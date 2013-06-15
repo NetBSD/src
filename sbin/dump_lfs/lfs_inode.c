@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.17 2013/06/08 23:37:37 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.18 2013/06/15 01:26:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,18 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.17 2013/06/08 23:37:37 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.18 2013/06/15 01:26:48 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <ufs/ufs/dinode.h>
 #include <sys/mount.h>
-#include <ufs/lfs/lfs.h>
-
-#include <protocols/dumprestore.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -61,6 +57,7 @@ __RCSID("$NetBSD: lfs_inode.c,v 1.17 2013/06/08 23:37:37 dholland Exp $");
 #include <unistd.h>
 
 #include "dump.h"
+#undef di_inumber
 
 #define MAXIFPB        (MAXBSIZE / sizeof(IFILE))
 
@@ -308,7 +305,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct ulfs1_dinode *dip)
 {
 	int cnt;
 
-	for(cnt=0;cnt<INOPB(fs);cnt++)
+	for (cnt = 0; cnt < INOPB(fs); cnt++)
 		if(dip[cnt].di_inumber == ino)
 			return &(dip[cnt]);
 	return NULL;
@@ -320,26 +317,26 @@ getino(ino_t inum)
 	static daddr_t inoblkno;
 	daddr_t blkno;
 	static struct ulfs1_dinode inoblock[MAXBSIZE / sizeof (struct ulfs1_dinode)];
-	static struct ulfs1_dinode ifile_dinode; /* XXX fill this in */
-	static struct ulfs1_dinode empty_dinode; /* Always stays zeroed */
+	static union dinode ifile_dinode; /* XXX fill this in */
+	static union dinode empty_dinode; /* Always stays zeroed */
 	struct ulfs1_dinode *dp;
 
 	if(inum == sblock->lfs_ifile) {
 		/* Load the ifile inode if not already */
-		if(ifile_dinode.di_inumber == 0) {
+		if(ifile_dinode.dlp1.di_inumber == 0) {
 			blkno = sblock->lfs_idaddr;
 			bread(fsbtodb(sblock, blkno), (char *)inoblock, 
 				(int)sblock->lfs_bsize);
 			dp = lfs_ifind(sblock, inum, inoblock);
-			ifile_dinode = *dp; /* Structure copy */
+			ifile_dinode.dlp1 = *dp; /* Structure copy */
 		}
-		return (union dinode *)&ifile_dinode;
+		return &ifile_dinode;
 	}
 
 	curino = inum;
 	blkno = lfs_ientry(inum)->if_daddr;
 	if(blkno == LFS_UNUSED_DADDR)
-		return (union dinode *)&empty_dinode;
+		return &empty_dinode;
 
 	if(blkno != inoblkno) {
 		bread(fsbtodb(sblock, blkno), (char *)inoblock, 
@@ -350,8 +347,7 @@ getino(ino_t inum)
 				ffs_dinode_swap(&inoblock[i], &inoblock[i]);
 #endif
 	}
-	/* XXX XXX: this cast is horribly unsafe */
-	return (union dinode *)lfs_ifind(sblock, inum, inoblock);
+	return (void *)lfs_ifind(sblock, inum, inoblock);
 }
 
 /*
