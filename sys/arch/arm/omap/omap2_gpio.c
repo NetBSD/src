@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.15 2013/04/18 01:33:18 khorben Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.16 2013/06/15 21:59:37 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.15 2013/04/18 01:33:18 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.16 2013/06/15 21:59:37 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -369,6 +369,18 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	    || oa->obio_addr == GPIO4_BASE_4430
 	    || oa->obio_addr == GPIO5_BASE_4430
 	    || oa->obio_addr == GPIO6_BASE_4430)
+		return 1;
+#endif
+
+#ifdef OMAP_5430
+	if (oa->obio_addr == GPIO1_BASE_5430
+	    || oa->obio_addr == GPIO2_BASE_5430
+	    || oa->obio_addr == GPIO3_BASE_5430
+	    || oa->obio_addr == GPIO4_BASE_5430
+	    || oa->obio_addr == GPIO5_BASE_5430
+	    || oa->obio_addr == GPIO6_BASE_5430
+	    || oa->obio_addr == GPIO7_BASE_5430
+	    || oa->obio_addr == GPIO8_BASE_5430)
 		return 1;
 #endif
 
