@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2011/10/11 13:07:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27 2013/06/15 01:37:10 christos Exp $
 
 NOMAN=		# defined
 
@@ -38,7 +38,7 @@ vers.c:	${VERSIONFILE}
 	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
-CFLAGS+= -m68020-60
+#CFLAGS+= -m68020-60
 CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
