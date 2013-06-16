@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.79 2013/06/12 17:06:52 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.80 2013/06/16 16:43:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -736,10 +736,10 @@ ARMREG_READ_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
 ARMREG_WRITE_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
 /* cp15 c14 registers */
 /* cp15 Global Timer Registers */
-ARMREG_READ_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
-ARMREG_WRITE_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
-ARMREG_READ_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
-ARMREG_WRITE_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_READ_INLINE(cnt_frq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_WRITE_INLINE(cnt_frq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_READ_INLINE(cntk_ctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_WRITE_INLINE(cntk_ctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
 ARMREG_READ_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
 ARMREG_WRITE_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
 ARMREG_READ_INLINE(cntp_ctl, "p15,0,%0,c14,c2,1") /* PL1 Physical Timer Control Register */
@@ -748,10 +748,10 @@ ARMREG_READ_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Registe
 ARMREG_WRITE_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Register */
 ARMREG_READ_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
 ARMREG_WRITE_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
-ARMREG_READ64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
-ARMREG_WRITE64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
-ARMREG_READ64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
-ARMREG_WRITE64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_READ64_INLINE(cntp_ct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_WRITE64_INLINE(cntp_ct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_READ64_INLINE(cntv_ct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_WRITE64_INLINE(cntv_ct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
 ARMREG_READ64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_WRITE64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_READ64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
