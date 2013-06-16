@@ -98,7 +98,7 @@
 #define INIT_MEMSIZE	128
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.14 2013/06/16 16:48:23 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.15 2013/06/16 17:57:21 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -285,8 +285,8 @@ mmu_init_table:
 		L1_S_PROTO | L1_S_APv7_KRW)
 
 #if OMAP_L4_CORE_BASE <= CONSADDR \
-	/* Map first 1MB of L4 CORE 1:1 (so console will work) */
 	&& CONSADDR < OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE
+	/* Map first 1MB of L4 CORE 1:1 (so console will work) */
 	MMU_INIT(OMAP_L4_CORE_BASE, OMAP_L4_CORE_BASE,
 		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
