@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.49 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.50 2013/06/16 16:48:23 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -238,7 +238,6 @@ omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
 omapmputmr1	at obio2 addr 0x49034000 intr 39	# GP Timer 3
 # Microtime Reference Timer
 omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
-options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
