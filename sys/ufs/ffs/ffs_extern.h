@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.79 2012/10/19 17:09:08 drochner Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.80 2013/06/16 13:33:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -153,7 +153,7 @@ void	ffs_snapremove(struct vnode *);
 int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
 void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
-void	ffs_snapgone(struct inode *);
+void	ffs_snapgone(struct vnode *);
 int	ffs_snapshot_read(struct vnode *, struct uio *, int);
 
 /* Write Ahead Physical Block Logging */
