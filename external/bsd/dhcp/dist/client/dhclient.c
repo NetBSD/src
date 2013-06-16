@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $	*/
 
 /* dhclient.c
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -105,6 +105,55 @@ static int check_domain_name_list(const char *ptr, size_t len, int dots);
 static int check_option_values(struct universe *universe, unsigned int opt,
 			       const char *ptr, size_t len);
 
+static void
+setup(void) {
+	isc_result_t status;
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create();
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+			  isc_result_totext(status));
+
+	/* Set up the OMAPI. */
+	status = omapi_init();
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize OMAPI: %s",
+			  isc_result_totext(status));
+
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_common_objects_setup();
+
+	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
+	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
+	dhcp_interface_startup_hook = dhclient_interface_startup_hook;
+}
+
+
+static void
+add_interfaces(char **ifaces, int nifaces)
+{
+	isc_result_t status;
+
+	for (int i = 0; i < nifaces; i++) {
+		    struct interface_info *tmp = NULL;
+		    status = interface_allocate(&tmp, MDL);
+		    if (status != ISC_R_SUCCESS)
+			log_fatal("Can't record interface %s:%s",
+				  ifaces[i], isc_result_totext(status));
+		    if (strlen(ifaces[i]) >= sizeof(tmp->name))
+			    log_fatal("%s: interface name too long (is %ld)",
+				      ifaces[i], (long)strlen(ifaces[i]));
+		    strcpy(tmp->name, ifaces[i]);
+		    if (interfaces) {
+			    interface_reference(&tmp->next,
+						interfaces, MDL);
+			    interface_dereference(&interfaces, MDL);
+		    }
+		    interface_reference(&interfaces, tmp, MDL);
+		    tmp->flags = INTERFACE_REQUESTED;
+	}
+}
 int
 main(int argc, char **argv) {
 	int fd;
@@ -113,7 +162,6 @@ main(int argc, char **argv) {
 	struct client_state *client;
 	unsigned seed;
 	char *server = NULL;
-	isc_result_t status;
 	int exit_mode = 0;
 	int release_mode = 0;
 	struct timeval tv;
@@ -128,6 +176,7 @@ main(int argc, char **argv) {
 	int local_family_set = 0;
 #endif /* DHCPv6 */
 	char *s;
+	char **ifaces;
 
 	/* Initialize client globals. */
 	memset(&default_duid, 0, sizeof(default_duid));
@@ -151,25 +200,10 @@ main(int argc, char **argv) {
 	setlogmask(LOG_UPTO(LOG_INFO));
 #endif
 
-	/* Set up the isc and dns library managers */
-	status = dhcp_context_create();
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize context: %s",
-			  isc_result_totext(status));
-
-	/* Set up the OMAPI. */
-	status = omapi_init();
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize OMAPI: %s",
-			  isc_result_totext(status));
-
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_common_objects_setup();
-
-	dhcp_interface_discovery_hook = dhclient_interface_discovery_hook;
-	dhcp_interface_shutdown_hook = dhclient_interface_shutdown_hook;
-	dhcp_interface_startup_hook = dhclient_interface_startup_hook;
+	if ((ifaces = malloc(sizeof(*ifaces) * argc)) == NULL) {
+		log_fatal("Can't allocate memory");
+		return 1;
+	}
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-r")) {
@@ -320,27 +354,20 @@ main(int argc, char **argv) {
 		} else if (interfaces_requested < 0) {
 		    usage();
 		} else {
-		    struct interface_info *tmp = NULL;
-
-		    status = interface_allocate(&tmp, MDL);
-		    if (status != ISC_R_SUCCESS)
-			log_fatal("Can't record interface %s:%s",
-				  argv[i], isc_result_totext(status));
-		    if (strlen(argv[i]) >= sizeof(tmp->name))
-			    log_fatal("%s: interface name too long (is %ld)",
-				      argv[i], (long)strlen(argv[i]));
-		    strcpy(tmp->name, argv[i]);
-		    if (interfaces) {
-			    interface_reference(&tmp->next,
-						interfaces, MDL);
-			    interface_dereference(&interfaces, MDL);
-		    }
-		    interface_reference(&interfaces, tmp, MDL);
-		    tmp->flags = INTERFACE_REQUESTED;
-		    interfaces_requested++;
+		    ifaces[interfaces_requested++] = argv[i];
 		}
 	}
 
+	/*
+	 * Do this before setup, otherwise if we are using threads things
+	 * are not going to work
+	 */
+	if (nowait)
+		go_daemon();
+	setup();
+	if (interfaces_requested > 0)
+		add_interfaces(ifaces, interfaces_requested);
+	free(ifaces);
 	if (wanted_ia_na < 0) {
 		wanted_ia_na = 1;
 	}
@@ -686,10 +713,6 @@ main(int argc, char **argv) {
 	dmalloc_outstanding = 0;
 #endif
 
-	/* If we're not supposed to wait before getting the address,
-	   don't. */
-	if (nowait)
-		go_daemon();
 
 	/* If we're not going to daemonize, write the pid file
 	   now. */
@@ -870,7 +893,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
