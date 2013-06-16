@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.16 2013/04/15 08:09:48 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.17 2013/06/16 06:29:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -107,6 +107,7 @@
 #define ANAR_NP		0x8000	/* Next page (ro) */
 #define	ANAR_ACK	0x4000	/* link partner abilities acknowledged (ro) */
 #define ANAR_RF		0x2000	/* remote fault (ro) */
+		/* Annex 28B.2 */
 #define	ANAR_FC		0x0400	/* local device supports PAUSE */
 #define ANAR_T4		0x0200	/* local device supports 100bT4 */
 #define ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
@@ -114,13 +115,18 @@
 #define ANAR_10_FD	0x0040	/* local device supports 10bT FD */
 #define ANAR_10		0x0020	/* local device supports 10bT */
 #define	ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define	ANAR_PAUSE_NONE		(0 << 10)
+#define	ANAR_PAUSE_SYM		(1 << 10)
+#define	ANAR_PAUSE_ASYM		(2 << 10)
+#define	ANAR_PAUSE_TOWARDS	(3 << 10)
 
+		/* Annex 28D */
 #define	ANAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
 #define	ANAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
-#define	ANAR_X_PAUSE_NONE	(0 << 10)
-#define	ANAR_X_PAUSE_SYM	(1 << 10)
-#define	ANAR_X_PAUSE_ASYM	(2 << 10)
-#define	ANAR_X_PAUSE_TOWARDS	(3 << 10)
+#define	ANAR_X_PAUSE_NONE	(0 << 7)
+#define	ANAR_X_PAUSE_SYM	(1 << 7)
+#define	ANAR_X_PAUSE_ASYM	(2 << 7)
+#define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
 
 #define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
@@ -134,14 +140,19 @@
 #define ANLPAR_10_FD	0x0040	/* link partner supports 10bT FD */
 #define ANLPAR_10	0x0020	/* link partner supports 10bT */
 #define	ANLPAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define	ANLPAR_PAUSE_MASK	(3 << 10)
+#define	ANLPAR_PAUSE_NONE	(0 << 10)
+#define	ANLPAR_PAUSE_SYM	(1 << 10)
+#define	ANLPAR_PAUSE_ASYM	(2 << 10)
+#define	ANLPAR_PAUSE_TOWARDS	(3 << 10)
 
 #define	ANLPAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
 #define	ANLPAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
-#define	ANLPAR_X_PAUSE_MASK	(3 << 10)
-#define	ANLPAR_X_PAUSE_NONE	(0 << 10)
-#define	ANLPAR_X_PAUSE_SYM	(1 << 10)
-#define	ANLPAR_X_PAUSE_ASYM	(2 << 10)
-#define	ANLPAR_X_PAUSE_TOWARDS	(3 << 10)
+#define	ANLPAR_X_PAUSE_MASK	(3 << 7)
+#define	ANLPAR_X_PAUSE_NONE	(0 << 7)
+#define	ANLPAR_X_PAUSE_SYM	(1 << 7)
+#define	ANLPAR_X_PAUSE_ASYM	(2 << 7)
+#define	ANLPAR_X_PAUSE_TOWARDS	(3 << 7)
 
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
