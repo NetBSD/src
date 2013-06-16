@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.2 2012/09/02 16:55:10 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.3 2013/06/16 16:44:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ static const char * const a5_devices[] = {
 
 #ifdef CPU_CORTEXA7
 static const char * const a7_devices[] = {
-	"armgic", NULL
+	"armgic", "armtmr", NULL
 };
 #endif
 
@@ -69,6 +69,13 @@ static const char * const a9_devices[] = {
 	"armscu", "arml2cc", "armgic", "a9tmr", "a9wdt", NULL
 };
 #endif
+
+#ifdef CPU_CORTEXA15
+static const char * const a15_devices[] = {
+	"armgic", "armtmr", NULL
+};
+#endif
+
 
 static const struct mpcore_config {
 	const char * const *cfg_devices;
@@ -85,7 +92,7 @@ static const struct mpcore_config {
 	{ a9_devices, 0x410fc090, 3*4096 },
 #endif
 #ifdef CPU_CORTEXA15
-	{ a15_devices, 0x410fc0f0, 32768 },
+	{ a15_devices, 0x410fc0f0, 8*4096 },
 #endif
 };
 
