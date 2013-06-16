@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.216 2013/06/16 00:13:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.216 2013/06/16 00:13:58 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1267,6 +1267,13 @@ ufs_symlink(void *v)
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);
+	/*
+	 * This test is off by one. um_maxsymlinklen contains the
+	 * number of bytes available, and we aren't storing a \0, so
+	 * the test should properly be <=. However, it cannot be
+	 * changed as this would break compatibility with existing fs
+	 * images -- see the way ufs_readlink() works.
+	 */
 	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
@@ -1452,6 +1459,12 @@ ufs_readlink(void *v)
 	struct inode	*ip = VTOI(vp);
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int		isize;
+
+	/*
+	 * The test against um_maxsymlinklen is off by one; it should
+	 * theoretically be <=, not <. However, it cannot be changed
+	 * as that would break compatibility with existing fs images.
+	 */
 
 	isize = ip->i_size;
 	if (isize < ump->um_maxsymlinklen ||
