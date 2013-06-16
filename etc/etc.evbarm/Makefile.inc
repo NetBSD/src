@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51 2013/03/23 11:51:47 he Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2013/06/16 13:47:42 jakllsch Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -26,6 +26,7 @@ __mkimage: .USE
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
 	TOOL_DISKLABEL=${TOOL_DISKLABEL} \
 	TOOL_FDISK=${TOOL_FDISK} \
+	TOOL_GZIP=${TOOL_GZIP} \
 	TOOL_MKNOD=${TOOL_MKNOD} \
 	TOOL_PAX=${TOOL_PAX} \
 	TOOL_MTREE=${TOOL_MTREE} \
