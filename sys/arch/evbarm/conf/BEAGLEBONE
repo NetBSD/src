@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.14 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: BEAGLEBONE,v 1.15 2013/06/16 16:48:23 matt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -131,7 +131,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -234,8 +234,6 @@ omapdmtimer1	at obio0 addr 0x44e31000 size 0x1000 intr 67	# DM Timer 1ms
 
 # Statclock timer
 omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
-
-options OMAP_SYSTEM_CLOCK_FREQ=24000000
 
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
