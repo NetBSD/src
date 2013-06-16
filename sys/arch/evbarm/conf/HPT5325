@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.16 2013/06/16 08:13:28 tsutsui Exp $
+#	$NetBSD: HPT5325,v 1.17 2013/06/16 08:18:00 tsutsui Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -20,7 +20,8 @@ options 	CPU_SHEEVA
 #options 	MV_L2_CACHE_ENABLE
 #options 	MV_L2_CACHE_WRITE_THROUGH
 options 	MV_CACHE_RANGE_OPS
-makeoptions	CPUFLAGS="-march=armv5te"
+#makeoptions	CPUFLAGS="-march=armv5te"
+makeoptions	CPUFLAGS="-mtune=arm9e"
 
 # Marvell SoC options
 options 	KIRKWOOD
