@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.6 2012/12/24 06:41:02 kiyohara Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.7 2013/06/16 16:42:13 matt Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.6 2012/12/24 06:41:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.7 2013/06/16 16:42:13 matt Exp $");
 
 #include "locators.h"
 
@@ -273,10 +273,18 @@ omap3_ehci_attach1(device_t self)
 static int
 omap3_ehci_match(device_t parent, cfdata_t match, void *opaque)
 {
+#ifdef OMAP3
 	struct obio_attach_args *obio = opaque;
+#endif
 
-	if (obio->obio_addr == EHCI1_BASE_3530)
+#if defined(OMAP3) && !defined(OMAP4)
+	if (obio->obio_addr == EHCI1_BASE_OMAP3)
 		return 1;
+#endif
+#ifdef OMAP4
+	if (obio->obio_addr == EHCI1_BASE_OMAP4)
+		return 1;
+#endif
 
 	return 0;
 }
@@ -429,7 +437,6 @@ dpll5_init(struct omap3_ehci_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc.iot;
 	bus_space_handle_t ioh;
-	uint32_t m, n, m2;
 	int err;
 
 	if (sc->sc_dpll5.m == 0 || sc->sc_dpll5.n == 0 || sc->sc_dpll5.m2 == 0)
@@ -440,27 +447,38 @@ dpll5_init(struct omap3_ehci_softc *sc)
                 panic("%s: cannot map CCR_CM_BASE at %#x, error %d\n",
                         __func__, CCR_CM_BASE, err);
 
-#if OMAP_MPU_TIMER_CLOCK_FREQ != 12000000
-#error FIXME
-#endif
 
+#if defined(OMAP_3530) || defined(OMAP_3540)
 	/* set the multiplier and divider values for the desired CLKOUT freq */
-	m = sc->sc_dpll5.m;
-	n = sc->sc_dpll5.n;
+	uint32_t m = sc->sc_dpll5.m;
+	uint32_t n = sc->sc_dpll5.n;
 	/* set the corresponding output dividers */
-	m2 = sc->sc_dpll5.m2;
+	uint32_t m2 = sc->sc_dpll5.m2;
 
-	/* 4.7.6.2 In the DPLL programming sequence, the DPLL_FREQSEL must be programmed
-	 * before the new Multiplier factor M and the Divider factor N are programmed so
-	 * that the new value is taken into account during current DPLL relock.
+	KASSERTMSG(479900000 <= 2 * m * (omap_sys_clk / ((n + 1) * m2)),
+	    "m=%u n=%u m2=%u freq=%u",
+	    m, n, m2, 2 * m * (omap_sys_clk / ((n + 1) * m2)));
+	KASSERTMSG(2 * m * (omap_sys_clk / ((n + 1) * m2)) <= 480100000,
+	    "m=%u n=%u m2=%u freq=%u",
+	    m, n, m2, 2 * m * (omap_sys_clk / ((n + 1) * m2)));
+
+	/* 4.7.6.2
+	 * In the DPLL programming sequence, the DPLL_FREQSEL must be
+	 * programmed before the new Multiplier factor M and the Divider
+	 * factor N are programmed so that the new value is taken into
+	 * account during current DPLL relock.
 	 */
 	bus_space_write_4(iot, ioh, CM_CLKEN2_PLL, (0x4 << 4) | 0x7);
 
 	bus_space_write_4(iot, ioh, CM_CLKSEL4_PLL, (m << 8) | n);
 	bus_space_write_4(iot, ioh, CM_CLKSEL5_PLL, m2);
 
-	/* Put DPLL5 into low power stop mode when the 120MHz clock is not required (restarted automatically) */
+	/*
+	 * Put DPLL5 into low power stop mode when the 120MHz clock
+	 * is not required (restarted automatically)
+	 */
 	bus_space_write_4(iot, ioh, CM_AUTOIDLE2_PLL, AUTO_PERIPH2_DPLL);
+#endif /* OMAP_3540 || OMAP_3530 */
 
 	bus_space_unmap(iot, ioh, CCR_CM_SIZE);
 }
