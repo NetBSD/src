@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.8 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: PANDABOARD,v 1.9 2013/06/16 16:49:09 matt Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -172,7 +172,7 @@ a9tmr0		at armperiph?				# Global Timer
 a9wdt0		at armperiph?				# Watchdog
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=512
+#options 	MEMSIZE=512
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -187,11 +187,11 @@ obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
 gpmc0		at mainbus? base 0x50000000
 
 omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 160 intr 61
-#omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 192 intr 62
-#omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 224 intr 63
-#omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 256 intr 64
-omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 288 intr 65
-#omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 320 intr 66
+#omapgpio1	at obio2 addr 0x49055000 size 0x0400 intrbase 192 intr 62
+#omapgpio2	at obio2 addr 0x49057000 size 0x0400 intrbase 224 intr 63
+#omapgpio3	at obio2 addr 0x49059000 size 0x0400 intrbase 256 intr 64
+omapgpio4	at obio2 addr 0x4905a000 size 0x0400 intrbase 288 intr 65
+#omapgpio5	at obio2 addr 0x4905d000 size 0x0400 intrbase 320 intr 66
 
 gpio*		at omapgpio?
 
@@ -268,9 +268,9 @@ axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
 
-options		HWCLOCK
-options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
-options		OMAP_CK_REF_SPEED=12000000
+#options	HWCLOCK
+#options	HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
+#options	OMAP_CK_REF_SPEED=12000000
 
 # Pseudo-Devices
 
