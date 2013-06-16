@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.7 2013/06/16 16:42:13 matt Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.8 2013/06/16 17:47:54 matt Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.7 2013/06/16 16:42:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.8 2013/06/16 17:47:54 matt Exp $");
 
 #include "locators.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.7 2013/06/16 16:42:13 matt Exp $");
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#include <arm/omap/omap_var.h>
 #include <arm/omap/omap2_gpio.h>
 #include <arm/omap/omap2_obioreg.h>
 #include <arm/omap/omap2_obiovar.h>
