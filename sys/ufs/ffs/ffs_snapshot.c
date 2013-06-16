@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.123 2013/06/16 13:33:30 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.123 2013/06/16 13:33:30 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1372,10 +1372,10 @@ blocks_in_journal(struct fs *fs)
  * It will not be freed until the last open reference goes away.
  */
 void
-ffs_snapgone(struct inode *ip)
+ffs_snapgone(struct vnode *vp)
 {
+	struct inode *xp, *ip = VTOI(vp);
 	struct mount *mp = ip->i_devvp->v_specmountpoint;
-	struct inode *xp;
 	struct fs *fs;
 	struct snap_info *si;
 	int snaploc;
