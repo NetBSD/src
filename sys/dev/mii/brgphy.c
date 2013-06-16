@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.65 2013/06/14 06:21:51 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.66 2013/06/16 06:29:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.65 2013/06/14 06:21:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.66 2013/06/16 06:29:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	} else {
 		anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 		if (sc->mii_flags & MIIF_DOPAUSE)
-			anar |= ANAR_FC | ANAR_X_PAUSE_ASYM;
+			anar |= ANAR_FC | ANAR_PAUSE_ASYM;
 	}
 	PHY_WRITE(sc, MII_ANAR, anar);
 	DELAY(1000);
