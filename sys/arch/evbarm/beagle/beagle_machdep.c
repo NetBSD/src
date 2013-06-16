@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.44 2013/06/12 20:36:53 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.45 2013/06/16 16:48:23 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.44 2013/06/12 20:36:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.45 2013/06/16 16:48:23 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -229,12 +229,14 @@ static void beagle_reset(void);
 #if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
 #endif
-#if defined(OMAP_4430)
+#if defined(OMAP_4430) || defined(OMAP_5430)
 static void omap4_cpu_clk(void);
 #endif
 #if defined(TI_AM335X)
 static void am335x_cpu_clk(void);
-static psize_t am335x_memprobe(void);
+#endif
+#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+static psize_t emif_memprobe(void);
 #endif
 
 #if defined(OMAP_3430) || defined(OMAP_3530)
@@ -317,14 +319,26 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 #endif
-#ifdef OMAP_EMIF_BASE
+#ifdef OMAP_EMIF1_BASE
 	{
 		/*
-		 * Map all of the L4 EMIF area
+		 * Map all of the L4 EMIF1 area
 		 */
-		.pd_va = _A(OMAP_EMIF_VBASE),
-		.pd_pa = _A(OMAP_EMIF_BASE),
-		.pd_size = _S(OMAP_EMIF_SIZE),
+		.pd_va = _A(OMAP_EMIF1_VBASE),
+		.pd_pa = _A(OMAP_EMIF1_BASE),
+		.pd_size = _S(OMAP_EMIF1_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
+#ifdef OMAP_EMIF2_BASE
+	{
+		/*
+		 * Map all of the L4 EMIF2 area
+		 */
+		.pd_va = _A(OMAP_EMIF2_VBASE),
+		.pd_pa = _A(OMAP_EMIF2_BASE),
+		.pd_size = _S(OMAP_EMIF2_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -426,11 +440,11 @@ initarm(void *arg)
 #if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
-#if defined(OMAP_4430)
+#if defined(OMAP_4430) || defined(OMAP_5430)
 	omap4_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(TI_AM335X)
-	am335x_cpu_clk();
+	am335x_cpu_clk();		// find our CPU speed.
 #endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
@@ -474,16 +488,17 @@ initarm(void *arg)
 #if defined(OMAP_3430) || defined(OMAP_3530)
 	ram_size = omap3530_memprobe();
 #endif
-#if defined(TI_AM335X)
-	ram_size = am335x_memprobe();
+#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+	ram_size = emif_memprobe();
 #endif
+
 	/*
 	 * If MEMSIZE specified less than what we really have, limit ourselves
 	 * to that.
 	 */
 #ifdef MEMSIZE
-	if (ram_size == 0 || ram_size > MEMSIZE * 1024 * 1024)
-		ram_size = MEMSIZE * 1024 * 1024;
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
@@ -492,6 +507,18 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
+
+#if 0
+#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+	KASSERT(cs1_p == false);
+	if (cs1_p > 0) {
+		bootconfig.dramblocks = 2;
+		bootconfig.dram[1].address = 0xC0000000;
+		bootconfig.dram[0].pages /= 2;
+		bootconfig.dram[1].pages = bootconfig.dram[0].pages;
+	}
+#endif
+#endif
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
@@ -668,10 +695,11 @@ omap3_cpu_clk(void)
 	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
 	 */
 	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
+	omap_sys_clk = sys_clk * OMAP3_PRM_CLKSEL_MULT;
 }
 #endif /* OMAP_3430 || OMAP_3530 || TI_DM37XX */
 
-#if defined(OMAP_4430)
+#if defined(OMAP_4430) || defined(OMAP_5430)
 void
 omap4_cpu_clk(void)
 {
@@ -690,11 +718,12 @@ omap4_cpu_clk(void)
 	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
 	 */
 	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * 2 * m) / ((n + 1) * m2)) * OMAP4_CM_CLKSEL_MULT / 2;
+	omap_sys_clk = sys_clk * OMAP4_CM_CLKSEL_MULT;
 	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u mult=%u\n",
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 }
-#endif /* OMAP_4400 */
+#endif /* OMAP_4430 || OMAP_5430 */
 
 #if defined(TI_AM335X)
 void
@@ -718,26 +747,53 @@ am335x_cpu_clk(void)
 	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2);
+	omap_sys_clk = sys_clk;
+}
+#endif /* TI_AM335X */
+
+#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+static inline uint32_t
+emif_read_sdram_config(vaddr_t emif_base)
+{
+	return *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
 }
 
 static psize_t 
-am335x_memprobe(void)
+emif_memprobe(void)
 {
-	const vaddr_t emif_base = OMAP_EMIF_VBASE;
-	uint32_t sdram_config = *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
+	uint32_t sdram_config = emif_read_sdram_config(OMAP_EMIF1_VBASE);
+	psize_t memsize = 1L;
+#if defined(TI_AM335X)
 	/*
 	 * The original bbone's u-boot misprograms the EMIF so correct it
 	 * if we detect if it has the wrong value.
 	 */
 	if (sdram_config == 0x41805332)
 		sdram_config -= __SHIFTIN(1, SDRAM_CONFIG_RSIZE);
+#endif
+#ifdef OMAP_EMIF2_VBASE
+	/*
+	 * OMAP4 and OMAP5 have two EMIFs so if the 2nd one is configured
+	 * like the first, we have twice the memory.
+	 */
+	if (emif_read_sdram_config(OMAP_EMIF2_VBASE) == sdram_config)
+		memsize <<= 1;
+#endif
 
+	const u_int ebank = __SHIFTOUT(sdram_config, SDRAM_CONFIG_EBANK);
 	const u_int ibank = __SHIFTOUT(sdram_config, SDRAM_CONFIG_IBANK);
 	const u_int rsize = 9 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_RSIZE);
 	const u_int pagesize = 8 + __SHIFTOUT(sdram_config, SDRAM_CONFIG_PAGESIZE);
 	const u_int width = 2 - __SHIFTOUT(sdram_config, SDRAM_CONFIG_WIDTH);
-	printf("sdram_config = %#x\n", sdram_config);
-	return 1L << (ibank + rsize + pagesize + width);
+#ifdef TI_AM335X
+	KASSERT(ebank == 0);	// No chip selects on Sitara
+#endif
+	memsize <<= (ebank + ibank + rsize + pagesize + width);
+#ifdef VERBOSE_INIT_ARM
+	printf("sdram_config = %#x, memsize = %uMB\n", sdram_config,
+	    (u_int)(memsize >> 20));
+#endif
+	return memsize;
 }
 #endif
 
