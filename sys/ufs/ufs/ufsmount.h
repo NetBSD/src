@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.40 2013/06/16 13:33:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -139,6 +139,7 @@ struct ufs_ops {
 	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
 	    struct buf **);
         void (*uo_unmark_vnode)(struct vnode *);
+        void (*uo_snapgone)(struct vnode *);
 };
 
 #define	UFS_OPS(vp)	(VFSTOUFS((vp)->v_mount)->um_ops)
@@ -157,6 +158,8 @@ struct ufs_ops {
 	(*UFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
 #define	UFS_UNMARK_VNODE(vp) \
 	(*UFS_OPS(vp)->uo_unmark_vnode)((vp))
+#define	UFS_SNAPGONE(vp) \
+	(*UFS_OPS(vp)->uo_snapgone)((vp))
 
 /* UFS-specific flags */
 #define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
