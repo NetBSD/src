@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.14 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: HPT5325,v 1.15 2013/06/16 08:08:51 tsutsui Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -141,6 +141,11 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
