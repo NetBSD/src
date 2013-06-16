@@ -98,7 +98,7 @@
 #define INIT_MEMSIZE	128
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.13 2013/04/30 00:18:02 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.14 2013/06/16 16:48:23 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -284,10 +284,26 @@ mmu_init_table:
 		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 
+#if OMAP_L4_CORE_BASE <= CONSADDR \
+	/* Map first 1MB of L4 CORE 1:1 (so console will work) */
+	&& CONSADDR < OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE
+	MMU_INIT(OMAP_L4_CORE_BASE, OMAP_L4_CORE_BASE,
+		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
+
 	/* Map first 4MB of L4 PERIPHERAL (so console will work) */
 	MMU_INIT(OMAP_L4_PERIPHERAL_VBASE, OMAP_L4_PERIPHERAL_BASE,
 		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
+
+#if OMAP_L4_PERIPHERAL_BASE <= CONSADDR \
+	&& CONSADDR < OMAP_L4_PERIPHERAL_BASE + OMAP_L4_PERIPHERAL_SIZE
+	/* Map first 1MB of L4 PERIPHERAL 1:1 (so console will work) */
+	MMU_INIT(OMAP_L4_PERIPHERAL_BASE, OMAP_L4_PERIPHERAL_BASE,
+		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
 
 #if defined(OMAP_L4_WAKEUP_BASE) && defined(OMAP_L4_WAKEUP_VBASE)
 	/* Map all 4MB of L4 WAKEUP (so console will work) */
@@ -303,10 +319,17 @@ mmu_init_table:
 		L1_S_PROTO | L1_S_APv7_KRW)
 #endif
 
-#ifdef OMAP_EMIF_BASE
-	/* Map first 1MB of EMIF0 (so we can probe memory size) */
-	MMU_INIT(OMAP_EMIF_VBASE, OMAP_EMIF_BASE,
-		(OMAP_EMIF_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+#ifdef OMAP_EMIF1_BASE
+	/* Map first 1MB of EMIF1 (so we can probe memory size) */
+	MMU_INIT(OMAP_EMIF1_VBASE, OMAP_EMIF1_BASE,
+		(OMAP_EMIF1_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
+
+#ifdef OMAP_EMIF2_BASE
+	/* Map first 1MB of EMIF2 (so we can probe memory size) */
+	MMU_INIT(OMAP_EMIF2_VBASE, OMAP_EMIF2_BASE,
+		(OMAP_EMIF2_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 #endif
 
