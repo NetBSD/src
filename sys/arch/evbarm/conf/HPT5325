@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.15 2013/06/16 08:08:51 tsutsui Exp $
+#	$NetBSD: HPT5325,v 1.16 2013/06/16 08:13:28 tsutsui Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -35,14 +35,14 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
-#file-system 	MFS		# memory file system
+file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
+file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
@@ -52,7 +52,7 @@ file-system 	PROCFS		# /proc
 #file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
-#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
