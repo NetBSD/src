@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.13.8.1 2013/04/20 09:58:23 bouyer Exp $	*/
+/*	$NetBSD: vax.c,v 1.13.8.2 2013/06/17 02:05:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,11 +68,15 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.13.8.1 2013/04/20 09:58:23 bouyer Exp $");
+__RCSID("$NetBSD: vax.c,v 1.13.8.2 2013/06/17 02:05:19 msaitoh Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/vax/disklabel.h>
+#else
 #include <sys/disklabel.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
