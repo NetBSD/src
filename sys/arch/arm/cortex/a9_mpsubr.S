@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.4 2012/11/28 22:48:13 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.5 2013/06/17 04:38:51 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,20 @@ arm_boot_l1pt_init:
 	.unreq	itable
 	.unreq	l1table
 
-a9_cpuinit:
+#if defined(CPU_CORTEXA8)
+#undef CPU_CONTROL_SWP_ENABLE		// not present on A8
+#define	CPU_CONTROL_SWP_ENABLE		0
+#endif
+
+#define	CPU_CONTROL_SET \
+	(CPU_CONTROL_MMU_ENABLE		|	\
+	 CPU_CONTROL_AFLT_ENABLE	|	\
+	 CPU_CONTROL_DC_ENABLE		|	\
+	 CPU_CONTROL_SWP_ENABLE		|	\
+	 CPU_CONTROL_BPRD_ENABLE	|	\
+	 CPU_CONTROL_IC_ENABLE)
+
+arm_cpuinit:
 	/*
 	 * In theory, because the MMU is off, we shouldn't need all of this,
 	 * but let's not take any chances and do a typical sequence to set
@@ -117,6 +130,8 @@ a9_cpuinit:
 	 */
 	mov	ip, lr
 	mov	r10, r0
+
+	mcr     p15, 0, r10, c7, c5, 0	/* invalidate I cache */
 
 	mrc	p15, 0, r2, c1, c0, 0	/*  "       "   "     */
 	bic	r2, r2, #CPU_CONTROL_DC_ENABLE	@ clear data cache enable
@@ -149,9 +164,10 @@ a9_cpuinit:
 	XPUTC(#75)
 	mrc	p15, 0, r0, c1, c0, 0
 
-	ldr	r2, .Lcontrol_clr
-	bic	r0, r0, r2
-	ldr	r3, .Lcontrol_set
+	movw	r3, #:lower16:CPU_CONTROL_SET
+#if (CPU_CONTROL_SET & 0xffff0000)
+	movt	r3, #:upper16:CPU_CONTROL_SET
+#endif
 	orr	r0, r0, r3
 	
 	dsb
@@ -165,6 +181,7 @@ a9_cpuinit:
 	 */
 	mrc	p15, 0, r0, c0, c0, 0	/* Read an arbitrary value. */
 	mov	r0, r0			/* Stall until read completes. */
+	XPUTC(#76)
 
 	bx	ip			/* return */
 
@@ -173,18 +190,8 @@ a9_cpuinit:
  */
 
 	.p2align 2
-	/* bits to clear in the Control Register */
-.Lcontrol_clr:
-	.word	0
 
 	/* bits to set in the Control Register */
-.Lcontrol_set:
-	.word CPU_CONTROL_MMU_ENABLE	|			\
-	      CPU_CONTROL_AFLT_ENABLE	|			\
-	      CPU_CONTROL_DC_ENABLE	|			\
-	      CPU_CONTROL_SYST_ENABLE	|			\
-	      CPU_CONTROL_SWP_ENABLE	|			\
-	      CPU_CONTROL_IC_ENABLE
 
 #if defined(VERBOSE_INIT_ARM) && XPUTC_COM
 #define	TIMO	0x25000
@@ -231,7 +238,11 @@ xputc:
 	bx	lr
 
 .Luart0:
+#ifdef CONADDR
 	.word	CONADDR
+#elif defined(CONSADDR)
+	.word	CONSADDR
+#endif
 
 #ifdef MULTIPROCESSOR
 .Lcomlock:
@@ -274,6 +285,7 @@ a9_start:
 	 */
 	XPUTC(#66)
 	bl	_C_LABEL(armv7_dcache_wbinv_all)	@ writeback/invalidate d-cache
+	XPUTC(#67)
 
 	/*
 	 * Step 2, disable the data cache
@@ -282,22 +294,28 @@ a9_start:
 	bic	r1, r2, #CPU_CONTROL_DC_ENABLE	@ clear data cache enable
 	mcr	p15, 0, r1, c1, c0, 0		@ set system ctl register
 	isb
+	XPUTC(#49)
 
 	/*
 	 * Step 3, enable the SCU (and set SMP mode)
 	 */
+	mrc	p15, 4, r3, c15, c0, 0		@ read cbar
 	ldr	r1, [r3, #SCU_CTL]		@ read scu control
 	orr	r1, r1, #SCU_CTL_SCU_ENA	@ set scu enable flag
 	str	r1, [r3, #SCU_CTL]		@ write scu control
 	dsb
 	isb
+	XPUTC(#50)
 
 	/*
 	 * Step 4a, enable the data cache
 	 */
+	orr	r2, r2, #CPU_CONTROL_DC_ENABLE	@ set data cache enable
 	mcr	p15, 0, r2, c1, c0, 0		@ reenable caches
 	isb
+	XPUTC(#51)
 
+#ifdef MULTIPROCESSOR
 	/*
 	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
 	 */
@@ -308,6 +326,8 @@ a9_start:
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
+	XPUTC(#52)
+#endif
 
 	bx	r10
 ASEND(a9_start)
