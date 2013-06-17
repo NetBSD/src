@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.15 2013/06/16 16:48:23 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.16 2013/06/17 00:40:18 matt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -131,7 +131,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
