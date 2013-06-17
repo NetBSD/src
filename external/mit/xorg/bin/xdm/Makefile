@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/06/16 01:51:29 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2013/06/17 15:58:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,6 @@ SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 .if ${MKPIC} == "no"
 SRCS+=		Login.c greet.c verify.c
 CPPFLAGS+=	-DSTATIC_GREETER_LIB
-.else
-# XXX: Perhaps always build libXdmGreet and link against that?
-SUBDIR+=	greeter
 .endif
 
 CPPFLAGS+=		-DRETSIGTYPE=void
