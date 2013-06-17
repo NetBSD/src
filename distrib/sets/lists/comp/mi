@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1823 2013/06/08 02:06:17 dholland Exp $
+#	$NetBSD: mi,v 1.1824 2013/06/17 12:35:02 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9470,6 +9470,7 @@
 ./usr/share/man/cat9/m_copydata.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copym.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copypacket.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_copyup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_devget.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_dup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_free.0			comp-sys-catman		.cat
@@ -15881,6 +15882,7 @@
 ./usr/share/man/html9/m_copydata.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_copym.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_copypacket.html		comp-sys-htmlman	html
+./usr/share/man/html9/m_copyup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_devget.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_dup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_free.html		comp-sys-htmlman	html
@@ -22451,6 +22453,7 @@
 ./usr/share/man/man9/m_copydata.9		comp-sys-man		.man
 ./usr/share/man/man9/m_copym.9			comp-sys-man		.man
 ./usr/share/man/man9/m_copypacket.9		comp-sys-man		.man
+./usr/share/man/man9/m_copyup.9			comp-sys-man		.man
 ./usr/share/man/man9/m_devget.9			comp-sys-man		.man
 ./usr/share/man/man9/m_dup.9			comp-sys-man		.man
 ./usr/share/man/man9/m_free.9			comp-sys-man		.man
