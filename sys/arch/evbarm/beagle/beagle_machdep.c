@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.45 2013/06/16 16:48:23 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.45 2013/06/16 16:48:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -169,6 +169,9 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.45 2013/06/16 16:48:23 matt Exp
 
 #include <arm/arm32/machdep.h>
 #include <arm/mainbus/mainbus.h>
+
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
 
 #include <arm/omap/omap_com.h>
 #include <arm/omap/omap_var.h>
@@ -395,18 +398,20 @@ void
 beagle_putchar(char c)
 {
 #if NCOM > 0
-	unsigned char *com0addr = (char *)CONSADDR_VA;
+	volatile uint32_t *com0addr = (volatile uint32_t *)CONSADDR_VA;
 	int timo = 150000;
 
-	while ((com0addr[5 * 4] & 0x20) == 0)
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
 		if (--timo == 0)
 			break;
+	}
 
-	com0addr[0] = c;
+	com0addr[com_data] = c;
 
-	while ((com0addr[5 * 4] & 0x20) == 0)
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
 		if (--timo == 0)
 			break;
+	}
 #endif
 }
 
@@ -428,9 +433,11 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	char *ptr;
+
 #if 1
 	beagle_putchar('d');
 #endif
+
 	/*
 	 * When we enter here, we are using a temporary first level
 	 * translation table with section entries in it to cover the OBIO
@@ -776,7 +783,8 @@ emif_memprobe(void)
 	 * OMAP4 and OMAP5 have two EMIFs so if the 2nd one is configured
 	 * like the first, we have twice the memory.
 	 */
-	if (emif_read_sdram_config(OMAP_EMIF2_VBASE) == sdram_config)
+	const uint32_t sdram_config2 = emif_read_sdram_config(OMAP_EMIF2_VBASE);
+	if (sdram_config2 == sdram_config)
 		memsize <<= 1;
 #endif
 
