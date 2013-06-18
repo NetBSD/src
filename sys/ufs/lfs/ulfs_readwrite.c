@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.3 2013/06/08 22:05:15 dholland Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.4 2013/06/18 18:18:58 christos Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.3 2013/06/08 22:05:15 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.4 2013/06/18 18:18:58 christos Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -141,17 +141,17 @@ READ(void *v)
 		bytesinfile = ip->i_size - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(fs, uio->uio_offset);
+		lbn = lfs_lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = blksize(fs, ip, lbn);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		size = lfs_blksize(fs, ip, lbn);
+		blkoffset = lfs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(fs, nextlbn) >= ip->i_size)
+		if (lfs_lblktosize(fs, nextlbn) >= ip->i_size)
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
-			int nextsize = blksize(fs, ip, nextlbn);
+			int nextsize = lfs_blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
@@ -278,28 +278,28 @@ WRITE(void *v)
 
 #ifdef LFS_READWRITE
 	async = true;
-	lfs_availwait(fs, btofsb(fs, uio->uio_resid));
+	lfs_availwait(fs, lfs_btofsb(fs, uio->uio_resid));
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
 		goto bcache;
 
-	preallocoff = round_page(blkroundup(fs, MAX(osize, uio->uio_offset)));
+	preallocoff = round_page(lfs_blkroundup(fs, MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
-	endallocoff = nsize - blkoff(fs, nsize);
+	endallocoff = nsize - lfs_blkoff(fs, nsize);
 
 	/*
 	 * if we're increasing the file size, deal with expanding
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(fs, osize) < ULFS_NDADDR &&
-	    lblkno(fs, osize) != lblkno(fs, nsize) &&
-	    blkroundup(fs, osize) != osize) {
+	if (nsize > osize && lfs_lblkno(fs, osize) < ULFS_NDADDR &&
+	    lfs_lblkno(fs, osize) != lfs_lblkno(fs, nsize) &&
+	    lfs_blkroundup(fs, osize) != osize) {
 		off_t eob;
 
-		eob = blkroundup(fs, osize);
+		eob = lfs_blkroundup(fs, osize);
 		uvm_vnp_setwritesize(vp, eob);
 		error = ulfs_balloc_range(vp, osize, eob - osize, cred, aflag);
 		if (error)
@@ -322,7 +322,7 @@ WRITE(void *v)
 		}
 
 		oldoff = uio->uio_offset;
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = lfs_blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (bytelen == 0) {
 			break;
@@ -338,12 +338,12 @@ WRITE(void *v)
 		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
 		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 &&
-		    blkoff(fs, uio->uio_offset) == 0 &&
+		    lfs_blkoff(fs, uio->uio_offset) == 0 &&
 		    (uio->uio_offset & PAGE_MASK) == 0) {
 			vsize_t len;
 
 			len = trunc_page(bytelen);
-			len -= blkoff(fs, len);
+			len -= lfs_blkoff(fs, len);
 			if (len > 0) {
 				overwrite = true;
 				bytelen = len;
@@ -411,7 +411,7 @@ WRITE(void *v)
 	if (error == 0 && ioflag & IO_SYNC) {
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
-		    round_page(blkroundup(fs, uio->uio_offset)),
+		    round_page(lfs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 	goto out;
@@ -421,8 +421,8 @@ WRITE(void *v)
 	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
 	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	while (uio->uio_resid > 0) {
-		lbn = lblkno(fs, uio->uio_offset);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		lbn = lfs_lblkno(fs, uio->uio_offset);
+		blkoffset = lfs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
@@ -431,7 +431,7 @@ WRITE(void *v)
 
 #ifdef LFS_READWRITE
 		error = lfs_reserve(fs, vp, NULL,
-		    btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
 		need_unreserve = true;
@@ -447,7 +447,7 @@ WRITE(void *v)
 			uvm_vnp_setsize(vp, ip->i_size);
 			extended = 1;
 		}
-		size = blksize(fs, ip, lbn) - bp->b_resid;
+		size = lfs_blksize(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
 			xfersize = size;
 
@@ -465,7 +465,7 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp->b_vp, bp);
 		lfs_reserve(fs, vp, NULL,
-		    -btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
 		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
@@ -481,7 +481,7 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 	if (need_unreserve) {
 		lfs_reserve(fs, vp, NULL,
-		    -btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
 	}
 #endif
 

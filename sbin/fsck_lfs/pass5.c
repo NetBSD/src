@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.27 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.28 2013/06/18 18:18:58 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -105,23 +105,23 @@ pass5(void)
 			}
 		}
 		if (su->su_flags & SEGUSE_DIRTY) {
-			bb += btofsb(fs, su->su_nbytes +
+			bb += lfs_btofsb(fs, su->su_nbytes +
 			    su->su_nsums * fs->lfs_sumsize);
-			ubb += btofsb(fs, su->su_nbytes +
+			ubb += lfs_btofsb(fs, su->su_nbytes +
 			    su->su_nsums * fs->lfs_sumsize +
 			    su->su_ninos * fs->lfs_ibsize);
-			dmeta += btofsb(fs,
+			dmeta += lfs_btofsb(fs,
 			    fs->lfs_sumsize * su->su_nsums);
-			dmeta += btofsb(fs,
+			dmeta += lfs_btofsb(fs,
 			    fs->lfs_ibsize * su->su_ninos);
 		} else {
 			nclean++;
-			avail += segtod(fs, 1);
+			avail += lfs_segtod(fs, 1);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
-				avail -= btofsb(fs, LFS_SBPAD);
+				avail -= lfs_btofsb(fs, LFS_SBPAD);
 			if (i == 0 && fs->lfs_version > 1 &&
-			    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
-				avail -= btofsb(fs, LFS_LABELPAD) -
+			    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD))
+				avail -= lfs_btofsb(fs, LFS_LABELPAD) -
 				    fs->lfs_start;
 		}
 		if (diddirty)
@@ -131,13 +131,13 @@ pass5(void)
 	}
 
 	/* Also may be available bytes in current seg */
-	i = dtosn(fs, fs->lfs_offset);
-	avail += sntod(fs, i + 1) - fs->lfs_offset;
+	i = lfs_dtosn(fs, fs->lfs_offset);
+	avail += lfs_sntod(fs, i + 1) - fs->lfs_offset;
 	/* But do not count minfreesegs */
-	avail -= segtod(fs, (fs->lfs_minfreeseg -
+	avail -= lfs_segtod(fs, (fs->lfs_minfreeseg -
 		(fs->lfs_minfreeseg / 2)));
 	/* Note we may have bytes to write yet */
-	avail -= btofsb(fs, locked_queue_bytes);
+	avail -= lfs_btofsb(fs, locked_queue_bytes);
 
 	if (idaddr)
 		pwarn("NOTE: when using -i, expect discrepancies in dmeta,"
@@ -169,8 +169,8 @@ pass5(void)
 
 	labelskew = 0;
 	if (fs->lfs_version > 1 &&
-	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
-		labelskew = btofsb(fs, LFS_LABELPAD);
+	    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD))
+		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
 	if (fs->lfs_bfree > fs->lfs_dsize - bb - labelskew ||
 	    fs->lfs_bfree < fs->lfs_dsize - ubb - labelskew) {
 		pwarn("BFREE GIVEN AS %d, SHOULD BE BETWEEN %ld AND %ld\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.116 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.117 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.116 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.117 2013/06/18 18:18:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -126,7 +126,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_size);
+	blkno = lfs_lblkno(fs, ip->i_size);
 	if ((error = lfs_balloc(vp, ip->i_size, fs->lfs_bsize, cred, 0,
 				&bp)) != 0) {
 		return (error);
@@ -549,12 +549,12 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	}
 #endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp);
+		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < sizeof (struct ulfs1_dinode)) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %" PRIu32 " short by %d)\n",
-			       dtosn(fs, old_iaddr),
+			       lfs_dtosn(fs, old_iaddr),
 			       (int)sizeof (struct ulfs1_dinode) -
 				    sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
@@ -562,7 +562,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		}
 #endif
 		sup->su_nbytes -= sizeof (struct ulfs1_dinode);
-		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp); /* Ifile */
+		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
 
 	/* Set superblock modified bit and decrement file count. */
@@ -618,10 +618,10 @@ lfs_order_freelist(struct lfs *fs)
 		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
 			lfs_truncate(vp, 0, 0, NOCRED);
 			vput(vp);
-			LFS_SEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
 			KASSERT(sup->su_nbytes >= DINODE1_SIZE);
 			sup->su_nbytes -= DINODE1_SIZE;
-			LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ifp->if_daddr), bp);
+			LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, ifp->if_daddr), bp);
 
 			/* Set up to fall through to next section */
 			ifp->if_daddr = LFS_UNUSED_DADDR;

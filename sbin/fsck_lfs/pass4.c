@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.21 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.22 2013/06/18 18:18:58 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -153,7 +153,7 @@ pass4check(struct inodesc * idesc)
 	struct ubuf *bp;
 	int sn;
 
-	sn = dtosn(fs, blkno);
+	sn = lfs_dtosn(fs, blkno);
 	for (ndblks = idesc->id_numfrags; ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
@@ -170,9 +170,9 @@ pass4check(struct inodesc * idesc)
 			if (dlp == 0) {
 				clrbmap(blkno);
 				LFS_SEGENTRY(sup, fs, sn, bp);
-				sup->su_nbytes -= fsbtob(fs, 1);
+				sup->su_nbytes -= lfs_fsbtob(fs, 1);
 				VOP_BWRITE(bp);
-				seg_table[sn].su_nbytes -= fsbtob(fs, 1);
+				seg_table[sn].su_nbytes -= lfs_fsbtob(fs, 1);
 				++fs->lfs_bfree;
 				n_blks--;
 			}
