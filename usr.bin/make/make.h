@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.90 2013/02/25 01:57:14 dholland Exp $	*/
+/*	$NetBSD: make.h,v 1.91 2013/06/18 20:06:09 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -426,6 +426,9 @@ extern pid_t	myPid;
 #define MAKEFILE_PREFERENCE ".MAKE.MAKEFILE_PREFERENCE"
 #define MAKE_DEPENDFILE	".MAKE.DEPENDFILE" /* .depend */
 #define MAKE_MODE	".MAKE.MODE"
+#ifndef MAKE_LEVEL_ENV
+# define MAKE_LEVEL_ENV	"MAKELEVEL"
+#endif
 
 /*
  * debug control:

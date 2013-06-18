@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.178 2013/06/10 20:24:58 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.179 2013/06/18 20:06:09 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.178 2013/06/10 20:24:58 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.179 2013/06/18 20:06:09 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.178 2013/06/10 20:24:58 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.179 2013/06/18 20:06:09 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -778,7 +778,7 @@ Var_UnExport(char *str)
     if (unexport_env) {
 	char **newenv;
 
-	cp = getenv("MAKELEVEL");	/* we should preserve this */
+	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
 	if (environ == savedEnv) {
 	    /* we have been here before! */
 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
@@ -795,7 +795,7 @@ Var_UnExport(char *str)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	setenv("MAKELEVEL", cp, 1);
+	setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
 	for (; *str != '\n' && isspace((unsigned char) *str); str++)
 	    continue;
@@ -961,7 +961,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * children see a correctly incremented value.
      */
     if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0)
-	setenv("MAKELEVEL", val, 1);
+	setenv(MAKE_LEVEL_ENV, val, 1);
 	
 	
  out:
