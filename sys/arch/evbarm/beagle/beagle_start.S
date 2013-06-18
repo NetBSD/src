@@ -99,10 +99,8 @@
 #include <arm/cortex/a9tmr_reg.h>
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.16 2013/06/17 04:39:48 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.17 2013/06/18 15:28:36 matt Exp $")
 
-#undef VERBOSE_INIT_ARM
-#define VERBOSE_INIT_ARM
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
 #define COM_MULT	4
@@ -159,6 +157,8 @@ _C_LABEL(beagle_start):
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	bl	arm_cpuinit
 	XPUTC(#90)
+	XPUTC(#13)
+	XPUTC(#10)
 
 	/*
 	 * Jump to start in locore.S, which in turn will call initarm and main.
