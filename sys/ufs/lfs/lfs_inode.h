@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.4 2013/06/09 00:13:55 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.5 2013/06/18 08:01:00 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -50,6 +50,12 @@
 
 #include <miscfs/genfs/genfs_node.h>
 #include <ufs/lfs/lfs.h>
+
+/*
+ * Adjustable filesystem parameters
+ */
+#define MIN_FREE_SEGS	20
+#define MIN_RESV_SEGS	15
 
 /*
  * The following constants define the usage of the quota file array in the
@@ -244,6 +250,86 @@ struct lfs_inode_ext {
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
 #define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
 #define i_lfs_odnlink		inode_ext.lfs->lfs_odnlink
+
+/*
+ * "struct buf" associated definitions
+ */
+
+#ifdef _KERNEL
+
+# define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
+
+# ifdef DEBUG
+#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
+	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
+		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
+		cv_broadcast(&locked_queue_cv);				\
+	}								\
+} while (0)
+# else
+#  define LFS_DEBUG_COUNTLOCKED(m)
+# endif
+
+/* log for debugging writes to the Ifile */
+# ifdef DEBUG
+struct lfs_log_entry {
+	const char *op;
+	const char *file;
+	int pid;
+	int line;
+	daddr_t block;
+	unsigned long flags;
+};
+extern int lfs_lognum;
+extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
+#  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
+	int _s;								\
+									\
+	mutex_enter(&lfs_lock);						\
+	_s = splbio();							\
+	lfs_log[lfs_lognum].op = theop;					\
+	lfs_log[lfs_lognum].file = thefile;				\
+	lfs_log[lfs_lognum].line = (theline);				\
+	lfs_log[lfs_lognum].pid = (thepid);				\
+	lfs_log[lfs_lognum].block = (lbn);				\
+	lfs_log[lfs_lognum].flags = (theflags);				\
+	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
+	splx(_s);							\
+	mutex_exit(&lfs_lock);						\
+} while (0)
+
+#  define LFS_BCLEAN_LOG(fs, bp) do {					\
+	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
+		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
+			      bp->b_lblkno, bp->b_flags, curproc->p_pid);\
+} while (0)
+
+/* Must match list in lfs_vfsops.c ! */
+#  define DLOG_RF     0  /* roll forward */
+#  define DLOG_ALLOC  1  /* inode alloc */
+#  define DLOG_AVAIL  2  /* lfs_{,r,f}avail */
+#  define DLOG_FLUSH  3  /* flush */
+#  define DLOG_LLIST  4  /* locked list accounting */
+#  define DLOG_WVNODE 5  /* vflush/writevnodes verbose */
+#  define DLOG_VNODE  6  /* vflush/writevnodes */
+#  define DLOG_SEG    7  /* segwrite */
+#  define DLOG_SU     8  /* seguse accounting */
+#  define DLOG_CLEAN  9  /* cleaner routines */
+#  define DLOG_MOUNT  10 /* mount/unmount */
+#  define DLOG_PAGE   11 /* putpages/gop_write */
+#  define DLOG_DIROP  12 /* dirop accounting */
+#  define DLOG_MALLOC 13 /* lfs_malloc accounting */
+#  define DLOG_MAX    14 /* The terminator */
+#  define DLOG(a) lfs_debug_log a
+# else /* ! DEBUG */
+#  define LFS_BCLEAN_LOG(fs, bp)
+#  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
+#  define DLOG(a)
+# endif /* ! DEBUG */
+#else /* ! _KERNEL */
+# define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#endif /* _KERNEL */
 
 
 #endif /* _UFS_LFS_LFS_INODE_H_ */
