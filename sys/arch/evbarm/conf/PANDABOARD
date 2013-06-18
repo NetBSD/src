@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.9 2013/06/16 16:49:09 matt Exp $
+#	$NetBSD: PANDABOARD,v 1.10 2013/06/18 15:40:26 matt Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -186,12 +186,12 @@ obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x50000000
 
-omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 160 intr 61
-#omapgpio1	at obio2 addr 0x49055000 size 0x0400 intrbase 192 intr 62
-#omapgpio2	at obio2 addr 0x49057000 size 0x0400 intrbase 224 intr 63
-#omapgpio3	at obio2 addr 0x49059000 size 0x0400 intrbase 256 intr 64
-omapgpio4	at obio2 addr 0x4905a000 size 0x0400 intrbase 288 intr 65
-#omapgpio5	at obio2 addr 0x4905d000 size 0x0400 intrbase 320 intr 66
+omapgpio0	at obio1 addr 0x4a310000 size 0x0400 intrbase 160 intr 61
+omapgpio1	at obio2 addr 0x48055000 size 0x0400 intrbase 192 intr 62
+omapgpio2	at obio2 addr 0x48057000 size 0x0400 intrbase 224 intr 63
+omapgpio3	at obio2 addr 0x48059000 size 0x0400 intrbase 256 intr 64
+omapgpio4	at obio2 addr 0x4805a000 size 0x0400 intrbase 288 intr 65
+omapgpio5	at obio2 addr 0x4805d000 size 0x0400 intrbase 320 intr 66
 
 gpio*		at omapgpio?
 
@@ -246,6 +246,15 @@ options 	CONSADDR=0x48020000, CONSPEED=115200
 
 # Power, Reset and Clock Management
 prcm*		at obio1 addr 0x4A306000 size 0x2000	# PRM Module
+
+# MMC/SDIO
+sdhc0		at obio2 addr 0x4809c000 size 0x0f00 intr 115 # 83 + 32
+#sdhc1		at obio2 addr 0x480b4000 size 0x0f00 intr 118 # 85 + 32
+#sdhc2		at obio2 addr 0x480ad000 size 0x0f00 intr 126 # 94 + 32
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+#options SDMMC_DEBUG
+#options SDHC_DEBUG
 
 # On-board USB
 ohci*		at obio0 addr 0x4A064800 size 0x0400 intr 108	# 76 + 32
