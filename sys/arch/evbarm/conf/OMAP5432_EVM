@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OMAP5432_EVM,v 1.1 2013/06/16 16:49:52 matt Exp $
+#	$NetBSD: OMAP5432_EVM,v 1.2 2013/06/18 15:42:54 matt Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -20,6 +20,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_CORTEXA15
 options 	OMAP_5430
 options 	PMAPCOUNTERS
+no options	__HAVE_MM_MD_DIRECT_MAPPED_PHYS # too much memory to direct map
 
 # Architecture options
 
