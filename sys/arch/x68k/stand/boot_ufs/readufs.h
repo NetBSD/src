@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.11 2013/06/15 01:37:10 christos Exp $	*/
+/*	$NetBSD: readufs.h,v 1.12 2013/06/18 18:18:58 christos Exp $	*/
 /*	from Id: readufs.h,v 1.9 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -12,6 +12,7 @@
 #include <ufs/lfs/lfs.h>
 #endif
 #include <ufs/ufs/dinode.h>
+#include <ufs/lfs/lfs.h>
 #include <ufs/ufs/dir.h>
 
 /*
