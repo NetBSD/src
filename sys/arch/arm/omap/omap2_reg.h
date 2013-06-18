@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.20 2013/06/18 15:02:55 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.21 2013/06/18 22:41:03 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -784,6 +784,8 @@
 #define OMAP4_L2CC_SIZE			0x00001000	/* 4KB */
 
 #define OMAP4_CONTROL_ID_CODE		0x4a002204
+
+#define AHCI1_BASE_OMAP5		0x4a140000
 
 #ifdef TI_AM335X
 #define TI_AM335X_CTLMOD_BASE		0x44e10000
