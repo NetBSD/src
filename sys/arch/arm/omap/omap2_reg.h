@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.19 2013/06/16 16:42:13 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.20 2013/06/18 15:02:55 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -434,7 +434,7 @@
 #define OMAP3_PRM_CLKSEL_FREQS	{ 12000, 13000, 19200, 26000, 38400, 16800, 0, 0 }
 #define	OMAP3_PRM_CLKSEL_MULT	1000
 
-#define	OMAP4_PRM_RSTCTRL	0x1b00
+#define	OMAP4_PRM_RSTCTRL	0x7b00
 #define	OMAP4_PRM_RSTCTRL_WARM	0x0001
 #define	OMAP4_PRM_RSTCTRL_COLD	0x0002
 
@@ -776,6 +776,14 @@
  */
 #define OMAP3530_SDMA_BASE		0x48056000
 #define OMAP3530_SDMA_SIZE		0x00001000	/* 4KB */
+
+/*
+ * PL310 L2CC (44xx)
+ */
+#define OMAP4_L2CC_BASE			0x48242000
+#define OMAP4_L2CC_SIZE			0x00001000	/* 4KB */
+
+#define OMAP4_CONTROL_ID_CODE		0x4a002204
 
 #ifdef TI_AM335X
 #define TI_AM335X_CTLMOD_BASE		0x44e10000
