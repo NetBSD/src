@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.21 2013/06/18 22:41:03 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.22 2013/06/18 23:39:44 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -435,6 +435,7 @@
 #define	OMAP3_PRM_CLKSEL_MULT	1000
 
 #define	OMAP4_PRM_RSTCTRL	0x7b00
+#define	OMAP5_PRM_RSTCTRL	0x7c00
 #define	OMAP4_PRM_RSTCTRL_WARM	0x0001
 #define	OMAP4_PRM_RSTCTRL_COLD	0x0002
 
