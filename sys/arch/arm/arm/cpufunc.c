@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.122 2013/06/12 01:16:48 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.123 2013/06/18 15:27:05 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.122 2013/06/12 01:16:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.123 2013/06/18 15:27:05 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2794,8 +2794,10 @@ arm9_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2845,8 +2847,10 @@ arm10_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2899,8 +2903,10 @@ arm11_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2946,8 +2952,10 @@ arm11mpcore_setup(char *args)
 
 	cpuctrl = parse_cpu_options(args, arm11_options, cpuctrl);
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2985,8 +2993,10 @@ pj4bv7_setup(char *args)
 	cpuctrl |= (0x5 << 16) | (1 < 22);
 	cpuctrl |= CPU_CONTROL_XP_ENABLE;
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3034,8 +3044,10 @@ armv7_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3091,8 +3103,10 @@ arm11x6_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	auxctrl = 0;
 	auxctrl_wax = ~0;
@@ -3189,8 +3203,10 @@ sa110_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3252,8 +3268,10 @@ sa11x0_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3304,8 +3322,10 @@ fa526_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3355,8 +3375,10 @@ ixp12x0_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3420,8 +3442,10 @@ xscale_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3500,8 +3524,10 @@ sheeva_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
