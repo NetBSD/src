@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.8 2013/06/18 08:01:00 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.9 2013/06/18 18:18:58 christos Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -145,8 +145,8 @@ struct lfid {
 
 /* Address calculations for metadata located in the inode */
 #define	S_INDIR(fs)	-ULFS_NDADDR
-#define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
-#define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
+#define	D_INDIR(fs)	(S_INDIR(fs) - LFS_NINDIR(fs) - 1)
+#define	T_INDIR(fs)	(D_INDIR(fs) - LFS_NINDIR(fs) * LFS_NINDIR(fs) - 1)
 
 /*
  * "struct vnode" associated definitions

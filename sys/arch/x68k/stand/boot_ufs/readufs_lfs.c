@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.13 2013/06/15 01:37:10 christos Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.14 2013/06/18 18:18:58 christos Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -14,7 +14,6 @@
 #include "readufs.h"
 
 #include <sys/mount.h>
-#include <ufs/lfs/lfs.h>
 
 #ifndef USE_UFS1
  #error LFS currently requires USE_UFS1
