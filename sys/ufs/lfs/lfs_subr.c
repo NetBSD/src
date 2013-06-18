@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.78 2013/06/06 00:44:40 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.79 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.78 2013/06/06 00:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.79 2013/06/18 18:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ lfs_setup_resblks(struct lfs *fs)
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
 	maxbpp = ((fs->lfs_sumsize - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
-	maxbpp = MIN(maxbpp, segsize(fs) / fs->lfs_fsize + 2);
+	maxbpp = MIN(maxbpp, lfs_segsize(fs) / fs->lfs_fsize + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
 		"lfsbpppl", &pool_allocator_nointr, IPL_NONE);
 }
@@ -449,7 +449,7 @@ lfs_segunlock(struct lfs *fs)
 		KASSERT(sp->cbpp == sp->bpp + 1);
 
 		/* Free allocated segment summary */
-		fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
+		fs->lfs_offset -= lfs_btofsb(fs, fs->lfs_sumsize);
 		bp = *sp->bpp;
 		lfs_freebuf(fs, bp);
 

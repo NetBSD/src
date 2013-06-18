@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.76 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.77 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.76 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.77 2013/06/18 18:18:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -123,9 +123,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	offset = blkoff(fs, startoffset);
+	offset = lfs_blkoff(fs, startoffset);
 	KASSERT(iosize <= fs->lfs_bsize);
-	lbn = lblkno(fs, startoffset);
+	lbn = lfs_lblkno(fs, startoffset);
 	/* (void)lfs_check(vp, lbn, 0); */
 
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -150,9 +150,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 		*bpp = NULL;
 
 	/* Check for block beyond end of file and fragment extension needed. */
-	lastblock = lblkno(fs, ip->i_size);
+	lastblock = lfs_lblkno(fs, ip->i_size);
 	if (lastblock < ULFS_NDADDR && lastblock < lbn) {
-		osize = blksize(fs, ip, lastblock);
+		osize = lfs_blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
 						    lastblock,
@@ -175,12 +175,12 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * size or it already exists and contains some fragments and
 	 * may need to extend it.
 	 */
-	if (lbn < ULFS_NDADDR && lblkno(fs, ip->i_size) <= lbn) {
-		osize = blksize(fs, ip, lbn);
-		nsize = fragroundup(fs, offset + iosize);
-		if (lblktosize(fs, lbn) >= ip->i_size) {
+	if (lbn < ULFS_NDADDR && lfs_lblkno(fs, ip->i_size) <= lbn) {
+		osize = lfs_blksize(fs, ip, lbn);
+		nsize = lfs_fragroundup(fs, offset + iosize);
+		if (lfs_lblktosize(fs, lbn) >= ip->i_size) {
 			/* Brand new block or fragment */
-			frags = numfrags(fs, nsize);
+			frags = lfs_numfrags(fs, nsize);
 			if (!ISSPACE(fs, frags, cred))
 				return ENOSPC;
 			if (bpp) {
@@ -260,7 +260,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 					clrbuf(ibp);
 					ibp->b_blkno = UNWRITTEN;
 				} else if (!(ibp->b_oflags & (BO_DELWRI | BO_DONE))) {
-					ibp->b_blkno = fsbtodb(fs, idaddr);
+					ibp->b_blkno = LFS_FSBTODB(fs, idaddr);
 					ibp->b_flags |= B_READ;
 					VOP_STRATEGY(vp, ibp);
 					biowait(ibp);
@@ -294,7 +294,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * Get the existing block from the cache, if requested.
 	 */
 	if (bpp)
-		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
+		*bpp = bp = getblk(vp, lbn, lfs_blksize(fs, ip, lbn), 0, 0);
 
 	/*
 	 * Do accounting on blocks that represent pages.
@@ -380,7 +380,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	frags = (long)numfrags(fs, nsize - osize);
+	frags = (long)lfs_numfrags(fs, nsize - osize);
 	error = 0;
 
 	ASSERT_NO_SEGLOCK(fs);
@@ -500,7 +500,7 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	ASSERT_NO_SEGLOCK(fs);
 
 	/* If no space, wait for the cleaner */
-	lfs_availwait(fs, btofsb(fs, 1 << fs->lfs_bshift));
+	lfs_availwait(fs, lfs_btofsb(fs, 1 << fs->lfs_bshift));
 
 	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
 	lbp->lbn = lbn;
@@ -513,7 +513,7 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 	}
 
 	++ip->i_lfs_nbtree;
-	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
+	fs->lfs_favail += lfs_btofsb(fs, (1 << fs->lfs_bshift));
 	fs->lfs_pages += fs->lfs_bsize >> PAGE_SHIFT;
 	++locked_fakequeue_count;
 	lfs_subsys_pages += fs->lfs_bsize >> PAGE_SHIFT;
@@ -528,8 +528,8 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 	mutex_enter(&lfs_lock);
 	--ip->i_lfs_nbtree;
 	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
-	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
-		fs->lfs_favail -= btofsb(fs, (1 << fs->lfs_bshift));
+	if (fs->lfs_favail > lfs_btofsb(fs, (1 << fs->lfs_bshift)))
+		fs->lfs_favail -= lfs_btofsb(fs, (1 << fs->lfs_bshift));
 	fs->lfs_pages -= fs->lfs_bsize >> PAGE_SHIFT;
 	if (locked_fakequeue_count > 0)
 		--locked_fakequeue_count;

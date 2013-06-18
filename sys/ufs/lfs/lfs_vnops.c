@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.247 2013/06/08 22:23:52 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.248 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.247 2013/06/08 22:23:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.248 2013/06/18 18:18:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -973,7 +973,7 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
+	vap->va_bytes = lfs_fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -1235,18 +1235,18 @@ lfs_strategy(void *v)
 		 * Since the cleaner is synchronous, we can trust
 		 * the list of intervals to be current.
 		 */
-		tbn = dbtofsb(fs, bp->b_blkno);
-		sn = dtosn(fs, tbn);
+		tbn = LFS_DBTOFSB(fs, bp->b_blkno);
+		sn = lfs_dtosn(fs, tbn);
 		slept = 0;
 		for (i = 0; i < fs->lfs_cleanind; i++) {
-			if (sn == dtosn(fs, fs->lfs_cleanint[i]) &&
+			if (sn == lfs_dtosn(fs, fs->lfs_cleanint[i]) &&
 			    tbn >= fs->lfs_cleanint[i]) {
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: ino %d lbn %" PRId64
 				      " ind %d sn %d fsb %" PRIx32
 				      " given sn %d fsb %" PRIx64 "\n",
 				      ip->i_number, bp->b_lblkno, i,
-				      dtosn(fs, fs->lfs_cleanint[i]),
+				      lfs_dtosn(fs, fs->lfs_cleanint[i]),
 				      fs->lfs_cleanint[i], sn, tbn));
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: sleeping on ino %d lbn %"
@@ -2182,7 +2182,7 @@ lfs_putpages(void *v)
 		return 0;
 	}
 
-	blkeof = blkroundup(fs, ip->i_size);
+	blkeof = lfs_blkroundup(fs, ip->i_size);
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
@@ -2231,7 +2231,7 @@ lfs_putpages(void *v)
 		origendoffset = endoffset;
 	} else {
 		origendoffset = round_page(ap->a_offhi);
-		endoffset = round_page(blkroundup(fs, origendoffset));
+		endoffset = round_page(lfs_blkroundup(fs, origendoffset));
 	}
 
 	KASSERT(startoffset > 0 || endoffset >= startoffset);
@@ -2457,7 +2457,7 @@ lfs_putpages(void *v)
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 			      " %d ino %d off %x (seg %d)\n", error,
 			      ip->i_number, fs->lfs_offset,
-			      dtosn(fs, fs->lfs_offset)));
+			      lfs_dtosn(fs, fs->lfs_offset)));
 
 			if (oreclaim) {
 				mutex_enter(vp->v_interlock);
@@ -2472,7 +2472,7 @@ lfs_putpages(void *v)
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 			      " %d ino %d off %x (seg %d)\n", error,
 			      (int)ip->i_number, fs->lfs_offset,
-			      dtosn(fs, fs->lfs_offset)));
+			      lfs_dtosn(fs, fs->lfs_offset)));
 		}
 		/* genfs_do_putpages loses the interlock */
 #ifdef DEBUG
@@ -2576,12 +2576,12 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
 
-	olbn = lblkno(fs, ip->i_size);
-	nlbn = lblkno(fs, size);
+	olbn = lfs_lblkno(fs, ip->i_size);
+	nlbn = lfs_lblkno(fs, size);
 	if (!(flags & GOP_SIZE_MEM) && nlbn < ULFS_NDADDR && olbn <= nlbn) {
-		*eobp = fragroundup(fs, size);
+		*eobp = lfs_fragroundup(fs, size);
 	} else {
-		*eobp = blkroundup(fs, size);
+		*eobp = lfs_blkroundup(fs, size);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.153 2013/06/18 08:01:00 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.154 2013/06/18 18:18:58 christos Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -999,65 +999,65 @@ struct lfs {
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
-/* NINDIR is the number of indirects in a file system block. */
-#define	NINDIR(fs)	((fs)->lfs_nindir)
+/* LFS_NINDIR is the number of indirects in a file system block. */
+#define	LFS_NINDIR(fs)	((fs)->lfs_nindir)
 
-/* INOPB is the number of inodes in a secondary storage block. */
-#define	INOPB(fs)	((fs)->lfs_inopb)
+/* LFS_INOPB is the number of inodes in a secondary storage block. */
+#define	LFS_INOPB(fs)	((fs)->lfs_inopb)
 /* INOPF is the number of inodes in a fragment. */
-#define INOPF(fs)	((fs)->lfs_inopf)
+#define LFS_INOPF(fs)	((fs)->lfs_inopf)
 
-#define	blksize(fs, ip, lbn) \
+#define	lfs_blksize(fs, ip, lbn) \
 	(((lbn) >= ULFS_NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs1_size))))
-#define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
-#define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
+	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (ip)->i_ffs1_size))))
+#define	lfs_blkoff(fs, loc)	((int)((loc) & (fs)->lfs_bmask))
+#define lfs_fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
 
-#if defined (_KERNEL)
-#define	fsbtodb(fs, b)		((b) << ((fs)->lfs_ffshift - DEV_BSHIFT))
-#define	dbtofsb(fs, b)		((b) >> ((fs)->lfs_ffshift - DEV_BSHIFT))
+#if defined(_KERNEL)
+#define	LFS_FSBTODB(fs, b)	((b) << ((fs)->lfs_ffshift - DEV_BSHIFT))
+#define	LFS_DBTOFSB(fs, b)	((b) >> ((fs)->lfs_ffshift - DEV_BSHIFT))
 #else
-#define	fsbtodb(fs, b)		((b) << (fs)->lfs_fsbtodb)
-#define	dbtofsb(fs, b)		((b) >> (fs)->lfs_fsbtodb)
+#define	LFS_FSBTODB(fs, b)	((b) << (fs)->lfs_fsbtodb)
+#define	LFS_DBTOFSB(fs, b)	((b) >> (fs)->lfs_fsbtodb)
 #endif
 
-#define	lblkno(fs, loc)		((loc) >> (fs)->lfs_bshift)
-#define	lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
+#define	lfs_lblkno(fs, loc)	((loc) >> (fs)->lfs_bshift)
+#define	lfs_lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
 
-#define fsbtob(fs, b)		((b) << (fs)->lfs_ffshift)
-#define btofsb(fs, b)		((b) >> (fs)->lfs_ffshift)
+#define lfs_fsbtob(fs, b)	((b) << (fs)->lfs_ffshift)
+#define lfs_btofsb(fs, b)	((b) >> (fs)->lfs_ffshift)
 
-#define numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
+#define lfs_numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> (fs)->lfs_ffshift)
-#define blkroundup(fs, size)	/* calculates roundup(size, fs->lfs_bsize) */ \
+#define lfs_blkroundup(fs, size)/* calculates roundup(size, fs->lfs_bsize) */ \
 	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
-#define fragroundup(fs, size)	/* calculates roundup(size, fs->lfs_fsize) */ \
+#define lfs_fragroundup(fs, size)/* calculates roundup(size, fs->lfs_fsize) */ \
 	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
-#define fragstoblks(fs, frags)/* calculates (frags / fs->fs_frag) */ \
+#define lfs_fragstoblks(fs, frags)/* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->lfs_fbshift)
-#define blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
+#define lfs_blkstofrags(fs, blks)/* calculates (blks * fs->fs_frag) */ \
 	((blks) << (fs)->lfs_fbshift)
-#define fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
+#define lfs_fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
 	((fsb) & ((fs)->lfs_frag - 1))
-#define blknum(fs, fsb)		/* calculates rounddown(fsb, fs->lfs_frag) */ \
+#define lfs_blknum(fs, fsb)	/* calculates rounddown(fsb, fs->lfs_frag) */ \
 	((fsb) &~ ((fs)->lfs_frag - 1))
-#define dblksize(fs, dp, lbn) \
+#define lfs_dblksize(fs, dp, lbn) \
 	(((lbn) >= ULFS_NDADDR || (dp)->di_size >= ((lbn) + 1) << (fs)->lfs_bshift)\
 	    ? (fs)->lfs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (dp)->di_size))))
+	    : (lfs_fragroundup(fs, lfs_blkoff(fs, (dp)->di_size))))
 
-#define	segsize(fs)	((fs)->lfs_version == 1 ?	     		\
-			   lblktosize((fs), (fs)->lfs_ssize) :		\
+#define	lfs_segsize(fs)	((fs)->lfs_version == 1 ?	     		\
+			   lfs_lblktosize((fs), (fs)->lfs_ssize) :	\
 			   (fs)->lfs_ssize)
-#define segtod(fs, seg) (((fs)->lfs_version == 1     ?	     		\
+#define lfs_segtod(fs, seg) (((fs)->lfs_version == 1     ?	    	\
 			   (fs)->lfs_ssize << (fs)->lfs_blktodb :	\
-			   btofsb((fs), (fs)->lfs_ssize)) * (seg))
-#define	dtosn(fs, daddr)	/* block address to segment number */	\
-	((uint32_t)(((daddr) - (fs)->lfs_start) / segtod((fs), 1)))
-#define sntod(fs, sn)		/* segment number to disk address */	\
-	((daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
+			   lfs_btofsb((fs), (fs)->lfs_ssize)) * (seg))
+#define	lfs_dtosn(fs, daddr)	/* block address to segment number */	\
+	((uint32_t)(((daddr) - (fs)->lfs_start) / lfs_segtod((fs), 1)))
+#define lfs_sntod(fs, sn)	/* segment number to disk address */	\
+	((daddr_t)(lfs_segtod((fs), (sn)) + (fs)->lfs_start))
 
 /*
  * Structures used by lfs_bmapv and lfs_markv to communicate information
@@ -1189,7 +1189,7 @@ struct lbnentry {
  * directory direct block (1) + ULFS_NIADDR indirect blocks + inode block (1) +
  * ifile direct block (1) + ULFS_NIADDR indirect blocks = 3 + 2 * ULFS_NIADDR blocks.
  */
-#define LFS_NRESERVE(F) (btofsb((F), (2 * ULFS_NIADDR + 3) << (F)->lfs_bshift))
+#define LFS_NRESERVE(F) (lfs_btofsb((F), (2 * ULFS_NIADDR + 3) << (F)->lfs_bshift))
 
 /* Statistics Counters */
 struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */

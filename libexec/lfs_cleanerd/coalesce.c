@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.22 2013/06/08 21:15:30 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.23 2013/06/18 18:18:57 christos Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for bmapv */
-	onb = nb = lblkno(fs, dip->di_size);
+	onb = nb = lfs_lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
 	if (nb < ULFS_NDADDR) {
@@ -229,7 +229,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	 * can have a break or two and it's okay.
 	 */
 	if (nb <= 1 || noff == 0 || noff < log2int(nb) ||
-	    segtod(fs, noff) * 2 < nb) {
+	    lfs_segtod(fs, noff) * 2 < nb) {
 		retval = COALESCE_NOTWORTHIT;
 		goto out;
 	} else if (debug)
@@ -241,7 +241,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	for (i = 0; i < nb; i++) {
 		if (bip[i].bi_daddr <= 0)
 			continue;
-		sup = &fs->clfs_segtab[dtosn(fs, bip[i].bi_daddr)];
+		sup = &fs->clfs_segtab[lfs_dtosn(fs, bip[i].bi_daddr)];
 		if (sup->flags & SEGUSE_ACTIVE)
 			bip[i].bi_daddr = LFS_UNUSED_DADDR; /* 0 */
 	}
@@ -280,7 +280,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		}
 
 		if (kops.ko_pread(fs->clfs_devfd, bip[i].bi_bp, bip[i].bi_size,
-			  fsbtob(fs, bip[i].bi_daddr)) < 0) {
+			  lfs_fsbtob(fs, bip[i].bi_daddr)) < 0) {
 			retval = COALESCE_EIO;
 			goto out;
 		}
@@ -294,7 +294,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	 * than half of the available segments, sleep until that's not
 	 * true any more.
 	 */
-	bps = segtod(fs, 1);
+	bps = lfs_segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		do {
 			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, 0, &bp);

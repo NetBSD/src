@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.36 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.37 2013/06/18 18:18:58 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -233,7 +233,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			if (ndb > ULFS_NDADDR) {
 				j = ndb - ULFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(fs);
+					ndb *= LFS_NINDIR(fs);
 				ndb += ULFS_NDADDR;
 			}
 		}
@@ -246,7 +246,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			goto unknown;
 		}
 	for (j = 0, ndb -= ULFS_NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(fs);
+		ndb /= LFS_NINDIR(fs);
 	for (; j < ULFS_NIADDR; j++)
 		if (dp->di_ib[j] != 0) {
 			if (debug)
@@ -339,7 +339,7 @@ pass1check(struct inodesc *idesc)
 			return (STOP);
 		}
 	} else if (!testbmap(blkno)) {
-		seg_table[dtosn(fs, blkno)].su_nbytes += idesc->id_numfrags * fs->lfs_fsize;
+		seg_table[lfs_dtosn(fs, blkno)].su_nbytes += idesc->id_numfrags * fs->lfs_fsize;
 	}
 	for (ndblks = idesc->id_numfrags; ndblks > 0; blkno++, ndblks--) {
 		if (anyout && chkrange(blkno, 1)) {

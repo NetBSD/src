@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.146 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.147 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.146 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.147 2013/06/18 18:18:58 christos Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -249,7 +249,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	if (fs->lfs_ronly)
 		return EROFS;
 
-	maxino = (fragstoblks(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks) -
+	maxino = (lfs_fragstoblks(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
 	cnt = blkcnt;
@@ -325,7 +325,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				DLOG((DLOG_CLEAN, "lfs_markv: lfs_fastvget"
 				      " failed with %d (ino %d, segment %d)\n",
 				      error, blkp->bi_inode,
-				      dtosn(fs, blkp->bi_daddr)));
+				      lfs_dtosn(fs, blkp->bi_daddr)));
 				/*
 				 * If we got EAGAIN, that means that the
 				 * Inode was locked.  This is
@@ -391,13 +391,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 		b_daddr = 0;
 		if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &b_daddr, NULL) ||
-		    dbtofsb(fs, b_daddr) != blkp->bi_daddr)
+		    LFS_DBTOFSB(fs, b_daddr) != blkp->bi_daddr)
 		{
-			if (dtosn(fs, dbtofsb(fs, b_daddr)) ==
-			    dtosn(fs, blkp->bi_daddr))
+			if (lfs_dtosn(fs, LFS_DBTOFSB(fs, b_daddr)) ==
+			    lfs_dtosn(fs, blkp->bi_daddr))
 			{
 				DLOG((DLOG_CLEAN, "lfs_markv: wrong da same seg: %llx vs %llx\n",
-				      (long long)blkp->bi_daddr, (long long)dbtofsb(fs, b_daddr)));
+				      (long long)blkp->bi_daddr, (long long)LFS_DBTOFSB(fs, b_daddr)));
 			}
 			do_again++;
 			continue;
@@ -409,7 +409,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		 * counterparts.
 		 */
 		if (blkp->bi_lbn >= 0)
-			obsize = blksize(fs, ip, blkp->bi_lbn);
+			obsize = lfs_blksize(fs, ip, blkp->bi_lbn);
 		else
 			obsize = fs->lfs_bsize;
 		/* Check for fragment size change */
@@ -438,7 +438,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 			bp = lfs_fakebuf(fs, vp, blkp->bi_lbn,
 					 blkp->bi_size, blkp->bi_bp);
 			/* Pretend we used bread() to get it */
-			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
+			bp->b_blkno = LFS_FSBTODB(fs, blkp->bi_daddr);
 		} else {
 			/* Indirect block or ifile */
 			if (blkp->bi_size != fs->lfs_bsize &&
@@ -471,7 +471,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		/*
 		 * XXX should account indirect blocks and ifile pages as well
 		 */
-		if (nblkwritten + lblkno(fs, ninowritten * sizeof (struct ulfs1_dinode))
+		if (nblkwritten + lfs_lblkno(fs, ninowritten * sizeof (struct ulfs1_dinode))
 		    > LFS_MARKV_MAX_BLOCKS) {
 			DLOG((DLOG_CLEAN, "lfs_markv: writing %d blks %d inos\n",
 			      nblkwritten, ninowritten));
@@ -806,10 +806,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
 				continue;
 			}
-			blkp->bi_daddr = dbtofsb(fs, bi_daddr);
+			blkp->bi_daddr = LFS_DBTOFSB(fs, bi_daddr);
 			/* Fill in the block size, too */
 			if (blkp->bi_lbn >= 0)
-				blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
+				blkp->bi_size = lfs_blksize(fs, ip, blkp->bi_lbn);
 			else
 				blkp->bi_size = fs->lfs_bsize;
 		}
@@ -895,7 +895,7 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 
-	if (dtosn(fs, fs->lfs_curseg) == segnum) {
+	if (lfs_dtosn(fs, fs->lfs_curseg) == segnum) {
 		return (EBUSY);
 	}
 
@@ -919,17 +919,17 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 		return (EALREADY);
 	}
 
-	fs->lfs_avail += segtod(fs, 1);
+	fs->lfs_avail += lfs_segtod(fs, 1);
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
-		fs->lfs_avail -= btofsb(fs, LFS_SBPAD);
+		fs->lfs_avail -= lfs_btofsb(fs, LFS_SBPAD);
 	if (fs->lfs_version > 1 && segnum == 0 &&
-	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
-		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+	    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD))
+		fs->lfs_avail -= lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
 	mutex_enter(&lfs_lock);
-	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
-		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
-	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
-		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
+	fs->lfs_bfree += sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+		lfs_btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
+	fs->lfs_dmeta -= sup->su_nsums * lfs_btofsb(fs, fs->lfs_sumsize) +
+		lfs_btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
 	mutex_exit(&lfs_lock);
@@ -1168,7 +1168,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	} else {
 		retries = 0;
 	    again:
-		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
+		error = bread(ump->um_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
 			      NOCRED, 0, &bp);
 		if (error) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: bread failed (%d)\n",

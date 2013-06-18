@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.9 2012/04/12 10:30:17 joerg Exp $	 */
+/* $NetBSD: fdfs.c,v 1.10 2013/06/18 18:18:57 christos Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -64,12 +64,11 @@ fd_vget(int fd, int bsize, int segsize, int nseg)
 	struct uvnode *vp;
 	int i;
 
-	fs = (struct fdfs *)malloc(sizeof(*fs));
+	fs = malloc(sizeof(*fs));
 	if (fs == NULL)
 		return NULL;
 	if (segsize > 0) {
-		fs->fd_bufp = (struct fd_buf *)malloc(nseg *
-						      sizeof(struct fd_buf));
+		fs->fd_bufp = malloc(nseg * sizeof(struct fd_buf));
 		if (fs->fd_bufp == NULL) {
 			free(fs);
 			return NULL;
@@ -77,7 +76,7 @@ fd_vget(int fd, int bsize, int segsize, int nseg)
 		for (i = 0; i < nseg; i++) {
 			fs->fd_bufp[i].start = 0x0;
 			fs->fd_bufp[i].end = 0x0;
-			fs->fd_bufp[i].buf = (char *)malloc(segsize);
+			fs->fd_bufp[i].buf = malloc(segsize);
 			if (fs->fd_bufp[i].buf == NULL) {
 				while (--i >= 0)
 					free(fs->fd_bufp[i].buf);
@@ -95,7 +94,7 @@ fd_vget(int fd, int bsize, int segsize, int nseg)
 	fs->fd_bsize = bsize;
 	fs->fd_ssize = segsize;
 
-	vp = (struct uvnode *) malloc(sizeof(*vp));
+	vp = malloc(sizeof(*vp));
 	if (vp == NULL) {
 		if (fs->fd_bufp) {
 			for (i = 0; i < nseg; i++)
@@ -190,7 +189,7 @@ fd_preload(struct uvnode *vp, daddr_t start)
 		fs->fd_bufp = t;
 		fs->fd_bufp[fs->fd_bufi].start = 0x0;
 		fs->fd_bufp[fs->fd_bufi].end = 0x0;
-		fs->fd_bufp[fs->fd_bufi].buf = (char *)malloc(fs->fd_ssize);
+		fs->fd_bufp[fs->fd_bufi].buf = malloc(fs->fd_ssize);
 		if (fs->fd_bufp[fs->fd_bufi].buf == NULL) {
 			syslog(LOG_NOTICE, "failed to allocate buffer #%d\n",
 				fs->fd_bufc);

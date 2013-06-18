@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.7 2013/06/15 00:42:16 christos Exp $	*/
+/*	$NetBSD: readufs.h,v 1.8 2013/06/18 18:18:58 christos Exp $	*/
 /*	from Id: readufs.h,v 1.10 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
 #include <ufs/lfs/ulfs_dinode.h>
+#include <ufs/ufs/dir.h>
 
 /*
  * UFS1 / UFS2

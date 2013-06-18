@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.11 2013/06/08 22:23:52 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.12 2013/06/18 18:18:58 christos Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.11 2013/06/08 22:23:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.12 2013/06/18 18:18:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -817,7 +817,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	struct buf *bp;
 	u_int dsize;
 	struct lfs_direct *ep, *nep;
-	int error, ret, blkoff, loc, spacefree;
+	int error, ret, lfs_blkoff, loc, spacefree;
 	char *dirbuf;
 	struct timespec ts;
 	struct ulfsmount *ump = VFSTOULFS(dvp->v_mount);
@@ -861,13 +861,13 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 				dirp->d_type = tmp;
 			}
 		}
-		blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
-		memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
+		lfs_blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
+		memcpy((char *)bp->b_data + lfs_blkoff, dirp, newentrysize);
 #ifdef LFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
 			ulfsdirhash_newblk(dp, ulr->ulr_offset);
 			ulfsdirhash_add(dp, dirp, ulr->ulr_offset);
-			ulfsdirhash_checkblock(dp, (char *)bp->b_data + blkoff,
+			ulfsdirhash_checkblock(dp, (char *)bp->b_data + lfs_blkoff,
 			    ulr->ulr_offset);
 		}
 #endif

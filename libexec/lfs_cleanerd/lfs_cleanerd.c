@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.35 2013/06/08 21:15:30 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.36 2013/06/18 18:18:57 christos Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -438,7 +438,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		 */
 		if (fic >= ssp->ss_nfinfo && *iaddrp != daddr) {
 			syslog(LOG_WARNING, "%s: bad pseg at %x (seg %d)",
-			       fs->lfs_fsmnt, odaddr, dtosn(fs, odaddr));
+			       fs->lfs_fsmnt, odaddr, lfs_dtosn(fs, odaddr));
 			*bipp = bip;
 			return 0x0;
 		}
@@ -487,7 +487,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				bip[*bic - 1].bi_size = LFS_DINODE1_SIZE;
 			}
 			inoc += i;
-			daddr += btofsb(fs, fs->lfs_ibsize);
+			daddr += lfs_btofsb(fs, fs->lfs_ibsize);
 			--iaddrp;
 			continue;
 		}
@@ -512,7 +512,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			SEGSUM *nssp;
 
 			syslog(LOG_WARNING, "fixing short FINFO at %x (seg %d)",
-			       odaddr, dtosn(fs, odaddr));
+			       odaddr, lfs_dtosn(fs, odaddr));
 			bread(fs->clfs_devvp, odaddr, fs->lfs_fsize,
 			    NOCRED, 0, &nbp);
 			nssp = (SEGSUM *)nbp->b_data;
@@ -522,7 +522,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			bwrite(nbp);
 #endif
 			syslog(LOG_WARNING, "zero-length FINFO at %x (seg %d)",
-			       odaddr, dtosn(fs, odaddr));
+			       odaddr, lfs_dtosn(fs, odaddr));
 			continue;
 		}
 
@@ -545,7 +545,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 					fip->fi_lastlength : fs->lfs_bsize;
 				cp = fd_ptrget(fs->clfs_devvp, daddr);
 				ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
-				daddr += btofsb(fs, size);
+				daddr += lfs_btofsb(fs, size);
 			}
 			fip = (FINFO *)(fip->fi_blocks + fip->fi_nblocks);
 			continue;
@@ -572,7 +572,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
 			bip[*bic + i].bi_bp = cp;
-			daddr += btofsb(fs, bip[*bic + i].bi_size);
+			daddr += lfs_btofsb(fs, bip[*bic + i].bi_size);
 
 #ifdef TEST_PATTERN
 			check_test_pattern(bip + *bic + i); /* XXXDEBUG */
@@ -613,7 +613,7 @@ log_segment_read(struct clfs *fs, int sn)
 	 * indexed by the segment serial numbers; but it is not suitable
 	 * for everyday use since the copylog will be simply enormous.
          */
-	cp = fd_ptrget(fs->clfs_devvp, sntod(fs, sn));
+	cp = fd_ptrget(fs->clfs_devvp, lfs_sntod(fs, sn));
 
         fp = fopen(copylog_filename, "ab");
         if (fp != NULL) {
@@ -634,18 +634,18 @@ load_segment(struct clfs *fs, int sn, BLOCK_INFO **bipp, int *bic)
 	int32_t daddr;
 	int i, npseg;
 
-	daddr = sntod(fs, sn);
-	if (daddr < btofsb(fs, LFS_LABELPAD))
-		daddr = btofsb(fs, LFS_LABELPAD);
+	daddr = lfs_sntod(fs, sn);
+	if (daddr < lfs_btofsb(fs, LFS_LABELPAD))
+		daddr = lfs_btofsb(fs, LFS_LABELPAD);
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		if (fs->lfs_sboffs[i] == daddr) {
-			daddr += btofsb(fs, LFS_SBPAD);
+			daddr += lfs_btofsb(fs, LFS_SBPAD);
 			break;
 		}
 	}
 
 	/* Preload the segment buffer */
-	if (fd_preload(fs->clfs_devvp, sntod(fs, sn)) < 0)
+	if (fd_preload(fs->clfs_devvp, lfs_sntod(fs, sn)) < 0)
 		return -1;
 
 	if (copylog_filename)
@@ -657,8 +657,8 @@ load_segment(struct clfs *fs, int sn, BLOCK_INFO **bipp, int *bic)
 	++fs->clfs_nactive;
 
 	npseg = 0;
-	while(dtosn(fs, daddr) == sn &&
-	      dtosn(fs, daddr + btofsb(fs, fs->lfs_bsize)) == sn) {
+	while(lfs_dtosn(fs, daddr) == sn &&
+	      lfs_dtosn(fs, daddr + lfs_btofsb(fs, fs->lfs_bsize)) == sn) {
 		daddr = parse_pseg(fs, daddr, bipp, bic);
 		if (daddr == 0x0) {
 			++cleaner_stats.segs_error;
@@ -1237,7 +1237,7 @@ needs_cleaning(struct clfs *fs, CLEANERINFO *cip)
 	}
 
 	/* Compute theoretical "free segments" maximum based on usage */
-	fsb_per_seg = segtod(fs, 1);
+	fsb_per_seg = lfs_segtod(fs, 1);
 	max_free_segs = MAX(cip->bfree, 0) / fsb_per_seg + fs->lfs_minfreeseg;
 
 	dlog("%s: bfree = %d, avail = %d, clean = %d/%d",

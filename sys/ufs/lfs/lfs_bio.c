@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.124 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.125 2013/06/18 18:18:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.124 2013/06/06 00:48:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.125 2013/06/18 18:18:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	/*
 	 * XXX just a guess. should be more precise.
 	 */
-	error = lfs_reservebuf(fs, vp, vp2, fsb, fsbtob(fs, fsb));
+	error = lfs_reservebuf(fs, vp, vp2, fsb, lfs_fsbtob(fs, fsb));
 	if (error)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
@@ -357,8 +357,8 @@ lfs_fits(struct lfs *fs, int fsb)
 	int needed;
 
 	ASSERT_NO_SEGLOCK(fs);
-	needed = fsb + btofsb(fs, fs->lfs_sumsize) +
-		 ((howmany(fs->lfs_uinodes + 1, INOPB(fs)) + fs->lfs_segtabsz +
+	needed = fsb + lfs_btofsb(fs, fs->lfs_sumsize) +
+		 ((howmany(fs->lfs_uinodes + 1, LFS_INOPB(fs)) + fs->lfs_segtabsz +
 		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
 
 	if (needed >= fs->lfs_avail) {
@@ -469,7 +469,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * blocks.
 	 */
 	if ((bp->b_flags & B_LOCKED) == 0) {
-		fsb = numfrags(fs, bp->b_bcount);
+		fsb = lfs_numfrags(fs, bp->b_bcount);
 
 		ip = VTOI(vp);
 		mutex_enter(&lfs_lock);
@@ -596,7 +596,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	wakeup(&lfs_writing);
 }
 
-#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, INOPB(fs))
+#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, LFS_INOPB(fs))
 #define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ulfs1_dinode))
 
 /*
@@ -731,7 +731,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	size_t nbytes;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	nbytes = roundup(size, fsbtob(fs, 1));
+	nbytes = roundup(size, lfs_fsbtob(fs, 1));
 
 	bp = getiobuf(NULL, true);
 	if (nbytes) {
