@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.152 2013/06/09 00:13:55 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.153 2013/06/18 08:01:00 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -205,83 +205,10 @@
 /*
  * Adjustable filesystem parameters
  */
-#define MIN_FREE_SEGS	20
-#define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
 #define LFS_MARKV_MAXBLKCNT	65536	/* Max block count for lfs_markv() */
-
-/* Misc. definitions */
-#define BW_CLEAN	1		/* Flag for lfs_bwrite_ext() */
-#define PG_DELWRI	PG_PAGER1	/* Local def for delayed pageout */
-
-/* Resource limits */
-#define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
-#define	LFS_WAIT_RESOURCE(x, u)	(((x) >> 1) - ((x) >> 3) - 10 * (u))
-#define	LFS_INVERSE_MAX_RESOURCE(x, u)	(((x) + 10 * (u)) << 2)
-#define LFS_MAX_BUFS	    LFS_MAX_RESOURCE(nbuf, 1)
-#define LFS_WAIT_BUFS	    LFS_WAIT_RESOURCE(nbuf, 1)
-#define LFS_INVERSE_MAX_BUFS(n)	LFS_INVERSE_MAX_RESOURCE(n, 1)
-#define LFS_MAX_BYTES	    LFS_MAX_RESOURCE(bufmem_lowater, PAGE_SIZE)
-#define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
-#define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
-#define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + LFS_DINODE1_SIZE))
-#define LFS_MAX_FSDIROP(fs)						\
-	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
-	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
-          (2 * SIZEOF_DIROP(fs)))
-#define LFS_MAX_PAGES	lfs_max_pages()
-#define LFS_WAIT_PAGES	lfs_wait_pages()
-#define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
-
-#ifdef _KERNEL
-int lfs_wait_pages(void);
-int lfs_max_pages(void);
-#endif /* _KERNEL */
-
-/* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
-
-/*
- * Reserved blocks for lfs_malloc
- */
-
-/* Structure to keep reserved blocks */
-typedef struct lfs_res_blk {
-	void *p;
-	LIST_ENTRY(lfs_res_blk) res;
-	int size;
-	char inuse;
-} res_t;
-
-/* Types for lfs_newbuf and lfs_malloc */
-#define LFS_NB_UNKNOWN -1
-#define LFS_NB_SUMMARY	0
-#define LFS_NB_SBLOCK	1
-#define LFS_NB_IBLOCK	2
-#define LFS_NB_CLUSTER	3
-#define LFS_NB_CLEAN	4
-#define LFS_NB_BLKIOV	5
-#define LFS_NB_COUNT	6 /* always last */
-
-/* Number of reserved memory blocks of each type */
-#define LFS_N_SUMMARIES 2
-#define LFS_N_SBLOCKS	1   /* Always 1, to throttle superblock writes */
-#define LFS_N_IBLOCKS	16  /* In theory ssize/bsize; in practice around 2 */
-#define LFS_N_CLUSTERS	16  /* In theory ssize/MAXPHYS */
-#define LFS_N_CLEAN	0
-#define LFS_N_BLKIOV	1
-
-/* Total count of "large" (non-pool) types */
-#define LFS_N_TOTAL (LFS_N_SUMMARIES + LFS_N_SBLOCKS + LFS_N_IBLOCKS +	\
-		     LFS_N_CLUSTERS + LFS_N_CLEAN + LFS_N_BLKIOV)
-
-/* Counts for pool types */
-#define LFS_N_CL	LFS_N_CLUSTERS
-#define LFS_N_BPP	2
-#define LFS_N_SEG	2
 
 /*
  * Directories
@@ -519,9 +446,6 @@ struct ulfs2_dinode {
 /* Unused logical block number */
 #define LFS_UNUSED_LBN	-1
 
-/* Determine if a buffer belongs to the ifile */
-#define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
-
 # define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & B_LOCKED) == 0 && bp->b_iodone == NULL) {	\
 		mutex_enter(&lfs_lock);					\
@@ -545,110 +469,9 @@ struct ulfs2_dinode {
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
 
-#ifdef _KERNEL
-
-extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
-
-# define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
-
-# ifdef DEBUG
-#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
-		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		cv_broadcast(&locked_queue_cv);				\
-	}								\
-} while (0)
-# else
-#  define LFS_DEBUG_COUNTLOCKED(m)
-# endif
-
-/* log for debugging writes to the Ifile */
-# ifdef DEBUG
-struct lfs_log_entry {
-	const char *op;
-	const char *file;
-	int pid;
-	int line;
-	daddr_t block;
-	unsigned long flags;
-};
-extern int lfs_lognum;
-extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
-#  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
-#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
-	int _s;								\
-									\
-	mutex_enter(&lfs_lock);						\
-	_s = splbio();							\
-	lfs_log[lfs_lognum].op = theop;					\
-	lfs_log[lfs_lognum].file = thefile;				\
-	lfs_log[lfs_lognum].line = (theline);				\
-	lfs_log[lfs_lognum].pid = (thepid);				\
-	lfs_log[lfs_lognum].block = (lbn);				\
-	lfs_log[lfs_lognum].flags = (theflags);				\
-	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
-	splx(_s);							\
-	mutex_exit(&lfs_lock);						\
-} while (0)
-
-#  define LFS_BCLEAN_LOG(fs, bp) do {					\
-	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
-		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
-			      bp->b_lblkno, bp->b_flags, curproc->p_pid);\
-} while (0)
-
-/* Must match list in lfs_vfsops.c ! */
-#  define DLOG_RF     0  /* roll forward */
-#  define DLOG_ALLOC  1  /* inode alloc */
-#  define DLOG_AVAIL  2  /* lfs_{,r,f}avail */
-#  define DLOG_FLUSH  3  /* flush */
-#  define DLOG_LLIST  4  /* locked list accounting */
-#  define DLOG_WVNODE 5  /* vflush/writevnodes verbose */
-#  define DLOG_VNODE  6  /* vflush/writevnodes */
-#  define DLOG_SEG    7  /* segwrite */
-#  define DLOG_SU     8  /* seguse accounting */
-#  define DLOG_CLEAN  9  /* cleaner routines */
-#  define DLOG_MOUNT  10 /* mount/unmount */
-#  define DLOG_PAGE   11 /* putpages/gop_write */
-#  define DLOG_DIROP  12 /* dirop accounting */
-#  define DLOG_MALLOC 13 /* lfs_malloc accounting */
-#  define DLOG_MAX    14 /* The terminator */
-#  define DLOG(a) lfs_debug_log a
-# else /* ! DEBUG */
-#  define LFS_BCLEAN_LOG(fs, bp)
-#  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
-#  define DLOG(a)
-# endif /* ! DEBUG */
-#else /* ! _KERNEL */
-# define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
-#endif /* _KERNEL */
-
-#ifdef _KERNEL
-/* This overlays the fid structure (see fstypes.h). */
-struct ulfs_ufid {
-	u_int16_t ufid_len;	/* Length of structure. */
-	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	u_int32_t ufid_ino;	/* File number (ino). */
-	int32_t	  ufid_gen;	/* Generation number. */
-};
-/* Filehandle structure for exported LFSes */
-struct lfid {
-	struct ulfs_ufid lfid_ufid;
-#define lfid_len lfid_ufid.ufid_len
-#define lfid_ino lfid_ufid.ufid_ino
-#define lfid_gen lfid_ufid.ufid_gen
-	uint32_t lfid_ident;
-};
-#endif /* _KERNEL */
-
 /*
  * "struct inode" associated definitions
  */
-
-/* Address calculations for metadata located in the inode */
-#define	S_INDIR(fs)	-ULFS_NDADDR
-#define	D_INDIR(fs)	(S_INDIR(fs) - NINDIR(fs) - 1)
-#define	T_INDIR(fs)	(D_INDIR(fs) - NINDIR(fs) * NINDIR(fs) - 1)
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
@@ -679,20 +502,6 @@ struct lfid {
 #define LFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		lfs_itimes(ip, acc, mod, cre)
-
-/*
- * "struct vnode" associated definitions
- */
-
-/* Heuristic emptiness measure */
-#define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !(vp->v_type == VREG && (vp)->v_iflag & VI_ONWORKLST) &&\
-			  VTOI(vp)->i_lfs_nbtree == 0)
-
-#define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
-	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
-	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
-
 
 /*
  * On-disk and in-memory checkpoint segment usage structure.
@@ -1164,7 +973,7 @@ struct lfs {
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
 	long	  lfs_favail;		/* blocks pre-reserved for writing */
-	res_t *lfs_resblk;		/* Reserved memory for pageout */
+	struct lfs_res_blk *lfs_resblk;	/* Reserved memory for pageout */
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
 #define LFS_RESHASH_WIDTH 17
