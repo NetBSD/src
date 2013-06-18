@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.47 2013/06/18 15:37:16 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.47 2013/06/18 15:37:16 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/gpio.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -180,6 +181,11 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.46 2013/06/17 04:37:39 matt Exp
 #include <arm/omap/omap2_gpio.h>
 #ifdef TI_AM335X
 #  include <arm/omap/am335x_prcm.h>
+#endif
+
+#ifdef CPU_CORTEXA9
+#include <arm/cortex/pl310_reg.h>
+#include <arm/cortex/pl310_var.h>
 #endif
 
 #include <evbarm/include/autoconf.h>
@@ -229,21 +235,21 @@ static void kgdb_port_init(void);
 static void init_clocks(void);
 static void beagle_device_register(device_t, void *);
 static void beagle_reset(void);
-#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3XXX) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
 #endif
-#if defined(OMAP_4430) || defined(OMAP_5430)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX)
 static void omap4_cpu_clk(void);
 #endif
 #if defined(TI_AM335X)
 static void am335x_cpu_clk(void);
 #endif
-#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 static psize_t emif_memprobe(void);
 #endif
 
-#if defined(OMAP_3430) || defined(OMAP_3530)
-static psize_t omap3530_memprobe(void);
+#if defined(OMAP_3XXX)
+static psize_t omap3_memprobe(void);
 #endif
 
 bs_protos(bs_notimpl);
@@ -444,10 +450,10 @@ initarm(void *arg)
 	 * peripherals and SDRAM.  The temporary first level translation table
 	 * is at the end of SDRAM.
 	 */
-#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3XXX) || defined(TI_DM37XX)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
-#if defined(OMAP_4430) || defined(OMAP_5430)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX)
 	omap4_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(TI_AM335X)
@@ -462,6 +468,14 @@ initarm(void *arg)
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
 	consinit();
+#if defined(OMAP_4XXX)
+	/*
+	 * Probe the PL310 L2CC
+	 */
+	const bus_space_handle_t pl310_bh = OMAP4_L2CC_BASE +
+	    OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+	arml2cc_init(&omap_bs_tag, pl310_bh, 0);
+#endif
 #if 1
 	beagle_putchar('h');
 #endif
@@ -479,7 +493,7 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (beagle) booting ...\n");
 #endif
 
-#ifdef BOOT_ARGSt
+#ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
@@ -492,10 +506,10 @@ initarm(void *arg)
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
-#if defined(OMAP_3430) || defined(OMAP_3530)
-	ram_size = omap3530_memprobe();
+#if defined(OMAP_3XXX)
+	ram_size = omap3_memprobe();
 #endif
-#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 	ram_size = emif_memprobe();
 #endif
 
@@ -514,18 +528,6 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
-
-#if 0
-#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
-	KASSERT(cs1_p == false);
-	if (cs1_p > 0) {
-		bootconfig.dramblocks = 2;
-		bootconfig.dram[1].address = 0xC0000000;
-		bootconfig.dram[0].pages /= 2;
-		bootconfig.dram[1].pages = bootconfig.dram[0].pages;
-	}
-#endif
-#endif
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
@@ -632,7 +634,7 @@ consinit(void)
 void
 beagle_reset(void)
 {
-#if defined(OMAP_4430)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP4_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_WARM;
 #elif defined(TI_AM335X)
 	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP2_CM_BASE - OMAP_L4_CORE_BASE) + AM335X_PRCM_PRM_DEVICE + PRM_RSTCTRL) = RST_GLOBAL_WARM_SW;
@@ -683,7 +685,7 @@ static kgdb_port_init(void)
 }
 #endif
 
-#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
+#if defined(OMAP_3XXX) || defined(TI_DM37XX)
 void
 omap3_cpu_clk(void)
 {
@@ -704,9 +706,9 @@ omap3_cpu_clk(void)
 	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
 	omap_sys_clk = sys_clk * OMAP3_PRM_CLKSEL_MULT;
 }
-#endif /* OMAP_3430 || OMAP_3530 || TI_DM37XX */
+#endif /* OMAP_3XXX || TI_DM37XX */
 
-#if defined(OMAP_4430) || defined(OMAP_5430)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX)
 void
 omap4_cpu_clk(void)
 {
@@ -730,7 +732,7 @@ omap4_cpu_clk(void)
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 }
-#endif /* OMAP_4430 || OMAP_5430 */
+#endif /* OMAP_4XXX || OMAP_5XXX */
 
 #if defined(TI_AM335X)
 void
@@ -758,7 +760,7 @@ am335x_cpu_clk(void)
 }
 #endif /* TI_AM335X */
 
-#if defined(OMAP_4430) || defined(OMAP_5430) || defined(TI_AM335X)
+#if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 static inline uint32_t
 emif_read_sdram_config(vaddr_t emif_base)
 {
@@ -805,11 +807,11 @@ emif_memprobe(void)
 }
 #endif
 
-#if defined(OMAP_3430) || defined(OMAP_3530)
+#if defined(OMAP_3XXX)
 #define SDRC_MCFG(p)		(0x80 + (0x30 * (p)))
 #define SDRC_MCFG_MEMSIZE(m)	((((m) & __BITS(8,17)) >> 8) * 2)
 static psize_t 
-omap3530_memprobe(void)
+omap3_memprobe(void)
 {
 	const vaddr_t gpmc_base = OMAP_SDRC_VBASE;
 	const uint32_t mcfg0 = *(volatile uint32_t *)(gpmc_base + SDRC_MCFG(0));
@@ -893,16 +895,39 @@ beagle_device_register(device_t self, void *aux)
 	if (device_is_a(self, "ehci")) {
 #if defined(OMAP_3530)
 		/* XXX Beagleboard specific port configuration */
+		prop_dictionary_set_uint16(dict, "nports", 3);
 		prop_dictionary_set_cstring(dict, "port0-mode", "none");
 		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
 		prop_dictionary_set_cstring(dict, "port2-mode", "none");
 		prop_dictionary_set_bool(dict, "phy-reset", true);
 		prop_dictionary_set_int16(dict, "port0-gpio", -1);
 		prop_dictionary_set_int16(dict, "port1-gpio", 147);
+		prop_dictionary_set_bool(dict, "port1-gpioval", true);
 		prop_dictionary_set_int16(dict, "port2-gpio", -1);
 		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
 		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
 		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
+#if defined(OMAP_4430)
+		prop_dictionary_set_uint16(dict, "nports", 2);
+#if 0
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+#else
+		prop_dictionary_set_bool(dict, "phy-reset", false);
+#endif
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+#if 0
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+#else
+		prop_dictionary_set_cstring(dict, "port1-mode", "none");
+#endif
+		prop_dictionary_set_int16(dict, "port1-gpio", 62);
+		prop_dictionary_set_bool(dict, "port1-gpioval", true);
+#if 0
+		omap2_gpio_ctl(1, GPIO_PIN_OUTPUT);
+		omap2_gpio_write(1, 1);		// Enable Hub
+#endif
 #endif
 		return;
 	}
