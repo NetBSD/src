@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.25 2013/06/08 02:16:03 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.26 2013/06/18 18:18:58 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,7 +121,7 @@ lfs_match_indir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 0);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % LFS_NINDIR(fs) == 0);
 }
 
 int
@@ -130,7 +130,7 @@ lfs_match_dindir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 1);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % LFS_NINDIR(fs) == 1);
 }
 
 int
@@ -139,7 +139,7 @@ lfs_match_tindir(struct lfs * fs, struct ubuf * bp)
 	daddr_t lbn;
 
 	lbn = bp->b_lblkno;
-	return (lbn < 0 && (-lbn - ULFS_NDADDR) % NINDIR(fs) == 2);
+	return (lbn < 0 && (-lbn - ULFS_NDADDR) % LFS_NINDIR(fs) == 2);
 }
 
 /*
@@ -175,15 +175,15 @@ lfs_segwrite(struct lfs * fs, int flags)
 	lfs_segunlock(fs);
 #if 0
 	printf("wrote %" PRId64 " bytes (%" PRId32 " fsb)\n",
-		written_bytes, (ulfs_daddr_t)btofsb(fs, written_bytes));
+		written_bytes, (ulfs_daddr_t)lfs_btofsb(fs, written_bytes));
 	printf("wrote %" PRId64 " bytes data (%" PRId32 " fsb)\n",
-		written_data, (ulfs_daddr_t)btofsb(fs, written_data));
+		written_data, (ulfs_daddr_t)lfs_btofsb(fs, written_data));
 	printf("wrote %" PRId64 " bytes indir (%" PRId32 " fsb)\n",
-		written_indir, (ulfs_daddr_t)btofsb(fs, written_indir));
+		written_indir, (ulfs_daddr_t)lfs_btofsb(fs, written_indir));
 	printf("wrote %" PRId64 " bytes dev (%" PRId32 " fsb)\n",
-		written_dev, (ulfs_daddr_t)btofsb(fs, written_dev));
+		written_dev, (ulfs_daddr_t)lfs_btofsb(fs, written_dev));
 	printf("wrote %d inodes (%" PRId32 " fsb)\n",
-		written_inodes, btofsb(fs, written_inodes * fs->lfs_ibsize));
+		written_inodes, lfs_btofsb(fs, written_inodes * fs->lfs_ibsize));
 #endif
 	return 0;
 }
@@ -258,24 +258,24 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 
 		/* Get next inode block. */
 		daddr = fs->lfs_offset;
-		fs->lfs_offset += btofsb(fs, fs->lfs_ibsize);
+		fs->lfs_offset += lfs_btofsb(fs, fs->lfs_ibsize);
 		sp->ibp = *sp->cbpp++ =
-		    getblk(fs->lfs_devvp, fsbtodb(fs, daddr),
+		    getblk(fs->lfs_devvp, LFS_FSBTODB(fs, daddr),
 		    fs->lfs_ibsize);
 		sp->ibp->b_flags |= B_GATHERED;
 		gotblk++;
 
 		/* Zero out inode numbers */
-		for (i = 0; i < INOPB(fs); ++i)
+		for (i = 0; i < LFS_INOPB(fs); ++i)
 			((struct ulfs1_dinode *) sp->ibp->b_data)[i].di_inumber = 0;
 
 		++sp->start_bpp;
-		fs->lfs_avail -= btofsb(fs, fs->lfs_ibsize);
+		fs->lfs_avail -= lfs_btofsb(fs, fs->lfs_ibsize);
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= fs->lfs_ibsize;
 		sp->sum_bytes_left -= sizeof(ulfs_daddr_t);
 		ndx = fs->lfs_sumsize / sizeof(ulfs_daddr_t) -
-		    sp->ninodes / INOPB(fs) - 1;
+		    sp->ninodes / LFS_INOPB(fs) - 1;
 		((ulfs_daddr_t *) (sp->segsum))[ndx] = daddr;
 	}
 	/* Update the inode times and copy the inode onto the inode page. */
@@ -299,7 +299,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		return 0;
 	}
 	bp = sp->ibp;
-	cdp = ((struct ulfs1_dinode *) bp->b_data) + (sp->ninodes % INOPB(fs));
+	cdp = ((struct ulfs1_dinode *) bp->b_data) + (sp->ninodes % LFS_INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
 
 	/* If all blocks are goig to disk, update the "size on disk" */
@@ -307,7 +307,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 
 	if (ip->i_number == LFS_IFILE_INUM)	/* We know sp->idp == NULL */
 		sp->idp = ((struct ulfs1_dinode *) bp->b_data) +
-		    (sp->ninodes % INOPB(fs));
+		    (sp->ninodes % LFS_INOPB(fs));
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
 		assert(!(bp->b_flags & B_INVAL));
@@ -317,7 +317,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	++((SEGSUM *) (sp->segsum))->ss_ninos;
 
 	/* If this page is full, set flag to allocate a new page. */
-	if (++sp->ninodes % INOPB(fs) == 0)
+	if (++sp->ninodes % LFS_INOPB(fs) == 0)
 		sp->ibp = NULL;
 
 	/*
@@ -327,12 +327,12 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	ino = ip->i_number;
 	if (ino == LFS_IFILE_INUM) {
 		daddr = fs->lfs_idaddr;
-		fs->lfs_idaddr = dbtofsb(fs, bp->b_blkno);
+		fs->lfs_idaddr = LFS_DBTOFSB(fs, bp->b_blkno);
 		sbdirty();
 	} else {
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = ifp->if_daddr;
-		ifp->if_daddr = dbtofsb(fs, bp->b_blkno) + fsb;
+		ifp->if_daddr = LFS_DBTOFSB(fs, bp->b_blkno) + fsb;
 		error = LFS_BWRITE_LOG(ibp);	/* Ifile */
 	}
 
@@ -342,7 +342,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	 * is actually written.
 	 */
 	if (daddr != LFS_UNUSED_DADDR) {
-		u_int32_t oldsn = dtosn(fs, daddr);
+		u_int32_t oldsn = lfs_dtosn(fs, daddr);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
 		sup->su_nbytes -= LFS_DINODE1_SIZE;
 		redo_ifile =
@@ -449,9 +449,9 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	if (error)
 		errx(1, "lfs_updatemeta: ulfs_bmaparray returned %d looking up lbn %" PRId64 "\n", error, lbn);
 	if (daddr > 0)
-		daddr = dbtofsb(fs, daddr);
+		daddr = LFS_DBTOFSB(fs, daddr);
 
-	frags = numfrags(fs, size);
+	frags = lfs_numfrags(fs, size);
 	switch (num) {
 	case 0:
 		ooff = ip->i_ffs1_db[lbn];
@@ -459,7 +459,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 			ip->i_ffs1_blocks += frags;
 		else {
 			/* possible fragment truncation or extension */
-			ofrags = btofsb(fs, ip->i_lfs_fragsize[lbn]);
+			ofrags = lfs_btofsb(fs, ip->i_lfs_fragsize[lbn]);
 			ip->i_ffs1_blocks += (frags - ofrags);
 		}
 		ip->i_ffs1_db[lbn] = ndaddr;
@@ -488,7 +488,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	 * and location.
 	 */
 	if (daddr > 0) {
-		u_int32_t oldsn = dtosn(fs, daddr);
+		u_int32_t oldsn = lfs_dtosn(fs, daddr);
 		if (lbn >= 0 && lbn < ULFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
@@ -566,7 +566,7 @@ lfs_updatemeta(struct segment * sp)
 		sbp = *sp->start_bpp;
 		lbn = *sp->start_lbp;
 
-		sbp->b_blkno = fsbtodb(fs, fs->lfs_offset);
+		sbp->b_blkno = LFS_FSBTODB(fs, fs->lfs_offset);
 
 		/*
 		 * If we write a frag in the wrong place, the cleaner won't
@@ -585,7 +585,7 @@ lfs_updatemeta(struct segment * sp)
 		for (bytesleft = sbp->b_bcount; bytesleft > 0;
 		    bytesleft -= fs->lfs_bsize) {
 			size = MIN(bytesleft, fs->lfs_bsize);
-			frags = numfrags(fs, size);
+			frags = lfs_numfrags(fs, size);
 			lbn = *sp->start_lbp++;
 			lfs_update_single(fs, sp, lbn, fs->lfs_offset, size);
 			fs->lfs_offset += frags;
@@ -619,8 +619,8 @@ lfs_initseg(struct lfs * fs)
 		repeat = 1;
 		fs->lfs_offset = fs->lfs_curseg;
 
-		sp->seg_number = dtosn(fs, fs->lfs_curseg);
-		sp->seg_bytes_left = fsbtob(fs, fs->lfs_fsbpseg);
+		sp->seg_number = lfs_dtosn(fs, fs->lfs_curseg);
+		sp->seg_bytes_left = lfs_fsbtob(fs, fs->lfs_fsbpseg);
 
 		/*
 		 * If the segment contains a superblock, update the offset
@@ -628,19 +628,19 @@ lfs_initseg(struct lfs * fs)
 		 */
 		LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
 		if (sup->su_flags & SEGUSE_SUPERBLOCK) {
-			fs->lfs_offset += btofsb(fs, LFS_SBPAD);
+			fs->lfs_offset += lfs_btofsb(fs, LFS_SBPAD);
 			sp->seg_bytes_left -= LFS_SBPAD;
 		}
 		brelse(bp, 0);
 		/* Segment zero could also contain the labelpad */
 		if (fs->lfs_version > 1 && sp->seg_number == 0 &&
-		    fs->lfs_start < btofsb(fs, LFS_LABELPAD)) {
-			fs->lfs_offset += btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
-			sp->seg_bytes_left -= LFS_LABELPAD - fsbtob(fs, fs->lfs_start);
+		    fs->lfs_start < lfs_btofsb(fs, LFS_LABELPAD)) {
+			fs->lfs_offset += lfs_btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
+			sp->seg_bytes_left -= LFS_LABELPAD - lfs_fsbtob(fs, fs->lfs_start);
 		}
 	} else {
-		sp->seg_number = dtosn(fs, fs->lfs_curseg);
-		sp->seg_bytes_left = fsbtob(fs, fs->lfs_fsbpseg -
+		sp->seg_number = lfs_dtosn(fs, fs->lfs_curseg);
+		sp->seg_bytes_left = lfs_fsbtob(fs, fs->lfs_fsbpseg -
 		    (fs->lfs_offset - fs->lfs_curseg));
 	}
 	fs->lfs_lastpseg = fs->lfs_offset;
@@ -654,11 +654,11 @@ lfs_initseg(struct lfs * fs)
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;
 	sbp = *sp->cbpp = getblk(fs->lfs_devvp,
-	    fsbtodb(fs, fs->lfs_offset), fs->lfs_sumsize);
+	    LFS_FSBTODB(fs, fs->lfs_offset), fs->lfs_sumsize);
 	sp->segsum = sbp->b_data;
 	memset(sp->segsum, 0, fs->lfs_sumsize);
 	sp->start_bpp = ++sp->cbpp;
-	fs->lfs_offset += btofsb(fs, fs->lfs_sumsize);
+	fs->lfs_offset += lfs_btofsb(fs, fs->lfs_sumsize);
 
 	/* Set point to SEGSUM, initialize it. */
 	ssp = sp->segsum;
@@ -691,12 +691,12 @@ lfs_newseg(struct lfs * fs)
 	struct ubuf *bp;
 	int curseg, isdirty, sn;
 
-	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
+	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_nextseg), bp);
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
 	sup->su_nbytes = 0;
 	sup->su_nsums = 0;
 	sup->su_ninos = 0;
-	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
+	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, fs->lfs_nextseg), bp);
 
 	LFS_CLEANERINFO(cip, fs, bp);
 	--cip->clean;
@@ -706,7 +706,7 @@ lfs_newseg(struct lfs * fs)
 
 	fs->lfs_lastseg = fs->lfs_curseg;
 	fs->lfs_curseg = fs->lfs_nextseg;
-	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
+	for (sn = curseg = lfs_dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
 		if (sn == curseg)
 			errx(1, "lfs_nextseg: no clean segments");
@@ -719,7 +719,7 @@ lfs_newseg(struct lfs * fs)
 	}
 
 	++fs->lfs_nactive;
-	fs->lfs_nextseg = sntod(fs, sn);
+	fs->lfs_nextseg = lfs_sntod(fs, sn);
 }
 
 
@@ -744,7 +744,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	nblocks = sp->cbpp - sp->bpp;
 #if 0
 	printf("write %d blocks at 0x%x\n",
-		nblocks, (int)dbtofsb(fs, (*sp->bpp)->b_blkno));
+		nblocks, (int)LFS_DBTOFSB(fs, (*sp->bpp)->b_blkno));
 #endif
 	if (nblocks == 1)
 		return 0;
@@ -760,13 +760,13 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		if ((*bpp)->b_vp != devvp) {
 			sup->su_nbytes += (*bpp)->b_bcount;
 		}
-		assert(dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)) == sp->seg_number);
+		assert(lfs_dtosn(fs, LFS_DBTOFSB(fs, (*bpp)->b_blkno)) == sp->seg_number);
 	}
 
 	ssp = (SEGSUM *) sp->segsum;
 	ssp->ss_flags |= SS_RFW;
 
-	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
+	ninos = (ssp->ss_ninos + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
 	sup->su_nbytes += ssp->ss_ninos * LFS_DINODE1_SIZE;
 
 	if (fs->lfs_version == 1)
@@ -775,9 +775,9 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 		sup->su_lastmod = write_time;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
-	fs->lfs_dmeta += (btofsb(fs, fs->lfs_sumsize) + btofsb(fs, ninos *
+	fs->lfs_dmeta += (lfs_btofsb(fs, fs->lfs_sumsize) + lfs_btofsb(fs, ninos *
 		fs->lfs_ibsize));
-	fs->lfs_avail -= btofsb(fs, fs->lfs_sumsize);
+	fs->lfs_avail -= lfs_btofsb(fs, fs->lfs_sumsize);
 
 	do_again = !(bp->b_flags & B_GATHERED);
 	LFS_WRITESEGENTRY(sup, fs, sp->seg_number, bp);	/* Ifile */
@@ -819,8 +819,8 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	    cksum(&ssp->ss_datasum, fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
 	free(datap);
 	datap = dp = NULL;
-	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
-	    btofsb(fs, fs->lfs_sumsize));
+	fs->lfs_bfree -= (lfs_btofsb(fs, ninos * fs->lfs_ibsize) +
+	    lfs_btofsb(fs, fs->lfs_sumsize));
 
 	if (devvp == NULL)
 		errx(1, "devvp is NULL");
@@ -929,7 +929,7 @@ lfs_segunlock(struct lfs * fs)
 	if (fs->lfs_seglock == 1) {
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
-			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
+			fs->lfs_offset -= lfs_btofsb(fs, fs->lfs_sumsize);
 			bp = *sp->bpp;
 			bremfree(bp);
 			bp->b_flags |= B_DONE | B_INVAL;
@@ -1003,7 +1003,7 @@ lfs_writesuper(struct lfs *fs, ulfs_daddr_t daddr)
 	/* Checksum the superblock and copy it into a buffer. */
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
 	assert(daddr > 0);
-	bp = getblk(fs->lfs_devvp, fsbtodb(fs, daddr), LFS_SBPAD);
+	bp = getblk(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), LFS_SBPAD);
 	memset(bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *) bp->b_data = fs->lfs_dlfs;
