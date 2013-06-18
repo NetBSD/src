@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.31 2013/06/08 02:16:03 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.32 2013/06/18 18:18:58 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -563,7 +563,7 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 	struct ubuf *bp;
 	char *cp, firstblk[LFS_DIRBLKSIZ];
 
-	lastbn = lblkno(fs, dp->di_size);
+	lastbn = lfs_lblkno(fs, dp->di_size);
 	if (lastbn >= ULFS_NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
 		return (0);
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
@@ -571,9 +571,9 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 	bp = getblk(vp, lastbn, fs->lfs_bsize);
 	VOP_BWRITE(bp);
 	dp->di_size += fs->lfs_bsize;
-	dp->di_blocks += btofsb(fs, fs->lfs_bsize);
+	dp->di_blocks += lfs_btofsb(fs, fs->lfs_bsize);
 	bread(vp, dp->di_db[lastbn + 1],
-	    (long) dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
+	    (long) lfs_dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(firstblk, bp->b_data, LFS_DIRBLKSIZ);
@@ -587,7 +587,7 @@ expanddir(struct uvnode *vp, struct ulfs1_dinode *dp, char *name)
 		memcpy(cp, &emptydir, sizeof emptydir);
 	VOP_BWRITE(bp);
 	bread(vp, dp->di_db[lastbn + 1],
-	    (long) dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
+	    (long) lfs_dblksize(fs, dp, lastbn + 1), NOCRED, 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
 	memcpy(bp->b_data, &emptydir, sizeof emptydir);
@@ -603,7 +603,7 @@ bad:
 	dp->di_db[lastbn] = dp->di_db[lastbn + 1];
 	dp->di_db[lastbn + 1] = 0;
 	dp->di_size -= fs->lfs_bsize;
-	dp->di_blocks -= btofsb(fs, fs->lfs_bsize);
+	dp->di_blocks -= lfs_btofsb(fs, fs->lfs_bsize);
 	return (0);
 }
 
