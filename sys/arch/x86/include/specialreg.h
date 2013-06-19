@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.31.4.2 2012/11/28 04:39:03 riz Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.31.4.3 2013/06/19 07:44:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -314,6 +314,22 @@
 #define	MSR_MTRRphysMask6	0x20d
 #define	MSR_MTRRphysBase7	0x20e
 #define	MSR_MTRRphysMask7	0x20f
+#define	MSR_MTRRphysBase8	0x210
+#define	MSR_MTRRphysMask8	0x211
+#define	MSR_MTRRphysBase9	0x212
+#define	MSR_MTRRphysMask9	0x213
+#define	MSR_MTRRphysBase10	0x214
+#define	MSR_MTRRphysMask10	0x215
+#define	MSR_MTRRphysBase11	0x216
+#define	MSR_MTRRphysMask11	0x217
+#define	MSR_MTRRphysBase12	0x218
+#define	MSR_MTRRphysMask12	0x219
+#define	MSR_MTRRphysBase13	0x21a
+#define	MSR_MTRRphysMask13	0x21b
+#define	MSR_MTRRphysBase14	0x21c
+#define	MSR_MTRRphysMask14	0x21d
+#define	MSR_MTRRphysBase15	0x21e
+#define	MSR_MTRRphysMask15	0x21f
 #define	MSR_MTRRfix64K_00000	0x250
 #define	MSR_MTRRfix16K_80000	0x258
 #define	MSR_MTRRfix16K_A0000	0x259
