@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.17 2013/01/20 12:20:38 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.18 2013/06/19 07:50:54 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.17 2013/01/20 12:19:06 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.18 2013/06/19 07:50:15 bouyer Exp
  */
 
 /*
@@ -8032,12 +8032,20 @@ static const struct pci_product pci_products[] = {
 	    "i82567V-3 LAN Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82583V,
-	    "i82583V 1000baseT Ethernet",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH2_LV_LM,
+	    "82579LM Gigabit Network Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH2_LV_V,
+	    "82579V Gigabit Network Connection",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS,
 	    "82576 gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82583V,
+	    "i82583V 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES_QUAD,
@@ -8074,6 +8082,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_ER_DUAL,
 	    "82580 dual-1000BaseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I350_COPPER,
+	    "I350 Gigabit Network Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I350_FIBER,
+	    "I350 Gigabit Fiber Network Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I350_SERDES,
+	    "I350 Gigabit Backplane Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I350_SGMII,
+	    "I350 Gigabit Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_D_BM_V,
+	    "82567V LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
+	    "82580 quad-1000BaseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
@@ -9902,6 +9934,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555,
 	    "21555 Non-Transparent PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_HANKSVILLE,
+	    "HANKSVILLE LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
@@ -15084,4 +15120,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3170;
+const int pci_nproducts = 3179;
