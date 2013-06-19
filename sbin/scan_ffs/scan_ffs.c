@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.22 2013/06/19 17:51:26 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.22 2013/06/19 17:51:26 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $");
 #undef fsbtodb
 #undef dbtofsb
 #undef blkoff
-#undef fragoff
 #undef lblktosize
 #undef lblkno
 #undef numfrags
@@ -62,10 +61,6 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $");
 #undef blkstofrags
 #undef fragnum
 #undef blknum
-#undef blksize
-#undef INOPB
-#undef INOPF
-#undef NINDIR
 
 #include <ufs/ffs/fs.h>
 
@@ -74,7 +69,6 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $");
 #undef fsbtodb
 #undef dbtofsb
 #undef blkoff
-#undef fragoff
 #undef lblktosize
 #undef lblkno
 #undef numfrags
@@ -84,10 +78,6 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.21 2009/04/11 06:52:59 lukem Exp $");
 #undef blkstofrags
 #undef fragnum
 #undef blknum
-#undef blksize
-#undef INOPB
-#undef INOPF
-#undef NINDIR
 
 #include <unistd.h>
 #include <stdlib.h>
