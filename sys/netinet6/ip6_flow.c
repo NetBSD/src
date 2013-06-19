@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.17 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.17.10.1 2013/06/19 08:01:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.17 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.17.10.1 2013/06/19 08:01:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,6 +276,11 @@ ip6flow_fastforward(struct mbuf *m)
 		/* Return to main IPv6 input function. */
 		return 0;
 	}
+
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC)
 		return 0;
