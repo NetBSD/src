@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.46 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.47 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.46 2013/06/09 17:57:09 dholland Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.47 2013/06/19 17:51:26 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -542,9 +542,9 @@ CMDFUNC(findblk)
 				    (unsigned long long)fsbtodb(sblock,
 					ino_to_fsba(sblock, inum)),
 				    (unsigned long long)
-				    (inum / INOPB(sblock)) * INOPB(sblock),
+				    (inum / FFS_INOPB(sblock)) * FFS_INOPB(sblock),
 				    (unsigned long long)
-				    (inum / INOPB(sblock) + 1) * INOPB(sblock));
+				    (inum / FFS_INOPB(sblock) + 1) * FFS_INOPB(sblock));
 				findblk_numtofind--;
 				if (findblk_numtofind == 0)
 					goto end;
