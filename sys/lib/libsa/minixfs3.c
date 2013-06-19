@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.1 2012/01/16 18:44:13 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.2 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -258,13 +258,13 @@ block_map(struct open_file *f, block_t file_block, block_t *disk_block_p)
 	 * mdi_blocks[NR_DZONES+0]
 	 *			block NDADDR+0 is the single indirect block
 	 *			holds zone numbers for zones
-	 *			NR_DZONES .. NR_DZONES + NINDIR(fs)-1
+	 *			NR_DZONES .. NR_DZONES + MFS_NINDIR(fs)-1
 	 *
 	 * mdi_blocks[NR_DZONES+1]
 	 *			block NDADDR+1 is the double indirect block
 	 *			holds zone numbers for INDEX blocks for zones
-	 *			NR_DZONES + NINDIR(fs) ..
-	 *			NR_TZONES + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			NR_DZONES + MFS_NINDIR(fs) ..
+	 *			NR_TZONES + MFS_NINDIR(fs) + MFS_NINDIR(fs)**2 - 1
 	 */
 
 	zone = file_block >> scale;
@@ -587,7 +587,7 @@ minixfs3_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = MFS_NINDIR(fs);
 #ifdef DEBUG
 		if (!powerof2(mult)) {
 			/* Hummm was't a power of 2 */

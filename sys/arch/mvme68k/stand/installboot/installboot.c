@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.16 2013/01/22 09:39:14 dholland Exp $ */
+/*	$NetBSD: installboot.c,v 1.17 2013/06/19 17:51:26 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -331,7 +331,7 @@ loadblocknums(char *boot, int devfd)
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 	/* XXX ondisk32 */
 	ap = (int32_t *)buf;
-	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
+	for (; i < FFS_NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
 		if (verbose)
 			printf("%d: %d\n", i, blk);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.169 2013/04/08 21:12:33 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.170 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.169 2013/04/08 21:12:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.170 2013/06/19 17:51:26 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -757,8 +757,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_nindir = NINDIR(m_fs);
-	ump->um_lognindir = ffs(NINDIR(m_fs)) - 1;
+	ump->um_nindir = EXT2_NINDIR(m_fs);
+	ump->um_lognindir = ffs(EXT2_NINDIR(m_fs)) - 1;
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
 	ump->um_maxsymlinklen = EXT2_MAXSYMLINKLEN;

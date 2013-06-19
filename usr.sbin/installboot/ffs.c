@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.30 2013/01/22 09:39:19 dholland Exp $	*/
+/*	$NetBSD: ffs.c,v 1.31 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.30 2013/01/22 09:39:19 dholland Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.31 2013/06/19 17:51:26 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -221,18 +221,18 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 			/* XXX ondisk32 */
 			level[level_i].blknums = 
 				(int32_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = FFS_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %lu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    fsbtodb(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
 		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, (int64_t)inode->di_size, lblk));
+		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)
@@ -357,18 +357,18 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 				return (0);
 			level[level_i].blknums = 
 				(int64_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = FFS_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %llu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    fsbtodb(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
 		    fsbtodb(fs, blk) + params->fstype->offset,
-		    sblksize(fs, (int64_t)inode->di_size, lblk));
+		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
 		if (rv != 1)

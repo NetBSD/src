@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.154 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.155 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -282,7 +282,7 @@
  */
 #define	doff_t		int32_t
 #define	lfs_doff_t	int32_t
-#define	MAXDIRSIZE	(0x7fffffff)
+#define	LFS_MAXDIRSIZE	(0x7fffffff)
 
 #define	LFS_MAXNAMLEN	255
 
@@ -1004,7 +1004,7 @@ struct lfs {
 
 /* LFS_INOPB is the number of inodes in a secondary storage block. */
 #define	LFS_INOPB(fs)	((fs)->lfs_inopb)
-/* INOPF is the number of inodes in a fragment. */
+/* LFS_INOPF is the number of inodes in a fragment. */
 #define LFS_INOPF(fs)	((fs)->lfs_inopf)
 
 #define	lfs_blksize(fs, ip, lbn) \

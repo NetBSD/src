@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.60 2013/01/22 09:39:16 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.61 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,7 +123,7 @@
  * necessary.  The file system format retains only a single pointer
  * to such a fragment, which is a piece of a single large block that
  * has been divided.  The size of such a fragment is determinable from
- * information in the inode, using the ``blksize(fs, ip, lbn)'' macro.
+ * information in the inode, using the ``ffs_blksize(fs, ip, lbn)'' macro.
  *
  * The file system records space availability at the fragment level;
  * to determine block availability, aligned fragments are examined.
@@ -287,8 +287,8 @@ struct fs {
 	int32_t	 fs_sbsize;		/* actual size of super block */
 	int32_t	 fs_spare1[2];		/* old fs_csmask */
 					/* old fs_csshift */
-	int32_t	 fs_nindir;		/* value of NINDIR */
-	int32_t	 fs_inopb;		/* value of INOPB */
+	int32_t	 fs_nindir;		/* value of FFS_NINDIR */
+	int32_t	 fs_inopb;		/* value of FFS_INOPB */
 	int32_t	 fs_old_nspf;		/* value of NSPF */
 /* yet another configuration parameter */
 	int32_t	 fs_optim;		/* optimization preference, see below */
@@ -636,8 +636,8 @@ struct ocg {
 #define	ino_to_cg(fs, x)	((x) / (fs)->fs_ipg)
 #define	ino_to_fsba(fs, x)						\
 	((daddr_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
-	    (blkstofrags((fs), (((x) % (fs)->fs_ipg) / INOPB(fs))))))
-#define	ino_to_fsbo(fs, x)	((x) % INOPB(fs))
+	    (blkstofrags((fs), (((x) % (fs)->fs_ipg) / FFS_INOPB(fs))))))
+#define	ino_to_fsbo(fs, x)	((x) % FFS_INOPB(fs))
 
 /*
  * Give cylinder group number for a file system block.
@@ -665,9 +665,9 @@ struct ocg {
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define	blkoff(fs, loc)		/* calculates (loc % fs->fs_bsize) */ \
+#define	ffs_blkoff(fs, loc)	/* calculates (loc % fs->fs_bsize) */ \
 	((loc) & (fs)->fs_qbmask)
-#define	fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
+#define	ffs_fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
 	((loc) & (fs)->fs_qfmask)
 #define	lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
 	(((off_t)(frag)) << (fs)->fs_fshift)
@@ -702,27 +702,27 @@ struct ocg {
 /*
  * Determining the size of a file block in the file system.
  */
-#define	blksize(fs, ip, lbn) \
+#define	ffs_blksize(fs, ip, lbn) \
 	(((lbn) >= UFS_NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize \
-	    : ((int32_t)fragroundup(fs, blkoff(fs, (ip)->i_size))))
+	    : ((int32_t)fragroundup(fs, ffs_blkoff(fs, (ip)->i_size))))
 
-#define	sblksize(fs, size, lbn) \
+#define	ffs_sblksize(fs, size, lbn) \
 	(((lbn) >= UFS_NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
 	  ? (fs)->fs_bsize \
-	  : ((int32_t)fragroundup(fs, blkoff(fs, (uint64_t)(size)))))
+	  : ((int32_t)fragroundup(fs, ffs_blkoff(fs, (uint64_t)(size)))))
 
 
 /*
  * Number of inodes in a secondary storage block/fragment.
  */
-#define	INOPB(fs)	((fs)->fs_inopb)
-#define	INOPF(fs)	((fs)->fs_inopb >> (fs)->fs_fragshift)
+#define	FFS_INOPB(fs)	((fs)->fs_inopb)
+#define	FFS_INOPF(fs)	((fs)->fs_inopb >> (fs)->fs_fragshift)
 
 /*
  * Number of indirects in a file system block.
  */
-#define	NINDIR(fs)	((fs)->fs_nindir)
+#define	FFS_NINDIR(fs)	((fs)->fs_nindir)
 
 /*
  * Apple UFS Label:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.106 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.106 2013/06/19 17:51:26 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -46,6 +46,8 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland
 #define	UFS_WAPBL_BEGIN(mp)	0
 #define	UFS_WAPBL_END(mp)	do { } while (0)
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
+#define ufs_blkoff		lfs_blkoff
+#define ufs_blksize		lfs_blksize
 #else
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -53,6 +55,8 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland
 #define	READ_S			"ffs_read"
 #define	WRITE			ffs_write
 #define	WRITE_S			"ffs_write"
+#define ufs_blkoff		ffs_blkoff
+#define ufs_blksize		ffs_blksize
 #endif
 
 /*
@@ -145,15 +149,15 @@ READ(void *v)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = blksize(fs, ip, lbn);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		size = ufs_blksize(fs, ip, lbn);
+		blkoffset = ufs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
 		if (lblktosize(fs, nextlbn) >= ip->i_size)
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
-			int nextsize = blksize(fs, ip, nextlbn);
+			int nextsize = ufs_blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
@@ -303,7 +307,7 @@ WRITE(void *v)
 	preallocoff = round_page(blkroundup(fs, MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
-	endallocoff = nsize - blkoff(fs, nsize);
+	endallocoff = nsize - ufs_blkoff(fs, nsize);
 
 	/*
 	 * if we're increasing the file size, deal with expanding
@@ -338,7 +342,7 @@ WRITE(void *v)
 		}
 
 		oldoff = uio->uio_offset;
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = ufs_blkoff(fs, uio->uio_offset);
 		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (bytelen == 0) {
 			break;
@@ -354,12 +358,12 @@ WRITE(void *v)
 		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
 		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 &&
-		    blkoff(fs, uio->uio_offset) == 0 &&
+		    ufs_blkoff(fs, uio->uio_offset) == 0 &&
 		    (uio->uio_offset & PAGE_MASK) == 0) {
 			vsize_t len;
 
 			len = trunc_page(bytelen);
-			len -= blkoff(fs, len);
+			len -= ufs_blkoff(fs, len);
 			if (len > 0) {
 				overwrite = true;
 				bytelen = len;
@@ -438,7 +442,7 @@ WRITE(void *v)
 	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = ufs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
@@ -463,7 +467,7 @@ WRITE(void *v)
 			uvm_vnp_setsize(vp, ip->i_size);
 			extended = 1;
 		}
-		size = blksize(fs, ip, lbn) - bp->b_resid;
+		size = ufs_blksize(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
 			xfersize = size;
 

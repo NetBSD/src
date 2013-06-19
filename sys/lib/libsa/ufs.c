@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.60 2013/06/09 17:57:08 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.61 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -136,8 +136,15 @@ struct fs {
 #define indp_t		int32_t
 #endif
 typedef uint32_t	ino32_t;
+
 #ifndef FSBTODB
 #define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#endif
+#ifndef UFS_NINDIR
+#define UFS_NINDIR FFS_NINDIR
+#endif
+#ifndef ufs_blkoff
+#define ufs_blkoff ffs_blkoff
 #endif
 
 /*
@@ -329,19 +336,19 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	 *
 	 * di_ib[0]		index block 0 is the single indirect block
 	 *			holds block numbers for blocks
-	 *			UFS_NDADDR .. UFS_NDADDR + NINDIR(fs)-1
+	 *			UFS_NDADDR .. UFS_NDADDR + UFS_NINDIR(fs)-1
 	 *
 	 * di_ib[1]		index block 1 is the double indirect block
 	 *			holds block numbers for INDEX blocks for blocks
-	 *			UFS_NDADDR + NINDIR(fs) ..
-	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *			UFS_NDADDR + UFS_NINDIR(fs) ..
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2 - 1
 	 *
 	 * di_ib[2]		index block 2 is the triple indirect block
 	 *			holds block numbers for double-indirect
 	 *			blocks for blocks
-	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *			UFS_NDADDR + NINDIR(fs) + NINDIR(fs)**2
-	 *				+ NINDIR(fs)**3 - 1
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2 ..
+	 *			UFS_NDADDR + UFS_NINDIR(fs) + UFS_NINDIR(fs)**2
+	 *				+ UFS_NINDIR(fs)**3 - 1
 	 */
 
 	if (file_block < UFS_NDADDR) {
@@ -422,12 +429,12 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	size_t block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
+	off = ufs_blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
 	block_size = dblksize(fs, &fp->f_di, file_block);
 #else
-	block_size = sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
+	block_size = ffs_sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
 #endif
 
 	if (file_block != fp->f_buf_blkno) {
@@ -625,7 +632,7 @@ ufs_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = UFS_NINDIR(fs);
 #ifdef DEBUG
 		if (mult & (mult - 1)) {
 			/* Hummm was't a power of 2 */

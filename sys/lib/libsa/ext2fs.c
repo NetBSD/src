@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.15 2013/05/10 15:22:37 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.16 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -247,21 +247,21 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	 * e2di_blocks[EXT2FS_NDADDR+0]
 	 *		block EXT2FS_NDADDR+0 is the single indirect block
 	 *		holds block numbers for blocks
-	 *		EXT2FS_NDADDR .. EXT2FS_NDADDR + NINDIR(fs)-1
+	 *		EXT2FS_NDADDR .. EXT2FS_NDADDR + EXT2_NINDIR(fs)-1
 	 *
 	 * e2di_blocks[EXT2FS_NDADDR+1]
 	 *		block EXT2FS_NDADDR+1 is the double indirect block
 	 *		holds block numbers for INDEX blocks for blocks
-	 *		EXT2FS_NDADDR + NINDIR(fs) ..
-	 *		EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 - 1
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) ..
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2 - 1
 	 *
 	 * e2di_blocks[EXT2FS_NDADDR+2]
 	 *		block EXT2FS_NDADDR+2 is the triple indirect block
 	 *		holds block numbers for	double-indirect
 	 *		blocks for blocks
-	 *		EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2 ..
-	 *		EXT2FS_NDADDR + NINDIR(fs) + NINDIR(fs)**2
-	 *			+ NINDIR(fs)**3 - 1
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2 ..
+	 *		EXT2FS_NDADDR + EXT2_NINDIR(fs) + EXT2_NINDIR(fs)**2
+	 *			+ EXT2_NINDIR(fs)**3 - 1
 	 */
 
 	if (file_block < EXT2FS_NDADDR) {
@@ -345,7 +345,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	size_t block_size;
 	int rc;
 
-	off = blkoff(fs, fp->f_seekp);
+	off = ext2_blkoff(fs, fp->f_seekp);
 	file_block = lblkno(fs, fp->f_seekp);
 	block_size = fs->e2fs_bsize;	/* no fragment */
 
@@ -570,7 +570,7 @@ ext2fs_open(const char *path, struct open_file *f)
 		 * of divide and remainder and avoinds pulling in the
 		 * 64bit division routine into the boot code.
 		 */
-		mult = NINDIR(fs);
+		mult = EXT2_NINDIR(fs);
 #ifdef DEBUG
 		if (!powerof2(mult)) {
 			/* Hummm was't a power of 2 */

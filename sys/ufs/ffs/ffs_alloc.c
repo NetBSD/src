@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.133 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.134 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.133 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.134 2013/06/19 17:51:26 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -133,7 +133,7 @@ static int
 ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
     long size, dev_t dev, ino_t inum)
 {
-	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
+	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
 		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
 		    "size = %ld, fs = %s\n",
@@ -228,7 +228,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 
 	*bnp = 0;
 #ifdef DIAGNOSTIC
-	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
+	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0) {
 		printf("dev = 0x%llx, bsize = %d, size = %d, fs = %s\n",
 		    (unsigned long long)ip->i_dev, fs->fs_bsize, size,
 		    fs->fs_fsmnt);
@@ -347,8 +347,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 #endif
 
 #ifdef DIAGNOSTIC
-	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
-	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
+	if ((u_int)osize > fs->fs_bsize || ffs_fragoff(fs, osize) != 0 ||
+	    (u_int)nsize > fs->fs_bsize || ffs_fragoff(fs, nsize) != 0) {
 		printf(
 		    "dev = 0x%llx, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
 		    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
@@ -835,7 +835,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int flags,
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < UFS_NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + FFS_NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (cgbase(fs, cg) + fs->fs_frag);
 		}
@@ -899,7 +899,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int flags,
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < UFS_NDADDR + NINDIR(fs)) {
+		if (lbn < UFS_NDADDR + FFS_NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (cgbase(fs, cg) + fs->fs_frag);
 		}
@@ -1323,7 +1323,7 @@ retry:
 	if (fs->fs_magic == FS_UFS2_MAGIC && ibp == NULL) {
 		initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
 		nalloc = fs->fs_ipg - ufs_rw32(cgp->cg_cs.cs_nifree, needswap);
-		if (nalloc + INOPB(fs) > initediblk &&
+		if (nalloc + FFS_INOPB(fs) > initediblk &&
 		    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
 			/*
 			 * We have to release the cg buffer here to prevent
@@ -1385,7 +1385,7 @@ gotit:
 		KASSERT(initediblk == ufs_rw32(cgp->cg_initediblk, needswap));
 		memset(ibp->b_data, 0, fs->fs_bsize);
 		dp2 = (struct ufs2_dinode *)(ibp->b_data);
-		for (i = 0; i < INOPB(fs); i++) {
+		for (i = 0; i < FFS_INOPB(fs); i++) {
 			/*
 			 * Don't bother to swap, it's supposed to be
 			 * random, after all.
@@ -1393,7 +1393,7 @@ gotit:
 			dp2->di_gen = (cprng_fast32() & INT32_MAX) / 2 + 1;
 			dp2++;
 		}
-		initediblk += INOPB(fs);
+		initediblk += FFS_INOPB(fs);
 		cgp->cg_initediblk = ufs_rw32(initediblk, needswap);
 	}
 
@@ -1459,7 +1459,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 	u_int8_t *blksfree;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
-	KASSERT((u_int)size <= fs->fs_bsize && fragoff(fs, size) == 0 &&
+	KASSERT((u_int)size <= fs->fs_bsize && ffs_fragoff(fs, size) == 0 &&
 	    fragnum(fs, bno) + numfrags(fs, size) <= fs->fs_frag);
 	KASSERT(bno < fs->fs_size);
 
