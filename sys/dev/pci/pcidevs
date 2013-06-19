@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.17 2013/01/20 12:19:06 bouyer Exp $
+$NetBSD: pcidevs,v 1.962.4.18 2013/06/19 07:50:15 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2294,8 +2294,10 @@ product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 82801I_82567V_3	0x1501	i82567V-3 LAN Controller
-product INTEL 82583V		0x150c	i82583V 1000baseT Ethernet
+product INTEL PCH2_LV_LM	0x1502	82579LM Gigabit Network Connection
+product INTEL PCH2_LV_V		0x1503	82579V Gigabit Network Connection
 product INTEL 82576_NS 		0x150a	82576 gigabit Ethernet
+product INTEL 82583V		0x150c	i82583V 1000baseT Ethernet
 product INTEL 82576_SERDES_QUAD	0x150d	82576 quad-gigabit Ethernet (SERDES)
 product INTEL 82580_COPPER 	0x150e	82580 1000BaseT Ethernet
 product INTEL 82580_FIBER 	0x150f	82580 1000BaseX Ethernet
@@ -2305,6 +2307,12 @@ product INTEL 82580_COPPER_DUAL	0x1516	82580 dual-1000BaseT Ethernet
 product INTEL 82576_NS_SERDES 	0x1518	82576 gigabit Ethernet (SERDES)
 product INTEL 82580_ER 		0x151d	82580 1000BaseT Ethernet
 product INTEL 82580_ER_DUAL 	0x151e	82580 dual-1000BaseT Ethernet
+product INTEL I350_COPPER 	0x1521	I350 Gigabit Network Connection
+product INTEL I350_FIBER 	0x1522	I350 Gigabit Fiber Network Connection
+product INTEL I350_SERDES 	0x1523	I350 Gigabit Backplane Connection
+product INTEL I350_SGMII 	0x1524	I350 Gigabit Connection
+product INTEL 82801J_D_BM_V	0x1525	82567V LAN Controller
+product INTEL 82580_QUAD_FIBER 	0x1527	82580 quad-1000BaseX Ethernet
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
@@ -2762,6 +2770,7 @@ product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
+product INTEL HANKSVILLE	0xF0FE	HANKSVILLE LAN Controller
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
