@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_rename.c,v 1.8 2013/06/08 22:23:52 dholland Exp $	*/
+/*	$NetBSD: ulfs_rename.c,v 1.9 2013/06/19 17:51:26 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.8 2013/06/08 22:23:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_rename.c,v 1.9 2013/06/19 17:51:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -579,7 +579,7 @@ ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *fulr,
 	 * of the free space for an entry that we are about to fill.
 	 */
 	to_start = tulr->ulr_offset;
-	KASSERT(tulr->ulr_count < (MAXDIRSIZE - to_start));
+	KASSERT(tulr->ulr_count < (LFS_MAXDIRSIZE - to_start));
 	to_end = (to_start + tulr->ulr_count);
 
 	return
@@ -637,7 +637,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 
 	/* Find the bounds of the search.  */
 	search_start = tulr->ulr_offset;
-	KASSERT(fulr->ulr_reclen < (MAXDIRSIZE - fulr->ulr_offset));
+	KASSERT(fulr->ulr_reclen < (LFS_MAXDIRSIZE - fulr->ulr_offset));
 	search_end = (fulr->ulr_offset + fulr->ulr_reclen);
 
 	/* Compaction must happen only within a directory block. (*)  */

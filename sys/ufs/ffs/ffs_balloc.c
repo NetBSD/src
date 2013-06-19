@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.56 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.57 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.56 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.57 2013/06/19 17:51:26 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -117,7 +117,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
 	lbn = lblkno(fs, off);
-	size = blkoff(fs, off) + size;
+	size = ffs_blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
 	if (bpp != NULL) {
@@ -137,7 +137,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	lastlbn = lblkno(fs, ip->i_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = blksize(fs, ip, nb);
+		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
 			error = ffs_realloccg(ip, nb,
@@ -190,7 +190,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, blkoff(fs, ip->i_size));
+			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
@@ -534,7 +534,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
 	lbn = lblkno(fs, off);
-	size = blkoff(fs, off) + size;
+	size = ffs_blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
 	if (bpp != NULL) {
@@ -560,7 +560,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		lastlbn = lblkno(fs, dp->di_extsize);
 		if (lastlbn < lbn) {
 			nb = lastlbn;
-			osize = sblksize(fs, dp->di_extsize, nb);
+			osize = ffs_sblksize(fs, dp->di_extsize, nb);
 			if (osize < fs->fs_bsize && osize > 0) {
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, -1 - nb,
@@ -604,7 +604,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
-			osize = fragroundup(fs, blkoff(fs, dp->di_extsize));
+			osize = fragroundup(fs, ffs_blkoff(fs, dp->di_extsize));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 				error = bread(vp, -1 - lbn, osize,
@@ -660,7 +660,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	lastlbn = lblkno(fs, ip->i_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = blksize(fs, ip, nb);
+		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
 			error = ffs_realloccg(ip, nb,
@@ -713,7 +713,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, blkoff(fs, ip->i_size));
+			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
