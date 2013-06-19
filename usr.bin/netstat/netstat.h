@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.46 2013/03/01 18:26:11 joerg Exp $	*/
+/*	$NetBSD: netstat.h,v 1.47 2013/06/19 21:12:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ int	get_hardticks __P((void));
 
 void	protopr __P((u_long, const char *));
 void	tcp_stats __P((u_long, const char *));
-void	tcp_dump __P((u_long));
+void	tcp_dump __P((u_long, const char *, u_long));
 void	udp_stats __P((u_long, const char *));
 void	ip_stats __P((u_long, const char *));
 void	icmp_stats __P((u_long, const char *));
@@ -160,5 +160,7 @@ void	bpf_dump(const char *);
 kvm_t *get_kvmd(void);
 
 char	*mpls_ntoa(const struct sockaddr *);
+
+struct kinfo_pcb *getpcblist_sysctl(const char *, size_t *);
 
 #define PLEN    (LONG_BIT / 4 + 2)
