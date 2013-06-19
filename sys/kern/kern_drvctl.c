@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.19.6.3 2009/05/03 22:39:49 snj Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.19.6.4 2013/06/19 07:55:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.6.3 2009/05/03 22:39:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.6.4 2013/06/19 07:55:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	mutex_enter(&drvctl_lock);
 
 	if (drvctl_nopen == 0) {
+		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
 		return;
 	}
@@ -125,6 +126,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 
 	dce = kmem_alloc(sizeof(*dce), KM_SLEEP);
 	if (dce == NULL) {
+		prop_object_release(ev);
 		mutex_exit(&drvctl_lock);
 		return;
 	}
