@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.28 2012/12/20 08:03:44 hannken Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.29 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.28 2012/12/20 08:03:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.29 2013/06/19 17:51:26 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 		return (error);
 	}
 	if (res)
-		*res = (char *)bp->b_data + blkoff(fs, offset);
+		*res = (char *)bp->b_data + ext2_blkoff(fs, offset);
 	*bpp = bp;
 	return (0);
 }

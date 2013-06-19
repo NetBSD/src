@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.23 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: dir.h,v 1.24 2013/06/19 17:51:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,7 +45,7 @@
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
  */
 #define	doff_t		int32_t
-#define	MAXDIRSIZE	(0x7fffffff)
+#define	UFS_MAXDIRSIZE	(0x7fffffff)
 
 /*
  * A directory consists of some number of blocks of UFS_DIRBLKSIZ

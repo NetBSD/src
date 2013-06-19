@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.1 2012/01/16 18:44:13 christos Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.2 2013/06/19 17:51:26 dholland Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -111,7 +111,7 @@ struct mfs_sblock {
 #define ZONE_NUM_SIZE		sizeof(zone_t) /* # bytes in zone  */
 #define INODE_SIZE		sizeof(struct mfs_dinode) /* bytes in dsk ino */
 /* # zones/indir block */
-#define NINDIR(fs)		((fs)->mfs_block_size/ZONE_NUM_SIZE)
+#define MFS_NINDIR(fs)		((fs)->mfs_block_size/ZONE_NUM_SIZE)
 
 #define NO_ZONE			((zone_t) 0)	/* absence of a zone number */
 #define NO_BLOCK		((block_t) 0)	/* absence of a block number */
