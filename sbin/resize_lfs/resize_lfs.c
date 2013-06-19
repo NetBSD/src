@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.6 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.7 2013/06/19 01:07:55 christos Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -124,8 +124,8 @@ main(int argc, char **argv)
 	for (sboff = LFS_LABELPAD;;) {
 		pread(devfd, buf, sboff, LFS_SBPAD);
 		memcpy(&fs->lfs_dlfs, buf, sizeof(struct dlfs));
-		if (sboff == LFS_LABELPAD && fsbtob(fs, 1) > LFS_LABELPAD)
-			sboff = fsbtob(fs, (off_t)fs->lfs_sboffs[0]);
+		if (sboff == LFS_LABELPAD && lfs_fsbtob(fs, 1) > LFS_LABELPAD)
+			sboff = lfs_fsbtob(fs, (off_t)fs->lfs_sboffs[0]);
 		else
 			break;
 	}
