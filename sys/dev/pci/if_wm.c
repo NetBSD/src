@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.255 2013/06/11 14:39:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.256 2013/06/19 10:27:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.255 2013/06/11 14:39:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.256 2013/06/19 10:27:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4443,7 +4443,8 @@ wm_init(struct ifnet *ifp)
 
 	reg = CSR_READ(sc, WMREG_CTRL_EXT);
 	/* Enable PHY low-power state when MAC is at D3 w/o WoL */
-	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2))
+	if ((sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
+	    || (sc->sc_type == WM_T_PCH_LPT))
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_PHYPDEN);
 
 	/* Initialize the transmit descriptor ring. */
@@ -4579,7 +4580,7 @@ wm_init(struct ifnet *ifp)
 	 */
 	if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
 	    && (sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)
-	    && (sc->sc_type != WM_T_PCH2)) {
+	    && (sc->sc_type != WM_T_PCH2) && (sc->sc_type != WM_T_PCH_LPT)) {
 		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
@@ -4677,7 +4678,7 @@ wm_init(struct ifnet *ifp)
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-		 || (sc->sc_type == WM_T_PCH2)) {
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)) {
 		reg = CSR_READ(sc, WMREG_KABGTXD);
 		reg |= KABGTXD_BGSQLBIAS;
 		CSR_WRITE(sc, WMREG_KABGTXD, reg);
