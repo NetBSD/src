@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.256 2013/06/19 10:27:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.257 2013/06/19 10:38:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.256 2013/06/19 10:27:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.257 2013/06/19 10:38:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4798,6 +4798,26 @@ wm_init(struct ifnet *ifp)
 
 	/* Set the receive filter. */
 	wm_set_filter(sc);
+
+	/* Enable ECC */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+		reg = CSR_READ(sc, WMREG_PBA_ECC);
+		reg |= PBA_ECC_CORR_EN;
+		CSR_WRITE(sc, WMREG_PBA_ECC, reg);
+		break;
+	case WM_T_PCH_LPT:
+		reg = CSR_READ(sc, WMREG_PBECCSTS);
+		reg |= PBECCSTS_UNCORR_ECC_ENABLE;
+		CSR_WRITE(sc, WMREG_PBECCSTS, reg);
+
+		reg = CSR_READ(sc, WMREG_CTRL);
+		reg |= CTRL_MEHE;
+		CSR_WRITE(sc, WMREG_CTRL, reg);
+		break;
+	default:
+		break;
+	}
 
 	/* On 575 and later set RDT only if RX enabled */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
