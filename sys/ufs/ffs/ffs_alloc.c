@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.134 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.135 2013/06/19 18:02:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.134 2013/06/19 17:51:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.135 2013/06/19 18:02:21 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -217,7 +217,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT((pg == NULL && (vp->v_vflag & VV_MAPPED) == 0 &&
 				 (size & PAGE_MASK) == 0 && 
-				 blkoff(fs, size) == 0) ||
+				 ffs_blkoff(fs, size) == 0) ||
 				(pg != NULL && pg->owner == curproc->p_pid &&
 				 pg->lowner == curlwp->l_lid));
 			off += PAGE_SIZE;
