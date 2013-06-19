@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.9 2013/06/17 02:05:42 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.10 2013/06/19 07:35:18 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -242,3 +242,8 @@ usr.sbin/installboot/arch/vax.c			1.16-1.17
 	Don't include host's disklabel.h. Fixes cross compile error on
 	some environment.
 	[martin, ticket #865]
+sys/netinet6/ip6_flow.c				1.21
+
+	Clear mbuf's csum_flags in ip6flow_fastforward(). Fixes PR#47849.
+	[msaitoh, ticket #895]
+
