@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.10 2013/06/12 20:44:20 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.11 2013/06/19 00:41:16 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@
 				SX_LONG | (sreg << 7) | (o))
 #define SX_STB(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_UBYTE_0 | (sreg << 7) | (o))
+#define SX_STBC(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
+				SX_UBYTE_0 | (sreg << 7) | (o))
 #define SX_STP(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_PACKED | (sreg << 7) | (o))
 #define SX_STS(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
@@ -171,6 +173,8 @@
 #define SX_STBS(reg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_SELECT \
 				| SX_UBYTE_0 | (reg << 7) | (o))
 #define SX_STUQ0(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UQUAD_0 | (sreg << 7) | (o))
+#define SX_STUQ0C(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
 				SX_UQUAD_0 | (sreg << 7) | (o))
 #define SX_STUQ8(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_UQUAD_8 | (sreg << 7) | (o))
