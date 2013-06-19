@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.18 2013/06/15 01:26:48 christos Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.19 2013/06/19 06:15:54 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.18 2013/06/15 01:26:48 christos Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.19 2013/06/19 06:15:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,8 @@ fs_read_sblock(char *superblock)
 #endif
 				quit("bad sblock magic number\n");
 		}
-		if (fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]) != sboff) {
-			sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]);
+		if (lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]) != sboff) {
+			sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[0]);
 			continue;
 		}
 		break;
@@ -105,7 +105,7 @@ fs_read_sblock(char *superblock)
 	/*
 	 * Read the secondary and take the older of the two
 	 */
-	rawread(fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), u.tbuf,
+	rawread(lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]), u.tbuf,
 	    sizeof(u.tbuf));
 #ifdef notyet
 	if (ns)
@@ -113,17 +113,17 @@ fs_read_sblock(char *superblock)
 #endif
 	if (u.lfss.lfs_magic != LFS_MAGIC) {
 		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
-			fsbtodb(sblock, (off_t)sblock->lfs_sboffs[1]));
+			LFS_FSBTODB(sblock, (off_t)sblock->lfs_sboffs[1]));
 	} else {
 		if (sblock->lfs_version > 1) {
 			if (u.lfss.lfs_serial < sblock->lfs_serial) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
-				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
+				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		} else {
 			if (u.lfss.lfs_otstamp < sblock->lfs_otstamp) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
-				sboff = fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
+				sboff = lfs_fsbtob(sblock, (off_t)sblock->lfs_sboffs[1]);
 			}
 		}
 	}
@@ -146,7 +146,7 @@ fs_parametrize(void)
 
 	spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
 
-	ufsi.ufs_dsize = fsbtodb(sblock,sblock->lfs_size);
+	ufsi.ufs_dsize = LFS_FSBTODB(sblock,sblock->lfs_size);
 	if (sblock->lfs_version == 1) 
 		ufsi.ufs_dsize = sblock->lfs_size >> sblock->lfs_blktodb;
 	ufsi.ufs_bsize = sblock->lfs_bsize;
@@ -191,11 +191,11 @@ fs_mapinodes(ino_t maxino, u_int64_t *tapesz, int *anydirskipped)
  * XXX KS - I know there's a better way to do this.
  */
 #define BASE_SINDIR (ULFS_NDADDR)
-#define BASE_DINDIR (ULFS_NDADDR+NINDIR(fs))
-#define BASE_TINDIR (ULFS_NDADDR+NINDIR(fs)+NINDIR(fs)*NINDIR(fs))
+#define BASE_DINDIR (ULFS_NDADDR+LFS_NINDIR(fs))
+#define BASE_TINDIR (ULFS_NDADDR+LFS_NINDIR(fs)+LFS_NINDIR(fs)*LFS_NINDIR(fs))
 
-#define D_UNITS (NINDIR(fs))
-#define T_UNITS (NINDIR(fs)*NINDIR(fs))
+#define D_UNITS (LFS_NINDIR(fs))
+#define T_UNITS (LFS_NINDIR(fs)*LFS_NINDIR(fs))
 
 static daddr_t
 lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
@@ -206,7 +206,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 
 	up = UNASSIGNED;	/* XXXGCC -Wunitialized [sh3] */
 	
-	if(lbn > 0 && lbn > lblkno(fs, idinode->di_size)) {
+	if(lbn > 0 && lbn > lfs_lblkno(fs, idinode->di_size)) {
 		return UNASSIGNED;
 	}
 	/*
@@ -232,15 +232,15 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 		 * Find the immediate parent. This is essentially finding the
 		 * residue of modulus, and then rounding accordingly.
 		 */
-		residue = (lbn-ULFS_NDADDR) % NINDIR(fs);
+		residue = (lbn-ULFS_NDADDR) % LFS_NINDIR(fs);
 		if(residue == 1) {
 			/* Double indirect.  Parent is the triple. */
 			up = idinode->di_ib[2];
-			off = (lbn-2-BASE_TINDIR)/(NINDIR(fs)*NINDIR(fs));
+			off = (lbn-2-BASE_TINDIR)/(LFS_NINDIR(fs)*LFS_NINDIR(fs));
 			if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 				return UNASSIGNED;
 			/* printf("lbn %d: parent is the triple\n", -lbn); */
-			bread(fsbtodb(sblock, up), bp, sblock->lfs_bsize);
+			bread(LFS_FSBTODB(sblock, up), bp, sblock->lfs_bsize);
 			/* XXX ondisk32 */
 			return (daddr_t)((int32_t *)bp)[off];
 		} else /* residue == 0 */ {
@@ -273,7 +273,7 @@ lfs_bmap(struct lfs *fs, struct ulfs1_dinode *idinode, daddr_t lbn)
 	up = lfs_bmap(fs,idinode,up);
 	if(up == UNASSIGNED || up == LFS_UNUSED_DADDR)
 		return UNASSIGNED;
-	bread(fsbtodb(sblock, up), bp, sblock->lfs_bsize);
+	bread(LFS_FSBTODB(sblock, up), bp, sblock->lfs_bsize);
 	/* XXX ondisk32 */
 	return (daddr_t)((int32_t *)bp)[off];
 }
@@ -294,7 +294,7 @@ lfs_ientry(ino_t ino)
 	ldp = (struct ulfs1_dinode *)dp;
 	blkno = lfs_bmap(sblock, ldp ,lbn);
 	if (blkno != ifblkno)
-		bread(fsbtodb(sblock, blkno), (char *)ifileblock,
+		bread(LFS_FSBTODB(sblock, blkno), (char *)ifileblock,
 		    sblock->lfs_bsize);
 	return ifileblock + (ino % sblock->lfs_ifpb);
 }
@@ -305,7 +305,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct ulfs1_dinode *dip)
 {
 	int cnt;
 
-	for (cnt = 0; cnt < INOPB(fs); cnt++)
+	for (cnt = 0; cnt < LFS_INOPB(fs); cnt++)
 		if(dip[cnt].di_inumber == ino)
 			return &(dip[cnt]);
 	return NULL;
@@ -325,7 +325,7 @@ getino(ino_t inum)
 		/* Load the ifile inode if not already */
 		if(ifile_dinode.dlp1.di_inumber == 0) {
 			blkno = sblock->lfs_idaddr;
-			bread(fsbtodb(sblock, blkno), (char *)inoblock, 
+			bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
 				(int)sblock->lfs_bsize);
 			dp = lfs_ifind(sblock, inum, inoblock);
 			ifile_dinode.dlp1 = *dp; /* Structure copy */
@@ -339,7 +339,7 @@ getino(ino_t inum)
 		return &empty_dinode;
 
 	if(blkno != inoblkno) {
-		bread(fsbtodb(sblock, blkno), (char *)inoblock, 
+		bread(LFS_FSBTODB(sblock, blkno), (char *)inoblock, 
 			(int)sblock->lfs_bsize);
 #ifdef notyet
 		if (needswap)
