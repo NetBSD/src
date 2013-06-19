@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.2 2013/06/19 17:51:26 dholland Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.3 2013/06/19 18:18:12 dholland Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -149,7 +149,7 @@ void minixfs3_i_bswap(struct mfs_dinode *, struct mfs_dinode *);
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define blkoff(fs, loc)		/* calculates (loc % fs->mfs_bsize) */ \
+#define mfs_blkoff(fs, loc)	/* calculates (loc % fs->mfs_bsize) */ \
 	((loc) & (fs)->mfs_qbmask)
 #define lblkno(fs, loc)		/* calculates (loc / fs->mfs_bsize) */ \
 	((loc) >> (fs)->mfs_bshift)
