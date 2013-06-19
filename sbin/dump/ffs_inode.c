@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.20 2013/01/22 09:39:11 dholland Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.21 2013/06/19 17:51:25 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.20 2013/01/22 09:39:11 dholland Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.21 2013/06/19 17:51:25 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -231,8 +231,8 @@ getino(ino_t inum)
 		goto gotit;
 	bread(fsatoda(ufsib, ino_to_fsba(sblock, inum)), (char *)inoblock,
 	    (int)ufsib->ufs_bsize);
-	minino = inum - (inum % INOPB(sblock));
-	maxino = minino + INOPB(sblock);
+	minino = inum - (inum % FFS_INOPB(sblock));
+	maxino = minino + FFS_INOPB(sblock);
 	if (needswap) {
 		if (is_ufs2) {
 			dp2 = (struct ufs2_dinode *)inoblock;

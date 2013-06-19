@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.97 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.98 2013/06/19 17:51:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.97 2013/06/09 17:57:09 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.98 2013/06/19 17:51:25 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ setup(const char *dev, const char *origdev)
 	sizepb = sblock->fs_bsize;
 	maxfilesize = sblock->fs_bsize * UFS_NDADDR - 1;
 	for (i = 0; i < UFS_NIADDR; i++) {
-		sizepb *= NINDIR(sblock);
+		sizepb *= FFS_NINDIR(sblock);
 		maxfilesize += sizepb;
 	}
 	if ((!is_ufs2 && cvtlevel >= 4) &&

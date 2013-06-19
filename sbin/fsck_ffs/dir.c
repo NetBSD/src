@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.55 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: dir.c,v 1.56 2013/06/19 17:51:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.55 2013/06/09 17:57:09 dholland Exp $");
+__RCSID("$NetBSD: dir.c,v 1.56 2013/06/19 17:51:25 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -737,7 +737,7 @@ expanddir(union dinode *dp, char *name)
 		    btodb(sblock->fs_bsize));
 		dirblk = iswap32(dp1->di_db[lastbn + 1]);
 	}
-	bp = getdirblk(dirblk, sblksize(sblock, (daddr_t)DIP(dp, size), lastbn + 1));
+	bp = getdirblk(dirblk, ffs_sblksize(sblock, (daddr_t)DIP(dp, size), lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memmove(firstblk, bp->b_un.b_buf, dirblksiz);
@@ -751,7 +751,7 @@ expanddir(union dinode *dp, char *name)
 	     cp += dirblksiz)
 		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
-	bp = getdirblk(dirblk, sblksize(sblock, (daddr_t)DIP(dp, size), lastbn + 1));
+	bp = getdirblk(dirblk, ffs_sblksize(sblock, (daddr_t)DIP(dp, size), lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memmove(bp->b_un.b_buf, &emptydir, sizeof emptydir);
