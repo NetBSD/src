@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.257 2013/06/19 10:38:51 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.258 2013/06/19 10:53:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.257 2013/06/19 10:38:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.258 2013/06/19 10:53:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7023,7 +7023,7 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 	uint16_t val;
 	int rv;
 
-	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
+	if (wm_get_swfwhw_semaphore(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
 		return 0;
@@ -7055,7 +7055,7 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 	}
 
 	rv = wm_gmii_i82544_readreg(self, phy, regnum & IGPHY_MAXREGADDR);
-	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
+	wm_put_swfwhw_semaphore(sc);
 	return rv;
 }
 
@@ -7073,7 +7073,7 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
 
-	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
+	if (wm_get_swfwhw_semaphore(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
 		return;
@@ -7110,7 +7110,7 @@ wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 	}
 
 	wm_gmii_i82544_writereg(self, phy, regnum & IGPHY_MAXREGADDR, val);
-	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
+	wm_put_swfwhw_semaphore(sc);
 }
 
 /*
