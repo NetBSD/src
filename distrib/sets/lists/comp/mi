@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1824 2013/06/17 12:35:02 tsutsui Exp $
+#	$NetBSD: mi,v 1.1825 2013/06/20 20:43:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6956,6 +6956,7 @@
 ./usr/share/man/cat3/login_getcapstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_getcaptime.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_getclass.0		comp-c-catman		.cat
+./usr/share/man/cat3/login_getpwclass.0		comp-c-catman		.cat
 ./usr/share/man/cat3/login_tty.0		comp-c-catman		.cat
 ./usr/share/man/cat3/loginx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/logout.0			comp-c-catman		.cat
@@ -13458,6 +13459,7 @@
 ./usr/share/man/html3/login_getcapstr.html	comp-c-htmlman		html
 ./usr/share/man/html3/login_getcaptime.html	comp-c-htmlman		html
 ./usr/share/man/html3/login_getclass.html	comp-c-htmlman		html
+./usr/share/man/html3/login_getpwclass.html	comp-c-htmlman		html
 ./usr/share/man/html3/login_tty.html		comp-c-htmlman		html
 ./usr/share/man/html3/loginx.html		comp-c-htmlman		html
 ./usr/share/man/html3/logout.html		comp-c-htmlman		html
@@ -19944,6 +19946,7 @@
 ./usr/share/man/man3/login_getcapstr.3		comp-c-man		.man
 ./usr/share/man/man3/login_getcaptime.3		comp-c-man		.man
 ./usr/share/man/man3/login_getclass.3		comp-c-man		.man
+./usr/share/man/man3/login_getpwclass.3		comp-c-man		.man
 ./usr/share/man/man3/login_tty.3		comp-c-man		.man
 ./usr/share/man/man3/loginx.3			comp-c-man		.man
 ./usr/share/man/man3/logout.3			comp-c-man		.man
