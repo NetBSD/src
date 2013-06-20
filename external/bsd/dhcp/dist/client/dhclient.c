@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.7 2013/06/20 15:14:03 christos Exp $	*/
 
 /* dhclient.c
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.7 2013/06/20 15:14:03 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -894,7 +894,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.7 2013/06/20 15:14:03 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
@@ -3532,9 +3532,11 @@ void go_daemon (void)
 		log_fatal ("Can't fork daemon: %m");
 	else if (pid) {
 		char c;
+		close(pfd[0]);
 		read(pfd[1], &c, 1);
 		exit (0);
-	}
+	} else
+		close(pfd[1]);
 }
 
 void write_client_pid_file ()
