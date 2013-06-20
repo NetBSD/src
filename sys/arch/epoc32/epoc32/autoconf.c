@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2013/06/20 13:40:09 kiyohara Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2013/06/20 13:40:09 kiyohara Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -71,4 +71,8 @@ device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint32(dict, "height", epoc32_fb_height);
 		prop_dictionary_set_uint32(dict, "addr", epoc32_fb_addr);
 	}
+
+	if (booted_device == NULL)
+		if (device_is_a(dev, "wd"))
+			booted_device = dev;
 }
