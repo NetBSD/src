@@ -1,4 +1,4 @@
-/*	$NetBSD: divide.S,v 1.2 2013/05/08 05:13:56 matt Exp $	*/
+/*	$NetBSD: divide.S,v 1.3 2013/06/20 07:16:23 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -13,6 +13,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef __ARM_ARCH_EXT_IDIV__
 
 #include <machine/asm.h>
 
@@ -374,3 +376,5 @@ __divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	addhs	r3, r3, r2
 	mov	r0, r3
 	RET
+
+#endif /* __ARM_ARCH_EXT_IDIV__ */
