@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2013/04/28 12:11:26 kiyohara Exp $
+$NetBSD: version,v 1.2 2013/06/20 13:36:48 kiyohara Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -8,3 +8,4 @@ is taken as the current.
 0.2:		Load specific kernel.
 0.3:		Support SERIES5.
 1.0:		Initial release version.
+1.1:		Support boot argument for kernel.
