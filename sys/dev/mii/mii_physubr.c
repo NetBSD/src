@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.79 2013/06/16 06:29:08 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.80 2013/06/20 13:56:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.79 2013/06/16 06:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.80 2013/06/20 13:56:29 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -436,9 +436,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int s;
 
-	s = splnet();
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
 			if_link_state_change(ifp, LINK_STATE_UP);
@@ -446,7 +444,6 @@ mii_phy_statusmsg(struct mii_softc *sc)
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 	} else
 		if_link_state_change(ifp, LINK_STATE_UNKNOWN);
-	splx(s);
 
 	ifp->if_baudrate = ifmedia_baudrate(mii->mii_media_active);
 }

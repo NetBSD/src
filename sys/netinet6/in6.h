@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.72 2013/06/11 12:08:29 roy Exp $	*/
+/*	$NetBSD: in6.h,v 1.73 2013/06/20 13:56:29 roy Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -700,6 +700,8 @@ void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
+extern void in6_if_link_up(struct ifnet *);
+extern void in6_if_link_down(struct ifnet *);
 extern void in6_if_up(struct ifnet *);
 extern void in6_if_down(struct ifnet *);
 #ifndef __FreeBSD__

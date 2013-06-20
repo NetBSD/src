@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.164 2013/06/11 12:08:29 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.165 2013/06/20 13:56:29 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.164 2013/06/11 12:08:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165 2013/06/20 13:56:29 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2165,7 +2165,7 @@ in6_ifawithifp(struct ifnet *ifp, struct in6_addr *dst)
  * perform DAD when interface becomes IFF_UP.
  */
 void
-in6_if_up(struct ifnet *ifp)
+in6_if_link_up(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
@@ -2206,23 +2206,33 @@ in6_if_up(struct ifnet *ifp)
 		}
 	}
 
+	/* Restore any detached prefixes */
+	pfxlist_onlink_check();
+}
+
+void
+in6_if_up(struct ifnet *ifp)
+{
+
 	/*
 	 * special cases, like 6to4, are handled in in6_ifattach
 	 */
 	in6_ifattach(ifp, NULL);
 
-	/* Restore any detached prefixes */
-	pfxlist_onlink_check();
+	/* interface may not support link state, so bring it up also */
+	in6_if_link_up(ifp);
 }
-
 /*
  * Mark all addresses as detached.
  */
 void
-in6_if_down(struct ifnet *ifp)
+in6_if_link_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
+
+	/* Any prefixes on this interface should be detached as well */
+	pfxlist_onlink_check();
 
 	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -2249,9 +2259,13 @@ in6_if_down(struct ifnet *ifp)
 			nd6_newaddrmsg(ifa);
 		}
 	}
+}
 
-	/* Any prefixes on this interface should be detached as well */
-	pfxlist_onlink_check();
+void
+in6_if_down(struct ifnet *ifp)
+{
+
+	in6_if_link_down(ifp);
 }
 
 int

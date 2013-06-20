@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.263 2013/06/11 12:08:29 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.263 2013/06/11 12:08:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $");
 
 #include "opt_inet.h"
 
@@ -1333,14 +1333,19 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 
 /*
  * Handle a change in the interface link state.
+ * XXX: We should listen to the routing socket in-kernel rather
+ * than calling in6_if_link_* functions directly from here.
  */
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int old_link_state;
+	int old_link_state, s;
 
-	if (ifp->if_link_state == link_state)
+	s = splnet();
+	if (ifp->if_link_state == link_state) {
+		splx(s);
 		return;
+	}
 
 	old_link_state = ifp->if_link_state;
 	ifp->if_link_state = link_state;
@@ -1349,7 +1354,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		link_state == LINK_STATE_UP ? "UP" :
 		link_state == LINK_STATE_DOWN ? "DOWN" :
 		"UNKNOWN",
-		old_link_state == LINK_STATE_UP ? "UP" :
+		 old_link_state == LINK_STATE_UP ? "UP" :
 		old_link_state == LINK_STATE_DOWN ? "DOWN" :
 		"UNKNOWN");
 #endif
@@ -1366,7 +1371,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	 */
 	if (link_state == LINK_STATE_UP &&
 	    old_link_state == LINK_STATE_UNKNOWN)
-		in6_if_down(ifp);
+		in6_if_link_down(ifp);
 #endif
 
 	/* Notify that the link state has changed. */
@@ -1379,10 +1384,12 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 
 #ifdef INET6
 	if (link_state == LINK_STATE_DOWN)
-		in6_if_down(ifp);
+		in6_if_link_down(ifp);
 	else if (link_state == LINK_STATE_UP)
-		in6_if_up(ifp);
+		in6_if_link_up(ifp);
 #endif
+
+	splx(s);
 }
 
 /*
