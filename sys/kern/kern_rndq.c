@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.12 2013/06/13 01:37:03 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.13 2013/06/20 23:21:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.12 2013/06/13 01:37:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.13 2013/06/20 23:21:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -174,6 +174,12 @@ LIST_HEAD(, krndsource)	rnd_sources;
 
 rndsave_t		*boot_rsp;
 
+void
+rnd_init_softint(void) {
+	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	    rnd_intr, NULL);
+}
+
 /*
  * Generate a 32-bit counter.  This should be more machine dependent,
  * using cycle counters and the like when possible.
@@ -207,20 +213,12 @@ rnd_schedule_softint(void *softint)
 	kpreempt_enable();
 }
 
-/*
- * XXX repulsive: we can't initialize our softints in rnd_init
- * XXX (too early) so we wrap the points where we'd schedule them, thus.
- */
 static inline void
 rnd_schedule_process(void)
 {
 	if (__predict_true(rnd_process)) {
 		rnd_schedule_softint(rnd_process);
 		return;
-	}
-	if (!cold) {
-		rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-						rnd_intr, NULL);
 	} 
 	rnd_process_events();
 }
