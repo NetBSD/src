@@ -1,4 +1,4 @@
-/*	$NetBSD: e32boot.cpp,v 1.2 2013/06/20 13:36:48 kiyohara Exp $	*/
+/*	$NetBSD: e32boot.cpp,v 1.3 2013/06/20 15:30:00 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -173,7 +173,9 @@ E32BootL(void)
 	int n, m;
 	n = sizeof(bootargs->bootargs);
 	m = (*netbsd->GetArgs()).Length();
-	Mem::Copy(bootargs->bootargs, &(*netbsd->GetArgs())[0], n < m ? n : m);
+	if (m > 0)
+		Mem::Copy(bootargs->bootargs, &(*netbsd->GetArgs())[0],
+		    n < m ? n : m);
 	bootargs->bootargs[n < m ? n - 1 : m] = '\0';
 
 	netbsd->ParseHeader();
