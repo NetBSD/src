@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.449 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.450 2013/06/20 23:21:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.449 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.450 2013/06/20 23:21:41 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -564,6 +564,8 @@ main(void)
 	domaininit(true);
 	if_attachdomain();
 	splx(s);
+
+	rnd_init_softint();
 
 #ifdef GPROF
 	/* Initialize kernel profiling. */
