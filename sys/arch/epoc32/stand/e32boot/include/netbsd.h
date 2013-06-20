@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.h,v 1.1 2013/04/28 12:11:27 kiyohara Exp $	*/
+/*	$NetBSD: netbsd.h,v 1.2 2013/06/20 13:36:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -43,16 +43,20 @@ struct loaddesc {
 class NetBSD {
 public:
 	static NetBSD *New(const TDesC &);
+	static NetBSD *New(const TDesC &, const TDesC &);
 
 	virtual void ParseHeader(void);
-	TUint8 *getBuffer(void) { return Buffer; };
-	Elf32_Off getEntryPoint(void) { return EntryPoint; };
-	struct loaddesc *getLoadDescriptor(void) { return LoadDescriptor; };
+	TUint8 *GetBuffer(void) { return Buffer; };
+	Elf32_Off GetEntryPoint(void) { return EntryPoint; };
+	struct loaddesc *GetLoadDescriptor(void) { return LoadDescriptor; };
+	const TDesC *GetArgs(void) { return Args; };
 
 protected:
 	TUint8 *Buffer;
 	struct loaddesc *LoadDescriptor;	/* Must page aligned */
 	Elf32_Off EntryPoint;
+
+	const TDesC *Args; 
 };
 
 class ELF : public NetBSD {

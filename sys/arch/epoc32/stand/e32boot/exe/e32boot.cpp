@@ -1,4 +1,4 @@
-/*	$NetBSD: e32boot.cpp,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: e32boot.cpp,v 1.2 2013/06/20 13:36:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -131,6 +131,7 @@ E32BootL(void)
 	struct btinfo_common *bootinfo;
 	struct btinfo_model *model;
 	struct btinfo_video *video;
+	struct btinfo_bootargs *bootargs;
 
 	console =
 	    Console::NewL(E32BootName, TSize(KConsFullScreen, KConsFullScreen));
@@ -160,12 +161,20 @@ E32BootL(void)
 
 	console->Printf(_L("\n"));
 
+	bootargs =
+	    (struct btinfo_bootargs *)FindBootInfoL(bootinfo, BTINFO_BOOTARGS);
 	TRAP(err, netbsd = LoadNetBSDL());
 	if (err != KErrNone)
 		User::Leave(err);
 	else if (netbsd == NULL)
 		return;
 	console->Printf(_L("\nLoaded\n"));
+
+	int n, m;
+	n = sizeof(bootargs->bootargs);
+	m = (*netbsd->GetArgs()).Length();
+	Mem::Copy(bootargs->bootargs, &(*netbsd->GetArgs())[0], n < m ? n : m);
+	bootargs->bootargs[n < m ? n - 1 : m] = '\0';
 
 	netbsd->ParseHeader();
 
@@ -220,13 +229,15 @@ LOCAL_C NetBSD *
 LoadNetBSDL(void)
 {
 	NetBSD *netbsd = NULL;
-	TBuf<KMaxCommandLine> input;
+	TBuf<KMaxCommandLine> input, *args;
 	TPtrC Default = _L("C:\\netbsd");
 	TPtrC Prompt = _L("Boot: ");
 	TInt pos, err;
 	TBool retry;
 
 	input.Zero();
+	args = new TBuf<KMaxCommandLine>;
+	args->Zero();
 	retry = false;
 	console->Printf(Prompt);
 	console->Printf(_L("["));
@@ -264,19 +275,29 @@ LoadNetBSDL(void)
 			break;
 		}
 		if (gChar == EKeyEnter) {
-			if (input.Length() > 0) {
-				TBufC<KMaxCommandLine> kernel =
-				    TBufC<KMaxCommandLine>(input);
+			input.TrimAll();
+			if (input[0] == '-')
+				input.Swap(*args);
+			for (int i = 0; i < input.Length(); i++)
+				if (input[i] == ' ') {
+					args->Copy(input);
+					input.SetLength(i);
+					args->Delete(0, i + 1);
+					break;
+				}
+			args->ZeroTerminate();
 
-				TRAP(err, netbsd = NetBSD::New(kernel));
+			if (input.Length() > 0) {
+				TRAP(err, netbsd = NetBSD::New(input, *args));
 			} else {
-				TRAP(err, netbsd = NetBSD::New(Default));
+				TRAP(err, netbsd = NetBSD::New(Default, *args));
 			}
 			if (err == 0 && netbsd != NULL)
 				break;
 			console->Printf(_L("\nLoad failed: %d\n"), err);
 
 			input.Zero();
+			args->Zero();
 			console->Printf(Prompt);
 			pos = 0;
 			retry = true;
@@ -306,6 +327,7 @@ CreateBootInfo(TAny *buf)
 	struct btinfo_model *model;
 	struct btinfo_memory *memory;
 	struct btinfo_video *video;
+	struct btinfo_bootargs *bootargs;
 	struct memmap *memmap;
 	TUint memsize;
 	TUint i;
@@ -360,6 +382,12 @@ CreateBootInfo(TAny *buf)
 		memory->size = 4096 KB;			/* XXXXX */
 		common = &(memory + 1)->common;
 	}
+
+	common->len = sizeof(struct btinfo_bootargs);
+	common->type = BTINFO_BOOTARGS;
+	bootargs = (struct btinfo_bootargs *)common;
+	bootargs->bootargs[0] = '\0';
+	common = &(bootargs + 1)->common;
 
 	common->len = 0;
 	common->type = BTINFO_NONE;

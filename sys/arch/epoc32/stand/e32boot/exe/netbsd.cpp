@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.cpp,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: netbsd.cpp,v 1.2 2013/06/20 13:36:48 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -72,6 +72,16 @@ NetBSD::New(const TDesC &aFilename)
 
 	netbsd->LoadDescriptor =
 	    (struct loaddesc *)PAGE_ALIGN(User::AllocL(ALIGN_SAFE_PAGE_SIZE));
+
+	return netbsd;
+}
+
+NetBSD *
+NetBSD::New(const TDesC &aFilename, const TDesC &aArgs)
+{
+	NetBSD *netbsd = New(aFilename);
+
+	netbsd->Args = &aArgs;
 
 	return netbsd;
 }
