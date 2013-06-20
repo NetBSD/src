@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.48 2013/06/18 23:40:38 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.49 2013/06/20 05:39:19 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.48 2013/06/18 23:40:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.49 2013/06/20 05:39:19 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -217,6 +217,10 @@ extern char _end[];
 int use_fb_console = false;
 #else
 int use_fb_console = true;
+#endif
+
+#ifdef CPU_CORTEXA15
+uint32_t omap5_cnt_frq;
 #endif
 
 /*
@@ -479,7 +483,7 @@ initarm(void *arg)
 #if 1
 	beagle_putchar('h');
 #endif
-	printf("uboot arg = %#x, %#x, %#x, %#x\n",
+	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 #ifdef KGDB
@@ -501,6 +505,8 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
+
+	printf("initarm: cbar=%#x\n", armreg_cbar_read());
 
 	/*
 	 * Set up the variables that define the availability of physical
@@ -719,7 +725,8 @@ omap4_cpu_clk(void)
 	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
 	static const uint32_t cm_clksel_freqs[] = OMAP4_CM_CLKSEL_FREQS;
 	const uint32_t prm_clksel = *(volatile uint32_t *)(prm_base + OMAP4_CM_SYS_CLKSEL);
-	const uint32_t sys_clk = cm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP4_CM_SYS_CLKSEL_CLKIN)];
+	const u_int clksel = __SHIFTOUT(prm_clksel, OMAP4_CM_SYS_CLKSEL_CLKIN);
+	const uint32_t sys_clk = cm_clksel_freqs[clksel];
 	const uint32_t dpll1 = *(volatile uint32_t *)(cm_base + OMAP4_CM_CLKSEL_DPLL_MPU);
 	const uint32_t dpll2 = *(volatile uint32_t *)(cm_base + OMAP4_CM_DIV_M2_DPLL_MPU);
 	const uint32_t m = __SHIFTOUT(dpll1, OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
@@ -734,6 +741,56 @@ omap4_cpu_clk(void)
 	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u mult=%u\n",
 	    __func__, curcpu()->ci_data.cpu_cc_freq,
 	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
+
+#if defined(CPU_CORTEXA15)
+	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
+		beagle_putchar('0');
+		uint32_t voffset = OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR; 
+		uint32_t frac2_reg = OMAP5_PRM_FRAC_INCREMENTER_DENUMERATOR_RELOAD; 
+		uint32_t frac1 = *(volatile uint32_t *)(frac1_reg + voffset);
+		beagle_putchar('1');
+		uint32_t frac2 = *(volatile uint32_t *)(frac2_reg + voffset);
+		beagle_putchar('2');
+		uint32_t numer = __SHIFTOUT(frac1, PRM_FRAC_INCR_NUM_SYS_MODE);
+		uint32_t denom = __SHIFTOUT(frac2, PRM_FRAC_INCR_DENUM_DENOMINATOR);
+		uint32_t freq = (uint64_t)omap_sys_clk * numer / denom;
+#if 1
+		if (freq != OMAP5_GTIMER_FREQ) {
+			static uint16_t numer_demon[8][2] = {
+			    {         0,          0 },	/* not used */
+			    {  26 *  64,  26 *  125 },	/* 12.0Mhz */
+			    {   2 * 768,   2 * 1625 },	/* 13.0Mhz */
+			    {         0,          0 },	/* 16.8Mhz (not used) */
+			    { 130 *   8, 130 *   25 },	/* 19.2Mhz */
+			    {   2 * 384,   2 * 1625 },	/* 26.0Mhz */
+			    {   3 * 256,   3 * 1125 },	/* 27.0Mhz */
+			    { 130 *   4, 130 *   25 },	/* 38.4Mhz */
+			};
+			if (numer_demon[clksel][0] != numer) {
+				frac1 &= ~PRM_FRAC_INCR_NUM_SYS_MODE;
+				frac1 |= numer_demon[clksel][0];
+			}
+			if (numer_demon[clksel][1] != denom) {
+				frac2 &= ~PRM_FRAC_INCR_DENUM_DENOMINATOR;
+				frac2 |= numer_demon[clksel][1];
+			}
+			*(volatile uint32_t *)(frac1_reg + voffset) = frac1;
+			*(volatile uint32_t *)(frac2_reg + voffset) = frac2
+			    | PRM_FRAC_INCR_DENUM_RELOAD;
+			freq = OMAP5_GTIMER_FREQ;
+		}
+#endif
+		beagle_putchar('3');
+#if 0
+		if (gtimer_freq != freq) {
+			armreg_cnt_frq_write(freq);	// secure only
+		}
+#endif
+		omap5_cnt_frq = freq;
+		beagle_putchar('4');
+	}
+#endif
 }
 #endif /* OMAP_4XXX || OMAP_5XXX */
 
@@ -767,7 +824,15 @@ am335x_cpu_clk(void)
 static inline uint32_t
 emif_read_sdram_config(vaddr_t emif_base)
 {
-	return *(const volatile uint32_t *)(emif_base + EMIF_SDRAM_CONFIG);
+#ifdef CPU_CORTEXA15
+	return 0x61851b32; // XXX until i figure out why deref emif_base dies
+#else
+	emif_base += EMIF_SDRAM_CONFIG;
+	//printf("%s: sdram_config @ %#"PRIxVADDR" = ", __func__, emif_base);
+	uint32_t v = *(const volatile uint32_t *)(emif_base);
+	//printf("%#x\n", v);
+	return v;
+#endif
 }
 
 static psize_t 
@@ -881,6 +946,7 @@ beagle_device_register(device_t self, void *aux)
 		return;
 	}
  
+#ifdef CPU_CORTEXA9
 	/*
 	 * We need to tell the A9 Global/Watchdog Timer
 	 * what frequency it runs at.
@@ -893,7 +959,18 @@ beagle_device_register(device_t self, void *aux)
                 prop_dictionary_set_uint32(dict, "frequency",
 		    curcpu()->ci_data.cpu_cc_freq / 2);
 		return;
-	}	
+	}
+#endif
+
+#ifdef CPU_CORTEXA15
+	if (device_is_a(self, "armgtmr")) {
+		/*
+		 * The frequency of the generic timer was figured out when
+		 * determined the cpu frequency.
+		 */
+                prop_dictionary_set_uint32(dict, "frequency", omap5_cnt_frq);
+	}
+#endif
 
 	if (device_is_a(self, "ehci")) {
 #if defined(OMAP_3530)
