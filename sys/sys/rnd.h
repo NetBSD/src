@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.36 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.37 2013/06/20 23:21:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
+void		rnd_init_softint(void);
 void		_rnd_add_uint32(krndsource_t *, uint32_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
