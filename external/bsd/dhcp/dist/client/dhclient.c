@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $	*/
 
 /* dhclient.c
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -55,6 +55,7 @@ char *path_dhclient_script = path_dhclient_script_array;
 
 /* False (default) => we write and use a pid file */
 isc_boolean_t no_pid_file = ISC_FALSE;
+isc_boolean_t hw_mismatch_drop = ISC_TRUE;
 
 int dhcp_max_agent_option_packet_length = 0;
 
@@ -344,6 +345,8 @@ main(int argc, char **argv) {
 				usage();
 			}
 #endif /* DHCPv6 */
+		} else if (!strcmp(argv[i], "-m")) {
+			hw_mismatch_drop = ISC_FALSE;
 		} else if (!strcmp(argv[i], "-v")) {
 			quiet = 0;
 		} else if (!strcmp(argv[i], "--version")) {
@@ -362,8 +365,7 @@ main(int argc, char **argv) {
 	 * Do this before setup, otherwise if we are using threads things
 	 * are not going to work
 	 */
-	if (nowait)
-		go_daemon();
+	go_daemon();
 	setup();
 	if (interfaces_requested > 0)
 		add_interfaces(ifaces, interfaces_requested);
@@ -431,7 +433,8 @@ main(int argc, char **argv) {
 	 * to write a pid file - we assume they are controlling
 	 * the process in some other fashion.
 	 */
-	if ((release_mode || exit_mode) && (no_pid_file == ISC_FALSE)) {
+	if (path_dhclient_pid != NULL &&
+	    (release_mode || exit_mode) && (no_pid_file == ISC_FALSE)) {
 		FILE *pidfd;
 		pid_t oldpid;
 		long temp;
@@ -712,8 +715,6 @@ main(int argc, char **argv) {
 	dmalloc_longterm = dmalloc_outstanding;
 	dmalloc_outstanding = 0;
 #endif
-
-
 	/* If we're not going to daemonize, write the pid file
 	   now. */
 	if (no_daemon || nowait)
@@ -736,9 +737,9 @@ static void usage()
 
 	log_fatal("Usage: dhclient "
 #ifdef DHCPv6
-		  "[-4|-6] [-SNTP1dvrx] [-nw] [-p <port>] [-D LL|LLT]\n"
+		  "[-4|-6] [-SNTP1dvrx] [-nw] [-m] [-p <port>] [-D LL|LLT]\n"
 #else /* DHCPv6 */
-		  "[-1dvrx] [-nw] [-p <port>]\n"
+		  "[-1dvrx] [-nw] [-m] [-p <port>]\n"
 #endif /* DHCPv6 */
 		  "                [-s server-addr] [-cf config-file] "
 		  "[-lf lease-file]\n"
@@ -815,7 +816,7 @@ void run_stateless(int exit_mode)
 	/* If we're not supposed to wait before getting the address,
 	   don't. */
 	if (nowait)
-		go_daemon();
+		finish_daemon();
 
 	/* If we're not going to daemonize, write the pid file
 	   now. */
@@ -893,7 +894,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.5 2013/06/16 23:49:50 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.6 2013/06/20 12:24:08 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
@@ -1045,6 +1046,25 @@ void state_selecting (cpp)
 	send_request (client);
 }
 
+static isc_boolean_t
+compare_hw_address(const char *name, struct packet *packet) {
+	if (packet->interface->hw_address.hlen - 1 != packet->raw->hlen ||
+	    memcmp(&packet->interface->hw_address.hbuf[1],
+	    packet->raw->chaddr, packet->raw->hlen)) {
+		unsigned char *c  = packet->raw ->chaddr;
+		log_error ("%s raw = %d %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 
+		    name, packet->raw->hlen,
+		    c[0], c[1], c[2], c[3], c[4], c[5]);
+		c = &packet -> interface -> hw_address.hbuf [1];
+		log_error ("%s cooked = %d %.2x:%.2x:%.2x:%.2x:%.2x:%.2x", 
+		    name, packet->interface->hw_address.hlen - 1,
+		    c[0], c[1], c[2], c[3], c[4], c[5]);
+		log_error ("%s in wrong transaction (%s ignored).", name,
+			hw_mismatch_drop ? "packet" : "error");
+		return hw_mismatch_drop;
+	}
+	return ISC_FALSE;
+}
 /* state_requesting is called when we receive a DHCPACK message after
    having sent out one or more DHCPREQUEST packets. */
 
@@ -1063,16 +1083,8 @@ void dhcpack (packet)
 		if (client -> xid == packet -> raw -> xid)
 			break;
 	}
-	if (!client ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("DHCPACK in wrong transaction.");
-#endif
+	if (!client || compare_hw_address("DHCPACK", packet) == ISC_TRUE)
 		return;
-	}
 
 	if (client -> state != S_REBOOTING &&
 	    client -> state != S_REQUESTING &&
@@ -1274,7 +1286,7 @@ void bind_lease (client)
 	      (long)(client -> active -> renewal - cur_time));
 	client -> state = S_BOUND;
 	reinitialize_interfaces ();
-	go_daemon ();
+	finish_daemon ();
 #if defined (NSUPDATE)
 	if (client->config->do_forward_update)
 		dhclient_schedule_updates(client, &client->active->address, 1);
@@ -1535,17 +1547,9 @@ void dhcpoffer (packet)
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (!client ||
-	    client -> state != S_SELECTING ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("%s in wrong transaction.", name);
-#endif
+	if (!client || client -> state != S_SELECTING ||
+	    compare_hw_address(name, packet) == ISC_TRUE)
 		return;
-	}
 
 	sprintf (obuf, "%s from %s", name, piaddr (packet -> client_addr));
 
@@ -1781,16 +1785,8 @@ void dhcpnak (packet)
 
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
-	if (!client ||
-	    (packet -> interface -> hw_address.hlen - 1 !=
-	     packet -> raw -> hlen) ||
-	    (memcmp (&packet -> interface -> hw_address.hbuf [1],
-		     packet -> raw -> chaddr, packet -> raw -> hlen))) {
-#if defined (DEBUG)
-		log_debug ("DHCPNAK in wrong transaction.");
-#endif
+	if (!client || compare_hw_address("DHCPNAK", packet) == ISC_TRUE)
 		return;
-	}
 
 	if (client -> state != S_REBOOTING &&
 	    client -> state != S_REQUESTING &&
@@ -2067,7 +2063,7 @@ void state_panic (cpp)
 	tv.tv_usec = ((tv.tv_sec - cur_tv.tv_sec) > 1) ?
 			random() % 1000000 : cur_tv.tv_usec;
 	add_timeout(&tv, state_init, client, 0, 0);
-	go_daemon ();
+	finish_daemon ();
 }
 
 void send_request (cpp)
@@ -3482,16 +3478,13 @@ int dhcp_option_ev_name (buf, buflen, option)
 	return 1;
 }
 
-void go_daemon ()
+static int pfd[2];
+void finish_daemon (void)
 {
 	static int state = 0;
-	int pid;
 
-	/* Don't become a daemon if the user requested otherwise. */
-	if (no_daemon) {
-		write_client_pid_file ();
+	if (no_daemon)
 		return;
-	}
 
 	/* Only do it once. */
 	if (state)
@@ -3501,13 +3494,8 @@ void go_daemon ()
 	/* Stop logging to stderr... */
 	log_perror = 0;
 
-	/* Become a daemon... */
-	if ((pid = fork ()) < 0)
-		log_fatal ("Can't fork daemon: %m");
-	else if (pid)
-		exit (0);
 	/* Become session leader and get pid... */
-	pid = setsid ();
+	setsid();
 
 	/* Close standard I/O descriptors. */
 	close(0);
@@ -3522,6 +3510,31 @@ void go_daemon ()
 	write_client_pid_file ();
 
 	IGNORE_RET (chdir("/"));
+	write(pfd[0], "X", 1);
+	close(pfd[0]);
+}
+
+void go_daemon (void)
+{
+	pid_t pid;
+
+	/* Don't become a daemon if the user requested otherwise. */
+	if (no_daemon) {
+		write_client_pid_file ();
+		return;
+	}
+
+
+	if (pipe(pfd) == -1)
+		log_fatal ("Can't pipe to child: %m");
+	/* Become a daemon... */
+	if ((pid = fork ()) < 0)
+		log_fatal ("Can't fork daemon: %m");
+	else if (pid) {
+		char c;
+		read(pfd[1], &c, 1);
+		exit (0);
+	}
 }
 
 void write_client_pid_file ()
@@ -3530,7 +3543,7 @@ void write_client_pid_file ()
 	int pfdesc;
 
 	/* nothing to do if the user doesn't want a pid file */
-	if (no_pid_file == ISC_TRUE) {
+	if (path_dhclient_pid == NULL || no_pid_file == ISC_TRUE) {
 		return;
 	}
 
