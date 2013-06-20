@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2013/06/20 13:40:09 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2013/06/20 13:40:09 kiyohara Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $")
 
 
 BootConfig bootconfig;		/* Boot config storage */
+static char bootargs[256];
 char *boot_args = NULL;
 
 vm_offset_t physical_start;
@@ -170,6 +171,7 @@ initarm(void *arg)
 	struct btinfo_model *model = NULL;
 	struct btinfo_memory *memory = NULL;
 	struct btinfo_video *video = NULL;
+	struct btinfo_bootargs *args = NULL;
 	u_int l1pagetable, _end_physical;
 	int loop, loop1, n, i;
 
@@ -211,12 +213,29 @@ initarm(void *arg)
 			epoc32_fb_width = video->width;
 			epoc32_fb_height = video->height;
 			break;
+
+		case BTINFO_BOOTARGS:
+			args = (struct btinfo_bootargs *)btinfo;
+			btinfo = &(args + 1)->common;
+			memcpy(bootargs, args->bootargs,
+			    min(sizeof(bootargs), sizeof(args->bootargs)));
+			bootargs[sizeof(bootargs) - 1] = '\0';
+			boot_args = bootargs;
+			break;
+
+		default:
+#define NEXT_BOOTINFO(bi) (struct btinfo_common *)((char *)bi + (bi)->len)
+
+			btinfo = NEXT_BOOTINFO(btinfo);
 		}
 	}
 	if (bootconfig.dramblocks == 0)
 		panic("BTINFO_MEMORY not found");
 
 	consinit();
+
+	if (boot_args != NULL)
+		parse_mi_bootargs(boot_args);
 
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = bootconfig.dram[0].address;
