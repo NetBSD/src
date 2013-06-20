@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.19 2013/02/05 23:23:34 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.20 2013/06/20 05:24:46 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -152,6 +152,7 @@ load_vfpregs(const struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
+	case FPU_VFP_CORTEXA15:
 #endif
 		load_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -172,6 +173,7 @@ save_vfpregs(struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
+	case FPU_VFP_CORTEXA15:
 #endif
 		save_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -376,6 +378,7 @@ vfp_attach(void)
 	case FPU_VFP_CORTEXA7:
 	case FPU_VFP_CORTEXA8:
 	case FPU_VFP_CORTEXA9:
+	case FPU_VFP_CORTEXA15:
 		model = "NEON MPE (VFP 3.0+)";
 		cpu_neon_present = 1;
 		break;
@@ -539,6 +542,7 @@ vfp_state_load(lwp_t *l, u_int flags)
 			case FPU_VFP_CORTEXA7:
 			case FPU_VFP_CORTEXA8:
 			case FPU_VFP_CORTEXA9:
+			case FPU_VFP_CORTEXA15:
 				write_fpinst2(fregs->vfp_fpinst2);
 				write_fpinst(fregs->vfp_fpinst);
 				break;
@@ -588,6 +592,7 @@ vfp_state_save(lwp_t *l, u_int flags)
 		case FPU_VFP_CORTEXA7:
 		case FPU_VFP_CORTEXA8:
 		case FPU_VFP_CORTEXA9:
+		case FPU_VFP_CORTEXA15:
 			fregs->vfp_fpinst = read_fpinst();
 			fregs->vfp_fpinst2 = read_fpinst2();
 			break;
