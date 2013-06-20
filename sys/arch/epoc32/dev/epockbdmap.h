@@ -1,4 +1,4 @@
-/*	$NetBSD: epockbdmap.h,v 1.1 2013/04/28 12:11:25 kiyohara Exp $	*/
+/*	$NetBSD: epockbdmap.h,v 1.2 2013/06/20 13:42:02 kiyohara Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -46,7 +46,7 @@ static const keysym_t epockbd_keysym_us[] = {
     KC(13),  KS_8,		KS_asterisk,	KS_bracketright,
     KC(14),  KS_7,		KS_ampersand,	KS_bracketleft,
 //  KC(15),  Play
-    KC(17),  KS_y,		KS_voidSymbol,	KS_asterisk,
+    KC(17),  KS_y,		KS_Y,		KS_asterisk,
     KC(18),  KS_t,
     KC(19),  KS_r,
     KC(20),  KS_e,
@@ -92,13 +92,82 @@ static const keysym_t epockbd_keysym_us[] = {
 
 static const keysym_t epockbd_keysym_uk[] = {
 /*  pos      normal		shifted		altgr  */
-    KC(3),   KS_4,		KS_dollar,	KS_at,
-    KC(4),   KS_3,		KS_sterling,	KS_backslash,
-    KC(5),   KS_2,		KS_quotedbl,	KS_numbersign,
+    KC(3),   KS_4,		KS_dollar,	KS_at,		KS_Cmd_Screen3,
+    KC(4),   KS_3,		KS_sterling,	KS_backslash,	KS_Cmd_Screen2,
+    KC(5),   KS_2,		KS_quotedbl,	KS_numbersign,	KS_Cmd_Screen1,
     KC(9),   KS_apostrophe,	KS_asciitilde,	KS_colon,
     KC(26),  KS_l,		KS_L,		KS_semicolon,
     KC(42),  KS_period,		KS_question,	KS_plus,
     KC(59),  KS_comma,		KS_slash,	KS_Help,
+};
+
+static const keysym_t epockbd_keysym_de[] = {
+/*  pos      normal		shifted		altgr		shift+altgr  */
+    KC(1),   KS_6,		KS_ampersand,	KS_greater,
+    KC(3),   KS_4,		KS_dollar,	KS_asciitilde,	KS_Cmd_Screen3,
+    KC(4),   KS_3,		KS_section,	KS_backslash,	KS_Cmd_Screen2,
+    KC(5),   KS_2,		KS_quotedbl,	KS_slash,	KS_Cmd_Screen1,
+    KC(9),   KS_numbersign,	KS_asterisk,	KS_equal,
+    KC(11),  KS_0,		KS_apostrophe,	KS_braceright,
+    KC(12),  KS_9,		KS_parenright,	KS_braceleft,
+    KC(13),  KS_8,		KS_parenleft,	KS_bracketright,
+    KC(14),  KS_7,		KS_question,	KS_bracketleft,
+    KC(19),  KS_r,		KS_R,		KS_masculine,
+    KC(20),  KS_e,		KS_E,		KS_currency,
+    KC(21),  KS_w,		KS_W,		KS_asciicircum,
+    KC(22),  KS_q,		KS_Q,		KS_at,
+    KC(26),  KS_l,		KS_L,		KS_minus,
+    KC(27),  KS_p,		KS_P,		KS_ssharp,
+    KC(28),  KS_o,		KS_O,		KS_diaeresis,
+    KC(29),  KS_i,		KS_I,		KS_mu,
+    KC(30),  KS_u,		KS_U,		KS_udiaeresis,
+    KC(31),  KS_Menu,
+    KC(37),  KS_a,		KS_A,		KS_adiaeresis,
+    KC(42),  KS_comma,		KS_semicolon,
+    KC(43),  KS_m,
+    KC(44),  KS_k,		KS_K,		KS_plus,
+    KC(45),  KS_j,		KS_J,		KS_slash,
+    KC(47),  KS_Mode_switch,	KS_Multi_key,
+    KC(50),  KS_b,		KS_B,		KS_dead_caron,
+    KC(51),  KS_v,		KS_V,		KS_dead_breve,
+    KC(52),  KS_c,		KS_C,		KS_acute,
+    KC(54),  KS_y,		KS_Y,		KS_diaeresis,
+    KC(59),  KS_period,		KS_colon,
+};
+
+static const keysym_t epockbd_keysym_fr[] = {
+/*  pos      normal		shifted		altgr		shift+altgr  */
+    KC(1),   KS_6,		KS_dollar,	KS_parenright,
+    KC(2),   KS_5,		KS_degree,	KS_parenleft,
+    KC(3),   KS_4,		KS_dead_tilde,	KS_apostrophe,	KS_Cmd_Screen3,
+    KC(4),   KS_3,		KS_numbersign,	KS_quotedbl,	KS_Cmd_Screen2,
+    KC(5),   KS_2,		KS_percent,	KS_eacute,	KS_Cmd_Screen1,
+    KC(6),   KS_1,		KS_exclam,	KS_ampersand,	KS_Cmd_Screen0,
+    KC(9),   KS_m,		KS_M,		KS_minus,
+    KC(11),  KS_0,		KS_at,		KS_agrave,
+    KC(12),  KS_9,		KS_dead_circumflex, KS_ccedilla,
+    KC(13),  KS_8,		KS_backslash,	KS_underscore,
+    KC(14),  KS_7,		KS_sterling,	KS_eacute,
+    KC(17),  KS_y,		KS_Y,		KS_braceright,
+    KC(18),  KS_t,		KS_T,		KS_braceleft,
+    KC(19),  KS_r,		KS_R,		KS_bracketright,
+    KC(20),  KS_e,		KS_E,		KS_bracketleft,
+    KC(21),  KS_z,		KS_Z,		KS_greater,
+    KC(22),  KS_a,		KS_A,		KS_less,
+    KC(26),  KS_l,		KS_L,		KS_plus,
+    KC(28),  KS_o,
+    KC(29),  KS_i,		KS_I,		KS_bar,
+    KC(30),  KS_u,		KS_U,		KS_ugrave,
+    KC(37),  KS_q,
+    KC(42),  KS_period,		KS_semicolon,	KS_slash,
+    KC(43),  KS_question,	KS_comma,
+    KC(44),  KS_k,		KS_K,		KS_KP_Divide,
+    KC(50),  KS_b,		KS_B,		KS_dead_circumflex,
+    KC(51),  KS_v,		KS_V,		KS_dead_tilde,
+    KC(52),  KS_c,		KS_C,		KS_apostrophe,
+    KC(53),  KS_x,		KS_X,		KS_grave,
+    KC(54),  KS_w,		KS_W,		KS_dead_diaeresis,
+    KC(59),  KS_colon,		KS_mu,
 };
 
 #define KBD_MAP(name, base, map) \
@@ -107,8 +176,8 @@ static const keysym_t epockbd_keysym_uk[] = {
 struct wscons_keydesc epockbd_keydesctab[] = {
 	KBD_MAP(KB_UK,		KB_US,		epockbd_keysym_uk),
 	KBD_MAP(KB_US,		0,		epockbd_keysym_us),
-//	KBD_MAP(KB_DE,		KB_?,		epockbd_keysym_de),
-//	KBD_MAP(KB_FR,		KB_?,		epockbd_keysym_fr),
+	KBD_MAP(KB_DE,		KB_US,		epockbd_keysym_de),
+	KBD_MAP(KB_FR,		KB_US,		epockbd_keysym_fr),
 
 	{ 0, 0, 0, NULL }
 };
