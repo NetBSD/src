@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.1 2012/10/30 12:42:13 christos Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.2 2013/06/20 07:16:23 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -20,4 +20,15 @@
 ENTRY_NP(__aeabi_uidivmod)
 ENTRY_NP(__aeabi_uidiv)
 ENTRY(__udivsi3)
+#if defined(__ARM_ARCH_EXT_IDIV__)
+# if defined(__ARM_EABI__)
+	mov	r3, r0		@ save for mls
+# endif
+	udiv	r0, r0, r1
+# if defined(__ARM_EABI__)
+	mls	r1, r0, r1, r3	@ return modulus in r1
+# endif
+	RET
+#else
 	b	__udivide
+#endif
