@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.3 2013/06/16 16:44:39 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4 2013/06/20 05:30:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,41 +52,59 @@ struct armperiph_softc {
 	bus_space_handle_t sc_memh;
 };
 
+struct armperiph_info {
+	const char pi_name[12];
+	bus_size_t pi_off1;
+	bus_size_t pi_off2;
+};
+
 #ifdef CPU_CORTEXA5
-static const char * const a5_devices[] = {
-	"armscu", "armgic", NULL
+static const struct armperiph_info a5_devices[] = {
+	{ "armscu", 0x0000, 0 },
+	{ "armgic", 0x1000, 0x0100 },
+	{ "a9tmr",  0x0200, 0 },
+	{ "", 0, 0 },
 };
 #endif
 
 #ifdef CPU_CORTEXA7
-static const char * const a7_devices[] = {
-	"armgic", "armtmr", NULL
+static const struct armperiph_info a7_devices[] = {
+	{ "armgic",  0x1000, 0x2000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
 };
 #endif
 
 #ifdef CPU_CORTEXA9
-static const char * const a9_devices[] = {
-	"armscu", "arml2cc", "armgic", "a9tmr", "a9wdt", NULL
+static const struct armperiph_info a9_devices[] = {
+	{ "armscu",  0x0000, 0 },
+	{ "arml2cc", 0x2000, 0 },
+	{ "armgic",  0x1000, 0x0100 },
+	{ "a9tmr",   0x0200, 0 },
+	{ "a9wdt",   0x0600, 0 },
+	{ "", 0, 0 },
 };
 #endif
 
 #ifdef CPU_CORTEXA15
-static const char * const a15_devices[] = {
-	"armgic", "armtmr", NULL
+static const struct armperiph_info a15_devices[] = {
+	{ "armgic",  0x1000, 0x2000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
 };
 #endif
 
 
 static const struct mpcore_config {
-	const char * const *cfg_devices;
+	const struct armperiph_info *cfg_devices;
 	uint32_t cfg_cpuid;
 	uint32_t cfg_cbar_size;
 } configs[] = {
 #ifdef CPU_CORTEXA5
-	{ a5_devices, 0x410fc050, 8192 },
+	{ a5_devices, 0x410fc050, 2*4096 },
 #endif
 #ifdef CPU_CORTEXA7
-	{ a7_devices, 0x410fc070, 32768 },
+	{ a7_devices, 0x410fc070, 8*4096 },
 #endif
 #ifdef CPU_CORTEXA9
 	{ a9_devices, 0x410fc090, 3*4096 },
@@ -172,11 +190,13 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Let's try to attach any children we may have.
 	 */
-	for (size_t i = 0; cfg->cfg_devices[i] != NULL; i++) {
+	for (size_t i = 0; cfg->cfg_devices[i].pi_name[0] != 0; i++) {
 		struct mpcore_attach_args mpcaa = {
-			.mpcaa_name = cfg->cfg_devices[i],
+			.mpcaa_name = cfg->cfg_devices[i].pi_name,
 			.mpcaa_memt = sc->sc_memt,
 			.mpcaa_memh = sc->sc_memh,
+			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
+			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
 
 		config_found(self, &mpcaa, NULL);

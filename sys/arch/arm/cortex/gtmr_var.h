@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.1 2013/06/16 16:44:39 matt Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.2 2013/06/20 05:30:21 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 struct gtmr_softc {
 	device_t sc_dev;
 	struct evcnt sc_ev_missing_ticks;
-	u_long sc_freq;
+	uint32_t sc_freq;
 	u_long sc_autoinc;
 	void *sc_global_ih;
 };
