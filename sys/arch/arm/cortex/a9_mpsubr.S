@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.5 2013/06/17 04:38:51 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.6 2013/06/20 05:29:01 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,7 +143,14 @@ arm_cpuinit:
 	mcr	p15, 0, r1, c7, c10, 4	/* Drain the write buffers. */
 
 	XPUTC(#71)
+	mrc	p15, 0, r2, c0, c0, 5	/* get MPIDR */
+	cmp	r2, #0
+	orrlt	r10, r10, #0x5b		/* MP, cachable (Normal WB) */
+	orrge	r10, r10, #0x1b		/* Non-MP, cacheable, normal WB */
 	mcr	p15, 0, r10, c2, c0, 0	/* Set Translation Table Base */
+
+	XPUTC(#49)
+	mcr	p15, 0, r1, c2, c0, 2	/* Set Translation Table Control */
 
 	XPUTC(#72)
 	mov	r1, #0
