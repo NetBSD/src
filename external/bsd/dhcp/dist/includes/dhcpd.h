@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.h,v 1.4 2013/03/27 00:38:08 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.5 2013/06/20 12:26:34 christos Exp $	*/
 
 /* dhcpd.h
 
@@ -2753,6 +2753,7 @@ void client_envadd (struct client_state *,
 
 struct client_lease *packet_to_lease (struct packet *, struct client_state *);
 void go_daemon (void);
+void finish_daemon (void);
 void write_client_pid_file (void);
 void client_location_changed (void);
 void do_release (struct client_state *);
