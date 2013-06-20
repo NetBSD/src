@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.1 2013/06/16 16:44:39 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.2 2013/06/20 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.1 2013/06/16 16:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.2 2013/06/20 05:30:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,12 +91,13 @@ static void
 gtmr_attach(device_t parent, device_t self, void *aux)
 {
         struct gtmr_softc *sc = &gtmr_sc;
-	char freqbuf[sizeof("XXX SHz")];
+	prop_dictionary_t dict = device_properties(self);
+	char freqbuf[sizeof("X.XXX SHz")];
 
 	/*
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
-	sc->sc_freq = armreg_cnt_frq_read();
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);            
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
@@ -145,7 +146,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	armreg_cntv_ctl_write(ARM_CNTCTL_ENABLE);
 #if 0
 	printf("%s: %s: ctl %#x cmp %#"PRIx64" now %#"PRIx64"\n",
-	    __func__, ci->ci_data.cpu_name, armreg_cntvctl_read(),
+	    __func__, ci->ci_data.cpu_name, armreg_cntv_ctl_read(),
 	    armreg_cntv_cval_read(), armreg_cntv_ct_read());
 
 	int s = splsched();
