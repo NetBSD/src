@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.102 2013/06/19 21:12:03 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.103 2013/06/20 10:43:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.102 2013/06/19 21:12:03 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.103 2013/06/20 10:43:18 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 			    (char *)&tcpcb, sizeof (tcpcb));
 		}
 		pcblist[i].ki_ppcbaddr = 
-		    istcp ? (uint64_t) inpcb.inp_ppcb : (uint64_t) prev;
+		    istcp ? (uintptr_t) inpcb.inp_ppcb : (uintptr_t) prev;
 		pcblist[i].ki_rcvq = (uint64_t)sockb.so_rcv.sb_cc;
 		pcblist[i].ki_sndq = (uint64_t)sockb.so_snd.sb_cc;
 
