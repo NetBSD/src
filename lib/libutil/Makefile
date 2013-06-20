@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2013/05/02 07:17:09 matt Exp $
+#	$NetBSD: Makefile,v 1.75 2013/06/20 20:42:30 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -51,6 +51,7 @@ MLINKS+=login_cap.3 login_getcapnum.3
 MLINKS+=login_cap.3 login_getcapsize.3
 MLINKS+=login_cap.3 login_getcapstr.3
 MLINKS+=login_cap.3 login_getcaptime.3
+MLINKS+=login_cap.3 login_getpwclass.3
 MLINKS+=login_cap.3 login_close.3
 MLINKS+=login_cap.3 setclasscontext.3
 MLINKS+=login_cap.3 setusercontext.3
