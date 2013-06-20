@@ -1,4 +1,4 @@
-/*	$NetBSD: dhc6.c,v 1.4 2013/03/27 00:38:07 christos Exp $	*/
+/*	$NetBSD: dhc6.c,v 1.5 2013/06/20 12:24:08 christos Exp $	*/
 
 /* dhc6.c - DHCPv6 client routines. */
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhc6.c,v 1.4 2013/03/27 00:38:07 christos Exp $");
+__RCSID("$NetBSD: dhc6.c,v 1.5 2013/06/20 12:24:08 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -1371,7 +1371,7 @@ start_init6(struct client_state *client)
 	add_timeout(&tv, do_init6, client, NULL, NULL);
 
 	if (nowait)
-		go_daemon();
+		finish_daemon();
 }
 
 /*
