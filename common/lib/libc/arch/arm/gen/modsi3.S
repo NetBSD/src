@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.2 2012/11/28 01:35:05 matt Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.3 2013/06/20 07:16:23 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -22,9 +22,14 @@
  */
 
 ENTRY(__modsi3)
+#ifdef __ARM_ARCH_EXT_IDIV__
+	sdiv	r3, r0, r1
+	mls	r0, r3, r1, r0
+#else
 	str	lr, [sp, #-8]!	/* push lr */
 	bl	PIC_SYM(__divsi3, PLT)
 	mov	r0, r1
 	ldr	lr, [sp], #8	/* pop lr */
+#endif
 	RET
 END(__modsi3)
