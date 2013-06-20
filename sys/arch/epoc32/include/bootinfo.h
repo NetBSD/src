@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2013/04/28 12:11:25 kiyohara Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2013/06/20 13:38:03 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -40,6 +40,7 @@ struct btinfo_common {
 #define BTINFO_MODEL	1
 #define BTINFO_MEMORY	2
 #define BTINFO_VIDEO	3
+#define BTINFO_BOOTARGS	4
 
 #define BTINFO_MAX_SIZE	512
 
@@ -59,6 +60,11 @@ struct btinfo_video {
 	struct btinfo_common common;
 	int width;
 	int height;
+};
+
+struct btinfo_bootargs {
+	struct btinfo_common common;
+	char bootargs[256];
 };
 #endif	/* _LOCORE */
 
