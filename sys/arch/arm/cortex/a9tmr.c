@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.5 2013/06/12 00:59:50 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.6 2013/06/20 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.5 2013/06/12 00:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.6 2013/06/20 05:30:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,9 +123,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
 	 * The MD code should have setup our frequency for us.
 	 */
-	prop_number_t pn = prop_dictionary_get(dict, "frequency");
-	KASSERT(pn != NULL);
-	sc->sc_freq = prop_number_unsigned_integer_value(pn);
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
