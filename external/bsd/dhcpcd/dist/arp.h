@@ -1,6 +1,8 @@
-/* 
+/* $NetBSD: arp.h,v 1.1.1.3 2013/06/21 19:33:08 roy Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +30,7 @@
 #ifndef ARP_H
 #define ARP_H
 
-/* These are for IPV4LL, RFC 3927.
- * We put them here as we use the timings for all ARP foo. */
+/* ARP timings from RFC5227 */
 #define PROBE_WAIT		 1
 #define PROBE_NUM		 3
 #define PROBE_MIN		 1
@@ -43,7 +44,7 @@
 
 #include "dhcpcd.h"
 
-void send_arp_announce(void *);
-void send_arp_probe(void *);
-void start_arping(struct interface *);
+void arp_announce(void *);
+void arp_probe(void *);
+void arp_start(struct interface *);
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1.1.4 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: script.h,v 1.1.1.1 2013/06/21 19:33:08 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -27,15 +27,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#ifndef SCRIPT_H
+#define SCRIPT_H
 
-char *hardware_platform(void);
-#ifdef INET6
-int check_ipv6(const char *);
-int ipv6_dadtransmits(const char *);
-#else
-#define check_ipv6(a) 0
-#endif
+#include "net.h"
+
+void if_printoptions(void);
+int send_interface(int, const struct interface *);
+int script_runreason(const struct interface *, const char *);
 
 #endif
