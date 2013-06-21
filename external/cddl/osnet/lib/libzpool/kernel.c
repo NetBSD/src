@@ -1,4 +1,4 @@
-/*     $NetBSD: kernel.c,v 1.7 2013/01/02 16:31:24 dsl Exp $  */
+/*     $NetBSD: kernel.c,v 1.8 2013/06/21 16:22:46 christos Exp $  */
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel.c,v 1.7 2013/01/02 16:31:24 dsl Exp $");
+__RCSID("$NetBSD: kernel.c,v 1.8 2013/06/21 16:22:46 christos Exp $");
 
 #include <sys/zfs_context.h>
 #include <sys/sysctl.h>
@@ -496,7 +496,7 @@ kobj_get_filesize(struct _buf *file, uint64_t *size)
  */
 
 void
-delay(clock_t ticks)
+xdelay(clock_t ticks)
 {
 	poll(0, 0, ticks * (1000 / hz));
 }
