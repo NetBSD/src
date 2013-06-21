@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.12 2012/10/27 17:18:12 chs Exp $	*/
+/*	$NetBSD: pyro.c,v 1.13 2013/06/21 20:09:58 nakayama Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.12 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.13 2013/06/21 20:09:58 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -290,12 +290,23 @@ pcireg_t
 pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct pyro_pbm *pp = pc->cookie;
+	struct cpu_info *ci = curcpu();
 	pcireg_t val = (pcireg_t)~0;
+	int s;
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	if (PCITAG_NODE(tag) != -1)
+	if (PCITAG_NODE(tag) != -1) {
+		s = splhigh();
+		ci->ci_pci_probe = true;
+		membar_Sync();
 		val = bus_space_read_4(pp->pp_cfgt, pp->pp_cfgh,
 		    (PCITAG_OFFSET(tag) << 4) + reg);
+		membar_Sync();
+		if (ci->ci_pci_fault)
+			val = (pcireg_t)~0;
+		ci->ci_pci_probe = ci->ci_pci_fault = false;
+		splx(s);
+	}
 	DPRINTF(PDB_CONF, (" returning %08x\n", (u_int)val));
 	return (val);
 }
