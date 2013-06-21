@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2013/06/21 19:47:29 roy Exp $
+# $NetBSD: Makefile,v 1.15 2013/06/21 21:09:34 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -28,7 +28,7 @@ SCRIPTSDIR_dhcpcd-run-hooks=	/libexec
 CONFIGFILES=			dhcpcd.conf
 FILESDIR_dhcpcd.conf=		/etc
 
-HOOKS=			01-test 02-dump 10-mtu 10-wpa_supplicant
+HOOKS=			01-test 02-dump 10-mtu 10-wpa_supplicant 15-timezone
 HOOKS+=			20-resolv.conf 29-lookup-hostname 30-hostname
 HOOKS+=			50-ntp.conf
 
