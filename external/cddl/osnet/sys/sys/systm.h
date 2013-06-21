@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: systm.h,v 1.4 2013/06/21 16:22:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -73,8 +73,7 @@
 #define	PAGEOFFSET	(PAGESIZE - 1)
 #define	PAGEMASK	(~PAGEOFFSET)
 
-#undef delay
-#define	delay(x)	kpause("soldelay", false, (x), NULL)
+#define	xdelay(x)	kpause("soldelay", false, (x), NULL)
 
 #define	xcopyin(u, k, s)	copyin(u, k, s)
 #define	xcopyout(k, u, s)	copyout(k, u, s)

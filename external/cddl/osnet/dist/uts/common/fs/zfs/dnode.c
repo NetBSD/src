@@ -483,7 +483,7 @@ dnode_special_close(dnode_t *dn)
 	 * dnode.
 	 */
 	while (refcount_count(&dn->dn_holds) > 0)
-		delay(1);
+		xdelay(1);
 	dnode_destroy(dn);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.14 2013/01/02 16:31:24 dsl Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.15 2013/06/21 16:22:46 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -403,7 +403,7 @@ extern vnode_t *rootdir;
 #define	lbolt64	(gethrtime() >> 23)
 #define	hz	119	/* frequency when using gethrtime() >> 23 for lbolt */
 	
-extern void delay(clock_t ticks);
+extern void xdelay(clock_t ticks);
 
 #define	gethrestime_sec() time(NULL)
 #define gethrestime(t) \

@@ -14947,7 +14947,7 @@ dtrace_module_loaded(modctl_t *ctl)
 	 * not a serious problem -- it just means that the module that we
 	 * just loaded may not be immediately instrumentable.
 	 */
-	delay(1);
+	xdelay(1);
 }
 
 static void
