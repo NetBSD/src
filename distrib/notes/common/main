@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.495 2013/05/06 21:21:14 jnemeth Exp $
+.\"	$NetBSD: main,v 1.496 2013/06/21 10:05:52 shm Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1253,6 +1253,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta John Klos Ta Mt jklos@NetBSD.org
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
 .It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
+.It Ta Mateusz Kocielski Ta Mt shm@NetBSD.org
 .It Ta Jonathan A. Kollasch Ta Mt jakllsch@NetBSD.org
 .It Ta Joseph Koshy Ta Mt jkoshy@NetBSD.org
 .It Ta Radoslaw Kujawa Ta Mt rkujawa@NetBSD.org
