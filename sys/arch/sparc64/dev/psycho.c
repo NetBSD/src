@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.112 2012/01/27 18:53:03 para Exp $	*/
+/*	$NetBSD: psycho.c,v 1.113 2013/06/21 20:09:58 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112 2012/01/27 18:53:03 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.113 2013/06/21 20:09:58 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -1350,7 +1350,9 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
+	struct cpu_info *ci = curcpu();
 	pcireg_t val = (pcireg_t)~0;
+	int s;
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__,
 		(long)tag, reg));
@@ -1362,8 +1364,16 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 				PCITAG_OFFSET(tag) + reg),
 			(int)PCITAG_OFFSET(tag) + reg));
 
+		s = splhigh();
+		ci->ci_pci_probe = true;
+		membar_Sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
 			PCITAG_OFFSET(tag) + reg);
+		membar_Sync();
+		if (ci->ci_pci_fault)
+			val = (pcireg_t)~0;
+		ci->ci_pci_probe = ci->ci_pci_fault = false;
+		splx(s);
 	}
 #ifdef DEBUG
 	else DPRINTF(PDB_CONF, ("%s: bogus pcitag %x\n", __func__,
