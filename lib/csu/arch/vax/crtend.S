@@ -1,7 +1,6 @@
-/* $NetBSD: crt0.S,v 1.3 2013/06/21 15:54:08 matt Exp $ */
-
+/*	$NetBSD: crtend.S,v 1.1 2013/06/21 15:54:08 matt Exp $	*/
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,12 +30,26 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.3 2013/06/21 15:54:08 matt Exp $")
+RCSID("$NetBSD: crtend.S,v 1.1 2013/06/21 15:54:08 matt Exp $")
 
-STRONG_ALIAS(_start,__start)
+	.section	.ctors, "aw", @progbits
+	.p2align 2
+	.global		__CTOR_LIST_END__
+	.hidden 	__CTOR_LIST_END__
+__CTOR_LIST_END__:
+	.word		0
 
-_ENTRY(__start, 0x0101)
-	movq	%r8,-(%sp)	/* ps_strings / obj */
-	pushl	%r7		/* cleanup */
-	calls	$3,___start
-END(__start)
+	.section	.dtors, "aw", @progbits
+	.p2align 2
+	.global		__DTOR_LIST_END__
+	.hidden 	__DTOR_LIST_END__
+__DTOR_LIST_END__:
+	.word		0
+
+	.section	.eh_frame, "a", @progbits
+	.p2align 2
+	.space	4
+
+	.section	.jcr, "aw", @progbits
+	.p2align 2
+	.space	4
