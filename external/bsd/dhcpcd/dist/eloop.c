@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: eloop.c,v 1.1.1.7 2013/06/21 19:33:07 roy Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,92 +28,142 @@
  * SUCH DAMAGE.
  */
 
+/* Needed for ppoll(2) */
+#define _GNU_SOURCE
+
+#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <syslog.h>
 
 #include "common.h"
+#include "dhcpcd.h"
 #include "eloop.h"
 
 static struct timeval now;
 
-static struct event {
+struct event {
+	TAILQ_ENTRY(event) next;
 	int fd;
 	void (*callback)(void *);
 	void *arg;
-	struct event *next;
-} *events;
-static struct event *free_events;
+	struct pollfd *pollfd;
+};
+static size_t events_len;
+static TAILQ_HEAD (event_head, event) events = TAILQ_HEAD_INITIALIZER(events);
+static struct event_head free_events = TAILQ_HEAD_INITIALIZER(free_events);
 
-static struct timeout {
+struct timeout {
+	TAILQ_ENTRY(timeout) next;
 	struct timeval when;
 	void (*callback)(void *);
 	void *arg;
 	int queue;
-	struct timeout *next;
-} *timeouts;
-static struct timeout *free_timeouts;
+};
+static TAILQ_HEAD (timeout_head, timeout) timeouts
+    = TAILQ_HEAD_INITIALIZER(timeouts);
+static struct timeout_head free_timeouts
+    = TAILQ_HEAD_INITIALIZER(free_timeouts);
+
+static void (*volatile timeout0)(void *);
+static void *volatile timeout0_arg;
 
 static struct pollfd *fds;
 static size_t fds_len;
 
-void
-add_event(int fd, void (*callback)(void *), void *arg)
+static void
+eloop_event_setup_fds(void)
 {
-	struct event *e, *last = NULL;
+	struct event *e;
+	size_t i;
+
+	i = 0;
+	TAILQ_FOREACH(e, &events, next) {
+		fds[i].fd = e->fd;
+		fds[i].events = POLLIN;
+		fds[i].revents = 0;
+		e->pollfd = &fds[i];
+		i++;
+	}
+}
+
+int
+eloop_event_add(int fd, void (*callback)(void *), void *arg)
+{
+	struct event *e;
 
 	/* We should only have one callback monitoring the fd */
-	for (e = events; e; e = e->next) {
+	TAILQ_FOREACH(e, &events, next) {
 		if (e->fd == fd) {
 			e->callback = callback;
 			e->arg = arg;
-			return;
+			return 0;
 		}
-		last = e;
 	}
 
 	/* Allocate a new event if no free ones already allocated */
-	if (free_events) {
-		e = free_events;
-		free_events = e->next;
-	} else
-		e = xmalloc(sizeof(*e));
+	if ((e = TAILQ_FIRST(&free_events))) {
+		TAILQ_REMOVE(&free_events, e, next);
+	} else {
+		e = malloc(sizeof(*e));
+		if (e == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			return -1;
+		}
+	}
+
+	/* Ensure we can actually listen to it */
+	events_len++;
+	if (events_len > fds_len) {
+		fds_len += 5;
+		free(fds);
+		fds = malloc(sizeof(*fds) * fds_len);
+		if (fds == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			free(e);
+			return -1;
+		}
+	}
+
+	/* Now populate the structure and add it to the list */
 	e->fd = fd;
 	e->callback = callback;
 	e->arg = arg;
-	e->next = NULL;
-	if (last)
-		last->next = e;
-	else
-		events = e;
+	/* The order of events should not matter.
+	 * However, some PPP servers love to close the link right after
+	 * sending their final message. So to ensure dhcpcd processes this
+	 * message (which is likely to be that the DHCP addresses are wrong)
+	 * we insert new events at the queue head as the link fd will be
+	 * the first event added. */
+	TAILQ_INSERT_HEAD(&events, e, next);
+	eloop_event_setup_fds();
+	return 0;
 }
 
 void
-delete_event(int fd)
+eloop_event_delete(int fd)
 {
-	struct event *e, *last = NULL;
+	struct event *e;
 
-	for (e = events; e; e = e->next) {
+	TAILQ_FOREACH(e, &events, next) {
 		if (e->fd == fd) {
-			if (last)
-				last->next = e->next;
-			else
-				events = e->next;
-			e->next = free_events;
-			free_events = e;
+			TAILQ_REMOVE(&events, e, next);
+			TAILQ_INSERT_TAIL(&free_events, e, next);
+			events_len--;
+			eloop_event_setup_fds();
 			break;
 		}
-		last = e;
 	}
 }
 
-void
-add_q_timeout_tv(int queue,
+int
+eloop_q_timeout_add_tv(int queue,
     const struct timeval *when, void (*callback)(void *), void *arg)
 {
 	struct timeval w;
@@ -121,28 +174,28 @@ add_q_timeout_tv(int queue,
 	/* Check for time_t overflow. */
 	if (timercmp(&w, &now, <)) {
 		errno = ERANGE;
-		return;
+		return -1;
 	}
 
 	/* Remove existing timeout if present */
-	for (t = timeouts; t; t = t->next) {
+	TAILQ_FOREACH(t, &timeouts, next) {
 		if (t->callback == callback && t->arg == arg) {
-			if (tt)
-				tt->next = t->next;
-			else
-				timeouts = t->next;
+			TAILQ_REMOVE(&timeouts, t, next);
 			break;
 		}
-		tt = t;
 	}
 
-	if (!t) {
+	if (t == NULL) {
 		/* No existing, so allocate or grab one from the free pool */
-		if (free_timeouts) {
-			t = free_timeouts;
-			free_timeouts = t->next;
-		} else
-			t = xmalloc(sizeof(*t));
+		if ((t = TAILQ_FIRST(&free_timeouts))) {
+			TAILQ_REMOVE(&free_timeouts, t, next);
+		} else {
+			t = malloc(sizeof(*t));
+			if (t == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				return -1;
+			}
+		}
 	}
 
 	t->when.tv_sec = w.tv_sec;
@@ -152,95 +205,93 @@ add_q_timeout_tv(int queue,
 	t->queue = queue;
 
 	/* The timeout list should be in chronological order,
-	 * soonest first.
-	 * This is the easiest algorithm - check the head, then middle
-	 * and finally the end. */
-	if (!timeouts || timercmp(&t->when, &timeouts->when, <)) {
-		t->next = timeouts;
-		timeouts = t;
-		return;
-	} 
-	for (tt = timeouts; tt->next; tt = tt->next)
-		if (timercmp(&t->when, &tt->next->when, <)) {
-			t->next = tt->next;
-			tt->next = t;
-			return;
+	 * soonest first. */
+	TAILQ_FOREACH(tt, &timeouts, next) {
+		if (timercmp(&t->when, &tt->when, <)) {
+			TAILQ_INSERT_BEFORE(tt, t, next);
+			return 0;
 		}
-	tt->next = t;
-	t->next = NULL;
+	}
+	TAILQ_INSERT_TAIL(&timeouts, t, next);
+	return 0;
 }
 
-void
-add_q_timeout_sec(int queue, time_t when, void (*callback)(void *), void *arg)
+int
+eloop_q_timeout_add_sec(int queue, time_t when,
+    void (*callback)(void *), void *arg)
 {
 	struct timeval tv;
 
 	tv.tv_sec = when;
 	tv.tv_usec = 0;
-	add_q_timeout_tv(queue, &tv, callback, arg);
+	return eloop_q_timeout_add_tv(queue, &tv, callback, arg);
+}
+
+int
+eloop_timeout_add_now(void (*callback)(void *), void *arg)
+{
+
+	if (timeout0 != NULL) {
+		syslog(LOG_WARNING, "%s: timeout0 already set", __func__);
+		return eloop_q_timeout_add_sec(0, 0, callback, arg);
+	}
+
+	timeout0 = callback;
+	timeout0_arg = arg;
+	return 0;
 }
 
 /* This deletes all timeouts for the interface EXCEPT for ones with the
  * callbacks given. Handy for deleting everything apart from the expire
  * timeout. */
 static void
-v_delete_q_timeouts(int queue, void *arg, void (*callback)(void *), va_list v)
+eloop_q_timeouts_delete_v(int queue, void *arg,
+    void (*callback)(void *), va_list v)
 {
-	struct timeout *t, *tt, *last = NULL;
+	struct timeout *t, *tt;
 	va_list va;
 	void (*f)(void *);
 
-	for (t = timeouts; t && (tt = t->next, 1); t = tt) {
-		if (t->queue == queue && t->arg == arg &&
+	TAILQ_FOREACH_SAFE(t, &timeouts, next, tt) {
+		if ((queue == 0 || t->queue == queue) && t->arg == arg &&
 		    t->callback != callback)
 		{
 			va_copy(va, v);
-			while ((f = va_arg(va, void (*)(void *))))
+			while ((f = va_arg(va, void (*)(void *)))) {
 				if (f == t->callback)
 					break;
+			}
 			va_end(va);
-			if (!f) {
-				if (last)
-					last->next = t->next;
-				else
-					timeouts = t->next;
-				t->next = free_timeouts;
-				free_timeouts = t;
-				continue;
+			if (f == NULL) {
+				TAILQ_REMOVE(&timeouts, t, next);
+				TAILQ_INSERT_TAIL(&free_timeouts, t, next);
 			}
 		}
-		last = t;
 	}
 }
 
 void
-delete_q_timeouts(int queue, void *arg, void (*callback)(void *), ...)
+eloop_q_timeouts_delete(int queue, void *arg, void (*callback)(void *), ...)
 {
 	va_list va;
 
 	va_start(va, callback);
-	v_delete_q_timeouts(queue, arg, callback, va);
+	eloop_q_timeouts_delete_v(queue, arg, callback, va);
 	va_end(va);
 }
 
 void
-delete_q_timeout(int queue, void (*callback)(void *), void *arg)
+eloop_q_timeout_delete(int queue, void (*callback)(void *), void *arg)
 {
-	struct timeout *t, *tt, *last = NULL;
+	struct timeout *t, *tt;
 
-	for (t = timeouts; t && (tt = t->next, 1); t = tt) {
+	TAILQ_FOREACH_SAFE(t, &timeouts, next, tt) {
 		if (t->queue == queue && t->arg == arg &&
 		    (!callback || t->callback == callback))
 		{
-			if (last)
-				last->next = t->next;
-			else
-				timeouts = t->next;
-			t->next = free_timeouts;
-			free_timeouts = t;
-			continue;
+			TAILQ_REMOVE(&timeouts, t, next);
+			TAILQ_INSERT_TAIL(&free_timeouts, t, next);
 		}
-		last = t;
 	}
 }
 
@@ -249,30 +300,26 @@ delete_q_timeout(int queue, void (*callback)(void *), void *arg)
  * Normally we don't do this as the OS will do it for us at exit,
  * but it's handy for debugging other leaks in valgrind. */
 static void
-cleanup(void)
+eloop_cleanup(void)
 {
 	struct event *e;
 	struct timeout *t;
 
-	while (events) {
-		e = events->next;
-		free(events);
-		events = e;
+	while ((e = TAILQ_FIRST(&events))) {
+		TAILQ_REMOVE(&events, e, next);
+		free(e);
 	}
-	while (free_events) {
-		e = free_events->next;
-		free(free_events);
-		free_events = e;
+	while ((e = TAILQ_FIRST(&free_events))) {
+		TAILQ_REMOVE(&free_events, e, next);
+		free(e);
 	}
-	while (timeouts) {
-		t = timeouts->next;
-		free(timeouts);
-		timeouts = t;
+	while ((t = TAILQ_FIRST(&timeouts))) {
+		TAILQ_REMOVE(&timeouts, t, next);
+		free(t);
 	}
-	while (free_timeouts) {
-		t = free_timeouts->next;
-		free(free_timeouts);
-		free_timeouts = t;
+	while ((t = TAILQ_FIRST(&free_timeouts))) {
+		TAILQ_REMOVE(&free_timeouts, t, next);
+		free(t);
 	}
 	free(fds);
 }
@@ -281,86 +328,64 @@ void
 eloop_init(void)
 {
 
-	atexit(cleanup);
+	atexit(eloop_cleanup);
 }
 #endif
 
-_noreturn void
-start_eloop(void)
+__dead void
+eloop_start(const sigset_t *sigmask)
 {
-	int msecs, n;
-	nfds_t nfds, i;
+	int n;
 	struct event *e;
 	struct timeout *t;
 	struct timeval tv;
+	struct timespec ts, *tsp;
+	void (*t0)(void *);
 
 	for (;;) {
-		/* Run all timeouts first.
-		 * When we have one that has not yet occured,
-		 * calculate milliseconds until it does for use in poll. */
-		if (timeouts) {
-			if (timercmp(&now, &timeouts->when, >)) {
-				t = timeouts;
-				timeouts = timeouts->next;
+		/* Run all timeouts first */
+		if (timeout0) {
+			t0 = timeout0;
+			timeout0 = NULL;
+			t0(timeout0_arg);
+			continue;
+		}
+		if ((t = TAILQ_FIRST(&timeouts))) {
+			get_monotonic(&now);
+			if (timercmp(&now, &t->when, >)) {
+				TAILQ_REMOVE(&timeouts, t, next);
 				t->callback(t->arg);
-				t->next = free_timeouts;
-				free_timeouts = t;
+				TAILQ_INSERT_TAIL(&free_timeouts, t, next);
 				continue;
 			}
-			timersub(&timeouts->when, &now, &tv);
-			if (tv.tv_sec > INT_MAX / 1000 ||
-			    (tv.tv_sec == INT_MAX / 1000 &&
-				(tv.tv_usec + 999) / 1000 > INT_MAX % 1000))
-				msecs = INT_MAX;
-			else
-				msecs = tv.tv_sec * 1000 +
-				    (tv.tv_usec + 999) / 1000;
+			timersub(&t->when, &now, &tv);
+			TIMEVAL_TO_TIMESPEC(&tv, &ts);
+			tsp = &ts;
 		} else
-			/* No timeouts, so wait forever. */
-			msecs = -1;
+			/* No timeouts, so wait forever */
+			tsp = NULL;
 
-		/* Allocate memory for our pollfds as and when needed.
-		 * We don't bother shrinking it. */
-		nfds = 0;
-		for (e = events; e; e = e->next)
-			nfds++;
-		if (msecs == -1 && nfds == 0) {
+		if (tsp == NULL && events_len == 0) {
 			syslog(LOG_ERR, "nothing to do");
 			exit(EXIT_FAILURE);
 		}
-		if (nfds > fds_len) {
-			free(fds);
-			/* Allocate 5 more than we need for future use */
-			fds_len = nfds + 5;
-			fds = xmalloc(sizeof(*fds) * fds_len);
-		}
-		nfds = 0;
-		for (e = events; e; e = e->next) {
-			fds[nfds].fd = e->fd;
-			fds[nfds].events = POLLIN;
-			fds[nfds].revents = 0;
-			nfds++;
-		}
-		n = poll(fds, nfds, msecs);
+
+		n = pollts(fds, events_len, tsp, sigmask);
 		if (n == -1) {
-			if (errno == EAGAIN || errno == EINTR) {
-				get_monotonic(&now);
+			if (errno == EAGAIN || errno == EINTR)
 				continue;
-			}
 			syslog(LOG_ERR, "poll: %m");
 			exit(EXIT_FAILURE);
 		}
 
-		/* Get the now time and process any triggered events. */
-		get_monotonic(&now);
-		if (n == 0)
-			continue;
-		for (i = 0; i < nfds; i++) {
-			if (!(fds[i].revents & (POLLIN | POLLHUP)))
-				continue;
-			for (e = events; e; e = e->next) {
-				if (e->fd == fds[i].fd) {
+		/* Process any triggered events. */
+		if (n > 0) {
+			TAILQ_FOREACH(e, &events, next) {
+				if (e->pollfd->revents & (POLLIN | POLLHUP)) {
 					e->callback(e->arg);
+					/* We need to break here as the
+					 * callback could destroy the next
+					 * fd to process. */
 					break;
 				}
 			}
