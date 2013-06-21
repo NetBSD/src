@@ -1,6 +1,8 @@
-/* 
+/* $NetBSD: common.h,v 1.1.1.8 2013/06/21 19:33:08 roy Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -34,30 +36,55 @@
 #include "config.h"
 #include "defs.h"
 
+#ifndef HOSTNAME_MAX_LEN
+#define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
+#endif
+
 #define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
 
 #define timeval_to_double(tv) ((tv)->tv_sec * 1.0 + (tv)->tv_usec * 1.0e-6)
-#define ms_to_tv(tv, ms) 						\
-	do {								\
-		(tv)->tv_sec = (ms / 1000);				\
-		(tv)->tv_usec = ((ms % 1000) * 1000);			\
-	} while (0 /* CONSTCOND */);
-#define timernorm(tvp)							\
-	do {								\
-		while ((tvp)->tv_usec >= 1000000) {			\
-			(tvp)->tv_sec++;				\
-			(tvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (0 /* CONSTCOND */);
+#define timernorm(tv) do {						\
+	while ((tv)->tv_usec >= 1000000) {				\
+		(tv)->tv_sec++;						\
+		(tv)->tv_usec -= 1000000;				\
+	}								\
+} while (0 /* CONSTCOND */);
+#define tv_to_ms(ms, tv) do {						\
+	ms = (tv)->tv_sec * 1000;					\
+	ms += (tv)->tv_usec / 1000;					\
+} while (0 /* CONSTCOND */);
+#define ms_to_tv(tv, ms) do {						\
+	(tv)->tv_sec = ms / 1000;					\
+	(tv)->tv_usec = (ms - ((tv)->tv_sec * 1000)) * 1000;		\
+} while (0 /* CONSTCOND */);
+
+#ifndef TIMEVAL_TO_TIMESPEC
+#define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
+	(ts)->tv_sec = (tv)->tv_sec;					\
+	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\
+} while (0 /* CONSTCOND */)
+#endif
 
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# define _noreturn __attribute__((__noreturn__))
-# define _packed   __attribute__((__packed__))
-# define _unused   __attribute__((__unused__))
+# ifndef __dead
+#  define __dead __attribute__((__noreturn__))
+# endif
+# ifndef __packed
+#  define __packed   __attribute__((__packed__))
+# endif
+# ifndef __unused
+#  define __unused   __attribute__((__unused__))
+# endif
 #else
-# define _noreturn
-# define _packed
-# define _unused
+# ifndef __dead
+#  define __dead
+# endif
+# ifndef __packed
+#  define __packed
+# endif
+# ifndef __unused
+#  define __unused
+# endif
 #endif
 
 /* We don't really need this as our supported systems define __restrict
@@ -75,15 +102,12 @@
 int set_cloexec(int);
 int set_nonblock(int);
 char *get_line(FILE * __restrict);
+const char *get_hostname(void);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
 ssize_t setvar(char ***, const char *, const char *, const char *);
 ssize_t setvard(char ***, const char *, const char *, int);
 time_t uptime(void);
 int writepid(int, pid_t);
-void *xrealloc(void *, size_t);
-void *xmalloc(size_t);
-void *xzalloc(size_t);
-char *xstrdup(const char *);
 
 #endif
