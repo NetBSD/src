@@ -1,3 +1,5 @@
+/* $NetBSD: bpf-filter.h,v 1.3 2013/06/21 19:40:20 roy Exp $ */
+
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>

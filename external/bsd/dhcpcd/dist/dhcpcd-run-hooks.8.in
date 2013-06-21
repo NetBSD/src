@@ -1,4 +1,5 @@
-.\" Copyright (c) 2006-2012 Roy Marples
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.3 2013/06/21 19:40:20 roy Exp $
+.\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2012
+.Dd June 6, 2013
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -75,16 +76,16 @@ dhcpcd is starting up and any pre-initialisation should be done.
 .It Dv CARRIER
 dhcpcd has detected the carrier is up.
 This is generally just a notification and no action need be taken.
-.It Dv INFORM
+.It Dv INFORM | Dv INFORM6
 dhcpcd informed a DHCP server about it's address and obtained other
 configuration details.
-.It Dv BOUND
+.It Dv BOUND | Dv BOUND6
 dhcpcd obtained a new lease from a DHCP server.
-.It Dv RENEW
+.It Dv RENEW | Dv RENEW6
 dhcpcd renewed it's lease.
-.It Dv REBIND
+.It Dv REBIND | Dv REBIND6
 dhcpcd has rebound to a new DHCP server.
-.It Dv REBOOT
+.It Dv REBOOT | Dv REBOOT6
 dhcpcd successfully requested a lease from a DHCP server.
 .It Dv IPV4LL
 dhcpcd failed to contact any DHCP servers but did obtain an IPV4LL address.
@@ -95,13 +96,13 @@ obtained from a DHCP server.
 dhcpcd is monitoring the interface for a 3rd party to give it an IP address.
 .It Dv TIMEOUT
 dhcpcd failed to contact any DHCP servers but was able to use an old lease.
-.It Dv EXPIRE
+.It Dv EXPIRE | EXPIRE6
 dhcpcd's lease or state expired and it failed to obtain a new one.
-.It Dv RELEASE
-dhcpcd's lease was released back to the DHCP server for re-use.
 .It Dv NAK
 dhcpcd received a NAK from the DHCP server.
 This should be treated as EXPIRE.
+.It Dv RECONFIGURE
+dhcpcd has been instructed to reconfigure an interface.
 .It Dv NOCARRIER
 dhcpcd lost the carrier.
 The cable may have been unplugged or association to the wireless point lost.
@@ -110,8 +111,10 @@ dhcpcd failed to operate on the interface.
 This normally happens when dhcpcd does not support the raw interface, which
 means it cannot work as a DHCP or ZeroConf client.
 Static configuration and DHCP INFORM is still allowed.
-.It Dv STOP
+.It Dv STOP | Dv STOP6
 dhcpcd stopped running on the interface.
+.It Dv DEPARTED
+The interface has been removed.
 .It Dv DUMP
 dhcpcd has been asked to dump the last lease for the interface.
 .It Dv TEST
