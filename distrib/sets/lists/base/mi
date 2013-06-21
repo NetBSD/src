@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1032 2013/06/21 19:46:58 roy Exp $
+# $NetBSD: mi,v 1.1033 2013/06/21 21:09:34 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -218,6 +218,7 @@
 ./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete			obsolete
 ./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete			obsolete
 ./libexec/dhcpcd-hooks/15-hostname		base-obsolete			obsolete
+./libexec/dhcpcd-hooks/15-timezone		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/20-resolv.conf		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/29-lookup-hostname	base-dhcpcd-root
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
