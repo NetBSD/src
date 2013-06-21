@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.66 2013/06/16 06:29:08 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.67 2013/06/21 04:25:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.66 2013/06/16 06:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.67 2013/06/21 04:25:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,8 +411,47 @@ setit:
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return (0);
+		/*
+		 * Is the interface even up?
+		 */
+		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+			return 0;
+
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+			sc->mii_ticks = 0;
+			break;
+		}
+
+		/*
+		 * Check for link.
+		 * Read the status register twice; BMSR_LINK is latch-low.
+		 */
+		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		if (reg & BMSR_LINK) {
+			sc->mii_ticks = 0;
+			break;
+		}
+
+		/*
+		 * mii_ticks == 0 means it's the first tick after changing the
+		 * media or the link became down since the last tick
+		 * (see above), so break to update the status.
+		 */
+		if (sc->mii_ticks++ == 0)
+			break;
+
+		/*
+		 * Only retry autonegotiation every mii_anegticks seconds.
+		 */
+		KASSERT(sc->mii_anegticks != 0);
+		if (sc->mii_ticks <= sc->mii_anegticks)
+			break;
+
+		brgphy_mii_phy_auto(sc);
 		break;
 
 	case MII_DOWN:
