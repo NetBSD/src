@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2013/02/04 22:19:43 macallan Exp $ */
+/*	$NetBSD: cpu.h,v 1.102 2013/06/21 20:09:59 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,6 +173,10 @@ struct cpu_info {
 	 */
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
+
+	/* probe fault in PCI config space reads */
+	bool			ci_pci_probe;
+	bool			ci_pci_fault;
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
