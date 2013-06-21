@@ -1,3 +1,5 @@
+# $NetBSD: 30-hostname,v 1.1.1.8 2013/06/21 19:33:08 roy Exp $
+
 # Set the hostname from DHCP data if required
 
 # Some systems don't have hostname(1)
@@ -6,17 +8,32 @@ _hostname()
 	local name=
 
 	if [ -z "$1" ]; then
-		if [ -r /proc/sys/kernel/hostname ]; then
-			read name </proc/sys/kernel/hostname && echo "$name"
-		else
+		if type hostname >/dev/null 2>&1; then
 			hostname
+		elif [ -r /proc/sys/kernel/hostname ]; then
+			read name </proc/sys/kernel/hostname && echo "$name"
+		elif sysctl kern.hostname >/dev/null 2>&1; then
+			sysctl -n kern.hostname
+		elif sysctl kernel.hostname >/dev/null 2>&1; then
+			sysctl -n kernel.hostname
+		else
+			return 1
 		fi
 		return $?
 	fi
 
-	if [ -w /proc/sys/kernel/hostname ]; then
+	# Always prefer hostname(1) if we have it
+	if type hostname >/dev/null 2>&1; then
+		hostname "$1"
+	elif [ -w /proc/sys/kernel/hostname ]; then
 		echo "$1" >/proc/sys/kernel/hostname
+	elif sysctl kern.hostname >/dev/null 2>&1; then
+		sysctl -w "kern.hostname=$1"
+	elif sysctl kernel.hostname >/dev/null 2>&1; then
+		sysctl -w "kernel.hostname=$1"
 	else
+		# We know this will fail, but it will now fail
+		# with an error to stdout
 		hostname "$1"
 	fi
 }
@@ -50,14 +67,26 @@ try_hostname()
 
 set_hostname()
 {
-	if need_hostname; then
-		if [ -n "$new_host_name" ]; then
+
+	need_hostname || return
+
+	if [ -n "$new_fqdn_name" ]; then
+		try_hostname "$new_fqdn_name"
+	elif [ -n "$new_host_name" ]; then
+		if [ -n "$new_domain_name" ]; then
+			try_hostname "$new_host_name.$new_domain_name"
+		else
 			try_hostname "$new_host_name"
-		elif [ -n "$new_fqdn_name" ]; then
-			try_hostname "$new_fqdn_name"
 		fi
 	fi
 }
+
+# For ease of use, map DHCP6 names onto our DHCP4 names
+case "$reason" in
+BOUND6|RENEW6|REBIND6|REBOOT6|INFORM6)
+	new_fqdn_name="$new_dhcp6_fqdn"
+	;;
+esac
 
 if $if_up; then
 	set_hostname

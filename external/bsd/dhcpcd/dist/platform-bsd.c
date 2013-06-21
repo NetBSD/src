@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.7 2013/06/21 19:33:07 roy Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,15 +28,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+
+#include <net/if.h>
+#ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
+#  include <net/if_var.h>
+#endif
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
+#include "dhcpcd.h"
 #include "if-options.h"
 #include "platform.h"
 
@@ -55,6 +69,7 @@ hardware_platform(void)
 	return march;
 }
 
+#ifdef INET6
 #define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
 #define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
 static int
@@ -87,17 +102,45 @@ restore_kernel_ra(void)
 		syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
 }
 
+static int
+ipv6_ra_flush(void)
+{
+	int s;
+	char dummy[IFNAMSIZ + 8];
+
+	s = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (s == -1)
+		return -1;
+	strcpy(dummy, "lo0");
+	if (ioctl(s, SIOCSRTRFLUSH_IN6, (caddr_t)&dummy) == -1)
+		syslog(LOG_ERR, "SIOSRTRFLUSH_IN6: %m");
+//	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummy) == -1)
+//		syslog(LOG_ERR, "SIOSPFXFLUSH_IN6: %m");
+	close(s);
+	return 0;
+}
+
 int
 check_ipv6(const char *ifname)
 {
-	int val;
+	static int ipv6_checked = 0;
+	int r;
 
 	/* BSD doesn't support these values per iface, so just return 1 */
 	if (ifname)
 		return 1;
 
-	val = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
-	if (val == 0)
+	if (ipv6_checked)
+		return 1;
+	ipv6_checked = 1;
+
+	r = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
+	if (r == -1)
+		/* The sysctl probably doesn't exist, but this isn't an
+		 * error as such so just log it and continue */
+		syslog(errno == ENOENT ? LOG_DEBUG : LOG_WARNING,
+		    "IPV6CTL_ACCEPT_RTADV: %m");
+	else if (r == 0)
 		options |= DHCPCD_IPV6RA_OWN;
 	else if (options & DHCPCD_IPV6RA_OWN) {
 		syslog(LOG_INFO, "disabling Kernel IPv6 RA support");
@@ -107,12 +150,31 @@ check_ipv6(const char *ifname)
 		}
 		atexit(restore_kernel_ra);
 	}
-return 1;
-	if (get_inet6_sysctl(IPV6CTL_FORWARDING) != 0) {
+
+	r = get_inet6_sysctl(IPV6CTL_FORWARDING);
+	if (r == -1)
+		/* The sysctl probably doesn't exist, but this isn't an
+		 * error as such so just log it and continue */
+		syslog(errno == ENOENT ? LOG_DEBUG : LOG_WARNING,
+		    "IPV6CTL_FORWARDING: %m");
+	else if (r != 0) {
 		syslog(LOG_WARNING,
 		    "Kernel is configured as a router, not a host");
 		return 0;
 	}
 
+	/* Flush the kernel knowledge of advertised routers */
+	ipv6_ra_flush();
+
 	return 1;
 }
+
+int
+ipv6_dadtransmits(__unused const char *ifname)
+{
+	int r;
+
+	r = get_inet6_sysctl(IPV6CTL_DAD_COUNT);
+	return r < 0 ? 0 : r;
+}
+#endif

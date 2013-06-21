@@ -1,4 +1,7 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: duid.c,v 1.1.1.5 2013/06/21 19:33:07 roy Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  * All rights reserved
@@ -29,6 +32,12 @@
 #define DUID_LLT	1
 #define DUID_LL		3
 
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#include <net/if.h>
+#include <net/if_arp.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +45,10 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+
+#ifndef ARPHRD_NETROM
+#  define ARPHRD_NETROM	0
+#endif
 
 #include "common.h"
 #include "duid.h"
@@ -71,12 +84,13 @@ make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
 }
 
 size_t
-get_duid(unsigned char *duid, const struct interface *ifp)
+get_duid(unsigned char *duid, const struct interface *iface)
 {
 	FILE *f;
 	int x = 0;
 	size_t len = 0;
 	char *line;
+	const struct interface *ifp;
 
 	/* If we already have a DUID then use it as it's never supposed
 	 * to change once we have one even if the interfaces do */
@@ -93,25 +107,42 @@ get_duid(unsigned char *duid, const struct interface *ifp)
 		if (len)
 			return len;
 	} else {
-		if (errno != ENOENT) {
+		if (errno != ENOENT)
 			syslog(LOG_ERR, "error reading DUID: %s: %m", DUID);
-			return make_duid(duid, ifp, DUID_LL);
-		}
 	}
 
 	/* No file? OK, lets make one based on our interface */
+	if (iface->family == ARPHRD_NETROM) {
+		syslog(LOG_WARNING, "%s: is a NET/ROM psuedo interface",
+		    iface->name);
+		TAILQ_FOREACH(ifp, ifaces, next) {
+			if (ifp->family != ARPHRD_NETROM)
+				break;
+		}
+		if (ifp) {
+			iface = ifp;
+			syslog(LOG_WARNING,
+			    "picked interface %s to generate a DUID",
+			    iface->name);
+		} else {
+			syslog(LOG_WARNING,
+			    "no interfaces have a fixed hardware address");
+			return make_duid(duid, iface, DUID_LL);
+		}
+	}
+
 	if (!(f = fopen(DUID, "w"))) {
 		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
-		return make_duid(duid, ifp, DUID_LL);
+		return make_duid(duid, iface, DUID_LL);
 	}
-	len = make_duid(duid, ifp, DUID_LLT);
+	len = make_duid(duid, iface, DUID_LLT);
 	x = fprintf(f, "%s\n", hwaddr_ntoa(duid, len));
 	fclose(f);
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
 		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
 		unlink(DUID);
-		return make_duid(duid, ifp, DUID_LL);
+		return make_duid(duid, iface, DUID_LL);
 	}
 	return len;
 }

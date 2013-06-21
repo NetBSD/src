@@ -1,4 +1,7 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: common.c,v 1.1.1.12 2013/06/21 19:33:06 roy Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
@@ -60,6 +63,7 @@
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
+static char hostname_buffer[HOSTNAME_MAX_LEN + 1];
 int clock_monotonic;
 static char *lbuf;
 static size_t lbuf_len;
@@ -132,6 +136,20 @@ set_nonblock(int fd)
 		return -1;
 	}
 	return 0;
+}
+
+const char *
+get_hostname(void)
+{
+
+	gethostname(hostname_buffer, sizeof(hostname_buffer));
+	hostname_buffer[sizeof(hostname_buffer) - 1] = '\0';
+	if (strcmp(hostname_buffer, "(none)") == 0 ||
+	    strcmp(hostname_buffer, "localhost") == 0 ||
+	    strncmp(hostname_buffer, "localhost.", strlen("localhost.")) == 0 ||
+	    hostname_buffer[0] == '.')
+		return NULL;
+	return hostname_buffer;
 }
 
 /* Handy function to get the time.
@@ -207,7 +225,11 @@ setvar(char ***e, const char *prefix, const char *var, const char *value)
 
 	if (prefix)
 		len += strlen(prefix) + 1;
-	**e = xmalloc(len);
+	**e = malloc(len);
+	if (**e == NULL) {
+		syslog(LOG_ERR, "%s: %m", __func__);
+		return -1;
+	}
 	if (prefix)
 		snprintf(**e, len, "%s_%s=%s", prefix, var, value);
 	else
@@ -249,59 +271,4 @@ writepid(int fd, pid_t pid)
 	if (len != (ssize_t)strlen(spid))
 		return -1;
 	return 0;
-}
-
-#ifndef xmalloc
-void *
-xmalloc(size_t s)
-{
-	void *value = malloc(s);
-
-	if (value != NULL)
-		return value;
-	syslog(LOG_ERR, "memory exhausted (xalloc %zu bytes)", s);
-	exit (EXIT_FAILURE);
-	/* NOTREACHED */
-}
-#endif
-
-#ifndef xrealloc
-void *
-xrealloc(void *ptr, size_t s)
-{
-	void *value = realloc(ptr, s);
-
-	if (value != NULL)
-		return value;
-	syslog(LOG_ERR, "memory exhausted (xrealloc %zu bytes)", s);
-	exit(EXIT_FAILURE);
-	/* NOTREACHED */
-}
-#endif
-
-#ifndef xstrdup
-char *
-xstrdup(const char *str)
-{
-	char *value;
-
-	if (str == NULL)
-		return NULL;
-
-	if ((value = strdup(str)) != NULL)
-		return value;
-
-	syslog(LOG_ERR, "memory exhausted (xstrdup)");
-	exit(EXIT_FAILURE);
-	/* NOTREACHED */
-}
-#endif
-
-void *
-xzalloc(size_t s)
-{
-	void *value = xmalloc(s);
-
-	memset(value, 0, s);
-	return value;
 }

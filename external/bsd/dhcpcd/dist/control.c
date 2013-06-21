@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: control.c,v 1.1.1.4 2013/06/21 19:33:07 roy Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -45,31 +48,49 @@ static int fd = -1;
 static char buffer[1024];
 static char *argvp[255];
 
-struct sockaddr_un sun;
-struct fd_list *fds = NULL;
+static struct sockaddr_un sun;
+struct fd_list *control_fds = NULL;
+
+#ifdef DEBUG_MEMORY
+static void
+cleanup(void)
+{
+	struct fd_list *f;
+
+	f = control_fds;
+	while (f) {
+		control_fds = f->next;
+		free(f);
+		f = control_fds;
+	}
+}
+#endif
 
 static void
-remove_control_data(void *arg)
+control_remove(void *arg)
 {
-	struct fd_list *l, *last = NULL;
+	struct fd_list *l, *n, *last = NULL;
 
-	for (l = fds; l != NULL; l = l->next) {
+	l = control_fds;
+	while (l) {
+		n = l->next;
 		if (l == arg) {
 			close(l->fd);
-			delete_event(l->fd);
+			eloop_event_delete(l->fd);
 			if (last == NULL)
-				fds = l->next;
+				control_fds = l->next;
 			else
 				last->next = l->next;
 			free(l);
 			break;
 		}
 		last = l;
+		l = n;
 	}
 }
 
 static void
-handle_control_data(void *arg)
+control_handle_data(void *arg)
 {
 	struct fd_list *l = arg;
 	ssize_t bytes;
@@ -79,7 +100,7 @@ handle_control_data(void *arg)
 
 	bytes = read(l->fd, buffer, sizeof(buffer) - 1);
 	if (bytes == -1 || bytes == 0) {
-		remove_control_data(l);
+		control_remove(l);
 		return;
 	}
 	buffer[bytes] = '\0';
@@ -97,7 +118,7 @@ handle_control_data(void *arg)
 
 /* ARGSUSED */
 static void
-handle_control(_unused void *arg)
+control_handle(__unused void *arg)
 {
 	struct sockaddr_un run;
 	socklen_t len;
@@ -107,12 +128,15 @@ handle_control(_unused void *arg)
 	len = sizeof(run);
 	if ((f = accept(fd, (struct sockaddr *)&run, &len)) == -1)
 		return;
-	l = xmalloc(sizeof(*l));
-	l->fd = f;
-	l->listener = 0;
-	l->next = fds;
-	fds = l;
-	add_event(l->fd, handle_control_data, l);
+	set_cloexec(f);
+	l = malloc(sizeof(*l));
+	if (l) {
+		l->fd = f;
+		l->listener = 0;
+		l->next = control_fds;
+		control_fds = l;
+		eloop_event_add(l->fd, control_handle_data, l);
+	}
 }
 
 static int
@@ -127,7 +151,7 @@ make_sock(void)
 }
 
 int
-start_control(void)
+control_start(void)
 {
 	int len;
 
@@ -139,52 +163,55 @@ start_control(void)
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == -1 ||
 	    set_cloexec(fd) == -1 ||
 	    set_nonblock(fd) == -1 ||
-	    listen(fd, sizeof(fds)) == -1)
+	    listen(fd, sizeof(control_fds)) == -1)
 	{
 		close(fd);
 		return -1;
 	}
-	add_event(fd, handle_control, NULL);
+	eloop_event_add(fd, control_handle, NULL);
 	return fd;
 }
 
 int
-stop_control(void)
+control_stop(void)
 {
 	int retval = 0;
-	struct fd_list *l, *ll;
+	struct fd_list *l;
 
-	delete_event(fd);
+	eloop_event_delete(fd);
 	if (shutdown(fd, SHUT_RDWR) == -1)
 		retval = 1;
 	fd = -1;
 	if (unlink(CONTROLSOCKET) == -1)
 		retval = -1;
 
-	l = fds;
+	l = control_fds;
 	while (l != NULL) {
-		ll = l->next;
-		delete_event(l->fd);
+		control_fds = l->next;
+		eloop_event_delete(l->fd);
 		shutdown(l->fd, SHUT_RDWR);
 		free(l);
-		l = ll;
+		l = control_fds;
 	}
 
 	return retval;
 }
 
 int
-open_control(void)
+control_open(void)
 {
 	int len;
 
 	if ((len = make_sock()) == -1)
 		return -1;
+#ifdef DEBUG_MEMORY
+	atexit(cleanup);
+#endif
 	return connect(fd, (struct sockaddr *)&sun, len);
 }
 
 int
-send_control(int argc, char * const *argv)
+control_send(int argc, char * const *argv)
 {
 	char *p = buffer;
 	int i;

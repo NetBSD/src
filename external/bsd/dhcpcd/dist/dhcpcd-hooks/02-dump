@@ -1,3 +1,5 @@
+# $NetBSD: 02-dump,v 1.1.1.2 2013/06/21 19:33:08 roy Exp $
+
 # Just echo our DHCP options we have
 
 if [ "$reason" = "DUMP" ]; then
