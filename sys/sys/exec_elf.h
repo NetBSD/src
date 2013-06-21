@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.127 2013/01/30 01:12:56 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.128 2013/06/21 01:40:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -429,6 +429,13 @@ typedef struct {
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
+#define SHT_ARM_EXIDX	     0x70000001	/* exception index table */
+#define SHT_ARM_PREEMPTMAP   0x70000002 /* BPABI DLL dynamic linking 
+					 * pre-emption map */
+#define SHT_ARM_ATTRIBUTES   0x70000003 /* Object file compatibility 
+					 * attributes */
+#define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
+#define SHT_ARM_OVERLAYSECTION 0x70000005
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
