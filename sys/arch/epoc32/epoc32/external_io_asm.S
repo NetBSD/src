@@ -1,4 +1,4 @@
-/*	$NetBSD: external_io_asm.S,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: external_io_asm.S,v 1.2 2013/06/22 13:32:54 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -47,13 +47,6 @@ ENTRY(external_bs_r_1)
 	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
-ENTRY(external_bs_r_2)
-	mov	r2, r2, lsl r0
-	ldr	r0, [r1, r2]
-	bic	r0, r0, #0xff000000
-	bic	r0, r0, #0x00ff0000
-	mov	pc, lr
-
 ENTRY(external_bs_r_4)
 	mov	r2, r2, lsl r0
 	ldr	r0, [r1, r2]
@@ -66,13 +59,6 @@ ENTRY(external_bs_r_4)
 ENTRY(external_bs_w_1)
 	mov	r2, r2, lsl r0
 	strb	r3, [r1, r2]
-	mov	pc, lr
-
-ENTRY(external_bs_w_2)
-	mov	r3, r3, lsl #16
-	orr	r3, r3, r3, lsr #16
-	mov	r2, r2, lsl r0
-	str	r3, [r1, r2]
 	mov	pc, lr
 
 ENTRY(external_bs_w_4)
