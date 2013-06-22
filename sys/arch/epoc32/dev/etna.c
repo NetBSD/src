@@ -1,4 +1,4 @@
-/*	$NetBSD: etna.c,v 1.1 2013/04/28 12:11:25 kiyohara Exp $	*/
+/*	$NetBSD: etna.c,v 1.2 2013/06/22 13:36:16 kiyohara Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.1 2013/04/28 12:11:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.2 2013/06/22 13:36:16 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -341,6 +341,13 @@ etna_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	      bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct etna_softc *sc = (struct etna_softc *)pch;
+	extern char epoc32_model[];
+
+	/*
+	 * XXXXX: Series 5 can't allocate I/O map???
+	 */
+	if (strcmp(epoc32_model, "SERIES5 R1") == 0)
+		return -1;
 
 	memset(pcihp, 0, sizeof(*pcihp));
 	pcihp->iot = sc->sc_iot;
