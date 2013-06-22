@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.58 2012/11/14 01:04:45 jakllsch Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.59 2013/06/22 05:37:06 matt Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.58 2012/11/14 01:04:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.59 2013/06/22 05:37:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -872,7 +872,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
