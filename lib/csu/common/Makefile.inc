@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2012/03/25 06:55:19 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2013/06/22 02:21:58 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,18 +12,30 @@ OBJS+=		crtbegin.o crtbeginS.o crtend.o
 
 realall: ${OBJS}
 
+.if exists(${ARCHDIR}/crtbegin.c)
+crtbegin.o: crtbegin.c
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${ARCHDIR}/crtbegin.c -o ${.TARGET}.o
+.else
 crtbegin.o: crtbegin.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
+.if exists(${ARCHDIR}/crtbegin.c)
+crtbeginS.o: crtbegin.c
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} -DPIC -DSHARED ${ARCHDIR}/crtbegin.c -o ${.TARGET}.o
+.else
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
