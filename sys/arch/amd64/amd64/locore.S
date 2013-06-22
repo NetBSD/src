@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.70 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.71 2013/06/22 15:13:56 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -187,6 +187,9 @@
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
+#define	_RELOC(x)	((x) - KERNBASE)
+#define	RELOC(x)	_RELOC(_C_LABEL(x))
+
 #ifdef XEN
 
 /*
@@ -216,53 +219,92 @@
 
 #if NLAPIC > 0 
 	.align  NBPG
-	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id), _C_LABEL(lapic_tpr)
-_C_LABEL(local_apic):
+	.globl _C_LABEL(local_apic)
+	.globl _C_LABEL(lapic_id)
+	.globl _C_LABEL(lapic_tpr)
+
+	.type	_C_LABEL(local_apic), @object
+LABEL(local_apic)
 	.space  LAPIC_ID
-_C_LABEL(lapic_id):
+END(local_apic)
+	.type	_C_LABEL(lapic_id), @object
+LABEL(lapic_id)
 	.long   0x00000000
 	.space  LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):
+END(lapic_id)
+	.type	_C_LABEL(lapic_tpr), @object
+LABEL(lapic_tpr)
 	.space  LAPIC_PPRI-LAPIC_TPRI
+END(lapic_tpr)
+	.type	_C_LABEL(lapic_ppr), @object
 _C_LABEL(lapic_ppr):
 	.space  LAPIC_ISR-LAPIC_PPRI 
+END(lapic_ppr)
+	.type	_C_LABEL(lapic_isr), @object
 _C_LABEL(lapic_isr):
 	.space  NBPG-LAPIC_ISR
+END(lapic_isr)
 #endif
 
-	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
+	.globl	_C_LABEL(cpu_id)
+	.globl	_C_LABEL(cpu_vendorname)
+	.globl	_C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level)
-	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
-	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
+	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(eblob)
+	.globl	_C_LABEL(boothowto)
+	.globl	_C_LABEL(bootinfo)
+	.globl	_C_LABEL(atdevbase)
 	.globl	_C_LABEL(PDPpaddr)
-	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore),_C_LABEL(cputype)
+	.globl	_C_LABEL(biosbasemem)
+	.globl	_C_LABEL(biosextmem)
+	.globl	_C_LABEL(gdtstore)
+	.globl	_C_LABEL(cputype)
 
-_C_LABEL(cputype):	.long	0	# are we 386, 386sx, or 486,
+	.type	_C_LABEL(cputype), @object
+LABEL(cputype)		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
-_C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
+END(cputype)
+	.type	_C_LABEL(cpu_id), @object
+LABEL(cpu_id)		.long	0	# saved from `cpuid' instruction
+END(cpu_id)
+	.type	_C_LABEL(cpuid_level), @object
+LABEL(cpuid_level)	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
-_C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
+END(cpuid_level)
+	.type	_C_LABEL(cpu_vendorname), @object
+LABEL(cpu_vendorname)	.space	16	# vendor string returned by `cpuid'
 					#   instruction
-_C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
-_C_LABEL(esym):		.quad	0	# ptr to end of syms
-_C_LABEL(eblob):	.quad	0	# ptr to end of modules
-_C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
-_C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
+END(cpu_vendorname)
+	.type	_C_LABEL(cpu_brand_id), @object
+LABEL(cpu_brand_id)	.long	0	# brand ID from 'cpuid' instruction
+END(cpu_brand_id)
+	.type	_C_LABEL(esym), @object
+LABEL(esym)		.quad	0	# ptr to end of syms
+END(esym)
+	.type	_C_LABEL(eblob), @object
+LABEL(eblob)		.quad	0	# ptr to end of modules
+END(eblob)
+	.type	_C_LABEL(atdevbase), @object
+LABEL(atdevbase)	.quad	0	# location of start of iomem in virtual
+END(atdevbase)
+	.type	_C_LABEL(PDPpaddr), @object
+LABEL(PDPpaddr)		.quad	0	# paddr of PTD, for libkvm
+END(PDPpaddr)
+	.type	_C_LABEL(biosbasemem), @object
 #ifndef REALBASEMEM
-_C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
+LABEL(biosbasemem)	.long	0	# base memory reported by BIOS
 #else
-_C_LABEL(biosbasemem):	.long	REALBASEMEM
+LABEL(biosbasemem)	.long	REALBASEMEM
 #endif
+END(biosbasemem)
+	.type	_C_LABEL(biosextmem), @object
 #ifndef REALEXTMEM
-_C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
+LABEL(biosextmem)	.long	0	# extended memory reported by BIOS
 #else
-_C_LABEL(biosextmem):	.long	REALEXTMEM
+LABEL(biosextmem)	.long	REALEXTMEM
 #endif
-
-#define	_RELOC(x)	((x) - KERNBASE)
-#define	RELOC(x)	_RELOC(_C_LABEL(x))
+END(biosextmem)
 
 #ifndef XEN
 	.globl	gdt64_lo
@@ -271,30 +313,40 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #define GDT64_LIMIT gdt64_end-gdt64_start-1
 
 /* Temporary gdt64, with base address in low memory */
-gdt64_lo:
+	.type	_C_LABEL(gdt64_lo), @object
+LABEL(gdt64_lo)
 	.word	GDT64_LIMIT
 	.quad	_RELOC(gdt64_start)
+END(gdt64_lo)
 .align 64
 
 /* Temporary gdt64, with base address in high memory */
-gdt64_hi:
+	.type	_C_LABEL(gdt64_hi), @object
+LABEL(gdt64_hi)
 	.word	GDT64_LIMIT
 	.quad	gdt64_start
+END(gdt64_hi)
 .align 64
 
 #undef GDT64_LIMIT
 
-gdt64_start:
+	.type	_C_LABEL(gdt64_start), @object
+_C_LABEL(gdt64_start):
 	.quad 0x0000000000000000	/* always empty */
 	.quad 0x00af9a000000ffff	/* kernel CS */
 	.quad 0x00cf92000000ffff	/* kernel DS */
+END(gdt64_start)
 gdt64_end:
 
-farjmp64:
+	.type	_C_LABEL(farjmp64), @object
+_C_LABEL(farjmp64):
 	.long	_RELOC(longmode)
 	.word	GSEL(GCODE_SEL, SEL_KPL)
+END(farjmp64)
 	
 #endif	/* !XEN */
+
+	.size	tmpstk, tmpstk - .
 	.space 512
 tmpstk:
 
@@ -311,12 +363,10 @@ tmpstk:
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
+ENTRY(start)
 #ifndef XEN
-.code32
-
-	.globl	start
-start:	movw	$0x1234,0x472			# warm boot
-
+	.code32
+	movw	$0x1234,0x472			# warm boot
 	/*
 	 * Load parameters from stack
 	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
@@ -717,8 +767,6 @@ longmode_hi:
 	leaq	(TABLESIZE+IOM_SIZE)(%rsi),%rdi
 
 #else	/* XEN */
-	.globl	start
-start:
 	/* First, reset the PSL. */
 	pushq	$2
 	popfq
@@ -814,6 +862,7 @@ start:
 	call	_C_LABEL(init_x86_64)
 
 	call 	_C_LABEL(main)
+END(start)
 
 #ifdef XEN
 /* space for the hypercall call page */
@@ -821,6 +870,7 @@ start:
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
+END(hypercall_page)
 #endif /* XEN */
 
 /*
@@ -846,6 +896,7 @@ ENTRY(setjmp)
 	movq	%rdx,56(%rax)
 	xorl	%eax,%eax
 	ret
+END(setjmp)
 
 /*
  * int longjmp(label_t *)
@@ -865,6 +916,7 @@ ENTRY(longjmp)
 	movq	%rdx,(%rsp)
 	movl	$1,%eax
 	ret
+END(longjmp)
 
 ENTRY(dumpsys)
 	# mimic cpu_switchto() for postmortem debugging.
@@ -885,6 +937,7 @@ ENTRY(dumpsys)
 
 	addq	$(5*8), %rsp	# sizeof(switchframe) - sizeof(%rip)
 	ret
+END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
@@ -1045,6 +1098,7 @@ ENTRY(cpu_switchto)
 	je	2b
 	movq	%rax,TF_RIP(%rbx)
 	jmp	2b
+END(cpu_switchto)
 
 /*
  * void savectx(struct pcb *pcb);
@@ -1056,9 +1110,11 @@ ENTRY(savectx)
 	movq	%rsp,PCB_RSP(%rdi)
 	movq	%rbp,PCB_RBP(%rdi)
 	ret
+END(savectx)
 
 IDTVEC(syscall32)
 	sysret		/* go away please */
+IDTVEC_END(syscall32)
 
 /*
  * syscall()
@@ -1204,6 +1260,7 @@ do_syscall:
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
+IDTVEC_END(syscall)
 
 /*
  * void lwp_trampoline(void);
@@ -1220,6 +1277,7 @@ NENTRY(lwp_trampoline)
 	movq	%r13,%rdi
 	call	*%r12
 	jmp	.Lsyscall_checkast
+END(lwp_trampoline)
 
 /*
  * oosyscall()
@@ -1240,6 +1298,7 @@ IDTVEC(oosyscall)
 	popq	16(%rsp)
 	pushq	$7		# size of instruction for restart
 	jmp	osyscall1
+IDTVEC_END(oosyscall)
 
 /*
  * osyscall()
@@ -1258,6 +1317,7 @@ osyscall1:
 	INTRENTRY
 	STI(si)
 	jmp	do_syscall
+IDTVEC_END(osyscall)
 
 /*
  * bool sse2_idlezero_page(void *pg)
@@ -1294,6 +1354,7 @@ ENTRY(sse2_idlezero_page)
 	sfence
 	popq	%rbp
 	ret
+END(sse2_idlezero_page)
 
 /*
  * void pagezero(vaddr_t va)
@@ -1318,3 +1379,4 @@ ENTRY(pagezero)
 	jne	1b
 	sfence
 	ret
+END(pagezero)
