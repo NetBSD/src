@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42 2012/11/02 08:33:16 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.43 2013/06/22 08:48:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -115,9 +115,11 @@
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
+IDTVEC_END(trap00)
 
 IDTVEC(trap01)
 	ZTRAP(T_TRCTRAP)
+IDTVEC_END(trap01)
 
 IDTVEC(trap02)
 #if defined(XEN)
@@ -152,6 +154,7 @@ IDTVEC(trap02)
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif /* defined(XEN) */
+IDTVEC_END(trap02)
 
 IDTVEC(trap03)
 #ifndef KDTRACE_HOOKS
@@ -195,15 +198,19 @@ dtrace_invop_calltrap_addr:
 	.zero	8
 	.text
 #endif
+IDTVEC_END(trap03)
 
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
+IDTVEC_END(trap04)
 
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
+IDTVEC_END(trap05)
 
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
+IDTVEC_END(trap06)
 
 IDTVEC(trap07)
 	ZTRAP_NJ(T_ASTFLT)
@@ -214,15 +221,19 @@ IDTVEC(trap07)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
+IDTVEC_END(trap07)
 
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
+IDTVEC_END(trap08)
 
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
+IDTVEC_END(trap09)
 
 IDTVEC(trap0a)
 	TRAP(T_TSSFLT)
+IDTVEC_END(trap0a)
 
 #ifdef XEN
 /*
@@ -236,10 +247,12 @@ IDTVEC(trap0a)
 IDTVEC(trap0b)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	check_swapgs
+IDTVEC_END(trap0b)		/* #NP() Segment not present */
 
 IDTVEC(trap0c)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
 	jmp	check_swapgs
+IDTVEC_END(trap0c)		/* #SS() Stack exception */
 
 IDTVEC(trap0d)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
@@ -271,9 +284,11 @@ check_swapgs:
 	jne	2b			/* No - normal kernel fault */
 	jmp	1b			/* Yes - restore %gs */
 #endif
+IDTVEC_END(trap0d)
 
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
+IDTVEC_END(trap0e)
 
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
@@ -283,6 +298,8 @@ IDTVEC(trap0f)
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
+IDTVEC_END(trap0f)
+IDTVEC_END(intrspurious)
 
 IDTVEC(trap10)
 	ZTRAP_NJ(T_ARITHTRAP)
@@ -299,16 +316,20 @@ IDTVEC(trap10)
 1:
   	STI(si)
 	jmp	calltrap
+IDTVEC_END(trap10)
 
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
+IDTVEC_END(trap11)
 
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
+IDTVEC_END(trap12)
 
 IDTVEC(trap13)
 	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
+IDTVEC_END(trap13)
 
 IDTVEC(trap14)
 IDTVEC(trap15)
@@ -324,6 +345,18 @@ IDTVEC(trap1e)
 IDTVEC(trap1f)
 	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
+IDTVEC_END(trap1f)
+IDTVEC_END(trap1e)
+IDTVEC_END(trap1d)
+IDTVEC_END(trap1c)
+IDTVEC_END(trap1b)
+IDTVEC_END(trap1a)
+IDTVEC_END(trap19)
+IDTVEC_END(trap18)
+IDTVEC_END(trap17)
+IDTVEC_END(trap16)
+IDTVEC_END(trap15)
+IDTVEC_END(trap14)
 
 IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
@@ -342,6 +375,7 @@ IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
 	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
+IDTVEC_END(exceptions)
 
 /*
  * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
@@ -351,13 +385,15 @@ IDTVEC(exceptions)
  * Typically the code will have raised a SIGSEGV which will be actioned
  * by the code below.
  */
-_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
+	.type	_C_LABEL(trap_return_fault_return), @function
+LABEL(trap_return_fault_return)
 	mov	%rdi,%rsp		/* frame for user return */
 #ifdef DIAGNOSTIC
 	/* We can't recover the saved %rbx, so suppress warning */
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
+END(trap_return_fault_return)
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -412,6 +448,7 @@ calltrap:
 9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
+END(alltraps)
 
 
 #define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
@@ -451,6 +488,7 @@ IDTVEC(recurse_lapic_ipi)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ipi)
 
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
@@ -471,6 +509,8 @@ IDTVEC(resume_lapic_ipi)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(resume_lapic_ipi)
+IDTVEC_END(intr_lapic_ipi)
 
 #if defined(DDB)
 IDTVEC(intrddb)
@@ -486,6 +526,7 @@ IDTVEC(intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
+IDTVEC_END(intrddb)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 	
@@ -498,6 +539,7 @@ IDTVEC(recurse_lapic_ltimer)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ltimer)
 
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
@@ -520,6 +562,8 @@ IDTVEC(resume_lapic_ltimer)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(resume_lapic_ltimer)
+IDTVEC_END(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 #ifndef XEN
@@ -533,6 +577,7 @@ IDTVEC(intr_lapic_tlb)
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	callq	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
+IDTVEC_END(intr_lapic_tlb)
 
 #endif /* !XEN */
 
@@ -721,8 +766,8 @@ INTRSTUB(ioapic_level,31,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-.globl _C_LABEL(i8259_stubs)
-_C_LABEL(i8259_stubs):
+	.type _C_LABEL(i8259_stubs), @object
+LABEL(i8259_stubs)
 	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.quad _C_LABEL(Xresume_legacy0)
 	.quad _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
@@ -755,10 +800,11 @@ _C_LABEL(i8259_stubs):
 	.quad _C_LABEL(Xresume_legacy14)
 	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.quad _C_LABEL(Xresume_legacy15)
+END(i8259_stubs)
 
 #if NIOAPIC > 0
-.globl _C_LABEL(ioapic_edge_stubs)
-_C_LABEL(ioapic_edge_stubs):
+	.type _C_LABEL(ioapic_edge_stubs), @object
+LABEL(ioapic_edge_stubs)
 	.quad _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
 	.quad _C_LABEL(Xresume_ioapic_edge0)
 	.quad _C_LABEL(Xintr_ioapic_edge1), _C_LABEL(Xrecurse_ioapic_edge1)
@@ -823,9 +869,10 @@ _C_LABEL(ioapic_edge_stubs):
 	.quad _C_LABEL(Xresume_ioapic_edge30)
 	.quad _C_LABEL(Xintr_ioapic_edge31), _C_LABEL(Xrecurse_ioapic_edge31)
 	.quad _C_LABEL(Xresume_ioapic_edge31)
+END(ioapic_edge_stubs)
 
-.globl _C_LABEL(ioapic_level_stubs)
-_C_LABEL(ioapic_level_stubs):
+	.type _C_LABEL(ioapic_level_stubs), @object
+LABEL(ioapic_level_stubs)
 	.quad _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
 	.quad _C_LABEL(Xresume_ioapic_level0)
 	.quad _C_LABEL(Xintr_ioapic_level1), _C_LABEL(Xrecurse_ioapic_level1)
@@ -890,6 +937,7 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xresume_ioapic_level30)
 	.quad _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
 	.quad _C_LABEL(Xresume_ioapic_level31)
+END(ioapic_level_stubs)
 #endif
 
 #else	/* !XEN */
@@ -962,8 +1010,7 @@ XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
   
-.globl _C_LABEL(xenev_stubs)
-_C_LABEL(xenev_stubs):
+LABEL(xenev_stubs)
   	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
   	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
   	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
@@ -996,6 +1043,7 @@ _C_LABEL(xenev_stubs):
   	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
   	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
   	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+END(xenev_stubs)
 
 # Xen callbacks
 
@@ -1015,6 +1063,7 @@ NENTRY(hypervisor_callback)
 	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
+END(hypervisor_callback)
 
 # Panic?
 NENTRY(failsafe_callback)
@@ -1029,5 +1078,6 @@ NENTRY(failsafe_callback)
 	call xen_failsafe_handler
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
+END(failsafe_callback)
 
 #endif	/* !XEN */
