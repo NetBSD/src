@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.103 2012/10/26 14:46:44 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.104 2013/06/22 15:13:55 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.103 2012/10/26 14:46:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.104 2013/06/22 15:13:55 uebayasi Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -163,6 +163,13 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.103 2012/10/26 14:46:44 chs Exp $");
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
+#ifndef XEN
+#define	_RELOC(x)	((x) - KERNBASE)
+#else
+#define	_RELOC(x)	((x))
+#endif /* XEN */
+#define	RELOC(x)	_RELOC(_C_LABEL(x))
+
 #ifdef XEN
 /*
  * Xen guest identifier and loader selection
@@ -194,7 +201,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.103 2012/10/26 14:46:44 chs Exp $");
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(lwp0uarea),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea)
+	.globl	_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
@@ -206,52 +214,68 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.103 2012/10/26 14:46:44 chs Exp $");
 	.align	12
 #endif
 	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
-_C_LABEL(local_apic):
+	.type	_C_LABEL(local_apic), @object
+LABEL(local_apic)
 	.space	LAPIC_ID
-_C_LABEL(lapic_id):
+END(local_apic)
+	.type	_C_LABEL(lapic_id), @object
+LABEL(lapic_id)
 	.long	0x00000000
 	.space  LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):
+END(lapic_id)
+	.type	_C_LABEL(lapic_tpr), @object
+LABEL(lapic_tpr)
 	.space  LAPIC_PPRI-LAPIC_TPRI
+END(lapic_tpr)
+	.type	_C_LABEL(lapic_ppr), @object
 _C_LABEL(lapic_ppr):
 	.space	LAPIC_ISR-LAPIC_PPRI
+END(lapic_ppr)
+	.type	_C_LABEL(lapic_isr), @object
 _C_LABEL(lapic_isr):
 	.space	PAGE_SIZE-LAPIC_ISR
+END(lapic_isr)
 #else
-_C_LABEL(lapic_tpr):
+	.type	_C_LABEL(lapic_tpr), @object
+LABEL(lapic_tpr)
 	.long 0
+END(lapic_tpr)
 #endif
-
-_C_LABEL(cputype):	.long	0	# are we 80486, Pentium, or..
-_C_LABEL(cpuid_level):	.long	0
-_C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(lwp0uarea):	.long	0
-_C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
+	.type	_C_LABEL(cputype), @object
+LABEL(cputype)		.long	0	# are we 80486, Pentium, or..
+END(cputype)
+	.type	_C_LABEL(cpuid_level), @object
+LABEL(cpuid_level)	.long	0
+END(cpuid_level)
+	.type	_C_LABEL(atdevbase), @object
+LABEL(atdevbase)	.long	0	# location of start of iomem in virtual
+END(atdevbase)
+	.type	_C_LABEL(lwp0uarea), @object
+LABEL(lwp0uarea)	.long	0
+END(lwp0uarea)
+	.type	_C_LABEL(PDPpaddr), @object
+LABEL(PDPpaddr)		.long	0	# paddr of PDP, for libkvm
+END(PDPpaddr)
+	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	0
-
+END(tablesize)
+	.size	tmpstk, tmpstk - .
 	.space 512
 tmpstk:
 #ifdef XEN
 	.align 		PAGE_SIZE, 0x0	# Align on page boundary
-	.globl tmpgdt
-_C_LABEL(tmpgdt):
+LABEL(tmpgdt)
 	.space 		PAGE_SIZE	# Xen expects a page
+END(tmpgdt)
 #endif /* XEN */
-#ifndef XEN
-#define	_RELOC(x)	((x) - KERNBASE)
-#else
-#define	_RELOC(x)	((x))
-#endif /* XEN */
-#define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 	.text
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
-	.globl	start
+ENTRY(start)
 #ifndef XEN
-start:	movw	$0x1234,0x472			# warm boot
-
+	movw	$0x1234,0x472			# warm boot
 #if defined(MULTIBOOT)
 	jmp	1f
 
@@ -752,7 +776,6 @@ begin:
 
 	call 	_C_LABEL(main)
 #else /* XEN */
-start:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -816,6 +839,8 @@ start:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
+#endif /* defined(XEN) */
+END(start)
 
 #if defined(XEN)
 /* space for the hypercall call page */
@@ -823,7 +848,7 @@ start:
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN) */
+END(hypercall_page)
 
 /*
  * void lgdt_finish(void);
