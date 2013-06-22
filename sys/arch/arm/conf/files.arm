@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.119 2013/06/12 21:34:12 matt Exp $
+#	$NetBSD: files.arm,v 1.120 2013/06/22 00:35:31 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -36,7 +36,7 @@ defflag  opt_cpuoptions.h	TPIDRPRW_IS_CURCPU
 defflag  opt_cpuoptions.h	ARM11_PMC CORTEX_PMC
 defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
 defflag	 opt_cpuoptions.h	ARM11MPCORE_COMPAT_MMU
-defflag	 opt_cpuoptions.h	ARM_USE_VBAR
+defflag	 opt_cpuoptions.h	ARM_HAS_VBAR
 # use extended small page in compatible MMU mode for ARMv6
 defflag  opt_cpuoptions.h	ARMV6_EXTENDED_SMALL_PAGE
 
