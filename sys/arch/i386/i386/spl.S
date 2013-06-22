@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.38 2012/11/10 16:28:06 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.39 2013/06/22 06:57:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.38 2012/11/10 16:28:06 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.39 2013/06/22 06:57:30 uebayasi Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -136,6 +136,8 @@ ENTRY(cx8_spllower)
 	ret
 2:
 	popl	%ebx
+
+	.type	_C_LABEL(cx8_spllower_patch), @function
 LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
@@ -281,8 +283,8 @@ IDTVEC(doreti)
 #else
 	jmp	6f
 #endif
-	.globl doreti_checkast
-doreti_checkast:
+	.type	_C_LABEL(doreti_checkast), @function
+LABEL(doreti_checkast)
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 	CLEAR_ASTPENDING(%eax)
@@ -294,6 +296,8 @@ doreti_checkast:
 	addl	$4,%esp
 	CLI(%eax)
 	jmp	5b
+END(doreti_checkast)
+
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
