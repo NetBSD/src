@@ -1,4 +1,4 @@
-/*	$NetBSD: epockbd.c,v 1.1 2013/04/28 12:11:25 kiyohara Exp $	*/
+/*	$NetBSD: epockbd.c,v 1.2 2013/06/22 13:53:30 kiyohara Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.1 2013/04/28 12:11:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.2 2013/06/22 13:53:30 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,6 +182,13 @@ epockbd_cngetc(void *conscookie, u_int *type, int *data)
 	struct epockbd_softc *sc = conscookie;
 	uint8_t cmd, key, mask;
 	int column, row;
+#if 1
+	/*
+	 * For some machines which return a strange response, it calculates
+	 * using this variable.
+	 */
+	int pc = 0, pr = 0;
+#endif
 
 	*type = 0;
 	*data = 0;
@@ -197,12 +204,23 @@ epockbd_cngetc(void *conscookie, u_int *type, int *data)
 		if (sc->sc_state[column] != key) {
 			row = sc->sc_state[column] ^ key;
 			sc->sc_state[column] = key;
-			if (*data == 0) {
+#if 1
+			if (*data == 0 ||
+			    (row == pr && pc == 0 &&
+			     column == sc->sc_kbd_ncolumn - 1))
+#else
+			if (*data == 0)
+#endif
+			{
 				if (key & row)
 					*type = WSCONS_EVENT_KEY_DOWN;
 				else
 					*type = WSCONS_EVENT_KEY_UP;
 				*data = EPOC2WS_KBD_DATA(row, column);
+#if 1
+				pc = column;
+				pr = row;
+#endif
 			}
 		}
 	}
