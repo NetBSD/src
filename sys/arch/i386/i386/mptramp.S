@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.24 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.25 2013/06/22 13:09:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.24 2012/04/20 22:23:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.25 2013/06/22 13:09:07 uebayasi Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -118,7 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.24 2012/04/20 22:23:24 rmind Exp $");
 	.text
 	.align 4,0x0
 	.code16
-_C_LABEL(cpu_spinup_trampoline):
+/* XXX ENTRY() */
+LABEL(cpu_spinup_trampoline)
 	cli
 	xorw    %ax,%ax
 	movw    %ax, %ds
@@ -271,14 +272,16 @@ mp_cont:
 	HALTT(0x30,%ecx)	
 	pushl	%ecx
 	call	_C_LABEL(cpu_hatch)
+END(cpu_spinup_trampoline)
 	
 	.data
-_C_LABEL(mp_pdirpa):
+LABEL(mp_pdirpa)
 	.long	0
+END(mp_pdirpa)
 #ifdef MPDEBUG
-	.global _C_LABEL(cpu_trace)
-_C_LABEL(cpu_trace):
+LABEL(cpu_trace)
 	.long  0x40
 	.long  0xff
 	.long  0xff		
+END(cpu_trace)
 #endif
