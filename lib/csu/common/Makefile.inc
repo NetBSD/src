@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2013/06/22 02:21:58 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2013/06/22 02:37:09 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,10 +12,10 @@ OBJS+=		crtbegin.o crtbeginS.o crtend.o
 
 realall: ${OBJS}
 
-.if exists(${ARCHDIR}/crtbegin.c)
+.if !exists(${ARCHDIR}/crtbegin.S)
 crtbegin.o: crtbegin.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${ARCHDIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .else
 crtbegin.o: crtbegin.S
 	${_MKTARGET_COMPILE}
@@ -27,10 +27,10 @@ crtbegin.o: crtbegin.S
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-.if exists(${ARCHDIR}/crtbegin.c)
+.if !exists(${ARCHDIR}/crtbegin.S)
 crtbeginS.o: crtbegin.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -DPIC -DSHARED ${ARCHDIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} -DPIC -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .else
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
