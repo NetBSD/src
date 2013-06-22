@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.1 2013/06/21 19:33:08 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.2 2013/06/22 09:25:33 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -626,19 +626,19 @@ dhcp6_makemessage(struct interface *ifp)
 			p = D6_OPTION_DATA(o);
 			switch (ifo->fqdn) {
 			case FQDN_BOTH:
-				*p = 0x01;
+				*p = D6_FQDN_BOTH;
 				break;
 			case FQDN_PTR:
-				*p = 0x00;
+				*p = D6_FQDN_PTR;
 				break;
 			default:
-				*p = 0x04;
+				*p = D6_FQDN_NONE;
 				break;
 			}
-			o->len = encode_rfc1035(hostname, p + 1);
-			if (o->len == 0)
-				*p = 0x04;
-			o->len = htons(++o->len);
+			l = encode_rfc1035(hostname, p + 1);
+			if (l == 0)
+				*p = D6_FQDN_NONE;
+			o->len = htons(l + 1);
 		}
 
 		if (n_options) {
