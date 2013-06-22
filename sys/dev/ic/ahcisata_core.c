@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.47 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.48 2013/06/22 05:41:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.47 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.48 2013/06/22 05:41:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -326,7 +326,7 @@ ahci_attach(struct ahci_softc *sc)
 		chp->ch_channel = i;
 		chp->ch_atac = &sc->sc_atac;
 		chp->ch_queue = malloc(sizeof(struct ata_queue),
-		    M_DEVBUF, M_NOWAIT);
+		    M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (chp->ch_queue == NULL) {
 			aprint_error("%s port %d: can't allocate memory for "
 			    "command queue", AHCINAME(sc), i);
