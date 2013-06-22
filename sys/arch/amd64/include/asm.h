@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2013/06/21 02:47:06 uebayasi Exp $	*/
+/*	$NetBSD: asm.h,v 1.17 2013/06/22 07:31:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,9 +79,13 @@
 #ifdef __STDC__
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X ## name; .type X ## name,@function; X ## name:
+#define	IDTVEC_END(name) \
+	.size X ## name, . - X ## name
 #else 
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X/**/name; .type X/**/name,@function; X/**/name:
+#define	IDTVEC_END(name) \
+	.size X/**/name, . - X/**/name
 #endif /* __STDC__ */ 
 #endif /* _KERNEL */
 
