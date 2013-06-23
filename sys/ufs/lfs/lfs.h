@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.155 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.156 2013/06/23 02:07:04 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -851,7 +851,7 @@ struct dlfs {
 	u_int32_t dlfs_inodefmt;  /* 360: inode format version */
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
-	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb abd dbtodsb shift constant */
+	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb and dbtodsb shift constant */
 	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
 	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
 /* Checksum -- last valid disk field. */
