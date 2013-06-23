@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.21 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.22 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.21 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.22 2013/06/23 22:03:34 dholland Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -793,7 +793,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		min_desired_blks = desired_blks / 4;
 
 	/* Look at number of blocks per CG.  If it's too small, bail early. */
-	bpcg = fragstoblks(fs, fs->fs_fpg);
+	bpcg = ffs_fragstoblks(fs, fs->fs_fpg);
 	if (min_desired_blks > bpcg) {
 		printf("ffs_wapbl: cylinder group size of %" PRId64 " MB "
 		    " is not big enough for journal\n",
@@ -851,7 +851,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 
 			if (freeblks > best_blks) {
 				best_blks = freeblks;
-				best_addr = blkstofrags(fs, start_addr) +
+				best_addr = ffs_blkstofrags(fs, start_addr) +
 				    cgbase(fs, cg);
 
 				if (freeblks >= desired_blks) {
@@ -872,7 +872,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		*indir_addr = 0;
 	} else {
 		/* put indirect blocks at start, and data blocks after */
-		*addr = best_addr + blkstofrags(fs, indir_blks);
+		*addr = best_addr + ffs_blkstofrags(fs, indir_blks);
 		*indir_addr = best_addr;
 	}
 	*size = min(desired_blks, best_blks) - indir_blks;
