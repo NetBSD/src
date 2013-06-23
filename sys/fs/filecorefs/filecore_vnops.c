@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.37 2013/06/19 18:16:10 dholland Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.38 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.37 2013/06/19 18:16:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.38 2013/06/23 07:28:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ filecore_read(void *v)
 	}
 
 	do {
-		lbn = lblkno(fcmp, uio->uio_offset);
+		lbn = filecore_lblkno(fcmp, uio->uio_offset);
 		on = filecore_blkoff(fcmp, uio->uio_offset);
 		n = MIN(filecore_blksize(fcmp, ip, lbn) - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;

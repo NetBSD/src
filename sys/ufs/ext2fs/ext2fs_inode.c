@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.80 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.81 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.80 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.81 2013/06/23 07:28:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
+	lastblock = ext2_lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - EXT2FS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - EXT2_NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - EXT2_NINDIR(fs) * EXT2_NINDIR(fs);
