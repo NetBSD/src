@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.117 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.118 2013/06/23 04:14:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.117 2013/06/23 02:06:05 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.118 2013/06/23 04:14:28 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1257,7 +1257,7 @@ makedir(struct direct *protodir, int entries)
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
-	memset(buf, 0, dirblksiz);
+	memset(buf, 0, UFS_DIRBLKSIZ);
 	spcleft = dirblksiz;
 	for (cp = buf, i = 0; i < entries - 1; i++) {
 		protodir[i].d_reclen = UFS_DIRSIZ(Oflag == 0, &protodir[i], 0);
