@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.57 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.58 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.57 2013/06/19 17:51:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.58 2013/06/23 02:06:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -241,7 +241,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (error)
 				return (error);
 			if (bpp != NULL) {
-				error = ffs_getblk(vp, lbn, fsbtodb(fs, newb),
+				error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, newb),
 				    nsize, (flags & B_CLRBUF) != 0, bpp);
 				if (error)
 					return error;
@@ -277,7 +277,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		nb = newb;
 		*allocblk++ = nb;
-		error = ffs_getblk(vp, indirs[1].in_lbn, fsbtodb(fs, nb),
+		error = ffs_getblk(vp, indirs[1].in_lbn, FFS_FSBTODB(fs, nb),
 		    fs->fs_bsize, true, &bp);
 		if (error)
 			goto fail;
@@ -332,7 +332,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		error = ffs_getblk(vp, indirs[i].in_lbn, fsbtodb(fs, nb),
+		error = ffs_getblk(vp, indirs[i].in_lbn, FFS_FSBTODB(fs, nb),
 		    fs->fs_bsize, true, &nbp);
 		if (error) {
 			brelse(bp, 0);
@@ -389,7 +389,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		nb = newb;
 		*allocblk++ = nb;
 		if (bpp != NULL) {
-			error = ffs_getblk(vp, lbn, fsbtodb(fs, nb),
+			error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, nb),
 			    fs->fs_bsize, (flags & B_CLRBUF) != 0, bpp);
 			if (error) {
 				brelse(bp, 0);
@@ -422,7 +422,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				goto fail;
 			}
 		} else {
-			error = ffs_getblk(vp, lbn, fsbtodb(fs, nb),
+			error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, nb),
 			    fs->fs_bsize, true, &nbp);
 			if (error)
 				goto fail;
@@ -454,8 +454,8 @@ fail:
 			    fs->fs_bsize, false, &bp) != 0)
 				continue;
 			if (bp->b_oflags & BO_DELWRI) {
-				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
-				    dbtofsb(fs, bp->b_blkno))));
+				nb = FFS_FSBTODB(fs, cgtod(fs, dtog(fs,
+				    FFS_DBTOFSB(fs, bp->b_blkno))));
 				bwrite(bp);
 				if (ffs_getblk(ip->i_devvp, nb, FFS_NOBLK,
 				    fs->fs_cgsize, false, &bp) != 0)
@@ -572,7 +572,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				if (error)
 					return (error);
 				dp->di_extsize = smalllblktosize(fs, nb + 1);
-				dp->di_extb[nb] = dbtofsb(fs, bp->b_blkno);
+				dp->di_extb[nb] = FFS_DBTOFSB(fs, bp->b_blkno);
 				bp->b_xflags |= BX_ALTDATA;
 				ip->i_flag |= IN_CHANGE | IN_UPDATE;
 				if (flags & IO_SYNC)
@@ -594,7 +594,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				return (error);
 			}
 			mutex_enter(&bp->b_interlock);
-			bp->b_blkno = fsbtodb(fs, nb);
+			bp->b_blkno = FFS_FSBTODB(fs, nb);
 			bp->b_xflags |= BX_ALTDATA;
 			mutex_exit(&bp->b_interlock);
 			*bpp = bp;
@@ -613,7 +613,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 					return (error);
 				}
 				mutex_enter(&bp->b_interlock);
-				bp->b_blkno = fsbtodb(fs, nb);
+				bp->b_blkno = FFS_FSBTODB(fs, nb);
 				bp->b_xflags |= BX_ALTDATA;
 				mutex_exit(&bp->b_interlock);
 			} else {
@@ -639,13 +639,13 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			   nsize, flags, cred, &newb);
 			if (error)
 				return (error);
-			error = ffs_getblk(vp, -1 - lbn, fsbtodb(fs, newb),
+			error = ffs_getblk(vp, -1 - lbn, FFS_FSBTODB(fs, newb),
 			    nsize, (flags & BA_CLRBUF) != 0, &bp);
 			if (error)
 				return error;
 			bp->b_xflags |= BX_ALTDATA;
 		}
-		dp->di_extb[lbn] = dbtofsb(fs, bp->b_blkno);
+		dp->di_extb[lbn] = FFS_DBTOFSB(fs, bp->b_blkno);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
@@ -764,7 +764,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (error)
 				return (error);
 			if (bpp != NULL) {
-				error = ffs_getblk(vp, lbn, fsbtodb(fs, newb),
+				error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, newb),
 				    nsize, (flags & B_CLRBUF) != 0, bpp);
 				if (error)
 					return error;
@@ -800,7 +800,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		nb = newb;
 		*allocblk++ = nb;
-		error = ffs_getblk(vp, indirs[1].in_lbn, fsbtodb(fs, nb),
+		error = ffs_getblk(vp, indirs[1].in_lbn, FFS_FSBTODB(fs, nb),
 		    fs->fs_bsize, true, &bp);
 		if (error)
 			goto fail;
@@ -855,7 +855,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		error = ffs_getblk(vp, indirs[i].in_lbn, fsbtodb(fs, nb),
+		error = ffs_getblk(vp, indirs[i].in_lbn, FFS_FSBTODB(fs, nb),
 		    fs->fs_bsize, true, &nbp);
 		if (error) {
 			brelse(bp, 0);
@@ -912,7 +912,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		nb = newb;
 		*allocblk++ = nb;
 		if (bpp != NULL) {
-			error = ffs_getblk(vp, lbn, fsbtodb(fs, nb),
+			error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, nb),
 			    fs->fs_bsize, (flags & B_CLRBUF) != 0, bpp);
 			if (error) {
 				brelse(bp, 0);
@@ -945,7 +945,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				goto fail;
 			}
 		} else {
-			error = ffs_getblk(vp, lbn, fsbtodb(fs, nb),
+			error = ffs_getblk(vp, lbn, FFS_FSBTODB(fs, nb),
 			    fs->fs_bsize, true, &nbp);
 			if (error)
 				goto fail;
@@ -977,8 +977,8 @@ fail:
 			    fs->fs_bsize, false, &bp) != 0)
 				continue;
 			if (bp->b_oflags & BO_DELWRI) {
-				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
-				    dbtofsb(fs, bp->b_blkno))));
+				nb = FFS_FSBTODB(fs, cgtod(fs, dtog(fs,
+				    FFS_DBTOFSB(fs, bp->b_blkno))));
 				bwrite(bp);
 				if (ffs_getblk(ip->i_devvp, nb, FFS_NOBLK,
 				    fs->fs_cgsize, false, &bp) != 0)

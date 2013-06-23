@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.37 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.38 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.37 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.38 2013/06/23 02:06:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -155,7 +155,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
 			bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
+			bp->b_blkno = EXT2_FSBTODB(fs, newb);
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 			*bpp = bp;
@@ -189,7 +189,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, newb);
+		bp->b_blkno = EXT2_FSBTODB(fs, newb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -231,7 +231,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -282,7 +282,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		}
 		if (bpp != NULL) {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
 			*bpp = nbp;
@@ -299,7 +299,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 			}
 		} else {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		}
 		*bpp = nbp;
 	}

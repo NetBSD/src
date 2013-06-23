@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.284 2013/06/16 13:33:30 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.285 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.284 2013/06/16 13:33:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.285 2013/06/23 02:06:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -789,7 +789,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
 			      NOCRED, 0, &bp);
 		if (error) {
 			return (error);
@@ -850,7 +850,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 * Step 6: re-read inode data for all active vnodes.
 		 */
 		ip = VTOI(vp);
-		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+		error = bread(devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			      (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
@@ -1154,7 +1154,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 
 	if (!ronly) {
-		error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize,
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1), fs->fs_fsize,
 		    cred, 0, &bp);
 		if (bp->b_bcount != fs->fs_fsize)
 			error = EINVAL;
@@ -1185,7 +1185,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
 			      cred, 0, &bp);
 		if (error) {
 			kmem_free(fs->fs_csp, allocsbsize);
@@ -1603,7 +1603,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
 	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
-	    fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
+	    fs->fs_cstotal.cs_nffree + FFS_DBTOFSB(fs, fs->fs_pendingblocks);
 	sbp->f_bresvd = ((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    fs->fs_minfree) / (u_int64_t) 100;
 	if (sbp->f_bfree > sbp->f_bresvd)
@@ -1864,7 +1864,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	mutex_exit(&ufs_hashlock);
 
 	/* Read in the disk contents for the inode, copy into the inode. */
-	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
+	error = bread(ump->um_devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ino)),
 		      (int)fs->fs_bsize, NOCRED, 0, &bp);
 	if (error) {
 
@@ -2052,7 +2052,7 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		error = ffs_getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
+		error = ffs_getblk(mp->um_devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i),
 		    FFS_NOBLK, size, false, &bp);
 		if (error)
 			break;

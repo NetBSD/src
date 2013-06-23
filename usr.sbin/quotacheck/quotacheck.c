@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.46 2013/01/22 09:39:20 dholland Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.47 2013/06/23 02:06:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.46 2013/01/22 09:39:20 dholland Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.47 2013/06/23 02:06:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,14 +407,14 @@ chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
 		return 1;
 	}
 
-	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
+	dev_bsize = sblock.fs_fsize / FFS_FSBTODB(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	for (cg = 0; cg < sblock.fs_ncg; cg++) {
 		ino = cg * sblock.fs_ipg;
 		setinodebuf(ino);
 #ifdef HAVE_UFSv2
 		if (sblock.fs_magic == FS_UFS2_MAGIC) {
-			bread(fsbtodb(&sblock, cgtod(&sblock, cg)), (char *)cgp,
+			bread(FFS_FSBTODB(&sblock, cgtod(&sblock, cg)), (char *)cgp,
 			    sblock.fs_cgsize);
 			if (needswap)
 				ffs_cg_swap(cgp, cgp, &sblock);
@@ -740,7 +740,7 @@ getnextinode(ino_t inumber)
 
 	if (inumber >= lastinum) {
 		readcnt++;
-		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
+		dblk = FFS_FSBTODB(&sblock, ino_to_fsba(&sblock, lastinum));
 		if (readcnt % readpercg == 0) {
 			size = partialsize;
 			lastinum += partialcnt;

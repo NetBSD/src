@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.30 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.31 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.30 2013/06/19 17:51:26 dholland Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.31 2013/06/23 02:06:05 dholland Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -150,7 +150,7 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
 		off_t sp;
-		sp = (off_t) fsbtodb(fs, ino_to_fsba(fs, ino)) *
+		sp = (off_t) FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) *
 		     (off_t) lab->d_secsize;
 
 		if (lseek(fd, sp, SEEK_SET) == (off_t) -1)
