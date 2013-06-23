@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.78.2.1 2012/11/20 03:02:48 tls Exp $	*/
+/*	$NetBSD: key.c,v 1.78.2.2 2013/06/23 06:20:26 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.78.2.1 2012/11/20 03:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.78.2.2 2013/06/23 06:20:26 tls Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -400,10 +400,8 @@ static int key_spddump (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static struct mbuf * key_setspddump (int *errorp, pid_t);
 static struct mbuf * key_setspddump_chain (int *errorp, int *lenp, pid_t pid);
-#ifdef IPSEC_NAT_T
 static int key_nat_map (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-#endif
 static struct mbuf *key_setdumpsp (struct secpolicy *,
 	u_int8_t, u_int32_t, pid_t);
 static u_int key_getspreqmsglen (const struct secpolicy *);
@@ -424,11 +422,9 @@ static int key_setsaval (struct secasvar *, struct mbuf *,
 static int key_mature (struct secasvar *);
 static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 	u_int8_t, u_int32_t, u_int32_t);
-#ifdef IPSEC_NAT_T
 static struct mbuf *key_setsadbxport (u_int16_t, u_int16_t);
 static struct mbuf *key_setsadbxtype (u_int16_t);
 static struct mbuf *key_setsadbxfrag (u_int16_t);
-#endif
 static void key_porttosaddr (union sockaddr_union *, u_int16_t);
 static int key_checksalen (const union sockaddr_union *);
 static struct mbuf *key_setsadbmsg (u_int8_t, u_int16_t, u_int8_t,
@@ -465,13 +461,11 @@ static int key_getspi (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static u_int32_t key_do_getnewspi (const struct sadb_spirange *,
 					const struct secasindex *);
-#ifdef IPSEC_NAT_T
 static int key_handle_natt_info (struct secasvar *,
 				     const struct sadb_msghdr *);
 static int key_set_natt_ports (union sockaddr_union *,
 			 	union sockaddr_union *,
 				const struct sadb_msghdr *);
-#endif
 static int key_update (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 #ifdef IPSEC_DOSEQCHECK
@@ -1102,10 +1096,8 @@ key_allocsa(
 	u_int16_t cpi = 0;
 	u_int8_t algo = 0;
 
-#ifdef IPSEC_NAT_T
 	if ((sport != 0) && (dport != 0))
 		chkport = 1;
-#endif
 
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
@@ -2574,7 +2566,6 @@ key_spddump(struct socket *so, struct mbuf *m0,
 	return error;
 }
 
-#ifdef IPSEC_NAT_T
 /*
  * SADB_X_NAT_T_NEW_MAPPING. Unused by racoon as of 2005/04/23
  */
@@ -2639,7 +2630,6 @@ key_nat_map(struct socket *so, struct mbuf *m,
 
 	return 0;
 }
-#endif /* IPSEC_NAT_T */
 
 static struct mbuf *
 key_setdumpsp(struct secpolicy *sp, u_int8_t type, u_int32_t seq, pid_t pid)
@@ -3191,10 +3181,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->tdb_encalgxform = NULL;	/* encoding algorithm */
 	sav->tdb_authalgxform = NULL;	/* authentication algorithm */
 	sav->tdb_compalgxform = NULL;	/* compression algorithm */
-#ifdef IPSEC_NAT_T
 	sav->natt_type = 0;
 	sav->esp_frag = 0;
-#endif
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -3520,12 +3508,10 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		SADB_EXT_ADDRESS_DST, SADB_EXT_ADDRESS_PROXY, SADB_EXT_KEY_AUTH,
 		SADB_EXT_KEY_ENCRYPT, SADB_EXT_IDENTITY_SRC,
 		SADB_EXT_IDENTITY_DST, SADB_EXT_SENSITIVITY,
-#ifdef IPSEC_NAT_T
 		SADB_X_EXT_NAT_T_TYPE,
 		SADB_X_EXT_NAT_T_SPORT, SADB_X_EXT_NAT_T_DPORT,
 		SADB_X_EXT_NAT_T_OAI, SADB_X_EXT_NAT_T_OAR,
 		SADB_X_EXT_NAT_T_FRAG,
-#endif
 
 	};
 
@@ -3598,7 +3584,6 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			p = sav->lft_s;
 			break;
 
-#ifdef IPSEC_NAT_T
 		case SADB_X_EXT_NAT_T_TYPE:
 			m = key_setsadbxtype(sav->natt_type);
 			break;
@@ -3629,7 +3614,6 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		case SADB_X_EXT_NAT_T_OAI:
 		case SADB_X_EXT_NAT_T_OAR:
 			continue;
-#endif
 
 		case SADB_EXT_ADDRESS_PROXY:
 		case SADB_EXT_IDENTITY_SRC:
@@ -3687,7 +3671,6 @@ fail:
 }
 
 
-#ifdef IPSEC_NAT_T
 /*
  * set a type in sadb_x_nat_t_type
  */
@@ -3802,7 +3785,6 @@ key_portfromsaddr(const union sockaddr_union *saddr)
 	return port;
 }
 
-#endif /* IPSEC_NAT_T */
 
 /*
  * Set port is struct sockaddr. port is in network order
@@ -4250,7 +4232,6 @@ key_cmpsaidx(
 	 * in the SPD: This means we have a non-generated
 	 * SPD which can't know UDP ports.
 	 */
-#ifdef IPSEC_NAT_T
 	if (saidx1->mode == IPSEC_MODE_TUNNEL &&
 	    ((((const struct sockaddr *)(&saidx1->src))->sa_family == AF_INET &&
 	      ((const struct sockaddr *)(&saidx1->dst))->sa_family == AF_INET &&
@@ -4261,7 +4242,6 @@ key_cmpsaidx(
 	      ((const struct sockaddr_in6 *)(&saidx1->src))->sin6_port &&
 	      ((const struct sockaddr_in6 *)(&saidx1->dst))->sin6_port)))
 		chkport = 1;
-#endif
 
 		if (key_sockaddrcmp(&saidx0->src.sa, &saidx1->src.sa, chkport) != 0) {
 			return 0;
@@ -4846,10 +4826,8 @@ key_setsecasidx(int proto, int mode, int reqid,
 	memcpy(&saidx->src, src_u, src_u->sa.sa_len);
 	memcpy(&saidx->dst, dst_u, dst_u->sa.sa_len);
 
-#ifndef IPSEC_NAT_T
 	key_porttosaddr(&((saidx)->src),0);
 	key_porttosaddr(&((saidx)->dst),0);
-#endif
 	return 0;
 }
 
@@ -4916,10 +4894,8 @@ key_getspi(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* SPI allocation */
 	spi = key_do_getnewspi((struct sadb_spirange *)mhp->ext[SADB_EXT_SPIRANGE],
@@ -5098,8 +5074,6 @@ key_do_getnewspi(const struct sadb_spirange *spirange,
 	return newspi;
 }
 
-#ifdef IPSEC_NAT_T
-/* Handle IPSEC_NAT_T info if present */
 static int
 key_handle_natt_info(struct secasvar *sav,
       		     const struct sadb_msghdr *mhp)
@@ -5222,7 +5196,6 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
 
 	return 0;
 }
-#endif
 
 
 /*
@@ -5298,10 +5271,8 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* get a SA header */
 	if ((sah = key_getsah(&saidx)) == NULL) {
@@ -5363,10 +5334,8 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, error);
 	}
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_handle_natt_info(sav,mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif /* IPSEC_NAT_T */
 
 	/* check SA values to be mature. */
 	if ((mhp->msg->sadb_msg_errno = key_mature(sav)) != 0) {
@@ -5500,10 +5469,8 @@ key_add(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* get a SA header */
 	if ((newsah = key_getsah(&saidx)) == NULL) {
@@ -5532,10 +5499,8 @@ key_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, error);
 	}
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_handle_natt_info(newsav, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif /* IPSEC_NAT_T */
 
 	/* check SA values to be mature. */
 	if ((error = key_mature(newsav)) != 0) {
@@ -5733,10 +5698,8 @@ key_delete(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* get a SA header */
 	LIST_FOREACH(sah, &sahtree, chain) {
@@ -5803,10 +5766,8 @@ key_delete_all(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
@@ -5917,10 +5878,8 @@ key_get(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* get a SA header */
 	LIST_FOREACH(sah, &sahtree, chain) {
@@ -6601,10 +6560,8 @@ key_acquire2(struct socket *so, struct mbuf *m,
 				     dst0 + 1, &saidx)) != 0)
 		return key_senderror(so, m, EINVAL);
 
-#ifdef IPSEC_NAT_T
 	if ((error = key_set_natt_ports(&saidx.src, &saidx.dst, mhp)) != 0)
 		return key_senderror(so, m, EINVAL);
-#endif
 
 	/* get a SA index */
 	LIST_FOREACH(sah, &sahtree, chain) {
@@ -7287,9 +7244,7 @@ static int (*key_typesw[]) (struct socket *, struct mbuf *,
 	key_spdadd,	/* SADB_X_SPDSETIDX */
 	NULL,		/* SADB_X_SPDEXPIRE */
 	key_spddelete2,	/* SADB_X_SPDDELETE2 */
-#ifdef IPSEC_NAT_T
-       key_nat_map,	/* SADB_X_NAT_T_NEW_MAPPING */
-#endif
+	key_nat_map,	/* SADB_X_NAT_T_NEW_MAPPING */
 };
 
 /*
@@ -7624,14 +7579,12 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
-#ifdef IPSEC_NAT_T
 		case SADB_X_EXT_NAT_T_TYPE:
 		case SADB_X_EXT_NAT_T_SPORT:
 		case SADB_X_EXT_NAT_T_DPORT:
 		case SADB_X_EXT_NAT_T_OAI:
 		case SADB_X_EXT_NAT_T_OAR:
 		case SADB_X_EXT_NAT_T_FRAG:
-#endif
 			/* duplicate check */
 			/*
 			 * XXX Are there duplication payloads of either
@@ -8226,7 +8179,7 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 }
 
 /*
- * Create sysctl tree for native FAST_IPSEC key knobs, originally
+ * Create sysctl tree for native IPSEC key knobs, originally
  * under name "net.keyv2"  * with MIB number { CTL_NET, PF_KEY_V2. }.
  * However, sysctl(8) never checked for nodes under { CTL_NET, PF_KEY_V2 };
  * and in any case the part of our sysctl namespace used for dumping the
@@ -8234,16 +8187,16 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
  * namespace, for API reasons.
  *
  * Pending a consensus on the right way  to fix this, add a level of
- * indirection in how we number the `native' FAST_IPSEC key nodes;
+ * indirection in how we number the `native' IPSEC key nodes;
  * and (as requested by Andrew Brown)  move registration of the
  * KAME-compatible names  to a separate function.
  */
 #if 0
-#  define FAST_IPSEC_PFKEY PF_KEY_V2
-# define FAST_IPSEC_PFKEY_NAME "keyv2"
+#  define IPSEC_PFKEY PF_KEY_V2
+# define IPSEC_PFKEY_NAME "keyv2"
 #else
-#  define FAST_IPSEC_PFKEY PF_KEY
-# define FAST_IPSEC_PFKEY_NAME "key"
+#  define IPSEC_PFKEY PF_KEY
+# define IPSEC_PFKEY_NAME "key"
 #endif
 
 static int
@@ -8263,55 +8216,55 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, FAST_IPSEC_PFKEY_NAME, NULL,
+		       CTLTYPE_NODE, IPSEC_PFKEY_NAME, NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug", NULL,
 		       NULL, 0, &key_debug_level, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_DEBUG_LEVEL, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_DEBUG_LEVEL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_try", NULL,
 		       NULL, 0, &key_spi_trycnt, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_TRY, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_SPI_TRY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_min_value", NULL,
 		       NULL, 0, &key_spi_minval, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_max_value", NULL,
 		       NULL, 0, &key_spi_maxval, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "random_int", NULL,
 		       NULL, 0, &key_int_random, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_RANDOM_INT, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_RANDOM_INT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "larval_lifetime", NULL,
 		       NULL, 0, &key_larval_lifetime, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_count", NULL,
 		       NULL, 0, &key_blockacq_count, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_lifetime", NULL,
 		       NULL, 0, &key_blockacq_lifetime, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_keymin", NULL,
 		       NULL, 0, &ipsec_esp_keymin, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_ESP_KEYMIN, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_ESP_KEYMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "prefered_oldsa", NULL,
@@ -8321,26 +8274,26 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_auth", NULL,
 		       NULL, 0, &ipsec_esp_auth, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_ESP_AUTH, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_ESP_AUTH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_keymin", NULL,
 		       NULL, 0, &ipsec_ah_keymin, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_AH_KEYMIN, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, KEYCTL_AH_KEYMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("PF_KEY statistics"),
 		       sysctl_net_key_stats, 0, NULL, 0,
-		       CTL_NET, FAST_IPSEC_PFKEY, CTL_CREATE, CTL_EOL);
+		       CTL_NET, IPSEC_PFKEY, CTL_CREATE, CTL_EOL);
 }
 
 /*
  * Register sysctl names used by setkey(8). For historical reasons,
  * and to share a single API, these names appear under { CTL_NET, PF_KEY }
- * for both FAST_IPSEC and KAME IPSEC.
+ * for both IPSEC and KAME IPSEC.
  */
-SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for FAST_IPSEC")
+SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for IPSEC")
 {
 
 	/* Make sure net.key exists before we register nodes underneath it. */

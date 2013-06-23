@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.22.2.2 2013/02/25 00:27:59 tls Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.22.2.3 2013/06/23 06:21:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.22.2.2 2013/02/25 00:27:59 tls Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.22.2.3 2013/06/23 06:21:08 tls Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 #include <string.h>
 #include <sys/lwpctl.h>
@@ -55,6 +56,9 @@ pthread_setspecific(pthread_key_t key, const void *value)
 {
 	pthread_t self;
 
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_setspecific_stub(key, value);
+
 	self = pthread__self();
 	/*
 	 * We can't win here on constness. Having been given a 
@@ -68,6 +72,8 @@ pthread_setspecific(pthread_key_t key, const void *value)
 void *
 pthread_getspecific(pthread_key_t key)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_getspecific_stub(key);
 
 	return pthread__self()->pt_specific[key].pts_value;
 }
@@ -75,8 +81,17 @@ pthread_getspecific(pthread_key_t key)
 unsigned int
 pthread_curcpu_np(void)
 {
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_curcpu_stub();
 
-	return pthread__self()->pt_lwpctl->lc_curcpu;
+	{
+		const int curcpu = pthread__self()->pt_lwpctl->lc_curcpu;
+
+		pthread__assert(curcpu != LWPCTL_CPU_NONE);
+		pthread__assert(curcpu != LWPCTL_CPU_EXITED);
+		pthread__assert(curcpu >= 0);
+		return curcpu;
+	}
 }
 
 /*

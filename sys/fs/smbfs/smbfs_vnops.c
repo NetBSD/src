@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.80.2.2 2013/02/25 00:29:49 tls Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.80.2.3 2013/06/23 06:18:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80.2.2 2013/02/25 00:29:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80.2.3 2013/06/23 06:18:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ smbfs_check_permitted(struct vnode *vp, struct smbnode *np, mode_t mode,
 	mode_t file_mode = (vp->v_type == VDIR) ? smp->sm_args.dir_mode :
 	    smp->sm_args.file_mode;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    file_mode, smp->sm_args.uid, smp->sm_args.gid, mode, cred));
 }

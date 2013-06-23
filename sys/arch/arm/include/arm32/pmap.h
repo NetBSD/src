@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.111.2.2 2013/02/25 00:28:30 tls Exp $	*/
+/*	$NetBSD: pmap.h,v 1.111.2.3 2013/06/23 06:20:00 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -186,7 +186,9 @@ struct pmap {
 	bool			pm_remove_all;
 	bool			pm_activated;
 	struct l1_ttable	*pm_l1;
+#ifndef ARM_HAS_VBAR
 	pd_entry_t		*pm_pl1vec;
+#endif
 	pd_entry_t		pm_l1vec;
 	union pmap_cache_state	pm_cstate;
 	struct uvm_object	pm_obj;

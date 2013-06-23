@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.143.2.1 2013/06/23 06:20:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.143.2.1 2013/06/23 06:20:25 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $"
 #include <netinet6/in6_pcb.h>
 #endif
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif /* IPSEC */
@@ -191,7 +191,7 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	int error;
 #endif
 
@@ -207,7 +207,7 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_errormtu = -1;
 	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
 		s = splnet();
@@ -470,6 +470,11 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 		return (EAFNOSUPPORT);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
+
+	if (IN_MULTICAST(sin->sin_addr.s_addr) &&
+	    inp->inp_socket->so_type == SOCK_STREAM)
+		return EADDRNOTAVAIL;
+
 	if (TAILQ_FIRST(&in_ifaddrhead) != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,
@@ -551,7 +556,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	}
 
 	in_pcbstate(inp, INP_CONNECTED);
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	if (inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
@@ -569,7 +574,7 @@ in_pcbdisconnect(void *v)
 	inp->inp_faddr = zeroin_addr;
 	inp->inp_fport = 0;
 	in_pcbstate(inp, INP_BOUND);
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	ipsec_pcbdisconn(inp->inp_sp);
 #endif
 	if (inp->inp_socket->so_state & SS_NOFDREF)
@@ -586,7 +591,7 @@ in_pcbdetach(void *v)
 	if (inp->inp_af != AF_INET)
 		return;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;

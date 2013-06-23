@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.41 2012/08/30 12:16:49 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.41.2.1 2013/06/23 06:20:26 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.41 2012/08/30 12:16:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.41.2.1 2013/06/23 06:20:26 tls Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -511,11 +511,8 @@ esp_input_cb(struct cryptop *crp)
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	void *ptr;
-	u_int16_t dport = 0;
-	u_int16_t sport = 0;
-#ifdef IPSEC_NAT_T
-	struct m_tag * tag = NULL;
-#endif
+	u_int16_t dport;
+	u_int16_t sport;
 
 	crd = crp->crp_desc;
 	IPSEC_ASSERT(crd != NULL, ("esp_input_cb: null crypto descriptor!"));
@@ -527,13 +524,8 @@ esp_input_cb(struct cryptop *crp)
 	mtag = (struct m_tag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
-#ifdef IPSEC_NAT_T
 	/* find the source port for NAT-T */
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		sport = ((u_int16_t *)(tag + 1))[0];
-		dport = ((u_int16_t *)(tag + 1))[1];
-	}
-#endif
+	nat_t_ports_get(m, &dport, &sport);
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);

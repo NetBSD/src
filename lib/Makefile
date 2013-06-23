@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188.2.2 2013/02/25 00:27:47 tls Exp $
+#	$NetBSD: Makefile,v 1.188.2.3 2013/06/23 06:21:03 tls Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -39,8 +39,11 @@ SUBDIR+=	libarch \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
-.if (${MACHINE_ARCH:C/e[bl]$//} == "arm")
+.if (${MACHINE_CPU} == "arm")
+LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
+.if empty(LIBC_MACHINE_ARCH:M*hf*)
 SUBDIR+=	libc_vfp
+.endif
 .endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient
@@ -64,7 +67,6 @@ SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
 SUBDIR+=	../external/bsd/libdwarf/lib
 SUBDIR+=	../external/bsd/libelf/lib
-SUBDIR+=	../external/bsd/libevent/lib
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
@@ -137,7 +139,11 @@ SUBDIR+=	../external/gpl2/lvm2/lib	# depends on libprop
 SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
 .endif
 
-.if (${MKGCC} != "no" && ${MKCXX} != "no")
+.if (${MKLIBCXX} != "no")
+SUBDIR+=	../external/bsd/libc++
+.endif
+
+.if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
 . if ${HAVE_GCC} == 4
 SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
 SUBDIR+=	../gnu/lib/libsupc++4
@@ -175,6 +181,7 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
 SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
+SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
 SUBDIR+=	../external/bsd/bind/lib	# depends on libcrypto
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1402.2.2 2013/02/25 00:24:40 tls Exp $
+# $NetBSD: mi,v 1.1402.2.3 2013/06/23 06:26:18 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,15 +54,20 @@
 ./usr/share/man/cat1/atf-check.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-cleanup.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-compile.0		man-obsolete		obsolete
-./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf,!kyua
+./usr/share/man/cat1/atf-config.0		man-obsolete		.cat,kyua,obsolete
 ./usr/share/man/cat1/atf-exec.0			man-atf-catman		obsolete
 ./usr/share/man/cat1/atf-format.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-killpg.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-report.0		man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-run.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atf-sh.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat,atf
-./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-version.0		man-atf-catman		.cat,atf,!kyua
+./usr/share/man/cat1/atf-version.0		man-obsolete		.cat,kyua,obsolete
+./usr/share/man/cat1/atf2kyua.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
 ./usr/share/man/cat1/audiocfg.0			man-audio-catman	.cat
@@ -849,6 +854,7 @@
 ./usr/share/man/cat4/ate.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atf-test-case.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat4/ath.0			man-sys-catman		.cat
+./usr/share/man/cat4/athn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/atppc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/attimer.0			man-sys-catman		.cat
@@ -920,9 +926,9 @@
 ./usr/share/man/cat4/ciss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/clcs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/clct.0			man-sys-catman		.cat
-./usr/share/man/cat4/clnp.0			man-sys-catman		.cat
+./usr/share/man/cat4/clnp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/clockctl.0			man-sys-catman		.cat
-./usr/share/man/cat4/cltp.0			man-sys-catman		.cat
+./usr/share/man/cat4/cltp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cmdide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cmpci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cms.0			man-sys-catman		.cat
@@ -1000,7 +1006,7 @@
 ./usr/share/man/cat4/esa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esh.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esiop.0			man-sys-catman		.cat
-./usr/share/man/cat4/esis.0			man-sys-catman		.cat
+./usr/share/man/cat4/esis.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esl.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eso.0			man-sys-catman		.cat
@@ -1257,7 +1263,7 @@
 ./usr/share/man/cat4/isdntel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isdntrc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isic.0			man-sys-catman		.cat
-./usr/share/man/cat4/iso.0			man-sys-catman		.cat
+./usr/share/man/cat4/iso.0			man-obsolete		obsolete
 ./usr/share/man/cat4/isp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/it.0			man-obsolete		obsolete
@@ -1325,6 +1331,7 @@
 ./usr/share/man/cat4/mca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcclock.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcd.0			man-sys-catman		.cat
+./usr/share/man/cat4/mcp980x.0			man-sys-catman		.cat
 ./usr/share/man/cat4/md.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfi.0			man-sys-catman		.cat
@@ -1694,9 +1701,10 @@
 ./usr/share/man/cat4/tlp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tm121temp.0		man-sys-catman		.cat
-./usr/share/man/cat4/tp.0			man-sys-catman		.cat
+./usr/share/man/cat4/tp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/tpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tprof.0			man-sys-catman		.cat
+./usr/share/man/cat4/tps65217pmic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/tqphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tra.0			man-sys-catman		.cat
@@ -1902,6 +1910,7 @@
 ./usr/share/man/cat4/x86/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/soekrisgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tprof_amdpmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
@@ -2154,6 +2163,7 @@
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pcap-filter.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pcap-linktype.0		man-netutil-catman	.cat
+./usr/share/man/cat7/pcap-tstamp.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
@@ -3029,6 +3039,7 @@
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/vndconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/wake.0			man-obsolete		obsolete
 ./usr/share/man/cat8/wakeonlan.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
@@ -3090,15 +3101,20 @@
 ./usr/share/man/html1/atf-check.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-cleanup.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-compile.html		man-obsolete		obsolete
-./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf,!kyua
+./usr/share/man/html1/atf-config.html		man-obsolete		html,kyua,obsolete
 ./usr/share/man/html1/atf-exec.html		man-atf-htmlman		obsolete
 ./usr/share/man/html1/atf-format.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-killpg.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-report.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atf-run.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-run.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atf-sh.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-test-program.html	man-atf-htmlman		html,atf
-./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-version.html		man-atf-htmlman		html,atf,!kyua
+./usr/share/man/html1/atf-version.html		man-obsolete		html,kyua,obsolete
+./usr/share/man/html1/atf2kyua.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
 ./usr/share/man/html1/audiocfg.html		man-audio-htmlman	html
@@ -3807,6 +3823,7 @@
 ./usr/share/man/html4/ate.html			man-sys-htmlman		html
 ./usr/share/man/html4/atf-test-case.html	man-atf-htmlman		html,atf
 ./usr/share/man/html4/ath.html			man-sys-htmlman		html
+./usr/share/man/html4/athn.html			man-sys-htmlman		html
 ./usr/share/man/html4/atphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/atppc.html		man-sys-htmlman		html
 ./usr/share/man/html4/attimer.html		man-sys-htmlman		html
@@ -3875,9 +3892,9 @@
 ./usr/share/man/html4/ciss.html			man-sys-htmlman		html
 ./usr/share/man/html4/clcs.html			man-sys-htmlman		html
 ./usr/share/man/html4/clct.html			man-sys-htmlman		html
-./usr/share/man/html4/clnp.html			man-sys-htmlman		html
+./usr/share/man/html4/clnp.html			man-obsolete		obsolete
 ./usr/share/man/html4/clockctl.html		man-sys-htmlman		html
-./usr/share/man/html4/cltp.html			man-sys-htmlman		html
+./usr/share/man/html4/cltp.html			man-obsolete		obsolete
 ./usr/share/man/html4/cmdide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cmpci.html		man-sys-htmlman		html
 ./usr/share/man/html4/cms.html			man-sys-htmlman		html
@@ -3955,7 +3972,7 @@
 ./usr/share/man/html4/esa.html			man-sys-htmlman		html
 ./usr/share/man/html4/esh.html			man-sys-htmlman		html
 ./usr/share/man/html4/esiop.html		man-sys-htmlman		html
-./usr/share/man/html4/esis.html			man-sys-htmlman		html
+./usr/share/man/html4/esis.html			man-obsolete		obsolete
 ./usr/share/man/html4/esl.html			man-obsolete		obsolete
 ./usr/share/man/html4/esm.html			man-sys-htmlman		html
 ./usr/share/man/html4/eso.html			man-sys-htmlman		html
@@ -4179,7 +4196,7 @@
 ./usr/share/man/html4/isdntel.html		man-sys-htmlman		html
 ./usr/share/man/html4/isdntrc.html		man-sys-htmlman		html
 ./usr/share/man/html4/isic.html			man-sys-htmlman		html
-./usr/share/man/html4/iso.html			man-sys-htmlman		html
+./usr/share/man/html4/iso.html			man-obsolete		obsolete
 ./usr/share/man/html4/isp.html			man-sys-htmlman		html
 ./usr/share/man/html4/isv.html			man-sys-htmlman		html
 ./usr/share/man/html4/iteide.html		man-sys-htmlman		html
@@ -4241,6 +4258,7 @@
 ./usr/share/man/html4/mca.html			man-sys-htmlman		html
 ./usr/share/man/html4/mcclock.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcd.html			man-sys-htmlman		html
+./usr/share/man/html4/mcp980x.html		man-sys-htmlman		html
 ./usr/share/man/html4/md.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfb.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfi.html			man-sys-htmlman		html
@@ -4575,9 +4593,10 @@
 ./usr/share/man/html4/tlp.html			man-sys-htmlman		html
 ./usr/share/man/html4/tlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tm121temp.html		man-sys-htmlman		html
-./usr/share/man/html4/tp.html			man-sys-htmlman		html
+./usr/share/man/html4/tp.html			man-obsolete		obsolete
 ./usr/share/man/html4/tpm.html			man-sys-htmlman		html
 ./usr/share/man/html4/tprof.html		man-sys-htmlman		html
+./usr/share/man/html4/tps65217pmic.html		man-sys-htmlman		html
 ./usr/share/man/html4/tqphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/tr.html			man-sys-htmlman		html
 ./usr/share/man/html4/tra.html			man-sys-htmlman		html
@@ -4777,6 +4796,7 @@
 ./usr/share/man/html4/x86/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/odcm.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/powernow.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/soekrisgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/tprof_amdpmi.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/tprof_pmi.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/vmt.html		man-sys-htmlman		html
@@ -5006,6 +5026,7 @@
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
 ./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
+./usr/share/man/html7/pcap-tstamp.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
@@ -5681,6 +5702,7 @@
 ./usr/share/man/html8/virecover.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/virtual.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/vnconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/vndconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/wake.html			man-obsolete		obsolete
 ./usr/share/man/html8/wakeonlan.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wdogctl.html		man-sysutil-htmlman	html
@@ -5734,15 +5756,20 @@
 ./usr/share/man/man1/atf-check.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-cleanup.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-compile.1		man-obsolete		obsolete
-./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf,!kyua
+./usr/share/man/man1/atf-config.1		man-obsolete		.man,kyua,obsolete
 ./usr/share/man/man1/atf-exec.1			man-atf-man		obsolete
 ./usr/share/man/man1/atf-format.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-killpg.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-report.1		man-kyua-man		.man,kyua
 ./usr/share/man/man1/atf-run.1			man-atf-man		.man,atf
+./usr/share/man/man1/atf-run.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atf-sh.1			man-atf-man		.man,atf
 ./usr/share/man/man1/atf-test-program.1		man-atf-man		.man,atf
-./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf
+./usr/share/man/man1/atf-version.1		man-atf-man		.man,atf,!kyua
+./usr/share/man/man1/atf-version.1		man-obsolete		.man,kyua,obsolete
+./usr/share/man/man1/atf2kyua.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
 ./usr/share/man/man1/audiocfg.1			man-audio-man		.man
@@ -6529,6 +6556,7 @@
 ./usr/share/man/man4/ate.4			man-sys-man		.man
 ./usr/share/man/man4/atf-test-case.4		man-cat-man		.man,atf
 ./usr/share/man/man4/ath.4			man-sys-man		.man
+./usr/share/man/man4/athn.4			man-sys-man		.man
 ./usr/share/man/man4/atphy.4			man-sys-man		.man
 ./usr/share/man/man4/atppc.4			man-sys-man		.man
 ./usr/share/man/man4/attimer.4			man-sys-man		.man
@@ -6600,9 +6628,9 @@
 ./usr/share/man/man4/ciss.4			man-sys-man		.man
 ./usr/share/man/man4/clcs.4			man-sys-man		.man
 ./usr/share/man/man4/clct.4			man-sys-man		.man
-./usr/share/man/man4/clnp.4			man-sys-man		.man
+./usr/share/man/man4/clnp.4			man-obsolete		obsolete
 ./usr/share/man/man4/clockctl.4			man-sys-man		.man
-./usr/share/man/man4/cltp.4			man-sys-man		.man
+./usr/share/man/man4/cltp.4			man-obsolete		obsolete
 ./usr/share/man/man4/cmdide.4			man-sys-man		.man
 ./usr/share/man/man4/cmpci.4			man-sys-man		.man
 ./usr/share/man/man4/cms.4			man-sys-man		.man
@@ -6680,7 +6708,7 @@
 ./usr/share/man/man4/esa.4			man-sys-man		.man
 ./usr/share/man/man4/esh.4			man-sys-man		.man
 ./usr/share/man/man4/esiop.4			man-sys-man		.man
-./usr/share/man/man4/esis.4			man-sys-man		.man
+./usr/share/man/man4/esis.4			man-obsolete		obsolete
 ./usr/share/man/man4/esl.4			man-obsolete		obsolete
 ./usr/share/man/man4/esm.4			man-sys-man		.man
 ./usr/share/man/man4/eso.4			man-sys-man		.man
@@ -6937,7 +6965,7 @@
 ./usr/share/man/man4/isdntel.4			man-sys-man		.man
 ./usr/share/man/man4/isdntrc.4			man-sys-man		.man
 ./usr/share/man/man4/isic.4			man-sys-man		.man
-./usr/share/man/man4/iso.4			man-sys-man		.man
+./usr/share/man/man4/iso.4			man-obsolete		obsolete
 ./usr/share/man/man4/isp.4			man-sys-man		.man
 ./usr/share/man/man4/isv.4			man-sys-man		.man
 ./usr/share/man/man4/it.4			man-obsolete		obsolete
@@ -7005,6 +7033,7 @@
 ./usr/share/man/man4/mca.4			man-sys-man		.man
 ./usr/share/man/man4/mcclock.4			man-sys-man		.man
 ./usr/share/man/man4/mcd.4			man-sys-man		.man
+./usr/share/man/man4/mcp980x.4			man-sys-man		.man
 ./usr/share/man/man4/md.4			man-sys-man		.man
 ./usr/share/man/man4/mfb.4			man-sys-man		.man
 ./usr/share/man/man4/mfi.4			man-sys-man		.man
@@ -7374,9 +7403,10 @@
 ./usr/share/man/man4/tlp.4			man-sys-man		.man
 ./usr/share/man/man4/tlphy.4			man-sys-man		.man
 ./usr/share/man/man4/tm121temp.4		man-sys-man		.man
-./usr/share/man/man4/tp.4			man-sys-man		.man
+./usr/share/man/man4/tp.4			man-obsolete		obsolete
 ./usr/share/man/man4/tpm.4			man-sys-man		.man
 ./usr/share/man/man4/tprof.4			man-sys-man		.man
+./usr/share/man/man4/tps65217pmic.4		man-sys-man		.man
 ./usr/share/man/man4/tqphy.4			man-sys-man		.man
 ./usr/share/man/man4/tr.4			man-sys-man		.man
 ./usr/share/man/man4/tra.4			man-sys-man		.man
@@ -7582,6 +7612,7 @@
 ./usr/share/man/man4/x86/mem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/odcm.4			man-sys-man		.man
 ./usr/share/man/man4/x86/powernow.4		man-sys-man		.man
+./usr/share/man/man4/x86/soekrisgpio.4		man-sys-man		.man
 ./usr/share/man/man4/x86/tprof_amdpmi.4		man-sys-man		.man
 ./usr/share/man/man4/x86/tprof_pmi.4		man-sys-man		.man
 ./usr/share/man/man4/x86/vmt.4			man-sys-man		.man
@@ -7833,6 +7864,7 @@
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
+./usr/share/man/man7/pcap-tstamp.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
@@ -8704,6 +8736,7 @@
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/vndconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/wake.8			man-obsolete		obsolete
 ./usr/share/man/man8/wakeonlan.8		man-netutil-man		.man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.117 2012/08/17 20:11:40 abs Exp $
+#	$NetBSD: INSTALL,v 1.117.2.1 2013/06/23 06:20:08 tls Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -198,10 +198,10 @@ umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	openfirm		# /dev/openfirm
 
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

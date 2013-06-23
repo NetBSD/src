@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2011/05/26 04:25:27 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.29.14.1 2013/06/23 06:20:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -195,7 +195,7 @@ void
 command_help(char *arg)
 {
 	printf("commands are:\n"
-	       "boot [filename] [-adsqv]\n"
+	       "boot [filename] [-acdsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"

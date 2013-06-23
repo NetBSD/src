@@ -1,4 +1,4 @@
-/*	$NetBSD: umodsi3.S,v 1.1.6.3 2013/02/25 00:23:55 tls Exp $	*/
+/*	$NetBSD: umodsi3.S,v 1.1.6.4 2013/06/23 06:26:13 tls Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -22,8 +22,13 @@
  */
 
 ENTRY(__umodsi3)
+#ifdef __ARM_ARCH_EXT_IDIV__
+	udiv	r3, r0, r1
+	mls	r0, r3, r1, r0
+#else
 	str	lr, [sp, #-8]!	/* push lr */
 	bl	PIC_SYM(__udivsi3, PLT)
 	mov	r0, r1
 	ldr	lr, [sp], #8	/* pop lr */
+#endif
 	RET

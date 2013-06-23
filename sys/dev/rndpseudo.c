@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.10.2.1 2013/02/25 00:29:11 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.1 2013/02/25 00:29:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -219,6 +219,7 @@ rndopen(dev_t dev, int flag, int ifmt,
 	}
 	ctx->cprng = NULL;
 	ctx->hard = hard;
+	ctx->bytesonkey = 0;
 	mutex_init(&ctx->interlock, MUTEX_DEFAULT, IPL_NONE);
 
 	return fd_clone(fp, fd, flag, &rnd_fileops, ctx);
@@ -298,12 +299,19 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 
 		/* XXX is this _really_ what's wanted? */
 		if (ctx->hard) {
+#ifdef RND_VERBOSE
+			printf("rnd: hard, want = %d, strength = %d, "
+			       "bytesonkey = %d\n", (int)want, (int)strength,
+			       (int)ctx->bytesonkey);
+#endif
 			n = MIN(want, strength - ctx->bytesonkey);
 			if (n < 1) {
-			    cprng_strong_deplete(cprng);
-			    n = MIN(want, strength);
-			    ctx->bytesonkey = 0;
-			    membar_producer();
+#ifdef RND_VERBOSE
+			    printf("rnd: BAD BAD BAD: n = %d, want = %d, "
+				   "strength = %d, bytesonkey = %d\n", n,
+				   (int)want, (int)strength,
+				   (int)ctx->bytesonkey);
+#endif
 			}
 		} else {
 			n = want;
@@ -313,7 +321,15 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 				     (fp->f_flag & FNONBLOCK) ? FNONBLOCK : 0);
 
 		if (ctx->hard && nread > 0) {
-			atomic_add_int(&ctx->bytesonkey, nread);
+			if (atomic_add_int_nv(&ctx->bytesonkey, nread) >=
+			    strength) {
+				cprng_strong_deplete(cprng);
+				ctx->bytesonkey = 0;
+				membar_producer();
+			}
+#ifdef RND_VERBOSE
+			printf("rnd: new bytesonkey %d\n", ctx->bytesonkey);
+#endif
 		}
 		if (nread < 1) {
 			if (fp->f_flag & FNONBLOCK) {

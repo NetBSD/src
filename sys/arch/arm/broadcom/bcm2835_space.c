@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.1.4.2 2013/06/23 06:20:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.1.4.2 2013/06/23 06:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ bcm2835_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
-	
+
 	if (flags) {
 		/* Issue an ARM11 Data Syncronisation Barrier (DSB) */
 		__asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0)

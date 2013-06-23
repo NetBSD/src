@@ -1,3 +1,5 @@
+# $NetBSD: 50-ypbind,v 1.1.1.5.2.1 2013/06/23 06:26:31 tls Exp $
+
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the Linux version.
 

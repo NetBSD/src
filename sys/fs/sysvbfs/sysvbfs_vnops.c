@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.46 2012/06/11 21:11:41 agc Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.46.2.1 2013/06/23 06:18:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.46 2012/06/11 21:11:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.46.2.1 2013/06/23 06:18:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -218,6 +218,10 @@ sysvbfs_close(void *arg)
 	struct bfs_fileattr attr;
 
 	DPRINTF("%s:\n", __func__);
+
+	if (v->v_mount->mnt_flag & MNT_RDONLY)
+		goto out;
+
 	uvm_vnp_setsize(v, bnode->size);
 
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
@@ -231,6 +235,7 @@ sysvbfs_close(void *arg)
 
 	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0);
 
+ out:
 	return 0;
 }
 
@@ -251,7 +256,7 @@ sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
 {
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, attr->mode), vp, NULL, genfs_can_access(vp->v_type,
 	    attr->mode, attr->uid, attr->gid, mode, cred));
 }
@@ -876,6 +881,9 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 {
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_fileattr attr;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return 0;
 
 	DPRINTF("%s:\n", __func__);
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */

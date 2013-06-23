@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.6.2 2013/02/25 00:26:37 tls Exp $
+#	$NetBSD: Makefile,v 1.9.6.3 2013/06/23 06:28:22 tls Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -29,6 +29,7 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMTargetMachine.cpp \
 	ARMTargetObjectFile.cpp \
 	ARMTargetTransformInfo.cpp \
+	A15SDOptimizer.cpp \
 	MLxExpansionPass.cpp \
 	Thumb1InstrInfo.cpp \
 	Thumb1FrameLowering.cpp \

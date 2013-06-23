@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14.2.1 2013/02/25 00:27:51 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.2 2013/06/23 06:21:05 tls Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
@@ -17,8 +17,8 @@ SRCS.quad+=	udivdi3.c umoddi3.c
 SRCS.quad+=	ashldi3.S ashrdi3.S lshrdi3.S
 .elif (${MACHINE_ARCH} == "m68000")
 SRCS.quad+=	ashldi3.S lshrdi3.S
-.elif (${MACHINE_ARCH:Mearm*} != "")
-SRCS.quad+=	ashrdi3.c lshldi3.c lshrdi3.c
+.elif (!empty{LIBC_MACHINE_ARCH:Mearm*})
+SRCS.quad+=	ashldi3.c ashrdi3.c lshrdi3.c lshldi3.c
 .else
 SRCS.quad+=	ashldi3.c ashrdi3.c lshrdi3.c
 .endif

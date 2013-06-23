@@ -1,3 +1,5 @@
+/*	$NetBSD: os-aix4.h,v 1.1.1.2.12.1 2013/06/23 06:28:20 tls Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/lbl/os-aix4.h,v 1.1 2002-06-01 09:37:40 guy Exp
+ * @(#) Header: /tcpdump/master/libpcap/lbl/os-aix4.h,v 1.1 2002-06-01 09:37:40 guy Exp 
  */
 
 /* Prototypes missing in AIX 4.x */

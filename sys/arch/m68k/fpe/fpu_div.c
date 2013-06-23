@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.6 2009/03/14 15:36:09 dsl Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.6 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $");
 
 #include <sys/types.h>
 
@@ -150,11 +150,11 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.6 2009/03/14 15:36:09 dsl Exp $");
  */
 
 struct fpn *
-fpu_div(register struct fpemu *fe)
+fpu_div(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
-	register u_int q, bit;
-	register u_int r0, r1, r2, d0, d1, d2, y0, y1, y2;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
+	uint32_t q, bit;
+	uint32_t r0, r1, r2, d0, d1, d2, y0, y1, y2;
 	FPU_DECL_CARRY
 
 	fe->fe_fpsr &= ~FPSR_EXCP; /* clear all exceptions */

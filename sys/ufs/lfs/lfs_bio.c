@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.122.2.1 2013/06/23 06:18:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122.2.1 2013/06/23 06:18:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/lfs/ulfs_inode.h>
+#include <ufs/lfs/ulfsmount.h>
+#include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
@@ -315,7 +315,7 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	/*
 	 * XXX just a guess. should be more precise.
 	 */
-	error = lfs_reservebuf(fs, vp, vp2, fsb, fsbtob(fs, fsb));
+	error = lfs_reservebuf(fs, vp, vp2, fsb, lfs_fsbtob(fs, fsb));
 	if (error)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
@@ -357,8 +357,8 @@ lfs_fits(struct lfs *fs, int fsb)
 	int needed;
 
 	ASSERT_NO_SEGLOCK(fs);
-	needed = fsb + btofsb(fs, fs->lfs_sumsize) +
-		 ((howmany(fs->lfs_uinodes + 1, INOPB(fs)) + fs->lfs_segtabsz +
+	needed = fsb + lfs_btofsb(fs, fs->lfs_sumsize) +
+		 ((howmany(fs->lfs_uinodes + 1, LFS_INOPB(fs)) + fs->lfs_segtabsz +
 		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
 
 	if (needed >= fs->lfs_avail) {
@@ -426,7 +426,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	int fsb;
 
 	vp = bp->b_vp;
-	fs = VFSTOUFS(vp->v_mount)->um_lfs;
+	fs = VFSTOULFS(vp->v_mount)->um_lfs;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_cflags & BC_BUSY);
@@ -469,7 +469,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * blocks.
 	 */
 	if ((bp->b_flags & B_LOCKED) == 0) {
-		fsb = numfrags(fs, bp->b_bcount);
+		fsb = lfs_numfrags(fs, bp->b_bcount);
 
 		ip = VTOI(vp);
 		mutex_enter(&lfs_lock);
@@ -577,7 +577,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
-				tfs = VFSTOUFS(mp)->um_lfs;
+				tfs = VFSTOULFS(mp)->um_lfs;
 				mutex_enter(&lfs_lock);
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
@@ -596,8 +596,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	wakeup(&lfs_writing);
 }
 
-#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, INOPB(fs))
-#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ufs1_dinode))
+#define INOCOUNT(fs) howmany((fs)->lfs_uinodes, LFS_INOPB(fs))
+#define INOBYTES(fs) ((fs)->lfs_uinodes * sizeof (struct ulfs1_dinode))
 
 /*
  * make sure that we don't have too many locked buffers.
@@ -731,7 +731,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	size_t nbytes;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	nbytes = roundup(size, fsbtob(fs, 1));
+	nbytes = roundup(size, lfs_fsbtob(fs, 1));
 
 	bp = getiobuf(NULL, true);
 	if (nbytes) {

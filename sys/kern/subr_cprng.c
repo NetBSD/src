@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.12.2.2 2013/02/25 00:29:53 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.12.2.3 2013/06/23 06:18:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12.2.2 2013/02/25 00:29:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12.2.3 2013/06/23 06:18:58 tls Exp $");
 
 void
 cprng_init(void)
@@ -157,11 +157,11 @@ cprng_strong_reseed(void *const arg)
 }
 
 static size_t
-cprng_entropy_try(uint8_t *key, size_t keylen, int hard)
+cprng_entropy_try(uint8_t *key, size_t keylen)
 {
 	int r;
 	r = rnd_extract_data(key, keylen, RND_EXTRACT_GOOD);
-	if (r != keylen && !hard) {
+	if (r != keylen) {	/* Always fill in, for safety */
 		rnd_extract_data(key + r, keylen - r, RND_EXTRACT_ANY);
 	}
 	return r;
@@ -196,12 +196,21 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 
 	selinit(&c->selq);
 
-	r = cprng_entropy_try(key, sizeof(key), c->flags & CPRNG_INIT_ANY);
+	r = cprng_entropy_try(key, sizeof(key));
 	if (r != sizeof(key)) {
 		if (c->flags & CPRNG_INIT_ANY) {
 #ifdef DEBUG
-			printf("cprng %s: WARNING insufficient "
-			       "entropy at creation.\n", name);
+			/*
+			 * If we have ever crossed the pool's
+			 * minimum-entropy threshold, then we are
+			 * providing cryptographically strong
+			 * random output -- if not information-
+			 * theoretically strong.  Warn elsewise.
+			 */
+			if (!rnd_initial_entropy) {
+				printf("cprng %s: WARNING insufficient "
+			 		"entropy at creation.\n", name);
+			}
 #endif
 		} else {
 			hard++;
@@ -251,7 +260,7 @@ rekeyany:
 		if (c->flags & CPRNG_REKEY_ANY) {
 			uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 
-			if (cprng_entropy_try(key, sizeof(key), 0) !=
+			if (cprng_entropy_try(key, sizeof(key)) !=
 			    sizeof(key)) {
  				printf("cprng %s: WARNING "
 				       "pseudorandom rekeying.\n", c->name);

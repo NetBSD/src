@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.60 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: setlocale.c,v 1.60.2.1 2013/06/23 06:21:05 tls Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.60 2012/03/04 21:14:56 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.60.2.1 2013/06/23 06:21:05 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,16 @@ static _locale_set_t all_categories[_LC_LAST] = {
 _locale_set_t
 _find_category(int category)
 {
+	static int initialised;
+
+	if (!initialised) {
+		if (issetugid() || ((_PathLocale == NULL &&
+		    (_PathLocale = getenv("PATH_LOCALE")) == NULL) ||
+		    *_PathLocale == '\0'))
+			_PathLocale = _PATH_LOCALE;
+		initialised = 1;
+	}
+
 	if (category >= LC_ALL && category < _LC_LAST)
 		return all_categories[category];
 	return NULL;
@@ -86,16 +96,12 @@ char *
 __setlocale(int category, const char *name)
 {
 	_locale_set_t sl;
-	struct _locale_impl_t *impl;
+	struct _locale *impl;
 
 	sl = _find_category(category);
 	if (sl == NULL)
 		return NULL;
-	if (issetugid() || ((_PathLocale == NULL &&
-	    (_PathLocale = getenv("PATH_LOCALE")) == NULL) ||
-	    *_PathLocale == '\0'))
-		_PathLocale = _PATH_LOCALE;
-	impl = *_current_locale();
+	impl = _current_locale();
 	return __UNCONST((*sl)(name, impl));
 }
 

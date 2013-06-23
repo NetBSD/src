@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.6 2012/07/21 04:21:14 kiyohara Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.6.2.1 2013/06/23 06:20:17 tls Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.6 2012/07/21 04:21:14 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.6.2.1 2013/06/23 06:20:17 tls Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -341,8 +341,13 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
 	if (!error)
 		*valp = RREG(sc, TWSI_DATA);
-	if (flags & I2C_F_LAST)
+	if (flags & I2C_F_LAST) {
+#if defined(ARMADAXP)
+		error = gttwsi_send_stop(sc, flags);
+#else
 		WREG(sc, TWSI_CONTROL, 0);
+#endif
+	}
 	return error;
 }
 
@@ -352,6 +357,10 @@ gttwsi_write_byte(void *v, uint8_t val, int flags)
 	struct gttwsi_softc *sc = v;
 
 	WREG(sc, TWSI_DATA, val);
+#if defined(ARMADAXP)
+	if (flags & I2C_F_LAST)
+		gttwsi_send_stop(sc, flags);
+#endif
 	return gttwsi_wait(sc, 0, STAT_MTDB_AR, flags);
 }
 
@@ -391,6 +400,7 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		return EIO;
 	}
 
+#ifndef ARMADAXP
 	if (flags & I2C_F_STOP)
 		switch (expect) {
 		case STAT_SCT:
@@ -401,6 +411,7 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		default:
 			error = gttwsi_send_stop(sc, flags);
 		}
+#endif
 
 	return error;
 }

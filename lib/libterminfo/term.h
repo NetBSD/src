@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.12.2.1 2013/02/25 00:28:01 tls Exp $ */
+/* $NetBSD: term.h,v 1.12.2.2 2013/06/23 06:21:08 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 /* Define available terminfo flags */
 enum TIFLAGS {
-       	TICODE_bw,
+	TICODE_bw,
 	TICODE_am,
 	TICODE_bce,
 	TICODE_ccc,
@@ -1812,7 +1812,7 @@ enum TISTRS{
  * lab_f6: Labels on function key f6 if not f6
  * lab_f7: Labels on function key f7 if not f7
  * lab_f8: Labels on function key f8 if not f8
- * lab_f8: Labels on function key f9 if not f9
+ * lab_f9: Labels on function key f9 if not f9
  * lab_f10: Labels on function key f10 if not f10
  * label_format: Label format
  * label_off: Turn off soft labels

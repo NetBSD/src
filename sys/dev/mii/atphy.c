@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.12 2012/07/23 00:09:49 matt Exp $ */
+/*	$NetBSD: atphy.c,v 1.12.2.1 2013/06/23 06:20:18 tls Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.12 2012/07/23 00:09:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.12.2.1 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
 			if (sc->mii_flags & MIIF_DOPAUSE)
-				anar |= ANAR_X_PAUSE_TOWARDS;
+				anar |= ANAR_PAUSE_TOWARDS;
 		}
 
 		if ((sc->mii_extcapabilities & (EXTSR_1000TFDX |
@@ -264,7 +264,8 @@ done:
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
 			break;
 		}
@@ -289,7 +290,6 @@ done:
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
 
-		sc->mii_ticks = 0;
 		atphy_mii_phy_auto(sc);
 		break;
 	}
@@ -405,6 +405,7 @@ atphy_mii_phy_auto(struct mii_softc *sc)
 {
 	uint16_t anar;
 
+	sc->mii_ticks = 0;
 	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 	if (sc->mii_flags & MIIF_DOPAUSE)
 		anar |= ANAR_X_PAUSE_TOWARDS;

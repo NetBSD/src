@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.278.2.4 2013/02/25 00:30:15 tls Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.278.2.5 2013/06/23 06:18:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.4 2013/02/25 00:30:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.5 2013/06/23 06:18:39 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -174,6 +174,7 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
 	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
+	.uo_snapgone = ffs_snapgone,
 };
 
 static int
@@ -753,7 +754,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		mp->mnt_iflag |= IMNT_DTYPE;
 	} else {
 		ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
-		ump->um_dirblksiz = DIRBLKSIZ;
+		ump->um_dirblksiz = UFS_DIRBLKSIZ;
 		if (ump->um_maxsymlinklen > 0)
 			mp->mnt_iflag |= IMNT_DTYPE;
 		else
@@ -1235,7 +1236,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		mp->mnt_iflag |= IMNT_DTYPE;
 	} else {
 		ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
-		ump->um_dirblksiz = DIRBLKSIZ;
+		ump->um_dirblksiz = UFS_DIRBLKSIZ;
 		if (ump->um_maxsymlinklen > 0)
 			mp->mnt_iflag |= IMNT_DTYPE;
 		else

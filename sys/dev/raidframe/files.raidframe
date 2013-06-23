@@ -1,11 +1,11 @@
-#	$NetBSD: files.raidframe,v 1.8 2009/11/17 18:54:26 jld Exp $
+#	$NetBSD: files.raidframe,v 1.8.22.1 2013/06/23 06:20:21 tls Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC
 
 defpseudodev raid:		disk
 
-file	dev/raidframe/rf_acctrace.c		raid		needs-flag
+file	dev/raidframe/rf_acctrace.c		raid
 file	dev/raidframe/rf_alloclist.c		raid
 file	dev/raidframe/rf_aselect.c		raid
 file	dev/raidframe/rf_callback.c		raid

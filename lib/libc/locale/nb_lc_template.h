@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template.h,v 1.4 2012/03/04 21:14:56 tnozaki Exp $ */
+/* $NetBSD: nb_lc_template.h,v 1.4.2.1 2013/06/23 06:21:05 tls Exp $ */
 
 /*-
  * Copyright (c)1999, 2008 Citrus Project,
@@ -216,7 +216,7 @@ done:
 
 const char *
 _PREFIX(setlocale)(const char * __restrict name,
-    struct _locale_impl_t * __restrict locale)
+    struct _locale * __restrict locale)
 {
 	_nb_part_t *part;
 
@@ -236,7 +236,7 @@ _PREFIX(setlocale)(const char * __restrict name,
 			locale->part_impl[(size_t)_CATEGORY_ID]
 			    = part->impl;
 			_PREFIX(build_cache)(locale->cache, part->impl);
-			if (locale == &_global_locale)
+			if (locale == &_lc_global_locale)
 				_PREFIX(fixup)(part->impl);
 		}
 	}

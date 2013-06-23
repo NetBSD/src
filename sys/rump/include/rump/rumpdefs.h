@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.11.2.2 2013/02/25 00:30:08 tls Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.11.2.3 2013/06/23 06:20:27 tls Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.43 2012/11/18 17:41:54 manu Exp 	*/
+/*	NetBSD: fcntl.h,v 1.45 2013/01/13 08:15:03 dholland Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -40,7 +40,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_LK_NOWAIT	0x00000010	
 #define	RUMP_LK_RETRY	0x00020000	
 
-/*	NetBSD: errno.h,v 1.39 2006/10/31 00:38:07 cbiere Exp 	*/
+/*	NetBSD: errno.h,v 1.40 2013/01/02 18:51:53 dsl Exp 	*/
 #define	RUMP_EPERM		1		/* Operation not permitted */
 #define	RUMP_ENOENT		2		/* No such file or directory */
 #define	RUMP_ESRCH		3		/* No such process */
@@ -170,7 +170,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_AB_SILENT	0x00040000	
 #define	RUMP_AB_DEBUG	0x00080000	
 
-/*	NetBSD: socket.h,v 1.107 2012/06/22 18:26:35 christos Exp 	*/
+/*	NetBSD: socket.h,v 1.108 2013/01/31 14:30:47 joerg Exp 	*/
 #define	RUMP_SOCK_STREAM	1		
 #define	RUMP_SOCK_DGRAM	2		
 #define	RUMP_SOCK_RAW	3		
@@ -275,6 +275,179 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define RUMP_SO_SNDTIMEO	0x100b		
 #define RUMP_SO_RCVTIMEO	0x100c		
 #define	RUMP_SOL_SOCKET	0xffff		
+#define	RUMP_MSG_OOB		0x0001		
+#define	RUMP_MSG_PEEK	0x0002		
+#define	RUMP_MSG_DONTROUTE	0x0004		
+#define	RUMP_MSG_EOR		0x0008		
+#define	RUMP_MSG_TRUNC	0x0010		
+#define	RUMP_MSG_CTRUNC	0x0020		
+#define	RUMP_MSG_WAITALL	0x0040		
+#define	RUMP_MSG_DONTWAIT	0x0080		
+#define	RUMP_MSG_BCAST	0x0100		
+#define	RUMP_MSG_MCAST	0x0200		
+#define	RUMP_MSG_NOSIGNAL	0x0400		
+#define	RUMP_MSG_CRUMP_MSG_CLOEXEC 0x0800		
+#define	RUMP_MSG_NBIO	0x1000		
+#define	RUMP_MSG_WAITFORONE	0x2000		
+#define	RUMP_MSG_USERFLAGS	0x0ffffff
+#define RUMP_MSG_NAMEMBUF	0x1000000	
+#define RUMP_MSG_CONTROLMBUF	0x2000000	
+#define RUMP_MSG_IOVUSRSPACE	0x4000000	
+#define RUMP_MSG_LENUSRSPACE	0x8000000	
+
+/*	NetBSD: in.h,v 1.88 2013/04/27 21:35:24 joerg Exp 	*/
+#define	RUMP_IP_OPTIONS		1    
+#define	RUMP_IP_HDRINCL		2    
+#define	RUMP_IP_TOS			3    
+#define	RUMP_IP_TTL			4    
+#define	RUMP_IP_RECVOPTS		5    
+#define	RUMP_IP_RECVRETOPTS		6    
+#define	RUMP_IP_RECVDSTADDR		7    
+#define	RUMP_IP_RETOPTS		8    
+#define	RUMP_IP_MULTICAST_IF		9    
+#define	RUMP_IP_MULTICAST_TTL	10   
+#define	RUMP_IP_MULTICAST_LOOP	11   
+#define	RUMP_IP_ADD_MEMBERSHIP	12   
+#define	RUMP_IP_DROP_MEMBERSHIP	13   
+#define	RUMP_IP_PORTALGO		18   
+#define	RUMP_IP_PORTRANGE		19   
+#define	RUMP_IP_RECVIF		20   
+#define	RUMP_IP_ERRORMTU		21   
+#define	RUMP_IP_IPSEC_POLICY		22 
+#define	RUMP_IP_RECVTTL		23   
+#define	RUMP_IP_MINTTL		24   
+#define	RUMP_IP_DEFAULT_MULTICAST_TTL  1	
+#define	RUMP_IP_DEFAULT_MULTICAST_LOOP 1	
+#define	RUMP_IP_MAX_MEMBERSHIPS	20	
+#define	RUMP_IP_PORTRANGE_DEFAULT	0	
+#define	RUMP_IP_PORTRANGE_HIGH	1	
+#define	RUMP_IP_PORTRANGE_LOW	2	
+#define	RUMP_IPPROTO_IP		0		
+#define	RUMP_IPPROTO_HOPOPTS		0		
+#define	RUMP_IPPROTO_ICMP		1		
+#define	RUMP_IPPROTO_IGMP		2		
+#define	RUMP_IPPROTO_GGP		3		
+#define	RUMP_IPPROTO_IPV4		4 		
+#define	RUMP_IPPROTO_IPIP		4		
+#define	RUMP_IPPROTO_TCP		6		
+#define	RUMP_IPPROTO_EGP		8		
+#define	RUMP_IPPROTO_PUP		12		
+#define	RUMP_IPPROTO_UDP		17		
+#define	RUMP_IPPROTO_IDP		22		
+#define	RUMP_IPPROTO_TP		29 		
+#define	RUMP_IPPROTO_IPV6		41		
+#define	RUMP_IPPROTO_ROUTING		43		
+#define	RUMP_IPPROTO_FRAGMENT	44		
+#define	RUMP_IPPROTO_RSVP		46		
+#define	RUMP_IPPROTO_GRE		47		
+#define	RUMP_IPPROTO_ESP		50 		
+#define	RUMP_IPPROTO_AH		51 		
+#define	RUMP_IPPROTO_MOBILE		55		
+#define	RUMP_IPPROTO_IPV6_ICMP	58		
+#define	RUMP_IPPROTO_ICMPV6		58		
+#define	RUMP_IPPROTO_NONE		59		
+#define	RUMP_IPPROTO_DSTOPTS		60		
+#define	RUMP_IPPROTO_EON		80		
+#define	RUMP_IPPROTO_ETHERIP		97		
+#define	RUMP_IPPROTO_ENCAP		98		
+#define	RUMP_IPPROTO_PIM		103		
+#define	RUMP_IPPROTO_IPCOMP		108		
+#define	RUMP_IPPROTO_VRRP		112		
+#define	RUMP_IPPROTO_CARP		112		
+#define RUMP_IPPROTO_PFSYNC      240     
+#define	RUMP_IPPROTO_RAW		255		
+#define	RUMP_IPPROTO_MAX		256
+#define	RUMP_IPPROTO_DONE		257
+#define	RUMP_IPPROTO_MAXID	(RUMP_IPPROTO_AH + 1)	
+
+/*	NetBSD: tcp.h,v 1.30 2012/01/07 20:20:22 christos Exp 	*/
+#define	RUMP_TCP_MSS		536
+#define	RUMP_TCP_MINMSS	216
+#define	RUMP_TCP_MAXWIN	65535	
+#define	RUMP_TCP_MAX_WINSHIFT	14	
+#define	RUMP_TCP_MAXBURST	4	
+#define	RUMP_TCP_NODELAY	1	
+#define	RUMP_TCP_MAXSEG	2	
+#define	RUMP_TCP_KEEPIDLE	3
+#define	RUMP_TCP_NOPUSH	4	
+#define	RUMP_TCP_KEEPINTVL	5
+#define	RUMP_TCP_KEEPCNT	6
+#define	RUMP_TCP_KEEPINIT	7
+#define	RUMP_TCP_NOOPT	8	
+#define	RUMP_TCP_MD5SIG	0x10	
+#define	RUMP_TCP_CONGCTL	0x20	
+
+/*	NetBSD: mount.h,v 1.209 2013/04/26 22:27:16 mlelstv Exp 	*/
+#define	RUMP_MOUNT_FFS	"ffs"		
+#define	RUMP_MOUNT_UFS	RUMP_MOUNT_FFS	
+#define	RUMP_MOUNT_NFS	"nfs"		
+#define	RUMP_MOUNT_MFS	"mfs"		
+#define	RUMP_MOUNT_MSDOS	"msdos"		
+#define	RUMP_MOUNT_LFS	"lfs"		
+#define	RUMP_MOUNT_FDESC	"fdesc"		
+#define	RUMP_MOUNT_NULL	"null"		
+#define	RUMP_MOUNT_OVERLAY	"overlay"	
+#define	RUMP_MOUNT_UMAP	"umap"	
+#define	RUMP_MOUNT_KERNFS	"kernfs"	
+#define	RUMP_MOUNT_PROCFS	"procfs"	
+#define	RUMP_MOUNT_AFS	"afs"		
+#define	RUMP_MOUNT_CD9660	"cd9660"	
+#define	RUMP_MOUNT_UNION	"union"		
+#define	RUMP_MOUNT_ADOSFS	"adosfs"	
+#define	RUMP_MOUNT_EXT2FS	"ext2fs"	
+#define	RUMP_MOUNT_CFS	"coda"		
+#define	RUMP_MOUNT_CODA	RUMP_MOUNT_CFS	
+#define	RUMP_MOUNT_FILECORE	"filecore"	
+#define	RUMP_MOUNT_NTFS	"ntfs"		
+#define	RUMP_MOUNT_SMBFS	"smbfs"		
+#define	RUMP_MOUNT_PTYFS	"ptyfs"		
+#define	RUMP_MOUNT_TMPFS	"tmpfs"		
+#define RUMP_MOUNT_UDF	"udf"		
+#define	RUMP_MOUNT_SYSVBFS	"sysvbfs"	
+#define RUMP_MOUNT_PUFFS	"puffs"		
+#define RUMP_MOUNT_HFS	"hfs"		
+#define RUMP_MOUNT_EFS	"efs"		
+#define RUMP_MOUNT_ZFS	"zfs"		
+#define RUMP_MOUNT_NILFS	"nilfs"		
+#define RUMP_MOUNT_RUMPFS	"rumpfs"	
+#define	RUMP_MOUNT_V7FS	"v7fs"		
+
+/*	NetBSD: fstypes.h,v 1.32 2012/11/26 16:22:21 drochner Exp 	*/
+#define	RUMP_MNT_RDONLY	0x00000001	
+#define	RUMP_MNT_SYNCHRONOUS	0x00000002	
+#define	RUMP_MNT_NOEXEC	0x00000004	
+#define	RUMP_MNT_NOSUID	0x00000008	
+#define	RUMP_MNT_NODEV	0x00000010	
+#define	RUMP_MNT_UNION	0x00000020	
+#define	RUMP_MNT_ASYNC	0x00000040	
+#define	RUMP_MNT_NOCOREDUMP	0x00008000	
+#define	RUMP_MNT_RELATIME	0x00020000	
+#define	RUMP_MNT_IGNORE	0x00100000	
+#define	RUMP_MNT_DISCARD	0x00800000	
+#define	RUMP_MNT_EXTATTR	0x01000000	
+#define	RUMP_MNT_LOG		0x02000000	
+#define	RUMP_MNT_NOATIME	0x04000000	
+#define	RUMP_MNT_SYMPERM	0x20000000	
+#define	RUMP_MNT_NODEVMTIME	0x40000000	
+#define	RUMP_MNT_SOFTDEP	0x80000000	
+#define	RUMP_MNT_EXRDONLY	0x00000080	
+#define	RUMP_MNT_EXPORTED	0x00000100	
+#define	RUMP_MNT_DEFEXPORTED	0x00000200	
+#define	RUMP_MNT_EXPORTANON	0x00000400	
+#define	RUMP_MNT_EXKERB	0x00000800	
+#define	RUMP_MNT_EXNORESPORT	0x08000000	
+#define	RUMP_MNT_EXPUBLIC	0x10000000	
+#define	RUMP_MNT_LOCAL	0x00001000	
+#define	RUMP_MNT_QUOTA	0x00002000	
+#define	RUMP_MNT_ROOTFS	0x00004000	
+#define	RUMP_MNT_UPDATE	0x00010000	
+#define	RUMP_MNT_RELOAD	0x00040000	
+#define	RUMP_MNT_FORCE	0x00080000	
+#define	RUMP_MNT_GETARGS	0x00400000	
+#define	RUMP_MNT_OP_FLAGS	(RUMP_MNT_UPDATE|RUMP_MNT_RELOAD|RUMP_MNT_FORCE|RUMP_MNT_GETARGS)
+#define	RUMP_MNT_WAIT	1	
+#define	RUMP_MNT_NOWAIT	2	
+#define	RUMP_MNT_LAZY 	3	
 
 /*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
 struct rump_modctl_load {
@@ -289,6 +462,11 @@ struct rump_modctl_load {
 /*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
 struct rump_ufs_args {
 	char	*fspec;			/* block special device to mount */
+};
+
+/*	NetBSD: sysvbfs_args.h,v 1.1 2008/09/04 12:07:30 pooka Exp 	*/
+struct rump_sysvbfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
 };
 
 #endif /* _RUMP_RUMPDEFS_H_ */

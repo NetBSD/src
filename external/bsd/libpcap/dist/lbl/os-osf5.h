@@ -1,3 +1,5 @@
+/*	$NetBSD: os-osf5.h,v 1.1.1.2.12.1 2013/06/23 06:28:20 tls Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/lbl/os-osf5.h,v 1.2 2002-08-02 03:24:15 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/lbl/os-osf5.h,v 1.2 2002-08-02 03:24:15 guy Exp  (LBL)
  */
 
 /*

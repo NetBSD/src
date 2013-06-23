@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.19 2009/05/12 14:31:27 cegger Exp $ */
+/* $NetBSD: ciphy.c,v 1.19.22.1 2013/06/23 06:20:18 tls Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.19 2009/05/12 14:31:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.19.22.1 2013/06/23 06:20:18 tls Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -257,8 +257,15 @@ setit:
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+			/*
+			 * Reset autonegotiation timer to 0 just to make sure
+			 * the future autonegotiation start with 0.
+			 */
+			sc->mii_ticks = 0;
 			break;
+		}
 
 		/*
 		 * Check to see if we have link.  If we do, we don't
@@ -266,16 +273,30 @@ setit:
 		 * the BMSR twice in case it's latched.
 		 */
 		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
+		if (reg & BMSR_LINK) {
+			/*
+			 * Reset autonegotiation timer to 0 in case the link
+			 * goes down in the next tick.
+			 */
+			sc->mii_ticks = 0;
+			/* See above. */
+			break;
+		}
+
+		/*
+		 * mii_ticks == 0 means it's the first tick after changing the
+		 * media or the link became down since the last tick
+		 * (see above), so return with 0 to update the status.
+		 */
+		if (sc->mii_ticks++ == 0)
 			break;
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
+		 * Only retry autonegotiation every N seconds.
 		 */
-		if (++sc->mii_ticks <= MII_ANEGTICKS)
+		if (sc->mii_ticks <= MII_ANEGTICKS_GIGE)
 			break;
 
-		sc->mii_ticks = 0;
 		mii_phy_auto(sc, 0);
 		return (0);
 	}

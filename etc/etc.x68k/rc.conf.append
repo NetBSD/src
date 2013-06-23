@@ -1,0 +1,7 @@
+#	$NetBSD: rc.conf.append,v 1.1.4.2 2013/06/23 06:26:21 tls Exp $
+#
+# Arch-specific rc.conf(5) configuration.
+
+# powerd(8) is recommended for a front power switch.
+#
+powerd=YES

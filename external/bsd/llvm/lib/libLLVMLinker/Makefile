@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.6.1 2013/02/25 00:26:38 tls Exp $
+#	$NetBSD: Makefile,v 1.2.6.2 2013/06/23 06:28:23 tls Exp $
 
 LIB=	LLVMLinker
 
@@ -6,8 +6,7 @@ LIB=	LLVMLinker
 
 .PATH: ${LLVM_SRCDIR}/lib/Linker
 
-SRCS+=	LinkModules.cpp \
-	Linker.cpp
+SRCS+=	LinkModules.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

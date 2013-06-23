@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.18.14.1 2012/11/20 03:02:50 tls Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.18.14.2 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.2 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.1 2012/11/20 03:02:50 tls Exp $")
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+struct emul *emul_default = &emul_netbsd;
 
 static void
 lwproc_proc_free(struct proc *p)
@@ -90,7 +92,7 @@ lwproc_proc_free(struct proc *p)
 /*
  * Allocate a new process.  Mostly mimic fork by
  * copying the properties of the parent.  However, there are some
- * differences.  For example, we never share the fd table.
+ * differences.
  *
  * Switch to the new lwp and return a pointer to it.
  */
@@ -125,7 +127,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	p->p_stats = pstatscopy(parent->p_stats);
 
 	p->p_vmspace = vmspace_kernel();
-	p->p_emul = &emul_netbsd;
+	p->p_emul = emul_default;
 	if (*parent->p_comm)
 		strcpy(p->p_comm, parent->p_comm);
 	else
@@ -147,7 +149,7 @@ lwproc_newproc(struct proc *parent, int flags)
 	LIST_INIT(&p->p_children);
 
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p->p_reflock);
 	cv_init(&p->p_waitcv, "pwait");
@@ -194,7 +196,7 @@ lwproc_freelwp(struct lwp *l)
 		KASSERT(p != &proc0);
 		p->p_stat = SDEAD;
 	}
-	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in rump? */
+	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in a rump kernel? */
 	kauth_cred_free(l->l_cred);
 	mutex_exit(p->p_lock);
 
@@ -206,6 +208,8 @@ lwproc_freelwp(struct lwp *l)
 		kmem_free(l->l_name, MAXCOMLEN);
 	lwp_finispecific(l);
 
+	rumpuser_curlwpop(RUMPUSER_LWP_DESTROY, l);
+	membar_exit();
 	kmem_free(l, sizeof(*l));
 
 	if (p->p_stat == SDEAD)
@@ -239,6 +243,8 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	lwp_update_creds(l);
 	lwp_initspecific(l);
 
+	membar_enter();
+	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
 	if (doswitch) {
 		rump_lwproc_switch(l);
 	}
@@ -346,13 +352,13 @@ rump_lwproc_switch(struct lwp *newlwp)
 		fd_free();
 	}
 
-	rumpuser_set_curlwp(NULL);
+	rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
 	newlwp->l_mutex = l->l_mutex;
 	newlwp->l_pflag |= LP_RUNNING;
 
-	rumpuser_set_curlwp(newlwp);
+	rumpuser_curlwpop(RUMPUSER_LWP_SET, newlwp);
 
 	/*
 	 * Check if the thread should get a signal.  This is
@@ -399,4 +405,15 @@ rump_lwproc_curlwp(void)
 	if (l->l_flag & LW_WEXIT)
 		return NULL;
 	return l;
+}
+
+/* this interface is under construction (like the proverbial 90's web page) */
+int rump_i_know_what_i_am_doing_with_sysents = 0;
+void
+rump_lwproc_sysent_usenative()
+{
+
+	if (!rump_i_know_what_i_am_doing_with_sysents)
+		panic("don't use rump_lwproc_sysent_usenative()");
+	curproc->p_emul = &emul_netbsd;
 }

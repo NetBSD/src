@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.54.2.1 2012/11/20 03:01:52 tls Exp $
+#	$NetBSD: GENERIC,v 1.54.2.2 2013/06/23 06:20:14 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -391,7 +391,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester

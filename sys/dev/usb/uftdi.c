@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.53.2.2 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.53.2.3 2013/06/23 06:20:22 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.53.2.2 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.53.2.3 2013/06/23 06:20:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_634 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_CFA_635 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_OPENRD_JTAGKEY },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_BEAGLEBONE },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MAXSTREAM_PKG_U },
 	{ USB_VENDOR_xxFTDI, USB_PRODUCT_xxFTDI_SHEEVAPLUG_JTAG },
 	{ USB_VENDOR_INTREPIDCS, USB_PRODUCT_INTREPIDCS_VALUECAN },
@@ -630,7 +631,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		flow = FTDI_SIO_RTS_CTS_HS;
 		USETW(req.wValue, 0);
-	} else if (ISSET(t->c_iflag, IXON|IXOFF)) {
+	} else if (ISSET(t->c_iflag, IXON) && ISSET(t->c_iflag, IXOFF)) {
 		flow = FTDI_SIO_XON_XOFF_HS;
 		USETW2(req.wValue, t->c_cc[VSTOP], t->c_cc[VSTART]);
 	} else {

@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.14 2012/03/28 17:03:27 christos Exp $ */
+/* $NetBSD: limits.h,v 1.14.2.1 2013/06/23 06:19:58 tls Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -76,6 +76,7 @@
 #endif
 
 #if defined(_NETBSD_SOURCE)
+#define	SSIZE_MIN	LONG_MIN	/* min value for a ssize_t */
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 /* Quads and longs are the same on the alpha */

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.16.2.1 2012/11/20 03:01:19 tls Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.16.2.2 2013/06/23 06:20:05 tls Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -112,17 +112,10 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -169,10 +162,10 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device 	wsmux

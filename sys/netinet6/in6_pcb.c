@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.121.2.1 2013/06/23 06:20:25 tls Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.121.2.1 2013/06/23 06:20:25 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -99,11 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $
 
 #include "faith.h"
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #include <netinet/tcp_vtw.h>
 
@@ -157,7 +157,7 @@ in6_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct in6pcb *in6p;
 	int s;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	int error;
 #endif
 
@@ -174,7 +174,7 @@ in6_pcballoc(struct socket *so, void *v)
 	in6p->in6p_icmp6filt = NULL;
 	in6p->in6p_portalgo = PORTALGO_DEFAULT;
 	in6p->in6p_bindportonsend = false;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
 		s = splnet();
@@ -452,6 +452,10 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	if (sin6->sin6_port == 0)
 		return (EADDRNOTAVAIL);
 
+	if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr) &&
+	    in6p->in6p_socket->so_type == SOCK_STREAM)
+		return EADDRNOTAVAIL;
+
 	if (sin6->sin6_scope_id == 0 && !ip6_use_defzone)
 		scope_ambiguous = 1;
 	if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
@@ -562,7 +566,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	if (ip6_auto_flowlabel)
 		in6p->in6p_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	if (in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
 #endif
@@ -576,7 +580,7 @@ in6_pcbdisconnect(struct in6pcb *in6p)
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	ipsec_pcbdisconn(in6p->in6p_sp);
 #endif
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
@@ -592,7 +596,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
 	so->so_pcb = 0;

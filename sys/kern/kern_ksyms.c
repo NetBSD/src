@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.67.6.2 2013/02/25 00:29:50 tls Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.67.6.3 2013/06/23 06:18:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.67.6.2 2013/02/25 00:29:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.67.6.3 2013/06/23 06:18:57 tls Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -508,7 +508,7 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 		return;
 
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
-	    &kernel_symtab, start, ctfstart, ctfsize, ksyms_nmap);
+	    &kernel_symtab, symstart, ctfstart, ctfsize, ksyms_nmap);
 
 #ifdef DEBUG
 	aprint_normal("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",

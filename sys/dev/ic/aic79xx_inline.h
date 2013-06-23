@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.19 2009/09/05 12:39:25 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.19.22.1 2013/06/23 06:20:17 tls Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -393,7 +393,7 @@ ahd_sync_sense(struct ahd_softc *ahd, struct scb *scb, int op)
 {
 	ahd_dmamap_sync(ahd, ahd->parent_dmat,
 			scb->sense_map->dmamap,
-			/*offset*/scb->sense_busaddr,
+			/*offset*/scb->sense_busaddr - scb->sense_map->physaddr,
 			/*len*/AHD_SENSE_BUFSIZE, op);
 }
 

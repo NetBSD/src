@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.7 2008/06/14 16:01:07 tnozaki Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.7.26.1 2013/06/23 06:21:04 tls Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.7 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.7.26.1 2013/06/23 06:21:04 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -72,8 +72,10 @@ typedef struct {
 		_GBK2KState	s_mbrtowc;
 		_GBK2KState	s_mbtowc;
 		_GBK2KState	s_mbsrtowcs;
+		_GBK2KState	s_mbsnrtowcs;
 		_GBK2KState	s_wcrtomb;
 		_GBK2KState	s_wcsrtombs;
+		_GBK2KState	s_wcsnrtombs;
 		_GBK2KState	s_wctomb;
 	} states;
 } _GBK2KCTypeInfo;

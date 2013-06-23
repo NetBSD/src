@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/01/11 23:24:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2013/06/23 06:28:24 tls Exp $
 
 LIB=	LLVMX86MCTargetDesc
 
@@ -14,7 +14,9 @@ SRCS+=	X86AsmBackend.cpp \
 	X86MCAsmInfo.cpp \
 	X86MCCodeEmitter.cpp \
 	X86MCTargetDesc.cpp \
+	X86MachORelocationInfo.cpp \
 	X86MachObjectWriter.cpp \
+	X86ELFRelocationInfo.cpp \
 	X86WinCOFFObjectWriter.cpp
 
 .if defined(HOSTLIB)

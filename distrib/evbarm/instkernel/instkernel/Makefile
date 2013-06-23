@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.16.2.2 2013/02/25 00:24:27 tls Exp $
+#	$NetBSD: Makefile,v 1.16.2.3 2013/06/23 06:26:17 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+SSHRAMDISKDIR!=	cd ${.CURDIR}/../sshramdisk && ${PRINTOBJDIR}
+SSHRAMDISK=	${SSHRAMDISKDIR}/sshramdisk.fs
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms.
@@ -25,6 +27,15 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 # Big endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
 .endif
+
+.if \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "earm" || \
+    ${MACHINE_ARCH} == "earmhf"
+# Little endian (any ABI) platforms.
+MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-
+.endif
+
 MDSET_RELEASEDIR=	installation/instkernel
 
 MDSET_SUFFIXES.-=	srec create-srec  bin create-bin

@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.2 2012/08/04 03:53:56 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.2.2.1 2013/06/23 06:21:07 tls Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2012/08/04 03:53:56 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2.2.1 2013/06/23 06:21:07 tls Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -57,6 +57,10 @@ __RCSID("$NetBSD: fenv.c,v 1.2 2012/08/04 03:53:56 riastradh Exp $");
 /* No-Wait Store x87 environment */
 #define	__fnstenv(__env)	__asm__ __volatile__ \
 	("fnstenv %0" : "=m" (*(__env)))
+
+/* Check for and handle pending unmasked x87 pending FPU exceptions */
+#define	__fwait(__env)		__asm__	__volatile__	\
+	("fwait")
 
 /* Load the MXCSR register */
 #define	__ldmxcsr(__mxcsr)	__asm__ __volatile__ \
@@ -178,6 +182,7 @@ feraiseexcept(int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 	fesetexceptflag((unsigned int *)&excepts, excepts);
+	__fwait();
 
 	/* Success */
 	return (0);
@@ -519,6 +524,6 @@ fegetexcept(void)
 	 */
 	__fnstcw(&control);
 
-	return (control & FE_ALL_EXCEPT);
+	return (~control & FE_ALL_EXCEPT);
 }
 

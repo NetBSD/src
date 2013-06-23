@@ -1,4 +1,4 @@
-#	$NetBSD: genlfs.cf,v 1.1 2010/02/13 23:38:17 eeh Exp $
+#	$NetBSD: genlfs.cf,v 1.1.24.1 2013/06/23 06:20:12 tls Exp $
 
 #	Copyright (c) 2010 Eduardo Horvath.
 #	All rights reserved.
@@ -70,8 +70,10 @@ member	if2_version	if_version
 member 	if2_daddr	if_daddr
 
 #
-# the dinode is the same as ffs v1
+# LFS v1 dinode
 #
+struct  ulfs1_dinode
+member	di_inumber	di_inumber
 
 define	lfs_magic_value		LFS_MAGIC
 define	lfs_unused_daddr	LFS_UNUSED_DADDR

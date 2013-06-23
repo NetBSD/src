@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.135 2012/06/05 08:44:13 abs Exp $
+#	$NetBSD: INSTALL_TINY,v 1.135.2.1 2013/06/23 06:20:06 tls Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -120,8 +120,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -499,7 +497,7 @@ cinclude "arch/i386/conf/INSTALL.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
@@ -514,6 +512,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 options 	NO_DEV_PTM
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

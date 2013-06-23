@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.10.2.2 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.10.2.3 2013/06/23 06:18:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -393,7 +393,7 @@ chfs_access(void *v)
 	if (mode & VWRITE && ip->flags & IMMUTABLE)
 		return (EPERM);
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->mode & ALLPERMS, ip->uid, ip->gid, mode, cred));
 }
@@ -583,7 +583,7 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 	(((off_t)(blk)) << (chmp)->chm_fs_bshift)
 
 /* calculates (loc % chmp->chm_chm_fs_bsize) */
-#define	blkoff(chmp, loc)							      \
+#define	chfs_blkoff(chmp, loc)							      \
 	((loc) & (chmp)->chm_fs_qbmask)
 
 /* calculates (loc / chmp->chm_chm_fs_bsize) */
@@ -594,10 +594,10 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 #define	fragroundup(chmp, size)						      \
 	(((size) + (chmp)->chm_fs_qfmask) & (chmp)->chm_fs_fmask)
 
-#define	blksize(chmp, ip, lbn)						      \
+#define	chfs_blksize(chmp, ip, lbn)					      \
 	(((lbn) >= UFS_NDADDR || (ip)->size >= lblktosize(chmp, (lbn) + 1))	      \
 	    ? (chmp)->chm_fs_bsize					      \
-	    : (fragroundup(chmp, blkoff(chmp, (ip)->size))))
+	    : (fragroundup(chmp, chfs_blkoff(chmp, (ip)->size))))
 
 /* calculates roundup(size, chmp->chm_chm_fs_bsize) */
 #define	blkroundup(chmp, size)						      \
@@ -688,8 +688,8 @@ chfs_read(void *v)
 			break;
 		lbn = lblkno(chmp, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = blksize(chmp, ip, lbn);
-		blkoffset = blkoff(chmp, uio->uio_offset);
+		size = chfs_blksize(chmp, ip, lbn);
+		blkoffset = chfs_blkoff(chmp, uio->uio_offset);
 		xfersize = MIN(MIN(chmp->chm_fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
@@ -697,7 +697,7 @@ chfs_read(void *v)
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 			dbg("after bread\n");
 		} else {
-			int nextsize = blksize(chmp, ip, nextlbn);
+			int nextsize = chfs_blksize(chmp, ip, nextlbn);
 			dbg("size: %ld\n", size);
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
@@ -846,7 +846,7 @@ chfs_write(void *v)
 		MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
-	endallocoff = nsize - blkoff(chmp, nsize);
+	endallocoff = nsize - chfs_blkoff(chmp, nsize);
 
 	/*
 	 * if we're increasing the file size, deal with expanding
@@ -882,7 +882,7 @@ chfs_write(void *v)
 		}
 
 		oldoff = uio->uio_offset;
-		blkoffset = blkoff(chmp, uio->uio_offset);
+		blkoffset = chfs_blkoff(chmp, uio->uio_offset);
 		bytelen = MIN(chmp->chm_fs_bsize - blkoffset, uio->uio_resid);
 		if (bytelen == 0) {
 			break;
@@ -898,12 +898,12 @@ chfs_write(void *v)
 		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
 		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 &&
-		    blkoff(chmp, uio->uio_offset) == 0 &&
+		    chfs_blkoff(chmp, uio->uio_offset) == 0 &&
 		    (uio->uio_offset & PAGE_MASK) == 0) {
 			vsize_t len;
 
 			len = trunc_page(bytelen);
-			len -= blkoff(chmp, len);
+			len -= chfs_blkoff(chmp, len);
 			if (len > 0) {
 				overwrite = true;
 				bytelen = len;

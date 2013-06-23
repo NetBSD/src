@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.8 2005/12/24 20:07:15 perry Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.8.122.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.8 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.8.122.1 2013/06/23 06:20:08 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -56,16 +56,35 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.8 2005/12/24 20:07:15 perry Exp $");
 #include "fpu_arith.h"
 
 /*
+ * m68020 or later has a BFFFO instruction, therefore use it.
+ * Otherwise, use C version.
+ */
+static inline int
+bfffo(uint32_t src)
+{
+	int offset;
+#if defined(__m68k__) && !defined(__mc68010__)
+	__asm volatile("bfffo %1{#0:#32},%0" : "=d"(offset) : "g"(src));
+#else
+	int width = 32;
+	for (offset = 0; width-- > 0 && (int)src >= 0; src <<= 1) {
+		offset++;
+	}
+#endif
+	return offset;
+}
+
+/*
  * Shift the given number right rsh bits.  Any bits that `fall off' will get
  * shoved into the sticky field; we return the resulting sticky.  Note that
  * shifting NaNs is legal (this will never shift all bits out); a NaN's
  * sticky field is ignored anyway.
  */
 int
-fpu_shr(register struct fpn *fp, register int rsh)
+fpu_shr(struct fpn *fp, int rsh)
 {
-	register u_int m0, m1, m2, s;
-	register int lsh;
+	uint32_t m0, m1, m2, s;
+	int lsh;
 
 #ifdef DIAGNOSTIC
 	if (rsh < 0 || (fp->fp_class != FPC_NUM && !ISNAN(fp)))
@@ -129,10 +148,10 @@ fpu_shr(register struct fpn *fp, register int rsh)
  * a supernormal and it will fix it (provided fp->fp_mant[2] == 0).
  */
 void
-fpu_norm(register struct fpn *fp)
+fpu_norm(struct fpn *fp)
 {
-	register u_int m0, m1, m2, sup, nrm;
-	register int lsh, rsh, exp;
+	uint32_t m0, m1, m2, sup, nrm;
+	int lsh, rsh, exp;
 
 	exp = fp->fp_exp;
 	m0 = fp->fp_mant[0];
@@ -165,7 +184,7 @@ fpu_norm(register struct fpn *fp)
 		 * We have a supernormal number.  We need to shift it right.
 		 * We may assume m2==0.
 		 */
-		__asm volatile("bfffo %1{#0:#32},%0" : "=d"(rsh) : "g"(m0));
+		rsh = bfffo(m0);
 		rsh = 31 - rsh - FP_LG;
 		exp += rsh;
 		lsh = 32 - rsh;
@@ -177,7 +196,7 @@ fpu_norm(register struct fpn *fp)
 		 * We have a regular denorm (a subnormal number), and need
 		 * to shift it left.
 		 */
-		__asm volatile("bfffo %1{#0:#32},%0" : "=d"(lsh) : "g"(m0));
+		lsh = bfffo(m0);
 		lsh = FP_LG - 31 + lsh;
 		exp -= lsh;
 		rsh = 32 - lsh;
@@ -197,9 +216,9 @@ fpu_norm(register struct fpn *fp)
  * As a side effect, we set OPERR for the current exceptions.
  */
 struct fpn *
-fpu_newnan(register struct fpemu *fe)
+fpu_newnan(struct fpemu *fe)
 {
-	register struct fpn *fp;
+	struct fpn *fp;
 
 	fe->fe_fpsr |= FPSR_OPERR;
 	fp = &fe->fe_f3;

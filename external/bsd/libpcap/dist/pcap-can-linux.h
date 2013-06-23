@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-can-linux.h,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.

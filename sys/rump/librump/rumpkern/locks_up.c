@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.6 2012/04/28 18:04:02 stacktic Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.6.2.1 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6 2012/04/28 18:04:02 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6.2.1 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,6 +69,13 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 	checkncpu();
+
+	/*
+	 * In uniprocessor locking we don't need to differentiate
+	 * between spin mutexes and adaptive ones.  We could
+	 * replace mutex_enter() with a NOP for spin mutexes, but
+	 * not bothering with that for now.
+	 */
 
 	/*
 	 * XXX: pool_cache would be nice, but not easily possible,
@@ -368,21 +375,15 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
-	struct timespec ts, tstick;
+	struct timespec ts;
 
 #ifdef DIAGNOSTIC
 	UPMTX(mtx);
 	KASSERT(upm->upm_owner == curlwp);
 #endif
 
-	/*
-	 * XXX: this fetches rump kernel time, but rumpuser_cv_timedwait
-	 * uses host time.
-	 */
-	nanotime(&ts);
-	tstick.tv_sec = ticks / hz;
-	tstick.tv_nsec = (ticks % hz) * (1000000000/hz);
-	timespecadd(&ts, &tstick, &ts);
+	ts.tv_sec = ticks / hz;
+	ts.tv_nsec = (ticks % hz) * (1000000000/hz);
 
 	if (ticks == 0) {
 		cv_wait(cv, mtx);
@@ -425,8 +426,11 @@ cv_broadcast(kcondvar_t *cv)
 bool
 cv_has_waiters(kcondvar_t *cv)
 {
+	int n;
 
-	return rumpuser_cv_has_waiters(RUMPCV(cv));
+	rumpuser_cv_has_waiters(RUMPCV(cv), &n);
+
+	return n > 0;
 }
 
 /* this is not much of an attempt, but ... */

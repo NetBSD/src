@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.19 2011/10/15 15:34:06 tsutsui Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.19.12.1 2013/06/23 06:20:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -81,7 +81,7 @@ struct fpn {
 	int	fp_sign;		/* 0 => positive, 1 => negative */
 	int	fp_exp;			/* exponent (unbiased) */
 	int	fp_sticky;		/* nonzero bits lost at right end */
-	u_int	fp_mant[3];		/* 83-bit mantissa */
+	uint32_t fp_mant[3];		/* 83-bit mantissa */
 };
 
 #define	FP_NMANT	83		/* total bits in mantissa (incl g,r) */
@@ -132,11 +132,11 @@ CPYFPN(struct fpn *dst, const struct fpn *src)
  * then op1 is the one we want; otherwise op2 is the one we want.
  */
 #define	ORDER(x, y) { \
-	if ((u_int)(x)->fp_class > (u_int)(y)->fp_class) \
+	if ((uint32_t)(x)->fp_class > (uint32_t)(y)->fp_class) \
 		SWAP(x, y); \
 }
 #define	SWAP(x, y) {				\
-	register struct fpn *swap;		\
+	struct fpn *swap;			\
 	swap = (x), (x) = (y), (y) = swap;	\
 }
 
@@ -146,8 +146,8 @@ CPYFPN(struct fpn *dst, const struct fpn *src)
 struct fpemu {
 	struct frame *fe_frame; /* integer regs, etc */
 	struct fpframe *fe_fpframe; /* FP registers, etc */
-	u_int fe_fpsr;		/* fpsr copy (modified during op) */
-	u_int fe_fpcr;		/* fpcr copy */
+	uint32_t fe_fpsr;	/* fpsr copy (modified during op) */
+	uint32_t fe_fpcr;	/* fpcr copy */
 	struct fpn fe_f1;	/* operand 1 */
 	struct fpn fe_f2;	/* operand 2, if required */
 	struct fpn fe_f3;	/* available storage for result */
@@ -188,8 +188,8 @@ struct insn_ea {
 #define ea_fea		ea_ext[0]	/* MC68LC040 only: frame EA */
 
 struct instruction {
-	u_int	is_pc;		/* insn's address */
-	u_int	is_nextpc;	/* next PC */
+	uint32_t is_pc;		/* insn's address */
+	uint32_t is_nextpc;	/* next PC */
 	int	is_advance;	/* length of instruction */
 	int	is_datasize;	/* size of memory operand */
 	int	is_opcode;	/* opcode word */
@@ -224,11 +224,11 @@ int	fpu_shr(struct fpn *, int);
 /*
  * Round a number according to the round mode in FPCR
  */
-int	fpu_round(register struct fpemu *, register struct fpn *);
+int	fpu_round(struct fpemu *, struct fpn *);
 
 /* type conversion */
-void	fpu_explode(struct fpemu *, struct fpn *, int t, u_int *);
-void	fpu_implode(struct fpemu *, struct fpn *, int t, u_int *);
+void	fpu_explode(struct fpemu *, struct fpn *, int t, const uint32_t *);
+void	fpu_implode(struct fpemu *, struct fpn *, int t, uint32_t *);
 
 /*
  * non-static emulation functions
@@ -246,16 +246,28 @@ int fpu_emul_fscale(struct fpemu *, struct instruction *);
 int fpu_emulate(struct frame *, struct fpframe *, ksiginfo_t *);
 struct fpn *fpu_cmp(struct fpemu *);
 
-struct fpn *fpu_sincos_taylor(struct fpemu *, struct fpn *, u_int, int);
+/* fpu_cordic.c */
+extern const struct fpn fpu_cordic_inv_gain1;
+extern const struct fpn fpu_cordic_inv_gain2;
+void fpu_cordit1(struct fpemu *,
+	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
+void fpu_cordit2(struct fpemu *,
+	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
 
 /*
  * "helper" functions
  */
 /* return values from constant rom */
-struct fpn *fpu_const(struct fpn *, u_int);
+struct fpn *fpu_const(struct fpn *, uint32_t);
+#define FPU_CONST_PI	(0x00)	/* pi */
+#define FPU_CONST_0 	(0x0f)	/* 0.0 */
+#define FPU_CONST_LN_2	(0x30)	/* ln(2) */
+#define FPU_CONST_LN_10	(0x31)	/* ln(10) */
+#define FPU_CONST_1 	(0x32)	/* 1.0 */
+
 /* update exceptions and FPSR */
 int fpu_upd_excp(struct fpemu *);
-u_int fpu_upd_fpsr(struct fpemu *, struct fpn *);
+uint32_t fpu_upd_fpsr(struct fpemu *, struct fpn *);
 
 /* address mode decoder, and load/store */
 int fpu_decode_ea(struct frame *, struct instruction *,
@@ -266,7 +278,7 @@ int fpu_store_ea(struct frame *, struct instruction *,
 		  struct insn_ea *, char *);
 
 /* fpu_subr.c */
-void fpu_norm(register struct fpn *);
+void fpu_norm(struct fpn *);
 
 #if !defined(FPE_DEBUG)
 #  define FPE_DEBUG 0

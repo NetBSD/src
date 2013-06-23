@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.1.2.2 2013/02/25 00:28:26 tls Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.1.2.3 2013/06/23 06:20:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.2 2013/02/25 00:28:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1.2.3 2013/06/23 06:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,9 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	if (a9tmr_sc.sc_dev != NULL)
 		return 0;
 
+	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
+		return 0;
+
 	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
@@ -120,9 +123,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
 	 * The MD code should have setup our frequency for us.
 	 */
-	prop_number_t pn = prop_dictionary_get(dict, "frequency");
-	KASSERT(pn != NULL);
-	sc->sc_freq = prop_number_unsigned_integer_value(pn);
+	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 

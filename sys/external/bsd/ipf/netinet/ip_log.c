@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.3.2.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.3.2.2 2013/06/23 06:20:22 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.3.2.1 2012/11/20 03:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.3.2.2 2013/06/23 06:20:22 tls Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -327,6 +327,7 @@ ipf_log_soft_fini(ipf_main_softc_t *softc, void *arg)
 			MUTEX_ENTER(&softl->ipl_mutex[i]);
 		}
 		MUTEX_EXIT(&softl->ipl_mutex[i]);
+		MUTEX_DESTROY(&softl->ipl_mutex[i]);
 	}
 
 	return 0;
@@ -351,7 +352,6 @@ ipf_log_soft_destroy(ipf_main_softc_t *softc, void *arg)
 # if SOLARIS && defined(_KERNEL)
 		cv_destroy(&softl->ipl_wait[i]);
 # endif
-		MUTEX_DESTROY(&softl->ipl_mutex[i]);
 	}
 
 	if (softl->ipf_log_tune != NULL) {

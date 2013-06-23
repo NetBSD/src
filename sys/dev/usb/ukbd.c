@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.124.2.1 2013/02/25 00:29:39 tls Exp $        */
+/*      $NetBSD: ukbd.c,v 1.124.2.2 2013/06/23 06:20:22 tls Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124.2.1 2013/02/25 00:29:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124.2.2 2013/06/23 06:20:22 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -976,7 +976,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	sc->sc_flags |= FLAG_POLLING;
-	while(sc->sc_npollchar <= 0)
+	while (sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
 	sc->sc_flags &= ~FLAG_POLLING;
 	c = sc->sc_pollchars[0];

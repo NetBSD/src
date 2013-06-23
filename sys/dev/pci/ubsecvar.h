@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.3.86.1 2012/11/20 03:02:29 tls Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.3.86.2 2013/06/23 06:20:21 tls Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ struct ubsec_q {
 struct ubsec_softc {
 	device_t		sc_dev;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
+	kmutex_t		sc_mtx;
 	bus_space_handle_t	sc_sh;		/* memory handle */
 	bus_space_tag_t		sc_st;		/* memory tag */
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
@@ -170,6 +171,8 @@ struct ubsec_softc {
 	struct callout		sc_rngto;	/* rng timeout */
 	int			sc_rnghz;	/* rng poll time */
 	struct ubsec_q2_rng	sc_rng;
+	krndsource_t		sc_rnd_source;
+	int			sc_rng_need;	/* how many bytes wanted */
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */

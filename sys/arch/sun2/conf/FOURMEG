@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.49 2011/11/22 21:25:38 tls Exp $
+# $NetBSD: FOURMEG,v 1.49.8.1 2013/06/23 06:20:13 tls Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.49 $"
+#ident 		"FOURMEG-$Revision: 1.49.8.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -79,12 +79,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP protocol stack support
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -217,7 +213,7 @@ bwtwo0	at obio0 addr 0x0	# 2/50
 pcons0	at mainbus0			# PROM console
 
 #### Miscellaneous.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
@@ -230,8 +226,8 @@ pseudo-device	loop		1	# network loopback
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
-#pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated disks
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem

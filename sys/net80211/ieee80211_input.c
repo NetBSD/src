@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.72.6.2 2013/06/23 06:20:25 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72.6.2 2013/06/23 06:20:25 tls Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h> 
 #include <sys/malloc.h>
 #include <sys/endian.h>
 #include <sys/kernel.h>
- 
+
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/endian.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.72.6.1 2013/02/25 00:30:04 tls
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <net/if_ether.h>
 #endif
 
@@ -282,7 +282,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		ni->ni_rstamp = rstamp;
 		if (HAS_SEQ(type)) {
 			u_int8_t tid;
-			if (IEEE80211_QOS_HAS_SEQ(wh)) {
+			if (ieee80211_has_qos(wh)) {
 				tid = ((struct ieee80211_qosframe *)wh)->
 					i_qos[0] & IEEE80211_QOS_TID;
 				if (TID_TO_WME_AC(tid) >= WME_AC_VI)
@@ -919,7 +919,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		ic->ic_stats.is_rx_bad_auth++;	/* XXX */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			/* XXX hack to workaround calling convention */
-			ieee80211_send_error(ic, ni, wh->i_addr2, 
+			ieee80211_send_error(ic, ni, wh->i_addr2,
 			    IEEE80211_FC0_SUBTYPE_AUTH,
 			    (seq + 1) | (IEEE80211_STATUS_ALG<<16));
 		}
@@ -1340,7 +1340,7 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 } while (0)
 #endif /* !IEEE80211_DEBUG */
 
-/* unalligned little endian access */     
+/* unaligned little endian access */
 #define LE_READ_2(p)					\
 	((u_int16_t)					\
 	 ((((const u_int8_t *)(p))[0]      ) |		\
@@ -1618,7 +1618,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
 	int n;
 
 	/*
-	 * Check the length once for fixed parts: 
+	 * Check the length once for fixed parts:
 	 * version, mcast cipher, and 2 selector counts.
 	 * Other, variable-length data, must be checked separately.
 	 */
@@ -1686,7 +1686,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
 	n = LE_READ_2(frm);
 	frm += 2, len -= 2;
 	if (len < n*4) {
-		IEEE80211_DISCARD_IE(ic, 
+		IEEE80211_DISCARD_IE(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_WPA,
 		    wh, "RSN", "key mgmt alg data too short; len %u, n %u",
 		    len, n);
@@ -1861,7 +1861,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 *      updates such as 802.11g slot time), or
 		 *    o adhoc mode (to discover neighbors)
 		 * Frames otherwise received are discarded.
-		 */ 
+		 */
 		if (!((ic->ic_flags & IEEE80211_F_SCAN) ||
 		      (ic->ic_opmode == IEEE80211_M_STA && ni->ni_associd) ||
 		       ic->ic_opmode == IEEE80211_M_IBSS)) {
@@ -2249,7 +2249,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			}
 #endif /* !IEEE80211_NO_HOSTAP */
 			return;
-		} 
+		}
 		break;
 	}
 
@@ -2348,7 +2348,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_node_leave(ic, ni);
 			/* XXX distinguish WPA/RSN? */
 			ic->ic_stats.is_rx_assoc_badwpaie++;
-			return;	
+			return;
 		}
 		if (wpa != NULL) {
 			/*
@@ -2723,7 +2723,7 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 		IEEE80211_NODE_SAVEQ_DEQUEUE(ni, m, qlen);
 		if (m == NULL)
 			break;
-		/* 
+		/*
 		 * If this is the last packet, turn off the TIM bit.
 		 * If there are more packets, set the more packets bit
 		 * in the mbuf so ieee80211_encap will mark the 802.11
@@ -2786,7 +2786,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 			ic->ic_set_tim(ni, 0);	/* just in case */
 		return;
 	}
-	/* 
+	/*
 	 * If there are more packets, set the more packets bit
 	 * in the packet dispatched to the station; otherwise
 	 * turn off the TIM bit.

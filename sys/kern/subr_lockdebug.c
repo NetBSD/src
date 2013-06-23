@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.46.2.1 2013/02/25 00:29:53 tls Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.46.2.2 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46.2.1 2013/02/25 00:29:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46.2.2 2013/06/23 06:18:58 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -411,8 +411,7 @@ lockdebug_more(int s)
  *	Process the preamble to a lock acquire.
  */
 void
-lockdebug_wantlock(volatile void *lock, uintptr_t where, bool shared,
-		   bool trylock)
+lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -432,7 +431,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, bool shared,
 	}
 	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
-			if (ld->ld_lwp == l && !(shared && trylock))
+			if (ld->ld_lwp == l)
 				recurse = true;
 		} else if (ld->ld_cpu == (uint16_t)cpu_index(curcpu()))
 			recurse = true;

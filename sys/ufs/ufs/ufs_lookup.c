@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.117.2.2 2013/02/25 00:30:18 tls Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.117.2.3 2013/06/23 06:18:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.117.2.2 2013/02/25 00:30:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.117.2.3 2013/06/23 06:18:40 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -220,7 +220,7 @@ ufs_lookup(void *v)
 	slotfreespace = slotsize = slotneeded = 0;
 	if ((nameiop == CREATE || nameiop == RENAME) && (flags & ISLASTCN)) {
 		slotstatus = NONE;
-		slotneeded = DIRECTSIZ(cnp->cn_namelen);
+		slotneeded = UFS_DIRECTSIZ(cnp->cn_namelen);
 	}
 
 	/*
@@ -348,7 +348,7 @@ searchloop:
 			int size = ufs_rw16(ep->d_reclen, needswap);
 
 			if (ep->d_ino != 0)
-				size -= DIRSIZ(FSFMT(vdp), ep, needswap);
+				size -= UFS_DIRSIZ(FSFMT(vdp), ep, needswap);
 			if (size > 0) {
 				if (size >= slotneeded) {
 					slotstatus = FOUND;
@@ -528,10 +528,10 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
+	if (results->ulr_offset + UFS_DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
 		ufs_dirbad(dp, results->ulr_offset, "i_size too small");
 		dp->i_size =
-		    results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
+		    results->ulr_offset + UFS_DIRSIZ(FSFMT(vdp), ep, needswap);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
@@ -733,13 +733,13 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 	    ufs_rw16(ep->d_reclen, needswap) >
 		dirblksiz - (entryoffsetinblock & (dirblksiz - 1)) ||
 	    ufs_rw16(ep->d_reclen, needswap) <
-		DIRSIZ(FSFMT(dp), ep, needswap) ||
+		UFS_DIRSIZ(FSFMT(dp), ep, needswap) ||
 	    namlen > FFS_MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%#x, DIRSIZ=%lu, namlen=%d, "
 			"flags=%#x, entryoffsetinblock=%d, dirblksiz = %d\n",
 			ufs_rw16(ep->d_reclen, needswap),
-			(u_long)DIRSIZ(FSFMT(dp), ep, needswap),
+			(u_long)UFS_DIRSIZ(FSFMT(dp), ep, needswap),
 			namlen, dp->v_mount->mnt_flag, entryoffsetinblock,
 			dirblksiz);
 		goto bad;
@@ -833,7 +833,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	l = curlwp;
 
 	dp = VTOI(dvp);
-	newentrysize = DIRSIZ(0, dirp, 0);
+	newentrysize = UFS_DIRSIZ(0, dirp, 0);
 
 	if (ulr->ulr_count == 0) {
 		/*
@@ -923,7 +923,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * ulr_offset + ulr_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = (ep->d_ino != 0) ? DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
+	dsize = (ep->d_ino != 0) ? UFS_DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
 	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < ulr->ulr_count; ) {
 		uint16_t reclen;
@@ -950,7 +950,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 			dsize = 0;
 			continue;
 		}
-		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
+		dsize = UFS_DIRSIZ(FSFMT(dvp), nep, needswap);
 		spacefree += reclen - dsize;
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
@@ -1150,7 +1150,7 @@ out:
 	 */
 	if (ip != 0 && (ip->i_flags & SF_SNAPSHOT) != 0 &&
 	    ip->i_nlink == 0)
-		ffs_snapgone(ip);
+		UFS_SNAPGONE(ITOV(ip));
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
 	return (error);
 }
@@ -1199,7 +1199,7 @@ ufs_dirrewrite(struct inode *dp, off_t offset,
 	 * when last open reference goes away.
 	 */
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
-		ffs_snapgone(oip);
+		UFS_SNAPGONE(ITOV(oip));
 	UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
 	return (error);
 }

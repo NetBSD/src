@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110.2.2 2013/02/25 00:29:59 tls Exp $
+#	$NetBSD: Makefile,v 1.110.2.3 2013/06/23 06:20:24 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	if_axe
+SUBDIR+=	if_npflog
 SUBDIR+=	iic
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
@@ -49,7 +50,7 @@ SUBDIR+=	nilfs
 SUBDIR+=	npf
 SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
-SUBDIR+=	npf_ext_normalise
+SUBDIR+=	npf_ext_normalize
 SUBDIR+=	npf_ext_rndblock
 SUBDIR+=	ntfs
 SUBDIR+=	null

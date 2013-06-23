@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.4 2010/11/14 03:57:17 uebayasi Exp $ */
+/*	$NetBSD: interrupts.c,v 1.4.18.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.4 2010/11/14 03:57:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.4.18.1 2013/06/23 06:20:08 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.4 2010/11/14 03:57:17 uebayasi Exp 
 #include "pic_openpic.h"
 #include "pic_ohare.h"
 #include "pic_heathrow.h"
+#include "pic_u3_ht.h"
 #include "opt_ipi.h"
 #include "ipi_openpic.h"
 #include "ipi_hammerhead.h"
@@ -117,6 +118,10 @@ init_interrupt(void)
 #endif
 #if NPIC_HEATHROW > 0
 	if (init_heathrow())
+		goto done;
+#endif
+#if NPIC_U3_HT > 0
+	if (init_u3_ht())
 		goto done;
 #endif
 #if NPIC_OPENPIC > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2012/04/10 13:45:08 gson Exp $	*/
+/*	$NetBSD: component.c,v 1.2.2.1 2013/06/23 06:20:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2012/04/10 13:45:08 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.1 2013/06/23 06:20:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,6 +56,13 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	if ((error = devsw_attach("md", &md_bdevsw, &bmaj,
 	    &md_cdevsw, &cmaj)) != 0)
 		panic("md devsw attach failed: %d", error);
+
+        if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/md0", 'a',
+            bmaj, 0, 7)) != 0)
+                panic("cannot create cooked md dev nodes: %d", error);
+        if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rmd0", 'a',
+            cmaj, 0, 7)) != 0)
+                panic("cannot create raw md dev nodes: %d", error);
 
 	rump_pdev_add(mdattach, 0);
 }

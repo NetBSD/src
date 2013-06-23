@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.7.2.1 2013/02/25 00:27:48 tls Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7.2.2 2013/06/23 06:21:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -107,10 +107,10 @@ ENTRY(_longjmp)
 #ifdef __ARM_EABI__
 	teq	r3, r2				/* did magic change? */
 	beq	1f				/*   no, don't restore VFP */
-	add	r1, r0, #(_JB_REG_D8 * 4)
-	vldmia	r1, {d8-d15}
-	ldr	r1, [r0, #(_JB_REG_FPSCR * 4)]
-	vmsr	fpscr, r1
+	add	ip, r0, #(_JB_REG_D8 * 4)
+	vldmia	ip, {d8-d15}
+	ldr	ip, [r0, #(_JB_REG_FPSCR * 4)]
+	vmsr	fpscr, ip
 1:
 #endif /* __ARM_EABI__ */
 
@@ -124,8 +124,7 @@ ENTRY(_longjmp)
 	beq	botch
 
 	/* Set return value */
-	mov	r0, r1
-	teq	r0, #0x00000000
+	movs	r0, r1
 	moveq	r0, #0x00000001
 	RET
 

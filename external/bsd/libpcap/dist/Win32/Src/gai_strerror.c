@@ -1,3 +1,5 @@
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.12.1 2013/06/23 06:28:20 tls Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

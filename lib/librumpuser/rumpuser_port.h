@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.3.2.2 2013/02/25 00:28:01 tls Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3.2.3 2013/06/23 06:21:08 tls Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -31,11 +31,20 @@
 #define PLATFORM_HAS_NBQUOTA
 #endif
 
+#if __NetBSD_Prereq__(6,99,16)
+#define HAVE_CLOCK_NANOSLEEP
+#endif
+
 /*
  * This includes also statvfs1() and fstatvfs1().  They could be
  * reasonably easily emulated on other platforms.
  */
 #define PLATFORM_HAS_NBVFSSTAT
+#endif /* __NetBSD__ */
+
+/* might not be 100% accurate, maybe need to revisit later */
+#if defined(__linux__) || defined(__sun__)
+#define HAVE_CLOCK_NANOSLEEP
 #endif
 
 #ifdef __linux__
@@ -44,6 +53,14 @@
 #define _FILE_OFFSET_BITS 64
 #define _GNU_SOURCE
 #include <features.h>
+#endif
+
+#if defined(__sun__)
+#  if defined(RUMPUSER_NO_FILE_OFFSET_BITS)
+#    undef _FILE_OFFSET_BITS
+#  else
+#    define _FILE_OFFSET_BITS 64
+#  endif
 #endif
 
 #include <sys/types.h>
@@ -79,6 +96,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #if defined(__sun__)
 #include <sys/sysmacros.h>
 
+#if !defined(HAVE_POSIX_MEMALIGN)
 /* Solarisa 10 has memalign() but no posix_memalign() */
 #include <stdlib.h>
 
@@ -91,6 +109,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 		return ENOMEM;
 	return 0;
 }
+#endif /* !HAVE_POSIX_MEMALIGN */
 #endif /* __sun__ */
 
 #ifndef __RCSID
@@ -141,8 +160,10 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
-#define arc4random() random()
-#define RUMPUSER_USE_RANDOM
+#define RUMPUSER_RANDOM() random()
+#define RUMPUSER_USE_DEVRANDOM
+#else
+#define RUMPUSER_RANDOM() arc4random()
 #endif
 
 #ifndef __NetBSD_Prereq__

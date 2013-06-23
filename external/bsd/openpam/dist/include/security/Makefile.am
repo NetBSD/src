@@ -1,4 +1,4 @@
-# Id: Makefile.am 405 2007-12-19 11:38:27Z des
+# Id: Makefile.am 405 2007-12-19 11:38:27Z des 
 
 openpamdir = $(includedir)/security
 

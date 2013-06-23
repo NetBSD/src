@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.14 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.14.2.1 2013/06/23 06:21:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,24 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.14 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.14.2.1 2013/06/23 06:21:05 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <netiso/iso.h>
 
 #include <assert.h>
 #include <string.h>
+
+struct iso_addr {
+	uint8_t		isoa_len;	/* length (in bytes) */
+	char		isoa_genaddr[20];	/* general opaque address */
+};
+
+__BEGIN_DECLS
+struct iso_addr *iso_addr(const char *);
+char *iso_ntoa(const struct iso_addr *);
+__END_DECLS
 
 /* States*/
 #define VIRGIN	0

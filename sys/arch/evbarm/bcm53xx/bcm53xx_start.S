@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.3.2.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.3.2.2 2013/06/23 06:20:03 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.3.2.1 2012/11/20 03:01:12 tls Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.3.2.2 2013/06/23 06:20:03 tls Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -109,7 +109,7 @@ _C_LABEL(bcm53xx_start):
 	XPUTC(#69)
 
 	ldr	r0, .Ltemp_l1_table	/* The page table address */
-	bl	a9_cpuinit
+	bl	arm_cpuinit
 
 	XPUTC(#33)
 	XPUTC(#10)

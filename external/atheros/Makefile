@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2010/11/03 18:52:45 christos Exp $
+# $NetBSD: Makefile,v 1.1.12.1 2013/06/23 06:26:22 tls Exp $
 
-SUBDIR+=	otus
+SUBDIR+=	athn otus
 
 .include <bsd.subdir.mk>

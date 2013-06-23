@@ -1,5 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2010/10/20 09:20:12 jmmv Exp $
+# $NetBSD: Makefile,v 1.3.12.1 2013/06/23 06:26:23 tls Exp $
 
-SUBDIR= atf-config atf-report atf-run atf-sh atf-version
+.include <bsd.init.mk>
+
+SUBDIR=		atf-sh
+.if !(${MKKYUA} != "no")
+SUBDIR+=	atf-config atf-report atf-run atf-version
+.endif
 
 .include <bsd.subdir.mk>

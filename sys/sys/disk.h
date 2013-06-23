@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.57.2.2 2013/02/10 16:26:34 tls Exp $	*/
+/*	$NetBSD: disk.h,v 1.57.2.3 2013/06/23 06:20:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -421,6 +421,7 @@ struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
 	const char	*dk_name;	/* disk name */
 	prop_dictionary_t dk_info;	/* reference to disk-info dictionary */
+	struct disk_geom dk_geom;	/* cooked version of dk_info */
 	int		dk_bopenmask;	/* block devices open */
 	int		dk_copenmask;	/* character devices open */
 	int		dk_openmask;	/* composite (bopen|copen) */
@@ -525,6 +526,7 @@ struct disk *disk_find(const char *);
 struct disk *disk_find_blk(dev_t);
 int	disk_maxphys(const struct disk *const);
 int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
+void	disk_set_info(device_t, struct disk *, const char *);
 
 void	dkwedge_init(void);
 int	dkwedge_add(struct dkwedge_info *);

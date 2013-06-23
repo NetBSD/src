@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.7 2011/02/21 02:31:57 itohy Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.7.14.1 2013/06/23 06:20:05 tls Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.8 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -20,7 +20,7 @@
  #error LFS currently requires USE_UFS1
 #endif
 
-static struct ufs1_dinode	ifile_dinode;
+static struct ulfs1_dinode	ifile_dinode;
 
 #define fsi	(*ufsinfo)
 #define fsi_lfs	fsi.fs_u.u_lfs
@@ -156,7 +156,7 @@ get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf)
 	struct ufs_info *ufsinfo = &ufs_info;
 	daddr_t daddr;
 	char *buf = alloca(fsi.bsize);
-	struct ufs1_dinode *di, *diend;
+	struct ulfs1_dinode *di, *diend;
 	int i;
 
 	/* Get fs block which contains the specified inode. */
@@ -186,7 +186,7 @@ get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf)
 	RAW_READ(buf, daddr << fsi.fsbtodb, fsi_lfs.ibsize);
 
 	/* Search for the inode. */
-	di = (struct ufs1_dinode *) buf;
+	di = (struct ulfs1_dinode *) buf;
 	diend = di + fsi_lfs.inopb;
 
 	for ( ; di < diend; di++)
@@ -210,7 +210,7 @@ found:
 #endif
 #endif
 
-	dibuf->di1 = *di;
+	dibuf->dil1 = *di;
 
 	return 0;
 }

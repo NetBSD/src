@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.9.12.1 2013/06/23 06:21:05 tls Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.9.12.1 2013/06/23 06:21:05 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
 #include <langinfo.h>
+#include <stdlib.h>
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <wchar.h>
@@ -46,19 +47,19 @@ __RCSID("$NetBSD: multibyte_amd1.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $");
 #include "runetype_local.h"
 #include "multibyte.h"
 
-#define _RUNE_LOCALE() \
-    ((_RuneLocale *)(*_current_locale())->part_impl[(size_t)LC_CTYPE])
+#define _RUNE_LOCALE(loc) \
+    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
 
-#define _CITRUS_CTYPE() \
-    (_RUNE_LOCALE()->rl_citrus_ctype)
+#define _CITRUS_CTYPE(loc) \
+    (_RUNE_LOCALE(loc)->rl_citrus_ctype)
 
 size_t
-mbrlen(const char *s, size_t n, mbstate_t *ps)
+mbrlen_l(const char *s, size_t n, mbstate_t *ps, locale_t loc)
 {
 	size_t ret;
 	int err0;
 
-	_fixup_ps(_RUNE_LOCALE(), ps, s == NULL);
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
 	err0 = _citrus_ctype_mbrlen(_ps_to_ctype(ps), s, n,
 				     _ps_to_private(ps), &ret);
@@ -68,8 +69,14 @@ mbrlen(const char *s, size_t n, mbstate_t *ps)
 	return ret;
 }
 
+size_t
+mbrlen(const char *s, size_t n, mbstate_t *ps)
+{
+	return mbrlen_l(s, n, ps, _current_locale());
+}
+
 int
-mbsinit(const mbstate_t *ps)
+mbsinit_l(const mbstate_t *ps, locale_t loc)
 {
 	int ret;
 	int err0;
@@ -79,7 +86,7 @@ mbsinit(const mbstate_t *ps)
 		return 1;
 
 	if (_ps_to_runelocale(ps) == NULL)
-		rl = _RUNE_LOCALE();
+		rl = _RUNE_LOCALE(loc);
 	else
 		rl = _ps_to_runelocale(ps);
 
@@ -92,13 +99,19 @@ mbsinit(const mbstate_t *ps)
 	return ret;
 }
 
+int
+mbsinit(const mbstate_t *ps)
+{
+	return mbsinit_l(ps, _current_locale());
+}
+
 size_t
-mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+mbrtowc_l(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps, locale_t loc)
 {
 	size_t ret;
 	int err0;
 
-	_fixup_ps(_RUNE_LOCALE(), ps, s == NULL);
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
 	err0 = _citrus_ctype_mbrtowc(_ps_to_ctype(ps), pwc, s, n,
 				      _ps_to_private(ps), &ret);
@@ -109,12 +122,19 @@ mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 }
 
 size_t
-mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
+mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
+{
+	return mbrtowc_l(pwc, s, n, ps, _current_locale());
+}
+
+size_t
+mbsrtowcs_l(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps,
+    locale_t loc)
 {
 	size_t ret;
 	int err0;
 
-	_fixup_ps(_RUNE_LOCALE(), ps, s == NULL);
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
 	err0 = _citrus_ctype_mbsrtowcs(_ps_to_ctype(ps), pwcs, s, n,
 					_ps_to_private(ps), &ret);
@@ -125,12 +145,41 @@ mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
 }
 
 size_t
-wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
+mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
+{
+	return mbsrtowcs_l(pwcs, s, n, ps, _current_locale());
+}
+
+size_t
+mbsnrtowcs_l(wchar_t *pwcs, const char **s, size_t in, size_t n, mbstate_t *ps,
+    locale_t loc)
 {
 	size_t ret;
 	int err0;
 
-	_fixup_ps(_RUNE_LOCALE(), ps, s == NULL);
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
+
+	err0 = _citrus_ctype_mbsnrtowcs(_ps_to_ctype(ps), pwcs, s, in, n,
+					_ps_to_private(ps), &ret);
+	if (err0)
+		errno = err0;
+
+	return ret;
+}
+
+size_t
+mbsnrtowcs(wchar_t *pwcs, const char **s, size_t in, size_t n, mbstate_t *ps)
+{
+	return mbsnrtowcs_l(pwcs, s, in, n, ps, _current_locale());
+}
+
+size_t
+wcrtomb_l(char *s, wchar_t wc, mbstate_t *ps, locale_t loc)
+{
+	size_t ret;
+	int err0;
+
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
 	err0 = _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
 				       _ps_to_private(ps), &ret);
@@ -141,12 +190,19 @@ wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 }
 
 size_t
-wcsrtombs(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps)
+wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
+{
+	return wcrtomb_l(s, wc, ps, _current_locale());
+}
+
+size_t
+wcsrtombs_l(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps,
+    locale_t loc)
 {
 	size_t ret;
 	int err0;
 
-	_fixup_ps(_RUNE_LOCALE(), ps, s == NULL);
+	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
 	err0 = _citrus_ctype_wcsrtombs(_ps_to_ctype(ps), s, ppwcs, n,
 					_ps_to_private(ps), &ret);
@@ -156,13 +212,38 @@ wcsrtombs(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps)
 	return ret;
 }
 
+size_t
+wcsrtombs(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps)
+{
+	return wcsrtombs_l(s, ppwcs, n, ps, _current_locale());
+}
+
 wint_t
-btowc(int c)
+btowc_l(int c, locale_t loc)
 {
 	wint_t ret;
 	int err0;
 
-	err0 = _citrus_ctype_btowc(_CITRUS_CTYPE(), c, &ret);
+	err0 = _citrus_ctype_btowc(_CITRUS_CTYPE(loc), c, &ret);
+	if (err0)
+		errno = err0;
+
+	return ret;
+}
+
+wint_t
+btowc(int c)
+{
+	return btowc_l(c, _current_locale());
+}
+
+int
+wctob_l(wint_t wc, locale_t loc)
+{
+	int ret;
+	int err0;
+
+	err0 = _citrus_ctype_wctob(_CITRUS_CTYPE(loc), wc, &ret);
 	if (err0)
 		errno = err0;
 
@@ -172,12 +253,12 @@ btowc(int c)
 int
 wctob(wint_t wc)
 {
-	int ret;
-	int err0;
+	return wctob_l(wc, _current_locale());
+}
 
-	err0 = _citrus_ctype_wctob(_CITRUS_CTYPE(), wc, &ret);
-	if (err0)
-		errno = err0;
+size_t
+_mb_cur_max_l(locale_t loc)
+{
 
-	return ret;
+	return _citrus_ctype_get_mb_cur_max(_CITRUS_CTYPE(loc));
 }

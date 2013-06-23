@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.72.2.1 2013/02/10 16:26:34 tls Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.72.2.2 2013/06/23 06:18:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -210,12 +210,6 @@ int	ufs_makeinode(int, struct vnode *, const struct ufs_lookup_results *,
 		      struct vnode **, struct componentname *);
 int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ufs_gop_markupdate(struct vnode *, int);
-
-/*
- * Snapshot function prototypes.
- */
-
-void	ffs_snapgone(struct inode *);
 
 __END_DECLS
 

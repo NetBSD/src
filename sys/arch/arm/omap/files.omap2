@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.15.2.1 2013/02/25 00:28:31 tls Exp $
+#	$NetBSD: files.omap2,v 1.15.2.2 2013/06/23 06:20:01 tls Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -16,11 +16,18 @@ defparam opt_omap.h				OMAP_EMIFF_PBASE OMAP_EMIFF_SIZE
 defflag opt_omap.h				OMAP2
 defflag opt_omap.h				OMAP3: OMAP2
 defflag opt_omap.h				OMAP4: OMAP3
-defflag	opt_omap.h				OMAP_2430: OMAP2
-defflag opt_omap.h				OMAP_2420: OMAP2
-defflag opt_omap.h				OMAP_3430: OMAP3
-defflag opt_omap.h				OMAP_3530: OMAP3
-defflag opt_omap.h				OMAP_4430: OMAP4
+defflag opt_omap.h				OMAP5: OMAP4
+defflag opt_omap.h				OMAP_2XXX: OMAP2
+defflag opt_omap.h				OMAP_2430: OMAP_2XXX
+defflag opt_omap.h				OMAP_2420: OMAP_2XXX
+defflag opt_omap.h				OMAP_3XXX: OMAP3
+defflag opt_omap.h				OMAP_3430: OMAP_3XXX
+defflag opt_omap.h				OMAP_3530: OMAP_3XXX
+defflag opt_omap.h				OMAP_4XXX: OMAP4
+defflag opt_omap.h				OMAP_4430: OMAP_4XXX
+defflag opt_omap.h				OMAP_4460: OMAP_4XXX
+defflag opt_omap.h				OMAP_5XXX: OMAP5
+defflag opt_omap.h				OMAP_5430: OMAP_5XXX
 defflag opt_omap.h				TI_AM335X: OMAP3
 defflag opt_omap.h				TI_DM37XX: OMAP3
 
@@ -37,6 +44,12 @@ file	arch/arm/arm/bus_space_a2x.S		obio
 file	arch/arm/omap/omap_a4x_space.c		obio
 file	arch/arm/arm/bus_space_a4x.S		obio
 
+# TI Sitara control module
+device	sitaracm
+attach	sitaracm at obio with sitaracm
+file	arch/arm/omap/sitara_cm.c		sitaracm
+file	arch/arm/omap/am335x_cm_padconf.c	ti_am335x
+
 # OMAP2 interrupt controller
 device	omapicu: pic, pic_splfuncs
 attach	omapicu at obio with omap2icu
@@ -47,6 +60,11 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
 file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+
+# TI_AM335X (and maybe TI OMAP4) I2C controllers
+device	tiiic: i2cbus, i2cexec
+attach	tiiic at obio with ti_iic
+file	arch/arm/omap/ti_iic.c			ti_iic
 
 # OMAP3 I2C controllers
 device	omapiic: i2cbus, i2cexec
@@ -124,6 +142,9 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
+
+attach	ahcisata at obio with omap5_ahcisata
+file	arch/arm/omap/omap5_ahcisata.c		omap5_ahcisata
 
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio

@@ -1,4 +1,4 @@
-# Id: Makefile.am 320 2006-02-16 20:33:19Z des
+# Id: Makefile.am 320 2006-02-16 20:33:19Z des 
 
 pkglibdir = @OPENPAM_MODULES_DIR@
 INCLUDES = -I$(top_srcdir)/include

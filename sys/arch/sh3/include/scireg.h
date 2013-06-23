@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.9 2009/04/30 05:19:38 nonaka Exp $ */
+/* $NetBSD: scireg.h,v 1.9.22.1 2013/06/23 06:20:11 tls Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -56,6 +56,7 @@
 #define	SHREG_SCTDR	(*(volatile unsigned char *)	0xffe0000c)
 #define	SHREG_SCSSR	(*(volatile unsigned char *)	0xffe00010)
 #define	SHREG_SCRDR	(*(volatile unsigned char *)	0xffe00014)
+#define	SHREG_SCSCMR	(*(volatile unsigned char *)	0xffe00018)
 #define	SHREG_SCSPTR	(*(volatile unsigned char *)	0xffe0001c)
 
 #endif

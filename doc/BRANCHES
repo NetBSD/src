@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.325.2.2 2013/02/25 00:24:48 tls Exp $
+#	$NetBSD: BRANCHES,v 1.325.2.3 2013/06/23 06:26:21 tls Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -297,6 +297,17 @@ Notes:		This branch is used to develop the version of netpgp
 		libraries, so that it is able to operate without openssl
 		being in place.
 
+Branch:		agc-symver
+Description:	Add library symbol versioning information
+Status:		Active
+Start Date:	24 March 2013
+End Date:
+Base Tag:	agc-symver-base
+Maintainer:	Alistair Crooks <agc@NetBSD.org>
+Scope:		src
+Notes:		This branch is used to develop DSO symbol versioning, allowing
+		symbols to be added, modified and removed from shared libraries.
+
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general
 Status:		Dormant
@@ -430,6 +441,15 @@ Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
 		Please consult with the maintainer before committing
 		to this branch.
 		This branch is not expected to be compilable yet.
+
+Branch:		khorben-n900
+Description:	Supporting the Nokia N900 smartphone
+Status:		Active
+Start Date:	2013-05-07
+Maintainer:	Pierre Pronchery <khorben@netbsd.org>
+Scope:		kernel (OMAP3 support, device drivers)
+Notes:		Do not hesitate to communicate any change that would be welcome
+		in HEAD.
 
 Branch:		matt-timespec
 Description:	Convert the kernel to struct timespec as its primary time

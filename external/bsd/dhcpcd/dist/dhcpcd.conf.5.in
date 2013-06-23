@@ -1,4 +1,5 @@
-.\" Copyright (c) 2006-2012 Roy Marples
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.1.1.15.2.2 2013/06/23 06:26:31 tls Exp $
+.\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 11, 2012
+.Dd June 19, 2013
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -133,13 +134,58 @@ is an empty string then the current system hostname is sent.
 If
 .Ar hostname
 is a FQDN (ie, contains a .) then it will be encoded as such.
+.It Ic ia_na Op Ar iaid
+Request a DHCPv6 Normal Address for
+.Ar iaid .
+If none is specified, a default
+.Ar iaid
+is used.
+If the interface name is 4 characters or less then that is used,
+otherwise the interface index is used.
+.It Ic ia_ta Op Ar iaid
+Request a DHCPv6 Temporary Address for
+.Ar iaid .
+.It Ic ia_pd Op Ar iaid Op Ar interface Op / Ar sla_id Op / Ar prefix_len
+Request a DHCPv6 Delegated Prefix for
+.Ar iaid .
+If no
+.Ar interface
+is given then we will assign a prefix to every other interface with a unique
+.Ar sla_id
+for each, starting from 0.
+Otherwise addresses are only assigned for each
+.Ar interface
+and
+.Ar sla_id
+A default
+.Ar prefix_len
+of 64 is assumed.
+.Ar sla_id
+is an integer and is added to the prefix which must fit inside
+.Ar prefix_len
+less the length of the delegated prefix.
+You can specify multiple
+.Ar interface /
+.Ar sla_id /
+.Ar prefix_len
+per
+.Ic ia_pd ,
+space separated.
+IPv6RS should be disabled globally when requesting a Prefix Delegation like so:
+.Pp
+.D1 noipv6rs
+.Pp
+.D1 interface eth0
+.D1 ia_pd 1 eth1/0 eth2/1
 .It Ic ipv4only
 Only configure IPv4.
 .It Ic ipv6only
-Only configure IPv6.
-.It Ic fqdn Op none | ptr | both
-none disables FQDN encoding, ptr just asks the DHCP server to update the PTR
+Only confgiure IPv6.
+.It Ic fqdn Op disable | ptr | both
+ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
+disable will disable the FQDN option.
+The default is both.
 .Nm dhcpcd
 itself never does any DNS updates.
 .Nm dhcpcd
@@ -161,11 +207,13 @@ always fork on an RA.
 .It Ic ipv6ra_own
 Disables kernel IPv6 Router Advertisment processing so dhcpcd can manage
 addresses and routes.
+This does not work reliably on any BSD system, probably due to kernel issues.
 .It Ic ipv6ra_own_default
 Each time dhcpcd receives an IPv6 Router Adveristment, dhcpcd will manage
 the default route only.
 This allows dhcpcd to prefer an interface for outbound traffic based on metric
 and/or user selection rather than the kernel.
+This does work reliably on BSD systems.
 .It Ic ipv6rs
 Enables IPv6 Router Advertisment solicitation.
 This is on by default, but is documented here in the case where it is disabled
@@ -179,6 +227,9 @@ Metrics are used to prefer an interface over another one, lowest wins.
 will supply a default metric of 200 +
 .Xr if_nametoindex 3 .
 An extra 100 will be added for wireless interfaces.
+.It Ic noalias
+IPv4 addresses added will overwrite a pre-existing address instead of working
+alongside.
 .It Ic noarp
 Don't send any ARP requests.
 This also disables IPv4LL.
@@ -200,7 +251,7 @@ See
 .%T "RFC 3927"
 .Re
 .It Ic noipv6rs
-Disable solicition of IPv6 Router Advertisements.
+Disable solicitation and receipt of IPv6 Router Advertisements.
 .It Ic nolink
 Don't receive link messages about carrier status.
 You should only set this for buggy interface drivers.
@@ -211,7 +262,15 @@ from the server.
 It can be a variable to be used in
 .Xr dhcpcd-run-hooks 8
 or the numerical value.
-You can specify more options separated by commas, spaces or more option lines.
+You can specify more
+.Ar option Ns s
+separated by commas, spaces or more
+.Ic option
+lines.
+Prepend dhcp6_ to
+.Ar option
+to request a DHCPv6 option.
+DHCPv4 options are mapped to DHCPv6 where applicable.
 .It Ic nooption Ar option
 Remove the option from the DHCP message.
 This should only be used when a DHCP server sends a non requested option
@@ -230,11 +289,17 @@ Suppress any dhcpcd output to the console, except for errors.
 .It Ic reboot Ar seconds
 Allow
 .Ar reboot
-seconds before moving to the discover phase if we have an old lease to use.
+seconds before moving to the DISCOVER phase if we have an old lease to use.
 The default is 5 seconds.
-A setting if 0 seconds causes
+A setting of 0 seconds causes
 .Nm dhcpcd
-to skip the reboot phase and go straight into discover.
+to skip the REBOOT phase and go straight into DISCOVER.
+This is desirable for mobile users because if you change from network A to
+network B and they use the same subnet and the address from network A isn't
+in use on network B, then the DHCP server will remain silent even if authorative
+which means
+.Nm dhcpcd
+will timeout before moving back to the DISCOVER phase.
 .It Ic release
 .Nm dhcpcd
 will release the lease prior to stopping the interface.
@@ -284,6 +349,11 @@ into the value.
 .It Ic timeout Ar seconds
 The default timeout for waiting for a DHCP response is 30 seconds which may
 be too long or too short and can be changed here.
+A setting of 0
+.Ar seconds
+causes
+.Nm dhcpcd
+to wait forever to get a lease.
 .It Ic userclass Ar string
 Tag the DHCP messages with the userclass.
 You can specify more than one.

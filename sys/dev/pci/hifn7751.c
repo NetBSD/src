@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.50.6.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.50.6.2 2013/06/23 06:20:18 tls Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,10 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.50.6.1 2012/11/20 03:02:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.50.6.2 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -140,6 +141,7 @@ static int	hifn_dmamap_load_dst(struct hifn_softc *,
 				     struct hifn_command *);
 static int	hifn_init_pubrng(struct hifn_softc *);
 static void	hifn_rng(void *);
+static void	hifn_rng_locked(void *);
 static void	hifn_tick(void *);
 static void	hifn_abort(struct hifn_softc *);
 static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
@@ -154,7 +156,6 @@ static int	hifn_compress_enter(struct hifn_softc *, struct hifn_command *);
 static void	hifn_callback_comp(struct hifn_softc *, struct hifn_command *,
 				   u_int8_t *);
 #endif	/* HAVE_CRYPTO_LZS */
-
 
 struct hifn_stats hifnstats;
 
@@ -418,14 +419,18 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG))
+	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG)) {
 		hifn_init_pubrng(sc);
+		sc->sc_rng_need = RND_POOLBITS / NBBY;
+	}
+
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
 
 #ifdef	__OpenBSD__
 	timeout_set(&sc->sc_tickto, hifn_tick, sc);
 	timeout_add(&sc->sc_tickto, hz);
 #else
-	callout_init(&sc->sc_tickto, 0);
+	callout_init(&sc->sc_tickto, CALLOUT_MPSAFE);
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
 #endif
 	return;
@@ -446,6 +451,18 @@ fail_io1:
 	bus_space_unmap(sc->sc_st1, sc->sc_sh1, iosize1);
 fail_io0:
 	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
+}
+
+static void
+hifn_rng_get(size_t bytes, void *priv)
+{
+	struct hifn_softc *sc = priv;
+
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_rng_need = bytes;
+
+	hifn_rng_locked(sc);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static int
@@ -500,6 +517,7 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		DELAY(4000);
 
 #ifdef __NetBSD__
+		rndsource_setcb(&sc->sc_rnd_source, hifn_rng_get, sc);
 		/*
 		 * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
 		 * XXX here is unobvious: we later feed raw bits
@@ -512,10 +530,10 @@ hifn_init_pubrng(struct hifn_softc *sc)
 		 * XXX we add data periodically from a callout.
 		 */
 		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-				  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+				  RND_TYPE_RNG,
+				  RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
 #endif
 
-		sc->sc_rngfirst = 1;
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
@@ -523,7 +541,7 @@ hifn_init_pubrng(struct hifn_softc *sc)
 #ifdef	__OpenBSD__
 		timeout_set(&sc->sc_rngto, hifn_rng, sc);
 #else	/* !__OpenBSD__ */
-		callout_init(&sc->sc_rngto, 0);
+		callout_init(&sc->sc_rngto, CALLOUT_MPSAFE);
 #endif	/* !__OpenBSD__ */
 	}
 
@@ -541,7 +559,7 @@ hifn_init_pubrng(struct hifn_softc *sc)
 }
 
 static void
-hifn_rng(void *vsc)
+hifn_rng_locked(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 #ifdef __NetBSD__
@@ -551,6 +569,12 @@ hifn_rng(void *vsc)
 #endif
 	uint32_t sts;
 	int i;
+	size_t got, gotent;
+
+	if (sc->sc_rng_need < 1) {
+		callout_stop(&sc->sc_rngto);
+		return;
+	}
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		for (i = 0; i < 5; i++) {	/* XXX why 5? */
@@ -569,14 +593,12 @@ hifn_rng(void *vsc)
 			 */
 			num[0] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
 			num[1] = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			got = 2 * sizeof(num[0]);
+			gotent = (got * NBBY) / HIFN_RNG_BITSPER;
 
-			if (sc->sc_rngfirst)
-				sc->sc_rngfirst = 0;
 #ifdef __NetBSD__
-			rnd_add_data(&sc->sc_rnd_source, num,
-			    2 * sizeof(num[0]),
-			    (2 * sizeof(num[0]) * NBBY) /
-			    HIFN_RNG_BITSPER);
+			rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
+			sc->sc_rng_need -= gotent;
 #else
 			/*
 			 * XXX This is a really bad idea.
@@ -597,13 +619,16 @@ hifn_rng(void *vsc)
 				
 		}
 	} else {
-#ifdef __NetBSD__
-		/* First time through, try to help fill the pool. */
-		int nwords = sc->sc_rngfirst ?
-		    sizeof(num) / sizeof(num[0]) : 4;
-#else
-		int nwords = 2;
-#endif
+		int nwords = 0;
+
+		if (sc->sc_rng_need) {
+			nwords = (sc->sc_rng_need * NBBY) / HIFN_RNG_BITSPER;
+		}
+
+		if (nwords < 2) {
+			nwords = 2;
+		}
+
 		/*
 		 * We must be *extremely* careful here.  The Hifn
 		 * 795x differ from the published 6500 RNG design
@@ -624,24 +649,18 @@ hifn_rng(void *vsc)
 		 * read must require at least one PCI cycle, and
 		 * RNG_Clk is at least PCI_Clk, this is safe.
 		 */
-
-
-		if (sc->sc_rngfirst) {
-			sc->sc_rngfirst = 0;
-		}
-		
-
 		for(i = 0 ; i < nwords * 8; i++)
 		{
 			volatile u_int32_t regtmp;
 			regtmp = READ_REG_1(sc, HIFN_1_RNG_DATA);
 			num[i / 8] = regtmp;
 		}
+
+		got = nwords * sizeof(num[0]);
+		gotent = (got * NBBY) / HIFN_RNG_BITSPER;
 #ifdef __NetBSD__
-		rnd_add_data(&sc->sc_rnd_source, num,
-		    nwords * sizeof(num[0]),
-		    (nwords * sizeof(num[0]) * NBBY) /
-		    HIFN_RNG_BITSPER);
+		rnd_add_data(&sc->sc_rnd_source, num, got, gotent);
+		sc->sc_rng_need -= gotent;
 #else
 		/* XXX a bad idea; see 7811 block above */
 		add_true_randomness(num[0]);
@@ -651,8 +670,20 @@ hifn_rng(void *vsc)
 #ifdef	__OpenBSD__
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
-	callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
+	if (sc->sc_rng_need > 0) {
+		callout_reset(&sc->sc_rngto, sc->sc_rnghz, hifn_rng, sc);
+	}
 #endif
+}
+
+static void
+hifn_rng(void *vsc)
+{
+	struct hifn_softc *sc = vsc;
+
+	mutex_spin_enter(&sc->sc_mtx);
+	hifn_rng_locked(vsc);
+	mutex_spin_exit(&sc->sc_mtx);
 }
 
 static void
@@ -1590,7 +1621,7 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 {
 	struct	hifn_dma *dma = sc->sc_dma;
 	u_int32_t cmdlen;
-	int	cmdi, resi, s, err = 0;
+	int	cmdi, resi, err = 0;
 
 	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
 	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
@@ -1720,21 +1751,17 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
 
-	s = splnet();
-
 	/*
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
 	if ((dma->cmdu + 1) > HIFN_D_CMD_RSIZE ||
 	    (dma->resu + 1) > HIFN_D_RES_RSIZE) {
-		splx(s);
 		err = ENOMEM;
 		goto err_dstmap;
 	}
 	if ((dma->srcu + cmd->src_map->dm_nsegs) > HIFN_D_SRC_RSIZE ||
 	    (dma->dstu + cmd->dst_map->dm_nsegs + 1) > HIFN_D_DST_RSIZE) {
-		splx(s);
 		err = ENOMEM;
 		goto err_dstmap;
 	}
@@ -1837,7 +1864,6 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 #endif
 
 	sc->sc_active = 5;
-	splx(s);
 	return (err);		/* success */
 
 err_dstmap:
@@ -1860,9 +1886,8 @@ static void
 hifn_tick(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
-	int s;
 
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	if (sc->sc_active == 0) {
 		struct hifn_dma *dma = sc->sc_dma;
 		u_int32_t r = 0;
@@ -1891,12 +1916,12 @@ hifn_tick(void *vsc)
 	}
 	else
 		sc->sc_active--;
-	splx(s);
 #ifdef	__OpenBSD__
 	timeout_add(&sc->sc_tickto, hz);
 #else
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
 #endif
+	mutex_spin_exit(&sc->sc_mtx);
 }
 
 static int
@@ -1917,9 +1942,13 @@ hifn_intr(void *arg)
 		       dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 #endif
 
+	mutex_spin_enter(&sc->sc_mtx);
+
 	/* Nothing in the DMA unit interrupted */
-	if ((dmacsr & sc->sc_dmaier) == 0)
+	if ((dmacsr & sc->sc_dmaier) == 0) {
+		mutex_spin_exit(&sc->sc_mtx);
 		return (0);
+	}
 
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, dmacsr & sc->sc_dmaier);
 
@@ -1948,7 +1977,7 @@ hifn_intr(void *arg)
 		printf("%s: abort, resetting.\n", device_xname(sc->sc_dv));
 		hifnstats.hst_abort++;
 		hifn_abort(sc);
-		return (1);
+		goto out;
 	}
 
 	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->resu == 0)) {
@@ -2026,6 +2055,8 @@ hifn_intr(void *arg)
 	}
 	dma->cmdk = i; dma->cmdu = u;
 
+out:
+	mutex_spin_exit(&sc->sc_mtx);
 	return (1);
 }
 
@@ -2039,17 +2070,21 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c;
 	struct hifn_softc *sc = arg;
-	int i, mac = 0, cry = 0, comp = 0;
+	int i, mac = 0, cry = 0, comp = 0, retval = EINVAL;
 
 	KASSERT(sc != NULL /*, ("hifn_newsession: null softc")*/);
 	if (sidp == NULL || cri == NULL || sc == NULL)
-		return (EINVAL);
+		return retval;
+
+	mutex_spin_enter(&sc->sc_mtx);
 
 	for (i = 0; i < sc->sc_maxses; i++)
 		if (sc->sc_sessions[i].hs_state == HS_STATE_FREE)
 			break;
-	if (i == sc->sc_maxses)
-		return (ENOMEM);
+	if (i == sc->sc_maxses) {
+		retval = ENOMEM;
+		goto out;
+	}
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -2057,8 +2092,9 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_SHA1:
 		case CRYPTO_MD5_HMAC_96:
 		case CRYPTO_SHA1_HMAC_96:
-			if (mac)
-				return (EINVAL);
+			if (mac) {
+				goto out;
+			}
 			mac = 1;
 			break;
 		case CRYPTO_DES_CBC:
@@ -2082,35 +2118,42 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 #endif
 			/*FALLTHROUGH*/
 		case CRYPTO_ARC4:
-			if (cry)
-				return (EINVAL);
+			if (cry) {
+				goto out;
+			}
 			cry = 1;
 			break;
 #ifdef HAVE_CRYPTO_LZS
 		case CRYPTO_LZS_COMP:
-			if (comp)
-				return (EINVAL);
+			if (comp) {
+				goto out;
+			}
 			comp = 1;
 			break;
 #endif
 		default:
-			return (EINVAL);
+			goto out;
 		}
 	}
-	if (mac == 0 && cry == 0 && comp == 0)
-		return (EINVAL);
+	if (mac == 0 && cry == 0 && comp == 0) {
+		goto out;
+	}
 
 	/*
 	 * XXX only want to support compression without chaining to
 	 * MAC/crypt engine right now
 	 */
-	if ((comp && mac) || (comp && cry))
-		return (EINVAL);
+	if ((comp && mac) || (comp && cry)) {
+		goto out;
+	}
 
 	*sidp = HIFN_SID(device_unit(sc->sc_dv), i);
 	sc->sc_sessions[i].hs_state = HS_STATE_USED;
 
-	return (0);
+	retval = 0;
+out:
+	mutex_spin_exit(&sc->sc_mtx);
+	return retval;
 }
 
 /*
@@ -2129,11 +2172,15 @@ hifn_freesession(void *arg, u_int64_t tid)
 	if (sc == NULL)
 		return (EINVAL);
 
+	mutex_spin_enter(&sc->sc_mtx);
 	session = HIFN_SESSION(sid);
-	if (session >= sc->sc_maxses)
+	if (session >= sc->sc_maxses) {
+		mutex_spin_exit(&sc->sc_mtx);
 		return (EINVAL);
+	}
 
 	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
+	mutex_spin_exit(&sc->sc_mtx);
 	return (0);
 }
 
@@ -2149,6 +2196,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		hifnstats.hst_invalid++;
 		return (EINVAL);
 	}
+
+	mutex_spin_enter(&sc->sc_mtx);
 	session = HIFN_SESSION(crp->crp_sid);
 
 	if (sc == NULL || session >= sc->sc_maxses) {
@@ -2377,6 +2426,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 				enccrd->crd_flags & CRD_F_ENCRYPT;
 		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
 			sc->sc_sessions[session].hs_state = HS_STATE_KEY;
+		mutex_spin_exit(&sc->sc_mtx);
 		return 0;
 	} else if (err == ERESTART) {
 		/*
@@ -2390,6 +2440,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 #endif
 		free(cmd, M_DEVBUF);
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
+		mutex_spin_exit(&sc->sc_mtx);
 		return (err);
 	}
 
@@ -2401,6 +2452,7 @@ errout:
 	else
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
+	mutex_spin_exit(&sc->sc_mtx);
 	crypto_done(crp);
 	return (0);
 }
@@ -2716,9 +2768,7 @@ hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
 	cmd->session_num = 0;
 	cmd->softc = sc;
 
-	s = splnet();
 	err = hifn_compress_enter(sc, cmd);
-	splx(s);
 
 	if (err != 0)
 		goto fail;
@@ -2745,9 +2795,6 @@ fail:
 	return (0);
 }
 
-/*
- * must be called at splnet()
- */
 static int
 hifn_compress_enter(struct hifn_softc *sc, struct hifn_command *cmd)
 {
@@ -2921,7 +2968,6 @@ hifn_callback_comp(struct hifn_softc *sc, struct hifn_command *cmd,
 		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
 		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-		/* already at splnet... */
 		err = hifn_compress_enter(sc, cmd);
 		if (err != 0)
 			goto out;
