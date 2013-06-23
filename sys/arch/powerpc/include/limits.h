@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.17 2012/03/28 17:03:31 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.17.2.1 2013/06/23 06:20:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -87,8 +87,10 @@
 
 #if defined(_NETBSD_SOURCE)
 #ifdef _LP64
+#define	SSIZE_MIN	LONG_MIN	/* min value for a ssize_t */
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 #else
+#define	SSIZE_MIN	INT_MIN		/* min value for a ssize_t */
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 #endif
 

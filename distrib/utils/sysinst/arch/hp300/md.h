@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2011/04/04 08:30:28 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.17.10.1 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,8 +68,6 @@
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11_NOSERVERS
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

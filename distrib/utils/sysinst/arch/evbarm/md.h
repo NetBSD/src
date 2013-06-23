@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.19 2012/02/07 09:06:04 nisimura Exp $	*/
+/*	$NetBSD: md.h,v 1.19.6.1 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,10 @@
 #include "mbr.h"
 
 /* Constants and defines */
+#define PART_BOOT		PART_E
+#define PART_BOOT_MSDOS		PART_BOOT
+#define PART_BOOT_PI_MOUNT	"/boot"
+#define PART_BOOT_PI_FLAGS	PIF_MOUNT
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
@@ -56,6 +60,9 @@
 #define SET_KERNEL_5_NAME	"kern-MINI2440"
 #define SET_KERNEL_6_NAME	"kern-TEAMASA_NPWR"
 #define SET_KERNEL_7_NAME	"kern-TS7200"
+#define SET_KERNEL_8_NAME	"kern-RPI"
+#define SET_KERNEL_9_NAME	"kern-KUROBOX_PRO"
+#define SET_KERNEL_RPI		SET_KERNEL_8
 
 #define MD_SETS_SELECTED SET_SYSTEM
 
@@ -68,3 +75,8 @@
  * hand-edited disklabel will NOT be written by MI code.
  */
 #define DISKLABEL_CMD "disklabel -w -r"
+
+/* Special board type routines need a switch */
+#define BOARD_TYPE_NORMAL	0
+#define BOARD_TYPE_RPI		1
+int boardtype;

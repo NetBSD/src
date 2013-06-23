@@ -1,6 +1,9 @@
-/* 
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.17.2.2 2013/06/23 06:26:31 tls Exp $");
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -60,11 +63,10 @@
 
 #include "config.h"
 #include "common.h"
-#include "configure.h"
 #include "dhcp.h"
 #include "if-options.h"
+#include "ipv4.h"
 #include "ipv6.h"
-#include "net.h"
 
 #ifndef RT_ROUNDUP
 #define RT_ROUNDUP(a)							      \
@@ -72,24 +74,27 @@
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 #endif
 
-/* FIXME: Why do we need to check for sa_family 255 */
 #define COPYOUT(sin, sa)						      \
 	sin.s_addr = ((sa) != NULL) ?					      \
 	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
+
+#define COPYOUT6(sin, sa)						      \
+	sin.s6_addr = ((sa) != NULL) ?					      \
+	    (((struct sockaddr_in6 *)(void *)sa)->sin6_addr).s6_addr : 0
 
 static int r_fd = -1;
 static char *link_buf;
 static ssize_t link_buflen;
 
 int
-if_init(_unused struct interface *iface)
+if_init(__unused struct interface *iface)
 {
 	/* BSD promotes secondary address by default */
 	return 0;
 }
 
 int
-if_conf(_unused struct interface *iface)
+if_conf(__unused struct interface *iface)
 {
 	/* No extra checks needed on BSD */
 	return 0;
@@ -105,7 +110,7 @@ cleanup(void)
 #endif
 
 int
-init_sockets(void)
+open_sockets(void)
 {
 	if ((socket_afnet = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		return -1;
@@ -114,6 +119,24 @@ init_sockets(void)
 		return -1;
 	set_cloexec(r_fd);
 	return 0;
+}
+
+int
+open_link_socket(void)
+{
+	int fd;
+
+#ifdef DEBUG_MEMORY
+	if (link_buf == NULL)
+		atexit(cleanup);
+#endif
+
+	fd = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (fd != -1) {
+		set_cloexec(fd);
+		set_nonblock(fd);
+	}
+	return fd;
 }
 
 int
@@ -154,6 +177,7 @@ getifssid(const char *ifname, char *ssid)
 	return retval;
 }
 
+#ifdef INET
 int
 if_address(const struct interface *iface, const struct in_addr *address,
     const struct in_addr *netmask, const struct in_addr *broadcast,
@@ -183,19 +207,21 @@ if_address(const struct interface *iface, const struct in_addr *address,
 #undef ADDADDR
 
 	return ioctl(socket_afnet,
-	    action < 0 ? SIOCDIFADDR : SIOCAIFADDR, &ifa);
+	    action < 0 ? SIOCDIFADDR :
+	    action == 2 ? SIOCSIFADDR :  SIOCAIFADDR, &ifa);
 }
 
 int
 if_route(const struct rt *rt, int action)
 {
+	const struct dhcp_state *state;
 	union sockunion {
 		struct sockaddr sa;
 		struct sockaddr_in sin;
 		struct sockaddr_dl sdl;
 		struct sockaddr_storage ss;
 	} su;
-	struct rtm 
+	struct rtm
 	{
 		struct rt_msghdr hdr;
 		char buffer[sizeof(su) * 4];
@@ -217,6 +243,7 @@ if_route(const struct rt *rt, int action)
 		ADDSU;							      \
 	}
 
+	state = D_CSTATE(rt->iface);
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.hdr.rtm_version = RTM_VERSION;
 	rtm.hdr.rtm_seq = 1;
@@ -229,13 +256,16 @@ if_route(const struct rt *rt, int action)
 	rtm.hdr.rtm_flags = RTF_UP;
 	/* None interface subnet routes are static. */
 	if (rt->gate.s_addr != INADDR_ANY ||
-	    rt->net.s_addr != rt->iface->net.s_addr ||
-	    rt->dest.s_addr != (rt->iface->addr.s_addr & rt->iface->net.s_addr))
+	    rt->net.s_addr != state->net.s_addr ||
+	    rt->dest.s_addr != (state->addr.s_addr & state->net.s_addr))
 		rtm.hdr.rtm_flags |= RTF_STATIC;
 	rtm.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
 	if (rt->dest.s_addr == rt->gate.s_addr &&
 	    rt->net.s_addr == INADDR_BROADCAST)
 		rtm.hdr.rtm_flags |= RTF_HOST;
+	else if (rt->gate.s_addr == htonl(INADDR_LOOPBACK) &&
+	    rt->net.s_addr == INADDR_BROADCAST)
+		rtm.hdr.rtm_flags |= RTF_HOST | RTF_GATEWAY;
 	else {
 		rtm.hdr.rtm_addrs |= RTA_NETMASK;
 		if (rtm.hdr.rtm_flags & RTF_STATIC)
@@ -245,7 +275,8 @@ if_route(const struct rt *rt, int action)
 	}
 
 	ADDADDR(&rt->dest);
-	if (rtm.hdr.rtm_flags & RTF_HOST ||
+	if ((rtm.hdr.rtm_flags & RTF_HOST &&
+	    rt->gate.s_addr != htonl(INADDR_LOOPBACK)) ||
 	    !(rtm.hdr.rtm_flags & RTF_STATIC))
 	{
 		/* Make us a link layer socket for the host gateway */
@@ -259,10 +290,16 @@ if_route(const struct rt *rt, int action)
 	if (rtm.hdr.rtm_addrs & RTA_NETMASK)
 		ADDADDR(&rt->net);
 
-	/* IFP here if we need it */
+	if (rtm.hdr.rtm_addrs & RTA_IFP) {
+		/* Make us a link layer socket for the host gateway */
+		memset(&su, 0, sizeof(su));
+		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
+		link_addr(rt->iface->name, &su.sdl);
+		ADDSU;
+	}
 
 	if (rtm.hdr.rtm_addrs & RTA_IFA)
-		ADDADDR(&rt->iface->addr);
+		ADDADDR(&state->addr);
 
 #undef ADDADDR
 #undef ADDSU
@@ -272,15 +309,33 @@ if_route(const struct rt *rt, int action)
 		retval = -1;
 	return retval;
 }
+#endif
 
+#ifdef INET6
 int
-if_address6(const struct interface *ifp, const struct ipv6_addr *a, int action)
+if_address6(const struct ipv6_addr *a, int action)
 {
+	int s, r;
 	struct in6_aliasreq ifa;
 	struct in6_addr mask;
 
+	s = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (s == -1)
+		return -1;
 	memset(&ifa, 0, sizeof(ifa));
-	strlcpy(ifa.ifra_name, ifp->name, sizeof(ifa.ifra_name));
+	strlcpy(ifa.ifra_name, a->iface->name, sizeof(ifa.ifra_name));
+	/*
+	 * We should not set IN6_IFF_TENTATIVE as the kernel should be
+	 * able to work out if it's a new address or not.
+	 *
+	 * We should set IN6_IFF_AUTOCONF, but the kernel won't let us.
+	 * This is probably a safety measure, but still it's not entirely right
+	 * either.
+	 */
+#if 0
+	if (a->autoconf)
+		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
+#endif
 
 #define ADDADDR(v, addr) {						      \
 		(v)->sin6_family = AF_INET6;				      \
@@ -295,8 +350,9 @@ if_address6(const struct interface *ifp, const struct ipv6_addr *a, int action)
 	ifa.ifra_lifetime.ia6t_pltime = a->prefix_pltime;
 #undef ADDADDR
 
-	return ioctl(socket_afnet6,
-	    action < 0 ? SIOCDIFADDR_IN6 : SIOCAIFADDR_IN6, &ifa);
+	r = ioctl(s, action < 0 ? SIOCDIFADDR_IN6 : SIOCAIFADDR_IN6, &ifa);
+	close(s);
+	return r;
 }
 
 int
@@ -308,7 +364,7 @@ if_route6(const struct rt6 *rt, int action)
 		struct sockaddr_dl sdl;
 		struct sockaddr_storage ss;
 	} su;
-	struct rtm 
+	struct rtm
 	{
 		struct rt_msghdr hdr;
 		char buffer[sizeof(su) * 4];
@@ -316,22 +372,23 @@ if_route6(const struct rt6 *rt, int action)
 	char *bp = rtm.buffer;
 	size_t l;
 	int retval = 0;
+	const struct ipv6_addr_l *lla;
 
 /* KAME based systems want to store the scope inside the sin6_addr
  * for link local addreses */
 #ifdef __KAME__
 #define SCOPE {								      \
-		if (IN6_IS_ADDR_LINKLOCAL(&su.sin.sin6_addr)) { 	      \
+		if (IN6_IS_ADDR_LINKLOCAL(&su.sin.sin6_addr)) {		      \
 			*(uint16_t *)(void *)&su.sin.sin6_addr.s6_addr[2] =   \
-			    htons(su.sin.sin6_scope_id); 		      \
-			su.sin.sin6_scope_id = 0; 			      \
-		} 							      \
+			    htons(su.sin.sin6_scope_id);		      \
+			su.sin.sin6_scope_id = 0;			      \
+		}							      \
 	}
 #else
 #define SCOPE
 #endif
 
-#define ADDSU {							     	      \
+#define ADDSU {								      \
 		l = RT_ROUNDUP(su.sa.sa_len);				      \
 		memcpy(bp, &su, l);					      \
 		bp += l;						      \
@@ -368,18 +425,19 @@ if_route6(const struct rt6 *rt, int action)
 #endif
 
 	rtm.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
-//	if (action >= 0)
-//		rtm.hdr.rtm_addrs |= RTA_IFA;
+	if (action >= 0)
+		rtm.hdr.rtm_addrs |= RTA_IFP | RTA_IFA;
 
 	ADDADDR(&rt->dest);
 	if (!(rtm.hdr.rtm_flags & RTF_GATEWAY)) {
-		/* Make us a link layer socket for the host gateway */
-		memset(&su, 0, sizeof(su));
-		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
-		link_addr(rt->iface->name, &su.sdl);
-		ADDSU;
-	} else
+		lla = ipv6_linklocal(rt->iface);
+		if (lla == NULL) /* unlikely as we need a LL to get here */
+			return -1;
+		ADDADDRS(&lla->addr, rt->iface->index);
+	} else {
+		lla = NULL;
 		ADDADDRS(&rt->gate, rt->iface->index);
+	}
 
 	if (rtm.hdr.rtm_addrs & RTA_NETMASK) {
 		if (rtm.hdr.rtm_flags & RTF_GATEWAY) {
@@ -390,8 +448,22 @@ if_route6(const struct rt6 *rt, int action)
 			ADDADDR(&rt->net);
 	}
 
-	/* IFP here if we need it */
-	/* IFA here if we need it */
+	if (rtm.hdr.rtm_addrs & RTA_IFP) {
+		/* Make us a link layer socket for the host gateway */
+		memset(&su, 0, sizeof(su));
+		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
+		link_addr(rt->iface->name, &su.sdl);
+		ADDSU;
+	}
+
+	if (rtm.hdr.rtm_addrs & RTA_IFA) {
+		if (lla == NULL) {
+			lla = ipv6_linklocal(rt->iface);
+			if (lla == NULL) /* unlikely */
+				return -1;
+		}
+		ADDADDRS(&lla->addr, rt->iface->index);
+	}
 
 #undef ADDADDR
 #undef ADDSU
@@ -407,24 +479,7 @@ if_route6(const struct rt6 *rt, int action)
 		retval = -1;
 	return retval;
 }
-
-int
-open_link_socket(void)
-{
-	int fd;
-
-#ifdef DEBUG_MEMORY
-	if (link_buf == NULL)
-		atexit(cleanup);
 #endif
-
-	fd = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (fd != -1) {
-		set_cloexec(fd);
-		set_nonblock(fd);
-	}
-	return fd;
-}
 
 static void
 get_addrs(int type, char *cp, struct sockaddr **sa)
@@ -445,6 +500,28 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 	}
 }
 
+#ifdef INET6
+int
+in6_addr_flags(const char *ifname, const struct in6_addr *addr)
+{
+	int s, flags;
+	struct in6_ifreq ifr6;
+
+	s = socket(AF_INET6, SOCK_DGRAM, 0);
+	flags = -1;
+	if (s != -1) {
+		memset(&ifr6, 0, sizeof(ifr6));
+		strncpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
+		ifr6.ifr_addr.sin6_family = AF_INET6;
+		ifr6.ifr_addr.sin6_addr = *addr;
+		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) != -1)
+			flags = ifr6.ifr_ifru.ifru_flags6;
+		close(s);
+	}
+	return flags;
+}
+#endif
+
 int
 manage_link(int fd)
 {
@@ -455,12 +532,19 @@ manage_link(int fd)
 	struct if_announcemsghdr *ifan;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
-	struct rt rt;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	int len;
 #ifdef RTM_CHGADDR
 	struct sockaddr_dl sdl;
 	unsigned char *hwaddr;
+#endif
+#ifdef INET
+	struct rt rt;
+#endif
+#if defined(INET6) && !defined(LISTEN_DAD)
+	struct in6_addr ia6;
+	struct sockaddr_in6 *sin6;
+	int ifa_flags;
 #endif
 
 	for (;;) {
@@ -505,10 +589,10 @@ manage_link(int fd)
 					break;
 				switch (ifm->ifm_data.ifi_link_state) {
 				case LINK_STATE_DOWN:
-					len = -1;
+					len = LINK_DOWN;
 					break;
 				case LINK_STATE_UP:
-					len = 1;
+					len = LINK_UP;
 					break;
 				default:
 					/* handle_carrier will re-load
@@ -518,7 +602,7 @@ manage_link(int fd)
 					 * set IFF_RUNNING when this routing
 					 * message is generated.
 					 * As such, it is a race ...*/
-					len = 0;
+					len = LINK_UNKNOWN;
 					break;
 				}
 				handle_carrier(len, ifm->ifm_flags, ifname);
@@ -533,13 +617,15 @@ manage_link(int fd)
 				sa = (struct sockaddr *)(void *)cp;
 				if (sa->sa_family != AF_INET)
 					break;
+#ifdef INET
 				get_addrs(rtm->rtm_addrs, cp, rti_info);
+				memset(&rt, 0, sizeof(rt));
 				rt.iface = NULL;
-				rt.next = NULL;
 				COPYOUT(rt.dest, rti_info[RTAX_DST]);
 				COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
 				COPYOUT(rt.gate, rti_info[RTAX_GATEWAY]);
-				route_deleted(&rt);
+				ipv4_routedeleted(&rt);
+#endif
 				break;
 #ifdef RTM_CHGADDR
 			case RTM_CHGADDR:	/* FALLTHROUGH */
@@ -560,21 +646,46 @@ manage_link(int fd)
 						break;
 					memcpy(&sdl, rti_info[RTAX_IFA],
 					    rti_info[RTAX_IFA]->sa_len);
-					hwaddr = xmalloc(sdl.sdl_alen);
-					memcpy(hwaddr, LLADDR(&sdl),
-					    sdl.sdl_alen);
-					handle_hwaddr(ifname, hwaddr,
-					    sdl.sdl_alen);
+					hwaddr = malloc(sdl.sdl_alen);
+					if (hwaddr) {
+						memcpy(hwaddr, LLADDR(&sdl),
+						    sdl.sdl_alen);
+						handle_hwaddr(ifname, hwaddr,
+						    sdl.sdl_alen);
+					} else
+						syslog(LOG_ERR, "%s: %m",
+						    __func__);
 					break;
 #endif
+#ifdef INET
 				case AF_INET:
 				case 255: /* FIXME: Why 255? */
 					COPYOUT(rt.dest, rti_info[RTAX_IFA]);
 					COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
 					COPYOUT(rt.gate, rti_info[RTAX_BRD]);
-					handle_ifa(rtm->rtm_type, ifname,
+					ipv4_handleifa(rtm->rtm_type, ifname,
 					    &rt.dest, &rt.net, &rt.gate);
 					break;
+#endif
+#if defined(INET6) && !defined(LISTEN_DAD)
+				case AF_INET6:
+					sin6 = (struct sockaddr_in6*)(void *)
+					    rti_info[RTAX_IFA];
+					memcpy(ia6.s6_addr,
+					    sin6->sin6_addr.s6_addr,
+					    sizeof(ia6.s6_addr));
+					if (rtm->rtm_type == RTM_NEWADDR) {
+						ifa_flags = in6_addr_flags(
+								ifname,
+								&ia6);
+						if (ifa_flags == -1)
+							break;
+					} else
+						ifa_flags = 0;
+					ipv6_handleifa(rtm->rtm_type, NULL,
+					    ifname, &ia6, ifa_flags);
+					break;
+#endif
 				}
 				break;
 			}

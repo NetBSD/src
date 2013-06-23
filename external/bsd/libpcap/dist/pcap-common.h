@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-common.h,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 
 /*
  * We use the "receiver-makes-right" approach to byte order,

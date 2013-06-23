@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.39.22.1 2013/02/25 00:29:59 tls Exp $	*/
+/*	$NetBSD: specdev.h,v 1.39.22.2 2013/06/23 06:20:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ struct	uio;
 
 int	spec_lookup(void *);
 #define	spec_create	genfs_badop
+#define	spec_whiteout	genfs_badop
 #define	spec_mknod	genfs_badop
 int	spec_open(void *);
 int	spec_close(void *);

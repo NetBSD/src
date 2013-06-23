@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.5.2.1 2013/02/25 00:30:19 tls Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.5.2.2 2013/06/23 06:18:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.5.2.1 2013/02/25 00:30:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.5.2.2 2013/06/23 06:18:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -271,8 +271,8 @@ ufs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
  * XXX Copypasta from ufs_vnops.c.  Kill!
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*
@@ -586,7 +586,7 @@ ufs_rename_ulr_overlap_p(const struct ufs_lookup_results *fulr,
 	 * of the free space for an entry that we are about to fill.
 	 */
 	to_start = tulr->ulr_offset;
-	KASSERT(tulr->ulr_count < (MAXDIRSIZE - to_start));
+	KASSERT(tulr->ulr_count < (UFS_MAXDIRSIZE - to_start));
 	to_end = (to_start + tulr->ulr_count);
 
 	return
@@ -644,7 +644,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 
 	/* Find the bounds of the search.  */
 	search_start = tulr->ulr_offset;
-	KASSERT(fulr->ulr_reclen < (MAXDIRSIZE - fulr->ulr_offset));
+	KASSERT(fulr->ulr_reclen < (UFS_MAXDIRSIZE - fulr->ulr_offset));
 	search_end = (fulr->ulr_offset + fulr->ulr_reclen);
 
 	/* Compaction must happen only within a directory block. (*)  */

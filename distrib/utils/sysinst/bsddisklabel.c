@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.56.10.1 2013/02/25 00:24:47 tls Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.56.10.2 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -543,6 +543,7 @@ make_bsd_partitions(void)
 	 * Initialize global variables that track space used on this disk.
 	 * Standard 4.4BSD 8-partition labels always cover whole disk.
 	 */
+	if (logfp) fprintf(logfp, "dlsize=%" PRId64 " ptsize=%" PRId64 " ptstart=%" PRId64 "\n", dlsize,ptsize,ptstart);
 	if (ptsize == 0)
 		ptsize = dlsize - ptstart;
 	if (dlsize == 0)
@@ -604,7 +605,11 @@ make_bsd_partitions(void)
 #endif
 #elif defined(PART_BOOT)
 	if (bootsize != 0) {
+#if defined(PART_BOOT_MSDOS)
+		bsdlabel[PART_BOOT].pi_fstype = FS_MSDOS;
+#else
 		bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+#endif
 		bsdlabel[PART_BOOT].pi_size = bootsize;
 		bsdlabel[PART_BOOT].pi_offset = bootstart;
 #if defined(PART_BOOT_PI_FLAGS)

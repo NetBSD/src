@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.13 2012/08/16 16:23:32 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13.2.1 2013/06/23 06:19:58 tls Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
 
+KLINK_MACHINE= acorn26
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
 BINDIR=/usr/mdec
@@ -19,6 +20,7 @@ LIBCRTEND=
 RISCOSTYPE ?= ff8
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
@@ -27,9 +29,11 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
+CPUFLAGS=
 CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
+CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv2
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes

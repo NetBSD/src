@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.20.2.2 2013/02/25 00:30:02 tls Exp $	*/
+/*	$NetBSD: npf.h,v 1.20.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ typedef uint8_t			npf_netmask_t;
 #define	NPF_DECISION_PASS	1
 
 #define	NPF_EXT_MODULE(name, req)	\
-    MODULE(MODULE_CLASS_MISC, name, "npf," req)
+    MODULE(MODULE_CLASS_MISC, name, (sizeof(req) - 1) ? ("npf," req) : "npf")
 
 /*
  * Packet information cache.

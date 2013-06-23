@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.129.2.1 2012/11/20 02:57:53 tls Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.129.2.2 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -853,7 +853,7 @@ message set_X11_prog
 {X11 développement}
 
 message set_source
-{Code source}
+{Code source et débogage}
 
 message set_syssrc
 {Sources du noyeau}
@@ -869,6 +869,12 @@ message set_gnusrc
 
 message set_xsrc
 {Sources X11}
+
+message set_debug
+{Symboles de débogage}
+
+message set_xdebug
+{Symboles de débogage X11}
 
 message cur_distsets_row
 {%-33s %3s}
@@ -1052,6 +1058,7 @@ message other {autre }
 message Perform_IPv6_autoconfiguration {Configurer automatiquement l'IPv6 ?}
 message Perform_DHCP_autoconfiguration {Configurer automatiquement par DHCP ?}
 message Root_shell {Shell du compte "root"}
+message User_shell {Shell du compte "user"}
 
 .if AOUT2ELF
 message aoutfail
@@ -1120,6 +1127,7 @@ message enable_sshd {Activer sshd}
 message enable_ntpd {Activer ntpd}
 message run_ntpdate {Executer ntpdate au démarrage}
 message enable_mdnsd {Activer mdnsd}
+message add_a_user {Add a user}
 message configmenu {Configurer les items suivants si nécéssaire.}
 message doneconfig {Configuration terminée}
 message Install_pkgin {Installer pkgin et mettre à jour le sommaire des paquetages}
@@ -1148,3 +1156,5 @@ message pkgin_failed
 {L'installation de pkgin a échoué, peut-être parce que son paquetage binaire
 n'existe pas.  Vérifiez le chemin et essayez à nouveau.}
 message failed {Échoué}
+message addusername {8 character username to add:}
+message addusertowheel {Do you wish to add this user to group wheel?}

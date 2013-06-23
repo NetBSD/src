@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.363.2.2 2013/02/25 00:28:20 tls Exp $
+# $NetBSD: GENERIC,v 1.363.2.3 2013/06/23 06:19:59 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.363.2.2 $"
+#ident 		"GENERIC-$Revision: 1.363.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -177,14 +177,10 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -396,6 +392,7 @@ radeondrm*	at drm?		# ATI Radeon DRM driver
 savagedrm*	at drm?		# S3 Savage DRM driver
 sisdrm* 	at drm?		# SiS DRM driver
 tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+viadrm*		at drm?		# VIA DRM driver
 
 # Cryptographic Devices
 
@@ -534,6 +531,9 @@ ld*	at iop? tid ?			# block devices
 
 # Pulsing GPIO pins in software
 #gpiopwm*	at gpio?
+
+# Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
+#soekrisgpio0	at isa? port 0x680
 
 # SCSI Controllers and Devices
 
@@ -693,6 +693,7 @@ alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+athn*	at pci? dev ? function ?	# Atheros AR9k (802.11a/g/n)
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce*	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -768,6 +769,7 @@ sm*	at mhzc?
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+athn*	at cardbus? function ?	# Atheros AR9k (802.11a/g/n) - UNTESTED
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? function ?	# 3Com 3C575TX
 fxp*	at cardbus? function ?	# Intel i8255x
@@ -901,6 +903,10 @@ irframe* at stuirda?
 ustir*	at uhub? port ?
 irframe* at ustir?
 
+# KingSun/DonShine USB/IrDA Bridge
+udsir*	at uhub? port ?
+irframe* at udsir?
+
 # Windows Media Center IR transceiver
 irmce*	at uhub? port ?
 cir*	at irmce?
@@ -964,6 +970,7 @@ ucom*	at ukyopon? portno ?
 uscanner* at uhub? port ?
 
 # USB 802.11 adapters
+athn*	at uhub? port ?		# Atheros AR9002U
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 otus*	at uhub? port ?		# Atheros AR9001U
 ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
@@ -1137,6 +1144,7 @@ btsco* at bthub?
 
 # SD/MMC controller
 sdhc*	at pci?		# SD Host Controller
+sdhc*	at cardbus?	# SD Host Controller
 sdmmc*	at sdhc?	# SD/MMC bus
 
 ld*	at sdmmc?
@@ -1164,9 +1172,9 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
-pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -1220,7 +1228,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
@@ -1230,7 +1238,7 @@ pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
@@ -1250,7 +1258,7 @@ options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 # Veriexec
 #
 # a pseudo device needed for veriexec
-pseudo-device	veriexec		1
+pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

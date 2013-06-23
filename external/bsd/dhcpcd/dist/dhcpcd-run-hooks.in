@@ -1,12 +1,17 @@
 #!/bin/sh
+# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.13.2.1 2013/06/23 06:26:31 tls Exp $
+
 # dhcpcd client configuration script 
 
 # Handy variables and functions for our hooks to use
-if [ "$reason" = ROUTERADVERT ]; then
-	ifsuffix=":ra"
-else
-	ifsuffix=
-fi
+case "$reason" in
+	ROUTERADVERT)
+		ifsuffix=":ra";;
+	INFORM6|BOUND6|RENEW6|REBIND6|REBOOT6|EXPIRE6|RELEASE6|STOP6)
+		ifsuffix=":dhcp6";;
+	*)
+		ifsuffix=;;
+esac
 ifname="$interface$ifsuffix"
 
 from=from
@@ -229,6 +234,7 @@ for hook in \
 do
 	for skip in $skip_hooks; do
 		case "$hook" in
+			*/*~)				continue 2;;
 			*/"$skip")			continue 2;;
 			*/[0-9][0-9]"-$skip")		continue 2;;
 			*/[0-9][0-9]"-$skip.sh")	continue 2;;

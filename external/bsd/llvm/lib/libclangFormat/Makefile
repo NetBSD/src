@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2013/02/25 00:26:41 tls Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2013/06/23 06:28:25 tls Exp $
 
 LIB=	clangFormat
 
@@ -6,9 +6,11 @@ LIB=	clangFormat
 
 .PATH: ${CLANG_SRCDIR}/lib/Format
 
-SRCS+=	Format.cpp \
+SRCS+=	BreakableToken.cpp \
+	Format.cpp \
 	TokenAnnotator.cpp \
-	UnwrappedLineParser.cpp
+	UnwrappedLineParser.cpp \
+	WhitespaceManager.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

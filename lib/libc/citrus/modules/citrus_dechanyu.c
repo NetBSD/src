@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_dechanyu.c,v 1.4 2011/11/19 18:20:13 tnozaki Exp $ */
+/* $NetBSD: citrus_dechanyu.c,v 1.4.6.1 2013/06/23 06:21:04 tls Exp $ */
 
 /*-
  * Copyright (c)2007 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_dechanyu.c,v 1.4 2011/11/19 18:20:13 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_dechanyu.c,v 1.4.6.1 2013/06/23 06:21:04 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -71,8 +71,10 @@ typedef struct {
 		_DECHanyuState	s_mbrtowc;
 		_DECHanyuState	s_mbtowc;
 		_DECHanyuState	s_mbsrtowcs;
+		_DECHanyuState	s_mbsnrtowcs;
 		_DECHanyuState	s_wcrtomb;
 		_DECHanyuState	s_wcsrtombs;
+		_DECHanyuState	s_wcsnrtombs;
 		_DECHanyuState	s_wctomb;
 	} states;
 } _DECHanyuCTypeInfo;

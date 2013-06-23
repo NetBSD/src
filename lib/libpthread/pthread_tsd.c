@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.8.2.1 2013/02/25 00:27:59 tls Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.8.2.1 2013/02/25 00:27:59 tls Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "reentrant.h"
 
 
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -55,10 +56,15 @@ null_destructor(void *p)
 {
 }
 
+#include <err.h>
+#include <stdlib.h>
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 {
 	int i;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_keycreate_stub(key, destructor);
 
 	/* Get a lock on the allocation list */
 	pthread_mutex_lock(&tsd_mutex);
@@ -148,7 +154,6 @@ pthread__add_specific(pthread_t self, pthread_key_t key, const void *value)
 int
 pthread_key_delete(pthread_key_t key)
 {
-
 	/*
 	 * This is tricky.  The standard says of pthread_key_create()
 	 * that new keys have the value NULL associated with them in
@@ -228,6 +233,9 @@ pthread_key_delete(pthread_key_t key)
 	 *	pthread_key_delete.html
 	 */
 	struct pt_specific *pt;
+
+	if (__predict_false(__uselibcstub))
+		return __libc_thr_keydelete_stub(key);
 
 	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
 

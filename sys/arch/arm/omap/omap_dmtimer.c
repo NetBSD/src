@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_dmtimer.c,v 1.1.6.2 2013/02/25 00:28:32 tls Exp $	*/
+/*	$NetBSD: omap_dmtimer.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $	*/
 
 /*
  * TI OMAP Dual-mode timers
@@ -34,21 +34,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_dmtimer.c,v 1.1.6.2 2013/02/25 00:28:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_dmtimer.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/timetc.h>
-
-#include <machine/intr.h>
 
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap_dmtimerreg.h>
 #include <arm/omap/omap_dmtimervar.h>
+
+#include <arm/omap/omap_var.h>
 
 typedef uint8_t dmt_reg_t;
 typedef uint16_t dmt_timer_reg_t;
@@ -94,7 +95,9 @@ omap_dmtimer_attach_timecounter(struct omap_dmtimer_softc *sc)
 static struct timecounter dmt_timecounter = {
 	.tc_get_timecount	= dmt_tc_get_timecount,
 	.tc_counter_mask	= 0xffffffff, /* XXXMAGIC Make sense?  */
+#ifdef OMAP_SYSTEM_CLOCK_FREQ
 	.tc_frequency		= OMAP_SYSTEM_CLOCK_FREQ, /* XXXPOWER */
+#endif
 	.tc_name		= "dmtimer", /* XXX Which one?  */
 	.tc_quality		= 100, /* XXXMAGIC?  */
 	.tc_priv		= NULL,
@@ -151,6 +154,10 @@ cpu_initclocks(void)
 		panic("omap dmtimer statclock not initialized");
 	dmt_enable(timecounter_sc);
 	dmt_start_timecounter(timecounter_sc);
+
+#ifndef OMAP_SYSTEM_CLOCK_FREQ
+	dmt_timecounter.tc_frequency = omap_sys_clk;
+#endif
 	tc_init(&dmt_timecounter);
 }
 
@@ -259,7 +266,7 @@ dmt_start(struct omap_dmtimer_softc *sc, unsigned int frequency)
 	 * clock frequency by default.  On the AM335x, the system clock
 	 * frequency is 24 MHz, but dmtimer0 runs at 32 kHz.
 	 */
-	value = (0xffffffff - ((OMAP_SYSTEM_CLOCK_FREQ / frequency) - 1));
+	value = (0xffffffff - ((omap_sys_clk / frequency) - 1));
 
 	dmt_timer_write_4(sc, OMAP_DMTIMER_TIMER_LOAD, value);
 	dmt_timer_write_4(sc, OMAP_DMTIMER_TIMER_COUNTER, value);

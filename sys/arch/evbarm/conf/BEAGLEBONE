@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.2.2.2 2013/02/25 00:28:34 tls Exp $
+#	$NetBSD: BEAGLEBONE,v 1.2.2.3 2013/06/23 06:20:03 tls Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -34,7 +34,7 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
@@ -61,16 +61,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -172,7 +165,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options 	MEMSIZE=256
+#options 	MEMSIZE=256
 
 # L3 Interconnect
 #L3i0		at mainbus?
@@ -194,12 +187,15 @@ omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
 # Power, Reset and Clock Management
 prcm0		at obio0 addr 0x44e00000 size 0x2000	# PRM Module
 
+# Control Module
+sitaracm0	at obio0 addr 0x44e10000 size 0x2000
+
 # SDHC controllers
 # XXX Kludge -- the am335x's mmc registers start at an offset of #x100
 # from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
 # driver to handle this.
 sdhc0		at obio0 addr 0x48060100 size 0x0f00 intr 64
-#sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28
+sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28 # BB Black
 #sdhc2		at obio0 addr 0x47810100 size 0xff00 intr 29
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
@@ -215,14 +211,11 @@ ld*		at sdmmc?
 
 #gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# I2C Controller
+tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
+iic*		at tiiic?
+seeprom*	at iic0 addr 0x50 size 32768
+tps65217pmic*	at iic0 addr 0x24
 
 # On-board 16550 UARTs
 com0		at obio0 addr 0x44e09000 size 0x1000 intr 72 mult 4	# UART0
@@ -241,8 +234,6 @@ omapdmtimer1	at obio0 addr 0x44e31000 size 0x1000 intr 67	# DM Timer 1ms
 
 # Statclock timer
 omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
-
-options OMAP_SYSTEM_CLOCK_FREQ=24000000
 
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.44.8.2 2013/02/25 00:30:10 tls Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.44.8.3 2013/06/23 06:20:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.2 2013/02/25 00:30:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.3 2013/06/23 06:20:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.2 2013/02/25 00:30:10 tls Exp $"
 
 #include "rump_private.h"
 #include "rump_net_private.h"
+#include "rumpcomp_user.h"
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
@@ -108,6 +109,18 @@ static void shmif_rcv(void *);
 
 vmem_t *shmif_units;
 
+static void
+dowakeup(struct shmif_sc *sc)
+{
+	struct rumpuser_iovec iov;
+	uint32_t ver = SHMIF_VERSION;
+	size_t n;
+
+	iov.iov_base = &ver;
+	iov.iov_len = sizeof(ver);
+	rumpuser_iovwrite(sc->sc_memfd, &iov, 1, IFMEM_WAKEUP, &n);
+}
+
 /*
  * This locking needs work and will misbehave severely if:
  * 1) the backing memory has to be paged in
@@ -121,12 +134,9 @@ shmif_lockbus(struct shmif_mem *busmem)
 	while (__predict_false(atomic_cas_32(&busmem->shm_lock,
 	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)) {
 		if (__predict_false(++i > LOCK_COOLDOWN)) {
-			uint64_t sec, nsec;
-			int error;
-
-			sec = 0;
-			nsec = 1000*1000; /* 1ms */
-			rumpuser_nanosleep(&sec, &nsec, &error);
+			/* wait 1ms */
+			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL,
+			    0, 1000*1000);
 			i = 0;
 		}
 		continue;
@@ -205,13 +215,13 @@ initbackend(struct shmif_sc *sc, int memfd)
 {
 	volatile uint8_t v;
 	volatile uint8_t *p;
+	void *mem;
 	int error;
 
-	sc->sc_busmem = rumpuser_filemmap(memfd, 0, BUSMEM_SIZE,
-	    RUMPUSER_FILEMMAP_TRUNCATE | RUMPUSER_FILEMMAP_SHARED
-	    | RUMPUSER_FILEMMAP_READ | RUMPUSER_FILEMMAP_WRITE, &error);
+	error = rumpcomp_shmif_mmap(memfd, BUSMEM_SIZE, &mem);
 	if (error)
 		return error;
+	sc->sc_busmem = mem;
 
 	if (sc->sc_busmem->shm_magic
 	    && sc->sc_busmem->shm_magic != SHMIF_MAGIC) {
@@ -250,8 +260,9 @@ initbackend(struct shmif_sc *sc, int memfd)
 #endif
 	shmif_unlockbus(sc->sc_busmem);
 
-	sc->sc_kq = rumpuser_writewatchfile_setup(-1, memfd, 0, &error);
-	if (sc->sc_kq == -1) {
+	sc->sc_kq = -1;
+	error = rumpcomp_shmif_watchsetup(&sc->sc_kq, memfd);
+	if (error) {
 		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
 		return error;
 	}
@@ -275,8 +286,8 @@ finibackend(struct shmif_sc *sc)
 	}
 
 	rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
-	rumpuser_close(sc->sc_memfd, NULL);
-	rumpuser_close(sc->sc_kq, NULL);
+	rumpuser_close(sc->sc_memfd);
+	rumpuser_close(sc->sc_kq);
 
 	sc->sc_memfd = -1;
 }
@@ -290,9 +301,9 @@ rump_shmif_create(const char *path, int *ifnum)
 	int memfd = -1; /* XXXgcc */
 
 	if (path) {
-		memfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &error);
-		if (memfd == -1)
+		error = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &memfd);
+		if (error)
 			return error;
 	}
 
@@ -301,7 +312,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if (error != 0) {
 		if (path)
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 		return error;
 	}
 
@@ -309,7 +320,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if ((error = allocif(unit, &sc)) != 0) {
 		if (path)
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 		return error;
 	}
 
@@ -471,16 +482,16 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			kmem_free(path, ifd->ifd_len);
 			break;
 		}
-		memfd = rumpuser_open(path,
-		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &rv);
-		if (memfd == -1) {
+		rv = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &memfd);
+		if (rv) {
 			kmem_free(path, ifd->ifd_len);
 			break;
 		}
 		rv = initbackend(sc, memfd);
 		if (rv) {
 			kmem_free(path, ifd->ifd_len);
-			rumpuser_close(memfd, NULL);
+			rumpuser_close(memfd);
 			break;
 		}
 		sc->sc_backfile = path;
@@ -509,7 +520,6 @@ shmif_start(struct ifnet *ifp)
 	uint32_t pktsize, pktwrote;
 	bool wrote = false;
 	bool wrap;
-	int error;
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -566,9 +576,9 @@ shmif_start(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* wakeup? */
-	if (wrote)
-		rumpuser_pwrite(sc->sc_memfd,
-		    &busversion, sizeof(busversion), IFMEM_WAKEUP, &error);
+	if (wrote) {
+		dowakeup(sc);
+	}
 }
 
 static void
@@ -583,9 +593,9 @@ shmif_stop(struct ifnet *ifp, int disable)
 	 * wakeup thread.  this will of course wake up all bus
 	 * listeners, but that's life.
 	 */
-	if (sc->sc_memfd != -1)
-		rumpuser_pwrite(sc->sc_memfd,
-		    &busversion, sizeof(busversion), IFMEM_WAKEUP, NULL);
+	if (sc->sc_memfd != -1) {
+		dowakeup(sc);
+	}
 }
 
 
@@ -668,7 +678,7 @@ shmif_rcv(void *arg)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
 			error = 0;
-			rumpuser_writewatchfile_wait(sc->sc_kq, NULL, &error);
+			rumpcomp_shmif_watchwait(sc->sc_kq);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();
@@ -712,6 +722,16 @@ shmif_rcv(void *arg)
 			sc->sc_devgen++;
 			DPRINTF(("dev %p generation now %" PRIu64 "\n",
 			    sc, sc->sc_devgen));
+		}
+
+		/*
+		 * Ignore packets too short to possibly be valid.
+		 * This is hit at least for the first frame on a new bus.
+		 */
+		if (__predict_false(sp.sp_len < ETHER_HDR_LEN)) {
+			DPRINTF(("shmif read packet len %d < ETHER_HDR_LEN\n",
+			    sp.sp_len));
+			continue;
 		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.2 2011/05/20 06:06:59 msaitoh Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.2.14.1 2013/06/23 06:20:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.2 2011/05/20 06:06:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.2.14.1 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ static const struct mii_phydesc ihphys[] = {
 	  MII_STR_INTEL_I82577 },
 	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82579,
 	  MII_STR_INTEL_I82579 },
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I217,
+	  MII_STR_INTEL_I217 },
 
 	{ 0,				0,
 	  NULL },
@@ -212,12 +214,6 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return 0;
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return 0;
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)

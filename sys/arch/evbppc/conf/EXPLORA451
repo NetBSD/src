@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.48.2.1 2012/11/20 03:01:19 tls Exp $
+#	$NetBSD: EXPLORA451,v 1.48.2.2 2013/06/23 06:20:05 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -109,13 +109,9 @@ options 	NFSSERVER	# Network File System server
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -200,7 +196,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester

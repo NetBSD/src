@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.17.2.2 2013/02/25 00:30:02 tls Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.17.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.17.2.2 2013/02/25 00:30:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.17.2.3 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -211,6 +211,35 @@ npf_mk_rprocs(npf_rprocset_t *rpset, prop_array_t rprocs,
 			break;
 		}
 		npf_rprocset_insert(rpset, rp);
+	}
+	prop_object_iterator_release(it);
+	return error;
+}
+
+static npf_alg_t *
+npf_mk_singlealg(prop_dictionary_t aldict)
+{
+	const char *name;
+
+	if (!prop_dictionary_get_cstring_nocopy(aldict, "name", &name))
+		return NULL;
+	return npf_alg_construct(name);
+}
+
+static int __noinline
+npf_mk_algs(prop_array_t alglist, prop_dictionary_t errdict)
+{
+	prop_object_iterator_t it;
+	prop_dictionary_t nadict;
+	int error = 0;
+
+	it = prop_array_iterator(alglist);
+	while ((nadict = prop_object_iterator_next(it)) != NULL) {
+		if (npf_mk_singlealg(nadict) == NULL) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
 	}
 	prop_object_iterator_release(it);
 	return error;
@@ -419,7 +448,7 @@ npfctl_reload(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
 	prop_dictionary_t npf_dict, errdict;
-	prop_array_t natlist, tables, rprocs, rules;
+	prop_array_t alglist, natlist, tables, rprocs, rules;
 	npf_tableset_t *tblset = NULL;
 	npf_rprocset_t *rpset = NULL;
 	npf_ruleset_t *rlset = NULL;
@@ -443,6 +472,13 @@ npfctl_reload(u_long cmd, void *data)
 	prop_dictionary_get_uint32(npf_dict, "version", &ver);
 	if (ver != NPF_VERSION) {
 		error = EPROGMISMATCH;
+		goto fail;
+	}
+
+	/* ALGs. */
+	alglist = prop_dictionary_get(npf_dict, "algs");
+	error = npf_mk_algs(alglist, errdict);
+	if (error) {
 		goto fail;
 	}
 
@@ -707,36 +743,36 @@ npfctl_sessions_load(u_long cmd, void *data)
 
 	/* Create a session hash table. */
 	sehasht = sess_htable_create();
-	if (sehasht == NULL) {
-		prop_object_release(selist);
-		return ENOMEM;
-	}
 
 	/*
 	 * Iterate through and construct each session.  Note: acquire the
 	 * config lock as we access NAT policies during the restore.
 	 */
 	error = 0;
-	npf_config_enter();
 	it = prop_array_iterator(selist);
+
+	npf_config_enter();
 	while ((sedict = prop_object_iterator_next(it)) != NULL) {
 		/* Session - dictionary. */
 		if (prop_object_type(sedict) != PROP_TYPE_DICTIONARY) {
 			error = EINVAL;
-			goto fail;
+			break;
 		}
 		/* Construct and insert real session structure. */
 		error = npf_session_restore(sehasht, sedict);
 		if (error) {
-			goto fail;
+			break;
 		}
 	}
-	sess_htable_reload(sehasht);
-fail:
 	npf_config_exit();
+
 	prop_object_iterator_release(it);
 	prop_object_release(selist);
-	if (error) {
+
+	if (!error) {
+		/* Finally, load the new table. */
+		npf_session_load(sehasht);
+	} else {
 		/* Destroy session table. */
 		sess_htable_destroy(sehasht);
 	}
@@ -776,6 +812,9 @@ npfctl_table(void *data)
 	case NPF_CMD_TABLE_LIST:
 		error = npf_table_list(tblset, nct->nct_tid,
 		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
+		break;
+	case NPF_CMD_TABLE_FLUSH:
+		error = npf_table_flush(tblset, nct->nct_tid);
 		break;
 	default:
 		error = EINVAL;

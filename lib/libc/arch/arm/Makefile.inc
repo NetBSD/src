@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15.2.2 2013/02/25 00:27:48 tls Exp $
+# $NetBSD: Makefile.inc,v 1.15.2.3 2013/06/23 06:21:04 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SRCS+=	__aeabi_read_tp.S __sigaction14_sigtramp.c __sigtramp2.S
 
 CPPFLAGS += -I.
 
-.if ${MACHINE_ARCH:Mearm*} != ""
+.if !empty(LIBC_MACHINE_ARCH:Mearm*)
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
 SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
 SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
@@ -18,7 +18,7 @@ SRCS+=	arm_initfini.c
 CPPFLAGS += -DSOFTFLOAT
 
 # for earm, use the 64-bit softfloat
-.if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb"
+.if ${LIBC_MACHINE_ARCH} == "arm" || ${LIBC_MACHINE_ARCH} == "armeb"
 SOFTFLOAT_BITS=32
 .endif
 

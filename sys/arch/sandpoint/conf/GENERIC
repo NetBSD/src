@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.73.2.1 2012/11/20 03:01:40 tls Exp $
+# $NetBSD: GENERIC,v 1.73.2.2 2013/06/23 06:20:11 tls Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73.2.1 $"
+#ident 		"GENERIC-$Revision: 1.73.2.2 $"
 
 maxusers	32
 
@@ -127,13 +127,9 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -273,12 +269,12 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 #pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
 
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -326,7 +322,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	lockstat		# lock profiling
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester
@@ -337,7 +333,7 @@ pseudo-device	drvctl
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

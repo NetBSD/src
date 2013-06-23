@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.32.14.1 2012/12/02 05:46:39 tls Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.32.14.2 2013/06/23 06:20:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -158,6 +158,7 @@ struct ccdbuf;
  * A concatenated disk is described after initialization by this structure.
  */
 struct ccd_softc {
+	int		 sc_unit;
 	int		 sc_flags;		/* flags */
 	size_t		 sc_size;		/* size of ccd */
 	int		 sc_ileave;		/* interleave */
@@ -169,7 +170,6 @@ struct ccd_softc {
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
 	kmutex_t	 sc_dvlock;		/* lock on device node */
-#if defined(_KERNEL) /* XXX ccdconfig(8) refers softc directly using kvm */
 	struct bufq_state *sc_bufq;		/* buffer queue */
 	kmutex_t	 *sc_iolock;		/* lock on I/O start/stop */
 	kcondvar_t	 sc_stop;		/* when inflight goes zero */
@@ -177,7 +177,7 @@ struct ccd_softc {
 	kcondvar_t	 sc_push;		/* for deferred I/O */
 	bool		 sc_zap;		/* for deferred I/O */
 	size_t		 sc_maxphys;		/* Max I/O size */
-#endif
+	LIST_ENTRY(ccd_softc) sc_link;
 };
 
 /* sc_flags */
@@ -203,5 +203,15 @@ struct ccd_softc {
  */
 #define CCDIOCSET	_IOWR('F', 16, struct ccd_ioctl)   /* enable ccd */
 #define CCDIOCCLR	_IOW('F', 17, struct ccd_ioctl)    /* disable ccd */
+
+/*
+ * Sysctl information
+ */
+struct ccddiskinfo {
+	int ccd_ileave;
+	u_int ccd_ndisks;
+	size_t ccd_size;
+	int ccd_flags;
+};
 
 #endif /* _DEV_CCDVAR_H_ */

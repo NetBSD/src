@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.65.2.2 2013/02/25 00:28:29 tls Exp $	*/
+/*	$NetBSD: armreg.h,v 1.65.2.3 2013/06/23 06:20:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -179,7 +179,7 @@
 #define CPU_ID_ARM700		0x41007000 /* XXX This is a guess. */
 #define CPU_ID_ARM710		0x41007100
 #define CPU_ID_ARM7500		0x41027100
-#define CPU_ID_ARM710A		0x41047100 /* inc ARM7100 */
+#define CPU_ID_ARM710A		0x41067100
 #define CPU_ID_ARM7500FE	0x41077100
 #define CPU_ID_ARM710T		0x41807100
 #define CPU_ID_ARM720T		0x41807200
@@ -205,6 +205,7 @@
 #define CPU_ID_ARM1176JZS	0x410fb760
 #define CPU_ID_ARM11_P(n)	((n & 0xff07f000) == 0x4107b000)
 #define CPU_ID_CORTEXA5R0	0x410fc050
+#define CPU_ID_CORTEXA7R0	0x411fc070
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
 #define CPU_ID_CORTEXA8R3	0x413fc080
@@ -214,8 +215,11 @@
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
 #define CPU_ID_CORTEX_P(n)	((n & 0xff0ff000) == 0x410fc000)
+#define CPU_ID_CORTEX_A5_P(n)	((n & 0xff0ff0f0) == 0x410fc050)
+#define CPU_ID_CORTEX_A7_P(n)	((n & 0xff0ff0f0) == 0x410fc070)
 #define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
 #define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
+#define CPU_ID_CORTEX_A15_P(n)	((n & 0xff0ff0f0) == 0x410fc0f0)
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -243,6 +247,21 @@
 #define	CPU_ID_IXP425_533	0x690541c0
 #define	CPU_ID_IXP425_400	0x690541d0
 #define	CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_MV88SV58XX_P(n)	((n & 0xff0fff00) == 0x560f5800)
+#define CPU_ID_MV88SV581X_V6	0x560f5810 /* Marvell Sheeva 88SV581x v6 Core */
+#define CPU_ID_MV88SV581X_V7	0x561f5810 /* Marvell Sheeva 88SV581x v7 Core */
+#define CPU_ID_MV88SV584X_V6	0x561f5840 /* Marvell Sheeva 88SV584x v6 Core */
+#define CPU_ID_MV88SV584X_V7	0x562f5840 /* Marvell Sheeva 88SV584x v7 Core */
+/* Marvell's CPUIDs with ARM ID in implementor field */
+#define CPU_ID_ARM_88SV581X_V6	0x410fb760 /* Marvell Sheeva 88SV581x v6 Core */
+#define CPU_ID_ARM_88SV581X_V7	0x413fc080 /* Marvell Sheeva 88SV581x v7 Core */
+#define CPU_ID_ARM_88SV584X_V6	0x410fb020 /* Marvell Sheeva 88SV584x v6 Core */
+
+/* CPUID registers */
+#define ARM_PFR0_THUMBEE_MASK	0x0000f000
+#define ARM_PFR1_GTIMER_MASK	0x000f0000
+#define ARM_PFR1_VIRT_MASK	0x0000f000
+#define ARM_PFR1_SEC_MASK	0x000000f0
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
@@ -379,6 +398,9 @@
 #define	MPCORE_AUXCTL_F 	0x00000008 /* instruction folding enable */
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
+
+/* Marvell PJ4B Auxillary Control Register */
+#define PJ4B_AUXCTL_SMPNAMP	0x00000040 /* SMP/AMP */
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
@@ -557,6 +579,25 @@
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
+/* Defines for ARM Generic Timer */
+#define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
+#define ARM_CNTCTL_IMASK		__BIT(1) // Mask Interrupt
+#define ARM_CNTCTL_ISTATUS		__BIT(2) // Interrupt is pending
+
+#define ARM_CNTKCTL_PL0PTEN		__BIT(9)
+#define ARM_CNTKCTL_PL0VTEN		__BIT(8)
+#define ARM_CNTKCTL_EVNTI		__BITS(7,4)
+#define ARM_CNTKCTL_EVNTDIR		__BIT(3)
+#define ARM_CNTKCTL_EVNTEN		__BIT(2)
+#define ARM_CNTKCTL_PL0PCTEN		__BIT(1)
+#define ARM_CNTKCTL_PL0VCTEN		__BIT(0)
+
+#define ARM_CNTHCTL_EVNTI		__BITS(7,4)
+#define ARM_CNTHCTL_EVNTDIR		__BIT(3)
+#define ARM_CNTHCTL_EVNTEN		__BIT(2)
+#define ARM_CNTHCTL_PL1PCTEN		__BIT(1)
+#define ARM_CNTHCTL_PL1VCTEN		__BIT(0)
+
 #if !defined(__ASSEMBLER__) && !defined(_RUMPKERNEL)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
 static inline uint32_t armreg_##name##_read(void)		\
@@ -657,6 +698,21 @@ ARMREG_WRITE_INLINE(dmb, "p15,0,%0,c7,c10,5") /* Data Memory Barrier */
 ARMREG_WRITE_INLINE(dccmvau, "p15,0,%0,c7,c14,1") /* Data Clean MVA to PoU */
 ARMREG_WRITE_INLINE(dccimvac, "p15,0,%0,c7,c14,1") /* Data Clean&Inv MVA to PoC */
 ARMREG_WRITE_INLINE(dccisw, "p15,0,%0,c7,c14,2") /* Data Clean&Inv Set/Way */
+/* cp15 c8 registers */
+ARMREG_WRITE_INLINE(tlbiallis, "p15,0,%0,c8,c3,0") /* Invalidate entire unified TLB, inner shareable */
+ARMREG_WRITE_INLINE(tlbimvais, "p15,0,%0,c8,c3,1") /* Invalidate unified TLB by MVA, inner shareable */
+ARMREG_WRITE_INLINE(tlbiasidis, "p15,0,%0,c8,c3,2") /* Invalidate unified TLB by ASID, inner shareable */
+ARMREG_WRITE_INLINE(tlbimvaais, "p15,0,%0,c8,c3,3") /* Invalidate unified TLB by MVA, all ASID, inner shareable */
+ARMREG_WRITE_INLINE(itlbiall, "p15,0,%0,c8,c5,0") /* Invalidate entire instruction TLB */
+ARMREG_WRITE_INLINE(itlbimva, "p15,0,%0,c8,c5,1") /* Invalidate instruction TLB by MVA */
+ARMREG_WRITE_INLINE(itlbiasid, "p15,0,%0,c8,c5,2") /* Invalidate instruction TLB by ASID */
+ARMREG_WRITE_INLINE(dtlbiall, "p15,0,%0,c8,c6,0") /* Invalidate entire data TLB */
+ARMREG_WRITE_INLINE(dtlbimva, "p15,0,%0,c8,c6,1") /* Invalidate data TLB by MVA */
+ARMREG_WRITE_INLINE(dtlbiasid, "p15,0,%0,c8,c6,2") /* Invalidate data TLB by ASID */
+ARMREG_WRITE_INLINE(tlbiall, "p15,0,%0,c8,c7,0") /* Invalidate entire unified TLB */
+ARMREG_WRITE_INLINE(tlbimva, "p15,0,%0,c8,c7,1") /* Invalidate unified TLB by MVA */
+ARMREG_WRITE_INLINE(tlbiasid, "p15,0,%0,c8,c7,2") /* Invalidate unified TLB by ASID */
+ARMREG_WRITE_INLINE(tlbimvaa, "p15,0,%0,c8,c7,3") /* Invalidate unified TLB by MVA, all ASID */
 /* cp15 c9 registers */
 ARMREG_READ_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
 ARMREG_WRITE_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
@@ -675,13 +731,15 @@ ARMREG_READ_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_WRITE_INLINE(contextidr, "p15,0,%0,c13,c0,1") /* Context ID Register */
 ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
 ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
-ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
+/* cp14 c12 registers */
+ARMREG_READ_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
+ARMREG_WRITE_INLINE(vbar, "p15,0,%0,c12,c0,0")	/* Vector Base Address Register */
 /* cp15 c14 registers */
 /* cp15 Global Timer Registers */
-ARMREG_READ_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
-ARMREG_WRITE_INLINE(cntfrq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
-ARMREG_READ_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
-ARMREG_WRITE_INLINE(cntkctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_READ_INLINE(cnt_frq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_WRITE_INLINE(cnt_frq, "p15,0,%0,c14,c0,0") /* Counter Frequency Register */
+ARMREG_READ_INLINE(cntk_ctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
+ARMREG_WRITE_INLINE(cntk_ctl, "p15,0,%0,c14,c1,0") /* Timer PL1 Control Register */
 ARMREG_READ_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
 ARMREG_WRITE_INLINE(cntp_tval, "p15,0,%0,c14,c2,0") /* PL1 Physical TimerValue Register */
 ARMREG_READ_INLINE(cntp_ctl, "p15,0,%0,c14,c2,1") /* PL1 Physical Timer Control Register */
@@ -690,15 +748,16 @@ ARMREG_READ_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Registe
 ARMREG_WRITE_INLINE(cntv_tval, "p15,0,%0,c14,c3,0") /* Virtual TimerValue Register */
 ARMREG_READ_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
 ARMREG_WRITE_INLINE(cntv_ctl, "p15,0,%0,c14,c3,1") /* Virtual Timer Control Register */
-ARMREG_READ64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
-ARMREG_WRITE64_INLINE(cntpct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
-ARMREG_READ64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
-ARMREG_WRITE64_INLINE(cntvct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_READ64_INLINE(cntp_ct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_WRITE64_INLINE(cntp_ct, "p15,0,%Q0,%R0,c14") /* Physical Count Register */
+ARMREG_READ64_INLINE(cntv_ct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
+ARMREG_WRITE64_INLINE(cntv_ct, "p15,1,%Q0,%R0,c14") /* Virtual Count Register */
 ARMREG_READ64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_WRITE64_INLINE(cntp_cval, "p15,2,%Q0,%R0,c14") /* PL1 Physical Timer CompareValue Register */
 ARMREG_READ64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
 ARMREG_WRITE64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer CompareValue Register */
 /* cp15 c15 registers */
+ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
 ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */

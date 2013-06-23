@@ -1,5 +1,5 @@
-/*	$NetBSD: context.S,v 1.3.22.1 2013/02/25 00:28:44 tls Exp $	*/
-	
+/*	$NetBSD: context.S,v 1.3.22.2 2013/06/23 06:20:07 tls Exp $	*/
+
 /*
  * Copyright (c) 2003 Marcel Moolenaar
  * All rights reserved.
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32	
+	ldf.fill	f34=[r32],32
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32

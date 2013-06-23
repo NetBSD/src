@@ -1,9 +1,9 @@
-# $NetBSD: md.x68k,v 1.2.6.2 2013/02/25 00:24:38 tls Exp $
+# $NetBSD: md.x68k,v 1.2.6.3 2013/06/23 06:26:18 tls Exp $
 ./usr/libdata/debug/usr/bin/bellctrl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/loadfont.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/loadkmap.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/palette.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rtcalarm.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rtcalarm.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/tvctrl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/mdec/newdisk.debug	comp-sysutil-debug	debug

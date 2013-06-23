@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28.2.2 2013/02/25 00:28:24 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.28.2.3 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -37,12 +37,11 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/param.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.28.2.2 2013/02/25 00:28:24 tls Exp $")
+	RCSID("$NetBSD: locore.S,v 1.28.2.3 2013/06/23 06:19:59 tls Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -60,7 +59,6 @@ ASENTRY_NP(start)
 
 	adr	r1, .Lstart
 	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
-	sub	r2, r2, r1		/* get zero init data and cpu_info_store */
 
 #if defined(TPIDRPRW_IS_CURCPU) || defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r8, c13, c0, 4
@@ -69,11 +67,18 @@ ASENTRY_NP(start)
 	ldr	r8, [r8, #L_CPU]	/* r8 needs curcpu in it */
 #endif
 
-	mov	r3, #0
+	mov	r4, #0
+#ifdef _ARM_ARCH_DWORD_OK
+	mov	r5, #0
+#endif
 .L1:
-	str	r3, [r1], #0x0004	/* Zero the bss */
-	subs	r2, r2, #4
-	bgt	.L1
+#ifdef _ARM_ARCH_DWORD_OK
+	strd	r4, [r1], #0x0008	/* Zero the bss */
+#else
+	str	r4, [r1], #0x0004	/* Zero the bss */
+#endif
+	cmp	r1, r2
+	blt	.L1
 
 	mrc	p15, 0, r3, c0, c0, 0	/* get our cpuid and save it early */
 	str	r3, [r8, #CI_ARM_CPUID]

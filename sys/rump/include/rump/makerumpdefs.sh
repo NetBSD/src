@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.2 2013/02/25 00:30:08 tls Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.3 2013/06/23 06:20:27 tls Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -38,7 +38,7 @@ sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
     < ../../../sys/fcntl.h
 
 fromvers ../../../sys/vnode.h
-sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp}' < ../../../sys/vnode.h
+sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp;}' <../../../sys/vnode.h
 sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
@@ -60,11 +60,32 @@ sed -n '/#define[ 	]*SO_[A-Z]/s/SO_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*SOL_[A-Z]/s/SOL_/RUMP_&/gp' <../../../sys/socket.h \
     | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*MSG_[A-Z]/s/MSG_/RUMP_&/gp' <../../../sys/socket.h \
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../netinet/in.h
+sed -n '/#define[ 	]*IP_[A-Z]/s/IP_/RUMP_&/gp' <../../../netinet/in.h \
+    | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*IPPROTO_[A-Z]/s/IPPROTO_/RUMP_&/gp' <../../../netinet/in.h \
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../netinet/tcp.h
+sed -n '/#define[ 	]*TCP_[A-Z]/s/TCP_/RUMP_&/gp' <../../../netinet/tcp.h \
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/mount.h
+sed -n '/#define[ 	]*MOUNT_[A-Z]/s/MOUNT_/RUMP_MOUNT_/gp' <../../../sys/mount.h | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/fstypes.h
+sed -n '/#define[ 	]*MNT_[A-Z].*[^\]$/s/MNT_/RUMP_MNT_/gp' <../../../sys/fstypes.h | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/module.h
 getstruct ../../../sys/module.h modctl_load
 
 fromvers ../../../ufs/ufs/ufsmount.h
 getstruct ../../../ufs/ufs/ufsmount.h ufs_args
+
+fromvers ../../../fs/sysvbfs/sysvbfs_args.h
+getstruct ../../../fs/sysvbfs/sysvbfs_args.h sysvbfs_args
 
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'

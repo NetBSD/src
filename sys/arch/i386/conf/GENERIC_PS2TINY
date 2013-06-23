@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.66 2012/08/17 20:11:39 abs Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.66.2.1 2013/06/23 06:20:06 tls Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -98,13 +98,9 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

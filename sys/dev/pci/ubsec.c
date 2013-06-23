@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.27.6.1 2012/11/20 03:02:29 tls Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.27.6.2 2013/06/23 06:20:21 tls Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.1 2012/11/20 03:02:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.2 2013/06/23 06:20:21 tls Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.27.6.1 2012/11/20 03:02:29 tls Exp $");
 #include <sys/proc.h>
 #include <sys/endian.h>
 #ifdef __NetBSD__
+  #define UBSEC_NO_RNG	/* hangs on attach */
   #define letoh16 htole16
   #define letoh32 htole32
-#define UBSEC_NO_RNG		/* until statistically tested */
 #endif
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -119,7 +119,9 @@ static	void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
 static	void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
 static	void	ubsec_feed2(struct ubsec_softc *);
 #ifndef UBSEC_NO_RNG
-static	void	ubsec_rng(void *);
+static  void	ubsec_rng(void *);
+static  void	ubsec_rng_locked(void *);
+static  void	ubsec_rng_get(size_t, void *);
 #endif /* UBSEC_NO_RNG */
 static	int 	ubsec_dma_malloc(struct ubsec_softc *, bus_size_t,
 				 struct ubsec_dma_alloc *, int);
@@ -359,6 +361,9 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_rng_need = RND_POOLBITS / NBBY;
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_VM);
+
 	SIMPLEQ_INIT(&sc->sc_freequeue);
 	dmap = sc->sc_dmaa;
 	for (i = 0; i < UBS_MAX_NQUEUE; i++, dmap++) {
@@ -430,6 +435,10 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 			goto skip_rng;
 		}
 
+		rndsource_setcb(&sc->sc_rnd_source, ubsec_rng_get, sc);
+		rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
+				  RND_TYPE_RNG,
+				  RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
 		else
@@ -474,9 +483,11 @@ ubsec_intr(void *arg)
 	struct ubsec_dma *dmap;
 	int npkts = 0, i;
 
+	mutex_spin_enter(&sc->sc_mtx);
 	stat = READ_REG(sc, BS_STAT);
 	stat &= sc->sc_statmask;
 	if (stat == 0) {
+		mutex_spin_exit(&sc->sc_mtx);
 		return (0);
 	}
 
@@ -583,6 +594,7 @@ ubsec_intr(void *arg)
 		sc->sc_needwakeup &= ~wkeup;
 		crypto_unblock(sc->sc_cid, wkeup);
 	}
+	mutex_spin_exit(&sc->sc_mtx);
 	return (1);
 }
 
@@ -926,7 +938,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 #ifdef	__OpenBSD__
 	int card;
 #endif
-	int err = 0, i, j, s, nicealign;
+	int err = 0, i, j, nicealign;
 	struct ubsec_softc *sc;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
@@ -948,18 +960,18 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		return (EINVAL);
 	}
 
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 
 	if (SIMPLEQ_EMPTY(&sc->sc_freequeue)) {
 		ubsecstats.hst_queuefull++;
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
-		splx(s);
+		mutex_spin_exit(&sc->sc_mtx);
 		return(ERESTART);
 	}
 
 	q = SIMPLEQ_FIRST(&sc->sc_freequeue);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_freequeue, /*q,*/ q_next);
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 
 	dmap = q->q_dma; /* Save dma pointer */
 	memset(q, 0, sizeof(struct ubsec_q));
@@ -1436,14 +1448,14 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 		    offsetof(struct ubsec_dmachunk, d_ctx), &ctx,
 		    sizeof(struct ubsec_pktctx));
 
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
 	sc->sc_nqueue++;
 	ubsecstats.hst_ipackets++;
 	ubsecstats.hst_ibytes += dmap->d_alloc.dma_map->dm_mapsize;
 	if ((hint & CRYPTO_HINT_MORE) == 0 || sc->sc_nqueue >= ubsec_maxbatch)
 		ubsec_feed(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 	return (0);
 
 errout:
@@ -1460,9 +1472,9 @@ errout:
 			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
 		}
 
-		s = splnet();
+		mutex_spin_enter(&sc->sc_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
-		splx(s);
+		mutex_spin_exit(&sc->sc_mtx);
 	}
 #if 0 /* jonathan says: this openbsd code seems to be subsumed elsewhere */
 	if (err == EINVAL)
@@ -1638,13 +1650,18 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 			add_true_randomness(letoh32(*p));
 		rng->rng_used = 0;
 #else
-		/* XXX NetBSD rnd subsystem too weak */
-		i = 0; (void)i;	/* shut off gcc warnings */
+		i = UBSEC_RNG_BUFSIZ * sizeof(u_int32_t);
+		rnd_add_data(&sc->sc_rnd_source, (char *)p, i, i * NBBY);
+		sc->sc_rng_need -= i;
+		rng->rng_used = 0;
 #endif
 #ifdef __OpenBSD__
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
-		callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
+		if (sc->sc_rng_need > 0) {
+			callout_reset(&sc->sc_rngto, sc->sc_rnghz,
+				      ubsec_rng, sc);
+		}
 #endif
 		break;
 	}
@@ -1727,20 +1744,48 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 }
 
 #ifndef UBSEC_NO_RNG
+
+static void
+ubsec_rng_get(size_t bytes, void *vsc)
+{
+	struct ubsec_softc *sc = vsc;
+
+	mutex_spin_enter(&sc->sc_mtx);
+	sc->sc_rng_need = bytes;
+	ubsec_rng_locked(sc);
+	mutex_spin_exit(&sc->sc_mtx);
+
+}
+
 static void
 ubsec_rng(void *vsc)
+{
+	struct ubsec_softc *sc = vsc;
+	mutex_spin_enter(&sc->sc_mtx);
+	ubsec_rng_locked(sc);
+	mutex_spin_exit(&sc->sc_mtx);
+}
+
+static void
+ubsec_rng_locked(void *vsc)
 {
 	struct ubsec_softc *sc = vsc;
 	struct ubsec_q2_rng *rng = &sc->sc_rng;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rngbypass *ctx;
-	int s;
 
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	if (rng->rng_used) {
-		splx(s);
+		mutex_spin_exit(&sc->sc_mtx);
 		return;
 	}
+
+	if (sc->sc_rng_need < 1) {
+		callout_stop(&sc->sc_rngto);
+		mutex_spin_exit(&sc->sc_mtx);
+		return;
+	}
+
 	sc->sc_nqueue2++;
 	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
 		goto out;
@@ -1770,7 +1815,7 @@ ubsec_rng(void *vsc)
 	rng->rng_used = 1;
 	ubsec_feed2(sc);
 	ubsecstats.hst_rng++;
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 
 	return;
 
@@ -1779,7 +1824,7 @@ out:
 	 * Something weird happened, generate our own call back.
 	 */
 	sc->sc_nqueue2--;
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 #ifdef __OpenBSD__
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
@@ -2097,7 +2142,7 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_modexp *ctx;
 	struct ubsec_pktbuf *epb;
-	int s, err = 0;
+	int err = 0;
 	u_int nbits, normbits, mbits, shiftbits, ebits;
 
 	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
@@ -2254,11 +2299,11 @@ ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
 	    0, me->me_epb.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* Enqueue and we're done... */
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &me->me_q, q_next);
 	ubsec_feed2(sc);
 	ubsecstats.hst_modexp++;
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 
 	return (0);
 
@@ -2302,7 +2347,7 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_modexp *ctx;
 	struct ubsec_pktbuf *epb;
-	int s, err = 0;
+	int err = 0;
 	u_int nbits, normbits, mbits, shiftbits, ebits;
 
 	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
@@ -2459,10 +2504,10 @@ ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
 	    0, me->me_epb.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* Enqueue and we're done... */
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &me->me_q, q_next);
 	ubsec_feed2(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 
 	return (0);
 
@@ -2502,7 +2547,7 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 	struct ubsec_q2_rsapriv *rp = NULL;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rsapriv *ctx;
-	int s, err = 0;
+	int err = 0;
 	u_int padlen, msglen;
 
 	msglen = ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_P]);
@@ -2655,11 +2700,11 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 	    0, rp->rpr_msgout.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	/* Enqueue and we're done... */
-	s = splnet();
+	mutex_spin_enter(&sc->sc_mtx);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rp->rpr_q, q_next);
 	ubsec_feed2(sc);
 	ubsecstats.hst_modexpcrt++;
-	splx(s);
+	mutex_spin_exit(&sc->sc_mtx);
 	return (0);
 
 errout:

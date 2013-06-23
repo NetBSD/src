@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.249.2.1 2013/02/25 00:29:39 tls Exp $	*/
+/*	$NetBSD: uhci.c,v 1.249.2.2 2013/06/23 06:20:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.249.2.1 2013/02/25 00:29:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.249.2.2 2013/06/23 06:20:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1912,7 +1912,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 		      "flags=0x%x\n", addr, UE_GET_ADDR(endpt), len,
 		      upipe->pipe.device->speed, flags));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	maxp = UGETW(upipe->pipe.endpoint->edesc->wMaxPacketSize);
 	if (maxp == 0) {
@@ -3005,7 +3005,7 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 
 	DPRINTFN(5, ("uhci_device_intr_done: length=%d\n", xfer->actlen));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	npoll = upipe->u.intr.npoll;
 	for(i = 0; i < npoll; i++) {

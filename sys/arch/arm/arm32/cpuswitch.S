@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.72.2.2 2013/02/25 00:28:24 tls Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.72.2.3 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -84,12 +84,11 @@
 #include "opt_lockdebug.h"
 
 #include "assym.h"
-#include <machine/param.h>
-#include <machine/frame.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
+#include <machine/frame.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.72.2.2 2013/02/25 00:28:24 tls Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.72.2.3 2013/06/23 06:19:59 tls Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	

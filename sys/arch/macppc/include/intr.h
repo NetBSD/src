@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2011/06/17 23:36:17 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.30.12.1 2013/06/23 06:20:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef _LOCORE
 
-#define ICU_LEN		64
+#define ICU_LEN		128
 
 #ifdef MULTIPROCESSOR
 struct cpu_info;
@@ -52,6 +52,7 @@ struct cpu_info;
 /* probe for a PIC and set it up, return TRUE on success */
 int init_ohare(void);
 int init_heathrow(void);
+int init_u3_ht(void);
 int init_grandcentral(void);
 void setup_hammerhead_ipi(void);
 #endif

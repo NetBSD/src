@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.2.8.2 2013/02/25 00:25:24 tls Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.2.8.3 2013/06/23 06:26:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -152,6 +152,10 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	rsa = RSA_new();
 	e = BN_new();
 	pkey = EVP_PKEY_new();

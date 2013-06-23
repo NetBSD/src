@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.260.6.1 2012/11/20 03:02:46 tls Exp $	*/
+/*	$NetBSD: if.c,v 1.260.6.2 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260.6.1 2012/11/20 03:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260.6.2 2013/06/23 06:20:25 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260.6.1 2012/11/20 03:02:46 tls Exp $");
 #include <net/radix.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <sys/module.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
@@ -984,25 +985,32 @@ if_clone_lookup(const char *name, int *unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
+	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
 
+	strcpy(ifname, "if_");
 	/* separate interface name from unit */
-	for (cp = name;
-	    cp - name < IFNAMSIZ && *cp && (*cp < '0' || *cp > '9');
-	    cp++)
-		continue;
+	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
+	    *cp && (*cp < '0' || *cp > '9');)
+		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
 		return NULL;	/* No name or unit number */
+	*dp++ = '\0';
 
+again:
 	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
-		if (strlen(ifc->ifc_name) == cp - name &&
-		    strncmp(name, ifc->ifc_name, cp - name) == 0)
+		if (strcmp(ifname + 3, ifc->ifc_name) == 0)
 			break;
 	}
 
-	if (ifc == NULL)
-		return NULL;
+	if (ifc == NULL) {
+		if (*ifname == '\0' ||
+		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+			return NULL;
+		*ifname = '\0';
+		goto again;
+	}
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
@@ -1325,19 +1333,63 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 
 /*
  * Handle a change in the interface link state.
+ * XXX: We should listen to the routing socket in-kernel rather
+ * than calling in6_if_link_* functions directly from here.
  */
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	if (ifp->if_link_state == link_state)
+	int old_link_state, s;
+
+	s = splnet();
+	if (ifp->if_link_state == link_state) {
+		splx(s);
 		return;
+	}
+
+	old_link_state = ifp->if_link_state;
 	ifp->if_link_state = link_state;
+#ifdef DEBUG
+	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
+		link_state == LINK_STATE_UP ? "UP" :
+		link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN",
+		 old_link_state == LINK_STATE_UP ? "UP" :
+		old_link_state == LINK_STATE_DOWN ? "DOWN" :
+		"UNKNOWN");
+#endif
+
+#ifdef INET6
+	/*
+	 * When going from UNKNOWN to UP, we need to mark existing
+	 * IPv6 addresses as tentative and restart DAD as we may have
+	 * erroneously not found a duplicate.
+	 *
+	 * This needs to happen before rt_ifmsg to avoid a race where
+	 * listeners would have an address and expect it to work right
+	 * away.
+	 */
+	if (link_state == LINK_STATE_UP &&
+	    old_link_state == LINK_STATE_UNKNOWN)
+		in6_if_link_down(ifp);
+#endif
+
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
+
 #if NCARP > 0
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
 #endif
+
+#ifdef INET6
+	if (link_state == LINK_STATE_DOWN)
+		in6_if_link_down(ifp);
+	else if (link_state == LINK_STATE_UP)
+		in6_if_link_up(ifp);
+#endif
+
+	splx(s);
 }
 
 /*
@@ -1360,6 +1412,9 @@ if_down(struct ifnet *ifp)
 		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
+#ifdef INET6
+	in6_if_down(ifp);
+#endif
 }
 
 /*

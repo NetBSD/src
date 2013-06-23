@@ -30,15 +30,20 @@
 #include <machine/asm.h>
 #include <sys/errno.h>
 
-RCSID("$NetBSD: n_scalbn.S,v 1.1 2011/07/28 20:53:20 matt Exp $")
+RCSID("$NetBSD: n_scalbn.S,v 1.1.8.1 2013/06/23 06:21:07 tls Exp $")
 
-ENTRY(scalbnf, 0)
+WEAK_ALIAS(scalbn,_scalbn)
+WEAK_ALIAS(ldexp,_scalbn)
+WEAK_ALIAS(ldexpf,_scalbnf)
+WEAK_ALIAS(ldexpl,_scalbnl)
+
+ENTRY(_scalbnf, 0)
 	cvtfd	4(%ap), %r0
 	movl	8(%ap), %r2
 	jr	1f
 
-ALTENTRY(scalbnl)
-ENTRY(scalbn, 0)
+ALTENTRY(_scalbnl)
+ENTRY(_scalbn, 0)
 	movd	4(%ap), %r0
 	movl	12(%ap), %r2
 

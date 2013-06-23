@@ -1,0 +1,61 @@
+#
+# Psion Series5/5mx/Series7 and other EPOC specific configuration info
+#
+
+maxpartitions	16
+maxusers	2 8 64
+
+include "arch/arm/pic/files.pic"
+file	arch/arm/arm32/irq_dispatch.S
+
+# Memory disk driver
+file	dev/md_root.c				memory_disk_hooks
+
+# Generic MD files
+file	arch/epoc32/epoc32/autoconf.c
+file	arch/epoc32/epoc32/machdep.c
+file	arch/epoc32/epoc32/clock.c
+file	arch/epoc32/epoc32/intr.c
+
+device	internal { }: pic, pic_splfuncs
+attach	internal at mainbus
+file	arch/epoc32/epoc32/internal.c		internal
+
+device	external { }
+attach	external at mainbus
+file	arch/epoc32/epoc32/external.c		external
+file	arch/epoc32/epoc32/external_io.c	external
+file	arch/epoc32/epoc32/external_io_asm.S	external
+
+device	etna : pcmciabus
+attach	etna at external
+file	arch/epoc32/dev/etna.c			etna
+
+include "arch/arm/clps711x/files.clps711x"
+include "arch/epoc32/windermere/files.windermere"
+include "arch/arm/conf/files.sa11x0"
+attach	saip at internal with saip_internal
+
+device	epockbd : wskbddev
+attach	epockbd at clpssoc with epockbd_clpssoc
+attach	epockbd at windermere with epockbd_windermere
+attach	epockbd at external with epockbd_external
+file	arch/epoc32/dev/epockbd.c		epockbd		needs-flag
+file	arch/epoc32/dev/epockbd_clpssoc.c	epockbd_clpssoc
+file	arch/epoc32/dev/epockbd_windermere.c	epockbd_windermere
+#file	arch/epoc32/dev/epockbd_external.c	epockbd_external
+
+file	kern/subr_disk_mbr.c			disk
+
+
+# Machine-independent ATA drivers
+include "dev/scsipi/files.scsipi"		# required
+include "dev/ata/files.ata"
+
+# Power Management
+#include "dev/hpc/apm/files.apm"
+
+# PCMCIA drivers
+include "dev/pcmcia/files.pcmcia"
+
+include "arch/epoc32/conf/majors.epoc32"

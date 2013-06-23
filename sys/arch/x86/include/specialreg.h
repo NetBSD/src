@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.59.2.2 2013/02/25 00:29:04 tls Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.59.2.3 2013/06/23 06:20:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -159,6 +159,37 @@
 #define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
 
 #define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF"
+
+/*
+ * Intel Structured Extended Feature leaf
+ * Fn0000_0007 main leaf - %ebx.
+ */
+#define CPUID_SEF_FSGSBASE	__BIT(0)
+#define CPUID_SEF_BMI1		__BIT(3)
+#define CPUID_SEF_HLE		__BIT(4)
+#define CPUID_SEF_AVX2		__BIT(5)
+#define CPUID_SEF_SMEP		__BIT(7)
+#define CPUID_SEF_BMI2		__BIT(8)
+#define CPUID_SEF_ERMS		__BIT(9)
+#define CPUID_SEF_INVPCID	__BIT(10)
+#define CPUID_SEF_RTM		__BIT(11)
+#define CPUID_SEF_RDSEED	__BIT(18)
+#define CPUID_SEF_ADX		__BIT(19)
+#define CPUID_SEF_SMAP		__BIT(20)
+
+#define CPUID_SEF_FLAGS	"\20" \
+	"\1" "FSGSBASE" \
+	"\2" "BMI1" \
+	"\4" "HLE" \
+	"\5" "AVX2" \
+	"\7" "SMEP" \
+	"\10" "BMI2" \
+	"\11" "ERMS" \
+	"\12" "INVPCID" \
+	"\13" "RTM" \
+	"\22" "RDSEED" \
+	"\23" "ADX" \
+	"\24" "SMAP"
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.140.2.1 2013/02/25 00:30:05 tls Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.1 2013/02/25 00:30:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -113,11 +113,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.1 2013/02/25 00:30:05 tls Exp 
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
@@ -269,7 +269,7 @@ ip6_input(struct mbuf *m)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
@@ -357,7 +357,7 @@ ip6_input(struct mbuf *m)
 	 * let ipfilter look at packet on the wire,
 	 * not the decapsulated packet.
 	 */
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 	if (!ipsec_indone(m))
 #else
 	if (1)
@@ -766,7 +766,7 @@ ip6_input(struct mbuf *m)
 			}
 		}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -803,7 +803,7 @@ ip6_input(struct mbuf *m)
 		if (error)
 			goto bad;
 	}
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);

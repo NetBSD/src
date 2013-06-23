@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2012/05/26 22:02:29 christos Exp $
+# $NetBSD: Makefile,v 1.1.2.1 2013/06/23 06:21:07 tls Exp $
 
 .include <bsd.own.mk>
 
+LIBEXECINFO_MACHINE_ARCH?= ${MACHINE_ARCH}
 USE_UNWIND=yes
 WARNS?=4
 INCSDIR=/usr/include
@@ -19,6 +20,9 @@ MAN= backtrace.3
 
 .if ${USE_UNWIND} == "yes"
 SRCS+=unwind.c
+.if !empty(LIBEXECINFO_MACHINE_ARCH:Mearm*)
+SRCS+=unwind_arm_ehabi_stub.c
+.endif
 .else
 SRCS+=builtin.c
 .endif

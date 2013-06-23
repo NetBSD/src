@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.79 2012/06/05 08:44:11 abs Exp $
+#	$NetBSD: TX3912,v 1.79.2.1 2013/06/23 06:20:06 tls Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -85,14 +85,9 @@ file-system	PTYFS		# /dev/pts/N support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	WAPBL		# File system journaling support
@@ -264,8 +259,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated disks
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk
@@ -274,14 +269,14 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

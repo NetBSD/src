@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.23.2.2 2013/02/25 00:29:31 tls Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.23.2.3 2013/06/23 06:20:21 tls Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.23.2.2 2013/02/25 00:29:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.23.2.3 2013/06/23 06:20:21 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -717,14 +717,17 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.tran_speed = 26000;	/* 26MHz */
 			break;
 
-		case EXT_CSD_CARD_TYPE_52M | EXT_CSD_CARD_TYPE_26M:
+		case EXT_CSD_CARD_TYPE_52M:
+		case EXT_CSD_CARD_TYPE_52M_V18:
+		case EXT_CSD_CARD_TYPE_52M_V12:
+		case EXT_CSD_CARD_TYPE_52M_V12_18:
 			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = 1;
 			break;
 
 		default:
 			aprint_error_dev(sc->sc_dev,
-			    "unknwon CARD_TYPE: 0x%x\n",
+			    "unknown CARD_TYPE: 0x%x\n",
 			    ext_csd[EXT_CSD_CARD_TYPE]);
 			return error;
 		}

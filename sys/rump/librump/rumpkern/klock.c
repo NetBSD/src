@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.4.2.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: klock.c,v 1.4.2.2 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4.2.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4.2.2 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ _kernel_lock(int nlocks)
 			nlocks = 0;
 			ev_biglock_recurse.ev_count++;
 		} else {
-			if (!rumpuser_mutex_tryenter(rump_giantlock)) {
+			if (rumpuser_mutex_tryenter(rump_giantlock) != 0) {
 				rump_unschedule_cpu1(l, NULL);
 				rumpuser_mutex_enter_nowrap(rump_giantlock);
 				rump_schedule_cpu(l);

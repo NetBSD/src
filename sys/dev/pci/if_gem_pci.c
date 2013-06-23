@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.44.6.1 2012/11/20 03:02:16 tls Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.44.6.2 2013/06/23 06:20:18 tls Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.44.6.1 2012/11/20 03:02:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.44.6.2 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 				    gempromvalid(buf + PROMDATA_DATA2) &&
 				    (vpdoff = (buf[PROMDATA_PTR_VPD] |
 					(buf[PROMDATA_PTR_VPD + 1] << 8))) >= 0x1c) {
-	
+
 					/*
 					 * The VPD of gem is not in PCI 2.2 standard
 					 * format.  The length in the resource header

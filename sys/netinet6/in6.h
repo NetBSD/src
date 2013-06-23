@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.70 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.70.2.1 2013/06/23 06:20:25 tls Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,8 @@
 
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
+
+#include <sys/featuretest.h>
 
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
 #error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
@@ -698,7 +700,10 @@ void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);
+extern void in6_if_link_up(struct ifnet *);
+extern void in6_if_link_down(struct ifnet *);
 extern void in6_if_up(struct ifnet *);
+extern void in6_if_down(struct ifnet *);
 #ifndef __FreeBSD__
 extern int in6_src_sysctl(void *, size_t *, void *, size_t);
 #endif

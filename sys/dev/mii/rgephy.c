@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.29.18.1 2013/06/23 06:20:18 tls Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.29.18.1 2013/06/23 06:20:18 tls Exp $");
 
 
 /*
@@ -288,8 +288,15 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+			/*
+			 * Reset autonegotiation timer to 0 to make sure
+			 * the future autonegotiation start with 0.
+			 */
+			sc->mii_ticks = 0;
 			break;
+		}
 
 		/*
 		 * Check to see if we have link.  If we do, we don't
@@ -319,7 +326,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			return 0;
 
-		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
 		break;
 	}
@@ -428,12 +434,13 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 {
 	int anar;
 
+	mii->mii_ticks = 0;
 	rgephy_loop(mii);
 	rgephy_reset(mii);
 
 	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
 	if (mii->mii_flags & MIIF_DOPAUSE)
-		anar |= ANAR_FC | ANAR_X_PAUSE_ASYM;
+		anar |= ANAR_FC | ANAR_PAUSE_ASYM;
 
 	PHY_WRITE(mii, MII_ANAR, anar);
 	DELAY(1000);

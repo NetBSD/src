@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56.2.1 2012/11/20 03:01:10 tls Exp $
+# $NetBSD: GENERIC,v 1.56.2.2 2013/06/23 06:20:01 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -133,7 +133,7 @@ le*		at mainbus0		# LANCE ethernet interfaces
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty			# pseudo ptys
 #pseudo-device	sl			# SLIP network interfaces
 #pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -143,8 +143,8 @@ pseudo-device	pty		64	# pseudo ptys
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	clockctl		# user control of clock subsystem
@@ -155,7 +155,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

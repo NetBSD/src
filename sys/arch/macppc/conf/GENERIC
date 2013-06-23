@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.303.2.2 2013/02/25 00:28:50 tls Exp $
+# $NetBSD: GENERIC,v 1.303.2.3 2013/06/23 06:20:08 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.303.2.2 $"
+#ident 		"GENERIC-$Revision: 1.303.2.3 $"
 
 maxusers	32
 
@@ -130,13 +130,9 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -584,9 +580,9 @@ pseudo-device   accf_http		# "httpready" accept filter
 #pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options 	RF_INCLUDE_EVENODD=1
@@ -631,7 +627,7 @@ pseudo-device   drvctl
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

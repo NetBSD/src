@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.17.2.1 2013/02/25 00:30:03 tls Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.17.2.2 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.17.2.1 2013/02/25 00:30:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.17.2.2 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -260,7 +260,8 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 	}
 	mutex_exit(&np->n_lock);
 
-	/* All references should be going away. */
+	/* Kick the worker - all references should be going away. */
+	npf_worker_signal();
 	while (np->n_refcnt) {
 		kpause("npfgcnat", false, 1, NULL);
 	}
@@ -827,7 +828,10 @@ npf_nat_restore(prop_dictionary_t sedict, npf_session_t *se)
 		return NULL;
 	}
 
-	/* Match if there is an existing NAT policy. */
+	/*
+	 * Match if there is an existing NAT policy.  Will acquire the
+	 * reference on it if further operations are successful.
+	 */
 	KASSERT(npf_config_locked_p());
 	rl = npf_ruleset_matchnat(npf_config_natset(), __UNCONST(onp));
 	if (rl == NULL) {
@@ -840,6 +844,7 @@ npf_nat_restore(prop_dictionary_t sedict, npf_session_t *se)
 	if (!npf_nat_takeport(np, ntraw->nt_tport)) {
 		return NULL;
 	}
+	atomic_inc_uint(&np->n_refcnt);
 
 	/* Create and return NAT entry for association. */
 	nt = pool_cache_get(nat_cache, PR_WAITOK);

@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.59.2.1 2012/11/20 03:01:19 tls Exp $
+#	$NetBSD: WALNUT,v 1.59.2.2 2013/06/23 06:20:05 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -98,14 +98,10 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
-options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -258,9 +254,9 @@ ds1743rtc0	at pbus? addr ?			# RTC
 #wsdisplay* at vga? console ?
 
 pseudo-device	vnd			# disk-like interface to files
-pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback

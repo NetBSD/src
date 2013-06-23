@@ -1,9 +1,78 @@
+
+# Copyright (c)2011,2013 YAMAMOTO Takashi,
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+# a macro to dump kernel modules
+
+# printed addresses can be used for gdb add-symbol-file command.
+#
+# for example:
+#
+# % objdump -h puffs.kmod
+#     :
+#     :
+#     :
+# Sections:
+# Idx Name          Size      VMA               LMA               File off  Algn
+#   0 .text         0000c87c  0000000000000000  0000000000000000  00000040  2**2
+#                   CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+#     :
+#     :
+#     :
+# 
+# 
+# (gdb) target kvm /dev/mem
+# #0  0xffffffff804f14d4 in mi_switch (l=0xffffffff80dfa020)
+#     at /siro/nbsd/src/sys/kern/kern_synch.c:720
+# 720                     prevlwp = cpu_switchto(l, newl, returning);
+# (gdb) modules                                                                   module puffs    0xffffffff810c6000-0xffffffff810ffcd0
+# module wmimsi
+# module wmihp
+# module wmieeepc
+#     :
+#     :
+#     :
+# (gdb) add-symbol-file /siro/nbsd/src/sys/modules/puffs/obj/puffs.kmod 0xffffffff810c6000+0x40
+# add symbol table from file "/siro/nbsd/src/sys/modules/puffs/obj/puffs.kmod" at
+#         .text_addr = 0xffffffff810c6040
+# (y or n) y
+# Reading symbols from /siro/nbsd/src/sys/modules/puffs/obj/puffs.kmod...done.
+# (gdb) disas puffs_getvnode
+# Dump of assembler code for function puffs_getvnode:   
+#    0xffffffff810c609a <+0>:     push   %rbp
+#    0xffffffff810c609b <+1>:     rorb   $0x45,-0x75(%rax)
+#    0xffffffff810c609f <+5>:     callq  0xffffffffc9dce9ed
+#    0xffffffff810c60a4 <+10>:    mov    $0x810d28a0,%ecx
+#    0xffffffff810c60aa <+16>:    mov    $0x16,%edx
+#    0xffffffff810c60af <+21>:    mov    $0x1,%esi
+
 define modules
 	set $h = module_list
-	set $e = $h->tqh_first
+	set $e = $h.tqh_first
 	while ($e != 0)
 		if ($e->mod_kobj != 0)
-			printf "module %s\t0x%016x-0x%016x\n", \
+			printf "module %s\t0x%016lx-0x%016lx\n", \
 			    $e->mod_info.mi_name, \
 			    $e->mod_kobj->ko_address, \
 			    $e->mod_kobj->ko_address + $e->mod_kobj->ko_size

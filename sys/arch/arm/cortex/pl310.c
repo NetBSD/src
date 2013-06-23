@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.4.2.2 2013/02/25 00:28:26 tls Exp $	*/
+/*	$NetBSD: pl310.c,v 1.4.2.3 2013/06/23 06:20:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4.2.2 2013/02/25 00:28:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4.2.3 2013/06/23 06:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,7 +191,9 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_enabled = true;
 	}
 
-	KASSERT(arm_pcache.dcache_line_size == arm_scache.dcache_line_size);
+	KASSERTMSG(arm_pcache.dcache_line_size == arm_scache.dcache_line_size,
+	    "pcache %u scache %u",
+	    arm_pcache.dcache_line_size, arm_scache.dcache_line_size);
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.11.2.2 2013/02/25 00:28:31 tls Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.11.2.3 2013/06/23 06:20:01 tls Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11.2.2 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11.2.3 2013/06/23 06:20:01 tls Exp $");
 
 #define _INTR_PRIVATE
 
@@ -187,6 +187,8 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	case IST_LEVEL_HIGH: gpio->gpio_level_hi_mask |= irq_mask; break;
 	case IST_EDGE_FALLING: gpio->gpio_edge_falling_mask |= irq_mask; break;
 	case IST_EDGE_RISING: gpio->gpio_edge_rising_mask |= irq_mask; break;
+	case IST_EDGE_BOTH: gpio->gpio_edge_falling_mask |= irq_mask;
+			    gpio->gpio_edge_rising_mask |= irq_mask; break;
 	}
 	gpio->gpio_edge_mask =
 	    gpio->gpio_edge_rising_mask | gpio->gpio_edge_falling_mask;
@@ -367,6 +369,18 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	    || oa->obio_addr == GPIO4_BASE_4430
 	    || oa->obio_addr == GPIO5_BASE_4430
 	    || oa->obio_addr == GPIO6_BASE_4430)
+		return 1;
+#endif
+
+#ifdef OMAP_5430
+	if (oa->obio_addr == GPIO1_BASE_5430
+	    || oa->obio_addr == GPIO2_BASE_5430
+	    || oa->obio_addr == GPIO3_BASE_5430
+	    || oa->obio_addr == GPIO4_BASE_5430
+	    || oa->obio_addr == GPIO5_BASE_5430
+	    || oa->obio_addr == GPIO6_BASE_5430
+	    || oa->obio_addr == GPIO7_BASE_5430
+	    || oa->obio_addr == GPIO8_BASE_5430)
 		return 1;
 #endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2013/02/25 00:26:32 tls Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2013/06/23 06:28:21 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,15 @@ SUBDIR=	clang \
 	clang-tblgen \
 	tblgen
 
+.if ${MKMCLINKER} != "no"
+SUBDIR+=	\
+	llvm-mcld
+.endif
+
 .if defined(LLVM_DEVELOPER)
 SUBDIR+= \
 	bugpoint \
+	clang-format \
 	llc \
 	lli \
 	llvm-ar \

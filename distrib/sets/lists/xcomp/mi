@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.134.2.1 2013/02/25 00:24:42 tls Exp $
+#	 $NetBSD: mi,v 1.134.2.2 2013/06/23 06:26:19 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5661,12 +5661,14 @@
 ./usr/X11R7/include/freetype2/freetype/config/ftstdlib.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftadvanc.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftautoh.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbzip2.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
@@ -5696,35 +5698,35 @@
 ./usr/X11R7/include/freetype2/freetype/fttypes.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftwinfnt.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftxf86.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/autohint.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftcalc.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftdebug.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftdriver.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftgloadr.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftmemory.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftobjs.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftrfork.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftserv.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/ftstream.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/fttrace.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/internal.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/internal/autohint.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftcalc.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftdebug.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftdriver.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftgloadr.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftmemory.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftobjs.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftrfork.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftserv.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/ftstream.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/fttrace.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/internal.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/internal/pcftypes.h	-unknown-	obsolete
-./usr/X11R7/include/freetype2/freetype/internal/psaux.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/pshints.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svbdf.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svgldict.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svmm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpfr.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpostnm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpscmap.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svpsinfo.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svsfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svttcmap.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svwinfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services/svxf86nm.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/sfnt.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/t1types.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/internal/tttypes.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/internal/psaux.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/pshints.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svbdf.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svgldict.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svmm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpfr.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpostnm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpscmap.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svpsinfo.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svsfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svttcmap.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svwinfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services/svxf86nm.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/sfnt.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/t1types.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/tttypes.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/t1tables.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ttnameid.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/tttables.h	-unknown-	xorg
@@ -5932,6 +5934,7 @@
 ./usr/X11R7/include/xorg/xaarop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf1bpp.h			-unknown-	obsolete
 ./usr/X11R7/include/xorg/xf4bpp.h			-unknown-	obsolete
+./usr/X11R7/include/xorg/xf86-mouse-properties.h	-unknown-	xorg,xorg_server
 ./usr/X11R7/include/xorg/xf86.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Crtc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/xf86Cursor.h			-unknown-	xorg
@@ -6123,6 +6126,8 @@
 ./usr/X11R7/lib/libXcursor_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXdamage.a				-unknown-	xorg
 ./usr/X11R7/lib/libXdamage_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libXdmGreet.a				-unknown-	xorg
+./usr/X11R7/lib/libXdmGreet_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXdmcp.a				-unknown-	xorg
 ./usr/X11R7/lib/libXdmcp_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXevie.a				-unknown-	xorg
@@ -6366,6 +6371,7 @@
 ./usr/X11R7/lib/pkgconfig/xkeyboard-config.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmuu.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xorg-mouse.pc			-unknown-	xorg,xorg_server
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xp.pc				-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/xpm.pc			-unknown-	xorg
@@ -6418,6 +6424,12 @@
 ./usr/X11R7/man/cat3/FcCacheNumFont.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheNumSubdir.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheSubdir.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCacheCreateTagFile.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCharSetDelChar.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcGetDefaultLangs.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetDel.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetSubtract.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetUnion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetAddChar.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCopy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCount.0			-unknown-	.cat,xorg
@@ -7318,6 +7330,7 @@
 ./usr/X11R7/man/html3/FcBlanksDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcBlanksIsMember.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheCopySet.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcCacheCreateTagFile.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheDir.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheNumFont.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCacheNumSubdir.html		-unknown-	html,xorg
@@ -7327,6 +7340,7 @@
 ./usr/X11R7/man/html3/FcCharSetCount.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetCoverage.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetCreate.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcCharSetDelChar.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcCharSetFirstPage.html		-unknown-	html,xorg
@@ -7392,6 +7406,7 @@
 ./usr/X11R7/man/html3/FcFreeTypeCharSetAndSpacing.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcFreeTypeQuery.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcFreeTypeQueryFace.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcGetDefaultLangs.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcGetLangs.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcGetVersion.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcInit.html			-unknown-	html,xorg
@@ -7407,10 +7422,13 @@
 ./usr/X11R7/man/html3/FcLangSetContains.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetCopy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetCreate.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetDel.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetDestroy.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetHasLang.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcLangSetHash.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetSubtract.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/FcLangSetUnion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixCopy.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixEqual.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcMatrixInit.html			-unknown-	html,xorg
@@ -8221,6 +8239,7 @@
 ./usr/X11R7/man/man3/FcBlanksDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcBlanksIsMember.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheCopySet.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcCacheCreateTagFile.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheDir.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheNumFont.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCacheNumSubdir.3			-unknown-	.man,xorg
@@ -8230,6 +8249,7 @@
 ./usr/X11R7/man/man3/FcCharSetCount.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetCoverage.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetCreate.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcCharSetDelChar.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetFirstPage.3		-unknown-	.man,xorg
@@ -8295,6 +8315,7 @@
 ./usr/X11R7/man/man3/FcFreeTypeCharSetAndSpacing.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcFreeTypeQuery.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcFreeTypeQueryFace.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcGetDefaultLangs.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcGetLangs.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcGetVersion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcInit.3				-unknown-	.man,xorg
@@ -8310,10 +8331,13 @@
 ./usr/X11R7/man/man3/FcLangSetContains.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetCopy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetCreate.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetDel.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetDestroy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetHasLang.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcLangSetHash.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetSubtract.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcLangSetUnion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixCopy.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcMatrixInit.3			-unknown-	.man,xorg
@@ -9102,6 +9126,7 @@
 ./usr/X11R7/share/xcb/damage.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/dpms.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/dri2.xml				-unknown-	xorg
+./usr/X11R7/share/xcb/ge.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/glx.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/randr.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/record.xml			-unknown-	xorg
@@ -9115,12 +9140,14 @@
 ./usr/X11R7/share/xcb/xcb.xsd				-unknown-	xorg
 ./usr/X11R7/share/xcb/xevie.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xf86dri.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xf86vidmode.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xfixes.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinerama.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinput.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xprint.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xproto.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xselinux.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xkb.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xtest.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xv.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xvmc.xml				-unknown-	xorg
@@ -9149,6 +9176,7 @@
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXcursor.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXdamage.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXdmGreet.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXdmcp.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXdmcp.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXevie.ln			-unknown-	lint,xorg

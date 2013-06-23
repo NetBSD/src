@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.11 2011/07/23 12:13:17 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.11.8.1 2013/06/23 06:26:21 tls Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -80,8 +80,6 @@
 ./usr/X11R7/lib/X11/locale/ja
 ./usr/X11R7/lib/X11/locale/ja.JIS
 ./usr/X11R7/lib/X11/locale/ja.SJIS
-./usr/X11R7/lib/X11/locale/ja.S90
-./usr/X11R7/lib/X11/locale/ja.U90
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8
 ./usr/X11R7/lib/X11/locale/ko
 ./usr/X11R7/lib/X11/locale/ko_KR.UTF-8
@@ -124,12 +122,7 @@
 ./usr/X11R7/lib/X11/xkb/keycodes
 ./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr
 ./usr/X11R7/lib/X11/xkb/keycodes/sgi_vndr
-./usr/X11R7/lib/X11/xkb/keymap
-./usr/X11R7/lib/X11/xkb/keymap/digital_vndr
-./usr/X11R7/lib/X11/xkb/keymap/sgi_vndr
-./usr/X11R7/lib/X11/xkb/keymap/sun_vndr
 ./usr/X11R7/lib/X11/xkb/rules
-./usr/X11R7/lib/X11/xkb/semantics
 ./usr/X11R7/lib/X11/xkb/symbols
 ./usr/X11R7/lib/X11/xkb/symbols/digital_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr

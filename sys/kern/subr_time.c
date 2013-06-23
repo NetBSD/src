@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.9.6.1 2013/06/23 06:18:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9 2011/12/18 22:30:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.9.6.1 2013/06/23 06:18:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,28 +161,34 @@ tstohz(const struct timespec *ts)
  * Check that a proposed value to load into the .it_value or
  * .it_interval part of an interval timer is acceptable, and
  * fix it to have at least minimal value (i.e. if it is less
- * than the resolution of the clock, round it up.)
+ * than the resolution of the clock, round it up.). We don't
+ * timeout the 0,0 value because this means to disable the
+ * timer or the interval.
  */
 int
 itimerfix(struct timeval *tv)
 {
 
-	if (tv->tv_sec < 0 || tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return (EINVAL);
+	if (tv->tv_usec < 0 || tv->tv_usec >= 1000000)
+		return EINVAL;
+	if (tv->tv_sec < 0)
+		return ETIMEDOUT;
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
-	return (0);
+	return 0;
 }
 
 int
 itimespecfix(struct timespec *ts)
 {
 
-	if (ts->tv_sec < 0 || ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (EINVAL);
+	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
+		return EINVAL;
+	if (ts->tv_sec < 0)
+		return ETIMEDOUT;
 	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
 		ts->tv_nsec = tick * 1000;
-	return (0);
+	return 0;
 }
 
 int
@@ -212,26 +218,53 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	return tstohz(ts);
 }
 
+int
+clock_gettime1(clockid_t clock_id, struct timespec *ts)
+{
+
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		nanotime(ts);
+		break;
+	case CLOCK_MONOTONIC:
+		nanouptime(ts);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
 /*
  * Calculate delta and convert from struct timespec to the ticks.
  */
 int
-abstimeout2timo(struct timespec *ts, int *timo)
+ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
+    int *timo, struct timespec *start)
 {
-	struct timespec tsd;
 	int error;
+	struct timespec tsd;
 
-	getnanotime(&tsd);
-	timespecsub(ts, &tsd, &tsd);
-	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
-		return ETIMEDOUT;
-	}
-	error = itimespecfix(&tsd);
-	if (error) {
+	flags &= TIMER_ABSTIME;
+	if (start == NULL)
+		start = &tsd;
+
+	if (flags || start != &tsd)
+		if ((error = clock_gettime1(clock_id, start)) != 0)
+			return error;
+
+	if (flags)
+		timespecsub(ts, start, ts);
+
+	if ((error = itimespecfix(ts)) != 0)
 		return error;
-	}
-	*timo = tstohz(&tsd);
-	KASSERT(*timo != 0);
+
+	if (ts->tv_sec == 0 && ts->tv_nsec == 0)
+		return ETIMEDOUT;
+
+	*timo = tstohz(ts);
+	KASSERT(*timo > 0);
 
 	return 0;
 }

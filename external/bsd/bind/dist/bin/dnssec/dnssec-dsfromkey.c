@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.4.2.1 2013/02/25 00:25:02 tls Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.4.2.2 2013/06/23 06:26:23 tls Exp $	*/
 
 /*
  * Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -361,6 +361,7 @@ main(int argc, char **argv) {
 	dns_rdataset_t	rdataset;
 	dns_rdata_t	rdata;
 
+	isc__mem_register();
 	dns_rdata_init(&rdata);
 
 	if (argc == 1)

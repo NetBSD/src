@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.46 2011/12/18 05:49:28 dholland Exp $
+# 	$NetBSD: LROUTER,v 1.46.6.1 2013/06/23 06:20:06 tls Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -84,14 +84,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
@@ -171,14 +166,14 @@ cd*	at atapibus? drive ? flags 0x0ff0 # ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0ff0 # ATAPI disk drives
 st*	at atapibus? drive ? flags 0x0ff0 # ATAPI tape drives
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
-#pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	ccd			# concatenated disks
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 
@@ -190,7 +185,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 #options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.
 pseudo-device	md			# memory disk device (ramdisk)
 
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # for IPv6

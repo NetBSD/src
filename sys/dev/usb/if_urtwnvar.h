@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.2.2.1 2013/02/25 00:29:36 tls Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.2.2.2 2013/06/23 06:20:22 tls Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -23,7 +23,12 @@
  * Driver definitions.
  */
 #define URTWN_RX_LIST_COUNT		1
+#ifndef URTWN_DOTG_WORKAROUND
 #define URTWN_TX_LIST_COUNT		8
+#else
+#define URTWN_TX_LIST_COUNT		1
+#endif
+
 #define URTWN_HOST_CMD_RING_COUNT	32
 
 #define URTWN_RXBUFSZ	(16 * 1024)
@@ -148,8 +153,8 @@ struct urtwn_softc {
 	int				avg_pwdb;
 	int				thcal_state;
 	int				thcal_lctemp;
-	int				ntxchains;
-	int				nrxchains;
+	size_t				ntxchains;
+	size_t				nrxchains;
 	int				ledlink;
 	bool				iqk_inited;
 
@@ -181,4 +186,3 @@ struct urtwn_softc {
 };
 
 #endif /* _IF_URTWNVAR_H_ */
-

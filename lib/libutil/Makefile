@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2012/04/07 16:44:39 christos Exp $
+#	$NetBSD: Makefile,v 1.73.2.1 2013/06/23 06:21:09 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -11,7 +11,8 @@ WARNS?=	5
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 LINTFLAGS+=-w
-SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
+SRCS+=	efun.c \
+	getbootfile.c getbyteorder.c getlabelsector.c getmaxpartitions.c \
 	getfsspecname.c getmntopts.c getrawpartition.c getdiskrawname.c \
 	disklabel_dkcksum.c disklabel_scan.c \
 	if_media.c \
@@ -22,7 +23,8 @@ SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
 	secure_path.c sockaddr_snprintf.c stat_flags.c \
 	strpct.c ttyaction.c ttymsg.c
 
-MAN=	efun.3 getbootfile.3 getfstypename.3 getlabelsector.3 \
+MAN=	efun.3 \
+	getbootfile.3 getbyteorder.3 getfstypename.3 getlabelsector.3 \
 	getmaxpartitions.3 getmntopts.3 getrawpartition.3 \
 	getdiskrawname.3 getfsspecname.3 \
 	login.3 login_cap.3 loginx.3 \
@@ -49,6 +51,7 @@ MLINKS+=login_cap.3 login_getcapnum.3
 MLINKS+=login_cap.3 login_getcapsize.3
 MLINKS+=login_cap.3 login_getcapstr.3
 MLINKS+=login_cap.3 login_getcaptime.3
+MLINKS+=login_cap.3 login_getpwclass.3
 MLINKS+=login_cap.3 login_close.3
 MLINKS+=login_cap.3 setclasscontext.3
 MLINKS+=login_cap.3 setusercontext.3

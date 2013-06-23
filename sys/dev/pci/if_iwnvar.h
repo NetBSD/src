@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnvar.h,v 1.13 2011/05/15 13:56:20 christos Exp $	*/
-/*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.13.14.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.24 2012/11/17 14:02:51 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008

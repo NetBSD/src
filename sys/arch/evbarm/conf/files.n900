@@ -1,0 +1,56 @@
+#	$NetBSD: files.n900,v 1.5.4.2 2013/06/23 06:20:04 tls Exp $
+#
+# Nokia N900 configuration info
+#
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+
+file	arch/evbarm/beagle/beagle_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/omap/files.omap2"
+
+# NS16550 compatible serial ports
+attach com at obio with obiouart
+file	arch/arm/omap/obio_com.c		obiouart
+defparam opt_com.h				CONSADDR CONSPEED CONMODE
+
+# Audio jack
+device n900audjck: sysmon_envsys
+attach n900audjck at gpio with n900audjck
+file	arch/evbarm/n900/n900_audjck.c		n900audjck
+
+# Camera button
+device n900cambtn: sysmon_envsys
+attach n900cambtn at gpio with n900cambtn
+file	arch/evbarm/n900/n900_cambtn.c		n900cambtn
+
+# Camera cover
+device n900camcvr: sysmon_envsys
+attach n900camcvr at gpio with n900camcvr
+file	arch/evbarm/n900/n900_camcvr.c		n900camcvr
+
+# Charging sensor
+device n900acad: sysmon_envsys
+attach n900acad at gpio with n900acad
+file	arch/evbarm/n900/n900_acad.c		n900acad
+
+# Keyboard slide
+device n900kbdsld: sysmon_envsys
+attach n900kbdsld at gpio with n900kbdsld
+file	arch/evbarm/n900/n900_kbdsld.c	n900kbdsld
+
+# Lock button
+device n900lckbtn: sysmon_envsys
+attach n900lckbtn at gpio with n900lckbtn
+file	arch/evbarm/n900/n900_lckbtn.c		n900lckbtn
+
+# Proximity sensor
+device n900prxmty: sysmon_envsys
+attach n900prxmty at gpio with n900prxmty
+file	arch/evbarm/n900/n900_prxmty.c		n900prxmty

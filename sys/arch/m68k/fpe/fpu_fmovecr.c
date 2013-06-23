@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.14.12.1 2013/06/23 06:20:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14.12.1 2013/06/23 06:20:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_fmovecr.c,v 1.14 2011/07/18 14:11:27 isaki Exp $
 
 /* XXX: quick consistency check */
 #if (FP_1 != 0x40000)
-Error you have to change this table when changing the mantissa size
+#error you have to change this table when changing the mantissa size
 #endif
 
 static struct fpn constrom[] = {
@@ -72,7 +72,7 @@ static struct fpn constrom[] = {
 };
 
 struct fpn *
-fpu_const(struct fpn *fp, u_int offset)
+fpu_const(struct fpn *fp, uint32_t offset)
 {
 	struct fpn *r;
 
@@ -101,7 +101,7 @@ int
 fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn)
 {
 	int dstreg, offset;
-	u_int *fpreg;
+	uint32_t *fpreg;
 
 	dstreg = (insn->is_word1 >> 7) & 0x7;
 	offset = insn->is_word1 & 0x7F;

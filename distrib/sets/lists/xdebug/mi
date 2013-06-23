@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.3.6.2 2013/02/25 00:24:44 tls Exp $
+# $NetBSD: mi,v 1.3.6.3 2013/06/23 06:26:19 tls Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/libdata/debug/usr/X11R6/bin/Xdmx.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xnest.debug		-unknown-	debug,x11
@@ -156,6 +156,8 @@
 ./usr/libdata/debug/usr/X11R7/bin/fc-match.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-query.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-scan.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-pattern.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-validate.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fonttosfnt.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fslsfonts.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fstobdf.debug		-unknown-	debug,xorg
@@ -327,6 +329,7 @@
 ./usr/X11R7/lib/libXcomposite_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXcursor_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXdamage_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libXdmGreet_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXdmcp_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXevie_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXext_g.a				-unknown-	debuglib,xorg

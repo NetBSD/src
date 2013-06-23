@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.38 2010/12/08 07:38:35 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.38.14.1 2013/06/23 06:26:14 tls Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -563,18 +563,30 @@ admin_process(so2, combuf)
 			iph2->seq = pk_getseq();
 			iph2->status = PHASE2ST_STATUS2;
 
-			/* set end addresses of SA */
-			iph2->sa_dst = dupsaddr(dst);
-			iph2->sa_src = dupsaddr(src);
-			iph2->dst = dupsaddr(dst);
-			iph2->src = dupsaddr(src);
-			if (iph2->sa_src == NULL || iph2->sa_dst == NULL ||
-			    iph2->dst == NULL || iph2->src == NULL) {
-				delph2(iph2);
-				break;
-			}
-			set_port(iph2->dst, 0);
-			set_port(iph2->src, 0);
+                        if (sp_out->local && sp_out->remote) {
+                            /* hints available, let's use them */
+                            iph2->sa_dst = dupsaddr(dst);
+                            iph2->sa_src = dupsaddr(src);
+                            iph2->src = dupsaddr((struct sockaddr *)sp_out->local);
+                            iph2->dst = dupsaddr((struct sockaddr *)sp_out->remote);
+                        } else if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
+                            /* Tunnel mode and no hint, use endpoints */
+                            iph2->src = dupsaddr((struct sockaddr *)&sp_out->req->saidx.src);
+                            iph2->dst = dupsaddr((struct sockaddr *)&sp_out->req->saidx.dst);
+                        } else {
+                            /* default, use selectors as fallback */
+                            iph2->sa_dst = dupsaddr(dst);
+                            iph2->sa_src = dupsaddr(src);
+                            iph2->dst = dupsaddr(dst);
+                            iph2->src = dupsaddr(src);
+                        }
+
+                        if (iph2->dst == NULL || iph2->src == NULL) {
+                            delph2(iph2);
+                            break;
+                        }
+                        set_port(iph2->dst, 0);
+                        set_port(iph2->src, 0);
 
 			if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
 				delph2(iph2);

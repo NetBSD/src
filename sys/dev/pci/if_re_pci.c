@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.41 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.41.6.1 2013/06/23 06:20:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.41 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.41.6.1 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/types.h>
 
@@ -304,6 +304,6 @@ re_pci_detach(device_t self, int flags)
 		bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle, sc->rtk_bsize);
 		sc->rtk_bsize = 0;
 	}
-	
+
 	return 0;
 }

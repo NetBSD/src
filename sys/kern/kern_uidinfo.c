@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.7 2012/06/09 02:55:32 christos Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.7.2.1 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.7 2012/06/09 02:55:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.7.2.1 2013/06/23 06:18:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,13 @@ sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
 	return EINVAL;
 }
 
+static struct sysctllog *kern_uidinfo_sysctllog;
+
 static void
 sysctl_kern_uidinfo_setup(void)
 {
 	const struct sysctlnode *rnode, *cnode;
-	struct sysctllog *kern_uidinfo_sysctllog;
 
-	kern_uidinfo_sysctllog = NULL;
 	sysctl_createv(&kern_uidinfo_sysctllog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "uidinfo",

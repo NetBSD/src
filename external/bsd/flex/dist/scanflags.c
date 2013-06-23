@@ -1,4 +1,4 @@
-/*	$NetBSD: scanflags.c,v 1.1.1.1 2009/10/26 00:26:55 christos Exp $	*/
+/*	$NetBSD: scanflags.c,v 1.1.1.1.12.1 2013/06/23 06:26:33 tls Exp $	*/
 
 /* scanflags - flags used by scanning. */
 
@@ -62,6 +62,9 @@ sf_init (void)
 {
     assert(_sf_stk == NULL);
     _sf_stk = (scanflags_t*) flex_alloc ( sizeof(scanflags_t) * (_sf_max = 32));
+    if (!_sf_stk)
+        lerrsf_fatal(_("Unable to allocate %ld of stack"),
+            (long)sizeof(scanflags_t));
     _sf_stk[_sf_top_ix] = 0;
 }
 

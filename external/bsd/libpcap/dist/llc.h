@@ -1,3 +1,5 @@
+/*	$NetBSD: llc.h,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/libpcap/llc.h,v 1.2 2001-01-28 09:44:50 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/llc.h,v 1.2 2001-01-28 09:44:50 guy Exp  (LBL)
  */
 
 /*

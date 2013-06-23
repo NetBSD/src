@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.38.2.1 2013/02/25 00:29:54 tls Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.1 2013/02/25 00:29:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -715,6 +715,9 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 	/*
 	 * Calculate timeout, if it was specified.
+	 *
+	 * NULL pointer means an infinite timeout.
+	 * {.tv_sec = 0, .tv_nsec = 0} means do not block.
 	 */
 	if (SCARG(uap, timeout)) {
 		error = (*fetchts)(SCARG(uap, timeout), &ts, sizeof(ts));
@@ -725,8 +728,12 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 			return error;
 
 		timo = tstohz(&ts);
-		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec != 0)
-			timo++;
+		if (timo == 0) {
+			if (ts.tv_sec == 0 && ts.tv_nsec == 0)
+				timo = -1; /* do not block */
+			else
+				timo = 1; /* the shortest possible timeout */
+		}
 
 		/*
 		 * Remember current uptime, it would be used in
@@ -735,7 +742,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		getnanouptime(&tsstart);
 	} else {
 		memset(&tsstart, 0, sizeof(tsstart)); /* XXXgcc */
-		timo = 0;
+		timo = 0; /* infinite timeout */
 	}
 
 	error = (*fetchss)(SCARG(uap, set), &l->l_sigwaitset,
@@ -760,6 +767,12 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		/* If found a pending signal, just copy it out to the user. */
 		mutex_exit(p->p_lock);
 		goto out;
+	}
+
+	if (timo < 0) {
+		/* If not allowed to block, return an error */
+		mutex_exit(p->p_lock);
+		return EAGAIN;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.82.2.1 2013/02/25 00:28:33 tls Exp $
+#	$NetBSD: INSTALL,v 1.82.2.2 2013/06/23 06:20:01 tls Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -58,13 +58,9 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -441,7 +437,7 @@ ds1687rtc0	at isa? port 0x72	# Dallas RTC
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		2	# concatenated/striped disk devices
+pseudo-device	ccd			# concatenated/striped disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
@@ -457,9 +453,9 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux

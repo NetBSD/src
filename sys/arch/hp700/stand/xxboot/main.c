@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2012/02/24 18:45:20 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.10.2.1 2013/06/23 06:20:05 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -41,9 +41,9 @@
 
 static char *hexstr(char *, unsigned);
 void ipl_main(unsigned /*interactive*/, unsigned /*sptop*/, unsigned /*psw*/);
-void load_file(const char *, unsigned /*loadadr*/, unsigned /*interactive*/,
+void load_file(const char *, uintptr_t /*loadadr*/, unsigned /*interactive*/,
     int /*part*/);
-void load_file_ino(ino32_t, const char *, unsigned /*loadadr*/,
+void load_file_ino(ino32_t, const char *, uintptr_t /*loadadr*/,
     unsigned /*interactive*/, int /*part*/);
 
 struct loadinfo {
@@ -184,7 +184,7 @@ ipl_main(unsigned interactive, unsigned sptop, unsigned psw)
 	int part = 0;		/* default partition "a" */
 	unsigned secsz, partoff, partsz;
 	int c, c1;
-	unsigned loadadr;
+	uintptr_t loadadr;
 
 #if 0
 	print(hexstr(buf, interactive));
@@ -294,7 +294,7 @@ ipl_main(unsigned interactive, unsigned sptop, unsigned psw)
 }
 
 void
-load_file(const char *path, unsigned loadadr, unsigned interactive, int part)
+load_file(const char *path, uintptr_t loadadr, unsigned interactive, int part)
 {
 
 	/* look-up the file */
@@ -305,7 +305,7 @@ load_file(const char *path, unsigned loadadr, unsigned interactive, int part)
 }
 
 void
-load_file_ino(ino32_t ino, const char *fn, unsigned loadadr, unsigned interactive, int part)
+load_file_ino(ino32_t ino, const char *fn, uintptr_t loadadr, unsigned interactive, int part)
 	/* fn:		 for message only */
 {
 	union ufs_dinode dinode;

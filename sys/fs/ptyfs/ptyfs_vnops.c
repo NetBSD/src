@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.39.2.1 2012/11/20 03:02:40 tls Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.39.2.2 2013/06/23 06:18:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.39.2.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.39.2.2 2013/06/23 06:18:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,7 @@ ptyfs_access(void *v)
 		return error;
 
 	return kauth_authorize_vnode(ap->a_cred,
-	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode, va.va_uid,
 	    va.va_gid, ap->a_mode, ap->a_cred));
 

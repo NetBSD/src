@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.1.2.2 2013/02/25 00:28:31 tls Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.1.2.3 2013/06/23 06:20:01 tls Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.1.2.2 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.1.2.3 2013/06/23 06:20:01 tls Exp $");
 
 #include "opt_omap.h"
 
@@ -101,7 +101,7 @@ CFATTACH_DECL_NEW(obiosdhc, sizeof(struct obiosdhc_softc),
 static int
 obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-#if defined(OMAP_3430) || defined(OMAP_3530)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(OMAP4)
 	struct obio_attach_args * const oa = aux;
 #endif
 #ifdef TI_AM335X
@@ -118,6 +118,13 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 	if (oa->obio_addr == SDMMC1_BASE_3530
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
+                return 1;
+#elif defined(OMAP4)
+	if (oa->obio_addr == SDMMC1_BASE_4430
+	    || oa->obio_addr == SDMMC2_BASE_4430
+	    || oa->obio_addr == SDMMC3_BASE_4430
+	    || oa->obio_addr == SDMMC4_BASE_4430
+	    || oa->obio_addr == SDMMC5_BASE_4430)
                 return 1;
 #endif
 
@@ -159,7 +166,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
 	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
-#ifdef OMAP_3530
+#if defined(OMAP_3530)
 	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;

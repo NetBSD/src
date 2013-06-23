@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.2.2.1 2013/02/25 00:28:26 tls Exp $
+# $NetBSD: files.cortex,v 1.2.2.2 2013/06/23 06:20:00 tls Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -18,6 +18,11 @@ file	arch/arm/cortex/gic.c			armgic
 device	arml2cc
 attach	arml2cc at armperiph
 file	arch/arm/cortex/pl310.c			arml2cc
+
+# ARMv7 Generic Timer
+device	armgtmr
+attach	armgtmr at armperiph
+file	arch/arm/cortex/gtmr.c			armgtmr
 
 # A9 MPCore Global Timer
 device	a9tmr

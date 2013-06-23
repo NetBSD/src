@@ -1,3 +1,5 @@
+/*	$NetBSD: sockstorage.h,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.

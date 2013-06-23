@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.77 2011/11/22 21:25:21 tls Exp $
+# $NetBSD: NET4501,v 1.77.8.1 2013/06/23 06:20:06 tls Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.77 $"
+#ident 		"NET4501-$Revision: 1.77.8.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -133,13 +133,9 @@ options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -284,7 +280,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem

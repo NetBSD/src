@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.67.12.2 2013/02/25 00:30:10 tls Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.67.12.3 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.2 2013/02/25 00:30:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.3 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -91,18 +91,15 @@ drainbufs(int npages)
 
 RUMP_COMPONENT(RUMP__FACTION_VFS)
 {
-	extern struct devsw_conv devsw_conv0[];
-	extern int max_devsw_convs;
 	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
-	int error;
 	int rv, i;
 
 	/* initialize indirect interfaces */
 	rump_vfs_fini = fini;
 	rump_vfs_drainbufs = drainbufs;
 
-	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
+	if (rumpuser_getparam("RUMP_NVNODES", buf, sizeof(buf)) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<10;
@@ -128,12 +125,6 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	spec_init();
 	fstrans_init();
 
-	if (rump_threads) {
-		if ((rv = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL,
-		    rumpuser_biothread, rump_biodone, NULL, "rmpabio")) != 0)
-			panic("syncer thread create failed: %d", rv);
-	}
-
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
@@ -144,8 +135,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	vfs_mountroot();
 
 	/* "mtree": create /dev */
-	do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
-	rump_devnull_init();
+	do_sys_mkdir("/dev", 0755, UIO_SYSSPACE);
 
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
@@ -167,7 +157,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 	{
 	char *mbase;
 
-	if (rumpuser_getenv("RUMP_MODULEBASE", buf, sizeof(buf), &error) == 0)
+	if (rumpuser_getparam("RUMP_MODULEBASE", buf, sizeof(buf)) == 0)
 		mbase = buf;
 	else
 		mbase = module_base;
@@ -180,7 +170,25 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 
 	module_init_class(MODULE_CLASS_VFS);
 
+	/*
+	 * Don't build device names for a large set of devices by
+	 * default.  While the pseudo-devfs is a fun experiment,
+	 * creating many many device nodes may increase rump kernel
+	 * bootstrap time by ~40%.  Device nodes should be created
+	 * per-demand in the component constructors.
+	 */
+#if 0
+	{
+	extern struct devsw_conv devsw_conv0[];
+	extern int max_devsw_convs;
 	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
+	}
+#else
+	rump_vfs_builddevs(NULL, 0);
+#endif
+
+	/* attach null device and create /dev/{null,zero} */
+	rump_devnull_init();
 
 	rump_component_init(RUMP_COMPONENT_VFS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: madt.c,v 1.2 2009/11/09 14:15:15 skrll Exp $	*/
+/*	$NetBSD: madt.c,v 1.2.22.1 2013/06/23 06:20:07 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/reboot.h>
 
 #include <machine/md_var.h>
+#include <machine/sapicvar.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
@@ -38,8 +39,6 @@
 
 
 extern uint64_t ia64_lapic_address;
-
-struct sapic *sapic_create(int, int, uint64_t);
 
 static void
 print_entry(ACPI_SUBTABLE_HEADER *entry)

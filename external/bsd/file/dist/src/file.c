@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3.2.1 2013/02/25 00:26:07 tls Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3.2.2 2013/06/23 06:26:33 tls Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.148 2012/11/21 16:27:39 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.149 2013/01/07 18:20:19 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.3.2.1 2013/02/25 00:26:07 tls Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.3.2.2 2013/06/23 06:26:33 tls Exp $");
 #endif
 #endif	/* lint */
 
@@ -281,6 +281,11 @@ main(int argc, char *argv[])
 	}
 	if (e)
 		return e;
+
+	if (MAGIC_VERSION != magic_version())
+		(void)fprintf(stderr, "%s: compiled magic version [%d] "
+		    "does not match with shared library magic version [%d]\n",
+		    progname, MAGIC_VERSION, magic_version());
 
 	switch(action) {
 	case FILE_CHECK:

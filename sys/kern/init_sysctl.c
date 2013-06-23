@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.190.2.2 2013/02/25 00:29:50 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.190.2.3 2013/06/23 06:18:57 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.2 2013/02/25 00:29:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.3 2013/06/23 06:18:57 tls Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -727,6 +727,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Maximal number of semaphores"),
 			NULL, 0, &ksem_max, 0,
 			CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "configname",
+			SYSCTL_DESCR("Name of config file"),
+			NULL, 0, __UNCONST(kernel_ident), 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
@@ -955,8 +961,9 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	if (new_vnodes <= 0)
 		return (EINVAL);
 
-	/* Limits: 75% of KVA and physical memory. */
-	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
+	/* Limits: 75% of kmem and physical memory. */
+	new_max = calc_cache_size(vmem_size(kmem_arena, VMEM_FREE|VMEM_ALLOC),
+	    75, 75) / VNODE_COST;
 	if (new_vnodes > new_max)
 		new_vnodes = new_max;
 

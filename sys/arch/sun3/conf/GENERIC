@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159.2.1 2012/11/20 03:01:47 tls Exp $
+# $NetBSD: GENERIC,v 1.159.2.2 2013/06/23 06:20:13 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.159.2.1 $"
+#ident		"GENERIC-$Revision: 1.159.2.2 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -119,12 +119,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP protocol stack support
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -265,7 +261,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 pseudo-device	md		
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	sl			# CSLIP
@@ -286,9 +282,9 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-#pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated disks
+#pseudo-device	cgd			# cryptographic disk devices
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -307,7 +303,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.84.2.1 2013/02/25 00:24:45 tls Exp $
+# $NetBSD: md.i386,v 1.84.2.2 2013/06/23 06:26:19 tls Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -516,11 +516,11 @@
 ./usr/X11R7/lib/modules/drivers/via_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.12	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.13	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmware_drv.so.11	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmware_drv.so.13	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg

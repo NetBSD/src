@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile,v 1.2.28.1 2013/06/23 06:26:17 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,6 @@ HPCBOOT=	hpcboot.exe
 .PATH: ${HPCBOOTDIR}
 
 UUDECODE_FILES=	${HPCBOOT}
-UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 
 release:: check_RELEASEDIR .WAIT ${HPCBOOT}
 	${INSTALL} -c -m ${NONBINMODE} \

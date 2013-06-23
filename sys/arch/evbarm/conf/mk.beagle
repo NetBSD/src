@@ -1,12 +1,16 @@
-#	$NetBSD: mk.beagle,v 1.8.2.1 2013/02/25 00:28:35 tls Exp $
+#	$NetBSD: mk.beagle,v 1.8.2.2 2013/06/23 06:20:04 tls Exp $
 .if ${KERNEL_BUILD:T:MPANDA*} != ""
 CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
+#.elif ${KERNEL_BUILD:T:MOMAP5*} != ""
+#CPPFLAGS+=		-mcpu=cortex-a15 -mfpu=neon
 .else
 CPPFLAGS+=		-mcpu=cortex-a8 -mfpu=neon
 .endif
 
 SYSTEM_FIRST_OBJ=	beagle_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/beagle/beagle_start.S
+
+GENASSYM_EXTRAS+=	${THISARM}/beagle/genassym.cf
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 

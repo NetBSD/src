@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.12 2012/03/28 17:03:28 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.12.2.1 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -68,6 +68,7 @@
 #endif
 
 #if defined(_NETBSD_SOURCE)
+#define	SSIZE_MIN	LONG_MIN		/* min value for a ssize_t */
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */

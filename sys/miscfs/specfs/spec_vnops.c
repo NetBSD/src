@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.135.2.1 2013/02/25 00:29:59 tls Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.135.2.2 2013/06/23 06:20:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.135.2.1 2013/02/25 00:29:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.135.2.2 2013/06/23 06:20:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -683,12 +683,28 @@ spec_read(void *v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
+
+		/*
+		 * dholland 20130616: XXX this logic should not be
+		 * here. It is here because the old buffer cache
+		 * demands that all accesses to the same blocks need
+		 * to be the same size; but it only works for FFS and
+		 * nowadays I think it'll fail silently if the size
+		 * info in the disklabel is wrong. (Or missing.) The
+		 * buffer cache needs to be smarter; or failing that
+		 * we need a reliable way here to get the right block
+		 * size; or a reliable way to guarantee that (a) the
+		 * fs is not mounted when we get here and (b) any
+		 * buffers generated here will get purged when the fs
+		 * does get mounted.
+		 */
 		if (bdev_ioctl(vp->v_rdev, DIOCGPART, &dpart, FREAD, l) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
 		}
+
 		bscale = bsize >> DEV_BSHIFT;
 		do {
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);

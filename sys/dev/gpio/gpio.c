@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.50.8.1 2012/11/20 03:02:00 tls Exp $ */
+/* $NetBSD: gpio.c,v 1.50.8.2 2013/06/23 06:20:17 tls Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.2 2013/06/23 06:20:17 tls Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -562,9 +562,9 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if (value != GPIO_PIN_LOW && value != GPIO_PIN_HIGH)
 			return EINVAL;
 
-		gpiobus_pin_write(gc, pin, value);
 		/* return old value */
-		req->gp_value = sc->sc_pins[pin].pin_state;
+		req->gp_value = gpiobus_pin_read(gc, pin);
+		gpiobus_pin_write(gc, pin, value);
 		/* update current value */
 		sc->sc_pins[pin].pin_state = value;
 		break;
