@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.33 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.34 2013/06/23 02:38:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -251,6 +251,7 @@ _arc4randbytes(void *p, size_t len)
 		arc4_init();
 		/* avoid conditionalizing locking */
 		arc4randbytes_unlocked(p, len);
+		arc4_numbytes += len;
 		return;
 	}
 	mutex_spin_enter(&arc4_mtx);
