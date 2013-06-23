@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.125 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.126 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.125 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.126 2013/06/23 07:28:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -464,7 +464,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	blkno = 1;
 	blkno = ufs_rw64(blkno, UFS_FSNEEDSWAP(fs));
 	error = vn_rdwr(UIO_WRITE, vp,
-	    (void *)&blkno, sizeof(blkno), lblktosize(fs, (off_t)numblks),
+	    (void *)&blkno, sizeof(blkno), ffs_lblktosize(fs, (off_t)numblks),
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_cred, NULL, NULL);
 	if (error)
 		return error;
@@ -483,7 +483,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	if (error)
 		return error;
 	for (blkno = UFS_NDADDR, n = 0; blkno < numblks; blkno += FFS_NINDIR(fs)) {
-		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
+		error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)blkno),
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
@@ -506,7 +506,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	blkno = fragstoblks(fs, fs->fs_csaddr);
 	len = howmany(fs->fs_cssize, fs->fs_bsize);
 	for (loc = 0; loc < len; loc++) {
-		error = ffs_balloc(vp, lblktosize(fs, (off_t)(blkno + loc)),
+		error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)(blkno + loc)),
 		    fs->fs_bsize, l->l_cred, 0, &nbp);
 		if (error)
 			goto out;
@@ -522,7 +522,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	 * Allocate all cylinder group blocks.
 	 */
 	for (cg = 0; cg < fs->fs_ncg; cg++) {
-		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
+		error = ffs_balloc(vp, ffs_lfragtosize(fs, cgtod(fs, cg)),
 		    fs->fs_bsize, l->l_cred, 0, &nbp);
 		if (error)
 			goto out;
@@ -569,7 +569,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	if (fs->fs_sbsize < size)
 		memset((char *)(*sbbuf) + loc + fs->fs_sbsize, 0, 
 		    size - fs->fs_sbsize);
-	size = blkroundup(fs, fs->fs_cssize);
+	size = ffs_blkroundup(fs, fs->fs_cssize);
 	if (fs->fs_contigsumsize > 0)
 		size += fs->fs_ncg * sizeof(int32_t);
 	space = malloc(size, M_UFSMNT, M_WAITOK);
@@ -689,7 +689,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		blkno = 0;
 		loc = howmany(xp->i_size, fs->fs_bsize) - 1;
 		if (loc < UFS_NDADDR) {
-			len = fragroundup(fs, ffs_blkoff(fs, xp->i_size));
+			len = ffs_fragroundup(fs, ffs_blkoff(fs, xp->i_size));
 			if (len > 0 && len < fs->fs_bsize) {
 				error = UFS_WAPBL_BEGIN(mp);
 				if (error) {
@@ -727,7 +727,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	 */
 	*snaplist = malloc(*snaplistsize * sizeof(daddr_t), M_UFSMNT, M_WAITOK);
 	blkp = &(*snaplist)[1];
-	*blkp++ = lblkno(fs, fs->fs_sblockloc);
+	*blkp++ = ffs_lblkno(fs, fs->fs_sblockloc);
 	blkno = fragstoblks(fs, fs->fs_csaddr);
 	for (cg = 0; cg < fs->fs_ncg; cg++) {
 		if (fragstoblks(fs, cgtod(fs, cg)) > blkno)
@@ -813,7 +813,7 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 	for (i = 0; i < snaplistsize; i++)
 		snaplist[i] = ufs_rw64(snaplist[i], UFS_FSNEEDSWAP(fs));
 	error = vn_rdwr(UIO_WRITE, vp, (void *)snaplist,
-	    snaplistsize * sizeof(daddr_t), lblktosize(fs, (off_t)numblks),
+	    snaplistsize * sizeof(daddr_t), ffs_lblktosize(fs, (off_t)numblks),
 	    UIO_SYSSPACE, IO_NODELOCKED | IO_UNIT, l->l_cred, NULL, NULL);
 	for (i = 0; i < snaplistsize; i++)
 		snaplist[i] = ufs_rw64(snaplist[i], UFS_FSNEEDSWAP(fs));
@@ -870,7 +870,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 	}
 	if (error)
 		goto out;
-	error = bread(vp, lblkno(fs, fs->fs_sblockloc),
+	error = bread(vp, ffs_lblkno(fs, fs->fs_sblockloc),
 	    fs->fs_bsize, l->l_cred, B_MODIFY, &bp);
 	if (error) {
 		goto out;
@@ -886,7 +886,7 @@ snapshot_writefs(struct mount *mp, struct vnode *vp, void *sbbuf)
 	for (loc = 0; loc < UFS_NDADDR; loc++) {
 		if (db_get(ip, loc) != 0)
 			continue;
-		error = ffs_balloc(vp, lblktosize(fs, (off_t)loc),
+		error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)loc),
 		    fs->fs_bsize, l->l_cred, 0, &bp);
 		if (error)
 			break;
@@ -927,7 +927,7 @@ cgaccount(struct vnode *vp, int passno, int *redo)
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			return error;
-		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
+		error = ffs_balloc(vp, ffs_lfragtosize(fs, cgtod(fs, cg)),
 		    fs->fs_bsize, curlwp->l_cred, 0, &nbp);
 		if (error) {
 			UFS_WAPBL_END(vp->v_mount);
@@ -999,7 +999,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 			}
 		}
 	}
-	if ((error = ffs_balloc(vp, lblktosize(fs, (off_t)(base + loc)),
+	if ((error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)(base + loc)),
 	    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp)) != 0)
 		return (error);
 	indiroff = (base + loc - UFS_NDADDR) % FFS_NINDIR(fs);
@@ -1007,7 +1007,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 		if (indiroff >= FFS_NINDIR(fs)) {
 			bawrite(ibp);
 			if ((error = ffs_balloc(vp,
-			    lblktosize(fs, (off_t)(base + loc)),
+			    ffs_lblktosize(fs, (off_t)(base + loc)),
 			    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp)) != 0)
 				return (error);
 			indiroff = 0;
@@ -1064,7 +1064,7 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		error = bread(snapvp, lbn, fs->fs_bsize, l->l_cred,
 		    B_MODIFY, &bp);
 	} else {
-		error = ffs_balloc(snapvp, lblktosize(fs, (off_t)lbn),
+		error = ffs_balloc(snapvp, ffs_lblktosize(fs, (off_t)lbn),
 		    fs->fs_bsize, l->l_cred, 0, &bp);
 		if (! error)
 			error = rwfsblk(snapvp, B_READ, bp->b_data, lbn);
@@ -1258,7 +1258,7 @@ snapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 			blkno = db_get(ip, lbn);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		} else {
-			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
+			error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)lbn),
 			    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 			if (error)
 				break;
@@ -1484,7 +1484,7 @@ ffs_snapremove(struct vnode *vp)
 	}
 	numblks = howmany(ip->i_size, fs->fs_bsize);
 	for (blkno = UFS_NDADDR; blkno < numblks; blkno += FFS_NINDIR(fs)) {
-		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
+		error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)blkno),
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
 			continue;
@@ -1570,7 +1570,7 @@ retry:
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
-			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
+			error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)lbn),
 			    fs->fs_bsize, FSCRED, B_METAONLY, &ibp);
 			if (error) {
 				mutex_enter(&si->si_lock);
@@ -1779,7 +1779,7 @@ ffs_snapshot_mount(struct mount *mp)
 		 */
 		error = vn_rdwr(UIO_READ, vp,
 		    (void *)&snaplistsize, sizeof(snaplistsize),
-		    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
+		    ffs_lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
 		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT|IO_ALTSEMANTICS,
 		    l->l_cred, NULL, NULL);
 		if (error) {
@@ -1794,7 +1794,7 @@ ffs_snapshot_mount(struct mount *mp)
 		else {
 			error = vn_rdwr(UIO_READ, vp, (void *)snapblklist,
 			    snaplistsize * sizeof(daddr_t),
-			    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
+			    ffs_lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
 			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT|IO_ALTSEMANTICS,
 			    l->l_cred, NULL, NULL);
 			for (i = 0; i < snaplistsize; i++)
@@ -2077,22 +2077,22 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	if (ioflag & IO_ALTSEMANTICS)
 		fsbytes = ip->i_size;
 	else
-		fsbytes = lfragtosize(fs, fs->fs_size);
+		fsbytes = ffs_lfragtosize(fs, fs->fs_size);
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = fsbytes - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(fs, uio->uio_offset);
+		lbn = ffs_lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = fs->fs_bsize;
 		blkoffset = ffs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(fs, nextlbn + 1) >= fsbytes) {
-			if (lblktosize(fs, lbn) + size > fsbytes)
-				size = fragroundup(fs,
-				    fsbytes - lblktosize(fs, lbn));
+		if (ffs_lblktosize(fs, nextlbn + 1) >= fsbytes) {
+			if (ffs_lblktosize(fs, lbn) + size > fsbytes)
+				size = ffs_fragroundup(fs,
+				    fsbytes - ffs_lblktosize(fs, lbn));
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		} else {
 			int nextsize = fs->fs_bsize;
@@ -2245,7 +2245,7 @@ wrsnapblk(struct vnode *vp, void *data, daddr_t lbn)
 	struct buf *bp;
 	int error;
 
-	error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn), fs->fs_bsize,
+	error = ffs_balloc(vp, ffs_lblktosize(fs, (off_t)lbn), fs->fs_bsize,
 	    FSCRED, (ip->i_nlink > 0 ? B_SYNC : 0), &bp);
 	if (error)
 		return error;

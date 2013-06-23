@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.44 2013/06/19 18:16:53 dholland Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.45 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.44 2013/06/19 18:16:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.45 2013/06/23 07:28:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ cd9660_read(void *v)
 	}
 
 	do {
-		lbn = lblkno(imp, uio->uio_offset);
+		lbn = cd9660_lblkno(imp, uio->uio_offset);
 		on = cd9660_blkoff(imp, uio->uio_offset);
 		n = MIN(imp->logical_block_size - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
@@ -259,7 +259,7 @@ cd9660_read(void *v)
 			n = diff;
 		size = cd9660_blksize(imp, ip, lbn);
 		rablock = lbn + 1;
-		if (lblktosize(imp, rablock) < ip->i_size) {
+		if (cd9660_lblktosize(imp, rablock) < ip->i_size) {
 			rasize = cd9660_blksize(imp, ip, rablock);
 			error = breadn(vp, lbn, size, &rablock,
 				       &rasize, 1, NOCRED, 0, &bp);
