@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.45 2012/04/07 04:52:21 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.46 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.45 2012/04/07 04:52:21 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.46 2013/06/23 02:06:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ main(int argc, char *argv[])
 	bwrite(sblockloc, buf, SBLOCKSIZE, special);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
-			bwrite(fsbtodb(&sblock, cgsblock(&sblock, i)),
+			bwrite(FFS_FSBTODB(&sblock, cgsblock(&sblock, i)),
 			    buf, SBLOCKSIZE, special);
 	close(fi);
 	exit(0);
@@ -517,7 +517,7 @@ getsb(struct fs *fs, const char *file)
 		break;
 	}
 
-	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
+	dev_bsize = fs->fs_fsize / FFS_FSBTODB(fs, 1);
 	sblockloc = sblock_try[i] / dev_bsize;
 }
 

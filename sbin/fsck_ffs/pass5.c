@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.51 2013/01/22 09:39:12 dholland Exp $	*/
+/*	$NetBSD: pass5.c,v 1.52 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.51 2013/01/22 09:39:12 dholland Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.52 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ pass5(void)
 		 */
 		if ((cvtlevel && sblk.b_dirty) || doswap) {
 			bwrite(fswritefd, sblk.b_un.b_buf,
-			    fsbtodb(sblock, cgsblock(sblock, c)),
+			    FFS_FSBTODB(sblock, cgsblock(sblock, c)),
 			    sblock->fs_sbsize);
 		} else {
 			/*
@@ -248,7 +248,7 @@ pass5(void)
 			     dofix(&idesc[3],
 				   "ALTERNATE SUPERBLK(S) ARE INCORRECT")) {
 				bwrite(fswritefd, sblk.b_un.b_buf,
-				    fsbtodb(sblock, cgsblock(sblock, c)),
+				    FFS_FSBTODB(sblock, cgsblock(sblock, c)),
 				    sblock->fs_sbsize);
 			}
 			sb_oldfscompat_read(sblock, 0);

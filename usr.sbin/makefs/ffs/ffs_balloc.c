@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.18 2013/06/19 17:51:27 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.19 2013/06/23 02:06:06 dholland Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.18 2013/06/19 17:51:27 dholland Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.19 2013/06/23 02:06:06 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -195,7 +195,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				return (error);
 			if (bpp != NULL) {
 				bp = getblk(ip->i_devvp, lbn, nsize, 0, 0);
-				bp->b_blkno = fsbtodb(fs, newb);
+				bp->b_blkno = FFS_FSBTODB(fs, newb);
 				clrbuf(bp);
 				*bpp = bp;
 			}
@@ -233,7 +233,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(ip->i_devvp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, nb);
+		bp->b_blkno = FFS_FSBTODB(fs, nb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -275,7 +275,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		nb = newb;
 		*allocblk++ = nb;
 		nbp = getblk(ip->i_devvp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		nbp->b_blkno = FFS_FSBTODB(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -306,7 +306,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		*allocblk++ = nb;
 		if (bpp != NULL) {
 			nbp = getblk(ip->i_devvp, lbn, fs->fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = FFS_FSBTODB(fs, nb);
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
@@ -446,7 +446,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				return (error);
 			if (bpp != NULL) {
 				bp = getblk(ip->i_devvp, lbn, nsize, 0, 0);
-				bp->b_blkno = fsbtodb(fs, newb);
+				bp->b_blkno = FFS_FSBTODB(fs, newb);
 				clrbuf(bp);
 				*bpp = bp;
 			}
@@ -484,7 +484,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		nb = newb;
 		*allocblk++ = nb;
 		bp = getblk(ip->i_devvp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, nb);
+		bp->b_blkno = FFS_FSBTODB(fs, nb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -526,7 +526,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		nb = newb;
 		*allocblk++ = nb;
 		nbp = getblk(ip->i_devvp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		nbp->b_blkno = FFS_FSBTODB(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -557,7 +557,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		*allocblk++ = nb;
 		if (bpp != NULL) {
 			nbp = getblk(ip->i_devvp, lbn, fs->fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = FFS_FSBTODB(fs, nb);
 			clrbuf(nbp);
 			*bpp = nbp;
 		}

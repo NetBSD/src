@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.19 2013/01/22 09:39:16 dholland Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.20 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.19 2013/01/22 09:39:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.20 2013/06/23 02:06:05 dholland Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -177,7 +177,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		 * if it cannot read the cylinder group block
 		 */
 		ffs_blkfree(fs, ump->um_devvp,
-		    dbtofsb(fs, deallocblks[i]), dealloclens[i], -1);
+		    FFS_DBTOFSB(fs, deallocblks[i]), dealloclens[i], -1);
 	}
 
 	fs->fs_fmod = 0;
@@ -201,7 +201,7 @@ ffs_wapbl_abort_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		 * blkfree succeeded above, then this shouldn't fail because
 		 * the buffer will be locked in the current transaction.
 		 */
-		ffs_blkalloc_ump(ump, dbtofsb(fs, deallocblks[i]),
+		ffs_blkalloc_ump(ump, FFS_DBTOFSB(fs, deallocblks[i]),
 		    dealloclens[i]);
 	}
 }
@@ -536,7 +536,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	    desired_logsize / 1024);
 
 	/* Is there space after after filesystem on partition for log? */
-	logstart = fsbtodb(fs, fs->fs_size);
+	logstart = FFS_FSBTODB(fs, fs->fs_size);
 	error = getdisksize(devvp, &numsecs, &secsize);
 	if (error)
 		return error;
@@ -695,7 +695,7 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
 		return error;
 	}
 
-	*startp     = fsbtodb(fs, addr);
+	*startp     = FFS_FSBTODB(fs, addr);
 	*countp     = btodb(logsize);
 	*extradatap = VTOI(vp)->i_number;
 
@@ -819,7 +819,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	    best_blks < desired_blks && cg >= 0 && cg < fs->fs_ncg;
 	    s++, n = -n, cg += n * s) {
 		DPRINTF("check cg %d of %d\n", cg, fs->fs_ncg);
-		error = bread(devvp, fsbtodb(fs, cgtod(fs, cg)),
+		error = bread(devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 		    fs->fs_cgsize, FSCRED, 0, &bp);
 		if (error) {
 			continue;

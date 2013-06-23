@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.66 2013/06/19 17:51:25 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.67 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.66 2013/06/19 17:51:25 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.67 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,7 +402,7 @@ getnextinode(ino_t inumber)
 
 	if (inumber >= lastinum) {
 		readcnt++;
-		dblk = fsbtodb(sblock, ino_to_fsba(sblock, lastinum));
+		dblk = FFS_FSBTODB(sblock, ino_to_fsba(sblock, lastinum));
 		if (readcnt % readpercg == 0) {
 			size = partialsize;
 			lastinum += partialcnt;

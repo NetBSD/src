@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.116 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.117 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.116 2013/06/19 17:51:26 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.117 2013/06/23 02:06:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ mkfs(const char *fsys, int fi, int fo,
 		fserr(21);
 	}
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
-	sblock.fs_size = dbtofsb(&sblock, fssize);
+	sblock.fs_size = FFS_DBTOFSB(&sblock, fssize);
 	if (Oflag <= 1) {
 		if ((uint64_t)sblock.fs_size >= 1ull << 31) {
 			printf("Too many fragments (0x%" PRIx64
@@ -541,7 +541,7 @@ mkfs(const char *fsys, int fi, int fo,
 		printf("%s: %.1fMB (%lld sectors) block size %d, "
 		       "fragment size %d\n",
 		    fsys, (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
-		    (long long)fsbtodb(&sblock, sblock.fs_size),
+		    (long long)FFS_FSBTODB(&sblock, sblock.fs_size),
 		    sblock.fs_bsize, sblock.fs_fsize);
 		printf("\tusing %d cylinder groups of %.2fMB, %d blks, "
 		       "%d inodes.\n",
@@ -654,7 +654,7 @@ mkfs(const char *fsys, int fi, int fo,
 		printf("super-block backups (for fsck_ffs -b #) at:\n");
 	/* If we are printing more than one line of numbers, line up columns */
 	fld_width = verbosity < 4 ? 1 : snprintf(NULL, 0, "%" PRIu64, 
-		(uint64_t)fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg-1)));
+		(uint64_t)FFS_FSBTODB(&sblock, cgsblock(&sblock, sblock.fs_ncg-1)));
 	/* Get terminal width */
 	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) == 0)
 		max_cols = winsize.ws_col;
@@ -682,7 +682,7 @@ mkfs(const char *fsys, int fi, int fo,
 		}
 		/* Print superblock numbers */
 		len = printf("%s%*" PRIu64 ",", col ? " " : "", fld_width,
-		    (uint64_t)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		    (uint64_t)FFS_FSBTODB(&sblock, cgsblock(&sblock, cylno)));
 		col += len;
 		if (col + len < max_cols)
 			/* Next number fits */
@@ -736,13 +736,13 @@ mkfs(const char *fsys, int fi, int fo,
 	/* Write out first and last cylinder summary sectors */
 	if (needswap)
 		ffs_csum_swap(fscs_0, fscs_0, sblock.fs_fsize);
-	wtfs(fsbtodb(&sblock, sblock.fs_csaddr), sblock.fs_fsize, fscs_0);
+	wtfs(FFS_FSBTODB(&sblock, sblock.fs_csaddr), sblock.fs_fsize, fscs_0);
 
 	if (fscs_next > fscs_reset) {
 		if (needswap)
 			ffs_csum_swap(fscs_reset, fscs_reset, sblock.fs_fsize);
 		fs_csaddr++;
-		wtfs(fsbtodb(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
+		wtfs(FFS_FSBTODB(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
 	}
 
 	/* mfs doesn't need these permanently allocated */
@@ -924,7 +924,7 @@ initcg(int cylno, const struct timeval *tv)
 		if (needswap)
 			ffs_csum_swap(fscs_reset, fscs_reset, sblock.fs_fsize);
 		fs_csaddr++;
-		wtfs(fsbtodb(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
+		wtfs(FFS_FSBTODB(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
 		fscs_next = fscs_reset;
 		memset(fscs_next, 0, sblock.fs_fsize);
 	}
@@ -949,7 +949,7 @@ initcg(int cylno, const struct timeval *tv)
 			dp2++;
 		}
 	}
-	wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)), iobufsize, iobuf);
+	wtfs(FFS_FSBTODB(&sblock, cgsblock(&sblock, cylno)), iobufsize, iobuf);
 	/*
 	 * For the old file system, we have to initialize all the inodes.
 	 */
@@ -966,7 +966,7 @@ initcg(int cylno, const struct timeval *tv)
 		do
 			dp1->di_gen = arc4random() & INT32_MAX;
 		while ((char *)++dp1 < &iobuf[iobuf_memsize]);
-		wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
+		wtfs(FFS_FSBTODB(&sblock, cgimin(&sblock, cylno) + i),
 		    d * sblock.fs_bsize / sblock.fs_frag, &iobuf[start]);
 	}
 }
@@ -1070,7 +1070,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		qblocks += node.dp1.di_blocks;
 		node.dp1.di_uid = geteuid();
 		node.dp1.di_gid = getegid();
-		wtfs(fsbtodb(&sblock, node.dp1.di_db[0]), node.dp1.di_size,
+		wtfs(FFS_FSBTODB(&sblock, node.dp1.di_db[0]), node.dp1.di_size,
 		    buf);
 	} else {
 		node.dp2.di_atime = tv->tv_sec;
@@ -1092,7 +1092,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		qblocks += node.dp2.di_blocks;
 		node.dp2.di_uid = geteuid();
 		node.dp2.di_gid = getegid();
-		wtfs(fsbtodb(&sblock, node.dp2.di_db[0]), node.dp2.di_size,
+		wtfs(FFS_FSBTODB(&sblock, node.dp2.di_db[0]), node.dp2.di_size,
 		    buf);
 	}
 	qinos++;
@@ -1124,7 +1124,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp1.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp1.di_size));
 		qblocks += node.dp1.di_blocks;
-		wtfs(fsbtodb(&sblock, node.dp1.di_db[0]), sblock.fs_fsize, buf);
+		wtfs(FFS_FSBTODB(&sblock, node.dp1.di_db[0]), sblock.fs_fsize, buf);
 	} else {
 		if (mfs) {
 			node.dp2.di_mode = IFDIR | mfsmode;
@@ -1151,7 +1151,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp2.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp2.di_size));
 		qblocks += node.dp2.di_blocks;
-		wtfs(fsbtodb(&sblock, node.dp2.di_db[0]), sblock.fs_fsize, buf);
+		wtfs(FFS_FSBTODB(&sblock, node.dp2.di_db[0]), sblock.fs_fsize, buf);
 	}
 	qinos++;
 	iput(&node, UFS_ROOTINO);
@@ -1212,7 +1212,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			    node.dp1.di_size));
 			node.dp1.di_uid = geteuid();
 			node.dp1.di_gid = getegid();
-			wtfs(fsbtodb(&sblock, node.dp1.di_db[0]),
+			wtfs(FFS_FSBTODB(&sblock, node.dp1.di_db[0]),
 			     node.dp1.di_size, buf);
 		} else {
 			node.dp2.di_atime = tv->tv_sec;
@@ -1234,7 +1234,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			    node.dp2.di_size));
 			node.dp2.di_uid = geteuid();
 			node.dp2.di_gid = getegid();
-			wtfs(fsbtodb(&sblock, node.dp2.di_db[0]),
+			wtfs(FFS_FSBTODB(&sblock, node.dp2.di_db[0]),
 			    node.dp2.di_size, buf);
 		}
 		iput(&node, nextino);
@@ -1279,7 +1279,7 @@ alloc(int size, int mode)
 	int i, frag;
 	daddr_t d, blkno;
 
-	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
+	rdfs(FFS_FSBTODB(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	/* fs -> host byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
@@ -1328,7 +1328,7 @@ goth:
 	/* host -> fs byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
-	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
+	wtfs(FFS_FSBTODB(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	return (d);
 }
 
@@ -1343,7 +1343,7 @@ iput(union dinode *ip, ino_t ino)
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 
-	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
+	rdfs(FFS_FSBTODB(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	/* fs -> host byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
@@ -1356,7 +1356,7 @@ iput(union dinode *ip, ino_t ino)
 	/* host -> fs byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
-	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
+	wtfs(FFS_FSBTODB(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	sblock.fs_cstotal.cs_nifree--;
 	fscs_0->cs_nifree--;
 	if (ino >= (ino_t)(sblock.fs_ipg * sblock.fs_ncg)) {
@@ -1364,7 +1364,7 @@ iput(union dinode *ip, ino_t ino)
 		    (unsigned long long)ino);
 		fserr(32);
 	}
-	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
+	d = FFS_FSBTODB(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.fs_bsize, (char *)iobuf);
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
 		dp1 = (struct ufs1_dinode *)iobuf;

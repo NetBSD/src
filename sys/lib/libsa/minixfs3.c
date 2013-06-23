@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.3 2013/06/19 18:18:12 dholland Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.4 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -138,7 +138,7 @@
 
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) MFS_FSBTODB(fs, indp)
 #endif
 
 /*

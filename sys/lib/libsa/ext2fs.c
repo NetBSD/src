@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.16 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.17 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -115,7 +115,7 @@
 #endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) EXT2_FSBTODB(fs, indp)
 #endif
 
 /*

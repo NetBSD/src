@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.61 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.62 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -605,11 +605,11 @@ struct ocg {
  * This maps file system blocks to device size blocks.
  */
 #if defined (_KERNEL)
-#define	fsbtodb(fs, b)	((b) << ((fs)->fs_fshift - DEV_BSHIFT))
-#define	dbtofsb(fs, b)	((b) >> ((fs)->fs_fshift - DEV_BSHIFT))
+#define	FFS_FSBTODB(fs, b)	((b) << ((fs)->fs_fshift - DEV_BSHIFT))
+#define	FFS_DBTOFSB(fs, b)	((b) >> ((fs)->fs_fshift - DEV_BSHIFT))
 #else
-#define	fsbtodb(fs, b)	((b) << (fs)->fs_fsbtodb)
-#define	dbtofsb(fs, b)	((b) >> (fs)->fs_fsbtodb)
+#define	FFS_FSBTODB(fs, b)	((b) << (fs)->fs_fsbtodb)
+#define	FFS_DBTOFSB(fs, b)	((b) >> (fs)->fs_fsbtodb)
 #endif
 
 /*
@@ -653,11 +653,11 @@ struct ocg {
 #define	blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
 #define	old_cbtocylno(fs, bno) \
-    (fsbtodb(fs, bno) / (fs)->fs_old_spc)
+    (FFS_FSBTODB(fs, bno) / (fs)->fs_old_spc)
 #define	old_cbtorpos(fs, bno) \
     ((fs)->fs_old_nrpos <= 1 ? 0 : \
-     (fsbtodb(fs, bno) % (fs)->fs_old_spc / (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
-      fsbtodb(fs, bno) % (fs)->fs_old_spc % (fs)->fs_old_nsect * (fs)->fs_old_interleave) % \
+     (FFS_FSBTODB(fs, bno) % (fs)->fs_old_spc / (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
+      FFS_FSBTODB(fs, bno) % (fs)->fs_old_spc % (fs)->fs_old_nsect * (fs)->fs_old_interleave) % \
      (fs)->fs_old_nsect * (fs)->fs_old_nrpos / (fs)->fs_old_npsect)
 
 /*

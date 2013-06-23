@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.13 2011/02/21 02:31:58 itohy Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.14 2013/06/23 02:06:05 dholland Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -129,7 +129,7 @@ get_ffs_inode(ino32_t ino, union ufs_dinode *dibuf)
 	union ufs_dinode *di;
 	unsigned ioff;
 
-	RAW_READ(buf, fsbtodb(&fsi, ino_to_fsba(&fsi, ino)),
+	RAW_READ(buf, FFS_FSBTODB(&fsi, ino_to_fsba(&fsi, ino)),
 			(size_t) fsi.bsize);
 
 	ioff = ino_to_fsbo(&fsi, ino);

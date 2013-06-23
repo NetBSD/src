@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.124 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.125 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.124 2013/06/19 17:51:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.125 2013/06/23 02:06:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -580,7 +580,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	i = fs->fs_frag - loc % fs->fs_frag;
 	len = (i == fs->fs_frag) ? 0 : i * fs->fs_fsize;
 	if (len > 0) {
-		if ((error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + loc),
+		if ((error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + loc),
 		    len, l->l_cred, 0, &bp)) != 0) {
 			free(copyfs->fs_csp, M_UFSMNT);
 			free(*sbbuf, M_UFSMNT);
@@ -964,7 +964,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	ip = VTOI(vp);
 	fs = ip->i_fs;
 	ns = UFS_FSNEEDSWAP(fs);
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, l->l_cred, 0, &bp);
 	if (error) {
 		return (error);
@@ -1172,7 +1172,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	 * We have to expand bread here since it will deadlock looking
 	 * up the block number for any blocks that are not in the cache.
 	 */
-	error = ffs_getblk(cancelvp, lbn, fsbtodb(fs, blkno), fs->fs_bsize,
+	error = ffs_getblk(cancelvp, lbn, FFS_FSBTODB(fs, blkno), fs->fs_bsize,
 	    false, &bp);
 	if (error)
 		return error;
@@ -1901,8 +1901,8 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	 * By doing these checks we avoid several potential deadlocks.
 	 */
 	fs = ip->i_fs;
-	lbn = fragstoblks(fs, dbtofsb(fs, bp->b_blkno));
-	if (bp->b_blkno >= fsbtodb(fs, fs->fs_size)) {
+	lbn = fragstoblks(fs, FFS_DBTOFSB(fs, bp->b_blkno));
+	if (bp->b_blkno >= FFS_FSBTODB(fs, fs->fs_size)) {
 		mutex_exit(&si->si_lock);
 		return 0;
 	}
@@ -2187,7 +2187,7 @@ rwfsblk(struct vnode *vp, int flags, void *data, daddr_t lbn)
 	nbp->b_bcount = nbp->b_bufsize = fs->fs_bsize;
 	nbp->b_error = 0;
 	nbp->b_data = data;
-	nbp->b_blkno = nbp->b_rawblkno = fsbtodb(fs, blkstofrags(fs, lbn));
+	nbp->b_blkno = nbp->b_rawblkno = FFS_FSBTODB(fs, blkstofrags(fs, lbn));
 	nbp->b_proc = NULL;
 	nbp->b_dev = ip->i_devvp->v_rdev;
 	SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
@@ -2223,7 +2223,7 @@ syncsnap(struct vnode *vp)
 		KASSERT(bp->b_bcount == fs->fs_bsize);
 		mutex_exit(&bufcache_lock);
 		error = rwfsblk(vp, B_WRITE, bp->b_data,
-		    fragstoblks(fs, dbtofsb(fs, bp->b_blkno)));
+		    fragstoblks(fs, FFS_DBTOFSB(fs, bp->b_blkno)));
 		brelse(bp, BC_INVAL | BC_VFLUSH);
 		if (error)
 			return error;

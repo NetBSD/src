@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.3 2013/06/19 18:18:12 dholland Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.4 2013/06/23 02:06:05 dholland Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -117,7 +117,7 @@ struct mfs_sblock {
 #define NO_BLOCK		((block_t) 0)	/* absence of a block number */
 
 /* Turn file system block numbers into disk block addresses */
-#define fsbtodb(fs, b)	((b) << (fs)->mfs_fsbtodb)
+#define MFS_FSBTODB(fs, b)	((b) << (fs)->mfs_fsbtodb)
 
 #define	ino_to_fsba(fs, x)						\
 	(((x) - 1) / (fs)->mfs_inodes_per_block +			\

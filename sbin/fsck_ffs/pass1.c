@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.53 2013/06/19 18:02:21 dholland Exp $	*/
+/*	$NetBSD: pass1.c,v 1.54 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.53 2013/06/19 18:02:21 dholland Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.54 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    size > 0 && size < UFS1_MAXSYMLINKLEN &&
 		    DIP(dp, blocks) != 0) {
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(sblock, iswap32(DIP(dp, db[0]))),
+			    FFS_FSBTODB(sblock, iswap32(DIP(dp, db[0]))),
 			    (long)secsize) != 0)
 				errexit("cannot read symlink");
 			if (debug) {
