@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.19 2013/06/19 08:02:06 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.20 2013/06/23 11:11:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -427,4 +427,17 @@ sys/netinet6/ip6_flow.c				1.21
 
 	Clear mbuf's csum_flags in ip6flow_fastforward(). Fixes PR#47849.
 	[msaitoh, ticket #1864]
+
+distrib/sets/lists/man/mi			1.1411
+share/man/man4/Makefile				1.593
+share/man/man4/gpio.4				1.24
+share/man/man4/ptcd.4				1.1, 1.3, 1.4
+sys/arch/i386/conf/ALL				1.348
+sys/arch/i386/conf/files.i386			1.369
+sys/dev/isa/ptcd.c				1.1
+
+	Add ptcd(4), a device driver for the cash drawer port found on
+	Protech PS3100 point of sale terminals.  It controls the cash drawer
+	using a gpio(4) device that attaches at ptcd0.
+	[mbalmer, ticket #1863]
 
