@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.1 2011/09/17 18:08:35 jruoho Exp $ */
+/* $NetBSD: t_atan.c,v 1.1.4.1 2013/06/23 11:16:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ ATF_TC_BODY(atan_inf_neg, tc)
 {
 #ifndef __vax__
 	const double x = -1.0L / 0.0L;
-	const float eps = 1.0e-40;
+	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) + M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(-Inf) != -pi/2");
@@ -78,7 +78,7 @@ ATF_TC_BODY(atan_inf_pos, tc)
 {
 #ifndef __vax__
 	const double x = +1.0L / 0.0L;
-	const float eps = 1.0e-40;
+	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) - M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(+Inf) != pi/2");
@@ -95,7 +95,7 @@ ATF_TC_BODY(atan_tan, tc)
 {
 #ifndef __vax__
 	const double x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
-	const double eps = 1.0e-40;
+	const double eps = 1.0e-15;
 	double y;
 	size_t i;
 
