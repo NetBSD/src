@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.20 2013/06/21 08:18:24 wiz Exp $
+.\" $NetBSD: login_cap.3,v 1.21 2013/06/23 08:38:41 wiz Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -102,10 +102,7 @@ function.
 The
 .Fn login_getpwclass
 function is equivalent to:
-login_getclass(
-.Fa pwd
-? pwd->pw_class :
-.Dv NULL ) .
+.Dl login_getclass(pwd\ ? pwd->pw_class\ : NULL)
 .Pp
 Once
 .Ar lc
