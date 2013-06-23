@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.6 2012/08/23 11:59:02 drochner Exp $
+.\"	$NetBSD: cprng.9,v 1.7 2013/06/23 02:39:32 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,7 +116,6 @@ The
 family of functions supply less strong random numbers, suitable for
 initialization vectors, nonces in certain protocols, and other
 similar purposes, using a faster but less secure stream-cipher generator.
-stream-cipher generator.
 Calls to
 .Xr arc4random 9
 should be replaced with calls to
