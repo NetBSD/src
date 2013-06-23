@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.137 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.137 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,7 +134,7 @@ ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
     long size, dev_t dev, ino_t inum)
 {
 	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
-	    fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
+	    ffs_fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
 		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
 		    "size = %ld, fs = %s\n",
 		    (long long)dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
@@ -725,7 +725,7 @@ ffs_dirpref(struct inode *pip)
 	minifree = avgifree - fs->fs_ipg / 4;
 	if (minifree < 0)
 		minifree = 0;
-	minbfree = avgbfree - fragstoblks(fs, fs->fs_fpg) / 4;
+	minbfree = avgbfree - ffs_fragstoblks(fs, fs->fs_fpg) / 4;
 	if (minbfree < 0)
 		minbfree = 0;
 	cgsize = (int64_t)fs->fs_fsize * fs->fs_fpg;
@@ -831,7 +831,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int flags,
 		if (flags & B_METAONLY)
 			return ip->i_ffs_first_indir_blk;
 		else
-			return ip->i_ffs_first_data_blk + blkstofrags(fs, lbn);
+			return ip->i_ffs_first_data_blk + ffs_blkstofrags(fs, lbn);
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
@@ -895,7 +895,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int flags,
 		if (flags & B_METAONLY)
 			return ip->i_ffs_first_indir_blk;
 		else
-			return ip->i_ffs_first_data_blk + blkstofrags(fs, lbn);
+			return ip->i_ffs_first_data_blk + ffs_blkstofrags(fs, lbn);
 	}
 
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
@@ -1021,8 +1021,8 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	if (fs->fs_cs(fs, cg).cs_nffree < ffs_numfrags(fs, nsize - osize))
 		return (0);
 	frags = ffs_numfrags(fs, nsize);
-	bbase = fragnum(fs, bprev);
-	if (bbase > fragnum(fs, (bprev + frags - 1))) {
+	bbase = ffs_fragnum(fs, bprev);
+	if (bbase > ffs_fragnum(fs, (bprev + frags - 1))) {
 		/* cannot extend across a block boundary */
 		return (0);
 	}
@@ -1222,12 +1222,12 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 	if (bpref == 0 || dtog(fs, bpref) != ufs_rw32(cgp->cg_cgx, needswap)) {
 		bpref = ufs_rw32(cgp->cg_rotor, needswap);
 	} else {
-		bpref = blknum(fs, bpref);
+		bpref = ffs_blknum(fs, bpref);
 		bno = dtogd(fs, bpref);
 		/*
 		 * if the requested block is available, use it
 		 */
-		if (ffs_isblock(fs, blksfree, fragstoblks(fs, bno)))
+		if (ffs_isblock(fs, blksfree, ffs_fragstoblks(fs, bno)))
 			goto gotit;
 		/*
 		 * if the requested data block isn't available and we are
@@ -1245,7 +1245,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 		return (0);
 	cgp->cg_rotor = ufs_rw32(bno, needswap);
 gotit:
-	blkno = fragstoblks(fs, bno);
+	blkno = ffs_fragstoblks(fs, bno);
 	ffs_clrblock(fs, blksfree, blkno);
 	ffs_clusteracct(fs, cgp, blkno, -1);
 	ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
@@ -1460,7 +1460,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	KASSERT((u_int)size <= fs->fs_bsize && ffs_fragoff(fs, size) == 0 &&
-	    fragnum(fs, bno) + ffs_numfrags(fs, size) <= fs->fs_frag);
+	    ffs_fragnum(fs, bno) + ffs_numfrags(fs, size) <= fs->fs_frag);
 	KASSERT(bno < fs->fs_size);
 
 	cg = dtog(fs, bno);
@@ -1481,7 +1481,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 
 	mutex_enter(&ump->um_lock);
 	if (size == fs->fs_bsize) {
-		fragno = fragstoblks(fs, cgbno);
+		fragno = ffs_fragstoblks(fs, cgbno);
 		if (!ffs_isblock(fs, blksfree, fragno)) {
 			mutex_exit(&ump->um_lock);
 			brelse(bp, 0);
@@ -1493,7 +1493,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 		fs->fs_cstotal.cs_nbfree--;
 		fs->fs_cs(fs, cg).cs_nbfree--;
 	} else {
-		bbase = cgbno - fragnum(fs, cgbno);
+		bbase = cgbno - ffs_fragnum(fs, cgbno);
 
 		frags = ffs_numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
@@ -1506,7 +1506,7 @@ ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
 		/*
 		 * if a complete block is being split, account for it
 		 */
-		fragno = fragstoblks(fs, bbase);
+		fragno = ffs_fragstoblks(fs, bbase);
 		if (ffs_isblock(fs, blksfree, fragno)) {
 			ufs_add32(cgp->cg_cs.cs_nffree, fs->fs_frag, needswap);
 			fs->fs_cstotal.cs_nffree += fs->fs_frag;
@@ -1616,7 +1616,7 @@ ffs_blkfree_td(struct fs *fs, struct discardopdata *td)
 
 	while (td->size) {
 		todo = min(td->size,
-		  ffs_lfragtosize(fs, (fs->fs_frag - fragnum(fs, td->bno))));
+		  ffs_lfragtosize(fs, (fs->fs_frag - ffs_fragnum(fs, td->bno))));
 		ffs_blkfree_cg(fs, td->devvp, td->bno, todo);
 		td->bno += ffs_numfrags(fs, todo);
 		td->size -= todo;
@@ -1838,7 +1838,7 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	cg = dtog(fs, bno);
 	dev = VTOI(devvp)->i_devvp->v_rdev;
 	ump = VFSTOUFS(devvp->v_mount);
-	cgblkno = fragstoblks(fs, cgtod(fs, cg));
+	cgblkno = ffs_fragstoblks(fs, cgtod(fs, cg));
 
 	error = ffs_check_bad_allocation(__func__, fs, bno, size, dev, inum);
 	if (error)
@@ -1880,7 +1880,7 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 	blksfree = cg_blksfree(cgp, needswap);
 	mutex_enter(&ump->um_lock);
 	if (size == fs->fs_bsize) {
-		fragno = fragstoblks(fs, cgbno);
+		fragno = ffs_fragstoblks(fs, cgbno);
 		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
 			if (devvp_is_snapshot) {
 				mutex_exit(&ump->um_lock);
@@ -1907,7 +1907,7 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 			ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
 		}
 	} else {
-		bbase = cgbno - fragnum(fs, cgbno);
+		bbase = cgbno - ffs_fragnum(fs, cgbno);
 		/*
 		 * decrement the counts associated with the old frags
 		 */
@@ -1938,7 +1938,7 @@ ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 		/*
 		 * if a complete block has been reassembled, account for it
 		 */
-		fragno = fragstoblks(fs, bbase);
+		fragno = ffs_fragstoblks(fs, bbase);
 		if (ffs_isblock(fs, blksfree, fragno)) {
 			ufs_add32(cgp->cg_cs.cs_nffree, -fs->fs_frag, needswap);
 			fs->fs_cstotal.cs_nffree -= fs->fs_frag;
@@ -2040,7 +2040,7 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	cg = ino_to_cg(fs, ino);
 	dev = VTOI(devvp)->i_devvp->v_rdev;
 	ump = VFSTOUFS(devvp->v_mount);
-	cgbno = fragstoblks(fs, cgtod(fs, cg));
+	cgbno = ffs_fragstoblks(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
 		    (unsigned long long)dev, (unsigned long long)ino,
@@ -2125,7 +2125,7 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 
 	cg = ino_to_cg(fs, ino);
 	if (devvp_is_snapshot)
-		cgbno = fragstoblks(fs, cgtod(fs, cg));
+		cgbno = ffs_fragstoblks(fs, cgtod(fs, cg));
 	else
 		cgbno = FFS_FSBTODB(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)

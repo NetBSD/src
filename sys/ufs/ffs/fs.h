@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.63 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.64 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -470,7 +470,7 @@ struct fs {
     /* block map */	howmany((fpg), NBBY) +\
     /* if present */	((fs)->fs_contigsumsize <= 0 ? 0 : \
     /* cluster sum */	(fs)->fs_contigsumsize * sizeof(int32_t) + \
-    /* cluster map */	howmany(fragstoblks(fs, (fpg)), NBBY)))
+    /* cluster map */	howmany(ffs_fragstoblks(fs, (fpg)), NBBY)))
 
 #define	CGSIZE(fs) CGSIZE_IF((fs), (fs)->fs_ipg, (fs)->fs_fpg)
 
@@ -636,7 +636,7 @@ struct ocg {
 #define	ino_to_cg(fs, x)	((x) / (fs)->fs_ipg)
 #define	ino_to_fsba(fs, x)						\
 	((daddr_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
-	    (blkstofrags((fs), (((x) % (fs)->fs_ipg) / FFS_INOPB(fs))))))
+	    (ffs_blkstofrags((fs), (((x) % (fs)->fs_ipg) / FFS_INOPB(fs))))))
 #define	ino_to_fsbo(fs, x)	((x) % FFS_INOPB(fs))
 
 /*
@@ -681,13 +681,13 @@ struct ocg {
 	(((size) + (fs)->fs_qbmask) & (fs)->fs_bmask)
 #define	ffs_fragroundup(fs, size) /* calculates roundup(size, fs->fs_fsize) */ \
 	(((size) + (fs)->fs_qfmask) & (fs)->fs_fmask)
-#define	fragstoblks(fs, frags)	/* calculates (frags / fs->fs_frag) */ \
+#define	ffs_fragstoblks(fs, frags) /* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->fs_fragshift)
-#define	blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
+#define	ffs_blkstofrags(fs, blks) /* calculates (blks * fs->fs_frag) */ \
 	((blks) << (fs)->fs_fragshift)
-#define	fragnum(fs, fsb)	/* calculates (fsb % fs->fs_frag) */ \
+#define	ffs_fragnum(fs, fsb)	/* calculates (fsb % fs->fs_frag) */ \
 	((fsb) & ((fs)->fs_frag - 1))
-#define	blknum(fs, fsb)		/* calculates rounddown(fsb, fs->fs_frag) */ \
+#define	ffs_blknum(fs, fsb)	/* calculates rounddown(fsb, fs->fs_frag) */ \
 	((fsb) &~ ((fs)->fs_frag - 1))
 
 /*
@@ -695,7 +695,7 @@ struct ocg {
  * percentage to hold in reserve.
  */
 #define	freespace(fs, percentreserved) \
-	(blkstofrags((fs), (fs)->fs_cstotal.cs_nbfree) + \
+	(ffs_blkstofrags((fs), (fs)->fs_cstotal.cs_nbfree) + \
 	(fs)->fs_cstotal.cs_nffree - \
 	(((off_t)((fs)->fs_dsize)) * (percentreserved) / 100))
 
