@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2013/02/23 16:22:39 jkunz Exp $
+# $Id: Makefile,v 1.6 2013/06/23 13:57:27 matt Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -8,7 +8,8 @@ SRCS=		args_prep.c boot_prep.c clock_prep.c common.c emi_prep.c \
 .include <bsd.own.mk>
 
 CLEANFILES+=	${PROG}
-CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv5te -mtune=arm926ej-s
+CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
+CFLAGS+=	-march=armv5te -mtune=arm926ej-s
 CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch

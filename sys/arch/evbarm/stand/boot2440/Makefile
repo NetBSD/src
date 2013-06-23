@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/03/29 17:01:00 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2013/06/23 13:56:40 matt Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ SRCS+=		s3csdi.c vers.c
 .include <bsd.own.mk>
 
 CLEANFILES+=	vers.c ${PROG}.elf
-CFLAGS+=	-Wall -Wno-main -ffreestanding
+CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -DLIBSA_PRINTF_WIDTH_SUPPORT
 CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27" 
 CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
