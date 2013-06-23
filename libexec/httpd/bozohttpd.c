@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.33 2013/03/09 21:36:04 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.34 2013/06/23 20:32:55 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1076,7 +1076,7 @@ check_virtual(bozo_httpreq_t *request)
 				    len) == 0) {
 					/* found it, punch it */
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
-					httpd->virthostname = d->d_name;
+					httpd->virthostname = strdup(d->d_name);
 					if (asprintf(&s, "%s/%s", httpd->virtbase,
 					    httpd->virthostname) < 0)
 						bozo_err(httpd, 1, "asprintf");
