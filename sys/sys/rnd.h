@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.37 2013/06/20 23:21:42 christos Exp $	*/
+/*	$NetBSD: rnd.h,v 1.38 2013/06/23 02:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -139,23 +139,6 @@ rndsource_setcb(struct krndsource *const rs, void *const cb, void *const arg)
 	rs->getarg = arg;
 }
 
-enum rsink_st {
-	RSTATE_IDLE = 0,
-	RSTATE_PENDING,
-	RSTATE_HASBITS
-};
-
-typedef struct rndsink {
-        TAILQ_ENTRY(rndsink) tailq;     /* the queue */
-	kmutex_t	mtx;		/* lock to seed or unregister */
-	enum rsink_st	state;		/* in-use?  filled? */
-        void            (*cb)(void *);  /* callback function when ready */
-        void            *arg;           /* callback function argument */
-        char            name[16];       /* sink name */
-        size_t          len;            /* how many bytes wanted/supplied */
-        uint8_t         data[64];       /* random data returned here */
-} rndsink_t;
-
 typedef struct {
         uint32_t        cursor;         /* current add point in the pool */
         uint32_t        rotate;         /* how many bits to rotate by */
@@ -184,8 +167,7 @@ void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
 void		rnd_detach_source(krndsource_t *);
 
-void		rndsink_attach(rndsink_t *);
-void		rndsink_detach(rndsink_t *);
+void		rnd_getmore(size_t);
 
 void		rnd_seed(void *, size_t);
 
@@ -257,7 +239,7 @@ typedef struct {
  * A context.  cprng plus a smidge.
  */
 typedef struct {
-	struct _cprng_strong	*cprng;
+	struct cprng_strong	*cprng;
 	int		hard;
 	int		bytesonkey;
 	kmutex_t	interlock;

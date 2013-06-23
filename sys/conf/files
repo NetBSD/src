@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1073 2013/06/10 20:28:36 christos Exp $
+#	$NetBSD: files,v 1.1074 2013/06/23 02:35:24 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1524,6 +1524,7 @@ file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_rndpool.c
 file	kern/kern_rndq.c
+file	kern/kern_rndsink.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c

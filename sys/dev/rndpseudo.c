@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.12 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.13 2013/06/23 02:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.12 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.13 2013/06/23 02:35:24 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -679,12 +679,10 @@ rnd_poll(struct file *fp, int events)
 		}       
 	}
 
-	if (cprng_strong_ready(ctx->cprng)) {
-		revents |= events & (POLLIN | POLLRDNORM);
+	if (ctx->hard) {
+		revents |= cprng_strong_poll(ctx->cprng, events);
 	} else {
-		mutex_enter(&ctx->cprng->mtx);
-		selrecord(curlwp, &ctx->cprng->selq);
-		mutex_exit(&ctx->cprng->mtx);
+		revents |= (events & (POLLIN | POLLRDNORM));
 	}
 
 	return (revents);
@@ -723,39 +721,10 @@ rnd_close(struct file *fp)
 	return 0;
 }
 
-static void
-filt_rnddetach(struct knote *kn)
-{
-	cprng_strong_t *c = kn->kn_hook;
-
-	mutex_enter(&c->mtx);
-	SLIST_REMOVE(&c->selq.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(&c->mtx);
-}
-
-static int
-filt_rndread(struct knote *kn, long hint)
-{
-	cprng_strong_t *c = kn->kn_hook;
-
-	if (cprng_strong_ready(c)) {
-		kn->kn_data = RND_TEMP_BUFFER_SIZE;
-		return 1;
-	}
-	return 0;
-}
-
-static const struct filterops rnd_seltrue_filtops =
-	{ 1, NULL, filt_rnddetach, filt_seltrue };
-
-static const struct filterops rndread_filtops =
-	{ 1, NULL, filt_rnddetach, filt_rndread };
-
 static int
 rnd_kqfilter(struct file *fp, struct knote *kn)
 {
 	rp_ctx_t *ctx = fp->f_data;
-	struct klist *klist;
 
 	if (ctx->cprng == NULL) {
 		rnd_alloc_cprng(ctx);
@@ -764,27 +733,5 @@ rnd_kqfilter(struct file *fp, struct knote *kn)
 		}
 	}
 
-	mutex_enter(&ctx->cprng->mtx);
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		klist = &ctx->cprng->selq.sel_klist;
-		kn->kn_fop = &rndread_filtops;
-		break;
-
-	case EVFILT_WRITE:
-		klist = &ctx->cprng->selq.sel_klist;
-		kn->kn_fop = &rnd_seltrue_filtops;
-		break;
-
-	default:
-		mutex_exit(&ctx->cprng->mtx);
-		return EINVAL;
-	}
-
-	kn->kn_hook = ctx->cprng;
-
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-
-	mutex_exit(&ctx->cprng->mtx);
-	return (0);
+	return cprng_strong_kqfilter(ctx->cprng, kn);
 }

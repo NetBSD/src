@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.13 2013/06/20 23:21:41 christos Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.13 2013/06/20 23:21:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.13 2013/06/20 23:21:41 christos Exp 
 #include <sys/callout.h>
 #include <sys/intr.h>
 #include <sys/rnd.h>
+#include <sys/rndsink.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
@@ -102,17 +103,6 @@ typedef struct _rnd_sample_t {
  */
 SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
 kmutex_t			rnd_mtx;
-
-/*
- * Entropy sinks: usually other generators waiting to be rekeyed.
- *
- * A sink's callback MUST NOT re-add the sink to the list, or
- * list corruption will occur.  The list is protected by the
- * rndsink_mtx, which must be released before calling any sink's
- * callback.
- */
-TAILQ_HEAD(, rndsink)		rnd_sinks;
-kmutex_t			rndsink_mtx;
 
 /*
  * Memory pool for sample buffers
@@ -240,7 +230,7 @@ rnd_schedule_wakeup(void)
 /*
  * Tell any sources with "feed me" callbacks that we are hungry.
  */
-static void 
+void
 rnd_getmore(size_t byteswanted)
 {
 	krndsource_t *rs; 
@@ -266,85 +256,30 @@ rnd_getmore(size_t byteswanted)
 void
 rnd_wakeup_readers(void)
 {
-	rndsink_t *sink, *tsink;
-	size_t	entropy_count;
-	TAILQ_HEAD(, rndsink) sunk = TAILQ_HEAD_INITIALIZER(sunk);
 
+	/*
+	 * XXX This bookkeeping shouldn't be here -- this is not where
+	 * the rnd_empty/rnd_initial_entropy state change actually
+	 * happens.
+	 */
 	mutex_spin_enter(&rndpool_mtx);
-	entropy_count = rndpool_get_entropy_count(&rnd_pool);
+	const size_t entropy_count = rndpool_get_entropy_count(&rnd_pool);
 	if (entropy_count < RND_ENTROPY_THRESHOLD * 8) {
 		rnd_empty = 1;
 		mutex_spin_exit(&rndpool_mtx);
 		return;
 	} else {
 #ifdef RND_VERBOSE
-		if (__predict_false(!rnd_initial_entropy)) {
-			printf("rnd: have initial entropy (%u)\n",
-			       (unsigned int)entropy_count);
-		}
+		if (__predict_false(!rnd_initial_entropy))
+			printf("rnd: have initial entropy (%zu)\n",
+			    entropy_count);
 #endif
 		rnd_empty = 0;
 		rnd_initial_entropy = 1;
 	}
-
-	/*
-	 * First, take care of consumers needing rekeying.
-	 */
-	mutex_spin_enter(&rndsink_mtx);
-	TAILQ_FOREACH_SAFE(sink, &rnd_sinks, tailq, tsink) {
-		if (!mutex_tryenter(&sink->mtx)) {
-#ifdef RND_VERBOSE
-			printf("rnd_wakeup_readers: "
-			       "skipping busy rndsink\n");
-#endif
-			continue;
-		}
-
-		KASSERT(RSTATE_PENDING == sink->state);
-		
-		if (sink->len * 8 < rndpool_get_entropy_count(&rnd_pool)) {
-			/* We have enough entropy to sink some here. */
-			if (rndpool_extract_data(&rnd_pool, sink->data,
-						 sink->len, RND_EXTRACT_GOOD)
-			    != sink->len) {
-				panic("could not extract estimated "
-				      "entropy from pool");
-			}
-			sink->state = RSTATE_HASBITS;
-			/* Move this sink to the list of pending callbacks */
-			TAILQ_REMOVE(&rnd_sinks, sink, tailq);
-			TAILQ_INSERT_HEAD(&sunk, sink, tailq);
-		} else {
-#ifdef RND_VERBOSE
-			printf("sink wants %d, we have %d, asking for more\n",
-			       (int)sink->len * 8,
-			       (int)rndpool_get_entropy_count(&rnd_pool));
-#endif
-			mutex_spin_exit(&sink->mtx);
-			rnd_getmore(sink->len * 8);
-		}
-	}
-	mutex_spin_exit(&rndsink_mtx);
 	mutex_spin_exit(&rndpool_mtx);
 
-	/*
-	 * Now that we have dropped the mutexes, we can run sinks' callbacks.
-	 * Since we have reused the "tailq" member of the sink structure for
-	 * this temporary on-stack queue, the callback must NEVER re-add
-	 * the sink to the main queue, or our on-stack queue will become
-	 * corrupt.
-	 */
-	while ((sink = TAILQ_FIRST(&sunk))) {
-#ifdef RND_VERBOSE
-		printf("supplying %d bytes to entropy sink \"%s\""
-		       " (cb %p, arg %p).\n",
-		       (int)sink->len, sink->name, sink->cb, sink->arg);
-#endif
-		sink->state = RSTATE_HASBITS;
-		sink->cb(sink->arg);
-		TAILQ_REMOVE(&sunk, sink, tailq);
-		mutex_spin_exit(&sink->mtx);
-	}
+	rndsinks_distribute();
 }
 
 /*
@@ -445,7 +380,7 @@ rnd_init(void)
 		return;
 
 	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&rndsink_mtx, MUTEX_DEFAULT, IPL_VM);
+	rndsinks_init();
 
 	/*
 	 * take a counter early, hoping that there's some variance in
@@ -455,7 +390,6 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
-	TAILQ_INIT(&rnd_sinks);
 
 	rndpool_init(&rnd_pool);
 	mutex_init(&rndpool_mtx, MUTEX_DEFAULT, IPL_VM);
@@ -900,7 +834,6 @@ rnd_process_events(void)
 			SIMPLEQ_HEAD_INITIALIZER(dq_samples);
 	SIMPLEQ_HEAD(, _rnd_sample_t) df_samples =
 			SIMPLEQ_HEAD_INITIALIZER(df_samples);
-        TAILQ_HEAD(, rndsink) sunk = TAILQ_HEAD_INITIALIZER(sunk);
 
 	/*
 	 * Sample queue is protected by rnd_mtx, drain to onstack queue
@@ -1108,42 +1041,6 @@ rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 	retval = rnd_extract_data_locked(p, len, flags);
 	mutex_spin_exit(&rndpool_mtx);
 	return retval;
-}
-
-void
-rndsink_attach(rndsink_t *rs)
-{
-#ifdef RND_VERBOSE
-	printf("rnd: entropy sink \"%s\" wants %d bytes of data.\n",
-	       rs->name, (int)rs->len);
-#endif
-
-	KASSERT(mutex_owned(&rs->mtx));
-	KASSERT(rs->state = RSTATE_PENDING);
-
-	mutex_spin_enter(&rndsink_mtx);
-	TAILQ_INSERT_TAIL(&rnd_sinks, rs, tailq);
-	mutex_spin_exit(&rndsink_mtx);
-
-	rnd_schedule_process();
-}
-
-void
-rndsink_detach(rndsink_t *rs)
-{
-	rndsink_t *sink, *tsink;
-#ifdef RND_VERBOSE
-	printf("rnd: entropy sink \"%s\" no longer wants data.\n", rs->name);
-#endif
-	KASSERT(mutex_owned(&rs->mtx));
-
-	mutex_spin_enter(&rndsink_mtx);
-	TAILQ_FOREACH_SAFE(sink, &rnd_sinks, tailq, tsink) {
-		if (sink == rs) {
-			TAILQ_REMOVE(&rnd_sinks, rs, tailq);
-		}
-	}
-	mutex_spin_exit(&rndsink_mtx);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.6 2013/04/30 00:03:53 pooka Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.7 2013/06/23 02:35:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,16 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/cprng.h>
+#include <sys/event.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/poll.h>
 #include <sys/rngtest.h>
-
-#include <sys/cprng.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
 #include <rump/rumpuser.h>
 
@@ -60,41 +61,46 @@ cprng_init(void)
 }
 
 cprng_strong_t *
-cprng_strong_create(const char *const name, int ipl, int flags)
+cprng_strong_create(const char *const name __unused, int ipl __unused,
+    int flags __unused)
 {
-	cprng_strong_t *c;
-
-	/* zero struct to zero counters we won't ever set with no DRBG */
-	c = kmem_zalloc(sizeof(*c), KM_NOSLEEP);
-	if (c == NULL) {
-		return NULL;
-	}
-	strlcpy(c->name, name, sizeof(c->name));
-	mutex_init(&c->mtx, MUTEX_DEFAULT, ipl);
-	if (c->flags & CPRNG_USE_CV) {
-		cv_init(&c->cv, name);
-	}
-	selinit(&c->selq);
-	return c;
+	return NULL;
 }
 
-
 size_t
-cprng_strong(cprng_strong_t *c, void *p, size_t len, int blocking)
+cprng_strong(cprng_strong_t *c __unused, void *p, size_t len,
+    int blocking __unused)
 {
-	mutex_enter(&c->mtx);
+	KASSERT(c == NULL);
 	cprng_fast(p, len);		/* XXX! */
-	mutex_exit(&c->mtx);
 	return len;
 }
 
-void
-cprng_strong_destroy(cprng_strong_t *c)
+int
+cprng_strong_kqfilter(cprng_strong_t *c __unused, struct knote *kn __unused)
 {
-	mutex_destroy(&c->mtx);
-	cv_destroy(&c->cv);
-	memset(c, 0, sizeof(*c));
-	kmem_free(c, sizeof(*c));
+	KASSERT(c == NULL);
+	kn->kn_data = CPRNG_MAX_LEN;
+	return 1;
+}
+
+int
+cprng_strong_poll(cprng_strong_t *c __unused, int events)
+{
+	KASSERT(c == NULL);
+	return (events & (POLLIN | POLLRDNORM));
+}
+
+void
+cprng_strong_deplete(struct cprng_strong *c __unused)
+{
+	KASSERT(c == NULL);
+}
+
+void
+cprng_strong_destroy(cprng_strong_t *c __unused)
+{
+	KASSERT(c == NULL);
 }
 
 size_t
@@ -103,6 +109,7 @@ cprng_fast(void *p, size_t len)
 	size_t randlen;
 
 	rumpuser_getrandom(p, len, 0, &randlen);
+	KASSERT(randlen == len);
 	return len;
 }
 
@@ -113,6 +120,7 @@ cprng_fast32(void)
 	uint32_t ret;
 
 	rumpuser_getrandom(&ret, sizeof(ret), 0, &randlen);
+	KASSERT(randlen == sizeof(ret));
 	return ret;
 }
 
@@ -123,5 +131,6 @@ cprng_fast64(void)
 
 	size_t randlen;
 	rumpuser_getrandom(&ret, sizeof(ret), 0, &randlen);
+	KASSERT(randlen == sizeof(ret));
 	return ret;
 }
