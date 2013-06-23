@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53 2012/11/13 14:07:42 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54 2013/06/23 23:49:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -140,9 +140,6 @@ extern struct pool_cache pmap_pdp_cache;
  * pm_lock is the same as the lock for vm object 0.  Changes to
  * the other objects may only be made if that lock has been taken
  * (the other object locks are only used when uvm_pagealloc is called)
- *
- * XXX If we ever support processor numbers higher than 31, we'll have
- * XXX to rethink the CPU mask.
  */
 
 struct pmap {
