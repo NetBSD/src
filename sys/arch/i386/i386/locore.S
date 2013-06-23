@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.104 2013/06/22 15:13:55 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.105 2013/06/23 03:16:46 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.104 2013/06/22 15:13:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.105 2013/06/23 03:16:46 uebayasi Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -592,38 +592,38 @@ try586:	/* Use the `cpuid' instruction. */
 	cmpl	%eax,RELOC(nkptp)+1*4
 	jnz	1b
 
- 	/* Clear tables */
- 	movl	%esi,%edi
+	/* Clear tables */
+	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
- 	movl	RELOC(tablesize),%ecx
- 	shrl	$2,%ecx
+	movl	RELOC(tablesize),%ecx
+	shrl	$2,%ecx
 	rep
 	stosl
 
- 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
+	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 /*
  * Build initial page tables.
  */
- 	/*
- 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	/*
+	 * Compute &__data_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
 	 * 32 bit mode. So use the bottom 32 bits.
- 	 */
- 	movl	$RELOC(__data_start),%edx
+	 */
+	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
 
- 	/*
- 	 * Skip the first MB.
- 	 */
+	/*
+	 * Skip the first MB.
+	 */
 	movl	$_RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
 #ifdef PAE
- 	shll	$1,%ecx			/* pdes are twice larger with PAE */
+	shll	$1,%ecx			/* pdes are twice larger with PAE */
 #endif
- 	addl	%ecx,%ebx
+	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
 	movl	%edx,%ecx
@@ -648,24 +648,24 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Construct a page table directory.
  */
- 	/* Set up top level entries for identity mapping */
- 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
- 	leal	(PROC0_PTP1_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW), %eax
- 	movl	RELOC(nkptp)+1*4,%ecx
+	/* Set up top level entries for identity mapping */
+	leal	(PROC0_PDIR_OFF)(%esi),%ebx
+	leal	(PROC0_PTP1_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
- 	/* Set up top level entries for actual kernel mapping */
- 	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
- 	leal	(PROC0_PTP1_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW), %eax
- 	movl	RELOC(nkptp)+1*4,%ecx
+	/* Set up top level entries for actual kernel mapping */
+	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
+	leal	(PROC0_PTP1_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
- 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
- 	leal	(PROC0_PDIR_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW),%eax
+	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
+	leal	(PROC0_PDIR_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt
 
@@ -694,9 +694,9 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
 
- 	/*
- 	 * 2. Enable paging and the rest of it.
- 	 */
+	/*
+	 * 2. Enable paging and the rest of it.
+	 */
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
@@ -706,17 +706,17 @@ try586:	/* Use the `cpuid' instruction. */
 	ret
 
 begin:
- 	/*
- 	 * We have arrived.
- 	 * There's no need anymore for the identity mapping in low
- 	 * memory, remove it.
- 	 */
- 	movl	_C_LABEL(nkptp)+1*4,%ecx
- 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys address of PDIR
- 	addl	$(KERNBASE), %ebx		# new, virtual address of PDIR
+	/*
+	 * We have arrived.
+	 * There's no need anymore for the identity mapping in low
+	 * memory, remove it.
+	 */
+	movl	_C_LABEL(nkptp)+1*4,%ecx
+	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys address of PDIR
+	addl	$(KERNBASE), %ebx		# new, virtual address of PDIR
 1:	movl	$0,(PDE_SIZE-4)(%ebx)		# Upper bits (for PAE)
 	movl	$0,(%ebx)
- 	addl	$PDE_SIZE,%ebx
+	addl	$PDE_SIZE,%ebx
 	loop	1b
 
 	/* Relocate atdevbase. */
@@ -726,7 +726,7 @@ begin:
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
- 	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
+	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(lwp0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
@@ -745,7 +745,7 @@ begin:
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
- 	movl	_C_LABEL(tablesize),%eax
+	movl	_C_LABEL(tablesize),%eax
 	addl	%esi,%eax		# skip past stack and page tables
 
 #ifdef PAE
@@ -784,7 +784,7 @@ begin:
 	movl	%esp, %ebx		# save start of available space
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
-        /* Clear BSS first so that there are no surprises... */
+	/* Clear BSS first so that there are no surprises... */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
@@ -792,7 +792,7 @@ begin:
 	rep stosb
 
 	/* Copy the necessary stuff from start_info structure. */
-        /* We need to copy shared_info early, so that sti/cli work */
+	/* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
 	rep movsl
