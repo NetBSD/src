@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.11 2013/06/23 11:17:29 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.12 2013/06/23 11:22:29 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -252,4 +252,10 @@ tests/lib/libm/t_atan.c				1.4 - 1.7, 1.9 via patch
 	Fix test of atan_inf_neg, atan_inf_pos and atan_tan on i386.
 	PR port-i386/46108.
 	[isaki, ticket #903]
+
+sys/arch/i386/eisa/eisa_machdep.c		1.38
+
+	port-i386/47907: kernel trap when using EISA with I/O APIC on i386
+	Patch from Felix Deichmann.
+	[uebayasi, ticket #904]
 
