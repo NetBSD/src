@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.24 2013/06/19 17:51:27 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.25 2013/06/23 02:06:06 dholland Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.24 2013/06/19 17:51:27 dholland Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.25 2013/06/23 02:06:06 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -307,7 +307,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
 		return (0);
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 	    (int)fs->fs_cgsize, NULL, 0, &bp);
 	if (error) {
 		return (0);
@@ -450,7 +450,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		    (unsigned long long)ip->i_number);
 		return;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 	    (int)fs->fs_cgsize, NULL, 0, &bp);
 	if (error) {
 		brelse(bp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.60 2013/04/02 13:31:47 taca Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.61 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.60 2013/04/02 13:31:47 taca Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.61 2013/06/23 02:06:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ dumpfs(const char *name)
 	}
 
 
-	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
+	dev_bsize = afs.fs_fsize / FFS_FSBTODB(&afs, 1);
 
 	rval = 0;
 	printf("file system: %s\n", name);
@@ -478,7 +478,7 @@ print_cgsum(const char *name, int fd)
 		    afs.fs_cssize - i : afs.fs_bsize;
 		ccsp = (struct csum *)((char *)afs.fs_csp + i);
 		if (lseek(fd,
-		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
+		    (off_t)(FFS_FSBTODB(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
 		    dev_bsize, SEEK_SET) == (off_t)-1)
 			return 1;
 		if (read(fd, ccsp, size) != size)
@@ -518,7 +518,7 @@ print_alt_super(const char *name, int fd)
 	int save_printold;
 
 	for (i = 0; i < afs.fs_ncg; i++) {
-		loc = (off_t)(fsbtodb(&afs, cgsblock(&afs, i))) * dev_bsize;
+		loc = (off_t)(FFS_FSBTODB(&afs, cgsblock(&afs, i))) * dev_bsize;
 		printf("\nalternate %d\n", i);
 		if (pread(fd, &alt, sizeof alt, loc) != sizeof alt) {
 			warnx("%s: error reading alt %d", name, i);
@@ -585,7 +585,7 @@ dumpcg(const char *name, int fd, int c)
 	time_t t;
 
 	printf("cg %d:\n", c);
-	if ((cur = lseek(fd, (off_t)(fsbtodb(&afs, cgtod(&afs, c))) * dev_bsize,
+	if ((cur = lseek(fd, (off_t)(FFS_FSBTODB(&afs, cgtod(&afs, c))) * dev_bsize,
 	    SEEK_SET)) == (off_t)-1)
 		return (1);
 	if (read(fd, &acg, afs.fs_bsize) != afs.fs_bsize) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.98 2013/06/19 17:51:25 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.99 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.98 2013/06/19 17:51:25 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.99 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ setup(const char *dev, const char *origdev)
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
 		for (cg = 0; cg < proto.fs_ncg; cg++) {
-			bflag = fsbtodb(&proto, cgsblock(&proto, cg));
+			bflag = FFS_FSBTODB(&proto, cgsblock(&proto, cg));
 			if (readsb(0) != 0)
 				break;
 		}
@@ -458,7 +458,7 @@ setup(const char *dev, const char *origdev)
 		    sblock->fs_cssize - i : sblock->fs_bsize;
 		ccsp = (struct csum *)((char *)sblock->fs_csp + i);
 		if (bread(fsreadfd, (char *)ccsp,
-		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
+		    FFS_FSBTODB(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0) {
@@ -470,7 +470,7 @@ setup(const char *dev, const char *origdev)
 		if (doswap) {
 			ffs_csum_swap(ccsp, ccsp, size);
 			bwrite(fswritefd, (char *)ccsp,
-			    fsbtodb(sblock,
+			    FFS_FSBTODB(sblock,
 				sblock->fs_csaddr + j * sblock->fs_frag),
 			    size);
 		}
@@ -793,11 +793,11 @@ readsb(int listerr)
 		{ badsb(listerr, "SIZE PREPOSTEROUSLY LARGE"); return (0); }
 	/*
 	 * Compute block size that the filesystem is based on,
-	 * according to fsbtodb, and adjust superblock block number
+	 * according to FFS_FSBTODB, and adjust superblock block number
 	 * so we can tell if this is an alternate later.
 	 */
 	super *= dev_bsize;
-	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
+	dev_bsize = sblock->fs_fsize / FFS_FSBTODB(sblock, 1);
 	sblk.b_bno = super / dev_bsize;
 	sblk.b_size = SBLOCKSIZE;
 	if (bflag)
