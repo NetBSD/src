@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.71 2013/06/22 15:13:56 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.72 2013/06/23 03:16:46 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -425,7 +425,7 @@ ENTRY(start)
 	subl	%ebx, (%edx)		/* correct number of entries */
 1:
 
- 	movl	16(%esp),%eax
+	movl	16(%esp),%eax
 	testl	%eax,%eax
 	jz	1f
 	addl	$KERNBASE_LO,%eax
@@ -554,7 +554,7 @@ ENTRY(start)
 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 	/*
- 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	 * Compute &__data_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
 	 * 32 bit mode. So use the bottom 32 bits.
 	 */
