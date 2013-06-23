@@ -1,11 +1,11 @@
-/*	$NetBSD: subr_cprng.c,v 1.17 2013/06/13 00:55:01 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.18 2013/06/23 02:35:24 riastradh Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Thor Lancelot Simon.
+ * by Thor Lancelot Simon and Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,24 +29,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.18 2013/06/23 02:35:24 riastradh Exp $");
+
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/condvar.h>
+#include <sys/cprng.h>
+#include <sys/errno.h>
+#include <sys/event.h>		/* XXX struct knote */
+#include <sys/fcntl.h>		/* XXX FNONBLOCK */
 #include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/kmem.h>
-#include <sys/mutex.h>
-#include <sys/rngtest.h>
+#include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
+#include <sys/select.h>
+#include <sys/systm.h>
 #include <sys/rnd.h>
-#include <dev/rnd_private.h>
+#include <sys/rndsink.h>
+#if DEBUG
+#include <sys/rngtest.h>
+#endif
+
+#include <crypto/nist_ctr_drbg/nist_ctr_drbg.h>
 
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
 
-#include <sys/cprng.h>
+static void	cprng_strong_generate(struct cprng_strong *, void *, size_t);
+static void	cprng_strong_reseed(struct cprng_strong *);
+static void	cprng_strong_reseed_from(struct cprng_strong *, const void *,
+		    size_t, bool);
+#if DEBUG
+static void	cprng_strong_rngtest(struct cprng_strong *);
+#endif
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.17 2013/06/13 00:55:01 tls Exp $");
+static rndsink_callback_t	cprng_strong_rndsink_callback;
 
 void
 cprng_init(void)
@@ -71,343 +89,378 @@ cprng_counter(void)
 	return (tv.tv_sec * 1000000 + tv.tv_usec);
 }
 
-static void
-cprng_strong_doreseed(cprng_strong_t *const c)
+struct cprng_strong {
+	char		cs_name[16];
+	int		cs_flags;
+	kmutex_t	cs_lock;
+	kcondvar_t	cs_cv;
+	struct selinfo	cs_selq;
+	struct rndsink	*cs_rndsink;
+	bool		cs_ready;
+	NIST_CTR_DRBG	cs_drbg;
+};
+
+struct cprng_strong *
+cprng_strong_create(const char *name, int ipl, int flags)
 {
-	uint32_t cc = cprng_counter();
+	const uint32_t cc = cprng_counter();
+	struct cprng_strong *const cprng = kmem_alloc(sizeof(*cprng),
+	    KM_SLEEP);
 
-	KASSERT(mutex_owned(&c->mtx));
-	KASSERT(mutex_owned(&c->reseed.mtx));
-	KASSERT(c->reseed.len == NIST_BLOCK_KEYLEN_BYTES);
-
-	if (nist_ctr_drbg_reseed(&c->drbg, c->reseed.data, c->reseed.len,
-				 &cc, sizeof(cc))) {
-		panic("cprng %s: nist_ctr_drbg_reseed failed.", c->name);
-	}
-	memset(c->reseed.data, 0, c->reseed.len);
-
-#ifdef RND_VERBOSE
-	printf("cprng %s: reseeded with rnd_filled = %d\n", c->name,
-							    rnd_filled);
-#endif
-	c->entropy_serial = rnd_filled;
-	c->reseed.state = RSTATE_IDLE;
-	if (c->flags & CPRNG_USE_CV) {
-		cv_broadcast(&c->cv);
-	}
-	selnotify(&c->selq, 0, 0);
-}
-
-static void
-cprng_strong_sched_reseed(cprng_strong_t *const c)
-{
-	KASSERT(mutex_owned(&c->mtx));
-	if (mutex_tryenter(&c->reseed.mtx)) {
-		switch (c->reseed.state) {
-		    case RSTATE_IDLE:
-			c->reseed.state = RSTATE_PENDING;
-			c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
-			rndsink_attach(&c->reseed);
-			break;
-		    case RSTATE_HASBITS:
-			/* Just rekey the underlying generator now. */
-			cprng_strong_doreseed(c);
-			break;
-		    case RSTATE_PENDING:
-			if (c->entropy_serial != rnd_filled) {
-				rndsink_detach(&c->reseed);
-				rndsink_attach(&c->reseed);
-			}
-			break;
-		    default:
-			panic("cprng %s: bad reseed state %d",
-			      c->name, c->reseed.state);
-			break;
-		}
-		mutex_spin_exit(&c->reseed.mtx);
-	}
-#ifdef RND_VERBOSE
-	else {
-		printf("cprng %s: skipping sched_reseed, sink busy\n",
-		       c->name);
-	}
-#endif
-}
-
-static void
-cprng_strong_reseed(void *const arg)
-{
-	cprng_strong_t *c = arg;
-
-	KASSERT(mutex_owned(&c->reseed.mtx));
-	KASSERT(RSTATE_HASBITS == c->reseed.state);
-
-	if (!mutex_tryenter(&c->mtx)) {
-#ifdef RND_VERBOSE
-	    printf("cprng: sink %s cprng busy, no reseed\n", c->reseed.name);
-#endif
-	    if (c->flags & CPRNG_USE_CV) {	/* XXX if flags change? */
-        	cv_broadcast(&c->cv);
-	    }
-	    return;
-	}
-
-	cprng_strong_doreseed(c);
-	mutex_exit(&c->mtx);
-}
-
-static size_t
-cprng_entropy_try(uint8_t *key, size_t keylen)
-{
-	int r;
-	r = rnd_extract_data(key, keylen, RND_EXTRACT_GOOD);
-	if (r != keylen) {	/* Always fill in, for safety */
-		rnd_extract_data(key + r, keylen - r, RND_EXTRACT_ANY);
-	}
-	return r;
-}
-
-cprng_strong_t *
-cprng_strong_create(const char *const name, int ipl, int flags)
-{
-	cprng_strong_t *c;
-	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
-	int r, getmore = 0, hard = 0;
-	uint32_t cc;
-
-	c = kmem_alloc(sizeof(*c), KM_NOSLEEP);
-	if (c == NULL) {
-		return NULL;
-	}
-	c->flags = flags;
-	strlcpy(c->name, name, sizeof(c->name));
-	c->reseed.state = RSTATE_IDLE;
-	c->reseed.cb = cprng_strong_reseed;
-	c->reseed.arg = c;
-	c->entropy_serial = rnd_initial_entropy ? rnd_filled : -1;
-	mutex_init(&c->reseed.mtx, MUTEX_DEFAULT, IPL_VM);
-	strlcpy(c->reseed.name, name, sizeof(c->reseed.name));
-
-	mutex_init(&c->mtx, MUTEX_DEFAULT, ipl);
-
-	if (c->flags & CPRNG_USE_CV) {
-		cv_init(&c->cv, (const char *)c->name);
-	}
-
-	selinit(&c->selq);
-
-	r = cprng_entropy_try(key, sizeof(key));
-	if (r != sizeof(key)) {
-		if (c->flags & CPRNG_INIT_ANY) {
-#ifdef DEBUG
-			/*
-			 * If we have ever crossed the pool's
-			 * minimum-entropy threshold, then we are
-			 * providing cryptographically strong
-			 * random output -- if not information-
-			 * theoretically strong.  Warn elsewise.
-			 */
-			if (!rnd_initial_entropy) {
-				printf("cprng %s: WARNING insufficient "
-			 		"entropy at creation.\n", name);
-			}
-#endif
-		} else {
-			hard++;
-		}
-		getmore++;
-	}
-		
-	if (nist_ctr_drbg_instantiate(&c->drbg, key, sizeof(key),
-				      &cc, sizeof(cc), name, strlen(name))) {
-		panic("cprng %s: instantiation failed.", name);
-	}
-
-	if (getmore) {
-		/* Cause readers to wait for rekeying. */
-		if (hard) {
-			c->drbg.reseed_counter =
-			    NIST_CTR_DRBG_RESEED_INTERVAL + 1;
-		} else {
-			c->drbg.reseed_counter =
-			    (NIST_CTR_DRBG_RESEED_INTERVAL / 2) + 1;
-		}
-	}
-	return c;
-}
-
-size_t
-cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
-{
-	uint32_t cc = cprng_counter();
-#ifdef DEBUG
-	int testfail = 0;
-#endif
-	if (len > CPRNG_MAX_LEN) {	/* XXX should we loop? */
-		len = CPRNG_MAX_LEN;	/* let the caller loop if desired */
-	}
-	mutex_enter(&c->mtx);
-
-	/* If we were initialized with the pool empty, rekey ASAP */
-	if (__predict_false(c->entropy_serial == -1) && rnd_initial_entropy) {
-		c->entropy_serial = 0;
-		goto rekeyany;		/* We have _some_ entropy, use it. */
-	}
-		
-	if (nist_ctr_drbg_generate(&c->drbg, p, len, &cc, sizeof(cc))) {
-		/* A generator failure really means we hit the hard limit. */
-rekeyany:
-		if (c->flags & CPRNG_REKEY_ANY) {
-			uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
-
-			if (cprng_entropy_try(key, sizeof(key)) !=
-			    sizeof(key)) {
- 				printf("cprng %s: WARNING "
-				       "pseudorandom rekeying.\n", c->name);
-			}
-			cc = cprng_counter();
-			if (nist_ctr_drbg_reseed(&c->drbg, key, sizeof(key),
-			    &cc, sizeof(cc))) {
-				panic("cprng %s: nist_ctr_drbg_reseed "
-				      "failed.", c->name);
-			}
-			memset(key, 0, sizeof(key));
-		} else {
-			int wr;
-
-			do {
-				cprng_strong_sched_reseed(c);
-				if ((flags & FNONBLOCK) ||
-				    !(c->flags & CPRNG_USE_CV)) {
-					len = 0;
-					break;
-				}
-			/*
-			 * XXX There's a race with the cv_broadcast
-			 * XXX in cprng_strong_sched_reseed, because
-			 * XXX of the use of tryenter in that function.
-			 * XXX This "timedwait" hack works around it,
-			 * XXX at the expense of occasionaly polling
-			 * XXX for success on a /dev/random rekey.
-			 */
-				wr = cv_timedwait_sig(&c->cv, &c->mtx,
-						      mstohz(100));
-				if (wr == ERESTART) {
-					mutex_exit(&c->mtx);
-					return 0;
-				}
-			} while (nist_ctr_drbg_generate(&c->drbg, p,
-							len, &cc,
-							sizeof(cc)));
-		}
-	}
-
-#ifdef DEBUG
 	/*
-	 * If the generator has just been keyed, perform
-	 * the statistical RNG test.
+	 * rndsink_request takes a spin lock at IPL_VM, so we can be no
+	 * higher than that.
 	 */
-	if (__predict_false(c->drbg.reseed_counter == 1) &&
-	    (flags & FASYNC) == 0) {
-		rngtest_t *rt = kmem_intr_alloc(sizeof(*rt), KM_NOSLEEP);
+	KASSERT(ipl <= IPL_VM);
 
-		if (rt) {
+	/* Initialize the easy fields.  */
+	(void)strlcpy(cprng->cs_name, name, sizeof(cprng->cs_name));
+	cprng->cs_flags = flags;
+	mutex_init(&cprng->cs_lock, MUTEX_DEFAULT, ipl);
+	cv_init(&cprng->cs_cv, cprng->cs_name);
+	selinit(&cprng->cs_selq);
+	cprng->cs_rndsink = rndsink_create(NIST_BLOCK_KEYLEN_BYTES,
+	    &cprng_strong_rndsink_callback, cprng);
 
-			strncpy(rt->rt_name, c->name, sizeof(rt->rt_name));
+	/* Get some initial entropy.  Record whether it is full entropy.  */
+	uint8_t seed[NIST_BLOCK_KEYLEN_BYTES];
+	cprng->cs_ready = rndsink_request(cprng->cs_rndsink, seed,
+	    sizeof(seed));
+	if (nist_ctr_drbg_instantiate(&cprng->cs_drbg, seed, sizeof(seed),
+		&cc, sizeof(cc), cprng->cs_name, sizeof(cprng->cs_name)))
+		/* XXX Fix nist_ctr_drbg API so this can't happen.  */
+		panic("cprng %s: NIST CTR_DRBG instantiation failed",
+		    cprng->cs_name);
+	explicit_bzero(seed, sizeof(seed));
 
-			if (nist_ctr_drbg_generate(&c->drbg, rt->rt_b,
-		  	    sizeof(rt->rt_b), NULL, 0)) {
-				panic("cprng %s: nist_ctr_drbg_generate "
-				      "failed!", c->name);
-		
-			}
-			testfail = rngtest(rt);
+	if (!cprng->cs_ready && !ISSET(flags, CPRNG_INIT_ANY))
+		printf("cprng %s: creating with partial entropy\n",
+		    cprng->cs_name);
 
-			if (testfail) {
-				printf("cprng %s: failed statistical RNG "
-				       "test.\n", c->name);
-				c->drbg.reseed_counter =
-				    NIST_CTR_DRBG_RESEED_INTERVAL + 1;
-				len = 0;
-			}
-			memset(rt, 0, sizeof(*rt));
-			kmem_intr_free(rt, sizeof(*rt));
-		}
-	}
-#endif
-	if (__predict_false(c->drbg.reseed_counter >
-			     (NIST_CTR_DRBG_RESEED_INTERVAL / 2))) {
-		cprng_strong_sched_reseed(c);
-	} else if (rnd_full) {
-		if (c->entropy_serial != rnd_filled) {
-#ifdef RND_VERBOSE
-			printf("cprng %s: reseeding from full pool "
-			       "(serial %d vs pool %d)\n", c->name,
-			       c->entropy_serial, rnd_filled);
-#endif
-			cprng_strong_sched_reseed(c);
-		}
-	}
-
-	mutex_exit(&c->mtx);
-	return len;
+	return cprng;
 }
 
 void
-cprng_strong_destroy(cprng_strong_t *c)
+cprng_strong_destroy(struct cprng_strong *cprng)
 {
-	mutex_enter(&c->mtx);
-	mutex_spin_enter(&c->reseed.mtx);
 
-	if (c->flags & CPRNG_USE_CV) {
-		KASSERT(!cv_has_waiters(&c->cv));
-		cv_destroy(&c->cv);
+	/*
+	 * Destroy the rndsink first to prevent calls to the callback.
+	 */
+	rndsink_destroy(cprng->cs_rndsink);
+
+	KASSERT(!cv_has_waiters(&cprng->cs_cv));
+#if 0
+	KASSERT(!select_has_waiters(&cprng->cs_selq)) /* XXX ? */
+#endif
+
+	nist_ctr_drbg_destroy(&cprng->cs_drbg);
+	seldestroy(&cprng->cs_selq);
+	cv_destroy(&cprng->cs_cv);
+	mutex_destroy(&cprng->cs_lock);
+
+	explicit_bzero(cprng, sizeof(*cprng)); /* paranoia */
+	kmem_free(cprng, sizeof(*cprng));
+}
+
+/*
+ * Generate some data from cprng.  Block or return zero bytes,
+ * depending on flags & FNONBLOCK, if cprng was created without
+ * CPRNG_REKEY_ANY.
+ */
+size_t
+cprng_strong(struct cprng_strong *cprng, void *buffer, size_t bytes, int flags)
+{
+	size_t result;
+
+	/* Caller must loop for more than CPRNG_MAX_LEN bytes.  */
+	bytes = MIN(bytes, CPRNG_MAX_LEN);
+
+	mutex_enter(&cprng->cs_lock);
+
+	if (ISSET(cprng->cs_flags, CPRNG_REKEY_ANY)) {
+		if (!cprng->cs_ready)
+			cprng_strong_reseed(cprng);
+	} else {
+		while (!cprng->cs_ready) {
+			if (ISSET(flags, FNONBLOCK) ||
+			    !ISSET(cprng->cs_flags, CPRNG_USE_CV) ||
+			    cv_wait_sig(&cprng->cs_cv, &cprng->cs_lock)) {
+				result = 0;
+				goto out;
+			}
+		}
 	}
-	seldestroy(&c->selq);
 
-	if (RSTATE_PENDING == c->reseed.state) {
-		rndsink_detach(&c->reseed);
+	cprng_strong_generate(cprng, buffer, bytes);
+	result = bytes;
+
+out:	mutex_exit(&cprng->cs_lock);
+	return result;
+}
+
+static void	filt_cprng_detach(struct knote *);
+static int	filt_cprng_event(struct knote *, long);
+
+static const struct filterops cprng_filtops =
+	{ 1, NULL, filt_cprng_detach, filt_cprng_event };
+
+int
+cprng_strong_kqfilter(struct cprng_strong *cprng, struct knote *kn)
+{
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &cprng_filtops;
+		kn->kn_hook = cprng;
+		mutex_enter(&cprng->cs_lock);
+		SLIST_INSERT_HEAD(&cprng->cs_selq.sel_klist, kn, kn_selnext);
+		mutex_exit(&cprng->cs_lock);
+		return 0;
+
+	case EVFILT_WRITE:
+	default:
+		return EINVAL;
 	}
-	mutex_spin_exit(&c->reseed.mtx);
-	mutex_destroy(&c->reseed.mtx);
+}
 
-	nist_ctr_drbg_destroy(&c->drbg);
+static void
+filt_cprng_detach(struct knote *kn)
+{
+	struct cprng_strong *const cprng = kn->kn_hook;
 
-	mutex_exit(&c->mtx);
-	mutex_destroy(&c->mtx);
+	mutex_enter(&cprng->cs_lock);
+	SLIST_REMOVE(&cprng->cs_selq.sel_klist, kn, knote, kn_selnext);
+	mutex_exit(&cprng->cs_lock);
+}
 
-	memset(c, 0, sizeof(*c));
-	kmem_free(c, sizeof(*c));
+static int
+filt_cprng_event(struct knote *kn, long hint)
+{
+	struct cprng_strong *const cprng = kn->kn_hook;
+	int ret;
+
+	if (hint == NOTE_SUBMIT)
+		KASSERT(mutex_owned(&cprng->cs_lock));
+	else
+		mutex_enter(&cprng->cs_lock);
+	if (cprng->cs_ready) {
+		kn->kn_data = CPRNG_MAX_LEN; /* XXX Too large?  */
+		ret = 1;
+	} else {
+		ret = 0;
+	}
+	if (hint == NOTE_SUBMIT)
+		KASSERT(mutex_owned(&cprng->cs_lock));
+	else
+		mutex_exit(&cprng->cs_lock);
+
+	return ret;
 }
 
 int
-cprng_strong_getflags(cprng_strong_t *const c)
+cprng_strong_poll(struct cprng_strong *cprng, int events)
 {
-	KASSERT(mutex_owned(&c->mtx));
-	return c->flags;
+	int revents;
+
+	if (!ISSET(events, (POLLIN | POLLRDNORM)))
+		return 0;
+
+	mutex_enter(&cprng->cs_lock);
+	if (cprng->cs_ready) {
+		revents = (events & (POLLIN | POLLRDNORM));
+	} else {
+		selrecord(curlwp, &cprng->cs_selq);
+		revents = 0;
+	}
+	mutex_exit(&cprng->cs_lock);
+
+	return revents;
 }
 
+/*
+ * XXX Kludge for the current /dev/random implementation.
+ */
 void
-cprng_strong_setflags(cprng_strong_t *const c, int flags)
+cprng_strong_deplete(struct cprng_strong *cprng)
 {
-	KASSERT(mutex_owned(&c->mtx));
-	if (flags & CPRNG_USE_CV) {
-		if (!(c->flags & CPRNG_USE_CV)) {
-			cv_init(&c->cv, (const char *)c->name);
+
+	mutex_enter(&cprng->cs_lock);
+	cprng->cs_ready = false;
+	rndsink_schedule(cprng->cs_rndsink);
+	mutex_exit(&cprng->cs_lock);
+}
+
+/*
+ * XXX Move nist_ctr_drbg_reseed_advised_p and
+ * nist_ctr_drbg_reseed_needed_p into the nist_ctr_drbg API and make
+ * the NIST_CTR_DRBG structure opaque.
+ */
+static bool
+nist_ctr_drbg_reseed_advised_p(NIST_CTR_DRBG *drbg)
+{
+
+	return (drbg->reseed_counter > (NIST_CTR_DRBG_RESEED_INTERVAL / 2));
+}
+
+static bool
+nist_ctr_drbg_reseed_needed_p(NIST_CTR_DRBG *drbg)
+{
+
+	return (drbg->reseed_counter >= NIST_CTR_DRBG_RESEED_INTERVAL);
+}
+
+/*
+ * Generate some data from the underlying generator.
+ */
+static void
+cprng_strong_generate(struct cprng_strong *cprng, void *buffer,
+    size_t bytes)
+{
+	const uint32_t cc = cprng_counter();
+
+	KASSERT(bytes <= CPRNG_MAX_LEN);
+	KASSERT(mutex_owned(&cprng->cs_lock));
+
+	/*
+	 * Generate some data from the NIST CTR_DRBG.  Caller
+	 * guarantees reseed if we're not ready, and if we exhaust the
+	 * generator, we mark ourselves not ready.  Consequently, this
+	 * call to the CTR_DRBG should not fail.
+	 */
+	if (__predict_false(nist_ctr_drbg_generate(&cprng->cs_drbg, buffer,
+		    bytes, &cc, sizeof(cc))))
+		panic("cprng %s: NIST CTR_DRBG failed", cprng->cs_name);
+
+	/*
+	 * If we've been seeing a lot of use, ask for some fresh
+	 * entropy soon.
+	 */
+	if (__predict_false(nist_ctr_drbg_reseed_advised_p(&cprng->cs_drbg)))
+		rndsink_schedule(cprng->cs_rndsink);
+
+	/*
+	 * If we just exhausted the generator, inform the next user
+	 * that we need a reseed.
+	 *
+	 * XXX For /dev/random CPRNGs, the criterion is supposed to be
+	 * `Has this seeding generated 32 bytes?'.
+	 */
+	if (__predict_false(nist_ctr_drbg_reseed_needed_p(&cprng->cs_drbg))) {
+		cprng->cs_ready = false;
+		rndsink_schedule(cprng->cs_rndsink); /* paranoia */
+	}
+}
+
+/*
+ * Reseed with whatever we can get from the system entropy pool right now.
+ */
+static void
+cprng_strong_reseed(struct cprng_strong *cprng)
+{
+	uint8_t seed[NIST_BLOCK_KEYLEN_BYTES];
+
+	KASSERT(mutex_owned(&cprng->cs_lock));
+
+	const bool full_entropy = rndsink_request(cprng->cs_rndsink, seed,
+	    sizeof(seed));
+	cprng_strong_reseed_from(cprng, seed, sizeof(seed), full_entropy);
+	explicit_bzero(seed, sizeof(seed));
+}
+
+/*
+ * Reseed with the given seed.  If we now have full entropy, notify waiters.
+ */
+static void
+cprng_strong_reseed_from(struct cprng_strong *cprng,
+    const void *seed, size_t bytes, bool full_entropy)
+{
+	const uint32_t cc = cprng_counter();
+
+	KASSERT(bytes == NIST_BLOCK_KEYLEN_BYTES);
+	KASSERT(mutex_owned(&cprng->cs_lock));
+
+	/*
+	 * Notify anyone interested in the partiality of entropy in our
+	 * seed -- anyone waiting for full entropy, or any system
+	 * operators interested in knowing when the entropy pool is
+	 * running on fumes.
+	 */
+	if (full_entropy) {
+		if (!cprng->cs_ready) {
+			cprng->cs_ready = true;
+			cv_broadcast(&cprng->cs_cv);
+			selnotify(&cprng->cs_selq, (POLLIN | POLLRDNORM),
+			    NOTE_SUBMIT);
 		}
 	} else {
-		if (c->flags & CPRNG_USE_CV) {
-			KASSERT(!cv_has_waiters(&c->cv));
-			cv_destroy(&c->cv);
-		}
+		/*
+		 * XXX Is there is any harm in reseeding with partial
+		 * entropy when we had full entropy before?  If so,
+		 * remove the conditional on this message.
+		 */
+		if (!cprng->cs_ready &&
+		    !ISSET(cprng->cs_flags, CPRNG_REKEY_ANY))
+			printf("cprng %s: reseeding with partial entropy\n",
+			    cprng->cs_name);
 	}
-	if (flags & CPRNG_REKEY_ANY) {
-		if (!(c->flags & CPRNG_REKEY_ANY)) {
-			if (c->flags & CPRNG_USE_CV) {
-				cv_broadcast(&c->cv);
-			}
-			selnotify(&c->selq, 0, 0);
-		}
+
+	if (nist_ctr_drbg_reseed(&cprng->cs_drbg, seed, bytes, &cc, sizeof(cc)))
+		/* XXX Fix nist_ctr_drbg API so this can't happen.  */
+		panic("cprng %s: NIST CTR_DRBG reseed failed", cprng->cs_name);
+
+#if DEBUG
+	cprng_strong_rngtest(cprng);
+#endif
+}
+
+#if DEBUG
+/*
+ * Generate some output and apply a statistical RNG test to it.
+ */
+static void
+cprng_strong_rngtest(struct cprng_strong *cprng)
+{
+
+	KASSERT(mutex_owned(&cprng->cs_lock));
+
+	/* XXX Switch to a pool cache instead?  */
+	rngtest_t *const rt = kmem_intr_alloc(sizeof(*rt), KM_NOSLEEP);
+	if (rt == NULL)
+		/* XXX Warn?  */
+		return;
+
+	(void)strlcpy(rt->rt_name, cprng->cs_name, sizeof(rt->rt_name));
+
+	if (nist_ctr_drbg_generate(&cprng->cs_drbg, rt->rt_b, sizeof(rt->rt_b),
+		NULL, 0))
+		panic("cprng %s: NIST CTR_DRBG failed after reseed",
+		    cprng->cs_name);
+
+	if (rngtest(rt)) {
+		printf("cprng %s: failed statistical RNG test\n",
+		    cprng->cs_name);
+		/* XXX Not clear that this does any good...  */
+		cprng->cs_ready = false;
+		rndsink_schedule(cprng->cs_rndsink);
 	}
-	c->flags = flags;
+
+	explicit_bzero(rt, sizeof(*rt)); /* paranoia */
+	kmem_intr_free(rt, sizeof(*rt));
+}
+#endif
+
+/*
+ * Feed entropy from an rndsink request into the CPRNG for which the
+ * request was issued.
+ */
+static void
+cprng_strong_rndsink_callback(void *context, const void *seed, size_t bytes)
+{
+	struct cprng_strong *const cprng = context;
+
+	mutex_enter(&cprng->cs_lock);
+	/* Assume that rndsinks provide only full-entropy output.  */
+	cprng_strong_reseed_from(cprng, seed, bytes, true);
+	mutex_exit(&cprng->cs_lock);
 }
