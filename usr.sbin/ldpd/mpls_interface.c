@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.7 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.8 2013/06/23 06:40:26 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -133,8 +133,9 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 			    RT_ROUNDUP(so_oldifa->sa.sa_len));
 	}
 
-	if (so_gate->sa.sa_family != AF_INET) {
-		debugp("Failed at family check - only INET supoprted for now\n");
+	if (so_gate->sa.sa_family != AF_INET &&
+	    so_gate->sa.sa_family != AF_INET6) {
+		debugp("mpls_add_label: so_gate is not IP or IPv6\n");
 		return LDP_E_BAD_AF;
 	}
 
@@ -153,7 +154,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	if (lab->binding == MPLS_LABEL_IMPLNULL) {
 		change_local_label(lab, get_free_local_label());
 		if (!lab->binding) {
-			fatalp("No more free labels !!!\n");
+			fatalp("Label pool depleted\n");
 			return LDP_E_TOO_MANY_LABELS;
 		}
 	}
@@ -181,16 +182,18 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
-	if (add_route(so_dest, NULL, so_nexthop, NULL, so_tag, FREESO, RTM_ADD) != LDP_E_OK)
+	if (add_route(so_dest, NULL, so_nexthop, NULL, so_tag,
+	    FREESO, RTM_ADD) != LDP_E_OK)
 		return LDP_E_ROUTE_ERROR;
 
-	/* Now, let's add tag to IPv4 route and point it to mpls interface */
+	/* Now, let's add tag to IP route and point it to mpls interface */
 	if ((so_dest = make_inet_union(satos(addr))) == NULL) {	// XXX: grobian
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
 
-	/* if prefixlen == 32 check if it's inserted as host
+	/*
+	* if prefixlen == 32 check if it's inserted as host
  	* and treat it as host. It may also be set as /32 prefix
  	* (thanks mlelstv for heads-up about this)
  	*/
@@ -227,7 +230,8 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		memcpy(so_ifa, so_oldifa, so_oldifa->sa.sa_len);
 	} else
 		so_ifa = NULL;
-	if (add_route(so_dest, so_pref, so_nexthop, so_ifa, so_tag, FREESO, RTM_CHANGE) != LDP_E_OK)
+	if (add_route(so_dest, so_pref, so_nexthop, so_ifa, so_tag,
+	    FREESO, RTM_CHANGE) != LDP_E_OK)
 		return LDP_E_ROUTE_ERROR;
 
 	debugp("Added %s/%d as label %d to peer %s\n", satos(addr), len,
