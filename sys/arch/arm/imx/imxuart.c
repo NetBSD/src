@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.9 2012/02/02 19:42:58 tls Exp $ */
+/* $NetBSD: imxuart.c,v 1.9.6.1 2013/06/23 06:20:00 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.9 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.9.6.1 2013/06/23 06:20:00 tls Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2372,6 +2372,8 @@ void
 imxucnpollc(dev_t dev, int on)
 {
 
+	imxuart_readahead_in = 0;
+	imxuart_readahead_out = 0;
 }
 
 #endif	/* IMXUARTCONSOLE */

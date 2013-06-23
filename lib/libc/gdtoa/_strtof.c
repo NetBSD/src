@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtof.c,v 1.2 2009/10/21 01:07:45 snj Exp $	*/
+/*	$NetBSD: _strtof.c,v 1.2.12.1 2013/06/23 06:21:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -26,20 +26,29 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _strtof.c,v 1.2 2009/10/21 01:07:45 snj Exp $");
+__RCSID("$NetBSD: _strtof.c,v 1.2.12.1 2013/06/23 06:21:05 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__indr_reference)
 __indr_reference(_strtof, strtof)
+__indr_reference(_strtof_l, strtof_l)
 #else
 
 #include <stdlib.h>
 float	_strtof(const char * __restrict, char ** __restrict);
+float	_strtof_l(const char * __restrict, char ** __restrict, locale_t);
 
 float
 strtof(const char *nptr, char **endptr)
 {
 
 	return _strtof(nptr, endptr);
+}
+
+float
+strtof_l(const char *nptr, char **endptr, locale_t loc)
+{
+
+	return _strtof_l(nptr, endptr, loc);
 }
 #endif

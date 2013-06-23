@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.6.1 2013/02/25 00:28:30 tls Exp $	*/
+/*	$NetBSD: param.h,v 1.17.6.2 2013/06/23 06:20:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,7 +57,7 @@
 #define USPACE          (UPAGES * NBPG) /* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	16384	 	/* default message buffer size */
 #endif
 
 /*
@@ -89,8 +89,8 @@
 #define USPACE_SVC_STACK_TOP		(USPACE)
 #define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb))
 
-#define arm_btop(x)			((x) >> PGSHIFT)
-#define arm_ptob(x)			((x) << PGSHIFT)
+#define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
+#define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
 #define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
     
 #ifdef _KERNEL

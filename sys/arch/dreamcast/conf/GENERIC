@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108.2.1 2012/11/20 03:01:11 tls Exp $
+# $NetBSD: GENERIC,v 1.108.2.2 2013/06/23 06:20:02 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -104,13 +104,9 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflrate compression support for PPP
@@ -196,7 +192,7 @@ mbe*		at g2bus?			# SEGA LAN Adapter
 aica*		at g2bus?			# AICA Sound Processing Unit
 audio*		at aica?
 
-#pseudo-device	cgd		2	# cryptographic disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
@@ -236,7 +232,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

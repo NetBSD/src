@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_scalbn.c,v 1.15.8.1 2013/02/25 00:27:58 tls Exp $");
+__RCSID("$NetBSD: s_scalbn.c,v 1.15.8.2 2013/06/23 06:21:07 tls Exp $");
 #endif
 
 /*
@@ -40,6 +40,7 @@ __weak_alias(scalblnl, _scalblnl)
 #ifdef __weak_alias
 __weak_alias(scalbn, _scalbn)
 __weak_alias(scalbln, _scalbln)
+__weak_alias(ldexp, _scalbn)
 #endif
 
 static const double

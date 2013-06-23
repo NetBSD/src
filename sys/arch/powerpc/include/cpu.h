@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93.2.2 2013/02/25 00:28:53 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93.2.3 2013/06/23 06:20:10 tls Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -265,7 +265,7 @@ mftb(void)
 {
 	uint64_t tb;
 
-#ifdef _LP64
+#ifdef _ARCH_PPC64
 	__asm volatile ("mftb %0" : "=r"(tb));
 #else
 	int tmp;

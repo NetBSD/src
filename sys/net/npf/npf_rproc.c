@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.2.4.2 2013/02/25 00:30:03 tls Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.2.4.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include "npf_impl.h"
 
@@ -97,17 +98,35 @@ npf_ext_sysfini(void)
  * NPF extension management for the rule procedures.
  */
 
+static const char npf_ext_prefix[] = "npf_ext_";
+#define NPF_EXT_PREFLEN (sizeof(npf_ext_prefix) - 1)
+
 static npf_ext_t *
-npf_ext_lookup(const char *name)
+npf_ext_lookup(const char *name, bool autoload)
 {
-	npf_ext_t *ext = NULL;
+	npf_ext_t *ext;
+	char modname[RPROC_NAME_LEN + NPF_EXT_PREFLEN];
+	int error;
 
 	KASSERT(mutex_owned(&ext_lock));
 
+again:
 	LIST_FOREACH(ext, &ext_list, ext_entry)
 		if (strcmp(ext->ext_callname, name) == 0)
 			break;
-	return ext;
+
+	if (ext != NULL || !autoload)
+		return ext;
+
+	mutex_exit(&ext_lock);
+	autoload = false;
+	snprintf(modname, sizeof(modname), "%s%s", npf_ext_prefix, name);
+	error = module_autoload(modname, MODULE_CLASS_MISC);
+	mutex_enter(&ext_lock);
+
+	if (error)
+		return NULL;
+	goto again;
 }
 
 void *
@@ -120,7 +139,7 @@ npf_ext_register(const char *name, const npf_ext_ops_t *ops)
 	ext->ext_ops = ops;
 
 	mutex_enter(&ext_lock);
-	if (npf_ext_lookup(name)) {
+	if (npf_ext_lookup(name, false)) {
 		mutex_exit(&ext_lock);
 		kmem_free(ext, sizeof(npf_ext_t));
 		return NULL;
@@ -148,7 +167,7 @@ npf_ext_unregister(void *extid)
 		mutex_exit(&ext_lock);
 		return EBUSY;
 	}
-	KASSERT(npf_ext_lookup(ext->ext_callname));
+	KASSERT(npf_ext_lookup(ext->ext_callname, false));
 	LIST_REMOVE(ext, ext_entry);
 	mutex_exit(&ext_lock);
 
@@ -169,7 +188,7 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
 	}
 
 	mutex_enter(&ext_lock);
-	ext = npf_ext_lookup(name);
+	ext = npf_ext_lookup(name, true);
 	if (ext) {
 		atomic_inc_uint(&ext->ext_refcnt);
 	}

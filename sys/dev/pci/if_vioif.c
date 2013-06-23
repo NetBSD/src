@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.2.12.1 2013/06/23 06:20:18 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2 2011/11/19 12:32:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.2.12.1 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,6 @@ struct vioif_softc {
 
 	uint8_t			sc_mac[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
-	uint32_t		sc_features;
 	short			sc_ifflags;
 
 	/* bus_dmamem */
@@ -391,7 +390,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		C_L2(ctrl_cmd_dmamap, ctrl_cmd,
 		    sizeof(struct virtio_net_ctrl_cmd), 1, WRITE,
 		    "control command");
-		
+	
 		/* control vq status */
 		C_L2(ctrl_status_dmamap, ctrl_status,
 		    sizeof(struct virtio_net_ctrl_status), 1, READ,
@@ -652,9 +651,9 @@ vioif_stop(struct ifnet *ifp, int disable)
 
 	if (disable)
 		vioif_rx_drain(sc);
-	
+
 	virtio_reinit_start(vsc);
-	virtio_negotiate_features(vsc, sc->sc_features);
+	virtio_negotiate_features(vsc, vsc->sc_features);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[0]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[1]);
 	if (vsc->sc_nvqs >= 3)
@@ -883,7 +882,7 @@ vioif_rx_deq(struct vioif_softc *sc)
 		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 	}
-	
+
 	return r;
 }
 
@@ -1057,7 +1056,7 @@ vioif_ctrl_rx(struct vioif_softc *sc, int cmd, bool onoff)
 	sc->sc_ctrl_inuse = FREE;
 	cv_signal(&sc->sc_ctrl_wait);
 	mutex_exit(&sc->sc_ctrl_wait_lock);
-	
+
 	return r;
 }
 
@@ -1188,7 +1187,7 @@ out:
 	sc->sc_ctrl_inuse = FREE;
 	cv_signal(&sc->sc_ctrl_wait);
 	mutex_exit(&sc->sc_ctrl_wait_lock);
-	
+
 	return r;
 }
 

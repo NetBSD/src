@@ -1,3 +1,5 @@
+/*	$NetBSD: nametoaddr.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -24,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.83 2008-02-06 10:21:30 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.83 2008-02-06 10:21:30 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

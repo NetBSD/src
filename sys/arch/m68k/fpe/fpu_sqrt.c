@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.6 2009/03/14 15:36:09 dsl Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.6 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $");
 
 #include <sys/types.h>
 
@@ -188,12 +188,12 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.6 2009/03/14 15:36:09 dsl Exp $");
 struct fpn *
 fpu_sqrt(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f2;
-	register u_int bit, q, tt;
-	register u_int x0, x1, x2;
-	register u_int y0, y1, y2;
-	register u_int d0, d1, d2;
-	register int e;
+	struct fpn *x = &fe->fe_f2;
+	uint32_t bit, q, tt;
+	uint32_t x0, x1, x2;
+	uint32_t y0, y1, y2;
+	uint32_t d0, d1, d2;
+	int e;
 	FPU_DECL_CARRY
 
 	/*

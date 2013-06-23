@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.12.1 2013/06/23 06:20:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.12.1 2013/06/23 06:20:10 tls Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -343,7 +343,7 @@ init_ofppc_interrupt(void)
 	}
 	if (isa_cascade) {
 		primary_pic = 1;
-		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		intr_establish(16, IST_LEVEL, IPL_HIGH, pic_handle_intr,
 		    isa_pic);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.70 2012/03/22 20:34:40 drochner Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70 2012/03/22 20:34:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -62,12 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70 2012/03/22 20:34:40 drochner Ex
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #include <netipsec/xform.h>
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
@@ -105,10 +105,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 	u_int32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
-#ifdef FAST_IPSEC
-    struct secpolicy *sp = NULL;
-    int needipsec = 0;
-    int s;
+#ifdef IPSEC
+	struct secpolicy *sp = NULL;
+	int needipsec = 0;
+	int s;
 #endif
 
 	/*
@@ -160,7 +160,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/* Check the security policy (SP) for the packet */
 
 	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
@@ -175,7 +175,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		error = 0;
 	goto freecopy;
 	}
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 	if (srcrt) {
 		union {
@@ -261,21 +261,19 @@ ip6_forward(struct mbuf *m, int srcrt)
 		m_freem(m);
 		return;
 	}
-#ifdef FAST_IPSEC
-    /*
-     * If we need to encapsulate the packet, do it here
-     * ipsec6_proces_packet will send the packet using ip6_output 
-     */
+#ifdef IPSEC
+	/*
+	 * If we need to encapsulate the packet, do it here
+	 * ipsec6_proces_packet will send the packet using ip6_output 
+	 */
 	if (needipsec) {
 		s = splsoftnet();
 		error = ipsec6_process_packet(m,sp->req);
 		splx(s);
 		if (mcopy)
 			goto freecopy;
-    }
+	}
 #endif   
-
-
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope

@@ -1,4 +1,6 @@
-#	$NetBSD: shlib_version,v 1.1 2010/02/26 18:54:20 pooka Exp $
+#	$NetBSD: shlib_version,v 1.1.12.1 2013/06/23 06:21:08 tls Exp $
 #
+
+# see comment in rumpuser_component.c
 major=0
-minor=0
+minor=1

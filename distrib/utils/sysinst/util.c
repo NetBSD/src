@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.179.2.1 2012/11/20 02:57:53 tls Exp $	*/
+/*	$NetBSD: util.c,v 1.179.2.2 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 #define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE, SET_DEBUGGING
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
@@ -118,6 +118,9 @@ distinfo dist_list[] = {
 #ifdef SET_KERNEL_8_NAME
 	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
 #endif
+#ifdef SET_KERNEL_9_NAME
+	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		MSG_set_kernel_9, NULL},
+#endif
 
 	{"modules",		SET_MODULES,		MSG_set_modules, NULL},
 	{"base",		SET_BASE,		MSG_set_base, NULL},
@@ -156,6 +159,8 @@ distinfo dist_list[] = {
 	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
 	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
 	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
+	{"debug",		SET_DEBUG,		MSG_set_debug, NULL},
+	{"xdebug",		SET_X11_DEBUG,		MSG_set_xdebug, NULL},
 	{NULL,			SET_GROUP_END,		NULL, NULL},
 
 	{NULL,			SET_LAST,		NULL, NULL},

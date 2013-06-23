@@ -1,4 +1,4 @@
-#	$NetBSD: VERSION,v 1.4.4.2 2013/02/25 00:30:07 tls Exp $
+#	$NetBSD: VERSION,v 1.4.4.3 2013/06/23 06:20:26 tls Exp $
 #
 # Since cvs does not provide a version number for the entire tree, provide
 # identifiers which can be used by external parties to check if the NetBSD
@@ -9,4 +9,4 @@
 # when date is bumped.
 #
 
-BUILDRUMP=20130131:0
+BUILDRUMP=20130515:1

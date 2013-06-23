@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.14.2.1 2013/02/25 00:28:31 tls Exp $	*/
+/*	$Id: omap2_obio.c,v 1.14.2.2 2013/06/23 06:20:01 tls Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.14.2.1 2013/02/25 00:28:31 tls Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.14.2.2 2013/06/23 06:20:01 tls Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.14.2.1 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.14.2.2 2013/06/23 06:20:01 tls Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -129,6 +129,13 @@ typedef struct {
 	ulong		cs_addr;
 	ulong		cs_size;
 } obio_csconfig_t;
+
+/* global containing the base system frequency */
+#ifdef OMAP_MPU_TIMER_CLOCK_FREQ
+u_int omap_sys_clk = OMAP_MPU_TIMER_CLOCK_FREQ;
+#else
+u_int omap_sys_clk;
+#endif
 
 /* prototypes */
 static int	obio_match(device_t, cfdata_t, void *);
@@ -378,12 +385,19 @@ static const struct {
 #if defined(GPIO6_BASE)
 	{ .name = "gpio6", .addr = GPIO6_BASE, .required = false },
 #endif
+#if defined(GPIO7_BASE)
+	{ .name = "gpio7", .addr = GPIO7_BASE, .required = false },
+#endif
+#if defined(GPIO8_BASE)
+	{ .name = "gpio8", .addr = GPIO8_BASE, .required = false },
+#endif
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
 #if defined(TI_AM335X)
 	{ .name = "omapicu", .addr = 0x48200000, .required = true },
 	{ .name = "prcm", .addr = 0x44e00000, .required = true },
+	{ .name = "sitaracm", .addr = 0x44e10000, .required = true },
 #endif
 #if defined(OMAP_3530)
 	{ .name = "omapdma", .addr = OMAP3530_SDMA_BASE, .required = true },

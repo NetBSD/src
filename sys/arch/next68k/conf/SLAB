@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.46 2012/06/05 08:44:14 abs Exp $
+# $NetBSD: SLAB,v 1.46.2.1 2013/06/23 06:20:09 tls Exp $
 #
 # deberg's development machine
 #
@@ -95,13 +95,9 @@ file-system	PTYFS		# /dev/pts/N support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -189,7 +185,7 @@ scsibus* at scsi?
 pseudo-device	md		
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
@@ -204,8 +200,8 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	ccd		4	# concatenated disks
+pseudo-device	ccd			# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem

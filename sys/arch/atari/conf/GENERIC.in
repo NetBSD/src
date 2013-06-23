@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.98.2.1 2012/11/20 03:01:08 tls Exp $
+#	$NetBSD: GENERIC.in,v 1.98.2.2 2013/06/23 06:20:01 tls Exp $
 #
 # Generic atari
 #
@@ -66,14 +66,10 @@ options 	INET		# IP + ICMP + TCP + UDP
 #if !defined(SMALL030_KERNEL)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #if !defined(NO_PHYS_NETWORK)
 #options 	NETATALK	# AppleTalk networking protocols
 #endif /* NO_PHYS_NETWORK */
@@ -275,9 +271,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 #endif /* NO_PHYS_NETWORK */
-pseudo-device	ccd		4	# concatenating disk driver
-#pseudo-device	cgd		4	# cryptographic disk driver
-#pseudo-device	raid		8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenating disk driver
+#pseudo-device	cgd			# cryptographic disk driver
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1

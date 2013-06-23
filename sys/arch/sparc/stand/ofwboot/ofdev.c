@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.33 2012/07/16 11:26:27 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.33.2.1 2013/06/23 06:20:12 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -374,7 +374,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	int error = 0;
 
 	if (ofdev.handle != -1)
-		panic("devopen");
+		panic("devopen: ofdev already in use");
 	if (of->f_flags != F_READ)
 		return EPERM;
 	DPRINTF(("devopen: you want %s\n", name));

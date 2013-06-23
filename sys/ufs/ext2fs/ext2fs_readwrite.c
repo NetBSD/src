@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.61.2.1 2013/02/25 00:30:14 tls Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.61.2.2 2013/06/23 06:18:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.61.2.1 2013/02/25 00:30:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.61.2.2 2013/06/23 06:18:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ ext2fs_read(void *v)
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = fs->e2fs_bsize;
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = ext2_blkoff(fs, uio->uio_offset);
 		xfersize = fs->e2fs_bsize - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
@@ -279,7 +279,7 @@ ext2fs_write(void *v)
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
 			oldoff = uio->uio_offset;
-			blkoffset = blkoff(fs, uio->uio_offset);
+			blkoffset = ext2_blkoff(fs, uio->uio_offset);
 			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
@@ -330,7 +330,7 @@ ext2fs_write(void *v)
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
-		blkoffset = blkoff(fs, uio->uio_offset);
+		blkoffset = ext2_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(fs->e2fs_bsize - blkoffset, uio->uio_resid);
 		if (xfersize < fs->e2fs_bsize)
 			flags |= B_CLRBUF;

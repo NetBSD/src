@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.2.8.2 2013/02/25 00:25:02 tls Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.2.8.3 2013/06/23 06:26:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -166,6 +166,7 @@ main(int argc, char *argv[]) {
 	dns_rdataclass_t rdclass;
 	char ch, *endp;
 
+	isc__mem_register();
 #define CMDLINE_FLAGS \
 	"m:o:I:c:E:v:xz"
 

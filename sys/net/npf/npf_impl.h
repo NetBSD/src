@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.22.2.2 2013/02/25 00:30:03 tls Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.22.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ typedef npf_table_t *		npf_tableset_t;
 
 typedef bool (*npf_alg_func_t)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
+typedef void (*npf_workfunc_t)(void);
 
 #define	NPF_NCODE_LIMIT		1024
 #define	NPF_TABLE_SLOTS		32
@@ -142,6 +143,12 @@ npf_ruleset_t *	npf_config_natset(void);
 npf_tableset_t *npf_config_tableset(void);
 prop_dictionary_t npf_config_dict(void);
 bool		npf_default_pass(void);
+
+int		npf_worker_sysinit(void);
+void		npf_worker_sysfini(void);
+void		npf_worker_signal(void);
+void		npf_worker_register(npf_workfunc_t);
+void		npf_worker_unregister(npf_workfunc_t);
 
 void		npflogattach(int);
 void		npflogdetach(void);
@@ -220,6 +227,7 @@ int		npf_table_remove(npf_tableset_t *, u_int,
 int		npf_table_lookup(npf_tableset_t *, u_int,
 		    const int, const npf_addr_t *);
 int		npf_table_list(npf_tableset_t *, u_int, void *, size_t);
+int		npf_table_flush(npf_tableset_t *, u_int);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(size_t);
@@ -271,11 +279,10 @@ void		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int *);
 /* Session handling interface. */
 void		npf_session_sysinit(void);
 void		npf_session_sysfini(void);
-int		npf_session_tracking(bool);
+void		npf_session_tracking(bool);
 
 npf_sehash_t *	sess_htable_create(void);
 void		sess_htable_destroy(npf_sehash_t *);
-void		sess_htable_reload(npf_sehash_t *);
 
 npf_session_t *	npf_session_lookup(const npf_cache_t *, const nbuf_t *,
 		    const int, bool *);
@@ -288,6 +295,7 @@ void		npf_session_setpass(npf_session_t *, npf_rproc_t *);
 int		npf_session_setnat(npf_session_t *, npf_nat_t *, const int);
 npf_nat_t *	npf_session_retnat(npf_session_t *, const int, bool *);
 
+void		npf_session_load(npf_sehash_t *);
 int		npf_session_save(prop_array_t, prop_array_t);
 int		npf_session_restore(npf_sehash_t *, prop_dictionary_t);
 
@@ -324,9 +332,10 @@ npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
 /* ALG interface. */
 void		npf_alg_sysinit(void);
 void		npf_alg_sysfini(void);
-npf_alg_t *	npf_alg_register(npf_alg_func_t, npf_alg_func_t,
+npf_alg_t *	npf_alg_register(const char *, npf_alg_func_t, npf_alg_func_t,
 		    npf_alg_sfunc_t);
 int		npf_alg_unregister(npf_alg_t *);
+npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 npf_session_t *	npf_alg_session(npf_cache_t *, nbuf_t *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.67.6.2 2013/02/25 00:28:57 tls Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.67.6.3 2013/06/23 06:20:12 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -228,7 +228,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	struct cgfourteen_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
-	int node, ramsize;
+	int node;
 	volatile uint32_t *lut;
 	int i, isconsole, items;
 	uint32_t fbva[2] = {0, 0};
@@ -254,10 +254,8 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	fb->fb_type.fb_depth = 32;
 
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
-	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
 
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
-	fb->fb_type.fb_size = ramsize + COLOUR_OFFSET;
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
@@ -268,6 +266,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
 	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;
+	fb->fb_type.fb_size = sc->sc_vramsize;
 
 	printf(": %d MB VRAM", (uint32_t)(sc->sc_vramsize >> 20));
 	/*
@@ -329,7 +328,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		if (sbus_bus_map( sc->sc_bustag,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
-		    ramsize, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+		    sc->sc_vramsize, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 		    &bh) != 0) {
 			printf("%s: cannot map pixels\n", 
 				device_xname(sc->sc_dev));
@@ -554,8 +553,27 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 		   off < CG14_R32_VOFF + (sc->sc_vramsize >> 2)) {
 		offset = sc->sc_fbaddr + CG14_FB_PR32;
 		off -= CG14_R32_VOFF;
+#if NSX > 0
+	} else if (sc->sc_sx == NULL) {
+		return -1;
+	} else if (off >= CG14_SXREG_VOFF &&
+		   off < (CG14_SXREG_VOFF + 0x400)) {
+		return (bus_space_mmap(sc->sc_sx->sc_tag, sc->sc_sx->sc_uregs,
+			0, prot, BUS_SPACE_MAP_LINEAR));
+	} else if (off >= CG14_SXIO_VOFF &&
+		   off < (CG14_SXIO_VOFF + 0x03ffffff)) {
+		return (bus_space_mmap(sc->sc_sx->sc_tag, 0x800000000LL,
+			sc->sc_fb_paddr + (off - CG14_SXIO_VOFF),
+			prot, BUS_SPACE_MAP_LINEAR));
+#endif
 	} else
 		return -1;
+	/*
+	 * for convenience we also map the SX ranges here:
+	 * - one page userland registers
+	 * - CG14-sized IO space at 0x800000000 ( not a typo, it's above 4GB )
+	 * bus_space_mmap() should accept 64bit bus_addr_t's by the look of it
+	 */
 	return (bus_space_mmap(sc->sc_bustag, offset, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 }
@@ -1203,6 +1221,7 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 	 * until we're 32bit aligned, then do the rest in 32bit
 	 * mode. Assumes that stride is always a multiple of 4. 
 	 */ 
+	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
 	for (line = 0; line < he; line++) {
@@ -1241,6 +1260,7 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 	 * until we're 32bit aligned, then do the rest in 32bit
 	 * mode. Assumes that stride is always a multiple of 4. 
 	 */ 
+	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
 	for (line = 0; line < he; line++) {
@@ -1356,6 +1376,7 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 		}
 	} else {
 		/* unaligned, have to use byte mode */
+		/* funnel shifter & byte mask trickery? */
 		for (line = 0; line < he; line++) {
 			sptr = saddr;
 			dptr = daddr;

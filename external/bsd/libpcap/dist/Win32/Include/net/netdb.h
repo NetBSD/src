@@ -1,3 +1,5 @@
+/*	$NetBSD: netdb.h,v 1.1.1.1.12.1 2013/06/23 06:28:20 tls Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1983, 1988, 1993
  *     The Regents of the University of California.  All rights reserved.

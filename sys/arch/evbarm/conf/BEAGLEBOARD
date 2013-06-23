@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.29.2.2 2013/02/25 00:28:34 tls Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.29.2.3 2013/06/23 06:20:03 tls Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -58,16 +58,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -245,7 +238,6 @@ omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
 omapmputmr1	at obio2 addr 0x49034000 intr 39	# GP Timer 3
 # Microtime Reference Timer
 omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
-options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3

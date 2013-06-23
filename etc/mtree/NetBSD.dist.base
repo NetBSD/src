@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.104.2.2 2013/02/25 00:24:51 tls Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.104.2.3 2013/06/23 06:26:21 tls Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -62,8 +62,10 @@
 ./etc/ssh
 ./etc/zfs
 ./lib
+./lib/npf
 ./libdata
 ./libdata/firmware
+./libdata/firmware/if_athn
 ./libdata/firmware/if_ipw
 ./libdata/firmware/if_iwi
 ./libdata/firmware/if_iwn
@@ -95,7 +97,9 @@
 ./usr/include/arpa
 ./usr/include/atf-c
 ./usr/include/atf-c++
-./usr/include/clang-3.3
+./usr/include/c++
+./usr/include/c++/ext
+./usr/include/clang-3.4
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -123,6 +127,7 @@
 ./usr/include/dev/usb
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
+./usr/include/event2
 ./usr/include/filecorefs
 ./usr/include/fs
 ./usr/include/fs/smbfs
@@ -165,7 +170,6 @@
 ./usr/include/netinet6
 ./usr/include/netipsec
 ./usr/include/netisdn
-./usr/include/netiso
 ./usr/include/netkey
 ./usr/include/netnatm
 ./usr/include/netpgp
@@ -198,12 +202,13 @@
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.1
-./usr/lib/npf
 ./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
 ./usr/libdata/debug/bin
+./usr/libdata/debug/lib
+./usr/libdata/debug/lib/npf
 ./usr/libdata/debug/libexec
 ./usr/libdata/debug/sbin
 ./usr/libdata/debug/usr
@@ -211,7 +216,6 @@
 ./usr/libdata/debug/usr/games
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
-./usr/libdata/debug/usr/lib/npf
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
@@ -254,6 +258,7 @@
 ./usr/share/doc/html/ntp/drivers/scripts
 ./usr/share/doc/html/ntp/icons
 ./usr/share/doc/html/ntp/scripts
+./usr/share/doc/kyua-atf-compat
 ./usr/share/doc/kyua-cli
 ./usr/share/doc/kyua-testers
 ./usr/share/doc/psd
@@ -438,6 +443,7 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
+./usr/share/kyua-atf-compat
 ./usr/share/kyua-cli
 ./usr/share/kyua-cli/misc
 ./usr/share/kyua-cli/store

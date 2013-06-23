@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.6.8.2 2013/02/25 00:24:29 tls Exp $
+# $NetBSD: mkvars.mk,v 1.6.8.3 2013/06/23 06:26:18 tls Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -17,19 +17,25 @@ MKEXTRAVARS= \
 	MKDYNAMICROOT \
 	MKMANPAGES \
 	MKSLJIT \
+	MKSOFTFLOAT \
 	MKXORG \
+	MKXORG_SERVER \
 	X11FLAVOR \
 	USE_INET6 \
 	USE_KERBEROS \
 	USE_LDAP \
 	USE_YP \
 	NETBSDSRCDIR \
-	MAKEVERBOSE
+	MAKEVERBOSE \
+	TARGET_ENDIANNESS \
+	EABI \
+	ARCH64
 
 #####
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
+.include <bsd.endian.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
 MKMANPAGES=no
@@ -44,6 +50,18 @@ MKX11:=no
 . else
 MKXORG:=no
 . endif
+.endif
+
+.if (!empty(MACHINE_ARCH:Mearm*))
+EABI=yes
+.else
+EABI=no
+.endif
+
+.if (!empty(MACHINE_ARCH:M*64*) || ${MACHINE_ARCH} == alpha)
+ARCH64=yes
+.else
+ARCH64=no
 .endif
 
 #####

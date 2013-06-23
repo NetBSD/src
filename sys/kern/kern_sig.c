@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.317 2012/02/19 21:06:53 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.317.2.1 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.317 2012/02/19 21:06:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.317.2.1 2013/06/23 06:18:58 tls Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -131,21 +131,21 @@ int (*coredump_vec)(struct lwp *, const char *) =
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,signal_send, 
+SDT_PROBE_DEFINE(proc,,,signal_send,signal-send,
 	    "struct lwp *", NULL,	/* target thread */
 	    "struct proc *", NULL,	/* target process */
 	    "int", NULL, 		/* signal */
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_discard, 
+SDT_PROBE_DEFINE(proc,,,signal_discard,signal-discard,
 	    "struct lwp *", NULL,	/* target thread */
 	    "struct proc *", NULL,	/* target process */
 	    "int", NULL, 		/* signal */
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_clear, 
+SDT_PROBE_DEFINE(proc,,,signal_clear,signal-clear,
 	    "int", NULL,		/* signal */
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_handle, 
+SDT_PROBE_DEFINE(proc,,,signal_handle,signal-handle,
 	    "int", NULL,		/* signal */
 	    "ksiginfo_t *", NULL,
 	    "void (*)(void)", NULL,	/* handler address */

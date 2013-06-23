@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.2 2008/06/14 16:01:07 tnozaki Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.2.26.1 2013/06/23 06:21:04 tls Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.2 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.2.26.1 2013/06/23 06:21:04 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -143,8 +143,10 @@ typedef struct {
 		_HZState	s_mbrtowc;
 		_HZState	s_mbtowc;
 		_HZState	s_mbsrtowcs;
+		_HZState	s_mbsnrtowcs;
 		_HZState	s_wcrtomb;
 		_HZState	s_wcsrtombs;
+		_HZState	s_wcsnrtombs;
 		_HZState	s_wctomb;
 	} states;
 } _HZCTypeInfo;

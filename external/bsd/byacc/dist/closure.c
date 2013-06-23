@@ -1,11 +1,11 @@
-/*	$NetBSD: closure.c,v 1.6 2011/09/10 21:29:04 christos Exp $	*/
+/*	$NetBSD: closure.c,v 1.6.8.1 2013/06/23 06:26:26 tls Exp $	*/
 
-/* Id: closure.c,v 1.9 2010/06/09 08:21:47 tom Exp */
+/* Id: closure.c,v 1.9 2010/06/09 08:21:47 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: closure.c,v 1.6 2011/09/10 21:29:04 christos Exp $");
+__RCSID("$NetBSD: closure.c,v 1.6.8.1 2013/06/23 06:26:26 tls Exp $");
 
 Value_t *itemset;
 Value_t *itemsetend;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.6 2010/04/06 17:39:47 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.6.12.1 2013/06/23 06:26:33 tls Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -1977,7 +1977,7 @@ void make_tables ()
 		("if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )");
 	indent_up ();
 	indent_puts ("{");
-	indent_puts ("int yyl;");
+	indent_puts ("yy_size_t yyl;");
 	do_indent ();
 	out_str ("for ( yyl = %s; yyl < yyleng; ++yyl )\n",
 		 yymore_used ? (yytext_is_array ? "YY_G(yy_prev_more_offset)" :

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.7.2.2 2013/02/25 00:28:37 tls Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.7.2.3 2013/06/23 06:20:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.2 2013/02/25 00:28:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.3 2013/06/23 06:20:04 tls Exp $");
 
 #include "opt_evbarm_boardtype.h"
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include "sdhc.h"
 #include "dotg.h"
@@ -45,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.2 2013/02/25 00:28:37 tls Exp 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/bus.h>
 
@@ -72,6 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.2 2013/02/25 00:28:37 tls Exp 
 #include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #if NPLCOM > 0
 #include <evbarm/dev/plcomreg.h>
@@ -139,8 +148,21 @@ int plcomcnmode = PLCONMODE;
 #endif
 
 #include "opt_kgdb.h"
+#if (NPLCOM == 0)
+#error Enable plcom for KGDB support
+#endif
 #ifdef KGDB
 #include <sys/kgdb.h>
+static void kgdb_port_init(void);
+#endif
+
+#if (NPLCOM > 0 && (defined(PLCONSOLE) || defined(KGDB)))
+static struct plcom_instance rpi_pi = {
+	.pi_type = PLCOM_TYPE_PL011,
+	.pi_flags = PLC_FLAG_32BIT_ACCESS,
+	.pi_iot = &bcm2835_bs_tag,
+	.pi_size = BCM2835_UART0_SIZE
+    };
 #endif
 
 /* Smallest amount of RAM start.elf could give us. */
@@ -344,6 +366,9 @@ static struct {
 		.vpt_tag = VCPROPTAG_NULL,
 	},
 };
+
+extern void bcmgenfb_set_console_dev(device_t dev);
+extern void bcmgenfb_ddb_trap_callback(int where);
 #endif
 
 static void
@@ -524,6 +549,10 @@ initarm(void *arg)
 	printf("done.\n");
 #endif
 
+#ifdef KGDB
+	kgdb_port_init();
+#endif
+
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
@@ -547,14 +576,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-#if (NPLCOM > 0 && defined(PLCONSOLE))
-	static struct plcom_instance rpi_pi = {
-		.pi_type = PLCOM_TYPE_PL011,
-		.pi_flags = PLC_FLAG_32BIT_ACCESS,
-		.pi_iot = &bcm2835_bs_tag,
-		.pi_size = BCM2835_UART0_SIZE
-	};
-#endif
+
 	if (consinit_called != 0)
 		return;
 
@@ -572,6 +594,31 @@ consinit(void)
 
 #endif
 }
+
+#ifdef KGDB
+#if !defined(KGDB_PLCOMUNIT) || !defined(KGDB_DEVRATE) || !defined(KGDB_CONMODE)
+#error Specify KGDB_PLCOMUNIT, KGDB_DEVRATE and KGDB_CONMODE for KGDB.
+#endif
+
+void
+static kgdb_port_init(void)
+{
+	static int kgdbsinit_called = 0;
+	int res;
+
+	if (kgdbsinit_called != 0)
+		return;
+
+	kgdbsinit_called = 1;
+
+	rpi_pi.pi_iobase = consaddr;
+
+	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, BCM2835_UART0_CLK,
+	    KGDB_CONMODE, KGDB_PLCOMUNIT);
+	if (res)
+		panic("KGDB uart can not be initialized, err=%d.", res);
+}
+#endif
 
 #if NGENFB > 0
 static bool
@@ -770,6 +817,12 @@ rpi_device_register(device_t dev, void *aux)
 #if NGENFB > 0
 	if (device_is_a(dev, "genfb")) {
 		char *ptr;
+
+		bcmgenfb_set_console_dev(dev);
+#ifdef DDB
+		db_trap_callback = bcmgenfb_ddb_trap_callback;
+#endif
+
 		if (rpi_fb_init(dict) == false)
 			return;
 		if (get_bootconf_option(boot_args, "console",

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.110.2.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.110.2.2 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.110.2.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.110.2.2 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -88,6 +88,7 @@ static int rump_vop_access(void *);
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_putpages_desc, genfs_null_putpages },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
@@ -217,8 +218,9 @@ struct rumpfs_mount {
 static int lastino = 2;
 static kmutex_t reclock;
 
+#define RUMPFS_DEFAULTMODE 0755
 static void freedir(struct rumpfs_node *, struct componentname *);
-static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
+static struct rumpfs_node *makeprivate(enum vtype, mode_t, dev_t, off_t, bool);
 
 /*
  * Extra Terrestrial stuff.  We map a given key (pathname) to a file on
@@ -340,7 +342,7 @@ doregister(const char *key, const char *hostpath,
 		key++;
 	}
 
-	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
+	if ((error = rumpuser_getfileinfo(hostpath, &fsize, &hft)) != 0)
 		return error;
 
 	/* etfs directory requires a directory on the host */
@@ -372,7 +374,8 @@ doregister(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size, true);
+	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), RUMPFS_DEFAULTMODE,
+	    rdev, size, true);
 	et->et_removing = false;
 	et->et_blkmin = dmin;
 
@@ -509,12 +512,13 @@ rump_etfs_remove(const char *key)
  */
 
 static struct rumpfs_node *
-makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
+makeprivate(enum vtype vt, mode_t mode, dev_t rdev, off_t size, bool et)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
 	struct timespec ts;
 
+	KASSERT((mode & ~ALLPERMS) == 0);
 	rn = kmem_zalloc(sizeof(*rn), KM_SLEEP);
 
 	switch (vt) {
@@ -535,7 +539,7 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
 
 	va = &rn->rn_va;
 	va->va_type = vt;
-	va->va_mode = 0755;
+	va->va_mode = mode;
 	if (vt == VDIR)
 		va->va_nlink = 2;
 	else
@@ -730,7 +734,7 @@ rump_vop_lookup(void *v)
 		strlcat(newpath, "/", newpathlen);
 		strlcat(newpath, cnp->cn_nameptr, newpathlen);
 
-		if (rumpuser_getfileinfo(newpath, &fsize, &hft, &error)) {
+		if ((error = rumpuser_getfileinfo(newpath, &fsize, &hft)) != 0){
 			free(newpath, M_TEMP);
 			return error;
 		}
@@ -741,7 +745,8 @@ rump_vop_lookup(void *v)
 			return ENOENT;
 		}
 
-		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize, true);
+		rn = makeprivate(hft_to_vtype(hft), RUMPFS_DEFAULTMODE,
+		    NODEV, fsize, true);
 		rn->rn_flags |= RUMPNODE_CANRECLAIM;
 		if (rnd->rn_flags & RUMPNODE_DIR_ETSUBS) {
 			rn->rn_flags |= RUMPNODE_DIR_ET | RUMPNODE_DIR_ETSUBS;
@@ -841,8 +846,9 @@ rump_check_permitted(struct vnode *vp, struct rumpfs_node *rnode,
 {
 	struct vattr *attr = &rnode->rn_va;
 
-	return genfs_can_access(vp->v_type, attr->va_mode, attr->va_uid,
-	    attr->va_gid, mode, cred);
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
+	    vp->v_type, attr->va_mode), vp, NULL, genfs_can_access(vp->v_type,
+	    attr->va_mode, attr->va_uid, attr->va_gid, mode, cred));
 }
 
 int
@@ -996,10 +1002,11 @@ rump_vop_mkdir(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv = 0;
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn = makeprivate(VDIR, va->va_mode & ALLPERMS, NODEV, DEV_BSIZE, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rn->rn_parent = rnd;
@@ -1101,7 +1108,8 @@ rump_vop_mknod(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv;
 
-	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, false);
+	rn = makeprivate(va->va_type, va->va_mode & ALLPERMS, va->va_rdev,
+	    DEV_BSIZE, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1133,7 +1141,8 @@ rump_vop_create(void *v)
 	int rv;
 
 	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
-	rn = makeprivate(va->va_type, NODEV, newsize, false);
+	rn = makeprivate(va->va_type, va->va_mode & ALLPERMS, NODEV,
+	    newsize, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1160,6 +1169,7 @@ rump_vop_symlink(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	const char *target = ap->a_target;
 	size_t linklen;
@@ -1167,7 +1177,7 @@ rump_vop_symlink(void *v)
 
 	linklen = strlen(target);
 	KASSERT(linklen < MAXPATHLEN);
-	rn = makeprivate(VLNK, NODEV, linklen, false);
+	rn = makeprivate(VLNK, va->va_mode & ALLPERMS, NODEV, linklen, false);
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = makevnode(dvp->v_mount, rn, vpp);
@@ -1250,21 +1260,21 @@ rump_vop_open(void *v)
 	if (mode & FREAD) {
 		if (rn->rn_readfd != -1)
 			return 0;
-		rn->rn_readfd = rumpuser_open(rn->rn_hostpath,
-		    RUMPUSER_OPEN_RDONLY, &error);
+		error = rumpuser_open(rn->rn_hostpath,
+		    RUMPUSER_OPEN_RDONLY, &rn->rn_readfd);
 	}
 
 	if (mode & FWRITE) {
 		if (rn->rn_writefd != -1)
 			return 0;
-		rn->rn_writefd = rumpuser_open(rn->rn_hostpath,
-		    RUMPUSER_OPEN_WRONLY, &error);
+		error = rumpuser_open(rn->rn_hostpath,
+		    RUMPUSER_OPEN_WRONLY, &rn->rn_writefd);
 	}
 
 	return error;
 }
 
-/* simple readdir.  event omits dotstuff and periods */
+/* simple readdir.  even omits dotstuff and periods */
 static int
 rump_vop_readdir(void *v)
 {
@@ -1280,6 +1290,7 @@ rump_vop_readdir(void *v)
 	struct uio *uio = ap->a_uio;
 	struct rumpfs_node *rnd = vp->v_data;
 	struct rumpfs_dent *rdent;
+	struct dirent *dentp = NULL;
 	unsigned i;
 	int rv = 0;
 
@@ -1292,35 +1303,37 @@ rump_vop_readdir(void *v)
 		goto out;
 
 	/* copy entries */
+	dentp = kmem_alloc(sizeof(*dentp), KM_SLEEP);
 	for (; rdent && uio->uio_resid > 0;
 	    rdent = LIST_NEXT(rdent, rd_entries), i++) {
-		struct dirent dent;
-
-		strlcpy(dent.d_name, rdent->rd_name, sizeof(dent.d_name));
-		dent.d_namlen = strlen(dent.d_name);
-		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
+		strlcpy(dentp->d_name, rdent->rd_name, sizeof(dentp->d_name));
+		dentp->d_namlen = strlen(dentp->d_name);
+		dentp->d_reclen = _DIRENT_RECLEN(dentp, dentp->d_namlen);
 
 		if (__predict_false(RDENT_ISWHITEOUT(rdent))) {
-			dent.d_fileno = INO_WHITEOUT;
-			dent.d_type = DT_WHT;
+			dentp->d_fileno = INO_WHITEOUT;
+			dentp->d_type = DT_WHT;
 		} else {
-			dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
-			dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
+			dentp->d_fileno = rdent->rd_node->rn_va.va_fileid;
+			dentp->d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
 		}
 
-		if (uio->uio_resid < dent.d_reclen) {
+		if (uio->uio_resid < dentp->d_reclen) {
 			i--;
 			break;
 		}
 
-		rv = uiomove(&dent, dent.d_reclen, uio); 
+		rv = uiomove(dentp, dentp->d_reclen, uio); 
 		if (rv) {
 			i--;
 			break;
 		}
 	}
+	kmem_free(dentp, sizeof(*dentp));
+	dentp = NULL;
 
  out:
+	KASSERT(dentp == NULL);
 	if (ap->a_cookies) {
 		*ap->a_ncookies = 0;
 		*ap->a_cookies = NULL;
@@ -1337,25 +1350,26 @@ rump_vop_readdir(void *v)
 static int
 etread(struct rumpfs_node *rn, struct uio *uio)
 {
+	struct rumpuser_iovec iov;
 	uint8_t *buf;
-	size_t bufsize;
-	ssize_t n;
+	size_t bufsize, n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
 	if (bufsize == 0)
 		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
-	    uio->uio_offset + rn->rn_offset, &error)) == -1)
-		goto out;
-	KASSERT(n <= bufsize);
-	error = uiomove(buf, n, uio);
 
- out:
+	iov.iov_base = buf;
+	iov.iov_len = bufsize;
+	if ((error = rumpuser_iovread(rn->rn_readfd, &iov, 1,
+	    uio->uio_offset + rn->rn_offset, &n)) == 0) {
+		KASSERT(n <= bufsize);
+		error = uiomove(buf, n, uio);
+	}
+
 	kmem_free(buf, bufsize);
 	return error;
-
 }
 
 static int
@@ -1398,9 +1412,9 @@ rump_vop_read(void *v)
 static int
 etwrite(struct rumpfs_node *rn, struct uio *uio)
 {
+	struct rumpuser_iovec iov;
 	uint8_t *buf;
-	size_t bufsize;
-	ssize_t n;
+	size_t bufsize, n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
@@ -1410,10 +1424,12 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 	error = uiomove(buf, bufsize, uio);
 	if (error)
 		goto out;
+
 	KASSERT(uio->uio_resid == 0);
-	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
-	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
-	if (n >= 0) {
+	iov.iov_base = buf;
+	iov.iov_len = bufsize;
+	if ((error = rumpuser_iovwrite(rn->rn_writefd, &iov, 1,
+	    (uio->uio_offset-bufsize) + rn->rn_offset, &n)) == 0) {
 		KASSERT(n <= bufsize);
 		uio->uio_resid = bufsize - n;
 	}
@@ -1619,15 +1635,14 @@ rump_vop_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
-	int error;
 
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST && vp->v_type == VREG) {
 		if (rn->rn_readfd != -1) {
-			rumpuser_close(rn->rn_readfd, &error);
+			rumpuser_close(rn->rn_readfd);
 			rn->rn_readfd = -1;
 		}
 		if (rn->rn_writefd != -1) {
-			rumpuser_close(rn->rn_writefd, &error);
+			rumpuser_close(rn->rn_writefd);
 			rn->rn_writefd = -1;
 		}
 	}
@@ -1745,7 +1760,7 @@ rumpfs_mountfs(struct mount *mp)
 
 	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn = makeprivate(VDIR, RUMPFS_DEFAULTMODE, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rn;
 	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
 		return error;

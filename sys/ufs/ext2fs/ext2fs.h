@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.30.2.1 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.30.2.2 2013/06/23 06:18:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -390,7 +390,7 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  * quantities by using shifts and masks in place of divisions
  * modulos and multiplications.
  */
-#define blkoff(fs, loc)		/* calculates (loc % fs->e2fs_bsize) */ \
+#define ext2_blkoff(fs, loc)	/* calculates (loc % fs->e2fs_bsize) */ \
 	((loc) & (fs)->e2fs_qbmask)
 #define lblktosize(fs, blk)	/* calculates (blk * fs->e2fs_bsize) */ \
 	((blk) << (fs)->e2fs_bshift)
@@ -410,6 +410,6 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 /*
  * Number of indirects in a file system block.
  */
-#define	NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
+#define	EXT2_NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
 
 #endif /* !_UFS_EXT2FS_EXT2FS_H_ */

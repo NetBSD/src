@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.22 2012/05/30 08:05:12 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.22.2.1 2013/06/23 06:20:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22 2012/05/30 08:05:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22.2.1 2013/06/23 06:20:21 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,17 @@ static void	voyagerfb_bitblt(void *, int, int, int, int,
 static void	voyagerfb_cursor(void *, int, int, int);
 static void	voyagerfb_putchar_mono(void *, int, int, u_int, long);
 static void	voyagerfb_putchar_aa32(void *, int, int, u_int, long);
+static void	voyagerfb_putchar_aa8(void *, int, int, u_int, long);
 static void	voyagerfb_copycols(void *, int, int, int, int);
 static void	voyagerfb_erasecols(void *, int, int, int, long);
 static void	voyagerfb_copyrows(void *, int, int, int);
 static void	voyagerfb_eraserows(void *, int, int, long);
 
 static int	voyagerfb_set_curpos(struct voyagerfb_softc *, int, int);
-static int	voyagerfb_gcursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
-static int	voyagerfb_scursor(struct voyagerfb_softc *, struct wsdisplay_cursor *);
+static int	voyagerfb_gcursor(struct voyagerfb_softc *,
+		 struct wsdisplay_cursor *);
+static int	voyagerfb_scursor(struct voyagerfb_softc *,
+		 struct wsdisplay_cursor *);
 
 struct wsdisplay_accessops voyagerfb_accessops = {
 	voyagerfb_ioctl,
@@ -206,8 +209,10 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
+	uint32_t		reg;
 	bool			is_console;
 	int i, j;
+	uint8_t			cmap[768];
 
 	sc->sc_pc = vaa->vaa_pc;
 	sc->sc_pcitag = vaa->vaa_pcitag;
@@ -221,7 +226,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_fb = vaa->vaa_mem_pa;
 	sc->sc_fbh = vaa->vaa_memh;
-	sc->sc_fbsize = 16 * 1024 * 1024;
 	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
 	sc->sc_reg = vaa->vaa_reg_pa;
@@ -230,19 +234,40 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dataport = bus_space_vaddr(sc->sc_memt, sc->sc_regh);
 	sc->sc_dataport += SM502_DATAPORT;
 
+	sc->sc_gpio_cookie = device_private(parent);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_DRAM_CONTROL);
+	switch(reg & 0x0000e000) {
+		case SM502_MEM_2M:
+			sc->sc_fbsize = 2 * 1024 * 1024;
+			break;
+		case SM502_MEM_4M:
+			sc->sc_fbsize = 4 * 1024 * 1024;
+			break;
+		case SM502_MEM_8M:
+			sc->sc_fbsize = 8 * 1024 * 1024;
+			break;
+		case SM502_MEM_16M:
+			sc->sc_fbsize = 16 * 1024 * 1024;
+			break;
+		case SM502_MEM_32M:
+			sc->sc_fbsize = 32 * 1024 * 1024;
+			break;
+		case SM502_MEM_64M:
+			sc->sc_fbsize = 64 * 1024 * 1024;
+			break;
+	}
+
 	sc->sc_width = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
 		SM502_PANEL_FB_WIDTH) & SM502_FBW_WIN_WIDTH_MASK) >> 16;
 	sc->sc_height = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
 		SM502_PANEL_FB_HEIGHT) & SM502_FBH_WIN_HEIGHT_MASK) >> 16;
 
-#ifdef VOYAGERFB_ANTIALIAS
+#ifdef VOYAGERFB_DEPTH_32
 	sc->sc_depth = 32;
 #else
 	sc->sc_depth = 8;
 #endif
-
-	/* init engine here */
-	voyagerfb_init(sc);
 
 	printf("%s: %d x %d, %d bit, stride %d\n", device_xname(self), 
 		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
@@ -251,8 +276,11 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	 * XXX yeah, casting the fb address to uint32_t is formally wrong
 	 * but as far as I know there are no SM502 with 64bit BARs
 	 */
-	aprint_normal("%s: %d MB aperture at 0x%08x\n", device_xname(self),
+	aprint_normal("%s: %d MB video memory at 0x%08x\n", device_xname(self),
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
+
+	/* init engine here */
+	voyagerfb_init(sc);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -272,7 +300,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->vd.init_screen = voyagerfb_init_screen;
 
 	/* backlight control */
-	sc->sc_gpio_cookie = device_private(parent);
 	voyagerfb_setup_backlight(sc);
 
 	ri = &sc->sc_console_screen.scr_ri;
@@ -292,7 +319,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdness later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+			    &defattr);
 		}
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
@@ -305,15 +333,16 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
 	j = 0;
 	if (sc->sc_depth <= 8) {
-		for (i = 0; i < (1 << sc->sc_depth); i++) {
+		for (i = 0; i < 256; i++) {
 
-			sc->sc_cmap_red[i] = rasops_cmap[j];
-			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
-			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-			voyagerfb_putpalreg(sc, i, rasops_cmap[j],
-			    rasops_cmap[j + 1], rasops_cmap[j + 2]);
+			sc->sc_cmap_red[i] = cmap[j];
+			sc->sc_cmap_green[i] = cmap[j + 1];
+			sc->sc_cmap_blue[i] = cmap[j + 2];
+			voyagerfb_putpalreg(sc, i, cmap[j], cmap[j + 1],
+			    cmap[j + 2]);
 			j += 3;
 		}
 	}
@@ -384,7 +413,7 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-#ifdef VOYAGERFB_ANTIALIAS
+#ifdef VOYAGERFB_DEPTH_32
 				sc->sc_depth = 32;
 #else
 				sc->sc_depth = 8;
@@ -506,8 +535,8 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/*
 	 * restrict all other mappings to processes with privileges
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
-	    NULL, NULL, NULL, NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;
@@ -547,6 +576,12 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
+	if (sc->sc_depth == 8) {
+		ri->ri_flg |= RI_8BIT_IS_RGB;
+#ifdef VOYAGERFB_ANTIALIAS
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+#endif
+	}
 	if (sc->sc_depth == 32) {
 #ifdef VOYAGERFB_ANTIALIAS
 		ri->ri_flg |= RI_ENABLE_ALPHA;
@@ -573,7 +608,16 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.erasecols = voyagerfb_erasecols;
 	ri->ri_ops.cursor = voyagerfb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
-		ri->ri_ops.putchar = voyagerfb_putchar_aa32;
+	        switch (sc->sc_depth) {
+	                case 32:
+                		ri->ri_ops.putchar = voyagerfb_putchar_aa32;
+                		break;
+                        case 8:
+                                ri->ri_ops.putchar = voyagerfb_putchar_aa8;
+                                break;
+                        default:
+                                printf("alpha font at %d!?\n", sc->sc_depth);
+                }
 	} else
 		ri->ri_ops.putchar = voyagerfb_putchar_mono;
 }
@@ -647,7 +691,7 @@ voyagerfb_restore_palette(struct voyagerfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
+	for (i = 0; i < 256; i++) {
 		voyagerfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
 	}
@@ -714,18 +758,26 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 	}
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_FB_OFFSET,
 	    (sc->sc_stride << 16) | sc->sc_stride);
+
+	/* clear the screen... */
+	voyagerfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, 0);
+
+	/* ...and then switch colour depth. For aesthetic reasons. */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL,
 	    reg);
 
 	/* put the cursor at the end of video memory */
 	sc->sc_cursor_addr = 16 * 1024 * 1024 - 16 * 64;	/* XXX */
 	DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr); 
-	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt, sc->sc_fbh)
-			 + sc->sc_cursor_addr);
+	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt,
+			 sc->sc_fbh) + sc->sc_cursor_addr);
 #ifdef VOYAGERFB_DEBUG
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY, 0x00100010);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL12, 0x0000ffff);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL3, 0x0000f800);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_XY,
+							 0x00100010);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL12,
+							 0x0000ffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_COL3,
+							 0x0000f800);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
 	    SM502_CRSR_ENABLE | sc->sc_cursor_addr);
 	sc->sc_cursor[0] = 0x00000000;
@@ -739,7 +791,7 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 #else
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_CRSR_ADDR,
 	    sc->sc_cursor_addr);
-#endif	
+#endif
 }
 
 static void
@@ -967,7 +1019,8 @@ voyagerfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION, (wi << 16) | he);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION,
+	    (wi << 16) | he);
 	rf = (fg >> 16) & 0xff;
 	rb = (bg >> 16) & 0xff;
 	gf = (fg >> 8) & 0xff;
@@ -993,6 +1046,118 @@ voyagerfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 			}
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    SM502_DATAPORT, pixel);
+		}
+		if (pad)
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DATAPORT, 0);
+	}
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
+}
+
+static void
+voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct voyagerfb_softc *sc = scr->scr_cookie;
+	uint32_t cmd;
+	int fg, bg;
+	uint8_t *data;
+	int x, y, wi, he;
+	int i, j, r, g, b, aval, pad;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint32_t pixel = 0, latch = 0, bg8, fg8;
+	int rv;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+		
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		voyagerfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	data = WSFONT_GLYPH(c, font);
+	/*
+	 * we can't accelerate the actual alpha blending but
+	 * we can at least use a host blit to go through the
+	 * pipeline instead of having to sync the engine
+	 */
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	cmd = ROP_COPY |
+	      SM502_CTRL_USE_ROP2 |
+	      SM502_CTRL_CMD_HOSTWRT |
+	      SM502_CTRL_QUICKSTART_E;
+	voyagerfb_ready(sc);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION,
+	    (wi << 16) | he);
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	pad = wi & 4;
+	for (i = 0; i < he; i++) {
+		for (j = 0; j < wi; j++) {
+			aval = *data;
+			data++;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch = (latch << 8) | pixel;
+			/* write in 32bit chunks */
+			if ((j & 3) == 3) {
+				bus_space_write_4(sc->sc_memt, sc->sc_regh,
+				    SM502_DATAPORT, be32toh(latch));
+				latch = 0;
+			}
+		}
+		/* if we have pixels left in latch write them out */
+		if ((j & 3) != 0) {
+			latch = latch << ((4 - (i & 3)) << 3);	
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DATAPORT, be32toh(latch));
 		}
 		if (pad)
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
@@ -1134,9 +1299,11 @@ voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 		/* in these cases bypass the PWM and use the gpio */
 		voyager_control_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
 		if (level == 0) {
-			voyager_write_gpio(sc->sc_gpio_cookie, ~GPIO_BACKLIGHT, 0);
+			voyager_write_gpio(sc->sc_gpio_cookie,
+			    ~GPIO_BACKLIGHT, 0);
 		} else {
-			voyager_write_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+			voyager_write_gpio(sc->sc_gpio_cookie,
+			    0xffffffff, GPIO_BACKLIGHT);
 		}
 	} else {
 		uint32_t pwm;
@@ -1146,7 +1313,8 @@ voyagerfb_set_backlight(struct voyagerfb_softc *sc, int level)
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM0, pwm);
 
 		/* let the PWM take over */
-		voyager_control_gpio(sc->sc_gpio_cookie, 0xffffffff, GPIO_BACKLIGHT);
+		voyager_control_gpio(sc->sc_gpio_cookie,
+		    0xffffffff, GPIO_BACKLIGHT);
 	}
 }
 
@@ -1255,7 +1423,8 @@ voyagerfb_scursor(struct voyagerfb_softc *sc, struct wsdisplay_cursor *cur)
 				    SM502_PANEL_CRSR_COL3,
 				    val);
 			}
-			DPRINTF("%s: %d %04x\n", __func__, i + cur->cmap.index, val);
+			DPRINTF("%s: %d %04x\n", __func__, i + cur->cmap.index,
+			    val);
 		}
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {

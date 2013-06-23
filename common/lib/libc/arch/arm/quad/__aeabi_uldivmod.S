@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2 2012/08/05 06:34:09 matt Exp $")
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2.2.1 2013/06/23 06:26:13 tls Exp $")
 
 /*
  * typedef struct { unsigned long long quo, rem } ulldiv_t;
@@ -38,14 +38,31 @@ RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2 2012/08/05 06:34:09 matt Exp $")
  */
 
 ENTRY(__aeabi_uldivmod)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+	orrs	ip, r2, r3
+	beq	.Ldivbyzero
+#endif
+
 	push	{r4,lr}
-	sub	sp, sp, #8
-	mov	r4, sp
+	sub	sp, sp, #16
+	add	ip, sp, #8
+	str	ip, [sp]
 	bl	PLT_SYM(__qdivrem)
+	add	sp, sp, #8
 	/*
 	 * The remainder is already on the stack just waiting to be popped
 	 * into r2/r3.
 	 */
 	pop	{r2-r4,lr}
 	RET
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+.Ldivbyzero:
+	push	{r0-r1,ip,lr}
+	mvn	r0, #0
+	mvn	r1, #0
+	bl	PLT_SYM(__aeabi_ldiv0)
+	pop	{r2-r3,ip,lr}
+	RET
+#endif
 END(__aeabi_uldivmod)

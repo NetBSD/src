@@ -1,5 +1,10 @@
-# $NetBSD: Makefile,v 1.2 2010/06/04 08:33:41 jmmv Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2013/06/23 06:26:23 tls Exp $
 
-SUBDIR= doc examples xml xsl
+.include <bsd.init.mk>
+
+SUBDIR=		doc
+.if !(${MKKYUA} != "no")
+SUBDIR+=	examples xml xsl
+.endif
 
 .include <bsd.subdir.mk>

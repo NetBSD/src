@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.4.8.1 2013/02/25 00:26:07 tls Exp $	*/
+/*	$NetBSD: magic.c,v 1.4.8.2 2013/06/23 06:26:33 tls Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.77 2012/10/31 17:20:06 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.78 2013/01/07 18:20:19 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.4.8.1 2013/02/25 00:26:07 tls Exp $");
+__RCSID("$NetBSD: magic.c,v 1.4.8.2 2013/06/23 06:26:33 tls Exp $");
 #endif
 #endif	/* lint */
 
@@ -482,4 +482,10 @@ magic_setflags(struct magic_set *ms, int flags)
 #endif
 	ms->flags = flags;
 	return 0;
+}
+
+public int
+magic_version(void)
+{
+	return MAGIC_VERSION;
 }

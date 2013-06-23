@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.236.2.2 2013/02/25 00:28:24 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.236.2.3 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -162,8 +162,8 @@
  *       the active domain on that cpu). I guess there are lots more tlb
  *       shootdown issues too...
  *
- *     o If the vector_page is at 0x00000000 instead of 0xffff0000, then
- *       MP systems will lose big-time because of the MMU domain hack.
+ *     o If the vector_page is at 0x00000000 instead of in kernel VA space,
+ *       then MP systems will lose big-time because of the MMU domain hack.
  *       The only way this can be solved (apart from moving the vector
  *       page to 0xffff0000) is to reserve the first 1MB of user address
  *       space for kernel use only. This would require re-linking all
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236.2.2 2013/02/25 00:28:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236.2.3 2013/06/23 06:19:59 tls Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1554,6 +1554,7 @@ pmap_pmap_ctor(void *arg, void *v, int flags)
 static void
 pmap_pinit(pmap_t pm)
 {
+#ifndef ARM_HAS_VBAR
 	struct l2_bucket *l2b;
 
 	if (vector_page < KERNEL_BASE) {
@@ -1571,6 +1572,7 @@ pmap_pinit(pmap_t pm)
 		    L1_C_DOM(pm->pm_domain);
 	} else
 		pm->pm_pl1vec = NULL;
+#endif
 }
 
 #ifdef PMAP_CACHE_VIVT
@@ -2502,7 +2504,7 @@ void
 pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 {
 	vsize_t va_offset, end_va;
-	void (*cf)(vaddr_t, vsize_t);
+	bool wbinv_p;
 
 	if (arm_cache_prefer_mask == 0)
 		return;
@@ -2523,19 +2525,19 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 		 * Mark that the page is no longer dirty.
 		 */
 		md->pvh_attrs &= ~PVF_DIRTY;
-		cf = cpufuncs.cf_idcache_wbinv_range;
+		wbinv_p = true;
 		break;
 	case PMAP_FLUSH_SECONDARY:
 		va_offset = 0;
 		end_va = arm_cache_prefer_mask;
-		cf = cpufuncs.cf_idcache_wbinv_range;
+		wbinv_p = true;
 		md->pvh_attrs &= ~PVF_MULTCLR;
 		PMAPCOUNT(vac_flush_lots);
 		break;
 	case PMAP_CLEAN_PRIMARY:
 		va_offset = md->pvh_attrs & arm_cache_prefer_mask;
 		end_va = va_offset;
-		cf = cpufuncs.cf_dcache_wb_range;
+		wbinv_p = false;
 		/*
 		 * Mark that the page is no longer dirty.
 		 */
@@ -2551,6 +2553,8 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 
 	NPDEBUG(PDB_VAC, printf("pmap_flush_page: md=%p (attrs=%#x)\n",
 	    md, md->pvh_attrs));
+
+	const size_t scache_line_size = arm_scache.dcache_line_size;
 
 	for (; va_offset <= end_va; va_offset += PAGE_SIZE) {
 		const size_t pte_offset = va_offset >> PGSHIFT;
@@ -2575,7 +2579,22 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
 		/*
 		 * Flush it.
 		 */
-		(*cf)(cdstp + va_offset, PAGE_SIZE);
+                vaddr_t va = cdstp + va_offset;  
+		if (scache_line_size != 0) {
+			cpu_dcache_wb_range(va, PAGE_SIZE); 
+			if (wbinv_p) {
+				cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE); 
+				cpu_dcache_inv_range(va, PAGE_SIZE);
+			} else {
+				cpu_sdcache_wb_range(va, pa, PAGE_SIZE);
+			}
+		} else {
+			if (wbinv_p) {
+				cpu_dcache_wbinv_range(va, PAGE_SIZE);
+			} else {
+				cpu_dcache_wb_range(va, PAGE_SIZE);
+			}
+		}
 
 		/*
 		 * Restore the page table entry since we might have interrupted
@@ -2806,6 +2825,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pt_entry_t *ptep, npte, opte;
 	u_int nflags;
 	u_int oflags;
+#ifdef ARM_HAS_VBAR
+	const bool vector_page_p = false;
+#else
+	const bool vector_page_p = (va == vector_page);
+#endif
 
 	NPDEBUG(PDB_ENTER, printf("pmap_enter: pm %p va 0x%lx pa 0x%lx prot %x flag %x\n", pm, va, pa, prot, flags));
 
@@ -2997,8 +3021,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * Make sure the vector table is mapped cacheable
 		 */
-		if ((pm != pmap_kernel() && va == vector_page) ||
-		    (flags & ARM32_MMAP_CACHEABLE)) {
+		if ((vector_page_p && pm != pmap_kernel())
+		    || (flags & ARM32_MMAP_CACHEABLE)) {
 			npte |= pte_l2_s_cache_mode;
 		} else if (flags & ARM32_MMAP_WRITECOMBINE) {
 			npte |= pte_l2_s_wc_mode;
@@ -3036,8 +3060,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * Make sure userland mappings get the right permissions
 	 */
-	if (pm != pmap_kernel() && va != vector_page)
+	if (!vector_page_p && pm != pmap_kernel()) {
 		npte |= L2_S_PROT_U;
+	}
 
 	/*
 	 * Keep the stats up to date
@@ -3064,7 +3089,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * We only need to frob the cache/tlb if this pmap
 			 * is current
 			 */
-			if (va != vector_page && l2pte_valid(npte)) {
+			if (!vector_page_p && l2pte_valid(npte)) {
 				/*
 				 * This mapping is likely to be accessed as
 				 * soon as we return to userland. Fix up the
@@ -4109,7 +4134,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1) {
 		extern int last_fault_code;
-		extern int kernel_debug;
 		printf("fixup: pm %p, va 0x%lx, ftype %d - nothing to do!\n",
 		    pm, va, ftype);
 		printf("fixup: l2 %p, l2b %p, ptep %p, pl1pd %p\n",
@@ -4117,6 +4141,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		printf("fixup: pte 0x%x, l1pd 0x%x, last code 0x%x\n",
 		    pte, l1pd, last_fault_code);
 #ifdef DDB
+		extern int kernel_debug;
+
 		if (kernel_debug & 2)
 			Debugger();
 #endif
@@ -4264,6 +4290,7 @@ pmap_activate(struct lwp *l)
 	/* No interrupts while we frob the TTB/DACR */
 	oldirqstate = disable_interrupts(IF32_bits);
 
+#ifndef ARM_HAS_VBAR
 	/*
 	 * For ARM_VECTORS_LOW, we MUST, I repeat, MUST fix up the L1
 	 * entry corresponding to 'vector_page' in the incoming L1 table
@@ -4276,6 +4303,7 @@ pmap_activate(struct lwp *l)
 		*npm->pm_pl1vec = npm->pm_l1vec;
 		PTE_SYNC(npm->pm_pl1vec);
 	}
+#endif
 
 	cpu_domains(ndacr);
 
@@ -4421,6 +4449,7 @@ pmap_destroy(pmap_t pm)
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page < KERNEL_BASE) {
 		KDASSERT(!pmap_is_current(pm));
 
@@ -4428,6 +4457,7 @@ pmap_destroy(pmap_t pm)
 		pmap_remove(pm, vector_page, vector_page + PAGE_SIZE);
 		pmap_update(pm);
 	}
+#endif
 
 	LIST_REMOVE(pm, pm_list);
 
@@ -5106,6 +5136,7 @@ out:
 
 /************************ Utility routines ****************************/
 
+#ifndef ARM_HAS_VBAR
 /*
  * vector_page_setprot:
  *
@@ -5117,6 +5148,17 @@ vector_page_setprot(int prot)
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep;
 
+#if defined(CPU_ARMV7) || defined(CPU_ARM11)
+	/*
+	 * If we are using VBAR to use the vectors in the kernel, then it's
+	 * already mapped in the kernel text so no need to anything here.
+	 */
+	if (vector_page != ARM_VECTORS_LOW && vector_page != ARM_VECTORS_HIGH) {
+		KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
+		return;
+	}
+#endif
+
 	l2b = pmap_get_l2_bucket(pmap_kernel(), vector_page);
 	KDASSERT(l2b != NULL);
 
@@ -5127,6 +5169,7 @@ vector_page_setprot(int prot)
 	cpu_tlb_flushD_SE(vector_page);
 	cpu_cpwait();
 }
+#endif
 
 /*
  * Fetch pointers to the PDE/PTE for the given pmap/VA pair.
@@ -5409,6 +5452,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	TAILQ_INIT(&l1_lru_list);
 	pmap_init_l1(l1, l1pt);
 
+#ifndef ARM_HAS_VBAR
 	/* Set up vector page L1 details, if necessary */
 	if (vector_page < KERNEL_BASE) {
 		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
@@ -5418,6 +5462,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 		    L1_C_DOM(pm->pm_domain);
 	} else
 		pm->pm_pl1vec = NULL;
+#endif
 
 	/*
 	 * Initialize the pmap cache

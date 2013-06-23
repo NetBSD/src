@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.398.2.2 2013/02/25 00:24:48 tls Exp $
+#	$NetBSD: Makefile,v 1.398.2.3 2013/06/23 06:26:21 tls Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -53,7 +53,7 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 # Note: At least mkisofs 2.0 should be used.
 #
 .if !defined(MKISOFS)
-MKISOFS!=       (which mkisofs || echo true)
+MKISOFS!=       (which mkisofs || echo true) 2>/dev/null
 .endif
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
@@ -93,10 +93,10 @@ BIN1+=	bootptab changelist csh.cshrc csh.login \
 	ftpusers gettytab gpio.conf group hosts hosts.lpd inetd.conf \
 	locate.conf login.conf mailer.conf man.conf monthly monthly.conf \
 	mrouted.conf named.conf netconfig networks newsyslog.conf \
-	nsswitch.conf ntp.conf passwd.conf phones printcap profile protocols \
-	rbootd.conf rc rc.conf rc.local rc.subr rc.shutdown remote rpc \
-	security security.conf services shells shrc sysctl.conf syslog.conf \
-	weekly weekly.conf wscons.conf
+	nsswitch.conf ntp.conf passwd.conf pkgpath.conf phones printcap \
+	profile protocols rbootd.conf rc rc.conf rc.local rc.subr \
+	rc.shutdown remote rpc security security.conf services shells \
+	shrc sysctl.conf syslog.conf weekly weekly.conf wscons.conf
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)

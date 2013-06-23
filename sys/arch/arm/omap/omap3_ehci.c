@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.3.2.2 2013/02/25 00:28:31 tls Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.2 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $");
 
 #include "locators.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.2 2013/02/25 00:28:31 tls Exp $
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#include <arm/omap/omap_var.h>
 #include <arm/omap/omap2_gpio.h>
 #include <arm/omap/omap2_obioreg.h>
 #include <arm/omap/omap2_obiovar.h>
@@ -107,11 +108,19 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.2 2013/02/25 00:28:31 tls Exp $
 #define CM_CLKSTST_USBHOST	0x4c
 
 /* USBTLL module */
+#ifdef OMAP_3XXX
 #define	USBTLL_BASE		0x48062000
+#elif defined(OMAP4)
+#define	USBTLL_BASE		0x4a062000
+#endif
 #define	USBTLL_SIZE		0x1000
 
 /* HS USB HOST module */
+#ifdef OMAP_3XXX
 #define	UHH_BASE		0x48064000
+#elif defined(OMAP4)
+#define	UHH_BASE		0x4a064000
+#endif
 #define	UHH_SIZE		0x1000
 
 enum omap3_ehci_port_mode {
@@ -130,18 +139,22 @@ struct omap3_ehci_softc {
 	bus_space_handle_t sc_ioh_uhh;
 	bus_size_t	sc_uhh_size;
 
+	uint16_t	sc_nports;
 	bool		sc_phy_reset;
 	struct {
 		enum omap3_ehci_port_mode mode;
 		int gpio;
+		bool value;
 	} sc_portconfig[3];
 	struct {
 		uint16_t m, n, m2;
 	} sc_dpll5;
 };
 
-static void	dpll5_init(struct omap3_ehci_softc *);
-static void	usbhost_init(struct omap3_ehci_softc *, int);
+#ifdef OMAP_3XXX
+static void	omap3_dpll5_init(struct omap3_ehci_softc *);
+static void	omap3_usbhost_init(struct omap3_ehci_softc *, int);
+#endif
 static void	usbtll_reset(struct omap3_ehci_softc *);
 static void	usbtll_power(struct omap3_ehci_softc *, bool);
 static void	usbtll_init(struct omap3_ehci_softc *, int);
@@ -207,7 +220,9 @@ omap3_ehci_find_companions(struct omap3_ehci_softc *sc)
 	     dv = deviter_next(&di)) {
 		if (device_is_a(dv, "ohci") &&
 		    device_parent(dv) == device_parent(sc->sc.sc_dev)) {
-			printf("  adding companion '%s'\n", device_xname(dv));
+#ifdef OMAP3_EHCI_DEBUG
+			aprint_normal("  adding companion '%s'\n", device_xname(dv));
+#endif
 			sc->sc.sc_comps[sc->sc.sc_ncomp++] = dv;
 		}
 	}
@@ -219,9 +234,8 @@ omap3_ehci_attach1(device_t self)
 {
 	struct omap3_ehci_softc *sc = device_private(self);
 	usbd_status err;
-	int i;
 
-	for (i = 0; sc->sc_phy_reset && i < 3; i++) {
+	for (u_int i = 0; sc->sc_phy_reset && i < sc->sc_nports; i++) {
 		if (sc->sc_portconfig[i].gpio != -1) {
 			if (!omap2_gpio_has_pin(sc->sc_portconfig[i].gpio)) {
 				aprint_error_dev(self, "WARNING: "
@@ -230,7 +244,8 @@ omap3_ehci_attach1(device_t self)
 				continue;
 			}
 			omap2_gpio_ctl(sc->sc_portconfig[i].gpio, GPIO_PIN_OUTPUT);
-			omap2_gpio_write(sc->sc_portconfig[i].gpio, 0);
+			omap2_gpio_write(sc->sc_portconfig[i].gpio,
+			    !sc->sc_portconfig[i].value); // off
 			delay(10);
 		}
 	}
@@ -241,7 +256,7 @@ omap3_ehci_attach1(device_t self)
 	uhh_power(sc, true);
 	uhh_portconfig(sc);
 
-	for (i = 0; i < 3; i++) {
+	for (u_int i = 0; i < sc->sc_nports; i++) {
 		if (sc->sc_portconfig[i].mode == OMAP3_EHCI_PORT_MODE_PHY) {
 			omap3_ehci_phy_reset(sc, i);
 		}
@@ -249,12 +264,13 @@ omap3_ehci_attach1(device_t self)
 
 	delay(10);
 
-	for (i = 0; sc->sc_phy_reset && i < 3; i++) {
+	for (u_int i = 0; sc->sc_phy_reset && i < sc->sc_nports; i++) {
 		if (sc->sc_portconfig[i].gpio != -1) {
 			if (!omap2_gpio_has_pin(sc->sc_portconfig[i].gpio))
 				continue;
 			omap2_gpio_ctl(sc->sc_portconfig[i].gpio, GPIO_PIN_OUTPUT);
-			omap2_gpio_write(sc->sc_portconfig[i].gpio, 1);
+			omap2_gpio_write(sc->sc_portconfig[i].gpio,
+			    sc->sc_portconfig[i].value);
 			delay(10);
 		}
 	}
@@ -273,10 +289,18 @@ omap3_ehci_attach1(device_t self)
 static int
 omap3_ehci_match(device_t parent, cfdata_t match, void *opaque)
 {
+#ifdef OMAP3
 	struct obio_attach_args *obio = opaque;
+#endif
 
-	if (obio->obio_addr == EHCI1_BASE_3530)
+#ifdef OMAP_3XXX
+	if (obio->obio_addr == EHCI1_BASE_OMAP3)
 		return 1;
+#endif
+#ifdef OMAP4
+	if (obio->obio_addr == EHCI1_BASE_OMAP4)
+		return 1;
+#endif
 
 	return 0;
 }
@@ -290,8 +314,10 @@ omap3_ehci_get_port_mode(prop_dictionary_t prop, const char *key)
 	if (prop_dictionary_get_cstring_nocopy(prop, key, &s) && s != NULL) {
 		if (strcmp(s, "phy") == 0) {
 			mode = OMAP3_EHCI_PORT_MODE_PHY;
+#ifdef OMAP_3XXX
 		} else if (strcmp(s, "tll") == 0) {
 			mode = OMAP3_EHCI_PORT_MODE_TLL;
+#endif
 		}
 	}
 
@@ -312,24 +338,36 @@ omap3_ehci_get_port_gpio(prop_dictionary_t prop, const char *key)
 static void
 omap3_ehci_parse_properties(struct omap3_ehci_softc *sc, prop_dictionary_t prop)
 {
+	prop_dictionary_get_uint16(prop, "nports", &sc->sc_nports);
 	prop_dictionary_get_bool(prop, "phy-reset", &sc->sc_phy_reset);
 	sc->sc_portconfig[0].mode = omap3_ehci_get_port_mode(prop, "port0-mode");
 	sc->sc_portconfig[0].gpio = omap3_ehci_get_port_gpio(prop, "port0-gpio");
-	sc->sc_portconfig[1].mode = omap3_ehci_get_port_mode(prop, "port1-mode");
-	sc->sc_portconfig[1].gpio = omap3_ehci_get_port_gpio(prop, "port1-gpio");
-	sc->sc_portconfig[2].mode = omap3_ehci_get_port_mode(prop, "port2-mode");
-	sc->sc_portconfig[2].gpio = omap3_ehci_get_port_gpio(prop, "port2-gpio");
+	prop_dictionary_get_bool(prop, "port0-gpioval", &sc->sc_portconfig[0].value);
+	if (sc->sc_nports > 1) {
+		sc->sc_portconfig[1].mode = omap3_ehci_get_port_mode(prop, "port1-mode");
+		sc->sc_portconfig[1].gpio = omap3_ehci_get_port_gpio(prop, "port1-gpio");
+		prop_dictionary_get_bool(prop, "port1-gpioval", &sc->sc_portconfig[1].value);
+	}
+	if (sc->sc_nports > 2) {
+		sc->sc_portconfig[2].mode = omap3_ehci_get_port_mode(prop, "port2-mode");
+		sc->sc_portconfig[2].gpio = omap3_ehci_get_port_gpio(prop, "port2-gpio");
+		prop_dictionary_get_bool(prop, "port2-gpioval", &sc->sc_portconfig[2].value);
+	}
 
+#ifdef OMAP_3XXX
 	prop_dictionary_get_uint16(prop, "dpll5-m", &sc->sc_dpll5.m);
 	prop_dictionary_get_uint16(prop, "dpll5-n", &sc->sc_dpll5.n);
 	prop_dictionary_get_uint16(prop, "dpll5-m2", &sc->sc_dpll5.m2);
+#endif
 
 #ifdef OMAP3_EHCI_DEBUG
 	printf("  GPIO PHY reset: %d\n", sc->sc_phy_reset);
 	printf("  Port #0: mode %d, gpio %d\n", sc->sc_portconfig[0].mode, sc->sc_portconfig[0].gpio);
 	printf("  Port #1: mode %d, gpio %d\n", sc->sc_portconfig[1].mode, sc->sc_portconfig[1].gpio);
 	printf("  Port #2: mode %d, gpio %d\n", sc->sc_portconfig[2].mode, sc->sc_portconfig[2].gpio);
+#ifdef OMAP_3XXX
 	printf("  DPLL5: m=%d n=%d m2=%d\n", sc->sc_dpll5.m, sc->sc_dpll5.n, sc->sc_dpll5.m2);
+#endif
 #endif
 }
 
@@ -372,9 +410,11 @@ omap3_ehci_attach(device_t parent, device_t self, void *opaque)
 	sc->sc.sc_id_vendor = PCI_VENDOR_TI;
 	strlcpy(sc->sc.sc_vendor, "OMAP3", sizeof(sc->sc.sc_vendor));
 
-	dpll5_init(sc);
+#ifdef OMAP_3XXX
+	omap3_dpll5_init(sc);
 
-	usbhost_init(sc, 1);
+	omap3_usbhost_init(sc, 1);
+#endif /* OMAP_3XXX */
 
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
@@ -424,12 +464,12 @@ omap3_ehci_detach(device_t self, int flags)
 	return 0;
 }
 
+#ifdef OMAP_3XXX
 static void
-dpll5_init(struct omap3_ehci_softc *sc)
+omap3_dpll5_init(struct omap3_ehci_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc.iot;
 	bus_space_handle_t ioh;
-	uint32_t m, n, m2;
 	int err;
 
 	if (sc->sc_dpll5.m == 0 || sc->sc_dpll5.n == 0 || sc->sc_dpll5.m2 == 0)
@@ -440,33 +480,41 @@ dpll5_init(struct omap3_ehci_softc *sc)
                 panic("%s: cannot map CCR_CM_BASE at %#x, error %d\n",
                         __func__, CCR_CM_BASE, err);
 
-#if OMAP_MPU_TIMER_CLOCK_FREQ != 12000000
-#error FIXME
-#endif
-
 	/* set the multiplier and divider values for the desired CLKOUT freq */
-	m = sc->sc_dpll5.m;
-	n = sc->sc_dpll5.n;
+	uint32_t m = sc->sc_dpll5.m;
+	uint32_t n = sc->sc_dpll5.n;
 	/* set the corresponding output dividers */
-	m2 = sc->sc_dpll5.m2;
+	uint32_t m2 = sc->sc_dpll5.m2;
 
-	/* 4.7.6.2 In the DPLL programming sequence, the DPLL_FREQSEL must be programmed
-	 * before the new Multiplier factor M and the Divider factor N are programmed so
-	 * that the new value is taken into account during current DPLL relock.
+	KASSERTMSG(479900000 <= 2 * m * (omap_sys_clk / ((n + 1) * m2)),
+	    "m=%u n=%u m2=%u freq=%u",
+	    m, n, m2, 2 * m * (omap_sys_clk / ((n + 1) * m2)));
+	KASSERTMSG(2 * m * (omap_sys_clk / ((n + 1) * m2)) <= 480100000,
+	    "m=%u n=%u m2=%u freq=%u",
+	    m, n, m2, 2 * m * (omap_sys_clk / ((n + 1) * m2)));
+
+	/* 4.7.6.2
+	 * In the DPLL programming sequence, the DPLL_FREQSEL must be
+	 * programmed before the new Multiplier factor M and the Divider
+	 * factor N are programmed so that the new value is taken into
+	 * account during current DPLL relock.
 	 */
 	bus_space_write_4(iot, ioh, CM_CLKEN2_PLL, (0x4 << 4) | 0x7);
 
 	bus_space_write_4(iot, ioh, CM_CLKSEL4_PLL, (m << 8) | n);
 	bus_space_write_4(iot, ioh, CM_CLKSEL5_PLL, m2);
 
-	/* Put DPLL5 into low power stop mode when the 120MHz clock is not required (restarted automatically) */
+	/*
+	 * Put DPLL5 into low power stop mode when the 120MHz clock
+	 * is not required (restarted automatically)
+	 */
 	bus_space_write_4(iot, ioh, CM_AUTOIDLE2_PLL, AUTO_PERIPH2_DPLL);
 
 	bus_space_unmap(iot, ioh, CCR_CM_SIZE);
 }
 
 static void
-usbhost_init(struct omap3_ehci_softc *sc, int enable)
+omap3_usbhost_init(struct omap3_ehci_softc *sc, int enable)
 {
 	bus_space_tag_t iot = sc->sc.iot;
         bus_space_handle_t ioh;
@@ -537,6 +585,7 @@ usbhost_init(struct omap3_ehci_softc *sc, int enable)
 #undef CORE_CM_SIZE
 #undef CORE_CM_BASE
 }
+#endif /* OMAP_3XXX */
 
 static void
 usbtll_reset(struct omap3_ehci_softc *sc)
@@ -575,7 +624,6 @@ usbtll_power(struct omap3_ehci_softc *sc, bool on)
 static void
 usbtll_init(struct omap3_ehci_softc *sc, int chmask)
 {
-	int i;
 	uint32_t v;
 
 	v = USBTLL_READ4(sc, USBTLL_SHARED_CONF);
@@ -584,7 +632,7 @@ usbtll_init(struct omap3_ehci_softc *sc, int chmask)
 	v &= ~USBTLL_SHARED_CONF_USB_180D_SDR_EN;
 	USBTLL_WRITE4(sc, USBTLL_SHARED_CONF, v);
 
-	for (i = 0; i < 3; i++) {
+	for (u_int i = 0; i < sc->sc_nports; i++) {
 		if (sc->sc_portconfig[i].mode == OMAP3_EHCI_PORT_MODE_NONE)
 			continue;
 		v = USBTLL_READ4(sc, USBTLL_CHANNEL_CONF(i));
@@ -644,24 +692,24 @@ uhh_portconfig(struct omap3_ehci_softc *sc)
 
 	if (sc->sc_portconfig[0].mode == OMAP3_EHCI_PORT_MODE_NONE)
 		v &= ~UHH_HOSTCONFIG_P1_CONNECT_STATUS;
-	if (sc->sc_portconfig[1].mode == OMAP3_EHCI_PORT_MODE_NONE)
+	if (sc->sc_nports > 1
+	    && sc->sc_portconfig[1].mode == OMAP3_EHCI_PORT_MODE_NONE)
 		v &= ~UHH_HOSTCONFIG_P2_CONNECT_STATUS;
-	if (sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_NONE)
+	if (sc->sc_nports > 2
+	    && sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_NONE)
 		v &= ~UHH_HOSTCONFIG_P3_CONNECT_STATUS;
 
-	if (sc->sc_portconfig[0].mode == OMAP3_EHCI_PORT_MODE_PHY)
-		v &= ~UHH_HOSTCONFIG_P1_ULPI_BYPASS;
-	else
+	v &= ~(UHH_HOSTCONFIG_P1_ULPI_BYPASS |UHH_HOSTCONFIG_P2_ULPI_BYPASS
+	    |UHH_HOSTCONFIG_P2_ULPI_BYPASS);
+	if (sc->sc_portconfig[0].mode != OMAP3_EHCI_PORT_MODE_PHY)
 		v |= UHH_HOSTCONFIG_P1_ULPI_BYPASS;
 
-	if (sc->sc_portconfig[1].mode == OMAP3_EHCI_PORT_MODE_PHY)
-		v &= ~UHH_HOSTCONFIG_P2_ULPI_BYPASS;
-	else
+	if (sc->sc_nports > 1
+	    && sc->sc_portconfig[1].mode != OMAP3_EHCI_PORT_MODE_PHY)
 		v |= UHH_HOSTCONFIG_P2_ULPI_BYPASS;
 
-	if (sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_PHY)
-		v &= ~UHH_HOSTCONFIG_P3_ULPI_BYPASS;
-	else
+	if (sc->sc_nports > 2
+	    && sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_PHY)
 		v |= UHH_HOSTCONFIG_P3_ULPI_BYPASS;
 
 	UHH_WRITE4(sc, UHH_HOSTCONFIG, v);

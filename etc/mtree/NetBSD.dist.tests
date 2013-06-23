@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.83.2.2 2013/02/25 00:24:52 tls Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.83.2.3 2013/06/23 06:26:21 tls Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -110,6 +110,7 @@
 ./usr/libdata/debug/usr/tests/lib/libppath
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
+./usr/libdata/debug/usr/tests/lib/libpthread/dlopen
 ./usr/libdata/debug/usr/tests/lib/librt
 ./usr/libdata/debug/usr/tests/lib/librumpclient
 ./usr/libdata/debug/usr/tests/lib/librumphijack
@@ -208,6 +209,7 @@
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
+./usr/tests/kyua-atf-compat
 ./usr/tests/kyua-cli
 ./usr/tests/kyua-cli/bootstrap
 ./usr/tests/kyua-cli/cli
@@ -276,6 +278,7 @@
 ./usr/tests/lib/libppath
 ./usr/tests/lib/libprop
 ./usr/tests/lib/libpthread
+./usr/tests/lib/libpthread/dlopen
 ./usr/tests/lib/librt
 ./usr/tests/lib/librumpclient
 ./usr/tests/lib/librumphijack

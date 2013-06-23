@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.341.2.2 2013/02/25 00:28:59 tls Exp $	*/
+/*	$NetBSD: locore.s,v 1.341.2.3 2013/06/23 06:20:12 tls Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2234,7 +2234,6 @@ Ldatafault_internal:
 	call	_C_LABEL(data_access_fault)	! data_access_fault(&tf, type, 
 						!	pc, addr, sfva, sfsr)
 	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
-	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 
 data_recover:
 #ifdef TRAPSTATS
@@ -2243,6 +2242,7 @@ data_recover:
 	set	_C_LABEL(iveccnt), %g1
 	stw	%g0, [%g1]
 #endif
+	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 	b	return_from_trap			! go return
 	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1		! Load this for return_from_trap
 	NOTREACHED
@@ -3146,7 +3146,7 @@ setup_sparcintr:
 	LDPTR	[%g1], %g3		! Load list head
 	STPTR	%g3, [%g5+IH_PEND]	! Link our intrhand node in
 	mov	%g5, %g7
-	CASPTR	[%g1] ASI_N, %g3, %g7
+	CASPTRA	[%g1] ASI_N, %g3, %g7
 	cmp	%g7, %g3		! Did it work?
 	bne,pn	CCCR, 1b		! No, try again
 	 .empty
@@ -3396,7 +3396,7 @@ sparc_intr_retry:
 	beq,pn	CCCR, intrcmplt		! Empty list?
 	 mov	-1, %l7
 	membar	#LoadStore
-	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
+	CASPTRA	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	CCCR, 1b
 	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
@@ -5899,7 +5899,7 @@ ENTRY(send_softint)
 	LDPTR	[%o3], %o5		! Load list head
 	STPTR	%o5, [%o2+IH_PEND]	! Link our intrhand node in
 	mov	%o2, %o4
-	CASPTR	[%o3] ASI_N, %o5, %o4
+	CASPTRA	[%o3] ASI_N, %o5, %o4
 	cmp	%o4, %o5		! Did it work?
 	bne,pn	CCCR, 2b		! No, try again
 	 .empty

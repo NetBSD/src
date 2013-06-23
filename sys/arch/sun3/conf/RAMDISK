@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.52 2010/11/23 11:14:07 hannken Exp $
+#	$NetBSD: RAMDISK,v 1.52.18.1 2013/06/23 06:20:13 tls Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -141,6 +141,6 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 pseudo-device	md		
 
 # Misc.
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	sl			# CSLIP
 #pseudo-device	fss			# file system snapshot device

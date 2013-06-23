@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.11 2008/11/22 20:23:33 tsutsui Exp $
+# $NetBSD: ipsec,v 1.11.14.1 2013/06/23 06:26:22 tls Exp $
 #
 
 # PROVIDE: ipsec
@@ -29,10 +29,23 @@ ipsec_prestart()
 	return 0
 }
 
+ipsec_getip() {
+	ifconfig $1 | while read what address rest; do
+		case "$what" in
+		inet)	echo "$address";;
+		esac
+	done
+}
+
 ipsec_start()
 {
 	echo "Installing ipsec manual keys/policies."
-	/sbin/setkey -f /etc/ipsec.conf
+	if [ -n "$ipsec_flags" ]; then
+		sed -e "s/@LOCAL_ADDR@/$(ipsec_getip "$ipsec_flags")/" \
+		    < /etc/ipsec.conf | /sbin/setkey -f -
+	else
+		/sbin/setkey -f /etc/ipsec.conf
+	fi
 }
 
 ipsec_stop()
@@ -50,9 +63,8 @@ ipsec_stop()
 ipsec_reload()
 {
 	echo "Reloading ipsec manual keys/policies."
-	/sbin/setkey -F
-	/sbin/setkey -FP
-	/sbin/setkey -f /etc/ipsec.conf
+	ipsec_stop
+	ipsec_start
 }
 
 load_rc_config $name

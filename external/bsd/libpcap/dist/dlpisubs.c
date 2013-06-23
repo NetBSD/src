@@ -1,3 +1,5 @@
+/*	$NetBSD: dlpisubs.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * This code is derived from code formerly in pcap-dlpi.c, originally
  * contributed by Atanu Ghosh (atanu@cs.ucl.ac.uk), University College
@@ -12,7 +14,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-	"@(#) Header: /tcpdump/master/libpcap/dlpisubs.c,v 1.3 2008-12-02 16:40:19 guy Exp (LBL)";
+	"@(#) Header: /tcpdump/master/libpcap/dlpisubs.c,v 1.3 2008-12-02 16:40:19 guy Exp  (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

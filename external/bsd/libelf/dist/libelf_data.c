@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_data.c,v 1.4 2010/02/22 10:48:33 darran Exp $	*/
+/*	$NetBSD: libelf_data.c,v 1.4.12.1 2013/06/23 06:28:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -87,9 +87,9 @@ _libelf_xlate_shtype(uint32_t sht)
 	case SHT_SUNW_syminfo:
 		return (ELF_T_SYMINFO);
 #endif /* __LIBELF_HAVE_ELF_SYMINFO */
-	case SHT_AMD64_UNWIND:	/* == SHT_IA_64_UNWIND */
-		return (ELF_T_BYTE);
 	default:
+		if (sht >= SHT_LOPROC && sht <= SHT_HIPROC)
+			return (ELF_T_BYTE);
 		return (-1);
 	}
 }

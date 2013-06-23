@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_mputmr.c,v 1.4.12.1 2013/02/25 00:28:31 tls Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.4.12.2 2013/06/23 06:20:01 tls Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.1 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.2 2013/06/23 06:20:01 tls Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -89,12 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.1 2013/02/25 00:28:31 tls Ex
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <dev/clock_subr.h>
 
-#include <sys/bus.h>
-#include <machine/intr.h>
-
+#include <arm/omap/omap_var.h>
 #include <arm/omap/omap_gptmrreg.h>
 #include <arm/omap/omap2_mputmrvar.h>
 
@@ -109,7 +109,9 @@ static uint32_t mpu_get_timecount(struct timecounter *);
 static struct timecounter mpu_timecounter = {
 	.tc_get_timecount = mpu_get_timecount,
 	.tc_counter_mask = 0xffffffff,
+#ifdef OMAP_MPU_TIMER_CLOCK_FREQ
 	.tc_frequency = OMAP_MPU_TIMER_CLOCK_FREQ,
+#endif
 	.tc_name = "gpt",
 	.tc_quality = 100,
 	.tc_priv = NULL
@@ -251,6 +253,14 @@ cpu_initclocks(void)
 	_timer_intr_enb(clock_sc);
 	_timer_intr_enb(stat_sc);
 
+#ifndef OMAP_MPU_TIMER_CLOCK_FREQ
+	/*
+	 * Make sure to copy the system clock frequency over.
+	 */
+	if (omap_sys_clk)
+		mpu_timecounter.tc_frequency = omap_sys_clk;
+#endif
+
 	tc_init(&mpu_timecounter);
 }
 
@@ -308,7 +318,7 @@ calc_timer_factors(int ints_per_sec, timer_factors *tf)
 		 */
 		tf->ptv = 0;
 		tf->reload = 0;
-		tf->counts_per_usec = OMAP_MPU_TIMER_CLOCK_FREQ / us_per_sec;
+		tf->counts_per_usec = omap_sys_clk / us_per_sec;
 		return;
 	}
 
@@ -316,15 +326,15 @@ calc_timer_factors(int ints_per_sec, timer_factors *tf)
 	tf->ptv = 8;
 	for (;;) {
 		ptv_power = 1 << tf->ptv;
-		count_freq = OMAP_MPU_TIMER_CLOCK_FREQ;
+		count_freq = omap_sys_clk;
 		count_freq /= ints_per_sec;
 		count_freq /= ptv_power;
 		tf->reload = -count_freq;
 		tf->counts_per_usec = count_freq / us_per_sec;
 		if ((tf->reload * ptv_power * ints_per_sec
-		     == OMAP_MPU_TIMER_CLOCK_FREQ)
+		     == omap_sys_clk)
 		    && (tf->counts_per_usec * ptv_power * us_per_sec
-			== OMAP_MPU_TIMER_CLOCK_FREQ))
+			== omap_sys_clk))
 		{	/* Exact match.  Life is good. */
 			/* Currently reload is MPU_LOAD_TIMER+1.  Fix it. */
 			tf->reload--;

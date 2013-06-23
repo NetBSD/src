@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.49.2.1 2012/11/20 03:01:21 tls Exp $
+# $NetBSD: INSTALL,v 1.49.2.2 2013/06/23 06:20:05 tls Exp $
 #
 # INSTALL machine description file
 #
@@ -93,8 +93,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 #options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
@@ -228,8 +226,8 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	vnd			# vnode pseudo-disks
-#pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1

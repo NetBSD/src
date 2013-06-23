@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.139.6.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: if_de.c,v 1.139.6.2 2013/06/23 06:20:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.139.6.1 2012/11/20 03:02:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.139.6.2 2013/06/23 06:20:18 tls Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -1345,7 +1345,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       "ICS 1890"
 #endif
     },
-    { 0, 0, {{ 0, 0, 0},}, 
+    { 0, 0, {{ 0, 0, 0},},
 #if defined(TULIP_DEBUG)
 	NULL
 #endif

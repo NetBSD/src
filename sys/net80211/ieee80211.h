@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.22 2012/08/20 07:30:10 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.22.2.1 2013/06/23 06:20:25 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -52,7 +52,7 @@ struct ieee80211_plcp_hdr {
 	u_int16_t	i_crc;
 } __packed;
 
-#define IEEE80211_PLCP_SFD      0xF3A0 
+#define IEEE80211_PLCP_SFD      0xF3A0
 #define IEEE80211_PLCP_SERVICE  0x00
 
 /*
@@ -149,6 +149,21 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_FC0_SUBTYPE_QOS		0x80
 #define	IEEE80211_FC0_SUBTYPE_QOS_NULL		0xc0
 
+/*
+ * DS bit usage
+ *
+ * TA = transmitter address
+ * RA = receiver address
+ * DA = destination address
+ * SA = source address
+ *
+ * ToDS    FromDS  A1(RA)  A2(TA)  A3      A4      Use
+ * -----------------------------------------------------------------
+ *  0       0       DA      SA      BSSID   -       IBSS/DLS
+ *  0       1       DA      BSSID   SA      -       AP -> STA
+ *  1       0       BSSID   SA      DA      -       AP <- STA
+ *  1       1       RA      TA      DA      SA      unspecified (WDS)
+ */
 #define	IEEE80211_FC1_DIR_MASK			0x03
 #define	IEEE80211_FC1_DIR_NODS			0x00	/* STA->STA */
 #define	IEEE80211_FC1_DIR_TODS			0x01	/* STA->AP  */
@@ -186,12 +201,6 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_QOS_ESOP			0x0010
 #define	IEEE80211_QOS_ESOP_S			4
 #define	IEEE80211_QOS_TID			0x000f
-
-/* does frame have QoS sequence control data */
-#define	IEEE80211_QOS_HAS_SEQ(wh) \
-	(((wh)->i_fc[0] & \
-	  (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
-	  (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
 
 /*
  * WME/802.11e information element.
@@ -243,7 +252,14 @@ struct ieee80211_wme_acparams {
 	u_int16_t	acp_txop;
 } __packed;
 
-#define WME_NUM_AC		4	/* 4 AC categories */
+/* WME stream classes */
+enum ieee80211_wme_ac {
+	WME_AC_BE	= 0,		/* best effort */
+	WME_AC_BK	= 1,		/* background */
+	WME_AC_VI	= 2,		/* video */
+	WME_AC_VO	= 3,		/* voice */
+};
+#define WME_NUM_AC	4		/* 4 AC categories */
 
 #define WME_PARAM_ACI		0x60	/* Mask for ACI field */
 #define WME_PARAM_ACI_S		5	/* Shift for ACI field */
@@ -345,6 +361,50 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
 	/* FCS */
 } __packed;
+
+static __inline int
+ieee80211_has_seq(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	    IEEE80211_FC0_TYPE_CTL;
+}
+
+static __inline int
+ieee80211_has_addr4(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+	    IEEE80211_FC1_DIR_DSTODS;
+}
+
+static __inline int
+ieee80211_has_qos(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS);
+}
+
+static __inline int
+ieee80211_has_htc(const struct ieee80211_frame *wh)
+{
+	return (wh->i_fc[1] & IEEE80211_FC1_ORDER) &&
+	    (ieee80211_has_qos(wh) ||
+	     (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT);
+}
+
+static __inline u_int16_t
+ieee80211_get_qos(const struct ieee80211_frame *wh)
+{
+	const u_int8_t *frm;
+
+	if (ieee80211_has_addr4(wh))
+		frm = ((const struct ieee80211_qosframe_addr4 *)wh)->i_qos;
+	else
+		frm = ((const struct ieee80211_qosframe *)wh)->i_qos;
+
+	return le16toh(*(const u_int16_t *)frm);
+}
 
 /*
  * BEACON management packets
@@ -517,12 +577,6 @@ struct ieee80211_country_ie {
 #define	WME_PARAM_OUI_SUBTYPE	0x01
 #define	WME_VERSION		1
 
-/* WME stream classes */
-#define	WME_AC_BE	0		/* best effort */
-#define	WME_AC_BK	1		/* background */
-#define	WME_AC_VI	2		/* video */
-#define	WME_AC_VO	3		/* voice */
-
 /*
  * AUTH management packets
  *
@@ -652,7 +706,7 @@ enum {
 
 #define	IEEE80211_AID(b)	((b) &~ 0xc000)
 
-/* 
+/*
  * RTS frame length parameters.  The default is specified in
  * the 802.11 spec as 512; we treat it as implementation-dependent
  * so it's defined in ieee80211_var.h.  The max may be wrong
@@ -661,7 +715,7 @@ enum {
 #define	IEEE80211_RTS_MIN		1
 #define	IEEE80211_RTS_MAX		2346
 
-/* 
+/*
  * TX fragmentation parameters.  As above for RTS, we treat
  * default as implementation-dependent so define it elsewhere.
  */

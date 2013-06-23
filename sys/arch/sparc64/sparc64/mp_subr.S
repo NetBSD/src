@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.3.12.1 2013/02/25 00:29:00 tls Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.3.12.2 2013/06/23 06:20:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -345,7 +345,7 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
 	set	FPLWP, %g1
-	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
+	CASPTRA	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
 	membar	#Sync			! Should not be needed due to retry
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
 	ba,a	ret_from_intr_vector

@@ -1,15 +1,14 @@
-/*	$NetBSD: error.y,v 1.1.1.4 2011/09/10 21:22:03 christos Exp $	*/
+/*	$NetBSD: error.y,v 1.1.1.4.8.1 2013/06/23 06:26:26 tls Exp $	*/
 
+%{
+int yylex(void);
+static void yyerror(const char *);
+%}
 %%
 S: error
 %%
 
 #include <stdio.h>
-
-#ifdef YYBYACC
-extern int YYLEX_DECL();
-static void YYERROR_DECL();
-#endif
 
 int
 main(void)

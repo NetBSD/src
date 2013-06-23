@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.6.1 2012/11/20 03:01:34 tls Exp $
+# $NetBSD: GENERIC,v 1.83.6.2 2013/06/23 06:20:09 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.83.6.1 $"
+#ident 		"GENERIC-$Revision: 1.83.6.2 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -77,13 +77,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	ISO		# OSI networking
-#options 	TPIP
-#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -148,7 +143,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	vnd 
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss			# file system snapshot device
@@ -163,7 +158,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

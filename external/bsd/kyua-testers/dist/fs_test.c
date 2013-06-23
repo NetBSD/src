@@ -392,7 +392,7 @@ ATF_TC_BODY(cleanup__mount_point__busy, tc)
         while (!atf_utils_file_exists("done")) {}
         fprintf(stderr, "Child done; cleaning up\n");
 
-        ATF_REQUIRE(!kyua_error_is_set(kyua_fs_cleanup("root")));
+        ATF_REQUIRE(kyua_error_is_set(kyua_fs_cleanup("root")));
         ATF_REQUIRE(atf_utils_file_exists("root/dir1/dont-delete-me"));
 
         fprintf(stderr, "Killing child\n");

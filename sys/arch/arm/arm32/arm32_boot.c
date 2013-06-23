@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.1.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.1.2.2 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,10 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.1 2012/11/20 03:01:02 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.2 2013/06/23 06:19:59 tls Exp $");
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -139,6 +142,10 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.1 2012/11/20 03:01:02 tls Exp $
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 vaddr_t
 initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
@@ -162,7 +169,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	printf("bootstrap done.\n");
 #endif
 
+#ifdef VERBOSE_INIT_ARM
+	printf("vectors");
+#endif
 	arm32_vector_init(systempage.pv_va, ARM_VEC_ALL);
+#ifdef VERBOSE_INIT_ARM
+	printf(" %#"PRIxVADDR"\n", vector_page);
+#endif
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

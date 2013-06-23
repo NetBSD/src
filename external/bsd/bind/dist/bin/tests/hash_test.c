@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_test.c,v 1.3 2012/06/05 00:39:22 christos Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -66,6 +66,10 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	s = "abc";
 	isc_sha1_init(&sha1);
 	memcpy(buffer, s, strlen(s));

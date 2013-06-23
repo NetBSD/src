@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.29 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.29.44.1 2013/06/23 06:20:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ struct RF_Pools_s {
 
 extern struct RF_Pools_s rf_pools;
 void rf_pool_init(struct pool *, size_t, const char *, size_t, size_t);
-int rf_buf_queue_check(int);
+int rf_buf_queue_check(RF_Raid_t *);
 
 /* XXX probably belongs in a different .h file. */
 typedef struct RF_AutoConfig_s {

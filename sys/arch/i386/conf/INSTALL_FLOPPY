@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.16 2012/06/05 08:44:13 abs Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.16.2.1 2013/06/23 06:20:06 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -133,8 +133,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -753,8 +751,8 @@ cinclude "arch/i386/conf/INSTALL.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# memory disk device (ramdisk)
@@ -771,14 +769,14 @@ pseudo-device	sl			# Serial Line IP
 #pseudo-device	gre			# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+pseudo-device	pty			# pseudo-terminals
 options NO_DEV_PTM
-#pseudo-device	sequencer	1	# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

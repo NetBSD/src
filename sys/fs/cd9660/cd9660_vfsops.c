@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.75.2.1 2013/02/25 00:29:46 tls Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.75.2.2 2013/06/23 06:18:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.75.2.1 2013/02/25 00:29:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.75.2.2 2013/06/23 06:18:27 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -766,7 +766,7 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 			return (ESTALE);
 		}
 
-		off = blkoff(imp, ino);
+		off = cd9660_blkoff(imp, ino);
 		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
 			vput(vp);
 			printf("fhtovp: crosses block boundary %d\n",

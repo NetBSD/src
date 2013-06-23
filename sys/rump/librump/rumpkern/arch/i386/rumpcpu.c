@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.9.18.1 2013/02/25 00:30:09 tls Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.9.18.2 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.9.18.1 2013/02/25 00:30:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.9.18.2 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 
@@ -65,7 +65,7 @@ struct lwp *
 x86_curlwp()
 {
 
-	return rumpuser_get_curlwp();
+	return rumpuser_curlwp();
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.2 2013/02/25 00:24:52 tls Exp $
+#	$NetBSD: Makefile,v 1.32.2.3 2013/06/23 06:26:22 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -20,10 +20,13 @@ SUBDIR+=ipf
 SUBDIR+= iscsi 
 .endif
 .if (${MKKYUA} != "no")
-SUBDIR+= lutok kyua-testers kyua-cli
+SUBDIR+= lutok kyua-testers kyua-cli kyua-atf-compat
 .endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
+.endif
+.if (${MKLIBCXX} != "no")
+SUBDIR+= libc++
 .endif
 .if (${MKLLVM} != "no")
 SUBDIR+= llvm
@@ -31,5 +34,7 @@ SUBDIR+= llvm
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+
+SUBDIR+= pdisk dhcp
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: log_test.c,v 1.3 2012/06/05 00:39:23 christos Exp $	*/
+/*	$NetBSD: log_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -58,6 +58,10 @@ main(int argc, char **argv) {
 	const isc_logcategory_t *category;
 	const isc_logmodule_t *module;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	progname = strrchr(*argv, '/');
 	if (progname != NULL)
 		progname++;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77.2.1 2013/02/25 00:27:59 tls Exp $
+#	$NetBSD: Makefile,v 1.77.2.2 2013/06/23 06:21:08 tls Exp $
 #
 
 WARNS?=	5
@@ -25,15 +25,14 @@ INCSDIR=/usr/include
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
-CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
-CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
+CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC -D_REENTRANT
+CPPFLAGS+=	-I${.CURDIR}/../libc/include
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -D__LIBC_THREAD_STUBS
 
 # XXX: This crappy poke at libc's internals needs to be fixed.
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 LIB=	pthread
-
-LDFLAGS+=	-Wl,-znodlopen
 
 #
 # NOTE: When you create a new file for libpthread, make sure that pthread.c
@@ -60,6 +59,11 @@ SRCS+=	sem.c
 SRCS+= pthread_md.S
 .endif
 
+# The PTHREAD__COMPAT flag builds a libpthread that can be dropped
+# into a NetBSD 2/3/4 chroot with a NetBSD 5 or later kernel.
+# This makes threading work in the chroot, no other modifications
+# required.
+#
 .if defined(PTHREAD__COMPAT)
 SRCS+=		pthread_compat.c
 .PATH.c:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic

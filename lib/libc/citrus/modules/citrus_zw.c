@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_zw.c,v 1.4 2008/06/14 16:01:08 tnozaki Exp $ */
+/* $NetBSD: citrus_zw.c,v 1.4.26.1 2013/06/23 06:21:04 tls Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_zw.c,v 1.4 2008/06/14 16:01:08 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_zw.c,v 1.4.26.1 2013/06/23 06:21:04 tls Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <sys/types.h>
@@ -77,8 +77,10 @@ typedef struct {
 		_ZWState	s_mbrtowc;
 		_ZWState	s_mbtowc;
 		_ZWState	s_mbsrtowcs;
+		_ZWState	s_mbsnrtowcs;
 		_ZWState	s_wcrtomb;
 		_ZWState	s_wcsrtombs;
+		_ZWState	s_wcsnrtombs;
 		_ZWState	s_wctomb;
 	} states;
 } _ZWCTypeInfo;

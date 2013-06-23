@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.3.4.1 2013/02/25 00:24:47 tls Exp $
+# $NetBSD: mkimage,v 1.3.4.2 2013/06/23 06:26:19 tls Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,7 @@ PROG="$(basename "$0")"
 
 DISKLABEL=${TOOL_DISKLABEL:-disklabel}
 FDISK=${TOOL_FDISK:-fdisk}
+GZIP=${TOOL_GZIP:-gzip}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
 
@@ -68,13 +69,18 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-bmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+
+-b	Boot only, no sets loaded
+-d	Add the debug sets
+-m	Mimimize disk writes for sd cards
+-x	Load the x sets too, not just the base ones
 EOF
 	exit 1
 }
 
 # First pass for options to get the host and src directories
-OPTS="K:D:S:c:h:s:x"
+OPTS="K:D:S:bc:dh:ms:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -98,6 +104,9 @@ fi
 . "${DIR}/conf/${h}.conf"
 
 selected_sets="$sets"
+dsets=false
+xsets=false
+minwrites=false
 
 OPTIND=1
 while getopts "$OPTS" f
@@ -106,10 +115,23 @@ do
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
+	b)	bootonly="true";;
+	d)	dsets=true
+		selected_sets="$selected_sets debug"
+		if $xsets; then
+			selected_sets="$selected_sets xdebug"
+		fi
+		;;
 	c)	custom="$OPTARG";;
 	h)	;;
+	m)	minwrites=true;;
 	s)	size="$OPTARG";;
-	x)	selected_sets="$sets $xsets";;
+	x)	xsets=true
+		selected_sets="$selected_sets $xsets"
+		if $dsets; then
+		    selected_sets="$selected_sets xdebug"
+		fi
+		;;
 	*)	usage;;
 	esac
 done
@@ -126,32 +148,39 @@ case "$image" in
 *)	compress=false;;
 esac
 
-echo ${bar} configuring sets ${bar}
-(echo '/set type=dir uname=root gname=wheel mode=0755'
-for i in $selected_sets; do
-	s="${release}/etc/mtree/set.$i"
-	if [ -f "$s" ]; then
-		cat "$s"
-	fi
-done) > "$tmp/selected_sets"
+if [ -z "$bootonly" ]; then
+	echo ${bar} configuring sets ${bar}
+	(echo '/set type=dir uname=root gname=wheel mode=0755'
+	for i in $selected_sets; do
+		s="${release}/etc/mtree/set.$i"
+		if [ -f "$s" ]; then
+			cat "$s"
+		fi
+	done) > "$tmp/selected_sets"
+fi
 
 make_fstab
 customize
 populate
 
-(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
-    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
+if [ -z "$bootonly" ]; then
+	(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
+	    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
+fi
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t msdos \
-	    -O $((${init} / 2))m -s $((${boot} / 2))m ${image} ${mnt}/boot
+	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m ${image} ${mnt}/boot
 fi
 
-echo ${bar} Populating ffs filesystem ${bar}
-${MAKEFS} -N ${release}/etc -t ffs -rx \
-    -O $(((${init} + ${boot} + ${swap}) / 2))m \
-    -b $((${extra} / 2))m \
-    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
+if [ -z "$bootonly" ]; then
+	echo ${bar} Populating ffs filesystem ${bar}
+	${MAKEFS} -N ${release}/etc -t ffs -rx \
+	    -O $(((${init} + ${boot} + ${swap}) / 2))m \
+		-o d=4096 \
+	    -b $((${extra}))m \
+	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
+fi
 
 if [ "${size}" = 0 ]; then
 	size="$(getsize "${image}")"
@@ -171,7 +200,7 @@ fi
 if $compress; then
 	echo ${bar} Compressing image ${bar}
 	rm -f "${image}.gz"
-	gzip -9 ${image}
+	${GZIP} -9 ${image}
 	image="${image}.gz"
 fi
 

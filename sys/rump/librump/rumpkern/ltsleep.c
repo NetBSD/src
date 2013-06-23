@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.29 2012/01/28 12:22:33 rmind Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.29.6.1 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.29 2012/01/28 12:22:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.29.6.1 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,13 +58,13 @@ struct ltsleeper {
 #define kcv u.kern
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
-static struct rumpuser_mtx *qlock;
+static kmutex_t qlock;
 
 static int
 sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 {
 	struct ltsleeper lts;
-	struct timespec ts, ticks;
+	struct timespec ts;
 	int rv;
 
 	lts.id = ident;
@@ -76,9 +76,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		rumpuser_cv_init(&lts.ucv);
 	}
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 
 	if (timo) {
 		if (kinterlock) {
@@ -86,14 +86,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		} else {
 			/*
 			 * Calculate wakeup-time.
-			 * XXX: should assert nanotime() does not block,
-			 * i.e. yield the cpu and/or biglock.
 			 */
-			ticks.tv_sec = timo / hz;
-			ticks.tv_nsec = (timo % hz) * (1000000000/hz);
-			nanotime(&ts);
-			timespecadd(&ts, &ticks, &ts);
-
+			ts.tv_sec = timo / hz;
+			ts.tv_nsec = (timo % hz) * (1000000000/hz);
 			rv = rumpuser_cv_timedwait(lts.ucv, rump_giantlock,
 			    ts.tv_sec, ts.tv_nsec);
 		}
@@ -109,9 +104,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		rv = 0;
 	}
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_REMOVE(&lts, entries);
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 
 	if (kinterlock)
 		cv_destroy(&lts.kcv);
@@ -157,7 +152,7 @@ wakeup(wchan_t ident)
 {
 	struct ltsleeper *ltsp;
 
-	rumpuser_mutex_enter_nowrap(qlock);
+	mutex_spin_enter(&qlock);
 	LIST_FOREACH(ltsp, &sleepers, entries) {
 		if (ltsp->id == ident) {
 			if (ltsp->iskwait) {
@@ -167,12 +162,12 @@ wakeup(wchan_t ident)
 			}
 		}
 	}
-	rumpuser_mutex_exit(qlock);
+	mutex_exit(&qlock);
 }
 
 void
 rump_tsleep_init()
 {
 
-	rumpuser_mutex_init(&qlock);
+	mutex_init(&qlock, MUTEX_SPIN, IPL_NONE);
 }

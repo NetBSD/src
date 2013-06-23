@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.2.2.1 2013/06/23 06:18:58 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2.2.1 2013/06/23 06:18:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2 2012/04/17 02:50:38 tls Exp $")
 
 /*
  * Let others know: the pool is full.
+ *
+ * XXX these should be per-pool if we really mean to allow multiple pools.
  */
 int rnd_full = 0;			/* Flag: is the pool full? */
 int rnd_filled = 0;			/* Count: how many times filled? */
+int rnd_empty = 1;			/* Flag: is the pool empty? */
+extern int	rnd_initial_entropy;	/* Have ever hit the "threshold" */
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
@@ -232,8 +236,11 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
  * the hash are xored together before being returned.
  *
  * Honor the request from the caller to only return good data, any data,
- * etc.  Note that we must have at least 64 bits of entropy in the pool
- * before we return anything in the high-quality modes.
+ * etc.
+ *
+ * For the "high-quality" mode, we must have as much data as the caller
+ * requests, and at some point we must have had at least the "threshold"
+ * amount of entropy in the pool.
  */
 u_int32_t
 rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
@@ -243,7 +250,6 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 	u_char digest[SHA1_DIGEST_LENGTH];
 	u_int32_t remain, deltae, count;
 	u_int8_t *buf;
-	int good;
 
 	buf = p;
 	remain = len;
@@ -252,14 +258,10 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 		rnd_full = 0;
 	}
 
-	if (mode == RND_EXTRACT_ANY)
-		good = 1;
-	else
-		good = (rp->stats.curentropy >= (8 * RND_ENTROPY_THRESHOLD));
-
 	KASSERT(RND_ENTROPY_THRESHOLD * 2 <= sizeof(digest));
 
-	while (good && (remain != 0)) {
+	while (remain != 0 && ! (mode == RND_EXTRACT_GOOD &&
+				 remain > rp->stats.curentropy * 8)) {
 		/*
 		 * While bytes are requested, compute the hash of the pool,
 		 * and then "fold" the hash in half with XOR, keeping the
@@ -286,6 +288,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 			rndpool_add_one_word(rp, word);
 		}
 
+		/* XXX careful, here the THRESHOLD just controls folding */
 		count = min(remain, RND_ENTROPY_THRESHOLD);
 
 		for (i = 0; i < count; i++)
@@ -303,9 +306,6 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 		if (rp->stats.curentropy == 0)
 			rp->stats.generated += (count * 8) - deltae;
 
-		if (mode == RND_EXTRACT_GOOD)
-			good = (rp->stats.curentropy >=
-			    (8 * RND_ENTROPY_THRESHOLD));
 	}
 
 	memset(&hash, 0, sizeof(hash));

@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.9 2009/05/04 16:44:14 ginsbach Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.9.22.1 2013/06/23 06:20:29 tls Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, February 2, 1998.
@@ -56,6 +56,7 @@
  *
  * _REENTRANT
  * _ISOC99_SOURCE
+ * _ISOC11_SOURCE
  * _LARGEFILE_SOURCE		Large File Support
  *		<http://ftp.sas.com/standards/large.file/x_open.20Mar96.html>
  */

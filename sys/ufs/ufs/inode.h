@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.62.2.1 2013/02/25 00:30:18 tls Exp $	*/
+/*	$NetBSD: inode.h,v 1.62.2.2 2013/06/23 06:18:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -182,8 +182,8 @@ struct inode {
 #define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
 #define	i_ffs1_size		i_din.ffs1_din->di_size
 #define	i_ffs1_uid		i_din.ffs1_din->di_uid
-#define	i_ffs1_ouid		i_din.ffs1_din->di_u.oldids[0]
-#define	i_ffs1_ogid		i_din.ffs1_din->di_u.oldids[1]
+#define	i_ffs1_ouid		i_din.ffs1_din->di_oldids[0]
+#define	i_ffs1_ogid		i_din.ffs1_din->di_oldids[1]
 
 #define	i_ffs2_atime		i_din.ffs2_din->di_atime
 #define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec

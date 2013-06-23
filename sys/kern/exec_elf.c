@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.43 2012/08/05 01:43:58 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.43.2.1 2013/06/23 06:18:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.43 2012/08/05 01:43:58 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.43.2.1 2013/06/23 06:18:57 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -665,7 +665,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
-	struct proc *p;
 	struct elf_args *ap = NULL;
 	bool is_dyn;
 
@@ -691,7 +690,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * Allocate space to hold all the program headers, and read them
 	 * from the file
 	 */
-	p = l->l_proc;
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = kmem_alloc(phsize, KM_SLEEP);
 
@@ -738,7 +736,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	p->p_pax = epp->ep_pax_flags;
+	l->l_proc->p_pax = epp->ep_pax_flags;
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	if (is_dyn)

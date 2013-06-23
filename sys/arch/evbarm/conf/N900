@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.4.6.2 2013/02/25 00:28:34 tls Exp $
+#	$NetBSD: N900,v 1.4.6.3 2013/06/23 06:20:04 tls Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -17,6 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
+#options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	OMAP_3430
 options 	PMAPCOUNTERS
@@ -34,9 +35,9 @@ file-system	NFS		# Network file system
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
-#file-system	KERNFS		# /kern
+file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -57,16 +58,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -132,6 +126,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
+#options 	LOCKDEBUG	# expensive locking checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -140,7 +135,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+options 	SYMTAB_SPACE=800000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -159,7 +154,7 @@ options UHUB_DEBUG
 #  verbose		Show aprint_normal and aprint_verbose output
 options		BOOT_ARGS="\"\""
 
-config		netbsd		root on ? type ?
+config		netbsd		root on ld0a type ?
 
 # The main bus device
 mainbus0	at root
@@ -207,27 +202,56 @@ flash2		at nand0 offset 0x3a02040 size 0x0180000 # swap
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
 omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
-#omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
-#omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
-#omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
+omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
+omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
+omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
 omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
-#omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
+omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# GPIO devices
+# Charging sensor
+n900acad0	at gpio0 offset 7 mask 0x1 #intr 103
+
+# Camera button
+n900cambtn0	at gpio2 offset 4 mask 0x3 #intr 164, 165
+
+# Keyboard slide
+n900kbdsld0	at gpio2 offset 7 mask 0x1 #intr 167
+
+# Proximity sensor
+n900prxmty0	at gpio2 offset 25 mask 0x1 #intr 185
+
+# Camera cover
+n900camcvr0	at gpio3 offset 14 mask 0x1 #intr 206
+
+# Lock button
+n900lckbtn0	at gpio3 offset 17 mask 0x1 #intr 209
+
+# Audio jack
+n900audjck0	at gpio5 offset 17 mask 0x1 #intr 273
+
+# System Control Module
+omapscm0 	at obio0 addr 0x48002000 size 0x1000
+
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x80
+omapiic1	at obio0 addr 0x48072000 size 0x80
+omapiic2	at obio0 addr 0x48060000 size 0x80
+iic*		at omapiic?
+
+# I2C devices
+# Power Management and System Companion Device
+tps65950pm0	at iic0 addr 0x48
+tps65950pm1	at iic0 addr 0x49
+tps65950pm2	at iic0 addr 0x4a
+tps65950pm3	at iic0 addr 0x4b
 
 # On-board 16550 UARTs
-com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
+#com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
 #options 	CONSADDR=0x49020000, CONSPEED=38400
-options 	CONSADDR=0x49020000, CONSPEED=115200
+#options 	CONSADDR=0x49020000, CONSPEED=115200
 
 # Operating System Timer
 omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
@@ -239,8 +263,10 @@ options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
 #omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# onboard DMA
+omapdma0	at obio0 addr 0x48056000 size 0x1000
 
 # onboard video
 omapfb*		at obio0 addr 0x48050000 size 0x10000
@@ -256,6 +282,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -310,3 +338,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+
+cinclude "arch/evbarm/conf/N900.local"

@@ -1,12 +1,12 @@
-#	$NetBSD: std.n900,v 1.2.6.2 2013/02/25 00:28:35 tls Exp $
+#	$NetBSD: std.n900,v 1.2.6.3 2013/06/23 06:20:04 tls Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
 machine	evbarm arm
 include 	"arch/evbarm/conf/std.evbarm"
 
-# Pull in BEAGLEBOARD config definitions.
-include		"arch/evbarm/conf/files.beagle"
+# Pull in N900 config definitions.
+include		"arch/evbarm/conf/files.n900"
 
 # To support easy transit to ../arch/arm/arm32
 options 	__HAVE_CPU_COUNTER

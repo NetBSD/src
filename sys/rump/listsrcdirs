@@ -1,24 +1,46 @@
-#	$NetBSD: listsrcdirs,v 1.1.4.2 2013/02/25 00:30:07 tls Exp $
+#!/bin/sh
+#
+#	$NetBSD: listsrcdirs,v 1.1.4.3 2013/06/23 06:20:26 tls Exp $
 #
 
 #
-# Run this script with a shell which supports brace expansion (bash, csh, etc.)
-# It will echo all of the NetBSD source directories required to build rump
+# This script echoes the NetBSD source directories required to build rump
 # kernels with TOOLS_BUILDRUMP=yes (used for example by buildrump.sh).
 # Feed the output to whichever method you use to obtain NetBSD sources, e.g.
 #
-# bash listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
+# ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
 #
 
-echo src/{build.sh,Makefile,Makefile.inc} \
-    src/{sys,tools,common,include} \
-    src/share/mk \
-    src/etc/{Makefile.params,master.passwd,group} \
-    src/lib/lib{c,util} \
-    src/lib/librump{user,client,,dev,net,vfs} \
-    src/external/bsd/{flex,mdocml,byacc} \
-    src/external/historical/nawk \
-    src/external/cddl/osnet \
-    src/usr.bin/{make,xinstall,config,mktemp,sed,tsort,cksum,m4,mkdep,lorder} \
-    src/usr.bin/join \
-    src/usr.sbin/mtree
+precho ()
+{
+
+	pfx=$1
+	shift
+	for arg in $* ; do echo ${pfx}${arg} ; done
+}
+
+precho src/			build.sh Makefile Makefile.inc
+precho src/			tools common include share/mk
+precho src/etc/			Makefile.params master.passwd group
+precho src/lib/lib		c util rump
+precho src/lib/librump		user client hijack dev net vfs
+precho src/external/bsd/	flex mdocml byacc
+precho src/external/cddl/	osnet
+precho src/external/historical/	nawk
+precho src/usr.bin/		make xinstall config mktemp sed tsort
+precho src/usr.bin/		lorder join cksum m4 mkdep
+precho src/usr.sbin/		mtree
+
+# If -c is given, use CVS syntax to exclude large subdirectories
+# of sys.  Otherwise just do it wholesale.
+if [ "${1}" = '-c' ]; then
+	echo \!src/sys/arch \!src/sys/dev/microcode	\
+	    \!src/sys/dev/pci src/sys
+
+	# pick a few useful archs, namely those mentioned in buildrump.sh
+	for x in amd64 i386 x86 arm evbarm sparc sparc64 ; do
+		precho src/sys/arch/${x}/ include ${x}
+	done
+else
+	echo src/sys
+fi

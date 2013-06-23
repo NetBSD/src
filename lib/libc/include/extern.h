@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20.2.1 2012/11/20 03:00:42 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.20.2.2 2013/06/23 06:21:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -60,11 +60,6 @@ void	syslogp_ss(int, struct syslog_data *, const char *, const char *,
 void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
     const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
 #endif
-
-int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
-    __printflike(3, 4);
-int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
-    va_list) __printflike(3, 0);
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);

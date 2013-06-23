@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/05/03 18:28:45 dyoung Exp $
+#	$NetBSD: Makefile.inc,v 1.8.14.1 2013/06/23 06:20:28 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet ${.CURDIR}/../../../../netinet6
@@ -6,7 +6,7 @@
 # INET
 SRCS+=	in_proto.c igmp.c in.c in_offload.c in_pcb.c ip_carp.c ip_icmp.c\
 	ip_flow.c ip_id.c ip_input.c ip_reass.c ip_output.c raw_ip.c	\
-	in_cksum.c cpu_in_cksum.c in4_cksum.c ip_encap.c
+	in_cksum.c cpu_in_cksum.c in4_cksum.c ip_encap.c portalgo.c
 
 # INET6
 SRCS+=	dest6.c frag6.c icmp6.c in6.c in6_cksum.c in6_ifattach.c	\
@@ -26,6 +26,9 @@ SRCS+=	tcp_congctl.c tcp_input.c tcp_output.c tcp_sack.c tcp_subr.c \
 SRCS+=	udp_usrreq.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnet/opt
+
+CPPFLAGS+=	-DPORTALGO_INET4_DEFAULT=PORTALGO_RANDOM_START
+CPPFLAGS+=	-DPORTALGO_INET6_DEFAULT=PORTALGO_RANDOM_START
 
 # TCP debugging
 #SRCS+=		tcp_debug.c

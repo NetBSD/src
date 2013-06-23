@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.11 2011/07/18 07:44:30 isaki Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.11.12.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2011/07/18 07:44:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11.12.1 2013/06/23 06:20:08 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11 2011/07/18 07:44:30 isaki Exp $
 
 
 /* Conversion to internal format -- note asymmetry. */
-static int	fpu_itof(struct fpn *fp, u_int i);
-static int	fpu_stof(struct fpn *fp, u_int i);
-static int	fpu_dtof(struct fpn *fp, u_int i, u_int j);
-static int	fpu_xtof(struct fpn *fp, u_int i, u_int j, u_int k);
+static int	fpu_itof(struct fpn *fp, uint32_t i);
+static int	fpu_stof(struct fpn *fp, uint32_t i);
+static int	fpu_dtof(struct fpn *fp, uint32_t i, uint32_t j);
+static int	fpu_xtof(struct fpn *fp, uint32_t i, uint32_t j, uint32_t k);
 
 /*
  * N.B.: in all of the following, we assume the FP format is
@@ -87,7 +87,7 @@ static int	fpu_xtof(struct fpn *fp, u_int i, u_int j, u_int k);
  * int -> fpn.
  */
 static int
-fpu_itof(register struct fpn *fp, register u_int i)
+fpu_itof(struct fpn *fp, uint32_t i)
 {
 
 	if (i == 0)
@@ -143,10 +143,10 @@ fpu_itof(register struct fpn *fp, register u_int i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 static int
-fpu_stof(register struct fpn *fp, register u_int i)
+fpu_stof(struct fpn *fp, uint32_t i)
 {
-	register int exp;
-	register u_int frac, f0, f1;
+	int exp;
+	uint32_t frac, f0, f1;
 #define SNG_SHIFT (SNG_FRACBITS - FP_LG)
 
 	exp = (i >> (32 - 1 - SNG_EXPBITS)) & mask(SNG_EXPBITS);
@@ -161,10 +161,10 @@ fpu_stof(register struct fpn *fp, register u_int i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 static int
-fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
+fpu_dtof(struct fpn *fp, uint32_t i, uint32_t j)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2;
+	int exp;
+	uint32_t frac, f0, f1, f2;
 #define DBL_SHIFT (DBL_FRACBITS - 32 - FP_LG)
 
 	exp = (i >> (32 - 1 - DBL_EXPBITS)) & mask(DBL_EXPBITS);
@@ -180,11 +180,10 @@ fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
  * 96-bit extended -> fpn.
  */
 static int
-fpu_xtof(register struct fpn *fp, register u_int i, register u_int j,
-	register u_int k)
+fpu_xtof(struct fpn *fp, uint32_t i, uint32_t j, uint32_t k)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2;
+	int exp;
+	uint32_t frac, f0, f1, f2;
 #define EXT_SHIFT (EXT_FRACBITS - 1 - 32 - FP_LG)
 
 	exp = (i >> (32 - 1 - EXT_EXPBITS)) & mask(EXT_EXPBITS);
@@ -223,10 +222,9 @@ fpu_xtof(register struct fpn *fp, register u_int i, register u_int j,
  * Explode the contents of a memory operand.
  */
 void
-fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type,
-	register u_int *space)
+fpu_explode(struct fpemu *fe, struct fpn *fp, int type, const uint32_t *space)
 {
-	register u_int s;
+	uint32_t s;
 
 	s = space[0];
 	fp->fp_sign = s >> 31;

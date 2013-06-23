@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.3.12.2 2013/02/25 00:28:32 tls Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.3.12.3 2013/06/23 06:20:01 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3.12.2 2013/02/25 00:28:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3.12.3 2013/06/23 06:20:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_dev = self;
 	sc->sc_dmat = obio->obio_dmat;
-	
+
 	printf(": OMAP onboard video\n");
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
 	    &sc->sc_regh)) {
@@ -219,7 +219,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		sz = bus_space_read_4(sc->sc_iot, sc->sc_regh,
 		    OMAPFB_DISPC_SIZE_DIG);
 	}
-	
+
 	/* ... and make sure it ends up where we need it */
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE, sz);
 
@@ -238,7 +238,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 #if 0
 	printf("DSS revision: %08x\n",
 	    bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_REVISION));
-#endif	
+#endif
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 	edid_data = prop_dictionary_get(dict, "EDID");
@@ -262,11 +262,11 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_dmamem, 1, &segs, BUS_DMA_NOWAIT) != 0) {
 		panic("boo!\n");
 		aprint_error_dev(sc->sc_dev,
-		"failed to allocate video memory\n");
+		    "failed to allocate video memory\n");
 		return;
 	}
 
-	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamem, 1, sc->sc_vramsize, 
+	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamem, 1, sc->sc_vramsize,
 	    &sc->sc_vramaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to map video RAM\n");
 		return;
@@ -300,18 +300,18 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 			sc->sc_cmap_green[i] = i;
 			sc->sc_cmap_blue[i] = i;
 		}
-	}	
+	}
 	omapfb_restore_palette(sc);
 
 	/* now that we have video memory, stick it to the video controller */
-	
+
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SYSCONFIG);
 	reg &= ~(OMAP_DISPC_SYSC_STANDBY_MASK | OMAP_DISPC_SYSC_IDLE_MASK);
 	reg |= OMAP_DISPC_SYSC_SMART_STANDBY | OMAP_DISPC_SYSC_SMART_IDLE |
 	       OMAP_DISPC_SYSC_WAKEUP_ENABLE | OMAP_SYSCONF_AUTOIDLE;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_SYSCONFIG, reg);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_SYSCONFIG, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DSS_SYSCONFIG,
 	    OMAP_SYSCONF_AUTOIDLE);
 
 	reg = OMAP_DISPC_CFG_TV_ALPHA_EN | OMAP_DISPC_CFG_LCD_ALPHA_EN;
@@ -322,14 +322,14 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GLOBAL_ALPHA,
 	    0x00ff00ff);
 	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_BASE_0, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_BASE_0,
 	    sc->sc_fbhwaddr);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
 	    OMAPFB_DISPC_VID1_POSITION, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_SIZE, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_SIZE,
 	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
-	    OMAPFB_DISPC_VID1_PICTURE_SIZE, 
+	    OMAPFB_DISPC_VID1_PICTURE_SIZE,
 	    ((sc->sc_height - 1) << 16) | (sc->sc_width - 1));
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
 	    OMAPFB_DISPC_VID1_ROW_INC, 1);
@@ -337,7 +337,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    OMAPFB_DISPC_VID1_PIXEL_INC, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
 	    OMAPFB_DISPC_VID1_PRELOAD, 0x60);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ATTRIBUTES, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_ATTRIBUTES,
 	    OMAP_VID_ATTR_ENABLE |
 	    OMAP_VID_ATTR_BURST_16x32 |
 	    OMAP_VID_ATTR_RGB16 |
@@ -345,24 +345,24 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 
 	/* turn off overlay 2 */
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
-	    OMAPFB_DISPC_VID2_ATTRIBUTES, 0); 
+	    OMAPFB_DISPC_VID2_ATTRIBUTES, 0);
 
 	/* initialize the gfx layer for use as hardware cursor */
 	sc->sc_cursor_cmap[0] = 0;
 	sc->sc_cursor_offset = (12 << 20) - (64 * 64 * 4);
-	sc->sc_cursor_img = 
+	sc->sc_cursor_img =
 	   (uint32_t *)((uint8_t *)sc->sc_fbaddr + sc->sc_cursor_offset);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0,
 	    sc->sc_fbhwaddr + sc->sc_cursor_offset);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_TABLE_BASE, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_TABLE_BASE,
 	    sc->sc_dmamem->ds_addr);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE,
 	    0x003f003f);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION,
 	    0x00100010);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
 	    OMAPFB_DISPC_GFX_PRELOAD, 0x60);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ATTRIBUTES,
 	    /*OMAP_DISPC_ATTR_ENABLE |*/
 	    OMAP_DISPC_ATTR_BURST_16x32 |
 	    OMAP_DISPC_ATTR_ARGB32 |
@@ -382,15 +382,15 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	adr = OMAPFB_VENC_F_CONTROL;
 #if 0
 	for (i = 0; i < __arraycount(venc_mode_ntsc); i++) {
-		bus_space_write_4(sc->sc_iot, sc->sc_regh, adr, 
+		bus_space_write_4(sc->sc_iot, sc->sc_regh, adr,
 		    venc_mode_ntsc[i]);
 		adr += 4;
 	}
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_VENC_F_CONTROL, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_VENC_F_CONTROL,
 		    venc_mode_ntsc[0]);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_VENC_SYNC_CTRL, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_VENC_SYNC_CTRL,
 		    venc_mode_ntsc[2]);
-		    
+
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_DEFAULT_COLOR_1,
 	    0x00ff0000);
 #endif
@@ -479,7 +479,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	printf("OMAPDMAC_CSR: %08x\n", omapdma_read_ch_reg(0, OMAPDMAC_CSR));
 	printf("OMAPDMAC_CCR: %08x\n", omapdma_read_ch_reg(0, OMAPDMAC_CCR));
 #endif
-#endif	
+#endif
 }
 
 static int
@@ -539,7 +539,7 @@ omapfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						vcons_redraw_screen(ms);
 					} else {
 						omapfb_set_depth(sc, 32);
-					}						
+					}
 				}
 			}
 			return 0;
@@ -757,7 +757,6 @@ omapfb_putpalreg(struct omapfb_softc *sc, int idx, uint8_t r, uint8_t g,
 	/* whack the DAC */
 	reg = (r << 16) | (g << 8) | b;
 	sc->sc_clut[idx] = reg;
-	
 }
 
 static int
@@ -782,10 +781,10 @@ omapfb_set_depth(struct omapfb_softc *sc, int d)
 	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
-	    OMAPFB_DISPC_VID1_ATTRIBUTES, reg); 
+	    OMAPFB_DISPC_VID1_ATTRIBUTES, reg);
 
 	/*
-	 * now tell the video controller that we're done mucking around and 
+	 * now tell the video controller that we're done mucking around and
 	 * actually update its settings
 	 */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
@@ -824,7 +823,7 @@ omapfb_set_video(struct omapfb_softc *sc, int on)
 	}
 
 	/*
-	 * now tell the video controller that we're done mucking around and 
+	 * now tell the video controller that we're done mucking around and
 	 * actually update its settings
 	 */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
@@ -912,7 +911,7 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
 {
 	int bpp = sc->sc_depth >> 3;	/* bytes per pixel */
 	int width_in_bytes = wi * bpp;
-	
+
 	int hstep, vstep;
 	uint32_t saddr, daddr;
 
@@ -922,7 +921,7 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
 	 */
 	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * bpp;
 	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * bpp;
-		
+
 	if (ys < yd) {
 		/* need to go vertically backwards */
 		vstep = 1 - (sc->sc_stride + width_in_bytes);
@@ -983,7 +982,7 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
 	int wi, he, pos;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
 	pos = col + row * ri->ri_cols;
@@ -1018,7 +1017,7 @@ omapfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct omapfb_softc *sc = scr->scr_cookie;
 
 	if (c == 0x20) {
-		uint32_t fg, bg, ul; 
+		uint32_t fg, bg, ul;
 		rasops_unpack_attr(attr, &fg, &bg, &ul);
 		omapfb_rectfill(sc,
 		    ri->ri_xorigin + ri->ri_font->fontwidth * col,
@@ -1029,7 +1028,7 @@ omapfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 	omapfb_wait_idle(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);	
+	sc->sc_putchar(cookie, row, col, c, attr);
 }
 
 static void
@@ -1039,7 +1038,7 @@ omapfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1057,7 +1056,7 @@ omapfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1094,7 +1093,7 @@ omapfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1145,14 +1144,14 @@ omapfb_move_cursor(struct omapfb_softc *sc, int x, int y)
 	pos = (yy << 16) | xx;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_BASE_0,
 	    addr);
-	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION, 
+	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_POSITION,
 	    pos);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_SIZE,
 	    ((he - 1) << 16) | (wi - 1));
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GFX_ROW_INC,
 	    (64 - wi) * 4 + 1);
 	/*
-	 * now tell the video controller that we're done mucking around and 
+	 * now tell the video controller that we're done mucking around and
 	 * actually update its settings
 	 */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL);
@@ -1190,7 +1189,7 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
 		int i;
 		uint32_t val;
-	
+
 		for (i = 0; i < min(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] << 16 ) |
 			      (cur->cmap.green[i] << 8) |
@@ -1218,7 +1217,7 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 				sc->sc_cursor_img[i * 8 + j] =
 				    sc->sc_cursor_cmap[idx];
 				mask = mask << 1;
-			} 
+			}
 		}
 	}
 	if (whack) {
@@ -1228,7 +1227,7 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 		    OMAPFB_DISPC_CONTROL);
 		bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_CONTROL,
 		    reg | OMAP_DISPC_CTRL_GO_LCD | OMAP_DISPC_CTRL_GO_DIGITAL);
-	}		
+	}
 	return 0;
 
 }

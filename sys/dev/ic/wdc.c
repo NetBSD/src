@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.274.2.1 2013/02/25 00:29:15 tls Exp $ */
+/*	$NetBSD: wdc.c,v 1.274.2.2 2013/06/23 06:20:17 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.274.2.1 2013/02/25 00:29:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.274.2.2 2013/06/23 06:20:17 tls Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -211,7 +211,7 @@ wdc_sataprobe(struct ata_channel *chp)
 
 	/* reset the PHY and bring online */
 	switch (sata_reset_interface(chp, wdr->sata_iot, wdr->sata_control,
-	    wdr->sata_status)) {
+	    wdr->sata_status, AT_WAIT)) {
 	case SStatus_DET_DEV:
 		/* wait 5s for BSY to clear */
 		for (i = 0; i < WDC_PROBE_WAIT * hz; i++) {

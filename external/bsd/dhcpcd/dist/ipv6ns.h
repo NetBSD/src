@@ -1,6 +1,8 @@
-/* 
+/* $NetBSD: ipv6ns.h,v 1.1.1.2.2.1 2013/06/23 06:26:31 tls Exp $ */
+
+/*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +34,18 @@
 #include "ipv6rs.h"
 
 #define MAX_REACHABLE_TIME	3600	/* seconds */
-#define REACHABLE_TIME		30 	/* seconds */
-#define RETRANS_TIMER		1  	/* second */
+#define REACHABLE_TIME		30	/* seconds */
+#define RETRANS_TIMER		1000	/* milliseconds */
 #define DELAY_FIRST_PROBE_TIME	5	/* seconds */
 
-int ipv6ns_open(void);
-void ipv6ns_sendprobe(void *);
-void ipv6ns_handledata(void *);
+void ipv6ns_probeaddr(void *);
+ssize_t ipv6ns_probeaddrs(struct ipv6_addrhead *);
+void ipv6ns_proberouter(void *);
+void ipv6ns_cancelproberouter(struct ra *);
+
+#ifdef LISTEN_DAD
+void ipv6ns_cancelprobeaddr(struct ipv6_addr *);
+#else
+#define ipv6ns_cancelprobeaddr(a)
+#endif
 #endif

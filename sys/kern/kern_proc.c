@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.186 2012/06/09 02:31:14 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.186.2.1 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.186 2012/06/09 02:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.186.2.1 2013/06/23 06:18:58 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -172,7 +172,7 @@ struct pgrp pgrp0 = {
 };
 filedesc_t filedesc0;
 struct cwdinfo cwdi0 = {
-	.cwdi_cmask = CMASK,		/* see cmask below */
+	.cwdi_cmask = CMASK,
 	.cwdi_refcnt = 1,
 };
 struct plimit limit0;
@@ -206,7 +206,6 @@ kauth_cred_t cred0;
 
 static const int	nofile	= NOFILE;
 static const int	maxuprc	= MAXUPRC;
-static const int	cmask	= CMASK;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);

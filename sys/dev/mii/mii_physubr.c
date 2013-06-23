@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.74.2.1 2012/11/20 03:02:12 tls Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.74.2.2 2013/06/23 06:20:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.74.2.1 2012/11/20 03:02:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.74.2.2 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -177,8 +177,8 @@ mii_phy_setmedia(struct mii_softc *sc)
 			/* XXX Only 1000BASE-T has PAUSE_ASYM? */
 			if ((sc->mii_flags & MIIF_HAVE_GTCR) &&
 			    (sc->mii_extcapabilities &
-			     (EXTSR_1000THDX|EXTSR_1000TFDX)))
-				anar |= ANAR_X_PAUSE_ASYM;
+			     (EXTSR_1000THDX | EXTSR_1000TFDX)))
+				anar |= ANAR_PAUSE_ASYM;
 		}
 	}
 
@@ -202,6 +202,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
+	sc->mii_ticks = 0;
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		/*
 		 * Check for 1000BASE-X.  Autonegotiation is a bit
@@ -231,8 +232,8 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 				/* XXX Only 1000BASE-T has PAUSE_ASYM? */
 				if ((sc->mii_flags & MIIF_HAVE_GTCR) &&
 				    (sc->mii_extcapabilities &
-				     (EXTSR_1000THDX|EXTSR_1000TFDX)))
-					anar |= ANAR_X_PAUSE_ASYM;
+				     (EXTSR_1000THDX | EXTSR_1000TFDX)))
+					anar |= ANAR_PAUSE_ASYM;
 			}
 
 			/*
@@ -323,30 +324,46 @@ mii_phy_tick(struct mii_softc *sc)
 	/*
 	 * If we're not doing autonegotiation, we don't need to do
 	 * any extra work here.  However, we need to check the link
-	 * status so we can generate an announcement if the status
-	 * changes.
+	 * status so we can generate an announcement by returning
+	 * with 0 if the status changes.
 	 */
 	if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
-	(IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
+	    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
+		/*
+		 * Reset autonegotiation timer to 0 just to make sure
+		 * the future autonegotiation start with 0.
+		 */
+		sc->mii_ticks = 0;
 		return (0);
+	}
 
 	/* Read the status register twice; BMSR_LINK is latch-low. */
 	reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
 	if (reg & BMSR_LINK) {
 		/*
-		 * See above.
+		 * Reset autonegotiation timer to 0 in case the link
+		 * goes down in the next tick.
 		 */
+		sc->mii_ticks = 0;
+		/* See above. */
 		return (0);
 	}
+
+	/*
+	 * mii_ticks == 0 means it's the first tick after changing the media or
+	 * the link became down since the last tick (see above), so return with
+	 * 0 to update the status.
+	 */
+	if (sc->mii_ticks++ == 0)
+		return (0);
 
 	/*
 	 * Only retry autonegotiation every N seconds.
 	 */
 	KASSERT(sc->mii_anegticks != 0);
-	if (++sc->mii_ticks <= sc->mii_anegticks)
+	if (sc->mii_ticks <= sc->mii_anegticks)
 		return (EJUSTRETURN);
 
-	sc->mii_ticks = 0;
 	PHY_RESET(sc);
 
 	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
@@ -419,9 +436,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int s;
 
-	s = splnet();
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
 			if_link_state_change(ifp, LINK_STATE_UP);
@@ -429,7 +444,6 @@ mii_phy_statusmsg(struct mii_softc *sc)
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 	} else
 		if_link_state_change(ifp, LINK_STATE_UNKNOWN);
-	splx(s);
 
 	ifp->if_baudrate = ifmedia_baudrate(mii->mii_media_active);
 }
@@ -630,30 +644,35 @@ mii_phy_flowstatus(struct mii_softc *sc)
 	anar = PHY_READ(sc, MII_ANAR);
 	anlpar = PHY_READ(sc, MII_ANLPAR);
 
-	if ((anar & ANAR_X_PAUSE_SYM) & (anlpar & ANLPAR_X_PAUSE_SYM))
+	/* For 1000baseX, the bits are in a different location. */
+	if (sc->mii_flags & MIIF_IS_1000X) {
+		anar <<= 3;
+		anlpar <<= 3;
+	}
+
+	if ((anar & ANAR_PAUSE_SYM) & (anlpar & ANLPAR_PAUSE_SYM))
 		return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
 
-	if ((anar & ANAR_X_PAUSE_SYM) == 0) {
-		if ((anar & ANAR_X_PAUSE_ASYM) &&
-		    ((anlpar &
-		      ANLPAR_X_PAUSE_TOWARDS) == ANLPAR_X_PAUSE_TOWARDS))
+	if ((anar & ANAR_PAUSE_SYM) == 0) {
+		if ((anar & ANAR_PAUSE_ASYM) &&
+		    ((anlpar & ANLPAR_PAUSE_TOWARDS) == ANLPAR_PAUSE_TOWARDS))
 			return (IFM_FLOW|IFM_ETH_TXPAUSE);
 		else
 			return (0);
 	}
 
-	if ((anar & ANAR_X_PAUSE_ASYM) == 0) {
-		if (anlpar & ANLPAR_X_PAUSE_SYM)
+	if ((anar & ANAR_PAUSE_ASYM) == 0) {
+		if (anlpar & ANLPAR_PAUSE_SYM)
 			return (IFM_FLOW|IFM_ETH_TXPAUSE|IFM_ETH_RXPAUSE);
 		else
 			return (0);
 	}
 
-	switch ((anlpar & ANLPAR_X_PAUSE_TOWARDS)) {
-	case ANLPAR_X_PAUSE_NONE:
+	switch ((anlpar & ANLPAR_PAUSE_TOWARDS)) {
+	case ANLPAR_PAUSE_NONE:
 		return (0);
 
-	case ANLPAR_X_PAUSE_ASYM:
+	case ANLPAR_PAUSE_ASYM:
 		return (IFM_FLOW|IFM_ETH_RXPAUSE);
 
 	default:

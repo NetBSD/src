@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112.2.2 2013/02/25 00:28:52 tls Exp $
+# $NetBSD: GENERIC,v 1.112.2.3 2013/06/23 06:20:09 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -82,13 +82,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -287,7 +283,7 @@ pseudo-device	swcrypto	# software crypto implementation
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss			# file system snapshot device
-#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -316,7 +312,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

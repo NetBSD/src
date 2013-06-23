@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.2.2.1 2012/11/20 02:57:29 tls Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2.2.2 2013/06/23 06:26:13 tls Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -18,5 +18,20 @@
 
 ENTRY_NP(__aeabi_idivmod)
 ENTRY_NP(__aeabi_idiv)
+#if defined(__ARM_EABI__) && defined(PIC_SYMVER)
+	.symver	__aeabi_idiv,__aeabi_idiv@@GCC_3.5
+	.symver	__aeabi_idivmod,__aeabi_idivmod@@GCC_3.5
+#endif
 ENTRY(__divsi3)
+#if defined(__ARM_ARCH_EXT_IDIV__)
+# if defined(__ARM_EABI__)
+	mov	r3, r0		@ save for mls
+# endif
+	sdiv	r0, r0, r1
+# if defined(__ARM_EABI__)
+	mls	r1, r0, r1, r3	@ return modulus in r1
+# endif
+	RET
+#else
 	b	__divide
+#endif

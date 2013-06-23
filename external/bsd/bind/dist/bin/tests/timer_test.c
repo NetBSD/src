@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_test.c,v 1.3 2012/06/05 00:39:27 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -104,6 +104,10 @@ main(int argc, char *argv[]) {
 	isc_time_t expires, now;
 	isc_interval_t interval;
 
+	isc__mem_register();
+	isc__task_register();
+	isc__timer_register();
+	isc__socket_register();
 	if (argc > 1)
 		workers = atoi(argv[1]);
 	else

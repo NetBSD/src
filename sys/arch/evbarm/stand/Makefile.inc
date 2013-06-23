@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1 2003/04/29 05:35:08 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.1.152.1 2013/06/23 06:20:04 tls Exp $
 
-BINDIR?= /usr/mdec
-FILESDIR?= /usr/mdec
+BINDIR?=	/usr/mdec
+FILESDIR?=	/usr/mdec
+KLINK_MACHINE=	evbarm

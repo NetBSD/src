@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.55 2011/12/06 18:04:31 njoly Exp $	*/
+/*	$NetBSD: locks.c,v 1.55.6.1 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55 2011/12/06 18:04:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.1 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -90,10 +90,32 @@ static lockops_t rw_lockops = {
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 {
+	int ruflags = RUMPUSER_MTX_KMUTEX;
+	int isspin;
 
 	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 
-	rumpuser_mutex_init_kmutex((struct rumpuser_mtx **)mtx);
+	/*
+	 * Try to figure out if the caller wanted a spin mutex or
+	 * not with this easy set of conditionals.  The difference
+	 * between a spin mutex and an adaptive mutex for a rump
+	 * kernel is that the hypervisor does not relinquish the
+	 * rump kernel CPU context for a spin mutex.  The
+	 * hypervisor itself may block even when "spinning".
+	 */
+	if (type == MUTEX_SPIN) {
+		isspin = 1;
+	} else if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
+	    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
+	    ipl == IPL_SOFTSERIAL) {
+		isspin = 0;
+	} else {
+		isspin = 1;
+	}
+
+	if (isspin)
+		ruflags |= RUMPUSER_MTX_SPIN;
+	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
 	ALLOCK(mtx, &mutex_lockops);
 }
 
@@ -113,19 +135,27 @@ mutex_enter(kmutex_t *mtx)
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
-__strong_alias(mutex_spin_enter,mutex_enter);
+
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	WANTLOCK(mtx, false, false);
+	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
+	LOCKED(mtx, false);
+}
 
 int
 mutex_tryenter(kmutex_t *mtx)
 {
-	int rv;
+	int error;
 
-	rv = rumpuser_mutex_tryenter(RUMPMTX(mtx));
-	if (rv) {
+	error = rumpuser_mutex_tryenter(RUMPMTX(mtx));
+	if (error == 0) {
 		WANTLOCK(mtx, false, true);
 		LOCKED(mtx, false);
 	}
-	return rv;
+	return error == 0;
 }
 
 void
@@ -147,13 +177,29 @@ mutex_owned(kmutex_t *mtx)
 struct lwp *
 mutex_owner(kmutex_t *mtx)
 {
+	struct lwp *l;
 
-	return rumpuser_mutex_owner(RUMPMTX(mtx));
+	rumpuser_mutex_owner(RUMPMTX(mtx), &l);
+	return l;
 }
 
 #define RUMPRW(rw) (*(struct rumpuser_rw **)(rw))
 
 /* reader/writer locks */
+
+static enum rumprwlock
+krw2rumprw(const krw_t op)
+{
+
+	switch (op) {
+	case RW_READER:
+		return RUMPUSER_RW_READER;
+	case RW_WRITER:
+		return RUMPUSER_RW_WRITER;
+	default:
+		panic("unknown rwlock type");
+	}
+}
 
 void
 rw_init(krwlock_t *rw)
@@ -179,21 +225,21 @@ rw_enter(krwlock_t *rw, const krw_t op)
 
 
 	WANTLOCK(rw, op == RW_READER, false);
-	rumpuser_rw_enter(RUMPRW(rw), op == RW_WRITER);
+	rumpuser_rw_enter(krw2rumprw(op), RUMPRW(rw));
 	LOCKED(rw, op == RW_READER);
 }
 
 int
 rw_tryenter(krwlock_t *rw, const krw_t op)
 {
-	int rv;
+	int error;
 
-	rv = rumpuser_rw_tryenter(RUMPRW(rw), op == RW_WRITER);
-	if (rv) {
+	error = rumpuser_rw_tryenter(krw2rumprw(op), RUMPRW(rw));
+	if (error == 0) {
 		WANTLOCK(rw, op == RW_READER, true);
 		LOCKED(rw, op == RW_READER);
 	}
-	return rv;
+	return error == 0;
 }
 
 void
@@ -210,45 +256,53 @@ rw_exit(krwlock_t *rw)
 	rumpuser_rw_exit(RUMPRW(rw));
 }
 
-/* always fails */
 int
 rw_tryupgrade(krwlock_t *rw)
 {
+	int rv;
 
-	return 0;
+	rv = rumpuser_rw_tryupgrade(RUMPRW(rw));
+	if (rv == 0) {
+		UNLOCKED(rw, 1);
+		WANTLOCK(rw, 0, true);
+		LOCKED(rw, 0);
+	}
+	return rv == 0;
 }
 
 void
 rw_downgrade(krwlock_t *rw)
 {
 
-	/*
-	 * XXX HACK: How we can downgrade re lock in rump properly.
-	 */
-	rw_exit(rw);
-	rw_enter(rw, RW_READER);
-	return;
-}
-
-int
-rw_write_held(krwlock_t *rw)
-{
-
-	return rumpuser_rw_wrheld(RUMPRW(rw));
+	rumpuser_rw_downgrade(RUMPRW(rw));
+	UNLOCKED(rw, 0);
+	WANTLOCK(rw, 1, false);
+	LOCKED(rw, 1);
 }
 
 int
 rw_read_held(krwlock_t *rw)
 {
+	int rv;
 
-	return rumpuser_rw_rdheld(RUMPRW(rw));
+	rumpuser_rw_held(RUMPUSER_RW_READER, RUMPRW(rw), &rv);
+	return rv;
+}
+
+int
+rw_write_held(krwlock_t *rw)
+{
+	int rv;
+
+	rumpuser_rw_held(RUMPUSER_RW_WRITER, RUMPRW(rw), &rv);
+	return rv;
 }
 
 int
 rw_lock_held(krwlock_t *rw)
 {
 
-	return rumpuser_rw_held(RUMPRW(rw));
+	return rw_read_held(rw) || rw_write_held(rw);
 }
 
 /* curriculum vitaes */
@@ -352,22 +406,15 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
-	struct timespec ts, tick;
+	struct timespec ts;
 	extern int hz;
 	int rv;
 
 	if (ticks == 0) {
 		rv = cv_wait_sig(cv, mtx);
 	} else {
-		/*
-		 * XXX: this fetches rump kernel time, but
-		 * rumpuser_cv_timedwait uses host time.
-		 */
-		nanotime(&ts);
-		tick.tv_sec = ticks / hz;
-		tick.tv_nsec = (ticks % hz) * (1000000000/hz);
-		timespecadd(&ts, &tick, &ts);
-
+		ts.tv_sec = ticks / hz;
+		ts.tv_nsec = (ticks % hz) * (1000000000/hz);
 		rv = docvwait(cv, mtx, &ts);
 	}
 
@@ -392,8 +439,10 @@ cv_broadcast(kcondvar_t *cv)
 bool
 cv_has_waiters(kcondvar_t *cv)
 {
+	int rv;
 
-	return rumpuser_cv_has_waiters(RUMPCV(cv));
+	rumpuser_cv_has_waiters(RUMPCV(cv), &rv);
+	return rv != 0;
 }
 
 /* this is not much of an attempt, but ... */

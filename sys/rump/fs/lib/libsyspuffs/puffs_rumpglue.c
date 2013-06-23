@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.11 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.11.22.1 2013/06/23 06:20:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.11.22.1 2013/06/23 06:20:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ readthread(void *arg)
 	kpause(NULL, 0, hz/4, NULL);
 
 	for (;;) {
-		ssize_t n;
+		size_t n;
 
 		off = 0;
 		fp = fd_getfile(pap->fpfd);
@@ -97,8 +97,14 @@ readthread(void *arg)
 		inited = 1;
 
 		while (rv) {
-			n = rumpuser_write(pap->comfd, buf, rv, &error);
-			if (n == -1)
+			struct rumpuser_iovec iov;
+
+			iov.iov_base = buf;
+			iov.iov_len = rv;
+
+			error = rumpuser_iovwrite(pap->comfd, &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &n);
+			if (error)
 				panic("fileread failed: %d", error);
 			if (n == 0)
 				panic("fileread failed: closed");
@@ -126,7 +132,7 @@ writethread(void *arg)
 	phdr = (struct putter_hdr *)buf;
 
 	for (;;) {
-		ssize_t n;
+		size_t n;
 
 		/*
 		 * Need to write everything to the "kernel" in one chunk,
@@ -135,12 +141,16 @@ writethread(void *arg)
 		off = 0;
 		toread = sizeof(struct putter_hdr);
 		do {
-			n = rumpuser_read(pap->comfd, buf+off, toread, &error);
-			if (n <= 0) {
-				if (n == 0)
-					goto out;
+			struct rumpuser_iovec iov;
+
+			iov.iov_base = buf+off;
+			iov.iov_len = toread;
+			error = rumpuser_iovread(pap->comfd, &iov, 1,
+			    RUMPUSER_IOV_NOSEEK, &n);
+			if (error)
 				panic("rumpuser_read %zd %d", n, error);
-			}
+			if (n == 0)
+				goto out;
 			off += n;
 			if (off >= sizeof(struct putter_hdr))
 				toread = phdr->pth_framelen - off;

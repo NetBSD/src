@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.234.2.2 2013/02/25 00:24:36 tls Exp $
+# $NetBSD: shl.mi,v 1.234.2.3 2013/06/23 06:26:18 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17,6 +17,7 @@
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
 ./usr/lib/libc_pic.a				comp-c-piclib
+./usr/lib/libc++_pic.a				comp-c-piclib		libcxx
 ./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libcompat_pic.a			comp-c-piclib
@@ -34,6 +35,8 @@
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libelf_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
+./usr/lib/libevent_openssl_pic.a		comp-c-piclib		crypto
+./usr/lib/libevent_pthreads_pic.a		comp-c-piclib
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib
 ./usr/lib/libexpat_pic.a			comp-c-piclib
 ./usr/lib/libfetch_pic.a			comp-c-piclib
@@ -221,7 +224,7 @@
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
-./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds
+./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds,libstdcxx
 ./usr/lib/libtddl_pic.a				comp-c-piclib		tpm
 ./usr/lib/libtspi_pic.a				comp-c-piclib		tpm
 ./usr/lib/libtelnet_pic.a			comp-obsolete		obsolete

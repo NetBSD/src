@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.9 2012/05/10 11:03:22 skrll Exp $ */
+/* $NetBSD: nbfs.c,v 1.9.2.1 2013/06/23 06:19:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -354,7 +354,7 @@ nbfs_func_dirents(struct nbfs_reg *r)
 	size_t skip = r->r4;
 	ssize_t off = 0;
 	size_t buflen = r->r5;
-	char dirbuf[DIRBLKSIZ];
+	char dirbuf[UFS_DIRBLKSIZ];
 	char *outp = (char *)r->r2;
 
 	err = nbfs_fopen(&f, special, fname);
@@ -367,12 +367,12 @@ nbfs_func_dirents(struct nbfs_reg *r)
 		err = ENOTDIR;
 		goto fail;
 	}
-	while (FS_READ(f.f_ops)(&f, dirbuf, DIRBLKSIZ, &resid) == 0 &&
+	while (FS_READ(f.f_ops)(&f, dirbuf, UFS_DIRBLKSIZ, &resid) == 0 &&
 	    resid == 0) {
 		struct direct  *dp, *edp;
 
 		dp = (struct direct *) dirbuf;
-		edp = (struct direct *) (dirbuf + DIRBLKSIZ);
+		edp = (struct direct *) (dirbuf + UFS_DIRBLKSIZ);
 
 		for (; dp < edp; dp = (void *)((char *)dp + dp->d_reclen)) {
 			size_t entsiz = 0;

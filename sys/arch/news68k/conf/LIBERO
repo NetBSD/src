@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.55.8.1 2012/11/20 03:01:36 tls Exp $
+# 	$NetBSD: LIBERO,v 1.55.8.2 2013/06/23 06:20:09 tls Exp $
 
 #	NEWS1750 config file;
 #
@@ -80,8 +80,6 @@ options 	FFS_NO_SNAPSHOT	# FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# IPv6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
@@ -160,8 +158,8 @@ pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
 #pseudo-device	ppp			# PPP interfaces

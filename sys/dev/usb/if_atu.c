@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.43.6.2 2013/02/25 00:29:33 tls Exp $ */
+/*	$NetBSD: if_atu.c,v 1.43.6.3 2013/06/23 06:20:22 tls Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.43.6.2 2013/02/25 00:29:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.43.6.3 2013/06/23 06:20:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -693,8 +693,8 @@ atu_initial_config(struct atu_softc *sc)
 
 		cmd.WEP_DefaultKeyID = ic->ic_def_txkey;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
-			    ic->ic_nw_keys[i].wk_keylen); 
+			memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key,
+			    ic->ic_nw_keys[i].wk_keylen);
 		}
 	}
 

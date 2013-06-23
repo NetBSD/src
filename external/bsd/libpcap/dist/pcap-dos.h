@@ -1,8 +1,10 @@
+/*	$NetBSD: pcap-dos.h,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * Internal details for libpcap on DOS.
  * 32-bit targets: djgpp, Pharlap or DOS4GW.
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap-dos.h,v 1.1 2004-12-18 08:52:10 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-dos.h,v 1.1 2004-12-18 08:52:10 guy Exp  (LBL)
  */
 
 #ifndef __PCAP_DOS_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.43 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.43.6.1 2013/06/23 06:20:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.43 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.43.6.1 2013/06/23 06:20:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	rtk_attach(sc);
 }
 
-static int 
+static int
 rtk_pci_detach(device_t self, int flags)
 {
 	struct rtk_pci_softc *psc = device_private(self);

@@ -1,4 +1,4 @@
-#	$NetBSD: genfth.cf,v 1.7.20.1 2013/02/25 00:28:58 tls Exp $
+#	$NetBSD: genfth.cf,v 1.7.20.2 2013/06/23 06:20:12 tls Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -136,7 +136,6 @@ member	di1_size	di_size
 member	di1_mode	di_mode
 member	di1_db		di_db
 member	di1_ib		di_ib
-member	di_inumber	di_inumber
 
 #
 # ufs2 dinode

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.39.2.1 2013/02/25 00:29:46 tls Exp $	*/
+/*	$NetBSD: advnops.c,v 1.39.2.2 2013/06/23 06:18:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.1 2013/02/25 00:29:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.2 2013/06/23 06:18:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -776,7 +776,7 @@ adosfs_check_permitted(struct vnode *vp, struct anode *ap, mode_t mode,
 {
 	mode_t file_mode = adunixprot(ap->adprot) & ap->amp->mask;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, file_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    file_mode, ap->uid, ap->gid, mode, cred));
 }

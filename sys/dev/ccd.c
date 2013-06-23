@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.143.10.1 2012/12/02 05:46:39 tls Exp $	*/
+/*	$NetBSD: ccd.c,v 1.143.10.2 2013/06/23 06:20:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.143.10.1 2012/12/02 05:46:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.143.10.2 2013/06/23 06:20:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.143.10.1 2012/12/02 05:46:39 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/bufq.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -168,6 +169,7 @@ static void	ccdgetdisklabel(dev_t);
 static void	ccdmakedisklabel(struct ccd_softc *);
 static void	ccdstart(struct ccd_softc *);
 static void	ccdthread(void *);
+static struct	ccd_softc *ccdget(int);
 
 static dev_type_open(ccdopen);
 static dev_type_close(ccdclose);
@@ -205,10 +207,8 @@ const struct cdevsw ccd_cdevsw = {
 static	void printiinfo(struct ccdiinfo *);
 #endif
 
-/* Publically visible for the benefit of libkvm and ccdconfig(8). */
-struct ccd_softc 	*ccd_softc;
-const int		ccd_softc_elemsize = sizeof(struct ccd_softc);
-int			numccd = 0;
+static LIST_HEAD(, ccd_softc) ccds = LIST_HEAD_INITIALIZER(ccds);
+static kmutex_t ccd_lock;
 
 static void
 ccdminphys(struct buf *bp)
@@ -217,15 +217,80 @@ ccdminphys(struct buf *bp)
 	long xmax;
 	int unit = ccdunit(bp->b_dev);
 
-	cs = &ccd_softc[unit];
+	cs = ccdget(unit);
 
+	if (__predict_false(cs == NULL)) {
+		panic("minphys called on missing ccd unit %d", unit);
+	}
 	xmax = cs->sc_maxphys;
 
 	if (bp->b_bcount > xmax)
-	    bp->b_bcount = xmax;
+		bp->b_bcount = xmax;
 }
 
 const struct dkdriver ccd_dkdriver = { ccdstrategy, ccdminphys };
+
+static struct ccd_softc *
+ccdcreate(int unit) {
+	struct ccd_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	if (sc == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: out of memory\n", __func__);
+#endif
+		return NULL;
+	}
+	/* Initialize per-softc structures. */
+	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "ccd%d", unit);
+	mutex_init(&sc->sc_dvlock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_stop, "ccdstop");
+	cv_init(&sc->sc_push, "ccdthr");
+	disk_init(&sc->sc_dkdev, sc->sc_xname, &ccd_dkdriver); /* XXX */
+	return sc;
+}
+
+static void
+ccddestroy(struct ccd_softc *sc) {
+	mutex_obj_free(sc->sc_iolock);
+	mutex_destroy(&sc->sc_dvlock);
+	cv_destroy(&sc->sc_stop);
+	cv_destroy(&sc->sc_push);
+	disk_destroy(&sc->sc_dkdev);
+	kmem_free(sc, sizeof(*sc));
+}
+
+static struct ccd_softc *
+ccdget(int unit) {
+	struct ccd_softc *sc;
+	if (unit < 0) {
+#ifdef DIAGNOSTIC
+		panic("%s: unit %d!", __func__, unit);
+#endif
+		return NULL;
+	}
+	mutex_enter(&ccd_lock);
+	LIST_FOREACH(sc, &ccds, sc_link) {
+		if (sc->sc_unit == unit) {
+			mutex_exit(&ccd_lock);
+			return sc;
+		}
+	}
+	mutex_exit(&ccd_lock);
+	if ((sc = ccdcreate(unit)) == NULL)
+		return NULL;
+	mutex_enter(&ccd_lock);
+	LIST_INSERT_HEAD(&ccds, sc, sc_link);
+	mutex_exit(&ccd_lock);
+	return sc;
+}
+
+static void 
+ccdput(struct ccd_softc *sc) {
+	mutex_enter(&ccd_lock);
+	LIST_REMOVE(sc, sc_link);
+	mutex_exit(&ccd_lock);
+	ccddestroy(sc);
+}
 
 /*
  * Called by main() during pseudo-device attachment.  All we need
@@ -234,37 +299,11 @@ const struct dkdriver ccd_dkdriver = { ccdstrategy, ccdminphys };
 void
 ccdattach(int num)
 {
-	struct ccd_softc *cs;
-	int i;
-
-	if (num <= 0) {
-#ifdef DIAGNOSTIC
-		panic("ccdattach: count <= 0");
-#endif
-		return;
-	}
-
-	ccd_softc = kmem_zalloc(num * ccd_softc_elemsize, KM_SLEEP);
-	if (ccd_softc == NULL) {
-		printf("WARNING: no memory for concatenated disks\n");
-		return;
-	}
-	numccd = num;
+	mutex_init(&ccd_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initialize the component buffer pool. */
 	ccd_cache = pool_cache_init(sizeof(struct ccdbuf), 0,
 	    0, 0, "ccdbuf", NULL, IPL_BIO, NULL, NULL, NULL);
-
-	/* Initialize per-softc structures. */
-	for (i = 0; i < num; i++) {
-		cs = &ccd_softc[i];
-		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
-		mutex_init(&cs->sc_dvlock, MUTEX_DEFAULT, IPL_NONE);
-		cs->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&cs->sc_stop, "ccdstop");
-		cv_init(&cs->sc_push, "ccdthr");
-		disk_init(&cs->sc_dkdev, cs->sc_xname, &ccd_dkdriver);
-	}
 }
 
 static int
@@ -569,9 +608,8 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdopen(0x%"PRIx64", 0x%x)\n", dev, flags);
 #endif
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return ENXIO;
 
 	mutex_enter(&cs->sc_dvlock);
 
@@ -631,9 +669,8 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		printf("ccdclose(0x%"PRIx64", 0x%x)\n", dev, flags);
 #endif
 
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return ENXIO;
 
 	mutex_enter(&cs->sc_dvlock);
 
@@ -714,7 +751,9 @@ static void
 ccdstrategy(struct buf *bp)
 {
 	int unit = ccdunit(bp->b_dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct ccd_softc *cs;
+	if ((cs = ccdget(unit)) == NULL)
+		return;
 
 	/* Must be open or reading label. */
 	KASSERT(cs->sc_dkdev.dk_openmask != 0 ||
@@ -999,9 +1038,8 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return 0;
 
 	/* Unlocked advisory check, ccdstrategy check is synchronous. */
 	if ((cs->sc_flags & CCDF_INITED) == 0)
@@ -1021,9 +1059,8 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return ENOENT;
 
 	/* Unlocked advisory check, ccdstrategy check is synchronous. */
 	if ((cs->sc_flags & CCDF_INITED) == 0)
@@ -1048,9 +1085,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel newlabel;
 #endif
 
-	if (unit >= numccd)
-		return (ENXIO);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return ENOENT;
 	uc = kauth_cred_get();
 
 	/* Must be open for writes for these commands... */
@@ -1262,6 +1298,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* Detatch the disk. */
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
+		ccdput(cs);
 		break;
 
 	case DIOCGDINFO:
@@ -1383,9 +1420,8 @@ ccdsize(dev_t dev)
 	int part, unit, omask, size;
 
 	unit = ccdunit(dev);
-	if (unit >= numccd)
-		return (-1);
-	cs = &ccd_softc[unit];
+	if ((cs = ccdget(unit)) == NULL)
+		return -1;
 
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (-1);
@@ -1448,11 +1484,15 @@ static void
 ccdgetdisklabel(dev_t dev)
 {
 	int unit = ccdunit(dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct ccd_softc *cs;
 	const char *errstring;
-	struct disklabel *lp = cs->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
 
+	if ((cs = ccdget(unit)) == NULL)
+		return;
+	lp = cs->sc_dkdev.dk_label;
+	clp = cs->sc_dkdev.dk_cpulabel;
 	KASSERT(mutex_owned(&cs->sc_dvlock));
 
 	memset(clp, 0, sizeof(*clp));
@@ -1576,4 +1616,178 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
+}
+
+static int
+ccd_units_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct ccd_softc *sc;
+	int error, i, nccd, *units;
+	size_t size;
+
+	nccd = 0;
+	mutex_enter(&ccd_lock);
+	LIST_FOREACH(sc, &ccds, sc_link)
+		nccd++;
+	mutex_exit(&ccd_lock);
+
+	if (nccd != 0) {
+		size = nccd * sizeof(*units);
+		units = kmem_zalloc(size, KM_SLEEP);
+		if (units == NULL)
+			return ENOMEM;
+
+		i = 0;
+		mutex_enter(&ccd_lock);
+		LIST_FOREACH(sc, &ccds, sc_link) {
+			if (i >= nccd)
+				break;
+			units[i] = sc->sc_unit;
+		}
+		mutex_exit(&ccd_lock);
+	} else {
+		units = NULL;
+		size = 0;
+	}
+
+	node = *rnode;
+	node.sysctl_data = units;
+	node.sysctl_size = size;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (units)
+		kmem_free(units, size);
+	return error;
+}
+
+static int
+ccd_info_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct ccddiskinfo ccd;
+	struct ccd_softc *sc;
+	int unit;
+
+	if (newp == NULL || newlen != sizeof(int))
+		return EINVAL;
+
+	unit = *(const int *)newp;
+	newp = NULL;
+	newlen = 0;
+	ccd.ccd_ndisks = ~0;
+	mutex_enter(&ccd_lock);
+	LIST_FOREACH(sc, &ccds, sc_link) {
+		if (sc->sc_unit == unit) {
+			ccd.ccd_ileave = sc->sc_ileave;
+			ccd.ccd_size = sc->sc_size;
+			ccd.ccd_ndisks = sc->sc_nccdisks;
+			ccd.ccd_flags = sc->sc_flags;
+			break;
+		}
+	}
+	mutex_exit(&ccd_lock);
+
+	if (ccd.ccd_ndisks == ~0)
+		return ENOENT;
+
+	node = *rnode;
+	node.sysctl_data = &ccd;
+	node.sysctl_size = sizeof(ccd);
+
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+ccd_components_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, unit;
+	size_t size;
+	char *names, *p, *ep;
+	struct ccd_softc *sc;
+
+	if (newp == NULL || newlen != sizeof(int))
+		return EINVAL;
+
+	size = 0;
+	unit = *(const int *)newp;
+	newp = NULL;
+	newlen = 0;
+	mutex_enter(&ccd_lock);
+	LIST_FOREACH(sc, &ccds, sc_link)
+		if (sc->sc_unit == unit) {
+			for (size_t i = 0; i < sc->sc_nccdisks; i++)
+				size += strlen(sc->sc_cinfo[i].ci_path) + 1;
+			break;
+		}
+	mutex_exit(&ccd_lock);
+
+	if (size == 0)
+		return ENOENT;
+	names = kmem_zalloc(size, KM_SLEEP); 
+	if (names == NULL)
+		return ENOMEM;
+
+	p = names;
+	ep = names + size;
+	mutex_enter(&ccd_lock);
+	LIST_FOREACH(sc, &ccds, sc_link)
+		if (sc->sc_unit == unit) {
+			for (size_t i = 0; i < sc->sc_nccdisks; i++) {
+				char *d = sc->sc_cinfo[i].ci_path;
+				while (p < ep && (*p++ = *d++) != '\0') 
+					continue;
+			}
+			break;
+		}
+	mutex_exit(&ccd_lock);
+
+	node = *rnode;
+	node.sysctl_data = names;
+	node.sysctl_size = ep - names;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	kmem_free(names, size);
+	return error;
+}
+
+SYSCTL_SETUP(sysctl_kern_ccd_setup, "sysctl kern.ccd subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	/* Make sure net.key exists before we register nodes underneath it. */
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "kern", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "ccd",
+	    SYSCTL_DESCR("ConCatenated Disk state"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLTYPE_STRUCT, "units",
+	    SYSCTL_DESCR("List of ccd unit numbers"),
+	    ccd_units_sysctl, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_STRUCT, "info",
+	    SYSCTL_DESCR("Information about a CCD unit"),
+	    ccd_info_sysctl, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_STRUCT, "components",
+	    SYSCTL_DESCR("Information about CCD components"),
+	    ccd_components_sysctl, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 }

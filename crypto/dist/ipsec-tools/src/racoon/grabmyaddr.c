@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.29.6.1 2013/02/25 00:24:02 tls Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.29.6.2 2013/06/23 06:26:14 tls Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -764,6 +764,7 @@ kernel_handle_message(msg)
 	case RTM_ADD:
 	case RTM_DELETE:
 	case RTM_CHANGE:
+	case RTM_GET:
 	case RTM_MISS:
 	case RTM_IFINFO:
 #ifdef RTM_OIFINFO
@@ -779,7 +780,7 @@ kernel_handle_message(msg)
 		break;
 	default:
 		plog(LLV_WARNING, LOCATION, NULL,
-		     "unrecognized route message with rtm_type: %d",
+		     "unrecognized route message with rtm_type: %d\n",
 		     rtm->rtm_type);
 		break;
 	}

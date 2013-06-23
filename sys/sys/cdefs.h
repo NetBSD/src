@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.100.2.2 2013/02/25 00:30:11 tls Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.100.2.3 2013/06/23 06:20:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -294,6 +294,11 @@
 #  define __END_PUBLIC_DECLS	__END_EXTERN_C
 #  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
 #  define __END_HIDDEN_DECLS	__END_EXTERN_C
+#endif
+#if __GNUC_PREREQ__(4, 2)
+#  define __dso_protected	__attribute__((__visibility__("protected")))
+#else
+#  define __dso_protected
 #endif
 
 #define	__BEGIN_DECLS		__BEGIN_PUBLIC_DECLS

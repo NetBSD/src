@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.6 2012/02/24 18:45:20 skrll Exp $	*/
+/*	$NetBSD: readufs.h,v 1.6.2.1 2013/06/23 06:20:05 tls Exp $	*/
 /*	from Id: readufs.h,v 1.10 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>
+#include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/ufs/dir.h>
 
 /*
@@ -20,6 +21,10 @@ union ufs_dinode {
 #endif
 #ifdef USE_UFS2
 	struct ufs2_dinode di2;
+#endif
+#ifdef USE_LFS
+	struct ulfs1_dinode dil1;
+	struct ulfs2_dinode dil2;
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.174.2.1 2012/11/20 03:02:43 tls Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.174.2.2 2013/06/23 06:18:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.174.2.1 2012/11/20 03:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.174.2.2 2013/06/23 06:18:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -188,24 +188,6 @@ sys___clock_gettime50(struct lwp *l,
 		return error;
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
-}
-
-int
-clock_gettime1(clockid_t clock_id, struct timespec *ts)
-{
-
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(ts);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(ts);
-		break;
-	default:
-		return EINVAL;
-	}
-
-	return 0;
 }
 
 /* ARGSUSED */
@@ -346,16 +328,9 @@ nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
 	struct timespec rmtstart;
 	int error, timo;
 
-	if ((error = clock_gettime1(clock_id, &rmtstart)) != 0)
-		return ENOTSUP;
+	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0)
+		return error == ETIMEDOUT ? 0 : error;
 
-	if (flags & TIMER_ABSTIME)
-		timespecsub(rqt, &rmtstart, rqt);
-
-	if ((error = itimespecfix(rqt)) != 0)
-		return error;
-
-	timo = tstohz(rqt);
 	/*
 	 * Avoid inadvertently sleeping forever
 	 */
@@ -370,8 +345,12 @@ again:
 
 		(void)clock_gettime1(clock_id, &rmtend);
 		t = (rmt != NULL) ? rmt : &t0;
-		timespecsub(&rmtend, &rmtstart, t);
-		timespecsub(rqt, t, t);
+		if (flags & TIMER_ABSTIME) {
+			timespecsub(rqt, &rmtend, t);
+		} else {
+			timespecsub(&rmtend, &rmtstart, t);
+			timespecsub(rqt, t, t);
+		}
 		if (t->tv_sec < 0)
 			timespecclear(t);
 		if (error == 0) {

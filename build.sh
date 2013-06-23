@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.255.2.2 2013/02/25 00:23:49 tls Exp $
+#	$NetBSD: build.sh,v 1.255.2.3 2013/06/23 06:26:12 tls Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -586,6 +586,7 @@ MACHINE=cobalt		MACHINE_ARCH=mips64el	ALIAS=cobalt64
 MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
+MACHINE=epoc32		MACHINE_ARCH=arm
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evbarm-el	DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evbarm-eb
 MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el
@@ -1434,7 +1435,7 @@ print_tooldir_make()
 #    1. build a new version of nbmake in a temporary directory;
 #    2. use the temporary nbmake to create the top level obj directory;
 #    3. use $(getmakevar TOOLDIR) with the temporary nbmake to
-#       get the corect value of TOOLDIR;
+#       get the correct value of TOOLDIR;
 #    4. move the temporary nbmake to ${TOOLDIR}/bin/nbmake.
 #
 # However, people don't like building nbmake unnecessarily if their
@@ -1730,7 +1731,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.255.2.2 2013/02/25 00:23:49 tls Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.255.2.3 2013/06/23 06:26:12 tls Exp $
 # with these arguments: ${_args}
 #
 
@@ -1958,6 +1959,7 @@ dorump()
 	[ "${1}" != "rumptest" ] && bomb 'build.sh rump not yet functional. ' \
 	    'did you mean "rumptest"?'
 
+	export RUMPTEST_BUILDSH=1
 	# create obj and distrib dirs
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		make_in_dir "${NETBSDSRCDIR}/etc/mtree" obj
@@ -1998,7 +2000,7 @@ dorump()
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
 				if (match($NF,
-				    "`(rumpuser_|__" quirks ")") == 0)
+				    "`(rumpuser_|rumpcomp_|__" quirks ")") == 0)
 					fails[NR] = $0
 			}
 			/cannot find -l/{fails[NR] = $0}

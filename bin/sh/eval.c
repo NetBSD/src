@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.104.2.1 2013/02/25 00:23:52 tls Exp $	*/
+/*	$NetBSD: eval.c,v 1.104.2.2 2013/06/23 06:26:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.104.2.1 2013/02/25 00:23:52 tls Exp $");
+__RCSID("$NetBSD: eval.c,v 1.104.2.2 2013/06/23 06:26:13 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -947,7 +947,7 @@ normal_fork:
 		}
 		savehandler = handler;
 		handler = &jmploc;
-		listmklocal(varlist.list, 0);
+		listmklocal(varlist.list, VEXPORT);
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
 			error("too many nested function calls");

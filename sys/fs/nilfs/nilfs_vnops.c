@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.18.2.1 2012/11/20 03:02:40 tls Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.18.2.2 2013/06/23 06:18:27 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.2 2013/06/23 06:18:27 tls Exp $");
 #endif /* not lint */
 
 
@@ -315,6 +315,11 @@ return EIO;
 /*
  * bmap functionality that translates logical block numbers to the virtual
  * block numbers to be stored on the vnode itself.
+ *
+ * Important alert!
+ *
+ * If runp is not NULL, the number of contiguous blocks __starting from the
+ * next block after the queried block__ will be returned in runp.
  */
 
 int
@@ -364,7 +369,8 @@ nilfs_trivial_bmap(void *v)
 	run = 1;
 	while ((run < blks) && (l2vmap[run] == *bnp + run))
 		run++;
-	
+	run--;	/* see comment at start of function */
+
 	/* set runlength */
 	if (runp)
 		*runp = run;
@@ -1038,7 +1044,7 @@ nilfs_check_permitted(struct vnode *vp, struct vattr *vap, mode_t mode,
 {
 
 	/* ask the generic genfs_can_access to advice on security */
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, vap->va_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    vap->va_mode, vap->va_uid, vap->va_gid, mode, cred));
 }

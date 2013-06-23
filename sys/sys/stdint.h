@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.6 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: stdint.h,v 1.6.44.1 2013/06/23 06:20:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -87,11 +87,13 @@ typedef	__uintptr_t	uintptr_t;
 
 #include <machine/int_mwgwtypes.h>
 
-#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
+#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) || \
+    (__cplusplus >= 201103L)
 #include <machine/int_limits.h>
 #endif
 
-#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
+#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS) || \
+    (__cplusplus >= 201103L)
 #include <machine/int_const.h>
 #endif
 

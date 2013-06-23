@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2011/02/18 00:42:20 jmcneill Exp $
+# $NetBSD: mi,v 1.18.10.1 2013/06/23 06:26:19 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,12 +57,16 @@
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
 ./etc/fonts/conf.avail/10-autohint.conf			-unknown-	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-rgb.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-vbgr.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-vrgb.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-unhinted.conf			-unknown-	xorg
-./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-default.conf	-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-legacy.conf		-unknown-	xorg
+./etc/fonts/conf.avail/11-lcdfilter-light.conf		-unknown-	xorg
+./etc/fonts/conf.avail/20-fix-globaladvance.conf	-unknown-	obsolete
 ./etc/fonts/conf.avail/20-unhint-small-vera.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/25-unhint-nonlatin.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/30-metric-aliases.conf		-unknown-	xorg
@@ -81,7 +85,8 @@
 ./etc/fonts/conf.avail/70-yes-bitmaps.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/80-delicious.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/90-synthetic.conf		-unknown-	xorg
-./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		-unknown-	xorg
+./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	xorg

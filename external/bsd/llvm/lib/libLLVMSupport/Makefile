@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2013/02/25 00:26:40 tls Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2013/06/23 06:28:23 tls Exp $
 
 LIB=	LLVMSupport
 
@@ -16,6 +16,7 @@ SRCS+=	APFloat.cpp \
 	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
+	Compression.cpp \
 	ConstantRange.cpp \
 	ConvertUTF.c \
 	ConvertUTFWrapper.cpp \
@@ -40,6 +41,7 @@ SRCS+=	APFloat.cpp \
 	IsNAN.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
+	MD5.cpp \
 	ManagedStatic.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
@@ -55,12 +57,14 @@ SRCS+=	APFloat.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
+	StringRefMemoryObject.cpp \
 	SystemUtils.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	Watchdog.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \
 	raw_os_ostream.cpp \
@@ -103,6 +107,7 @@ SRCS+=	Host.inc \
 	Program.inc \
 	RWMutex.inc \
 	Signals.inc \
+	Watchdog.inc \
 	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc

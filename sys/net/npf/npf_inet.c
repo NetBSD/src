@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.16.2.2 2013/02/25 00:30:03 tls Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.16.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Various procotol related helper routines.
+ * Various protocol related helper routines.
  *
  * This layer manipulates npf_cache_t structure i.e. caches requested headers
  * and stores which information was cached in the information bit field.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.2 2013/02/25 00:30:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.3 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

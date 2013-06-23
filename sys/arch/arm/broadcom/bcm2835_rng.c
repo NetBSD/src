@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.3.6.2 2013/02/25 00:28:25 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.3.6.3 2013/06/23 06:20:00 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3.6.2 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3.6.3 2013/06/23 06:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3.6.2 2013/02/25 00:28:25 tls Exp 
 #include <sys/kernel.h>
 #include <sys/bus.h>
 #include <sys/rnd.h>
+#include <sys/atomic.h>
 
 #include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
@@ -59,15 +60,15 @@ struct bcm2835rng_softc {
 	bus_space_handle_t sc_ioh;
 
 	krndsource_t sc_rnd;
-	callout_t sc_tick;
+
+	kmutex_t sc_mutex;
 
 	uint32_t sc_data[RNG_DATA_MAX];
 };
 
+static void bcmrng_get(size_t, void *);
 static int bcmrng_match(device_t, cfdata_t, void *);
 static void bcmrng_attach(device_t, device_t, void *);
-
-static void bcmrng_tick(void *);
 
 CFATTACH_DECL_NEW(bcmrng_amba, sizeof(struct bcm2835rng_softc),
     bcmrng_match, bcmrng_attach, NULL, NULL);
@@ -103,11 +104,11 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rnd_attach_source(&sc->sc_rnd, device_xname(self), RND_TYPE_RNG,
-	    RND_FLAG_NO_ESTIMATE);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
-	callout_init(&sc->sc_tick, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_tick, bcmrng_tick, sc);
+	rndsource_setcb(&sc->sc_rnd, bcmrng_get, sc);
+	rnd_attach_source(&sc->sc_rnd, device_xname(self), RND_TYPE_RNG,
+	    RND_FLAG_NO_ESTIMATE|RND_FLAG_HASCB);
 
 	/* discard initial numbers, broadcom says they are "less random" */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS, 0x40000);
@@ -116,26 +117,34 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL);
 	ctrl |= RNG_CTRL_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL, ctrl);
-
-	/* start timer */
-	bcmrng_tick(sc);
 }
 
 static void
-bcmrng_tick(void *priv)
+bcmrng_get(size_t bytes, void *priv)
 {
-	struct bcm2835rng_softc *sc = priv;
+        struct bcm2835rng_softc *sc = priv;
 	uint32_t status;
-	int cnt;
+	int need = bytes, cnt;
 
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS);
-	cnt = (status & RNG_STATUS_CNT_MASK) >> RNG_STATUS_CNT_SHIFT;
-	if (cnt > 0) {
-		bus_space_read_multi_4(sc->sc_iot, sc->sc_ioh, RNG_DATA,
-		    sc->sc_data, cnt);
-		rnd_add_data(&sc->sc_rnd, sc->sc_data,
-		    cnt * 4, cnt * 4 * NBBY);
+        mutex_spin_enter(&sc->sc_mutex);
+
+        printf("bcmrng: asked for %d bytes", (int)bytes);
+
+	if (__predict_false(need < 1)) {
+		return;
 	}
 
-	callout_schedule(&sc->sc_tick, 1);
+	while (need > 0) {
+		status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS);
+		cnt = (status & RNG_STATUS_CNT_MASK) >> RNG_STATUS_CNT_SHIFT;
+		if (cnt > 0) {
+			bus_space_read_multi_4(sc->sc_iot, sc->sc_ioh,
+					       RNG_DATA, sc->sc_data, cnt);
+			rnd_add_data(&sc->sc_rnd, sc->sc_data,
+		    		     cnt * 4, cnt * 4 * NBBY);
+		}
+
+		need -= cnt * 4;
+	}
+	mutex_spin_exit(&sc->sc_mutex);
 }

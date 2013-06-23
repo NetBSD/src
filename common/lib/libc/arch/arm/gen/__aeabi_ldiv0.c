@@ -29,9 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: __aeabi_ldiv0.c,v 1.1.4.2 2013/02/25 00:23:55 tls Exp $");
+__RCSID("$NetBSD: __aeabi_ldiv0.c,v 1.1.4.3 2013/06/23 06:26:13 tls Exp $");
 
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,8 +44,7 @@ __RCSID("$NetBSD: __aeabi_ldiv0.c,v 1.1.4.2 2013/02/25 00:23:55 tls Exp $");
 long long
 __aeabi_ldiv0(long long result)
 {
-#ifdef _KERNEL
-#else
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	siginfo_t info;
 	
 	memset(&info, 0, sizeof info);

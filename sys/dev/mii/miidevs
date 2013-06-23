@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.108.2.2 2013/02/25 00:29:17 tls Exp $
+$NetBSD: miidevs,v 1.108.2.3 2013/06/23 06:20:18 tls Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
 model BROADCOM2 BCM5481		0x000a BCM5481 1000BASE-T media interface
 model BROADCOM2 BCM5482		0x000b BCM5482 1000BASE-T media interface
 model BROADCOM2 BCM5755		0x000c BCM5755 1000BASE-T media interface
+model BROADCOM2 BCM5756		0x000d BCM5756 1000BASE-T media interface XXX
 model BROADCOM2 BCM5754		0x000e BCM5754/5787 1000BASE-T media interface
 model BROADCOM2 BCM5708S	0x0015 BCM5708S 1000/2500baseSX PHY
 model BROADCOM2 BCM5785		0x0016 BCM5785 1000BASE-T media interface
@@ -205,7 +206,10 @@ model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
 model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
 
 /* IC Plus Corp. PHYs */
+model ICPLUS IP100		0x0004 IP100 10/100 PHY
 model ICPLUS IP101		0x0005 IP101 10/100 PHY
+model ICPLUS IP1000A		0x0008 IP1000A 10/100/1000 PHY
+model ICPLUS IP1001		0x0019 IP1001 10/100/1000 PHY
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
@@ -224,6 +228,8 @@ model yyINTEL I82553		0x0035 i82553 10/100 media interface
 model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
 model INTEL I82579		0x0009 i82579 10/100/1000 media interface
+model INTEL I217		0x000a i217 10/100/1000 media interface
+model xxMARVELL I210		0x0000 I210 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY

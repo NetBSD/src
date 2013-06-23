@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.40 2011/06/30 20:09:33 wiz Exp $
+# 	$NetBSD: RC3230,v 1.40.12.1 2013/06/23 06:20:09 tls Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -74,13 +74,9 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 options 	INET6		# Internet protocols
 options 	IPSEC		# Internet protocols
-options 	IPSEC_ESP	# Internet protocols
-options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO,TPIP	# OSI networking
-#options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -143,8 +139,8 @@ pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	vnd			# disk-like interface to files
-pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated and striped disks
+#pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	strip			# radio clock
 #pseudo-device	ipfilter		# ip filter

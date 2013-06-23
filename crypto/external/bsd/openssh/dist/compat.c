@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.4 2012/05/02 02:41:08 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.79 2011/09/23 07:45:05 markus Exp $ */
+/*	$NetBSD: compat.c,v 1.4.2.1 2013/06/23 06:26:14 tls Exp $	*/
+/* $OpenBSD: compat.c,v 1.80 2012/08/17 01:30:00 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.4 2012/05/02 02:41:08 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.4.2.1 2013/06/23 06:26:14 tls Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -46,6 +46,8 @@ int datafellows = 0;
 void
 enable_compat20(void)
 {
+	if (compat20)
+		return;
 	debug("Enabling compatibility mode for protocol 2.0");
 	compat20 = 1;
 }

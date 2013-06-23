@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.38 2012/08/30 12:16:49 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.38.2.1 2013/06/23 06:20:26 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.38 2012/08/30 12:16:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.38.2.1 2013/06/23 06:20:26 tls Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -827,11 +827,8 @@ ah_input_cb(struct cryptop *crp)
 	u_int8_t nxt;
 	char *ptr;
 	int s, authsize;
-	u_int16_t dport = 0;
-	u_int16_t sport = 0;
-#ifdef IPSEC_NAT_T
-	struct m_tag * tag = NULL;
-#endif
+	u_int16_t dport;
+	u_int16_t sport;
 
 	crd = crp->crp_desc;
 
@@ -844,13 +841,8 @@ ah_input_cb(struct cryptop *crp)
 	m = (struct mbuf *) crp->crp_buf;
 
 
-#ifdef IPSEC_NAT_T
 	/* find the source port for NAT-T */
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		sport = ((u_int16_t *)(tag + 1))[0];
-		dport = ((u_int16_t *)(tag + 1))[1];
-	}
-#endif
+	nat_t_ports_get(m, &dport, &sport);
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);

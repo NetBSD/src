@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.16.2.1 2013/02/25 00:29:29 tls Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.16.2.2 2013/06/23 06:20:21 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -171,7 +171,7 @@ struct radeonfb_display {
 	uint16_t		rd_xoffset;
 	uint16_t		rd_yoffset;
 
-	int			rd_bg;		/* background */
+	uint32_t		rd_bg;		/* background */
 	bool			rd_console;
 
 	struct callout          rd_bl_lvds_co;  /* delayed lvds operation */

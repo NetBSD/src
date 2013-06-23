@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.10.2.2 2013/02/25 00:27:59 tls Exp $	*/
+/*	$NetBSD: npf.h,v 1.10.2.3 2013/06/23 06:21:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -134,6 +134,11 @@ void		_npf_nat_getinfo(nl_nat_t *, int *, u_int *, npf_addr_t *,
 void		_npf_table_foreach(nl_config_t *, nl_table_callback_t);
 
 void		_npf_debug_addif(nl_config_t *, struct ifaddrs *, u_int);
+
+/* The ALG interface is experimental */
+int 		_npf_alg_load(nl_config_t *, const char *);
+int		_npf_alg_unload(nl_config_t *, const char *);
+
 #endif
 
 __END_DECLS

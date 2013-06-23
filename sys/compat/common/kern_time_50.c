@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.22.6.2 2013/02/25 00:29:07 tls Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.22.6.3 2013/06/23 06:20:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.2 2013/02/25 00:29:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22.6.3 2013/06/23 06:20:15 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -379,7 +379,7 @@ compat_50_sys__lwp_park(struct lwp *l,
 			return error;
 	}
 
-	return lwp_park(tsp, SCARG(uap, hint));
+	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp, SCARG(uap, hint));
 }
 
 int

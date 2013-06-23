@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24.2.2 2013/02/25 00:26:36 tls Exp $
+# $NetBSD: Makefile,v 1.24.2.3 2013/06/23 06:28:22 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR=	\
 	libLLVMBitWriter \
 	libLLVMCodeGen \
 	libLLVMIR \
+	libLLVMIRReader \
 	libLLVMInstCombine \
 	libLLVMInstrumentation \
 	libLLVMipa \
@@ -19,6 +20,7 @@ SUBDIR=	\
 	libLLVMMCDisassembler \
 	libLLVMMCParser \
 	libLLVMObjCARC \
+	libLLVMObject \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
@@ -58,6 +60,7 @@ SUBDIR+= \
 	libLLVMMipsTargetInfo
 
 SUBDIR+= \
+	libLLVMPowerPCAsmParser \
 	libLLVMPowerPCAsmPrinter \
 	libLLVMPowerPCMCTargetDesc \
 	libLLVMPowerPCTargetInfo
@@ -85,7 +88,6 @@ SUBDIR+= \
 	libLLVMInterpreter \
 	libLLVMJIT \
 	libLLVMMCJIT \
-	libLLVMObject \
 	libLLVMOption \
 	libLLVMRuntimeDyld
 .endif
@@ -114,8 +116,30 @@ SUBDIR+= \
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libclangASTMatchers \
+	libclangASTMatchersDynamic \
 	libclangFormat \
 	libclangTooling
+.endif
+
+.if ${MKMCLINKER} != "no"
+SUBDIR+= \
+	libMCLinkerADT \
+	libMCLinkerCodeGen \
+	libMCLinkerCore \
+	libMCLinkerFragment \
+	libMCLinkerLD \
+	libMCLinkerMC \
+	libMCLinkerObject \
+	libMCLinkerSupport \
+	libMCLinkerTarget
+
+SUBDIR+= \
+	libMCLinkerARMCodeGen libMCLinkerARMTargetInfo
+SUBDIR+= \
+	libMCLinkerMipsCodeGen libMCLinkerMipsTargetInfo
+SUBDIR+= \
+	libMCLinkerX86CodeGen libMCLinkerX86TargetInfo
+
 .endif
 
 .include <bsd.subdir.mk>

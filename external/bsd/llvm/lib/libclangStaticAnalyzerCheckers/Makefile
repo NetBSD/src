@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2012/11/20 02:58:03 tls Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2013/06/23 06:28:25 tls Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -6,10 +6,10 @@ LIB=	clangStaticAnalyzerCheckers
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers
 
-SRCS+=	AnalyzerStatsChecker.cpp \
+SRCS+=	AllocationDiagnostics.cpp \
+	AnalyzerStatsChecker.cpp \
 	ArrayBoundChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
-	AttrNonNullChecker.cpp \
 	BasicObjCFoundationChecks.cpp \
 	BoolAssignmentChecker.cpp \
 	BuiltinFunctionChecker.cpp \
@@ -46,6 +46,7 @@ SRCS+=	AnalyzerStatsChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NoReturnFunctionChecker.cpp \
+	NonNullParamChecker.cpp \
 	ObjCAtSyncChecker.cpp \
 	ObjCContainersASTChecker.cpp \
 	ObjCContainersChecker.cpp \

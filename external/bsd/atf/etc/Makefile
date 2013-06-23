@@ -1,5 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:03 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.14.1 2013/06/23 06:26:22 tls Exp $
 
+.include <bsd.init.mk>
+
+.if !(${MKKYUA} != "no")
 SUBDIR= atf
+.endif
 
 .include <bsd.subdir.mk>

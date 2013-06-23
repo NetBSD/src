@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.12.2.2 2013/02/25 00:30:02 tls Exp $	*/
+/*	$NetBSD: npf.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12.2.2 2013/02/25 00:30:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,6 +88,7 @@ npf_init(void)
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf_sysctl = NULL;
 
+	npf_worker_sysinit();
 	npf_tableset_sysinit();
 	npf_session_sysinit();
 	npf_nat_sysinit();
@@ -128,6 +129,9 @@ npf_fini(void)
 	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
+
+	/* Note: worker is the last. */
+	npf_worker_sysfini();
 
 	if (npf_sysctl) {
 		sysctl_teardown(&npf_sysctl);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.219.12.1 2012/11/20 03:01:56 tls Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.219.12.2 2013/06/23 06:20:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.219.12.1 2012/11/20 03:01:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.219.12.2 2013/06/23 06:20:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1378,4 +1378,63 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
 
         return 0;
 }
+
+#ifndef __alpha__
+int
+linux_sys_utimes(struct lwp *l, const struct linux_sys_utimes_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const struct linux_timeval) *times;
+	} */
+	struct linux_timeval ltv[2];
+	struct timeval tv[2];
+	struct timeval *tptr = NULL;
+	int error;
+
+	if (SCARG(uap, times)) {
+		if ((error = copyin(SCARG(uap, times), &ltv, sizeof(ltv))))
+			return error;
+
+		tv[0].tv_sec = ltv[0].tv_sec;
+		tv[0].tv_usec = ltv[0].tv_usec;
+		tv[1].tv_sec = ltv[1].tv_sec;
+		tv[1].tv_usec = ltv[1].tv_usec;
+
+		tptr = tv;
+	}
+
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+	    tptr, UIO_SYSSPACE);
+}
+
+int linux_sys_lutimes(struct lwp *, const struct linux_sys_utimes_args *, register_t *);
+int
+linux_sys_lutimes(struct lwp *l, const struct linux_sys_utimes_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const struct linux_timeval) *times;
+	} */
+	struct linux_timeval ltv[2];
+	struct timeval tv[2];
+	struct timeval *tptr = NULL;
+	int error;
+
+	if (SCARG(uap, times)) {
+		if ((error = copyin(SCARG(uap, times), &ltv, sizeof(ltv))))
+			return error;
+
+		tv[0].tv_sec = ltv[0].tv_sec;
+		tv[0].tv_usec = ltv[0].tv_usec;
+		tv[1].tv_sec = ltv[1].tv_sec;
+		tv[1].tv_usec = ltv[1].tv_usec;
+
+		tptr = tv;
+	}
+
+	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
+	    tptr, UIO_SYSSPACE);
+}
+#endif /* __alpha__ */
 #endif /* !COMPAT_LINUX32 */

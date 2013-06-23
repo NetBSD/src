@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.210.2.1 2013/02/25 00:30:19 tls Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.210.2.2 2013/06/23 06:18:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.210.2.1 2013/02/25 00:30:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.210.2.2 2013/06/23 06:18:40 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,8 +124,8 @@ static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
  * A virgin directory (no blushing please).
  */
 static const struct dirtemplate mastertemplate = {
-	0,	12,		DT_DIR,	1,	".",
-	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+	0,	12,			DT_DIR,	1,	".",
+	0,	UFS_DIRBLKSIZ - 12,	DT_DIR,	2,	".."
 };
 
 /*
@@ -345,7 +345,7 @@ ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
@@ -503,7 +503,8 @@ ufs_setattr(void *v)
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
 
-		if ((vap->va_flags & UF_SETTABLE) != vap->va_flags) {
+		if ((vap->va_flags & SF_SETTABLE) !=
+		    (ip->i_flags & SF_SETTABLE)) {
 			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
 			changing_sysflags = true;
 		}
@@ -1266,6 +1267,13 @@ ufs_symlink(void *v)
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);
+	/*
+	 * This test is off by one. um_maxsymlinklen contains the
+	 * number of bytes available, and we aren't storing a \0, so
+	 * the test should properly be <=. However, it cannot be
+	 * changed as this would break compatibility with existing fs
+	 * images -- see the way ufs_readlink() works.
+	 */
 	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
@@ -1451,6 +1459,12 @@ ufs_readlink(void *v)
 	struct inode	*ip = VTOI(vp);
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int		isize;
+
+	/*
+	 * The test against um_maxsymlinklen is off by one; it should
+	 * theoretically be <=, not <. However, it cannot be changed
+	 * as that would break compatibility with existing fs images.
+	 */
 
 	isize = ip->i_size;
 	if (isize < ump->um_maxsymlinklen ||

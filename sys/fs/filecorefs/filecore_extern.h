@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.20 2011/05/23 22:00:30 rmind Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.20.14.1 2013/06/23 06:18:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -96,10 +96,10 @@ struct filecore_mnt {
 
 #define VFSTOFILECORE(mp)	((struct filecore_mnt *)((mp)->mnt_data))
 
-#define blkoff(fcp, loc)	((loc) & ((fcp)->blksize-1))
+#define filecore_blkoff(fcp, loc)	((loc) & ((fcp)->blksize-1))
 #define lblktosize(fcp, blk)	((blk) << (fcp)->log2bsize)
 #define lblkno(fcp, loc)	((loc) >> (fcp)->log2bsize)
-#define blksize(fcp, ip, lbn)	((fcp)->blksize)
+#define filecore_blksize(fcp, ip, lbn)	((fcp)->blksize)
 
 extern struct pool filecore_node_pool;
 

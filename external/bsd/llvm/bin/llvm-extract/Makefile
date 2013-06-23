@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.12.2 2013/02/25 00:26:33 tls Exp $
+#	$NetBSD: Makefile,v 1.1.12.3 2013/06/23 06:28:21 tls Exp $
 
 PROG_CXX=	llvm-extract
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	llvm-extract.cpp
 
 LLVM_LIBS+= \
+	IRReader \
 	AsmParser \
 	BitReader \
 	BitWriter \

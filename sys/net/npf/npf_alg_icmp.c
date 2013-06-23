@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.2 2013/02/25 00:30:02 tls Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.2 2013/02/25 00:30:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
-#include <sys/pool.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -78,17 +77,14 @@ static npf_session_t *npfa_icmp_session(npf_cache_t *, nbuf_t *, int);
 static int
 npf_alg_icmp_init(void)
 {
-
-	alg_icmp = npf_alg_register(npfa_icmp_match,
+	alg_icmp = npf_alg_register("icmp", npfa_icmp_match,
 	    npfa_icmp_nat, npfa_icmp_session);
-	KASSERT(alg_icmp != NULL);
-	return 0;
+	return alg_icmp ? 0 : ENOMEM;
 }
 
 static int
 npf_alg_icmp_fini(void)
 {
-
 	KASSERT(alg_icmp != NULL);
 	return npf_alg_unregister(alg_icmp);
 }
@@ -96,7 +92,6 @@ npf_alg_icmp_fini(void)
 static int
 npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 {
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return npf_alg_icmp_init();

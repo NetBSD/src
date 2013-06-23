@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.15 2011/05/27 18:00:21 drochner Exp $	*/
+/*	$NetBSD: setkey.c,v 1.15.10.1 2013/06/23 06:26:14 tls Exp $	*/
 
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
@@ -165,8 +165,10 @@ main(argc, argv)
 			break;
 		case 'f':
 			f_mode = MODE_SCRIPT;
-			if ((fp = fopen(optarg, "r")) == NULL) {
-				err(1, "fopen");
+			if (strcmp(optarg, "-") == 0)
+				fp = stdin;
+			else if ((fp = fopen(optarg, "r")) == NULL) {
+				err(1, "Can't open `%s'", optarg);
 				/*NOTREACHED*/
 			}
 			break;

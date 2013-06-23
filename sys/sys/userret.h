@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.25 2012/02/19 21:07:00 rmind Exp $	*/
+/*	$NetBSD: userret.h,v 1.25.2.1 2013/06/23 06:20:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 #define	_SYS_USERRET_H_
 
 #include <sys/lockdebug.h>
-#include <sys/userret.h>
 #include <sys/intr.h>
 
 /*

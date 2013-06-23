@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.1.2.1 2013/02/25 00:30:05 tls Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.1.2.2 2013/06/23 06:20:25 tls Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1.2.1 2013/02/25 00:30:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1.2.2 2013/06/23 06:20:25 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -86,13 +86,20 @@ static bool portalgo_debug = true;
 #define DPRINTF while (/*CONSTCOND*/0) printf
 #endif
 
+#ifndef PORTALGO_INET4_DEFAULT
+#define PORTALGO_INET4_DEFAULT PORTALGO_BSD
+#endif
+#ifndef PORTALGO_INET6_DEFAULT
+#define PORTALGO_INET6_DEFAULT PORTALGO_BSD
+#endif
+
 typedef __BITMAP_TYPE(, uint32_t, 0x10000) bitmap;
 #ifdef INET
-static int inet4_portalgo = PORTALGO_BSD;
+static int inet4_portalgo = PORTALGO_INET4_DEFAULT;
 static bitmap inet4_reserve;
 #endif
 #ifdef INET6
-static int inet6_portalgo = PORTALGO_BSD;
+static int inet6_portalgo = PORTALGO_INET6_DEFAULT;
 static bitmap inet6_reserve;
 #endif
 

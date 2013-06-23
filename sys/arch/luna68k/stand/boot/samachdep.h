@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.9.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.9.6.3 2013/06/23 06:20:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -74,7 +74,6 @@ void bmdclear(void);
 
 /* boot.c */
 extern int howto;
-extern char default_file[];
 int how_to_boot(int, char **);
 int boot(int, char **);
 int bootnetbsd(char *);
@@ -116,6 +115,7 @@ extern int cpuspeed;
 extern int hz;
 extern int nplane;
 extern int machtype;
+extern char default_file[];
 
 /* kbd.c */
 int kbd_decode(u_char);

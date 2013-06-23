@@ -1,4 +1,4 @@
-/* $NetBSD: pckbdreg.h,v 1.2 2005/12/11 12:23:22 christos Exp $ */
+/* $NetBSD: pckbdreg.h,v 1.2.120.1 2013/06/23 06:20:21 tls Exp $ */
 
 /*
  * Keyboard definitions
@@ -19,7 +19,9 @@
 #define	KBR_EXTENDED0	0xE0	/* extended key sequence */
 #define	KBR_EXTENDED1	0xE1	/* extended key sequence */
 #define	KBR_RESEND	0xFE	/* needs resend of command */
+#define	KBR_BAT_DONE	0xAA
 #define	KBR_ACK		0xFA	/* received a valid command */
+#define	KBR_BAT_FAIL	0xFC
 #define	KBR_OVERRUN	0x00	/* flooded */
 #define	KBR_FAILURE	0xFD	/* diagnostic failure */
 #define	KBR_BREAK	0xF0	/* break code prefix - sent on key release */

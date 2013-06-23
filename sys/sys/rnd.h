@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.33.2.1 2013/02/25 00:30:12 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.33.2.2 2013/06/23 06:20:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef struct {
 #define	RND_FLAG_NO_ESTIMATE	0x00000100	/* don't estimate entropy */
 #define	RND_FLAG_NO_COLLECT	0x00000200	/* don't collect entropy */
 #define RND_FLAG_FAST		0x00000400	/* process samples in bulk */
+#define RND_FLAG_HASCB		0x00000800	/* has get callback */
 
 #define	RND_TYPE_UNKNOWN	0	/* unknown source */
 #define	RND_TYPE_DISK		1	/* source is physical disk */
@@ -127,7 +128,16 @@ typedef struct krndsource {
         void            *state;         /* state information */
         size_t          test_cnt;       /* how much test data accumulated? */
         rngtest_t	*test;          /* test data for RNG type sources */
+	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
+	void		*getarg;	/* argument to get-function */
 } krndsource_t;
+
+static inline void
+rndsource_setcb(struct krndsource *const rs, void *const cb, void *const arg)
+{
+	rs->get = cb;
+	rs->getarg = arg;
+}
 
 enum rsink_st {
 	RSTATE_IDLE = 0,
@@ -166,6 +176,7 @@ uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
+void		rnd_init_softint(void);
 void		_rnd_add_uint32(krndsource_t *, uint32_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
@@ -186,6 +197,7 @@ rnd_add_uint32(krndsource_t *kr, uint32_t val)
 	}
 }
 
+extern int	rnd_empty;
 extern int	rnd_full;
 extern int	rnd_filled;
 extern int	rnd_initial_entropy;

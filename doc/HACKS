@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.123.2.2 2013/02/25 00:24:48 tls Exp $
+# $NetBSD: HACKS,v 1.123.2.3 2013/06/23 06:26:21 tls Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -485,10 +485,10 @@ port	vax
 	kcah
 
 	hack	xorg warnings
-	cdat	30 July 2008
+	cdat	30 July 2008, 3 June, 2013
 	who	mrg
 	file	external/mit/xorg/lib/libSM/Makefile : 1.2
-		external/mit/xorg/lib/libX11/Makefile.libx11 : 1.2
+		external/mit/xorg/lib/libX11/Makefile.libx11 : 1.10
 		external/mit/xorg/lib/libXext/Makefile : 1.2
 		external/mit/xorg/lib/libXfont/Makefile : 1.2
 	descr
@@ -778,4 +778,26 @@ port	ia64
 		{standard input}:22978: Warning: This is the location of the conflicting usage
 	kcah
 
+port	x68k
 
+	hack	compiler error with gcc 4.5.x
+	cdate	Fri May 24 13:23:01 EDT 2013
+	who	christos
+	file	src/external/gpl3/gcc/usr.bin/bakend/Makefile: 1.17
+		xsrc/external/mit/xorg/lib/libGLU/Makefile: 1.11
+		src/x11/lib/GLU/Makefile: 1.9
+	descr
+		workaround for:
+		internal compiler error: in cselib_record_set, at cselib.c:1999
+	kcah
+
+hack	fallback to /usr/bin/clang-cpp in rpcgen
+cdate	Wed Jun  5 15:49:27 CEST 2013
+who	joerg
+file	src/usr.bin/rpcgen/rpc_main.c
+descr
+	It is undecided which compiler owns /usr/bin/cpp whether it should
+	exist in a MKGCC=no world. To allow rpcgen to work out-of-the-box,
+	if either gcc or clang is installed, use /usr/bin/clang-cpp as fallback.
+	This applies only if RPCGEN_CPP is not set and /usr/bin/cpp is not executable.
+kcah

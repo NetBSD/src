@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/08/10 12:20:12 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2013/06/23 06:26:14 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,7 @@ kexecdhc.c \
 kexgex.c \
 kexgexc.c \
 key.c \
+krl.c \
 log.c \
 mac.c \
 match.c \

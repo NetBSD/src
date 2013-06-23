@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.26.2.2 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.26.2.3 2013/06/23 06:18:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.2 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26.2.3 2013/06/23 06:18:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ efs_check_permitted(struct vnode *vp, struct efs_inode *eip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, eip->ei_mode), vp, NULL, genfs_can_access(vp->v_type,
 	    eip->ei_mode, eip->ei_uid, eip->ei_gid, mode, cred));
 }

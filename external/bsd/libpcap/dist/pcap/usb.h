@@ -1,3 +1,5 @@
+/*	$NetBSD: usb.h,v 1.1.1.2.12.1 2013/06/23 06:28:20 tls Exp $	*/
+
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.
@@ -30,7 +32,7 @@
  * Basic USB data struct
  * By Paolo Abeni <paolo.abeni@email.it>
  *
- * @(#) Header: /tcpdump/master/libpcap/pcap/usb.h,v 1.9 2008-12-23 20:13:29 guy Exp
+ * @(#) Header: /tcpdump/master/libpcap/pcap/usb.h,v 1.9 2008-12-23 20:13:29 guy Exp 
  */
  
 #ifndef _PCAP_USB_STRUCTS_H__

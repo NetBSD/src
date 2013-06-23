@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwn.c,v 1.62 2012/01/30 19:41:20 drochner Exp $	*/
-/*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.62.6.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.62 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.62.6.1 2013/06/23 06:20:18 tls Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -108,10 +108,10 @@ static const struct ieee80211_rateset iwn_rateset_11a =
 	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static const struct ieee80211_rateset iwn_rateset_11b =
-	{ 4, { 2, 4, 11, 22 } };	
+	{ 4, { 2, 4, 11, 22 } };
 
 static const struct ieee80211_rateset iwn_rateset_11g =
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };	
+	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 static int	iwn_match(device_t , struct cfdata *, void *);
 static void	iwn_attach(device_t , device_t , void *);
@@ -413,7 +413,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	if (error != 0) {
 		aprint_error(": could not attach device\n");
 		return;
-	}		
+	}	
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error(": hardware not ready\n");
@@ -2726,7 +2726,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	hdrlen = ieee80211_anyhdrsize(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	hdrlen2 = (IEEE80211_QOS_HAS_SEQ(wh)) ?
+	hdrlen2 = (ieee80211_has_qos(wh)) ?
 	    sizeof (struct ieee80211_qosframe) :
 	    sizeof (struct ieee80211_frame);
 
@@ -2736,7 +2736,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	/* XXX OpenBSD sets a different tid when using QOS */
 	tid = 0;
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
+	if (ieee80211_has_qos(wh)) {
 		cap = &ic->ic_wme.wme_chanParams;
 		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
 	}
@@ -2814,7 +2814,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
 		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
-#endif          
+#endif         
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */
@@ -4067,8 +4067,8 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 		cmd.flags |= htole16(IWN_PS_FAST_PD);
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
-	if (!(reg & PCI_PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
+	    sc->sc_cap_off + PCIE_LCSR);
+	if (!(reg & PCIE_LCSR_ASPM_L0S))	/* L0s Entry disabled. */
 		cmd.flags |= htole16(IWN_PS_PCI_PMGT);
 	cmd.rxtimeout = htole32(pmgt->rxtimeout * 1024);
 	cmd.txtimeout = htole32(pmgt->txtimeout * 1024);
@@ -5475,9 +5475,9 @@ iwn_apm_init(struct iwn_softc *sc)
 
 	/* Retrieve PCIe Active State Power Management (ASPM). */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-	    sc->sc_cap_off + PCI_PCIE_LCSR);
+	    sc->sc_cap_off + PCIE_LCSR);
 	/* Workaround for HW instability in PCIe L0->L0s->L1 transition. */
-	if (reg & PCI_PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
+	if (reg & PCIE_LCSR_ASPM_L1)	/* L1 Entry enabled. */
 		IWN_SETBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
 	else
 		IWN_CLRBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);

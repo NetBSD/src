@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.7.6.2 2013/02/25 00:29:35 tls Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.7.6.3 2013/06/23 06:20:22 tls Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -56,7 +56,7 @@
  * go through the packet data and decode the headers prior to sending.
  * On Linux they generally provide cues to the location of the csum and the
  * area to calculate it over, on FreeBSD we seem to have to do it all ourselves,
- * hence this is not as optimal and therefore h/w tX checksum is currently not
+ * hence this is not as optimal and therefore h/w TX checksum is currently not
  * implemented.
  */
 
@@ -574,7 +574,7 @@ smsc_init(struct ifnet *ifp)
 
 	/* Load the multicast filter. */
 	smsc_setmulti(sc);
-	
+
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[SMSC_ENDPT_RX],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[SMSC_ENDPT_RX]);
@@ -798,7 +798,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	 * There is a so called 'turbo mode' that the linux driver supports, it
 	 * seems to allow you to jam multiple frames per Rx transaction.
 	 * By default this driver supports that and therefore allows multiple
-	 * frames per URB.
+	 * frames per USB transfer.
 	 *
 	 * The xfer buffer size needs to reflect this as well, therefore based
 	 * on the calculations in the Linux driver the RX bufsize is set to
@@ -832,7 +832,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	}
 
 	/*
-	 * The following setings are used for 'turbo mode', a.k.a multiple
+	 * The following settings are used for 'turbo mode', a.k.a multiple
 	 * frames per Rx transaction (again info taken form Linux driver).
 	 */
 #ifdef SMSC_TURBO
@@ -1044,7 +1044,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = smsc_stop;
 
         sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
-	
+
 	/* Setup some of the basics */
 	sc->sc_phyno = 1;
 
@@ -1308,7 +1308,7 @@ smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		m->m_pkthdr.rcvif = ifp;
 
 		pktlen -= 2;	// JDM
-		
+
 		m->m_pkthdr.len = m->m_len = pktlen;
 #define ETHER_ALIGN 2
 		m_adj(m, ETHER_ALIGN);

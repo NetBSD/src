@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.43 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.43.14.1 2013/06/23 06:20:21 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -260,6 +260,7 @@ struct RF_Raid_s {
 	RF_DiskId_t **diskids;
 
 	int     raidid;
+	void   *softc;
 	RF_AccTotals_t acc_totals;
 	int     keep_acc_totals;
 

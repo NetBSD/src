@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.150.2.1 2013/02/25 00:30:05 tls Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.1 2013/02/25 00:30:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.1 2013/02/25 00:30:05 tls Exp
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
@@ -184,7 +184,7 @@ ip6_output(
 	struct route *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	struct secpolicy *sp = NULL;
 	int s;
 #endif
@@ -245,7 +245,7 @@ ip6_output(
 	/* NOTE: we don't add AH/ESP length here. do that later. */
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	/* Check the security policy (SP) for the packet */
     
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
@@ -260,7 +260,7 @@ ip6_output(
 		error = 0;
 	goto freehdrs;
     }
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 	if (needipsec &&
@@ -467,7 +467,7 @@ ip6_output(
 			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (needipsec) {
 		s = splsoftnet();
 		error = ipsec6_process_packet(m,sp->req);
@@ -483,7 +483,7 @@ ip6_output(
 		splx(s);
 		goto done;
 	}
-#endif /* FAST_IPSEC */    
+#endif /* IPSEC */    
 
 
 
@@ -905,6 +905,11 @@ ip6_output(
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
+			/*
+			 * ip6f must be valid if error is 0.  But how
+			 * can a compiler be expected to infer this?
+			 */
+			ip6f = NULL;
 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
 			if (error) {
 				IP6_STATINC(IP6_STAT_ODROPPED);
@@ -971,10 +976,10 @@ sendorfree:
 done:
 	rtcache_free(&ip6route);
 
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
-#endif /* FAST_IPSEC */
+#endif /* IPSEC */
 
 
 	return (error);
@@ -1647,7 +1652,7 @@ else 					\
 			    (struct inpcb_hdr *)in6p, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
 			error = ipsec6_set_policy(in6p, optname,
 			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
@@ -1836,7 +1841,7 @@ else 					\
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if defined(FAST_IPSEC)
+#if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
 		    {
 			struct mbuf *m = NULL;

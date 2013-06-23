@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_arith.h,v 1.5 2005/12/24 22:45:35 perry Exp $ */
+/*	$NetBSD: fpu_arith.h,v 1.5.122.1 2013/06/23 06:20:08 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #ifndef FPE_USE_ASM
 
 /* set up for extended-precision arithemtic */
-#define	FPU_DECL_CARRY quad_t fpu_carry, fpu_tmp;
+#define	FPU_DECL_CARRY uint64_t fpu_carry, fpu_tmp;
 
 /*
  * We have three kinds of add:
@@ -79,28 +79,28 @@
 	(r) = (x) + (y) + (!!fpu_carry)
 #define	FPU_ADDS(r, x, y) \
 	{ \
-		fpu_tmp = (quad_t)(x) + (quad_t)(y); \
-		(r) = (u_int)fpu_tmp; \
+		fpu_tmp = (uint64_t)(x) + (uint64_t)(y); \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_ADDCS(r, x, y) \
 	{ \
-		fpu_tmp = (quad_t)(x) + (quad_t)(y) + (!!fpu_carry); \
-		(r) = (u_int)fpu_tmp; \
+		fpu_tmp = (uint64_t)(x) + (uint64_t)(y) + (!!fpu_carry); \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_SUBC(r, x, y) \
 	(r) = (x) - (y) - (!!fpu_carry)
 #define	FPU_SUBS(r, x, y) \
 	{ \
-		fpu_tmp = (quad_t)(x) - (quad_t)(y); \
-		(r) = (u_int)fpu_tmp; \
+		fpu_tmp = (uint64_t)(x) - (uint64_t)(y); \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 #define	FPU_SUBCS(r, x, y) \
 	{ \
-		fpu_tmp = (quad_t)(x) - (quad_t)(y) - (!!fpu_carry); \
-		(r) = (u_int)fpu_tmp; \
+		fpu_tmp = (uint64_t)(x) - (uint64_t)(y) - (!!fpu_carry); \
+		(r) = (uint32_t)fpu_tmp; \
 		fpu_carry = ((fpu_tmp & 0xffffffff00000000LL) != 0); \
 	}
 
@@ -110,7 +110,7 @@
 #else
 
 /* set up for extended-precision arithemtic */
-#define	FPU_DECL_CARRY register int fpu_tmp;
+#define	FPU_DECL_CARRY int fpu_tmp;
 
 /*
  * We have three kinds of add:

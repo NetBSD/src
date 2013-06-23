@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.31.2.1 2013/02/25 00:24:43 tls Exp $
+#	$NetBSD: shl.mi,v 1.31.2.2 2013/06/23 06:26:19 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,6 +64,7 @@
 ./usr/X11R7/lib/libXcomposite_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXcursor_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXdamage_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libXdmGreet_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXdmcp_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXevie_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXext_pic.a				-unknown-	xorg

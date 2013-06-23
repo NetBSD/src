@@ -29,13 +29,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.1 2012/08/05 06:33:51 matt Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.1.2.1 2013/06/23 06:26:13 tls Exp $")
 
 ENTRY(__aeabi_ldivmod)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+	orrs	ip, r2, r3
+	beq	.Ldivbyzero
+#endif
+
 	push	{r4-r5, sl, lr}
 #define	NEG	r5
 	mov	NEG, #0
-	
+
 #ifdef __ARMEB__
 #define	ALO	r1	/* incoming numerator, outgoing quotient */
 #define	AHI	r0	/* incoming numerator, outgoing quotient */
@@ -64,9 +69,11 @@ ENTRY(__aeabi_ldivmod)
 	 * Arguments are setup, allocate some stack for the remainder
 	 * and call __qdivrem for the heavy lifting.
 	 */
-	sub	sp, sp, #8
-	mov	r4, sp		/* pointer to remainder */
+	sub	sp, sp, #16
+	add	ip, sp, #8
+	str	ip, [sp]
 	bl	PLT_SYM(__qdivrem)
+	add	sp, sp, #8
 
 	teq	NEG, #0		/* any signs to flip? */
 	/*
@@ -78,9 +85,9 @@ ENTRY(__aeabi_ldivmod)
 
 	pop	{r2, r3}
 	tst	NEG, #2		/* does remainder need to be negative? */
-	bleq	.Lnegate_b
+	blne	.Lnegate_b
 	tst	NEG, #1		/* does quotient need to be negative? */
-	bleq	.Lnegate_a
+	blne	.Lnegate_a
 	pop	{r4-r5, sl, lr}
 	RET
 
@@ -101,7 +108,7 @@ ENTRY(__aeabi_ldivmod)
 	 * them to see if the numerator has the same value.  We
 	 * don't have to worry about sign.
 	 */
-	teq	BHI, AHI 
+	teq	BHI, AHI
 	teqeq	BLO, ALO
 	bne	1f
 
@@ -125,4 +132,16 @@ ENTRY(__aeabi_ldivmod)
 	pop	{r4-r5, sl, lr}
 	RET
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+.Ldivbyzero:
+	push	{r0-r1, ip, lr}
+	cmp	AHI, #0
+	mvnge	ALO, #0
+	movge	AHI, ALO, lsr #1
+	movlt	ALO, #0
+	andlt	AHI, AHI, #0x800000000
+	bl	PLT_SYM(__aeabi_ldiv0)
+	pop	{r2-r3, ip, lr}
+	RET
+#endif
 END(__aeabi_ldivmod)

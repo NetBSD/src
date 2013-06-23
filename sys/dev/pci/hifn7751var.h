@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.8.8.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.8.8.2 2013/06/23 06:20:18 tls Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -169,8 +169,8 @@ struct hifn_softc {
 	struct callout		sc_rngto;	/* rng timeout */
 	struct callout		sc_tickto;	/* led-clear timeout */
 	krndsource_t	sc_rnd_source;
-	int			sc_rngfirst;
 	int			sc_rnghz;
+	int			sc_rng_need;	/* how many bytes wanted */
 	int			sc_c_busy;	/* command ring busy */
 	int			sc_s_busy;	/* source data ring busy */
 	int			sc_d_busy;	/* destination data ring busy */
@@ -184,6 +184,7 @@ struct hifn_softc {
 	pcitag_t sc_pci_tag;
 	bus_size_t sc_waw_lastreg;
 	int sc_waw_lastgroup;
+	kmutex_t		sc_mtx;
 };
 
 #define WRITE_REG_0(sc,reg,val)		hifn_write_4((sc), 0, (reg), (val))

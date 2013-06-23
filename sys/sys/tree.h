@@ -1,5 +1,5 @@
-/*	$NetBSD: tree.h,v 1.16 2008/03/21 13:07:15 ad Exp $	*/
-/*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
+/*	$NetBSD: tree.h,v 1.16.48.1 2013/06/23 06:20:29 tls Exp $	*/
+/*	$OpenBSD: tree.h,v 1.13 2011/07/09 00:19:45 pirofti Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -330,7 +330,7 @@ struct {								\
 } while (/*CONSTCOND*/ 0)
 
 #ifndef RB_AUGMENT
-#define RB_AUGMENT(x) (void)(x)
+#define RB_AUGMENT(x)	do {} while (/*CONSTCOND*/ 0)
 #endif
 
 #define RB_ROTATE_LEFT(head, elm, tmp, field) do {			\
@@ -733,9 +733,29 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	     (x) != NULL;						\
 	     (x) = name##_RB_NEXT(x))
 
+#define RB_FOREACH_FROM(x, name, y)					\
+	for ((x) = (y);							\
+	    ((x) != NULL) && ((y) = name##_RB_NEXT(x), (x) != NULL);	\
+	     (x) = (y))
+
+#define RB_FOREACH_SAFE(x, name, head, y)				\
+	for ((x) = RB_MIN(name, head);					\
+	    ((x) != NULL) && ((y) = name##_RB_NEXT(x), (x) != NULL);	\
+	     (x) = (y))
+
 #define RB_FOREACH_REVERSE(x, name, head)				\
 	for ((x) = RB_MAX(name, head);					\
 	     (x) != NULL;						\
 	     (x) = name##_RB_PREV(x))
+
+#define RB_FOREACH_REVERSE_FROM(x, name, y)				\
+	for ((x) = (y);							\
+	    ((x) != NULL) && ((y) = name##_RB_PREV(x), (x) != NULL);	\
+	     (x) = (y))
+
+#define RB_FOREACH_REVERSE_SAFE(x, name, head, y)			\
+	for ((x) = RB_MAX(name, head);					\
+	    ((x) != NULL) && ((y) = name##_RB_PREV(x), (x) != NULL);	\
+	     (x) = (y))
 
 #endif	/* _SYS_TREE_H_ */

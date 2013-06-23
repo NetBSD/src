@@ -1,4 +1,4 @@
-/* $NetBSD: mmeye.h,v 1.5 2011/02/19 10:46:28 kiyohara Exp $ */
+/* $NetBSD: mmeye.h,v 1.5.14.1 2013/06/23 06:20:09 tls Exp $ */
 
 /*
  * Brains mmEye specific register definition
@@ -29,7 +29,7 @@ void mmeye_intr_disestablish(void *);
 #define   WDT_DISCMD	0x0f	/* XXX: Oops, no effect... */
 #define   WDT_ENACMD	0xf0
 
-callout_t epc_wdtc;
+extern callout_t epc_wdtc;
 void epc_watchdog_timer_reset(void *);
 #endif
 

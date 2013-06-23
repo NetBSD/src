@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.64.2.2 2012/12/02 05:46:40 tls Exp $	*/
+/*	$NetBSD: dk.c,v 1.64.2.3 2013/06/23 06:20:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.2 2012/12/02 05:46:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.3 2013/06/23 06:20:16 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -230,35 +230,18 @@ dkwedge_array_expand(void)
 static void
 dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
 {
-	prop_dictionary_t disk_info, odisk_info, geom;
+	struct disk_geom *dg = &disk->dk_geom;
 
-	disk_info = prop_dictionary_create();
+	memset(dg, 0, sizeof(*dg));
 
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
+	dg->dg_secperunit = dkw->dkw_size >> disk->dk_blkshift;
+	dg->dg_secsize = DEV_BSIZE << disk->dk_blkshift;
+	dg->dg_nsectors = 32;
+	dg->dg_ntracks = 64;
+	/* XXX: why is that dkw->dkw_size instead of secperunit?!?! */
+	dg->dg_ncylinders = dkw->dkw_size / (dg->dg_nsectors * dg->dg_ntracks);
 
-	geom = prop_dictionary_create();
-
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    dkw->dkw_size >> disk->dk_blkshift);
-
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE << disk->dk_blkshift);
-
-	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-
-	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dkw->dkw_size / 2048);
-
-	prop_dictionary_set(disk_info, "geometry", geom);
-	prop_object_release(geom);
-
-	odisk_info = disk->dk_info;
-
-	disk->dk_info = disk_info;
-
-	if (odisk_info != NULL)
-		prop_object_release(odisk_info);
+	disk_set_info(NULL, disk, "ESDI");
 }
 
 /*

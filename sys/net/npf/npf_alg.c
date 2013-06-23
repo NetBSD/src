@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_alg.c,v 1.5.2.1 2013/02/25 00:30:02 tls Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.5.2.2 2013/06/23 06:20:25 tls Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,11 +30,11 @@
  */
 
 /*
- * NPF interface for application level gateways (ALGs).
+ * NPF interface for the Application Level Gateways (ALGs).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.5.2.1 2013/02/25 00:30:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.5.2.2 2013/06/23 06:20:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,59 +43,129 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.5.2.1 2013/02/25 00:30:02 tls Exp $");
 #include <sys/pserialize.h>
 #include <sys/mutex.h>
 #include <net/pfil.h>
+#include <sys/module.h>
 
 #include "npf_impl.h"
 
-/* NAT ALG structure for registration. */
+/*
+ * NAT ALG description structure.  For more compact use of cache,
+ * the functions are separated in their own arrays.  The number of
+ * ALGs is expected to be very small.
+ */
+
 struct npf_alg {
-	LIST_ENTRY(npf_alg)	na_entry;
-	npf_alg_t *		na_bptr;
-	npf_alg_func_t		na_match_func;
-	npf_alg_func_t		na_tr_func;
-	npf_alg_sfunc_t		na_se_func;
+	const char *	na_name;
+	u_int		na_slot;
 };
 
-static LIST_HEAD(, npf_alg)	nat_alg_list	__cacheline_aligned;
-static kmutex_t			nat_alg_lock	__cacheline_aligned;
-static pserialize_t		nat_alg_psz	__cacheline_aligned;
+#define	NPF_MAX_ALGS	8
+
+/* List of ALGs and the count. */
+static pserialize_t	alg_psz			__cacheline_aligned;
+static npf_alg_t	alg_list[NPF_MAX_ALGS]	__read_mostly;
+static u_int		alg_count		__read_mostly;
+
+/* Session, matching and translation functions. */
+static npf_alg_sfunc_t	alg_sfunc[NPF_MAX_ALGS]	__read_mostly;
+static npf_alg_func_t	alg_mfunc[NPF_MAX_ALGS]	__read_mostly;
+static npf_alg_func_t	alg_tfunc[NPF_MAX_ALGS]	__read_mostly;
+
+static const char	alg_prefix[] = "npf_alg_";
+#define	NPF_EXT_PREFLEN	(sizeof(alg_prefix) - 1)
 
 void
 npf_alg_sysinit(void)
 {
+	alg_psz = pserialize_create();
+	memset(&alg_list, 0, sizeof(alg_list));
+	alg_count = 0;
 
-	mutex_init(&nat_alg_lock, MUTEX_DEFAULT, IPL_NONE);
-	nat_alg_psz = pserialize_create();
-	LIST_INIT(&nat_alg_list);
+	memset(&alg_mfunc, 0, sizeof(alg_mfunc));
+	memset(&alg_tfunc, 0, sizeof(alg_tfunc));
+	memset(&alg_sfunc, 0, sizeof(alg_sfunc));
 }
 
 void
 npf_alg_sysfini(void)
 {
+	pserialize_destroy(alg_psz);
+}
 
-	KASSERT(LIST_EMPTY(&nat_alg_list));
-	pserialize_destroy(nat_alg_psz);
-	mutex_destroy(&nat_alg_lock);
+static npf_alg_t *
+npf_alg_lookup(const char *name)
+{
+	KASSERT(npf_config_locked_p());
+
+	for (u_int i = 0; i < alg_count; i++) {
+		npf_alg_t *alg = &alg_list[i];
+		const char *aname = alg->na_name;
+
+		if (aname && strcmp(aname, name) == 0)
+			return alg;
+	}
+	return NULL;
+}
+
+npf_alg_t *
+npf_alg_construct(const char *name)
+{
+	npf_alg_t *alg;
+
+	npf_config_enter();
+	if ((alg = npf_alg_lookup(name)) == NULL) {
+		char modname[NPF_EXT_PREFLEN + 64];
+		snprintf(modname, sizeof(modname), "%s%s", alg_prefix, name);
+		npf_config_exit();
+
+		if (module_autoload(modname, MODULE_CLASS_MISC) != 0) {
+			return NULL;
+		}
+		npf_config_enter();
+		alg = npf_alg_lookup(name);
+	}
+	npf_config_exit();
+	return alg;
 }
 
 /*
  * npf_alg_register: register application-level gateway.
  */
 npf_alg_t *
-npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
+npf_alg_register(const char *name, npf_alg_func_t mfunc, npf_alg_func_t tfunc,
     npf_alg_sfunc_t sfunc)
 {
 	npf_alg_t *alg;
+	u_int i;
 
-	alg = kmem_zalloc(sizeof(npf_alg_t), KM_SLEEP);
-	alg->na_bptr = alg;
-	alg->na_match_func = mfunc;
-	alg->na_tr_func = tfunc;
-	alg->na_se_func = sfunc;
+	npf_config_enter();
+	if (npf_alg_lookup(name) != NULL) {
+		npf_config_exit();
+		return NULL;
+	}
 
-	mutex_enter(&nat_alg_lock);
-	LIST_INSERT_HEAD(&nat_alg_list, alg, na_entry);
-	mutex_exit(&nat_alg_lock);
+	/* Find a spare slot. */
+	for (i = 0; i < NPF_MAX_ALGS; i++) {
+		alg = &alg_list[i];
+		if (alg->na_name == NULL) {
+			break;
+		}
+	}
+	if (i == NPF_MAX_ALGS) {
+		npf_config_exit();
+		return NULL;
+	}
 
+	/* Register the ALG. */
+	alg->na_name = name;
+	alg->na_slot = i;
+
+	/* Assign the functions. */
+	alg_mfunc[i] = mfunc;
+	alg_tfunc[i] = tfunc;
+	alg_sfunc[i] = sfunc;
+
+	alg_count = MAX(alg_count, i + 1);
+	npf_config_exit();
 	return alg;
 }
 
@@ -105,16 +175,20 @@ npf_alg_register(npf_alg_func_t mfunc, npf_alg_func_t tfunc,
 int
 npf_alg_unregister(npf_alg_t *alg)
 {
-	mutex_enter(&nat_alg_lock);
-	LIST_REMOVE(alg, na_entry);
-	pserialize_perform(nat_alg_psz);
-	mutex_exit(&nat_alg_lock);
+	u_int i = alg->na_slot;
 
+	/* Deactivate the functions first. */
 	npf_config_enter();
+	alg_mfunc[i] = NULL;
+	alg_tfunc[i] = NULL;
+	alg_sfunc[i] = NULL;
+	pserialize_perform(alg_psz);
+
+	/* Finally, unregister the ALG. */
 	npf_ruleset_freealg(npf_config_natset(), alg);
+	alg->na_name = NULL;
 	npf_config_exit();
 
-	kmem_free(alg, sizeof(npf_alg_t));
 	return 0;
 }
 
@@ -124,13 +198,12 @@ npf_alg_unregister(npf_alg_t *alg)
 bool
 npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 {
-	npf_alg_t *alg;
 	bool match = false;
 	int s;
 
 	s = pserialize_read_enter();
-	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		npf_alg_func_t func = alg->na_match_func;
+	for (u_int i = 0; i < alg_count; i++) {
+		npf_alg_func_t func = alg_mfunc[i];
 
 		if (func && func(npc, nbuf, nt, di)) {
 			match = true;
@@ -147,15 +220,14 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 void
 npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 {
-	npf_alg_t *alg;
 	int s;
 
 	s = pserialize_read_enter();
-	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
+	for (u_int i = 0; i < alg_count; i++) {
 		npf_alg_func_t func;
 
-		if ((func = alg->na_tr_func) != NULL) {
-			(func)(npc, nbuf, nt, di);
+		if ((func = alg_tfunc[i]) != NULL) {
+			func(npc, nbuf, nt, di);
 		}
 	}
 	pserialize_read_exit(s);
@@ -165,12 +237,11 @@ npf_session_t *
 npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 {
 	npf_session_t *se = NULL;
-	npf_alg_t *alg;
 	int s;
 
 	s = pserialize_read_enter();
-	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		npf_alg_sfunc_t func = alg->na_se_func;
+	for (u_int i = 0; i < alg_count; i++) {
+		npf_alg_sfunc_t func = alg_sfunc[i];
 
 		if (func && (se = func(npc, nbuf, di)) != NULL) {
 			break;

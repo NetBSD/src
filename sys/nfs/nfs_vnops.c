@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.295.2.1 2012/11/20 03:02:49 tls Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.295.2.2 2013/06/23 06:20:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.295.2.1 2012/11/20 03:02:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.295.2.2 2013/06/23 06:20:26 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -3366,7 +3366,7 @@ nfsspec_access(void *v)
 		}
 	}
 
-	return kauth_authorize_vnode(ap->a_cred, kauth_access_action(ap->a_mode,
+	return kauth_authorize_vnode(ap->a_cred, KAUTH_ACCESS_ACTION(ap->a_mode,
 	    va.va_type, va.va_mode), vp, NULL, genfs_can_access(va.va_type,
 	    va.va_mode, va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }

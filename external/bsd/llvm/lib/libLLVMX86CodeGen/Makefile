@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.6.2 2013/02/25 00:26:40 tls Exp $
+#	$NetBSD: Makefile,v 1.7.6.3 2013/06/23 06:28:23 tls Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -10,6 +10,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86COFFMachineModuleInfo.cpp \
 	X86CodeEmitter.cpp \
 	X86FastISel.cpp \
+	X86FixupLEAs.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
 	X86ISelDAGToDAG.cpp \

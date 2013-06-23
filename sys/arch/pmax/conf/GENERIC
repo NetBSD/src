@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173.2.1 2012/11/20 03:01:37 tls Exp $
+# $NetBSD: GENERIC,v 1.173.2.2 2013/06/23 06:20:10 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.173.2.1 $"
+#ident		"GENERIC-$Revision: 1.173.2.2 $"
 
 maxusers	64
 
@@ -106,15 +106,10 @@ options 	WAPBL		# File system journaling support
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-#options 	ISO		# OSI networking
-#options 	TPIP		# TPIP
-#options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -280,7 +275,7 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop		 1	# network loopback
+pseudo-device	loop			# network loopback
 pseudo-device	sl		 	# serial-line IP ports
 pseudo-device	ppp		 	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -299,9 +294,9 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 pseudo-device	vnd		 	# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd		 4	# concatenated disks
-#pseudo-device	cgd		 4	# cryptographic disk devices
-pseudo-device	raid		 8	# RAIDframe disk driver
+pseudo-device	ccd			# concatenated disks
+#pseudo-device	cgd		 	# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
@@ -324,7 +319,7 @@ pseudo-device	wsmux			# wsmux control device
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel

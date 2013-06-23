@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.116.2.2 2013/02/25 00:28:23 tls Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.116.2.3 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116.2.2 2013/02/25 00:28:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116.2.3 2013/06/23 06:19:59 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1329,6 +1329,67 @@ struct cpu_functions cortex_cpufuncs = {
 };
 #endif /* CPU_CORTEX */
 
+#ifdef CPU_PJ4B
+struct cpu_functions pj4bv7_cpufuncs = {
+	/* CPU functions */
+
+	.cf_id			= cpufunc_id,
+	.cf_cpwait		= pj4b_drain_writebuf,
+
+	/* MMU functions */
+
+	.cf_control		= cpufunc_control,
+	.cf_domains		= cpufunc_domains,
+	.cf_setttb		= pj4b_setttb,
+	.cf_faultstatus		= cpufunc_faultstatus,
+	.cf_faultaddress	= cpufunc_faultaddress,
+
+	/* TLB functions */
+
+	.cf_tlb_flushID		= pj4b_tlb_flushID,
+	.cf_tlb_flushID_SE	= pj4b_tlb_flushID_SE,
+	.cf_tlb_flushI		= pj4b_tlb_flushID,
+	.cf_tlb_flushI_SE	= pj4b_tlb_flushID_SE,
+	.cf_tlb_flushD		= pj4b_tlb_flushID,
+	.cf_tlb_flushD_SE	= pj4b_tlb_flushID_SE,
+
+	/* Cache operations */
+
+	.cf_icache_sync_all	= armv7_idcache_wbinv_all,
+	.cf_icache_sync_range	= pj4b_icache_sync_range,
+
+	.cf_dcache_wbinv_all	= armv7_dcache_wbinv_all,
+	.cf_dcache_wbinv_range	= pj4b_dcache_wbinv_range,
+	.cf_dcache_inv_range	= pj4b_dcache_inv_range,
+	.cf_dcache_wb_range	= pj4b_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_idcache_wbinv_all	= armv7_idcache_wbinv_all,
+	.cf_idcache_wbinv_range	= pj4b_idcache_wbinv_range,
+
+	/* Other functions */
+
+	.cf_flush_prefetchbuf	= pj4b_drain_readbuf,
+	.cf_drain_writebuf	= pj4b_drain_writebuf,
+	.cf_flush_brnchtgt_C	= pj4b_flush_brnchtgt_all,
+	.cf_flush_brnchtgt_E	= pj4b_flush_brnchtgt_va,
+
+	.cf_sleep		= (void *)cpufunc_nullop,
+
+	/* Soft functions */
+
+	.cf_dataabt_fixup	= cpufunc_null_fixup,
+	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
+
+	.cf_context_switch	= pj4b_context_switch,
+
+	.cf_setup		= pj4bv7_setup
+};
+#endif /* CPU_PJ4B */
+
 #ifdef CPU_SHEEVA
 struct cpu_functions sheeva_cpufuncs = {
 	/* CPU functions */
@@ -1403,7 +1464,7 @@ u_int cputype;
     defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX) || defined(CPU_SHEEVA)
+    defined(CPU_CORTEX) || defined(CPU_PJ4B) || defined(CPU_SHEEVA)
 static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -1418,7 +1479,7 @@ get_cachesize_cp15(int cssr)
 {
 	u_int csid;
 
-#if (CPU_CORTEX) > 0
+#if ((CPU_CORTEX) > 0) || defined(CPU_PJ4B)
 	__asm volatile(".arch\tarmv7a");
 	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
 	__asm volatile("isb");	/* sync to the new cssr */
@@ -1490,7 +1551,9 @@ get_cachetype_cp15(void)
 	if (CPU_CT_FORMAT(ctype) == 4) {
 		u_int clidr = armreg_clidr_read();
 
-		arm_cache_prefer_mask = PAGE_SIZE;
+		if (CPU_CT4_L1IPOLICY(ctype) != CPU_CT4_L1_PIPT) {
+			arm_cache_prefer_mask = PAGE_SIZE;
+		}
 		arm_pcache.cache_type = CPU_CT_CTYPE_WB14;
 
 		get_cacheinfo_clidr(&arm_pcache, 0, clidr & 7);
@@ -2010,6 +2073,21 @@ set_cpufuncs(void)
 		return 0;
 	}
 #endif /* CPU_CORTEX */
+
+#if defined(CPU_PJ4B)
+	if ((cputype == CPU_ID_MV88SV581X_V6 ||
+	    cputype == CPU_ID_MV88SV581X_V7 ||
+	    cputype == CPU_ID_MV88SV584X_V7 ||
+	    cputype == CPU_ID_ARM_88SV581X_V6 ||
+	    cputype == CPU_ID_ARM_88SV581X_V7) &&
+	    (armreg_pfr0_read() & ARM_PFR0_THUMBEE_MASK)) {
+			cpufuncs = pj4bv7_cpufuncs;
+			get_cachetype_cp15();
+			pmap_pte_init_armv7();
+			return 0;
+	}
+#endif /* CPU_PJ4B */
+
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -2716,8 +2794,10 @@ arm9_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2767,8 +2847,10 @@ arm10_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2821,8 +2903,10 @@ arm11_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2868,8 +2952,10 @@ arm11mpcore_setup(char *args)
 
 	cpuctrl = parse_cpu_options(args, arm11_options, cpuctrl);
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2888,6 +2974,42 @@ arm11mpcore_setup(char *args)
 }
 #endif	/* CPU_ARM11MPCORE */
 
+#ifdef CPU_PJ4B
+void
+pj4bv7_setup(char *args)
+{
+	int cpuctrl;
+
+	pj4b_config();
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE;
+#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
+	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
+#endif
+	cpuctrl |= CPU_CONTROL_DC_ENABLE;
+	cpuctrl |= CPU_CONTROL_IC_ENABLE;
+	cpuctrl |= (0xf << 3);
+	cpuctrl |= CPU_CONTROL_BPRD_ENABLE;
+	cpuctrl |= (0x5 << 16) | (1 < 22);
+	cpuctrl |= CPU_CONTROL_XP_ENABLE;
+
+#ifndef ARM_HAS_VBAR
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
+
+	/* Clear out the cache */
+	cpu_idcache_wbinv_all();
+
+	/* Set the control register */
+	cpu_control(0xffffffff, cpuctrl);
+
+	/* And again. */
+	cpu_idcache_wbinv_all();
+
+	curcpu()->ci_ctrl = cpuctrl;
+}
+#endif /* CPU_PJ4B */
 
 #if defined(CPU_CORTEX)
 struct cpu_option armv7_options[] = {
@@ -2922,8 +3044,10 @@ armv7_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2979,8 +3103,10 @@ arm11x6_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	auxctrl = 0;
 	auxctrl_wax = ~0;
@@ -3077,8 +3203,10 @@ sa110_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3140,8 +3268,10 @@ sa11x0_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3192,8 +3322,10 @@ fa526_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3243,8 +3375,10 @@ ixp12x0_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3308,8 +3442,10 @@ xscale_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -3388,8 +3524,10 @@ sheeva_setup(char *args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+#ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();

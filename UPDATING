@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.238.2.1 2012/11/20 02:57:27 tls Exp $
+$NetBSD: UPDATING,v 1.238.2.2 2013/06/23 06:26:12 tls Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,25 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20130605:
+	Previous freetype installations eroneously installed private
+	header files. If you are building against a non-empty $DESTDIR,
+	please remove ${DESTDIR}//usr/X11R7/include/freetype2/freetype/.
+
+20130531:
+	The xdm update may cause build failure due to xdm.man being
+	in the obj tree.  Make sure to ensure any like this:
+		nbmake: nbmake: don't know how to make xdm.man. Stop
+	is fixed by deleting the xdm.man in the obj tree.
+
+20130530:
+	Updates of many xsrc packages will leave old .pc files around.
+	Best to clean out the xsrc objdir entirely before rebuilds.
+
+20130301:
+	The removal of netiso requires manual removal of /usr/include/netiso
+	prior to the build and make cleandir in /usr/src/usr.bin/{ktruss,kdump}
 
 20120726:
 	The update of OpenSSL requires cleaning both the OpenSSL build

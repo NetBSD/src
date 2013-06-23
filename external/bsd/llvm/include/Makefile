@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.2 2013/02/25 00:26:35 tls Exp $
+#	$NetBSD: Makefile,v 1.12.2.3 2013/06/23 06:28:22 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -24,6 +24,8 @@ INCS=	__wmmintrin_aes.h \
 	nmmintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
+	prfchwintrin.h \
+	rdseedintrin.h \
 	rtmintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
@@ -68,6 +70,7 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/AST/AttrImpl.inc|-gen-clang-attr-impl \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
+	clang/Parse/AttrExprArgs.inc|-gen-clang-attr-expr-args-list \
 	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
 	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
 	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \

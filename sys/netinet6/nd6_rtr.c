@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.84.2.1 2013/02/25 00:30:06 tls Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.84.2.2 2013/06/23 06:20:26 tls Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.84.2.1 2013/02/25 00:30:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.84.2.2 2013/06/23 06:20:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1404,7 +1404,9 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
 
 	for (pfxrtr = LIST_FIRST(&pr->ndpr_advrtrs); pfxrtr;
 	     pfxrtr = LIST_NEXT(pfxrtr, pfr_entry)) {
-		if ((rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
+		if (pfxrtr->router->ifp->if_flags & IFF_UP &&
+		    pfxrtr->router->ifp->if_link_state != LINK_STATE_DOWN &&
+		    (rt = nd6_lookup(&pfxrtr->router->rtaddr, 0,
 		    pfxrtr->router->ifp)) &&
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
 		    ND6_IS_LLINFO_PROBREACH(ln))
@@ -1580,10 +1582,14 @@ pfxlist_onlink_check(void)
 					ifa->ia6_flags |= IN6_IFF_TENTATIVE;
 					nd6_dad_start((struct ifaddr *)ifa,
 					    0);
+					/* We will notify the routing socket
+					 * of the DAD result, so no need to
+					 * here */
 				}
 			} else {
 				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ifa->ia6_flags |= IN6_IFF_DETACHED;
+					nd6_newaddrmsg((struct ifaddr *)ifa);
 				}
 			}
 		}

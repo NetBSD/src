@@ -1,0 +1,20 @@
+#
+# Configuration info for CL PS-711x support
+#
+device	clpssoc {[irq = -1]} : bus_space_generic
+attach	clpssoc at internal
+file	arch/arm/clps711x/clpssoc.c		clpssoc
+
+file	arch/arm/clps711x/clps711x_space.c	clpssoc
+
+device	clpscom
+attach	clpscom at clpssoc
+file	arch/arm/clps711x/clpscom.c		clpscom		needs-flag
+
+device	clpslcd : rasops2, rasops4, wsemuldisplaydev
+attach	clpslcd at clpssoc
+file	arch/arm/clps711x/clpslcd.c		clpslcd		needs-flag
+
+device	clpsrtc
+attach	clpsrtc at clpssoc
+file	arch/arm/clps711x/clpsrtc.c		clpsrtc

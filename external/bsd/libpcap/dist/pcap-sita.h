@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-sita.h,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 /*
  * pcap-sita.h: Packet capture interface for SITA WAN devices
  *

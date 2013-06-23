@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.65.2.1 2013/02/25 00:29:05 tls Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.65.2.2 2013/06/23 06:20:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.1 2013/02/25 00:29:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.2 2013/06/23 06:20:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ matchbiosdisks(void)
 				if (be->flags & BI_GEOM_INVALID)
 					continue;
 				if (be->cksum == ck &&
-				    memcmp(&mbr[MBR_PART_OFFSET], be->dosparts,
+				    memcmp(&mbr[MBR_PART_OFFSET], be->mbrparts,
 				        MBR_PART_COUNT *
 					  sizeof(struct mbr_partition)) == 0) {
 #ifdef GEOM_DEBUG
@@ -346,7 +346,10 @@ findroot(void)
 			return;
 	}
 
-	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
+	bid = lookup_bootinfo(BTINFO_BOOTDISK);
+	biw = lookup_bootinfo(BTINFO_BOOTWEDGE);
+
+	if (biw != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple
@@ -382,7 +385,7 @@ findroot(void)
 				continue;
 			}
 			booted_device = dv;
-			booted_partition = 0;
+			booted_partition = bid != NULL ? bid->partition : 0;
 			booted_nblks = biw->nblks;
 			booted_startblk = biw->startblk;
 		}
@@ -392,7 +395,7 @@ findroot(void)
 			return;
 	}
 
-	if ((bid = lookup_bootinfo(BTINFO_BOOTDISK)) != NULL) {
+	if (bid != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple

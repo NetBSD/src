@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.110.2.1 2013/02/25 00:30:15 tls Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.110.2.2 2013/06/23 06:18:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.110.2.1 2013/02/25 00:30:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.110.2.2 2013/06/23 06:18:39 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -307,7 +307,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * zeroed page past EOF, but that's life.
 	 */
 
-	offset = blkoff(fs, length);
+	offset = ffs_blkoff(fs, length);
 	pgoffset = length & PAGE_MASK;
 	if (ovp->v_type == VREG && (pgoffset != 0 || offset != 0) &&
 	    osize > length) {
@@ -322,7 +322,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				return error;
 		}
 		lbn = lblkno(fs, length);
-		size = blksize(fs, oip, lbn);
+		size = ffs_blksize(fs, oip, lbn);
 		eoz = MIN(MAX(lblktosize(fs, lbn) + size, round_page(pgoffset)),
 		    osize);
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
@@ -350,8 +350,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 */
 	lastblock = lblkno(fs, length + fs->fs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - UFS_NDADDR;
-	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
-	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
+	lastiblock[DOUBLE] = lastiblock[SINGLE] - FFS_NINDIR(fs);
+	lastiblock[TRIPLE] = lastiblock[DOUBLE] - FFS_NINDIR(fs) * FFS_NINDIR(fs);
 	nblocks = btodb(fs->fs_bsize);
 	/*
 	 * Update file and block pointers on disk before we start freeing
@@ -409,8 +409,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * Indirect blocks first.
 	 */
 	indir_lbn[SINGLE] = -UFS_NDADDR;
-	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) - 1;
-	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
+	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - FFS_NINDIR(fs) - 1;
+	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - FFS_NINDIR(fs) * FFS_NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
 		if (oip->i_ump->um_fstype == UFS1)
 			bn = ufs_rw32(oip->i_ffs1_ib[level],UFS_FSNEEDSWAP(fs));
@@ -451,7 +451,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		if (bn == 0)
 			continue;
 		DIP_ASSIGN(oip, db[i], 0);
-		bsize = blksize(fs, oip, i);
+		bsize = ffs_blksize(fs, oip, i);
 		if ((oip->i_ump->um_mountp->mnt_wapbl) &&
 		    (ovp->v_type != VREG)) {
 			UFS_WAPBL_REGISTER_DEALLOCATION(oip->i_ump->um_mountp,
@@ -478,10 +478,10 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		 * Calculate amount of space we're giving
 		 * back as old block size minus new block size.
 		 */
-		oldspace = blksize(fs, oip, lastblock);
+		oldspace = ffs_blksize(fs, oip, lastblock);
 		oip->i_size = length;
 		DIP_ASSIGN(oip, size, length);
-		newspace = blksize(fs, oip, lastblock);
+		newspace = ffs_blksize(fs, oip, lastblock);
 		if (newspace == 0)
 			panic("itrunc: newspace");
 		if (oldspace - newspace > 0) {
@@ -575,7 +575,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	factor = 1;
 	for (i = SINGLE; i < level; i++)
-		factor *= NINDIR(fs);
+		factor *= FFS_NINDIR(fs);
 	last = lastbn;
 	if (lastbn > 0)
 		last /= factor;
@@ -624,7 +624,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (lastbn >= 0) {
 		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
-		for (i = last + 1; i < NINDIR(fs); i++)
+		for (i = last + 1; i < FFS_NINDIR(fs); i++)
 			BAP_ASSIGN(ip, i, 0);
 		error = bwrite(bp);
 		if (error)
@@ -638,7 +638,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	/*
 	 * Recursively free totally unused blocks.
 	 */
-	for (i = NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
+	for (i = FFS_NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
 		nb = RBAP(ip, i);
 		if (nb == 0)

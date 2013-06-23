@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.24 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.24.40.1 2013/06/23 06:18:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -85,10 +85,10 @@ struct iso_mnt {
 
 #define VFSTOISOFS(mp)	((struct iso_mnt *)((mp)->mnt_data))
 
-#define blkoff(imp, loc)	((loc) & (imp)->im_bmask)
+#define cd9660_blkoff(imp, loc)		((loc) & (imp)->im_bmask)
 #define lblktosize(imp, blk)	((blk) << (imp)->im_bshift)
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
-#define blksize(imp, ip, lbn)	((imp)->logical_block_size)
+#define cd9660_blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
 #ifdef _KERNEL
 

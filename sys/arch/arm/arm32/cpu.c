@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86.2.2 2013/02/25 00:28:24 tls Exp $	*/
+/*	$NetBSD: cpu.c,v 1.86.2.3 2013/06/23 06:19:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86.2.2 2013/02/25 00:28:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86.2.3 2013/06/23 06:19:59 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -227,6 +227,7 @@ enum cpu_class {
 	CPU_CLASS_ARM11J,
 	CPU_CLASS_ARMV4,
 	CPU_CLASS_CORTEX,
+	CPU_CLASS_PJ4B,
 };
 
 static const char * const generic_steppings[16] = {
@@ -487,6 +488,22 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
 	  pN_steppings, "7A" },
 
+	{ CPU_ID_MV88SV581X_V6, CPU_CLASS_PJ4B,      "Sheeva 88SV581x",
+	  generic_steppings },
+	{ CPU_ID_ARM_88SV581X_V6, CPU_CLASS_PJ4B,    "Sheeva 88SV581x",
+	  generic_steppings },
+	{ CPU_ID_MV88SV581X_V7, CPU_CLASS_PJ4B,      "Sheeva 88SV581x",
+	  generic_steppings },
+	{ CPU_ID_ARM_88SV581X_V7, CPU_CLASS_PJ4B,    "Sheeva 88SV581x",
+	  generic_steppings },
+	{ CPU_ID_MV88SV584X_V6, CPU_CLASS_PJ4B,      "Sheeva 88SV584x",
+	  generic_steppings },
+	{ CPU_ID_ARM_88SV584X_V6, CPU_CLASS_PJ4B,    "Sheeva 88SV584x",
+	  generic_steppings },
+	{ CPU_ID_MV88SV584X_V7, CPU_CLASS_PJ4B,      "Sheeva 88SV584x",
+	  generic_steppings },
+
+
 	{ 0, CPU_CLASS_NONE, NULL, NULL, "" }
 };
 
@@ -514,6 +531,7 @@ const struct cpu_classtab cpu_classes[] = {
 	[CPU_CLASS_ARM11J] =	{ "ARM11J",	"CPU_ARM11" },
 	[CPU_CLASS_ARMV4] =	{ "ARMv4",	"CPU_ARMV4" },
 	[CPU_CLASS_CORTEX] =	{ "Cortex",	"CPU_CORTEX" },
+	[CPU_CLASS_PJ4B] =	{ "Marvell",	"CPU_PJ4B" },
 };
 
 /*
@@ -627,6 +645,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	case CPU_CLASS_ARM11J:
 	case CPU_CLASS_ARMV4:
 	case CPU_CLASS_CORTEX:
+	case CPU_CLASS_PJ4B:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			aprint_normal(" DC disabled");
 		else
@@ -654,7 +673,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
-	if (CPU_ID_CORTEX_P(cpuid) || CPU_ID_ARM11_P(cpuid)) {
+	if (CPU_ID_CORTEX_P(cpuid) || CPU_ID_ARM11_P(cpuid) || CPU_ID_MV88SV58XX_P(cpuid)) {
 		identify_features(dv);
 	}
 
@@ -713,6 +732,9 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 #endif
 #if defined(CPU_CORTEX)
 	case CPU_CLASS_CORTEX:
+#endif
+#if defined(CPU_PJ4B)
+	case CPU_CLASS_PJ4B:
 #endif
 #if defined(CPU_FA526)
 	case CPU_CLASS_ARMV4:

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.445.2.1 2013/02/25 00:29:49 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.1 2013/02/25 00:29:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -171,7 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.1 2013/02/25 00:29:49 tls Exp 
 #include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #include <sys/kprintf.h>
-#ifdef FAST_IPSEC
+#ifdef IPSEC
 #include <netipsec/ipsec.h>
 #endif
 #ifdef SYSVSHM
@@ -444,8 +444,8 @@ main(void)
 	 * 10% of memory for vnodes and associated data structures in the
 	 * assumed worst case.  Do not provide fewer than NVNODE vnodes.
 	 */
-	usevnodes =
-	    calc_cache_size(kernel_map, 10, VNODE_VA_MAXPCT) / VNODE_COST;
+	usevnodes = calc_cache_size(vmem_size(kmem_arena, VMEM_FREE|VMEM_ALLOC),
+	    10, VNODE_KMEM_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -550,7 +550,7 @@ main(void)
 	pax_init();
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-#ifdef	FAST_IPSEC
+#ifdef	IPSEC
 	/* Attach network crypto subsystem */
 	ipsec_attach();
 #endif
@@ -564,6 +564,8 @@ main(void)
 	domaininit(true);
 	if_attachdomain();
 	splx(s);
+
+	rnd_init_softint();
 
 #ifdef GPROF
 	/* Initialize kernel profiling. */
@@ -1078,20 +1080,17 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size (in bytes) from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vsize.
  */
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vsize, int pct, int va_pct)
 {
 	paddr_t t;
 
 	/* XXX should consider competing cache if any */
 	/* XXX should consider submaps */
 	t = (uintmax_t)physmem * pct / 100 * PAGE_SIZE;
-	if (map != NULL) {
-		vsize_t vsize;
-
-		vsize = vm_map_max(map) - vm_map_min(map);
+	if (vsize != 0) {
 		vsize = (uintmax_t)vsize * va_pct / 100;
 		if (t > vsize) {
 			t = vsize;

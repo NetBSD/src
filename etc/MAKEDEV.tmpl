@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.2 2013/02/25 00:24:48 tls Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.158.2.3 2013/06/23 06:26:21 tls Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -124,6 +124,7 @@
 #	ixpcom	IXP12x0 COM ports
 #	epcom	EP93xx COM ports
 #	plcom	ARM PL01[01] serial ports
+#	wmcom	EPOC Windermere COM ports
 #	ttyM?	HP200/300 4 port serial mux interface (hp300)
 #	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
@@ -296,6 +297,9 @@
 #
 # Trusted Computing devices
 #	tpm	Trusted Platform Module
+#
+# Debugging and tracing
+#	dtrace	Dynamic tracing framework
 
 
 #
@@ -492,6 +496,7 @@ setup()
 
 	u_root="%uid_root%"
 	u_uucp="%uid_uucp%"
+	g_gpio="%gid__gpio%"
 	g_kmem="%gid_kmem%"
 	g_ntpd="%gid_ntpd%"
 	g_operator="%gid_operator%"
@@ -1136,6 +1141,12 @@ flash[0-9]*)
 	mkdev rflash$unit c %flash_chr% $unit
 	;;
 
+spiflash[0-9]*)
+	unit=${i#spiflash}
+	spiflash=spiflash$unit
+	mkdev spiflash$unit b %spiflash_blk% $unit
+	;;
+
 altmem[0-9]*)
 	name=altmem; unit=${i#altmem}; blk=%altmem_blk%; chr=%altmem_chr%
 	%MKDISK% $name $unit $blk $chr
@@ -1448,7 +1459,7 @@ hdaudio[0-9]*)
 
 gpio[0-9]*)
 	unit=${i#gpio}
-	mkdev gpio$unit c %gpio_chr% $unit 644
+	mkdev gpio$unit c %gpio_chr% $unit 664 $g_gpio
 	;;
 
 rmidi[0-9]*)
@@ -1905,6 +1916,11 @@ plcom[0-9]*)
 	mkdev plcom$unit c %plcom_chr% $unit "" "" $u_uucp
 	;;
 
+wmcom[0-9]*)
+	unit=${i#wmcom}
+	mkdev wmcom$unit c %wmcom_chr% $unit "" "" $u_uucp
+	;;
+
 ucbsnd)
 	mkdev ucbsnd c %ucbsnd_chr% 0 666
 	;;
@@ -2073,6 +2089,11 @@ tpm)
 	mkdev tpm c %tpm_chr% 0 600
 	;;
 
+dtrace)
+	makedir dtrace 755
+	mkdev dtrace/dtrace c %dtrace_chr% 0 600
+	;;
+
 fw[0-9]*)
 	unit=${i#fw}
 	for j in 0 1 2 3
@@ -2097,6 +2118,10 @@ zfs)
 iscsi[0-9]*)
 	unit=${i#iscsi}
 	mkdev iscsi${unit} c %iscsi_chr% 0 600
+	;;
+
+vchiq)
+	mkdev vchiq c %vchiq_chr% 0 600
 	;;
 
 midevend)
@@ -2148,6 +2173,37 @@ makedisk_p8()
 	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
 	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
 	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
+}
+
+makedisk_p12high()
+{
+	ho=524280	# offset for partition 9 to 11 (same as ...p16high)
+	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
+	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
+	mkdev ${name}${unit}c	b $blk $(($unit * 8 + 2))	640 $g_operator
+	mkdev ${name}${unit}d	b $blk $(($unit * 8 + 3))	640 $g_operator
+	mkdev ${name}${unit}e	b $blk $(($unit * 8 + 4))	640 $g_operator
+	mkdev ${name}${unit}f	b $blk $(($unit * 8 + 5))	640 $g_operator
+	mkdev ${name}${unit}g	b $blk $(($unit * 8 + 6))	640 $g_operator
+	mkdev ${name}${unit}h	b $blk $(($unit * 8 + 7))	640 $g_operator
+	mkdev ${name}${unit}i	b $blk $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev ${name}${unit}j	b $blk $(($unit * 8 + $ho + 9)) 640 $g_operator
+	mkdev ${name}${unit}k	b $blk $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev ${name}${unit}l	b $blk $(($unit * 8 + $ho + 11)) 640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * 8 + 0))	640 $g_operator
+	mkdev r${name}${unit}b	c $chr $(($unit * 8 + 1))	640 $g_operator
+	mkdev r${name}${unit}c	c $chr $(($unit * 8 + 2))	640 $g_operator
+	mkdev r${name}${unit}d	c $chr $(($unit * 8 + 3))	640 $g_operator
+	mkdev r${name}${unit}e	c $chr $(($unit * 8 + 4))	640 $g_operator
+	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
+	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
+	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
+	mkdev r${name}${unit}i	c $chr $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev r${name}${unit}j	c $chr $(($unit * 8 + $ho + 9)) 640 $g_operator
+	mkdev r${name}${unit}k	c $chr $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev r${name}${unit}l	c $chr $(($unit * 8 + $ho + 11)) 640 $g_operator
 }
 
 makedisk_p16()

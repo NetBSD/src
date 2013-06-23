@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.34.2.1 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.34.2.2 2013/06/23 06:18:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34.2.1 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34.2.2 2013/06/23 06:18:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ filecore_check_permitted(struct vnode *vp, struct filecore_node *ip,
 {
 	struct filecore_mnt *fcmp = ip->i_mnt;
 
-	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, filecore_mode(ip)), vp, NULL,
 	    genfs_can_access(vp->v_type, filecore_mode(ip), fcmp->fc_uid,
 	    fcmp->fc_gid, mode, cred));
@@ -240,14 +240,14 @@ filecore_read(void *v)
 
 	do {
 		lbn = lblkno(fcmp, uio->uio_offset);
-		on = blkoff(fcmp, uio->uio_offset);
-		n = MIN(blksize(fcmp, ip, lbn) - on, uio->uio_resid);
+		on = filecore_blkoff(fcmp, uio->uio_offset);
+		n = MIN(filecore_blksize(fcmp, ip, lbn) - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
 		if (diff < n)
 			n = diff;
-		size = blksize(fcmp, ip, lbn);
+		size = filecore_blksize(fcmp, ip, lbn);
 		rablock = lbn + 1;
 		if (ip->i_dirent.attr & FILECORE_ATTR_DIR) {
 			error = filecore_dbread(ip, &bp);

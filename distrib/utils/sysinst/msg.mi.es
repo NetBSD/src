@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.46.2.1 2012/11/20 02:57:53 tls Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.46.2.2 2013/06/23 06:26:20 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -797,7 +797,7 @@ message set_X11_prog
 {Programación de X11}
 
 message set_source
-{Source sets}
+{Source and debug sets}
 
 message set_syssrc
 {Kernel sources}
@@ -813,6 +813,12 @@ message set_gnusrc
 
 message set_xsrc
 {X11 sources}
+
+message set_debug
+{Debug symbols}
+
+message set_xdebug
+{X11 debug symbols}
 
 message cur_distsets_row
 {%-27s %3s}
@@ -980,6 +986,7 @@ message other {otro }
 message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
 message Perform_DHCP_autoconfiguration {¿Realizar autoconfiguración DHCP ?}
 message Root_shell {Shell de root}
+message User_shell {Shell de user}
 
 .if AOUT2ELF
 message aoutfail
@@ -1057,6 +1064,7 @@ message enable_sshd {Activar sshd}
 message enable_ntpd {Activar ntpd}
 message run_ntpdate {Ejecutar ntpdate durante el arranque}
 message enable_mdnsd {Activar mdnsd}
+message add_a_user {Add a user}
 message configmenu {Configurar elementos adicionales bajo demanda.}
 message doneconfig {Terminar configuración}
 message Install_pkgin {Instalar pkgin y actualizar la lista de paquetes}
@@ -1088,3 +1096,5 @@ message pkgin_failed
 paquetes binarios.  Por favor verifique el camino a los paquetes y
 reinténtelo de nuevo.}
 message failed {Error}
+message addusername {8 character username to add:}
+message addusertowheel {Do you wish to add this user to group wheel?}

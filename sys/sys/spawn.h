@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.3 2012/04/30 21:19:58 rmind Exp $	*/
+/*	$NetBSD: spawn.h,v 1.3.2.1 2013/06/23 06:20:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -32,6 +32,7 @@
 #define _SYS_SPAWN_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 #include <sys/sigtypes.h>
 #include <sys/signal.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-snf.c,v 1.1.1.1.12.1 2013/06/23 06:28:19 tls Exp $	*/
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

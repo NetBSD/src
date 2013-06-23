@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.150.14.2 2013/02/25 00:30:08 tls Exp $	*/
+/*	$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.2 2013/02/25 00:30:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.2 2013/02/25 00:30:08 tls Exp $");
 #include <sys/module.h>
 #include <sys/tty.h>
 #include <sys/reboot.h>
+#include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
 #include <sys/sleepq.h>
@@ -128,6 +129,9 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+#ifndef __HAVE_MINIMAL_EMUL
+	.e_nsysent = SYS_NSYSENT,
+#endif
 	.e_vm_default_addr = uvm_default_mapaddr,
 #ifdef __HAVE_SYSCALL_INTERN
 	.e_syscall_intern = syscall_intern,
@@ -140,7 +144,7 @@ int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv, error;
+	int rv;
 	uint64_t sec, nsec;
 
 	if (mtx)
@@ -148,13 +152,11 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 
 	sec = timeo / hz;
 	nsec = (timeo % hz) * (1000000000 / hz);
-	rv = rumpuser_nanosleep(&sec, &nsec, &error);
-	
+	rv = rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
+	KASSERT(rv == 0);
+
 	if (mtx)
 		mutex_enter(mtx);
-
-	if (rv)
-		return error;
 
 	return 0;
 }
@@ -188,7 +190,7 @@ lwp_update_creds(struct lwp *l)
 }
 
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct, int va_pct)
+calc_cache_size(vsize_t vasz, int pct, int va_pct)
 {
 	paddr_t t;
 
@@ -221,7 +223,6 @@ static void
 rump_delay(unsigned int us)
 {
 	uint64_t sec, nsec;
-	int error;
 
 	sec = us / 1000000;
 	nsec = (us % 1000000) * 1000;
@@ -229,7 +230,7 @@ rump_delay(unsigned int us)
 	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
 
-	rumpuser_nanosleep(&sec, &nsec, &error);
+	rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
 }
 void (*delay_func)(unsigned int) = rump_delay;
 
@@ -260,9 +261,8 @@ __weak_alias(tputchar,rump_tputchar);
 void
 cnputc(int c)
 {
-	int error;
 
-	rumpuser_putchar(c, &error);
+	rumpuser_putchar(c);
 }
 
 void

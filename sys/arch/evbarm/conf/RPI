@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.8.2.2 2013/02/25 00:28:34 tls Exp $
+#	$NetBSD: RPI,v 1.8.2.3 2013/06/23 06:20:04 tls Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -42,6 +42,9 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	TMPFS		# memory file system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+#file-system	NILFS		# experimental - NTT's NiLFS(2)
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
@@ -58,16 +61,9 @@ options 	WAPBL		# File system journaling support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -142,7 +138,7 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#options 	KGDB
+#options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
 makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYMTAB_SPACE=800000
 options 	PLCONSOLE
@@ -183,12 +179,20 @@ bcmicu0		at obio?
 bcmmbox0	at obio?
 vcmbox0 	at bcmmbox0
 
+# VCHIQ
+vchiq0		at obio?
+
+# AUDS
+vcaudio0	at vchiq0
+audio0		at vcaudio0
+
 # PL011 uart
 plcom0		at obio?
 
 # Framebuffer console
 genfb0		at obio?
 wsdisplay*	at genfb?
+options		VCONS_DRAW_INTR
 
 # System timer
 bcmtmr0		at obio?
@@ -245,7 +249,7 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	putter			# for puffs and pud
+pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -286,6 +290,9 @@ pseudo-device	wsfont
 # data mover pseudo-devices
 #pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device 	drvctl
 
 # local configuration
 cinclude "arch/evbarm/conf/RPI.local"

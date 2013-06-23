@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.6.2.1 2013/02/25 00:26:06 tls Exp $	*/
+/*	$NetBSD: cdf.c,v 1.6.2.2 2013/06/23 06:26:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.51 2012/03/20 18:28:02 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.53 2013/02/26 16:20:42 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.6.2.1 2013/02/25 00:26:06 tls Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.6.2.2 2013/06/23 06:26:33 tls Exp $");
 #endif
 #endif
 
@@ -302,10 +302,7 @@ cdf_read(const cdf_info_t *info, off_t off, void *buf, size_t len)
 	if (info->i_fd == -1)
 		return -1;
 
-	if (lseek(info->i_fd, off, SEEK_SET) == (off_t)-1)
-		return -1;
-
-	if (read(info->i_fd, buf, len) != (ssize_t)len)
+	if (pread(info->i_fd, buf, len, off) != (ssize_t)len)
 		return -1;
 
 	return (ssize_t)len;

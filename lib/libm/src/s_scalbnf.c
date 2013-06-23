@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_scalbnf.c,v 1.9.12.1 2013/02/25 00:27:58 tls Exp $");
+__RCSID("$NetBSD: s_scalbnf.c,v 1.9.12.2 2013/06/23 06:21:07 tls Exp $");
 #endif
 
 #include "namespace.h"
@@ -27,6 +27,7 @@ __strong_alias(_scalbnf, _scalblnf)
 #endif
 __weak_alias(scalbnf, _scalbnf)
 __weak_alias(scalblnf, _scalblnf)
+__weak_alias(ldexpf, _scalbnf)
 
 static const float
 two25   =  0x1.0p25,	/* 0x4c000000 */

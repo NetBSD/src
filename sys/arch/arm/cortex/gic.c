@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $	*/
+/*	$NetBSD: gic.c,v 1.1.2.2 2013/06/23 06:20:00 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.1.2.2 2013/06/23 06:20:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,8 @@ static struct armgic_softc {
 	struct pic_softc sc_pic;
 	device_t sc_dev;
 	bus_space_tag_t sc_memt;
-	bus_space_handle_t sc_memh;
+	bus_space_handle_t sc_gicch;
+	bus_space_handle_t sc_gicdh;
 	size_t sc_gic_lines;
 	uint32_t sc_gic_type;
 	uint32_t sc_gic_valid_lines[1024/32];
@@ -108,7 +109,7 @@ __CTASSERT(NIPL == 8);
 static inline uint32_t
 gicc_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_memh, GICC_BASE + o);
+	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicch, o);
 	return le32toh(v);
 }
 
@@ -116,13 +117,13 @@ static inline void
 gicc_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
 	v = htole32(v);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, GICC_BASE + o, v);
+	bus_space_write_4(sc->sc_memt, sc->sc_gicch, o, v);
 }
 
 static inline uint32_t
 gicd_read(struct armgic_softc *sc, bus_size_t o)
 {
-	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_memh, GICD_BASE + o);
+	uint32_t v = bus_space_read_4(sc->sc_memt, sc->sc_gicdh, o);
 	return le32toh(v);
 }
 
@@ -130,7 +131,7 @@ static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
 	v = htole32(v);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, GICD_BASE + o, v);
+	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
 }
 
 /*
@@ -454,9 +455,7 @@ armgic_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(cf->cf_name, mpcaa->mpcaa_name) != 0)
 		return 0;
-	if (!CPU_ID_CORTEX_P(cputype))
-		return 0;
-	if (CPU_ID_CORTEX_A8_P(cputype))
+	if (!CPU_ID_CORTEX_P(cputype) || CPU_ID_CORTEX_A8_P(cputype))
 		return 0;
 
 	return 1;
@@ -472,7 +471,10 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 
 	sc->sc_memt = mpcaa->mpcaa_memt;	/* provided for us */
-	sc->sc_memh = mpcaa->mpcaa_memh;	/* provided for us */
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, mpcaa->mpcaa_off1,
+	    4096, &sc->sc_gicdh);
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, mpcaa->mpcaa_off2,
+	    4096, &sc->sc_gicch);
 
 	sc->sc_gic_type = gicd_read(sc, GICD_TYPER);
 	sc->sc_pic.pic_maxsources = GICD_TYPER_LINES(sc->sc_gic_type);

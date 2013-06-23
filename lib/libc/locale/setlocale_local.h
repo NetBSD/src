@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.8 2012/03/04 21:14:57 tnozaki Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.8.2.1 2013/06/23 06:21:05 tls Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -29,6 +29,8 @@
 #ifndef _SETLOCALE_LOCAL_H_
 #define _SETLOCALE_LOCAL_H_
 
+#include "ctype_local.h"
+
 #define _LOCALENAME_LEN_MAX 33
 
 #define _C_LOCALE		"C"
@@ -40,15 +42,18 @@ extern const char		*_PathLocale;
 typedef void *_locale_part_t;
 
 struct _locale_cache_t {
-	const unsigned char *ctype_tab;
+	const unsigned short *ctype_tab;
 	const short *tolower_tab;
 	const short *toupper_tab;
 	size_t mb_cur_max;
 	struct lconv *ldata;
 	const char **items;
+#ifdef __BUILD_LEGACY
+	const unsigned char *compat_bsdctype;
+#endif
 };
 
-struct _locale_impl_t {
+struct _locale {
 	struct _locale_cache_t *cache;
 	char query[_LOCALENAME_LEN_MAX * (_LC_LAST - 1)];
 	const char *part_name[_LC_LAST];
@@ -56,37 +61,45 @@ struct _locale_impl_t {
 };
 
 typedef const char *(*_locale_set_t)(const char * __restrict,
-    struct _locale_impl_t * __restrict);
+    struct _locale * __restrict);
 
 __BEGIN_DECLS
 _locale_set_t		_find_category(int);
 const char		*_get_locale_env(const char *);
-struct _locale_impl_t	**_current_locale(void);
 char			*__setlocale(int, const char *);
 
 const char *_generic_LC_ALL_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_dummy_LC_COLLATE_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_CTYPE_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_MONETARY_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_NUMERIC_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_TIME_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_MESSAGES_setlocale(
-    const char * __restrict, struct _locale_impl_t * __restrict);
+    const char * __restrict, struct _locale * __restrict);
 __END_DECLS
+
+#ifdef _LIBC
+extern __dso_protected struct _locale	_lc_global_locale;
+
+static __inline struct _locale *
+_current_locale(void)
+{
+	return &_lc_global_locale;
+}
 
 static __inline struct _locale_cache_t *
 _current_cache(void)
 {
-	return (*_current_locale())->cache;
+	return _lc_global_locale.cache;
 }
+#endif
 
-extern struct _locale_impl_t	_global_locale;
 extern size_t __mb_len_max_runtime;
 
 #endif /*_SETLOCALE_LOCAL_H_*/

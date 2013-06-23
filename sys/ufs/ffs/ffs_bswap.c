@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.35.14.1 2013/02/25 00:30:15 tls Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.35.14.2 2013/06/23 06:18:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.35.14.1 2013/02/25 00:30:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.35.14.2 2013/06/23 06:18:39 tls Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -119,8 +119,8 @@ ffs_dinode1_swap(struct ufs1_dinode *o, struct ufs1_dinode *n)
 
 	n->di_mode = bswap16(o->di_mode);
 	n->di_nlink = bswap16(o->di_nlink);
-	n->di_u.oldids[0] = bswap16(o->di_u.oldids[0]);
-	n->di_u.oldids[1] = bswap16(o->di_u.oldids[1]);
+	n->di_oldids[0] = bswap16(o->di_oldids[0]);
+	n->di_oldids[1] = bswap16(o->di_oldids[1]);
 	n->di_size = bswap64(o->di_size);
 	n->di_atime = bswap32(o->di_atime);
 	n->di_atimensec = bswap32(o->di_atimensec);

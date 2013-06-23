@@ -1,4 +1,4 @@
-/*	$NetBSD: divide.S,v 1.1.4.2 2012/11/20 02:57:29 tls Exp $	*/
+/*	$NetBSD: divide.S,v 1.1.4.3 2013/06/23 06:26:13 tls Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -14,6 +14,8 @@
  * SUCH DAMAGE.
  */
 
+#ifndef __ARM_ARCH_EXT_IDIV__
+
 #include <machine/asm.h>
 
 /* 
@@ -23,14 +25,20 @@
 
 .L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#ifdef __ARM_EABI__
+	mov	r0, r1				/* return quotient */
+	b	PLT_SYM(__aeabi_idiv0)
+#else
 	mov	r0, #8			/* SIGFPE */
-	bl	PIC_SYM(_C_LABEL(raise), PLT)	/* raise it */
+	bl	PLT_SYM(_C_LABEL(raise))	/* raise it */
 	mov	r0, #0
+	RET
+#endif
 #else
 	/* XXX should cause a fatal error */
 	mvn	r0, #0
-#endif
 	RET
+#endif
 
 	.globl	__udivide
 __udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -368,3 +376,5 @@ __divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	addhs	r3, r3, r2
 	mov	r0, r3
 	RET
+
+#endif /* __ARM_ARCH_EXT_IDIV__ */

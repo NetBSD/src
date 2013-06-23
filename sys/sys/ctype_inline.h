@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_inline.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
+/* $NetBSD: ctype_inline.h,v 1.2.18.1 2013/06/23 06:20:29 tls Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -45,17 +45,17 @@
 
 #include <sys/ctype_bits.h>
 
-#define	isdigit(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_N))
-#define	islower(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_L))
-#define	isspace(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_S))
-#define	ispunct(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_P))
-#define	isupper(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_U))
-#define	isalpha(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_U|_CTYPE_L)))
-#define	isxdigit(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_N|_CTYPE_X)))
-#define	isalnum(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_U|_CTYPE_L|_CTYPE_N)))
-#define	isprint(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)))
-#define	isgraph(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N)))
-#define	iscntrl(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_C))
+#define	isalnum(c)	((int)((_ctype_tab_ + 1)[(c)] & (_CTYPE_A|_CTYPE_D)))
+#define	isalpha(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_A))
+#define	iscntrl(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_C))
+#define	isdigit(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_D))
+#define	isgraph(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_G))
+#define	islower(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_L))
+#define	isprint(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_R))
+#define	ispunct(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_P))
+#define	isspace(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_S))
+#define	isupper(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_U))
+#define	isxdigit(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_X))
 #define	tolower(c)	((int)((_tolower_tab_ + 1)[(c)]))
 #define	toupper(c)	((int)((_toupper_tab_ + 1)[(c)]))
 
@@ -68,15 +68,7 @@
 
 #if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
     (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
-
-/*
- * isblank() is implemented as C function, due to insufficient bitwidth in
- * _ctype_.  Note that _B does not mean isblank - it means isprint && !isgraph.
- */
-#if 0
-#define isblank(c)	((int)((_ctype_ + 1)[(c)] & _B))
-#endif
-
+#define	isblank(c)	((int)((_ctype_tab_ + 1)[(c)] & _CTYPE_BL))
 #endif
 
 #endif /* !_CTYPE_INLINE_H_ */

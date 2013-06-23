@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 2012/06/11 15:18:05 chs Exp $	*/
+/*	$NetBSD: asm.h,v 1.15.2.1 2013/06/23 06:19:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,7 @@
 #define	ALTENTRY(x)	NENTRY(x)
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	LABEL(y)	_LABEL(_C_LABEL(y))
+#define	END(y)		.size y, . - y
 
 #define	ASMSTR		.asciz
 

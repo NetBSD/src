@@ -1,3 +1,3 @@
-/* $NetBSD: version.h,v 1.1 2010/12/05 01:45:46 christos Exp $ */
+/* $NetBSD: version.h,v 1.1.12.1 2013/06/23 06:28:21 tls Exp $ */
 
-static const char pcap_version_string[] = "libpcap version 1.1.1";
+static const char pcap_version_string[] = "libpcap version 1.3.0";
