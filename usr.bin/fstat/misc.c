@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2012/11/25 15:30:28 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2013/06/23 02:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.11 2012/11/25 15:30:28 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2013/06/23 02:35:24 riastradh Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -205,23 +205,9 @@ p_rnd(struct file *f)
 		dprintf("can't read rnd at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
-	(void)printf("* rnd ");
+	(void)printf("* rnd");
 	if (rp.hard)
-		printf("bytesonkey=%d, ", rp.bytesonkey);
-	if (rp.cprng) {
-		cprng_strong_t cprng;
-		if (!KVM_READ(rp.cprng, &cprng, sizeof(cprng))) {
-			dprintf("can't read rnd cprng at %p for pid %d",
-			    rp.cprng, Pid);
-		} else {
-			char buf[128];
-			snprintb(buf, sizeof(buf), CPRNG_FMT, cprng.flags);
-			(void)printf("name=%s, serial=%d%s, flags=%s\n",
-			    cprng.name, cprng.entropy_serial,
-			    cprng.reseed_pending ?  ", reseed" : "", buf);
-			return 0;
-		}
-	}
+		printf(" bytesonkey=%d", rp.bytesonkey);
 	printf("\n");
 	return 0;
 }

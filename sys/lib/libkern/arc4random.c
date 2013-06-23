@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.32 2012/04/10 14:02:28 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.33 2013/06/23 02:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -43,38 +43,38 @@
 
 #include <sys/cdefs.h>
 
-#ifdef _KERNEL
-#define NRND 1
-#else
-#define NRND 0
-#endif
-
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/param.h>
-#ifdef _KERNEL
-#include <sys/kernel.h>
-#endif
-#include <sys/systm.h>
-
-#ifdef _KERNEL
-#include <sys/mutex.h>
+#include <sys/types.h>
 #include <sys/rngtest.h>
-#else
-#define mutex_spin_enter(x) ;
-#define mutex_spin_exit(x) ;
-#define mutex_init(x, y, z) ;
-#endif
+#include <sys/systm.h>
+#include <sys/time.h>
+
+#ifdef _STANDALONE
+/*
+ * XXX This is a load of bollocks.  Standalone has no entropy source.
+ * This module should be removed from libkern once we confirm nobody is
+ * using it.
+ */
+#define	time_uptime	1
+typedef struct kmutex	*kmutex_t;
+#define	MUTEX_DEFAULT	0
+#define	IPL_VM		0
+static void mutex_init(kmutex_t *m, int t, int i) {}
+static void mutex_spin_enter(kmutex_t *m) {}
+static void mutex_spin_exit(kmutex_t *m) {}
+typedef void rndsink_callback_t(void *, const void *, size_t);
+struct rndsink;
+static struct rndsink *rndsink_create(size_t n, rndsink_callback_t c, void *a)
+  { return NULL; }
+static bool rndsink_request(struct rndsink *s, void *b, size_t n)
+  { return true; }
+#else  /* !_STANDALONE */
+#include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/rndsink.h>
+#endif /* _STANDALONE */
 
 #include <lib/libkern/libkern.h>
-
-#if NRND > 0
-#include <sys/rnd.h>
-#include <dev/rnd_private.h>
-
-static rndsink_t	rs;
-
-#endif
 
 /*
  * The best known attack that distinguishes RC4 output from a random
@@ -97,9 +97,8 @@ static rndsink_t	rs;
 #define	ARC4_RESEED_SECONDS	300
 #define	ARC4_KEYBYTES		16 /* 128 bit key */
 
-#ifdef _STANDALONE
-#define	time_uptime	1	/* XXX ugly! */
-#endif /* _STANDALONE */
+static kmutex_t	arc4_mtx;
+static struct rndsink *arc4_rndsink;
 
 static u_int8_t arc4_i, arc4_j;
 static int arc4_initialized = 0;
@@ -107,10 +106,10 @@ static int arc4_numbytes = 0;
 static u_int8_t arc4_sbox[256];
 static time_t arc4_nextreseed;
 
-#ifdef _KERNEL
-kmutex_t	arc4_mtx;
-#endif
-
+static rndsink_callback_t arc4_rndsink_callback;
+static void arc4_randrekey(void);
+static void arc4_randrekey_from(const uint8_t[ARC4_KEYBYTES], bool);
+static void arc4_init(void);
 static inline u_int8_t arc4_randbyte(void);
 static inline void arc4randbytes_unlocked(void *, size_t);
 void _arc4randbytes(void *, size_t);
@@ -126,133 +125,75 @@ arc4_swap(u_int8_t *a, u_int8_t *b)
 	*b = c;
 }
 
+static void
+arc4_rndsink_callback(void *context __unused, const void *seed, size_t bytes)
+{
+
+	KASSERT(bytes == ARC4_KEYBYTES);
+	arc4_randrekey_from(seed, true);
+}
+
 /*
- * Stir our S-box.
+ * Stir our S-box with whatever we can get from the system entropy pool
+ * now.
  */
 static void
-arc4_randrekey(void *arg)
+arc4_randrekey(void)
 {
-	u_int8_t key[256];
-	int n, ask_for_more = 0;
-#ifdef _KERNEL
-#ifdef DIAGNOSTIC
-#if 0	/* XXX rngtest_t is too large and could cause stack overflow */
-	rngtest_t rt;
-#endif
-#endif
-#endif
-#if NRND > 0
-	static int callback_pending;
-	int r;
-#endif
+	uint8_t seed[ARC4_KEYBYTES];
+
+	const bool full_entropy = rndsink_request(arc4_rndsink, seed,
+	    sizeof(seed));
+	arc4_randrekey_from(seed, full_entropy);
+	explicit_bzero(seed, sizeof(seed));
+}
+
+/*
+ * Stir our S-box with what's in seed.
+ */
+static void
+arc4_randrekey_from(const uint8_t seed[ARC4_KEYBYTES], bool full_entropy)
+{
+	uint8_t key[256];
+	size_t n;
+
+	mutex_spin_enter(&arc4_mtx);
+
+	(void)memcpy(key, seed, ARC4_KEYBYTES);
+
+	/* Rekey the arc4 state.  */
+	for (n = ARC4_KEYBYTES; n < sizeof(key); n++)
+		key[n] = key[n % ARC4_KEYBYTES];
+
+	for (n = 0; n < 256; n++) {
+		arc4_j = (arc4_j + arc4_sbox[n] + key[n]) % 256;
+		arc4_swap(&arc4_sbox[n], &arc4_sbox[arc4_j]);
+	}
+	arc4_i = arc4_j;
+
+	explicit_bzero(key, sizeof(key));
 
 	/*
-	 * The first time through, we must take what we can get,
-	 * so schedule ourselves for callback no matter what.
+	 * Throw away the first N words of output, as suggested in the
+	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4" by
+	 * Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	if (__predict_true(arc4_initialized)) {
-		mutex_spin_enter(&arc4_mtx);
-	}
-#if NRND > 0	/* XXX without rnd, we will key from the stack, ouch! */
-	else {
-		ask_for_more = 1;
-		r = rnd_extract_data(key, ARC4_KEYBYTES, RND_EXTRACT_ANY);
-		goto got_entropy;
-	}
+	for (n = 0; n < 256 * 4; n++)
+		arc4_randbyte();
 
-	if (arg == NULL) {
-		if (callback_pending) {
-			if (arc4_numbytes > ARC4_HARDMAX) {
-				printf("arc4random: WARNING, hit 2^29 bytes, "
-				    "forcibly rekeying.\n");
-				r = rnd_extract_data(key, ARC4_KEYBYTES,
-				    RND_EXTRACT_ANY);
-				mutex_spin_enter(&rs.mtx);
-				rndsink_detach(&rs);
-				mutex_spin_exit(&rs.mtx);
-				callback_pending = 0;
-				goto got_entropy;
-			} else {
-				mutex_spin_exit(&arc4_mtx);
-				return;
-			}
-		}
-		r = rnd_extract_data(key, ARC4_KEYBYTES, RND_EXTRACT_GOOD);
-		if (r < ARC4_KEYBYTES) {
-			ask_for_more = 1;
-		}
-	} else {
-		ask_for_more = 0;
-		callback_pending = 0;
-		if (rs.len != ARC4_KEYBYTES) {
-			panic("arc4_randrekey: rekey callback bad length");
-		}
-		memcpy(key, rs.data, rs.len);
-		memset(rs.data, 0, rs.len);
-	}
-
-got_entropy:
-
-	if (!ask_for_more) {
-		callback_pending = 0;
-	} else if (!callback_pending) {
-		callback_pending = 1;
-		mutex_spin_enter(&rs.mtx);
-		strlcpy(rs.name, "arc4random", sizeof(rs.name));
-		rs.cb = arc4_randrekey;
-		rs.arg = &rs;
-		rs.len = ARC4_KEYBYTES;
-		rndsink_attach(&rs);
-		mutex_spin_exit(&rs.mtx);
-	}
-#endif
 	/*
-	 * If it's the first time, or we got a good key, actually rekey.
+	 * Reset for next reseed cycle.  If we don't have full entropy,
+	 * caller has scheduled a reseed already.
 	 */
-	if (!ask_for_more || !arc4_initialized) {
-		for (n = ARC4_KEYBYTES; n < sizeof(key); n++)
-				key[n] = key[n % ARC4_KEYBYTES];
+	arc4_nextreseed = time_uptime +
+	    (full_entropy? ARC4_RESEED_SECONDS : 0);
+	arc4_numbytes = 0;
 
-		for (n = 0; n < 256; n++) {
-			arc4_j = (arc4_j + arc4_sbox[n] + key[n]) % 256;
-			arc4_swap(&arc4_sbox[n], &arc4_sbox[arc4_j]);
-		}
-		arc4_i = arc4_j;
+#if 0				/* XXX */
+	arc4_rngtest();
+#endif
 
-		memset(key, 0, sizeof(key));
-		/*
-		 * Throw away the first N words of output, as suggested in the
-		 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
-		 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
-		 */
-		for (n = 0; n < 256 * 4; n++)
-			arc4_randbyte();
-
-		/* Reset for next reseed cycle. */
-		arc4_nextreseed = time_uptime + ARC4_RESEED_SECONDS;
-		arc4_numbytes = 0;
-#ifdef _KERNEL
-#ifdef DIAGNOSTIC
-#if 0	/* XXX rngtest_t is too large and could cause stack overflow */
-		/*
-		 * Perform the FIPS 140-2 statistical RNG test; warn if our
-		 * output has such poor quality as to fail the test.
-		 */
-		arc4randbytes_unlocked(rt.rt_b, sizeof(rt.rt_b));
-		strlcpy(rt.rt_name, "arc4random", sizeof(rt.rt_name));
-		if (rngtest(&rt)) {
-			/* rngtest will scream to the console. */
-			arc4_nextreseed = time_uptime;
-			arc4_numbytes = ARC4_MAXBYTES;
-			/* XXX should keep old context around, *NOT* use new */
-		}
-#endif
-#endif
-#endif
-	}
-	if (__predict_true(arc4_initialized)) {
-		mutex_spin_exit(&arc4_mtx);
-	}
+	mutex_spin_exit(&arc4_mtx);
 }
 
 /*
@@ -264,12 +205,14 @@ arc4_init(void)
 	int n;
 
 	mutex_init(&arc4_mtx, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&rs.mtx, MUTEX_DEFAULT, IPL_VM);
+	arc4_rndsink = rndsink_create(ARC4_KEYBYTES, &arc4_rndsink_callback,
+	    NULL);
+
 	arc4_i = arc4_j = 0;
 	for (n = 0; n < 256; n++)
 		arc4_sbox[n] = (u_int8_t) n;
 
-	arc4_randrekey(NULL);
+	arc4_randrekey();
 	arc4_initialized = 1;
 }
 
@@ -316,7 +259,7 @@ _arc4randbytes(void *p, size_t len)
 	mutex_spin_exit(&arc4_mtx);
 	if ((arc4_numbytes > ARC4_MAXBYTES) ||
 	    (time_uptime > arc4_nextreseed)) {
-		arc4_randrekey(NULL);
+		arc4_randrekey();
 	}
 }
 
