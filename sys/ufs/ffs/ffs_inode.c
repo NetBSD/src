@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.114 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.115 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.114 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.115 2013/06/23 07:28:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -261,12 +261,12 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 */
 
 	if (osize < length) {
-		if (lblkno(fs, osize) < UFS_NDADDR &&
-		    lblkno(fs, osize) != lblkno(fs, length) &&
-		    blkroundup(fs, osize) != osize) {
+		if (ffs_lblkno(fs, osize) < UFS_NDADDR &&
+		    ffs_lblkno(fs, osize) != ffs_lblkno(fs, length) &&
+		    ffs_blkroundup(fs, osize) != osize) {
 			off_t eob;
 
-			eob = blkroundup(fs, osize);
+			eob = ffs_blkroundup(fs, osize);
 			uvm_vnp_setwritesize(ovp, eob);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
 			    cred, aflag);
@@ -321,9 +321,9 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			if (error)
 				return error;
 		}
-		lbn = lblkno(fs, length);
+		lbn = ffs_lblkno(fs, length);
 		size = ffs_blksize(fs, oip, lbn);
-		eoz = MIN(MAX(lblktosize(fs, lbn) + size, round_page(pgoffset)),
+		eoz = MIN(MAX(ffs_lblktosize(fs, lbn) + size, round_page(pgoffset)),
 		    osize);
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
 		    UBC_UNMAP_FLAG(ovp));
@@ -348,7 +348,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->fs_bsize - 1) - 1;
+	lastblock = ffs_lblkno(fs, length + fs->fs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - UFS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - FFS_NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - FFS_NINDIR(fs) * FFS_NINDIR(fs);
@@ -490,7 +490,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			 * the old block # plus the number of frags
 			 * required for the storage we're keeping.
 			 */
-			bn += numfrags(fs, newspace);
+			bn += ffs_numfrags(fs, newspace);
 			if ((oip->i_ump->um_mountp->mnt_wapbl) &&
 			    (ovp->v_type != VREG)) {
 				UFS_WAPBL_REGISTER_DEALLOCATION(

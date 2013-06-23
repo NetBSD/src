@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.52 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: pass5.c,v 1.53 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.52 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.53 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ pass5(void)
 					if (preen)
 						pwarn("%sING CLUSTER MAPS\n",
 						    doit);
-					ncgsize = fragroundup(fs, CGSIZE(fs));
+					ncgsize = ffs_fragroundup(fs, CGSIZE(fs));
 					ncg = realloc(cgrp, ncgsize);
 					if (ncg == NULL)
 						errexit(
