@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.34 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.35 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -362,8 +362,8 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  * Turn file system block numbers into disk block addresses.
  * This maps file system blocks to device size blocks.
  */
-#define fsbtodb(fs, b)	((b) << (fs)->e2fs_fsbtodb)
-#define dbtofsb(fs, b)	((b) >> (fs)->e2fs_fsbtodb)
+#define EXT2_FSBTODB(fs, b)	((b) << (fs)->e2fs_fsbtodb)
+#define EXT2_DBTOFSB(fs, b)	((b) >> (fs)->e2fs_fsbtodb)
 
 /*
  * Macros for handling inode numbers:

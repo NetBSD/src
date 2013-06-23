@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.61 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.62 2013/06/23 02:06:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -138,7 +138,7 @@ struct fs {
 typedef uint32_t	ino32_t;
 
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) FFS_FSBTODB(fs, indp)
 #endif
 #ifndef UFS_NINDIR
 #define UFS_NINDIR FFS_NINDIR
