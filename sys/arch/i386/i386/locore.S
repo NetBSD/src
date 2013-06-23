@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.105 2013/06/23 03:16:46 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.106 2013/06/23 09:00:36 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.105 2013/06/23 03:16:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.106 2013/06/23 09:00:36 uebayasi Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -176,20 +176,20 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.105 2013/06/23 03:16:46 uebayasi Exp $"
  */
 .section __xen_guest
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
-	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
-	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
-	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-	.ascii  ",HYPERCALL_PAGE=0x00000101"
+	.ascii	",VIRT_BASE=0xc0000000" /* KERNBASE */
+	.ascii	",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
+	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
+	.ascii	",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
 #ifdef PAE
-	.ascii  ",PAE=yes[extended-cr3]"
+	.ascii	",PAE=yes[extended-cr3]"
 #endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
-#endif
+#endif	/* XEN */
 
 /*
  * Initialization
@@ -221,11 +221,11 @@ END(local_apic)
 	.type	_C_LABEL(lapic_id), @object
 LABEL(lapic_id)
 	.long	0x00000000
-	.space  LAPIC_TPRI-(LAPIC_ID+4)
+	.space	LAPIC_TPRI-(LAPIC_ID+4)
 END(lapic_id)
 	.type	_C_LABEL(lapic_tpr), @object
 LABEL(lapic_tpr)
-	.space  LAPIC_PPRI-LAPIC_TPRI
+	.space	LAPIC_PPRI-LAPIC_TPRI
 END(lapic_tpr)
 	.type	_C_LABEL(lapic_ppr), @object
 _C_LABEL(lapic_ppr):
@@ -529,7 +529,7 @@ try586:	/* Use the `cpuid' instruction. */
  *	eax = pte (page frame | control | status)
  *	ebx = page table address
  *	ecx = number of pages to map
- * 
+ *
  * For PAE, each entry is 8 bytes long: we must set the 4 upper bytes to 0.
  * This is done by the first instruction of fillkpt. In the non-PAE case, this
  * instruction just clears the page table entry.
@@ -537,9 +537,9 @@ try586:	/* Use the `cpuid' instruction. */
 
 #define fillkpt	\
 1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* clear bits */	\
-	movl	%eax,(%ebx)		;	/* store phys addr */   \
-	addl	$PDE_SIZE,%ebx		;	/* next pte/pde */      \
-	addl	$PAGE_SIZE,%eax		;	/* next phys page */    \
+	movl	%eax,(%ebx)		;	/* store phys addr */	\
+	addl	$PDE_SIZE,%ebx		;	/* next pte/pde */	\
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			;
 
 	/* Find end of kernel image. */
@@ -730,7 +730,7 @@ begin:
 	movl	%eax,_C_LABEL(lwp0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
-	xorl	%ebp,%ebp               # mark end of frames
+	xorl	%ebp,%ebp		# mark end of frames
 
 #if defined(MULTIBOOT)
 	/* It is now safe to parse the Multiboot information structure
@@ -784,7 +784,7 @@ begin:
 	movl	%esp, %ebx		# save start of available space
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
-	/* Clear BSS first so that there are no surprises... */
+	/* Clear BSS. */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
@@ -827,7 +827,7 @@ begin:
 
 	/* Set up bootstrap stack. */
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	xorl	%ebp,%ebp               # mark end of frames
+	xorl	%ebp,%ebp		# mark end of frames
 
 	addl	$USPACE, %esi
 	subl	$KERNBASE, %esi		#init386 want a physical address
@@ -839,7 +839,7 @@ begin:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
-#endif /* defined(XEN) */
+#endif /* XEN */
 END(start)
 
 #if defined(XEN)
@@ -974,7 +974,7 @@ ENTRY(dumpsys)
 END(dumpsys)
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct *newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -1210,13 +1210,13 @@ syscall1:
 .Lsyscall_resume:
 	movl	%ebx,%eax	# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax   # any non-masked bits left?
+	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
 	jz	17f
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
-17:	movl	%ebx, CPUVAR(ILEVEL)    #restore cpl
+17:	movl	%ebx, CPUVAR(ILEVEL)	#restore cpl
 	jmp	.Lsyscall_checkast
 14:
 #endif /* XEN */
