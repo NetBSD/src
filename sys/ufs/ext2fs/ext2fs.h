@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.35 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.36 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -392,13 +392,13 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  */
 #define ext2_blkoff(fs, loc)	/* calculates (loc % fs->e2fs_bsize) */ \
 	((loc) & (fs)->e2fs_qbmask)
-#define lblktosize(fs, blk)	/* calculates (blk * fs->e2fs_bsize) */ \
+#define ext2_lblktosize(fs, blk) /* calculates (blk * fs->e2fs_bsize) */ \
 	((blk) << (fs)->e2fs_bshift)
-#define lblkno(fs, loc)		/* calculates (loc / fs->e2fs_bsize) */ \
+#define ext2_lblkno(fs, loc)	/* calculates (loc / fs->e2fs_bsize) */ \
 	((loc) >> (fs)->e2fs_bshift)
-#define blkroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
+#define ext2_blkroundup(fs, size) /* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
-#define fragroundup(fs, size)	/* calculates roundup(size, fs->e2fs_bsize) */ \
+#define ext2_fragroundup(fs, size) /* calculates roundup(size, fs->e2fs_bsize) */ \
 	(((size) + (fs)->e2fs_qbmask) & (fs)->e2fs_bmask)
 /*
  * Determine the number of available frags given a

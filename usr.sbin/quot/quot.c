@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.31 2013/06/19 17:51:27 dholland Exp $	*/
+/*	$NetBSD: quot.c,v 1.32 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.31 2013/06/19 17:51:27 dholland Exp $");
+__RCSID("$NetBSD: quot.c,v 1.32 2013/06/23 07:28:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,8 +150,8 @@ virtualblocks(struct fs *super, union dinode *dp)
 	
 	sz = DIP(super, dp, size);
 #ifdef	COMPAT
-	if (lblkno(super, sz) >= UFS_NDADDR) {
-		nblk = blkroundup(super, sz);
+	if (ffs_lblkno(super, sz) >= UFS_NDADDR) {
+		nblk = ffs_blkroundup(super, sz);
 		if (sz == nblk)
 			nblk += super->fs_bsize;
 	}
@@ -159,9 +159,9 @@ virtualblocks(struct fs *super, union dinode *dp)
 	return sz / 1024;
 #else	/* COMPAT */
 	
-	if (lblkno(super, sz) >= UFS_NDADDR) {
-		nblk = blkroundup(super, sz);
-		sz = lblkno(super, nblk);
+	if (ffs_lblkno(super, sz) >= UFS_NDADDR) {
+		nblk = ffs_blkroundup(super, sz);
+		sz = ffs_lblkno(super, nblk);
 		sz = howmany(sz - UFS_NDADDR, FFS_NINDIR(super));
 		while (sz > 0) {
 			nblk += sz * super->fs_bsize;
@@ -169,7 +169,7 @@ virtualblocks(struct fs *super, union dinode *dp)
 			sz = howmany(sz - 1, FFS_NINDIR(super));
 		}
 	} else
-		nblk = fragroundup(super, sz);
+		nblk = ffs_fragroundup(super, sz);
 	
 	return nblk / DEV_BSIZE;
 #endif	/* COMPAT */

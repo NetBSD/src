@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.36 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.37 2013/06/23 07:28:36 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.36 2013/06/23 02:06:05 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.37 2013/06/23 07:28:36 dholland Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -138,9 +138,9 @@ static unsigned char *iflags;
 
 /* resize_ffs works directly on dinodes, adapt blksize() */
 #define dblksize(fs, dip, lbn, filesize) \
-	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= ffs_lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
-	    : (fragroundup(fs, ffs_blkoff(fs, (filesize)))))
+	    : (ffs_fragroundup(fs, ffs_blkoff(fs, (filesize)))))
 
 
 /*
@@ -966,7 +966,7 @@ grow(void)
 		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
 	}
 	/* Find out how big the csum area is, and realloc csums if bigger. */
-	newsb->fs_cssize = fragroundup(newsb,
+	newsb->fs_cssize = ffs_fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
 	if (newsb->fs_cssize > oldsb->fs_cssize)
 		csums = nfrealloc(csums, newsb->fs_cssize, "new cg summary");
@@ -1054,10 +1054,10 @@ markblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o)
 	filesize = DIP(di,di_size);
 	if (o >= filesize)
 		return (0);
-	sz = dblksize(newsb, di, lblkno(newsb, o), filesize);
+	sz = dblksize(newsb, di, ffs_lblkno(newsb, o), filesize);
 	nb = (sz > filesize - o) ? filesize - o : sz;
 	if (bn)
-		(*fn) (bn, numfrags(newsb, sz), nb, MDB_DATA);
+		(*fn) (bn, ffs_numfrags(newsb, sz), nb, MDB_DATA);
 	return (sz);
 }
 /* Helper function - handles an indirect block.  Makes the
@@ -1720,7 +1720,7 @@ shrink(void)
 	/* Initialize for block motion. */
 	blkmove_init();
 	/* Update csum size, then fix up for the new size */
-	newsb->fs_cssize = fragroundup(newsb,
+	newsb->fs_cssize = ffs_fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
 	csum_fixup();
 	/* Evict data from any cgs being wholly eliminated */
