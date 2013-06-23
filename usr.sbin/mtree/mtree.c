@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37.8.2 2013/02/25 00:30:46 tls Exp $	*/
+/*	$NetBSD: mtree.c,v 1.37.8.3 2013/06/23 06:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37.8.2 2013/02/25 00:30:46 tls Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.37.8.3 2013/06/23 06:29:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: mtree.c,v 1.37.8.2 2013/02/25 00:30:46 tls Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	bflag, cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
-    	nflag, qflag, rflag, sflag, tflag, uflag, Uflag, wflag;
+int	bflag, dflag, eflag, iflag, jflag, lflag, mflag, nflag, qflag, rflag,
+	sflag, tflag, uflag;
 char	fullpath[MAXPATHLEN];
 
 static struct {
@@ -79,11 +79,13 @@ main(int argc, char **argv)
 {
 	int	ch, status;
 	unsigned int	i;
+	int	cflag, Cflag, Dflag, Uflag, wflag;
 	char	*dir, *p;
 	FILE	*spec1, *spec2;
 
 	setprogname(argv[0]);
 
+	cflag = Cflag = Dflag = Uflag = wflag = 0;
 	dir = NULL;
 	init_excludes();
 	spec1 = stdin;

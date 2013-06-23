@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.48.2.1 2013/02/25 00:30:44 tls Exp $	*/
+/*	$NetBSD: ffs.c,v 1.48.2.2 2013/06/23 06:29:05 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.48.2.1 2013/02/25 00:30:44 tls Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.48.2.2 2013/06/23 06:29:05 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -575,12 +575,12 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 
 #define	ADDDIRENT(e) do {						\
 	tmpdir.d_namlen = strlen((e));					\
-	this = DIRSIZ(0, &tmpdir, 0);					\
+	this = UFS_DIRSIZ(0, &tmpdir, 0);				\
 	if (debug & DEBUG_FS_SIZE_DIR_ADD_DIRENT)			\
 		printf("ADDDIRENT: was: %s (%d) this %d cur %d\n",	\
 		    e, tmpdir.d_namlen, this, curdirsize);		\
-	if (this + curdirsize > roundup(curdirsize, DIRBLKSIZ))		\
-		curdirsize = roundup(curdirsize, DIRBLKSIZ);		\
+	if (this + curdirsize > roundup(curdirsize, UFS_DIRBLKSIZ))	\
+		curdirsize = roundup(curdirsize, UFS_DIRBLKSIZ);	\
 	curdirsize += this;						\
 	if (debug & DEBUG_FS_SIZE_DIR_ADD_DIRENT)			\
 		printf("ADDDIRENT: now: %s (%d) this %d cur %d\n",	\
@@ -1006,13 +1006,13 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
 	strcpy(de.d_name, name);
-	reclen = DIRSIZ(0, &de, needswap);
+	reclen = UFS_DIRSIZ(0, &de, needswap);
 	de.d_reclen = ufs_rw16(reclen, needswap);
 
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
 	llen = 0;
 	if (dp != NULL)
-		llen = DIRSIZ(0, dp, needswap);
+		llen = UFS_DIRSIZ(0, dp, needswap);
 
 	if (debug & DEBUG_FS_MAKE_DIRBUF)
 		printf(
@@ -1022,15 +1022,15 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		    ufs_rw32(de.d_fileno, needswap), de.d_type, reclen,
 		    de.d_namlen, de.d_name);
 
-	if (reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
+	if (reclen + dbuf->cur + llen > roundup(dbuf->size, UFS_DIRBLKSIZ)) {
 		if (debug & DEBUG_FS_MAKE_DIRBUF)
 			printf("ffs_make_dirbuf: growing buf to %d\n",
-			    dbuf->size + DIRBLKSIZ);
-		newbuf = erealloc(dbuf->buf, dbuf->size + DIRBLKSIZ);
+			    dbuf->size + UFS_DIRBLKSIZ);
+		newbuf = erealloc(dbuf->buf, dbuf->size + UFS_DIRBLKSIZ);
 		dbuf->buf = newbuf;
-		dbuf->size += DIRBLKSIZ;
-		memset(dbuf->buf + dbuf->size - DIRBLKSIZ, 0, DIRBLKSIZ);
-		dbuf->cur = dbuf->size - DIRBLKSIZ;
+		dbuf->size += UFS_DIRBLKSIZ;
+		memset(dbuf->buf + dbuf->size - UFS_DIRBLKSIZ, 0, UFS_DIRBLKSIZ);
+		dbuf->cur = dbuf->size - UFS_DIRBLKSIZ;
 	} else if (dp) {			/* shrink end of previous */
 		dp->d_reclen = ufs_rw16(llen,needswap);
 		dbuf->cur += llen;
@@ -1103,19 +1103,19 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	 */
 	initediblk = ufs_rw32(cgp->cg_initediblk, fsopts->needswap);
 	if (ffs_opts->version == 2 &&
-	    (uint32_t)(cgino + INOPB(fs)) > initediblk &&
+	    (uint32_t)(cgino + FFS_INOPB(fs)) > initediblk &&
 	    initediblk < ufs_rw32(cgp->cg_niblk, fsopts->needswap)) {
 		memset(buf, 0, fs->fs_bsize);
 		dip = (struct ufs2_dinode *)buf;
 		srandom(time(NULL));
-		for (i = 0; i < INOPB(fs); i++) {
+		for (i = 0; i < FFS_INOPB(fs); i++) {
 			dip->di_gen = random() / 2 + 1;
 			dip++;
 		}
 		ffs_wtfs(fsbtodb(fs, ino_to_fsba(fs,
 				  cg * fs->fs_ipg + initediblk)),
 		    fs->fs_bsize, buf, fsopts);
-		initediblk += INOPB(fs);
+		initediblk += FFS_INOPB(fs);
 		cgp->cg_initediblk = ufs_rw32(initediblk, fsopts->needswap);
 	}
 

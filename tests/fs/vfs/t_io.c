@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.10 2012/03/20 18:20:49 njoly Exp $	*/
+/*	$NetBSD: t_io.c,v 1.10.2.1 2013/06/23 06:28:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -122,11 +122,11 @@ overwritebody(const atf_tc_t *tc, off_t count, bool dotrunc)
 
 	REQUIRE_LIBC(buf = malloc(count), NULL);
 	FSTEST_ENTER();
-	RL(fd = rump_sys_open("testi", O_CREAT | O_RDWR));
+	RL(fd = rump_sys_open("testi", O_CREAT | O_RDWR, 0666));
 	ATF_REQUIRE_EQ(rump_sys_write(fd, buf, count), count);
 	RL(rump_sys_close(fd));
 
-	RL(fd = rump_sys_open("testi", O_CREAT | O_RDWR));
+	RL(fd = rump_sys_open("testi", O_RDWR));
 	if (dotrunc)
 		RL(rump_sys_ftruncate(fd, 0));
 	ATF_REQUIRE_EQ(rump_sys_write(fd, buf, count), count);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11.12.1 2013/02/25 00:28:04 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.11.12.2 2013/06/23 06:28:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -32,17 +32,12 @@ void	showpartition(FILE *, struct disklabel *, int, int);
 void	interact(struct disklabel *, int);
 int	list_fs_types(void);
 
+extern	u_int	maxpartitions;
 extern	char	specname[];
 extern	int	 Cflag;
 
 #ifdef HAVE_NBTOOL_CONFIG_H
-static int
-dk_ioctl(int f, void *arg)
-{
-	errno = ENOTTY;
-	return -1;
-}
-# define dk_ioctl(f, cmd, arg) dk_ioctl(f, arg)
+#define	dk_ioctl(f, cmd, arg)	(errno = ENOTTY, -1)
 #else
-# define dk_ioctl(f, cmd, arg) ioctl(f, cmd, arg)
-#endif /* HAVE_NBTOOL_CONFIG_H */
+int	dk_ioctl(int, u_long cmd, void *);
+#endif

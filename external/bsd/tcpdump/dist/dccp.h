@@ -1,4 +1,4 @@
-/* @(#) Header: /tcpdump/master/tcpdump/dccp.h,v 1.5 2006-11-02 09:05:23 hannes Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/dccp.h,v 1.5 2006-11-02 09:05:23 hannes Exp  (LBL) */
 /*
  * Copyright (C) Arnaldo Carvalho de Melo 2004
  * Copyright (C) Ian McDonald 2005 <iam4@cs.waikato.ac.nz>

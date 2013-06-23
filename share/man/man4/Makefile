@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.591.2.2 2013/02/25 00:28:12 tls Exp $
+#	$NetBSD: Makefile,v 1.591.2.3 2013/06/23 06:28:53 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -8,7 +8,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	aibs.4 alc.4 ale.4 alipm.4 altmem.4 altq.4 amdpm.4 amdtemp.4 amhphy.4 \
 	amr.4 aps.4 \
 	an.4 arcmsr.4 aria.4 artsata.4 ata.4 atalk.4 ataraid.4 \
-	ath.4 atphy.4 atppc.4 attimer.4 atw.4 \
+	ath.4 athn.4 atphy.4 atppc.4 attimer.4 atw.4 \
 	auacer.4 audio.4 audiocs.4 auich.4 \
 	auixp.4 autri.4 auvia.4 awi.4 azalia.4 \
 	battery_pmu.4 bba.4 bce.4 bcsp.4 be.4 bge.4 bnx.4 bha.4 \
@@ -17,12 +17,12 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	btmagic.4 btms.4 btsco.4 btuart.4 \
 	bwi.4 \
 	cac.4 cardbus.4 carp.4 cas.4 ccd.4 cd.4 \
-	cec.4 cgd.4 cfb.4 ch.4 chipsfb.4 ciphy.4 ciss.4 clcs.4 clct.4 clnp.4 \
-	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
+	cec.4 cgd.4 cfb.4 ch.4 chipsfb.4 ciphy.4 ciss.4 clcs.4 clct.4 \
+	clockctl.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cuda.4 cypide.4 \
 	ddb.4 ddc.4 de.4 dge.4 dk.4 dm.4 dmoverio.4 \
 	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 dtv.4 dtviic.4 \
-	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
+	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 \
 	esa.4 esiop.4 esm.4 eso.4 et.4 etherip.4 etphy.4 exphy.4 \
 	fast_ipsec.4 fd.4 filemon.4 finsio.4 flash.4 fpa.4 fms.4 fss.4 fujbp.4 fxp.4 \
 	gcscaudio.4 gem.4 genfb.4 gentbi.4 geodeide.4 \
@@ -33,7 +33,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	ifmedia.4 igphy.4 igsfb.4 iha.4 ihphy.4 iic.4 inet.4 ikphy.4 inphy.4 \
 	intersil7170.4 \
 	ioasic.4 ioat.4 iop.4 iophy.4 iopsp.4 ip.4 ipkdb.4 ipmi.4 ipw.4 \
-	irmce.4 iso.4 isp.4 isv.4 itesio.4 iteide.4 iwi.4 iwn.4 ixg.4 ixpide.4 \
+	irmce.4 isp.4 isv.4 itesio.4 iteide.4 iwi.4 iwn.4 ixg.4 ixpide.4 \
 	jme.4 jmide.4 joy.4 \
 	kloader.4 kse.4 ksyms.4 kttcp.4 \
 	lc.4 ld.4 lii.4 lo.4 lxtphy.4 \
@@ -58,7 +58,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	st.4 ste.4 stge.4 sti.4 stpcide.4 sv.4 strip.4 \
 	svwsata.4 swsensor.4 swwdog.4 sysmon.4 \
 	tap.4 tc.4 tcds.4 tcp.4 tdvfb.4 termios.4 tfb.4 thinkpad.4 \
-	ti.4 tl.4 tlp.4 tlphy.4 tp.4 tpm.4 tprof.4 tr.4 tra.4 \
+	ti.4 tl.4 tlp.4 tlphy.4 tpm.4 tprof.4 tr.4 tra.4 \
 	trm.4 tty.4 tun.4 tqphy.4 twa.4 twe.4 txp.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 unix.4 userconf.4 \
 	vald.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 vioif.4 viomb.4 virt.4 \
@@ -121,7 +121,8 @@ MAN+=	sc.4 si.4
 MAN+=	fwohci.4 fwip.4 sbp.4
 
 # machine-independent I2C devices
-MAN+=	dbcool.4 g760a.4 lmtemp.4 sdtemp.4 smscmon.4 spdmem.4
+MAN+=	dbcool.4 g760a.4 lmtemp.4 mcp980x.4 sdtemp.4 smscmon.4 spdmem.4 \
+	tps65217pmic.4
 
 # machine-independent SPI devices
 MAN +=	m25p.4 tm121temp.4

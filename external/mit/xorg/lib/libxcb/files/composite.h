@@ -200,7 +200,7 @@ typedef struct xcb_composite_release_overlay_window_request_t {
 } xcb_composite_release_overlay_window_request_t;
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -225,7 +225,7 @@ xcb_composite_query_version (xcb_connection_t *c  /**< */,
                              uint32_t          client_minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -284,7 +284,7 @@ xcb_composite_query_version_reply (xcb_connection_t                      *c  /**
                                    xcb_generic_error_t                  **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -312,7 +312,7 @@ xcb_composite_redirect_window_checked (xcb_connection_t *c  /**< */,
                                        uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -337,7 +337,7 @@ xcb_composite_redirect_window (xcb_connection_t *c  /**< */,
                                uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -365,7 +365,7 @@ xcb_composite_redirect_subwindows_checked (xcb_connection_t *c  /**< */,
                                            uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -390,7 +390,7 @@ xcb_composite_redirect_subwindows (xcb_connection_t *c  /**< */,
                                    uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -418,7 +418,7 @@ xcb_composite_unredirect_window_checked (xcb_connection_t *c  /**< */,
                                          uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -443,7 +443,7 @@ xcb_composite_unredirect_window (xcb_connection_t *c  /**< */,
                                  uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -471,7 +471,7 @@ xcb_composite_unredirect_subwindows_checked (xcb_connection_t *c  /**< */,
                                              uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -496,7 +496,7 @@ xcb_composite_unredirect_subwindows (xcb_connection_t *c  /**< */,
                                      uint8_t           update  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -524,7 +524,7 @@ xcb_composite_create_region_from_border_clip_checked (xcb_connection_t    *c  /*
                                                       xcb_window_t         window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -549,7 +549,7 @@ xcb_composite_create_region_from_border_clip (xcb_connection_t    *c  /**< */,
                                               xcb_window_t         window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -577,7 +577,7 @@ xcb_composite_name_window_pixmap_checked (xcb_connection_t *c  /**< */,
                                           xcb_pixmap_t      pixmap  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -602,7 +602,7 @@ xcb_composite_name_window_pixmap (xcb_connection_t *c  /**< */,
                                   xcb_pixmap_t      pixmap  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -625,7 +625,7 @@ xcb_composite_get_overlay_window (xcb_connection_t *c  /**< */,
                                   xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -682,7 +682,7 @@ xcb_composite_get_overlay_window_reply (xcb_connection_t                        
                                         xcb_generic_error_t                       **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -708,7 +708,7 @@ xcb_composite_release_overlay_window_checked (xcb_connection_t *c  /**< */,
                                               xcb_window_t      window  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

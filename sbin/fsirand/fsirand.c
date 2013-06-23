@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.29.8.1 2013/06/23 06:28:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.29 2011/08/27 17:36:05 joerg Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.29.8.1 2013/06/23 06:28:51 tls Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ getsblock(int fd, const char *name, struct fs *fs)
 static void
 fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 {
-	int inopb = INOPB(fs);
+	int inopb = FFS_INOPB(fs);
 	int size;
 	caddr_t buf;
 	struct ufs1_dinode *dp1 = NULL;

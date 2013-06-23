@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.8.1 2013/02/25 00:27:41 tls Exp $
+#	$NetBSD: Makefile,v 1.14.8.2 2013/06/23 06:28:45 tls Exp $
 
 NOLINT=	1	# defined
 
@@ -17,13 +17,10 @@ SRCS=					\
 	pixman-combine32.c		\
 	pixman-combine-float.c		\
 	pixman-conical-gradient.c	\
-	pixman-x86.c			\
-	pixman-mips.c			\
-	pixman-arm.c			\
-	pixman-ppc.c			\
 	pixman-edge.c			\
 	pixman-edge-accessors.c		\
 	pixman-fast-path.c		\
+	pixman-filter.c			\
 	pixman-glyph.c			\
 	pixman-general.c		\
 	pixman-gradient-walker.c	\
@@ -40,13 +37,21 @@ SRCS=					\
 	pixman-trap.c			\
 	pixman-utils.c
 
+SRCS+=					\
+	pixman-x86.c			\
+	pixman-mips.c			\
+	pixman-arm.c			\
+	pixman-ppc.c			\
+
 # XXX
 
 .if ${MACHINE_ARCH} == "i386"
-# SSE2 does not work, for unknown reasons
 SRCS+= pixman-mmx.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
-MKDEPFLAGS+=		-mmmx -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
+SRCS+=	pixman-sse2.c
+COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+CPPFLAGS+=	-DUSE_SSE2 -DUSE_X86_MMX
 .elif ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-sse2.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
@@ -63,7 +68,8 @@ MKDEPFLAGS+=		-maltivec
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
-		pixman-arm-simd-asm.S
+		pixman-arm-simd-asm.S		\
+		pixman-arm-simd-asm-scaled.S
 CPPFLAGS+=	-DUSE_ARM_SIMD
 # ARM NEON
 SRCS+=		pixman-arm-neon.c		\
@@ -71,9 +77,17 @@ SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm-bilinear.S
 CPPFLAGS+=	-DUSE_ARM_NEON
 # ARM iwMMX
+#SRCS+=		pixman-mmx.c
+#COPTS.pixman-mmx.c=	-mcpu=iwmmxt
+#CPPFLAGS+=	-DUSE_ARM_IWMMXT
+.endif
+
+.if ${MACHINE} == "evbmips"
+# Loongson MMI
 SRCS+=		pixman-mmx.c
-COPTS.pixman-mmx.c=	-mcpu=iwmmxt
-CPPFLAGS+=	-DUSE_ARM_IWMMXT
+CPPFLAGS+=	-DUSE_LOONGSON_MMI
+# SIMD instructions use floatpoint registers so we need to enable their use
+COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float
 .endif
 
 INCS=	pixman.h pixman-version.h

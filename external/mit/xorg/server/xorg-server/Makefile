@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.12.1 2013/06/23 06:28:48 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -10,21 +10,9 @@ SUBDIR.xfont=Xfont fontbase
 SUBDIR.xfont=
 .endif
 
-.if ${XSERVER_NEEDS_MIEXT} != "no"
-SUBDIR.miext=miext
-.else
-SUBDIR.miext=
-.endif
-
-.if ${XSERVER_HAS_IPLAN} != "no"
-SUBDIR.iplan=iplan2p4 iplan2p8
-.else
-SUBDIR.iplan=
-.endif
-
 SUBDIR=		doc include .WAIT
 SUBDIR+=	glx
-SUBDIR+=	dix fb mi Xext ${SUBDIR.miext} os randr render 
+SUBDIR+=	dix fb mi Xext miext os randr render 
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
 SUBDIR+=	damageext composite config .WAIT
 SUBDIR+=	hw

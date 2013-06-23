@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.31.12.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: inode.c,v 1.31.12.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.31.12.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: inode.c,v 1.31.12.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 				}
 			}
 		}
-		sizepb *= NINDIR(&sblock);
+		sizepb *= EXT2_NINDIR(&sblock);
 		remsize -= sizepb;
 	}
 	return (KEEPON);
@@ -273,14 +273,14 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	bp = getdatablk(idesc->id_blkno, sblock.e2fs_bsize);
 	ilevel--;
 	for (sizepb = sblock.e2fs_bsize, i = 0; i < ilevel; i++)
-		sizepb *= NINDIR(&sblock);
-	if (isize > sizepb * NINDIR(&sblock))
-		nif = NINDIR(&sblock);
+		sizepb *= EXT2_NINDIR(&sblock);
+	if (isize > sizepb * EXT2_NINDIR(&sblock))
+		nif = EXT2_NINDIR(&sblock);
 	else
 		nif = howmany(isize, sizepb);
 	if (idesc->id_func == pass1check &&
-		nif < NINDIR(&sblock)) {
-		aplim = &bp->b_un.b_indir[NINDIR(&sblock)];
+		nif < EXT2_NINDIR(&sblock)) {
+		aplim = &bp->b_un.b_indir[EXT2_NINDIR(&sblock)];
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;

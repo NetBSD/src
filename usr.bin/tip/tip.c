@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.51 2011/09/06 18:33:01 joerg Exp $	*/
+/*	$NetBSD: tip.c,v 1.51.8.1 2013/06/23 06:29:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.51 2011/09/06 18:33:01 joerg Exp $");
+__RCSID("$NetBSD: tip.c,v 1.51.8.1 2013/06/23 06:29:02 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -496,7 +496,9 @@ ttysetup(speed_t spd)
 	cntrl.c_cc[VMIN] = 1;
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
-		cntrl.c_iflag |= IXOFF;
+		cntrl.c_iflag |= IXOFF|IXON|IXANY;
+	else
+		cntrl.c_iflag &= ~(IXOFF|IXON|IXANY);
 	return tcsetattr(FD, TCSAFLUSH, &cntrl);
 }
 

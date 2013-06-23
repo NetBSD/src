@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.35.8.1 2013/02/25 00:28:07 tls Exp $ */
+/* $NetBSD: lfs.c,v 1.35.8.2 2013/06/23 06:28:51 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,10 +70,9 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 #undef vnode
 
 #include <assert.h>
@@ -144,7 +143,7 @@ lfs_vop_bwrite(struct ubuf * bp)
 
 	fs = bp->b_vp->v_fs;
 	if (!(bp->b_flags & B_DELWRI)) {
-		fs->lfs_avail -= btofsb(fs, bp->b_bcount);
+		fs->lfs_avail -= lfs_btofsb(fs, bp->b_bcount);
 	}
 	bp->b_flags |= B_DELWRI | B_LOCKED;
 	reassignbuf(bp, bp->b_vp);
@@ -153,27 +152,27 @@ lfs_vop_bwrite(struct ubuf * bp)
 }
 
 /*
- * ufs_bmaparray does the bmap conversion, and if requested returns the
+ * ulfs_bmaparray does the bmap conversion, and if requested returns the
  * array of logical blocks which must be traversed to get to a block.
  * Each entry contains the offset into that block that gets you to the
  * next block and the disk address of the block (if it is assigned).
  */
 int
-ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, struct indir * ap, int *nump)
+ulfs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, struct indir * ap, int *nump)
 {
 	struct inode *ip;
 	struct ubuf *bp;
-	struct indir a[UFS_NIADDR + 1], *xap;
+	struct indir a[ULFS_NIADDR + 1], *xap;
 	daddr_t daddr;
 	daddr_t metalbn;
 	int error, num;
 
 	ip = VTOI(vp);
 
-	if (bn >= 0 && bn < UFS_NDADDR) {
+	if (bn >= 0 && bn < ULFS_NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
-		*bnp = fsbtodb(fs, ip->i_ffs1_db[bn]);
+		*bnp = LFS_FSBTODB(fs, ip->i_ffs1_db[bn]);
 		if (*bnp == 0)
 			*bnp = -1;
 		return (0);
@@ -181,7 +180,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 	xap = ap == NULL ? a : ap;
 	if (!nump)
 		nump = &num;
-	if ((error = ufs_getlbns(fs, vp, bn, xap, nump)) != 0)
+	if ((error = ulfs_getlbns(fs, vp, bn, xap, nump)) != 0)
 		return (error);
 
 	num = *nump;
@@ -208,16 +207,16 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 		bp = getblk(vp, metalbn, fs->lfs_bsize);
 
 		if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
-			bp->b_blkno = fsbtodb(fs, daddr);
+			bp->b_blkno = LFS_FSBTODB(fs, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
 		}
-		daddr = ((ufs_daddr_t *) bp->b_data)[xap->in_off];
+		daddr = ((ulfs_daddr_t *) bp->b_data)[xap->in_off];
 	}
 	if (bp)
 		brelse(bp, 0);
 
-	daddr = fsbtodb(fs, (ufs_daddr_t) daddr);
+	daddr = LFS_FSBTODB(fs, (ulfs_daddr_t) daddr);
 	*bnp = daddr == 0 ? -1 : daddr;
 	return (0);
 }
@@ -232,7 +231,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, int *nump)
+ulfs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, int *nump)
 {
 	daddr_t metalbn, realbn;
 	int64_t blockcnt;
@@ -255,11 +254,11 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 
 	/* Determine the number of levels of indirection.  After this loop is
 	 * done, blockcnt indicates the number of data blocks possible at the
-	 * given level of indirection, and UFS_NIADDR - i is the number of levels
+	 * given level of indirection, and ULFS_NIADDR - i is the number of levels
 	 * of indirection needed to locate the requested block. */
 
-	bn -= UFS_NDADDR;
-	for (lbc = 0, i = UFS_NIADDR;; i--, bn -= blockcnt) {
+	bn -= ULFS_NDADDR;
+	for (lbc = 0, i = ULFS_NIADDR;; i--, bn -= blockcnt) {
 		if (i == 0)
 			return (EFBIG);
 
@@ -271,17 +270,17 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 	}
 
 	/* Calculate the address of the first meta-block. */
-	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + UFS_NIADDR - i);
+	metalbn = -((realbn >= 0 ? realbn : -realbn) - bn + ULFS_NIADDR - i);
 
 	/* At each iteration, off is the offset into the bap array which is an
 	 * array of disk addresses at the current level of indirection. The
 	 * logical block number and the offset in that block are stored into
 	 * the argument array. */
 	ap->in_lbn = metalbn;
-	ap->in_off = off = UFS_NIADDR - i;
+	ap->in_off = off = ULFS_NIADDR - i;
 	ap->in_exists = 0;
 	ap++;
-	for (++numlevels; i <= UFS_NIADDR; i++) {
+	for (++numlevels; i <= ULFS_NIADDR; i++) {
 		/* If searching for a meta-data block, quit when found. */
 		if (metalbn == realbn)
 			break;
@@ -306,17 +305,17 @@ ufs_getlbns(struct lfs * fs, struct uvnode * vp, daddr_t bn, struct indir * ap, 
 int
 lfs_vop_bmap(struct uvnode * vp, daddr_t lbn, daddr_t * daddrp)
 {
-	return ufs_bmaparray(vp->v_fs, vp, lbn, daddrp, NULL, NULL);
+	return ulfs_bmaparray(vp->v_fs, vp, lbn, daddrp, NULL, NULL);
 }
 
 /* Search a block for a specific dinode. */
-struct ufs1_dinode *
+struct ulfs1_dinode *
 lfs_ifind(struct lfs * fs, ino_t ino, struct ubuf * bp)
 {
-	struct ufs1_dinode *dip = (struct ufs1_dinode *) bp->b_data;
-	struct ufs1_dinode *ldip, *fin;
+	struct ulfs1_dinode *dip = (struct ulfs1_dinode *) bp->b_data;
+	struct ulfs1_dinode *ldip, *fin;
 
-	fin = dip + INOPB(fs);
+	fin = dip + LFS_INOPB(fs);
 
 	/*
 	 * Read the inode block backwards, since later versions of the
@@ -334,11 +333,11 @@ lfs_ifind(struct lfs * fs, ino_t ino, struct ubuf * bp)
  * XXX it currently loses atime information.
  */
 struct uvnode *
-lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
+lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 {
 	struct uvnode *vp;
 	struct inode *ip;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	struct ubuf *bp;
 	int i, hash;
 
@@ -367,7 +366,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
-		bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
+		bread(fs->lfs_devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
 		    NULL, 0, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
@@ -393,10 +392,10 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	}
 #endif
 
-	memset(ip->i_lfs_fragsize, 0, UFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
-	for (i = 0; i < UFS_NDADDR; i++)
+	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
+	for (i = 0; i < ULFS_NDADDR; i++)
 		if (ip->i_ffs1_db[i] != 0)
-			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+			ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 
 	++nvnodes;
 	hash = ((int)(intptr_t)fs + ino) & (VNODE_HASH_MAX - 1);
@@ -410,14 +409,14 @@ static struct uvnode *
 lfs_vget(void *vfs, ino_t ino)
 {
 	struct lfs *fs = (struct lfs *)vfs;
-	ufs_daddr_t daddr;
+	ulfs_daddr_t daddr;
 	struct ubuf *bp;
 	IFILE *ifp;
 
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
 	brelse(bp, 0);
-	if (daddr <= 0 || dtosn(fs, daddr) >= fs->lfs_nseg)
+	if (daddr <= 0 || lfs_dtosn(fs, daddr) >= fs->lfs_nseg)
 		return NULL;
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 }
@@ -491,7 +490,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		dev_bsize = fs->lfs_fsize >> fs->lfs_fsbtodb;
 	
 		if (tryalt) {
-			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
+			error = bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
 		    	LFS_SBPAD, NOCRED, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
@@ -567,14 +566,14 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
  * or "goal" if we reached it without failure (the partial segment *at* goal
  * need not be valid).
  */
-ufs_daddr_t
-try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
+ulfs_daddr_t
+try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 {
-	ufs_daddr_t daddr, odaddr;
+	ulfs_daddr_t daddr, odaddr;
 	SEGSUM *sp;
 	int i, bc, hitclean;
 	struct ubuf *bp;
-	ufs_daddr_t nodirop_daddr;
+	ulfs_daddr_t nodirop_daddr;
 	u_int64_t serial;
 
 	bc = 0;
@@ -587,19 +586,19 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		/*
 		 * Don't mistakenly read a superblock, if there is one here.
 		 */
-		if (sntod(osb, dtosn(osb, daddr)) == daddr) {
+		if (lfs_sntod(osb, lfs_dtosn(osb, daddr)) == daddr) {
 			if (daddr == osb->lfs_start)
-				daddr += btofsb(osb, LFS_LABELPAD);
+				daddr += lfs_btofsb(osb, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (osb->lfs_sboffs[i] < daddr)
 					break;
 				if (osb->lfs_sboffs[i] == daddr)
-					daddr += btofsb(osb, LFS_SBPAD);
+					daddr += lfs_btofsb(osb, LFS_SBPAD);
 			}
 		}
 
 		/* Read in summary block */
-		bread(devvp, fsbtodb(osb, daddr), osb->lfs_sumsize,
+		bread(devvp, LFS_FSBTODB(osb, daddr), osb->lfs_sumsize,
 		    NULL, 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 
@@ -648,10 +647,10 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 			      (int)sp->ss_serial);
 		assert (bc > 0);
 		odaddr = daddr;
-		daddr += btofsb(osb, osb->lfs_sumsize + bc);
-		if (dtosn(osb, odaddr) != dtosn(osb, daddr) ||
-		    dtosn(osb, daddr) != dtosn(osb, daddr +
-			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize) - 1)) {
+		daddr += lfs_btofsb(osb, osb->lfs_sumsize + bc);
+		if (lfs_dtosn(osb, odaddr) != lfs_dtosn(osb, daddr) ||
+		    lfs_dtosn(osb, daddr) != lfs_dtosn(osb, daddr +
+			lfs_btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize) - 1)) {
 			daddr = sp->ss_next;
 		}
 
@@ -680,7 +679,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 struct lfs *
 lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 {
-	ufs_daddr_t daddr;
+	ulfs_daddr_t daddr;
 	struct lfs *osb, *nsb;
 
 	/*
@@ -739,27 +738,27 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 
 /* Verify a partial-segment summary; return the number of bytes on disk. */
 int
-check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
-	      struct uvnode *devvp, void (func(ufs_daddr_t, FINFO *)))
+check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
+	      struct uvnode *devvp, void (func(ulfs_daddr_t, FINFO *)))
 {
 	FINFO *fp;
 	int bc;			/* Bytes in partial segment */
 	int nblocks;
-	ufs_daddr_t seg_addr, daddr;
-	ufs_daddr_t *dp, *idp;
+	ulfs_daddr_t seg_addr, daddr;
+	ulfs_daddr_t *dp, *idp;
 	struct ubuf *bp;
 	int i, j, k, datac, len;
 	long sn;
 	u_int32_t *datap;
 	u_int32_t ccksum;
 
-	sn = dtosn(fs, pseg_addr);
-	seg_addr = sntod(fs, sn);
+	sn = lfs_dtosn(fs, pseg_addr);
+	seg_addr = lfs_sntod(fs, sn);
 
 	/* We've already checked the sumsum, just do the data bounds and sum */
 
 	/* Count the blocks. */
-	nblocks = howmany(sp->ss_ninos, INOPB(fs));
+	nblocks = howmany(sp->ss_ninos, LFS_INOPB(fs));
 	bc = nblocks << (fs->lfs_version > 1 ? fs->lfs_ffshift : fs->lfs_bshift);
 	assert(bc >= 0);
 
@@ -776,32 +775,32 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 	datap = emalloc(nblocks * sizeof(*datap));
 	datac = 0;
 
-	dp = (ufs_daddr_t *) sp;
-	dp += fs->lfs_sumsize / sizeof(ufs_daddr_t);
+	dp = (ulfs_daddr_t *) sp;
+	dp += fs->lfs_sumsize / sizeof(ulfs_daddr_t);
 	dp--;
 
 	idp = dp;
-	daddr = pseg_addr + btofsb(fs, fs->lfs_sumsize);
+	daddr = pseg_addr + lfs_btofsb(fs, fs->lfs_sumsize);
 	fp = (FINFO *) (sp + 1);
 	for (i = 0, j = 0;
-	     i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, INOPB(fs)); i++) {
+	     i < sp->ss_nfinfo || j < howmany(sp->ss_ninos, LFS_INOPB(fs)); i++) {
 		if (i >= sp->ss_nfinfo && *idp != daddr) {
 			pwarn("Not enough inode blocks in pseg at 0x%" PRIx32
 			      ": found %d, wanted %d\n",
-			      pseg_addr, j, howmany(sp->ss_ninos, INOPB(fs)));
+			      pseg_addr, j, howmany(sp->ss_ninos, LFS_INOPB(fs)));
 			if (debug)
 				pwarn("*idp=%x, daddr=%" PRIx32 "\n", *idp,
 				      daddr);
 			break;
 		}
-		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
-			bread(devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
+		while (j < howmany(sp->ss_ninos, LFS_INOPB(fs)) && *idp == daddr) {
+			bread(devvp, LFS_FSBTODB(fs, daddr), fs->lfs_ibsize,
 			    NOCRED, 0, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 			brelse(bp, 0);
 
 			++j;
-			daddr += btofsb(fs, fs->lfs_ibsize);
+			daddr += lfs_btofsb(fs, fs->lfs_ibsize);
 			--idp;
 		}
 		if (i < sp->ss_nfinfo) {
@@ -811,11 +810,11 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 				len = (k == fp->fi_nblocks - 1 ?
 				       fp->fi_lastlength
 				       : fs->lfs_bsize);
-				bread(devvp, fsbtodb(fs, daddr), len,
+				bread(devvp, LFS_FSBTODB(fs, daddr), len,
 				    NOCRED, 0, &bp);
 				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 				brelse(bp, 0);
-				daddr += btofsb(fs, len);
+				daddr += lfs_btofsb(fs, len);
 			}
 			fp = (FINFO *) (fp->fi_blocks + fp->fi_nblocks);
 		}
@@ -919,7 +918,7 @@ extend_ifile(struct lfs *fs)
 
 	vp = fs->lfs_ivnode;
 	ip = VTOI(vp);
-	blkno = lblkno(fs, ip->i_ffs1_size);
+	blkno = lfs_lblkno(fs, ip->i_ffs1_size);
 
 	lfs_balloc(vp, ip->i_ffs1_size, fs->lfs_bsize, &bp);
 	ip->i_ffs1_size += fs->lfs_bsize;
@@ -930,7 +929,7 @@ extend_ifile(struct lfs *fs)
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 	max = i + fs->lfs_ifpb;
-	fs->lfs_bfree -= btofsb(fs, fs->lfs_bsize);
+	fs->lfs_bfree -= lfs_btofsb(fs, fs->lfs_bsize);
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
@@ -966,8 +965,8 @@ extend_ifile(struct lfs *fs)
  * this block to be created.
  *
  * Blocks which have never been accounted for (i.e., which "do not exist")
- * have disk address 0, which is translated by ufs_bmap to the special value
- * UNASSIGNED == -1, as in the historical UFS.
+ * have disk address 0, which is translated by ulfs_bmap to the special value
+ * UNASSIGNED == -1, as in the historical ULFS.
  *
  * Blocks which have been accounted for but which have not yet been written
  * to disk are given the new special disk address UNWRITTEN == -2, so that
@@ -981,15 +980,15 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	struct ubuf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
-	struct indir indirs[UFS_NIADDR+2], *idp;
+	struct indir indirs[ULFS_NIADDR+2], *idp;
 	daddr_t	lbn, lastblock;
 	int bcount;
 	int error, frags, i, nsize, osize, num;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	offset = blkoff(fs, startoffset);
-	lbn = lblkno(fs, startoffset);
+	offset = lfs_blkoff(fs, startoffset);
+	lbn = lfs_lblkno(fs, startoffset);
 
 	/*
 	 * Three cases: it's a block beyond the end of file, it's a block in
@@ -1011,9 +1010,9 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 		*bpp = NULL;
 
 	/* Check for block beyond end of file and fragment extension needed. */
-	lastblock = lblkno(fs, ip->i_ffs1_size);
-	if (lastblock < UFS_NDADDR && lastblock < lbn) {
-		osize = blksize(fs, ip, lastblock);
+	lastblock = lfs_lblkno(fs, ip->i_ffs1_size);
+	if (lastblock < ULFS_NDADDR && lastblock < lbn) {
+		osize = lfs_blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
 						    lastblock,
@@ -1034,12 +1033,12 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	 * size or it already exists and contains some fragments and
 	 * may need to extend it.
 	 */
-	if (lbn < UFS_NDADDR && lblkno(fs, ip->i_ffs1_size) <= lbn) {
-		osize = blksize(fs, ip, lbn);
-		nsize = fragroundup(fs, offset + iosize);
-		if (lblktosize(fs, lbn) >= ip->i_ffs1_size) {
+	if (lbn < ULFS_NDADDR && lfs_lblkno(fs, ip->i_ffs1_size) <= lbn) {
+		osize = lfs_blksize(fs, ip, lbn);
+		nsize = lfs_fragroundup(fs, offset + iosize);
+		if (lfs_lblktosize(fs, lbn) >= ip->i_ffs1_size) {
 			/* Brand new block or fragment */
-			frags = numfrags(fs, nsize);
+			frags = lfs_numfrags(fs, nsize);
 			if (bpp) {
 				*bpp = bp = getblk(vp, lbn, nsize);
 				bp->b_blkno = UNWRITTEN;
@@ -1066,7 +1065,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 		return 0;
 	}
 
-	error = ufs_bmaparray(fs, vp, lbn, &daddr, &indirs[0], &num);
+	error = ulfs_bmaparray(fs, vp, lbn, &daddr, &indirs[0], &num);
 	if (error)
 		return (error);
 
@@ -1076,7 +1075,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
 	 */
-        frags = fsbtodb(fs, 1); /* frags = VFSTOUFS(vp->v_mount)->um_seqinc; */
+        frags = LFS_FSBTODB(fs, 1); /* frags = VFSTOULFS(vp->v_mount)->um_seqinc; */
 	bcount = 0;
 	if (daddr == UNASSIGNED) {
 		bcount = frags;
@@ -1106,7 +1105,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 					memset(ibp->b_data, 0, ibp->b_bufsize);
 					ibp->b_blkno = UNWRITTEN;
 				} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
-					ibp->b_blkno = fsbtodb(fs, idaddr);
+					ibp->b_blkno = LFS_FSBTODB(fs, idaddr);
 					ibp->b_flags |= B_READ;
 					VOP_STRATEGY(ibp);
 				}
@@ -1132,13 +1131,13 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	 * Get the existing block from the cache, if requested.
 	 */
 	if (bpp)
-		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn));
+		*bpp = bp = getblk(vp, lbn, lfs_blksize(fs, ip, lbn));
 
 	/*
 	 * The block we are writing may be a brand new block
 	 * in which case we need to do accounting.
 	 *
-	 * We can tell a truly new block because ufs_bmaparray will say
+	 * We can tell a truly new block because ulfs_bmaparray will say
 	 * it is UNASSIGNED.  Once we allocate it we will assign it the
 	 * disk address UNWRITTEN.
 	 */
@@ -1200,7 +1199,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	frags = (long)numfrags(fs, nsize - osize);
+	frags = (long)lfs_numfrags(fs, nsize - osize);
 	error = 0;
 
 	/*

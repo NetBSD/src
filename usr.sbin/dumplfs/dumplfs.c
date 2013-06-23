@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.38.12.2 2013/06/23 06:29:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.38.12.2 2013/06/23 06:29:04 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $");
 #include <sys/mount.h>
 #include <sys/time.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -64,7 +63,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.38.12.1 2013/02/25 00:30:42 tls Exp $");
 
 static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
-static void	dump_dinode(struct ufs1_dinode *);
+static void	dump_dinode(struct ulfs1_dinode *);
 static void	dump_ifile(int, struct lfs *, int, int, daddr_t);
 static int	dump_ipage_ifile(struct lfs *, int, char *, int);
 static int	dump_ipage_segusage(struct lfs *, int, char *, int);
@@ -126,7 +125,7 @@ print_ientry(int i, IFILE *ip)
 		    (ip->if_nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-"));
 }
 
-#define fsbtobyte(fs, b)	fsbtob((fs), (off_t)((b)))
+#define fsbtobyte(fs, b)	lfs_fsbtob((fs), (off_t)((b)))
 
 int datasum_check = 0;
 
@@ -190,8 +189,8 @@ main(int argc, char **argv)
 
 		/* If that wasn't the real first sb, get the real first sb */
 		if (lfs_sb1.lfs_version > 1 &&
-		    lfs_sb1.lfs_sboffs[0] > btofsb(&lfs_sb1, LFS_LABELPAD))
-			get(fd, fsbtob(&lfs_sb1, lfs_sb1.lfs_sboffs[0]),
+		    lfs_sb1.lfs_sboffs[0] > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
+			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb1.lfs_sboffs[0]),
 			    &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
 	
 		/*
@@ -242,14 +241,14 @@ main(int argc, char **argv)
 
 	if (seglist != NULL)
 		for (; seglist != NULL; seglist = seglist->next) {
-			seg_addr = sntod(lfs_master, seglist->num);
+			seg_addr = lfs_sntod(lfs_master, seglist->num);
 			dump_segment(fd, seglist->num, seg_addr, lfs_master,
 				     do_allsb);
 		}
 	else
-		for (segnum = 0, seg_addr = sntod(lfs_master, 0);
+		for (segnum = 0, seg_addr = lfs_sntod(lfs_master, 0);
 		     segnum < lfs_master->lfs_nseg;
-		     segnum++, seg_addr = sntod(lfs_master, segnum))
+		     segnum++, seg_addr = lfs_sntod(lfs_master, segnum))
 			dump_segment(fd, segnum, seg_addr, lfs_master,
 				     do_allsb);
 
@@ -266,7 +265,7 @@ static void
 dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
 	char *ipage;
-	struct ufs1_dinode *dip, *dpage;
+	struct ulfs1_dinode *dip, *dpage;
 	/* XXX ondisk32 */
 	int32_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
@@ -279,7 +278,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		err(1, "malloc");
 	get(fd, fsbtobyte(lfsp, addr), dpage, psize);
 
-	for (dip = dpage + INOPB(lfsp) - 1; dip >= dpage; --dip)
+	for (dip = dpage + LFS_INOPB(lfsp) - 1; dip >= dpage; --dip)
 		if (dip->di_inumber == LFS_IFILE_INUM)
 			break;
 
@@ -294,7 +293,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 
 	(void)printf("\nIFILE contents\n");
 	nblocks = dip->di_size >> lfsp->lfs_bshift;
-	block_limit = MIN(nblocks, UFS_NDADDR);
+	block_limit = MIN(nblocks, ULFS_NDADDR);
 
 	/* Get the direct block */
 	if ((ipage = malloc(psize)) == NULL)
@@ -325,7 +324,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			inum = dump_ipage_ifile(lfsp, inum, ipage, lfsp->lfs_ifpb);
 	}
 
-	if (nblocks <= UFS_NDADDR)
+	if (nblocks <= ULFS_NDADDR)
 		goto e0;
 
 	/* Dump out blocks off of single indirect block */
@@ -451,7 +450,7 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 }
 
 static void
-dump_dinode(struct ufs1_dinode *dip)
+dump_dinode(struct ulfs1_dinode *dip)
 {
 	int i;
 	time_t at, mt, ct;
@@ -472,12 +471,12 @@ dump_dinode(struct ufs1_dinode *dip)
 		"ctime ", ctime(&ct));
 	(void)printf("    inum  %d\n", dip->di_inumber);
 	(void)printf("    Direct Addresses\n");
-	for (i = 0; i < UFS_NDADDR; i++) {
+	for (i = 0; i < ULFS_NDADDR; i++) {
 		(void)printf("\t0x%x", dip->di_db[i]);
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
-	for (i = 0; i < UFS_NIADDR; i++)
+	for (i = 0; i < ULFS_NIADDR; i++)
 		(void)printf("\t0x%x", dip->di_ib[i]);
 	(void)printf("\n");
 }
@@ -491,7 +490,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	int ck;
 	int numbytes, numblocks;
 	char *datap;
-	struct ufs1_dinode *inop;
+	struct ulfs1_dinode *inop;
 	size_t el_size;
 	u_int32_t datasum;
 	time_t t;
@@ -501,8 +500,8 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	    sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
 	    lfsp->lfs_sumsize - sizeof(sp->ss_sumsum)))) {
 		/* Don't print "corrupt" if we're just too close to the edge */
-		if (dtosn(lfsp, addr + fsbtodb(lfsp, 1)) ==
-		    dtosn(lfsp, addr))
+		if (lfs_dtosn(lfsp, addr + LFS_FSBTODB(lfsp, 1)) ==
+		    lfs_dtosn(lfsp, addr))
 			(void)printf("dumplfs: %s %d address 0x%llx\n",
 		                     "corrupt summary block; segment", segnum,
 				     (long long)addr);
@@ -548,13 +547,13 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		numbytes += lfsp->lfs_ibsize;	/* add bytes for inode block */
 		printf("\t0x%x {", *dp);
 		get(fd, fsbtobyte(lfsp, *dp), inop, lfsp->lfs_ibsize);
-		for (j = 0; i < sp->ss_ninos && j < INOPB(lfsp); j++, i++) {
+		for (j = 0; i < sp->ss_ninos && j < LFS_INOPB(lfsp); j++, i++) {
 			if (j > 0) 
 				(void)printf(", ");
 			(void)printf("%dv%d", inop[j].di_inumber, inop[j].di_gen);
 		}
 		(void)printf("}");
-		if (((i/INOPB(lfsp)) % 4) == 3)
+		if (((i/LFS_INOPB(lfsp)) % 4) == 3)
 			(void)printf("\n");
 	}
 	free(inop);
@@ -606,13 +605,13 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	datap = (char *)malloc(el_size * numblocks);
 	memset(datap, 0, el_size * numblocks);
 	acc = 0;
-	addr += btofsb(lfsp, lfsp->lfs_sumsize);
+	addr += lfs_btofsb(lfsp, lfsp->lfs_sumsize);
 	buf = malloc(lfsp->lfs_bsize);
 	for (i = 0; i < sp->ss_nfinfo; i++) {
 		while (addr == *idp) {
 			get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_ibsize);
 			memcpy(datap + acc * el_size, buf, el_size);
-			addr += btofsb(lfsp, lfsp->lfs_ibsize);
+			addr += lfs_btofsb(lfsp, lfsp->lfs_ibsize);
 			--idp;
 			++acc;
 		}
@@ -620,9 +619,9 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_fsize);
 			memcpy(datap + acc * el_size, buf, el_size);
 			if (j == fp->fi_nblocks - 1)
-				addr += btofsb(lfsp, fp->fi_lastlength);
+				addr += lfs_btofsb(lfsp, fp->fi_lastlength);
 			else
-				addr += btofsb(lfsp, lfsp->lfs_bsize);
+				addr += lfs_btofsb(lfsp, lfsp->lfs_bsize);
 			++acc;
 		}
 		fp = (FINFO *)&(fp->fi_blocks[fp->fi_nblocks]);
@@ -630,7 +629,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	while (addr == *idp) {
 		get(fd, fsbtobyte(lfsp, addr), buf, lfsp->lfs_ibsize);
 		memcpy(datap + acc * el_size, buf, el_size);
-		addr += btofsb(lfsp, lfsp->lfs_ibsize);
+		addr += lfs_btofsb(lfsp, lfsp->lfs_ibsize);
 		--idp;
 		++acc;
 	}
@@ -657,16 +656,16 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	daddr_t new_addr;
 
 	(void)printf("\nSEGMENT %lld (Disk Address 0x%llx)\n",
-		     (long long)dtosn(lfsp, addr), (long long)addr);
+		     (long long)lfs_dtosn(lfsp, addr), (long long)addr);
 	sum_offset = fsbtobyte(lfsp, addr);
 	sumblock = malloc(lfsp->lfs_sumsize);
 
 	if (lfsp->lfs_version > 1 && segnum == 0) {
-		if (fsbtob(lfsp, lfsp->lfs_start) < LFS_LABELPAD) {
+		if (lfs_fsbtob(lfsp, lfsp->lfs_start) < LFS_LABELPAD) {
 			/* First segment eats the disklabel */
-			sum_offset += fragroundup(lfsp, LFS_LABELPAD) -
-				      fsbtob(lfsp, lfsp->lfs_start);
-			addr += btofsb(lfsp, fragroundup(lfsp, LFS_LABELPAD)) -
+			sum_offset += lfs_fragroundup(lfsp, LFS_LABELPAD) -
+				      lfs_fsbtob(lfsp, lfsp->lfs_start);
+			addr += lfs_btofsb(lfsp, lfs_fragroundup(lfsp, LFS_LABELPAD)) -
 				lfsp->lfs_start;
 			printf("Disklabel at 0x0\n");
 		}
@@ -684,14 +683,14 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			sbp = (struct lfs *)sump;
 			if ((sb = (sbp->lfs_magic == LFS_MAGIC))) {
 				printf("Superblock at 0x%x\n",
-				       (unsigned)btofsb(lfsp, sum_offset));
+				       (unsigned)lfs_btofsb(lfsp, sum_offset));
 				if (dump_sb)  {
 					get(fd, sum_offset, &(lfs_sb.lfs_dlfs),
 					    sizeof(struct dlfs));
 					dump_super(&lfs_sb);
 				}
 				if (lfsp->lfs_version > 1)
-					sum_offset += fragroundup(lfsp, LFS_SBPAD);
+					sum_offset += lfs_fragroundup(lfsp, LFS_SBPAD);
 				else
 					sum_offset += LFS_SBPAD;
 			} else if (did_one)
@@ -703,7 +702,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			}
 		} else {
 			nbytes = dump_sum(fd, lfsp, sump, segnum, 
-				btofsb(lfsp, sum_offset));
+				lfs_btofsb(lfsp, sum_offset));
 			if (nbytes >= 0)
 				sum_offset += lfsp->lfs_sumsize + nbytes;
 			else
@@ -711,9 +710,9 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			did_one = 1;
 		}
 		/* If the segment ends right on a boundary, it still ends */
-		new_addr = btofsb(lfsp, sum_offset);
+		new_addr = lfs_btofsb(lfsp, sum_offset);
 		/* printf("end daddr = 0x%lx\n", (long)new_addr); */
-		if (dtosn(lfsp, new_addr) != dtosn(lfsp, addr))
+		if (lfs_dtosn(lfsp, new_addr) != lfs_dtosn(lfsp, addr))
 			break;
 	} while (sum_offset);
 

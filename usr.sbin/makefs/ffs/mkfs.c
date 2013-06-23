@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.24.2.1 2013/02/25 00:30:45 tls Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.24.2.2 2013/06/23 06:29:05 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.24.2.1 2013/02/25 00:30:45 tls Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.24.2.2 2013/06/23 06:29:05 tls Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -301,7 +301,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
 	sblock.fs_maxfilesize = sblock.fs_bsize * UFS_NDADDR - 1;
 	for (sizepb = sblock.fs_bsize, i = 0; i < UFS_NIADDR; i++) {
-		sizepb *= NINDIR(&sblock);
+		sizepb *= FFS_NINDIR(&sblock);
 		sblock.fs_maxfilesize += sizepb;
 	}
 
@@ -322,22 +322,22 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	origdensity = density;
 	for (;;) {
 		fragsperinode = MAX(numfrags(&sblock, density), 1);
-		minfpg = fragsperinode * INOPB(&sblock);
+		minfpg = fragsperinode * FFS_INOPB(&sblock);
 		if (minfpg > sblock.fs_size)
 			minfpg = sblock.fs_size;
-		sblock.fs_ipg = INOPB(&sblock);
+		sblock.fs_ipg = FFS_INOPB(&sblock);
 		sblock.fs_fpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
+		    sblock.fs_ipg / FFS_INOPF(&sblock), sblock.fs_frag);
 		if (sblock.fs_fpg < minfpg)
 			sblock.fs_fpg = minfpg;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+		    FFS_INOPB(&sblock));
 		sblock.fs_fpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
+		    sblock.fs_ipg / FFS_INOPF(&sblock), sblock.fs_frag);
 		if (sblock.fs_fpg < minfpg)
 			sblock.fs_fpg = minfpg;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+		    FFS_INOPB(&sblock));
 		if (CGSIZE(&sblock) < (unsigned long)sblock.fs_bsize)
 			break;
 		density -= sblock.fs_fsize;
@@ -354,7 +354,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 */
 	for ( ; sblock.fs_fpg < maxblkspercg; sblock.fs_fpg += sblock.fs_frag) {
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+		    FFS_INOPB(&sblock));
 		if (sblock.fs_size / sblock.fs_fpg < 1)
 			break;
 		if (CGSIZE(&sblock) < (unsigned long)sblock.fs_bsize)
@@ -363,7 +363,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 			break;
 		sblock.fs_fpg -= sblock.fs_frag;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+		    FFS_INOPB(&sblock));
 		break;
 	}
 	/*
@@ -376,7 +376,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	for (;;) {
 		sblock.fs_ncg = howmany(sblock.fs_size, sblock.fs_fpg);
 		lastminfpg = roundup(sblock.fs_iblkno +
-		    sblock.fs_ipg / INOPF(&sblock), sblock.fs_frag);
+		    sblock.fs_ipg / FFS_INOPF(&sblock), sblock.fs_frag);
 		if (sblock.fs_size < lastminfpg) {
 			printf("Filesystem size %lld < minimum size of %d\n",
 			    (long long)sblock.fs_size, lastminfpg);
@@ -387,13 +387,13 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 			break;
 		sblock.fs_fpg -= sblock.fs_frag;
 		sblock.fs_ipg = roundup(howmany(sblock.fs_fpg, fragsperinode),
-		    INOPB(&sblock));
+		    FFS_INOPB(&sblock));
 	}
 	if (optimalfpg != sblock.fs_fpg)
 		printf("Reduced frags per cylinder group from %d to %d %s\n",
 		   optimalfpg, sblock.fs_fpg, "to enlarge last cyl group");
 	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
-	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
+	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / FFS_INOPF(&sblock);
 	if (Oflag <= 1) {
 		sblock.fs_old_spc = sblock.fs_fpg * sblock.fs_old_nspf;
 		sblock.fs_old_nsect = sblock.fs_old_spc;
@@ -617,8 +617,8 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 	acg.cg_magic = CG_MAGIC;
 	acg.cg_cgx = cylno;
 	acg.cg_niblk = sblock.fs_ipg;
-	acg.cg_initediblk = sblock.fs_ipg < 2 * INOPB(&sblock) ?
-	    sblock.fs_ipg : 2 * INOPB(&sblock);
+	acg.cg_initediblk = sblock.fs_ipg < 2 * FFS_INOPB(&sblock) ?
+	    sblock.fs_ipg : 2 * FFS_INOPB(&sblock);
 	acg.cg_ndblk = dmax - cbase;
 	if (sblock.fs_contigsumsize > 0)
 		acg.cg_nclusterblks = acg.cg_ndblk >> sblock.fs_fragshift;
@@ -764,10 +764,10 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 	 */
 	if (Oflag <= 1) {
 		for (i = 2 * sblock.fs_frag;
-		     i < sblock.fs_ipg / INOPF(&sblock);
+		     i < sblock.fs_ipg / FFS_INOPF(&sblock);
 		     i += sblock.fs_frag) {
 			dp1 = (struct ufs1_dinode *)(&iobuf[start]);
-			for (j = 0; j < INOPB(&sblock); j++) {
+			for (j = 0; j < FFS_INOPB(&sblock); j++) {
 				dp1->di_gen = random();
 				dp1++;
 			}

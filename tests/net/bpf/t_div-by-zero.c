@@ -7,7 +7,6 @@
 #include <fcntl.h>
 
 #include <rump/rump.h>
-#include <rump/rumpuser.h>
 #include <rump/rump_syscalls.h>
 
 ATF_TC(div_by_zero);

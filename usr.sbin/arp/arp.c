@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.49 2010/06/10 06:03:20 dholland Exp $ */
+/*	$NetBSD: arp.c,v 1.49.12.1 2013/06/23 06:29:03 tls Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.49 2010/06/10 06:03:20 dholland Exp $");
+__RCSID("$NetBSD: arp.c,v 1.49.12.1 2013/06/23 06:29:03 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 		}
 		break;
 	case 's':
-		if (argc < 2 || argc > 5)
+		if (argc < 2 || argc > 7)
 			usage();
 		return (set(argc, argv) ? 1 : 0);
 	case 'f':
@@ -237,6 +237,29 @@ getsocket(void)
 		err(1, "socket");
 }
 
+static int
+getlink(const char *name, struct sockaddr_dl *sdl)
+{
+	struct ifaddrs *ifap, *ifa;
+
+	if (getifaddrs(&ifap) != 0) {
+		warn("getifaddrs");
+		return 0;
+	}
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+		if (strcmp(ifa->ifa_name, name) != 0)
+			continue;
+		memcpy(sdl, ifa->ifa_addr, sizeof(*sdl));
+		freeifaddrs(ifap);
+		return 1;
+	}
+	freeifaddrs(ifap);
+	return 0;
+}
+
 /*
  * Set an individual arp entry 
  */
@@ -263,7 +286,7 @@ set(int argc, char **argv)
 	if (atosdl(eaddr, &sdl_m))
 		warnx("invalid link-level address '%s'", eaddr);
 	doing_proxy = flags = export_only = expire_time = 0;
-	while (argc-- > 0) {
+	for (; argc-- > 0; argv++) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
 			struct timeval timev;
 			(void)gettimeofday(&timev, 0);
@@ -279,9 +302,20 @@ set(int argc, char **argv)
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
 			warnx("%s: Sending trailers is no longer supported",
 			    host);
+		} else if (strcmp(argv[0], "ifscope") == 0) {
+			if (argc == 0) {
+				warnx("missing interface for ifscope");
+				continue;
+			}
+			argc--;
+			argv++;
+			if (!getlink(argv[0], &sdl_m))
+				warnx("cannot get link address for %s", argv[0]);
 		}
-		argv++;
+
 	}
+	if (memcmp(&sdl_m, &blank_sdl, sizeof(blank_sdl)))
+		goto out;
 tryagain:
 	if (rtmsg(RTM_GET) < 0) {
 		warn("%s", host);
@@ -313,6 +347,7 @@ overwrite:
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
+out:
 	rval = rtmsg(RTM_ADD);
 	if (vflag)
 		(void)printf("%s (%s) added\n", host, eaddr);

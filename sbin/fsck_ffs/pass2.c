@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.48.8.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: pass2.c,v 1.48.8.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.48.8.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.48.8.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,7 @@ pass2check(struct inodesc *idesc)
 			proto.d_type = proto.d_namlen;
 			proto.d_namlen = tmp;
 		}
-	entrysize = DIRSIZ(0, &proto, 0);
+	entrysize = UFS_DIRSIZ(0, &proto, 0);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
@@ -433,9 +433,9 @@ chk1:
 		proto.d_type = proto.d_namlen;
 		proto.d_namlen = tmp;
 	}
-	entrysize = DIRSIZ(0, &proto, 0);
+	entrysize = UFS_DIRSIZ(0, &proto, 0);
 	if (idesc->id_entryno == 0) {
-		n = DIRSIZ(0, dirp, 0);
+		n = UFS_DIRSIZ(0, dirp, 0);
 		if (iswap16(dirp->d_reclen) < n + entrysize)
 			goto chk2;
 		proto.d_reclen = iswap16(iswap16(dirp->d_reclen) - n);

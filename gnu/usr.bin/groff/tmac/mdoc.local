@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.68 2012/06/10 15:04:47 christos Exp $
+.\" $NetBSD: mdoc.local,v 1.68.2.1 2013/06/23 06:28:49 tls Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,15 +88,20 @@
 .ds doc-str-Lb-libdm            Device-mapper Library (libdm, \-ldm)
 .ds doc-str-Lb-libexecinfo	Backtrace Access Library (libexecinfo, \-lexecinfo)
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)
-.ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
+.ds doc-str-Lb-libiscsi         iSCSI Protocol Library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libisns          Internet Storage Name Service Library (libisns, \-lisns)
-.ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
-.ds doc-str-Lb-libperfuse       PUFFS enabled relay to FUSE Library (libperfuse, \-lperfuse)
+.ds doc-str-Lb-libmj            Minimalist JSON Library (libmj, \-lmj)
+.ds doc-str-Lb-libmandoc        Mandoc Macro Compiler Library (libmandoc, \-lmandoc)
+.ds doc-str-Lb-libnetpgp        Netpgp Signing, Verification, Encryption and Decryption (libnetpgp, \-lnetpgp)
+.ds doc-str-Lb-libnetpgpverify  Netpgp Signature Verification (libnetpgpverify, \-lnetpgpverify)
+.ds doc-str-Lb-libnpf           NPF Packet Filter Library (libnpf, \-lnpf)
+.ds doc-str-Lb-libperfuse       PUFFS-enabled Relay to FUSE Library (libperfuse, \-lperfuse)
 .ds doc-str-Lb-libppath         Property-List Paths Library (libppath, \-lppath)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-libquota		Disk Quota Access and Control Library (libquota, \-lquota)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
+.ds doc-str-Lb-librumpclient	Clientside Stubs for rump Kernel Remote Protocols (librumpclient, \-lrumpclient)
 .ds doc-str-Lb-libsaslc         Simple Authentication and Security Layer client library (libsaslc, \-lsaslc)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
 .ds doc-str-Lb-libterminfo      Terminal Information Library (libterminfo, \-lterminfo)

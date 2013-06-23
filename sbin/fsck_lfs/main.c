@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.43 2011/06/09 19:57:53 christos Exp $	 */
+/* $NetBSD: main.c,v 1.43.8.1 2013/06/23 06:28:51 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,8 +32,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/ufsmount.h>
 #include <ufs/lfs/lfs.h>
 
 #include <fstab.h>
@@ -307,7 +305,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		 */
 		if (statvfs("/", &stfs_buf) == 0) {
 			long flags = stfs_buf.f_flag;
-			struct ufs_args args;
+			struct ulfs_args args;
 
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;

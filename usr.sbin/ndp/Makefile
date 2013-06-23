@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2010/12/12 18:50:31 christos Exp $
+# $NetBSD: Makefile,v 1.8.12.1 2013/06/23 06:29:05 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,7 @@ PROG=	ndp
 SRCS=	ndp.c gmt2local.c
 MAN=	ndp.8
 
-.if ${MKINET6} != "no"
 CPPFLAGS+=-DINET6
-.endif
 CPPFLAGS+=-I. -I${TCPDUMP}
 
 .include <bsd.prog.mk>

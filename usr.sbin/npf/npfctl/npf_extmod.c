@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_extmod.c,v 1.3.4.2 2012/11/20 03:03:03 tls Exp $	*/
+/*	$NetBSD: npf_extmod.c,v 1.3.4.3 2013/06/23 06:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_extmod.c,v 1.3.4.2 2012/11/20 03:03:03 tls Exp $");
+__RCSID("$NetBSD: npf_extmod.c,v 1.3.4.3 2013/06/23 06:29:05 tls Exp $");
 
 #include <stdlib.h>
 #include <inttypes.h>
@@ -75,7 +75,7 @@ npf_extmod_load(const char *name)
 	void *handle;
 	char extlib[PATH_MAX];
 
-	snprintf(extlib, sizeof(extlib), "/usr/lib/npf/ext_%s.so", name);
+	snprintf(extlib, sizeof(extlib), "/lib/npf/ext_%s.so", name);
 	handle = dlopen(extlib, RTLD_LAZY | RTLD_LOCAL);
 	if (handle == NULL) {
 		errx(EXIT_FAILURE, "dlopen: %s", dlerror());

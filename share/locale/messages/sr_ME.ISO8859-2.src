@@ -1,4 +1,4 @@
-# $NetBSD: sr_ME.ISO8859-2.src,v 1.1 2009/01/02 00:20:21 tnozaki Exp $
+# $NetBSD: sr_ME.ISO8859-2.src,v 1.1.16.1 2013/06/23 06:28:53 tls Exp $
 #
 # Serbian Language Message Locale for 
 #
@@ -6,7 +6,7 @@
 #
 # From: $FreeBSD: src/share/msgdef/sr_YU.ISO8859-2.src,v 1.1 2002/10/19 13:04:04 ache Exp $
 #
-# Acceptable Affrimative Response Expression (yesexpr)
+# Acceptable Affirmative Response Expression (yesexpr)
 #    NOTE: This must be a valid Extended Regular Expression.
 ^[dDyY].*
 # Acceptable Negative Response Expression (noexpr)
@@ -18,7 +18,7 @@
 #       IEEE Std 1003.1, 2004 Edition (POSIX).
 #      The current NetBSD implementation still requires a value or blank line.
 #
-# Acceptable Affrimative Response (yesstr)
+# Acceptable Affirmative Response (yesstr)
 
 # Acceptable Negative  Response (nostr)
 

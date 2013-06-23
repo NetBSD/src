@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.50 2012/03/27 19:24:03 christos Exp $ */
+/* $NetBSD: scan.l,v 1.50.2.1 2013/06/23 06:29:02 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.50 2012/03/27 19:24:03 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.50.2.1 2013/06/23 06:29:02 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -604,7 +604,7 @@ icon(int base)
 			warning(252);
 		}
 		break;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case STRUCT:
 	case VOID:
 	case LDOUBLE:
@@ -1084,7 +1084,7 @@ directive(void)
  *	CONSTCOND CONSTANTCOND CONSTANTCONDITION
  *	FALLTHRU FALLTHROUGH
  *	LINTLIBRARY
- *	LINTED NOSTRICT
+ *	LINTEDn NOSTRICTn
  *	LONGLONG
  *	NOTREACHED
  *	PRINTFLIKEn
@@ -1111,9 +1111,9 @@ comment(void)
 		{ "FALLTHRU",		0,	fallthru	},
 		{ "FALLTHROUGH",	0,	fallthru	},
 		{ "LINTLIBRARY",	0,	lintlib		},
-		{ "LINTED",		0,	linted		},
+		{ "LINTED",		1,	linted		},
 		{ "LONGLONG",		0,	longlong	},
-		{ "NOSTRICT",		0,	linted		},
+		{ "NOSTRICT",		1,	linted		},
 		{ "NOTREACHED",		0,	notreach	},
 		{ "PRINTFLIKE",		1,	printflike	},
 		{ "PROTOLIB",		1,	protolib	},
@@ -1222,7 +1222,7 @@ void
 clrwflgs(void)
 {
 
-	nowarn = 0;
+	lwarn = LWARN_ALL;
 	quadflg = 0;
 	ccflg = 0;
 }

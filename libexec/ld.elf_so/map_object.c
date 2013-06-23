@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.44.2.1 2012/11/20 03:00:46 tls Exp $	 */
+/*	$NetBSD: map_object.c,v 1.44.2.2 2013/06/23 06:28:50 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.44.2.1 2012/11/20 03:00:46 tls Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.44.2.2 2013/06/23 06:28:50 tls Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -204,7 +204,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_PHDR",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;
-		
+
 		case PT_DYNAMIC:
 			obj->dynamic = (void *)(uintptr_t)phdr->p_vaddr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_DYNAMIC",
@@ -216,6 +216,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			phtls = phdr;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_TLS",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
+			break;
+#endif
+#ifdef __ARM_EABI__
+		case PT_ARM_EXIDX:
+			obj->exidx_start = (void *)(uintptr_t)phdr->p_vaddr;
+			obj->exidx_sz = phdr->p_memsz;
 			break;
 #endif
 		}
@@ -395,6 +401,10 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		obj->interp = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->interp);
 	if (obj->phdr_loaded)
 		obj->phdr =  (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->phdr);
+#ifdef __ARM_EABI__
+	if (obj->exidx_start)
+		obj->exidx_start = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->exidx_start);
+#endif
 
 	return obj;
 
@@ -411,6 +421,7 @@ void
 _rtld_obj_free(Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
+	Name_Entry *entry;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	if (obj->tls_done)
@@ -421,6 +432,10 @@ _rtld_obj_free(Obj_Entry *obj)
 		Needed_Entry *needed = obj->needed;
 		obj->needed = needed->next;
 		xfree(needed);
+	}
+	while ((entry = SIMPLEQ_FIRST(&obj->names)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&obj->names, link);
+		xfree(entry);
 	}
 	while ((elm = SIMPLEQ_FIRST(&obj->dldags)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&obj->dldags, link);
@@ -444,6 +459,7 @@ _rtld_obj_new(void)
 	Obj_Entry *obj;
 
 	obj = CNEW(Obj_Entry);
+	SIMPLEQ_INIT(&obj->names);
 	SIMPLEQ_INIT(&obj->dldags);
 	SIMPLEQ_INIT(&obj->dagmembers);
 	return obj;

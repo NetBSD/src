@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.39 2012/04/06 10:10:11 gson Exp $ */
+/* $NetBSD: i386.c,v 1.39.2.1 2013/06/23 06:29:04 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.39 2012/04/06 10:10:11 gson Exp $");
+__RCSID("$NetBSD: i386.c,v 1.39.2.1 2013/06/23 06:29:04 tls Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -185,7 +185,7 @@ write_boot_area(ib_params *params, uint8_t *buf, size_t len)
   bad_write:
 	if (rv == -1)
 		warn("Writing `%s'", params->filesystem);
-	else 
+	else
 		warnx("Writing `%s': short write, %u bytes",
 			params->filesystem, rv);
 	return 0;

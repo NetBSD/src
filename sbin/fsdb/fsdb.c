@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.44.2.1 2013/02/25 00:28:07 tls Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.44.2.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.44.2.1 2013/02/25 00:28:07 tls Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.44.2.2 2013/06/23 06:28:51 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -542,9 +542,9 @@ CMDFUNC(findblk)
 				    (unsigned long long)fsbtodb(sblock,
 					ino_to_fsba(sblock, inum)),
 				    (unsigned long long)
-				    (inum / INOPB(sblock)) * INOPB(sblock),
+				    (inum / FFS_INOPB(sblock)) * FFS_INOPB(sblock),
 				    (unsigned long long)
-				    (inum / INOPB(sblock) + 1) * INOPB(sblock));
+				    (inum / FFS_INOPB(sblock) + 1) * FFS_INOPB(sblock));
 				findblk_numtofind--;
 				if (findblk_numtofind == 0)
 					goto end;
@@ -990,7 +990,7 @@ chnamefunc(struct inodesc *idesc)
 	if (slotcount++ == desired) {
 		/* will name fit? */
 		testdir.d_namlen = strlen(idesc->id_name);
-		if (DIRSIZ(NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
+		if (UFS_DIRSIZ(UFS_NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
 			dirp->d_namlen = testdir.d_namlen;
 			strlcpy(dirp->d_name, idesc->id_name,
 			    sizeof(dirp->d_name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.7 2009/11/15 22:21:03 christos Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.7.14.1 2013/06/23 06:28:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _INTTYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/inttypes.h>
 #include <machine/ansi.h>
 
@@ -59,6 +60,21 @@ typedef struct {
 } imaxdiv_t;
 
 imaxdiv_t	imaxdiv(intmax_t, intmax_t);
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+intmax_t	strtoimax_l(const char * __restrict,
+		    char ** __restrict, int, locale_t);
+uintmax_t	strtoumax_l(const char * __restrict,
+		    char ** __restrict, int, locale_t);
+intmax_t	wcstoimax_l(const wchar_t * __restrict,
+		    wchar_t ** __restrict, int, locale_t);
+uintmax_t	wcstoumax_l(const wchar_t * __restrict,
+		    wchar_t ** __restrict, int, locale_t);
+#endif
 __END_DECLS
 
 #endif /* !_INTTYPES_H_ */

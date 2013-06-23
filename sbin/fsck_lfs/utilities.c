@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.31.8.1 2013/02/25 00:28:07 tls Exp $	 */
+/* $NetBSD: utilities.c,v 1.31.8.2 2013/06/23 06:28:51 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,8 +33,6 @@
 #include <sys/time.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/dir.h>
 #define buf ubuf
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
@@ -64,17 +62,17 @@ long diskreads, totalreads;	/* Disk cache statistics */
 extern off_t locked_queue_bytes;
 
 int
-ftypeok(struct ufs1_dinode * dp)
+ftypeok(struct ulfs1_dinode * dp)
 {
-	switch (dp->di_mode & IFMT) {
+	switch (dp->di_mode & LFS_IFMT) {
 
-	case IFDIR:
-	case IFREG:
-	case IFBLK:
-	case IFCHR:
-	case IFLNK:
-	case IFSOCK:
-	case IFIFO:
+	case LFS_IFDIR:
+	case LFS_IFREG:
+	case LFS_IFBLK:
+	case LFS_IFCHR:
+	case LFS_IFLNK:
+	case LFS_IFSOCK:
+	case LFS_IFIFO:
 		return (1);
 
 	default:
@@ -194,7 +192,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	struct inodesc idesc;
 	static int busy = 0;
 
-	if (curdir == ino && ino == UFS_ROOTINO) {
+	if (curdir == ino && ino == ULFS_ROOTINO) {
 		(void) strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
@@ -213,7 +211,7 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 		idesc.id_parent = curdir;
 		goto namelookup;
 	}
-	while (ino != UFS_ROOTINO) {
+	while (ino != ULFS_ROOTINO) {
 		idesc.id_number = ino;
 		idesc.id_func = findino;
 		idesc.id_name = "..";
@@ -237,7 +235,7 @@ namelookup:
 		ino = idesc.id_number;
 	}
 	busy = 0;
-	if (ino != UFS_ROOTINO)
+	if (ino != ULFS_ROOTINO)
 		*--cp = '?';
 	memcpy(namebuf, cp, (size_t) (&namebuf[MAXPATHLEN] - cp));
 }

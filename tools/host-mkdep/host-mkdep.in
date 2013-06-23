@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.21.2.1 2013/02/25 00:30:30 tls Exp $
+#	$NetBSD: host-mkdep.in,v 1.21.2.2 2013/06/23 06:28:58 tls Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -84,6 +84,7 @@ while [ $# -gt 0 ]; do
 		-o)	OPTIONAL=true; AWK_OPTIONAL='print ".OPTIONAL:" $0';;
 		-p)	NEWEXT=;;
 		-q)	QUIET=true;;
+		-[iv])	;;
 
 		-[fPs])	# Options with arguments
 			[ -z "$optarg" ] && {
@@ -180,7 +181,9 @@ else
 		--sysroot*)
 				shift
 				;;
-
+		-[iv])
+				shift
+				;;
 		-*)		
 				echo "$0: Unknown option: $1" 1>&2 # all other -options
 				exit 1
@@ -228,7 +231,7 @@ else
 		file=${file%.*}
 		set_objlist $file
 
-		@CPP@ "$@" $f | @AWK@ '
+		( (@CPP@ "$@" $f; echo $? >&3) | @AWK@ '
 			/^#/ {
 				# Be as tolerant as possible.
 				sub(/^#(line)? [ 0-9]*\"?/, "")
@@ -244,7 +247,7 @@ else
 				print "'"$objlist"'" ": " $0
 				'"$AWK_OPTIONAL"'
 			}
-		' >> $TMP
+		' >> $TMP) 3>&1 | (read a; exit $a)
 	done
 fi
 

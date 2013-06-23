@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26.2.1 2012/11/20 03:02:54 tls Exp $
+# $NetBSD: Makefile,v 1.26.2.2 2013/06/23 06:28:56 tls Exp $
 
 NOMAN=		# defined
 
@@ -13,8 +13,10 @@ TESTS_C+=	t_pty
 TESTS_C+=	t_mqueue
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
+TESTS_C+=	t_kauth_pr_47598
 
 TESTS_SH=	t_umount
+TESTS_SH+=	t_umountstress
 TESTS_SH+=	t_ps_strings
 
 BINDIR=		${TESTSDIR}

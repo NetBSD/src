@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.82.12.1 2013/02/25 00:30:35 tls Exp $	*/
+/*	$NetBSD: version.h,v 1.82.12.2 2013/06/23 06:29:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -34,5 +34,5 @@
 #endif
 
 #ifndef FTP_VERSION
-#define	FTP_VERSION	"20121224"
+#define	FTP_VERSION	"20130220"
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.67.2.1 2013/02/25 00:28:16 tls Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.67.2.2 2013/06/23 06:28:54 tls Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -21,6 +21,8 @@ LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBEVENT?=	/usr/lib/libevent.a
+LIBEVENT_OPENSSL?=	/usr/lib/libevent_openssl.a
+LIBEVENT_PTHREADS?=	/usr/lib/libevent_pthreads.a
 LIBEXPAT?=	/usr/lib/libexpat.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
@@ -115,7 +117,7 @@ ${HOSTPROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .if !empty(.MAKE.OS:M*CYGWIN*)
-	${NETBSDSRCDIR}/tools/binstall/mkmanifest ${HOSTPROG}
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${HOSTPROG}
 .endif
 
 

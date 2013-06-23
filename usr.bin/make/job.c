@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.163.2.1 2013/02/25 00:30:36 tls Exp $	*/
+/*	$NetBSD: job.c,v 1.163.2.2 2013/06/23 06:29:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.163.2.1 2013/02/25 00:30:36 tls Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.163.2.2 2013/06/23 06:29:00 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.163.2.1 2013/02/25 00:30:36 tls Exp $");
+__RCSID("$NetBSD: job.c,v 1.163.2.2 2013/06/23 06:29:00 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -401,6 +401,15 @@ JobCreatePipe(Job *job, int minfd)
     if (pipe(job->jobPipe) == -1)
 	Punt("Cannot create pipe: %s", strerror(errno));
 
+    for (i = 0; i < 2; i++) {
+       /* Avoid using low numbered fds */
+       fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
+       if (fd != -1) {
+	   close(job->jobPipe[i]);
+	   job->jobPipe[i] = fd;
+       }
+    }
+    
     /* Set close-on-exec flag for both */
     (void)fcntl(job->jobPipe[0], F_SETFD, 1);
     (void)fcntl(job->jobPipe[1], F_SETFD, 1);
@@ -413,15 +422,6 @@ JobCreatePipe(Job *job, int minfd)
      */
     fcntl(job->jobPipe[0], F_SETFL, 
 	fcntl(job->jobPipe[0], F_GETFL, 0) | O_NONBLOCK);
-
-    for (i = 0; i < 2; i++) {
-       /* Avoid using low numbered fds */
-       fd = fcntl(job->jobPipe[i], F_DUPFD, minfd);
-       if (fd != -1) {
-	   close(job->jobPipe[i]);
-	   job->jobPipe[i] = fd;
-       }
-    }
 }
 
 /*-
@@ -1232,8 +1232,10 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->flags & FROM_DEPEND) {
-		fprintf(stdout, "%s: ignoring stale %s for %s\n",
-			progname, makeDependfile, gn->name);
+		if (!Job_RunTarget(".STALE", gn->fname))
+		    fprintf(stdout, "%s: %s, %d: ignoring stale %s for %s\n",
+			progname, gn->fname, gn->lineno, makeDependfile,
+			gn->name);
 		return TRUE;
 	    }
 
@@ -1376,11 +1378,13 @@ JobExec(Job *job, char **argv)
 	 * we can kill it and all its descendants in one fell swoop,
 	 * by killing its process family, but not commit suicide.
 	 */
+#if defined(MAKE_NATIVE) || defined(HAVE_SETPGID)
 #if defined(SYSV)
 	/* XXX: dsl - I'm sure this should be setpgrp()... */
 	(void)setsid();
 #else
 	(void)setpgid(0, getpid());
+#endif
 #endif
 
 	Var_ExportVars();
@@ -2175,8 +2179,6 @@ Job_SetPrefix(void)
 void
 Job_Init(void)
 {
-    GNode         *begin;     /* node for commands to do at the very start */
-
     /* Allocate space for all the job info */
     job_table = bmake_malloc(maxJobs * sizeof *job_table);
     memset(job_table, 0, maxJobs * sizeof *job_table);
@@ -2252,15 +2254,7 @@ Job_Init(void)
     ADDSIG(SIGCONT, JobContinueSig)
 #undef ADDSIG
 
-    begin = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-
-    if (begin != NULL) {
-	JobRun(begin);
-	if (begin->made == ERROR) {
-	    PrintOnError(begin, "\n\nStop.");
-	    exit(1);
-	}
-    }
+    (void)Job_RunTarget(".BEGIN", NULL);
     postCommands = Targ_FindNode(".END", TARG_CREATE);
 }
 
@@ -2818,6 +2812,8 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	/* Pipe passed in from parent */
 	tokenWaitJob.inPipe = jp_0;
 	tokenWaitJob.outPipe = jp_1;
+	(void)fcntl(jp_0, F_SETFD, 1);
+	(void)fcntl(jp_1, F_SETFD, 1);
 	return;
     }
 
@@ -2923,6 +2919,38 @@ Job_TokenWithdraw(void)
     jobTokensRunning++;
     if (DEBUG(JOB))
 	fprintf(debug_file, "(%d) withdrew token\n", getpid());
+    return TRUE;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_RunTarget --
+ *	Run the named target if found. If a filename is specified, then
+ *	set that to the sources.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ * 	exits if the target fails.
+ *
+ *-----------------------------------------------------------------------
+ */
+Boolean
+Job_RunTarget(const char *target, const char *fname) {
+    GNode *gn = Targ_FindNode(target, TARG_NOCREATE);
+
+    if (gn == NULL)
+	return FALSE;
+
+    if (fname)
+	Var_Set(ALLSRC, fname, gn, 0);
+
+    JobRun(gn);
+    if (gn->made == ERROR) {
+	PrintOnError(gn, "\n\nStop.");
+	exit(1);
+    }
     return TRUE;
 }
 

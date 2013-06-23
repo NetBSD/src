@@ -1,4 +1,4 @@
-/* @(#) Header: /tcpdump/master/tcpdump/telnet.h,v 1.5 2007-08-29 02:31:44 mcr Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/telnet.h,v 1.5 2007-08-29 02:31:44 mcr Exp  (LBL) */
 
 /*	NetBSD: telnet.h,v 1.9 2001/06/11 01:50:50 wiz Exp 	*/
 

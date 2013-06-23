@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.278.2.1 2013/02/25 00:28:17 tls Exp $
+#	$NetBSD: bsd.prog.mk,v 1.278.2.2 2013/06/23 06:28:54 tls Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -269,6 +269,9 @@ LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .endif
 .endfor
 
+# Ugly one-offs
+LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
+
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
@@ -510,8 +513,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
-	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    ${_PROGLDOPTS}
+	    ${OBJS.${_P}} ${_PROGLDOPTS} ${_LDADD.${_P}}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif

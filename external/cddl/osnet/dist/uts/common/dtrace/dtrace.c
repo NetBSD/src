@@ -14947,7 +14947,7 @@ dtrace_module_loaded(modctl_t *ctl)
 	 * not a serious problem -- it just means that the module that we
 	 * just loaded may not be immediately instrumentable.
 	 */
-	delay(1);
+	xdelay(1);
 }
 
 static void
@@ -16603,9 +16603,11 @@ static int		dtrace_unload(void);
 #include <dtrace_unload.c>
 #include <dtrace_vtime.c>
 #include <dtrace_hacks.c>
+#if defined(__i386__) || defined(__x86_64__)
 #include <dtrace_isa.c>
+#endif
 
-MODULE(MODULE_CLASS_MISC, dtrace, "solaris");
+MODULE(MODULE_CLASS_DRIVER, dtrace, "solaris");
 
 #if 0
 DEV_MODULE(dtrace, dtrace_modevent, NULL);

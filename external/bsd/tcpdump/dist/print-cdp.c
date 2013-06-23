@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-cdp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-cdp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #endif
 #endif
 
@@ -129,7 +129,7 @@ cdp_print(const u_char *pptr, u_int length, u_int caplen)
                                tok2str(cdp_tlv_values,"unknown field type", type),
                                type,
                                len,
-                               len>1 ? "s" : ""); /* plural */
+                               PLURAL_SUFFIX(len)); /* plural */
 
                     switch (type) {
 

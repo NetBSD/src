@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.8 2011/08/27 17:38:16 joerg Exp $");
+__RCSID("$NetBSD: label.c,v 1.8.8.1 2013/06/23 06:28:51 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ label(int fd)
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		le_uuid_dec(&ent->ent_type, &uuid);
+		le_uuid_dec(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
 			continue;
@@ -133,7 +133,7 @@ label(int fd)
 		ent = (void*)((char*)lbt->map_data + i *
 		    le32toh(hdr->hdr_entsz));
 
-		/* Label the secundary entry. */
+		/* Label the secondary entry. */
 		utf8_to_utf16(name, ent->ent_name, 36);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23.12.1 2013/02/25 00:28:05 tls Exp $	*/
+/*	$NetBSD: dir.c,v 1.23.12.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23.12.1 2013/02/25 00:28:05 tls Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23.12.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ const char	*lfname = "lost+found";
 int	lfmode = 01700;
 struct	ext2fs_dirtemplate emptydir = {
 	.dot_ino = 0,
-	.dot_reclen = DIRBLKSIZ,
+	.dot_reclen = UFS_DIRBLKSIZ,
 }; 
 struct	ext2fs_dirtemplate dirhead = {
 	.dot_ino = 0,
@@ -93,12 +93,12 @@ struct	ext2fs_dirtemplate dirhead = {
 	.dot_type = EXT2_FT_DIR,
 	.dot_name = ".",
 	.dotdot_ino = 0,
-	.dotdot_reclen = DIRBLKSIZ - 12,
+	.dotdot_reclen = UFS_DIRBLKSIZ - 12,
 	.dotdot_namlen = 2,
 	.dotdot_type = EXT2_FT_DIR,
 	.dotdot_name = "..",
 };
-#undef DIRBLKSIZ
+#undef UFS_DIRBLKSIZ
 
 static int expanddir(struct ext2fs_dinode *, char *);
 static void freedir(ino_t, ino_t);
