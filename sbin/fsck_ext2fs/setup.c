@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.30 2013/06/19 17:51:25 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.30 2013/06/19 17:51:25 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.31 2013/06/23 02:06:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ setup(const char *dev)
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return 0;
 		for (cg = 1; cg < proto.e2fs_ncg; cg++) {
-			bflag = fsbtodb(&proto,
+			bflag = EXT2_FSBTODB(&proto,
 			    cg * proto.e2fs.e2fs_bpg +
 			    proto.e2fs.e2fs_first_dblock);
 			if (readsb(0) != 0)
@@ -220,7 +220,7 @@ setup(const char *dev)
 		if (bread(fsreadfd,
 		    (char *)&sblock.e2fs_gd[i * sblock.e2fs_bsize /
 		    sizeof(struct ext2_gd)],
-		    fsbtodb(&sblock, ((sblock.e2fs_bsize > 1024) ? 0 : 1) +
+		    EXT2_FSBTODB(&sblock, ((sblock.e2fs_bsize > 1024) ? 0 : 1) +
 		    i + 1),
 		    sblock.e2fs_bsize) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
@@ -335,7 +335,7 @@ readsb(int listerr)
 	 * so we can tell if this is an alternate later.
 	 */
 	super *= dev_bsize;
-	dev_bsize = sblock.e2fs_bsize / fsbtodb(&sblock, 1);
+	dev_bsize = sblock.e2fs_bsize / EXT2_FSBTODB(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
 
 	if (sblock.e2fs_ncg == 1) {
