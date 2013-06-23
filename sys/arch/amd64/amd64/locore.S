@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.72 2013/06/23 03:16:46 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.73 2013/06/23 09:00:37 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -193,14 +193,14 @@
 #ifdef XEN
 
 /*
- * Xen Guest Loader Info
+ * Xen guest identifier and loader selection
  */
 
 .section __xen_guest
 
-	.ascii  "GUEST_OS=NetBSD,GUEST_VER=4.99"
-	.ascii  ",XEN_VER=xen-3.0"
-	.ascii  ",LOADER=generic"
+	.ascii	"GUEST_OS=NetBSD,GUEST_VER=4.99"
+	.ascii	",XEN_VER=xen-3.0"
+	.ascii	",LOADER=generic"
 	.ascii	",VIRT_BASE=0xffffffff80000000"
 	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
 	.ascii	",VIRT_ENTRY=0xffffffff80100000"
@@ -208,7 +208,7 @@
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
-	.byte   0
+	.byte	0
 
 #endif	/* XEN */
 
@@ -217,32 +217,32 @@
  */
 	.data
 
-#if NLAPIC > 0 
-	.align  NBPG
+#if NLAPIC > 0
+	.align	PAGE_SIZE
 	.globl _C_LABEL(local_apic)
 	.globl _C_LABEL(lapic_id)
 	.globl _C_LABEL(lapic_tpr)
 
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
-	.space  LAPIC_ID
+	.space	LAPIC_ID
 END(local_apic)
 	.type	_C_LABEL(lapic_id), @object
 LABEL(lapic_id)
-	.long   0x00000000
-	.space  LAPIC_TPRI-(LAPIC_ID+4)
+	.long	0x00000000
+	.space	LAPIC_TPRI-(LAPIC_ID+4)
 END(lapic_id)
 	.type	_C_LABEL(lapic_tpr), @object
 LABEL(lapic_tpr)
-	.space  LAPIC_PPRI-LAPIC_TPRI
+	.space	LAPIC_PPRI-LAPIC_TPRI
 END(lapic_tpr)
 	.type	_C_LABEL(lapic_ppr), @object
 _C_LABEL(lapic_ppr):
-	.space  LAPIC_ISR-LAPIC_PPRI 
+	.space	LAPIC_ISR-LAPIC_PPRI
 END(lapic_ppr)
 	.type	_C_LABEL(lapic_isr), @object
 _C_LABEL(lapic_isr):
-	.space  NBPG-LAPIC_ISR
+	.space	PAGE_SIZE-LAPIC_ISR
 END(lapic_isr)
 #endif
 
@@ -262,8 +262,7 @@ END(lapic_isr)
 	.globl	_C_LABEL(cputype)
 
 	.type	_C_LABEL(cputype), @object
-LABEL(cputype)		.long	0	# are we 386, 386sx, or 486,
-					#   or Pentium, or..
+LABEL(cputype)		.long	0	# are we 80486, Pentium, or..
 END(cputype)
 	.type	_C_LABEL(cpu_id), @object
 LABEL(cpu_id)		.long	0	# saved from `cpuid' instruction
@@ -351,7 +350,7 @@ END(farjmp64)
 tmpstk:
 
 	.globl _C_LABEL(cpu_private)
-	.comm _C_LABEL(cpu_private),NBPG,NBPG
+	.comm _C_LABEL(cpu_private),PAGE_SIZE,PAGE_SIZE
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
@@ -459,7 +458,7 @@ ENTRY(start)
 	movl	%ebx,(%ebp)
 	movl	%edx,4(%ebp)
 	movl	%ecx,8(%ebp)
-	movl	$0,  12(%ebp)
+	movl	$0, 12(%ebp)
 
 	movl	$1,%eax
 	cpuid
@@ -486,7 +485,7 @@ ENTRY(start)
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp | L2 ptp | L3 
+ * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp | L2 ptp | L3
  *			      0          1       2      3
  */
 
@@ -504,21 +503,20 @@ ENTRY(start)
 
 
 #define PROC0_PML4_OFF	0
-#define PROC0_STK_OFF	(PROC0_PML4_OFF + NBPG)
-#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * NBPG)
-#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * NBPG)
-#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * NBPG)
+#define PROC0_STK_OFF	(PROC0_PML4_OFF + PAGE_SIZE)
+#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
+#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
+#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
 #define TABLESIZE \
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
-    * NBPG)
+    * PAGE_SIZE)
 
 #define fillkpt	\
-1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
-	movl	$0,4(%ebx)	; 	/* upper 32 bits 0 */ \
-	addl	$8,%ebx		; 	/* next pte/pde */ \
-	addl	$NBPG,%eax	; 	/* next phys page */ \
-	loop	1b		;  \
-
+1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
+	movl	$0,4(%ebx)		; 	/* upper 32 bits 0 */	\
+	addl	$8,%ebx			; 	/* next pte/pde */	\
+	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
+	loop	1b			;
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
@@ -538,9 +536,9 @@ ENTRY(start)
 	subl	$KERNBASE_LO,%eax	/* XXX */
 	movl	%eax,%edi
 1:
-	/* Clear tables */
+	/* Compute sizes */
 	movl	%edi,%esi
-	addl	$PGOFSET,%esi
+	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 
 	movl	%esi,%edi
@@ -553,6 +551,9 @@ ENTRY(start)
 
 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
+/*
+ * Build initial page tables.
+ */
 	/*
 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
@@ -569,28 +570,31 @@ ENTRY(start)
 	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # pdes */
 	addl	%ecx,%ebx
 
-	/* Map kernel text read-only */
+	/* Map the kernel text read-only. */
 	movl	%edx,%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-	orl     $(PG_V|PG_KR),%eax
+	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
 	movl	$TABLESIZE,%ecx
-	addl	%esi,%ecx		/* %ecx = &end[TABLESIZE] */
-	subl	%edx,%ecx		/* %ecx = %ecx - etext */
+	addl	%esi,%ecx				# end of tables
+	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 
 	/* Map ISA I/O mem (later atdevbase) */
-	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx
+	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax	# having these bits set
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
 	fillkpt
 
+/*
+ * Construct a page table directory.
+ */
 	/* Set up level 2 pages */
-	leal    (PROC0_PTP2_OFF)(%esi),%ebx
+	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
@@ -599,14 +603,14 @@ ENTRY(start)
 #if L2_SLOT_KERNBASE > 0
 	/* If needed, set up level 2 entries for actual kernel mapping */
 	leal	(PROC0_PTP2_OFF+ L2_SLOT_KERNBASE*8)(%esi),%ebx
-	leal    (PROC0_PTP1_OFF)(%esi),%eax
-	orl     $(PG_V|PG_KW), %eax
-	movl    $(NKL2_KIMG_ENTRIES+1),%ecx
+	leal	(PROC0_PTP1_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 #endif
 
 	/* Set up level 3 pages */
-	leal    (PROC0_PTP3_OFF)(%esi),%ebx
+	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
@@ -615,29 +619,29 @@ ENTRY(start)
 #if L3_SLOT_KERNBASE > 0
 	/* If needed, set up level 3 entries for actual kernel mapping */
 	leal	(PROC0_PTP3_OFF+ L3_SLOT_KERNBASE*8)(%esi),%ebx
-	leal    (PROC0_PTP2_OFF)(%esi),%eax
-	orl     $(PG_V|PG_KW), %eax
-	movl    $NKL3_KIMG_ENTRIES,%ecx
+	leal	(PROC0_PTP2_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 #endif
 
 	/* Set up top level entries for identity mapping */
-	leal    (PROC0_PML4_OFF)(%esi),%ebx
+	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Set up top level entries for actual kernel mapping */
-	leal    (PROC0_PML4_OFF + L4_SLOT_KERNBASE*8)(%esi),%ebx
+	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW), %eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE */
-	leal    (PROC0_PML4_OFF + PDIR_SLOT_PTE*8)(%esi),%ebx
-	leal    (PROC0_PML4_OFF)(%esi),%eax
+	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE*8)(%esi),%ebx
+	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
 	movl	$0, 4(%ebx)
@@ -660,7 +664,7 @@ ENTRY(start)
 	 * 2. Set Long Mode Enable in EFER. Also enable the
 	 *    syscall extensions.
 	 */
-	movl    $MSR_EFER,%ecx
+	movl	$MSR_EFER,%ecx
 	rdmsr
 	xorl	%eax,%eax	/* XXX */
 	orl	$(EFER_LME|EFER_SCE),%eax
@@ -716,6 +720,7 @@ longmode_hi:
 	lgdt	(%rax)
 
 	/*
+	 * We have arrived.
 	 * There's no need anymore for the identity mapping in low
 	 * memory, remove it.
 	 */
@@ -757,7 +762,7 @@ longmode_hi:
 	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
-	xorq	%rbp,%rbp               # mark end of frames
+	xorq	%rbp,%rbp		# mark end of frames
 
 	xorw	%ax,%ax
 	movw	%ax,%gs
@@ -781,7 +786,7 @@ longmode_hi:
 	 */
 	movq	%rsi, %rbx
 
-	/* Clear BSS */
+	/* Clear BSS. */
 	xorq	%rax,%rax
 	movq	$_C_LABEL(__bss_start),%rdi
 	movq	$_C_LABEL(_end),%rcx
@@ -858,13 +863,13 @@ longmode_hi:
 	addq	$USPACE,%rdi
 	subq	$KERNBASE,%rdi		# init_x86_64 want a physical address
 
-#endif	/* !XEN */
+#endif	/* XEN */
 	call	_C_LABEL(init_x86_64)
 
 	call 	_C_LABEL(main)
 END(start)
 
-#ifdef XEN
+#if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
@@ -918,9 +923,12 @@ ENTRY(longjmp)
 	ret
 END(longjmp)
 
+/*
+ * void dumpsys(void)
+ *
+ * Mimic cpu_switchto() for postmortem debugging.
+ */
 ENTRY(dumpsys)
-	# mimic cpu_switchto() for postmortem debugging.
-
 	# build a fake switch frame.
 	pushq	%rbx
 	pushq	%r12
@@ -1032,7 +1040,7 @@ ENTRY(cpu_switchto)
 	je	6f
 	movq	%rcx,%cr0
 
-6:	testl   $PCB_COMPAT32, PCB_FLAGS(%r14)
+6:	testl	$PCB_COMPAT32, PCB_FLAGS(%r14)
 	jne	32f
 
 	/* Zero out %fs/%gs registers and GDT descriptors. */
