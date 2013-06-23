@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $");
 #include <sys/kthread.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/poll.h>
 #include <sys/protosw.h>
 #include <sys/queue.h>
@@ -64,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.33 2013/06/01 20:22:27 pooka Exp $");
 DOMAIN_DEFINE(sockindomain);
 DOMAIN_DEFINE(sockin6domain);
 
-
+static int	sockin_do_init(void);
 static void	sockin_init(void);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
@@ -372,8 +373,8 @@ sockinworker(void *arg)
 
 }
 
-static void
-sockin_init(void)
+static int
+sockin_do_init(void)
 {
 	int rv;
 
@@ -387,6 +388,15 @@ sockin_init(void)
 	mutex_init(&su_mtx, MUTEX_DEFAULT, IPL_NONE);
 	strlcpy(sockin_if.if_xname, "sockin0", sizeof(sockin_if.if_xname));
 	bpf_attach(&sockin_if, DLT_NULL, 0);
+	return 0;
+}
+
+static void
+sockin_init(void)
+{
+	static ONCE_DECL(init);
+
+	RUN_ONCE(&init, sockin_do_init);
 }
 
 static int
