@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/21 06:01:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2013/06/23 06:28:42 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SRCS=	auth.c choose.c info.c list.c lock.c log.c \
 
 XSMDIR=	${X11ETCDIR}/xsm
 
-CPPFLAGS+=-DHAS_MKSTEMP
+CPPFLAGS+=-DHAVE_MKSTEMP -DHAVE_PUTENV
 CPPFLAGS.remote.c=	-DRSHCMD=\"ssh\"
 CPPFLAGS.restart.c=	-DSYSTEM_INIT_FILE=\"${XSMDIR}/system.xsm\"
 
@@ -24,6 +24,7 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

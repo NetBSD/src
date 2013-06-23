@@ -1,4 +1,4 @@
-/*	$NetBSD: taskq.c,v 1.2 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: taskq.c,v 1.2.12.1 2013/06/23 06:28:31 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -664,7 +664,7 @@ taskq_ent_alloc(taskq_t *tq, int flags)
 			 * the caller.  So, we just delay for one second
 			 * to throttle the allocation rate.
 			 */
-			delay(hz);
+			xdelay(hz);
 		}
 		tqe = kmem_cache_alloc(taskq_ent_cache, kmflags);
 		mutex_enter(&tq->tq_lock);

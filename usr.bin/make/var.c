@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.171.2.1 2012/11/20 03:02:58 tls Exp $	*/
+/*	$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.171.2.1 2012/11/20 03:02:58 tls Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.171.2.1 2012/11/20 03:02:58 tls Exp $");
+__RCSID("$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -309,7 +309,6 @@ static char *VarGetPattern(GNode *, Var_Parse_State *,
 			   int, const char **, int, int *, int *,
 			   VarPattern *);
 static char *VarQuote(char *);
-static char *VarChangeCase(char *, int);
 static char *VarHash(char *);
 static char *VarModify(GNode *, Var_Parse_State *,
     const char *,
@@ -530,11 +529,20 @@ void
 Var_Delete(const char *name, GNode *ctxt)
 {
     Hash_Entry 	  *ln;
-
-    ln = Hash_FindEntry(&ctxt->context, name);
+    char *cp;
+    
+    if (strchr(name, '$')) {
+	cp = Var_Subst(NULL, name, VAR_GLOBAL, 0);
+    } else {
+	cp = (char *)name;
+    }
+    ln = Hash_FindEntry(&ctxt->context, cp);
     if (DEBUG(VAR)) {
 	fprintf(debug_file, "%s:delete %s%s\n",
-	    ctxt->name, name, ln ? "" : " (not found)");
+	    ctxt->name, cp, ln ? "" : " (not found)");
+    }
+    if (cp != name) {
+	free(cp);
     }
     if (ln != NULL) {
 	Var 	  *v;
@@ -770,7 +778,7 @@ Var_UnExport(char *str)
     if (unexport_env) {
 	char **newenv;
 
-	cp = getenv(MAKE_LEVEL);	/* we should preserve this */
+	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
 	if (environ == savedEnv) {
 	    /* we have been here before! */
 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
@@ -787,7 +795,7 @@ Var_UnExport(char *str)
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
-	setenv(MAKE_LEVEL, cp, 1);
+	setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
 	for (; *str != '\n' && isspace((unsigned char) *str); str++)
 	    continue;
@@ -952,14 +960,8 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * We allow the makefiles to update .MAKE.LEVEL and ensure
      * children see a correctly incremented value.
      */
-    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0) {
-	char tmp[64];
-	int level;
-	
-	level = atoi(val);
-	snprintf(tmp, sizeof(tmp), "%u", level + 1);
-	setenv(MAKE_LEVEL, tmp, 1);
-    }
+    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0)
+	setenv(MAKE_LEVEL_ENV, val, 1);
 	
 	
  out:
@@ -2296,9 +2298,7 @@ VarHash(char *str)
     size_t         len, len2;
     unsigned char  *ustr = (unsigned char *)str;
     uint32_t       h, k, c1, c2;
-    int            done;
 
-    done = 1;
     h  = 0x971e137bU;
     c1 = 0x95543787U;
     c2 = 0x2ad7eb25U;
@@ -2328,7 +2328,7 @@ VarHash(char *str)
 	h = (h << 13) ^ (h >> 19);
 	h = h * 5 + 0x52dce729U;
 	h ^= k;
-   } while (!done);
+   }
    h ^= len2;
    h *= 0x85ebca6b;
    h ^= h >> 13;
@@ -2341,37 +2341,6 @@ VarHash(char *str)
        h >>= 4;
    }
 
-   return Buf_Destroy(&buf, FALSE);
-}
-
-/*-
- *-----------------------------------------------------------------------
- * VarChangeCase --
- *      Change the string to all uppercase or all lowercase
- *
- * Input:
- *	str		String to modify
- *	upper		TRUE -> uppercase, else lowercase
- *
- * Results:
- *      The string with case changed
- *
- * Side Effects:
- *      None.
- *
- *-----------------------------------------------------------------------
- */
-static char *
-VarChangeCase(char *str, int upper)
-{
-   Buffer         buf;
-   int            (*modProc)(int);
-
-   modProc = (upper ? toupper : tolower);
-   Buf_Init(&buf, 0);
-   for (; *str ; str++) {
-       Buf_AddByte(&buf, modProc(*str));
-   }
    return Buf_Destroy(&buf, FALSE);
 }
 
@@ -3051,8 +3020,16 @@ ApplyModifiers(char *nstr, const char *tstr,
 					       VarRealpath, NULL);
 			    cp = tstr + 2;
 			    termc = *cp;
-			} else if (tstr[1] == 'u' || tstr[1] == 'l') {
-			    newStr = VarChangeCase(nstr, (tstr[1] == 'u'));
+			} else if (tstr[1] == 'u') {
+			    char *dp = bmake_strdup(nstr);
+			    for (newStr = dp; *dp; dp++)
+				*dp = toupper((unsigned char)*dp);
+			    cp = tstr + 2;
+			    termc = *cp;
+			} else if (tstr[1] == 'l') {
+			    char *dp = bmake_strdup(nstr);
+			    for (newStr = dp; *dp; dp++)
+				*dp = tolower((unsigned char)*dp);
 			    cp = tstr + 2;
 			    termc = *cp;
 			} else if (tstr[1] == 'W' || tstr[1] == 'w') {

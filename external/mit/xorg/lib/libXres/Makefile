@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/11/06 22:28:26 veego Exp $
+#	$NetBSD: Makefile,v 1.7.14.1 2013/06/23 06:28:44 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@ XRESDIR=	${X11SRCDIR.Xres}
 .PATH:		${XRESDIR}/man
 .PATH:		${XRESDIR}/include/X11/extensions
 SRCS=		XRes.c
+
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 INCS=	XRes.h
 INCSDIR=${X11INCDIR}/X11/extensions

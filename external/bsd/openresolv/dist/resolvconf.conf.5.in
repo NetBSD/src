@@ -1,4 +1,4 @@
-.\" Copyright (c) 2009-2012 Roy Marples
+.\" Copyright (c) 2009-2013 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 2, 2012
+.Dd April 27, 2013
 .Dt RESOLVCONF.CONF 5 SMM
 .Os
 .Sh NAME
@@ -108,11 +108,12 @@ without any alteration.
 A libc resolver sortlist, as specified in
 .Xr resolv.conf 5 .
 .It Sy resolv_conf_local_only
-If a local nameserver is configured then the default is just to specify that
+If a local name server is configured then the default is just to specify that
 and ignore all other entries as they will be configured for the local
-nameserver.
-Set this to YES to list them instead, if you need working DNS and the local
-nameserver stops functioning at the expense of duplicated server queries.
+name server.
+Set this to NO to also list non-local nameservers.
+This will give you working DNS even if the local nameserver stops functioning
+at the expense of duplicated server queries.
 .El
 .Sh SUBSCRIBER OPTIONS
 openresolv ships with subscribers for the name servers
@@ -125,28 +126,31 @@ Each subscriber can create configuration files which should be included in
 in the subscribers main configuration file.
 .Bl -tag -width indent
 .It Sy dnsmasq_conf
-This file tells dnsmasq which nameservers to use for specific domains.
+This file tells dnsmasq which name servers to use for specific domains.
 .It Sy dnsmasq_resolv
-This file tells dnsmasq which nameservers to use for global lookups.
+This file tells dnsmasq which name servers to use for global lookups.
 .Pp
 Example resolvconf.conf for dnsmasq:
-.D1 nameservers=127.0.0.1
+.D1 name_servers=127.0.0.1
 .D1 dnsmasq_conf=/etc/dnsmasq-conf.conf
 .D1 dnsmasq_resolv=/etc/dnsmasq-resolv.conf
 .Pp
 Example dnsmasq.conf:
 .D1 listen-address=127.0.0.1
+.D1 # If dnsmasq is compiled for DBus then we can take
+.D1 # advantage of not having to restart dnsmasq.
+.D1 enable-dbus
 .D1 conf-file=/etc/dnsmasq-conf.conf
 .D1 resolv-file=/etc/dnsmasq-resolv.conf
 .It Sy named_options
 Include this file in the named options block.
-This file tells named which nameservers to use for global lookups.
+This file tells named which name servers to use for global lookups.
 .It Sy named_zones
 Include this file in the named global scope, after the options block.
-This file tells named which nameservers to use for specific domains.
+This file tells named which name servers to use for specific domains.
 .Pp
 Example resolvconf.conf for named:
-.D1 nameservers=127.0.0.1
+.D1 name_servers=127.0.0.1
 .D1 named_options=/etc/named-options.conf
 .D1 named_zones=/etc/named-zones.conf
 .Pp
@@ -164,12 +168,12 @@ setup to read
 .Pa pdnsd_resolv
 as documented below.
 .It Sy pdnsd_resolv
-This file tells pdnsd about global nameservers.
+This file tells pdnsd about global name servers.
 If this variable is not set then it's written to
 .Pa pdnsd_conf .
 .Pp
 Example resolvconf.conf for pdnsd:
-.D1 nameservers=127.0.0.1
+.D1 name_servers=127.0.0.1
 .D1 pdnsd_conf=/etc/pdnsd.conf
 .D1 # pdnsd_resolv=/etc/pdnsd-resolv.conf
 .Pp
@@ -185,10 +189,10 @@ Example pdnsd.conf:
 .D1 	# file="/etc/pdnsd-resolv.conf";
 .D1 }
 .It Sy unbound_conf
-This file tells unbound about specific and global nameservers.
+This file tells unbound about specific and global name servers.
 .Pp
 Example resolvconf.conf for unbound:
-.D1 nameservers=127.0.0.1
+.D1 name_servers=127.0.0.1
 .D1 unbound_conf=/etc/unbound-resolvconf.conf
 .Pp
 Example unbound.conf:
@@ -208,8 +212,6 @@ To accomodate this, the subscribers have these files in configurable
 variables, documented below.
 .Pp
 .Bl -tag -width indent
-.It Sy dbus_pid
-Locaiton of the dbus pidfile.
 .It Sy dnsmasq_service
 Location of the dnsmasq service.
 .It Sy dnsmasq_restart
@@ -232,6 +234,7 @@ Location of the unbound service.
 Command to restart the unbound service.
 .It Sy unbound_pid
 Location of the unbound pidfile.
+.El
 .Sh SEE ALSO
 .Xr resolv.conf 5
 and
@@ -240,7 +243,7 @@ and
 .An Roy Marples Aq roy@marples.name
 .Sh BUGS
 Each distribution is a special snowflake and likes to name the same thing
-differently, namely the named service script and the dbus pidfile location.
+differently, namely the named service script.
 .Pp
 Please report them to
 .Lk http://roy.marples.name/projects/openresolv

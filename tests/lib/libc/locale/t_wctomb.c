@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctomb.c,v 1.2 2011/06/11 18:03:18 christos Exp $ */
+/* $NetBSD: t_wctomb.c,v 1.2.8.1 2013/06/23 06:28:56 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctomb.c,v 1.2 2011/06/11 18:03:18 christos Exp $");
+__RCSID("$NetBSD: t_wctomb.c,v 1.2.8.1 2013/06/23 06:28:56 tls Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: t_wctomb.c,v 1.2 2011/06/11 18:03:18 christos Exp $");
 #include <vis.h>
 #include <wchar.h>
 #include <string.h>
+#include <limits.h>
 
 #include <atf-c.h>
 
@@ -100,7 +101,7 @@ h_wctomb(const struct test *t, char tc)
 {
 	wchar_t wcs[16 + 2];
 	char buf[128];
-	char cs[MB_CUR_MAX];
+	char cs[MB_LEN_MAX];
 	const char *pcs;
 	char *str;
 	mbstate_t st;

@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.33.8.1 2013/02/25 00:28:04 tls Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.33.8.2 2013/06/23 06:28:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.33.8.1 2013/02/25 00:28:04 tls Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.33.8.2 2013/06/23 06:28:50 tls Exp $");
 #endif
 
 #include <err.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.33.8.1 2013/02/25 00:28:04 tls Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <paths.h>
+#include <dirent.h>
 
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
@@ -52,6 +54,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.33.8.1 2013/02/25 00:28:04 tls Exp $");
 #include <sys/param.h>
 #include <sys/resource.h>
 #include <sys/statvfs.h>
+#include <sys/bitops.h>
 
 #include <dev/cgdvar.h>
 
@@ -999,68 +1002,91 @@ iv_method(int mode)
 	}
 }
 
+
+static void
+show(const char *dev) {
+	char path[64];
+	struct cgd_user cgu;
+	int fd;
+
+	fd = opendisk(dev, O_RDONLY, path, sizeof(path), 0);
+	if (fd == -1) {
+		warn("open: %s", dev);
+		return;
+	}
+
+	cgu.cgu_unit = -1;
+	if (prog_ioctl(fd, CGDIOCGET, &cgu) == -1) {
+		close(fd);
+		err(1, "CGDIOCGET");
+	}
+
+	printf("%s: ", dev);
+
+	if (cgu.cgu_dev == 0) {
+		printf("not in use");
+		goto out;
+	}
+
+	dev = devname(cgu.cgu_dev, S_IFBLK);
+	if (dev != NULL)
+		printf("%s ", dev);
+	else
+		printf("dev %llu,%llu ", (unsigned long long)major(cgu.cgu_dev),
+		    (unsigned long long)minor(cgu.cgu_dev));
+
+	if (verbose)
+		printf("%s ", cgu.cgu_alg);
+	if (verbose > 1) {
+		printf("keylen %d ", cgu.cgu_keylen);
+		printf("blksize %zd ", cgu.cgu_blocksize);
+		printf("%s ", iv_method(cgu.cgu_mode));
+	}
+
+out:
+	putchar('\n');
+	close(fd);
+}
+
 static int
 do_list(int argc, char **argv)
 {
-	char path[64], buf[16];
-	struct cgd_user cgu;
-	const char *fn;
-	int fd, n, rv;
 
 	if (argc != 0 && argc != 1)
 		usage();
 
-	fn = argc ? argv[0] : "cgd0";
-	n = 0;
-	for (;;) {
-		fd = opendisk(fn, O_RDONLY, path, sizeof(path), 0);
-		if (fd == -1) {
-			if (argc)
-				err(1, "open: %s", fn);
-			break;
-		}
-
-		cgu.cgu_unit = argc ? -1 : n;
-		rv = prog_ioctl(fd, CGDIOCGET, &cgu);
-		if (rv == -1) {
-			close(fd);
-			err(1, "CGDIOCGET");
-		}
-
-		printf("%s: ", fn);
-
-		if (cgu.cgu_dev == 0)
-			printf("not in use");
-		else {
-			char *dev;
-
-			dev = devname(cgu.cgu_dev, S_IFBLK);
-			if (dev != NULL)
-				printf("%s ", dev);
-			else
-				printf("dev %llu,%llu ",
-				    (unsigned long long)major(cgu.cgu_dev),
-				    (unsigned long long)minor(cgu.cgu_dev));
-
-			if (verbose)
-				printf("%s ", cgu.cgu_alg);
-			if (verbose > 1) {
-				printf("keylen %d ", cgu.cgu_keylen);
-				printf("blksize %zd ", cgu.cgu_blocksize);
-				printf("%s ", iv_method(cgu.cgu_mode));
-			}
-		}
-		putchar('\n');
-		close(fd);
-
-		if (argc)
-			break;
-
-		n++;
-		snprintf(buf, sizeof(buf), "cgd%d", n);
-		fn = buf;
+	if (argc) {
+		show(argv[0]);
+		return 0;
 	}
 
+	DIR *dirp;
+	struct dirent *dp;
+	__BITMAP_TYPE(, uint32_t, 65536) bm;
+
+	__BITMAP_ZERO(&bm);
+
+	if ((dirp = opendir(_PATH_DEV)) == NULL)
+		err(1, "opendir: %s", _PATH_DEV);
+
+	while ((dp = readdir(dirp)) != NULL) {
+		char *ep;
+		if (strncmp(dp->d_name, "rcgd", 4) != 0)
+			continue;
+		errno = 0;
+		int n = (int)strtol(dp->d_name + 4, &ep, 0);
+		if (ep == dp->d_name + 4 || errno != 0) {
+			warnx("bad name %s", dp->d_name);
+			continue;
+		}
+		*ep = '\0';
+		if (__BITMAP_ISSET(n, &bm))
+			continue;
+		__BITMAP_SET(n, &bm);
+		show(dp->d_name + 1);
+	}
+
+	closedir(dirp);
 	return 0;
 }
 

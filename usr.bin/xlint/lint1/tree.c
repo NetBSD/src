@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.71.2.1 2013/06/23 06:29:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.71.2.1 2013/06/23 06:29:02 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1039,7 +1039,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		if (!modtab[ln->tn_op].m_sideeff)
 			nulleff(ln);
 		break;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case CON:
 	case CASE:
 	case PUSH:
@@ -2822,7 +2822,7 @@ foldtst(tnode_t *tn)
 
 	switch (tn->tn_op) {
 	case NOT:
-		if (hflag)
+		if (hflag && !ccflg)
 			/* constant argument to NOT */
 			warning(239);
 		v->v_quad = !l;
@@ -3580,7 +3580,7 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	case NAME:
 	case STRING:
 		return;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case OR:
 	case XOR:
 	case NE:
@@ -3969,7 +3969,7 @@ precconf(tnode_t *tn)
 			}
 		}
 		break;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case DECAFT:
 	case XORASS:
 	case SHLASS:

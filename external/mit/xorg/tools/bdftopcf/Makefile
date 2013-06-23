@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/12/19 13:04:54 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2013/06/23 06:28:48 tls Exp $
 
 NOMAN=		1
 
@@ -17,7 +17,8 @@ HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.Xfont}/src/stubs \
 		-DBDFFORMAT -DPCFFORMAT -DSNFFORMAT -DX_GZIP_FONT_COMPRESSION \
-		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
+		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\" \
+		-DPACKAGE_STRING="\"NetBSD tool bdftopcf 1.0.4\""
 
 .PATH:		${X11SRCDIR.Xfont}/src/bitmap
 SRCS+=		bdfread.c bdfutils.c bitmap.c bitmaputil.c fontink.c \

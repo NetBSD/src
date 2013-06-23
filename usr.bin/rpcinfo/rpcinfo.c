@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.34 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.34.8.1 2013/06/23 06:29:01 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -538,6 +538,8 @@ pmapdump(int argc, char **argv)
 				(void)printf("%6s", "udp");
 			else if (head->pml_map.pm_prot == IPPROTO_TCP)
 				(void)printf("%6s", "tcp");
+			else if (head->pml_map.pm_prot == 0)
+				(void)printf("%6s", "local");
 			else
 				(void)printf("%6ld", head->pml_map.pm_prot);
 			(void)printf("%7ld", head->pml_map.pm_port);
@@ -1540,6 +1542,20 @@ getvers(const char *arg)
 	return (rpcvers_t)vers;
 }
 
+static in_port_t
+getport(const struct netbuf *nb)
+{
+	const struct sockaddr *sa = nb->buf;
+	switch (sa->sa_family) {
+	case AF_INET:
+		return ((const struct sockaddr_in *)nb->buf)->sin_port;
+	case AF_INET6:
+		return ((const struct sockaddr_in6 *)nb->buf)->sin6_port;
+	default:
+		return -1;
+	}
+}
+
 /*
  * This routine should take a pointer to an "rpc_err" structure, rather than
  * a pointer to a CLIENT structure, but "clnt_sperror" takes a pointer to
@@ -1559,8 +1575,13 @@ pstatus(CLIENT *client, rpcprog_t prog, rpcvers_t vers)
 		    clnt_sperror(client, "") + 2);
 		return -1;
 	} else {
-		(void)printf("program %lu version %lu ready and waiting\n",
-		    (unsigned long)prog, (unsigned long)vers);
+		in_port_t portnum;
+		struct netbuf nb;
+		CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)&nb);
+		portnum = ntohs(getport(&nb));
+		(void)printf("program %lu version %lu ready and waiting"
+		    " at port %u\n", (unsigned long)prog, (unsigned long)vers,
+		    portnum);
 		return 0;
 	}
 }

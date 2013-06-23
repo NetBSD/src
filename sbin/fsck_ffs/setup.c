@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.95.6.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: setup.c,v 1.95.6.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.95.6.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: setup.c,v 1.95.6.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ setup(const char *dev, const char *origdev)
 	sizepb = sblock->fs_bsize;
 	maxfilesize = sblock->fs_bsize * UFS_NDADDR - 1;
 	for (i = 0; i < UFS_NIADDR; i++) {
-		sizepb *= NINDIR(sblock);
+		sizepb *= FFS_NINDIR(sblock);
 		maxfilesize += sizepb;
 	}
 	if ((!is_ufs2 && cvtlevel >= 4) &&
@@ -534,7 +534,7 @@ setup(const char *dev, const char *origdev)
 	if (readappleufs())
 		isappleufs = 1;
 
-	dirblksiz = DIRBLKSIZ;
+	dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 

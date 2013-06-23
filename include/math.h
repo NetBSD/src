@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.58.2.1 2013/02/25 00:27:47 tls Exp $	*/
+/*	$NetBSD: math.h,v 1.58.2.2 2013/06/23 06:28:49 tls Exp $	*/
 
 /*
  * ====================================================
@@ -39,6 +39,19 @@ union __long_double_u {
 #include <machine/math.h>		/* may use __float_u, __double_u,
 					   or __long_double_u */
 #include <limits.h>			/* for INT_{MIN,MAX} */
+
+#if ((_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE))
+#  if defined(__FLT_EVAL_METHOD__) && (__FLT_EVAL_METHOD__ - 0) == 0
+typedef double double_t;
+typedef float float_t;
+#  elif (__FLT_EVAL_METHOD__ - 0) == 1
+typedef double double_t;
+typedef double float_t;
+#  elif (__FLT_EVAL_METHOD__ - 0) == 2
+typedef long double double_t;
+typedef long double float_t;
+#  endif
+#endif
 
 #ifdef __HAVE_LONG_DOUBLE
 #define	__fpmacro_unary_floating(__name, __arg0)			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.23 2010/01/27 12:20:25 spz Exp $	*/
+/*	$NetBSD: rcache.c,v 1.23.12.1 2013/06/23 06:28:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.23 2010/01/27 12:20:25 spz Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.23.12.1 2013/06/23 06:28:50 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: rcache.c,v 1.23 2010/01/27 12:20:25 spz Exp $");
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <ufs/ufs/dinode.h>
 
 #include <stdio.h>
 #include <stdlib.h>

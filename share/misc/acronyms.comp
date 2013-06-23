@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.128.2.2 2013/02/25 00:28:16 tls Exp $
+$NetBSD: acronyms.comp,v 1.128.2.3 2013/06/23 06:28:54 tls Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -41,6 +41,7 @@ AM	access method
 AM	alignment mask
 AM	amplitude modulation
 AMI	alternate mark inversion
+AMQP	advanced message queuing protocol
 AMT	active management technology
 AN	Arabic number
 ANSI	American National Standards Institute
@@ -134,13 +135,16 @@ BPSK	binary phase shift keying
 BQS	Berkeley quality software
 BRE	basic regular expression
 BS	binary sequence
+BSA	basic service area
 BSD	Berkeley Software Distribution
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
 BSP	bootstrap processor
 BSR	bit scan reverse
+BSS	basic service set
 BSS	block started by symbol
+BSSID	basic service set identifier
 BT	BitTorrent
 BT	Bluetooth
 BT	bit test
@@ -390,6 +394,8 @@ ERD	emergency recovery disk
 ERE	extended regular expression
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
+ESS	extended service set
+ESSID	extended service set identifier
 EST	enhanced speedstep
 ETL	extract, transform, load
 EU	execution unit
@@ -436,6 +442,7 @@ FSF	Free Software Foundation
 FSK	frequency shift keying
 FSM	finite-state machine
 FTA	fault tree analysis
+FTL	flash translation layer
 FTP	File Transfer Protocol
 FTPS	File Transfer Protocol Secure
 FUS	fast user switching
@@ -505,6 +512,7 @@ IANA	Internet Assigned Numbers Authority
 IBC	iterated block cipher
 IBM	International Business Machines
 IBS	instruction based sampling
+IBSS	independent basic service set
 IC	integrated circuit
 ICA	independent computer architecture
 ICB	Internet Citizen's Band
@@ -803,6 +811,7 @@ OSS	open sound system
 OSS	open source software
 OSVW	operating system visible workarounds
 OTP	one time password
+OTP	open telecom platform
 OU	organizational unit
 OUI	organizationally unique identifier
 OWL	Web Ontology Language
@@ -856,6 +865,7 @@ PHB	PCI host bridge
 PHP	PHP: Hypertext Preprocessor
 PIC	position independent code
 PIC	programmable interrupt controller
+PICNIC	problem in chair, not in computer
 PID	process id
 PIE	position independent executable
 PIM	personal information manager
@@ -1093,6 +1103,7 @@ SSE	streaming SIMD extensions
 SSFDC	solid state floppy disc card
 SSH	secure shell
 SSI	server side includes
+SSID	service set identifier
 SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
@@ -1137,6 +1148,7 @@ TIAS	try it and see
 TIFF	tagged image file format
 TITS	try it to see
 TK	temporal key
+TKIP	Temporal Key Integrity Protocol
 TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
@@ -1251,6 +1263,7 @@ W	watt
 W3C	World Wide Web Consortium
 WAN	wide area network
 WAP	Wireless Application Protocol
+WAP	wireless access point
 WDT	watchdog timer
 WEP	Wired Equivalent Privacy
 WFI	wait for interrupt
@@ -1267,7 +1280,9 @@ WORM	write once read many
 WP	WordPerfect
 WP	word processor
 WP	write protect
-WPA	wi-fi protected access
+WPA	Wi-Fi Protected Access
+WPA2	Wi-Fi Protected Access II
+WPS	Wi-Fi Protected Setup
 WRAM	window random access memory
 WS	web services
 WTC	write through caching

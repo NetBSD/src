@@ -1,6 +1,6 @@
-.\"	$NetBSD: scanc.9,v 1.2 2011/11/01 23:18:07 wiz Exp $
+.\"	$NetBSD: scanc.9,v 1.2.8.1 2013/06/23 06:28:54 tls Exp $
 .\"
-.\" Copyright (c)2011 YAMAMOTO Takashi,
+.\" Copyright (c)2011,2013 YAMAMOTO Takashi,
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd November 1, 2011
+.Dd April 24, 2013
 .Dt SCANC 9
 .Os
 .\" ------------------------------------------------------------
@@ -38,7 +38,7 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft int
 .Fn scanc \
-"size_t size" "const u_char *cp" "const u_char table[]" "int mask"
+"u_int size" "const u_char *cp" "const u_char table[]" "int mask"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -56,7 +56,11 @@ isn't zero or the string is exhausted, the scan stops.
 .Sh RETURN VALUES
 The
 .Fn scanc
-function returns the number of characters skipped.
+function returns the length of the rest of the string,
+including the character which made the scan stop.
+If the
+.Fn scanc
+function exhausted the string, it returns 0.
 .\" ------------------------------------------------------------
 .Sh HISTORY
 The

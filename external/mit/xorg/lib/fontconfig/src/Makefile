@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/03/22 23:46:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2013/06/23 06:28:43 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -10,20 +10,24 @@ SRCS=	fcatomic.c \
 	fccache.c \
 	fccfg.c \
 	fccharset.c \
+	fccompat.c \
 	fcdbg.c \
 	fcdefault.c \
 	fcdir.c \
 	fcformat.c \
 	fcfreetype.c \
 	fcfs.c \
+	fchash.c \
 	fcinit.c \
 	fclang.c \
 	fclist.c \
 	fcmatch.c \
 	fcmatrix.c \
 	fcname.c \
+	fcobjs.c \
 	fcpat.c \
 	fcserialize.c \
+	fcstat.c \
 	fcstr.c \
 	fcxml.c \
 	ftglue.c
@@ -80,7 +84,10 @@ MAN=	FcAtomicCreate.3 FcAtomicDeleteNew.3 FcAtomicDestroy.3 FcAtomicLock.3 \
 	FcStrSetDel.3 FcStrSetDestroy.3 FcStrSetEqual.3 FcStrSetMember.3 \
 	FcStrStr.3 FcStrStrIgnoreCase.3 FcToLower.3 FcUcs4ToUtf8.3 \
 	FcUtf16Len.3 FcUtf16ToUcs4.3 FcUtf8Len.3 FcUtf8ToUcs4.3 \
-	FcValueDestroy.3 FcValueEqual.3 FcValuePrint.3 FcValueSave.3
+	FcValueDestroy.3 FcValueEqual.3 FcValuePrint.3 FcValueSave.3 \
+	FcCacheCreateTagFile.3 FcCharSetDelChar.3 FcGetDefaultLangs.3 \
+	FcLangSetDel.3 FcLangSetSubtract.3 FcLangSetUnion.3
+
 MAN+=	fonts-conf.5
 
 LIBDPLIBS=\
@@ -88,6 +95,7 @@ LIBDPLIBS=\
 	freetype	${.CURDIR}/../../freetype
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
+CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-DFONTCONFIG_PATH='"/etc/fonts"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"/var/cache/fontconfig"' \
@@ -105,16 +113,14 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.freetype}/src \
 		-I${X11SRCDIR.freetype}/include \
 		-I${X11SRCDIR.${LIB}}/../include \
-		-I.
+		-I. \
+		-I${X11SRCDIR.${LIB}}
 
-FCARCH_DEPFILE=	fccache.c
 .include "Makefile.fcarch"
 
 CLEANFILES+= fcarch.h
 
 PKGCONFIG=	fontconfig
-# fontconfig uses VERSION and not PACKAGE_VERSION
-PKGCONFIG_VERSION.fontconfig=	2.6.0
 
 # XXX
 CPPFLAGS.fcxml.c=	-Wno-error

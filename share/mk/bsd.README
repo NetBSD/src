@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.300.2.2 2013/02/25 00:28:16 tls Exp $
+#	$NetBSD: bsd.README,v 1.300.2.3 2013/06/23 06:28:54 tls Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -157,6 +157,13 @@ MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
 		Default: no
 
+MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
+		instead of inlining the contents of the .d files. Useful
+		when stale dependencies are present, to list the exact
+		files that need refreshing. It is off by default because
+		it is possibly slower.
+		Default "no"
+
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
 
@@ -237,6 +244,12 @@ MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
 
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKLIBCXX	If not "no", build and install libc++.
+		Default: no
+
+MKLIBSTDCXX	If not "no", build and install libstdc++.
 		Default: yes
 
 MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
@@ -377,6 +390,12 @@ MKX11FONTS	If not "no", if ${X11FLAVOUR} is "Xorg", do not build or
 		install the X fonts.  The xfont set is still created but
 		will be empty.
 		Default: yes
+
+MKX11MOTIF:	If "yes" and ${X11FLAVOUR} is "Xorg", build the native X11
+		libGLw with Motif stubs.  If Motif is not installed in the
+		default location /usr/pkg, the location can be specified
+		using the X11MOTIFPATH variable.
+		Default: no
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
@@ -1478,6 +1497,8 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
+		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
 		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
@@ -1569,6 +1590,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
 		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
 		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBX11_XCB?=	${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a

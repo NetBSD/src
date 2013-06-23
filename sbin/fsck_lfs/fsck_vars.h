@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.12 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.12.48.1 2013/06/23 06:28:51 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -76,6 +76,6 @@ extern int lfmode;		/* lost & found directory creation mode */
 extern daddr_t n_blks;		/* number of blocks in use */
 extern ino_t n_files;		/* number of files in use */
 
-extern struct ufs1_dinode zino;
+extern struct ulfs1_dinode zino;
 
 extern int no_roll_forward;	/* Don't roll forward */

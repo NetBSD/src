@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33.2.1 2013/02/25 00:27:41 tls Exp $
+#	$NetBSD: Makefile,v 1.33.2.2 2013/06/23 06:28:48 tls Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -61,7 +61,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
     ${MACHINE} == "evbmips"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
-CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DPCVT_SUPPORT  -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 

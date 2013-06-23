@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.19.6.1 2013/02/25 00:28:03 tls Exp $  */
+/*      $NetBSD: coalesce.c,v 1.19.6.2 2013/06/23 06:28:50 tls Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <fcntl.h>
@@ -104,13 +103,13 @@ const char *coalesce_return[] = {
 	"No such error"
 };
 
-static struct ufs1_dinode *
+static struct ulfs1_dinode *
 get_dinode(struct clfs *fs, ino_t ino)
 {
 	IFILE *ifp;
 	daddr_t daddr;
 	struct ubuf *bp;
-	struct ufs1_dinode *dip, *r;
+	struct ulfs1_dinode *dip, *r;
 
 	lfs_ientry(&ifp, fs, ino, &bp);
 	daddr = ifp->if_daddr;
@@ -120,10 +119,10 @@ get_dinode(struct clfs *fs, ino_t ino)
 		return NULL;
 
 	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, 0, &bp);
-	for (dip = (struct ufs1_dinode *)bp->b_data;
-	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
+	for (dip = (struct ulfs1_dinode *)bp->b_data;
+	     dip < (struct ulfs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
 		if (dip->di_inumber == ino) {
-			r = (struct ufs1_dinode *)malloc(sizeof(*r));
+			r = (struct ulfs1_dinode *)malloc(sizeof(*r));
 			if (r == NULL)
 				break;
 			memcpy(r, dip, sizeof(*r));
@@ -144,7 +143,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	BLOCK_INFO *bip = NULL, *tbip;
 	CLEANERINFO cip;
 	struct ubuf *bp;
-	struct ufs1_dinode *dip;
+	struct ulfs1_dinode *dip;
 	struct clfs_seguse *sup;
 	struct lfs_fcntl_markv /* {
 		BLOCK_INFO *blkiov;
@@ -161,10 +160,10 @@ clean_inode(struct clfs *fs, ino_t ino)
 		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for bmapv */
-	onb = nb = lblkno(fs, dip->di_size);
+	onb = nb = lfs_lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
-	if (nb < UFS_NDADDR) {
+	if (nb < ULFS_NDADDR) {
 		free(dip);
 		return COALESCE_TOOSMALL;
 	}
@@ -230,7 +229,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	 * can have a break or two and it's okay.
 	 */
 	if (nb <= 1 || noff == 0 || noff < log2int(nb) ||
-	    segtod(fs, noff) * 2 < nb) {
+	    lfs_segtod(fs, noff) * 2 < nb) {
 		retval = COALESCE_NOTWORTHIT;
 		goto out;
 	} else if (debug)
@@ -242,7 +241,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	for (i = 0; i < nb; i++) {
 		if (bip[i].bi_daddr <= 0)
 			continue;
-		sup = &fs->clfs_segtab[dtosn(fs, bip[i].bi_daddr)];
+		sup = &fs->clfs_segtab[lfs_dtosn(fs, bip[i].bi_daddr)];
 		if (sup->flags & SEGUSE_ACTIVE)
 			bip[i].bi_daddr = LFS_UNUSED_DADDR; /* 0 */
 	}
@@ -281,7 +280,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 		}
 
 		if (kops.ko_pread(fs->clfs_devfd, bip[i].bi_bp, bip[i].bi_size,
-			  fsbtob(fs, bip[i].bi_daddr)) < 0) {
+			  lfs_fsbtob(fs, bip[i].bi_daddr)) < 0) {
 			retval = COALESCE_EIO;
 			goto out;
 		}
@@ -295,7 +294,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	 * than half of the available segments, sleep until that's not
 	 * true any more.
 	 */
-	bps = segtod(fs, 1);
+	bps = lfs_segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		do {
 			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, 0, &bp);

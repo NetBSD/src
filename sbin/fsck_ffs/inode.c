@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.64.10.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: inode.c,v 1.64.10.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.64.10.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: inode.c,v 1.64.10.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 	ndb = howmany(iswap64(DIP(&dino, size)), sblock->fs_bsize);
 	for (i = 0; i < UFS_NDADDR; i++) {
 		if (--ndb == 0 &&
-		    (offset = blkoff(sblock, iswap64(DIP(&dino, size)))) != 0)
+		    (offset = ffs_blkoff(sblock, iswap64(DIP(&dino, size)))) != 0)
 			idesc->id_numfrags =
 				numfrags(sblock, fragroundup(sblock, offset));
 		else
@@ -165,7 +165,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 				}
 			}
 		}
-		sizepb *= NINDIR(sblock);
+		sizepb *= FFS_NINDIR(sblock);
 		remsize -= sizepb;
 	}
 	return (KEEPON);
@@ -192,9 +192,9 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	bp = getdatablk(idesc->id_blkno, sblock->fs_bsize);
 	ilevel--;
 	for (sizepb = sblock->fs_bsize, i = 0; i < ilevel; i++)
-		sizepb *= NINDIR(sblock);
-	if (howmany(isize, sizepb) > (size_t)NINDIR(sblock))
-		nif = NINDIR(sblock);
+		sizepb *= FFS_NINDIR(sblock);
+	if (howmany(isize, sizepb) > (size_t)FFS_NINDIR(sblock))
+		nif = FFS_NINDIR(sblock);
 	else
 		nif = howmany(isize, sizepb);
 	if (do_blkswap) { /* swap byte order of the whole blk */
@@ -210,8 +210,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		dirty(bp);
 		flush(fswritefd, bp);
 	}
-	if (idesc->id_func == pass1check && nif < NINDIR(sblock)) {
-		for (i = nif; i < NINDIR(sblock); i++) {
+	if (idesc->id_func == pass1check && nif < FFS_NINDIR(sblock)) {
+		for (i = nif; i < FFS_NINDIR(sblock); i++) {
 			if (IBLK(bp, i) == 0)
 				continue;
 			(void)snprintf(buf, sizeof(buf),
@@ -327,18 +327,18 @@ ginode(ino_t inumber)
 		errexit("bad inode number %llu to ginode",
 		    (unsigned long long)inumber);
 	if (startinum == 0 ||
-	    inumber < startinum || inumber >= startinum + INOPB(sblock)) {
+	    inumber < startinum || inumber >= startinum + FFS_INOPB(sblock)) {
 		iblk = ino_to_fsba(sblock, inumber);
 		if (pbp != 0)
 			pbp->b_flags &= ~B_INUSE;
 		pbp = getdatablk(iblk, sblock->fs_bsize);
-		startinum = (inumber / INOPB(sblock)) * INOPB(sblock);
+		startinum = (inumber / FFS_INOPB(sblock)) * FFS_INOPB(sblock);
 	}
 	if (is_ufs2) {
-		blkoff = (inumber % INOPB(sblock)) * DINODE2_SIZE;
+		blkoff = (inumber % FFS_INOPB(sblock)) * DINODE2_SIZE;
 		return ((union dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
 	}
-	blkoff = (inumber % INOPB(sblock)) * DINODE1_SIZE;
+	blkoff = (inumber % FFS_INOPB(sblock)) * DINODE1_SIZE;
 	return ((union dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
 }
 

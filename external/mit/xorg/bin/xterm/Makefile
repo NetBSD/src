@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/03/22 23:46:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2013/06/23 06:28:42 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	fontutils.c input.c linedata.c menu.c misc.c print.c ptydata.c \
 	screen.c scrollback.c scrollbar.c tabs.c util.c xstrings.c \
 	TekPrsTbl.c Tekproc.c VTPrsTbl.c main.c charclass.c precompose.c \
-	wcwidth.c xutf8.c cachedGCs.c xtermcap.c
+	wcwidth.c xutf8.c cachedGCs.c xtermcap.c version.c
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
@@ -35,6 +35,8 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 SUBDIR=	resize uxterm
 
 .PATH:	${X11SRCDIR.${PROG}}
+
+COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
 
 .include "Makefile.inc"
 

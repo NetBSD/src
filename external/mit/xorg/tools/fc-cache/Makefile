@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/02/29 20:07:57 tron Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2013/06/23 06:28:48 tls Exp $
 
 NOMAN=		1
 
@@ -14,10 +14,12 @@ EXPAT=		${NETBSDSRCDIR}/external/mit/expat/dist
 SRCS.fc-cache=	fc-cache.c
 
 .PATH:	${FONTCONFIG}/src
-SRCS.fontconfig=	fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
-		fcdefault.c fcdir.c fcfreetype.c fcfs.c fcinit.c fclang.c \
-		fclist.c fcmatch.c fcmatrix.c fcname.c fcpat.c fcserialize.c \
-		fcstr.c fcxml.c ftglue.h ftglue.c
+SRCS.fontconfig=	fcatomic.c fcblanks.c fccache.c fccfg.c \
+		fccharset.c fcdbg.c fccompat.c fcdefault.c fcdir.c \
+		fcfreetype.c fcfs.c fchash.c fcinit.c fclang.c \
+		fclist.c fcmatch.c fcmatrix.c fcname.c fcobjs.c \
+		fcpat.c fcserialize.c fcstat.c fcstr.c fcxml.c \
+		ftglue.c
 
 .PATH:	${FREETYPE}/src/base
 SRCS.freetype=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
@@ -99,7 +101,10 @@ HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DHAVE_EXPAT -DXFREE86_FT2 -DHAVE_INTTYPES_H \
 		-DFT2_BUILD_LIBRARY \
 		-DXML_BYTE_ORDER=0 -DHAVE_MEMMOVE=1 \
-		-DHAVE_STDINT_H -DHAVE_RANDOM -DDARWIN_NO_CARBON
+		-DHAVE_STDINT_H -DHAVE_RANDOM -DDARWIN_NO_CARBON \
+		-DHAVE_SYS_TYPES_H -DHAVE_FCNTL_H -DHAVE_SYS_STAT_H \
+		-DHAVE_MKSTEMP \
+		-DFLEXIBLE_ARRAY_MEMBER="/**/"
 HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FREETYPE}/include -I${EXPAT}/lib \
@@ -109,7 +114,6 @@ HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 LDADD=	-lz
 #LDADD+=	-lbz2
 
-FCARCH_DEPFILE=	fc-cache.c
 .include "../../lib/fontconfig/src/Makefile.fcarch"
 
 .include <bsd.x11.mk>

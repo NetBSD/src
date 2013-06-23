@@ -382,7 +382,7 @@ namespace __gnu_cxx
 	    _Rope_RopeLeaf<_CharT, _Alloc>* __l
 	      = (_Rope_RopeLeaf<_CharT, _Alloc>*)this;
 	    __l->_Rope_RopeLeaf<_CharT, _Alloc>::~_Rope_RopeLeaf();
-	    _L_deallocate(__l, 1);
+	    this->_L_deallocate(__l, 1);
 	    break;
 	  }
 	case _Rope_constants::_S_concat:
@@ -391,7 +391,7 @@ namespace __gnu_cxx
 	      = (_Rope_RopeConcatenation<_CharT, _Alloc>*)this;
 	    __c->_Rope_RopeConcatenation<_CharT, _Alloc>::
 	      ~_Rope_RopeConcatenation();
-	    _C_deallocate(__c, 1);
+	    this->_C_deallocate(__c, 1);
 	    break;
 	  }
 	case _Rope_constants::_S_function:
@@ -399,7 +399,7 @@ namespace __gnu_cxx
 	    _Rope_RopeFunction<_CharT, _Alloc>* __f
 	      = (_Rope_RopeFunction<_CharT, _Alloc>*)this;
 	    __f->_Rope_RopeFunction<_CharT, _Alloc>::~_Rope_RopeFunction();
-	    _F_deallocate(__f, 1);
+	    this->_F_deallocate(__f, 1);
 	    break;
 	  }
 	case _Rope_constants::_S_substringfn:
@@ -408,7 +408,7 @@ namespace __gnu_cxx
 	      (_Rope_RopeSubstring<_CharT, _Alloc>*)this;
 	    __ss->_Rope_RopeSubstring<_CharT, _Alloc>::
 	      ~_Rope_RopeSubstring();
-	    _S_deallocate(__ss, 1);
+	    this->_S_deallocate(__ss, 1);
 	    break;
 	  }
 	}
@@ -513,7 +513,7 @@ namespace __gnu_cxx
 	    }
 	  catch(...)
 	    {
-	      _C_deallocate(__result,1);
+	      rope::_C_deallocate(__result,1);
 	      __throw_exception_again;
 	    }
 	  // In case of exception, we need to deallocate

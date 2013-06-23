@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.40.12.1 2012/11/20 03:00:40 tls Exp $	*/
+/*	$NetBSD: time.h,v 1.40.12.2 2013/06/23 06:28:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -174,6 +174,16 @@ struct tm *localtime_r(const time_t * __restrict, struct tm * __restrict)
 #endif
 #endif
 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+size_t strftime_l(char * __restrict, size_t, const char * __restrict,
+    const struct tm * __restrict, locale_t)
+    __attribute__((__format__(__strftime__, 3, 0)));
+#endif
+
 #if defined(_NETBSD_SOURCE)
 
 typedef struct __state *timezone_t;
@@ -200,9 +210,14 @@ void tzfree(const timezone_t) __RENAME(__tzfree50);
 const char *tzgetname(const timezone_t, int) __RENAME(__tzgetname50);
 #endif
 
+size_t strftime_lz(const timezone_t, char * __restrict, size_t,
+    const char * __restrict, const struct tm * __restrict, locale_t)
+    __attribute__((__format__(__strftime__, 4, 0)));
 size_t strftime_z(const timezone_t, char * __restrict, size_t,
     const char * __restrict, const struct tm * __restrict)
     __attribute__((__format__(__strftime__, 4, 0)));
+char *strptime_l(const char * __restrict, const char * __restrict,
+    struct tm * __restrict, locale_t);
 
 #endif /* _NETBSD_SOURCE */
 

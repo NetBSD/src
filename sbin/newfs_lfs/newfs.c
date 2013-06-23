@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.26 2012/02/02 03:49:22 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.26.6.1 2013/06/23 06:28:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.26 2012/02/02 03:49:22 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.26.6.1 2013/06/23 06:28:52 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,6 @@ __RCSID("$NetBSD: newfs.c,v 1.26 2012/02/02 03:49:22 perseant Exp $");
 #include <sys/time.h>
 #include <sys/disk.h>
 
-#include <ufs/ufs/dir.h>
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -168,7 +166,7 @@ main(int argc, char **argv)
 	struct disk_geom geo;
 	struct dkwedge_info dkw;
 	struct stat st;
-	int debug, force, fsi, fso, segsize, maxpartitions;
+	int debug, force, fsi, fso, lfs_segsize, maxpartitions;
 	uint secsize = 0;
 	daddr_t start;
 	const char *opstring;
@@ -188,14 +186,14 @@ main(int argc, char **argv)
 
 	opstring = "AB:b:DFf:I:i:LM:m:NO:R:r:S:s:v:";
 
-	debug = force = segsize = start = 0;
+	debug = force = lfs_segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case 'A':	/* Adaptively configure segment size */
-			segsize = -1;
+			lfs_segsize = -1;
 			break;
 		case 'B':	/* LFS segment size */
-		        segsize = strsuftoi64("segment size", optarg, LFS_MINSEGSIZE, INT64_MAX, NULL);
+		        lfs_segsize = strsuftoi64("segment size", optarg, LFS_MINSEGSIZE, INT64_MAX, NULL);
 			break;
 		case 'D':
 			debug = 1;
@@ -346,17 +344,17 @@ main(int argc, char **argv)
 			dkw.dkw_size = fssize;
 
 	/* Try autoconfiguring segment size, if asked to */
-	if (segsize == -1) {
+	if (lfs_segsize == -1) {
 		if (!S_ISCHR(st.st_mode)) {
 			warnx("%s is not a character special device, ignoring -A", special);
-			segsize = 0;
+			lfs_segsize = 0;
 		} else
-			segsize = auto_segsize(fsi, dkw.dkw_size / secsize,
+			lfs_segsize = auto_segsize(fsi, dkw.dkw_size / secsize,
 			    version);
 	}
 
 	/* If we're making a LFS, we break out here */
-	r = make_lfs(fso, secsize, &dkw, minfree, bsize, fsize, segsize,
+	r = make_lfs(fso, secsize, &dkw, minfree, bsize, fsize, lfs_segsize,
 	    minfreeseg, resvseg, version, start, ibsize, interleave, roll_id);
 	if (debug)
 		bufstats();

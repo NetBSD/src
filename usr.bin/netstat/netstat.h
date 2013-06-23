@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.44.2.1 2013/02/25 00:30:37 tls Exp $	*/
+/*	$NetBSD: netstat.h,v 1.44.2.2 2013/06/23 06:29:01 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ int	get_hardticks __P((void));
 
 void	protopr __P((u_long, const char *));
 void	tcp_stats __P((u_long, const char *));
-void	tcp_dump __P((u_long));
+void	tcp_dump __P((u_long, const char *, u_long));
 void	udp_stats __P((u_long, const char *));
 void	ip_stats __P((u_long, const char *));
 void	icmp_stats __P((u_long, const char *));
@@ -151,15 +151,6 @@ void	intpr __P((int, u_long, void (*) __P((const char *))));
 
 void	unixpr __P((u_long));
 
-void	esis_stats __P((u_long, const char *));
-void	clnp_stats __P((u_long, const char *));
-void	cltp_stats __P((u_long, const char *));
-void	iso_protopr __P((u_long, const char *));
-void	iso_protopr1 __P((u_long, int));
-void	tp_protopr __P((u_long, const char *));
-void	tp_inproto __P((u_long));
-void	tp_stats __P((u_long, const char *));
-
 void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));
 
@@ -169,5 +160,7 @@ void	bpf_dump(const char *);
 kvm_t *get_kvmd(void);
 
 char	*mpls_ntoa(const struct sockaddr *);
+
+struct kinfo_pcb *getpcblist_sysctl(const char *, size_t *);
 
 #define PLEN    (LONG_BIT / 4 + 2)

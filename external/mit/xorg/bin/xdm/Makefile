@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/10/25 16:56:23 christos Exp $
+#	$NetBSD: Makefile,v 1.8.8.1 2013/06/23 06:28:40 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,12 @@ PROG=		xdm
 SRCS=		access.c auth.c choose.c daemon.c dm.c dpylist.c \
 		error.c file.c genauth.c mitauth.c netaddr.c policy.c \
 		protodpy.c reset.c resource.c server.c session.c socket.c \
-		streams.c util.c xdmauth.c xdmcp.c \
-		Login.c greet.c verify.c
+		streams.c util.c xdmauth.c xdmcp.c prngc.c
+
+.if ${MKPIC} == "no"
+SRCS+=		Login.c greet.c verify.c
+CPPFLAGS+=	-DSTATIC_GREETER_LIB
+.endif
 
 CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS.auth.c=	-DBSD44SOCKETS
@@ -38,18 +42,12 @@ LDADD+= -lpam ${PAM_STATIC_LDADD}
 DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
-SUBDIR=		chooser config
+SUBDIR+=	chooser config
 TARGETS+=	configinstall
-
-.PATH:		${X11SRCDIR.${PROG}}
-.PATH:		${X11SRCDIR.${PROG}}/greeter
-
-BUILDSYMLINKS+=	xdm.man.cpp xdm.man
 
 .include "Makefile.xdm"
 
 CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
-CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}/freetype2
 
 X11MANCPP=	yes
 X11EXTRAMANDEFS+=	-DARC4_RANDOM \

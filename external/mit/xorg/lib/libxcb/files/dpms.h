@@ -212,7 +212,7 @@ typedef struct xcb_dpms_info_reply_t {
 } xcb_dpms_info_reply_t;
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -237,7 +237,7 @@ xcb_dpms_get_version (xcb_connection_t *c  /**< */,
                       uint16_t          client_minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -296,7 +296,7 @@ xcb_dpms_get_version_reply (xcb_connection_t               *c  /**< */,
                             xcb_generic_error_t           **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -317,7 +317,7 @@ xcb_dpms_capable_cookie_t
 xcb_dpms_capable (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -372,7 +372,7 @@ xcb_dpms_capable_reply (xcb_connection_t           *c  /**< */,
                         xcb_generic_error_t       **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -393,7 +393,7 @@ xcb_dpms_get_timeouts_cookie_t
 xcb_dpms_get_timeouts (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -448,7 +448,7 @@ xcb_dpms_get_timeouts_reply (xcb_connection_t                *c  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -478,7 +478,7 @@ xcb_dpms_set_timeouts_checked (xcb_connection_t *c  /**< */,
                                uint16_t          off_timeout  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -505,7 +505,7 @@ xcb_dpms_set_timeouts (xcb_connection_t *c  /**< */,
                        uint16_t          off_timeout  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -529,7 +529,7 @@ xcb_void_cookie_t
 xcb_dpms_enable_checked (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -550,7 +550,7 @@ xcb_void_cookie_t
 xcb_dpms_enable (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -574,7 +574,7 @@ xcb_void_cookie_t
 xcb_dpms_disable_checked (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -595,7 +595,7 @@ xcb_void_cookie_t
 xcb_dpms_disable (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -621,7 +621,7 @@ xcb_dpms_force_level_checked (xcb_connection_t *c  /**< */,
                               uint16_t          power_level  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -644,7 +644,7 @@ xcb_dpms_force_level (xcb_connection_t *c  /**< */,
                       uint16_t          power_level  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -665,7 +665,7 @@ xcb_dpms_info_cookie_t
 xcb_dpms_info (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

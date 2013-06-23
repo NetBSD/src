@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/05 22:35:53 macallan Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2013/06/23 06:28:47 tls Exp $
 
 DRIVER=		xf86-video-sunleo
 DRIVER_NAME=	sunleo_drv
 
-SRCS=		leo_accel.c leo_checks.c leo_cursor.c leo_driver.c \
-		leo_frect.c leo_frectsp.c leo_fspans.c leo_fspanssp.c \
-		leo_glyph.c
+SRCS=		leo_accel.c leo_cursor.c leo_driver.c
 
 CPPFLAGS+=	${X11FLAGS.DRI}
+CPPFLAGS+=	-DHAVE_XAA_H
 
 MAN=		sunleo.4
 

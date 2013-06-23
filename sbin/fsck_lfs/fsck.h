@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.18 2008/10/09 16:56:23 christos Exp $	 */
+/* $NetBSD: fsck.h,v 1.18.24.1 2013/06/23 06:28:51 tls Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ struct ubufarea {
 		int32_t *b_indir;	/* indirect block */
 		struct lfs *b_fs;	/* super block */
 		struct cg *b_cg;/* cylinder group */
-		struct ufs1_dinode *b_dinode;	/* inode block */
+		struct ulfs1_dinode *b_dinode;	/* inode block */
 	}     b_un;
 	char b_dirty;
 };
@@ -131,7 +131,7 @@ struct inodesc {
 	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
-	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
+	struct lfs_direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	const char *id_name;	/* for DATA nodes, name to find or enter */
 	char id_type;		/* type of descriptor, DATA or ADDR */
 };
@@ -206,7 +206,7 @@ int	Uflag;			/* resolve user names */
 
 ino_t allocino(ino_t, int);
 int ino_to_fsba(struct lfs *, ino_t);
-struct ufs1_dinode *ginode(ino_t);
+struct ulfs1_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 daddr_t lfs_ino_daddr(ino_t);
 void clearinode(ino_t);

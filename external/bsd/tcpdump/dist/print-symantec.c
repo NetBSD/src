@@ -22,9 +22,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-symantec.c,v 1.5 2005-07-07 01:22:21 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-symantec.c,v 1.5 2005-07-07 01:22:21 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-symantec.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-symantec.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #endif
 #endif
 
@@ -112,7 +112,7 @@ symantec_if_print(const struct pcap_pkthdr *h, const u_char *p)
 
 		if (!suppress_default_print)
 			default_print(p, caplen);
-	} else if (ethertype_print(ether_type, p, length, caplen) == 0) {
+	} else if (ethertype_print(gndo, ether_type, p, length, caplen) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!eflag)
 			symantec_hdr_print((u_char *)sp, length + sizeof (struct symantec_header));

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/28 12:38:34 ghen Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2013/06/23 06:28:46 tls Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	compat
-FILES=		README accessx basic caps complete default iso9995 japan \
-		keypad ledcaps lednum ledscroll level5 misc mousekeys \
-		norepeat olpc pc pc98 xfree86 xtest
+FILES=		README accessx basic caps complete iso9995 japan \
+		ledcaps lednum ledscroll level5 misc mousekeys \
+		olpc pc pc98 xfree86 xtest
 
 XKBDIR=		1
 
