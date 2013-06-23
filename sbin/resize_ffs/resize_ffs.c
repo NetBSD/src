@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.37 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.37 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.38 2013/06/23 22:03:34 dholland Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -527,7 +527,7 @@ initcg(int cgn)
 		cg->cg_clusteroff = cg->cg_clustersumoff +
 		    ((newsb->fs_contigsumsize + 1) * sizeof(int32_t));
 		cg->cg_nextfreeoff = cg->cg_clusteroff +
-		    howmany(fragstoblks(newsb,newsb->fs_fpg), NBBY);
+		    howmany(ffs_fragstoblks(newsb,newsb->fs_fpg), NBBY);
 		n = dlow / newsb->fs_frag;
 		if (n > 0) {
 			set_bits(cg_clustersfree(cg, 0), 0, n);
@@ -706,7 +706,7 @@ find_freeblock(void)
 	fwc = dtogd(newsb, hand);
 	secondpass = (hand == 0);
 	bits = cg_blksfree(cgs[cgn], 0);
-	cgsize = blknum(newsb, cgs[cgn]->cg_ndblk);
+	cgsize = ffs_blknum(newsb, cgs[cgn]->cg_ndblk);
 	while (1) {
 		if (blk_is_set(bits, fwc, newsb->fs_frag))
 			return (hand);
@@ -723,7 +723,7 @@ find_freeblock(void)
 				cgn = 0;
 			}
 			bits = cg_blksfree(cgs[cgn], 0);
-			cgsize = blknum(newsb, cgs[cgn]->cg_ndblk);
+			cgsize = ffs_blknum(newsb, cgs[cgn]->cg_ndblk);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.53 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: pass5.c,v 1.54 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.53 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.54 2013/06/23 22:03:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ pass5(void)
 		newcg->cg_clusteroff = newcg->cg_clustersumoff +
 		    (fs->fs_contigsumsize + 1) * sizeof(u_int32_t);
 		newcg->cg_nextfreeoff = newcg->cg_clusteroff +
-		    howmany(fragstoblks(fs, fs->fs_fpg), CHAR_BIT);
+		    howmany(ffs_fragstoblks(fs, fs->fs_fpg), CHAR_BIT);
 	}
 	newcg->cg_magic = CG_MAGIC;
 	mapsize = newcg->cg_nextfreeoff - newcg->cg_iusedoff;
@@ -195,7 +195,7 @@ pass5(void)
 			idesc[i].id_fix = FIX;
 	}
 	memset(&cstotal, 0, sizeof(struct csum_total));
-	dmax = blknum(fs, fs->fs_size + fs->fs_frag - 1);
+	dmax = ffs_blknum(fs, fs->fs_size + fs->fs_frag - 1);
 	for (d = fs->fs_size; d < dmax; d++)
 		setbmap(d);
 	for (c = 0; c < fs->fs_ncg; c++) {
@@ -360,7 +360,7 @@ pass5(void)
 				}
 				if (fs->fs_contigsumsize > 0)
 					setbit(cg_clustersfree(newcg, 0),
-					    fragstoblks(fs, i));
+					    ffs_fragstoblks(fs, i));
 			} else if (frags > 0) {
 				newcg->cg_cs.cs_nffree += frags;
 				blk = blkmap(fs, cg_blksfree(newcg, 0), i);

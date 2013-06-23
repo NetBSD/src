@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.24 2013/06/23 07:28:36 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.25 2013/06/23 22:03:34 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.24 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.25 2013/06/23 22:03:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,24 +44,11 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.24 2013/06/23 07:28:36 dholland Exp $");
 #include <sys/fcntl.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
-#undef fragstoblks
-#undef blkstofrags
-#undef fragnum
-#undef blknum
-
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-
-/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
-/* ...to make sure we don't later depend on their (ambigious) definition */
-#undef fragstoblks
-#undef blkstofrags
-#undef fragnum
-#undef blknum
 
 #include <unistd.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.68 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.69 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.68 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.69 2013/06/23 22:03:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,10 +281,10 @@ chkrange(daddr_t blk, int cnt)
 	    cnt - 1 > maxfsblock - blk)
 		return (1);
 	if (cnt > sblock->fs_frag ||
-	    fragnum(sblock, blk) + cnt > sblock->fs_frag) {
+	    ffs_fragnum(sblock, blk) + cnt > sblock->fs_frag) {
 		if (debug)
 			printf("bad size: blk %lld, offset %d, size %d\n",
-			    (long long)blk, (int)fragnum(sblock, blk), cnt);
+			    (long long)blk, (int)ffs_fragnum(sblock, blk), cnt);
 	}
 	c = dtog(sblock, blk);
 	if (blk < cgdmin(sblock, c)) {
