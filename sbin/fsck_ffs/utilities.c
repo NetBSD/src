@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.62 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: utilities.c,v 1.63 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.62 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.63 2013/06/23 22:03:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,7 @@ allocblk(long frags)
 				sblock->fs_cstotal.cs_nbfree--;
 				sblock->fs_cs(fs, cg).cs_nbfree--;
 				ffs_clusteracct(sblock, cgp,
-				    fragstoblks(sblock, baseblk), -1);
+				    ffs_fragstoblks(sblock, baseblk), -1);
 			} else {
 				cgp->cg_cs.cs_nffree -= frags;
 				sblock->fs_cstotal.cs_nffree -= frags;

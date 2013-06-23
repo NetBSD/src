@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.26 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.27 2013/06/23 22:03:34 dholland Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.26 2013/06/23 07:28:37 dholland Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.27 2013/06/23 22:03:34 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -395,12 +395,12 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref)
 	if (bpref == 0 || dtog(fs, bpref) != ufs_rw32(cgp->cg_cgx, needswap)) {
 		bpref = ufs_rw32(cgp->cg_rotor, needswap);
 	} else {
-		bpref = blknum(fs, bpref);
+		bpref = ffs_blknum(fs, bpref);
 		bno = dtogd(fs, bpref);
 		/*
 		 * if the requested block is available, use it
 		 */
-		if (ffs_isblock(fs, blksfree, fragstoblks(fs, bno)))
+		if (ffs_isblock(fs, blksfree, ffs_fragstoblks(fs, bno)))
 			goto gotit;
 	}
 	/*
@@ -411,7 +411,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref)
 		return (0);
 	cgp->cg_rotor = ufs_rw32(bno, needswap);
 gotit:
-	blkno = fragstoblks(fs, bno);
+	blkno = ffs_fragstoblks(fs, bno);
 	ffs_clrblock(fs, blksfree, (long)blkno);
 	ffs_clusteracct(fs, cgp, blkno, -1);
 	ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
@@ -440,7 +440,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	if (size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
-	    fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
+	    ffs_fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
 		errx(1, "blkfree: bad size: bno %lld bsize %d size %ld",
 		    (long long)bno, fs->fs_bsize, size);
 	}
@@ -463,7 +463,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	}
 	cgbno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
-		fragno = fragstoblks(fs, cgbno);
+		fragno = ffs_fragstoblks(fs, cgbno);
 		if (!ffs_isfreeblock(fs, cg_blksfree(cgp, needswap), fragno)) {
 			errx(1, "blkfree: freeing free block %lld",
 			    (long long)bno);
@@ -474,7 +474,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		fs->fs_cstotal.cs_nbfree++;
 		fs->fs_cs(fs, cg).cs_nbfree++;
 	} else {
-		bbase = cgbno - fragnum(fs, cgbno);
+		bbase = cgbno - ffs_fragnum(fs, cgbno);
 		/*
 		 * decrement the counts associated with the old frags
 		 */
@@ -502,7 +502,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		/*
 		 * if a complete block has been reassembled, account for it
 		 */
-		fragno = fragstoblks(fs, bbase);
+		fragno = ffs_fragstoblks(fs, bbase);
 		if (ffs_isblock(fs, cg_blksfree(cgp, needswap), fragno)) {
 			ufs_add32(cgp->cg_cs.cs_nffree, -fs->fs_frag, needswap);
 			fs->fs_cstotal.cs_nffree -= fs->fs_frag;

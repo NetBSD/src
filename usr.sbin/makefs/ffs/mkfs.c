@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.30 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.31 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.30 2013/06/23 07:28:37 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.31 2013/06/23 22:03:34 dholland Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -453,12 +453,12 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	sblock.fs_dsize = sblock.fs_size - sblock.fs_sblkno -
 	    sblock.fs_ncg * (sblock.fs_dblkno - sblock.fs_sblkno);
 	sblock.fs_cstotal.cs_nbfree =
-	    fragstoblks(&sblock, sblock.fs_dsize) -
+	    ffs_fragstoblks(&sblock, sblock.fs_dsize) -
 	    howmany(csfrags, sblock.fs_frag);
 	sblock.fs_cstotal.cs_nffree =
-	    fragnum(&sblock, sblock.fs_size) +
-	    (fragnum(&sblock, csfrags) > 0 ?
-	    sblock.fs_frag - fragnum(&sblock, csfrags) : 0);
+	    ffs_fragnum(&sblock, sblock.fs_size) +
+	    (ffs_fragnum(&sblock, csfrags) > 0 ?
+	    sblock.fs_frag - ffs_fragnum(&sblock, csfrags) : 0);
 	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - UFS_ROOTINO;
 	sblock.fs_cstotal.cs_ndir = 0;
 	sblock.fs_dsize -= csfrags;
@@ -654,7 +654,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 		acg.cg_clusteroff = acg.cg_clustersumoff +
 		    (sblock.fs_contigsumsize + 1) * sizeof(int32_t);
 		acg.cg_nextfreeoff = acg.cg_clusteroff +
-		    howmany(fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
+		    howmany(ffs_fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
 	}
 	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");

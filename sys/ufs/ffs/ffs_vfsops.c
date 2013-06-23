@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.285 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.286 2013/06/23 22:03:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.285 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.286 2013/06/23 22:03:34 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1602,7 +1602,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_frsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
-	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
+	sbp->f_bfree = ffs_blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
 	    fs->fs_cstotal.cs_nffree + FFS_DBTOFSB(fs, fs->fs_pendingblocks);
 	sbp->f_bresvd = ((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    fs->fs_minfree) / (u_int64_t) 100;
