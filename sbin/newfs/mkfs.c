@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.118 2013/06/23 04:14:28 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.119 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.118 2013/06/23 04:14:28 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.119 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ mkfs(const char *fsys, int fi, int fo,
 		sblock.fs_bshift++;
 	for (sblock.fs_fshift = 0, i = sblock.fs_fsize; i > 1; i >>= 1)
 		sblock.fs_fshift++;
-	sblock.fs_frag = numfrags(&sblock, sblock.fs_bsize);
+	sblock.fs_frag = ffs_numfrags(&sblock, sblock.fs_bsize);
 	for (sblock.fs_fragshift = 0, i = sblock.fs_frag; i > 1; i >>= 1)
 		sblock.fs_fragshift++;
 	if (sblock.fs_frag > MAXFRAG) {
@@ -373,7 +373,7 @@ mkfs(const char *fsys, int fi, int fo,
 		 * Calculate 'per inode block' so we can allocate less than
 		 * 1 fragment per inode - useful for /dev.
 		 */
-		fragsperinodeblk = MAX(numfrags(&sblock,
+		fragsperinodeblk = MAX(ffs_numfrags(&sblock,
 					(uint64_t)density * FFS_INOPB(&sblock)), 1);
 		inodeblks = (sblock.fs_size - sblock.fs_iblkno) /	
 			(sblock.fs_frag + fragsperinodeblk);
@@ -450,7 +450,7 @@ mkfs(const char *fsys, int fi, int fo,
 	}
 	sblock.fs_ncg = ncg;
 
-	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
+	sblock.fs_cgsize = ffs_fragroundup(&sblock, CGSIZE(&sblock));
 	if (Oflag <= 1) {
 		sblock.fs_old_spc = sblock.fs_fpg * sblock.fs_old_nspf;
 		sblock.fs_old_nsect = sblock.fs_old_spc;
@@ -467,7 +467,7 @@ mkfs(const char *fsys, int fi, int fo,
 	 */
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
-	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
+	    ffs_fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 	if (512 % sizeof *fscs_0)
 		errx(1, "cylinder group summary doesn't fit in sectors");
 	fscs_0 = mmap(0, 2 * sblock.fs_fsize, PROT_READ|PROT_WRITE,
@@ -482,7 +482,7 @@ mkfs(const char *fsys, int fi, int fo,
 	/*
 	 * fill in remaining fields of the super block
 	 */
-	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
+	sblock.fs_sbsize = ffs_fragroundup(&sblock, sizeof(struct fs));
 	if (sblock.fs_sbsize > SBLOCKSIZE)
 		sblock.fs_sbsize = SBLOCKSIZE;
 	sblock.fs_minfree = minfree;
@@ -1065,7 +1065,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp1.di_db[0] = alloc(node.dp1.di_size, node.dp1.di_mode);
 		if (node.dp1.di_db[0] == 0)
 			return (0);
-		node.dp1.di_blocks = btodb(fragroundup(&sblock,
+		node.dp1.di_blocks = btodb(ffs_fragroundup(&sblock,
 		    node.dp1.di_size));
 		qblocks += node.dp1.di_blocks;
 		node.dp1.di_uid = geteuid();
@@ -1087,7 +1087,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp2.di_db[0] = alloc(node.dp2.di_size, node.dp2.di_mode);
 		if (node.dp2.di_db[0] == 0)
 			return (0);
-		node.dp2.di_blocks = btodb(fragroundup(&sblock,
+		node.dp2.di_blocks = btodb(ffs_fragroundup(&sblock,
 		    node.dp2.di_size));
 		qblocks += node.dp2.di_blocks;
 		node.dp2.di_uid = geteuid();
@@ -1121,7 +1121,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp1.di_db[0] = alloc(sblock.fs_fsize, node.dp1.di_mode);
 		if (node.dp1.di_db[0] == 0)
 			return (0);
-		node.dp1.di_blocks = btodb(fragroundup(&sblock,
+		node.dp1.di_blocks = btodb(ffs_fragroundup(&sblock,
 		    node.dp1.di_size));
 		qblocks += node.dp1.di_blocks;
 		wtfs(FFS_FSBTODB(&sblock, node.dp1.di_db[0]), sblock.fs_fsize, buf);
@@ -1148,7 +1148,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp2.di_db[0] = alloc(sblock.fs_fsize, node.dp2.di_mode);
 		if (node.dp2.di_db[0] == 0)
 			return (0);
-		node.dp2.di_blocks = btodb(fragroundup(&sblock,
+		node.dp2.di_blocks = btodb(ffs_fragroundup(&sblock,
 		    node.dp2.di_size));
 		qblocks += node.dp2.di_blocks;
 		wtfs(FFS_FSBTODB(&sblock, node.dp2.di_db[0]), sblock.fs_fsize, buf);
@@ -1208,7 +1208,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			    alloc(node.dp1.di_size, node.dp1.di_mode);
 			if (node.dp1.di_db[0] == 0)
 				return (0);
-			node.dp1.di_blocks = btodb(fragroundup(&sblock,
+			node.dp1.di_blocks = btodb(ffs_fragroundup(&sblock,
 			    node.dp1.di_size));
 			node.dp1.di_uid = geteuid();
 			node.dp1.di_gid = getegid();
@@ -1230,7 +1230,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			    alloc(node.dp2.di_size, node.dp2.di_mode);
 			if (node.dp2.di_db[0] == 0)
 				return (0);
-			node.dp2.di_blocks = btodb(fragroundup(&sblock,
+			node.dp2.di_blocks = btodb(ffs_fragroundup(&sblock,
 			    node.dp2.di_size));
 			node.dp2.di_uid = geteuid();
 			node.dp2.di_gid = getegid();

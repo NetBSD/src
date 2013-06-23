@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.4 2013/06/23 02:06:05 dholland Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.5 2013/06/23 07:28:36 dholland Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -151,7 +151,7 @@ void minixfs3_i_bswap(struct mfs_dinode *, struct mfs_dinode *);
  */
 #define mfs_blkoff(fs, loc)	/* calculates (loc % fs->mfs_bsize) */ \
 	((loc) & (fs)->mfs_qbmask)
-#define lblkno(fs, loc)		/* calculates (loc / fs->mfs_bsize) */ \
+#define mfs_lblkno(fs, loc)	/* calculates (loc / fs->mfs_bsize) */ \
 	((loc) >> (fs)->mfs_bshift)
 
 /* Flag bits for i_mode in the inode. */

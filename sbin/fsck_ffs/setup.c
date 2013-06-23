@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.99 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.100 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.99 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.100 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,7 @@ setup(const char *dev, const char *origdev)
 				(char *)(&sblock->fs_magic+1) -
 				(char *)(&sblock->fs_firstfield);
 		sblock->fs_cgsize =
-			fragroundup(sblock, CGSIZE(sblock));
+			ffs_fragroundup(sblock, CGSIZE(sblock));
 		sbdirty();
 		dirty(&asblk);
 	}

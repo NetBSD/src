@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.4 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.5 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -359,7 +359,7 @@ buf_read_file(struct open_file *f, void *v, size_t *size_p)
 	int rc;
 
 	off = mfs_blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	file_block = mfs_lblkno(fs, fp->f_seekp);
 	block_size = fs->mfs_block_size;
 
 	if (file_block != fp->f_buf_blkno) {

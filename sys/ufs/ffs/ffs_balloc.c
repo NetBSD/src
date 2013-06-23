@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.58 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.59 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.58 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.59 2013/06/23 07:28:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,7 +116,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 #endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
-	lbn = lblkno(fs, off);
+	lbn = ffs_lblkno(fs, off);
 	size = ffs_blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
@@ -134,7 +134,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = lblkno(fs, ip->i_size);
+	lastlbn = ffs_lblkno(fs, ip->i_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = ffs_blksize(fs, ip, nb);
@@ -146,7 +146,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			ip->i_size = lblktosize(fs, nb + 1);
+			ip->i_size = ffs_lblktosize(fs, nb + 1);
 			ip->i_ffs1_size = ip->i_size;
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
 			ip->i_ffs1_db[nb] = ufs_rw32((u_int32_t)newb, needswap);
@@ -166,7 +166,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 
 	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw32(ip->i_ffs1_db[lbn], needswap);
-		if (nb != 0 && ip->i_size >= lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -190,8 +190,8 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_size));
-			nsize = fragroundup(fs, size);
+			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_size));
+			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -229,8 +229,8 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_size < lblktosize(fs, lbn + 1))
-				nsize = fragroundup(fs, size);
+			if (ip->i_size < ffs_lblktosize(fs, lbn + 1))
+				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);
@@ -533,7 +533,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 #endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
-	lbn = lblkno(fs, off);
+	lbn = ffs_lblkno(fs, off);
 	size = ffs_blkoff(fs, off) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
@@ -557,7 +557,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		 * and the data is currently composed of a fragment
 		 * this fragment has to be extended to be a full block.
 		 */
-		lastlbn = lblkno(fs, dp->di_extsize);
+		lastlbn = ffs_lblkno(fs, dp->di_extsize);
 		if (lastlbn < lbn) {
 			nb = lastlbn;
 			osize = ffs_sblksize(fs, dp->di_extsize, nb);
@@ -604,8 +604,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
-			osize = fragroundup(fs, ffs_blkoff(fs, dp->di_extsize));
-			nsize = fragroundup(fs, size);
+			osize = ffs_fragroundup(fs, ffs_blkoff(fs, dp->di_extsize));
+			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 				error = bread(vp, -1 - lbn, osize,
 				    NOCRED, 0, &bp);
@@ -629,7 +629,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			}
 		} else {
 			if (dp->di_extsize < smalllblktosize(fs, lbn + 1))
-				nsize = fragroundup(fs, size);
+				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);
@@ -657,7 +657,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = lblkno(fs, ip->i_size);
+	lastlbn = ffs_lblkno(fs, ip->i_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = ffs_blksize(fs, ip, nb);
@@ -669,7 +669,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			ip->i_size = lblktosize(fs, nb + 1);
+			ip->i_size = ffs_lblktosize(fs, nb + 1);
 			ip->i_ffs2_size = ip->i_size;
 			uvm_vnp_setsize(vp, ip->i_size);
 			ip->i_ffs2_db[nb] = ufs_rw64(newb, needswap);
@@ -689,7 +689,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 
 	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw64(ip->i_ffs2_db[lbn], needswap);
-		if (nb != 0 && ip->i_size >= lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -713,8 +713,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_size));
-			nsize = fragroundup(fs, size);
+			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_size));
+			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -752,8 +752,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_size < lblktosize(fs, lbn + 1))
-				nsize = fragroundup(fs, size);
+			if (ip->i_size < ffs_lblktosize(fs, lbn + 1))
+				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);

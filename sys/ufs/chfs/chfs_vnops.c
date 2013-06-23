@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.16 2013/06/19 18:15:35 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.17 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -579,7 +579,7 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 
 /* --------------------------------------------------------------------- */
 /* calculates ((off_t)blk * chmp->chm_chm_fs_bsize) */
-#define	lblktosize(chmp, blk)						      \
+#define	chfs_lblktosize(chmp, blk)					      \
 	(((off_t)(blk)) << (chmp)->chm_fs_bshift)
 
 /* calculates (loc % chmp->chm_chm_fs_bsize) */
@@ -587,20 +587,20 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 	((loc) & (chmp)->chm_fs_qbmask)
 
 /* calculates (loc / chmp->chm_chm_fs_bsize) */
-#define	lblkno(chmp, loc)							      \
+#define	chfs_lblkno(chmp, loc)							      \
 	((loc) >> (chmp)->chm_fs_bshift)
 
 /* calculates roundup(size, chmp->chm_chm_fs_fsize) */
-#define	fragroundup(chmp, size)						      \
+#define	chfs_fragroundup(chmp, size)					      \
 	(((size) + (chmp)->chm_fs_qfmask) & (chmp)->chm_fs_fmask)
 
 #define	chfs_blksize(chmp, ip, lbn)					      \
-	(((lbn) >= UFS_NDADDR || (ip)->size >= lblktosize(chmp, (lbn) + 1))	      \
+	(((lbn) >= UFS_NDADDR || (ip)->size >= chfs_lblktosize(chmp, (lbn) + 1))	      \
 	    ? (chmp)->chm_fs_bsize					      \
-	    : (fragroundup(chmp, chfs_blkoff(chmp, (ip)->size))))
+	    : (chfs_fragroundup(chmp, chfs_blkoff(chmp, (ip)->size))))
 
 /* calculates roundup(size, chmp->chm_chm_fs_bsize) */
-#define	blkroundup(chmp, size)						      \
+#define	chfs_blkroundup(chmp, size)					      \
  	(((size) + (chmp)->chm_fs_qbmask) & (chmp)->chm_fs_bmask)
 
 /* from ffs read */
@@ -686,14 +686,14 @@ chfs_read(void *v)
 		bytesinfile = ip->size - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(chmp, uio->uio_offset);
+		lbn = chfs_lblkno(chmp, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = chfs_blksize(chmp, ip, lbn);
 		blkoffset = chfs_blkoff(chmp, uio->uio_offset);
 		xfersize = MIN(MIN(chmp->chm_fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(chmp, nextlbn) >= ip->size) {
+		if (chfs_lblktosize(chmp, nextlbn) >= ip->size) {
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 			dbg("after bread\n");
 		} else {
@@ -842,7 +842,7 @@ chfs_write(void *v)
 	osize = ip->size;
 	error = 0;
 
-	preallocoff = round_page(blkroundup(chmp,
+	preallocoff = round_page(chfs_blkroundup(chmp,
 		MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
@@ -853,12 +853,12 @@ chfs_write(void *v)
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(chmp, osize) < UFS_NDADDR &&
-	    lblkno(chmp, osize) != lblkno(chmp, nsize) &&
-	    blkroundup(chmp, osize) != osize) {
+	if (nsize > osize && chfs_lblkno(chmp, osize) < UFS_NDADDR &&
+	    chfs_lblkno(chmp, osize) != chfs_lblkno(chmp, nsize) &&
+	    chfs_blkroundup(chmp, osize) != osize) {
 		off_t eob;
 
-		eob = blkroundup(chmp, osize);
+		eob = chfs_blkroundup(chmp, osize);
 		uvm_vnp_setwritesize(vp, eob);
 		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
 		if (error)
@@ -972,7 +972,7 @@ out:
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & chmp->chm_fs_bmask),
-		    round_page(blkroundup(chmp, uio->uio_offset)),
+		    round_page(chfs_blkroundup(chmp, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 	ip->iflag |= IN_CHANGE | IN_UPDATE;

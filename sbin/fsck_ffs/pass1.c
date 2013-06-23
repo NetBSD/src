@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.54 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: pass1.c,v 1.55 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.54 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.55 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,8 +432,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		for (j = 0; j < UFS_NXADDR; j++) {
 			if (--ndb == 0 &&
 			    (offset = ffs_blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
-				idesc->id_numfrags = numfrags(sblock,
-				    fragroundup(sblock, offset));
+				idesc->id_numfrags = ffs_numfrags(sblock,
+				    ffs_fragroundup(sblock, offset));
 			else
 				idesc->id_numfrags = sblock->fs_frag;
 			if (dp->dp2.di_extb[j] == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.62 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.63 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -145,6 +145,9 @@ typedef uint32_t	ino32_t;
 #endif
 #ifndef ufs_blkoff
 #define ufs_blkoff ffs_blkoff
+#endif
+#ifndef ufs_lblkno
+#define ufs_lblkno ffs_lblkno
 #endif
 
 /*
@@ -430,7 +433,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	int rc;
 
 	off = ufs_blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	file_block = ufs_lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
 	block_size = dblksize(fs, &fp->f_di, file_block);
 #else

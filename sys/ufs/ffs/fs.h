@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.62 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.63 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -669,17 +669,17 @@ struct ocg {
 	((loc) & (fs)->fs_qbmask)
 #define	ffs_fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
 	((loc) & (fs)->fs_qfmask)
-#define	lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
+#define	ffs_lfragtosize(fs, frag) /* calculates ((off_t)frag * fs->fs_fsize) */ \
 	(((off_t)(frag)) << (fs)->fs_fshift)
-#define	lblktosize(fs, blk)	/* calculates ((off_t)blk * fs->fs_bsize) */ \
+#define	ffs_lblktosize(fs, blk)	/* calculates ((off_t)blk * fs->fs_bsize) */ \
 	((uint64_t)(((off_t)(blk)) << (fs)->fs_bshift))
-#define	lblkno(fs, loc)		/* calculates (loc / fs->fs_bsize) */ \
+#define	ffs_lblkno(fs, loc)	/* calculates (loc / fs->fs_bsize) */ \
 	((loc) >> (fs)->fs_bshift)
-#define	numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
+#define	ffs_numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
 	((loc) >> (fs)->fs_fshift)
-#define	blkroundup(fs, size)	/* calculates roundup(size, fs->fs_bsize) */ \
+#define	ffs_blkroundup(fs, size) /* calculates roundup(size, fs->fs_bsize) */ \
 	(((size) + (fs)->fs_qbmask) & (fs)->fs_bmask)
-#define	fragroundup(fs, size)	/* calculates roundup(size, fs->fs_fsize) */ \
+#define	ffs_fragroundup(fs, size) /* calculates roundup(size, fs->fs_fsize) */ \
 	(((size) + (fs)->fs_qfmask) & (fs)->fs_fmask)
 #define	fragstoblks(fs, frags)	/* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->fs_fragshift)
@@ -703,14 +703,14 @@ struct ocg {
  * Determining the size of a file block in the file system.
  */
 #define	ffs_blksize(fs, ip, lbn) \
-	(((lbn) >= UFS_NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= UFS_NDADDR || (ip)->i_size >= ffs_lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize \
-	    : ((int32_t)fragroundup(fs, ffs_blkoff(fs, (ip)->i_size))))
+	    : ((int32_t)ffs_fragroundup(fs, ffs_blkoff(fs, (ip)->i_size))))
 
 #define	ffs_sblksize(fs, size, lbn) \
 	(((lbn) >= UFS_NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
 	  ? (fs)->fs_bsize \
-	  : ((int32_t)fragroundup(fs, ffs_blkoff(fs, (uint64_t)(size)))))
+	  : ((int32_t)ffs_fragroundup(fs, ffs_blkoff(fs, (uint64_t)(size)))))
 
 
 /*

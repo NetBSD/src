@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.56 2013/06/19 17:51:25 dholland Exp $	*/
+/*	$NetBSD: dir.c,v 1.57 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.56 2013/06/19 17:51:25 dholland Exp $");
+__RCSID("$NetBSD: dir.c,v 1.57 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -716,7 +716,7 @@ expanddir(union dinode *dp, char *name)
 	else
 		dp1 = &dp->dp1;
 
-	lastbn = lblkno(sblock, iswap64(DIP(dp, size)));
+	lastbn = ffs_lblkno(sblock, iswap64(DIP(dp, size)));
 	if (lastbn >= UFS_NDADDR - 1 || DIP(dp, db[lastbn]) == 0 ||
 	    DIP(dp, size) == 0)
 		return (0);

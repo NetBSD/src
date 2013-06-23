@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.67 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.68 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.67 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.68 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 		if (--ndb == 0 &&
 		    (offset = ffs_blkoff(sblock, iswap64(DIP(&dino, size)))) != 0)
 			idesc->id_numfrags =
-				numfrags(sblock, fragroundup(sblock, offset));
+				ffs_numfrags(sblock, ffs_fragroundup(sblock, offset));
 		else
 			idesc->id_numfrags = sblock->fs_frag;
 		if (DIP(&dino, db[i]) == 0) {
@@ -441,7 +441,7 @@ setinodebuf(ino_t inum)
 	readcnt = 0;
 	if (inodebuf != NULL)
 		return;
-	inobufsize = blkroundup(sblock, INOBUFSIZE);
+	inobufsize = ffs_blkroundup(sblock, INOBUFSIZE);
 	fullcnt = inobufsize / (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	readpercg = sblock->fs_ipg / fullcnt;
 	partialcnt = sblock->fs_ipg % fullcnt;
@@ -786,8 +786,8 @@ allocino(ino_t request, int type)
 		(void)time(&t);
 		dp2->di_atime = iswap64(t);
 		dp2->di_mtime = dp2->di_ctime = dp2->di_atime;
-		dp2->di_size = iswap64(lfragtosize(sblock, nfrags));
-		dp2->di_blocks = iswap64(btodb(lfragtosize(sblock, nfrags)));
+		dp2->di_size = iswap64(ffs_lfragtosize(sblock, nfrags));
+		dp2->di_blocks = iswap64(btodb(ffs_lfragtosize(sblock, nfrags)));
 	} else {
 		dp1 = &dp->dp1;
 		dp1->di_db[0] = iswap32(allocblk(nfrags));
@@ -800,8 +800,8 @@ allocino(ino_t request, int type)
 		(void)time(&t);
 		dp1->di_atime = iswap32(t);
 		dp1->di_mtime = dp1->di_ctime = dp1->di_atime;
-		dp1->di_size = iswap64(lfragtosize(sblock, nfrags));
-		dp1->di_blocks = iswap32(btodb(lfragtosize(sblock, nfrags)));
+		dp1->di_size = iswap64(ffs_lfragtosize(sblock, nfrags));
+		dp1->di_blocks = iswap32(btodb(ffs_lfragtosize(sblock, nfrags)));
 	}
 	n_files++;
 	inodirty();
@@ -863,7 +863,7 @@ freeino(ino_t ino)
 ssize_t
 readblk(union dinode *dp, off_t offset, struct bufarea **bp)
 {
-	daddr_t blkno = lblkno(sblock, offset);
+	daddr_t blkno = ffs_lblkno(sblock, offset);
 	daddr_t iblkno;
 	int type = IFMT & iswap16(DIP(dp, mode));
 	ssize_t filesize = iswap64(DIP(dp, size));
@@ -952,7 +952,7 @@ expandfile(union dinode *dp)
 	di_blocks = is_ufs2 ? iswap64(dp->dp2.di_blocks) :
 	    iswap32(dp->dp1.di_blocks);
 	/* compute location of new block */
-	blkno = lblkno(sblock, filesize);
+	blkno = ffs_lblkno(sblock, filesize);
 
 	if (blkno < UFS_NDADDR) {
 		/* easy way: allocate a direct block */

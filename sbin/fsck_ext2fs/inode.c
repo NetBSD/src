@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.35 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.36 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.35 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.36 2013/06/23 07:28:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ resetinodebuf(void)
 	nextino = 1;
 	lastinum = 1;
 	readcnt = 0;
-	inobufsize = blkroundup(&sblock, INOBUFSIZE);
+	inobufsize = ext2_blkroundup(&sblock, INOBUFSIZE);
 	fullcnt = inobufsize / EXT2_DINODE_SIZE(&sblock);
 	readpercg = sblock.e2fs.e2fs_ipg / fullcnt;
 	partialcnt = sblock.e2fs.e2fs_ipg % fullcnt;

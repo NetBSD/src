@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.17 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.18 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -346,7 +346,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	int rc;
 
 	off = ext2_blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	file_block = ext2_lblkno(fs, fp->f_seekp);
 	block_size = fs->e2fs_bsize;	/* no fragment */
 
 	if (file_block != fp->f_buf_blkno) {

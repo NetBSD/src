@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.25 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.26 2013/06/23 07:28:37 dholland Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.25 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.26 2013/06/23 07:28:37 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -328,7 +328,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	 * allocsiz is the size which will be allocated, hacking
 	 * it down to a smaller size if necessary
 	 */
-	frags = numfrags(fs, size);
+	frags = ffs_numfrags(fs, size);
 	for (allocsiz = frags; allocsiz < fs->fs_frag; allocsiz++)
 		if (cgp->cg_frsum[allocsiz] != 0)
 			break;
@@ -440,7 +440,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	if (size > fs->fs_bsize || ffs_fragoff(fs, size) != 0 ||
-	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
+	    fragnum(fs, bno) + ffs_numfrags(fs, size) > fs->fs_frag) {
 		errx(1, "blkfree: bad size: bno %lld bsize %d size %ld",
 		    (long long)bno, fs->fs_bsize, size);
 	}
@@ -483,7 +483,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		/*
 		 * deallocate the fragment
 		 */
-		frags = numfrags(fs, size);
+		frags = ffs_numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(cg_blksfree(cgp, needswap), cgbno + i)) {
 				errx(1, "blkfree: freeing free frag: block %lld",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.19 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.20 2013/06/23 07:28:37 dholland Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.19 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.20 2013/06/23 07:28:37 dholland Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int32_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
-	lbn = lblkno(fs, offset);
+	lbn = ffs_lblkno(fs, offset);
 	size = ffs_blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
@@ -112,7 +112,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = lblkno(fs, ip->i_ffs1_size);
+	lastlbn = ffs_lblkno(fs, ip->i_ffs1_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = ffs_blksize(fs, ip, nb);
@@ -128,7 +128,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 
 	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw32(ip->i_ffs1_db[lbn], needswap);
-		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_ffs1_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -153,8 +153,8 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_ffs1_size));
-			nsize = fragroundup(fs, size);
+			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_ffs1_size));
+			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -183,8 +183,8 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs1_size < lblktosize(fs, lbn + 1))
-				nsize = fragroundup(fs, size);
+			if (ip->i_ffs1_size < ffs_lblktosize(fs, lbn + 1))
+				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
@@ -347,7 +347,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	int64_t *allocib;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
-	lbn = lblkno(fs, offset);
+	lbn = ffs_lblkno(fs, offset);
 	size = ffs_blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
@@ -363,7 +363,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 * this fragment has to be extended to be a full block.
 	 */
 
-	lastlbn = lblkno(fs, ip->i_ffs2_size);
+	lastlbn = ffs_lblkno(fs, ip->i_ffs2_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
 		osize = ffs_blksize(fs, ip, nb);
@@ -379,7 +379,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 
 	if (lbn < UFS_NDADDR) {
 		nb = ufs_rw64(ip->i_ffs2_db[lbn], needswap);
-		if (nb != 0 && ip->i_ffs2_size >= lblktosize(fs, lbn + 1)) {
+		if (nb != 0 && ip->i_ffs2_size >= ffs_lblktosize(fs, lbn + 1)) {
 
 			/*
 			 * The block is an already-allocated direct block
@@ -404,8 +404,8 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_ffs2_size));
-			nsize = fragroundup(fs, size);
+			osize = ffs_fragroundup(fs, ffs_blkoff(fs, ip->i_ffs2_size));
+			nsize = ffs_fragroundup(fs, size);
 			if (nsize <= osize) {
 
 				/*
@@ -434,8 +434,8 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs2_size < lblktosize(fs, lbn + 1))
-				nsize = fragroundup(fs, size);
+			if (ip->i_ffs2_size < ffs_lblktosize(fs, lbn + 1))
+				nsize = ffs_fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
