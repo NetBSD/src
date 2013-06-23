@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.10 2013/06/19 07:35:18 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.11 2013/06/23 11:17:29 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -246,4 +246,10 @@ sys/netinet6/ip6_flow.c				1.21
 
 	Clear mbuf's csum_flags in ip6flow_fastforward(). Fixes PR#47849.
 	[msaitoh, ticket #895]
+
+tests/lib/libm/t_atan.c				1.4 - 1.7, 1.9 via patch
+
+	Fix test of atan_inf_neg, atan_inf_pos and atan_tan on i386.
+	PR port-i386/46108.
+	[isaki, ticket #903]
 
