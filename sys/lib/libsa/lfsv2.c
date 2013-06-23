@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.8 2013/06/19 17:51:26 dholland Exp $ */
+/* $NetBSD: lfsv2.c,v 1.9 2013/06/23 07:28:36 dholland Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -27,7 +27,7 @@
 
 #define UFS_NINDIR		LFS_NINDIR
 #define ufs_blkoff(a, b)	lfs_blkoff((a), (b))
-#define lblkno(a, b)		lfs_lblkno((a), (b))
+#define ufs_lblkno(a, b)	lfs_lblkno((a), (b))
 #define dblksize(a, b, c)	lfs_dblksize((a), (b), (c))
 #define FSBTODB(a, b)		LFS_FSBTODB((a), (b))
 

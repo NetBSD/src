@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.29 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.30 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.29 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.30 2013/06/23 07:28:37 dholland Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -247,7 +247,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		sblock.fs_bshift++;
 	for (sblock.fs_fshift = 0, i = sblock.fs_fsize; i > 1; i >>= 1)
 		sblock.fs_fshift++;
-	sblock.fs_frag = numfrags(&sblock, sblock.fs_bsize);
+	sblock.fs_frag = ffs_numfrags(&sblock, sblock.fs_bsize);
 	for (sblock.fs_fragshift = 0, i = sblock.fs_frag; i > 1; i >>= 1)
 		sblock.fs_fragshift++;
 	if (sblock.fs_frag > MAXFRAG) {
@@ -321,7 +321,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 */
 	origdensity = density;
 	for (;;) {
-		fragsperinode = MAX(numfrags(&sblock, density), 1);
+		fragsperinode = MAX(ffs_numfrags(&sblock, density), 1);
 		minfpg = fragsperinode * FFS_INOPB(&sblock);
 		if (minfpg > sblock.fs_size)
 			minfpg = sblock.fs_size;
@@ -392,7 +392,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	if (optimalfpg != sblock.fs_fpg)
 		printf("Reduced frags per cylinder group from %d to %d %s\n",
 		   optimalfpg, sblock.fs_fpg, "to enlarge last cyl group");
-	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
+	sblock.fs_cgsize = ffs_fragroundup(&sblock, CGSIZE(&sblock));
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / FFS_INOPF(&sblock);
 	if (Oflag <= 1) {
 		sblock.fs_old_spc = sblock.fs_fpg * sblock.fs_old_nspf;
@@ -406,7 +406,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 */
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
-	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
+	    ffs_fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 
 	/*
 	 * Setup memory for temporary in-core cylgroup summaries.
@@ -427,7 +427,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		*lp++ = sblock.fs_contigsumsize;
 	}
 
-	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
+	sblock.fs_sbsize = ffs_fragroundup(&sblock, sizeof(struct fs));
 	if (sblock.fs_sbsize > SBLOCKSIZE)
 		sblock.fs_sbsize = SBLOCKSIZE;
 	sblock.fs_minfree = minfree;

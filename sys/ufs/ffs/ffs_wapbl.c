@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.20 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.21 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.20 2013/06/23 02:06:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.21 2013/06/23 07:28:37 dholland Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -528,7 +528,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	}
 
 	desired_logsize =
-	    lfragtosize(fs, fs->fs_size) / UFS_WAPBL_JOURNAL_SCALE;
+	    ffs_lfragtosize(fs, fs->fs_size) / UFS_WAPBL_JOURNAL_SCALE;
 	DPRINTF("desired log size = %" PRId64 " kB\n", desired_logsize / 1024);
 	desired_logsize = max(desired_logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
 	desired_logsize = min(desired_logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
@@ -680,11 +680,11 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
 	if (addr == 0) {
 		printf("%s: log not allocated, largest extent is "
 		    "%" PRId64 "MB\n", __func__,
-		    lblktosize(fs, size) / (1024 * 1024));
+		    ffs_lblktosize(fs, size) / (1024 * 1024));
 		return ENOSPC;
 	}
 
-	logsize = lblktosize(fs, size);	/* final log size */
+	logsize = ffs_lblktosize(fs, size);	/* final log size */
 
 	VTOI(vp)->i_ffs_first_data_blk = addr;
 	VTOI(vp)->i_ffs_first_indir_blk = indir_addr;
@@ -737,7 +737,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 
 	if (logsize == 0) {
 		fixedsize = 0;	/* We can adjust the size if tight */
-		logsize = lfragtosize(fs, fs->fs_dsize) /
+		logsize = ffs_lfragtosize(fs, fs->fs_dsize) /
 		    UFS_WAPBL_JOURNAL_SCALE;
 		DPRINTF("suggested log size = %" PRId64 "\n", logsize);
 		logsize = max(logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
@@ -797,7 +797,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	if (min_desired_blks > bpcg) {
 		printf("ffs_wapbl: cylinder group size of %" PRId64 " MB "
 		    " is not big enough for journal\n",
-		    lblktosize(fs, bpcg) / (1024 * 1024));
+		    ffs_lblktosize(fs, bpcg) / (1024 * 1024));
 		goto bad;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.24 2013/06/19 18:16:53 dholland Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.24 2013/06/19 18:16:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.25 2013/06/23 07:28:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -306,8 +306,8 @@ searchloop:
 foundino:
 		dp->i_ino = ino;
 		if (saveoffset != dp->i_offset) {
-			if (lblkno(imp, dp->i_offset) !=
-			    lblkno(imp, saveoffset)) {
+			if (cd9660_lblkno(imp, dp->i_offset) !=
+			    cd9660_lblkno(imp, saveoffset)) {
 				if (bp != NULL)
 					brelse(bp, 0);
 				if ((error = cd9660_blkatoff(vdp,
@@ -421,7 +421,7 @@ cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 
 	ip = VTOI(vp);
 	imp = ip->i_mnt;
-	lbn = lblkno(imp, offset);
+	lbn = cd9660_lblkno(imp, offset);
 	bsize = cd9660_blksize(imp, ip, lbn);
 
 	if ((error = bread(vp, lbn, bsize, NOCRED, 0, &bp)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.47 2013/06/23 02:06:06 dholland Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.48 2013/06/23 07:28:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.47 2013/06/23 02:06:06 dholland Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.48 2013/06/23 07:28:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -779,7 +779,7 @@ setinodebuf(ino_t inum)
 	readcnt = 0;
 	if (inodebuf != NULL)
 		return;
-	inobufsize = blkroundup(&sblock, INOBUFSIZE);
+	inobufsize = ffs_blkroundup(&sblock, INOBUFSIZE);
 	fullcnt = inobufsize / (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	readpercg = sblock.fs_ipg / fullcnt;
 	partialcnt = sblock.fs_ipg % fullcnt;
