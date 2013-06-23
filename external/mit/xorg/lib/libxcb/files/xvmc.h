@@ -502,7 +502,7 @@ xcb_generic_iterator_t
 xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -523,7 +523,7 @@ xcb_xvmc_query_version_cookie_t
 xcb_xvmc_query_version (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -577,8 +577,11 @@ xcb_xvmc_query_version_reply (xcb_connection_t                 *c  /**< */,
                               xcb_xvmc_query_version_cookie_t   cookie  /**< */,
                               xcb_generic_error_t             **e  /**< */);
 
+int
+xcb_xvmc_list_surface_types_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -601,7 +604,7 @@ xcb_xvmc_list_surface_types (xcb_connection_t *c  /**< */,
                              xcb_xv_port_t     port_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -696,8 +699,11 @@ xcb_xvmc_list_surface_types_reply (xcb_connection_t                      *c  /**
                                    xcb_xvmc_list_surface_types_cookie_t   cookie  /**< */,
                                    xcb_generic_error_t                  **e  /**< */);
 
+int
+xcb_xvmc_create_context_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -730,7 +736,7 @@ xcb_xvmc_create_context (xcb_connection_t   *c  /**< */,
                          uint32_t            flags  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -836,7 +842,7 @@ xcb_xvmc_create_context_reply (xcb_connection_t                  *c  /**< */,
                                xcb_generic_error_t              **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -862,7 +868,7 @@ xcb_xvmc_destroy_context_checked (xcb_connection_t   *c  /**< */,
                                   xcb_xvmc_context_t  context_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -884,8 +890,11 @@ xcb_void_cookie_t
 xcb_xvmc_destroy_context (xcb_connection_t   *c  /**< */,
                           xcb_xvmc_context_t  context_id  /**< */);
 
+int
+xcb_xvmc_create_surface_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -910,7 +919,7 @@ xcb_xvmc_create_surface (xcb_connection_t   *c  /**< */,
                          xcb_xvmc_context_t  context_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1008,7 +1017,7 @@ xcb_xvmc_create_surface_reply (xcb_connection_t                  *c  /**< */,
                                xcb_generic_error_t              **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1034,7 +1043,7 @@ xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c  /**< */,
                                   xcb_xvmc_surface_t  surface_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1056,8 +1065,11 @@ xcb_void_cookie_t
 xcb_xvmc_destroy_surface (xcb_connection_t   *c  /**< */,
                           xcb_xvmc_surface_t  surface_id  /**< */);
 
+int
+xcb_xvmc_create_subpicture_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1088,7 +1100,7 @@ xcb_xvmc_create_subpicture (xcb_connection_t      *c  /**< */,
                             uint16_t               height  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1192,7 +1204,7 @@ xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c  /**< 
                                   xcb_generic_error_t                 **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1218,7 +1230,7 @@ xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c  /**< */,
                                      xcb_xvmc_subpicture_t  subpicture_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1240,8 +1252,11 @@ xcb_void_cookie_t
 xcb_xvmc_destroy_subpicture (xcb_connection_t      *c  /**< */,
                              xcb_xvmc_subpicture_t  subpicture_id  /**< */);
 
+int
+xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -1266,7 +1281,7 @@ xcb_xvmc_list_subpicture_types (xcb_connection_t   *c  /**< */,
                                 xcb_xvmc_surface_t  surface_id  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

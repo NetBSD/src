@@ -205,7 +205,7 @@ typedef struct xcb_xevie_select_input_reply_t {
 } xcb_xevie_select_input_reply_t;
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -230,7 +230,7 @@ xcb_xevie_query_version (xcb_connection_t *c  /**< */,
                          uint16_t          client_minor_version  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -289,7 +289,7 @@ xcb_xevie_query_version_reply (xcb_connection_t                  *c  /**< */,
                                xcb_generic_error_t              **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -312,7 +312,7 @@ xcb_xevie_start (xcb_connection_t *c  /**< */,
                  uint32_t          screen  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -369,7 +369,7 @@ xcb_xevie_start_reply (xcb_connection_t          *c  /**< */,
                        xcb_generic_error_t      **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -392,7 +392,7 @@ xcb_xevie_end (xcb_connection_t *c  /**< */,
                uint32_t          cmap  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -492,7 +492,7 @@ xcb_generic_iterator_t
 xcb_xevie_event_end (xcb_xevie_event_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -517,7 +517,7 @@ xcb_xevie_send (xcb_connection_t  *c  /**< */,
                 uint32_t           data_type  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -576,7 +576,7 @@ xcb_xevie_send_reply (xcb_connection_t         *c  /**< */,
                       xcb_generic_error_t     **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -599,7 +599,7 @@ xcb_xevie_select_input (xcb_connection_t *c  /**< */,
                         uint32_t          event_mask  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/11 23:15:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2013/06/23 06:28:38 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 CWARNFLAGS.clang+=	-Wno-format
 

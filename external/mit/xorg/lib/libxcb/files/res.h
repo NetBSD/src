@@ -273,7 +273,7 @@ xcb_generic_iterator_t
 xcb_res_type_end (xcb_res_type_iterator_t i  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -298,7 +298,7 @@ xcb_res_query_version (xcb_connection_t *c  /**< */,
                        uint8_t           client_minor  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -356,8 +356,11 @@ xcb_res_query_version_reply (xcb_connection_t                *c  /**< */,
                              xcb_res_query_version_cookie_t   cookie  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
+int
+xcb_res_query_clients_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -378,7 +381,7 @@ xcb_res_query_clients_cookie_t
 xcb_res_query_clients (xcb_connection_t *c  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -471,8 +474,11 @@ xcb_res_query_clients_reply (xcb_connection_t                *c  /**< */,
                              xcb_res_query_clients_cookie_t   cookie  /**< */,
                              xcb_generic_error_t            **e  /**< */);
 
+int
+xcb_res_query_client_resources_sizeof (const void  *_buffer  /**< */);
+
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -495,7 +501,7 @@ xcb_res_query_client_resources (xcb_connection_t *c  /**< */,
                                 uint32_t          xid  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -591,7 +597,7 @@ xcb_res_query_client_resources_reply (xcb_connection_t                         *
                                       xcb_generic_error_t                     **e  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *
@@ -614,7 +620,7 @@ xcb_res_query_client_pixmap_bytes (xcb_connection_t *c  /**< */,
                                    uint32_t          xid  /**< */);
 
 /**
- * Delivers a request to the X server
+ *
  * @param c The connection
  * @return A cookie
  *

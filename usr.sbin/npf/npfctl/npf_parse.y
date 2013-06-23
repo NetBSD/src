@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.12.2.2 2013/02/25 00:30:46 tls Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.12.2.3 2013/06/23 06:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ yyerror(const char *fmt, ...)
 
 %}
 
+%token			ALG
 %token			ALL
 %token			ANY
 %token			APPLY
@@ -131,6 +132,7 @@ yyerror(const char *fmt, ...)
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
+%token			RULESET
 %token			SEPLINE
 %token			SLASH
 %token			STATEFUL
@@ -152,9 +154,9 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, list_elem, table_store
+%type	<str>		addr, some_name, list_elem, table_store, string
 %type	<str>		proc_param_val, opt_apply
-%type	<num>		ifindex, port, opt_final, on_ifindex
+%type	<num>		ifindex, port, opt_final, on_ifindex, number
 %type	<num>		afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
@@ -195,6 +197,7 @@ line
 	| map
 	| group
 	| rproc
+	| alg
 	|
 	;
 
@@ -237,12 +240,12 @@ list_elem
 		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
 		npfvar_add_elements(cvar, vp);
 	}
-	| NUM MINUS NUM
+	| number MINUS number
 	{
 		npfvar_t *vp = npfctl_parse_port_range($1, $3);
 		npfvar_add_elements(cvar, vp);
 	}
-	| NUM
+	| number
 	{
 		npfvar_t *vp = npfvar_create(".num");
 		npfvar_add_element(vp, NPFVAR_NUM, &$1, sizeof($1));
@@ -310,12 +313,23 @@ map
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
+	| MAP RULESET PAR_OPEN group_attr PAR_CLOSE
+	{
+		npfctl_build_maprset($4.rg_name, $4.rg_attr, $4.rg_ifnum);
+	}
 	;
 
 rproc
 	: PROCEDURE STRING CURLY_OPEN procs CURLY_CLOSE
 	{
 		npfctl_build_rproc($2, $4);
+	}
+	;
+
+alg
+	: ALG STRING
+	{
+		npfctl_build_alg($2);
 	}
 	;
 
@@ -364,7 +378,7 @@ proc_param
 
 proc_param_val
 	: some_name	{ $$ = $1; }
-	| NUM		{ (void)asprintf(&$$, "%ld", $1); }
+	| number	{ (void)asprintf(&$$, "%ld", $1); }
 	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
 	|		{ $$ = NULL; }
 	;
@@ -382,6 +396,15 @@ group
 		npfctl_build_group_end();
 	}
 	;
+
+ruleset
+	: RULESET PAR_OPEN group_attr PAR_CLOSE
+	{
+		/* Ruleset is a dynamic group. */
+		npfctl_build_group($3.rg_name, $3.rg_attr | NPF_RULE_DYNAMIC,
+		    $3.rg_ifnum, $3.rg_default);
+		npfctl_build_group_end();
+	}
 
 group_attr
 	: group_opt COMMA group_attr
@@ -443,19 +466,20 @@ group_opt
 	;
 
 ruleset_block
-	: CURLY_OPEN ruleset CURLY_CLOSE
-	| /* Empty (for a dynamic ruleset). */
+	: CURLY_OPEN ruleset_def CURLY_CLOSE
 	;
 
-ruleset
-	: rule_group SEPLINE ruleset
+ruleset_def
+	: rule_group SEPLINE ruleset_def
 	| rule_group
 	;
 
 rule_group
 	: rule
 	| group
+	| ruleset
 	|
+	;
 
 rule
 	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
@@ -518,7 +542,7 @@ opt_proto
 		$$.op_proto = npfctl_protono($2);
 		$$.op_opts = NULL;
 	}
-	| PROTO NUM
+	| PROTO number
 	{
 		$$.op_proto = $2;
 		$$.op_opts = NULL;
@@ -589,11 +613,7 @@ filt_addr
 	;
 
 addr_and_mask
-	: addr SLASH NUM
-	{
-		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
-	}
-	| addr SLASH HEX
+	: addr SLASH number
 	{
 		$$ = npfctl_parse_fam_addr_mask($1, NULL, &$3);
 	}
@@ -621,10 +641,17 @@ addr_or_ifnet
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp, 0);
+		int type = npfvar_get_type(vp, 0);
 		ifnet_addr_t *ifna;
 
+again:
 		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			vp = npfctl_parse_ifnet(npfvar_expand_string(vp),
+			    AF_UNSPEC);
+			type = npfvar_get_type(vp, 0);
+			goto again;
 		case NPFVAR_FAM:
 			$$ = vp;
 			break;
@@ -668,8 +695,9 @@ port_range
 	;
 
 port
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
+	| STRING	{ $$ = npfctl_portno($1); }
 	;
 
 icmp_type_and_code
@@ -677,7 +705,7 @@ icmp_type_and_code
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, -1);
 	}
-	| ICMPTYPE icmp_type CODE NUM
+	| ICMPTYPE icmp_type CODE number
 	{
 		$$ = npfctl_parse_icmp($<num>0, $2, $4);
 	}
@@ -718,7 +746,7 @@ tcp_flags
 	;
 
 icmp_type
-	: NUM		{ $$ = $1; }
+	: number	{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_icmptype($<num>-1, $1); }
 	| VAR_ID
 	{
@@ -727,15 +755,42 @@ icmp_type
 	}
 	;
 
+string
+	: IDENTIFIER
+	{
+		$$ = $1;
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		const int type = npfvar_get_type(vp, 0);
+
+		switch (type) {
+		case NPFVAR_STRING:
+		case NPFVAR_IDENTIFIER:
+			$$ = npfvar_expand_string(vp);
+			break;
+		case -1:
+			yyerror("undefined variable '%s' for interface", $1);
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for string",
+			    $1, npfvar_type(type));
+			break;
+		}
+	}
+	;
+
 ifnet
-	: IFNET PAR_OPEN IDENTIFIER PAR_CLOSE
+	: IFNET PAR_OPEN string PAR_CLOSE
 	{
 		$$ = npfctl_parse_ifnet($3, AF_UNSPEC);
 	}
-	| afamily PAR_OPEN IDENTIFIER PAR_CLOSE
+	| afamily PAR_OPEN string PAR_CLOSE
 	{
 		$$ = npfctl_parse_ifnet($3, $1);
 	}
+	;
 
 ifindex
 	: some_name
@@ -771,6 +826,11 @@ ifindex
 			break;
 		}
 	}
+	;
+
+number
+	: HEX		{ $$ = $1; }
+	| NUM		{ $$ = $1; }
 	;
 
 some_name

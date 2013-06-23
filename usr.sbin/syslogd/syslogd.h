@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.3 2009/04/20 09:56:08 mschuett Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.3.12.1 2013/06/23 06:29:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -302,6 +302,7 @@ STAILQ_HEAD(buf_queue_head, buf_queue);
 /* a pair of a socket and an associated event object */
 struct socketEvent {
 	int fd;
+	int af;
 	struct event *ev;
 };
 

@@ -1,16 +1,8 @@
-#	$NetBSD: Makefile.fcarch,v 1.2 2008/09/07 14:37:45 lukem Exp $
+#	$NetBSD: Makefile.fcarch,v 1.2.28.1 2013/06/23 06:28:43 tls Exp $
 
 .ifndef _FONTCONFIG_FCARCH_MK_
 _FONTCONFIG_FCARCH_MK_=1
 
-${FCARCH_DEPFILE}: fcarch.h
-
-fcarch.h: fcarch-netbsd.h
-fcarch-netbsd.h:
-	${_MKTARGET_CREATE}
-	@echo '#define FC_ARCHITECTURE "${MACHINE_ARCH}"' > ${.TARGET}
-
-CLEANFILES+= fcarch-netbsd.h
-
+CPPFLAGS+=	-DFC_ARCHITECTURE="\"${MACHINE_ARCH}\""
 
 .endif

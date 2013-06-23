@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.63.2.1 2012/11/20 03:00:40 tls Exp $	*/
+/*	$NetBSD: util.h,v 1.63.2.2 2013/06/23 06:28:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -73,6 +73,7 @@ struct sockaddr;
 char	       *flags_to_string(unsigned long, const char *);
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
+int		getbyteorder(void);
 off_t		getlabeloffset(void);
 int		getlabelsector(void);
 int		getlabelusesmbr(void);

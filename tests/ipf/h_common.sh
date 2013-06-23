@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.3.12.1 2013/02/25 00:30:21 tls Exp $
+# $NetBSD: h_common.sh,v 1.3.12.2 2013/06/23 06:28:56 tls Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,3 +75,26 @@ failing_test_case()
 		${check_function} '${name}' " "${@}" "; \
 	}"
 }
+
+failing_test_case_be()
+{
+	# this test fails on some architectures - not fully analyzed, assume
+	# an endianess bug
+	local name="${1}"; shift
+	local check_function="${1}"; shift
+	local reason="${1}"; shift
+
+	atf_test_case "${name}"
+
+	if [ `sysctl -n hw.byteorder` = 4321 ]; then
+		eval "${name}_body() { \
+			atf_expect_fail '${reason}'; \
+			${check_function} '${name}' " "${@}" "; \
+		}"
+	else
+		eval "${name}_body() { \
+			${check_function} '${name}' " "${@}" "; \
+		}"
+	fi
+}
+

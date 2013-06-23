@@ -181,31 +181,6 @@ extern void bcopy ();
 # define mempcpy(Dest, Src, Len) __mempcpy (Dest, Src, Len)
 #endif
 
-#ifndef	__GNU_LIBRARY__
-# ifdef	__GNUC__
-__inline
-# endif
-# ifndef __SASC
-#  ifdef WINDOWS32
-static void *
-#  else
-static char *
-# endif
-my_realloc (p, n)
-     char *p;
-     unsigned int n;
-{
-  /* These casts are the for sake of the broken Ultrix compiler,
-     which warns of illegal pointer combinations otherwise.  */
-  if (p == NULL)
-    return (char *) malloc (n);
-  return (char *) realloc (p, n);
-}
-# define	realloc	my_realloc
-# endif /* __SASC */
-#endif /* __GNU_LIBRARY__ */
-
-
 #if !defined __alloca && !defined __GNU_LIBRARY__
 
 # ifdef	__GNUC__

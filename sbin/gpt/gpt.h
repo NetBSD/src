@@ -47,8 +47,13 @@
 
 #include <uuid.h>
 
+#ifdef __NetBSD__
+#define le_uuid_dec uuid_dec_le
+#define le_uuid_enc uuid_enc_le
+#else
 void	le_uuid_dec(void const *, uuid_t *);
 void	le_uuid_enc(void *, uuid_t const *);
+#endif
 int	parse_uuid(const char *, uuid_t *);
 
 struct mbr_part {

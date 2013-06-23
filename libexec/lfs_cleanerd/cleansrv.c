@@ -1,4 +1,4 @@
-/* $NetBSD: cleansrv.c,v 1.3 2008/04/28 20:23:04 martin Exp $	 */
+/* $NetBSD: cleansrv.c,v 1.3.26.1 2013/06/23 06:28:50 tls Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <ufs/ufs/inode.h>
+#include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
 
 #include "bufcache.h"

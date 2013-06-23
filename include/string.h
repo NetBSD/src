@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.41 2012/08/30 12:16:48 drochner Exp $	*/
+/*	$NetBSD: string.h,v 1.41.2.1 2013/06/23 06:28:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -113,6 +113,17 @@ void	__explicit_bzero(void *, size_t);
 int	__consttime_bcmp(const void *, const void *, size_t);
 __END_DECLS
 #endif
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+#  ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#  define __LOCALE_T_DECLARED
+#  endif
+__BEGIN_DECLS
+int	 strcoll_l(const char *, const char *, locale_t);
+size_t	 strxfrm_l(char * __restrict, const char * __restrict, size_t, locale_t);
+__END_DECLS
+#endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 
 #if _FORTIFY_SOURCE > 0
 #include <ssp/string.h>

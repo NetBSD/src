@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.13.2.2 2013/02/25 00:30:46 tls Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.13.2.3 2013/06/23 06:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.13.2.2 2013/02/25 00:30:46 tls Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.13.2.3 2013/06/23 06:29:05 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -384,8 +384,10 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	 */
 	code = npfctl_ncgen_complete(nc, &len);
 	if (npf_debug) {
+		extern char *yytext;
 		extern int yylineno;
-		printf("RULE AT LINE %d\n", yylineno);
+
+		printf("RULE AT LINE %d\n", yylineno - (int)(*yytext == '\n'));
 		npfctl_ncgen_print(code, len);
 	}
 	assert(code && len > 0);
@@ -443,7 +445,7 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 
 	rp = npf_rproc_create(name);
 	if (rp == NULL) {
-		errx(EXIT_FAILURE, "npf_rproc_create failed");
+		errx(EXIT_FAILURE, "%s failed", __func__);
 	}
 	npf_rproc_insert(npf_conf, rp);
 
@@ -451,6 +453,22 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 		proc_call_t *pc = npfvar_get_data(procs, NPFVAR_PROC, i);
 		npfctl_build_rpcall(rp, pc->pc_name, pc->pc_opts);
 	}
+}
+
+void
+npfctl_build_maprset(const char *name, int attr, u_int if_idx)
+{
+	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
+	nl_rule_t *rl;
+
+	/* If no direction is not specified, then both. */
+	if ((attr & attr_di) == 0) {
+		attr |= attr_di;
+	}
+	/* Allow only "in/out" attributes. */
+	attr = NPF_RULE_GROUP | NPF_RULE_GROUP | (attr & attr_di);
+	rl = npf_rule_create(name, attr, if_idx);
+	npf_nat_insert(npf_conf, rl, NPF_PRI_LAST);
 }
 
 /*
@@ -692,5 +710,17 @@ npfctl_build_table(const char *tid, u_int type, const char *fname)
 
 	if (fname) {
 		npfctl_fill_table(tl, type, fname);
+	}
+}
+
+/*
+ * npfctl_build_alg: create an NPF application level gatewayl and add it
+ * to the configuration.
+ */
+void
+npfctl_build_alg(const char *al_name)
+{
+	if (_npf_alg_load(npf_conf, al_name) != 0) {
+		errx(EXIT_FAILURE, "ALG '%s' already loaded", al_name);
 	}
 }

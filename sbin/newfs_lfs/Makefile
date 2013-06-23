@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/08/06 00:51:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.9.12.1 2013/06/23 06:28:52 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -23,7 +23,6 @@ LDADD=  -lutil
 LDADD+=-lprop
 DPADD+=${LIBPROP}
 
-CPPFLAGS+=-I${FSCK_LFS} -I${FSCK} "-Dmutex_enter(x)=" "-Dmutex_exit(x)=" # -DNDEBUG # -DVERBOSE_BLOCKMAP
-CPPFLAGS+="-DKASSERT(x)="
+CPPFLAGS+=-I${FSCK_LFS} -I${FSCK} # -DNDEBUG # -DVERBOSE_BLOCKMAP
 
 .include <bsd.prog.mk>

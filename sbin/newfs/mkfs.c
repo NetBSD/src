@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.112.6.1 2013/02/25 00:28:09 tls Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.112.6.2 2013/06/23 06:28:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.112.6.1 2013/02/25 00:28:09 tls Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.112.6.2 2013/06/23 06:28:52 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,6 @@ static void setblock(struct fs *, unsigned char *, int);
 static int ilog2(int);
 static void zap_old_sblock(int);
 #ifdef MFS
-static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
 #endif
 
@@ -191,9 +190,6 @@ mkfs(const char *fsys, int fi, int fo,
 #endif
 #ifdef MFS
 	if (mfs && !Nflag) {
-		calc_memfree();
-		if ((uint64_t)fssize * sectorsize > memleft)
-			fssize = memleft / sectorsize;
 		if ((membase = mkfs_malloc(fssize * sectorsize)) == NULL)
 			exit(12);
 	}
@@ -338,7 +334,7 @@ mkfs(const char *fsys, int fi, int fo,
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
 	sblock.fs_maxfilesize = sblock.fs_bsize * UFS_NDADDR - 1;
 	for (sizepb = sblock.fs_bsize, i = 0; i < UFS_NIADDR; i++) {
-		sizepb *= NINDIR(&sblock);
+		sizepb *= FFS_NINDIR(&sblock);
 		sblock.fs_maxfilesize += sizepb;
 	}
 
@@ -371,14 +367,14 @@ mkfs(const char *fsys, int fi, int fo,
 		fserr(23);
 	}
 	if (num_inodes != 0)
-		inodeblks = howmany(num_inodes, INOPB(&sblock));
+		inodeblks = howmany(num_inodes, FFS_INOPB(&sblock));
 	else {
 		/*
 		 * Calculate 'per inode block' so we can allocate less than
 		 * 1 fragment per inode - useful for /dev.
 		 */
 		fragsperinodeblk = MAX(numfrags(&sblock,
-					(uint64_t)density * INOPB(&sblock)), 1);
+					(uint64_t)density * FFS_INOPB(&sblock)), 1);
 		inodeblks = (sblock.fs_size - sblock.fs_iblkno) /	
 			(sblock.fs_frag + fragsperinodeblk);
 	}
@@ -388,14 +384,14 @@ mkfs(const char *fsys, int fi, int fo,
 	if (inodeblks > (uint64_t)(sblock.fs_size - sblock.fs_iblkno)/sblock.fs_frag - 2)
 		inodeblks = (sblock.fs_size-sblock.fs_iblkno)/sblock.fs_frag-2;
 	/* Even UFS2 limits number of inodes to 2^31 (fs_ipg is int32_t) */
-	if (inodeblks * INOPB(&sblock) >= 1ull << 31)
-		inodeblks = ((1ull << 31) - NBBY) / INOPB(&sblock);
+	if (inodeblks * FFS_INOPB(&sblock) >= 1ull << 31)
+		inodeblks = ((1ull << 31) - NBBY) / FFS_INOPB(&sblock);
 	/*
 	 * See what would happen if we tried to use 1 cylinder group.
 	 * Assume space linear, so work out number of cylinder groups needed.
 	 */
 	cgzero = CGSIZE_IF(&sblock, 0, 0);
-	cgall = CGSIZE_IF(&sblock, inodeblks * INOPB(&sblock), sblock.fs_size);
+	cgall = CGSIZE_IF(&sblock, inodeblks * FFS_INOPB(&sblock), sblock.fs_size);
 	ncg = howmany(cgall - cgzero, sblock.fs_bsize - cgzero);
 	if (ncg < MINCYLGRPS) {
 		/*
@@ -421,14 +417,14 @@ mkfs(const char *fsys, int fi, int fo,
 	sblock.fs_fpg = roundup(howmany(sblock.fs_size, ncg), sblock.fs_frag);
 	/* Round up the fragments/group so the bitmap bytes are full */
 	sblock.fs_fpg = roundup(sblock.fs_fpg, NBBY);
-	inodes_per_cg = ((inodeblks - 1) / ncg + 1) * INOPB(&sblock);
+	inodes_per_cg = ((inodeblks - 1) / ncg + 1) * FFS_INOPB(&sblock);
 
 	i = CGSIZE_IF(&sblock, inodes_per_cg, sblock.fs_fpg);
 	if (i > sblock.fs_bsize) {
 		sblock.fs_fpg -= (i - sblock.fs_bsize) * NBBY;
 		/* ... and recalculate how many cylinder groups we now need */
 		ncg = howmany(sblock.fs_size, sblock.fs_fpg);
-		inodes_per_cg = ((inodeblks - 1) / ncg + 1) * INOPB(&sblock);
+		inodes_per_cg = ((inodeblks - 1) / ncg + 1) * FFS_INOPB(&sblock);
 	}
 	sblock.fs_ipg = inodes_per_cg;
 	/* Sanity check on our sums... */
@@ -438,7 +434,7 @@ mkfs(const char *fsys, int fi, int fo,
 		fserr(24);
 	}
 
-	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
+	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / FFS_INOPF(&sblock);
 	/* Check that the last cylinder group has enough space for the inodes */
 	i = sblock.fs_size - sblock.fs_fpg * (ncg - 1ull);
 	if (i < sblock.fs_dblkno) {
@@ -796,8 +792,8 @@ initcg(int cylno, const struct timeval *tv)
 	if (Oflag == 2) {
 		acg.cg_time = tv->tv_sec;
 		acg.cg_niblk = sblock.fs_ipg;
-		acg.cg_initediblk = sblock.fs_ipg < 2 * INOPB(&sblock) ?
-		    sblock.fs_ipg : 2 * INOPB(&sblock);
+		acg.cg_initediblk = sblock.fs_ipg < 2 * FFS_INOPB(&sblock) ?
+		    sblock.fs_ipg : 2 * FFS_INOPB(&sblock);
 		acg.cg_iusedoff = start;
 	} else {
 		acg.cg_old_ncyl = sblock.fs_old_cpg;
@@ -943,7 +939,7 @@ initcg(int cylno, const struct timeval *tv)
 	start += sblock.fs_bsize;
 	dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);
-	for (i = MIN(sblock.fs_ipg, 2) * INOPB(&sblock); i != 0; i--) {
+	for (i = MIN(sblock.fs_ipg, 2) * FFS_INOPB(&sblock); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			/* No need to swap, it'll stay random */
 			dp1->di_gen = arc4random() & INT32_MAX;
@@ -962,7 +958,7 @@ initcg(int cylno, const struct timeval *tv)
 
 	/* Write 'd' (usually 16 * fs_frag) file-system fragments at once */
 	d = (iobuf_memsize - start) / sblock.fs_bsize * sblock.fs_frag;
-	dupper = sblock.fs_ipg / INOPF(&sblock);
+	dupper = sblock.fs_ipg / FFS_INOPF(&sblock);
 	for (i = 2 * sblock.fs_frag; i < dupper; i += d) {
 		if (d > dupper - i)
 			d = dupper - i;
@@ -1257,14 +1253,14 @@ makedir(struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
-	int dirblksiz = DIRBLKSIZ;
+	int dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 
-	memset(buf, 0, DIRBLKSIZ);
+	memset(buf, 0, dirblksiz);
 	spcleft = dirblksiz;
 	for (cp = buf, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = DIRSIZ(Oflag == 0, &protodir[i], 0);
+		protodir[i].d_reclen = UFS_DIRSIZ(Oflag == 0, &protodir[i], 0);
 		copy_dir(&protodir[i], (struct direct*)cp);
 		cp += protodir[i].d_reclen;
 		spcleft -= protodir[i].d_reclen;
@@ -1543,7 +1539,7 @@ setblock(struct fs *fs, unsigned char *cp, int h)
 static void
 copy_dir(struct direct *dir, struct direct *dbuf)
 {
-	memcpy(dbuf, dir, DIRSIZ(Oflag == 0, dir, 0));
+	memcpy(dbuf, dir, UFS_DIRSIZ(Oflag == 0, dir, 0));
 	if (needswap) {
 		dbuf->d_ino = bswap32(dir->d_ino);
 		dbuf->d_reclen = bswap16(dir->d_reclen);
@@ -1625,33 +1621,6 @@ zap_old_sblock(int sblkoff)
 
 #ifdef MFS
 /*
- * XXX!
- * Attempt to guess how much more space is available for process data.  The
- * heuristic we use is
- *
- *	max_data_limit - (sbrk(0) - etext) - 128kB
- *
- * etext approximates that start address of the data segment, and the 128kB
- * allows some slop for both segment gap between text and data, and for other
- * (libc) malloc usage.
- */
-static void
-calc_memfree(void)
-{
-	extern char etext;
-	struct rlimit rlp;
-	u_long base;
-
-	base = (u_long)sbrk(0) - (u_long)&etext;
-	if (getrlimit(RLIMIT_DATA, &rlp) < 0)
-		perror("getrlimit");
-	rlp.rlim_cur = rlp.rlim_max;
-	if (setrlimit(RLIMIT_DATA, &rlp) < 0)
-		perror("setrlimit");
-	memleft = rlp.rlim_max - base - (128 * 1024);
-}
-
-/*
  * Internal version of malloc that trims the requested size if not enough
  * memory is available.
  */
@@ -1659,20 +1628,36 @@ static void *
 mkfs_malloc(size_t size)
 {
 	u_long pgsz;
-	caddr_t *memory;
+	caddr_t *memory, *extra;
+	size_t exsize = 128 * 1024;
 
 	if (size == 0)
 		return (NULL);
-	if (memleft == 0)
-		calc_memfree();
 
 	pgsz = getpagesize() - 1;
 	size = (size + pgsz) &~ pgsz;
-	if (size > memleft)
-		size = memleft;
-	memleft -= size;
+
+	/* try to map requested size */
 	memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 	    -1, 0);
-	return memory != MAP_FAILED ? memory : NULL;
+	if (memory == MAP_FAILED)
+		return NULL;
+
+	/* try to map something extra */
+	extra = mmap(0, exsize, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+	    -1, 0);
+	munmap(extra, exsize);
+
+	/* if extra memory couldn't be mapped, reduce original request accordingly */
+	if (extra == MAP_FAILED) {
+		munmap(memory, size);
+		size -= exsize;
+		memory = mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
+		    -1, 0);
+		if (memory == MAP_FAILED)
+			return NULL;
+	}
+
+	return memory;
 }
 #endif	/* MFS */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2009/08/06 00:51:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.17.12.1 2013/06/23 06:28:51 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -13,8 +13,7 @@ SRCS+=	segwrite.c setup.c utilities.c vars.c vnode.c
 SRCS+=	kernelops.c
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 .PATH:	${NETBSDSRCDIR}/sys/ufs/lfs ${FSCK}
-CPPFLAGS+=-I${.CURDIR} -I${FSCK} -DIN_FSCK_LFS "-Dmutex_enter(x)=" "-Dmutex_exit(x)="
-CPPFLAGS+="-DKASSERT(x)="
+CPPFLAGS+=-I${.CURDIR} -I${FSCK} -DIN_FSCK_LFS
 # -DVERBOSE_BLOCKMAP 
 
 LDADD+=-lutil

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.33.2.1 2013/02/25 00:28:10 tls Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.33.2.2 2013/06/23 06:28:52 tls Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.33.2.1 2013/02/25 00:28:10 tls Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.33.2.2 2013/06/23 06:28:52 tls Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -140,7 +140,7 @@ static unsigned char *iflags;
 #define dblksize(fs, dip, lbn, filesize) \
 	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
-	    : (fragroundup(fs, blkoff(fs, (filesize)))))
+	    : (fragroundup(fs, ffs_blkoff(fs, (filesize)))))
 
 
 /*
@@ -487,8 +487,8 @@ initcg(int cgn)
 
 	if (is_ufs2) {
 		cg->cg_time = newsb->fs_time;
-		cg->cg_initediblk = newsb->fs_ipg < 2 * INOPB(newsb) ?
-		    newsb->fs_ipg : 2 * INOPB(newsb);
+		cg->cg_initediblk = newsb->fs_ipg < 2 * FFS_INOPB(newsb) ?
+		    newsb->fs_ipg : 2 * FFS_INOPB(newsb);
 		cg->cg_iusedoff = start;
 	} else {
 		cg->cg_old_time = newsb->fs_time;
@@ -1085,7 +1085,7 @@ markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 	if (bn == 0) {
 		for (i = newsb->fs_bsize;
 		    lev >= 0;
-		    i *= NINDIR(newsb), lev--);
+		    i *= FFS_NINDIR(newsb), lev--);
 		return (i);
 	}
 	(*fn) (bn, newsb->fs_frag, newsb->fs_bsize, MDB_INDIR_PRE);
@@ -1094,7 +1094,7 @@ markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 		for (k = 0; k < howmany(MAXBSIZE, sizeof(int32_t)); k++)
 			indirblks[lev][k] = bswap32(indirblks[lev][k]);
 	tot = 0;
-	for (i = 0; i < NINDIR(newsb); i++) {
+	for (i = 0; i < FFS_NINDIR(newsb); i++) {
 		j = markiblk(fn, di, indirblks[lev][i], o, lev - 1);
 		if (j == 0)
 			break;
@@ -1471,7 +1471,7 @@ moveindir_callback(off_t off, unsigned int nfrag, unsigned int nbytes,
 		if (needswap)
 			for (i = 0; i < howmany(MAXBSIZE, sizeof(int32_t)); i++)
 				blk[i] = bswap32(blk[i]);
-		if (movemap_blocks(&blk[0], NINDIR(oldsb))) {
+		if (movemap_blocks(&blk[0], FFS_NINDIR(oldsb))) {
 			if (needswap)
 				for (i = 0; i < howmany(MAXBSIZE,
 					sizeof(int32_t)); i++)
@@ -1519,7 +1519,7 @@ flush_inodes(void)
 
 	na = UFS_NDADDR + UFS_NIADDR;
 	ni = newsb->fs_ipg * newsb->fs_ncg;
-	m = INOPB(newsb) - 1;
+	m = FFS_INOPB(newsb) - 1;
 	for (i = 0; i < ni; i++) {
 		if (iflags[i] & IF_DIRTY) {
 			iflags[i & ~m] |= IF_BDIRTY;
@@ -2155,9 +2155,9 @@ main(int argc, char **argv)
 
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
-	if (oldsb->fs_ipg % INOPB(oldsb))
-		errx(EXIT_FAILURE, "ipg[%d] %% INOPB[%d] != 0",
-		    (int) oldsb->fs_ipg, (int) INOPB(oldsb));
+	if (oldsb->fs_ipg % FFS_INOPB(oldsb))
+		errx(EXIT_FAILURE, "ipg[%d] %% FFS_INOPB[%d] != 0",
+		    (int) oldsb->fs_ipg, (int) FFS_INOPB(oldsb));
 	/* The superblock is bigger than struct fs (there are trailing
 	 * tables, of non-fixed size); make sure we copy the whole
 	 * thing.  SBLOCKSIZE may be an over-estimate, but we do this

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.40 2011/08/30 20:54:18 joerg Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.40.8.1 2013/06/23 06:29:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,11 +73,13 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/bitops.h>
 
 #include <dev/vndvar.h>
 
 #include <disktab.h>
 #include <err.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -86,6 +88,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <paths.h>
 
 #define VND_CONFIG	1
 #define VND_UNCONFIG	2
@@ -97,6 +100,7 @@ static int	force = 0;
 static int	compressed = 0;
 static char	*tabname;
 
+static void	show(int, int);
 static int	config(char *, char *, char *, int);
 static int	getgeom(struct vndgeom *, char *);
 __dead static void	usage(void);
@@ -157,10 +161,9 @@ main(int argc, char *argv[])
 			usage();
 		rv = config(argv[0], NULL, NULL, action);
 	} else { /* VND_GET */
+		int n, v;
 		const char *vn;
 		char path[64];
-		struct vnd_user vnu;
-		int v, n;
 
 		if (argc != 0 && argc != 1)
 			usage();
@@ -171,66 +174,83 @@ main(int argc, char *argv[])
 		if (v == -1)
 			err(1, "open: %s", vn);
 
-		for (n = 0; ; n++) {
-			vnu.vnu_unit = argc ? -1 : n;
-			rv = ioctl(v, VNDIOCGET, &vnu);
-			if (rv == -1) {
-				if (errno == ENXIO)
-					break;
-				err(1, "VNDIOCGET");
+		if (argc)
+			show(v, -1);
+		else {
+			DIR *dirp;
+			struct dirent *dp;
+			__BITMAP_TYPE(, uint32_t, 65536) bm;
+
+			__BITMAP_ZERO(&bm);
+
+			if ((dirp = opendir(_PATH_DEV)) == NULL)
+				err(1, "opendir: %s", _PATH_DEV);
+
+			while ((dp = readdir(dirp)) != NULL) {
+				if (strncmp(dp->d_name, "rvnd", 4) != 0)
+					continue;
+				n = atoi(dp->d_name + 4);
+				if (__BITMAP_ISSET(n, &bm))
+					continue;
+				__BITMAP_SET(n, &bm);
+				show(v, n);
 			}
 
-			if (vnu.vnu_ino == 0)
-				printf("vnd%d: not in use\n",
-				    vnu.vnu_unit);
-			else {
-				char *dev;
-				struct statvfs *mnt = NULL;
-				int i, nmount;
-
-				nmount = 0;	/* XXXGCC -Wuninitialized */
-
-				printf("vnd%d: ", vnu.vnu_unit);
-
-				dev = devname(vnu.vnu_dev, S_IFBLK);
-				if (dev != NULL)
-					nmount = getmntinfo(&mnt, MNT_NOWAIT);
-				else
-					mnt = NULL;
-				if (mnt != NULL) {
-					for (i = 0; i < nmount; i++) {
-						if (strncmp(
-						    mnt[i].f_mntfromname,
-						    "/dev/", 5) == 0 &&
-						    strcmp(
-						    mnt[i].f_mntfromname + 5,
-						    dev) == 0)
-							break;
-					}
-					if (i < nmount)
-						printf("%s (%s) ",
-						    mnt[i].f_mntonname,
-						    mnt[i].f_mntfromname);
-					else
-						printf("%s ", dev);
-				}
-				else if (dev != NULL)
-					printf("%s ", dev);
-				else
-					printf("dev %llu,%llu ",
-					    (unsigned long long)major(vnu.vnu_dev),
-					    (unsigned long long)minor(vnu.vnu_dev));
-
-				printf("inode %llu\n",
-				    (unsigned long long)vnu.vnu_ino);
-			}
-
-			if (argc)
-				break;
+			closedir(dirp);
 		}
 		close(v);
+		rv = 0;
 	}
-	exit(rv);
+	return rv;
+}
+
+static void
+show(int v, int n)
+{
+	struct vnd_user vnu;
+	char *dev;
+	struct statvfs *mnt;
+	int i, nmount;
+
+	vnu.vnu_unit = n;
+	if (ioctl(v, VNDIOCGET, &vnu) == -1)
+		err(1, "VNDIOCGET");
+
+	if (vnu.vnu_ino == 0) {
+		printf("vnd%d: not in use\n", vnu.vnu_unit);
+		return;
+	}
+
+	printf("vnd%d: ", vnu.vnu_unit);
+
+	dev = devname(vnu.vnu_dev, S_IFBLK);
+	if (dev != NULL)
+		nmount = getmntinfo(&mnt, MNT_NOWAIT);
+	else {
+		mnt = NULL;
+		nmount = 0;
+	}
+
+	if (mnt != NULL) {
+		for (i = 0; i < nmount; i++) {
+			if (strncmp(mnt[i].f_mntfromname, "/dev/", 5) == 0 &&
+			    strcmp(mnt[i].f_mntfromname + 5, dev) == 0)
+				break;
+		}
+		if (i < nmount)
+			printf("%s (%s) ", mnt[i].f_mntonname,
+			    mnt[i].f_mntfromname);
+		else
+			printf("%s ", dev);
+	}
+	else if (dev != NULL)
+		printf("%s ", dev);
+	else
+		printf("dev %llu,%llu ",
+		    (unsigned long long)major(vnu.vnu_dev),
+		    (unsigned long long)minor(vnu.vnu_dev));
+
+	printf("inode %llu\n", (unsigned long long)vnu.vnu_ino);
 }
 
 static int

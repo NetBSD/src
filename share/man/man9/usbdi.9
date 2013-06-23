@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.24.2.1 2013/02/25 00:28:15 tls Exp $
+.\"	$NetBSD: usbdi.9,v 1.24.2.2 2013/06/23 06:28:54 tls Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2013
+.Dd June 10, 2013
 .Dt USBDI 9
 .Os
 .Sh NAME
@@ -150,8 +150,9 @@
 .Ft int
 .Fn usbd_get_no_alts "usb_config_descriptor_t *iface" "int ifaceno"
 .Ft usbd_status
-.Fn usbd_get_interface "usbd_interface_handle iface" "uint8_t *aiface"
-.Ft void
+.\" unused, delete?
+.\" .Fn usbd_get_interface "usbd_interface_handle iface" "uint8_t *aiface"
+.\" .Ft void
 .Fn usbd_fill_deviceinfo "usbd_device_handle dev" "struct usb_device_info *di"
 .Ft int
 .Fn usbd_get_interface_altindex "usbd_interface_handle iface"
@@ -253,8 +254,9 @@ through
 .Ft usbd_status
 .Fn usbd_alloc_report_desc "usbd_interface_handle ifc" "void **descp" \
  "int *sizep" "int mem"
-.Ft usbd_status
-.Fn usbd_get_config "usbd_device_handle dev" "uint8_t *conf"
+.\" private API between ugen(4) and usbdi(9)
+.\" .Ft usbd_status
+.\" .Fn usbd_get_config "usbd_device_handle dev" "uint8_t *conf"
 .Ft usbd_status
 .Fn usbd_get_string_desc "usbd_device_handle dev" "int sindex" "int langid" \
  "usb_string_descriptor_t *sdesc"
@@ -388,8 +390,8 @@ macro can be used to match any USB product by a particular vendor.
 .\" .Fn usbd_get_interface_descriptor "usbd_interface_handle iface"
 .\" .Fn usbd_get_config_descriptor "usbd_device_handle dev"
 .\" .Fn usbd_get_device_descriptor "usbd_device_handle dev"
-.\" .Fn usbd_set_interface "usbd_interface_handle iface" "int altidx"
 .\" .Fn usbd_get_no_alts "usb_config_descriptor_t *iface" "int ifaceno"
+.\" unused, delete?
 .\" .Fn usbd_get_interface "usbd_interface_handle iface" "uint8_t *aiface"
 .\" .Fn usbd_fill_deviceinfo "usbd_device_handle dev" "struct usb_device_info *di"
 .\" .Fn usbd_get_interface_altindex "usbd_interface_handle iface"
@@ -464,8 +466,6 @@ macro can be used to match any USB product by a particular vendor.
 .\" .Ft usbd_status
 .\" .Fn usbd_alloc_report_desc "usbd_interface_handle ifc" "void **descp" \
 .\"  "int *sizep" "int mem"
-.\" .Ft usbd_status
-.\" .Fn usbd_get_config "usbd_device_handle dev" "uint8_t *conf"
 .\" .Ft usbd_status
 .\" .Fn usbd_get_string_desc "usbd_device_handle dev" "int sindex" "int langid" \
 .\"  "usb_string_descriptor_t *sdesc"
@@ -776,11 +776,15 @@ The available values are:
 .It Dv UR_SET_ADDRESS
 .It Dv UR_GET_DESCRIPTOR
 .It Dv UR_SET_DESCRIPTOR
-.It Dv UR_GET_CONFIG
-.It Dv UR_SET_CONFIG
-.It Dv UR_GET_INTERFACE
-.It Dv UR_SET_INTERFACE
-.It Dv UR_SYNCH_FRAME
+.\" these have API front ends
+.\" .It Dv UR_GET_CONFIG
+.\"  api usbd_get_config() (ugen private)
+.\" .It Dv UR_SET_CONFIG
+.\"  static api usbd_set_config() (usb_subr private)
+.\" .It Dv UR_GET_INTERFACE
+.\" .It Dv UR_SET_INTERFACE
+.\" this isn't supported
+.\" .It Dv UR_SYNCH_FRAME
 .El
 .Pp
 The
@@ -870,14 +874,13 @@ member may be one of the following values:
 .It Dv UDESC_CS_ENDPOINT
 .It Dv UDESC_HUB
 .El
-.\".Pp
-.\" these have API front ends
-.\" .It Dv UR_GET_CONFIG
-.\" .It Dv UR_SET_CONFIG
-.\" .It Dv UR_GET_INTERFACE
-.\" .It Dv UR_SET_INTERFACE
-.\" this isn't supported
-.\" .It Dv UR_SYNCH_FRAME
+.Pp
+The
+.\" XXXMRG is the below even remotely valid?
+.Fn usbd_set_interface
+function can be used to change the index used for transfers on this
+interface as obtained via
+.Fn usbd_device2interface_handle .
 .Sh USB DEVICE DETACHMENT
 There are two functions available to ease the detach of active devices.
 Typically a reference count is maintained on syscall activity.

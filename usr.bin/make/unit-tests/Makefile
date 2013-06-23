@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34.2.1 2012/11/20 03:02:58 tls Exp $
+# $NetBSD: Makefile,v 1.34.2.2 2013/06/23 06:29:01 tls Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -24,6 +24,7 @@ SUBFILES= \
 	error \
 	export \
 	export-all \
+	export-env \
 	doterror \
 	dotwait \
 	forloop \

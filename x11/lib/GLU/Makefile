@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/07/21 03:36:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.8.1 2013/06/23 06:29:07 tls Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -74,3 +74,8 @@ DPADD+=		${LIBSTDCXX} ${LIBM}
 # XXX -Wno-deprecated doesn't work?
 CXXFLAGS+=	-Wno-error
 .endif
+
+.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
+COPTS.sampleCompTop.cc+=        -O0
+.endif
+

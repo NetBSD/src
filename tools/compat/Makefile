@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.59.2.1 2013/02/25 00:30:27 tls Exp $
+#	$NetBSD: Makefile,v 1.59.2.2 2013/06/23 06:28:57 tls Exp $
 
 HOSTLIB=	nbcompat
 
 .include <bsd.own.mk>
 
 SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
-		fgetln.c flock.c fparseln.c fpurge.c \
+		dprintf.c fgetln.c flock.c fparseln.c fpurge.c \
 		getcap.c getline.c getmode.c getopt_long.c gettemp.c \
 		heapsort.c \
 		issetugid.c lchflags.c lchmod.c lchown.c libyywrap.c \

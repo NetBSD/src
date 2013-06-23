@@ -3,10 +3,17 @@
  * Edit at your peril.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>  /* for offsetof() */
 #include "xcbext.h"
 #include "xtest.h"
+
+#define ALIGNOF(type) offsetof(struct { char dummy; type member; }, member)
 #include "xproto.h"
 
 xcb_extension_t xcb_test_id = { "XTEST", 0 };
@@ -47,6 +54,7 @@ xcb_test_get_version (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -87,6 +95,7 @@ xcb_test_get_version_unchecked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -146,6 +155,7 @@ xcb_test_compare_cursor (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -185,6 +195,7 @@ xcb_test_compare_cursor_unchecked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -219,8 +230,8 @@ xcb_test_compare_cursor_reply (xcb_connection_t                  *c  /**< */,
  ** @param uint8_t           detail
  ** @param uint32_t          time
  ** @param xcb_window_t      root
- ** @param uint16_t          rootX
- ** @param uint16_t          rootY
+ ** @param int16_t           rootX
+ ** @param int16_t           rootY
  ** @param uint8_t           deviceid
  ** @returns xcb_void_cookie_t
  **
@@ -232,8 +243,8 @@ xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
                              uint8_t           detail  /**< */,
                              uint32_t          time  /**< */,
                              xcb_window_t      root  /**< */,
-                             uint16_t          rootX  /**< */,
-                             uint16_t          rootY  /**< */,
+                             int16_t           rootX  /**< */,
+                             int16_t           rootY  /**< */,
                              uint8_t           deviceid  /**< */)
 {
     static const xcb_protocol_request_t xcb_req = {
@@ -262,6 +273,7 @@ xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -276,8 +288,8 @@ xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
  ** @param uint8_t           detail
  ** @param uint32_t          time
  ** @param xcb_window_t      root
- ** @param uint16_t          rootX
- ** @param uint16_t          rootY
+ ** @param int16_t           rootX
+ ** @param int16_t           rootY
  ** @param uint8_t           deviceid
  ** @returns xcb_void_cookie_t
  **
@@ -289,8 +301,8 @@ xcb_test_fake_input (xcb_connection_t *c  /**< */,
                      uint8_t           detail  /**< */,
                      uint32_t          time  /**< */,
                      xcb_window_t      root  /**< */,
-                     uint16_t          rootX  /**< */,
-                     uint16_t          rootY  /**< */,
+                     int16_t           rootX  /**< */,
+                     int16_t           rootY  /**< */,
                      uint8_t           deviceid  /**< */)
 {
     static const xcb_protocol_request_t xcb_req = {
@@ -319,6 +331,7 @@ xcb_test_fake_input (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -356,6 +369,7 @@ xcb_test_grab_control_checked (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }
@@ -393,6 +407,7 @@ xcb_test_grab_control (xcb_connection_t *c  /**< */,
     xcb_parts[2].iov_len = sizeof(xcb_out);
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
 }

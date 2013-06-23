@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.35.12.1 2013/02/25 00:28:04 tls Exp $	*/
+/*	$NetBSD: interact.c,v 1.35.12.2 2013/06/23 06:28:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.35.12.1 2013/02/25 00:28:04 tls Exp $");
+__RCSID("$NetBSD: interact.c,v 1.35.12.2 2013/06/23 06:28:50 tls Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: interact.c,v 1.35.12.1 2013/02/25 00:28:04 tls Exp $");
 #include <sys/ioctl.h>
 
 #if HAVE_NBTOOL_CONFIG_H
-#define	getmaxpartitions()	MAXPARTITIONS
+#define	getmaxpartitions()	maxpartitions
 #include <nbinclude/sys/disklabel.h>
 #else
 #include <util.h>

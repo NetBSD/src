@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.37 2012/07/08 22:49:55 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.37.2.1 2013/06/23 06:29:06 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,11 +61,11 @@
 .\"
 .\"	@(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 9, 2012
-.Dt VNCONFIG 8
+.Dd June 9, 2013
+.Dt VNDCONFIG 8
 .Os
 .Sh NAME
-.Nm vnconfig
+.Nm vndconfig
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm
@@ -182,23 +182,23 @@ is assumed.
 .It Pa /etc/disktab
 .El
 .Sh EXAMPLES
-.Dl vnconfig vnd0 /tmp/diskimage
+.Dl vndconfig vnd0 /tmp/diskimage
 or
-.Dl vnconfig /dev/rvnd0c /tmp/diskimage
+.Dl vndconfig /dev/rvnd0c /tmp/diskimage
 .Pp
 Configures the vnode disk
 .Pa vnd0 .
 Please note that use of the second form of the command is discouraged because
 it requires knowledge of the raw partition which varies between architectures.
 .Pp
-.Dl vnconfig vnd0 /tmp/floppy.img 512/18/2/80
+.Dl vndconfig vnd0 /tmp/floppy.img 512/18/2/80
 .Pp
 Configures the vnode disk
 .Pa vnd0
 emulating the geometry of 512 bytes per sector, 18 sectors per track,
 2 tracks per cylinder, and 80 cylinders total.
 .Pp
-.Dl vnconfig -t floppy vnd0 /tmp/floppy.img
+.Dl vndconfig -t floppy vnd0 /tmp/floppy.img
 .Pp
 Configures the vnode disk
 .Pa vnd0
@@ -207,7 +207,7 @@ using the geometry specified in the
 entry in
 .Pa /etc/disktab .
 .Pp
-.Dl vnconfig -u vnd0
+.Dl vndconfig -u vnd0
 .Pp
 Unconfigures the
 .Pa vnd0

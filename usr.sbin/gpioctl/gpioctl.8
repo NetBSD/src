@@ -1,6 +1,6 @@
-.\" $NetBSD: gpioctl.8,v 1.16 2011/11/13 14:39:42 mbalmer Exp $
+.\" $NetBSD: gpioctl.8,v 1.16.6.1 2013/06/23 06:29:04 tls Exp $
 .\"
-.\" Copyright (c) 2009, 2010, 2011 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2009, 2010, 2011, 2013 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +15,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd November 13, 2011
+.Dd May 19, 2013
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
 .Nm gpioctl
 .Nd control GPIO devices
 .Sh SYNOPSIS
+.Nm gpioctl
+.Op Fl qs
+.Ar device
 .Nm gpioctl
 .Op Fl q
 .Ar device
@@ -31,12 +34,12 @@
 .Ar mask
 .Op Ar flag
 .Nm gpioctl
-.Op Fl q
+.Op Fl qs
 .Ar device
 .Ar pin
 .Op Ar 0 | 1 | 2
 .Nm gpioctl
-.Op Fl q
+.Op Fl qs
 .Ar device
 .Ar pin
 .Op Ar on | off | toggle
@@ -98,8 +101,6 @@ or
 .Ar toggle
 can be used.
 .Pp
-To
-.Pp
 Only pins that have been configured at securelevel 0, typically during system
 startup, are accessible once the securelevel has been raised.
 Pins can be given symbolic names for easier use.
@@ -158,6 +159,12 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
+.It Fl s
+Only output a single number on stdout, representing either the state of the
+pin or the number of available pins if no pin number was passed as argument.
+This option is useful e.g. when
+.Nm
+is used in shell scripts to query the state of a pin.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact

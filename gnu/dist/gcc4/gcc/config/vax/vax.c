@@ -1075,7 +1075,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 		{
 		  operands[1] = GEN_INT (lval);
 		  operands[2] = GEN_INT (n);
-		  return "ashq %2,%1,%0";
+		  return "ashq %2,%D1,%0";
 		}
 #if HOST_BITS_PER_WIDE_INT == 32
 	    }
@@ -1087,7 +1087,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	    {
 	      operands[1] = GEN_INT (hval >> n);
 	      operands[2] = GEN_INT (n + 32);
-	      return "ashq %2,%1,%0";
+	      return "ashq %2,%D1,%0";
 #endif
 	    }
 	}

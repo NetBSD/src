@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.54.2.1 2013/02/25 00:30:41 tls Exp $ */
+/* $NetBSD: decl.c,v 1.54.2.2 2013/06/23 06:29:02 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.54.2.1 2013/02/25 00:30:41 tls Exp $");
+__RCSID("$NetBSD: decl.c,v 1.54.2.2 2013/06/23 06:29:02 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -425,7 +425,7 @@ tdeferr(type_t *td, tspec_t t)
 			return (td);
 		}
 		break;
-		/* LINTED (enumeration values not handled in switch) */
+		/* LINTED206: (enumeration values not handled in switch) */
 	case NOTSPEC:
 	case USHORT:
 	case UCHAR:
@@ -2876,21 +2876,22 @@ void
 chkusage(dinfo_t *di)
 {
 	sym_t	*sym;
-	int	mknowarn;
+	int	mklwarn;
 
-	/* for this warnings LINTED has no effect */
-	mknowarn = nowarn;
-	nowarn = 0;
+	/* for this warning LINTED has no effect */
+	mklwarn = lwarn;
+	lwarn = LWARN_ALL;
 
 #ifdef DEBUG
-	printf("%s, %d: >temp nowarn = 0\n", curr_pos.p_file, curr_pos.p_line);
+	printf("%s, %d: >temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
+	    lwarn);
 #endif
 	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
 		chkusg1(di->d_asm, sym);
-	nowarn = mknowarn;
+	lwarn = mklwarn;
 #ifdef DEBUG
-	printf("%s, %d: <temp nowarn = %d\n", curr_pos.p_file, curr_pos.p_line,
-	    nowarn);
+	printf("%s, %d: <temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
+	    lwarn);
 #endif
 }
 

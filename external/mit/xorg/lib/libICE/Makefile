@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/04/04 10:59:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2013/06/23 06:28:43 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -16,11 +16,15 @@ INCSDIR=${X11INCDIR}/X11/ICE
 CONN_DEFINES=	${X11FLAGS.CONNECTION} -DICE_t=1 -DTRANS_CLIENT -DTRANS_SERVER
 SOCK_DEFINES=	-DBSD44SOCKETS
 
+CPPFLAGS+=	-DHAVE_ASPRINTF
+
 CPPFLAGS+=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
 
 PKGDIST=	${LIB}
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
+
+COPTS.icetrans.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

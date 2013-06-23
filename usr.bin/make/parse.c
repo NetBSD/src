@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $	*/
+/*	$NetBSD: parse.c,v 1.185.2.1 2013/06/23 06:29:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.185.2.1 2013/06/23 06:29:00 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.185.2.1 2013/06/23 06:29:00 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -154,7 +154,7 @@ __RCSID("$NetBSD: parse.c,v 1.185 2012/06/12 19:21:51 joerg Exp $");
  * Structure for a file being read ("included file")
  */
 typedef struct IFile {
-    const char      *fname;         /* name of file */
+    char      	    *fname;         /* name of file */
     int             lineno;         /* current line number in file */
     int             first_lineno;   /* line number of start of text */
     int             cond_depth;     /* 'if' nesting when file opened */
@@ -210,6 +210,7 @@ typedef enum {
     ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
     SingleShell,    /* .SINGLESHELL */
+    Stale,	    /* .STALE */
     Suffixes,	    /* .SUFFIXES */
     Wait,	    /* .WAIT */
     Attribute	    /* Generic attribute */
@@ -333,6 +334,7 @@ static const struct {
 { ".SHELL", 	  ExShell,    	0 },
 { ".SILENT",	  Silent,   	OP_SILENT },
 { ".SINGLESHELL", SingleShell,	0 },
+{ ".STALE",	  Stale,	0 },
 { ".SUFFIXES",	  Suffixes, 	0 },
 { ".USE",   	  Attribute,   	OP_USE },
 { ".USEBEFORE",   Attribute,   	OP_USEBEFORE },
@@ -905,6 +907,8 @@ ParseDoOp(void *gnp, void *opp)
 	gn->type |= op & ~OP_OPMASK;
 
 	cohort = Targ_FindNode(gn->name, TARG_NOHASH);
+	if (doing_depend)
+	    ParseMark(cohort);
 	/*
 	 * Make the cohort invisible as well to avoid duplicating it into
 	 * other variables. True, parents of this target won't tend to do
@@ -977,6 +981,8 @@ ParseDoSrc(int tOp, const char *src)
 		 */
 		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
 		gn = Targ_FindNode(wait_src, TARG_NOHASH);
+		if (doing_depend)
+		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 		Lst_ForEach(targets, ParseLinkSrc, gn);
 		return;
@@ -1008,6 +1014,8 @@ ParseDoSrc(int tOp, const char *src)
 	 * source and the current one.
 	 */
 	gn = Targ_FindNode(src, TARG_CREATE);
+	if (doing_depend)
+	    ParseMark(gn);
 	if (predecessor != NULL) {
 	    (void)Lst_AtEnd(predecessor->order_succ, gn);
 	    (void)Lst_AtEnd(gn->order_pred, predecessor);
@@ -1039,6 +1047,8 @@ ParseDoSrc(int tOp, const char *src)
 
 	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_FindNode(src, TARG_CREATE);
+	if (doing_depend)
+	    ParseMark(gn);
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
@@ -1284,6 +1294,7 @@ ParseDoDependency(char *line)
 		 *	    	    	apply the .DEFAULT commands.
 		 *	.PHONY		The list of targets
 		 *	.NOPATH		Don't search for file in the path
+		 *	.STALE
 		 *	.BEGIN
 		 *	.END
 		 *	.ERROR
@@ -1294,42 +1305,45 @@ ParseDoDependency(char *line)
 		 *  	.ORDER	    	Must set initial predecessor to NULL
 		 */
 		switch (specType) {
-		    case ExPath:
-			if (paths == NULL) {
-			    paths = Lst_Init(FALSE);
-			}
-			(void)Lst_AtEnd(paths, dirSearchPath);
-			break;
-		    case Main:
-			if (!Lst_IsEmpty(create)) {
-			    specType = Not;
-			}
-			break;
-		    case Begin:
-		    case End:
-		    case dotError:
-		    case Interrupt:
-			gn = Targ_FindNode(line, TARG_CREATE);
-			gn->type |= OP_NOTMAIN|OP_SPECIAL;
-			(void)Lst_AtEnd(targets, gn);
-			break;
-		    case Default:
-			gn = Targ_NewGN(".DEFAULT");
-			gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-			(void)Lst_AtEnd(targets, gn);
-			DEFAULT = gn;
-			break;
-		    case NotParallel:
-			maxJobs = 1;
-			break;
-		    case SingleShell:
-			compatMake = TRUE;
-			break;
-		    case Order:
-			predecessor = NULL;
-			break;
-		    default:
-			break;
+		case ExPath:
+		    if (paths == NULL) {
+			paths = Lst_Init(FALSE);
+		    }
+		    (void)Lst_AtEnd(paths, dirSearchPath);
+		    break;
+		case Main:
+		    if (!Lst_IsEmpty(create)) {
+			specType = Not;
+		    }
+		    break;
+		case Begin:
+		case End:
+		case Stale:
+		case dotError:
+		case Interrupt:
+		    gn = Targ_FindNode(line, TARG_CREATE);
+		    if (doing_depend)
+			ParseMark(gn);
+		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
+		    (void)Lst_AtEnd(targets, gn);
+		    break;
+		case Default:
+		    gn = Targ_NewGN(".DEFAULT");
+		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
+		    (void)Lst_AtEnd(targets, gn);
+		    DEFAULT = gn;
+		    break;
+		case NotParallel:
+		    maxJobs = 1;
+		    break;
+		case SingleShell:
+		    compatMake = TRUE;
+		    break;
+		case Order:
+		    predecessor = NULL;
+		    break;
+		default:
+		    break;
 		}
 	    } else if (strncmp(line, ".PATH", 5) == 0) {
 		/*
@@ -1388,6 +1402,8 @@ ParseDoDependency(char *line)
 		} else {
 		    gn = Suff_AddTransform(targName);
 		}
+		if (doing_depend)
+		    ParseMark(gn);
 
 		(void)Lst_AtEnd(targets, gn);
 	    }
@@ -1435,6 +1451,7 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
 		break;
 	    case Default:
+	    case Stale:
 	    case Begin:
 	    case End:
 	    case dotError:
@@ -2317,7 +2334,7 @@ Parse_SetInput(const char *name, int line, int fd,
      * name of the include file so error messages refer to the right
      * place.
      */
-    curFile->fname = name;
+    curFile->fname = bmake_strdup(name);
     curFile->lineno = line;
     curFile->first_lineno = line;
     curFile->nextbuf = nextbuf;
@@ -2330,6 +2347,8 @@ Parse_SetInput(const char *name, int line, int fd,
     buf = curFile->nextbuf(curFile->nextbuf_arg, &len);
     if (buf == NULL) {
         /* Was all a waste of time ... */
+	if (curFile->fname)
+	    free(curFile->fname);
 	free(curFile);
 	return;
     }
@@ -2444,6 +2463,7 @@ ParseGmakeExport(char *line)
 		     "Variable/Value missing from \"export\"");
 	return;
     }
+    *value++ = '\0';			/* terminate variable */
 
     /*
      * Expand the value before putting it in the environment.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sup.h,v 1.11 2007/12/20 20:14:24 christos Exp $	*/
+/*	$NetBSD: sup.h,v 1.11.32.1 2013/06/23 06:29:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -169,7 +169,7 @@ extern char scmversion[];		/* string version of scm */
 #endif
 
 /* String length */
-#define STRINGLENGTH	2000
+#define STRINGLENGTH	8192
 
 /* Password transmission encryption key */
 #define PSWDCRYPT	"SuperMan"

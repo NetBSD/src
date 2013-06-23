@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.203.2.1 2013/02/25 00:30:37 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.203.2.2 2013/06/23 06:29:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.203.2.1 2013/02/25 00:30:37 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.203.2.2 2013/06/23 06:29:00 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.203.2.1 2013/02/25 00:30:37 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.203.2.2 2013/06/23 06:29:00 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -739,7 +739,7 @@ MakeMode(const char *mode)
 	}
 #if USE_META
 	if (strstr(mode, "meta"))
-	    meta_init(mode);
+	    meta_mode_init(mode);
 #endif
     }
     if (mp)
@@ -799,7 +799,7 @@ main(int argc, char **argv)
 		progname++;
 	else
 		progname = argv[0];
-#ifdef RLIMIT_NOFILE
+#if defined(MAKE_NATIVE) || (defined(HAVE_SETRLIMIT) && defined(RLIMIT_NOFILE))
 	/*
 	 * get rid of resource limit on file descriptors
 	 */
@@ -937,13 +937,11 @@ main(int argc, char **argv)
 	 * Set some other useful macros
 	 */
 	{
-	    char tmp[64];
-	    const char *ep;
+	    char tmp[64], *ep;
 
-	    if (!(ep = getenv(MAKE_LEVEL))) {
-		ep = "0";
-	    }
-	    Var_Set(MAKE_LEVEL, ep, VAR_GLOBAL, 0);
+	    snprintf(tmp, sizeof(tmp), "%d",
+		(ep = getenv(MAKE_LEVEL_ENV)) ? atoi(ep) + 1 : 0);
+	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", myPid);
 	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", getppid());
@@ -951,6 +949,9 @@ main(int argc, char **argv)
 	}
 	Job_SetPrefix();
 
+#ifdef USE_META
+	meta_init();
+#endif
 	/*
 	 * First snag any flags out of the MAKE environment variable.
 	 * (Note this is *not* MAKEFLAGS since /bin/make uses that and it's
@@ -1660,7 +1661,7 @@ Finish(int errors)
 }
 
 /*
- * enunlink --
+ * eunlink --
  *	Remove a file carefully, avoiding directories.
  */
 int

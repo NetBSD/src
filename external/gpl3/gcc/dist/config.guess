@@ -158,6 +158,8 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	UNAME_MACHINE_ARCH=`(/sbin/$sysctl 2>/dev/null || \
 	    /usr/sbin/$sysctl 2>/dev/null || echo unknown)`
 	case "${UNAME_MACHINE_ARCH}" in
+	    earm*eb*) machine=armeb-unknown ;;
+	    earm*) machine=arm-unknown ;;
 	    armeb) machine=armeb-unknown ;;
 	    arm*) machine=arm-unknown ;;
 	    sh3el) machine=shl-unknown ;;
@@ -166,8 +168,18 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	    *) machine=${UNAME_MACHINE_ARCH}-unknown ;;
 	esac
 	# The Operating System including object format, if it has switched
-	# to ELF recently, or will in the future.
+	# to ELF recently, or will in the future and ABI.
 	case "${UNAME_MACHINE_ARCH}" in
+	    earm*)
+		eval $set_cc_for_build
+		if echo __ARM_PCS_VFP | $CC_FOR_BUILD -E - 2>/dev/null \
+			| grep -q __ARM_PCS_VFP
+		then
+		    os=netbsdelf-eabi
+		else
+		    os=netbsdelf-eabihf
+		fi
+		;;
 	    arm*|i386|m68k|ns32k|sh3*|sparc|vax)
 		eval $set_cc_for_build
 		if echo __ELF__ | $CC_FOR_BUILD -E - 2>/dev/null \

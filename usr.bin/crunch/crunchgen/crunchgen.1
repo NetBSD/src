@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.29 2012/04/08 22:00:38 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.29.2.1 2013/06/23 06:29:00 tls Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd October 18, 2006
+.Dd June 10, 2013
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -272,6 +272,28 @@ If they are not valid for a particular program, that
 program is skipped in the
 .Ar objs
 target.
+.Pp
+The makefile produced by
+.Nm
+strips certain sections from the final binary to reduce its size.
+This includes:
+.Bl -tag -width ".Li .eh_frame_hdr"
+.It Li .eh_frame
+Unwinding tables for exceptions and backtraces.
+.It Li .eh_frame_hdr
+Index of the
+.Li .eh_frame
+section.
+.It Li .note
+Optional data for the kernel and/or runtime linker.
+.It Li .comment
+Comments in the binary.
+.It Li .ident
+Embedded source revisions used by
+.Xr ident 1 .
+.It Li .copyright
+Embedded copyright notes.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width MAKEOBJDIRPREFIX
 .It Ev MAKEOBJDIRPREFIX

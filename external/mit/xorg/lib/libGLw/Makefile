@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.2.28.1 2013/06/23 06:28:43 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,16 @@ LIB=	GLw
 SRCS=	GLwDrawA.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+
+# Motif stubs for glwMDrawingAreaClass are enabled by setting MKX11MOTIF
+# in /etc/mk.conf.  If Motif is not installed in the default location
+# (/usr/pkg), set X11MOTIFPATH as well.
+
+.if "${MKX11MOTIF}" == "yes"
+X11MOTIFPATH?=	/usr/pkg
+SRCS+=		GLwMDrawA.c
+CPPFLAGS+=	-I${X11MOTIFPATH}/include
+.endif
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic \

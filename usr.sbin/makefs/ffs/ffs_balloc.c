@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13.54.1 2013/02/25 00:30:45 tls Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.54.2 2013/06/23 06:29:05 tls Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.13.54.1 2013/02/25 00:30:45 tls Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.13.54.2 2013/06/23 06:29:05 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = lblkno(fs, offset);
-	size = blkoff(fs, offset) + bufsize;
+	size = ffs_blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
@@ -115,7 +115,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	lastlbn = lblkno(fs, ip->i_ffs1_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = blksize(fs, ip, nb);
+		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			warnx("need to ffs_realloccg; not supported!");
 			abort();
@@ -153,7 +153,7 @@ ffs_balloc_ufs1(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, blkoff(fs, ip->i_ffs1_size));
+			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_ffs1_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 
@@ -348,7 +348,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = lblkno(fs, offset);
-	size = blkoff(fs, offset) + bufsize;
+	size = ffs_blkoff(fs, offset) + bufsize;
 	if (bpp != NULL) {
 		*bpp = NULL;
 	}
@@ -366,7 +366,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	lastlbn = lblkno(fs, ip->i_ffs2_size);
 	if (lastlbn < UFS_NDADDR && lastlbn < lbn) {
 		nb = lastlbn;
-		osize = blksize(fs, ip, nb);
+		osize = ffs_blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			warnx("need to ffs_realloccg; not supported!");
 			abort();
@@ -404,7 +404,7 @@ ffs_balloc_ufs2(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			 * Consider need to reallocate a fragment.
 			 */
 
-			osize = fragroundup(fs, blkoff(fs, ip->i_ffs2_size));
+			osize = fragroundup(fs, ffs_blkoff(fs, ip->i_ffs2_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 

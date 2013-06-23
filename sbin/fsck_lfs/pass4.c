@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.17.12.1 2013/02/25 00:28:07 tls Exp $	 */
+/* $NetBSD: pass4.c,v 1.17.12.2 2013/06/23 06:28:51 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,12 +32,12 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <ufs/ufs/inode.h>
 
 #define vnode uvnode
 #define buf ubuf
 #define panic call_panic
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 
 #include <err.h>
 #include <stdlib.h>
@@ -81,14 +81,14 @@ pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
-	struct ufs1_dinode *dp;
+	struct ulfs1_dinode *dp;
 	struct inodesc idesc;
 	int n;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
-	for (inumber = UFS_ROOTINO; inumber <= lastino; inumber++) {
+	for (inumber = ULFS_ROOTINO; inumber <= lastino; inumber++) {
 		idesc.id_number = inumber;
 		switch (statemap[inumber]) {
 
@@ -153,7 +153,7 @@ pass4check(struct inodesc * idesc)
 	struct ubuf *bp;
 	int sn;
 
-	sn = dtosn(fs, blkno);
+	sn = lfs_dtosn(fs, blkno);
 	for (ndblks = idesc->id_numfrags; ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
@@ -170,9 +170,9 @@ pass4check(struct inodesc * idesc)
 			if (dlp == 0) {
 				clrbmap(blkno);
 				LFS_SEGENTRY(sup, fs, sn, bp);
-				sup->su_nbytes -= fsbtob(fs, 1);
+				sup->su_nbytes -= lfs_fsbtob(fs, 1);
 				VOP_BWRITE(bp);
-				seg_table[sn].su_nbytes -= fsbtob(fs, 1);
+				seg_table[sn].su_nbytes -= lfs_fsbtob(fs, 1);
 				++fs->lfs_bfree;
 				n_blks--;
 			}

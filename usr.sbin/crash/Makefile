@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2012/11/20 03:03:00 tls Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2013/06/23 06:29:03 tls Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -53,6 +53,9 @@ MACHINE_FAMILY = x86
 . elif  ${MACHINE_ARCH} == "m68k" \
      || ${MACHINE_ARCH} == "arm"
 MACHINE_FAMILY = ${MACHINE_ARCH}
+. elif    ${MACHINE} == "sparc64" \
+     || ${MACHINE} == "sparc64"
+MACHINE_FAMILY = sparc
 . else
 MACHINE_FAMILY = ${MACHINE}
 . endif

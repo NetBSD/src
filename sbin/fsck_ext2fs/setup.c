@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.28.8.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: setup.c,v 1.28.8.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.28.8.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: setup.c,v 1.28.8.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ setup(const char *dev)
 	sizepb = sblock.e2fs_bsize;
 	maxfilesize = sblock.e2fs_bsize * EXT2FS_NDADDR - 1;
 	for (i = 0; i < EXT2FS_NIADDR; i++) {
-		sizepb *= NINDIR(&sblock);
+		sizepb *= EXT2_NINDIR(&sblock);
 		maxfilesize += sizepb;
 	}
 	/*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/12/14 23:39:11 haad Exp $
+#	$NetBSD: Makefile,v 1.6.12.1 2013/06/23 06:28:31 tls Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -17,6 +17,9 @@ CPPFLAGS+=	-std=c99
 
 # Local stuff
 SRCS=		kernel.c kernel2.c
+.if ${MACHINE_ARCH} == "arm"
+SRCS+=		atomic.c
+.endif
 
 # Sun stuff
 SRCS+=		${ZFS_COMMON_OBJS:C/.o$/.c/}

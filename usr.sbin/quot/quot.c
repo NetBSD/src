@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.29.10.1 2013/02/25 00:30:48 tls Exp $	*/
+/*	$NetBSD: quot.c,v 1.29.10.2 2013/06/23 06:29:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.29.10.1 2013/02/25 00:30:48 tls Exp $");
+__RCSID("$NetBSD: quot.c,v 1.29.10.2 2013/06/23 06:29:05 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,11 +162,11 @@ virtualblocks(struct fs *super, union dinode *dp)
 	if (lblkno(super, sz) >= UFS_NDADDR) {
 		nblk = blkroundup(super, sz);
 		sz = lblkno(super, nblk);
-		sz = howmany(sz - UFS_NDADDR, NINDIR(super));
+		sz = howmany(sz - UFS_NDADDR, FFS_NINDIR(super));
 		while (sz > 0) {
 			nblk += sz * super->fs_bsize;
 			/* One block on this level is in the inode itself */
-			sz = howmany(sz - 1, NINDIR(super));
+			sz = howmany(sz - 1, FFS_NINDIR(super));
 		}
 	} else
 		nblk = fragroundup(super, sz);
@@ -522,7 +522,7 @@ ffs_oldfscompat(struct fs *fs)
 
 		fs->fs_maxfilesize = fs->fs_bsize * UFS_NDADDR - 1;
 		for (i = 0; i < UFS_NIADDR; i++) {
-			sizepb *= NINDIR(fs);
+			sizepb *= FFS_NINDIR(fs);
 			fs->fs_maxfilesize += sizepb;
 		}
 		fs->fs_qbmask = ~fs->fs_bmask;

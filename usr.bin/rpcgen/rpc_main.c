@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.34 2011/08/31 16:24:58 plunky Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.34.8.1 2013/06/23 06:29:01 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.34 2011/08/31 16:24:58 plunky Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.34.8.1 2013/06/23 06:29:01 tls Exp $");
 #endif
 #endif
 
@@ -164,8 +164,11 @@ main(argc, argv)
 	struct commandline cmd;
 
 	setprogname(argv[0]);
-	if (!(CPP = getenv("RPCGEN_CPP")))
+	if ((CPP = getenv("RPCGEN_CPP")) == NULL) {
 		CPP = "/usr/bin/cpp";
+		if (access(CPP, X_OK))
+			CPP = "/usr/bin/clang-cpp";
+	}
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
 	clear_args();

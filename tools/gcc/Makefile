@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51.2.1 2012/11/20 03:02:56 tls Exp $
+#	$NetBSD: Makefile,v 1.51.2.2 2013/06/23 06:28:58 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -129,10 +129,20 @@ native-gcc: .native/.configure_done
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 .if ${HAVE_GCC} >= 45
+MPC=		${NEWCONFIGDIR}/external/lgpl2/mpc
+MPFR=		${NEWCONFIGDIR}/external/lgpl3/mpfr
+GMP=		${NEWCONFIGDIR}/external/lgpl3/gmp
+MPCOBJ!=	cd ${MPC}/lib/libmpc && ${PRINTOBJDIR}
+MPFROBJ!=	cd ${MPFR}/lib/libmpfr && ${PRINTOBJDIR}
+GMPOBJ!=	cd ${GMP}/lib/libgmp && ${PRINTOBJDIR}
+
 NATIVE_CONFIGURE_ARGS+=	\
-			--with-mpc=${DESTDIR}/usr \
-			--with-mpfr=${DESTDIR}/usr \
-			--with-gmp=${DESTDIR}/usr
+			--with-mpc-lib=${MPCOBJ} \
+			--with-mpfr-lib=${MPFROBJ} \
+			--with-gmp-lib=${GMPOBJ} \
+			--with-mpc-include=${MPC}/dist/src \
+			--with-mpfr-include=${MPFR}/dist \
+			--with-gmp-include=${GMP}/lib/libgmp/arch/${MACHINE_ARCH}
 
 .  if ${MACHINE_ARCH} != "vax"
 NATIVE_CONFIGURE_ARGS+= --enable-tls

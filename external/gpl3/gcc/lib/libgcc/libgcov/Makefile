@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.8.1 2013/02/25 00:26:55 tls Exp $
+#	$NetBSD: Makefile,v 1.2.8.2 2013/06/23 06:28:34 tls Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -11,12 +11,7 @@ LIB=		gcov
 
 .if ${MKGCC} != "no"
 
-# XXX: Fix me
-.if ${MACHINE_ARCH} == "earmeb"
-.include "${.CURDIR}/arch/earm/defs.mk"
-.else
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
-.endif
 
 LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 

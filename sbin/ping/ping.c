@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.102.6.2 2013/02/25 00:28:10 tls Exp $	*/
+/*	$NetBSD: ping.c,v 1.102.6.3 2013/06/23 06:28:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.102.6.2 2013/02/25 00:28:10 tls Exp $");
+__RCSID("$NetBSD: ping.c,v 1.102.6.3 2013/06/23 06:28:52 tls Exp $");
 #endif
 
 #include <stdio.h>
@@ -953,8 +953,11 @@ pr_pack_sub(int cc,
 	if (dupflag)
 		(void)printf(" DUP!");
 	(void)printf(" ttl=%d", ttl);
-	if (pingflags & (F_TIMING|F_TIMING64))
-		(void)printf(" time=%.3f ms", triptime*1000.0);
+	if (pingflags & (F_TIMING|F_TIMING64)) {
+		const unsigned int prec = (pingflags & F_TIMING64) != 0 ? 6 : 3;
+
+		(void)printf(" time=%.*f ms", prec, triptime*1000.0);
+	}
 
 	/*
 	 * Send beep to stderr, since that's more likely than stdout
@@ -1340,13 +1343,16 @@ summary(int header)
 		double n = nreceived + nrepeats;
 		double avg = (tsum / n);
 		double variance = 0.0;
+		const unsigned int prec = (pingflags & F_TIMING64) != 0 ? 6 : 3;
 		if (n>1)
 			variance = (tsumsq - n*avg*avg) /(n-1);
 
 		printf("round-trip min/avg/max/stddev = "
-			"%.3f/%.3f/%.3f/%.3f ms\n",
-			tmin * 1000.0, avg * 1000.0,
-			tmax * 1000.0, sqrt(variance) * 1000.0);
+			"%.*f/%.*f/%.*f/%.*f ms\n",
+			prec, tmin * 1000.0,
+			prec, avg * 1000.0,
+			prec, tmax * 1000.0,
+			prec, sqrt(variance) * 1000.0);
 		if (pingflags & F_FLOOD) {
 			double r = diffsec(&last_rx, &first_rx);
 			double t = diffsec(&last_tx, &first_tx);

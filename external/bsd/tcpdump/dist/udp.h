@@ -1,4 +1,4 @@
-/* @(#) Header: /tcpdump/master/tcpdump/udp.h,v 1.13 2007-08-08 17:20:58 hannes Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/udp.h,v 1.13 2007-08-08 17:20:58 hannes Exp  (LBL) */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -86,4 +86,6 @@ struct udphdr {
 #define RIPNG_PORT 521		/*XXX*/
 #define DHCP6_SERV_PORT 546	/*XXX*/
 #define DHCP6_CLI_PORT 547	/*XXX*/
+#define BABEL_PORT 6696
+#define BABEL_PORT_OLD 6697
 #endif

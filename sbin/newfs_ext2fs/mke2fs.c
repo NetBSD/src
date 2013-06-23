@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.16.2.1 2013/02/25 00:28:09 tls Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.16.2.2 2013/06/23 06:28:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.16.2.1 2013/02/25 00:28:09 tls Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.16.2.2 2013/06/23 06:28:52 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		 * Reserved group descriptor blocks are preserved as
 		 * the second level double indirect reference blocks in
 		 * the EXT2_RESIZEINO inode, so the maximum number of
-		 * the blocks is NINDIR(fs).
+		 * the blocks is EXT2_NINDIR(fs).
 		 * (see also descriptions in init_resizeino() function)
 		 *
 		 * We check a number including current e2fs_ngdb here
@@ -455,8 +455,8 @@ mke2fs(const char *fsys, int fi, int fo)
 		 * possible future size shrink, though e2fsprogs don't
 		 * seem to care about it.
 		 */
-		if (target_ngdb > NINDIR(&sblock))
-			target_ngdb = NINDIR(&sblock);
+		if (target_ngdb > EXT2_NINDIR(&sblock))
+			target_ngdb = EXT2_NINDIR(&sblock);
 
 		reserved_ngdb = target_ngdb - sblock.e2fs_ngdb;
 
@@ -1120,8 +1120,8 @@ init_resizeino(const struct timeval *tv)
 
 	/* set e2di_size which occupies whole blocks through DINDIR blocks */
 	isize = (uint64_t)sblock.e2fs_bsize * EXT2FS_NDADDR +
-	    (uint64_t)sblock.e2fs_bsize * NINDIR(&sblock) +
-	    (uint64_t)sblock.e2fs_bsize * NINDIR(&sblock) * NINDIR(&sblock);
+	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) +
+	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) * EXT2_NINDIR(&sblock);
 	if (isize > UINT32_MAX &&
 	    (sblock.e2fs.e2fs_features_rocompat &
 	     EXT2F_ROCOMPAT_LARGEFILE) == 0) {
@@ -1181,12 +1181,12 @@ init_resizeino(const struct timeval *tv)
 		 * point reserved group descriptor block in the first
 		 * (i.e. master) block group
 		 * 
-		 * XXX: e2fsprogs seem to use "(i % NINDIR(&sblock))" here
-		 *      to store maximum NINDIR(&sblock) reserved gdbs.
+		 * XXX: e2fsprogs seem to use "(i % EXT2_NINDIR(&sblock))" here
+		 *      to store maximum EXT2_NINDIR(&sblock) reserved gdbs.
 		 *      I'm not sure what will be done on future filesystem
 		 *      shrink in that case on their way.
 		 */
-		if (i >= NINDIR(&sblock))
+		if (i >= EXT2_NINDIR(&sblock))
 			errx(EXIT_FAILURE, "%s: too many reserved "
 			    "group descriptors (%u) for resize inode",
 			    __func__, sblock.e2fs.e2fs_reserved_ngdb);
@@ -1205,7 +1205,7 @@ init_resizeino(const struct timeval *tv)
 			    cg_has_sb(cylno) == 0)
 				continue;
 
-			if (n >= NINDIR(&sblock))
+			if (n >= EXT2_NINDIR(&sblock))
 				errx(EXIT_FAILURE, "%s: too many block groups "
 				    "for the resize feature", __func__);
 			/*
@@ -1216,7 +1216,7 @@ init_resizeino(const struct timeval *tv)
 			    NBLOCK_SUPERBLOCK + i);
 			nblock += fsbtodb(&sblock, 1);
 		}
-		for (; n < NINDIR(&sblock); n++)
+		for (; n < EXT2_NINDIR(&sblock); n++)
 			reserved_gdb[n] = 0;
 
 		/* write group descriptor block as the second dindirect refs */
@@ -1224,7 +1224,7 @@ init_resizeino(const struct timeval *tv)
 		    sblock.e2fs_bsize, reserved_gdb);
 		nblock += fsbtodb(&sblock, 1);
 	}
-	for (; i < NINDIR(&sblock); i++) {
+	for (; i < EXT2_NINDIR(&sblock); i++) {
 		/* leave trailing entries unallocated */
 		dindir_block[i] = 0;
 	}

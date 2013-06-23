@@ -1,41 +1,17 @@
-#	$NetBSD: Makefile.common,v 1.25 2012/05/14 08:42:04 abs Exp $
+#	$NetBSD: Makefile.common,v 1.25.2.1 2013/06/23 06:28:48 tls Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
 # below for descriptions of each variable.
 
+.include <bsd.own.mk>
+
 
 # XFree86 servers all need XFONT as well.
-.if \
-    ${MACHINE} == "alpha"	|| \
-    ${MACHINE} == "amd64"	|| \
-    ${MACHINE} == "bebox"	|| \
-    ${MACHINE} == "cats"	|| \
-    ${MACHINE} == "dreamcast"	|| \
-    ${MACHINE} == "ews4800mips"	|| \
-    ${MACHINE} == "evbarm"	|| \
-    ${MACHINE} == "evbmips"	|| \
-    ${MACHINE} == "hp300"	|| \
-    ${MACHINE} == "hpcarm"	|| \
-    ${MACHINE} == "hpcmips"	|| \
-    ${MACHINE} == "hpcsh"	|| \
-    ${MACHINE} == "i386"	|| \
-    ${MACHINE} == "luna68k"	|| \
-    ${MACHINE} == "macppc"	|| \
-    ${MACHINE} == "netwinder"	|| \
-    ${MACHINE} == "newsmips"	|| \
-    ${MACHINE} == "prep"	|| \
-    ${MACHINE} == "ofppc"	|| \
-    ${MACHINE} == "sgimips"	|| \
-    ${MACHINE} == "shark"	|| \
-    ${MACHINE} == "sparc"	|| \
-    ${MACHINE} == "sparc64"	|| \
-    ${MACHINE} == "vax"		|| \
-    ${MACHINE} == "zaurus"
+.if ${MKXORG_SERVER} != "no"
 XSERVER_NEEDS_XFONT=	yes
 XSERVER_XFREE86=	yes
 .endif
-
 
 .if ${MACHINE} == "acorn32"
 XSERVER_XARM32VIDC=	yes
@@ -48,26 +24,19 @@ XSERVER_XDECNETBSD=	yes
 
 .if ${MACHINE} == "amiga"
 XSERVER_XAMIGA=		yes
-XSERVER_HAS_AFB=	yes
 .endif
 
 .if ${MACHINE} == "atari"
-XSERVER_HAS_IPLAN?=	yes
 #XSERVER_XFREE68=	yes
 .endif
 
 .if ${MACHINE} == "mac68k"
 XSERVER_XMAC68K=	yes
-XSERVER_HAS_CFB=	yes
 .endif
 
 .if ${MACHINE} == "macppc"
 XSERVER_XMACPPC=	yes
 .endif
-
-#.if ${MACHINE} == "newsmips"
-#XSERVER_XNEWSMIPS?=	yes
-#.endif
 
 .if ${MACHINE} == "pmax"
 XSERVER_XDECNETBSD=	yes
@@ -92,16 +61,6 @@ XSERVER_X68K=		yes
 
 # Does this server need Xfont/fontbase libraries?
 XSERVER_NEEDS_XFONT?=	no
-# Does this server need miext modules?
-XSERVER_NEEDS_MIEXT?=	yes
-# Does this server use cfb* libraries?
-XSERVER_HAS_CFB?=	yes
-# Does this server use fb library?
-XSERVER_HAS_FB?=	yes
-# Does this server use afb library?
-XSERVER_HAS_AFB?=	no
-# Does this server use iplan2p? libraries?
-XSERVER_HAS_IPLAN?=	no
 
 # Does this platform build XFree86 X server?
 XSERVER_XFREE86?=	no

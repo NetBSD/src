@@ -74,7 +74,7 @@ task_alloc(taskq_t *tq, int tqflags)
 			 * the caller.  So, we just delay for one second
 			 * to throttle the allocation rate.
 			 */
-			delay(hz);
+			xdelay(hz);
 		}
 
 		/* Clean up TQ_FRONT from tqflags before passing it to kmem */

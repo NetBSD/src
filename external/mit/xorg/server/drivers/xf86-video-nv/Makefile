@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/05/30 05:20:36 macallan Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2013/06/23 06:28:47 tls Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
@@ -14,5 +14,7 @@ MAN=		nv.4
 .if ${MACHINE} == "macppc"
 CPPFLAGS+= -DAVOID_VGAHW
 .endif
+
+CPPFLAGS+= -DHAVE_XAA_H
 
 .include "../Makefile.xf86-driver"

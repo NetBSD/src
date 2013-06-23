@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2010/07/28 22:35:52 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.3.12.1 2013/06/23 06:28:50 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=3		# XXX: too many sign-compare issues
@@ -15,7 +15,5 @@ FSCK_LFS= ${NETBSDSRCDIR}/sbin/fsck_lfs
 DPADD+=  ${LIBUTIL}
 LDADD+=  -lutil
 CPPFLAGS+=-I${FSCK_LFS} -I${NETBSDSRCDIR}/sbin/mount_lfs # -DUSE_CLIENT_SERVER 
-CPPFLAGS+="-Dmutex_enter(x)=" "-Dmutex_exit(x)="
-CPPFLAGS+="-DKASSERT(x)="
 #CPPFLAGS+=-DREPAIR_ZERO_FINFO
 #CPPFLAGS+=-DTEST_PATTERN

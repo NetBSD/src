@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.38.8.1 2013/02/25 00:28:07 tls Exp $ */
+/* $NetBSD: setup.c,v 1.38.8.2 2013/06/23 06:28:51 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,10 +71,9 @@
 #include <sys/disk.h>
 #include <sys/file.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
 #define vnode uvnode
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_inode.h>
 #undef vnode
 
 #include <ctype.h>
@@ -98,7 +97,7 @@
 extern u_int32_t cksum(void *, size_t);
 static uint64_t calcmaxfilesize(int);
 
-ufs_daddr_t *din_table;
+ulfs_daddr_t *din_table;
 SEGUSE *seg_table;
 
 #ifdef DKTYPENAMES
@@ -124,7 +123,7 @@ calcmaxfilesize(int bshift)
 	uint64_t maxblock;
 
 	nptr = (1 << bshift) / sizeof(uint32_t);
-	maxblock = UFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
+	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
 }
@@ -239,13 +238,13 @@ setup(const char *dev)
 		if (debug)
 			pwarn("adjusting offset, serial for -i 0x%lx\n",
 				(unsigned long)idaddr);
-		tdaddr = sntod(fs, dtosn(fs, idaddr));
-		if (sntod(fs, dtosn(fs, tdaddr)) == tdaddr) {
+		tdaddr = lfs_sntod(fs, lfs_dtosn(fs, idaddr));
+		if (lfs_sntod(fs, lfs_dtosn(fs, tdaddr)) == tdaddr) {
 			if (tdaddr == fs->lfs_start)
-				tdaddr += btofsb(fs, LFS_LABELPAD);
+				tdaddr += lfs_btofsb(fs, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
 				if (fs->lfs_sboffs[i] == tdaddr)
-					tdaddr += btofsb(fs, LFS_SBPAD);
+					tdaddr += lfs_btofsb(fs, LFS_SBPAD);
 				if (fs->lfs_sboffs[i] > tdaddr)
 					break;
 			}
@@ -255,7 +254,7 @@ setup(const char *dev)
 			pwarn("begin with offset/serial 0x%x/%d\n",
 				(int)fs->lfs_offset, (int)fs->lfs_serial);
 		while (tdaddr < idaddr) {
-			bread(fs->lfs_devvp, fsbtodb(fs, tdaddr),
+			bread(fs->lfs_devvp, LFS_FSBTODB(fs, tdaddr),
 			      fs->lfs_sumsize,
 			      NULL, 0, &bp);
 			sp = (SEGSUM *)bp->b_data;
@@ -269,7 +268,7 @@ setup(const char *dev)
 				break;
 			}
 			fp = (FINFO *)(sp + 1);
-			bc = howmany(sp->ss_ninos, INOPB(fs)) <<
+			bc = howmany(sp->ss_ninos, LFS_INOPB(fs)) <<
 				(fs->lfs_version > 1 ? fs->lfs_ffshift :
 						       fs->lfs_bshift);
 			for (i = 0; i < sp->ss_nfinfo; i++) {
@@ -278,7 +277,7 @@ setup(const char *dev)
 				fp = (FINFO *)(fp->fi_blocks + fp->fi_nblocks);
 			}
 
-			tdaddr += btofsb(fs, bc) + 1;
+			tdaddr += lfs_btofsb(fs, bc) + 1;
 			fs->lfs_offset = tdaddr;
 			fs->lfs_serial = sp->ss_serial + 1;
 			brelse(bp, 0);
@@ -288,8 +287,8 @@ setup(const char *dev)
 		 * Set curseg, nextseg appropriately -- inlined from
 		 * lfs_newseg()
 		 */
-		curseg = dtosn(fs, fs->lfs_offset);
-		fs->lfs_curseg = sntod(fs, curseg);
+		curseg = lfs_dtosn(fs, fs->lfs_offset);
+		fs->lfs_curseg = lfs_sntod(fs, curseg);
 		for (sn = curseg + fs->lfs_interleave;;) {  
 			sn = (sn + 1) % fs->lfs_nseg;
 			if (sn == curseg)
@@ -305,10 +304,10 @@ setup(const char *dev)
 		/* Skip superblock if necessary */
 		for (i = 0; i < LFS_MAXNUMSB; i++)
 			if (fs->lfs_offset == fs->lfs_sboffs[i])
-				fs->lfs_offset += btofsb(fs, LFS_SBPAD);
+				fs->lfs_offset += lfs_btofsb(fs, LFS_SBPAD);
 
 		++fs->lfs_nactive;
-		fs->lfs_nextseg = sntod(fs, sn);
+		fs->lfs_nextseg = lfs_sntod(fs, sn);
 		if (debug) {
 			pwarn("offset = 0x%" PRIx32 ", serial = %" PRId64 "\n",
 				fs->lfs_offset, fs->lfs_serial);
@@ -388,10 +387,10 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	if (fs->lfs_maxsymlinklen != UFS1_MAXSYMLINKLEN) {
+	if (fs->lfs_maxsymlinklen != ULFS1_MAXSYMLINKLEN) {
 		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 		    fs->lfs_maxsymlinklen);
-		fs->lfs_maxsymlinklen = UFS1_MAXSYMLINKLEN;
+		fs->lfs_maxsymlinklen = ULFS1_MAXSYMLINKLEN;
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
@@ -433,7 +432,7 @@ setup(const char *dev)
 
 	/* Initialize Ifile entry */
 	din_table[fs->lfs_ifile] = fs->lfs_idaddr;
-	seg_table[dtosn(fs, fs->lfs_idaddr)].su_nbytes += DINODE1_SIZE;
+	seg_table[lfs_dtosn(fs, fs->lfs_idaddr)].su_nbytes += LFS_DINODE1_SIZE;
 
 #ifndef VERBOSE_BLOCKMAP
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));

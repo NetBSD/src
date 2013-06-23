@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.17 2011/08/31 13:32:42 joerg Exp $ */
+/* $NetBSD: wsfontload.c,v 1.17.8.1 2013/06/23 06:29:06 tls Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <err.h>
-#include <malloc.h>
 
 #include <dev/wscons/wsconsio.h>
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2012/09/12 02:00:55 manu Exp $
+# $NetBSD: Makefile,v 1.8.2.1 2013/06/23 06:28:57 tls Exp $
 
 NOMAN=		# defined
 
@@ -12,11 +12,13 @@ LDADD.t_fpu+=	-lm
 
 SRCS.t_join=	t_join.c ${SRCS_CHECK_STACK}
 CPPFLAGS.t_join.c+=	${CPPFLAGS_CHECK_STACK}
+CPPFLAGS.t_condwait.c+=	-I${.CURDIR}/../libc/gen
 
 TESTS_SH+=	t_atexit
 TESTS_C+=	t_barrier
 TESTS_SH+=	t_cancel
 TESTS_C+=	t_cond
+TESTS_C+=	t_condwait
 TESTS_C+=	t_detach
 TESTS_C+=	t_equal
 TESTS_SH+=	t_exit
@@ -47,5 +49,7 @@ PROGS+=		h_resolv
 
 FILESDIR=	${TESTSDIR}
 FILES=		d_mach
+
+SUBDIR=		dlopen
 
 .include <bsd.test.mk>

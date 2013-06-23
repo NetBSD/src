@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.28.10.1 2013/02/25 00:30:27 tls Exp $
+#	$NetBSD: Makefile.host,v 1.28.10.2 2013/06/23 06:28:57 tls Exp $
 
 NOINFO=		# defined
 NOLINT=		# defined
@@ -61,7 +61,7 @@ ${HOST_INSTALLPROG}:: ${HOSTPROG}
 	mkdir -p ${HOST_BINDIR}
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
 .if !empty(.MAKE.OS:M*CYGWIN*)
-	${NETBSDSRCDIR}/tools/binstall/mkmanifest ${.TARGET}
+	${HOST_SH} ${NETBSDSRCDIR}/tools/binstall/mkmanifest ${.TARGET}
 .endif
 
 .if ${MKUPDATE} == "no"

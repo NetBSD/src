@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.50 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.50.12.1 2013/06/23 06:28:54 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2008
+.Dd June 17, 2013
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@
 .Nm m_prepend ,
 .Nm m_pulldown ,
 .Nm m_pullup ,
+.Nm m_copyup ,
 .Nm m_split ,
 .Nm m_adj ,
 .Nm m_apply ,
@@ -100,6 +101,8 @@
 .Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 .Ft struct mbuf *
 .Fn m_pullup "struct mbuf *n" "int len"
+.Ft struct mbuf *
+.Fn m_copyup "struct mbuf *m" "int len" "int dstoff"
 .Ft struct mbuf *
 .Fn m_split "struct mbuf *m0" "int len0" "int wait"
 .Ft void
@@ -484,6 +487,26 @@ extra bytes to the
 contiguous region to possibly avoid being called again.
 .Fa len
 must be smaller or equal than
+.Dv MHLEN .
+.It Fn m_copyup "struct mbuf *m" "int len" "int dstoff"
+Similar to
+.Fn m_pullup
+but copies
+.Fa len
+bytes of data into a new mbuf at
+.Fa dstoff
+bytes into the mbuf.
+The
+.Fa dstoff
+argument aligns the data and leaves room for a link layer header.
+Returns the new
+mbuf chain on success, and frees the mbuf chain and returns
+.Dv NULL
+on failure.
+Note that
+the function does not allocate mbuf clusters, so
+.Fa len + dstoff
+must be less than
 .Dv MHLEN .
 .It Fn m_split "struct mbuf *m0" "int len0" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,

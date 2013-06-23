@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_openbsd.h,v 1.5 2008/06/18 09:06:28 yamt Exp $	*/
+/*	$NetBSD: compat_openbsd.h,v 1.5.24.1 2013/06/23 06:29:05 tls Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -33,14 +33,6 @@
 #include <sys/cdefs.h>
 
 #include <stdarg.h>
-
-/*
- * sys/queue.h
- */
-
-#define	TAILQ_END(h)	NULL
-#define	LIST_END(h)	NULL
-
 
 /*
  * libc/stdlib/strtonum.c

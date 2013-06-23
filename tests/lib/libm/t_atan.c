@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.6 2012/03/11 06:36:05 jruoho Exp $ */
+/* $NetBSD: t_atan.c,v 1.6.2.1 2013/06/23 06:28:57 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,10 +30,21 @@
  */
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 #include <math.h>
-#include <stdlib.h>
-#include <string.h>
+
+static const struct {
+	double x;
+	double y;
+} values[] = {
+	{ -100, -1.560796660108231, },
+	{  -10, -1.471127674303735, },
+	{   -1, -M_PI / 4, },
+	{ -0.1, -0.09966865249116204, },
+	{  0.1,  0.09966865249116204, },
+	{    1,  M_PI / 4, },
+	{   10,  1.471127674303735, },
+	{  100,  1.560796660108231, },
+};
 
 /*
  * atan(3)
@@ -64,11 +75,7 @@ ATF_TC_BODY(atan_inf_neg, tc)
 {
 #ifndef __vax__
 	const double x = -1.0L / 0.0L;
-	const double eps = 1.0e-40;
-
-	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") != 0)
-		atf_tc_expect_fail("PR port-i386/46108");
+	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) + M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(-Inf) != -pi/2");
@@ -85,42 +92,29 @@ ATF_TC_BODY(atan_inf_pos, tc)
 {
 #ifndef __vax__
 	const double x = +1.0L / 0.0L;
-	const double eps = 1.0e-40;
-
-	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") != 0)
-		atf_tc_expect_fail("PR port-i386/46108");
+	const double eps = 1.0e-15;
 
 	if (fabs(atan(x) - M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(+Inf) != pi/2");
 #endif
 }
 
-ATF_TC(atan_tan);
-ATF_TC_HEAD(atan_tan, tc)
+ATF_TC(atan_inrange);
+ATF_TC_HEAD(atan_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test atan(tan(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test atan(x) for some values");
 }
 
-ATF_TC_BODY(atan_tan, tc)
+ATF_TC_BODY(atan_inrange, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.0, 1.0, M_PI / 2, M_PI / 3, M_PI / 6 };
-	const double eps = 1.0e-40;
-	double y;
+	const double eps = 1.0e-15;
 	size_t i;
 
-	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") != 0)
-		atf_tc_expect_fail("PR port-i386/46108");
-
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = atan(tan(x[i]));
-
-		if (fabs(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("atan(tan(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+	for (i = 0; i < __arraycount(values); i++) {
+		if (fabs(atan(values[i].x) - values[i].y) > eps)
+			atf_tc_fail_nonfatal("atan(%g) != %g",
+				values[i].x, values[i].y);
 	}
 #endif
 }
@@ -212,27 +206,25 @@ ATF_TC_BODY(atanf_inf_pos, tc)
 #endif
 }
 
-ATF_TC(atanf_tanf);
-ATF_TC_HEAD(atanf_tanf, tc)
+ATF_TC(atanf_inrange);
+ATF_TC_HEAD(atanf_inrange, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test atanf(tanf(x)) == x");
+	atf_tc_set_md_var(tc, "descr", "Test atanf(x) for some values");
 }
 
-ATF_TC_BODY(atanf_tanf, tc)
+ATF_TC_BODY(atanf_inrange, tc)
 {
 #ifndef __vax__
-	const float x[] = { 0.0, 1.0, M_PI / 3, M_PI / 6 };
 	const float eps = 1.0e-7;
+	float x;
 	float y;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
-
-		y = atanf(tanf(x[i]));
-
-		if (fabsf(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("atanf(tanf(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+	for (i = 0; i < __arraycount(values); i++) {
+		x = values[i].x;
+		y = values[i].y;
+		if (fabs(atanf(x) - y) > eps)
+			atf_tc_fail_nonfatal("atan(%g) != %g", x, y);
 	}
 #endif
 }
@@ -277,14 +269,14 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, atan_nan);
 	ATF_TP_ADD_TC(tp, atan_inf_neg);
 	ATF_TP_ADD_TC(tp, atan_inf_pos);
-	ATF_TP_ADD_TC(tp, atan_tan);
+	ATF_TP_ADD_TC(tp, atan_inrange);
 	ATF_TP_ADD_TC(tp, atan_zero_neg);
 	ATF_TP_ADD_TC(tp, atan_zero_pos);
 
 	ATF_TP_ADD_TC(tp, atanf_nan);
 	ATF_TP_ADD_TC(tp, atanf_inf_neg);
 	ATF_TP_ADD_TC(tp, atanf_inf_pos);
-	ATF_TP_ADD_TC(tp, atanf_tanf);
+	ATF_TP_ADD_TC(tp, atanf_inrange);
 	ATF_TP_ADD_TC(tp, atanf_zero_neg);
 	ATF_TP_ADD_TC(tp, atanf_zero_pos);
 

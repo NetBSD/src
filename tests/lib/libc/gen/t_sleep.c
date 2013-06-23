@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.5.2.2 2012/11/09 20:13:25 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.5.2.3 2013/06/23 06:28:56 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -38,6 +38,8 @@
 #include <sys/cdefs.h>
 #include <sys/event.h>
 #include <sys/signal.h>
+
+#include "isqemu.h"
 
 #define BILLION		1000000000LL	/* nano-seconds per second */
 #define MILLION		1000000LL	/* nano-seconds per milli-second */
@@ -157,7 +159,7 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	 * under QEMU, make sure the delay is long enough to account
 	 * for the effects of PR kern/43997 !
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0 &&
+	if (isQEMU() &&
 	    tmo/1000 < delay->tv_sec && tmo/500 > delay->tv_sec)
 		delay->tv_sec = MAXSLEEP;
 
@@ -301,8 +303,7 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 *= round;
 
 		if (delta3 > FUZZ || delta3 < -FUZZ) {
-			if (!sim_remain &&
-			    system("cpuctl identify 0 | grep -q QEMU") == 0) 
+			if (!sim_remain)
 				atf_tc_expect_fail("Long reschedule latency "
 				    "due to PR kern/43997");
 

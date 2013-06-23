@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.86.2.1 2013/02/25 00:30:27 tls Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.86.2.2 2013/06/23 06:28:57 tls Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -266,6 +266,9 @@ int evasprintf(char **, const char *, va_list);
 
 #if !HAVE_FGETLN || defined(__NetBSD__)
 char *fgetln(FILE *, size_t *);
+#endif
+#if !HAVE_DPRINTF
+int dprintf(int, const char *, ...);
 #endif
 
 #if !HAVE_FLOCK

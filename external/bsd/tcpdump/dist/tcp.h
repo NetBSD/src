@@ -1,4 +1,4 @@
-/* @(#) Header: /tcpdump/master/tcpdump/tcp.h,v 1.14 2007-12-09 00:30:47 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/tcp.h,v 1.14 2007-12-09 00:30:47 guy Exp  (LBL) */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,6 +101,7 @@ struct tcphdr {
 #define NFS_PORT	        2049
 #endif
 #define MSDP_PORT	        639
+#define RPKI_RTR_PORT	        2222 /* experimental up until sidr-wg registers a well-known port */
 #define LDP_PORT                646
 #ifndef SMB_PORT
 #define SMB_PORT                445

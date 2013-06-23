@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.1.2.1 2012/11/20 03:02:55 tls Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.1.2.2 2013/06/23 06:28:56 tls Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -88,9 +88,9 @@ mainfunc(void)
 	if (!alter_tlsbase)
 		nctx.uc_flags &= ~_UC_TLSBASE;
 #endif /* _UC_TLSBASE */
-       
+
 	makecontext(&nctx, swapfunc, 0);
-       
+
 	_lwp_setprivate(&val2);
 	otls = _lwp_getprivate();
 	printf("before swapcontext TLS pointer = %p\n", otls);

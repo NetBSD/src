@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga.c,v 1.7 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: amiga.c,v 1.7.12.1 2013/06/23 06:29:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: amiga.c,v 1.7 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: amiga.c,v 1.7.12.1 2013/06/23 06:29:04 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ amiga_setboot(ib_params *params)
 	char *dline;
 	int sumlen;
 	u_int32_t sum2, sum16;
-	
+
 	struct stat		bootstrapsb;
 
 	u_int32_t block[128*16];

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.h,v 1.3 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: segwrite.h,v 1.3.12.1 2013/06/23 06:28:51 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,7 +50,7 @@ void lfs_updatemeta(struct segment *);
 int lfs_initseg(struct lfs *);
 void lfs_newseg(struct lfs *);
 int lfs_writeseg(struct lfs *, struct segment *);
-void lfs_writesuper(struct lfs *, ufs_daddr_t);
+void lfs_writesuper(struct lfs *, ulfs_daddr_t);
 
 int lfs_match_data(struct lfs *, struct ubuf *);
 int lfs_match_indir(struct lfs *, struct ubuf *);
@@ -59,11 +59,11 @@ int lfs_match_tindir(struct lfs *, struct ubuf *);
 
 void lfs_shellsort(struct ubuf **, int32_t *, int, int);
 
-int ufs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
-int ufs_bmaparray(struct lfs *, struct uvnode *, daddr_t, daddr_t *, struct indir *, int *);
+int ulfs_getlbns(struct lfs *, struct uvnode *, daddr_t, struct indir *, int *);
+int ulfs_bmaparray(struct lfs *, struct uvnode *, daddr_t, daddr_t *, struct indir *, int *);
 
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 int lfs_writevnodes(struct lfs *, struct segment *, int);
 
-void lfs_writesuper(struct lfs *, ufs_daddr_t);
+void lfs_writesuper(struct lfs *, ulfs_daddr_t);

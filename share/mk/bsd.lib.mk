@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.324.2.2 2013/02/25 00:28:16 tls Exp $
+#	$NetBSD: bsd.lib.mk,v 1.324.2.3 2013/06/23 06:28:54 tls Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -45,12 +45,6 @@ realinstall:	checkver libinstall
 .if defined(MKPIE) && (${MKPIE} != "no")
 CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
-.endif
-
-.if defined(MKDEBUG) && (${MKDEBUG} != "no")
-# We only add -g to the shared library objects
-# because we don't currently split .a archives.
-CSHLIBFLAGS+=	-g
 .endif
 
 ##### Libraries that this may depend upon.
@@ -199,6 +193,16 @@ MKSHLIBOBJS= yes
 MKSHLIBOBJS= no
 .endif
 
+.if (defined(MKDEBUG) && (${MKDEBUG} != "no")) || \
+    (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
+# We only add -g to the shared library objects
+# because we don't currently split .a archives.
+CSHLIBFLAGS+=	-g
+.if ${LIBISPRIVATE} == "yes"
+CFLAGS+=	-g
+.endif
+.endif
+
 # Platform-independent linker flags for ELF shared libraries
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB}.so.${SHLIB_SOVERSION}
@@ -217,13 +221,27 @@ CTFFLAGS+=	-g
 .endif
 .endif
 
+LIBSTRIPAOBJS=	yes
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+LIBSTRIPCOBJS=	yes
+.endif
+.if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
+LIBSTRIPOBJCOBJS=	yes
+.endif
+.if !defined(FFLAGS) || empty(FFLAGS:M*-g*)
+LIBSTRIPFOBJS=	yes
+.endif
+.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*) 
+LIBSTRIPSHLIBOBJS=	yes
+.endif
+
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -233,7 +251,7 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -244,21 +262,21 @@ CTFFLAGS+=	-g
 .c.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*) 
+.if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .cc.po .cpp.po .cxx.po .C.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if defined(LIBSTRIPCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -269,7 +287,7 @@ CTFFLAGS+=	-g
 .cc.pico .cpp.pico .cxx.pico .C.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*)
+.if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -279,7 +297,7 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(FOPTS) || empty(FOPTS:M*-g*)
+.if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -289,7 +307,7 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(FOPTS) || empty(FOPTS:M*-g*)
+.if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -300,7 +318,7 @@ CTFFLAGS+=	-g
 .f.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(FOPTS) || empty(FOPTS:M*-g*)
+.if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -314,7 +332,7 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
+.if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -324,21 +342,21 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
-.if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
+.if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .m.go:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${DEBUGFLAGS} -g ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-.if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
+.if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .m.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-.if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
+.if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
@@ -348,7 +366,9 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 .S.o:
 	${_MKTARGET_COMPILE}
@@ -356,7 +376,9 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 .s.po:
 	${_MKTARGET_COMPILE}
@@ -364,7 +386,9 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 .S.po:
 	${_MKTARGET_COMPILE}
@@ -372,7 +396,9 @@ CTFFLAGS+=	-g
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 .s.go:
 	${_MKTARGET_COMPILE}
@@ -385,12 +411,16 @@ CTFFLAGS+=	-g
 .s.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 .S.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
 
 # Declare a few variables to make our life easier later.
 _LIB:=${_LIB_PREFIX}${LIB}
@@ -413,6 +443,7 @@ _DEST.LIB:=${DESTDIR}${LIBDIR}
 _DEST.OBJ:=${DESTDIR}${_LIBSODIR}
 _DEST.LINT:=${DESTDIR}${LINTLIBDIR}
 _DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}
+_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
 
 .if defined(LIB)							# {
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
@@ -440,7 +471,7 @@ OBJS+=		${_LIB}_combine.o
 ${_LIB}_combine.o: ${COMBINESRCS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -MD --combine ${.ALLSRC} -o ${.TARGET}
-.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+.if defined(LIBSTRIPOBJS)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
@@ -808,6 +839,10 @@ ${_DEST.DEBUG}/${_LIB.so.debug}: ${_LIB.so.debug}
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
 	    ${.ALLSRC} ${.TARGET}
+.if ${_LIBSODIR} != ${LIBDIR}
+	${INSTALL_SYMLINK} -l r ${_DEST.DEBUG}/${_LIB.so.debug} \
+	    ${_DEST.ODEBUG}/${_LIB.so.debug} 
+.endif
 .endif
 
 .if ${MKLINT} != "no" && !empty(LOBJS)

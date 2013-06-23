@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.24.24.1 2013/06/23 06:28:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.24.24.1 2013/06/23 06:28:52 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,8 +161,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
-	    "           [-u user] tmpfs mountpoint\n", getprogname());
+	    "usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
+	    "           [-u user] tmpfs mount_point\n", getprogname());
 	exit(1);
 }
 

@@ -46,9 +46,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-telnet.c,v 1.24 2003-12-29 11:05:10 hannes Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-telnet.c,v 1.24 2003-12-29 11:05:10 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-telnet.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #endif
 #endif
 

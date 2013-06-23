@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.49.8.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: pass1.c,v 1.49.8.2 2013/06/23 06:28:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.49.8.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.49.8.2 2013/06/23 06:28:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	else
 		kernmaxfilesize = (u_int64_t)0x80000000 * sblock->fs_bsize - 1;
 	if (size > kernmaxfilesize  || size + sblock->fs_bsize - 1 < size ||
-	    (mode == IFDIR && size > MAXDIRSIZE)) {
+	    (mode == IFDIR && size > UFS_MAXDIRSIZE)) {
 		if (debug)
 			printf("bad size %llu:",(unsigned long long)size);
 		goto unknown;
@@ -339,7 +339,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (ndb > UFS_NDADDR) {
 				j = ndb - UFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(sblock);
+					ndb *= FFS_NINDIR(sblock);
 				ndb += UFS_NDADDR;
 			}
 		}
@@ -362,7 +362,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 
 	for (j = 0, ndb -= UFS_NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(sblock);
+		ndb /= FFS_NINDIR(sblock);
 
 	for (; j < UFS_NIADDR; j++)
 		if (DIP(dp, ib[j]) != 0) {
@@ -431,7 +431,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		ndb = howmany(iswap32(dp->dp2.di_extsize), sblock->fs_bsize);
 		for (j = 0; j < UFS_NXADDR; j++) {
 			if (--ndb == 0 &&
-			    (offset = blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
+			    (offset = ffs_blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
 				idesc->id_numfrags = numfrags(sblock,
 				    fragroundup(sblock, offset));
 			else

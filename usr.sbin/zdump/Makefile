@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/16 07:52:32 christos Exp $
+#	$NetBSD: Makefile,v 1.7.8.1 2013/06/23 06:29:06 tls Exp $
 
+.include "${.PARSEDIR}/../zic/Makefile.inc"
 .include <bsd.own.mk>
 
 PROG=	zdump

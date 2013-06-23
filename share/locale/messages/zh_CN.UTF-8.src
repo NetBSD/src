@@ -1,4 +1,4 @@
-# $NetBSD: zh_CN.UTF-8.src,v 1.1 2008/05/17 03:57:52 ginsbach Exp $
+# $NetBSD: zh_CN.UTF-8.src,v 1.1.30.1 2013/06/23 06:28:53 tls Exp $
 #
 # Chinese Language Message Locale for China
 #
@@ -6,7 +6,7 @@
 #
 # From: $FreeBSD: src/share/msgdef/zh_CN.UTF-8.src,v 1.1 2004/03/27 08:14:15 tjr Exp $
 #
-# Acceptable Affrimative Response Expression (yesexpr)
+# Acceptable Affirmative Response Expression (yesexpr)
 #    NOTE: This must be a valid Extended Regular Expression.
 ^[yYｙＹ是].*
 # Acceptable Negative Response Expression (noexpr)
@@ -18,7 +18,7 @@
 #       IEEE Std 1003.1, 2004 Edition (POSIX).
 #      The current NetBSD implementation still requires a value or blank line.
 #
-# Acceptable Affrimative Response (yesstr)
+# Acceptable Affirmative Response (yesstr)
 是
 # Acceptable Negative  Response (nostr)
 否

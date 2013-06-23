@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.6.12.1 2013/02/25 00:30:43 tls Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.6.12.2 2013/06/23 06:29:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.6.12.1 2013/02/25 00:30:43 tls Exp $");
+__RCSID("$NetBSD: ext2fs.c,v 1.6.12.2 2013/06/23 06:29:04 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -294,14 +294,14 @@ ext2fs_find_disk_blocks(ib_params *params, ino_t ino,
 			/* XXX ondisk32 */
 			level[level_i].blknums = 
 			    (uint32_t *)level[level_i].diskbuf;
-			level[level_i].blkcount = NINDIR(fs);
+			level[level_i].blkcount = EXT2_NINDIR(fs);
 			continue;
 		}
 
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %lu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), sblksize(fs, inode->di_size, lblk));
+		    fsbtodb(fs, blk), ext2_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
 		    fsbtodb(fs, blk) + params->fstype->offset, fs->e2fs_bsize);

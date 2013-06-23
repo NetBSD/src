@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.367.2.1 2013/02/25 00:28:15 tls Exp $
+#       $NetBSD: Makefile,v 1.367.2.2 2013/06/23 06:28:54 tls Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -51,7 +51,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
-	tcp_congctl.9 timecounter.9 time_second.9 todr.9 tvtohz.9 \
+	tcp_congctl.9 timecounter.9 time_second.9 todr.9 ts2timo.9 tvtohz.9 \
 	ucas.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
@@ -405,10 +405,13 @@ MLINKS+=kcpuset.9 kcpuset_create.9 \
 	kcpuset.9 kcpuset_fill.9 \
 	kcpuset.9 kcpuset_set.9 \
 	kcpuset.9 kcpuset_clear.9 \
+	kcpuset.9 kcpuset_isotherset.9 \
 	kcpuset.9 kcpuset_isset.9 \
 	kcpuset.9 kcpuset_iszero.9 \
+	kcpuset.9 kcpuset_countset.9 \
 	kcpuset.9 kcpuset_match.9 \
 	kcpuset.9 kcpuset_merge.9 \
+	kcpuset.9 kcpuset_export_32.9 \
 	kcpuset.9 kcpuset_atomic_set.9 \
 	kcpuset.9 kcpuset_atomic_clear.9
 MLINKS+=kmem.9 kmem_alloc.9 \
@@ -459,8 +462,8 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
 	mbuf.9 m_copyback_cow.9 \
 	mbuf.9 m_makewritable.9 \
-	mbuf.9 m_pulldown.9 \
-	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
+	mbuf.9 m_pulldown.9 mbuf.9 m_pullup.9 mbuf.9 m_copyup.9 \
+	mbuf.9 m_split.9 mbuf.9 m_adj.9 mbuf.9 m_free.9 \
 	mbuf.9 m_freem.9 mbuf.9 mtod.9 mbuf.9 mtocl.9 mbuf.9 cltom.9 \
 	mbuf.9 MGET.9 mbuf.9 MGETHDR.9 mbuf.9 MEXTMALLOC.9 \
 	mbuf.9 MEXTADD.9 mbuf.9 MCLGET.9 mbuf.9 M_COPY_PKTHDR.9 \
