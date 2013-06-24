@@ -1,14 +1,14 @@
-/* $NetBSD: consttime_bcmp.c,v 1.1 2012/08/30 12:16:49 drochner Exp $ */
+/* $NetBSD: consttime_memequal.c,v 1.1 2013/06/24 04:21:19 riastradh Exp $ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#define consttime_bcmp __consttime_bcmp
+#define consttime_memequal __consttime_memequal
 #else
 #include <lib/libkern/libkern.h>
 #endif
 
 int
-consttime_bcmp(const void *b1, const void *b2, size_t len)
+consttime_memequal(const void *b1, const void *b2, size_t len)
 {
 	const char *c1 = b1, *c2 = b2;
 	int res = 0;
