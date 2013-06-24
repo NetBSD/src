@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1825 2013/06/20 20:43:33 christos Exp $
+#	$NetBSD: mi,v 1.1826 2013/06/24 01:12:08 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5159,6 +5159,7 @@
 ./usr/share/man/cat3/conj.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/conjf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/conjl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/consttime_bcmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysign.0			comp-c-catman		.cat
 ./usr/share/man/cat3/copysignf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysignl.0		comp-c-catman		.cat
@@ -5557,6 +5558,7 @@
 ./usr/share/man/cat3/exp2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp2f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expf.0			comp-c-catman		.cat
+./usr/share/man/cat3/explicit_bzero.0		comp-c-catman		.cat
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/extattr.0			comp-obsolete		obsolete
@@ -11700,6 +11702,7 @@
 ./usr/share/man/html3/conj.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/conjf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/conjl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/consttime_bcmp.html	comp-c-htmlman		html
 ./usr/share/man/html3/copysign.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignf.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignl.html		comp-c-htmlman		html
@@ -12096,6 +12099,7 @@
 ./usr/share/man/html3/exp2.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2f.html		comp-c-htmlman		html
 ./usr/share/man/html3/expf.html			comp-c-htmlman		html
+./usr/share/man/html3/explicit_bzero.html	comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
 ./usr/share/man/html3/extattr.html		comp-obsolete		obsolete
@@ -18149,6 +18153,7 @@
 ./usr/share/man/man3/conj.3			comp-c-man		complex,.man
 ./usr/share/man/man3/conjf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/conjl.3			comp-c-man		complex,.man
+./usr/share/man/man3/consttime_bcmp.3		comp-c-man		.man
 ./usr/share/man/man3/copysign.3			comp-c-man		.man
 ./usr/share/man/man3/copysignf.3		comp-c-man		.man
 ./usr/share/man/man3/copysignl.3		comp-c-man		.man
@@ -18547,6 +18552,7 @@
 ./usr/share/man/man3/exp2.3			comp-c-man		.man
 ./usr/share/man/man3/exp2f.3			comp-c-man		.man
 ./usr/share/man/man3/expf.3			comp-c-man		.man
+./usr/share/man/man3/explicit_bzero.3		comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
 ./usr/share/man/man3/extattr.3			comp-obsolete		obsolete
