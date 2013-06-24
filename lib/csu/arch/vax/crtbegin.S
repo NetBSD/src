@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1 2013/06/21 15:54:08 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.2 2013/06/24 14:49:55 matt Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1 2013/06/21 15:54:08 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.2 2013/06/24 14:49:55 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -40,6 +40,7 @@ __CTOR_LIST__:		/* symbol is not used */
 	.section	.dtors, "aw", @progbits
 	.p2align 2
 __DTOR_LIST__:
+	.word -1
 
 	.section	.eh_frame, "a", @progbits
 	.p2align 2
@@ -63,7 +64,7 @@ __dso_handle:
 #endif
 
 	.local	__dwarf_eh_object
-	.comm	__dwarf_eh_object,24
+	.comm	__dwarf_eh_object,32
 	.local	__initialized
 	.comm	__initialized,1
 	.local	__finished
@@ -102,7 +103,7 @@ __do_global_dtors_aux:
 	 * We use load with postincrement to advance the pointer along.
 	 * We know the list ends with 0.  If we load one, we must be done.
 	 */
-	moval	__DTOR_LIST__, %r8	/* skip first entry */
+	moval	__DTOR_LIST__+4, %r8	/* skip first entry */
 2:	movl	(%r8)+, %r0		/* r0 = *r8++; */
 	beql	3f
 	calls	$0, (%r0)
