@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.2 2013/05/05 10:26:57 skrll Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.3 2013/06/24 14:53:42 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.2 2013/05/05 10:26:57 skrll Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.3 2013/06/24 14:53:42 matt Exp $")
 
 	.section	.eh_frame, "a", %progbits
 	.p2align 2
@@ -209,7 +209,7 @@ __do_global_ctors_aux:
 	.local	__initialized
 	.comm	__initialized,1,1
 	.local	__dwarf_eh_object
-	.comm	__dwarf_eh_object,24,4
+	.comm	__dwarf_eh_object,32,4
 
 	.section .init_array,"aw",%init_array
 	.p2align 2
