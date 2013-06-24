@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.5 2013/05/05 10:26:57 skrll Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.6 2013/06/24 14:49:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.5 2013/05/05 10:26:57 skrll Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.6 2013/06/24 14:49:13 matt Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
@@ -64,7 +64,7 @@ __dso_handle:
 #endif
 
 	.local	__dwarf_eh_object
-	.comm	__dwarf_eh_object,24
+	.comm	__dwarf_eh_object,32
 	.local	__initialized
 	.comm	__initialized,1
 	.local	__finished
