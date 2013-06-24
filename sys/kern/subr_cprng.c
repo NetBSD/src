@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.18 2013/06/23 02:35:24 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.19 2013/06/24 00:56:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.18 2013/06/23 02:35:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.19 2013/06/24 00:56:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.18 2013/06/23 02:35:24 riastradh Ex
 #include <sys/fcntl.h>		/* XXX FNONBLOCK */
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/lwp.h>
 #include <sys/poll.h>		/* XXX POLLIN/POLLOUT/&c. */
 #include <sys/select.h>
 #include <sys/systm.h>
