@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.19 2013/06/24 00:56:21 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.20 2013/06/24 04:21:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.19 2013/06/24 00:56:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.20 2013/06/24 04:21:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -132,7 +132,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 		/* XXX Fix nist_ctr_drbg API so this can't happen.  */
 		panic("cprng %s: NIST CTR_DRBG instantiation failed",
 		    cprng->cs_name);
-	explicit_bzero(seed, sizeof(seed));
+	explicit_memset(seed, 0, sizeof(seed));
 
 	if (!cprng->cs_ready && !ISSET(flags, CPRNG_INIT_ANY))
 		printf("cprng %s: creating with partial entropy\n",
@@ -160,7 +160,7 @@ cprng_strong_destroy(struct cprng_strong *cprng)
 	cv_destroy(&cprng->cs_cv);
 	mutex_destroy(&cprng->cs_lock);
 
-	explicit_bzero(cprng, sizeof(*cprng)); /* paranoia */
+	explicit_memset(cprng, 0, sizeof(*cprng)); /* paranoia */
 	kmem_free(cprng, sizeof(*cprng));
 }
 
@@ -366,7 +366,7 @@ cprng_strong_reseed(struct cprng_strong *cprng)
 	const bool full_entropy = rndsink_request(cprng->cs_rndsink, seed,
 	    sizeof(seed));
 	cprng_strong_reseed_from(cprng, seed, sizeof(seed), full_entropy);
-	explicit_bzero(seed, sizeof(seed));
+	explicit_memset(seed, 0, sizeof(seed));
 }
 
 /*
@@ -446,7 +446,7 @@ cprng_strong_rngtest(struct cprng_strong *cprng)
 		rndsink_schedule(cprng->cs_rndsink);
 	}
 
-	explicit_bzero(rt, sizeof(*rt)); /* paranoia */
+	explicit_memset(rt, 0, sizeof(*rt)); /* paranoia */
 	kmem_intr_free(rt, sizeof(*rt));
 }
 #endif
