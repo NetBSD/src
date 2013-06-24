@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.5 2013/04/10 12:46:50 christos Exp $	*/
+/*	$NetBSD: athn.c,v 1.6 2013/06/24 19:43:58 martin Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.5 2013/04/10 12:46:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.6 2013/06/24 19:43:58 martin Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -2675,7 +2675,8 @@ athn_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
-			athn_stop(ifp, 1);
+			/* see athn_init, no need to call athn_stop here */
+			/* athn_stop(ifp, 0); */
 			(void)athn_init(ifp);
 			ifp->if_oerrors++;
 			return;
@@ -2816,7 +2817,7 @@ athn_init(struct ifnet *ifp)
 	KASSERT(!cpu_intr_p());
 
 	if (device_is_active(sc->sc_dev)) {
-		athn_stop(ifp, 0);	/* XXX: necessary? */
+		athn_stop(ifp, 0);	/* see athn_watchdog() */
 	} else {
 		short flags = ifp->if_flags;
 		ifp->if_flags &= ~IFF_UP;
