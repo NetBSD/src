@@ -1,3 +1,24 @@
+Introduction
+
+This document covers the native NetBSD compiler runtime. The full support
+for the native runtime is enabled by setting USE_COMPILERCRTSTUFF to no
+in bsd.own.mk.
+
+Machine independent sources can be found in common. The crtbegin.c in
+that directory is a useful template for deriving compact assembler
+versions. That is preferable to decouple the result from changes in the
+compiler logic.
+
+A new platform should provide the following content in
+arch/${MACHINE_ARCH} or arch/${MACHINE_CPU}:
+- Makefile.inc: provides ELFSIZE corresponding to 32/64bit file format
+- crt0.S: provides setup code and the call to __start.
+- crtbegin.S: see below
+- crtend.S: see below, most likely just a copy of an existing architecture
+- crti.S: prefix part of .init/.fini sections, i.e. to ensure stack alignment
+- crte.S: suffix part of the .init/.fini sections, i.e. return to caller.
+
+
 Overview of the common runtime support
 
 The common runtime support contains two modules, crtbegin and crtend.
