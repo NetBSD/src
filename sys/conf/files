@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1074 2013/06/23 02:35:24 riastradh Exp $
+#	$NetBSD: files,v 1.1075 2013/06/24 16:19:02 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1173,7 +1173,6 @@ define	sdmmcbus { }			# SD/MMC attachment
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
-# UHCI USB controller
 #
 
 defparam USB_MEM_RESERVE
@@ -1183,6 +1182,8 @@ file	dev/usb/usbroothub_subr.c	usbroothub
 
 define	usb_dma
 
+# UHCI USB controller
+#
 device	uhci: usbus, usbroothub, usb_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
@@ -1196,7 +1197,7 @@ file	dev/usb/ohci.c			ohci			needs-flag
 device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
-# XHCI USB3 controller
+# xHCI USB3 controller
 #
 device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
