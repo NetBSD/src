@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndsink.9,v 1.1 2013/06/23 02:35:23 riastradh Exp $
+.\"	$NetBSD: rndsink.9,v 1.2 2013/06/24 04:21:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -122,7 +122,7 @@ May be called at
 .Dv IPL_VM
 or lower.
 The caller should use
-.Xr explicit_bzero 3
+.Xr explicit_memset 3
 to clear
 .Fa buffer
 once it has used the data stored there.
@@ -139,7 +139,7 @@ The rndsink API is implemented in
 and
 .Pa sys/sys/rndsink.h .
 .Sh SEE ALSO
-.Xr explicit_bzero 3 ,
+.Xr explicit_memset 3 ,
 .Xr cprng 9 ,
 .Xr rnd 9
 .Sh HISTORY

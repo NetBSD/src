@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.34 2013/06/23 02:38:22 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.35 2013/06/24 04:21:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ arc4_randrekey(void)
 	const bool full_entropy = rndsink_request(arc4_rndsink, seed,
 	    sizeof(seed));
 	arc4_randrekey_from(seed, full_entropy);
-	explicit_bzero(seed, sizeof(seed));
+	explicit_memset(seed, 0, sizeof(seed));
 }
 
 /*
@@ -171,7 +171,7 @@ arc4_randrekey_from(const uint8_t seed[ARC4_KEYBYTES], bool full_entropy)
 	}
 	arc4_i = arc4_j;
 
-	explicit_bzero(key, sizeof(key));
+	explicit_memset(key, 0, sizeof(key));
 
 	/*
 	 * Throw away the first N words of output, as suggested in the

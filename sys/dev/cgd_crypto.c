@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.11 2012/12/05 02:23:20 christos Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.12 2013/06/24 04:21:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.11 2012/12/05 02:23:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.12 2013/06/24 04:21:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ cgd_cipher_aes_destroy(void *data)
 {
 	struct aes_privdata *apd = data;
 
-	explicit_bzero(apd, sizeof(*apd));
+	explicit_memset(apd, 0, sizeof(*apd));
 	free(apd, M_DEVBUF);
 }
 
@@ -296,7 +296,7 @@ cgd_cipher_3des_init(size_t keylen, const void *key, size_t *blocksize)
 	error |= des_key_sched(block + 1, cp->cp_key2);
 	error |= des_key_sched(block + 2, cp->cp_key3);
 	if (error) {
-		explicit_bzero(cp, sizeof(*cp));
+		explicit_memset(cp, 0, sizeof(*cp));
 		free(cp, M_DEVBUF);
 		return NULL;
 	}
@@ -308,7 +308,7 @@ cgd_cipher_3des_destroy(void *data)
 {
 	struct c3des_privdata *cp = data;
 
-	explicit_bzero(cp, sizeof(*cp));
+	explicit_memset(cp, 0, sizeof(*cp));
 	free(cp, M_DEVBUF);
 }
 
@@ -393,7 +393,7 @@ cgd_cipher_bf_destroy(void *data)
 {
 	struct	bf_privdata *bp = data;
 
-	explicit_bzero(bp, sizeof(*bp));
+	explicit_memset(bp, 0, sizeof(*bp));
 	free(bp, M_DEVBUF);
 }
 
