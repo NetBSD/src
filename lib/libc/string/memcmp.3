@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcmp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcmp.3,v 1.10 2013/06/23 16:44:06 riastradh Exp $
+.\"	$NetBSD: memcmp.3,v 1.11 2013/06/24 04:21:20 riastradh Exp $
 .\"
 .Dd June 23, 2013
 .Dt MEMCMP 3
@@ -74,11 +74,11 @@ to compare cryptographic secrets, because the time it takes varies
 depending on how many bytes are the same, and thus leaks information
 about the two strings by a timing side channel.
 To compare secrets, hashes, message authentication codes, etc., use
-.Xr consttime_bcmp 3
+.Xr consttime_memequal 3
 instead.
 .Sh SEE ALSO
 .Xr bcmp 3 ,
-.Xr consttime_bcmp 3 ,
+.Xr consttime_memequal 3 ,
 .Xr strcasecmp 3 ,
 .Xr strcmp 3 ,
 .Xr strcoll 3 ,
