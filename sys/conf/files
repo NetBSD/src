@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1075 2013/06/24 16:19:02 jakllsch Exp $
+#	$NetBSD: files,v 1.1076 2013/06/24 16:19:43 jakllsch Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -93,9 +93,9 @@ defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 
 # Per system call number counts and times
 defflag opt_syscall_stats.h	SYSCALL_STATS
-defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS 
+defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS
 # Assume cpu_hascounter() returns true - to use disabled rdtsc() (for soekris)
-defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES 
+defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES
 file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
@@ -1469,7 +1469,7 @@ file	dev/radio.c			radio			needs-flag
 file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
-file	dev/vnd.c			vnd	
+file	dev/vnd.c			vnd
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
@@ -1679,7 +1679,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_loop.c			loop	
+file	net/if_loop.c			loop
 file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
@@ -1689,7 +1689,7 @@ file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
-file	net/if_tap.c			tap	
+file	net/if_tap.c			tap
 file	net/if_tun.c			tun
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
