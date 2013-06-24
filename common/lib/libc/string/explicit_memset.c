@@ -1,8 +1,8 @@
-/* $NetBSD: explicit_bzero.c,v 1.1 2012/08/30 12:16:49 drochner Exp $ */
+/* $NetBSD: explicit_memset.c,v 1.1 2013/06/24 04:21:19 riastradh Exp $ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#define explicit_bzero __explicit_bzero
+#define explicit_memset __explicit_memset
 #define explicit_memset_impl __explicit_memset_impl
 #else
 #include <lib/libkern/libkern.h>
@@ -15,8 +15,8 @@
 void *(* volatile explicit_memset_impl)(void *, int, size_t) = memset;
 
 void
-explicit_bzero(void *b, size_t len)
+explicit_memset(void *b, int c, size_t len)
 {
 
-	(*explicit_memset_impl)(b, 0, len);
+	(*explicit_memset_impl)(b, c, len);
 }

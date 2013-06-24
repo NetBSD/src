@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.1 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.2 2013/06/24 04:21:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.1 2013/06/23 02:35:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.2 2013/06/24 04:21:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -156,7 +156,7 @@ rndsinks_distribute(void)
 	uint8_t buffer[RNDSINK_MAX_BYTES];
 	struct rndsink *rndsink;
 
-	explicit_bzero(buffer, sizeof(buffer)); /* paranoia */
+	explicit_memset(buffer, 0, sizeof(buffer)); /* paranoia */
 
 	mutex_spin_enter(&rndsinks_lock);
 	while ((rndsink = TAILQ_FIRST(&rndsinks)) != NULL) {
@@ -178,7 +178,7 @@ rndsinks_distribute(void)
 
 		(*rndsink->rsink_callback)(rndsink->rsink_arg, buffer,
 		    rndsink->rsink_bytes);
-		explicit_bzero(buffer, rndsink->rsink_bytes);
+		explicit_memset(buffer, 0, rndsink->rsink_bytes);
 
 		mutex_spin_enter(&rndsinks_lock);
 
@@ -199,7 +199,7 @@ rndsinks_distribute(void)
 	}
 	mutex_spin_exit(&rndsinks_lock);
 
-	explicit_bzero(buffer, sizeof(buffer));	/* paranoia */
+	explicit_memset(buffer, 0, sizeof(buffer));	/* paranoia */
 }
 
 static void
