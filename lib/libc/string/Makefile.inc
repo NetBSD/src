@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.76 2012/08/30 12:16:48 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.77 2013/06/24 01:12:08 riastradh Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -39,7 +39,8 @@ SRCS+=	_strlcat.c _strlcpy.c _strerror_r.c
 
 .include "${ARCHDIR}/string/Makefile.inc"
 
-MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 \
+MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 consttime_bcmp.3 \
+	explicit_bzero.3 ffs.3 index.3 \
 	memccpy.3 memchr.3 memcmp.3 memcpy.3 memmem.3 memmove.3	memset.3 \
 	popcount.3 \
 	rindex.3 strcasecmp.3 strcat.3 strchr.3 strcmp.3 strcoll.3 \
