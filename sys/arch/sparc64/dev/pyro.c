@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.13 2013/06/21 20:09:58 nakayama Exp $	*/
+/*	$NetBSD: pyro.c,v 1.14 2013/06/24 11:32:21 nakayama Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.13 2013/06/21 20:09:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.14 2013/06/24 11:32:21 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -223,7 +223,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_pc->spc_busnode = malloc(sizeof(*pbm->pp_pc->spc_busnode),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm->pp_pc->spc_busnode == NULL)
-		panic("schizo: malloc busnode");
+		panic("pyro: malloc busnode");
 
 #if 0
 	pbm->pp_pc->bustag = pbm->pp_cfgt;
