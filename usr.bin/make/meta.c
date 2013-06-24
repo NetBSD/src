@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.30 2013/05/16 21:56:56 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.31 2013/06/24 21:16:02 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1123,6 +1123,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 		    /* Ignore /etc/ files. */
 		    if (strncmp(p, "/etc/", 5) == 0)
+			break;
+
+		    /* Ignore /proc/ too. */
+		    if (strncmp(p, "/proc/", 6) == 0)
 			break;
 
 		    if ((cp = strrchr(p, '/'))) {
