@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.3 2013/06/24 14:53:42 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.4 2013/06/24 20:56:18 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.3 2013/06/24 14:53:42 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.4 2013/06/24 20:56:18 matt Exp $")
 
 	.section	.eh_frame, "a", %progbits
 	.p2align 2
@@ -117,7 +117,7 @@ __do_global_dtors_aux:
 
 	.pushsection .fini_array,"aw",%fini_array
 	.p2align 2
-	.word	__do_global_dtors_aux
+	.word	__do_global_dtors_aux(target1)
 	.popsection
 #endif /* SHARED */
 
@@ -213,4 +213,4 @@ __do_global_ctors_aux:
 
 	.section .init_array,"aw",%init_array
 	.p2align 2
-	.word	__do_global_ctors_aux
+	.word	__do_global_ctors_aux(target1)
