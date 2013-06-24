@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.1 2013/06/22 02:37:09 matt Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.2 2013/06/24 14:49:13 matt Exp $");
 
 typedef void (*fptr_t)(void);
 
@@ -57,7 +57,7 @@ __weakref_visible void register_frame_info(const void *, const void *)
 __weakref_visible void deregister_frame_info(const void *)
 	__weak_reference(__deregister_frame_info);
 
-static long dwarf_eh_object[6];
+static long dwarf_eh_object[8];
 static unsigned char __initialized;
 static unsigned char __finished;
 
