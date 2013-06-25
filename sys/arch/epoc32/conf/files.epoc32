@@ -21,7 +21,7 @@ device	internal { }: pic, pic_splfuncs
 attach	internal at mainbus
 file	arch/epoc32/epoc32/internal.c		internal
 
-device	external { }
+device	external {[addr = -1], [addr2 = -1], [irq = -1]}
 attach	external at mainbus
 file	arch/epoc32/epoc32/external.c		external
 file	arch/epoc32/epoc32/external_io.c	external
