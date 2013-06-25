@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.5 2009/06/02 23:21:38 pooka Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.6 2013/06/25 17:38:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,6 +62,27 @@ sy_call(const struct sysent *sy, struct lwp *l, const void *uap,
 	l->l_sysent = NULL;
 
 	return error;
+}
+
+static inline int
+sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
+	register_t *rval, int code)
+{
+	int error;
+
+        if (!__predict_false(l->l_proc->p_trace_enabled)
+            || __predict_false(sy->sy_flags & SYCALL_INDIRECT)
+            || (error = trace_enter(code, uap, sy->sy_narg)) == 0) {
+                rval[0] = 0;
+                rval[1] = 0;
+                error = sy_call(sy, l, uap, rval);
+        }       
+        
+        if (__predict_false(l->l_proc->p_trace_enabled)
+            && !__predict_false(sy->sy_flags & SYCALL_INDIRECT)) {
+                trace_exit(code, rval, error);
+        }
+	return error;                
 }
 
 /* inclusion in the kernel currently depends on SYSCALL_DEBUG */
