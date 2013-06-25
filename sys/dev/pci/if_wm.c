@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.258 2013/06/19 10:53:24 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.259 2013/06/25 02:34:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.258 2013/06/19 10:53:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.259 2013/06/25 02:34:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,6 +570,8 @@ static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
 static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
 static int	wm_get_swfwhw_semaphore(struct wm_softc *);
 static void	wm_put_swfwhw_semaphore(struct wm_softc *);
+static int	wm_get_hw_semaphore_82573(struct wm_softc *);
+static void	wm_put_hw_semaphore_82573(struct wm_softc *);
 
 static int	wm_read_eeprom_ich8(struct wm_softc *, int, int, uint16_t *);
 static int32_t	wm_ich8_cycle_init(struct wm_softc *);
@@ -4018,7 +4020,6 @@ wm_reset(struct wm_softc *sc)
 {
 	int phy_reset = 0;
 	uint32_t reg, mask;
-	int i;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -4118,19 +4119,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		i = 0;
-		reg = CSR_READ(sc, WMREG_EXTCNFCTR)
-		    | EXTCNFCTR_MDIO_SW_OWNERSHIP;
-		do {
-			CSR_WRITE(sc, WMREG_EXTCNFCTR,
-			    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
-			reg = CSR_READ(sc, WMREG_EXTCNFCTR);
-			if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
-				break;
-			reg |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
-			delay(2*1000);
-			i++;
-		} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+		wm_get_hw_semaphore_82573(sc);
 		break;
 	default:
 		break;
@@ -4228,6 +4217,16 @@ wm_reset(struct wm_softc *sc)
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		break;
+	}
+
+	/* Must release the MDIO ownership after MAC reset */
+	switch (sc->sc_type) {
+	case WM_T_82574:
+	case WM_T_82583:
+		wm_put_hw_semaphore_82573(sc);
+		break;
+	default:
 		break;
 	}
 
@@ -7521,6 +7520,43 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
 	ext_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
+}
+
+static int
+wm_get_hw_semaphore_82573(struct wm_softc *sc)
+{
+	int i = 0;
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	do {
+		CSR_WRITE(sc, WMREG_EXTCNFCTR,
+		    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
+		reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+		if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
+			break;
+		delay(2*1000);
+		i++;
+	} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+
+	if (i == WM_MDIO_OWNERSHIP_TIMEOUT) {
+		wm_put_hw_semaphore_82573(sc);
+		log(LOG_ERR, "%s: Driver can't access the PHY\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+wm_put_hw_semaphore_82573(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	reg &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
+	CSR_WRITE(sc, WMREG_EXTCNFCTR, reg);
 }
 
 static int
