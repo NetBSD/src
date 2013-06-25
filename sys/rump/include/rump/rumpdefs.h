@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.21 2013/06/01 09:50:32 stacktic Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.22 2013/06/25 21:07:22 stacktic Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -449,6 +449,27 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_MNT_NOWAIT	2	
 #define	RUMP_MNT_LAZY 	3	
 
+/*	NetBSD: ioccom.h,v 1.11 2011/10/19 10:53:12 yamt Exp 	*/
+#define	RUMP_IOCPARM_MASK	0x1fff		
+#define	RUMP_IOCPARM_SHIFT	16
+#define	RUMP_IOCGROUP_SHIFT	8
+#define	RUMP_IOCPARM_LEN(x)	(((x) >> RUMP_IOCPARM_SHIFT) & RUMP_IOCPARM_MASK)
+#define	RUMP_IOCBASECMD(x)	((x) & ~(RUMP_IOCPARM_MASK << RUMP_IOCPARM_SHIFT))
+#define	RUMP_IOCGROUP(x)	(((x) >> RUMP_IOCGROUP_SHIFT) & 0xff)
+#define	RUMP_IOCPARM_MAX	NBPG	
+#define	RUMP_IOC_VOID	(unsigned long)0x20000000
+#define	RUMP_IOC_OUT		(unsigned long)0x40000000
+#define	RUMP_IOC_IN		(unsigned long)0x80000000
+#define	RUMP_IOC_INOUT	(RUMP_IOC_IN|RUMP_IOC_OUT)
+#define	RUMP_IOC_DIRMASK	(unsigned long)0xe0000000
+#define	_RUMP_IOC(inout, group, num, len) \
+    ((inout) | (((len) & RUMP_IOCPARM_MASK) << RUMP_IOCPARM_SHIFT) | \
+    ((group) << RUMP_IOCGROUP_SHIFT) | (num))
+#define	_RUMP_IO(g,n)	_RUMP_IOC(RUMP_IOC_VOID,	(g), (n), 0)
+#define	_RUMP_IOR(g,n,t)	_RUMP_IOC(RUMP_IOC_OUT,	(g), (n), sizeof(t))
+#define	_RUMP_IOW(g,n,t)	_RUMP_IOC(RUMP_IOC_IN,	(g), (n), sizeof(t))
+#define	_RUMP_IOWR(g,n,t)	_RUMP_IOC(RUMP_IOC_INOUT,	(g), (n), sizeof(t))
+
 /*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
 struct rump_modctl_load {
 	const char *ml_filename;
@@ -459,7 +480,7 @@ struct rump_modctl_load {
 	size_t ml_propslen;
 };
 
-/*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
+/*	NetBSD: ufsmount.h,v 1.40 2013/06/16 13:33:30 hannken Exp 	*/
 struct rump_ufs_args {
 	char	*fspec;			/* block special device to mount */
 };
