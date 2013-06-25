@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.2 2013/06/24 14:49:55 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.3 2013/06/25 00:30:07 matt Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,17 +30,17 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.2 2013/06/24 14:49:55 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.3 2013/06/25 00:30:07 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
 __CTOR_LIST__:		/* symbol is not used */
-	.word -1
+	.long -1
 
 	.section	.dtors, "aw", @progbits
 	.p2align 2
 __DTOR_LIST__:
-	.word -1
+	.long -1
 
 	.section	.eh_frame, "a", @progbits
 	.p2align 2
@@ -58,9 +58,9 @@ __JCR_LIST__:
 	.hidden	__dso_handle
 __dso_handle:
 #ifdef SHARED
-	.word	__dso_handle
+	.long	__dso_handle
 #else
-	.word	0
+	.long	0
 #endif
 
 	.local	__dwarf_eh_object
@@ -80,9 +80,7 @@ __dso_handle:
  * needed.
  */
 
-	.type __do_global_dtors_aux, @function
-__do_global_dtors_aux:
-	.word	0x0100				/* save r8 */
+_ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 	tstb	__finished			/* done this already? */
 	bneq	4f
 	movb	$1, __finished			/* mark it as done */
@@ -129,8 +127,7 @@ __do_global_dtors_aux:
 	.weak	__register_frame_info
 	.weak	_Jv_RegisterClasses
 
-	.type __do_global_ctors_aux, @function
-__do_global_ctors_aux:
+_ENTRY(__do_global_ctors_aux, 0x0800)
 	tstb	__initialized
 	bneq	4f
 	movb	$1, __initialized
