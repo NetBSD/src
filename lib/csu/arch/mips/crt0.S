@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.1 2013/06/22 02:37:09 matt Exp $ */
+/* $NetBSD: crt0.S,v 1.2 2013/06/25 16:47:47 matt Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.1 2013/06/22 02:37:09 matt Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2013/06/25 16:47:47 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -49,6 +49,8 @@ STRONG_ALIAS(_start,__start)
  */
 
 NESTED_NOPROFILE(__start, CALLFRAME_SIZ, ra)
+	SETUP_GP
+	SETUP_GP64(t3, __start)
 	move	a0, a1		/* cleanup */
 	move	a1, a2		/* Obj_Entry */
 	move	a2, a3		/* ps_strings */
