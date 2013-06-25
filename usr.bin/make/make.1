@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.216 2013/06/25 00:20:54 sjg Exp $
+.\"	$NetBSD: make.1,v 1.217 2013/06/25 07:08:10 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -882,7 +882,7 @@ is modified.
 .It Va .MAKE.PATH_FILEMON
 If
 .Nm
-was built with 
+was built with
 .Xr filemon 4
 support, this is set to the path of the device node.
 This allows makefiles to test for this support.
@@ -1326,7 +1326,7 @@ The path of the node which has the same name as the variable
 is the value.
 If no such node exists or its path is null, then the
 name of the variable is used.
-In order for this modifier to work, the name (node) must at least have 
+In order for this modifier to work, the name (node) must at least have
 appeared on the rhs of a dependency.
 .Sm off
 .It Cm \&:\&! Ar cmd Cm \&!
@@ -2119,7 +2119,7 @@ machines using a daemon called
 Historically the target/dependency
 .Dq FRC
 has been used to FoRCe rebuilding (since the target/dependency
-does not exist... unless someone creates an 
+does not exist... unless someone creates an
 .Dq FRC
 file).
 .Sh BUGS
