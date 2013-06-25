@@ -452,15 +452,25 @@ fragment <<EOF
 
 static bfd_boolean
 gld${EMULATION_NAME}_search_needed (const char *path,
-				    struct dt_needed *n, int force)
+				    struct dt_needed *n, int force, int prepend_sysroot)
 {
   const char *s;
   const char *name = n->name;
   size_t len;
   struct dt_needed needed;
 
-  if (name[0] == '/')
+  if (name[0] == '/') {
+    if (prepend_sysroot && ld_sysroot) {
+      bfd_boolean rv;
+      needed.by = n->by;
+      char *filename= concat(ld_sysroot, n->name, (const char *)NULL);
+      needed.name = filename;
+      rv = gld${EMULATION_NAME}_try_needed (&needed, force);
+      free(filename);
+      return rv;
+    }
     return gld${EMULATION_NAME}_try_needed (n, force);
+  }
 
   if (path == NULL || *path == '\0')
     return FALSE;
@@ -499,6 +509,13 @@ gld${EMULATION_NAME}_search_needed (const char *path,
 	}
       strcpy (sset, name);
 
+      if (prepend_sysroot && filename[0] == '=')
+        abort();
+      if (filename[0] == '/' && prepend_sysroot && ld_sysroot) {
+        char *filename2 = concat(ld_sysroot, filename, (const char *)NULL);
+        free(filename);
+        filename = filename2;
+      }
       needed.name = filename;
       if (gld${EMULATION_NAME}_try_needed (&needed, force))
 	return TRUE;
@@ -613,7 +630,7 @@ gld${EMULATION_NAME}_check_ld_elf_hints (const char *name, int force)
   needed.by = NULL;
   needed.name = name;
   return gld${EMULATION_NAME}_search_needed (ld_elf_hints, & needed,
-					     force);
+					     force, 0);
 }
 EOF
     # FreeBSD
@@ -824,7 +841,7 @@ gld${EMULATION_NAME}_check_ld_so_conf (const char *name, int force)
 
   needed.by = NULL;
   needed.name = name;
-  return gld${EMULATION_NAME}_search_needed (ld_so_conf, &needed, force);
+  return gld${EMULATION_NAME}_search_needed (ld_so_conf, &needed, force, 0);
 }
 
 EOF
@@ -1256,13 +1273,13 @@ fi
 fragment <<EOF
 
 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath_link,
-						  &n, force))
+						  &n, force, 0))
 	    break;
 EOF
 if [ "x${USE_LIBPATH}" = xyes ] ; then
 fragment <<EOF
 	  if (gld${EMULATION_NAME}_search_needed (command_line.rpath,
-						  &n, force))
+						  &n, force, 1))
 	    break;
 EOF
 fi
@@ -1273,11 +1290,11 @@ fragment <<EOF
 	    {
 	      lib_path = (const char *) getenv ("LD_RUN_PATH");
 	      if (gld${EMULATION_NAME}_search_needed (lib_path, &n,
-						      force))
+						      force, 0))
 		break;
 	    }
 	  lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
-	  if (gld${EMULATION_NAME}_search_needed (lib_path, &n, force))
+	  if (gld${EMULATION_NAME}_search_needed (lib_path, &n, force, 0))
 	    break;
 EOF
 fi
@@ -1287,12 +1304,10 @@ fragment <<EOF
 	  rp = bfd_elf_get_runpath_list (link_info.output_bfd, &link_info);
 	  for (; !found && rp != NULL; rp = rp->next)
 	    {
-	      char *tmpname = gld${EMULATION_NAME}_add_sysroot (rp->name);
 	      found = (rp->by == l->by
-		       && gld${EMULATION_NAME}_search_needed (tmpname,
+		       && gld${EMULATION_NAME}_search_needed (rp->name,
 							      &n,
-							      force));
-	      free (tmpname);
+							      force, 1));
 	    }
 	  if (found)
 	    break;
