@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2010/07/23 02:46:12 christos Exp $
+	$NetBSD: syscalls.master,v 1.39 2013/06/25 04:10:17 riz Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -195,7 +195,7 @@
 99	UNIMPL		sigpending
 100	UNIMPL		getcontext/setcontext/sigsetjmp
 101	UNIMPL		envsys
-102	UNIMP		evtrapret
+102	UNIMPL		evtrapret
 103	STD		{ int|ibcs2_sys||statvfs(const char *path, \
 			    struct ibcs2_statvfs *buf); }
 104	STD		{ int|ibcs2_sys||fstatvfs(int fd, \
