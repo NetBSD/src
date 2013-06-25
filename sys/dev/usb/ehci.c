@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.206 2013/04/04 13:27:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.206 2013/04/04 13:27:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2427,7 +2427,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				goto ret;
 			}
 			/*
-			 * An embedded transaction translater will automatically
+			 * An embedded transaction translator will automatically
 			 * terminate the reset sequence so there's no need to
 			 * it.
 			 */
