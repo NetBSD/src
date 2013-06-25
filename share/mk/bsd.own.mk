@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.735 2013/06/25 00:33:09 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.736 2013/06/25 01:17:29 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -61,6 +61,7 @@ HAVE_GCC?=    45
 .if \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_CPU} == "mips" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "x86_64" || \
@@ -74,8 +75,7 @@ HAVE_GDB?=	7
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "hppa") || \
     (${MACHINE_ARCH} == "ia64") || \
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
-    (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+    (${MACHINE_CPU} == "mips")
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
