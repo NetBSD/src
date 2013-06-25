@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.80 2012/12/31 16:20:17 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.81 2013/06/25 21:08:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.80 2012/12/31 16:20:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81 2013/06/25 21:08:07 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -567,10 +567,26 @@ xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 	struct fpreg regs64;
 	struct save87 *s87 = (struct save87 *)regs;
 	int error, i;
+
+	union fp_addr {
+	        uint64_t fa_64; /* Linear address for 64bit systems */
+	        struct {
+	                uint32_t fa_off;        /* Linear address for 32 bit */
+	                uint16_t fa_seg;        /* Code/data (etc) segment */
+	                uint16_t fa_pad;
+	        } fa_32; 
+	} fa;
+
+	/* 
+	 * NOTE: This 'struct fpreg32' is just char[108] and is shorter
+	 * than 'struct save87'.
+	 * If we write to the extra fields we trash the stack when writing
+	 * process coredumps (see coredump_note() in core_elf32.c).
+	 * This code must not set sv_env.en_tw or s87->sv_ex_sw.
+	 */
 
 	/*
 	 * All that stuff makes no sense in i386 code :(
@@ -582,28 +598,23 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 
 	s87->sv_env.en_cw = regs64.fxstate.fx_fcw;
 	s87->sv_env.en_sw = regs64.fxstate.fx_fsw;
-	s87->sv_env.en_fip = regs64.fxstate.fx_rip >> 16; /* XXX Order? */
-	s87->sv_env.en_fcs = regs64.fxstate.fx_rip & 0xffff;
+	fa.fa_64 = regs64.fxstate.fx_rip;
+	s87->sv_env.en_fip = fa.fa_32.fa_off;
+	s87->sv_env.en_fcs = fa.fa_32.fa_seg;
 	s87->sv_env.en_opcode = regs64.fxstate.fx_fop;
-	s87->sv_env.en_foo = regs64.fxstate.fx_rdp >> 16; /* XXX See above */
-	s87->sv_env.en_fos = regs64.fxstate.fx_rdp & 0xffff;
+	fa.fa_64 = regs64.fxstate.fx_rdp;
+	s87->sv_env.en_foo = fa.fa_32.fa_off;
+	s87->sv_env.en_fos = fa.fa_32.fa_seg;
 
 	s87->sv_env.en_tw = 0;
-	s87->sv_ex_tw = 0;
 	for (i = 0; i < 8; i++) {
 		s87->sv_env.en_tw |=
 		    (xmm_to_s87_tag((uint8_t *)&regs64.fxstate.fx_st[i][0], i,
 		     regs64.fxstate.fx_ftw) << (i * 2));
 
-		s87->sv_ex_tw |=
-		    (xmm_to_s87_tag((uint8_t *)&regs64.fxstate.fx_st[i][0], i,
-		     pcb->pcb_savefpu_i387.fp_ex_tw) << (i * 2));
-
 		memcpy(&s87->sv_ac[i].fp_bytes, &regs64.fxstate.fx_st[i][0],
 		    sizeof(s87->sv_ac[i].fp_bytes));
 	}
-
-	s87->sv_ex_sw = pcb->pcb_savefpu_i387.fp_ex_sw;
 
 	return (0);
 }
