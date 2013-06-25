@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 2013/04/28 12:11:25 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.2 2013/06/25 13:56:59 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32			# estimated number of users
 
@@ -157,7 +157,6 @@ wsdisplay* at wmlcd? console ?
 
 epockbd* at clpssoc?
 epockbd* at windermere?
-#epockbd* at external? addr 0x10000030, 0x10000004
 wskbd*	at epockbd?
 
 #spi*	at clpsssi*
@@ -167,7 +166,12 @@ wskbd*	at epockbd?
 #audio* at audio?
 
 # External devices
-etna* at external?				# ETNA Controller
+
+#epockbd* at external? addr 0x10000030 addr2 0x10000004		# Series 7
+
+# ETNA Controller
+etna* at external? addr 0x20000000 addr2 0x40000000 irq 5	# 5mx
+etna* at external? addr 0x50000000 addr2 0x30000000 irq 5	# 5mx Pro
 pcmcia* at etna?
 
 wdc* at pcmcia?					# CF
