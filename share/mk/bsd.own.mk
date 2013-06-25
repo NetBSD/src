@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.734 2013/06/12 21:35:29 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.735 2013/06/25 00:33:09 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -63,7 +63,8 @@ HAVE_GCC?=    45
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "vax"
 USE_COMPILERCRTSTUFF?=	no
 .endif
 USE_COMPILERCRTSTUFF?=	yes
@@ -493,14 +494,14 @@ OBJCOPY_ELF2AOUT_FLAGS?=	\
 	-R .arm.atpcs		\
 	-R .comment		\
 	-R .debug_abbrev	\
+	-R .debug_aranges	\
 	-R .debug_info		\
 	-R .debug_line		\
 	-R .debug_frame		\
 	-R .debug_loc		\
 	-R .debug_pubnames	\
-	-R .debug_aranges	\
-	-R .debug_str		\
 	-R .debug_pubtypes	\
+	-R .debug_str		\
 	-R .note.netbsd.ident
 .endif
 
