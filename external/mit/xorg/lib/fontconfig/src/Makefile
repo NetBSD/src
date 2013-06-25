@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/06/05 22:42:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2013/06/25 14:05:04 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -126,6 +126,7 @@ PKGCONFIG=	fontconfig
 CPPFLAGS.fcxml.c=	-Wno-error
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-switch
+CWARNFLAGS.clang+=	-Wno-error=tautological-constant-out-of-range-compare
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
