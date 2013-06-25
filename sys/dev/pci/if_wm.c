@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.259 2013/06/25 02:34:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.260 2013/06/25 17:38:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.259 2013/06/25 02:34:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.260 2013/06/25 17:38:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7968,8 +7968,7 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_MANAGE, ("%s: MANC (%08x)\n",
 		device_xname(sc->sc_dev), manc));
-	if (((manc & MANC_RECV_TCO_EN) == 0)
-	    || ((manc & MANC_EN_MAC_ADDR_FILTER) == 0))
+	if ((manc & MANC_RECV_TCO_EN) == 0)
 		return 0;
 
 	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0) {
@@ -7978,6 +7977,17 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		if (((factps & FACTPS_MNGCG) == 0)
 		    && ((fwsm & FWSM_MODE_MASK)
 			== (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT)))
+			return 1;
+	} else if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)){
+		uint16_t data;
+
+		factps = CSR_READ(sc, WMREG_FACTPS);
+		wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &data);
+		DPRINTF(WM_DEBUG_MANAGE, ("%s: CFG2 (%04x)\n",
+					  device_xname(sc->sc_dev), data));
+		if (((factps & FACTPS_MNGCG) == 0)
+		    && ((data & EEPROM_CFG2_MNGM_MASK)
+			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
 			return 1;
 	} else if (((manc & MANC_SMBUS_EN) != 0)
 	    && ((manc & MANC_ASF_EN) == 0))
@@ -8471,6 +8481,7 @@ wm_release_manageability(struct wm_softc *sc)
 	if (sc->sc_flags & WM_F_HAS_MANAGE) {
 		uint32_t manc = CSR_READ(sc, WMREG_MANC);
 
+		manc |= MANC_ARP_EN;
 		if (sc->sc_type >= WM_T_82571)
 			manc &= ~MANC_EN_MNG2HOST;
 
@@ -8496,11 +8507,9 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-#if 0 /* XXX */
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
-#endif
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
