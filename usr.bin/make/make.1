@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.215 2013/05/22 19:35:11 christos Exp $
+.\"	$NetBSD: make.1,v 1.216 2013/06/25 00:20:54 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 22, 2013
+.Dd June 24, 2013
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -856,6 +856,11 @@ In "meta" mode, this variable contains a list of all the meta files
 used (updated or not).
 This list can be used to process the meta files to extract dependency
 information.
+.It Va .MAKE.META.IGNORE_PATHS
+Provides a list of path prefixes that should be ignored;
+because the contents are expected to change over time.
+The default list includes:
+.Ql Pa /dev /etc /proc /tmp /var/run /var/tmp
 .It Va .MAKE.META.PREFIX
 Defines the message printed for each meta file updated in "meta verbose" mode.
 The default value is:
