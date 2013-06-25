@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.122 2013/01/22 21:12:32 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.123 2013/06/25 15:37:17 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.122 2013/01/22 21:12:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.123 2013/06/25 15:37:17 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * To have the best chance of success we do things in the exact same
-	 * order as Windoze98.  This should not be necessary, but some
+	 * order as Windows 98.  This should not be necessary, but some
 	 * devices do not follow the USB specs to the letter.
 	 *
 	 * These are the events on the bus when a hub is attached:
