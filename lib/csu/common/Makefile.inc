@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2013/06/22 02:37:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2013/06/25 07:18:02 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,14 +12,14 @@ OBJS+=		crtbegin.o crtbeginS.o crtend.o
 
 realall: ${OBJS}
 
-.if !exists(${ARCHDIR}/crtbegin.S)
-crtbegin.o: crtbegin.c
-	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
-.else
+.if exists(${ARCHDIR}/crtbegin.S)
 crtbegin.o: crtbegin.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.else
+crtbegin.o: crtbegin.c crtbegin.h
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
@@ -27,14 +27,14 @@ crtbegin.o: crtbegin.S
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
-.if !exists(${ARCHDIR}/crtbegin.S)
-crtbeginS.o: crtbegin.c
-	${_MKTARGET_COMPILE}
-	${COMPILE.c} -DPIC -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
-.else
+.if exists(${ARCHDIR}/crtbegin.S)
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+.else
+crtbeginS.o: crtbegin.c crtbegin.h
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} -DPIC -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
