@@ -28,10 +28,41 @@
  */
 
 __asm(	"\n\t"
-	".pushsection .init, \"ax\", @progbits" "\n\t"
-	"jal	__do_global_ctors_aux"		"\n\t"
+	".pushsection .init, \"ax\", @progbits"			"\n\t"
+#ifdef __mips_o32
+	".set noreorder"					"\n\t"
+	".set nomacro"						"\n\t"
+	"lw	$28,16($sp)" 					"\n\t"
+	"nop"							"\n\t"
+	"lw	$25,%got(__do_global_ctors_aux)($28)"		"\n\t"
+	"nop"							"\n\t"
+	"addiu   $25,$25,%lo(__do_global_ctors_aux)"		"\n\t"
+	".reloc	1f,R_MIPS_JALR,__do_global_ctors_aux"		"\n\t"
+	"1:	jalr	$25"					"\n\t"
+        "nop"							"\n\t"
+	".set macro"						"\n\t"
+	".set reorder"						"\n\t"
+#else
+	"jal	__do_global_ctors_aux"				"\n\t"
+#endif
 	".popsection");
+
 __asm(	"\n\t"
 	".pushsection .fini, \"ax\", @progbits" "\n\t"
-	"jal	__do_global_dtors_aux"		"\n\t"
+#ifdef __mips_o32
+	".set noreorder"					"\n\t"
+	".set nomacro"						"\n\t"
+	"lw	$28,16($sp)" 					"\n\t"
+	"nop"							"\n\t"
+	"lw	$25,%got(__do_global_dtors_aux)($28)"		"\n\t"
+	"nop"							"\n\t"
+	"addiu   $25,$25,%lo(__do_global_dtors_aux)"		"\n\t"
+	".reloc	1f,R_MIPS_JALR,__do_global_dtors_aux"		"\n\t"
+	"1:	jalr	$25"					"\n\t"
+        "nop"							"\n\t"
+	".set macro"						"\n\t"
+	".set reorder"						"\n\t"
+#else
+	"jal	__do_global_dtors_aux"				"\n\t"
+#endif
 	".popsection");
