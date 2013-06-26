@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/03/05 19:58:33 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2013/06/26 19:29:24 reinoud Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 LIB=	vfstest
 SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
 	fstest_nfs.c fstest_puffs.c fstest_rumpfs.c fstest_sysvbfs.c	\
-	fstest_tmpfs.c fstest_v7fs.c
+	fstest_tmpfs.c fstest_udf.c fstest_v7fs.c
 
 .if (${MKZFS} != "no")
 SRCS+=	fstest_zfs.c
