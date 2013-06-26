@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.41 2012/07/22 14:02:11 matt Exp $ */
+/* $NetBSD: syscall.c,v 1.42 2013/06/26 15:09:59 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41 2012/07/22 14:02:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2013/06/26 15:09:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,19 +190,7 @@ syscall(struct lwp *l, uint64_t code, struct trapframe *tf)
 	}
 	args += hidden;
 
-	if (!__predict_false(p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = sy_call(callp, l, args, rval);
-	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		trace_exit(code, rval, error);
-	}
-
+	error = sy_invoke(callp, l, args, rval, code);
 
 	if (__predict_true(error == 0)) {
 		tf->tf_regs[FRAME_V0] = rval[0];
