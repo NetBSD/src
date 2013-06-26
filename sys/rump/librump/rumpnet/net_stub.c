@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.13 2012/08/05 15:36:19 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.14 2013/06/26 17:10:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.13 2012/08/05 15:36:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.14 2013/06/26 17:10:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -46,14 +46,10 @@ __rumpnet_stub(void)
 	panic("component not available");
 }
 __weak_alias(rtioctl,__rumpnet_stub);
-__weak_alias(rt_walktree,__rumpnet_stub);
 __weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(ifioctl,__rumpnet_stub);
 __weak_alias(ifunit,__rumpnet_stub);
 __weak_alias(ifreq_setaddr,__rumpnet_stub);
-__weak_alias(rt_msg1,__rumpnet_stub);
-__weak_alias(route_enqueue,__rumpnet_stub);
-__weak_alias(route_info,__rumpnet_stub);
 
 /*
  * Weak symbols so that we can optionally leave components out.
