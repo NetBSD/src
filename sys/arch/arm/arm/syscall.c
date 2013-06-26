@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.57 2013/06/26 06:31:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2013/06/26 06:31:53 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -254,17 +254,7 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 		args = &tf->tf_r0;
 	}
 
-	if (!__predict_false(p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(code, args, nargs)) == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
-	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    || !__predict_false(callp->sy_flags & SYCALL_INDIRECT))
-		trace_exit(code, rval, error);
+	error = sy_invoke(callp, l, args, rval, code);
 
 	switch (error) {
 	case 0:
