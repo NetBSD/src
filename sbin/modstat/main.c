@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2012/08/07 01:19:05 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2013/06/26 17:55:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2012/08/07 01:19:05 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2013/06/26 17:55:38 riz Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -175,9 +175,9 @@ main(int argc, char **argv)
 		if (maxnamelen < namelen)
 			maxnamelen = namelen;
 	}
-	printf("%-*s %-10s %-10s %-5s %-8s %s\n",
-	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "REFS", "SIZE",
-	    "REQUIRES");
+	printf("%-*s %-10s %-10s %-5s %-16s %-8s %s \n",
+	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "REFS", "ADDRESS",
+	    "SIZE", "REQUIRES");
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
 		const char *class;
 		const char *source;
@@ -204,9 +204,9 @@ main(int argc, char **argv)
 		else
 			source = "UNKNOWN";
 
-		printf("%-*s %-10s %-10s %-5d %-8s %s\n",
+		printf("%-*s %-10s %-10s %-5d %-16" PRIx64 " %-8s %s\n",
 		    (int)maxnamelen, ms->ms_name, class, source, ms->ms_refcnt,
-		    sbuf, ms->ms_required);
+		    ms->ms_addr, sbuf, ms->ms_required);
 	}
 
 	exit(EXIT_SUCCESS);
