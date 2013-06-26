@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.51 2012/07/20 14:21:20 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.52 2013/06/26 06:31:53 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2012/07/20 14:21:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2013/06/26 06:31:53 matt Exp $");
 
 void
 child_return(void *arg)
@@ -144,18 +144,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 		params = args;
 	}
 
-	if (!__predict_false(p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(realcode, params, callp->sy_narg)) == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = sy_call(callp, l, params, rval);
-	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		trace_exit(code, rval, error);
-	}
+	error = sy_invoke(callp, l, params, rval, code);
 
 	if (__predict_true(error == 0)) {
 		tf->tf_fixreg[FIRSTARG] = rval[0];
