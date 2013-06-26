@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.22 2013/01/15 10:18:38 martin Exp $     */
+/*	$NetBSD: syscall.c,v 1.23 2013/06/26 06:31:53 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2013/01/15 10:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2013/06/26 06:31:53 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -103,11 +103,7 @@ syscall(struct trapframe *tf)
 	 * Only trace if tracing is enabled and the syscall isn't indirect
 	 * (SYS_syscall or SYS___syscall)
 	 */
-	if (__predict_true(!p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(tf->tf_code, args, callp->sy_narg)) == 0) {
-		error = sy_call(callp, curlwp, args, rval);
-	}
+	error = sy_invoke(callp, curlwp, args, rval, tf->tf_code);
 
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
 	    "tf %p\n", syscallnames[tf->tf_code], tf->tf_pc, tf->tf_psl,
@@ -133,10 +129,6 @@ bad:
 		tf->tf_psl |= PSL_C;
 		break;
 	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    && __predict_true(!(callp->sy_flags & SYCALL_INDIRECT)))
-		trace_exit(tf->tf_code, rval, error);
 
 	userret(l, tf, oticks);
 }
