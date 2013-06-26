@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1827 2013/06/24 04:21:19 riastradh Exp $
+#	$NetBSD: mi,v 1.1828 2013/06/26 12:07:21 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5160,7 +5160,7 @@
 ./usr/share/man/cat3/conjf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/conjl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/consttime_bcmp.0		comp-obsolete		obsolete
-./usr/share/man/cat3/consttime_memcmp.0		comp-c-catman		.cat
+./usr/share/man/cat3/consttime_memequal.0	comp-c-catman		.cat
 ./usr/share/man/cat3/copysign.0			comp-c-catman		.cat
 ./usr/share/man/cat3/copysignf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysignl.0		comp-c-catman		.cat
