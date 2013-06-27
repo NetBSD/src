@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.22 2012/04/29 03:46:43 christos Exp $
+.\"	$NetBSD: man.conf.5,v 1.23 2013/06/27 21:55:10 jdf Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,9 +81,9 @@ Control keywords must start with the
 .Dq _
 character.
 The following control keywords are currently defined:
-.Bl -tag -width "_version"
+.Bl -tag -width "_\*[Lt]machine\*[Gt]"
 .It _build
-identifies the set of suffixes used for manual pages that must be
+Identifies the set of suffixes used for manual pages that must be
 formatted for display and the command that should be used to format
 them.
 Manual file names, regardless of their format, are expected to end in a
@@ -103,7 +103,7 @@ There should be exactly one occurrence of the string
 in the shell command line, and it will
 be replaced by the name of the file which is being formatted.
 .It _crunch
-used by
+Used by
 .Xr catman 8
 to determine how to crunch formatted pages
 which originally were compressed man pages: The first field lists a suffix
@@ -115,9 +115,9 @@ There should be exactly one occurrence of the string
 in the shell command line, and it will
 be replaced by the name of the output file.
 .It _default
-contains the system-wide default man path used to search for man pages.
+Contains the system-wide default man path used to search for man pages.
 .It _subdir
-contains the list (in search order) of section subdirectories which will
+Contains the list (in search order) of section subdirectories which will
 be searched in any man path directory named with a trailing slash
 .Pq Dq /
 character.
@@ -141,9 +141,9 @@ Each suffix may contain the normal shell globbing characters (NOT
 including curly braces
 .Pq Dq {} ) .
 .It _version
-contains the version of the configuration file.
+Contains the version of the configuration file.
 .It _whatdb
-defines the full pathname (not just a directory path) for a database to
+Defines the full pathname (not just a directory path) for a database to
 be used
 by the
 .Xr apropos 1
@@ -157,7 +157,7 @@ to escape a shell globbing character,
 precede it with a backslash
 .Pq Dq \e .
 .It _\*[Lt]machine\*[Gt]
-The defines additional paths to be searched for the particular
+Defines additional paths to be searched for the particular
 .Dv machine
 whose literal value is taken from
 .Xr uname 1
