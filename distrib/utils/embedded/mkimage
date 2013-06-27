@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.40 2013/06/16 13:47:42 jakllsch Exp $
+# $NetBSD: mkimage,v 1.41 2013/06/27 03:00:53 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-bmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-bdmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 
 -b	Boot only, no sets loaded
 -d	Add the debug sets
@@ -115,7 +115,7 @@ do
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
-	b)	bootonly="true";;
+	b)	bootonly=true;;
 	d)	dsets=true
 		selected_sets="$selected_sets debug"
 		if $xsets; then
@@ -170,15 +170,15 @@ fi
 if [ -n ${msdosid} ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t msdos \
-	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m ${image} ${mnt}/boot
+	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m \
+	    ${image} ${mnt}/boot
 fi
 
 if [ -z "$bootonly" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t ffs -rx \
 	    -O $(((${init} + ${boot} + ${swap}) / 2))m \
-		-o d=4096 \
-	    -b $((${extra}))m \
+	    -o d=4096 -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
