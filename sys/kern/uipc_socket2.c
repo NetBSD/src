@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.110 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.111 2013/06/27 18:53:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.110 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.111 2013/06/27 18:53:17 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -1301,32 +1301,49 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(void *p, int size, int type, int level)
+sbcreatecontrol1(void **p, int size, int type, int level, int flags)
 {
 	struct cmsghdr	*cp;
 	struct mbuf	*m;
+	int space = CMSG_SPACE(size);
 
-	if (CMSG_SPACE(size) > MCLBYTES) {
-		printf("sbcreatecontrol: message too large %d\n", size);
+	if ((flags & M_DONTWAIT) && space > MCLBYTES) {
+		printf("%s: message too large %d\n", __func__, space);
 		return NULL;
 	}
 
-	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
-		return (NULL);
-	if (CMSG_SPACE(size) > MLEN) {
-		MCLGET(m, M_DONTWAIT);
+	if ((m = m_get(flags, MT_CONTROL)) == NULL)
+		return NULL;
+	if (space > MLEN) {
+		if (space > MCLBYTES)
+			MEXTMALLOC(m, space, M_WAITOK);
+		else
+			MCLGET(m, flags);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
 			return NULL;
 		}
 	}
 	cp = mtod(m, struct cmsghdr *);
-	memcpy(CMSG_DATA(cp), p, size);
-	m->m_len = CMSG_SPACE(size);
+	*p = CMSG_DATA(cp);
+	m->m_len = space;
 	cp->cmsg_len = CMSG_LEN(size);
 	cp->cmsg_level = level;
 	cp->cmsg_type = type;
-	return (m);
+	return m;
+}
+
+struct mbuf *
+sbcreatecontrol(void *p, int size, int type, int level)
+{
+	struct mbuf *m;
+	void *v;
+
+	m = sbcreatecontrol1(&v, size, type, level, M_DONTWAIT);
+	if (m == NULL)
+		return NULL;
+	memcpy(v, p, size);
+	return m;
 }
 
 void

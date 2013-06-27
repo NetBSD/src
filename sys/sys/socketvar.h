@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.129 2012/02/01 02:27:23 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.130 2013/06/27 18:53:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
 	sbcreatecontrol(void *, int, int, int);
+struct mbuf *
+	sbcreatecontrol1(void **, int, int, int, int);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
