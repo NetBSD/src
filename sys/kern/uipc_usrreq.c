@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.141 2013/02/14 01:00:07 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.142 2013/06/27 18:54:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.141 2013/02/14 01:00:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142 2013/06/27 18:54:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1465,52 +1465,26 @@ unp_internalize(struct mbuf **controlp)
 struct mbuf *
 unp_addsockcred(struct lwp *l, struct mbuf *control)
 {
-	struct cmsghdr *cmp;
 	struct sockcred *sc;
-	struct mbuf *m, *n;
-	int len, space, i;
+	struct mbuf *m;
+	void *p;
 
-	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
-	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)));
-
-	m = m_get(M_WAIT, MT_CONTROL);
-	if (space > MLEN) {
-		if (space > MCLBYTES)
-			MEXTMALLOC(m, space, M_WAITOK);
-		else
-			m_clget(m, M_WAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			return (control);
-		}
-	}
-
-	m->m_len = space;
-	m->m_next = NULL;
-	cmp = mtod(m, struct cmsghdr *);
-	sc = (struct sockcred *)CMSG_DATA(cmp);
-	cmp->cmsg_len = len;
-	cmp->cmsg_level = SOL_SOCKET;
-	cmp->cmsg_type = SCM_CREDS;
+	m = sbcreatecontrol1(&p, SOCKCREDSIZE(kauth_cred_ngroups(l->l_cred)),
+		SCM_CREDS, SOL_SOCKET, M_WAITOK);
+	if (m == NULL)
+		return control;
+		
+	sc = p;
 	sc->sc_uid = kauth_cred_getuid(l->l_cred);
 	sc->sc_euid = kauth_cred_geteuid(l->l_cred);
 	sc->sc_gid = kauth_cred_getgid(l->l_cred);
 	sc->sc_egid = kauth_cred_getegid(l->l_cred);
 	sc->sc_ngroups = kauth_cred_ngroups(l->l_cred);
-	for (i = 0; i < sc->sc_ngroups; i++)
+
+	for (int i = 0; i < sc->sc_ngroups; i++)
 		sc->sc_groups[i] = kauth_cred_group(l->l_cred, i);
 
-	/*
-	 * If a control message already exists, append us to the end.
-	 */
-	if (control != NULL) {
-		for (n = control; n->m_next != NULL; n = n->m_next)
-			;
-		n->m_next = m;
-	} else
-		control = m;
-
-	return (control);
+	return m_add(control, m);
 }
 
 /*
