@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.35 2013/06/27 10:01:31 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.36 2013/06/27 11:02:20 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1114,9 +1114,10 @@ use_slashdir:
 
 /*
  * checks to see if this request has a valid .bzredirect file.  returns
- * 0 on failure and 1 on success.
+ * 0 when no redirection happend, or 1 when handle_redirect() has been
+ * called.
  */
-static void
+static int
 check_bzredirect(bozo_httpreq_t *request)
 {
 	struct stat sb;
@@ -1145,12 +1146,12 @@ check_bzredirect(bozo_httpreq_t *request)
 	snprintf(redir, sizeof(redir), "%s/%s", dir, REDIRECT_FILE);
 	if (lstat(redir, &sb) == 0) {
 		if (!S_ISLNK(sb.st_mode))
-			return;
+			return 0;
 		absolute = 0;
 	} else {
 		snprintf(redir, sizeof(redir), "%s/%s", dir, ABSREDIRECT_FILE);
 		if (lstat(redir, &sb) < 0 || !S_ISLNK(sb.st_mode))
-			return;
+			return 0;
 		absolute = 1;
 	}
 	debug((request->hr_httpd, DEBUG_FAT,
@@ -1158,7 +1159,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	rv = readlink(redir, redirpath, sizeof redirpath - 1);
 	if (rv == -1 || rv == 0) {
 		debug((request->hr_httpd, DEBUG_FAT, "readlink failed"));
-		return;
+		return 0;
 	}
 	redirpath[rv] = '\0';
 	debug((request->hr_httpd, DEBUG_FAT,
@@ -1174,6 +1175,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	debug((request->hr_httpd, DEBUG_FAT,
 	       "check_bzredirect: new redir %s", finalredir));
 	handle_redirect(request, finalredir, absolute);
+	return 1;
 }
 
 /* this fixes the %HH hack that RFC2396 requires.  */
@@ -1288,7 +1290,8 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		goto bad_done;
 	}
 
-	check_bzredirect(request);
+	if (check_bzredirect(request))
+		return 0;
 
 	if (httpd->untrustedref) {
 		int to_indexhtml = 0;
