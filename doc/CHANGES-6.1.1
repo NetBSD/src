@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.1,v 1.1.2.7 2013/06/23 11:17:42 bouyer Exp $
+# $NetBSD: CHANGES-6.1.1,v 1.1.2.8 2013/06/27 01:34:34 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1 release to the NetBSD 6.1.1
 release:
@@ -103,3 +103,8 @@ tests/lib/libm/t_atan.c				1.4 - 1.7, 1.9 via patch
 	PR port-i386/46108.
 	[isaki, ticket #903]
 
+external/gpl3/binutils/dist/ld/emultempl/elf32.em 1.6
+
+	PR 47922: Properly resolve DT_NEEDED entries under sysroot and don't
+	accidently try the installed system.
+	[joerg, ticket #911]
