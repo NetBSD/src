@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.34 2013/06/27 20:14:25 christos Exp $
+.\"	$NetBSD: ip.4,v 1.35 2013/06/27 21:22:46 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,8 +113,8 @@ setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, ipsec_get_policylen(buf));
 The
 .Dv IP_PKTINFO
 option can be used to turn on receiving of information about the source
-address of the packet, and the interface index. The information is passed
-in an
+address of the packet, and the interface index.
+The information is passed in a
 .Tp struct in_pktinfo
 structure, which contains
 .Bd -literal
@@ -213,7 +213,6 @@ The
 option is similar to the
 .Dv IP_PKTINFO
 one, only in this case the inbound information is returned.
-i
 .Pp
 If the
 .Dv IP_RECVTTL
