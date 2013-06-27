@@ -1,6 +1,5 @@
-/*	$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $	*/
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,28 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <powerpc/asm.h>
-
-RCSID("$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $")
-
-	.section	.ctors, "aw", @progbits
-	.p2align 2
-	.global		__CTOR_LIST_END__
-	.hidden 	__CTOR_LIST_END__
-__CTOR_LIST_END__:
-	.long 0
-
-	.section	.dtors, "aw", @progbits
-	.p2align 2
-	.global		__DTOR_LIST_END__
-	.hidden 	__DTOR_LIST_END__
-__DTOR_LIST_END__:
-	.long 0
-
-	.section	.eh_frame, "a", @progbits
-	.p2align 2
-	.long 0
-
-	.section	.jcr, "aw", @progbits
-	.p2align 2
-	.long 0
+__asm(	".pushsection	.init, \"ax\", @progbits"	"\n\t"
+	"calls	$0, __do_global_ctors_aux"		"\n\t"
+	".popsection"					"\n\t"
+	".pushsection	.fini, \"ax\", @progbits"	"\n\t"
+	"calls	$0, __do_global_dtors_aux"		"\n\t"
+	".popsection"
+	);
