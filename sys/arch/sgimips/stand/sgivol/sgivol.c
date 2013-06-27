@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.18 2008/08/03 17:42:34 rumble Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.19 2013/06/27 21:24:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -529,6 +529,7 @@ write_file(void)
 		}
 		i -= i > 512 ? 512 : i;
 	}
+	fclose(fp);
 }
 
 void
