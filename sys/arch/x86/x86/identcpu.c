@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.33 2013/06/26 20:52:28 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.34 2013/06/27 00:38:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.33 2013/06/26 20:52:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.34 2013/06/27 00:38:18 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -563,17 +563,6 @@ cpu_probe_geode(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_qemu(struct cpu_info *ci)
-{
-       if (memcmp("QEMU Virtual CPU", cpu_brand_string, 16) != 0)
-               return;
-
-       /* if QEMU does not implement MSR_TSC, disable the TSC */
-       ci->ci_feat_val[0] &= ~CPUID_MSR;
-       cpu_feature[0] &= ~CPUID_MSR;
-}
-
-static void
 cpu_probe_vortex86(struct cpu_info *ci)
 {
 #define PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -720,7 +709,6 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_c3(ci);
 	cpu_probe_geode(ci);
 	cpu_probe_vortex86(ci);
-	cpu_probe_qemu(ci);
 
 	x86_cpu_topology(ci);
 
