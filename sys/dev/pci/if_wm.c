@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.260 2013/06/25 17:38:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.261 2013/06/27 09:57:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.260 2013/06/25 17:38:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.261 2013/06/27 09:57:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1244,8 +1244,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	wm_get_wakeup(sc);
-
 	/*
 	 * In addition, i82544 and later support I/O mapped indirect
 	 * register access.  It is not desirable (nor supported in
@@ -1540,26 +1538,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	wm_reset(sc);
 
-	switch (sc->sc_type) {
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82573:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0)
-			wm_get_hw_control(sc);
-		break;
-	default:
-		break;
-	}
-
 	/*
 	 * Get some information about the EEPROM.
 	 */
@@ -1696,6 +1674,28 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_ee_addrbits, eetype);
 	}
 
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+		if (wm_check_mng_mode(sc) != 0) {
+			printf ("get hw control (1)\n");
+			wm_get_hw_control(sc);
+		}
+		break;
+	default:
+		break;
+	}
+	wm_get_wakeup(sc);
 	/*
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
@@ -7983,8 +7983,8 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 
 		factps = CSR_READ(sc, WMREG_FACTPS);
 		wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &data);
-		DPRINTF(WM_DEBUG_MANAGE, ("%s: CFG2 (%04x)\n",
-					  device_xname(sc->sc_dev), data));
+		DPRINTF(WM_DEBUG_MANAGE, ("%s: FACTPS = %08x, CFG2=%04x\n",
+			device_xname(sc->sc_dev), factps, data));
 		if (((factps & FACTPS_MNGCG) == 0)
 		    && ((data & EEPROM_CFG2_MNGM_MASK)
 			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
