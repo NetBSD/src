@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.36 2013/06/27 11:02:20 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.37 2013/06/27 12:20:08 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -924,7 +924,7 @@ check_direct_access(bozo_httpreq_t *request)
 	char dir[MAXPATHLEN], dirfile[MAXPATHLEN], *basename;
 
 	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
-	debug((request->hr_httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
+	debug((request->hr_httpd, DEBUG_FAT, "check_direct_access: dir %s", dir));
 	basename = strrchr(dir, '/');
 
 	if ((!basename || basename[1] != '\0') &&
