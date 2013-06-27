@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.151 2013/01/19 00:51:52 rmind Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.152 2013/06/27 17:47:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -852,9 +852,12 @@ void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);
 char *	m_mapin(struct mbuf *);
-void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
+void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
+struct mbuf *m_add(struct mbuf *, struct mbuf *);
+void	m_align(struct mbuf *, int);
+int	m_append(struct mbuf *, int, const void *);
 
 /* Inline routines. */
 static __inline u_int m_length(const struct mbuf *) __unused;
