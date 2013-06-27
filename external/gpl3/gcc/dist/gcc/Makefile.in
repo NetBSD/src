@@ -602,6 +602,9 @@ objext = .o
 exeext = @host_exeext@
 build_exeext = @build_exeext@
 
+# NetBSD mknative-gcc addition
+ENABLE_SHARED = @enable_shared@
+
 # Directory in which to put man pages.
 mandir = @mandir@
 man1dir = $(mandir)/man1
