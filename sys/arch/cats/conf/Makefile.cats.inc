@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.cats.inc,v 1.25 2011/07/10 04:37:56 tsutsui Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.26 2013/06/27 01:01:08 matt Exp $
 
-MACHINE_ARCH=	arm
+MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
 
 .if defined(ABLEELF) && (${ABLEELF} == "1")
