@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.41 2012/12/14 09:48:31 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.42 2013/06/27 15:46:40 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1379,7 +1379,13 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		if ((hdr->nd_opt_type == ND_OPT_MTU &&
 		    (optlen != sizeof(struct nd_opt_mtu))) ||
 		    ((hdr->nd_opt_type == ND_OPT_PREFIX_INFORMATION &&
-		    optlen != sizeof(struct nd_opt_prefix_info)))) {
+		    optlen != sizeof(struct nd_opt_prefix_info))) ||
+		    (hdr->nd_opt_type == ND_OPT_RDNSS &&
+		    ((optlen < (int)sizeof(struct nd_opt_rdnss) ||
+		    (optlen - sizeof(struct nd_opt_rdnss)) % 16 != 0))) ||
+		    (hdr->nd_opt_type == ND_OPT_DNSSL &&
+		    optlen < (int)sizeof(struct nd_opt_dnssl)))
+		{
 			syslog(LOG_INFO, "<%s> invalid option length",
 			    __func__);
 			continue;
@@ -1388,6 +1394,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		switch (hdr->nd_opt_type) {
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
+		case ND_OPT_RDNSS:
+		case ND_OPT_DNSSL:
 			break;	/* we don't care about these options */
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_MTU:
