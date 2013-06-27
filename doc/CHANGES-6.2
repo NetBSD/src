@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.12 2013/06/23 11:22:29 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.13 2013/06/27 01:19:36 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -259,3 +259,8 @@ sys/arch/i386/eisa/eisa_machdep.c		1.38
 	Patch from Felix Deichmann.
 	[uebayasi, ticket #904]
 
+external/gpl3/binutils/dist/ld/emultempl/elf32.em 1.6
+
+	PR 47922: Properly resolve DT_NEEDED entries under sysroot and don't
+	accidently try the installed system.
+	[joerg, ticket #911]
