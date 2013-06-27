@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.34 2013/06/23 20:32:55 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.35 2013/06/27 10:01:31 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -337,6 +337,7 @@ bozo_clean_request(bozo_httpreq_t *request)
 	MF(hr_remotehost);
 	MF(hr_remoteaddr);
 	MF(hr_serverport);
+	MF(hr_virthostname);
 	MF(hr_file);
 	MF(hr_oldfile);
 	MF(hr_query);
@@ -539,6 +540,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	request->hr_range = NULL;
 	request->hr_last_byte_pos = -1;
 	request->hr_if_modified_since = NULL;
+	request->hr_virthostname = NULL;
 	request->hr_file = NULL;
 	request->hr_oldfile = NULL;
 
@@ -954,6 +956,7 @@ handle_redirect(bozo_httpreq_t *request,
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *urlbuf;
 	char portbuf[20];
+	const char *hostname = BOZOHOST(httpd, request);
 	int query = 0;
 	
 	if (url == NULL) {
@@ -972,7 +975,7 @@ handle_redirect(bozo_httpreq_t *request,
 		    request->hr_serverport);
 	else
 		portbuf[0] = '\0';
-	bozo_warn(httpd, "redirecting %s%s%s", httpd->virthostname, portbuf, url);
+	bozo_warn(httpd, "redirecting %s%s%s", hostname, portbuf, url);
 	debug((httpd, DEBUG_FAT, "redirecting %s", url));
 	bozo_printf(httpd, "%s 301 Document Moved\r\n", request->hr_proto);
 	if (request->hr_proto != httpd->consts.http_09) 
@@ -980,7 +983,7 @@ handle_redirect(bozo_httpreq_t *request,
 	if (request->hr_proto != httpd->consts.http_09) {
 		bozo_printf(httpd, "Location: http://");
 		if (absolute == 0)
-			bozo_printf(httpd, "%s%s", httpd->virthostname, portbuf);
+			bozo_printf(httpd, "%s%s", hostname, portbuf);
 		if (query) {
 			bozo_printf(httpd, "%s?%s\r\n", url, request->hr_query);
 		} else {
@@ -997,13 +1000,13 @@ handle_redirect(bozo_httpreq_t *request,
 		if (absolute)
 			bozo_printf(httpd, "%s?%s", url, request->hr_query);
 		else
-			bozo_printf(httpd, "%s%s%s?%s", httpd->virthostname,
+			bozo_printf(httpd, "%s%s%s?%s", hostname,
 				    portbuf, url, request->hr_query);
 	} else {
 		if (absolute)
 			bozo_printf(httpd, "%s", url);
 		else
-			bozo_printf(httpd, "%s%s%s", httpd->virthostname,
+			bozo_printf(httpd, "%s%s%s", hostname,
 				    portbuf, url);
 	}
 	bozo_printf(httpd, "\">here</a>\n");
@@ -1076,9 +1079,10 @@ check_virtual(bozo_httpreq_t *request)
 				    len) == 0) {
 					/* found it, punch it */
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
-					httpd->virthostname = strdup(d->d_name);
+					request->hr_virthostname =
+					    bozostrdup(httpd,d->d_name);
 					if (asprintf(&s, "%s/%s", httpd->virtbase,
-					    httpd->virthostname) < 0)
+					    request->hr_virthostname) < 0)
 						bozo_err(httpd, 1, "asprintf");
 					break;
 				}
@@ -1268,6 +1272,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 	bozohttpd_t *httpd = request->hr_httpd;
 	char	*file, *newfile = NULL;
 	size_t	len;
+	const char *hostname = BOZOHOST(httpd, request);
 
 	file = NULL;
 	*isindex = 0;
@@ -1306,10 +1311,10 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 
 			debug((httpd, DEBUG_FAT,
 				"checking referrer \"%s\" vs virthostname %s",
-				r, httpd->virthostname));
+				r, hostname));
 			if (strncmp(r, "http://", 7) != 0 ||
-			    (strncasecmp(r + 7, httpd->virthostname,
-			    		 strlen(httpd->virthostname)) != 0 &&
+			    (strncasecmp(r + 7, hostname,
+			    		 strlen(hostname)) != 0 &&
 			     !TOP_PAGE(file)))
 				to_indexhtml = 1;
 		} else {
@@ -1318,8 +1323,8 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 			debug((httpd, DEBUG_FAT, "url has no referrer at all"));
 			/* if there's no referrer, let / or /index.html past */
 			if (!TOP_PAGE(file) ||
-			    (h && strncasecmp(h, httpd->virthostname,
-			    		strlen(httpd->virthostname)) != 0))
+			    (h && strncasecmp(h, hostname,
+			    		strlen(hostname)) != 0))
 				to_indexhtml = 1;
 		}
 
@@ -1829,6 +1834,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	const char *reason = http_errors_long(code);
 	const char *proto = (request && request->hr_proto) ?
 				request->hr_proto : httpd->consts.http_11;
+	const char *hostname = BOZOHOST(httpd, request);
 	int	size;
 
 	debug((httpd, DEBUG_FAT, "bozo_http_error %d: %s", code, msg));
@@ -1855,7 +1861,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
  		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
 		    "</body></html>\n",
 		    header, header, request->hr_file, reason,
-		    httpd->virthostname, portbuf, httpd->virthostname, portbuf);
+		    hostname, portbuf, hostname, portbuf);
 		if (size >= (int)BUFSIZ) {
 			bozo_warn(httpd,
 				"bozo_http_error buffer too small, truncated");

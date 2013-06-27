@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.20 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.21 2013/06/27 10:01:31 martin Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -380,7 +380,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	bozo_setenv(httpd, "PATH", _PATH_DEFPATH, curenvp++);
 	bozo_setenv(httpd, "IFS", " \t\n", curenvp++);
-	bozo_setenv(httpd, "SERVER_NAME", httpd->virthostname, curenvp++);
+	bozo_setenv(httpd, "SERVER_NAME", BOZOHOST(httpd,request), curenvp++);
 	bozo_setenv(httpd, "GATEWAY_INTERFACE", "CGI/1.1", curenvp++);
 	bozo_setenv(httpd, "SERVER_PROTOCOL", request->hr_proto, curenvp++);
 	bozo_setenv(httpd, "REQUEST_METHOD", request->hr_methodstr, curenvp++);

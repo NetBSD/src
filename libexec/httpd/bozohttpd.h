@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.23 2012/07/19 09:53:06 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.24 2013/06/27 10:01:31 martin Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -117,6 +117,8 @@ typedef struct bozo_httpreq_t {
 #define HTTP_TRACE	0x07	/* not supported */
 #define HTTP_CONNECT	0x08	/* not supported */
 	const char *hr_methodstr;
+	char	*hr_virthostname;	/* server name (if not identical
+					   to hr_httpd->virthostname) */
 	char	*hr_file;
 	char	*hr_oldfile;	/* if we added an index_html */
 	char	*hr_query;  
@@ -143,6 +145,11 @@ typedef struct bozo_httpreq_t {
 	SIMPLEQ_HEAD(, bozoheaders)	hr_headers;
 	int	hr_nheaders;
 } bozo_httpreq_t;
+
+/* helper to access the "active" host name from a httpd/request pair */
+#define	BOZOHOST(HTTPD,REQUEST)	((REQUEST)->hr_virthostname ?		\
+					(REQUEST)->hr_virthostname :	\
+					(HTTPD)->virthostname)
 
 /* structure to hold string based (name, value) pairs with preferences */
 typedef struct bozoprefs_t {
