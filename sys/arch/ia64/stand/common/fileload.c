@@ -1,4 +1,4 @@
-/*	$NetBSD: fileload.c,v 1.3 2012/12/27 20:21:51 martin Exp $	*/
+/*	$NetBSD: fileload.c,v 1.4 2013/06/27 21:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -61,7 +61,7 @@ int
 command_load(int argc, char *argv[])
 {
     char	*typestr;
-    int		dofile, dokld, ch, error;
+    int		dofile, dokld, ch;
     
     dokld = dofile = 0;
     optind = 1;
@@ -89,11 +89,12 @@ command_load(int argc, char *argv[])
      * Do we have explicit KLD load ?
      */
     if (dokld || file_havepath(argv[1])) {
-	error = file_loadkernel(argv[1], argc - 2, argv + 2);
+	int error = file_loadkernel(argv[1], argc - 2, argv + 2);
 	if (error == EEXIST)
 	    sprintf(command_errbuf, "warning: KLD '%s' already loaded", argv[1]);
+	return error == 0 ? CMD_OK : CMD_ERROR;
     }
-    return (error == 0 ? CMD_OK : CMD_ERROR);
+    return CMD_OK;
 }
 
 
