@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.75 2013/03/18 19:35:41 plunky Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.76 2013/06/27 09:38:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.75 2013/03/18 19:35:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.76 2013/06/27 09:38:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -276,7 +276,6 @@ udf_write(void *v)
 	struct extfile_entry *efe;
 	uint64_t file_size, old_size, old_offset;
 	vsize_t len;
-	int async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	int aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	int error;
 	int resid, extended;
@@ -364,7 +363,7 @@ udf_write(void *v)
 		 * Directories are excluded since its file data that we want
 		 * to purge.
 		 */
-		if (!async && (vp->v_type != VDIR) &&
+		if ((vp->v_type != VDIR) &&
 		  (old_offset >> 16 != uio->uio_offset >> 16)) {
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
