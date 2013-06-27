@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.49 2013/06/20 05:39:19 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.49 2013/06/20 05:39:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -506,7 +506,9 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 #endif
 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15)
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
+#endif
 
 	/*
 	 * Set up the variables that define the availability of physical
