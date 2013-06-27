@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.41 2013/06/27 03:00:53 christos Exp $
+# $NetBSD: mkimage,v 1.42 2013/06/27 03:03:16 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,7 +73,7 @@ Usage: $PROG -h <host-arch> [-bdmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>
 
 -b	Boot only, no sets loaded
 -d	Add the debug sets
--m	Mimimize disk writes for sd cards
+-m	Optimize the OS installation to mimimize disk writes for SSD cards
 -x	Load the x sets too, not just the base ones
 EOF
 	exit 1
