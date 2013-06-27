@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2013/04/25 16:18:43 skrll Exp $
+#	$NetBSD: Makefile,v 1.55 2013/06/27 02:38:39 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -112,6 +112,8 @@ GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
 CXXADDFLAGS=	--sysroot=${DESTDIR}
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 
+# NEWCONFIGDIR can be set to a read-write location of the source tree
+# in case the version being used is not.
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gcc
 
@@ -129,9 +131,9 @@ native-gcc: .native/.configure_done
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 .if ${HAVE_GCC} >= 45
-MPC=		${NEWCONFIGDIR}/external/lgpl2/mpc
-MPFR=		${NEWCONFIGDIR}/external/lgpl3/mpfr
-GMP=		${NEWCONFIGDIR}/external/lgpl3/gmp
+MPC=		${NETBSDSRCDIR}/external/lgpl2/mpc
+MPFR=		${NETBSDSRCDIR}/external/lgpl3/mpfr
+GMP=		${NETBSDSRCDIR}/external/lgpl3/gmp
 MPCOBJ!=	cd ${MPC}/lib/libmpc && ${PRINTOBJDIR}
 MPFROBJ!=	cd ${MPFR}/lib/libmpfr && ${PRINTOBJDIR}
 GMPOBJ!=	cd ${GMP}/lib/libgmp && ${PRINTOBJDIR}
