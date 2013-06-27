@@ -1,6 +1,6 @@
-/*	$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $	*/
+/* $NetBSD: crtbegin.h,v 1.1 2013/06/27 21:24:39 matt Exp $ */
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,28 +28,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <powerpc/asm.h>
+static void __do_global_ctors_aux(void) __attribute__((__constructor__)) __used;
+#ifdef SHARED
+static void __do_global_dtors_aux(void) __attribute__((__destructor__)) __used;
+#endif
 
-RCSID("$NetBSD: crtend.S,v 1.2 2013/06/27 21:24:39 matt Exp $")
+#ifndef SHARED
+static const void *find_exidx(void *, int *) __used;
 
-	.section	.ctors, "aw", @progbits
-	.p2align 2
-	.global		__CTOR_LIST_END__
-	.hidden 	__CTOR_LIST_END__
-__CTOR_LIST_END__:
-	.long 0
+static const void *
+find_exidx(void * pc, int * pcount)
+{
+	extern __dso_hidden const char __exidx_start[];
+	extern __dso_hidden const char __exidx_end[];
 
-	.section	.dtors, "aw", @progbits
-	.p2align 2
-	.global		__DTOR_LIST_END__
-	.hidden 	__DTOR_LIST_END__
-__DTOR_LIST_END__:
-	.long 0
+	*pcount = (__exidx_end - __exidx_start) / 8;
+	return __exidx_start;
+}
 
-	.section	.eh_frame, "a", @progbits
-	.p2align 2
-	.long 0
-
-	.section	.jcr, "aw", @progbits
-	.p2align 2
-	.long 0
+__weak_alias(__gnu_Uwind_find_exidx,find_exidx)
+#endif /* !SHARED */
