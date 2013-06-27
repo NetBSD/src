@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.38 2013/06/27 13:00:43 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.39 2013/06/27 13:11:11 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1124,7 +1124,8 @@ static int
 check_bzredirect(bozo_httpreq_t *request)
 {
 	struct stat sb;
-	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1];
+	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1],
+	    path[MAXPATHLEN];
 	char *basename, *finalredir;
 	int rv, absolute;
 
@@ -1167,7 +1168,12 @@ check_bzredirect(bozo_httpreq_t *request)
 	redirpath[rv] = '\0';
 	debug((request->hr_httpd, DEBUG_FAT,
 	       "readlink returned \"%s\"", redirpath));
-	
+
+	/* check if we need authentication */
+	snprintf(path, sizeof(path), "%s/", dir);
+	if (bozo_auth_check(request, path))
+		return 1;
+
 	/* now we have the link pointer, redirect to the real place */
 	if (absolute)
 		finalredir = redirpath;
