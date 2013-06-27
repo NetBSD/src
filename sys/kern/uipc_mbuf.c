@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.149 2013/05/08 11:08:45 pooka Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.150 2013/06/27 17:47:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.149 2013/05/08 11:08:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.150 2013/06/27 17:47:18 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -456,6 +456,88 @@ mb_ctor(void *arg, void *object, int flags)
 	m->m_paddr = M_PADDR_INVALID;
 #endif
 	return (0);
+}
+
+/*
+ * Add mbuf to the end of a chain
+ */
+struct mbuf *
+m_add(struct mbuf *c, struct mbuf *m) {
+	struct mbuf *n;
+
+	if (c == NULL)
+		return m;
+
+	for (n = c; n->m_next != NULL; n = n->m_next)
+		continue;
+	n->m_next = m;
+	return c;
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf
+ * to place an object of the specified size at the
+ * end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+       int adjust;
+
+       if (m->m_flags & M_EXT)
+	       adjust = m->m_ext.ext_size - len;
+       else if (m->m_flags & M_PKTHDR)
+	       adjust = MHLEN - len;
+       else
+	       adjust = MLEN - len;
+       m->m_data += adjust &~ (sizeof(long)-1);
+}
+
+/*
+ * Append the specified data to the indicated mbuf chain,
+ * Extend the mbuf chain if the new data does not fit in
+ * existing space.
+ *
+ * Return 1 if able to complete the job; otherwise 0.
+ */
+int
+m_append(struct mbuf *m0, int len, const void *cpv)
+{
+	struct mbuf *m, *n;
+	int remainder, space;
+	const char *cp = cpv;
+
+	for (m = m0; m->m_next != NULL; m = m->m_next)
+		continue;
+	remainder = len;
+	space = M_TRAILINGSPACE(m);
+	if (space > 0) {
+		/*
+		 * Copy into available space.
+		 */
+		if (space > remainder)
+			space = remainder;
+		memmove(mtod(m, char *) + m->m_len, cp, space);
+		m->m_len += space;
+		cp = cp + space, remainder -= space;
+	}
+	while (remainder > 0) {
+		/*
+		 * Allocate a new mbuf; could check space
+		 * and allocate a cluster instead.
+		 */
+		n = m_get(M_DONTWAIT, m->m_type);
+		if (n == NULL)
+			break;
+		n->m_len = min(MLEN, remainder);
+		memmove(mtod(n, void *), cp, n->m_len);
+		cp += n->m_len, remainder -= n->m_len;
+		m->m_next = n;
+		m = n;
+	}
+	if (m0->m_flags & M_PKTHDR)
+		m0->m_pkthdr.len += len - remainder;
+	return (remainder == 0);
 }
 
 void
