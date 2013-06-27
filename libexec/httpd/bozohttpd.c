@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.37 2013/06/27 12:20:08 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.38 2013/06/27 13:00:43 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -975,7 +975,10 @@ handle_redirect(bozo_httpreq_t *request,
 		    request->hr_serverport);
 	else
 		portbuf[0] = '\0';
-	bozo_warn(httpd, "redirecting %s%s%s", hostname, portbuf, url);
+	if (absolute)
+		bozo_warn(httpd, "redirecting %s", url);
+	else
+		bozo_warn(httpd, "redirecting %s%s%s", hostname, portbuf, url);
 	debug((httpd, DEBUG_FAT, "redirecting %s", url));
 	bozo_printf(httpd, "%s 301 Document Moved\r\n", request->hr_proto);
 	if (request->hr_proto != httpd->consts.http_09) 
