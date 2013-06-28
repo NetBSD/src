@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $ */
+/* $NetBSD: moused.c,v 1.23 2013/06/28 15:04:35 joerg Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $");
+__RCSID("$NetBSD: moused.c,v 1.23 2013/06/28 15:04:35 joerg Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2045,7 +2045,7 @@ r_installmap(char *arg)
 	    return FALSE;
 	lbutton = atoi(s);
 
-	arg = skipspace(++arg);
+	arg = skipspace(arg + 1);
 	s = arg;
 	while (isdigit((unsigned char)*arg))
 	    ++arg;
