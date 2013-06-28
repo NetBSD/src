@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.21 2012/10/06 14:41:40 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.22 2013/06/28 15:26:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.21 2012/10/06 14:41:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.22 2013/06/28 15:26:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1342,19 +1342,17 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 		 * best one we can support
 		 */
 		if (sc->sc_videomode == NULL) {
-			int n;
 			struct videomode *m = sc->sc_ei.edid_modes;
 
 			sort_modes(sc->sc_ei.edid_modes,
-			 	    &sc->sc_ei.edid_preferred_mode,
-				    sc->sc_ei.edid_nmodes);
-			while ((sc->sc_videomode == NULL) &&
-			       (n < sc->sc_ei.edid_nmodes)) {
-				if (MODE_IS_VALID(&m[n])) {
-					sc->sc_videomode = &m[n];
-				}
-				n++;
-			}
+			    &sc->sc_ei.edid_preferred_mode,
+			    sc->sc_ei.edid_nmodes);
+			if (sc->sc_videomode == NULL)
+				for (int n = 0; n < sc->sc_ei.edid_nmodes; n++)
+					if (MODE_IS_VALID(&m[n])) {
+						sc->sc_videomode = &m[n];
+						break;
+					}
 		}
 	}
 	if (sc->sc_videomode == NULL) {
