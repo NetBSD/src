@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2013/06/27 02:38:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.56 2013/06/28 08:30:10 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -120,14 +120,14 @@ MKNATIVE?=	${.CURDIR}/mknative-gcc
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
 	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MKNATIVE_TARGET} \
-		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
-		${DESTDIR}
+		${.OBJDIR}/build ${NEWCONFIGDIR} ${NETBSDSRCDIR} \
+		${MACHINE_GNU_PLATFORM} ${DESTDIR}
 
 native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
 	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} ${MKNATIVE_TARGET} \
-		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
-		${DESTDIR}
+		${.OBJDIR}/.native ${NEWCONFIGDIR} ${NETBSDSRCDIR} \
+		${MACHINE_GNU_PLATFORM} ${DESTDIR}
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 .if ${HAVE_GCC} >= 45
