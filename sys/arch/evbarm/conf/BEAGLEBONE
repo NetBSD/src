@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.17 2013/06/28 00:52:02 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.18 2013/06/28 05:58:57 matt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -289,6 +289,7 @@ ukphy*		at mii?
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
+pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
