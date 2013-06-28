@@ -1,24 +1,17 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.23 2013/03/19 22:16:54 garbled Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.24 2013/06/28 05:59:38 matt Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
 # tree, insert it into the kernel *before* we make the u-boot images.
 #
-.if ${KERNEL_BUILD:T:MRPI_INSTALL} != ""
-RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/sshramdisk && ${PRINTOBJDIR}
+RAMDISKNAME?=	ramdisk
+.if ${KERNEL_BUILD:T:M*INSTALL} != ""
+RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/${RAMDISKNAME} && ${PRINTOBJDIR}
 
-.if exists(${RAMDISKDIR}/sshramdisk.fs)
+.if exists(${RAMDISKDIR}/${RAMDISKNAME}.fs)
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/sshramdisk.fs; \
-	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/sshramdisk.fs
-.endif
-.elif ${KERNEL_BUILD:T:M*INSTALL} != ""
-RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/ramdisk && ${PRINTOBJDIR}
-
-.if exists(${RAMDISKDIR}/ramdisk.fs)
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
-	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/${RAMDISKNAME}.fs; \
+	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/${RAMDISKNAME}.fs
 .endif
 .endif
 
