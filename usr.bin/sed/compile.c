@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.38 2012/12/14 08:16:51 msaitoh Exp $	*/
+/*	$NetBSD: compile.c,v 1.39 2013/06/28 15:04:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.38 2012/12/14 08:16:51 msaitoh Exp $");
+__RCSID("$NetBSD: compile.c,v 1.39 2013/06/28 15:04:35 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -657,7 +657,7 @@ compile_tr(char *p, char **transtab)
 		goto bad;
 	}
 	new = xmalloc(strlen(p) + 1);
-	p = compile_delimited(--p, new);
+	p = compile_delimited(p - 1, new);
 	if (p == NULL) {
 		err(COMPILE, "unterminated transform target string");
 		goto bad;
