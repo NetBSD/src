@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.156 2013/06/23 02:07:04 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -283,8 +283,6 @@
 #define	doff_t		int32_t
 #define	lfs_doff_t	int32_t
 #define	LFS_MAXDIRSIZE	(0x7fffffff)
-
-#define	LFS_MAXNAMLEN	255
 
 /*
  * File types for d_type
