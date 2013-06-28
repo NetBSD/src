@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.45 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.46 2013/06/28 01:21:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.46 2013/06/28 01:21:45 matt Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -311,7 +311,9 @@ callout_destroy(callout_t *cs)
 	 */
 	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
 	KASSERT(c->c_cpu->cc_lwp == curlwp || c->c_cpu->cc_active != c);
-	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERTMSG(c->c_magic == CALLOUT_MAGIC,
+	    "callout %p: c_magic (%#x) != CALLOUT_MAGIC (%#x)",
+	    c, c->c_magic, CALLOUT_MAGIC);
 	c->c_magic = 0;
 }
 
