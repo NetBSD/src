@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.226 2013/02/09 00:31:21 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.227 2013/06/28 15:33:40 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.226 2013/02/09 00:31:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.227 2013/06/28 15:33:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -241,7 +241,7 @@ frob_cfdrivervec(struct cfdriver * const *cfdriverv,
 {
 	void (*pr)(const char *, ...) __printflike(1, 2) =
 	    dopanic ? panic : printf;
-	int i = 0, error = 0, e2;
+	int i, error = 0, e2;
 
 	for (i = 0; cfdriverv[i] != NULL; i++) {
 		if ((error = drv_do(cfdriverv[i])) != 0) {
