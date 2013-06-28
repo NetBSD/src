@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.70 2013/05/05 07:11:34 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.71 2013/06/28 08:30:10 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -9,9 +9,10 @@
 
 _TMPDIR=$2
 _TOP=$3
-_PLATFORM=$4
-_DESTDIR=$5
-_ABI=$6
+_SRC=$4
+_PLATFORM=$5
+_DESTDIR=$6
+_ABI=$7
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
 
@@ -29,9 +30,10 @@ _OUTDIRBASE="gnu"
 sanitise_includes () {
 	sed \
 		-e "s,-I$_DESTDIR/usr/include,,g" \
-		-e "s,-I$_TOP/external/lgpl3/mpfr/dist,,g" \
-		-e "s,-I$_TOP/external/lgpl2/mpc/dist/src,,g" \
-		-e "s,-I$_TOP/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g"
+		-e "s,-I$_SRC/external/lgpl3/mpfr/dist,,g" \
+		-e "s,-I$_SRC/external/lgpl2/mpc/dist/src,,g" \
+		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/$MACHINE_ARCH,,g" \
+		-e "s,-I/usr/include/[^ 	]*,,"
 }
 
 ##### gnu/lib/crtstuff #####
