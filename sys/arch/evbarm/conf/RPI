@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.34 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: RPI,v 1.35 2013/06/28 06:00:30 matt Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -140,7 +140,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+options 	SYMTAB_SPACE=810000
 options 	PLCONSOLE
 #options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
 
@@ -247,7 +247,7 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 # disk/mass storage pseudo-devices
 #pseudo-device	fss			# file system snapshot device
 
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
 
