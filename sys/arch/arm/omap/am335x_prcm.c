@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.1 2012/12/11 18:53:26 riastradh Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.2 2013/06/28 02:31:16 matt Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.1 2012/12/11 18:53:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.2 2013/06/28 02:31:16 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,4 +92,34 @@ prcm_module_disable(const struct omap_module *om)
 	    AM335X_CLKCTRL_MODULEMODE_MASK);
 	prcm_write_4(cm_module, clkctrl_reg, clkctrl);
 	am335x_prcm_check_clkctrl(cm_module, clkctrl_reg, clkctrl);
+}
+
+void
+prcm_mpu_pll_config(u_int mpupll_m)
+{
+	uint32_t clkmode = prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKMODE_DPLL_MPU);
+	uint32_t clksel = prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKSEL_DPLL_MPU);
+	//uint32_t div_m2 = prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_DIV_M2_DPLL_MPU);
+
+	/* Request the DPLL to be put into bypass mode */
+	prcm_write_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKMODE_DPLL_MPU, AM335X_PRCM_CM_CLKMODE_DPLL_MN_BYP_MODE);
+
+	/* Wait for it to be put into bypass */
+	while (prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_IDLEST_DPLL_MPU) != AM335X_PRCM_CM_IDLEST_DPLL_ST_DPLL_CLK_MN_BYPASS) {
+		/* nothing */
+	}
+
+	/* Replace multipler */
+	clksel &= ~AM335X_PRCM_CM_CLKSEL_DPLL_MULT;
+	clksel |= __SHIFTIN(mpupll_m, AM335X_PRCM_CM_CLKSEL_DPLL_MULT);
+	prcm_write_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKSEL_DPLL_MPU, clksel);
+
+	/* Exit bypass mode */
+	clkmode |= AM335X_PRCM_CM_CLKMODE_DPLL_LOCK_MODE; 
+	prcm_write_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKMODE_DPLL_MPU, clkmode);
+
+	/* Wait for the DPLL to lock */
+	while (prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_IDLEST_DPLL_MPU) != AM335X_PRCM_CM_IDLEST_DPLL_ST_DPLL_CLK_LOCKED) {
+		/* nothing */
+	}
 }
