@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.23 2013/06/27 21:55:10 jdf Exp $
+.\"	$NetBSD: man.conf.5,v 1.24 2013/06/28 10:13:18 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ Control keywords must start with the
 .Dq _
 character.
 The following control keywords are currently defined:
-.Bl -tag -width "_\*[Lt]machine\*[Gt]"
+.Bl -tag -width XXmachineX
 .It _build
 Identifies the set of suffixes used for manual pages that must be
 formatted for display and the command that should be used to format
@@ -156,7 +156,7 @@ including curly braces
 to escape a shell globbing character,
 precede it with a backslash
 .Pq Dq \e .
-.It _\*[Lt]machine\*[Gt]
+.It _ Ns Aq machine
 Defines additional paths to be searched for the particular
 .Dv machine
 whose literal value is taken from
@@ -241,7 +241,7 @@ sect3		/usr/share/man/{old/,}cat3
 By default, the command
 .Dq Li man mktemp
 will search for
-.Dq mktemp.\*[Lt]any_digit\*[Gt]
+.Dq mktemp. Ns Aq any_digit
 and
 .Dq mktemp.tbl
 in the directories
@@ -260,7 +260,7 @@ searched.
 If
 .Dq mktemp.tbl
 was found first, the command
-.Dq Li tbl \*[Lt]manual page\*[Gt] | nroff -man
+.Dq Li tbl Ao manual page Ac | nroff -man
 would be run to build a man page for display to the user.
 .Pp
 The command
