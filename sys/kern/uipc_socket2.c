@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.111 2013/06/27 18:53:17 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.111 2013/06/27 18:53:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -1235,7 +1235,8 @@ sbdrop(struct sockbuf *sb, int len)
 	while (len > 0) {
 		if (m == 0) {
 			if (next == 0)
-				panic("sbdrop");
+				panic("sbdrop(%p,%d): cc=%lu",
+				    sb, len, sb->sb_cc);
 			m = next;
 			next = m->m_nextpkt;
 			continue;
