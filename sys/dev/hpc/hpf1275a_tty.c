@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.26 2012/10/27 17:18:17 chs Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.27 2013/06/28 14:44:15 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.26 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.27 2013/06/28 14:44:15 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -307,7 +307,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 		.cf_fstate = FSTATE_STAR,
 	};
 	struct lwp *l = curlwp;		/* XXX */
-	struct hpf1275a_softc *sc;
+	struct hpf1275a_softc *sc = device_private(self);
 	device_t self;
 	int error, s;
 
@@ -328,7 +328,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 		return (EIO);
 	}
 
-	tp->t_sc = device_private(self);
+	tp->t_sc = sc;
 	sc->sc_tp = tp;
 
 	splx(s);
