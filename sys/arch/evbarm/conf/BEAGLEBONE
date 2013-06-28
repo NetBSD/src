@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.16 2013/06/17 00:40:18 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.17 2013/06/28 00:52:02 matt Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -154,7 +154,7 @@ options UHUB_DEBUG
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-options		BOOT_ARGS="\"-d -v\""
+options		BOOT_ARGS="\"-v\""
 
 config		netbsd		root on ? type ?
 
@@ -281,12 +281,6 @@ pseudo-device	wsfont
 # Ethernet
 cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
 ukphy*		at mii?
-
-# Hardware clocking and power management
-
-options		HWCLOCK
-options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
-options		OMAP_CK_REF_SPEED=12000000
 
 # Pseudo-Devices
 
