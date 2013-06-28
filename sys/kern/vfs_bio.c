@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.244 2013/05/19 11:02:12 njoly Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.244 2013/05/19 11:02:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1436,7 +1436,7 @@ static int
 buf_trim(void)
 {
 	buf_t *bp;
-	long size = 0;
+	long size;
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
