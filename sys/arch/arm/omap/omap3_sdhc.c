@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.11 2013/06/18 15:04:53 matt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.12 2013/06/28 00:50:22 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.11 2013/06/18 15:04:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.12 2013/06/28 00:50:22 matt Exp $");
 
 #include "opt_omap.h"
 
@@ -89,9 +89,9 @@ struct am335x_sdhc {
 
 static const struct am335x_sdhc am335x_sdhc[] = {
 	/* XXX All offset by 0x100 because of the am335x's mmc registers.  */
-	{ "MMCHS0",	0x48060100, 64, { AM335X_PRCM_CM_PER, 0x3c } },
-	{ "MMC1",	0x481d8100, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
-	{ "MMCHS2",	0x47810100, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+	{ "MMCHS0", SDMMC1_BASE_TIAM335X, 64, { AM335X_PRCM_CM_PER, 0x3c } },
+	{ "MMC1",   SDMMC2_BASE_TIAM335X, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
+	{ "MMCHS2", SDMMC3_BASE_TIAM335X, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
 };
 #endif
 
