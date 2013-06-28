@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.463 2013/01/13 08:15:03 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.464 2013/06/28 15:32:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.463 2013/01/13 08:15:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464 2013/06/28 15:32:20 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3198,10 +3198,10 @@ do_sys_readlinkat(struct lwp *l, int fdat, const char *path, char *buf,
 		KASSERT(l == curlwp);
 		auio.uio_vmspace = l->l_proc->p_vmspace;
 		auio.uio_resid = count;
-		error = VOP_READLINK(vp, &auio, l->l_cred);
+		if ((error = VOP_READLINK(vp, &auio, l->l_cred)) == 0)
+			*retval = count - auio.uio_resid;
 	}
 	vput(vp);
-	*retval = count - auio.uio_resid;
 	return (error);
 }
 
