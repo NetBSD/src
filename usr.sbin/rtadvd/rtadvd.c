@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.42 2013/06/27 15:46:40 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.43 2013/06/28 07:59:32 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -358,6 +358,12 @@ die(void)
 		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
 		free(rcvcmsgbuf);
 		free(sndcmsgbuf);
+		exit(0);
+		/* NOT REACHED */
+	}
+
+	if (TAILQ_FIRST(&ralist) == NULL) {
+		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
 		exit(0);
 		/* NOT REACHED */
 	}
