@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2013/01/30 14:12:33 he Exp $
+#	$NetBSD: list,v 1.25 2013/06/28 22:13:56 matt Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin usr.bin usr.sbin
 
@@ -46,6 +46,7 @@ PROG	sbin/restore	sbin/rrestore
 PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/slattach
+PROG	sbin/sysctl
 PROG	sbin/swapctl
 PROG	sbin/umount
 
