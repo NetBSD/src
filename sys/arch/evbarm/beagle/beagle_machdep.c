@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp
 #include "opt_omap.h"
 #include "prcm.h"
 #include "com.h"
+#include "sdhc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +181,11 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.50 2013/06/27 14:58:55 matt Exp
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap2_gpio.h>
 #ifdef TI_AM335X
-#  include <arm/omap/am335x_prcm.h>
+# include <arm/omap/am335x_prcm.h>
+# if NSDHC > 0
+#  include <arm/omap/omap2_obiovar.h>
+#  include <arm/omap/omap3_sdmmcreg.h>
+# endif
 #endif
 
 #ifdef CPU_CORTEXA9
@@ -479,6 +484,9 @@ initarm(void *arg)
 	const bus_space_handle_t pl310_bh = OMAP4_L2CC_BASE +
 	    OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 	arml2cc_init(&omap_bs_tag, pl310_bh, 0);
+#endif
+#if defined(TI_AM335X)
+	am335x_cpu_clk();		// find our CPU speed.
 #endif
 #if 1
 	beagle_putchar('h');
@@ -1018,6 +1026,11 @@ beagle_device_register(device_t self, void *aux)
 #if defined(OMAP_3430) || defined(OMAP_3530)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
 		prop_dictionary_set_bool(dict, "8bit", true);
+#endif
+#if defined(TI_AM335X) && 0	// doesn't work
+		struct obio_attach_args * const obio = aux;
+		if (obio->obio_addr == SDMMC2_BASE_TIAM335X)
+			prop_dictionary_set_bool(dict, "8bit", true);
 #endif
 		return;
 	}
