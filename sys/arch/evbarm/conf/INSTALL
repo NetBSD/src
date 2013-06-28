@@ -1,11 +1,11 @@
-#	$NetBSD: INSTALL,v 1.5 2013/06/28 15:32:07 htodd Exp $
+#	$NetBSD: INSTALL,v 1.6 2013/06/28 15:38:56 matt Exp $
 #
 #	INSTALL -- Common configuration fragment for install kernels.
 #
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=7368
+options 	MEMORY_DISK_ROOT_SIZE=7424
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md	
