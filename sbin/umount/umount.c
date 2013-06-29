@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: umount.c,v 1.44 2013/06/29 22:53:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: umount.c,v 1.44 2013/06/29 22:53:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $");
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
 #ifndef SMALL
+#include "mount_nfs.h"
 #include "mountprog.h"
 
 static int	 fake, verbose;
@@ -76,6 +77,7 @@ static struct addrinfo *nfshost_ai = NULL;
 static int	 namematch(const struct addrinfo *);
 static int	 sacmp(const struct sockaddr *, const struct sockaddr *);
 static int	 xdr_dir(XDR *, char *);
+static const char *getmntproto(const char *);
 #endif /* !SMALL */
 
 static int	 fflag;
@@ -273,7 +275,8 @@ umountfs(const char *name, const char **typelist, int raw)
 
 #ifndef SMALL
 	if (ai != NULL && !(fflag & MNT_FORCE)) {
-		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, "udp");
+		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1,
+		    getmntproto(mntpt));
 		if (clp  == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
 			return 1;
@@ -380,6 +383,28 @@ static int
 xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN);
+}
+
+static const char *
+getmntproto(const char *mntpt)
+{
+	struct nfs_args nfsargs;
+	struct sockaddr_storage sa;
+	int proto;
+
+	char *name = strdup(mntpt);
+	memset(&sa, 0, sizeof(sa));
+	nfsargs.addr = (struct sockaddr *)&sa; 
+	nfsargs.addrlen = sizeof(sa);
+	if ((name = strdup(mntpt)) == NULL)
+		err(EXIT_FAILURE, "strdup");
+	if (!getnfsargs(name, &nfsargs))
+		proto = IPPROTO_UDP;
+	else
+		proto = nfsargs.proto;
+
+	// XXX: Return udp6/tcp6 too?
+	return proto == IPPROTO_UDP ? "udp" : "tcp";
 }
 #endif /* !SMALL */
 
