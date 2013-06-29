@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.70 2013/03/01 18:25:17 joerg Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.71 2013/06/29 22:56:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.70 2013/03/01 18:25:17 joerg Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.71 2013/06/29 22:56:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,15 +149,6 @@ struct nfs_args nfsdefargs = {
 	.deadthresh = NFS_DEFDEADTHRESH,
 	.hostname = NULL,
 };
-
-#define DEF_RETRY 10000
-
-int retrycnt = DEF_RETRY;
-int opflags = 0;
-int force2 = 0;
-int force3 = 0;
-int mnttcp_ok = 1;
-int port = 0;
 
 static void	shownfsargs(const struct nfs_args *);
 int	mount_nfs(int argc, char **argv);

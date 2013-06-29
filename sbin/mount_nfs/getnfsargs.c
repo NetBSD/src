@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.15 2013/03/01 18:25:17 joerg Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.16 2013/06/29 22:56:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.15 2013/03/01 18:25:17 joerg Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.16 2013/06/29 22:56:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,13 @@ __RCSID("$NetBSD: getnfsargs.c,v 1.15 2013/03/01 18:25:17 joerg Exp $");
 #include <util.h>
 
 #include "mount_nfs.h"
+
+int retrycnt = DEF_RETRY; 
+int opflags = 0;
+int force2 = 0;
+int force3 = 0;
+int mnttcp_ok = 1;
+int port = 0;
 
 struct nfhret {
 	u_long		stat;
