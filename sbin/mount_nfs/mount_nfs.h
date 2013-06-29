@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.h,v 1.2 2008/10/16 09:12:54 pooka Exp $	*/
+/*	$NetBSD: mount_nfs.h,v 1.3 2013/06/29 22:56:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -47,6 +47,8 @@ extern int retrycnt;
 extern int opflags;
 extern int mnttcp_ok;
 extern int port;
+
+#define DEF_RETRY 10000
 
 int	getnfsargs(char *, struct nfs_args *);
 void	mount_nfs_dogetargs(struct nfs_args *, int, const char *);
