@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.18 2013/06/20 20:54:02 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.18 2013/06/20 20:54:02 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.19 2013/06/29 05:08:35 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,8 +493,6 @@ out:
 				err(EXIT_FAILURE, "setting user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
-			if (gohome && chdir(pwd->pw_dir) == -1)
-				errx(EXIT_FAILURE, "no directory");
 		}
 
 		if (asthem || pwd->pw_uid) {
@@ -551,6 +549,13 @@ out:
 
 	if (setusercontext(lc, pwd, pwd->pw_uid, setwhat) == -1)
 		err(EXIT_FAILURE, "setusercontext");
+
+	if (!asme) {
+		if (asthem) {
+			if (gohome && chdir(pwd->pw_dir) == -1)
+				errx(EXIT_FAILURE, "no directory");
+		}
+	}
 
 	(void)execv(shell, np);
 	err(EXIT_FAILURE, "%s", shell);
