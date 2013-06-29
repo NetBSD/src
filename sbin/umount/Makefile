@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2006/01/21 11:59:53 dsl Exp $
+#	$NetBSD: Makefile,v 1.17 2013/06/29 22:53:04 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 6/22/95
 
 .include <bsd.own.mk>
@@ -11,9 +11,9 @@ MAN=	umount.8
 CPPFLAGS+= -DSMALL
 .else
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
-CPPFLAGS+= -I${MOUNT}
-.PATH:	${MOUNT}
-SRCS+=	vfslist.c
+CPPFLAGS+= -I${MOUNT} -I${MOUNT}_nfs
+.PATH:	${MOUNT} ${MOUNT}_nfs
+SRCS+=	vfslist.c getnfsargs.c
 .endif
 
 .include <bsd.prog.mk>
