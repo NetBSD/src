@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.137 2013/06/05 21:03:57 dholland Exp $
+$NetBSD: acronyms.comp,v 1.138 2013/06/29 12:22:48 jdf Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -108,7 +108,8 @@ BFT	binary file transfer
 BGA	ball grid array
 BGP	Border Gateway Protocol
 BIND	Berkeley Internet Name Daemon
-BIOS	basic input/output system
+BIOS	Basic Input/Output System
+BIOS	built-in operating system
 BIST	built-in self-test
 BIU	bus interface unit
 BKDG	BIOS and kernel developer's guide
@@ -181,7 +182,7 @@ CF	compact flash
 CFG	context-free grammar
 CFG	control-flow graph
 CG	control gate
-CGA	color graphics {adapter,array}
+CGA	Color Graphics Adapter
 CGI	common gateway interface
 CGN	Carrier-Grade NAT
 CHAP	Challenge-Handshake Authentication Protocol
@@ -284,7 +285,7 @@ DDK	device driver kit
 DDL	data description language
 DDR	double data rate
 DDS	direct digital sound
-DDWG	digital display working group
+DDWG	Digital Display Working Group
 DE	debugging extensions
 DE	desktop environment
 DEA	data encryption algorithm
@@ -320,6 +321,7 @@ DOF	data over fibre
 DOM	document object model
 DOS	denial of service
 DOS	disk operating system
+DP	DisplayPort
 DPC	deferred procedure call
 DPCM	differential pulse code modulation
 DPD	dead peer detection
@@ -351,7 +353,8 @@ DVB	digital video broadcasting
 DVCS	distributed version control system
 DVD	digital versatile disc
 DVFS	dynamic voltage and frequency scaling
-DVI	digital visual interface
+DVI	device independent
+DVI	Digital Visual Interface
 DVR	digital video recorder
 E-XER	extended XML encoding rules
 EABI	embedded-application binary interface
@@ -372,7 +375,7 @@ EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
 EFL	emitter follower logic
 EFM	eight to fourteen modulation
-EGA	enhanced graphics {adapter,array}
+EGA	Enhanced Graphics Adapter
 EGP	exterior gateway protocol
 EH	extension header
 EIDE	enchanced IDE
@@ -483,9 +486,10 @@ HCF	halt and catch fire
 HCI	host controller interface
 HCI	human-computer interaction
 HCL	hardware compatibility list
-HDCP	high-bandwidth digital content protection
+HDCP	High-bandwidth Digital Content Protection
 HDD	hard disk drive
 HDL	hardware description language
+HDMI	High-Definition Multimedia Interface
 HDTV	high-definition television
 HF	high frequency
 HFM	highest frequency mode
@@ -673,13 +677,13 @@ MC	memory controller
 MCA	machine check architecture
 MCC	multiversion concurrency control
 MCE	machine check exception
-MCGA	multicolor graphics adapter
+MCGA	Multi-Color Graphics Array
 MCH	memory controller hub
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
 MDA	mail delivery agent
-MDA	monochrome display adapter
+MDA	Monochrome Display Adapter
 MDRAM	multibank dynamic random access memory
 MESI	modified, exclusive, shared, invalid
 MFC	merge from current
@@ -798,7 +802,7 @@ OOP	object oriented programming
 OOSE	object oriented software engineering
 OPM	operations per minute
 OPS	operations per second
-OQL	object query language
+OQL	Object Query Language
 ORM	object-relational mapping
 OS	operating system
 OSD	open source definition
@@ -941,7 +945,7 @@ RA	remote assistance
 RA	resource affinity
 RA	router advertisement
 RAD	rapid application development
-RAID	redundant array of inexpensive disks
+RAID	redundant array of {independent,inexpensive} disks
 RAM	random access memory
 RAS	remote access service
 RAS	restartable atomic sequence
@@ -953,7 +957,7 @@ RC	remote control
 RCS	Revision Control System
 RCS	revision control system
 RCU	read, copy, update
-RDF	resource description format
+RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
 RE	regular expression
@@ -1062,7 +1066,7 @@ SLRU	segmented LRU
 SMA	smart memory access
 SMAF	system management action field
 SMART	self-monitoring analysis and reporting technology
-SMBIOS	system management BIOS
+SMBIOS	System Management BIOS
 SMC	system management controller
 SMI	structure of management information
 SMI	system management interrupt
@@ -1113,7 +1117,7 @@ STP	shielded twisted pair
 SUS	Single Unix Specification
 SUT	system under test
 SVG	scalable vector graphics
-SVGA	super video graphics {adapter,array}
+SVGA	Super Video Graphics Array
 SVM	secure virtual machine
 SVM	support vector machine
 SVR	System V Release
@@ -1237,10 +1241,10 @@ VCF	voltage-controlled filter
 VCM	virtual channel memory
 VCO	voltage-controlled oscillator
 VCS	version control system
-VESA	video electronics standards association
+VESA	Video Electronics Standards Association
 VFO	variable-frequency oscillator
 VG	volume group
-VGA	video graphics {adapter,array}
+VGA	Video Graphics Array
 VHDCI	very high density cable interconnect
 VID	voltage level identifier
 VIPT	virtually indexed, physically tagged
@@ -1291,7 +1295,7 @@ WWW	world wide web
 WYSIWYG	what you see is what you get
 XBAR	crossbar
 XER	XML encoding rules
-XGA	extended graphics {adapter,array}
+XGA	Extended Graphics Array
 XIP	execute in place
 XML	Extensible Markup Language
 XOR	exclusive or
