@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.223 2013/06/27 19:38:16 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.224 2013/06/29 21:06:58 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,9 +91,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.223 2013/06/27 19:38:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.224 2013/06/29 21:06:58 rmind Exp $");
 
-#include "opt_pfil_hooks.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -140,9 +139,7 @@ static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet_pfil_hook;			/* XXX */
-#endif
+extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
 int	ip_do_loopback_cksum = 0;
 
@@ -481,18 +478,16 @@ sendit:
 	}
 #endif
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
-#endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
 
