@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.44 2013/06/29 22:53:04 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.44 2013/06/29 22:53:04 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,8 +391,8 @@ getmntproto(const char *mntpt)
 	struct nfs_args nfsargs;
 	struct sockaddr_storage sa;
 	int proto;
+	char *name;
 
-	char *name = strdup(mntpt);
 	memset(&sa, 0, sizeof(sa));
 	nfsargs.addr = (struct sockaddr *)&sa; 
 	nfsargs.addrlen = sizeof(sa);
@@ -402,6 +402,7 @@ getmntproto(const char *mntpt)
 		proto = IPPROTO_UDP;
 	else
 		proto = nfsargs.proto;
+	free(name);
 
 	// XXX: Return udp6/tcp6 too?
 	return proto == IPPROTO_UDP ? "udp" : "tcp";
