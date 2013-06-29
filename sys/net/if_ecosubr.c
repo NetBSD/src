@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.36 2011/11/20 12:15:38 kiyohara Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.37 2013/06/29 21:06:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,10 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.36 2011/11/20 12:15:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.37 2013/06/29 21:06:58 rmind Exp $");
 
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -320,12 +319,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		erp->erp_count = retry_count;
 	}
 
-#ifdef PFIL_HOOKS
-	if ((error = pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		return (error);
 	if (m == NULL)
 		return (0);
-#endif
 
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
@@ -366,12 +363,10 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 	void *tha;
 #endif
 
-#ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
 		return;
 	if (m == NULL)
 		return;
-#endif
 
 	/* Copy the mbuf header and trim it off. */
 	/* XXX use m_split? */

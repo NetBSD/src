@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.265 2013/06/29 21:06:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,13 +90,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.265 2013/06/29 21:06:58 rmind Exp $");
 
 #include "opt_inet.h"
 
 #include "opt_atalk.h"
 #include "opt_natm.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -164,9 +163,8 @@ static int if_cloners_count;
 static uint64_t index_gen;
 static kmutex_t index_gen_mtx;
 
-#ifdef PFIL_HOOKS
-struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
-#endif
+/* Packet filtering hook for interfaces. */
+pfil_head_t *	if_pfil;
 
 static kauth_listener_t if_listener;
 
@@ -237,15 +235,9 @@ ifinit(void)
 void
 ifinit1(void)
 {
-
 	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
-
-#ifdef PFIL_HOOKS
-	if_pfil.ph_type = PFIL_TYPE_IFNET;
-	if_pfil.ph_ifnet = NULL;
-	if (pfil_head_register(&if_pfil) != 0)
-		printf("WARNING: unable to register pfil hook\n");
-#endif
+	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
+	KASSERT(if_pfil != NULL);
 }
 
 struct ifnet *
@@ -611,15 +603,9 @@ if_attach(struct ifnet *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-#ifdef PFIL_HOOKS
-	ifp->if_pfil.ph_type = PFIL_TYPE_IFNET;
-	ifp->if_pfil.ph_ifnet = ifp;
-	if (pfil_head_register(&ifp->if_pfil) != 0)
-		printf("%s: WARNING: unable to register pfil hook\n",
-		    ifp->if_xname);
-	(void)pfil_run_hooks(&if_pfil,
+	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
+	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
-#endif
 
 	if (!STAILQ_EMPTY(&domains))
 		if_attachdomain1(ifp);
@@ -845,11 +831,9 @@ again:
 		}
 	}
 
-#ifdef PFIL_HOOKS
-	(void)pfil_run_hooks(&if_pfil,
+	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
-	(void)pfil_head_unregister(&ifp->if_pfil);
-#endif
+	(void)pfil_head_destroy(ifp->if_pfil);
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);

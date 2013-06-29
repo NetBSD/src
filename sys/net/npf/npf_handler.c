@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.26 2013/02/09 03:35:31 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.27 2013/06/29 21:06:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.26 2013/02/09 03:35:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.27 2013/06/29 21:06:58 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.26 2013/02/09 03:35:31 rmind Exp $
  * If npf_ph_if != NULL, pfil hooks are registered.  If NULL, not registered.
  * Used to check the state.  Locked by: softnet_lock + KERNEL_LOCK (XXX).
  */
-static struct pfil_head *	npf_ph_if = NULL;
-static struct pfil_head *	npf_ph_inet = NULL;
-static struct pfil_head *	npf_ph_inet6 = NULL;
+static pfil_head_t *	npf_ph_if = NULL;
+static pfil_head_t *	npf_ph_inet = NULL;
+static pfil_head_t *	npf_ph_inet6 = NULL;
 
 #ifndef INET6
 #define ip6_reass_packet(x, y)	ENOTSUP
@@ -309,8 +309,8 @@ npf_pfil_register(void)
 
 	/* Capture point of any activity in interfaces and IP layer. */
 	npf_ph_if = pfil_head_get(PFIL_TYPE_IFNET, 0);
-	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
-	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
+	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 	if (!npf_ph_if || (!npf_ph_inet && !npf_ph_inet6)) {
 		npf_ph_if = NULL;
 		error = ENOENT;
@@ -319,18 +319,18 @@ npf_pfil_register(void)
 
 	/* Interface re-config or attach/detach hook. */
 	error = pfil_add_hook(npf_ifhook, NULL,
-	    PFIL_WAITOK | PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
+	    PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
 	KASSERT(error == 0);
 
 	/* Packet IN/OUT handler on all interfaces and IP layer. */
 	if (npf_ph_inet) {
 		error = pfil_add_hook(npf_packet_handler, NULL,
-		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
+		    PFIL_ALL, npf_ph_inet);
 		KASSERT(error == 0);
 	}
 	if (npf_ph_inet6) {
 		error = pfil_add_hook(npf_packet_handler, NULL,
-		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet6);
+		    PFIL_ALL, npf_ph_inet6);
 		KASSERT(error == 0);
 	}
 fail:

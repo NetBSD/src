@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.98 2011/09/05 12:19:09 rjs Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.99 2013/06/29 21:06:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.98 2011/09/05 12:19:09 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.99 2013/06/29 21:06:58 rmind Exp $");
 
 #include "pppoe.h"
-#include "opt_pfil_hooks.h"
 #include "opt_pppoe.h"
 
 #include <sys/param.h>
@@ -193,9 +192,7 @@ static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(uint8_t *, size_t, struct ifnet *);
 static struct mbuf *pppoe_get_mbuf(size_t len);
 
-#ifdef PFIL_HOOKS
 static int pppoe_ifattach_hook(void *, struct mbuf **, struct ifnet *, int);
-#endif
 
 static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
@@ -249,11 +246,9 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sppp_attach(&sc->sc_sppp.pp_if);
 
 	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
-#ifdef PFIL_HOOKS
-	if (LIST_EMPTY(&pppoe_softc_list))
-		pfil_add_hook(pppoe_ifattach_hook, NULL,
-		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
-#endif
+	if (LIST_EMPTY(&pppoe_softc_list)) {
+		pfil_add_hook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
+	}
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
 	return 0;
 }
@@ -265,11 +260,9 @@ pppoe_clone_destroy(struct ifnet *ifp)
 
 	callout_stop(&sc->sc_timeout);
 	LIST_REMOVE(sc, sc_list);
-#ifdef PFIL_HOOKS
-	if (LIST_EMPTY(&pppoe_softc_list))
-		pfil_remove_hook(pppoe_ifattach_hook, NULL,
-		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
-#endif
+	if (LIST_EMPTY(&pppoe_softc_list)) {
+		pfil_remove_hook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
+	}
 	bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
@@ -1514,10 +1507,8 @@ pppoe_start(struct ifnet *ifp)
 }
 
 
-#ifdef PFIL_HOOKS
 static int
-pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp,
-    int dir)
+pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	struct pppoe_softc *sc;
 	int s;
@@ -1541,7 +1532,6 @@ pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp,
 
 	return 0;
 }
-#endif
 
 static void
 pppoe_clear_softc(struct pppoe_softc *sc, const char *message)

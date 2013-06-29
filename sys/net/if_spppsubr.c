@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.126 2013/03/01 18:25:56 joerg Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.126 2013/03/01 18:25:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.127 2013/06/29 21:06:58 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipx.h"
-#include "opt_pfil_hooks.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #endif
@@ -4897,11 +4896,10 @@ found:
 			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
 			" failed, error=%d\n", ifp->if_xname, error);
 		}
-#ifdef PFIL_HOOKS
-		if (!error)
-			(void)pfil_run_hooks(&if_pfil,
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
-#endif
+		}
 	}
 }
 
@@ -4946,10 +4944,8 @@ found:
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil,
+		(void)pfil_run_hooks(if_pfil,
 		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
-#endif
 	}
 }
 #endif
@@ -5050,11 +5046,10 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 			log(LOG_DEBUG, "%s: sppp_set_ip6_addr: in6_ifinit "
 			" failed, error=%d\n", ifp->if_xname, error);
 		}
-#ifdef PFIL_HOOKS
-		if (!error)
-			(void)pfil_run_hooks(&if_pfil,
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR_IN6, ifp, PFIL_IFADDR);
-#endif
+		}
 	}
 }
 #endif
