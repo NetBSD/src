@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.h,v 1.3 2013/06/28 02:31:16 matt Exp $	*/
+/*	$NetBSD: am335x_prcm.h,v 1.4 2013/06/29 20:21:41 matt Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -73,6 +73,10 @@ struct omap_module {
 #define  AM335X_PRCM_CM_CLKMODE_DPLL_MN_BYP_MODE	4
 #define  AM335X_PRCM_CM_CLKMODE_DPLL_LOCK_MODE		7
 #define	AM335X_PRCM_CM_DIV_M2_DPLL_MPU	0xa8
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_ST_DPLL_CLKOUT	__BIT(9)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_GATE_CTRL	__BIT(8)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_DIVCHACK	__BIT(5)
+#define	 AM335X_PRCM_CM_DIV_M2_DPLL_CLKOUT_DIV		__BITS(4,0)
 
 
 #define PRM_RSTCTRL		0x00	/* offset from AM335X_PRCM_PRM_DEVICE */
