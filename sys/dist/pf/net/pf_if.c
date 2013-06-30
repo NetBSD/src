@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.22 2013/06/30 14:58:48 rmind Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.23 2013/06/30 17:23:52 njoly Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.22 2013/06/30 14:58:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.23 2013/06/30 17:23:52 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -145,8 +145,8 @@ pfi_destroy(void)
 	struct pfi_kif *p;
 	int i;
 
-	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
-	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 
 	for (i = 0; i < if_indexlim; i++) {
 		struct ifnet *ifp = ifindex2ifnet[i];
