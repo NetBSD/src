@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.18 2013/06/28 05:58:57 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.19 2013/06/30 21:38:56 rmind Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -65,7 +65,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

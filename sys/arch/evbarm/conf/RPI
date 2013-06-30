@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.35 2013/06/28 06:00:30 matt Exp $
+#	$NetBSD: RPI,v 1.36 2013/06/30 21:38:56 rmind Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -65,7 +65,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
