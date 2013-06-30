@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.6 2013/06/30 22:02:29 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.6 2013/06/30 22:02:29 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -56,6 +56,8 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $")
 #else
 #define	XPUTC(n)
 #endif
+
+#define	MD_CPU_HATCH	bcm53xx_cpu_hatch
 
 /*
  * Kernel start routine for BCM5301X boards.
