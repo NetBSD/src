@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.25 2013/06/30 07:50:54 matt Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.26 2013/06/30 10:07:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.25 2013/06/30 07:50:54 matt Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.26 2013/06/30 10:07:43 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -231,15 +231,19 @@ setttyentpath(const char *path)
 	/*
 	 * Try <path>.$MACHINE (e.g. etc/ttys.amd64)
 	 */
-	char machine[_SYS_NMLN];
-	const int mib[] = { [0] = CTL_HW, [1] = HW_MACHINE, };
-	size_t len = sizeof(machine);
+	{
+		char machine[_SYS_NMLN];
+		const int mib[] = { [0] = CTL_HW, [1] = HW_MACHINE, };
+		size_t len = sizeof(machine);
 
-        if (sysctl(mib, __arraycount(mib), machine, &len, NULL, 0) != -1) {
-		char npath[PATH_MAX];
-		(void)snprintf(npath, sizeof(npath), "%s.%s", path, machine);
-		if ((tf = fopen(npath, "re")) != NULL)
-			return 1;
+		if (sysctl(mib, (u_int)__arraycount(mib), machine, &len,
+		     NULL, 0) != -1) {
+			char npath[PATH_MAX];
+			(void)snprintf(npath, sizeof(npath), "%s.%s", path,
+			    machine);
+			if ((tf = fopen(npath, "re")) != NULL)
+				return 1;
+		}
 	}
 
 	if ((tf = fopen(path, "re")) != NULL)
