@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.21 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.22 2013/06/30 14:58:48 rmind Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.21 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.22 2013/06/30 14:58:48 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,8 +133,8 @@ pfi_initialize(void)
 		}
 	}
 
-	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
-	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
+	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
 #endif /* __NetBSD__ */
 }
 
