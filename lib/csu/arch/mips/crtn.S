@@ -29,16 +29,24 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crtn.S,v 1.1 2013/06/22 02:37:09 matt Exp $")
+RCSID("$NetBSD: crtn.S,v 1.2 2013/06/30 08:00:34 matt Exp $")
 
 	.section ".init", "ax", @progbits
-	RESTORE_GP64
 	REG_L	ra, CALLFRAME_RA(sp)
+#if defined(__mips_o32) || defined(__mips_o64)
+	REG_L	s0, CALLFRAME_S0(sp)
+#else
+	REG_L	gp, CALLFRAME_GP(sp)
+#endif
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
 	jr	ra
 
 	.section ".fini", "ax", @progbits
-	RESTORE_GP64
 	REG_L	ra, CALLFRAME_RA(sp)
+#ifdef __mips_o32
+	REG_L	s0, CALLFRAME_S0(sp)
+#else
+	REG_L	gp, CALLFRAME_GP(sp)
+#endif
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
 	jr	ra

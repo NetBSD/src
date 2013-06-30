@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2013/06/22 02:37:09 matt Exp $ */
+/* $NetBSD: crti.S,v 1.2 2013/06/30 08:00:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2013/06/22 02:37:09 matt Exp $")
+RCSID("$NetBSD: crti.S,v 1.2 2013/06/30 08:00:34 matt Exp $")
 
 #include "sysident.S"
 
@@ -39,16 +39,22 @@ RCSID("$NetBSD: crti.S,v 1.1 2013/06/22 02:37:09 matt Exp $")
 NESTED_NOPROFILE(_init, CALLFRAME_SIZ, ra)
         SETUP_GP
         PTR_SUBU sp, sp, CALLFRAME_SIZ	# allocate stack frame
-        SAVE_GP(CALLFRAME_GP)
-        SETUP_GP64(CALLFRAME_GP, _init)
 	REG_S	ra, CALLFRAME_RA(sp)	# save RA
+#ifdef __mips_o32
+	REG_S	s0, CALLFRAME_S0(sp)	# save s0
+	move	s0, gp 
+#endif
+        SETUP_GP64(CALLFRAME_GP, _init)
 END(_init)
 
 	.section ".fini", "ax", @progbits
 NESTED_NOPROFILE(_fini, CALLFRAME_SIZ, ra)
         SETUP_GP
         PTR_SUBU sp, sp, CALLFRAME_SIZ	# allocate stack frame
-        SAVE_GP(CALLFRAME_GP)
-        SETUP_GP64(CALLFRAME_GP, _fini)
 	REG_S	ra, CALLFRAME_RA(sp)	# save RA
+#ifdef __mips_o32
+	REG_S	s0, CALLFRAME_S0(sp)	# save s0
+	move	s0, gp 
+#endif
+        SETUP_GP64(CALLFRAME_GP, _fini)
 END(_fini)
