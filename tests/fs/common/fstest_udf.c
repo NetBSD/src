@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_udf.c,v 1.1 2013/06/26 19:29:24 reinoud Exp $	*/
+/*	$NetBSD: fstest_udf.c,v 1.2 2013/06/30 15:05:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <ufs/ufs/ufsmount.h>
+#include <fs/udf/udf_mount.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -47,7 +47,7 @@
 #include "h_fsmacros.h"
 
 struct udftestargs {
-        struct ufs_args ta_uargs;
+        struct udf_args ta_uargs;
         char ta_devpath[MAXPATHLEN];
         char ta_imgpath[MAXPATHLEN];
 };
