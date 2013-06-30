@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_udf.c,v 1.2 2013/06/30 15:05:49 martin Exp $	*/
+/*	$NetBSD: fstest_udf.c,v 1.3 2013/06/30 15:42:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,6 +63,10 @@ udf_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	struct sigaction act, oact;
 
 	size /= 512;
+	/*
+	 * XXX newfs should be newfs_udf here!
+	 *     But newfs_udf does not support plain file mode.
+	 */
 	snprintf(cmd, 1024, "newfs -F -s %"PRId64" %s >/dev/null", size, image);
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = SIG_DFL;
@@ -83,6 +87,7 @@ udf_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.udf", num);
 	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
 	args->ta_uargs.fspec = args->ta_devpath;
+	args->ta_uargs.version = UDFMNT_VERSION;
 
 	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
 	if (res != 0) {
