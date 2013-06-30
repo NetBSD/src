@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.77 2013/06/08 19:40:07 htodd Exp $
+#	$NetBSD: GUMSTIX,v 1.78 2013/06/30 21:38:56 rmind Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -82,7 +82,6 @@ options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
