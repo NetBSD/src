@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.28 2013/06/30 11:47:00 wiz Exp $
+.\"	$NetBSD: rename.2,v 1.29 2013/06/30 11:48:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd June 30, 2013
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .In stdio.h
 .Ft int
 .Fn rename "const char *from" "const char *to"
+.In unistd.h
 .Ft int
 .Fn renameat "int fromfd" "const char *from" "int tofd" "const char *to"
 .Sh DESCRIPTION
