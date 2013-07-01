@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_stub.c,v 1.7 2013/06/23 02:35:24 riastradh Exp $ */
+/*	$NetBSD: cprng_stub.c,v 1.8 2013/07/01 20:02:15 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -89,12 +89,6 @@ cprng_strong_poll(cprng_strong_t *c __unused, int events)
 {
 	KASSERT(c == NULL);
 	return (events & (POLLIN | POLLRDNORM));
-}
-
-void
-cprng_strong_deplete(struct cprng_strong *c __unused)
-{
-	KASSERT(c == NULL);
 }
 
 void
