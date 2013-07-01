@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.23 2013/06/30 17:23:52 njoly Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.24 2013/07/01 08:32:48 skrll Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.23 2013/06/30 17:23:52 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.24 2013/07/01 08:32:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 #endif
 
 #include <sys/param.h>
