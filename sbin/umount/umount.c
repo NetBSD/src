@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.46 2013/07/01 15:16:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.46 2013/07/01 15:16:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $");
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
+#include <nfs/nfsmount.h>
 #endif /* !SMALL */
 
 #include <err.h>
@@ -67,7 +68,6 @@ __RCSID("$NetBSD: umount.c,v 1.45 2013/06/29 23:06:29 christos Exp $");
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
 #ifndef SMALL
-#include "mount_nfs.h"
 #include "mountprog.h"
 
 static int	 fake, verbose;
@@ -186,6 +186,7 @@ umountfs(const char *name, const char **typelist, int raw)
 #endif /* !SMALL */
 	const char *mntpt;
 	char *type, rname[MAXPATHLEN];
+	const char *proto = NULL;
 	mntwhat what;
 	struct stat sb;
 
@@ -243,6 +244,7 @@ umountfs(const char *name, const char **typelist, int raw)
 		if (!strncmp(type, MOUNT_NFS,
 		    sizeof(((struct statvfs *)NULL)->f_fstypename))) {
 			char *delimp;
+			proto = getmntproto(mntpt);
 			/* look for host:mountpoint */
 			if ((delimp = strrchr(name, ':')) != NULL) {
 				int len = delimp - name;
@@ -275,8 +277,7 @@ umountfs(const char *name, const char **typelist, int raw)
 
 #ifndef SMALL
 	if (ai != NULL && !(fflag & MNT_FORCE)) {
-		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1,
-		    getmntproto(mntpt));
+		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, proto);
 		if (clp  == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
 			return 1;
@@ -386,26 +387,16 @@ xdr_dir(XDR *xdrsp, char *dirp)
 }
 
 static const char *
-getmntproto(const char *mntpt)
+getmntproto(const char *name)
 {
 	struct nfs_args nfsargs;
-	struct sockaddr_storage sa;
-	int proto;
-	char *name;
+	struct sockaddr_storage ss;
 
-	memset(&sa, 0, sizeof(sa));
-	nfsargs.addr = (struct sockaddr *)&sa; 
-	nfsargs.addrlen = sizeof(sa);
-	if ((name = strdup(mntpt)) == NULL)
-		err(EXIT_FAILURE, "strdup");
-	if (!getnfsargs(name, &nfsargs))
-		proto = IPPROTO_UDP;
-	else
-		proto = nfsargs.proto;
-	free(name);
-
-	// XXX: Return udp6/tcp6 too?
-	return proto == IPPROTO_UDP ? "udp" : "tcp";
+	nfsargs.sotype = SOCK_DGRAM;
+	nfsargs.addr = (struct sockaddr *)&ss; 
+	nfsargs.addrlen = sizeof(ss);
+	(void)mount("nfs", name, MNT_GETARGS, &nfsargs, sizeof(nfsargs));
+	return nfsargs.sotype == SOCK_STREAM ? "tcp" : "udp";
 }
 #endif /* !SMALL */
 
