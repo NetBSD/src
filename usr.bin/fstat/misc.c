@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2013/07/01 15:22:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.12 2013/06/23 02:35:24 riastradh Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2013/07/01 15:22:00 riastradh Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -101,8 +101,6 @@ static struct nlist nl[] = {
     { .n_name = "vnops" },
 #define NL_XENEVT	16
     { .n_name = "xenevt_fileops" },
-#define NL_RND		17
-    { .n_name = "rnd_fileops" },
 #define NL_MAX		18
     { .n_name = NULL }
 };
@@ -196,21 +194,6 @@ p_kqueue(struct file *f)
 	return 0;
 }
 
-static int
-p_rnd(struct file *f)
-{
-	rp_ctx_t rp;
-
-	if (!KVM_READ(f->f_data, &rp, sizeof(rp))) {
-		dprintf("can't read rnd at %p for pid %d", f->f_data, Pid);
-		return 0;
-	}
-	(void)printf("* rnd");
-	if (rp.hard)
-		printf(" bytesonkey=%d", rp.bytesonkey);
-	printf("\n");
-	return 0;
-}
 int
 pmisc(struct file *f, const char *name)
 {
@@ -244,8 +227,6 @@ pmisc(struct file *f, const char *name)
 		return p_kqueue(f);
 	case NL_SEM:
 		return p_sem(f);
-	case NL_RND:
-		return p_rnd(f);
 	case NL_TAP:
 		printf("* tap %lu\n", (unsigned long)(intptr_t)f->f_data);
 		return 0;
