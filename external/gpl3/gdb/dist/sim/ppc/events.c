@@ -25,6 +25,7 @@
 #include "basics.h"
 #include "events.h"
 
+#include <stdlib.h>
 #include <signal.h>
 
 #if !defined (SIM_EVENTS_POLL_RATE)
