@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.88 2013/02/18 05:14:13 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.88 2013/02/18 05:14:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,13 +227,12 @@ data_abort_handler(trapframe_t *tf)
 	int error;
 	ksiginfo_t ksi;
 
-	UVMHIST_FUNC("data_abort_handler"); 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* Grab FAR/FSR before enabling interrupts */
 	far = cpu_faultaddress();
 	fsr = cpu_faultstatus();
 
-	UVMHIST_CALLED(maphist);
 	/* Update vmmeter statistics */
 	ci->ci_data.cpu_ntrap++;
 
@@ -765,7 +764,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	ksiginfo_t ksi;
 	int error, user;
 
-	UVMHIST_FUNC("prefetch_abort_handler"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* Update vmmeter statistics */
 	curcpu()->ci_data.cpu_ntrap++;
