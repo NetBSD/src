@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.80 2013/06/16 16:43:08 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.81 2013/07/02 05:55:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -578,6 +578,25 @@
 #define CORTEX_CNTENS_C __BIT(31)	/* Enables the cycle counter */
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
+
+/* Translate Table Base Control Register */
+#define TTBCR_S_EAE	__BIT(31)	// Extended Address Extension
+#define TTBCR_S_PD1	__BIT(5)	// Don't use TTBR1
+#define TTBCR_S_PD0	__BIT(4)	// Don't use TTBR0
+#define TTBCR_S_N	__BITS(2,0)	// Width of base address in TTB0
+
+#define TTBCR_L_EAE	__BIT(31)	// Extended Address Extension
+#define TTBCR_L_SH1	__BITS(29,28)	// TTBR1 Shareability
+#define TTBCR_L_ORGN1	__BITS(27,26)	// TTBR1 Outer cacheability
+#define TTBCR_L_IRGN1	__BITS(25,24)	// TTBR1 inner cacheability
+#define TTBCR_L_EPD1	__BIT(23)	// Don't use TTBR1
+#define TTBCR_L_A1	__BIT(22)	// ASID is in TTBR1
+#define TTBCR_L_T1SZ	__BITS(18,16)	// TTBR1 size offset
+#define TTBCR_L_SH0	__BITS(13,12)	// TTBR0 Shareability
+#define TTBCR_L_ORGN0	__BITS(11,10)	// TTBR0 Outer cacheability
+#define TTBCR_L_IRGN0	__BITS(9,8)	// TTBR0 inner cacheability
+#define TTBCR_L_EPD0	__BIT(7)	// Don't use TTBR0
+#define TTBCR_L_T0SZ	__BITS(2,0)	// TTBR0 size offset
 
 /* Defines for ARM Generic Timer */
 #define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
