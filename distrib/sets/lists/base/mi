@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1034 2013/06/26 21:38:10 christos Exp $
+# $NetBSD: mi,v 1.1035 2013/07/02 02:15:13 jnemeth Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -577,6 +577,7 @@
 ./usr/bin/mailx					base-mail-bin
 ./usr/bin/make					base-util-bin
 ./usr/bin/man					base-man-bin
+./usr/bin/mandoc				base-man-bin
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
@@ -1343,6 +1344,7 @@
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
 ./usr/sbin/makefs				base-sysutil-bin
+./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/sbin/makemap				base-obsolete		obsolete
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
