@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.14 2013/07/01 15:22:00 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.15 2013/07/02 13:27:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.14 2013/07/01 15:22:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.15 2013/07/02 13:27:42 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -294,7 +294,7 @@ out:	if (tmp != NULL)
 static struct cprng_strong *
 rnd_percpu_cprng(void)
 {
-	struct cprng_strong **cprngp, *cprng, *tmp;
+	struct cprng_strong **cprngp, *cprng, *tmp = NULL;
 
 	/* Fast path: if there already is a CPRNG for this CPU, use it.  */
 	cprngp = percpu_getref(percpu_urandom_cprng);
@@ -341,7 +341,7 @@ static int
 rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	int error;
+	int error = 0;
 
 	DPRINTF(RND_DEBUG_READ,
 	    ("Random: Read of %zu requested, flags 0x%08x\n",
