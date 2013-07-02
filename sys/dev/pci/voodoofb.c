@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.43 2012/11/09 19:50:22 rkujawa Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.44 2013/07/02 00:18:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.43 2012/11/09 19:50:22 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.44 2013/07/02 00:18:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1388,7 +1388,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 
 	uint8_t misc;
 
-	memset(&mod, 0, sizeof(mode));
+	memset(&mod, 0, sizeof(mod));
 	
 	mode = &mod;
 	
