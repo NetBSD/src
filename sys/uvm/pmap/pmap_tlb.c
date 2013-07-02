@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1 2012/10/03 00:51:47 christos Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.2 2013/07/02 09:35:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1 2012/10/03 00:51:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.2 2013/07/02 09:35:48 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -302,7 +302,7 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	TLBINFO_LOCK(ti);
 	const __cpuset_t cpu_mask = CPUSET_SINGLE(cpu_index(ci));
 	CPUSET_ADDSET(ti->ti_cpu_mask, cpu_mask);
-	ci->ci_tlb_info = ti;
+	cpu_set_tlb_info(ci, ti);
 
 	/*
 	 * Do any MD tlb info init.
@@ -444,7 +444,7 @@ void
 pmap_tlb_shootdown_process(void)
 {
 	struct cpu_info * const ci = curcpu();
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 #ifdef DIAGNOSTIC
 	struct pmap * const pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
 #endif
@@ -547,7 +547,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	 * We don't need to deal our own TLB.
 	 */
 	__cpuset_t pm_active =
-	   CPUSET_EXCLUDE(pm->pm_active, curcpu()->ci_tlb_info->ti_cpu_mask);
+	   CPUSET_EXCLUDE(pm->pm_active, cpu_tlb_info(curcpu())->ti_cpu_mask);
 	const bool kernel_p = (pm == pmap_kernel());
 	bool ipi_sent = false;
 
@@ -626,10 +626,11 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 }
 #endif /* MULTIPROCESSOR && PMAP_NEED_TLB_SHOOTDOWN */
 
+#ifndef PMAP_TLB_HWPAGEWALKER
 int
 pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pt_entry, u_int flags)
 {
-	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	int rv = -1;
 
@@ -649,11 +650,12 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pt_entry, u_int flags)
 
 	return rv;
 }
+#endif /* !PMAP_TLB_HWPAGEWALKER */
 
 void
 pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 {
-	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
 	KASSERT(kpreempt_disabled());
@@ -753,7 +755,7 @@ void
 pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 {
 	struct cpu_info * const ci = l->l_cpu;
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
 	KASSERT(kpreempt_disabled());
@@ -881,7 +883,7 @@ pmap_tlb_asid_check(void)
 void
 pmap_tlb_check(pmap_t pm, bool (*func)(void *, vaddr_t, tlb_asid_t, pt_entry_t))
 {
-        struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
+        struct pmap_tlb_info * const ti = cpu_tlb_info(curcpu());
         struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
         TLBINFO_LOCK(ti);
         if (pm == pmap_kernel() || pai->pai_asid > KERNEL_PID)
