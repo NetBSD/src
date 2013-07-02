@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_udf.c,v 1.3 2013/06/30 15:42:43 martin Exp $	*/
+/*	$NetBSD: fstest_udf.c,v 1.4 2013/07/02 15:00:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,12 +62,11 @@ udf_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	struct udftestargs *args;
 	struct sigaction act, oact;
 
-	size /= 512;
 	/*
-	 * XXX newfs should be newfs_udf here!
-	 *     But newfs_udf does not support plain file mode.
+	 * Sectorsize can be specified with -S, as a multiple of 512.
+	 * newfs_udf takes humanized number as size in bytes as -s parameter!
 	 */
-	snprintf(cmd, 1024, "newfs -F -s %"PRId64" %s >/dev/null", size, image);
+	snprintf(cmd, 1024, "newfs_udf -F -s %"PRId64" %s >/dev/null", size, image);
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = SIG_DFL;
 	sigaction(SIGCHLD, &act, &oact);
