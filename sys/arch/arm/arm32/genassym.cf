@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2013/06/17 04:41:12 matt Exp $
+#	$NetBSD: genassym.cf,v 1.63 2013/07/02 05:52:14 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,7 @@ define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
 define	L1_TABLE_SIZE		L1_TABLE_SIZE
 define	L1_TYPE_S		L1_TYPE_S
 define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
+define	L2_S_SIZE		L2_S_SIZE
 
 define	L1_C_PROTO_generic	L1_C_PROTO_generic
 
