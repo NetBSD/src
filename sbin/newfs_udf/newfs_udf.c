@@ -1,7 +1,7 @@
-/* $NetBSD: newfs_udf.c,v 1.12 2011/05/26 07:59:08 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.13 2013/07/02 14:59:01 reinoud Exp $ */
 
 /*
- * Copyright (c) 2006, 2008 Reinoud Zandijk
+ * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,7 @@ char	*format_str;			/* format: string representation */
 int	 format_flags;			/* format: attribute flags	 */
 int	 media_accesstype;		/* derived from current mmc cap  */
 int	 check_surface;			/* for rewritables               */
+int	 imagefile_secsize;		/* for files			 */
 
 int	 wrtrack_skew;
 int	 meta_perc = UDF_META_PERC;
@@ -283,9 +284,10 @@ udf_dump_discinfo(struct mmc_discinfo *di)
 static int
 udf_update_discinfo(struct mmc_discinfo *di)
 {
+	struct stat st;
 	struct disklabel  disklab;
 	struct partition *dp;
-	struct stat st;
+	off_t size, sectors, secsize;
 	int partnr, error;
 
 	memset(di, 0, sizeof(struct mmc_discinfo));
@@ -295,20 +297,39 @@ udf_update_discinfo(struct mmc_discinfo *di)
 	if (error == 0)
 		return 0;
 
-	/*
-	 * disc partition support; note we can't use DIOCGPART in userland so
-	 * get disc label and use the stat info to get the partition number.
-	 */
-	if (ioctl(fd, DIOCGDINFO, &disklab) == -1) {
-		/* failed to get disclabel! */
-		perror("disklabel");
-		return errno;
-	}
-
-	/* get disk partition it refers to */
+	/* (re)fstat the file */
 	fstat(fd, &st);
-	partnr = DISKPART(st.st_rdev);
-	dp = &disklab.d_partitions[partnr];
+
+	if (S_ISREG(st.st_mode)) {
+		/* file support; we pick the minimum sector size allowed */
+		size = st.st_size;
+		secsize = imagefile_secsize;
+		sectors = size / secsize;
+	} else {
+		/*
+		 * disc partition support; note we can't use DIOCGPART in userland so
+		 * get disc label and use the stat info to get the partition number.
+		 */
+		if (ioctl(fd, DIOCGDINFO, &disklab) == -1) {
+			/* failed to get disclabel! */
+			perror("disklabel");
+			return errno;
+		}
+
+		/* get disk partition it refers to */
+		fstat(fd, &st);
+		partnr = DISKPART(st.st_rdev);
+		dp = &disklab.d_partitions[partnr];
+
+		/* TODO problem with last_possible_lba on resizable VND; request */
+		if (dp->p_size == 0) {
+			perror("faulty disklabel partition returned, check label\n");
+			return EIO;
+		}
+
+		sectors = dp->p_size;
+		secsize = disklab.d_secsize;
+	}
 
 	/* set up a disc info profile for partitions */
 	di->mmc_profile		= 0x01;	/* disc type */
@@ -323,13 +344,8 @@ udf_update_discinfo(struct mmc_discinfo *di)
 	di->mmc_cap    = di->mmc_cur;
 	di->disc_flags = MMC_DFLAGS_UNRESTRICTED;
 
-	/* TODO problem with last_possible_lba on resizable VND; request */
-	if (dp->p_size == 0) {
-		perror("faulty disklabel partition returned, check label\n");
-		return EIO;
-	}
-	di->last_possible_lba = dp->p_size - 1;
-	di->sector_size       = disklab.d_secsize;
+	di->last_possible_lba = sectors - 1;
+	di->sector_size       = secsize;
 
 	di->num_sessions = 1;
 	di->num_tracks   = 1;
@@ -1437,7 +1453,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s [-cFM] [-L loglabel] "
-	    "[-P discid] [-S setlabel] [-s size] [-p perc] "
+	    "[-P discid] [-S sectorsize] [-s size] [-p perc] "
 	    "[-t gmtoff] [-v min_udf] [-V max_udf] special\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -1449,7 +1465,8 @@ main(int argc, char **argv)
 	struct tm *tm;
 	struct stat st;
 	time_t now;
-	char  scrap[255];
+	off_t setsize;
+	char  scrap[255], *colon;
 	int ch, req_enable, req_disable, force;
 	int error;
 
@@ -1461,6 +1478,8 @@ main(int argc, char **argv)
 	format_flags  = FORMAT_INVALID;
 	force         = 0;
 	check_surface = 0;
+	setsize       = 0;
+	imagefile_secsize = 512;	/* minimum allowed sector size */
 
 	srandom((unsigned long) time(NULL));
 	udf_init_create_context();
@@ -1512,14 +1531,34 @@ main(int argc, char **argv)
 				context.min_udf = context.max_udf;
 			break;
 		case 'P' :
+			/* check if there is a ':' in the name */
+			if ((colon = strstr(optarg, ":"))) {
+				if (context.volset_name)
+					free(context.volset_name);
+				*colon = 0;
+				context.volset_name = strdup(optarg);
+				optarg = colon+1;
+			}
+			if (context.primary_name)
+				free(context.primary_name);
+			if ((strstr(optarg, ":"))) {
+				perror("primary name can't have ':' in its name");
+				return EXIT_FAILURE;
+			}
 			context.primary_name = strdup(optarg);
 			break;
 		case 's' :
-			/* TODO size argument; recordable emulation */
+			/* support for files, set file size */
+			/* XXX support for formatting recordables on vnd/file? */
+			if (dehumanize_number(optarg, &setsize) < 0) {
+				perror("can't parse size argument");
+				return EXIT_FAILURE;
+			}
+			setsize = MAX(0, setsize);
 			break;
 		case 'S' :
-			if (context.volset_name) free(context.volset_name);
-			context.volset_name = strdup(optarg);
+			imagefile_secsize = a_num(optarg, "secsize");
+			imagefile_secsize = MAX(512, imagefile_secsize);
 			break;
 		case 't' :
 			/* time zone overide */
@@ -1539,8 +1578,26 @@ main(int argc, char **argv)
 
 	/* open device */
 	if ((fd = open(dev, O_RDWR, 0)) == -1) {
-		perror("can't open device");
-		return EXIT_FAILURE;
+		/* check if we need to create a file */
+		fd = open(dev, O_RDONLY, 0);
+		if (fd > 0) {
+			perror("device is there but can't be opened for read/write");
+			return EXIT_FAILURE;
+		}
+		if (!force) {
+			perror("can't open device");
+			return EXIT_FAILURE;
+		}
+		if (setsize == 0) {
+			perror("need to create image file but no size specified");
+			return EXIT_FAILURE;
+		}
+		/* need to create a file */
+		fd = open(dev, O_RDWR | O_CREAT | O_TRUNC, 0777);
+		if (fd == -1) {
+			perror("can't create image file");
+			return EXIT_FAILURE;
+		}
 	}
 
 	/* stat the device */
@@ -1550,8 +1607,21 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	if (S_ISREG(st.st_mode)) {
+		if (setsize == 0)
+			setsize = st.st_size;
+		/* sanitise arguments */
+		imagefile_secsize &= ~511;
+		setsize &= ~(imagefile_secsize-1);
+
+		if (ftruncate(fd, setsize)) {
+			perror("can't resize file");
+			return EXIT_FAILURE;
+		}
+	}
+
 	/* formatting can only be done on raw devices */
-	if (!S_ISCHR(st.st_mode)) {
+	if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
 		printf("%s is not a raw device\n", dev);
 		close(fd);
 		return EXIT_FAILURE;
@@ -1560,7 +1630,7 @@ main(int argc, char **argv)
 	/* just in case something went wrong, synchronise the drive's cache */
 	udf_synchronise_caches();
 
-	/* get disc information */
+	/* get 'disc' information */
 	error = udf_update_discinfo(&mmc_discinfo);
 	if (error) {
 		perror("can't retrieve discinfo");
