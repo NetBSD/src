@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.199 2013/07/03 14:16:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.199 2013/07/03 14:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2830,7 +2830,6 @@ reply(int n, const char *fmt, ...)
 	size_t	b;
 	va_list	ap;
 
-	b = 0;
 	if (n == 0)
 		b = snprintf(msg, sizeof(msg), "    ");
 	else if (n < 0)
