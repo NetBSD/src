@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.33 2013/07/03 15:08:01 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.34 2013/07/03 19:23:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.33 2013/07/03 15:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.34 2013/07/03 19:23:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -87,8 +87,8 @@ static int  virtif_unclone(struct ifnet *);
 struct if_clone virtif_cloner =
     IF_CLONE_INITIALIZER(VIRTIF_BASE, virtif_clone, virtif_unclone);
 
-int
-rump_virtif_create(int num)
+static int
+virtif_clone(struct if_clone *ifc, int unit)
 {
 	struct virtif_sc *sc;
 	struct virtif_user *viu;
@@ -145,13 +145,6 @@ rump_virtif_create(int num)
 	}
 
 	return error;
-}
-
-static int
-virtif_clone(struct if_clone *ifc, int unit)
-{
-
-	return rump_virtif_create(unit);
 }
 
 static int
