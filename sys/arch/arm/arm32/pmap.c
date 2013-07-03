@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.257 2013/06/12 21:34:12 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.258 2013/07/03 05:23:04 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2013/06/12 21:34:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2013/07/03 05:23:04 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -821,6 +821,18 @@ pmap_dcache_wbinv_all(pmap_t pm)
 }
 #endif /* PMAP_CACHE_VIVT */
 
+static inline uint8_t
+pmap_domain(pmap_t pm)
+{
+	return pm->pm_domain;
+}
+
+static inline pd_entry_t *
+pmap_l1_kva(pmap_t pm)
+{
+	return pm->pm_l1->l1_kva;
+}
+
 static inline bool
 pmap_is_current(pmap_t pm)
 {
@@ -1227,8 +1239,8 @@ pmap_free_l1(pmap_t pm)
 	/*
 	 * Free up the domain number which was allocated to the pmap
 	 */
-	l1->l1_domain_free[pm->pm_domain - 1] = l1->l1_domain_first;
-	l1->l1_domain_first = pm->pm_domain - 1;
+	l1->l1_domain_free[pmap_domain(pm) - 1] = l1->l1_domain_first;
+	l1->l1_domain_first = pmap_domain(pm) - 1;
 	l1->l1_domain_use_count--;
 
 	/*
@@ -1457,14 +1469,14 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	ptep = l2b->l2b_kva;
 	l2b->l2b_kva = NULL;
 
-	pl1pd = &pm->pm_l1->l1_kva[l1idx];
+	pl1pd = pmap_l1_kva(pm) + l1idx;
 
 	/*
 	 * If the L1 slot matches the pmap's domain
 	 * number, then invalidate it.
 	 */
 	l1pd = *pl1pd & (L1_TYPE_MASK | L1_C_DOM_MASK);
-	if (l1pd == (L1_C_DOM(pm->pm_domain) | L1_TYPE_C)) {
+	if (l1pd == (L1_C_DOM(pmap_domain(pm)) | L1_TYPE_C)) {
 		*pl1pd = 0;
 		PTE_SYNC(pl1pd);
 	}
@@ -1565,11 +1577,11 @@ pmap_pinit(pmap_t pm)
 		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 		pmap_update(pm);
 
-		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
+		pm->pm_pl1vec = pmap_l1_kva(pm) + L1_IDX(vector_page);
 		l2b = pmap_get_l2_bucket(pm, vector_page);
 		KDASSERT(l2b != NULL);
 		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
-		    L1_C_DOM(pm->pm_domain);
+		    L1_C_DOM(pmap_domain(pm));
 	} else
 		pm->pm_pl1vec = NULL;
 #endif
@@ -3098,8 +3110,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 */
 				pd_entry_t *pl1pd, l1pd;
 
-				pl1pd = &pm->pm_l1->l1_kva[L1_IDX(va)];
-				l1pd = l2b->l2b_phys | L1_C_DOM(pm->pm_domain) |
+				pl1pd = pmap_l1_kva(pm) + L1_IDX(va);
+				l1pd = l2b->l2b_phys | L1_C_DOM(pmap_domain(pm)) |
 				    L1_C_PROTO;
 				if (*pl1pd != l1pd) {
 					*pl1pd = l1pd;
@@ -3597,7 +3609,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	pmap_acquire_pmap_lock(pm);
 
 	l1idx = L1_IDX(va);
-	pl1pd = &pm->pm_l1->l1_kva[l1idx];
+	pl1pd = pmap_l1_kva(pm) + l1idx;
 	l1pd = *pl1pd;
 
 	if (l1pte_section_p(l1pd)) {
@@ -4056,8 +4068,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 * We know there is a valid mapping here, so simply
 	 * fix up the L1 if necessary.
 	 */
-	pl1pd = &pm->pm_l1->l1_kva[l1idx];
-	l1pd = l2b->l2b_phys | L1_C_DOM(pm->pm_domain) | L1_C_PROTO;
+	pl1pd = pmap_l1_kva(pm) + l1idx;
+	l1pd = l2b->l2b_phys | L1_C_DOM(pmap_domain(pm)) | L1_C_PROTO;
 	if (*pl1pd != l1pd) {
 		*pl1pd = l1pd;
 		PTE_SYNC(pl1pd);
@@ -4234,7 +4246,7 @@ pmap_activate(struct lwp *l)
 
 	npm = l->l_proc->p_vmspace->vm_map.pmap;
 	ndacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
-	    (DOMAIN_CLIENT << (npm->pm_domain * 2));
+	    (DOMAIN_CLIENT << (pmap_domain(npm) * 2));
 
 	/*
 	 * If TTB and DACR are unchanged, short-circuit all the
@@ -4243,7 +4255,7 @@ pmap_activate(struct lwp *l)
 	if (pmap_previous_active_lwp != NULL) {
 		opm = pmap_previous_active_lwp->l_proc->p_vmspace->vm_map.pmap;
 		odacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
-		    (DOMAIN_CLIENT << (opm->pm_domain * 2));
+		    (DOMAIN_CLIENT << (pmap_domain(opm) * 2));
 
 		if (opm->pm_l1 == npm->pm_l1 && odacr == ndacr)
 			goto all_done;
@@ -5198,7 +5210,7 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 		return false;
 
 	l1idx = L1_IDX(va);
-	*pdp = pl1pd = &pm->pm_l1->l1_kva[l1idx];
+	*pdp = pl1pd = pmap_l1_kva(pm) + l1idx;
 	l1pd = *pl1pd;
 
 	if (l1pte_section_p(l1pd)) {
@@ -5223,13 +5235,11 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 bool
 pmap_get_pde(pmap_t pm, vaddr_t va, pd_entry_t **pdp)
 {
-	u_short l1idx;
 
 	if (pm->pm_l1 == NULL)
 		return false;
 
-	l1idx = L1_IDX(va);
-	*pdp = &pm->pm_l1->l1_kva[l1idx];
+	*pdp = pmap_l1_kva(pm) + L1_IDX(va);
 
 	return true;
 }
@@ -5252,7 +5262,7 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
 	 * Copy the kernel's L1 entries to each new L1.
 	 */
 	if (pmap_initialized)
-		memcpy(l1pt, pmap_kernel()->pm_l1->l1_kva, L1_TABLE_SIZE);
+		memcpy(l1pt, pmap_l1_kva(pmap_kernel()), L1_TABLE_SIZE);
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l1pt,
 	    &l1->l1_physaddr) == false)
@@ -5455,11 +5465,11 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #ifndef ARM_HAS_VBAR
 	/* Set up vector page L1 details, if necessary */
 	if (vector_page < KERNEL_BASE) {
-		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
+		pm->pm_pl1vec = pmap_l1_kva(pm) + L1_IDX(vector_page);
 		l2b = pmap_get_l2_bucket(pm, vector_page);
 		KDASSERT(l2b != NULL);
 		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
-		    L1_C_DOM(pm->pm_domain);
+		    L1_C_DOM(pmap_domain(pm));
 	} else
 		pm->pm_pl1vec = NULL;
 #endif
@@ -6746,7 +6756,7 @@ pmap_dump(pmap_t pm)
 	else
 		printf("user pmap (%p): ", pm);
 
-	printf("domain %d, l1 at %p\n", pm->pm_domain, pm->pm_l1->l1_kva);
+	printf("domain %d, l1 at %p\n", pmap_domain(pm), pmap_l1_kva(pm));
 
 	l2_va = 0;
 	for (i = 0; i < L2_SIZE; i++, l2_va += 0x01000000) {
