@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.76 2013/06/27 09:38:08 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.77 2013/07/03 12:55:34 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.76 2013/06/27 09:38:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.77 2013/07/03 12:55:34 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2196,7 +2196,7 @@ udf_rmdir(void *v)
 //		cache_purge(dvp);	/* XXX from msdosfs, why? */
 		VN_KNOTE(vp, NOTE_DELETE);
 	}
-	DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
+	DPRINTFIF(NODE, error, ("\tgot error removing dir\n"));
 
 	/* unput the nodes and exit */
 	vput(dvp);
