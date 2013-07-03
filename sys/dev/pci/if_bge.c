@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.254 2013/07/03 05:49:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.254 2013/07/03 05:49:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3395,8 +3395,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5717:
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
-		sc->bge_flags |= BGE_5717_PLUS | BGE_5755_PLUS | BGE_575X_PLUS |
-		    BGE_5705_PLUS;
+		sc->bge_flags |= BGE_5717_PLUS | BGE_5755_PLUS |
+		    BGE_575X_PLUS | BGE_5705_PLUS | BGE_JUMBO_CAPABLE;
+		/* Jumbo frame on BCM5719 A0 does not work. */
+		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
+		    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0))
+			sc->bge_flags |= ~BGE_JUMBO_CAPABLE;
 		break;
 	case BGE_ASICREV_BCM5755:
 	case BGE_ASICREV_BCM5761:
@@ -3415,7 +3419,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5714_A0:
 	case BGE_ASICREV_BCM5780:
 	case BGE_ASICREV_BCM5714:
-		sc->bge_flags |= BGE_5714_FAMILY;
+		sc->bge_flags |= BGE_5714_FAMILY | BGE_JUMBO_CAPABLE;
 		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5750:
 	case BGE_ASICREV_BCM5752:
