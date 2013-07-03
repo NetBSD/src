@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2013/07/02 17:56:06 nakayama Exp $
+# $NetBSD: mi,v 1.26 2013/07/03 14:01:29 nakayama Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -1817,10 +1817,10 @@
 ./usr/libdata/debug/usr/tests/net/icmp/t_ping.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if/t_compat.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_loop/t_pr.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/net/sys/t_rfc6056.debug			tests-net-debug		debug,atf

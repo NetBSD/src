@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.13 2012/09/12 14:06:31 martin Exp $
+# $NetBSD: Makefile,v 1.14 2013/07/03 14:01:29 nakayama Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net
 
-TESTS_SUBDIRS=		fdpass route sys
+TESTS_SUBDIRS=		fdpass net route sys
 .if (${MKRUMP} != "no")
-TESTS_SUBDIRS+=		bpf bpfilter carp icmp if if_loop net npf
+TESTS_SUBDIRS+=		bpf bpfilter carp icmp if if_loop npf
 .endif
 
 .include <bsd.test.mk>

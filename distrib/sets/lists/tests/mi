@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.538 2013/07/02 17:56:06 nakayama Exp $
+# $NetBSD: mi,v 1.539 2013/07/03 14:01:29 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2598,12 +2598,12 @@
 ./usr/tests/net/if_loop/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_loop/t_pr		tests-net-tests		atf,rump
 ./usr/tests/net/net				tests-net-tests
-./usr/tests/net/net/Atffile			tests-net-tests		atf,rump
-./usr/tests/net/net/Kyuafile			tests-net-tests		atf,rump,kyua
-./usr/tests/net/net/t_pktinfo		tests-net-tests		atf,rump
+./usr/tests/net/net/Atffile			tests-net-tests		atf
+./usr/tests/net/net/Kyuafile			tests-net-tests		atf,kyua
+./usr/tests/net/net/t_pktinfo		tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
-./usr/tests/net/net/t_udp		tests-net-tests		atf,rump
-./usr/tests/net/net/t_unix		tests-net-tests		atf,rump
+./usr/tests/net/net/t_udp		tests-net-tests		atf
+./usr/tests/net/net/t_unix		tests-net-tests		atf
 ./usr/tests/net/npf			tests-net-tests
 ./usr/tests/net/npf/Atffile		tests-net-tests		atf,rump
 ./usr/tests/net/npf/Kyuafile		tests-net-tests		atf,rump,kyua
