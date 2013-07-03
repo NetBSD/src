@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.78 2013/07/03 14:35:28 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.79 2013/07/03 15:39:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.78 2013/07/03 14:35:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.79 2013/07/03 15:39:22 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1376,7 +1376,6 @@ static int
 udf_check_permitted(struct vnode *vp, struct vattr *vap, mode_t mode,
     kauth_cred_t cred)
 {
-
 	/* ask the generic genfs_can_access to advice on security */
 	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode,
 	    vp->v_type, vap->va_mode), vp, NULL, genfs_can_access(vp->v_type,
