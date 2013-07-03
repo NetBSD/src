@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.40 2013/06/28 17:20:15 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.41 2013/07/03 21:20:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.40 2013/06/28 17:20:15 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.41 2013/07/03 21:20:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,7 +488,7 @@ timeout_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 
 	rexmtval = tout;
 	if (asize > *ackl && (l = snprintf(ack + *ackl, asize - *ackl,
-	    "timeout%c%lu%c", 0, tout, 0)))
+	    "timeout%c%lu%c", 0, tout, 0)) > 0)
 		*ackl += l;
 	else
 		return -1;
@@ -714,7 +714,7 @@ again:
 			if (sizeof(oackbuf) > alen &&
 			    (l = snprintf(oackbuf + alen,
 			    sizeof(oackbuf) - alen, "tsize%c%u%c", 0,
-			    tftp_tsize, 0)))
+			    tftp_tsize, 0)) > 0)
 				alen += l;
 		}
 		oack_h = (struct tftphdr *) oackbuf;
