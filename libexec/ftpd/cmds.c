@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.32 2013/06/28 15:04:35 joerg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.32 2013/06/28 15:04:35 joerg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.33 2013/07/03 14:15:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -951,8 +951,8 @@ discover_path(char *last_path, const char *new_path)
 		tp[strlen(tp) - 1] = '\0';
 
 	/* check that the path is correct */
-	stat(tp, &st1);
-	stat(".", &st2);
+	if (stat(tp, &st1) == -1 || stat(".", &st2) == -1)
+		goto bad;
 	if ((st1.st_dev != st2.st_dev) || (st1.st_ino != st2.st_ino))
 		goto bad;
 
