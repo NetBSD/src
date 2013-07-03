@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.120 2013/06/12 21:34:12 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.121 2013/07/03 21:37:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -450,6 +450,27 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #define l2pte_minidata(pte)	(((pte) & \
 				 (L2_B | L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))\
 				 == (L2_C | L2_XS_T_TEX(TEX_XSCALE_X)))
+
+static inline void
+l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
+{
+	KASSERT(*ptep == opte);
+	*ptep = pte;
+	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
+		KASSERT(ptep[k] == opte ? opte + k * L2_S_SIZE : 0);
+		pte += L2_S_SIZE;
+		ptep[k] = pte;
+	}
+}       
+
+static inline void
+l2pte_reset(pt_entry_t *ptep)
+{
+	*ptep = 0;
+	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
+		ptep[k] = 0;
+	}
+}       
 
 /* L1 and L2 page table macros */
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
