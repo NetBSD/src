@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259 2013/07/03 15:24:35 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.260 2013/07/03 15:26:42 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2013/07/03 15:24:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2013/07/03 15:26:42 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -766,8 +766,8 @@ pmap_tlb_flushD(pmap_t pm)
 		 * This is not true for other CPUs.
 		 */
 		pm->pm_cstate.cs_tlb_d = 0;
-	}
 #endif /* ARM_MMU_V7 */
+	}
 }
 
 #ifdef PMAP_CACHE_VIVT
