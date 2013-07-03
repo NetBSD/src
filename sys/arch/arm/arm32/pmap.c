@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.260 2013/07/03 15:26:42 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.261 2013/07/03 15:30:24 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2013/07/03 15:26:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.261 2013/07/03 15:30:24 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3177,7 +3177,9 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				pv = pmap_remove_pv(md, pa, pm, sva);
 				pmap_vac_me_harder(md, pa, pm, 0);
 				if (pv != NULL) {
-					flags = pv->pv_flags;
+					if (pm->pm_remove_all == false) {
+						flags = pv->pv_flags;
+					}
 					pool_put(&pmap_pv_pool, pv);
 				}
 			}
