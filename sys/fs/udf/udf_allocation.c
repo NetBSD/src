@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.32 2011/06/16 09:21:02 hannken Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.33 2013/07/03 11:50:59 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.32 2011/06/16 09:21:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.33 2013/07/03 11:50:59 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2706,8 +2706,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			error = 0;
 
 			/* set new size for uvm */
-			uvm_vnp_setsize(vp, old_size);
 			uvm_vnp_setwritesize(vp, new_size);
+			uvm_vnp_setsize(vp, new_size);
 
 #if 0
 			/* zero append space in buffer */
