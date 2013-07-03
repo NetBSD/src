@@ -1,7 +1,7 @@
-/*	$NetBSD: if_virt.c,v 1.31 2013/04/30 00:03:54 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.32 2013/07/03 15:06:25 pooka Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.31 2013/04/30 00:03:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.32 2013/07/03 15:06:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -56,12 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.31 2013/04/30 00:03:54 pooka Exp $");
 #include "rumpcomp_user.h"
 
 /*
- * Virtual interface for userspace purposes.  Uses tap(4) to
- * interface with the kernel and just simply shovels data
- * to/from /dev/tap.
+ * Virtual interface.  Uses hypercalls to shovel packets back
+ * and forth.  The exact method for shoveling depends on the
+ * hypercall implementation.
  */
 
+#ifndef VIRTIF_BASE
 #define VIRTIF_BASE "virt"
+#endif
 
 static int	virtif_init(struct ifnet *);
 static int	virtif_ioctl(struct ifnet *, u_long, void *);
@@ -108,19 +110,20 @@ rump_virtif_create(int num)
 	sc->sc_viu = viu;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_cv, "virtsnd");
+	cv_init(&sc->sc_cv, VIRTIF_BASE "snd");
 	ifp = &sc->sc_ec.ec_if;
 	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, num);
 	ifp->if_softc = sc;
 
 	if (rump_threads) {
 		if ((error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-		    virtif_receiver, ifp, &sc->sc_l_rcv, "virtifr")) != 0)
+		    virtif_receiver, ifp, &sc->sc_l_rcv,
+		    VIRTIF_BASE "ifr")) != 0)
 			goto out;
 
 		if ((error = kthread_create(PRI_NONE,
 		    KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
-		    virtif_sender, ifp, &sc->sc_l_snd, "virtifs")) != 0)
+		    virtif_sender, ifp, &sc->sc_l_snd, VIRTIF_BASE "ifs")) != 0)
 			goto out;
 	} else {
 		printf("WARNING: threads not enabled, receive NOT working\n");
