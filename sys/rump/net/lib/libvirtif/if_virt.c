@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.32 2013/07/03 15:06:25 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.33 2013/07/03 15:08:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.32 2013/07/03 15:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.33 2013/07/03 15:08:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -341,50 +341,4 @@ virtif_sender(void *arg)
 	mutex_exit(&sc->sc_mtx);
 
 	kthread_exit(0);
-}
-
-/*
- * dummyif is a nada-interface.
- * As it requires nothing external, it can be used for testing
- * interface configuration.
- */
-static int	dummyif_init(struct ifnet *);
-static void	dummyif_start(struct ifnet *);
-
-void
-rump_dummyif_create()
-{
-	struct ifnet *ifp;
-	struct ethercom *ec;
-	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
-
-	enaddr[2] = cprng_fast32() & 0xff;
-	enaddr[5] = cprng_fast32() & 0xff;
-
-	ec = kmem_zalloc(sizeof(*ec), KM_SLEEP);
-
-	ifp = &ec->ec_if;
-	strlcpy(ifp->if_xname, "dummy0", sizeof(ifp->if_xname));
-	ifp->if_softc = ifp;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = dummyif_init;
-	ifp->if_ioctl = virtif_ioctl;
-	ifp->if_start = dummyif_start;
-
-	if_attach(ifp);
-	ether_ifattach(ifp, enaddr);
-}
-
-static int
-dummyif_init(struct ifnet *ifp)
-{
-
-	ifp->if_flags |= IFF_RUNNING;
-	return 0;
-}
-
-static void
-dummyif_start(struct ifnet *ifp)
-{
-
 }
