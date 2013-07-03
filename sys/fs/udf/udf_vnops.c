@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.77 2013/07/03 12:55:34 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.78 2013/07/03 14:35:28 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.77 2013/07/03 12:55:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.78 2013/07/03 14:35:28 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.77 2013/07/03 12:55:34 reinoud Exp $
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+#include <sys/dirhash.h>
+
 #include "udf.h"
 #include "udf_subr.h"
 #include "udf_bswap.h"
@@ -2166,7 +2168,7 @@ udf_rmdir(void *v)
 	struct udf_mount *ump = dir_node->ump;
 	int refcnt, error;
 
-	DPRINTF(NOTIMPL, ("udf_rmdir called\n"));
+	DPRINTF(NOTIMPL, ("udf_rmdir '%s' called\n", cnp->cn_nameptr));
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == udf_node) {
@@ -2189,11 +2191,20 @@ udf_rmdir(void *v)
 		return ENOTEMPTY;
 	}
 
-	/* detach the node from the directory */
+	/* detach the node from the directory, udf_node is an empty dir here */
 	error = udf_dir_detach(ump, dir_node, udf_node, cnp);
 	if (error == 0) {
 		cache_purge(vp);
 //		cache_purge(dvp);	/* XXX from msdosfs, why? */
+		/*
+		 * Bug alert: we need to remove '..' from the detaching
+		 * udf_node so further lookups of this are not possible. This
+		 * prevents a process in a deleted directory from going to its
+		 * deleted parent. Since `udf_node' is garanteed to be empty
+		 * here, trunc it so no fids are there.
+		 */
+		dirhash_purge(&udf_node->dir_hash);
+		udf_shrink_node(udf_node, 0);
 		VN_KNOTE(vp, NOTE_DELETE);
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing dir\n"));
