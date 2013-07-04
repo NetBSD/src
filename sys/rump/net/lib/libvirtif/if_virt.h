@@ -1,4 +1,8 @@
-/*	$NetBSD: if_virt.h,v 1.1 2013/07/04 11:46:51 pooka Exp $	*/
+/*	$NetBSD: if_virt.h,v 1.2 2013/07/04 11:58:11 pooka Exp $	*/
+
+/*
+ * NOTE!  This file is supposed to work on !NetBSD platforms.
+ */
 
 #ifndef VIRTIF_BASE
 #error Define VIRTIF_BASE
