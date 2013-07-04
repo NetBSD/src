@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.35 2013/07/03 20:17:07 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.36 2013/07/04 11:46:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.35 2013/07/03 20:17:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.36 2013/07/04 11:46:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.35 2013/07/03 20:17:07 pooka Exp $");
 #include "rump_private.h"
 #include "rump_net_private.h"
 
+#include "if_virt.h"
 #include "rumpcomp_user.h"
 
 /*
@@ -60,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.35 2013/07/03 20:17:07 pooka Exp $");
  * and forth.  The exact method for shoveling depends on the
  * hypercall implementation.
  */
-
-#ifndef VIRTIF_BASE
-#define VIRTIF_BASE "virt"
-#endif
 
 static int	virtif_init(struct ifnet *);
 static int	virtif_ioctl(struct ifnet *, u_long, void *);
@@ -84,8 +81,8 @@ static void virtif_sender(void *);
 static int  virtif_clone(struct if_clone *, int);
 static int  virtif_unclone(struct ifnet *);
 
-struct if_clone virtif_cloner =
-    IF_CLONE_INITIALIZER(VIRTIF_BASE, virtif_clone, virtif_unclone);
+struct if_clone VIF_CLONER =
+    IF_CLONE_INITIALIZER(VIF_NAME, virtif_clone, virtif_unclone);
 
 static int
 virtif_clone(struct if_clone *ifc, int num)
@@ -99,7 +96,7 @@ virtif_clone(struct if_clone *ifc, int num)
 	if (num >= 0x100)
 		return E2BIG;
 
-	if ((error = rumpcomp_virtif_create(num, &viu)) != 0)
+	if ((error = VIFHYPER_CREATE(num, &viu)) != 0)
 		return error;
 
 	enaddr[2] = cprng_fast32() & 0xff;
@@ -110,20 +107,19 @@ virtif_clone(struct if_clone *ifc, int num)
 	sc->sc_viu = viu;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_cv, VIRTIF_BASE "snd");
+	cv_init(&sc->sc_cv, VIF_NAME "snd");
 	ifp = &sc->sc_ec.ec_if;
-	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, num);
+	sprintf(ifp->if_xname, "%s%d", VIF_NAME, num);
 	ifp->if_softc = sc;
 
 	if (rump_threads) {
 		if ((error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-		    virtif_receiver, ifp, &sc->sc_l_rcv,
-		    VIRTIF_BASE "ifr")) != 0)
+		    virtif_receiver, ifp, &sc->sc_l_rcv, VIF_NAME "ifr")) != 0)
 			goto out;
 
 		if ((error = kthread_create(PRI_NONE,
 		    KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
-		    virtif_sender, ifp, &sc->sc_l_snd, VIRTIF_BASE "ifs")) != 0)
+		    virtif_sender, ifp, &sc->sc_l_snd, VIF_NAME "ifs")) != 0)
 			goto out;
 	} else {
 		printf("WARNING: threads not enabled, receive NOT working\n");
@@ -161,7 +157,7 @@ virtif_unclone(struct ifnet *ifp)
 	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_mtx);
 
-	rumpcomp_virtif_dying(sc->sc_viu);
+	VIFHYPER_DYING(sc->sc_viu);
 
 	virtif_stop(ifp, 1);
 	if_down(ifp);
@@ -175,7 +171,7 @@ virtif_unclone(struct ifnet *ifp)
 		sc->sc_l_rcv = NULL;
 	}
 
-	rumpcomp_virtif_destroy(sc->sc_viu);
+	VIFHYPER_DESTROY(sc->sc_viu);
 
 	mutex_destroy(&sc->sc_mtx);
 	cv_destroy(&sc->sc_cv);
@@ -259,7 +255,7 @@ virtif_receiver(void *arg)
 			break;
 		}
 		
-		error = rumpcomp_virtif_recv(sc->sc_viu,
+		error = VIFHYPER_RECV(sc->sc_viu,
 		    mtod(m, void *), plen, &n);
 		if (error) {
 			printf("%s: read hypercall failed %d. host if down?\n",
@@ -324,7 +320,7 @@ virtif_sender(void *arg)
 			panic("lazy bum");
 		bpf_mtap(ifp, m0);
 
-		rumpcomp_virtif_send(sc->sc_viu, io, i);
+		VIFHYPER_SEND(sc->sc_viu, io, i);
 
 		m_freem(m0);
 		mutex_enter(&sc->sc_mtx);
