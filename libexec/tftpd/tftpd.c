@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.41 2013/07/03 21:20:45 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.42 2013/07/04 02:58:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.41 2013/07/03 21:20:45 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.42 2013/07/04 02:58:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -420,7 +420,7 @@ main(int argc, char *argv[])
 
 static int
 blk_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
-    size_t *ackl, int *ec)
+    size_t *ackl, int *ecode)
 {
 	unsigned long bsize;
 	char *endp;
@@ -438,7 +438,8 @@ blk_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (bsize < 8 || bsize > 65464) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -446,22 +447,25 @@ blk_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 
 	tftp_blksize = bsize;
 	if (asize > *ackl && (l = snprintf(ack + *ackl, asize - *ackl,
-	    "blksize%c%lu%c", 0, bsize, 0)) > 0)
+	    "blksize%c%lu%c", 0, bsize, 0)) > 0) {
 		*ackl += l;
-	else
+	} else {
+		*ecode = EBADOP;
 		return -1;
+	}
 
 	return 0;
 }
 
 static int
 timeout_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
-		size_t *ackl, int *ec)
+		size_t *ackl, int *ecode)
 {
 	unsigned long tout;
 	char *endp;
@@ -475,7 +479,8 @@ timeout_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (tout < 1 || tout > 255) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -509,7 +514,7 @@ timeout_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 
 static int
 tsize_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
-    size_t *ackl, int *ec)
+    size_t *ackl, int *ecode)
 {
 	unsigned long fsize;
 	char *endp;
@@ -528,7 +533,8 @@ tsize_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (fsize > (unsigned long) 65535 * 65464) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -536,7 +542,8 @@ tsize_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 
 	tftp_opt_tsize = 1;
@@ -566,11 +573,11 @@ static const struct tftp_options {
  */
 static int
 get_options(struct tftphdr *tp, char *cp, int size, char *ackb, size_t asize,
-    size_t *alen, int *err)
+    size_t *alen, int *ecode)
 {
 	const struct tftp_options *op;
 	char *option, *value, *endp;
-	int r, rv=0, ec=0;
+	int r, rv=0;
 
 	endp = cp + size;
 	while (cp < endp) {
@@ -598,7 +605,7 @@ get_options(struct tftphdr *tp, char *cp, int size, char *ackb, size_t asize,
 				break;
 		}
 		if (op->o_name) {
-			r = op->o_handler(tp, value, ackb, asize, alen, &ec);
+			r = op->o_handler(tp, value, ackb, asize, alen, ecode);
 			if (r < 0) {
 				rv = -1;
 				break;
@@ -606,9 +613,6 @@ get_options(struct tftphdr *tp, char *cp, int size, char *ackb, size_t asize,
 			rv++;
 		} /* else ignore unknown options */
 	}
-	
-	if (rv < 0)
-		*err = ec;
 
 	return rv;
 }
