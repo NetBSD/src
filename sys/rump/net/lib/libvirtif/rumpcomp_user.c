@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/05/20 10:24:26 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.7 2013/07/04 09:48:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __linux__
 #include <net/if.h>
@@ -43,6 +44,8 @@
 #endif
 
 #include <rump/rumpuser_component.h>
+
+#include "rumpcomp_user.h"
 
 struct virtif_user {
 	int viu_fd;
@@ -150,8 +153,11 @@ rumpcomp_virtif_recv(struct virtif_user *viu,
 	pfd.events = POLLIN;
 
 	for (;;) {
-		if (viu->viu_dying)
+		if (viu->viu_dying) {
+			rv = 0;
+			*rcv = 0;
 			break;
+		}
 
 		prv = poll(&pfd, 1, POLLTIMO_MS);
 		if (prv == 0)
