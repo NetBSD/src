@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.7 2013/07/04 09:48:01 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.8 2013/07/04 11:46:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -45,6 +45,7 @@
 
 #include <rump/rumpuser_component.h>
 
+#include "if_virt.h"
 #include "rumpcomp_user.h"
 
 struct virtif_user {
@@ -96,7 +97,7 @@ opentapdev(int devnum)
 }
 
 int
-rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
+VIFHYPER_CREATE(int devnum, struct virtif_user **viup)
 {
 	struct virtif_user *viu = NULL;
 	void *cookie;
@@ -127,7 +128,7 @@ rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
 }
 
 void
-rumpcomp_virtif_send(struct virtif_user *viu,
+VIFHYPER_SEND(struct virtif_user *viu,
 	struct iovec *iov, size_t iovlen)
 {
 	void *cookie = rumpuser_component_unschedule();
@@ -141,7 +142,7 @@ rumpcomp_virtif_send(struct virtif_user *viu,
 /* how often to check for interface going south */
 #define POLLTIMO_MS 10
 int
-rumpcomp_virtif_recv(struct virtif_user *viu,
+VIFHYPER_RECV(struct virtif_user *viu,
 	void *data, size_t dlen, size_t *rcv)
 {
 	void *cookie = rumpuser_component_unschedule();
@@ -186,7 +187,7 @@ rumpcomp_virtif_recv(struct virtif_user *viu,
 #undef POLLTIMO_MS
 
 void
-rumpcomp_virtif_dying(struct virtif_user *viu)
+VIFHYPER_DYING(struct virtif_user *viu)
 {
 
 	/* no locking necessary.  it'll be seen eventually */
@@ -194,7 +195,7 @@ rumpcomp_virtif_dying(struct virtif_user *viu)
 }
 
 void
-rumpcomp_virtif_destroy(struct virtif_user *viu)
+VIFHYPER_DESTROY(struct virtif_user *viu)
 {
 	void *cookie = rumpuser_component_unschedule();
 
