@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.6 2013/06/06 17:40:09 joerg Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.7 2013/07/04 23:53:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,28 +29,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.6 2013/06/06 17:40:09 joerg Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.7 2013/07/04 23:53:13 joerg Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
 #include <string.h>
 #include <stdlib.h>
 #include <execinfo.h>
+#include <unistd.h>
 
 #ifndef __arraycount
 #define __arraycount(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
-static void __attribute__((__noinline__))
+volatile int prevent_inline;
+
+static void
 myfunc3(size_t ncalls)
 {
 	static const char *top[] = { "myfunc", "atfu_backtrace_fmt_basic_body",
 	    "atf_tc_run", "atf_tp_run", "atf_tp_main", "main", "___start" };
-	static bool optional_frame[] = { false, false, false, true, false, false, false };
+	static bool optional_frame[] = { false, false, false, true, false,
+	    false, true };
 	size_t j, nptrs, min_frames, max_frames;
 	void *buffer[ncalls + 10];
 	char **strings;
 	__CTASSERT(__arraycount(top) == __arraycount(optional_frame));
+
+	if (prevent_inline)
+		vfork();
 
 	min_frames = 0;
 	max_frames = 0;
@@ -83,24 +90,33 @@ myfunc3(size_t ncalls)
 	free(strings);
 }
 
-static void __attribute__((__noinline__))
+static void
 myfunc2(size_t ncalls)
 {
+	if (prevent_inline)
+		vfork();
+
 	myfunc3(ncalls);
 }
 
-static void __attribute__((__noinline__))
+static void
 myfunc1(size_t origcalls, size_t ncalls)
 {
+	if (prevent_inline)
+		vfork();
+
 	if (ncalls > 1)
 		myfunc1(origcalls, ncalls - 1);
 	else
 		myfunc2(origcalls);
 }
 
-static void __attribute__((__noinline__))
+static void
 myfunc(size_t ncalls)
 {
+	if (prevent_inline)
+		vfork();
+
 	myfunc1(ncalls, ncalls);
 }
 
