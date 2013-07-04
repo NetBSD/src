@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/05/27 22:57:24 martin Exp $
+# $NetBSD: Makefile,v 1.3 2013/07/04 23:53:13 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,5 @@ TESTS_C+=	t_backtrace
 
 LDADD+=		-lexecinfo -lelf
 DPADD+=		${LIBEXECINFO} ${LIBELF}
-DBG=-O0		# prevent inlining, nothing else helps.
 
 .include <bsd.test.mk>
