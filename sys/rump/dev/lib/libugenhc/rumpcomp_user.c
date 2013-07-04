@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.5 2013/04/30 12:39:21 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/07/04 10:09:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #include <sys/ioctl.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 #include <rump/rumpuser_component.h>
 
