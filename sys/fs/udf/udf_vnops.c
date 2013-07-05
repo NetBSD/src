@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.79 2013/07/03 15:39:22 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.80 2013/07/05 20:04:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.79 2013/07/03 15:39:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.80 2013/07/05 20:04:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -656,9 +656,11 @@ udf_lookup(void *v)
 	struct udf_node  *dir_node, *res_node;
 	struct udf_mount *ump;
 	struct long_ad    icb_loc;
+	mode_t mode;
+	uid_t d_uid;
+	gid_t d_gid;
 	const char *name;
 	int namelen, nameiop, islastcn, mounted_ro;
-	int vnodetp;
 	int error, found;
 
 	dir_node = VTOI(dvp);
@@ -706,9 +708,14 @@ udf_lookup(void *v)
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		DPRINTF(LOOKUP, ("\tlookup '.'\n"));
 		/* special case 1 '.' */
+		if (islastcn && cnp->cn_nameiop == RENAME) {
+			error = EISDIR;
+			goto out;
+		}
 		vref(dvp);
 		*vpp = dvp;
 		/* done */
+		goto done;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		/* special case 2 '..' */
 		DPRINTF(LOOKUP, ("\tlookup '..'\n"));
@@ -740,58 +747,74 @@ udf_lookup(void *v)
 
 		/* try to relock parent */
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	} else {
-		DPRINTF(LOOKUP, ("\tlookup file\n"));
-		/* all other files */
-		/* lookup filename in the directory; location icb_loc */
-		name    = cnp->cn_nameptr;
-		namelen = cnp->cn_namelen;
-		error = udf_lookup_name_in_dir(dvp, name, namelen,
-				&icb_loc, &found);
+		goto out;
+	}
+
+	/* all other files */
+	DPRINTF(LOOKUP, ("\tlookup file/dir in directory\n"));
+
+	/* lookup filename in the directory; location icb_loc */
+	name    = cnp->cn_nameptr;
+	namelen = cnp->cn_namelen;
+	error = udf_lookup_name_in_dir(dvp, name, namelen,
+			&icb_loc, &found);
+	if (error)
+		goto out;
+	if (!found) {
+		DPRINTF(LOOKUP, ("\tNOT found\n"));
+		/*
+		 * The entry was not found in the directory.  This is
+		 * valid if we are creating or renaming an entry and
+		 * are working on the last component of the path name.
+		 */
+		if (islastcn && (cnp->cn_nameiop == CREATE ||
+				 cnp->cn_nameiop == RENAME)) {
+			error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+			if (error) {
+				goto out;
+			}
+			error = EJUSTRETURN;
+		} else {
+			error = ENOENT;
+		}
+		/* done */
+		goto done;
+	}
+
+	/*
+	 * XXX NOTE tmpfs has a test here that tests that intermediate
+	 * components i.e. not the last one ought to be either a directory or
+	 * a link. It seems to function well without this code.
+	 */
+
+	/* check the permissions */
+	if (islastcn && (cnp->cn_nameiop == DELETE ||
+			 cnp->cn_nameiop == RENAME)  ) {
+		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 		if (error)
 			goto out;
-		if (!found) {
-			DPRINTF(LOOKUP, ("\tNOT found\n"));
-			/*
-			 * UGH, didn't find name. If we're creating or
-			 * renaming on the last name this is OK and we ought
-			 * to return EJUSTRETURN if its allowed to be created.
-			 */
-			error = ENOENT;
-			if (islastcn &&
-				(nameiop == CREATE || nameiop == RENAME))
-					error = 0;
-			if (!error) {
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
-				if (!error) {
-					error = EJUSTRETURN;
-				}
-			}
-			/* done */
-		} else {
-			/* try to create/reuse the node */
-			error = udf_get_node(ump, &icb_loc, &res_node);
-			if (!error) {
-				/*
-				 * If we are not at the last path component
-				 * and found a non-directory or non-link entry
-				 * (which may itself be pointing to a
-				 * directory), raise an error.
-				 */
-				vnodetp = res_node->vnode->v_type;
-				if ((vnodetp != VDIR) && (vnodetp != VLNK)) {
-					if (!islastcn)
-						error = ENOTDIR;
-				}
 
-			}
-			if (!error) {
-				*vpp = res_node->vnode;
+		/* get node attributes */
+		mode = udf_getaccessmode(dir_node);
+		udf_getownership(dir_node, &d_uid, &d_gid);
+		if ((mode & S_ISTXT) != 0) {
+			error = kauth_authorize_vnode(cnp->cn_cred,
+			    KAUTH_VNODE_DELETE, res_node->vnode,
+			    dir_node->vnode, genfs_can_sticky(cnp->cn_cred,
+			    d_uid, d_uid));
+			if (error) {
+				error = EPERM;
+				goto out;
 			}
 		}
-	}	
+	}
+	/* try to create/reuse the node */
+	error = udf_get_node(ump, &icb_loc, &res_node);
+	if (error)
+		goto out;
+	*vpp = res_node->vnode;
 
-out:
+done:
 	/*
 	 * Store result in the cache if requested. If we are creating a file,
 	 * the file might not be found and thus putting it into the namecache
@@ -801,6 +824,7 @@ out:
 		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 			    cnp->cn_flags);
 
+out:
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
 
 	return error;
