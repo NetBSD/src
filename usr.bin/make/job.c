@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.173 2013/06/05 03:59:43 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.174 2013/07/05 22:14:56 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.173 2013/06/05 03:59:43 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.174 2013/07/05 22:14:56 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.173 2013/06/05 03:59:43 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.174 2013/07/05 22:14:56 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -300,6 +300,7 @@ static Shell *commandShell = &shells[DEFSHELL_INDEX]; /* this is the shell to
 const char *shellPath = NULL,		  	  /* full pathname of
 						   * executable image */
            *shellName = NULL;		      	  /* last component of shell */
+char *shellErrFlag = NULL;
 static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
@@ -2136,6 +2137,24 @@ Shell_Init(void)
     if (commandShell->echo == NULL) {
 	commandShell->echo = "";
     }
+    if (commandShell->hasErrCtl && *commandShell->exit) {
+	if (shellErrFlag &&
+	    strcmp(commandShell->exit, &shellErrFlag[1]) != 0) {
+	    free(shellErrFlag);
+	    shellErrFlag = NULL;
+	}
+	if (!shellErrFlag) {
+	    int n = strlen(commandShell->exit) + 2;
+
+	    shellErrFlag = bmake_malloc(n);
+	    if (shellErrFlag) {
+		snprintf(shellErrFlag, n, "-%s", commandShell->exit);
+	    }
+	}
+    } else if (shellErrFlag) {
+	free(shellErrFlag);
+	shellErrFlag = NULL;
+    }
 }
 
 /*-
@@ -2480,6 +2499,8 @@ Job_ParseShell(char *line)
 	    commandShell = bmake_malloc(sizeof(Shell));
 	    *commandShell = newShell;
 	}
+	/* this will take care of shellErrFlag */
+	Shell_Init();
     }
 
     if (commandShell->echoOn && commandShell->echoOff) {
