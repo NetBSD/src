@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.7 2013/07/04 23:53:13 joerg Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.8 2013/07/05 09:55:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.7 2013/07/04 23:53:13 joerg Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.8 2013/07/05 09:55:39 joerg Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -55,9 +55,6 @@ myfunc3(size_t ncalls)
 	void *buffer[ncalls + 10];
 	char **strings;
 	__CTASSERT(__arraycount(top) == __arraycount(optional_frame));
-
-	if (prevent_inline)
-		vfork();
 
 	min_frames = 0;
 	max_frames = 0;
@@ -88,36 +85,39 @@ myfunc3(size_t ncalls)
 	}
 
 	free(strings);
+
+	if (prevent_inline)
+		vfork();
 }
 
 static void
 myfunc2(size_t ncalls)
 {
+	myfunc3(ncalls);
+
 	if (prevent_inline)
 		vfork();
-
-	myfunc3(ncalls);
 }
 
 static void
-myfunc1(size_t origcalls, size_t ncalls)
+myfunc1(size_t origcalls, volatile size_t ncalls)
 {
-	if (prevent_inline)
-		vfork();
-
 	if (ncalls > 1)
 		myfunc1(origcalls, ncalls - 1);
 	else
 		myfunc2(origcalls);
+
+	if (prevent_inline)
+		vfork();
 }
 
 static void
 myfunc(size_t ncalls)
 {
+	myfunc1(ncalls, ncalls);
+
 	if (prevent_inline)
 		vfork();
-
-	myfunc1(ncalls, ncalls);
 }
 
 ATF_TC(backtrace_fmt_basic);
