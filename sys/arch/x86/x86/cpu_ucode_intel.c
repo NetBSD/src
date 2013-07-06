@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.2 2012/10/17 20:19:55 drochner Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.3 2013/07/06 12:11:54 gdt Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.2 2012/10/17 20:19:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.3 2013/07/06 12:11:54 gdt Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -150,4 +150,4 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 
 	return 0;
 }
-#endif
+#endif /* ! XEN */
