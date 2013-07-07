@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/05/28 17:37:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2013/07/07 21:36:44 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -84,7 +84,6 @@ SRCS+=	Atomic.cpp \
 	Memory.cpp \
 	Mutex.cpp \
 	Path.cpp \
-	PathV2.cpp \
 	Process.cpp \
 	Program.cpp \
 	RWMutex.cpp \
@@ -102,7 +101,6 @@ SRCS+=	Host.inc \
 	Memory.inc \
 	Mutex.inc \
 	Path.inc \
-	PathV2.inc \
 	Process.inc \
 	Program.inc \
 	RWMutex.inc \
