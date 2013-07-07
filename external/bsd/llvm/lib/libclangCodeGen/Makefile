@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/03/24 13:02:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/07/07 21:36:44 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -44,6 +44,7 @@ SRCS+=	BackendUtil.cpp \
 	CodeGenTypes.cpp \
 	ItaniumCXXABI.cpp \
 	MicrosoftCXXABI.cpp \
+	MicrosoftVBTables.cpp \
 	ModuleBuilder.cpp \
 	TargetInfo.cpp
 
