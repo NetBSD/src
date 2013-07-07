@@ -79,6 +79,9 @@
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
 
+/* Define to 1 if you have the <cxxabi.h> header file. */
+/* #undef HAVE_CXXABI_H */
+
 /* Define to 1 if you have the declaration of `FE_ALL_EXCEPT', and to 0 if you
    don't. */
 #define HAVE_DECL_FE_ALL_EXCEPT 1
@@ -144,7 +147,9 @@
 /* #undef HAVE_FDP */
 
 /* Define to 1 if you have the <fenv.h> header file. */
+  #ifndef __ppc__
 #define HAVE_FENV_H 1
+  #endif
 
 /* Define if libffi is available on this platform. */
 /* #undef HAVE_FFI_CALL */
@@ -163,6 +168,12 @@
 
 /* Define to 1 if you have the `fmodf' function. */
 #define HAVE_FMODF 1
+
+/* Define to 1 if you have the `futimens' function. */
+#define HAVE_FUTIMENS 1
+
+/* Define to 1 if you have the `futimes' function. */
+#define HAVE_FUTIMES 1
 
 /* Define to 1 if you have the `getcwd' function. */
 #define HAVE_GETCWD 1
@@ -198,13 +209,13 @@
 #define HAVE_ISATTY 1
 
 /* Set to 1 if the isinf function is found in <cmath> */
-/* #undef HAVE_ISINF_IN_CMATH */
+#define HAVE_ISINF_IN_CMATH 1
 
 /* Set to 1 if the isinf function is found in <math.h> */
 #define HAVE_ISINF_IN_MATH_H 1
 
 /* Set to 1 if the isnan function is found in <cmath> */
-/* #undef HAVE_ISNAN_IN_CMATH */
+#define HAVE_ISNAN_IN_CMATH 1
 
 /* Set to 1 if the isnan function is found in <math.h> */
 #define HAVE_ISNAN_IN_MATH_H 1
@@ -582,6 +593,9 @@
 /* Define if threads enabled */
 #define LLVM_ENABLE_THREADS 1
 
+/* Define if zlib is enabled */
+#define LLVM_ENABLE_ZLIB 1
+
 /* Installation directory for config files */
 #define LLVM_ETCDIR "/usr/etc/llvm"
 
@@ -596,9 +610,6 @@
 
 /* Installation directory for .info files */
 #define LLVM_INFODIR "/usr/info"
-
-/* Installation directory for libraries */
-#define LLVM_LIBDIR "/usr/lib"
 
 /* Installation directory for man pages */
 #define LLVM_MANDIR "/usr/man"
@@ -678,10 +689,6 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LTDL_OBJDIR ".libs/"
-
-/* Define to the name of the environment variable that determines the dynamic
-   library search path. */
-#define LTDL_SHLIBPATH_VAR "LD_LIBRARY_PATH"
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #define LTDL_SHLIB_EXT ".so"

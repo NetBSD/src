@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/11 13:53:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/07/07 21:36:43 joerg Exp $
 
 PROG_CXX=	llvm-dwarfdump
 NOMAN=		yes
@@ -13,6 +13,9 @@ LLVM_LIBS+= \
 	DebugInfo \
 	Object \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

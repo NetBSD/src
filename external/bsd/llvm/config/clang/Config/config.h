@@ -14,7 +14,7 @@
 #define C_INCLUDE_DIRS "/usr/include/clang-3.4:/usr/include"
 
 /* Linker version detected at compile time. */
-#define HOST_LINK_VERSION "1"
+#define HOST_LINK_VERSION "2.23.2"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""

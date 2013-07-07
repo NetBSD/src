@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/03/24 13:02:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/07/07 21:36:42 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,6 @@ SUBDIR+= \
 	llvm-nm \
 	llvm-objdump \
 	llvm-prof \
-	llvm-ranlib \
 	llvm-readobj \
 	llvm-size \
 	llvm-symbolizer \

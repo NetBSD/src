@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/04/25 13:59:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/07/07 21:36:44 joerg Exp $
 
 LIB=	LLVMVectorize
 
@@ -9,7 +9,6 @@ LIB=	LLVMVectorize
 SRCS+=	BBVectorize.cpp \
 	LoopVectorize.cpp \
 	SLPVectorizer.cpp \
-	VecUtils.cpp \
 	Vectorize.cpp
 
 .if defined(HOSTLIB)

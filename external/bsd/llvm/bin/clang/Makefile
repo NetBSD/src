@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2013/05/28 17:37:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.27 2013/07/07 21:36:42 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -90,6 +90,7 @@ LLVM_LIBS+= \
 	TransformsUtils \
 	ipa \
 	IR \
+	Option \
 	Support
 
 .include "${.PARSEDIR}/../../link.mk"

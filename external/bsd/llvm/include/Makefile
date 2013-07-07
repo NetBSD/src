@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/05/28 17:37:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2013/07/07 21:36:43 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -53,15 +53,14 @@ HEADER=	\
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
 
-TABLEGEN_SRC=	Intrinsics.td
+TABLEGEN_SRC=	Intrinsics.td Options.td CC1AsOptions.td 
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/Intrinsics.gen|-gen-intrinsic
 
 CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
 	CommentNodes.td CommentHTMLNamedCharacterReferences.td DeclNodes.td \
-	StmtNodes.td Diagnostic.td arm_neon.td Options.td \
-	CC1AsOptions.td CC1Options.td
+	StmtNodes.td Diagnostic.td arm_neon.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
@@ -118,12 +117,12 @@ CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
 	arm_neon.h.inc|-gen-arm-neon
 
-CLANG_TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-CLANG_TABLEGEN_OUTPUT.Options.td= \
+TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
+TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
 
-CLANG_TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-CLANG_TABLEGEN_OUTPUT.CC1AsOptions.td= \
+TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
+TABLEGEN_OUTPUT.CC1AsOptions.td= \
 	clang/Driver/CC1AsOptions.inc|-gen-opt-parser-defs
 
 .include "${.PARSEDIR}/../tablegen.mk"
@@ -147,7 +146,7 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 	mkdir -p ${.TARGET:H}
 	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
 	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
-	    -e /\#endif/d \
+	    -e /^\#endif/d \
 	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
 	    > ${.TARGET}.tmp
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
