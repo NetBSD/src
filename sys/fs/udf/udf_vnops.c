@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.82 2013/07/07 19:49:44 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.83 2013/07/07 20:16:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.82 2013/07/07 19:49:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.83 2013/07/07 20:16:22 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -787,12 +787,19 @@ udf_lookup(void *v)
 	 * a link. It seems to function well without this code.
 	 */
 
+	/* try to create/reuse the node */
+	error = udf_get_node(ump, &icb_loc, &res_node);
+	if (error)
+		goto out;
+
 	/* check the permissions */
 	if (islastcn && (cnp->cn_nameiop == DELETE ||
 			 cnp->cn_nameiop == RENAME)  ) {
 		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
-		if (error)
+		if (error) {
+			vput(res_node->vnode);
 			goto out;
+		}
 
 		/* get node attributes */
 		mode = udf_getaccessmode(dir_node);
@@ -804,14 +811,12 @@ udf_lookup(void *v)
 			    d_uid, d_uid));
 			if (error) {
 				error = EPERM;
+				vput(res_node->vnode);
 				goto out;
 			}
 		}
 	}
-	/* try to create/reuse the node */
-	error = udf_get_node(ump, &icb_loc, &res_node);
-	if (error)
-		goto out;
+
 	*vpp = res_node->vnode;
 
 done:
