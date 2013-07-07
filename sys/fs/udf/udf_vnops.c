@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.81 2013/07/05 20:40:20 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.82 2013/07/07 19:49:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.81 2013/07/05 20:40:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.82 2013/07/07 19:49:44 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2191,7 +2191,7 @@ udf_rmdir(void *v)
 	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
-	int refcnt, error;
+	int error, isempty;
 
 	DPRINTF(NOTIMPL, ("udf_rmdir '%s' called\n", cnp->cn_nameptr));
 
@@ -2202,15 +2202,19 @@ udf_rmdir(void *v)
 		return EINVAL;
 	}
 
-	/* check to see if the directory is empty */
-	error = 0;
-	if (dir_node->fe) {
-		refcnt = udf_rw16(udf_node->fe->link_cnt);
-	} else {
-		refcnt = udf_rw16(udf_node->efe->link_cnt);
+	/* make sure our `leaf' node's hash is populated */
+	dirhash_get(&udf_node->dir_hash);
+	error = udf_dirhash_fill(udf_node);
+	if (error) {
+		dirhash_put(udf_node->dir_hash);
+		return error;
 	}
-	if (refcnt > 1) {
-		/* NOT empty */
+
+	/* check to see if the directory is empty */
+	isempty = dirhash_dir_isempty(udf_node->dir_hash);
+	dirhash_put(udf_node->dir_hash);
+
+	if (!isempty) {
 		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
