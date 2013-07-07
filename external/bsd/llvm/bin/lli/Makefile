@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/04/25 13:59:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2013/07/07 21:36:43 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -25,6 +25,7 @@ LLVM_LIBS+= \
 	JIT \
 	MCJIT \
 	RuntimeDyld \
+	Instrumentation \
 	Interpreter \
 	ExecutionEngine \
 	Object \

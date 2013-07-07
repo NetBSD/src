@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/05/28 17:37:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2013/07/07 21:36:43 joerg Exp $
 
 PROG_CXX=	llc
 NOMAN=		yes
@@ -33,6 +33,7 @@ LLVM_LIBS+= \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
+	PowerPCAsmParser \
 	PowerPCAsmPrinter \
 	SparcCodeGen \
 	SparcTargetInfo \

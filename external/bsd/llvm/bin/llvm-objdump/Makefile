@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/28 17:37:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/07/07 21:36:43 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -30,6 +30,7 @@ LLVM_LIBS+= \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \
 	MipsAsmParser \
+	PowerPCAsmParser \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
@@ -46,6 +47,9 @@ LLVM_LIBS+= \
 	MC \
 	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 
