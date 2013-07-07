@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/01/23 15:02:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/07/07 21:36:43 joerg Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -7,10 +7,12 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-ar
 
-SRCS=	llvm-ar.cpp
+SRCS=	llvm-ar.cpp \
+	Archive.cpp \
+	ArchiveReader.cpp \
+	ArchiveWriter.cpp
 
 LLVM_LIBS+= \
-	Archive \
 	BitReader \
 	IR \
 	Support
