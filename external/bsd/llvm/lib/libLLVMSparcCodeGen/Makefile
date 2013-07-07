@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/01/11 23:24:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/07/07 21:36:44 joerg Exp $
 
 LIB=	LLVMSparcCodeGen
 
@@ -7,7 +7,6 @@ LIB=	LLVMSparcCodeGen
 .PATH: ${LLVM_SRCDIR}/lib/Target/Sparc
 
 SRCS+=	DelaySlotFiller.cpp \
-	FPMover.cpp \
 	SparcAsmPrinter.cpp \
 	SparcInstrInfo.cpp \
 	SparcISelDAGToDAG.cpp \
