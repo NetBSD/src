@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.34 2013/03/16 05:45:37 jmmv Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.35 2013/07/08 06:44:51 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -206,6 +206,10 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
 
+	if (FSTYPE_UDF(tc))
+		atf_tc_skip("PR kern/47986: UDF is not using the new"
+			"rename framework yet");
+
 	USES_DIRS;
 
 	md(pb1, mp, "dir1");
@@ -337,6 +341,10 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_skip("PR kern/47986: UDF is not using the new"
+			"rename framework yet");
 
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");
