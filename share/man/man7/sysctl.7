@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.68 2011/11/03 00:29:00 jym Exp $
+.\"	$NetBSD: sysctl.7,v 1.68.8.1 2013/07/08 07:40:56 jdc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2011
+.Dd June 22, 2012
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1212,8 +1212,12 @@ The currently defined protocols and names are:
 .It ip	hostzerobroadcast	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
+.It ip6	maxdynroutes	integer	yes
+.It ip6	maxifprefixes	integer	yes
+.It ip6	maxifdefrouters	integer	yes
 .It ip	maxflows	integer	yes
 .It ip	maxfragpackets	integer	yes
+.It ip6	neighborgcthresh	integer	yes
 .It ip	mtudisc	integer	yes
 .It ip	mtudisctimeout	integer	yes
 .It ip	random_id	integer	yes
@@ -1687,6 +1691,18 @@ The lowest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be smaller than
 .Li ip6.lowportmax .
+.It Li ip6.maxdynroutes
+Maximum number of routes created by redirect.
+Set it to negative to disable.
+The default value is 4096.
+.It Li ip6.maxifprefixes
+Maximum number of prefixes created by route advertisements per interface.
+Set it to negative to disable.
+The default value is 16.
+.It Li ip6.maxifdefrouters 16
+Maximum number of default routers created by route advertisements per interface.
+Set it to negative to disable.
+The default value is 16.
 .It Li ip6.maxflows
 IPv6 Fast Forwarding is enabled by default.
 If set to 0, IPv6 Fast Forwarding is disabled.
@@ -1703,6 +1719,10 @@ The maximum number of fragments the node will accept.
 0 means that the node will not accept any fragments.
 \-1 means that the node will accept as many fragments as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
+.It Li ip6.neighborgcthresh
+Maximum number of entries in neighbor cache.
+Set to negative to disable.
+The default value is 2048.
 .It Li ip6.redirect
 If set to 1, ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.95 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.95.8.1 2013/07/08 07:40:56 jdc Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.95 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.95.8.1 2013/07/08 07:40:56 jdc Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -475,6 +475,10 @@ int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec. */
 int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_v6only = 1;
+int     ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
+int     ip6_maxifprefixes = 16; /* Max acceptable prefixes via RA per IF */
+int     ip6_maxifdefrouters = 16; /* Max acceptable def routers via RA */
+int     ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
 
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = 0;
