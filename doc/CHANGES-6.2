@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.13 2013/06/27 01:19:36 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.14 2013/07/08 07:41:28 jdc Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -264,3 +264,18 @@ external/gpl3/binutils/dist/ld/emultempl/elf32.em 1.6
 	PR 47922: Properly resolve DT_NEEDED entries under sysroot and don't
 	accidently try the installed system.
 	[joerg, ticket #911]
+
+share/man/man7/sysctl.7				1.73 via patch
+sys/netinet6/icmp6.c				1.161 via patch
+sys/netinet6/in6.c				1.161 via patch
+sys/netinet6/in6_proto.c			1.97 via patch
+sys/netinet6/in6_var.h				1.65 via patch
+sys/netinet6/ip6_input.c			1.139 via patch
+sys/netinet6/ip6_var.h				1.59 via patch
+sys/netinet6/nd6.c				1.143 via patch
+sys/netinet6/nd6.h				1.57 via patch
+sys/netinet6/nd6_rtr.c				1.83 via patch
+
+	4 new sysctls to avoid ipv6 DoS attacks from OpenBSD
+	[christos, ticket #905]
+
