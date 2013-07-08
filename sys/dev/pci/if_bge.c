@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.256 2013/07/05 07:08:26 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.257 2013/07/08 05:24:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.256 2013/07/05 07:08:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.257 2013/07/08 05:24:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,8 +677,9 @@ static const struct bge_product {
 #define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGE_5714_FAMILY)
 #define BGE_IS_575X_PLUS(sc)		((sc)->bge_flags & BGE_575X_PLUS)
 #define BGE_IS_5755_PLUS(sc)		((sc)->bge_flags & BGE_5755_PLUS)
-#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
+#define BGE_IS_57765_FAMILY(sc)		((sc)->bge_flags & BGE_57765_FAMILY)
 #define BGE_IS_57765_PLUS(sc)		((sc)->bge_flags & BGE_57765_PLUS)
+#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
 
 static const struct bge_revision {
 	uint32_t		br_chipid;
@@ -2285,8 +2286,7 @@ bge_chipinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 	}
 	
-	/* XXX Should we use 57765_FAMILY? */
-	if (BGE_IS_57765_PLUS(sc)) {
+	if (BGE_IS_57765_FAMILY(sc)) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
 			/* Save */
 			mode_ctl = CSR_READ_4(sc, BGE_MODE_CTL);
@@ -2403,7 +2403,7 @@ bge_chipinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
 
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_DIS_CACHE_ALIGNMENT;
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0)
 			dma_rw_ctl &= ~BGE_PCIDMARWCTL_CRDRDR_RDMA_MRRS_MSK;
@@ -2413,8 +2413,8 @@ bge_chipinit(struct bge_softc *sc)
 		 * a status tag update and leave interrupts permanently
 		 * disabled.
 		 */
-		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
-		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765)
+		if (!BGE_IS_57765_FAMILY(sc) &&
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717)
 			dma_rw_ctl |= BGE_PCIDMARWCTL_TAGGED_STATUS_WA;
 	}
 
@@ -2635,7 +2635,7 @@ bge_blockinit(struct bge_softc *sc)
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
 	/* 5718 step 16 */
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
 		 * Bits 15-2 : Maximum RX frame size
@@ -2801,15 +2801,13 @@ bge_blockinit(struct bge_softc *sc)
 	 * 'ring diabled' bit in the flags field of all the receive
 	 * return ring control blocks, located in NIC memory.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (BGE_IS_5717_PLUS(sc)) {
 		/* Should be 17, use 16 until we get an SRAM map. */
 		limit = 16;
 	} else if (BGE_IS_5700_FAMILY(sc))
 		limit = BGE_RX_RINGS_MAX;
 	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_IS_57765_PLUS(sc))
+	    BGE_IS_57765_FAMILY(sc))
 		limit = 4;
 	else
 		limit = 1;
@@ -3043,7 +3041,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780 ||
-	    BGE_IS_5717_PLUS(sc)) { /* XXX 57765? */
+	    BGE_IS_57765_PLUS(sc)) {
 		dmactl = CSR_READ_4(sc, BGE_RDMA_RSRVCTRL);
 		/*
 		 * Adjust tx margin to prevent TX data corruption and
@@ -3398,14 +3396,16 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	/* Save chipset family. */
 	switch (BGE_ASICREV(sc->bge_chipid)) {
-	case BGE_ASICREV_BCM57765:
-	case BGE_ASICREV_BCM57766:
-		sc->bge_flags |= BGE_57765_PLUS;
-		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5717:
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
-		sc->bge_flags |= BGE_5717_PLUS | BGE_5755_PLUS |
+		sc->bge_flags |= BGE_5717_PLUS;
+		/* FALLTHROUGH */
+	case BGE_ASICREV_BCM57765:
+	case BGE_ASICREV_BCM57766:
+		if (!BGE_IS_5717_PLUS(sc))
+			sc->bge_flags |= BGE_57765_FAMILY;
+		sc->bge_flags |= BGE_57765_PLUS | BGE_5755_PLUS |
 		    BGE_575X_PLUS | BGE_5705_PLUS | BGE_JUMBO_CAPABLE;
 		/* Jumbo frame on BCM5719 A0 does not work. */
 		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
@@ -3577,7 +3577,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780 &&
-	    !BGE_IS_5717_PLUS(sc)) {
+	    !BGE_IS_57765_PLUS(sc)) {
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
@@ -4394,7 +4394,7 @@ static void
 bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
 {
 
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		if ((cur_rx->bge_flags & BGE_RXBDFLAG_IPV6) == 0) {
 			if ((cur_rx->bge_flags & BGE_RXBDFLAG_IP_CSUM) != 0)
 				m->m_pkthdr.csum_flags = M_CSUM_IPv4;
