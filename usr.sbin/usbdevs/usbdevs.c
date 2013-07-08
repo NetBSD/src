@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.28 2011/08/30 20:51:29 joerg Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.29 2013/07/08 14:47:18 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n",
 	    getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static char done[USB_MAX_DEVICES];
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 {
 	int ch, i, f;
 	char buf[50];
-	char *dev = 0;
+	char *dev = NULL;
 	int addr = 0;
 	int ncont;
 
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (dev == 0) {
+	if (dev == NULL) {
 		for (ncont = 0, i = 0; i < 10; i++) {
 			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
@@ -248,5 +248,5 @@ main(int argc, char **argv)
 		else
 			err(1, "%s", dev);
 	}
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
