@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.39 2013/07/08 17:01:05 mhitch Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.39 2013/07/08 17:01:05 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -668,7 +668,8 @@ find_pci_host_node(int node)
 				 &dev_type, sizeof(dev_type));
 		if (len <= 0)
 			continue;
-		if (!strcmp(dev_type, "pci"))
+		if (!strcmp(dev_type, "pci") ||
+		    !strcmp(dev_type, "pciex"))
 			pch = node;
 	}
 	return pch;
@@ -687,7 +688,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 {
 	int i, len;
 	int address_cells, size_cells, interrupt_cells, interrupt_map_len;
-	int static_interrupt_map[100];
+	int static_interrupt_map[256];
 	int interrupt_map_mask[10];
 	int *interrupt_map = &static_interrupt_map[0];
 	int maplen = sizeof static_interrupt_map;
@@ -697,8 +698,11 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int phc_node;
 	int rc = -1;
 
-	/* Don't need to map OBP interrupt, it's already */
-	if (*interrupt & 0x20)
+	/* 
+	 * Don't try to map interrupts for onboard devices, or if the
+	 * interrupt is already fully specified.
+	 */
+	if (*interrupt & 0x20 || *interrupt & 0x7c0)
 		return validlen;
 
 	/*
@@ -722,7 +726,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 
 	phc_node = find_pci_host_node(node);
 
-	for (; node; node = OF_parent(node)) {
+	while (node) {
 #ifdef DEBUG
 		char name[40];
 
@@ -740,7 +744,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			/* Swizzle interrupt if this is a PCI bridge. */
 			if (((len = OF_getprop(node, "device_type", &dev_type,
 					      sizeof(dev_type))) > 0) &&
-			    !strcmp(dev_type, "pci") &&
+			    (!strcmp(dev_type, "pci") ||
+			     !strcmp(dev_type, "pciex")) &&
 			    (node != phc_node)) {
 #ifdef DEBUG
 				int ointerrupt = *interrupt;
@@ -755,6 +760,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			/* Get reg for next level compare. */
 			reg[0] = 0;
 			OF_getprop(node, "reg", &reg, sizeof(reg));
+
+			node = OF_parent(node);
 			continue;
 		}
 		if (interrupt_map_len > maplen) {
@@ -813,7 +820,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 
 		/* finally we can attempt the compare */
 		i = 0;
-		while (i < interrupt_map_len) {
+		while (i < interrupt_map_len + address_cells + interrupt_cells) {
 			int pintr_cells;
 			int *imap = &interrupt_map[i];
 			int *parent = &imap[address_cells + interrupt_cells];
@@ -850,6 +857,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 						free(free_map, M_DEVBUF);
 					return (-1);
 				}
+				node = *parent;
 				parent++;
 #ifdef DEBUG
 				DPRINTF(("Match! using "));
@@ -860,6 +868,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 				for (i = 0; i < pintr_cells; i++)
 					interrupt[i] = parent[i];
 				rc = validlen = pintr_cells;
+				if (node == phc_node)
+					return(rc);
 				break;
 			}
 			/* Move on to the next interrupt_map entry. */
@@ -877,14 +887,15 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		/* Get reg for the next level search. */
 		if ((len = OF_getprop(node, "reg", &reg, sizeof(reg))) <= 0) {
 			DPRINTF(("OF_mapintr: no reg property?\n"));
-			continue;
+		} else {
+			DPRINTF(("reg len %d\n", len));
 		}
-		DPRINTF(("reg len %d\n", len));
 
 		if (free_map) {
 			free(free_map, M_DEVBUF);
 			free_map = NULL;
 		}
+		node = OF_parent(node);
 	} 
 	return (rc);
 }
