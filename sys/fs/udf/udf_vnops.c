@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.83 2013/07/07 20:16:22 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.84 2013/07/08 08:21:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.83 2013/07/07 20:16:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.84 2013/07/08 08:21:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -792,7 +792,7 @@ udf_lookup(void *v)
 	if (error)
 		goto out;
 
-	/* check the permissions */
+	/* check permissions */
 	if (islastcn && (cnp->cn_nameiop == DELETE ||
 			 cnp->cn_nameiop == RENAME)  ) {
 		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
@@ -801,10 +801,14 @@ udf_lookup(void *v)
 			goto out;
 		}
 
-		/* get node attributes */
+		/*
+		 * Check if the directory has its sticky bit set. If so, ask
+		 * for clearance since only the owner of a file or directory
+		 * can remove/rename from taht directory.
+		 */
 		mode = udf_getaccessmode(dir_node);
-		udf_getownership(dir_node, &d_uid, &d_gid);
 		if ((mode & S_ISTXT) != 0) {
+			udf_getownership(dir_node, &d_uid, &d_gid);
 			error = kauth_authorize_vnode(cnp->cn_cred,
 			    KAUTH_VNODE_DELETE, res_node->vnode,
 			    dir_node->vnode, genfs_can_sticky(cnp->cn_cred,
