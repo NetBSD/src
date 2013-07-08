@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.136 2012/01/10 20:01:56 drochner Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.136.6.1 2013/07/08 07:40:34 jdc Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.136 2012/01/10 20:01:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.136.6.1 2013/07/08 07:40:34 jdc Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -1989,6 +1989,38 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 			CTL_NET, PF_INET6, IPPROTO_IPV6,
 			CTL_CREATE, CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "neighborgcthresh",
+		       SYSCTL_DESCR("Maximum number of entries in neighbor"
+			 " cache"),
+		       NULL, 1, &ip6_neighborgcthresh, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxifprefixes",
+		       SYSCTL_DESCR("Maximum number of prefixes created by"
+			   " route advertisement per interface"),
+		       NULL, 1, &ip6_maxifprefixes, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxifdefrouters",
+		       SYSCTL_DESCR("Maximum number of default routers created"
+			   " by route advertisement per interface"),
+		       NULL, 1, &ip6_maxifdefrouters, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxdynroutes",
+		       SYSCTL_DESCR("Maximum number of routes created via"
+			   " redirect"),
+		       NULL, 1, &ip6_maxdynroutes, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
 }
 
 void
