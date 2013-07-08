@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.81 2013/05/31 17:15:19 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.82 2013/07/08 05:24:34 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2631,7 +2631,8 @@ struct vpd_key {
 #define BGE_5714_FAMILY		0x01000000
 #define BGE_5700_FAMILY		0x02000000
 #define	BGE_5717_PLUS		0x04000000
-#define	BGE_57765_PLUS		0x08000000
-#define	BGE_APE			0x10000000
-#define	BGE_CPMU_PRESENT	0x20000000
+#define	BGE_57765_FAMILY	0x08000000
+#define	BGE_57765_PLUS		0x10000000
+#define	BGE_APE			0x20000000
+#define	BGE_CPMU_PRESENT	0x40000000
 #define BGE_TSO			0x80000000
