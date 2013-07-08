@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.257 2013/07/08 05:24:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.258 2013/07/08 05:36:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.257 2013/07/08 05:24:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.258 2013/07/08 05:36:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1952,8 +1952,10 @@ bge_free_tx_ring(struct bge_softc *sc)
 static int
 bge_init_tx_ring(struct bge_softc *sc)
 {
+	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int i;
 	bus_dmamap_t dmamap;
+	bus_size_t maxsegsz;
 	struct txdmamap_pool_entry *dma;
 
 	if (sc->bge_flags & BGE_TXRING_VALID)
@@ -1975,10 +1977,18 @@ bge_init_tx_ring(struct bge_softc *sc)
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 		bge_writembx(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
+	/* Limit DMA segment size for some chips */
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) &&
+	    (ifp->if_mtu <= ETHERMTU))
+		maxsegsz = 2048;
+	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719)
+		maxsegsz = 4096;
+	else
+		maxsegsz = ETHER_MAX_LEN_JUMBO;
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_TXDMA_MAX,
-		    BGE_NTXSEG, ETHER_MAX_LEN_JUMBO, 0, BUS_DMA_NOWAIT,
+		    BGE_NTXSEG, maxsegsz, 0, BUS_DMA_NOWAIT,
 		    &dmamap))
 			return ENOBUFS;
 		if (dmamap == NULL)
@@ -2769,6 +2779,10 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_5700_FAMILY(sc)) {
 		/* 5700 to 5704 had 16 send rings. */
 		limit = BGE_TX_RINGS_EXTSSRAM_MAX;
+	} else if (BGE_IS_5717_PLUS(sc)) {
+		limit = BGE_TX_RINGS_5717_MAX;
+	} else if (BGE_IS_57765_FAMILY(sc)) {
+		limit = BGE_TX_RINGS_57765_MAX;
 	} else
 		limit = 1;
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
@@ -3024,6 +3038,10 @@ bge_blockinit(struct bge_softc *sc)
 
 	if (sc->bge_flags & BGE_PCIE)
 		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) {
+		if (ifp->if_mtu <= ETHERMTU)
+			val |= BGE_RDMAMODE_JMB_2K_MMRR;
+	}
 	if (sc->bge_flags & BGE_TSO)
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
@@ -5244,7 +5262,7 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	const uint16_t *m;
-	uint32_t mode;
+	uint32_t mode, reg;
 	int s, error = 0;
 
 	s = splnet();
@@ -5353,8 +5371,16 @@ bge_init(struct ifnet *ifp)
 	/* 5718 step 66 */
 	DELAY(10);
 
-	/* 5718 step 12 */
-	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
+	/* 5718 step 12, 57XX step 37 */
+	/*
+	 * XXX Doucments of 5718 series and 577xx say the recommended value
+	 * is 1, but tg3 set 1 only on 57765 series.
+	 */
+	if (BGE_IS_57765_PLUS(sc))
+		reg = 1;
+	else
+		reg = 2;
+	CSR_WRITE_4_FLUSH(sc, BGE_MAX_RX_FRAME_LOWAT, reg);
 
 	/* Tell firmware we're alive. */
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
