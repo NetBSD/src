@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
 #  include <errno.h>
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.7 2012/01/23 03:22:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -193,7 +193,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 			bit = *bitfmt++;	/* now 0-origin */
 			switch (ch) {
 			case 'b':
-				if (((u_int)(val >> bit) & 1) == 0)
+				if (((unsigned int)(val >> bit) & 1) == 0)
 					goto skip;
 				cur_fmt = c_fmt;
 				PUTSEP;
