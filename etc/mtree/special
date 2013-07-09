@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.145 2013/05/16 07:37:05 yamt Exp $
+#	$NetBSD: special,v 1.146 2013/07/09 09:34:58 roy Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -395,6 +395,10 @@
 ./var/chroot/ntpd/var/db	type=dir  mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
 ./var/chroot/pflogd		type=dir  mode=0755
+./var/chroot/rtadvd		type=dir  mode=0755
+./var/chroot/rtadvd/etc		type=dir  mode=0755
+./var/chroot/rtadvd/var		type=dir  mode=0755
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/chroot/tcpdump		type=dir  mode=0755
 ./var/chroot/tftp-proxy		type=dir  mode=0755
