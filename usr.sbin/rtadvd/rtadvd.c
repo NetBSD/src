@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.43 2013/06/28 07:59:32 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.44 2013/07/09 09:34:59 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <util.h>
 #endif
 #include <poll.h>
+#include <pwd.h>
 
 #include "rtadvd.h"
 #include "rrenum.h"
@@ -177,6 +178,7 @@ main(int argc, char *argv[])
 	struct timeval *timeout;
 	int i, ch;
 	int fflag = 0, logopt;
+	struct passwd *pw;
 
 	/* get command line options and arguments */
 #define OPTIONS "c:dDfM:Rs"
@@ -229,6 +231,17 @@ main(int argc, char *argv[])
 	if (dflag == 1)
 		(void)setlogmask(LOG_UPTO(LOG_INFO));
 
+	errno = 0; /* Ensure errno is 0 so we know if getpwnam errors or not */
+	if ((pw = getpwnam(RTADVD_USER)) == NULL) {
+		if (errno == 0)
+			syslog(LOG_ERR,
+			    "user %s does not exist, aborting",
+			    RTADVD_USER);
+		else
+			syslog(LOG_ERR, "getpwnam: %s: %m", RTADVD_USER);
+		exit(1);
+	}
+
 	/* timer initialization */
 	rtadvd_timer_init();
 
@@ -259,6 +272,23 @@ main(int argc, char *argv[])
 		set[1].events = POLLIN;
 	} else
 		set[1].fd = -1;
+
+	syslog(LOG_INFO, "dropping privileges to %s", RTADVD_USER);
+	if (chroot(pw->pw_dir) == -1) {
+		syslog(LOG_ERR, "chroot: %s: %m", pw->pw_dir);
+		exit(1);
+	}
+	if (chdir("/") == -1) {
+		syslog(LOG_ERR, "chdir: /: %m");
+		exit(1);
+	}
+	if (setgroups(1, &pw->pw_gid) == -1 ||
+	    setgid(pw->pw_gid) == -1 || 
+	    setuid(pw->pw_uid) == -1)
+	{
+		syslog(LOG_ERR, "failed to drop privileges: %m");
+		exit(1);
+	}
 
 	signal(SIGINT, set_die);
 	signal(SIGTERM, set_die);
