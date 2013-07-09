@@ -1,4 +1,4 @@
-.\"	$NetBSD: huntd.6,v 1.9 2009/03/11 13:01:49 joerg Exp $
+.\"	$NetBSD: huntd.6,v 1.10 2013/07/09 09:41:30 njoly Exp $
 .\"
 .\" huntd
 .\"
@@ -49,7 +49,7 @@ game.
 When it starts up, it tries to notify all members of the
 .Em hunt-players
 mailing list (see
-.Xr sendmail 8 )
+.Xr sendmail 1 )
 by faking a
 .Xr talk 1
 request from user
@@ -116,9 +116,9 @@ process starts up a
 .Nm
 on the local machine and tries to rendezvous with it.
 .Sh SEE ALSO
+.Xr sendmail 1 ,
 .Xr talk 1 ,
-.Xr hunt 6 ,
-.Xr sendmail 8
+.Xr hunt 6
 .Sh AUTHORS
 Conrad Huang, Ken Arnold, and Greg Couch;
 .br
