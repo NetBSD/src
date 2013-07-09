@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.39 2013/07/08 17:01:05 mhitch Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.40 2013/07/09 20:32:11 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.39 2013/07/08 17:01:05 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.40 2013/07/09 20:32:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -701,9 +701,20 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	/* 
 	 * Don't try to map interrupts for onboard devices, or if the
 	 * interrupt is already fully specified.
+	 * XXX This should be done differently (i.e. by matching
+	 * the node name) - but we need access to a machine where
+	 * a change is testable - hence the printf below.
 	 */
-	if (*interrupt & 0x20 || *interrupt & 0x7c0)
+	if (*interrupt & 0x20 || *interrupt & 0x7c0) {
+		char name[40];
+
+		OF_getprop(node, "name", &name, sizeof(name));
+		printf("\nATTENTION: if you see this message, please mail "
+		    "the output of \"dmesg\" and \"ofctl -p\" to "
+		    "port-sparc64@NetBSD.org!\n"
+		    "Not mapping interrupt for node %s (%x)\n", name, node);
 		return validlen;
+	}
 
 	/*
 	 * If there is no interrupt map in the bus node, we 
