@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.82 2013/07/04 10:14:04 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.83 2013/07/09 17:49:37 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -108,7 +108,7 @@ rumpcomp_user.pico: rumpcomp_user.c
 
 rumpcomp_user.po: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
 RUMPCOMP_USEROBJ=rumpcomp_user.*o
 SRCS+=rumpcomp_user.c
