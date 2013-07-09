@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.216 2013/07/06 18:19:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.217 2013/07/09 18:13:14 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.216 2013/07/06 18:19:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.217 2013/07/09 18:13:14 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.216 2013/07/06 18:19:17 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.217 2013/07/09 18:13:14 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -932,6 +932,8 @@ main(int argc, char **argv)
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
 	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
 	Var_Set(".ALLTARGETS", "", VAR_GLOBAL, 0);
+	/* some makefiles need to know this */
+	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_GLOBAL, 0);
 
 	/*
 	 * Set some other useful macros
