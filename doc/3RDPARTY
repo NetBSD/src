@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1040 2013/07/07 10:52:52 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.1041 2013/07/09 08:57:16 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -685,7 +685,7 @@ should test it before import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	1.3.0
-Current Vers:	1.3.0
+Current Vers:	1.4.0
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1172,7 +1172,7 @@ unnecessary local changes.
 
 Package:	tcpdump
 Version:	4.3.0
-Current Vers:	4.3.0
+Current Vers:	4.4.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
