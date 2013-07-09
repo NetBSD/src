@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.103 2013/03/14 19:16:52 njoly Exp $
+.\"	$NetBSD: hier.7,v 1.104 2013/07/09 09:41:30 njoly Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -208,13 +208,13 @@ see
 .Xr ctime 3
 .It Sy mail/
 configuration files for
-.Xr sendmail 8
+.Xr sendmail 1
 .Pp
 .Bl -tag -width "sendmail.*" -compact
 .It Sy aliases*
 name alias files
 .It Sy sendmail.*
-.Xr sendmail 8
+.Xr sendmail 1
 configuration information
 .El
 .It Sy mail.rc
@@ -1117,7 +1117,7 @@ system last time logged in log; see
 printer daemon error logs; see
 .Xr lpd 8
 .It Sy maillog.*
-.Xr sendmail 8
+.Xr sendmail 1
 log files
 .It Sy messages.*
 general system information log
@@ -1128,7 +1128,7 @@ script
 .It Sy secure
 sensitive security information log
 .It Sy sendmail.st
-.Xr sendmail 8
+.Xr sendmail 1
 statistics
 .It Sy timed.*
 .Xr timed 8
@@ -1183,7 +1183,7 @@ the anonymous ftp root directory; see
 .It Sy mqueue/
 sendmail mail queue;
 see
-.Xr sendmail 8
+.Xr sendmail 1
 .It Sy news/
 Network news archival and spooling directories
 .It Sy output/
