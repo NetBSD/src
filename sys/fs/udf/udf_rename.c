@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.1 2013/07/10 15:10:56 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.2 2013/07/10 19:14:07 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.1 2013/07/10 15:10:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.2 2013/07/10 19:14:07 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -329,8 +329,6 @@ udf_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *tdvp, struct componentname *tcnp,
     void *tde, struct vnode *tvp)
 {
-	struct dirent **fdirentp = fde;
-	struct dirent **tdirentp = tde;
 	struct udf_node *fnode, *fdnode, *tnode, *tdnode;
 	struct vattr fvap;
 	int error;
@@ -342,11 +340,6 @@ udf_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(fvp != NULL);
 	KASSERT(tdvp != NULL);
 	KASSERT(tcnp != NULL);
-	KASSERT(fdirentp != NULL);
-	KASSERT(tdirentp != NULL);
-	KASSERT(fdirentp != tdirentp);
-	KASSERT((*fdirentp) != (*tdirentp));
-	KASSERT((*fdirentp) != NULL);
 	KASSERT(fdvp != fvp);
 	KASSERT(fdvp != tvp);
 	KASSERT(tdvp != fvp);
