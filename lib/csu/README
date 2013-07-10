@@ -16,7 +16,7 @@ arch/${MACHINE_ARCH} or arch/${MACHINE_CPU}:
 - crtbegin.S: see below
 - crtend.S: see below, most likely just a copy of an existing architecture
 - crti.S: prefix part of .init/.fini sections, i.e. to ensure stack alignment
-- crte.S: suffix part of the .init/.fini sections, i.e. return to caller.
+- crtn.S: suffix part of the .init/.fini sections, i.e. return to caller.
 
 
 Overview of the common runtime support
