@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.5 2013/07/10 22:55:40 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.6 2013/07/10 23:30:45 matt Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.5 2013/07/10 22:55:40 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.6 2013/07/10 23:30:45 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -120,6 +120,7 @@ _ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 #endif /* SHARED */
 
 4:	ret
+END(__do_global_dtors_aux)
 
 	.weak	__deregister_frame_info
 	.weak	__cxa_finalize
@@ -167,6 +168,7 @@ _ENTRY(__do_global_ctors_aux, 0x0800)
 	brb	3b			/* get next one */
 
 4:	ret
+END(__do_global_ctors_aux)
 
 	.hidden	_C_LABEL(__CTOR_LIST_END__)
 
