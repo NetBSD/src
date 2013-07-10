@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2013/07/03 14:29:28 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2013/07/10 08:00:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993 "
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2013/07/03 14:29:28 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2013/07/10 08:00:29 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ main(argc, argv)
 	char **argv;
 {
 	int envargc, argcnt;
-	char *envargv[2];
+	char *envargv[3];
 
 	/*
 	 * Process command line arguments and MORE environment arguments.
