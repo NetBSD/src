@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.3 2013/06/25 00:30:07 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.4 2013/07/10 14:27:01 matt Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.3 2013/06/25 00:30:07 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.4 2013/07/10 14:27:01 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -91,7 +91,7 @@ _ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 	 *	__cxa_finalize(&__dso_handle);
 	 */
 	movab	__cxa_finalize, %r0
-	bneq	1f
+	beql	1f
 	pushal	__dso_handle	
 	calls	$0, (%r0)
 1:
