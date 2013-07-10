@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.4 2013/07/10 14:27:01 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.5 2013/07/10 22:55:40 matt Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.4 2013/07/10 14:27:01 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.5 2013/07/10 22:55:40 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
@@ -114,7 +114,7 @@ _ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 	 *     __deregister_frame_info(&__EH_FRAME_LIST__[0]);
 	 */
 	moval	__deregister_frame_info, %r0
-	bneq	4f
+	beql	4f
 	pushal	__EH_FRAME_LIST__
 	calls	$0, (%r0)
 #endif /* SHARED */
