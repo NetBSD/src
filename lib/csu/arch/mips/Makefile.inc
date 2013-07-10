@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 2013/06/22 02:37:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2013/07/10 15:05:46 matt Exp $
 
-CPPFLAGS+=	-I${ARCHDIR}
+CPPFLAGS+=	-I${ARCHDIR} -DELFSIZE=_MIPS_SZPTR
