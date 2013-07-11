@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.10 2013/02/05 13:02:33 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.11 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,13 +49,14 @@
 char            my_ldp_id[20];
 struct sockaddr	mplssockaddr;
 
-/* Processing a hello */
+/* Process a hello */
 void
-run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
-    struct sockaddr * padd, struct in_addr * ladd, int mysock, bool may_connect)
+run_ldp_hello(const struct ldp_pdu * pduid, const struct hello_tlv * ht,
+    const struct sockaddr * padd, const struct in_addr * ladd, int mysock,
+    bool may_connect)
 {
 	struct ldp_peer *peer = NULL;
-	struct transport_address_tlv *trtlv;
+	const struct transport_address_tlv *trtlv;
 	struct hello_info *hi = NULL;
 	union sockunion traddr;
 
@@ -68,19 +69,15 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 
 	if (ht->length <= 4)	/* Common hello parameters */
 		return;
-	ht->ch.type = ntohs(ht->ch.type);
-	ht->ch.length = ntohs(ht->ch.length);
-	ht->ch.holdtime = ntohs(ht->ch.holdtime);
-	ht->ch.res = ntohs(ht->ch.res);
-	debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
-	    " Hold time: %d\n", ht->ch.type, ht->ch.length,
-	    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
+	debugp("Common hello Type: 0x%.4X Length: %.2d"
+	    " Hold time: %d\n", ntohs(ht->ch.type), ntohs(ht->ch.length),
+	    ht->ch.holdtime);
 
 	memset(&traddr, 0, sizeof(traddr));
 	/* Check transport TLV */
 	if (pduid->length - PDU_PAYLOAD_LENGTH -
 	    sizeof(struct hello_tlv) >= 8) {
-		trtlv = (struct transport_address_tlv *)(ht + 1);
+		trtlv = (const struct transport_address_tlv *)(ht + 1);
 		if (trtlv->type == htons(TLV_IPV4_TRANSPORT)) {
 			traddr.sin.sin_family = AF_INET;
 			traddr.sin.sin_len = sizeof(struct sockaddr_in);
@@ -119,9 +116,9 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 
 	/* Update expire timer */
 	if (ht->ch.holdtime != 0)
-		hi->keepalive = ht->ch.holdtime;
+		hi->keepalive = ntohs(ht->ch.holdtime);
 	else {
-		if (ht->ch.res >> 15 == 0)
+		if (ntohs(ht->ch.res) >> 15 == 0)
 			hi->keepalive = LDP_HELLO_KEEP;
 		else
 			hi->keepalive = LDP_THELLO_KEEP;
@@ -138,7 +135,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 		    ntohl(ladd->s_addr))) {
 			peer = ldp_peer_new(&pduid->ldp_id, padd,
 				&hi->transport_address.sa,
-				ht->ch.holdtime, 0);
+				ntohs(ht->ch.holdtime), 0);
 			if (peer == NULL)
 				return;
 			if (peer->state == LDP_PEER_CONNECTED)
