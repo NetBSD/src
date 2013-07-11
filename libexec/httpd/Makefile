@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/07/11 08:32:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2013/07/11 08:51:09 mrg Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -69,5 +69,23 @@ bozohttpd.8.txt: bozohttpd.8
 	$(NROFF) -mdoc -Tascii $> | $(TXTFROB) > $@
 
 CLEANFILES+=	bozohttpd.8.html bozohttpd.8.txt
+
+# Create a distfile: uses /tmp
+BASE=bozohttpd-${BOZOVER}
+TAR=${BASE}.tar
+export-distfile:
+	dir=`mktemp -d /tmp/bozo-export-XXXXXX`; \
+	cd "$${dir}" || exit; \
+	mkdir ${BASE}; \
+	( cd ${BASE} || exit; \
+	  cp -r "${.CURDIR}/." "."; \
+	  find . -name .CVS | xargs rm -r; \
+	); \
+	pax -wf ${TAR} ${BASE}; \
+	gzip -c9 ${TAR} > ${TAR}.gz; \
+	bzip2 -9 ${TAR}
+	@echo "Exported two files:"
+	@echo ${TAR}.gz
+	@echo ${TAR}.bz2
 
 .include <bsd.prog.mk>
