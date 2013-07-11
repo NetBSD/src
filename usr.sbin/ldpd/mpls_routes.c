@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.12 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.13 2013/07/11 18:02:03 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include "tlv_stack.h"
 #include "label.h"
 #include "mpls_routes.h"
+#include "socketops.h"
 
 extern int      route_socket;
 int             rt_seq = 0;
@@ -68,6 +69,7 @@ static int read_route_socket(char *, int);
 void	mask_addr(union sockunion *);
 int	compare_sockunion(const union sockunion *, const union sockunion *);
 char *	mpls_ntoa(union mpls_shim);
+static int check_if_addr_updown(struct rt_msg * rg);
 
 extern struct sockaddr mplssockaddr;
 
@@ -565,7 +567,6 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 	return LDP_E_OK;
 }
 
-
 /* triggered when a route event occurs */
 int 
 check_route(struct rt_msg * rg, uint rlen)
@@ -580,19 +581,18 @@ check_route(struct rt_msg * rg, uint rlen)
 	gate[0] = 0;
 	pref[0] = 0;
 
-	if (rlen <= sizeof(struct rt_msghdr))
+	if (rlen <= sizeof(struct rt_msghdr) ||
+	    rg->m_rtm.rtm_version != RTM_VERSION)
 		return LDP_E_ROUTE_ERROR;
 
-	if (rg->m_rtm.rtm_version != RTM_VERSION)
-		return LDP_E_ROUTE_ERROR;
-
-	if ((rg->m_rtm.rtm_flags & RTF_DONE) == 0)
+	if (rg->m_rtm.rtm_type == RTM_NEWADDR ||
+	    rg->m_rtm.rtm_type == RTM_DELADDR)
+		return check_if_addr_updown(rg);
+	if (rg->m_rtm.rtm_pid == getpid() ||
+	    ((rg->m_rtm.rtm_flags & RTF_DONE) == 0))
 		return LDP_E_OK;
 
-	if (rg->m_rtm.rtm_pid == getpid())	/* We did it.. */
-		return LDP_E_OK;
-	else
-		debugp("Check route triggered by PID: %d\n", rg->m_rtm.rtm_pid);
+	debugp("Check route triggered by PID: %d\n", rg->m_rtm.rtm_pid);
 
 	so_dest = (union sockunion *) rg->m_space;
 
@@ -735,6 +735,48 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	if(so_pref_allocated)
 		free(so_pref);
+	return LDP_E_OK;
+}
+
+/*
+ * Checks NEWADDR and DELADDR messages and sends announcements accordingly
+ */
+static int
+check_if_addr_updown(struct rt_msg * rg)
+{
+	union sockunion *ifa, *netmask;
+	struct ldp_peer *p;
+	struct address_list_tlv al_tlv;
+
+	if ((rg->m_rtm.rtm_addrs & RTA_NETMASK) == 0 ||
+	    (rg->m_rtm.rtm_addrs & RTA_IFA) == 0)
+		return LDP_E_ROUTE_ERROR;
+
+	ifa = netmask = (union sockunion *) rg->m_space;
+	if (netmask->sa.sa_family != AF_INET)
+		return LDP_E_OK;
+
+	if (rg->m_rtm.rtm_addrs & RTA_IFP)
+		ifa = GETNEXT(netmask);
+	ifa = GETNEXT(ifa);
+
+	if (ifa->sa.sa_family != AF_INET)
+		return LDP_E_OK;
+
+	memset(&al_tlv, 0, sizeof(al_tlv));
+	al_tlv.type = rg->m_rtm.rtm_type == RTM_NEWADDR ? htons(LDP_ADDRESS) :
+	    htons(LDP_ADDRESS_WITHDRAW);
+	al_tlv.length = htons(sizeof(al_tlv) - TLV_TYPE_LENGTH);
+	al_tlv.messageid = htonl(get_message_id());
+	al_tlv.a_type = htons(TLV_ADDRESS_LIST);
+	al_tlv.a_length = htons(sizeof(al_tlv.a_af) + sizeof(al_tlv.a_address));
+	al_tlv.a_af = htons(LDP_AF_INET);
+	memcpy(&al_tlv.a_address, &ifa->sin.sin_addr, sizeof(al_tlv.a_address));
+
+	SLIST_FOREACH(p, &ldp_peer_head, peers)
+		if (p->state == LDP_PEER_ESTABLISHED)
+			send_tlv(p, (struct tlv *)&al_tlv);
+
 	return LDP_E_OK;
 }
 
