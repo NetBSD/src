@@ -35,7 +35,7 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crt0.S,v 1.2 2013/07/11 17:07:35 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -49,4 +49,4 @@ _ENTRY(__start)
 	pea	(16+4)(%sp,%d1.l)	| envp = &argv[argc + 1]
 	pea	20(%sp)			| argv
 	movl	%d0,-(%sp)		| argc
-	jsr	___start
+	bsr	___start
