@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.10 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.11 2013/07/11 09:11:35 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -229,16 +229,13 @@ from_cidr_to_union(uint8_t prefixlen)
 uint8_t 
 from_mask_to_cidr(char *mask)
 {
-	/* LoL (although I don't think about something faster right now) */
-	char            mtest[20];
-	uint8_t        i;
+	struct in_addr addr;
+	uint8_t plen = 0;
 
-	for (i = 1; i < 32; i++) {
-		from_cidr_to_mask(i, mtest);
-		if (!strcmp(mask, mtest))
-			break;
-	}
-	return i;
+	if (inet_aton(mask, &addr) != 0)
+		for (; addr.s_addr; plen++)
+			addr.s_addr &= addr.s_addr - 1;
+	return plen;
 }
 
 uint8_t
@@ -258,23 +255,13 @@ from_union_to_cidr(union sockunion *so_pref)
 void
 from_cidr_to_mask(uint8_t prefixlen, char *mask)
 {
-	uint32_t       a = 0, p = prefixlen;
-	if (prefixlen > 32) {
-		strlcpy(mask, "255.255.255.255", 16);
-		return;
-	}
-	for (; p > 0; p--) {
-		a = a >> (p - 1);
-		a += 1;
-		a = a << (p - 1);
-	}
-	/* is this OK ? */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	a = a << (32 - prefixlen);
-#endif
+	uint32_t a = 0;
+	uint8_t plen = prefixlen < 32 ? prefixlen : 32;
 
+	if (plen != 0)
+		a = (0xffffffff >> (32 - plen)) << (32 - plen);
 	snprintf(mask, 16, "%d.%d.%d.%d", a >> 24, (a << 8) >> 24,
-	    (a << 16) >> 24, (a << 24) >> 24);
+	    (a << 16) >> 24, (a << 24) >> 24);  
 }
 
 char *
