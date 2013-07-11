@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.11 2013/02/04 20:28:24 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.12 2013/07/11 05:45:23 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@ sockaddr_cmp(const struct sockaddr *a, const struct sockaddr *b)
  * initiate a new one
  */
 struct ldp_peer *
-ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
-	     struct sockaddr * tradd, uint16_t holdtime, int soc)
+ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
+	     const struct sockaddr * tradd, uint16_t holdtime, int soc)
 {
 	struct ldp_peer *p;
 	int s = soc;
@@ -93,10 +93,13 @@ ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
 			fatalp("ldp_peer_new: cannot create socket\n");
 			return NULL;
 		}
-		if (tradd != NULL)
-			connecting_sa = tradd;
-		else
-			connecting_sa = padd;
+		if (tradd != NULL) {
+			connecting_sa = malloc(tradd->sa_len);
+			memcpy(connecting_sa, tradd, tradd->sa_len);
+		} else {
+			connecting_sa = malloc(padd->sa_len);
+			memcpy(connecting_sa, padd, padd->sa_len);
+		}
 
 		assert(connecting_sa->sa_family == AF_INET ||
 		    connecting_sa->sa_family == AF_INET6);
@@ -159,11 +162,13 @@ ldp_peer_new(const struct in_addr * ldp_id, struct sockaddr * padd,
 	if (soc < 1)
 		if (connect(s, connecting_sa, connecting_sa->sa_len) == -1) {
 			if (errno == EINTR) {
+				free(connecting_sa);
 				return p;	/* We take care of this in
 						 * big_loop */
 			}
 			warnp("connect to %s failed: %s\n",
 			    satos(connecting_sa), strerror(errno));
+			free(connecting_sa);
 			ldp_peer_holddown(p);
 			return NULL;
 		}
@@ -263,10 +268,10 @@ get_ldp_peer_by_socket(int s)
  * Returns the number of addresses inserted successfuly
  */
 int 
-add_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
+add_ifaddresses(struct ldp_peer * p, const struct al_tlv * a)
 {
 	int             i, c, n;
-	struct in_addr *ia;
+	const struct in_addr *ia;
 	struct sockaddr_in	ipa;
 
 	memset(&ipa, 0, sizeof(ipa));
@@ -288,7 +293,7 @@ add_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
 	debugp("Trying to add %d addresses to peer %s ... \n", n,
 	    inet_ntoa(p->ldp_id));
 
-	for (ia = (struct in_addr *) & a->address, c = 0, i = 0; i < n; i++) {
+	for (ia = (const struct in_addr *) & a->address,c = 0,i = 0; i<n; i++) {
 		memcpy(&ipa.sin_addr, &ia[i], sizeof(ipa.sin_addr));
 		if (add_ifaddr(p, (struct sockaddr *)&ipa) == LDP_E_OK)
 			c++;
@@ -300,10 +305,10 @@ add_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
 }
 
 int 
-del_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
+del_ifaddresses(struct ldp_peer * p, const struct al_tlv * a)
 {
 	int             i, c, n;
-	struct in_addr *ia;
+	const struct in_addr *ia;
 	struct sockaddr_in	ipa;
 
 	memset(&ipa, 0, sizeof(ipa));
@@ -324,7 +329,7 @@ del_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
 	debugp("Trying to delete %d addresses from peer %s ... \n", n,
 	    inet_ntoa(p->ldp_id));
 
-	for (ia = (struct in_addr *) & a[1], c = 0, i = 0; i < n; i++) {
+	for (ia = (const struct in_addr *) & a[1], c = 0, i = 0; i < n; i++) {
 		memcpy(&ipa.sin_addr, &ia[i], sizeof(ipa.sin_addr));
 		if (del_ifaddr(p, (struct sockaddr *)&ipa) == LDP_E_OK)
 			c++;
@@ -338,7 +343,7 @@ del_ifaddresses(struct ldp_peer * p, struct al_tlv * a)
 
 /* Adds a _SINGLE_ INET address to a specific peer */
 int 
-add_ifaddr(struct ldp_peer * p, struct sockaddr * a)
+add_ifaddr(struct ldp_peer * p, const struct sockaddr * a)
 {
 	struct ldp_peer_address *lpa;
 
@@ -363,7 +368,7 @@ add_ifaddr(struct ldp_peer * p, struct sockaddr * a)
 
 /* Deletes an address bounded to a specific peer */
 int 
-del_ifaddr(struct ldp_peer * p, struct sockaddr * a)
+del_ifaddr(struct ldp_peer * p, const struct sockaddr * a)
 {
 	struct ldp_peer_address *wp;
 
@@ -379,7 +384,7 @@ del_ifaddr(struct ldp_peer * p, struct sockaddr * a)
 
 /* Checks if an address is already bounded */
 struct ldp_peer_address *
-check_ifaddr(struct ldp_peer * p, const struct sockaddr * a)
+check_ifaddr(const struct ldp_peer * p, const struct sockaddr * a)
 {
 	struct ldp_peer_address *wp;
 
@@ -402,7 +407,7 @@ del_all_ifaddr(struct ldp_peer * p)
 }
 
 void 
-print_bounded_addresses(struct ldp_peer * p)
+print_bounded_addresses(const struct ldp_peer * p)
 {
 	struct ldp_peer_address *wp;
 	char abuf[512];
@@ -432,8 +437,8 @@ add_my_if_addrs(struct in_addr * a, int count)
 
 /* Adds a label and a prefix to a specific peer */
 int 
-ldp_peer_add_mapping(struct ldp_peer * p, struct sockaddr * a, int prefix,
-    int label)
+ldp_peer_add_mapping(struct ldp_peer * p, const struct sockaddr * a,
+    int prefix, int label)
 {
 	struct label_mapping *lma;
 
@@ -459,7 +464,8 @@ ldp_peer_add_mapping(struct ldp_peer * p, struct sockaddr * a, int prefix,
 }
 
 int 
-ldp_peer_delete_mapping(struct ldp_peer * p, struct sockaddr * a, int prefix)
+ldp_peer_delete_mapping(struct ldp_peer * p, const struct sockaddr * a,
+    int prefix)
 {
 	struct label_mapping *lma;
 
@@ -477,7 +483,8 @@ ldp_peer_delete_mapping(struct ldp_peer * p, struct sockaddr * a, int prefix)
 }
 
 struct label_mapping *
-ldp_peer_get_lm(struct ldp_peer * p, struct sockaddr * a, uint prefix)
+ldp_peer_get_lm(const struct ldp_peer * p, const struct sockaddr * a,
+    uint prefix)
 {
 	struct label_mapping *rv;
 
@@ -492,7 +499,7 @@ ldp_peer_get_lm(struct ldp_peer * p, struct sockaddr * a, uint prefix)
 
 }
 
-int 
+int
 ldp_peer_delete_all_mappings(struct ldp_peer * p)
 {
 	struct label_mapping *lma;
@@ -508,7 +515,8 @@ ldp_peer_delete_all_mappings(struct ldp_peer * p)
 
 /* returns a mapping and its peer */
 struct peer_map *
-ldp_test_mapping(struct sockaddr * a, int prefix, struct sockaddr * gate)
+ldp_test_mapping(const struct sockaddr * a, int prefix,
+    const struct sockaddr * gate)
 {
 	struct ldp_peer *lpeer;
 	struct peer_map *rv = NULL;
