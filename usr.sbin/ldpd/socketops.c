@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.27 2013/05/08 08:57:45 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.28 2013/07/11 05:45:23 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ static int set_tos(int);
 static int socket_reuse_port(int);
 static int get_local_addr(struct sockaddr_dl *, struct in_addr *);
 static int is_hello_socket(int);
-static int is_passive_if(char *if_name);
+static int is_passive_if(const char *if_name);
 
 int 
 create_hello_sockets()
@@ -284,7 +284,7 @@ is_hello_socket(int s)
 
 /* Check if interface is passive */
 static int
-is_passive_if(char *if_name)
+is_passive_if(const char *if_name)
 {
 	struct passive_if *pif;
 
@@ -443,8 +443,7 @@ send_hello(void)
 			sizeof(struct common_hello_tlv) +
 			IPV4_HELLO_MSG_SIZE - BASIC_HELLO_MSG_SIZE);
 	/*
-	 * kefren:
-	 * I used ID 0 instead of htonl(get_message_id()) because I've
+	 * We used ID 0 instead of htonl(get_message_id()) because we've
 	 * seen hellos from Cisco routers doing the same thing
 	 */
 	t->messageid = 0;
@@ -944,7 +943,7 @@ new_peer_connection()
 	union sockunion peer_address, my_address;
 	struct in_addr *peer_ldp_id = NULL;
 	struct hello_info *hi;
-	int             s;
+	int s;
 
 	s = accept(ls, &peer_address.sa,
 		& (socklen_t) { sizeof(union sockunion) } );
@@ -1008,7 +1007,7 @@ new_peer_connection()
 }
 
 void 
-send_initialize(struct ldp_peer * p)
+send_initialize(const struct ldp_peer * p)
 {
 	struct init_tlv ti;
 
@@ -1028,7 +1027,7 @@ send_initialize(struct ldp_peer * p)
 }
 
 void 
-keep_alive(struct ldp_peer * p)
+keep_alive(const struct ldp_peer * p)
 {
 	struct ka_tlv   kt;
 
@@ -1074,7 +1073,8 @@ recv_session_pdu(struct ldp_peer * p)
 		return;
 	}
 	if (c < MIN_PDU_SIZE) {
-		debugp("PDU too small received from peer %s\n", inet_ntoa(p->ldp_id));
+		debugp("PDU too small received from peer %s\n",
+		    inet_ntoa(p->ldp_id));
 		return;
 	}
 	rpdu = (struct ldp_pdu *) recvspace;
@@ -1277,7 +1277,8 @@ recv_session_pdu(struct ldp_peer * p)
 
 /* Sends a pdu, tlv pair to a connected peer */
 int 
-send_message(struct ldp_peer * p, struct ldp_pdu * pdu, struct tlv * t)
+send_message(const struct ldp_peer * p, const struct ldp_pdu * pdu,
+	const struct tlv * t)
 {
 	unsigned char   sendspace[MAX_PDU_SIZE];
 
@@ -1325,7 +1326,7 @@ send_message(struct ldp_peer * p, struct ldp_pdu * pdu, struct tlv * t)
  * Encapsulates TLV into a PDU and sends it to a peer
  */
 int 
-send_tlv(struct ldp_peer * p, struct tlv * t)
+send_tlv(const struct ldp_peer * p, const struct tlv * t)
 {
 	struct ldp_pdu  pdu;
 
@@ -1340,7 +1341,7 @@ send_tlv(struct ldp_peer * p, struct tlv * t)
 
 
 int 
-send_addresses(struct ldp_peer * p)
+send_addresses(const struct ldp_peer * p)
 {
 	struct address_list_tlv *t;
 	int             ret;

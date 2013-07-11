@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.4 2013/02/04 17:14:31 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.5 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -88,32 +88,33 @@ struct peer_map {
 
 int	sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 void            ldp_peer_init(void);
-struct ldp_peer *	ldp_peer_new(const struct in_addr *, struct sockaddr *,
-				struct sockaddr *, uint16_t, int);
+struct ldp_peer * ldp_peer_new(const struct in_addr *, const struct sockaddr *,
+				const struct sockaddr *, uint16_t, int);
 void            ldp_peer_holddown(struct ldp_peer *);
 void            ldp_peer_delete(struct ldp_peer *);
 struct ldp_peer * get_ldp_peer(const struct sockaddr *);
 struct ldp_peer * get_ldp_peer_by_id(const struct in_addr *);
 struct ldp_peer * get_ldp_peer_by_socket(int);
-int add_ifaddresses(struct ldp_peer *, struct al_tlv *);
-int add_ifaddr(struct ldp_peer *, struct sockaddr *);
-int del_ifaddr(struct ldp_peer *, struct sockaddr *);
-struct ldp_peer_address * check_ifaddr(struct ldp_peer *,
+int add_ifaddresses(struct ldp_peer *, const struct al_tlv *);
+int add_ifaddr(struct ldp_peer *, const struct sockaddr *);
+int del_ifaddr(struct ldp_peer *, const struct sockaddr *);
+struct ldp_peer_address * check_ifaddr(const struct ldp_peer *,
 	const struct sockaddr *);
-void print_bounded_addresses(struct ldp_peer *);
+void print_bounded_addresses(const struct ldp_peer *);
 void del_all_ifaddr(struct ldp_peer *);
-int del_ifaddresses(struct ldp_peer *, struct al_tlv *);
+int del_ifaddresses(struct ldp_peer *, const struct al_tlv *);
 void add_my_if_addrs(struct in_addr *, int);
 
-int ldp_peer_add_mapping(struct ldp_peer *, struct sockaddr *, int, int);
-int ldp_peer_delete_mapping(struct ldp_peer *, struct sockaddr *, int);
-struct label_mapping * ldp_peer_get_lm(struct ldp_peer *, struct sockaddr *,
-				uint);
+int ldp_peer_add_mapping(struct ldp_peer *, const struct sockaddr *, int, int);
+int ldp_peer_delete_mapping(struct ldp_peer *, const struct sockaddr *, int);
+struct label_mapping * ldp_peer_get_lm(const struct ldp_peer *,
+	const struct sockaddr *, uint);
 int ldp_peer_delete_all_mappings(struct ldp_peer *);
 void ldp_peer_holddown_all(void);
 
-struct peer_map * ldp_test_mapping(struct sockaddr *, int, struct sockaddr *);
+struct peer_map * ldp_test_mapping(const struct sockaddr *, int,
+	const struct sockaddr *);
 
-const char *	ldp_state_to_name(int);
+const char * ldp_state_to_name(int);
 
 #endif	/* !_LDP_PEER_H_ */
