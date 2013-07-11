@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.2 2013/01/26 21:07:49 kefren Exp $ */
+/* $NetBSD: conffile.h,v 1.3 2013/07/11 10:46:19 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -57,6 +57,6 @@ struct passive_if {
 };
 SLIST_HEAD(,passive_if) passifs_head;
 
-int conf_parsefile(char *fname);
+int conf_parsefile(const char *fname);
 
 #endif

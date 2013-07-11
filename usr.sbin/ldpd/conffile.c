@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.5 2013/01/26 21:07:49 kefren Exp $ */
+/* $NetBSD: conffile.c,v 1.6 2013/07/11 10:46:19 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct conf_func main_commands[] = {
  * Parses config file
  */
 int
-conf_parsefile(char *fname)
+conf_parsefile(const char *fname)
 {
 	int i;
 	char buf[LINEMAXSIZE + 1];
