@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.26 2013/07/11 07:46:37 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.27 2013/07/11 08:24:47 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -32,7 +32,7 @@
 #ifndef BOZOHTTOPD_H_
 #define BOZOHTTOPD_H_	1
 
-#include <sys/queue.h>
+#include "netbsd_queue.h"
 
 #include <sys/stat.h>
 
