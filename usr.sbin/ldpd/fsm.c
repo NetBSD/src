@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.11 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.12 2013/07/11 05:55:13 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -195,7 +195,6 @@ build_address_list_tlv(void)
 	}
 	freeifaddrs(ifa);
 
-	add_my_if_addrs(ia, adrcount);
 	return t;
 }
 
