@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.3 2013/07/11 15:43:12 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.4 2013/07/11 19:41:19 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.3 2013/07/11 15:43:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.4 2013/07/11 19:41:19 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -480,23 +480,13 @@ udf_gro_lookup(struct mount *mp, struct vnode *dvp,
 static bool
 udf_rmdired_p(struct vnode *vp)
 {
-	struct long_ad icb_loc;
-	const char *name;
-	int namelen;
-	int error, found;
-
 	DPRINTF(CALL, ("udf_rmdired_p called\n"));
 
 	KASSERT(vp != NULL);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(vp->v_type == VDIR);
 
-	/* get our node */
-	name    = "..";
-	namelen = 2;
-	error = udf_lookup_name_in_dir(vp, name, namelen,
-			&icb_loc, &found);
-	return (error || !found);
+	return (VTOI(vp)->i_flags & IN_DELETED);
 }
 
 
