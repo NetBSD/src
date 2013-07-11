@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.5 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.6 2013/07/11 05:55:13 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@ struct ldp_peer_address * check_ifaddr(const struct ldp_peer *,
 void print_bounded_addresses(const struct ldp_peer *);
 void del_all_ifaddr(struct ldp_peer *);
 int del_ifaddresses(struct ldp_peer *, const struct al_tlv *);
-void add_my_if_addrs(struct in_addr *, int);
 
 int ldp_peer_add_mapping(struct ldp_peer *, const struct sockaddr *, int, int);
 int ldp_peer_delete_mapping(struct ldp_peer *, const struct sockaddr *, int);
