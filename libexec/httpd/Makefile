@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/09/20 23:11:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2013/07/11 08:32:39 mrg Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -43,5 +43,31 @@ DPADD+=	${LIBSSL} ${LIBCRYPTO}
 COPTS+=	-DNO_SSL_SUPPORT
 
 .endif
+
+#
+# Build release things.
+#
+NROFF?=		nroff
+  
+PREHTMLFROB=	sed \
+		    -e 's/&/\&amp;/' \
+		    -e 's/</\&lt;/' \
+		    -e 's/>/\&gt;/'
+
+HTMLFROB=	sed \
+		    -e 's/\([MC] "[^"]*\)<dd>$$/\1<b>"<\/b><dd>/' \
+		    -e 's/'"''"'/\&rdquo;/' \
+		    -e 's/""/\&ldquo;/' \
+		    -e 's/<a href="\.\.\/html[^>]*>\(.*\)<\/a>/\1/'
+
+TXTFROB=	col -b
+
+bozohttpd.8.html: bozohttpd.8
+	$(PREHTMLFROB) $> | $(NROFF) -mdoc2html | $(HTMLFROB) > $@
+  
+bozohttpd.8.txt: bozohttpd.8
+	$(NROFF) -mdoc -Tascii $> | $(TXTFROB) > $@
+
+CLEANFILES+=	bozohttpd.8.html bozohttpd.8.txt
 
 .include <bsd.prog.mk>
