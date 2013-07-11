@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.12 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.13 2013/07/11 05:55:13 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,13 +54,10 @@
 
 extern int ldp_holddown_time;
 
-struct in_addr *myaddresses;
-
 void 
 ldp_peer_init(void)
 {
 	SLIST_INIT(&ldp_peer_head);
-	myaddresses = NULL;
 }
 
 int
@@ -420,19 +417,6 @@ print_bounded_addresses(const struct ldp_peer * p)
 		strncat(abuf, " ", sizeof(abuf) -1);
 	}
 	warnp("%s\n", abuf);
-}
-
-void 
-add_my_if_addrs(struct in_addr * a, int count)
-{
-	myaddresses = calloc((count + 1), sizeof(*myaddresses));
-
-	if (!myaddresses) {
-		fatalp("add_my_if_addrs: malloc problem\n");
-		return;
-	}
-	memcpy(myaddresses, a, count * sizeof(struct in_addr));
-	myaddresses[count].s_addr = 0;
 }
 
 /* Adds a label and a prefix to a specific peer */
