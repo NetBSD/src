@@ -1,6 +1,10 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
 changes since bozohttpd 20111118:
+	o  properly escape generated HTML
+	o  add authentication for redirections, from martin@netbsd.org
+	o  handle chained ssl certifications, from elric@netbsd.org
+	o  add basic support for gzipped files, from elric@netbsd.org
 	o  properly escape generated URIs
 
 changes since bozohttpd 20100920:
