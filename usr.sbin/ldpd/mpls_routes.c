@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.11 2013/07/11 09:11:35 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.12 2013/07/11 10:46:19 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ int             replay_index = 0;
 
 static int read_route_socket(char *, int);
 void	mask_addr(union sockunion *);
-int	compare_sockunion(union sockunion *, union sockunion *);
+int	compare_sockunion(const union sockunion *, const union sockunion *);
 char *	mpls_ntoa(union mpls_shim);
 
 extern struct sockaddr mplssockaddr;
@@ -196,8 +196,8 @@ make_mpls_union(uint32_t label)
 }
 
 int
-compare_sockunion(union sockunion * __restrict a,
-    union sockunion * __restrict b)
+compare_sockunion(const union sockunion * __restrict a,
+    const union sockunion * __restrict b)
 {
 	if (a->sa.sa_len != b->sa.sa_len)
 		return 1;
@@ -227,7 +227,7 @@ from_cidr_to_union(uint8_t prefixlen)
 }
 
 uint8_t 
-from_mask_to_cidr(char *mask)
+from_mask_to_cidr(const char *mask)
 {
 	struct in_addr addr;
 	uint8_t plen = 0;
@@ -239,9 +239,9 @@ from_mask_to_cidr(char *mask)
 }
 
 uint8_t
-from_union_to_cidr(union sockunion *so_pref)
+from_union_to_cidr(const union sockunion *so_pref)
 {
-	struct sockaddr_in *sin = (struct sockaddr_in*)so_pref;
+	const struct sockaddr_in *sin = (const struct sockaddr_in*) so_pref;
 	uint32_t a;
 	uint8_t r;
 
@@ -265,7 +265,7 @@ from_cidr_to_mask(uint8_t prefixlen, char *mask)
 }
 
 char *
-mpls_ntoa(union mpls_shim ms)
+mpls_ntoa(const union mpls_shim ms)
 {
 	static char     ret[255];
 	union mpls_shim ms2;
@@ -275,10 +275,11 @@ mpls_ntoa(union mpls_shim ms)
 	return ret;
 }
 
-char           *
-union_ntoa(union sockunion * so)
+char *
+union_ntoa(const union sockunion * so)
 {
-	static char     defret[] = "Unknown family address";
+	static char defret[] = "Unknown family address";
+
 	switch (so->sa.sa_family) {
 	case AF_INET:
 		return inet_ntoa(so->sin.sin_addr);
@@ -313,8 +314,8 @@ route_strerror(int error)
 /* Adds a route. Or changes it. */
 int
 add_route(union sockunion *so_dest, union sockunion *so_prefix,
-    union sockunion *so_gate, union sockunion *so_ifa, union sockunion *so_tag,
-    int fr, int optype)
+    union sockunion *so_gate, union sockunion *so_ifa,
+    union sockunion *so_tag, int fr, int optype)
 {
 	int             l, rlen, rv = LDP_E_OK;
 	struct rt_msg   rm;
@@ -343,8 +344,19 @@ add_route(union sockunion *so_dest, union sockunion *so_prefix,
 		NEXTADDR(so_gate);
 
 	if (so_prefix) {
-		mask_addr(so_prefix);
-		NEXTADDR(so_prefix);
+		union sockunion *so_prefix_temp = so_prefix;
+
+		if (fr != FREESO) {
+			/* don't modify so_prefix */
+			so_prefix_temp = calloc(1, so_prefix->sa.sa_len);
+			if (so_prefix_temp == NULL)
+				return LDP_E_MEMORY;
+			memcpy(so_prefix_temp, so_prefix, so_prefix->sa.sa_len);
+		}
+		mask_addr(so_prefix_temp);
+		NEXTADDR(so_prefix_temp);
+		if (fr != FREESO)
+			free(so_prefix_temp);
 		/* XXX: looks like nobody cares about this */
 		rm.m_rtm.rtm_flags |= RTF_MASK;
 		rm.m_rtm.rtm_addrs |= RTA_NETMASK;
@@ -378,7 +390,7 @@ add_route(union sockunion *so_dest, union sockunion *so_prefix,
 			warnp("Gateway was: %s\n", union_ntoa(so_gate));
 		rv = LDP_E_ROUTE_ERROR;
 	}
-	if (fr) {
+	if (fr == FREESO) {
 		free(so_dest);
 		if (so_prefix)
 			free(so_prefix);
@@ -420,8 +432,18 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
 	NEXTADDR(so_dest);
 
 	if (so_pref) {
-		mask_addr(so_pref);
-		NEXTADDR(so_pref);
+		union sockunion *so_pref_temp = so_pref; 
+		if (freeso != FREESO) {
+			/* don't modify the original prefix */
+			so_pref_temp = calloc(1, so_pref->sa.sa_len);
+			if (so_pref_temp == NULL)
+				return LDP_E_MEMORY;
+			memcpy(so_pref_temp, so_pref, so_pref->sa.sa_len);
+		}
+		mask_addr(so_pref_temp);
+		NEXTADDR(so_pref_temp);
+		if (freeso != FREESO)
+			free(so_pref_temp);
 	}
 	rm.m_rtm.rtm_msglen = l = cp - (char *) &rm;
 
@@ -452,8 +474,8 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
  * with the returned result
  */
 int
-get_route(struct rt_msg * rg, union sockunion * so_dest,
-    union sockunion * so_pref, int exact_match)
+get_route(struct rt_msg * rg, const union sockunion * so_dest,
+    const union sockunion * so_pref, int exact_match)
 {
 	int             l, rlen, myseq;
 	struct rt_msg   rm;
@@ -484,9 +506,15 @@ get_route(struct rt_msg * rg, union sockunion * so_dest,
 
 	NEXTADDR(so_dest);
 	if (so_pref) {
+		union sockunion *so_pref_temp = calloc(1, so_pref->sa.sa_len);
+
+		if (so_pref_temp == NULL)
+			return LDP_E_MEMORY;
 		rm.m_rtm.rtm_addrs |= RTA_NETMASK;
-		mask_addr(so_pref);
-		NEXTADDR(so_pref);
+		memcpy(so_pref_temp, so_pref, so_pref->sa.sa_len);
+		mask_addr(so_pref_temp);
+		NEXTADDR(so_pref_temp);
+		free(so_pref_temp);
 	}
 	rm.m_rtm.rtm_msglen = l = cp - (char *) &rm;
 

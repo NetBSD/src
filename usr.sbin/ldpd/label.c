@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.5 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: label.c,v 1.6 2013/07/11 10:46:19 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@ label_init()
  * if binding == 0 it receives a free one
  */
 struct label   *
-label_add(union sockunion * so_dest, union sockunion * so_pref,
-	  union sockunion * so_gate, uint32_t binding, struct ldp_peer * p,
-	  uint32_t label)
+label_add(const union sockunion * so_dest, const union sockunion * so_pref,
+	  const union sockunion * so_gate, uint32_t binding,
+	  const struct ldp_peer * p, uint32_t label)
 {
 	struct label   *l;
 	char	spreftmp[INET_ADDRSTRLEN];
@@ -157,7 +157,7 @@ label_reattach_route(struct label *l, int readd)
  * Get a label by dst and pref
  */
 struct label*
-label_get(union sockunion *sodest, union sockunion *sopref)
+label_get(const union sockunion *sodest, const union sockunion *sopref)
 {
 	struct label *l;
 
@@ -189,7 +189,7 @@ label_reattach_all_peer_labels(const struct ldp_peer *p, int readd)
  * and delete them
  */
 void 
-del_all_peer_labels(struct ldp_peer * p, int readd)
+del_all_peer_labels(const struct ldp_peer * p, int readd)
 {
 	struct label   *l, *lnext;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.7 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.8 2013/07/11 10:46:19 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -230,8 +230,8 @@ prepare_release(struct tlv * v)
 
 /* Sends a label mapping */
 void 
-send_label_tlv(const struct ldp_peer * peer, struct sockaddr * addr,
-    uint8_t prefixlen, uint32_t label, struct label_request_tlv *lrt)
+send_label_tlv(const struct ldp_peer * peer, const struct sockaddr * addr,
+    uint8_t prefixlen, uint32_t label, const struct label_request_tlv *lrt)
 {
 	struct label_map_tlv *lmt;
 	struct fec_tlv *fec;
@@ -306,7 +306,8 @@ send_label_tlv(const struct ldp_peer * peer, struct sockaddr * addr,
 }
 
 void 
-send_label_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen, uint32_t label)
+send_label_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen,
+    uint32_t label)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
@@ -317,7 +318,7 @@ send_label_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen, uint32_t label)
  * Send all local labels to a peer
  */
 void 
-send_all_bindings(struct ldp_peer * peer)
+send_all_bindings(const struct ldp_peer * peer)
 {
 	struct label *l;
 
@@ -329,7 +330,7 @@ send_all_bindings(struct ldp_peer * peer)
 
 /* Sends a label WITHDRAW */
 void 
-send_withdraw_tlv(const struct ldp_peer * peer, struct sockaddr * addr,
+send_withdraw_tlv(const struct ldp_peer * peer, const struct sockaddr * addr,
     uint8_t prefixlen)
 {
 	struct label_map_tlv *lmt;
@@ -384,7 +385,7 @@ send_withdraw_tlv(const struct ldp_peer * peer, struct sockaddr * addr,
 }
 
 void 
-send_withdraw_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen)
+send_withdraw_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
@@ -392,10 +393,10 @@ send_withdraw_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen)
 }
 
 int
-request_respond(const struct ldp_peer *p, struct label_map_tlv *lmt,
-    struct fec_tlv *fec)
+request_respond(const struct ldp_peer *p, const struct label_map_tlv *lmt,
+    const struct fec_tlv *fec)
 {
-	struct prefix_tlv *pref;
+	const struct prefix_tlv *pref;
 	union sockunion socktmp;
 	struct label *lab;
 	struct label_request_tlv lrm;
@@ -404,7 +405,7 @@ request_respond(const struct ldp_peer *p, struct label_map_tlv *lmt,
 		debugp("Invalid FEC TLV !\n");
 		return LDP_E_BAD_FEC;
 	}
-	pref = (struct prefix_tlv *) (fec + 1);
+	pref = (const struct prefix_tlv *) (fec + 1);
 
 	memset(&socktmp, 0, sizeof(socktmp));
 	if (ntohs(pref->af) == LDP_AF_INET) {
@@ -438,7 +439,8 @@ request_respond(const struct ldp_peer *p, struct label_map_tlv *lmt,
 		/* XXX - use sizeof */
 		lrm.length = htons(socktmp.sa.sa_family == AF_INET ? 4 : 16);
 		lrm.messageid = lmt->messageid;
-		send_label_tlv(p, &socktmp.sa, pref->prelen, lab->binding, &lrm);
+		send_label_tlv(p, &socktmp.sa, pref->prelen, lab->binding,
+		    &lrm);
 		break;
 
 		case FEC_WILDCARD:
