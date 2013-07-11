@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.2 2013/07/10 19:14:07 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.3 2013/07/11 15:43:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.2 2013/07/10 19:14:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.3 2013/07/11 15:43:12 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -84,12 +84,10 @@ udf_sane_rename( struct vnode *fdvp, struct componentname *fcnp,
     struct vnode *tdvp, struct componentname *tcnp,
     kauth_cred_t cred, bool posixly_correct)
 {
-	struct dirent fdirent, tdirent;	/* XXX OK? XXX */
-
 	DPRINTF(CALL, ("udf_sane_rename '%s' -> '%s'\n",
 		fcnp->cn_nameptr, tcnp->cn_nameptr));
 	return genfs_sane_rename(&udf_genfs_rename_ops,
-	    fdvp, fcnp, &fdirent, tdvp, tcnp, &tdirent,
+	    fdvp, fcnp, NULL, tdvp, tcnp, NULL,
 	    cred, posixly_correct);
 }
 
@@ -184,8 +182,6 @@ udf_gro_rename_check_possible(struct mount *mp,
 	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 
 	DPRINTF(CALL, ("udf_gro_rename_check_possible called\n"));
-	if (mp->mnt_flag & MNT_RDONLY)
-		return EROFS;
 
 	/* flags not implemented since they are not defined (yet) in UDF */
 	return 0;
@@ -273,8 +269,6 @@ udf_gro_remove_check_possible(struct mount *mp,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	DPRINTF(CALL, ("udf_gro_remove_check_possible called\n"));
-	if (mp->mnt_flag & MNT_RDONLY)
-		return EROFS;
 
 	/* flags not implemented since they are not defined (yet) in UDF */
 	return 0;
