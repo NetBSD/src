@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.36 2013/03/02 16:45:31 ryoon Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.37 2013/07/11 07:44:19 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2010 Matthew R. Green
+.\" Copyright (c) 1997-2013 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 20, 2012
+.Dd June 11, 2013
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -485,7 +485,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20100920.
+version 20130711.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
@@ -531,13 +531,17 @@ Alistair G. Crooks
 cleaned up many internal interfaces, made bozohttpd linkable as a
 library and provided the lua binding.
 .It
+Roland Dowdeswell
+.Aq elric@netbsd.org
+added support for serving gzipped files and better SSL handling
+.It
 Jun-ichiro itojun Hagino, KAME
 .Aq itojun@iijlab.net
 provided initial IPv6 support
 .It
 Martin Husemann
 .Aq martin@netbsd.org
-provided .bzabsredirect support
+provided .bzabsredirect support, and fixed various redirection issues
 .It
 Arto Huusko
 .Aq arto.huusko@pp2.inet.fi
@@ -555,6 +559,10 @@ Nicolas Jombart
 .Aq ecu@ipv42.net
 provided fixes for HTTP basic authorisation support
 .It
+Antti Kantee
+.Aq pooka@netbsd.org
+provided fixes for HTTP basic authorisation support
+.It
 Thomas Klausner
 .Aq wiz@danbala.ifoer.tuwien.ac.at
 provided many fixes and enhancements for the man page
@@ -562,6 +570,12 @@ provided many fixes and enhancements for the man page
 Johnny Lam
 .Aq jlam@netbsd.org
 provided man page fixes
+.It
+Julio Merino
+.Aq jmmv@netbsd.org
+Added the
+.Fl P
+option.
 .It
 Luke Mewburn
 .Aq lukem@netbsd.org
@@ -589,6 +603,10 @@ Steve Rumble
 provided the
 .Fl V
 option.
+.It
+Thor Lancelot Simon
+.Aq tls@netbsd.org
+enhanced cgi-bin support.
 .It
 Joerg Sonnenberger
 .Aq joerg@netbsd.org
