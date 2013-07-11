@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: label.h,v 1.3 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 struct label {
 	union sockunion so_dest, so_pref, so_gate;
 	int binding, label;
-	struct ldp_peer *p;
+	const struct ldp_peer *p;
 	SLIST_ENTRY(label) labels;
 };
 SLIST_HEAD(,label) label_head;
@@ -61,7 +61,7 @@ struct label *	label_add(union sockunion *, union sockunion *,
 	  union sockunion *, uint32_t, struct ldp_peer *, uint32_t);
 void            label_del(struct label *);
 void            del_all_peer_labels(struct ldp_peer*, int);
-void		label_reattach_all_peer_labels(struct ldp_peer*, int);
+void		label_reattach_all_peer_labels(const struct ldp_peer*, int);
 void            label_del_by_binding(uint32_t, int);
 struct label *	label_get(union sockunion *sodest, union sockunion *sopref);
 struct label *	label_get_by_prefix(const struct sockaddr *, int);

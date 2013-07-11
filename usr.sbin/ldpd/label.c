@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.4 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: label.c,v 1.5 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ label_get(union sockunion *sodest, union sockunion *sopref)
  * and reattach them to IPv4
  */
 void
-label_reattach_all_peer_labels(struct ldp_peer *p, int readd)
+label_reattach_all_peer_labels(const struct ldp_peer *p, int readd)
 {
 	struct label   *l;
 

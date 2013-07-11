@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.h,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: pdu.h,v 1.3 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@ struct ldp_pdu {
 }               __packed;
 
 
-uint	get_pdu(unsigned char *, struct ldp_pdu *);
-int	check_recv_pdu(struct ldp_peer *, struct ldp_pdu *, int);
+uint	get_pdu(const unsigned char *, struct ldp_pdu *);
+int	check_recv_pdu(const struct ldp_peer *, const struct ldp_pdu *, int);
 
 
 #endif	/* !_PDU_H_ */
