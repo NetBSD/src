@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.39 2013/06/27 13:11:11 martin Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.40 2013/07/11 07:44:19 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20111118"
+#define SERVER_SOFTWARE		"bozohttpd/20130711"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -854,7 +854,7 @@ parse_http_date(const char *val, time_t *timestamp)
  * to be updated for any sort of parallel processing.
  */
 char *
-escape_rfc3986(bozohttpd_t *httpd, const char *url)
+bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url)
 {
 	static char *buf;
 	static size_t buflen = 0;
@@ -965,7 +965,7 @@ handle_redirect(bozo_httpreq_t *request,
 		url = urlbuf;
 	} else
 		urlbuf = NULL;
-	url = escape_rfc3986(request->hr_httpd, url);
+	url = bozo_escape_rfc3986(request->hr_httpd, url);
 
 	if (request->hr_query && strlen(request->hr_query))
 		query = 1;
@@ -1083,7 +1083,7 @@ check_virtual(bozo_httpreq_t *request)
 					/* found it, punch it */
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
 					request->hr_virthostname =
-					    bozostrdup(httpd,d->d_name);
+					    bozostrdup(httpd, d->d_name);
 					if (asprintf(&s, "%s/%s", httpd->virtbase,
 					    request->hr_virthostname) < 0)
 						bozo_err(httpd, 1, "asprintf");
@@ -1739,12 +1739,20 @@ bozo_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 	exit(code);
 }
 
-/* this escape HTML tags */
-static void
-escape_html(bozo_httpreq_t *request)
+/*
+ * this escapes HTML tags.  returns allocated escaped
+ * string if needed, or NULL on allocation failure or
+ * lack of escape need.
+ * call with NULL httpd in error paths, to avoid recursive
+ * malloc failure.  call with valid httpd in normal paths
+ * to get automatic allocation failure handling.
+ */
+char *
+bozo_escape_html(bozohttpd_t *httpd, const char *url)
 {
 	int	i, j;
-	char	*url = request->hr_file, *tmp;
+	char	*tmp;
+	size_t	len;
 
 	for (i = 0, j = 0; url[i]; i++) {
 		switch (url[i]) {
@@ -1759,16 +1767,17 @@ escape_html(bozo_httpreq_t *request)
 	}
 
 	if (j == 0)
-		return;
+		return NULL;
 
-	if ((tmp = (char *) malloc(strlen(url) + j)) == 0)
-		/*
-		 * ouch, but we are only called from an error context, and
-		 * most paths here come from malloc(3) failures anyway...
-		 * we could completely punt and just exit, but isn't returning
-		 * an not-quite-correct error better than nothing at all?
-		 */
-		return;
+	/*
+	 * we need to handle being called from different
+	 * pathnames.
+	 */
+	len = strlen(url) + j;
+	if (httpd)
+		tmp = bozomalloc(httpd, len);
+	else if ((tmp = malloc(len)) == 0)
+			return NULL;
 
 	for (i = 0, j = 0; url[i]; i++) {
 		switch (url[i]) {
@@ -1790,8 +1799,7 @@ escape_html(bozo_httpreq_t *request)
 	}
 	tmp[j] = 0;
 
-	free(request->hr_file);
-	request->hr_file = tmp;
+	return tmp;
 }
 
 /* short map between error code, and short/long messages */
@@ -1865,14 +1873,19 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		portbuf[0] = '\0';
 
 	if (request && request->hr_file) {
-		escape_html(request);
+		char *file = NULL;
+
+		/* bozo_escape_html() failure here is just too bad. */
+		file = bozo_escape_html(NULL, request->hr_file);
+		if (file == NULL)
+			file = request->hr_file;
 		size = snprintf(httpd->errorbuf, BUFSIZ,
 		    "<html><head><title>%s</title></head>\n"
 		    "<body><h1>%s</h1>\n"
 		    "%s: <pre>%s</pre>\n"
  		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
 		    "</body></html>\n",
-		    header, header, request->hr_file, reason,
+		    header, header, file, reason,
 		    hostname, portbuf, hostname, portbuf);
 		if (size >= (int)BUFSIZ) {
 			bozo_warn(httpd,
