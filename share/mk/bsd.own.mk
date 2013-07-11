@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.736 2013/06/25 01:17:29 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.737 2013/07/11 06:58:30 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,6 +64,8 @@ HAVE_GCC?=    45
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "vax"
 USE_COMPILERCRTSTUFF?=	no
