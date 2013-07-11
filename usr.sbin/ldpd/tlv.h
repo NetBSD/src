@@ -1,4 +1,4 @@
-/* $NetBSD: tlv.h,v 1.3 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: tlv.h,v 1.4 2013/07/11 18:02:03 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@ struct tlv {
 	uint16_t       type;
 	uint16_t       length;
 	uint32_t       messageid;
-	void           *value;
-	struct ldp_pdu *pdu;
 }               __packed;
 
 /* Common Hello TLV structure */
