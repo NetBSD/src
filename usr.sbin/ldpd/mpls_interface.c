@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.8 2013/06/23 06:40:26 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.9 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 extern int no_default_route;
 
 int
-mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
+mpls_add_label(const struct ldp_peer * p, struct rt_msg * inh_rg,
     struct sockaddr * addr, int len, int label, int rlookup)
 {
 	char            padd[20];
@@ -241,13 +241,13 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 }
 
 int 
-mpls_add_ldp_peer(struct ldp_peer * p)
+mpls_add_ldp_peer(const struct ldp_peer * p)
 {
 	return LDP_E_OK;
 }
 
 int 
-mpls_delete_ldp_peer(struct ldp_peer * p)
+mpls_delete_ldp_peer(const struct ldp_peer * p)
 {
 
 	/* Reput all the routes also to IPv4 */

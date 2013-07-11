@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.h,v 1.2 2013/01/26 17:29:55 kefren Exp $ */
+/* $NetBSD: mpls_interface.h,v 1.3 2013/07/11 05:45:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
 
 #include "mpls_routes.h"
 
-int             mpls_add_label(struct ldp_peer *, struct rt_msg *,
+int             mpls_add_label(const struct ldp_peer *, struct rt_msg *,
 				struct sockaddr *, int, int, int);
-int             mpls_add_ldp_peer(struct ldp_peer *);
-int             mpls_delete_ldp_peer(struct ldp_peer *);
+int             mpls_add_ldp_peer(const struct ldp_peer *);
+int             mpls_delete_ldp_peer(const struct ldp_peer *);
 int             mpls_start_ldp(void);
 
 #endif	/* _MPLS_INTERFACE_H_ */
