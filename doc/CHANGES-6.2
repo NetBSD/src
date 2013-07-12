@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.14 2013/07/08 07:41:28 jdc Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.15 2013/07/12 11:19:34 jdc Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -274,8 +274,9 @@ sys/netinet6/ip6_input.c			1.139 via patch
 sys/netinet6/ip6_var.h				1.59 via patch
 sys/netinet6/nd6.c				1.143 via patch
 sys/netinet6/nd6.h				1.57 via patch
-sys/netinet6/nd6_rtr.c				1.83 via patch
+sys/netinet6/nd6_rtr.c				1.83,1.84 via patch
 
-	4 new sysctls to avoid ipv6 DoS attacks from OpenBSD
+	4 new sysctls to avoid ipv6 DoS attacks from OpenBSD.
+        Fix potentially uninitialised variable.
 	[christos, ticket #905]
 
