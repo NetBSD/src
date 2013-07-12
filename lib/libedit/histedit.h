@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.50 2013/01/22 20:23:21 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.51 2013/07/12 17:48:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -279,6 +279,7 @@ int		 el_wparse(EditLine *, int, const wchar_t **);
 int		 el_wset(EditLine *, int, ...);
 int		 el_wget(EditLine *, int, ...);
 
+int		 el_cursor(EditLine *, int);
 const LineInfoW	*el_wline(EditLine *);
 int		 el_winsertstr(EditLine *, const wchar_t *);
 #define          el_wdeletestr  el_deletestr
