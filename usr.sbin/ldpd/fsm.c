@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.12 2013/07/11 05:55:13 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.13 2013/07/12 08:55:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -186,10 +186,11 @@ build_address_list_tlv(void)
 	ia = &t->a_address;
 	for (adrcount = 0, ifb = ifa; ifb; ifb = ifb->ifa_next) {
 		if ((ifb->ifa_addr->sa_family != AF_INET) ||
-		    (!(ifb->ifa_flags & IFF_UP)) ||
-		    (ifb->ifa_flags & IFF_LOOPBACK))
+		    (!(ifb->ifa_flags & IFF_UP)))
 			continue;
 		sa = (struct sockaddr_in *) ifb->ifa_addr;
+		if (ntohl(sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
+			continue;
 		memcpy(&ia[adrcount], &sa->sin_addr, sizeof(struct in_addr));
 		adrcount++;
 	}

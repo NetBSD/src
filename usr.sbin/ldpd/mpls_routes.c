@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.13 2013/07/11 18:02:03 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.14 2013/07/12 08:55:52 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -69,18 +69,19 @@ static int read_route_socket(char *, int);
 void	mask_addr(union sockunion *);
 int	compare_sockunion(const union sockunion *, const union sockunion *);
 char *	mpls_ntoa(union mpls_shim);
-static int check_if_addr_updown(struct rt_msg * rg);
+static int check_if_addr_updown(struct rt_msg *, uint);
 
 extern struct sockaddr mplssockaddr;
 
 /* Many lines inspired or shamelessly stolen from sbin/route/route.c */
 
 #define NEXTADDR(u) \
-	do { l = RT_ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l; } while(0);
+	do { l = RT_ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l;} while(0);
 #define NEXTADDR2(u) \
 	do { l = RT_ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
 #define GETNEXT(sunion) \
-	(union sockunion *) ((char *) (sunion)  + RT_ROUNDUP((sunion)->sa.sa_len))
+	(union sockunion *) ((char *) (sunion)  + \
+	RT_ROUNDUP((sunion)->sa.sa_len))
 
 static int 
 read_route_socket(char *s, int max)
@@ -581,13 +582,16 @@ check_route(struct rt_msg * rg, uint rlen)
 	gate[0] = 0;
 	pref[0] = 0;
 
-	if (rlen <= sizeof(struct rt_msghdr) ||
-	    rg->m_rtm.rtm_version != RTM_VERSION)
+	if (rlen < 3 || rg->m_rtm.rtm_version != RTM_VERSION)
 		return LDP_E_ROUTE_ERROR;
 
 	if (rg->m_rtm.rtm_type == RTM_NEWADDR ||
 	    rg->m_rtm.rtm_type == RTM_DELADDR)
-		return check_if_addr_updown(rg);
+		return check_if_addr_updown(rg, rlen);
+
+	if (rlen < sizeof(struct rt_msghdr))
+		return LDP_E_ROUTE_ERROR;
+
 	if (rg->m_rtm.rtm_pid == getpid() ||
 	    ((rg->m_rtm.rtm_flags & RTF_DONE) == 0))
 		return LDP_E_OK;
@@ -719,6 +723,9 @@ check_route(struct rt_msg * rg, uint rlen)
 	case RTM_LOSING:
 		strlcpy(oper, "losing", 20);
 		break;
+	case RTM_REDIRECT:
+		strlcpy(oper, "redirect", 20);
+		break;
 	case RTM_NEWADDR:
 		strlcpy(oper, "new address", 20);
 		break;
@@ -726,7 +733,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		strlcpy(oper, "del address", 20);
 		break;
 	default:
-		snprintf(oper, 50, "unknown 0x%X operation",
+		snprintf(oper, sizeof(oper), "unknown 0x%X operation",
 		    rg->m_rtm.rtm_type);
 	}
 
@@ -742,25 +749,29 @@ check_route(struct rt_msg * rg, uint rlen)
  * Checks NEWADDR and DELADDR messages and sends announcements accordingly
  */
 static int
-check_if_addr_updown(struct rt_msg * rg)
+check_if_addr_updown(struct rt_msg * rg, uint rlen)
 {
 	union sockunion *ifa, *netmask;
 	struct ldp_peer *p;
 	struct address_list_tlv al_tlv;
+	struct ifa_msghdr *msghdr = (struct ifa_msghdr *)&rg->m_rtm;
 
-	if ((rg->m_rtm.rtm_addrs & RTA_NETMASK) == 0 ||
-	    (rg->m_rtm.rtm_addrs & RTA_IFA) == 0)
+	if (rlen < sizeof(struct ifa_msghdr) ||
+	    (msghdr->ifam_addrs & RTA_NETMASK) == 0 ||
+	    (msghdr->ifam_addrs & RTA_IFA) == 0)
 		return LDP_E_ROUTE_ERROR;
 
-	ifa = netmask = (union sockunion *) rg->m_space;
+	/* we should have RTA_NETMASK, RTA_IFP, RTA_IFA and RTA_BRD */
+	ifa = netmask = (union sockunion *)(msghdr + 1);
 	if (netmask->sa.sa_family != AF_INET)
 		return LDP_E_OK;
 
-	if (rg->m_rtm.rtm_addrs & RTA_IFP)
-		ifa = GETNEXT(netmask);
+	if (msghdr->ifam_addrs & RTA_IFP)
+		ifa = GETNEXT(ifa);
 	ifa = GETNEXT(ifa);
 
-	if (ifa->sa.sa_family != AF_INET)
+	if (ifa->sa.sa_family != AF_INET ||
+	    ntohl(ifa->sin.sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
 		return LDP_E_OK;
 
 	memset(&al_tlv, 0, sizeof(al_tlv));
