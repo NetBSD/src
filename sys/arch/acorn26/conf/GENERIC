@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: GENERIC,v 1.76 2013/07/12 14:28:39 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -190,6 +190,9 @@ scsibus*	at hcsc?
 
 oak*		at podulebus0 slot ?	# Oak Solutions 16-bit SCSI interface
 scsibus*	at oak?
+
+esp*		at podulebus0 slot ?	# Castle SCSI interface
+scsibus*	at esp?
 
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port
