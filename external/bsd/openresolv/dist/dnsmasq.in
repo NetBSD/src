@@ -29,7 +29,7 @@
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
 [ -z "$dnsmasq_conf" -a -z "$dnsmasq_resolv" ] && exit 0
-[ -z "$RESOLVCONF" ] && eval "$(@PREFIX@/sbin/resolvconf -v)"
+[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "
 
@@ -154,7 +154,7 @@ fi
 if type config_mkdirs >/dev/null 2>&1; then
 	config_mkdirs "$dnsmasq_conf" "$dnsmasq_resolv"
 else
-	@PREFIX@/sbin/resolvconf -D "$dnsmasq_conf" "$dnsmasq_resolv"
+	@SBINDIR@/resolvconf -D "$dnsmasq_conf" "$dnsmasq_resolv"
 fi
 
 changed=false
