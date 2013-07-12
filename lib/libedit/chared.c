@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.38 2013/07/12 17:48:29 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.39 2013/07/12 22:39:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.38 2013/07/12 17:48:29 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.39 2013/07/12 22:39:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -660,7 +660,7 @@ el_cursor(EditLine *el, int n)
 	if (el->el_line.cursor > el->el_line.lastchar)
 		el->el_line.cursor = el->el_line.lastchar;
 out:
-	return el->el_line.cursor - el->el_line.buffer;
+	return (int)(el->el_line.cursor - el->el_line.buffer);
 }
 
 /* c_gets():
