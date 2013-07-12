@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.4 2013/07/11 19:41:19 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.5 2013/07/12 16:14:10 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.4 2013/07/11 19:41:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.5 2013/07/12 16:14:10 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -140,7 +140,8 @@ udf_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
 	error = udf_dirhash_fill(udf_node);
 	if (error) {
 		dirhash_put(udf_node->dir_hash);
-		return error;
+		/* VERY unlikely, answer its not empty */
+		return 0;
 	}
 
 	/* check to see if the directory is empty */
