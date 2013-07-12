@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.79 2013/01/22 20:23:21 christos Exp $
+.\"	$NetBSD: editline.3,v 1.80 2013/07/12 17:48:29 christos Exp $
 .\"
 .\" Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2013
+.Dd July 12, 2013
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Nm el_wget ,
 .Nm el_source ,
 .Nm el_resize ,
+.Nm el_cursor ,
 .Nm el_line ,
 .Nm el_wline ,
 .Nm el_insertstr ,
@@ -112,8 +113,12 @@
 .Fn el_source "EditLine *e" "const char *file"
 .Ft void
 .Fn el_resize "EditLine *e"
+.Fn int
+.Fn el_cursor "EditLine *e" "int count"
 .Ft const LineInfo *
 .Fn el_line "EditLine *e"
+.Ft const LineInfoW *
+.Fn el_wline "EditLine *e"
 .Ft int
 .Fn el_insertstr "EditLine *e" "const char *str"
 .Ft int
@@ -610,6 +615,11 @@ then this is done automatically.
 Otherwise, it's the responsibility of the application to call
 .Fn el_resize
 on the appropriate occasions.
+.It Fn el_cursor
+Move the cursor to the right (if positive) or to the left (if negative)
+.Fa count
+characters.
+Returns the resulting offset of the cursor from the beginning of the line.
 .It Fn el_line
 Return the editing information for the current line in a
 .Fa LineInfo
