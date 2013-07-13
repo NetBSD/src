@@ -14,7 +14,7 @@ arch/${MACHINE_ARCH} or arch/${MACHINE_CPU}:
 - Makefile.inc: provides ELFSIZE corresponding to 32/64bit file format.
   If using the common C code instead of crtbegin.S also provide a -I option
   to find crtbegin.h in your arch subdir.
-- crt0.S: provides setup code and the call to __start.
+- crt0.S: provides setup code and the call to ___start.
 - crtbegin.S or crtbegin.h: see below
 - crtend.S: see below, most likely just a copy of an existing architecture
 - crti.S: prefix part of .init/.fini sections, i.e. to ensure stack alignment
