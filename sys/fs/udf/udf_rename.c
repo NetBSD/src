@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.6 2013/07/13 19:39:02 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.7 2013/07/13 19:40:14 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.6 2013/07/13 19:39:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.7 2013/07/13 19:40:14 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -408,7 +408,6 @@ udf_gro_remove(struct mount *mp, kauth_cred_t cred,
 {
 	struct udf_node *dir_node, *udf_node;
 
-	(void)vp;
 	KASSERT(mp != NULL);
 	KASSERT(dvp != NULL);
 	KASSERT(cnp != NULL);
