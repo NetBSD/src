@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.5 2013/07/12 16:14:10 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.6 2013/07/13 19:39:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.5 2013/07/12 16:14:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.6 2013/07/13 19:39:02 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -374,22 +374,25 @@ udf_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	/* unlink old directory entry for the node, if failing, unattach new */
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
-	if (error) {
-		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
-	} else if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
+	if (error)
+		goto rollback_attach;
+
+	if ((fdnode != tdnode) && (fvp->v_type == VDIR)) {
 		/* update fnode's '..' entry */
 		error = udf_dir_update_rootentry(fnode->ump, fnode, tdnode);
-		if (error) {
-			/* 'try' to recover from this situation */
-			udf_dir_attach(tdnode->ump, fdnode, fnode, &fvap, fcnp);
-			udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
-		}
+		if (error)
+			goto rollback;
 	}
 
-	if (!error) {
-		VN_KNOTE(fvp, NOTE_RENAME);
-		genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
-	}
+	VN_KNOTE(fvp, NOTE_RENAME);
+	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
+	return 0;
+
+rollback:
+	/* 'try' to recover from this situation */
+	udf_dir_attach(tdnode->ump, fdnode, fnode, &fvap, fcnp);
+rollback_attach:
+	udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
 
 	return error;
 }
