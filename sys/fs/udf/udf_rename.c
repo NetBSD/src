@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.7 2013/07/13 19:40:14 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.8 2013/07/13 19:42:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.7 2013/07/13 19:40:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.8 2013/07/13 19:42:26 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -542,8 +542,7 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 	ump = target->ump;
 
 	/* if nodes are equal, it is no use looking */
-	if (udf_compare_icb(&source->loc, &target->loc) == 0)
-		return EEXIST;
+	KASSERT(udf_compare_icb(&source->loc, &target->loc) != 0);
 
 	child_node = target;
 	vref(child_node->vnode);
