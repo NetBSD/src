@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.15 2013/07/12 11:19:34 jdc Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.16 2013/07/14 20:35:48 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -279,4 +279,23 @@ sys/netinet6/nd6_rtr.c				1.83,1.84 via patch
 	4 new sysctls to avoid ipv6 DoS attacks from OpenBSD.
         Fix potentially uninitialised variable.
 	[christos, ticket #905]
+
+sys/dev/pci/pcidevs				1.1145, 1.1147, 1.1150-1.1158
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Pull up pcidevs changes:
+	Intel Atom E600 PCI-LPC bridge, adds a watchdog + HPET support.
+	Update some Intel LPC devices.
+	Change from "3400 USB" to "3400 USB EHCI" for EHCI devices.
+	Fix BCM5785F entry. That is not gigabit Ethernet.
+	Add ALTIMA AC1003, BROADCOM BCM57782 and BCM57786.
+	Add Intel I21[0178] Ethernet.
+	Add IDs for Marvell Armada XP. Obtained from Marvell, Semihalf.
+	Add some Intel devices from document (Intel 8 Series / C220 Chipset
+	Family Platform Controller Hub (PCH) Datasheet).
+	Add some Intel devices from datasheets (4th Generation Intel Core
+	Processor, Intel Xeon Processor E3-1200 v3).
+	Add ATI RADEON_HD7340.
+	[msaitoh, ticket #906]
 
