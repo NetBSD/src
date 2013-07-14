@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.156 2013/07/14 15:27:12 htodd Exp $
+# $NetBSD: postinstall,v 1.157 2013/07/14 15:44:00 htodd Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1585,7 +1585,7 @@ do_uid()
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
 	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
-	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss _rtadvd
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd
 }
 
 
