@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.154 2013/06/17 17:40:17 christos Exp $
+# $NetBSD: postinstall,v 1.155 2013/07/14 15:17:22 htodd Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -909,7 +909,7 @@ do_gid()
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
 	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
-	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio
+	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd
 }
 
 #
