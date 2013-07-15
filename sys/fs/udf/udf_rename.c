@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.8 2013/07/13 19:42:26 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.9 2013/07/15 14:40:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.8 2013/07/13 19:42:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.9 2013/07/15 14:40:21 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -586,24 +586,36 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 			return 0;
 		}
 
+		/*
+		 * Unlock vp so that we can lock the parent, but keep child vp
+		 * referenced until after we have found the parent, so that
+		 * dotdot_ino will not be recycled.
+		 *
+		 * XXX This guarantees that vp's inode number will not be
+		 * recycled, but why can't dotdot_ino be recycled?
+		 */
 		DPRINTF(NODE, ("\tgetting the parent node\n"));
+		VOP_UNLOCK(child_node->vnode);
 		error = udf_get_node(ump, &parent_loc, &parent_node);
-		if (error) {
-			vput(child_node->vnode);
+		vrele(child_node->vnode);
+		if (error) 
 			return error;
+
+		/* sanity check */
+		if (parent_node->vnode->v_type != VDIR) {
+			/* 
+			 * Odd, but can happen if we loose the race and the
+			 * '..' node has been recycled.
+			 */
+			vput(child_node->vnode);
+			return ENOTDIR;
 		}
 
 		if (udf_rmdired_p(parent_node->vnode)) {
-			vput(child_node->vnode);
 			vput(parent_node->vnode);
 			return ENOENT;
 		}
 
-		/*
-		 * Push our intermediate node, we're done with it, but do
-		 * remember our parent location
-		 */
-		vput(child_node->vnode);
 		child_node = parent_node;
 	}
 }
