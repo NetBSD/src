@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.180 2013/07/06 18:19:17 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.180 2013/07/06 18:19:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.180 2013/07/06 18:19:17 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -960,14 +960,8 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * We allow the makefiles to update .MAKE.LEVEL and ensure
      * children see a correctly incremented value.
      */
-    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0) {
-	char tmp[64];
-	int level;
-
-	level = atoi(val);
-	snprintf(tmp, sizeof(tmp), "%u", level + 1);
-	setenv(MAKE_LEVEL_ENV, tmp, 1);
-    }
+    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0)
+	setenv(MAKE_LEVEL_ENV, val, 1);
 	
  out:
     if (expanded_name != NULL)
