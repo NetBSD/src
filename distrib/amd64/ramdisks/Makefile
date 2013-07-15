@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2006/06/02 22:11:52 hubertf Exp $
+#	$NetBSD: Makefile,v 1.2 2013/07/15 00:22:10 khorben Exp $
 
 SUBDIR=
 SUBDIR+=	ramdisk
+SUBDIR+=	ramdisk-cgdroot
 
 TARGETS+=	release
 
