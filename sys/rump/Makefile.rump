@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.83 2013/07/09 17:49:37 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.84 2013/07/16 19:07:54 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -16,7 +16,7 @@ CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .endif
 
 CPPFLAGS+=	-DMAXUSERS=32
-CPPFLAGS+=	-DCOMPAT_50=1
+CPPFLAGS+=	-DCOMPAT_50=1 -DCOMPAT_60=1
 
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
