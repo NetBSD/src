@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.4 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.5 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,17 +39,19 @@
 #if 0
 	RCSID("from: @(#)modsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: modsi3.S,v 1.4 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: modsi3.S,v 1.5 2013/07/16 23:24:18 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int % int */
-ENTRY(__modsi3)
 #ifndef __mc68010__
+ENTRY(__modsi3)
 	movel	4(%sp),%d1
 	divsll	8(%sp),%d0:%d1
 	rts
+END(__modsi3)
 #else
+ENTRY(__modsi3)
 | NB: this requires that __udivsi3 preserve %a0 and return
 | the modulus in %d1:
 	movel	(%sp)+, %a0	| pop return address
@@ -65,4 +67,5 @@ ENTRY(__modsi3)
 	negl	%d1		| negate modulus
 Lret:	movl	%d1, %d0	| move modulus into %d0
 	jmp	(%a0)
+END(__modsi3)
 #endif /* __mc68010__ */
