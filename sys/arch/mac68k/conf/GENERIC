@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.214 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: GENERIC,v 1.215 2013/07/16 07:31:40 jklos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.214 $"
+#ident 		"GENERIC-$Revision: 1.215 $"
 
 maxusers	16		# estimated number of users
 
@@ -34,6 +34,10 @@ options 	M68020		# Note:  must have 68851 PMMU
 # CPU-related options.
 options 	FPSP
 options 	FPU_EMULATE
+
+# Support for 128 meg SIMMs in Centris / Quadra 610, 650 and 800 machines.
+# You need to set the total memory in the MacOS Booter.
+#options 	DJMEMCMAX
 
 # Standard system options
 
