@@ -1,4 +1,4 @@
-/*	$NetBSD: ashldi3.S,v 1.5 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: ashldi3.S,v 1.6 2013/07/16 21:49:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,3 +58,4 @@ L2:	asll	%d2,%d0
 L3:	moveml	-12(%fp),%d2-%d4
 	unlk	%fp
 	rts
+END(__ashldi3)
