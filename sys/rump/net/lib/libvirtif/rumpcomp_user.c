@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.9 2013/07/16 19:44:31 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.10 2013/07/16 21:14:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -132,9 +132,19 @@ VIFHYPER_SEND(struct virtif_user *viu,
 	struct iovec *iov, size_t iovlen)
 {
 	void *cookie = rumpuser_component_unschedule();
+	ssize_t idontcare __attribute__((__unused__));
 
-	/* no need to check for return value; packets may be dropped */
-	(void)writev(viu->viu_fd, iov, iovlen);
+	/*
+	 * no need to check for return value; packets may be dropped
+	 *
+	 * ... sorry, I spoke too soon.  We need to check it because
+	 * apparently gcc reinvented const poisoning and it's very
+	 * hard to say "thanks, I know I'm not using the result,
+	 * but please STFU and let's get on with something useful".
+	 * So let's trick gcc into letting us share the compiler
+	 * experience.
+	 */
+	idontcare = writev(viu->viu_fd, iov, iovlen);
 
 	rumpuser_component_schedule(cookie);
 }
