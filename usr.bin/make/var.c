@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.183 2013/07/16 20:00:56 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.183 2013/07/16 20:00:56 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.183 2013/07/16 20:00:56 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -929,6 +929,14 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
     }
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
+	if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
+	    /*
+	     * This var would normally prevent the same name being added
+	     * to VAR_GLOBAL, so delete it from there if needed.
+	     * Otherwise -V name may show the wrong value.
+	     */
+	    Var_Delete(name, VAR_GLOBAL);
+	}
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_Empty(&v->val);
