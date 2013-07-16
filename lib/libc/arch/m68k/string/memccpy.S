@@ -1,4 +1,4 @@
-/*	$NetBSD: memccpy.S,v 1.2 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: memccpy.S,v 1.3 2013/07/16 21:46:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memccpy.S,v 1.2 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: memccpy.S,v 1.3 2013/07/16 21:46:42 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(memccpy)
@@ -80,3 +80,4 @@ Lmcnzdone:
 Lmcdone:
 	movl	%a0,%d0
 	rts
+END(memccpy)
