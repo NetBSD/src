@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.182 2013/07/16 14:00:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,6 +139,7 @@ __RCSID("$NetBSD: var.c,v 1.181 2013/07/15 20:33:11 christos Exp $");
 #include    "dir.h"
 #include    "job.h"
 
+extern int makelevel;
 /*
  * This lets us tell if we have replaced the original environ
  * (which we cannot free).
@@ -657,6 +658,15 @@ Var_ExportVars(void)
     char *val;
     int n;
 
+    /*
+     * Several make's support this sort of mechanism for tracking
+     * recursion - but each uses a different name.
+     * We allow the makefiles to update MAKELEVEL and ensure
+     * children see a correctly incremented value.
+     */
+    snprintf(tmp, sizeof(tmp), "%d", makelevel + 1);
+    setenv(MAKE_LEVEL_ENV, tmp, 1);
+
     if (VAR_EXPORTED_NONE == var_exportedVars)
 	return;
 
@@ -953,15 +963,6 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-    /*
-     * Another special case.
-     * Several make's support this sort of mechanism for tracking
-     * recursion - but each uses a different name.
-     * We allow the makefiles to update .MAKE.LEVEL and ensure
-     * children see a correctly incremented value.
-     */
-    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0)
-	setenv(MAKE_LEVEL_ENV, val, 1);
 	
  out:
     if (expanded_name != NULL)
