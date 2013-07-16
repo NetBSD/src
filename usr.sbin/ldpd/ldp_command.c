@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.10 2013/01/28 21:08:14 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.11 2013/07/16 02:54:32 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -513,9 +513,9 @@ show_bindings(int s, char *recvspace)
 	writestr(s, sendspace);
 	SLIST_FOREACH (l, &label_head, labels) {
 		snprintf(sendspace, MAXSEND, "%d\t\t%s/", l->binding,
-		    union_ntoa(&l->so_dest));
+		    satos(&l->so_dest.sa));
 		writestr(s, sendspace);
-		snprintf(sendspace, MAXSEND, "%s", union_ntoa(&l->so_pref));
+		snprintf(sendspace, MAXSEND, "%s", satos(&l->so_pref.sa));
 		writestr(s, sendspace);
 		if (l->p)
 			snprintf(sendspace, MAXSEND, "\t%s:%d\n",

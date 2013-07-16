@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.6 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: label.c,v 1.7 2013/07/16 02:54:32 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,9 +85,9 @@ label_add(const union sockunion * so_dest, const union sockunion * so_pref,
 
 	SLIST_INSERT_HEAD(&label_head, l, labels);
 
-	strlcpy(spreftmp, union_ntoa(so_pref), INET_ADDRSTRLEN);
+	strlcpy(spreftmp, satos(&so_pref->sa), INET_ADDRSTRLEN);
 	warnp("[label_add] added binding %d for %s/%s\n", l->binding,
-	    union_ntoa(so_dest), spreftmp);
+	    satos(&so_dest->sa), spreftmp);
 
 	send_label_tlv_to_all(&(so_dest->sa),
 	    from_union_to_cidr(so_pref), l->binding);
@@ -99,7 +99,7 @@ void
 label_del(struct label * l)
 {
 	warnp("[label_del] deleted binding %d for %s\n", l->binding,
-	   union_ntoa(&l->so_dest));
+	   satos(&l->so_dest.sa));
 	SLIST_REMOVE(&label_head, l, label, labels);
 	free(l);
 }
