@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.2 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.3 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcpy.S,v 1.2 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.3 2013/07/16 23:24:19 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,3 +54,4 @@ Lscloop:
 	moveal	%d0,%a0
 #endif
 	rts
+END(strcpy)
