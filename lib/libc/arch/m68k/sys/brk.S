@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.16 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.17 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,15 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.16 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.17 2013/07/16 23:00:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_end
 	.globl	_C_LABEL(__minbrk)
+	.hidden	_C_LABEL(__minbrk)
 	.globl	_C_LABEL(__curbrk)
+	.hidden	_C_LABEL(__curbrk)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
@@ -59,26 +61,23 @@ _C_LABEL(__minbrk):
 
 ENTRY(_brk)
 #ifdef	PIC
-	lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),%a1
-	movl	_C_LABEL(__minbrk)@GOT:w(%a1),%a0
-	movl	(%a0),%d0
+	LEA_LCL(_C_LABEL(__minbrk),%a1)
+	movl	(%a1),%a1
 #else
-	movl	_C_LABEL(__minbrk),%d0
+	movl	_C_LABEL(__minbrk),%a1
 #endif
-	cmpl	4(%sp),%d0
+	cmpl	4(%sp),%a1
 	jls	ok
-	movl	%d0,4(%sp)
+	movl	%a1,4(%sp)
 ok:
-	movl	#SYS_break,%d0
-	trap	#0
-	jcs	err
+	SYSTRAP(break)
+	jcc	CERROR
 #ifdef	PIC
-	movl	_C_LABEL(__curbrk)@GOT:w(%a1),%a0
-	movl	4(%sp),(%a0)
+	LEA_LCL(_C_LABEL(__curbrk),%a0)
+	movl	%a1,(%a0)
 #else
-	movl	4(%sp),_C_LABEL(__curbrk)
+	movl	%a1,_C_LABEL(__curbrk)
 #endif
 	clrl	%d0
 	rts
-err:
-	jra	PIC_PLT(CERROR)
+END(_brk)
