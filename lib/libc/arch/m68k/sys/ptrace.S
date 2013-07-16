@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.12 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.13 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.12 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.13 2013/07/16 23:00:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,16 +58,14 @@ ENTRY(ptrace)
 	clrl	(%a0)
 #else
 #ifdef	PIC
-	lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),%a0
+	GOT_SETUP(%a0)
 	movl	_C_LABEL(errno)@GOT:w(%a0),%a0
 	clrl	(%a0)
 #else
 	clrl	_C_LABEL(errno)
 #endif	/* PIC */
 #endif	/* _REENTRANT */
-	movl	#SYS_ptrace,%d0
-	trap	#0
-	jcs	err
+	SYSTRAP(ptrace)
+	jcc	CERROR
 	rts
-err:
-	jra	PIC_PLT(CERROR)
+END(ptrace)
