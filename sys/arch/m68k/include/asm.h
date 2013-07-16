@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.28 2011/02/12 16:32:36 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.29 2013/07/16 21:01:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@
 
 #define	_ENTRY(name) \
 	.text; .even; .globl name; .type name,@function; name:
+#define	END(name)	.size name,.-name
 
 #ifdef __ELF__
 #define	MCOUNT_ENTRY	__mcount
@@ -245,13 +246,13 @@
 /*
  * Macros to hide shortcomings in the 68010.
  */
-#ifndef __mc68010__
-#define	EXTBL(reg)					\
-	extbl	reg
-#else	/* __mc68010__ */
+#ifdef __mc68010__
 #define	EXTBL(reg)					\
 	extw	reg		;			\
 	extl	reg
+#else	/* __mc68010__ */
+#define	EXTBL(reg)					\
+	extbl	reg
 #endif	/* __mc68010__ */
 
 #endif /* _M68K_ASM_H_ */
