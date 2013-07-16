@@ -1,4 +1,4 @@
-/*	$NetBSD: subsf3.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: subsf3.S,v 1.8 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)subsf3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: subsf3.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: subsf3.S,v 1.8 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,3 +51,4 @@ ENTRY(__subsf3)
 	fmoves	%fp0,%d0
 #endif
 	rts
+END(__subsf3)
