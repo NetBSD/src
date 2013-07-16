@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.39 2013/03/06 11:52:53 yamt Exp $	*/
+/*	$NetBSD: i386.c,v 1.40 2013/07/16 09:54:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.39 2013/03/06 11:52:53 yamt Exp $");
+__RCSID("$NetBSD: i386.c,v 1.40 2013/07/16 09:54:30 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -294,12 +294,18 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x0a] = "Pentium III Xeon (Cascades)",
 				[0x0b] = "Pentium III (Tualatin)",
 				[0x0d] = "Pentium M (Dothan)", 
-				[0x0e] = "Pentium Core Duo", // "M (Yonah)",
-				[0x0f] = "Core 2",
+				[0x0e] = "Pentium Core Duo, Core solo",
+				[0x0f] = "Xeon 30xx, 32xx, 51xx, 53xx, 73xx, "
+					 "Core 2 Quad 6xxx, "
+					 "Core 2 Extreme 6xxx, "
+					 "Core 2 Duo 4xxx, 5xxx, 6xxx, 7xxx "
+					 "and Pentium DC",
 				[0x15] = "EP80579 Integrated Processor",
 				[0x16] = "Celeron (45nm)",
-				[0x17] = "Core 2 Extreme",
-				[0x1a] = "Core i7 (Nehalem)",
+				[0x17] = "Xeon 31xx, 33xx, 52xx, 54xx, "
+					 "Core 2 Quad 8xxx and 9xxx",
+				[0x1a] = "Core i7, Xeon 34xx, 35xx and 55xx "
+					 "(Nehalem)",
 				[0x1c] = "Atom Family",
 				[0x1d] = "XeonMP 74xx (Nehalem)",
 				[0x1e] = "Core i7 and i5",
@@ -307,15 +313,24 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x25] = "Xeon 36xx & 56xx, i7, i5 and i3",
 				[0x26] = "Atom Family",
 				[0x27] = "Atom Family",
-				[0x2a] = "Xeon E3-12xx, 2nd gen i7, i5, i3 2xxx",
+				[0x2a] = "Xeon E3-12xx, 2nd gen i7, i5, "
+					 "i3 2xxx",
 				[0x2c] = "Xeon 36xx & 56xx, i7, i5 and i3",
-				[0x2e] = "Xeon 75xx & 65xx",
 				[0x2d] = "Xeon E5 Sandy bridy family",
+				[0x2e] = "Xeon 75xx & 65xx",
 				[0x2f] = "Xeon E7 family",
-				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, Ivy bridge",
-				[0x3c] = "Next Intel Core",
-				[0x3e] = "Next gen Xeon E5, Ivy bridge",
-				[0x45] = "Next Intel Core",
+				[0x35] = "Atom Family",
+				[0x36] = "Atom S",
+				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, "
+					 "Ivy bridge",
+				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
+					 "(Haswell)",
+				[0x3e] = "Next gen Xeon E5/E7, Ivy bridge",
+				[0x3f] = "Future gen Xeon",
+				[0x45] = "4th gen Core, Xeon E3-12xx v3 "
+					 "(Haswell)",
+				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
+					 "(Haswell)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
