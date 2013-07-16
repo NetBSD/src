@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.9 2013/07/15 14:40:21 reinoud Exp $ */
+/* $NetBSD: udf_rename.c,v 1.10 2013/07/16 10:49:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.9 2013/07/15 14:40:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.10 2013/07/16 10:49:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -503,7 +503,8 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct udf_mount *ump;
-	struct udf_node *source, *target, *parent_node, *child_node;
+	struct udf_node *parent_node;
+	struct vnode *vp, *dvp;
 	struct long_ad parent_loc;
 	const char *name;
 	int namelen;
@@ -532,91 +533,97 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 	if (error)
 		return error;
 
-	source = VTOI(fdvp);
-	target = VTOI(tdvp);
-
 	name     = "..";
 	namelen  = 2;
 	error    = 0;
 
-	ump = target->ump;
+	ump = VTOI(tdvp)->ump;
 
 	/* if nodes are equal, it is no use looking */
-	KASSERT(udf_compare_icb(&source->loc, &target->loc) != 0);
+	KASSERT(udf_compare_icb(&VTOI(fdvp)->loc, &VTOI(tdvp)->loc) != 0);
 
-	child_node = target;
-	vref(child_node->vnode);
+	/* start at destination vnode and walk up the tree */
+	vp = tdvp;
+	vref(vp);
 
 	for (;;) {
+		KASSERT(vp != NULL);
+		KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+		KASSERT(vp->v_mount == mp);
+		KASSERT(vp->v_type == VDIR);
+		KASSERT(!udf_rmdired_p(vp));
+
 		DPRINTF(NODE, ("udf_gro_genealogy : "
-			"source vp %p, looking at vp %p\n",
-			source->vnode, child_node->vnode));
+			"fdvp %p, looking at vp %p\n",
+			fdvp, vp));
 
 		/* sanity check */
-		if (child_node->vnode->v_type != VDIR) {
-			vput(child_node->vnode);
+		if (vp->v_type != VDIR) {
+			vput(vp);
 			return ENOTDIR;
 		}
 
 		/* go down one level */
-		error = udf_lookup_name_in_dir(child_node->vnode, name, namelen,
+		error = udf_lookup_name_in_dir(vp, name, namelen,
 			&parent_loc, &found);
 		DPRINTF(NODE, ("\tlookup of parent '..' resulted in error %d, "
 			"found %d\n", error, found));
 		if (!found)
 			error = ENOENT;
 		if (error) {
-			vput(child_node->vnode);
+			vput(vp);
 			return error;
 		}
 
 		/* did we encounter the root node? i.e. loop back */
-		if (udf_compare_icb(&parent_loc, &child_node->loc) == 0) {
+		if (udf_compare_icb(&parent_loc, &VTOI(vp)->loc) == 0) {
 			DPRINTF(NODE, ("ROOT found!\n"));
-			vput(child_node->vnode);
+			vput(vp);
 			*intermediate_node_ret = NULL;
 			return 0;
 		}
 
-		/* did we encounter source node? */
-		if (udf_compare_icb(&parent_loc, &source->loc) == 0) {
-			DPRINTF(NODE, ("SOURCE NODE FOUND\n"));
-			*intermediate_node_ret = child_node->vnode;
-			VOP_UNLOCK(child_node->vnode);
+		/* Did we find that fdvp is an ancestor of tdvp? */
+		if (udf_compare_icb(&parent_loc, &VTOI(fdvp)->loc) == 0) {
+			DPRINTF(NODE, ("fdvp is ancestor of tdvp\n"));
+			*intermediate_node_ret = vp;
+			VOP_UNLOCK(vp);
 			return 0;
 		}
 
 		/*
 		 * Unlock vp so that we can lock the parent, but keep child vp
 		 * referenced until after we have found the parent, so that
-		 * dotdot_ino will not be recycled.
-		 *
-		 * XXX This guarantees that vp's inode number will not be
-		 * recycled, but why can't dotdot_ino be recycled?
+		 * parent_node will not be recycled.
 		 */
 		DPRINTF(NODE, ("\tgetting the parent node\n"));
-		VOP_UNLOCK(child_node->vnode);
+		VOP_UNLOCK(vp);
 		error = udf_get_node(ump, &parent_loc, &parent_node);
-		vrele(child_node->vnode);
+		vrele(vp);
 		if (error) 
 			return error;
 
+		dvp = parent_node->vnode;
+
+		/* switch */
+		KASSERT(dvp != NULL);
+		KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+		vp  = dvp;
+
 		/* sanity check */
-		if (parent_node->vnode->v_type != VDIR) {
+		if (vp->v_type != VDIR) {
 			/* 
 			 * Odd, but can happen if we loose the race and the
 			 * '..' node has been recycled.
 			 */
-			vput(child_node->vnode);
+			vput(vp);
 			return ENOTDIR;
 		}
 
-		if (udf_rmdired_p(parent_node->vnode)) {
-			vput(parent_node->vnode);
+		if (udf_rmdired_p(vp)) {
+			vput(vp);
 			return ENOENT;
 		}
-
-		child_node = parent_node;
 	}
 }
 
