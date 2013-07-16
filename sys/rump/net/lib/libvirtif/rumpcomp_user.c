@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.8 2013/07/04 11:46:51 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.9 2013/07/16 19:44:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -134,7 +134,7 @@ VIFHYPER_SEND(struct virtif_user *viu,
 	void *cookie = rumpuser_component_unschedule();
 
 	/* no need to check for return value; packets may be dropped */
-	writev(viu->viu_fd, iov, iovlen);
+	(void)writev(viu->viu_fd, iov, iovlen);
 
 	rumpuser_component_schedule(cookie);
 }
