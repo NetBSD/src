@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.4 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,4 +62,5 @@ ENTRY(__clone)
 	/* NOTREACHED */
 1:	rts
 2:	movl	#EINVAL,%d0
-3:	jra	PIC_PLT(CERROR)
+3:	jbra	CERROR
+END(__clone)

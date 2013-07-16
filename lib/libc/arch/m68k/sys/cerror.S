@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.16 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.17 2013/07/16 23:00:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.16 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.17 2013/07/16 23:00:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ _ENTRY(CERROR)
 	movl	(%sp)+,(%a0)
 #else
 #ifdef	PIC
-	lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),%a0
+	GOT_SETUP(%a0)
 	movl	_C_LABEL(errno)@GOT:w(%a0),%a0
 	movl	%d0,(%a0)
 #else
@@ -71,3 +71,4 @@ _ENTRY(CERROR)
 	movl	%d0,%a0
 #endif
 	rts
+END(CERROR)
