@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.219 2013/07/15 20:33:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.219 2013/07/15 20:33:11 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.219 2013/07/15 20:33:11 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -128,6 +128,7 @@ __RCSID("$NetBSD: main.c,v 1.219 2013/07/15 20:33:11 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "make.h"
 #include "hash.h"
@@ -163,6 +164,7 @@ Boolean			noRecursiveExecute;	/* -N flag */
 Boolean			keepgoing;	/* -k flag */
 Boolean			queryFlag;	/* -q flag */
 Boolean			touchFlag;	/* -t flag */
+Boolean			enterFlag;	/* -w flag */
 Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
@@ -184,11 +186,44 @@ char curdir[MAXPATHLEN + 1];		/* Startup directory */
 char *progname;				/* the program name */
 char *makeDependfile;
 pid_t myPid;
+int makelevel;
 
 Boolean forceJobs = FALSE;
 
 extern Lst parseIncPath;
 
+/*
+ * For compatibility with the POSIX version of MAKEFLAGS that includes
+ * all the options with out -, convert flags to -f -l -a -g -s.
+ */
+static char *
+explode(const char *flags)
+{
+    size_t len;
+    char *nf, *st;
+    const char *f;
+
+    if (flags == NULL)
+	return NULL;
+
+    for (f = flags; *f; f++)
+	if (!isalpha((unsigned char)*f))
+	    break;
+
+    if (*f)
+	return estrdup(flags);
+
+    len = strlen(flags);
+    st = nf = emalloc(len * 3 + 1);
+    while (*flags) {
+	*nf++ = '-';
+	*nf++ = *flags++;
+	*nf++ = ' ';
+    }
+    *nf = '\0';
+    return st;
+}
+	    
 static void
 parse_debug_options(const char *argvalue)
 {
@@ -341,7 +376,7 @@ MainParseArgs(int argc, char **argv)
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrst"
+#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstw"
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
@@ -548,6 +583,10 @@ rearg:
 		case 't':
 			touchFlag = TRUE;
 			Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
+			break;
+		case 'w':
+			enterFlag = TRUE;
+			Var_Append(MAKEFLAGS, "-w", VAR_GLOBAL);
 			break;
 		case '-':
 			dashDash = TRUE;
@@ -941,13 +980,20 @@ main(int argc, char **argv)
 	{
 	    char tmp[64], *ep;
 
-	    snprintf(tmp, sizeof(tmp), "%d",
-	        ((ep = getenv(MAKE_LEVEL_ENV)) && *ep) ? atoi(ep) + 1 : 0);
+	    makelevel = ((ep = getenv(MAKE_LEVEL_ENV)) && *ep) ? atoi(ep) : 0;
+	    if (makelevel < 0)
+		makelevel = 0;
+	    snprintf(tmp, sizeof(tmp), "%d", makelevel);
 	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", myPid);
 	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
 	    snprintf(tmp, sizeof(tmp), "%u", getppid());
 	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL, 0);
+	}
+	if (makelevel > 0) {
+		char pn[1024];
+		snprintf(pn, sizeof(pn), "%s[%d]", progname, makelevel);
+		progname = estrdup(pn);
 	}
 	Job_SetPrefix();
 
@@ -960,7 +1006,9 @@ main(int argc, char **argv)
 	 * in a different format).
 	 */
 #ifdef POSIX
-	Main_ParseArgLine(getenv("MAKEFLAGS"));
+	p1 = explode(getenv("MAKEFLAGS"));
+	Main_ParseArgLine(p1);
+	free(p1);
 #else
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
@@ -976,6 +1024,9 @@ main(int argc, char **argv)
 	}
 
 	MainParseArgs(argc, argv);
+
+	if (enterFlag)
+		printf("%s: Entering directory `%s'\n", progname, curdir);
 
 	/*
 	 * Verify that cwd is sane.
@@ -1292,6 +1343,9 @@ main(int argc, char **argv)
 		Targ_PrintGraph(2);
 
 	Trace_Log(MAKEEND, 0);
+
+	if (enterFlag)
+		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
 	Suff_End();
         Targ_End();
@@ -1721,8 +1775,12 @@ execError(const char *af, const char *av)
 static void
 usage(void)
 {
+	char *p;
+	if ((p = strchr(progname, '[')) != NULL)
+	    *p = '\0';
+
 	(void)fprintf(stderr,
-"usage: %s [-BeikNnqrstWX] \n\
+"usage: %s [-BeikNnqrstWwX] \n\
             [-C directory] [-D variable] [-d flags] [-f makefile]\n\
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
             [-V variable] [variable=value] [target ...]\n", progname);
