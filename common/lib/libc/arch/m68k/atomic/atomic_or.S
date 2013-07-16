@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.7 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.8 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
 ENTRY(_atomic_or_32)
 	movl	4(%sp), %a0
 	movl	8(%sp), %d0
-	orl	%d0, %a0@
+	orl	%d0, (%a0)
 	rts
+END(_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
@@ -51,7 +52,7 @@ ENTRY(_atomic_or_32_nv)
 1:	movl	(%a0), %d0
 	movl	%d0, %d1
 	orl	8(%sp), %d0
-	casl	%d1, %d0, %a0@
+	casl	%d1, %d0, (%a0)
 	bne	1b
 	rts
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
