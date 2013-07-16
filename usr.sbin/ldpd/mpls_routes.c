@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.15 2013/07/16 02:54:32 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.16 2013/07/16 16:55:01 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -726,7 +726,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		    rg->m_rtm.rtm_type);
 	}
 
-	warnp("[check_route] Route %s: %s / %s -> %s by PID:%d\n", oper, dest,
+	debugp("[check_route] Route %s: %s / %s -> %s by PID:%d\n", oper, dest,
 		pref, gate, rg->m_rtm.rtm_pid);
 
 	if(so_pref_allocated)
@@ -879,7 +879,7 @@ bind_current_routes()
 				free(so_pref);
 			continue;
 		}
-		if (so_gate->sa.sa_family == AF_INET)
+		if (so_gate == NULL || so_gate->sa.sa_family == AF_INET)
 			label_add(so_dst, so_pref, so_gate,
 			    MPLS_LABEL_IMPLNULL, NULL, 0);
 
