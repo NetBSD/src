@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.6 2003/08/07 16:42:11 agc Exp $	*/
+/*	$NetBSD: modf.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)modf.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: modf.S,v 1.6 2003/08/07 16:42:11 agc Exp $")
+	RCSID("$NetBSD: modf.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,14 +48,14 @@
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 ENTRY(modf)
-	fmoved	%sp@(4),%fp0
-	movel	%sp@(12),%a0
+	fmoved	4(%sp),%fp0
+	movel	12(%sp),%a0
 	fintrzx	%fp0,%fp1
-	fmoved	%fp1,%a0@
+	fmoved	%fp1,(%a0)
 	fsubx	%fp1,%fp0
 #ifndef __SVR4_ABI__
-	fmoved	%fp0,%sp@-
-	movel	%sp@+,%d0
-	movel	%sp@+,%d1
+	fmoved	%fp0,-(%sp)
+	movel	(%sp)+,%d0
+	movel	(%sp)+,%d1
 #endif
 	rts

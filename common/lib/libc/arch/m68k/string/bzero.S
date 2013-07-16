@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bzero.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,14 +68,14 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.2 2008/04/28 20:22:52 martin Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(bzero)
-	movl	%d2,%sp@-
-	movl	%sp@(8),%a0		| destination
-	movl	%sp@(12),%d1		| count
+	movl	%d2,-(%sp)
+	movl	8(%sp),%a0		| destination
+	movl	12(%sp),%d1		| count
 
 	movql	#0,%d2
 
@@ -90,13 +90,13 @@ ENTRY(bzero)
 	movl	%a0,%d0
 	btst	#0,%d0			| if (dst & 1)
 	jeq	Lbzalgndw		| 
-	movb	%d2,%a0@+		| 	*(char *)dst++ = 0
+	movb	%d2,(%a0)+		| 	*(char *)dst++ = 0
 	subql	#1,%d1			|	len--
 Lbzalgndw:
 	/* long word align */
 	btst	#1,%d0			| if (dst & 2)
 	jeq	Lbzalgndl		|
-	movw	%d2,%a0@+		|	*(short *)dst++ = 0
+	movw	%d2,(%a0)+		|	*(short *)dst++ = 0
 	subql	#2,%d1			|	len -= 2
 Lbzalgndl:
 	/* zero by 8 longwords */
@@ -106,14 +106,14 @@ Lbzalgndl:
 	andl	#31,%d1			|	len %= 32
 	subql	#1,%d0			|	set up for dbf
 Lbz32loop:
-	movl	%d2,%a0@+		|	zero 8 long words
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
-	movl	%d2,%a0@+
+	movl	%d2,(%a0)+		|	zero 8 long words
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
+	movl	%d2,(%a0)+
 	dbf	%d0,Lbz32loop		|	till done
 	clrw	%d0
 	subql	#1,%d0
@@ -126,16 +126,16 @@ Lbzlong:
 	jeq	Lbzbyte			| if (cnt)
 	subql	#1,%d0			|	set up for dbf
 Lbzlloop:
-	movl	%d2,%a0@+		|	clear longwords
+	movl	%d2,(%a0)+		|	clear longwords
 	dbf	%d0,Lbzlloop		|	till done
 	andl	#3,%d1			|	len %= 4
 	jeq	Lbzdone
 
 	subql	#1,%d1			| set up for dbf
 Lbzbloop:
-	movb	%d2,%a0@+		| zero bytes
+	movb	%d2,(%a0)+		| zero bytes
 Lbzbyte:
 	dbf	%d1,Lbzbloop		| till done
 Lbzdone:
-	movl	%sp@+,%d2
+	movl	(%sp)+,%d2
 	rts

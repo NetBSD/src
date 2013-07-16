@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.2 2008/04/28 20:22:52 martin Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,13 +83,13 @@ ENTRY(bcopy)
 #endif
 #endif
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%a1		| dest address
-	movl	%sp@(8),%a0		| src address
+	movl	4(%sp),%a1		| dest address
+	movl	8(%sp),%a0		| src address
 #else
-	movl	%sp@(4),%a0		| src address
-	movl	%sp@(8),%a1		| dest address
+	movl	4(%sp),%a0		| src address
+	movl	8(%sp),%a1		| dest address
 #endif
-	movl	%sp@(12),%d1		| count
+	movl	12(%sp),%d1		| count
 
 	cmpl	%a1,%a0			| src after dest?
 	jlt	Lbcback			| yes, must copy backwards
@@ -117,13 +117,13 @@ ENTRY(bcopy)
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
 	jeq	Lbcfalgndw	| 
-	movb	%a0@+,%a1@+	|	*(char *)dst++ = *(char *) src++
+	movb	(%a0)+,(%a1)+	|	*(char *)dst++ = *(char *) src++
 	subql	#1,%d1		|	len--
 Lbcfalgndw:
 	/* long word align */
 	btst	#1,%d0		| if (dst & 2)
 	jeq	Lbcfalgndl
-	movw	%a0@+,%a1@+	|	*(short *)dst++ = *(short *) dst++
+	movw	(%a0)+,(%a1)+	|	*(short *)dst++ = *(short *) dst++
 	subql	#2,%d1		|	len -= 2
 Lbcfalgndl:
 	/* copy by 8 longwords */
@@ -133,14 +133,14 @@ Lbcfalgndl:
 	andl	#31,%d1		|	len %= 32
 	subql	#1,%d0		|	set up for dbf
 Lbcf32loop:
-	movl	%a0@+,%a1@+	|	copy 8 long words
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
+	movl	(%a0)+,(%a1)+	|	copy 8 long words
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
 	dbf	%d0,Lbcf32loop	|	till done
 	clrw	%d0
 	subql	#1,%d0
@@ -153,19 +153,19 @@ Lbcflong:
 	jeq	Lbcfbyte	| if (cnt)
 	subql	#1,%d0		|	set up for dbf
 Lbcflloop:
-	movl	%a0@+,%a1@+	|	copy longwords
+	movl	(%a0)+,(%a1)+	|	copy longwords
 	dbf	%d0,Lbcflloop	|	til done
 	andl	#3,%d1		|	len %= 4
 	jeq	Lbcdone
 
 	subql	#1,%d1		| set up for dbf
 Lbcfbloop:
-	movb	%a0@+,%a1@+	| copy bytes
+	movb	(%a0)+,(%a1)+	| copy bytes
 Lbcfbyte:
 	dbf	%d1,Lbcfbloop	| till done
 Lbcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%d0	| dest address
+	movl	4(%sp),%d0	| dest address
 #if defined(__SVR4_ABI__)
 	moveal	%d0,%a0
 #endif
@@ -200,13 +200,13 @@ Lbcback:
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
 	jeq	Lbcbalgndw	| 
-	movb	%a0@-,%a1@-	|	*(char *)dst-- = *(char *) src--
+	movb	-(%a0),-(%a1)	|	*(char *)dst-- = *(char *) src--
 	subql	#1,%d1		|	len--
 Lbcbalgndw:
 	/* long word align */
 	btst	#1,%d0		| if (dst & 2)
 	jeq	Lbcbalgndl
-	movw	%a0@-,%a1@-	|	*(short *)dst-- = *(short *) dst--
+	movw	-(%a0),-(%a1)	|	*(short *)dst-- = *(short *) dst--
 	subql	#2,%d1		|	len -= 2
 Lbcbalgndl:
 	/* copy by 8 longwords */
@@ -216,14 +216,14 @@ Lbcbalgndl:
 	andl	#31,%d1		|	len %= 32
 	subql	#1,%d0		|	set up for dbf
 Lbcb32loop:
-	movl	%a0@-,%a1@-	|	copy 8 long words
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
-	movl	%a0@-,%a1@-
+	movl	-(%a0),-(%a1)	|	copy 8 long words
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
+	movl	-(%a0),-(%a1)
 	dbf	%d0,Lbcb32loop	|	till done
 	clrw	%d0
 	subql	#1,%d0
@@ -236,19 +236,19 @@ Lbcblong:
 	jeq	Lbcbbyte	| if (cnt)
 	subql	#1,%d0		|	set up for dbf
 Lbcblloop:
-	movl	%a0@-,%a1@-	|	copy longwords
+	movl	-(%a0),-(%a1)	|	copy longwords
 	dbf	%d0,Lbcblloop	|	til done
 	andl	#3,%d1		|	len %= 4
 	jeq	Lbcdone
 
 	subql	#1,%d1		| set up for dbf
 Lbcbbloop:
-	movb	%a0@-,%a1@-	| copy bytes
+	movb	-(%a0),-(%a1)	| copy bytes
 Lbcbbyte:
 	dbf	%d1,Lbcbbloop	| till done
 
 #if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	%sp@(4),%d0	| dest address
+	movl	4(%sp),%d0	| dest address
 #if defined(__SVR4_ABI__)
 	moveal	%d0,%a0
 #endif

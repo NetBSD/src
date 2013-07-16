@@ -1,4 +1,4 @@
-/*	$NetBSD: fixdfsi.S,v 1.5 2003/08/07 16:42:10 agc Exp $	*/
+/*	$NetBSD: fixdfsi.S,v 1.6 2013/07/16 20:49:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,12 +39,12 @@
 #if 0
 	RCSID("from: @(#)fixdfsi.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: fixdfsi.S,v 1.5 2003/08/07 16:42:10 agc Exp $")
+	RCSID("$NetBSD: fixdfsi.S,v 1.6 2013/07/16 20:49:42 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* (int) double */
 ENTRY(__fixdfsi)
-	fintrzd	%sp@(4),%fp0
+	fintrzd	4(%sp),%fp0
 	fmovel	%fp0,%d0
 	rts
