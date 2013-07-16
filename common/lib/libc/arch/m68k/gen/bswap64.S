@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.2 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: bswap64.S,v 1.3 2013/07/16 23:24:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -38,3 +38,4 @@ ENTRY(bswap64)
 	rolw	#8,%d0
 	rolw	#8,%d1
 	rts
+END(bswap64)

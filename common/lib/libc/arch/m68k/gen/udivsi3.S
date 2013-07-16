@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,17 +39,19 @@
 #if 0
 	RCSID("from: @(#)udivsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: udivsi3.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* unsigned / unsigned */
-ENTRY(__udivsi3)
 #ifndef __mc68010__
+ENTRY(__udivsi3)
 	movel	4(%sp),%d0
 	divul	8(%sp),%d0
 	rts
+END(__udivsi3)
 #else
+ENTRY(__udivsi3)
 	movel	%d2, -(%sp)	| save %d2
 	movel	12(%sp), %d0	| load divisor
 	movel	8(%sp), %d1	| load dividend
@@ -123,4 +125,5 @@ ENTRY(__udivsi3)
 	addl	%a1, %d1	| adjust remainder
 3:	movel	(%sp)+, %d2	| restore %d2
 	rts
+END(__udivsi3)
 #endif /* __mc68010__ */

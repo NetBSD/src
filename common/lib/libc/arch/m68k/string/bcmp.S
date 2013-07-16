@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,3 +165,4 @@ Lbcdone:
 Lbcnoteq:
 	movql	#1,%d0
 	rts
+END(bcmp)

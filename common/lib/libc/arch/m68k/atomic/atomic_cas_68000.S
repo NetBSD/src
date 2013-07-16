@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_68000.S,v 1.4 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: atomic_cas_68000.S,v 1.5 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -46,4 +46,4 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 	movl	12(%sp), (%a0)		/* *ptr = new */
 RAS_END_ASM_HIDDEN(_atomic_cas)
 1:	rts
-
+END(_atomic_cas_up)
