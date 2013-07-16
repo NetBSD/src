@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.h,v 1.4 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: mpls_routes.h,v 1.5 2013/07/16 02:54:32 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@ int	get_route(struct rt_msg *, const union sockunion *,
 int	bind_current_routes(void);
 int	flush_mpls_routes(void);
 int	check_route(struct rt_msg *, uint);
-char*	union_ntoa(const union sockunion *);
 uint8_t	from_union_to_cidr(const union sockunion *);
 union sockunion *	from_cidr_to_union(uint8_t);
 

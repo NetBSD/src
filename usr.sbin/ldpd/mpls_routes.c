@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.14 2013/07/12 08:55:52 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.15 2013/07/16 02:54:32 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ int             replay_index = 0;
 static int read_route_socket(char *, int);
 void	mask_addr(union sockunion *);
 int	compare_sockunion(const union sockunion *, const union sockunion *);
-char *	mpls_ntoa(union mpls_shim);
 static int check_if_addr_updown(struct rt_msg *, uint);
 
 extern struct sockaddr mplssockaddr;
@@ -79,9 +78,25 @@ extern struct sockaddr mplssockaddr;
 	do { l = RT_ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l;} while(0);
 #define NEXTADDR2(u) \
 	do { l = RT_ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
-#define GETNEXT(sunion) \
-	(union sockunion *) ((char *) (sunion)  + \
-	RT_ROUNDUP((sunion)->sa.sa_len))
+
+#define CHECK_LEN(sunion) \
+	if (size_cp + sunion->sa.sa_len > rlen) \
+		return LDP_E_ROUTE_ERROR; \
+	else \
+		size_cp += sunion->sa.sa_len;
+
+#define CHECK_MINSA \
+	if (size_cp + sizeof(sa_family_t) + sizeof(uint8_t) > rlen) \
+		return LDP_E_ROUTE_ERROR;
+
+#define GETNEXT(dstunion, origunion) \
+	do { \
+	CHECK_MINSA \
+	dstunion = (union sockunion *) ((char *) (origunion)  + \
+	RT_ROUNDUP((origunion)->sa.sa_len)); \
+	CHECK_LEN(dstunion) \
+	} while (0);
+
 
 static int 
 read_route_socket(char *s, int max)
@@ -267,35 +282,6 @@ from_cidr_to_mask(uint8_t prefixlen, char *mask)
 	    (a << 16) >> 24, (a << 24) >> 24);  
 }
 
-char *
-mpls_ntoa(const union mpls_shim ms)
-{
-	static char     ret[255];
-	union mpls_shim ms2;
-
-	ms2.s_addr = ntohl(ms.s_addr);
-	snprintf(ret, sizeof(ret), "%d", ms2.shim.label);
-	return ret;
-}
-
-char *
-union_ntoa(const union sockunion * so)
-{
-	static char defret[] = "Unknown family address";
-
-	switch (so->sa.sa_family) {
-	case AF_INET:
-		return inet_ntoa(so->sin.sin_addr);
-	case AF_LINK:
-		return link_ntoa(&so->sdl);
-	case AF_MPLS:
-		return mpls_ntoa(so->smpls.smpls_addr);
-	}
-	fatalp("Unknown family address in union_ntoa: %d\n",
-	       so->sa.sa_family);
-	return defret;
-}
-
 /* From src/sbin/route/route.c */
 static const char *
 route_strerror(int error)
@@ -386,11 +372,11 @@ add_route(union sockunion *so_dest, union sockunion *so_prefix,
 
 	if ((rlen = write(route_socket, (char *) &rm, l)) < l) {
 		warnp("Error adding a route: %s\n", route_strerror(errno));
-		warnp("Destination was: %s\n", union_ntoa(so_dest));
+		warnp("Destination was: %s\n", satos(&so_dest->sa));
 		if (so_prefix)
-			warnp("Prefix was: %s\n", union_ntoa(so_prefix));
+			warnp("Prefix was: %s\n", satos(&so_prefix->sa));
 		if (so_gate)
-			warnp("Gateway was: %s\n", union_ntoa(so_gate));
+			warnp("Gateway was: %s\n", satos(&so_gate->sa));
 		rv = LDP_E_ROUTE_ERROR;
 	}
 	if (fr == FREESO) {
@@ -461,11 +447,11 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
 		strlcpy(spreftmp, inet_ntoa(so_pref->sin.sin_addr),
 		    INET_ADDRSTRLEN);
 		warnp("Error deleting route(%s): %s/%s",
-		    route_strerror(errno), union_ntoa(so_dest),
+		    route_strerror(errno), satos(&so_dest->sa),
 		    spreftmp);
 	    } else
 		warnp("Error deleting route(%s) : %s",
-		    route_strerror(errno), union_ntoa(so_dest));
+		    route_strerror(errno), satos(&so_dest->sa));
 	    return LDP_E_NO_SUCH_ROUTE;
 	}
 	return LDP_E_OK;
@@ -559,8 +545,8 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 	if (exact_match) {
 		su = (union sockunion*)(rg->m_space);
 		if (compare_sockunion(so_dest, su)) {
-			debugp("Dest %s ", union_ntoa(so_dest));
-			debugp("not like %s\n", union_ntoa(su));
+			debugp("Dest %s ", satos(&so_dest->sa));
+			debugp("not like %s\n", satos(&su->sa));
 			return LDP_E_NO_SUCH_ROUTE;
 		}
 	}
@@ -575,6 +561,7 @@ check_route(struct rt_msg * rg, uint rlen)
 	union sockunion *so_dest = NULL, *so_gate = NULL, *so_pref = NULL;
 	int             so_pref_allocated = 0;
 	int             prefixlen;
+	size_t		size_cp;
 	struct peer_map *pm;
 	struct label	*lab;
 	char            dest[50], gate[50], pref[50], oper[50];
@@ -589,8 +576,8 @@ check_route(struct rt_msg * rg, uint rlen)
 	    rg->m_rtm.rtm_type == RTM_DELADDR)
 		return check_if_addr_updown(rg, rlen);
 
-	if (rlen < sizeof(struct rt_msghdr))
-		return LDP_E_ROUTE_ERROR;
+	size_cp = sizeof(struct rt_msghdr);
+	CHECK_MINSA;
 
 	if (rg->m_rtm.rtm_pid == getpid() ||
 	    ((rg->m_rtm.rtm_flags & RTF_DONE) == 0))
@@ -603,8 +590,10 @@ check_route(struct rt_msg * rg, uint rlen)
 	if (so_dest->sa.sa_family != AF_INET)
 		return LDP_E_OK;/* We don't care about non-IP changes */
 
+	CHECK_LEN(so_dest);
+
 	if (rg->m_rtm.rtm_addrs & RTA_GATEWAY) {
-		so_gate = GETNEXT(so_dest);
+		GETNEXT(so_gate, so_dest);
 		if ((so_gate->sa.sa_family != AF_INET) &&
 		    (so_gate->sa.sa_family != AF_MPLS))
 			return LDP_E_OK;
@@ -614,7 +603,7 @@ check_route(struct rt_msg * rg, uint rlen)
 			so_pref = so_gate;
 		else
 			so_pref = so_dest;
-		so_pref = GETNEXT(so_pref);
+		GETNEXT(so_pref, so_pref);
 	}
 	if (!(rg->m_rtm.rtm_flags & RTF_GATEWAY)) {
 		if (rg->m_rtm.rtm_addrs & RTA_GENMASK) {
@@ -673,7 +662,7 @@ check_route(struct rt_msg * rg, uint rlen)
 			}
 		} else	/* We already know about this prefix */
 			debugp("Binding already there for prefix %s/%d !\n",
-			      union_ntoa(so_dest), prefixlen);
+			      satos(&so_dest->sa), prefixlen);
 		break;
 	case RTM_DELETE:
 		if (!so_gate)
@@ -701,11 +690,11 @@ check_route(struct rt_msg * rg, uint rlen)
 	/* Rest is just for debug */
 
 	if (so_dest)
-		strlcpy(dest, union_ntoa(so_dest), 16);
+		strlcpy(dest, satos(&so_dest->sa), sizeof(dest));
 	if (so_pref)
-		snprintf(pref, 3, "%d", prefixlen);
+		snprintf(pref, sizeof(pref), "%d", prefixlen);
 	if (so_gate)
-		strlcpy(gate, union_ntoa(so_gate), 16);
+		strlcpy(gate, satos(&so_gate->sa), sizeof(gate));
 
 	switch (rg->m_rtm.rtm_type) {
 	case RTM_ADD:
@@ -755,20 +744,25 @@ check_if_addr_updown(struct rt_msg * rg, uint rlen)
 	struct ldp_peer *p;
 	struct address_list_tlv al_tlv;
 	struct ifa_msghdr *msghdr = (struct ifa_msghdr *)&rg->m_rtm;
+	size_t size_cp = sizeof(struct ifa_msghdr);
 
 	if (rlen < sizeof(struct ifa_msghdr) ||
 	    (msghdr->ifam_addrs & RTA_NETMASK) == 0 ||
 	    (msghdr->ifam_addrs & RTA_IFA) == 0)
 		return LDP_E_ROUTE_ERROR;
 
+	CHECK_MINSA;
+
 	/* we should have RTA_NETMASK, RTA_IFP, RTA_IFA and RTA_BRD */
 	ifa = netmask = (union sockunion *)(msghdr + 1);
 	if (netmask->sa.sa_family != AF_INET)
 		return LDP_E_OK;
+	CHECK_LEN(netmask);
 
 	if (msghdr->ifam_addrs & RTA_IFP)
-		ifa = GETNEXT(ifa);
-	ifa = GETNEXT(ifa);
+		GETNEXT(ifa, ifa);
+
+	GETNEXT(ifa, ifa);
 
 	if (ifa->sa.sa_family != AF_INET ||
 	    ntohl(ifa->sin.sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
@@ -794,11 +788,12 @@ check_if_addr_updown(struct rt_msg * rg, uint rlen)
 int 
 bind_current_routes()
 {
-	size_t          needed;
+	size_t          needed, size_cp;
 	int             mib[6];
 	char           *buf, *next, *lim;
 	struct rt_msghdr *rtmes;
 	union sockunion *so_dst, *so_pref, *so_gate;
+	uint rlen;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -819,8 +814,10 @@ bind_current_routes()
 	}
 	lim = buf + needed;
 
-	for (next = buf; next < lim; next += rtmes->rtm_msglen) {
+	for (next = buf; next < lim; next += rlen) {
 		rtmes = (struct rt_msghdr *) next;
+		rlen = rtmes->rtm_msglen;
+		size_cp = sizeof(struct rt_msghdr);
 		so_pref = NULL;
 		so_gate = NULL;
 		if (rtmes->rtm_flags & RTF_LLINFO)	/* No need for arps */
@@ -830,8 +827,9 @@ bind_current_routes()
 			continue;
 		}
 
+		CHECK_MINSA;
 		so_dst = (union sockunion *) & rtmes[1];
-
+		CHECK_LEN(so_dst);
 		/*
 		 * This function is called only at startup, so use
 		 * this ocassion to delete all MPLS routes
@@ -851,22 +849,22 @@ bind_current_routes()
 		if (so_dst->sin.sin_addr.s_addr == 0 && no_default_route != 0)
 			continue;
 
-		/* XXX: Check if it's loopback */
+		/* Check if it's loopback */
 		if ((ntohl(so_dst->sin.sin_addr.s_addr) >> 24)==IN_LOOPBACKNET)
 			continue;
 
 		/* Get Gateway */
 		if (rtmes->rtm_addrs & RTA_GATEWAY)
-			so_gate = GETNEXT(so_dst);
+			GETNEXT(so_gate, so_dst);
 
 		/* Get prefix */
 		if (rtmes->rtm_flags & RTF_HOST) {
 			if ((so_pref = from_cidr_to_union(32)) == NULL)
 				return LDP_E_MEMORY;
-		} else if (rtmes->rtm_addrs & RTA_GATEWAY)
-			so_pref = GETNEXT(so_gate);
-		else
-			so_pref = GETNEXT(so_dst);
+		} else if (rtmes->rtm_addrs & RTA_GATEWAY) {
+			GETNEXT(so_pref, so_gate);
+		} else
+			GETNEXT(so_pref, so_dst);
 
 		so_pref->sa.sa_family = AF_INET;
 		so_pref->sa.sa_len = sizeof(struct sockaddr_in);
@@ -895,9 +893,10 @@ bind_current_routes()
 int 
 flush_mpls_routes()
 {
-	size_t          needed;
-	int             mib[6];
-	char           *buf, *next, *lim;
+	size_t needed, size_cp;
+	int mib[6];
+	uint rlen;
+	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
 	union sockunion *so_dst, *so_pref, *so_gate;
 
@@ -921,8 +920,10 @@ flush_mpls_routes()
 	}
 	lim = buf + needed;
 
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+	for (next = buf; next < lim; next += rlen) {
 		rtm = (struct rt_msghdr *) next;
+		size_cp = sizeof(struct rt_msghdr);
+		rlen = rtm->rtm_msglen;
 		so_pref = NULL;
 		so_gate = NULL;
 		if (rtm->rtm_flags & RTF_LLINFO)	/* No need for arps */
@@ -940,10 +941,10 @@ flush_mpls_routes()
 		}
 
 		if (rtm->rtm_addrs & RTA_GATEWAY) {
-			so_gate = GETNEXT(so_dst);
-			so_pref = GETNEXT(so_gate);
+			GETNEXT(so_gate, so_dst);
+			GETNEXT(so_pref, so_gate);
 		} else
-			so_pref = GETNEXT(so_dst);
+			GETNEXT(so_pref, so_dst);
 
 		if (so_gate->sa.sa_family == AF_MPLS) {
 			if (so_dst->sa.sa_family == AF_INET)
