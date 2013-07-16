@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.220 2013/07/16 14:00:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -211,10 +211,10 @@ explode(const char *flags)
 	    break;
 
     if (*f)
-	return estrdup(flags);
+	return bmake_strdup(flags);
 
     len = strlen(flags);
-    st = nf = emalloc(len * 3 + 1);
+    st = nf = bmake_malloc(len * 3 + 1);
     while (*flags) {
 	*nf++ = '-';
 	*nf++ = *flags++;
@@ -993,7 +993,7 @@ main(int argc, char **argv)
 	if (makelevel > 0) {
 		char pn[1024];
 		snprintf(pn, sizeof(pn), "%s[%d]", progname, makelevel);
-		progname = estrdup(pn);
+		progname = bmake_strdup(pn);
 	}
 	Job_SetPrefix();
 
