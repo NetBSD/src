@@ -1,4 +1,4 @@
-/*	$NetBSD: memccpy.S,v 1.1 2001/02/05 00:17:22 scottr Exp $	*/
+/*	$NetBSD: memccpy.S,v 1.2 2013/07/16 20:49:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -29,23 +29,23 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memccpy.S,v 1.1 2001/02/05 00:17:22 scottr Exp $")
+	RCSID("$NetBSD: memccpy.S,v 1.2 2013/07/16 20:49:42 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(memccpy)
-	movl	%sp@(16),%d0		| count
+	movl	16(%sp),%d0		| count
 	jeq	Lmcbail			| nothing to do
 
-	movl	%sp@(4),%a0		| a0 = toaddr
+	movl	4(%sp),%a0		| a0 = toaddr
 	subql	#1,%d0			|   prepare count for DBcc loop
-	movl	%sp@(8),%a1		| a1 = fromaddr
-	movl	%sp@(12),%d1		| d1 = terminator
+	movl	8(%sp),%a1		| a1 = fromaddr
+	movl	12(%sp),%d1		| d1 = terminator
 	jeq	Lmcloop			|   handle ASCII NUL specially
 
-	movl	%d2,%sp@-		| save scratch register
+	movl	%d2,-(%sp)		| save scratch register
 Lmcnzloop:
-	movb	%a1@+,%d2		| move a byte
-	movb	%d2,%a0@+
+	movb	(%a1)+,%d2		| move a byte
+	movb	%d2,(%a0)+
 	cmpb	%d2,%d1			| found the terminator?
 	dbeq	%d0,Lmcnzloop		| if not, keep transferring,
 	jeq	Lmcnzdone		|   otherwise done
@@ -53,7 +53,7 @@ Lmcnzloop:
 	subql	#1,%d0
 	jcc	Lmcnzloop		| yes, keep going...
 
-	movl	%sp@+,%d2		| restore scratch register
+	movl	(%sp)+,%d2		| restore scratch register
 	movql	#0,%d0			| no terminator found, return NULL
 #ifdef __SVR4_ABI__
 	movl	%d0,%a0			| XXX maybe use lea to avoid stall?
@@ -61,7 +61,7 @@ Lmcnzloop:
 	rts
 
 Lmcloop:
-	movb	%a1@+,%a0@+		| move a byte; was it NUL?
+	movb	(%a1)+,(%a0)+		| move a byte; was it NUL?
 	dbeq	%d0,Lmcloop		| if not, keep transferring,
 	jeq	Lmcdone			|   otherwise done
 	clrw	%d0			| check to see if more to do
@@ -76,7 +76,7 @@ Lmcbail:
 	rts
 
 Lmcnzdone:
-	movl	%sp@+,%d2		| restore scratch register
+	movl	(%sp)+,%d2		| restore scratch register
 Lmcdone:
 	movl	%a0,%d0
 	rts

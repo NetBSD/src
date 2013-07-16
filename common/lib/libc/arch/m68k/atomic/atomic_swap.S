@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.4 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.5 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,9 +34,9 @@
 	.text
 
 ENTRY(_atomic_swap_32)
-	movl	%sp@(4), %a0
-1:	movl	%a0@, %d0
-	movl	%sp@(8), %d1
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
+	movl	8(%sp), %d1
 	casl	%d0, %d1, %a0@
 	bne	1b
 	/* %d0 now contains the old value */

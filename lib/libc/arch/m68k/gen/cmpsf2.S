@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpsf2.S,v 1.5 2003/08/07 16:42:10 agc Exp $	*/
+/*	$NetBSD: cmpsf2.S,v 1.6 2013/07/16 20:49:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)cmpsf2.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: cmpsf2.S,v 1.5 2003/08/07 16:42:10 agc Exp $")
+	RCSID("$NetBSD: cmpsf2.S,v 1.6 2013/07/16 20:49:42 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,8 +47,8 @@
 /* single < single: -1 */
 /* single == single: 0 */
 ENTRY(__cmpsf2)
-	fmoves	%sp@(4),%fp0
-	fcmps	%sp@(8),%fp0
+	fmoves	4(%sp),%fp0
+	fcmps	8(%sp),%fp0
 	fbgt	Lagtb
 	fslt	%d0
 	extbl	%d0

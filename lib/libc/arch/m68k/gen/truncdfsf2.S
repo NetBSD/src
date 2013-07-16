@@ -1,4 +1,4 @@
-/*	$NetBSD: truncdfsf2.S,v 1.6 2003/08/07 16:42:11 agc Exp $	*/
+/*	$NetBSD: truncdfsf2.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,13 @@
 #if 0
 	RCSID("from: @(#)truncdfsf2.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: truncdfsf2.S,v 1.6 2003/08/07 16:42:11 agc Exp $")
+	RCSID("$NetBSD: truncdfsf2.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* (float) double */
 ENTRY(__truncdfsf2)
-	fmoved	%sp@(4),%fp0
+	fmoved	4(%sp),%fp0
 #ifndef __SVR4_ABI__
 	fmoves	%fp0,%d0
 #endif

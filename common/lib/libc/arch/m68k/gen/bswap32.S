@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap32.S,v 1.2 2007/09/19 20:31:34 he Exp $	*/
+/*	$NetBSD: bswap32.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -33,7 +33,7 @@ _ENTRY(_C_LABEL(bswap32))
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 _ENTRY(_C_LABEL(__bswap32))
 #endif /* defined(_KERNEL) || defined(_STANDALONE) */
-	movl	%sp@(4),%d0
+	movl	4(%sp),%d0
 	rolw	#8,%d0
 	swap	%d0
 	rolw	#8,%d0

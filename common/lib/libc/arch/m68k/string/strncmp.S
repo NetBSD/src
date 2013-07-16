@@ -1,4 +1,4 @@
-/*	$NetBSD: strncmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: strncmp.S,v 1.3 2013/07/16 20:49:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,45 +33,45 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strncmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $")
+	RCSID("$NetBSD: strncmp.S,v 1.3 2013/07/16 20:49:42 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strncmp)
-	movl	%sp@(12),%d0
+	movl	12(%sp),%d0
 	jeq	L4
-	movl	%sp@(4),%a0
-	movl	%sp@(8),%a1
+	movl	4(%sp),%a0
+	movl	8(%sp),%a1
 L1:				/* unroll by 4 for m680[23]0's */
-	movb	%a0@+,%d1
+	movb	(%a0)+,%d1
 	jeq	L2
-	subb	%a1@+,%d1
+	subb	(%a1)+,%d1
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	%a0@+,%d1
+	movb	(%a0)+,%d1
 	jeq	L2
-	subb	%a1@+,%d1
+	subb	(%a1)+,%d1
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	%a0@+,%d1
+	movb	(%a0)+,%d1
 	jeq	L2
-	subb	%a1@+,%d1
+	subb	(%a1)+,%d1
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	%a0@+,%d1
+	movb	(%a0)+,%d1
 	jeq	L2
-	subb	%a1@+,%d1
+	subb	(%a1)+,%d1
 	jne	L3
 	subql	#1,%d0
 	jne	L1
 L4:	rts
 
-L2:	subb	%a1@,%d1
+L2:	subb	(%a1),%d1
 L3:	scs	%d0
 	EXTBL(%d0)
 	movb	%d1,%d0

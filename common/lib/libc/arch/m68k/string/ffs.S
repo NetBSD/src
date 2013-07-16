@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2011/07/09 14:57:29 mrg Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.2 2011/07/09 14:57:29 mrg Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ WEAK_ALIAS(__ffssi2,ffs)
 #ifndef	__mc68010__
 
 ENTRY(ffs)
-	movl	%sp@(4),%d0
+	movl	4(%sp),%d0
 	movl	%d0,%d1
 	negl	%d0
 	andl	%d0,%d1
@@ -62,7 +62,7 @@ ENTRY(ffs)
 #else	/* __mc68010__ */
 
 ENTRY(ffs)
-	movl	%sp@(4),%d0
+	movl	4(%sp),%d0
 	jeq	L2
 	movql	#31,%d1
 L1:	

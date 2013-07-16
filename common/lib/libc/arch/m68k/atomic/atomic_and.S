@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.6 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.7 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 	.text
 
 ENTRY(_atomic_and_32)
-	movl	%sp@(4), %a0
-	movl	%sp@(8), %d0
+	movl	4(%sp), %a0
+	movl	8(%sp), %d0
 	andl	%d0, %a0@
 	rts
 ATOMIC_OP_ALIAS(atomic_and_32,_atomic_and_32)
@@ -47,10 +47,10 @@ ATOMIC_OP_ALIAS(atomic_and_ptr,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_ptr,_atomic_and_32)
 
 ENTRY(_atomic_and_32_nv)
-	movl	%sp@(4), %a0
-1:	movl	%a0@, %d0
+	movl	4(%sp), %a0
+1:	movl	(%a0), %d0
 	movl	%d0, %d1
-	andl	%sp@(8), %d0
+	andl	8(%sp), %d0
 	casl	%d1, %d0, %a0@
 	bne	1b
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: bswap64.S,v 1.2 2013/07/16 20:49:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,8 +29,8 @@
 #include <machine/asm.h>
 
 ENTRY(bswap64)
-	movl	%sp@(4),%d1
-	movl	%sp@(8),%d0
+	movl	4(%sp),%d1
+	movl	8(%sp),%d0
 	rolw	#8,%d1
 	rolw	#8,%d0
 	swap	%d1
