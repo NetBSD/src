@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.3 2013/07/16 20:49:42 matt Exp $ */
+/*	$NetBSD: __sigtramp2.S,v 1.4 2013/07/16 22:19:16 matt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ ENTRY_NOPROFILE(__sigtramp_siginfo_2)
 	movl	8(%sp),%a0	/* get pointer to ucontext */
 	movl	%a0,4(%sp)	/* put it in the argument slot */
 				/* fake return address already there */
-        movl    #SYS_setcontext,%d0
-        trap    #0
+	SYSTRAP(setcontext)
 	movl	%d0,4(%sp)	/* error code */
 	SYSTRAP(exit)		/* exit */
+END(__sigtramp_siginfo_2)
