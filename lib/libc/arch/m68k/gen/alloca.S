@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: alloca.S,v 1.8 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)alloca.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: alloca.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: alloca.S,v 1.8 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,3 +57,4 @@ ENTRY(alloca)
 	moveal	%d0,%a0
 #endif
 	jmp 	(%a1)		/* funny return */
+END(alloca)

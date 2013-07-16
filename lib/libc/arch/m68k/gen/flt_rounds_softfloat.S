@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds_softfloat.S,v 1.3 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: flt_rounds_softfloat.S,v 1.4 2013/07/16 22:12:20 matt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -27,6 +27,4 @@ ENTRY(__flt_rounds)
 	/* lea	_map,%a0 */
 	moveb	#0,%d0
 	rts
-
-
-		
+END(_flt_rounds)

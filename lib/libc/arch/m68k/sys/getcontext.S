@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.4 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.5 2013/07/16 22:15:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.4 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.5 2013/07/16 22:15:55 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -45,3 +45,4 @@ _SYSCALL(_getcontext,getcontext)
 	movl	(%sp),100(%a0)		| adjust saved program counter
 	clrl	36(%a0)		| arrange for return value of 0
 	rts
+END(_getcontext)

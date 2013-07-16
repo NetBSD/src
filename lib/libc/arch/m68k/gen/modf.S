@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: modf.S,v 1.8 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)modf.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: modf.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: modf.S,v 1.8 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,3 +59,4 @@ ENTRY(modf)
 	movel	(%sp)+,%d1
 #endif
 	rts
+END(modf)

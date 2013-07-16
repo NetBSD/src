@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.13 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.14 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.13 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.14 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,4 +90,4 @@ ENTRY(__setjmp14)
 
 	clrl	%d0		/* return 0 */
 	rts
-
+END(__setjmp14)

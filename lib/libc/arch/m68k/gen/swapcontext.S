@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2013/07/16 22:12:20 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -47,3 +47,4 @@ ENTRY(swapcontext)
 	jbsr	PIC_PLT(_C_LABEL(setcontext))	| setcontext(ucp)
 L1:	addql	#4,%sp			| pop ucp
 	rts
+END(swapcontext)

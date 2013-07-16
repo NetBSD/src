@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.S,v 1.9 2000/12/04 12:02:08 is Exp $	*/
+/*	$NetBSD: flt_rounds.S,v 1.10 2013/07/16 22:12:20 matt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -23,3 +23,4 @@ ENTRY(__flt_rounds)
 	bfextu %d0{#26:#2},%d0
 	eorib #1,%d0
 	rts
+END(__flt_rounds)

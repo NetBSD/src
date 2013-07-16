@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpsf2.S,v 1.6 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: cmpsf2.S,v 1.7 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)cmpsf2.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: cmpsf2.S,v 1.6 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: cmpsf2.S,v 1.7 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,3 +56,4 @@ ENTRY(__cmpsf2)
 Lagtb:
 	moveq	#1,%d0
 	rts
+END(__cmpsf2)

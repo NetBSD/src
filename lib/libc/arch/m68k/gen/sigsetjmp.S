@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.9 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.10 2013/07/16 22:12:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigsetjmp.S,v 1.9 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.10 2013/07/16 22:12:20 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,7 @@ ENTRY(__sigsetjmp14)
 	jra	PIC_PLT(_C_LABEL(_setjmp))
 dosig:
 	jra	PIC_PLT(_C_LABEL(__setjmp14))
+END(__sigsetjmp14)
 
 
 ENTRY(__siglongjmp14)
@@ -75,3 +76,4 @@ ENTRY(__siglongjmp14)
 	jra	PIC_PLT(_C_LABEL(_longjmp))
 didsig:
 	jra	PIC_PLT(_C_LABEL(__longjmp14))
+END(__siglongjmp14)
