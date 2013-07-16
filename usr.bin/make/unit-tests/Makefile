@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2013/03/22 16:36:46 sjg Exp $
+# $NetBSD: Makefile,v 1.37 2013/07/16 19:59:28 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -79,7 +79,7 @@ LANG= C
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
 	@cd ${.OBJDIR} && ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
-	${TOOL_SED} -e 's,^${TEST_MAKE:T:C/\./\\\./g}:,make:,' \
+	${TOOL_SED} -e 's,^${TEST_MAKE:T:C/\./\\\./g}[^:]*:,make:,' \
 	-e '/stopped/s, /.*, unit-tests,' \
 	-e 's,${.CURDIR:C/\./\\\./g}/,,g' \
 	-e 's,${UNIT_TESTS:C/\./\\\./g}/,,g' > ${.TARGET}.out || { \
