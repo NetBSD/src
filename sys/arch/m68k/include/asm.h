@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.29 2013/07/16 21:01:03 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.30 2013/07/16 22:23:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,25 +73,22 @@
 #ifndef _M68K_ASM_H_
 #define _M68K_ASM_H_
 
-#if defined(__ELF__) && defined(PIC)
-#define PIC_PLT(name)	name@PLTPC
+#if defined(PIC)
+#define PIC_PLT(name)		name@PLTPC
+#define LEA_LCL(name,reg)	lea	(name,%pc),reg
+#define GOT_SETUP(reg)		lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),reg
 #else
-#define PIC_PLT(name)	name
+#define	__IMMEDIATE		#
+#define PIC_PLT(name)		name
+#define LEA_LCL(name,reg)	movl	__IMMEDIATE name,reg
+#define GOT_SETUP(reg)		/* nothing */
 #endif
 
-#ifdef __ELF__
-# if __STDC__
-#  define _C_LABEL(name)	name
-# else
-#  define _C_LABEL(name)	name
+#if __STDC__
+# define _C_LABEL(name)	name
+#else
+# define _C_LABEL(name)	name
 #endif /* __STDC__ */
-#else /* __ELF__ */
-# if __STDC__
-#  define _C_LABEL(name)	_ ## name
-# else
-#  define _C_LABEL(name)	_/**/name
-# endif /* __STDC__ */
-#endif /* __ELF__ */
 
 #define	_ASM_LABEL(name)	name
 
@@ -99,11 +96,7 @@
 	.text; .even; .globl name; .type name,@function; name:
 #define	END(name)	.size name,.-name
 
-#ifdef __ELF__
 #define	MCOUNT_ENTRY	__mcount
-#else
-#define	MCOUNT_ENTRY	mcount
-#endif
 
 #ifdef GPROF
 #define _PROF_PROLOG	link %a6,#0; jbsr MCOUNT_ENTRY; unlk %a6
@@ -219,11 +212,10 @@
 #define	VECTOR_UNUSED					\
 	.long	0
 
-#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
+
 /*
  * STRONG_ALIAS: create a strong alias.
  */
