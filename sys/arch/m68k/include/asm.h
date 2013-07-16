@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.30 2013/07/16 22:23:15 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.31 2013/07/16 23:01:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -162,6 +162,13 @@
 #define	ASBSS(name, size)				\
 	.comm	_ASM_LABEL(name),size
 
+/*
+ * Need a better place for these but these are common across
+ * all m68k ports so let's define just once.
+ */
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
+#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
+
 #ifdef _KERNEL
 /*
  * Shorthand for calling panic().
@@ -172,13 +179,6 @@
 		jbsr	_C_LABEL(panic)		;	\
 	9:	.asciz	x			;	\
 		.even
-
-/*
- * Need a better place for these but these are common across
- * all m68k ports so let's define just once.
- */
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
 
 /* 64-bit counter increments */
 #define CPUINFO_INCREMENT(n)					\
