@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.8 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.9 2013/07/16 19:40:01 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,9 +47,9 @@
 #include "mpls_interface.h"
 #include "tlv_stack.h"
 
-uint8_t ldp_ceil8(int);
+static uint8_t ldp_ceil8(int);
 
-uint8_t 
+static uint8_t 
 ldp_ceil8(int x)
 {
 	if (x % 8 == 0)
@@ -285,7 +285,8 @@ send_label_tlv(const struct ldp_peer * peer, const struct sockaddr * addr,
 	p->type = FEC_PREFIX;
 	p->af = htons(LDP_AF_INET);
 	p->prelen = prefixlen;
-	memcpy(&p->prefix, addr, ldp_ceil8(prefixlen));
+	memcpy(&p->prefix, & ((const struct sockaddr_in*)addr)->sin_addr,
+	    ldp_ceil8(prefixlen));
 
 	/* LABEL TLV */
 	l = (struct label_tlv *) ((unsigned char *) p +
