@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,14 +68,14 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.2 2008/04/28 20:22:52 martin Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(bcmp)
-	movl	%sp@(4),%a0		| string 1
-	movl	%sp@(8),%a1		| string 2
-	movl	%sp@(12),%d1		| length
+	movl	4(%sp),%a0		| string 1
+	movl	8(%sp),%a1		| string 2
+	movl	12(%sp),%d1		| length
 
 	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
@@ -100,14 +100,14 @@ ENTRY(bcmp)
 	movl	%a0,%d0
 	btst	#0,%d0
 	jeq	Lbcalgndw
-	cmpmb	%a0@+,%a1@+
+	cmpmb	(%a0)+,(%a1)+
 	jne	Lbcnoteq
 	subql	#1,%d1
 Lbcalgndw:
 	/* long word align */
 	btst	#1,%d0
 	jeq	Lbcalgndl
-	cmpmw	%a0@+,%a1@+
+	cmpmw	(%a0)+,(%a1)+
 	jne	Lbcnoteq
 	subql	#2,%d1
 Lbcalgndl:
@@ -118,21 +118,21 @@ Lbcalgndl:
 	andl	#31,%d1			|	len %= 32
 	subql	#1,%d0			|	set up for dbf
 Lbc32loop:
-	cmpml	%a0@+,%a1@+		|	compare 8 longwords
+	cmpml	(%a0)+,(%a1)+		|	compare 8 longwords
 	jne	Lbcnoteq		|	not equal, return non-zero
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
-	cmpml	%a0@+,%a1@+
+	cmpml	(%a0)+,(%a1)+
 	jne	Lbcnoteq
 	dbf	%d0,Lbc32loop		|	till done
 	clrw	%d0
@@ -146,7 +146,7 @@ Lbclong:
 	jeq	Lbcbyte			| if (cnt)
 	subql	#1,%d0			|	set up for dbf
 Lbclloop:
-	cmpml	%a0@+,%a1@+		|	compare a longword
+	cmpml	(%a0)+,(%a1)+		|	compare a longword
 	jne	Lbcnoteq		|	not equal, return non-zero
 	dbf	%d0,Lbclloop		|	till done
 	andl	#3,%d1			|	len %= 4
@@ -154,7 +154,7 @@ Lbclloop:
 
 	subql	#1,%d1			| set up for dbf
 Lbcbloop:
-	cmpmb	%a0@+,%a1@+		| compare a byte
+	cmpmb	(%a0)+,(%a1)+		| compare a byte
 	jne	Lbcnoteq		| not equal, return non-zero
 Lbcbyte:
 	dbf	%d1,Lbcbloop

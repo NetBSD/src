@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds_softfloat.S,v 1.2 2004/09/26 21:13:27 jmmv Exp $	*/
+/*	$NetBSD: flt_rounds_softfloat.S,v 1.3 2013/07/16 20:49:42 matt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -23,7 +23,7 @@ _map:
 
 ENTRY(__flt_rounds)
 	/* lea	_C_LABEL(_fpCCR),%a0	| check the rounding mode */
-	/* movew	%a0@(6),%d0	| rounding mode in d0 */
+	/* movew	6(%a0),%d0	| rounding mode in d0 */
 	/* lea	_map,%a0 */
 	moveb	#0,%d0
 	rts
