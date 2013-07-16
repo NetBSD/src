@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.S,v 1.8 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: swab.S,v 1.9 2013/07/16 21:46:42 matt Exp $	*/
 
 #include <machine/asm.h>
 
@@ -18,3 +18,4 @@ swloop:
 
 swdone:
 	rts
+END(swab)
