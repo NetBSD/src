@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.7 2013/07/16 20:49:42 matt Exp $	*/
+/*	$NetBSD: pipe.S,v 1.8 2013/07/16 22:16:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.7 2013/07/16 20:49:42 matt Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.8 2013/07/16 22:16:53 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,3 +53,4 @@ _SYSCALL(_pipe,pipe)
 	movl	%d1,(%a0)
 	clrl	%d0
 	rts
+END(_pipe)
