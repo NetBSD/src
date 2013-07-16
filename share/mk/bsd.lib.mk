@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.335 2013/04/22 22:16:14 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.336 2013/07/16 02:58:19 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -207,6 +207,8 @@ CFLAGS+=	-g
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB}.so.${SHLIB_SOVERSION}
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
+SHLIB_SHFLAGS+=		-Wl,-Map=${_LIB}.so.${SHLIB_SOVERSION}.map
+CLEANFILES+=		${_LIB}.so.${SHLIB_SOVERSION}.map
 SHLIB_LDSTARTFILE?=	${_GCC_CRTI} ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTN}
 
