@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2013/01/25 19:07:14 he Exp $
+#	$NetBSD: Makefile,v 1.39 2013/07/16 17:47:43 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -7,6 +7,7 @@
 # To profile, put -DPROF in DFLAGS and -pg in COPTS, and recompile.
 
 .include <bsd.own.mk>
+WARNS=6
 
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
