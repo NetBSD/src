@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: strchr.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)index.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strchr.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,5 +59,6 @@ ixloop:
 ixfound:
 	movl	%a0,%d0			| found, return pointer
 	rts
+END(strchr)
 
 STRONG_ALIAS(index,strchr)

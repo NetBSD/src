@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strcmp.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strcmp)
@@ -69,3 +69,4 @@ L2:	movq	#0,%d0
 	movb	(%a1),%d0
 	negl	%d0
 	rts
+END(strcmp)

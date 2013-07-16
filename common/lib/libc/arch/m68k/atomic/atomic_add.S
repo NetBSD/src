@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.5 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.6 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
 ENTRY(_atomic_add_32)
 	movl	4(%sp), %a0
 	movl	8(%sp), %d0
-	addl	%d0, %a0@
+	addl	%d0, (%a0)
 	rts
+END(_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
@@ -52,10 +53,12 @@ ENTRY(_atomic_add_32_nv)
 1:	movl	(%a0), %d0
 	movl	%d0, %d1
 	addl	8(%sp), %d0
-	casl	%d1, %d0, %a0@
+	casl	%d1, %d0, (%a0)
 	bne	1b
 	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
+END(_atomic_add_32_nv)
+
 ATOMIC_OP_ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
 ATOMIC_OP_ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
 STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)

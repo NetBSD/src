@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.5 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.6 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@ ENTRY(_atomic_swap_32)
 	movl	4(%sp), %a0
 1:	movl	(%a0), %d0
 	movl	8(%sp), %d1
-	casl	%d0, %d1, %a0@
+	casl	%d0, %d1, (%a0)
 	bne	1b
 	/* %d0 now contains the old value */
 	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
+END(_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)

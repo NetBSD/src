@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap32.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: bswap32.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -29,12 +29,15 @@
 #include <machine/asm.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-_ENTRY(_C_LABEL(bswap32))
+#define BSWAP32 _C_LABEL(bswap32)
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-_ENTRY(_C_LABEL(__bswap32))
+#define BSWAP32 _C_LABEL(__bswap32)
 #endif /* defined(_KERNEL) || defined(_STANDALONE) */
+
+_ENTRY(BSWAP32)
 	movl	4(%sp),%d0
 	rolw	#8,%d0
 	swap	%d0
 	rolw	#8,%d0
 	rts
+END(BSWAP32)

@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,17 +39,19 @@
 #if 0
 	RCSID("from: @(#)divsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: divsi3.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: divsi3.S,v 1.4 2013/07/16 23:24:18 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* int / int */
-ENTRY(__divsi3)
 #ifndef __mc68010__
+ENTRY(__divsi3)
 	movel	4(%sp),%d0
 	divsl	8(%sp),%d0
 	rts
+END(__divsi3)
 #else
+ENTRY(__divsi3)
 | NB: this requires that __udivsi3 preserve %a0:
 	movel	4(%sp), %d1	| load the dividend
 	bpl	1f
@@ -64,4 +66,5 @@ ENTRY(__divsi3)
 3:	jmp	_C_LABEL(__udivsi3)
 Lret:	negl	%d0		| negate quotient
 	jmp	(%a0)
+END(__divsi3)
 #endif /* __mc68010__ */

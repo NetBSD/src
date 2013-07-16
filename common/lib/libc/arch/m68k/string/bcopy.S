@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.3 2013/07/16 20:49:41 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,20 +68,20 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.3 2013/07/16 20:49:41 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
 #ifdef MEMCOPY
-ENTRY(memcpy)
+#define	XCOPY	memcpy
+#elif defined(MEMMOVE)
+#define	XCOPY	memmove
 #else
-#ifdef MEMMOVE
-ENTRY(memmove)
-#else
-ENTRY(bcopy)
+#define	XCOPY	bcopy
 #endif
-#endif
+
+ENTRY(XCOPY)
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	4(%sp),%a1		| dest address
 	movl	8(%sp),%a0		| src address
@@ -254,3 +254,4 @@ Lbcbbyte:
 #endif
 #endif
 	rts
+END(XCOPY)
