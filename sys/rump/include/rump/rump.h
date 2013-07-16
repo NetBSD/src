@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.56 2013/04/27 15:13:11 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.57 2013/07/16 20:17:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,10 @@ enum rump_sigmodel {
 /* flags to rump_lwproc_rfork */
 #define RUMP_RFFDG	0x01
 #define RUMP_RFCFDG	0x02
+/* slightly-easier-to-parse aliases for the above */
+#define RUMP_RFFD_SHARE 0x00 /* lossage */
+#define RUMP_RFFD_COPY	RUMP_RFFDG
+#define RUMP_RFFD_CLEAR	RUMP_RFCFDG
 
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
