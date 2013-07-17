@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.250.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.250.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,14 +100,11 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp 
 #include "opt_mbuftrace.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/md5.h>
@@ -155,9 +152,11 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp 
  #include <netipsec/key.h>
 #endif	/* IPSEC*/
 
+/* Head of queue of active TCP PCBs. */
+inpcbtable_t *		tcbtable;
 
-struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-u_int32_t tcp_now;		/* slow ticks, for RFC 1323 timestamps */
+/* Slow ticks for RFC 1323 timestamps. */
+uint32_t		tcp_now;
 
 percpu_t *tcpstat_percpu;
 
@@ -395,7 +394,7 @@ tcp_init(void)
 {
 	int hlen;
 
-	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
+	tcbtable = inpcb_init(tcbhashsize, tcbhashsize, 0);
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL, IPL_SOFTNET);
 
@@ -458,7 +457,7 @@ tcp_init(void)
 struct mbuf *
 tcp_template(struct tcpcb *tp)
 {
-	struct inpcb *inp = tp->t_inpcb;
+	inpcb_t *inp = tp->t_inpcb;
 #ifdef INET6
 	struct in6pcb *in6p = tp->t_in6pcb;
 #endif
@@ -532,8 +531,7 @@ tcp_template(struct tcpcb *tp)
 		ipov->ih_pr = IPPROTO_TCP;
 		ipov->ih_len = htons(sizeof(struct tcphdr));
 		if (inp) {
-			ipov->ih_src = inp->inp_laddr;
-			ipov->ih_dst = inp->inp_faddr;
+			inpcb_get_addrs(inp, &ipov->ih_src, &ipov->ih_dst);
 		}
 #ifdef INET6
 		else if (in6p) {
@@ -590,8 +588,7 @@ tcp_template(struct tcpcb *tp)
 #endif
 	}
 	if (inp) {
-		n->th_sport = inp->inp_lport;
-		n->th_dport = inp->inp_fport;
+		inpcb_get_ports(inp, &n->th_sport, &n->th_dport);
 	}
 #ifdef INET6
 	else if (in6p) {
@@ -646,8 +643,10 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 			panic("tcp_respond: both t_inpcb and t_in6pcb are set");
 #endif
 #ifdef INET
-		if (tp->t_inpcb)
-			win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
+		if (tp->t_inpcb) {
+			so = inpcb_get_socket(tp->t_inpcb);
+			win = sbspace(&so->so_rcv);
+		}
 #endif
 #ifdef INET6
 		if (tp->t_in6pcb)
@@ -886,7 +885,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 	}
 
 	if (tp && tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 	else if (tp && tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
@@ -895,14 +894,16 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		so = NULL;
 
 	if (tp != NULL && tp->t_inpcb != NULL) {
-		ro = &tp->t_inpcb->inp_route;
+		ro = inpcb_get_route(tp->t_inpcb);
 #ifdef DIAGNOSTIC
-		if (family != AF_INET)
-			panic("tcp_respond: address family mismatch");
-		if (!in_hosteq(ip->ip_dst, tp->t_inpcb->inp_faddr)) {
+		struct in_addr faddr;
+
+		KASSERT(family == AF_INET);
+		inpcb_get_addrs(tp->t_inpcb, NULL, &faddr);
+
+		if (!in_hosteq(ip->ip_dst, faddr)) {
 			panic("tcp_respond: ip_dst %x != inp_faddr %x",
-			    ntohl(ip->ip_dst.s_addr),
-			    ntohl(tp->t_inpcb->inp_faddr.s_addr));
+			    ntohl(ip->ip_dst.s_addr), ntohl(faddr.s_addr));
 		}
 #endif
 	}
@@ -1045,13 +1046,13 @@ tcp_newtcpcb(int family, void *aux)
 	switch (family) {
 	case AF_INET:
 	    {
-		struct inpcb *inp = (struct inpcb *)aux;
+		inpcb_t *inp = (inpcb_t *)aux;
+		struct ip *inp_ip = in_getiphdr(inp);
 
-		inp->inp_ip.ip_ttl = ip_defttl;
-		inp->inp_ppcb = (void *)tp;
-
-		tp->t_inpcb = inp;
+		inp_ip->ip_ttl = ip_defttl;
 		tp->t_mtudisc = ip_mtudisc;
+		tp->t_inpcb = inp;
+		inpcb_set_protopcb(inp, (void *)tp);
 		break;
 	    }
 #ifdef INET6
@@ -1113,7 +1114,7 @@ tcp_drop(struct tcpcb *tp, int errno)
 #endif
 #ifdef INET
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)
@@ -1161,8 +1162,8 @@ tcp_close(struct tcpcb *tp)
 	so = NULL;
 	ro = NULL;
 	if (inp) {
-		so = inp->inp_socket;
-		ro = &inp->inp_route;
+		so = inpcb_get_socket(inp);
+		ro = inpcb_get_route(inp);
 	}
 #ifdef INET6
 	else if (in6p) {
@@ -1170,6 +1171,7 @@ tcp_close(struct tcpcb *tp)
 		ro = (struct route *)&in6p->in6p_route;
 	}
 #endif
+	KASSERT(so != NULL);
 
 #ifdef RTV_RTT
 	/*
@@ -1262,9 +1264,9 @@ tcp_close(struct tcpcb *tp)
 	 */
 	tp->t_flags |= TF_DEAD;
 	if (inp) {
-		inp->inp_ppcb = 0;
+		inpcb_set_protopcb(inp, NULL);
 		soisdisconnected(so);
-		in_pcbdetach(inp);
+		inpcb_destroy(inp);
 	}
 #ifdef INET6
 	else if (in6p) {
@@ -1332,6 +1334,33 @@ tcp_drainstub(void)
 	tcp_drainwanted = 1;
 }
 
+static int
+tcp_drain_one(inpcb_t *inp, void *arg)
+{
+	const int af = (int)(intptr_t)arg;
+	struct tcpcb *tp;
+
+	switch (af) {
+	case AF_INET:
+		tp = intotcpcb(inp);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		tp = in6totcpcb((struct in6pcb *)inp);
+		break;
+#endif
+	default:
+		tp = NULL;
+	}
+	if (tp && tcp_reass_lock_try(tp)) {
+		if (tcp_freeq(tp)) {
+			TCP_STATINC(TCP_STAT_CONNSDRAINED);
+		}
+		TCP_REASS_UNLOCK(tp);
+	}
+	return 0;
+}
+
 /*
  * Protocol drain routine.  Called when memory is in short supply.
  * Called from pr_fasttimo thus a callout context.
@@ -1339,8 +1368,7 @@ tcp_drainstub(void)
 void
 tcp_drain(void)
 {
-	struct inpcb_hdr *inph;
-	struct tcpcb *tp;
+	int af;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
@@ -1348,33 +1376,13 @@ tcp_drain(void)
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	CIRCLEQ_FOREACH(inph, &tcbtable.inpt_queue, inph_queue) {
-		switch (inph->inph_af) {
-		case AF_INET:
-			tp = intotcpcb((struct inpcb *)inph);
-			break;
+
+	af = AF_INET;
+	(void)inpcb_foreach(tcbtable, af, tcp_drain_one, (void *)(intptr_t)af);
 #ifdef INET6
-		case AF_INET6:
-			tp = in6totcpcb((struct in6pcb *)inph);
-			break;
+	af = AF_INET6;
+	(void)inpcb_foreach(tcbtable, af, tcp_drain_one, (void *)(intptr_t)af);
 #endif
-		default:
-			tp = NULL;
-			break;
-		}
-		if (tp != NULL) {
-			/*
-			 * We may be called from a device's interrupt
-			 * context.  If the tcpcb is already busy,
-			 * just bail out now.
-			 */
-			if (tcp_reass_lock_try(tp) == 0)
-				continue;
-			if (tcp_freeq(tp))
-				TCP_STATINC(TCP_STAT_CONNSDRAINED);
-			TCP_REASS_UNLOCK(tp);
-		}
-	}
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
@@ -1388,8 +1396,8 @@ tcp_drain(void)
 void
 tcp_notify(struct inpcb *inp, int error)
 {
-	struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
-	struct socket *so = inp->inp_socket;
+	struct tcpcb *tp = (struct tcpcb *)inpcb_get_protopcb(inp);
+	struct socket *so = inpcb_get_socket(inp);
 
 	/*
 	 * Ignore some errors if we are hooked up.
@@ -1512,7 +1520,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&tcbtable, &sa6->sin6_addr,
+			if (in6_pcblookup_connect(tcbtable, &sa6->sin6_addr,
 			    th.th_dport,
 			    (const struct in6_addr *)&sa6_src->sin6_addr,
 						  th.th_sport, 0, 0))
@@ -1534,7 +1542,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			return NULL;
 		}
 
-		nmatch = in6_pcbnotify(&tcbtable, sa, th.th_dport,
+		nmatch = in6_pcbnotify(tcbtable, sa, th.th_dport,
 		    (const struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
@@ -1543,7 +1551,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			syn_cache_unreach((const struct sockaddr *)sa6_src,
 					  sa, &th);
 	} else {
-		(void) in6_pcbnotify(&tcbtable, sa, 0,
+		(void) in6_pcbnotify(tcbtable, sa, 0,
 		    (const struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
 
@@ -1585,7 +1593,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 */
 		return NULL;
 	else if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, ip = 0;
+		notify = inpcb_rtchange, ip = 0;
 	else if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
 		/*
 		 * Check to see if we have a valid TCP connection
@@ -1602,16 +1610,16 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		memcpy(&src6.s6_addr32[3], &ip->ip_src, sizeof(struct in_addr));
 		memcpy(&dst6.s6_addr32[3], &ip->ip_dst, sizeof(struct in_addr));
 #endif
-		if ((inp = in_pcblookup_connect(&tcbtable, ip->ip_dst,
-						th->th_dport, ip->ip_src, th->th_sport, 0)) != NULL)
+		if ((inp = inpcb_lookup_connect(tcbtable, ip->ip_dst,
+		    th->th_dport, ip->ip_src, th->th_sport, 0)) != NULL)
 #ifdef INET6
 			in6p = NULL;
 #else
 			;
 #endif
 #ifdef INET6
-		else if ((in6p = in6_pcblookup_connect(&tcbtable, &dst6,
-						       th->th_dport, &src6, th->th_sport, 0, 0)) != NULL)
+		else if ((in6p = in6_pcblookup_connect(tcbtable, &dst6,
+		    th->th_dport, &src6, th->th_sport, 0, 0)) != NULL)
 			;
 #endif
 		else
@@ -1680,7 +1688,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		return NULL;
 	if (ip && ip->ip_v == 4 && sa->sa_family == AF_INET) {
 		th = (struct tcphdr *)((char *)ip + (ip->ip_hl << 2));
-		nmatch = in_pcbnotify(&tcbtable, satocsin(sa)->sin_addr,
+		nmatch = inpcb_notify(tcbtable, satocsin(sa)->sin_addr,
 		    th->th_dport, ip->ip_src, th->th_sport, errno, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
@@ -1697,7 +1705,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 
 		/* XXX mapped address case */
 	} else
-		in_pcbnotifyall(&tcbtable, satocsin(sa)->sin_addr, errno,
+		inpcb_notifyall(tcbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }
@@ -1743,7 +1751,7 @@ tcp_mtudisc_callback(struct in_addr faddr)
 	struct in6_addr in6;
 #endif
 
-	in_pcbnotifyall(&tcbtable, faddr, EMSGSIZE, tcp_mtudisc);
+	inpcb_notifyall(tcbtable, faddr, EMSGSIZE, tcp_mtudisc);
 #ifdef INET6
 	memset(&in6, 0, sizeof(in6));
 	in6.s6_addr16[5] = 0xffff;
@@ -1758,19 +1766,19 @@ tcp_mtudisc_callback(struct in_addr faddr)
  * that all packets will be received.
  */
 void
-tcp_mtudisc(struct inpcb *inp, int errno)
+tcp_mtudisc(inpcb_t *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
-	struct rtentry *rt = in_pcbrtentry(inp);
+	struct rtentry *rt = inpcb_rtentry(inp);
 
-	if (tp != 0) {
-		if (rt != 0) {
+	if (tp) {
+		if (rt) {
 			/*
 			 * If this was not a host route, remove and realloc.
 			 */
 			if ((rt->rt_flags & RTF_HOST) == 0) {
-				in_rtchange(inp, errno);
-				if ((rt = in_pcbrtentry(inp)) == 0)
+				inpcb_rtchange(inp, errno);
+				if ((rt = inpcb_rtentry(inp)) == NULL)
 					return;
 			}
 
@@ -1810,7 +1818,7 @@ tcp6_mtudisc_callback(struct in6_addr *faddr)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
+	(void) in6_pcbnotify(tcbtable, (struct sockaddr *)&sin6, 0,
 	    (const struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
 }
 
@@ -1962,9 +1970,9 @@ tcp_mss_from_peer(struct tcpcb *tp, int offer)
 	rt = NULL;
 #ifdef INET
 	if (tp->t_inpcb) {
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
-		rt = in_pcbrtentry(tp->t_inpcb);
+		rt = inpcb_rtentry(tp->t_inpcb);
 #endif
 	}
 #endif
@@ -2055,22 +2063,25 @@ tcp_established(struct tcpcb *tp)
 #ifdef INET
 	/* This is a while() to reduce the dreadful stairstepping below */
 	while (tp->t_inpcb) {
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #if defined(RTV_RPIPE)
-		rt = in_pcbrtentry(tp->t_inpcb);
+		rt = inpcb_rtentry(tp->t_inpcb);
 #endif
 		if (__predict_true(tcp_msl_enable)) {
-			if (tp->t_inpcb->inp_laddr.s_addr == INADDR_LOOPBACK) {
+			struct in_addr laddr, faddr;
+
+			inpcb_get_addrs(tp->t_inpcb, &laddr, &faddr);
+
+			if (laddr.s_addr == INADDR_LOOPBACK) {
 				tp->t_msl = tcp_msl_loop ? tcp_msl_loop : (TCPTV_MSL >> 2);
 				break;
 			}
-
 			if (__predict_false(tcp_rttlocal)) {
 				/* This may be adjusted by tcp_input */
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
-			if (in_localaddr(tp->t_inpcb->inp_faddr)) {
+			if (in_localaddr(faddr)) {
 				tp->t_msl = tcp_msl_local ? tcp_msl_local : (TCPTV_MSL >> 1);
 				break;
 			}
@@ -2088,7 +2099,7 @@ tcp_established(struct tcpcb *tp)
 #endif
 		if (__predict_true(tcp_msl_enable)) {
 			extern const struct in6_addr in6addr_loopback;
-		    
+
 			if (IN6_ARE_ADDR_EQUAL(&tp->t_in6pcb->in6p_laddr,
 					       &in6addr_loopback)) {
 				tp->t_msl = tcp_msl_loop ? tcp_msl_loop : (TCPTV_MSL >> 2);
@@ -2148,7 +2159,7 @@ tcp_rmx_rtt(struct tcpcb *tp)
 #endif
 #ifdef INET
 	if (tp->t_inpcb)
-		rt = in_pcbrtentry(tp->t_inpcb);
+		rt = inpcb_rtentry(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)
@@ -2193,13 +2204,16 @@ u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
 tcp_seq
 tcp_new_iss(struct tcpcb *tp, tcp_seq addin)
 {
-
 #ifdef INET
 	if (tp->t_inpcb != NULL) {
-		return (tcp_new_iss1(&tp->t_inpcb->inp_laddr,
-		    &tp->t_inpcb->inp_faddr, tp->t_inpcb->inp_lport,
-		    tp->t_inpcb->inp_fport, sizeof(tp->t_inpcb->inp_laddr),
-		    addin));
+		struct in_addr laddr, faddr;
+		in_port_t lport, fport;
+
+		inpcb_get_addrs(tp->t_inpcb, &laddr, &faddr);
+		inpcb_get_ports(tp->t_inpcb, &lport, &fport);
+
+		return tcp_new_iss1(&laddr, &faddr, lport, fport,
+		    sizeof(struct in_addr), addin);
 	}
 #endif
 #ifdef INET6

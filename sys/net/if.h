@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.155 2012/10/25 11:53:14 msaitoh Exp $	*/
+/*	$NetBSD: if.h,v 1.155.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -838,20 +838,6 @@ do {									\
 MALLOC_DECLARE(M_IFADDR);
 MALLOC_DECLARE(M_IFMADDR);
 
-#define	IFNET_FIRST()			TAILQ_FIRST(&ifnet)
-#define	IFNET_NEXT(__ifp)		TAILQ_NEXT((__ifp), if_list)
-#define	IFNET_FOREACH(__ifp)		TAILQ_FOREACH(__ifp, &ifnet, if_list)
-#define	IFADDR_FIRST(__ifp)		TAILQ_FIRST(&(__ifp)->if_addrlist)
-#define	IFADDR_NEXT(__ifa)		TAILQ_NEXT((__ifa), ifa_list)
-#define	IFADDR_FOREACH(__ifa, __ifp)	TAILQ_FOREACH(__ifa, \
-					    &(__ifp)->if_addrlist, ifa_list)
-#define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
-
-extern struct ifnet_head ifnet;
-extern struct ifnet **ifindex2ifnet;
-extern struct ifnet *lo0ifp;
-extern size_t if_indexlim;
-
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
 struct ifnet *if_alloc(u_char);
@@ -946,6 +932,18 @@ __END_DECLS
 #endif /* _KERNEL */ /* XXX really ALTQ? */
 
 #ifdef _KERNEL
+
+#define	IFNET_FIRST()			TAILQ_FIRST(&ifnet_list)
+#define	IFNET_NEXT(__ifp)		TAILQ_NEXT((__ifp), if_list)
+#define	IFNET_FOREACH(__ifp)		TAILQ_FOREACH(__ifp, &ifnet_list, if_list)
+#define	IFADDR_FIRST(__ifp)		TAILQ_FIRST(&(__ifp)->if_addrlist)
+#define	IFADDR_NEXT(__ifa)		TAILQ_NEXT((__ifa), ifa_list)
+#define	IFADDR_FOREACH(__ifa, __ifp)	TAILQ_FOREACH(__ifa, \
+					    &(__ifp)->if_addrlist, ifa_list)
+#define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
+
+extern struct ifnet_head ifnet_list;
+extern struct ifnet *lo0ifp;
 
 ifnet_t *	if_byindex(u_int);
 

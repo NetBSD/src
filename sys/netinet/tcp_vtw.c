@@ -124,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9 2012/04/13 15:37:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1565,12 +1565,12 @@ vtw_tick(void *arg)
 		callout_schedule(&vtw_cs, hz / 5);
 	else {
 		tcp_vtw_was_enabled = 0;
-		tcbtable.vestige    = 0;
+		inpcb_set_vestige(tcbtable, NULL);
 	}
 	mutex_exit(softnet_lock);
 }
 
-/* in_pcblookup_ports assist for handling vestigial entries.
+/* inpcb_lookup_ports assist for handling vestigial entries.
  */
 static void *
 tcp_init_ports_v4(struct in_addr addr, u_int port, int wild)
@@ -1669,7 +1669,7 @@ tcp_lookup_v4(struct in_addr faddr, uint16_t fport,
 	return vtw_export_v4(ctl, vtw, res);
 }
 
-/* in_pcblookup_ports assist for handling vestigial entries.
+/* inpcb_lookup_ports assist for handling vestigial entries.
  */
 static void *
 tcp_init_ports_v6(const struct in6_addr *addr, u_int port, int wild)
@@ -1887,10 +1887,8 @@ vtw_control(int af, uint32_t msl)
 		/* This guarantees is timer ticks until we no longer need them.
 		 */
 		tcp_vtw_was_enabled = 1;
-
 		callout_schedule(&vtw_cs, hz / 5);
-
-		tcbtable.vestige = &tcp_hooks;
+		inpcb_set_vestige(tcbtable, &tcp_hooks);
 	}
 
 	return ctl + class;
@@ -1921,20 +1919,20 @@ vtw_add(int af, struct tcpcb *tp)
 
 		switch (af) {
 		case AF_INET: {
-			struct inpcb	*inp = tp->t_inpcb;
+			inpcb_t *inp = tp->t_inpcb;
 			vtw_v4_t	*v4  = (void*)vtw;
+			struct socket	*so;
 
-			v4->faddr = inp->inp_faddr.s_addr;
-			v4->laddr = inp->inp_laddr.s_addr;
-			v4->fport = inp->inp_fport;
-			v4->lport = inp->inp_lport;
+			inpcb_get_addrs(inp,
+			    (struct in_addr *)&v4->laddr,
+			    (struct in_addr *)&v4->faddr);
+			inpcb_get_ports(inp, &v4->lport, &v4->fport);
 
-			vtw->reuse_port = !!(inp->inp_socket->so_options
-					     & SO_REUSEPORT);
-			vtw->reuse_addr = !!(inp->inp_socket->so_options
-					     & SO_REUSEADDR);
+			so = inpcb_get_socket(inp);
+			vtw->reuse_port = !!(so->so_options & SO_REUSEPORT);
+			vtw->reuse_addr = !!(so->so_options & SO_REUSEADDR);
 			vtw->v6only	= 0;
-			vtw->uid	= inp->inp_socket->so_uidinfo->ui_uid;
+			vtw->uid	= so->so_uidinfo->ui_uid;
 
 			vtw_inshash_v4(ctl, vtw);
 

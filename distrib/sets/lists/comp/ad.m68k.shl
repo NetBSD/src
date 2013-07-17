@@ -1,2 +1,0 @@
-# $NetBSD: ad.m68k.shl,v 1.9 2013/01/16 16:01:05 christos Exp $
-./usr/lib/libm68k_pic.a				comp-c-piclib

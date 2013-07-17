@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.69 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: pf.c,v 1.69.4.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.69 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.69.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "pflog.h"
 
@@ -2451,7 +2451,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 
 		/*
 		 * port search; start random, step;
-		 * similar 2 portloop in in_pcbbind
+		 * similar 2 portloop in inpcb_bind
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
 		    proto == IPPROTO_ICMP)) {
@@ -2771,14 +2771,14 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 			return (-1);
 		sport = pd->hdr.tcp->th_sport;
 		dport = pd->hdr.tcp->th_dport;
-		tb = &tcbtable;
+		tb = tcbtable;
 		break;
 	case IPPROTO_UDP:
 		if (pd->hdr.udp == NULL)
 			return (-1);
 		sport = pd->hdr.udp->uh_sport;
 		dport = pd->hdr.udp->uh_dport;
-		tb = &udbtable;
+		tb = udbtable;
 		break;
 	default:
 		return (-1);
@@ -2799,11 +2799,11 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 
 #ifdef __NetBSD__
 #define in_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
-    in_pcblookup_connect(tbl, saddr, sport, daddr, dport, NULL)
+    inpcb_lookup_connect(tbl, saddr, sport, daddr, dport, NULL)
 #define in6_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
     in6_pcblookup_connect(tbl, saddr, sport, daddr, dport, 0, NULL)
-#define in_pcblookup_listen(tbl, addr, port, zero) \
-    in_pcblookup_bind(tbl, addr, port)
+#define inpcb_lookup_listen(tbl, addr, port, zero) \
+    inpcb_lookup_bind(tbl, addr, port)
 #define in6_pcblookup_listen(tbl, addr, port, zero) \
     in6_pcblookup_bind(tbl, addr, port, zero)
 #endif
@@ -2812,7 +2812,7 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
-			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0);
+			inp = inpcb_lookup_listen(tb, daddr->v4, dport, 0);
 			if (inp == NULL)
 				return (-1);
 		}
@@ -2839,7 +2839,7 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	switch (pd->af) {
 #ifdef INET
 	case AF_INET:
-		so = inp->inp_socket;
+		so = inpcb_get_socket(inp);
 		break;
 #endif
 #ifdef INET6
@@ -5947,7 +5947,7 @@ done:
 	/*
 	 * connections redirected to loopback should not match sockets
 	 * bound specifically to loopback due to security implications,
-	 * see tcp_input() and in_pcblookup_listen().
+	 * see tcp_input() and inpcb_lookup_listen().
 	 */
 	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&

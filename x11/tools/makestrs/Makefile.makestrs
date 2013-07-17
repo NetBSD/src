@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.makestrs,v 1.1 2004/02/09 04:30:05 lukem Exp $
-
-MAKESTRSDIR!=	cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${PRINTOBJDIR}
-MAKESTRS=	${MAKESTRSDIR}/makestrs
-
-${MAKESTRS}:
-	(cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${MAKE})

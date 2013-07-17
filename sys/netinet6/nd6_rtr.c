@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.89 2013/06/20 13:56:29 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.89.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.89 2013/06/20 13:56:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.89.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2165,19 +2165,15 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 int
 nd6_setdefaultiface(int ifindex)
 {
+	ifnet_t *ifp;
 	int error = 0;
 
-	if (ifindex < 0 || if_indexlim <= ifindex)
-		return (EINVAL);
-	if (ifindex != 0 && !ifindex2ifnet[ifindex])
-		return (EINVAL);
-
+	if ((ifp = if_byindex(ifindex)) == NULL) {
+		return EINVAL;
+	}
 	if (nd6_defifindex != ifindex) {
 		nd6_defifindex = ifindex;
-		if (nd6_defifindex > 0) {
-			nd6_defifp = ifindex2ifnet[nd6_defifindex];
-		} else
-			nd6_defifp = NULL;
+		nd6_defifp = nd6_defifindex > 0 ? ifp : NULL;
 
 		/*
 		 * Our current implementation assumes one-to-one maping between
