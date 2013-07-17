@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.159 2012/11/04 11:12:31 apb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.160 2013/07/17 14:05:43 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -219,7 +219,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
+SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 .if defined(KERNLDSCRIPT)
 SYSTEM_DEP+=	${KERNLDSCRIPT}
 .endif
