@@ -1,4 +1,4 @@
-/*	$NetBSD: scheck.c,v 1.10 2013/07/17 20:13:04 christos Exp $	*/
+/*	$NetBSD: scheck.c,v 1.11 2013/07/17 23:09:26 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -15,7 +15,7 @@
 #if 0
 static char	elsieid[] = "@(#)scheck.c	8.19";
 #else
-__RCSID("$NetBSD: scheck.c,v 1.10 2013/07/17 20:13:04 christos Exp $");
+__RCSID("$NetBSD: scheck.c,v 1.11 2013/07/17 23:09:26 christos Exp $");
 #endif
 #endif /* !defined lint */
 
@@ -26,12 +26,12 @@ __RCSID("$NetBSD: scheck.c,v 1.10 2013/07/17 20:13:04 christos Exp $");
 const char *
 scheck(const char *const string, const char *const format)
 {
-	register char *		fbuf;
-	register const char *	fp;
-	register char *		tp;
-	register int		c;
-	register const char *	result;
-	char			dummy;
+	char *		fbuf;
+	const char *	fp;
+	char *		tp;
+	int		c;
+	const char *	result;
+	char		dummy;
 
 	result = "";
 	if (string == NULL || format == NULL)

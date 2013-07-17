@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.29 2013/07/17 20:13:04 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.30 2013/07/17 23:09:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.29 2013/07/17 20:13:04 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.30 2013/07/17 23:09:26 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -380,8 +380,8 @@ main(int argc, char *argv[])
 		intmax_t	lo;
 		intmax_t	hi;
 		char		dummy;
-		register intmax_t cutloyear = ZDUMP_LO_YEAR;
-		register intmax_t cuthiyear = ZDUMP_HI_YEAR;
+		intmax_t cutloyear = ZDUMP_LO_YEAR;
+		intmax_t cuthiyear = ZDUMP_HI_YEAR;
 		if (cutarg != NULL) {
 			if (sscanf(cutarg, "%"SCNdMAX"%c", &hi, &dummy) == 1) {
 				cuthiyear = hi;
