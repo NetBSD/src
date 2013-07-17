@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1150 2013/06/13 06:11:54 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1151 2013/07/17 19:51:03 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1158 2013/06/13 06:11:34 matt Exp
+ *	NetBSD: pcidevs,v 1.1159 2013/07/17 19:49:11 soren Exp
  */
 
 /*
@@ -640,6 +640,7 @@
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
+#define	PCI_VENDOR_QINHENG2	0x1c00		/* Nanjing QinHeng Electronics (PCIe) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
@@ -4507,8 +4508,27 @@
 #define	PCI_PRODUCT_PROMISE_PDC20277	0x7275		/* PDC20277 Ultra/133 IDE Controller */
 
 /* Nanjing QinHeng Electronics */
-#define	PCI_PRODUCT_QINHENG_CH352	0x3253		/* CH352 */
-#define	PCI_PRODUCT_QINHENG_CH353	0x7053		/* CH353 */
+#define	PCI_PRODUCT_QINHENG_CH352_2S	0x3253		/* CH352 2S */
+#define	PCI_PRODUCT_QINHENG_CH353_4S	0x3453		/* CH353 4S */
+#define	PCI_PRODUCT_QINHENG_CH356_8S	0x3853		/* CH356 8S */
+#define	PCI_PRODUCT_QINHENG_CH356_6S	0x3873		/* CH356 6S */
+#define	PCI_PRODUCT_QINHENG_CH353_2S1PAR	0x5046		/* CH353 2S, 1P (fixed address) */
+#define	PCI_PRODUCT_QINHENG_CH352_1S1P	0x5053		/* CH352 1S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH357_4S	0x5334		/* CH357 4S */
+#define	PCI_PRODUCT_QINHENG_CH358_4S1P	0x5334		/* CH358 4S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH358_8S	0x5338		/* CH358 8S */
+#define	PCI_PRODUCT_QINHENG_CH359_16S	0x5838		/* CH359 16S */
+#define	PCI_PRODUCT_QINHENG_CH353_2S1P	0x7053		/* CH353 2S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH356_4S1P	0x7073		/* CH356 4S, 1P */
+#define	PCI_PRODUCT_QINHENG_CH355_4S	0x7173		/* CH355 4S */
+
+/* Nanjing QinHeng Electronics (PCIe) */
+#define	PCI_PRODUCT_QINHENG2_CH384_4S1P	0x3450		/* CH384 4S, 1P */
+#define	PCI_PRODUCT_QINHENG2_CH384_4S	0x3470		/* CH384 4S */
+#define	PCI_PRODUCT_QINHENG2_CH382_2S1P	0x3250		/* CH382 2S, 1P */
+#define	PCI_PRODUCT_QINHENG2_CH382_2S	0x3253		/* CH382 2S */
+#define	PCI_PRODUCT_QINHENG2_CH384_8S	0x3853		/* CH384 8S */
+#define	PCI_PRODUCT_QINHENG2_CH384_28S	0x4353		/* CH384 28S */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_QLA200	0x0119		/* QLA200 */
