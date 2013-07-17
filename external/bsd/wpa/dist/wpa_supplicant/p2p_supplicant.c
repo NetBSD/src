@@ -104,7 +104,6 @@ static int wpas_p2p_scan(void *ctx, enum p2p_scan_type type, int freq,
 	struct wpabuf *wps_ie, *ies;
 	int social_channels[] = { 2412, 2437, 2462, 0, 0 };
 	size_t ielen;
-	int was_in_p2p_scan;
 
 	if (wpa_s->global->p2p_disabled || wpa_s->global->p2p == NULL)
 		return -1;
@@ -155,19 +154,18 @@ static int wpas_p2p_scan(void *ctx, enum p2p_scan_type type, int freq,
 		break;
 	}
 
-	was_in_p2p_scan = wpa_s->scan_res_handler == wpas_p2p_scan_res_handler;
-	wpa_s->scan_res_handler = wpas_p2p_scan_res_handler;
 	ret = wpa_drv_scan(wpa_s, &params);
 
 	wpabuf_free(ies);
 
 	if (ret) {
-		wpa_s->scan_res_handler = NULL;
-		if (wpa_s->scanning || was_in_p2p_scan) {
+		if (wpa_s->scanning ||
+		    wpa_s->scan_res_handler == wpas_p2p_scan_res_handler) {
 			wpa_s->p2p_cb_on_scan_complete = 1;
 			ret = 1;
 		}
-	}
+	} else
+		wpa_s->scan_res_handler = wpas_p2p_scan_res_handler;
 
 	return ret;
 }
@@ -477,6 +475,7 @@ static void wpas_p2p_add_persistent_group_client(struct wpa_supplicant *wpa_s,
 	struct wpa_ssid *ssid, *s;
 	u8 *n;
 	size_t i;
+	int found = 0;
 
 	ssid = wpa_s->current_ssid;
 	if (ssid == NULL || ssid->mode != WPAS_MODE_P2P_GO ||
@@ -497,17 +496,40 @@ static void wpas_p2p_add_persistent_group_client(struct wpa_supplicant *wpa_s,
 
 	for (i = 0; s->p2p_client_list && i < s->num_p2p_clients; i++) {
 		if (os_memcmp(s->p2p_client_list + i * ETH_ALEN, addr,
-			      ETH_ALEN) == 0)
-			return; /* already in list */
+			      ETH_ALEN) != 0)
+			continue;
+
+		if (i == s->num_p2p_clients - 1)
+			return; /* already the most recent entry */
+
+		/* move the entry to mark it most recent */
+		os_memmove(s->p2p_client_list + i * ETH_ALEN,
+			   s->p2p_client_list + (i + 1) * ETH_ALEN,
+			   (s->num_p2p_clients - i - 1) * ETH_ALEN);
+		os_memcpy(s->p2p_client_list +
+			  (s->num_p2p_clients - 1) * ETH_ALEN, addr, ETH_ALEN);
+		found = 1;
+		break;
 	}
 
-	n = os_realloc(s->p2p_client_list,
-		       (s->num_p2p_clients + 1) * ETH_ALEN);
-	if (n == NULL)
-		return;
-	os_memcpy(n + s->num_p2p_clients * ETH_ALEN, addr, ETH_ALEN);
-	s->p2p_client_list = n;
-	s->num_p2p_clients++;
+	if (!found && s->num_p2p_clients < P2P_MAX_STORED_CLIENTS) {
+		n = os_realloc(s->p2p_client_list,
+			       (s->num_p2p_clients + 1) * ETH_ALEN);
+		if (n == NULL)
+			return;
+		os_memcpy(n + s->num_p2p_clients * ETH_ALEN, addr, ETH_ALEN);
+		s->p2p_client_list = n;
+		s->num_p2p_clients++;
+	} else if (!found) {
+		/* Not enough room for an additional entry - drop the oldest
+		 * entry */
+		os_memmove(s->p2p_client_list,
+			   s->p2p_client_list + ETH_ALEN,
+			   (s->num_p2p_clients - 1) * ETH_ALEN);
+		os_memcpy(s->p2p_client_list +
+			  (s->num_p2p_clients - 1) * ETH_ALEN,
+			  addr, ETH_ALEN);
+	}
 
 #ifndef CONFIG_NO_CONFIG_WRITE
 	if (wpa_s->parent->conf->update_config &&
@@ -829,6 +851,7 @@ static void wpas_p2p_clone_config(struct wpa_supplicant *dst,
 	d->p2p_group_idle = s->p2p_group_idle;
 	d->p2p_intra_bss = s->p2p_intra_bss;
 	d->persistent_reconnect = s->persistent_reconnect;
+	d->max_num_sta = s->max_num_sta;
 }
 
 
@@ -2131,7 +2154,6 @@ static int wpas_p2p_setup_channels(struct wpa_supplicant *wpa_s,
 	int cla, op;
 	struct p2p_oper_class_map op_class[] = {
 		{ HOSTAPD_MODE_IEEE80211G, 81, 1, 13, 1, BW20 },
-		{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20 },
 #if 0 /* Do not enable HT40 on 2 GHz for now */
 		{ HOSTAPD_MODE_IEEE80211G, 83, 1, 9, 1, BW40PLUS },
 		{ HOSTAPD_MODE_IEEE80211G, 84, 5, 13, 1, BW40MINUS },
@@ -2379,6 +2401,7 @@ int wpas_p2p_init(struct wpa_global *global, struct wpa_supplicant *wpa_s)
 	global->p2p = p2p_init(&p2p);
 	if (global->p2p == NULL)
 		return -1;
+	global->p2p_init_wpa_s = wpa_s;
 
 	for (i = 0; i < MAX_WPS_VENDOR_EXT; i++) {
 		if (wpa_s->conf->wps_vendor_ext[i] == NULL)
@@ -2469,6 +2492,7 @@ void wpas_p2p_deinit_global(struct wpa_global *global)
 
 	p2p_deinit(global->p2p);
 	global->p2p = NULL;
+	global->p2p_init_wpa_s = NULL;
 }
 
 
