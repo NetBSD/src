@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.165 2013/06/20 13:56:29 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165 2013/06/20 13:56:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2311,7 +2311,7 @@ in6_setmaxmtu(void)
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		/* this function can be called during ifnet initialization */
 		if (!ifp->if_afdata[AF_INET6])
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.17 2012/01/28 01:02:27 rmind Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.17.10.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -18,35 +18,6 @@
 
 #ifndef _NET_IF_TUN_H_
 #define _NET_IF_TUN_H_
-
-#ifdef _KERNEL
-struct tun_softc {
-	struct	ifnet tun_if;		/* the interface */
-
-	u_short	tun_flags;		/* misc flags */
-#define	TUN_OPEN	0x0001
-#define	TUN_INITED	0x0002
-#define	TUN_RCOLL	0x0004
-#define	TUN_IASET	0x0008
-#define	TUN_DSTADDR	0x0010
-#define	TUN_RWAIT	0x0040
-#define	TUN_ASYNC	0x0080
-#define	TUN_NBIO	0x0100
-#define	TUN_PREPADDR	0x0200
-#define	TUN_IFHEAD	0x0400
-
-#define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
-
-	pid_t	tun_pgid;		/* PID or process group ID */
-	struct	selinfo	tun_rsel;	/* read select */
-	struct	selinfo	tun_wsel;	/* write select (not used) */
-	int	tun_unit;		/* the tunnel unit number */
-	kmutex_t tun_lock;		/* lock for this tunnel */
-	LIST_ENTRY(tun_softc) tun_list;	/* list of all tuns */
-	void	*tun_osih;		/* soft interrupt handle */
-	void	*tun_isih;		/* soft interrupt handle */
-};
-#endif	/* _KERNEL */
 
 /* Maximum packet size */
 #define	TUNMTU		1500

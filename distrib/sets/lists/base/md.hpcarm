@@ -1,5 +1,0 @@
-# $NetBSD: md.hpcarm,v 1.12 2013/05/02 03:56:38 matt Exp $
-./dev/beep					base-obsolete		obsolete
-./dev/mouse-qms0				base-obsolete		obsolete
-./dev/pms0					base-obsolete		obsolete
-./dev/qms0					base-obsolete		obsolete

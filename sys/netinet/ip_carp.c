@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.50.4.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 /*
  * TODO:
@@ -897,7 +897,7 @@ carp_send_ad_all(void)
 	struct carp_if *cif;
 	struct carp_softc *vh;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (ifp->if_carp == NULL || ifp->if_type == IFT_CARP)
 			continue;
 

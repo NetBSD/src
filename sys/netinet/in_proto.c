@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.106.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.106.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.106 2013/06/05 19:01:26 christos Exp 
 
 #include "carp.h"
 #if NCARP > 0
+#include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
 

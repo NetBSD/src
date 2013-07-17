@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.51 2013/06/27 19:38:16 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.51.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,15 +63,61 @@
 #ifndef _NETINET_IN_PCB_H_
 #define _NETINET_IN_PCB_H_
 
+struct inpcb;
+struct inpcb_hdr;
+struct inpcbtable;
+struct vestigial_inpcb;
+
+LIST_HEAD(inpcbhead, inpcb_hdr);
+typedef struct inpcbhead inpcbhead_t;
+typedef struct inpcbtable inpcbtable_t;
+typedef struct inpcb inpcb_t;
+
+#include <sys/types.h>
 #include <sys/queue.h>
-#include <netinet/in_pcb_hdr.h>
+
+struct inpcbpolicy;
+struct vestigial_hooks;
+
+struct inpcb_hdr {
+	LIST_ENTRY(inpcb_hdr) inph_hash;
+	LIST_ENTRY(inpcb_hdr) inph_lhash;
+	CIRCLEQ_ENTRY(inpcb_hdr) inph_queue;
+	int		inph_af;	/* address family - AF_INET */
+	void *		inph_ppcb;	/* pointer to per-protocol pcb */
+	int		inph_state;	/* bind/connect state */
+	int		inph_portalgo;
+	struct socket *	inph_socket;	/* back pointer to socket */
+	inpcbtable_t *	inph_table;
+	struct inpcbpolicy *inph_sp;	/* security policy */
+};
+
+#if defined(__INPCB_PRIVATE)
+
+struct inpcbtable {
+	kmutex_t	inpt_lock;
+	int		inpt_flags;
+	CIRCLEQ_HEAD(, inpcb_hdr) inpt_queue;
+	inpcbhead_t *	inpt_porthashtbl;
+	inpcbhead_t *	inpt_bindhashtbl;
+	inpcbhead_t *	inpt_connecthashtbl;
+	u_long		inpt_porthash;
+	u_long		inpt_bindhash;
+	u_long		inpt_connecthash;
+	in_port_t	inpt_lastport;
+	in_port_t	inpt_lastlow;
+	struct vestigial_hooks *inpt_vestige;
+};
+
+#define	inpt_lasthi	inpt_lastport
+
+#define	INPT_MPSAFE	0x01
 
 /*
- * Common structure pcb for internet protocol implementation.
- * Here are stored pointers to local and foreign host table
- * entries, local and foreign socket numbers, and pointers
- * up (to a socket structure) and down (to a protocol-specific)
- * control block.
+ * Common structure PCB for internet protocol implementation.
+ * It stores pointers to the local and foreign host table entries,
+ * local and foreign socket numbers, and pointers up (to a socket
+ * structure) and down (to a protocol-specific) control block.
  */
 struct inpcb {
 	struct inpcb_hdr inp_head;
@@ -84,22 +130,29 @@ struct inpcb {
 #define inp_socket	inp_head.inph_socket
 #define inp_table	inp_head.inph_table
 #define inp_sp		inp_head.inph_sp
-	struct	  route inp_route;	/* placeholder for routing entry */
-	u_int16_t inp_fport;		/* foreign port */
-	u_int16_t inp_lport;		/* local port */
-	int	  inp_flags;		/* generic IP/datagram flags */
-	struct	  ip inp_ip;		/* header prototype; should have more */
-	struct	  mbuf *inp_options;	/* IP options */
-	struct	  ip_moptions *inp_moptions; /* IP multicast options */
-	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
-	uint8_t	  inp_ip_minttl;
-	bool      inp_bindportonsend;
+	struct route	inp_route;	/* placeholder for routing entry */
+	in_port_t	inp_fport;	/* foreign port */
+	in_port_t	inp_lport;	/* local port */
+	int		inp_flags;	/* generic IP/datagram flags */
+	struct ip	inp_ip;		/* header prototype; should have more */
+	struct mbuf *	inp_options;	/* IP options */
+	struct ip_moptions *inp_moptions; /* IP multicast options */
+	int		inp_errormtu;	/* MTU of last xmit status = EMSGSIZE */
+	uint8_t		inp_ip_minttl;
+	bool		inp_bindportonsend;
 };
 
 #define	inp_faddr	inp_ip.ip_dst
 #define	inp_laddr	inp_ip.ip_src
 
-/* flags in inp_flags: */
+#endif /* !defined(__INPCB_PRIVATE) */
+
+/* States in inpcb_t::inp_state */
+#define	INP_ATTACHED		0
+#define	INP_BOUND		1
+#define	INP_CONNECTED		2
+
+/* Flags in inpcb_t::inp_flags */
 #define	INP_RECVOPTS		0x0001	/* receive incoming IP options */
 #define	INP_RECVRETOPTS		0x0002	/* receive IP options for reply */
 #define	INP_RECVDSTADDR		0x0004	/* receive IP dst address */
@@ -126,40 +179,72 @@ struct inpcb {
 				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO|\
 				INP_PKTINFO)
 
+#define	sotoinpcb_hdr(so)	((struct inpcb_hdr *)(so)->so_pcb)
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
 #ifdef _KERNEL
-void	in_losing(struct inpcb *);
-int	in_pcballoc(struct socket *, void *);
-int	in_pcbbind(void *, struct mbuf *, struct lwp *);
-int	in_pcbconnect(void *, struct mbuf *, struct lwp *);
-void	in_pcbdetach(void *);
-void	in_pcbdisconnect(void *);
-void	in_pcbinit(struct inpcbtable *, int, int);
-struct inpcb *
-	in_pcblookup_port(struct inpcbtable *,
-			  struct in_addr, u_int, int, struct vestigial_inpcb *);
-struct inpcb *
-	in_pcblookup_bind(struct inpcbtable *,
-	    struct in_addr, u_int);
-struct inpcb *
-	in_pcblookup_connect(struct inpcbtable *,
-			     struct in_addr, u_int, struct in_addr, u_int,
-			     struct vestigial_inpcb *);
-int	in_pcbnotify(struct inpcbtable *, struct in_addr, u_int,
-	    struct in_addr, u_int, int, void (*)(struct inpcb *, int));
-void	in_pcbnotifyall(struct inpcbtable *, struct in_addr, int,
-	    void (*)(struct inpcb *, int));
-void	in_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
-void	in_pcbpurgeif(struct inpcbtable *, struct ifnet *);
-void	in_pcbstate(struct inpcb *, int);
-void	in_rtchange(struct inpcb *, int);
-void	in_setpeeraddr(struct inpcb *, struct mbuf *);
-void	in_setsockaddr(struct inpcb *, struct mbuf *);
-struct rtentry *
-	in_pcbrtentry(struct inpcb *);
-extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
+
+struct route;
+struct ip_moptions;
+
+typedef int (*inpcb_func_t)(inpcb_t *, void *);
+
+inpcbtable_t *inpcb_init(size_t, size_t, int);
+
+int	inpcb_create(struct socket *, inpcbtable_t *);
+int	inpcb_bind(inpcb_t *, struct mbuf *, struct lwp *);
+int	inpcb_connect(inpcb_t *, struct mbuf *, struct lwp *);
+void	inpcb_destroy(inpcb_t *);
+void	inpcb_disconnect(inpcb_t *);
+inpcb_t *inpcb_lookup_port(inpcbtable_t *, struct in_addr, u_int, int,
+    struct vestigial_inpcb *);
+inpcb_t *inpcb_lookup_bind(inpcbtable_t *, struct in_addr, u_int);
+inpcb_t *inpcb_lookup_connect(inpcbtable_t *, struct in_addr, u_int,
+    struct in_addr, u_int, struct vestigial_inpcb *);
+int	inpcb_notify(inpcbtable_t *, struct in_addr, u_int,
+	    struct in_addr, u_int, int, void (*)(inpcb_t *, int));
+void	inpcb_notifyall(inpcbtable_t *, struct in_addr, int,
+	    void (*)(inpcb_t *, int));
+void	inpcb_purgeif0(inpcbtable_t *, struct ifnet *);
+void	inpcb_purgeif(inpcbtable_t *, struct ifnet *);
+int	inpcb_foreach(inpcbtable_t *, int, inpcb_func_t, void *);
+void	inpcb_fetch_peeraddr(inpcb_t *, struct mbuf *);
+void	inpcb_fetch_sockaddr(inpcb_t *, struct mbuf *);
+
+void	inpcb_set_state(inpcb_t *, int);
+
+struct rtentry *inpcb_rtentry(inpcb_t *);
+void	inpcb_rtchange(inpcb_t *, int);
+void	inpcb_losing(inpcb_t *);
+
+struct socket *inpcb_get_socket(inpcb_t *);
+struct route *inpcb_get_route(inpcb_t *);
+void *	inpcb_get_protopcb(inpcb_t *);
+void	inpcb_set_protopcb(inpcb_t *, void *);
+
+int	inpcb_get_flags(inpcb_t *);
+void	inpcb_set_flags(inpcb_t *, int);
+void	inpcb_get_addrs(inpcb_t *, struct in_addr *, struct in_addr *);
+void	inpcb_set_addrs(inpcb_t *, struct in_addr *, struct in_addr *);
+void	inpcb_get_ports(inpcb_t *, in_port_t *, in_port_t *);
+void	inpcb_set_ports(inpcb_t *, in_port_t, in_port_t);
+
+struct mbuf *inpcb_get_options(inpcb_t *);
+void	inpcb_set_options(inpcb_t *, struct mbuf *);
+struct ip *in_getiphdr(inpcb_t *);
+struct ip_moptions *inpcb_get_moptions(inpcb_t *);
+void	inpcb_set_moptions(inpcb_t *, struct ip_moptions *);
+int	inpcb_get_portalgo(inpcb_t *);
+int	inpcb_get_errormtu(inpcb_t *);
+void	inpcb_set_errormtu(inpcb_t *, int);
+uint8_t	inpcb_get_minttl(inpcb_t *);
+void	inpcb_set_minttl(inpcb_t *, uint8_t);
+
+struct inpcbpolicy *inpcb_get_sp(inpcb_t *);
+
+void	inpcb_set_vestige(inpcbtable_t *, void *);
+void *	inpcb_get_vestige(inpcbtable_t *);
+
 #endif
 
 #endif /* !_NETINET_IN_PCB_H_ */

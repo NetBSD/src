@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.44 2013/01/06 00:17:13 christos Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.44.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.44 2013/01/06 00:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.44.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -178,7 +178,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 	if (sin6) {
 		/*
-		 * IPv4 version of udp_output calls in_pcbconnect in this case,
+		 * IPv4 version of udp_output calls inpcb_connect in this case,
 		 * which needs splnet and affects performance.
 		 * We have to do this as well, since in6_pcbsetport needs to
 		 * know the foreign address for some of the algorithms that

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.123 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.123.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -89,10 +89,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123 2013/06/05 19:01:26 christos Exp $
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
 #include <netinet/portalgo.h>
 #include <netinet6/ip6_var.h>
+#define __INPCB_PRIVATE
 #include <netinet6/in6_pcb.h>
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
@@ -140,15 +140,16 @@ in6pcb_poolinit(void)
 	return 0;
 }
 
-void
-in6_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
+inpcbtable_t *
+in6_pcbinit(size_t bindhashsize, size_t connecthashsize, int flags)
 {
 	static ONCE_DECL(control);
-
-	in_pcbinit(table, bindhashsize, connecthashsize);
-	table->inpt_lastport = (u_int16_t)ip6_anonportmax;
+	inpcbtable_t *inpt;
 
 	RUN_ONCE(&control, in6pcb_poolinit);
+	inpt = inpcb_init(bindhashsize, connecthashsize, flags);
+	inpt->inpt_lastport = (u_int16_t)ip6_anonportmax;
+	return inpt;
 }
 
 int
@@ -316,7 +317,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			struct inpcb *t;
 			struct vestigial_inpcb vestige;
 
-			t = in_pcblookup_port(table,
+			t = inpcb_lookup_port(table,
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
 			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
@@ -924,6 +925,7 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p, *match = 0;
+	struct vestigial_hooks *vestige;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 
@@ -1000,15 +1002,14 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 	if (match && matchwild == 0)
 		return match;
 
-	if (vp && table->vestige && table->vestige->init_ports6) {
+	if (vp && (vestige = table->inpt_vestige) != NULL &&
+	    vestige->init_ports6 != NULL) {
 		struct vestigial_inpcb better;
 		void *state;
 
-		state = (*table->vestige->init_ports6)(laddr6,
-						       lport_arg,
-						       lookup_wildcard);
-		while (table->vestige
-		       && (*table->vestige->next_port6)(state, vp)) {
+		state = (*vestige->init_ports6)(laddr6, lport_arg,
+		    lookup_wildcard);
+		while ((*vestige->next_port6)(state, vp)) {
 
 			if (vp->lport != lport)
 				continue;
@@ -1132,6 +1133,7 @@ in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
+	struct vestigial_hooks *vestige;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	if (vp)
@@ -1162,9 +1164,8 @@ in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
 			continue;
 		return in6p;
 	}
-	if (vp && table->vestige) {
-		if ((*table->vestige->lookup6)(faddr6, fport_arg,
-					       laddr6, lport_arg, vp))
+	if (vp && (vestige = table->inpt_vestige) != NULL) {
+		if ((*vestige->lookup6)(faddr6, fport_arg, laddr6, lport_arg, vp))
 			return 0;
 	}
 

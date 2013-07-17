@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.5 2013/06/01 11:01:48 pooka Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.5.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.5 2013/06/01 11:01:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.5.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.5 2013/06/01 11:01:48 pooka Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#define	__INPCB_PRIVATE
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
@@ -265,10 +266,10 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 			return false;
 
 		sin.sin_addr = inp->inp_laddr;
-		pcb = in_pcblookup_port(table, sin.sin_addr, htons(port), 1,
+		pcb = inpcb_lookup_port(table, sin.sin_addr, htons(port), 1,
 		    &vestigial);
 
-		DPRINTF("%s in_pcblookup_port returned %p and "
+		DPRINTF("%s inpcb_lookup_port returned %p and "
 		    "vestigial.valid %d\n",
 		    __func__, pcb, vestigial.valid);
 
@@ -320,11 +321,11 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 #ifdef INET
 		if (IN6_IS_ADDR_V4MAPPED(&sin6.sin6_addr)) {
-			t = in_pcblookup_port(table,
+			t = inpcb_lookup_port(table,
 			    *(struct in_addr *)&sin6.sin6_addr.s6_addr32[3],
 			    htons(port), wild, &vestigial);
 			if (!t && vestigial.valid) {
-				DPRINTF("%s in_pcblookup_port returned "
+				DPRINTF("%s inpcb_lookup_port returned "
 				    "a result\n", __func__);
 				return false;
 			}

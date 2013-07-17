@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.37 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.37.4.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #define _NETINET6_IN6_PCB_H_
 
 #include <sys/queue.h>
-#include <netinet/in_pcb_hdr.h>
+#include <netinet/in_pcb.h>
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -74,6 +74,7 @@
  * up (to a socket structure) and down (to a protocol-specific)
  * control block.
  */
+struct inpcb_hdr;
 struct icmp6_filter;
 
 struct	in6pcb {
@@ -151,8 +152,8 @@ struct	in6pcb {
 
 #define sotoin6pcb(so)	((struct in6pcb *)(so)->so_pcb)
 
+inpcbtable_t *in6_pcbinit(size_t, size_t, int);
 void	in6_losing(struct in6pcb *);
-void	in6_pcbinit(struct inpcbtable *, int, int);
 int	in6_pcballoc(struct socket *, void *);
 int	in6_pcbbind(void *, struct mbuf *, struct lwp *);
 int	in6_pcbconnect(void *, struct mbuf *, struct lwp *);

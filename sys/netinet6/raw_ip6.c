@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.111.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -85,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/ip.h>
+#define __INPCB_PRIVATE
+#include <netinet/in_pcb.h>
+
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
@@ -110,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.111 2013/06/05 19:01:26 christos Exp $
 #endif
 
 extern struct inpcbtable rawcbtable;
-struct	inpcbtable raw6cbtable;
+inpcbtable_t *raw6cbtable;
 #define ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 
 /*
@@ -129,9 +133,8 @@ static void sysctl_net_inet6_raw6_setup(struct sysctllog **);
 void
 rip6_init(void)
 {
-
 	sysctl_net_inet6_raw6_setup(NULL);
-	in6_pcbinit(&raw6cbtable, 1, 1);
+	raw6cbtable = in6_pcbinit(1, 1, 0);
 
 	rip6stat_percpu = percpu_alloc(sizeof(uint64_t) * RIP6_NSTATS);
 }
@@ -177,7 +180,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+	CIRCLEQ_FOREACH(inph, &raw6cbtable->inpt_queue, inph_queue) {
 		in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
@@ -323,7 +326,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 * from icmp6_notify_error()
 		 */
 		in6p = NULL;
-		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
+		in6p = in6_pcblookup_connect(raw6cbtable, &sa6->sin6_addr, 0,
 					     (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0, 0);
 #if 0
 		if (!in6p) {
@@ -334,7 +337,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * We should at least check if the local
 			 * address (= s) is really ours.
 			 */
-			in6p = in6_pcblookup_bind(&raw6cbtable,
+			in6p = in6_pcblookup_bind(raw6cbtable,
 			    &sa6->sin6_addr, 0, 0);
 		}
 #endif
@@ -361,7 +364,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 */
 	}
 
-	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
+	(void) in6_pcbnotify(raw6cbtable, sa, 0,
 	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 	return NULL;
 }
@@ -598,9 +601,9 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	if (req == PRU_PURGEIF) {
 		mutex_enter(softnet_lock);
-		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
+		in6_pcbpurgeif0(raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
+		in6_pcbpurgeif(raw6cbtable, (struct ifnet *)control);
 		mutex_exit(softnet_lock);
 		return 0;
 	}
@@ -624,7 +627,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			splx(s);
 			break;
 		}
-		if ((error = in6_pcballoc(so, &raw6cbtable)) != 0) {
+		if ((error = in6_pcballoc(so, raw6cbtable)) != 0) {
 			splx(s);
 			break;
 		}
@@ -677,7 +680,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		if (TAILQ_EMPTY(&ifnet) || addr->sin6_family != AF_INET6) {
+		if (!IFNET_FIRST() || addr->sin6_family != AF_INET6) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -718,7 +721,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			error = EINVAL;
 			break;
 		}
-		if (TAILQ_EMPTY(&ifnet)) {
+		if (!IFNET_FIRST()) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -875,7 +878,7 @@ sysctl_net_inet6_raw6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "pcblist",
 		       SYSCTL_DESCR("Raw IPv6 control block list"),
-		       sysctl_inpcblist, 0, &raw6cbtable, 0,
+		       sysctl_inpcblist, 0, raw6cbtable, 0,
 		       CTL_NET, PF_INET6, IPPROTO_RAW,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

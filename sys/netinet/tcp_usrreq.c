@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.166.4.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -162,12 +162,11 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Ex
  * then m is the mbuf chain of send data.  If this is a timer expiration
  * (called from the software clock routine), then timertype tells which timer.
  */
-/*ARGSUSED*/
 int
-tcp_usrreq(struct socket *so, int req,
-    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
+tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
-	struct inpcb *inp;
+	inpcb_t *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
 #endif
@@ -205,16 +204,16 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			in_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
+			inpcb_purgeif0(tcbtable, (struct ifnet *)control);
 			in_purgeif((struct ifnet *)control);
-			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
+			inpcb_purgeif(tcbtable, (struct ifnet *)control);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
-			in6_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
+			in6_pcbpurgeif0(tcbtable, (struct ifnet *)control);
 			in6_purgeif((struct ifnet *)control);
-			in6_pcbpurgeif(&tcbtable, (struct ifnet *)control);
+			in6_pcbpurgeif(tcbtable, (struct ifnet *)control);
 			break;
 #endif
 		default:
@@ -226,6 +225,8 @@ tcp_usrreq(struct socket *so, int req,
 		splx(s);
 		return (0);
 	}
+
+	KASSERT(req == PRU_ATTACH || solocked(so));
 
 	if (req == PRU_ATTACH)
 		sosetlock(so);
@@ -335,7 +336,7 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			error = in_pcbbind(inp, nam, l);
+			error = inpcb_bind(inp, nam, l);
 			break;
 #endif
 #ifdef INET6
@@ -358,10 +359,15 @@ tcp_usrreq(struct socket *so, int req,
 	 */
 	case PRU_LISTEN:
 #ifdef INET
-		if (inp && inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL, l);
-			if (error)
-				break;
+		if (inp) {
+			in_port_t lport;
+
+			inpcb_get_ports(inp, &lport, NULL);
+			if (lport == 0) {
+				error = inpcb_bind(inp, NULL, l);
+				if (error)
+					break;
+			}
 		}
 #endif
 #ifdef INET6
@@ -384,12 +390,15 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_CONNECT:
 #ifdef INET
 		if (inp) {
-			if (inp->inp_lport == 0) {
-				error = in_pcbbind(inp, NULL, l);
+			in_port_t lport;
+
+			inpcb_get_ports(inp, &lport, NULL);
+			if (lport == 0) {
+				error = inpcb_bind(inp, NULL, l);
 				if (error)
 					break;
 			}
-			error = in_pcbconnect(inp, nam, l);
+			error = inpcb_connect(inp, nam, l);
 		}
 #endif
 #ifdef INET6
@@ -415,7 +424,7 @@ tcp_usrreq(struct socket *so, int req,
 		if (tp->t_template == 0) {
 #ifdef INET
 			if (inp)
-				in_pcbdisconnect(inp);
+				inpcb_disconnect(inp);
 #endif
 #ifdef INET6
 			if (in6p)
@@ -470,7 +479,7 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_ACCEPT:
 #ifdef INET
 		if (inp)
-			in_setpeeraddr(inp, nam);
+			inpcb_fetch_peeraddr(inp, nam);
 #endif
 #ifdef INET6
 		if (in6p)
@@ -580,7 +589,7 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_SOCKADDR:
 #ifdef INET
 		if (inp)
-			in_setsockaddr(inp, nam);
+			inpcb_fetch_sockaddr(inp, nam);
 #endif
 #ifdef INET6
 		if (in6p)
@@ -591,7 +600,7 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_PEERADDR:
 #ifdef INET
 		if (inp)
-			in_setpeeraddr(inp, nam);
+			inpcb_fetch_peeraddr(inp, nam);
 #endif
 #ifdef INET6
 		if (in6p)
@@ -638,7 +647,7 @@ int
 tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0, s;
-	struct inpcb *inp;
+	inpcb_t *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
 #endif
@@ -845,7 +854,7 @@ int
 tcp_attach(struct socket *so)
 {
 	struct tcpcb *tp;
-	struct inpcb *inp;
+	inpcb_t *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
 #endif
@@ -871,7 +880,7 @@ tcp_attach(struct socket *so)
 	switch (family) {
 #ifdef INET
 	case PF_INET:
-		error = in_pcballoc(so, &tcbtable);
+		error = inpcb_create(so, tcbtable);
 		if (error)
 			return (error);
 		inp = sotoinpcb(so);
@@ -882,7 +891,7 @@ tcp_attach(struct socket *so)
 #endif
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcballoc(so, &tcbtable);
+		error = in6_pcballoc(so, tcbtable);
 		if (error)
 			return (error);
 		inp = NULL;
@@ -901,13 +910,13 @@ tcp_attach(struct socket *so)
 	else
 		tp = NULL;
 
-	if (tp == 0) {
+	if (tp == NULL) {
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
 #ifdef INET
 		if (inp)
-			in_pcbdetach(inp);
+			inpcb_destroy(inp);
 #endif
 #ifdef INET6
 		if (in6p)
@@ -934,13 +943,15 @@ tcp_disconnect(struct tcpcb *tp)
 	struct socket *so;
 
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 	else if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
 	else
 		so = NULL;
+
+	KASSERT(so != NULL);
 
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		tp = tcp_close(tp);
@@ -991,7 +1002,7 @@ tcp_usrclosed(struct tcpcb *tp)
 	if (tp && tp->t_state >= TCPS_FIN_WAIT_2) {
 		struct socket *so;
 		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
+			so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 		else if (tp->t_in6pcb)
 			so = tp->t_in6pcb->in6p_socket;
@@ -1185,32 +1196,32 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
     void *oldp, size_t *oldlenp,
     struct lwp *l, int dodrop)
 {
-	struct inpcb *inp;
-	struct socket *sockp;
+	inpcb_t *inp;
+	struct socket *so;
 
-	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
-	
-	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
+	inp = inpcb_lookup_connect(tcbtable, raddr, rport, laddr, lport, 0);
+	if (inp == NULL || (so = inpcb_get_socket(inp)) == NULL)
 		return ESRCH;
 
 	if (dodrop) {
 		struct tcpcb *tp;
 		int error;
-		
-		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
-		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
+
+		if ((tp = intotcpcb(inp)) == NULL ||
+		    (so->so_options & SO_ACCEPTCONN) != 0)
 			return ESRCH;
 
 		error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-		    KAUTH_REQ_NETWORK_SOCKET_DROP, inp->inp_socket, tp, NULL);
-		if (error)
-			return (error);
-		
+		    KAUTH_REQ_NETWORK_SOCKET_DROP, so, tp, NULL);
+		if (error) {
+			return error;
+		}
+
 		(void)tcp_drop(tp, ECONNABORTED);
 		return 0;
 	}
-	else
-		return copyout_uid(sockp, oldp, oldlenp);
+
+	return copyout_uid(so, oldp, oldlenp);
 }
 
 #ifdef INET6
@@ -1223,7 +1234,7 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 	struct in6pcb *in6p;
 	struct socket *sockp;
 
-	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0, 0);
+	in6p = in6_pcblookup_connect(tcbtable, raddr, rport, laddr, lport, 0, 0);
 
 	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
 		return ESRCH;
@@ -1375,201 +1386,6 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	default:
 		return EPROTONOSUPPORT;
 	}
-}
-
-/*
- * sysctl helper for the inet and inet6 pcblists.  handles tcp/udp and
- * inet/inet6, as well as raw pcbs for each.  specifically not
- * declared static so that raw sockets and udp/udp6 can use it as
- * well.
- */
-int
-sysctl_inpcblist(SYSCTLFN_ARGS)
-{
-#ifdef INET
-	struct sockaddr_in *in;
-	const struct inpcb *inp;
-#endif
-#ifdef INET6
-	struct sockaddr_in6 *in6;
-	const struct in6pcb *in6p;
-#endif
-	/*
-	 * sysctl_data is const, but CIRCLEQ_FOREACH can't use a const
-	 * struct inpcbtable pointer, so we have to discard const.  :-/
-	 */
-	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
-	const struct inpcb_hdr *inph;
-	struct tcpcb *tp;
-	struct kinfo_pcb pcb;
-	char *dp;
-	u_int op, arg;
-	size_t len, needed, elem_size, out_size;
-	int error, elem_count, pf, proto, pf2;
-
-	if (namelen != 4)
-		return (EINVAL);
-
-	if (oldp != NULL) {
-		    len = *oldlenp;
-		    elem_size = name[2];
-		    elem_count = name[3];
-		    if (elem_size != sizeof(pcb))
-			    return EINVAL;
-	} else {
-		    len = 0;
-		    elem_count = INT_MAX;
-		    elem_size = sizeof(pcb);
-	}
-	error = 0;
-	dp = oldp;
-	op = name[0];
-	arg = name[1];
-	out_size = elem_size;
-	needed = 0;
-
-	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
-
-	if (name - oname != 4)
-		return (EINVAL);
-
-	pf = oname[1];
-	proto = oname[2];
-	pf2 = (oldp != NULL) ? pf : 0;
-
-	mutex_enter(softnet_lock);
-
-	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
-#ifdef INET
-		inp = (const struct inpcb *)inph;
-#endif
-#ifdef INET6
-		in6p = (const struct in6pcb *)inph;
-#endif
-
-		if (inph->inph_af != pf)
-			continue;
-
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, inph->inph_socket, NULL,
-		    NULL) != 0)
-			continue;
-
-		memset(&pcb, 0, sizeof(pcb));
-
-		pcb.ki_family = pf;
-		pcb.ki_type = proto;
-
-		switch (pf2) {
-		case 0:
-			/* just probing for size */
-			break;
-#ifdef INET
-		case PF_INET:
-			pcb.ki_family = inp->inp_socket->so_proto->
-			    pr_domain->dom_family;
-			pcb.ki_type = inp->inp_socket->so_proto->
-			    pr_type;
-			pcb.ki_protocol = inp->inp_socket->so_proto->
-			    pr_protocol;
-			pcb.ki_pflags = inp->inp_flags;
-
-			pcb.ki_sostate = inp->inp_socket->so_state;
-			pcb.ki_prstate = inp->inp_state;
-			if (proto == IPPROTO_TCP) {
-				tp = intotcpcb(inp);
-				pcb.ki_tstate = tp->t_state;
-				pcb.ki_tflags = tp->t_flags;
-			}
-
-			pcb.ki_pcbaddr = PTRTOUINT64(inp);
-			pcb.ki_ppcbaddr = PTRTOUINT64(inp->inp_ppcb);
-			pcb.ki_sockaddr = PTRTOUINT64(inp->inp_socket);
-
-			pcb.ki_rcvq = inp->inp_socket->so_rcv.sb_cc;
-			pcb.ki_sndq = inp->inp_socket->so_snd.sb_cc;
-
-			in = satosin(&pcb.ki_src);
-			in->sin_len = sizeof(*in);
-			in->sin_family = pf;
-			in->sin_port = inp->inp_lport;
-			in->sin_addr = inp->inp_laddr;
-			if (pcb.ki_prstate >= INP_CONNECTED) {
-				in = satosin(&pcb.ki_dst);
-				in->sin_len = sizeof(*in);
-				in->sin_family = pf;
-				in->sin_port = inp->inp_fport;
-				in->sin_addr = inp->inp_faddr;
-			}
-			break;
-#endif
-#ifdef INET6
-		case PF_INET6:
-			pcb.ki_family = in6p->in6p_socket->so_proto->
-			    pr_domain->dom_family;
-			pcb.ki_type = in6p->in6p_socket->so_proto->pr_type;
-			pcb.ki_protocol = in6p->in6p_socket->so_proto->
-			    pr_protocol;
-			pcb.ki_pflags = in6p->in6p_flags;
-
-			pcb.ki_sostate = in6p->in6p_socket->so_state;
-			pcb.ki_prstate = in6p->in6p_state;
-			if (proto == IPPROTO_TCP) {
-				tp = in6totcpcb(in6p);
-				pcb.ki_tstate = tp->t_state;
-				pcb.ki_tflags = tp->t_flags;
-			}
-
-			pcb.ki_pcbaddr = PTRTOUINT64(in6p);
-			pcb.ki_ppcbaddr = PTRTOUINT64(in6p->in6p_ppcb);
-			pcb.ki_sockaddr = PTRTOUINT64(in6p->in6p_socket);
-
-			pcb.ki_rcvq = in6p->in6p_socket->so_rcv.sb_cc;
-			pcb.ki_sndq = in6p->in6p_socket->so_snd.sb_cc;
-
-			in6 = satosin6(&pcb.ki_src);
-			in6->sin6_len = sizeof(*in6);
-			in6->sin6_family = pf;
-			in6->sin6_port = in6p->in6p_lport;
-			in6->sin6_flowinfo = in6p->in6p_flowinfo;
-			in6->sin6_addr = in6p->in6p_laddr;
-			in6->sin6_scope_id = 0; /* XXX? */
-
-			if (pcb.ki_prstate >= IN6P_CONNECTED) {
-				in6 = satosin6(&pcb.ki_dst);
-				in6->sin6_len = sizeof(*in6);
-				in6->sin6_family = pf;
-				in6->sin6_port = in6p->in6p_fport;
-				in6->sin6_flowinfo = in6p->in6p_flowinfo;
-				in6->sin6_addr = in6p->in6p_faddr;
-				in6->sin6_scope_id = 0; /* XXX? */
-			}
-			break;
-#endif
-		}
-
-		if (len >= elem_size && elem_count > 0) {
-			error = copyout(&pcb, dp, out_size);
-			if (error) {
-				mutex_exit(softnet_lock);
-				return (error);
-			}
-			dp += elem_size;
-			len -= elem_size;
-		}
-		needed += elem_size;
-		if (elem_count > 0 && elem_count != INT_MAX)
-			elem_count--;
-	}
-
-	*oldlenp = needed;
-	if (oldp == NULL)
-		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
-
-	mutex_exit(softnet_lock);
-
-	return (error);
 }
 
 static int
@@ -1902,7 +1718,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "pcblist",
 		       SYSCTL_DESCR("TCP protocol control block list"),
-		       sysctl_inpcblist, 0, &tcbtable, 0,
+		       sysctl_inpcblist, 0, tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

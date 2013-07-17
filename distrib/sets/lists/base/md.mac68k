@@ -1,2 +1,0 @@
-# $NetBSD: md.mac68k,v 1.42 2012/04/06 22:46:15 christos Exp $
-./usr/lkm/iwmfd.o				base-obsolete	obsolete

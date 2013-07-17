@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.175 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.175.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.175 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.175.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -238,7 +238,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
     bool *alwaysfragp)
 {
 #ifdef INET
-	struct inpcb *inp = tp->t_inpcb;
+	inpcb_t *inp = tp->t_inpcb;
 #endif
 #ifdef INET6
 	struct in6pcb *in6p = tp->t_in6pcb;
@@ -275,8 +275,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	rt = NULL;
 #ifdef INET
 	if (inp) {
-		rt = in_pcbrtentry(inp);
-		so = inp->inp_socket;
+		rt = inpcb_rtentry(inp);
+		so = inpcb_get_socket(inp);
 	}
 #endif
 #ifdef INET6
@@ -311,10 +311,14 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	} else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - hdrlen;
 #ifdef INET
-	else if (inp && tp->t_mtudisc)
-		size = ifp->if_mtu - hdrlen;
-	else if (inp && in_localaddr(inp->inp_faddr))
-		size = ifp->if_mtu - hdrlen;
+	else if (inp) {
+		struct in_addr faddr;
+
+		inpcb_get_addrs(inp, NULL, &faddr);
+		if (tp->t_mtudisc || in_localaddr(faddr)) {
+			size = ifp->if_mtu - hdrlen;
+		}
+	}
 #endif
 #ifdef INET6
 	else if (in6p) {
@@ -351,7 +355,9 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #ifdef INET
 	if (inp) {
 #if defined(IPSEC)
-		if (! IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+		struct inpcbpolicy *sp = inpcb_get_sp(inp);
+
+		if (! IPSEC_PCB_SKIP_IPSEC(sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		optlen += ip_optlen(inp);
@@ -580,8 +586,8 @@ tcp_output(struct tcpcb *tp)
 	so = NULL;
 	ro = NULL;
 	if (tp->t_inpcb) {
-		so = tp->t_inpcb->inp_socket;
-		ro = &tp->t_inpcb->inp_route;
+		so = inpcb_get_socket(tp->t_inpcb);
+		ro = inpcb_get_route(tp->t_inpcb);
 	}
 #ifdef INET6
 	else if (tp->t_in6pcb) {
@@ -627,10 +633,10 @@ tcp_output(struct tcpcb *tp)
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC)
-		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
+		  IPSEC_PCB_SKIP_IPSEC(inpcb_get_sp(tp->t_inpcb),
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
-		  (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
+		  (rt = rtcache_validate(ro)) != NULL &&
 		  (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
 #endif /* defined(INET) */
 #if defined(INET6)
@@ -676,9 +682,14 @@ tcp_output(struct tcpcb *tp)
 			 */
 			int ss = tcp_init_win;
 #ifdef INET
-			if (tp->t_inpcb &&
-			    in_localaddr(tp->t_inpcb->inp_faddr))
-				ss = tcp_init_win_local;
+			if (tp->t_inpcb) {
+				struct in_addr faddr;
+
+				inpcb_get_addrs(tp->t_inpcb, NULL, &faddr);
+				if (in_localaddr(faddr)) {
+					ss = tcp_init_win_local;
+				}
+			}
 #endif
 #ifdef INET6
 			if (tp->t_in6pcb &&
@@ -1110,7 +1121,7 @@ send:
 		synrt = NULL;
 #ifdef INET
 		if (tp->t_inpcb)
-			synrt = in_pcbrtentry(tp->t_inpcb);
+			synrt = inpcb_rtentry(tp->t_inpcb);
 #endif
 #ifdef INET6
 		if (tp->t_in6pcb)
@@ -1546,8 +1557,10 @@ timer:
 		ip->ip_len = htons(m->m_pkthdr.len);
 		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb) {
-			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
-			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos | ecn_tos;
+			struct ip *inp_ip = in_getiphdr(tp->t_inpcb);
+
+			ip->ip_ttl = inp_ip->ip_ttl;
+			ip->ip_tos = inp_ip->ip_tos | ecn_tos;
 		}
 #ifdef INET6
 		else if (tp->t_in6pcb) {
@@ -1589,7 +1602,7 @@ timer:
 		struct mbuf *opts;
 
 		if (tp->t_inpcb)
-			opts = tp->t_inpcb->inp_options;
+			opts = inpcb_get_options(tp->t_inpcb);
 		else
 			opts = NULL;
 		error = ip_output(m, opts, ro,

@@ -1,5 +1,0 @@
-locking_init
-locking_end
-lock_resource
-query_resource
-reset_locking

@@ -1,3 +1,0 @@
-config_directory = .
-smtpd_restriction_classes = bar
-./postconf: warning: ./master.cf: unused parameter: baz=xx

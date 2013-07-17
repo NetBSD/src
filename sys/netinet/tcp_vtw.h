@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_vtw.h,v 1.6 2012/11/23 14:48:31 joerg Exp $	*/
+/*	$NetBSD: tcp_vtw.h,v 1.6.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,6 +121,10 @@
  */
 #ifndef _NETINET_TCP_VTW_H
 #define _NETINET_TCP_VTW_H
+
+#if !defined(_KERNEL)
+#error "not supposed to be exposed to userland"
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -388,11 +392,28 @@ typedef struct vestigial_inpcb {
 	struct vtw_ctl		*ctl;
 } vestigial_inpcb_t;
 
-#ifdef _KERNEL
+/*
+ * Hooks for vestigial pcb entries.  If vestigial entries exist for a
+ * table (TCP only) the vestigial pointer is set.
+ */
+typedef struct vestigial_hooks {
+	/* IPv4 hooks */
+	void	*(*init_ports4)(struct in_addr, u_int, int);
+	int	(*next_port4)(void *, struct vestigial_inpcb *);
+	int	(*lookup4)(struct in_addr, uint16_t,
+			   struct in_addr, uint16_t,
+			   struct vestigial_inpcb *);
+	/* IPv6 hooks */
+	void	*(*init_ports6)(const struct in6_addr*, u_int, int);
+	int	(*next_port6)(void *, struct vestigial_inpcb *);
+	int	(*lookup6)(const struct in6_addr *, uint16_t,
+			   const struct in6_addr *, uint16_t,
+			   struct vestigial_inpcb *);
+} vestigial_hooks_t;
+
 void vtw_restart(vestigial_inpcb_t*);
 int vtw_earlyinit(void);
 int sysctl_tcp_vtw_enable(SYSCTLFN_PROTO);
-#endif /* _KERNEL */
 
 #ifdef VTW_DEBUG
 typedef struct sin_either {

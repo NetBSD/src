@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.327.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -213,6 +213,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_private.h>
 #include <netinet/tcpip.h>
+#include <netinet/tcp_vtw.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 
@@ -453,7 +454,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	uint64_t *tcps;
 
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 	else if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
@@ -1203,7 +1204,7 @@ tcp_input(struct mbuf *m, ...)
 {
 	struct tcphdr *th;
 	struct ip *ip;
-	struct inpcb *inp;
+	inpcb_t *inp;
 #ifdef INET6
 	struct ip6_hdr *ip6;
 	struct in6pcb *in6p;
@@ -1406,15 +1407,14 @@ findpcb:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
-					   ip->ip_dst, th->th_dport,
-					   &vestige);
-		if (inp == 0 && !vestige.valid) {
+		inp = inpcb_lookup_connect(tcbtable, ip->ip_src, th->th_sport,
+		    ip->ip_dst, th->th_dport, &vestige);
+		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst, th->th_dport);
+			inp = inpcb_lookup_bind(tcbtable, ip->ip_dst, th->th_dport);
 		}
 #ifdef INET6
-		if (inp == 0 && !vestige.valid) {
+		if (inp == NULL && !vestige.valid) {
 			struct in6_addr s, d;
 
 			/* mapped addr case */
@@ -1424,20 +1424,19 @@ findpcb:
 			memset(&d, 0, sizeof(d));
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
-			in6p = in6_pcblookup_connect(&tcbtable, &s,
-						     th->th_sport, &d, th->th_dport,
-						     0, &vestige);
+			in6p = in6_pcblookup_connect(tcbtable, &s,
+			    th->th_sport, &d, th->th_dport, 0, &vestige);
 			if (in6p == 0 && !vestige.valid) {
 				TCP_STATINC(TCP_STAT_PCBHASHMISS);
-				in6p = in6_pcblookup_bind(&tcbtable, &d,
+				in6p = in6_pcblookup_bind(tcbtable, &d,
 				    th->th_dport, 0);
 			}
 		}
 #endif
 #ifndef INET6
-		if (inp == 0 && !vestige.valid)
+		if (inp == NULL && !vestige.valid)
 #else
-		if (inp == 0 && in6p == 0 && !vestige.valid)
+		if (inp == NULL && in6p == NULL && !vestige.valid)
 #endif
 		{
 			TCP_STATINC(TCP_STAT_NOPORT);
@@ -1449,7 +1448,8 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		if (inp && (so = inpcb_get_socket(inp)) != NULL &&
+		    (so->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec4_in_reject(m, inp)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
@@ -1475,11 +1475,11 @@ findpcb:
 #else
 		faith = 0;
 #endif
-		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
-					     th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
+		in6p = in6_pcblookup_connect(tcbtable, &ip6->ip6_src,
+		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
 		if (!in6p && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
+			in6p = in6_pcblookup_bind(tcbtable, &ip6->ip6_dst,
 				th->th_dport, faith);
 		}
 		if (!in6p && !vestige.valid) {
@@ -1514,11 +1514,11 @@ findpcb:
 	so = NULL;
 	if (inp) {
 		/* Check the minimum TTL for socket. */
-		if (ip->ip_ttl < inp->inp_ip_minttl)
+		if (ip->ip_ttl < inpcb_get_minttl(inp)) {
 			goto drop;
-
+		}
 		tp = intotcpcb(inp);
-		so = inp->inp_socket;
+		so = inpcb_get_socket(inp);
 	}
 #ifdef INET6
 	else if (in6p) {
@@ -2227,8 +2227,14 @@ after_listen:
 		else {
 			int ss = tcp_init_win;
 #ifdef INET
-			if (inp != NULL && in_localaddr(inp->inp_faddr))
-				ss = tcp_init_win_local;
+			if (inp) {
+				struct in_addr faddr;
+
+				inpcb_get_addrs(inp, NULL, &faddr);
+				if (in_localaddr(faddr)) {
+					ss = tcp_init_win_local;
+				}
+			}
 #endif
 #ifdef INET6
 			if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
@@ -3104,7 +3110,7 @@ drop:
 	 */
 	if (tp) {
 		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
+			so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 		else if (tp->t_in6pcb)
 			so = tp->t_in6pcb->in6p_socket;
@@ -3920,7 +3926,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
-	struct inpcb *inp = NULL;
+	inpcb_t *inp = NULL;
 #ifdef INET6
 	struct in6pcb *in6p = NULL;
 #endif
@@ -3987,14 +3993,18 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (inp) {
-			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
-			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
-			inp->inp_options = ip_srcroute();
-			in_pcbstate(inp, INP_BOUND);
-			if (inp->inp_options == NULL) {
-				inp->inp_options = sc->sc_ipopts;
+			struct sockaddr_in *sin = (struct sockaddr_in *)dst;
+			struct mbuf *opts = ip_srcroute();
+
+			inpcb_set_addrs(inp, &sin->sin_addr, NULL);
+			inpcb_set_ports(inp, sin->sin_port, 0);
+			if (!opts) {
+				inpcb_set_options(inp, sc->sc_ipopts);
 				sc->sc_ipopts = NULL;
+			} else {
+				inpcb_set_options(inp, opts);
 			}
+			inpcb_set_state(inp, INP_BOUND);
 		}
 #ifdef INET6
 		else if (in6p) {
@@ -4046,7 +4056,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 */
 	if (inp) {
 		/* copy old policy into new socket's */
-		if (ipsec_copy_pcbpolicy(sotoinpcb(oso)->inp_sp, inp->inp_sp))
+		struct inpcbpolicy *osp = inpcb_get_sp(sotoinpcb(oso));
+		struct inpcbpolicy *sp = inpcb_get_sp(inp);
+
+		if (ipsec_copy_pcbpolicy(osp, sp))
 			printf("tcp_input: could not copy policy\n");
 	}
 #ifdef INET6
@@ -4063,7 +4076,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * Give the new socket our cached route reference.
 	 */
 	if (inp) {
-		rtcache_copy(&inp->inp_route, &sc->sc_route);
+		struct route *rt = inpcb_get_route(inp);
+		rtcache_copy(rt, &sc->sc_route);
 		rtcache_free(&sc->sc_route);
 	}
 #ifdef INET6
@@ -4080,7 +4094,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am, &lwp0)) {
+		if (inpcb_connect(inp, am, &lwp0)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -4174,8 +4188,14 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	else {
 		int ss = tcp_init_win;
 #ifdef INET
-		if (inp != NULL && in_localaddr(inp->inp_faddr))
-			ss = tcp_init_win_local;
+		if (inp) {
+			struct in_addr faddr;
+
+			inpcb_get_addrs(inp, NULL, &faddr);
+			if (in_localaddr(faddr)) {
+				ss = tcp_init_win_local;
+			}
+		}
 #endif
 #ifdef INET6
 		if (in6p != NULL && in6_localaddr(&in6p->in6p_faddr))
@@ -4588,7 +4608,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	if (sc->sc_tp) {
 		tp = sc->sc_tp;
 		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
+			so = inpcb_get_socket(tp->t_inpcb);
 #ifdef INET6
 		else if (tp->t_in6pcb)
 			so = tp->t_in6pcb->in6p_socket;
