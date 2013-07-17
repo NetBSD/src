@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.14 2013/07/16 22:12:20 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.15 2013/07/17 03:05:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,12 +34,13 @@
  */
 
 #include <machine/asm.h>
+#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.14 2013/07/16 22:12:20 matt Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.15 2013/07/17 03:05:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,11 +68,11 @@ ENTRY(__setjmp14)
 
 	/* Get pointer to jmp_buf; a sigcontext is at the beginning. */
 	movl	4(%sp),%a0
-	movl	%d0,(%a0)	/* store onstack */
-	clrl	4(%a0)		/* unused word (old style signal mask) */
+	movl	%d0,SC_ONSTACK(%a0) /* store onstack */
+	clrl	SC___MASK13(%a0) /* unused word (old style signal mask) */
 
 	/* Get the signal mask. */
-	pea	28(%a0)	/* oset = &sc.sc_mask */
+	pea	SC_MASK(%a0)	/* oset = &sc.sc_mask */
 	movl	#0,-(%sp)	/* set = NULL */
 	movl	#0,-(%sp)	/* action = 0 <ignored> */
 	jbsr	PIC_PLT(_C_LABEL(__sigprocmask14))
@@ -79,14 +80,14 @@ ENTRY(__setjmp14)
 
 	movl	4(%sp),%a0	/* get jmp_buf pointer again */
 	lea	4(%sp),%a1	/* adjust SP since we won't rts */
-	movl	%a1,8(%a0)	/* save SP */
-	movl	%a6,12(%a0)	/* save FP */
-	clrl	16(%a0)	/* no AP */
-	movl	(%sp),20(%a0)	/* save return PC */
-	clrl	24(%a0)	/* clear PS */
+	movl	%a1,SC_SP(%a0)	/* save SP */
+	movl	%a6,SC_FP(%a0)	/* save FP */
+	clrl	SC_AP(%a0)	/* no AP */
+	movl	(%sp),SC_PC(%a0)/* save return PC */
+	clrl	SC_PS(%a0)	/* clear PS */
 
 	/* Save remaining non-scratch regs after signal mask. */
-	moveml	#0x3CFC,44(%a0)
+	moveml	#0x3CFC,SC_SIZE(%a0)
 
 	clrl	%d0		/* return 0 */
 	rts
