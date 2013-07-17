@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2013/07/05 02:06:49 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2013/07/17 14:23:45 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ crtbegin.o: crtbegin.S
 .else
 crtbegin.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -fpie ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} -fPIE ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
