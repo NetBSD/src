@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.170 2013/04/10 00:16:04 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.170.4.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -535,7 +535,7 @@ struct syn_cache_head {
 	u_short sch_length;			/* # entries in bucket */
 };
 
-#define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
+#define	intotcpcb(ip)	((struct tcpcb *)inpcb_get_protopcb(ip))
 #ifdef INET6
 #define	in6totcpcb(ip)	((struct tcpcb *)(ip)->in6p_ppcb)
 #endif
@@ -785,7 +785,8 @@ struct syn_cache_head {
 }
 
 #ifdef _KERNEL
-extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
+struct inpcbtable;
+extern	struct inpcbtable *tcbtable;	/* head of queue of active tcpcb's */
 extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */

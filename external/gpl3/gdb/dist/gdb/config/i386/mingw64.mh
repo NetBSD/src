@@ -1,1 +1,0 @@
-NATDEPFILES= i386-nat.o windows-nat.o amd64-windows-nat.o

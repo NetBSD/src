@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.60 2013/06/08 13:50:22 rmind Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.60.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.60 2013/06/08 13:50:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.60.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 /*
  * IPsec controller part.
@@ -65,25 +65,26 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.60 2013/06/08 13:50:22 rmind Exp $");
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/in_var.h>
+#include <netinet/ip6.h>
+#ifdef INET6
+#include <netinet6/ip6_var.h>
+#endif
+#define __INPCB_PRIVATE
+#include <netinet/in_pcb.h>
+#ifdef INET6
+#include <netinet6/in6_pcb.h>
+#include <netinet/icmp6.h>
+#endif
+
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_private.h>
-
-#include <netinet/ip6.h>
-#ifdef INET6
-#include <netinet6/ip6_var.h>
-#endif
-#include <netinet/in_pcb.h>
-#ifdef INET6
-#include <netinet6/in6_pcb.h>
-#include <netinet/icmp6.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
@@ -313,7 +314,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 * to generate spidx again, nor check the address match again.
 		 *
 		 * For IPv4/v6 SOCK_STREAM sockets, this assumptions holds
-		 * and there are calls to ipsec_pcbconn() from in_pcbconnect().
+		 * and there are calls to ipsec_pcbconn() from inpcb_connect().
 		 */
 	}
 

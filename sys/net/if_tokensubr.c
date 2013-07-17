@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.62 2013/03/01 18:25:57 joerg Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.62.6.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.62 2013/03/01 18:25:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.62.6.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -124,17 +124,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.62 2013/03/01 18:25:57 joerg Exp 
 #include <net/if_ether.h>
 #include <net/if_token.h>
 
-#include "carp.h"
-#if NCARP > 0
-#include <netinet/ip_carp.h>
-#endif
-
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
 #endif
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #ifdef DECNET
 #include <netdnet/dn.h>

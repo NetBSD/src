@@ -1,5 +1,0 @@
-#define TOP_PACKAGE "@PACKAGE@"
-#define TOP_PACKAGE_NAME "@PACKAGE_NAME@"
-#define TOP_PACKAGE_VERSION "@PACKAGE_VERSION@"
-#define TOP_PACKAGE_STRING "@PACKAGE_STRING@"
-#define TOP_PACKAGE_URL "http://ipsec-tools.sourceforge.net"

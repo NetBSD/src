@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.87 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.87.10.1 2013/07/17 03:16:31 rmind Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.87 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.87.10.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ get_ifid(struct ifnet *ifp0, struct ifnet *altifp,
 	}
 
 	/* next, try to get it from some other hardware interface */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		if (ifp == ifp0)
 			continue;
 		if (in6_get_hw_ifid(ifp, in6) != 0)
@@ -967,7 +967,7 @@ in6_tmpaddrtimer(void *ignored_arg)
 	    ip6_temp_regen_advance) * hz, in6_tmpaddrtimer, NULL);
 
 	memset(nullbuf, 0, sizeof(nullbuf));
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		ndi = ND_IFINFO(ifp);
 		if (memcmp(ndi->randomid, nullbuf, sizeof(nullbuf)) != 0) {
 			/*

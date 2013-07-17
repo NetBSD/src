@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.86 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.86.16.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86.16.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -293,14 +293,15 @@ tcp_timer_rexmt(void *arg)
 		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
-		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
+
+		inpcb_get_addrs(tp->t_inpcb, NULL, &icmpsrc.sin_addr);
 		icmp_mtudisc(&icmp, icmpsrc.sin_addr);
 
 		/*
 		 * Notify all connections to the same peer about
 		 * new mss and trigger retransmit.
 		 */
-		in_pcbnotifyall(&tcbtable, icmpsrc.sin_addr, EMSGSIZE,
+		inpcb_notifyall(tcbtable, icmpsrc.sin_addr, EMSGSIZE,
 		    tcp_mtudisc);
 		KERNEL_UNLOCK_ONE(NULL);
 		mutex_exit(softnet_lock);
@@ -309,7 +310,7 @@ tcp_timer_rexmt(void *arg)
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)
@@ -381,7 +382,7 @@ tcp_timer_rexmt(void *arg)
 	if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
 #ifdef INET
 		if (tp->t_inpcb)
-			in_losing(tp->t_inpcb);
+			inpcb_losing(tp->t_inpcb);
 #endif
 #ifdef INET6
 		if (tp->t_in6pcb)
@@ -453,7 +454,7 @@ tcp_timer_persist(void *arg)
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)
@@ -536,7 +537,7 @@ tcp_timer_keep(void *arg)
 		goto dropit;
 #ifdef INET
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)
@@ -625,7 +626,7 @@ tcp_timer_2msl(void *arg)
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
+		so = inpcb_get_socket(tp->t_inpcb);
 #endif
 #ifdef INET6
 	if (tp->t_in6pcb)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.264.2.1 2013/07/17 03:16:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $");
 
 #include "carp.h"
 #if NCARP > 0
+#include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
 
@@ -148,10 +149,23 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264 2013/06/20 13:56:29 roy Exp $");
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
 
-int	ifqmaxlen = IFQ_MAXLEN;
-callout_t if_slowtimo_ch;
+/*
+ * Global list of interfaces.
+ */
+struct ifnet_head		ifnet_list;
+static ifnet_t **		ifindex2ifnet = NULL;
 
-int netisr;			/* scheduling bits for network */
+static u_int			if_index = 1;
+static size_t			if_indexlim = 0;
+static uint64_t			index_gen;
+static kmutex_t			index_gen_mtx;
+
+static struct ifaddr **		ifnet_addrs = NULL;
+
+static callout_t		if_slowtimo_ch;
+
+struct ifnet *lo0ifp;
+int	ifqmaxlen = IFQ_MAXLEN;
 
 static int	if_rt_walktree(struct rtentry *, void *);
 
@@ -160,9 +174,6 @@ static int	if_clone_list(struct if_clonereq *);
 
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
-
-static uint64_t index_gen;
-static kmutex_t index_gen_mtx;
 
 #ifdef PFIL_HOOKS
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
@@ -237,6 +248,8 @@ ifinit(void)
 void
 ifinit1(void)
 {
+	TAILQ_INIT(&ifnet_list);
+	if_indexlim = 8;
 
 	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -248,16 +261,16 @@ ifinit1(void)
 #endif
 }
 
-struct ifnet *
+ifnet_t *
 if_alloc(u_char type)
 {
-	return malloc(sizeof(struct ifnet), M_DEVBUF, M_WAITOK|M_ZERO);
+	return kmem_zalloc(sizeof(ifnet_t), KM_SLEEP);
 }
 
 void
-if_free(struct ifnet *ifp)
+if_free(ifnet_t *ifp)
 {
-	free(ifp, M_DEVBUF);
+	kmem_free(ifp, sizeof(ifnet_t));
 }
 
 void
@@ -332,13 +345,6 @@ if_nulldrain(struct ifnet *ifp)
 
 	/* Nothing. */
 }
-
-static u_int if_index = 1;
-struct ifnet_head ifnet;
-size_t if_indexlim = 0;
-struct ifaddr **ifnet_addrs = NULL;
-struct ifnet **ifindex2ifnet = NULL;
-struct ifnet *lo0ifp;
 
 void
 if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen, bool factory)
@@ -492,61 +498,46 @@ if_free_sadl(struct ifnet *ifp)
 	splx(s);
 }
 
-/*
- * Attach an interface to the
- * list of "active" interfaces.
- */
-void
-if_attach(struct ifnet *ifp)
+static void
+if_getindex(ifnet_t *ifp)
 {
 	int indexlim = 0;
-
-	if (if_indexlim == 0) {
-		TAILQ_INIT(&ifnet);
-		if_indexlim = 8;
-	}
-	TAILQ_INIT(&ifp->if_addrlist);
-	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
-
-	if (ifioctl_attach(ifp) != 0)
-		panic("%s: ifioctl_attach() failed", __func__);
 
 	mutex_enter(&index_gen_mtx);
 	ifp->if_index_gen = index_gen++;
 	mutex_exit(&index_gen_mtx);
 
 	ifp->if_index = if_index;
-	if (ifindex2ifnet == NULL)
+	if (ifindex2ifnet == NULL) {
 		if_index++;
-	else
-		while (ifp->if_index < if_indexlim &&
-		    ifindex2ifnet[ifp->if_index] != NULL) {
-			++if_index;
-			if (if_index == 0)
-				if_index = 1;
+		goto skip;
+	}
+	while (if_byindex(ifp->if_index)) {
+		/*
+		 * If we hit USHRT_MAX, we skip back to 0 since
+		 * there are a number of places where the value
+		 * of if_index or if_index itself is compared
+		 * to or stored in an unsigned short.  By
+		 * jumping back, we won't botch those assignments
+		 * or comparisons.
+		 */
+		if (++if_index == 0) {
+			if_index = 1;
+		} else if (if_index == USHRT_MAX) {
 			/*
-			 * If we hit USHRT_MAX, we skip back to 0 since
-			 * there are a number of places where the value
-			 * of if_index or if_index itself is compared
-			 * to or stored in an unsigned short.  By
-			 * jumping back, we won't botch those assignments
-			 * or comparisons.
+			 * However, if we have to jump back to
+			 * zero *twice* without finding an empty
+			 * slot in ifindex2ifnet[], then there
+			 * there are too many (>65535) interfaces.
 			 */
-			else if (if_index == USHRT_MAX) {
-				/*
-				 * However, if we have to jump back to
-				 * zero *twice* without finding an empty
-				 * slot in ifindex2ifnet[], then there
-				 * there are too many (>65535) interfaces.
-				 */
-				if (indexlim++)
-					panic("too many interfaces");
-				else
-					if_index = 1;
-			}
-			ifp->if_index = if_index;
+			if (indexlim++)
+				panic("too many interfaces");
+			else
+				if_index = 1;
 		}
-
+		ifp->if_index = if_index;
+	}
+skip:
 	/*
 	 * We have some arrays that should be indexed by if_index.
 	 * since if_index will grow dynamically, they should grow too.
@@ -582,8 +573,22 @@ if_attach(struct ifnet *ifp)
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
-
 	ifindex2ifnet[ifp->if_index] = ifp;
+}
+
+/*
+ * Attach an interface to the list of "active" interfaces.
+ */
+void
+if_attach(ifnet_t *ifp)
+{
+	TAILQ_INIT(&ifp->if_addrlist);
+	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
+
+	if (ifioctl_attach(ifp) != 0)
+		panic("%s: ifioctl_attach() failed", __func__);
+
+	if_getindex(ifp);
 
 	/*
 	 * Link level name is allocated later by a separate call to
@@ -856,7 +861,7 @@ again:
 
 	ifindex2ifnet[ifp->if_index] = NULL;
 
-	TAILQ_REMOVE(&ifnet, ifp, if_list);
+	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
 
 	ifioctl_detach(ifp);
 
@@ -883,13 +888,9 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 
 	prev = NULL;
 	for (m = q->ifq_head; m != NULL; m = next) {
+		KASSERT((m->m_flags & M_PKTHDR) != 0);
+
 		next = m->m_nextpkt;
-#ifdef DIAGNOSTIC
-		if ((m->m_flags & M_PKTHDR) == 0) {
-			prev = m;
-			continue;
-		}
-#endif
 		if (m->m_pkthdr.rcvif != ifp) {
 			prev = m;
 			continue;

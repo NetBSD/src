@@ -1,4 +1,0 @@
-.\" $NetBSD: man.local,v 1.4 2003/06/30 18:41:24 wiz Exp $
-.ds Lt <
-.ds Gt >
-.ds Am \&&
