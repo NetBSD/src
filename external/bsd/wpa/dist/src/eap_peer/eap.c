@@ -881,7 +881,7 @@ static void eap_sm_processIdentity(struct eap_sm *sm, const struct wpabuf *req)
 static int eap_sm_imsi_identity(struct eap_sm *sm,
 				struct eap_peer_config *conf)
 {
-	int aka = 0;
+	enum { EAP_SM_SIM, EAP_SM_AKA, EAP_SM_AKA_PRIME } method = EAP_SM_SIM;
 	char imsi[100];
 	size_t imsi_len;
 	struct eap_method_type *m = conf->eap_methods;
@@ -903,8 +903,14 @@ static int eap_sm_imsi_identity(struct eap_sm *sm,
 	for (i = 0; m && (m[i].vendor != EAP_VENDOR_IETF ||
 			  m[i].method != EAP_TYPE_NONE); i++) {
 		if (m[i].vendor == EAP_VENDOR_IETF &&
+		    m[i].method == EAP_TYPE_AKA_PRIME) {
+			method = EAP_SM_AKA_PRIME;
+			break;
+		}
+
+		if (m[i].vendor == EAP_VENDOR_IETF &&
 		    m[i].method == EAP_TYPE_AKA) {
-			aka = 1;
+			method = EAP_SM_AKA;
 			break;
 		}
 	}
@@ -917,7 +923,17 @@ static int eap_sm_imsi_identity(struct eap_sm *sm,
 		return -1;
 	}
 
-	conf->identity[0] = aka ? '0' : '1';
+	switch (method) {
+	case EAP_SM_SIM:
+		conf->identity[0] = '1';
+		break;
+	case EAP_SM_AKA:
+		conf->identity[0] = '0';
+		break;
+	case EAP_SM_AKA_PRIME:
+		conf->identity[0] = '6';
+		break;
+	}
 	os_memcpy(conf->identity + 1, imsi, imsi_len);
 	conf->identity_len = 1 + imsi_len;
 

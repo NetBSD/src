@@ -1,5 +1,29 @@
 ChangeLog for hostapd
 
+2012-11-06 - v1.1
+	* Fix EAPOL processing when STA switches between multi-BSSes.
+	* EAP-TLS server: Fix a bug with TLS Message Length validation that
+	  could result in the process terminating.
+	* Fix memory allocation failure handling in EAP-TTLS/MSCHAPv2 server.
+	* Fix EAP-FAST with OpenSSL 1.0.1.
+	* Fix WPA GTK rekeying with multiple VLANs.
+	* EAP-pwd: Increase maximum number of hunting-and-pecking iterations,
+	  which results in less authentication attempts failing.
+	* hlr_auc_gw: Use 5 bit IND for SQN updates. The length of IND can be
+	  configured on the command line with the new -i<IND len> parameter.
+	  -i0 would make hlr_auc_gw behave the same as the prev implementation.
+	* EAP-AKA'
+	  - Update to RFC 5448 in the leading characters used in the username.
+	    This will make EAP-AKA' not interoperate between the earlier draft
+	    version and the new version.
+	  - server: Fix identity for MK derivation, when the EAP client is using
+	    pseudonym.
+	* WPS:
+	  - Fix nonce comparisons to compare all bytes, not just the first byte.
+	  - Fix NFC password token building with WPS 2.0 to avoid wpabuf
+	    overflow and application abort if NFC out-of-band mechanism is used
+	    with WPS 2.0 enabled.
+
 2012-04-18 - v1.0
 	* Add channel selection support in hostapd. See hostapd.conf.
 	* Add support for IEEE 802.11v Time Advertisement mechanism with UTC

@@ -1137,7 +1137,10 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 				"mode");
 			return;
 		}
-		wpa_supplicant_create_ap(wpa_s, ssid);
+		if (wpa_supplicant_create_ap(wpa_s, ssid) < 0) {
+			wpa_supplicant_set_state(wpa_s, WPA_DISCONNECTED);
+			return;
+		}
 		wpa_s->current_bss = bss;
 #else /* CONFIG_AP */
 		wpa_msg(wpa_s, MSG_ERROR, "AP mode support not included in "
@@ -1365,7 +1368,12 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 	if (bss) {
 		params.ssid = bss->ssid;
 		params.ssid_len = bss->ssid_len;
-		if (!wpas_driver_bss_selection(wpa_s)) {
+		if (!wpas_driver_bss_selection(wpa_s) || ssid->bssid_set) {
+			wpa_printf(MSG_DEBUG, "Limit connection to BSSID "
+				   MACSTR " freq=%u MHz based on scan results "
+				   "(bssid_set=%d)",
+				   MAC2STR(bss->bssid), bss->freq,
+				   ssid->bssid_set);
 			params.bssid = bss->bssid;
 			params.freq = bss->freq;
 		}
@@ -1435,6 +1443,7 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 			 * succeed.
 			 */
 			wpas_connection_failed(wpa_s, wpa_s->pending_bssid);
+			wpa_supplicant_set_state(wpa_s, WPA_DISCONNECTED);
 			os_memset(wpa_s->pending_bssid, 0, ETH_ALEN);
 			return;
 		}
@@ -2419,6 +2428,14 @@ static void wpa_supplicant_deinit_iface(struct wpa_supplicant *wpa_s,
 
 	wpa_supplicant_cleanup(wpa_s);
 
+#ifdef CONFIG_P2P
+	if (wpa_s == wpa_s->global->p2p_init_wpa_s && wpa_s->global->p2p) {
+		wpa_dbg(wpa_s, MSG_DEBUG, "P2P: Disable P2P since removing "
+			"the management interface is being removed");
+		wpas_p2p_deinit_global(wpa_s->global);
+	}
+#endif /* CONFIG_P2P */
+
 	if (notify)
 		wpas_notify_iface_removed(wpa_s);
 
@@ -2926,3 +2943,77 @@ int wpas_driver_bss_selection(struct wpa_supplicant *wpa_s)
 	return wpa_s->conf->ap_scan == 2 ||
 		(wpa_s->drv_flags & WPA_DRIVER_FLAGS_BSS_SELECTION);
 }
+
+
+#if defined(CONFIG_CTRL_IFACE) || defined(CONFIG_CTRL_IFACE_DBUS_NEW)
+int wpa_supplicant_ctrl_iface_ctrl_rsp_handle(struct wpa_supplicant *wpa_s,
+					      struct wpa_ssid *ssid,
+					      const char *field,
+					      const char *value)
+{
+#ifdef IEEE8021X_EAPOL
+	struct eap_peer_config *eap = &ssid->eap;
+
+	wpa_printf(MSG_DEBUG, "CTRL_IFACE: response handle field=%s", field);
+	wpa_hexdump_ascii_key(MSG_DEBUG, "CTRL_IFACE: response value",
+			      (const u8 *) value, os_strlen(value));
+
+	switch (wpa_supplicant_ctrl_req_from_string(field)) {
+	case WPA_CTRL_REQ_EAP_IDENTITY:
+		os_free(eap->identity);
+		eap->identity = (u8 *) os_strdup(value);
+		eap->identity_len = os_strlen(value);
+		eap->pending_req_identity = 0;
+		if (ssid == wpa_s->current_ssid)
+			wpa_s->reassociate = 1;
+		break;
+	case WPA_CTRL_REQ_EAP_PASSWORD:
+		os_free(eap->password);
+		eap->password = (u8 *) os_strdup(value);
+		eap->password_len = os_strlen(value);
+		eap->pending_req_password = 0;
+		if (ssid == wpa_s->current_ssid)
+			wpa_s->reassociate = 1;
+		break;
+	case WPA_CTRL_REQ_EAP_NEW_PASSWORD:
+		os_free(eap->new_password);
+		eap->new_password = (u8 *) os_strdup(value);
+		eap->new_password_len = os_strlen(value);
+		eap->pending_req_new_password = 0;
+		if (ssid == wpa_s->current_ssid)
+			wpa_s->reassociate = 1;
+		break;
+	case WPA_CTRL_REQ_EAP_PIN:
+		os_free(eap->pin);
+		eap->pin = os_strdup(value);
+		eap->pending_req_pin = 0;
+		if (ssid == wpa_s->current_ssid)
+			wpa_s->reassociate = 1;
+		break;
+	case WPA_CTRL_REQ_EAP_OTP:
+		os_free(eap->otp);
+		eap->otp = (u8 *) os_strdup(value);
+		eap->otp_len = os_strlen(value);
+		os_free(eap->pending_req_otp);
+		eap->pending_req_otp = NULL;
+		eap->pending_req_otp_len = 0;
+		break;
+	case WPA_CTRL_REQ_EAP_PASSPHRASE:
+		os_free(eap->private_key_passwd);
+		eap->private_key_passwd = (u8 *) os_strdup(value);
+		eap->pending_req_passphrase = 0;
+		if (ssid == wpa_s->current_ssid)
+			wpa_s->reassociate = 1;
+		break;
+	default:
+		wpa_printf(MSG_DEBUG, "CTRL_IFACE: Unknown field '%s'", field);
+		return -1;
+	}
+
+	return 0;
+#else /* IEEE8021X_EAPOL */
+	wpa_printf(MSG_DEBUG, "CTRL_IFACE: IEEE 802.1X not included");
+	return -1;
+#endif /* IEEE8021X_EAPOL */
+}
+#endif /* CONFIG_CTRL_IFACE || CONFIG_CTRL_IFACE_DBUS_NEW */

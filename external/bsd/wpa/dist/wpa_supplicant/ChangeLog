@@ -1,5 +1,81 @@
 ChangeLog for wpa_supplicant
 
+2012-11-06 - v1.1
+	* Fix EAPOL supplicant port authorization with PMKSA caching.
+	* Fix EAPOL processing when STA switches between multi-BSSes.
+	* Fix EAP-FAST with OpenSSL 1.0.1.
+	* EAP-pwd: Increase maximum number of hunting-and-pecking iterations,
+	  which results in less authentication attempts failing.
+	* Set state to DISCONNECTED on AP creation errors. Previously the
+	  supplicant would stay in SCANNING state forever.
+	* Fix REMOVE_NETWORK to not run operations with invalid current_ssid.
+	* EAP-SIM peer: Fix AT_COUNTER_TOO_SMALL use.
+	* Interworking: Fix PLMN matching with multiple entries to compare all
+	  entries, not just the first one.
+	* Handle long configuration file lines more gracefully.
+	* Fix adding extra IEs in sched scan.
+	* PMKSA: Set cur_pmksa pointer during initial association.
+	* PMKSA: Do not evict the active cache entry when adding new ones.
+	* Set state consistently to DISCONNECTED on auth/assoc failures.
+	* Fix BSSID enforcement with driver-based BSS selection. Set BSSID and
+	  channel when the network block has an explicit bssid parameter to
+	  select which BSS is to be used.
+	* wpa_gui: Fix compilation with gcc/g++ 4.7.
+	* EAP-AKA'
+	  - Update to RFC 5448 in the leading characters used in the username.
+	    This will make EAP-AKA' not interoperate between the earlier draft
+	    version and the new version.
+	  - Fix SIM/USIM determination to support EAP-AKA'.
+	* dbus:
+	  - Add global capabilities property.
+	  - Fix bss_expire_count getter, which was returning the wrong value.
+	  - P2P: Remove network_object dictionary entry from signal
+	    GroupStarted.
+	  - Fix D-Bus build without ctrl_iface.
+	* WPS:
+	  - Fix nonce comparisons to compare all bytes, not just the first byte.
+	  - Fix NFC password token building with WPS 2.0 to avoid wpabuf
+	    overflow and application abort if NFC out-of-band mechanism is used
+	    with WPS 2.0 enabled.
+	  - Fix cleanup of WPS operations (by clearing them) in WPA_SCANNING
+	    and WPA_DISCONNECTED states.
+	  - Fix issue with BSSID filter handling that could cause only a single
+	    one of the available BSSes to be available or could cause issues
+	    connecting.
+	  - Fix overlapping memcpy on WPS interface addition.
+	* P2P:
+	  - Remove channel 14 from supported P2P channels.
+	  - Fix Provision Discovery retries on delay in off channel
+	    transmission, to avoid unnecessary retries.
+	  - Limit maximum number of stored P2P clients (the p2p_client_list
+	    parameter) to 100.
+	  - Improve p2p_client_list updates in configuration file, reording
+	    entries so that the most recently added values are maintained in
+	    the list if the list gets truncated due to size.
+	  - Fix Provision Discovery retries during p2p_find by making the
+	    p2p_find case behave consistently with the limited retry
+	    behavior used with Provision Discovery retries in the IDLE state.
+	  - Fix P2P Client Discoverability bit updates so that the bit is only
+	    updated based on P2P Group Info attribute from a GO.
+	  - Fix GO Negotiation race condition where both devices may believe
+	    they are the GO. (Ignore unexpected GO Neg Response if we have
+	    already sent GO Neg Response.)
+	  - Deinitialize global P2P context on P2P management interface removal.
+	  - Wait 100 ms if driver fails to start listen operation. This is a
+	    workaround for some drivers that may accept the remain-on-channel
+	    command, but instead of indicating start event for
+	    remain-on-channel, just indicate that the operation has been
+	    cancelled immediately.
+	  - Clone max_sta_num parameter for group interfaces, allowing this
+	    parameter set in the main config file to apply to dynamically
+	    created P2P group interfaces.
+	  - Fix Device ID matching for Probe Request frames, which was checking
+	    only the first octet of the P2P Device Address.
+	  - Do not update peer Listen channel based on PD Request Invitation
+	    Request frames (just on Probe Response frames).
+	  - Fix p2p_listen to disallow scheduling a new after scan operation
+	    in the case where a p2p_connect operation is pending.
+
 2012-04-18 - v1.0
 	* bsd: Add support for setting HT values in IFM_MMASK.
 	* Delay STA entry removal until Deauth/Disassoc TX status in AP mode.

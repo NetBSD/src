@@ -12,16 +12,12 @@
  * See README and COPYING for more details.
  */
 
-#ifdef __MINGW32__
-/* Need to get getopt() */
-#include <unistd.h>
-#endif
-
 #ifdef CONFIG_NATIVE_WINDOWS
 #include <windows.h>
 #endif /* CONFIG_NATIVE_WINDOWS */
 
 #include <cstdio>
+#include <unistd.h>
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QImageReader>
