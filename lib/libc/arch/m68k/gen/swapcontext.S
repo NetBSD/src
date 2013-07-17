@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2013/07/16 22:12:20 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2013/07/17 03:05:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.5 2013/07/16 22:12:20 matt Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.6 2013/07/17 03:05:17 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -41,8 +42,8 @@ ENTRY(swapcontext)
 	tstl	%d0			| OK?
 	jne	L1
 	movl	(%sp),%a0
-	addql	#8,96(%a0)		| adjust saved stack pointer (again)
-	movl	4(%sp),100(%a0)	| adjust saved program counter (again)
+	addql	#8,UC_MCONTEXT_SP(%a0)	| adjust saved stack pointer (again)
+	movl	%sp@(4),UC_MCONTEXT_PC(%a0) | adjust saved program counter (again)
 	movl	12(%sp),(%sp)		| push ucp on stack
 	jbsr	PIC_PLT(_C_LABEL(setcontext))	| setcontext(ucp)
 L1:	addql	#4,%sp			| pop ucp
