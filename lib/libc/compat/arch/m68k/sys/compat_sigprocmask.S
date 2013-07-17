@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.2 2013/07/16 23:00:15 matt Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.3 2013/07/17 04:56:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.2 2013/07/16 23:00:15 matt Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.3 2013/07/17 04:56:14 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,8 @@ ENTRY(sigprocmask)
 	tstl	8(%sp)			/* check new sigset pointer */
 	jne	gotptr			/* if not null, indirect */
 /*	movl	#0,8(%sp)		/* null mask pointer: block empty set */
-	movl	#1,4(%sp)		/* SIG_BLOCK */
+	movql	#1,%d0			/* SIG_BLOCK */
+	movl	%d0,4(%sp)
 	jra	doit
 gotptr:
 	movl	8(%sp),%a0
