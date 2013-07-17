@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.27 2013/07/17 20:13:04 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.28 2013/07/17 23:09:26 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.27 2013/07/17 20:13:04 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.28 2013/07/17 23:09:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -645,8 +645,8 @@ static char *
 _yconv(const int a, const int b, const int convert_top, const int convert_yy,
     char *pt, const char *const ptlim)
 {
-	register int	lead;
-	register int	trail;
+	int	lead;
+	int	trail;
 
 #define DIVISOR	100
 	trail = a % DIVISOR + b % DIVISOR;

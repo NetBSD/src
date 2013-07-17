@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.74 2013/07/17 20:13:04 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.75 2013/07/17 23:09:26 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.74 2013/07/17 20:13:04 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.75 2013/07/17 23:09:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1538,7 +1538,7 @@ offtime(const time_t *const timep, long offset)
 	struct tm *tmp;
 
 	if ((offset > 0 && offset > INT_FAST32_MAX) ||
-	    (offset < 0 && offset > INT_FAST32_MIN)) {
+	    (offset < 0 && offset < INT_FAST32_MIN)) {
 		errno = EOVERFLOW;
 		return NULL;
 	}
@@ -1554,7 +1554,7 @@ struct tm *
 offtime_r(const time_t *timep, long offset, struct tm *tmp)
 {
 	if ((offset > 0 && offset > INT_FAST32_MAX) ||
-	    (offset < 0 && offset > INT_FAST32_MIN)) {
+	    (offset < 0 && offset < INT_FAST32_MIN)) {
 		errno = EOVERFLOW;
 		return NULL;
 	}
@@ -2189,7 +2189,7 @@ timeoff(struct tm *const tmp, long offset)
 	time_t t;
 
 	if ((offset > 0 && offset > INT_FAST32_MAX) ||
-	    (offset < 0 && offset > INT_FAST32_MIN)) {
+	    (offset < 0 && offset < INT_FAST32_MIN)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
