@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1043 2013/07/17 20:15:49 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1044 2013/07/17 21:58:14 adam Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1269,8 +1269,8 @@ upstream but there is too much inertia to apply them. Check for .gitignore
 files.
 
 Package:	wpa_supplicant/hostapd
-Version:	1.0
-Current Vers:	1.0
+Version:	1.1
+Current Vers:	2.0
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/
