@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.224 2013/07/16 17:48:52 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.225 2013/07/17 19:24:56 martin Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -64,7 +64,7 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .if ${WARNS} > 4
 CFLAGS+=	-Wold-style-definition
 .endif
-.if ${WARNS} > 5
+.if ${WARNS} > 5 && !(defined(HAVE_GCC) && ${HAVE_GCC} <= 45)
 CFLAGS+=	-Wconversion
 .endif
 CFLAGS+=	-Wsign-compare -Wformat=2
