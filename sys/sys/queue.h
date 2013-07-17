@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.54 2013/04/10 22:22:16 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.55 2013/07/17 15:50:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,8 +33,6 @@
 
 #ifndef	_SYS_QUEUE_H_
 #define	_SYS_QUEUE_H_
-
-#include <sys/null.h>
 
 /*
  * This file defines five types of data structures: singly-linked lists,
@@ -81,6 +79,17 @@
  *
  * For details on the use of these macros, see the queue(3) manual page.
  */
+
+/*
+ * Include the definition of NULL only on NetBSD because sys/null.h
+ * is not available elsewhere.  This conditional makes the header
+ * portable and it can simply be dropped verbatim into any system.
+ * The caveat is that on other systems some other header
+ * must provide NULL before the macros can be used.
+ */
+#ifdef __NetBSD__
+#include <sys/null.h>
+#endif
 
 /*
  * List definitions.
