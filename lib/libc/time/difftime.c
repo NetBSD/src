@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.13 2012/10/26 23:23:23 christos Exp $	*/
+/*	$NetBSD: difftime.c,v 1.14 2013/07/17 20:13:04 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.13 2012/10/26 23:23:23 christos Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.14 2013/07/17 20:13:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -18,13 +18,12 @@ __RCSID("$NetBSD: difftime.c,v 1.13 2012/10/26 23:23:23 christos Exp $");
 
 #include "private.h"	/* for time_t, TYPE_INTEGRAL, and TYPE_SIGNED */
 
-double
+double ATTRIBUTE_CONST
 difftime(const time_t time1, const time_t time0)
 {
 	/*
 	** If (sizeof (double) > sizeof (time_t)) simply convert and subtract
 	** (assuming that the larger type has more precision).
-	** This is the common real-world case circa 2004.
 	*/
 	/*CONSTCOND*/
 	if (sizeof (double) > sizeof (time_t))
@@ -44,8 +43,8 @@ difftime(const time_t time1, const time_t time0)
 		** if the minuend is greater than or equal to the subtrahend.
 		*/
 		if (time1 >= time0)
-			return time1 - time0;
-		else	return -((double) (time0 - time1));
+			return            time1 - time0;
+		else	return -(double) (time0 - time1);
 	}
 	/*
 	** time_t is integral and signed.
@@ -56,17 +55,17 @@ difftime(const time_t time1, const time_t time0)
 		return time1 - time0;
 	/*
 	** time1 and time0 have opposite signs.
-	** Punt if unsigned long is too narrow.
+	** Punt if uintmax_t is too narrow.
+	** This suffers from double rounding; attempt to lessen that
+	** by using long double temporaries.
 	*/
 	/* CONSTCOND */
-	if (sizeof (unsigned long) < sizeof (time_t))
+	if (sizeof (uintmax_t) < sizeof (time_t))
 		return (double) time1 - (double) time0;
 	/*
 	** Stay calm...decent optimizers will eliminate the complexity below.
 	*/
 	if (time1 >= 0 /* && time0 < 0 */)
-		return (unsigned long) time1 +
-			(unsigned long) (-(time0 + 1)) + 1;
-	return -(double) ((unsigned long) time0 +
-		(unsigned long) (-(time1 + 1)) + 1);
+		return    (uintmax_t) time1 + (uintmax_t) (-(time0 + 1)) + 1;
+	return -(double) ((uintmax_t) time0 + (uintmax_t) (-(time1 + 1)) + 1);
 }
