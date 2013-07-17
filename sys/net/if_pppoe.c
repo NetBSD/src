@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.99 2013/06/29 21:06:58 rmind Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.100 2013/07/17 10:16:58 oki Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.99 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.100 2013/07/17 10:16:58 oki Exp $");
 
 #include "pppoe.h"
 #include "opt_pppoe.h"
@@ -717,6 +717,7 @@ breakbreak:;
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
 		break;
 	case PPPOE_CODE_PADT:
+		sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
 		if (sc == NULL)
 			goto done;
 		pppoe_clear_softc(sc, "received PADT");
