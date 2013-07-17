@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.10 2012/08/09 12:38:25 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.11 2013/07/17 20:13:04 christos Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -123,7 +123,7 @@ struct tzhead {
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
 #define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
 #define MONSPERYEAR	12
 
 #define TM_SUNDAY	0

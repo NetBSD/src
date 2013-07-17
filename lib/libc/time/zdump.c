@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.29 2013/07/17 20:13:04 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.29 2013/07/17 20:13:04 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -14,7 +14,12 @@ __RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
 ** This code has been made independent of the rest of the time
 ** conversion package to increase confidence in the verification it provides.
 ** You can use this code to help in verifying other implementations.
+**
+** However, include private.h when debugging, so that it overrides
+** time_t consistently with the rest of the package.
 */
+
+#include "private.h"
 
 #include "stdio.h"	/* for stdout, stderr */
 #include "string.h"	/* for strcpy */
@@ -28,7 +33,46 @@ __RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
 #define isascii(x) 1
 #endif /* !defined isascii */
 
-#include "private.h"
+/*
+** Substitutes for pre-C99 compilers.
+** Much of this section of code is stolen from private.h.
+*/
+
+#ifndef HAVE_STDINT_H
+# define HAVE_STDINT_H \
+    (199901 <= __STDC_VERSION__ || 2 < (__GLIBC__ + (0 < __GLIBC_MINOR__)))
+#endif
+#if HAVE_STDINT_H
+# include "stdint.h"
+#endif
+#ifndef HAVE_INTTYPES_H
+# define HAVE_INTTYPES_H HAVE_STDINT_H
+#endif
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+
+#ifndef INT_FAST32_MAX
+# if INT_MAX >> 31 == 0
+typedef long int_fast32_t;
+# else
+typedef int int_fast32_t;
+# endif
+#endif
+
+#ifndef INTMAX_MAX
+# if defined LLONG_MAX || defined __LONG_LONG_MAX__
+typedef long long intmax_t;
+#  define PRIdMAX "lld"
+# else
+typedef long intmax_t;
+#  define PRIdMAX "ld"
+# endif
+#endif
+#ifndef SCNdMAX
+# define SCNdMAX PRIdMAX
+#endif
+
 
 #ifndef ZDUMP_LO_YEAR
 #define ZDUMP_LO_YEAR	(-500)
@@ -97,7 +141,7 @@ __RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
 #define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
 #endif /* !defined isleap_sum */
 
-#define SECSPERDAY	((long) SECSPERHOUR * HOURSPERDAY)
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
 
@@ -119,11 +163,11 @@ __RCSID("$NetBSD: zdump.c,v 1.28 2013/03/02 21:24:28 christos Exp $");
 #endif /* !defined lint */
 #endif /* !defined GNUC_or_lint */
 
-#ifndef __pure
+#ifndef ATTRIBUTE_PURE
 #if 2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)
-# define __pure __attribute__ ((__pure__))
+# define ATTRIBUTE_PURE __attribute__ ((ATTRIBUTE_PURE__))
 #else
-# define __pure /* empty */
+# define ATTRIBUTE_PURE /* empty */
 #endif
 #endif
 
@@ -159,22 +203,42 @@ extern int	getopt(int argc, char * const argv[],
 extern char *	optarg;
 extern int	optind;
 
-static time_t	absolute_min_time;
-static time_t	absolute_max_time;
+/* The minimum and maximum finite time values.  */
+static time_t	absolute_min_time =
+   ((time_t) 0.5 == 0.5
+    ? (sizeof (time_t) == sizeof (float) ? (time_t) -FLT_MAX
+       : sizeof (time_t) == sizeof (double) ? (time_t) -DBL_MAX
+       : sizeof (time_t) == sizeof (long double) ? (time_t) -LDBL_MAX
+       : 0)
+#ifndef TIME_T_FLOATING
+    : (time_t) -1 < 0
+    ? (time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1)
+#endif
+    : 0);
+static time_t	absolute_max_time =
+  ((time_t) 0.5 == 0.5
+   ? (sizeof (time_t) == sizeof (float) ? (time_t) FLT_MAX
+      : sizeof (time_t) == sizeof (double) ? (time_t) DBL_MAX
+      : sizeof (time_t) == sizeof (long double) ? (time_t) LDBL_MAX
+      : -1)
+#ifndef TIME_T_FLOATING
+   : (time_t) -1 < 0
+   ? - (~ 0 < 0) - ((time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1))
+#endif
+   : -1);
 static size_t	longest;
 static char *	progname;
 static int	warned;
 
 static const char *	abbr(struct tm * tmp);
 static void	abbrok(const char * abbrp, const char * zone);
-static long	delta(struct tm * newp, struct tm * oldp) __pure;
+static intmax_t	delta(struct tm * newp, struct tm * oldp) ATTRIBUTE_PURE;
 static void	dumptime(const struct tm * tmp);
 static time_t	hunt(char * name, time_t lot, time_t	hit);
-int		main(int, char **);
-static void	setabsolutes(void);
+static void	checkabsolutes(void);
 static void	show(char * zone, time_t t, int v);
 static const char *	tformat(void);
-static time_t	yeartot(long y) __pure;
+static time_t	yeartot(long y) ATTRIBUTE_PURE;
 
 #ifndef TYPECHECK
 #define my_localtime	localtime
@@ -252,9 +316,9 @@ __dead static void
 usage(FILE *const stream, const int status)
 {
 	(void) fprintf(stream,
-_("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n\
-\n\
-Report bugs to %s.\n"),
+_("%s: usage: %s [--version] [--help] [-{vV}] [-{ct} [lo,]hi] zonename ...\n"
+  "\n"
+  "Report bugs to %s.\n"),
 		       progname, progname, REPORT_BUGS_TO);
 	exit(status);
 }
@@ -263,11 +327,10 @@ int
 main(int argc, char *argv[])
 {
 	int		i;
-	int		c;
 	int		vflag;
+	int		Vflag;
 	char *		cutarg;
-	long		cutloyear = ZDUMP_LO_YEAR;
-	long		cuthiyear = ZDUMP_HI_YEAR;
+	char *		cuttimes;
 	time_t		cutlotime;
 	time_t		cuthitime;
 	char **		fakeenv;
@@ -279,8 +342,8 @@ main(int argc, char *argv[])
 	struct tm *	tmp;
 	struct tm *	newtmp;
 
-	INITIALIZE(cutlotime);
-	INITIALIZE(cuthitime);
+	cutlotime = absolute_min_time;
+	cuthitime = absolute_max_time;
 #if HAVE_GETTEXT
 	(void) setlocale(LC_ALL, "");
 #ifdef TZ_DOMAINDIR
@@ -296,25 +359,33 @@ main(int argc, char *argv[])
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
 		}
-	vflag = 0;
-	cutarg = NULL;
-	while ((c = getopt(argc, argv, "c:v")) == 'c' || c == 'v')
-		if (c == 'v')
-			vflag = 1;
-		else	cutarg = optarg;
-	if ((c != EOF && c != -1) ||
-		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
-			usage(stderr, EXIT_FAILURE);
-	}
-	if (vflag) {
-		if (cutarg != NULL) {
-			long	lo;
-			long	hi;
-			char	dummy;
+	vflag = Vflag = 0;
+	cutarg = cuttimes = NULL;
+	for (;;)
+	  switch (getopt(argc, argv, "c:t:vV")) {
+	  case 'c': cutarg = optarg; break;
+	  case 't': cuttimes = optarg; break;
+	  case 'v': vflag = 1; break;
+	  case 'V': Vflag = 1; break;
+	  case -1:
+	    if (! (optind == argc - 1 && strcmp(argv[optind], "=") == 0))
+	      goto arg_processing_done;
+	    /* Fall through.  */
+	  default:
+	    usage(stderr, EXIT_FAILURE);
+	  }
+ arg_processing_done:;
 
-			if (sscanf(cutarg, "%ld%c", &hi, &dummy) == 1) {
+	if (vflag | Vflag) {
+		intmax_t	lo;
+		intmax_t	hi;
+		char		dummy;
+		register intmax_t cutloyear = ZDUMP_LO_YEAR;
+		register intmax_t cuthiyear = ZDUMP_HI_YEAR;
+		if (cutarg != NULL) {
+			if (sscanf(cutarg, "%"SCNdMAX"%c", &hi, &dummy) == 1) {
 				cuthiyear = hi;
-			} else if (sscanf(cutarg, "%ld,%ld%c",
+			} else if (sscanf(cutarg, "%"SCNdMAX",%"SCNdMAX"%c",
 				&lo, &hi, &dummy) == 2) {
 					cutloyear = lo;
 					cuthiyear = hi;
@@ -324,9 +395,37 @@ main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
-		setabsolutes();
-		cutlotime = yeartot(cutloyear);
-		cuthitime = yeartot(cuthiyear);
+		checkabsolutes();
+		if (cutarg != NULL || cuttimes == NULL) {
+			cutlotime = yeartot(cutloyear);
+			cuthitime = yeartot(cuthiyear);
+		}
+		if (cuttimes != NULL) {
+			if (sscanf(cuttimes, "%"SCNdMAX"%c", &hi, &dummy) == 1) {
+				if (hi < cuthitime) {
+					if (hi < absolute_min_time)
+						hi = absolute_min_time;
+					cuthitime = hi;
+				}
+			} else if (sscanf(cuttimes, "%"SCNdMAX",%"SCNdMAX"%c",
+					  &lo, &hi, &dummy) == 2) {
+				if (cutlotime < lo) {
+					if (absolute_max_time < lo)
+						lo = absolute_max_time;
+					cutlotime = lo;
+				}
+				if (hi < cuthitime) {
+					if (hi < absolute_min_time)
+						hi = absolute_min_time;
+					cuthitime = hi;
+				}
+			} else {
+				(void) fprintf(stderr,
+					_("%s: wild -t argument %s\n"),
+					progname, cuttimes);
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 	(void) time(&now);
 	longest = 0;
@@ -357,15 +456,17 @@ main(int argc, char *argv[])
 		static char	buf[MAX_STRING_LENGTH];
 
 		(void) strcpy(&fakeenv[0][3], argv[i]);	/* XXX strcpy is safe */
-		if (!vflag) {
+		if (! (vflag | Vflag)) {
 			show(argv[i], now, FALSE);
 			continue;
 		}
 		warned = FALSE;
 		t = absolute_min_time;
-		show(argv[i], t, TRUE);
-		t += SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
+		if (!Vflag) {
+			show(argv[i], t, TRUE);
+			t += SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+		}
 		if (t < cutlotime)
 			t = cutlotime;
 		tmp = my_localtime(&t);
@@ -397,11 +498,13 @@ main(int argc, char *argv[])
 			tm = newtm;
 			tmp = newtmp;
 		}
-		t = absolute_max_time;
-		t -= SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
-		t += SECSPERHOUR * HOURSPERDAY;
-		show(argv[i], t, TRUE);
+		if (!Vflag) {
+			t = absolute_max_time;
+			t -= SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+			t += SECSPERHOUR * HOURSPERDAY;
+			show(argv[i], t, TRUE);
+		}
 	}
 	if (fflush(stdout) || ferror(stdout)) {
 		err(EXIT_FAILURE, _("Error writing standard output"));
@@ -411,64 +514,23 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
 }
 
-static time_t
-ovfl_check(time_t t)
-{
-	if (t < 0 && t - 1 >= 0)
-		return t;
-	else
-		return t - 1;
-}
-
 static void
-setabsolutes(void)
+checkabsolutes(void)
 {
-	if (0.5 == (time_t) 0.5) {
-		/*
-		** time_t is floating.
-		*/
-		if (sizeof (time_t) == sizeof (float)) {
-			absolute_min_time = (time_t) -FLT_MAX;
-			absolute_max_time = (time_t) FLT_MAX;
-		} else if (sizeof (time_t) == sizeof (double)) {
-			absolute_min_time = (time_t) -DBL_MAX;
-			absolute_max_time = (time_t) DBL_MAX;
-		} else {
-			(void) fprintf(stderr,
+	if (absolute_max_time < absolute_min_time) {
+		(void) fprintf(stderr,
 _("%s: use of -v on system with floating time_t other than float or double\n"),
-				progname);
-			exit(EXIT_FAILURE);
-		}
-	} else if (0 > (time_t) -1) {
-		/*
-		** time_t is signed.  Assume overflow wraps around.
-		*/
-		time_t t = 0;
-		time_t t1 = 1;
-
-		while (t < t1) {
-			t = t1;
-			t1 = 2 * t1 + 1;
-		}
-
-		absolute_max_time = t;
-		t = -t;
-		absolute_min_time = ovfl_check(t);
-	} else {
-		/*
-		** time_t is unsigned.
-		*/
-		absolute_min_time = 0;
-		absolute_max_time = absolute_min_time - 1;
+			       progname);
+		exit(EXIT_FAILURE);
 	}
 }
 
 static time_t
 yeartot(const long y)
 {
-	long	myy;
-	long	seconds;
-	time_t	t;
+	intmax_t	myy;
+	int_fast32_t	seconds;
+	time_t		t;
 
 	myy = EPOCH_YEAR;
 	t = 0;
@@ -498,7 +560,6 @@ static time_t
 hunt(char *name, time_t lot, time_t hit)
 {
 	time_t			t;
-	long			diff;
 	struct tm		lotm;
 	struct tm *	lotmp;
 	struct tm		tm;
@@ -511,7 +572,7 @@ hunt(char *name, time_t lot, time_t hit)
 		(void) strncpy(loab, abbr(&lotm), (sizeof loab) - 1);
 	}
 	for ( ; ; ) {
-		diff = (long) (hit - lot);
+		time_t diff = hit - lot;
 		if (diff < 2)
 			break;
 		t = lot;
@@ -541,11 +602,11 @@ hunt(char *name, time_t lot, time_t hit)
 ** Thanks to Paul Eggert for logic used in delta.
 */
 
-static long
+static intmax_t
 delta(struct tm *newp, struct tm *oldp)
 {
-	long	result;
-	int	tmy;
+	intmax_t	result;
+	int		tmy;
 
 	if (newp->tm_year < oldp->tm_year)
 		return -delta(oldp, newp);
@@ -621,12 +682,18 @@ tformat(void)
 		return "%g";
 	}
 	if (0 > (time_t) -1) {		/* signed */
+		if (sizeof (time_t) == sizeof (intmax_t))
+			return "%"PRIdMAX;
 		if (sizeof (time_t) > sizeof (long))
 			return "%lld";
 		if (sizeof (time_t) > sizeof (int))
 			return "%ld";
 		return "%d";
 	}
+#ifdef PRIuMAX
+	if (sizeof (time_t) == sizeof (uintmax_t))
+		return "%"PRIuMAX;
+#endif
 	if (sizeof (time_t) > sizeof (unsigned long))
 		return "%llu";
 	if (sizeof (time_t) > sizeof (unsigned int))
