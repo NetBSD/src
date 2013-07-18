@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.47 2013/07/18 04:05:32 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.48 2013/07/18 15:39:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.47 2013/07/18 04:05:32 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.48 2013/07/18 15:39:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static void	 cat(char *);
 static const char	*check_pager(const char *);
 static int	 cleanup(void);
 static void	 how(char *);
-static void	 jump(char **, char *, char *);
+static void	 jump(char **, const char *, const char *);
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int);
 static void	 usage(void) __attribute__((__noreturn__));
@@ -122,13 +122,15 @@ static void	 addpath(struct manstate *, const char *, size_t, const char *);
 static const char *getclass(const char *);
 static void printmanpath(struct manstate *);
 
+static char EMPTY[1];
+
 /*
  * main function
  */
 int
 main(int argc, char **argv)
 {
-	static struct manstate m = { 0 }; 	/* init to zero */
+	static struct manstate m;
 	int ch, abs_section, found;
 	ENTRY *esubd, *epath;
 	char *p, **ap, *cmd;
@@ -464,6 +466,21 @@ main(int argc, char **argv)
 	exit(cleanup());
 }
 
+static void
+fixstring(char *buf, size_t len, const char *fmt, const char *str)
+{
+	const char *ptr = strstr(fmt, "%s");
+	size_t l;
+	if (ptr == NULL) {
+		strlcpy(buf, fmt, len);
+		return;
+	}
+	l = (size_t)(ptr - fmt) + 1;
+	strlcpy(buf, fmt, MIN(l, len));
+	strlcat(buf, str, len);
+	strlcat(buf, ptr + 2, len);
+}
+
 static int
 manual_find_buildkeyword(char *escpage, const char *fmt,
 	struct manstate *mp, glob_t *pg, size_t cnt)
@@ -483,7 +500,7 @@ manual_find_buildkeyword(char *escpage, const char *fmt,
 			continue;
 
 		*p = '\0';
-		(void)snprintf(buf, sizeof(buf), fmt, escpage, suffix->s);
+		fixstring(buf, sizeof(buf), fmt, escpage);
 		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 			if (!mp->where)
 				build_page(p + 1, &pg->gl_pathv[cnt], mp);
@@ -570,14 +587,14 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = "";
+						pg->gl_pathv[cnt] = EMPTY;
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = "";
+			pg->gl_pathv[cnt] = EMPTY;
 		}
 
   notfound:
@@ -626,7 +643,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			if (mp->pathsearch) {
 				p = strstr(pg->gl_pathv[cnt], mp->pathsearch);
 				if (!p || strchr(p, '/') == NULL) {
-					pg->gl_pathv[cnt] = ""; /* zap! */
+					pg->gl_pathv[cnt] = EMPTY; /* zap! */
 					continue;
 				}
 			}
@@ -665,14 +682,14 @@ next:				anyfound = 1;
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = "";
+						pg->gl_pathv[cnt] = EMPTY;
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = "";
+			pg->gl_pathv[cnt] = EMPTY;
 		}
 
 		if (anyfound && !mp->all)
@@ -700,7 +717,8 @@ static void
 build_page(char *fmt, char **pathp, struct manstate *mp)
 {
 	static int warned;
-	int olddir, fd, n, tmpdirlen;
+	int olddir, fd, n;
+	size_t tmpdirlen;
 	char *p, *b;
 	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
 	const char *tmpdir;
@@ -765,7 +783,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 		exit(EXIT_FAILURE);
 	}
 	(void)snprintf(buf, sizeof(buf), "%s > %s", fmt, tpath);
-	(void)snprintf(cmd, sizeof(cmd), buf, p);
+	fixstring(cmd, sizeof(cmd), buf, p);
 	(void)system(cmd);
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
@@ -842,7 +860,8 @@ how(char *fname)
 static void
 cat(char *fname)
 {
-	int fd, n;
+	int fd;
+	ssize_t n;
 	char buf[2048];
 
 	if ((fd = open(fname, O_RDONLY, 0)) < 0) {
@@ -851,7 +870,7 @@ cat(char *fname)
 		exit(EXIT_FAILURE);
 	}
 	while ((n = read(fd, buf, sizeof(buf))) > 0)
-		if (write(STDOUT_FILENO, buf, n) != n) {
+		if (write(STDOUT_FILENO, buf, (size_t)n) != n) {
 			warn("write");
 			(void)cleanup();
 			exit(EXIT_FAILURE);
@@ -898,11 +917,11 @@ check_pager(const char *name)
  *	strip out flag argument and jump
  */
 static void
-jump(char **argv, char *flag, char *name)
+jump(char **argv, const char *flag, const char *name)
 {
 	char **arg;
 
-	argv[0] = name;
+	argv[0] = __UNCONST(name);
 	for (arg = argv + 1; *arg; ++arg)
 		if (!strcmp(*arg, flag))
 			break;
