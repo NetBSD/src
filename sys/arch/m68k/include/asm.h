@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.31 2013/07/16 23:01:05 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.32 2013/07/18 22:21:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,12 +73,22 @@
 #ifndef _M68K_ASM_H_
 #define _M68K_ASM_H_
 
-#if defined(PIC)
+#define __IMMEDIATE		#
+
+#if defined(PIC) || defined(__pic__)
 #define PIC_PLT(name)		name@PLTPC
+#ifdef __mcoldfire__
+#define LEA_LCL(name,reg) \
+	movl	__IMMEDIATE name - .,reg ; \
+	lea	(-6,%pc,reg),reg
+#define GOT_SETUP(reg) \
+	movl	__IMMEDIATE _GLOBAL_OFFSET_TABLE_@GOTPC,reg ; \
+	lea	(-6,%pc,reg),reg
+#else
 #define LEA_LCL(name,reg)	lea	(name,%pc),reg
 #define GOT_SETUP(reg)		lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),reg
+#endif
 #else
-#define	__IMMEDIATE		#
 #define PIC_PLT(name)		name
 #define LEA_LCL(name,reg)	movl	__IMMEDIATE name,reg
 #define GOT_SETUP(reg)		/* nothing */
@@ -166,8 +176,13 @@
  * Need a better place for these but these are common across
  * all m68k ports so let's define just once.
  */
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
+#ifdef __mcoldfire__
+#define INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
+#define INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
+#else
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
+#define INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
+#endif
 
 #ifdef _KERNEL
 /*
