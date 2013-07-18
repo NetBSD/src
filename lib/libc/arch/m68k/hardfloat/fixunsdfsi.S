@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.1 2013/07/17 06:39:06 matt Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.2 2013/07/18 21:29:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,19 +39,36 @@
 #if 0
 	RCSID("from: @(#)fixunsdfsi.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.1 2013/07/17 06:39:06 matt Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.2 2013/07/18 21:29:08 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef __mcoldfire__
+	.section .rodata,"a"
+	.p2align 4
+L2G:	.double 0r2147483648.0
+#endif
 
 /* (unsigned) double */
 ENTRY(__fixunsdfsi)
 	fintrzd	4(%sp),%fp0
-	fcmpd	#0r2147483648.0,%fp0
+#ifdef __mcoldfire__
+	LEA_LCL(L2G,%a0)
+	fmoved	(%a0),%fp1
+	fcmpd	%fp1,%fp0
+#else
+	fmoved	#0r2147483648.0,%fp1
+	fcmpx	%fp1,%fp0
+#endif
 	fbge	Lwaybig
 	fmovel	%fp0,%d0
 	rts
 Lwaybig:
-	fsubd	#0r2147483648.0,%fp0
+#ifdef __mcoldfire__
+	fsubd	%fp1,%fp0
+#else
+	fsubx	%fp1,%fp0
+#endif
 	fmovel	%fp0,%d0
 	bset	#31,%d0
 	rts
