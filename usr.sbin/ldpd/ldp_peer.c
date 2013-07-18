@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.13 2013/07/11 05:55:13 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.14 2013/07/18 06:07:45 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -428,8 +428,11 @@ ldp_peer_add_mapping(struct ldp_peer * p, const struct sockaddr * a,
 
 	if (!p)
 		return -1;
-	if (ldp_peer_get_lm(p, a, prefix))
-		return LDP_E_ALREADY_DONE;
+	if ((lma = ldp_peer_get_lm(p, a, prefix)) != NULL) {
+		/* Change the current label */
+		lma->label = label;
+		return LDP_E_OK;
+	}
 
 	lma = malloc(sizeof(*lma));
 

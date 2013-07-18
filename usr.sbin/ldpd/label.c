@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.7 2013/07/16 02:54:32 kefren Exp $ */
+/* $NetBSD: label.c,v 1.8 2013/07/18 06:07:45 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -70,12 +70,13 @@ label_add(const union sockunion * so_dest, const union sockunion * so_pref,
 	assert(so_dest);
 	assert(so_pref);
 	assert(so_dest->sa.sa_family == so_pref->sa.sa_family);
+	assert(label_get(so_dest, so_pref) == NULL);
 
-	memcpy(&l->so_dest, so_dest, sizeof(union sockunion));
-	memcpy(&l->so_pref, so_pref, sizeof(union sockunion));
+	memcpy(&l->so_dest, so_dest, so_dest->sa.sa_len);
+	memcpy(&l->so_pref, so_pref, so_pref->sa.sa_len);
 
 	if (so_gate)
-		memcpy(&l->so_gate, so_gate, sizeof(union sockunion));
+		memcpy(&l->so_gate, so_gate, so_gate->sa.sa_len);
 	if (binding)
 		l->binding = binding;
 	else
@@ -130,8 +131,8 @@ label_reattach_route(struct label *l, int readd)
 	/* Delete and re-add IPv4 route */
 		if (get_route(&rg, &l->so_dest, &l->so_pref, 1) == LDP_E_OK) {
 			delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
-			add_route(&l->so_dest, &l->so_pref, &l->so_gate, NULL, NULL,
-			    NO_FREESO, RTM_READD);
+			add_route(&l->so_dest, &l->so_pref, &l->so_gate, NULL,
+			    NULL, NO_FREESO, RTM_READD);
 		} else if (from_union_to_cidr(&l->so_pref) == 32 &&
 		    l->so_dest.sa.sa_family == AF_INET &&
 		    get_route(&rg, &l->so_dest, NULL, 1) == LDP_E_OK) {
@@ -225,15 +226,15 @@ label_del_by_binding(uint32_t binding, int readd)
 struct label*
 label_get_by_prefix(const struct sockaddr *a, int prefixlen)
 {
-	union sockunion *so_dest, *so_pref;
+	const union sockunion *so_dest;
+	union sockunion *so_pref;
 	struct label *l;
 
-	so_dest = make_inet_union(satos(a));	// XXX: grobian
+	so_dest = (const union sockunion *)a;
 	so_pref = from_cidr_to_union(prefixlen);
 
 	l = label_get(so_dest, so_pref);
 
-	free(so_dest);
 	free(so_pref);
 
 	return l;
@@ -270,4 +271,21 @@ change_local_label(struct label *l, uint32_t newbind)
 	send_label_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)),
 		l->binding);
+}
+
+void
+label_check_assoc(struct ldp_peer *p)
+{
+	struct label *l;
+	struct ldp_peer_address *wp;
+
+	SLIST_FOREACH (l, &label_head, labels)
+		if (l->p == NULL && l->so_gate.sa.sa_family != 0)
+			SLIST_FOREACH(wp, &p->ldp_peer_address_head, addresses)
+				if (sockaddr_cmp(&l->so_gate.sa,
+				    &wp->address.sa) == 0){
+					l->p = p;
+					l->label = MPLS_LABEL_IMPLNULL;
+					break;
+				}
 }

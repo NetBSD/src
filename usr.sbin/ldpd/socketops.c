@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.28 2013/07/11 05:45:23 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.29 2013/07/18 06:07:45 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ bool	may_connect;
 void	recv_pdu(int);
 void	send_hello_alarm(int);
 __dead static void bail_out(int);
+static void print_info(int);
 static int bind_socket(int s, int stype);
 static int set_tos(int); 
 static int socket_reuse_port(int);
@@ -774,6 +775,19 @@ bail_out(int x)
 	exit(0);
 }
 
+static void
+print_info(int x)
+{
+	printf("Info for %s\n-------\n", LDP_ID);
+	printf("Neighbours:\n");
+	show_neighbours(1, NULL);
+	printf("Bindings:\n");
+	show_bindings(1, NULL);
+	printf("Labels:\n");
+	show_labels(1, NULL);
+	printf("--------\n");
+}
+
 /*
  * The big poll that catches every single event
  * on every socket.
@@ -798,12 +812,15 @@ the_big_loop(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, bail_out);
 	signal(SIGTERM, bail_out);
+	signal(SIGINFO, print_info);
 
 	/* Send first hellos in 5 seconds. Avoid No hello notifications */
 	may_connect = false;
 	alarm(5);
 
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
+	setsockopt(route_socket, SOL_SOCKET, SO_USELOOPBACK, &(int){0},
+		sizeof(int));
 
 	sock_error = bind_current_routes();
 	if (sock_error != LDP_E_OK) {
@@ -996,7 +1013,7 @@ new_peer_connection()
 		}
 	}
 	if (peer_ldp_id == NULL) {
-		fatalp("Got connection from %s, but no hello info exists\n",
+		warnp("Got connection from %s, but no hello info exists\n",
 		    satos(&peer_address.sa));
 		close(s);
 		return;
@@ -1036,10 +1053,12 @@ keep_alive(const struct ldp_peer * p)
 	kt.messageid = htonl(get_message_id());
 
 	send_tlv(p, (struct tlv *) (void *) &kt);
-
 }
 
-void 
+/*
+ * Process a message received from a peer
+ */
+void
 recv_session_pdu(struct ldp_peer * p)
 {
 	struct ldp_pdu *rpdu;
@@ -1181,6 +1200,11 @@ recv_session_pdu(struct ldp_peer * p)
 			atlv = (struct address_tlv *) ttmp;
 			altlv = (struct al_tlv *) (&atlv[1]);
 			add_ifaddresses(p, altlv);
+			/*
+			 * try to see if we have labels with null peer that
+			 * would match the new peer
+			 */
+			label_check_assoc(p);
 			print_bounded_addresses(p);
 			break;
 		case LDP_ADDRESS_WITHDRAW:

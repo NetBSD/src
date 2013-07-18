@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.4 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: label.h,v 1.5 2013/07/18 06:07:45 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -69,5 +69,6 @@ struct label *	label_get_by_prefix(const struct sockaddr *, int);
 uint32_t	get_free_local_label(void);
 void		change_local_label(struct label*, uint32_t);
 void		label_reattach_route(struct label*, int);
+void		label_check_assoc(struct ldp_peer *p);
 
 #endif /* !_LABEL_H_ */
