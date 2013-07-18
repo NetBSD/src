@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.rumpnetcomp,v 1.5 2012/08/15 17:56:58 rmind Exp $
+#	$NetBSD: Makefile.rumpnetcomp,v 1.6 2013/07/18 15:59:27 kefren Exp $
 #
 
-RUMPNETCOMP=	agr bridge net net80211 netbt netinet npf local shmif virtif
+RUMPNETCOMP=	agr bridge net net80211 netbt netinet netmpls npf
+RUMPNETCOMP+=	local shmif virtif
 
 RUMPNETSOCKIN=	sockin
 
