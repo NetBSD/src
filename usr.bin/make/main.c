@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.222 2013/07/18 15:31:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.222 2013/07/18 15:31:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.221 2013/07/16 14:22:13 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.222 2013/07/18 15:31:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -808,7 +808,7 @@ main(int argc, char **argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = FALSE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p1, *path, *pwd;
+	char *p1, *path;
 	char mdpath[MAXPATHLEN];
     	const char *machine = getenv("MACHINE");
 	const char *machine_arch = getenv("MACHINE_ARCH");
@@ -1048,17 +1048,23 @@ main(int argc, char **argv)
 	 * So, to stop it breaking this case only, we ignore PWD if
 	 * MAKEOBJDIRPREFIX is set or MAKEOBJDIR contains a transform.
 	 */
-	if (!ignorePWD &&
-	    (pwd = getenv("PWD")) != NULL &&
-	    getenv("MAKEOBJDIRPREFIX") == NULL) {
-		const char *makeobjdir = getenv("MAKEOBJDIR");
+#ifndef NO_PWD_OVERRIDE
+	if (!ignorePWD) {
+		char *pwd;
 
-		if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
-			if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-			    sa.st_dev == sb.st_dev)
-				(void)strncpy(curdir, pwd, MAXPATHLEN);
+		if ((pwd = getenv("PWD")) != NULL &&
+		    getenv("MAKEOBJDIRPREFIX") == NULL) {
+			const char *makeobjdir = getenv("MAKEOBJDIR");
+
+			if (makeobjdir == NULL || !strchr(makeobjdir, '$')) {
+				if (stat(pwd, &sb) == 0 &&
+				    sa.st_ino == sb.st_ino &&
+				    sa.st_dev == sb.st_dev)
+					(void)strncpy(curdir, pwd, MAXPATHLEN);
+			}
 		}
 	}
+#endif
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL, 0);
 
 	/*
