@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.S,v 1.8 2013/07/18 12:42:24 matt Exp $	*/
+/*	$NetBSD: scanc.S,v 1.9 2013/07/18 22:14:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,13 +51,22 @@ ENTRY(scanc)
 	movb	19(%sp),%d1	| and mask to use
 	movl	%d2,-(%sp)	| need a scratch register
 	clrl	%d2		| clear it out
+#ifndef __mcoldfire__
 	subqw	#1,%d0		| adjust for dbra
+#endif
 Lscloop:
 	movb	(%a0)+,%d2	| get character
 	movb	(%a1,%d2),%d2	| get table entry
 	andl	%d1,%d2		| mask it
+#ifdef __mcoldfire__
+	jne	1f		| break out if mask matched
+	subql	#1,%d0		| decrement
+	jne	Lscloop		| keep going til no more
+1:
+#else
 	dbne	%d0,Lscloop	| keep going til no more or non-zero
 	addqw	#1,%d0		| overshot by one
+#endif
 	movl	(%sp)+,%d2	| restore scratch
 Lscdone:
 	rts
