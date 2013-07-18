@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap16.S,v 1.4 2013/07/16 23:24:18 matt Exp $	*/
+/*	$NetBSD: bswap16.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -35,7 +35,20 @@
 #endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 _ENTRY(BSWAP16)
+#ifdef __mcfisac__
+	mvzw	6(%sp),%d0
+	swap	%d0
+	byterev	%d0
+#elif defined(__mcoldfire__)
+	mvzw	6(%sp),%d0
+	movl	%d0,%d1
+	mvzb	%d0,%d0
+	lsll	#8,%d0
+	lsrl	#8,%d1
+	orl	%d1,%d0
+#else
 	movl	4(%sp),%d0
 	rolw	#8,%d0
+#endif
 	rts
 END(BSWAP16)
