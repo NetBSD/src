@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.10 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.11 2013/07/18 11:45:36 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -202,15 +202,15 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 		 */
 		lab = label_get_by_prefix(&socktmp.sa, pref->prelen);
 		if ((lab) && (lab->p == p)) {
-			change_local_label(lab, MPLS_LABEL_IMPLNULL);
-			label_reattach_route(lab, LDP_READD_CHANGE);
+			label_reattach_route(lab, REATT_INET_CHANGE);
+			announce_label_change(lab); /* binding has changed */
 		}
 		break;
 	    case FEC_WILDCARD:
 		fatalp("LDP neighbour %s: Wildcard withdraw !!!\n",
 		    satos(p->address));
 		ldp_peer_delete_mapping(p, NULL, 0);
-		label_reattach_all_peer_labels(p, LDP_READD_CHANGE);
+		label_reattach_all_peer_labels(p, REATT_INET_CHANGE);
 		break;
 	    default:
 		fatalp("Unknown FEC type %d\n", pref->type);
