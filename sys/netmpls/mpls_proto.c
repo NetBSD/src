@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.3 2012/02/01 16:49:36 christos Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.4 2013/07/18 06:23:07 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3 2012/02/01 16:49:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.4 2013/07/18 06:23:07 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -51,6 +51,7 @@ struct ifqueue mplsintrq;
 
 static int mpls_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	struct mbuf *, struct lwp *);
+static void sysctl_net_mpls_setup(struct sysctllog **);
 
 #ifdef MBUFTRACE
 struct mowner mpls_owner = MOWNER_INIT("MPLS", "");
@@ -72,6 +73,8 @@ void mpls_init(void)
 #endif
 	memset(&mplsintrq, 0, sizeof(mplsintrq));
 	mplsintrq.ifq_maxlen = 256;
+
+	sysctl_net_mpls_setup(NULL);
 }
 
 DOMAIN_DEFINE(mplsdomain);
@@ -134,7 +137,8 @@ mpls_usrreq(struct socket *so, int req, struct mbuf *m,
 /*
  * Sysctl for MPLS variables.
  */
-SYSCTL_SETUP(sysctl_net_mpls_setup, "sysctl net.mpls subtree setup")
+static void
+sysctl_net_mpls_setup(struct sysctllog **clog)
 {
 
         sysctl_createv(clog, 0, NULL, NULL,
