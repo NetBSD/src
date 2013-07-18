@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.S,v 1.3 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.4 2013/07/18 22:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strncpy.S,v 1.3 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.4 2013/07/18 22:42:50 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,9 +52,13 @@ ENTRY(strncpy)
 	subql	#1,%d1
 Lscloop:
 	movb	(%a0)+,(%a1)+		| copy a byte
+#ifndef __mcoldfire__
 	dbeq	%d1,Lscloop		| loop through low word of d1
+#endif
 	jeq	Lscpadding		| copied null, padding if necessary
+#ifndef __mcoldfire__
 	clrw	%d1			| clear low word of d1
+#endif
 	subql	#1,%d1			| adjust count for long copies
 	jcc	Lscloop			| more room, keep going
 Lscdone:
@@ -65,8 +69,10 @@ Lscdone:
 
 Lscploop:
 	clrb	(%a1)+			| clear a byte
+#ifndef __mcoldfire__
 	dbra	%d1,Lscploop		| keep going
 	clrw	%d1
+#endif
 Lscpadding:
 	subql	#1,%d1
 	jcc	Lscploop
