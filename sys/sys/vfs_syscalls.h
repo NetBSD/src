@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.18 2012/03/13 18:41:02 elad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.19 2013/07/18 13:41:08 matt Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct quotactl_args;
 
 /* Status functions to kernel 'struct stat' buffers */
 int do_sys_stat(const char *, unsigned int, struct stat *);
+int do_sys_statat(struct lwp *, int, const char *, unsigned int, struct stat *);
 int do_fhstat(struct lwp *, const void *, size_t, struct stat *);
 int do_fhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int);
 
