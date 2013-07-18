@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.17 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.18 2013/07/18 11:45:36 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,9 @@ extern int	debug_f, warn_f;
 struct rt_msg   replay_rt[REPLAY_MAX];
 int             replay_index = 0;
 
+#if 0
 static int read_route_socket(char *, int);
+#endif
 void	mask_addr(union sockunion *);
 int	compare_sockunion(const union sockunion *, const union sockunion *);
 static int check_if_addr_updown(struct rt_msg *, uint);
@@ -98,7 +100,7 @@ extern struct sockaddr mplssockaddr;
 	CHECK_LEN(dstunion) \
 	} while (0);
 
-
+#if 0
 static int 
 read_route_socket(char *s, int max)
 {
@@ -148,6 +150,7 @@ read_route_socket(char *s, int max)
 
 	return rv;
 }
+#endif	/* 0 */
 
 /* Recalculate length */
 void 
@@ -455,6 +458,7 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
 	return LDP_E_OK;
 }
 
+#if 0
 /*
  * Check for a route and returns it in rg
  * If exact_match is set it compares also the so_dest and so_pref
@@ -565,6 +569,8 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 	return LDP_E_OK;
 }
 
+#endif	/* 0 */
+
 /* triggered when a route event occurs */
 int 
 check_route(struct rt_msg * rg, uint rlen)
@@ -634,7 +640,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		if (lab) {
 			send_withdraw_tlv_to_all(&so_dest->sa,
 			    prefixlen);
-			label_reattach_route(lab, LDP_READD_NODEL);
+			label_reattach_route(lab, REATT_INET_DEL);
 			label_del(lab);
 		}
 	/* Fallthrough */
@@ -655,8 +661,11 @@ check_route(struct rt_msg * rg, uint rlen)
 				pm = ldp_test_mapping(&so_dest->sa,
 					 prefixlen, &so_gate->sa);
 				if (pm) {
+					/* create an implnull label as it
+					 * gets rewritten in mpls_add_label */
 					lab = label_add(so_dest, so_pref,
-					   so_gate, 0, pm->peer, pm->lm->label);
+					    so_gate, MPLS_LABEL_IMPLNULL,
+					    pm->peer, pm->lm->label);
 					if (lab != NULL)
 						mpls_add_label(lab);
 					free(pm);
@@ -680,7 +689,7 @@ check_route(struct rt_msg * rg, uint rlen)
 			break;
 		send_withdraw_tlv_to_all(&so_dest->sa, prefixlen);
 		/* No readd or delete IP route. Just delete the MPLS route */
-		label_reattach_route(lab, LDP_READD_NODEL);
+		label_reattach_route(lab, REATT_INET_NODEL);
 		label_del(lab);
 		break;
 	}
