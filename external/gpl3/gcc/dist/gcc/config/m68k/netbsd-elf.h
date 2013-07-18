@@ -35,53 +35,39 @@ along with GCC; see the file COPYING3.  If not see
     }						\
   while (0)
 
-/* Don't try using XFmode on the 68010.  */ 
+/* Don't try using XFmode on the 68010 or coldfire.  */ 
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE (TARGET_68020 ? 80 : 64)
 
 #undef LIBGCC2_LONG_DOUBLE_TYPE_SIZE
-#ifdef __mc68010__
+#if defined(__mc68010__) || defined(__mcoldfire__)
 #define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
 #else
 #define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 80
 #endif
 
+#undef SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS \
+  { \
+    if (TARGET_COLDFIRE) \
+      { \
+	target_flags |= MASK_STRICT_ALIGNMENT | MASK_CF_HWDIV; \
+	if ((target_flags_explicit & MASK_HARD_FLOAT) == 0) \
+	  { \
+	    target_flags &= ~MASK_HARD_FLOAT; \
+	    m68k_fpu = FPUTYPE_NONE; \
+	  } \
+      } \
+  }
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS \
-  { "cpp_cpu_default_spec", CPP_CPU_DEFAULT_SPEC }, \
-  { "cpp_cpu_spec",         CPP_CPU_SPEC }, \
-  { "cpp_fpu_spec",         CPP_FPU_SPEC }, \
-  { "asm_default_spec",     ASM_DEFAULT_SPEC }, \
   { "netbsd_cpp_spec",      NETBSD_CPP_SPEC }, \
   { "netbsd_entry_point",   NETBSD_ENTRY_POINT },
 
 
-#define CPP_CPU_SPEC \
-  "%{m68010:-D__mc68010__} \
-   %{m68020:-D__mc68020__} \
-   %{m68030:-D__mc68030__} \
-   %{m68040:-D__mc68040__} \
-   %(cpp_cpu_default_spec)"
-
-
 #undef TARGET_VERSION
-#if TARGET_DEFAULT & MASK_68020
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/m68k ELF)");
-#define CPP_CPU_DEFAULT_SPEC "%{!m680*:-D__mc68020__}"
-#define ASM_DEFAULT_SPEC "%{!m680*:-m68020}"
-#else
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/68010 ELF)");
-#define CPP_CPU_DEFAULT_SPEC "%{!m680*:-D__mc68010__}"
-#define ASM_DEFAULT_SPEC "%{!m680*:-m68010}"
-#endif
-
-
-#if TARGET_DEFAULT & MASK_68881
-#define CPP_FPU_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__}"
-#else
-#define CPP_FPU_SPEC "%{m68881:-D__HAVE_68881__ -D__HAVE_FPU__}"
-#endif
 
 
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
@@ -90,7 +76,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef CPP_SPEC
 #define CPP_SPEC \
-  "%(netbsd_cpp_spec) %(cpp_cpu_spec) %(cpp_fpu_spec)"
+  "%(netbsd_cpp_spec)"
 
 
 /* Provide an ASM_SPEC appropriate for NetBSD m68k ELF targets.  We need
@@ -100,6 +86,8 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_SPEC \
   "%(asm_default_spec) \
     %{m68010} %{m68020} %{m68030} %{m68040} %{m68060} \
+    %{m5200} %{m5206e} %{m528x} %{m5307} %{m5407} %{mcfv4e}\
+    %{mcpu=*:-mcpu=%*} %{march=*:-march=%*}\
     %{fpic|fpie:-k} %{fPIC|fPIE:-k -K}"
 
 #define AS_NEEDS_DASH_FOR_PIPED_INPUT
@@ -123,7 +111,13 @@ along with GCC; see the file COPYING3.  If not see
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
 do									\
   {									\
-    asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));	\
+    if (TARGET_COLDFIRE)						\
+      {									\
+        asm_fprintf (FILE, "\tmovea.l #%LLP%d-.,%Ra1\n", (LABELNO));	\
+        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n", (LABELNO));	\
+      }									\
+    else								\
+      asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));	\
     if (flag_pic)							\
       fprintf (FILE, "\tbsr.l __mcount@PLTPC\n");			\
     else								\
