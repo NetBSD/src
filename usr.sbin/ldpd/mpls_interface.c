@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.10 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.11 2013/07/18 11:45:36 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -91,11 +91,12 @@ mpls_add_label(struct label *lab)
 
 	/* if binding is implicit null we need to generate a new one */
 	if (lab->binding == MPLS_LABEL_IMPLNULL) {
-		change_local_label(lab, get_free_local_label());
+		lab->binding = get_free_local_label();
 		if (!lab->binding) {
 			fatalp("Label pool depleted\n");
 			return LDP_E_TOO_MANY_LABELS;
 		}
+		announce_label_change(lab);
 	}
 
 	warnp("[mpls_add_label] Adding %s/%d as local binding %d (%d), label %d"
@@ -177,7 +178,7 @@ mpls_delete_ldp_peer(const struct ldp_peer * p)
 {
 
 	/* Reput all the routes also to IPv4 */
-	label_reattach_all_peer_labels(p, LDP_READD_CHANGE);
+	label_reattach_all_peer_labels(p, REATT_INET_CHANGE);
 
 	return LDP_E_OK;
 }
