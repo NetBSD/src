@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.58 2013/04/30 12:39:20 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.59 2013/07/18 12:28:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.58 2013/04/30 12:39:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.59 2013/07/18 12:28:26 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -648,7 +648,16 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 			break;
 	}
 
-	assert(i < MAXCLI);
+	/*
+	 * Although not finding a slot is impossible (cf. how this routine
+	 * is called), the compiler can still think that i == MAXCLI
+	 * if this code is either compiled with NDEBUG or the platform
+	 * does not use __dead for assert().  Therefore, add an explicit
+	 * check to avoid an array-bounds error.
+	 */
+	/* assert(i < MAXCLI); */
+	if (i == MAXCLI)
+		abort();
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
