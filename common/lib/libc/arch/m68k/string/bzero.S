@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: bzero.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ ENTRY(bzero)
 	movl	8(%sp),%a0		| destination
 	movl	12(%sp),%d1		| count
 
-	movql	#0,%d2
+	clrl	%d2
 
 	/* 
 	 * It isn't worth the overhead of aligning to {long}word boundries
@@ -114,8 +114,10 @@ Lbz32loop:
 	movl	%d2,(%a0)+
 	movl	%d2,(%a0)+
 	movl	%d2,(%a0)+
+#ifndef __mcoldfire__
 	dbf	%d0,Lbz32loop		|	till done
 	clrw	%d0
+#endif
 	subql	#1,%d0
 	jcc	Lbz32loop
 
@@ -127,7 +129,12 @@ Lbzlong:
 	subql	#1,%d0			|	set up for dbf
 Lbzlloop:
 	movl	%d2,(%a0)+		|	clear longwords
+#ifdef __mcoldfire__
+	subql	#1,%d0			|	decrement
+	jcc	Lbzlloop		|	till done
+#else
 	dbf	%d0,Lbzlloop		|	till done
+#endif
 	andl	#3,%d1			|	len %= 4
 	jeq	Lbzdone
 
@@ -135,7 +142,12 @@ Lbzlloop:
 Lbzbloop:
 	movb	%d2,(%a0)+		| zero bytes
 Lbzbyte:
+#ifdef __mcoldfire__
+	subql	#1,%d0			| decrement
+	jcc	Lbzbloop		| till done
+#else
 	dbf	%d1,Lbzbloop		| till done
+#endif
 Lbzdone:
 	movl	(%sp)+,%d2
 	rts

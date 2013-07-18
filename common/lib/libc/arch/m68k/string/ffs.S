@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,7 @@
 
 WEAK_ALIAS(__ffssi2,ffs)
 
-#ifndef	__mc68010__
+#if (!defined(__mc68010__) && !defined(__mcoldfire__)) || defined(__mcfisac__)
 
 ENTRY(ffs)
 	movl	4(%sp),%d0
@@ -55,10 +55,27 @@ ENTRY(ffs)
 	negl	%d0
 	andl	%d0,%d1
 	movql	#32,%d0
+#if defined(__mcfisac__)
+	ff1.l	%d1		| count leading zeros
+#else
 	bfffo	%d1{#0:#32},%d1
+#endif
 	subl	%d1,%d0
 	rts
 END(ffs)
+
+#elif defined(__mcoldfire__)
+
+ENTRY(ffs)
+	clrl	%d0
+	movl	4(%sp),%d1
+	jeq	L2		| return 0 if 0
+L1:
+	addql	#1,%d0
+	lsrl	#1,%d1		| shift low bit into carry
+	jcc	L1		| keep looping while carry is clear.
+L2:
+	rts
 
 #else	/* __mc68010__ */
 

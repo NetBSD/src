@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,14 +68,27 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef __mcoldfire__
+#define	CMPMB(a,b)	movb b,%d2; cmpb a,%d2
+#define	CMPMW(a,b)	movw b,%d2; cmpw a,%d2
+#define	CMPML(a,b)	movl b,%d2; cmpl a,%d2
+#else
+#define	CMPMB(a,b)	cmpmb a,b
+#define	CMPMW(a,b)	cmpmw a,b
+#define	CMPML(a,b)	cmpml a,b
+#endif
 
 ENTRY(bcmp)
 	movl	4(%sp),%a0		| string 1
 	movl	8(%sp),%a1		| string 2
 	movl	12(%sp),%d1		| length
+#ifdef __mcoldfire__
+	movl	%d2,-(%sp)		| save temp
+#endif
 
 	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
@@ -100,14 +113,14 @@ ENTRY(bcmp)
 	movl	%a0,%d0
 	btst	#0,%d0
 	jeq	Lbcalgndw
-	cmpmb	(%a0)+,(%a1)+
+	CMPMB((%a0)+,(%a1)+)
 	jne	Lbcnoteq
 	subql	#1,%d1
 Lbcalgndw:
 	/* long word align */
 	btst	#1,%d0
 	jeq	Lbcalgndl
-	cmpmw	(%a0)+,(%a1)+
+	CMPMW((%a0)+,(%a1)+)
 	jne	Lbcnoteq
 	subql	#2,%d1
 Lbcalgndl:
@@ -118,24 +131,26 @@ Lbcalgndl:
 	andl	#31,%d1			|	len %= 32
 	subql	#1,%d0			|	set up for dbf
 Lbc32loop:
-	cmpml	(%a0)+,(%a1)+		|	compare 8 longwords
+	CMPML((%a0)+,(%a1)+)		|	compare 1 of 8 longwords
 	jne	Lbcnoteq		|	not equal, return non-zero
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 2 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 3 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 4 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 5 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 6 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 7 of 8 longwords
 	jne	Lbcnoteq
-	cmpml	(%a0)+,(%a1)+
+	CMPML((%a0)+,(%a1)+)		|	compare 8 of 8 longwords
 	jne	Lbcnoteq
+#ifndef __mcoldfire__
 	dbf	%d0,Lbc32loop		|	till done
 	clrw	%d0
+#endif
 	subql	#1,%d0
 	jcc	Lbc32loop
 
@@ -146,19 +161,32 @@ Lbclong:
 	jeq	Lbcbyte			| if (cnt)
 	subql	#1,%d0			|	set up for dbf
 Lbclloop:
-	cmpml	(%a0)+,(%a1)+		|	compare a longword
+	CMPML((%a0)+,(%a1)+)		|	compare a longword
 	jne	Lbcnoteq		|	not equal, return non-zero
+#ifdef __mcoldfire__
+	subql	#1,%d0			|	decrement
+	jcc	Lbclloop		|	till done
+#else
 	dbf	%d0,Lbclloop		|	till done
+#endif
 	andl	#3,%d1			|	len %= 4
 	jeq	Lbcdone 
 
 	subql	#1,%d1			| set up for dbf
 Lbcbloop:
-	cmpmb	(%a0)+,(%a1)+		| compare a byte
+	CMPMB((%a0)+,(%a1)+)		| compare a byte
 	jne	Lbcnoteq		| not equal, return non-zero
 Lbcbyte:
+#ifdef __mcoldfire__
+	subql	#1,%d0			|	decrement
+	jcc	Lbcbloop		|	till done
+#else
 	dbf	%d1,Lbcbloop
+#endif
 Lbcdone:
+#ifdef __mcoldfire__
+	movl	(%sp)+,%d2		| restore temp
+#endif
 	movql	#0,%d0
 	rts
 
