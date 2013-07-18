@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.10 2011/01/14 06:12:16 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.11 2013/07/18 12:21:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,13 +44,8 @@
 #define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
 #endif
 
-#ifdef __ELF__
 #define	CERROR		_C_LABEL(__cerror)
 #define	CURBRK		_C_LABEL(__curbrk)
-#else
-#define	CERROR		_ASM_LABEL(cerror)
-#define	CURBRK		_ASM_LABEL(curbrk)
-#endif
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
