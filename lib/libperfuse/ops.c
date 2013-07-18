@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.60 2012/11/03 15:43:20 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.61 2013/07/18 09:01:20 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1369,10 +1369,29 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * Do not open twice, and do not reopen for reading
 	 * if we already have write handle.
 	 */
-	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
-	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
-	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH)))
-		goto out;
+	switch (mode & (FREAD|FWRITE)) {
+	case FREAD:
+		if (pnd->pnd_flags & (PND_RFH|PND_WFH))
+			goto out;
+		break;
+	case FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+		break;
+	case FREAD|FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+
+		/*
+		 * Corner case: if already open for reading (PND_RFH)
+		 * and re-opening FREAD|FWRITE, we need to reopen, 
+		 * but only for writing. Note the change on mode 
+		 * will only affect perfuse_new_fh()
+		 */
+		if (pnd->pnd_flags & PND_RFH)
+			mode &= ~FREAD;
+		break;
+	}
 	
 	/*
 	 * Queue open on a node so that we do not open
@@ -2723,8 +2742,8 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 #ifdef PERFUSE_DEBUG
 	if ((pnd->pnd_flags & PND_OPEN) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))
-		DERRX(EX_SOFTWARE, "%s: opc = %p: still open",
-		      __func__, opc);
+		DERRX(EX_SOFTWARE, "%s: opc = %p \"%s\": still open",
+		      __func__, opc, pnd->pnd_name);
 
 	if ((pnd->pnd_flags & PND_BUSY) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))
