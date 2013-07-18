@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.12 2013/07/18 12:20:41 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.11 2011/01/29 02:21:20 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.12 2013/07/18 12:20:41 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef _KERNEL
@@ -76,16 +76,20 @@ cb_memset:
 		/* First find out cache line size */
 		mflr	%r9
 #ifdef PIC
-		PIC_GOTSETUP(%r10)
+		bcl	20,31,1f
+1:		mflr	%r5
 		mtlr	%r9
-		lwz	%r5,cache_info@got(%r10)
+		addis	%r5,%r5,cache_info+4-1b@ha
+		lwzu	%r9,cache_info+4-1b@l(%r5)
 #else
-		lis	%r5,cache_info@h
-		ori	%r5,%r5,cache_info@l
+		lis	%r5,cache_info+4@ha
+		lwzu	%r9,cache_info+4@l(%r5)
 #endif
-		lwz	%r6, 4(%r5)
-		cmpwi	%r6, -1
+		lwz	%r10,cache_sh-(cache_info+4)(%r5)
+		cmpwi	%r9, -1
 		bne+	cb_cacheline_known
+
+		addi	%r5, %r5, -4	/* point r5 @ beginning of cache_info */
 
 /*----------------------------------------------------------------------*/
 #define CTL_MACHDEP	7
@@ -172,33 +176,25 @@ cb_memset:
 
 		cntlzw	%r6, %r9			/* compute shift value */
 		li	%r5, 31
-		subf	%r5, %r6, %r5
+		subf	%r10, %r6, %r5
 
 #ifdef PIC
 		mflr	%r9
-		PIC_GOTSETUP(%r10)
+		bcl	20,31,1f
+1:		mflr	%r5
 		mtlr	%r9
-		lwz	%r6, cache_sh@got(%r10)
-		stw	%r5, 0(%r6)
+
+		addis	%r5, %r5, cache_info+4-1b@ha
+		lwzu	%r9, cache_info+4-1b@l(%r5)
 #else
-		lis	%r6, cache_sh@ha
-		stw	%r5, cache_sh@l(%r6)
+		lis	%r5, cache_info+4@ha
+		lwzu	%r9, cache_info+4@l(%r5)
 #endif
+		stw	%r10, cache_sh-(cache_info+4)(%r5)
+
 /*----------------------------------------------------------------------*/
 /* Okay, we know the cache line size (%r9) and shift value (%r10) */
 cb_cacheline_known:
-#ifdef PIC
-		lwz	%r5, cache_info@got(%r10)
-		lwz	%r9, 4(%r5)
-		lwz	%r5, cache_sh@got(%r10)
-		lwz	%r10, 0(%r5)
-#else
-		lis	%r9, cache_info+4@ha
-		lwz	%r9, cache_info+4@l(%r9)
-		lis	%r10, cache_sh@ha
-		lwz	%r10, cache_sh@l(%r10)
-#endif
-
 #else /* _KERNEL */
 #ifdef	MULTIPROCESSOR
 		mfsprg	%r10, 0			/* Get cpu_info pointer */
@@ -371,6 +367,7 @@ END(memset)
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
 		.data
+		.p2align 2
 cache_info:	.long	-1, -1, -1, -1
 cache_sh:	.long	0
 
