@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2013/07/17 14:23:45 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2013/07/18 18:43:56 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ OBJS+=		crtbegin.o crtend.o
 
 .if ${MKPIC} == "yes"
 OBJS+=		crtbeginS.o
+CFLAGS.crtbegin.c+= -fPIE
 .endif
 
 realall: ${OBJS}
@@ -23,7 +24,7 @@ crtbegin.o: crtbegin.S
 .else
 crtbegin.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -fPIE ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} ${CFLAGS.crtbegin.c} ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
