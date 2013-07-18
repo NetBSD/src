@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.1 2013/07/18 12:44:21 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.2 2013/07/18 12:50:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_write.c,v 1.1 2013/07/18 12:44:21 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.2 2013/07/18 12:50:51 reinoud Exp $");
 #endif /* not lint */
 
 #define _EXPOSE_MMC
@@ -709,6 +709,7 @@ udf_do_newfs_prefix(void)
 }
 
 
+/* specific routine for newfs to create empty rootdirectory */
 int
 udf_do_rootdir(void) {
 	union dscrptr *root_dscr;
