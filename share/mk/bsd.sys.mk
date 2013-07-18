@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.225 2013/07/17 19:24:56 martin Exp $
+#	$NetBSD: bsd.sys.mk,v 1.226 2013/07/18 22:06:09 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -75,7 +75,8 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
-     && (${MACHINE_ARCH} == "sh3eb" || \
+     && (${MACHINE_ARCH} == "coldfire" || \
+	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
 	 ${MACHINE_ARCH} == "m68k" || \
 	 ${MACHINE_ARCH} == "m68000"))
@@ -104,6 +105,9 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .if ${MKSOFTFLOAT:Uno} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
+.elif ${MACHINE_ARCH} == "coldfire"
+COPTS+=		-mhard-float
+FOPTS+=		-mhard-float
 .endif
 
 .if ${MKIEEEFP:Uno} != "no"
