@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.50 2013/07/18 16:28:52 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.51 2013/07/18 16:33:31 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.50 2013/07/18 16:28:52 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.51 2013/07/18 16:33:31 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -759,7 +759,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 		tmpdir = _PATH_TMP;
 	tmpdirlen = strlen(tmpdir);
 	(void)snprintf(tpath, sizeof (tpath), "%s%s%s", tmpdir, 
-	    (tmpdirlen && tmpdir[tmpdirlen-1] == '/') ? "" : "/", TMPFILE);
+	    (tmpdirlen > 0 && tmpdir[tmpdirlen-1] == '/') ? "" : "/", TMPFILE);
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();
