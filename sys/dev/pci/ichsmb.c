@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.30 2013/01/12 20:33:02 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.31 2013/07/18 03:14:09 msaitoh Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.30 2013/01/12 20:33:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.31 2013/07/18 03:14:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,6 +109,7 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_3400_SMB:
 		case PCI_PRODUCT_INTEL_6SERIES_SMB:
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
+		case PCI_PRODUCT_INTEL_8SERIES_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
