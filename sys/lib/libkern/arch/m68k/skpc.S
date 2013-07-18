@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.S,v 1.7 2013/07/18 12:29:30 matt Exp $	*/
+/*	$NetBSD: skpc.S,v 1.8 2013/07/18 12:54:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@ ENTRY(skpc)
 	movl	12(%sp),%a0	| where to start
 	subqw	#1,%d0		| adjust for dbcc
 Lskloop:
-	cmpb	(%a0)+,%d1	| compate with mask
+	cmpb	(%a0)+,%d1	| compare with mask
 	dbne	%d0,Lskloop	| keep going til no more or zero
 	addqw	#1,%d0		| overshot by one
 Lskdone:
