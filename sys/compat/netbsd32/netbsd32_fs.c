@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.66 2013/07/18 14:07:43 matt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.67 2013/07/18 14:14:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.66 2013/07/18 14:07:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.67 2013/07/18 14:14:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1271,21 +1271,22 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_timespecp_t) tptr;
 	} */
-	struct netbsd32_timespec ts32;
-	struct timespec ts;
+	struct netbsd32_timespec ts32[2];
+	struct timespec ts[2];
 	file_t *fp;
 	int error;
 
-	if ((error = copyin(SCARG_P32(uap, tptr), &ts32, sizeof(ts32))) != 0)
+	if ((error = copyin(SCARG_P32(uap, tptr), ts32, sizeof(ts32))) != 0)
 		return (error);
 
-	netbsd32_to_timespec(&ts32, &ts);
+	netbsd32_to_timespec(&ts32[0], &ts[0]);
+	netbsd32_to_timespec(&ts32[1], &ts[1]);
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
-	    &ts, UIO_SYSSPACE);
+	    ts, UIO_SYSSPACE);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
