@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.8 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: label.c,v 1.9 2013/07/18 11:45:36 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -106,53 +106,39 @@ label_del(struct label * l)
 }
 
 /*
- * Delete or Reuse the old IPv4 route, delete MPLS route (if any)
+ * Delete or Reuse the old IPv4 route, delete MPLS route
+ * readd = REATT_INET_CHANGE -> delete and recreate the INET route
+ * readd = REATT_INET_DEL -> deletes INET route
+ * readd = REATT_INET_NODEL -> doesn't touch the INET route
  */
 void
 label_reattach_route(struct label *l, int readd)
 {
-	union sockunion *u;
-	union sockunion emptysu;
-	struct rt_msg rg;
-	int oldbinding = l->binding;
 
 	warnp("[label_reattach_route] binding %d deleted\n",
 		l->binding);
 
-	l->p = NULL;
-	l->binding = MPLS_LABEL_IMPLNULL;
-
 	/* No gateway ? */
-	memset(&emptysu, 0, sizeof (union sockunion));
-	if (memcmp(&l->so_gate, &emptysu, sizeof(union sockunion)) == 0)
+	if (l->so_gate.sa.sa_len == 0)
 		return;
 
-	if (l->label != MPLS_LABEL_IMPLNULL && readd == LDP_READD_CHANGE) {
-	/* Delete and re-add IPv4 route */
-		if (get_route(&rg, &l->so_dest, &l->so_pref, 1) == LDP_E_OK) {
-			delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
-			add_route(&l->so_dest, &l->so_pref, &l->so_gate, NULL,
-			    NULL, NO_FREESO, RTM_READD);
-		} else if (from_union_to_cidr(&l->so_pref) == 32 &&
-		    l->so_dest.sa.sa_family == AF_INET &&
-		    get_route(&rg, &l->so_dest, NULL, 1) == LDP_E_OK) {
-			delete_route(&l->so_dest, NULL, NO_FREESO);
-			add_route(&l->so_dest, NULL, &l->so_gate, NULL, NULL,
-			    NO_FREESO, RTM_READD);
-		} else
-			add_route(&l->so_dest, &l->so_pref,
-			    &l->so_gate, NULL, NULL, NO_FREESO, RTM_READD);
-	} else
-		if (readd != LDP_READD_NODEL)
-			delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
+	if (readd == REATT_INET_CHANGE) {
+		/* Delete the tagged route and re-add IPv4 route */
+		delete_route(&l->so_dest,
+		    l->so_pref.sa.sa_len != 0 ? &l->so_pref : NULL, NO_FREESO);
+		add_route(&l->so_dest,
+		    l->so_pref.sa.sa_len != 0 ? &l->so_pref : NULL, &l->so_gate,
+		    NULL, NULL, NO_FREESO, RTM_READD);
+	} else if (readd == REATT_INET_DEL)
+		delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
 
+	/* Deletes the MPLS route */
+	if (l->binding >= min_label)
+		delete_route(make_mpls_union(l->binding), NULL, FREESO);
+
+	l->binding = MPLS_LABEL_IMPLNULL;
+	l->p = NULL;
 	l->label = 0;
-
-	/* Deletes pure MPLS route */
-	if (oldbinding >= min_label) {
-		u = make_mpls_union(oldbinding);
-		delete_route(u, NULL, FREESO);
-	}
 }
 /*
  * Get a label by dst and pref
@@ -260,14 +246,14 @@ get_free_local_label()
 }
 
 /*
- * Change local binding
+ * Announce peers that a label has changed its binding
+ * by withdrawing it and reannouncing it
  */
 void
-change_local_label(struct label *l, uint32_t newbind)
+announce_label_change(struct label *l)
 {
 	send_withdraw_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)));
-	l->binding = newbind;
 	send_label_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)),
 		l->binding);
