@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.46 2013/07/18 04:02:31 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.47 2013/07/18 04:05:32 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.46 2013/07/18 04:02:31 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.47 2013/07/18 04:05:32 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static void	 cat(char *);
 static const char	*check_pager(const char *);
 static int	 cleanup(void);
 static void	 how(char *);
-static void	 jump(char **, const char *, const char *);
+static void	 jump(char **, char *, char *);
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int);
 static void	 usage(void) __attribute__((__noreturn__));
@@ -898,7 +898,7 @@ check_pager(const char *name)
  *	strip out flag argument and jump
  */
 static void
-jump(char **argv, const char *flag, const char *name)
+jump(char **argv, char *flag, char *name)
 {
 	char **arg;
 
