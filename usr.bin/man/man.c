@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $	*/
+/*	$NetBSD: man.c,v 1.45 2013/07/18 03:48:22 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $");
+__RCSID("$NetBSD: man.c,v 1.45 2013/07/18 03:48:22 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,9 +101,9 @@ struct manstate {
 
 	/* other misc stuff */
 	const char *pager;	/* pager to use */
+	size_t pagerlen;	/* length of the above */
 	const char *machine;	/* machine */
 	const char *machclass;	/* machine class */
-	size_t pagerlen;	/* length of the above */
 };
 
 /*
