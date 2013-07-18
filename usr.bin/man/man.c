@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.49 2013/07/18 16:01:25 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.50 2013/07/18 16:28:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.49 2013/07/18 16:01:25 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.50 2013/07/18 16:28:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -464,21 +464,6 @@ main(int argc, char **argv)
 	exit(cleanup());
 }
 
-static void
-fixstring(char *buf, size_t len, const char *fmt, const char *str)
-{
-	const char *ptr = strstr(fmt, "%s");
-	size_t l;
-	if (ptr == NULL) {
-		strlcpy(buf, fmt, len);
-		return;
-	}
-	l = (size_t)(ptr - fmt) + 1;
-	strlcpy(buf, fmt, MIN(l, len));
-	strlcat(buf, str, len);
-	strlcat(buf, ptr + 2, len);
-}
-
 static int
 manual_find_buildkeyword(char *escpage, const char *fmt,
 	struct manstate *mp, glob_t *pg, size_t cnt)
@@ -498,7 +483,7 @@ manual_find_buildkeyword(char *escpage, const char *fmt,
 			continue;
 
 		*p = '\0';
-		fixstring(buf, sizeof(buf), fmt, escpage);
+		(void)snprintf(buf, sizeof(buf), fmt, escpage, suffix->s);
 		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 			if (!mp->where)
 				build_page(p + 1, &pg->gl_pathv[cnt], mp);
@@ -781,7 +766,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 		exit(EXIT_FAILURE);
 	}
 	(void)snprintf(buf, sizeof(buf), "%s > %s", fmt, tpath);
-	fixstring(cmd, sizeof(cmd), buf, p);
+	(void)snprintf(cmd, sizeof(cmd), buf, p);
 	(void)system(cmd);
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
