@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.48 2013/07/18 15:39:08 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.49 2013/07/18 16:01:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.48 2013/07/18 15:39:08 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.49 2013/07/18 16:01:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,8 +121,6 @@ static void	 usage(void) __attribute__((__noreturn__));
 static void	 addpath(struct manstate *, const char *, size_t, const char *);
 static const char *getclass(const char *);
 static void printmanpath(struct manstate *);
-
-static char EMPTY[1];
 
 /*
  * main function
@@ -587,14 +585,14 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = EMPTY;
+						*pg->gl_pathv[cnt] = '\0';
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = EMPTY;
+			*pg->gl_pathv[cnt] = '\0';
 		}
 
   notfound:
@@ -643,7 +641,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			if (mp->pathsearch) {
 				p = strstr(pg->gl_pathv[cnt], mp->pathsearch);
 				if (!p || strchr(p, '/') == NULL) {
-					pg->gl_pathv[cnt] = EMPTY; /* zap! */
+					*pg->gl_pathv[cnt] = '\0'; /* zap! */
 					continue;
 				}
 			}
@@ -682,14 +680,14 @@ next:				anyfound = 1;
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = EMPTY;
+						*pg->gl_pathv[cnt] = '\0';
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = EMPTY;
+			*pg->gl_pathv[cnt] = '\0';
 		}
 
 		if (anyfound && !mp->all)
