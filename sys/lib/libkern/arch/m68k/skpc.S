@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.S,v 1.8 2013/07/18 12:54:08 matt Exp $	*/
+/*	$NetBSD: skpc.S,v 1.9 2013/07/18 22:14:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,10 +48,18 @@ ENTRY(skpc)
 	jeq	Lskdone		| nothing to do, return
 	movb	7(%sp),%d1	| mask to use
 	movl	12(%sp),%a0	| where to start
+#ifndef __mcoldfire__
 	subqw	#1,%d0		| adjust for dbcc
+#endif
 Lskloop:
 	cmpb	(%a0)+,%d1	| compare with mask
+#ifdef __mcoldfire__
+	jne	Lskdone		| keep going til no more or zero
+	subql	#1,%d0
+	jne	Lskloop
+#else
 	dbne	%d0,Lskloop	| keep going til no more or zero
 	addqw	#1,%d0		| overshot by one
+#endif
 Lskdone:
 	rts
