@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2013/02/05 07:23:00 matt Exp $
+#	$NetBSD: Makefile,v 1.27 2013/07/18 21:59:46 matt Exp $
 
 .include <bsd.own.mk>   # For MKPIC
 .include <bsd.shlib.mk>
@@ -7,7 +7,7 @@
 .if ${MKPIC} != "no" && \
     ((${MACHINE_CPU} == "arm" && ${TARGET_ENDIANNESS} == "1234") || \
      ${MACHINE_ARCH} == "i386" ||	\
-     ${MACHINE_ARCH} == "m68k" ||	\
+     ${MACHINE_CPU} == "m68k" ||	\
      ${MACHINE_ARCH} == "sparc" ||	\
      ${MACHINE_ARCH} == "vax")
 
