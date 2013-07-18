@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.41 2013/07/18 22:14:54 soren Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.41 2013/07/18 22:14:54 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,6 +389,13 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %zu, len %zu, flags 0x%x\n",
 	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
+
+	/* Clear status bits */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 
+	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR | 
+	    PIIX_SMB_HS_BUSERR | PIIX_SMB_HS_FAILED);
+        bus_space_barrier(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 1,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
