@@ -354,7 +354,8 @@ m68k-*-uclinux*)	targ_emul=m68kelf ;;
 m68*-*-gnu*)		targ_emul=m68kelf ;;
 m68*-*-netbsd*4k*)	targ_emul=m68k4knbsd
 			targ_extra_emuls="m68knbsd m68kelfnbsd" ;;
-m68*-*-netbsdelf*)	targ_emul=m68kelfnbsd
+m68*-*-netbsdelf* | m5407*-*-netbsdelf*)
+			targ_emul=m68kelfnbsd
 			targ_extra_emuls="m68knbsd m68k4knbsd" ;;
 m68*-*-netbsdaout* | m68*-*-netbsd*)
 			targ_emul=m68knbsd
