@@ -1,4 +1,4 @@
-/* $NetBSD: hostname.c,v 1.19 2013/07/19 11:19:23 wiz Exp $ */
+/* $NetBSD: hostname.c,v 1.20 2013/07/19 15:53:00 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: hostname.c,v 1.19 2013/07/19 11:19:23 wiz Exp $");
+__RCSID("$NetBSD: hostname.c,v 1.20 2013/07/19 15:53:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 			i = getnameinfo(ifp->ifa_addr, ifp->ifa_addr->sa_len,
 			    buf, sizeof(buf), NULL, 0,
 			    Iflag ? NI_NUMERICHOST: NI_NAMEREQD);
-			if (i == -1) {
+			if (i) {
 				if (Iflag && i != EAI_NONAME)
 					errx(1, "getnameinfo: %s",
 					    gai_strerror(i));
@@ -157,8 +157,9 @@ main(int argc, char *argv[])
 			hints.ai_family = AF_UNSPEC;
 			hints.ai_socktype = SOCK_DGRAM;
 			hints.ai_flags = AI_CANONNAME;
-			if (getaddrinfo(hostname, NULL, &hints, &ainfos) == -1)
-				err(1, "getaddrinfo");
+			i = getaddrinfo(hostname, NULL, &hints, &ainfos);
+			if (i)
+				errx(1, "getaddrinfo: %s", gai_strerror(i));
 			if (ainfos) {
 				if (dflag) {
 					if ((p = strchr(ainfos->ai_canonname,
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 						    ai->ai_addrlen,
 						    buf, sizeof(buf), NULL, 0,
 						    NI_NUMERICHOST);
-						if (i == -1)
+						if (i)
 							errx(1,
 							    "getnameinfo: %s",
 							    gai_strerror(i));
