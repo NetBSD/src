@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.76 2013/03/05 16:26:41 christos Exp $
+#	$NetBSD: configure.ac,v 1.77 2013/07/19 10:53:20 pooka Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -100,7 +100,9 @@ AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 			  [Define if you have the socklen_t type.])],,
 [#include <sys/types.h>
+#ifdef HAVE_RPC_TYPES_H
 #include <rpc/types.h>
+#endif
 #include <sys/socket.h>])
 
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
@@ -141,6 +143,9 @@ AC_CHECK_DECLS([optind, optreset],,, [
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 ])
 AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
