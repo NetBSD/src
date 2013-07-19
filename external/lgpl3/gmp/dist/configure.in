@@ -25,7 +25,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 AC_COPYRIGHT(GMP_COPYRIGHT)
 AH_TOP(/*GMP_COPYRIGHT*/)
 
-AC_REVISION($Revision: 1.1.1.1 $)
+AC_REVISION($Revision: 1.2 $)
 AC_PREREQ(2.59)
 AC_INIT(GNU MP, GMP_VERSION, gmp-bugs@gmplib.org, gmp)
 AC_CONFIG_SRCDIR(gmp-impl.h)
@@ -743,6 +743,12 @@ case $host in
     esac
     ;;
 
+  # Mototole Coldfire (isa_b)
+  M5407_PATTERN)
+    gcc_cflags="$gcc_cflags $fomit_frame_pointer"
+    gcc_cflags_optlist="arch"
+    gcc_cflags_arch="-m5407"
+    ;;
 
   # Motorola 68k
   #
