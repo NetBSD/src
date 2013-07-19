@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.88 2013/03/05 16:26:41 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.89 2013/07/19 12:00:30 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -168,7 +168,7 @@ typedef unsigned int id_t;
 #endif
 
 #if !HAVE_SOCKLEN_T
-typedef int socklen_t;
+typedef unsigned int socklen_t;
 #endif
 
 #if !HAVE_U_LONG
