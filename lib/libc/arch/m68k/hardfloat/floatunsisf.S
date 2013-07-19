@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunsisf.S,v 1.1 2013/07/18 21:25:11 matt Exp $	*/
+/*	$NetBSD: floatunsisf.S,v 1.2 2013/07/19 22:32:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: floatunsisf.S,v 1.1 2013/07/18 21:25:11 matt Exp $")
+RCSID("$NetBSD: floatunsisf.S,v 1.2 2013/07/19 22:32:04 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __mcoldfire__
@@ -45,19 +45,19 @@ L2G:	.double 0r2147483648.0
 ENTRY(__floatunsisf)
 	movl	4(%sp),%d0
 	jpl	1f
-	fsmovel	%d0,%fp0
+	fmovel	%d0,%fp0
 #ifndef __SVR4_ABI__
 	fmoves	%fp0,%d0
 #endif
 	rts
 1:
 	bclr	#31,%d0
-	fsmovel	%d0,%fp0
+	fmovel	%d0,%fp0
 #ifdef __mcoldfire__
 	LEA_LCL(L2G,%a0)
-	fsaddd	(%a0),%fp0
+	faddd	(%a0),%fp0
 #else
-	fsaddd	#0r2147483648.0,%fp0
+	faddd	#0r2147483648.0,%fp0
 #endif
 #ifndef __SVR4_ABI__
 	fmoves	%fp0,%d0
