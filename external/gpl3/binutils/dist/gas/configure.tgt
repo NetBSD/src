@@ -48,7 +48,7 @@ case ${cpu} in
   m32c)			cpu_type=m32c endian=little ;;
   m32r)			cpu_type=m32r endian=big ;;
   m32rle)		cpu_type=m32r endian=little ;;
-  m5200)		cpu_type=m68k ;;
+  m5200|m5407)		cpu_type=m68k ;;
   m68008)		cpu_type=m68k ;;
   m680[012346]0)	cpu_type=m68k ;;
   m6811|m6812|m68hc12)	cpu_type=m68hc11 ;;
