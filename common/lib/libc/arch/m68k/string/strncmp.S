@@ -1,4 +1,4 @@
-/*	$NetBSD: strncmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: strncmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strncmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
+	RCSID("$NetBSD: strncmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -50,7 +50,9 @@ ENTRY(strncmp)
 	jeq	L4
 	movl	4(%sp),%a0
 	movl	8(%sp),%a1
+#ifdef __coldfire__
 	movl	%d2,-(%sp)	| save temp
+#endif
 L1:				/* unroll by 4 for m680[23]0's */
 	GETC((%a0)+,%d1)
 	jeq	L2
@@ -88,9 +90,11 @@ L2:	SUBC((%a1),%d1)
 L3:	
 #ifdef __mcoldfire__
 	movl	(%sp)+,%d2		| restore temp
-#else
-	EXTBL(%d1)
-#endif
 	movl	%d1,%d0
+#else
+	scs	%d0
+	EXTBL(%d0)
+	moveb	%d1,%d0
+#endif
 	rts
 END(strncmp)
