@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.53 2013/07/19 04:55:05 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.54 2013/07/19 04:59:46 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.53 2013/07/19 04:55:05 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.54 2013/07/19 04:59:46 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -474,7 +474,7 @@ manual_find_buildkeyword(const char *prefix, const char *escpage,
 	int suflen;
 
 	found = 0;
-	/* Try the _build key words next. */
+	/* Try the _build keywords next. */
 	TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
 		for (p = suffix->s, suflen = 0;
 		    *p != '\0' && !isspace((unsigned char)*p);
@@ -631,11 +631,11 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			}
 
 			/*
-			 * Try the _suffix key words first.
+			 * Try the _suffix keywords first.
 			 *
 			 * XXX
-			 * Older versions of man.conf didn't have the suffix
-			 * key words, it was assumed that everything was a .0.
+			 * Older versions of man.conf didn't have the _suffix
+			 * keywords, it was assumed that everything was a .0.
 			 * We just test for .0 first, it's fast and probably
 			 * going to hit.
 			 */
@@ -656,7 +656,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			if (found)
 				goto next;
 
-			/* Try the _build key words next. */
+			/* Try the _build keywords next. */
 			found = manual_find_buildkeyword("*/", escpage,
 				mp, pg, cnt);
 			if (found) {
@@ -746,7 +746,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 			}
 
 
-	/* advance fmt pass the suffix spec to the printf format string */
+	/* advance fmt past the suffix spec to the printf format string */
 	for (; *fmt && isspace((unsigned char)*fmt); ++fmt)
 		continue;
 
