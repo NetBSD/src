@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.52 2013/07/19 04:18:10 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.53 2013/07/19 04:55:05 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.52 2013/07/19 04:18:10 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.53 2013/07/19 04:55:05 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,28 +471,26 @@ manual_find_buildkeyword(const char *prefix, const char *escpage,
 	ENTRY *suffix;
 	int found;
 	char *p, buf[MAXPATHLEN];
+	int suflen;
 
 	found = 0;
 	/* Try the _build key words next. */
 	TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
-		for (p = suffix->s;
+		for (p = suffix->s, suflen = 0;
 		    *p != '\0' && !isspace((unsigned char)*p);
 		    ++p)
-			continue;
+			++suflen;
 		if (*p == '\0')
 			continue;
 
-		*p = '\0';
-		(void)snprintf(buf, sizeof(buf), "%s%s%s",
-			       prefix, escpage, suffix->s);
+		(void)snprintf(buf, sizeof(buf), "%s%s%.*s",
+			       prefix, escpage, suflen, suffix->s);
 		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 			if (!mp->where)
 				build_page(p + 1, &pg->gl_pathv[cnt], mp);
-			*p = ' ';
 			found = 1;
 			break;
-		}      
-		*p = ' ';
+		}
 	}
 
 	return found;
