@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.51 2013/07/18 16:33:31 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.52 2013/07/19 04:18:10 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.51 2013/07/18 16:33:31 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.52 2013/07/19 04:18:10 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 }
 
 static int
-manual_find_buildkeyword(char *escpage, const char *fmt,
+manual_find_buildkeyword(const char *prefix, const char *escpage,
 	struct manstate *mp, glob_t *pg, size_t cnt)
 {
 	ENTRY *suffix;
@@ -483,7 +483,8 @@ manual_find_buildkeyword(char *escpage, const char *fmt,
 			continue;
 
 		*p = '\0';
-		(void)snprintf(buf, sizeof(buf), fmt, escpage, suffix->s);
+		(void)snprintf(buf, sizeof(buf), "%s%s%s",
+			       prefix, escpage, suffix->s);
 		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 			if (!mp->where)
 				build_page(p + 1, &pg->gl_pathv[cnt], mp);
@@ -563,7 +564,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 		for (cnt = pg->gl_pathc - pg->gl_matchc;
 		    cnt < pg->gl_pathc; ++cnt)
 		{
-			found = manual_find_buildkeyword(escpage, "%s%s",
+			found = manual_find_buildkeyword("", escpage,
 				mp, pg, cnt);
 			if (found) {
 				anyfound = 1;
@@ -658,7 +659,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 				goto next;
 
 			/* Try the _build key words next. */
-			found = manual_find_buildkeyword(escpage, "*/%s%s",
+			found = manual_find_buildkeyword("*/", escpage,
 				mp, pg, cnt);
 			if (found) {
 next:				anyfound = 1;
