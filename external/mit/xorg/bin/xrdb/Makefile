@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/21 04:40:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/07/19 08:29:27 prlw1 Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xrdb
 
-CPPFLAGS+=-DCPP="\"/usr/bin/cpp\"" -DHAS_MKSTEMP	# XXX
-CPPFLAGS+=-DCPP_ARGS="\"-traditional\""
+CPPFLAGS+=-DCPP="\"/usr/bin/cpp -traditional\"" -DHAS_MKSTEMP	# XXX
 CPPFLAGS+=-DHAVE_ASPRINTF
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
