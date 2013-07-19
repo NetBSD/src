@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.54 2013/07/19 04:59:46 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.55 2013/07/19 05:05:59 uwe Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.54 2013/07/19 04:59:46 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.55 2013/07/19 05:05:59 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,11 +109,11 @@ struct manstate {
 /*
  * prototypes
  */
-static void	 build_page(char *, char **, struct manstate *);
-static void	 cat(char *);
+static void	 build_page(const char *, char **, struct manstate *);
+static void	 cat(const char *);
 static const char	*check_pager(const char *);
 static int	 cleanup(void);
-static void	 how(char *);
+static void	 how(const char *);
 static void	 jump(char **, const char *, const char *);
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int);
@@ -470,7 +470,8 @@ manual_find_buildkeyword(const char *prefix, const char *escpage,
 {
 	ENTRY *suffix;
 	int found;
-	char *p, buf[MAXPATHLEN];
+	char buf[MAXPATHLEN];
+	const char *p;
 	int suflen;
 
 	found = 0;
@@ -696,7 +697,7 @@ next:				anyfound = 1;
  *	Build a man page for display.
  */
 static void
-build_page(char *fmt, char **pathp, struct manstate *mp)
+build_page(const char *fmt, char **pathp, struct manstate *mp)
 {
 	static int warned;
 	int olddir, fd, n;
@@ -793,12 +794,13 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
  *	display how information
  */
 static void
-how(char *fname)
+how(const char *fname)
 {
 	FILE *fp;
 
 	int lcnt, print;
-	char *p, buf[256];
+	char buf[256];
+	const char *p;
 
 	if (!(fp = fopen(fname, "r"))) {
 		warn("%s", fname);
@@ -840,7 +842,7 @@ how(char *fname)
  *	cat out the file
  */
 static void
-cat(char *fname)
+cat(const char *fname)
 {
 	int fd;
 	ssize_t n;
