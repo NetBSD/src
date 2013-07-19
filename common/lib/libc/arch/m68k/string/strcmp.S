@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strcmp.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __mcoldfire__
@@ -69,10 +69,13 @@ L1:				/* unrolled by 4 for 680[23]0's */
 	jeq	L1
 
 L3:
-#ifndef __mcoldfire__
-	EXTBL(%d1)
-#endif
+#ifdef __mcoldfire__
 	movl	%d1,%d0
+#else
+	scs	%d0
+	EXTBL(%d0)
+	movb	%d1,%d0
+#endif
 	rts
 
 L2:	movq	#0,%d0

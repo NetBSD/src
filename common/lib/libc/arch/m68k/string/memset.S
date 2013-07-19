@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: memset.S,v 1.6 2013/07/19 16:42:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
+	RCSID("$NetBSD: memset.S,v 1.6 2013/07/19 16:42:12 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,11 +76,7 @@ ENTRY(memset)
 	movl	%d2,-(%sp)
 	movl	8(%sp),%a0		| destination
 	movl	16(%sp),%d1		| count
-#ifdef __mcoldfire__
-	mvzb	15(%sp),%d2		| zero extend fill character
-#else
 	movb	15(%sp),%d2		| get fill character
-#endif
 
 	/* 
 	 * It isn't worth the overhead of aligning to {long}word boundries
@@ -89,15 +85,15 @@ ENTRY(memset)
 	cmpl	#15,%d1
 	jlt	Lbzbyte
 
-#ifndef __mcoldfire__
-	andb	0xff,%d2		| clear high bytes
-#endif
-	movl	%d2,%d0
-	lsll	#8,%d0			| shift to 8-15
-	orl	%d0,%d2			| merge so low word is done
-	movl	%d2,%d0 		| copy word
-	swap	%d0			| swap it
-	orl	%d0,%d2			| put it upper half
+	clrl %d0
+	moveb	%d2,%d0
+	movel	%d0,%d2
+	lsll	#8,%d0
+	orl	%d0,%d2
+	lsll	#8,%d0	
+	orl	%d0,%d2	
+	lsll	#8,%d0	
+	orl	%d0,%d2	
 
 	/* word align */
 	movl	%a0,%d0
