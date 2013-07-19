@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.738 2013/07/18 22:06:09 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.739 2013/07/19 16:52:44 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -687,7 +687,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 #
 # GNU sources and packages sometimes see architecture names differently.
 #
-GNU_ARCH.coldfire=m68k
+GNU_ARCH.coldfire=m5407
 GNU_ARCH.earm=arm
 GNU_ARCH.earmeb=armeb
 GNU_ARCH.earmhf=arm
@@ -708,8 +708,6 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 #
 .if (!empty(MACHINE_ARCH:Mearm*))
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:S/earm/eabi/}
-.elif ${MACHINE_ARCH} == "coldfire"
-MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-coldfire
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "i386" || \
