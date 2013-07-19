@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.61 2013/07/18 09:01:20 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.62 2013/07/19 07:32:35 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1391,6 +1391,10 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 		if (pnd->pnd_flags & PND_RFH)
 			mode &= ~FREAD;
 		break;
+	default:
+		DWARNX("open without either FREAD nor FWRITE");
+		error = EPERM;
+		goto out;
 	}
 	
 	/*
