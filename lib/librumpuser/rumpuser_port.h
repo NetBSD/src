@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.18 2013/04/28 13:17:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.19 2013/07/20 18:46:15 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -157,6 +157,14 @@ posix_memalign(void **ptr, size_t align, size_t size)
 
 #ifndef __UNCONST
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
+#endif
+
+#ifndef __CONCAT
+#define __CONCAT(x,y)	x ## y
+#endif
+
+#ifndef __STRING
+#define __STRING(x)	#x
 #endif
 
 #if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
