@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.7 2013/07/20 19:59:31 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.8 2013/07/20 20:01:24 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -85,7 +85,6 @@ int	ulfs_print(void *);
 int	ulfs_readdir(void *);
 int	ulfs_readlink(void *);
 int	ulfs_remove(void *);
-int	ulfs_rename(void *);
 int	ulfs_rmdir(void *);
 #define	ulfs_seek	genfs_seek
 #define	ulfs_poll	genfs_poll
