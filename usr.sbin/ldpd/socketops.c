@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.29 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.30 2013/07/20 05:16:08 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -932,6 +932,7 @@ the_big_loop(void)
 				p = get_ldp_peer_by_socket(pfd[i].fd);
 				if (!p)
 					continue;
+				assert(p->state == LDP_PEER_CONNECTING);
 				if (getsockopt(pfd[i].fd, SOL_SOCKET, SO_ERROR,
 				    &sock_error, &sock_error_size) != 0 ||
 				    sock_error != 0) {
@@ -1078,7 +1079,9 @@ recv_session_pdu(struct ldp_peer * p)
 
 	memset(recvspace, 0, MAX_PDU_SIZE);
 
-	c = recv(p->socket, (void *) recvspace, MAX_PDU_SIZE, MSG_PEEK);
+	do {
+		c = recv(p->socket, (void *) recvspace, MAX_PDU_SIZE, MSG_PEEK);
+	} while (c == -1 && errno == EINTR);
 
 	debugp("Ready to read %d bytes\n", c);
 
@@ -1097,12 +1100,12 @@ recv_session_pdu(struct ldp_peer * p)
 		return;
 	}
 	rpdu = (struct ldp_pdu *) recvspace;
-	/* XXX: buggy messages may crash the whole thing */
-	c = recv(p->socket, (void *) recvspace,
-		ntohs(rpdu->length) + PDU_VER_LENGTH, MSG_WAITALL);
-	rpdu = (struct ldp_pdu *) recvspace;
+	do {
+		c = recv(p->socket, (void *) recvspace,
+		    ntohs(rpdu->length) + PDU_VER_LENGTH, MSG_WAITALL);
+	} while (c == -1 && errno == EINTR);
 
-	/* Check if it's somehow OK... */
+	/* sanity check */
 	if (check_recv_pdu(p, rpdu, c) != 0)
 		return;
 
