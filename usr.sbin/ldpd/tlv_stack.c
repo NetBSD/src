@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.11 2013/07/18 11:45:36 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.12 2013/07/20 05:16:08 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 	    case FEC_WILDCARD:
 		fatalp("LDP neighbour %s: Wildcard withdraw !!!\n",
 		    satos(p->address));
-		ldp_peer_delete_mapping(p, NULL, 0);
+		ldp_peer_delete_all_mappings(p);
 		label_reattach_all_peer_labels(p, REATT_INET_CHANGE);
 		break;
 	    default:
@@ -222,7 +222,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 
 
 /*
- * In case of label redraw, reuse the same buffer to send label release
+ * In case of label withdraw, reuse the same buffer to send label release
  * Simply replace type and message id
  */
 void 
@@ -322,7 +322,8 @@ send_label_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen,
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
-		send_label_tlv(p, addr, prefixlen, label, NULL);
+		if (p->state == LDP_PEER_ESTABLISHED)
+			send_label_tlv(p, addr, prefixlen, label, NULL);
 }
 
 /*
@@ -400,7 +401,8 @@ send_withdraw_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
-		send_withdraw_tlv(p, addr, prefixlen);
+		if (p->state == LDP_PEER_ESTABLISHED)
+			send_withdraw_tlv(p, addr, prefixlen);
 }
 
 int
