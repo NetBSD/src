@@ -224,7 +224,7 @@ resolvconf, as written by Thomas Hood.
 .Xr resolver 3 ,
 .Xr stdin 3
 .Sh AUTHORS
-.An Roy Marples Aq roy@marples.name
+.An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Please report them to
 .Lk http://roy.marples.name/projects/openresolv
