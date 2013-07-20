@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.466 2013/07/18 14:06:27 matt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.467 2013/07/20 15:55:57 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.466 2013/07/18 14:06:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.467 2013/07/20 15:55:57 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4169,8 +4169,6 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	int error;
 
 	KASSERT(l != NULL || (fromfd == AT_FDCWD && tofd == AT_FDCWD));
-	KASSERT(from != NULL);
-	KASSERT(to != NULL);
 
 	error = pathbuf_maybe_copyin(from, seg, &fpb);
 	if (error)
