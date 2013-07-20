@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.249 2013/07/20 19:59:31 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.250 2013/07/20 22:14:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.249 2013/07/20 19:59:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.250 2013/07/20 22:14:49 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -554,13 +554,16 @@ lfs_mknod(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vattr *vap = ap->a_vap;
-	struct vnode **vpp = ap->a_vpp;
+	struct vattr *vap;
+	struct vnode **vpp;
 	struct inode *ip;
 	int error;
 	struct mount	*mp;
 	ino_t		ino;
 	struct ulfs_lookup_results *ulr;
+
+	vap = ap->a_vap;
+	vpp = ap->a_vpp;
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(ap->a_dvp)->i_crap;
@@ -570,30 +573,37 @@ lfs_mknod(void *v)
 		vput(ap->a_dvp);
 		return error;
 	}
+
+	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	error = ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 			      ap->a_dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	SET_ENDOP_CREATE_AP(ap, "mknod");
 
-	if (error)
+	if (error) {
+		fstrans_done(ap->a_dvp->v_mount);
+		*vpp = NULL;
 		return (error);
+	}
 
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	mp  = (*vpp)->v_mount;
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
+		struct ulfsmount *ump = ip->i_ump;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-#if 0
-		ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
-					   ULFS_MPNEEDSWAP((*vpp)->v_mount));
-#else
-		ip->i_ffs1_rdev = vap->va_rdev;
-#endif
+		if (ump->um_fstype == ULFS1)
+			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
+		else
+			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
+			    ULFS_MPNEEDSWAP(ump));
 	}
 
 	/*
@@ -616,11 +626,12 @@ lfs_mknod(void *v)
 	 */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
-	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
+	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
 
+	fstrans_done(ap->a_dvp->v_mount);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
