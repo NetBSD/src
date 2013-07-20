@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.248 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.249 2013/07/20 19:59:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.248 2013/06/18 18:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.249 2013/07/20 19:59:31 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -377,25 +377,7 @@ lfs_inactive(void *v)
 	return ulfs_inactive(v);
 }
 
-/*
- * These macros are used to bracket ULFS directory ops, so that we can
- * identify all the pages touched during directory ops which need to
- * be ordered and flushed atomically, so that they may be recovered.
- *
- * Because we have to mark nodes VU_DIROP in order to prevent
- * the cache from reclaiming them while a dirop is in progress, we must
- * also manage the number of nodes so marked (otherwise we can run out).
- * We do this by setting lfs_dirvcount to the number of marked vnodes; it
- * is decremented during segment write, when VU_DIROP is taken off.
- */
-#define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
-#define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
-#define	SET_DIROP_CREATE(dvp, vpp)	lfs_set_dirop_create((dvp), (vpp))
-#define	SET_DIROP_REMOVE(dvp, vp)	lfs_set_dirop((dvp), (vp))
-static int lfs_set_dirop_create(struct vnode *, struct vnode **);
-static int lfs_set_dirop(struct vnode *, struct vnode *);
-
-static int
+int
 lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 {
 	struct lfs *fs;
@@ -474,7 +456,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
  * NB: this means we have to clear the new vnodes on error.  Fortunately
  * SET_ENDOP is there to do that for us.
  */
-static int
+int
 lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 {
 	int error;
@@ -500,49 +482,6 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 	}
 	return 0;
 }
-
-#define	SET_ENDOP_BASE(fs, dvp, str)					\
-	do {								\
-		mutex_enter(&lfs_lock);				\
-		--(fs)->lfs_dirops;					\
-		if (!(fs)->lfs_dirops) {				\
-			if ((fs)->lfs_nadirop) {			\
-				panic("SET_ENDOP: %s: no dirops but "	\
-					" nadirop=%d", (str),		\
-					(fs)->lfs_nadirop);		\
-			}						\
-			wakeup(&(fs)->lfs_writer);			\
-			mutex_exit(&lfs_lock);				\
-			lfs_check((dvp), LFS_UNUSED_LBN, 0);		\
-		} else							\
-			mutex_exit(&lfs_lock);				\
-	} while(0)
-#define SET_ENDOP_CREATE(fs, dvp, nvpp, str)				\
-	do {								\
-		UNMARK_VNODE(dvp);					\
-		if (nvpp && *nvpp)					\
-			UNMARK_VNODE(*nvpp);				\
-		/* Check for error return to stem vnode leakage */	\
-		if (nvpp && *nvpp && !((*nvpp)->v_uflag & VU_DIROP))	\
-			ungetnewvnode(*(nvpp));				\
-		SET_ENDOP_BASE((fs), (dvp), (str));			\
-		lfs_reserve((fs), (dvp), NULL, -LFS_NRESERVE(fs));	\
-		vrele(dvp);						\
-	} while(0)
-#define SET_ENDOP_CREATE_AP(ap, str)					\
-	SET_ENDOP_CREATE(VTOI((ap)->a_dvp)->i_lfs, (ap)->a_dvp,		\
-			 (ap)->a_vpp, (str))
-#define SET_ENDOP_REMOVE(fs, dvp, ovp, str)				\
-	do {								\
-		UNMARK_VNODE(dvp);					\
-		if (ovp)						\
-			UNMARK_VNODE(ovp);				\
-		SET_ENDOP_BASE((fs), (dvp), (str));			\
-		lfs_reserve((fs), (dvp), (ovp), -LFS_NRESERVE(fs));	\
-		vrele(dvp);						\
-		if (ovp)						\
-			vrele(ovp);					\
-	} while(0)
 
 void
 lfs_mark_vnode(struct vnode *vp)
@@ -808,131 +747,6 @@ lfs_link(void *v)
 	SET_ENDOP_CREATE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vpp, "link");
 	return (error);
 }
-
-static const struct genfs_rename_ops lfs_genfs_rename_ops;
-
-/*
- * lfs_sane_rename: The hairiest vop, with the saner API.
- *
- * Arguments:
- *
- * . fdvp (from directory vnode),
- * . fcnp (from component name),
- * . tdvp (to directory vnode),
- * . tcnp (to component name),
- * . cred (credentials structure), and
- * . posixly_correct (flag for behaviour if target & source link same file).
- *
- * fdvp and tdvp may be the same, and must be referenced and unlocked.
- */
-static int
-lfs_sane_rename(
-    struct vnode *fdvp, struct componentname *fcnp,
-    struct vnode *tdvp, struct componentname *tcnp,
-    kauth_cred_t cred, bool posixly_correct)
-{
-	struct ulfs_lookup_results fulr, tulr;
-
-	/*
-	 * XXX Provisional kludge -- ulfs_lookup does not reject rename
-	 * of . or .. (from or to), so we hack it here.  This is not
-	 * the right place: it should be caller's responsibility to
-	 * reject this case.
-	 */
-	KASSERT(fcnp != NULL);
-	KASSERT(tcnp != NULL);
-	KASSERT(fcnp != tcnp);
-	KASSERT(fcnp->cn_nameptr != NULL);
-	KASSERT(tcnp->cn_nameptr != NULL);
-
-	if ((fcnp->cn_flags | tcnp->cn_flags) & ISDOTDOT)
-		return EINVAL;	/* XXX EISDIR?  */
-	if ((fcnp->cn_namelen == 1) && (fcnp->cn_nameptr[0] == '.'))
-		return EINVAL;
-	if ((tcnp->cn_namelen == 1) && (tcnp->cn_nameptr[0] == '.'))
-		return EINVAL;
-
-	return genfs_sane_rename(&lfs_genfs_rename_ops,
-	    fdvp, fcnp, &fulr, tdvp, tcnp, &tulr,
-	    cred, posixly_correct);
-}
-
-/*
- * lfs_rename: The hairiest vop, with the insanest API.  Defer to
- * genfs_insane_rename immediately.
- */
-int
-lfs_rename(void *v)
-{
-
-	return genfs_insane_rename(v, &lfs_sane_rename);
-}
-
-/*
- * lfs_gro_rename: Actually perform the rename operation.  Do a little
- * LFS bookkeeping and then defer to ulfs_gro_rename.
- */
-static int
-lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
-    struct vnode *fdvp, struct componentname *fcnp,
-    void *fde, struct vnode *fvp,
-    struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
-{
-	int error;
-
-	KASSERT(mp != NULL);
-	KASSERT(fdvp != NULL);
-	KASSERT(fcnp != NULL);
-	KASSERT(fde != NULL);
-	KASSERT(fvp != NULL);
-	KASSERT(tdvp != NULL);
-	KASSERT(tcnp != NULL);
-	KASSERT(tde != NULL);
-	KASSERT(fdvp != fvp);
-	KASSERT(fdvp != tvp);
-	KASSERT(tdvp != fvp);
-	KASSERT(tdvp != tvp);
-	KASSERT(fvp != tvp);
-	KASSERT(fdvp->v_mount == mp);
-	KASSERT(fvp->v_mount == mp);
-	KASSERT(tdvp->v_mount == mp);
-	KASSERT((tvp == NULL) || (tvp->v_mount == mp));
-	KASSERT(VOP_ISLOCKED(fdvp) == LK_EXCLUSIVE);
-	KASSERT(VOP_ISLOCKED(fvp) == LK_EXCLUSIVE);
-	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
-	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
-
-	error = SET_DIROP_REMOVE(tdvp, tvp);
-	if (error != 0)
-		return error;
-
-	MARK_VNODE(fdvp);
-	MARK_VNODE(fvp);
-
-	error = ulfs_gro_rename(mp, cred,
-	    fdvp, fcnp, fde, fvp,
-	    tdvp, tcnp, tde, tvp);
-
-	UNMARK_VNODE(fdvp);
-	UNMARK_VNODE(fvp);
-	SET_ENDOP_REMOVE(VFSTOULFS(mp)->um_lfs, tdvp, tvp, "rename");
-
-	return error;
-}
-
-static const struct genfs_rename_ops lfs_genfs_rename_ops = {
-	.gro_directory_empty_p		= ulfs_gro_directory_empty_p,
-	.gro_rename_check_possible	= ulfs_gro_rename_check_possible,
-	.gro_rename_check_permitted	= ulfs_gro_rename_check_permitted,
-	.gro_remove_check_possible	= ulfs_gro_remove_check_possible,
-	.gro_remove_check_permitted	= ulfs_gro_remove_check_permitted,
-	.gro_rename			= lfs_gro_rename,
-	.gro_remove			= ulfs_gro_remove,
-	.gro_lookup			= ulfs_gro_lookup,
-	.gro_genealogy			= ulfs_gro_genealogy,
-	.gro_lock_directory		= ulfs_gro_lock_directory,
-};
 
 /* XXX hack to avoid calling ITIMES in getattr */
 int
