@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.1 2013/07/20 19:59:31 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.2 2013/07/20 20:01:24 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.1 2013/07/20 19:59:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.2 2013/07/20 20:01:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1100,19 +1100,6 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	return error;
 }
 
-static const struct genfs_rename_ops ulfs_genfs_rename_ops = {
-	.gro_directory_empty_p		= ulfs_gro_directory_empty_p,
-	.gro_rename_check_possible	= ulfs_gro_rename_check_possible,
-	.gro_rename_check_permitted	= ulfs_gro_rename_check_permitted,
-	.gro_remove_check_possible	= ulfs_gro_remove_check_possible,
-	.gro_remove_check_permitted	= ulfs_gro_remove_check_permitted,
-	.gro_rename			= ulfs_gro_rename,
-	.gro_remove			= ulfs_gro_remove,
-	.gro_lookup			= ulfs_gro_lookup,
-	.gro_genealogy			= ulfs_gro_genealogy,
-	.gro_lock_directory		= ulfs_gro_lock_directory,
-};
-
 static const struct genfs_rename_ops lfs_genfs_rename_ops = {
 	.gro_directory_empty_p		= ulfs_gro_directory_empty_p,
 	.gro_rename_check_possible	= ulfs_gro_rename_check_possible,
@@ -1125,33 +1112,6 @@ static const struct genfs_rename_ops lfs_genfs_rename_ops = {
 	.gro_genealogy			= ulfs_gro_genealogy,
 	.gro_lock_directory		= ulfs_gro_lock_directory,
 };
-
-/*
- * ulfs_sane_rename: The hairiest vop, with the saner API.
- *
- * Arguments:
- *
- * . fdvp (from directory vnode),
- * . fcnp (from component name),
- * . tdvp (to directory vnode),
- * . tcnp (to component name),
- * . cred (credentials structure), and
- * . posixly_correct (flag for behaviour if target & source link same file).
- *
- * fdvp and tdvp may be the same, and must be referenced and unlocked.
- */
-static int
-ulfs_sane_rename(
-    struct vnode *fdvp, struct componentname *fcnp,
-    struct vnode *tdvp, struct componentname *tcnp,
-    kauth_cred_t cred, bool posixly_correct)
-{
-	struct ulfs_lookup_results fulr, tulr;
-
-	return genfs_sane_rename(&ulfs_genfs_rename_ops,
-	    fdvp, fcnp, &fulr, tdvp, tcnp, &tulr,
-	    cred, posixly_correct);
-}
 
 /*
  * lfs_sane_rename: The hairiest vop, with the saner API.
@@ -1197,17 +1157,6 @@ lfs_sane_rename(
 	return genfs_sane_rename(&lfs_genfs_rename_ops,
 	    fdvp, fcnp, &fulr, tdvp, tcnp, &tulr,
 	    cred, posixly_correct);
-}
-
-/*
- * ulfs_rename: The hairiest vop, with the insanest API.  Defer to
- * genfs_insane_rename immediately.
- */
-int
-ulfs_rename(void *v)
-{
-
-	return genfs_insane_rename(v, &ulfs_sane_rename);
 }
 
 /*
