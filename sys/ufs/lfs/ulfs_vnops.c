@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.13 2013/06/08 22:23:52 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.14 2013/07/20 22:16:02 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.13 2013/06/08 22:23:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.14 2013/07/20 22:16:02 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -151,75 +151,6 @@ ulfs_create(void *v)
 	}
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	return (0);
-}
-
-/*
- * Mknod vnode call
- */
-/* ARGSUSED */
-int
-ulfs_mknod(void *v)
-{
-	struct vop_mknod_args /* {
-		struct vnode		*a_dvp;
-		struct vnode		**a_vpp;
-		struct componentname	*a_cnp;
-		struct vattr		*a_vap;
-	} */ *ap = v;
-	struct vattr	*vap;
-	struct vnode	**vpp;
-	struct inode	*ip;
-	int		error;
-	struct mount	*mp;
-	ino_t		ino;
-	struct ulfs_lookup_results *ulr;
-
-	vap = ap->a_vap;
-	vpp = ap->a_vpp;
-
-	/* XXX should handle this material another way */
-	ulr = &VTOI(ap->a_dvp)->i_crap;
-	ULFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
-
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	if ((error =
-	    ulfs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, ulr, vpp, ap->a_cnp)) != 0)
-		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	ip = VTOI(*vpp);
-	mp  = (*vpp)->v_mount;
-	ino = ip->i_number;
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	if (vap->va_rdev != VNOVAL) {
-		struct ulfsmount *ump = ip->i_ump;
-		/*
-		 * Want to be able to use this to make badblock
-		 * inodes, so don't truncate the dev number.
-		 */
-		if (ump->um_fstype == ULFS1)
-			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
-		else
-			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
-	}
-	/*
-	 * Remove inode so that it will be reloaded by VFS_VGET and
-	 * checked to see if it is an alias of an existing entry in
-	 * the inode cache.
-	 */
-	(*vpp)->v_type = VNON;
-	VOP_UNLOCK(*vpp);
-	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp);
-out:
-	fstrans_done(ap->a_dvp->v_mount);
-	if (error != 0) {
-		*vpp = NULL;
-		return (error);
-	}
 	return (0);
 }
 
