@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.18 2013/07/18 11:45:36 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.19 2013/07/20 05:16:08 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -678,8 +678,6 @@ check_route(struct rt_msg * rg, uint rlen)
 			      satos(&so_dest->sa), prefixlen);
 		break;
 	case RTM_DELETE:
-		if (!so_gate)
-			break;	/* Non-existent route  XXX ?! */
 		/*
 		 * Send withdraw check the binding, delete the route, delete
 		 * the binding

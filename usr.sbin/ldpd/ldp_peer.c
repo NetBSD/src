@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.14 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.15 2013/07/20 05:16:08 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <stdio.h>
@@ -77,12 +78,11 @@ ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
 	     const struct sockaddr * tradd, uint16_t holdtime, int soc)
 {
 	struct ldp_peer *p;
-	int s = soc;
-	struct sockaddr *connecting_sa = NULL;
+	int s = soc, sopts;
+	union sockunion connecting_su;
 	struct conf_neighbour *cn;
 
-	if (tradd != NULL)
-		assert(tradd->sa_family == padd->sa_family);
+	assert(tradd == NULL || tradd->sa_family == padd->sa_family);
 
 	if (soc < 1) {
 		s = socket(PF_INET, SOCK_STREAM, 0);
@@ -91,22 +91,20 @@ ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
 			return NULL;
 		}
 		if (tradd != NULL) {
-			connecting_sa = malloc(tradd->sa_len);
-			memcpy(connecting_sa, tradd, tradd->sa_len);
+			assert(tradd->sa_len <= sizeof(connecting_su));
+			memcpy(&connecting_su, tradd, tradd->sa_len);
 		} else {
-			connecting_sa = malloc(padd->sa_len);
-			memcpy(connecting_sa, padd, padd->sa_len);
+			assert(padd->sa_len <= sizeof(connecting_su));
+			memcpy(&connecting_su, padd, padd->sa_len);
 		}
 
-		assert(connecting_sa->sa_family == AF_INET ||
-		    connecting_sa->sa_family == AF_INET6);
+		assert(connecting_su.sa.sa_family == AF_INET ||
+		    connecting_su.sa.sa_family == AF_INET6);
 
-		if (connecting_sa->sa_family == AF_INET)
-			((struct sockaddr_in*)connecting_sa)->sin_port =
-			    htons(LDP_PORT);
+		if (connecting_su.sa.sa_family == AF_INET)
+			connecting_su.sin.sin_port = htons(LDP_PORT);
 		else
-			((struct sockaddr_in6*)connecting_sa)->sin6_port =
-			    htons(LDP_PORT);
+			connecting_su.sin6.sin6_port = htons(LDP_PORT);
 
 		set_ttl(s);
 	}
@@ -155,20 +153,23 @@ ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
 	SLIST_INIT(&p->label_mapping_head);
 	p->timeout = p->holdtime;
 
+	sopts = fcntl(p->socket, F_GETFL);
+	if (sopts >= 0) {
+		sopts |= O_NONBLOCK;
+		fcntl(p->socket, F_SETFL, &sopts);
+	}
+
 	/* And connect to peer */
-	if (soc < 1)
-		if (connect(s, connecting_sa, connecting_sa->sa_len) == -1) {
-			if (errno == EINTR) {
-				free(connecting_sa);
-				return p;	/* We take care of this in
-						 * big_loop */
-			}
-			warnp("connect to %s failed: %s\n",
-			    satos(connecting_sa), strerror(errno));
-			free(connecting_sa);
-			ldp_peer_holddown(p);
-			return NULL;
-		}
+	if (soc < 1 &&
+	    connect(s, &connecting_su.sa, connecting_su.sa.sa_len) == -1) {
+		if (errno == EINTR || errno == EINPROGRESS)
+			/* We take care of this in big_loop */
+			return p;
+		warnp("connect to %s failed: %s\n",
+		    satos(&connecting_su.sa), strerror(errno));
+		ldp_peer_holddown(p);
+		return NULL;
+	}
 	p->state = LDP_PEER_CONNECTED;
 	return p;
 }
@@ -176,12 +177,15 @@ ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
 void 
 ldp_peer_holddown(struct ldp_peer * p)
 {
-	if (!p)
+
+	if (!p || p->state == LDP_PEER_HOLDDOWN)
 		return;
-	if (p->state == LDP_PEER_ESTABLISHED)
+	if (p->state == LDP_PEER_ESTABLISHED) {
+		p->state = LDP_PEER_HOLDDOWN;
 		mpls_delete_ldp_peer(p);
-	p->state = LDP_PEER_HOLDDOWN;
-	p->timeout = ldp_holddown_time;
+	} else
+		p->state = LDP_PEER_HOLDDOWN;
+	p->timeout = p->holdtime;
 	shutdown(p->socket, SHUT_RDWR);
 	ldp_peer_delete_all_mappings(p);
 	del_all_ifaddr(p);
@@ -457,7 +461,7 @@ ldp_peer_delete_mapping(struct ldp_peer * p, const struct sockaddr * a,
 	struct label_mapping *lma;
 
 	if (!a)
-		return ldp_peer_delete_all_mappings(p);
+		return LDP_E_NOENT;
 
 	lma = ldp_peer_get_lm(p, a, prefix);
 	if (!lma)
@@ -486,7 +490,7 @@ ldp_peer_get_lm(const struct ldp_peer * p, const struct sockaddr * a,
 
 }
 
-int
+void
 ldp_peer_delete_all_mappings(struct ldp_peer * p)
 {
 	struct label_mapping *lma;
@@ -496,8 +500,6 @@ ldp_peer_delete_all_mappings(struct ldp_peer * p)
 		SLIST_REMOVE_HEAD(&p->label_mapping_head, mappings);
 		free(lma);
 	}
-
-	return LDP_E_OK;
 }
 
 /* returns a mapping and its peer */
