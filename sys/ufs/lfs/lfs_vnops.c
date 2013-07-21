@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.250 2013/07/20 22:14:49 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.251 2013/07/21 00:01:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.250 2013/07/20 22:14:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.251 2013/07/21 00:01:22 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -772,6 +772,8 @@ lfs_getattr(void *v)
 	struct inode *ip = VTOI(vp);
 	struct vattr *vap = ap->a_vap;
 	struct lfs *fs = ip->i_lfs;
+
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	/*
 	 * Copy from inode table
 	 */
@@ -801,6 +803,7 @@ lfs_getattr(void *v)
 	vap->va_bytes = lfs_fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -854,7 +857,9 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 }
 
 /*
- * Close called
+ * Close called.
+ *
+ * Update the times on the inode.
  */
 /* ARGSUSED */
 int
@@ -881,9 +886,11 @@ lfs_close(void *v)
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -994,6 +1001,10 @@ lfs_reclaim(void *v)
 
 /*
  * Read a block from a storage device.
+ *
+ * Calculate the logical to physical mapping if not done already,
+ * then call the device strategy routine.
+ *
  * In order to avoid reading blocks that are in the process of being
  * written by the cleaner---and hence are not mutexed by the normal
  * buffer cache / page cache mechanisms---check for collisions before
@@ -1112,8 +1123,7 @@ lfs_strategy(void *v)
 	mutex_exit(&lfs_lock);
 
 	vp = ip->i_devvp;
-	VOP_STRATEGY(vp, bp);
-	return (0);
+	return VOP_STRATEGY(vp, bp);
 }
 
 /*
