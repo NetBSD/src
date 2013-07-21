@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.15 2013/07/02 13:27:42 pgoyette Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.16 2013/07/21 22:30:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.15 2013/07/02 13:27:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.16 2013/07/21 22:30:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -387,6 +387,22 @@ rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 		error = uiomove(buf, n_read, uio);
 		if (error)
 			goto out;
+
+		/*
+		 * Do at most one iteration for /dev/random and return
+		 * a short read without hanging further.  Hanging
+		 * breaks applications worse than short reads.  Reads
+		 * can't be zero unless nonblocking from /dev/random;
+		 * in that case, ask caller to retry, instead of just
+		 * returning zero bytes, which means EOF.
+		 */
+		KASSERT((0 < n_read) || (ctx->rc_hard &&
+			ISSET(fp->f_flag, FNONBLOCK)));
+		if (ctx->rc_hard) {
+			if (n_read == 0)
+				error = EAGAIN;
+			goto out;
+		}
 	}
 
 out:	pool_cache_put(rnd_temp_buffer_cache, buf);
