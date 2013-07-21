@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.14 2013/07/20 22:16:02 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.15 2013/07/21 00:01:22 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.14 2013/07/20 22:16:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.15 2013/07/21 00:01:22 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -178,32 +178,6 @@ ulfs_open(void *v)
 	return (0);
 }
 
-/*
- * Close called.
- *
- * Update the times on the inode.
- */
-/* ARGSUSED */
-int
-ulfs_close(void *v)
-{
-	struct vop_close_args /* {
-		struct vnode	*a_vp;
-		int		a_fflag;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-	if (vp->v_usecount > 1)
-		ULFS_ITIMES(vp, NULL, NULL, NULL);
-	fstrans_done(vp->v_mount);
-	return (0);
-}
-
 static int
 ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
@@ -287,76 +261,6 @@ ulfs_access(void *v)
 	error = ulfs_check_permitted(vp, ip, mode, ap->a_cred);
 
 	return error;
-}
-
-/* ARGSUSED */
-int
-ulfs_getattr(void *v)
-{
-	struct vop_getattr_args /* {
-		struct vnode	*a_vp;
-		struct vattr	*a_vap;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-	struct vattr	*vap;
-
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	vap = ap->a_vap;
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-	ULFS_ITIMES(vp, NULL, NULL, NULL);
-
-	/*
-	 * Copy from inode table
-	 */
-	vap->va_fsid = ip->i_dev;
-	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode & ALLPERMS;
-	vap->va_nlink = ip->i_nlink;
-	vap->va_uid = ip->i_uid;
-	vap->va_gid = ip->i_gid;
-	vap->va_size = vp->v_size;
-	if (ip->i_ump->um_fstype == ULFS1) {
-		vap->va_rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
-		    ULFS_MPNEEDSWAP(ip->i_ump));
-		vap->va_atime.tv_sec = ip->i_ffs1_atime;
-		vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
-		vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
-		vap->va_mtime.tv_nsec = ip->i_ffs1_mtimensec;
-		vap->va_ctime.tv_sec = ip->i_ffs1_ctime;
-		vap->va_ctime.tv_nsec = ip->i_ffs1_ctimensec;
-		vap->va_birthtime.tv_sec = 0;
-		vap->va_birthtime.tv_nsec = 0;
-		vap->va_bytes = dbtob((u_quad_t)ip->i_ffs1_blocks);
-	} else {
-		vap->va_rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
-		    ULFS_MPNEEDSWAP(ip->i_ump));
-		vap->va_atime.tv_sec = ip->i_ffs2_atime;
-		vap->va_atime.tv_nsec = ip->i_ffs2_atimensec;
-		vap->va_mtime.tv_sec = ip->i_ffs2_mtime;
-		vap->va_mtime.tv_nsec = ip->i_ffs2_mtimensec;
-		vap->va_ctime.tv_sec = ip->i_ffs2_ctime;
-		vap->va_ctime.tv_nsec = ip->i_ffs2_ctimensec;
-		vap->va_birthtime.tv_sec = ip->i_ffs2_birthtime;
-		vap->va_birthtime.tv_nsec = ip->i_ffs2_birthnsec;
-		vap->va_bytes = dbtob(ip->i_ffs2_blocks);
-	}
-	vap->va_gen = ip->i_gen;
-	vap->va_flags = ip->i_flags;
-
-	/* this doesn't belong here */
-	if (vp->v_type == VBLK)
-		vap->va_blocksize = BLKDEV_IOSIZE;
-	else if (vp->v_type == VCHR)
-		vap->va_blocksize = MAXBSIZE;
-	else
-		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_type = vp->v_type;
-	vap->va_filerev = ip->i_modrev;
-	fstrans_done(vp->v_mount);
-	return (0);
 }
 
 /*
@@ -1271,52 +1175,6 @@ ulfs_readlink(void *v)
 		return (0);
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
-}
-
-/*
- * Calculate the logical to physical mapping if not done already,
- * then call the device strategy routine.
- */
-int
-ulfs_strategy(void *v)
-{
-	struct vop_strategy_args /* {
-		struct vnode *a_vp;
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf	*bp;
-	struct vnode	*vp;
-	struct inode	*ip;
-	int		error;
-
-	bp = ap->a_bp;
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	if (vp->v_type == VBLK || vp->v_type == VCHR)
-		panic("ulfs_strategy: spec");
-	KASSERT(bp->b_bcount != 0);
-	if (bp->b_blkno == bp->b_lblkno) {
-		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
-				 NULL);
-		if (error) {
-			bp->b_error = error;
-			biodone(bp);
-			return (error);
-		}
-		if (bp->b_blkno == -1) /* no valid data */
-			clrbuf(bp);
-	}
-	if (bp->b_blkno < 0) { /* block is not on disk */
-		biodone(bp);
-		return (0);
-	}
-	vp = ip->i_devvp;
-
-	error = VOP_STRATEGY(vp, bp);
-	if (error)
-		return error;
-
-	return 0;
 }
 
 /*
