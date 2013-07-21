@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddc.9,v 1.5 2013/07/20 21:39:59 wiz Exp $
+.\"	$NetBSD: ddc.9,v 1.6 2013/07/21 10:14:55 njoly Exp $
 .\"
 .\" Copyright 2006 Itronix Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ to retrieve and print information about a monitor:
 	...
 	/* initialize i2c tag... */
 	...
-	if ((ddc_read_edid(tag, buffer, 128) == 0) \*[Am]\*[Am] 
+	if ((ddc_read_edid(tag, buffer, 128) == 0) \*[Am]\*[Am]
 	    (edid_parse(buffer, \*[Am]info) == 0))
 		edid_print(info);
 	...
