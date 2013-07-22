@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.58 2013/07/22 13:40:36 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.58 2013/07/22 13:40:36 soren Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Ex
 #include "opt_vga.h"
 #include "pci.h"
 #include "wsdisplay.h"
+#include "com.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -136,6 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Ex
 #endif
 
 #include <machine/mpconfig.h>
+
+#if NCOM > 0
+#include <dev/pci/puccn.h>
+#endif
 
 #include "opt_pci_conf_mode.h"
 
@@ -997,3 +1002,15 @@ device_pci_register(device_t dev, void *aux)
 	}
 	return NULL;
 }
+
+#if NCOM > 0
+int
+cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
+{
+	pci_mode_detect();
+	pa->pa_iot = x86_bus_space_io;
+	pa->pa_pc = 0;
+	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
+	return 0;
+}
+#endif
