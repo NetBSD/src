@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.33 2013/07/22 13:40:36 soren Exp $	*/
+/*	$NetBSD: puc.c,v 1.34 2013/07/22 14:40:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.33 2013/07/22 13:40:36 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.34 2013/07/22 14:40:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,6 @@ puc_attach(device_t parent, device_t self, void *aux)
 	pcireg_t subsys;
 	int i, barindex;
 	int locs[PUCCF_NLOCS];
-
-	sc->sc_pc = pa->pa_pc;
 
 	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	sc->sc_desc = puc_find_description(PCI_VENDOR(pa->pa_id),
