@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.102 2013/07/20 18:46:15 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.103 2013/07/22 12:11:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.102 2013/07/20 18:46:15 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.103 2013/07/22 12:11:03 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1305,12 +1305,24 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 }
 
 /*
- * ioctl and fcntl are varargs calls and need special treatment
+ * ioctl() and fcntl() are varargs calls and need special treatment.
+ */
+
+/*
+ * Various [Linux] libc's have various signatures for ioctl so we
+ * need to handle the discrepancies.  On NetBSD, we use the
+ * one with unsigned long cmd.
  */
 int
+#ifdef HAVE_IOCTL_CMD_INT
+ioctl(int fd, int cmd, ...)
+{
+	int (*op_ioctl)(int, int cmd, ...);
+#else
 ioctl(int fd, unsigned long cmd, ...)
 {
 	int (*op_ioctl)(int, unsigned long cmd, ...);
+#endif
 	va_list ap;
 	int rv;
 
