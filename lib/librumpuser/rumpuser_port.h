@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.19 2013/07/20 18:46:15 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.20 2013/07/22 08:58:31 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -201,6 +201,16 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #if defined(__sun__) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
+#endif
+
+#include <sys/time.h>
+
+#ifndef TIMEVAL_TO_TIMESPEC
+#define TIMEVAL_TO_TIMESPEC(tv, ts)		\
+do {						\
+	(ts)->tv_sec  = (tv)->tv_sec;		\
+	(ts)->tv_nsec = (tv)->tv_usec * 1000;	\
+} while (/*CONSTCOND*/0)
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */
