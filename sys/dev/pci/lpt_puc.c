@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.14 2008/03/07 17:15:52 cube Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.15 2013/07/22 13:42:17 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.14 2008/03/07 17:15:52 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.15 2013/07/22 13:42:17 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": interrupting at %s\n", intrstr);
 
 	lpt_attach_subr(sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 CFATTACH_DECL_NEW(lpt_puc, sizeof(struct lpt_softc),
