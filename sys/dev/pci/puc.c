@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.34 2013/07/22 14:40:03 martin Exp $	*/
+/*	$NetBSD: puc.c,v 1.35 2013/07/22 14:52:02 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.34 2013/07/22 14:40:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.35 2013/07/22 14:52:02 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ puc_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_1(sc->sc_bar_mappings[1].t,
 		    sc->sc_bar_mappings[1].h, SB16C105X_OPT_IMRREG0, 0xff);
 	} else {
-		if (!pmf_device_register(self, NULL, NULL);
+		if (!pmf_device_register(self, NULL, NULL))
 	                aprint_error_dev(self,
 			    "couldn't establish power handler\n");
 	}
