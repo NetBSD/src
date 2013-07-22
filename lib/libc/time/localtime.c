@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.75 2013/07/17 23:09:26 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.76 2013/07/22 04:55:09 msaitoh Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.75 2013/07/17 23:09:26 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.76 2013/07/22 04:55:09 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -169,12 +169,12 @@ static struct tm *	gmtsub(const timezone_t sp, const time_t *timep,
 static struct tm *	localsub(const timezone_t sp, const time_t *timep,
 				const int_fast32_t offset, struct tm *tmp);
 static int		increment_overflow(int * number, int delta);
+static int		increment_overflow32(int_fast32_t * number, int delta);
 static int		leaps_thru_end_of(int y) ATTRIBUTE_PURE;
-static int		increment_overflow(int_fast32_t * number, int delta);
-static int		normalize_overflow(int_fast32_t * tensptr,
-				int * unitsptr, int base);
 static int		normalize_overflow(int * tensptr, int * unitsptr,
 				int base);
+static int		normalize_overflow32(int_fast32_t * tensptr,
+				int * unitsptr, int base);
 static void		settzname(void);
 static time_t		time1(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp, const int_fast32_t offset);
