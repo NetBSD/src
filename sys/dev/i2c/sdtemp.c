@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.21 2012/02/02 02:47:59 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.22 2013/07/22 13:46:20 soren Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.21 2012/02/02 02:47:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.22 2013/07/22 13:46:20 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,8 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor->flags |= ENVSYS_FMONLIMITS;
 	(void)strlcpy(sc->sc_sensor->desc, device_xname(self),
 	    sizeof(sc->sc_sensor->desc));
+	snprintf(sc->sc_sensor->desc, sizeof(sc->sc_sensor->desc),
+	    "DIMM %d temperature", sc->sc_address - SDTEMP_ADDR);
 
 	/* Now attach the sensor */
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, sc->sc_sensor)) {
