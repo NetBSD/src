@@ -1,4 +1,4 @@
-|	$NetBSD: oc_cksum.s,v 1.7 2013/07/22 03:30:38 matt Exp $
+|	$NetBSD: oc_cksum.s,v 1.8 2013/07/22 03:37:17 matt Exp $
 
 | Copyright (c) 1988 Regents of the University of California.
 | All rights reserved.
@@ -194,19 +194,31 @@ L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
 	jeq	L6		| if 1 excess
 
 	| 3 bytes excess
+#ifdef __mcoldfire__
+	mvzw	(-3,%a0,%d1:l),%d2	| add in last full word then drop
+#else
 	clrl	%d2
 	movw	(-3,%a0,%d1:l),%d2	| add in last full word then drop
+#endif
 	addl	%d2,%d0		|  through to pick up last byte
 
 L6:	| 1 byte excess
+#ifdef __mcoldfire__
+	mvzb	(-1,%a0,%d1:l),%d2
+#else
 	clrl	%d2
 	movb	(-1,%a0,%d1:l),%d2
+#endif
 	lsll	#8,%d2
 	addl	%d2,%d0
 	jra	L1
 
 L7:	| 2 bytes excess
+#ifdef __mcoldfire__
+	mvzw	(-2,%a0,%d1:l),%d2
+#else
 	clrl	%d2
 	movw	(-2,%a0,%d1:l),%d2
+#endif
 	addl	%d2,%d0
 	jra	L1
