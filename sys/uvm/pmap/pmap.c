@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2013/07/17 23:15:20 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2013/07/22 03:40:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2013/07/17 23:15:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2013/07/22 03:40:36 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -308,6 +308,8 @@ pmap_page_syncicache(struct vm_page *pg)
 	kcpuset_t *onproc;
 #ifdef MULTIPROCESSOR
 	kcpuset_create(&onproc, true);
+#else
+	onproc = NULL;
 #endif
 	(void)VM_PAGEMD_PVLIST_LOCK(mdpg, false);
 
