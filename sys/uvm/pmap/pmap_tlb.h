@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.2 2013/07/17 23:15:20 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.3 2013/07/22 03:39:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,7 +148,11 @@ extern u_int pmap_ntlbs;
 #define	cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
 #endif
 #ifndef cpu_tlb_info
+#ifdef MULTIPROCESSOR
 #define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+#else
+#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
+#endif
 #endif
 
 #ifdef MULTIPROCESSOR
