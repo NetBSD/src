@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.132 2013/07/23 14:47:54 skrll Exp $
+# $NetBSD: HACKS,v 1.133 2013/07/23 14:52:07 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -813,3 +813,10 @@ port	hp700
 		corruption.
 	kcah
 
+	hack	compiler error with gcc 4.5.x
+	cdate	Tue Jul 23 07:42:28 BST 2013
+	who	skrll
+	file	src/sys/lib/libkern/Makefile.libkern: 1.26
+	descr
+		workaround for unanalysed codegen bug affecting md5c.c.
+	kcah
