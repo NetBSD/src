@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.131 2013/07/23 07:04:18 skrll Exp $
+# $NetBSD: HACKS,v 1.132 2013/07/23 14:47:54 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -807,7 +807,7 @@ port	hp700
 	hack	compiler error with gcc 4.5.x
 	cdate	Tue Jul 23 07:42:28 BST 2013
 	who	skrll
-	file	src/tests/lib/libc/sys/Makefile: 
+	file	src/tests/lib/libc/sys/Makefile: 1.32
 	descr
 		workaround for codegen bug affecting t_msgrcv.c. Callee saved (%r4)
 		corruption.
