@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.9 2013/07/15 12:10:34 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.10 2013/07/23 11:11:55 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.9 2013/07/15 12:10:34 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.10 2013/07/23 11:11:55 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -95,7 +95,8 @@ static struct mbuf *mpls_label_inet6(struct mbuf *, union mpls_shim *, uint);
 static struct mbuf *mpls_prepend_shim(struct mbuf *, union mpls_shim *);
 
 extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
-	mpls_forwarding, mpls_accept, mpls_mapprec_inet, mpls_mapclass_inet6;
+	mpls_forwarding, mpls_accept, mpls_mapprec_inet, mpls_mapclass_inet6,
+	mpls_rfc4182;
 
 /* ARGSUSED */
 void
@@ -324,6 +325,19 @@ mpls_lse(struct mbuf *m)
 	/* TTL decrement */
 	if ((m = mpls_ttl_dec(m)) == NULL)
 		goto done;
+
+	/* RFC 4182 */
+	if (mpls_rfc4182 != 0)
+		while((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
+		    dst.smpls_addr.shim.label == MPLS_LABEL_IPV6NULL) &&
+		    __predict_false(dst.smpls_addr.shim.bos == 0)) {
+			m_adj(m, sizeof(union mpls_shim));
+			if (m->m_len < sizeof(union mpls_shim) &&
+			    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
+				goto done;
+			dst.smpls_addr.s_addr =
+			    ntohl(mtod(m, union mpls_shim *)->s_addr);
+		}
 
 	if (dst.smpls_addr.shim.label <= MPLS_LABEL_RESMAX) {
 		/* Don't swap reserved labels */
