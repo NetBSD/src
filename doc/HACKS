@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.130 2013/06/05 13:54:26 joerg Exp $
+# $NetBSD: HACKS,v 1.131 2013/07/23 07:04:18 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -801,3 +801,15 @@ descr
 	if either gcc or clang is installed, use /usr/bin/clang-cpp as fallback.
 	This applies only if RPCGEN_CPP is not set and /usr/bin/cpp is not executable.
 kcah
+
+port	hp700
+
+	hack	compiler error with gcc 4.5.x
+	cdate	Tue Jul 23 07:42:28 BST 2013
+	who	skrll
+	file	src/tests/lib/libc/sys/Makefile: 
+	descr
+		workaround for codegen bug affecting t_msgrcv.c. Callee saved (%r4)
+		corruption.
+	kcah
+
