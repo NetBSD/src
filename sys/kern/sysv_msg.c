@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.63 2012/03/13 18:40:54 elad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.64 2013/07/23 07:03:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.63 2012/03/13 18:40:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.64 2013/07/23 07:03:16 skrll Exp $");
 
 #define SYSVMSG
 
@@ -656,8 +656,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	kmsq_t *msq;
 	short next;
 
-	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
-	    (long long)msgsz, msgflg));
+	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqidr,
+	     user_msgp, (long long)msgsz, msgflg));
 
 	if ((ssize_t)msgsz < 0)
 		return EINVAL;
@@ -966,7 +966,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	kmsq_t *msq;
 	short next;
 
-	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
+	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqidr,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
 
 	if ((ssize_t)msgsz < 0)
