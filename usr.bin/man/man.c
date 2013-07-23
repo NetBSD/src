@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $	*/
+/*	$NetBSD: man.c,v 1.44.10.1 2013/07/23 21:07:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.44 2012/01/03 17:49:57 joerg Exp $");
+__RCSID("$NetBSD: man.c,v 1.44.10.1 2013/07/23 21:07:39 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,20 +101,20 @@ struct manstate {
 
 	/* other misc stuff */
 	const char *pager;	/* pager to use */
+	size_t pagerlen;	/* length of the above */
 	const char *machine;	/* machine */
 	const char *machclass;	/* machine class */
-	size_t pagerlen;	/* length of the above */
 };
 
 /*
  * prototypes
  */
-static void	 build_page(char *, char **, struct manstate *);
-static void	 cat(char *);
+static void	 build_page(const char *, char **, struct manstate *);
+static void	 cat(const char *);
 static const char	*check_pager(const char *);
 static int	 cleanup(void);
-static void	 how(char *);
-static void	 jump(char **, char *, char *);
+static void	 how(const char *);
+static void	 jump(char **, const char *, const char *);
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int);
 static void	 usage(void) __attribute__((__noreturn__));
@@ -128,7 +128,7 @@ static void printmanpath(struct manstate *);
 int
 main(int argc, char **argv)
 {
-	static struct manstate m = { 0 }; 	/* init to zero */
+	static struct manstate m;
 	int ch, abs_section, found;
 	ENTRY *esubd, *epath;
 	char *p, **ap, *cmd;
@@ -465,33 +465,33 @@ main(int argc, char **argv)
 }
 
 static int
-manual_find_buildkeyword(char *escpage, const char *fmt,
+manual_find_buildkeyword(const char *prefix, const char *escpage,
 	struct manstate *mp, glob_t *pg, size_t cnt)
 {
 	ENTRY *suffix;
 	int found;
-	char *p, buf[MAXPATHLEN];
+	char buf[MAXPATHLEN];
+	const char *p;
+	int suflen;
 
 	found = 0;
-	/* Try the _build key words next. */
+	/* Try the _build keywords next. */
 	TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
-		for (p = suffix->s;
+		for (p = suffix->s, suflen = 0;
 		    *p != '\0' && !isspace((unsigned char)*p);
 		    ++p)
-			continue;
+			++suflen;
 		if (*p == '\0')
 			continue;
 
-		*p = '\0';
-		(void)snprintf(buf, sizeof(buf), fmt, escpage, suffix->s);
+		(void)snprintf(buf, sizeof(buf), "%s%s%.*s",
+			       prefix, escpage, suflen, suffix->s);
 		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 			if (!mp->where)
 				build_page(p + 1, &pg->gl_pathv[cnt], mp);
-			*p = ' ';
 			found = 1;
 			break;
-		}      
-		*p = ' ';
+		}
 	}
 
 	return found;
@@ -563,21 +563,21 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 		for (cnt = pg->gl_pathc - pg->gl_matchc;
 		    cnt < pg->gl_pathc; ++cnt)
 		{
-			found = manual_find_buildkeyword(escpage, "%s%s",
+			found = manual_find_buildkeyword("", escpage,
 				mp, pg, cnt);
 			if (found) {
 				anyfound = 1;
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = "";
+						*pg->gl_pathv[cnt] = '\0';
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = "";
+			*pg->gl_pathv[cnt] = '\0';
 		}
 
   notfound:
@@ -626,17 +626,17 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			if (mp->pathsearch) {
 				p = strstr(pg->gl_pathv[cnt], mp->pathsearch);
 				if (!p || strchr(p, '/') == NULL) {
-					pg->gl_pathv[cnt] = ""; /* zap! */
+					*pg->gl_pathv[cnt] = '\0'; /* zap! */
 					continue;
 				}
 			}
 
 			/*
-			 * Try the _suffix key words first.
+			 * Try the _suffix keywords first.
 			 *
 			 * XXX
-			 * Older versions of man.conf didn't have the suffix
-			 * key words, it was assumed that everything was a .0.
+			 * Older versions of man.conf didn't have the _suffix
+			 * keywords, it was assumed that everything was a .0.
 			 * We just test for .0 first, it's fast and probably
 			 * going to hit.
 			 */
@@ -657,22 +657,22 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			if (found)
 				goto next;
 
-			/* Try the _build key words next. */
-			found = manual_find_buildkeyword(escpage, "*/%s%s",
+			/* Try the _build keywords next. */
+			found = manual_find_buildkeyword("*/", escpage,
 				mp, pg, cnt);
 			if (found) {
 next:				anyfound = 1;
 				if (!mp->all) {
 					/* Delete any other matches. */
 					while (++cnt< pg->gl_pathc)
-						pg->gl_pathv[cnt] = "";
+						*pg->gl_pathv[cnt] = '\0';
 					break;
 				}
 				continue;
 			}
 
 			/* It's not a man page, forget about it. */
-			pg->gl_pathv[cnt] = "";
+			*pg->gl_pathv[cnt] = '\0';
 		}
 
 		if (anyfound && !mp->all)
@@ -697,10 +697,11 @@ next:				anyfound = 1;
  *	Build a man page for display.
  */
 static void
-build_page(char *fmt, char **pathp, struct manstate *mp)
+build_page(const char *fmt, char **pathp, struct manstate *mp)
 {
 	static int warned;
-	int olddir, fd, n, tmpdirlen;
+	int olddir, fd, n;
+	size_t tmpdirlen;
 	char *p, *b;
 	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
 	const char *tmpdir;
@@ -746,7 +747,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 			}
 
 
-	/* advance fmt pass the suffix spec to the printf format string */
+	/* advance fmt past the suffix spec to the printf format string */
 	for (; *fmt && isspace((unsigned char)*fmt); ++fmt)
 		continue;
 
@@ -758,7 +759,7 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
 		tmpdir = _PATH_TMP;
 	tmpdirlen = strlen(tmpdir);
 	(void)snprintf(tpath, sizeof (tpath), "%s%s%s", tmpdir, 
-	    (tmpdirlen && tmpdir[tmpdirlen-1] == '/') ? "" : "/", TMPFILE);
+	    (tmpdirlen > 0 && tmpdir[tmpdirlen-1] == '/') ? "" : "/", TMPFILE);
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();
@@ -793,12 +794,13 @@ build_page(char *fmt, char **pathp, struct manstate *mp)
  *	display how information
  */
 static void
-how(char *fname)
+how(const char *fname)
 {
 	FILE *fp;
 
 	int lcnt, print;
-	char *p, buf[256];
+	char buf[256];
+	const char *p;
 
 	if (!(fp = fopen(fname, "r"))) {
 		warn("%s", fname);
@@ -840,9 +842,10 @@ how(char *fname)
  *	cat out the file
  */
 static void
-cat(char *fname)
+cat(const char *fname)
 {
-	int fd, n;
+	int fd;
+	ssize_t n;
 	char buf[2048];
 
 	if ((fd = open(fname, O_RDONLY, 0)) < 0) {
@@ -851,7 +854,7 @@ cat(char *fname)
 		exit(EXIT_FAILURE);
 	}
 	while ((n = read(fd, buf, sizeof(buf))) > 0)
-		if (write(STDOUT_FILENO, buf, n) != n) {
+		if (write(STDOUT_FILENO, buf, (size_t)n) != n) {
 			warn("write");
 			(void)cleanup();
 			exit(EXIT_FAILURE);
@@ -898,11 +901,11 @@ check_pager(const char *name)
  *	strip out flag argument and jump
  */
 static void
-jump(char **argv, char *flag, char *name)
+jump(char **argv, const char *flag, const char *name)
 {
 	char **arg;
 
-	argv[0] = name;
+	argv[0] = __UNCONST(name);
 	for (arg = argv + 1; *arg; ++arg)
 		if (!strcmp(*arg, flag))
 			break;

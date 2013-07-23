@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.1.1.19 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.19.2.1 2013/07/23 21:07:22 riastradh Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -81,6 +81,10 @@
 #define COPYOUT6(sin, sa)						      \
 	sin.s6_addr = ((sa) != NULL) ?					      \
 	    (((struct sockaddr_in6 *)(void *)sa)->sin6_addr).s6_addr : 0
+
+#ifndef CLLADDR
+#  define CLLADDR(s) ((const char *)((s)->sdl_data + (s)->sdl_nlen))
+#endif
 
 static int r_fd = -1;
 static char *link_buf;
@@ -534,10 +538,7 @@ manage_link(int fd)
 	struct ifa_msghdr *ifam;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	int len;
-#ifdef RTM_CHGADDR
 	struct sockaddr_dl sdl;
-	unsigned char *hwaddr;
-#endif
 #ifdef INET
 	struct rt rt;
 #endif
@@ -640,23 +641,20 @@ manage_link(int fd)
 				if (rti_info[RTAX_IFA] == NULL)
 					break;
 				switch (rti_info[RTAX_IFA]->sa_family) {
-#ifdef RTM_CHGADDR
 				case AF_LINK:
+#ifdef RTM_CHGADDR
 					if (rtm->rtm_type != RTM_CHGADDR)
 						break;
+#else
+					if (rtm->rtm_type != RTM_NEWADDR)
+						break;
+#endif
 					memcpy(&sdl, rti_info[RTAX_IFA],
 					    rti_info[RTAX_IFA]->sa_len);
-					hwaddr = malloc(sdl.sdl_alen);
-					if (hwaddr) {
-						memcpy(hwaddr, LLADDR(&sdl),
-						    sdl.sdl_alen);
-						handle_hwaddr(ifname, hwaddr,
-						    sdl.sdl_alen);
-					} else
-						syslog(LOG_ERR, "%s: %m",
-						    __func__);
+					handle_hwaddr(ifname,
+					    (const unsigned char*)CLLADDR(&sdl),
+					    sdl.sdl_alen);
 					break;
-#endif
 #ifdef INET
 				case AF_INET:
 				case 255: /* FIXME: Why 255? */

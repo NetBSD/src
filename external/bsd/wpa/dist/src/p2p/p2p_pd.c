@@ -22,8 +22,8 @@
 
 
 /*
- * Number of retries to attempt for provision discovery requests during IDLE
- * state in case the peer is not listening.
+ * Number of retries to attempt for provision discovery requests
+ * in case the peer is not listening.
  */
 #define MAX_PROV_DISC_REQ_RETRIES 10
 
@@ -116,7 +116,8 @@ void p2p_process_prov_disc_req(struct p2p_data *p2p, const u8 *sa,
 		wpa_msg(p2p->cfg->msg_ctx, MSG_DEBUG,
 			"P2P: Provision Discovery Request from "
 			"unknown peer " MACSTR, MAC2STR(sa));
-		if (p2p_add_device(p2p, sa, rx_freq, 0, data + 1, len - 1)) {
+		if (p2p_add_device(p2p, sa, rx_freq, 0, data + 1, len - 1, 0))
+		{
 			wpa_msg(p2p->cfg->msg_ctx, MSG_DEBUG,
 			        "P2P: Provision Discovery Request add device "
 				"failed " MACSTR, MAC2STR(sa));
@@ -386,8 +387,7 @@ int p2p_prov_disc_req(struct p2p_data *p2p, const u8 *peer_addr,
 	 */
 	p2p->user_initiated_pd = !join;
 
-	/* Also set some retries to attempt in case of IDLE state */
-	if (p2p->user_initiated_pd && p2p->state == P2P_IDLE)
+	if (p2p->user_initiated_pd)
 		p2p->pd_retries = MAX_PROV_DISC_REQ_RETRIES;
 
 	return p2p_send_prov_disc_req(p2p, dev, join, force_freq);

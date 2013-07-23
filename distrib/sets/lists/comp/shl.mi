@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.249 2013/04/28 04:05:40 joerg Exp $
+# $NetBSD: shl.mi,v 1.249.4.1 2013/07/23 21:07:21 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -203,6 +203,7 @@
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib		rump
 ./usr/lib/librumpnet_netbt_pic.a		comp-c-piclib		rump
 ./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib		rump
+./usr/lib/librumpnet_netmpls_pic.a		comp-c-piclib		rump
 ./usr/lib/librumpnet_npf.so			comp-c-piclib		rump
 ./usr/lib/librumpnet_npf.so.0			comp-c-piclib		rump
 ./usr/lib/librumpnet_npf.so.0.0			comp-c-piclib		rump

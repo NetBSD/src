@@ -1,6 +1,9 @@
-# $NetBSD: 30-hostname,v 1.1.1.8 2013/06/21 19:33:08 roy Exp $
+# $NetBSD: 30-hostname,v 1.1.1.8.2.1 2013/07/23 21:07:22 riastradh Exp $
 
 # Set the hostname from DHCP data if required
+
+# Generally we should not set the system hostname to be fully qualified
+: ${hostname_fqdn:=false}
 
 # Some systems don't have hostname(1)
 _hostname()
@@ -40,24 +43,47 @@ _hostname()
 
 need_hostname()
 {
-	local hostname=""
+	local hostname hfqdn
 
 	case "$force_hostname" in
-	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1) ;;
-	*) hostname="$(_hostname)";;
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1) return 0;;
 	esac
+
+	hostname="$(_hostname)"
 	case "$hostname" in
-	""|"(none)"|localhost|localhost.localdomain)
-		[ -n "$new_host_name" -o -n "$new_fqdn_name" ];;
-	"$old_host_name"|"$old_fqdn_name")
-		true;;
-	*)
-		false;;
+	""|"(none)"|localhost|localhost.localdomain) return 0;;
 	esac
+	
+	case "$hostname_fqdn" in
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1)	hfqdn=true;;
+	*)					hfqdn=false;;
+	esac
+
+	if [ -n "$old_fqdn_name" ]; then
+		if ${hfqdn}; then
+			[ "$hostname" = "$old_fqdn_name" ]
+		else	
+			[ "$hostname" = "${old_fqdn_name%%.*}" ]
+		fi
+	elif [ -n "$old_host_name" ]; then
+		if ${hfqdn}; then
+			if [ -n "$old_domain_name" -a \
+			    "$old_host_name" = "${old_host_name#*.}" ]
+			then
+				[ "$hostname" = \
+				    "$old_host_name.$old_domain_name" ]
+			else
+				[ "$hostname" = "$old_host_name" ]
+			fi
+		else
+			[ "$hostname" = "${old_host_name%%.*}" ]
+		fi
+	fi
 }
 
 try_hostname()
 {
+
 	if valid_domainname "$1"; then
 		_hostname "$1"
 	else
@@ -67,16 +93,32 @@ try_hostname()
 
 set_hostname()
 {
+	local hfqdn
 
 	need_hostname || return
 
+	case "$hostname_fqdn" in
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1)	hfqdn=true;;
+	*)					hfqdn=false;;
+	esac
+
 	if [ -n "$new_fqdn_name" ]; then
-		try_hostname "$new_fqdn_name"
-	elif [ -n "$new_host_name" ]; then
-		if [ -n "$new_domain_name" ]; then
-			try_hostname "$new_host_name.$new_domain_name"
+		if ${hfqdn}; then
+			try_hostname "$new_fqdn_name"
 		else
-			try_hostname "$new_host_name"
+			try_hostname "${new_fqdn_name%%.*}"
+		fi
+	elif [ -n "$new_host_name" ]; then
+		if ${hfqdn}; then
+			if [ -n "$new_domain_name" -a \
+			    "$new_host_name" = "${new_host_name#*.}" ]
+			then
+				try_hostname "$new_host_name.$new_domain_name"
+			else
+				try_hostname "$new_host_name"
+			fi
+		else
+			try_hostname "${new_host_name%%.*}"
 		fi
 	fi
 }

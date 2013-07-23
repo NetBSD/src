@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1831 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1831.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -254,4 +254,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-6.0.0 [roy 20130621]
 	zoneinfo: Import tzdata2013d. [apb 20130707]
 	openresolv(8): Import openresolv-3.5.6 [roy 20130712]
-
+	libc: Update to tzcode2013d. [christo 20130717]
+	wpa:	Import wpa_supplicant and hostapd 1.1 [adam 20130717]
+	dhcpcd(8): Import dhcpcd-6.0.3 [roy 20130719]
+	coldfire: add userland and toolchain support for FreeScale Coldfire
+		CPUs (which implement a subset of m68k instructions and
+		addressing modes). [matt 20130719]

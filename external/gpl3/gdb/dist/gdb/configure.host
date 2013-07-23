@@ -43,7 +43,7 @@ alpha*)			gdb_host_cpu=alpha ;;
 arm*)			gdb_host_cpu=arm ;;
 hppa*)			gdb_host_cpu=pa ;;
 i[34567]86*)		gdb_host_cpu=i386 ;;
-m68*)			gdb_host_cpu=m68k ;;
+m68*|m5407*)		gdb_host_cpu=m68k ;;
 m88*)			gdb_host_cpu=m88k ;;
 mips*)			gdb_host_cpu=mips ;;
 powerpc* | rs6000)	gdb_host_cpu=powerpc ;;
@@ -109,7 +109,7 @@ ia64-*-hpux*)		gdb_host=hpux ;;
 ia64-*-linux*)		gdb_host=linux ;;
 
 m68*-*-linux*)		gdb_host=linux ;;
-m68*-*-netbsdelf* | m68*-*-knetbsd*-gnu)
+m68*-*-netbsdelf* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
 			gdb_host=nbsdelf ;;
 m68*-*-netbsd*)		gdb_host=nbsdaout ;;
 m68*-*-openbsd*)	gdb_host=obsd ;;

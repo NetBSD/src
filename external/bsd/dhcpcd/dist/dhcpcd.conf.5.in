@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.1.1.17 2013/06/21 19:33:08 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.1.1.17.2.1 2013/07/23 21:07:22 riastradh Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -394,7 +394,7 @@ of a randomly generated number.
 .Xr if_nametoindex 3 ,
 .Xr fnmatch 3
 .Sh AUTHORS
-.An Roy Marples Aq roy@marples.name
+.An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd

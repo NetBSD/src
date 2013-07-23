@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.4.2.1 2013/07/23 21:07:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.4.2.1 2013/07/23 21:07:20 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -141,8 +141,10 @@ Lbcf32loop:
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
+#ifndef __mcoldfire__
 	dbf	%d0,Lbcf32loop	|	till done
 	clrw	%d0
+#endif
 	subql	#1,%d0
 	jcc	Lbcf32loop
 
@@ -154,7 +156,12 @@ Lbcflong:
 	subql	#1,%d0		|	set up for dbf
 Lbcflloop:
 	movl	(%a0)+,(%a1)+	|	copy longwords
+#ifdef __mcoldfire__
+	subql	#1,%d0		|	decrement
+	jcc	Lbcflloop	|	til done
+#else
 	dbf	%d0,Lbcflloop	|	til done
+#endif
 	andl	#3,%d1		|	len %= 4
 	jeq	Lbcdone
 
@@ -162,7 +169,12 @@ Lbcflloop:
 Lbcfbloop:
 	movb	(%a0)+,(%a1)+	| copy bytes
 Lbcfbyte:
+#ifdef __mcoldfire__
+	subql	#1,%d0		|	decrement
+	jcc	Lbcfbloop	|	til done
+#else
 	dbf	%d1,Lbcfbloop	| till done
+#endif
 Lbcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	4(%sp),%d0	| dest address
@@ -224,8 +236,10 @@ Lbcb32loop:
 	movl	-(%a0),-(%a1)
 	movl	-(%a0),-(%a1)
 	movl	-(%a0),-(%a1)
+#ifndef __mcoldfire__
 	dbf	%d0,Lbcb32loop	|	till done
 	clrw	%d0
+#endif
 	subql	#1,%d0
 	jcc	Lbcb32loop
 	
@@ -237,7 +251,12 @@ Lbcblong:
 	subql	#1,%d0		|	set up for dbf
 Lbcblloop:
 	movl	-(%a0),-(%a1)	|	copy longwords
+#ifdef __mcoldfire__
+	subql	#1,%d0		|	decrement
+	jcc	Lbcblloop	|	til done
+#else
 	dbf	%d0,Lbcblloop	|	til done
+#endif
 	andl	#3,%d1		|	len %= 4
 	jeq	Lbcdone
 
@@ -245,7 +264,12 @@ Lbcblloop:
 Lbcbbloop:
 	movb	-(%a0),-(%a1)	| copy bytes
 Lbcbbyte:
+#ifdef __mcoldfire__
+	subql	#1,%d0		| decrement
+	jcc	Lbcbbloop	| til done
+#else
 	dbf	%d1,Lbcbbloop	| till done
+#endif
 
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	4(%sp),%d0	| dest address

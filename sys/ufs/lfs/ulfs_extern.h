@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.6 2013/06/08 02:12:56 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.6.6.1 2013/07/23 21:07:38 riastradh Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -85,7 +85,6 @@ int	ulfs_print(void *);
 int	ulfs_readdir(void *);
 int	ulfs_readlink(void *);
 int	ulfs_remove(void *);
-int	ulfs_rename(void *);
 int	ulfs_rmdir(void *);
 #define	ulfs_seek	genfs_seek
 #define	ulfs_poll	genfs_poll
@@ -139,29 +138,6 @@ int	ulfs_checkpath(struct inode *, struct inode *, kauth_cred_t);
 int	ulfs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
 			int *, struct vnode **);
 int	ulfs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
-
-/* ulfs_rename.c -- for lfs */
-bool	ulfs_gro_directory_empty_p(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_rename_check_possible(struct mount *,
-	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
-int	ulfs_gro_rename_check_permitted(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
-int	ulfs_gro_remove_check_possible(struct mount *,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_remove_check_permitted(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_rename(struct mount *, kauth_cred_t,
-	    struct vnode *, struct componentname *, void *, struct vnode *,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
-int	ulfs_gro_remove(struct mount *, kauth_cred_t,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
-int	ulfs_gro_lookup(struct mount *, struct vnode *,
-	    struct componentname *, void *, struct vnode **);
-int	ulfs_gro_genealogy(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *, struct vnode **);
-int	ulfs_gro_lock_directory(struct mount *, struct vnode *);
-
 
 /* ulfs_quota.c */
 /*

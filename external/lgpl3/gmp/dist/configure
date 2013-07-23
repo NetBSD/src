@@ -4475,6 +4475,16 @@ echo "include_mpn(\`ia64/ia64-defs.m4')" >> $gmp_tmpconfigm4i
     ;;
 
 
+  # Motorola Coldfire
+  #
+  m5407-*-*)
+
+    gcc_cflags="$gcc_cflags $fomit_frame_pointer"
+    gcc_cflags_optlist="arch"
+    gcc_cflags_arch="-m5407"
+  ;;
+
+
   # Motorola 68k
   #
   m68k-*-* | m68[0-9][0-9][0-9]-*-*)

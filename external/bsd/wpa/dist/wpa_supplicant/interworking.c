@@ -501,6 +501,7 @@ static int plmn_id_match(struct wpabuf *anqp, const char *imsi)
 					break;
 				if (os_memcmp(pos, plmn, 3) == 0)
 					return 1; /* Found matching PLMN */
+				pos += 3;
 			}
 		}
 

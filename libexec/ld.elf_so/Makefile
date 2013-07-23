@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2013/05/09 11:44:36 skrll Exp $
+#	$NetBSD: Makefile,v 1.120.2.1 2013/07/23 21:07:30 riastradh Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -28,6 +28,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${LDELFSO_MACHINE_ARCH} == "alpha") ||				\
      (${MACHINE_CPU} == "arm") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "coldfire") ||				\
      (${LDELFSO_MACHINE_ARCH} == "hppa") ||				\
      (${LDELFSO_MACHINE_ARCH} == "i386") ||				\
      (${LDELFSO_MACHINE_ARCH} == "m68k") ||				\

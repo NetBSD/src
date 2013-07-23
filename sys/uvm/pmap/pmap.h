@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2013/07/02 09:35:48 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.1 2013/07/23 21:07:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,9 @@ void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
 extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
+#ifdef MULTIPROCESSOR
+#include <sys/kcpuset.h>
+#endif
 #include <uvm/pmap/pmap_tlb.h>
 
 /*
@@ -120,8 +123,8 @@ extern kmutex_t pmap_segtab_lock;
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	__cpuset_t		pm_active;	/* pmap was active on ... */
-	__cpuset_t		pm_onproc;	/* pmap is active on ... */
+	kcpuset_t		*pm_active;	/* pmap was active on ... */
+	kcpuset_t		*pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
 	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
@@ -137,8 +140,8 @@ struct pmap {
 #ifdef	_KERNEL
 struct pmap_kernel {
 	struct pmap kernel_pmap;
-#ifdef MULTIPROCESSOR
-	struct pmap_asid_info kernel_pai[MAXCPUS-1];
+#if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
+	struct pmap_asid_info kernel_pai[PMAP_TLB_MAX-1];
 #endif
 };
 

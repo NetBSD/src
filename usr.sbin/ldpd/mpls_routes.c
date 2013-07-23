@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.16 2013/07/16 16:55:01 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.16.2.1 2013/07/23 21:07:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -57,7 +58,7 @@
 #include "socketops.h"
 
 extern int      route_socket;
-int             rt_seq = 0;
+int             rt_seq = 200;
 int		dont_catch = 0;
 extern int	no_default_route;
 extern int	debug_f, warn_f;
@@ -65,7 +66,9 @@ extern int	debug_f, warn_f;
 struct rt_msg   replay_rt[REPLAY_MAX];
 int             replay_index = 0;
 
+#if 0
 static int read_route_socket(char *, int);
+#endif
 void	mask_addr(union sockunion *);
 int	compare_sockunion(const union sockunion *, const union sockunion *);
 static int check_if_addr_updown(struct rt_msg *, uint);
@@ -97,39 +100,36 @@ extern struct sockaddr mplssockaddr;
 	CHECK_LEN(dstunion) \
 	} while (0);
 
-
+#if 0
 static int 
 read_route_socket(char *s, int max)
 {
 	int             rv, to_read;
-	fd_set          fs;
-	struct timeval  tv;
 	struct rt_msghdr *rhdr;
+	struct pollfd pfd;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = 5000;
-
-	FD_ZERO(&fs);
-	FD_SET(route_socket, &fs);
+	pfd.fd = route_socket;
+	pfd.events = POLLRDNORM;
+	pfd.revents = 0;
 
 	errno = 0;
 
 	do {
-		rv = select(route_socket + 1, &fs, NULL, &fs, &tv);
-	} while ((rv == -1) && (errno == EINTR));
+		rv = poll(&pfd, 1, 100);
+	} while (rv == -1 && errno == EINTR);
 
 	if (rv < 1) {
 		if (rv == 0) {
-			fatalp("read_route_socket: select timeout\n");
+			fatalp("read_route_socket: poll timeout\n");
 		} else
-			fatalp("read_route_socket: select: %s",
+			fatalp("read_route_socket: poll: %s",
 			    strerror(errno));
 		return 0;
 	}
 
 	do {
 		rv = recv(route_socket, s, max, MSG_PEEK);
-	} while((rv == -1) && (errno == EINTR));
+	} while(rv == -1 && errno == EINTR);
 
 	if (rv < 1) {
 		debugp("read_route_socket: recv error\n");
@@ -150,6 +150,7 @@ read_route_socket(char *s, int max)
 
 	return rv;
 }
+#endif	/* 0 */
 
 /* Recalculate length */
 void 
@@ -457,6 +458,7 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
 	return LDP_E_OK;
 }
 
+#if 0
 /*
  * Check for a route and returns it in rg
  * If exact_match is set it compares also the so_dest and so_pref
@@ -507,7 +509,13 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 	}
 	rm.m_rtm.rtm_msglen = l = cp - (char *) &rm;
 
-	if ((rlen = write(route_socket, (char *) &rm, l)) < l) {
+	setsockopt(route_socket, SOL_SOCKET, SO_USELOOPBACK, &(int){1},
+	    sizeof(int));
+	rlen = write(route_socket, (char *) &rm, l);
+	setsockopt(route_socket, SOL_SOCKET, SO_USELOOPBACK, &(int){0},
+	    sizeof(int));
+
+	if (rlen < l) {
 		debugp("Cannot get a route !(rlen=%d instead of %d) - %s\n",
 		    rlen, l, strerror(errno));
 		return LDP_E_NO_SUCH_ROUTE;
@@ -525,7 +533,14 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 			if (rg->m_rtm.rtm_pid == getpid() &&
 			    rg->m_rtm.rtm_seq == myseq)
 				break;
-			debugp("Added to replay PID: %d, SEQ: %d\n",
+			/* Fast skip */
+			if (rg->m_rtm.rtm_type != RTM_ADD &&
+			    rg->m_rtm.rtm_type != RTM_DELETE &&
+			    rg->m_rtm.rtm_type != RTM_CHANGE &&
+			    rg->m_rtm.rtm_type != RTM_NEWADDR &&
+			    rg->m_rtm.rtm_type != RTM_DELADDR)
+				continue;
+			warnp("Added to replay PID: %d, SEQ: %d\n",
 			    rg->m_rtm.rtm_pid, rg->m_rtm.rtm_seq);
 			memcpy(&replay_rt[replay_index], rg,
 			    sizeof(struct rt_msg));
@@ -553,6 +568,8 @@ get_route(struct rt_msg * rg, const union sockunion * so_dest,
 
 	return LDP_E_OK;
 }
+
+#endif	/* 0 */
 
 /* triggered when a route event occurs */
 int 
@@ -599,21 +616,14 @@ check_route(struct rt_msg * rg, uint rlen)
 			return LDP_E_OK;
 	}
 	if (rg->m_rtm.rtm_addrs & RTA_NETMASK) {
-		if (so_gate)
-			so_pref = so_gate;
-		else
-			so_pref = so_dest;
-		GETNEXT(so_pref, so_pref);
-	}
-	if (!(rg->m_rtm.rtm_flags & RTF_GATEWAY)) {
-		if (rg->m_rtm.rtm_addrs & RTA_GENMASK) {
-			debugp("Used GENMASK\n");
+		if (so_gate != NULL) {
+			GETNEXT(so_pref, so_gate);
 		} else
-			debugp("No GENMASK to use\n");
+			GETNEXT(so_pref, so_dest);
 	}
 	/* Calculate prefixlen */
 	if (so_pref)
-		prefixlen = from_mask_to_cidr(inet_ntoa(so_pref->sin.sin_addr));
+		prefixlen = from_union_to_cidr(so_pref);
 	else {
 		prefixlen = 32;
 		if ((so_pref = from_cidr_to_union(32)) == NULL)
@@ -630,7 +640,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		if (lab) {
 			send_withdraw_tlv_to_all(&so_dest->sa,
 			    prefixlen);
-			label_reattach_route(lab, LDP_READD_NODEL);
+			label_reattach_route(lab, REATT_INET_DEL);
 			label_del(lab);
 		}
 	/* Fallthrough */
@@ -643,30 +653,31 @@ check_route(struct rt_msg * rg, uint rlen)
 
 		/* First of all check if we already know this one */
 		if (label_get(so_dest, so_pref) == NULL) {
-			if (!(rg->m_rtm.rtm_flags & RTF_GATEWAY))
+			/* Just add an IMPLNULL label */
+			if (so_gate == NULL)
 				label_add(so_dest, so_pref, NULL,
 					MPLS_LABEL_IMPLNULL, NULL, 0);
 			else {
 				pm = ldp_test_mapping(&so_dest->sa,
 					 prefixlen, &so_gate->sa);
 				if (pm) {
-					label_add(so_dest, so_pref,
-						so_gate, 0, NULL, 0);
-					mpls_add_label(pm->peer, rg,
-					  &so_dest->sa, prefixlen,
-					  pm->lm->label, ROUTE_LOOKUP_LOOP);
+					/* create an implnull label as it
+					 * gets rewritten in mpls_add_label */
+					lab = label_add(so_dest, so_pref,
+					    so_gate, MPLS_LABEL_IMPLNULL,
+					    pm->peer, pm->lm->label);
+					if (lab != NULL)
+						mpls_add_label(lab);
 					free(pm);
 				} else
 					label_add(so_dest, so_pref, so_gate,
 					    MPLS_LABEL_IMPLNULL, NULL, 0);
 			}
 		} else	/* We already know about this prefix */
-			debugp("Binding already there for prefix %s/%d !\n",
+			fatalp("Binding already there for prefix %s/%d !\n",
 			      satos(&so_dest->sa), prefixlen);
 		break;
 	case RTM_DELETE:
-		if (!so_gate)
-			break;	/* Non-existent route  XXX ?! */
 		/*
 		 * Send withdraw check the binding, delete the route, delete
 		 * the binding
@@ -676,7 +687,7 @@ check_route(struct rt_msg * rg, uint rlen)
 			break;
 		send_withdraw_tlv_to_all(&so_dest->sa, prefixlen);
 		/* No readd or delete IP route. Just delete the MPLS route */
-		label_reattach_route(lab, LDP_READD_NODEL);
+		label_reattach_route(lab, REATT_INET_NODEL);
 		label_del(lab);
 		break;
 	}
@@ -818,8 +829,7 @@ bind_current_routes()
 		rtmes = (struct rt_msghdr *) next;
 		rlen = rtmes->rtm_msglen;
 		size_cp = sizeof(struct rt_msghdr);
-		so_pref = NULL;
-		so_gate = NULL;
+		so_gate = so_pref = NULL;
 		if (rtmes->rtm_flags & RTF_LLINFO)	/* No need for arps */
 			continue;
 		if (!(rtmes->rtm_addrs & RTA_DST)) {
@@ -830,6 +840,7 @@ bind_current_routes()
 		CHECK_MINSA;
 		so_dst = (union sockunion *) & rtmes[1];
 		CHECK_LEN(so_dst);
+
 		/*
 		 * This function is called only at startup, so use
 		 * this ocassion to delete all MPLS routes
@@ -879,6 +890,10 @@ bind_current_routes()
 				free(so_pref);
 			continue;
 		}
+
+		if (so_gate != NULL && so_gate->sa.sa_family == AF_LINK)
+			so_gate = NULL;	/* connected route */
+
 		if (so_gate == NULL || so_gate->sa.sa_family == AF_INET)
 			label_add(so_dst, so_pref, so_gate,
 			    MPLS_LABEL_IMPLNULL, NULL, 0);
