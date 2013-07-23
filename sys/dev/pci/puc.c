@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.35 2013/07/22 14:52:02 soren Exp $	*/
+/*	$NetBSD: puc.c,v 1.36 2013/07/23 07:40:38 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.35 2013/07/22 14:52:02 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.36 2013/07/23 07:40:38 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,9 +265,11 @@ puc_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_bar_mappings[barindex].a +
 		    sc->sc_desc->ports[i].offset, &subregion_handle);
 		if (is_console) {
-                        sc->sc_bar_mappings[barindex].mapped = 1;
-                       	sc->sc_bar_mappings[barindex].h = subregion_handle -
+			sc->sc_bar_mappings[barindex].mapped = 1;
+#if defined(amd64) || defined(i386)
+			sc->sc_bar_mappings[barindex].h = subregion_handle -
 			    sc->sc_desc->ports[i].offset;	/* XXX hack */
+#endif
 		}
 #endif
 		if (!sc->sc_bar_mappings[barindex].mapped) {
