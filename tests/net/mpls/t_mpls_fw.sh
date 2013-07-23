@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw.sh,v 1.2 2013/07/23 12:14:49 martin Exp $
+# $NetBSD: t_mpls_fw.sh,v 1.3 2013/07/23 12:41:01 kefren Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,10 +37,10 @@
 # ping from R1 to R4 right hand side interface
 
 
-RUMP_SERVER1=unix:///tmp/r1
-RUMP_SERVER2=unix:///tmp/r2
-RUMP_SERVER3=unix:///tmp/r3
-RUMP_SERVER4=unix:///tmp/r4
+RUMP_SERVER1=unix://./r1
+RUMP_SERVER2=unix://./r2
+RUMP_SERVER3=unix://./r3
+RUMP_SERVER4=unix://./r4
 
 RUMP_FLAGS=\
 "-lrumpnet -lrumpnet_net -lrumpnet_netmpls -lrumpnet_netinet -lrumpnet_shmif"
@@ -129,7 +129,7 @@ doping()
 
 	export RUMP_SERVER=${RUMP_SERVER1}
 	atf_check -s exit:0 -o match:"64 bytes from 10.0.4.1: icmp_seq=" \
-	    rump.ping -n -w 5 10.0.4.1
+	    rump.ping -n -o -w 5 10.0.4.1
 	unset RUMP_SERVER
 }
 
