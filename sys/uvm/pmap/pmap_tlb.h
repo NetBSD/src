@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.1 2013/07/02 09:35:48 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.1.2.1 2013/07/23 21:07:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,12 @@
 #ifndef	_COMMON_PMAP_TLB_H_
 #define	_COMMON_PMAP_TLB_H_
 
+#include <sys/kcpuset.h>
+
+#if defined(MULTIPROCESSOR) && !defined(PMAP_TLB_MAX)
+#define PMAP_TLB_MAX		MAXCPUS
+#endif
+
 /*
  * Per TLB (normally same as CPU) asid info
  */
@@ -110,10 +116,14 @@ struct pmap_tlb_info {
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	__cpuset_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
-	enum tlb_invalidate_op ti_tlbinvop;
+#if PMAP_TLB_MAX > 1
+	kcpuset_t *ti_kcpuset;		/* bitmask of CPUs sharing this TLB */
 	u_int ti_index;
+	enum tlb_invalidate_op ti_tlbinvop;
 #define tlbinfo_index(ti)	((ti)->ti_index)
+#else
+#define tlbinfo_index(ti)	(0)
+#endif
 	struct evcnt ti_evcnt_synci_asts;
 	struct evcnt ti_evcnt_synci_all;
 	struct evcnt ti_evcnt_synci_pages;
@@ -138,7 +148,11 @@ extern u_int pmap_ntlbs;
 #define	cpu_set_tlb_info(ci, ti)	((void)((ci)->ci_tlb_info = (ti)))
 #endif
 #ifndef cpu_tlb_info
+#ifdef MULTIPROCESSOR
 #define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+#else
+#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
+#endif
 #endif
 
 #ifdef MULTIPROCESSOR

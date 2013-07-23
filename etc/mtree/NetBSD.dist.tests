@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.96 2013/03/21 19:17:51 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.96.6.1 2013/07/23 21:07:22 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -302,6 +302,7 @@
 ./usr/tests/net/icmp
 ./usr/tests/net/if
 ./usr/tests/net/if_loop
+./usr/tests/net/mpls
 ./usr/tests/net/net
 ./usr/tests/net/npf
 ./usr/tests/net/route

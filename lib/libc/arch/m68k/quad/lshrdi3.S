@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrdi3.S,v 1.7 2013/07/16 21:49:45 matt Exp $	*/
+/*	$NetBSD: lshrdi3.S,v 1.7.2.1 2013/07/23 21:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
 | d3 offset (32 - shift)
 
 ENTRY(__lshrdi3)
-	link	%fp,#0
-	moveml	%d2-%d4,-(%sp)
+	link	%fp,#-12
+	moveml	%d2-%d4,(%sp)
 	movel	8(%fp),%d0
 	movel	12(%fp),%d1
 	movel	16(%fp),%d2

@@ -1,4 +1,4 @@
-/*	$NetBSD: strncmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: strncmp.S,v 1.4.2.1 2013/07/23 21:07:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,47 +33,68 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strncmp.S,v 1.4 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: strncmp.S,v 1.4.2.1 2013/07/23 21:07:20 riastradh Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+
+#ifdef __mcoldfire__
+#define GETC(a,b)	mvsb	a,b
+#define	SUBC(a,b)	mvsb	a,%d2; subl %d2,b
+#else
+#define GETC(a,b)	movb	a,b
+#define	SUBC(a,b)	subb	a,b
+#endif
 
 ENTRY(strncmp)
 	movl	12(%sp),%d0
 	jeq	L4
 	movl	4(%sp),%a0
 	movl	8(%sp),%a1
+#ifdef __coldfire__
+	movl	%d2,-(%sp)	| save temp
+#endif
 L1:				/* unroll by 4 for m680[23]0's */
-	movb	(%a0)+,%d1
+	GETC((%a0)+,%d1)
 	jeq	L2
-	subb	(%a1)+,%d1
+	SUBC((%a1)+,%d1)
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	(%a0)+,%d1
+	GETC((%a0)+,%d1)
 	jeq	L2
-	subb	(%a1)+,%d1
+	SUBC((%a1)+,%d1)
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	(%a0)+,%d1
+	GETC((%a0)+,%d1)
 	jeq	L2
-	subb	(%a1)+,%d1
+	SUBC((%a1)+,%d1)
 	jne	L3
 	subql	#1,%d0
 	jeq	L4
 
-	movb	(%a0)+,%d1
+	GETC((%a0)+,%d1)
 	jeq	L2
-	subb	(%a1)+,%d1
+	SUBC((%a1)+,%d1)
 	jne	L3
 	subql	#1,%d0
 	jne	L1
+#ifdef __mcoldfire__
+	movl	(%sp)+,%d2		| restore temp
+#endif
 L4:	rts
 
-L2:	subb	(%a1),%d1
-L3:	scs	%d0
+L2:	SUBC((%a1),%d1)
+L3:	
+#ifdef __mcoldfire__
+	movl	(%sp)+,%d2		| restore temp
+	movl	%d1,%d0
+#else
+	scs	%d0
 	EXTBL(%d0)
-	movb	%d1,%d0
+	moveb	%d1,%d0
+#endif
 	rts
 END(strncmp)

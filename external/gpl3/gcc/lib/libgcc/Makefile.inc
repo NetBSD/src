@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2013/02/14 09:19:28 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.1 2013/07/23 21:07:26 riastradh Exp $
 
 .if ${MKGCC} != "no"
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH}
@@ -46,6 +46,8 @@ LIB2FUNCS_ALL= \
 	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3        \
 	_divtc3 _bswapsi2 _bswapdi2
 
+.if ${MACHINE_ARCH} != "coldfire"
+
 # non swfloat versions 
 .for _p in _fix _fixuns
 . for _m in sf df xf tf
@@ -62,6 +64,7 @@ LIB2FUNCS_ALL+=	${_p}di${_m}
 .for _m in sf df xf
 LIB2FUNCS_ALL+=	_fixuns${_m}si
 .endfor
+.endif
 
 LIB2FUNCS_SHORT:=${LIB2FUNCS_ALL}
 LIB2_DIVMOD_FUNCS:=${G_LIB2_DIVMOD_FUNCS}

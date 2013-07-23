@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.26 2013/05/08 15:35:33 christos Exp $
+# $NetBSD: shl.mi,v 1.26.2.1 2013/07/23 21:07:21 riastradh Exp $
 ./usr/libdata/debug/lib/libc.so.12.185.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -216,6 +216,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_net80211.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netbt.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netinet.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_netmpls.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_npf.so.0.0.debug		comp-rump-debug	npf,debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_shmif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug,rump

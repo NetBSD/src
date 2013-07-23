@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.3 2013/02/14 08:56:56 matt Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.3.2.1 2013/07/23 21:07:29 riastradh Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,11 +13,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.3 2013/02/14 08:56:56 matt Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.3.2.1 2013/07/23 21:07:29 riastradh Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <machine/ieee.h>
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #ifdef EXT_EXP_INFNAN
 #if LDBL_MAX_EXP != 0x4000
@@ -98,3 +100,5 @@ nextafterl(long double x, long double y)
 	return ux.extu_ld;
 }
 #endif
+
+#endif /* __HAVE_LONG_DOUBLE */

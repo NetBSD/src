@@ -33,6 +33,9 @@ dnl    conftest.exe - various DOS compilers
 define(IA64_PATTERN,
 [[ia64*-*-* | itanium-*-* | itanium2-*-*]])
 
+define(M5407_PATTERN,
+[[m5407-*-*]])
+
 dnl  Need to be careful not to match m6811, m6812, m68hc11 and m68hc12, all
 dnl  of which config.sub accepts.  (Though none of which are likely to work
 dnl  with GMP.)

@@ -326,6 +326,10 @@ hppa*-*-*)
 m32r*-*-*)
         cpu_type=m32r
         ;;
+m5200-*-*|m5407-*-*)
+	cpu_type=m68k
+	extra_headers=math-68881.h
+	;;
 m680[012]0-*-*)
 	cpu_type=m68k
 	extra_headers=math-68881.h
@@ -1659,21 +1663,28 @@ m68k-*-elf* | fido-*-elf*)
 	esac
 	extra_parts="crtbegin.o crtend.o"
 	;;
-m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
+m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
 	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h m68k/netbsd-elf.h"
 	tm_defines="${tm_defines} MOTOROLA=1 USE_GAS=1"
 	default_cf_cpu=5475
+	default_m68k_cpu=68020
 	case ${target} in
+	m5407*)
+		with_arch=${with_arch:-cf}
+		target_cpu_default="mcf5475"
+#	        target="`echo ${target} | sed 's/m68kcf/m68k/'`"
+		;;
 	m68010*)
-		target_cpu_default="0"
+		target_cpu_default="m68010"
 		tmake_file="m68k/t-m68kelf m68k/t-m68010-netbsd"
 		default_m68k_cpu=68010
+		tmake_file="${tmake_file} m68k/t-floatlib"
 		;;
 	*)
-		default_m68k_cpu=68020
+		with_arch=${with_arch:-m68k}
+		tmake_file="${tmake_file} m68k/t-floatlib"
 		;;
 	esac
-	tmake_file="${tmake_file} m68k/t-floatlib"
 	;;
 m68k*-*-openbsd*)
 	default_m68k_cpu=68020
@@ -2895,6 +2906,9 @@ if test x$with_cpu = x ; then
     frv550-*-*linux*)
       with_cpu=fr550
       ;;
+    m5200-*-*|m5407-*-*)
+      with_cpu=${default_cf_cpu}
+      ;;
     m68k*-*-*)
       case "$with_arch" in
 	"cf")
@@ -3150,7 +3164,7 @@ case "${target}" in
 		esac
 		;;
 
-	fido-*-* | m68k*-*-*)
+	fido-*-* | m68k*-*-* | m5200-*-* | m5407-*-*)
 		supported_defaults="arch cpu"
 		case "$with_arch" in
 		"" | "m68k"| "cf")
