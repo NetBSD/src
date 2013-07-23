@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw.sh,v 1.1 2013/07/19 04:00:40 kefren Exp $
+# $NetBSD: t_mpls_fw.sh,v 1.2 2013/07/23 12:14:49 martin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ configservers()
 	# Setup the first server
 	export RUMP_SERVER=${RUMP_SERVER1}
 	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr /tmp/shdom1
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ./shdom1
 	atf_check -s exit:0 rump.ifconfig shmif0 10.0.1.1/24
 	atf_check -s exit:0 rump.ifconfig mpls0 create up
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.accept=1
@@ -80,10 +80,10 @@ configservers()
 	# Setup the second server
 	export RUMP_SERVER=${RUMP_SERVER2}
 	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr /tmp/shdom1
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ./shdom1
 	atf_check -s exit:0 rump.ifconfig shmif0 10.0.1.2/24
 	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr /tmp/shdom2
+	atf_check -s exit:0 rump.ifconfig shmif1 linkstr ./shdom2
 	atf_check -s exit:0 rump.ifconfig shmif1 10.0.2.1/24
 	atf_check -s exit:0 rump.ifconfig mpls0 create up
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.accept=1
@@ -95,10 +95,10 @@ configservers()
 	# Setup the third server
 	export RUMP_SERVER=${RUMP_SERVER3}
 	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr /tmp/shdom2
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ./shdom2
 	atf_check -s exit:0 rump.ifconfig shmif0 10.0.2.2/24
 	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr /tmp/shdom3
+	atf_check -s exit:0 rump.ifconfig shmif1 linkstr ./shdom3
 	atf_check -s exit:0 rump.ifconfig shmif1 10.0.3.1/24
 	atf_check -s exit:0 rump.ifconfig mpls0 create up
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.accept=1
@@ -110,10 +110,10 @@ configservers()
 	# Setup the fourth server
 	export RUMP_SERVER=${RUMP_SERVER4}
 	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr /tmp/shdom3
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ./shdom3
 	atf_check -s exit:0 rump.ifconfig shmif0 10.0.3.2/24
 	atf_check -s exit:0 rump.ifconfig shmif1 create
-	atf_check -s exit:0 rump.ifconfig shmif1 linkstr /tmp/shdom4
+	atf_check -s exit:0 rump.ifconfig shmif1 linkstr ./shdom4
 	atf_check -s exit:0 rump.ifconfig shmif1 10.0.4.1/24
 	atf_check -s exit:0 rump.ifconfig mpls0 create up
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.accept=1
