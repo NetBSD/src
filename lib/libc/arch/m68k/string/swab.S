@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.S,v 1.9 2013/07/16 21:46:42 matt Exp $	*/
+/*	$NetBSD: swab.S,v 1.9.2.1 2013/07/23 21:07:29 riastradh Exp $	*/
 
 #include <machine/asm.h>
 
@@ -10,9 +10,15 @@ ENTRY(swab)
 	jeq	swdone
 
 swloop:
+#ifdef __mcoldfire__
+	movb	(%a0)+,1(%a1)
+	movb	(%a0)+,(%a1)
+	addql	#2,%a1
+#else
 	movw	(%a0)+,%d1
 	rorw	#8,%d1
 	movw	%d1,(%a1)+
+#endif
 	subql	#1,%d0
 	jne	swloop
 

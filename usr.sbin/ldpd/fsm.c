@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.13 2013/07/12 08:55:52 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.13.2.1 2013/07/23 21:07:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ run_ldp_hello(const struct ldp_pdu * pduid, const struct hello_tlv * ht,
 		hi->ldp_id.s_addr = pduid->ldp_id.s_addr;
 		memcpy(&hi->transport_address, &traddr, traddr.sa.sa_len);
 		SLIST_INSERT_HEAD(&hello_info_head, hi, infos);
+		may_connect = false;
 	}
 
 	/* Update expire timer */
@@ -236,5 +237,6 @@ set_my_ldp_id()
 	freeifaddrs(ifa);
 	debugp("LDP ID: %s\n", inet_ntoa(a));
 	strlcpy(my_ldp_id, inet_ntoa(a), INET_ADDRSTRLEN);
+	setproctitle("LDP ID: %s", my_ldp_id);
 	return LDP_E_OK;
 }

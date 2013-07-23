@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.h,v 1.5 2013/07/16 02:54:32 kefren Exp $ */
+/* $NetBSD: mpls_routes.h,v 1.5.2.1 2013/07/23 21:07:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,8 +68,10 @@ void	from_cidr_to_mask(uint8_t, char *);
 int	add_route(union sockunion *, union sockunion *, union sockunion *,
 		union sockunion *, union sockunion *, int, int);
 int	delete_route(union sockunion *, union sockunion *, int);
+#if 0
 int	get_route(struct rt_msg *, const union sockunion *,
 		const union sockunion *, int);
+#endif
 int	bind_current_routes(void);
 int	flush_mpls_routes(void);
 int	check_route(struct rt_msg *, uint);

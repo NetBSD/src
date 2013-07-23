@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.18 2013/04/28 13:17:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.18.2.1 2013/07/23 21:07:30 riastradh Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -159,6 +159,14 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
+#ifndef __CONCAT
+#define __CONCAT(x,y)	x ## y
+#endif
+
+#ifndef __STRING
+#define __STRING(x)	#x
+#endif
+
 #if defined(__linux__) || defined(__sun__) || defined (__CYGWIN__)
 #define RUMPUSER_RANDOM() random()
 #define RUMPUSER_USE_DEVRANDOM
@@ -193,6 +201,16 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #if defined(__sun__) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
+#endif
+
+#include <sys/time.h>
+
+#ifndef TIMEVAL_TO_TIMESPEC
+#define TIMEVAL_TO_TIMESPEC(tv, ts)		\
+do {						\
+	(ts)->tv_sec  = (tv)->tv_sec;		\
+	(ts)->tv_nsec = (tv)->tv_usec * 1000;	\
+} while (/*CONSTCOND*/0)
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */

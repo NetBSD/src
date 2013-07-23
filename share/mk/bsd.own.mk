@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.737 2013/07/11 06:58:30 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.737.2.1 2013/07/23 21:07:33 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:S/armeb/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -61,6 +61,7 @@ HAVE_GCC?=    45
 .if \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_CPU} == "sh3" || \
@@ -686,7 +687,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 #
 # GNU sources and packages sometimes see architecture names differently.
 #
-GNU_ARCH.coldfire=m68k
+GNU_ARCH.coldfire=m5407
 GNU_ARCH.earm=arm
 GNU_ARCH.earmeb=armeb
 GNU_ARCH.earmhf=arm
@@ -815,11 +816,13 @@ MKCOMPATMODULES:=	no
 
 #
 # Default mips64 to softfloat now.
-# arm is always softfloat
+# arm is always softfloat unless it isn't
 # emips is always softfloat.
+# coldfire is always softfloat
 #
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
     (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || \
     ${MACHINE} == "emips"
 MKSOFTFLOAT?=	yes
 .endif

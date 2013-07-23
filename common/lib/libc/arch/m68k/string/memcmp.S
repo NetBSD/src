@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.S,v 1.3 2013/07/16 23:24:19 matt Exp $	*/
+/*	$NetBSD: memcmp.S,v 1.3.2.1 2013/07/23 21:07:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,11 +39,21 @@
 #if 0
 	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memcmp.S,v 1.3 2013/07/16 23:24:19 matt Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.3.2.1 2013/07/23 21:07:20 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* memcmp(s1, s2, n) */
+
+#ifdef __mcoldfire__
+#define	CMPMB(a,b)	movb b,%d2; cmpb a,%d2
+#define	CMPMW(a,b)	movw b,%d2; cmpw a,%d2
+#define	CMPML(a,b)	movl b,%d2; cmpl a,%d2
+#else
+#define	CMPMB(a,b)	cmpmb a,b
+#define	CMPMW(a,b)	cmpmw a,b
+#define	CMPML(a,b)	cmpml a,b
+#endif
 
 /*
  * This is probably not the best we can do, but it is still 2-10 times
@@ -57,11 +67,14 @@ ENTRY(memcmp)
 	movl	4(%sp),%a0		| string 1
 	movl	8(%sp),%a1		| string 2
 	movl	12(%sp),%d0		| length
+#ifdef __mcoldfire__
+	movl	%d2,-(%sp)		| save temp
+#endif
 	jeq	bcdone			| if zero, nothing to do
 	movl	%a0,%d1
 	btst	#0,%d1			| string 1 address odd?
 	jeq	bceven			| no, skip alignment
-	cmpmb	(%a0)+,(%a1)+		| yes, compare a byte
+	CMPMB((%a0)+,(%a1)+)		| yes, compare a byte
 	jne	bcnoteq			| not equal, return non-zero
 	subql	#1,%d0			| adjust count
 	jeq	bcdone			| count 0, reutrn zero
@@ -73,14 +86,14 @@ bceven:
 	lsrl	#2,%d1			| convert count to longword count
 	jeq	bcbloop			| count 0, skip longword loop
 bclloop:
-	cmpml	(%a0)+,(%a1)+		| compare a longword
+	CMPML((%a0)+,(%a1)+)		| compare a longword
 	jne	bcnoteql		| not equal, return non-zero
 	subql	#1,%d1			| adjust count
 	jne	bclloop			| still more, keep comparing
 	andl	#3,%d0			| what remains
 	jeq	bcdone			| nothing, all done
 bcbloop:
-	cmpmb	(%a0)+,(%a1)+		| compare a byte
+	CMPMB((%a0)+,(%a1)+)		| compare a byte
 	jne	bcnoteq			| not equal, return non-zero
 	subql	#1,%d0			| adjust count
 	jne	bcbloop			| still more, keep going
@@ -97,5 +110,8 @@ bcnoteq:
 	movb	-(%a1),%d1
 	subl	%d1,%d0
 bcdone:
+#ifdef __mcoldfire__
+	movl	(%sp)+,%sp		| restore temp
+#endif
 	rts
 END(memcmp)

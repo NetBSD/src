@@ -268,6 +268,7 @@ static int wpa_supplicant_wps_cred(void *ctx,
 		ssid->eap.eap_methods = NULL;
 		if (!ssid->p2p_group)
 			ssid->temporary = 0;
+		ssid->bssid_set = 0;
 	} else {
 		wpa_printf(MSG_DEBUG, "WPS: Create a new network based on the "
 			   "received credential");
@@ -913,7 +914,8 @@ int wpas_wps_cancel(struct wpa_supplicant *wpa_s)
 	}
 #endif /* CONFIG_AP */
 
-	if (wpa_s->wpa_state == WPA_SCANNING) {
+	if (wpa_s->wpa_state == WPA_SCANNING ||
+	    wpa_s->wpa_state == WPA_DISCONNECTED) {
 		wpa_printf(MSG_DEBUG, "WPS: Cancel operation - cancel scan");
 		wpa_supplicant_cancel_scan(wpa_s);
 		wpas_clear_wps(wpa_s);
@@ -1107,8 +1109,10 @@ static void wpas_wps_set_uuid(struct wpa_supplicant *wpa_s,
 		while (first && first->next)
 			first = first->next;
 		if (first && first != wpa_s) {
-			os_memcpy(wps->uuid, wpa_s->global->ifaces->wps->uuid,
-				  WPS_UUID_LEN);
+			if (wps != wpa_s->global->ifaces->wps)
+				os_memcpy(wps->uuid,
+					  wpa_s->global->ifaces->wps->uuid,
+					  WPS_UUID_LEN);
 			wpa_hexdump(MSG_DEBUG, "WPS: UUID from the first "
 				    "interface", wps->uuid, WPS_UUID_LEN);
 		} else {

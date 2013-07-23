@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.224 2013/07/16 17:48:52 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.224.2.1 2013/07/23 21:07:33 riastradh Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -64,7 +64,7 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .if ${WARNS} > 4
 CFLAGS+=	-Wold-style-definition
 .endif
-.if ${WARNS} > 5
+.if ${WARNS} > 5 && !(defined(HAVE_GCC) && ${HAVE_GCC} <= 45)
 CFLAGS+=	-Wconversion
 .endif
 CFLAGS+=	-Wsign-compare -Wformat=2
@@ -75,7 +75,8 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
-     && (${MACHINE_ARCH} == "sh3eb" || \
+     && (${MACHINE_ARCH} == "coldfire" || \
+	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
 	 ${MACHINE_ARCH} == "m68k" || \
 	 ${MACHINE_ARCH} == "m68000"))
@@ -104,6 +105,9 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .if ${MKSOFTFLOAT:Uno} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
+.elif ${MACHINE_ARCH} == "coldfire"
+COPTS+=		-mhard-float
+FOPTS+=		-mhard-float
 .endif
 
 .if ${MKIEEEFP:Uno} != "no"

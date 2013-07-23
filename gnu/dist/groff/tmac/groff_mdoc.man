@@ -1180,8 +1180,8 @@ documented, or the name of the author of the actual manual page.
 .An "Joe Author"
 .It Li ".An \*[q]Joe Author\*[q] ,"
 .An "Joe Author" ,
-.It Li ".An \*[q]Joe Author\*[q] Aq nobody@FreeBSD.org"
-.An "Joe Author" Aq nobody@FreeBSD.org
+.It Li ".An \*[q]Joe Author\*[q] Aq Mt nobody@FreeBSD.org"
+.An "Joe Author" Aq Mt nobody@FreeBSD.org
 .It Li ".An \*[q]Joe Author\*[q] ) ) ,"
 .An "Joe Author" ) ) ,
 .El

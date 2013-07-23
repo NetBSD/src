@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.83 2013/03/06 11:20:10 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.83.8.1 2013/07/23 21:07:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.83 2013/03/06 11:20:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.83.8.1 2013/07/23 21:07:36 riastradh Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"

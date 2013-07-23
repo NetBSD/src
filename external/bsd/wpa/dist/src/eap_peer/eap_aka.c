@@ -1,6 +1,6 @@
 /*
- * EAP peer method: EAP-AKA (RFC 4187) and EAP-AKA' (draft-arkko-eap-aka-kdf)
- * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
+ * EAP peer method: EAP-AKA (RFC 4187) and EAP-AKA' (RFC 5448)
+ * Copyright (c) 2004-2012, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as

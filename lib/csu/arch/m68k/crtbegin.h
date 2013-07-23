@@ -1,4 +1,4 @@
-/* $NetBSD: crtbegin.h,v 1.1 2013/07/11 17:07:35 matt Exp $ */
+/* $NetBSD: crtbegin.h,v 1.1.2.1 2013/07/23 21:07:28 riastradh Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,17 @@
  */
 
 __asm(	".pushsection .init"
+#ifdef __pic__
 "\n\t"	"bsrl	__do_global_ctors_aux"
+#else
+"\n\t"	"jsr	__do_global_ctors_aux"
+#endif
 "\n\t"	".popsection");
 
 __asm(	".pushsection .fini"
-"\n\t"	"bsrl	__do_global_dtors_aux"
+#ifdef __pic__
+"\n\t"	"bsrl	__do_global_ctors_aux"
+#else
+"\n\t"	"jsr	__do_global_dtors_aux"
+#endif
 "\n\t"	".popsection");

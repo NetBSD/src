@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.1 2013/07/17 06:39:06 matt Exp $	*/
+/*	$NetBSD: modf.S,v 1.1.2.1 2013/07/23 21:07:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)modf.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: modf.S,v 1.1 2013/07/17 06:39:06 matt Exp $")
+	RCSID("$NetBSD: modf.S,v 1.1.2.1 2013/07/23 21:07:28 riastradh Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,9 +50,17 @@
 ENTRY(modf)
 	fmoved	4(%sp),%fp0
 	movel	12(%sp),%a0
+#ifdef __mcoldfire__
+	fintrzd	%fp0,%fp1
+#else
 	fintrzx	%fp0,%fp1
+#endif
 	fmoved	%fp1,(%a0)
+#ifdef __mcoldfire__
+	fsubd	%fp1,%fp0
+#else
 	fsubx	%fp1,%fp0
+#endif
 #ifndef __SVR4_ABI__
 	fmoved	%fp0,-(%sp)
 	movel	(%sp)+,%d0

@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.6 2013/07/11 05:55:13 kefren Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.6.2.1 2013/07/23 21:07:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ int ldp_peer_add_mapping(struct ldp_peer *, const struct sockaddr *, int, int);
 int ldp_peer_delete_mapping(struct ldp_peer *, const struct sockaddr *, int);
 struct label_mapping * ldp_peer_get_lm(const struct ldp_peer *,
 	const struct sockaddr *, uint);
-int ldp_peer_delete_all_mappings(struct ldp_peer *);
+void ldp_peer_delete_all_mappings(struct ldp_peer *);
 void ldp_peer_holddown_all(void);
 
 struct peer_map * ldp_test_mapping(const struct sockaddr *, int,

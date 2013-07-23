@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.88 2013/03/05 16:26:41 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.88.4.1 2013/07/23 21:07:38 riastradh Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -168,6 +168,11 @@ typedef unsigned int id_t;
 #endif
 
 #if !HAVE_SOCKLEN_T
+/*
+ * This is defined as int for compatibility with legacy systems (and not
+ * unsigned int), since universally it was int in most systems that did not
+ * define it.
+ */
 typedef int socklen_t;
 #endif
 

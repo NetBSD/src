@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1042 2013/07/12 16:52:56 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1042.2.1 2013/07/23 21:07:21 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -299,8 +299,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	6.0.0
-Current Vers:	6.0.0
+Version:	6.0.3
+Current Vers:	6.0.3
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -1250,7 +1250,7 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2013c / tzdata2013d
+Version:	tzcode2013d / tzdata2013d
 Current Vers:	tzcode2013d / tzdata2013d
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
@@ -1269,8 +1269,8 @@ upstream but there is too much inertia to apply them. Check for .gitignore
 files.
 
 Package:	wpa_supplicant/hostapd
-Version:	1.0
-Current Vers:	1.0
+Version:	1.1
+Current Vers:	2.0
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/

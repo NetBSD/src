@@ -311,7 +311,7 @@ m68*-*-linux*)
 			linux-tdep.o glibc-tdep.o symfile-mem.o"
 	build_gdbserver=yes
 	;;
-m68*-*-netbsd* | m68*-*-knetbsd*-gnu)
+m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsdelf*)
 	# Target: NetBSD/m68k
 	gdb_target_obs="m68k-tdep.o m68kbsd-tdep.o \
 			corelow.o solib.o solib-svr4.o"
