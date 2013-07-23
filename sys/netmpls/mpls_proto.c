@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.4 2013/07/18 06:23:07 kefren Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.5 2013/07/23 11:11:55 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.4 2013/07/18 06:23:07 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.5 2013/07/23 11:11:55 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -65,6 +65,7 @@ int mpls_forwarding = 0;
 int mpls_accept = 0;
 int mpls_mapprec_inet = 1;
 int mpls_mapclass_inet6 = 1;
+int mpls_rfc4182 = 1;
 
 void mpls_init(void)
 {
@@ -175,6 +176,12 @@ sysctl_net_mpls_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "ifq_len",
 		       SYSCTL_DESCR("MPLS queue length"),
 		       NULL, 0, &mplsintrq.ifq_maxlen, 0,
+		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rfc4182",
+		       SYSCTL_DESCR("RFC 4182 conformance"),
+		       NULL, 0, &mpls_rfc4182, 0,
 		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
 #ifdef INET
 	sysctl_createv(clog, 0, NULL, NULL,
