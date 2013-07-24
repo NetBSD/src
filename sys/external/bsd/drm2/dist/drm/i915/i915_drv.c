@@ -484,8 +484,13 @@ static int i915_drm_freeze(struct drm_device *dev)
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		int error = i915_gem_idle(dev);
 		if (error) {
+#ifdef __NetBSD__
+			dev_err(pci_dev_dev(dev->pdev),
+			    "GEM idle failed, resume might fail\n");
+#else
 			dev_err(&dev->pdev->dev,
 				"GEM idle failed, resume might fail\n");
+#endif
 			return error;
 		}
 
