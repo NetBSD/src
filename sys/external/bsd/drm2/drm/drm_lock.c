@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.1.2.2 2013/07/24 02:35:35 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.1.2.3 2013/07/24 02:38:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.2 2013/07/24 02:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.3 2013/07/24 02:38:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -209,6 +209,11 @@ drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 
 /*
  * Take the lock for the kernel's use.
+ *
+ * XXX This is unimplemented because it's not clear that the Linux code
+ * makes sense at all.  Linux's drm_idlelock_take never blocks, but it
+ * doesn't guarantee that the kernel holds the lock on return!  For
+ * now, I'll hope that the code paths relying on this don't matter yet.
  */
 void
 drm_idlelock_take(struct drm_lock_data *lock_data __unused)
