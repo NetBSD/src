@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.6 2013/07/24 03:12:33 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.7 2013/07/24 03:14:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.6 2013/07/24 03:12:33 riastradh Exp $");
-
-/* XXX Cargo-culted from the old drm_memory.c.  */
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.7 2013/07/24 03:14:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "agp_i810.h"
