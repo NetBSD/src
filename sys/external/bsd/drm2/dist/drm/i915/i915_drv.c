@@ -476,7 +476,9 @@ static int i915_drm_freeze(struct drm_device *dev)
 
 	drm_kms_helper_poll_disable(dev);
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_save_state(dev->pdev);
+#endif
 
 	/* If KMS is active, we do the leavevt stuff here */
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
