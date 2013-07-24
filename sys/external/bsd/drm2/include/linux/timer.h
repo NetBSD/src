@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.2.2 2013/07/24 02:28:50 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.2.3 2013/07/24 03:50:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -65,6 +65,17 @@ del_timer_sync(struct timer_list *timer)
 {
 	callout_halt(&timer->tl_callout, NULL);
 	callout_destroy(&timer->tl_callout);
+}
+
+/*
+ * XXX This is bogus -- the Linux version does various machinations to
+ * give some jitter so that stuff doesn't wake up all at once.
+ */
+
+static inline unsigned long
+round_jiffies_up(unsigned long j)
+{
+	return roundup(j, hz);
 }
 
 #endif  /* _LINUX_TIMER_H_ */
