@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.8 2013/07/16 22:20:35 matt Exp $	*/
+/*	$NetBSD: syscall.S,v 1.9 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,13 @@
 #if 0
 	RCSID("from: @(#)syscall.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: syscall.S,v 1.8 2013/07/16 22:20:35 matt Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.9 2013/07/24 15:38:07 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(syscall)
 	clrl	%d0
 	trap	#0
-	jcc	CERROR
+	jcs	CERROR
 	rts
 END(syscall)
