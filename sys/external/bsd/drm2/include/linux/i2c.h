@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.1.2.2 2013/07/24 01:52:39 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.1.2.3 2013/07/24 02:35:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _LINUX_I2C_H_
 #define _LINUX_I2C_H_
 
+#include <sys/types.h>
 #include <sys/device_if.h>
 
 struct i2c_adapter {
