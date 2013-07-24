@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.1.2.4 2013/07/24 03:11:44 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.1.2.5 2013/07/24 03:37:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@ struct i2c_adapter {
 	int				retries;
 	struct module			*owner;
 	unsigned int			class;
+	struct {
+		device_t	parent;
+	}				dev;	/* XXX Kludge for intel_dp.  */
 };
 
 static inline int
