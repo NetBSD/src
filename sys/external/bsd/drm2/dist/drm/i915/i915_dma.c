@@ -1217,6 +1217,7 @@ intel_teardown_mchbar(struct drm_device *dev)
 		release_resource(&dev_priv->mch_res);
 }
 
+#ifndef __NetBSD__  /* XXX vga */
 /* true = enable decode, false = disable decoder */
 static unsigned int i915_vga_set_decode(void *cookie, bool state)
 {
@@ -1265,6 +1266,7 @@ static const struct vga_switcheroo_client_ops i915_switcheroo_ops = {
 	.reprobe = NULL,
 	.can_switch = i915_switcheroo_can_switch,
 };
+#endif
 
 static int i915_load_modeset_init(struct drm_device *dev)
 {
@@ -1275,6 +1277,7 @@ static int i915_load_modeset_init(struct drm_device *dev)
 	if (ret)
 		DRM_INFO("failed to find VBIOS tables\n");
 
+#ifndef __NetBSD__		/* XXX vga */
 	/* If we have > 1 VGA cards, then we need to arbitrate access
 	 * to the common VGA resources.
 	 *
@@ -1285,12 +1288,15 @@ static int i915_load_modeset_init(struct drm_device *dev)
 	ret = vga_client_register(dev->pdev, dev, NULL, i915_vga_set_decode);
 	if (ret && ret != -ENODEV)
 		goto out;
+#endif
 
 	intel_register_dsm_handler();
 
+#ifndef __NetBSD__		/* XXX vga */
 	ret = vga_switcheroo_register_client(dev->pdev, &i915_switcheroo_ops);
 	if (ret)
 		goto cleanup_vga_client;
+#endif
 
 	/* Initialise stolen first so that we may reserve preallocated
 	 * objects for the BIOS to KMS transition.
@@ -1342,10 +1348,12 @@ cleanup_gem:
 cleanup_gem_stolen:
 	i915_gem_cleanup_stolen(dev);
 cleanup_vga_switcheroo:
+#ifndef __NetBSD__		/* XXX vga */
 	vga_switcheroo_unregister_client(dev->pdev);
 cleanup_vga_client:
 	vga_client_register(dev->pdev, NULL, NULL, NULL);
 out:
+#endif
 	return ret;
 }
 
@@ -1734,8 +1742,10 @@ int i915_driver_unload(struct drm_device *dev)
 			dev_priv->child_dev_num = 0;
 		}
 
+#ifndef __NetBSD__		/* XXX vga */
 		vga_switcheroo_unregister_client(dev->pdev);
 		vga_client_register(dev->pdev, NULL, NULL, NULL);
+#endif
 	}
 
 	/* Free error state after interrupts are fully disabled. */
@@ -1829,7 +1839,9 @@ void i915_driver_lastclose(struct drm_device * dev)
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
 		intel_fb_restore_mode(dev);
+#ifndef __NetBSD__		/* XXX vga */
 		vga_switcheroo_process_delayed_switch();
+#endif
 		return;
 	}
 
