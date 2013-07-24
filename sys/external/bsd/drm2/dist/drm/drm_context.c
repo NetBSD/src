@@ -40,6 +40,8 @@
  *		needed by SiS driver's memory management.
  */
 
+#include <linux/err.h>
+
 #include <drm/drmP.h>
 
 /******************************************************************/
