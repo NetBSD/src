@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.1 2013/07/24 02:49:21 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2013/07/24 03:09:10 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -14,7 +14,7 @@ SRCS+=	dvo_ivch.c
 SRCS+=	dvo_ns2501.c
 SRCS+=	dvo_sil164.c
 SRCS+=	dvo_tfp410.c
-SRCS+=	i915_debugfs.c
+#SRCS+=	i915_debugfs.c		# XXX No debugfs in NetBSD.
 SRCS+=	i915_dma.c
 SRCS+=	i915_drv.c
 SRCS+=	i915_gem.c
@@ -29,7 +29,7 @@ SRCS+=	i915_gem_tiling.c
 SRCS+=	i915_ioc32.c
 SRCS+=	i915_irq.c
 SRCS+=	i915_suspend.c
-SRCS+=	i915_sysfs.c
+#SRCS+=	i915_sysfs.c		# XXX No sysfs in NetBSD.
 SRCS+=	intel_bios.c
 SRCS+=	intel_crt.c
 SRCS+=	intel_ddi.c
