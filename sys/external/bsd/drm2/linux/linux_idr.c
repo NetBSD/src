@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.3 2013/07/24 02:07:09 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.4 2013/07/24 02:07:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.3 2013/07/24 02:07:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.4 2013/07/24 02:07:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
 
+#include <linux/err.h>
 #include <linux/idr.h>
 
 struct idr_node {
@@ -119,6 +120,25 @@ idr_find(struct idr *idr, int id)
 	rw_exit(&idr->idr_lock);
 
 	return data;
+}
+
+void *
+idr_replace(struct idr *idr, void *replacement, int id)
+{
+	struct idr_node *node;
+	void *result;
+
+	rw_enter(&idr->idr_lock, RW_WRITER);
+	node = rb_tree_find_node(&idr->idr_tree, &id);
+	if (node == NULL) {
+		result = ERR_PTR(-ENOENT);
+	} else {
+		result = node->in_data;
+		node->in_data = replacement;
+	}
+	rw_exit(&idr->idr_lock);
+
+	return result;
 }
 
 void
