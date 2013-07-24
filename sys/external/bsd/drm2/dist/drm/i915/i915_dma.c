@@ -1023,7 +1023,11 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_HAS_SECURE_BATCHES:
+#ifdef __NetBSD__
+		value = DRM_SUSER();
+#else
 		value = capable(CAP_SYS_ADMIN);
+#endif
 		break;
 	case I915_PARAM_HAS_PINNED_BATCHES:
 		value = 1;
