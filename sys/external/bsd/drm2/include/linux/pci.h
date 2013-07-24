@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.8 2013/07/24 03:04:18 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.9 2013/07/24 03:10:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,13 +64,37 @@ pci_find_capability(struct pci_dev *pdev, int cap)
 static inline void
 pci_read_config_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
 {
+	KASSERT(!ISSET(reg, 3));
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg);
 }
 
 static inline void
 pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 {
+	KASSERT(!ISSET(reg, 3));
 	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, value);
+}
+
+static inline void
+pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
+{
+	KASSERT(!ISSET(reg, 1));
+	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    (reg &~ 3)) >> (ISSET(reg, 3)? 16 : 0);
+}
+
+static inline void
+pci_write_config_word(struct pci_dev *pdev, int reg, uint16_t value)
+{
+	const int reg32 = (reg &~ 3);
+	const unsigned int shift = (ISSET(reg, 3)? 16 : 0);
+	uint32_t value32;
+
+	KASSERT(!ISSET(reg, 1));
+	pci_read_config_dword(pdev, reg32, &value32);
+	value32 &=~ (0xffffUL << shift);
+	value32 |= (value << shift);
+	pci_write_config_dword(pdev, reg32, value32);
 }
 
 /*
