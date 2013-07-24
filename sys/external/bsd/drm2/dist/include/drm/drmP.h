@@ -485,6 +485,12 @@ struct drm_file {
 	struct list_head event_list;
 	int event_space;
 
+#ifdef __NetBSD__
+#if 0				/* XXX drm event poll */
+	struct selinfo event_sel;
+#endif
+#endif
+
 	struct drm_prime_file_private prime;
 };
 
@@ -1372,9 +1378,10 @@ extern struct mutex drm_global_mutex;
 #ifdef __NetBSD__
 extern int drm_open_file(struct drm_file *, void *, struct drm_minor *);
 extern int drm_close_file(struct drm_file *);
-#  if 0				/* XXX */
-extern struct drm_pending_event *drm_dequeue_event(struct drm_file *, size_t);
-#  endif
+#if 0				/* XXX drm event poll */
+extern int drm_dequeue_event(struct drm_file *, size_t,
+    struct drm_pending_event **);
+#endif
 #else
 extern int drm_open(struct inode *inode, struct file *filp);
 extern int drm_stub_open(struct inode *inode, struct file *filp);
