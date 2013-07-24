@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.9 2013/07/24 03:22:42 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.10 2013/07/24 03:23:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.9 2013/07/24 03:22:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.10 2013/07/24 03:23:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -585,4 +585,23 @@ drm_version(struct drm_device *dev, void *data, struct drm_file *file)
 		goto out;
 out:
 	return error;
+}
+
+void
+drm_config_found(device_t parent, struct drm_driver *driver,
+    unsigned long flags, struct drm_device *dev)
+{
+	int error;
+
+	error = drm_fill_in_dev(dev, NULL, driver);
+	if (error) {
+		aprint_error_dev(parent, "unable to initialize drm: %d\n",
+		    error);
+		return;
+	}
+
+	if (config_found_ia(parent, "drmbus", dev, NULL) == NULL) {
+		aprint_error_dev(parent, "unable to attach drm\n");
+		return;
+	}
 }

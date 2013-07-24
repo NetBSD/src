@@ -1484,6 +1484,11 @@ extern long drm_compat_ioctl(struct file *filp,
 extern int drm_lastclose(struct drm_device *dev);
 #endif
 
+#ifdef __NetBSD__
+extern void drm_config_found(device_t, /* XXXX const */ struct drm_driver *,
+    unsigned long, struct drm_device *);
+#endif
+
 				/* Device support (drm_fops.h) */
 extern struct mutex drm_global_mutex;
 #ifdef __NetBSD__
