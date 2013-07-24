@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.1.2.2 2013/07/24 02:26:39 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.3 2013/07/24 02:51:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
+#define	BUG()			panic("%s:%d: BUG!", __FILE__, __LINE__)
 #define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
 
 /* XXX Rate limit?  */
