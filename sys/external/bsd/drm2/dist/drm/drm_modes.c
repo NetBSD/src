@@ -829,6 +829,8 @@ void drm_mode_validate_size(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_mode_validate_size);
 
+#ifndef __NetBSD__
+
 /**
  * drm_mode_validate_clocks - validate modes against clock limits
  * @dev: DRM device
@@ -865,6 +867,8 @@ void drm_mode_validate_clocks(struct drm_device *dev,
 	}
 }
 EXPORT_SYMBOL(drm_mode_validate_clocks);
+
+#endif	/* !defined(__NetBSD__) */
 
 /**
  * drm_mode_prune_invalid - remove invalid modes from mode list
