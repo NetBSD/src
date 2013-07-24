@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.1 2013/07/24 02:23:06 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.2 2013/07/24 02:39:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.1 2013/07/24 02:23:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.2 2013/07/24 02:39:25 riastradh Exp $");
 
 /* XXX Cargo-culted from the old drm_memory.c.  */
 
@@ -215,4 +215,122 @@ drm_iounmap(struct drm_device *dev, struct drm_local_map *map)
 		if (--bm->bm_mapped)
 			bus_space_unmap(bst, bm->bm_bsh, bm->bm_size);
 	}
+}
+
+/*
+ * Allocate a drm dma handle, allocate memory fit for DMA, and map it.
+ *
+ * XXX This is called drm_pci_alloc for hysterical raisins; it is not
+ * specific to PCI.
+ *
+ * XXX For now, we use non-blocking allocations because this is called
+ * by ioctls with the drm global mutex held.
+ *
+ * XXX Error information is lost because this returns NULL on failure,
+ * not even an error embedded in a pointer.
+ */
+struct drm_dma_handle *
+drm_pci_alloc(struct drm_device *dev, size_t size, size_t align)
+{
+	int nsegs;
+	int error;
+
+	/*
+	 * Allocate a drm_dma_handle record.
+	 *
+	 * XXX Must use kzalloc because callers pass this to kfree, not
+	 * necessarily to drm_pci_free.  Whattakludge.
+	 */
+	struct drm_dma_handle *const dmah = kzalloc(sizeof(*dmah), GFP_ATOMIC);
+	if (dmah == NULL) {
+		error = -ENOMEM;
+		goto out;
+	}
+	dmah->dmah_tag = dev->dmat;
+
+	/*
+	 * Allocate the requested amount of DMA-safe memory.
+	 */
+	/* XXX errno NetBSD->Linux */
+	error = -bus_dmamem_alloc(dmah->dmah_tag, size, align, 0,
+	    &dmah->dmah_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error)
+		goto fail0;
+	KASSERT(nsegs == 1);
+
+	/*
+	 * XXX Old drm passed BUS_DMA_NOWAIT below but BUS_DMA_WAITOK
+	 * above.  WTF?
+	 */
+
+	/*
+	 * Map the DMA-safe memory into kernel virtual address space.
+	 */
+	/* XXX errno NetBSD->Linux */
+	error = -bus_dmamem_map(dmah->dmah_tag, &dmah->dmah_seg, 1, size,
+	    &dmah->vaddr,
+	    (BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE));
+	if (error)
+		goto fail1;
+	dmah->size = size;
+
+	/*
+	 * Create a map for DMA transfers.
+	 */
+	/* XXX errno NetBSD->Linux */
+	error = -bus_dmamap_create(dmah->dmah_tag, size, 1, size, 0,
+	    BUS_DMA_NOWAIT, &dmah->dmah_map);
+	if (error)
+		goto fail2;
+
+	/*
+	 * Load the kva buffer into the map for DMA transfers.
+	 */
+	/* XXX errno NetBSD->Linux */
+	error = -bus_dmamap_load(dmah->dmah_tag, dmah->dmah_map, dmah->vaddr,
+	    size, NULL, (BUS_DMA_NOWAIT | BUS_DMA_NOCACHE));
+	if (error)
+		goto fail3;
+
+	/* Record the bus address for convenient reference.  */
+	dmah->busaddr = dmah->dmah_map->dm_segs[0].ds_addr;
+
+	/* Zero the DMA buffer.  XXX Yikes!  Is this necessary?  */
+	memset(dmah->vaddr, 0, size);
+
+	/* Success!  */
+	return dmah;
+
+fail3:	bus_dmamap_destroy(dmah->dmah_tag, dmah->dmah_map);
+fail2:	bus_dmamem_unmap(dmah->dmah_tag, dmah->vaddr, dmah->size);
+fail1:	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
+fail0:	dmah->dmah_tag = NULL;	/* XXX paranoia */
+	kfree(dmah);
+out:	DRM_DEBUG("drm_pci_alloc failed: %d\n", error);
+	return NULL;
+}
+
+/*
+ * Release the bus DMA mappings and memory in dmah.
+ */
+void
+__drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah)
+{
+
+	bus_dmamap_unload(dmah->dmah_tag, dmah->dmah_map);
+	bus_dmamap_destroy(dmah->dmah_tag, dmah->dmah_map);
+	bus_dmamem_unmap(dmah->dmah_tag, dmah->vaddr, dmah->size);
+	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
+	dmah->dmah_tag = NULL;	/* XXX paranoia */
+}
+
+/*
+ * Release the bus DMA mappings and memory in dmah, and deallocate it.
+ */
+void
+drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah)
+{
+
+	__drm_pci_free(dev, dmah);
+	kfree(dmah);
 }
