@@ -314,7 +314,7 @@ typedef int drm_ioctl_compat_t(struct file *filp, unsigned int cmd,
 #ifdef __NetBSD__
 /* XXX Kludge...is there a better way to do this?  */
 #define	DRM_IOCTL_NR(n)							\
-	(IOCBASECMD(n) &~ (IOCGROUP(n) << IOCGROUP_SHIFT))
+	(IOCBASECMD(n) &~ (IOC_DIRMASK | (IOCGROUP(n) << IOCGROUP_SHIFT)))
 #define	DRM_MAJOR	cdevsw_lookup_major(&drm_cdevsw)
 #else
 #define DRM_IOCTL_NR(n)                _IOC_NR(n)
