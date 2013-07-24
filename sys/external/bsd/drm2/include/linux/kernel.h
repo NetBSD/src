@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.18 2013/07/24 03:28:09 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.19 2013/07/24 03:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,14 @@
 #define	unlikely(X)	__predict_false(X)
 
 #define	uninitialized_var(x)	x
+
+/* XXX This will multiply evaluate its arguments.  */
+#define	min_t(T, X, Y)	MIN(X, Y)
+
+/*
+ * Rounding to what may or may not be powers of two.
+ */
+#define	DIV_ROUND_UP(X, N)	(((X) + (N) - 1) / (N))
 
 /*
  * Rounding to powers of two -- carefully avoiding multiple evaluation
