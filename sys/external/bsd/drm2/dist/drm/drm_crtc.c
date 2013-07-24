@@ -1011,8 +1011,13 @@ EXPORT_SYMBOL(drm_mode_create_dirty_info_property);
  */
 void drm_mode_config_init(struct drm_device *dev)
 {
+#ifdef __NetBSD__
+	linux_mutex_init(&dev->mode_config.mutex);
+	linux_mutex_init(&dev->mode_config.idr_mutex);
+#else
 	mutex_init(&dev->mode_config.mutex);
 	mutex_init(&dev->mode_config.idr_mutex);
+#endif
 	INIT_LIST_HEAD(&dev->mode_config.fb_list);
 	INIT_LIST_HEAD(&dev->mode_config.crtc_list);
 	INIT_LIST_HEAD(&dev->mode_config.connector_list);
