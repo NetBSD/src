@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.2 2013/07/24 01:59:05 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.3 2013/07/24 02:01:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,6 +50,12 @@ static inline void *
 kzalloc(size_t size, int flags)
 {
 	return malloc(size, M_TEMP, (flags | M_ZERO));
+}
+
+static inline void *
+krealloc(void *ptr, size_t size, int flags)
+{
+	return realloc(ptr, size, M_TEMP, flags);
 }
 
 static inline void
