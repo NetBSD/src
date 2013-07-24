@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.11 2013/07/24 03:26:02 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.12 2013/07/24 03:46:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.11 2013/07/24 03:26:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.12 2013/07/24 03:46:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -606,4 +606,25 @@ drm_config_found(device_t parent, struct drm_driver *driver,
 		aprint_error_dev(parent, "unable to attach drm\n");
 		return;
 	}
+}
+
+struct drm_local_map *
+drm_getsarea(struct drm_device *dev)
+{
+	struct drm_map_list *entry;
+
+	list_for_each_entry(entry, &dev->maplist, head) {
+		struct drm_local_map *const map = entry->map;
+
+		if (map == NULL)
+			continue;
+		if (map->type != _DRM_SHM)
+			continue;
+		if (!ISSET(map->flags, _DRM_CONTAINS_LOCK))
+			continue;
+
+		return map;
+	}
+
+	return NULL;
 }
