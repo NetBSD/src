@@ -839,7 +839,11 @@ struct drm_mode_config {
 
 struct drm_prop_enum_list {
 	int type;
+#ifdef __NetBSD__
+	const char *name;
+#else
 	char *name;
+#endif
 };
 
 extern int drm_crtc_init(struct drm_device *dev,
@@ -872,11 +876,19 @@ extern void drm_plane_cleanup(struct drm_plane *plane);
 extern void drm_encoder_cleanup(struct drm_encoder *encoder);
 
 extern char *drm_get_connector_name(struct drm_connector *connector);
+#ifdef __NetBSD__
+extern const char *drm_get_dpms_name(int val);
+extern const char *drm_get_dvi_i_subconnector_name(int val);
+extern const char *drm_get_dvi_i_select_name(int val);
+extern const char *drm_get_tv_subconnector_name(int val);
+extern const char *drm_get_tv_select_name(int val);
+#else
 extern char *drm_get_dpms_name(int val);
 extern char *drm_get_dvi_i_subconnector_name(int val);
 extern char *drm_get_dvi_i_select_name(int val);
 extern char *drm_get_tv_subconnector_name(int val);
 extern char *drm_get_tv_select_name(int val);
+#endif
 extern void drm_fb_release(struct drm_file *file_priv);
 extern int drm_mode_group_init_legacy_group(struct drm_device *dev, struct drm_mode_group *group);
 extern bool drm_probe_ddc(struct i2c_adapter *adapter);
