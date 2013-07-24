@@ -1549,11 +1549,19 @@ EXPORT_SYMBOL(drm_find_cea_extension);
  */
 u8 drm_match_cea_mode(struct drm_display_mode *to_match)
 {
+#ifdef __NetBSD__
+	const struct drm_display_mode *cea_mode;
+#else
 	struct drm_display_mode *cea_mode;
+#endif
 	u8 mode;
 
 	for (mode = 0; mode < drm_num_cea_modes; mode++) {
+#ifdef __NetBSD__
+		cea_mode = &edid_cea_modes[mode];
+#else
 		cea_mode = (struct drm_display_mode *)&edid_cea_modes[mode];
+#endif
 
 		if (drm_mode_equal(to_match, cea_mode))
 			return mode + 1;
