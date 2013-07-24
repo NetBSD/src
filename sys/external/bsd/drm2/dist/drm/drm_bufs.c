@@ -35,8 +35,11 @@
 
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
+#include <linux/sched.h>
 #include <linux/log2.h>
 #include <linux/export.h>
+#include <linux/mm.h>
+#include <asm/mtrr.h>
 #include <asm/shmparam.h>
 #include <drm/drmP.h>
 
