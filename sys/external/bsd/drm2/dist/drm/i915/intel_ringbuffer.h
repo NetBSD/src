@@ -48,7 +48,11 @@ struct  intel_ring_buffer {
 	} id;
 #define I915_NUM_RINGS 3
 	u32		mmio_base;
+#ifdef __NetBSD__
+	struct drm_local_map	virtual_start_map;
+#else
 	void		__iomem *virtual_start;
+#endif
 	struct		drm_device *dev;
 	struct		drm_i915_gem_object *obj;
 
@@ -205,7 +209,11 @@ int __must_check intel_ring_begin(struct intel_ring_buffer *ring, int n);
 static inline void intel_ring_emit(struct intel_ring_buffer *ring,
 				   u32 data)
 {
+#ifdef __NetBSD__
+	DRM_WRITE32(&ring->virtual_start_map, ring->tail, data);
+#else
 	iowrite32(data, ring->virtual_start + ring->tail);
+#endif
 	ring->tail += 4;
 }
 void intel_ring_advance(struct intel_ring_buffer *ring);
