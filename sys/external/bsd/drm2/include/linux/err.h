@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.1.2.2 2013/07/24 02:23:48 riastradh Exp $	*/
+/*	$NetBSD: err.h,v 1.1.2.3 2013/07/24 03:36:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+
+#define	EREMOTEIO	EIO	/* XXX Urk...  */
 
 #define	MAX_ERRNO	ELAST
 
