@@ -1742,13 +1742,23 @@ __i915_write(64, q)
 
 #define I915_READ16(reg)	i915_read16(dev_priv, (reg))
 #define I915_WRITE16(reg, val)	i915_write16(dev_priv, (reg), (val))
+#ifdef __NetBSD__
+#define	I915_READ16_NOTRACE(reg)	DRM_READ16(dev_priv->regs_map, (reg))
+#define	I915_WRITE16_NOTRACE(reg, val)	DRM_WRITE16(dev_priv->regs_map, (reg), (val))
+#else
 #define I915_READ16_NOTRACE(reg)	readw(dev_priv->regs + (reg))
 #define I915_WRITE16_NOTRACE(reg, val)	writew(val, dev_priv->regs + (reg))
+#endif
 
 #define I915_READ(reg)		i915_read32(dev_priv, (reg))
 #define I915_WRITE(reg, val)	i915_write32(dev_priv, (reg), (val))
+#ifdef __NetBSD__
+#define I915_READ_NOTRACE(reg)		DRM_READ32(dev_priv->regs_map, (reg))
+#define I915_WRITE_NOTRACE(reg, val)	DRM_WRITE32(dev_priv->regs_map, (reg), (val))
+#else
 #define I915_READ_NOTRACE(reg)		readl(dev_priv->regs + (reg))
 #define I915_WRITE_NOTRACE(reg, val)	writel(val, dev_priv->regs + (reg))
+#endif
 
 #define I915_WRITE64(reg, val)	i915_write64(dev_priv, (reg), (val))
 #define I915_READ64(reg)	i915_read64(dev_priv, (reg))
