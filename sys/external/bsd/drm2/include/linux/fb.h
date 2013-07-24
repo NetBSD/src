@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: fb.h,v 1.1.2.2 2013/07/24 02:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,8 @@
 
 #ifndef _LINUX_FB_H_
 #define _LINUX_FB_H_
+
+#define	PICOS2KHZ(PICOS)	(1000000000ul / (PICOS))
+#define	KHZ2PICOS(KHZ)		(1000000000ul / (KHZ))
 
 #endif  /* _LINUX_FB_H_ */
