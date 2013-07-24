@@ -1347,9 +1347,11 @@ extern long drm_ioctl(struct file *filp,
 extern long drm_compat_ioctl(struct file *filp,
 			     unsigned int cmd, unsigned long arg);
 extern int drm_lastclose(struct drm_device *dev);
+#endif
 
 				/* Device support (drm_fops.h) */
 extern struct mutex drm_global_mutex;
+#ifndef __NetBSD__
 extern int drm_open(struct inode *inode, struct file *filp);
 extern int drm_stub_open(struct inode *inode, struct file *filp);
 extern int drm_fasync(int fd, struct file *filp, int on);
