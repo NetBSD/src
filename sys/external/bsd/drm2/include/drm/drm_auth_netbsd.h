@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.1.2.6 2013/07/24 02:06:38 riastradh Exp $	*/
+/*	$NetBSD: drm_auth_netbsd.h,v 1.1.2.1 2013/07/24 02:06:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,17 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_OS_NETBSD_H_
-#define _DRM_DRM_OS_NETBSD_H_
+#ifndef _DRM_DRM_AUTH_NETBSD_H_
+#define _DRM_DRM_AUTH_NETBSD_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_drm.h"
-#endif
+#include <sys/kauth.h>
 
-#include <drm/drm_agp_netbsd.h>
-#include <drm/drm_auth_netbsd.h>
-#include <drm/drm_copy_netbsd.h>
-#include <drm/drm_irq_netbsd.h>
-#include <drm/drm_wait_netbsd.h>
+static inline bool
+DRM_SUSER(void)
+{
+	return kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) == 0;
+}
 
-#endif  /* _DRM_DRM_OS_NETBSD_H_ */
+#endif  /* _DRM_DRM_AUTH_NETBSD_H_ */
