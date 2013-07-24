@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.1.2.1 2013/07/24 02:07:31 riastradh Exp $	*/
+/*	$NetBSD: err.h,v 1.1.2.2 2013/07/24 02:23:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ ERR_PTR(int error)
 static inline int
 PTR_ERR(const void *ptr)
 {
-	KASSERT((intptr_t)INT_MAX <= (intptr_t)ptr);
+	KASSERT(ptr == (void *)(intptr_t)(int)(intptr_t)ptr); /* XXX Hurk!  */
 	return (int)(intptr_t)ptr;
 }
 
