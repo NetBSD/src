@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.3 2013/07/24 02:20:38 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.4 2013/07/24 02:27:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef _DRM_DRM_WAIT_NETBSD_H_
 #define _DRM_DRM_WAIT_NETBSD_H_
 
+#include <sys/param.h>
 #include <sys/condvar.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
@@ -40,6 +42,8 @@
 #include <linux/spinlock.h>
 
 typedef kcondvar_t drm_waitqueue_t;
+
+#define	DRM_HZ	hz		/* XXX Hurk...  */
 
 static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
