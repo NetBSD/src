@@ -693,6 +693,9 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
  *
  * Returns 0 on success, nonzero on failure.
  */
+#ifdef __NetBSD__
+#  define	__iomem	__pci_rom_iomem
+#endif
 int
 intel_parse_bios(struct drm_device *dev)
 {
@@ -757,6 +760,9 @@ intel_parse_bios(struct drm_device *dev)
 
 	return 0;
 }
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 /* Ensure that vital registers have been initialised, even if the BIOS
  * is absent or just failing to do its job.
