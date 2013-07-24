@@ -1151,7 +1151,11 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	ring->size = 32 * PAGE_SIZE;
 	memset(ring->sync_seqno, 0, sizeof(ring->sync_seqno));
 
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&ring->irq_queue, "i915irq");
+#else
 	init_waitqueue_head(&ring->irq_queue);
+#endif
 
 	if (I915_NEED_GFX_HWS(dev)) {
 		ret = init_status_page(ring);

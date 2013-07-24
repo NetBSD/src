@@ -1028,6 +1028,15 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 	(i915_seqno_passed(ring->get_seqno(ring, false), seqno) || \
 	atomic_read(&dev_priv->mm.wedged))
 	do {
+#ifdef __NetBSD__
+		/*
+		 * XXX This wait is always interruptible; we should
+		 * heed the flag `interruptible'.
+		 */
+		DRM_TIMED_WAIT_UNTIL(end, &ring->irq_queue, &drm_global_mutex,
+		    timeout_jiffies,
+		    EXIT_COND);
+#else
 		if (interruptible)
 			end = wait_event_interruptible_timeout(ring->irq_queue,
 							       EXIT_COND,
@@ -1036,6 +1045,7 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 			end = wait_event_timeout(ring->irq_queue, EXIT_COND,
 						 timeout_jiffies);
 
+#endif
 		ret = i915_gem_check_wedge(dev_priv, interruptible);
 		if (ret)
 			end = ret;
