@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.1 2013/07/24 01:49:31 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.2 2013/07/24 02:03:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,29 +36,37 @@
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
+#include <linux/mutex.h>
+
 typedef kcondvar_t drm_waitqueue_t;
-typedef kmutex_t drm_interlock_t;
+typedef struct mutex drm_interlock_t; /* XXX urk */
 
 static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
 {
-
 	cv_init(q, name);
 }
 
 static inline void
-DRM_WAKEUP(drm_waitqueue_t *q, drm_interlock_t *interlock)
+DRM_WAKEUP_ONE(drm_waitqueue_t *q, drm_interlock_t *interlock)
 {
+	KASSERT(mutex_owned(&interlock->mtx_lock));
+	cv_signal(q);
+}
 
-	KASSERT(mutex_owned(interlock));
+static inline void
+DRM_WAKEUP_ALL(drm_waitqueue_t *q, drm_interlock_t *interlock)
+{
+	KASSERT(mutex_owned(&interlock->mtx_lock));
 	cv_broadcast(q);
 }
 
 #define	DRM_WAIT_ON(RET, Q, INTERLOCK, TICKS, CONDITION) do		\
 {									\
-	KASSERT(mutex_owned((INTERLOCK)));				\
+	KASSERT(mutex_owned(&(INTERLOCK)->mtx_lock));			\
 	while (!(CONDITION)) {						\
-		(RET) = cv_timedwait_sig((Q), (INTERLOCK), (TICKS));	\
+		(RET) = cv_timedwait_sig((Q), &(INTERLOCK)->mtx_lock,	\
+		    (TICKS));						\
 		if (RET)						\
 			break;						\
 	}								\
