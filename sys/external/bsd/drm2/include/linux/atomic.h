@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.4 2013/07/24 02:02:17 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.5 2013/07/24 02:08:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -69,6 +69,56 @@ static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
 	return (-1 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+}
+
+static inline void
+set_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	atomic_or_ulong(ptr, (1 << bit));
+}
+
+static inline void
+clear_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	atomic_and_ulong(ptr, ~(1 << bit));
+}
+
+static inline void
+change_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	unsigned long v;
+
+	do v = *ptr; while (atomic_cas_ulong(ptr, v, v ^ (1 << bit)) != v);
+}
+
+static inline unsigned long
+test_and_set_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	unsigned long v;
+
+	do v = *ptr; while (atomic_cas_ulong(ptr, v, v | (1 << bit)) != v);
+
+	return (v & (1 << bit));
+}
+
+static inline unsigned long
+test_and_clear_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	unsigned long v;
+
+	do v = *ptr; while (atomic_cas_ulong(ptr, v, v &~ (1 << bit)) != v);
+
+	return (v & (1 << bit));
+}
+
+static inline unsigned long
+test_and_change_bit(unsigned long bit, volatile unsigned long *ptr)
+{
+	unsigned long v;
+
+	do v = *ptr; while (atomic_cas_ulong(ptr, v, v ^ (1 << bit)) != v);
+
+	return (v & (1 << bit));
 }
 
 #endif  /* _LINUX_ATOMIC_H_ */
