@@ -385,15 +385,23 @@ struct drm_waitlist {
 };
 
 struct drm_freelist {
+#ifndef __NetBSD__
 	int initialized;	       /**< Freelist in use */
 	atomic_t count;		       /**< Number of free buffers */
 	struct drm_buf *next;	       /**< End pointer */
 
+#ifdef __NetBSD__
+	drm_waitqueue_t waiting;       /**< Processes waiting on free bufs */
+#else
 	wait_queue_head_t waiting;     /**< Processes waiting on free bufs */
+#endif
+#endif
 	int low_mark;		       /**< Low water mark */
 	int high_mark;		       /**< High water mark */
+#ifndef __NetBSD__
 	atomic_t wfh;		       /**< If waiting for high mark */
 	spinlock_t lock;
+#endif
 };
 
 typedef struct drm_dma_handle {
@@ -456,7 +464,11 @@ struct drm_file {
 				      N.B. not always minor->master */
 	struct list_head fbs;
 
+#ifdef __NetBSD__
+	drm_waitqueue_t event_wait;
+#else
 	wait_queue_head_t event_wait;
+#endif
 	struct list_head event_list;
 	int event_space;
 
@@ -469,15 +481,27 @@ struct drm_queue {
 	atomic_t finalization;		/**< Finalization in progress */
 	atomic_t block_count;		/**< Count of processes waiting */
 	atomic_t block_read;		/**< Queue blocked for reads */
+#ifdef __NetBSD__
+	drm_waitqueue_t read_queue;	/**< Processes waiting on block_read */
+#else
 	wait_queue_head_t read_queue;	/**< Processes waiting on block_read */
+#endif
 	atomic_t block_write;		/**< Queue blocked for writes */
+#ifdef __NetBSD__
+	drm_waitqueue_t write_queue;	/**< Processes waiting on block_write */
+#else
 	wait_queue_head_t write_queue;	/**< Processes waiting on block_write */
+#endif
 	atomic_t total_queued;		/**< Total queued statistic */
 	atomic_t total_flushed;		/**< Total flushes statistic */
 	atomic_t total_locks;		/**< Total locks statistics */
 	enum drm_ctx_flags flags;	/**< Context preserving and 2D-only */
 	struct drm_waitlist waitlist;	/**< Pending buffers */
+#ifdef __NetBSD__
+	drm_waitqueue_t flush_queue;	/**< Processes waiting until flush */
+#else
 	wait_queue_head_t flush_queue;	/**< Processes waiting until flush */
+#endif
 };
 
 /**
@@ -487,7 +511,11 @@ struct drm_lock_data {
 	struct drm_hw_lock *hw_lock;	/**< Hardware lock */
 	/** Private of lock holder's file (NULL=kernel) */
 	struct drm_file *file_priv;
+#ifdef __NetBSD__
+	drm_waitqueue_t lock_queue;	/**< Queue of blocked processes */
+#else
 	wait_queue_head_t lock_queue;	/**< Queue of blocked processes */
+#endif
 	unsigned long lock_time;	/**< Time of last lock in jiffies */
 	spinlock_t spinlock;
 	uint32_t kernel_waiters;
@@ -1121,7 +1149,11 @@ struct drm_device {
 	__volatile__ long context_flag;	/**< Context swapping flag */
 	__volatile__ long interrupt_flag; /**< Interruption handler flag */
 	__volatile__ long dma_flag;	/**< DMA dispatch flag */
+#ifdef __NetBSD__
+	drm_waitqueue_t context_wait;	/**< Processes waiting on ctx switch */
+#else
 	wait_queue_head_t context_wait;	/**< Processes waiting on ctx switch */
+#endif
 	int last_checked;		/**< Last context checked for DMA */
 	int last_context;		/**< Last current context */
 	unsigned long last_switch;	/**< jiffies at last context switch */
@@ -1139,7 +1171,11 @@ struct drm_device {
 	 */
 	int vblank_disable_allowed;
 
+#ifdef __NetBSD__
+	drm_waitqueue_t *vbl_queue;     /**< VBLANK wait queue */
+#else
 	wait_queue_head_t *vbl_queue;   /**< VBLANK wait queue */
+#endif
 	atomic_t *_vblank_count;        /**< number of VBLANK interrupts (driver must alloc the right number of counters) */
 	struct timeval *_vblank_time;   /**< timestamp of current vblank_count (drivers must alloc right number of fields) */
 	spinlock_t vblank_time_lock;    /**< Protects vblank count and time updates during vblank enable/disable */
@@ -1166,8 +1202,13 @@ struct drm_device {
 	cycles_t lck_start;
 
 	struct fasync_struct *buf_async;/**< Processes waiting for SIGIO */
+#ifdef __NetBSD__
+	drm_waitqueue_t buf_readers;	/**< Processes waiting to read */
+	drm_waitqueue_t buf_writers;	/**< Processes waiting to ctx switch */
+#else
 	wait_queue_head_t buf_readers;	/**< Processes waiting to read */
 	wait_queue_head_t buf_writers;	/**< Processes waiting to ctx switch */
+#endif
 
 	struct drm_agp_head *agp;	/**< AGP data */
 
