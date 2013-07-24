@@ -277,7 +277,11 @@ static int drm_context_switch_complete(struct drm_device *dev,
 	   when the kernel holds the lock, release
 	   that lock here. */
 	clear_bit(0, &dev->context_flag);
+#ifdef __NetBSD__
+	DRM_WAKEUP_ONE(&dev->context_wait, &drm_global_mutex);
+#else
 	wake_up(&dev->context_wait);
+#endif
 
 	return 0;
 }
