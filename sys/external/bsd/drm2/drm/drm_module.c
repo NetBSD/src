@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.1 2013/07/24 02:43:09 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.2 2013/07/24 02:44:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.1 2013/07/24 02:43:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.2 2013/07/24 02:44:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
-MODULE(MODULE_CLASS_MISC, drm, NULL);
+MODULE(MODULE_CLASS_MISC, drm, "pci");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1.2.26 2013/07/24 02:43:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.27 2013/07/24 02:44:33 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
 
 .PATH:	${S}/external/bsd/drm2/drm
+.PATH:	${S}/external/bsd/drm2/pci
 .PATH:	${S}/external/bsd/drm2/linux
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
@@ -11,7 +12,7 @@ KMOD=	drm2
 IOCONF=	drm.ioconf
 
 #SRCS+=	ati_pcigart.c		# XXX Restore for ATI support.
-SRCS+=	drm_agpsupport.c
+SRCS+=	drm_agpsupport.c	# XXX Move to drm2pci module later.
 SRCS+=	drm_auth.c
 SRCS+=	drm_buffer.c
 SRCS+=	drm_bufs.c
@@ -37,7 +38,7 @@ SRCS+=	drm_lock.c
 SRCS+=	drm_memory.c
 SRCS+=	drm_mm.c
 #SRCS+=	drm_modes.c		# XXX Rewrite if necessary.
-#SRCS+=	drm_pci.c		# XXX Move to drm2pci module.
+SRCS+=	drm_pci.c		# XXX Move to drm2pci module later.
 #SRCS+=	drm_platform.c		# XXX Rewrite per platform.
 #SRCS+=	drm_prime.c		# XXX Revisit later.
 #SRCS+=	drm_proc.c		# XXX Rewrite for sysctl.
