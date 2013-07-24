@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.1.2.4 2013/07/24 03:36:10 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.1.2.5 2013/07/24 03:44:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,9 +38,13 @@
 
 #include <machine/param.h>
 
-#define	udelay	DELAY
-
 #define	MAX_UDELAY_MS	5
+
+static inline void
+udelay(unsigned int usec)
+{
+	DELAY(usec);
+}
 
 static inline void
 msleep(unsigned int msec)
