@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.1.2.2 2013/07/24 03:13:03 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.1.2.3 2013/07/24 03:28:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/null.h>
 
 static inline void *
 memchr_inv(const void *buffer, int c, size_t len)
