@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.1.2.1 2013/07/24 03:31:12 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.1.2.2 2013/07/24 03:46:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.1 2013/07/24 03:31:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.2 2013/07/24 03:46:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/mutex.h>
@@ -44,6 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.1 2013/07/24 03:31:12 riastradh
  * required not to fail.  To accomodate this, we reserve one page of
  * kva at boot (or load) and limit the system to at most kmap_atomic in
  * use at a time.
+ */
+
+/*
+ * XXX Use direct-mapped physical pages where available, e.g. amd64.
+ *
+ * XXX ...or add an abstraction to uvm for this.  (uvm_emap?)
  */
 
 static kmutex_t linux_kmap_atomic_lock;
@@ -102,6 +108,7 @@ kunmap_atomic(void *addr)
 {
 	const vaddr_t vaddr = (vaddr_t)addr;
 
+	KASSERT(mutex_owned(&linux_kmap_atomic_lock));
 	KASSERT(linux_kmap_atomic_vaddr == vaddr);
 	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
 
@@ -109,4 +116,43 @@ kunmap_atomic(void *addr)
 	pmap_update(pmap_kernel());
 
 	mutex_spin_exit(&linux_kmap_atomic_lock);
+}
+
+void *
+kmap(struct page *page)
+{
+	int s;
+
+	const vaddr_t vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
+	KASSERT(vaddr != 0);
+
+	s = splvm();
+
+	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
+	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
+	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
+	const int flags = 0;
+	pmap_kenter_pa(vaddr, paddr, prot, flags);
+	pmap_update(pmap_kernel());
+
+	splx(s);
+
+	return (void *)vaddr;
+}
+
+void
+kunmap(void *addr)
+{
+	const vaddr_t vaddr = (vaddr_t)addr;
+	int s;
+
+	s = splvm();
+
+	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
+
+	pmap_kremove(vaddr, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	splx(s);
 }

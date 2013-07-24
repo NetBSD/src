@@ -1,4 +1,4 @@
-/*	$NetBSD: highmem.h,v 1.1.2.2 2013/07/24 03:31:12 riastradh Exp $	*/
+/*	$NetBSD: highmem.h,v 1.1.2.3 2013/07/24 03:46:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,5 +49,8 @@ void	linux_kmap_fini(void);
 
 void *	kmap_atomic(struct page *);
 void	kunmap_atomic(void *);
+
+void *	kmap(struct page *);
+void	kunmap(void *);
 
 #endif  /* _LINUX_HIGHMEM_H_ */
