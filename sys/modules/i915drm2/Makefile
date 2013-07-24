@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.5 2013/07/24 03:42:37 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.6 2013/07/24 03:42:54 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -39,7 +39,7 @@ SRCS+=	intel_ddi.c
 SRCS+=	intel_display.c
 SRCS+=	intel_dp.c
 SRCS+=	intel_dvo.c
-SRCS+=	intel_fb.c
+#SRCS+=	intel_fb.c		# XXX Rewrite for wscons.
 SRCS+=	intel_hdmi.c
 SRCS+=	intel_i2c.c
 SRCS+=	intel_lvds.c
