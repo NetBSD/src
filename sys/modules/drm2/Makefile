@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.37 2013/07/24 03:33:27 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.38 2013/07/24 03:52:37 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -48,6 +48,7 @@ SRCS+=	drm_vm.c
 
 SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
+SRCS+=	drm_sysfs.c
 
 # XXX The following should be in a separate Linux compatibility module,
 # or modules.
