@@ -1691,7 +1691,11 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	spin_lock_init(&dev_priv->rps.lock);
 	spin_lock_init(&dev_priv->dpio_lock);
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->rps.hw_lock);
+#else
 	mutex_init(&dev_priv->rps.hw_lock);
+#endif
 
 	if (IS_IVYBRIDGE(dev) || IS_HASWELL(dev))
 		dev_priv->num_pipe = 3;
@@ -1732,6 +1736,14 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 out_gem_unload:
 	if (dev_priv->mm.inactive_shrinker.shrink)
 		unregister_shrinker(&dev_priv->mm.inactive_shrinker);
+
+#ifdef __NetBSD__
+	spin_lock_destroy(&dev_priv->irq_lock);
+	spin_lock_destroy(&dev_priv->error_lock);
+	spin_lock_destroy(&dev_priv->rps.lock);
+	spin_lock_destroy(&dev_priv->dpio_lock);
+	linux_mutex_destroy(&dev_priv->rps.hw_lock);
+#endif
 
 	if (dev->pdev->msi_enabled)
 		pci_disable_msi(dev->pdev);
