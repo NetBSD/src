@@ -2046,6 +2046,9 @@ DRM_IS_BUS_SPACE(struct drm_local_map *map)
 
 	case _DRM_GEM:
 		panic("I don't know how to access drm gem memory!");
+
+	default:
+		panic("I don't know what kind of memory you mean!");
 	}
 }
 
