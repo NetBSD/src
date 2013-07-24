@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.1.2.2 2013/07/24 03:14:49 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.1.2.3 2013/07/24 03:24:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.2 2013/07/24 03:14:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.3 2013/07/24 03:24:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -55,7 +55,7 @@ i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
 		error = config_init_component(cfdriver_ioconf_i915drm,
 		    cfattach_ioconf_i915drm, cfdata_ioconf_i915drm);
 		if (error) {
-			aprint_error("i915drm: failed to init component: %s\n",
+			aprint_error("i915drm: failed to init component: %d\n",
 			    error);
 			return error;
 		}
@@ -67,7 +67,7 @@ i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
 		error = config_fini_component(cfdriver_ioconf_i915drm,
 		    cfattach_ioconf_i915drm, cfdata_ioconf_i915drm);
 		if (error) {
-			aprint_error("i915drm: failed to fini component: %s\n",
+			aprint_error("i915drm: failed to fini component: %d\n",
 			    error);
 			return error;
 		}
