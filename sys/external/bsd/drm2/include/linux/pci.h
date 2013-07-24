@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.14 2013/07/24 03:32:19 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.15 2013/07/24 03:45:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct pci_dev {
 	bus_size_t		pd_rom_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
+	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
