@@ -52,6 +52,27 @@
 #define MBOX_SWSCI     (1<<1)
 #define MBOX_ASLE      (1<<2)
 
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  define	__iomem	__acpi_iomem
+
+static inline uint32_t
+ioread32(const uint32_t __acpi_iomem *ptr)
+{
+	const uint32_t value = *ptr;
+
+	__insn_barrier();
+	return value;
+}
+
+static inline void
+iowrite32(uint32_t value, uint32_t __acpi_iomem *ptr)
+{
+
+	__insn_barrier();
+	*ptr = value;
+}
+#endif
+
 struct opregion_header {
 	u8 signature[16];
 	u32 size;
