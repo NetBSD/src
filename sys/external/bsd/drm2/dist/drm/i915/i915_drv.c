@@ -28,6 +28,8 @@
  */
 
 #include <linux/device.h>
+#include <linux/moduleparam.h>
+#include <linux/time.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
