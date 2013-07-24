@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.3 2013/07/24 02:47:19 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.4 2013/07/24 02:47:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.3 2013/07/24 02:47:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.4 2013/07/24 02:47:50 riastradh Exp $");
 
 /* XXX Cargo-culted from the old drm_memory.c.  */
 
@@ -240,11 +240,9 @@ drm_pci_alloc(struct drm_device *dev, size_t size, size_t align)
 
 	/*
 	 * Allocate a drm_dma_handle record.
-	 *
-	 * XXX Must use kzalloc because callers pass this to kfree, not
-	 * necessarily to drm_pci_free.  Whattakludge.
 	 */
-	struct drm_dma_handle *const dmah = kzalloc(sizeof(*dmah), GFP_ATOMIC);
+	struct drm_dma_handle *const dmah = kmem_alloc(sizeof(*dmah),
+	    KM_NOSLEEP);
 	if (dmah == NULL) {
 		error = -ENOMEM;
 		goto out;
@@ -308,23 +306,9 @@ fail3:	bus_dmamap_destroy(dmah->dmah_tag, dmah->dmah_map);
 fail2:	bus_dmamem_unmap(dmah->dmah_tag, dmah->vaddr, dmah->size);
 fail1:	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
 fail0:	dmah->dmah_tag = NULL;	/* XXX paranoia */
-	kfree(dmah);
+	kmem_free(dmah, sizeof(*dmah));
 out:	DRM_DEBUG("drm_pci_alloc failed: %d\n", error);
 	return NULL;
-}
-
-/*
- * Release the bus DMA mappings and memory in dmah.
- */
-void
-__drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah)
-{
-
-	bus_dmamap_unload(dmah->dmah_tag, dmah->dmah_map);
-	bus_dmamap_destroy(dmah->dmah_tag, dmah->dmah_map);
-	bus_dmamem_unmap(dmah->dmah_tag, dmah->vaddr, dmah->size);
-	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
-	dmah->dmah_tag = NULL;	/* XXX paranoia */
 }
 
 /*
@@ -334,6 +318,10 @@ void
 drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah)
 {
 
-	__drm_pci_free(dev, dmah);
-	kfree(dmah);
+	bus_dmamap_unload(dmah->dmah_tag, dmah->dmah_map);
+	bus_dmamap_destroy(dmah->dmah_tag, dmah->dmah_map);
+	bus_dmamem_unmap(dmah->dmah_tag, dmah->vaddr, dmah->size);
+	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
+	dmah->dmah_tag = NULL;	/* XXX paranoia */
+	kmem_free(dmah, sizeof(*dmah));
 }
