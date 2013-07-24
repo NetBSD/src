@@ -30,7 +30,9 @@
 #include "i915_drv.h"
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
+#ifndef __NetBSD__
 #include <drm/drm_fb_helper.h>
+#endif
 #include <drm/drm_dp_helper.h>
 
 #define _wait_for(COND, MS, W) ({ \
@@ -129,12 +131,14 @@ struct intel_framebuffer {
 	struct drm_i915_gem_object *obj;
 };
 
+#ifndef __NetBSD__		/* XXX fb */
 struct intel_fbdev {
 	struct drm_fb_helper helper;
 	struct intel_framebuffer ifb;
 	struct list_head fbdev_list;
 	struct drm_display_mode *our_mode;
 };
+#endif
 
 struct intel_encoder {
 	struct drm_encoder base;
@@ -588,9 +592,11 @@ extern int intel_framebuffer_init(struct drm_device *dev,
 				  struct intel_framebuffer *ifb,
 				  struct drm_mode_fb_cmd2 *mode_cmd,
 				  struct drm_i915_gem_object *obj);
+#ifndef __NetBSD__		/* XXX fb */
 extern int intel_fbdev_init(struct drm_device *dev);
 extern void intel_fbdev_fini(struct drm_device *dev);
 extern void intel_fbdev_set_suspend(struct drm_device *dev, int state);
+#endif
 extern void intel_prepare_page_flip(struct drm_device *dev, int plane);
 extern void intel_finish_page_flip(struct drm_device *dev, int pipe);
 extern void intel_finish_page_flip_plane(struct drm_device *dev, int plane);
