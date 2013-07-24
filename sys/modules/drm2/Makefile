@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.11 2013/07/24 02:19:15 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.12 2013/07/24 02:25:26 riastradh Exp $
 
 .include "../Makefile.inc"
 
@@ -24,7 +24,7 @@ SRCS+=	drm_drv.c
 #SRCS+=	drm_encoder_slave.c	# XXX Rewrite for i2c.
 #SRCS+=	drm_fb_helper.c		# XXX Rewrite for wsconsole.
 SRCS+=	drm_fops.c
-SRCS+=	drm_gem.c
+#SRCS+=	drm_gem.c		# XXX Rewrite for uvm and stuff.
 SRCS+=	drm_global.c
 SRCS+=	drm_hashtab.c
 SRCS+=	drm_info.c
