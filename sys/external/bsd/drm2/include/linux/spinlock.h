@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.1.2.6 2013/07/24 02:50:36 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.1.2.7 2013/07/24 03:50:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,6 +55,18 @@ static inline void
 spin_unlock(spinlock_t *spinlock)
 {
 	mutex_exit(&spinlock->sl_lock);
+}
+
+static inline void
+spin_lock_irq(spinlock_t *spinlock)
+{
+	spin_lock(spinlock);
+}
+
+static inline void
+spin_unlock_irq(spinlock_t *spinlock)
+{
+	spin_unlock(spinlock);
 }
 
 /* Must be a macro because the second argument is to be assigned.  */
