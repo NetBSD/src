@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.7 2013/07/24 02:27:52 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.8 2013/07/24 02:28:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -134,5 +134,24 @@ test_and_change_bit(unsigned long bit, volatile unsigned long *ptr)
 
 	return (v & (1 << bit));
 }
+
+#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
+/*
+ * XXX These memory barriers are doubtless overkill, but I am having
+ * trouble understanding the intent and use of the Linux atomic membar
+ * API.  I think that for reference counting purposes, the sequences
+ * should be insn/inc/enter and exit/dec/insn, but the use of the
+ * before/after memory barriers is not consistent throughout Linux.
+ */
+#  define	smp_mb__before_atomic_inc()	membar_sync()
+#  define	smp_mb__after_atomic_inc()	membar_sync()
+#  define	smp_mb__before_atomic_dec()	membar_sync()
+#  define	smp_mb__after_atomic_dec()	membar_sync()
+#else
+#  define	smp_mb__before_atomic_inc()	__insn_barrier()
+#  define	smp_mb__after_atomic_inc()	__insn_barrier()
+#  define	smp_mb__before_atomic_dec()	__insn_barrier()
+#  define	smp_mb__after_atomic_dec()	__insn_barrier()
+#endif
 
 #endif  /* _LINUX_ATOMIC_H_ */
