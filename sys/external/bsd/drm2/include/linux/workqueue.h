@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.6 2013/07/24 03:37:04 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.7 2013/07/24 03:59:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -107,12 +107,13 @@ struct workqueue_struct;
 static inline struct workqueue_struct *
 alloc_ordered_workqueue(const char *name __unused, int flags __unused)
 {
-	return NULL;
+	return (void *)(uintptr_t)0xdeadbeef;
 }
 
 static inline void
 destroy_workqueue(struct workqueue_struct *wq __unused)
 {
+	KASSERT(wq == (void *)(uintptr_t)0xdeadbeef);
 }
 
 #define	flush_workqueue(wq)		WARN(true, "Can't flush workqueues!");
@@ -121,6 +122,7 @@ destroy_workqueue(struct workqueue_struct *wq __unused)
 static inline void
 queue_work(struct workqueue_struct *wq __unused, struct work_struct *work)
 {
+	KASSERT(wq == (void *)(uintptr_t)0xdeadbeef);
 	schedule_work(work);
 }
 
@@ -129,6 +131,7 @@ queue_delayed_work(struct workqueue_struct *wq __unused,
     struct delayed_work *dw,
     unsigned int ticks)
 {
+	KASSERT(wq == (void *)(uintptr_t)0xdeadbeef);
 	schedule_delayed_work(dw, ticks);
 }
 
