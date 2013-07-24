@@ -684,6 +684,12 @@ void drm_mm_takedown(struct drm_mm * mm)
 	}
 	spin_unlock(&mm->unused_lock);
 
+	/*
+	 * XXX The locking above can't be right -- either it is
+	 * unnecessary or it is insufficient.
+	 */
+	spin_lock_destroy(&mm->unused_lock);
+
 	BUG_ON(mm->num_unused != 0);
 }
 EXPORT_SYMBOL(drm_mm_takedown);
