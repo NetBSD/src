@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.3 2013/07/24 03:14:31 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.4 2013/07/24 03:31:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.3 2013/07/24 03:14:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.4 2013/07/24 03:31:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/systm.h>
+
+#include <linux/highmem.h>
 
 /*
  * XXX I2C stuff should be moved to a separate drm2edid module.
@@ -63,12 +65,19 @@ drm_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = linux_kmap_init();
+		if (error) {
+			aprint_error("drm: unable to initialize linux kmap:"
+			    " %d", error);
+			return error;
+		}
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_drm,
 		    cfattach_ioconf_drm, cfdata_ioconf_drm);
 		if (error) {
 			aprint_error("drm: unable to init component: %d\n",
 			    error);
+			linux_kmap_fini();
 			return error;
 		}
 		error = devsw_attach("drm", NULL, &bmajor,
@@ -78,6 +87,7 @@ drm_modcmd(modcmd_t cmd, void *arg __unused)
 			    error);
 			(void)config_fini_component(cfdriver_ioconf_drm,
 			    cfattach_ioconf_drm, cfdata_ioconf_drm);
+			linux_kmap_fini();
 			return error;
 		}
 #endif
@@ -94,6 +104,7 @@ drm_modcmd(modcmd_t cmd, void *arg __unused)
 			/* XXX Now what?  Reattach the devsw?  */
 			return error;
 #endif
+		linux_kmap_fini();
 		return 0;
 
 	default:

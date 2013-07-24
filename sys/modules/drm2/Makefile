@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.35 2013/07/24 03:11:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.36 2013/07/24 03:31:12 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -51,6 +51,8 @@ SRCS+=	drm_module.c
 
 # XXX The following should be in a separate Linux compatibility module,
 # or modules.
+SRCS+=	linux_gfp.c
+SRCS+=	linux_kmap.c
 SRCS+=	linux_i2c.c
 SRCS+=	linux_idr.c
 SRCS+=	linux_list_sort.c
