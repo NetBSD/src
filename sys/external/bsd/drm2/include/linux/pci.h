@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.6 2013/07/24 03:01:54 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.7 2013/07/24 03:02:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct pci_dev {
 	unsigned int device;
 	struct pci_attach_args pd_pa;
 	bool pd_kludged;	/* XXX pci_kludgey_find_dev hack */
+	bool msi_enabled;
 };
 
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
@@ -70,6 +71,23 @@ static inline void
 pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 {
 	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, value);
+}
+
+/*
+ * XXX pci msi
+ */
+static inline void
+pci_enable_msi(struct pci_dev *pdev)
+{
+	KASSERT(!pdev->msi_enabled);
+	pdev->msi_enabled = true;
+}
+
+static inline void
+pci_disable_msi(struct pci_dev *pdev)
+{
+	KASSERT(pdev->msi_enabled);
+	pdev->msi_enabled = false;
 }
 
 #define	PCIBIOS_MIN_MEM	0	/* XXX bogus x86 kludge bollocks */
