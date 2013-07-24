@@ -35,6 +35,7 @@
 #include <linux/export.h>
 #include <linux/printk.h>
 #include <linux/device.h>
+#include <linux/string.h>
 #include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
@@ -258,8 +259,6 @@ bool drm_edid_is_valid(struct edid *edid)
 }
 EXPORT_SYMBOL(drm_edid_is_valid);
 
-#ifndef __NetBSD__		/* XXX i2c */
-
 #define DDC_SEGMENT_ADDR 0x30
 /**
  * Get EDID information via I2C.
@@ -439,8 +438,6 @@ struct edid *drm_get_edid(struct drm_connector *connector,
 	return edid;
 }
 EXPORT_SYMBOL(drm_get_edid);
-
-#endif	/* !defined(__NetBSD__) */
 
 /*** EDID parsing ***/
 
