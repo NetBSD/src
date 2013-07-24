@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm2,v 1.1.2.1 2013/07/24 02:42:40 riastradh Exp $
+#	$NetBSD: files.drm2,v 1.1.2.2 2013/07/24 02:48:34 riastradh Exp $
 
 define	drm2base
 define	drm2pci
@@ -14,3 +14,6 @@ makeoptions 	drm2base	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
 
 # XXX Should probably be in a header file.  opt_drm.h?
 makeoptions	drm2base	CPPFLAGS+="-D__KERNEL__"
+
+device	i915drm: drm2base, drm2pci, drmbus
+attach	i915drm at pci
