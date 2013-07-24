@@ -166,6 +166,10 @@ static u32 i915_read_blc_pwm_ctl(struct drm_device *dev)
 	return val;
 }
 
+#ifdef __NetBSD__		/* XXX max kludge */
+#  define	max	max_hack
+#endif
+
 static u32 _intel_panel_get_max_backlight(struct drm_device *dev)
 {
 	u32 max;
@@ -283,6 +287,10 @@ static void intel_panel_actually_set_backlight(struct drm_device *dev, u32 level
 	tmp &= ~BACKLIGHT_DUTY_CYCLE_MASK;
 	I915_WRITE(BLC_PWM_CTL, tmp | level);
 }
+
+#ifdef __NetBSD__		/* XXX max hack */
+#  undef	max
+#endif
 
 void intel_panel_set_backlight(struct drm_device *dev, u32 level)
 {
