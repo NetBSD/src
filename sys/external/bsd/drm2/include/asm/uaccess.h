@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.1.2.1 2013/07/24 00:33:11 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.1.2.2 2013/07/24 02:02:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,21 @@
 
 #ifndef _ASM_UACCESS_H_
 #define _ASM_UACCESS_H_
+
+#include <sys/types.h>
+#include <sys/systm.h>
+
+static inline int
+copy_from_user(void *kernel_addr, const void *user_addr, size_t len)
+{
+	return -copyin(user_addr, kernel_addr, len);
+}
+
+static inline int
+copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
+{
+	return -copyout(kernel_addr, user_addr, len);
+}
+
 
 #endif  /* _ASM_UACCESS_H_ */

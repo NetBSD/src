@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.1.2.2 2013/07/24 02:02:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_UACCESS_H_
 #define _LINUX_UACCESS_H_
+
+#include <asm/uaccess.h>
 
 #endif  /* _LINUX_UACCESS_H_ */
