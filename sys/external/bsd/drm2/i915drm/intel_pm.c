@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.1.2.2 2013/07/24 03:52:52 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.1.2.3 2013/07/24 03:59:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* intel_pm.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.2 2013/07/24 03:52:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.3 2013/07/24 03:59:34 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -69,6 +69,11 @@ intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 
 void
 intel_gpu_ips_teardown(void)
+{
+}
+
+void
+intel_gt_init(struct drm_device *dev __unused)
 {
 }
 
