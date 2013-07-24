@@ -1164,7 +1164,10 @@ struct drm_device {
 #endif
 	int last_checked;		/**< Last context checked for DMA */
 	int last_context;		/**< Last current context */
+#ifndef __NetBSD__
+	/* XXX Nobody seems to use this.  */
 	unsigned long last_switch;	/**< jiffies at last context switch */
+#endif
 	/*@} */
 
 	struct work_struct work;
