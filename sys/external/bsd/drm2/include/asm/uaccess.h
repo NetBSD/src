@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.1.2.2 2013/07/24 02:02:03 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.1.2.3 2013/07/24 02:04:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,12 +38,14 @@
 static inline int
 copy_from_user(void *kernel_addr, const void *user_addr, size_t len)
 {
+	/* XXX errno NetBSD->Linux */
 	return -copyin(user_addr, kernel_addr, len);
 }
 
 static inline int
 copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 {
+	/* XXX errno NetBSD->Linux */
 	return -copyout(kernel_addr, user_addr, len);
 }
 
