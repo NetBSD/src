@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.1.2.2 2013/07/24 00:38:15 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2013/07/24 00:50:36 riastradh Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/external/bsd/drm2/dist/drm
+.PATH:	${S}/external/bsd/drm2/linux
 
 KMOD=	drm2
 
@@ -40,6 +41,8 @@ SRCS+=	drm_proc.c
 SRCS+=	drm_scatter.c
 SRCS+=	drm_stub.c
 SRCS+=	drm_vm.c
+
+SRCS+=	linux_idr.c
 
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/uapi

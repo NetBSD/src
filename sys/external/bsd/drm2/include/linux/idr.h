@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.2 2013/07/24 00:50:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,24 @@
 
 #ifndef _LINUX_IDR_H_
 #define _LINUX_IDR_H_
+
+#include <sys/types.h>
+#include <sys/rwlock.h>
+#include <sys/rbtree.h>
+
+/* XXX Stupid expedient algorithm should be replaced by something better.  */
+
+struct idr {
+	krwlock_t idr_lock;
+	rb_tree_t idr_tree;
+	struct idr_node *idr_temp;
+};
+
+void	idr_init(struct idr *);
+void	idr_destroy(struct idr *);
+void	*idr_find(struct idr *, int);
+void	idr_remove(struct idr *, int);
+int	idr_pre_get(struct idr *, int);
+int	idr_get_new_above(struct idr *, void *, int, int *);
 
 #endif  /* _LINUX_IDR_H_ */
