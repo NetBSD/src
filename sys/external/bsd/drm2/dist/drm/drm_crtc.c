@@ -858,8 +858,13 @@ EXPORT_SYMBOL(drm_mode_create_dvi_i_properties);
  * responsible for allocating a list of format names and passing them to
  * this routine.
  */
+#ifdef __NetBSD__		/* XXX const */
+int drm_mode_create_tv_properties(struct drm_device *dev, int num_modes,
+				  const char *modes[])
+#else
 int drm_mode_create_tv_properties(struct drm_device *dev, int num_modes,
 				  char *modes[])
+#endif
 {
 	struct drm_property *tv_selector;
 	struct drm_property *tv_subconnector;
