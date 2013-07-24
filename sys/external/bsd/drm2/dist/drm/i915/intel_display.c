@@ -2240,6 +2240,13 @@ intel_pipe_set_base_atomic(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	return dev_priv->display.update_plane(crtc, fb, x, y);
 }
 
+#ifdef __NetBSD__		/* XXX fb */
+static int
+intel_finish_fb(struct drm_framebuffer *old_fb __unused)
+{
+	return 0;
+}
+#else
 static int
 intel_finish_fb(struct drm_framebuffer *old_fb)
 {
@@ -2266,6 +2273,7 @@ intel_finish_fb(struct drm_framebuffer *old_fb)
 
 	return ret;
 }
+#endif
 
 static void intel_crtc_update_sarea_pos(struct drm_crtc *crtc, int x, int y)
 {
@@ -6612,6 +6620,7 @@ intel_framebuffer_create(struct drm_device *dev,
 	return &intel_fb->base;
 }
 
+#ifndef __NetBSD__		/* XXX fb */
 static u32
 intel_framebuffer_pitch_for_width(int width, int bpp)
 {
@@ -6625,7 +6634,17 @@ intel_framebuffer_size_for_mode(struct drm_display_mode *mode, int bpp)
 	u32 pitch = intel_framebuffer_pitch_for_width(mode->hdisplay, bpp);
 	return ALIGN(pitch * mode->vdisplay, PAGE_SIZE);
 }
+#endif
 
+#ifdef __NetBSD__		/* XXX fb */
+static struct drm_framebuffer *
+intel_framebuffer_create_for_mode(struct drm_device *dev __unused,
+    struct drm_display_mode *mode __unused,
+    int depth __unused, int bpp __unused)
+{
+	return NULL;
+}
+#else
 static struct drm_framebuffer *
 intel_framebuffer_create_for_mode(struct drm_device *dev,
 				  struct drm_display_mode *mode,
@@ -6647,7 +6666,16 @@ intel_framebuffer_create_for_mode(struct drm_device *dev,
 
 	return intel_framebuffer_create(dev, &mode_cmd, obj);
 }
+#endif
 
+#ifdef __NetBSD__		/* XXX fb */
+static struct drm_framebuffer *
+mode_fits_in_fbdev(struct drm_device *dev __unused,
+    struct drm_display_mode *mode __unused)
+{
+	return NULL;
+}
+#else
 static struct drm_framebuffer *
 mode_fits_in_fbdev(struct drm_device *dev,
 		   struct drm_display_mode *mode)
@@ -6673,6 +6701,7 @@ mode_fits_in_fbdev(struct drm_device *dev,
 
 	return fb;
 }
+#endif
 
 bool intel_get_load_detect_pipe(struct drm_connector *connector,
 				struct drm_display_mode *mode,
