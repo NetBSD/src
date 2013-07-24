@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.1.2.1 2013/07/24 03:30:42 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.1.2.2 2013/07/24 03:31:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ typedef int gfp_t;
 #define	__GFP_ZERO		__BIT(12)
 
 /* XXX Make the nm output a little more greppable...  */
-#define	alloc_page	linux_gfp_alloc_page
-#define	__free_page	linux_gfp___free_page
+#define	alloc_page	linux_alloc_page
+#define	__free_page	linux___free_page
 
 struct page;
 struct page *	alloc_page(gfp_t);

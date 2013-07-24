@@ -1,4 +1,4 @@
-/*	$NetBSD: highmem.h,v 1.1.2.2 2013/07/24 03:31:12 riastradh Exp $	*/
+/*	$NetBSD: linux_gfp.c,v 1.1.2.1 2013/07/24 03:31:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,25 +29,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_HIGHMEM_H_
-#define _LINUX_HIGHMEM_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_gfp.c,v 1.1.2.1 2013/07/24 03:31:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <linux/gfp.h>
 #include <linux/kernel.h>
 #include <linux/mm_types.h>
 
-/* XXX Make the nm output a little more greppable...  */
-#define	kmap_atomic	linux_kmap_atomic
-#define	kunmap_atomic	linux_kunmap_atomic
+struct page *
+alloc_page(gfp_t gfp)
+{
+	paddr_t low = 0;
+	paddr_t high = ~(paddr_t)0;
+	struct pglist pglist;
+	struct vm_page *vm_page;
+	int error;
 
-int	linux_kmap_init(void);
-void	linux_kmap_fini(void);
+	if (ISSET(gfp, __GFP_DMA32))
+		high = 0xffffffff;
 
-void *	kmap_atomic(struct page *);
-void	kunmap_atomic(void *);
+	error = uvm_pglistalloc(PAGE_SIZE, low, high, PAGE_SIZE, PAGE_SIZE,
+	    &pglist, 1, ISSET(gfp, __GFP_WAIT));
+	if (error)
+		return NULL;
 
-#endif  /* _LINUX_HIGHMEM_H_ */
+	vm_page = TAILQ_FIRST(&pglist);
+	TAILQ_REMOVE(&pglist, vm_page, pageq.queue);	/* paranoia */
+	KASSERT(TAILQ_EMPTY(&pglist));
+
+	return container_of(vm_page, struct page, p_vmp);
+}
+
+void
+__free_page(struct page *page)
+{
+	struct pglist pglist = TAILQ_HEAD_INITIALIZER(pglist);
+
+	TAILQ_INSERT_TAIL(&pglist, &page->p_vmp, pageq.queue);
+
+	uvm_pglistfree(&pglist);
+}
