@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.3 2013/07/24 00:49:32 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.4 2013/07/24 00:50:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define	__printf	__printflike
+#define	__user
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD)))
