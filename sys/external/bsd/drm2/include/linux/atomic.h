@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.8 2013/07/24 02:28:36 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.9 2013/07/24 03:35:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,6 +61,12 @@ atomic_add(int addend, atomic_t *atomic)
 	atomic_add_int(&atomic->a_u.au_uint, addend);
 }
 
+static inline void
+atomic_sub(int subtrahend, atomic_t *atomic)
+{
+	atomic_add_int(&atomic->a_u.au_uint, -subtrahend);
+}
+
 static inline int
 atomic_add_return(int addend, atomic_t *atomic)
 {
@@ -83,6 +89,39 @@ static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
 	return (-1 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+}
+
+static inline void
+atomic_set_mask(unsigned long mask, atomic_t *atomic)
+{
+	atomic_or_uint(&atomic->a_u.au_uint, mask);
+}
+
+static inline void
+atomic_clear_mask(unsigned long mask, atomic_t *atomic)
+{
+	atomic_and_uint(&atomic->a_u.au_uint, ~mask);
+}
+
+static inline int
+atomic_add_unless(atomic_t *atomic, int addend, int zero)
+{
+	int value;
+
+	do {
+		value = atomic->a_u.au_int;
+		if (value == zero)
+			return 0;
+	} while (atomic_cas_uint(&atomic->a_u.au_uint, value, (value + addend))
+	    != value);
+
+	return 1;
+}
+
+static inline int
+atomic_inc_not_zero(atomic_t *atomic)
+{
+	return atomic_add_unless(atomic, 1, 0);
 }
 
 static inline void
