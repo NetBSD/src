@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.8 2013/07/24 02:24:29 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.9 2013/07/24 02:36:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -131,10 +131,26 @@ list_splice_tail(const struct list_head *list, struct list_head *head)
 }
 
 static inline void
+list_move(struct list_head *node, struct list_head *head)
+{
+	list_del(node);
+	list_add(node, head);
+}
+
+static inline void
 list_move_tail(struct list_head *node, struct list_head *head)
 {
 	list_del(node);
 	list_add_tail(node, head);
+}
+
+static inline void
+list_replace(struct list_head *old, struct list_head *new)
+{
+	new->lh_prev = old->lh_prev;
+	old->lh_prev->lh_next = new;
+	new->lh_next = old->lh_next;
+	old->lh_next->lh_prev = new;
 }
 
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
