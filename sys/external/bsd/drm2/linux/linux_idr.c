@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.6 2013/07/24 03:16:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.6 2013/07/24 03:16:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -173,17 +173,17 @@ idr_remove_all(struct idr *idr)
 int
 idr_pre_get(struct idr *idr, int flags __unused /* XXX */)
 {
-	struct idr_node *const temp = kmem_alloc(sizeof(*temp), KM_SLEEP);
-
-	if (temp == NULL)
-		return 0;
+	struct idr_node *temp = kmem_alloc(sizeof(*temp), KM_SLEEP);
 
 	rw_enter(&idr->idr_lock, RW_WRITER);
-	if (idr->idr_temp == NULL)
+	if (idr->idr_temp == NULL) {
 		idr->idr_temp = temp;
-	else
-		kmem_free(temp, sizeof(*temp));
+		temp = NULL;
+	}
 	rw_exit(&idr->idr_lock);
+
+	if (temp != NULL)
+		kmem_free(temp, sizeof(*temp));
 
 	return 1;
 }
