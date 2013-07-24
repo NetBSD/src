@@ -1509,12 +1509,32 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	else
 		mmio_size = 2*1024*1024;
 
+#ifdef __NetBSD__
+	/* XXX Maybe it would be better to just use pci_mapreg_map...  */
+	{
+		bus_addr_t addr;
+		bus_size_t size;
+
+		if (pci_mapreg_info(dev->pdev->pd_pa.pa_pc,
+			dev->pdev->pd_pa.pa_tag, mmio_bar, PCI_MAPREG_TYPE_MEM,
+			&addr, &size, NULL /* XXX flags? */)) {
+			ret = -EIO;	    /* XXX */
+			goto put_gmch;
+		}
+
+		ret = drm_addmap(dev, addr, size, _DRM_REGISTERS,
+		    (_DRM_KERNEL | _DRM_DRIVER), &dev_priv->regs_map);
+		if (ret)
+			goto put_gmch;
+	}
+#else
 	dev_priv->regs = pci_iomap(dev->pdev, mmio_bar, mmio_size);
 	if (!dev_priv->regs) {
 		DRM_ERROR("failed to map registers\n");
 		ret = -EIO;
 		goto put_gmch;
 	}
+#endif
 
 	aperture_size = dev_priv->mm.gtt->gtt_mappable_entries << PAGE_SHIFT;
 	dev_priv->mm.gtt_base_addr = dev_priv->mm.gtt->gma_bus_addr;
@@ -1641,7 +1661,11 @@ out_mtrrfree:
 	}
 	io_mapping_free(dev_priv->mm.gtt_mapping);
 out_rmmap:
+#ifdef __NetBSD__
+	(void)drm_rmmap(dev, dev_priv->regs_map);
+#else
 	pci_iounmap(dev->pdev, dev_priv->regs);
+#endif
 put_gmch:
 	i915_gem_gtt_fini(dev);
 put_bridge:
@@ -1731,8 +1755,13 @@ int i915_driver_unload(struct drm_device *dev)
 			i915_free_hws(dev);
 	}
 
+#ifdef __NetBSD__
+	if (dev_priv->regs_map != NULL)
+		(void)drm_rmmap(dev, dev_priv->regs_map);
+#else
 	if (dev_priv->regs != NULL)
 		pci_iounmap(dev->pdev, dev_priv->regs);
+#endif
 
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);

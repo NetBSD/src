@@ -627,7 +627,11 @@ typedef struct drm_i915_private {
 
 	int relative_constants_mode;
 
+#ifdef __NetBSD__
+	struct drm_local_map *regs_map;
+#else
 	void __iomem *regs;
+#endif
 
 	struct drm_i915_gt_funcs gt;
 	/** gt_fifo_count and the subsequent register write are synchronized

@@ -1218,6 +1218,30 @@ ilk_dummy_write(struct drm_i915_private *dev_priv)
 	I915_WRITE_NOTRACE(MI_MODE, 0);
 }
 
+#ifdef __NetBSD__
+#define __i915_read(x, y) \
+u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
+	u##x val = 0; \
+	if (IS_GEN5(dev_priv->dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (NEEDS_FORCE_WAKE((dev_priv), (reg))) { \
+		unsigned long irqflags; \
+		spin_lock_irqsave(&dev_priv->gt_lock, irqflags); \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_get(dev_priv); \
+		val = DRM_READ##x(dev_priv->regs_map, reg); \
+		if (dev_priv->forcewake_count == 0) \
+			dev_priv->gt.force_wake_put(dev_priv); \
+		spin_unlock_irqrestore(&dev_priv->gt_lock, irqflags); \
+	} else if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
+		val = DRM_READ##x(dev_priv->regs_map, reg + 0x180000);	\
+	} else { \
+		val = DRM_READ##x(dev_priv->regs_map, reg); \
+	} \
+	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
+	return val; \
+}
+#else
 #define __i915_read(x, y) \
 u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	u##x val = 0; \
@@ -1240,6 +1264,7 @@ u##x i915_read##x(struct drm_i915_private *dev_priv, u32 reg) { \
 	trace_i915_reg_rw(false, reg, val, sizeof(val)); \
 	return val; \
 }
+#endif
 
 __i915_read(8, b)
 __i915_read(16, w)
@@ -1247,6 +1272,34 @@ __i915_read(32, l)
 __i915_read(64, q)
 #undef __i915_read
 
+#ifdef __NetBSD__
+#define __i915_write(x, y) \
+void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
+	u32 __fifo_ret = 0; \
+	trace_i915_reg_rw(true, reg, val, sizeof(val)); \
+	if (NEEDS_FORCE_WAKE((dev_priv), (reg))) { \
+		__fifo_ret = __gen6_gt_wait_for_fifo(dev_priv); \
+	} \
+	if (IS_GEN5(dev_priv->dev)) \
+		ilk_dummy_write(dev_priv); \
+	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unknown unclaimed register before writing to %x\n", reg); \
+		I915_WRITE_NOTRACE(GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
+	} \
+	if (IS_VALLEYVIEW(dev_priv->dev) && IS_DISPLAYREG(reg)) { \
+		DRM_WRITE##x(dev_priv->regs_map, reg + 0x180000, val);	\
+	} else {							\
+		DRM_WRITE##x(dev_priv->regs_map, reg, val);		\
+	}								\
+	if (unlikely(__fifo_ret)) { \
+		gen6_gt_check_fifodbg(dev_priv); \
+	} \
+	if (IS_HASWELL(dev_priv->dev) && (I915_READ_NOTRACE(GEN7_ERR_INT) & ERR_INT_MMIO_UNCLAIMED)) { \
+		DRM_ERROR("Unclaimed write to %x\n", reg); \
+		DRM_WRITE32(dev_priv->regs_map, GEN7_ERR_INT, ERR_INT_MMIO_UNCLAIMED); \
+	} \
+}
+#else
 #define __i915_write(x, y) \
 void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
 	u32 __fifo_ret = 0; \
@@ -1273,6 +1326,8 @@ void i915_write##x(struct drm_i915_private *dev_priv, u32 reg, u##x val) { \
 		writel(ERR_INT_MMIO_UNCLAIMED, dev_priv->regs + GEN7_ERR_INT);	\
 	} \
 }
+#endif
+
 __i915_write(8, b)
 __i915_write(16, w)
 __i915_write(32, l)
