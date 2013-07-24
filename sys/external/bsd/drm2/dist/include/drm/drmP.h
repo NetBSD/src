@@ -1499,8 +1499,10 @@ extern ssize_t drm_read(struct file *filp, char __user *buffer,
 extern int drm_release(struct inode *inode, struct file *filp);
 #endif
 
-#ifndef __NetBSD__
 				/* Mapping support (drm_vm.h) */
+#ifdef __NetBSD__
+extern paddr_t drm_mmap_paddr(struct drm_device *, off_t, int);
+#else
 extern int drm_mmap(struct file *filp, struct vm_area_struct *vma);
 extern int drm_mmap_locked(struct file *filp, struct vm_area_struct *vma);
 extern void drm_vm_open_locked(struct drm_device *dev, struct vm_area_struct *vma);
