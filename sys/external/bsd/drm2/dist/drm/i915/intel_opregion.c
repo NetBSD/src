@@ -29,6 +29,7 @@
 
 #include <linux/acpi.h>
 #include <linux/acpi_io.h>
+#include <linux/err.h>
 #include <acpi/video.h>
 
 #include <drm/drmP.h>
