@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.13 2013/07/24 02:50:22 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.14 2013/07/24 02:54:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _LINUX_KERNEL_H_
 
 #include <sys/cdefs.h>
-#include <sys/systm.h>
+#include <sys/types.h>
 
 #define	__printf	__printflike
 #define	__user
