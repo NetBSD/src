@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1.2.1 2013/07/24 02:42:19 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.2 2013/07/24 03:10:51 riastradh Exp $
 
 # Common makefile cruft for drm2 code.
 
@@ -12,4 +12,5 @@ CPPFLAGS+=	-DDIAGNOSTIC
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DMTRR
+CPPFLAGS+=	-DCONFIG_MTRR
 .endif
