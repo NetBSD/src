@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.1.2.1 2013/07/24 02:33:17 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.1.2.2 2013/07/24 02:35:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.1 2013/07/24 02:33:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.2.2 2013/07/24 02:35:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -191,6 +191,23 @@ out:	spin_unlock(&master->lock.spinlock);
 }
 
 /*
+ * Drop the lock.
+ *
+ * Return value is an artefact of Linux.  Caller must guarantee
+ * preconditions; failure is fatal.
+ */
+int
+drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
+{
+
+	spin_lock(&lock_data->spinlock);
+	drm_lock_release(lock_data, context);
+	spin_unlock(&lock_data->spinlock);
+
+	return 0;
+}
+
+/*
  * Take the lock for the kernel's use.
  */
 void
@@ -208,6 +225,33 @@ drm_idlelock_release(struct drm_lock_data *lock_data __unused)
 {
 	KASSERT(mutex_is_locked(&drm_global_mutex));
 	panic("drm_idlelock_release is not yet implemented"); /* XXX */
+}
+
+/*
+ * Does this file hold this drm device's hardware lock?
+ */
+int
+drm_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
+{
+	struct drm_lock_data *const lock_data = &file->master->lock;
+
+	/* If this file has never locked anything, then no.  */
+	if (file->lock_count == 0)
+		return 0;
+
+	/* If there is no lock, then this file doesn't hold it.  */
+	if (lock_data->hw_lock == NULL)
+		return 0;
+
+	/* If this lock is not held, then this file doesn't hold it.   */
+	if (!_DRM_LOCK_IS_HELD(lock_data->hw_lock->lock))
+		return 0;
+
+	/*
+	 * Otherwise, it boils down to whether this file is the owner
+	 * or someone else.
+	 */
+	return (file == lock_data->file_priv);
 }
 
 /*
