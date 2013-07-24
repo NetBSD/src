@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.2.2 2013/07/24 02:24:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,16 @@
 
 #ifndef _LINUX_HASH_H_
 #define _LINUX_HASH_H_
+
+#include <machine/limits.h>
+
+static inline unsigned long
+hash_long(unsigned long value, unsigned int bits)
+{
+	const unsigned long factor = (sizeof(factor) > 4?
+	    0x9e37fffffffc0001ull : 0x9e370001ul);
+
+	return ((value * factor) >> ((CHAR_BIT * sizeof(value)) - bits));
+}
 
 #endif  /* _LINUX_HASH_H_ */
