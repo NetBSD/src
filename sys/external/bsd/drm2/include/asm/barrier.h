@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.1.2.1 2013/07/24 01:54:57 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.1.2.2 2013/07/24 01:56:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define _ASM_BARRIER_H_
 
 #include <sys/atomic.h>
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 #define	mb	membar_sync
 #define	wmb	membar_producer
