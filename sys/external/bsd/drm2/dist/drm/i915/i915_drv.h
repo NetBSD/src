@@ -1419,6 +1419,7 @@ void i915_gem_release_mmap(struct drm_i915_gem_object *obj);
 void i915_gem_lastclose(struct drm_device *dev);
 
 int __must_check i915_gem_object_get_pages(struct drm_i915_gem_object *obj);
+#ifndef __NetBSD__		/* XXX */
 static inline struct page *i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 {
 	struct scatterlist *sg = obj->pages->sgl;
@@ -1433,6 +1434,7 @@ static inline struct page *i915_gem_object_get_page(struct drm_i915_gem_object *
 	}
 	return sg_page(sg+n);
 }
+#endif
 static inline void i915_gem_object_pin_pages(struct drm_i915_gem_object *obj)
 {
 	BUG_ON(obj->pages == NULL);
@@ -1515,7 +1517,9 @@ int i915_add_request(struct intel_ring_buffer *ring,
 		     u32 *seqno);
 int __must_check i915_wait_seqno(struct intel_ring_buffer *ring,
 				 uint32_t seqno);
+#ifndef __NetBSD__		/* XXX */
 int i915_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
+#endif
 int __must_check
 i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *obj,
 				  bool write);
