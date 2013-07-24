@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.1.2.6 2013/07/24 03:57:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,17 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.6 2013/07/24 03:57:19 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
 #include <sys/systm.h>
+
+#include <drm/drmP.h>
 
 MODULE(MODULE_CLASS_DRIVER, i915drm2, "drm2"); /* XXX drm2pci, drm2edid */
 
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
+
+/* XXX Kludge.  */
+extern struct drm_driver *const i915_drm_driver;
 
 static int
 i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
@@ -52,11 +57,18 @@ i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+		error = drm_pci_init(i915_drm_driver, NULL);
+		if (error) {
+			aprint_error("i915drm: failed to init pci: %d\n",
+			    error);
+			return error;
+		}
 		error = config_init_component(cfdriver_ioconf_i915drm,
 		    cfattach_ioconf_i915drm, cfdata_ioconf_i915drm);
 		if (error) {
 			aprint_error("i915drm: failed to init component: %d\n",
 			    error);
+			drm_pci_exit(i915_drm_driver, NULL);
 			return error;
 		}
 #endif
@@ -71,6 +83,7 @@ i915drm2_modcmd(modcmd_t cmd, void *arg __unused)
 			    error);
 			return error;
 		}
+		drm_pci_exit(i915_drm_driver, NULL);
 #endif
 		return 0;
 
