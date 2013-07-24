@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1.2.3 2013/07/24 03:17:32 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.1.2.4 2013/07/24 03:26:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,10 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#define	dev_err		device_printf
-#define	dev_warn	device_printf
+#define	dev_err(DEV, FMT, ...)					\
+	device_printf((DEV), "error: " FMT, ##__VA_ARGS__)
+
+#define	dev_warn(DEV, FMT, ...)					\
+	device_printf((DEV), "warning: " FMT, ##__VA_ARGS__)
 
 #endif  /* _LINUX_DEVICE_H_ */
