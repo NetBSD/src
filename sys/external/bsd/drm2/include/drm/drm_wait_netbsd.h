@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.5 2013/07/24 02:36:31 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.6 2013/07/24 03:08:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,6 +57,13 @@ DRM_DESTROY_WAITQUEUE(drm_waitqueue_t *q)
 	cv_destroy(q);
 }
 
+static inline bool
+DRM_WAITERS_P(drm_waitqueue_t *q, struct mutex *interlock)
+{
+	KASSERT(mutex_is_locked(interlock));
+	return cv_has_waiters(q);
+}
+
 static inline void
 DRM_WAKEUP_ONE(drm_waitqueue_t *q, struct mutex *interlock)
 {
@@ -69,6 +76,13 @@ DRM_WAKEUP_ALL(drm_waitqueue_t *q, struct mutex *interlock)
 {
 	KASSERT(mutex_is_locked(interlock));
 	cv_broadcast(q);
+}
+
+static inline bool
+DRM_SPIN_WAITERS_P(drm_waitqueue_t *q, spinlock_t *interlock)
+{
+	KASSERT(spin_is_locked(interlock));
+	return cv_has_waiters(q);
 }
 
 static inline void
