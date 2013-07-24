@@ -1220,8 +1220,13 @@ struct drm_device {
 
 	struct drm_agp_head *agp;	/**< AGP data */
 
+#ifdef __NetBSD__
+	device_t dev;
+	struct pci_attach_args pa;
+#else
 	struct device *dev;             /**< Device structure */
 	struct pci_dev *pdev;		/**< PCI device structure */
+#endif
 	int pci_vendor;			/**< PCI vendor id */
 	int pci_device;			/**< PCI device id */
 #ifdef __alpha__
@@ -1799,6 +1804,10 @@ static __inline__ void drm_core_dropmap(struct drm_local_map *map)
 
 #include <drm/drm_mem_util.h>
 
+#ifdef __NetBSD__		/* XXX temporary measure 20130212 */
+struct pci_device_id;
+#endif
+
 extern int drm_fill_in_dev(struct drm_device *dev,
 			   const struct pci_device_id *ent,
 			   struct drm_driver *driver);
@@ -1816,7 +1825,12 @@ static __inline__ int drm_pci_device_is_agp(struct drm_device *dev)
 		}
 	}
 
+#ifdef __NetBSD__
+	return pci_get_capability(dev->pa.pa_pc, dev->pa.pa_tag, PCI_CAP_AGP,
+	    NULL, NULL);
+#else
 	return pci_find_capability(dev->pdev, PCI_CAP_ID_AGP);
+#endif
 }
 
 extern int drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver);
