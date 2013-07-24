@@ -992,6 +992,8 @@ void drm_mode_connector_list_update(struct drm_connector *connector)
 }
 EXPORT_SYMBOL(drm_mode_connector_list_update);
 
+#ifndef __NetBSD__
+
 /**
  * drm_mode_parse_command_line_for_connector - parse command line for connector
  * @mode_option - per connector mode option
@@ -1180,3 +1182,5 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 	return mode;
 }
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
+
+#endif
