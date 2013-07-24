@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.2 2013/07/24 01:59:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,31 @@
 
 #ifndef _LINUX_SLAB_H_
 #define _LINUX_SLAB_H_
+
+#include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>	/* For PAGE_SIZE.  */
+
+/* XXX Should use kmem, but Linux kfree doesn't take the size.  */
+
+#define	GFP_KERNEL	M_WAITOK
+
+static inline void *
+kmalloc(size_t size, int flags)
+{
+	return malloc(size, M_TEMP, flags);
+}
+
+static inline void *
+kzalloc(size_t size, int flags)
+{
+	return malloc(size, M_TEMP, (flags | M_ZERO));
+}
+
+static inline void
+kfree(void *ptr)
+{
+	free(ptr, M_TEMP);
+}
 
 #endif  /* _LINUX_SLAB_H_ */
