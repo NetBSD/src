@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.1.2.7 2013/07/24 03:50:30 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.1.2.8 2013/07/24 04:01:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -99,5 +99,9 @@ spin_lock_destroy(spinlock_t *spinlock)
 {
 	mutex_destroy(&spinlock->sl_lock);
 }
+
+/* This is a macro to make the panic message clearer.  */
+#define	assert_spin_locked(spinlock)	\
+	KASSERT(mutex_owned(&(spinlock)->sl_lock))
 
 #endif  /* _LINUX_SPINLOCK_H_ */
