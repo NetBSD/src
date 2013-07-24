@@ -664,8 +664,30 @@ struct drm_local_map {
 	int mtrr;		 /**< MTRR slot used */
 
 #ifdef __NetBSD__
-	bus_space_handle_t bsh;
-	struct drm_bus_map *bus_map;
+	union {
+		/* _DRM_FRAME_BUFFER, _DRM_AGP, _DRM_REGISTERS */
+		/* XXX mtrr should be moved into this case too.  */
+		struct {
+			/*
+			 * XXX bst seems like a waste of space, but not
+			 * all accessors have the drm_device handy.
+			 */
+			bus_space_tag_t bst;
+			bus_space_handle_t bsh;
+			struct drm_bus_map *bus_map;
+		} bus_space;
+
+		/* _DRM_CONSISTENT */
+		struct drm_dma_handle *dmah;
+
+		/* _DRM_SCATTER_GATHER */
+#if 0				/* XXX stored in dev->sg instead */
+		struct drm_sg_mem *sg;
+#endif
+
+		/* _DRM_SHM */
+		/* XXX Anything?  uvm object?  */
+	} lm_data;
 #endif
 };
 
