@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.1.2.2 2013/07/24 02:04:31 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.1.2.3 2013/07/24 02:51:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ vm_mmap(struct file *file, unsigned long base, unsigned long size,
     unsigned long prot, unsigned long flags, unsigned long token)
 {
 	struct vnode *vnode;
-	vaddr_t addr = 0;
+	vaddr_t addr;
 	int error;
 
 	/*
@@ -94,6 +94,8 @@ vm_mmap(struct file *file, unsigned long base, unsigned long size,
 
 	/* XXX pax_mprotect?  pax_aslr?  */
 
+	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
+	    (vaddr_t)curproc->p_vmspace->vm_daddr, size);
 	error = uvm_mmap(&curproc->p_vmspace->vm_map, &addr, size,
 	    (VM_PROT_READ | VM_PROT_WRITE), (VM_PROT_READ | VM_PROT_WRITE),
 	    MAP_SHARED, vnode, base,
