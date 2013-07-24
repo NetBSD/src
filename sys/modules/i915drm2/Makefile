@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.4 2013/07/24 03:27:18 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.5 2013/07/24 03:42:37 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -20,17 +20,17 @@ SRCS+=	dvo_tfp410.c
 #SRCS+=	i915_debugfs.c		# XXX No debugfs in NetBSD.
 SRCS+=	i915_dma.c
 SRCS+=	i915_drv.c
-SRCS+=	i915_gem.c
-SRCS+=	i915_gem_context.c
-SRCS+=	i915_gem_debug.c
-SRCS+=	i915_gem_dmabuf.c
-SRCS+=	i915_gem_evict.c
-SRCS+=	i915_gem_execbuffer.c
-SRCS+=	i915_gem_gtt.c
-SRCS+=	i915_gem_stolen.c
-SRCS+=	i915_gem_tiling.c
-SRCS+=	i915_ioc32.c
-SRCS+=	i915_irq.c
+#SRCS+=	i915_gem.c
+#SRCS+=	i915_gem_context.c
+#SRCS+=	i915_gem_debug.c
+#SRCS+=	i915_gem_dmabuf.c
+#SRCS+=	i915_gem_evict.c
+#SRCS+=	i915_gem_execbuffer.c
+#SRCS+=	i915_gem_gtt.c
+#SRCS+=	i915_gem_stolen.c
+#SRCS+=	i915_gem_tiling.c
+#SRCS+=	i915_ioc32.c
+#SRCS+=	i915_irq.c
 SRCS+=	i915_suspend.c
 #SRCS+=	i915_sysfs.c		# XXX No sysfs in NetBSD.
 SRCS+=	intel_bios.c
