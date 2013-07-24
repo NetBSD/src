@@ -580,8 +580,10 @@ struct drm_agp_head {
 	int acquired;			/**< whether the AGP device has been acquired */
 	unsigned long base;
 	int agp_mtrr;
+#ifndef __NetBSD__
 	int cant_use_aperture;
 	unsigned long page_mask;
+#endif
 };
 
 /**
