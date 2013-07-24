@@ -1475,16 +1475,16 @@ extern unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait);
 
 				/* Memory management support (drm_memory.h) */
 #include <drm/drm_memory.h>
+#ifndef __NetBSD__
 extern void drm_free_agp(DRM_AGP_MEM * handle, int pages);
 extern int drm_bind_agp(DRM_AGP_MEM * handle, unsigned int start);
-#ifndef __NetBSD__
 extern DRM_AGP_MEM *drm_agp_bind_pages(struct drm_device *dev,
 				       struct page **pages,
 				       unsigned long num_pages,
 				       uint32_t gtt_offset,
 				       uint32_t type);
-#endif
 extern int drm_unbind_agp(DRM_AGP_MEM * handle);
+#endif
 #ifdef __NetBSD__
 extern void *drm_ioremap(struct drm_device *dev, struct drm_local_map *map);
 extern void drm_iounmap(struct drm_device *dev, struct drm_local_map *map);

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.3 2013/07/24 02:44:48 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.4 2013/07/24 02:45:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -153,6 +153,25 @@ static inline void
 agp_copy_info(struct agp_bridge_data *bridge, DRM_AGP_KERN *info)
 {
 	agp_get_info(bridge, info);
+}
+
+static inline int
+drm_bind_agp(struct agp_bridge_data *bridge, DRM_AGP_MEM *mem, size_t page)
+{
+	return agp_bind_memory(&bridge->abd_sc, mem, (page << AGP_PAGE_SHIFT));
+}
+
+static inline int
+drm_unbind_agp(struct agp_bridge_data *bridge, DRM_AGP_MEM *mem)
+{
+	return agp_unbind_memory(&bridge->abd_sc, mem);
+}
+
+static inline void
+drm_free_agp(struct agp_bridge_data *bridge, DRM_AGP_MEM *mem,
+    size_t npages __unused)
+{
+	agp_free_memory(&bridge->abd_sc, mem);
 }
 
 #endif  /* _DRM_DRM_AGP_NETBSD_H_ */
