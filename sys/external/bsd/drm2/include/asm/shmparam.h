@@ -1,4 +1,4 @@
-/*	$NetBSD: shmparam.h,v 1.1.2.1 2013/07/24 00:33:11 riastradh Exp $	*/
+/*	$NetBSD: shmparam.h,v 1.1.2.2 2013/07/24 02:01:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,9 @@
 
 #ifndef _ASM_SHMPARAM_H_
 #define _ASM_SHMPARAM_H_
+
+#include <uvm/uvm_extern.h>
+
+#define	SHMLBA	PAGE_SIZE
 
 #endif  /* _ASM_SHMPARAM_H_ */
