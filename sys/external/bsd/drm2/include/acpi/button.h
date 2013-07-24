@@ -1,4 +1,4 @@
-/*	$NetBSD: button.h,v 1.1.2.1 2013/07/24 03:12:15 riastradh Exp $	*/
+/*	$NetBSD: button.h,v 1.1.2.2 2013/07/24 03:43:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,27 @@
 
 #ifndef _DRM2_COMPAT_ACPI_BUTTON_H_
 #define _DRM2_COMPAT_ACPI_BUTTON_H_
+
+struct notifier_block;
+
+/* XXX This obviously needs a real implementation...  */
+
+static inline int
+acpi_lid_notifier_register(struct notifier_block *notifier)
+{
+	return 0;
+}
+
+static inline int
+acpi_lid_notifier_unregister(struct notifier_block *notifier)
+{
+	return 0;
+}
+
+static inline int
+acpi_lid_open(void)
+{
+	return 1;
+}
 
 #endif  /* _DRM2_COMPAT_ACPI_BUTTON_H_ */
