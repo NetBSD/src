@@ -1314,6 +1314,7 @@ struct drm_device {
 	/* XXX What does this have to do with AGP?  */
 	struct drm_bus_map *agp_maps;
 	size_t agp_nmaps;
+	bus_dma_tag_t dmat;
 #endif
 
 	struct drm_sg_mem *sg;	/**< Scatter gather memory */
