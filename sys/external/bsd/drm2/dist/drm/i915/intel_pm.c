@@ -28,7 +28,9 @@
 #include <linux/cpufreq.h>
 #include "i915_drv.h"
 #include "intel_drv.h"
+#ifndef __NetBSD__
 #include "../../../platform/x86/intel_ips.h"
+#endif
 #include <linux/module.h>
 
 #define FORCEWAKE_ACK_TIMEOUT_MS 2
@@ -3334,6 +3336,7 @@ EXPORT_SYMBOL_GPL(i915_gpu_turbo_disable);
 static void
 ips_ping_for_i915_load(void)
 {
+#ifndef __NetBSD__		/* XXX whattakludge for Linux module mania */
 	void (*link)(void);
 
 	link = symbol_get(ips_link_to_i915_driver);
@@ -3341,6 +3344,7 @@ ips_ping_for_i915_load(void)
 		link();
 		symbol_put(ips_link_to_i915_driver);
 	}
+#endif
 }
 
 void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
