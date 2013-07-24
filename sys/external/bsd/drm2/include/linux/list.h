@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.3 2013/07/24 01:55:44 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.4 2013/07/24 01:59:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,13 @@ struct list_head {
 	struct list_head *lh_next;
 };
 
+static inline void
+INIT_LIST_HEAD(struct list_head *head)
+{
+	head->lh_prev = head;
+	head->lh_next = head;
+}
+
 static inline struct list_head *
 list_first(struct list_head *head)
 {
@@ -56,6 +63,35 @@ static inline struct list_head *
 list_next(struct list_head *node)
 {
 	return node->lh_next;
+}
+
+static inline void
+list_add(struct list_head *new, struct list_head *head)
+{
+	struct list_head *const next = head->lh_next;
+
+	head->lh_next = new;
+	new->lh_prev = head;
+	new->lh_next = next;
+	next->lh_prev = new;
+}
+
+static inline void
+list_add_tail(struct list_head *new, struct list_head *head)
+{
+	struct list_head *const prev = head->lh_prev;
+
+	head->lh_prev = new;
+	new->lh_prev = prev;
+	new->lh_next = head;
+	prev->lh_next = new;
+}
+
+static inline void
+list_del(struct list_head *entry)
+{
+	entry->lh_prev->lh_next = entry->lh_next;
+	entry->lh_next->lh_prev = entry->lh_prev;
 }
 
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
