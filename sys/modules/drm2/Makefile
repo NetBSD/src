@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.30 2013/07/24 02:53:46 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.31 2013/07/24 02:54:09 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -46,6 +46,7 @@ SRCS+=	drm_scatter.c
 SRCS+=	drm_stub.c
 SRCS+=	drm_vm.c
 
+SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
 SRCS+=	linux_idr.c
 
