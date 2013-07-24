@@ -92,7 +92,9 @@ i915_gem_wait_for_error(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct completion *x = &dev_priv->error_completion;
+#ifndef __NetBSD__
 	unsigned long flags;
+#endif
 	int ret;
 
 	if (!atomic_read(&dev_priv->mm.wedged))
@@ -117,9 +119,14 @@ i915_gem_wait_for_error(struct drm_device *dev)
 		 * end up waiting upon a subsequent completion event that
 		 * will never happen.
 		 */
+#ifdef __NetBSD__
+		/* XXX Hope it's not a problem that we might wake someone.  */
+		complete(x);
+#else
 		spin_lock_irqsave(&x->wait.lock, flags);
 		x->done++;
 		spin_unlock_irqrestore(&x->wait.lock, flags);
+#endif
 	}
 	return 0;
 }
