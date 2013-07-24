@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_io.h,v 1.1.2.2 2013/07/24 03:00:03 riastradh Exp $	*/
+/*	$NetBSD: acpi_io.h,v 1.1.2.3 2013/07/24 03:44:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <dev/acpi/acpica.h>
 
 #define	acpi_os_ioremap	AcpiOsMapMemory
+#define	acpi_os_iounmap	AcpiOsUnmapMemory
 #define	__acpi_iomem
 
 #endif  /* _LINUX_ACPI_IO_H_ */
