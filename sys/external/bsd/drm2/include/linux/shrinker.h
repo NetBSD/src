@@ -1,4 +1,4 @@
-/*	$NetBSD: shrinker.h,v 1.1.2.1 2013/07/24 03:07:48 riastradh Exp $	*/
+/*	$NetBSD: shrinker.h,v 1.1.2.2 2013/07/24 03:30:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef _LINUX_SHRINKER_H_
 #define _LINUX_SHRINKER_H_
 
-struct shrink_control;
+struct shrink_control {
+	unsigned long nr_to_scan;
+};
 
 struct shrinker {
 	int (*shrink)(struct shrinker *, struct shrink_control *);
