@@ -205,6 +205,14 @@ void drm_vblank_cleanup(struct drm_device *dev)
 
 	vblank_disable_fn((unsigned long)dev);
 
+#ifdef __NetBSD__
+    {
+	unsigned int i;
+	for (i = 0; i < dev->num_crtcs; i++)
+		DRM_DESTROY_WAITQUEUE(&dev->vbl_queue[i]);
+    }
+#endif
+
 	kfree(dev->vbl_queue);
 	kfree(dev->_vblank_count);
 	kfree(dev->vblank_refcount);
@@ -215,6 +223,11 @@ void drm_vblank_cleanup(struct drm_device *dev)
 	kfree(dev->_vblank_time);
 
 	dev->num_crtcs = 0;
+
+#ifdef __NetBSD__
+	spin_lock_destroy(&dev->vblank_time_lock);
+	spin_lock_destroy(&dev->vbl_lock);
+#endif
 }
 EXPORT_SYMBOL(drm_vblank_cleanup);
 
