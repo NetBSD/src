@@ -1,6 +1,8 @@
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
 
+#include <asm/bug.h>
+
 /*
  * Gen2 BSpec "1. Programming Environment" / 1.4.4.6 "Ring Buffer Use"
  * Gen3 BSpec "vol1c Memory Interface Functions" / 2.3.4.5 "Ring Buffer Use"
