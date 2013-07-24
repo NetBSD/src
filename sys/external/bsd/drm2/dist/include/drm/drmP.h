@@ -618,9 +618,18 @@ struct drm_agp_head {
 struct drm_sg_mem {
 	unsigned long handle;
 	void *virtual;
+#ifdef __NetBSD__
+	size_t sg_size;
+	bus_dma_tag_t sg_tag;
+	bus_dmamap_t sg_map;
+	unsigned int sg_nsegs;
+	unsigned int sg_nsegs_max;
+	bus_dma_segment_t sg_segs[];
+#else
 	int pages;
 	struct page **pagelist;
 	dma_addr_t *busaddr;
+#endif
 };
 
 struct drm_sigdata {
