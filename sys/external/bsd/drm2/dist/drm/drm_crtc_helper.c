@@ -966,7 +966,9 @@ EXPORT_SYMBOL(drm_helper_resume_force_mode);
 void drm_kms_helper_hotplug_event(struct drm_device *dev)
 {
 	/* send a uevent + call fbdev */
+#ifndef __NetBSD__		/* XXX pmf event or something?  */
 	drm_sysfs_hotplug_event(dev);
+#endif
 	if (dev->mode_config.funcs->output_poll_changed)
 		dev->mode_config.funcs->output_poll_changed(dev);
 }
