@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.4 2013/07/24 02:09:43 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.5 2013/07/24 03:04:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,20 +51,31 @@ struct delayed_work {
 };
 
 static inline void
-INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
+INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 {
 
-	callout_init(&dw->dw_work.ws_callout, 0);
+	callout_init(&work->ws_callout, 0);
 
 	/* XXX This cast business is sketchy.  */
-	callout_setfunc(&dw->dw_work.ws_callout, (void (*)(void *))fn,
-	    &dw->dw_work);
+	callout_setfunc(&work->ws_callout, (void (*)(void *))fn, work);
+}
+
+static inline void
+INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
+{
+	INIT_WORK(&dw->dw_work, fn);
 }
 
 static inline struct delayed_work *
 to_delayed_work(struct work_struct *work)
 {
 	return container_of(work, struct delayed_work, dw_work);
+}
+
+static inline void
+schedule_work(struct work_struct *work)
+{
+	callout_schedule(&work->ws_callout, 0);
 }
 
 static inline void
@@ -75,9 +86,46 @@ schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 }
 
 static inline void
+cancel_work_sync(struct work_struct *work)
+{
+	callout_halt(&work->ws_callout, NULL);
+}
+
+static inline void
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
-	callout_halt(&dw->dw_work.ws_callout, NULL);
+	cancel_work_sync(&dw->dw_work);
+}
+
+/*
+ * XXX Bogus stubs for Linux work queues.
+ */
+
+struct workqueue_struct;
+
+static inline struct workqueue_struct *
+alloc_ordered_workqueue(const char *name __unused, int flags __unused)
+{
+	return NULL;
+}
+
+static inline void
+destroy_workqueue(struct workqueue_struct *wq __unused)
+{
+}
+
+static inline void
+queue_work(struct workqueue_struct *wq __unused, struct work_struct *work)
+{
+	schedule_work(work);
+}
+
+static inline void
+queue_delayed_work(struct workqueue_struct *wq __unused,
+    struct delayed_work *dw,
+    unsigned int ticks)
+{
+	schedule_delayed_work(dw, ticks);
 }
 
 #endif  /* _LINUX_WORKQUEUE_H_ */
