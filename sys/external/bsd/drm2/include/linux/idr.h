@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.4 2013/07/24 02:07:46 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,5 +52,6 @@ void	idr_remove(struct idr *, int);
 void	idr_remove_all(struct idr *);
 int	idr_pre_get(struct idr *, int);
 int	idr_get_new_above(struct idr *, void *, int, int *);
+int	idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
 
 #endif  /* _LINUX_IDR_H_ */
