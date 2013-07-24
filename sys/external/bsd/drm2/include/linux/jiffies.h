@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.1.2.2 2013/07/24 02:28:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,10 @@
 
 #ifndef _LINUX_JIFFIES_H_
 #define _LINUX_JIFFIES_H_
+
+#include <sys/param.h>
+#include <sys/kernel.h>
+
+#define	jiffies	hardclock_ticks
 
 #endif  /* _LINUX_JIFFIES_H_ */
