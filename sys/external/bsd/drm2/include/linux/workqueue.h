@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.2 2013/07/24 01:52:24 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.3 2013/07/24 01:53:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,12 @@
 
 #include <linux/kernel.h>
 
+/*
+ * XXX This implementation is a load of bollocks -- callouts are
+ * expedient, but wrong, if for no reason other than that we never call
+ * callout_destroy.
+ */
+
 struct work_struct {
 	struct callout ws_callout;
 };
@@ -47,6 +53,8 @@ struct delayed_work {
 static inline void
 INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct delayed_work *))
 {
+
+	callout_init(&dw->dw_work.ws_callout, 0);
 
 	/* XXX This cast business is sketchy.  */
 	callout_setfunc(&dw->dw_work.ws_callout, (void (*)(void *))fn,
@@ -69,7 +77,7 @@ schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 static inline void
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
-	callout_stop(&dw->dw_work.ws_callout);
+	callout_halt(&dw->dw_work.ws_callout, NULL);
 }
 
 #endif  /* _LINUX_WORKQUEUE_H_ */
