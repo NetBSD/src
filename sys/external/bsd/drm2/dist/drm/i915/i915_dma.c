@@ -72,7 +72,11 @@ static inline u32
 intel_read_legacy_status_page(struct drm_i915_private *dev_priv, int reg)
 {
 	if (I915_NEED_GFX_HWS(dev_priv->dev))
+#ifdef __NetBSD__
+		return DRM_READ32(&dev_priv->dri1.gfx_hws_cpu_map, reg);
+#else
 		return ioread32(dev_priv->dri1.gfx_hws_cpu_addr + reg);
+#endif
 	else
 		return intel_read_status_page(LP_RING(dev_priv), reg);
 }
@@ -121,7 +125,11 @@ static void i915_free_hws(struct drm_device *dev)
 
 	if (ring->status_page.gfx_addr) {
 		ring->status_page.gfx_addr = 0;
+#ifdef __NetBSD__
+		drm_iounmap(dev, &dev_priv->dri1.gfx_hws_cpu_map);
+#else
 		iounmap(dev_priv->dri1.gfx_hws_cpu_addr);
+#endif
 	}
 
 	/* Need to rewrite hardware status page */
@@ -1049,6 +1057,10 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	drm_i915_hws_addr_t *hws = data;
 	struct intel_ring_buffer *ring;
+#ifdef __NetBSD__
+	struct drm_local_map *const gfx_hws_cpu_map =
+	    &dev_priv->dri1.gfx_hws_cpu_map;
+#endif
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		return -ENODEV;
@@ -1071,6 +1083,27 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	ring = LP_RING(dev_priv);
 	ring->status_page.gfx_addr = hws->addr & (0x1ffff<<12);
 
+#ifdef __NetBSD__
+	gfx_hws_cpu_map->offset = (dev_priv->mm.gtt_base_addr +
+	    hws->addr);
+	gfx_hws_cpu_map->size = 4096;
+	gfx_hws_cpu_map->flags = 0;
+	gfx_hws_cpu_map->flags |= _DRM_RESTRICTED;
+	gfx_hws_cpu_map->flags |= _DRM_KERNEL;
+	gfx_hws_cpu_map->flags |= _DRM_WRITE_COMBINING;
+	gfx_hws_cpu_map->flags |= _DRM_DRIVER;
+	if (drm_ioremap(dev, gfx_hws_cpu_map) == NULL) {
+		i915_dma_cleanup(dev);
+		ring->status_page.gfx_addr = 0;
+		DRM_ERROR("can not ioremap virtual address for"
+				" G33 hw status page\n");
+		return -ENOMEM;
+	}
+
+	/* XXX drm_local_map abstraction violation.  Pooh.  */
+	bus_space_set_region_1(gfx_hws_cpu_map->lm_data.bus_space.bst,
+	    gfx_hws_cpu_map->lm_data.bus_space.bsh, 0, 0, PAGE_SIZE);
+#else
 	dev_priv->dri1.gfx_hws_cpu_addr =
 		ioremap_wc(dev_priv->mm.gtt_base_addr + hws->addr, 4096);
 	if (dev_priv->dri1.gfx_hws_cpu_addr == NULL) {
@@ -1082,6 +1115,8 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	}
 
 	memset_io(dev_priv->dri1.gfx_hws_cpu_addr, 0, PAGE_SIZE);
+#endif
+
 	I915_WRITE(HWS_PGA, ring->status_page.gfx_addr);
 
 	DRM_DEBUG_DRIVER("load hws HWS_PGA with gfx mem 0x%x\n",

@@ -606,7 +606,11 @@ struct intel_ilk_power_mgmt {
 
 struct i915_dri1_state {
 	unsigned allow_batchbuffer : 1;
+#ifdef __NetBSD__
+	struct drm_local_map gfx_hws_cpu_map;
+#else
 	u32 __iomem *gfx_hws_cpu_addr;
+#endif
 
 	unsigned int cpp;
 	int back_offset;
