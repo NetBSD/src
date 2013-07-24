@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.8 2013/07/24 03:22:26 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.9 2013/07/24 03:22:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.8 2013/07/24 03:22:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.9 2013/07/24 03:22:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -529,6 +529,10 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 		return EACCES;
 
 	if (ISSET(ioctl->flags, DRM_MASTER) && (file->master == NULL))
+		return EACCES;
+
+	if (!ISSET(ioctl->flags, DRM_CONTROL_ALLOW) &&
+	    (file->minor->type == DRM_MINOR_CONTROL))
 		return EACCES;
 
 	atomic_inc(&dev->ioctl_count);
