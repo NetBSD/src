@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.2 2013/07/24 02:03:16 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.3 2013/07/24 02:20:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
 #include <sys/systm.h>
 
 #include <linux/mutex.h>
+#include <linux/spinlock.h>
 
 typedef kcondvar_t drm_waitqueue_t;
-typedef struct mutex drm_interlock_t; /* XXX urk */
 
 static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
@@ -48,24 +48,74 @@ DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
 }
 
 static inline void
-DRM_WAKEUP_ONE(drm_waitqueue_t *q, drm_interlock_t *interlock)
+DRM_WAKEUP_ONE(drm_waitqueue_t *q, struct mutex *interlock)
 {
-	KASSERT(mutex_owned(&interlock->mtx_lock));
+	KASSERT(mutex_is_locked(interlock));
 	cv_signal(q);
 }
 
 static inline void
-DRM_WAKEUP_ALL(drm_waitqueue_t *q, drm_interlock_t *interlock)
+DRM_WAKEUP_ALL(drm_waitqueue_t *q, struct mutex *interlock)
 {
-	KASSERT(mutex_owned(&interlock->mtx_lock));
+	KASSERT(mutex_is_locked(interlock));
 	cv_broadcast(q);
 }
 
-#define	DRM_WAIT_ON(RET, Q, INTERLOCK, TICKS, CONDITION) do		\
+static inline void
+DRM_SPIN_WAKEUP_ONE(drm_waitqueue_t *q, spinlock_t *interlock)
+{
+	KASSERT(spin_is_locked(interlock));
+	cv_signal(q);
+}
+
+static inline void
+DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
+{
+	KASSERT(spin_is_locked(interlock));
+	cv_broadcast(q);
+}
+
+#define	DRM_WAIT_UNTIL(RET, Q, INTERLOCK, CONDITION)	do		\
 {									\
-	KASSERT(mutex_owned(&(INTERLOCK)->mtx_lock));			\
+	KASSERT(mutex_is_locked((INTERLOCK)));				\
 	while (!(CONDITION)) {						\
-		(RET) = cv_timedwait_sig((Q), &(INTERLOCK)->mtx_lock,	\
+		/* XXX errno NetBSD->Linux */				\
+		(RET) = -cv_wait_sig((Q), &(INTERLOCK)->mtx_lock);	\
+		if (RET)						\
+			break;						\
+	}								\
+} while (0)
+
+#define	DRM_TIMED_WAIT_UNTIL(RET, Q, INTERLOCK, TICKS, CONDITION) do	\
+{									\
+	KASSERT(mutex_is_locked((INTERLOCK)));				\
+	while (!(CONDITION)) {						\
+		/* XXX errno NetBSD->Linux */				\
+		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->mtx_lock,	\
+		    (TICKS));						\
+		if (RET)						\
+			break;						\
+	}								\
+} while (0)
+
+#define	DRM_SPIN_WAIT_UNTIL(RET, Q, INTERLOCK, CONDITION)	do	\
+{									\
+	KASSERT(spin_is_locked((INTERLOCK)));				\
+	while (!(CONDITION)) {						\
+		/* XXX errno NetBSD->Linux */				\
+		(RET) = -cv_wait_sig((Q), &(INTERLOCK)->sl_lock);	\
+		if (RET)						\
+			break;						\
+	}								\
+} while (0)
+
+#define	DRM_SPIN_TIMED_WAIT_UNTIL(RET, Q, INTERLOCK, TICKS, CONDITION)	\
+	do								\
+{									\
+	KASSERT(spin_is_locked((INTERLOCK)));				\
+	while (!(CONDITION)) {						\
+		/* XXX errno NetBSD->Linux */				\
+		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock,	\
 		    (TICKS));						\
 		if (RET)						\
 			break;						\
