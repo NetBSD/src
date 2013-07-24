@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.16 2013/07/24 03:01:24 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.17 2013/07/24 03:03:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #define	uninitialized_var(x)	x
 
 #define	round_up(X, Y)	roundup2(X, Y)
+
+#define	upper_32_bits(X)	((uint32_t) (((X) >> 16) >> 16))
+#define	lower_32_bits(X)	((uint32_t) ((X) & 0xffffffffUL))
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((void)sizeof((PTR) -						\
