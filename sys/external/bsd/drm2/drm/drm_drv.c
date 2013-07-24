@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.20 2013/07/24 03:58:36 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.21 2013/07/24 04:01:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.20 2013/07/24 03:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.21 2013/07/24 04:01:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -292,6 +292,12 @@ drm_attach(device_t parent, device_t self, void *aux)
 		(void)memset(&sc->sc_minor[i].mode_group, 0,
 		    sizeof(sc->sc_minor[i].mode_group));
 	}
+
+	dev->dev = self;
+
+	if (drm_core_check_feature(dev, DRIVER_MODESET))
+		dev->control = &sc->sc_minor[DRM_MINOR_CONTROL];
+	dev->primary = &sc->sc_minor[DRM_MINOR_LEGACY];
 
 	error = drm_fill_in_dev(dev, NULL, daa->daa_driver);
 	if (error) {
