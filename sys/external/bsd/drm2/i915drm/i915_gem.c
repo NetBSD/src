@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.1.2.2 2013/07/24 04:04:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* i915_gem*.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.1.2.2 2013/07/24 04:04:45 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -256,9 +256,17 @@ i915_gem_leavevt_ioctl(struct drm_device *dev, void *data,
 	return ENOTTY;
 }
 
-void
-i915_gem_load(struct drm_device *dev __unused)
+static void
+retire_work_handler(struct work_struct *work __unused)
 {
+}
+
+void
+i915_gem_load(struct drm_device *dev)
+{
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	INIT_DELAYED_WORK(&dev_priv->mm.retire_work, &retire_work_handler);
 }
 
 int
