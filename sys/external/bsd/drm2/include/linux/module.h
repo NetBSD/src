@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.1.2.3 2013/07/24 02:36:46 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.1.2.4 2013/07/24 03:03:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,5 +39,7 @@
 #define	MODULE_DESCRIPTION(DESCRIPTION)
 #define	MODULE_LICENSE(LICENSE)
 #define	MODULE_PARM_DESC(PARAMETER, DESCRIPTION)
+
+#define	THIS_MODULE	0
 
 #endif  /* _LINUX_MODULE_H_ */
