@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.2 2013/07/24 01:59:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,22 @@
 
 #ifndef _LINUX_PCI_H_
 #define _LINUX_PCI_H_
+
+#include <dev/pci/pcivar.h>
+
+struct pci_device_id;
+
+struct pci_dev {
+	struct pci_attach_args pd_pa;
+};
+
+#define	PCI_CAP_ID_AGP	PCI_CAP_AGP
+
+static inline int
+pci_find_capability(struct pci_dev *pdev, int cap)
+{
+	return pci_get_capability(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, cap,
+	    NULL, NULL);
+}
 
 #endif  /* _LINUX_PCI_H_ */
