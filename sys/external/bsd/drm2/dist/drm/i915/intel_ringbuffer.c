@@ -1181,6 +1181,21 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	if (ret)
 		goto err_unpin;
 
+#ifdef __NetBSD__
+	ring->virtual_start_map.offset = (dev_priv->mm.gtt->gma_bus_addr +
+	    obj->gtt_offset);
+	ring->virtual_start_map.size = ring->size;
+	ring->virtual_start_map.flags = 0;
+	ring->virtual_start_map.flags |= _DRM_RESTRICTED;
+	ring->virtual_start_map.flags |= _DRM_KERNEL;
+	ring->virtual_start_map.flags |= _DRM_WRITE_COMBINING;
+	ring->virtual_start_map.flags |= _DRM_DRIVER;
+	ret = drm_ioremap(dev, &ring->virtual_start_map);
+	if (ret) {
+		DRM_ERROR("failed to map ring buffer\n");
+		goto err_unpin;
+	}
+#else
 	ring->virtual_start =
 		ioremap_wc(dev_priv->mm.gtt->gma_bus_addr + obj->gtt_offset,
 			   ring->size);
@@ -1189,6 +1204,7 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 		ret = -EINVAL;
 		goto err_unpin;
 	}
+#endif
 
 	ret = ring->init(ring);
 	if (ret)
@@ -1205,7 +1221,11 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	return 0;
 
 err_unmap:
+#ifdef __NetBSD__
+	drm_iounmap(dev, &ring->virtual_start_map);
+#else
 	iounmap(ring->virtual_start);
+#endif
 err_unpin:
 	i915_gem_object_unpin(obj);
 err_unref:
@@ -1233,7 +1253,11 @@ void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 
 	I915_WRITE_CTL(ring, 0);
 
+#ifdef __NetBSD__
+	drm_iounmap(dev, &ring->virtual_start_map);
+#else
 	iounmap(ring->virtual_start);
+#endif
 
 	i915_gem_object_unpin(ring->obj);
 	drm_gem_object_unreference(&ring->obj->base);
@@ -1722,12 +1746,28 @@ int intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
 	if (IS_I830(ring->dev) || IS_845G(ring->dev))
 		ring->effective_size -= 128;
 
+#ifdef __NetBSD__
+	ring->virtual_start_map.offset = start;
+	ring->virtual_start_map.size = size;
+	ring->virtual_start_map.type = _DRM_REGISTERS;
+	ring->virtual_start_map.flags = 0;
+	ring->virtual_start_map.flags |= _DRM_RESTRICTED;
+	ring->virtual_start_map.flags |= _DRM_KERNEL;
+	ring->virtual_start_map.flags |= _DRM_WRITE_COMBINING;
+	ring->virtual_start_map.flags |= _DRM_DRIVER;
+	ret = drm_ioremap(dev, &ring->virtual_start_map);
+	if (ret) {
+		DRM_ERROR("cannot ioremap virtual address for ring buffer\n");
+		return ret;
+	}
+#else
 	ring->virtual_start = ioremap_wc(start, size);
 	if (ring->virtual_start == NULL) {
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
 		return -ENOMEM;
 	}
+#endif
 
 	if (!I915_NEED_GFX_HWS(dev)) {
 		ret = init_phys_hws_pga(ring);
