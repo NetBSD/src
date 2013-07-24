@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.1.2.2 2013/07/24 03:44:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,13 @@
 
 #ifndef _LINUX_BITOPS_H_
 #define _LINUX_BITOPS_H_
+
+#include <lib/libkern/libkern.h>
+
+static inline unsigned int
+hweight16(uint16_t n)
+{
+	return popcount32(n);
+}
 
 #endif  /* _LINUX_BITOPS_H_ */
