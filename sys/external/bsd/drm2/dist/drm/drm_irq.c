@@ -1152,7 +1152,11 @@ static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 	}
 
 	e->pipe = pipe;
+#ifdef __NetBSD__
+	e->base.pid = curproc->p_pid;
+#else
 	e->base.pid = current->pid;
+#endif
 	e->event.base.type = DRM_EVENT_VBLANK;
 	e->event.base.length = sizeof e->event;
 	e->event.user_data = vblwait->request.signal;
@@ -1179,8 +1183,13 @@ static int drm_queue_vblank_event(struct drm_device *dev, int pipe,
 	DRM_DEBUG("event on vblank count %d, current %d, crtc %d\n",
 		  vblwait->request.sequence, seq, pipe);
 
+#ifdef __NetBSD__
+	trace_drm_vblank_event_queued(curproc->p_pid, pipe,
+				      vblwait->request.sequence);
+#else
 	trace_drm_vblank_event_queued(current->pid, pipe,
 				      vblwait->request.sequence);
+#endif
 
 	e->event.sequence = vblwait->request.sequence;
 	if ((seq - vblwait->request.sequence) <= (1 << 23)) {
