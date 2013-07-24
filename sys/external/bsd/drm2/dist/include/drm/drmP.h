@@ -85,7 +85,11 @@ struct module;
 struct drm_file;
 struct drm_device;
 
+#ifdef __NetBSD__
+#include <drm/drm_os_netbsd.h>
+#else
 #include <drm/drm_os_linux.h>
+#endif
 #include <drm/drm_hashtab.h>
 #include <drm/drm_mm.h>
 
