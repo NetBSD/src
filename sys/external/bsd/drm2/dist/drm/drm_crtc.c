@@ -1145,6 +1145,11 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 
 	idr_remove_all(&dev->mode_config.crtc_idr);
 	idr_destroy(&dev->mode_config.crtc_idr);
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev->mode_config.mutex);
+	linux_mutex_destroy(&dev->mode_config.idr_mutex);
+#endif
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);
 
