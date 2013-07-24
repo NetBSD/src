@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.1.2.2 2013/07/24 01:51:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,80 @@
 
 #ifndef _LINUX_KREF_H_
 #define _LINUX_KREF_H_
+
+#include <sys/types.h>
+#include <sys/atomic.h>
+#include <sys/systm.h>
+
+#include <linux/mutex.h>
+
+struct kref {
+	unsigned int kr_count;
+};
+
+static inline void
+kref_init(struct kref *kref)
+{
+	kref->kr_count = 1;
+}
+
+static inline void
+kref_get(struct kref *kref)
+{
+	const unsigned int count __unused =
+	    atomic_inc_uint_nv(&kref->kr_count);
+
+	KASSERT(count > 1);
+}
+
+static inline int
+kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
+{
+	unsigned int old, new;
+
+	do {
+		old = kref->kr_count;
+		KASSERT(count <= old);
+		new = (old - count);
+	} while (atomic_cas_uint(&kref->kr_count, old, new) == old);
+
+	if (new == 0) {
+		(*release)(kref);
+		return 1;
+	}
+
+	return 0;
+}
+
+static inline int
+kref_put(struct kref *kref, void (*release)(struct kref *))
+{
+
+	return kref_sub(kref, 1, release);
+}
+
+static inline int
+kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
+    struct mutex *interlock)
+{
+	unsigned int old, new;
+
+	do {
+		old = kref->kr_count;
+		KASSERT(old > 0);
+		if (old == 1) {
+			mutex_lock(interlock);
+			if (atomic_add_int_nv(&kref->kr_count, -1) == 0) {
+				(*release)(kref);
+				return 1;
+			}
+			mutex_unlock(interlock);
+			return 0;
+		}
+		new = (old - 1);
+	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
+
+	return 0;
+}
 
 #endif  /* _LINUX_KREF_H_ */
