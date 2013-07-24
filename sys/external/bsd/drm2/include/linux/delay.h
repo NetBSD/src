@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.1.2.2 2013/07/24 03:03:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,18 @@
 
 #ifndef _LINUX_DELAY_H_
 #define _LINUX_DELAY_H_
+
+#include <sys/param.h>
+#include <sys/proc.h>
+
+#include <machine/param.h>
+
+#define	udelay	DELAY
+
+static inline void
+msleep(unsigned int msec)
+{
+	(void)kpause("lnxmslep", false, mstohz(msec), NULL);
+}
 
 #endif  /* _LINUX_DELAY_H_ */
