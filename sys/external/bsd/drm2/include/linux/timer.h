@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.2.1 2013/07/24 01:54:04 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.2.2 2013/07/24 02:28:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/callout.h>
 
+#include <linux/jiffies.h>
+
 struct timer_list {
 	struct callout tl_callout;
 };
@@ -51,9 +53,11 @@ setup_timer(struct timer_list *timer, void (*fn)(unsigned long),
 }
 
 static inline void
-mod_timer(struct timer_list *timer, unsigned long ticks)
+mod_timer(struct timer_list *timer, unsigned long then)
 {
-	callout_schedule(&timer->tl_callout, ticks);
+	const unsigned long now = jiffies;
+
+	callout_schedule(&timer->tl_callout, (now < then? (then - now) : 0));
 }
 
 static inline void
