@@ -1212,6 +1212,9 @@ struct drm_device {
 	/** \name Context support */
 	/*@{ */
 	int irq_enabled;		/**< True if irq handler is enabled */
+#ifdef __NetBSD__
+	struct drm_bus_irq_cookie *irq_cookie;
+#endif
 	__volatile__ long context_flag;	/**< Context swapping flag */
 	__volatile__ long interrupt_flag; /**< Interruption handler flag */
 	__volatile__ long dma_flag;	/**< DMA dispatch flag */
