@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.1.2.23 2013/07/24 02:41:58 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.24 2013/07/24 02:42:19 riastradh Exp $
 
 .include "../Makefile.inc"
+.include "Makefile.inc"
 
 .PATH:	${S}/external/bsd/drm2/drm
 .PATH:	${S}/external/bsd/drm2/linux
@@ -44,17 +45,5 @@ SRCS+=	drm_stub.c
 #SRCS+=	drm_vm.c		# XXX Rewrite for uvm.
 
 SRCS+=	linux_idr.c
-
-CPPFLAGS+=	-I${S}/external/bsd/drm2/include
-CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/uapi
-CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/include
-CPPFLAGS+=	-D__KERNEL__
-
-# XXX Is this the right place to set this?
-CPPFLAGS+=	-DDIAGNOSTIC
-
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-CPPFLAGS+=	-DMTRR
-.endif
 
 .include <bsd.kmodule.mk>
