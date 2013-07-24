@@ -211,7 +211,11 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 			}
 		}
 		if (map->type == _DRM_REGISTERS) {
+#ifdef __NetBSD__
+			map->handle = drm_ioremap(dev, map);
+#else
 			map->handle = ioremap(map->offset, map->size);
+#endif
 			if (!map->handle) {
 				kfree(map);
 				return -ENOMEM;
@@ -337,7 +341,11 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 	list = kzalloc(sizeof(*list), GFP_KERNEL);
 	if (!list) {
 		if (map->type == _DRM_REGISTERS)
+#ifdef __NetBSD__
+			drm_iounmap(dev, map);
+#else
 			iounmap(map->handle);
+#endif
 		kfree(map);
 		return -EINVAL;
 	}
@@ -354,7 +362,11 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 			     (map->type == _DRM_SHM));
 	if (ret) {
 		if (map->type == _DRM_REGISTERS)
+#ifdef __NetBSD__
+			drm_iounmap(dev, map);
+#else
 			iounmap(map->handle);
+#endif
 		kfree(map);
 		kfree(list);
 		mutex_unlock(&dev->struct_mutex);
@@ -452,7 +464,11 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
+#ifdef __NetBSD__
+		drm_iounmap(dev, map);
+#else
 		iounmap(map->handle);
+#endif
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
 		if (drm_core_has_MTRR(dev) && map->mtrr >= 0) {
