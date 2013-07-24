@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.2 2013/07/24 02:19:53 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.3 2013/07/24 02:20:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.2 2013/07/24 02:19:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.3 2013/07/24 02:20:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -328,9 +328,10 @@ fail0:
 static int
 drm_close(struct file *fp)
 {
+	struct drm_file *const file = fp->f_data;
 
 	/* XXX errno Linux->NetBSD */
-	return -drm_close_file(fp->f_data);
+	return -drm_close_file(file);
 }
 
 /*
