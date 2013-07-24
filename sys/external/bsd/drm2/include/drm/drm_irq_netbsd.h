@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.1.2.4 2013/07/24 01:53:26 riastradh Exp $	*/
+/*	$NetBSD: drm_irq_netbsd.h,v 1.1.2.1 2013/07/24 01:53:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,15 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_OS_NETBSD_H_
-#define _DRM_DRM_OS_NETBSD_H_
+#ifndef _DRM_DRM_IRQ_NETBSD_H_
+#define _DRM_DRM_IRQ_NETBSD_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_drm.h"
-#endif
+typedef int irqreturn_t;
 
-#include <drm/drm_agp_netbsd.h>
-#include <drm/drm_irq_netbsd.h>
-#include <drm/drm_wait_netbsd.h>
+#define	IRQ_NONE	0
+#define	IRQ_HANDLED	1
 
-#endif  /* _DRM_DRM_OS_NETBSD_H_ */
+#define	DRM_IRQ_ARGS	void *arg
+
+#endif  /* _DRM_DRM_IRQ_NETBSD_H_ */
