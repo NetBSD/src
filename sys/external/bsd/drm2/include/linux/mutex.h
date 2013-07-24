@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.2 2013/07/24 01:51:21 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.3 2013/07/24 01:57:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,13 +34,38 @@
 
 #include <sys/mutex.h>
 
-/* XXX Kludge: Replace `struct mutex' by `struct kmutex'.  */
-#define	mutex				kmutex
+struct mutex {
+	kmutex_t mtx_lock;
+};
 
-#define	mutex_lock			mutex_enter
-#define	mutex_lock_interruptible	mutex_enter /* XXX */
-#define	mutex_trylock			mutex_tryenter
-#define	mutex_unlock			mutex_exit
-#define	mutex_is_locked			mutex_owned
+static inline void
+mutex_lock(struct mutex *mutex)
+{
+	mutex_enter(&mutex->mtx_lock);
+}
+
+static inline void
+mutex_lock_interruptible(struct mutex *mutex)
+{
+	mutex_enter(&mutex->mtx_lock); /* XXX */
+}
+
+static inline int
+mutex_trylock(struct mutex *mutex)
+{
+	return mutex_tryenter(&mutex->mtx_lock);
+}
+
+static inline void
+mutex_unlock(struct mutex *mutex)
+{
+	mutex_exit(&mutex->mtx_lock);
+}
+
+static inline bool
+mutex_is_locked(struct mutex *mutex)
+{
+	return mutex_owned(&mutex->mtx_lock);
+}
 
 #endif  /* _LINUX_MUTEX_H_ */
