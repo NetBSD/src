@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.1.2.1 2013/07/24 00:33:11 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.1.2.2 2013/07/24 03:39:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,12 @@
 
 #ifndef _ASM_IO_H_
 #define _ASM_IO_H_
+
+/*
+ * XXX This is bollocks, and is wrong on various architectures (should
+ * work for x86; who knows what else), but bus_space_barrier won't work
+ * because we have no bus space tag or handle or offset or anything.
+ */
+#define	mmiowb()	__insn_barrier()
 
 #endif  /* _ASM_IO_H_ */
