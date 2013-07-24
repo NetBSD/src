@@ -1,6 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.1.2.3 2013/07/24 03:17:03 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.4 2013/07/24 03:17:18 riastradh Exp $
 
 # Common makefile cruft for drm2 code.
+
+# XXX All the -D crap needs to go in a header file instead so changing
+# it correctly triggers rebuilds.
 
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/uapi
