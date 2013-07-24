@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.2 2013/07/24 02:39:25 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.3 2013/07/24 02:47:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.2 2013/07/24 02:39:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.3 2013/07/24 02:47:19 riastradh Exp $");
 
 /* XXX Cargo-culted from the old drm_memory.c.  */
 
@@ -111,8 +111,9 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			error = bus_space_map(bst, bm->bm_base,
 			    bm->bm_size, bm->bm_flags, &bm->bm_bsh);
 			if (error) {
-				if (drm_bus_borrow(map->offset, &map->bsh)) {
-					map->bus_map = NULL;
+				if (drm_bus_borrow(map->offset,
+					&map->lm_data.bus_space.bsh)) {
+					map->lm_data.bus_space.bus_map = NULL;
 					goto win;
 				}
 				return NULL;
@@ -122,7 +123,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 		/* Mark it used and make a subregion just for the request.  */
 		bm->bm_mapped++;
 		error = bus_space_subregion(bst, bm->bm_bsh,
-		    map->offset - bm->bm_base, map->size, &map->bsh);
+		    map->offset - bm->bm_base, map->size,
+		    &map->lm_data.bus_space.bsh);
 		if (error) {
 			/*
 			 * Back out: unmark it and, if nobody else was
@@ -135,7 +137,7 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 		}
 
 		/* Got it!  */
-		map->bus_map = bm;
+		map->lm_data.bus_space.bus_map = bm;
 		goto win;
 	}
 
@@ -169,8 +171,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			/* XXX size is an input/output parameter too...?  */
 			map->size = bm->bm_size;
 
-			map->bsh = bm->bm_bsh;
-			map->bus_map = bm;
+			map->lm_data.bus_space.bsh = bm->bm_bsh;
+			map->lm_data.bus_space.bus_map = bm;
 			goto win;
 		} else {
 			const int flags = BUS_SPACE_MAP_PREFETCHABLE |
@@ -188,8 +190,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			bm->bm_size = map->size;
 			bm->bm_flags = flags; /* XXX What for?  */
 
-			map->bsh = bm->bm_bsh;
-			map->bus_map = bm;
+			map->lm_data.bus_space.bsh = bm->bm_bsh;
+			map->lm_data.bus_space.bus_map = bm;
 			goto win;
 		}
 	}
@@ -197,14 +199,15 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 	return NULL;
 
 win:
-	return bus_space_vaddr(bst, map->bsh);
+	map->lm_data.bus_space.bst = bst;
+	return bus_space_vaddr(bst, map->lm_data.bus_space.bsh);
 }
 
 void
 drm_iounmap(struct drm_device *dev, struct drm_local_map *map)
 {
 	const bus_space_tag_t bst = dev->bst;
-	struct drm_bus_map *const bm = map->bus_map;
+	struct drm_bus_map *const bm = map->lm_data.bus_space.bus_map;
 
 	/*
 	 * bm may be null if we have committed the horrible deed of
