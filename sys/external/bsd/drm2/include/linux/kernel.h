@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.8 2013/07/24 02:21:43 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.9 2013/07/24 02:24:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 
 #define	__printf	__printflike
 #define	__user
+
+#define	unlikely(X)	__predict_false(X)
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD)))
