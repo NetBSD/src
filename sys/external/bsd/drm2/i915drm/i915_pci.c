@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.2 2013/07/24 03:54:01 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.3 2013/07/24 03:54:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.2 2013/07/24 03:54:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.3 2013/07/24 03:54:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -114,6 +114,11 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	    (unsigned long)(uintptr_t)(const void *)info;
 
 	KASSERT(info != NULL);
+
+	/* XXX Show more information...  */
+	aprint_naive("\n");
+	aprint_normal(": vendor 0x%04x, device 0x%04x, gen %u\n",
+	    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id), info->gen);
 
 	/* XXX Whattakludge!  */
 	if (info->gen != 3) {
