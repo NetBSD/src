@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.1.2.2 2013/07/24 04:02:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* intel_ringbuffer.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.1.2.2 2013/07/24 04:02:12 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -57,6 +57,21 @@ int
 intel_ring_begin(struct intel_ring_buffer *ring __unused, int n __unused)
 {
 	return ENOTTY;
+}
+
+/*
+ * XXX Kludge!  Copypasta from intel_ringbuffer.c until we can use the
+ * whole thing.
+ */
+
+u32
+intel_ring_get_active_head(struct intel_ring_buffer *ring)
+{
+	drm_i915_private_t *dev_priv = ring->dev->dev_private;
+	u32 acthd_reg = INTEL_INFO(ring->dev)->gen >= 4 ?
+			RING_ACTHD(ring->mmio_base) : ACTHD;
+
+	return I915_READ(acthd_reg);
 }
 
 int
