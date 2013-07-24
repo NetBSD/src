@@ -1908,6 +1908,14 @@ int i915_driver_unload(struct drm_device *dev)
 		pci_iounmap(dev->pdev, dev_priv->regs);
 #endif
 
+#ifdef __NetBSD__
+	spin_lock_destroy(&dev_priv->irq_lock);
+	spin_lock_destroy(&dev_priv->error_lock);
+	spin_lock_destroy(&dev_priv->rps.lock);
+	spin_lock_destroy(&dev_priv->dpio_lock);
+	linux_mutex_destroy(&dev_priv->rps.hw_lock);
+#endif
+
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);
 
