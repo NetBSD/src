@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.24 2013/07/24 02:42:19 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.25 2013/07/24 02:43:09 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -8,6 +8,7 @@
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
 KMOD=	drm2
+IOCONF=	drm.ioconf
 
 #SRCS+=	ati_pcigart.c		# XXX Restore for ATI support.
 SRCS+=	drm_agpsupport.c
@@ -44,6 +45,7 @@ SRCS+=	drm_prime.c
 SRCS+=	drm_stub.c
 #SRCS+=	drm_vm.c		# XXX Rewrite for uvm.
 
+SRCS+=	drm_module.c
 SRCS+=	linux_idr.c
 
 .include <bsd.kmodule.mk>
