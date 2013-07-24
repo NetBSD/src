@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.13 2013/07/16 23:00:15 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.14 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.13 2013/07/16 23:00:15 matt Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.14 2013/07/24 15:38:07 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,6 @@ ENTRY(ptrace)
 #endif	/* PIC */
 #endif	/* _REENTRANT */
 	SYSTRAP(ptrace)
-	jcc	CERROR
+	jcs	CERROR
 	rts
 END(ptrace)

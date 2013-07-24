@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.16 2013/07/16 23:00:15 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.17 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.16 2013/07/16 23:00:15 matt Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.17 2013/07/24 15:38:07 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ ENTRY(_sbrk)
 	movl	(%a1),%d0
 	addl	%d0,4(%sp)
 	SYSTRAP(break)
-	jcc 	CERROR
+	jcs 	CERROR
 	movl	(%a1),%d0
 	movl	4(%sp),(%a1)
 #ifdef	__SVR4_ABI__

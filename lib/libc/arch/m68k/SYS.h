@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.17 2013/07/16 22:18:14 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.18 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@
 
 #define _SYSCALL(x,y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	jcc CERROR
+	jcs CERROR
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)

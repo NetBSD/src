@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.17 2013/07/16 23:00:15 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.18 2013/07/24 15:38:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.17 2013/07/16 23:00:15 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.18 2013/07/24 15:38:07 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ ENTRY(_brk)
 	movl	%a1,4(%sp)
 ok:
 	SYSTRAP(break)
-	jcc	CERROR
+	jcs	CERROR
 #ifdef	PIC
 	LEA_LCL(_C_LABEL(__curbrk),%a0)
 	movl	%a1,(%a0)
