@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.4 2013/07/24 02:45:06 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.5 2013/07/24 02:49:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@ agp_find_bridge(struct pci_dev *pdev __unused)
 	 * XXX How do we find the agp bridge attached to this
 	 * particular PCI device?
 	 */
-	return container_of(agp_find_device(0), struct agp_bridge_data,
-	    abd_sc);
+	return container_of((struct agp_softc *)agp_find_device(0),
+	    struct agp_bridge_data, abd_sc);
 }
 
 static inline struct agp_bridge_data *
