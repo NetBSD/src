@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1.2.1 2013/07/24 03:07:28 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1.2.2 2013/07/24 03:15:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,55 +36,129 @@
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 
+#include <machine/limits.h>
+
 struct completion {
-	kmutex_t c_lock;
-	kcondvar_t c_cv;
-	bool c_done;
+	kmutex_t	c_lock;
+	kcondvar_t	c_cv;
+
+	/*
+	 * c_done is either
+	 *
+	 *   . -1, meaning it's open season and we're done for good and
+	 *     nobody need wait any more;
+	 *
+	 *   . 0, meaning nothing is done, so waiters must block; or
+	 *
+	 *   . a positive integer, meaning that many waiters can
+	 *     proceed before further waiters must block.
+	 *
+	 * Negative values other than -1 are not allowed.
+	 */
+	int		c_done;
 };
 
-static inline void
-INIT_COMPLETION(struct completion *completion)
-{
-
-	mutex_enter(&completion->c_lock);
-	completion->c_done = false;
-	mutex_exit(&completion->c_lock);
-}
-
+/*
+ * Initialize a new completion object.
+ */
 static inline void
 init_completion(struct completion *completion)
 {
 
 	mutex_init(&completion->c_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&completion->c_cv, "lnxcmplt");
-	completion->c_done = false;
+	completion->c_done = 0;
 }
 
+/*
+ * Notify one waiter of completion, but not any future ones.
+ */
+static inline void
+complete(struct completion *completion)
+{
+
+	mutex_enter(&completion->c_lock);
+
+	/* If it's not open season, wake one waiter.  */
+	if (completion->c_done >= 0) {
+		KASSERT(completion->c_done < INT_MAX); /* XXX check */
+		completion->c_done++;
+		cv_signal(&completion->c_cv);
+	} else {
+		KASSERT(completion->c_done == -1);
+	}
+
+	mutex_exit(&completion->c_lock);
+}
+
+/*
+ * Notify all waiters, present and future (until INIT_COMPLETION), of
+ * completion.
+ */
 static inline void
 complete_all(struct completion *completion)
 {
 
 	mutex_enter(&completion->c_lock);
-	completion->c_done = true;
-	cv_broadcast(&completion->c_cv);
+
+	/* If it's not open season, make it open season and wake everyone.  */
+	if (completion->c_done >= 0) {
+		completion->c_done = -1;
+		cv_broadcast(&completion->c_cv);
+	} else {
+		KASSERT(completion->c_done == -1);
+	}
+
 	mutex_exit(&completion->c_lock);
 }
 
+/*
+ * Reverse the effect of complete_all so that subsequent waiters block
+ * until someone calls complete or complete_all.
+ *
+ * This operation is very different from its lowercase counterpart.
+ */
+static inline void
+INIT_COMPLETION(struct completion *completion)
+{
+
+	mutex_enter(&completion->c_lock);
+	completion->c_done = 0;
+	/* No notify -- waiters are interested only in nonzero values.  */
+	mutex_exit(&completion->c_lock);
+}
+
+/*
+ * Wait interruptibly with a timeout for someone to call complete or
+ * complete_all.
+ */
 static inline int
 wait_for_completion_interruptible_timeout(struct completion *completion,
     unsigned long ticks)
 {
-	int error = 0;
+	int error;
 
 	mutex_enter(&completion->c_lock);
-	while (!completion->c_done) {
-		error = cv_timedwait_sig(&completion->c_cv,
+
+	/* Wait until c_done is nonzero.  */
+	while (completion->c_done == 0) {
+		/* XXX errno NetBSD->Linux */
+		error = -cv_timedwait_sig(&completion->c_cv,
 		    &completion->c_lock, ticks);
 		if (error)
-			break;
+			goto out;
 	}
-	mutex_exit(&completion->c_lock);
 
+	/* Claim a completion if it's not open season.  */
+	if (completion->c_done > 0)
+		completion->c_done--;
+	else
+		KASSERT(completion->c_done == -1);
+
+	/* Success!  */
+	error = 0;
+
+out:	mutex_exit(&completion->c_lock);
 	return error;
 }
 
