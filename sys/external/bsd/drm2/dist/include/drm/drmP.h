@@ -793,11 +793,13 @@ struct drm_gem_object {
 
 	void *driver_private;
 
+#ifndef __NetBSD__	    /* XXX drm prime */
 	/* dma buf exported from this GEM object */
 	struct dma_buf *export_dma_buf;
 
 	/* dma buf attachment backing this object */
 	struct dma_buf_attachment *import_attach;
+#endif
 };
 
 #include <drm/drm_crtc.h>
@@ -1761,6 +1763,7 @@ extern void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *s
 #endif
 
 
+#ifndef __NetBSD__		/* XXX drm prime */
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv);
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv);
 int drm_prime_add_imported_buf_handle(struct drm_prime_file_private *prime_fpriv, struct dma_buf *dma_buf, uint32_t handle);
@@ -1770,6 +1773,7 @@ void drm_prime_remove_imported_buf_handle(struct drm_prime_file_private *prime_f
 int drm_prime_add_dma_buf(struct drm_device *dev, struct drm_gem_object *obj);
 int drm_prime_lookup_obj(struct drm_device *dev, struct dma_buf *buf,
 			 struct drm_gem_object **obj);
+#endif
 
 #if DRM_DEBUG_CODE
 #ifndef __NetBSD__
