@@ -366,7 +366,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 			     (map->type == _DRM_SHM));
 	if (ret) {
 		if (map->type == _DRM_REGISTERS)
-#ifdef __NetBSD__
+#ifdef __NetBSD__		/* XXX What about other map types...?  */
 			drm_iounmap(dev, map);
 #else
 			iounmap(map->handle);
