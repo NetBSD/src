@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.17 2013/07/24 03:56:18 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.18 2013/07/24 03:56:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.17 2013/07/24 03:56:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.18 2013/07/24 03:56:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -302,6 +302,15 @@ drm_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(parent, "unable to initialize drm: %d\n",
 		    error);
 		return;
+	}
+
+	if (dev->driver->load != NULL) {
+		error = (*dev->driver->load)(dev, daa->daa_flags);
+		if (error) {
+			aprint_error_dev(parent, "unable to load driver: %d\n",
+			    error);
+			return;
+		}
 	}
 
 #if 0				/* XXX drm wsdisplay */
