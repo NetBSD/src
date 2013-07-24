@@ -46,6 +46,8 @@
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/export.h>
+#include <linux/printk.h>
+#include <asm/bug.h>
 
 #define MM_UNUSED_TARGET 4
 
