@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.5 2013/07/24 03:01:38 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.6 2013/07/24 03:01:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ struct pci_device_id;
 
 struct pci_dev {
 	struct pci_bus *bus;
+	unsigned int device;
 	struct pci_attach_args pd_pa;
 	bool pd_kludged;	/* XXX pci_kludgey_find_dev hack */
 };
