@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.4 2013/07/24 03:01:09 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.5 2013/07/24 03:01:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
@@ -46,6 +47,7 @@ struct pci_device_id;
 struct pci_dev {
 	struct pci_bus *bus;
 	struct pci_attach_args pd_pa;
+	bool pd_kludged;	/* XXX pci_kludgey_find_dev hack */
 };
 
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
@@ -110,6 +112,46 @@ pci_bus_alloc_resource(struct pci_bus *bus, struct resource *resource,
 
 	resource->size = size;
 	return 0;
+}
+
+/*
+ * XXX Mega-kludgerific!
+ *
+ * XXX Doesn't check whether any such device actually exists.
+ */
+
+static inline struct pci_dev *
+pci_kludgey_find_dev(struct pci_dev *pdev, int bus, int dev, int func)
+{
+	struct pci_dev *const otherdev = kmem_zalloc(sizeof(*otherdev),
+	    KM_SLEEP);
+
+#ifdef DIAGNOSTIC
+	{
+		int obus, odev, ofunc;
+
+		pci_decompose_tag(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, &obus,
+		    &odev, &ofunc);
+		KASSERT(obus == bus);
+	}
+#endif
+
+	otherdev->bus = NULL;	/* XXX struct pci_dev::bus */
+	otherdev->device = dev;
+	otherdev->pd_pa = pdev->pd_pa;
+	otherdev->pd_pa.pa_tag = pci_make_tag(otherdev->pd_pa.pa_pc,
+	    bus, dev, func);
+	otherdev->pd_kludged = true;
+
+	return otherdev;
+}
+
+static inline void
+pci_dev_put(struct pci_dev *pdev)
+{
+
+	KASSERT(pdev->pd_kludged);
+	kmem_free(pdev, sizeof(*pdev));
 }
 
 #endif  /* _LINUX_PCI_H_ */
