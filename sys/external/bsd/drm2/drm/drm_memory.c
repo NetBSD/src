@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.4 2013/07/24 02:47:50 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.5 2013/07/24 03:02:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.4 2013/07/24 02:47:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.5 2013/07/24 03:02:21 riastradh Exp $");
 
 /* XXX Cargo-culted from the old drm_memory.c.  */
 
@@ -121,6 +121,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 		}
 
 		/* Mark it used and make a subregion just for the request.  */
+		if (bm->bm_mapped == UINT_MAX)
+			return NULL;
 		bm->bm_mapped++;
 		error = bus_space_subregion(bst, bm->bm_bsh,
 		    map->offset - bm->bm_base, map->size,
@@ -130,6 +132,7 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 			 * Back out: unmark it and, if nobody else was
 			 * using it, unmap it.
 			 */
+			KASSERT(bm->bm_mapped > 0);
 			if (--bm->bm_mapped == 0)
 				bus_space_unmap(bst, bm->bm_bsh,
 				    bm->bm_size);
@@ -166,6 +169,8 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 				continue;
 
 			/* Mark it used and return it.  */
+			if (bm->bm_mapped == UINT_MAX)
+				return NULL;
 			bm->bm_mapped++;
 
 			/* XXX size is an input/output parameter too...?  */
@@ -185,6 +190,7 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 				return NULL; /* XXX Why not continue?  */
 
 			/* Got it.  Allocate this bus map.  */
+			KASSERT(bm->bm_mapped == 0);
 			bm->bm_mapped++;
 			bm->bm_base = map->offset;
 			bm->bm_size = map->size;
@@ -215,7 +221,7 @@ drm_iounmap(struct drm_device *dev, struct drm_local_map *map)
 	 */
 	if (bm != NULL) {
 		KASSERT(bm->bm_mapped > 0);
-		if (--bm->bm_mapped)
+		if (--bm->bm_mapped == 0)
 			bus_space_unmap(bst, bm->bm_bsh, bm->bm_size);
 	}
 }
