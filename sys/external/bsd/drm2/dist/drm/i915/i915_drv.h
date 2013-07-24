@@ -890,7 +890,13 @@ typedef struct drm_i915_private {
 
 	struct drm_crtc *plane_to_crtc_mapping[3];
 	struct drm_crtc *pipe_to_crtc_mapping[3];
+#ifdef __NetBSD__
+	/* XXX The locking scheme looks broken.  This mutex is a stop-gap.  */
+	struct mutex pending_flip_lock;
+	drm_waitqueue_t pending_flip_queue;
+#else
 	wait_queue_head_t pending_flip_queue;
+#endif
 
 	struct intel_pch_pll pch_plls[I915_NUM_PLLS];
 	struct intel_ddi_plls ddi_plls;
