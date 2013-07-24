@@ -382,6 +382,17 @@ static void intel_panel_init_backlight(struct drm_device *dev)
 	dev_priv->backlight_enabled = dev_priv->backlight_level != 0;
 }
 
+#ifdef __NetBSD__		/* XXX This is worse than the others!  */
+static inline uint32_t
+ioread32(const uint32_t __acpi_iomem *ptr)
+{
+	const uint32_t value = *ptr;
+
+	__insn_barrier();
+	return value;
+}
+#endif
+
 enum drm_connector_status
 intel_panel_detect(struct drm_device *dev)
 {
