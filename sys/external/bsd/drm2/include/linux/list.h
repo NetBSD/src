@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.5 2013/07/24 02:02:32 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.6 2013/07/24 02:11:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ struct list_head {
 	struct list_head *lh_next;
 };
 
+#define	LIST_HEAD_INIT(name)	{ .lh_prev = &(name), .lh_next = &(name) }
+
 static inline void
 INIT_LIST_HEAD(struct list_head *head)
 {
@@ -54,43 +56,43 @@ INIT_LIST_HEAD(struct list_head *head)
 }
 
 static inline struct list_head *
-list_first(struct list_head *head)
+list_first(const struct list_head *head)
 {
 	return head->lh_next;
 }
 
 static inline struct list_head *
-list_next(struct list_head *node)
+list_next(const struct list_head *node)
 {
 	return node->lh_next;
 }
 
 static inline int
-list_empty(struct list_head *head)
+list_empty(const struct list_head *head)
 {
 	return (head->lh_next == head);
 }
 
 static inline void
-list_add(struct list_head *new, struct list_head *head)
+__list_add_between(struct list_head *prev, struct list_head *node,
+    struct list_head *next)
 {
-	struct list_head *const next = head->lh_next;
-
-	head->lh_next = new;
-	new->lh_prev = head;
-	new->lh_next = next;
-	next->lh_prev = new;
+	prev->lh_next = node;
+	node->lh_prev = prev;
+	node->lh_next = next;
+	next->lh_prev = node;
 }
 
 static inline void
-list_add_tail(struct list_head *new, struct list_head *head)
+list_add(struct list_head *node, struct list_head *head)
 {
-	struct list_head *const prev = head->lh_prev;
+	__list_add_between(head, node, head->lh_next);
+}
 
-	head->lh_prev = new;
-	new->lh_prev = prev;
-	new->lh_next = head;
-	prev->lh_next = new;
+static inline void
+list_add_tail(struct list_head *node, struct list_head *head)
+{
+	__list_add_between(head->lh_prev, node, head);
 }
 
 static inline void
@@ -100,12 +102,47 @@ list_del(struct list_head *entry)
 	entry->lh_next->lh_prev = entry->lh_prev;
 }
 
+static inline void
+__list_splice_between(struct list_head *prev, const struct list_head *list,
+    struct list_head *next)
+{
+	struct list_head *first = list->lh_next;
+	struct list_head *last = list->lh_prev;
+
+	first->lh_prev = prev;
+	prev->lh_next = first;
+
+	last->lh_next = next;
+	next->lh_prev = last;
+}
+
+static inline void
+list_splice(const struct list_head *list, struct list_head *head)
+{
+	if (!list_empty(list))
+		__list_splice_between(head, list, head->lh_next);
+}
+
+static inline void
+list_splice_tail(const struct list_head *list, struct list_head *head)
+{
+	if (!list_empty(list))
+		__list_splice_between(head->lh_prev, list, head);
+}
+
+static inline void
+list_move_tail(struct list_head *node, struct list_head *head)
+{
+	list_del(node);
+	list_add_tail(node, head);
+}
+
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
 		(VAR) != (HEAD);					\
-		(VAR) = list_next((VAR))
+		(VAR) = list_next((VAR)))
 
 #define	list_for_each_safe(VAR, NEXT, HEAD)				\
 	for ((VAR) = list_first((HEAD));				\
