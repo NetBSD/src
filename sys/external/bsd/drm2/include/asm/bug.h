@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.8 2013/07/24 02:21:43 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.1 2013/07/24 02:21:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,31 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_KERNEL_H_
-#define _LINUX_KERNEL_H_
+#ifndef _ASM_BUG_H_
+#define _ASM_BUG_H_
 
 #include <sys/cdefs.h>
 #include <sys/systm.h>
 
-#define	__printf	__printflike
-#define	__user
+#define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
 
-#define	container_of(PTR, TYPE, FIELD)					\
-	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD)))
-
-#define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
-
-#define	swap(X, Y)	do						\
+/* XXX Rate limit?  */
+#define WARN(CONDITION, FMT, ...)	do				\
 {									\
-	/* XXX Kludge for type-safety.  */				\
-	if (&(X) != &(Y)) {						\
-		CTASSERT(sizeof(X) == sizeof(Y));			\
-		/* XXX Can't do this much better without typeof.  */	\
-		char __swap_tmp[sizeof(X)];				\
-		(void)memcpy(__swap_tmp, &(X), sizeof(X));		\
-		(void)memcpy(&(X), &(Y), sizeof(X));			\
-		(void)memcpy(&(Y), __swap_tmp, sizeof(X));		\
-	}								\
+	if (CONDITION)							\
+		printf("warning: %s:%d: " FMT, __FILE__, __LINE__,	\
+		    ##__VA_ARGS__);					\
 } while (0)
+
+#define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 
 #endif  /* _LINUX_KERNEL_H_ */
