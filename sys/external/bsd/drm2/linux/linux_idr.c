@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.1 2013/07/24 00:50:36 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.2 2013/07/24 01:56:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.1 2013/07/24 00:50:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.2 2013/07/24 01:56:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -142,8 +142,12 @@ idr_pre_get(struct idr *idr, int flags __unused /* XXX */)
 	if (temp == NULL)
 		return 0;
 
-	if (atomic_cas_ptr(&idr->idr_temp, NULL, temp) != NULL)
+	rw_enter(&idr->idr_lock, RW_WRITER);
+	if (idr->idr_temp == NULL)
+		idr->idr_temp = temp;
+	else
 		kmem_free(temp, sizeof(*temp));
+	rw_exit(&idr->idr_lock);
 
 	return 1;
 }
@@ -154,11 +158,14 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 	struct idr_node *node, *search, *collision __unused;
 	int want_id = min_id;
 
-	node = atomic_swap_ptr(&idr->idr_temp, NULL);
-	if (node == NULL)
-		return -EAGAIN;
-
 	rw_enter(&idr->idr_lock, RW_WRITER);
+
+	node = idr->idr_temp;
+	if (node == NULL) {
+		rw_exit(&idr->idr_lock);
+		return -EAGAIN;
+	}
+	idr->idr_temp = NULL;
 
 	search = rb_tree_find_node_geq(&idr->idr_tree, &min_id);
 	while ((search != NULL) && (search->in_index == want_id)) {
