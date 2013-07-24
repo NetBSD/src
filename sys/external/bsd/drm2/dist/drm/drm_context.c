@@ -121,6 +121,9 @@ void drm_ctxbitmap_cleanup(struct drm_device * dev)
 {
 	mutex_lock(&dev->struct_mutex);
 	idr_remove_all(&dev->ctx_idr);
+#ifdef __NetBSD__
+	idr_destroy(&dev->ctx_idr);
+#endif
 	mutex_unlock(&dev->struct_mutex);
 }
 
