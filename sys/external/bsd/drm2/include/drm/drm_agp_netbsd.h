@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.1.2.3 2013/07/24 01:50:35 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.1 2013/07/24 01:50:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,14 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_OS_NETBSD_H_
-#define _DRM_DRM_OS_NETBSD_H_
+#ifndef _DRM_DRM_AGP_NETBSD_H_
+#define _DRM_DRM_AGP_NETBSD_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_drm.h"
-#endif
+#include <dev/pci/pcivar.h>	/* XXX include order botch */
+#include <dev/pci/agpvar.h>
 
-#include <drm/drm_agp_netbsd.h>
-#include <drm/drm_wait_netbsd.h>
+#define	__OS_HAS_AGP	1
 
-#endif  /* _DRM_DRM_OS_NETBSD_H_ */
+typedef struct agp_memory_info DRM_AGP_MEM;
+typedef struct agp_info DRM_AGP_KERN;
+
+#endif  /* _DRM_DRM_AGP_NETBSD_H_ */
