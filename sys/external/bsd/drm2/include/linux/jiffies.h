@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.1.2.2 2013/07/24 02:28:22 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.1.2.3 2013/07/24 03:03:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,5 +36,45 @@
 #include <sys/kernel.h>
 
 #define	jiffies	hardclock_ticks
+
+static inline unsigned int
+msecs_to_jiffies(unsigned int msec)
+{
+	return mstohz(msec);
+}
+
+static inline unsigned int
+usecs_to_jiffies(unsigned int usec)
+{
+	return mstohz((usec + (1000 / hz) - 1) / (1000 / hz));
+}
+
+/* XXX long is the wrong type here times...  */
+
+#define	__linux_time_compare(A, OP, B)	(((long)(A) - (long)(B)) OP 0)
+
+static inline bool
+time_after(unsigned long a, unsigned long b)
+{
+	return __linux_time_compare(a, >, b);
+}
+
+static inline bool
+time_after_eq(unsigned long a, unsigned long b)
+{
+	return __linux_time_compare(a, >=, b);
+}
+
+static inline bool
+time_before(unsigned long a, unsigned long b)
+{
+	return __linux_time_compare(a, <, b);
+}
+
+static inline bool
+time_before_eq(unsigned long a, unsigned long b)
+{
+	return __linux_time_compare(a, <=, b);
+}
 
 #endif  /* _LINUX_JIFFIES_H_ */
