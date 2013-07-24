@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.1.2.3 2013/07/24 02:51:20 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.4 2013/07/24 02:56:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,4 +49,4 @@
 #define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 #define	WARN_ON_SMP(CONDITION)	WARN_ON(CONDITION) /* XXX */
 
-#endif  /* _LINUX_KERNEL_H_ */
+#endif  /* _ASM_BUG_H_ */
