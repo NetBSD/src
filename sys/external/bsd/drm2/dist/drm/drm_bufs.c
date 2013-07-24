@@ -83,14 +83,7 @@ static int drm_map_handle(struct drm_device *dev, struct drm_hash_item *hash,
 	int use_hashed_handle, shift;
 	unsigned long add;
 
-#if (BITS_PER_LONG == 64)
-	use_hashed_handle = ((user_token & 0xFFFFFFFF00000000UL) || hashed_handle);
-#elif (BITS_PER_LONG == 32)
-	use_hashed_handle = hashed_handle;
-#else
-#error Unsupported long size. Neither 64 nor 32 bits.
-#endif
-
+	use_hashed_handle = (user_token &~ 0xffffffffUL) || hashed_handle;
 	if (!use_hashed_handle) {
 		int ret;
 		hash->key = user_token >> PAGE_SHIFT;
