@@ -61,6 +61,17 @@ int drm_agp_info(struct drm_device *dev, struct drm_agp_info *info)
 		return -EINVAL;
 
 	kern = &dev->agp->agp_info;
+#if __NetBSD__
+	info->agp_version_major = 1;
+	info->agp_version_minor = 0;
+	info->mode = kern->ai_mode;
+	info->aperture_base = kern->ai_aperture_base;
+	info->aperture_size = kern->ai_aperture_size;
+	info->memory_allowed = kern->ai_memory_allowed;
+	info->memory_used = kern->ai_memory_used;
+	info->id_vendor = PCI_VENDOR(kern->ai_devid);
+	info->id_device = PCI_PRODUCT(kern->ai_devid);
+#else
 	info->agp_version_major = kern->version.major;
 	info->agp_version_minor = kern->version.minor;
 	info->mode = kern->mode;
@@ -70,6 +81,7 @@ int drm_agp_info(struct drm_device *dev, struct drm_agp_info *info)
 	info->memory_used = kern->current_memory << PAGE_SHIFT;
 	info->id_vendor = kern->device->vendor;
 	info->id_device = kern->device->device;
+#endif
 
 	return 0;
 }
@@ -218,14 +230,27 @@ int drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 		return -ENOMEM;
 	}
 
+#ifdef __NetBSD__
+	/* I presume the `+ 1' is there to avoid an id of 0 or something.  */
+	entry->handle = (unsigned long)memory->am_id + 1;
+#else
 	entry->handle = (unsigned long)memory->key + 1;
+#endif
 	entry->memory = memory;
 	entry->bound = 0;
 	entry->pages = pages;
 	list_add(&entry->head, &dev->agp->memory);
 
 	request->handle = entry->handle;
+#ifdef __NetBSD__
+	{
+		struct agp_memory_info info;
+		agp_memory_info(dev->agp->bridge, memory, &info);
+		request->physical = info.ami_physical;
+	}
+#else
 	request->physical = memory->physical;
+#endif
 
 	return 0;
 }
@@ -414,16 +439,26 @@ struct drm_agp_head *drm_agp_init(struct drm_device *dev)
 	} else {
 		agp_copy_info(head->bridge, &head->agp_info);
 	}
+#ifndef __NetBSD__
+	/* Why would anything even attach in this case?  */
 	if (head->agp_info.chipset == NOT_SUPPORTED) {
 		kfree(head);
 		return NULL;
 	}
+#endif
 	INIT_LIST_HEAD(&head->memory);
+#ifdef __NetBSD__
+	/* Not sure what the other fields are used for...  */
+	head->base = head->agp_info.ai_aperture_base;
+#else
 	head->cant_use_aperture = head->agp_info.cant_use_aperture;
 	head->page_mask = head->agp_info.page_mask;
 	head->base = head->agp_info.aper_base;
+#endif
 	return head;
 }
+
+#ifndef __NetBSD__
 
 /**
  * Binds a collection of pages into AGP memory at the given offset, returning
@@ -467,5 +502,7 @@ drm_agp_bind_pages(struct drm_device *dev,
 	return mem;
 }
 EXPORT_SYMBOL(drm_agp_bind_pages);
+
+#endif	/* __NetBSD__ */
 
 #endif /* __OS_HAS_AGP */
