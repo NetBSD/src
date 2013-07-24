@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.3 2013/07/24 02:43:26 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.4 2013/07/24 02:45:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.3 2013/07/24 02:43:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.4 2013/07/24 02:45:38 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -384,8 +384,8 @@ drm_lastclose_agp(struct drm_device *dev)
 
 	list_for_each_entry_safe(entry, next, &dev->agp->memory, head) {
 		if (entry->bound)
-			drm_unbind_agp(entry->memory);
-		drm_free_agp(entry->memory, entry->pages);
+			drm_unbind_agp(dev->agp->bridge, entry->memory);
+		drm_free_agp(dev->agp->bridge, entry->memory, entry->pages);
 		kfree(entry);
 	}
 	INIT_LIST_HEAD(&dev->agp->memory); /* XXX seems kludgey */
