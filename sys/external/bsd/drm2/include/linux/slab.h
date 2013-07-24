@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.4 2013/07/24 02:24:44 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.5 2013/07/24 02:37:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 /* XXX Should use kmem, but Linux kfree doesn't take the size.  */
 
 #define	GFP_KERNEL	M_WAITOK
+#define	GFP_ATOMIC	M_NOWAIT
 
 static inline void *
 kmalloc(size_t size, int flags)
