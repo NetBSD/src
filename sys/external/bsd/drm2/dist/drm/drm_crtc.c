@@ -3529,13 +3529,21 @@ int drm_mode_gamma_set_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
+#ifdef __NetBSD__
+	g_base = (char *)r_base + size;
+#else
 	g_base = r_base + size;
+#endif
 	if (copy_from_user(g_base, (void __user *)(unsigned long)crtc_lut->green, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
+#ifdef __NetBSD__
+	b_base = (char *)g_base + size;
+#else
 	b_base = g_base + size;
+#endif
 	if (copy_from_user(b_base, (void __user *)(unsigned long)crtc_lut->blue, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -3583,13 +3591,21 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = r_base + size;
+#ifdef __NetBSD__
+	g_base = (char *)r_base + size;
+#else
+	g_base = (char *)r_base + size;
+#endif
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
+#ifdef __NetBSD__
+	b_base = (char *)g_base + size;
+#else
 	b_base = g_base + size;
+#endif
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->blue, b_base, size)) {
 		ret = -EFAULT;
 		goto out;
