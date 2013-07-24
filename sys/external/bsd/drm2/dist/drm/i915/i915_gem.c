@@ -241,7 +241,11 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_mode_create_dumb *args)
 {
 	/* have to work out size/pitch and return them */
+#ifdef __NetBSD__		/* ALIGN already means something.  */
+	args->pitch = round_up(args->width * ((args->bpp + 7) / 8), 64);
+#else
 	args->pitch = ALIGN(args->width * ((args->bpp + 7) / 8), 64);
+#endif
 	args->size = args->pitch * args->height;
 	return i915_gem_create(file, dev,
 			       args->size, &args->handle);
@@ -283,7 +287,11 @@ __copy_to_user_swizzled(char __user *cpu_vaddr,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
+#ifdef __NetBSD__
+		int cacheline_end = round_up(gpu_offset + 1, 64);
+#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
+#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
@@ -309,7 +317,11 @@ __copy_from_user_swizzled(char *gpu_vaddr, int gpu_offset,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
+#ifdef __NetBSD__
+		int cacheline_end = round_up(gpu_offset + 1, 64);
+#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
+#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
