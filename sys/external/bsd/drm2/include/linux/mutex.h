@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.5 2013/07/24 02:37:00 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.6 2013/07/24 03:25:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,10 +58,11 @@ mutex_lock(struct mutex *mutex)
 	mutex_enter(&mutex->mtx_lock);
 }
 
-static inline void
+static inline int
 mutex_lock_interruptible(struct mutex *mutex)
 {
 	mutex_enter(&mutex->mtx_lock); /* XXX */
+	return 0;
 }
 
 static inline int
