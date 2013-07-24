@@ -3594,7 +3594,7 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 #ifdef __NetBSD__
 	g_base = (char *)r_base + size;
 #else
-	g_base = (char *)r_base + size;
+	g_base = r_base + size;
 #endif
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
