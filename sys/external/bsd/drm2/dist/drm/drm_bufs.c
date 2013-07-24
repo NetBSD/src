@@ -415,8 +415,17 @@ int drm_addmap_ioctl(struct drm_device *dev, void *data,
 	struct drm_map_list *maplist;
 	int err;
 
+#ifdef __NetBSD__
+#  if 0				/* XXX Old drm did this.  */
+	if (!(dev->flags & (FREAD | FWRITE)))
+		return -EACCES;
+#  endif
+	if (!(DRM_SUSER() || map->type == _DRM_AGP || map->type == _DRM_SHM))
+		return -EACCES;	/* XXX */
+#else
 	if (!(capable(CAP_SYS_ADMIN) || map->type == _DRM_AGP || map->type == _DRM_SHM))
 		return -EPERM;
+#endif
 
 	err = drm_addmap_core(dev, map->offset, map->size, map->type,
 			      map->flags, &maplist);
@@ -811,8 +820,13 @@ int drm_addbufs_pci(struct drm_device * dev, struct drm_buf_desc * request)
 	if (!dma)
 		return -EINVAL;
 
+#ifdef __NetBSD__
+	if (!DRM_SUSER())
+		return -EACCES;	/* XXX */
+#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
+#endif
 
 	count = request->count;
 	order = drm_order(request->size);
@@ -1017,8 +1031,13 @@ static int drm_addbufs_sg(struct drm_device * dev, struct drm_buf_desc * request
 	if (!dma)
 		return -EINVAL;
 
+#ifdef __NetBSD__
+	if (!DRM_SUSER())
+		return -EACCES;	/* XXX */
+#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
+#endif
 
 	count = request->count;
 	order = drm_order(request->size);
@@ -1172,8 +1191,13 @@ static int drm_addbufs_fb(struct drm_device * dev, struct drm_buf_desc * request
 	if (!dma)
 		return -EINVAL;
 
+#ifdef __NetBSD__
+	if (!DRM_SUSER())
+		return -EACCES;	/* XXX */
+#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
+#endif
 
 	count = request->count;
 	order = drm_order(request->size);
