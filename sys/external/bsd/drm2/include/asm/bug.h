@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.1.2.5 2013/07/24 03:02:51 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.6 2013/07/24 03:25:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 /* XXX Rate limit?  */
 #define WARN(CONDITION, FMT, ...)					\
-	((CONDITION)?							\
+	linux_warning((CONDITION)?					\
 	    (printf("warning: %s:%d: " FMT, __FILE__, __LINE__,		\
 		##__VA_ARGS__), 1)					\
 	    : 0)
@@ -48,5 +48,12 @@
 #define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 #define	WARN_ON_SMP(CONDITION)	WARN_ON(CONDITION) /* XXX */
 #define	WARN_ON_ONCE(CONDITION)	WARN_ON(CONDITION) /* XXX */
+
+/* XXX Kludge to avoid GCC warning about statements without effect.  */
+static inline int
+linux_warning(int x)
+{
+	return x;
+}
 
 #endif  /* _ASM_BUG_H_ */
