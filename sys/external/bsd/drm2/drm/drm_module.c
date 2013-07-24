@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.2 2013/07/24 02:44:33 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.3 2013/07/24 03:14:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.2 2013/07/24 02:44:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.3 2013/07/24 03:14:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
-MODULE(MODULE_CLASS_MISC, drm, "pci");
+/*
+ * XXX I2C stuff should be moved to a separate drm2edid module.
+ *
+ * XXX PCI stuff should be moved to a separate drm2pci module.
+ *
+ * XXX Other Linux stuff should be moved to a linux compatibility
+ * module on which this one depends.
+ */
+MODULE(MODULE_CLASS_MISC, drm, "iic,pci");
 
 #ifdef _MODULE
 #include "ioconf.c"
