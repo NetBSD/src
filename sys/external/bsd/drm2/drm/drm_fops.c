@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.1 2013/07/24 02:19:53 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.2 2013/07/24 02:38:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.1 2013/07/24 02:19:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.2 2013/07/24 02:38:06 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -41,7 +41,6 @@ static void	drm_events_release(struct drm_file *);
 static void	drm_close_file_contexts(struct drm_file *);
 static void	drm_close_file_master(struct drm_file *);
 
-static void	drm_lastclose(struct drm_device *);
 static void	drm_lastclose_agp(struct drm_device *);
 static void	drm_lastclose_vma(struct drm_device *);
 
@@ -338,7 +337,7 @@ drm_close_file_master(struct drm_file *file)
 	mutex_unlock(&dev->struct_mutex);
 }
 
-static void
+void
 drm_lastclose(struct drm_device *dev)
 {
 
