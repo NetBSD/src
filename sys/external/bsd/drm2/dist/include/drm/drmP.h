@@ -755,8 +755,16 @@ struct drm_gem_object {
 	/** Related drm device */
 	struct drm_device *dev;
 
+#ifdef __NetBSD__
+	/* UVM anonymous object for shared memory mappings.  */
+	struct uvm_object *gemo_shm_uao;
+
+	/* UVM object with custom pager ops for device memory mappings.  */
+	struct uvm_object gemo_uvmobj;
+#else
 	/** File representing the shmem storage */
 	struct file *filp;
+#endif
 
 	/* Mapping info for this object */
 	struct drm_map_list map_list;
@@ -1074,7 +1082,11 @@ struct drm_driver {
 			    uint32_t handle);
 
 	/* Driver private ops for this object */
+#ifdef __NetBSD__
+	const struct uvm_pagerops *gem_uvm_ops;
+#else
 	const struct vm_operations_struct *gem_vm_ops;
+#endif
 
 	int major;
 	int minor;
