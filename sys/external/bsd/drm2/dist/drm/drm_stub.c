@@ -77,6 +77,16 @@ struct dentry *drm_debugfs_root;
 
 int drm_err(const char *func, const char *format, ...)
 {
+#ifdef __NetBSD__
+	va_list args;
+
+	va_start(args, format);
+	printf("DRM error in %s: ", func);
+	vprintf(format, args);
+	va_end(args);
+
+	return 0;
+#else
 	struct va_format vaf;
 	va_list args;
 	int r;
@@ -91,6 +101,7 @@ int drm_err(const char *func, const char *format, ...)
 	va_end(args);
 
 	return r;
+#endif
 }
 EXPORT_SYMBOL(drm_err);
 
