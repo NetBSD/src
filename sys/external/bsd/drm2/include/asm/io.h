@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.1.2.2 2013/07/24 03:39:52 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.1.2.3 2013/07/24 03:44:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,5 +38,9 @@
  * because we have no bus space tag or handle or offset or anything.
  */
 #define	mmiowb()	__insn_barrier()
+
+#define	memcpy_fromio	memcpy
+#define	memcpy_toio	memcpy
+#define	memset_io	memset
 
 #endif  /* _ASM_IO_H_ */
