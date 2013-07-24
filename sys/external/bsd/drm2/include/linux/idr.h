@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.6 2013/07/24 03:13:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,17 @@ struct idr {
 	rb_tree_t idr_tree;
 	struct idr_node *idr_temp;
 };
+
+/* XXX Make the nm output a little more greppable...  */
+#define	idr_init		linux_idr_init
+#define	idr_destroy		linux_idr_destroy
+#define	idr_find		linux_idr_find
+#define	idr_replace		linux_idr_replace
+#define	idr_remove		linux_idr_remove
+#define	idr_remove_all		linux_idr_remove_all
+#define	idr_pre_get		linux_idr_pre_get
+#define	idr_get_new_above	linux_idr_get_new_above
+#define	idr_for_each		linux_idr_for_each
 
 void	idr_init(struct idr *);
 void	idr_destroy(struct idr *);
