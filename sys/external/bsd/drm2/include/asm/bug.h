@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.1.2.4 2013/07/24 02:56:03 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.5 2013/07/24 03:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 #define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
 
 /* XXX Rate limit?  */
-#define WARN(CONDITION, FMT, ...)	do				\
-{									\
-	if (CONDITION)							\
-		printf("warning: %s:%d: " FMT, __FILE__, __LINE__,	\
-		    ##__VA_ARGS__);					\
-} while (0)
+#define WARN(CONDITION, FMT, ...)					\
+	((CONDITION)?							\
+	    (printf("warning: %s:%d: " FMT, __FILE__, __LINE__,		\
+		##__VA_ARGS__), 1)					\
+	    : 0)
 
 #define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 #define	WARN_ON_SMP(CONDITION)	WARN_ON(CONDITION) /* XXX */
+#define	WARN_ON_ONCE(CONDITION)	WARN_ON(CONDITION) /* XXX */
 
 #endif  /* _ASM_BUG_H_ */
