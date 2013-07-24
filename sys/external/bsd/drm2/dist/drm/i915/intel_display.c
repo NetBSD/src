@@ -472,6 +472,7 @@ static void vlv_init_dpio(struct drm_device *dev)
 	POSTING_READ(DPIO_CTL);
 }
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 static int intel_dual_link_lvds_callback(const struct dmi_system_id *id)
 {
 	DRM_INFO("Forcing lvds to dual link mode on %s\n", id->ident);
@@ -489,6 +490,7 @@ static const struct dmi_system_id intel_dual_link_lvds[] = {
 	},
 	{ }	/* terminating entry */
 };
+#endif
 
 static bool is_dual_link_lvds(struct drm_i915_private *dev_priv,
 			      unsigned int reg)
@@ -499,8 +501,10 @@ static bool is_dual_link_lvds(struct drm_i915_private *dev_priv,
 	if (i915_lvds_channel_mode > 0)
 		return i915_lvds_channel_mode == 2;
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 	if (dmi_check_system(intel_dual_link_lvds))
 		return true;
+#endif
 
 	if (dev_priv->lvds_val)
 		val = dev_priv->lvds_val;
@@ -8797,6 +8801,7 @@ static void intel_init_display(struct drm_device *dev)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 /*
  * Some BIOSes insist on assuming the GPU's pipe A is enabled at suspend,
  * resume, or other times.  This quirk makes sure that's the case for
@@ -8910,6 +8915,7 @@ static void intel_init_quirks(struct drm_device *dev)
 			intel_dmi_quirks[i].hook(dev);
 	}
 }
+#endif
 
 /* Disable the VGA plane that we never use */
 static void i915_disable_vga(struct drm_device *dev)
@@ -8965,7 +8971,9 @@ void intel_modeset_init(struct drm_device *dev)
 
 	dev->mode_config.funcs = &intel_mode_funcs;
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 	intel_init_quirks(dev);
+#endif
 
 	intel_init_pm(dev);
 
