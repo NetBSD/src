@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.6 2013/07/24 03:16:15 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.7 2013/07/24 03:16:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.6 2013/07/24 03:16:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.7 2013/07/24 03:16:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -160,8 +160,7 @@ idr_remove_all(struct idr *idr)
 	struct idr_node *node;
 
 	rw_enter(&idr->idr_lock, RW_WRITER);
-	while ((node = rb_tree_iterate(&idr->idr_tree, NULL, RB_DIR_RIGHT)) !=
-	    NULL) {
+	while ((node = RB_TREE_MIN(&idr->idr_tree)) != NULL) {
 		rb_tree_remove_node(&idr->idr_tree, node);
 		rw_exit(&idr->idr_lock);
 		kmem_free(node, sizeof(*node));
@@ -223,12 +222,11 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 int
 idr_for_each(struct idr *idr, int (*proc)(int, void *, void *), void *arg)
 {
-	struct idr_node *node = NULL;
+	struct idr_node *node;
 	int error = 0;
 
 	rw_enter(&idr->idr_lock, RW_READER);
-	while ((node = rb_tree_iterate(&idr->idr_tree, node, RB_DIR_RIGHT))
-	    != NULL) {
+	RB_TREE_FOREACH(node, &idr->idr_tree) {
 		error = (*proc)(node->in_index, node->in_data, arg);
 		if (error)
 			break;
