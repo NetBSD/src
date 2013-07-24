@@ -1260,7 +1260,7 @@ void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 	I915_WRITE_CTL(ring, 0);
 
 #ifdef __NetBSD__
-	drm_iounmap(dev, &ring->virtual_start_map);
+	drm_iounmap(dev_priv->dev, &ring->virtual_start_map);
 	ring->virtual_start_mapped = false;
 #else
 	iounmap(ring->virtual_start);
