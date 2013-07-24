@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.1.2.3 2013/07/24 02:51:06 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.1.2.4 2013/07/24 03:58:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@
 #include <uvm/uvm_extern.h>
 
 #define	PAGE_ALIGN(x)	round_page(x)
+
+/* XXX Ugh bletch!  Whattakludge!  Linux's sense is reversed...  */
+#undef	PAGE_MASK
+#define	PAGE_MASK	(~(PAGE_SIZE-1))
 
 /*
  * ###################################################################
