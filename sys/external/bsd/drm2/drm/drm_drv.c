@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.19 2013/07/24 03:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.20 2013/07/24 03:58:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.19 2013/07/24 03:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.20 2013/07/24 03:58:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -271,7 +271,6 @@ drm_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_initialized = false;     /* paranoia */
 
-	dev->driver = daa->daa_driver;
 	sc->sc_drm_dev = dev;
 	sc->sc_opencount = 0;
 
@@ -294,16 +293,13 @@ drm_attach(device_t parent, device_t self, void *aux)
 		    sizeof(sc->sc_minor[i].mode_group));
 	}
 
-	/*
-	 * XXX drm_fill_in_dev reinitializes dev->driver as an artefact
-	 * of Linux's driver attachment goop.  Harmless.
-	 */
-	error = drm_fill_in_dev(dev, NULL, dev->driver);
+	error = drm_fill_in_dev(dev, NULL, daa->daa_driver);
 	if (error) {
 		aprint_error_dev(parent, "unable to initialize drm: %d\n",
 		    error);
 		goto fail0;
 	}
+	KASSERT(dev->driver == daa->daa_driver);
 
 	if (dev->driver->load != NULL) {
 		error = (*dev->driver->load)(dev, daa->daa_flags);
