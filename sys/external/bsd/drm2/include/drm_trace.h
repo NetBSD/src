@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_trace.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: drm_trace.h,v 1.1.2.2 2013/07/24 02:27:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,24 @@
 
 #ifndef _DRM_TRACE_H_
 #define _DRM_TRACE_H_
+
+#include <sys/types.h>
+
+static inline void
+trace_drm_vblank_event_delivered(pid_t pid __unused, int pipe __unused,
+    uint32_t sequence __unused)
+{
+}
+
+static inline void
+trace_drm_vblank_event_queued(pid_t pid __unused, int pipe __unused,
+    uint32_t sequence __unused)
+{
+}
+
+static inline void
+trace_drm_vblank_event(int crtc __unused, uint32_t sequence __unused)
+{
+}
 
 #endif  /* _DRM_TRACE_H_ */
