@@ -1091,9 +1091,15 @@ struct drm_driver {
 	int major;
 	int minor;
 	int patchlevel;
+#ifdef __NetBSD__
+	const char *name;
+	const char *desc;
+	const char *date;
+#else
 	char *name;
 	char *desc;
 	char *date;
+#endif
 
 	u32 driver_features;
 	int dev_priv_size;
