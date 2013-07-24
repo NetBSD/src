@@ -538,11 +538,13 @@ int i915_suspend(struct drm_device *dev, pm_message_t state)
 	if (error)
 		return error;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (state.event == PM_EVENT_SUSPEND) {
 		/* Shut down the device */
 		pci_disable_device(dev->pdev);
 		pci_set_power_state(dev->pdev, PCI_D3hot);
 	}
+#endif
 
 	return 0;
 }
@@ -630,8 +632,10 @@ int i915_resume(struct drm_device *dev)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (pci_enable_device(dev->pdev))
 		return -EIO;
+#endif
 
 	pci_set_master(dev->pdev);
 
@@ -956,8 +960,10 @@ static int i915_pm_suspend(struct device *dev)
 	if (error)
 		return error;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_disable_device(pdev);
 	pci_set_power_state(pdev, PCI_D3hot);
+#endif
 
 	return 0;
 }
