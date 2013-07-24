@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.15 2013/07/24 03:55:17 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.16 2013/07/24 03:56:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.15 2013/07/24 03:55:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.16 2013/07/24 03:56:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -287,6 +287,10 @@ drm_attach(device_t parent, device_t self, void *aux)
 	 */
 	error = drm_fill_in_dev(dev, NULL, dev->driver);
 	if (error) {
+		/*
+		 * XXX This leaves the driver in a state such that
+		 * detaching it will fail horribly.  Please fix!
+		 */
 		aprint_error_dev(parent, "unable to initialize drm: %d\n",
 		    error);
 		return;
@@ -331,6 +335,19 @@ drm_detach(device_t self, int flags)
 		    dev->agp->agp_info.ai_aperture_size);
 		DRM_DEBUG("mtrr_del=%d\n", error);
 	}
+
+	/* XXX The placement of this is pretty random...  */
+	if (dev->driver->unload != NULL)
+		(*dev->driver->unload)(dev);
+
+	/* XXX Move into dev->driver->bus->agp_destroy.  */
+	if (drm_core_has_AGP(dev) && (dev->agp != NULL)) {
+		kfree(dev->agp);
+		dev->agp = NULL;
+	}
+
+	/* XXX Remove the entries in this.  */
+	drm_ht_remove(&dev->map_hash);
 
 	linux_mutex_destroy(&dev->ctxlist_mutex);
 	linux_mutex_destroy(&dev->struct_mutex);
