@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.12 2013/07/24 02:50:07 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.13 2013/07/24 02:50:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define	__user
 #define	__must_check	/* __attribute__((warn_unused_result)), if GCC */
 
+#define	barrier()	__insn_barrier()
 #define	unlikely(X)	__predict_false(X)
 
 #define	container_of(PTR, TYPE, FIELD)					\
