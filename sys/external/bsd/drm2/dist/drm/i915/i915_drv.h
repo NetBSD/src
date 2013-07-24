@@ -404,9 +404,7 @@ struct intel_gmbus {
 	u32 force_bit;
 	u32 reg0;
 	u32 gpio_reg;
-#ifndef __NetBSD__		/* XXX i2c */
 	struct i2c_algo_bit_data bit_algo;
-#endif
 	struct drm_i915_private *dev_priv;
 };
 
