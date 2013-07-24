@@ -25,6 +25,7 @@
  *
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
+#include <linux/kernel.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -167,6 +168,28 @@ struct overlay_registers {
 	u16 RESERVEDG[0x100 / 2 - N_HORIZ_UV_TAPS * N_PHASES];
 };
 
+#ifdef __NetBSD__		/* XXX intel overlay iomem */
+#  define	__intel_overlay_iomem
+#  define	__iomem			__intel_overlay_iomem
+
+static inline uint32_t
+ioread32(const uint32_t __intel_overlay_iomem *ptr)
+{
+	const uint32_t value = *ptr;
+
+	__insn_barrier();
+	return value;
+}
+
+static inline void
+iowrite32(uint32_t value, uint32_t __intel_overlay_iomem *ptr)
+{
+
+	__insn_barrier();
+	*ptr = value;
+}
+#endif
+
 struct intel_overlay {
 	struct drm_device *dev;
 	struct intel_crtc *crtc;
@@ -204,8 +227,15 @@ intel_overlay_map_regs(struct intel_overlay *overlay)
 static void intel_overlay_unmap_regs(struct intel_overlay *overlay,
 				     struct overlay_registers __iomem *regs)
 {
+#ifdef __NetBSD__		/* XXX io mapping */
+	struct drm_i915_private *dev_priv = overlay->dev->dev_private;
+
+	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
+		io_mapping_unmap(dev_priv->mm.gtt_mapping, regs);
+#else
 	if (!OVERLAY_NEEDS_PHYSICAL(overlay->dev))
 		io_mapping_unmap(regs);
+#endif
 }
 
 static int intel_overlay_do_wait_request(struct intel_overlay *overlay,
