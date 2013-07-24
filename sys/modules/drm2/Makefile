@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.14 2013/07/24 02:25:54 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.15 2013/07/24 02:26:09 riastradh Exp $
 
 .include "../Makefile.inc"
 
@@ -28,7 +28,7 @@ SRCS+=	drm_fops.c
 SRCS+=	drm_global.c
 SRCS+=	drm_hashtab.c
 #SRCS+=	drm_info.c		# XXX Rewrite for sysctl or something.
-SRCS+=	drm_ioc32.c
+#SRCS+=	drm_ioc32.c
 SRCS+=	drm_ioctl.c
 SRCS+=	drm_irq.c
 SRCS+=	drm_lock.c
