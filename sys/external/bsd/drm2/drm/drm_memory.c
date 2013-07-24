@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.5 2013/07/24 03:02:21 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.6 2013/07/24 03:12:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.5 2013/07/24 03:02:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.6 2013/07/24 03:12:33 riastradh Exp $");
 
 /* XXX Cargo-culted from the old drm_memory.c.  */
 
@@ -330,4 +330,57 @@ drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah)
 	bus_dmamem_free(dmah->dmah_tag, &dmah->dmah_seg, 1);
 	dmah->dmah_tag = NULL;	/* XXX paranoia */
 	kmem_free(dmah, sizeof(*dmah));
+}
+
+/*
+ * Make sure the DMA-safe memory allocated for dev lies between
+ * min_addr and max_addr.  Can be used multiple times to restrict the
+ * bounds further, but never to expand the bounds again.
+ *
+ * XXX Caller must guarantee nobody has used the tag yet,
+ * i.e. allocated any DMA memory.
+ */
+int
+drm_limit_dma_space(struct drm_device *dev, resource_size_t min_addr,
+    resource_size_t max_addr)
+{
+	int error;
+
+	KASSERT(min_addr <= max_addr);
+
+	/*
+	 * Limit it further if we have already limited it, and destroy
+	 * the old subregion DMA tag.
+	 */
+	if (dev->dmat_subregion_p) {
+		min_addr = MAX(min_addr, dev->dmat_subregion_min);
+		max_addr = MIN(max_addr, dev->dmat_subregion_max);
+		bus_dmatag_destroy(dev->dmat);
+	}
+
+	/*
+	 * Create a DMA tag for a subregion from the bus's DMA tag.  If
+	 * that fails, restore dev->dmat to the whole region so that we
+	 * need not worry about dev->dmat being uninitialized (not that
+	 * the caller should try to allocate DMA-safe memory on failure
+	 * anyway, but...paranoia).
+	 */
+	error = bus_dmatag_subregion(dev->bus_dmat, min_addr, max_addr,
+	    &dev->dmat, BUS_DMA_WAITOK);
+	if (error) {
+		dev->dmat = dev->bus_dmat;
+		return error;
+	}
+
+	/*
+	 * Remember that we have a subregion tag so that we know to
+	 * destroy it later, and record the bounds in case we need to
+	 * limit them again.
+	 */
+	dev->dmat_subregion_p = true;
+	dev->dmat_subregion_min = min_addr;
+	dev->dmat_subregion_max = max_addr;
+
+	/* Success!  */
+	return 0;
 }
