@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.8 2013/07/24 04:02:43 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.9 2013/07/24 04:02:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.8 2013/07/24 04:02:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.9 2013/07/24 04:02:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -192,18 +192,23 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 {
 	struct idr_node *node, *search, *collision __unused;
 	int want_id = min_id;
+	int error;
 
 	rw_enter(&idr->idr_lock, RW_WRITER);
 
 	node = idr->idr_temp;
 	if (node == NULL) {
-		rw_exit(&idr->idr_lock);
-		return -EAGAIN;
+		error = -EAGAIN;
+		goto out;
 	}
 	idr->idr_temp = NULL;
 
 	search = rb_tree_find_node_geq(&idr->idr_tree, &min_id);
 	while ((search != NULL) && (search->in_index == want_id)) {
+		if (want_id == INT_MAX) {
+			error = -ENOSPC;
+			goto out;
+		}
 		search = rb_tree_iterate(&idr->idr_tree, search, RB_DIR_RIGHT);
 		want_id++;
 	}
@@ -214,10 +219,11 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 	collision = rb_tree_insert_node(&idr->idr_tree, node);
 	KASSERT(collision == node);
 
-	rw_exit(&idr->idr_lock);
-
 	*id = want_id;
-	return 0;
+	error = 0;
+
+out:	rw_exit(&idr->idr_lock);
+	return error;
 }
 
 int
