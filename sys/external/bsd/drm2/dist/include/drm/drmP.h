@@ -2088,6 +2088,16 @@ DRM_READ32(struct drm_local_map *map, bus_size_t offset)
 		return *(volatile uint32_t *)((vaddr_t)map->handle + offset);
 }
 
+static inline uint64_t
+DRM_READ64(struct drm_local_map *map, bus_size_t offset)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		return bus_space_read_8(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, offset);
+	else
+		return *(volatile uint64_t *)((vaddr_t)map->handle + offset);
+}
+
 static inline void
 DRM_WRITE8(struct drm_local_map *map, bus_size_t offset, uint8_t value)
 {
@@ -2116,6 +2126,16 @@ DRM_WRITE32(struct drm_local_map *map, bus_size_t offset, uint32_t value)
 		    map->lm_data.bus_space.bsh, offset, value);
 	else
 		*(volatile uint32_t *)((vaddr_t)map->handle + offset) = value;
+}
+
+static inline void
+DRM_WRITE64(struct drm_local_map *map, bus_size_t offset, uint64_t value)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		bus_space_write_8(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, offset, value);
+	else
+		*(volatile uint64_t *)((vaddr_t)map->handle + offset) = value;
 }
 #endif	/* defined(__NetBSD__) */
 
