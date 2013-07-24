@@ -30,7 +30,9 @@
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
+#ifndef __NetBSD__		/* XXX fb */
 #include <drm/drm_fb_helper.h>
+#endif
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -1315,9 +1317,11 @@ static int i915_load_modeset_init(struct drm_device *dev)
 	/* FIXME: do pre/post-mode set stuff in core KMS code */
 	dev->vblank_disable_allowed = 1;
 
+#ifndef __NetBSD__		/* XXX fb */
 	ret = intel_fbdev_init(dev);
 	if (ret)
 		goto cleanup_irq;
+#endif
 
 	drm_kms_helper_poll_init(dev);
 
@@ -1326,8 +1330,10 @@ static int i915_load_modeset_init(struct drm_device *dev)
 
 	return 0;
 
+#ifndef __NetBSD__		/* XXX fb */
 cleanup_irq:
 	drm_irq_uninstall(dev);
+#endif
 cleanup_gem:
 	mutex_lock(&dev->struct_mutex);
 	i915_gem_cleanup_ringbuffer(dev);
@@ -1390,6 +1396,7 @@ i915_mtrr_setup(struct drm_i915_private *dev_priv, unsigned long base,
 	}
 }
 
+#ifndef __NetBSD__		/* XXX fb */
 static void i915_kick_out_firmware_fb(struct drm_i915_private *dev_priv)
 {
 	struct apertures_struct *ap;
@@ -1410,6 +1417,7 @@ static void i915_kick_out_firmware_fb(struct drm_i915_private *dev_priv)
 
 	kfree(ap);
 }
+#endif
 
 static void i915_dump_device_info(struct drm_i915_private *dev_priv)
 {
@@ -1476,8 +1484,10 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	if (ret)
 		goto put_bridge;
 
+#ifndef __NetBSD__		/* XXX fb */
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		i915_kick_out_firmware_fb(dev_priv);
+#endif
 
 	pci_set_master(dev->pdev);
 
@@ -1708,7 +1718,9 @@ int i915_driver_unload(struct drm_device *dev)
 	acpi_video_unregister();
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
+#ifndef __NetBSD__		/* XXX fb */
 		intel_fbdev_fini(dev);
+#endif
 		intel_modeset_cleanup(dev);
 		cancel_work_sync(&dev_priv->console_resume_work);
 
