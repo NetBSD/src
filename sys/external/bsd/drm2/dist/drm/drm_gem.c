@@ -147,9 +147,16 @@ int drm_gem_object_init(struct drm_device *dev,
 	BUG_ON((size & (PAGE_SIZE - 1)) != 0);
 
 	obj->dev = dev;
+#ifdef __NetBSD__
+	obj->gemo_shm_uao = uao_create(size, 0);
+	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
+	KASSERT(dev->driver->gem_uvm_ops != NULL);
+	uvm_obj_init(&obj->gemo_uvmobj, dev->driver->gem_uvm_ops, true, 1);
+#else
 	obj->filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
 	if (IS_ERR(obj->filp))
 		return PTR_ERR(obj->filp);
+#endif
 
 	kref_init(&obj->refcount);
 	atomic_set(&obj->handle_count, 0);
@@ -170,7 +177,14 @@ int drm_gem_private_object_init(struct drm_device *dev,
 	BUG_ON((size & (PAGE_SIZE - 1)) != 0);
 
 	obj->dev = dev;
+#ifdef __NetBSD__
+	obj->gemo_shm_uao = NULL;
+	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
+	KASSERT(dev->driver->gem_uvm_ops != NULL);
+	uvm_obj_init(&obj->gemo_uvmobj, dev->driver->gem_uvm_ops, true, 1);
+#else
 	obj->filp = NULL;
+#endif
 
 	kref_init(&obj->refcount);
 	atomic_set(&obj->handle_count, 0);
@@ -201,8 +215,12 @@ drm_gem_object_alloc(struct drm_device *dev, size_t size)
 	}
 	return obj;
 fput:
+#ifdef __NetBSD__
+	drm_gem_object_release(obj);
+#else
 	/* Object_init mangles the global counters - readjust them. */
 	fput(obj->filp);
+#endif
 free:
 	kfree(obj);
 	return NULL;
@@ -578,13 +596,22 @@ drm_gem_release(struct drm_device *dev, struct drm_file *file_private)
 
 	idr_remove_all(&file_private->object_idr);
 	idr_destroy(&file_private->object_idr);
+#ifdef __NetBSD__
+	spin_lock_destroy(&file_private->table_lock);
+#endif
 }
 
 void
 drm_gem_object_release(struct drm_gem_object *obj)
 {
+#ifdef __NetBSD__
+	if (obj->gemo_shm_uao)
+		uao_detach(obj->gemo_shm_uao);
+	uvm_obj_destroy(&obj->gemo_uvmobj, true);
+#else
 	if (obj->filp)
 	    fput(obj->filp);
+#endif
 }
 EXPORT_SYMBOL(drm_gem_object_release);
 
