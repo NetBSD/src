@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.1.2.3 2013/07/24 03:25:47 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.1.2.4 2013/07/24 03:29:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,118 @@
 
 #include <sys/types.h>
 
+#include "intel_drv.h"
+
+static inline void
+trace_i915_flip_complete(enum plane plane __unused,
+    struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_flip_request(enum plane plane __unused,
+    struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_gem_evict(struct drm_device *dev __unused, int min_size __unused,
+    unsigned int alignment __unused, bool mappable __unused)
+{
+}
+
+static inline void
+trace_i915_gem_evict_everything(struct drm_device *dev __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_bind(struct drm_i915_gem_object *obj __unused,
+    bool map_and_fenceable __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_change_domain(struct drm_i915_gem_object *obj __unused,
+    uint32_t read_domains __unused, uint32_t old_write_domain __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_clflush(struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_create(struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_destroy(struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_fault(struct drm_i915_gem_object *obj __unused,
+    pgoff_t page_offset __unused, bool gtt __unused, bool write __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_pread(struct drm_i915_gem_object *obj __unused,
+    uint32_t offset __unused, uint32_t size __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_pwrite(struct drm_i915_gem_object *obj __unused,
+    uint32_t offset __unused, uint32_t size __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_add(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_complete(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_retire(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_wait_begin(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_wait_end(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused)
+{
+}
+
+static inline void
+trace_i915_gem_ring_dispatch(struct intel_ring_buffer *ring __unused,
+    uint32_t seqno __unused, uint32_t flags __unused)
+{
+}
+
+static inline void
+trace_i915_gem_ring_flush(struct intel_ring_buffer *ring __unused,
+    uint32_t invalidate __unused, uint32_t flags __unused)
+{
+}
+
 static inline void
 trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
     uint64_t value __unused, size_t len __unused)
@@ -41,7 +153,17 @@ trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
 }
 
 static inline void
-trace_i915_gem_object_create(struct drm_i915_gem_object *obj __unused)
+trace_i915_ring_wait_begin(struct intel_ring_buffer *ring __unused)
+{
+}
+
+static inline void
+trace_i915_ring_wait_end(struct intel_ring_buffer *ring __unused)
+{
+}
+
+static inline void
+trace_intel_gpu_freq_change(unsigned int freq __unused)
 {
 }
 
