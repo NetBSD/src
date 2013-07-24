@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.1.2.5 2013/07/24 02:00:44 riastradh Exp $	*/
+/*	$NetBSD: drm_copy_netbsd.h,v 1.1.2.1 2013/07/24 02:00:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,16 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_OS_NETBSD_H_
-#define _DRM_DRM_OS_NETBSD_H_
+#ifndef _DRM_DRM_COPY_NETBSD_H_
+#define _DRM_DRM_COPY_NETBSD_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_drm.h"
-#endif
+#include <sys/types.h>
+#include <sys/systm.h>
 
-#include <drm/drm_agp_netbsd.h>
-#include <drm/drm_copy_netbsd.h>
-#include <drm/drm_irq_netbsd.h>
-#include <drm/drm_wait_netbsd.h>
+static inline int
+DRM_COPY_FROM_USER(void *kernel_addr, const void *user_addr, size_t len)
+{
+	return copyin(user_addr, kernel_addr, len);
+}
+
+static inline int
+DRM_COPY_TO_USER(const void *kernel_addr, void *user_addr, size_t len)
+{
+	return copyout(kernel_addr, user_addr, len);
+}
 
 #endif  /* _DRM_DRM_OS_NETBSD_H_ */
