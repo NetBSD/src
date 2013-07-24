@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.1.2.2 2013/07/24 02:02:45 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.1.2.3 2013/07/24 02:25:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,12 @@
 
 static inline void *
 vmalloc_user(unsigned long size)
+{
+	return malloc(size, M_TEMP, (M_WAITOK | M_ZERO));
+}
+
+static inline void *
+vzalloc(unsigned long size)
 {
 	return malloc(size, M_TEMP, (M_WAITOK | M_ZERO));
 }
