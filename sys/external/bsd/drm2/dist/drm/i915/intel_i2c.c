@@ -552,4 +552,8 @@ void intel_teardown_gmbus(struct drm_device *dev)
 		struct intel_gmbus *bus = &dev_priv->gmbus[i];
 		i2c_del_adapter(&bus->adapter);
 	}
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev_priv->gmbus_mutex);
+#endif
 }
