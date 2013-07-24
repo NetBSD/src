@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.3 2013/07/24 01:53:40 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.4 2013/07/24 02:09:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct delayed_work {
 };
 
 static inline void
-INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct delayed_work *))
+INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 {
 
 	callout_init(&dw->dw_work.ws_callout, 0);
