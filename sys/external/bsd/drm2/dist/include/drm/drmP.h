@@ -1359,7 +1359,11 @@ struct drm_device {
 	/* XXX What does this have to do with AGP?  */
 	struct drm_bus_map *agp_maps;
 	size_t agp_nmaps;
+	bus_dma_tag_t bus_dmat;
 	bus_dma_tag_t dmat;
+	bool dmat_subregion_p;
+	bus_addr_t dmat_subregion_min;
+	bus_addr_t dmat_subregion_max;
 #endif
 
 	struct drm_sg_mem *sg;	/**< Scatter gather memory */
@@ -1526,6 +1530,8 @@ extern int drm_unbind_agp(DRM_AGP_MEM * handle);
 #ifdef __NetBSD__
 extern void *drm_ioremap(struct drm_device *dev, struct drm_local_map *map);
 extern void drm_iounmap(struct drm_device *dev, struct drm_local_map *map);
+extern int drm_limit_dma_space(struct drm_device *, resource_size_t,
+    resource_size_t);
 #endif
 
 				/* Misc. IOCTL support (drm_ioctl.h) */
