@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.3 2013/07/24 03:00:34 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.4 2013/07/24 03:01:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,19 @@
 #ifndef _LINUX_PCI_H_
 #define _LINUX_PCI_H_
 
+#include <sys/types.h>
+#include <sys/bus.h>
+#include <sys/systm.h>
+
 #include <dev/pci/pcivar.h>
 
+#include <linux/ioport.h>
+
+struct pci_bus;
 struct pci_device_id;
 
 struct pci_dev {
+	struct pci_bus *bus;
 	struct pci_attach_args pd_pa;
 };
 
@@ -50,15 +58,58 @@ pci_find_capability(struct pci_dev *pdev, int cap)
 }
 
 static inline void
-pci_config_read_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
+pci_read_config_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
 {
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg);
 }
 
 static inline void
-pci_config_write_dword(struct pci_dev *pdev, int reg, uint32_t value)
+pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 {
 	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, value);
+}
+
+#define	PCIBIOS_MIN_MEM	0	/* XXX bogus x86 kludge bollocks */
+
+static inline bus_addr_t
+pcibios_align_resource(void *p, const struct resource *resource,
+    bus_addr_t addr, bus_size_t size)
+{
+	panic("pcibios_align_resource has accessed unaligned neurons!");
+}
+
+static inline int
+pci_bus_alloc_resource(struct pci_bus *bus, struct resource *resource,
+    bus_size_t size, bus_size_t align, bus_addr_t start, int type __unused,
+    bus_addr_t (*align_fn)(void *, const struct resource *, bus_addr_t,
+	bus_size_t) __unused,
+    struct pci_dev *pdev)
+{
+	const struct pci_attach_args *const pa = &pdev->pd_pa;
+	bus_space_tag_t bst;
+	int error;
+
+	switch (resource->flags) {
+	case IORESOURCE_MEM:
+		bst = pa->pa_memt;
+		break;
+
+	case IORESOURCE_IO:
+		bst = pa->pa_iot;
+		break;
+
+	default:
+		panic("I don't know what kind of resource you want!");
+	}
+
+	resource->r_bst = bst;
+	error = bus_space_alloc(bst, start, 0xffffffffffffffffULL /* XXX */,
+	    size, align, 0, 0, &resource->start, &resource->r_bsh);
+	if (error)
+		return error;
+
+	resource->size = size;
+	return 0;
 }
 
 #endif  /* _LINUX_PCI_H_ */
