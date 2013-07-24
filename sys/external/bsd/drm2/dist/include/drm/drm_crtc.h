@@ -114,6 +114,15 @@ enum drm_mode_status {
 #define DRM_MODE_TYPE_CLOCK_CRTC_C (DRM_MODE_TYPE_CLOCK_C | \
 				    DRM_MODE_TYPE_CRTC_C)
 
+#ifdef __NetBSD__
+#define DRM_MODE(nm, t, c, hd, hss, hse, ht, hsk, vd, vss, vse, vt, vs, f) \
+	.name = nm, .status = 0, .type = (t), .clock = (c), \
+	.hdisplay = (hd), .hsync_start = (hss), .hsync_end = (hse), \
+	.htotal = (ht), .hskew = (hsk), .vdisplay = (vd), \
+	.vsync_start = (vss), .vsync_end = (vse), .vtotal = (vt), \
+	.vscan = (vs), .flags = (f), .vrefresh = 0, \
+	.base = { .type = DRM_MODE_OBJECT_MODE }
+#else
 #define DRM_MODE(nm, t, c, hd, hss, hse, ht, hsk, vd, vss, vse, vt, vs, f) \
 	.name = nm, .status = 0, .type = (t), .clock = (c), \
 	.hdisplay = (hd), .hsync_start = (hss), .hsync_end = (hse), \
@@ -121,6 +130,7 @@ enum drm_mode_status {
 	.vsync_start = (vss), .vsync_end = (vse), .vtotal = (vt), \
 	.vscan = (vs), .flags = (f), .vrefresh = 0, \
 	.base.type = DRM_MODE_OBJECT_MODE
+#endif
 
 #define CRTC_INTERLACE_HALVE_V 0x1 /* halve V values for interlacing */
 
