@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.1.2.2 2013/07/24 03:52:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* intel_pm.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.2 2013/07/24 03:52:52 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -111,5 +111,10 @@ intel_update_sprite_watermarks(struct drm_device *dev __unused,
 
 void
 intel_update_watermarks(struct drm_device *dev __unused)
+{
+}
+
+void
+ironlake_teardown_rc6(struct drm_device *dev __unused)
 {
 }
