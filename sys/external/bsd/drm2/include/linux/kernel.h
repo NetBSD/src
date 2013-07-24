@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.17 2013/07/24 03:03:37 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.18 2013/07/24 03:28:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,11 +46,26 @@
 
 #define	uninitialized_var(x)	x
 
-#define	round_up(X, Y)	roundup2(X, Y)
+/*
+ * Rounding to powers of two -- carefully avoiding multiple evaluation
+ * of arguments and pitfalls with C integer arithmetic rules.
+ */
+#define	round_up(X, N)		((((X) - 1) | ((N) - 1)) + 1)
+#define	round_down(X, N)	((X) & ~(uintmax_t)((N) - 1))
 
+/*
+ * These select 32-bit halves of what may be 32- or 64-bit quantities,
+ * for which straight 32-bit shifts may be undefined behaviour (and do
+ * the wrong thing on most machines: return the input unshifted by
+ * ignoring the upper bits of the shift count).
+ */
 #define	upper_32_bits(X)	((uint32_t) (((X) >> 16) >> 16))
 #define	lower_32_bits(X)	((uint32_t) ((X) & 0xffffffffUL))
 
+/*
+ * Given x = &c->f, container_of(x, T, f) gives us back c, where T is
+ * the type of c.
+ */
 #define	container_of(PTR, TYPE, FIELD)					\
 	((void)sizeof((PTR) -						\
 		&((TYPE *)(((char *)(PTR)) -				\
