@@ -2711,7 +2711,12 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	struct drm_device *dev = intel_encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_display_mode *fixed_mode = NULL;
+#ifdef __NetBSD__
+	static const struct edp_power_seq zero_power_seq;
+	struct edp_power_seq power_seq = zero_power_seq;
+#else
 	struct edp_power_seq power_seq = { 0 };
+#endif
 	enum port port = intel_dig_port->port;
 	const char *name = NULL;
 	int type;
