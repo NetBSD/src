@@ -954,7 +954,12 @@ static int i915_getparam(struct drm_device *dev, void *data,
 
 	switch (param->param) {
 	case I915_PARAM_IRQ_ACTIVE:
+#ifdef __NetBSD__
+		/* XXX This is the old code; why was it changed upstream?  */
+		value = dev->irq_enabled ? 1 : 0;
+#else
 		value = dev->pdev->irq ? 1 : 0;
+#endif
 		break;
 	case I915_PARAM_ALLOW_BATCHBUFFER:
 		value = dev_priv->dri1.allow_batchbuffer ? 1 : 0;
