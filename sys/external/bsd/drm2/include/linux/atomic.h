@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.2 2013/07/24 00:48:34 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.3 2013/07/24 01:55:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _LINUX_ATOMIC_H_
 #define _LINUX_ATOMIC_H_
 
+#include <sys/atomic.h>
+
 typedef struct {
 	int atomic_value;
 } atomic_t;
@@ -40,6 +42,24 @@ static inline int
 atomic_read(atomic_t *atomic)
 {
 	return *(volatile int *)&atomic->atomic_value;
+}
+
+static inline void
+atomic_set(atomic_t *atomic, int value)
+{
+	atomic->atomic_value = value;
+}
+
+static inline void
+atomic_inc(atomic_t *atomic)
+{
+	atomic_inc_uint((unsigned int *)&atomic->atomic_value);
+}
+
+static inline int
+atomic_dec_and_test(atomic_t *atomic)
+{
+	return (-1 == (int)atomic_dec_uint_nv(&atomic->atomic_value));
 }
 
 #endif  /* _LINUX_ATOMIC_H_ */
