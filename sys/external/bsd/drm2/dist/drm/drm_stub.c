@@ -316,6 +316,12 @@ int drm_fill_in_dev(struct drm_device *dev,
 #endif
 
 	if (drm_ht_create(&dev->map_hash, 12)) {
+#ifdef __NetBSD__
+		spin_lock_destroy(&dev->count_lock);
+		spin_lock_destroy(&dev->event_lock);
+		linux_mutex_destroy(&dev->struct_mutex);
+		linux_mutex_destroy(&dev->ctxlist_mutex);
+#endif
 		return -ENOMEM;
 	}
 
