@@ -5414,7 +5414,12 @@ static void ironlake_set_m_n(struct drm_crtc *crtc,
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	enum transcoder cpu_transcoder = intel_crtc->cpu_transcoder;
 	struct intel_encoder *intel_encoder, *edp_encoder = NULL;
+#ifdef __NetBSD__
+	static const struct fdi_m_n zero_m_n;
+	struct fdi_m_n m_n = zero_m_n;
+#else
 	struct fdi_m_n m_n = {0};
+#endif
 	int target_clock, pixel_multiplier, lane, link_bw;
 	bool is_dp = false, is_cpu_edp = false;
 
