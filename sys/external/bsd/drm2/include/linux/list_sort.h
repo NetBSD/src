@@ -1,4 +1,4 @@
-/*	$NetBSD: list_sort.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: list_sort.h,v 1.1.2.2 2013/07/24 02:55:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,10 @@
 
 #ifndef _LINUX_LIST_SORT_H_
 #define _LINUX_LIST_SORT_H_
+
+struct list_head;
+
+void	list_sort(void *, struct list_head *,
+	    int (*)(void *, struct list_head *, struct list_head *));
 
 #endif  /* _LINUX_LIST_SORT_H_ */

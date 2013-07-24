@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.32 2013/07/24 02:55:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.33 2013/07/24 02:55:48 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -49,5 +49,6 @@ SRCS+=	drm_vm.c
 SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
 SRCS+=	linux_idr.c
+SRCS+=	linux_list_sort.c
 
 .include <bsd.kmodule.mk>
