@@ -168,9 +168,16 @@ get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *lvds_lfp_data,
 	int dvo_timing_offset =
 		lvds_lfp_data_ptrs->ptr[0].dvo_timing_offset -
 		lvds_lfp_data_ptrs->ptr[0].fp_timing_offset;
+#ifdef __NetBSD__
+	const char *entry = (const char *)lvds_lfp_data->data +
+	    lfp_data_size * index;
+
+	return (const struct lvds_dvo_timing *)(entry + dvo_timing_offset);
+#else
 	char *entry = (char *)lvds_lfp_data->data + lfp_data_size * index;
 
 	return (struct lvds_dvo_timing *)(entry + dvo_timing_offset);
+#endif
 }
 
 /* get lvds_fp_timing entry
