@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.4 2013/07/24 03:53:30 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.5 2013/07/24 03:54:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.4 2013/07/24 03:53:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.5 2013/07/24 03:54:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -182,5 +182,5 @@ drm_pci_irq_by_busid(struct drm_device *dev, struct drm_irq_busid *busid)
 static int
 drm_pci_agp_init(struct drm_device *dev)
 {
-	return -ENOSYS;		/* XXX */
+	return 0;		/* XXX */
 }
