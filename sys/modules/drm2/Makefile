@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1.2.9 2013/07/24 02:17:56 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.10 2013/07/24 02:18:11 riastradh Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	${S}/external/bsd/drm2/dist/drm
+.PATH:	${S}/external/bsd/drm2/drm
 .PATH:	${S}/external/bsd/drm2/linux
+.PATH:	${S}/external/bsd/drm2/dist/drm
 
 KMOD=	drm2
 
