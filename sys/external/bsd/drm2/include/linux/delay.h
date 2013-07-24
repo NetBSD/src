@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.1.2.2 2013/07/24 03:03:06 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.1.2.3 2013/07/24 03:31:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _LINUX_DELAY_H_
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 
 #include <machine/param.h>
