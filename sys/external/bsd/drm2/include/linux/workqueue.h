@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.5 2013/07/24 03:04:04 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.6 2013/07/24 03:37:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/callout.h>
 
+#include <asm/bug.h>
 #include <linux/kernel.h>
 
 /*
@@ -113,6 +114,9 @@ static inline void
 destroy_workqueue(struct workqueue_struct *wq __unused)
 {
 }
+
+#define	flush_workqueue(wq)		WARN(true, "Can't flush workqueues!");
+#define	flush_scheduled_work(wq)	WARN(true, "Can't flush workqueues!");
 
 static inline void
 queue_work(struct workqueue_struct *wq __unused, struct work_struct *work)
