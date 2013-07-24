@@ -662,6 +662,7 @@ init_vbt_defaults(struct drm_i915_private *dev_priv)
 	DRM_DEBUG_KMS("Set default to SSC at %dMHz\n", dev_priv->lvds_ssc_freq);
 }
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 static int __init intel_no_opregion_vbt_callback(const struct dmi_system_id *id)
 {
 	DRM_DEBUG_KMS("Falling back to manually reading VBT from "
@@ -681,6 +682,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 	},
 	{ }
 };
+#endif
 
 /**
  * intel_parse_bios - find VBT and initialize settings from the BIOS
@@ -701,6 +703,7 @@ intel_parse_bios(struct drm_device *dev)
 
 	init_vbt_defaults(dev_priv);
 
+#ifndef __NetBSD__		/* XXX dmi hack */
 	/* XXX Should this validation be moved to intel_opregion.c? */
 	if (!dmi_check_system(intel_no_opregion_vbt) && dev_priv->opregion.vbt) {
 		struct vbt_header *vbt = dev_priv->opregion.vbt;
@@ -711,6 +714,7 @@ intel_parse_bios(struct drm_device *dev)
 		} else
 			dev_priv->opregion.vbt = NULL;
 	}
+#endif
 
 	if (bdb == NULL) {
 		struct vbt_header *vbt = NULL;
