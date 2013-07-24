@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.2.1 2013/07/24 03:27:18 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.1.2.2 2013/07/24 03:54:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.1 2013/07/24 03:27:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.2.2 2013/07/24 03:54:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize the drm pci driver state.  */
+	sc->sc_drm_dev.driver = i915_drm_driver;
 	drm_pci_attach(self, pa, &sc->sc_pci_dev, &sc->sc_drm_dev);
 
 	/* Attach the drm driver.  */
