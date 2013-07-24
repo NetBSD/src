@@ -416,7 +416,9 @@ static void ivybridge_parity_work(struct work_struct *work)
 	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
 						    l3_parity.error_work);
 	u32 error_status, row, bank, subbank;
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	char *parity_event[5];
+#endif
 	uint32_t misccpctl;
 	unsigned long flags;
 
@@ -448,6 +450,7 @@ static void ivybridge_parity_work(struct work_struct *work)
 
 	mutex_unlock(&dev_priv->dev->struct_mutex);
 
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	parity_event[0] = "L3_PARITY_ERROR=1";
 	parity_event[1] = kasprintf(GFP_KERNEL, "ROW=%d", row);
 	parity_event[2] = kasprintf(GFP_KERNEL, "BANK=%d", bank);
@@ -463,6 +466,7 @@ static void ivybridge_parity_work(struct work_struct *work)
 	kfree(parity_event[3]);
 	kfree(parity_event[2]);
 	kfree(parity_event[1]);
+#endif
 }
 
 static void ivybridge_handle_parity_error(struct drm_device *dev)
@@ -846,18 +850,24 @@ static void i915_error_work_func(struct work_struct *work)
 	drm_i915_private_t *dev_priv = container_of(work, drm_i915_private_t,
 						    error_work);
 	struct drm_device *dev = dev_priv->dev;
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 	char *error_event[] = { "ERROR=1", NULL };
 	char *reset_event[] = { "RESET=1", NULL };
 	char *reset_done_event[] = { "ERROR=0", NULL };
 
 	kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, error_event);
+#endif
 
 	if (atomic_read(&dev_priv->mm.wedged)) {
 		DRM_DEBUG_DRIVER("resetting chip\n");
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 		kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, reset_event);
+#endif
 		if (!i915_reset(dev)) {
 			atomic_set(&dev_priv->mm.wedged, 0);
+#ifndef __NetBSD__		/* XXX kobject uevent...? */
 			kobject_uevent_env(&dev->primary->kdev.kobj, KOBJ_CHANGE, reset_done_event);
+#endif
 		}
 		complete_all(&dev_priv->error_completion);
 	}
