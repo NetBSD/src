@@ -1378,6 +1378,10 @@ extern DRM_AGP_MEM *drm_agp_bind_pages(struct drm_device *dev,
 				       uint32_t gtt_offset,
 				       uint32_t type);
 extern int drm_unbind_agp(DRM_AGP_MEM * handle);
+#ifdef __NetBSD__
+extern void *drm_ioremap(struct drm_device *dev, struct drm_local_map *map);
+extern void drm_iounmap(struct drm_device *dev, struct drm_local_map *map);
+#endif
 
 				/* Misc. IOCTL support (drm_ioctl.h) */
 extern int drm_irq_by_busid(struct drm_device *dev, void *data,
