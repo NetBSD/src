@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.5 2013/07/24 02:08:01 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.6 2013/07/24 02:27:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,12 +34,14 @@
 
 #include <sys/atomic.h>
 
-typedef struct {
+struct atomic {
 	union {
 		int au_int;
 		unsigned int au_uint;
 	} a_u;
-} atomic_t;
+};
+
+typedef struct atomic atomic_t;
 
 static inline int
 atomic_read(atomic_t *atomic)
