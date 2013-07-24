@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.4 2013/07/24 02:10:15 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.5 2013/07/24 02:37:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,13 @@ static inline void
 linux_mutex_init(struct mutex *mutex)
 {
 	mutex_init(&mutex->mtx_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+/* Another name collision.  */
+static inline void
+linux_mutex_destroy(struct mutex *mutex)
+{
+	mutex_destroy(&mutex->mtx_lock);
 }
 
 static inline void
