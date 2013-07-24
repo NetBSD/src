@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.2.4 2013/07/24 01:51:06 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.5 2013/07/24 01:54:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,5 +45,8 @@ typedef int32_t s32;
 typedef int64_t s64;
 
 typedef bus_size_t resource_size_t;
+
+/* XXX Is this the right type?  */
+typedef unsigned long long cycles_t;
 
 #endif  /* _LINUX_TYPES_H_ */
