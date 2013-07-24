@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.7 2013/07/24 03:58:51 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.8 2013/07/24 04:05:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.7 2013/07/24 03:58:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.8 2013/07/24 04:05:34 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -114,7 +114,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	    KM_SLEEP);
 	for (unit = 0; unit < dev->bus_nmaps; unit++) {
 		struct drm_bus_map *const bm = &dev->bus_maps[unit];
-		const int reg = (PCI_MAPREG_START + (unit*4));
+		const int reg = PCI_BAR(unit);
 		const pcireg_t type =
 		    pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
 
