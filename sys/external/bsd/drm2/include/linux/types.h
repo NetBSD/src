@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.2.6 2013/07/24 02:12:29 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.7 2013/07/24 02:50:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,7 +49,13 @@ typedef uint16_t __le16;
 typedef uint32_t __le32;
 typedef uint64_t __le64;
 
-typedef bus_size_t resource_size_t;
+/*
+ * This is used for absolute bus addresses, so it has to be bus_addr_t
+ * and not bus_size_t; bus_addr_t is sometimes wider than bus_size_t.
+ */
+typedef bus_addr_t resource_size_t;
+
+typedef paddr_t phys_addr_t;
 
 /* XXX Is this the right type?  */
 typedef unsigned long long cycles_t;
