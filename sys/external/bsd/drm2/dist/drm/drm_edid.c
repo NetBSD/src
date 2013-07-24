@@ -34,6 +34,7 @@
 #include <linux/moduleparam.h>
 #include <linux/export.h>
 #include <linux/printk.h>
+#include <linux/device.h>
 #include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
