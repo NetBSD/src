@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.1 2013/07/24 00:07:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2013/07/24 00:38:15 riastradh Exp $
 
 .include "../Makefile.inc"
 
@@ -41,7 +41,9 @@ SRCS+=	drm_scatter.c
 SRCS+=	drm_stub.c
 SRCS+=	drm_vm.c
 
+CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/uapi
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/include
+CPPFLAGS+=	-D__KERNEL__
 
 .include <bsd.kmodule.mk>
