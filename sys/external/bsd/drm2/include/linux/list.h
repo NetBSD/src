@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.9 2013/07/24 02:36:04 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.10 2013/07/24 02:36:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -65,6 +65,12 @@ static inline struct list_head *
 list_next(const struct list_head *node)
 {
 	return node->lh_next;
+}
+
+static inline struct list_head *
+list_prev(const struct list_head *node)
+{
+	return node->lh_prev;
 }
 
 static inline int
