@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.1 2013/07/24 02:35:07 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.2 2013/07/24 03:24:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.1 2013/07/24 02:35:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.2 2013/07/24 03:24:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -71,6 +71,28 @@ static const struct pci_attach_args *
 drm_pci_attach_args(struct drm_device *dev)
 {
 	return &dev->pdev->pd_pa;
+}
+
+void
+drm_pci_attach(device_t self, const struct pci_attach_args *pa,
+    struct pci_dev *pdev, struct drm_device *dev)
+{
+
+	linux_pci_dev_init(pdev, self, pa, false);
+
+	dev->pdev = pdev;
+	dev->pci_vendor = pdev->vendor;
+	dev->pci_device = pdev->device;
+
+	/* XXX Set the power state to D0?  */
+}
+
+int
+drm_pci_detach(struct drm_device *dev __unused, int flags __unused)
+{
+
+	/* XXX Disestablish irqs or anything?  */
+	return 0;
 }
 
 static int

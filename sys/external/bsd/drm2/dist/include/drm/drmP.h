@@ -1830,6 +1830,11 @@ extern drm_dma_handle_t *drm_pci_alloc(struct drm_device *dev, size_t size,
 				       size_t align);
 extern void __drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 extern void drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
+#ifdef __NetBSD__
+extern void drm_pci_attach(device_t, const struct pci_attach_args *,
+    struct pci_dev *, struct drm_device *);
+extern int drm_pci_detach(struct drm_device *, int);
+#endif
 
 			       /* sysfs support (drm_sysfs.c) */
 struct drm_sysfs_class;
