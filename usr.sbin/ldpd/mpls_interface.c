@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.11 2013/07/18 11:45:36 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.12 2013/07/24 09:05:53 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -138,24 +138,9 @@ mpls_add_label(struct label *lab)
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
-/*
-	if (so_oldifa != NULL) {
-		so_ifa = malloc(sizeof(*so_ifa));
-		if (so_ifa == NULL) {
-			free(so_dest);
-			if (so_pref != NULL)
-				free(so_pref);
-			free(so_tag);
-			free(so_nexthop);
-			fatalp("Out of memory\n");
-			return LDP_E_MEMORY;
-		}
-		memcpy(so_ifa, so_oldifa, so_oldifa->sa.sa_len);
-	} else
-		so_ifa = NULL;
-*/
-	if (add_route(&lab->so_dest, &lab->so_pref, &lab->so_gate, &so_ifa,
-	    so_tag, NO_FREESO, RTM_CHANGE) != LDP_E_OK) {
+
+	if (add_route(&lab->so_dest, lab->host ? NULL : &lab->so_pref,
+	    &lab->so_gate, &so_ifa, so_tag, NO_FREESO, RTM_CHANGE) != LDP_E_OK){
 		free(so_tag);
 		fatalp("[mpls_add_label]: INET route failure\n");
 		return LDP_E_ROUTE_ERROR;

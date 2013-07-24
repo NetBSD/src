@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.9 2013/07/18 11:45:36 kefren Exp $ */
+/* $NetBSD: label.c,v 1.10 2013/07/24 09:05:53 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ label_init()
 struct label   *
 label_add(const union sockunion * so_dest, const union sockunion * so_pref,
 	  const union sockunion * so_gate, uint32_t binding,
-	  const struct ldp_peer * p, uint32_t label)
+	  const struct ldp_peer * p, uint32_t label, bool host)
 {
 	struct label   *l;
 	char	spreftmp[INET_ADDRSTRLEN];
@@ -83,6 +83,7 @@ label_add(const union sockunion * so_dest, const union sockunion * so_pref,
 		l->binding = get_free_local_label();
 	l->p = p;
 	l->label = label;
+	l->host = host;
 
 	SLIST_INSERT_HEAD(&label_head, l, labels);
 
@@ -125,12 +126,13 @@ label_reattach_route(struct label *l, int readd)
 	if (readd == REATT_INET_CHANGE) {
 		/* Delete the tagged route and re-add IPv4 route */
 		delete_route(&l->so_dest,
-		    l->so_pref.sa.sa_len != 0 ? &l->so_pref : NULL, NO_FREESO);
+		    l->host ? NULL : &l->so_pref, NO_FREESO);
 		add_route(&l->so_dest,
-		    l->so_pref.sa.sa_len != 0 ? &l->so_pref : NULL, &l->so_gate,
+		    l->host ? NULL : &l->so_pref, &l->so_gate,
 		    NULL, NULL, NO_FREESO, RTM_READD);
 	} else if (readd == REATT_INET_DEL)
-		delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
+		delete_route(&l->so_dest, l->host ? NULL : &l->so_pref,
+		    NO_FREESO);
 
 	/* Deletes the MPLS route */
 	if (l->binding >= min_label)
