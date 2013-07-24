@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.1.2.3 2013/07/24 02:09:58 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.1.2.4 2013/07/24 02:20:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,12 @@
 typedef struct {
 	kmutex_t sl_lock;
 } spinlock_t;
+
+static inline int
+spin_is_locked(spinlock_t *spinlock)
+{
+	return mutex_owned(&spinlock->sl_lock);
+}
 
 static inline void
 spin_lock(spinlock_t *spinlock)
