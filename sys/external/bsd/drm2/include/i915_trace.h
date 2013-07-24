@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.1.2.2 2013/07/24 03:23:15 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.1.2.3 2013/07/24 03:25:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,11 @@
 static inline void
 trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
     uint64_t value __unused, size_t len __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_create(struct drm_i915_gem_object *obj __unused)
 {
 }
 
