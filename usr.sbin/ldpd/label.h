@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.6 2013/07/18 11:45:36 kefren Exp $ */
+/* $NetBSD: label.h,v 1.7 2013/07/24 09:05:53 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 struct label {
 	union sockunion so_dest, so_pref, so_gate;
 	int binding, label;
+	bool host;	/* change routes using RTF_HOST */
 	const struct ldp_peer *p;
 	SLIST_ENTRY(label) labels;
 };
@@ -58,7 +59,8 @@ SLIST_HEAD(,label) label_head;
 
 void            label_init(void);
 struct label *	label_add(const union sockunion *, const union sockunion *,
-	  const union sockunion *, uint32_t, const struct ldp_peer *, uint32_t);
+	  const union sockunion *, uint32_t, const struct ldp_peer *, uint32_t,
+	  bool);
 void            label_del(struct label *);
 void            del_all_peer_labels(const struct ldp_peer*, int);
 void		label_reattach_all_peer_labels(const struct ldp_peer*, int);
