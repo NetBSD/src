@@ -1369,14 +1369,22 @@ extern int drm_lastclose(struct drm_device *dev);
 
 				/* Device support (drm_fops.h) */
 extern struct mutex drm_global_mutex;
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+extern int drm_open_file(struct drm_file *, void *, struct drm_minor *);
+extern int drm_close_file(struct drm_file *);
+#  if 0				/* XXX */
+extern struct drm_pending_event *drm_dequeue_event(struct drm_file *, size_t);
+#  endif
+#else
 extern int drm_open(struct inode *inode, struct file *filp);
 extern int drm_stub_open(struct inode *inode, struct file *filp);
 extern int drm_fasync(int fd, struct file *filp, int on);
 extern ssize_t drm_read(struct file *filp, char __user *buffer,
 			size_t count, loff_t *offset);
 extern int drm_release(struct inode *inode, struct file *filp);
+#endif
 
+#ifndef __NetBSD__
 				/* Mapping support (drm_vm.h) */
 extern int drm_mmap(struct file *filp, struct vm_area_struct *vma);
 extern int drm_mmap_locked(struct file *filp, struct vm_area_struct *vma);
