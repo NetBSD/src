@@ -26,6 +26,7 @@
 #define __INTEL_DRV_H__
 
 #include <linux/i2c.h>
+#include <asm/processor.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 #include <drm/drm_crtc.h>
