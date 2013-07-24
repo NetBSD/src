@@ -2630,7 +2630,12 @@ int drm_mode_attachmode_crtc(struct drm_device *dev, struct drm_crtc *crtc,
 	struct drm_connector *connector;
 	int ret = 0;
 	struct drm_display_mode *dup_mode, *next;
+#ifdef __NetBSD__
+	/* LIST_HEAD has another meaning in NetBSD.  */
+	struct list_head list = LIST_HEAD_INIT(list);
+#else
 	LIST_HEAD(list);
+#endif
 
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		if (!connector->encoder)
