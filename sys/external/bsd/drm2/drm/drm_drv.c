@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.21 2013/07/24 04:01:37 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.22 2013/07/24 04:05:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.21 2013/07/24 04:01:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.22 2013/07/24 04:05:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -348,6 +348,12 @@ drm_detach(device_t self, int flags)
 	/* XXX The placement of this is pretty random...  */
 	if (dev->driver->unload != NULL)
 		(*dev->driver->unload)(dev);
+
+	/*
+	 * XXX Either this shouldn't be here, or the driver's load
+	 * function shouldn't be responsible for drm_vblank_init.
+	 */
+	drm_vblank_cleanup(dev);
 
 	drm_undo_fill_in_dev(dev);
 
