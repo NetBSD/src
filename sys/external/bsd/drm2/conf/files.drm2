@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm2,v 1.1.2.2 2013/07/24 02:48:34 riastradh Exp $
+#	$NetBSD: files.drm2,v 1.1.2.3 2013/07/24 03:53:14 riastradh Exp $
 
 define	drm2base
 define	drm2pci
@@ -17,3 +17,5 @@ makeoptions	drm2base	CPPFLAGS+="-D__KERNEL__"
 
 device	i915drm: drm2base, drm2pci, drmbus
 attach	i915drm at pci
+
+file	external/bsd/drm2/i915drm/i915_pci.c	i915drm

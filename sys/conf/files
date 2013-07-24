@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1077 2013/06/29 21:06:57 rmind Exp $
+#	$NetBSD: files,v 1.1077.2.1 2013/07/24 03:53:14 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1093,10 +1093,9 @@ device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
 # DRM - Direct Rendering Infrastructure: dev/drm
-define drm {}
-include "external/bsd/drm/conf/files.drm"
-include "dev/drm/files.drm"
-
+#define drm {}
+#include "external/bsd/drm/conf/files.drm"
+#include "dev/drm/files.drm"
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
