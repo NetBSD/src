@@ -2139,5 +2139,20 @@ DRM_WRITE64(struct drm_local_map *map, bus_size_t offset, uint64_t value)
 }
 #endif	/* defined(__NetBSD__) */
 
+#ifdef __NetBSD__
+
+/* XXX This is pretty kludgerific.  */
+
+#include <linux/io-mapping.h>
+
+static inline struct io_mapping *
+drm_io_mapping_create_wc(struct drm_device *dev, resource_size_t addr,
+    unsigned long size)
+{
+	return bus_space_io_mapping_create_wc(dev->bst, addr, size);
+}
+
+#endif	/* defined(__NetBSD__) */
+
 #endif				/* __KERNEL__ */
 #endif
