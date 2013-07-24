@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.6 2013/07/24 02:12:00 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.7 2013/07/24 02:14:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,5 +52,18 @@
 } while (0)
 
 #define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
+
+#define	swap(X, Y)	do						\
+{									\
+	/* XXX Kludge for type-safety.  */				\
+	if (&(X) != &(Y)) {						\
+		CTASSERT(sizeof(X) == sizeof(Y));			\
+		/* XXX Can't do this much better without typeof.  */	\
+		char __swap_tmp[sizeof(X)];				\
+		(void)memcpy(__swap_tmp, &(X), sizeof(X));		\
+		(void)memcpy(&(X), &(Y), sizeof(X));			\
+		(void)memcpy(&(Y), __swap_tmp, sizeof(X));		\
+	}								\
+} while (0)
 
 #endif  /* _LINUX_KERNEL_H_ */
