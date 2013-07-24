@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.1 2013/07/24 01:50:35 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.2 2013/07/24 01:59:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,12 +32,124 @@
 #ifndef _DRM_DRM_AGP_NETBSD_H_
 #define _DRM_DRM_AGP_NETBSD_H_
 
+/*
+ * XXX XXX XXX BEWARE!  This file is full of abstraction violations
+ * that are ruthlessly exploited for their value as happy accidents!
+ * You have been warned!
+ */
+
+#include <sys/agpio.h>
+
 #include <dev/pci/pcivar.h>	/* XXX include order botch */
 #include <dev/pci/agpvar.h>
 
+#include <linux/kernel.h>
+#include <linux/pci.h>
+
 #define	__OS_HAS_AGP	1
 
-typedef struct agp_memory_info DRM_AGP_MEM;
+typedef struct agp_memory DRM_AGP_MEM;
 typedef struct agp_info DRM_AGP_KERN;
+
+struct agp_bridge_data {
+	struct agp_softc abd_sc; /* XXX Abstraction violation! */
+};
+
+/*
+ * We already have a struct agp_memory, but fortunately it looks like
+ * it may accidentally work out.
+ */
+
+#if 0
+struct agp_memory {
+	void *am_cookie;
+};
+#endif
+
+static inline struct agp_bridge_data *
+agp_find_bridge(struct pci_dev *pdev __unused)
+{
+	/*
+	 * XXX How do we find the agp bridge attached to this
+	 * particular PCI device?
+	 */
+	return container_of(agp_find_device(0), struct agp_bridge_data,
+	    abd_sc);
+}
+
+static inline struct agp_bridge_data *
+agp_backend_acquire(struct pci_dev *pdev)
+{
+	struct agp_bridge_data *const bridge = agp_find_bridge(pdev);
+
+	if (bridge == NULL)
+		return NULL;
+
+	/* XXX We lose the error code here.  */
+	if (agp_acquire(&bridge->abd_sc) != 0)
+		return NULL;
+
+	return bridge;
+}
+
+static inline void
+agp_backend_release(struct agp_bridge_data *bridge)
+{
+
+	/* XXX We lose the error code here.  */
+	(void)agp_release(&bridge->abd_sc);
+}
+
+/*
+ * Happily, agp_enable will accidentally DTRT as is in NetBSD in spite
+ * of the name collision, thanks to a curious `void *' argument in its
+ * declaration...
+ */
+
+#if 0
+static inline void
+agp_enable(struct agp_bridge_data *bridge)
+{
+	...
+}
+#endif
+
+static inline struct agp_memory *
+agp_allocate_memory(struct agp_bridge_data *bridge, size_t npages,
+    uint32_t type)
+{
+	return agp_alloc_memory(&bridge->abd_sc, (npages << AGP_PAGE_SHIFT),
+	    type);
+}
+
+/*
+ * Once again, a happy accident makes agp_free_memory work out.
+ */
+
+#if 0
+static inline void
+agp_free_memory(struct agp_bridge_data *bridge, struct agp_memory *mem)
+{
+	...
+}
+#endif
+
+/*
+ * Unfortunately, Linux's agp_bind_memory doesn't require the agp
+ * device as an argument.  So we'll have to kludge that up as we go.
+ */
+#if 0
+static inline void
+agp_bind_memory(struct agp_memory *mem, size_t npages)
+{
+	agp_bind_memory(???, mem, (npages << AGP_PAGE_SHIFT));
+}
+#endif
+
+static inline void
+agp_copy_info(struct agp_bridge_data *bridge, DRM_AGP_KERN *info)
+{
+	agp_get_info(bridge, info);
+}
 
 #endif  /* _DRM_DRM_AGP_NETBSD_H_ */
