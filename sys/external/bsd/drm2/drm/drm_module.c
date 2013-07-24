@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.4 2013/07/24 03:31:12 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.4 2013/07/24 03:31:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.4 2013/07/24 03:31:12 riastradh
  * XXX Other Linux stuff should be moved to a linux compatibility
  * module on which this one depends.
  */
-MODULE(MODULE_CLASS_MISC, drm, "iic,pci");
+MODULE(MODULE_CLASS_MISC, drm2, "iic,pci");
 
 #ifdef _MODULE
 #include "ioconf.c"
@@ -56,7 +56,7 @@ MODULE(MODULE_CLASS_MISC, drm, "iic,pci");
 extern const struct cdevsw drm_cdevsw; /* XXX Put this in a header file?  */
 
 static int
-drm_modcmd(modcmd_t cmd, void *arg __unused)
+drm2_modcmd(modcmd_t cmd, void *arg __unused)
 {
 #ifdef _MODULE
 	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
