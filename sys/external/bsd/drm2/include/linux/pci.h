@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.2 2013/07/24 01:59:37 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.3 2013/07/24 03:00:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,18 @@ pci_find_capability(struct pci_dev *pdev, int cap)
 {
 	return pci_get_capability(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, cap,
 	    NULL, NULL);
+}
+
+static inline void
+pci_config_read_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
+{
+	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg);
+}
+
+static inline void
+pci_config_write_dword(struct pci_dev *pdev, int reg, uint32_t value)
+{
+	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, value);
 }
 
 #endif  /* _LINUX_PCI_H_ */
