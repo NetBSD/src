@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.2 2013/07/24 01:52:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,45 @@
 
 #ifndef _LINUX_WORKQUEUE_H_
 #define _LINUX_WORKQUEUE_H_
+
+#include <sys/callout.h>
+
+#include <linux/kernel.h>
+
+struct work_struct {
+	struct callout ws_callout;
+};
+
+struct delayed_work {
+	struct work_struct dw_work;
+};
+
+static inline void
+INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct delayed_work *))
+{
+
+	/* XXX This cast business is sketchy.  */
+	callout_setfunc(&dw->dw_work.ws_callout, (void (*)(void *))fn,
+	    &dw->dw_work);
+}
+
+static inline struct delayed_work *
+to_delayed_work(struct work_struct *work)
+{
+	return container_of(work, struct delayed_work, dw_work);
+}
+
+static inline void
+schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
+{
+	KASSERT(ticks < INT_MAX);
+	callout_schedule(&dw->dw_work.ws_callout, (int)ticks);
+}
+
+static inline void
+cancel_delayed_work_sync(struct delayed_work *dw)
+{
+	callout_stop(&dw->dw_work.ws_callout);
+}
 
 #endif  /* _LINUX_WORKQUEUE_H_ */
