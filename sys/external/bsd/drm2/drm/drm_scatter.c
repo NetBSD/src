@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.1.2.1 2013/07/24 02:46:33 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.1.2.2 2013/07/24 03:27:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.1.2.1 2013/07/24 02:46:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.1.2.2 2013/07/24 03:27:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -131,7 +131,8 @@ drm_sg_alloc_mem(struct drm_device *dev, size_t size, struct drm_sg_mem **sgp)
 	 * Allocate a drm_sg_mem record.
 	 */
 	struct drm_sg_mem *const sg =
-	    kzalloc(offsetof(struct drm_sg_mem, sg_segs[npages]), GFP_ATOMIC);
+	    kmem_zalloc(offsetof(struct drm_sg_mem, sg_segs[npages]),
+		KM_NOSLEEP);
 	if (sg == NULL)
 		return -ENOMEM;
 	sg->sg_tag = dev->dmat;
@@ -215,5 +216,5 @@ drm_sg_cleanup(struct drm_sg_mem *sg)
 	KASSERT(sg->sg_nsegs <= (unsigned int)INT_MAX);
 	bus_dmamem_free(sg->sg_tag, sg->sg_segs, (int)sg->sg_nsegs);
 	sg->sg_tag = NULL;	/* XXX paranoia */
-	kfree(sg);
+	kmem_free(sg, offsetof(struct drm_sg_mem, sg_segs[sg->sg_nsegs_max]));
 }
