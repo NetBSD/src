@@ -1,4 +1,4 @@
-/*	$NetBSD: log2.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: log2.h,v 1.1.2.2 2013/07/24 02:03:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_LOG2_H_
 #define _LINUX_LOG2_H_
+
+#include <sys/bitops.h>
 
 #endif  /* _LINUX_LOG2_H_ */
