@@ -799,9 +799,22 @@ struct drm_master {
 #define DRM_SCANOUTPOS_INVBL        (1 << 1)
 #define DRM_SCANOUTPOS_ACCURATE     (1 << 2)
 
+struct drm_bus_irq_cookie;
+
 struct drm_bus {
 	int bus_type;
+	/*
+	 * XXX NetBSD will have a problem with this: pci_intr_handle_t
+	 * is a long on some LP64 architectures, where int is 32-bit,
+	 * such as alpha and mips64.
+	 */
 	int (*get_irq)(struct drm_device *dev);
+#ifdef __NetBSD__
+	int (*irq_install)(struct drm_device *, irqreturn_t (*)(void *), int,
+	    const char *, void *, struct drm_bus_irq_cookie **);
+	void (*irq_uninstall)(struct drm_device *,
+	    struct drm_bus_irq_cookie *);
+#endif
 	const char *(*get_name)(struct drm_device *dev);
 	int (*set_busid)(struct drm_device *dev, struct drm_master *master);
 	int (*set_unique)(struct drm_device *dev, struct drm_master *master,
