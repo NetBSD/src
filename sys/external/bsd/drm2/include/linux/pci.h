@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.10 2013/07/24 03:16:47 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.11 2013/07/24 03:18:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct pci_device_id {
 struct pci_dev {
 	struct pci_attach_args	pd_pa;
 	bool			pd_kludged;	/* XXX pci_kludgey_find_dev */
-	device_t		dev;
+	device_t		pd_dev;
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
@@ -77,6 +77,12 @@ struct pci_dev {
 	uint32_t		class;
 	bool 			msi_enabled;
 };
+
+static inline device_t
+pci_dev_dev(struct pci_dev *pdev)
+{
+	return pdev->pd_dev;
+}
 
 #define	PCI_DEVFN(DEV, FN)						\
 	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
