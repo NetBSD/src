@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.11 2013/07/24 02:37:49 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.12 2013/07/24 03:29:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -157,6 +157,13 @@ list_replace(struct list_head *old, struct list_head *new)
 	old->prev->next = new;
 	new->next = old->next;
 	old->next->prev = new;
+}
+
+static inline void
+list_del_init(struct list_head *node)
+{
+	list_del(node);
+	INIT_LIST_HEAD(node);
 }
 
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
