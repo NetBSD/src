@@ -67,11 +67,13 @@ module_param_named(vblankoffdelay, drm_vblank_offdelay, int, 0600);
 module_param_named(timestamp_precision_usec, drm_timestamp_precision, int, 0600);
 module_param_named(timestamp_monotonic, drm_timestamp_monotonic, int, 0600);
 
+#ifndef __NetBSD__
 struct idr drm_minors_idr;
 
 struct class *drm_class;
 struct proc_dir_entry *drm_proc_root;
 struct dentry *drm_debugfs_root;
+#endif
 
 int drm_err(const char *func, const char *format, ...)
 {
@@ -109,6 +111,7 @@ void drm_ut_debug_printk(unsigned int request_level,
 }
 EXPORT_SYMBOL(drm_ut_debug_printk);
 
+#ifndef __NetBSD__
 static int drm_minor_get_id(struct drm_device *dev, int type)
 {
 	int new_id;
@@ -143,6 +146,7 @@ again:
 	}
 	return new_id;
 }
+#endif
 
 struct drm_master *drm_master_create(struct drm_minor *minor)
 {
@@ -331,6 +335,7 @@ int drm_fill_in_dev(struct drm_device *dev,
 EXPORT_SYMBOL(drm_fill_in_dev);
 
 
+#ifndef __NetBSD__
 /**
  * Get a secondary minor number.
  *
@@ -524,3 +529,5 @@ void drm_unplug_dev(struct drm_device *dev)
 	mutex_unlock(&drm_global_mutex);
 }
 EXPORT_SYMBOL(drm_unplug_dev);
+
+#endif	/* !defined(__NetBSD__) */
