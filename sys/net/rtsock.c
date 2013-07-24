@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.141 2013/03/01 18:25:57 joerg Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.142 2013/07/24 15:31:04 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.141 2013/03/01 18:25:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.142 2013/07/24 15:31:04 kefren Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1029,6 +1029,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_TAG] = rt_gettag(rt);
 	if (rt->rt_ifp) {
 		const struct ifaddr *rtifa;
 		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
