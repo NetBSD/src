@@ -2654,7 +2654,12 @@ int drm_mode_attachmode_crtc(struct drm_device *dev, struct drm_crtc *crtc,
 		if (!connector->encoder)
 			continue;
 		if (connector->encoder->crtc == crtc)
+#ifdef __NetBSD__
+			list_move_tail(list_next(&list),
+			    &connector->user_modes);
+#else
 			list_move_tail(list.next, &connector->user_modes);
+#endif
 	}
 
 	WARN_ON(!list_empty(&list));
