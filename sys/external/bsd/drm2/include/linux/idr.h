@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.1.2.2 2013/07/24 00:50:36 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.1.2.3 2013/07/24 02:07:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ void	idr_init(struct idr *);
 void	idr_destroy(struct idr *);
 void	*idr_find(struct idr *, int);
 void	idr_remove(struct idr *, int);
+void	idr_remove_all(struct idr *);
 int	idr_pre_get(struct idr *, int);
 int	idr_get_new_above(struct idr *, void *, int, int *);
 
