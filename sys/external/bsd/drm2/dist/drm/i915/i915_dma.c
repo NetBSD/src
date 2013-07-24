@@ -1642,9 +1642,15 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	aperture_size = dev_priv->mm.gtt->gtt_mappable_entries << PAGE_SHIFT;
 	dev_priv->mm.gtt_base_addr = dev_priv->mm.gtt->gma_bus_addr;
 
+#ifdef __NetBSD__
+	dev_priv->mm.gtt_mapping =
+	    drm_io_mapping_create_wc(dev, dev_priv->mm.gtt_base_addr,
+		aperture_size);
+#else
 	dev_priv->mm.gtt_mapping =
 		io_mapping_create_wc(dev_priv->mm.gtt_base_addr,
 				     aperture_size);
+#endif
 	if (dev_priv->mm.gtt_mapping == NULL) {
 		ret = -EIO;
 		goto out_rmmap;
