@@ -371,8 +371,13 @@ int drm_irq_install(struct drm_device *dev)
 	else
 		irqname = dev->driver->name;
 
+#ifdef __NetBSD__
+	ret = (*dev->driver->bus->irq_install)(dev, dev->driver->irq_handler,
+	    sh_flags, irqname, dev, &dev->irq_cookie);
+#else
 	ret = request_irq(drm_dev_to_irq(dev), dev->driver->irq_handler,
 			  sh_flags, irqname, dev);
+#endif
 
 	if (ret < 0) {
 		mutex_lock(&dev->struct_mutex);
@@ -394,7 +399,11 @@ int drm_irq_install(struct drm_device *dev)
 		mutex_unlock(&dev->struct_mutex);
 		if (!drm_core_check_feature(dev, DRIVER_MODESET))
 			vga_client_register(dev->pdev, NULL, NULL, NULL);
+#ifdef __NetBSD__
+		(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+#else
 		free_irq(drm_dev_to_irq(dev), dev);
+#endif
 	}
 
 	return ret;
@@ -451,7 +460,11 @@ int drm_irq_uninstall(struct drm_device *dev)
 	if (dev->driver->irq_uninstall)
 		dev->driver->irq_uninstall(dev);
 
+#ifdef __NetBSD__
+	(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+#else
 	free_irq(drm_dev_to_irq(dev), dev);
+#endif
 
 	return 0;
 }
