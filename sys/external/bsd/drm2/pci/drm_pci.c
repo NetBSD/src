@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.6 2013/07/24 03:57:03 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.7 2013/07/24 03:58:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.6 2013/07/24 03:57:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.7 2013/07/24 03:58:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -87,10 +87,14 @@ drm_pci_exit(struct drm_driver *driver __unused,
 {
 }
 
+/* XXX Should go elsewhere.  */
+#define	PCI_NMAPREGS	((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
+
 void
 drm_pci_attach(device_t self, const struct pci_attach_args *pa,
     struct pci_dev *pdev, struct drm_device *dev)
 {
+	unsigned int unit;
 
 	linux_pci_dev_init(pdev, self, pa, 0);
 
@@ -99,11 +103,64 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	dev->pci_device = pdev->device;
 
 	/* XXX Set the power state to D0?  */
+
+	dev->bst = pa->pa_memt;
+	dev->bus_dmat = pa->pa_dmat; /* XXX dmat64?  */
+	dev->dmat_subregion_p = false;
+
+	CTASSERT(PCI_NMAPREGS < (SIZE_MAX / sizeof(dev->bus_maps[0])));
+	dev->bus_nmaps = PCI_NMAPREGS;
+	dev->bus_maps = kmem_zalloc((PCI_NMAPREGS * sizeof(dev->bus_maps[0])),
+	    KM_SLEEP);
+	for (unit = 0; unit < dev->bus_nmaps; unit++) {
+		struct drm_bus_map *const bm = &dev->bus_maps[unit];
+		const int reg = (PCI_MAPREG_START + (unit*4));
+		const pcireg_t type =
+		    pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
+
+		/* Reject non-memory mappings.  */
+		if ((type & PCI_MAPREG_TYPE_MEM) != PCI_MAPREG_TYPE_MEM) {
+			aprint_debug_dev(self, "map %u has non-memory type:"
+			    " 0x%"PRIxMAX"\n", unit, (uintmax_t)type);
+			continue;
+		}
+
+		/* Inquire about it.  We'll map it in drm_ioremap.  */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
+			&bm->bm_base, &bm->bm_size, &bm->bm_flags) != 0) {
+			aprint_debug_dev(self, "map %u failed\n", unit);
+			continue;
+		}
+
+		aprint_debug_dev(self, "map %u at %"PRIxMAX" size %"PRIxMAX
+		    " flags 0x%"PRIxMAX"\n",
+		    unit, (uintmax_t)bm->bm_base, (uintmax_t)bm->bm_size,
+		    (uintmax_t)bm->bm_flags);
+
+		/* Assume since it is a memory mapping it can be linear.  */
+		bm->bm_flags |= BUS_SPACE_MAP_LINEAR;
+	}
+
+	/* All `agp' maps are just initialized to zero.  */
+	CTASSERT(PCI_NMAPREGS < (SIZE_MAX / sizeof(dev->agp_maps[0])));
+	dev->agp_nmaps = PCI_NMAPREGS;
+	dev->agp_maps = kmem_zalloc((PCI_NMAPREGS * sizeof(dev->agp_maps[0])),
+	    KM_SLEEP);
 }
 
 int
 drm_pci_detach(struct drm_device *dev __unused, int flags __unused)
 {
+
+	kmem_free(dev->bus_maps, (PCI_NMAPREGS * sizeof(dev->bus_maps[0])));
+	kmem_free(dev->agp_maps, (PCI_NMAPREGS * sizeof(dev->agp_maps[0])));
+
+	/*
+	 * XXX This is the wrong place!  Should be a routine in
+	 * drm_memory.c.
+	 */
+	if (dev->dmat_subregion_p)
+		bus_dmatag_destroy(dev->dmat);
 
 	/* XXX Disestablish irqs or anything?  */
 	return 0;
