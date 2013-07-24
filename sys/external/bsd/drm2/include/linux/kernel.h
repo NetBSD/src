@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.10 2013/07/24 02:28:07 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.11 2013/07/24 02:49:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@
 #define	unlikely(X)	__predict_false(X)
 
 #define	container_of(PTR, TYPE, FIELD)					\
-	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD)))
+	((void)sizeof((PTR) -						\
+		&((TYPE *)(((char *)(PTR)) -				\
+		    offsetof(TYPE, FIELD)))->FIELD),			\
+	    ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))))
 
 #define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
 
