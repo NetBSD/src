@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.13 2013/07/24 03:54:43 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.14 2013/07/24 03:55:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.13 2013/07/24 03:54:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.14 2013/07/24 03:55:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -257,6 +257,8 @@ drm_attach(device_t parent, device_t self, void *aux)
 	KASSERT(device_unit(self) >= 0);
 
 	aprint_normal("\n");
+
+	sc->sc_drm_dev = dev;
 
 	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
 		aprint_error_dev(self, "can't handle >=64 drm devices!");
