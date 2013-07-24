@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.7 2013/07/24 03:16:32 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.8 2013/07/24 04:02:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.7 2013/07/24 03:16:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.8 2013/07/24 04:02:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -216,6 +216,7 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 
 	rw_exit(&idr->idr_lock);
 
+	*id = want_id;
 	return 0;
 }
 
