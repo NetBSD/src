@@ -31,6 +31,7 @@
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
+#include <asm/param.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
