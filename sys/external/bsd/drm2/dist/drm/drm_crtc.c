@@ -2172,7 +2172,12 @@ int drm_mode_addfb(struct drm_device *dev,
 		   void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_fb_cmd *or = data;
+#ifdef __NetBSD__		/* XXX ...or just use memset.  */
+	static const struct drm_mode_fb_cmd2 zero_fbcmd;
+	struct drm_mode_fb_cmd2 r = zero_fbcmd;
+#else
 	struct drm_mode_fb_cmd2 r = {};
+#endif
 	struct drm_mode_config *config = &dev->mode_config;
 	struct drm_framebuffer *fb;
 	int ret = 0;
