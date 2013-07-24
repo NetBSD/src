@@ -2960,12 +2960,25 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
+	int error = 0;
+#endif
 
 	if (crtc->fb == NULL)
 		return;
 
+#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
+	mutex_lock(&dev_priv->pending_flip_lock);
+	do {
+		DRM_WAIT_UNTIL(error, &dev_priv->pending_flip_queue,
+		    &dev_priv->pending_flip_lock,
+		    !intel_crtc_has_pending_flip(crtc));
+	} while (error);
+	mutex_unlock(&dev_priv->pending_flip_lock);
+#else
 	wait_event(dev_priv->pending_flip_queue,
 		   !intel_crtc_has_pending_flip(crtc));
+#endif
 
 	mutex_lock(&dev->struct_mutex);
 	intel_finish_fb(crtc->fb);
@@ -7149,9 +7162,17 @@ static void do_intel_finish_page_flip(struct drm_device *dev,
 
 	obj = work->old_fb_obj;
 
+#ifdef __NetBSD__		/* XXX */
+	atomic_clear_mask(1 << intel_crtc->plane, &obj->pending_flip);
+	mutex_lock(&dev_priv->pending_flip_lock);
+	DRM_WAKEUP_ONE(&dev_priv->pending_flip_queue,
+	    &dev_priv->pending_flip_lock);
+	mutex_unlock(&dev_priv->pending_flip_lock);
+#else
 	atomic_clear_mask(1 << intel_crtc->plane,
 			  &obj->pending_flip.counter);
 	wake_up(&dev_priv->pending_flip_queue);
+#endif
 
 	queue_work(dev_priv->wq, &work->work);
 
