@@ -610,6 +610,19 @@ struct drm_sigdata {
 	struct drm_hw_lock *lock;
 };
 
+#ifdef __NetBSD__
+/*
+ * XXX Remember: memory mappings only.  bm_flags must include
+ * BUS_SPACE_MAP_LINEAR.
+ */
+struct drm_bus_map {
+	bus_addr_t		bm_base;
+	bus_size_t		bm_size;
+	bus_space_handle_t	bm_bsh;
+	int			bm_flags;
+	unsigned int		bm_mapped;
+};
+#endif
 
 /**
  * Kernel side of a mapping
@@ -622,6 +635,11 @@ struct drm_local_map {
 	void *handle;		 /**< User-space: "Handle" to pass to mmap() */
 				 /**< Kernel-space: kernel-virtual address */
 	int mtrr;		 /**< MTRR slot used */
+
+#ifdef __NetBSD__
+	bus_space_handle_t bsh;
+	struct drm_bus_map *bus_map;
+#endif
 };
 
 typedef struct drm_local_map drm_local_map_t;
@@ -1254,6 +1272,15 @@ struct drm_device {
 
 	struct platform_device *platformdev; /**< Platform device struture */
 	struct usb_device *usbdev;
+
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	struct drm_bus_map *bus_maps;
+	size_t bus_nmaps;
+	/* XXX What does this have to do with AGP?  */
+	struct drm_bus_map *agp_maps;
+	size_t agp_nmaps;
+#endif
 
 	struct drm_sg_mem *sg;	/**< Scatter gather memory */
 	unsigned int num_crtcs;                  /**< Number of CRTCs on this device */
