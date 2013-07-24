@@ -79,8 +79,10 @@
 
 #include <linux/idr.h>
 
+#ifndef __NetBSD__
 #define __OS_HAS_AGP (defined(CONFIG_AGP) || (defined(CONFIG_AGP_MODULE) && defined(MODULE)))
 #define __OS_HAS_MTRR (defined(CONFIG_MTRR))
+#endif
 
 struct module;
 
