@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.2 2013/07/24 02:03:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,15 @@
 
 #ifndef _LINUX_SCHED_H_
 #define _LINUX_SCHED_H_
+
+#include <sys/proc.h>
+
+#define	current	curproc
+
+static inline pid_t
+task_pid_nr(struct proc *p)
+{
+	return p->p_pid;
+}
 
 #endif  /* _LINUX_SCHED_H_ */
