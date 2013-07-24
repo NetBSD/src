@@ -454,8 +454,10 @@ struct drm_prime_file_private {
 /** File private data */
 struct drm_file {
 	int authenticated;
+#ifndef __NetBSD__
 	struct pid *pid;
 	kuid_t uid;
+#endif
 	drm_magic_t magic;
 	unsigned long ioctl_count;
 	struct list_head lhead;
@@ -1065,7 +1067,11 @@ struct drm_minor {
 	int index;			/**< Minor device number */
 	int type;                       /**< Control or render */
 	dev_t device;			/**< Device number for mknod */
+#ifdef __NetBSD__
+	device_t kdev;			/* NetBSD device */
+#else
 	struct device kdev;		/**< Linux device */
+#endif
 	struct drm_device *dev;
 
 #ifndef __NetBSD__
