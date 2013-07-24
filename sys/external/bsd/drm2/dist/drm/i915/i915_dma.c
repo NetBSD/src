@@ -1615,7 +1615,8 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 		bus_size_t size;
 
 		if (pci_mapreg_info(dev->pdev->pd_pa.pa_pc,
-			dev->pdev->pd_pa.pa_tag, mmio_bar, PCI_MAPREG_TYPE_MEM,
+			dev->pdev->pd_pa.pa_tag, (PCI_MAPREG_START + mmio_bar),
+			PCI_MAPREG_TYPE_MEM,
 			&addr, &size, NULL /* XXX flags? */)) {
 			ret = -EIO;	    /* XXX */
 			goto put_gmch;
