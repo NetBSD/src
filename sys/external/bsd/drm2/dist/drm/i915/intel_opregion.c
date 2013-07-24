@@ -593,6 +593,10 @@ int intel_opregion_setup(struct drm_device *dev)
 	return 0;
 
 err_out:
+#ifdef __NetBSD__
+	acpi_os_iounmap(base, OPREGION_SIZE);
+#else
 	iounmap(base);
+#endif
 	return err;
 }
