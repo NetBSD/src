@@ -331,7 +331,11 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 		}
 		map->handle = dmah->vaddr;
 		map->offset = (unsigned long)dmah->busaddr;
+#ifdef __NetBSD__
+		map->lm_data.dmah = dmah;
+#else
 		kfree(dmah);
+#endif
 		break;
 	default:
 		kfree(map);
@@ -451,7 +455,9 @@ int drm_addmap_ioctl(struct drm_device *dev, void *data,
 int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 {
 	struct drm_map_list *r_list = NULL, *list_t;
+#ifndef __NetBSD__
 	drm_dma_handle_t dmah;
+#endif
 	int found = 0;
 	struct drm_master *master;
 
@@ -505,10 +511,14 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 	case _DRM_SCATTER_GATHER:
 		break;
 	case _DRM_CONSISTENT:
+#ifdef __NetBSD__
+		drm_pci_free(dev, map->lm_data.dmah);
+#else
 		dmah.vaddr = map->handle;
 		dmah.busaddr = map->offset;
 		dmah.size = map->size;
 		__drm_pci_free(dev, &dmah);
+#endif
 		break;
 	case _DRM_GEM:
 		DRM_ERROR("tried to rmmap GEM object\n");
