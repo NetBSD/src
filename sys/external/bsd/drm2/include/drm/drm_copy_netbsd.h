@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_copy_netbsd.h,v 1.1.2.2 2013/07/24 02:01:42 riastradh Exp $	*/
+/*	$NetBSD: drm_copy_netbsd.h,v 1.1.2.3 2013/07/24 02:04:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,12 +38,14 @@
 static inline int
 DRM_COPY_FROM_USER(void *kernel_addr, const void *user_addr, size_t len)
 {
+	/* XXX errno NetBSD->Linux */
 	return -copyin(user_addr, kernel_addr, len);
 }
 
 static inline int
 DRM_COPY_TO_USER(const void *kernel_addr, void *user_addr, size_t len)
 {
+	/* XXX errno NetBSD->Linux */
 	return -copyout(kernel_addr, user_addr, len);
 }
 
