@@ -1006,6 +1006,7 @@ struct drm_driver {
 #define DRM_MINOR_RENDER 3
 
 
+#ifndef __NetBSD__
 /**
  * debugfs node list. This structure represents a debugfs file to
  * be created by the drm core
@@ -1046,6 +1047,7 @@ struct drm_info_node {
 	struct drm_info_list *info_ent;
 	struct dentry *dent;
 };
+#endif
 
 /**
  * DRM minor structure. This structure represents a drm minor number.
@@ -1057,12 +1059,14 @@ struct drm_minor {
 	struct device kdev;		/**< Linux device */
 	struct drm_device *dev;
 
+#ifndef __NetBSD__
 	struct proc_dir_entry *proc_root;  /**< proc directory entry */
 	struct drm_info_node proc_nodes;
 	struct dentry *debugfs_root;
 
 	struct list_head debugfs_list;
 	struct mutex debugfs_lock; /* Protects debugfs_list. */
+#endif
 
 	struct drm_master *master; /* currently active master for this node */
 	struct list_head master_list;
@@ -1233,7 +1237,9 @@ struct drm_device {
 	void *mm_private;
 	struct address_space *dev_mapping;
 	struct drm_sigdata sigdata;	   /**< For block_all_signals */
+#ifndef __NetBSD__
 	sigset_t sigmask;
+#endif
 
 	struct drm_driver *driver;
 	struct drm_local_map *agp_buffer_map;
@@ -1333,6 +1339,8 @@ static inline int drm_device_is_unplugged(struct drm_device *dev)
 /** \name Internal function definitions */
 /*@{*/
 
+#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
+
 				/* Driver support (drm_drv.h) */
 extern long drm_ioctl(struct file *filp,
 		      unsigned int cmd, unsigned long arg);
@@ -1355,6 +1363,8 @@ extern int drm_mmap_locked(struct file *filp, struct vm_area_struct *vma);
 extern void drm_vm_open_locked(struct drm_device *dev, struct vm_area_struct *vma);
 extern void drm_vm_close_locked(struct drm_device *dev, struct vm_area_struct *vma);
 extern unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait);
+
+#endif
 
 				/* Memory management support (drm_memory.h) */
 #include <drm/drm_memory.h>
@@ -1419,10 +1429,12 @@ extern int drm_authmagic(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 extern int drm_remove_magic(struct drm_master *master, drm_magic_t magic);
 
+#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
 /* Cache management (drm_cache.c) */
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 void drm_clflush_sg(struct sg_table *st);
 void drm_clflush_virt_range(char *addr, unsigned long length);
+#endif
 
 				/* Locking IOCTL support (drm_lock.h) */
 extern int drm_lock(struct drm_device *dev, void *data,
@@ -1584,6 +1596,7 @@ extern int drm_debugfs_remove_files(struct drm_info_list *files, int count,
 extern int drm_debugfs_cleanup(struct drm_minor *minor);
 #endif
 
+#ifndef __NetBSD__
 				/* Info file support */
 extern int drm_name_info(struct seq_file *m, void *data);
 extern int drm_vm_info(struct seq_file *m, void *data);
@@ -1591,6 +1604,7 @@ extern int drm_bufs_info(struct seq_file *m, void *data);
 extern int drm_vblank_info(struct seq_file *m, void *data);
 extern int drm_clients_info(struct seq_file *m, void* data);
 extern int drm_gem_name_info(struct seq_file *m, void *data);
+#endif
 
 
 extern int drm_gem_prime_handle_to_fd(struct drm_device *dev,
@@ -1604,10 +1618,12 @@ extern int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
 extern int drm_prime_fd_to_handle_ioctl(struct drm_device *dev, void *data,
 					struct drm_file *file_priv);
 
+#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
 extern int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
 					    dma_addr_t *addrs, int max_pages);
 extern struct sg_table *drm_prime_pages_to_sg(struct page **pages, int nr_pages);
 extern void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
+#endif
 
 
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv);
@@ -1621,7 +1637,9 @@ int drm_prime_lookup_obj(struct drm_device *dev, struct dma_buf *buf,
 			 struct drm_gem_object **obj);
 
 #if DRM_DEBUG_CODE
+#ifndef __NetBSD__
 extern int drm_vma_info(struct seq_file *m, void *data);
+#endif
 #endif
 
 				/* Scatter Gather Support (drm_scatter.h) */
