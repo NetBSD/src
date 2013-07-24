@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.2 2013/07/24 00:49:48 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.3 2013/07/24 01:55:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,34 +41,41 @@
  * Doubly-linked lists.
  */
 
-TAILQ_HEAD(list_head, list_node);
-struct list_node {
-	TAILQ_ENTRY(list_node) ln_entry;
+struct list_head {
+	struct list_head *lh_prev;
+	struct list_head *lh_next;
 };
 
-static inline struct list_node *
+static inline struct list_head *
 list_first(struct list_head *head)
 {
-	return TAILQ_FIRST(head);
+	return head->lh_next;
 }
 
-static inline struct list_node *
-list_next(struct list_node *node)
+static inline struct list_head *
+list_next(struct list_head *node)
 {
-	return TAILQ_NEXT(node, ln_entry);
+	return node->lh_next;
 }
 
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
-#define	list_for_each(VAR, HEAD)	TAILQ_FOREACH(VAR, HEAD, ln_entry)
+
+#define	list_for_each(VAR, HEAD)					\
+	for ((VAR) = list_first((HEAD));				\
+		(VAR) != NULL;						\
+		(VAR) = list_next((VAR))
+
 #define	list_for_each_safe(VAR, NEXT, HEAD)				\
-	TAILQ_FOREACH_SAFE(VAR, HEAD, ln_entry, NEXT)
+	for ((VAR) = list_first((HEAD));				\
+		((VAR) != NULL) && ((NEXT) = list_next((VAR)), 1);	\
+		(VAR) = (NEXT))
 
 #define	list_for_each_entry(VAR, HEAD, FIELD)				\
-	for ((VAR) = ((TAILQ_FIRST((HEAD)) == NULL)? NULL :		\
-		    list_entry(TAILQ_FIRST((HEAD)), typeof(*(VAR)), FIELD)); \
+	for ((VAR) = ((list_first((HEAD)) == NULL)? NULL :		\
+		    list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD)); \
 		(VAR) != NULL;						\
-		(VAR) = ((TAILQ_NEXT((VAR), FIELD) == NULL)? NULL :	\
-		    list_entry(TAILQ_NEXT((VAR), FIELD), typeof(*(VAR)), \
+		(VAR) = ((list_next(&(VAR)->FIELD) == NULL)? NULL :	\
+		    list_entry(list_next(&(VAR)->FIELD), typeof(*(VAR)), \
 			FIELD)))
 
 /*
