@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-mapping.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: dma-mapping.h,v 1.1.2.2 2013/07/24 00:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,9 @@
 
 #ifndef _LINUX_DMA_MAPPING_H_
 #define _LINUX_DMA_MAPPING_H_
+
+#include <sys/bus.h>
+
+typedef bus_addr_t dma_addr_t;
 
 #endif  /* _LINUX_DMA_MAPPING_H_ */
