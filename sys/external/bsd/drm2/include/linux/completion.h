@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1.2.2 2013/07/24 03:15:59 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1.2.3 2013/07/24 03:29:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -117,9 +117,14 @@ complete_all(struct completion *completion)
  * until someone calls complete or complete_all.
  *
  * This operation is very different from its lowercase counterpart.
+ *
+ * For some reason this works on the completion object itself, not on a
+ * pointer thereto, so it must be a macro.
  */
+#define	INIT_COMPLETION(COMPLETION)	INIT_COMPLETION_blorp(&(COMPLETION))
+
 static inline void
-INIT_COMPLETION(struct completion *completion)
+INIT_COMPLETION_blorp(struct completion *completion)
 {
 
 	mutex_enter(&completion->c_lock);
