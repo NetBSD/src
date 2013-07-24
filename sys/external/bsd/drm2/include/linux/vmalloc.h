@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.1.2.2 2013/07/24 02:02:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,19 @@
 
 #ifndef _LINUX_VMALLOC_H_
 #define _LINUX_VMALLOC_H_
+
+#include <sys/malloc.h>
+
+static inline void *
+vmalloc_user(unsigned long size)
+{
+	return malloc(size, M_TEMP, (M_WAITOK | M_ZERO));
+}
+
+static inline void
+vfree(void *ptr)
+{
+	return free(ptr, M_TEMP);
+}
 
 #endif  /* _LINUX_VMALLOC_H_ */
