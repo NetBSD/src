@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.1.2.1 2013/07/24 02:49:21 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.1.2.2 2013/07/24 03:14:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.1 2013/07/24 02:49:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.1.2.2 2013/07/24 03:14:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
-MODULE(MODULE_CLASS_DRIVER, i915drm2, "drm2"); /* XXX drm2pci */
+MODULE(MODULE_CLASS_DRIVER, i915drm2, "drm2"); /* XXX drm2pci, drm2edid */
 
 #ifdef _MODULE
 #include "ioconf.c"
