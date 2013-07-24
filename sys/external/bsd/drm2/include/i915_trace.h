@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.1.2.1 2013/07/24 03:15:12 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.1.2.2 2013/07/24 03:23:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,13 @@
 
 #ifndef _I915_TRACE_H_
 #define _I915_TRACE_H_
+
+#include <sys/types.h>
+
+static inline void
+trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
+    uint64_t value __unused, size_t len __unused)
+{
+}
 
 #endif  /* _I915_TRACE_H_ */
