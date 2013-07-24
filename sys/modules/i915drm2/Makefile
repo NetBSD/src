@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.1.2.2 2013/07/24 03:09:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2013/07/24 03:24:36 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
 
+CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/drm/i915
+
+.PATH:	${S}/external/bsd/drm2/i915drm
 .PATH:	${S}/external/bsd/drm2/dist/drm/i915
 
 KMOD=	i915drm2
@@ -49,5 +52,7 @@ SRCS+=	intel_ringbuffer.c
 SRCS+=	intel_sdvo.c
 SRCS+=	intel_sprite.c
 SRCS+=	intel_tv.c
+
+SRCS+=	i915_module.c
 
 .include <bsd.kmodule.mk>
