@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.1.2.2 2013/07/24 03:33:48 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.1.2.3 2013/07/24 03:34:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -118,4 +118,4 @@ print_hex_dump(const char *level, const char *prefix, int prefix_type,
 	}
 }
 
-#endif  /* _LINUX_LIST_H_ */
+#endif  /* _LINUX_PRINTK_H_ */
