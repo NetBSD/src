@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.4 2013/07/24 02:45:38 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.5 2013/07/24 03:22:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.4 2013/07/24 02:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.5 2013/07/24 03:22:11 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -356,12 +356,12 @@ drm_lastclose(struct drm_device *dev)
 	mutex_lock(&dev->struct_mutex);
 
 	if (drm_core_has_AGP(dev) &&
-	    dev->agp &&
+	    (dev->agp != NULL) &&
 	    !drm_core_check_feature(dev, DRIVER_MODESET))
 		drm_lastclose_agp(dev);
 
 	if (drm_core_check_feature(dev, DRIVER_SG) &&
-	    dev->sg &&
+	    (dev->sg != NULL) &&
 	    !drm_core_check_feature(dev, DRIVER_MODESET)) {
 		drm_sg_cleanup(dev->sg);
 		dev->sg = NULL;
