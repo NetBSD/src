@@ -130,6 +130,11 @@ drm_gem_destroy(struct drm_device *dev)
 	drm_ht_remove(&mm->offset_hash);
 	kfree(mm);
 	dev->mm_private = NULL;
+
+#ifdef __NetBSD__
+	idr_destroy(&dev->object_name_idr);
+	spin_lock_destroy(&dev->object_name_lock);
+#endif
 }
 
 /**
