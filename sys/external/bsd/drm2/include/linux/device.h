@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1.2.2 2013/07/24 02:57:38 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.1.2.3 2013/07/24 03:17:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#define	dev_err		device_printf
 #define	dev_warn	device_printf
 
 #endif  /* _LINUX_DEVICE_H_ */
