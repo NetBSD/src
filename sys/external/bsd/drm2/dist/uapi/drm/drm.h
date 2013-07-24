@@ -56,6 +56,12 @@ typedef int64_t  __s64;
 typedef uint64_t __u64;
 typedef unsigned long drm_handle_t;
 
+#  ifdef __NetBSD__		/* XXX totally wrong place for this */
+#    ifndef __user
+#      define	__user
+#    endif
+#  endif
+
 #endif
 
 #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */
