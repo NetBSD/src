@@ -669,6 +669,8 @@ void drm_gem_object_handle_free(struct drm_gem_object *obj)
 }
 EXPORT_SYMBOL(drm_gem_object_handle_free);
 
+#ifndef __NetBSD__
+
 void drm_gem_vm_open(struct vm_area_struct *vma)
 {
 	struct drm_gem_object *obj = vma->vm_private_data;
@@ -768,3 +770,5 @@ out_unlock:
 	return ret;
 }
 EXPORT_SYMBOL(drm_gem_mmap);
+
+#endif	/* defined(__NetBSD__) */
