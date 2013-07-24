@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.1.2.2 2013/07/24 00:49:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,44 @@
 
 #ifndef _LINUX_SPINLOCK_H_
 #define _LINUX_SPINLOCK_H_
+
+#include <sys/cdefs.h>
+#include <sys/mutex.h>
+
+typedef struct {
+	kmutex_t sl_lock;
+} spinlock_t;
+
+static inline void
+spin_lock(spinlock_t *spinlock)
+{
+	mutex_enter(&spinlock->sl_lock);
+}
+
+static inline void
+spin_unlock(spinlock_t *spinlock)
+{
+	mutex_exit(&spinlock->sl_lock);
+}
+
+/* Must be a macro because the second argument is to be assigned.  */
+#define	spin_lock_irqsave(SPINLOCK, FLAGS)				\
+	do {								\
+		(FLAGS) = 0;						\
+		mutex_enter(&((spinlock_t *)(SPINLOCK))->sl_lock);	\
+	} while (0)
+
+static inline void
+spin_lock_irqrestore(spinlock_t *spinlock, unsigned long __unused flags)
+{
+	mutex_exit(&spinlock->sl_lock);
+}
+
+static inline void
+spin_lock_init(spinlock_t *spinlock)
+{
+	/* XXX Need to identify which need to block intrs.  */
+	mutex_init(&spinlock->sl_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 #endif  /* _LINUX_SPINLOCK_H_ */
