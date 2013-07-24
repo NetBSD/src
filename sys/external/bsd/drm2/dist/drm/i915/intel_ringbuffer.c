@@ -1195,6 +1195,7 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 		DRM_ERROR("failed to map ring buffer\n");
 		goto err_unpin;
 	}
+	ring->virtual_start_mapped = true;
 #else
 	ring->virtual_start =
 		ioremap_wc(dev_priv->mm.gtt->gma_bus_addr + obj->gtt_offset,
@@ -1223,6 +1224,7 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 err_unmap:
 #ifdef __NetBSD__
 	drm_iounmap(dev, &ring->virtual_start_map);
+	ring->virtual_start_mapped = false;
 #else
 	iounmap(ring->virtual_start);
 #endif
@@ -1255,6 +1257,7 @@ void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 
 #ifdef __NetBSD__
 	drm_iounmap(dev, &ring->virtual_start_map);
+	ring->virtual_start_mapped = false;
 #else
 	iounmap(ring->virtual_start);
 #endif
@@ -1760,6 +1763,7 @@ int intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
 		DRM_ERROR("cannot ioremap virtual address for ring buffer\n");
 		return ret;
 	}
+	ring->virtual_start_mapped = true;
 #else
 	ring->virtual_start = ioremap_wc(start, size);
 	if (ring->virtual_start == NULL) {
