@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_types.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: mm_types.h,v 1.1.2.2 2013/07/24 03:30:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,11 @@
 
 #ifndef _LINUX_MM_TYPES_H_
 #define _LINUX_MM_TYPES_H_
+
+#include <uvm/uvm_page.h>	/* XXX don't expose this */
+
+struct page {
+	struct vm_page p_vmp;
+};
 
 #endif  /* _LINUX_MM_TYPES_H_ */
