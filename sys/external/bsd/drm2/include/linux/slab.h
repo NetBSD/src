@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.3 2013/07/24 02:01:28 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.4 2013/07/24 02:24:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/malloc.h>
 
+#include <machine/limits.h>
+
 #include <uvm/uvm_extern.h>	/* For PAGE_SIZE.  */
 
 /* XXX Should use kmem, but Linux kfree doesn't take the size.  */
@@ -50,6 +52,13 @@ static inline void *
 kzalloc(size_t size, int flags)
 {
 	return malloc(size, M_TEMP, (flags | M_ZERO));
+}
+
+static inline void *
+kcalloc(size_t n, size_t size, int flags)
+{
+	KASSERT((SIZE_MAX / n) <= size);
+	return malloc((n * size), M_TEMP, (flags | M_ZERO));
 }
 
 static inline void *
