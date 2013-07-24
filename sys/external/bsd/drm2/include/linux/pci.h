@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.7 2013/07/24 03:02:07 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.8 2013/07/24 03:04:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -88,6 +88,18 @@ pci_disable_msi(struct pci_dev *pdev)
 {
 	KASSERT(pdev->msi_enabled);
 	pdev->msi_enabled = false;
+}
+
+static inline void
+pci_set_master(struct pci_dev *pdev)
+{
+	pcireg_t csr;
+
+	csr = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    PCI_COMMAND_STATUS_REG, csr);
 }
 
 #define	PCIBIOS_MIN_MEM	0	/* XXX bogus x86 kludge bollocks */
