@@ -227,6 +227,12 @@ static void drm_master_destroy(struct kref *kref)
 
 	drm_ht_remove(&master->magiclist);
 
+#ifdef __NetBSD__
+	spin_lock_destroy(&master->lock.spinlock);
+	DRM_DESTROY_WAITQUEUE(&master->lock.lock_queue);
+	DRM_DESTROY_WAITQUEUE(&master->lock.kernel_lock_queue);
+#endif
+
 	kfree(master);
 }
 
