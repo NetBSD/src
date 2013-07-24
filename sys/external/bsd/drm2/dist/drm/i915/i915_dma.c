@@ -1160,7 +1160,11 @@ static int i915_get_bridge_dev(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
+#ifdef __NetBSD__
+	dev_priv->bridge_dev = pci_kludgey_find_dev(dev->pdev, 0, 0, 0);
+#else
 	dev_priv->bridge_dev = pci_get_bus_and_slot(0, PCI_DEVFN(0, 0));
+#endif
 	if (!dev_priv->bridge_dev) {
 		DRM_ERROR("bridge device not found\n");
 		return -1;
