@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.13 2013/07/24 03:24:03 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.14 2013/07/24 03:32:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,13 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 
 struct pci_dev {
 	struct pci_attach_args	pd_pa;
-	bool			pd_kludged;	/* XXX pci_kludgey_find_dev */
+	int			pd_kludges;	/* Gotta lose 'em...  */
+#define	NBPCI_KLUDGE_GET_MUMBLE	0x01
+#define	NBPCI_KLUDGE_MAP_ROM	0x02
+	bus_space_tag_t		pd_rom_bst;
+	bus_space_handle_t	pd_rom_bsh;
+	bus_size_t		pd_rom_size;
+	void			*pd_rom_vaddr;
 	device_t		pd_dev;
 	struct pci_bus		*bus;
 	uint32_t		devfn;
@@ -95,13 +101,14 @@ pci_dev_dev(struct pci_dev *pdev)
 
 static inline void
 linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
-    const struct pci_attach_args *pa, bool kludged)
+    const struct pci_attach_args *pa, int kludges)
 {
 	const uint32_t subsystem_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG);
 
 	pdev->pd_pa = *pa;
-	pdev->pd_kludged = kludged;
+	pdev->pd_kludges = kludges;
+	pdev->pd_rom_vaddr = NULL;
 	pdev->pd_dev = dev;
 	pdev->bus = NULL;	/* XXX struct pci_dev::bus */
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
@@ -286,7 +293,7 @@ pci_get_bus_and_slot(int bus, int slot)
 		return NULL;
 
 	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
-	linux_pci_dev_init(pdev, NULL, &pa, true);
+	linux_pci_dev_init(pdev, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
 }
@@ -316,7 +323,7 @@ pci_get_class(uint32_t class_subclass_shifted __unused,
 		return NULL;
 
 	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
-	linux_pci_dev_init(pdev, NULL, &pa, true);
+	linux_pci_dev_init(pdev, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
 }
@@ -325,8 +332,52 @@ static inline void
 pci_dev_put(struct pci_dev *pdev)
 {
 
-	KASSERT(pdev->pd_kludged);
+	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_GET_MUMBLE));
 	kmem_free(pdev, sizeof(*pdev));
+}
+
+#define	__pci_rom_iomem
+
+static inline void
+pci_unmap_rom(struct pci_dev *pdev, void __pci_rom_iomem *vaddr __unused)
+{
+
+	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM));
+	KASSERT(vaddr == pdev->pd_rom_vaddr);
+	bus_space_unmap(pdev->pd_rom_bst, pdev->pd_rom_bsh, pdev->pd_rom_size);
+	pdev->pd_kludges &= ~NBPCI_KLUDGE_MAP_ROM;
+	pdev->pd_rom_vaddr = NULL;
+}
+
+static inline void __pci_rom_iomem *
+pci_map_rom(struct pci_dev *pdev, size_t *sizep)
+{
+	bus_space_handle_t bsh;
+	bus_size_t size;
+
+	KASSERT(!ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM));
+
+	if (pci_mapreg_map(&pdev->pd_pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_ROM,
+		(BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR),
+		&pdev->pd_rom_bst, &pdev->pd_rom_bsh, NULL, &pdev->pd_rom_size)
+	    != 0) {
+		aprint_error_dev(pdev->pd_dev, "unable to map ROM\n");
+		return NULL;
+	}
+	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
+
+	/* XXX This type is obviously wrong in general...  */
+	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
+		PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
+		aprint_error_dev(pdev->pd_dev, "unable to find ROM\n");
+		pci_unmap_rom(pdev, NULL);
+		return NULL;
+	}
+
+	KASSERT(size <= SIZE_T_MAX);
+	*sizep = size;
+	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst, bsh);
+	return pdev->pd_rom_vaddr;
 }
 
 #endif  /* _LINUX_PCI_H_ */
