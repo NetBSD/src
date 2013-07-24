@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.12 2013/07/24 03:46:37 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.13 2013/07/24 03:54:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.12 2013/07/24 03:46:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.13 2013/07/24 03:54:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,9 +62,7 @@ struct drm_softc {
 
 static int	drm_match(device_t, cfdata_t, void *);
 static void	drm_attach(device_t, device_t, void *);
-#if 0				/* XXX drm detach */
 static int	drm_detach(device_t, int);
-#endif
 
 static struct drm_softc *drm_dev_softc(dev_t);
 static struct drm_minor *drm_dev_minor(dev_t);
@@ -234,8 +232,8 @@ static const struct fileops drm_fileops = {
 	.fo_restart = fnullop_restart,
 };
 
-CFATTACH_DECL_NEW(drm, sizeof(struct drm_minor),
-    drm_match, drm_attach, NULL /* XXX drm_detach */, NULL);
+CFATTACH_DECL_NEW(drm, sizeof(struct drm_softc),
+    drm_match, drm_attach, drm_detach, NULL);
 
 static int
 drm_match(device_t parent __unused, cfdata_t match __unused,
@@ -251,11 +249,14 @@ drm_attach(device_t parent, device_t self, void *aux)
 	struct drm_softc *sc = device_private(self);
 	struct drm_device *dev = aux;
 	unsigned int i;
+	int error;
 
 	KASSERT(sc != NULL);
 	KASSERT(dev != NULL);
 	KASSERT(dev->driver != NULL);
 	KASSERT(device_unit(self) >= 0);
+
+	aprint_normal("\n");
 
 	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
 		aprint_error_dev(self, "can't handle >=64 drm devices!");
@@ -276,31 +277,61 @@ drm_attach(device_t parent, device_t self, void *aux)
 		    sizeof(sc->sc_minor[i].mode_group));
 	}
 
+	/*
+	 * XXX drm_fill_in_dev reinitializes dev->driver as an artefact
+	 * of Linux's driver attachment goop.  Harmless.
+	 */
+	error = drm_fill_in_dev(dev, NULL, dev->driver);
+	if (error) {
+		aprint_error_dev(parent, "unable to initialize drm: %d\n",
+		    error);
+		return;
+	}
+
 #if 0				/* XXX drm wsdisplay */
 	attach wsdisplay;
 #endif
 }
 
-#if 0				/* XXX drm detach */
 static int
 drm_detach(device_t self, int flags)
 {
 	struct drm_softc *const sc = device_private(self);
 	KASSERT(sc != NULL);
-	struct drm_device *const dev = sc->sc_minor.dev;
+	struct drm_device *const dev = sc->sc_drm_dev;
 	KASSERT(dev != NULL);
+	const struct drm_driver *const driver = dev->driver;
+	KASSERT(driver != NULL);
 
-	drm_sysctl_cleanup(dev);
+	/*
+	 * XXX Synchronize with drm_fill_in_dev, perhaps with reference
+	 * to drm_put_dev.
+	 */
+
+	if (ISSET(driver->driver_features, DRIVER_GEM))
+		drm_gem_destroy(dev);
+
 	drm_ctxbitmap_cleanup(dev);
-	clean up mtrr crap;
-	do the last close;
-	unload it all;
-	vblank clenaup;
-	kill hash tables;
-	and more;
-	in a different order;
+
+	/* XXX Move to dev->driver->bus->agp_destroy.  */
+	if (drm_core_has_MTRR(dev) &&
+	    drm_core_has_AGP(dev) &&
+	    (dev->agp != NULL) &&
+	    (dev->agp->agp_mtrr >= 0)) {
+		int error __unused;
+		error = mtrr_del(dev->agp->agp_mtrr,
+		    dev->agp->agp_info.ai_aperture_base,
+		    dev->agp->agp_info.ai_aperture_size);
+		DRM_DEBUG("mtrr_del=%d\n", error);
+	}
+
+	linux_mutex_destroy(&dev->ctxlist_mutex);
+	linux_mutex_destroy(&dev->struct_mutex);
+	spin_lock_destroy(&dev->event_lock);
+	spin_lock_destroy(&dev->count_lock);
+
+	return 0;
 }
-#endif
 
 static struct drm_softc *
 drm_dev_softc(dev_t d)
@@ -593,15 +624,8 @@ void
 drm_config_found(device_t parent, struct drm_driver *driver,
     unsigned long flags, struct drm_device *dev)
 {
-	int error;
 
-	error = drm_fill_in_dev(dev, NULL, driver);
-	if (error) {
-		aprint_error_dev(parent, "unable to initialize drm: %d\n",
-		    error);
-		return;
-	}
-
+	dev->driver = driver;
 	if (config_found_ia(parent, "drmbus", dev, NULL) == NULL) {
 		aprint_error_dev(parent, "unable to attach drm\n");
 		return;
