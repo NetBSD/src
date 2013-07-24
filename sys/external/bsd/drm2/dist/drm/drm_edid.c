@@ -31,6 +31,10 @@
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/export.h>
+#include <linux/printk.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
 #include "drm_edid_modes.h"
