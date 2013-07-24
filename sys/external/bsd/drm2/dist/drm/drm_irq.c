@@ -42,6 +42,14 @@
 #include <linux/vgaarb.h>
 #include <linux/export.h>
 
+#include <linux/atomic.h>
+#include <linux/ktime.h>
+#include <linux/math64.h>
+#include <linux/preempt.h>
+#include <linux/sched.h>
+
+#include <asm/bug.h>
+
 /* Access macro for slots in vblank timestamp ringbuffer. */
 #define vblanktimestamp(dev, crtc, count) ( \
 	(dev)->_vblank_time[(crtc) * DRM_VBLANKTIME_RBSIZE + \
