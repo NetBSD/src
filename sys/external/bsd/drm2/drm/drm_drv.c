@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.18 2013/07/24 03:56:33 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.19 2013/07/24 03:58:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.18 2013/07/24 03:56:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.19 2013/07/24 03:58:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +59,7 @@ struct drm_softc {
 	struct drm_device	*sc_drm_dev;
 	struct drm_minor	sc_minor[__arraycount(drm_minor_types)];
 	unsigned int		sc_opencount;
+	bool			sc_initialized;
 };
 
 struct drm_attach_args {
@@ -70,6 +71,8 @@ struct drm_attach_args {
 static int	drm_match(device_t, cfdata_t, void *);
 static void	drm_attach(device_t, device_t, void *);
 static int	drm_detach(device_t, int);
+
+static void	drm_undo_fill_in_dev(struct drm_device *);
 
 static struct drm_softc *drm_dev_softc(dev_t);
 static struct drm_minor *drm_dev_minor(dev_t);
@@ -266,13 +269,15 @@ drm_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	sc->sc_initialized = false;     /* paranoia */
+
 	dev->driver = daa->daa_driver;
 	sc->sc_drm_dev = dev;
 	sc->sc_opencount = 0;
 
 	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
 		aprint_error_dev(self, "can't handle >=64 drm devices!");
-		return;
+		goto fail0;
 	}
 
 	for (i = 0; i < __arraycount(drm_minor_types); i++) {
@@ -295,13 +300,9 @@ drm_attach(device_t parent, device_t self, void *aux)
 	 */
 	error = drm_fill_in_dev(dev, NULL, dev->driver);
 	if (error) {
-		/*
-		 * XXX This leaves the driver in a state such that
-		 * detaching it will fail horribly.  Please fix!
-		 */
 		aprint_error_dev(parent, "unable to initialize drm: %d\n",
 		    error);
-		return;
+		goto fail0;
 	}
 
 	if (dev->driver->load != NULL) {
@@ -309,13 +310,23 @@ drm_attach(device_t parent, device_t self, void *aux)
 		if (error) {
 			aprint_error_dev(parent, "unable to load driver: %d\n",
 			    error);
-			return;
+			goto fail1;
 		}
 	}
 
 #if 0				/* XXX drm wsdisplay */
 	attach wsdisplay;
 #endif
+
+	/* Success!  */
+	sc->sc_initialized = true;
+	return;
+
+fail2: __unused
+	if (dev->driver->unload != NULL)
+		(*dev->driver->unload)(dev);
+fail1:	drm_undo_fill_in_dev(dev);
+fail0:	return;
 }
 
 static int
@@ -325,18 +336,31 @@ drm_detach(device_t self, int flags)
 	KASSERT(sc != NULL);
 	struct drm_device *const dev = sc->sc_drm_dev;
 	KASSERT(dev != NULL);
-	const struct drm_driver *const driver = dev->driver;
-	KASSERT(driver != NULL);
+
+	if (!sc->sc_initialized)
+		return 0;
 
 	if (sc->sc_opencount != 0)
 		return EBUSY;
 
+	/* XXX The placement of this is pretty random...  */
+	if (dev->driver->unload != NULL)
+		(*dev->driver->unload)(dev);
+
+	drm_undo_fill_in_dev(dev);
+
+	return 0;
+}
+
+static void
+drm_undo_fill_in_dev(struct drm_device *dev)
+{
 	/*
 	 * XXX Synchronize with drm_fill_in_dev, perhaps with reference
 	 * to drm_put_dev.
 	 */
 
-	if (ISSET(driver->driver_features, DRIVER_GEM))
+	if (ISSET(dev->driver->driver_features, DRIVER_GEM))
 		drm_gem_destroy(dev);
 
 	drm_ctxbitmap_cleanup(dev);
@@ -353,10 +377,6 @@ drm_detach(device_t self, int flags)
 		DRM_DEBUG("mtrr_del=%d\n", error);
 	}
 
-	/* XXX The placement of this is pretty random...  */
-	if (dev->driver->unload != NULL)
-		(*dev->driver->unload)(dev);
-
 	/* XXX Move into dev->driver->bus->agp_destroy.  */
 	if (drm_core_has_AGP(dev) && (dev->agp != NULL)) {
 		kfree(dev->agp);
@@ -370,8 +390,6 @@ drm_detach(device_t self, int flags)
 	linux_mutex_destroy(&dev->struct_mutex);
 	spin_lock_destroy(&dev->event_lock);
 	spin_lock_destroy(&dev->count_lock);
-
-	return 0;
 }
 
 static struct drm_softc *
