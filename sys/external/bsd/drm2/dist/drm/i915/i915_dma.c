@@ -1876,8 +1876,6 @@ int i915_driver_unload(struct drm_device *dev)
 		 * (XXX Well, do work queues for real...)
 		 */
 		cancel_work_sync(&dev_priv->l3_parity.error_work);
-		cancel_work_sync(&dev_priv->rps.work);
-		cancel_work_sync(&dev_priv->hotplug_work);
 #  if 0				/* XXX How do we get the CRTCs? */
 		cancel_work_sync(&...intel_crtc->unpin_work);
 #  endif
