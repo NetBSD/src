@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.14 2013/07/24 02:54:23 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.15 2013/07/24 02:56:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #define	barrier()	__insn_barrier()
 #define	unlikely(X)	__predict_false(X)
+
+#define	uninitialized_var(x)	x
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((void)sizeof((PTR) -						\
