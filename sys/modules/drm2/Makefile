@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.19 2013/07/24 02:34:16 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.20 2013/07/24 02:34:30 riastradh Exp $
 
 .include "../Makefile.inc"
 
@@ -41,7 +41,7 @@ SRCS+=	drm_prime.c
 #SRCS+=	drm_proc.c		# XXX Rewrite for sysctl.
 #SRCS+=	drm_scatter.c		# XXX Rewrite for bus_dma(9).
 SRCS+=	drm_stub.c
-SRCS+=	drm_vm.c
+#SRCS+=	drm_vm.c		# XXX Rewrite for uvm.
 
 SRCS+=	linux_idr.c
 
