@@ -220,18 +220,8 @@ bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
 bad:
 	if (raw_edid && print_bad_edid) {
 		printk(KERN_ERR "Raw EDID:\n");
-#ifdef __NetBSD__
-		for (i = 0; i < EDID_LENGTH; i++) {
-			printf("%02x", raw_edid[i]);
-			if ((i % 16) == 15)
-				printf("\n");
-			else
-				printf(" ");
-		}
-#else
 		print_hex_dump(KERN_ERR, " \t", DUMP_PREFIX_NONE, 16, 1,
 			       raw_edid, EDID_LENGTH, false);
-#endif
 	}
 	return 0;
 }
