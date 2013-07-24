@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.31 2013/07/24 02:54:09 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.32 2013/07/24 02:55:26 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -37,7 +37,7 @@ SRCS+=	drm_irq.c
 SRCS+=	drm_lock.c
 SRCS+=	drm_memory.c
 SRCS+=	drm_mm.c
-#SRCS+=	drm_modes.c		# XXX Rewrite if necessary.
+SRCS+=	drm_modes.c
 SRCS+=	drm_pci.c		# XXX Move to drm2pci module later.
 #SRCS+=	drm_platform.c		# XXX Rewrite per platform.
 #SRCS+=	drm_prime.c		# XXX Revisit later.
