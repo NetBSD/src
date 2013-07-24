@@ -145,6 +145,11 @@ struct opregion_swsci;
 struct opregion_asle;
 struct drm_i915_private;
 
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  define	__acpi_iomem
+#  define	__iomem			__acpi_iomem
+#endif
+
 struct intel_opregion {
 	struct opregion_header __iomem *header;
 	struct opregion_acpi __iomem *acpi;
@@ -154,6 +159,11 @@ struct intel_opregion {
 	u32 __iomem *lid_state;
 };
 #define OPREGION_SIZE            (8*1024)
+
+#ifdef __NetBSD__		/* XXX acpi iomem */
+#  undef	__acpi_iomem
+#  undef	__iomem
+#endif
 
 struct intel_overlay;
 struct intel_overlay_error_state;
