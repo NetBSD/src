@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.14 2013/07/24 03:55:00 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.15 2013/07/24 03:55:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.14 2013/07/24 03:55:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.15 2013/07/24 03:55:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,6 +58,7 @@ static int drm_minor_types[] = {
 struct drm_softc {
 	struct drm_device	*sc_drm_dev;
 	struct drm_minor	sc_minor[__arraycount(drm_minor_types)];
+	unsigned int		sc_opencount;
 };
 
 static int	drm_match(device_t, cfdata_t, void *);
@@ -259,6 +260,7 @@ drm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_drm_dev = dev;
+	sc->sc_opencount = 0;
 
 	if (device_unit(self) >= 64) { /* XXX Need to do something here!  */
 		aprint_error_dev(self, "can't handle >=64 drm devices!");
@@ -304,6 +306,9 @@ drm_detach(device_t self, int flags)
 	KASSERT(dev != NULL);
 	const struct drm_driver *const driver = dev->driver;
 	KASSERT(driver != NULL);
+
+	if (sc->sc_opencount != 0)
+		return EBUSY;
 
 	/*
 	 * XXX Synchronize with drm_fill_in_dev, perhaps with reference
@@ -359,9 +364,11 @@ drm_dev_minor(dev_t d)
 static int
 drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 {
+	struct drm_softc *const sc = drm_dev_softc(d);
 	struct drm_minor *const dminor = drm_dev_minor(d);
 	int fd;
 	struct file *fp;
+	unsigned int opencount;
 	int error;
 
 	if (dminor == NULL) {
@@ -379,16 +386,25 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 		goto fail0;
 	}
 
+	do {
+		opencount = sc->sc_opencount;
+		if (opencount == UINT_MAX) {
+			error = EBUSY;
+			goto fail0;
+		}
+	} while (atomic_cas_uint(&sc->sc_opencount, opencount, (opencount + 1))
+	    != opencount);
+
 	error = fd_allocfile(&fp, &fd);
 	if (error)
-		goto fail0;
+		goto fail1;
 
 	struct drm_file *const file = kmem_zalloc(sizeof(*file), KM_SLEEP);
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_open_file(file, fp, dminor);
 	if (error)
-		goto fail2;
+		goto fail3;
 
 	error = fd_clone(fp, fd, flags, &drm_fileops, file);
 	KASSERT(error == EMOVEFD); /* XXX */
@@ -396,11 +412,14 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 	/* Success!  (But error has to be EMOVEFD, not 0.)  */
 	return error;
 
-fail2:
+fail3:
 	kmem_free(file, sizeof(*file));
 
-fail1: __unused
+fail2: __unused
 	fd_abort(curproc, fp, fd);
+
+fail1:
+	atomic_dec_uint(&sc->sc_opencount);
 
 fail0:
 	return error;
