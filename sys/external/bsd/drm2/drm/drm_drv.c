@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.4 2013/07/24 02:21:05 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.5 2013/07/24 02:21:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.4 2013/07/24 02:21:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.5 2013/07/24 02:21:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.4 2013/07/24 02:21:05 riastradh Ex
 #include <sys/filedesc.h>
 #include <sys/ioccom.h>
 #include <sys/kauth.h>
+#if 0				/* XXX drm event poll */
+#include <sys/poll.h>
+#include <sys/select.h>
+#endif
 
 #include <drm/drmP.h>
 
@@ -58,9 +62,6 @@ static dev_type_open(drm_open);
 static int	drm_close(struct file *);
 static int	drm_read(struct file *, off_t *, struct uio *, kauth_cred_t,
 		    int);
-#if 0				/* XXX */
-static int	drm_dequeue_event(struct drm_file *, size_t);
-#endif
 static int	drm_poll(struct file *, int);
 static int	drm_stat(struct file *, struct stat *);
 static int	drm_ioctl(struct file *, unsigned long, void *);
@@ -350,28 +351,29 @@ drm_read(struct file *fp __unused, off_t *off __unused,
 #else
 	/* XXX How do flags figure into this?  */
 	struct drm_file *const file = fp->f_data;
-	size_t transferred, limit;
 	struct drm_pending_event *event;
 	int error;
 
 	if (off != 0)
 		return EINVAL;
 
-	mutex_lock(&dev->event_lock);
-	DRM_WAIT_ON(error, &file->event_wait, &dev->event_lock,
-	    !list_empty(&file->event_list));
-	if (error)
-		goto out;
+	for (;;) {
+		error = drm_dequeue_event(file, uio->uio_resid, &event);
+		if (error) {
+			/* XXX errno Linux->NetBSD */
+			return -error;
+		}
 
-	while ((event = drm_dequeue_event(file, uio->uio_resid)) != NULL) {
+		if (event == NULL)
+			break;
+
 		error = uiomove(event->event, event->event->length, uio);
-		if (error)
-			goto out;
+		if (error)	/* XXX Requeue the event?  */
+			return error;
 	}
 
-out:
-	mutex_unlock(&drm_global_mutex);
-	return error;
+	/* Success!  */
+	return 0;
 #endif
 }
 
@@ -387,8 +389,9 @@ drm_poll(struct file *fp __unused, int events __unused)
 #else
 	struct drm_file *const file = fp->f_data;
 	int revents = 0;
+	unsigned long flags;
 
-	mutex_lock(&file->event_list);
+	spin_lock_irqsave(&file->minor->dev->event_lock, flags);
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (!list_empty(&file->event_list))
@@ -400,7 +403,7 @@ drm_poll(struct file *fp __unused, int events __unused)
 			selrecord(curlwp, &file->event_sel);
 	}
 
-	mutex_unlock(&file->event_list);
+	spin_unlock_irqrestore(&file->minor->dev->event_lock, flags);
 
 	return revents;
 #endif
