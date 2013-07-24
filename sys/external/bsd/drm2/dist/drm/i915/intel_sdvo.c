@@ -621,7 +621,12 @@ intel_sdvo_get_value(struct intel_sdvo *intel_sdvo, u8 cmd, void *value, int len
 
 static bool intel_sdvo_set_target_input(struct intel_sdvo *intel_sdvo)
 {
+#ifdef __NetBSD__
+	static const struct intel_sdvo_set_target_input_args zero_targets;
+	struct intel_sdvo_set_target_input_args targets = zero_targets;
+#else
 	struct intel_sdvo_set_target_input_args targets = {0};
+#endif
 	return intel_sdvo_set_value(intel_sdvo,
 				    SDVO_CMD_SET_TARGET_INPUT,
 				    &targets, sizeof(targets));
