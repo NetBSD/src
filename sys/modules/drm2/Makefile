@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.4 2013/07/24 01:58:19 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.5 2013/07/24 02:04:01 riastradh Exp $
 
 .include "../Makefile.inc"
 
@@ -48,5 +48,9 @@ CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/uapi
 CPPFLAGS+=	-I${S}/external/bsd/drm2/dist/include
 CPPFLAGS+=	-D__KERNEL__
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DMTRR
+.endif
 
 .include <bsd.kmodule.mk>
