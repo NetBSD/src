@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.9 2013/07/24 03:10:37 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.10 2013/07/24 03:16:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,20 +37,51 @@
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <linux/ioport.h>
 
 struct pci_bus;
-struct pci_device_id;
+
+struct pci_device_id {
+	uint32_t	vendor;
+	uint32_t	device;
+	uint32_t	subvendor;
+	uint32_t	subdevice;
+	uint32_t	class;
+	uint32_t	class_mask;
+	unsigned long	driver_data;
+};
+
+#define	PCI_ANY_ID		((pcireg_t)-1)
+
+#define	PCI_BASE_CLASS_DISPLAY	PCI_CLASS_DISPLAY
+
+#define	PCI_CLASS_BRIDGE_ISA	PCI_SUBCLASS_BRIDGE_ISA
+
+#define	PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
 
 struct pci_dev {
-	struct pci_bus *bus;
-	unsigned int device;
-	struct pci_attach_args pd_pa;
-	bool pd_kludged;	/* XXX pci_kludgey_find_dev hack */
-	bool msi_enabled;
+	struct pci_attach_args	pd_pa;
+	bool			pd_kludged;	/* XXX pci_kludgey_find_dev */
+	device_t		dev;
+	struct pci_bus		*bus;
+	uint32_t		devfn;
+	uint16_t		vendor;
+	uint16_t		device;
+	uint16_t		subsystem_vendor;
+	uint16_t		subsystem_device;
+	uint8_t			revision;
+	uint32_t		class;
+	bool 			msi_enabled;
 };
+
+#define	PCI_DEVFN(DEV, FN)						\
+	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
+#define	PCI_SLOT(DEVFN)		__SHIFTOUT((DEVFN), __BITS(3, 7))
+#define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
 
 #define	PCI_CAP_ID_AGP	PCI_CAP_AGP
 
