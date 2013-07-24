@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.6 2013/07/24 02:11:38 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.7 2013/07/24 02:20:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@ list_move_tail(struct list_head *node, struct list_head *head)
 }
 
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
+#define	list_first_entry(PTR, TYPE, FIELD)				\
+	list_entry(list_first((PTR)), TYPE, FIELD)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
