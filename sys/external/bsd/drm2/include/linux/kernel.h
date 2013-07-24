@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.19 2013/07/24 03:36:31 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.20 2013/07/24 03:45:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,8 @@
 
 #define	uninitialized_var(x)	x
 
-/* XXX This will multiply evaluate its arguments.  */
+/* XXX These will multiply evaluate their arguments.  */
+#define	max_t(T, X, Y)	MAX(X, Y)
 #define	min_t(T, X, Y)	MIN(X, Y)
 
 /*
