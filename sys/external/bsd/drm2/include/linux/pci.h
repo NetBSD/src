@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.12 2013/07/24 03:20:05 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.13 2013/07/24 03:24:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,9 +59,18 @@ struct pci_device_id {
 
 #define	PCI_BASE_CLASS_DISPLAY	PCI_CLASS_DISPLAY
 
-#define	PCI_CLASS_BRIDGE_ISA	PCI_SUBCLASS_BRIDGE_ISA
+#define	PCI_CLASS_BRIDGE_ISA						\
+	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
+CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 
 #define	PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
+
+#define	PCI_DEVFN(DEV, FN)						\
+	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
+#define	PCI_SLOT(DEVFN)		__SHIFTOUT((DEVFN), __BITS(3, 7))
+#define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
+
+#define	PCI_CAP_ID_AGP	PCI_CAP_AGP
 
 struct pci_dev {
 	struct pci_attach_args	pd_pa;
@@ -84,12 +93,26 @@ pci_dev_dev(struct pci_dev *pdev)
 	return pdev->pd_dev;
 }
 
-#define	PCI_DEVFN(DEV, FN)						\
-	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
-#define	PCI_SLOT(DEVFN)		__SHIFTOUT((DEVFN), __BITS(3, 7))
-#define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
+static inline void
+linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
+    const struct pci_attach_args *pa, bool kludged)
+{
+	const uint32_t subsystem_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_SUBSYS_ID_REG);
 
-#define	PCI_CAP_ID_AGP	PCI_CAP_AGP
+	pdev->pd_pa = *pa;
+	pdev->pd_kludged = kludged;
+	pdev->pd_dev = dev;
+	pdev->bus = NULL;	/* XXX struct pci_dev::bus */
+	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
+	pdev->vendor = PCI_VENDOR(pa->pa_id);
+	pdev->device = PCI_PRODUCT(pa->pa_id);
+	pdev->subsystem_vendor = PCI_SUBSYS_VENDOR(subsystem_id);
+	pdev->subsystem_device = PCI_SUBSYS_ID(subsystem_id);
+	pdev->revision = PCI_REVISION(pa->pa_class);
+	pdev->class = __SHIFTOUT(pa->pa_class, 0xffffff00UL); /* ? */
+	pdev->msi_enabled = false;
+}
 
 static inline int
 pci_find_capability(struct pci_dev *pdev, int cap)
@@ -230,35 +253,72 @@ pci_bus_alloc_resource(struct pci_bus *bus, struct resource *resource,
 }
 
 /*
- * XXX Mega-kludgerific!
- *
- * XXX Doesn't check whether any such device actually exists.
+ * XXX Mega-kludgerific!  pci_get_bus_and_slot and pci_get_class are
+ * defined only for their single purposes in i915drm, in
+ * i915_get_bridge_dev and intel_detect_pch.  We can't define them more
+ * generally without adapting pci_find_device (and pci_enumerate_bus
+ * internally) to pass a cookie through.
  */
 
-static inline struct pci_dev *
-pci_kludgey_find_dev(struct pci_dev *pdev, int bus, int dev, int func)
+static inline int		/* XXX inline?  */
+pci_kludgey_match_bus0_dev0_func0(const struct pci_attach_args *pa)
 {
-	struct pci_dev *const otherdev = kmem_zalloc(sizeof(*otherdev),
-	    KM_SLEEP);
 
-#ifdef DIAGNOSTIC
-	{
-		int obus, odev, ofunc;
+	if (pa->pa_bus != 0)
+		return 0;
+	if (pa->pa_device != 0)
+		return 0;
+	if (pa->pa_function != 0)
+		return 0;
 
-		pci_decompose_tag(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, &obus,
-		    &odev, &ofunc);
-		KASSERT(obus == bus);
-	}
-#endif
+	return 1;
+}
 
-	otherdev->bus = NULL;	/* XXX struct pci_dev::bus */
-	otherdev->device = dev;
-	otherdev->pd_pa = pdev->pd_pa;
-	otherdev->pd_pa.pa_tag = pci_make_tag(otherdev->pd_pa.pa_pc,
-	    bus, dev, func);
-	otherdev->pd_kludged = true;
+static inline struct pci_dev *
+pci_get_bus_and_slot(int bus, int slot)
+{
+	struct pci_attach_args pa;
 
-	return otherdev;
+	KASSERT(bus == 0);
+	KASSERT(slot == PCI_DEVFN(0, 0));
+
+	if (!pci_find_device(&pa, &pci_kludgey_match_bus0_dev0_func0))
+		return NULL;
+
+	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
+	linux_pci_dev_init(pdev, NULL, &pa, true);
+
+	return pdev;
+}
+
+static inline int		/* XXX inline?  */
+pci_kludgey_match_isa_bridge(const struct pci_attach_args *pa)
+{
+
+	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE)
+		return 0;
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA)
+		return 0;
+
+	return 1;
+}
+
+static inline struct pci_dev *
+pci_get_class(uint32_t class_subclass_shifted __unused,
+    struct pci_dev *from __unused)
+{
+	struct pci_attach_args pa;
+
+	KASSERT(class_subclass_shifted == (PCI_CLASS_BRIDGE_ISA << 8));
+	KASSERT(from == NULL);
+
+	if (!pci_find_device(&pa, &pci_kludgey_match_isa_bridge))
+		return NULL;
+
+	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
+	linux_pci_dev_init(pdev, NULL, &pa, true);
+
+	return pdev;
 }
 
 static inline void
