@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.2 2013/07/24 01:59:52 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.1.2.3 2013/07/24 02:44:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #include <linux/pci.h>
 
 #define	__OS_HAS_AGP	1
+
+__CTASSERT(PAGE_SIZE == AGP_PAGE_SIZE);
+__CTASSERT(PAGE_SHIFT == AGP_PAGE_SHIFT);
 
 typedef struct agp_memory DRM_AGP_MEM;
 typedef struct agp_info DRM_AGP_KERN;
