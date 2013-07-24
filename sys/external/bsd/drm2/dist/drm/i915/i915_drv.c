@@ -508,9 +508,11 @@ static int i915_drm_freeze(struct drm_device *dev)
 	/* Modeset on resume, not lid events */
 	dev_priv->modeset_on_lid = 0;
 
+#ifndef __NetBSD__		/* XXX fb */
 	console_lock();
 	intel_fbdev_set_suspend(dev, 1);
 	console_unlock();
+#endif
 
 	return 0;
 }
@@ -545,6 +547,7 @@ int i915_suspend(struct drm_device *dev, pm_message_t state)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX fb */
 void intel_console_resume(struct work_struct *work)
 {
 	struct drm_i915_private *dev_priv =
@@ -556,6 +559,7 @@ void intel_console_resume(struct work_struct *work)
 	intel_fbdev_set_suspend(dev, 0);
 	console_unlock();
 }
+#endif
 
 static int __i915_drm_thaw(struct drm_device *dev)
 {
@@ -584,6 +588,7 @@ static int __i915_drm_thaw(struct drm_device *dev)
 
 	dev_priv->modeset_on_lid = 0;
 
+#ifndef __NetBSD__		/* XXX fb */
 	/*
 	 * The console lock can be pretty contented on resume due
 	 * to all the printk activity.  Try to keep it out of the hot
@@ -595,6 +600,7 @@ static int __i915_drm_thaw(struct drm_device *dev)
 	} else {
 		schedule_work(&dev_priv->console_resume_work);
 	}
+#endif
 
 	return error;
 }
