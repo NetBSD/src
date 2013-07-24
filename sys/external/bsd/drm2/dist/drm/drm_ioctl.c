@@ -203,6 +203,7 @@ int drm_getmap(struct drm_device *dev, void *data,
 int drm_getclient(struct drm_device *dev, void *data,
 		  struct drm_file *file_priv)
 {
+#ifndef __NetBSD__		/* XXX Too scary to contemplate.  */
 	struct drm_client *client = data;
 	struct drm_file *pt;
 	int idx;
@@ -225,6 +226,7 @@ int drm_getclient(struct drm_device *dev, void *data,
 		}
 	}
 	mutex_unlock(&dev->struct_mutex);
+#endif
 
 	return -EINVAL;
 }
