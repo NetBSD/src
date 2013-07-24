@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.1.2.1 2013/07/24 02:29:27 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.1.2.2 2013/07/24 02:31:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -77,6 +77,18 @@ static inline ktime_t
 ktime_sub_ns(ktime_t a, int64_t nsec)
 {
 	return ns_to_ktime(ktime_to_ns(a) - nsec);
+}
+
+static inline int64_t
+timespec_to_ns(struct timespec *t)
+{
+	return (t->tv_sec * 1000000000ul) + t->tv_nsec;
+}
+
+static inline int64_t
+timeval_to_ns(struct timeval *tv)
+{
+	return (tv->tv_sec * 1000000000ul) + (tv->tv_usec * 1000ul);
 }
 
 static inline struct timespec
