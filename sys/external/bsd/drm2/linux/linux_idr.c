@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.4 2013/07/24 02:07:46 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.4 2013/07/24 02:07:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.5 2013/07/24 02:51:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -218,4 +218,22 @@ idr_get_new_above(struct idr *idr, void *data, int min_id, int *id)
 	rw_exit(&idr->idr_lock);
 
 	return 0;
+}
+
+int
+idr_for_each(struct idr *idr, int (*proc)(int, void *, void *), void *arg)
+{
+	struct idr_node *node = NULL;
+	int error = 0;
+
+	rw_enter(&idr->idr_lock, RW_READER);
+	while ((node = rb_tree_iterate(&idr->idr_tree, node, RB_DIR_RIGHT))
+	    != NULL) {
+		error = (*proc)(node->in_index, node->in_data, arg);
+		if (error)
+			break;
+	}
+	rw_exit(&idr->idr_lock);
+
+	return error;
 }
