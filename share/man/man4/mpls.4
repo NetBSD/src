@@ -1,4 +1,4 @@
-.\" $NetBSD: mpls.4,v 1.8 2013/07/24 06:31:09 kefren Exp $
+.\" $NetBSD: mpls.4,v 1.9 2013/07/24 07:00:16 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,9 +82,9 @@ used to forward the frame to next-hop
 .It Traffic Class Field
 3 bits that are used for specifying a traffic class, usually used for defining
 a type of service.
-This field was named the "Experimental Field" in most early (pre-
-.%R RFC 5462
-) documents.
+This field was named the "Experimental Field" in most early
+.Pf ( pre- Ns Li RFC 5462 )
+documents.
 .It Bottom of Stack
 One bit that is set for the last entry in the shim stack and 0 for all others.
 An MPLS frame may contain more than one shim, the last one before the
@@ -121,7 +121,7 @@ Returns ICMP TTL exceeded in transit when an MPLS
 frame is dropped because of TTL = 0 on egress interface.
 .It Li net.mpls.rfc4182
 Pop the Explicit Null labels as specified by
-.%R RFC 4182
+.Li RFC 4182
 .El
 In order to encapsulate and decapsulate to and from MPLS, an mpls
 pseudo-interface must be created and packets that should be encapsulated
