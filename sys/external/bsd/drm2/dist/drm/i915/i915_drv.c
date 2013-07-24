@@ -132,6 +132,11 @@ MODULE_PARM_DESC(preliminary_hw_support,
 static struct drm_driver driver;
 extern int intel_agp_enabled;
 
+#ifdef __NetBSD__
+/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
+struct drm_driver *const i915_drm_driver = &driver;
+#endif
+
 #define INTEL_VGA_DEVICE(id, info) {		\
 	.class = PCI_BASE_CLASS_DISPLAY << 16,	\
 	.class_mask = 0xff0000,			\
@@ -402,6 +407,12 @@ static const struct pci_device_id pciidlist[] = {		/* aka */
 
 #if defined(CONFIG_DRM_I915_KMS)
 MODULE_DEVICE_TABLE(pci, pciidlist);
+#endif
+
+#ifdef __NetBSD__
+/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
+const struct pci_device_id *const i915_device_ids = pciidlist;
+const size_t i915_n_device_ids = __arraycount(pciidlist);
 #endif
 
 void intel_detect_pch(struct drm_device *dev)
