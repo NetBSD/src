@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.7 2013/07/24 04:00:19 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.1.2.8 2013/07/24 04:01:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ krealloc(void *ptr, size_t size, gfp_t gfp)
 static inline void
 kfree(void *ptr)
 {
-	free(ptr, M_TEMP);
+	if (ptr != NULL)
+		free(ptr, M_TEMP);
 }
 
 #endif  /* _LINUX_SLAB_H_ */
