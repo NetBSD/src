@@ -36,6 +36,9 @@
 #include <linux/pagemap.h>
 #include <linux/shmem_fs.h>
 #include <linux/dma-buf.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <asm/bug.h>
 #include <drm/drmP.h>
 
 /** @file drm_gem.c
