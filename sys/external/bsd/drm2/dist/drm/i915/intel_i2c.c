@@ -469,7 +469,11 @@ int intel_setup_gmbus(struct drm_device *dev)
 	else
 		dev_priv->gpio_mmio_base = 0;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->gmbus_mutex);
+#else
 	mutex_init(&dev_priv->gmbus_mutex);
+#endif
 
 	for (i = 0; i < GMBUS_NUM_PORTS; i++) {
 		struct intel_gmbus *bus = &dev_priv->gmbus[i];
