@@ -1806,6 +1806,7 @@ static __inline__ void drm_core_dropmap(struct drm_local_map *map)
 
 #ifdef __NetBSD__		/* XXX temporary measure 20130212 */
 struct pci_device_id;
+struct pci_dev;
 #endif
 
 extern int drm_fill_in_dev(struct drm_device *dev,
