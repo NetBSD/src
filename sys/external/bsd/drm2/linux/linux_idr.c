@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.1.2.2 2013/07/24 01:56:48 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.1.2.3 2013/07/24 02:07:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.2 2013/07/24 01:56:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.1.2.3 2013/07/24 02:07:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -132,6 +132,22 @@ idr_remove(struct idr *idr, int id)
 	rb_tree_remove_node(&idr->idr_tree, node);
 	rw_exit(&idr->idr_lock);
 	kmem_free(node, sizeof(*node));
+}
+
+void
+idr_remove_all(struct idr *idr)
+{
+	struct idr_node *node;
+
+	rw_enter(&idr->idr_lock, RW_WRITER);
+	while ((node = rb_tree_iterate(&idr->idr_tree, NULL, RB_DIR_RIGHT)) !=
+	    NULL) {
+		rb_tree_remove_node(&idr->idr_tree, node);
+		rw_exit(&idr->idr_lock);
+		kmem_free(node, sizeof(*node));
+		rw_enter(&idr->idr_lock, RW_WRITER);
+	}
+	rw_exit(&idr->idr_lock);
 }
 
 int
