@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.2.2 2013/07/24 02:38:06 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.1.2.3 2013/07/24 02:43:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.2 2013/07/24 02:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.2.3 2013/07/24 02:43:26 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -77,8 +77,10 @@ drm_open_file(struct drm_file *file, void *fp, struct drm_minor *minor)
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_open(dev, file);
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_init_file_private(&file->prime);
+#endif
 
 	if (dev->driver->open) {
 		error = (*dev->driver->open)(dev, file);
@@ -104,8 +106,10 @@ fail2:
 		(*dev->driver->postclose)(dev, file);
 
 fail1:
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_destroy_file_private(&file->prime);
+#endif
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_release(dev, file);
@@ -212,8 +216,10 @@ drm_close_file(struct drm_file *file)
 	if (dev->driver->postclose)
 		(*dev->driver->postclose)(dev, file);
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_destroy_file_private(&file->prime);
+#endif
 
 	atomic_inc(&dev->counts[_DRM_STAT_CLOSES]);
 	if (--dev->open_count == 0) {
