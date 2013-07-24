@@ -37,7 +37,9 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_crtc_helper.h>
+#ifndef __NetBSD__
 #include <drm/drm_fb_helper.h>
+#endif
 #include <drm/drm_edid.h>
 
 /**
