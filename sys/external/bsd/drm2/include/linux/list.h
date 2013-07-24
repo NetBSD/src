@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.7 2013/07/24 02:20:24 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.8 2013/07/24 02:24:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -185,6 +185,30 @@ hlist_next(struct hlist_node *node)
 	return LIST_NEXT(node, hln_entry);
 }
 
+static inline void
+hlist_add_head(struct hlist_node *node, struct hlist_head *head)
+{
+	LIST_INSERT_HEAD(head, node, hln_entry);
+}
+
+static inline void
+hlist_add_after(struct hlist_node *node, struct hlist_node *next)
+{
+	LIST_INSERT_AFTER(node, next, hln_entry);
+}
+
+static inline void
+hlist_del(struct hlist_node *node)
+{
+	LIST_REMOVE(node, hln_entry);
+}
+
+static inline void
+hlist_del_init(struct hlist_node *node)
+{
+	LIST_REMOVE(node, hln_entry);
+}
+
 #define	hlist_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 #define	hlist_for_each(VAR, HEAD)	LIST_FOREACH(VAR, HEAD, hln_entry)
 #define	hlist_for_each_safe(VAR, NEXT, HEAD)				\
@@ -195,5 +219,16 @@ hlist_next(struct hlist_node *node)
 		((HLIST) != NULL) &&					\
 		    ((VAR) = hlist_entry((HLIST), typeof(*(VAR)), FIELD), 1); \
 		(HLIST) = LIST_NEXT((HLIST), hln_entry))
+
+/*
+ * XXX The nominally RCU-safe APIs below lack dependent read barriers,
+ * so they're not actually RCU-safe...on the alpha, anyway.  Someone^TM
+ * should fix this.
+ */
+
+#define	hlist_add_after_rcu		hlist_add_after
+#define	hlist_add_head_rcu		hlist_add_head
+#define	hlist_del_init_rcu		hlist_del_init
+#define	hlist_for_each_entry_rcu	hlist_for_each_entry
 
 #endif  /* _LINUX_LIST_H_ */
