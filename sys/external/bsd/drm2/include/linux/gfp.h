@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.1.2.6 2013/07/24 03:30:42 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.1.2.1 2013/07/24 03:30:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,67 +29,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SLAB_H_
-#define _LINUX_SLAB_H_
+#ifndef	_LINUX_GFP_H_
+#define	_LINUX_GFP_H_
 
-#include <sys/malloc.h>
+/* GFP: `Get Free Page' */
 
-#include <machine/limits.h>
+#include <sys/param.h>
+#include <sys/cdefs.h>
 
-#include <uvm/uvm_extern.h>	/* For PAGE_SIZE.  */
+typedef int gfp_t;
 
-#include <linux/gfp.h>
+#define	GFP_KERNEL	(__GFP_FS | __GFP_IO | __GFP_WAIT)
+#define	GFP_ATOMIC	(__GFP_HIGH)
+#define	GFP_DMA32	(__GFP_DMA32)
+#define	GFP_HIGHUSER	(__GFP_FS | __GFP_HARDWALL | __GFP_HIGHMEM | \
+			    __GFP_IO | __GFP_WAIT)
+#define	GFP_USER	(__GFP_FS | __GFP_HARDWALL | __GFP_IO | __GFP_WAIT)
 
-/* XXX Should use kmem, but Linux kfree doesn't take the size.  */
+#define	__GFP_COMP		__BIT(0)
+#define	__GFP_DMA32		__BIT(1)
+#define	__GFP_FS		__BIT(2)
+#define	__GFP_HARDWALL		__BIT(3)
+#define	__GFP_HIGH		__BIT(4)
+#define	__GFP_HIGHMEM		__BIT(5)
+#define	__GFP_IO		__BIT(6)
+#define	__GFP_NORETRY		__BIT(7)
+#define	__GFP_NOWARN		__BIT(8)
+#define	__GFP_NO_KSWAPD		__BIT(9)
+#define	__GFP_RECLAIMABLE	__BIT(10)
+#define	__GFP_WAIT		__BIT(11)
+#define	__GFP_ZERO		__BIT(12)
 
-static inline int
-linux_gfp_to_malloc(gfp_t gfp)
-{
-	int flags = 0;
+/* XXX Make the nm output a little more greppable...  */
+#define	alloc_page	linux_gfp_alloc_page
+#define	__free_page	linux_gfp___free_page
 
-	/* XXX Handle other cases as they arise.  */
-	KASSERT((gfp == GFP_ATOMIC) || (gfp == GFP_KERNEL));
+struct page;
+struct page *	alloc_page(gfp_t);
+void		__free_page(struct page *);
 
-	if (ISSET(gfp, __GFP_WAIT))
-		flags |= M_WAITOK;
-	else
-		flags |= M_NOWAIT;
-
-	if (ISSET(gfp, __GFP_ZERO))
-		flags |= M_ZERO;
-
-	return flags;
-}
-
-static inline void *
-kmalloc(size_t size, gfp_t gfp)
-{
-	return malloc(size, M_TEMP, linux_gfp_to_malloc(gfp));
-}
-
-static inline void *
-kzalloc(size_t size, gfp_t gfp)
-{
-	return malloc(size, M_TEMP, (linux_gfp_to_malloc(gfp) | M_ZERO));
-}
-
-static inline void *
-kcalloc(size_t n, size_t size, gfp_t gfp)
-{
-	KASSERT((SIZE_MAX / n) <= size);
-	return malloc((n * size), M_TEMP, (linux_gfp_to_malloc(gfp) | M_ZERO));
-}
-
-static inline void *
-krealloc(void *ptr, size_t size, gfp_t gfp)
-{
-	return realloc(ptr, size, M_TEMP, linux_gfp_to_malloc(gfp));
-}
-
-static inline void
-kfree(void *ptr)
-{
-	free(ptr, M_TEMP);
-}
-
-#endif  /* _LINUX_SLAB_H_ */
+#endif	/* _LINUX_GFP_H_ */
