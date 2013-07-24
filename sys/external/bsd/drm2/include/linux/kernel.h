@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.9 2013/07/24 02:24:16 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.10 2013/07/24 02:28:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,5 +57,11 @@
 		(void)memcpy(&(Y), __swap_tmp, sizeof(X));		\
 	}								\
 } while (0)
+
+static inline int64_t
+abs64(int64_t x)
+{
+	return (x < 0? (-x) : x);
+}
 
 #endif  /* _LINUX_KERNEL_H_ */
