@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.2.11 2013/07/24 03:18:24 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.1.2.12 2013/07/24 03:20:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,6 +106,21 @@ pci_read_config_dword(struct pci_dev *pdev, int reg, uint32_t *valuep)
 }
 
 static inline void
+pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
+{
+	KASSERT(!ISSET(reg, 1));
+	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    (reg &~ 3)) >> (8 * (reg & 3));
+}
+
+static inline void
+pci_read_config_byte(struct pci_dev *pdev, int reg, uint8_t *valuep)
+{
+	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
+	    (reg &~ 1)) >> (8 * (reg & 1));
+}
+
+static inline void
 pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 {
 	KASSERT(!ISSET(reg, 3));
@@ -113,25 +128,33 @@ pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 }
 
 static inline void
-pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
+pci_rmw_config(struct pci_dev *pdev, int reg, unsigned int bytes,
+    uint32_t value)
 {
-	KASSERT(!ISSET(reg, 1));
-	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
-	    (reg &~ 3)) >> (ISSET(reg, 3)? 16 : 0);
+	const uint32_t mask = ~((~0UL) << (8 * bytes));
+	const int reg32 = (reg &~ 3);
+	const unsigned int shift = (8 * (reg & 3));
+	uint32_t value32;
+
+	KASSERT(bytes <= 4);
+	KASSERT(!ISSET(value, ~mask));
+	pci_read_config_dword(pdev, reg32, &value32);
+	value32 &=~ (mask << shift);
+	value32 |= (value << shift);
+	pci_write_config_dword(pdev, reg32, value32);
 }
 
 static inline void
 pci_write_config_word(struct pci_dev *pdev, int reg, uint16_t value)
 {
-	const int reg32 = (reg &~ 3);
-	const unsigned int shift = (ISSET(reg, 3)? 16 : 0);
-	uint32_t value32;
-
 	KASSERT(!ISSET(reg, 1));
-	pci_read_config_dword(pdev, reg32, &value32);
-	value32 &=~ (0xffffUL << shift);
-	value32 |= (value << shift);
-	pci_write_config_dword(pdev, reg32, value32);
+	pci_rmw_config(pdev, reg, 2, value);
+}
+
+static inline void
+pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
+{
+	pci_rmw_config(pdev, reg, 1, value);
 }
 
 /*
