@@ -1570,7 +1570,15 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 
 	/* overlay on gen2 is broken and can't address above 1G */
 	if (IS_GEN2(dev))
+#ifdef __NetBSD__
+		{
+			ret = drm_limit_dma_space(dev, 0, 0x3fffffffUL);
+			if (ret)
+				goto put_gmch;
+		}
+#else
 		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(30));
+#endif
 
 	/* 965GM sometimes incorrectly writes to hardware status page (HWS)
 	 * using 32bit addressing, overwriting memory if HWS is located
@@ -1581,7 +1589,15 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	 * which also needs to be handled carefully.
 	 */
 	if (IS_BROADWATER(dev) || IS_CRESTLINE(dev))
+#ifdef __NetBSD__
+		{
+			ret = drm_limit_dma_space(dev, 0, 0xffffffffUL);
+			if (ret)
+				goto put_gmch;
+		}
+#else
 		dma_set_coherent_mask(&dev->pdev->dev, DMA_BIT_MASK(32));
+#endif
 
 	mmio_bar = IS_GEN2(dev) ? 1 : 0;
 	/* Before gen4, the registers and the GTT are behind different BARs.
