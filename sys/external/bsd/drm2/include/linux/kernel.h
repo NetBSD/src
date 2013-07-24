@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.5 2013/07/24 01:52:08 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.6 2013/07/24 02:12:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,5 +40,17 @@
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD)))
+
+#define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
+
+/* XXX Rate limit?  */
+#define WARN(CONDITION, FMT, ...)	do				\
+{									\
+	if (CONDITION)							\
+		printf("warning: %s:%d: " FMT, __FILE__, __LINE__,	\
+		    ##__VA_ARGS__);					\
+} while (0)
+
+#define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 
 #endif  /* _LINUX_KERNEL_H_ */
