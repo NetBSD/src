@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.1.2.3 2013/07/24 02:04:16 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.1.2.4 2013/07/24 02:12:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,5 +49,10 @@ copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 	return -copyout(kernel_addr, user_addr, len);
 }
 
+#define	get_user(KERNEL_LOC, USER_ADDR)					\
+	copy_from_user(&(KERNEL_LOC), (USER_ADDR), sizeof(KERNEL_LOC))
+
+#define	put_user(KERNEL_LOC, USER_ADDR)					\
+	copy_to_user((USER_ADDR), &(KERNEL_LOC), sizeof(KERNEL_LOC))
 
 #endif  /* _ASM_UACCESS_H_ */
