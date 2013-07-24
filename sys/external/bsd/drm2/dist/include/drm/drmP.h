@@ -73,6 +73,7 @@
 #include <linux/poll.h>
 #include <linux/atomic.h>
 #include <linux/uidgid.h>
+#include <linux/kref.h>
 #include <asm/pgalloc.h>
 #include <drm/drm.h>
 #include <drm/drm_sarea.h>
