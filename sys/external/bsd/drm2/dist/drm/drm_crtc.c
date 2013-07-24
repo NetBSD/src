@@ -29,6 +29,8 @@
  *      Dave Airlie <airlied@linux.ie>
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
+#include <linux/err.h>
+#include <linux/spinlock.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/export.h>
