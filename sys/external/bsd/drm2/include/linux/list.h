@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.2.4 2013/07/24 01:59:19 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.1.2.5 2013/07/24 02:02:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -65,6 +65,12 @@ list_next(struct list_head *node)
 	return node->lh_next;
 }
 
+static inline int
+list_empty(struct list_head *head)
+{
+	return (head->lh_next == head);
+}
+
 static inline void
 list_add(struct list_head *new, struct list_head *head)
 {
@@ -98,21 +104,26 @@ list_del(struct list_head *entry)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
-		(VAR) != NULL;						\
+		(VAR) != (HEAD);					\
 		(VAR) = list_next((VAR))
 
 #define	list_for_each_safe(VAR, NEXT, HEAD)				\
 	for ((VAR) = list_first((HEAD));				\
-		((VAR) != NULL) && ((NEXT) = list_next((VAR)), 1);	\
+		((VAR) != (HEAD)) && ((NEXT) = list_next((VAR)), 1);	\
 		(VAR) = (NEXT))
 
 #define	list_for_each_entry(VAR, HEAD, FIELD)				\
-	for ((VAR) = ((list_first((HEAD)) == NULL)? NULL :		\
-		    list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD)); \
-		(VAR) != NULL;						\
-		(VAR) = ((list_next(&(VAR)->FIELD) == NULL)? NULL :	\
-		    list_entry(list_next(&(VAR)->FIELD), typeof(*(VAR)), \
-			FIELD)))
+	for ((VAR) = list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD); \
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_entry(list_next(&(VAR)->FIELD), typeof(*(VAR)), \
+		    FIELD))
+
+#define	list_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		\
+	for ((VAR) = list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD); \
+		(&(VAR)->FIELD != (HEAD)) &&				\
+		    ((NEXT) = list_entry(list_next(&(VAR)->FIELD),	\
+			typeof(*(VAR)), FIELD), 1);			\
+		(VAR) = (NEXT))
 
 /*
  * `H'ead-only/`H'ash-table doubly-linked lists.
