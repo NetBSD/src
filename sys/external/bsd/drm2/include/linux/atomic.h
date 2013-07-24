@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.2 2013/07/24 00:48:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,15 @@
 
 #ifndef _LINUX_ATOMIC_H_
 #define _LINUX_ATOMIC_H_
+
+typedef struct {
+	int atomic_value;
+} atomic_t;
+
+static inline int
+atomic_read(atomic_t *atomic)
+{
+	return *(volatile int *)&atomic->atomic_value;
+}
 
 #endif  /* _LINUX_ATOMIC_H_ */
