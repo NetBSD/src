@@ -40,6 +40,19 @@
 #include <drm/drm_fourcc.h>
 
 /* Avoid boilerplate.  I'm tired of typing. */
+#ifdef __NetBSD__
+/* XXX Does nobody build this code with -Wwrite-strings?  */
+#define DRM_ENUM_NAME_FN(fnname, list)				\
+	const char *fnname(int val)				\
+	{							\
+		int i;						\
+		for (i = 0; i < ARRAY_SIZE(list); i++) {	\
+			if (list[i].type == val)		\
+				return list[i].name;		\
+		}						\
+		return "(unknown)";				\
+	}
+#else
 #define DRM_ENUM_NAME_FN(fnname, list)				\
 	char *fnname(int val)					\
 	{							\
@@ -50,6 +63,7 @@
 		}						\
 		return "(unknown)";				\
 	}
+#endif
 
 /*
  * Global properties
@@ -132,12 +146,19 @@ static struct drm_prop_enum_list drm_dirty_info_enum_list[] = {
 	{ DRM_MODE_DIRTY_ANNOTATE, "Annotate" },
 };
 
+#ifndef __NetBSD__
+/* XXX Doesn't seem to be used...  */
 DRM_ENUM_NAME_FN(drm_get_dirty_info_name,
 		 drm_dirty_info_enum_list)
+#endif
 
 struct drm_conn_prop_enum_list {
 	int type;
+#ifdef __NetBSD__
+	const char *name;
+#else
 	char *name;
+#endif
 	int count;
 };
 
@@ -194,6 +215,7 @@ char *drm_get_connector_name(struct drm_connector *connector)
 }
 EXPORT_SYMBOL(drm_get_connector_name);
 
+#ifndef __NetBSD__
 char *drm_get_connector_status_name(enum drm_connector_status status)
 {
 	if (status == connector_status_connected)
@@ -203,6 +225,7 @@ char *drm_get_connector_status_name(enum drm_connector_status status)
 	else
 		return "unknown";
 }
+#endif
 
 /**
  * drm_mode_object_get - allocate a new identifier
