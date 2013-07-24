@@ -1,0 +1,16 @@
+#	$NetBSD: files.drm2,v 1.1.2.1 2013/07/24 02:42:40 riastradh Exp $
+
+define	drm2base
+define	drm2pci
+define	drmbus	{ }
+
+device	drm: drm2base, drmbus
+attach	drm at drmbus
+
+defflag		opt_drm.h	DRM_DEBUG
+makeoptions 	drm2base	CPPFLAGS+="-I$S/external/bsd/drm2/include"
+makeoptions 	drm2base	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
+makeoptions 	drm2base	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
+
+# XXX Should probably be in a header file.  opt_drm.h?
+makeoptions	drm2base	CPPFLAGS+="-D__KERNEL__"
