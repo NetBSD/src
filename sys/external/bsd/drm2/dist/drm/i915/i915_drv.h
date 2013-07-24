@@ -146,7 +146,7 @@ struct opregion_asle;
 struct drm_i915_private;
 
 #ifdef __NetBSD__		/* XXX acpi iomem */
-#  define	__acpi_iomem
+#  include <linux/acpi_io.h>
 #  define	__iomem			__acpi_iomem
 #endif
 
@@ -161,7 +161,6 @@ struct intel_opregion {
 #define OPREGION_SIZE            (8*1024)
 
 #ifdef __NetBSD__		/* XXX acpi iomem */
-#  undef	__acpi_iomem
 #  undef	__iomem
 #endif
 
