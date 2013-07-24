@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2013/07/24 03:24:36 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2013/07/24 03:27:18 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -54,5 +54,6 @@ SRCS+=	intel_sprite.c
 SRCS+=	intel_tv.c
 
 SRCS+=	i915_module.c
+SRCS+=	i915_pci.c
 
 .include <bsd.kmodule.mk>
