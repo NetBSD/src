@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.4 2013/07/24 02:27:09 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.5 2013/07/24 02:36:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,12 @@ static inline void
 DRM_INIT_WAITQUEUE(drm_waitqueue_t *q, const char *name)
 {
 	cv_init(q, name);
+}
+
+static inline void
+DRM_DESTROY_WAITQUEUE(drm_waitqueue_t *q)
+{
+	cv_destroy(q);
 }
 
 static inline void
