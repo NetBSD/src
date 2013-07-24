@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2013/07/23 07:04:18 skrll Exp $
+# $NetBSD: Makefile,v 1.34 2013/07/24 11:45:48 skrll Exp $
 
 MKMAN=	no
 
@@ -74,10 +74,6 @@ LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lpthread
 .endif
 
 WARNS=			4
-
-.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "hppa"
-COPTS.t_msgrcv.c +=	${${ACTIVE_CC} == "gcc" :? -O0 :}
-.endif
 
 .include <bsd.test.mk>
 
