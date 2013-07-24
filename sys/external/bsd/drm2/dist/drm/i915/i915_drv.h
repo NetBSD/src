@@ -910,7 +910,11 @@ typedef struct drm_i915_private {
 	struct drm_mm_node *compressed_fb;
 	struct drm_mm_node *compressed_llb;
 
+#ifdef __NetBSD__
+	time_t last_gpu_reset;
+#else
 	unsigned long last_gpu_reset;
+#endif
 
 	/* list of fbdev register on this device */
 	struct intel_fbdev *fbdev;
