@@ -425,6 +425,11 @@ typedef struct drm_dma_handle {
 	dma_addr_t busaddr;
 	void *vaddr;
 	size_t size;
+#ifdef __NetBSD__
+	bus_dma_tag_t dmah_tag;
+	bus_dmamap_t dmah_map;
+	bus_dma_segment_t dmah_seg;
+#endif
 } drm_dma_handle_t;
 
 /**
