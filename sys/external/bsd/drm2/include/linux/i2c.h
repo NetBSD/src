@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.1.2.3 2013/07/24 02:35:49 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.1.2.4 2013/07/24 03:11:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,9 +34,64 @@
 
 #include <sys/types.h>
 #include <sys/device_if.h>
+#include <sys/queue.h>		/* XXX include order botch: i2cvar.h needs */
+
+#include <dev/i2c/i2cvar.h>
+
+struct i2c_adapter;
+struct i2c_algorithm;
+struct i2c_msg;
+
+#define	I2C_NAME_SIZE	20
+
+#define	I2C_CLASS_DDC	0x01
 
 struct i2c_adapter {
-	device_t ia_dev;
+	char		 		name[I2C_NAME_SIZE];
+	const struct i2c_algorithm	*algo;
+	void				*algo_data;
+	int				retries;
+	struct module			*owner;
+	unsigned int			class;
 };
+
+static inline int
+i2c_add_adapter(struct i2c_adapter *adapter __unused)
+{
+	return 0;
+}
+
+static inline void
+i2c_del_adapter(struct i2c_adapter *adapter __unused)
+{
+}
+
+struct i2c_msg {
+	i2c_addr_t	addr;
+	uint16_t	flags;
+	uint16_t	len;
+	uint8_t		*buf;
+};
+
+#define	I2C_M_RD		0x01
+#define	I2C_M_NOSTART		0x02
+
+#define	I2C_FUNC_I2C			0x01
+#define	I2C_FUNC_NOSTART		0x02
+#define	I2C_FUNC_SMBUS_EMUL		0x04
+#define	I2C_FUNC_SMBUS_READ_BLOCK_DATA	0x08
+#define	I2C_FUNC_SMBUS_BLOCK_PROC_CALL	0x10
+#define	I2C_FUNC_10BIT_ADDR		0x20
+
+struct i2c_algorithm {
+	int		(*master_xfer)(struct i2c_adapter *, struct i2c_msg *,
+			    int);
+	uint32_t	(*functionality)(struct i2c_adapter *);
+};
+
+/* XXX Make the nm output a little more greppable...  */
+#define	i2c_transfer	linux_i2c_transfer
+
+int	i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
 
 #endif  /* _LINUX_I2C_H_ */
