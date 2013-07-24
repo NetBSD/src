@@ -1438,6 +1438,7 @@ extern int drm_close_file(struct drm_file *);
 extern int drm_dequeue_event(struct drm_file *, size_t,
     struct drm_pending_event **);
 #endif
+extern void drm_lastclose(struct drm_device *);
 #else
 extern int drm_open(struct inode *inode, struct file *filp);
 extern int drm_stub_open(struct inode *inode, struct file *filp);
