@@ -391,7 +391,11 @@ static const struct pci_device_id pciidlist[] = {		/* aka */
 	INTEL_VGA_DEVICE(0x0f30, &intel_valleyview_m_info),
 	INTEL_VGA_DEVICE(0x0157, &intel_valleyview_m_info),
 	INTEL_VGA_DEVICE(0x0155, &intel_valleyview_d_info),
+#ifdef __NetBSD__
+	{0, 0, 0, 0, 0, 0, 0}
+#else
 	{0, 0, 0}
+#endif
 };
 
 #if defined(CONFIG_DRM_I915_KMS)
