@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.19 2013/07/20 05:16:08 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.20 2013/07/24 09:05:53 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -414,8 +414,10 @@ delete_route(union sockunion * so_dest, union sockunion * so_pref, int freeso)
 	rm.m_rtm.rtm_seq = ++rt_seq;
 	if (so_pref)
 		rm.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
-	else
+	else {
 		rm.m_rtm.rtm_addrs = RTA_DST;
+		rm.m_rtm.rtm_flags |= RTF_HOST;
+	}
 
 	/* destination, gateway, netmask, genmask, ifp, ifa */
 
@@ -656,7 +658,8 @@ check_route(struct rt_msg * rg, uint rlen)
 			/* Just add an IMPLNULL label */
 			if (so_gate == NULL)
 				label_add(so_dest, so_pref, NULL,
-					MPLS_LABEL_IMPLNULL, NULL, 0);
+					MPLS_LABEL_IMPLNULL, NULL, 0,
+					rg->m_rtm.rtm_flags & RTF_HOST);
 			else {
 				pm = ldp_test_mapping(&so_dest->sa,
 					 prefixlen, &so_gate->sa);
@@ -665,13 +668,15 @@ check_route(struct rt_msg * rg, uint rlen)
 					 * gets rewritten in mpls_add_label */
 					lab = label_add(so_dest, so_pref,
 					    so_gate, MPLS_LABEL_IMPLNULL,
-					    pm->peer, pm->lm->label);
+					    pm->peer, pm->lm->label,
+					    rg->m_rtm.rtm_flags & RTF_HOST);
 					if (lab != NULL)
 						mpls_add_label(lab);
 					free(pm);
 				} else
 					label_add(so_dest, so_pref, so_gate,
-					    MPLS_LABEL_IMPLNULL, NULL, 0);
+					    MPLS_LABEL_IMPLNULL, NULL, 0,
+					    rg->m_rtm.rtm_flags & RTF_HOST);
 			}
 		} else	/* We already know about this prefix */
 			fatalp("Binding already there for prefix %s/%d !\n",
@@ -885,7 +890,9 @@ bind_current_routes()
 		    (so_gate->sa.sa_family == AF_MPLS)) {
 			debugp("MPLS route to %s deleted.\n",
 			    inet_ntoa(so_dst->sin.sin_addr));
-			delete_route(so_dst, so_pref, NO_FREESO);
+			delete_route(so_dst,
+			    rtmes->rtm_flags & RTF_HOST ? NULL : so_pref,
+			    NO_FREESO);
 			if (rtmes->rtm_flags & RTF_HOST)
 				free(so_pref);
 			continue;
@@ -896,7 +903,8 @@ bind_current_routes()
 
 		if (so_gate == NULL || so_gate->sa.sa_family == AF_INET)
 			label_add(so_dst, so_pref, so_gate,
-			    MPLS_LABEL_IMPLNULL, NULL, 0);
+			    MPLS_LABEL_IMPLNULL, NULL, 0,
+			    rtmes->rtm_flags & RTF_HOST);
 
 		if (rtmes->rtm_flags & RTF_HOST)
 			free(so_pref);
@@ -955,11 +963,12 @@ flush_mpls_routes()
 			continue;
 		}
 
-		if (rtm->rtm_addrs & RTA_GATEWAY) {
-			GETNEXT(so_gate, so_dst);
+		if ((rtm->rtm_addrs & RTA_GATEWAY) == 0)
+			continue;
+		GETNEXT(so_gate, so_dst);
+
+		if ((rtm->rtm_flags & RTF_HOST) == 0)
 			GETNEXT(so_pref, so_gate);
-		} else
-			GETNEXT(so_pref, so_dst);
 
 		if (so_gate->sa.sa_family == AF_MPLS) {
 			if (so_dst->sa.sa_family == AF_INET)
