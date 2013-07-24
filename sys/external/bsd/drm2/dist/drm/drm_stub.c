@@ -31,8 +31,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
+#include <linux/printk.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
