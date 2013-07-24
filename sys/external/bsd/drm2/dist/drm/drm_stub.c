@@ -169,7 +169,12 @@ struct drm_master *drm_master_create(struct drm_minor *minor)
 
 	kref_init(&master->refcount);
 	spin_lock_init(&master->lock.spinlock);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&master->lock.lock_queue, "drmulckq");
+	DRM_INIT_WAITQUEUE(&master->lock.kernel_lock_queue, "drmklckq");
+#else
 	init_waitqueue_head(&master->lock.lock_queue);
+#endif
 	drm_ht_create(&master->magiclist, DRM_MAGIC_HASH_ORDER);
 	INIT_LIST_HEAD(&master->magicfree);
 	master->minor = minor;
