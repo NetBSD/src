@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.6 2013/07/24 03:42:54 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.7 2013/07/24 03:43:26 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -47,8 +47,8 @@ SRCS+=	intel_modes.c
 SRCS+=	intel_opregion.c
 SRCS+=	intel_overlay.c
 SRCS+=	intel_panel.c
-SRCS+=	intel_pm.c
-SRCS+=	intel_ringbuffer.c
+#SRCS+=	intel_pm.c		# XXX Hook up later...
+#SRCS+=	intel_ringbuffer.c	# XXX Hook up later...
 SRCS+=	intel_sdvo.c
 SRCS+=	intel_sprite.c
 SRCS+=	intel_tv.c
