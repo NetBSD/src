@@ -1839,9 +1839,16 @@ int drm_gem_object_init(struct drm_device *dev,
 int drm_gem_private_object_init(struct drm_device *dev,
 			struct drm_gem_object *obj, size_t size);
 void drm_gem_object_handle_free(struct drm_gem_object *obj);
+#ifdef __NetBSD__
+void drm_gem_pager_reference(struct uvm_object *);
+void drm_gem_pager_detach(struct uvm_object *);
+int drm_gem_mmap_object(struct drm_device *, off_t *, size_t,
+    struct uvm_object **);
+#else
 void drm_gem_vm_open(struct vm_area_struct *vma);
 void drm_gem_vm_close(struct vm_area_struct *vma);
 int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
 #include <drm/drm_global.h>
 
