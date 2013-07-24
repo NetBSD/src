@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.6 2013/07/24 02:43:26 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.7 2013/07/24 02:43:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.6 2013/07/24 02:43:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.7 2013/07/24 02:43:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,6 +68,9 @@ static int	drm_ioctl(struct file *, unsigned long, void *);
 static int	drm_version_string(char *, size_t *, const char *);
 
 static drm_ioctl_t	drm_version;
+
+/* XXX Can this be pushed into struct drm_device?  */
+struct mutex drm_global_mutex;
 
 #define	DRM_IOCTL_DEF(IOCTL, FUNC, FLAGS)				\
 	[DRM_IOCTL_NR(IOCTL)] = {					\
