@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.1.2.5 2013/07/24 03:44:54 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.1.2.6 2013/07/24 04:04:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,12 +47,6 @@ udelay(unsigned int usec)
 }
 
 static inline void
-msleep(unsigned int msec)
-{
-	(void)kpause("lnxmslep", false, mstohz(msec), NULL);
-}
-
-static inline void
 mdelay(unsigned int msec)
 {
 
@@ -61,6 +55,15 @@ mdelay(unsigned int msec)
 	else
 		while (msec--)
 			udelay(1000);
+}
+
+static inline void
+msleep(unsigned int msec)
+{
+	if ((hz < 1000) && (msec < (1000/hz)))
+		mdelay(msec);
+	else
+		(void)kpause("lnxmslep", false, mstohz(msec), NULL);
 }
 
 #endif  /* _LINUX_DELAY_H_ */
