@@ -40,6 +40,8 @@
 #include <linux/backlight.h>
 #include <linux/intel-iommu.h>
 #include <linux/kref.h>
+#include <linux/completion.h>
+#include <linux/shrinker.h>
 
 /* General customization:
  */
