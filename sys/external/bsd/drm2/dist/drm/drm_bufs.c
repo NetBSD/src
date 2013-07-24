@@ -268,11 +268,19 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 		 * address if the map's offset isn't already within the
 		 * aperture.
 		 */
+#ifdef __NetBSD__
+		if (map->offset < dev->agp->base ||
+		    map->offset > dev->agp->base +
+		    dev->agp->agp_info.ai_aperture_size - 1) {
+			map->offset += dev->agp->base;
+		}
+#else
 		if (map->offset < dev->agp->base ||
 		    map->offset > dev->agp->base +
 		    dev->agp->agp_info.aper_size * 1024 * 1024 - 1) {
 			map->offset += dev->agp->base;
 		}
+#endif
 		map->mtrr = dev->agp->agp_mtrr;	/* for getmap */
 
 		/* This assumes the DRM is in total control of AGP space.
