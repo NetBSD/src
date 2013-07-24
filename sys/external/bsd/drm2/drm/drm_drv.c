@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.7 2013/07/24 02:43:42 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.8 2013/07/24 03:22:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.7 2013/07/24 02:43:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.8 2013/07/24 03:22:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,8 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.7 2013/07/24 02:43:42 riastradh Ex
 
 #include <drm/drmP.h>
 
+static int drm_minor_types[] = {
+	DRM_MINOR_LEGACY,
+	DRM_MINOR_CONTROL,
+#if 0				/* XXX Nothing seems to use this?  */
+	DRM_MINOR_RENDER,
+#endif
+};
+
 struct drm_softc {
-	struct drm_minor sc_minor;
+	struct drm_device	*sc_drm_dev;
+	struct drm_minor	sc_minor[__arraycount(drm_minor_types)];
 };
 
 static int	drm_match(device_t, cfdata_t, void *);
@@ -56,6 +65,9 @@ static void	drm_attach(device_t, device_t, void *);
 #if 0				/* XXX drm detach */
 static int	drm_detach(device_t, int);
 #endif
+
+static struct drm_softc *drm_dev_softc(dev_t);
+static struct drm_minor *drm_dev_minor(dev_t);
 
 static dev_type_open(drm_open);
 
@@ -238,22 +250,29 @@ drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct drm_softc *sc = device_private(self);
 	struct drm_device *dev = aux;
+	unsigned int i;
 
 	KASSERT(sc != NULL);
 	KASSERT(dev != NULL);
 	KASSERT(dev->driver != NULL);
+	KASSERT(device_unit(self) >= 0);
 
-	sc->sc_minor.index = device_unit(self);
-	sc->sc_minor.type = (drm_core_check_feature(dev, DRIVER_MODESET)?
-	    DRM_MINOR_CONTROL : DRM_MINOR_LEGACY);
-	sc->sc_minor.device = makedev(cdevsw_lookup_major(&drm_cdevsw),
-	    device_unit(self));
-	sc->sc_minor.kdev = self;
-	sc->sc_minor.dev = dev;
-	sc->sc_minor.master = NULL;
-	INIT_LIST_HEAD(&sc->sc_minor.master_list);
-	(void)memset(&sc->sc_minor.mode_group, 0,
-	    sizeof(sc->sc_minor.mode_group));
+	if (device_unit(self) >= 64) /* XXX Need to do something here!  */
+		return;
+
+	for (i = 0; i < __arraycount(drm_minor_types); i++) {
+		sc->sc_minor[i].index = (i * 64) + device_unit(self);
+		sc->sc_minor[i].type = drm_minor_types[i];
+		sc->sc_minor[i].device =
+		    makedev(cdevsw_lookup_major(&drm_cdevsw),
+			sc->sc_minor[i].index);
+		sc->sc_minor[i].kdev = self;
+		sc->sc_minor[i].dev = dev;
+		sc->sc_minor[i].master = NULL;
+		INIT_LIST_HEAD(&sc->sc_minor[i].master_list);
+		(void)memset(&sc->sc_minor[i].mode_group, 0,
+		    sizeof(sc->sc_minor[i].mode_group));
+	}
 
 #if 0				/* XXX drm wsdisplay */
 	attach wsdisplay;
@@ -281,15 +300,36 @@ drm_detach(device_t self, int flags)
 }
 #endif
 
+static struct drm_softc *
+drm_dev_softc(dev_t d)
+{
+	return device_lookup_private(&drm_cd, (minor(d) % 64));
+}
+
+static struct drm_minor *
+drm_dev_minor(dev_t d)
+{
+	struct drm_softc *const sc = drm_dev_softc(d);
+
+	if (sc == NULL)
+		return NULL;
+
+	const unsigned int i = minor(d) / 64;
+	if (i >= __arraycount(drm_minor_types))
+		return NULL;
+
+	return &sc->sc_minor[i];
+}
+
 static int
 drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 {
-	struct drm_softc *const sc = device_lookup_private(&drm_cd, minor(d));
+	struct drm_minor *const dminor = drm_dev_minor(d);
 	int fd;
 	struct file *fp;
 	int error;
 
-	if (sc == NULL) {
+	if (dminor == NULL) {
 		error = ENXIO;
 		goto fail0;
 	}
@@ -299,7 +339,7 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 		goto fail0;
 	}
 
-	if (sc->sc_minor.dev->switch_power_state != DRM_SWITCH_POWER_ON) {
+	if (dminor->dev->switch_power_state != DRM_SWITCH_POWER_ON) {
 		error = EINVAL;
 		goto fail0;
 	}
@@ -311,7 +351,7 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 	struct drm_file *const file = kmem_zalloc(sizeof(*file), KM_SLEEP);
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_open_file(file, fp, &sc->sc_minor);
+	error = -drm_open_file(file, fp, dminor);
 	if (error)
 		goto fail2;
 
