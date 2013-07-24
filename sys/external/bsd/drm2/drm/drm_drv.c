@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.16 2013/07/24 03:56:03 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.17 2013/07/24 03:56:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.16 2013/07/24 03:56:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.17 2013/07/24 03:56:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +59,12 @@ struct drm_softc {
 	struct drm_device	*sc_drm_dev;
 	struct drm_minor	sc_minor[__arraycount(drm_minor_types)];
 	unsigned int		sc_opencount;
+};
+
+struct drm_attach_args {
+	struct drm_device	*daa_drm_dev;
+	struct drm_driver	*daa_driver;
+	unsigned long		daa_flags;
 };
 
 static int	drm_match(device_t, cfdata_t, void *);
@@ -248,17 +254,19 @@ static void
 drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct drm_softc *sc = device_private(self);
-	struct drm_device *dev = aux;
+	const struct drm_attach_args *const daa = aux;
+	struct drm_device *const dev = daa->daa_drm_dev;
 	unsigned int i;
 	int error;
 
 	KASSERT(sc != NULL);
 	KASSERT(dev != NULL);
-	KASSERT(dev->driver != NULL);
+	KASSERT(daa->daa_driver != NULL);
 	KASSERT(device_unit(self) >= 0);
 
 	aprint_normal("\n");
 
+	dev->driver = daa->daa_driver;
 	sc->sc_drm_dev = dev;
 	sc->sc_opencount = 0;
 
@@ -662,9 +670,15 @@ void
 drm_config_found(device_t parent, struct drm_driver *driver,
     unsigned long flags, struct drm_device *dev)
 {
+	static const struct drm_attach_args zero_daa;
+	struct drm_attach_args daa = zero_daa;
+
+	daa.daa_drm_dev = dev;
+	daa.daa_driver = driver;
+	daa.daa_flags = flags;
 
 	dev->driver = driver;
-	if (config_found_ia(parent, "drmbus", dev, NULL) == NULL) {
+	if (config_found_ia(parent, "drmbus", &daa, NULL) == NULL) {
 		aprint_error_dev(parent, "unable to attach drm\n");
 		return;
 	}
