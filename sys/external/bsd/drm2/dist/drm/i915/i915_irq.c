@@ -353,7 +353,11 @@ static void notify_ring(struct drm_device *dev,
 
 	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
+#ifdef __NetBSD__
+	DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+#else
 	wake_up_all(&ring->irq_queue);
+#endif
 	if (i915_enable_hangcheck) {
 		dev_priv->hangcheck_count = 0;
 		mod_timer(&dev_priv->hangcheck_timer,
@@ -1151,7 +1155,12 @@ static void i915_record_ring_state(struct drm_device *dev,
 		error->instdone[ring->id] = I915_READ(INSTDONE);
 	}
 
+#ifdef __NetBSD__
+	error->waiting[ring->id] = DRM_WAITERS_P(&ring->irq_queue,
+	    &drm_global_mutex);
+#else
 	error->waiting[ring->id] = waitqueue_active(&ring->irq_queue);
+#endif
 	error->instpm[ring->id] = I915_READ(RING_INSTPM(ring->mmio_base));
 	error->seqno[ring->id] = ring->get_seqno(ring, false);
 	error->acthd[ring->id] = intel_ring_get_active_head(ring);
@@ -1466,7 +1475,11 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 * Wakeup waiting processes so they don't hang
 		 */
 		for_each_ring(ring, dev_priv, i)
+#ifdef __NetBSD__
+			DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+#else
 			wake_up_all(&ring->irq_queue);
+#endif
 	}
 
 	queue_work(dev_priv->wq, &dev_priv->error_work);
@@ -1671,12 +1684,21 @@ static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 	    i915_seqno_passed(ring->get_seqno(ring, false),
 			      ring_last_seqno(ring))) {
 		/* Issue a wake-up to catch stuck h/w. */
+#ifdef __NetBSD__
+		if (DRM_WAITERS_P(&ring->irq_queue, &drm_global_mutex)) {
+			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
+				  ring->name);
+			DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+			*err = true;
+		}
+#else
 		if (waitqueue_active(&ring->irq_queue)) {
 			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
 				  ring->name);
 			wake_up_all(&ring->irq_queue);
 			*err = true;
 		}
+#endif
 		return true;
 	}
 	return false;
