@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.1.2.4 2013/07/24 02:20:09 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.1.2.5 2013/07/24 02:24:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -75,6 +75,17 @@ spin_lock_init(spinlock_t *spinlock)
 {
 	/* XXX Need to identify which need to block intrs.  */
 	mutex_init(&spinlock->sl_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+/*
+ * XXX Linux doesn't ever destroy spin locks, it seems.  We'll have to
+ * kludge it up.
+ */
+
+static inline void
+spin_lock_destroy(spinlock_t *spinlock)
+{
+	mutex_destroy(&spinlock->sl_lock);
 }
 
 #endif  /* _LINUX_SPINLOCK_H_ */
