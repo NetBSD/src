@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.1.2.2 2013/07/24 03:13:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,21 @@
 
 #ifndef _LINUX_STRING_H_
 #define _LINUX_STRING_H_
+
+#include <sys/types.h>
+#include <sys/cdefs.h>
+
+static inline void *
+memchr_inv(const void *buffer, int c, size_t len)
+{
+	const uint8_t byte = c;	/* XXX lose */
+	const char *p;
+
+	for (p = buffer; len-- > 0; p++)
+		if (*p != byte)
+			return __UNCONST(p);
+
+	return NULL;
+}
 
 #endif  /* _LINUX_STRING_H_ */
