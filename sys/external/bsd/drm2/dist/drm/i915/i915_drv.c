@@ -562,9 +562,9 @@ int i915_suspend(struct drm_device *dev, pm_message_t state)
 	return 0;
 }
 
-#ifndef __NetBSD__		/* XXX fb */
 void intel_console_resume(struct work_struct *work)
 {
+#ifndef __NetBSD__		/* XXX fb */
 	struct drm_i915_private *dev_priv =
 		container_of(work, struct drm_i915_private,
 			     console_resume_work);
@@ -573,8 +573,8 @@ void intel_console_resume(struct work_struct *work)
 	console_lock();
 	intel_fbdev_set_suspend(dev, 0);
 	console_unlock();
-}
 #endif
+}
 
 static int __i915_drm_thaw(struct drm_device *dev)
 {
