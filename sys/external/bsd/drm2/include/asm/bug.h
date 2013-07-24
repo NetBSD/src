@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.1.2.6 2013/07/24 03:25:28 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1.2.7 2013/07/24 03:35:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
 	    (printf("warning: %s:%d: " FMT, __FILE__, __LINE__,		\
 		##__VA_ARGS__), 1)					\
 	    : 0)
+
+#define	WARN_ONCE(CONDITION, FMT, ...)					\
+	WARN(CONDITION, FMT, ##__VA_ARGS__) /* XXX */
 
 #define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
 #define	WARN_ON_SMP(CONDITION)	WARN_ON(CONDITION) /* XXX */
