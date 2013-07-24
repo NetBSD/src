@@ -40,11 +40,13 @@
 #include <linux/module.h>
 #include <drm/drm_crtc_helper.h>
 
+#ifndef __NetBSD__		/* XXX Use i915_modeset somewhere.  */
 static int i915_modeset __read_mostly = -1;
 module_param_named(modeset, i915_modeset, int, 0400);
 MODULE_PARM_DESC(modeset,
 		"Use kernel modesetting [KMS] (0=DRM_I915_KMS from .config, "
 		"1=on, -1=force vga console preference [default])");
+#endif
 
 unsigned int i915_fbpercrtc __always_unused = 0;
 module_param_named(fbpercrtc, i915_fbpercrtc, int, 0400);
@@ -607,6 +609,7 @@ static int __i915_drm_thaw(struct drm_device *dev)
 	return error;
 }
 
+#ifndef __NetBSD__		/* XXX freeze/thaw */
 static int i915_drm_thaw(struct drm_device *dev)
 {
 	int error = 0;
@@ -623,6 +626,7 @@ static int i915_drm_thaw(struct drm_device *dev)
 
 	return error;
 }
+#endif
 
 int i915_resume(struct drm_device *dev)
 {
@@ -900,6 +904,7 @@ int i915_reset(struct drm_device *dev)
 	return 0;
 }
 
+#ifndef __NetBSD__
 static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct intel_device_info *intel_info =
@@ -960,10 +965,8 @@ static int i915_pm_suspend(struct device *dev)
 	if (error)
 		return error;
 
-#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_disable_device(pdev);
 	pci_set_power_state(pdev, PCI_D3hot);
-#endif
 
 	return 0;
 }
@@ -1034,6 +1037,7 @@ static const struct file_operations i915_driver_fops = {
 #endif
 	.llseek = noop_llseek,
 };
+#endif	/* defined(__NetBSD__) */
 
 static struct drm_driver driver = {
 	/* Don't use MTRRs here; the Xserver or userspace app should
@@ -1062,7 +1066,11 @@ static struct drm_driver driver = {
 #endif
 	.gem_init_object = i915_gem_init_object,
 	.gem_free_object = i915_gem_free_object,
+#ifdef __NetBSD__
+	.gem_uvm_ops = NULL,
+#else
 	.gem_vm_ops = &i915_gem_vm_ops,
+#endif
 
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
@@ -1073,7 +1081,11 @@ static struct drm_driver driver = {
 	.dumb_map_offset = i915_gem_mmap_gtt,
 	.dumb_destroy = i915_gem_dumb_destroy,
 	.ioctls = i915_ioctls,
+#ifdef __NetBSD__
+	.fops = NULL,
+#else
 	.fops = &i915_driver_fops,
+#endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
 	.date = DRIVER_DATE,
@@ -1082,6 +1094,7 @@ static struct drm_driver driver = {
 	.patchlevel = DRIVER_PATCHLEVEL,
 };
 
+#ifndef __NetBSD__
 static struct pci_driver i915_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
@@ -1089,7 +1102,9 @@ static struct pci_driver i915_pci_driver = {
 	.remove = i915_pci_remove,
 	.driver.pm = &i915_pm_ops,
 };
+#endif
 
+#ifndef __NetBSD__
 static int __init i915_init(void)
 {
 	driver.num_ioctls = i915_max_ioctl;
@@ -1128,6 +1143,7 @@ static void __exit i915_exit(void)
 
 module_init(i915_init);
 module_exit(i915_exit);
+#endif
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
