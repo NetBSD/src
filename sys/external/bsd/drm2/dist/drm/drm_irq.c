@@ -229,8 +229,13 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 
 	dev->num_crtcs = num_crtcs;
 
+#ifdef __NetBSD__
+	dev->vbl_queue = kmalloc(sizeof(*dev->vbl_queue) * num_crtcs,
+				 GFP_KERNEL);
+#else
 	dev->vbl_queue = kmalloc(sizeof(wait_queue_head_t) * num_crtcs,
 				 GFP_KERNEL);
+#endif
 	if (!dev->vbl_queue)
 		goto err;
 
