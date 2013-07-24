@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.15 2013/07/24 02:56:17 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.16 2013/07/24 03:01:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,15 +34,19 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/param.h>
 
 #define	__printf	__printflike
 #define	__user
 #define	__must_check	/* __attribute__((warn_unused_result)), if GCC */
+#define	__always_unused	__unused
 
 #define	barrier()	__insn_barrier()
 #define	unlikely(X)	__predict_false(X)
 
 #define	uninitialized_var(x)	x
+
+#define	round_up(X, Y)	roundup2(X, Y)
 
 #define	container_of(PTR, TYPE, FIELD)					\
 	((void)sizeof((PTR) -						\
