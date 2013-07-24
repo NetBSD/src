@@ -309,7 +309,11 @@ int drm_agp_unbind(struct drm_device *dev, struct drm_agp_binding *request)
 		return -EINVAL;
 	if (!entry->bound)
 		return -EINVAL;
+#ifdef __NetBSD__
+	ret = drm_unbind_agp(dev->agp->bridge, entry->memory);
+#else
 	ret = drm_unbind_agp(entry->memory);
+#endif
 	if (ret == 0)
 		entry->bound = 0;
 	return ret;
@@ -351,8 +355,13 @@ int drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 	if (entry->bound)
 		return -EINVAL;
 	page = (request->offset + PAGE_SIZE - 1) / PAGE_SIZE;
+#ifdef __NetBSD__
+	if ((retcode = drm_bind_agp(dev->agp->bridge, entry->memory, page)))
+		return retcode;
+#else
 	if ((retcode = drm_bind_agp(entry->memory, page)))
 		return retcode;
+#endif
 	entry->bound = dev->agp->base + (page << PAGE_SHIFT);
 	DRM_DEBUG("base = 0x%lx entry->bound = 0x%lx\n",
 		  dev->agp->base, entry->bound);
@@ -392,11 +401,19 @@ int drm_agp_free(struct drm_device *dev, struct drm_agp_buffer *request)
 	if (!(entry = drm_agp_lookup_entry(dev, request->handle)))
 		return -EINVAL;
 	if (entry->bound)
+#ifdef __NetBSD__
+		drm_unbind_agp(dev->agp->bridge, entry->memory);
+#else
 		drm_unbind_agp(entry->memory);
+#endif
 
 	list_del(&entry->head);
 
+#ifdef __NetBSD__
+	drm_free_agp(dev->agp->bridge, entry->memory, entry->pages);
+#else
 	drm_free_agp(entry->memory, entry->pages);
+#endif
 	kfree(entry);
 	return 0;
 }
