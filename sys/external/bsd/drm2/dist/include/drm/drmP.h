@@ -1111,7 +1111,11 @@ struct drm_driver {
 		struct platform_device *platform_device;
 		struct usb_driver *usb;
 	} kdriver;
+#ifdef __NetBSD__		/* XXX const */
+	const struct drm_bus *bus;
+#else
 	struct drm_bus *bus;
+#endif
 
 	/* List of devices hanging off this driver */
 	struct list_head device_list;
