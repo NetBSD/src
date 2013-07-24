@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.1.2.2 2013/07/24 03:59:48 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.1.2.3 2013/07/24 04:00:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* i915_irq.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.1.2.2 2013/07/24 03:59:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.1.2.3 2013/07/24 04:00:02 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -45,6 +45,11 @@ i915_disable_pipestat(struct drm_i915_private *dev_priv __unused,
 void
 i915_enable_pipestat(struct drm_i915_private *dev_priv __unused,
     int pipe __unused, u32 mask __unused)
+{
+}
+
+void
+i915_hangcheck_elapsed(unsigned long delta __unused)
 {
 }
 
