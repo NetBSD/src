@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.2 2013/07/24 00:48:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,11 @@
 
 #ifndef _LINUX_TYPES_H_
 #define _LINUX_TYPES_H_
+
+#include <sys/types.h>
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
 
 #endif  /* _LINUX_TYPES_H_ */
