@@ -204,8 +204,14 @@ int drm_err(const char *func, const char *format, ...);
 #define DRM_ERROR(fmt, ...)				\
 	drm_err(__func__, fmt, ##__VA_ARGS__)
 
+#ifdef __NetBSD__
+/* XXX Use device_printf, with a device.  */
+#define	DRM_INFO(fmt, ...)				\
+	printf("drm: " fmt, ##__VA_ARGS__)
+#else
 #define DRM_INFO(fmt, ...)				\
 	printk(KERN_INFO "[" DRM_NAME "] " fmt, ##__VA_ARGS__)
+#endif
 
 /**
  * Debug output.
