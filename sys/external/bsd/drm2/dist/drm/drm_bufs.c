@@ -484,7 +484,12 @@ int drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 				dev->sigdata.lock = NULL;
 			master->lock.hw_lock = NULL;   /* SHM removed */
 			master->lock.file_priv = NULL;
+#ifdef __NetBSD__
+			DRM_WAKEUP_ALL(&master->lock.lock_queue,
+			    &drm_global_mutex);
+#else
 			wake_up_interruptible_all(&master->lock.lock_queue);
+#endif
 		}
 		break;
 	case _DRM_AGP:
