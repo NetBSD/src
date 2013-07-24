@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.7 2013/07/24 03:43:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.1.2.8 2013/07/24 03:52:13 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drm2/Makefile.inc"
@@ -20,7 +20,7 @@ SRCS+=	dvo_tfp410.c
 #SRCS+=	i915_debugfs.c		# XXX No debugfs in NetBSD.
 SRCS+=	i915_dma.c
 SRCS+=	i915_drv.c
-#SRCS+=	i915_gem.c
+SRCS+=	i915_gem.c		# XXX overridden for now
 #SRCS+=	i915_gem_context.c
 #SRCS+=	i915_gem_debug.c
 #SRCS+=	i915_gem_dmabuf.c
@@ -30,16 +30,16 @@ SRCS+=	i915_drv.c
 #SRCS+=	i915_gem_stolen.c
 #SRCS+=	i915_gem_tiling.c
 #SRCS+=	i915_ioc32.c
-#SRCS+=	i915_irq.c
+SRCS+=	i915_irq.c
 SRCS+=	i915_suspend.c
-#SRCS+=	i915_sysfs.c		# XXX No sysfs in NetBSD.
+SRCS+=	i915_sysfs.c		# XXX No sysfs in NetBSD.
 SRCS+=	intel_bios.c
 SRCS+=	intel_crt.c
 SRCS+=	intel_ddi.c
 SRCS+=	intel_display.c
 SRCS+=	intel_dp.c
 SRCS+=	intel_dvo.c
-#SRCS+=	intel_fb.c		# XXX Rewrite for wscons.
+SRCS+=	intel_fb.c		# XXX Rewrite for wscons.
 SRCS+=	intel_hdmi.c
 SRCS+=	intel_i2c.c
 SRCS+=	intel_lvds.c
@@ -47,8 +47,8 @@ SRCS+=	intel_modes.c
 SRCS+=	intel_opregion.c
 SRCS+=	intel_overlay.c
 SRCS+=	intel_panel.c
-#SRCS+=	intel_pm.c		# XXX Hook up later...
-#SRCS+=	intel_ringbuffer.c	# XXX Hook up later...
+SRCS+=	intel_pm.c		# XXX overridden for now
+SRCS+=	intel_ringbuffer.c	# XXX overridden for now
 SRCS+=	intel_sdvo.c
 SRCS+=	intel_sprite.c
 SRCS+=	intel_tv.c
