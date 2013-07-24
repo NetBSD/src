@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.2.3 2013/07/24 02:20:52 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.2.4 2013/07/24 02:21:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.3 2013/07/24 02:20:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.2.4 2013/07/24 02:21:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,7 +49,7 @@ struct drm_softc {
 
 static int	drm_match(device_t, cfdata_t, void *);
 static void	drm_attach(device_t, device_t, void *);
-#if 0				/* XXX */
+#if 0				/* XXX drm detach */
 static int	drm_detach(device_t, int);
 #endif
 
@@ -249,12 +249,12 @@ drm_attach(device_t parent, device_t self, void *aux)
 	(void)memset(&sc->sc_minor.mode_group, 0,
 	    sizeof(sc->sc_minor.mode_group));
 
-#if 0
+#if 0				/* XXX drm wsdisplay */
 	attach wsdisplay;
 #endif
 }
 
-#if 0				/* XXX */
+#if 0				/* XXX drm detach */
 static int
 drm_detach(device_t self, int flags)
 {
@@ -345,7 +345,7 @@ static int
 drm_read(struct file *fp __unused, off_t *off __unused,
     struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
 {
-#if 1				/* XXX */
+#if 1				/* XXX drm event poll */
 	return 0;
 #else
 	/* XXX How do flags figure into this?  */
@@ -378,7 +378,7 @@ out:
 static int
 drm_poll(struct file *fp __unused, int events __unused)
 {
-#if 1				/* XXX */
+#if 1				/* XXX drm event poll */
 	/*
 	 * XXX Let's worry about this later.  Notifiers need to be
 	 * modified to call selnotify.
