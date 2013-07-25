@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.64 2013/07/25 16:31:33 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.65 2013/07/25 16:34:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -165,6 +165,7 @@
  * Fn0000_0007 main leaf - %ebx.
  */
 #define CPUID_SEF_FSGSBASE	__BIT(0)
+#define CPUID_SEF_TSC_ADJUST	__BIT(1)
 #define CPUID_SEF_BMI1		__BIT(3)
 #define CPUID_SEF_HLE		__BIT(4)
 #define CPUID_SEF_AVX2		__BIT(5)
@@ -173,12 +174,15 @@
 #define CPUID_SEF_ERMS		__BIT(9)
 #define CPUID_SEF_INVPCID	__BIT(10)
 #define CPUID_SEF_RTM		__BIT(11)
+#define CPUID_SEF_QM		__BIT(12)
+#define CPUID_SEF_FPUCSDS	__BIT(13)
 #define CPUID_SEF_RDSEED	__BIT(18)
 #define CPUID_SEF_ADX		__BIT(19)
 #define CPUID_SEF_SMAP		__BIT(20)
 
 #define CPUID_SEF_FLAGS	"\20" \
 	"\1" "FSGSBASE" \
+	"\2" "TSCADJUST" \
 	"\4" "BMI1" \
 	"\5" "HLE" \
 	"\6" "AVX2" \
@@ -187,6 +191,8 @@
 	"\12" "ERMS" \
 	"\13" "INVPCID" \
 	"\14" "RTM" \
+	"\15" "QM" \
+	"\16" "FPUCSDS" \
 	"\23" "RDSEED" \
 	"\24" "ADX" \
 	"\25" "SMAP"
