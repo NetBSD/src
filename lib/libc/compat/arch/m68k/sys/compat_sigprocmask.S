@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.3 2013/07/17 04:56:14 matt Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.4 2013/07/25 22:08:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: compat_sigprocmask.S,v 1.3 2013/07/17 04:56:14 matt Exp $")
+	RCSID("$NetBSD: compat_sigprocmask.S,v 1.4 2013/07/25 22:08:15 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ gotptr:
 	movl	(%a0),8(%sp)		/* indirect to new mask arg */
 doit:
 	SYSTRAP(compat_13_sigprocmask13)
-	jcc	CERROR
+	jcs	CERROR
 	tstl	12(%sp)		/* test if old mask requested */
 	jeq	out
 	movl	12(%sp),%a0
