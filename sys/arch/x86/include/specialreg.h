@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.63 2013/03/06 11:51:40 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.64 2013/07/25 16:31:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -179,17 +179,17 @@
 
 #define CPUID_SEF_FLAGS	"\20" \
 	"\1" "FSGSBASE" \
-	"\2" "BMI1" \
-	"\4" "HLE" \
-	"\5" "AVX2" \
-	"\7" "SMEP" \
-	"\10" "BMI2" \
-	"\11" "ERMS" \
-	"\12" "INVPCID" \
-	"\13" "RTM" \
-	"\22" "RDSEED" \
-	"\23" "ADX" \
-	"\24" "SMAP"
+	"\4" "BMI1" \
+	"\5" "HLE" \
+	"\6" "AVX2" \
+	"\10" "SMEP" \
+	"\11" "BMI2" \
+	"\12" "ERMS" \
+	"\13" "INVPCID" \
+	"\14" "RTM" \
+	"\23" "RDSEED" \
+	"\24" "ADX" \
+	"\25" "SMAP"
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
