@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.40 2011/05/14 13:52:00 jakllsch Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.41 2013/07/25 04:32:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.40 2011/05/14 13:52:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.41 2013/07/25 04:32:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -595,7 +595,7 @@ dmio_stat(struct file *fp, struct stat *st)
 {
 	struct dmio_state *ds = fp->f_data;
 
-	(void)memset(st, 0, sizeof(st));
+	(void)memset(st, 0, sizeof(*st));
 	KERNEL_LOCK(1, NULL);
 	st->st_dev = makedev(cdevsw_lookup_major(&dmoverio_cdevsw), 0);
 	st->st_atimespec = ds->ds_atime;
