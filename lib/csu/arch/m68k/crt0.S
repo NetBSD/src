@@ -35,7 +35,7 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-RCSID("$NetBSD: crt0.S,v 1.3 2013/07/26 18:47:23 martin Exp $")
+RCSID("$NetBSD: crt0.S,v 1.4 2013/07/26 19:49:19 matt Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -44,4 +44,5 @@ _ENTRY(__start)
 	movl	%a0,-(%sp)		| obj
 	movl	%a1,-(%sp)		| cleanup
 	| call: ___start(cleanup, obj, ps_strings)
-	bsr	___start
+	jbsr	___start
+END(__start)
