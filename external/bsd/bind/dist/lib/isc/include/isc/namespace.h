@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.6 2013/03/24 18:42:00 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.7 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -71,6 +71,7 @@
 #define isc_mem_isovermem isc__mem_isovermem
 #define isc_mem_setname isc__mem_setname
 #define isc_mem_setwater isc__mem_setwater
+#define isc_mem_printactive isc__mem_printactive
 #define isc_mem_printallactive isc__mem_printallactive
 #define isc_mem_waterack isc__mem_waterack
 #define isc_mempool_create isc__mempool_create

@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.4 2013/03/24 18:43:32 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -82,8 +82,11 @@ typedef struct rdatasetheader {
 
 /* Copied from rbtdb.c */
 #define RDATASET_ATTR_NXDOMAIN		0x0010
+#define RDATASET_ATTR_NEGATIVE		0x0100
 #define NXDOMAIN(header) \
 	(((header)->attributes & RDATASET_ATTR_NXDOMAIN) != 0)
+#define NEGATIVE(header) \
+	(((header)->attributes & RDATASET_ATTR_NEGATIVE) != 0)
 
 static isc_result_t dns_ecdb_create(isc_mem_t *mctx, dns_name_t *origin,
 				    dns_dbtype_t type,
@@ -408,6 +411,8 @@ bind_rdataset(dns_ecdb_t *ecdb, dns_ecdbnode_t *node,
 	rdataset->trust = header->trust;
 	if (NXDOMAIN(header))
 		rdataset->attributes |= DNS_RDATASETATTR_NXDOMAIN;
+	if (NEGATIVE(header))
+		rdataset->attributes |= DNS_RDATASETATTR_NEGATIVE;
 
 	rdataset->private1 = ecdb;
 	rdataset->private2 = node;
@@ -471,6 +476,8 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	header->attributes = 0;
 	if ((rdataset->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 		header->attributes |= RDATASET_ATTR_NXDOMAIN;
+	if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
+		header->attributes |= RDATASET_ATTR_NEGATIVE;
 	ISC_LINK_INIT(header, link);
 	ISC_LIST_APPEND(ecdbnode->rdatasets, header, link);
 

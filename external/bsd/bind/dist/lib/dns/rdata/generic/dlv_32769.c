@@ -1,7 +1,7 @@
-/*	$NetBSD: dlv_32769.c,v 1.5 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: dlv_32769.c,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -93,7 +93,7 @@ fromtext_dlv(ARGS_FROMTEXT) {
 		length = -1;
 		break;
 	}
-	return (isc_hex_tobuffer(lexer, target, -1));
+	return (isc_hex_tobuffer(lexer, target, length));
 }
 
 static inline isc_result_t

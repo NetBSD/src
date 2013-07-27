@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.3 2012/06/05 00:42:57 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,7 +41,7 @@ struct isc_interval {
 	isc_int64_t interval;
 };
 
-LIBISC_EXTERNAL_DATA extern isc_interval_t *isc_interval_zero;
+LIBISC_EXTERNAL_DATA extern const isc_interval_t * const isc_interval_zero;
 
 ISC_LANG_BEGINDECLS
 
@@ -84,7 +84,7 @@ struct isc_time {
 	FILETIME absolute;
 };
 
-LIBISC_EXTERNAL_DATA extern isc_time_t *isc_time_epoch;
+LIBISC_EXTERNAL_DATA extern const isc_time_t * const isc_time_epoch;
 
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);

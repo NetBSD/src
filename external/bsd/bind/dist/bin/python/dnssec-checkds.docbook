@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<refentry id="man.dnssec-dsfromkey">
+<!-- Id -->
+
+<refentry id="man.dnssec-checkds">
   <refentryinfo>
     <date>April 11, 2012</date>
   </refentryinfo>
@@ -29,20 +31,21 @@
   </refmeta>
 
   <refnamediv>
-    <refname><application>dnssec-dsfromkey</application></refname>
-    <refpurpose>DNSSEC DS RR generation tool</refpurpose>
+    <refname><application>dnssec-checkds</application></refname>
+    <refpurpose>A DNSSEC delegation consistency checking tool.</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
       <year>2012</year>
+      <year>2013</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>dnssec-chedkcs</command>
+      <command>dnssec-checkds</command>
       <arg><option>-l <replaceable class="parameter">domain</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">file</replaceable></option></arg>
       <arg><option>-d <replaceable class="parameter">dig path</replaceable></option></arg>

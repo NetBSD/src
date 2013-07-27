@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.c,v 1.4 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: rpz.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
  */
 
 /* Id */
+
 
 /*! \file */
 
@@ -125,8 +126,6 @@ struct dns_rpz_cidr {
 	dns_name_t		nsdname_name;	/* RPZ_NSDNAME_ZONE.origin */
 };
 
-static isc_boolean_t		have_rpz_zones = ISC_FALSE;
-
 const char *
 dns_rpz_type2str(dns_rpz_type_t type) {
 	switch (type) {
@@ -193,6 +192,7 @@ dns_rpz_policy2str(dns_rpz_policy_t policy) {
 		break;
 	default:
 		str = "";
+		POST(str);
 		INSIST(0);
 	}
 	return (str);
@@ -268,21 +268,6 @@ dns_rpz_view_destroy(dns_view_t *view) {
 }
 
 /*
- * Note that we have at least one response policy zone.
- * It would be better for something to tell the rbtdb code that the
- * zone is in at least one view's list of policy zones.
- */
-void
-dns_rpz_set_need(isc_boolean_t need) {
-	have_rpz_zones = need;
-}
-
-isc_boolean_t
-dns_rpz_needed(void) {
-	return (have_rpz_zones);
-}
-
-/*
  * Start a new radix tree for a response policy zone.
  */
 isc_result_t
@@ -293,12 +278,6 @@ dns_rpz_new_cidr(isc_mem_t *mctx, dns_name_t *origin,
 	dns_rpz_cidr_t *cidr;
 
 	REQUIRE(rbtdb_cidr != NULL && *rbtdb_cidr == NULL);
-
-	/*
-	 * Only if there is at least one response policy zone.
-	 */
-	if (!have_rpz_zones)
-		return (ISC_R_SUCCESS);
 
 	cidr = isc_mem_get(mctx, sizeof(*cidr));
 	if (cidr == NULL)
@@ -341,7 +320,7 @@ dns_rpz_new_cidr(isc_mem_t *mctx, dns_name_t *origin,
  * See if a policy zone has IP, NSIP, or NSDNAME rules or records.
  */
 void
-dns_rpz_enabled(dns_rpz_cidr_t *cidr, dns_rpz_st_t *st) {
+dns_rpz_enabled_get(dns_rpz_cidr_t *cidr, dns_rpz_st_t *st) {
 	if (cidr == NULL)
 		return;
 	if (cidr->root != NULL &&
@@ -434,6 +413,9 @@ static void
 badname(int level, dns_name_t *name, const char *str1, const char *str2) {
 	char printname[DNS_NAME_FORMATSIZE];
 
+	/*
+	 * bin/tests/system/rpz/tests.sh looks for "invalid rpz".
+	 */
 	if (level < DNS_RPZ_DEBUG_QUIET
 	    && isc_log_wouldlog(dns_lctx, level)) {
 		dns_name_format(name, printname, sizeof(printname));
@@ -510,7 +492,7 @@ ip2name(dns_rpz_cidr_t *cidr, const dns_rpz_cidr_key_t *tgt_ip,
 				while (i < DNS_RPZ_CIDR_WORDS * 2 && w[i] == 0)
 					++i;
 			}
-			if (len > (int)sizeof(str))
+			if (len >= (int)sizeof(str))
 				return (ISC_R_FAILURE);
 		}
 	}
@@ -958,8 +940,7 @@ dns_rpz_cidr_addip(dns_rpz_cidr_t *cidr, dns_name_t *name) {
 	dns_rpz_cidr_bits_t tgt_prefix;
 	dns_rpz_type_t type;
 
-	if (cidr == NULL)
-		return;
+	REQUIRE(cidr != NULL);
 
 	/*
 	 * No worries if the new name is not an IP address.
@@ -987,6 +968,9 @@ dns_rpz_cidr_addip(dns_rpz_cidr_t *cidr, dns_name_t *name) {
 	{
 		char printname[DNS_NAME_FORMATSIZE];
 
+		/*
+		 * bin/tests/system/rpz/tests.sh looks for "rpz.*failed".
+		 */
 		dns_name_format(name, printname, sizeof(printname));
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
 			      DNS_LOGMODULE_RBTDB, DNS_RPZ_ERROR_LEVEL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.9 2013/03/24 18:44:38 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.10 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -368,6 +368,8 @@ main(int argc, char **argv) {
 		fprintf(stderr, "The use of RSA (RSAMD5) is not recommended.\n"
 				"If you still wish to use RSA (RSAMD5) please "
 				"specify \"-a RSAMD5\"\n");
+		if (freeit != NULL)
+			free(freeit);
 		return (1);
 	} else {
 		r.base = algname;
