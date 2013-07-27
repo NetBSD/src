@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.10 2013/04/30 23:41:23 matt Exp $
+# $NetBSD: ad.mips,v 1.11 2013/07/27 19:22:10 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -84,7 +84,7 @@
 ./usr/lib/64/libbfd.so.12			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbind9.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libbind9.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libbind9.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
@@ -116,7 +116,7 @@
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdns.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libdns.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libdns.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/64/libdwarf.so.0			base-compat-shlib	compat,pic,arch64
@@ -414,7 +414,7 @@
 ./usr/lib/o32/libbfd.so.12			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbind9.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libbind9.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libbind9.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbsdmalloc.so.0			base-compat-shlib	compat,pic,arch64
@@ -440,7 +440,7 @@
 ./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libdns.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libdns.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libdns.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/o32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/o32/libdwarf.so.0			base-compat-shlib	compat,pic,arch64
