@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.103 2013/07/22 12:11:03 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.104 2013/07/27 17:37:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -25,13 +25,10 @@
  * SUCH DAMAGE.
  */
 
-/* Disable namespace mangling, Fortification is useless here anyway. */
-#undef _FORTIFY_SOURCE
-
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.103 2013/07/22 12:11:03 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.104 2013/07/27 17:37:29 pooka Exp $");
 #endif
 
 #include <sys/param.h>
