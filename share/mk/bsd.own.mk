@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.739 2013/07/19 16:52:44 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.740 2013/07/27 11:13:57 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -60,6 +60,7 @@ HAVE_GCC?=    45
 
 .if \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "hppa" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
