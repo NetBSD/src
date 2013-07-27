@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,10 +24,34 @@ for db in zones/good*.db
 do
 	echo "I:checking $db ($n)"
 	ret=0
-	$CHECKZONE example $db > test.out.$n 2>&1 || ret=1
+	$CHECKZONE -i local example $db > test.out.$n 2>&1 || ret=1
 	n=`expr $n + 1`
 	if [ $ret != 0 ]; then echo "I:failed"; fi
 	status=`expr $status + $ret`
 done
+
+for db in zones/bad*.db
+do
+	echo "I:checking $db ($n)"
+	ret=0
+	$CHECKZONE -i local example $db > test.out.$n 2>&1 && ret=1
+	n=`expr $n + 1`
+	if [ $ret != 0 ]; then echo "I:failed"; fi
+	status=`expr $status + $ret`
+done
+
+echo "I:checking with spf warnings ($n)"
+ret=0
+$CHECKZONE example zones/spf.db > test.out1.$n 2>&1 || ret=1
+$CHECKZONE -T ignore example zones/spf.db > test.out2.$n 2>&1 || ret=1
+grep "'x.example' found SPF/TXT" test.out1.$n > /dev/null || ret=1
+grep "'y.example' found SPF/SPF" test.out1.$n > /dev/null || ret=1
+grep "'example' found SPF/" test.out1.$n > /dev/null && ret=1
+grep "'x.example' found SPF/" test.out2.$n > /dev/null && ret=1
+grep "'y.example' found SPF/" test.out2.$n > /dev/null && ret=1
+grep "'example' found SPF/" test.out2.$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 exit $status

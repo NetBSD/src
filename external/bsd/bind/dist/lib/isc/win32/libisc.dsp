@@ -463,6 +463,10 @@ SOURCE=..\include\isc\refcount.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\regex.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\isc\region.h
 # End Source File
 # Begin Source File
@@ -711,6 +715,10 @@ SOURCE=..\parseint.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\pool.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\portset.c
 # End Source File
 # Begin Source File
@@ -732,6 +740,10 @@ SOURCE=..\ratelimiter.c
 # Begin Source File
 
 SOURCE=..\refcount.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\regex.c
 # End Source File
 # Begin Source File
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ PIPEFILE="named_pipe"
 SYMFILE="named_sym"
 PIDFILE="${THISDIR}/${CONFDIR}/named.pid"
 myRNDC="$RNDC -c ${THISDIR}/${CONFDIR}/rndc.conf"
-myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -d 99"
+myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T clienttest -T nosyslog -d 99 -U 4"
 
 # Stop the server and run through a series of tests with various config
 # files while controlling the stop/start of the server.
@@ -76,7 +76,7 @@ then
 	cp $DIRCONF named.conf
 	echo > named.run
 	$myRNDC reconfig
-	grep "invalid file" named.run > /dev/null 2>&1
+	grep "configuring logging: invalid file" named.run > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
 		echo "I: testing directory as file succeeded (UNEXPECTED)"
@@ -98,7 +98,7 @@ then
 	cp $PIPECONF named.conf
 	echo > named.run
 	$myRNDC reconfig
-	grep "invalid file" named.run > /dev/null 2>&1
+	grep "configuring logging: invalid file" named.run  > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
 		echo "I: testing pipe file as log file succeeded (UNEXPECTED)"

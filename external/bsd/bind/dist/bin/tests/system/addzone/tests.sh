@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -91,6 +91,44 @@ grep "permission denied" rndc.out.ns2.$n > /dev/null || ret=1
 $DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add master zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inline.example { type master; file "inline.db"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inline.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inline.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add master zone with inline signing and missing master ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlinemissing.example { type master; file "missing.db"; inline-signing yes; };' 2> rndc.out.ns2.$n
+grep "file not found" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add slave zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlineslave.example { type slave; masters { 10.53.0.1; }; file "inlineslave.bk"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inlineslave.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inlineslave.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

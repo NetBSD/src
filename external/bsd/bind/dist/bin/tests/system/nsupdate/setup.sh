@@ -31,6 +31,7 @@ rm -f ns3/example.db.jnl
 cp -f ns1/example1.db ns1/example.db
 sed 's/example.nil/other.nil/g' ns1/example1.db > ns1/other.db
 sed 's/example.nil/unixtime.nil/g' ns1/example1.db > ns1/unixtime.db
+sed 's/example.nil/keytests.nil/g' ns1/example1.db > ns1/keytests.db
 cp -f ns3/example.db.in ns3/example.db
 
 # update_test.pl has its own zone file because it
@@ -52,5 +53,12 @@ EOF
 
 ../../../tools/genrandom 400 random.data
 $DDNSCONFGEN -q -r random.data -z example.nil > ns1/ddns.key
+
+$DDNSCONFGEN -q -r random.data -a hmac-md5 -k md5-key -z keytests.nil > ns1/md5.key
+$DDNSCONFGEN -q -r random.data -a hmac-sha1 -k sha1-key -z keytests.nil > ns1/sha1.key
+$DDNSCONFGEN -q -r random.data -a hmac-sha224 -k sha224-key -z keytests.nil > ns1/sha224.key
+$DDNSCONFGEN -q -r random.data -a hmac-sha256 -k sha256-key -z keytests.nil > ns1/sha256.key
+$DDNSCONFGEN -q -r random.data -a hmac-sha384 -k sha384-key -z keytests.nil > ns1/sha384.key
+$DDNSCONFGEN -q -r random.data -a hmac-sha512 -k sha512-key -z keytests.nil > ns1/sha512.key
 
 (cd ns3; sh -e sign.sh)

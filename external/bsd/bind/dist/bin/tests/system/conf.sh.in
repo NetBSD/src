@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -43,6 +43,7 @@ REVOKE=$TOP/bin/dnssec/dnssec-revoke
 SETTIME=$TOP/bin/dnssec/dnssec-settime
 DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
 CHECKDS=$TOP/bin/python/dnssec-checkds
+COVERAGE=$TOP/bin/python/dnssec-coverage
 CHECKZONE=$TOP/bin/check/named-checkzone
 CHECKCONF=$TOP/bin/check/named-checkconf
 PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -s ${SLOT:-0} -p 1234"
@@ -50,17 +51,20 @@ PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p 1234"
 PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p 1234"
 JOURNALPRINT=$TOP/bin/tools/named-journalprint
 VERIFY=$TOP/bin/dnssec/dnssec-verify
+ARPANAME=$TOP/bin/tools/arpaname
+SAMPLE=$TOP/lib/export/samples/sample
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
-SUBDIRS="acl allow_query addzone autosign builtin cacheclean checkconf
-	 @CHECKDS@ checknames checkzone database dlv dlvauto dlz dlzexternal
-         dname dns64 dnssec ecdsa forward glue gost ixfr inline limits
-	 logfileconfig lwresd masterfile masterformat metadata notify
-	 nsupdate pending pkcs11 redirect resolver rndc rpz rrsetorder
-	 rsabigexponent sortlist smartsign staticstub stub tkey tsig
-	 tsiggss unknown upforwd verify views xfer xferquota zonechecks"
+SUBDIRS="acl additional allow_query addzone autosign builtin
+	 cacheclean checkconf @CHECKDS@ checknames checkzone @COVERAGE@
+         database dlv dlvauto dlz dlzexternal dname dns64 dnssec ecdsa
+         formerr forward glue gost ixfr inline limits logfileconfig
+         lwresd masterfile masterformat metadata notify nsupdate pending
+	 pkcs11 redirect resolver rndc rpz rrsetorder rsabigexponent
+	 smartsign sortlist spf staticstub stub tkey tsig tsiggss unknown
+	 upforwd verify views wildcard xfer xferquota zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -78,4 +82,4 @@ fi
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT
+       JOURNALPRINT ARPANAME SAMPLE

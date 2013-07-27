@@ -49,7 +49,7 @@ dlopen@EXEEXT@: ${DLOPENOBJS}
 		-o $@ ${DLOPENOBJS} ${LIBS}
 
 driver.@SO@: ${SO_OBJS}
-	${LIBTOOL_MODE_LINK} @SO_LD@ -o $@ driver.@O@
+	${LIBTOOL_MODE_LINK} @SO_LD@ -o $@ driver.@O@ 
 
 clean distclean::
 	rm -f ${TARGETS}

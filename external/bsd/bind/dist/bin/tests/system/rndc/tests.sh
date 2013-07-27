@@ -231,5 +231,19 @@ $RNDC -s 10.53.0.2 -p 9953 -c ns2/secondkey.conf status > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:test 'rndc dumpdb' on a empty cache"
+ret=0
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf dumpdb > /dev/null || ret=1
+for i in 1 2 3 4 5  6 7 8 9
+do
+	tmp=0
+	grep "Dump complete" ns3/named_dump.db > /dev/null || tmp=1
+	[ $tmp -eq 0 ] && break
+	sleep 1
+done
+[ $tmp -eq 1 ] && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 exit $status

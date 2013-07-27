@@ -53,6 +53,8 @@ txt4		CLASS1	TYPE16	"hello"
 txt5			TXT	\# 6 0568656C6C6F
 txt6			TYPE16	\# 6 0568656C6C6F
 txt7		IN	TXT	\# 6 0568656C6C6F
+txt8		IN	TXT	"\#" 2 0145
+txt9		IN	TXT	\# text
 
 unk1			TYPE123	\# 1 00
 unk2		CLASS1	TYPE123	\# 1 00

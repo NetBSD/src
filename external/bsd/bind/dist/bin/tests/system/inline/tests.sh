@@ -621,7 +621,7 @@ echo "I:checking rndc freeze/thaw of dynamic inline zone ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 freeze dynamic > freeze.test$n 2>&1 || ret=1 
 sleep 1
-awk '$2 == ";" && $3 == "serial" { print $1 + 1, $2, $3; next; }
+awk '$2 == ";" && $3 == "serial" { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
      { print; }
      END { print "freeze1.dynamic. 0 TXT freeze1"; } ' ns3/dynamic.db > ns3/dynamic.db.new
 mv ns3/dynamic.db.new ns3/dynamic.db
@@ -651,7 +651,7 @@ echo "I:checking rndc freeze/thaw of server ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 freeze > freeze.test$n 2>&1 || ret=1
 sleep 1
-awk '$2 == ";" && $3 == "serial" { print $1 + 1, $2, $3; next; }
+awk '$2 == ";" && $3 == "serial" { printf("%d %s %s\n", $1 + 1, $2, $3); next; }
      { print; }
      END { print "freeze2.dynamic. 0 TXT freeze2"; } ' ns3/dynamic.db > ns3/dynamic.db.new
 mv ns3/dynamic.db.new ns3/dynamic.db
@@ -739,6 +739,39 @@ do
 done
 [ $ans = 1 ] && ret=1
 n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:stop bump in the wire signer server ($n)"
+ret=0
+$PERL ../stop.pl . ns3 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:update SOA record while stopped"
+cp ns3/master4.db.in ns3/master.db
+rm ns3/master.db.jnl
+
+n=`expr $n + 1`
+echo "I:restart bump in the wire signer server ($n)"
+ret=0
+$PERL ../start.pl --noclean --restart . ns3 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:updates to SOA parameters other than serial while stopped are reflected in signed zone ($n)"
+ret=0
+for i in 1 2 3 4 5 6 7 8 9
+do
+	ans=0
+	$DIG $DIGOPTS @10.53.0.3 -p 5300 master SOA > dig.out.ns3.test$n
+	grep "hostmaster" dig.out.ns3.test$n > /dev/null || ans=1
+	grep "ANSWER: 2," dig.out.ns3.test$n > /dev/null || ans=1
+	[ $ans = 1 ] || break
+	sleep 1
+done
+[ $ans = 0 ] || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,4 +20,6 @@ sh clean.sh
 
 ../../../tools/genrandom 400 random.data
 
+cp ns2/redirect.db.in ns2/redirect.db
+cp ns2/example.db.in ns2/example.db
 cd ns1 && sh sign.sh

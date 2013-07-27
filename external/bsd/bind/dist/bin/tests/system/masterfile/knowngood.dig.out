@@ -5,7 +5,6 @@ a.include.		300	IN	A	10.0.0.99
 a.a.include.		300	IN	A	10.0.1.1
 b.foo.a.include.	300	IN	A	10.0.2.2
 b.include.		300	IN	A	10.0.0.2
-b.include.		300	IN	A	10.0.0.99
 a.b.include.		300	IN	A	10.0.1.1
 c.b.include.		300	IN	A	10.0.0.3
 b.foo.b.include.	300	IN	A	10.0.2.2
