@@ -1,7 +1,7 @@
-/*	$NetBSD: sample.c,v 1.3 2012/06/05 00:42:23 christos Exp $	*/
+/*	$NetBSD: sample.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -174,7 +174,9 @@ set_key(dns_client_t *client, char *keynamestr, char *keystr,
 }
 
 static void
-addserver(dns_client_t *client, const char *addrstr, const char *namespace) {
+addserver(dns_client_t *client, const char *addrstr, const char *port,
+	  const char *namespace)
+{
 	struct addrinfo hints, *res;
 	int gai_error;
 	isc_sockaddr_t sa;
@@ -190,7 +192,7 @@ addserver(dns_client_t *client, const char *addrstr, const char *namespace) {
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_flags = AI_NUMERICHOST;
-	gai_error = getaddrinfo(addrstr, "53", &hints, &res);
+	gai_error = getaddrinfo(addrstr, port, &hints, &res);
 	if (gai_error != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",
 			gai_strerror(gai_error));
@@ -198,15 +200,15 @@ addserver(dns_client_t *client, const char *addrstr, const char *namespace) {
 	}
 	INSIST(res->ai_addrlen <= sizeof(sa.type));
 	memcpy(&sa.type, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
 	sa.length = res->ai_addrlen;
+	freeaddrinfo(res);
 	ISC_LINK_INIT(&sa, link);
 	ISC_LIST_INIT(servers);
 	ISC_LIST_APPEND(servers, &sa, link);
 
 	if (namespace != NULL) {
 		namelen = strlen(namespace);
-		isc_buffer_init(&b, namespace, namelen);
+		isc_buffer_constinit(&b, namespace, namelen);
 		isc_buffer_add(&b, namelen);
 		dns_fixedname_init(&fname);
 		name = dns_fixedname_name(&fname);
@@ -247,8 +249,9 @@ main(int argc, char *argv[]) {
 	isc_mem_t *keymctx = NULL;
 	unsigned int clientopt, resopt;
 	isc_boolean_t is_sep = ISC_FALSE;
+	const char *port = "53";
 
-	while ((ch = getopt(argc, argv, "a:es:t:k:K:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:es:t:k:K:p:")) != -1) {
 		switch (ch) {
 		case 't':
 			tr.base = optarg;
@@ -280,6 +283,9 @@ main(int argc, char *argv[]) {
 			break;
 		case 'K':
 			keystr = optarg;
+			break;
+		case 'p':
+			port = optarg;
 			break;
 		default:
 			usage();
@@ -320,11 +326,11 @@ main(int argc, char *argv[]) {
 	}
 
 	/* Set the nameserver */
-	addserver(client, argv[0], NULL);
+	addserver(client, argv[0], port, NULL);
 
 	/* Set the alternate nameserver (when specified) */
 	if (altserver != NULL)
-		addserver(client, altserveraddr, altservername);
+		addserver(client, altserveraddr, port, altservername);
 
 	/* Install DNSSEC key (if given) */
 	if (keynamestr != NULL) {
@@ -376,5 +382,5 @@ main(int argc, char *argv[]) {
 		isc_mem_destroy(&keymctx);
 	dns_lib_shutdown();
 
-	exit(0);
+	return (0);
 }

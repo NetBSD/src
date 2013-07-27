@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-async.c,v 1.3 2012/06/05 00:42:22 christos Exp $	*/
+/*	$NetBSD: sample-async.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -400,5 +400,5 @@ main(int argc, char *argv[]) {
 	isc_app_ctxfinish(query_actx);
 	ctxs_destroy(&mctx, &query_actx, &taskmgr, &socketmgr, &timermgr);
 
-	exit(0);
+	return (0);
 }

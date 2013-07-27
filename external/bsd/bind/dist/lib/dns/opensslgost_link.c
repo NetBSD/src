@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslgost_link.c,v 1.4 2012/12/04 23:38:42 spz Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -129,7 +129,8 @@ opensslgost_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	case 0:
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 	default:
-		return (dst__openssl_toresult2("EVP_VerifyFinal",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_VerifyFinal",
 					       DST_R_VERIFYFAILURE));
 	}
 }

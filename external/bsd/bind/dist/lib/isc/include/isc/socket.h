@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.5 2013/03/24 18:42:00 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1164,7 +1164,7 @@ isc__socketmgr_maxudp(isc_socketmgr_t *mgr, int maxudp);
 
 #ifdef HAVE_LIBXML2
 
-void
+int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr, xmlTextWriterPtr writer);
 /*%<
  * Render internal statistics and other state into the XML document.

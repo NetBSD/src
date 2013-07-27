@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.h,v 1.4 2012/06/05 00:41:45 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -247,12 +247,6 @@ dns_cache_getcleaninginterval(dns_cache_t *cache);
  * Get the periodic cache cleaning interval to 'interval' seconds.
  */
 
-isc_uint32_t
-dns_cache_getcachesize(dns_cache_t *cache);
-/*%<
- * Get the maximum cache size.
- */
-
 const char *
 dns_cache_getname(dns_cache_t *cache);
 /*%<
@@ -260,12 +254,12 @@ dns_cache_getname(dns_cache_t *cache);
  */
 
 void
-dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size);
+dns_cache_setcachesize(dns_cache_t *cache, size_t size);
 /*%<
  * Set the maximum cache size.  0 means unlimited.
  */
 
-isc_uint32_t
+size_t
 dns_cache_getcachesize(dns_cache_t *cache);
 /*%<
  * Get the maximum cache size.

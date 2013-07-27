@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkzone.c,v 1.4 2013/03/24 18:44:37 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -156,19 +156,21 @@ main(int argc, char **argv) {
 	if (progmode == progmode_compile) {
 		zone_options |= (DNS_ZONEOPT_CHECKNS |
 				 DNS_ZONEOPT_FATALNS |
+				 DNS_ZONEOPT_CHECKSPF |
 				 DNS_ZONEOPT_CHECKDUPRR |
 				 DNS_ZONEOPT_CHECKNAMES |
 				 DNS_ZONEOPT_CHECKNAMESFAIL |
 				 DNS_ZONEOPT_CHECKWILDCARD);
 	} else
-		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+		zone_options |= (DNS_ZONEOPT_CHECKDUPRR |
+				 DNS_ZONEOPT_CHECKSPF);
 
 #define ARGCMP(X) (strcmp(isc_commandline_argument, X) == 0)
 
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((c = isc_commandline_parse(argc, argv,
-			       "c:df:hi:jk:L:m:n:qr:s:t:o:vw:DF:M:S:W:"))
+			       "c:df:hi:jk:L:m:n:qr:s:t:o:vw:DF:M:S:T:W:"))
 	       != EOF) {
 		switch (c) {
 		case 'c':
@@ -385,6 +387,18 @@ main(int argc, char **argv) {
 			}
 			break;
 
+		case 'T':
+			if (ARGCMP("warn")) {
+				zone_options |= DNS_ZONEOPT_CHECKSPF;
+			} else if (ARGCMP("ignore")) {
+				zone_options &= ~DNS_ZONEOPT_CHECKSPF;
+			} else {
+				fprintf(stderr, "invalid argument to -T: %s\n",
+					isc_commandline_argument);
+				exit(1);
+			}
+			break;
+
 		case 'W':
 			if (ARGCMP("warn"))
 				zone_options |= DNS_ZONEOPT_CHECKWILDCARD;
@@ -396,6 +410,7 @@ main(int argc, char **argv) {
 			if (isc_commandline_option != '?')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					prog_name, isc_commandline_option);
+			/* FALLTHROUGH */
 		case 'h':
 			usage();
 

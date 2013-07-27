@@ -1,7 +1,7 @@
-/*	$NetBSD: getnameinfo.c,v 1.4 2012/06/15 19:54:21 joerg Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -159,7 +159,7 @@ int
 lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		  size_t hostlen, char *serv, size_t servlen, int flags)
 {
-	struct afd *afd;
+	struct afd *afd = NULL;
 	struct servent *sp;
 	unsigned short port;
 #ifdef LWRES_PLATFORM_HAVESALEN

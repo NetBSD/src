@@ -1,7 +1,7 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.2 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.3 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -230,7 +230,9 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 		return (ISC_R_FAILURE);
 	}
 
-	isc_mem_create(0, 0, &mctx);
+	result = isc_mem_create(0, 0, &mctx);
+	if (result != ISC_R_SUCCESS)
+		return (result);
 
 	cd = isc_mem_get(mctx, sizeof(*cd));
 	if (cd == NULL) {
@@ -252,7 +254,9 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	}
 
 	/* Initialize the lock */
-	isc_mutex_init(&cd->lock);
+	result = isc_mutex_init(&cd->lock);
+	if (result != ISC_R_SUCCESS)
+		goto failed;
 
 	/* Open the library */
 	dlopen_flags = RTLD_NOW|RTLD_GLOBAL;
@@ -356,11 +360,11 @@ dlopen_dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 
 failed:
 	dlopen_log(ISC_LOG_ERROR, "dlz_dlopen of '%s' failed", dlzname);
-	if (cd->dl_path)
+	if (cd->dl_path != NULL)
 		isc_mem_free(mctx, cd->dl_path);
-	if (cd->dlzname)
+	if (cd->dlzname != NULL)
 		isc_mem_free(mctx, cd->dlzname);
-	if (dlopen_flags)
+	if (dlopen_flags != 0)
 		(void) isc_mutex_destroy(&cd->lock);
 #ifdef HAVE_DLCLOSE
 	if (cd->dl_handle)
