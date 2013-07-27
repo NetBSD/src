@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.206 2013/04/28 04:05:37 joerg Exp $
+# $NetBSD: md.amd64,v 1.207 2013/07/27 19:22:10 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -76,7 +76,7 @@
 ./usr/lib/i386/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.6			base-compat-shlib	compat,pic
-./usr/lib/i386/libbind9.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -114,7 +114,7 @@
 ./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.6			base-compat-shlib	compat,pic
-./usr/lib/i386/libdns.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libdns.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdwarf.so.0			base-compat-shlib	compat,pic

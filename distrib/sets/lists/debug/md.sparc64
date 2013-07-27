@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.25 2013/07/09 17:14:37 njoly Exp $
+# $NetBSD: md.sparc64,v 1.26 2013/07/27 19:22:10 christos Exp $
 ./usr/libdata/debug/lib/sparc/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat
 ./usr/libdata/debug/lib/sparc/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat
@@ -43,7 +43,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libbfd.so.12.0.debug			comp-compat-shlib	compat,pic,binutils,debug
-./usr/libdata/debug/usr/lib/sparc/libbind9.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libbind9.so.7.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbz2.so.1.1.debug			comp-compat-shlib	compat,pic,debug
@@ -57,7 +57,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
 ./usr/libdata/debug/usr/lib/sparc/libdm.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libdns.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns.so.7.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
 ./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.1.debug			comp-compat-shlib	compat,pic,debug

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.16 2013/05/19 16:52:04 christos Exp $
+# $NetBSD: ad.arm,v 1.17 2013/07/27 19:22:10 christos Exp $
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
@@ -93,7 +93,7 @@
 ./usr/lib/oabi/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbind9.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/libbind9.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libbind9.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -129,7 +129,7 @@
 ./usr/lib/oabi/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdns.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/libdns.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libdns.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/oabi/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/oabi/libdwarf.so.0			base-compat-shlib	compat,pic

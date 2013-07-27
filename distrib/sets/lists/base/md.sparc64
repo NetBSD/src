@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.193 2013/04/28 04:05:37 joerg Exp $
+# $NetBSD: md.sparc64,v 1.194 2013/07/27 19:22:10 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -74,7 +74,7 @@
 ./usr/lib/sparc/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbind9.so.6			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbind9.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -106,7 +106,7 @@
 ./usr/lib/sparc/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.6			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdns_sd.so.0.0		base-compat-shlib	compat,pic,mdns
 ./usr/lib/sparc/libdwarf.so.0			base-compat-shlib	compat,pic
