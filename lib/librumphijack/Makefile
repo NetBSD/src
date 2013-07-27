@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/08/25 18:00:06 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2013/07/27 17:37:29 pooka Exp $
 #
 
 LIB=		rumphijack
@@ -11,6 +11,7 @@ MAN=		rumphijack.3
 SRCS=		hijack.c hijackdlsym.c
 
 CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT -I${.CURDIR}/../librumpuser
+CPPFLAGS+=	-U_FORTIFY_SOURCE
 
 WARNS?=		5
 
