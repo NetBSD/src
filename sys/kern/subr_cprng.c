@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.21 2013/07/01 15:22:00 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.21 2013/07/01 15:22:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.22 2013/07/27 11:19:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,7 +115,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 	 * rndsink_request takes a spin lock at IPL_VM, so we can be no
 	 * higher than that.
 	 */
-	KASSERT(ipl <= IPL_VM);
+	KASSERT(ipl != IPL_SCHED && ipl != IPL_HIGH);
 
 	/* Initialize the easy fields.  */
 	(void)strlcpy(cprng->cs_name, name, sizeof(cprng->cs_name));
