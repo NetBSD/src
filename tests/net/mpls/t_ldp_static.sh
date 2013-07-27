@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_static.sh,v 1.1 2013/07/25 14:28:29 kefren Exp $
+# $NetBSD: t_ldp_static.sh,v 1.2 2013/07/27 14:39:24 kefren Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,7 +86,7 @@ ping_one() {
 	# to R4's ldpd. ldpd on R4 should verify that the next hop
 	# corresponds to its routing table and tag the route to an
 	RUMP_SERVER=${RUMP_SERVER1} atf_check -s exit:0 -o ignore -e ignore \
-		rump.ping -n -o -w 2 $1
+		rump.ping -n -o -w 5 $1
 
 	# Tear it down and bye bye
 	RUMP_SERVER=${RUMP_SERVER5} atf_check -s exit:0 \
@@ -161,6 +161,7 @@ create_servers() {
 	atf_check -s exit:0 rump.ifconfig shmif1 10.0.4.1/24
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.accept=1
 	atf_check -s exit:0 rump.sysctl -q -w net.mpls.forwarding=1
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=0
 	atf_check -s exit:0 rump.ifconfig mpls0 create up
 	atf_check -s exit:0 rump.route -q add 10.0.1.0/24 10.0.3.1
 	atf_check -s exit:0 rump.route -q add 10.0.5.0/24 10.0.4.2
