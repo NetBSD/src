@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.1.1.7 2012/06/04 17:54:00 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.1.1.8 2013/07/27 15:22:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -795,6 +795,7 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 				usage(1);
 			}
+			/* FALLTHROUGH */
 		case 'h':
 			usage(0);
 			break;

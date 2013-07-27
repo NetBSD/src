@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.1.1.5 2012/06/04 17:56:35 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.1.1.6 2013/07/27 15:23:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -196,7 +196,7 @@ fromwire_keydata(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 4)
+	if (sr.length < 16)
 		return (ISC_R_UNEXPECTEDEND);
 
 	isc_buffer_forward(source, sr.length);

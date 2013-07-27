@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-checkds.8,v 1.1.1.1 2012/12/04 19:22:17 spz Exp $
+.\"	$NetBSD: dnssec-checkds.8,v 1.1.1.2 2013/07/27 15:22:49 christos Exp $
 .\"
-.\" Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -31,10 +31,10 @@
 .\" disable justification (adjust text to left margin only)
 .ad l
 .SH "NAME"
-dnssec\-dsfromkey \- DNSSEC DS RR generation tool
+dnssec\-checkds \- A DNSSEC delegation consistency checking tool.
 .SH "SYNOPSIS"
 .HP 15
-\fBdnssec\-chedkcs\fR [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIdig\ path\fR\fR] [\fB\-D\ \fR\fB\fIdsfromkey\ path\fR\fR] {zone}
+\fBdnssec\-checkds\fR [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIdig\ path\fR\fR] [\fB\-D\ \fR\fB\fIdsfromkey\ path\fR\fR] {zone}
 .HP 17
 \fBdnssec\-dsfromkey\fR [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIdig\ path\fR\fR] [\fB\-D\ \fR\fB\fIdsfromkey\ path\fR\fR] {zone}
 .SH "DESCRIPTION"
@@ -78,5 +78,5 @@ binary. Used for testing.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2012, 2013 Internet Systems Consortium, Inc. ("ISC")
 .br

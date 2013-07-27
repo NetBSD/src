@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.6 2012/12/04 19:26:01 spz Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.7 2013/07/27 15:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -398,6 +398,24 @@ isc_file_isplainfile(const char *filename) {
 	return(ISC_R_SUCCESS);
 }
 
+isc_result_t
+isc_file_isdirectory(const char *filename) {
+	/*
+	 * This function returns success if filename exists and is a
+	 * directory.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISDIR(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
 isc_boolean_t
 isc_file_isabsolute(const char *filename) {
 	REQUIRE(filename != NULL);
@@ -543,6 +561,9 @@ isc_result_t
 isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
 {
 	char *dir, *file, *slash;
+
+	if (path == NULL)
+		return (ISC_R_INVALIDFILE);
 
 	slash = strrchr(path, '/');
 

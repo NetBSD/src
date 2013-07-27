@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.1.1.7 2012/06/04 17:53:38 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.8 2013/07/27 15:22:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ command_compare(const char *text, const char *command) {
 isc_result_t
 ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	isccc_sexpr_t *data;
-	char *command;
+	char *command = NULL;
 	isc_result_t result;
 	int log_level;
 #ifdef HAVE_LIBSCF

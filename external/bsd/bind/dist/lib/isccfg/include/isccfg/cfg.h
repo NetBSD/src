@@ -1,7 +1,7 @@
-/*	$NetBSD: cfg.h,v 1.1.1.4 2012/06/04 17:57:01 christos Exp $	*/
+/*	$NetBSD: cfg.h,v 1.1.1.5 2013/07/27 15:23:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -413,6 +413,10 @@ cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
 /*%<
  * Delete a reference to a configuration object; destroy the object if
  * there are no more references.
+ *
+ * Require:
+ * \li     '*obj' is a valid cfg_obj_t.
+ * \li     'pctx' is a valid cfg_parser_t.
  */
 
 void

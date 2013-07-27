@@ -1,7 +1,7 @@
-/*	$NetBSD: buffer.c,v 1.1.1.3 2012/06/04 17:56:43 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.4 2013/07/27 15:23:18 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,7 +30,7 @@
 #include <isc/util.h>
 
 void
-isc__buffer_init(isc_buffer_t *b, const void *base, unsigned int length) {
+isc__buffer_init(isc_buffer_t *b, void *base, unsigned int length) {
 	/*
 	 * Make 'b' refer to the 'length'-byte region starting at 'base'.
 	 * XXXDCL see the comment in buffer.h about base being const.

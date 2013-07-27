@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.5 2012/06/04 17:56:56 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.6 2013/07/27 15:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -269,7 +269,8 @@ isc_dir_createunique(char *templet) {
 
 	do {
 		i = mkdir(templet);
-		i = chmod(templet, 0700);
+		if (i == 0)
+			i = chmod(templet, 0700);
 
 		if (i == 0 || errno != EEXIST)
 			break;

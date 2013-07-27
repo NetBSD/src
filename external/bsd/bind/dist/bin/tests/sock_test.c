@@ -1,7 +1,7 @@
-/*	$NetBSD: sock_test.c,v 1.1.1.3 2012/06/04 17:54:11 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.1.1.4 2013/07/27 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -207,8 +207,9 @@ my_listen(isc_task_t *task, isc_event_t *event) {
 		/*
 		 * Queue another listen on this socket.
 		 */
-		isc_socket_accept(event->ev_sender, task, my_listen,
-				  event->ev_arg);
+		RUNTIME_CHECK(isc_socket_accept(event->ev_sender, task,
+						my_listen, event->ev_arg)
+			      == ISC_R_SUCCESS);
 
 		region.base = isc_mem_get(mctx, 20);
 		region.length = 20;
@@ -264,9 +265,13 @@ main(int argc, char *argv[]) {
 	isc_result_t result;
 	int pf;
 
-	if (argc > 1)
+	if (argc > 1) {
 		workers = atoi(argv[1]);
-	else
+		if (workers < 1)
+			workers = 1;
+		if (workers > 8192)
+			workers = 8192;
+	} else
 		workers = 2;
 	printf("%d workers\n", workers);
 

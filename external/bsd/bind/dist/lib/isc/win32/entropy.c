@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.1.1.4 2012/06/04 17:56:56 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.5 2013/07/27 15:23:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -244,7 +244,6 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 	isc_result_t ret;
 	isc_entropysource_t *source;
 	HCRYPTPROV hcryptprov;
-	DWORD errval;
 	BOOL err;
 
 	REQUIRE(VALID_ENTROPY(ent));
@@ -260,7 +259,7 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 	err = CryptAcquireContext(&hcryptprov, NULL, NULL, PROV_RSA_FULL,
 				  CRYPT_VERIFYCONTEXT);
 	if (!err){
-		errval = GetLastError();
+		(void)GetLastError();
 		ret = ISC_R_IOERROR;
 		goto errout;
 	}

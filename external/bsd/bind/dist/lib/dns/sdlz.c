@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.8 2012/06/04 17:56:20 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.9 2013/07/27 15:23:13 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1843,7 +1843,7 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 
 	size = initial_size(data);
 	do {
-		isc_buffer_init(&b, data, strlen(data));
+		isc_buffer_constinit(&b, data, strlen(data));
 		isc_buffer_add(&b, strlen(data));
 
 		result = isc_lex_openbuffer(lex, &b);
@@ -1909,7 +1909,7 @@ dns_sdlz_putnamedrr(dns_sdlzallnodes_t *allnodes, const char *name,
 		origin = &sdlz->common.origin;
 	else
 		origin = dns_rootname;
-	isc_buffer_init(&b, name, strlen(name));
+	isc_buffer_constinit(&b, name, strlen(name));
 	isc_buffer_add(&b, strlen(name));
 
 	result = dns_name_fromtext(newname, &b, origin, 0, NULL);

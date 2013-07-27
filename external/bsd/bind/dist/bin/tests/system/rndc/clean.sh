@@ -18,4 +18,7 @@
 
 rm -f ns2/*.db ns2/*.jnl
 rm -f ns2/session.key
-rm -f ns2/named.memstats
+rm -f ns2/named.stats
+rm -f ns3/named_dump.db
+rm -f ns*/named.memstats
+rm -f ns*/named.run

@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.1.1.5 2012/12/04 19:24:53 spz Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.6 2013/07/27 15:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1009,11 +1009,12 @@ dns_db_resigned(dns_db_t *db, dns_rdataset_t *rdataset,
 		(db->methods->resigned)(db, rdataset, version);
 }
 
-void
+isc_result_t
 dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st)
 {
 	if (db->methods->rpz_enabled != NULL)
-		(db->methods->rpz_enabled)(db, st);
+		return ((db->methods->rpz_enabled)(db, st));
+	return (ISC_R_SUCCESS);
 }
 
 void

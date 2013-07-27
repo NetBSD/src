@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.8 2012/06/04 17:53:47 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.9 2013/07/27 15:22:46 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -167,7 +167,9 @@ enum {
 	dns_nsstatscounter_updatefail = 34,
 	dns_nsstatscounter_updatebadprereq = 35,
 
-	dns_nsstatscounter_max = 36
+	dns_nsstatscounter_rpz_rewrites = 36,
+
+	dns_nsstatscounter_max = 37
 };
 
 void

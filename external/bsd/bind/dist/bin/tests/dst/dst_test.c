@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.4 2012/06/04 17:54:13 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.5 2013/07/27 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -56,7 +56,7 @@ use(dst_key_t *key, isc_mem_t *mctx) {
 	 */
 	isc_buffer_add(&sigbuf, 1);
 
-	isc_buffer_init(&databuf, data, strlen(data));
+	isc_buffer_constinit(&databuf, data, strlen(data));
 	isc_buffer_add(&databuf, strlen(data));
 	isc_buffer_usedregion(&databuf, &datareg);
 
@@ -264,7 +264,7 @@ main(void) {
 
 	dns_fixedname_init(&fname);
 	name = dns_fixedname_name(&fname);
-	isc_buffer_init(&b, "test.", 5);
+	isc_buffer_constinit(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
 	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
@@ -276,7 +276,7 @@ main(void) {
 	io(name, 49667, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 	io(name, 2, DST_ALG_RSAMD5, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
 
-	isc_buffer_init(&b, "dh.", 3);
+	isc_buffer_constinit(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
 	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)

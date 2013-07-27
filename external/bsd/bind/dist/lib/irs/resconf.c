@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.1.1.4 2012/06/04 17:56:42 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.1.1.5 2013/07/27 15:23:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -240,7 +240,7 @@ add_server(isc_mem_t *mctx, const char *address_str,
 		goto cleanup;
 	}
 	address->length = res->ai_addrlen;
-	memcpy(&address->type.sa, res->ai_addr, res->ai_addrlen);
+	memcpy(&address->type.ss, res->ai_addr, res->ai_addrlen);
 	ISC_LINK_INIT(address, link);
 	ISC_LIST_APPEND(*nameservers, address, link);
 

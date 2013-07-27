@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.1.1.7 2012/12/04 19:25:56 spz Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.8 2013/07/27 15:23:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -790,7 +790,7 @@ isc_taskmgr_excltask(isc_taskmgr_t *mgr, isc_task_t **taskp);
 
 #ifdef HAVE_LIBXML2
 
-void
+int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr, xmlTextWriterPtr writer);
 
 #endif

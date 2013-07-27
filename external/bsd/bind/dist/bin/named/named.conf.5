@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.conf.5,v 1.1.1.7 2012/06/04 17:53:40 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.1.1.8 2013/07/27 15:22:45 christos Exp $
 .\"
-.\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -189,7 +189,7 @@ options {
 	random\-device \fIquoted_string\fR;
 	recursive\-clients \fIinteger\fR;
 	serial\-query\-rate \fIinteger\fR;
-	server\-id ( \fIquoted_string\fR | none |;
+	server\-id ( \fIquoted_string\fR | none );
 	stacksize \fIsize\fR;
 	statistics\-file \fIquoted_string\fR;
 	statistics\-interval \fIinteger\fR; // not yet implemented
@@ -598,5 +598,5 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBrndc\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 .br

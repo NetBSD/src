@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.4 2012/06/04 17:56:55 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.5 2013/07/27 15:23:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -56,8 +56,8 @@
  *** Intervals
  ***/
 
-static isc_interval_t zero_interval = { 0, 0 };
-isc_interval_t *isc_interval_zero = &zero_interval;
+static const isc_interval_t zero_interval = { 0, 0 };
+const isc_interval_t * const isc_interval_zero = &zero_interval;
 
 #if ISC_FIX_TV_USEC
 static inline void
@@ -112,8 +112,8 @@ isc_interval_iszero(const isc_interval_t *i) {
  *** Absolute Times
  ***/
 
-static isc_time_t epoch = { 0, 0 };
-isc_time_t *isc_time_epoch = &epoch;
+static const isc_time_t epoch = { 0, 0 };
+const isc_time_t * const isc_time_epoch = &epoch;
 
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds) {

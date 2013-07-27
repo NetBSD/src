@@ -1,4 +1,4 @@
-/*	$NetBSD: t_resolver.c,v 1.1.1.5 2012/12/04 19:22:27 spz Exp $	*/
+/*	$NetBSD: t_resolver.c,v 1.1.1.6 2013/07/27 15:22:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -87,7 +87,7 @@ make_resolver(dns_resolver_t **resolverp) {
 	isc_result_t result;
 
 	result = dns_resolver_create(view,
-			    task_manager, 1,
+			    task_manager, 1, 1,
 			    socket_manager,
 			    timer_manager,
 			    0, /* unsigned int options, */

@@ -1,7 +1,7 @@
-/*	$NetBSD: byaddr_test.c,v 1.1.1.3 2012/06/04 17:54:05 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.1.1.4 2013/07/27 15:22:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -166,7 +166,7 @@ main(int argc, char *argv[]) {
 							  512, 6, 1024,
 							  17, 19, attrs,
 							  attrs, &disp4)
-			 	      == ISC_R_SUCCESS);
+				      == ISC_R_SUCCESS);
 			INSIST(disp4 != NULL);
 		}
 
@@ -186,16 +186,16 @@ main(int argc, char *argv[]) {
 			INSIST(disp6 != NULL);
 		}
 
-		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10,
+		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10, 1,
 						      socketmgr,
 						      timermgr, 0,
 						      dispatchmgr,
 						      disp4, disp6) ==
 		      ISC_R_SUCCESS);
 
-	        if (disp4 != NULL)
+		if (disp4 != NULL)
 		    dns_dispatch_detach(&disp4);
-	        if (disp6 != NULL)
+		if (disp6 != NULL)
 		    dns_dispatch_detach(&disp6);
 	}
 

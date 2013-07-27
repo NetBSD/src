@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.6 2012/12/04 19:24:55 spz Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.7 2013/07/27 15:23:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #define DST_OPENSSL_H 1
 
 #include <isc/lang.h>
+#include <isc/log.h>
 #include <isc/result.h>
 
 #include <openssl/err.h>
@@ -43,6 +44,10 @@ dst__openssl_toresult(isc_result_t fallback);
 
 isc_result_t
 dst__openssl_toresult2(const char *funcname, isc_result_t fallback);
+
+isc_result_t
+dst__openssl_toresult3(isc_logcategory_t *category,
+		       const char *funcname, isc_result_t fallback);
 
 #ifdef USE_ENGINE
 ENGINE *

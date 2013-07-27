@@ -1,7 +1,7 @@
-/*	$NetBSD: region.h,v 1.1.1.3 2012/06/04 17:56:50 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.1.1.4 2013/07/27 15:23:19 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 /*! \file isc/region.h */
 
 #include <isc/types.h>
+#include <isc/lang.h>
 
 struct isc_region {
 	unsigned char *	base;
@@ -83,12 +84,14 @@ struct isc_consttextregion {
 	} while (0)
 /*@}*/
 
+ISC_LANG_BEGINDECLS
+
 int
 isc_region_compare(isc_region_t *r1, isc_region_t *r2);
 /*%<
- * Compares the contents of two regions 
+ * Compares the contents of two regions
  *
- * Requires: 
+ * Requires:
  *\li	'r1' is a valid region
  *\li	'r2' is a valid region
  *
@@ -97,5 +100,7 @@ isc_region_compare(isc_region_t *r1, isc_region_t *r2);
  *\li	 = 0 if r1 is lexicographically identical to r2
  *\li	 > 0 if r1 is lexicographically greater than r2
  */
+
+ISC_LANG_ENDDECLS
 
 #endif /* ISC_REGION_H */

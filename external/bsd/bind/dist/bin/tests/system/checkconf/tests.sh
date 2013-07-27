@@ -34,17 +34,14 @@ cmp good.conf.in good.conf.out || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I: checking that named-checkconf handles a known bad config"
-ret=0
-$CHECKCONF bad.conf > /dev/null 2>&1 && ret=1
-if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
-status=`expr $status + $ret`
-
-echo "I: checking that named-checkconf handles a known bad tsig secret"
-ret=0
-$CHECKCONF badtsig.conf > /dev/null 2>&1
-if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
-status=`expr $status + $ret`
+for bad in bad*.conf
+do
+	ret=0
+	echo "I: checking that named-checkconf detects error in $bad"
+	$CHECKCONF $bad > /dev/null 2>&1
+	if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+	status=`expr $status + $ret`
+done
 
 echo "I: checking named-checkconf dnssec warnings"
 ret=0
@@ -93,6 +90,17 @@ EOF
     $CHECKCONF badzero.conf > /dev/null 2>&1
     [ $? -eq 1 ] || { echo "I: zone $field failed" ; ret=1; }
 done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking options allowed in inline-signing slaves"
+ret=0
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "dnssec-dnskey-kskonly.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "dnssec-loadkeys-interval.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
+n=`$CHECKCONF bad-dnssec.conf 2>&1 | grep "update-check-ksk.*requires inline" | wc -l`
+[ $n -eq 1 ] || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

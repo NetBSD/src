@@ -1,7 +1,7 @@
-/*	$NetBSD: timer_test.c,v 1.1.1.3 2012/06/04 17:54:12 christos Exp $	*/
+/*	$NetBSD: timer_test.c,v 1.1.1.4 2013/07/27 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -104,9 +104,13 @@ main(int argc, char *argv[]) {
 	isc_time_t expires, now;
 	isc_interval_t interval;
 
-	if (argc > 1)
+	if (argc > 1) {
 		workers = atoi(argv[1]);
-	else
+		if (workers < 1)
+			workers = 1;
+		if (workers > 8192)
+			workers = 8192;
+	} else
 		workers = 2;
 	printf("%d workers\n", workers);
 

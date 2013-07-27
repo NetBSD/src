@@ -1,7 +1,7 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.9 2012/12/04 19:22:00 spz Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.10 2013/07/27 15:22:46 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -936,7 +936,7 @@ get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr) {
 	INSIST(count == 1);
 }
 
-#define PARSE_ARGS_FMT "dDML:y:ghlovk:p:rR::t:u:"
+#define PARSE_ARGS_FMT "dDML:y:ghlovk:p:r:R::t:u:"
 
 static void
 pre_parse_args(int argc, char **argv) {
