@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1077 2013/06/29 21:06:57 rmind Exp $
+#	$NetBSD: files,v 1.1078 2013/07/27 07:02:03 kiyohara Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -848,8 +848,9 @@ file	dev/ic/ne2000.c			ne | ipkdb_ne
 #
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP
+defflag	opt_com.h		COM_16650 COM_16750
+				COM_HAYESP COM_PXA2X0 COM_AU1X00
+				COM_REGMAP COM_FUNCMAP
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
