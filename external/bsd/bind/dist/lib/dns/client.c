@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.4 2012/06/05 00:41:28 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -320,7 +320,7 @@ dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		return (result);
 	}
 
-	result = dns_view_createresolver(view, taskmgr, ntasks, socketmgr,
+	result = dns_view_createresolver(view, taskmgr, ntasks, 1, socketmgr,
 					 timermgr, 0, dispatchmgr,
 					 dispatchv4, dispatchv6);
 	if (result != ISC_R_SUCCESS) {
@@ -356,6 +356,12 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
+#if 0
+	/* XXXMPA add debug logging support */
+	isc_log_t *lctx = NULL;
+	isc_logconfig_t *logconfig = NULL;
+	unsigned int logdebuglevel = 0;
+#endif
 
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
@@ -375,7 +381,18 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	result = isc_timermgr_createinctx(mctx, actx, &timermgr);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-
+#if 0
+	result = isc_log_create(mctx, &lctx, &logconfig);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+	isc_log_setcontext(lctx);
+	dns_log_init(lctx);
+	dns_log_setcontext(lctx);
+	result = isc_log_usechannel(logconfig, "default_debug", NULL, NULL);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+	isc_log_setdebuglevel(lctx, logdebuglevel);
+#endif
 	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
 				    options, clientp);
 	if (result != ISC_R_SUCCESS)
@@ -487,6 +504,7 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 	client->update_udpretries = DEF_UPDATE_UDPRETRIES;
 	client->find_timeout = DEF_FIND_TIMEOUT;
 	client->find_udpretries = DEF_FIND_UDPRETRIES;
+	client->attributes = 0;
 
 	client->references = 1;
 	client->magic = DNS_CLIENT_MAGIC;
@@ -2002,8 +2020,9 @@ resolveaddr_done(isc_task_t *task, isc_event_t *event) {
 				switch (family) {
 				case AF_INET:
 					dns_rdataset_current(rdataset, &rdata);
-					dns_rdata_tostruct(&rdata, &rdata_a,
-							   NULL);
+					result = dns_rdata_tostruct(&rdata, &rdata_a,
+								    NULL);
+					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					isc_sockaddr_fromin(sa,
 							    &rdata_a.in_addr,
 							    53);
@@ -2011,8 +2030,9 @@ resolveaddr_done(isc_task_t *task, isc_event_t *event) {
 					break;
 				case AF_INET6:
 					dns_rdataset_current(rdataset, &rdata);
-					dns_rdata_tostruct(&rdata, &rdata_aaaa,
-							   NULL);
+					result = dns_rdata_tostruct(&rdata, &rdata_aaaa,
+								    NULL);
+					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					isc_sockaddr_fromin6(sa,
 							     &rdata_aaaa.in6_addr,
 							     53);

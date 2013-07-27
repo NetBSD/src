@@ -1,7 +1,7 @@
-/*	$NetBSD: tkey.c,v 1.4 2012/06/05 00:41:42 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -993,8 +993,13 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key, dns_name_t *name,
 
 	ISC_LIST_INIT(namelist);
 	RETERR(add_rdata_to_list(msg, &keyname, rdata, 0, &namelist));
-	dns_message_addname(msg, ISC_LIST_HEAD(namelist),
-			    DNS_SECTION_ADDITIONAL);
+	name = ISC_LIST_HEAD(namelist);
+	while (name != NULL) {
+		dns_name_t *next = ISC_LIST_NEXT(name, link);
+		ISC_LIST_UNLINK(namelist, name, link);
+		dns_message_addname(msg, name, DNS_SECTION_ADDITIONAL);
+		name = next;
+	}
 
 	return (ISC_R_SUCCESS);
 

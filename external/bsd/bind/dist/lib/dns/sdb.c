@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.5 2012/06/05 00:41:40 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -384,7 +384,7 @@ dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
 	datalen = strlen(data);
 	size = initial_size(datalen);
 	do {
-		isc_buffer_init(&b, data, datalen);
+		isc_buffer_constinit(&b, data, datalen);
 		isc_buffer_add(&b, datalen);
 		result = isc_lex_openbuffer(lex, &b);
 		if (result != ISC_R_SUCCESS)
@@ -450,7 +450,7 @@ getnode(dns_sdballnodes_t *allnodes, const char *name, dns_sdbnode_t **nodep) {
 		origin = &sdb->common.origin;
 	else
 		origin = dns_rootname;
-	isc_buffer_init(&b, name, strlen(name));
+	isc_buffer_constinit(&b, name, strlen(name));
 	isc_buffer_add(&b, strlen(name));
 
 	result = dns_name_fromtext(newname, &b, origin, 0, NULL);

@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.h,v 1.10 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: zone.h,v 1.11 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -37,6 +37,7 @@
 #include <dns/master.h>
 #include <dns/masterdump.h>
 #include <dns/rdatastruct.h>
+#include <dns/rpz.h>
 #include <dns/types.h>
 #include <dns/zt.h>
 
@@ -50,6 +51,12 @@ typedef enum {
 	dns_zone_dlz,
 	dns_zone_redirect
 } dns_zonetype_t;
+
+typedef enum {
+	dns_zonestat_none = 0,
+	dns_zonestat_terse,
+	dns_zonestat_full
+} dns_zonestat_level_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
 #define DNS_ZONEOPT_PARENTS	  0x00000002U	/*%< perform parent checks */
@@ -82,6 +89,7 @@ typedef enum {
 #define DNS_ZONEOPT_DNSKEYKSKONLY 0x10000000U	/*%< dnssec-dnskey-kskonly */
 #define DNS_ZONEOPT_CHECKDUPRR	  0x20000000U   /*%< check-dup-records */
 #define DNS_ZONEOPT_CHECKDUPRRFAIL 0x40000000U	/*%< fatal check-dup-records failures */
+#define DNS_ZONEOPT_CHECKSPF	  0x80000000U	/*%< check SPF records */
 
 #ifndef NOMINUM_PUBLIC
 /*
@@ -1443,6 +1451,18 @@ dns_zonemgr_setsize(dns_zonemgr_t *zmgr, int num_zones);
  */
 
 isc_result_t
+dns_zonemgr_createzone(dns_zonemgr_t *zmgr, dns_zone_t **zonep);
+/*%<
+ *	Allocate a new zone using a memory context from the
+ *	zone manager's memory context pool.
+ *
+ * Require:
+ *\li	'zmgr' to be a valid zone manager.
+ *\li	'zonep' != NULL and '*zonep' == NULL.
+ */
+
+
+isc_result_t
 dns_zonemgr_managezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
 /*%<
  *	Bring the zone under control of a zone manager.
@@ -1693,9 +1713,13 @@ dns_zone_setstats(dns_zone_t *zone, isc_stats_t *stats);
 
 void
 dns_zone_setrequeststats(dns_zone_t *zone, isc_stats_t *stats);
+
+void
+dns_zone_setrcvquerystats(dns_zone_t *zone, dns_stats_t *stats);
 /*%<
- * Set an additional statistics set to zone.  It is attached in the zone
- * but is not counted in the zone module; only the caller updates the counters.
+ * Set additional statistics sets to zone.  These are attached to the zone
+ * but are not counted in the zone module; only the caller updates the
+ * counters.
  *
  * Requires:
  * \li	'zone' to be a valid zone.
@@ -1703,8 +1727,19 @@ dns_zone_setrequeststats(dns_zone_t *zone, isc_stats_t *stats);
  *\li	stats is a valid statistics.
  */
 
+#ifdef NEWSTATS
+void
+dns_zone_setrcvquerystats(dns_zone_t *zone, dns_stats_t *stats);
+#endif
+
 isc_stats_t *
 dns_zone_getrequeststats(dns_zone_t *zone);
+
+#ifdef NEWSTATS
+dns_stats_t *
+dns_zone_getrcvquerystats(dns_zone_t *zone);
+#endif
+
 /*%<
  * Get the additional statistics for zone, if one is installed.
  *
@@ -2020,7 +2055,7 @@ dns_zone_keydone(dns_zone_t *zone, const char *data);
 
 isc_result_t
 dns_zone_setnsec3param(dns_zone_t *zone, isc_uint8_t hash, isc_uint8_t flags,
-		       isc_uint8_t iter, isc_uint8_t saltlen,
+		       isc_uint16_t iter, isc_uint8_t saltlen,
 		       unsigned char *salt, isc_boolean_t replace);
 /*%
  * Set the NSEC3 parameters for the zone.
@@ -2045,6 +2080,25 @@ dns_zone_synckeyzone(dns_zone_t *zone);
 /*%
  * Force the managed key zone to synchronize, and start the key
  * maintenance timer.
+ */
+
+isc_result_t
+dns_zone_rpz_enable(dns_zone_t *zone);
+/*%
+ * Set the response policy associated with a zone.
+ */
+
+isc_boolean_t
+dns_zone_get_rpz(dns_zone_t *zone);
+
+void
+dns_zone_setstatlevel(dns_zone_t *zone, dns_zonestat_level_t level);
+
+dns_zonestat_level_t
+dns_zone_getstatlevel(dns_zone_t *zone);
+/*%
+ * Set and get the statistics reporting level for the zone;
+ * full, terse, or none.
  */
 
 ISC_LANG_ENDDECLS
