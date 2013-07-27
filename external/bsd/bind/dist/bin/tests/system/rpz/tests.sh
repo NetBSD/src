@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.12 2012/01/07 23:46:53 tbox Exp 
+# Id
+
 
 # test response policy zones (RPZ)
 
@@ -27,6 +28,8 @@ ns4=$ns.4			    # another server that is rewritten
 ns5=$ns.5			    # check performance with this server
 
 HAVE_CORE=
+SAVE_RESULTS=
+NS3_STATS=47
 
 USAGE="$0: [-x]"
 while getopts "x" c; do
@@ -43,11 +46,18 @@ fi
 # really quit on control-C
 trap 'exit 1' 1 2 15
 
+TS='%H:%M:%S '
+TS=
+comment () {
+    if test -n "$TS"; then
+	date "+I:${TS}$*"
+    fi
+}
 
 RNDCCMD="$RNDC -c $SYSTEMTESTTOP/common/rndc.conf -p 9953 -s"
 
 digcmd () {
-    digcmd_args="+noadd +nosearch +time=1 +tries=1 -p 5300 $*"
+    digcmd_args="+noadd +time=1 +tries=1 -p 5300 $*"
     expr "$digcmd_args" : '.*@' >/dev/null || \
 	digcmd_args="$digcmd_args @$ns3"
     expr "$digcmd_args" : '.*+[no]*auth' >/dev/null || \
@@ -70,16 +80,17 @@ make_dignm () {
 
 setret () {
     ret=1
+    status=`expr $status + 1`
     echo "$*"
 }
 
 # (re)load the reponse policy zones with the rules in the file $TEST_FILE
 load_db () {
     if test -n "$TEST_FILE"; then
-	if $NSUPDATE -v $TEST_FILE; then : ; else
+	$NSUPDATE -v $TEST_FILE || {
 	    echo "I:failed to update policy zone with $TEST_FILE"
 	    exit 1
-	fi
+	}
     fi
 }
 
@@ -122,10 +133,21 @@ ckalive () {
     return 1
 }
 
+# check that statistics for $1 in $2 = $3
+ckstats () {
+    $RNDCCMD $1 stats
+    CNT=`sed -n -e 's/[	 ]*\([0-9]*\).response policy.*/\1/p'  \
+		    $2/named.stats`
+    CNT=`expr 0$CNT + 0`
+    if test "$CNT" -ne $3; then
+	setret "I:wrong $2 statistics of $CNT instead of $3"
+    fi
+}
+
 # $1=message  $2=optional test file name
 start_group () {
     ret=0
-    test -n "$1" && echo "I:checking $1"
+    test -n "$1" && date "+I:${TS}checking $1"
     TEST_FILE=$2
     if test -n "$TEST_FILE"; then
 	GROUP_NM="-$TEST_FILE"
@@ -138,33 +160,25 @@ start_group () {
 
 end_group () {
     if test -n "$TEST_FILE"; then
+	# remove the previous set of test rules
 	sed -e 's/[	 ]add[	 ]/ delete /' $TEST_FILE | $NSUPDATE
 	TEST_FILE=
     fi
     ckalive $ns3 "I:failed; ns3 server crashed and restarted"
-    if test "$status" -eq 0; then
-	# look for complaints from rpz.c
-	EMSGS=`grep -l 'invalid rpz' */*.run`
-	if test -n "$EMSGS"; then
-	    setret "I:'invalid rpz' complaints in $EMSGS starting with:"
-	    grep 'invalid rpz' */*.run | sed -e '4,$d' -e 's/^/I:    /'
-	fi
-	# look for complaints from rpz.c and query.c
-	EMSGS=`grep -l 'rpz .*failed' */*.run`
-	if test -n "$EMSGS"; then
-	    setret "I:'rpz failed' complaints in $EMSGS starting with:"
-	    grep 'rpz .*failed' */*.run | sed -e '4,$d' -e 's/^/I:    /'
-	fi
-    fi
-    status=`expr $status + $ret`
     GROUP_NM=
+}
+
+clean_result () {
+    if test -z "$SAVE_RESULTS"; then
+	rm -f $*
+    fi
 }
 
 # $1=dig args $2=other dig output file
 ckresult () {
     #ckalive "$1" "I:server crashed by 'dig $1'" || return 1
     if $PERL $SYSTEMTESTTOP/digcomp.pl $DIGNM $2 >/dev/null; then
-	rm -f ${DIGNM}*
+	clean_result ${DIGNM}*
 	return 0
     fi
     setret "I:'dig $1' wrong; diff $DIGNM $2"
@@ -208,7 +222,7 @@ addr () {
     digcmd $2 >$DIGNM
     #ckalive "$2" "I:server crashed by 'dig $2'" || return 1
     ADDR_ESC=`echo "$ADDR" | sed -e 's/\./\\\\./g'`
-    ADDR_TTL=`sed -n -e  "s/^[-.a-z0-9]\{1,\}	*\([0-9]*\)	IN	A\{1,4\}	${ADDR_ESC}\$/\1/p" $DIGNM`
+    ADDR_TTL=`sed -n -e "s/^[-.a-z0-9]\{1,\}	*\([0-9]*\)	IN	AA*	${ADDR_ESC}\$/\1/p" $DIGNM`
     if test -z "$ADDR_TTL"; then
 	setret "I:'dig $2' wrong; no address $ADDR record in $DIGNM"
 	return 1
@@ -217,7 +231,7 @@ addr () {
 	setret "I:'dig $2' wrong; TTL=$ADDR_TTL instead of $3 in $DIGNM"
 	return 1
     fi
-    rm -f ${DIGNM}*
+    clean_result ${DIGNM}*
 }
 
 # check that a response is not rewritten
@@ -226,7 +240,7 @@ nochange () {
     make_dignm
     digcmd $* >$DIGNM
     digcmd $* @$ns2 >${DIGNM}_OK
-    ckresult "$*" ${DIGNM}_OK && rm -f ${DIGNM}_OK
+    ckresult "$*" ${DIGNM}_OK && clean_result ${DIGNM}_OK
 }
 
 # check against a 'here document'
@@ -248,8 +262,8 @@ start_group "QNAME rewrites" test1
 nochange .				# 1 do not crash or rewrite root
 nxdomain a0-1.tld2			# 2
 nodata a3-1.tld2			# 3
-nodata a3-2.tld2			# 4 no crash on DNAME
-nodata sub.a3-2.tld2
+nodata a3-2.tld2			# 4 nodata at DNAME itself
+nochange sub.a3-2.tld2			# 5 miss where DNAME might work
 nxdomain a4-2.tld2			# 6 rewrite based on CNAME target
 nxdomain a4-2-cname.tld2		# 7
 nodata a4-3-cname.tld2			# 8
@@ -313,8 +327,9 @@ nochange a5-1-2.tld2
 end_group
 
 if ./rpz nsdname; then
+    # these tests assume "min-ns-dots 0"
     start_group "NSDNAME rewrites" test3
-    nochange a3-1.tld2
+    nochange a3-1.tld2			# 1
     nochange a3-1.tld2	    +dnssec	# 2 this once caused problems
     nxdomain a3-1.sub1.tld2		# 3 NXDOMAIN *.sub1.tld2 by NSDNAME
     nxdomain a3-1.subsub.sub1.tld2
@@ -327,19 +342,31 @@ if ./rpz nsdname; then
     addr 127.0.0.2 a3-1.subsub.sub3.tld2
     nxdomain xxx.crash1.tld2		# 12 dns_db_detachnode() crash
     end_group
+    NS3_STATS=`expr $NS3_STATS + 7`
 else
-    echo "I:NSDNAME not checked; named not configured with --enable-rpz-nsdname"
+    echo "I:NSDNAME not checked; named configured with --disable-rpz-nsdname"
 fi
 
 if ./rpz nsip; then
+    # these tests assume "min-ns-dots 0"
     start_group "NSIP rewrites" test4
-    nxdomain a3-1.tld2			# 1 NXDOMAIN for all of tld2 by NSIP
+    nxdomain a3-1.tld2			# 1 NXDOMAIN for all of tld2
     nochange a3-2.tld2.			# 2 exempt rewrite by name
     nochange a0-1.tld2.			# 3 exempt rewrite by address block
     nochange a3-1.tld4			# 4 different NS IP address
     end_group
+
+#    start_group "walled garden NSIP rewrites" test4a
+#    addr 41.41.41.41 a3-1.tld2		# 1 walled garden for all of tld2
+#    addr 2041::41   'a3-1.tld2 AAAA'	# 2 walled garden for all of tld2
+#    here a3-1.tld2 TXT <<'EOF'		# 3 text message for all of tld2
+#    ;; status: NOERROR, x
+#    a3-1.tld2.	    x	IN	TXT   "NSIP walled garden"
+#EOF
+#    end_group
+    NS3_STATS=`expr $NS3_STATS + 1`
 else
-    echo "I:NSIP not checked; named not configured with --enable-rpz-nsip"
+    echo "I:NSIP not checked; named configured with --disable-rpz-nsip"
 fi
 
 # policies in ./test5 overridden by response-policy{} in ns3/named.conf
@@ -377,6 +404,11 @@ for Q in RRSIG SIG ANY 'ANY +dnssec'; do
     nocrash www.redirect -t$Q
     nocrash www.credirect -t$Q
 done
+
+# This is not a bug, because any data leaked by writing 24.4.3.2.10.rpz-ip
+# (or whatever) is available by publishing "foo A 10.2.3.4" and then
+# resolving foo.
+# nxdomain 32.3.2.1.127.rpz-ip
 end_group
 
 
@@ -384,54 +416,55 @@ end_group
 QPERF=`sh qperf.sh`
 if test -n "$QPERF"; then
     perf () {
-	echo "I:checking performance $1"
-	# don't measure the costs of -d99
-	$RNDCCMD $ns5 notrace >/dev/null
-	$QPERF -1 -l2 -d ns5/requests -s $ns5 -p 5300 >ns5/$2.perf
+	date "+I:${TS}checking performance $1"
+	# Dry run to prime everything
+	comment "before dry run $1"
+	$QPERF -c -1 -l30 -d ns5/requests -s $ns5 -p 5300 >/dev/null
+	comment "before real test $1"
+	PFILE="ns5/$2.perf"
+	$QPERF -c -1 -l30 -d ns5/requests -s $ns5 -p 5300 >$PFILE
+	comment "after test $1"
+	X=`sed -n -e 's/.*Returned *\([^ ]*:\) *\([0-9]*\) .*/\1\2/p' $PFILE \
+		| tr '\n' ' '`
+	if test "$X" != "$3"; then
+	    setret "I:wrong results '$X' in $PFILE"
+	fi
 	ckalive $ns5 "I:failed; server #5 crashed"
     }
     trim () {
 	sed -n -e 's/.*Queries per second: *\([0-9]*\).*/\1/p' ns5/$1.perf
     }
 
-    # Dry run to prime disk cache
-    #	Otherwise a first test of either flavor is 25% low
-    perf 'to prime disk cache' rpz
-
-    # get queries/second with rpz
-    perf 'with rpz' rpz
-
-    # turn off rpz and measure queries/second again
-    # Don't wait for a clean stop.  Clean stops of this server need seconds
-    # until the sockets are closed.  5 or 10 seconds after that, the
-    # server really stops and deletes named.pid.
-    echo "# rpz off" >ns5/rpz-switch
-    PID=`cat ns5/named.pid`
-    test -z "$PID" || kill -9 "$PID"
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns5
-    perf 'without rpz' norpz
-
-    # Don't wait for a clean stop.  Clean stops of this server need seconds
-    # until the sockets are closed.  5 or 10 seconds after that, the
-    # server really stops and deletes named.pid.
-    echo "# rpz off" >ns5/rpz-switch
-    PID=`cat ns5/named.pid`
-    test -z "$PID" || kill -9 "$PID" && rm -f ns5/named.pid
-
-    NORPZ=`trim norpz`
+    # get qps with rpz
+    perf 'with rpz' rpz 'NOERROR:2900 NXDOMAIN:100 '
     RPZ=`trim rpz`
-    echo "I:$RPZ qps with RPZ versus $NORPZ qps without"
 
-    # fail if RPZ costs more than 100%
-    NORPZ2=`expr "$NORPZ" / 2`
-    if test "$RPZ" -le "$NORPZ2"; then
-	echo "I:rpz $RPZ qps too far below non-RPZ $NORPZ qps"
-	status=`expr $status + 1`
+    # turn off rpz and measure qps again
+    echo "# rpz off" >ns5/rpz-switch
+    RNDCCMD_OUT=`$RNDCCMD $ns5 reload`
+    perf 'without rpz' norpz 'NOERROR:3000 '
+    NORPZ=`trim norpz`
+
+    PERCENT=`expr \( "$RPZ" \* 100 + \( $NORPZ / 2 \) \) / $NORPZ`
+    echo "I:$RPZ qps with rpz is $PERCENT% of $NORPZ qps without rpz"
+
+    MIN_PERCENT=30
+    if test "$PERCENT" -lt $MIN_PERCENT; then
+	setret "I:$RPZ qps with rpz or $PERCENT% is below $MIN_PERCENT% of $NORPZ qps"
     fi
+
+    if test "$PERCENT" -ge 100; then
+	setret "I:$RPZ qps with RPZ or $PERCENT% of $NORPZ qps without RPZ is too high"
+    fi
+
+    ckstats $ns5 ns5 203
+
 else
     echo "I:performance not checked; queryperf not available"
 fi
 
+
+ckstats $ns3 ns3 55
 
 # restart the main test RPZ server to see if that creates a core file
 if test -z "$HAVE_CORE"; then
@@ -441,6 +474,12 @@ if test -z "$HAVE_CORE"; then
     test -z "$HAVE_CORE" || setret "I:found $HAVE_CORE; memory leak?"
 fi
 
+# look for complaints from lib/dns/rpz.c and bin/name/query.c
+EMSGS=`egrep -l 'invalid rpz|rpz.*failed' ns*/named.run`
+if test -n "$EMSGS"; then
+    setret "I:error messages in $EMSGS starting with:"
+    egrep 'invalid rpz|rpz.*failed' ns*/named.run | sed -e '10,$d' -e 's/^/I:  /'
+fi
 
 echo "I:exit status: $status"
 exit $status
