@@ -35,4 +35,5 @@ status=0
 for d in $SUBDIRS
 do
    test ! -f $d/clean.sh || ( cd $d && sh clean.sh )
+   test -d $d && find $d -type d -exec rmdir '{}' \; 2> /dev/null
 done

@@ -161,7 +161,7 @@ sub start_server {
 				if (-e "$testdir/$server/named.nosoa");
 			$command .= "-T noaa " 
 				if (-e "$testdir/$server/named.noaa");
-			$command .= "-c named.conf -d 99 -g";
+			$command .= "-c named.conf -d 99 -g -U 4 ";
 		}
 		if ($restart) {
 			$command .= " >>named.run 2>&1 &";
@@ -177,7 +177,7 @@ sub start_server {
 		} else {
 			$command .= "-m record,size,mctx ";
 			$command .= "-T clienttest ";
-			$command .= "-C resolv.conf -d 99 -g ";
+			$command .= "-C resolv.conf -d 99 -g -U 4 ";
 			$command .= "-i lwresd.pid -P 9210 -p 5300";
 		}
 		if ($restart) {

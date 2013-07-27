@@ -31,8 +31,10 @@ perl updatelibxml2.pl
 rem Generate the version information
 perl makeversion.pl
 
-rem Generate header files for lib/dns
+rem Generate the SRCID information
+perl makesrcid.pl
 
+rem Generate header files for lib/dns
 call dnsheadergen.bat
 
 rem Make sure that the Build directories are there.

@@ -168,7 +168,12 @@ done
 
 # slave should have gotten notify and updated
 
-INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+	[ $INCR -eq 1 ] && break
+	sleep 1
+done
 if [ $INCR -ne 1 ]
 then
     echo "I:failed to get incremental response"
@@ -193,7 +198,12 @@ do
 done
 
 echo "I: this result should be AXFR"
-NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
+	[ $NONINCR -eq 2 ] && break
+	sleep 1
+done
 if [ $NONINCR -ne 2 ]
 then
     echo "I:failed to get nonincremental response in 2nd AXFR test"
@@ -213,7 +223,12 @@ do
 	sleep 1
 done
 
-INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+	[ $INCR -eq 2 ] && break
+	sleep 1
+done
 if [ $INCR -ne 2 ]
 then
     echo "I:failed to get incremental response in 2nd IXFR test"

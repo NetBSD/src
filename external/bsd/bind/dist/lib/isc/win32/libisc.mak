@@ -162,12 +162,14 @@ CLEAN :
 	-@erase "$(INTDIR)\ondestroy.obj"
 	-@erase "$(INTDIR)\os.obj"
 	-@erase "$(INTDIR)\parseint.obj"
+	-@erase "$(INTDIR)\pool.obj"
 	-@erase "$(INTDIR)\portset.obj"
 	-@erase "$(INTDIR)\quota.obj"
 	-@erase "$(INTDIR)\radix.obj"
 	-@erase "$(INTDIR)\random.obj"
 	-@erase "$(INTDIR)\ratelimiter.obj"
 	-@erase "$(INTDIR)\refcount.obj"
+	-@erase "$(INTDIR)\regex.obj"
 	-@erase "$(INTDIR)\region.obj"
 	-@erase "$(INTDIR)\resource.obj"
 	-@erase "$(INTDIR)\result.obj"
@@ -286,7 +288,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\parseint.obj" \
+	"$(INTDIR)\pool.obj" \
 	"$(INTDIR)\portset.obj" \
+	"$(INTDIR)\regex.obj" \
 	"$(INTDIR)\region.obj"
 
 "..\..\..\Build\Release\libisc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -403,6 +407,8 @@ CLEAN :
 	-@erase "$(INTDIR)\os.sbr"
 	-@erase "$(INTDIR)\parseint.obj"
 	-@erase "$(INTDIR)\parseint.sbr"
+	-@erase "$(INTDIR)\pool.obj"
+	-@erase "$(INTDIR)\pool.sbr"
 	-@erase "$(INTDIR)\portset.obj"
 	-@erase "$(INTDIR)\portset.sbr"
 	-@erase "$(INTDIR)\quota.obj"
@@ -415,6 +421,8 @@ CLEAN :
 	-@erase "$(INTDIR)\ratelimiter.sbr"
 	-@erase "$(INTDIR)\refcount.obj"
 	-@erase "$(INTDIR)\refcount.sbr"
+	-@erase "$(INTDIR)\regex.obj"
+	-@erase "$(INTDIR)\regex.sbr"
 	-@erase "$(INTDIR)\region.obj"
 	-@erase "$(INTDIR)\region.sbr"
 	-@erase "$(INTDIR)\resource.obj"
@@ -555,7 +563,9 @@ BSC32_SBRS= \
 	"$(INTDIR)\taskpool.sbr" \
 	"$(INTDIR)\timer.sbr" \
 	"$(INTDIR)\parseint.sbr" \
+	"$(INTDIR)\pool.sbr" \
 	"$(INTDIR)\portset.sbr" \
+	"$(INTDIR)\regex.sbr" \
 	"$(INTDIR)\region.sbr"
 
 "$(OUTDIR)\libisc.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
@@ -643,7 +653,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\taskpool.obj" \
 	"$(INTDIR)\timer.obj" \
 	"$(INTDIR)\parseint.obj" \
+	"$(INTDIR)\pool.obj" \
 	"$(INTDIR)\portset.obj" \
+	"$(INTDIR)\regex.obj" \
 	"$(INTDIR)\region.obj"
 
 "..\..\..\Build\Debug\libisc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1690,6 +1702,24 @@ SOURCE=..\parseint.c
 
 !ENDIF 
 
+SOURCE=..\pool.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\pool.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\pool.obj"	"$(INTDIR)\pool.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\portset.c
 
 !IF  "$(CFG)" == "libisc - Win32 Release"
@@ -1797,6 +1827,25 @@ SOURCE=..\refcount.c
 
 
 !ENDIF 
+
+SOURCE=..\regex.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\regex.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\regex.obj"	"$(INTDIR)\regex.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 
 SOURCE=..\region.c
 

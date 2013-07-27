@@ -29,7 +29,7 @@ echo "I:checking dnssec-lookaside "'"auto"'"; with views of multiple classes ($n
 if [ -s  ns2/named.pid ]
 then
 	ret=0
-	kill -TERM `cat ns2/named.pid`
+	$PERL $SYSTEMTESTTOP/stop.pl . ns2 || ret=1
 	sleep 1
 	(cd ns2; $NAMED -f -d 100 -c named.conf >> named.run 2>&1 & )
 	sleep 2
