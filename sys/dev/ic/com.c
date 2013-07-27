@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.311 2013/07/27 06:43:56 kiyohara Exp $ */
+/* $NetBSD: com.c,v 1.312 2013/07/27 06:54:35 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.311 2013/07/27 06:43:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.312 2013/07/27 06:54:35 kiyohara Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -415,6 +415,11 @@ com_attach_subr(struct com_softc *sc)
 			printf("can't re-init serial console @%lx\n",
 			    (u_long)comcons_info.regs.cr_iobase);
 		}
+
+#ifdef COM_16750
+		/* Use in comintr(). */
+		sc->sc_lcr = cflag2lcr(comcons_info.cflag);
+#endif
 
 		/* Make sure the console is always "hardwired". */
 		delay(10000);			/* wait for output to finish */
