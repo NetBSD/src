@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.1 2013/07/25 14:28:29 kefren Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.2 2013/07/27 14:36:39 kefren Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,8 +61,6 @@ newaddr_and_ping() {
 	# Now ldpd on R5 should take notice of the new route and announce it
 	# to R4's ldpd. ldpd on R4 should verify that the next hop
 	# corresponds to its routing table and change its tag entry
-
-	atf_expect_fail "IMPLNULL label bindings are not upgraded properly"
 	RUMP_SERVER=${RUMP_SERVER1} atf_check -s exit:0 -o ignore -e ignore \
 		rump.ping -n -o -w 5 10.0.5.1
 }
