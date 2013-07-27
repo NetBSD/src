@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -36,11 +36,14 @@ LIBS =		@LIBS@ @ATFLIBS@
 
 OBJS =		isctest.@O@
 SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c \
-		symtab_test.c task_test.c queue_test.c
+		sockaddr_test.c symtab_test.c task_test.c queue_test.c \
+		parse_test.c pool_test.c regex_test.c
 
 SUBDIRS =
 TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
-		symtab_test@EXEEXT@ task_test@EXEEXT@ queue_test@EXEEXT@
+		sockaddr_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
+		queue_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
+		regex_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -67,6 +70,22 @@ queue_test@EXEEXT@: queue_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 symtab_test@EXEEXT@: symtab_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			symtab_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+parse_test@EXEEXT@: parse_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			parse_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+sockaddr_test@EXEEXT@: sockaddr_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			sockaddr_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+pool_test@EXEEXT@: pool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			pool_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+regex_test@EXEEXT@: regex_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			regex_test.@O@ ${ISCLIBS} ${LIBS}
 
 unit::
 	sh ${top_srcdir}/unit/unittest.sh

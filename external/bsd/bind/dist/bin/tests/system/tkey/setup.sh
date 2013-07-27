@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -18,6 +18,8 @@
 # Id: setup.sh,v 1.7 2009/03/02 23:47:43 tbox Exp 
 
 RANDFILE=random.data
+
+sh clean.sh
 
 ../../../tools/genrandom 100 $RANDFILE
 

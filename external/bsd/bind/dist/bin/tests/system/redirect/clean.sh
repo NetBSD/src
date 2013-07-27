@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,3 +25,5 @@ rm -f ns1/dsset-nsec3.
 rm -f */named.memstats
 rm -f */named.run
 rm -f dig.out.* random.data
+rm -f ns2/*.db
+rm -f rndc.out
