@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.3 2013/06/21 21:13:49 matt Exp $
+# $NetBSD: ad.mips,v 1.4 2013/07/27 19:22:10 christos Exp $
 ./usr/libdata/debug/lib/64/npf/ext_log.so.0.0.debug	comp-npf-debug		debug,compat,arch64
 ./usr/libdata/debug/lib/64/npf/ext_normalize.so.0.0.debug	comp-npf-debug		debug,compat,arch64
 ./usr/libdata/debug/lib/64/npf/ext_rndblock.so.0.0.debug	comp-npf-debug		debug,compat,arch64
@@ -46,7 +46,7 @@
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libbind9.so.6.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64
@@ -61,7 +61,7 @@
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libdns.so.6.0.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
@@ -213,7 +213,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libbind9.so.6.0.debug	comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64
@@ -228,7 +228,7 @@
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdm.so.0.0.debug 		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libdns.so.6.0.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libdns.so.7.0.debug		comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libdwarf.so.0.1.debug	comp-sys-debug	debug,compat,arch64
