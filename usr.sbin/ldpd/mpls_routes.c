@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.20 2013/07/24 09:05:53 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.21 2013/07/27 14:35:41 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ int             rt_seq = 200;
 int		dont_catch = 0;
 extern int	no_default_route;
 extern int	debug_f, warn_f;
+static int	my_pid = 0;
 
 struct rt_msg   replay_rt[REPLAY_MAX];
 int             replay_index = 0;
@@ -588,7 +589,8 @@ check_route(struct rt_msg * rg, uint rlen)
 	gate[0] = 0;
 	pref[0] = 0;
 
-	if (rlen < 3 || rg->m_rtm.rtm_version != RTM_VERSION)
+	if (rlen <= offsetof(struct rt_msghdr, rtm_type) ||
+	    rg->m_rtm.rtm_version != RTM_VERSION)
 		return LDP_E_ROUTE_ERROR;
 
 	if (rg->m_rtm.rtm_type == RTM_NEWADDR ||
@@ -598,13 +600,23 @@ check_route(struct rt_msg * rg, uint rlen)
 	size_cp = sizeof(struct rt_msghdr);
 	CHECK_MINSA;
 
-	if (rg->m_rtm.rtm_pid == getpid() ||
-	    ((rg->m_rtm.rtm_flags & RTF_DONE) == 0))
+	if (my_pid == 0)
+		my_pid = getpid();
+	assert(my_pid != 0);
+
+	if (rg->m_rtm.rtm_pid == my_pid ||
+	    (rg->m_rtm.rtm_pid != 0 && (rg->m_rtm.rtm_flags & RTF_DONE) == 0) ||
+	    (rg->m_rtm.rtm_type != RTM_ADD &&
+	     rg->m_rtm.rtm_type != RTM_DELETE &&
+	     rg->m_rtm.rtm_type != RTM_CHANGE))
 		return LDP_E_OK;
 
 	debugp("Check route triggered by PID: %d\n", rg->m_rtm.rtm_pid);
 
-	so_dest = (union sockunion *) rg->m_space;
+	if (rg->m_rtm.rtm_addrs & RTA_DST)
+		so_dest = (union sockunion *) rg->m_space;
+	else
+		return LDP_E_ROUTE_ERROR;
 
 	if (so_dest->sa.sa_family != AF_INET)
 		return LDP_E_OK;/* We don't care about non-IP changes */
@@ -613,8 +625,9 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	if (rg->m_rtm.rtm_addrs & RTA_GATEWAY) {
 		GETNEXT(so_gate, so_dest);
-		if ((so_gate->sa.sa_family != AF_INET) &&
-		    (so_gate->sa.sa_family != AF_MPLS))
+		if ((rg->m_rtm.rtm_flags & RTF_CLONING) == 0 &&
+		    so_gate->sa.sa_family != AF_INET &&
+		    so_gate->sa.sa_family != AF_MPLS)
 			return LDP_E_OK;
 	}
 	if (rg->m_rtm.rtm_addrs & RTA_NETMASK) {
@@ -635,6 +648,9 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	so_pref->sa.sa_family = AF_INET;
 	so_pref->sa.sa_len = sizeof(struct sockaddr_in);
+
+	if (rg->m_rtm.rtm_flags & RTF_CLONING)
+		so_gate = NULL;
 
 	switch (rg->m_rtm.rtm_type) {
 	case RTM_CHANGE:
