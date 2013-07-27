@@ -1,4 +1,4 @@
-/*	$NetBSD: dki.c,v 1.2 2011/02/16 03:47:01 christos Exp $	*/
+/*	$NetBSD: dki.c,v 1.3 2013/07/27 19:23:11 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -72,7 +72,7 @@ static	dki_t	*dki_alloc ()
 	dki_estr[0] = '\0';
 	dki_t	*dkp = malloc (sizeof (dki_t));
 
-	if ( (dkp = malloc (sizeof (dki_t))) )
+	if ( dkp != NULL )
 	{
 		memset (dkp, 0, sizeof (dki_t));
 		return dkp;

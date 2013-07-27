@@ -1,7 +1,7 @@
-/*	$NetBSD: name.h,v 1.6 2012/06/05 00:41:50 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.7 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1301,15 +1301,17 @@ ISC_LANG_ENDDECLS
 
 #define DNS_NAME_INIT(n, o) \
 do { \
-	(n)->magic = DNS_NAME_MAGIC; \
-	(n)->ndata = NULL; \
-	(n)->length = 0; \
-	(n)->labels = 0; \
-	(n)->attributes = 0; \
-	(n)->offsets = (o); \
-	(n)->buffer = NULL; \
-	ISC_LINK_INIT((n), link); \
-	ISC_LIST_INIT((n)->list); \
+	dns_name_t *_n = (n); \
+	/* memset(_n, 0, sizeof(*_n)); */ \
+	_n->magic = DNS_NAME_MAGIC; \
+	_n->ndata = NULL; \
+	_n->length = 0; \
+	_n->labels = 0; \
+	_n->attributes = 0; \
+	_n->offsets = (o); \
+	_n->buffer = NULL; \
+	ISC_LINK_INIT(_n, link); \
+	ISC_LIST_INIT(_n->list); \
 } while (/*CONSTCOND*/0)
 
 #define DNS_NAME_RESET(n) \

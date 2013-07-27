@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.4 2013/07/01 21:59:20 joerg Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -285,6 +285,9 @@ main(int argc, char *argv[]) {
 
 	argc -= 1;
 	argv += 1;
+
+	POST(argc);
+	POST(argv);
 
 	if (origin == NULL)
 		origin = file;

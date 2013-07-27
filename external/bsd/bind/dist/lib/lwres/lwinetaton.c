@@ -1,7 +1,7 @@
-/*	$NetBSD: lwinetaton.c,v 1.3 2012/06/05 00:43:04 christos Exp $	*/
+/*	$NetBSD: lwinetaton.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1996-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -97,7 +97,7 @@ static char rcsid[] = "Id: lwinetaton.c,v 1.16 2007/06/19 23:47:22 tbox Exp ";
  */
 int
 lwres_net_aton(const char *cp, struct in_addr *addr) {
-	unsigned long val;
+	lwres_uint32_t val;
 	int base, n;
 	unsigned char c;
 	lwres_uint8_t parts[4];
@@ -122,7 +122,7 @@ lwres_net_aton(const char *cp, struct in_addr *addr) {
 			c = *++cp;
 			if (c == 'x' || c == 'X') {
 				base = 16;
-			       	c = *++cp;
+				c = *++cp;
 			} else {
 				base = 8;
 				digit = 1;

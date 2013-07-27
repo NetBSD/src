@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.4 2013/03/24 18:44:38 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,6 @@
 
 #include <config.h>
 
-#include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
 

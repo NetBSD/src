@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.8,v 1.3 2012/06/05 00:39:02 christos Exp $
+.\"	$NetBSD: named.8,v 1.4 2013/07/27 19:23:10 christos Exp $
 .\"
-.\" Copyright (C) 2004-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2009, 2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001, 2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -176,9 +176,11 @@ Use
 \fI#listeners\fR
 worker threads to listen for incoming UDP packets on each address. If not specified,
 \fBnamed\fR
-will use all of the worker threads for this purpose; the
+will use the number of detected CPUs. If
+\fB\-n\fR
+has been set to a higher value than the number of CPUs, then
 \fB\-U\fR
-option allows the number to be decreased but not increased.
+may be increased as high as that value, but no higher.
 .RE
 .PP
 \-u \fIuser\fR
@@ -280,7 +282,7 @@ BIND 9 Administrator Reference Manual.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2009, 2011, 2013 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001, 2003 Internet Software Consortium.
 .br

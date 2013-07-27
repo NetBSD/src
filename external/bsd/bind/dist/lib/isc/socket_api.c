@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_api.c,v 1.5 2013/03/24 18:42:00 christos Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -180,6 +180,18 @@ isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
 }
 
 isc_result_t
+isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
+		   isc_task_t *task, isc_sockaddr_t *address,
+		   struct in6_pktinfo *pktinfo, isc_socketevent_t *event,
+		   unsigned int flags)
+{
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return (sock->methods->sendto2(sock, region, task, address,
+				       pktinfo, event, flags));
+}
+
+isc_result_t
 isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
 		   isc_taskaction_t action, const void *arg)
 {
@@ -204,6 +216,17 @@ isc_socket_recv(isc_socket_t *sock, isc_region_t *region, unsigned int minimum,
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
 	return (sock->methods->recv(sock, region, minimum, task, action, arg));
+}
+
+isc_result_t
+isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
+		 unsigned int minimum, isc_task_t *task,
+		 isc_socketevent_t *event, unsigned int flags)
+{
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	return (sock->methods->recv2(sock, region, minimum, task,
+				     event, flags));
 }
 
 void
@@ -306,33 +329,12 @@ isc_socket_listen(isc_socket_t *sock, unsigned int backlog) {
 }
 
 isc_result_t
-isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
-		 unsigned int minimum, isc_task_t *task,
-		 isc_socketevent_t *event, unsigned int flags) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return(sock->methods->recv2(sock, region, minimum, task, event, flags));
-}
-
-isc_result_t
 isc_socket_send(isc_socket_t *sock, isc_region_t *region,
 		isc_task_t *task, isc_taskaction_t action,
 		const void *arg) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
 	return(sock->methods->send(sock, region, task, action, arg));
-}
-
-
-isc_result_t
-isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
-		   isc_task_t *task, isc_sockaddr_t *address,
-		   struct in6_pktinfo *pktinfo, isc_socketevent_t *event,
-		   unsigned int flags) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return(sock->methods->sendto2(sock, region, task, address, pktinfo,
-				      event, flags));
 }
 
 isc_result_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.6 2012/06/05 00:41:43 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.7 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -593,6 +593,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_AXFR_END:
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
+		/* NOTREACHED */
 	default:
 		INSIST(0);
 		break;
@@ -784,7 +785,8 @@ xfrin_create(isc_mem_t *mctx,
 	xfr = isc_mem_get(mctx, sizeof(*xfr));
 	if (xfr == NULL)
 		return (ISC_R_NOMEMORY);
-	xfr->mctx = mctx;
+	xfr->mctx = NULL;
+	isc_mem_attach(mctx, &xfr->mctx);
 	xfr->refcount = 0;
 	xfr->zone = NULL;
 	dns_zone_iattach(zone, &xfr->zone);
@@ -879,7 +881,7 @@ xfrin_create(isc_mem_t *mctx,
 		dns_db_detach(&xfr->db);
 	isc_task_detach(&xfr->task);
 	dns_zone_idetach(&xfr->zone);
-	isc_mem_put(mctx, xfr, sizeof(*xfr));
+	isc_mem_putanddetach(&xfr->mctx, xfr, sizeof(*xfr));
 
 	return (result);
 }
@@ -1494,7 +1496,7 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	if (xfr->zone != NULL)
 		dns_zone_idetach(&xfr->zone);
 
-	isc_mem_put(xfr->mctx, xfr, sizeof(*xfr));
+	isc_mem_putanddetach(&xfr->mctx, xfr, sizeof(*xfr));
 }
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.h,v 1.5 2012/06/05 00:41:52 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -128,7 +128,8 @@ typedef struct dns_fetchevent {
 
 isc_result_t
 dns_resolver_create(dns_view_t *view,
-		    isc_taskmgr_t *taskmgr, unsigned int ntasks,
+		    isc_taskmgr_t *taskmgr,
+		    unsigned int ntasks, unsigned int ndisp,
 		    isc_socketmgr_t *socketmgr,
 		    isc_timermgr_t *timermgr,
 		    unsigned int options,
@@ -157,9 +158,11 @@ dns_resolver_create(dns_view_t *view,
  *
  *\li	'timermgr' is a valid timer manager.
  *
- *\li	'dispatchv4' is a valid dispatcher with an IPv4 UDP socket, or is NULL.
+ *\li	'dispatchv4' is a dispatch with an IPv4 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
- *\li	'dispatchv6' is a valid dispatcher with an IPv6 UDP socket, or is NULL.
+ *\li	'dispatchv6' is a dispatch with an IPv6 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
  *\li	resp != NULL && *resp == NULL.
  *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/09/23 17:22:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2013/07/27 19:23:09 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,10 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
-CPPFLAGS+=-DNO_VERSION_DATE
+CPPFLAGS+=-DNO_VERSION_DATE -DPRODUCT=\"BIND\" -DSRCID=\"${SRCID}\"
+CPPFLAGS+=-DDESCRIPTION=\"\(Extended\ Support\ Version\)\"
+
+.include "${IDIST}/srcid"
 
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
 .for f in client

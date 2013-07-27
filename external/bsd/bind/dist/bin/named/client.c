@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.6 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: client.c,v 1.7 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1397,9 +1397,9 @@ client_request(isc_task_t *task, isc_event_t *event) {
 
 	INSIST(client->recursionquota == NULL);
 
-	INSIST(client->state == TCP_CLIENT(client) ?
+	INSIST(client->state == (TCP_CLIENT(client) ?
 				       NS_CLIENTSTATE_READING :
-				       NS_CLIENTSTATE_READY);
+				       NS_CLIENTSTATE_READY));
 
 	ns_client_requests++;
 
@@ -2418,6 +2418,9 @@ ns_client_replace(ns_client_t *client) {
 
 	CTRACE("replace");
 
+	REQUIRE(client != NULL);
+	REQUIRE(client->manager != NULL);
+
 	result = get_client(client->manager, client->interface,
 			    client->dispatch, TCP_CLIENT(client));
 	if (result != ISC_R_SUCCESS)
@@ -2509,10 +2512,10 @@ ns_clientmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	return (ISC_R_SUCCESS);
 
  cleanup_listlock:
-	isc_mutex_destroy(&manager->listlock);
+	(void) isc_mutex_destroy(&manager->listlock);
 
  cleanup_lock:
-	isc_mutex_destroy(&manager->lock);
+	(void) isc_mutex_destroy(&manager->lock);
 
  cleanup_manager:
 	isc_mem_put(manager->mctx, manager, sizeof(*manager));
@@ -2570,7 +2573,9 @@ get_client(ns_clientmgr_t *manager, ns_interface_t *ifp,
 	ns_client_t *client;
 	MTRACE("get client");
 
-	if (manager != NULL && manager->exiting)
+	REQUIRE(manager != NULL);
+
+	if (manager->exiting)
 		return (ISC_R_SHUTTINGDOWN);
 
 	/*

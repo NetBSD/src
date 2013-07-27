@@ -1,7 +1,7 @@
-/*	$NetBSD: thread.c,v 1.3 2012/06/05 00:42:44 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,7 +27,7 @@
 #include <isc/util.h>
 
 #ifndef THREAD_MINSTACKSIZE
-#define THREAD_MINSTACKSIZE		(64U * 1024)
+#define THREAD_MINSTACKSIZE		(1024U * 1024)
 #endif
 
 isc_result_t

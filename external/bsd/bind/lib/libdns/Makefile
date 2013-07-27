@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/03/24 18:55:55 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2013/07/27 19:23:14 christos Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -22,7 +22,7 @@ COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \
 	gssapi_link.c gssapictx.c hmac_link.c key.c openssl_link.c \
 	openssldh_link.c openssldsa_link.c opensslrsa_link.c \
-	opensslecdsa_link.c opensslgost_link.c
+	opensslecdsa_link.c opensslgost_link.c spnego.c
 
 SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c clientinfo.c \
 	compress.c client.c tsec.c ecdb.c \

@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.6 2012/06/05 00:38:55 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.7 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -170,6 +170,7 @@ isc_boolean_t	sigchase;
 	dns_name_t *oname;
 	ISC_LINK(dig_lookup_t) link;
 	ISC_LIST(dig_query_t) q;
+	ISC_LIST(dig_query_t) connecting;
 	dig_query_t *current_query;
 	dig_serverlist_t my_server_list;
 	dig_searchlist_t *origin;
@@ -216,6 +217,7 @@ struct dig_query {
 		slspace[4];
 	isc_socket_t *sock;
 	ISC_LINK(dig_query_t) link;
+	ISC_LINK(dig_query_t) clink;
 	isc_sockaddr_t sockaddr;
 	isc_time_t time_sent;
 	isc_uint64_t byte_count;

@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.5 2012/12/04 23:38:55 spz Exp $	*/
+/*	$NetBSD: file.c,v 1.6 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -173,7 +173,7 @@ isc_file_safemovefile(const char *oldname, const char *newname) {
 		tmpfd = mkstemp(buf, ISC_TRUE);
 		if (tmpfd > 0)
 			_close(tmpfd);
-		DeleteFile(buf);
+		(void)DeleteFile(buf);
 		_chmod(newname, _S_IREAD | _S_IWRITE);
 
 		filestatus = MoveFile(newname, buf);
@@ -200,7 +200,7 @@ isc_file_safemovefile(const char *oldname, const char *newname) {
 	 * Delete the backup file if it got created
 	 */
 	if (exists == TRUE)
-		filestatus = DeleteFile(buf);
+		(void)DeleteFile(buf);
 	return (0);
 }
 
@@ -298,7 +298,7 @@ isc_file_template(const char *path, const char *templet, char *buf,
 
 isc_result_t
 isc_file_renameunique(const char *file, char *templet) {
-	int fd = -1;
+	int fd;
 	int res = 0;
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -437,6 +437,23 @@ isc_file_isplainfile(const char *filename) {
 		return(isc__errno2result(errno));
 
 	if(! S_ISREG(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_isdirectory(const char *filename) {
+	/*
+	 * This function returns success if filename is a directory.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISDIR(filestat.st_mode))
 		return(ISC_R_INVALIDFILE);
 
 	return(ISC_R_SUCCESS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu_external.c,v 1.4 2012/06/05 00:41:41 christos Exp $	*/
+/*	$NetBSD: ssu_external.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@ ux_socket_connect(const char *path) {
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
 
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd == -1) {

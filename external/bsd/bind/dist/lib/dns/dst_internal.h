@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.5 2012/12/04 23:38:42 spz Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -140,6 +140,7 @@ struct dst_context {
 	unsigned int magic;
 	dst_key_t *key;
 	isc_mem_t *mctx;
+	isc_logcategory_t *category;
 	union {
 		void *generic;
 		dst_gssapi_signverifyctx_t *gssctx;

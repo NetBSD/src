@@ -1,7 +1,7 @@
-/*	$NetBSD: getipnode.c,v 1.3 2012/06/05 00:43:03 christos Exp $	*/
+/*	$NetBSD: getipnode.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -467,6 +467,9 @@ lwres_freehostent(struct hostent *he) {
 	char **cpp;
 	int names = 1;
 	int addresses = 1;
+
+	if (he == NULL)
+		return;
 
 	free(he->h_name);
 
@@ -952,8 +955,9 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 	 * Copy aliases.
 	 */
 	npp = he->h_aliases;
-	cpp = (he1 != NULL) ? he1->h_aliases : he2->h_aliases;
-	while (*cpp != NULL) {
+	cpp = (he1 != NULL) ? he1->h_aliases
+		: ((he2 != NULL) ?  he2->h_aliases : NULL);
+	while (cpp != NULL && *cpp != NULL) {
 		len = strlen (*cpp) + 1;
 		*npp = malloc(len);
 		if (*npp == NULL)
@@ -1117,6 +1121,8 @@ hostfromname(lwres_gabnresponse_t *name, int af) {
 	 * Copy aliases.
 	 */
 	he->h_aliases = malloc(sizeof(char *) * (name->naliases + 1));
+	if (he->h_aliases == NULL)
+		goto cleanup;
 	for (i = 0; i < name->naliases; i++) {
 		he->h_aliases[i] = strdup(name->aliases[i]);
 		if (he->h_aliases[i] == NULL)
@@ -1128,6 +1134,8 @@ hostfromname(lwres_gabnresponse_t *name, int af) {
 	 * Copy addresses.
 	 */
 	he->h_addr_list = malloc(sizeof(char *) * (name->naddrs + 1));
+	if (he->h_addr_list == NULL)
+		goto cleanup;
 	addr = LWRES_LIST_HEAD(name->addrs);
 	i = 0;
 	while (addr != NULL) {

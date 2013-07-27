@@ -1,1 +1,0 @@
-cvs -d cvs.netbsd.org:/cvsroot import -m "Import bind 9.9.3-P2" src/external/bsd/bind/dist ISC bind-9-9-3-P2

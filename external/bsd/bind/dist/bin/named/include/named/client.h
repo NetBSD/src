@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.3 2012/06/05 00:39:07 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.4 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -169,16 +169,17 @@ typedef ISC_LIST(ns_client_t) client_list_t;
 #define NS_CLIENT_MAGIC			ISC_MAGIC('N','S','C','c')
 #define NS_CLIENT_VALID(c)		ISC_MAGIC_VALID(c, NS_CLIENT_MAGIC)
 
-#define NS_CLIENTATTR_TCP		0x01
-#define NS_CLIENTATTR_RA		0x02 /*%< Client gets recursive service */
-#define NS_CLIENTATTR_PKTINFO		0x04 /*%< pktinfo is valid */
-#define NS_CLIENTATTR_MULTICAST		0x08 /*%< recv'd from multicast */
-#define NS_CLIENTATTR_WANTDNSSEC	0x10 /*%< include dnssec records */
-#define NS_CLIENTATTR_WANTNSID          0x20 /*%< include nameserver ID */
+#define NS_CLIENTATTR_TCP		0x001
+#define NS_CLIENTATTR_RA		0x002 /*%< Client gets recursive service */
+#define NS_CLIENTATTR_PKTINFO		0x004 /*%< pktinfo is valid */
+#define NS_CLIENTATTR_MULTICAST		0x008 /*%< recv'd from multicast */
+#define NS_CLIENTATTR_WANTDNSSEC	0x010 /*%< include dnssec records */
+#define NS_CLIENTATTR_WANTNSID          0x020 /*%< include nameserver ID */
 #ifdef ALLOW_FILTER_AAAA_ON_V4
-#define NS_CLIENTATTR_FILTER_AAAA	0x40 /*%< suppress AAAAs */
-#define NS_CLIENTATTR_FILTER_AAAA_RC	0x80 /*%< recursing for A against AAAA */
+#define NS_CLIENTATTR_FILTER_AAAA	0x040 /*%< suppress AAAAs */
+#define NS_CLIENTATTR_FILTER_AAAA_RC	0x080 /*%< recursing for A against AAAA */
 #endif
+#define NS_CLIENTATTR_WANTAD		0x100 /*%< want AD in response if possible */
 
 extern unsigned int ns_client_requests;
 

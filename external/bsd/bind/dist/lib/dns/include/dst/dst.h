@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.5 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: dst.h,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
+#include <dns/log.h>
 #include <dns/name.h>
 #include <dns/secalg.h>
 
@@ -171,6 +172,11 @@ dst_algorithm_supported(unsigned int alg);
 
 isc_result_t
 dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, dst_context_t **dctxp);
+
 /*%<
  * Creates a context to be used for a sign or verify operation.
  *

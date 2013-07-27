@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_driver.c,v 1.4 2012/06/05 00:39:38 christos Exp $	*/
+/*	$NetBSD: dlz_ldap_driver.c,v 1.5 2013/07/27 19:23:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -441,18 +441,17 @@ ldap_process_results(LDAP *dbc, LDAPMessage *msg, char ** attrs,
 				break;
 			case 2:
 				j++;
-				if (allnodes == isc_boolean_true) {
+				if (allnodes)
 					host = isc_mem_strdup(ns_g_mctx,
 							      vals[0]);
-				} else {
+				else
 					strcpy(data, vals[0]);
-				}
 				break;
 			case 3:
 				j++;
-				if (allnodes == isc_boolean_true) {
+				if (allnodes)
 					strcpy(data, vals[0]);
-				} else {
+				else {
 					strcat(data, " ");
 					strcat(data, vals[0]);
 				}
@@ -489,7 +488,7 @@ ldap_process_results(LDAP *dbc, LDAPMessage *msg, char ** attrs,
 			goto cleanup;
 		}
 
-		if (allnodes == isc_boolean_true) {
+		if (allnodes && host != NULL) {
 			if (strcasecmp(host, "~") == 0)
 				result = dns_sdlz_putnamedrr(
 						(dns_sdlzallnodes_t *) ptr,

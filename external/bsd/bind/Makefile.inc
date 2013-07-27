@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2012/05/09 21:59:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2013/07/27 19:23:09 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -89,10 +89,10 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL
+CPPFLAGS+=-DOPENSSL -DGSSAPI -DUSE_ISC_SPNEGO
 .if !defined (LIB) || empty(LIB)
-LDADD+= -lcrypto
-DPADD+= ${LIBCRYPTO}
+LDADD+= -lgssapi -lkrb5 -lcrypto
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBCRYPTO}
 .else
 .if exists(${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto)
 LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto

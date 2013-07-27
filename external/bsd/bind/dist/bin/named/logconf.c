@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.c,v 1.4 2012/06/05 00:39:00 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -248,14 +248,16 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 					isc_result_totext(result));
 			} else
 				(void)isc_stdio_close(fp);
-		} else {
-			syslog(LOG_ERR, "isc_file_isplainfile '%s' failed: %s",
-				dest.file.name, isc_result_totext(result));
-			fprintf(stderr, "isc_file_isplainfile '%s' failed: %s",
-				dest.file.name, isc_result_totext(result));
+			goto done;
 		}
+		if (!ns_g_nosyslog)
+			syslog(LOG_ERR, "isc_file_isplainfile '%s' failed: %s",
+			       dest.file.name, isc_result_totext(result));
+		fprintf(stderr, "isc_file_isplainfile '%s' failed: %s",
+			dest.file.name, isc_result_totext(result));
 	}
 
+ done:
 	return (result);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: acl.c,v 1.4 2012/06/05 00:41:27 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,10 @@ dns_acl_create(isc_mem_t *mctx, int n, dns_acl_t **target) {
 	acl = isc_mem_get(mctx, sizeof(*acl));
 	if (acl == NULL)
 		return (ISC_R_NOMEMORY);
-	acl->mctx = mctx;
+
+	acl->mctx = NULL;
+	isc_mem_attach(mctx, &acl->mctx);
+
 	acl->name = NULL;
 
 	result = isc_refcount_init(&acl->refcount, 1);
@@ -469,7 +472,7 @@ destroy(dns_acl_t *dacl) {
 		dns_iptable_detach(&dacl->iptable);
 	isc_refcount_destroy(&dacl->refcount);
 	dacl->magic = 0;
-	isc_mem_put(dacl->mctx, dacl, sizeof(*dacl));
+	isc_mem_putanddetach(&dacl->mctx, dacl, sizeof(*dacl));
 }
 
 void

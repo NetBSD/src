@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.3 2012/06/05 00:43:10 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.4 2013/07/27 19:23:14 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -345,6 +345,7 @@ main(int argc, char **argv) {
 void
 t_assert(const char *component, int anum, int class, const char *what, ...) {
 	va_list	args;
+	char buf[T_BIGBUF];
 
 	(void)printf("T:%s:%d:%s\n", component, anum, class == T_REQUIRED ?
 		     "A" : "C");
@@ -353,21 +354,22 @@ t_assert(const char *component, int anum, int class, const char *what, ...) {
 	 * Format text to a buffer.
 	 */
 	va_start(args, what);
-	(void)vsnprintf(T_buf, sizeof(T_buf), what, args);
+	(void)vsnprintf(buf, sizeof(buf), what, args);
 	va_end(args);
 
-	(void)t_putinfo("A", T_buf);
+	(void)t_putinfo("A", buf);
 	(void)printf("\n");
 }
 
 void
 t_info(const char *format, ...) {
 	va_list	args;
+	char buf[T_BIGBUF];
 
 	va_start(args, format);
-	(void) vsnprintf(T_buf, sizeof(T_buf), format, args);
+	(void) vsnprintf(buf, sizeof(buf), format, args);
 	va_end(args);
-	(void) t_putinfo("I", T_buf);
+	(void) t_putinfo("I", buf);
 }
 
 void

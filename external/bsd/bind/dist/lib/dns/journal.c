@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.c,v 1.4 2012/06/05 00:41:33 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -570,7 +570,8 @@ journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 	if (j == NULL)
 		return (ISC_R_NOMEMORY);
 
-	j->mctx = mctx;
+	j->mctx = NULL;
+	isc_mem_attach(mctx, &j->mctx);
 	j->state = JOURNAL_STATE_INVALID;
 	j->fp = NULL;
 	j->filename = filename;
@@ -681,7 +682,7 @@ journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 	}
 	if (j->fp != NULL)
 		(void)isc_stdio_close(j->fp);
-	isc_mem_put(j->mctx, j, sizeof(*j));
+	isc_mem_putanddetach(&j->mctx, j, sizeof(*j));
 	return (result);
 }
 
@@ -1246,7 +1247,7 @@ dns_journal_destroy(dns_journal_t **journalp) {
 	if (j->fp != NULL)
 		(void)isc_stdio_close(j->fp);
 	j->magic = 0;
-	isc_mem_put(j->mctx, j, sizeof(*j));
+	isc_mem_putanddetach(&j->mctx, j, sizeof(*j));
 	*journalp = NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.4 2012/06/05 00:42:12 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -196,9 +196,7 @@ totext_nsec3(ARGS_TOTEXT) {
 	RETERR(isc_base32hex_totext(&sr, 1, "", target));
 	sr.length = i - j;
 
-	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(tctx->linebreak, target));
-	else
+	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0)
 		RETERR(str_totext(" ", target));
 
 	/* Types covered */

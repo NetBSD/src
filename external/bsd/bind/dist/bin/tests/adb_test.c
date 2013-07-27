@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.4 2013/03/24 18:44:40 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -218,7 +218,7 @@ create_view(void) {
 			      == ISC_R_SUCCESS);
 		INSIST(disp6 != NULL);
 
-		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10,
+		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10, 1,
 						      socketmgr,
 						      timermgr, 0,
 						      dispatchmgr,
@@ -247,7 +247,7 @@ lookup(const char *target) {
 	INSIST(target != NULL);
 
 	client = new_client();
-	isc_buffer_init(&t, target, strlen(target));
+	isc_buffer_constinit(&t, target, strlen(target));
 	isc_buffer_add(&t, strlen(target));
 	isc_buffer_init(&namebuf, namedata, sizeof(namedata));
 	dns_name_init(&name, NULL);

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.10 2013/03/24 18:44:38 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.11 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -538,6 +538,7 @@ main(int argc, char **argv) {
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
+			INSIST(freeit == NULL);
 			return (1);
 		} else if (strcasecmp(algname, "HMAC-MD5") == 0)
 			alg = DST_ALG_HMACMD5;
@@ -964,8 +965,15 @@ main(int argc, char **argv) {
 				dst_key_settime(key, DST_TIME_INACTIVE,
 						inactive);
 
-			if (setdel)
+			if (setdel) {
+				if (setinact && delete < inactive)
+					fprintf(stderr, "%s: warning: Key is "
+						"scheduled to be deleted "
+						"before it is scheduled to be "
+						"made inactive.\n",
+						program);
 				dst_key_settime(key, DST_TIME_DELETE, delete);
+			}
 		} else {
 			if (setpub || setact || setrev || setinact ||
 			    setdel || unsetpub || unsetact ||

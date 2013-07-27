@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.4 2012/06/05 00:41:28 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * DNS_CACHE_MINSIZE is how many bytes is the floor for dns_cache_setcachesize().
  * See also DNS_CACHE_CLEANERINCREMENT
  */
-#define DNS_CACHE_MINSIZE	2097152 /*%< Bytes.  2097152 = 2 MB */
+#define DNS_CACHE_MINSIZE	2097152U /*%< Bytes.  2097152 = 2 MB */
 /*!
  * Control incremental cleaning.
  * CLEANERINCREMENT is how many nodes are examined in one pass.
@@ -138,7 +138,7 @@ struct dns_cache {
 	char			*db_type;
 	int			db_argc;
 	char			**db_argv;
-	isc_uint32_t		size;
+	size_t			size;
 
 	/* Locked by 'filelock'. */
 	char			*filename;
@@ -1030,9 +1030,8 @@ water(void *arg, int mark) {
 }
 
 void
-dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
-	isc_uint32_t lowater;
-	isc_uint32_t hiwater;
+dns_cache_setcachesize(dns_cache_t *cache, size_t size) {
+	size_t hiwater, lowater;
 
 	REQUIRE(VALID_CACHE(cache));
 
@@ -1040,7 +1039,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	 * Impose a minimum cache size; pathological things happen if there
 	 * is too little room.
 	 */
-	if (size != 0 && size < DNS_CACHE_MINSIZE)
+	if (size != 0U && size < DNS_CACHE_MINSIZE)
 		size = DNS_CACHE_MINSIZE;
 
 	LOCK(&cache->lock);
@@ -1057,7 +1056,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	 * water().
 	 */
 
-	if (size == 0 || hiwater == 0 || lowater == 0)
+	if (size == 0U || hiwater == 0U || lowater == 0U)
 		/*
 		 * Disable cache memory limiting.
 		 */
@@ -1070,9 +1069,9 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 		isc_mem_setwater(cache->mctx, water, cache, hiwater, lowater);
 }
 
-isc_uint32_t
+size_t
 dns_cache_getcachesize(dns_cache_t *cache) {
-	isc_uint32_t size;
+	size_t size;
 
 	REQUIRE(VALID_CACHE(cache));
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.5 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: view.h,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -167,6 +167,7 @@ struct dns_view {
 	ISC_LIST(dns_rpz_zone_t)	rpz_zones;
 	isc_boolean_t			rpz_recursive_only;
 	isc_boolean_t			rpz_break_dnssec;
+	unsigned int			rpz_min_ns_labels;
 
 	/*
 	 * Configurable data for server use only,
@@ -315,7 +316,8 @@ dns_view_weakdetach(dns_view_t **targetp);
 
 isc_result_t
 dns_view_createresolver(dns_view_t *view,
-			isc_taskmgr_t *taskmgr, unsigned int ntasks,
+			isc_taskmgr_t *taskmgr,
+			unsigned int ntasks, unsigned int ndisp,
 			isc_socketmgr_t *socketmgr,
 			isc_timermgr_t *timermgr,
 			unsigned int options,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.3 2013/03/24 18:44:42 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.4 2013/07/27 19:23:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -208,7 +208,7 @@ main(int argc, char **argv) {
 	      "isc_log_usechannel()");
 	dns_fixedname_init(&fname);
 	name = dns_fixedname_name(&fname);
-	isc_buffer_init(&buf, "example.", strlen("example."));
+	isc_buffer_constinit(&buf, "example.", strlen("example."));
 	isc_buffer_add(&buf, strlen("example."));
 	CHECK(dns_name_fromtext(name, &buf, dns_rootname, 0, NULL),
 	      "dns_name_fromtext(\"example.\")");

@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.6 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: config.c,v 1.7 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -153,6 +153,7 @@ options {\n\
 	check-names response ignore;\n\
 	check-dup-records warn;\n\
 	check-mx warn;\n\
+	check-spf warn;\n\
 	acache-enable no;\n\
 	acache-cleaning-interval 60;\n\
 	max-acache-size 16M;\n\
@@ -203,7 +204,7 @@ options {\n\
 	sig-signing-signatures 10;\n\
 	sig-signing-type 65534;\n\
 	inline-signing no;\n\
-	zone-statistics false;\n\
+	zone-statistics terse;\n\
 	max-journal-size unlimited;\n\
 	ixfr-from-differences false;\n\
 	check-wildcard yes;\n\
@@ -650,17 +651,16 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		if (isc_sockaddr_getport(&addrs[i]) == 0)
 			isc_sockaddr_setport(&addrs[i], port);
 		keys[i] = NULL;
-		if (!cfg_obj_isstring(key)) {
-			i++;
+		i++;	/* Increment here so that cleanup on error works. */
+		if (!cfg_obj_isstring(key))
 			continue;
-		}
-		keys[i] = isc_mem_get(mctx, sizeof(dns_name_t));
-		if (keys[i] == NULL)
+		keys[i - 1] = isc_mem_get(mctx, sizeof(dns_name_t));
+		if (keys[i - 1] == NULL)
 			goto cleanup;
-		dns_name_init(keys[i], NULL);
+		dns_name_init(keys[i - 1], NULL);
 
 		keystr = cfg_obj_asstring(key);
-		isc_buffer_init(&b, keystr, strlen(keystr));
+		isc_buffer_constinit(&b, keystr, strlen(keystr));
 		isc_buffer_add(&b, strlen(keystr));
 		dns_fixedname_init(&fname);
 		result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
@@ -668,10 +668,9 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 		result = dns_name_dup(dns_fixedname_name(&fname), mctx,
-				      keys[i]);
+				      keys[i - 1]);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
-		i++;
 	}
 	if (pushed != 0) {
 		pushed--;
@@ -727,7 +726,7 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	if (addrs != NULL)
 		isc_mem_put(mctx, addrs, addrcount * sizeof(isc_sockaddr_t));
 	if (keys != NULL) {
-		for (j = 0; j <= i; j++) {
+		for (j = 0; j < i; j++) {
 			if (keys[j] == NULL)
 				continue;
 			if (dns_name_dynamic(keys[j]))

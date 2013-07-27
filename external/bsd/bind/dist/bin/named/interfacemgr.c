@@ -1,7 +1,7 @@
-/*	$NetBSD: interfacemgr.c,v 1.4 2012/06/05 00:38:59 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.5 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -82,11 +82,13 @@ ns_interfacemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	if (mgr == NULL)
 		return (ISC_R_NOMEMORY);
 
+	mgr->mctx = NULL;
+	isc_mem_attach(mctx, &mgr->mctx);
+
 	result = isc_mutex_init(&mgr->lock);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mem;
 
-	mgr->mctx = mctx;
 	mgr->taskmgr = taskmgr;
 	mgr->socketmgr = socketmgr;
 	mgr->dispatchmgr = dispatchmgr;
@@ -118,7 +120,7 @@ ns_interfacemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	ns_listenlist_detach(&mgr->listenon4);
 	ns_listenlist_detach(&mgr->listenon6);
  cleanup_mem:
-	isc_mem_put(mctx, mgr, sizeof(*mgr));
+	isc_mem_putanddetach(&mgr->mctx, mgr, sizeof(*mgr));
 	return (result);
 }
 
@@ -131,7 +133,7 @@ ns_interfacemgr_destroy(ns_interfacemgr_t *mgr) {
 	clearlistenon(mgr);
 	DESTROYLOCK(&mgr->lock);
 	mgr->magic = 0;
-	isc_mem_put(mgr->mctx, mgr, sizeof(*mgr));
+	isc_mem_putanddetach(&mgr->mctx, mgr, sizeof(*mgr));
 }
 
 dns_aclenv_t *
@@ -428,7 +430,7 @@ ns_interface_destroy(ns_interface_t *ifp) {
 
 	ns_interface_shutdown(ifp);
 
-	for (disp = ifp->nudpdispatch; disp >= 0; disp--)
+	for (disp = 0; disp < ifp->nudpdispatch; disp++)
 		if (ifp->udpdispatch[disp] != NULL) {
 			dns_dispatch_changeattributes(ifp->udpdispatch[disp], 0,
 						    DNS_DISPATCHATTR_NOLISTEN);

@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.5 2012/06/05 00:41:39 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.6 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -896,12 +896,14 @@ dns_request_createvia3(dns_requestmgr_t *requestmgr, dns_message_t *message,
 	REQUIRE(action != NULL);
 	REQUIRE(requestp != NULL && *requestp == NULL);
 	REQUIRE(timeout > 0);
-	if (srcaddr != NULL)
-		REQUIRE(isc_sockaddr_pf(srcaddr) == isc_sockaddr_pf(destaddr));
 
 	mctx = requestmgr->mctx;
 
 	req_log(ISC_LOG_DEBUG(3), "dns_request_createvia");
+
+	if (srcaddr != NULL &&
+	    isc_sockaddr_pf(srcaddr) != isc_sockaddr_pf(destaddr))
+		return (ISC_R_FAMILYMISMATCH);
 
 	if (isblackholed(requestmgr->dispatchmgr, destaddr))
 		return (DNS_R_BLACKHOLED);
