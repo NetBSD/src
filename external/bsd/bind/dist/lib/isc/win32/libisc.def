@@ -228,6 +228,7 @@ isc_file_getmodtime
 isc_file_isabsolute
 isc_file_ischdiridempotent
 isc_file_iscurrentdir
+isc_file_isdirectory
 isc_file_isplainfile
 isc_file_mktemplate
 isc_file_mode
@@ -414,6 +415,11 @@ isc_os_ncpus
 isc_parse_uint16
 isc_parse_uint32
 isc_parse_uint8
+isc_pool_count
+isc_pool_create
+isc_pool_destroy
+isc_pool_expand
+isc_pool_get
 isc_portset_add
 isc_portset_addrange
 isc_portset_create
@@ -447,6 +453,7 @@ isc_ratelimiter_setinterval
 isc_ratelimiter_setpertic
 isc_ratelimiter_shutdown
 isc_refcount_init
+isc_regex_validate
 isc_region_compare
 isc_resource_getcurlimit
 isc_resource_getlimit

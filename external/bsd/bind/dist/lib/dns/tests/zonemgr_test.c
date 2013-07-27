@@ -1,7 +1,7 @@
-/*	$NetBSD: zonemgr_test.c,v 1.1.1.2 2012/06/04 17:56:39 christos Exp $	*/
+/*	$NetBSD: zonemgr_test.c,v 1.1.1.3 2013/07/27 15:23:17 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -112,6 +112,46 @@ ATF_TC_BODY(zonemgr_managezone, tc) {
 	dns_test_end();
 }
 
+ATF_TC(zonemgr_createzone);
+ATF_TC_HEAD(zonemgr_createzone, tc) {
+	atf_tc_set_md_var(tc, "descr", "create and release a zone");
+}
+ATF_TC_BODY(zonemgr_createzone, tc) {
+	dns_zonemgr_t *zonemgr = NULL;
+	dns_zone_t *zone = NULL;
+	isc_result_t result;
+
+	UNUSED(tc);
+
+	result = dns_test_begin(NULL, ISC_TRUE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+				    &zonemgr);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	/* This should not succeed until the dns_zonemgr_setsize() is run */
+	result = dns_zonemgr_createzone(zonemgr, &zone);
+	ATF_REQUIRE_EQ(result, ISC_R_FAILURE);
+
+	result = dns_zonemgr_setsize(zonemgr, 1);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	/* Now it should succeed */
+	result = dns_zonemgr_createzone(zonemgr, &zone);
+	ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+	ATF_CHECK(zone != NULL);
+
+	if (zone != NULL)
+		dns_zone_detach(&zone);
+
+	dns_zonemgr_shutdown(zonemgr);
+	dns_zonemgr_detach(&zonemgr);
+	ATF_REQUIRE_EQ(zonemgr, NULL);
+
+	dns_test_end();
+}
+
 ATF_TC(zonemgr_unreachable);
 ATF_TC_HEAD(zonemgr_unreachable, tc) {
 	atf_tc_set_md_var(tc, "descr", "manage and release a zone");
@@ -184,6 +224,7 @@ ATF_TC_BODY(zonemgr_unreachable, tc) {
 ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, zonemgr_create);
 	ATF_TP_ADD_TC(tp, zonemgr_managezone);
+	ATF_TP_ADD_TC(tp, zonemgr_createzone);
 	ATF_TP_ADD_TC(tp, zonemgr_unreachable);
 	return (atf_no_error());
 }

@@ -191,6 +191,10 @@ dns_dispatchmgr_setavailports
 dns_dispatchmgr_setblackhole
 dns_dispatchmgr_setblackportlist
 dns_dispatchmgr_setstats
+dns_dispatchset_cancelall
+dns_dispatchset_create
+dns_dispatchset_destroy
+dns_dispatchset_get
 dns_dlz_writeablezone
 dns_dlzallowzonexfr
 dns_dlzconfigure
@@ -314,6 +318,7 @@ dns_master_stylecreate
 dns_master_stylecreate2
 dns_master_styledestroy
 dns_message_addname
+dns_message_buildopt
 dns_message_checksig
 dns_message_create
 dns_message_currentname
@@ -639,11 +644,9 @@ dns_rpz_cidr_deleteip
 dns_rpz_cidr_find
 dns_rpz_cidr_free
 dns_rpz_decode_cname
-dns_rpz_enabled
-dns_rpz_needed
+dns_rpz_enabled_get
 dns_rpz_new_cidr
 dns_rpz_policy2str
-dns_rpz_set_need
 dns_rpz_str2policy
 dns_rpz_type2str
 dns_rpz_view_destroy
@@ -786,6 +789,7 @@ dns_zone_checknames
 dns_zone_clearforwardacl
 dns_zone_clearnotifyacl
 dns_zone_clearqueryacl
+dns_zone_clearqueryonacl
 dns_zone_clearupdateacl
 dns_zone_clearxfracl
 dns_zone_create
@@ -802,6 +806,7 @@ dns_zone_flush
 dns_zone_forcereload
 dns_zone_forwardupdate
 dns_zone_fulldumptostream
+dns_zone_get_rpz
 dns_zone_getadded
 dns_zone_getchecknames
 dns_zone_getclass
@@ -826,6 +831,7 @@ dns_zone_getoptions
 dns_zone_getorigin
 dns_zone_getprivatetype
 dns_zone_getqueryacl
+dns_zone_getqueryonacl
 dns_zone_getraw
 dns_zone_getrequeststats
 dns_zone_getserial
@@ -834,6 +840,7 @@ dns_zone_getserialupdatemethod
 dns_zone_getsigresigninginterval
 dns_zone_getsigvalidityinterval
 dns_zone_getssutable
+dns_zone_getstatlevel
 dns_zone_getstatscounters
 dns_zone_gettask
 dns_zone_gettype
@@ -864,6 +871,7 @@ dns_zone_nscheck
 dns_zone_refresh
 dns_zone_rekey
 dns_zone_replacedb
+dns_zone_rpz_enable
 dns_zone_setacache
 dns_zone_setadded
 dns_zone_setalsonotify
@@ -919,6 +927,7 @@ dns_zone_setsigresigninginterval
 dns_zone_setsigvalidityinterval
 dns_zone_setssutable
 dns_zone_setstatistics
+dns_zone_setstatlevel
 dns_zone_setstats
 dns_zone_settask
 dns_zone_settype
@@ -935,6 +944,7 @@ dns_zone_unload
 dns_zonekey_iszonekey
 dns_zonemgr_attach
 dns_zonemgr_create
+dns_zonemgr_createzone
 dns_zonemgr_detach
 dns_zonemgr_forcemaint
 dns_zonemgr_getcount
