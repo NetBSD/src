@@ -1,4 +1,4 @@
-/*	$NetBSD: macros_test.c,v 1.1.1.1 2011/09/11 17:20:28 christos Exp $	*/
+/*	$NetBSD: macros_test.c,v 1.1.1.2 2013/07/27 15:23:26 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -444,8 +444,8 @@ H_CHECK_STREQ_MSG(2_1, "2", "1", "2 does not match 1");
 H_CHECK_STREQ_MSG(2_2, "2", "2", "2 does not match 2");
 #define CHECK_STREQ_VAR1 "5"
 #define CHECK_STREQ_VAR2 "9"
-const const char *check_streq_var1 = CHECK_STREQ_VAR1;
-const const char *check_streq_var2 = CHECK_STREQ_VAR2;
+const char *check_streq_var1 = CHECK_STREQ_VAR1;
+const char *check_streq_var2 = CHECK_STREQ_VAR2;
 H_CHECK_STREQ(vars, check_streq_var1, check_streq_var2);
 
 ATF_TC(check_streq);
@@ -632,8 +632,8 @@ H_REQUIRE_STREQ_MSG(2_1, "2", "1", "2 does not match 1");
 H_REQUIRE_STREQ_MSG(2_2, "2", "2", "2 does not match 2");
 #define REQUIRE_STREQ_VAR1 "5"
 #define REQUIRE_STREQ_VAR2 "9"
-const const char *require_streq_var1 = REQUIRE_STREQ_VAR1;
-const const char *require_streq_var2 = REQUIRE_STREQ_VAR2;
+const char *require_streq_var1 = REQUIRE_STREQ_VAR1;
+const char *require_streq_var2 = REQUIRE_STREQ_VAR2;
 H_REQUIRE_STREQ(vars, require_streq_var1, require_streq_var2);
 
 ATF_TC(require_streq);

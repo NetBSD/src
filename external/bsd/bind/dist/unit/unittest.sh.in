@@ -4,7 +4,7 @@ PATH="@ATFBIN@:${PATH}"
 export PATH
 
 status=0
-if [ -n "@ATFBIN@" ]
+if [ -n "@ATFBIN@" -a -f Atffile ]
 then
 	echo "I: unit tests"
 	atf-run > atf.out

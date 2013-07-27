@@ -108,7 +108,12 @@ sed 's/EXAMPLE_ZONE_PLACEHOLDER//' ns3/named.conf.in > ns3/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reload 2>&1 | sed 's/^/I:ns3 /'
 # query the child zone again.  this should directly go to the child and
 # succeed.
-$DIG +tcp data2.sub.example. @10.53.0.2 txt -p 5300 > dig.out.ns2.test2.$n || ret=1
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIG +tcp data2.sub.example. @10.53.0.2 txt -p 5300 > dig.out.ns2.test2.$n || ret=1
+	grep "2nd sub test data" dig.out.ns2.test2.$n > /dev/null && break
+	sleep 1
+done
 grep "2nd sub test data" dig.out.ns2.test2.$n > /dev/null || ret=1
 # re-enable the parent
 sed 's/EXAMPLE_ZONE_PLACEHOLDER/zone "example" { type master; file "example.db.signed"; };/' ns3/named.conf.in > ns3/named.conf

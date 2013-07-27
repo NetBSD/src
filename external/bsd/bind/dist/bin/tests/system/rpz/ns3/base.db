@@ -1,4 +1,4 @@
-; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,8 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: base.db,v 1.6.4.1 2011/10/15 23:03:38 vjs Exp 
+; Id
+
 
 
 ; RPZ test
@@ -40,3 +41,10 @@ ns	A	10.53.0.3
 redirect	A       127.0.0.1
 *.redirect	A       127.0.0.1
 *.credirect	CNAME   google.com.
+
+
+; names in the RPZ TLDs that some say should not be rewritten.
+; This is not a bug, because any data leaked by writing 24.4.3.2.10.rpz-ip
+; (or whatever) is available by publishing "foo A 10.2.3.4" and then
+; resolving foo.
+32.3.2.1.127.rpz-ip					CNAME	walled.invalid.
