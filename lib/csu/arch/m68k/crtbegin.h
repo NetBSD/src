@@ -1,4 +1,4 @@
-/* $NetBSD: crtbegin.h,v 1.3 2013/07/19 06:26:41 matt Exp $ */
+/* $NetBSD: crtbegin.h,v 1.4 2013/07/27 13:07:06 martin Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@ __asm(	".pushsection .init"
 
 __asm(	".pushsection .fini"
 #ifdef __pic__
-"\n\t"	"bsrl	__do_global_ctors_aux"
+"\n\t"	"bsrl	__do_global_dtors_aux"
 #else
 "\n\t"	"jsr	__do_global_dtors_aux"
 #endif
