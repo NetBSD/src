@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.h,v 1.3 2012/06/05 00:41:45 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.4 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -609,7 +609,7 @@ dns_adb_flush(dns_adb_t *adb);
  */
 
 void
-dns_adb_setadbsize(dns_adb_t *adb, isc_uint32_t size);
+dns_adb_setadbsize(dns_adb_t *adb, size_t size);
 /*%<
  * Set a target memory size.  If memory usage exceeds the target
  * size entries will be removed before they would have expired on

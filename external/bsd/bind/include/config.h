@@ -148,9 +148,6 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if OpenSSL includes DSA support */
 #define HAVE_OPENSSL_DSA 1
 
-/* Define if OpenSSL includes ECDSA support */
-#define HAVE_OPENSSL_ECDSA 1
-
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #define ISC_SOCKADDR_LEN_T socklen_t
 
@@ -293,6 +290,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
+/* Define if OpenSSL includes ECDSA support */
+#define HAVE_OPENSSL_ECDSA 1
+
 /* Define if your OpenSSL version supports GOST. */
 #define HAVE_OPENSSL_GOST 1
 
@@ -392,6 +392,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */
 /* #undef NEED_SECURE_DIRECTORY */
+
+/* Use the new XML schema for statistics */
+/* #undef NEWSTATS */
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""

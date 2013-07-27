@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.5 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.6 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -151,7 +151,7 @@ free_listener(controllistener_t *listener) {
 	if (listener->acl != NULL)
 		dns_acl_detach(&listener->acl);
 
-	isc_mem_put(listener->mctx, listener, sizeof(*listener));
+	isc_mem_putanddetach(&listener->mctx, listener, sizeof(*listener));
 }
 
 static void
@@ -1068,8 +1068,9 @@ add_listener(ns_controls_t *cp, controllistener_t **listenerp,
 		result = ISC_R_NOMEMORY;
 
 	if (result == ISC_R_SUCCESS) {
+		listener->mctx = NULL;
+		isc_mem_attach(mctx, &listener->mctx);
 		listener->controls = cp;
-		listener->mctx = mctx;
 		listener->task = cp->server->task;
 		listener->address = *addr;
 		listener->sock = NULL;

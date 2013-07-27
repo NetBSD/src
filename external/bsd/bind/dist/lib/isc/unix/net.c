@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 2012/06/05 00:42:47 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -303,8 +303,6 @@ try_ipv6only(void) {
 		goto close;
 	}
 
-	close(s);
-
 	ipv6only_result = ISC_R_SUCCESS;
 
 close:
@@ -360,7 +358,6 @@ try_ipv6pktinfo(void) {
 		goto close;
 	}
 
-	close(s);
 	ipv6pktinfo_result = ISC_R_SUCCESS;
 
 close:

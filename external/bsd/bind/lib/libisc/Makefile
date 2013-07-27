@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/03/24 18:55:55 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2013/07/27 19:23:14 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -29,7 +29,8 @@ SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
 		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c inet_aton.c \
 		iterated_hash.c lex.c lfsr.c lib.c log.c md5.c mem.c \
 		mutexblock.c netaddr.c netscope.c ondestroy.c parseint.c \
-		portset.c quota.c radix.c random.c ratelimiter.c refcount.c \
+		pool.c portset.c quota.c radix.c random.c ratelimiter.c \
+		refcount.c regex.c \
 		region.c result.c rwlock.c serial.c sha1.c sha2.c sockaddr.c \
 		stats.c string.c strtoul.c symtab.c task.c taskpool.c timer.c \
 		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS} ${API_SRCS}

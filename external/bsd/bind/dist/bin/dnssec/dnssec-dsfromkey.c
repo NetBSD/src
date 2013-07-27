@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.6 2013/03/24 18:44:38 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.7 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -286,7 +286,9 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 		}
 	}
 
-	result = dns_rdata_totext(&ds, (dns_name_t *) NULL, &textb);
+	result = dns_rdata_tofmttext(&ds, (dns_name_t *) NULL, 0, 0, 0, "",
+				     &textb);
+
 	if (result != ISC_R_SUCCESS)
 		fatal("can't print rdata");
 

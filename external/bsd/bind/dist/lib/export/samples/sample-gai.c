@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-gai.c,v 1.3 2012/06/05 00:42:22 christos Exp $	*/
+/*	$NetBSD: sample-gai.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,7 +63,7 @@ do_gai(int family, char *hostname) {
 		}
 	}
 
-	freeaddrinfo(res);
+	freeaddrinfo(res0);
 }
 
 int
@@ -75,5 +75,5 @@ main(int argc, char *argv[]) {
 	do_gai(AF_INET6, argv[1]);
 	do_gai(AF_UNSPEC, argv[1]);
 
-	exit(0);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.9 2013/03/24 18:42:00 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.10 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -40,15 +40,6 @@ typedef void (*isc_mem_water_t)(void *, int);
 
 typedef void * (*isc_memalloc_t)(void *, size_t);
 typedef void (*isc_memfree_t)(void *, void *);
-
-/*%
- * Define ISC_MEM_DEBUG=1 to make all functions that free memory
- * set the pointer being freed to NULL after being freed.
- * This is the default; set ISC_MEM_DEBUG=0 to disable it.
- */
-#ifndef ISC_MEM_DEBUG
-#define ISC_MEM_DEBUG 1
-#endif
 
 /*%
  * Define ISC_MEM_TRACKLINES=1 to turn on detailed tracing of memory
@@ -276,7 +267,6 @@ struct isc_mempool {
 #define ISCAPI_MPOOL_VALID(mp)	((mp) != NULL && \
 				 (mp)->magic == ISCAPI_MPOOL_MAGIC)
 
-#if ISC_MEM_DEBUG
 #define isc_mem_put(c, p, s) \
 	do { \
 		ISCMEMFUNC(put)((c), (p), (s) _ISC_MEM_FILELINE);	\
@@ -297,13 +287,6 @@ struct isc_mempool {
 		ISCMEMPOOLFUNC(put)((c), (p) _ISC_MEM_FILELINE);	\
 		(p) = NULL; \
 	} while (/*CONSTCOND*/0)
-#else
-#define isc_mem_put(c, p, s)	ISCMEMFUNC(put)((c), (p), (s) _ISC_MEM_FILELINE)
-#define isc_mem_putanddetach(c, p, s) \
-	ISCMEMFUNC(putanddetach)((c), (p), (s) _ISC_MEM_FILELINE)
-#define isc_mem_free(c, p)	ISCMEMFUNC(free)((c), (p) _ISC_MEM_FILELINE)
-#define isc_mempool_put(c, p)	ISCMEMPOOLFUNC(put)((c), (p) _ISC_MEM_FILELINE)
-#endif
 
 /*@{*/
 isc_result_t
@@ -550,7 +533,7 @@ isc_mem_gettag(isc_mem_t *ctx);
  */
 
 #ifdef HAVE_LIBXML2
-void
+int
 isc_mem_renderxml(xmlTextWriterPtr writer);
 /*%<
  * Render all contexts' statistics and status in XML for writer.

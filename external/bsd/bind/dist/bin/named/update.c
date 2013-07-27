@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.5 2012/06/05 00:39:06 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.6 2013/07/27 19:23:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2371,7 +2371,8 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 		ISC_LIST_UNLINK(temp_diff.tuples, tuple, link);
 		ISC_LIST_APPEND(diff->tuples, tuple, link);
 
-		dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
+		result = dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if ((dnskey.flags &
 		     (DNS_KEYFLAG_OWNERMASK|DNS_KEYTYPE_NOAUTH))
 			 != DNS_KEYOWNER_ZONE)
