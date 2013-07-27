@@ -1,7 +1,7 @@
-/*	$NetBSD: queue.h,v 1.4 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: queue.h,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Id */
 
 /*
  * This is a generic implementation of a two-lock concurrent queue.
@@ -53,8 +55,8 @@
 
 #define ISC_QUEUE_INIT(queue, link) \
 	do { \
-		isc_mutex_init(&(queue).taillock); \
-		isc_mutex_init(&(queue).headlock); \
+		(void) isc_mutex_init(&(queue).taillock); \
+		(void) isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
 	} while (/*CONSTCOND*/0)
 
@@ -63,8 +65,8 @@
 #define ISC_QUEUE_DESTROY(queue) \
 	do { \
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
-		isc_mutex_destroy(&(queue).taillock); \
-		isc_mutex_destroy(&(queue).headlock); \
+		(void) isc_mutex_destroy(&(queue).taillock); \
+		(void) isc_mutex_destroy(&(queue).headlock); \
 	} while (/*CONSTCOND*/0)
 
 /*

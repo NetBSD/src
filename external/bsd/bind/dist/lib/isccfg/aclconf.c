@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.4 2012/06/05 00:43:01 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -194,7 +194,7 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
 	const char *txtname = cfg_obj_asstring(keyobj);
 
 	keylen = strlen(txtname);
-	isc_buffer_init(&buf, txtname, keylen);
+	isc_buffer_constinit(&buf, txtname, keylen);
 	isc_buffer_add(&buf, keylen);
 	dns_fixedname_init(&fixname);
 	result = dns_name_fromtext(dns_fixedname_name(&fixname), &buf,

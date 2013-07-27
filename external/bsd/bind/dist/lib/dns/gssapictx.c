@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapictx.c,v 1.4 2012/06/05 00:41:32 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.5 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -543,7 +543,7 @@ gss_err_message(isc_mem_t *mctx, isc_uint32_t major, isc_uint32_t minor,
 	}
 
 	estr = gss_error_tostring(major, minor, buf, sizeof(buf));
-	if (estr)
+	if (estr != NULL)
 		(*err_message) = isc_mem_strdup(mctx, estr);
 }
 #endif
@@ -599,8 +599,12 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
 
 	if (gret != GSS_S_COMPLETE && gret != GSS_S_CONTINUE_NEEDED) {
 		gss_err_message(mctx, gret, minor, err_message);
-		gss_log(3, "Failure initiating security context: %s",
-			*err_message);
+		if (err_message != NULL && *err_message != NULL)
+			gss_log(3, "Failure initiating security context: %s",
+				*err_message);
+		else
+			gss_log(3, "Failure initiating security context");
+
 		result = ISC_R_FAILURE;
 		goto out;
 	}

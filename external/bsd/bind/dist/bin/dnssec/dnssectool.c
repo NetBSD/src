@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.c,v 1.4 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -522,14 +522,16 @@ goodsig(dns_name_t *origin, dns_rdata_t *sigrdata, dns_name_t *name,
 	dst_key_t *dstkey = NULL;
 	isc_result_t result;
 
-	dns_rdata_tostruct(sigrdata, &sig, NULL);
+	result = dns_rdata_tostruct(sigrdata, &sig, NULL);
+	check_result(result, "dns_rdata_tostruct()");
 
 	for (result = dns_rdataset_first(keyrdataset);
 	     result == ISC_R_SUCCESS;
 	     result = dns_rdataset_next(keyrdataset)) {
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_rdataset_current(keyrdataset, &rdata);
-		dns_rdata_tostruct(&rdata, &key, NULL);
+		result = dns_rdata_tostruct(&rdata, &key, NULL);
+		check_result(result, "dns_rdata_tostruct()");
 		result = dns_dnssec_keyfromrdata(origin, &rdata, mctx,
 						 &dstkey);
 		if (result != ISC_R_SUCCESS)
@@ -583,7 +585,7 @@ verifynsec(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		dns_name_format(nextname, nextbuf, sizeof(nextbuf));
 		dns_name_format(&nsec.next, found, sizeof(found));
-		fprintf(stderr, "Bad record NSEC record for %s, next name "
+		fprintf(stderr, "Bad NSEC record for %s, next name "
 				"mismatch (expected:%s, found:%s)\n", namebuf,
 				nextbuf, found);
 		goto failure;
@@ -594,7 +596,7 @@ verifynsec(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	check_result(result, "dns_nsec_buildrdata()");
 	if (dns_rdata_compare(&rdata, &tmprdata) != 0) {
 		dns_name_format(name, namebuf, sizeof(namebuf));
-		fprintf(stderr, "Bad record NSEC record for %s, bit map "
+		fprintf(stderr, "Bad NSEC record for %s, bit map "
 				"mismatch\n", namebuf);
 		goto failure;
 	}
@@ -770,7 +772,7 @@ match_nsec3(dns_name_t *name, isc_mem_t *mctx,
 	len = dns_nsec_compressbitmap(cbm, types, maxtype);
 	if (nsec3.len != len || memcmp(cbm, nsec3.typebits, len) != 0) {
 		dns_name_format(name, namebuf, sizeof(namebuf));
-		fprintf(stderr, "Bad record NSEC3 record for %s, bit map "
+		fprintf(stderr, "Bad NSEC3 record for %s, bit map "
 				"mismatch\n", namebuf);
 		return (ISC_R_FAILURE);
 	}
@@ -823,6 +825,7 @@ innsec3params(dns_rdata_nsec3_t *nsec3, dns_rdataset_t *nsec3paramset) {
 
 		dns_rdataset_current(nsec3paramset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &nsec3param, NULL);
+		check_result(result, "dns_rdata_tostruct()");
 		if (nsec3param.flags == 0 &&
 		    nsec3param.hash == nsec3->hash &&
 		    nsec3param.iterations == nsec3->iterations &&
@@ -890,11 +893,64 @@ record_found(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 	return (ISC_R_SUCCESS);
 }
 
+static isc_boolean_t
+isoptout(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
+	 dns_rdata_t *nsec3rdata)
+{
+	dns_rdataset_t rdataset;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_nsec3_t nsec3;
+	dns_rdata_nsec3param_t nsec3param;
+	dns_fixedname_t fixed;
+	dns_name_t *hashname;
+	isc_result_t result;
+	dns_dbnode_t *node = NULL;
+	unsigned char rawhash[NSEC3_MAX_HASH_LENGTH];
+	size_t rhsize = sizeof(rawhash);
+	isc_boolean_t ret;
+
+	result = dns_rdata_tostruct(nsec3rdata, &nsec3param, NULL);
+	check_result(result, "dns_rdata_tostruct()");
+
+	dns_fixedname_init(&fixed);
+	result = dns_nsec3_hashname(&fixed, rawhash, &rhsize, origin, origin,
+				    nsec3param.hash, nsec3param.iterations,
+				    nsec3param.salt, nsec3param.salt_length);
+	check_result(result, "dns_nsec3_hashname()");
+
+	dns_rdataset_init(&rdataset);
+	hashname = dns_fixedname_name(&fixed);
+	result = dns_db_findnsec3node(db, hashname, ISC_FALSE, &node);
+	if (result == ISC_R_SUCCESS)
+		result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec3,
+					     0, 0, &rdataset, NULL);
+	if (result != ISC_R_SUCCESS)
+		return (ISC_FALSE);
+
+	result = dns_rdataset_first(&rdataset);
+	check_result(result, "dns_rdataset_first()");
+
+	dns_rdataset_current(&rdataset, &rdata);
+
+	result = dns_rdata_tostruct(&rdata, &nsec3, NULL);
+	if (result != ISC_R_SUCCESS)
+		ret = ISC_FALSE;
+	else
+		ret = ISC_TF((nsec3.flags & DNS_NSEC3FLAG_OPTOUT) != 0);
+
+	if (dns_rdataset_isassociated(&rdataset))
+		dns_rdataset_disassociate(&rdataset);
+	if (node != NULL)
+		dns_db_detachnode(db, &node);
+
+	return (ret);
+}
+
 static isc_result_t
 verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 	    isc_mem_t *mctx, dns_name_t *name, dns_rdata_t *rdata,
-	    isc_boolean_t delegation, unsigned char types[8192],
-	    unsigned int maxtype)
+	    isc_boolean_t delegation, isc_boolean_t empty,
+	    unsigned char types[8192], unsigned int maxtype)
 {
 	char namebuf[DNS_NAME_FORMATSIZE];
 	char hashbuf[DNS_NAME_FORMATSIZE];
@@ -906,6 +962,7 @@ verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 	dns_dbnode_t *node = NULL;
 	unsigned char rawhash[NSEC3_MAX_HASH_LENGTH];
 	size_t rhsize = sizeof(rawhash);
+	isc_boolean_t optout;
 
 	result = dns_rdata_tostruct(rdata, &nsec3param, NULL);
 	check_result(result, "dns_rdata_tostruct()");
@@ -915,6 +972,8 @@ verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 
 	if (!dns_nsec3_supportedhash(nsec3param.hash))
 		return (ISC_R_SUCCESS);
+
+	optout = isoptout(db, ver, origin, rdata);
 
 	dns_fixedname_init(&fixed);
 	result = dns_nsec3_hashname(&fixed, rawhash, &rhsize, name, origin,
@@ -935,16 +994,22 @@ verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 		result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec3,
 					     0, 0, &rdataset, NULL);
 	if (result != ISC_R_SUCCESS &&
-	    (!delegation || dns_nsec_isset(types, dns_rdatatype_ds))) {
+	    (!delegation || (empty && !optout) ||
+	     (!empty && dns_nsec_isset(types, dns_rdatatype_ds))))
+	{
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		dns_name_format(hashname, hashbuf, sizeof(hashbuf));
 		fprintf(stderr, "Missing NSEC3 record for %s (%s)\n",
 			namebuf, hashbuf);
+	} else if (result == ISC_R_NOTFOUND &&
+		   delegation && (!empty || optout))
+	{
+		result = ISC_R_SUCCESS;
 	} else if (result == ISC_R_SUCCESS) {
 		result = match_nsec3(name, mctx, &nsec3param, &rdataset,
 				     types, maxtype, rawhash, rhsize);
-	} else if (result == ISC_R_NOTFOUND && delegation)
-		result = ISC_R_SUCCESS;
+	}
+
 	if (dns_rdataset_isassociated(&rdataset))
 		dns_rdataset_disassociate(&rdataset);
 	if (node != NULL)
@@ -956,8 +1021,8 @@ verifynsec3(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 static isc_result_t
 verifynsec3s(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 	     isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *nsec3paramset,
-	     isc_boolean_t delegation, unsigned char types[8192],
-	     unsigned int maxtype)
+	     isc_boolean_t delegation, isc_boolean_t empty,
+	     unsigned char types[8192], unsigned int maxtype)
 {
 	isc_result_t result;
 
@@ -968,7 +1033,7 @@ verifynsec3s(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 
 		dns_rdataset_current(nsec3paramset, &rdata);
 		result = verifynsec3(db, ver, origin, mctx, name, &rdata,
-				     delegation, types, maxtype);
+				     delegation, empty, types, maxtype);
 		if (result != ISC_R_SUCCESS)
 			break;
 	}
@@ -1023,7 +1088,8 @@ verifyset(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 		dns_rdata_rrsig_t sig;
 
 		dns_rdataset_current(&sigrdataset, &rdata);
-		dns_rdata_tostruct(&rdata, &sig, NULL);
+		result = dns_rdata_tostruct(&rdata, &sig, NULL);
+		check_result(result, "dns_rdata_tostruct()");
 		if (rdataset->ttl != sig.originalttl) {
 			dns_name_format(name, namebuf, sizeof(namebuf));
 			type_format(rdataset->type, typebuf, sizeof(typebuf));
@@ -1112,8 +1178,8 @@ verifynode(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 
 	if (nsec3paramset != NULL && dns_rdataset_isassociated(nsec3paramset)) {
 		tresult = verifynsec3s(db, ver, origin, mctx, name,
-				       nsec3paramset, delegation, types,
-				       maxtype);
+				       nsec3paramset, delegation, ISC_FALSE,
+				       types, maxtype);
 		if (result == ISC_R_SUCCESS && tresult != ISC_R_SUCCESS)
 			result = tresult;
 	}
@@ -1302,8 +1368,8 @@ verify_nsec3_chains(isc_mem_t *mctx) {
 
 static isc_result_t
 verifyemptynodes(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
-		 isc_mem_t *mctx, dns_name_t *name, dns_name_t *nextname,
-		 dns_rdataset_t *nsec3paramset)
+		 isc_mem_t *mctx, dns_name_t *name, dns_name_t *prevname,
+		 isc_boolean_t isdelegation, dns_rdataset_t *nsec3paramset)
 {
 	dns_namereln_t reln;
 	int order;
@@ -1311,23 +1377,24 @@ verifyemptynodes(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *origin,
 	dns_name_t suffix;
 	isc_result_t result = ISC_R_SUCCESS, tresult;
 
-	reln = dns_name_fullcompare(name, nextname, &order, &labels);
+	reln = dns_name_fullcompare(prevname, name, &order, &labels);
 	if (order >= 0)
 		return (result);
 
-	nlabels = dns_name_countlabels(nextname);
+	nlabels = dns_name_countlabels(name);
 
 	if (reln == dns_namereln_commonancestor ||
 	    reln == dns_namereln_contains) {
 		dns_name_init(&suffix, NULL);
 		for (i = labels + 1; i < nlabels; i++) {
-			dns_name_getlabelsequence(nextname, nlabels - i, i,
+			dns_name_getlabelsequence(name, nlabels - i, i,
 						  &suffix);
 			if (nsec3paramset != NULL &&
 			     dns_rdataset_isassociated(nsec3paramset)) {
 				tresult = verifynsec3s(db, ver, origin, mctx,
 						       &suffix, nsec3paramset,
-						       ISC_FALSE, NULL, 0);
+						       isdelegation, ISC_TRUE,
+						       NULL, 0);
 				if (result == ISC_R_SUCCESS &&
 				    tresult != ISC_R_SUCCESS)
 					result = tresult;
@@ -1357,8 +1424,8 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 	char algbuf[80];
 	dns_dbiterator_t *dbiter = NULL;
 	dns_dbnode_t *node = NULL, *nextnode = NULL;
-	dns_fixedname_t fname, fnextname, fzonecut;
-	dns_name_t *name, *nextname, *zonecut;
+	dns_fixedname_t fname, fnextname, fprevname, fzonecut;
+	dns_name_t *name, *nextname, *prevname, *zonecut;
 	dns_rdata_dnskey_t dnskey;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdataset_t keyset, soaset;
@@ -1570,6 +1637,8 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 	name = dns_fixedname_name(&fname);
 	dns_fixedname_init(&fnextname);
 	nextname = dns_fixedname_name(&fnextname);
+	dns_fixedname_init(&fprevname);
+	prevname = NULL;
 	dns_fixedname_init(&fzonecut);
 	zonecut = NULL;
 
@@ -1636,8 +1705,13 @@ verifyzone(dns_db_t *db, dns_dbversion_t *ver,
 			vresult = ISC_R_SUCCESS;
 		if (vresult == ISC_R_SUCCESS && result != ISC_R_SUCCESS)
 			vresult = result;
-		result = verifyemptynodes(db, ver, origin, mctx, name,
-					  nextname, &nsec3paramset);
+		if (prevname != NULL) {
+			result = verifyemptynodes(db, ver, origin, mctx, name,
+						  prevname, isdelegation,
+						  &nsec3paramset);
+		} else
+			prevname = dns_fixedname_name(&fprevname);
+		dns_name_copy(name, prevname, NULL);
 		if (vresult == ISC_R_SUCCESS && result != ISC_R_SUCCESS)
 			vresult = result;
 		dns_db_detachnode(db, &node);

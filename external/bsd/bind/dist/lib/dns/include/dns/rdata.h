@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.6 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: rdata.h,v 1.7 2013/07/27 19:23:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -179,6 +179,7 @@ struct dns_rdata {
 #define DNS_RDATA_CHECKREVERSE		DNS_NAME_CHECKREVERSE
 #define DNS_RDATA_CHECKMX		DNS_NAME_CHECKMX
 #define DNS_RDATA_CHECKMXFAIL		DNS_NAME_CHECKMXFAIL
+#define DNS_RDATA_UNKNOWNESCAPE		0x80000000
 
 /***
  *** Initialization

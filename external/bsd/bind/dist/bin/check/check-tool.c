@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.4 2012/12/04 23:38:38 spz Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.5 2013/07/27 19:23:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -198,6 +198,10 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 		a->type == dns_rdatatype_a);
 	REQUIRE(aaaa == NULL || !dns_rdataset_isassociated(aaaa) ||
 		aaaa->type == dns_rdatatype_aaaa);
+
+	if (a == NULL || aaaa == NULL)
+		return (answer);
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = PF_UNSPEC;
@@ -260,8 +264,7 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 		}
 		return (ISC_TRUE);
 	}
-	if (a == NULL || aaaa == NULL)
-		return (answer);
+
 	/*
 	 * Check that all glue records really exist.
 	 */
@@ -599,7 +602,7 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 
 	dns_zone_settype(zone, dns_zone_master);
 
-	isc_buffer_init(&buffer, zonename, strlen(zonename));
+	isc_buffer_constinit(&buffer, zonename, strlen(zonename));
 	isc_buffer_add(&buffer, strlen(zonename));
 	dns_fixedname_init(&fixorigin);
 	origin = dns_fixedname_name(&fixorigin);
