@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.30 2013/07/20 05:16:08 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.31 2013/07/27 14:35:41 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -903,10 +903,15 @@ the_big_loop(void)
 					new_peer_connection();
 				else if (pfd[i].fd == route_socket) {
 					struct rt_msg xbuf;
-					int l;
+					int l, rtmlen = sizeof(xbuf);
+					/* Read at least rtm_msglen */
+					l = recv(route_socket, &xbuf,
+					  sizeof(u_short), MSG_PEEK);
+					if (l == sizeof(u_short))
+						rtmlen = xbuf.m_rtm.rtm_msglen;
 					do {
-						l = read(route_socket, &xbuf,
-						    sizeof(xbuf));
+						l = recv(route_socket, &xbuf,
+						    rtmlen, MSG_WAITALL);
 					} while ((l == -1) && (errno == EINTR));
 
 					if (l == -1)
