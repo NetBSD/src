@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.253 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.254 2013/07/28 01:27:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.253 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.254 2013/07/28 01:27:02 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,13 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.253 2013/07/28 01:10:49 dholland Exp
 
 extern pid_t lfs_writer_daemon;
 int lfs_ignore_lazy_sync = 1;
+
+static int lfs_openextattr(void *v);
+static int lfs_closeextattr(void *v);
+static int lfs_getextattr(void *v);
+static int lfs_setextattr(void *v);
+static int lfs_listextattr(void *v);
+static int lfs_deleteextattr(void *v);
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -150,6 +157,12 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_vnodeop_opv_desc =
@@ -198,6 +211,12 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_specop_opv_desc =
@@ -245,6 +264,12 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
+	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, lfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, lfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, lfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, lfs_deleteextattr },	/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
@@ -2455,4 +2480,172 @@ lfs_mmap(void *v)
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)
 		return EOPNOTSUPP;
 	return ulfs_mmap(v);
+}
+
+static int
+lfs_openextattr(void *v)
+{
+	struct vop_openextattr_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+
+	/* Not supported for ULFS1 file systems. */
+	if (ump->um_fstype == ULFS1)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_closeextattr(void *v)
+{
+	struct vop_closeextattr_args /* {
+		struct vnode *a_vp;
+		int a_commit;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+
+	/* Not supported for ULFS1 file systems. */
+	if (ump->um_fstype == ULFS1)
+		return (EOPNOTSUPP);
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_getextattr(void *v)
+{
+	struct vop_getextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_getextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_setextattr(void *v)
+{
+	struct vop_setextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		const char *a_name;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_setextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_listextattr(void *v)
+{
+	struct vop_listextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		struct uio *a_uio;
+		size_t *a_size;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_listextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
+}
+
+static int
+lfs_deleteextattr(void *v)
+{
+	struct vop_deleteextattr_args /* {
+		struct vnode *a_vp;
+		int a_attrnamespace;
+		kauth_cred_t a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct ulfsmount *ump = ip->i_ump;
+	//struct fs *fs = ip->i_lfs;
+	int error;
+
+	if (ump->um_fstype == ULFS1) {
+#ifdef LFS_EXTATTR
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		error = ulfs_deleteextattr(ap);
+		fstrans_done(vp->v_mount);
+#else
+		error = EOPNOTSUPP;
+#endif
+		return error;
+	}
+
+	/* XXX Not implemented for ULFS2 file systems. */
+	return (EOPNOTSUPP);
 }
