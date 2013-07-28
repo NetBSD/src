@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.15 2013/07/21 00:01:22 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.16 2013/07/28 00:31:54 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.15 2013/07/21 00:01:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.16 2013/07/28 00:31:54 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1249,29 +1249,6 @@ ulfsspec_write(void *v)
 }
 
 /*
- * Close wrapper for special devices.
- *
- * Update the times on the inode then do device close.
- */
-int
-ulfsspec_close(void *v)
-{
-	struct vop_close_args /* {
-		struct vnode	*a_vp;
-		int		a_fflag;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	if (vp->v_usecount > 1)
-		ULFS_ITIMES(vp, NULL, NULL, NULL);
-	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
-}
-
-/*
  * Read wrapper for fifo's
  */
 int
@@ -1309,29 +1286,6 @@ ulfsfifo_write(void *v)
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
-}
-
-/*
- * Close wrapper for fifo's.
- *
- * Update the times on the inode then do device close.
- */
-int
-ulfsfifo_close(void *v)
-{
-	struct vop_close_args /* {
-		struct vnode	*a_vp;
-		int		a_fflag;
-		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
-
-	vp = ap->a_vp;
-	ip = VTOI(vp);
-	if (ap->a_vp->v_usecount > 1)
-		ULFS_ITIMES(vp, NULL, NULL, NULL);
-	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
 /*
