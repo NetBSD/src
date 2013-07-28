@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.29 2013/06/30 11:48:42 wiz Exp $
+.\"	$NetBSD: rename.2,v 1.30 2013/07/28 09:07:55 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,7 +200,9 @@ An I/O error occurred while making or updating a directory entry.
 The requested link requires writing in a directory on a read-only file
 system.
 .It Bq Er EFAULT
-.Em Path
+.Fa from
+or
+.Fa to
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa from
