@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.5 2013/06/08 21:40:27 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.6 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.5 2013/06/08 21:40:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.6 2013/07/28 01:10:49 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -277,9 +277,10 @@ lfsquota1_umount(struct mount *mp, int flags)
 {
 	int i, error;
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	struct lwp *l = curlwp;
 
-	if ((ump->um_flags & ULFS_QUOTA) == 0)
+	if ((fs->um_flags & ULFS_QUOTA) == 0)
 		return 0;
 
 	if ((error = vflush(mp, NULLVP, SKIPSYSTEM | flags)) != 0)
@@ -305,13 +306,14 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
     const char *fname)
 {
 	struct mount *mp = ump->um_mountp;
+	struct lfs *fs = ump->um_lfs;
 	struct vnode *vp, **vpp, *mvp;
 	struct dquot *dq;
 	int error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		uprintf("%s: quotas v2 already enabled\n",
 		    mp->mnt_stat.f_mntonname);
 		return (EBUSY);
@@ -401,7 +403,7 @@ again:
 	ump->umq1_qflags[type] &= ~QTF_OPENING;
 	cv_broadcast(&lfs_dqcv);
 	if (error == 0)
-		ump->um_flags |= ULFS_QUOTA;
+		fs->um_flags |= ULFS_QUOTA;
 	mutex_exit(&lfs_dqlock);
 	if (error)
 		lfsquota1_handle_cmd_quotaoff(l, ump, type);
@@ -415,6 +417,7 @@ int
 lfsquota1_handle_cmd_quotaoff(struct lwp *l, struct ulfsmount *ump, int type)
 {
 	struct mount *mp = ump->um_mountp;
+	struct lfs *fs = ump->um_lfs;
 	struct vnode *vp;
 	struct vnode *qvp, *mvp;
 	struct dquot *dq;
@@ -434,7 +437,7 @@ lfsquota1_handle_cmd_quotaoff(struct lwp *l, struct ulfsmount *ump, int type)
 		return (0);
 	}
 	ump->umq1_qflags[type] |= QTF_CLOSING;
-	ump->um_flags &= ~ULFS_QUOTA;
+	fs->um_flags &= ~ULFS_QUOTA;
 	mutex_exit(&lfs_dqlock);
 	/*
 	 * Search vnodes associated with this mount point,

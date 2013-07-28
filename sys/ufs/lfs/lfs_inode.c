@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.133 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.134 2013/07/28 01:10:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.133 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.134 2013/07/28 01:10:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -213,7 +213,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	size_t bc;
 	int obufsize, odb;
 	int usepc;
-	struct ulfsmount *ump = oip->i_ump;
 
 	if (ovp->v_type == VCHR || ovp->v_type == VBLK ||
 	    ovp->v_type == VFIFO || ovp->v_type == VSOCK) {
@@ -233,9 +232,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		return (0);
 	}
 
+	fs = oip->i_lfs;
+
 	if (ovp->v_type == VLNK &&
-	    (oip->i_size < ump->um_maxsymlinklen ||
-	     (ump->um_maxsymlinklen == 0 &&
+	    (oip->i_size < fs->um_maxsymlinklen ||
+	     (fs->um_maxsymlinklen == 0 &&
 	      oip->i_ffs1_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -250,7 +251,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
-	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
@@ -262,7 +262,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
-		if (length > ump->um_maxfilesize)
+		if (length > fs->um_maxfilesize)
 			return (EFBIG);
 		aflags = B_CLRBUF;
 		if (ioflag & IO_SYNC)
