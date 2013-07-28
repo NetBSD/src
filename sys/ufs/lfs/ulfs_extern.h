@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.9 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.10 2013/07/28 01:22:55 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -158,6 +158,7 @@ int	lfsquota1_umount(struct mount *, int);
 
 /* ulfs_quota2.c */
 int	lfsquota2_umount(struct mount *, int);
+int	lfs_quota2_mount(struct mount *);
 
 /* ulfs_vfsops.c */
 void	ulfs_init(void);

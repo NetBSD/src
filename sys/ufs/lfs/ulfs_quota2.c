@@ -1,5 +1,6 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.9 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.10 2013/07/28 01:22:55 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
+/*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
 /*-
   * Copyright (c) 2010 Manuel Bouyer
@@ -28,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.9 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.10 2013/07/28 01:22:55 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1558,5 +1559,77 @@ out_mutex:
 int
 lfs_dq2sync(struct vnode *vp, struct dquot *dq)
 {
+	return 0;
+}
+
+int
+lfs_quota2_mount(struct mount *mp)
+{
+	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
+	int error = 0;
+	struct vnode *vp;
+	struct lwp *l = curlwp;
+
+	if ((fs->lfs_use_quota2) == 0)
+		return 0;
+
+	fs->um_flags |= ULFS_QUOTA2;
+	ump->umq2_bsize = fs->lfs_bsize;
+	ump->umq2_bmask = fs->lfs_bmask;
+	if (fs->lfs_quota_magic != Q2_HEAD_MAGIC) {
+		printf("%s: Invalid quota magic number\n",
+		    mp->mnt_stat.f_mntonname);
+		return EINVAL;
+	}
+        if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA)) &&
+            fs->lfs_quotaino[ULFS_USRQUOTA] == 0) {
+                printf("%s: no user quota inode\n",
+		    mp->mnt_stat.f_mntonname); 
+                error = EINVAL;
+        }
+        if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA)) &&
+            fs->lfs_quotaino[ULFS_GRPQUOTA] == 0) {
+                printf("%s: no group quota inode\n",
+		    mp->mnt_stat.f_mntonname);
+                error = EINVAL;
+        }
+	if (error)
+		return error;
+
+        if (fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA) &&
+	    ump->um_quotas[ULFS_USRQUOTA] == NULLVP) {
+		error = VFS_VGET(mp, fs->lfs_quotaino[ULFS_USRQUOTA], &vp);
+		if (error) {
+			printf("%s: can't vget() user quota inode: %d\n",
+			    mp->mnt_stat.f_mntonname, error);
+			return error;
+		}
+		ump->um_quotas[ULFS_USRQUOTA] = vp;
+		ump->um_cred[ULFS_USRQUOTA] = l->l_cred;
+		mutex_enter(vp->v_interlock);
+		vp->v_writecount++;
+		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
+	}
+        if (fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA) &&
+	    ump->um_quotas[ULFS_GRPQUOTA] == NULLVP) {
+		error = VFS_VGET(mp, fs->lfs_quotaino[ULFS_GRPQUOTA], &vp);
+		if (error) {
+			vn_close(ump->um_quotas[ULFS_USRQUOTA],
+			    FREAD|FWRITE, l->l_cred);
+			printf("%s: can't vget() group quota inode: %d\n",
+			    mp->mnt_stat.f_mntonname, error);
+			return error;
+		}
+		ump->um_quotas[ULFS_GRPQUOTA] = vp;
+		ump->um_cred[ULFS_GRPQUOTA] = l->l_cred;
+		mutex_enter(vp->v_interlock);
+		vp->v_vflag |= VV_SYSTEM;
+		vp->v_writecount++;
+		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
+	}
+	mp->mnt_flag |= MNT_QUOTA;
 	return 0;
 }
