@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.11 2013/07/27 19:22:10 christos Exp $
+# $NetBSD: ad.mips,v 1.12 2013/07/28 14:02:56 pgoyette Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -83,7 +83,7 @@
 ./usr/lib/64/libatf-c++.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/64/libbfd.so.12			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils,arch64
-./usr/lib/64/libbind9.so.6			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libbind9.so.7			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbind9.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
@@ -115,7 +115,7 @@
 ./usr/lib/64/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm,arch64
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libdns.so.6			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libdns.so.7			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdns.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
@@ -159,12 +159,12 @@
 ./usr/lib/64/libintl.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libipsec.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libipsec.so.3.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisc.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisc.so.6.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccc.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccc.so.6.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccfg.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccfg.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisc.so.7			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisc.so.7.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccc.so.7			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccc.so.7.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccfg.so.7			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libisccfg.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/64/libisns.so.0			base-compat-shlib	compat,pic,arch64
@@ -191,8 +191,8 @@
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblutok.so.1			base-compat-shlib	compat,pic,kyua,arch64
 ./usr/lib/64/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua,arch64
-./usr/lib/64/liblwres.so.6			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/liblwres.so.6.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/liblwres.so.7			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/liblwres.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblzf.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblzf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic,arch64
