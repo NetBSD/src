@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.9 2013/07/28 00:28:33 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.10 2013/07/28 00:29:18 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -70,9 +70,6 @@ struct ulfsmount {
 	/* pointer to the filesystem-specific filesystem structure */
 	struct lfs *um_lfs;
 
-	/* ops table for per-filesystem dispatch */
-	const struct ulfs_ops *um_ops;
-
 	/* ULFS-level information */
 	u_int32_t um_flags;			/* ULFS flags (below) */
 	u_long	um_nindir;			/* indirect ptrs per block */
@@ -107,35 +104,20 @@ struct ulfsmount {
 #define umq2_bmask  um_q.um_q2.q2_bmask
 };
 
-struct ulfs_ops {
-	void (*uo_itimes)(struct inode *ip, const struct timespec *,
-	    const struct timespec *, const struct timespec *);
-	int (*uo_update)(struct vnode *, const struct timespec *,
-	    const struct timespec *, int);
-	int (*uo_truncate)(struct vnode *, off_t, int, kauth_cred_t);
-	int (*uo_valloc)(struct vnode *, int, kauth_cred_t, struct vnode **);
-	int (*uo_vfree)(struct vnode *, ino_t, int);
-	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
-	    struct buf **);
-        void (*uo_unmark_vnode)(struct vnode *);
-};
-
-#define	ULFS_OPS(vp)	(VFSTOULFS((vp)->v_mount)->um_ops)
-
 #define	ULFS_ITIMES(vp, acc, mod, cre) \
-	(*ULFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
+	((void)0)
 #define	ULFS_UPDATE(vp, acc, mod, flags) \
-	(*ULFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
+	lfs_update((vp), (acc), (mod), (flags))
 #define	ULFS_TRUNCATE(vp, off, flags, cr) \
-	(*ULFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
+	lfs_truncate((vp), (off), (flags), (cr))
 #define	ULFS_VALLOC(vp, mode, cr, vpp) \
-	(*ULFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
+	lfs_valloc((vp), (mode), (cr), (vpp))
 #define	ULFS_VFREE(vp, ino, mode) \
-	(*ULFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
+	lfs_vfree((vp), (ino), (mode))
 #define	ULFS_BALLOC(vp, off, size, cr, flags, bpp) \
-	(*ULFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
+	lfs_balloc((vp), (off), (size), (cr), (flags), (bpp))
 #define	ULFS_UNMARK_VNODE(vp) \
-	(*ULFS_OPS(vp)->uo_unmark_vnode)((vp))
+	lfs_unmark_vnode((vp))
 
 /* ULFS-specific flags for um_flags */
 #define ULFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
