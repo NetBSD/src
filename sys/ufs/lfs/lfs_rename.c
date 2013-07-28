@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.3 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.4 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.3 2013/07/28 00:37:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.4 2013/07/28 01:10:49 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,9 +338,9 @@ ulfs_direct_namlen(const struct lfs_direct *ep, const struct vnode *vp)
 	KASSERT(VTOI(vp)->i_ump != NULL);
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
+	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
 #else
-	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
+	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
 #endif
 
 	return ((FSFMT(vp) && swap)? ep->d_type : ep->d_namlen);
@@ -357,6 +357,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
     const struct componentname *fcnp)
 {
 	struct mount *mp;
+	struct lfs *fs;
 	struct ulfsmount *ump;
 	int needswap;
 	/* XXX int is a silly type for this; blame ulfsmount::um_dirblksiz.  */
@@ -382,12 +383,14 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 
 	mp = dvp->v_mount;
 	ump = VFSTOULFS(mp);
+	fs = ump->um_lfs;
 	KASSERT(ump != NULL);
 	KASSERT(ump == VTOI(dvp)->i_ump);
+	KASSERT(fs == VTOI(dvp)->i_lfs);
 
-	needswap = ULFS_MPNEEDSWAP(ump);
+	needswap = ULFS_MPNEEDSWAP(fs);
 
-	dirblksiz = ump->um_dirblksiz;
+	dirblksiz = fs->um_dirblksiz;
 	KASSERT(0 < dirblksiz);
 	KASSERT((dirblksiz & (dirblksiz - 1)) == 0);
 
@@ -607,9 +610,9 @@ ulfs_dirbuf_dotdot_namlen(const struct lfs_dirtemplate *dirbuf,
 	KASSERT(VTOI(vp)->i_ump != NULL);
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) == 0);
+	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
 #else
-	swap = (ULFS_MPNEEDSWAP(VTOI(vp)->i_ump) != 0);
+	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
 #endif
 
 	return ((FSFMT(vp) && swap)?
@@ -642,7 +645,7 @@ ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 		return ENOTDIR;
 
 	*ino_ret = ulfs_rw32(dirbuf.dotdot_ino,
-	    ULFS_MPNEEDSWAP(VTOI(vp)->i_ump));
+	    ULFS_IPNEEDSWAP(VTOI(vp)));
 	return 0;
 }
 

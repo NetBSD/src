@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.17 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.17 2013/07/28 00:37:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.18 2013/07/28 01:10:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -658,6 +658,7 @@ ulfs_whiteout(void *v)
 	struct lfs_direct		*newdir;
 	int			error;
 	struct ulfsmount	*ump = VFSTOULFS(dvp->v_mount);
+	struct lfs *fs = ump->um_lfs;
 	struct ulfs_lookup_results *ulr;
 
 	/* XXX should handle this material another way */
@@ -668,7 +669,7 @@ ulfs_whiteout(void *v)
 	switch (ap->a_flags) {
 	case LOOKUP:
 		/* 4.4 format directories support whiteout operations */
-		if (ump->um_maxsymlinklen > 0)
+		if (fs->um_maxsymlinklen > 0)
 			return (0);
 		return (EOPNOTSUPP);
 
@@ -676,7 +677,7 @@ ulfs_whiteout(void *v)
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
+		if (fs->um_maxsymlinklen <= 0)
 			panic("ulfs_whiteout: old format filesystem");
 #endif
 
@@ -695,7 +696,7 @@ ulfs_whiteout(void *v)
 		/* remove an existing directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
+		if (fs->um_maxsymlinklen <= 0)
 			panic("ulfs_whiteout: old format filesystem");
 #endif
 
@@ -728,7 +729,8 @@ ulfs_mkdir(void *v)
 	struct lfs_direct		*newdir;
 	int			error, dmode;
 	struct ulfsmount	*ump = dp->i_ump;
-	int			dirblksiz = ump->um_dirblksiz;
+	struct lfs *fs = ump->um_lfs;
+	int dirblksiz = fs->um_dirblksiz;
 	struct ulfs_lookup_results *ulr;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
@@ -794,17 +796,17 @@ ulfs_mkdir(void *v)
 	 */
 	dirtemplate = mastertemplate;
 	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(ump));
-	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(ump));
+	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
+	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
 	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
-	    ULFS_MPNEEDSWAP(ump));
+	    ULFS_MPNEEDSWAP(fs));
 	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
-	    ULFS_MPNEEDSWAP(ump));
-	if (ump->um_maxsymlinklen <= 0) {
+	    ULFS_MPNEEDSWAP(fs));
+	if (fs->um_maxsymlinklen <= 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		if (ULFS_MPNEEDSWAP(ump) == 0)
+		if (ULFS_MPNEEDSWAP(fs) == 0)
 #else
-		if (ULFS_MPNEEDSWAP(ump) != 0)
+		if (ULFS_MPNEEDSWAP(fs) != 0)
 #endif
 		{
 			dirtemplate.dot_type = dirtemplate.dot_namlen;
@@ -984,7 +986,7 @@ ulfs_symlink(void *v)
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);
-	if (len < ip->i_ump->um_maxsymlinklen) {
+	if (len < ip->i_lfs->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
 		DIP_ASSIGN(ip, size, len);
@@ -1033,20 +1035,21 @@ ulfs_readdir(void *v)
 	off_t		startoff;
 	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
-	int nswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	int nswap = ULFS_MPNEEDSWAP(fs);
 #if BYTE_ORDER == LITTLE_ENDIAN
-	int needswap = ump->um_maxsymlinklen <= 0 && nswap == 0;
+	int needswap = fs->um_maxsymlinklen <= 0 && nswap == 0;
 #else
-	int needswap = ump->um_maxsymlinklen <= 0 && nswap != 0;
+	int needswap = fs->um_maxsymlinklen <= 0 && nswap != 0;
 #endif
 	uio = ap->a_uio;
 	count = uio->uio_resid;
-	rcount = count - ((uio->uio_offset + count) & (ump->um_dirblksiz - 1));
+	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
 
 	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
-	startoff = uio->uio_offset & ~(ump->um_dirblksiz - 1);
+	startoff = uio->uio_offset & ~(fs->um_dirblksiz - 1);
 	skipbytes = uio->uio_offset - startoff;
 	rcount += skipbytes;
 
@@ -1166,11 +1169,12 @@ ulfs_readlink(void *v)
 	struct vnode	*vp = ap->a_vp;
 	struct inode	*ip = VTOI(vp);
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
+	struct lfs *fs = ump->um_lfs;
 	int		isize;
 
 	isize = ip->i_size;
-	if (isize < ump->um_maxsymlinklen ||
-	    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
+	if (isize < fs->um_maxsymlinklen ||
+	    (fs->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
@@ -1379,10 +1383,10 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 		ump = ip->i_ump;
 		if (ump->um_fstype == ULFS1)
 			rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		else
 			rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		spec_node_init(vp, rdev);
 		break;
 	case VFIFO:
