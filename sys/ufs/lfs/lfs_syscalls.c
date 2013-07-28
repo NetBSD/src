@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.147 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.148 2013/07/28 01:05:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.147 2013/06/18 18:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.148 2013/07/28 01:05:52 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.147 2013/06/18 18:18:58 christos 
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
