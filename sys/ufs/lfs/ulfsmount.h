@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.10 2013/07/28 00:29:18 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.11 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -103,21 +103,6 @@ struct ulfsmount {
 #define umq2_bsize  um_q.um_q2.q2_bsize
 #define umq2_bmask  um_q.um_q2.q2_bmask
 };
-
-#define	ULFS_ITIMES(vp, acc, mod, cre) \
-	((void)0)
-#define	ULFS_UPDATE(vp, acc, mod, flags) \
-	lfs_update((vp), (acc), (mod), (flags))
-#define	ULFS_TRUNCATE(vp, off, flags, cr) \
-	lfs_truncate((vp), (off), (flags), (cr))
-#define	ULFS_VALLOC(vp, mode, cr, vpp) \
-	lfs_valloc((vp), (mode), (cr), (vpp))
-#define	ULFS_VFREE(vp, ino, mode) \
-	lfs_vfree((vp), (ino), (mode))
-#define	ULFS_BALLOC(vp, off, size, cr, flags, bpp) \
-	lfs_balloc((vp), (off), (size), (cr), (flags), (bpp))
-#define	ULFS_UNMARK_VNODE(vp) \
-	lfs_unmark_vnode((vp))
 
 /* ULFS-specific flags for um_flags */
 #define ULFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */

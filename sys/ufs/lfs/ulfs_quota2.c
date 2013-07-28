@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.7 2013/07/28 00:29:18 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.8 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.7 2013/07/28 00:29:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.8 2013/07/28 00:37:07 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -314,7 +314,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		struct inode *ip = VTOI(vp);
 		uint64_t size = ip->i_size;
 		/* need to alocate a new disk block */
-		error = ULFS_BALLOC(vp, size, ump->umq2_bsize,
+		error = lfs_balloc(vp, size, ump->umq2_bsize,
 		    ump->um_cred[type], B_CLRBUF | B_SYNC, &bp);
 		if (error) {
 			brelse(hbp, 0);
@@ -328,7 +328,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		lfsquota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
 		    needswap);
 		error = bwrite(bp);
-		error2 = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error2 = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 		if (error || error2) {
 			brelse(hbp, 0);
 			if (error)
