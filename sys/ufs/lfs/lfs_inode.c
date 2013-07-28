@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.134 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.135 2013/07/28 01:25:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.134 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.135 2013/07/28 01:25:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -587,7 +587,7 @@ done:
 	mutex_exit(&lfs_lock);
 
 	oip->i_flag |= IN_CHANGE;
-#ifdef LFS_QUOTA
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	(void) lfs_chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	lfs_reserve(fs, ovp, NULL,
