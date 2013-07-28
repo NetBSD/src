@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.308 2013/07/28 00:29:18 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.309 2013/07/28 01:05:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.308 2013/07/28 00:29:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.309 2013/07/28 01:05:52 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.308 2013/07/28 00:29:18 dholland Ex
 #include <uvm/uvm_pdaemon.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <miscfs/genfs/genfs.h>
