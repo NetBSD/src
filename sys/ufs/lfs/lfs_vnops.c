@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.251 2013/07/21 00:01:22 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.252 2013/07/28 01:05:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.251 2013/07/21 00:01:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.252 2013/07/28 01:05:52 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.251 2013/07/21 00:01:22 dholland Exp
 #include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 extern pid_t lfs_writer_daemon;
