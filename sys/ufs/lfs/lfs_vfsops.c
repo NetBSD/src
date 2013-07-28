@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.310 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.311 2013/07/28 01:22:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.310 2013/07/28 01:10:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.311 2013/07/28 01:22:55 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1002,6 +1002,14 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
 	fs->um_dirblksiz = LFS_DIRBLKSIZ;
 	fs->um_maxfilesize = fs->lfs_maxfilesize;
+
+	/* quota stuff */
+	/* XXX: these need to come from the on-disk superblock to be used */
+	fs->lfs_use_quota2 = 0;
+	fs->lfs_quota_magic = 0;
+	fs->lfs_quota_flags = 0;
+	fs->lfs_quotaino[0] = 0;
+	fs->lfs_quotaino[1] = 0;
 
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;

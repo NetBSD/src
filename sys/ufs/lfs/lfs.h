@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.159 2013/07/28 01:10:49 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.160 2013/07/28 01:22:55 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -1006,6 +1006,12 @@ struct lfs {
 	int um_maxsymlinklen;
 	int um_dirblksiz;
 	u_int64_t um_maxfilesize;
+
+	/* Stuff used by quota2 code, not currently operable */
+	unsigned lfs_use_quota2 : 1;
+	uint32_t lfs_quota_magic;
+	uint8_t lfs_quota_flags;
+	uint64_t lfs_quotaino[2];
 #endif
 };
 
