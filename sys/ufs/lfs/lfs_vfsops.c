@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.307 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.308 2013/07/28 00:29:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.307 2013/06/18 18:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.308 2013/07/28 00:29:18 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -175,16 +175,6 @@ const struct genfs_ops lfs_genfsops = {
 	.gop_alloc = ulfs_gop_alloc,
 	.gop_write = lfs_gop_write,
 	.gop_markupdate = ulfs_gop_markupdate,
-};
-
-static const struct ulfs_ops lfs_ulfsops = {
-	.uo_itimes = NULL,
-	.uo_update = lfs_update,
-	.uo_truncate = lfs_truncate,
-	.uo_valloc = lfs_valloc,
-	.uo_vfree = lfs_vfree,
-	.uo_balloc = lfs_balloc,
-	.uo_unmark_vnode = lfs_unmark_vnode,
 };
 
 struct shortlong {
@@ -965,7 +955,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
-	ump->um_ops = &lfs_ulfsops;
 	ump->um_fstype = ULFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		brelse(bp, BC_INVAL);
