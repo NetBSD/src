@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.5 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.6 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.5 2013/07/28 00:37:07 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.6 2013/07/28 01:10:49 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -82,6 +82,7 @@ READ(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	ump = ip->i_ump;
+	fs = ip->I_FS;
 	uio = ap->a_uio;
 	ioflag = ap->a_ioflag;
 	error = 0;
@@ -91,14 +92,13 @@ READ(void *v)
 		panic("%s: mode", READ_S);
 
 	if (vp->v_type == VLNK) {
-		if (ip->i_size < ump->um_maxsymlinklen ||
-		    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0))
+		if (ip->i_size < fs->um_maxsymlinklen ||
+		    (fs->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0))
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);
 #endif
-	fs = ip->I_FS;
-	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
+	if ((u_int64_t)uio->uio_offset > fs->um_maxfilesize)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
@@ -254,7 +254,7 @@ WRITE(void *v)
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->um_maxfilesize)
 		return (EFBIG);
 #ifdef LFS_READWRITE
 	/* Disallow writes to the Ifile, even if noschg flag is removed */
