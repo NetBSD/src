@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.36 2013/07/10 18:55:00 reinoud Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.37 2013/07/28 09:03:43 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -399,6 +399,9 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 		ATF_REQUIRE_EQ(sb.st_ino, f1ino);
 		ATF_REQUIRE_EQ(sb.st_nlink, 1);
 	}
+
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename("file2", NULL) == -1);
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename(NULL, "file2") == -1);
 
 	rump_sys_chdir("/");
 }
