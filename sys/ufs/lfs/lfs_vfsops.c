@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.311 2013/07/28 01:22:55 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.312 2013/07/28 01:25:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.311 2013/07/28 01:22:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.312 2013/07/28 01:25:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -757,11 +757,50 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 		ump = VFSTOULFS(mp);
 		fs = ump->um_lfs;
+
+		if (fs->lfs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+			/*
+			 * Changing from read/write to read-only.
+			 * XXX: shouldn't we sync here? or does vfs do that?
+			 */
+#ifdef LFS_QUOTA2
+			/* XXX: quotas should remain on when readonly */
+			if (fs->lfs_use_quota2) {
+				error = lfsquota2_umount(mp, 0);
+				if (error) {
+					return error;
+				}
+			}
+#endif
+		}
+
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
 			 * Note in the superblocks that we're writing.
 			 */
+
+			/* XXX: quotas should have been on even if readonly */
+			if (fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+				error = lfs_quota2_mount(mp);
+#else
+				uprintf("%s: no kernel support for this "
+					"filesystem's quotas\n",
+					mp->mnt_stat.f_mntonname);
+				if (mp->mnt_flag & MNT_FORCE) {
+					uprintf("%s: mounting anyway; "
+						"fsck afterwards\n",
+						mp->mnt_stat.f_mntonname);
+				} else {
+					error = EINVAL;
+				}
+#endif
+				if (error) {
+					return error;
+				}
+			}
+
 			fs->lfs_ronly = 0;
 			if (fs->lfs_pflags & LFS_PF_CLEAN) {
 				fs->lfs_pflags &= ~LFS_PF_CLEAN;
@@ -1092,6 +1131,46 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			brelse(bp, 0);
 	}
 
+	/*
+	 * XXX: if the fs has quotas, quotas should be on even if
+	 * readonly. Otherwise you can't query the quota info!
+	 * However, that's not how the quota2 code got written and I
+	 * don't know if it'll behave itself if enabled while
+	 * readonly, so for now use the same enable logic as ffs.
+	 *
+	 * XXX: also, if you use the -f behavior allowed here (and
+	 * equivalently above for remount) it will corrupt the fs. It
+	 * ought not to allow that. It should allow mounting readonly
+	 * if there are quotas and the kernel doesn't have the quota
+	 * code, but only readonly.
+	 *
+	 * XXX: and if you use the -f behavior allowed here it will
+	 * likely crash at unmount time (or remount time) because we
+	 * think quotas are active.
+	 *
+	 * Although none of this applies until there's a way to set
+	 * lfs_use_quota2 and have quotas in the fs at all.
+	 */
+	if (!ronly && fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+		error = lfs_quota2_mount(mp);
+#else
+		uprintf("%s: no kernel support for this filesystem's quotas\n",
+			mp->mnt_stat.f_mntonname);
+		if (mp->mnt_flag & MNT_FORCE) {
+			uprintf("%s: mounting anyway; fsck afterwards\n",
+				mp->mnt_stat.f_mntonname);
+		} else {
+			error = EINVAL;
+		}
+#endif
+		if (error) {
+			/* XXX XXX must clean up the stuff immediately above */
+			printf("lfs_mountfs: sorry, leaking some memory\n");
+			goto out;
+		}
+	}
+
 #ifdef LFS_KERNEL_RFW
 	lfs_roll_forward(fs, mp, l);
 #endif
@@ -1181,6 +1260,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
+	/* XXX: shouldn't this be *after* the error cases below? */
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
@@ -1190,6 +1270,10 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 #ifdef LFS_QUOTA
         if ((error = lfsquota1_umount(mp, flags)) != 0)
+		return (error);
+#endif
+#ifdef LFS_QUOTA2
+        if ((error = lfsquota2_umount(mp, flags)) != 0)
 		return (error);
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
@@ -2010,6 +2094,9 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 
 	ip->i_devvp = ump->um_devvp;
 	vref(ip->i_devvp);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	ulfsquota_init(ip);
+#endif
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 
