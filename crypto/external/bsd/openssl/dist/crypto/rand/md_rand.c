@@ -397,6 +397,11 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 		RAND_poll();
 		ok = (entropy >= ENTROPY_NEEDED);
 
+		}
+
+	if (!ok)
+		{
+
 		/* If the PRNG state is not yet unpredictable, then seeing
 		 * the PRNG output may help attackers to determine the new
 		 * state; thus we have to decrease the entropy estimate.
