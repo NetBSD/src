@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.118 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.118 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.119 2013/07/28 01:25:05 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -338,7 +338,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
 	LIST_INIT(&ip->i_lfs_segdhd);
-#ifdef LFS_QUOTA
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ulfsquota_init(ip);
 #endif
 }
