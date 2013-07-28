@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.31 2013/07/28 09:27:07 wiz Exp $
+.\"	$NetBSD: rename.2,v 1.32 2013/07/28 10:24:59 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 30, 2013
+.Dd July 28, 2013
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -121,13 +121,11 @@ can be set to
 .Dv AT_FDCWD
 in order to specify the current directory.
 .Sh RETURN VALUES
-A 0 value is returned if the operation succeeds, otherwise
-.Fn rename
-returns \-1 and the global variable
-.Va errno
-indicates the reason for the failure.
+.Rv -std rename renameat
 .Sh ERRORS
 .Fn rename
+and
+.Fn renameat
 will fail and neither of the argument files will be
 affected if:
 .Bl -tag -width Er
@@ -220,6 +218,32 @@ and the file named by
 are on different logical devices (file systems).
 Note that this error code will not be returned if the implementation
 permits cross-device links.
+.El
+.Pp
+In addition,
+.Fn renameat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa from
+or
+.Fa to
+does not specify an absolute path and
+.Fa fromfd
+or
+.Fa tofd ,
+respectively, is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa from
+or
+.Fa to
+is not an absolute path and
+.Fa fromfd
+or
+.Fa tofd ,
+respectively, is a file descriptor associated with a non-directory file.
 .El
 .Sh SEE ALSO
 .Xr open 2 ,
