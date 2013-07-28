@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.252 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.253 2013/07/28 01:10:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.252 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.253 2013/07/28 01:10:49 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -595,16 +595,17 @@ lfs_mknod(void *v)
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
 		struct ulfsmount *ump = ip->i_ump;
+		struct lfs *fs = ip->i_lfs;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
 		if (ump->um_fstype == ULFS1)
 			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 		else
 			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 	}
 
 	/*
