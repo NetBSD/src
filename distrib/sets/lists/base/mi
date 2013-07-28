@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1035 2013/07/02 02:15:13 jnemeth Exp $
+# $NetBSD: mi,v 1.1036 2013/07/28 13:37:57 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -152,6 +152,7 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
@@ -159,6 +160,7 @@
 ./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
@@ -168,6 +170,7 @@
 ./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-6000g2b-5.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root
 ./libdata/firmware/if_otus			base-firmware-root
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
