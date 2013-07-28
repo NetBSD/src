@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.158 2013/07/28 01:05:52 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -1113,28 +1113,6 @@ struct segment {
 	int	  ndupino;		/* number of duplicate inodes */
 };
 
-#ifdef _KERNEL
-struct lfs_cluster {
-	size_t bufsize;	       /* Size of kept data */
-	struct buf **bpp;      /* Array of kept buffers */
-	int bufcount;	       /* Number of kept buffers */
-#define LFS_CL_MALLOC	0x00000001
-#define LFS_CL_SHIFT	0x00000002
-#define LFS_CL_SYNC	0x00000004
-	u_int32_t flags;       /* Flags */
-	struct lfs *fs;	       /* LFS that this belongs to */
-	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
-};
-
-/*
- * Splay tree containing block numbers allocated through lfs_balloc.
- */
-struct lbnentry {
-	SPLAY_ENTRY(lbnentry) entry;
-	daddr_t lbn;
-};
-#endif /* _KERNEL */
-
 /*
  * Macros for determining free space on the disk, with the variable metadata
  * of segment summaries and inode blocks taken into account.
@@ -1208,9 +1186,6 @@ struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int	clean_vnlocked;
 	u_int   segs_reclaimed;
 };
-#ifdef _KERNEL
-extern struct lfs_stats lfs_stats;
-#endif
 
 /* Fcntls to take the place of the lfs syscalls */
 struct lfs_fcntl_markv {
@@ -1237,31 +1212,6 @@ struct lfs_fhandle {
 # define LFS_WRAP_GOING   0x0
 # define LFS_WRAP_WAITING 0x1
 #define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
-
-/*
- * Compat.  Defined for kernel only.  Userland always uses
- * "the one true version".
- */
-#ifdef _KERNEL
-#include <compat/sys/time_types.h>
-
-#define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
-#define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
-#define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
-#define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
-#define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
-#define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
-#define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
-#define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
-#endif
-
-#ifdef _KERNEL
-/* XXX MP */
-#define	LFS_SEGLOCK_HELD(fs) \
-	((fs)->lfs_seglock != 0 &&					\
-	 (fs)->lfs_lockpid == curproc->p_pid &&				\
-	 (fs)->lfs_locklwp == curlwp->l_lid)
-#endif /* _KERNEL */
 
 /* Debug segment lock */
 #ifdef notyet
