@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.312 2013/07/28 01:25:06 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.313 2013/07/28 01:26:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.312 2013/07/28 01:25:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.313 2013/07/28 01:26:13 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -119,6 +119,8 @@ MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+static int lfs_extattrctl(struct mount *, int, struct vnode *, int,
+			  const char *);
 
 static struct sysctllog *lfs_sysctl_log;
 
@@ -158,7 +160,7 @@ struct vfsops lfs_vfsops = {
 	lfs_done,
 	lfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
+	lfs_extattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
@@ -1171,6 +1173,18 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 	}
 
+#ifdef LFS_EXTATTR
+	/*
+	 * Initialize file-backed extended attributes for ULFS1 file
+	 * systems.
+	 *
+	 * XXX: why is this limited to ULFS1?
+	 */
+	if (ump->um_fstype == ULFS1) {
+		ulfs_extattr_uepm_init(&ump->um_extattr);
+	}
+#endif
+
 #ifdef LFS_KERNEL_RFW
 	lfs_roll_forward(fs, mp, l);
 #endif
@@ -1268,6 +1282,16 @@ lfs_unmount(struct mount *mp, int mntflags)
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
+#ifdef LFS_EXTATTR
+	if (ump->um_fstype == ULFS1) {
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_STARTED) {
+			ulfs_extattr_stop(mp, curlwp);
+		}
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_INITIALIZED) {
+			ulfs_extattr_uepm_destroy(&ump->um_extattr);
+		}
+	}
+#endif
 #ifdef LFS_QUOTA
         if ((error = lfsquota1_umount(mp, flags)) != 0)
 		return (error);
@@ -2299,4 +2323,22 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
     out:
 	lfs_segunlock(fs);
 	return error;
+}
+
+/*
+ * Extended attribute dispatch
+ */
+static int
+lfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	       int attrnamespace, const char *attrname)
+{
+#ifdef LFS_EXTATTR
+	struct ulfsmount *ump;
+
+	ump = VFSTOULFS(mp);
+	if (ump->um_fstype == ULFS1) {
+		return ulfs_extattrctl(mp, cmd, vp, attrnamespace, attrname);
+	}
+#endif
+	return vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname);
 }
