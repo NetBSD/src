@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.8 2013/07/20 20:01:24 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.9 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -102,7 +102,7 @@ int	ulfsfifo_write(void *);
 int	ulfsfifo_close(void *);
 
 /* ulfs_bmap.c */
-typedef	bool (*ulfs_issequential_callback_t)(const struct ulfsmount *,
+typedef	bool (*ulfs_issequential_callback_t)(const struct lfs *,
 						 daddr_t, daddr_t);
 int	ulfs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
 		      int *, int *, ulfs_issequential_callback_t);

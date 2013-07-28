@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.78 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.79 2013/07/28 01:10:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.78 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.79 2013/07/28 01:10:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -225,7 +225,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
 	 */
-	frags = VFSTOULFS(vp->v_mount)->um_seqinc;
+	frags = fs->um_seqinc;
 	bcount = 0;
 	if (daddr == UNASSIGNED) {
 		bcount = frags;

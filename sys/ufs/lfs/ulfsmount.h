@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.11 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.12 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -70,16 +70,6 @@ struct ulfsmount {
 	/* pointer to the filesystem-specific filesystem structure */
 	struct lfs *um_lfs;
 
-	/* ULFS-level information */
-	u_int32_t um_flags;			/* ULFS flags (below) */
-	u_long	um_nindir;			/* indirect ptrs per block */
-	u_long	um_lognindir;			/* log2 of um_nindir */
-	u_long	um_bptrtodb;			/* indir ptr to disk block */
-	u_long	um_seqinc;			/* inc between seq blocks */
-	int um_maxsymlinklen;
-	int um_dirblksiz;
-	u_int64_t um_maxfilesize;
-
 	/* Extended attribute information. */
 	struct ulfs_extattr_per_mount um_extattr;
 
@@ -127,11 +117,12 @@ struct ulfsmount {
 #define VFSTOULFS(mp)	((struct ulfsmount *)((mp)->mnt_data))
 
 /*
- * Macros to access file system parameters in the ulfsmount structure.
+ * Macros to access file system parameters (no longer) in the
+ * ulfsmount structure.
  * Used by ulfs_bmap.
  */
-#define MNINDIR(ump)			((ump)->um_nindir)
-#define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
+#define MNINDIR(lfs)			((lfs)->um_nindir)
+#define	blkptrtodb(lfs, b)		((b) << (lfs)->um_bptrtodb)
 
 /*
  * Predicate for byte-swapping support.

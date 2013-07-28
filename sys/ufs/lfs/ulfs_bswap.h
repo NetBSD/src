@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.3 2013/06/06 00:48:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_bswap.h,v 1.4 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
 
 /*
@@ -37,9 +37,9 @@
 
 /* Macros to access ULFS flags */
 #ifdef LFS_EI
-#define	ULFS_MPNEEDSWAP(ump)	((ump)->um_flags & ULFS_NEEDSWAP)
+#define	ULFS_MPNEEDSWAP(lfs)	((lfs)->um_flags & ULFS_NEEDSWAP)
 #define ULFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
-#define	ULFS_IPNEEDSWAP(ip)	ULFS_MPNEEDSWAP((ip)->i_ump)
+#define	ULFS_IPNEEDSWAP(ip)	ULFS_MPNEEDSWAP((ip)->i_lfs)
 #else
 #define	ULFS_MPNEEDSWAP(ump)	(0)
 #define ULFS_FSNEEDSWAP(fs)	(0)

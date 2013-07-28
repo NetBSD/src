@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.8 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.9 2013/07/28 01:10:49 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 
 /*-
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.8 2013/07/28 00:37:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.9 2013/07/28 01:10:49 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -142,7 +142,8 @@ getq2h(struct ulfsmount *ump, int type,
     struct buf **bpp, struct quota2_header **q2hp, int flags)
 {
 #ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 #endif
 	int error;
 	struct buf *bp;
@@ -198,7 +199,8 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
     int (*func)(struct ulfsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
 {
 #ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 #endif
 	daddr_t off = ulfs_rw64(*offp, needswap);
 	struct buf *bp, *obp = hbp;
@@ -273,8 +275,9 @@ lfsquota2_umount(struct mount *mp, int flags)
 {
 	int i, error;
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 
-	if ((ump->um_flags & ULFS_QUOTA2) == 0)
+	if ((fs->um_flags & ULFS_QUOTA2) == 0)
 		return 0;
 
 	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
@@ -301,7 +304,8 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 	struct quota2_entry *q2e;
 	daddr_t offset;
 	u_long hash_mask;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	KASSERT(mutex_owned(&dq->dq_interlock));
 	KASSERT(mutex_owned(&lfs_dqlock));
@@ -447,8 +451,9 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	struct dquot *dq;
 	uint64_t ncurblks;
 	struct ulfsmount *ump = ip->i_ump;
+	struct lfs *fs = ip->i_lfs;
 	struct mount *mp = ump->um_mountp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int i;
 
 	if ((error = getinoquota2(ip, change > 0, change != 0, bp, q2e)) != 0)
@@ -584,7 +589,8 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 	struct quota2_header *q2h;
 	struct quota2_entry q2e, *q2ep;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	/* make sure we can index by the fs-independent idtype */
 	CTASSERT(QUOTA_IDTYPE_USER == ULFS_USRQUOTA);
@@ -651,7 +657,8 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
 {
 	struct dq2clear_callback *c = v;
 #ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 #endif
 	uint64_t myoff;
 
@@ -787,7 +794,8 @@ quota2_fetch_q2e(struct ulfsmount *ump, const struct quotakey *qk,
 	int error;
 	struct quota2_entry *q2ep;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
@@ -822,7 +830,8 @@ quota2_fetch_quotaval(struct ulfsmount *ump, const struct quotakey *qk,
 	int error;
 	struct quota2_entry *q2ep, q2e;
 	struct buf  *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
 
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
@@ -860,7 +869,8 @@ lfsquota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
 	struct quota2_header *q2h;
 	struct quota2_entry q2e;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
 
 	/*
@@ -1087,7 +1097,8 @@ q2cursor_getids_callback(struct ulfsmount *ump, uint64_t *offp,
 	struct q2cursor_getids *gi = v;
 	id_t id;
 #ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 #endif
 
 	if (gi->skipped < gi->skip) {
@@ -1113,7 +1124,8 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
     struct q2cursor_state *state,
     int *hashsize_ret, struct quota2_entry *default_q2e_ret)
 {
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	struct buf *hbp;
 	struct quota2_header *q2h;
 	int quota2_hash_size;
@@ -1498,7 +1510,8 @@ dq2get_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	daddr_t lblkno;
 	int blkoff;
 #ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 #endif
 
 	if (ulfs_rw32(q2e->q2e_uid, needswap) == c->id) {

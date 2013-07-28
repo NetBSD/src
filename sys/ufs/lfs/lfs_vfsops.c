@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.309 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.310 2013/07/28 01:10:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.309 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.310 2013/07/28 01:10:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -118,9 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.309 2013/07/28 01:05:52 dholland Ex
 MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-static bool lfs_issequential_hole(const struct ulfsmount *,
-    daddr_t, daddr_t);
-
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
 static struct sysctllog *lfs_sysctl_log;
@@ -996,6 +993,16 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (ronly == 0)
 		fs->lfs_fmod = 1;
 
+	/* ulfs-level information */
+	fs->um_flags = 0;
+	fs->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	fs->um_seqinc = fs->lfs_frag;
+	fs->um_nindir = fs->lfs_nindir;
+	fs->um_lognindir = ffs(fs->lfs_nindir) - 1;
+	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	fs->um_dirblksiz = LFS_DIRBLKSIZ;
+	fs->um_maxfilesize = fs->lfs_maxfilesize;
+
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
 	mp->mnt_data = ump;
@@ -1006,21 +1013,14 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;
-	ump->um_flags = 0;
+	if (fs->um_maxsymlinklen > 0)
+		mp->mnt_iflag |= IMNT_DTYPE;
+
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
-	ump->um_seqinc = fs->lfs_frag;
-	ump->um_nindir = fs->lfs_nindir;
-	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
-	ump->um_dirblksiz = LFS_DIRBLKSIZ;
-	ump->um_maxfilesize = fs->lfs_maxfilesize;
-	if (ump->um_maxsymlinklen > 0)
-		mp->mnt_iflag |= IMNT_DTYPE;
 	devvp->v_specmountpoint = mp;
 
 	/* Set up reserved memory for pageout */
@@ -1574,9 +1574,11 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
  * we don't care about current daddr of them.
  */
 static bool
-lfs_issequential_hole(const struct ulfsmount *ump,
+lfs_issequential_hole(const struct lfs *fs,
     daddr_t daddr0, daddr_t daddr1)
 {
+	(void)fs; /* not used */
+
 	daddr0 = (daddr_t)((int32_t)daddr0); /* XXX ondisk32 */
 	daddr1 = (daddr_t)((int32_t)daddr1); /* XXX ondisk32 */
 
@@ -1959,7 +1961,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ip = VTOI(vp);
 
 	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
-	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
+	if (vp->v_type != VLNK || ip->i_size >= ip->i_lfs->um_maxsymlinklen) {
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 		    i < ULFS_NDADDR; i++) {

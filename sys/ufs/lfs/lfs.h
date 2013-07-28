@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.158 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.159 2013/07/28 01:10:49 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -995,6 +995,18 @@ struct lfs {
 	int lfs_reclino;		/* Inode being reclaimed */
 	int lfs_startseg;               /* Segment we started writing at */
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
+
+#ifdef _KERNEL
+	/* ULFS-level information */
+	u_int32_t um_flags;			/* ULFS flags (below) */
+	u_long	um_nindir;			/* indirect ptrs per block */
+	u_long	um_lognindir;			/* log2 of um_nindir */
+	u_long	um_bptrtodb;			/* indir ptr to disk block */
+	u_long	um_seqinc;			/* inc between seq blocks */
+	int um_maxsymlinklen;
+	int um_dirblksiz;
+	u_int64_t um_maxfilesize;
+#endif
 };
 
 /* LFS_NINDIR is the number of indirects in a file system block. */
