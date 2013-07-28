@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.16 2013/07/28 00:31:54 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.17 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.16 2013/07/28 00:31:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.17 2013/07/28 00:37:07 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -384,7 +384,7 @@ ulfs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = ULFS_TRUNCATE(vp, vap->va_size, 0, cred);
+			error = lfs_truncate(vp, vap->va_size, 0, cred);
 			if (error)
 				goto out;
 			break;
@@ -421,7 +421,7 @@ ulfs_setattr(void *v)
 			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
 			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
 		}
-		error = ULFS_UPDATE(vp, &vap->va_atime, &vap->va_mtime, 0);
+		error = lfs_update(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
 			goto out;
 	}
@@ -620,7 +620,7 @@ ulfs_link(void *v)
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
+	error = lfs_update(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
 		ulfs_makedirentry(ip, cnp, newdir);
@@ -748,7 +748,7 @@ ulfs_mkdir(void *v)
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
-	if ((error = ULFS_VALLOC(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
+	if ((error = lfs_valloc(dvp, dmode, cnp->cn_cred, ap->a_vpp)) != 0)
 		goto out;
 
 	tvp = *ap->a_vpp;
@@ -760,7 +760,7 @@ ulfs_mkdir(void *v)
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		ULFS_VFREE(tvp, ip->i_number, dmode);
+		lfs_vfree(tvp, ip->i_number, dmode);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
 		vput(dvp);
@@ -786,7 +786,7 @@ ulfs_mkdir(void *v)
 	dp->i_nlink++;
 	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
-	if ((error = ULFS_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = lfs_update(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/*
@@ -813,7 +813,7 @@ ulfs_mkdir(void *v)
 		} else
 			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
 	}
-	if ((error = ULFS_BALLOC(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
+	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
 	ip->i_size = dirblksiz;
@@ -829,7 +829,7 @@ ulfs_mkdir(void *v)
 	 */
 	if ((error = VOP_BWRITE(bp->b_vp, bp)) != 0)
 		goto bad;
-	if ((error = ULFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		goto bad;
 	}
 	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
@@ -844,14 +844,14 @@ ulfs_mkdir(void *v)
 		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
 		/*
-		 * No need to do an explicit ULFS_TRUNCATE here, vrele will
+		 * No need to do an explicit lfs_truncate here, vrele will
 		 * do this for us because we set the link count to 0.
 		 */
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
 		/* If IN_ADIROP, account for it */
-		ULFS_UNMARK_VNODE(tvp);
+		lfs_unmark_vnode(tvp);
 		vput(tvp);
 	}
  out:
@@ -937,7 +937,7 @@ ulfs_rmdir(void *v)
 	ip->i_nlink--;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
-	error = ULFS_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
+	error = lfs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 #ifdef LFS_DIRHASH
 	if (ip->i_dirhash != NULL)
@@ -1424,7 +1424,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	if ((mode & LFS_IFMT) == 0)
 		mode |= LFS_IFREG;
 
-	if ((error = ULFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
+	if ((error = lfs_valloc(dvp, mode, cnp->cn_cred, vpp)) != 0) {
 		vput(dvp);
 		return (error);
 	}
@@ -1436,7 +1436,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = lfs_chkiq(ip, 1, cnp->cn_cred, 0))) {
-		ULFS_VFREE(tvp, ip->i_number, mode);
+		lfs_vfree(tvp, ip->i_number, mode);
 		vput(tvp);
 		vput(dvp);
 		return (error);
@@ -1468,7 +1468,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = ULFS_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
 	ulfs_makedirentry(ip, cnp, newdir);
@@ -1489,7 +1489,7 @@ ulfs_makeinode(int mode, struct vnode *dvp, const struct ulfs_lookup_results *ul
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
 	/* If IN_ADIROP, account for it */
-	ULFS_UNMARK_VNODE(tvp);
+	lfs_unmark_vnode(tvp);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	vput(tvp);
 	vput(dvp);
@@ -1518,13 +1518,13 @@ ulfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         while (len > 0) {
                 bsize = MIN(bsize, len);
 
-                error = ULFS_BALLOC(vp, off, bsize, cred, flags, NULL);
+                error = lfs_balloc(vp, off, bsize, cred, flags, NULL);
                 if (error) {
                         goto out;
                 }
 
                 /*
-                 * increase file size now, ULFS_BALLOC() requires that
+                 * increase file size now, lfs_balloc() requires that
                  * EOF be up-to-date before each call.
                  */
 

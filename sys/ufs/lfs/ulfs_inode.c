@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.8 2013/07/28 00:29:18 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.9 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.8 2013/07/28 00:29:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9 2013/07/28 00:37:07 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -102,7 +102,7 @@ ulfs_inactive(void *v)
 		ulfs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0) {
-			error = ULFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
+			error = lfs_truncate(vp, (off_t)0, 0, NOCRED);
 		}
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 		(void)lfs_chkiq(ip, -1, NOCRED, 0);
@@ -119,7 +119,7 @@ ulfs_inactive(void *v)
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		ULFS_UPDATE(vp, NULL, NULL, 0);
+		lfs_update(vp, NULL, NULL, 0);
 	}
 
 out:
@@ -146,8 +146,8 @@ ulfs_reclaim(struct vnode *vp)
 
 	/* XXX: do we really need two of these? */
 	/* note: originally the first was inside a wapbl txn */
-	ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-	ULFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
+	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 
 	/*
 	 * Remove the inode from its hash chain.

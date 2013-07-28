@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.2 2013/07/20 20:01:24 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.3 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.2 2013/07/20 20:01:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.3 2013/07/28 00:37:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,7 +842,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	VTOI(fvp)->i_nlink++;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
 	VTOI(fvp)->i_flag |= IN_CHANGE;
-	error = ULFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP);
+	error = lfs_update(fvp, NULL, NULL, UPDATE_DIROP);
 	if (error)
 		goto whymustithurtsomuch;
 
@@ -869,7 +869,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			VTOI(tdvp)->i_nlink++;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
-			error = ULFS_UPDATE(tdvp, NULL, NULL, UPDATE_DIROP);
+			error = lfs_update(tdvp, NULL, NULL, UPDATE_DIROP);
 			if (error) {
 				/*
 				 * Link count update didn't take --
@@ -901,7 +901,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				DIP_ASSIGN(VTOI(tdvp), nlink,
 				    VTOI(tdvp)->i_nlink);
 				VTOI(tdvp)->i_flag |= IN_CHANGE;
-				(void)ULFS_UPDATE(tdvp, NULL, NULL,
+				(void)lfs_update(tdvp, NULL, NULL,
 				    UPDATE_WAIT | UPDATE_DIROP);
 			}
 			goto whymustithurtsomuch;
@@ -962,7 +962,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				    "hard-linked directory");
 			VTOI(tvp)->i_nlink = 0;
 			DIP_ASSIGN(VTOI(tvp), nlink, 0);
-			error = ULFS_TRUNCATE(tvp, (off_t)0, IO_SYNC, cred);
+			error = lfs_truncate(tvp, (off_t)0, IO_SYNC, cred);
 			if (error)
 				goto whymustithurtsomuch;
 		}

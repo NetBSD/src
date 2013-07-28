@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.13 2013/07/28 00:29:18 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.14 2013/07/28 00:37:07 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.13 2013/07/28 00:29:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.14 2013/07/28 00:37:07 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -842,7 +842,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		 */
 		if (ulr->ulr_offset & (dirblksiz - 1))
 			panic("ulfs_direnter: newblk");
-		if ((error = ULFS_BALLOC(dvp, (off_t)ulr->ulr_offset, dirblksiz,
+		if ((error = lfs_balloc(dvp, (off_t)ulr->ulr_offset, dirblksiz,
 		    cr, B_CLRBUF | B_SYNC, &bp)) != 0) {
 			return (error);
 		}
@@ -875,7 +875,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 #endif
 		error = VOP_BWRITE(bp->b_vp, bp);
 		vfs_timestamp(&ts);
-		ret = ULFS_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+		ret = lfs_update(dvp, &ts, &ts, UPDATE_DIROP);
 		if (error == 0)
 			return (ret);
 		return (error);
@@ -1018,7 +1018,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		if (dp->i_dirhash != NULL)
 			ulfsdirhash_dirtrunc(dp, ulr->ulr_endoff);
 #endif
-		(void) ULFS_TRUNCATE(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
+		(void) lfs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
 	}
 	return (error);
 }
