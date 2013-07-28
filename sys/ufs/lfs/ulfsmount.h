@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.7 2013/06/08 02:13:33 dholland Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.8 2013/07/28 00:28:05 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -62,10 +62,7 @@ struct ulfsmount {
 	struct	vnode *um_devvp;		/* block device mounted vnode */
 	u_long	um_fstype;
 	u_int32_t um_flags;			/* ULFS-specific flags - see below */
-	union {					/* pointer to superblock */
-		struct	lfs *lfs;		/* LFS */
-	} ulfsmount_u;
-#define	um_lfs	ulfsmount_u.lfs
+	struct lfs *um_lfs;			/* pointer to superblock */
 
 	/* Extended attribute information. */
 	struct ulfs_extattr_per_mount um_extattr;
@@ -76,7 +73,6 @@ struct ulfsmount {
 	u_long	um_lognindir;			/* log2 of um_nindir */
 	u_long	um_bptrtodb;			/* indir ptr to disk block */
 	u_long	um_seqinc;			/* inc between seq blocks */
-	kmutex_t um_lock;			/* lock on global data */
 	union {
 	    struct um_q1 {
 		time_t	q1_btime[ULFS_MAXQUOTAS];	/* block quota time limit */
@@ -94,15 +90,11 @@ struct ulfsmount {
 #define umq2_bsize  um_q.um_q2.q2_bsize
 #define umq2_bmask  um_q.um_q2.q2_bmask
 
-	void	*um_oldfscompat;		/* save 4.2 rotbl */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
 	u_int64_t um_maxfilesize;
-	void	*um_snapinfo;			/* snapshot private data */
 
 	const struct ulfs_ops *um_ops;
-
-	void *um_discarddata;
 };
 
 struct ulfs_ops {
