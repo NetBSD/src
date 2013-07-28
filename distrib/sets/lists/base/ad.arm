@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.17 2013/07/27 19:22:10 christos Exp $
+# $NetBSD: ad.arm,v 1.18 2013/07/28 14:02:56 pgoyette Exp $
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
@@ -92,7 +92,7 @@
 ./usr/lib/oabi/libatf-c++.so.0.0		base-compat-shlib	compat,pic,atf
 ./usr/lib/oabi/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
-./usr/lib/oabi/libbind9.so.6			base-compat-shlib	compat,pic
+./usr/lib/oabi/libbind9.so.7			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbind9.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
@@ -128,7 +128,7 @@
 ./usr/lib/oabi/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/oabi/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libdns.so.6			base-compat-shlib	compat,pic
+./usr/lib/oabi/libdns.so.7			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdns.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/oabi/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
@@ -172,12 +172,12 @@
 ./usr/lib/oabi/libintl.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libipsec.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisc.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisc.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccc.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccc.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisc.so.7			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisc.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccc.so.7			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccc.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccfg.so.7			base-compat-shlib	compat,pic
+./usr/lib/oabi/libisccfg.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libisns.so.0			base-compat-shlib	compat,pic
@@ -204,8 +204,8 @@
 ./usr/lib/oabi/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblutok.so.1			base-compat-shlib	compat,pic,kyua
 ./usr/lib/oabi/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
-./usr/lib/oabi/liblwres.so.6			base-compat-shlib	compat,pic
-./usr/lib/oabi/liblwres.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/liblwres.so.7			base-compat-shlib	compat,pic
+./usr/lib/oabi/liblwres.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzma.so.1			base-compat-shlib	compat,pic
