@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.11 2011/09/27 01:02:37 jym Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.11.8.1 2013/07/29 20:26:32 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.11 2011/09/27 01:02:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.11.8.1 2013/07/29 20:26:32 jdc Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -608,7 +608,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 			ipi_sent = true;
 			continue;
 		}
-		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_active, ti->ti_cpu_mask) {
+		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_active, ti->ti_cpu_mask))) {
 			/*
 			 * If this pmap has an ASID assigned but it's not
 			 * currently running, nuke its ASID.  Next time the
