@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.5 2013/06/21 19:40:20 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.6 2013/07/29 20:39:28 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -187,7 +187,7 @@ const struct dhcp_opt dhcp_opts[] = {
 	{ 76,	IPV4A,		"streettalk_directory_assistance_server" },
 	{ 77,	STRING,		"user_class" },
 	{ 80,	FLAG | NOREQ,	"rapid_commit" },
-	{ 81,	STRING | RFC3397,	"fqdn_name" },
+	{ 81,	STRING | RFC3397,	"fqdn" },
 	{ 85,	IPV4A,		"nds_servers" },
 	{ 86,	STRING,		"nds_tree_name" },
 	{ 87,	STRING,		"nds_context" },
@@ -848,7 +848,6 @@ make_message(struct dhcp_message **message,
 	uint32_t ul;
 	uint16_t sz;
 	size_t len;
-	const char *hp;
 	const struct dhcp_opt *opt;
 	const struct if_options *ifo = iface->options;
 	const struct dhcp_state *state = D_CSTATE(iface);
@@ -989,25 +988,11 @@ make_message(struct dhcp_message **message,
 			}
 		}
 
-		/* Regardless of RFC2132, we should always send a hostname
-		 * upto the first dot (the short hostname) as otherwise
-		 * confuses some DHCP servers when updating DNS.
-		 * The FQDN option should be used if a FQDN is required. */
 		if (ifo->hostname[0] == '\0')
-			hostname = get_hostname();
+			hostname = get_hostname(ifo->options &
+			    DHCPCD_HOSTNAME_SHORT ? 1 : 0);
 		else
 			hostname = ifo->hostname;
-		if (ifo->options & DHCPCD_HOSTNAME && hostname) {
-			*p++ = DHO_HOSTNAME;
-			hp = strchr(hostname, '.');
-			if (hp)
-				len = hp - hostname;
-			else
-				len = strlen(hostname);
-			*p++ = len;
-			memcpy(p, hostname, len);
-			p += len;
-		}
 		if (ifo->fqdn != FQDN_DISABLE) {
 			/* IETF DHC-FQDN option (81), RFC4702 */
 			*p++ = DHO_FQDN;
@@ -1034,6 +1019,12 @@ make_message(struct dhcp_message **message,
 				*lp += ul;
 				p += ul;
 			}
+		} else if (ifo->options & DHCPCD_HOSTNAME && hostname) {
+			*p++ = DHO_HOSTNAME;
+			len = strlen(hostname);
+			*p++ = len;
+			memcpy(p, hostname, len);
+			p += len;
 		}
 
 		/* vendor is already encoded correctly, so just add it */
