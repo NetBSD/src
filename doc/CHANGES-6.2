@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.21 2013/07/29 08:56:52 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.22 2013/07/29 20:27:07 jdc Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -390,3 +390,33 @@ etc/MAKEDEV.tmpl				1.166
 	Add a makedisk_p12high, used by VAX now after unbumping MAXPARTITIONS
 	from 16 down to 12. This fixes install issues on new setups.
 	[martin, ticket #919]
+
+src/doc/3RDPARTY				1.1040 via patch
+src/share/zoneinfo/africa			1.1.1.35 via patch
+src/share/zoneinfo/asia				1.1.1.60 via patch
+src/share/zoneinfo/australasia			1.32 via patch
+src/share/zoneinfo/europe			1.1.1.50 via patch
+src/share/zoneinfo/iso3166.tab			1.1.1.21 via patch
+src/share/zoneinfo/southamerica			1.1.1.55 via patch
+src/share/zoneinfo/zone.tab			1.1.1.45 via patch
+
+	Import tzdata2013d.
+	Changes for Morocco, Israel, Antarctica, metadata and documentation.
+	[apb, ticket #915]
+
+sys/dev/pci/if_wm.c				1.259,1.260,1.261,1.262
+sys/dev/pci/if_wmreg.h				1.54
+
+	Various fixes to wm(4):
+	  Fix "MDIC write error" bug for 82574 and 82583
+	  Sync the wm_enable_mng_pass_thru() function with FreeBSD
+	  Sync the wm_release_manageablilty() fucntion with FreeBSD
+	  For 82580(ER) or I350, set flags as per FreeBSD
+	  Move EEPROM-related calls to after identifying the EEPPROM
+	  Fix another NVM bank detect problem
+	[msaitoh, ticket #918]
+
+sys/common/pmap/tlb/pmap_tlb.c			patch
+
+	Add missing "))". This patch fixes PR#46371.
+	[msaitoh, ticket #920]
