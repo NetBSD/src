@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.1,v 1.1.2.12 2013/07/29 07:07:23 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.1,v 1.1.2.13 2013/07/29 08:57:19 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1 release to the NetBSD 6.1.1
 release:
@@ -138,3 +138,15 @@ usr.bin/netstat/netstat.h			1.47
 	pcb first!
 	Not all pointers are 64bit - use uintptr_t instead of uint64_t.
 	[christos, ticket #912]
+
+sys/miscfs/procfs/procfs_map.c			1.43
+
+	Add a missing vm_map_unlock_read() and uvmspace_free() to the ENOMEM
+	error case in procfs_domap()d. Fixes PR#48048.
+	[ryo, ticket #917]
+
+etc/MAKEDEV.tmpl				1.166
+
+	Add a makedisk_p12high, used by VAX now after unbumping MAXPARTITIONS
+	from 16 down to 12. This fixes install issues on new setups.
+	[martin, ticket #919]
