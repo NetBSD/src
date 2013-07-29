@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.65 2011/09/24 20:19:39 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.65.4.1 2013/07/29 05:35:41 msaitoh Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.65 2011/09/24 20:19:39 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.65.4.1 2013/07/29 05:35:41 msaitoh Exp $");
 #endif
 #endif
 
@@ -200,6 +200,27 @@ static int dodefaultroute(u_int32_t, int);
 static int get_ether_addr(u_int32_t, struct sockaddr_dl *);
 static void restore_loop(void);	/* Transfer ppp unit back to loopback */
 
+
+static void
+set_queue_size(const char *fmt, int fd) {
+#ifdef TIOCSQSIZE
+    int oqsize, qsize = 32768;
+
+    /* Only for ptys */
+    if (ioctl(fd, TIOCGQSIZE, &oqsize) == -1)
+	return;
+
+    if (oqsize >= qsize)
+	return;
+
+    if (ioctl(fd, TIOCSQSIZE, &qsize) == -1)
+	warn("%s: Cannot set tty queue size for %d from %d to %d", fmt, fd,
+	    oqsize, qsize);
+    else
+	notice("%s: Changed queue size of %d from %d to %d", fmt, fd, oqsize,
+	    qsize);
+#endif
+}
 
 /********************************************************************
  *
@@ -386,6 +407,7 @@ tty_establish_ppp(int fd)
 	    fatal("%s: ioctl(transfer ppp unit): %m", __func__);
     }
 
+    set_queue_size(__func__, fd);
     /*
      * Save the old line discipline of fd, and set it to PPP.
      */
@@ -443,6 +465,7 @@ restore_loop(void)
 {
     int x;
 
+    set_queue_size(__func__, loop_slave);
     /*
      * Transfer the ppp interface back to the loopback.
      */
@@ -645,6 +668,7 @@ clean_check(void)
     }
 }
 
+
 /*
  * set_up_tty: Set up the serial port on `fd' for 8 bits, no parity,
  * at the requested speed, etc.  If `local' is true, set CLOCAL
@@ -664,6 +688,8 @@ set_up_tty(int fd, int local)
 	inittermios = tios;
 	ioctl(fd, TIOCGWINSZ, &wsinfo);
     }
+
+    set_queue_size(__func__, fd);
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
     if (crtscts > 0 && !local) {
@@ -931,20 +957,13 @@ cif6addr(int unit, eui64_t our_eui64, eui64_t his_eui64)
 int
 get_pty(int *master_fdp, int *slave_fdp, char *slave_name, int uid)
 {
-#ifdef TIOCSQSIZE
-    int qsize = 32768;
-#endif
     struct termios tios;
 
     if (openpty(master_fdp, slave_fdp, slave_name, NULL, NULL) < 0)
 	return 0;
 
-#ifdef TIOCSQSIZE
-    if (ioctl(*master_fdp, TIOCSQSIZE, &qsize) == -1)
-	warn("%s: couldn't set master queue size: %m", __func__);
-    if (ioctl(*slave_fdp, TIOCSQSIZE, &qsize) == -1)
-	warn("%s: couldn't set slave queue size: %m", __func__);
-#endif
+    set_queue_size(__func__, *master_fdp);
+    set_queue_size(__func__, *slave_fdp);
     fchown(*slave_fdp, uid, -1);
     fchmod(*slave_fdp, S_IRUSR | S_IWUSR);
     if (tcgetattr(*slave_fdp, &tios) == 0) {
