@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2013/07/27 18:16:26 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2013/07/29 16:42:20 dholland Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -40,8 +40,12 @@ LDADD+=-lpthread
 LDADD+=-Wl,-Bdynamic
 .endif
 .if (${MKCRYPTO} != "no")
-LDADD+= -lgssapi -lkrb5 -lcrypto -lipsec
-DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBCRYPTO} ${LIBIPSEC}
+.if (${MKKERBEROS} != "no")
+LDADD+= -lgssapi -lkrb5
+DPADD+= ${LIBGSSAPI} ${LIBKRB5}
+.endif
+LDADD+= -lcrypto -lipsec
+DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
 .endif
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
