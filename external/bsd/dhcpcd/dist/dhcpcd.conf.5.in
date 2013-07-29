@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.2 2013/07/20 21:40:04 wiz Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.3 2013/07/29 20:39:28 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 19, 2013
+.Dd July 25, 2013
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -99,6 +99,20 @@ to the environment for use in
 For example, you can force the hostname hook to always set the hostname with
 .Ic env
 .Va force_hostname=YES .
+.Pp
+If the hostname is set, will be will set to the FQDN if possible as per
+RFC 4702 section 3.1.
+If the FQDN option is missing,
+.Nm dhcpcd
+will still try and set a FQDN from the hostname and domain options for
+consistency.
+To override this, set
+.Ic env
+.Va hostname_fqdn=[YES|NO|SERVER] .
+A value of server means just what the server says, don't manipulate it.
+This could lead to an inconsistent hostname on a DHCPv4 and DHCPv6 network
+where the DHCPv4 hostname is short and the DHCPv6 has an FQDN.
+DHCPv6 has no hostname option.
 .It Ic clientid Ar string
 Send the
 .Ar clientid .
@@ -116,9 +130,9 @@ Generate an
 .%T "RFC 4361"
 .Re
 compliant clientid.
-This requires persistent storage and not all DHCP servers work with it so it's
-not enabled by default.
-The duid generated will be held in
+If persistent storage is available then a DUID-LLT (link local address + time)
+is generated, otherwise DUID-LL is generated (link local address).
+The DUID-LLT generated will be held in
 .Pa @SYSCONFDIR@/dhcpcd.duid
 and should not be copied to other hosts.
 .It Ic fallback Ar profile
@@ -134,6 +148,14 @@ is an empty string then the current system hostname is sent.
 If
 .Ar hostname
 is a FQDN (ie, contains a .) then it will be encoded as such.
+.It Ic hostname_short
+Sends the short hostname to the DHCP server instead of the FQDN.
+This is useful because DHCP servers will not register the FQDN in their
+DNS if the domain part does not match theirs.
+.Pp
+Also, see the
+.Ic env
+option above to control how the hostname is set on the host.
 .It Ic ia_na Op Ar iaid
 Request a DHCPv6 Normal Address for
 .Ar iaid .
