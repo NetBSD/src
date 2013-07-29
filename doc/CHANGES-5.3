@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.21 2013/06/24 07:22:29 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.22 2013/07/29 02:20:07 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -441,3 +441,7 @@ sys/dev/isa/ptcd.c				1.1
 	using a gpio(4) device that attaches at ptcd0.
 	[mbalmer, ticket #1863]
 
+external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c	patch
+
+	Fix for bind CVE-2013-4854.
+	[spz, ticket #1871]
