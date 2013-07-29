@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.13 2013/07/29 08:57:41 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.14 2013/07/29 20:27:21 jdc Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -144,3 +144,16 @@ sys/miscfs/procfs/procfs_map.c			1.43
 	Add a missing vm_map_unlock_read() and uvmspace_free() to the ENOMEM
 	error case in procfs_domap()d. Fixes PR#48048.
 	[ryo, ticket #917]
+
+src/doc/3RDPARTY				1.1040 via patch
+src/share/zoneinfo/africa			1.1.1.35 via patch
+src/share/zoneinfo/asia				1.1.1.60 via patch
+src/share/zoneinfo/australasia			1.32 via patch
+src/share/zoneinfo/europe			1.1.1.50 via patch
+src/share/zoneinfo/iso3166.tab			1.1.1.21 via patch
+src/share/zoneinfo/southamerica			1.1.1.55 via patch
+src/share/zoneinfo/zone.tab			1.1.1.45 via patch
+
+  Import tzdata2013d.
+  Changes for Morocco, Israel, Antarctica, metadata and documentation.
+  [apb, ticket #915]
