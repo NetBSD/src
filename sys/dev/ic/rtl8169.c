@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.134.4.1 2012/03/05 20:31:49 sborrill Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.134.4.2 2013/07/29 08:11:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,11 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.134.4.1 2012/03/05 20:31:49 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.134.4.2 2013/07/29 08:11:53 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
- * RealTek 8139C+/8169/8169S/8110S PCI NIC driver
+ * RealTek 8139C+/8169/8169S/8168/8110S PCI NIC driver
  *
  * Written by Bill Paul <wpaul@windriver.com>
  * Senior Networking Software Engineer
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.134.4.1 2012/03/05 20:31:49 sborrill E
 /*
  * This driver is designed to support RealTek's next generation of
  * 10/100 and 10/100/1000 PCI ethernet controllers. There are currently
- * four devices in this family: the RTL8139C+, the RTL8169, the RTL8169S
- * and the RTL8110S.
+ * six devices in this family: the RTL8139C+, the RTL8169, the RTL8169S,
+ * RTL8110S, the RTL8168 and the RTL8111.
  *
  * The 8139C+ is a 10/100 ethernet chip. It is backwards compatible
  * with the older 8139 family, however it also supports a special
@@ -607,6 +607,7 @@ re_attach(struct rtk_softc *sc)
 			    RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168E_VL:
+		case RTK_HWREV_8168F:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
