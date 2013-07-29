@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.22 2013/06/21 19:33:08 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.1.1.23 2013/07/29 20:35:33 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -614,7 +614,7 @@ RFC\ 3361, RFC\ 3633, RFC\ 3396, RFC\ 3397, RFC\ 3442, RFC\ 3927, RFC\ 4039
 RFC\ 4075, RFC\ 4361, RFC\ 4390, RFC\ 4702, RFC\ 4704, RFC\ 4861, RFC\ 4833,
 RFC\ 5227, RFC\ 5969, RFC\ 6106.
 .Sh AUTHORS
-.An Roy Marples Aq roy@marples.name
+.An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd
