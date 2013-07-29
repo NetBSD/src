@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.9 2013/07/14 20:39:13 riz Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.10 2013/07/29 20:24:04 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.9 2013/07/14 20:39:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.10 2013/07/29 20:24:04 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,6 +570,8 @@ static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
 static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
 static int	wm_get_swfwhw_semaphore(struct wm_softc *);
 static void	wm_put_swfwhw_semaphore(struct wm_softc *);
+static int	wm_get_hw_semaphore_82573(struct wm_softc *);
+static void	wm_put_hw_semaphore_82573(struct wm_softc *);
 
 static int	wm_read_eeprom_ich8(struct wm_softc *, int, int, uint16_t *);
 static int32_t	wm_ich8_cycle_init(struct wm_softc *);
@@ -1242,8 +1244,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	wm_get_wakeup(sc);
-
 	/*
 	 * In addition, i82544 and later support I/O mapped indirect
 	 * register access.  It is not desirable (nor supported in
@@ -1538,26 +1538,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	wm_reset(sc);
 
-	switch (sc->sc_type) {
-	case WM_T_82571:
-	case WM_T_82572:
-	case WM_T_82573:
-	case WM_T_82574:
-	case WM_T_82583:
-	case WM_T_80003:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
-	case WM_T_PCH:
-	case WM_T_PCH2:
-	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0)
-			wm_get_hw_control(sc);
-		break;
-	default:
-		break;
-	}
-
 	/*
 	 * Get some information about the EEPROM.
 	 */
@@ -1694,6 +1674,28 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_ee_addrbits, eetype);
 	}
 
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+		if (wm_check_mng_mode(sc) != 0) {
+			printf ("get hw control (1)\n");
+			wm_get_hw_control(sc);
+		}
+		break;
+	default:
+		break;
+	}
+	wm_get_wakeup(sc);
 	/*
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
@@ -4018,7 +4020,6 @@ wm_reset(struct wm_softc *sc)
 {
 	int phy_reset = 0;
 	uint32_t reg, mask;
-	int i;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -4118,19 +4119,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		i = 0;
-		reg = CSR_READ(sc, WMREG_EXTCNFCTR)
-		    | EXTCNFCTR_MDIO_SW_OWNERSHIP;
-		do {
-			CSR_WRITE(sc, WMREG_EXTCNFCTR,
-			    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
-			reg = CSR_READ(sc, WMREG_EXTCNFCTR);
-			if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
-				break;
-			reg |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
-			delay(2*1000);
-			i++;
-		} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+		wm_get_hw_semaphore_82573(sc);
 		break;
 	default:
 		break;
@@ -4228,6 +4217,16 @@ wm_reset(struct wm_softc *sc)
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		break;
+	}
+
+	/* Must release the MDIO ownership after MAC reset */
+	switch (sc->sc_type) {
+	case WM_T_82574:
+	case WM_T_82583:
+		wm_put_hw_semaphore_82573(sc);
+		break;
+	default:
 		break;
 	}
 
@@ -7524,6 +7523,43 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 }
 
 static int
+wm_get_hw_semaphore_82573(struct wm_softc *sc)
+{
+	int i = 0;
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	do {
+		CSR_WRITE(sc, WMREG_EXTCNFCTR,
+		    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
+		reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+		if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
+			break;
+		delay(2*1000);
+		i++;
+	} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+
+	if (i == WM_MDIO_OWNERSHIP_TIMEOUT) {
+		wm_put_hw_semaphore_82573(sc);
+		log(LOG_ERR, "%s: Driver can't access the PHY\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+wm_put_hw_semaphore_82573(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+	reg &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
+	CSR_WRITE(sc, WMREG_EXTCNFCTR, reg);
+}
+
+static int
 wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 {
 	uint32_t eecd;
@@ -7560,7 +7596,8 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "EEPROM not present\n");
+	DPRINTF(WM_DEBUG_NVM, ("%s: No valid NVM bank present\n",
+		device_xname(sc->sc_dev)));
 	return -1;
 }
 
@@ -7592,7 +7629,7 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
 		    __func__);
-		return error;
+		flash_bank = 0;
 	}
 
 	/*
@@ -7932,8 +7969,7 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_MANAGE, ("%s: MANC (%08x)\n",
 		device_xname(sc->sc_dev), manc));
-	if (((manc & MANC_RECV_TCO_EN) == 0)
-	    || ((manc & MANC_EN_MAC_ADDR_FILTER) == 0))
+	if ((manc & MANC_RECV_TCO_EN) == 0)
 		return 0;
 
 	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0) {
@@ -7942,6 +7978,17 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		if (((factps & FACTPS_MNGCG) == 0)
 		    && ((fwsm & FWSM_MODE_MASK)
 			== (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT)))
+			return 1;
+	} else if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)){
+		uint16_t data;
+
+		factps = CSR_READ(sc, WMREG_FACTPS);
+		wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &data);
+		DPRINTF(WM_DEBUG_MANAGE, ("%s: FACTPS = %08x, CFG2=%04x\n",
+			device_xname(sc->sc_dev), factps, data));
+		if (((factps & FACTPS_MNGCG) == 0)
+		    && ((data & EEPROM_CFG2_MNGM_MASK)
+			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
 			return 1;
 	} else if (((manc & MANC_SMBUS_EN) != 0)
 	    && ((manc & MANC_ASF_EN) == 0))
@@ -8435,6 +8482,7 @@ wm_release_manageability(struct wm_softc *sc)
 	if (sc->sc_flags & WM_F_HAS_MANAGE) {
 		uint32_t manc = CSR_READ(sc, WMREG_MANC);
 
+		manc |= MANC_ARP_EN;
 		if (sc->sc_type >= WM_T_82571)
 			manc &= ~MANC_EN_MNG2HOST;
 
@@ -8460,11 +8508,9 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-#if 0 /* XXX */
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_I350:
-#endif
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
