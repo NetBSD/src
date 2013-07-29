@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.46.2.4 2013/07/14 20:39:13 riz Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.46.2.5 2013/07/29 20:24:04 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -350,7 +350,11 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_APM_PME	(1U << 15)
 #define	EEPROM_CFG2_SWDPIO_SHIFT 4
 #define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
-#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
+#define	EEPROM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
+#define	EEPROM_CFG2_MNGM_MASK	(3U << EEPROM_CFG2_MNGM_SHIFT)
+#define	EEPROM_CFG2_MNGM_DIS	0
+#define	EEPROM_CFG2_MNGM_NCSI	1
+#define	EEPROM_CFG2_MNGM_PT	2
 
 #define	EEPROM_K1_CONFIG_ENABLE	0x01
 
@@ -870,8 +874,10 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_SMBUS_EN		0x00000001
 #define	MANC_ASF_EN		0x00000002
 #define	MANC_ARP_EN		0x00002000
+#define	MANC_RECV_TCO_RESET	0x00010000
 #define	MANC_RECV_TCO_EN	0x00020000
 #define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+#define	MANC_RECV_ALL		0x00080000
 #define	MANC_EN_MAC_ADDR_FILTER	0x00100000
 #define	MANC_EN_MNG2HOST	0x00200000
 
