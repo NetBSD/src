@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.1.1.8 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: common.h,v 1.1.1.9 2013/07/29 20:35:33 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -102,7 +102,7 @@
 int set_cloexec(int);
 int set_nonblock(int);
 char *get_line(FILE * __restrict);
-const char *get_hostname(void);
+const char *get_hostname(int);
 extern int clock_monotonic;
 int get_monotonic(struct timeval *);
 ssize_t setvar(char ***, const char *, const char *, const char *);

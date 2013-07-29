@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.1.1.12 2013/06/21 19:33:06 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.1.1.13 2013/07/29 20:35:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -139,8 +139,9 @@ set_nonblock(int fd)
 }
 
 const char *
-get_hostname(void)
+get_hostname(int short_hostname)
 {
+	char *p;
 
 	gethostname(hostname_buffer, sizeof(hostname_buffer));
 	hostname_buffer[sizeof(hostname_buffer) - 1] = '\0';
@@ -149,6 +150,13 @@ get_hostname(void)
 	    strncmp(hostname_buffer, "localhost.", strlen("localhost.")) == 0 ||
 	    hostname_buffer[0] == '.')
 		return NULL;
+
+	if (short_hostname) {
+		p = strchr(hostname_buffer, '.');
+		if (p)
+			*p = '\0';
+	}
+
 	return hostname_buffer;
 }
 

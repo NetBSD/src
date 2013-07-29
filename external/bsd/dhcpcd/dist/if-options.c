@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.19 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.20 2013/07/29 20:35:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -70,6 +70,7 @@ unsigned long long options = 0;
 #define O_IA_NA			O_BASE + 10
 #define O_IA_TA			O_BASE + 11
 #define O_IA_PD			O_BASE + 12
+#define O_HOSTNAME_SHORT	O_BASE + 13
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -131,6 +132,7 @@ const struct option cf_options[] = {
 	{"ia_na",           no_argument,       NULL, O_IA_NA},
 	{"ia_ta",           no_argument,       NULL, O_IA_TA},
 	{"ia_pd",           no_argument,       NULL, O_IA_PD},
+	{"hostname_short",  no_argument,       NULL, O_HOSTNAME_SHORT},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -1081,6 +1083,9 @@ got_iaid:
 				}
 			}
 		}
+		break;
+	case O_HOSTNAME_SHORT:
+		ifo->options |= DHCPCD_HOSTNAME | DHCPCD_HOSTNAME_SHORT;
 		break;
 #endif
 	default:
