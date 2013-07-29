@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.19 2013/07/29 06:13:32 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.20 2013/07/29 06:47:57 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -352,6 +352,7 @@ sys/net/route.c					1.127
 sys/kern/subr_disk_mbr.c			1.46
 
 	If the MBR is a protective MBR, don't bother looking at it.
+	Fixes PR#47743.
 	[matt, ticket #910]
 
 usr.bin/netstat/inet.c				1.102-1.03
