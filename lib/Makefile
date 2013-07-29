@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.203 2013/04/28 04:05:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.204 2013/07/29 21:02:58 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -182,7 +182,6 @@ SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
-SUBDIR+=	../external/bsd/bind/lib	# depends on libcrypto
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
@@ -191,6 +190,8 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
 
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpdev	# depends on librump
