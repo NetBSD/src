@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.17 2013/07/14 20:39:55 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.18 2013/07/29 02:16:15 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -320,3 +320,7 @@ sys/dev/pci/if_wmvar.h				1.15-1.16
 	remove trailing whitespaces.
 	[msaitoh, ticket #907]
 
+external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c	patch
+
+	Fix for bind CVE-2013-4854.
+	[spz, ticket #924]
