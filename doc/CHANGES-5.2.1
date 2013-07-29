@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.1,v 1.1.2.10 2013/06/19 07:59:38 bouyer Exp $
+# $NetBSD: CHANGES-5.2.1,v 1.1.2.11 2013/07/29 02:21:30 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -180,3 +180,7 @@ share/man/man4/options.4			1.420
 	Fix typo
 	[msaitoh, ticket #1862]
 
+external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c	patch
+
+	Fix for bind CVE-2013-4854.
+	[spz, ticket #1871]
