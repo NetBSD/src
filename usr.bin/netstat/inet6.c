@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: inet6.c,v 1.59.12.1 2013/07/29 07:10:13 msaitoh Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.59.12.1 2013/07/29 07:10:13 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,12 +275,80 @@ print_vtw_v6(const vtw_t *vtw)
 		 TCPS_TIME_WAIT, "tcp6", &vtw->expire);
 }
 
-void
-ip6protopr(u_long off, const char *name)
-{
+
+static struct kinfo_pcb *
+getpcblist_kmem(u_long off, const char *name, size_t *len) {
+
 	struct inpcbtable table;
 	struct in6pcb *head, *prev, *next;
 	int istcp = strcmp(name, "tcp6") == 0;
+	struct kinfo_pcb *pcblist;
+	size_t size = 100, i;
+	struct sockaddr_in6 sin6;
+
+	if (off == 0) {
+		*len = 0;
+		return NULL;
+	}
+	kread(off, (char *)&table, sizeof (table));
+	head = prev =
+	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = (struct in6pcb *)table.inpt_queue.cqh_first;
+
+	if ((pcblist = malloc(size)) == NULL)
+		err(1, "malloc");
+
+	i = 0;
+	while (next != head) {
+		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
+		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev) {
+			warnx("bad pcb");
+			break;
+		}
+		prev = next;
+		next = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
+
+		if (in6pcb.in6p_af != AF_INET6)
+			continue;
+
+		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
+		    sizeof (sockb));
+		if (istcp) {
+#ifdef TCP6
+			kread((u_long)in6pcb.in6p_ppcb,
+			    (char *)&tcp6cb, sizeof (tcp6cb));
+#else
+			kread((u_long)in6pcb.in6p_ppcb,
+			    (char *)&tcpcb, sizeof (tcpcb));
+#endif
+		}
+		pcblist[i].ki_ppcbaddr = 
+		    istcp ? (uintptr_t) in6pcb.in6p_ppcb : (uintptr_t) prev;
+		pcblist[i].ki_rcvq = (uint64_t)sockb.so_rcv.sb_cc;
+		pcblist[i].ki_sndq = (uint64_t)sockb.so_snd.sb_cc;
+		sin6.sin6_addr = in6pcb.in6p_laddr;
+		sin6.sin6_port = in6pcb.in6p_lport;
+		memcpy(&pcblist[i].ki_s, &sin6, sizeof(sin6));
+		sin6.sin6_addr = in6pcb.in6p_faddr;
+		sin6.sin6_port = in6pcb.in6p_fport;
+		memcpy(&pcblist[i].ki_d, &sin6, sizeof(sin6));
+		pcblist[i].ki_tstate = tcpcb.t_state;
+		if (i++ == size) {
+			struct kinfo_pcb *n = realloc(pcblist, size += 100);
+			if (n == NULL)
+				err(1, "realloc");
+			pcblist = n;
+		}
+	}
+	*len = i;
+	return pcblist;
+}
+
+void
+ip6protopr(u_long off, const char *name)
+{
+	struct kinfo_pcb *pcblist;
+	size_t i, len;
 	static int first = 1;
 
 	compact = 0;
@@ -294,110 +362,35 @@ ip6protopr(u_long off, const char *name)
 	} else
 		width = 22;
 
-	if (use_sysctl) {
-		struct kinfo_pcb *pcblist;
-		int mib[8];
-		size_t namelen = 0, size = 0, i;
-		char *mibname = NULL;
+	if (use_sysctl)
+		pcblist = getpcblist_sysctl(name, &len);
+	else
+		pcblist = getpcblist_kmem(off, name, &len);
 
-		memset(mib, 0, sizeof(mib));
+	for (i = 0; i < len; i++) {
+		struct sockaddr_in6 src, dst;
 
-		if (asprintf(&mibname, "net.inet6.%s.pcblist", name) == -1)
-			err(1, "asprintf");
+		memcpy(&src, &pcblist[i].ki_s, sizeof(src));
+		memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
 
-		/* get dynamic pcblist node */
-		if (sysctlnametomib(mibname, mib, &namelen) == -1) {
-			if (errno == ENOENT)
-				return;
-
-			err(1, "sysctlnametomib: %s", mibname);
-		}
-
-		if (prog_sysctl(mib, __arraycount(mib),
-		    NULL, &size, NULL, 0) == -1)
-			err(1, "sysctl (query)");
-		
-		if ((pcblist = malloc(size)) == NULL)
-			err(1, "malloc");
-		memset(pcblist, 0, size);
-
-		mib[6] = sizeof(*pcblist);
-		mib[7] = size / sizeof(*pcblist);
-
-		if (prog_sysctl(mib, __arraycount(mib), pcblist,
-		    &size, NULL, 0) == -1)
-			err(1, "sysctl (copy)");
-
-		for (i = 0; i < size / sizeof(*pcblist); i++) {
-			struct sockaddr_in6 src, dst;
-
-			memcpy(&src, &pcblist[i].ki_s, sizeof(src));
-			memcpy(&dst, &pcblist[i].ki_d, sizeof(dst));
-
-			if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&dst.sin6_addr))
-				continue;
-
-			if (first) {
-				ip6protoprhdr();
-				first = 0;
-			}
-
-			ip6protopr0((intptr_t) pcblist[i].ki_ppcbaddr,
-			    pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
-			    &src.sin6_addr, src.sin6_port,
-			    &dst.sin6_addr, dst.sin6_port,
-			    pcblist[i].ki_tstate, name, NULL);
-		}
-
-		free(pcblist);
-		goto end;
-	}
-
-	if (off == 0)
-		return;
-	kread(off, (char *)&table, sizeof (table));
-	head = prev =
-	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct in6pcb *)table.inpt_queue.cqh_first;
-
-	while (next != head) {
-		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
-		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev) {
-			printf("???\n");
-			break;
-		}
-		prev = next;
-		next = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
-
-		if (in6pcb.in6p_af != AF_INET6)
+		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&dst.sin6_addr))
 			continue;
 
-		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_faddr))
-			continue;
-		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, 
-		    sizeof (sockb));
-		if (istcp) {
-#ifdef TCP6
-			kread((u_long)in6pcb.in6p_ppcb,
-			    (char *)&tcp6cb, sizeof (tcp6cb));
-#else
-			kread((u_long)in6pcb.in6p_ppcb,
-			    (char *)&tcpcb, sizeof (tcpcb));
-#endif
-		}
 		if (first) {
 			ip6protoprhdr();
 			first = 0;
 		}
-		ip6protopr0(istcp ? (intptr_t) in6pcb.in6p_ppcb : 
-		    (intptr_t) prev, sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
-		    &in6pcb.in6p_laddr, in6pcb.in6p_lport,
-		    &in6pcb.in6p_faddr, in6pcb.in6p_fport,
-		    tcpcb.t_state, name, NULL);
-		
+
+		ip6protopr0((intptr_t) pcblist[i].ki_ppcbaddr,
+		    pcblist[i].ki_rcvq, pcblist[i].ki_sndq,
+		    &src.sin6_addr, src.sin6_port,
+		    &dst.sin6_addr, dst.sin6_port,
+		    pcblist[i].ki_tstate, name, NULL);
 	}
-end:
-	if (istcp) {
+
+	free(pcblist);
+
+	if (strcmp(name, "tcp6") == 0) {
 		struct timeval t;
 		timebase(&t);
 		gettimeofday(&now, NULL);
@@ -1454,6 +1447,21 @@ tcp6_dump(u_long pcbaddr)
 {
 	struct tcp6cb tcp6cb;
 	int i;
+	struct kinfo_pcb *pcblist;
+	size_t j, len;
+
+	if (use_sysctl)
+		pcblist = getpcblist_sysctl(name, &len);	
+	else
+		pcblist = getpcblist_kmem(off, name, &len);	
+
+	for (j = 0; j < len; j++)
+		if (pcblist[j].ki_ppcbaddr == pcbaddr)
+			break;
+	free(pcblist);
+
+	if (j == len)
+		errx(1, "0x%lx is not a valid pcb address", pcbaddr);
 
 	kread(pcbaddr, (char *)&tcp6cb, sizeof(tcp6cb));
 
