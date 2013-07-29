@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.18 2013/07/29 02:16:15 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.19 2013/07/29 06:13:32 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -324,3 +324,42 @@ external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c	patch
 
 	Fix for bind CVE-2013-4854.
 	[spz, ticket #924]
+
+usr.sbin/pppd/pppd/sys-bsd.c			1.68
+
+	Add a set_queue_size to avoid more code duplication, and set the queue
+	size of all tty fd's, not just the ones that we create (the ones that
+	we get passed in too). Fixes my iPhone -> xl2tpd -> pppd VPN from
+	corrupting packets with MTU > ~650.
+	[christos, ticket #908]
+
+sys/net/route.c					1.127
+
+	PR/44032: Proxy entries stopped working with pppd. The issue here is
+	that the route entry was added, but the RTF_LLINFO bit was not set,
+	making arp -a not showing the entry, but netstat -rn -f inet showing
+	it with the missing L bit. The order of resolution in ifa_ifwithroute()
+	is that if a destination address is found, then the interface chosen
+	for the route is that of the destination. This does not work for
+	link-level addresses since the ppp interface does not arp (uses
+	link_rtrequest, not arp_rtrequest), so the bit is never set. The easy
+	solution here is to check that the gateway is a link address, and use
+	the interface which we chose for the link address as opposed to the
+	interface that routes to the destination. This restores the previous
+	behavior, but is it correct?
+	[christos, ticket #909]
+
+sys/kern/subr_disk_mbr.c			1.46
+
+	If the MBR is a protective MBR, don't bother looking at it.
+	[matt, ticket #910]
+
+usr.bin/netstat/inet.c				1.102-1.03
+usr.bin/netstat/inet6.c				1.61-1.62
+usr.bin/netstat/main.c				1.86
+usr.bin/netstat/netstat.h			1.47
+
+	Don't use -P as a kmem printer, verify that the address points to a
+	pcb first!
+	Not all pointers are 64bit - use uintptr_t instead of uint64_t.
+	[christos, ticket #912]
