@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.10 2013/07/12 11:19:45 jdc Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.11 2013/07/29 02:18:28 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -124,3 +124,7 @@ sys/netinet6/nd6_rtr.c				1.83,1.84 via patch
         Fix potentially uninitialised variable.
 	[christos, ticket #905]
 
+external/bsd/bind/dist/lib/dns/rdata/generic/keydata_65533.c	patch
+
+	Fix for bind CVE-2013-4854.
+	[spz, ticket #924]
