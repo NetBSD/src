@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.20 2013/07/20 21:40:04 wiz Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.21 2013/07/29 20:39:28 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
