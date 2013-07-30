@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.67 2013/07/18 14:14:00 matt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.68 2013/07/30 17:22:31 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.67 2013/07/18 14:14:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.68 2013/07/30 17:22:31 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ out:
 }
 
 /*
- * Common routine to set access and modification times given a vnode.
+ * Common routines to set access and modification times given a vnode.
  */
 static int
 get_utimes32(const netbsd32_timevalp_t *tptr, struct timeval *tv,
@@ -340,6 +340,28 @@ get_utimes32(const netbsd32_timevalp_t *tptr, struct timeval *tv,
 	netbsd32_to_timeval(&tv32[1], &tv[1]);
 
 	*tvp = tv;
+	return 0;
+}
+
+static int
+get_utimens32(const netbsd32_timespecp_t *tptr, struct timespec *ts,
+    struct timespec **tsp)
+{
+	int error;
+	struct netbsd32_timespec ts32[2];
+
+	if (tptr == NULL) {
+		*tsp = NULL;
+		return 0;
+	}
+
+	error = copyin(tptr, ts32, sizeof(ts32));
+	if (error)
+		return error;
+	netbsd32_to_timespec(&ts32[0], &ts[0]);
+	netbsd32_to_timespec(&ts32[1], &ts[1]);
+
+	*tsp = ts;
 	return 0;
 }
 
@@ -1168,23 +1190,18 @@ netbsd32_utimensat(struct lwp *l, const struct netbsd32_utimensat_args *uap,
 		syscallarg(netbsd32_timespecp_t) tptr;
 		syscallarg(int) flag;
 	} */
-	struct netbsd32_timespec ts32[2];
-	struct timespec ts[2];
+	struct timespec ts[2], *tsp;
 	int follow;
 	int error;
 
-	if ((error = copyin(SCARG_P32(uap, tptr), ts32, sizeof(ts32))) != 0)
-		return (error);
-
-	netbsd32_to_timespec(&ts32[0], &ts[0]);
-	netbsd32_to_timespec(&ts32[1], &ts[1]);
+	error = get_utimens32(SCARG_P32(uap, tptr), ts, &tsp);
+	if (error != 0)
+		return error;
 
 	follow = (SCARG(uap, flag) & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 
-	error = do_sys_utimensat(l, SCARG(uap, fd), NULL, 
-	    SCARG_P32(uap, path), follow, ts, UIO_SYSSPACE);
-
-	return error;
+	return do_sys_utimensat(l, SCARG(uap, fd), NULL, 
+	    SCARG_P32(uap, path), follow, tsp, UIO_SYSSPACE);
 }
 
 int
@@ -1271,22 +1288,19 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_timespecp_t) tptr;
 	} */
-	struct netbsd32_timespec ts32[2];
-	struct timespec ts[2];
+	struct timespec ts[2], *tsp;
 	file_t *fp;
 	int error;
 
-	if ((error = copyin(SCARG_P32(uap, tptr), ts32, sizeof(ts32))) != 0)
-		return (error);
-
-	netbsd32_to_timespec(&ts32[0], &ts[0]);
-	netbsd32_to_timespec(&ts32[1], &ts[1]);
+	error = get_utimens32(SCARG_P32(uap, tptr), ts, &tsp);
+	if (error != 0)
+		return error;
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
-	    ts, UIO_SYSSPACE);
+	    tsp, UIO_SYSSPACE);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
