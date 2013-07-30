@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.12 2013/01/28 21:03:28 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.13 2013/07/30 16:02:23 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.12 2013/01/28 21:03:28 christos Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.13 2013/07/30 16:02:23 reinoud Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -687,7 +687,7 @@ int
 cd9660node_rrip_tf(struct ISO_SUSP_ATTRIBUTES *p, fsnode *_node)
 {
 	p->attr.rr_entry.TF.flags[0] = TF_MODIFY | TF_ACCESS | TF_ATTRIBUTES;
-	p->attr.rr_entry.TF.h.length[0] = 4;
+	p->attr.rr_entry.TF.h.length[0] = 5;
 	p->attr.rr_entry.TF.h.version[0] = 1;
 
 	/*
