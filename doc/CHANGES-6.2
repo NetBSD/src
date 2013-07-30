@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.26 2013/07/30 07:00:06 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.27 2013/07/30 08:22:28 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -421,6 +421,7 @@ lib/libc/sys/msgsnd.2				1.19-1.20
 	[skrll, ticket #922]
 
 lib/libperfuse/ops.c				1.61-1.62
+
 	One more explicit error log, and two bug fixes
 	1) with recent FUSE, when lookup returns a null ino, it means ENOENT
 	2) odd corner case that caused a bug on dd if=test of=test conv=notrunc
@@ -430,3 +431,23 @@ lib/libperfuse/ops.c				1.61-1.62
 	   the read FH.
 	Catch open without FREAD|FWRITE (it should not happen)
 	[manu, ticket #923]
+
+lib/libc/nameser/ns_samedomain.c		1.7-1.8
+lib/libresolv/Makefile 				1.12
+lib/libresolv/dst_api.c				1.1-1.3
+lib/libresolv/dst_internal.h			1.1-1.2
+lib/libresolv/hmac_link.c			1.1-1.2
+lib/libresolv/ns_date.c				1.1
+lib/libresolv/ns_sign.c				1.1
+lib/libresolv/ns_verify.c			1.1-1.2
+lib/libresolv/res_findzonecut.c			1.1
+lib/libresolv/res_mkupdate.c			1.1-1.2
+lib/libresolv/res_mkupdate.h			1.1
+lib/libresolv/res_private.h			1.1
+lib/libresolv/res_sendsigned.c			1.1
+lib/libresolv/res_update.c			1.1
+lib/libresolv/support.c				1.1
+include/res_update.h				1.8
+
+	Restore libresolv missing bits, including NS updates.
+	[manu, ticket #887]
