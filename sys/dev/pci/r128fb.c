@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.36 2012/10/04 10:22:45 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.37 2013/07/30 19:21:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.36 2012/10/04 10:22:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.37 2013/07/30 19:21:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,

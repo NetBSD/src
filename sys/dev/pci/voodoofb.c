@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.44 2013/07/02 00:18:24 joerg Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.45 2013/07/30 19:21:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.44 2013/07/02 00:18:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.45 2013/07/30 19:21:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,11 +463,12 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 		voodoofb_defaultscreen.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&voodoofb_defaultscreen, ri, 0, 0, defattr);
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		voodoofb_set_videomode(sc, sc->sc_videomode);		 
+		if (voodoofb_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &voodoofb_console_screen,
+			    1, &defattr);
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
