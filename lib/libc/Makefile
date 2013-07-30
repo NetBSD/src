@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.157 2013/04/30 01:42:03 matt Exp $
+#	$NetBSD: Makefile,v 1.158 2013/07/30 15:28:47 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -37,7 +37,7 @@ CLEANFILES+=	assym.h assym.h.tmp
 
 assym.h: ${ARCHDIR}/genassym.cf
 	${_MKTARGET_CREATE}
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,--fatal-warnings} \
 		${CPPFLAGS} ${CPPFLAGS.assym.h} ${PROF} \
 		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
