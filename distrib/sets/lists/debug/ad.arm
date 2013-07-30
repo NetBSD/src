@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.9 2013/07/27 19:22:10 christos Exp $
+# $NetBSD: ad.arm,v 1.10 2013/07/30 20:51:38 htodd Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -100,9 +100,12 @@
 ./usr/libdata/debug/usr/lib/oabi/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisc.so.6.0.debug		comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisc.so.6.0.debug		comp-bind-debug	debug,compat,obsolete
+./usr/libdata/debug/usr/lib/oabi/libisc.so.7.0.debug		comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
+./usr/libdata/debug/usr/lib/oabi/libisccc.so.7.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
+./usr/libdata/debug/usr/lib/oabi/libisccfg.so.7.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -120,7 +123,8 @@
 ./usr/libdata/debug/usr/lib/oabi/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblutok.so.1.0.debug		comp-kyua-debug	kyua,debug,compat
-./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/liblwres.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
+./usr/libdata/debug/usr/lib/oabi/liblwres.so.7.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzf.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libm.so.0.10.debug		comp-sys-debug	debug,compat
