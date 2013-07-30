@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.53 2013/07/30 20:45:44 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.54 2013/07/30 22:23:45 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.53 2013/07/30 20:45:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.54 2013/07/30 22:23:45 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -562,10 +562,12 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
 	    mapallmem_p);
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	/* "bootargs" env variable is passed as 4th argument to kernel */
-	if ((uboot_args[3] & 0xe0000000) == 0x80000000) {
+	if (uboot_args[3] - 0x80000000 < ram_size) {
 		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
+#endif
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
