@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.52 2013/06/29 20:44:52 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.53 2013/07/30 20:45:44 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.52 2013/06/29 20:44:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.53 2013/07/30 20:45:44 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -563,7 +563,7 @@ initarm(void *arg)
 	    mapallmem_p);
 
 	/* "bootargs" env variable is passed as 4th argument to kernel */
-	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
+	if ((uboot_args[3] & 0xe0000000) == 0x80000000) {
 		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
 	boot_args = bootargs;
@@ -976,6 +976,23 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
 		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
 		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
+#if defined(TI_DM37XX)
+		/* XXX Beagleboard specific port configuration */
+		prop_dictionary_set_uint16(dict, "nports", 3);
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_int16(dict, "port1-gpio", 56);
+		prop_dictionary_set_bool(dict, "port1-gpioval", true);
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+#if 0
+		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
+		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
+		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
 #endif
 #if defined(OMAP_4430)
 		prop_dictionary_set_uint16(dict, "nports", 2);
