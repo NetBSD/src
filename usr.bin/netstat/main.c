@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.70.2.1 2013/07/30 02:24:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.70.2.1 2013/07/30 02:24:19 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ struct protox {
 	void	(*pr_istats)
 			__P((char *));	/* per/if statistics printing routine */
 	void	(*pr_dump)		/* PCB state dump routine */
-			__P((u_long));
+			__P((u_long, const char *, u_long));
 	char	*pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
@@ -568,7 +568,8 @@ main(argc, argv)
 			tp = name2protox("tcp");
 		}
 		if (tp->pr_dump)
-			(*tp->pr_dump)(pcbaddr);
+			(*tp->pr_dump)(nl[tp->pr_index].n_value, tp->pr_name,
+			    pcbaddr);
 		else
 			printf("%s: no PCB dump routine\n", tp->pr_name);
 		exit(0);
