@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.14 2013/07/29 20:27:21 jdc Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.15 2013/07/30 04:09:45 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -157,3 +157,8 @@ src/share/zoneinfo/zone.tab			1.1.1.45 via patch
   Import tzdata2013d.
   Changes for Morocco, Israel, Antarctica, metadata and documentation.
   [apb, ticket #915]
+
+sys/net/if_mpls.c				1.9
+
+	Stop abusing kmem during softint context to prevent panic.
+	[kefren, ticket #921]
