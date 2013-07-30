@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.23 2013/07/30 01:57:31 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.24 2013/07/30 02:02:28 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -393,16 +393,14 @@ src/share/zoneinfo/zone.tab			1.1.1.45 via patch
 	Changes for Morocco, Israel, Antarctica, metadata and documentation.
 	[apb, ticket #915]
 
-sys/dev/pci/if_wm.c				1.259,1.260,1.261,1.262
+sys/dev/pci/if_wm.c				1.259-1.262
 sys/dev/pci/if_wmreg.h				1.54
 
 	Various fixes to wm(4):
-	  Fix "MDIC write error" bug for 82574 and 82583
-	  Sync the wm_enable_mng_pass_thru() function with FreeBSD
-	  Sync the wm_release_manageablilty() fucntion with FreeBSD
-	  For 82580(ER) or I350, set flags as per FreeBSD
-	  Move EEPROM-related calls to after identifying the EEPPROM
-	  Fix another NVM bank detect problem
+	  Fix "MDIC write error" bug for 82574 and 82583.
+	  Sync some functions with FreeBSD to make IPMI/ASF stable.
+	  Move EEPROM-related calls to after identifying the EEPPROM.
+	  Fix another NVM bank detect problem.
 	[msaitoh, ticket #918]
 
 sys/common/pmap/tlb/pmap_tlb.c			patch
