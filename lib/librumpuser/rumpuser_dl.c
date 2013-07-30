@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.19 2013/06/04 15:17:28 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.20 2013/07/30 18:48:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.19 2013/06/04 15:17:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.20 2013/07/30 18:48:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -144,17 +144,20 @@ do {									\
 
 /*
  * On NetBSD, the dynamic section pointer values seem to be relative to
- * the address the dso is mapped at.  On Linux, they seem to contain
+ * the address the dso is mapped at.  On glibc, they seem to contain
  * the absolute address.  I couldn't find anything definite from a quick
  * read of the standard and therefore I will not go and figure beyond ifdef.
- * On Solaris and DragonFly, the main object works differently ... uuuuh.
+ * On Solaris and DragonFly / FreeBSD, the main object works differently
+ * ... uuuuh.
  */
-#if defined(__linux__)
+#if defined(__GLIBC__)
+/* XXX: not true for e.g. MIPS, but we'll cross that hurdle later */
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
 #elif defined(__sun__) || defined(__DragonFly__) || defined(__FreeBSD__)
 #define adjptr(_map_, _ptr_) \
     (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
+/* NetBSD and some others, e.g. Linux + musl-libc */
 #define adjptr(_map_, _ptr_) ((void *)(_map_->l_addr + (_ptr_)))
 #endif
 
