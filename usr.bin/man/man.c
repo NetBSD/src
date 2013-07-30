@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.55 2013/07/19 05:05:59 uwe Exp $	*/
+/*	$NetBSD: man.c,v 1.56 2013/07/30 15:10:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.55 2013/07/19 05:05:59 uwe Exp $");
+__RCSID("$NetBSD: man.c,v 1.56 2013/07/30 15:10:04 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,10 +114,10 @@ static void	 cat(const char *);
 static const char	*check_pager(const char *);
 static int	 cleanup(void);
 static void	 how(const char *);
-static void	 jump(char **, const char *, const char *);
+static void	 jump(char **, const char *, const char *) __dead;
 static int	 manual(char *, struct manstate *, glob_t *);
-static void	 onsig(int);
-static void	 usage(void) __attribute__((__noreturn__));
+static void	 onsig(int) __dead;
+static void	 usage(void) __dead;
 static void	 addpath(struct manstate *, const char *, size_t, const char *);
 static const char *getclass(const char *);
 static void printmanpath(struct manstate *);
