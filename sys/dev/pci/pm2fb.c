@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.22 2013/06/28 15:26:57 christos Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.23 2013/07/30 19:21:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.22 2013/06/28 15:26:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.23 2013/07/30 19:21:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
 			   &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 			   min(2047, (sc->sc_fbsize / sc->sc_stride))
 			    - sc->sc_height - 5,
@@ -502,9 +503,16 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				/* first set the video mode */
+				if (sc->sc_videomode != NULL) {
+					pm2fb_set_mode(sc, sc->sc_videomode);
+				}
+				/* then initialize the drawing engine */
 				pm2fb_init(sc);
 				pm2fb_restore_palette(sc);
+				/* clean out the glyph cache */
 				glyphcache_wipe(&sc->sc_gc);
+				/* and redraw everything */
 				vcons_redraw_screen(ms);
 			} else
 				pm2fb_flush_engine(sc);
