@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.17 2011/07/01 18:41:52 dyoung Exp $ */
+/*	$NetBSD: cuda.c,v 1.18 2013/07/30 15:31:49 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.17 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.18 2013/07/30 15:31:49 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,8 +358,8 @@ cuda_send(void *cookie, int poll, int length, uint8_t *msg)
 
 	s = splhigh();
 
-	if ((sc->sc_state == CUDA_IDLE) /*&& 
-	    ((cuda_read_reg(sc, vBufB) & vPB3) == vPB3)*/) {
+	if (sc->sc_state == CUDA_IDLE /*&& 
+	    (cuda_read_reg(sc, vBufB) & vPB3) == vPB3*/) {
 		/* fine */
 		DPRINTF("chip is idle\n");
 	} else {
