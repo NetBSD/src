@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.24 2013/07/30 02:02:28 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.25 2013/07/30 04:07:25 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -407,3 +407,26 @@ sys/common/pmap/tlb/pmap_tlb.c			patch
 
 	Add missing "))". This patch fixes PR#46371.
 	[msaitoh, ticket #920]
+
+sys/net/if_mpls.c				1.9
+
+	Stop abusing kmem during softint context to prevent panic.
+	[kefren, ticket #921]
+
+tests/lib/libc/sys/t_msgrcv.c			1.3
+lib/libc/sys/msgrcv.2				1.21-1.22
+lib/libc/sys/msgsnd.2				1.19-1.20
+
+	Fix msgsz confusion.
+	[skrll, ticket #922]
+
+lib/libperfuse/ops.c				1.61-1.62
+	One more explicit error log, and two bug fixes
+	1) with recent FUSE, when lookup returns a null ino, it means ENOENT
+	2) odd corner case that caused a bug on dd if=test of=test conv=notrunc
+	   This caused the file to be open first ro, then rw. A logic bug in
+	   perfuse_node_open caused it to skip the second operation, whereas
+	   it should open for writing, and store the write FH without touching
+	   the read FH.
+	Catch open without FREAD|FWRITE (it should not happen)
+	[manu, ticket #923]
