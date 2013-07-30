@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.60 2012/11/13 20:47:58 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.61 2013/07/30 19:24:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.60 2012/11/13 20:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.61 2013/07/30 19:24:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,7 +653,8 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		if (ri->ri_flg & RI_ENABLE_ALPHA) {
 			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(sc->sc_ramsize / sc->sc_stride) - 
