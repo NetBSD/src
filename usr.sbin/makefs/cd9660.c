@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.43 2013/01/31 15:15:15 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.44 2013/07/30 16:02:23 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.43 2013/01/31 15:15:15 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.44 2013/07/30 16:02:23 reinoud Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -723,8 +723,9 @@ cd9660_finalize_PVD(iso9660_disk *diskStructure)
 	/*
 	cd9660_set_date(diskStructure->primaryDescriptor.expiration_date, now);
 	*/
+	memset(diskStructure->primaryDescriptor.expiration_date, '0' ,16);
+	diskStructure->primaryDescriptor.expiration_date[16] = 0;
 
-	memset(diskStructure->primaryDescriptor.expiration_date, '0' ,17);
 	cd9660_time_8426(
 	    (unsigned char *)diskStructure->primaryDescriptor.effective_date,
 	    tim);
