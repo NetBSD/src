@@ -29,7 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.2 2013/01/31 06:47:55 matt Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.3 2013/07/30 10:47:44 skrll Exp $");
+
+#include "namespace.h"
 
 /*
  * To properly implement setjmp/longjmp for the ARM AAPCS ABI, it has to be
