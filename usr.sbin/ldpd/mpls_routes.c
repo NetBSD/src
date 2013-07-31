@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.21 2013/07/27 14:35:41 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.22 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -900,6 +900,8 @@ bind_current_routes()
 
 		so_pref->sa.sa_family = AF_INET;
 		so_pref->sa.sa_len = sizeof(struct sockaddr_in);
+		so_pref->sin.sin_port = 0;
+		memset(&so_pref->sin.sin_zero, 0, 8);
 
 		/* Also deletes when dest is IPv4 and gateway MPLS */
 		if ((rtmes->rtm_addrs & RTA_GATEWAY) &&
