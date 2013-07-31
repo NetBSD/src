@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_console.8,v 1.14 2009/03/09 19:24:31 joerg Exp $
+.\"	$NetBSD: boot_console.8,v 1.15 2013/07/31 13:54:42 soren Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -123,8 +123,8 @@ digits corresponding to the serial port number currently probed.
 .El
 .\"
 .Sh FILES
-.Bl -tag -width /sys/arch/i386/stand/{bios,dos,net}boot/Makefile
-.It Pa /sys/arch/i386/stand/{bios,dos,net}boot/Makefile
+.Bl -tag -width src/sys/arch/i386/stand/{boot,pxeboot}/Makefile
+.It Pa src/sys/arch/i386/stand/{boot,pxeboot}/Makefile
 compile time options for the boot programs.
 .El
 .\"
@@ -134,20 +134,6 @@ compile time options for the boot programs.
 .Xr installboot 8
 .\"
 .Sh BUGS
-The value of
-.Dv SERIAL_POLICY
-should be settable through a boot configuration option.
-However traditionally there was no non-volatile storage available on the
-PC platform.
-This requires console auto-selection methods which can be
-inconvenient and/or unstable in some situations.
-The selection policy should be adapted to the local hardware configuration,
-which might require code changes.
-(Some BIOS versions, particularly those used on
-large servers and in embedded and single-board industrial computers,
-have integrated support for serial consoles.
-The boot loader should query for these settings if possible.)
-.Pp
 The serial communication parameters (byte-size, parity, stop-bits) are
 not settable (either at compile time or run time).
 The default parameters are
