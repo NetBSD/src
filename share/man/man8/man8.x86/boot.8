@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.60 2013/07/31 13:54:42 soren Exp $
+.\"	$NetBSD: boot.8,v 1.1 2013/07/31 21:01:13 soren Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd July 31, 2013
-.Dt BOOT 8 i386
+.Dt BOOT 8 x86
 .Os
 .Sh NAME
 .Nm boot
@@ -48,7 +48,7 @@ the
 and its clones
 .Pc
 that can run
-.Nx Ns /i386
+.Nx Ns /x86
 can use any of the following boot procedures, depending on what the hardware and
 .Tn BIOS
 support:
@@ -139,7 +139,7 @@ See
 .Xr boot.cfg 5 .
 .Pp
 The
-.Nx Ns /i386
+.Nx Ns /x86
 boot loader can boot a kernel using either the native
 .Nx
 boot protocol, or the
@@ -167,7 +167,7 @@ In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
 .\" NOTE: much of this text is duplicated in the MI boot.8.
 .\" Some of it is
-.\" also duplicated in the i386-specific dosboot.8 and pxeboot.8;
+.\" also duplicated in the x86-specific dosboot.8 and pxeboot.8;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
@@ -226,7 +226,7 @@ Sets the machine-dependent flag
 in
 .Va boothowto .
 In
-.Nx Ns /i386 ,
+.Nx Ns /x86 ,
 this disables multiprocessor boot;
 the kernel will boot in uniprocessor mode.
 .It Fl 2
@@ -235,7 +235,7 @@ Sets the machine-dependent flag
 in
 .Va boothowto .
 In
-.Nx Ns /i386 ,
+.Nx Ns /x86 ,
 this disables ACPI.
 .It Fl 3
 Sets the machine-dependent flag
@@ -243,7 +243,7 @@ Sets the machine-dependent flag
 in
 .Va boothowto .
 In
-.Nx Ns /i386 ,
+.Nx Ns /x86 ,
 this has no effect.
 .It Fl 4
 Sets the machine-dependent flag
@@ -251,7 +251,7 @@ Sets the machine-dependent flag
 in
 .Va boothowto .
 In
-.Nx Ns /i386 ,
+.Nx Ns /x86 ,
 this has no effect.
 .It Fl a
 Sets the
@@ -565,7 +565,7 @@ lists all supported modes.
 .Pp
 In an emergency, the bootstrap methods described in the
 .Nx
-installation notes for the i386 architecture
+installation notes for the x86 architectures
 can be used to boot from floppy or other media,
 or over the network.
 .Sh FILES
