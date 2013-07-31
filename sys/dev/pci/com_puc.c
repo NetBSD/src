@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.20 2013/07/22 13:42:17 soren Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.21 2013/07/31 14:31:01 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.20 2013/07/22 13:42:17 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.21 2013/07/31 14:31:01 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,25 +90,6 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
-	/* Enable Cyberserial 8X clock. */
-	if (aa->flags & (PUC_COM_SIIG10x|PUC_COM_SIIG20x)) {
-		int usrregno;
-
-		if	(aa->flags & PUC_PORT_USR3) usrregno = 3;
-		else if (aa->flags & PUC_PORT_USR2) usrregno = 2;
-		else if (aa->flags & PUC_PORT_USR1) usrregno = 1;
-		else /* (aa->flags & PUC_PORT_USR0) */ usrregno = 0;
-
-		if (aa->flags & PUC_COM_SIIG10x)
-			write_siig10x_usrreg(aa->pc, aa->tag, usrregno, 1);
-		else
-			write_siig20x_usrreg(aa->pc, aa->tag, usrregno, 1);
-	} else {
-		if (!pmf_device_register(self, NULL, com_resume))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n");
-	}
-
 	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
 	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
 	    comintr, sc);
@@ -131,10 +112,28 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	if (aa->h < 0x10000)
 		aprint_normal("ioaddr 0x%04lx, ", aa->h);
 #endif
-
 	aprint_normal("interrupting at %s\n", intrstr);
-	aprint_normal("%s", device_xname(self));
 
+	/* Enable Cyberserial 8X clock. */
+	if (aa->flags & (PUC_COM_SIIG10x|PUC_COM_SIIG20x)) {
+		int usrregno;
+
+		if	(aa->flags & PUC_PORT_USR3) usrregno = 3;
+		else if (aa->flags & PUC_PORT_USR2) usrregno = 2;
+		else if (aa->flags & PUC_PORT_USR1) usrregno = 1;
+		else /* (aa->flags & PUC_PORT_USR0) */ usrregno = 0;
+
+		if (aa->flags & PUC_COM_SIIG10x)
+			write_siig10x_usrreg(aa->pc, aa->tag, usrregno, 1);
+		else
+			write_siig20x_usrreg(aa->pc, aa->tag, usrregno, 1);
+	} else {
+		if (!pmf_device_register(self, NULL, com_resume))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n");
+	}
+
+	aprint_normal("%s", device_xname(self));
 	com_attach_subr(sc);
 }
 

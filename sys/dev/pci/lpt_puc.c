@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.15 2013/07/22 13:42:17 soren Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.16 2013/07/31 14:31:01 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.15 2013/07/22 13:42:17 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.16 2013/07/31 14:31:01 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,22 +75,36 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
 
+	aprint_naive(": Parallel port");
+	aprint_normal(": ");
+
 	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
 	sc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    lptintr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error(": couldn't establish interrupt");
+		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal(": interrupting at %s\n", intrstr);
 
-	lpt_attach_subr(sc);
+#if defined(amd64) || defined(i386)
+	/*
+	 * Parallel ports are sometimes used for improvised GPIO by
+	 * userspace programs which need to know the port's I/O address.
+	 * Print the address here so the user doesn't have to dig through
+	 * PCI configuration space to find it.
+	*/
+	if (aa->h < 0x10000)
+		aprint_normal("ioaddr 0x%04lx, ", aa->h);
+#endif
+	aprint_normal("interrupting at %s\n", intrstr);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	lpt_attach_subr(sc);
 }
 
 CFATTACH_DECL_NEW(lpt_puc, sizeof(struct lpt_softc),
