@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.23 2013/07/31 13:54:42 soren Exp $
+.\"	$NetBSD: dosboot.8,v 1.1 2013/07/31 21:01:13 soren Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -27,11 +27,11 @@
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd July 31, 2013
-.Dt DOSBOOT 8 i386
+.Dt DOSBOOT 8 x86
 .Os
 .Sh NAME
 .Nm dosboot
-.Nd boot NetBSD/i386 from DOS
+.Nd boot NetBSD/x86 from DOS
 .Sh SYNOPSIS
 .Nm
 .Op Fl u
@@ -44,7 +44,7 @@ is an
 .Tn MS-DOS
 program.
 It is a boot loader for
-.Nx Ns Tn /i386
+.Nx Ns Tn /x86
 designed to permit
 .Nx
 to be booted directly from
@@ -104,7 +104,7 @@ The commands accepted after the
 .Fl c
 flag or in interactive mode are:
 .\" NOTE: some of this text is duplicated in the MI boot.8
-.\" and in other i386-specific *boot.8 files;
+.\" and in other x86-specific *boot.8 files;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
@@ -172,7 +172,7 @@ dosboot -u fd0a:netbsd -s
 .Xr boot 8
 .Sh HISTORY
 The
-.Nx Ns Tn /i386
+.Nx Ns Tn /x86
 .Nm
 command first appeared in
 .Nx 1.3 .
