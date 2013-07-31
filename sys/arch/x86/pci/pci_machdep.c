@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.59 2013/07/31 14:05:33 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.60 2013/07/31 19:27:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.59 2013/07/31 14:05:33 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.60 2013/07/31 19:27:51 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -897,7 +897,7 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
-					    (vaddr_t)ri->ri_bits);
+					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
 				}
@@ -932,6 +932,7 @@ device_pci_register(device_t dev, void *aux)
 #endif
 			}
 			prop_dictionary_set_bool(dict, "is_console", true);
+
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
 			prop_dictionary_set_uint16(dict, "cursor-row",
