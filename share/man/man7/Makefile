@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2013/02/25 02:02:41 jmmv Exp $
+#	$NetBSD: Makefile,v 1.30 2013/07/31 11:57:24 gdt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.init.mk>
@@ -13,10 +13,10 @@ MAN=	ascii.7 c.7 environ.7 glob.7 hier.7 hostname.7 intro.7 mailaddr.7 \
 CLEANFILES=	tests.7
 .if ${MKKYUA} != "no"
 tests.7: tests.kyua.7
-	cp ${.ALLSRC} ${.TARGET}
+	rm -f ${.TARGET} && cp ${.ALLSRC} ${.TARGET}
 .else
 tests.7: tests.atf.7
-	cp ${.ALLSRC} ${.TARGET}
+	rm -f ${.TARGET} && cp ${.ALLSRC} ${.TARGET}
 .endif
 
 MLINKS+=c.7 c78.7 \
