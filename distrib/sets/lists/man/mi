@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1430 2013/06/10 07:14:01 kardel Exp $
+# $NetBSD: mi,v 1.1431 2013/07/31 13:54:42 soren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2206,7 +2206,13 @@
 ./usr/share/man/cat8/amd.0			man-amd-catman		.cat
 ./usr/share/man/cat8/amd64/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amd64/boot.0		man-sys-catman		.cat
+./usr/share/man/cat8/amd64/boot_console.0	man-sys-catman		.cat
+./usr/share/man/cat8/amd64/bootselect.0		man-sys-catman		.cat
+./usr/share/man/cat8/amd64/dosboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/amd64/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/amd64/mbr.0		man-sys-catman		.cat
+./usr/share/man/cat8/amd64/multiboot.0		man-sys-catman		.cat
+./usr/share/man/cat8/amd64/pxeboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/amiga/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amiga/binpatch.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/boot.0		man-sys-catman		.cat
@@ -5058,6 +5064,12 @@
 ./usr/share/man/html8/altqd.html		man-router-htmlman	html
 ./usr/share/man/html8/amd.html			man-amd-htmlman		html
 ./usr/share/man/html8/amd64/boot.html		man-sys-htmlman		html
+./usr/share/man/html8/amd64/boot_console.html	man-sys-htmlman		html
+./usr/share/man/html8/amd64/bootselect.html	man-sys-htmlman		html
+./usr/share/man/html8/amd64/dosboot.html	man-sys-htmlman		html
+./usr/share/man/html8/amd64/mbr.html		man-sys-htmlman		html
+./usr/share/man/html8/amd64/multiboot.html	man-sys-htmlman		html
+./usr/share/man/html8/amd64/pxeboot.html	man-sys-htmlman		html
 ./usr/share/man/html8/amiga/binpatch.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/amiga/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/amiga/grfconfig.html	man-sysutil-htmlman	html
@@ -7907,7 +7919,13 @@
 ./usr/share/man/man8/amd.8			man-amd-man		.man
 ./usr/share/man/man8/amd64/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/amd64/boot.8		man-sys-man		.man
+./usr/share/man/man8/amd64/boot_console.8	man-sys-man		.man
+./usr/share/man/man8/amd64/bootselect.8		man-sys-man		.man
+./usr/share/man/man8/amd64/dosboot.8		man-sys-man		.man
 ./usr/share/man/man8/amd64/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/amd64/mbr.8		man-sys-man		.man
+./usr/share/man/man8/amd64/multiboot.8		man-sys-man		.man
+./usr/share/man/man8/amd64/pxeboot.8		man-sys-man		.man
 ./usr/share/man/man8/amiga/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/amiga/binpatch.8		man-sysutil-man		.man
 ./usr/share/man/man8/amiga/boot.8		man-sys-man		.man

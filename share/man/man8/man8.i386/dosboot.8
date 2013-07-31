@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.22 2013/07/13 10:52:50 njoly Exp $
+.\"	$NetBSD: dosboot.8,v 1.23 2013/07/31 13:54:42 soren Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd October 13, 2008
+.Dd July 31, 2013
 .Dt DOSBOOT 8 i386
 .Os
 .Sh NAME
@@ -169,8 +169,7 @@ dosboot -u fd0a:netbsd -s
 .Ed
 .Sh SEE ALSO
 .Xr release 7 ,
-.Xr boot 8 ,
-.Xr w95boot 8
+.Xr boot 8
 .Sh HISTORY
 The
 .Nx Ns Tn /i386
@@ -187,13 +186,6 @@ extenders and memory managers.
 .Nm
 does not run directly under
 .Tn Windows 95 .
-See
-.Xr w95boot 8
-for a method of starting
-.Nx
-from
-.Tn Windows 95
-using dosboot.
 .Pp
 In UFS mode, files can only be loaded from devices known to the BIOS.
 The device names do not necessarily comply with the names later
