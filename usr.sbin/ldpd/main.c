@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.8 2013/07/25 08:40:30 kefren Exp $ */
+/* $NetBSD: main.c,v 1.9 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/select.h>
 #include <arpa/inet.h>
 
 #include <stdio.h>

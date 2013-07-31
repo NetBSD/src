@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.7 2013/07/24 09:05:53 kefren Exp $ */
+/* $NetBSD: label.h,v 1.8 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _LABEL_H_
 #define _LABEL_H_
 
-#include <sys/queue.h>
+#include <sys/rbtree.h>
 
 #include "mpls_routes.h"
 #include "ldp_peer.h"
@@ -53,9 +53,8 @@ struct label {
 	int binding, label;
 	bool host;	/* change routes using RTF_HOST */
 	const struct ldp_peer *p;
-	SLIST_ENTRY(label) labels;
+	rb_node_t lbtree;
 };
-SLIST_HEAD(,label) label_head;
 
 void            label_init(void);
 struct label *	label_add(const union sockunion *, const union sockunion *,
@@ -72,5 +71,6 @@ uint32_t	get_free_local_label(void);
 void		announce_label_change(struct label *);
 void		label_reattach_route(struct label*, int);
 void		label_check_assoc(struct ldp_peer *p);
+struct label *	label_get_right(struct label *);
 
 #endif /* !_LABEL_H_ */

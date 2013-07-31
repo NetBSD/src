@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.12 2013/07/18 06:07:45 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.13 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -504,11 +504,11 @@ show_labels(int s, char *recvspace)
 int
 show_bindings(int s, char *recvspace)
 {
-	struct label *l;
+	struct label *l = NULL;
 
 	snprintf(sendspace, MAXSEND, "Local label\tNetwork\t\t\t\tNexthop\n");
 	writestr(s, sendspace);
-	SLIST_FOREACH (l, &label_head, labels) {
+	while((l = label_get_right(l)) != NULL) {
 		snprintf(sendspace, MAXSEND, "%d\t\t%s/", l->binding,
 		    satos(&l->so_dest.sa));
 		writestr(s, sendspace);

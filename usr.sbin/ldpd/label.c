@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.10 2013/07/24 09:05:53 kefren Exp $ */
+/* $NetBSD: label.c,v 1.11 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <netmpls/mpls.h>
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,12 +42,45 @@
 #include "label.h"
 #include "ldp_errors.h"
 
-int	min_label = MIN_LABEL, max_label = MAX_LABEL;
+static int labels_compare(void*, const void*, const void*);
+
+int min_label = MIN_LABEL, max_label = MAX_LABEL;
+
+static rb_tree_t labels_tree;
+static const rb_tree_ops_t tree_ops = {
+	.rbto_compare_nodes = labels_compare,
+	.rbto_compare_key = labels_compare,
+	.rbto_node_offset = offsetof(struct label, lbtree),
+	.rbto_context = NULL
+};
 
 void 
 label_init()
 {
-	SLIST_INIT(&label_head);
+
+	rb_tree_init(&labels_tree, &tree_ops);
+}
+
+static int
+labels_compare(void *context, const void *node1, const void *node2)
+{
+	const struct label *l1 = node1, *l2 = node2;
+	int ret;
+
+	if (__predict_false(l1->so_dest.sa.sa_family !=
+	    l2->so_dest.sa.sa_family))
+		return l1->so_dest.sa.sa_family > l2->so_dest.sa.sa_family ?
+		    1 : -1;
+
+	assert(l1->so_dest.sa.sa_len == l2->so_dest.sa.sa_len);
+	assert(l1->so_pref.sa.sa_len == l2->so_pref.sa.sa_len);
+
+	if ((ret = memcmp(&l1->so_dest.sa, &l2->so_dest.sa,
+	    l1->so_dest.sa.sa_len)) != 0)
+		return ret;
+	else
+		return memcmp(&l1->so_pref.sa, &l2->so_pref.sa,
+		    l1->so_pref.sa.sa_len);
 }
 
 /*
@@ -85,7 +119,8 @@ label_add(const union sockunion * so_dest, const union sockunion * so_pref,
 	l->label = label;
 	l->host = host;
 
-	SLIST_INSERT_HEAD(&label_head, l, labels);
+	if (rb_tree_insert_node(&labels_tree, l) != l)
+		fatalp("label already in tree");
 
 	strlcpy(spreftmp, satos(&so_pref->sa), INET_ADDRSTRLEN);
 	warnp("[label_add] added binding %d for %s/%s\n", l->binding,
@@ -102,7 +137,7 @@ label_del(struct label * l)
 {
 	warnp("[label_del] deleted binding %d for %s\n", l->binding,
 	   satos(&l->so_dest.sa));
-	SLIST_REMOVE(&label_head, l, label, labels);
+	rb_tree_remove_node(&labels_tree, l);
 	free(l);
 }
 
@@ -148,15 +183,13 @@ label_reattach_route(struct label *l, int readd)
 struct label*
 label_get(const union sockunion *sodest, const union sockunion *sopref)
 {
-	struct label *l;
+	struct label l;
 
-	SLIST_FOREACH (l, &label_head, labels)
-	    if (sodest->sin.sin_addr.s_addr ==
-		    l->so_dest.sin.sin_addr.s_addr &&
-		sopref->sin.sin_addr.s_addr ==
-		    l->so_pref.sin.sin_addr.s_addr)
-			return l;
-	return NULL;
+	memset(&l, 0, sizeof(l));
+	memcpy(&l.so_dest, sodest, sodest->sa.sa_len);
+	memcpy(&l.so_pref, sopref, sopref->sa.sa_len);
+
+	return rb_tree_find_node(&labels_tree, &l);
 }
 
 /*
@@ -168,7 +201,7 @@ label_reattach_all_peer_labels(const struct ldp_peer *p, int readd)
 {
 	struct label   *l;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	RB_TREE_FOREACH(l, &labels_tree)
 		if (l->p == p)
 			label_reattach_route(l, readd);
 }
@@ -182,12 +215,17 @@ del_all_peer_labels(const struct ldp_peer * p, int readd)
 {
 	struct label   *l, *lnext;
 
-	SLIST_FOREACH_SAFE(l, &label_head, labels, lnext) {
+	RB_TREE_FOREACH(l, &labels_tree) {
+back_delete:
 		if(l->p != p)
 			continue;
 		label_reattach_route(l, readd);
+		lnext = rb_tree_iterate(&labels_tree, l, RB_DIR_RIGHT);
 		label_del(l);
-		SLIST_REMOVE(&label_head, l, label, labels);
+		if (lnext == NULL)
+			break;
+		l = lnext;
+		goto back_delete;
 	}
 }
 
@@ -199,11 +237,10 @@ label_del_by_binding(uint32_t binding, int readd)
 {
 	struct label   *l;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	RB_TREE_FOREACH(l, &labels_tree)
 		if ((uint32_t)l->binding == binding) {
 			label_reattach_route(l, readd);
 			label_del(l);
-			SLIST_REMOVE(&label_head, l, label, labels);
 			break;
 		}
 }
@@ -238,7 +275,7 @@ get_free_local_label()
 	int lbl;
  
 	for (lbl = min_label; lbl <= max_label; lbl++) {
-		SLIST_FOREACH(l, &label_head, labels)
+		RB_TREE_FOREACH(l, &labels_tree)
 			if (l->binding == lbl)
 				break;
 		if (l == NULL)
@@ -267,13 +304,22 @@ label_check_assoc(struct ldp_peer *p)
 	struct label *l;
 	struct ldp_peer_address *wp;
 
-	SLIST_FOREACH (l, &label_head, labels)
+	RB_TREE_FOREACH(l, &labels_tree)
 		if (l->p == NULL && l->so_gate.sa.sa_family != 0)
 			SLIST_FOREACH(wp, &p->ldp_peer_address_head, addresses)
 				if (sockaddr_cmp(&l->so_gate.sa,
-				    &wp->address.sa) == 0){
+				    &wp->address.sa) == 0) {
 					l->p = p;
 					l->label = MPLS_LABEL_IMPLNULL;
 					break;
 				}
+}
+
+struct label *
+label_get_right(struct label *l)
+{
+	if (l == NULL)
+		return RB_TREE_MIN(&labels_tree);
+	else
+		return rb_tree_iterate(&labels_tree, l, RB_DIR_RIGHT);
 }

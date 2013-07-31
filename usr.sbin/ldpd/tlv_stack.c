@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.12 2013/07/20 05:16:08 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.13 2013/07/31 06:58:23 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 		 * POP Label
 		 */
 		lab = label_get_by_prefix(&socktmp.sa, pref->prelen);
-		if ((lab) && (lab->p == p)) {
+		if (lab && lab->p == p) {
 			label_reattach_route(lab, REATT_INET_CHANGE);
 			announce_label_change(lab); /* binding has changed */
 		}
@@ -332,9 +332,9 @@ send_label_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen,
 void 
 send_all_bindings(const struct ldp_peer * peer)
 {
-	struct label *l;
+	struct label *l = NULL;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	while((l = label_get_right(l)) != NULL)
 	   send_label_tlv(peer, &l->so_dest.sa,
 		from_union_to_cidr(&l->so_pref), l->binding, NULL);
 
