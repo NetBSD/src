@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.18 2010/11/06 23:33:29 jym Exp $
+.\"	$NetBSD: pxeboot.8,v 1.1 2013/07/31 21:01:13 soren Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -25,11 +25,11 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd November 7, 2010
-.Dt PXEBOOT 8 i386
+.Dt PXEBOOT 8 x86
 .Os
 .Sh NAME
 .Nm pxeboot
-.Nd network boot NetBSD/i386 through a PXE BIOS extension
+.Nd network boot NetBSD/x86 through a PXE BIOS extension
 .Sh DESCRIPTION
 .Nm
 is a
@@ -222,7 +222,7 @@ kernel's behaviour.
 .Pp
 The commands accepted in interactive mode are:
 .\" NOTE: some of this text is duplicated in the MI boot.8
-.\" and in other i386-specific *boot.8 files;
+.\" and in other x86-specific *boot.8 files;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Ic boot Oo Va device : Ns Oc Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
@@ -381,7 +381,7 @@ kernel to mount the root file system.
 .Re
 .Sh HISTORY
 The
-.Nx Ns Tn /i386
+.Nx Ns Tn /x86
 .Nm
 command first appeared in
 .Nx 1.6 .
