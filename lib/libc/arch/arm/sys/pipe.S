@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.6 2004/08/21 11:30:17 rearnsha Exp $	*/
+/*	$NetBSD: pipe.S,v 1.7 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@ WEAK_ALIAS(pipe, _pipe)
 ENTRY(_pipe)
 	mov	r2, r0
 	SYSTRAP(pipe)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	str	r0, [r2, #0x0000]
 	str	r1, [r2, #0x0004]
 	mov	r0, #0x00000000

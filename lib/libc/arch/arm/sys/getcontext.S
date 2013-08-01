@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.8 2013/04/30 19:42:56 skrll Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.9 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.8 2013/04/30 19:42:56 skrll Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.9 2013/08/01 05:54:24 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -43,7 +43,7 @@ WEAK_ALIAS(getcontext, _getcontext)
 ENTRY(_getcontext)
 	mov	r2, r0			/* Must save argument pointer. */
 	SYSTRAP (getcontext)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	str	lr, [r2, #_UC_REGS_PC]	/* Adjust PC. */
 #ifdef SOFTFLOAT
 	/* Ahem. */

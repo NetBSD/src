@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsuspend.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigsuspend.S,v 1.2 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,6 @@ WARN_REFERENCES(sigsuspend, \
 ENTRY(sigsuspend)
 	ldr	r0, [r0]
 	SYSTRAP(compat_13_sigsuspend13)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	mov	r0, #0x00000000
 	RET

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_Ovfork.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_Ovfork.S,v 1.2 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,7 @@ WARN_REFERENCES(vfork, \
 ENTRY(vfork)
 	mov	r2, r14
 	SYSTRAP(vfork)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	mov	r14, r2
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
