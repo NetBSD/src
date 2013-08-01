@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.5 2013/08/01 11:29:47 skrll Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.6 2013/08/01 11:30:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.5 2013/08/01 11:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.6 2013/08/01 11:30:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ bcmrng_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmrng_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835rng_softc *sc = device_private(self);
+	struct bcm2835rng_softc *sc = device_private(self);
  	struct amba_attach_args *aaa = aux;
 	uint32_t ctrl;
 
@@ -122,11 +122,11 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 static void
 bcmrng_get(size_t bytes, void *priv)
 {
-        struct bcm2835rng_softc *sc = priv;
+	struct bcm2835rng_softc *sc = priv;
 	uint32_t status;
 	int need = bytes, cnt;
 
-        mutex_spin_enter(&sc->sc_mutex);
+	mutex_spin_enter(&sc->sc_mutex);
 
 	if (__predict_false(need < 1)) {
 		return;
