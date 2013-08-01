@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.9 2011/05/13 23:14:36 nonaka Exp $	*/
+/*	$NetBSD: brk.S,v 1.10 2013/08/01 05:32:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(_end)
-	.globl	CURBRK
+	.globl	_C_LABEL(__curbrk)
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
@@ -43,6 +43,7 @@ WEAK_ALIAS(brk, _brk)
 	.data
 	.align	0
 	.globl	_C_LABEL(__minbrk)
+	.hidden	_C_LABEL(__minbrk)
 	.type	_C_LABEL(__minbrk),#object
 _C_LABEL(__minbrk):
 	.word	_C_LABEL(_end)
@@ -57,7 +58,7 @@ ENTRY(_brk)
 	add	r3, pc, r3
 .L1:
 	ldr	r1, .Lminbrk
-	ldr	r1, [r3, r1]
+	add	r1, r3, r1
 #else
 	ldr	r1, .Lminbrk
 #endif
@@ -76,7 +77,7 @@ ENTRY(_brk)
 
 #ifdef PIC
 	ldr	r1, .Lcurbrk
-	ldr	r1, [r3, r1]
+	add	r1, r3, r1
 #else
 	ldr	r1, .Lcurbrk
 #endif
@@ -93,6 +94,6 @@ ENTRY(_brk)
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
 .Lminbrk:
-	.word	PIC_SYM(_C_LABEL(__minbrk), GOT)
+	.word	PIC_SYM(_C_LABEL(__minbrk), GOTOFF)
 .Lcurbrk:
-	.word	PIC_SYM(CURBRK, GOT)
+	.word	PIC_SYM(_C_LABEL(__curbrk), GOTOFF)
