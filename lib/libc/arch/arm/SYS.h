@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 2013/07/18 12:21:52 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.12 2013/08/01 05:32:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,4 +86,5 @@
 	PSEUDO(weak,weak)
 #endif
 
+	.hidden	CERROR
 	.globl	CERROR
