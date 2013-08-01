@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.6 2006/04/24 19:00:30 snj Exp $ */
+/* $NetBSD: __clone.S,v 1.7 2013/08/01 05:54:24 matt Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -51,7 +51,7 @@ ENTRY(__clone)
 	mov	r0, r2
 
 	SYSTRAP(__clone)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 
 	/*
 	 * r1 and r0 are the same as from fork:
@@ -90,4 +90,4 @@ ENTRY(__clone)
 	/* error handler if func or stack is NULL */
 .Leinval:
 	mov	R0, #EINVAL
-	b	PIC_SYM(CERROR, PLT)
+	b	CERROR
