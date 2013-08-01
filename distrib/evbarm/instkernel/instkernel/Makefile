@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/05/06 17:42:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.21 2013/08/01 21:11:41 jklos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,6 +12,7 @@ SSHRAMDISK=	${SSHRAMDISKDIR}/sshramdisk.fs
 # Little endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			BCM5301X_INSTALL	${RAMDISK}	-	\
+			BEAGLEBONE_INSTALL	${RAMDISK}	-	\
 			CP3100_INSTALL		${RAMDISK}	-	\
 			GEMINI_INSTALL		${RAMDISK}	-	\
 			GUMSTIX_INSTALL		${RAMDISK}	-	\
