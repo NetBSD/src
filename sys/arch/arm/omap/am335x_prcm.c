@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.4 2013/06/29 20:43:33 matt Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.5 2013/08/01 00:24:43 matt Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.4 2013/06/29 20:43:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.5 2013/08/01 00:24:43 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,9 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 	int freq = mpu_frequency;
 	int old_freq = freq;
 
-	KASSERT(curcpu()->ci_data.cpu_cc_freq == mpu_frequency * 1000);
+	KASSERTMSG(curcpu()->ci_data.cpu_cc_freq == mpu_frequency * 1000000,
+	    "cc_freq %"PRIu64" mpu_freq %u000000",
+	    curcpu()->ci_data.cpu_cc_freq, mpu_frequency);
 
 	node.sysctl_data = &freq;
 
@@ -187,12 +189,13 @@ SYSCTL_SETUP(sysctl_am335x_machdep_setup, "sysctl am335x machdep subtree setup")
 
 	static char mpu_available_frequencies[__arraycount(mpu_frequencies)*6];
 
-	KASSERT(__arraycount(mpu_frequencies) == 8);
+	__CTASSERT(__arraycount(mpu_frequencies) == 8);
 	snprintf(mpu_available_frequencies, sizeof(mpu_available_frequencies),
 	   "%u %u %u %u %u %u %u %u",
 	   mpu_frequencies[0], mpu_frequencies[1], mpu_frequencies[2],
 	   mpu_frequencies[3], mpu_frequencies[4], mpu_frequencies[5],
 	   mpu_frequencies[6], mpu_frequencies[7]);
+	mpu_frequency = curcpu()->ci_data.cpu_cc_freq / 1000000;
 
 	sysctl_createv(clog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT,
@@ -215,7 +218,7 @@ SYSCTL_SETUP(sysctl_am335x_machdep_setup, "sysctl am335x machdep subtree setup")
 	sysctl_createv(clog, 0, &freqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "current", NULL,
-		       mpu_current_frequency_sysctl_helper, 0, NULL, 0
+		       mpu_current_frequency_sysctl_helper, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 }
 
