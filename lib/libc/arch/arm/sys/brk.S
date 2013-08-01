@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.10 2013/08/01 05:32:33 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.11 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@ ENTRY(_brk)
 	movcc	r0, r1
 	mov	r2, r0
 	SYSTRAP(break)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 
 #ifdef PIC
 	ldr	r1, .Lcurbrk

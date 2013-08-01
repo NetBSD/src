@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.8 2004/08/21 11:30:17 rearnsha Exp $ */
+/*	$NetBSD: ptrace.S,v 1.9 2013/08/01 05:54:24 matt Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,7 @@ ENTRY(ptrace)
 #endif /* _REENTRANT */
 
 	SYSTRAP(ptrace)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	RET
 
 #ifndef _REENTRANT

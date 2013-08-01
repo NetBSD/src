@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.1 2005/10/16 17:27:50 christos Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.2 2013/08/01 05:54:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@ ENTRY(sigprocmask)
 	moveq	r1, #0x00000000
 	ldrne	r1, [r1]
 	SYSTRAP(compat_13_sigprocmask13)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	CERROR
 	teq	r2, #0x00000000
 	strne	r0, [r2]
 	mov	r0, #0x00000000
