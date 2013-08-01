@@ -78,8 +78,8 @@
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:{!mfpu=*:-mfpu=vfp}}   \
-   %{mfloat-abi=hard:{!mfpu=*:-mfpu=vfp}}"
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+   %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\
