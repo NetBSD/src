@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.11 2013/08/01 22:18:50 matt Exp $ */
+/* $NetBSD: softfloat-for-gcc.h,v 1.12 2013/08/01 23:21:19 matt Exp $ */
 
 /*
  * Move private identifiers with external linkage into implementation
@@ -169,7 +169,9 @@
 #endif
 
 #ifdef __ARM_EABI__
+#ifdef __ARM_PCS_VFP
 #include <arm/aeabi.h>
+#endif
 #define __addsf3			__aeabi_fadd
 #define __adddf3			__aeabi_dadd
 
