@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.4 2013/06/13 00:55:01 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.5 2013/08/01 11:29:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.4 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.5 2013/08/01 11:29:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,6 @@ bcmrng_get(size_t bytes, void *priv)
 	int need = bytes, cnt;
 
         mutex_spin_enter(&sc->sc_mutex);
-
-        printf("bcmrng: asked for %d bytes", (int)bytes);
 
 	if (__predict_false(need < 1)) {
 		return;
