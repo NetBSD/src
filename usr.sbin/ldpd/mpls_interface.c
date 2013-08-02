@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.12 2013/07/24 09:05:53 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.13 2013/08/02 07:29:56 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ mpls_add_label(struct label *lab)
 	union sockunion *so_dest, *so_nexthop, *so_tag, so_ifa;
 	uint8_t prefixlen;
 	uint32_t oldbinding;
+	struct peer_map *pm;
 
 	assert(lab != NULL);
 
@@ -74,8 +75,13 @@ mpls_add_label(struct label *lab)
 		return LDP_E_BAD_AF;
 
 	/* double check if there is a label mapping for this */
-	if (ldp_peer_get_lm(lab->p, &lab->so_dest.sa, prefixlen) == NULL)
+	if ((pm = ldp_test_mapping(&lab->so_dest.sa, prefixlen,
+	    &lab->so_gate.sa)) == NULL || pm->peer != lab->p) {
+		if (pm != NULL)
+			free(pm);
 		return LDP_E_NOENT;
+	}
+	free(pm);
 
 	if (lab->so_gate.sa.sa_family != AF_INET &&
 	    lab->so_gate.sa.sa_family != AF_INET6) {
