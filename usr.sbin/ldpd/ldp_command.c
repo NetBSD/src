@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.13 2013/07/31 06:58:23 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.14 2013/08/02 07:29:56 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -481,12 +481,12 @@ int
 show_labels(int s, char *recvspace)
 {
 	struct ldp_peer *p;
-	struct label_mapping *lm;
+	struct label_mapping *lm = NULL;
 
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		if (p->state != LDP_PEER_ESTABLISHED)
 			continue;
-		SLIST_FOREACH(lm, &p->label_mapping_head, mappings) {
+		while ((lm = ldp_peer_lm_right(p, lm)) != NULL) {
 			char lma[256];
 			/* XXX: TODO */
 			if (lm->address.sa.sa_family != AF_INET)
