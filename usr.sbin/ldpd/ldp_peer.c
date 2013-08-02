@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.15 2013/07/20 05:16:08 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.16 2013/08/02 07:29:56 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -54,6 +55,17 @@
 #include "ldp_peer.h"
 
 extern int ldp_holddown_time;
+
+static struct label_mapping *ldp_peer_get_lm(struct ldp_peer *,
+    const struct sockaddr *, uint);
+
+static int mappings_compare(void *, const void *, const void *);
+static rb_tree_ops_t mappings_tree_ops = {
+	.rbto_compare_nodes = mappings_compare,
+	.rbto_compare_key = mappings_compare,
+	.rbto_node_offset = offsetof(struct label_mapping, mappings_node),
+	.rbto_context = NULL
+};
 
 void 
 ldp_peer_init(void)
@@ -69,6 +81,28 @@ sockaddr_cmp(const struct sockaddr *a, const struct sockaddr *b)
 		return -1;
 	return memcmp(a, b, a->sa_len);
 }
+
+static int
+mappings_compare(void *context, const void *node1, const void *node2)
+{
+	const struct label_mapping *l1 = node1, *l2 = node2;
+	int ret;
+
+	if (__predict_false(l1->address.sa.sa_family !=
+	    l2->address.sa.sa_family))
+		return l1->address.sa.sa_family > l2->address.sa.sa_family ?
+		    1 : -1;
+
+	assert(l1->address.sa.sa_len == l2->address.sa.sa_len);
+	if ((ret = memcmp(&l1->address.sa, &l2->address.sa, l1->address.sa.sa_len)) != 0)
+		return ret;
+
+	if (__predict_false(l1->prefix != l2->prefix))
+		return l1->prefix > l2->prefix ? 1 : -1;
+
+	return 0;
+}
+
 /*
  * soc should be > 1 if there is already a TCP socket for this else we'll
  * initiate a new one
@@ -150,7 +184,7 @@ ldp_peer_new(const struct in_addr * ldp_id, const struct sockaddr * padd,
 		set_ttl(p->socket);
 	}
 	SLIST_INIT(&p->ldp_peer_address_head);
-	SLIST_INIT(&p->label_mapping_head);
+	rb_tree_init(&p->label_mapping_tree, &mappings_tree_ops);
 	p->timeout = p->holdtime;
 
 	sopts = fcntl(p->socket, F_GETFL);
@@ -449,7 +483,7 @@ ldp_peer_add_mapping(struct ldp_peer * p, const struct sockaddr * a,
 	lma->prefix = prefix;
 	lma->label = label;
 
-	SLIST_INSERT_HEAD(&p->label_mapping_head, lma, mappings);
+	rb_tree_insert_node(&p->label_mapping_tree, lma);
 
 	return LDP_E_OK;
 }
@@ -460,34 +494,28 @@ ldp_peer_delete_mapping(struct ldp_peer * p, const struct sockaddr * a,
 {
 	struct label_mapping *lma;
 
-	if (!a)
+	if (a == NULL || (lma = ldp_peer_get_lm(p, a, prefix)) == NULL)
 		return LDP_E_NOENT;
 
-	lma = ldp_peer_get_lm(p, a, prefix);
-	if (!lma)
-		return LDP_E_NOENT;
-
-	SLIST_REMOVE(&p->label_mapping_head, lma, label_mapping, mappings);
+	rb_tree_remove_node(&p->label_mapping_tree, lma);
 	free(lma);
 
 	return LDP_E_OK;
 }
 
-struct label_mapping *
-ldp_peer_get_lm(const struct ldp_peer * p, const struct sockaddr * a,
+static struct label_mapping *
+ldp_peer_get_lm(struct ldp_peer * p, const struct sockaddr * a,
     uint prefix)
 {
-	struct label_mapping *rv;
+	struct label_mapping rv;
 
-	if (!p)
-		return NULL;
+	assert(a->sa_len <= sizeof(union sockunion));
 
-	SLIST_FOREACH(rv, &p->label_mapping_head, mappings)
-		if (rv->prefix == prefix && sockaddr_cmp(a, &rv->address.sa)==0)
-			break;
+	memset(&rv, 0, sizeof(rv));
+	memcpy(&rv.address.sa, a, a->sa_len);
+	rv.prefix = prefix;
 
-	return rv;
-
+	return rb_tree_find_node(&p->label_mapping_tree, &rv);
 }
 
 void
@@ -495,9 +523,8 @@ ldp_peer_delete_all_mappings(struct ldp_peer * p)
 {
 	struct label_mapping *lma;
 
-	while(!SLIST_EMPTY(&p->label_mapping_head)) {
-		lma = SLIST_FIRST(&p->label_mapping_head);
-		SLIST_REMOVE_HEAD(&p->label_mapping_head, mappings);
+	while((lma = RB_TREE_MIN(&p->label_mapping_tree)) != NULL) {
+		rb_tree_remove_node(&p->label_mapping_tree, lma);
 		free(lma);
 	}
 }
@@ -540,6 +567,16 @@ ldp_test_mapping(const struct sockaddr * a, int prefix,
 	rv->peer = lpeer;
 
 	return rv;
+}
+
+struct label_mapping * ldp_peer_lm_right(struct ldp_peer *p,
+    struct label_mapping * map)
+{
+	if (map == NULL)
+		return RB_TREE_MIN(&p->label_mapping_tree);
+	else
+		return rb_tree_iterate(&p->label_mapping_tree, map,
+		    RB_DIR_RIGHT);
 }
 
 /* Name from state */
