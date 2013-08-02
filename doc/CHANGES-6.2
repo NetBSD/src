@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.27 2013/07/30 08:22:28 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.28 2013/08/02 20:12:30 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -451,3 +451,8 @@ include/res_update.h				1.8
 
 	Restore libresolv missing bits, including NS updates.
 	[manu, ticket #887]
+
+sys/kern/uipc_socket.c				1.216
+	Fix an inversion in checking for authorization to drop TCP connections
+	found (and the obvious fix suggested) by Sander Bos.
+	[spz, ticket #927]
