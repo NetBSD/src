@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.30 2013/07/29 20:35:33 roy Exp $ */
+/* $NetBSD: defs.h,v 1.1.1.31 2013/08/03 10:30:01 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,7 +30,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"6.0.4"
+#define VERSION			"6.0.5"
 
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
