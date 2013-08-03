@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.51 2013/05/06 19:59:29 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.52 2013/08/03 13:17:05 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.51 2013/05/06 19:59:29 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.52 2013/08/03 13:17:05 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -400,7 +400,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 
 		case PT_INTERP:
 			obj->interp = (const char *)(uintptr_t)vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_INTERP", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -417,14 +417,14 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 				    obj->vaddrbase;
 			}
 			++nsegs;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_LOAD", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
 
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_DYNAMIC", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -436,7 +436,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			obj->tlsalign = ph->p_align;
 			obj->tlsinitsize = ph->p_filesz;
 			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_TLS", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -445,7 +445,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		case PT_ARM_EXIDX:
 			obj->exidx_start = (void *)(uintptr_t)vaddr;
 			obj->exidx_sz = ph->p_memsz;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_ARM_EXIDX", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
