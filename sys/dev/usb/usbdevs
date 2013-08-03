@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.650 2013/05/27 16:32:58 kiyohara Exp $
+$NetBSD: usbdevs,v 1.651 2013/08/03 16:04:30 soren Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
-vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
+vendor ZTE		0x19d2	ZTE
 vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
@@ -2578,10 +2578,6 @@ product QUALCOMM NTT_DOCOMO_L02C_STORAGE	0x61dd	NTT DOCOMO L-02C
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
-product QUALCOMMINC CDMA_MSM	0x0001	CDMA Technologies MSM modem
-product QUALCOMMINC ZTE_MF626	0x0031	CDMA Technologies MSM modem
-product QUALCOMMINC ZTE_STOR	0x2000  USB ZTE Storage
-product QUALCOMMINC AC8700	0xfffe	CDMA 1xEVDO USB modem
 
 /* Qualcomm Kyocera products */
 product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
@@ -2685,6 +2681,8 @@ product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
 product ROLAND UA25 		0x0074	EDIROL UA-25
 product ROLAND UA101		0x007d	EDIROL UA-101
+product ROLAND PC50A		0x008b	EDIROL PC-50 (advanced)
+product ROLAND PC50		0x008c	EDIROL PC-50
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
 product ROLAND UA1EX		0x0096	EDIROL UA-1EX
 product ROLAND UM3		0x009A	EDIROL UM-3
@@ -3299,6 +3297,16 @@ product ZINWELL RT3070		0x5257	RT3070
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
 product ZOOM 3095		0x3095	3095 USB Fax modem
+
+/* ZTE products */
+product ZTE MF622		0x0001	MF622 modem
+product ZTE MF628		0x0015	MF628 modem
+product ZTE MF626		0x0031	MF626 modem
+product ZTE MF820D_INSTALLER	0x0166	MF820D CD
+product ZTE MF820D		0x0167	MF820D modem
+product ZTE INSTALLER		0x2000  UMTS CD
+product ZTE MC2718		0xffe8	MC2718 modem
+product ZTE AC8700		0xfffe	CDMA 1xEVDO USB modem
 
 /* Zydas Technology Corporation products */
 product ZYDAS ZD1201		0x1201	ZD1201
