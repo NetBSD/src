@@ -1064,7 +1064,7 @@ vchiq_open(dev_t dev, int flags, int mode, lwp_t *l)
 		lmutex_init(&instance->bulk_waiter_list_mutex);
 		INIT_LIST_HEAD(&instance->bulk_waiter_list);
 
-	} 
+	}
 	else {
 		vchiq_log_error(vchiq_arm_log_level,
 			"Unknown minor device");
