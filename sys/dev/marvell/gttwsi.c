@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.8 2013/05/13 15:47:18 christos Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.9 2013/08/03 07:39:31 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.8 2013/05/13 15:47:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.9 2013/08/03 07:39:31 kiyohara Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -341,13 +341,8 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
 	if (!error)
 		*valp = RREG(sc, TWSI_DATA);
-	if (flags & I2C_F_LAST) {
-#if defined(ARMADAXP)
+	if ((flags & (I2C_F_LAST | I2C_F_STOP)) == (I2C_F_LAST | I2C_F_STOP))
 		error = gttwsi_send_stop(sc, flags);
-#else
-		WREG(sc, TWSI_CONTROL, 0);
-#endif
-	}
 	return error;
 }
 
@@ -355,13 +350,13 @@ static int
 gttwsi_write_byte(void *v, uint8_t val, int flags)
 {
 	struct gttwsi_softc *sc = v;
+	int error;
 
 	WREG(sc, TWSI_DATA, val);
-#if defined(ARMADAXP)
-	if (flags & I2C_F_LAST)
+	error = gttwsi_wait(sc, 0, STAT_MTDB_AR, flags);
+	if (flags & I2C_F_STOP)
 		gttwsi_send_stop(sc, flags);
-#endif
-	return gttwsi_wait(sc, 0, STAT_MTDB_AR, flags);
+	return error;
 }
 
 static int
@@ -399,19 +394,5 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		    "unexpected status 0x%x: expect 0x%x\n", status, expect);
 		return EIO;
 	}
-
-#ifndef ARMADAXP
-	if (flags & I2C_F_STOP)
-		switch (expect) {
-		case STAT_SCT:
-		case STAT_RSCT:
-		case STAT_MRRD_AT:
-		case STAT_ARBT_AR:
-			break;
-		default:
-			error = gttwsi_send_stop(sc, flags);
-		}
-#endif
-
 	return error;
 }
