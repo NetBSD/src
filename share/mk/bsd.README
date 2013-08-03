@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.318 2013/06/02 11:02:40 mbalmer Exp $
+#	$NetBSD: bsd.README,v 1.319 2013/08/03 19:31:26 adam Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -352,7 +352,7 @@ MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+MKSLJIT		If "no", disables building of sljit (stack-less platform
 		independent JIT compiler) private library and tests.
 		Default: yes on amd64, i386 and sparc, no elsewhere.
 
