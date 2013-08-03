@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.21 2013/08/02 03:48:19 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.22 2013/08/03 20:16:44 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -487,8 +487,8 @@ vfp_state_load(lwp_t *l, u_int flags)
 	if (__predict_false((l->l_md.md_flags & MDLWP_VFPUSED) == 0)) {
 		vfpevent_use.ev_count++;
 		l->l_md.md_flags |= MDLWP_VFPUSED;
-		pcb->pcb_vfp.vfp_fpscr =
-		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
+		pcb->pcb_vfp.vfp_fpscr =	/* Runfast */
+		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN);
 	} else {
 		vfpevent_reuse.ev_count++;
 	}
