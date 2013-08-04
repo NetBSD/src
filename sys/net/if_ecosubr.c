@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.37 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.38 2013/08/04 07:05:15 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.37 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.38 2013/08/04 07:05:15 kiyohara Exp $");
 
 #include "opt_inet.h"
 
@@ -355,8 +355,9 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	struct eco_header ehdr, *eh;
-	int s, i;
+	int s;
 #ifdef INET
+	int i;
 	struct arphdr *ah;
 	struct eco_arp *ecah;
 	struct mbuf *m1;
@@ -464,7 +465,9 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		printf("%s: unknown port stn %s port 0x%02x ctl 0x%02x\n",
 		    ifp->if_xname, eco_sprintf(eh->eco_shost),
 		    eh->eco_port, eh->eco_control);
+#ifdef INET
 	drop:
+#endif
 		m_freem(m);
 		return;
 	}
