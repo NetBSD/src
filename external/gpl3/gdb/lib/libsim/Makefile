@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/09 02:03:21 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2013/08/04 23:41:43 matt Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -20,13 +20,13 @@ MIC=	${HOST_SH} ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I. \
 		-I${DIST}/sim/ppc -I${DIST}/include \
-		-I${.CURDIR}/arch/${MACHINE_ARCH} \
-		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-DHAVE_COMMON_FPU \
-		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/sim/common
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
 		-DDEFAULT_INLINE=PSIM_INLINE_LOCALS \
@@ -195,7 +195,7 @@ ${DEFINES_H}: run-defines
 run-defines:
 	${TOOL_SED} -n -e '/^#define HAVE_/s/ 1$$/",/' \
 	       -e '/^#define HAVE_/s//"HAVE_/p' \
-	       < ${.CURDIR}/arch/${MACHINE_ARCH}/config.h > tmp-defines.h
+	       < ${.CURDIR}/arch/${GDB_MACHINE_ARCH}/config.h > tmp-defines.h
 	${MIC} tmp-defines.h defines.h
 	touch run-defines
 DPSRCS+= ${DEFINES_H}
