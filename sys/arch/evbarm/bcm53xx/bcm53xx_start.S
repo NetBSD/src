@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.6 2013/06/30 22:02:29 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.7 2013/08/04 01:02:01 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.6 2013/06/30 22:02:29 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.7 2013/08/04 01:02:01 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -68,6 +68,9 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.6 2013/06/30 22:02:29 matt Exp $")
 
 	.global	_C_LABEL(bcm53xx_start)
 _C_LABEL(bcm53xx_start):
+#ifdef __ARMEB__
+	setend	be		/* make sure we are running big endian */
+#endif
 	/*
 	 * Save any arguments u-boot passed us.
 	 */
