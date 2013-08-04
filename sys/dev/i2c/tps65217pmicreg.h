@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmicreg.h,v 1.5 2013/05/07 01:16:25 jakllsch Exp $ */
+/*	$NetBSD: tps65217pmicreg.h,v 1.6 2013/08/04 00:24:28 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,14 @@
 #define TPS65217PMIC_PPATH_IAC_2500MA			3
 #define TPS65217PMIC_PPATH_USB_EN		__BIT(4)
 #define TPS65217PMIC_PPATH_AC_EN		__BIT(5)
+
+#define TPS65217PMIC_INT		0x02
+#define TPS65217PMIC_INT_USBI			__BIT(0)
+#define TPS65217PMIC_INT_ACI			__BIT(1)
+#define TPS65217PMIC_INT_PBI			__BIT(2)
+#define TPS65217PMIC_INT_USBM			__BIT(4)
+#define TPS65217PMIC_INT_ACM			__BIT(5)
+#define TPS65217PMIC_INT_PBM			__BIT(6)
 
 #define TPS65217PMIC_WLEDCTRL1		0x07
 #define TPS65217PMIC_WLEDCTRL1_FDIM		__BITS(1,0)
