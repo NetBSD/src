@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/02/28 22:07:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/08/04 23:41:43 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 LIBISPRIVATE=	yes
 LIB=		gdb
-GDBARCHDIR=	${.CURDIR}/arch/${MACHINE_ARCH}
+GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
 
@@ -22,8 +22,8 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/include/opcode \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
-		-I${.CURDIR}/../libdecnumber/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		-DTARGET_SYSTEM_ROOT=\"\" \
