@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/02 18:16:06 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/08/04 23:41:43 matt Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -7,10 +7,10 @@ LIBISPRIVATE=	yes
 
 LIB=		bfd
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GDB_MACHINE_ARCH}/defs.mk"
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/include -I. \
+CPPFLAGS+=	-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-DDEBUGDIR=\"${DESTDIR}/usr/libdata/debug\"
 
