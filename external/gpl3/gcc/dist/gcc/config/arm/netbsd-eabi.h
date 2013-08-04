@@ -37,6 +37,8 @@
 #undef  TARGET_LINKER_EMULATION
 #if TARGET_BIG_ENDIAN_DEFAULT
 #define TARGET_LINKER_EMULATION TARGET_LINKER_BIG_EMULATION
+#undef BE8_LINK_SPEC
+#define BE8_LINK_SPEC " %{!mlittle-endian:%{march=armv7-a|mcpu=cortex-a5|mcpu=cortex-a8|mcpu=cortex-a9:%{!r:--be8}}}" 
 #else
 #define TARGET_LINKER_EMULATION TARGET_LINKER_LITTLE_EMULATION
 #endif
