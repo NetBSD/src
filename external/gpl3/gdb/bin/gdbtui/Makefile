@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2011/10/12 03:57:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/08/04 23:41:43 matt Exp $
 
 .include "../Makefile.inc"
 
-GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${MACHINE_ARCH}
+GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${GDB_MACHINE_ARCH}
 .include "${GDBARCHDIR}/defs.mk"
 
 PROG=		gdbtui
@@ -14,7 +14,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb/config \
 		-I${DIST}/include/opcode \
 		-I${DIST} \
-		-I${.CURDIR}/../../lib/libbfd/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
@@ -42,8 +42,8 @@ LDADD+= -L${LIBGDBDIR} -lgdb
 DPADD+= ${LIBGDBDIR}/libgdb.a
 
 # Simulator support
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
-    ${MACHINE_ARCH} == powerpc64
+.if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
+    ${GDB_MACHINE_ARCH} == powerpc64
 SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
@@ -72,4 +72,4 @@ DPADD+=		${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 LDADD+=                -lpthread_dbg
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
+    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
