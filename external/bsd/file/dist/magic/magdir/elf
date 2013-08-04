@@ -109,6 +109,8 @@
 >>4	byte		1
 >>>36	lelong&0xff000000	0x04000000	EABI4
 >>>36	lelong&0xff000000	0x05000000	EABI5
+>>>36	lelong		&0x00800000	BE8
+>>>36	lelong		&0x00400000	LE8
 >18	leshort		41		Alpha,
 >18	leshort		0xa390		IBM S/390 (obsolete),
 >18	leshort		42		Renesas SH,
