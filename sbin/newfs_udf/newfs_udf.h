@@ -41,9 +41,7 @@
 /* global variables describing disc and format requests */
 extern int	 fd;				/* device: file descriptor */
 extern char	*dev;				/* device: name		   */
-#if !HAVE_NBTOOL_CONFIG_H
 extern struct mmc_discinfo mmc_discinfo;	/* device: disc info	   */
-#endif
 
 extern char	*format_str;			/* format: string representation */
 extern int	 format_flags;			/* format: attribute flags	 */
@@ -61,9 +59,7 @@ struct udf_disclayout     layout;
 
 /* prototypes */
 int udf_write_sector(void *sector, uint32_t location);
-#if !HAVE_NBTOOL_CONFIG_H
 int udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti);
-#endif
 
 /* tmp */
 int writeout_write_queue(void);
