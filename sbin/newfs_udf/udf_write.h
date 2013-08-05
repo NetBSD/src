@@ -1,3 +1,5 @@
+/* $NetBSD: udf_write.h,v 1.4 2013/08/05 20:52:08 reinoud Exp $ */
+
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.
@@ -29,7 +31,10 @@
 
 #include "udf_create.h"
 #if !HAVE_NBTOOL_CONFIG_H
+#define _EXPOSE_MMC
 #include <sys/cdio.h>
+#else
+#include "udf/cdio_mmc_structs.h"
 #endif
 
 /* prototypes */
