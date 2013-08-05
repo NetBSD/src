@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/02/18 15:32:02 gdt Exp $
+#	$NetBSD: Makefile,v 1.10 2013/08/05 00:17:53 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -28,9 +28,9 @@ CPPFLAGS+=	-I${BFDDIR}
 .include <bsd.prog.mk>
 
 .ifndef HOSTPROG
-.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
+.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
-CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
+CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${BINUTILS_MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 DPADD+=		${LIBZ}
