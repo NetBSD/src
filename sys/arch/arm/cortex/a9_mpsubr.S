@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.7 2013/08/04 01:20:08 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.8 2013/08/05 00:59:19 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,14 +114,14 @@ arm_boot_l1pt_init:
 #define	CPU_CONTROL_SWP_ENABLE		0
 #endif
 #ifdef __ARMEL__
-#undef CPU_CONTROL_BEND_ENABLE		// needs to clear on LE systems
-#define	CPU_CONTROL_BEND_ENABLE		0
+#undef CPU_CONTROL_EX_BEND		// needs to clear on LE systems
+#define	CPU_CONTROL_EX_BEND		0
 #endif
 
 #define	CPU_CONTROL_SET \
 	(CPU_CONTROL_MMU_ENABLE		|	\
 	 CPU_CONTROL_AFLT_ENABLE	|	\
-	 CPU_CONTROL_BEND_ENABLE	|	\
+	 CPU_CONTROL_EX_BEND		|	\
 	 CPU_CONTROL_DC_ENABLE		|	\
 	 CPU_CONTROL_SWP_ENABLE		|	\
 	 CPU_CONTROL_BPRD_ENABLE	|	\
