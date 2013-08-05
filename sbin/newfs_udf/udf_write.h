@@ -32,6 +32,11 @@
 
 /* prototypes */
 
+int udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
+	uint32_t sects);
+void udf_metadata_alloc(int nblk, struct long_ad *pos);
+void udf_data_alloc(int nblk, struct long_ad *pos);
+
 int udf_derive_format(int req_enable, int req_disable, int force);
 int udf_proces_names(void);
 

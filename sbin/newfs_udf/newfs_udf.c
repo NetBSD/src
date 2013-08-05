@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.14 2013/07/18 12:44:21 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.15 2013/08/05 14:11:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -94,6 +94,7 @@ int	 format_flags;			/* format: attribute flags	 */
 int	 media_accesstype;		/* derived from current mmc cap  */
 int	 check_surface;			/* for rewritables               */
 int	 imagefile_secsize;		/* for files			 */
+int	 emul_packetsize;		/* for discs and files		 */
 
 int	 wrtrack_skew;
 int	 meta_perc = UDF_META_PERC;
@@ -289,8 +290,9 @@ udf_update_discinfo(struct mmc_discinfo *di)
 		sectors = size / secsize;
 	} else {
 		/*
-		 * disc partition support; note we can't use DIOCGPART in userland so
-		 * get disc label and use the stat info to get the partition number.
+		 * disc partition support; note we can't use DIOCGPART in
+		 * userland so get disc label and use the stat info to get the
+		 * partition number.
 		 */
 		if (ioctl(fd, DIOCGDINFO, &disklab) == -1) {
 			/* failed to get disclabel! */
@@ -303,9 +305,10 @@ udf_update_discinfo(struct mmc_discinfo *di)
 		partnr = DISKPART(st.st_rdev);
 		dp = &disklab.d_partitions[partnr];
 
-		/* TODO problem with last_possible_lba on resizable VND; request */
+		/* TODO problem with last_possible_lba on resizable VND */
 		if (dp->p_size == 0) {
-			perror("faulty disklabel partition returned, check label\n");
+			perror("faulty disklabel partition returned, "
+				"check label\n");
 			return EIO;
 		}
 
@@ -363,7 +366,7 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 	ti->flags = MMC_TRACKINFO_LRA_VALID | MMC_TRACKINFO_NWA_VALID;
 
 	ti->track_start    = 0;
-	ti->packet_size    = 1;
+	ti->packet_size    = emul_packetsize;
 
 	/* TODO support for resizable vnd */
 	ti->track_size    = di->last_possible_lba;
@@ -722,6 +725,7 @@ main(int argc, char **argv)
 	check_surface = 0;
 	setsize       = 0;
 	imagefile_secsize = 512;	/* minimum allowed sector size */
+	emul_packetsize   = 32;		/* reasonable default */
 
 	srandom((unsigned long) time(NULL));
 	udf_init_create_context();
@@ -740,7 +744,7 @@ main(int argc, char **argv)
 	context.gmtoff = tm->tm_gmtoff;
 
 	/* process options */
-	while ((ch = getopt(argc, argv, "cFL:Mp:P:s:S:t:v:V:")) != -1) {
+	while ((ch = getopt(argc, argv, "cFL:Mp:P:s:S:B:t:v:V:")) != -1) {
 		switch (ch) {
 		case 'c' :
 			check_surface = 1;
@@ -801,6 +805,12 @@ main(int argc, char **argv)
 		case 'S' :
 			imagefile_secsize = a_num(optarg, "secsize");
 			imagefile_secsize = MAX(512, imagefile_secsize);
+			break;
+		case 'B' :
+			emul_packetsize = a_num(optarg,
+				"blockingnr, packetsize");
+			emul_packetsize = MAX(emul_packetsize, 1);
+			emul_packetsize = MIN(emul_packetsize, 32);
 			break;
 		case 't' :
 			/* time zone overide */

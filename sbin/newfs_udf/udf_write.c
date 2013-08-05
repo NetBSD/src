@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.2 2013/07/18 12:50:51 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.3 2013/08/05 14:11:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_write.c,v 1.2 2013/07/18 12:50:51 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.3 2013/08/05 14:11:30 reinoud Exp $");
 #endif /* not lint */
 
 #define _EXPOSE_MMC
@@ -53,18 +53,14 @@ union dscrptr *terminator_dscr;
 
 
 static int
-udf_write_dscr_phys(union dscrptr *dscr, uint32_t location,
-	uint32_t sects)
+udf_write_phys(void *blob, uint32_t location, uint32_t sects)
 {
 	uint32_t phys, cnt;
 	uint8_t *bpos;
 	int error;
 
-	dscr->tag.tag_loc = udf_rw32(location);
-	(void) udf_validate_tag_and_crc_sums(dscr);
-
 	for (cnt = 0; cnt < sects; cnt++) {
-		bpos  = (uint8_t *) dscr;
+		bpos  = (uint8_t *) blob;
 		bpos += context.sector_size * cnt;
 
 		phys = location + cnt;
@@ -77,15 +73,24 @@ udf_write_dscr_phys(union dscrptr *dscr, uint32_t location,
 
 
 static int
+udf_write_dscr_phys(union dscrptr *dscr, uint32_t location,
+	uint32_t sects)
+{
+	dscr->tag.tag_loc = udf_rw32(location);
+	(void) udf_validate_tag_and_crc_sums(dscr);
+
+	return udf_write_phys(dscr, location, sects);
+}
+
+
+int
 udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 	uint32_t sects)
 {
 	struct file_entry *fe;
 	struct extfile_entry *efe;
 	struct extattrhdr_desc *extattrhdr;
-	uint32_t phys, cnt;
-	uint8_t *bpos;
-	int error;
+	uint32_t phys;
 
 	extattrhdr = NULL;
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
@@ -106,19 +111,51 @@ udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 	dscr->tag.tag_loc = udf_rw32(location);
 	udf_validate_tag_and_crc_sums(dscr);
 
-	for (cnt = 0; cnt < sects; cnt++) {
-		bpos  = (uint8_t *) dscr;
-		bpos += context.sector_size * cnt;
-
-		/* NOTE linear mapping assumed in the ranges used */
-		phys = context.vtop_offset[vpart] + location + cnt;
-
-		error = udf_write_sector(bpos, phys);
-		if (error)
-			return error;
+	/* determine physical location */
+	phys = context.vtop_offset[vpart];
+	if (context.vtop_tp[vpart] == UDF_VTOP_TYPE_VIRT) {
+		udf_vat_update(location, context.data_alloc_pos);
+		phys += context.data_alloc_pos++;
+	} else {
+		phys += location;
 	}
-	return 0;
+
+	return udf_write_phys(dscr, phys, sects);
 }
+
+
+void
+udf_metadata_alloc(int nblk, struct long_ad *pos)
+{
+	memset(pos, 0, sizeof(struct long_ad));
+	pos->len	  = udf_rw32(nblk * context.sector_size);
+	pos->loc.lb_num   = udf_rw32(context.metadata_alloc_pos);
+	pos->loc.part_num = udf_rw16(context.metadata_part);
+
+	udf_mark_allocated(context.metadata_alloc_pos, context.metadata_part,
+		nblk);
+
+	context.metadata_alloc_pos += nblk;
+	if (context.metadata_part == context.data_part)
+		context.data_alloc_pos = context.metadata_alloc_pos;
+}
+
+
+void
+udf_data_alloc(int nblk, struct long_ad *pos)
+{
+	memset(pos, 0, sizeof(struct long_ad));
+	pos->len	  = udf_rw32(nblk * context.sector_size);
+	pos->loc.lb_num   = udf_rw32(context.data_alloc_pos);
+	pos->loc.part_num = udf_rw16(context.data_part);
+
+	udf_mark_allocated(context.data_alloc_pos, context.data_part, nblk);
+	context.data_alloc_pos += nblk;
+	if (context.metadata_part == context.data_part)
+		context.metadata_alloc_pos = context.data_alloc_pos;
+}
+
+
 
 /* --------------------------------------------------------------------- */
 
@@ -198,13 +235,12 @@ udf_derive_format(int req_enable, int req_disable, int force)
 		format_flags &= ~(FORMAT_META | FORMAT_LOW);
 		req_disable  &= ~FORMAT_META;
 	}
-	if (req_disable || req_enable) {
-		(void)printf("Internal error\n");
-		(void)printf("\tunrecognised enable/disable req.\n");
-		return EIO;
-	}
 	if ((format_flags & FORMAT_VAT) & UDF_512_TRACK)
 		format_flags |= FORMAT_TRACK512;
+
+	if (req_enable & FORMAT_READONLY) {
+		format_flags |= FORMAT_READONLY;
+	}
 
 	/* determine partition/media access type */
 	media_accesstype = UDF_ACCESSTYPE_NOT_SPECIFIED;
@@ -218,6 +254,12 @@ udf_derive_format(int req_enable, int req_disable, int force)
 	}
 	if (mmc_discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE)
 		media_accesstype = UDF_ACCESSTYPE_PSEUDO_OVERWITE;
+
+	/* patch up media accesstype */
+	if (req_enable & FORMAT_READONLY) {
+		/* better now */
+		media_accesstype = UDF_ACCESSTYPE_READ_ONLY;
+	}
 
 	/* adjust minimum version limits */
 	if (format_flags & FORMAT_VAT)
@@ -432,6 +474,7 @@ udf_do_newfs_prefix(void)
 			blockingnr = 32;	/* UDF requirement */
 			break;
 		case 0x11 : /* DVD-R (DL) */
+		case 0x12 : /* DVD-RAM */
 		case 0x1b : /* DVD+R      */
 		case 0x2b : /* DVD+R Dual layer */
 		case 0x13 : /* DVD-RW restricted overwrite */
@@ -439,7 +482,10 @@ udf_do_newfs_prefix(void)
 			blockingnr = 16;	/* SCSI definition */
 			break;
 		case 0x41 : /* BD-R Sequential recording (SRM) */
+		case 0x42 : /* BD-R Random recording (RRM) */
+		case 0x43 : /* BD-RE */
 		case 0x51 : /* HD DVD-R   */
+		case 0x52 : /* HD DVD-RW  */
 			blockingnr = 32;	/* SCSI definition */
 			break;
 		default:
@@ -637,7 +683,7 @@ udf_do_newfs_prefix(void)
 	 * media report their own free/used space; no free/used space tables
 	 * should be recorded for these.
 	 */
-	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
+	if ((format_flags & (FORMAT_SEQUENTIAL | FORMAT_READONLY)) == 0) {
 		error = udf_create_space_bitmap(
 				layout.alloc_bitmap_dscr_size,
 				layout.part_size_lba,
@@ -697,6 +743,15 @@ udf_do_newfs_prefix(void)
 	if (error)
 		return error;
 
+	/* create VAT if needed */
+	if (format_flags & FORMAT_VAT) {
+		context.vat_allocated = context.sector_size;
+		context.vat_contents  = malloc(context.vat_allocated);
+		assert(context.vat_contents);
+
+		udf_prepend_VAT_file();
+	}
+
 	/* create FSD and writeout */
 	if ((error = udf_create_fsd()))
 		return error;
@@ -722,9 +777,9 @@ udf_do_rootdir(void) {
 		return error;
 	udf_mark_allocated(layout.rootdir, context.metadata_part, 1);
 
-	error = udf_write_dscr_virt(root_dscr, layout.rootdir, context.metadata_part, 1);
+	error = udf_write_dscr_virt(root_dscr,
+		layout.rootdir, context.metadata_part, 1);
 
-	/* XXX the place to add more files */
 	return error;
 }
 
@@ -734,7 +789,8 @@ udf_do_newfs_postfix(void)
 {
 	union dscrptr *vat_dscr;
 	union dscrptr *dscr;
-	uint32_t loc, len;
+	struct long_ad vatdata_pos;
+	uint32_t loc, len, phys, sects;
 	int data_part, metadata_part;
 	int error;
 
@@ -761,7 +817,7 @@ udf_do_newfs_postfix(void)
 	}
 
 	/* write out unallocated space bitmap on non sequential media */
-	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
+	if ((format_flags & (FORMAT_SEQUENTIAL | FORMAT_READONLY)) == 0) {
 		/* writeout unallocated space bitmap */
 		loc  = layout.unalloc_space;
 		dscr = (union dscrptr *) (context.part_unalloc_bits[data_part]);
@@ -792,7 +848,8 @@ udf_do_newfs_postfix(void)
 
 		/* writeout unallocated space bitmap */
 		loc  = layout.meta_bitmap_space;
-		dscr = (union dscrptr *) (context.part_unalloc_bits[metadata_part]);
+		dscr = (union dscrptr *)
+			(context.part_unalloc_bits[metadata_part]);
 		len  = layout.meta_bitmap_dscr_size;
 		error = udf_write_dscr_virt(dscr, loc, data_part, len);
 		if (error)
@@ -805,11 +862,31 @@ udf_do_newfs_postfix(void)
 		/* update lvint to reflect the newest values (no writeout) */
 		udf_update_lvintd(UDF_INTEGRITY_CLOSED);
 
-		error = udf_create_new_VAT(&vat_dscr);
+		error = udf_append_VAT_file();
 		if (error)
 			return error;
 
-		loc = layout.vat;
+		/* write out VAT data */
+		sects = UDF_ROUNDUP(context.vat_size, context.sector_size) /
+			context.sector_size;
+		layout.vat = context.data_alloc_pos;
+		udf_data_alloc(sects, &vatdata_pos);
+
+		loc = udf_rw32(vatdata_pos.loc.lb_num);
+		phys = context.vtop_offset[context.data_part] + loc;
+
+		error = udf_write_phys(context.vat_contents, phys, sects);
+		if (error)
+			return error;
+		loc += sects;
+
+		/* create new VAT descriptor */
+		error = udf_create_VAT(&vat_dscr);
+		if (error)
+			return error;
+		context.data_alloc_pos++;
+		loc++;
+
 		error = udf_write_dscr_virt(vat_dscr, loc, metadata_part, 1);
 		if (error)
 			return error;
