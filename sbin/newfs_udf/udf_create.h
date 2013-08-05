@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.4 2013/08/05 14:11:30 reinoud Exp $ */
+/* $NetBSD: udf_create.h,v 1.5 2013/08/05 17:12:04 joerg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -31,7 +31,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include <fs/udf/ecma167-udf.h>
+#else
+#include "../../sys/fs/udf/ecma167-udf.h"
+#endif
 #include "udf_bswap.h"
 #include "udf_osta.h"
 
