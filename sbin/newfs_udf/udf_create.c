@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.18 2013/08/05 14:11:30 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.19 2013/08/05 16:44:58 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.18 2013/08/05 14:11:30 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.19 2013/08/05 16:44:58 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1550,7 +1550,7 @@ udf_create_fid(uint32_t diroff, struct fileid_desc *fid, char *name,
 	uint32_t endfid;
 	uint32_t fidsize, lb_rest;
 
-	memset(fid, 0, sizeof(struct fileid_desc *));
+	memset(fid, 0, sizeof(*fid));
 	udf_inittag(&fid->tag, TAGID_FID, udf_rw32(ref->loc.lb_num));
 	fid->file_version_num = udf_rw16(1);	/* UDF 2.3.4.1 */
 	fid->file_char = file_char;
@@ -1993,7 +1993,7 @@ udf_append_meta_mapping_to_efe(struct extfile_entry *efe,
 	max_len = (max_len / layout.meta_blockingnr) * layout.meta_blockingnr;
 	max_len = max_len * context.sector_size;
 
-	memset(&mapping, 0, sizeof(struct short_ad));
+	memset(&mapping, 0, sizeof(mapping));
 	while (len) {
 		part_len = MIN(len, max_len);
 		mapping.lb_num   = udf_rw32(lb_num);
@@ -2227,7 +2227,7 @@ udf_create_VAT(union dscrptr **vat_dscr)
 
 	assert((layout.rootdir < 2) && (layout.fsd < 2));
 
-	memset(&dataloc, 0, sizeof(struct long_ad));
+	memset(&dataloc, 0, sizeof(dataloc));
 	dataloc.len = udf_rw32(context.vat_size);
 	dataloc.loc.part_num = udf_rw16(context.data_part);
 	dataloc.loc.lb_num   = udf_rw32(layout.vat);

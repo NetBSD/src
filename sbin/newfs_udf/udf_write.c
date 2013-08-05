@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.3 2013/08/05 14:11:30 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.4 2013/08/05 16:44:58 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_write.c,v 1.3 2013/08/05 14:11:30 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.4 2013/08/05 16:44:58 reinoud Exp $");
 #endif /* not lint */
 
 #define _EXPOSE_MMC
@@ -127,7 +127,7 @@ udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 void
 udf_metadata_alloc(int nblk, struct long_ad *pos)
 {
-	memset(pos, 0, sizeof(struct long_ad));
+	memset(pos, 0, sizeof(*pos));
 	pos->len	  = udf_rw32(nblk * context.sector_size);
 	pos->loc.lb_num   = udf_rw32(context.metadata_alloc_pos);
 	pos->loc.part_num = udf_rw16(context.metadata_part);
@@ -144,7 +144,7 @@ udf_metadata_alloc(int nblk, struct long_ad *pos)
 void
 udf_data_alloc(int nblk, struct long_ad *pos)
 {
-	memset(pos, 0, sizeof(struct long_ad));
+	memset(pos, 0, sizeof(*pos));
 	pos->len	  = udf_rw32(nblk * context.sector_size);
 	pos->loc.lb_num   = udf_rw32(context.data_alloc_pos);
 	pos->loc.part_num = udf_rw16(context.data_part);
