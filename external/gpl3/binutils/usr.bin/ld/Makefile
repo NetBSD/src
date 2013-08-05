@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.16 2013/02/14 21:29:35 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2013/08/05 00:08:58 matt Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 
 SCRIPTSDIR=	/usr/libdata
 
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
 		-DSCRIPTDIR=\"${SCRIPTSDIR}\" \
@@ -64,13 +64,13 @@ DPSRCS+=	.depend.${f} e${f}.c
 CLEANFILES+=	.depend.${f} e${f}.c
 
 # XXX super hack
-. if (${MACHINE_ARCH} == "x86_64" && \
+. if (${BINUTILS_MACHINE_ARCH} == "x86_64" && \
       ("${f}" == "elf_i386" || "${f}" == "i386nbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/i386
-. elif (${MACHINE_ARCH} == "sparc64" && \
+. elif (${BINUTILS_MACHINE_ARCH} == "sparc64" && \
       ("${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/sparc
-. elif ${MACHINE_ARCH} == "mips64el"
+. elif ${BINUTILS_MACHINE_ARCH} == "mips64el"
 .  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/o32
 .  elif "${f}" == "elf64ltsmip" || "${f}" == "elf64btsmip"
@@ -92,8 +92,9 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} yes ${f} "${G_target_alias}"
 
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.if ${BINUTILS_MACHINE_ARCH} == "x86_64" \
+    || ${BINUTILS_MACHINE_ARCH} == "sparc64" \
+    || !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs/.xc exists - slow!
@@ -103,7 +104,7 @@ HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 .if !empty(HAS_XS)
 FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 # only do this if we don't have GENERATE_SHLIB_SCRIPT
-.elif ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.elif !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .endif
 .endif	# x64_64 || sparc64 || mips64
