@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1840 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1841 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -270,3 +270,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	iwn(4): Add support for Centrino Wireless-N 1030 and Centrino
 		Advanced-N 6230 [prlw1 20130728]
 	dhcpcd(8): Import dhcpcd-6.0.5 [roy 20130803]
+	makefs(8): Added UDF support for makefs(8). It allows for the creation
+		of images for both read-only, rewritable or recordable media.
+		[reinoud 20130805]
