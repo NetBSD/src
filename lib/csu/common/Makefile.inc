@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2013/07/18 18:43:56 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2013/08/05 13:38:35 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,9 @@ OBJS+=		crtbegin.o crtend.o
 .if ${MKPIC} == "yes"
 OBJS+=		crtbeginS.o
 CFLAGS.crtbegin.c+= -fPIE
+.endif
+.if ${MACHINE_ARCH} == "alpha"
+OBJS+=		crtfm.o
 .endif
 
 realall: ${OBJS}
@@ -80,6 +83,15 @@ gcrt0.o: crt0.S crt0-common.c
 	rm -f ${.TARGET}.S.o ${.TARGET}.c.o
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
+.endif
+
+.if ${MACHINE_ARCH} == "alpha"
+# can't do this in Makefile.inc otherwise it will before realall:
+crtfm.o: crtfm.c
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
 .endif
 
 sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
