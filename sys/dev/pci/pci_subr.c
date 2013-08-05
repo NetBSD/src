@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.105 2013/04/21 23:54:44 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.106 2013/08/05 07:53:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.105 2013/04/21 23:54:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.106 2013/08/05 07:53:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1108,7 +1108,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("unknown %u value\n",
 			    (unsigned int)(reg & PCIE_LCSR_LINKSPEED) >> 16);
 		} else {
-			printf("%sGb/s\n",
+			printf("%sGT/s\n",
 			    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16) - 1]);
 		}
 		printf("      Negotiated Link Width: x%u lanes\n",
