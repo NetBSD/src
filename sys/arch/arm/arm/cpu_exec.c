@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.4 2013/08/05 00:57:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.4 2013/08/05 00:57:24 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -68,6 +68,18 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #else
 	const bool aapcs_p = false;
 #endif
+#ifdef __ARMEB__
+	const bool be8_p = (eh->e_flags & EF_ARM_BE8) != 0;
+
+	/*
+	 * If the BE-8 model is supported, CPSR[7] will be clear.
+	 * If the BE-32 model is supported, CPSR[7] will be set.
+	 */
+	register_t cpsr;
+	__asm("mrs\t%0, cpsr" : "=r"(cpsr));
+	if ((cpsr & CPU_CONTROL_BEND_ENABLE) == be8_p)
+		return ENOEXEC;
+#endif /* __ARMEB__ */
 
 	/*
 	 * This is subtle.  If are netbsd32, then we don't want to match the
