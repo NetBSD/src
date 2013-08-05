@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/08/10 16:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2013/08/05 01:46:57 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -476,7 +476,8 @@ CPPFLAGS+=	-I. \
 		-DHAVE_ATTRIBUTE_MODE=1
 
 # Find <gmp.h>
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH}
+GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[467]/arm/}
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 
 # XXX
 # XXX XXX check mips*

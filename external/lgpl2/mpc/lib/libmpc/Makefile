@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/09/21 02:06:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/08/05 01:53:42 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -94,7 +94,8 @@ SRCS=	\
 CPPFLAGS+=	-I${.CURDIR}
 
 # Find <mpfr.h> and <gmp.h>
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH}
+GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[467]/arm/}
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/mpfr/dist
 
 .include <bsd.lib.mk>
