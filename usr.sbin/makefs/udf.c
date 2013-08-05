@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $ */
+/* $NetBSD: udf.c,v 1.4 2013/08/05 18:44:16 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,9 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $");
-
-#define _EXPOSE_MMC
+__RCSID("$NetBSD: udf.c,v 1.4 2013/08/05 18:44:16 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,11 +43,15 @@ __RCSID("$NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $");
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#if !HAVE_NBTOOL_CONFIG_H
-#include <sys/cdio.h>
-#endif
 #include <sys/stat.h>
 #include <util.h>
+
+#if !HAVE_NBTOOL_CONFIG_H
+#define _EXPOSE_MMC
+#include <sys/cdio.h>
+#else
+#include "udf/cdio_mmc_structs.h"
+#endif
 
 #include "makefs.h"
 #include "udf_create.h"
@@ -66,9 +68,7 @@ __RCSID("$NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $");
 /* global variables describing disc and format requests */
 int	 fd;				/* device: file descriptor */
 char	*dev;				/* device: name		   */
-#if !HAVE_NBTOOL_CONFIG_H
 struct mmc_discinfo mmc_discinfo;	/* device: disc info	   */
-#endif
 
 char	*format_str;			/* format: string representation */
 int	 format_flags;			/* format: attribute flags	 */
@@ -155,7 +155,6 @@ udf_dump_discinfo(struct mmc_discinfo *di)
 
 /* --------------------------------------------------------------------- */
 
-#if !HAVE_NBTOOL_CONFIG_H
 static int
 udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 		int mmc_emuprofile)
@@ -266,16 +265,6 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 
 	return 0;
 }
-#else
-off_t sectors;
-
-static int
-udf_emulate_discinfo(fsinfo_t *fsopts, int mmc_emuprofile)
-{
-	sectors = fsopts->size / fsopts->sectorsize;
-	return 0;
-}
-#endif
 
 #define OPT_STR(letter, name, desc)  \
 	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
@@ -1184,11 +1173,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	int error;
 
 	/* determine format */
-#if !HAVE_NBTOOL_CONFIG_H
 	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
-#else
-	udf_emulate_discinfo(fsopts, mmc_profile);
-#endif
 	printf("req_enable %d, req_disable %d\n", req_enable, req_disable);
 
 	context.sector_size = fsopts->sectorsize;
@@ -1231,11 +1216,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	meta_fract = ((int) ((meta_fract + 0.005)*100.0)) / 100;
 
 	/* update mmc info but now with correct size */
-#if !HAVE_NBTOOL_CONFIG_H
 	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
-#else
-	udf_emulate_discinfo(fsopts, mmc_profile);
-#endif
 
 	udf_do_newfs_prefix();
 
