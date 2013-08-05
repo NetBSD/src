@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -25,11 +25,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: udf.c,v 1.3 2013/08/05 17:12:04 joerg Exp $");
 
 #define _EXPOSE_MMC
 
@@ -44,7 +45,9 @@ __RCSID("$NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $");
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/cdio.h>
+#endif
 #include <sys/stat.h>
 #include <util.h>
 
@@ -63,7 +66,9 @@ __RCSID("$NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $");
 /* global variables describing disc and format requests */
 int	 fd;				/* device: file descriptor */
 char	*dev;				/* device: name		   */
+#if !HAVE_NBTOOL_CONFIG_H
 struct mmc_discinfo mmc_discinfo;	/* device: disc info	   */
+#endif
 
 char	*format_str;			/* format: string representation */
 int	 format_flags;			/* format: attribute flags	 */
@@ -150,6 +155,7 @@ udf_dump_discinfo(struct mmc_discinfo *di)
 
 /* --------------------------------------------------------------------- */
 
+#if !HAVE_NBTOOL_CONFIG_H
 static int
 udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 		int mmc_emuprofile)
@@ -260,7 +266,16 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 
 	return 0;
 }
+#else
+off_t sectors;
 
+static int
+udf_emulate_discinfo(fsinfo_t *fsopts, int mmc_emuprofile)
+{
+	sectors = fsopts->size / fsopts->sectorsize;
+	return 0;
+}
+#endif
 
 #define OPT_STR(letter, name, desc)  \
 	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
@@ -879,7 +894,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 
 	fnode = cur->inode;
 
-	f = open(path, O_RDONLY, 0, 0);
+	f = open(path, O_RDONLY);
 	if (f < 0) {
 		warn("Can't open file %s for reading", cur->name);
 		return errno;
@@ -1169,7 +1184,11 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	int error;
 
 	/* determine format */
+#if !HAVE_NBTOOL_CONFIG_H
 	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
+#else
+	udf_emulate_discinfo(fsopts, mmc_profile);
+#endif
 	printf("req_enable %d, req_disable %d\n", req_enable, req_disable);
 
 	context.sector_size = fsopts->sectorsize;
@@ -1212,7 +1231,11 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	meta_fract = ((int) ((meta_fract + 0.005)*100.0)) / 100;
 
 	/* update mmc info but now with correct size */
+#if !HAVE_NBTOOL_CONFIG_H
 	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
+#else
+	udf_emulate_discinfo(fsopts, mmc_profile);
+#endif
 
 	udf_do_newfs_prefix();
 
