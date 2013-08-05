@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 2013/08/05 14:41:57 reinoud Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2013/08/05 18:45:00 reinoud Exp $
 #
 
-SYSFS=	${NETBSDSRCDIR}/sys/fs
-UDF=	${SYSFS}/udf
+UDF=	${NETBSDSRCDIR}/sys/fs/udf
 UDF_NEWFS=	${NETBSDSRCDIR}/sbin/newfs_udf
 FSCK=	${NETBSDSRCDIR}/sbin/fsck	# use progress meter.
 
@@ -12,9 +11,3 @@ CPPFLAGS+= -I${UDF} -I${UDF_NEWFS} -I${FSCK}
 
 SRCS += udf_create.c udf_write.c udf_osta.c
 
-#SRCS += main.c		# newfs
-#.if !defined(HOSTPROG)
-#SRCS += progress.c	# progress bar (fsck)
-#.endif
-
-#SRCS += v7fs_estimate.c v7fs_populate.c
