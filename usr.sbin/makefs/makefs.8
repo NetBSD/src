@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.45 2013/02/03 06:16:53 christos Exp $
+.\"	$NetBSD: makefs.8,v 1.46 2013/08/05 14:41:57 reinoud Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -215,6 +215,8 @@ Chip flash file system.
 FAT12, FAT16, or FAT32 file system.
 .It Sy v7fs
 7th Edition(V7) file system.
+.It Sy udf
+ISO/Ecma UDF file system.
 .El
 .It Fl x
 Exclude file system nodes not explicitly listed in the specfile.
@@ -388,6 +390,32 @@ PDP endian.
 Display a progress meter for the file system construction and file
 population.
 .El
+.Ss UDF-specific options
+.Sy udf
+images have ffs-specific optional parameters that may be provided.
+Each of the options consists of a keyword, an equal sign
+.Pq Ql = ,
+and a value.
+The following keywords are supported:
+.Pp
+.Bl -tag -width optimization -offset indent -compact
+.It Sy T
+disctype. It can have the values
+.Bl -tag -width 3n -offset indent -compact
+.It cdrom,
+.It dvdrom
+create a read-only fs
+.It dvdram,
+.It bdre,
+.It disk
+create a rewriteable fs without sparing
+.It cdr,
+.It dvdr
+create a rewritable fs on once recordable media using a VAT
+.It cdrw,
+.It dvdrw
+create a rewritable fs with sparing for defective sectors
+.It 
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
