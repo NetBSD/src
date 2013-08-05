@@ -28,7 +28,9 @@
 #define _FS_UDF_UDF_WRITE_H_
 
 #include "udf_create.h"
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/cdio.h>
+#endif
 
 /* prototypes */
 
