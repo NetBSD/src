@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1839 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1840 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -210,6 +210,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	zoneinfo: Import tzdata2013a. [apb 20130303]
 	zoneinfo: Import tzdata2013b. [apb 20130312]
 	libc: Update to tzcode2013b. [christos 20130315]
+	brgphy(4): Add support for BCM5756, BCM5717C, BCM5719C, BCM5720C and
+		BCM57780. [msaitoh 20130315]
 	vmt(4): Synchronize the clock periodically to ensure it remains
 		up-to-date even when the host is suspended.  [jmmv 20130316]
 	file(1): upgraded to 5.14 [christos 20130323]
@@ -253,6 +255,9 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		acceleration using SX [macallan 20130619]
 	dhcpcd(8): Import dhcpcd-6.0.0 [roy 20130621]
 	zoneinfo: Import tzdata2013d. [apb 20130707]
+	bge(4): Add support for Altima AC1003, Apple BCM5701,
+		Broadcom BCM5787F, BCM5787G, BCM5787F, BCM5719, BCM5720,
+		BCM57766, BCM57782 and BCM57786. [msaitoh 20130708]
 	openresolv(8): Import openresolv-3.5.6 [roy 20130712]
 	libc: Update to tzcode2013d. [christo 20130717]
 	wpa:	Import wpa_supplicant and hostapd 1.1 [adam 20130717]
