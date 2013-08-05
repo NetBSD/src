@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.13 2013/08/05 14:11:30 reinoud Exp $
+.\" $NetBSD: newfs_udf.8,v 1.14 2013/08/05 14:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -35,12 +35,12 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cFM
+.Op Fl B Ar blockingsize
 .Op Fl L Ar loglabel
 .Op Fl P Ar discid
 .Op Fl p Ar percentage
 .Op Fl S Ar sectorsize
 .Op Fl s Ar size
-.Op Fl B Ar blockingsize
 .Op Fl t Ar gmtoff
 .Op Fl V Ar max_udf
 .Op Fl v Ar min_udf
@@ -54,6 +54,10 @@ suitable for the media currently inserted.
 .Pp
 The options are as follow:
 .Bl -tag -width indent
+.It Fl B Ar blockingsize
+When creating image files, specify the blocking size or packetsize of the media
+to
+.Ar blockingsize .
 .It Fl c
 Perform a crude surface check first to weed out disc faults on rewritable
 media.
@@ -85,10 +89,6 @@ For strict conformance and interchange, don't set this manually.
 .It Fl s Ar size
 For image files, set the file size to the humanized size
 .Ar size .
-.It Fl B Ar blockingsize
-When creating image files, specify the blocking size or packetsize of the media
-to
-.Ar blockingsize .
 .It Fl t Ar gmtoff
 Use the specified
 .Ar gmtoff
