@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.46 2013/08/05 14:41:57 reinoud Exp $
+.\"	$NetBSD: makefs.8,v 1.47 2013/08/05 14:50:32 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -189,13 +189,13 @@ Set file system specific options.
 .Ar fs-options
 is a comma separated list of options.
 Valid file system specific options are detailed below.
+.It Fl r
+When merging multiple directories replace duplicate files with the last found.
 .It Fl S Ar sector-size
 Set the file system sector size to
 .Ar sector-size .
 .\" XXX: next line also true for cd9660?
 Defaults to 512.
-.It Fl r
-When merging multiple directories replace duplicate files with the last found.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
@@ -392,30 +392,25 @@ population.
 .El
 .Ss UDF-specific options
 .Sy udf
-images have ffs-specific optional parameters that may be provided.
+images have udf-specific optional parameters that may be provided.
 Each of the options consists of a keyword, an equal sign
 .Pq Ql = ,
 and a value.
 The following keywords are supported:
-.Pp
-.Bl -tag -width optimization -offset indent -compact
-.It Sy T
-disctype. It can have the values
-.Bl -tag -width 3n -offset indent -compact
-.It cdrom,
-.It dvdrom
+.Bl -tag -width optimization -compact
+.It Sy disctype
+This can have the following values:
+.Bl -tag -width dvdramXbdreXdiskXXX -compact
+.It Sy cdrom , Sy dvdrom
 create a read-only fs
-.It dvdram,
-.It bdre,
-.It disk
-create a rewriteable fs without sparing
-.It cdr,
-.It dvdr
+.It Sy dvdram , Sy bdre , Sy disk
+create a rewritable fs without sparing for defective sectors
+.It Sy cdr , Sy dvdr
 create a rewritable fs on once recordable media using a VAT
-.It cdrw,
-.It dvdrw
+.It Sy cdrw , Sy dvdrw
 create a rewritable fs with sparing for defective sectors
-.It 
+.El
+.El
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
