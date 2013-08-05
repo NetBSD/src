@@ -1,9 +1,10 @@
-/* $NetBSD: udf_osta.c,v 1.9 2009/03/18 10:22:42 cegger Exp $ */
+/* $NetBSD: udf_osta.c,v 1.10 2013/08/05 17:02:54 joerg Exp $ */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.9 2009/03/18 10:22:42 cegger Exp $");
-#endif /* not lint */
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.10 2013/08/05 17:02:54 joerg Exp $");
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
