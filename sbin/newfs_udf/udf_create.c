@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.19 2013/08/05 16:44:58 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.20 2013/08/05 17:12:04 joerg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -25,11 +25,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.19 2013/08/05 16:44:58 reinoud Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: udf_create.c,v 1.20 2013/08/05 17:12:04 joerg Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,9 +77,15 @@ udf_init_create_context(void)
 	context.volset_name  = NULL;
 	context.fileset_name = NULL;
 
+#ifdef __NetBSD_Version__
 	context.app_name	  = "*NetBSD newfs";
 	context.app_version_main =  __NetBSD_Version__ / 100000000;
 	context.app_version_sub  = (__NetBSD_Version__ / 1000000) % 100;
+#else
+	context.app_name	  = "*NetBSD makefs";
+	context.app_version_main = 0;
+	context.app_version_sub  = 0;
+#endif
 	context.impl_name        = "*NetBSD kernel UDF";
 
 	context.vds_seq = 0;		/* first one starts with zero */
@@ -1794,7 +1801,11 @@ udf_create_new_fe(struct file_entry **fep, int file_type, struct stat *st)
 
 	/* set attributes */
 	if (st) {
+#if !HAVE_NBTOOL_CONFIG_H
 		udf_set_timestamp(&birthtime,    st->st_birthtime);
+#else
+		udf_set_timestamp(&birthtime,    0);
+#endif
 		udf_set_timestamp(&fe->atime,    st->st_atime);
 		udf_set_timestamp(&fe->attrtime, st->st_ctime);
 		udf_set_timestamp(&fe->mtime,    st->st_mtime);
@@ -1891,7 +1902,11 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type, struct stat *st)
 
 	/* set attributes */
 	if (st) {
+#if !HAVE_NBTOOL_CONFIG_H
 		udf_set_timestamp(&efe->ctime,    st->st_birthtime);
+#else
+		udf_set_timestamp(&efe->ctime,    0);
+#endif
 		udf_set_timestamp(&efe->atime,    st->st_atime);
 		udf_set_timestamp(&efe->attrtime, st->st_ctime);
 		udf_set_timestamp(&efe->mtime,    st->st_mtime);
