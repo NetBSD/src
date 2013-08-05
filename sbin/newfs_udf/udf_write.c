@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.5 2013/08/05 17:12:04 joerg Exp $ */
+/* $NetBSD: udf_write.c,v 1.6 2013/08/05 20:52:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,9 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_write.c,v 1.5 2013/08/05 17:12:04 joerg Exp $");
-
-#define _EXPOSE_MMC
+__RCSID("$NetBSD: udf_write.c,v 1.6 2013/08/05 20:52:08 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,8 +41,12 @@ __RCSID("$NetBSD: udf_write.c,v 1.5 2013/08/05 17:12:04 joerg Exp $");
 #include <err.h>
 #include <sys/types.h>
 #include <sys/param.h>
+
 #if !HAVE_NBTOOL_CONFIG_H
+#define _EXPOSE_MMC
 #include <sys/cdio.h>
+#else
+#include "udf/cdio_mmc_structs.h"
 #endif
 
 #include "udf_create.h"
@@ -53,7 +55,6 @@ __RCSID("$NetBSD: udf_write.c,v 1.5 2013/08/05 17:12:04 joerg Exp $");
 
 
 union dscrptr *terminator_dscr;
-
 
 static int
 udf_write_phys(void *blob, uint32_t location, uint32_t sects)
@@ -175,7 +176,6 @@ udf_data_alloc(int nblk, struct long_ad *pos)
 int
 udf_derive_format(int req_enable, int req_disable, int force)
 {
-#if !HAVE_NBTOOL_CONFIG_H
 	/* disc writability, formatted, appendable */
 	if ((mmc_discinfo.mmc_cur & MMC_CAP_RECORDABLE) == 0) {
 		(void)printf("Can't newfs readonly device\n");
@@ -199,10 +199,8 @@ udf_derive_format(int req_enable, int req_disable, int force)
 			return EROFS;
 		}
 	}
-#endif
 
 	/* determine UDF format */
-#if !HAVE_NBTOOL_CONFIG_H
 	format_flags = 0;
 	if (mmc_discinfo.mmc_cur & MMC_CAP_REWRITABLE) {
 		/* all rewritable media */
@@ -235,13 +233,6 @@ udf_derive_format(int req_enable, int req_disable, int force)
 			format_flags |= FORMAT_WORM;
 		}
 	}
-#else
-	format_flags = FORMAT_REWRITABLE;
-	if (context.min_udf >= 0x0250) {
-		/* standard dictates meta as default */
-		format_flags |= FORMAT_META;
-	}
-#endif
 
 	/* enable/disable requests */
 	if (req_disable & FORMAT_META) {
@@ -257,7 +248,6 @@ udf_derive_format(int req_enable, int req_disable, int force)
 
 	/* determine partition/media access type */
 	media_accesstype = UDF_ACCESSTYPE_NOT_SPECIFIED;
-#if !HAVE_NBTOOL_CONFIG_H
 	if (mmc_discinfo.mmc_cur & MMC_CAP_REWRITABLE) {
 		media_accesstype = UDF_ACCESSTYPE_OVERWRITABLE;
 		if (mmc_discinfo.mmc_cur & MMC_CAP_ERASABLE)
@@ -268,9 +258,6 @@ udf_derive_format(int req_enable, int req_disable, int force)
 	}
 	if (mmc_discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE)
 		media_accesstype = UDF_ACCESSTYPE_PSEUDO_OVERWITE;
-#else
-	media_accesstype = UDF_ACCESSTYPE_OVERWRITABLE;
-#endif
 
 	/* patch up media accesstype */
 	if (req_enable & FORMAT_READONLY) {
@@ -336,30 +323,21 @@ udf_proces_names(void)
 	if (context.logvol_name == NULL)
 		context.logvol_name = strdup("anonymous");
 	if (context.primary_name == NULL) {
-#if !HAVE_NBTOOL_CONFIG_H
 		if (mmc_discinfo.disc_flags & MMC_DFLAGS_DISCIDVALID) {
 			primary_nr = mmc_discinfo.disc_id;
 		} else {
 			primary_nr = (uint32_t) random();
 		}
-#else
-		primary_nr = (uint32_t) random();
-#endif
 		context.primary_name = calloc(32, 1);
 		sprintf(context.primary_name, "%08"PRIx32, primary_nr);
 	}
 	if (context.volset_name == NULL) {
-#if !HAVE_NBTOOL_CONFIG_H
 		if (mmc_discinfo.disc_flags & MMC_DFLAGS_BARCODEVALID) {
 			volset_nr = mmc_discinfo.disc_barcode;
 		} else {
 			volset_nr  =  (uint32_t) random();
 			volset_nr |= ((uint64_t) random()) << 32;
 		}
-#else
-		volset_nr  =  (uint32_t) random();
-		volset_nr |= ((uint64_t) random()) << 32;
-#endif
 		context.volset_name = calloc(128,1);
 		sprintf(context.volset_name, "%016"PRIx64, volset_nr);
 	}
@@ -467,11 +445,7 @@ udf_do_newfs_prefix(void)
 {
 	union dscrptr *zero_dscr;
 	union dscrptr *dscr;
-#if !HAVE_NBTOOL_CONFIG_H
 	struct mmc_trackinfo ti;
-#else
-	extern off_t sectors;
-#endif
 	uint32_t sparable_blocks;
 	uint32_t sector_size, blockingnr;
 	uint32_t cnt, loc, len;
@@ -479,29 +453,22 @@ udf_do_newfs_prefix(void)
 	int error, integrity_type;
 	int data_part, metadata_part;
 
-#if !HAVE_NBTOOL_CONFIG_H
 	/* init */
 	sector_size = mmc_discinfo.sector_size;
 
 	/* determine span/size */
 	ti.tracknr = mmc_discinfo.first_track_last_session;
 	error = udf_update_trackinfo(&mmc_discinfo, &ti);
-#else
-	sector_size = 2048;
-#endif
 	if (error)
 		return error;
 
-#if !HAVE_NBTOOL_CONFIG_H
 	if (mmc_discinfo.sector_size < context.sector_size) {
 		fprintf(stderr, "Impossible to format: sectorsize too small\n");
 		return EIO;
 	}
-#endif
 	context.sector_size = sector_size;
 
 	/* determine blockingnr */
-#if !HAVE_NBTOOL_CONFIG_H
 	blockingnr = ti.packet_size;
 	if (blockingnr <= 1) {
 		/* paranoia on blockingnr */
@@ -554,17 +521,6 @@ udf_do_newfs_prefix(void)
 		ti.track_start, mmc_discinfo.last_possible_lba,
 		context.sector_size, blockingnr, sparable_blocks,
 		meta_fract);
-#else
-	blockingnr = 32;
-	wrtrack_skew = 0;
-	sparable_blocks = 32;
-
-	error = udf_calculate_disc_layout(format_flags, context.min_udf,
-		wrtrack_skew,
-		0, sectors - 1,
-		context.sector_size, blockingnr, sparable_blocks,
-		meta_fract);
-#endif
 
 	/* cache partition for we need it often */
 	data_part     = context.data_part;
@@ -596,11 +552,7 @@ udf_do_newfs_prefix(void)
 	if ((zero_dscr = calloc(1, context.sector_size)) == NULL)
 		return ENOMEM;
 
-#if !HAVE_NBTOOL_CONFIG_H
 	loc = (format_flags & FORMAT_TRACK512) ? layout.vds1 : ti.track_start;
-#else
-	loc = (format_flags & FORMAT_TRACK512) ? layout.vds1 : 0;
-#endif
 	for (; loc < layout.part_start_lba; loc++) {
 		if ((error = udf_write_sector(zero_dscr, loc))) {
 			free(zero_dscr);
