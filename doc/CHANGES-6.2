@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.28 2013/08/02 20:12:30 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.29 2013/08/05 10:09:53 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -456,3 +456,15 @@ sys/kern/uipc_socket.c				1.216
 	Fix an inversion in checking for authorization to drop TCP connections
 	found (and the obvious fix suggested) by Sander Bos.
 	[spz, ticket #927]
+
+sys/dev/pci/pcireg.h		1.74-1.82 and 1.84 via patch
+sys/dev/pci/pci_subr.c		1.92-1.102, 1.104-1.105 via patch
+
+	Add some PCI(e) register and bit definitions in pcireg.h.
+	Fix the definition of PCI_PCIE_SLCAP_PSN.
+	Fix a bug that IRQ(MSI) bits in PCIe capability register is incorrectly
+	decoded.
+	Print more registers in "pcictl dump".
+	Fix bug in comment.
+	[msaitoh, ticket #928]
+
