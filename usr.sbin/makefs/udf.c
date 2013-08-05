@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.1 2013/08/05 14:41:57 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf.c,v 1.1 2013/08/05 14:41:57 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.2 2013/08/05 16:43:46 reinoud Exp $");
 #endif /* not lint */
 
 #define _EXPOSE_MMC
@@ -156,7 +156,7 @@ udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 {
 	off_t sectors;
 
-	memset(di, 0, sizeof(struct mmc_discinfo));
+	memset(di, 0, sizeof(*di));
 
 	/* file support */
 	if ((mmc_emuprofile != 0x01) && (fsopts->sectorsize != 2048))
@@ -592,7 +592,10 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	size = UDF_EXT_LEN(udf_rw32(piece->len));
 
 	/* extract last entry as a long_ad */
-	memset(&last_piece, 0, sizeof(struct long_ad));
+	memset(&last_piece, 0, sizeof(last_piece));
+	last_len      = 0;
+	last_lb_num   = 0;
+	last_part_num = 0;
 	if (l_ad != 0) {
 		if (use_shorts) {
 			assert(cur_alloc == UDF_ICB_SHORT_ALLOC);
@@ -1183,7 +1186,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	error = 1;
 
 	/* estimate the amount of space needed */
-	memset(&stats, 0, sizeof(struct udf_stats));
+	memset(&stats, 0, sizeof(stats));
 	udf_enumerate_and_estimate(dir, root, fsopts, &stats);
 
 	printf("Calculated size of `%s': %lld bytes, %ld inodes\n",
