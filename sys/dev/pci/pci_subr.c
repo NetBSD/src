@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.90 2012/01/29 11:31:38 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.90.2.1 2013/08/05 10:09:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.90 2012/01/29 11:31:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.90.2.1 2013/08/05 10:09:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -90,6 +90,7 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,	NULL,	},
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,	NULL,	},
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
+	{ "NVM",		PCI_SUBCLASS_MASS_STORAGE_NVM,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -118,6 +119,7 @@ static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
+	{ "HD audio",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -452,7 +454,7 @@ pci_aprint_devinfo_fancy(const struct pci_attach_args *pa, const char *naive,
  * in a device attach routine like this:
  *
  *	#ifdef MYDEV_DEBUG
- *		printf("%s: ", device_xname(&sc->sc_dev));
+ *		printf("%s: ", device_xname(sc->sc_dev));
  *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */
@@ -807,24 +809,112 @@ pci_conf_print_type0(
 }
 
 static void
+pci_print_pcie_L0s_latency(uint32_t val)
+{
+
+	switch (val) {
+	case 0x0:
+		printf("Less than 64ns\n");
+		break;
+	case 0x1:
+	case 0x2:
+	case 0x3:
+		printf("%dns to less than %dns\n", 32 << val, 32 << (val + 1));
+		break;
+	case 0x4:
+		printf("512ns to less than 1us\n");
+		break;
+	case 0x5:
+		printf("1us to less than 2us\n");
+		break;
+	case 0x6:
+		printf("2us - 4us\n");
+		break;
+	case 0x7:
+		printf("More than 4us\n");
+		break;
+	}
+}
+
+static void
+pci_print_pcie_L1_latency(uint32_t val)
+{
+
+	switch (val) {
+	case 0x0:
+		printf("Less than 1us\n");
+		break;
+	case 0x6:
+		printf("32us - 64us\n");
+		break;
+	case 0x7:
+		printf("More than 64us\n");
+		break;
+	default:
+		printf("%dus to less than %dus\n", 1 << (val - 1), 1 << val);
+		break;
+	}
+}
+
+static void
+pci_print_pcie_compl_timeout(uint32_t val)
+{
+
+	switch (val) {
+	case 0x0:
+		printf("50us to 50ms\n");
+		break;
+	case 0x5:
+		printf("16ms to 55ms\n");
+		break;
+	case 0x6:
+		printf("65ms to 210ms\n");
+		break;
+	case 0x9:
+		printf("260ms to 900ms\n");
+		break;
+	case 0xa:
+		printf("1s to 3.5s\n");
+		break;
+	default:
+		printf("unknown %u value\n", val);
+		break;
+	}
+}
+
+static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
+	pcireg_t reg; /* for each register */
+	pcireg_t val; /* for each bitfield */
+	bool check_link = false;
 	bool check_slot = false;
+	bool check_rootport = false;
+	unsigned int pciever;
+	static const char * const linkspeeds[] = {"2.5", "5.0", "8.0"};
+	int i;
 
 	printf("\n  PCI Express Capabilities Register\n");
-	printf("    Capability version: %x\n",
-	    (unsigned int)((regs[o2i(capoff)] & 0x000f0000) >> 16));
-	printf("    Device type: ");
-	switch ((regs[o2i(capoff)] & 0x00f00000) >> 20) {
+	/* Capability Register */
+	reg = regs[o2i(capoff)];
+	printf("    Capability register: %04x\n", reg >> 16);
+	pciever = (unsigned int)((reg & 0x000f0000) >> 16);
+	printf("      Capability version: %u\n", pciever);
+	printf("      Device type: ");
+	switch ((reg & 0x00f00000) >> 20) {
 	case 0x0:
 		printf("PCI Express Endpoint device\n");
+		check_link = true;
 		break;
 	case 0x1:
 		printf("Legacy PCI Express Endpoint device\n");
+		check_link = true;
 		break;
 	case 0x4:
 		printf("Root Port of PCI Express Root Complex\n");
+		check_link = true;
 		check_slot = true;
+		check_rootport = true;
 		break;
 	case 0x5:
 		printf("Upstream Port of PCI Express Switch\n");
@@ -832,6 +922,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case 0x6:
 		printf("Downstream Port of PCI Express Switch\n");
 		check_slot = true;
+		check_rootport = true;
 		break;
 	case 0x7:
 		printf("PCI Express to PCI/PCI-X Bridge\n");
@@ -839,53 +930,249 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	case 0x8:
 		printf("PCI/PCI-X to PCI Express Bridge\n");
 		break;
+	case 0x9:
+		printf("Root Complex Integrated Endpoint\n");
+		break;
+	case 0xa:
+		check_rootport = true;
+		printf("Root Complex Event Collector\n");
+		break;
 	default:
 		printf("unknown\n");
 		break;
 	}
-	if (check_slot && (regs[o2i(capoff)] & 0x01000000) != 0)
-		printf("    Slot implemented\n");
-	printf("    Interrupt Message Number: %x\n",
-	    (unsigned int)((regs[o2i(capoff)] & 0x4e000000) >> 27));
-	printf("    Link Capabilities Register: 0x%08x\n",
-	    regs[o2i(capoff + 0x0c)]);
-	printf("      Maximum Link Speed: ");
-	if ((regs[o2i(capoff + 0x0c)] & 0x000f) != 1) {
-		printf("unknown %u value\n", 
-		    (regs[o2i(capoff + 0x0c)] & 0x000f));
-	} else {
-		printf("2.5Gb/s\n");
+	if (check_slot && (reg & PCI_PCIE_XCAP_SI) != 0)
+		printf("      Slot implemented\n");
+	printf("      Interrupt Message Number: %x\n",
+	    (unsigned int)((reg & PCI_PCIE_XCAP_IRQ) >> 27));
+
+	/* Device Capability Register */
+	reg = regs[o2i(capoff + PCI_PCIE_DCAP)];
+	printf("    Device Capabilities Register: 0x%08x\n", reg);
+	printf("      Max Payload Size Supported: %u bytes max\n",
+	    (unsigned int)(reg & PCI_PCIE_DCAP_MAX_PAYLOAD) * 256);
+	printf("      Phantom Functions Supported: ");
+	switch ((reg & PCI_PCIE_DCAP_PHANTOM_FUNCS) >> 3) {
+	case 0x0:
+		printf("not available\n");
+		break;
+	case 0x1:
+		printf("MSB\n");
+		break;
+	case 0x2:
+		printf("two MSB\n");
+		break;
+	case 0x3:
+		printf("All three bits\n");
+		break;
 	}
-	printf("      Maximum Link Width: x%u lanes\n",
-	    (regs[o2i(capoff + 0x0c)] & 0x03f0) >> 4);
-	printf("      Port Number: %u\n", regs[o2i(capoff + 0x0c)] >> 24);
-	printf("    Link Status Register: 0x%04x\n",
-	    regs[o2i(capoff + 0x10)] >> 16);
-	printf("      Negotiated Link Speed: ");
-	if (((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) != 1) {
-		printf("unknown %u value\n", 
-		    (regs[o2i(capoff + 0x10)] >> 16) & 0x000f);
-	} else {
-		printf("2.5Gb/s\n");
+	printf("      Extended Tag Field Supported: %dbit\n",
+	    (reg & PCI_PCIE_DCAP_EXT_TAG_FIELD) == 0 ? 5 : 8);
+	printf("      Endpoint L0 Acceptable Latency: ");
+	pci_print_pcie_L0s_latency((reg & PCI_PCIE_DCAP_L0S_LATENCY) >> 6);
+	printf("      Endpoint L1 Acceptable Latency: ");
+	pci_print_pcie_L1_latency((reg & PCI_PCIE_DCAP_L1_LATENCY) >> 9);
+	printf("      Attention Button Present: %s\n",
+	    (reg & PCI_PCIE_DCAP_ATTN_BUTTON) != 0 ? "yes" : "no");
+	printf("      Attention Indicator Present: %s\n",
+	    (reg & PCI_PCIE_DCAP_ATTN_IND) != 0 ? "yes" : "no");
+	printf("      Power Indicator Present: %s\n",
+	    (reg & PCI_PCIE_DCAP_PWR_IND) != 0 ? "yes" : "no");
+	printf("      Role-Based Error Report: %s\n",
+	    (reg & PCI_PCIE_DCAP_ROLE_ERR_RPT) != 0 ? "yes" : "no");
+	printf("      Captured Slot Power Limit Value: %d\n",
+	    (unsigned int)(reg & PCI_PCIE_DCAP_SLOT_PWR_LIM_VAL) >> 18);
+	printf("      Captured Slot Power Limit Scale: %d\n",
+	    (unsigned int)(reg & PCI_PCIE_DCAP_SLOT_PWR_LIM_SCALE) >> 26);
+	printf("      Function-Level Reset Capability: %s\n",
+	    (reg & PCI_PCIE_DCAP_FLR) != 0 ? "yes" : "no");
+
+	/* Device Control Register */
+	reg = regs[o2i(capoff + PCI_PCIE_DCSR)];
+	printf("    Device Control Register: 0x%04x\n", reg & 0xffff);
+	printf("      Correctable Error Reporting Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_COR_ERR) != 0 ? "on" : "off");
+	printf("      Non Fatal Error Reporting Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_NFER) != 0 ? "on" : "off");
+	printf("      Fatal Error Reporting Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_FER) != 0 ? "on" : "off");
+	printf("      Unsupported Request Reporting Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_URR) != 0 ? "on" : "off");
+	printf("      Enable Relaxed Ordering: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_RELAX_ORD) != 0 ? "on" : "off");
+	printf("      Max Payload Size: %d byte\n",
+	    128 << (((unsigned int)(reg & PCI_PCIE_DCSR_MAX_PAYLOAD) >> 5)));
+	printf("      Extended Tag Field Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_EXT_TAG_FIELD) != 0 ? "on" : "off");
+	printf("      Phantom Functions Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_PHANTOM_FUNCS) != 0 ? "on" : "off");
+	printf("      Aux Power PM Enable: %s\n",
+	    (reg & PCI_PCIE_DCSR_AUX_POWER_PM) != 0 ? "on" : "off");
+	printf("      Enable No Snoop: %s\n",
+	    (reg & PCI_PCIE_DCSR_ENA_NO_SNOOP) != 0 ? "on" : "off");
+	printf("      Max Read Request Size: %d byte\n",
+	    128 << ((unsigned int)(reg & PCI_PCIE_DCSR_MAX_READ_REQ) >> 12));
+
+	/* Device Status Register */
+	reg = regs[o2i(capoff + PCI_PCIE_DCSR)];
+	printf("    Device Status Register: 0x%04x\n", reg >> 16);
+	printf("      Correctable Error Detected: %s\n",
+	    (reg & PCI_PCIE_DCSR_CED) != 0 ? "on" : "off");
+	printf("      Non Fatal Error Detected: %s\n",
+	    (reg & PCI_PCIE_DCSR_NFED) != 0 ? "on" : "off");
+	printf("      Fatal Error Detected: %s\n",
+	    (reg & PCI_PCIE_DCSR_FED) != 0 ? "on" : "off");
+	printf("      Unsupported Request Detected: %s\n",
+	    (reg & PCI_PCIE_DCSR_URD) != 0 ? "on" : "off");
+	printf("      Aux Power Detected: %s\n",
+	    (reg & PCI_PCIE_DCSR_AUX_PWR) != 0 ? "on" : "off");
+	printf("      Transaction Pending: %s\n",
+	    (reg & PCI_PCIE_DCSR_TRANSACTION_PND) != 0 ? "on" : "off");
+
+	if (check_link) {
+		/* Link Capability Register */
+		reg = regs[o2i(capoff + PCI_PCIE_LCAP)];
+		printf("    Link Capabilities Register: 0x%08x\n", reg);
+		printf("      Maximum Link Speed: ");
+		val = reg & PCI_PCIE_LCAP_MAX_SPEED;
+		if (val < 1 || val > 3) {
+			printf("unknown %u value\n", val);
+		} else {
+			printf("%sGT/s\n", linkspeeds[val - 1]);
+		}
+		printf("      Maximum Link Width: x%u lanes\n",
+		    (unsigned int)(reg & PCI_PCIE_LCAP_MAX_WIDTH) >> 4);
+		printf("      Active State PM Support: ");
+		val = (reg & PCI_PCIE_LCAP_ASPM) >> 10;
+		switch (val) {
+		case 0x1:
+			printf("L0s Entry supported\n");
+			break;
+		case 0x3:
+			printf("L0s and L1 supported\n");
+			break;
+		default:
+			printf("Reserved value\n");
+			break;
+		}
+		printf("      L0 Exit Latency: ");
+		pci_print_pcie_L0s_latency((reg & PCI_PCIE_LCAP_L0S_EXIT) >> 12);
+		printf("      L1 Exit Latency: ");
+		pci_print_pcie_L1_latency((reg & PCI_PCIE_LCAP_L1_EXIT) >> 15);
+		printf("      Port Number: %u\n", reg >> 24);
+
+		/* Link Control Register */
+		reg = regs[o2i(capoff + PCI_PCIE_LCSR)];
+		printf("    Link Control Register: 0x%04x\n", reg & 0xffff);
+		printf("      Active State PM Control: ");
+		val = reg & (PCI_PCIE_LCSR_ASPM_L1 | PCI_PCIE_LCSR_ASPM_L0S);
+		switch (val) {
+		case 0:
+			printf("disabled\n");
+			break;
+		case 1:
+			printf("L0s Entry Enabled\n");
+			break;
+		case 2:
+			printf("L1 Entry Enabled\n");
+			break;
+		case 3:
+			printf("L0s and L1 Entry Enabled\n");
+			break;
+		}
+		printf("      Read Completion Boundary Control: %dbyte\n",
+		    (reg & PCI_PCIE_LCSR_RCB) != 0 ? 128 : 64);
+		printf("      Link Disable: %s\n",
+		    (reg & PCI_PCIE_LCSR_LINK_DIS) != 0 ? "on" : "off");
+		printf("      Retrain Link: %s\n",
+		    (reg & PCI_PCIE_LCSR_RETRAIN) != 0 ? "on" : "off");
+		printf("      Common Clock Configuration: %s\n",
+		    (reg & PCI_PCIE_LCSR_COMCLKCFG) != 0 ? "on" : "off");
+		printf("      Extended Synch: %s\n",
+		    (reg & PCI_PCIE_LCSR_EXTNDSYNC) != 0 ? "on" : "off");
+		printf("      Enable Clock Power Management: %s\n",
+		    (reg & PCI_PCIE_LCSR_ENCLKPM) != 0 ? "on" : "off");
+		printf("      Hardware Autonomous Width Disable: %s\n",
+		    (reg & PCI_PCIE_LCSR_HAWD) != 0 ? "on" : "off");
+		printf("      Link Bandwidth Management Interrupt Enable: %s\n",
+		    (reg & PCI_PCIE_LCSR_LBMIE) != 0 ? "on" : "off");
+		printf("      Link Autonomous Bandwidth Interrupt Enable: %s\n",
+		    (reg & PCI_PCIE_LCSR_LABIE) != 0 ? "on" : "off");
+
+		/* Link Status Register */
+		reg = regs[o2i(capoff + PCI_PCIE_LCSR)];
+		printf("    Link Status Register: 0x%04x\n", reg >> 16);
+		printf("      Negotiated Link Speed: ");
+		if (((reg >> 16) & 0x000f) < 1 ||
+		    ((reg >> 16) & 0x000f) > 3) {
+			printf("unknown %u value\n",
+			    (unsigned int)(reg & PCI_PCIE_LCSR_LINKSPEED) >> 16);
+		} else {
+			printf("%sGT/s\n",
+			    linkspeeds[((reg & PCI_PCIE_LCSR_LINKSPEED) >> 16) - 1]);
+		}
+		printf("      Negotiated Link Width: x%u lanes\n",
+		    (reg >> 20) & 0x003f);
+		printf("      Training Error: %s\n",
+		    (reg & PCI_PCIE_LCSR_LINKTRAIN_ERR) != 0 ? "on" : "off");
+		printf("      Link Training: %s\n",
+		    (reg & PCI_PCIE_LCSR_LINKTRAIN) != 0 ? "on" : "off");
+		printf("      Slot Clock Configuration: %s\n",
+		    (reg & PCI_PCIE_LCSR_SLOTCLKCFG) != 0 ? "on" : "off");
+		printf("      Data Link Layer Link Active: %s\n",
+		    (reg & PCI_PCIE_LCSR_DLACTIVE) != 0 ? "on" : "off");
+		printf("      Link Bandwidth Management Status: %s\n",
+		    (reg & PCI_PCIE_LCSR_LINK_BW_MGMT) != 0 ? "on" : "off");
+		printf("      Link Autonomous Bandwidth Status: %s\n",
+		    (reg & PCI_PCIE_LCSR_LINK_AUTO_BW) != 0 ? "on" : "off");
 	}
-	printf("      Negotiated Link Width: x%u lanes\n",
-	    (regs[o2i(capoff + 0x10)] >> 20) & 0x003f);
-	if ((regs[o2i(capoff + 0x18)] & 0x07ff) != 0) {
-		printf("    Slot Control Register:\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0001) != 0)
+
+	if (check_slot == true) {
+		/* Slot Capability Register */
+		reg = regs[o2i(capoff + PCI_PCIE_SLCAP)];
+		printf("    Slot Capability Register: %08x\n", reg);
+		if ((reg & PCI_PCIE_SLCAP_ABP) != 0)
+			printf("      Attention Button Present\n");
+		if ((reg & PCI_PCIE_SLCAP_PCP) != 0)
+			printf("      Power Controller Present\n");
+		if ((reg & PCI_PCIE_SLCAP_MSP) != 0)
+			printf("      MRL Sensor Present\n");
+		if ((reg & PCI_PCIE_SLCAP_AIP) != 0)
+			printf("      Attention Indicator Present\n");
+		if ((reg & PCI_PCIE_SLCAP_PIP) != 0)
+			printf("      Power Indicator Present\n");
+		if ((reg & PCI_PCIE_SLCAP_HPS) != 0)
+			printf("      Hot-Plug Surprise\n");
+		if ((reg & PCI_PCIE_SLCAP_HPC) != 0)
+			printf("      Hot-Plug Capable\n");
+		printf("      Slot Power Limit Value: %d\n",
+		    (unsigned int)(reg & PCI_PCIE_SLCAP_SPLV) >> 7);
+		printf("      Slot Power Limit Scale: %d\n",
+		    (unsigned int)(reg & PCI_PCIE_SLCAP_SPLS) >> 15);
+		if ((reg & PCI_PCIE_SLCAP_EIP) != 0)
+			printf("      Electromechanical Interlock Present\n");
+		if ((reg & PCI_PCIE_SLCAP_NCCS) != 0)
+			printf("      No Command Completed Support\n");
+		printf("      Physical Slot Number: %d\n",
+		    (unsigned int)(reg & PCI_PCIE_SLCAP_PSN) >> 19);
+
+		/* Slot Control Register */
+		reg = regs[o2i(capoff + PCI_PCIE_SLCSR)];
+		printf("    Slot Control Register: %04x\n", reg & 0xffff);
+		if ((reg & PCI_PCIE_SLCSR_ABE) != 0)
 			printf("      Attention Button Pressed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0002) != 0)
+		if ((reg & PCI_PCIE_SLCSR_PFE) != 0)
 			printf("      Power Fault Detected Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0004) != 0)
+		if ((reg & PCI_PCIE_SLCSR_MSE) != 0)
 			printf("      MRL Sensor Changed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0008) != 0)
-			printf("      Presense Detected Changed Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0010) != 0)
+		if ((reg & PCI_PCIE_SLCSR_PDE) != 0)
+			printf("      Presense Detect Changed Enabled\n");
+		if ((reg & PCI_PCIE_SLCSR_CCE) != 0)
 			printf("      Command Completed Interrupt Enabled\n");
-		if ((regs[o2i(capoff + 0x18)] & 0x0020) != 0)
+		if ((reg & PCI_PCIE_SLCSR_HPE) != 0)
 			printf("      Hot-Plug Interrupt Enabled\n");
 		printf("      Attention Indicator Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x00c0) >> 6) {
+		switch ((reg & PCI_PCIE_SLCSR_AIC) >> 6) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -900,7 +1187,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      Power Indicator Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x0300) >> 8) {
+		switch ((reg & PCI_PCIE_SLCSR_PIC) >> 8) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -915,11 +1202,206 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      Power Controller Control: ");
-		if ((regs[o2i(capoff + 0x18)] & 0x0400) != 0)
+		if ((reg & PCI_PCIE_SLCSR_PCC) != 0)
 			printf("off\n");
 		else
 			printf("on\n");
+		if ((reg & PCI_PCIE_SLCSR_EIC) != 0)
+			printf("      Electromechanical Interlock Control\n");
+		if ((reg & PCI_PCIE_SLCSR_LACS) != 0)
+			printf("      Data Link Layer State Changed Enable\n");
+
+		/* Slot Status Register */
+		printf("    Slot Status Register: %04x\n", reg >> 16);
+		if ((reg & PCI_PCIE_SLCSR_ABP) != 0)
+			printf("      Attention Button Pressed\n");
+		if ((reg & PCI_PCIE_SLCSR_PFD) != 0)
+			printf("      Power Fault Detected\n");
+		if ((reg & PCI_PCIE_SLCSR_MSC) != 0)
+			printf("      MRL Sensor Changed\n");
+		if ((reg & PCI_PCIE_SLCSR_PDC) != 0)
+			printf("      Presense Detect Changed\n");
+		if ((reg & PCI_PCIE_SLCSR_CC) != 0)
+			printf("      Command Completed\n");
+		if ((reg & PCI_PCIE_SLCSR_MS) != 0)
+			printf("      MRL Open\n");
+		if ((reg & PCI_PCIE_SLCSR_PDS) != 0)
+			printf("      Card Present in slot\n");
+		if ((reg & PCI_PCIE_SLCSR_EIS) != 0)
+			printf("      Electromechanical Interlock engaged\n");
+		if ((reg & PCI_PCIE_SLCSR_LACS) != 0)
+			printf("      Data Link Layer State Changed\n");
 	}
+
+	if (check_rootport == true) {
+		/* Root Control Register */
+		reg = regs[o2i(capoff + PCI_PCIE_RCR)];
+		printf("    Root Control Register: %04x\n", reg & 0xffff);
+		if ((reg & PCI_PCIE_RCR_SERR_CER) != 0)
+			printf("      SERR on Correctable Error Enable\n");
+		if ((reg & PCI_PCIE_RCR_SERR_NFER) != 0)
+			printf("      SERR on Non-Fatal Error Enable\n");
+		if ((reg & PCI_PCIE_RCR_SERR_FER) != 0)
+			printf("      SERR on Fatal Error Enable\n");
+		if ((reg & PCI_PCIE_RCR_PME_IE) != 0)
+			printf("      PME Interrupt Enable\n");
+
+		/* Root Capability Register */
+		printf("    Root Capability Register: %04x\n",
+		    reg >> 16);
+
+		/* Root Status Register */
+		reg = regs[o2i(capoff + PCI_PCIE_RSR)];
+		printf("    Root Status Register: %08x\n", reg);
+		printf("      PME Requester ID: %04x\n",
+		    (unsigned int)(reg & PCI_PCIE_RSR_PME_REQESTER));
+		if ((reg & PCI_PCIE_RSR_PME_STAT) != 0)
+			printf("      PME was asserted\n");
+		if ((reg & PCI_PCIE_RSR_PME_PEND) != 0)
+			printf("      another PME is pending\n");
+	}
+
+	/* PCIe DW9 to DW14 is for PCIe 2.0 and newer */
+	if (pciever < 2)
+		return;
+
+	/* Device Capabilities 2 */
+	reg = regs[o2i(capoff +PCI_PCIE_DCAP2)];
+	printf("    Device Capabilities 2: 0x%08x\n", reg);
+	printf("      Completion Timeout Ranges Supported: %u \n",
+	    (unsigned int)(reg &PCI_PCIE_DCAP2_COMPT_RANGE));
+	printf("      Completion Timeout Disable Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_COMPT_DIS) != 0 ? "yes" : "no");
+	printf("      ARI Forwarding Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_ARI_FWD) != 0 ? "yes" : "no");
+	printf("      AtomicOp Routing Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_ATOM_ROUT) != 0 ? "yes" : "no");
+	printf("      32bit AtomicOp Completer Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_32ATOM) != 0 ? "yes" : "no");
+	printf("      64bit AtomicOp Completer Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_64ATOM) != 0 ? "yes" : "no");
+	printf("      128-bit CAS Completer Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_128CAS) != 0 ? "yes" : "no");
+	printf("      No RO-enabled PR-PR passing: %s\n",
+	    (reg &PCI_PCIE_DCAP2_NO_ROPR_PASS) != 0 ? "yes" : "no");
+	printf("      LTR Mechanism Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_LTR_MEC) != 0 ? "yes" : "no");
+	printf("      TPH Completer Supported: %u\n",
+	    (unsigned int)(reg &PCI_PCIE_DCAP2_TPH_COMP) >> 12);
+	printf("      OBFF Supported: ");
+	switch ((reg &PCI_PCIE_DCAP2_OBFF) >> 18) {
+	case 0x0:
+		printf("Not supported\n");
+		break;
+	case 0x1:
+		printf("Message only\n");
+		break;
+	case 0x2:
+		printf("WAKE# only\n");
+		break;
+	case 0x3:
+		printf("Both\n");
+		break;
+	}
+	printf("      Extended Fmt Field Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_EXTFMT_FLD) != 0 ? "yes" : "no");
+	printf("      End-End TLP Prefix Supported: %s\n",
+	    (reg &PCI_PCIE_DCAP2_EETLP_PREF) != 0 ? "yes" : "no");
+	printf("      Max End-End TLP Prefixes: %u\n",
+	    (unsigned int)(reg &PCI_PCIE_DCAP2_MAX_EETLP) >> 22);
+
+	/* Device Control 2 */
+	reg = regs[o2i(capoff +PCI_PCIE_DCSR2)];
+	printf("    Device Control 2: 0x%04x\n", reg & 0xffff);
+	printf("      Completion Timeout Value: ");
+	pci_print_pcie_compl_timeout(reg &PCI_PCIE_DCSR2_COMPT_VAL);
+	if ((reg &PCI_PCIE_DCSR2_COMPT_DIS) != 0)
+		printf("      Completion Timeout Disabled\n");
+	if ((reg &PCI_PCIE_DCSR2_ARI_FWD) != 0)
+		printf("      ARI Forwarding Enabled\n");
+	if ((reg &PCI_PCIE_DCSR2_ATOM_REQ) != 0)
+		printf("      AtomicOp Rquester Enabled\n");
+	if ((reg &PCI_PCIE_DCSR2_ATOM_EBLK) != 0)
+		printf("      AtomicOp Egress Blocking on\n");
+	if ((reg &PCI_PCIE_DCSR2_IDO_REQ) != 0)
+		printf("      IDO Request Enabled\n");
+	if ((reg &PCI_PCIE_DCSR2_IDO_COMP) != 0)
+		printf("      IDO Completion Enabled\n");
+	if ((reg &PCI_PCIE_DCSR2_LTR_MEC) != 0)
+		printf("      LTR Mechanism Enabled\n");
+	printf("      OBFF: ");
+	switch ((reg &PCI_PCIE_DCSR2_OBFF_EN) >> 13) {
+	case 0x0:
+		printf("Disabled\n");
+		break;
+	case 0x1:
+		printf("Enabled with Message Signaling Variation A\n");
+		break;
+	case 0x2:
+		printf("Enabled with Message Signaling Variation B\n");
+		break;
+	case 0x3:
+		printf("Enabled using WAKE# signaling\n");
+		break;
+	}
+	if ((reg &PCI_PCIE_DCSR2_EETLP) != 0)
+		printf("      End-End TLP Prefix Blocking on\n");
+
+	if (check_link) {
+		/* Link Capability 2 */
+		reg = regs[o2i(capoff +PCI_PCIE_LCAP2)];
+		printf("    Link Capabilities 2: 0x%08x\n", reg);
+		val = (reg &PCI_PCIE_LCAP2_SUP_LNKSV) >> 1;
+		printf("      Supported Link Speed Vector:");
+		for (i = 0; i <= 2; i++) {
+			if (((val >> i) & 0x01) != 0)
+				printf(" %sGT/s", linkspeeds[i]);
+		}
+		printf("\n");
+
+		/* Link Control 2 */
+		reg = regs[o2i(capoff +PCI_PCIE_LCSR2)];
+		printf("    Link Control 2: 0x%04x\n", reg & 0xffff);
+		printf("      Target Link Speed: ");
+		val = reg &PCI_PCIE_LCSR2_TGT_LSPEED;
+		if (val < 1 || val > 3) {
+			printf("unknown %u value\n", val);
+		} else {
+			printf("%sGT/s\n", linkspeeds[val - 1]);
+		}
+		if ((reg &PCI_PCIE_LCSR2_ENT_COMPL) != 0)
+			printf("      Enter Compliance Enabled\n");
+		if ((reg &PCI_PCIE_LCSR2_HW_AS_DIS) != 0)
+			printf("      HW Autonomous Speed Disabled\n");
+		if ((reg &PCI_PCIE_LCSR2_SEL_DEEMP) != 0)
+			printf("      Selectable De-emphasis\n");
+		printf("      Transmit Margin: %u\n",
+		    (unsigned int)(reg &PCI_PCIE_LCSR2_TX_MARGIN) >> 7);
+		if ((reg &PCI_PCIE_LCSR2_EN_MCOMP) != 0)
+			printf("      Enter Modified Compliance\n");
+		if ((reg &PCI_PCIE_LCSR2_COMP_SOS) != 0)
+			printf("      Compliance SOS\n");
+		printf("      Compliance Present/De-emphasis: %u\n",
+		    (unsigned int)(reg &PCI_PCIE_LCSR2_COMP_DEEMP) >> 12);
+
+		/* Link Status 2 */
+		if ((reg &PCI_PCIE_LCSR2_DEEMP_LVL) != 0)
+			printf("      Current De-emphasis Level\n");
+		if ((reg &PCI_PCIE_LCSR2_EQ_COMPL) != 0)
+			printf("      Equalization Complete\n");
+		if ((reg &PCI_PCIE_LCSR2_EQP1_SUC) != 0)
+			printf("      Equalization Phase 1 Successful\n");
+		if ((reg &PCI_PCIE_LCSR2_EQP2_SUC) != 0)
+			printf("      Equalization Phase 2 Successful\n");
+		if ((reg &PCI_PCIE_LCSR2_EQP3_SUC) != 0)
+			printf("      Equalization Phase 3 Successful\n");
+		if ((reg &PCI_PCIE_LCSR2_LNKEQ_REQ) != 0)
+			printf("      Link Equalization Request\n");
+	}
+
+	/* Slot Capability 2 */
+	/* Slot Control 2 */
+	/* Slot Status 2 */
 }
 
 static const char *
@@ -1081,6 +1563,9 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_HOTPLUG:
 			printf("Hot-Plug");
+			break;
+		case PCI_CAP_SUBVENDOR:
+			printf("Sub Vendor ID");
 			break;
 		case PCI_CAP_AGP8:
 			printf("AGP 8x");

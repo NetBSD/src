@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.73 2011/08/17 00:59:47 dyoung Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.73.8.1 2013/08/05 10:09:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -179,6 +179,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
 #define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
+#define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -462,6 +463,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_DEBUGPORT	0x0a
 #define	PCI_CAP_CPCI_RSRCCTL	0x0b
 #define	PCI_CAP_HOTPLUG		0x0c
+#define	PCI_CAP_SUBVENDOR	0x0d
 #define	PCI_CAP_AGP8		0x0e
 #define	PCI_CAP_SECURE		0x0f
 #define	PCI_CAP_PCIEXPRESS     	0x10
@@ -643,19 +645,75 @@ struct pci_msix_table_entry {
 #define	 PCI_PCIE_XCAP_TYPE_DOWN	__SHIFTIN(0x6, PCI_PCIE_XCAP_TYPE_MASK)
 #define	 PCI_PCIE_XCAP_TYPE_PCIE2PCI	__SHIFTIN(0x7, PCI_PCIE_XCAP_TYPE_MASK)
 #define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	__SHIFTIN(0x8, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_ROOT_INTEP	__SHIFTIN(0x9, PCI_PCIE_XCAP_TYPE_MASK)
+#define	 PCI_PCIE_XCAP_TYPE_ROOT_EVNTC	__SHIFTIN(0xa, PCI_PCIE_XCAP_TYPE_MASK)
 #define PCI_PCIE_XCAP_SI	__SHIFTIN(__BIT(8), PCI_PCIE_XCAP_MASK)		/* Slot Implemented */
+#define PCI_PCIE_XCAP_IRQ	__SHIFTIN(__BITS(13, 9), PCI_PCIE_XCAP_MASK)
 #define PCI_PCIE_DCAP		0x04	/* Device Capabilities Register */
+#define PCI_PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
+#define PCI_PCIE_DCAP_PHANTOM_FUNCS	__BITS(4, 3)
+#define PCI_PCIE_DCAP_EXT_TAG_FIELD	__BIT(5)
+#define PCI_PCIE_DCAP_L0S_LATENCY	__BITS(8, 6)
+#define PCI_PCIE_DCAP_L1_LATENCY	__BITS(11, 9)
+#define PCI_PCIE_DCAP_ATTN_BUTTON	__BIT(12)
+#define PCI_PCIE_DCAP_ATTN_IND		__BIT(13)
+#define PCI_PCIE_DCAP_PWR_IND		__BIT(14)
+#define PCI_PCIE_DCAP_ROLE_ERR_RPT	__BIT(15)
+#define PCI_PCIE_DCAP_SLOT_PWR_LIM_VAL	__BITS(25, 18)
+#define PCI_PCIE_DCAP_SLOT_PWR_LIM_SCALE __BITS(27, 26)
+#define PCI_PCIE_DCAP_FLR		__BIT(28)
 #define PCI_PCIE_DCSR		0x08	/* Device Control & Status Register */
-#define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_ENA_COR_ERR	__BIT(0)
+#define PCI_PCIE_DCSR_ENA_NFER		__BIT(1)
+#define PCI_PCIE_DCSR_ENA_FER		__BIT(2)
+#define PCI_PCIE_DCSR_ENA_URR		__BIT(3)
+#define PCI_PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)
+#define PCI_PCIE_DCSR_MAX_PAYLOAD	__BITS(7, 5)
+#define PCI_PCIE_DCSR_EXT_TAG_FIELD	__BIT(8)
+#define PCI_PCIE_DCSR_PHANTOM_FUNCS	__BIT(9)
+#define PCI_PCIE_DCSR_AUX_POWER_PM	__BIT(10)
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	__BIT(11)
-#define PCI_PCIE_DCSR_CED	__BIT(0 + 16)
-#define PCI_PCIE_DCSR_NFED	__BIT(1 + 16)
-#define PCI_PCIE_DCSR_FED	__BIT(2 + 16)
-#define PCI_PCIE_DCSR_URD	__BIT(3 + 16)
-#define PCI_PCIE_LCAP		0x0c
+#define PCI_PCIE_DCSR_MAX_READ_REQ	__BITS(14, 12)
+#define PCI_PCIE_DCSR_BRDG_CFG_RETRY	__BIT(15)
+#define PCI_PCIE_DCSR_INITIATE_FLR	__BIT(15)
+#define PCI_PCIE_DCSR_CED		__BIT(0 + 16)
+#define PCI_PCIE_DCSR_NFED		__BIT(1 + 16)
+#define PCI_PCIE_DCSR_FED		__BIT(2 + 16)
+#define PCI_PCIE_DCSR_URD		__BIT(3 + 16)
+#define PCI_PCIE_DCSR_AUX_PWR		__BIT(4 + 16)
+#define PCI_PCIE_DCSR_TRANSACTION_PND	__BIT(5 + 16)
+#define PCI_PCIE_LCAP		0x0c	/* Link Capabilities Register */
+#define PCI_PCIE_LCAP_MAX_SPEED		__BITS(3, 0)
+#define PCI_PCIE_LCAP_MAX_WIDTH		__BITS(9, 4)
+#define PCI_PCIE_LCAP_ASPM		__BITS(11, 10)
+#define PCI_PCIE_LCAP_L0S_EXIT		__BITS(14, 12)
+#define PCI_PCIE_LCAP_L1_EXIT		__BITS(17, 15)
+#define PCI_PCIE_LCAP_CLOCK_PM		__BIT(18)
+#define PCI_PCIE_LCAP_SURPRISE_DOWN	__BIT(19)
+#define PCI_PCIE_LCAP_DL_ACTIVE		__BIT(20)
+#define PCI_PCIE_LCAP_LINK_BW_NOTIFY	__BIT(21)
+#define PCI_PCIE_LCAP_ASPM_COMPLIANCE	__BIT(22)
+#define PCI_PCIE_LCAP_PORT		__BITS(31, 24)
 #define PCI_PCIE_LCSR		0x10	/* Link Control & Status Register */
 #define PCI_PCIE_LCSR_ASPM_L0S	__BIT(0)
 #define PCI_PCIE_LCSR_ASPM_L1	__BIT(1)
+#define PCI_PCIE_LCSR_RCB	__BIT(3)
+#define PCI_PCIE_LCSR_LINK_DIS	__BIT(4)
+#define PCI_PCIE_LCSR_RETRAIN	__BIT(5)
+#define PCI_PCIE_LCSR_COMCLKCFG	__BIT(6)
+#define PCI_PCIE_LCSR_EXTNDSYNC	__BIT(7)
+#define PCI_PCIE_LCSR_ENCLKPM	__BIT(8)
+#define PCI_PCIE_LCSR_HAWD	__BIT(9)
+#define PCI_PCIE_LCSR_LBMIE	__BIT(10)
+#define PCI_PCIE_LCSR_LABIE	__BIT(11)
+#define	PCI_PCIE_LCSR_LINKSPEED	__BITS(19,16)
+#define	PCI_PCIE_LCSR_NLW	__BITS(25,20)
+#define	PCI_PCIE_LCSR_LINKTRAIN_ERR	__BIT(26)
+#define	PCI_PCIE_LCSR_LINKTRAIN	__BIT(27)
+#define	PCI_PCIE_LCSR_SLOTCLKCFG __BIT(28)
+#define	PCI_PCIE_LCSR_DLACTIVE	__BIT(29)
+#define	PCI_PCIE_LCSR_LINK_BW_MGMT	__BIT(30)
+#define	PCI_PCIE_LCSR_LINK_AUTO_BW	__BIT(31)
 #define PCI_PCIE_SLCAP		0x14	/* Slot Capabilities Register */
 #define PCI_PCIE_SLCAP_ABP	__BIT(0)	/* Attention Button Present */
 #define PCI_PCIE_SLCAP_PCP	__BIT(1)	/* Power Controller Present */
@@ -666,13 +724,24 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCAP_PIP	__BIT(4)	/* Power Indicator Present */
 #define PCI_PCIE_SLCAP_HPS	__BIT(5)	/* Hot-Plug Surprise */
 #define PCI_PCIE_SLCAP_HPC	__BIT(6)	/* Hot-Plug Capable */
-#define PCI_PCIE_SLCSR		0x18
+#define	PCI_PCIE_SLCAP_SPLV	__BITS(14, 7)
+#define	PCI_PCIE_SLCAP_SPLS	__BITS(16, 15)
+#define	PCI_PCIE_SLCAP_EIP	__BIT(17)
+#define	PCI_PCIE_SLCAP_NCCS	__BIT(18)
+#define	PCI_PCIE_SLCAP_PSN	__BITS(31, 19)
+#define PCI_PCIE_SLCSR		0x18	/* Slot Control & Status Register */
 #define PCI_PCIE_SLCSR_ABE	__BIT(0)
 #define PCI_PCIE_SLCSR_PFE	__BIT(1)
 #define PCI_PCIE_SLCSR_MSE	__BIT(2)
 #define PCI_PCIE_SLCSR_PDE	__BIT(3)
 #define PCI_PCIE_SLCSR_CCE	__BIT(4)
 #define PCI_PCIE_SLCSR_HPE	__BIT(5)
+#define PCI_PCIE_SLCSR_AIC	__BITS(7, 6)
+#define PCI_PCIE_SLCSR_PIC	__BITS(9, 8)
+#define PCI_PCIE_SLCSR_PCC	__BIT(10)
+#define PCI_PCIE_SLCSR_EIC	__BIT(11)
+#define PCI_PCIE_SLCSR_DLLSCE	__BIT(12)
+
 #define PCI_PCIE_SLCSR_ABP	__BIT(0 + 16)
 #define PCI_PCIE_SLCSR_PFD	__BIT(1 + 16)
 #define PCI_PCIE_SLCSR_MSC	__BIT(2 + 16)
@@ -680,15 +749,64 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_SLCSR_CC	__BIT(4 + 16)
 #define PCI_PCIE_SLCSR_MS	__BIT(5 + 16)
 #define PCI_PCIE_SLCSR_PDS	__BIT(6 + 16)
+#define PCI_PCIE_SLCSR_EIS	__BIT(7 + 16)
 #define PCI_PCIE_SLCSR_LACS	__BIT(8 + 16)
-#define PCI_PCIE_RCR		0x1c
-#define PCI_PCIE_RSR		0x20
-#define PCI_PCIE_DCAP2		0x24
-#define PCI_PCIE_DCSR2		0x28
-#define PCI_PCIE_LCAP2		0x2c
-#define PCI_PCIE_LCSR2		0x30
-#define PCI_PCIE_SLCAP2		0x34
-#define PCI_PCIE_SLCSR2		0x38
+#define PCI_PCIE_RCR		0x1c	/* Root Control & Capabilities Reg. */
+#define PCI_PCIE_RCR_SERR_CER	__BIT(0)
+#define PCI_PCIE_RCR_SERR_NFER	__BIT(1)
+#define PCI_PCIE_RCR_SERR_FER	__BIT(2)
+#define PCI_PCIE_RCR_PME_IE	__BIT(3)
+#define PCI_PCIE_RSR		0x20	/* Root Status Register */
+#define PCI_PCIE_RSR_PME_REQESTER	__BITS(15, 0)
+#define PCI_PCIE_RSR_PME_STAT	__BIT(16)
+#define PCI_PCIE_RSR_PME_PEND	__BIT(17)
+#define PCI_PCIE_DCAP2		0x24	/* Device Capabilities 2 Register */
+#define PCI_PCIE_DCAP2_COMPT_RANGE __BITS(3,0) /* Compl. Timeout Ranges Supp */
+#define PCI_PCIE_DCAP2_COMPT_DIS __BIT(4)      /* Compl. Timeout Disable Supp*/
+#define PCI_PCIE_DCAP2_ARI_FWD	__BIT(5)       /* ARI Forward Supported */
+#define PCI_PCIE_DCAP2_ATOM_ROUT __BIT(6)      /* AtomicOp Routing Supported */
+#define PCI_PCIE_DCAP2_32ATOM	__BIT(7)       /* 32bit AtomicOp Compl. Supp */
+#define PCI_PCIE_DCAP2_64ATOM	__BIT(8)       /* 64bit AtomicOp Compl. Supp */
+#define PCI_PCIE_DCAP2_128CAS	__BIT(9)       /* 128bit Cas Completer Supp. */
+#define PCI_PCIE_DCAP2_NO_ROPR_PASS __BIT(10)  /* No RO-enabled PR-PR Passng */
+#define PCI_PCIE_DCAP2_LTR_MEC	__BIT(11)      /* LTR Mechanism Supported */
+#define PCI_PCIE_DCAP2_TPH_COMP	__BITS(13, 12) /* TPH Completer Supported */
+#define PCI_PCIE_DCAP2_OBFF	__BITS(19, 18) /* OBPF */
+#define PCI_PCIE_DCAP2_EXTFMT_FLD __BIT(20)    /* Extended Fmt Field Support */
+#define PCI_PCIE_DCAP2_EETLP_PREF __BIT(21)    /* End-End TLP Prefix Support */
+#define PCI_PCIE_DCAP2_MAX_EETLP __BITS(23, 22) /* Max End-End TLP Prefix Sup */
+#define PCI_PCIE_DCSR2		0x28	/* Device Control & Status 2 Reg. */
+#define PCI_PCIE_DCSR2_COMPT_VAL __BITS(3, 0)   /* Completion Timeout Value */
+#define PCI_PCIE_DCSR2_COMPT_DIS __BIT(4)      /* Completion Timeout Disable */
+#define PCI_PCIE_DCSR2_ARI_FWD	__BIT(5)       /* ARI Forwarding Enable */
+#define PCI_PCIE_DCSR2_ATOM_REQ	__BIT(6)       /* AtomicOp Requester Enable */
+#define PCI_PCIE_DCSR2_ATOM_EBLK __BIT(7)       /* AtomicOp Egress Blocking */
+#define PCI_PCIE_DCSR2_IDO_REQ	__BIT(8)       /* IDO Request Enable */
+#define PCI_PCIE_DCSR2_IDO_COMP	__BIT(9)       /* IDO Completion Enable */
+#define PCI_PCIE_DCSR2_LTR_MEC	__BIT(10)      /* LTR Mechanism Enable */
+#define PCI_PCIE_DCSR2_OBFF_EN	__BITS(14, 13) /* OBPF Enable */
+#define PCI_PCIE_DCSR2_EETLP	__BIT(15)      /* End-End TLP Prefix Blcking */
+#define PCI_PCIE_LCAP2		0x2c	/* Link Capabilities 2 Register */
+#define PCI_PCIE_LCAP2_SUP_LNKSV __BITS(7, 1)  /* Supported Link Speeds Vect */
+#define PCI_PCIE_LCAP2_CROSSLNK	__BIT(8)       /* Crosslink Supported */
+#define PCI_PCIE_LCSR2		0x30	/* Link Control & Status 2 Register */
+#define PCI_PCIE_LCSR2_TGT_LSPEED __BITS(3, 0)   /* Target Link Speed */
+#define PCI_PCIE_LCSR2_ENT_COMPL __BIT(4)       /* Enter Compliance */
+#define PCI_PCIE_LCSR2_HW_AS_DIS __BIT(5)      /* HW Autonomous Speed Disabl */
+#define PCI_PCIE_LCSR2_SEL_DEEMP __BIT(6)       /* Selectable De-emphasis */
+#define PCI_PCIE_LCSR2_TX_MARGIN __BITS(9, 7)   /* Transmit Margin */
+#define PCI_PCIE_LCSR2_EN_MCOMP	__BIT(10)      /* Enter Modified Compliance */
+#define PCI_PCIE_LCSR2_COMP_SOS	__BIT(11)      /* Compliance SOS */
+#define PCI_PCIE_LCSR2_COMP_DEEMP __BITS(15, 12) /* Compliance Present/De-emph */
+#define PCI_PCIE_LCSR2_DEEMP_LVL __BIT(0 + 16)  /* Current De-emphasis Level */
+#define PCI_PCIE_LCSR2_EQ_COMPL	__BIT(1 + 16)  /* Equalization Complete */
+#define PCI_PCIE_LCSR2_EQP1_SUC	__BIT(2 + 16)  /* Equaliz Phase 1 Successful */
+#define PCI_PCIE_LCSR2_EQP2_SUC	__BIT(3 + 16)  /* Equaliz Phase 2 Successful */
+#define PCI_PCIE_LCSR2_EQP3_SUC	__BIT(4 + 16)  /* Equaliz Phase 3 Successful */
+#define PCI_PCIE_LCSR2_LNKEQ_REQ __BIT(5 + 16)  /* Link Equalization Request */
+
+#define PCI_PCIE_SLCAP2		0x34	/* Slot Capabilities 2 Register */
+#define PCI_PCIE_SLCSR2		0x38	/* Slot Control & Status 2 Register */
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
