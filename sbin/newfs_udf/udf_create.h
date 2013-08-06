@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.5 2013/08/05 17:12:04 joerg Exp $ */
+/* $NetBSD: udf_create.h,v 1.6 2013/08/06 12:49:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -216,6 +216,8 @@ extern struct udf_disclayout     layout;
 
 /* prototypes */
 void udf_init_create_context(void);
+int a_udf_version(const char *s, const char *id_type);
+
 int udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t wrtrack_skew,
 	uint32_t first_lba, uint32_t last_lba,
