@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 2013/08/06 05:57:37 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.54 2013/08/06 17:53:55 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -97,14 +97,24 @@ __mkimage: .USE
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 ARCHES.arm=		armv4 xscale armv5t armv6 armv7
+ARCHES.armeb=		armv4 xscale armv5t armv6
 ARCHES.earm=		xscale armv5t armv6 armv7
+ARCHES.earmeb=		xscale armv5t armv6
 ARCHES.earmhf=		armv6hf armv7hf
+ARCHES.earmhfeb=	armv6hf
 ARCHES.earmv4=		armv4
+ARCHES.earmv4eb=	armv4
+ARCHES.earmv5=		xscale armv5t
+ARCHES.earmv5eb=	xscale armv5t
 ARCHES.earmv6=		armv6
 ARCHES.earmv6hf=	armv6hf
+ARCHES.earmv6eb=	armv6
+ARCHES.earmv6hfeb=	armv6hf
 ARCHES.earmv7=		armv7
 ARCHES.earmv7hf=	armv7hf
-.for arch in ${ARCHES.${MACHINE_ARCH:S/eb//}}
+ARCHES.earmv7eb=	armv7
+ARCHES.earmv7hfeb=	armv7hf
+.for arch in ${ARCHES.${MACHINE_ARCH}}
 .for board in ${EVBARM_BOARDS.${arch}}
 KERNEL_SETS+=		${board}
 BUILD_KERNELS+=		${board}_INSTALL
