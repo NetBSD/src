@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.16 2013/08/06 12:49:13 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.17 2013/08/06 13:15:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -674,10 +674,10 @@ main(int argc, char **argv)
 
 	srandom((unsigned long) time(NULL));
 	udf_init_create_context();
-	context.app_name  = APP_NAME;
-	context.impl_name = IMPL_NAME;
+	context.app_name         = "*NetBSD newfs";
 	context.app_version_main = APP_VERSION_MAIN;
 	context.app_version_sub  = APP_VERSION_SUB;
+	context.impl_name        = IMPL_NAME;
 
 	/* minimum and maximum UDF versions we advise */
 	context.min_udf = 0x201;
