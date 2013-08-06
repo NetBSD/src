@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.90 2013/07/20 10:31:19 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.91 2013/08/06 21:58:46 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -444,6 +444,11 @@ int setpassent(int);
 #if !HAVE_SETPROGNAME || defined(__NetBSD__)
 const char *getprogname(void);
 void setprogname(const char *);
+#endif
+
+#if !HAVE_SNPRINTB_M
+int snprintb(char *, size_t, const char *, uint64_t);
+int snprintb_m(char *, size_t, const char *, uint64_t, size_t);
 #endif
 
 #if !HAVE_SNPRINTF
