@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1432 2013/07/31 21:01:13 soren Exp $
+# $NetBSD: mi,v 1.1433 2013/08/06 22:33:59 soren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -936,6 +936,7 @@
 ./usr/share/man/cat4/cobalt/gt.0		man-sys-catman		.cat
 ./usr/share/man/cat4/cobalt/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/com.0			man-sys-catman		.cat
+./usr/share/man/cat4/coram.0			man-sys-catman		.cat
 ./usr/share/man/cat4/coretemp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/crypto.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cs.0			man-sys-catman		.cat
@@ -943,6 +944,7 @@
 ./usr/share/man/cat4/cuda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cx24227.0			man-sys-catman		.cat
+./usr/share/man/cat4/cxdtv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
@@ -1799,6 +1801,7 @@
 ./usr/share/man/cat4/vax/dl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/dmc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/dmf.0			man-sys-catman		.cat
+./usr/share/man/cat4/vax/dmv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/dmz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/dn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/dz.0			man-sys-catman		.cat
@@ -3909,6 +3912,7 @@
 ./usr/share/man/html4/cobalt/gt.html		man-sys-htmlman		html
 ./usr/share/man/html4/cobalt/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/com.html			man-sys-htmlman		html
+./usr/share/man/html4/coram.html		man-sys-htmlman		html
 ./usr/share/man/html4/coretemp.html		man-obsolete		obsolete
 ./usr/share/man/html4/crypto.html		man-sys-htmlman		html
 ./usr/share/man/html4/cs.html			man-sys-htmlman		html
@@ -3916,6 +3920,7 @@
 ./usr/share/man/html4/cuda.html			man-sys-htmlman		html
 ./usr/share/man/html4/cue.html			man-sys-htmlman		html
 ./usr/share/man/html4/cx24227.html		man-sys-htmlman		html
+./usr/share/man/html4/cxdtv.html		man-sys-htmlman		html
 ./usr/share/man/html4/cy.html			man-sys-htmlman		html
 ./usr/share/man/html4/cypide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cz.html			man-sys-htmlman		html
@@ -4696,6 +4701,7 @@
 ./usr/share/man/html4/vax/dl.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/dmc.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/dmf.html		man-sys-htmlman		html
+./usr/share/man/html4/vax/dmv.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/dmz.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/dn.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/dz.html		man-sys-htmlman		html
@@ -6652,6 +6658,7 @@
 ./usr/share/man/man4/cobalt/gt.4		man-sys-man		.man
 ./usr/share/man/man4/cobalt/intro.4		man-sys-man		.man
 ./usr/share/man/man4/com.4			man-sys-man		.man
+./usr/share/man/man4/coram.4			man-sys-man		.man
 ./usr/share/man/man4/coretemp.4			man-obsolete		obsolete
 ./usr/share/man/man4/crypto.4			man-sys-man		.man
 ./usr/share/man/man4/cs.4			man-sys-man		.man
@@ -6659,6 +6666,7 @@
 ./usr/share/man/man4/cuda.4			man-sys-man		.man
 ./usr/share/man/man4/cue.4			man-sys-man		.man
 ./usr/share/man/man4/cx24227.4			man-sys-man		.man
+./usr/share/man/man4/cxdtv.4			man-sys-man		.man
 ./usr/share/man/man4/cy.4			man-sys-man		.man
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
@@ -7515,6 +7523,7 @@
 ./usr/share/man/man4/vax/dl.4			man-sys-man		.man
 ./usr/share/man/man4/vax/dmc.4			man-sys-man		.man
 ./usr/share/man/man4/vax/dmf.4			man-sys-man		.man
+./usr/share/man/man4/vax/dmv.4			man-sys-man		.man
 ./usr/share/man/man4/vax/dmz.4			man-sys-man		.man
 ./usr/share/man/man4/vax/dn.4			man-sys-man		.man
 ./usr/share/man/man4/vax/dz.4			man-sys-man		.man
