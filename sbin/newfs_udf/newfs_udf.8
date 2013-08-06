@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.15 2013/08/06 11:38:51 reinoud Exp $
+.\" $NetBSD: newfs_udf.8,v 1.16 2013/08/06 11:57:25 reinoud Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -75,10 +75,12 @@ its causing problems.
 .It Fl P Ar discid
 Set the physical disc label to the specified
 .Ar discid .
+.Pp
 Prepend
 .Ar discid
 with volsetname separated with a ':' if wanted.
-For strict conformance and interchange, don't set this manually.
+For strict conformance and interchange, don't set this manually unless it has
+an unique hex number in the first 8 character positions.
 .It Fl p Ar percentage
 Percentage of partition to be initially reserved for metadata on the Metadata
 partition.
