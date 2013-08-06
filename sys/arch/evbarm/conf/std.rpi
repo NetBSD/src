@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.8 2013/06/22 15:50:17 matt Exp $
+#	$NetBSD: std.rpi,v 1.9 2013/08/06 00:28:52 matt Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -19,6 +19,7 @@ options 	URTWN_DOTG_WORKAROUND
 options 	EVBARM_BOARDTYPE="rpi"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
 makeoptions	CPPFLAGS+="-I$S/../../../include"
+makeoptions	LOADADDRESS="0xc0008000"
 
 options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm2835_intr.h>"
 options 	ARM_GENERIC_TODR
