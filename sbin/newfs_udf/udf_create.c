@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.20 2013/08/05 17:12:04 joerg Exp $ */
+/* $NetBSD: udf_create.c,v 1.21 2013/08/06 12:49:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.20 2013/08/05 17:12:04 joerg Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.21 2013/08/06 12:49:13 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,6 +100,62 @@ udf_init_create_context(void)
 	context.metadata_part      = 0;
 	context.metadata_alloc_pos = 0;
 	context.data_alloc_pos     = 0;
+}
+
+
+/* version can be specified as 0xabc or a.bc */
+static int
+parse_udfversion(const char *pos, uint32_t *version) {
+	int hex = 0;
+	char c1, c2, c3, c4;
+
+	*version = 0;
+	if (*pos == '0') {
+		pos++;
+		/* expect hex format */
+		hex = 1;
+		if (*pos++ != 'x')
+			return 1;
+	}
+
+	c1 = *pos++;
+	if (c1 < '0' || c1 > '9')
+		return 1;
+	c1 -= '0';
+
+	c2 = *pos++;
+	if (!hex) {
+		if (c2 != '.')
+			return 1;
+		c2 = *pos++;
+	}
+	if (c2 < '0' || c2 > '9')
+		return 1;
+	c2 -= '0';
+
+	c3 = *pos++;
+	if (c3 < '0' || c3 > '9')
+		return 1;
+	c3 -= '0';
+
+	c4 = *pos++;
+	if (c4 != 0)
+		return 1;
+
+	*version = c1 * 0x100 + c2 * 0x10 + c3;
+	return 0;
+}
+
+
+/* parse a given string for an udf version */
+int
+a_udf_version(const char *s, const char *id_type)
+{
+	uint32_t version;
+
+	if (parse_udfversion(s, &version))
+		errx(1, "unknown %s id %s; specify as hex or float", id_type, s);
+	return version;
 }
 
 
