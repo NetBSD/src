@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2013/08/04 23:37:54 matt Exp $
+#	$NetBSD: Makefile,v 1.16 2013/08/06 05:35:57 matt Exp $
 
 .include <bsd.init.mk>
 
 # We don't install gmp, just provide it for GCC.
 LIBISPRIVATE?=	yes
 
-LIBGMP_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[467]/arm/}
+GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[67]/arm/}
 
 .if ${LIBISPRIVATE} != "yes"
 INCS=         gmp.h
@@ -147,7 +147,7 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
-CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${GMP_MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
@@ -182,13 +182,13 @@ perfsqr.h: gen-psqr.c
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 
 
-.include "${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH}/Makefile.inc"
+.include "${.CURDIR}/arch/${GMP_MACHINE_ARCH}/Makefile.inc"
 
 # XXX stuff looks for "../config.m4"
 dummy:
 	mkdir dummy
-${.OBJDIR}/config.m4: ${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
+${.OBJDIR}/config.m4: ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4
+	cp ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
 
 CLEANFILES+=	config.m4
 clean: cleandummy
@@ -221,7 +221,7 @@ CLEANFILES+=	mpn_${_build}
 
 .PATH:	${DIST} \
 	${DIST}/mpn/generic \
-	${.CURDIR}/arch/${LIBGMP_MACHINE_ARCH} \
+	${.CURDIR}/arch/${GMP_MACHINE_ARCH} \
 	${DIST}/mpf \
 	${DIST}/mpz
 
