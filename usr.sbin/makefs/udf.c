@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.6 2013/08/06 08:24:56 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.7 2013/08/06 09:32:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.6 2013/08/06 08:24:56 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.7 2013/08/06 09:32:23 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +133,8 @@ udf_dump_discinfo(struct mmc_discinfo *di)
 	printf("\tfst on last ses    %d\n", di->first_track_last_session);
 	printf("\tlst on last ses    %d\n", di->last_track_last_session);
 	printf("\tlink block penalty %d\n", di->link_block_penalty);
-	snprintb(bits, sizeof(bits), MMC_DFLAGS_FLAGBITS, (uint64_t) di->disc_flags);
+	snprintb(bits, sizeof(bits), MMC_DFLAGS_FLAGBITS,
+			(uint64_t) di->disc_flags);
 	printf("\tdisc flags         %s\n", bits);
 	printf("\tdisc id            %x\n", di->disc_id);
 	printf("\tdisc barcode       %"PRIx64"\n", di->disc_barcode);
@@ -191,7 +192,8 @@ udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
 	switch (mmc_emuprofile) {
 	case 0x00:	/* unknown, treat as CDROM */
 	case 0x08:	/* CDROM */
-	case 0x10:	/* DVD-ROM */
+	case 0x10:	/* DVDROM */
+	case 0x40:	/* BDROM */
 		req_enable |= FORMAT_READONLY;
 		/* FALLTROUGH */
 	case 0x01:	/* disc */
@@ -286,7 +288,7 @@ udf_prep_opts(fsinfo_t *fsopts)
 	time_t now;
 
 	const option_t udf_options[] = {
-		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,dvdram,bdre,disk,cdr,dvdr,cdrw,dvdrw)"),
+		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
 //		{ 'P', "progress", &display_progressbar, OPT_INT32, false, true,
 //		  "display progress bar" },
 		{ .name = NULL }
@@ -330,10 +332,20 @@ udf_cleanup_opts(fsinfo_t *fsopts)
 }
 
 
+#define CDRSIZE    ((uint64_t)   700*1024*1024)	/* small approx */
+#define CDRWSIZE   ((uint64_t)   576*1024*1024)	/* small approx */
+#define DVDRSIZE   ((uint64_t)  4488*1024*1024)	/* small approx */
+#define DVDRAMSIZE ((uint64_t)  4330*1024*1024)	/* small approx with spare */
+#define DVDRWSIZE  ((uint64_t)  4482*1024*1024)	/* small approx */
+#define BDRSIZE    ((uint64_t) 23866*1024*1024)	/* small approx */
+#define BDRESIZE   ((uint64_t) 23098*1024*1024)	/* small approx */
+
 int
 udf_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	option_t *udf_options = fsopts->fs_options;
+	uint64_t stdsize;
+	uint32_t set_sectorsize;
 	const char *name, *desc;
 	char buf[1024];
 	int i;
@@ -350,6 +362,9 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (udf_options[i].name == NULL)
 		abort();
 
+	set_sectorsize = 0;
+	stdsize = 0;
+
 	name = udf_options[i].name;
 	desc = udf_options[i].desc;
 	switch (udf_options[i].letter) {
@@ -358,25 +373,42 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 			mmc_profile = 0x00;
 		} else if (strcmp(buf, "dvdrom") == 0) {
 			mmc_profile = 0x10;
+		} else if (strcmp(buf, "bdrom") == 0) {
+			mmc_profile = 0x40;
 		} else if (strcmp(buf, "dvdram") == 0) {
 			mmc_profile = 0x12;
+			stdsize = DVDRAMSIZE;
 		} else if (strcmp(buf, "bdre") == 0) {
 			mmc_profile = 0x43;
+			stdsize = BDRESIZE;
 		} else if (strcmp(buf, "disk") == 0) {
 			mmc_profile = 0x01;
 		} else if (strcmp(buf, "cdr") == 0) {
 			mmc_profile = 0x09;
+			stdsize = CDRSIZE;
 		} else if (strcmp(buf, "dvdr") == 0) {
 			mmc_profile = 0x1b;
+			stdsize = DVDRSIZE;
+		} else if (strcmp(buf, "bdr") == 0) {
+			mmc_profile = 0x41;
+			stdsize = BDRSIZE;
 		} else if (strcmp(buf, "cdrw") == 0) {
 			mmc_profile = 0x0a;
+			stdsize = CDRWSIZE;
 		} else if (strcmp(buf, "dvdrw") == 0) {
 			mmc_profile = 0x13;
+			stdsize = DVDRWSIZE;
 		} else {
 			errx(EINVAL, "Unknown or unimplemented disc format");
 			return 0;
 		}
+		if (mmc_profile != 0x01)
+			set_sectorsize = 2048;
 	}
+	if (set_sectorsize)
+		fsopts->sectorsize = set_sectorsize;
+	if (stdsize)
+		fsopts->size = stdsize;
 	return 1;
 }
 
@@ -1122,6 +1154,7 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 		struct udf_stats *stats)
 {
 	char path[MAXPATHLEN + 1];
+	off_t proposed_size;
 	uint32_t n, nblk;
 
 	strncpy(path, dir, sizeof(path));
@@ -1162,11 +1195,17 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 		stats->ndatablocks += (n - nblk);
 		nblk += n - nblk;
 	}
-	fsopts->size = (uint64_t) nblk * fsopts->sectorsize;
-
+	proposed_size = (off_t) nblk * fsopts->sectorsize;
 	/* sanity size */
-	if (fsopts->size < 512*1024)
-		fsopts->size = 512*1024;
+	if (proposed_size < 512*1024)
+		proposed_size = 512*1024;
+
+	if (fsopts->size) {
+		if (fsopts->size < proposed_size) 
+			err(EINVAL, "makefs_udf: won't fit on disc!");
+	} else {
+		fsopts->size = proposed_size;
+	}
 
 	fsopts->inodes = stats->nfiles + stats->ndirs;
 }
@@ -1244,6 +1283,10 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		truncate_len *= context.sector_size;
 
 		printf("\nTruncing the disc-image to allow for VAT\n");
+		printf("Free space left on this volume approx. "
+			"%"PRIu64" KiB, %"PRIu64" MiB\n",
+			(fsopts->size - truncate_len)/1024,
+			(fsopts->size - truncate_len)/1024/1024);
 		ftruncate(fd, truncate_len);
 	}
 
