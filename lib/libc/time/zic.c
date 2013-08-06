@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.41 2013/07/17 20:13:04 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.42 2013/08/06 05:48:39 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.41 2013/07/17 20:13:04 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.42 2013/08/06 05:48:39 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -1572,10 +1572,13 @@ writezone(const char *const name, const char *const string)
 			int	mrudst, mrustd, hidst, histd, type;
 
 			hidst = histd = mrudst = mrustd = -1;
-			for (i = thistimei; i < thistimelim; ++i)
+			for (i = thistimei; i < thistimelim; ++i) {
+				if (i < 0)
+					continue;
 				if (isdsts[types[i]])
 					mrudst = types[i];
 				else	mrustd = types[i];
+			}
 			for (i = 0; i < typecnt; ++i)
 				if (writetype[i]) {
 					if (isdsts[i])
