@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.52 2013/08/06 12:47:21 reinoud Exp $
+.\"	$NetBSD: makefs.8,v 1.53 2013/08/06 20:16:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -414,21 +414,22 @@ create a rewritable fs with sparing for defective sectors
 When an optical media is selected here, the sectorsize and the default disc
 size is assumed unless given explicitly.
 For rom images the disc size is the minimum needed.
-.El
-.Bl -tag -width optimization -compact
 .It Sy loglabel
 Set the logical volume label of the disc to the specified argument.
 .It Sy discid
-Set the physical volume label of the disc to the specified argument. Prepend
-the physical volume label with a volumeset label separated with a ':' if
-wanted. For strict conformance and interchange, don't set the volumeset label
+Set the physical volume label of the disc to the specified argument.
+Prepend the physical volume label with a volumeset label separated
+with a ':' if wanted.
+For strict conformance and interchange, don't set the volumeset label
 manually unless it has an unique hex number in the first 8 character
 positions.
 .It Sy minver
-Set the minimum UDF version to be used. Choose UDF version numbers from 0x102,
-0x150, 0x200, and 0x201. Versions 0x250 and 0x260 are currently not supported
+Set the minimum UDF version to be used.
+Choose UDF version numbers from 0x102, 0x150, 0x200, and 0x201.
+Versions 0x250 and 0x260 are currently not supported
 in
 .Nm .
+.El
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
