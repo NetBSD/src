@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.50 2013/08/06 12:12:51 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.51 2013/08/06 12:19:34 reinoud Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -397,10 +397,11 @@ Each of the options consists of a keyword, an equal sign
 .Pq Ql = ,
 and a value.
 The following keywords are supported:
+.Pp
 .Bl -tag -width optimization -compact
 .It Sy disctype
 This can have the following values:
-.Bl -tag -width dvdramXbdreXdiskXXX -compact
+.Bl -tag -width cdromXdvdromXbdromXXX -compact
 .It Sy cdrom , Sy dvdrom , Sy bdrom
 create a read-only fs
 .It Sy dvdram , Sy bdre , Sy disk
@@ -412,9 +413,17 @@ create a rewritable fs with sparing for defective sectors
 .El
 When an optical media is selected here, the sectorsize and the default disc
 size is assumed unless given explicitly.
-For rom images the disc size is the
-minimum needed.
+For rom images the disc size is the minimum needed.
 .El
+.Bl -tag -width optimization -compact
+.It Sy loglabel
+Set the logical volume label of the disc to the specified argument.
+.It Sy discid
+Set the physical volume label of the disc to the specified argument. Prepend
+the physical volume label with a volumeset label separated with a ':' if
+wanted. For strict conformance and interchange, don't set the volumeset label
+manually unless it has an unique hex number in the first 8 character
+positions.
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
