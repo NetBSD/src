@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.16 2013/08/06 11:57:25 reinoud Exp $
+.\" $NetBSD: newfs_udf.8,v 1.17 2013/08/06 12:14:43 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -165,19 +165,6 @@ native sectorsize of 512 :
 .Bd -literal -offset indent
 newfs_udf -L "My USB stick" /dev/rsd0d
 .Ed
-.Sh BUGS
-The
-.Ar P
-and the
-.Ar S
-arguments have changed meaning.
-The meaning of
-.Ar S
-has been merged into
-.Ar P
-since
-.Nx 6.1 .
-.Ed
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8 ,
@@ -190,3 +177,15 @@ command first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
 .An Reinoud Zandijk Aq Mt reinoud@NetBSD.org
+.Sh BUGS
+The
+.Ar P
+and the
+.Ar S
+arguments have changed meaning.
+The meaning of
+.Ar S
+has been merged into
+.Ar P
+since
+.Nx 6.1 .
