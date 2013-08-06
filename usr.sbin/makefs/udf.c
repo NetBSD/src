@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.9 2013/08/06 12:47:21 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.10 2013/08/06 13:15:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.9 2013/08/06 12:47:21 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.10 2013/08/06 13:15:30 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: udf.c,v 1.9 2013/08/06 12:47:21 reinoud Exp $");
 #include "udf_write.h"
 #include "newfs_udf.h"
 
+#undef APP_NAME
+#define APP_NAME "*NetBSD makefs"
 
 /*
  * Note: due to the setup of the newfs code, the current state of the program
@@ -314,10 +316,10 @@ udf_prep_opts(fsinfo_t *fsopts)
 	mmc_profile = 0x01;		/* 'disc'/file */
 
 	udf_init_create_context();
-	context.app_name  = APP_NAME;
-	context.impl_name = IMPL_NAME;
+	context.app_name         = "*NetBSD makefs";
 	context.app_version_main = APP_VERSION_MAIN;
 	context.app_version_sub  = APP_VERSION_SUB;
+	context.impl_name        = IMPL_NAME;
 
 	/* minimum and maximum UDF versions we advise */
 	context.min_udf = 0x102;
