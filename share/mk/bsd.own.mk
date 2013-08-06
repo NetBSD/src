@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.741 2013/08/05 00:21:50 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.742 2013/08/06 05:46:26 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -694,6 +694,15 @@ GNU_ARCH.earmhf=arm
 GNU_ARCH.earmeb=armeb
 GNU_ARCH.earmhfeb=armeb
 GNU_ARCH.earmv4=armv4
+GNU_ARCH.earmv4eb=armv4eb
+GNU_ARCH.earmv5=arm
+GNU_ARCH.earmv5eb=armeb
+GNU_ARCH.earmv6=armv6
+GNU_ARCH.earmv6hf=armv6
+GNU_ARCH.earmv6eb=armv6eb
+GNU_ARCH.earmv6hfeb=armv6eb
+GNU_ARCH.earmv7=armv7
+GNU_ARCH.earmv7hf=armv7
 GNU_ARCH.earmv7eb=armv7eb
 GNU_ARCH.earmv7hfeb=armv7eb
 GNU_ARCH.i386=i486
@@ -711,7 +720,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # an "elf" tag for historically a.out platforms.
 #
 .if (!empty(MACHINE_ARCH:Mearm*))
-MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:C/v7//:S/earm/eabi/}
+MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:C/v[4-7]//:S/earm/eabi/}
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "i386" || \
