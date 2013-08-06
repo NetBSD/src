@@ -32,21 +32,20 @@
 #define UDF_META_PERC  20	/* picked */
 
 /* Identifying myself */
-#define APP_NAME		"*NetBSD newfs"
 #define APP_VERSION_MAIN	0
-#define APP_VERSION_SUB		4
+#define APP_VERSION_SUB		5
 #define IMPL_NAME		"*NetBSD userland UDF"
 
 
 /* global variables describing disc and format requests */
-extern int	 fd;				/* device: file descriptor */
-extern char	*dev;				/* device: name		   */
-extern struct mmc_discinfo mmc_discinfo;	/* device: disc info	   */
+extern int	 fd;			/* device: file descriptor */
+extern char	*dev;			/* device: name		   */
+extern struct mmc_discinfo mmc_discinfo;/* device: disc info	   */
 
-extern char	*format_str;			/* format: string representation */
-extern int	 format_flags;			/* format: attribute flags	 */
-extern int	 media_accesstype;		/* derived from current mmc cap  */
-extern int	 check_surface;			/* for rewritables               */
+extern char	*format_str;		/* format: string representation */
+extern int	 format_flags;		/* format: attribute flags	 */
+extern int	 media_accesstype;	/* derived from current mmc cap  */
+extern int	 check_surface;		/* for rewritables               */
 
 extern int	 wrtrack_skew;
 extern int	 meta_perc;

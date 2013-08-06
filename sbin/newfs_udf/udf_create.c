@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.21 2013/08/06 12:49:13 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.22 2013/08/06 13:15:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.21 2013/08/06 12:49:13 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.22 2013/08/06 13:15:30 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,16 +77,11 @@ udf_init_create_context(void)
 	context.volset_name  = NULL;
 	context.fileset_name = NULL;
 
-#ifdef __NetBSD_Version__
-	context.app_name	  = "*NetBSD newfs";
-	context.app_version_main =  __NetBSD_Version__ / 100000000;
-	context.app_version_sub  = (__NetBSD_Version__ / 1000000) % 100;
-#else
-	context.app_name	  = "*NetBSD makefs";
+	/* most basic identification */
+	context.app_name	 = "*NetBSD";
 	context.app_version_main = 0;
 	context.app_version_sub  = 0;
-#endif
-	context.impl_name        = "*NetBSD kernel UDF";
+	context.impl_name        = "*NetBSD";
 
 	context.vds_seq = 0;		/* first one starts with zero */
 
