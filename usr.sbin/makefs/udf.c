@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.5 2013/08/06 08:18:08 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.6 2013/08/06 08:24:56 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.5 2013/08/06 08:18:08 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.6 2013/08/06 08:24:56 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -517,7 +517,8 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, size_t size)
 
 	/* going internal */
 	assert(l_ad == 0);
-	assert(udf_rw16(icb->flags) == UDF_ICB_INTERN_ALLOC);
+	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
+			UDF_ICB_INTERN_ALLOC);
 
 	// assert(free_space >= size);
 	pos = data + l_ea + l_ad;
