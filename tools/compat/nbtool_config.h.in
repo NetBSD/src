@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.30 2013/07/19 11:06:37 pooka Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.31 2013/08/06 21:56:36 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -416,6 +416,9 @@
 
 /* Define if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
+
+/* Define if you have the `snprintb_m' function. */
+#undef HAVE_SNPRINTB_M
 
 /* Define if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
