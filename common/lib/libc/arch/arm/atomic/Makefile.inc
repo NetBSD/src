@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2013/08/06 20:37:22 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2013/08/06 20:49:15 matt Exp $
 
 ARMV6= ${CPUFLAGS:M-march=armv7*} ${CPUFLAGS:M-mcpu=cortex*}
 ARMV6+= ${CPUFLAGS:M-march=armv6*} ${CPUFLAGS:M-mcpu=arm11*}
@@ -6,7 +6,12 @@ ARMV6+= ${CFLAGS:M-march=armv7*:} ${CFLAGS:M-mcpu=cortex*}
 ARMV6+= ${CFLAGS:M-march=armv6*:} ${CFLAGS:M-mcpu=arm11*}
 ARMV6+= ${CPPFLAGS:M-march=armv7*:} ${CPPFLAGS:M-mcpu=cortex*}
 ARMV6+= ${CPPFLAGS:M-march=armv6*:} ${CPPFLAGS:M-mcpu=arm11*}
+.if empty(CPPFLAGS:M-D_STANDALONE) \
+    && empty(CFLAGS:M-march=*) && empty(CFLAGS:M-mcpu=*) \
+    && empty(CPPFLAGS:M-march=*) && empty(CPPFLAGS:M-mcpu=*) \
+    && empty(CPUFLAGS:M-march=*) && empty(CPUFLAGS:M-mcpu=*)
 ARMV6+= ${MACHINE_ARCH:Mearmv[67]*}
+.endif
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
