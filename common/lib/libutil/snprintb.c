@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -49,15 +49,16 @@ __RCSID("$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $");
 #  include <stdio.h>
 #  include <util.h>
 #  include <errno.h>
-# else
+# else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.8 2013/07/09 16:10:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
 #  include <lib/libkern/libkern.h>
-# endif
+# endif /* ! _KERNEL */
 
+# ifndef HAVE_SNPRINTB_M
 int
 snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	   size_t l_max)
@@ -278,4 +279,5 @@ snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
 {
 	return snprintb_m(buf, buflen, bitfmt, val, 0);
 }
-#endif
+# endif /* ! HAVE_SNPRINTB_M */
+#endif /* ! _STANDALONE */
