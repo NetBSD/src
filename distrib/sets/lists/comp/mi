@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1829 2013/07/18 16:01:41 kefren Exp $
+#	$NetBSD: mi,v 1.1830 2013/08/06 22:33:59 soren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9275,6 +9275,7 @@
 ./usr/share/man/cat9/fusword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/genfs.0			comp-sys-catman		.cat
+./usr/share/man/cat9/genfs_rename.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbinuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
@@ -9527,6 +9528,7 @@
 ./usr/share/man/cat9/memoryallocators.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/memset.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mi_switch.0		comp-sys-catman		.cat
+./usr/share/man/cat9/microseq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/microtime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module.0			comp-sys-catman		.cat
@@ -9731,6 +9733,7 @@
 ./usr/share/man/cat9/powerhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerof2.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ppi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/preempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
@@ -9782,6 +9785,7 @@
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_extract_data.0		comp-sys-catman		.cat
+./usr/share/man/cat9/rndsink.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rootconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/round_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
@@ -15696,6 +15700,7 @@
 ./usr/share/man/html9/fusword.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fuword.html		comp-sys-htmlman	html
 ./usr/share/man/html9/genfs.html		comp-sys-htmlman	html
+./usr/share/man/html9/genfs_rename.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbinuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getblk.html		comp-sys-htmlman	html
@@ -15944,6 +15949,7 @@
 ./usr/share/man/html9/memoryallocators.html	comp-sys-htmlman	html
 ./usr/share/man/html9/memset.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mi_switch.html		comp-sys-htmlman	html
+./usr/share/man/html9/microseq.html		comp-sys-htmlman	html
 ./usr/share/man/html9/microtime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/microuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
@@ -16144,6 +16150,7 @@
 ./usr/share/man/html9/powerhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerof2.html		comp-sys-htmlman	html
+./usr/share/man/html9/ppi.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ppsratecheck.html		comp-sys-htmlman	html
 ./usr/share/man/html9/preempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
@@ -16185,6 +16192,7 @@
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_extract_data.html	comp-sys-htmlman	html
+./usr/share/man/html9/rndsink.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rootconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/round_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
@@ -22268,6 +22276,7 @@
 ./usr/share/man/man9/fusword.9			comp-sys-man		.man
 ./usr/share/man/man9/fuword.9			comp-sys-man		.man
 ./usr/share/man/man9/genfs.9			comp-sys-man		.man
+./usr/share/man/man9/genfs_rename.9		comp-sys-man		.man
 ./usr/share/man/man9/getbintime.9		comp-sys-man		.man
 ./usr/share/man/man9/getbinuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
@@ -22520,6 +22529,7 @@
 ./usr/share/man/man9/memoryallocators.9		comp-sys-man		.man
 ./usr/share/man/man9/memset.9			comp-sys-man		.man
 ./usr/share/man/man9/mi_switch.9		comp-sys-man		.man
+./usr/share/man/man9/microseq.9			comp-sys-man		.man
 ./usr/share/man/man9/microtime.9		comp-sys-man		.man
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/module.9			comp-sys-man		.man
@@ -22724,6 +22734,7 @@
 ./usr/share/man/man9/powerhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerhook_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerof2.9			comp-sys-man		.man
+./usr/share/man/man9/ppi.9			comp-sys-man		.man
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man		.man
 ./usr/share/man/man9/preempt.9			comp-sys-man		.man
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
@@ -22775,6 +22786,7 @@
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_extract_data.9		comp-sys-man		.man
+./usr/share/man/man9/rndsink.9			comp-sys-man		.man
 ./usr/share/man/man9/rootconf.9			comp-sys-man		.man
 ./usr/share/man/man9/round_page.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
