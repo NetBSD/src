@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.70 2013/08/03 18:35:31 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.71 2013/08/06 19:13:13 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.70 2013/08/03 18:35:31 soren Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.71 2013/08/06 19:13:13 soren Exp $");
 #endif
 
 
@@ -1067,7 +1067,7 @@ device_identify(int argc, char *argv[])
 			    inqbuf->atap_sata_features_supp, ata_sata_feat);
 	}
 
-	if ((inqbuf->atap_ata_major & WDC_VER_ATA8) &&
+	if ((inqbuf->atap_ata_major & WDC_VER_ATA7) &&
 	    (inqbuf->support_dsm & ATA_SUPPORT_DSM_TRIM))
 		printf("TRIM supported\n");
 
