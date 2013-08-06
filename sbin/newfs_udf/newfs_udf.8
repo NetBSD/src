@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.14 2013/08/05 14:28:48 wiz Exp $
+.\" $NetBSD: newfs_udf.8,v 1.15 2013/08/06 11:38:51 reinoud Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -163,18 +163,6 @@ native sectorsize of 512 :
 .Bd -literal -offset indent
 newfs_udf -L "My USB stick" /dev/rsd0d
 .Ed
-.Sh SEE ALSO
-.Xr disktab 5 ,
-.Xr disklabel 8 ,
-.Xr mmcformat 8 ,
-.Xr newfs 8
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 5.0 .
-.Sh AUTHORS
-.An Reinoud Zandijk Aq Mt reinoud@NetBSD.org
 .Sh BUGS
 The
 .Ar P
@@ -187,3 +175,16 @@ has been merged into
 .Ar P
 since
 .Nx 6.1 .
+.Ed
+.Sh SEE ALSO
+.Xr disktab 5 ,
+.Xr disklabel 8 ,
+.Xr mmcformat 8 ,
+.Xr newfs 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Reinoud Zandijk Aq Mt reinoud@NetBSD.org
