@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.8 2013/08/06 12:19:34 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.9 2013/08/06 12:47:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.8 2013/08/06 12:19:34 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.9 2013/08/06 12:47:21 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,7 +97,7 @@ udf_write_sector(void *sector, uint32_t location)
 	ret = pwrite(fd, sector, context.sector_size, wpos);
 	if (ret == -1)
 		return errno;
-	if (ret < context.sector_size)
+	if (ret < (int) context.sector_size)
 		return EIO;
 	return 0;
 }
@@ -272,10 +272,10 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
 
 #define OPT_NUM(letter, name, field, min, max, desc) \
-	{ letter, name, &diskStructure->field, \
-	  sizeof(diskStructure->field) == 8 ? OPT_INT64 : \
-	  (sizeof(diskStructure->field) == 4 ? OPT_INT32 : \
-	  (sizeof(diskStructure->field) == 2 ? OPT_INT16 : OPT_INT8)), \
+	{ letter, name, &context.field, \
+	  sizeof(context.field) == 8 ? OPT_INT64 : \
+	  (sizeof(context.field) == 4 ? OPT_INT32 : \
+	  (sizeof(context.field) == 2 ? OPT_INT16 : OPT_INT8)), \
 	  min, max, desc }
 
 #define OPT_BOOL(letter, name, field, desc) \
@@ -291,8 +291,15 @@ udf_prep_opts(fsinfo_t *fsopts)
 		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,"
 			"dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
 		OPT_STR('L', "loglabel", "\"logical volume name\""),
-		OPT_STR('P', "discid",   "[\"volset name\"':']"
-			"\"physical volume name\""),
+		OPT_STR('P', "discid",   "\"[volset name ':']"
+			"physical volume name\""),
+		OPT_NUM('t', "tz", gmtoff, -24, 24, "timezone"),
+		OPT_STR('v', "minver", "minimum UDF version in either "
+			"``0x201'' or ``2.01'' format"),
+#if notyet
+		OPT_STR('V', "maxver", "maximum UDF version in either "
+			"``0x201'' or ``2.01'' format"),
+#endif
 		{ .name = NULL }
 	};
 
@@ -314,7 +321,7 @@ udf_prep_opts(fsinfo_t *fsopts)
 
 	/* minimum and maximum UDF versions we advise */
 	context.min_udf = 0x102;
-	context.max_udf = 0x201;
+	context.max_udf = 0x201;	/* 0x250 and 0x260 are not ready */
 
 	/* use user's time zone as default */
 	(void)time(&now);
@@ -334,6 +341,10 @@ udf_cleanup_opts(fsinfo_t *fsopts)
 }
 
 
+/* ----- included from newfs_udf.c ------ */
+/* ----- */
+
+
 #define CDRSIZE    ((uint64_t)   700*1024*1024)	/* small approx */
 #define CDRWSIZE   ((uint64_t)   576*1024*1024)	/* small approx */
 #define DVDRSIZE   ((uint64_t)  4488*1024*1024)	/* small approx */
@@ -341,7 +352,6 @@ udf_cleanup_opts(fsinfo_t *fsopts)
 #define DVDRWSIZE  ((uint64_t)  4482*1024*1024)	/* small approx */
 #define BDRSIZE    ((uint64_t) 23866*1024*1024)	/* small approx */
 #define BDRESIZE   ((uint64_t) 23098*1024*1024)	/* small approx */
-
 int
 udf_parse_opts(const char *option, fsinfo_t *fsopts)
 {
@@ -423,10 +433,19 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 		if (context.primary_name)
 			free(context.primary_name);
 		if ((strstr(buf, ":"))) {
-			perror("primary name can't have ':' in its name");
+			errx(EINVAL, "primary name can't have ':' in its name");
 			return 0;
 		}
 		context.primary_name = strdup(buf);
+		break;
+	case 'v':
+		context.min_udf = a_udf_version(buf, "min_udf");
+		if (context.min_udf > 0x201) {
+			errx(EINVAL, "maximum supported version is UDF 2.01");
+			return 0;
+		}
+		if (context.min_udf > context.max_udf)
+			context.max_udf = context.min_udf;
 		break;
 	}
 	if (set_sectorsize)
@@ -1240,6 +1259,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct udf_stats stats;
 	uint64_t truncate_len;
+	char scrap[255];
 	int error;
 
 	/* determine format */
@@ -1288,6 +1308,18 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	/* update mmc info but now with correct size */
 	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
 
+	printf("Building disc compatible with UDF version %x to %x\n\n",
+		context.min_udf, context.max_udf);
+	(void)snprintb(scrap, sizeof(scrap), FORMAT_FLAGBITS,
+	    (uint64_t) format_flags);
+	printf("UDF properties       %s\n", scrap);
+	printf("Volume set          `%s'\n", context.volset_name);
+	printf("Primary volume      `%s`\n", context.primary_name);
+	printf("Logical volume      `%s`\n", context.logvol_name);
+	if (format_flags & FORMAT_META)
+		printf("Metadata percentage  %d %%\n",
+			(int) (100.0*stats.ndatablocks/stats.nmetadatablocks));
+	printf("\n");
 	udf_do_newfs_prefix();
 
 	/* update context */
