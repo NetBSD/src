@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/08/05 00:08:58 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2013/08/06 05:35:57 matt Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -10,7 +10,7 @@ NOCLANGERROR=	# defined
 
 LIB=		iberty
 
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[467]/arm/}
+BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 

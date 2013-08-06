@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/05 00:08:58 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2013/08/06 05:35:57 matt Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -10,7 +10,7 @@ NOCLANGERROR=	# defined
 
 LIB=		opcodes
 
-BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[467]/arm/}
+BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 .if exists(${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"

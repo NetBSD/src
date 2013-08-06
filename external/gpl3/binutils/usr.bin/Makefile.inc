@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2013/08/05 00:08:58 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2013/08/06 05:35:57 matt Exp $
 
 BINDIR?=	/usr/bin
 
@@ -7,7 +7,7 @@ __MAKEFILE_INC_INCLUDED__=1
 
 .include <bsd.own.mk>
 
-BINUTILS_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[467]/arm/}
+BINUTILS_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 GNUHOSTDIST=	${DIST}
 GNUCPPFLAGS=	${G_DEFS} ${G_INCLUDES}
