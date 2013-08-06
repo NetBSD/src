@@ -1,4 +1,4 @@
-.\"	$NetBSD: iee.4,v 1.5 2009/05/27 19:23:59 snj Exp $
+.\"	$NetBSD: iee.4,v 1.6 2013/08/06 19:02:57 snj Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -95,7 +95,7 @@ Many frames where received under high load and the receive ring buffer
 was to small to store them all.
 Frame reception was restarted from scratch.
 Most likely there where frames lost.
-.It "iee%d: iee_intr: scb_status=0x%x scb_cmd=0x%x faild command %d: cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x"
+.It "iee%d: iee_intr: scb_status=0x%x scb_cmd=0x%x failed command %d: cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x"
 A transmit or setup command was not executed successfully.
 .It "iee%d: iee_intr: crc_err=%d"
 Number of frames with a CRC error received.
@@ -141,7 +141,7 @@ The hardware didn't respond to a transmit or setup command within five seconds.
 The interface will be reset and restarted.
 .It "iee%d: iee_gsc_cmd: timeout n=%d"
 Timeout at sending a channel attention command to the chip.
-.It "iee%d: iee_gsc_reset timeout bussy=0x%x"
+.It "iee%d: iee_gsc_reset timeout busy=0x%x"
 Timeout at resetting the chip.
 Possible errors during
 .Xr autoconf 4 .
