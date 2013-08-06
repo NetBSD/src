@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.51 2013/08/06 12:19:34 reinoud Exp $
+.\"	$NetBSD: makefs.8,v 1.52 2013/08/06 12:47:21 reinoud Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -424,6 +424,11 @@ the physical volume label with a volumeset label separated with a ':' if
 wanted. For strict conformance and interchange, don't set the volumeset label
 manually unless it has an unique hex number in the first 8 character
 positions.
+.It Sy minver
+Set the minimum UDF version to be used. Choose UDF version numbers from 0x102,
+0x150, 0x200, and 0x201. Versions 0x250 and 0x260 are currently not supported
+in
+.Nm .
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
