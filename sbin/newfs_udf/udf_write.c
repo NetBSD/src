@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.6 2013/08/05 20:52:08 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.7 2013/08/06 08:18:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_write.c,v 1.6 2013/08/05 20:52:08 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.7 2013/08/06 08:18:08 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -783,6 +783,8 @@ udf_do_rootdir(void) {
 	error = udf_write_dscr_virt(root_dscr,
 		layout.rootdir, context.metadata_part, 1);
 
+	free(root_dscr);
+
 	return error;
 }
 
@@ -891,6 +893,7 @@ udf_do_newfs_postfix(void)
 		loc++;
 
 		error = udf_write_dscr_virt(vat_dscr, loc, metadata_part, 1);
+		free(vat_dscr);
 		if (error)
 			return error;
 	}
