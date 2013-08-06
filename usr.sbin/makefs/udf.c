@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.7 2013/08/06 09:32:23 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.8 2013/08/06 12:19:34 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.7 2013/08/06 09:32:23 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.8 2013/08/06 12:19:34 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -288,9 +288,11 @@ udf_prep_opts(fsinfo_t *fsopts)
 	time_t now;
 
 	const option_t udf_options[] = {
-		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
-//		{ 'P', "progress", &display_progressbar, OPT_INT32, false, true,
-//		  "display progress bar" },
+		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,"
+			"dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
+		OPT_STR('L', "loglabel", "\"logical volume name\""),
+		OPT_STR('P', "discid",   "[\"volset name\"':']"
+			"\"physical volume name\""),
 		{ .name = NULL }
 	};
 
@@ -347,7 +349,7 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	uint64_t stdsize;
 	uint32_t set_sectorsize;
 	const char *name, *desc;
-	char buf[1024];
+	char buffer[1024], *buf, *colon;
 	int i;
 
 	assert(option != NULL);
@@ -355,7 +357,7 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("udf_parse_opts: got `%s'\n", option);
 
-	i = set_option(udf_options, option, buf, sizeof(buf));
+	i = set_option(udf_options, option, buffer, sizeof(buffer));
 	if (i == -1)
 		return 0;
 
@@ -365,6 +367,7 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	set_sectorsize = 0;
 	stdsize = 0;
 
+	buf = buffer;
 	name = udf_options[i].name;
 	desc = udf_options[i].desc;
 	switch (udf_options[i].letter) {
@@ -404,6 +407,27 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 		}
 		if (mmc_profile != 0x01)
 			set_sectorsize = 2048;
+		break;
+	case 'L':
+		if (context.logvol_name) free(context.logvol_name);
+		context.logvol_name = strdup(buf);
+		break;
+	case 'P':
+		if ((colon = strstr(buf, ":"))) {
+			if (context.volset_name)
+				free(context.volset_name);
+			*colon = 0;
+			context.volset_name = strdup(buf);
+			buf = colon+1;
+		}
+		if (context.primary_name)
+			free(context.primary_name);
+		if ((strstr(buf, ":"))) {
+			perror("primary name can't have ':' in its name");
+			return 0;
+		}
+		context.primary_name = strdup(buf);
+		break;
 	}
 	if (set_sectorsize)
 		fsopts->sectorsize = set_sectorsize;
