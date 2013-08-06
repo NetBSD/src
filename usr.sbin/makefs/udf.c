@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.4 2013/08/05 18:44:16 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.5 2013/08/06 08:18:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.4 2013/08/05 18:44:16 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.5 2013/08/06 08:18:08 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -880,6 +880,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	uint8_t *data;
 	int nblk;
 	int i, f;
+	int error;
 
 	fnode = cur->inode;
 
@@ -901,13 +902,13 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 
 	printf("  ");
 	i = 0;
+	error = 0;
 	while (chunk) {
 		rd = read(f, data, chunk);
 		if (rd != chunk) {
 			warn("Short read of file %s\n", cur->name);
-			close(f);
-			free(data);
-			return errno;
+			error = errno;
+			break;
 		}
 		printf("\b%c", "\\|/-"[i++ % 4]); fflush(stdout);fflush(stderr);
 
@@ -927,12 +928,13 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	udf_set_link_cnt(dscr, fnode->nlink);
 	udf_write_dscr_virt(dscr, udf_rw32(icb->loc.lb_num),
 		udf_rw16(icb->loc.part_num), 1);
+	free(dscr);
 
 	/* remember our location for hardlinks */
 	cur->inode->fsuse = malloc(sizeof(struct long_ad));
 	memcpy(cur->inode->fsuse, icb, sizeof(struct long_ad));
 
-	return 0;
+	return error;
 }
 
 
@@ -1069,6 +1071,7 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 			udf_write_dscr_virt(dscr, udf_rw32(icb.loc.lb_num),
 				udf_rw16(icb.loc.part_num), 1);
 
+			free(dscr);
 			free(softlink_buf);
 
 			udf_create_fid(ddoff, fid, cur->name, 0, &icb);
@@ -1088,6 +1091,8 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 	udf_write_dscr_virt(dir_dscr, udf_rw32(dir_icb->loc.lb_num),
 			udf_rw16(dir_icb->loc.part_num), 1);
 
+	free(dirdata);
+	free(dir_dscr);
 	return retval;
 }
 
@@ -1122,10 +1127,11 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 
 	/* calculate strict minimal size */
 	udf_estimate_walk(fsopts, root, path, stats);
-	printf("ndirs\t\t%d\n", stats->ndirs);
-	printf("nfiles\t\t%d\n", stats->nfiles);
-	printf("ndata_blocks\t%d\n", stats->ndatablocks);
-	printf("nmetadata_blocks\t%d\n", stats->nmetadatablocks);
+	printf("ndirs            %d\n", stats->ndirs);
+	printf("nfiles           %d\n", stats->nfiles);
+	printf("ndata_blocks     %d\n", stats->ndatablocks);
+	printf("nmetadata_blocks %d\n", stats->nmetadatablocks);
+	printf("\n");
 
 	/* adjust for options : free file nodes */
 	if (fsopts->freefiles) {
