@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.12 2013/08/05 00:57:24 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.13 2013/08/07 18:34:53 matt Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -77,13 +77,29 @@
 #define R_ARM_GOTPC		25
 #define R_ARM_GOT32		26
 #define R_ARM_PLT32		27
-
+#define R_ARM_CALL		28
+#define R_ARM_JUMP24		29
+#define R_ARM_THM_JUMP24	30
+#define R_ARM_BASE_ABS		31
 #define R_ARM_ALU_PCREL_7_0	32
 #define R_ARM_ALU_PCREL_15_8	33
 #define R_ARM_ALU_PCREL_23_15	34
 #define R_ARM_ALU_SBREL_11_0	35
 #define R_ARM_ALU_SBREL_19_12	36
-#define R_ARM_ALU_SBREL_27_20	37
+#define R_ARM_ALU_SBREL_27_20	37	// depcreated
+#define R_ARM_TARGET1		38
+#define R_ARM_SBREL31		39	// deprecated
+#define R_ARM_V4BX		40
+#define R_ARM_TARGET2		41
+#define R_ARM_PREL31		42
+#define R_ARM_MOVW_ABS_NC	43
+#define R_ARM_MOVT_ABS		44
+#define R_ARM_MOVW_PREL_NC	45
+#define R_ARM_MOVT_PREL		46
+#define R_ARM_THM_MOVW_ABS_NC	47
+#define R_ARM_THM_MOVT_ABS	48
+#define R_ARM_THM_MOVW_PREL_NC	49
+#define R_ARM_THM_MOVT_PREL	50
 
 /* 96-111 are reserved to G++. */
 #define R_ARM_GNU_VTENTRY	100
