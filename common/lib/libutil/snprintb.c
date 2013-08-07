@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.10 2013/08/07 22:37:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.10 2013/08/07 22:37:28 pgoyette Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.9 2013/08/06 22:02:50 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.10 2013/08/07 22:37:28 pgoyette Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -215,10 +215,10 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 					sep = ',';
 				if (ch == 'F')	/* just extract */
 					break;
-				if (restart == 0) {
+				if (restart == 0)
 					PUTS(bitfmt);
+				if (restart == 0)
 					PUTCHR('=');
-				}
 				if (restart == 0) {
 					f_len = snprintf(bp, buflen - t_len,
 							 sbase, field);
