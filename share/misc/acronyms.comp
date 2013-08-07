@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.138 2013/06/29 12:22:48 jdf Exp $
+$NetBSD: acronyms.comp,v 1.139 2013/08/07 05:19:40 agc Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -307,9 +307,11 @@ DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
 DL	diode logic
+DL	discrete logarithm
 DL	download
 DLE	data link escape
 DLL	dynamic link library
+DLP	discrete logarithm problem
 DMA	direct memory access
 DMI	desktop management interface
 DMS	document management system
@@ -334,6 +336,7 @@ DRI	direct rendering infrastructure
 DRM	digital rights management
 DRRS	display refresh rate switching
 DS	debug store
+DSA	digital signature algorithm
 DSB	double-sideband modulation
 DSDT	differentiated system descriptor table
 DSL	digital subscriber line
@@ -360,7 +363,10 @@ E-XER	extended XML encoding rules
 EABI	embedded-application binary interface
 EAP	Extensible Authentication Protocol
 EBR	extended boot record
+EC	elliptical curve
 ECC	error correction code
+ECDL	elliptical curve discrete logarithm
+ECDSA	elliptical curve digital signature algorithm
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
 ECP	enhanced capability port
@@ -693,12 +699,14 @@ MIB	management information base
 MID	mobile Internet device
 MIDI	musical instrument digital interface
 MIF	management information format
+MIM	man in the middle
 MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
 MISD	multiple instruction, single data
 MIT	Massachusetts Institute of Technology
+MITM	man in the middle
 ML	machine language
 ML	machine learning
 ML	mailing list
