@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.127 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.128 2013/08/07 12:50:17 blymn Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.127 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.128 2013/08/07 12:50:17 blymn Exp $");
 
 #include "opt_ata.h"
 
@@ -1678,7 +1678,10 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	KASSERT(chp->ch_queue->queue_freeze > 0);
 	/* unfreeze the queue and reset drives */
 	chp->ch_queue->queue_freeze--;
-	ata_reset_channel(chp, AT_WAIT);
+
+	/* reset channel only if there are drives attached */
+	if (chp->ch_ndrives > 0)
+		ata_reset_channel(chp, AT_WAIT);
 	splx(s);
 
 	return true;
