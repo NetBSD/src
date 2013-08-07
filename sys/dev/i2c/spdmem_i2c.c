@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.7 2013/07/28 06:12:45 kiyohara Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.8 2013/08/07 19:38:45 soren Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.7 2013/07/28 06:12:45 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.8 2013/08/07 19:38:45 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.7 2013/07/28 06:12:45 kiyohara Exp 
 #include <dev/ic/spdmemvar.h>
 
 /* Constants for matching i2c bus address */
-#define SPDMEM_I2C_ADDRMASK 0x78
+#define SPDMEM_I2C_ADDRMASK 0x3f8
 #define SPDMEM_I2C_ADDR     0x50
 
 struct spdmem_i2c_softc {

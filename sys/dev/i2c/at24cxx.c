@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.13 2013/02/08 15:14:11 jdc Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.14 2013/08/07 19:38:45 soren Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.13 2013/02/08 15:14:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.14 2013/08/07 19:38:45 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.13 2013/02/08 15:14:11 jdc Exp $");
  * larger than 512kb).  Be sure to check the datasheet of your EEPROM
  * because there's much variation between models.
  */
-#define	AT24CXX_ADDRMASK	0x78
+#define	AT24CXX_ADDRMASK	0x3f8
 #define	AT24CXX_ADDR		0x50
 
 #define	AT24CXX_WRITE_CYCLE_MS	10
