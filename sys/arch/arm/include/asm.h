@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 2013/01/28 23:47:38 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.18 2013/08/07 17:09:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -176,6 +176,25 @@
 # define RET		mov		pc, lr
 # define RETr(r)	mov		pc, r
 # define RETc(c)	__CONCAT(mov,c)	pc, lr
+#endif
+
+#ifdef _ARM_ARCH_7
+#define KMODTRAMPOLINE(n)			\
+_ENTRY(__wrap_ ## n)				\
+	movw	ip, #:lower16:n;	\
+	movt	ip, #:upper16:n;	\
+	bx	ip
+#elif defined(_ARM_ARCH_4T)
+#define KMODTRAMPOLINE(n)	\
+_ENTRY(__wrap_ ## n)		\
+	ldr	ip, [pc];	\
+	bx	ip;		\
+	.word	n
+#else
+#define KMODTRAMPOLINE(n)	\
+_ENTRY(__wrap_ ## n)		\
+	ldr	pc, [pc, #-4];	\
+	.word	n
 #endif
 
 #endif /* !_ARM_ASM_H_ */
