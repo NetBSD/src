@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2013/08/07 06:09:32 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2013/08/07 20:57:22 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -58,9 +58,9 @@ EVBARM_BOARDS.armv5t+=		SHEEVAPLUG
 #EVBARM_BOARDS.armv6hf+= 	IMX31LITE
 EVBARM_BOARDS.armv6+=		RPI
 EVBARM_BOARDS.armv6hf+=	 	RPI
-EVBARM_BOARDS.armv6+=		TIDSP2420
-EVBARM_BOARDS.armv6hf+= 	TIDSP2420
-EVBARM_BOARDS.armv6+=		TIDSP2430
+EVBARM_BOARDS.armv6+=		TISDP2420
+EVBARM_BOARDS.armv6hf+= 	TISDP2420
+#EVBARM_BOARDS.armv6+=		TISDP2430
 EVBARM_BOARDS.armv7+=		ARMADAXP
 EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv7hf+= 	BCM5301X
