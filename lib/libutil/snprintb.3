@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.15 2013/08/07 22:51:59 pgoyette Exp $
+.\"     $NetBSD: snprintb.3,v 1.16 2013/08/07 23:22:28 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,9 +228,9 @@ snprintb(buf, buflen, "\e10\e2BITTWO\e1BITONE", 3)
 \(rA "03<BITTWO,BITONE>"
 
 snprintb(buf, buflen,
-       "\e20\ex10NOTBOOT\ex0fFPP\ex0eSDVMA\ex0cVIDEO"
-       "\ex0bLORES\ex0aFPA\ex09DIAG\ex07CACHE"
-       "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE",
+       "\e20\ex10NOTBOOT\ex0f" "FPP\ex0eSDVMA\ex0cVIDEO"
+       "\ex0bLORES\ex0a" "FPA\ex09" "DIAG\ex07" "CACHE"
+       "\ex06IOCACHE\ex05LOOPBACK\ex04" "DBGCACHE",
        0xe860)
 \(rA "0xe860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
 .Ed
