@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2009/08/17 19:44:32 dsl Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4 2013/08/07 18:36:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2009/08/17 19:44:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2013/08/07 18:36:19 matt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -91,6 +91,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	switch (rtype) {
 	case R_ARM_NONE:	/* none */
+	case R_ARM_V4BX:	/* none */
 		return 0;
 
 	case R_ARM_ABS32:
@@ -117,8 +118,21 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			*where = addr;
 		return 0;
 
+	case R_ARM_MOVW_ABS_NC:
+	case R_ARM_MOVT_ABS:
+		addr = kobj_sym_lookup(ko, symidx);
+		if (addr == 0)
+			break;
+		if (rtype == R_ARM_MOVT_ABS)
+			addr >>= 16;
+		*where = (*where & 0xfff0f000)
+		    | ((addr << 4) & 0x000f0000) | (addr & 0x00000fff);
+		return 0;
+
+	case R_ARM_CALL:
+	case R_ARM_JUMP24:
 	case R_ARM_PC24:
-		if (local)
+		if (local && (*where & 0x00ffffff) != 0x00fffffe)
 			return 0;
 
 		/* Remove the instruction from the 24 bit offset */
@@ -128,18 +142,25 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addend & 0x00800000)
 			addend |= 0xff000000;
 
+		addend <<= 2;
+
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			break;
 
 		addend += ((uint32_t *)addr - (uint32_t *)where);
 
-		if ((addend & 0xff800000) != 0x00000000 &&
-		    (addend & 0xff800000) != 0xff800000) {
+		if (addend & 3) {
+			printf ("Relocation %x unaligned @ %p\n", addend, where);
+			return -1;
+		}
+
+		if ((addend & 0xfe000000) != 0x00000000 &&
+		    (addend & 0xfe000000) != 0xfe000000) {
 			printf ("Relocation %x too far @ %p\n", addend, where);
 			return -1;
 		}
-		*where = (*where & 0xff000000) | (addend & 0x00ffffff);
+		*where = (*where & 0xff000000) | ((addend >> 2) & 0x00ffffff);
 		return 0;
 
 	default:
