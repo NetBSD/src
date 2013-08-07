@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.5 2010/07/12 03:39:05 pgoyette Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.6 2013/08/07 19:38:45 soren Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * Following definitions derived from JEDEC Standard 21-C section 4.7
  * available at http://www.jedec.org/download/search/4_07R15.pdf
  */
-#define	SDTEMP_ADDRMASK			0x78
+#define	SDTEMP_ADDRMASK			0x3f8
 #define	SDTEMP_ADDR			0x18	/* I2C address 001 1xxx */
 
 #define	SDTEMP_REG_CAPABILITY		0x00
