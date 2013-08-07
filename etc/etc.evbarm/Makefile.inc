@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.54 2013/08/06 17:53:55 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.55 2013/08/07 06:09:32 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -14,7 +14,7 @@ EVBARM_BOARDS.${i}=
 
 .if !empty(MACHINE_ARCH:M*eb)
 # big endian boards
-KERNEL_SETS.armv4+=		IMX1200
+KERNEL_SETS.armv4+=		IXM1200
 EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
 EVBARM_BOARDS.armv7+=		BCM5301X
@@ -25,7 +25,7 @@ EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv4+=		GEMINI
 EVBARM_BOARDS.armv4+=		INTEGRATOR
 KERNEL_SETS.armv4+=		INTEGRATOR_CP
-KERNEL_SETS.armv4+=		IMX1200
+KERNEL_SETS.armv4+=		IXM1200
 #EVBARM_BOARDS.armv4+=		MINI2440
 #EVBARM_BOARDS.armv4+=		MPCSA_GENERIC
 #EVBARM_BOARDS.armv4+=		NAPPI
