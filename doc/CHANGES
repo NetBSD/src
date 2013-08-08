@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1842 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1843 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -249,6 +249,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	wm(4): Add support for I217 and I218 [msaitoh 20130602]
 	X11: Updated all Xorg packages that could be, for Xorg SA 2003-05-23,
 		and general.  [mrg 20130605]
+	ipsec(4): FAST_IPSEC is now named IPSEC, old IPSEC is gone.
+		[christos 20130605]
 	kernel: Add driver soekrisgpio for Soekris net6501 
 		Ported by kardel@ from a patch for OpenBSD. [kardel 20130609]
 	cgfourteen: both kernel and Xorg driver now support hardware
@@ -273,5 +275,3 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	makefs(8): Added UDF support for makefs(8). It allows for the creation
 		of images for both read-only, rewritable or recordable media.
 		[reinoud 20130805]
-	ipsec(4): FAST_IPSEC is now named IPSEC, old IPSEC is gone.
-		[christos 20130605]
