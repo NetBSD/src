@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.13 2013/08/08 16:43:13 agc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,17 +41,17 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.13 2013/08/08 16:43:13 agc Exp $");
 #  endif
 
 #  include <sys/types.h>
-#  include <sys/inttypes.h>
+#  include <inttypes.h>
 #  include <stdio.h>
 #  include <util.h>
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.13 2013/08/08 16:43:13 agc Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
