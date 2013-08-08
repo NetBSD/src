@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.1 2012/04/19 17:50:51 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.2 2013/08/08 07:06:13 kardel Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1 2012/04/19 17:50:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.2 2013/08/08 07:06:13 kardel Exp $");
 
 #include "bio.h"
 
@@ -2296,7 +2296,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	chan->chan_bustype = &scsi_sas_bustype;
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
-	chan->chan_nluns = 1;
+	chan->chan_nluns = 8;
 	chan->chan_ntargets = sc->sc_max_devices;
 	chan->chan_id = -1;
 
