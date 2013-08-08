@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.29 2013/08/05 10:09:53 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.30 2013/08/08 21:59:43 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -467,4 +467,10 @@ sys/dev/pci/pci_subr.c		1.92-1.102, 1.104-1.105 via patch
 	Print more registers in "pcictl dump".
 	Fix bug in comment.
 	[msaitoh, ticket #928]
+
+sys/netinet6/nd6_rtr.c				1.86
+
+	Avoid crash destroying tap0 after deleting its link-local address.
+	PR/47576.
+	[msaitoh, ticket #926]
 
