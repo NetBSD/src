@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.82.10.2 2013/07/12 11:18:57 jdc Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.82.10.3 2013/08/08 21:57:40 snj Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.82.10.2 2013/07/12 11:18:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.82.10.3 2013/08/08 21:57:40 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1038,10 +1038,12 @@ prelist_remove(struct nd_prefix *pr)
 		free(pfr, M_IP6NDP);
 	}
 
-	ext->nprefixes--;
-	if (ext->nprefixes < 0) {
-		log(LOG_WARNING, "prelist_remove: negative count on %s\n",
-		    pr->ndpr_ifp->if_xname);
+	if (ext) {
+		ext->nprefixes--;
+		if (ext->nprefixes < 0) {
+			log(LOG_WARNING, "prelist_remove: negative count on "
+			    "%s\n", pr->ndpr_ifp->if_xname);
+		}
 	}
 	splx(s);
 
