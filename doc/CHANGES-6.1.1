@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.1,v 1.1.2.17 2013/08/08 03:20:17 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.1,v 1.1.2.18 2013/08/08 21:58:21 snj Exp $
 
 A complete list of changes from the NetBSD 6.1 release to the NetBSD 6.1.1
 release:
@@ -180,3 +180,10 @@ doc/CHANGES-6.1					patch
 	Remove the note about ticket #652 (bge) because the change wasn't
 	added. 	Fixes PR#48069 for netbsd-6-1 branch.
 	[msaitoh]
+
+sys/netinet6/nd6_rtr.c				1.86
+
+        Avoid crash destroying tap0 after deleting its link-local address.
+        PR/47576.
+        [msaitoh, ticket #926]
+
