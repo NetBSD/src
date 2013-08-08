@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.246 2013/06/05 21:59:59 martin Exp $
+$NetBSD: UPDATING,v 1.247 2013/08/08 20:00:20 spz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20130605:
+	The kernel option FAST_IPSEC no longer exists, it's been renamed
+	to IPSEC (and the older IPSEC version removed).
 
 20130605:
 	Previous freetype installations eroneously installed private
