@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.2 2013/08/08 04:52:10 pgoyette Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.3 2013/08/08 05:10:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.2 2013/08/08 04:52:10 pgoyette Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.3 2013/08/08 05:10:07 pgoyette Exp $");
 
 #include <string.h>
 #include <util.h>
@@ -75,7 +75,7 @@ h_snprintb_m(const char *fmt, uint64_t val, int line_max, const char *res,
 
 	len = snprintb_m(buf, sizeof(buf), fmt, val, line_max);
 
-	ATF_REQUIRE_EQG(len, res_len);
+	ATF_REQUIRE_EQ(len, res_len);
 	ATF_REQUIRE_EQ(0, memcmp(res, buf, res_len + 1));
 }
 
