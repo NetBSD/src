@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.26 2013/06/22 05:41:25 matt Exp $ */
+/* $NetBSD: siisata.c,v 1.27 2013/08/08 17:38:56 bouyer Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.26 2013/06/22 05:41:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.27 2013/08/08 17:38:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1417,7 +1417,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
+	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
 		SIISATA_DEBUG_PRINT(("%s: drive %d "
 		    "not present\n", __func__, target), DEBUG_PROBE);
 		return;
