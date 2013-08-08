@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.11 2013/08/07 23:48:13 pgoyette Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.11 2013/08/07 23:48:13 pgoyette Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.11 2013/08/07 23:48:13 pgoyette Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.11 2013/08/07 23:48:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.12 2013/08/08 04:32:43 mrg Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -115,12 +115,12 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	if ((val == 0) && (ch != '\177'))
 		goto terminate;
 
-#define STORE(c) { l_len++;						\
+#define STORE(c) do { l_len++;						\
 		   if ((size_t)(++t_len) < buflen)			\
 		   	*bp++ = (c);					\
 		 } while ( /* CONSTCOND */ 0)
 
-#define	BACKUP	{ if (s_bp != NULL) {					\
+#define	BACKUP	do { if (s_bp != NULL) {				\
 			bp = s_bp; s_bp = NULL;				\
 			t_len -= l_len - s_len;				\
 			restart = 1;					\
@@ -132,32 +132,34 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		  t_len += v_len; l_len = v_len; bp += v_len;		\
 		} while ( /* CONSTCOND */ 0)
 
-#define	PUTSEP								\
-		if (l_max > 0 && (size_t)l_len >= l_max) {		\
-			BACKUP;						\
-			STORE('<');					\
-		} else {						\
-			/* Remember separator location */		\
-			if (l_max > 0 && sep != '<') {			\
-				s_len = l_len;				\
-				s_bp  = bp;				\
-				s_fmt = cur_fmt;			\
+#define	PUTSEP do {							\
+			if (l_max > 0 && (size_t)l_len >= l_max) {	\
+				BACKUP;					\
+				STORE('<');				\
+			} else {					\
+				/* Remember separator location */	\
+				if (l_max > 0 && sep != '<') {		\
+					s_len = l_len;			\
+					s_bp  = bp;			\
+					s_fmt = cur_fmt;		\
+				}					\
+				STORE(sep);				\
+				restart = 0;				\
 			}						\
-			STORE(sep);					\
-			restart = 0;					\
-		}							\
+		} while ( /* CONSTCOND */ 0)
 
-#define	PUTCHR(c)							\
-		if (l_max > 0 && (size_t)l_len >= (l_max - 1)) {	\
-			BACKUP;						\
-			if (restart == 0) {				\
+#define	PUTCHR(c) do {							\
+			if (l_max > 0 && (size_t)l_len >= (l_max - 1)) {\
+				BACKUP;					\
+				if (restart == 0) {			\
+					STORE(c);			\
+				} else					\
+					sep = '<';			\
+			} else {					\
 				STORE(c);				\
-			} else						\
-				sep = '<';				\
-		} else {						\
-			STORE(c);					\
-			restart = 0;					\
-		}							\
+				restart = 0;				\
+			}						\
+		} while ( /* CONSTCOND */ 0)
 
 #define PUTS(s) while ((ch = *(s)++) != 0) {				\
 			PUTCHR(ch);					\
