@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.31 2013/08/06 21:56:36 apb Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.32 2013/08/09 20:13:21 jmcneill Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -320,6 +320,9 @@
 
 /* Define if you have the `regex' library (-lregex). */
 #undef HAVE_LIBREGEX
+
+/* Define if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
 
 /* Define if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
