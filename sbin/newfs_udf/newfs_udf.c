@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.17 2013/08/06 13:15:30 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.18 2013/08/09 15:11:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -75,7 +75,7 @@ static void usage(void) __attribute__((__noreturn__));
 
 /* queue for temporary storage of sectors to be written out */
 struct wrsect {
-	uint32_t  sectornr;
+	uint64_t  sectornr;
 	uint8_t	 *sector_data;
 	TAILQ_ENTRY(wrsect) next;
 };
@@ -108,7 +108,7 @@ float	 meta_fract = (float) UDF_META_PERC / 100.0;
  */
 
 int
-udf_write_sector(void *sector, uint32_t location)
+udf_write_sector(void *sector, uint64_t location)
 {
 	struct wrsect *pos, *seekpos;
 
@@ -155,8 +155,8 @@ writeout_write_queue(void)
 {
 	struct wrsect *pos;
 	uint64_t offset;
-	uint32_t line_len, line_offset;
-	uint32_t line_start, new_line_start, relpos;
+	uint64_t line_start, new_line_start;
+	uint32_t line_len, line_offset, relpos;
 	uint32_t blockingnr;
 	uint8_t *linebuf, *adr;
 
