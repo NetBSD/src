@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.6 2013/08/06 12:49:13 reinoud Exp $ */
+/* $NetBSD: udf_create.h,v 1.7 2013/08/09 15:11:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -83,10 +83,10 @@
 
 /* handys */
 #define UDF_ROUNDUP(val, gran) \
-	((gran) * (((uint64_t)(val) + (gran)-1) / (gran)))
+	((uint64_t) (gran) * (((uint64_t)(val) + (gran)-1) / (gran)))
 
 #define UDF_ROUNDDOWN(val, gran) \
-	((gran) * (((uint64_t)(val)) / (gran)))
+	((uint64_t) (gran) * (((uint64_t)(val)) / (gran)))
 
 
 /* disc offsets for various structures and their sizes */
@@ -182,7 +182,7 @@ struct udf_create_context {
 	/* logical to physical translations */
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
-	int			 vtop_offset[UDF_PMAPS+1]; /* offset in lb   */
+	uint64_t		 vtop_offset[UDF_PMAPS+1]; /* offset in lb   */
 
 	/* sparable */
 	struct udf_sparing_table*sparing_table;		/* replacements      */
