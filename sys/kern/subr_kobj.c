@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.45 2012/12/30 20:52:20 pooka Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.46 2013/08/09 05:10:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.45 2012/12/30 20:52:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.46 2013/08/09 05:10:14 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -257,9 +257,13 @@ kobj_load(kobj_t ko)
 			symstrindex = shdr[i].sh_link;
 			break;
 		case SHT_REL:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				continue;
 			ko->ko_nrel++;
 			break;
 		case SHT_RELA:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				continue;
 			ko->ko_nrela++;
 			break;
 		case SHT_STRTAB:
@@ -488,6 +492,8 @@ kobj_load(kobj_t ko)
 			pb++;
 			break;
 		case SHT_REL:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				break;
 			ko->ko_reltab[rl].size = shdr[i].sh_size;
 			ko->ko_reltab[rl].size -=
 			    shdr[i].sh_size % sizeof(Elf_Rel);
@@ -508,6 +514,8 @@ kobj_load(kobj_t ko)
 			rl++;
 			break;
 		case SHT_RELA:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				break;
 			ko->ko_relatab[ra].size = shdr[i].sh_size;
 			ko->ko_relatab[ra].size -=
 			    shdr[i].sh_size % sizeof(Elf_Rela);
@@ -532,16 +540,21 @@ kobj_load(kobj_t ko)
 		}
 	}
 	if (pb != ko->ko_nprogtab) {
-		panic("lost progbits");
+		panic("%s:%d: %s: lost progbits", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (rl != ko->ko_nrel) {
-		panic("lost rel");
+		panic("%s:%d: %s: lost rel", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (ra != ko->ko_nrela) {
-		panic("lost rela");
+		panic("%s:%d: %s: lost rela", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (ko->ko_type != KT_MEMORY && mapbase != ko->ko_address + mapsize) {
-		panic("mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
+		panic("%s:%d: %s: "
+		    "mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name,
 		    (long)mapbase, (long)ko->ko_address, (long)mapsize,
 		    (long)ko->ko_address + mapsize);
 	}
@@ -929,7 +942,9 @@ kobj_relocate(kobj_t ko, bool local)
 		rellim = rel + ko->ko_reltab[i].nrel;
 		base = kobj_findbase(ko, ko->ko_reltab[i].sec);
 		if (base == 0) {
-			panic("lost base for e_reltab");
+			panic("%s:%d: %s: lost base for e_reltab[%d] sec %d",
+			   __func__, __LINE__, ko->ko_name, i,
+			   ko->ko_reltab[i].sec);
 		}
 		for (; rel < rellim; rel++) {
 			symidx = ELF_R_SYM(rel->r_info);
@@ -958,7 +973,9 @@ kobj_relocate(kobj_t ko, bool local)
 		relalim = rela + ko->ko_relatab[i].nrela;
 		base = kobj_findbase(ko, ko->ko_relatab[i].sec);
 		if (base == 0) {
-			panic("lost base for e_relatab");
+			panic("%s:%d: %s: lost base for e_relatab[%d] sec %d",
+			   __func__, __LINE__, ko->ko_name, i,
+			   ko->ko_relatab[i].sec);
 		}
 		for (; rela < relalim; rela++) {
 			symidx = ELF_R_SYM(rela->r_info);
