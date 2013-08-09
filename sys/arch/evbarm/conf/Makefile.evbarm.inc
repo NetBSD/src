@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.26 2013/08/04 00:59:46 matt Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.27 2013/08/09 04:24:19 matt Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
@@ -23,6 +23,7 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 EXTRA_CLEAN+= ldscript tmp ${KERNELS:=.map}
 
 .if defined(KERNEL_BASE_PHYS)
+LINKTEXT=
 KERNLDSCRIPT=	ldscript
 EXTRA_LINKFLAGS+=	-T ldscript
 
@@ -33,4 +34,6 @@ ldscript: ${THISARM}/conf/ldscript.evbarm ${THISARM}/conf/Makefile.evbarm.inc Ma
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.evbarm > tmp && mv tmp $@
 
+.else
+LINKTEXT=	-Ttext ${LOADADDRESS}
 .endif	# KERNEL_BASE_PHYS
