@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.78 2013/08/06 21:50:19 apb Exp $
+#	$NetBSD: configure.ac,v 1.79 2013/08/09 20:12:38 jmcneill Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -200,6 +200,8 @@ dnl # Cygwin: We *MUST* look at -lregex *before* the "no libs" condition.
 dnl # Thus AC_CHECK_LIB(regex...) comes first, and AC_SEARCHLIBS next.
 AC_CHECK_LIB(regex, regfree)
 AC_SEARCH_LIBS(regfree, rx posix)
+
+AC_CHECK_LIB(rt, clock_gettime)
 
 AC_CHECK_FUNCS(fparseln, [
     AC_MSG_CHECKING(if fparseln seems to work)
