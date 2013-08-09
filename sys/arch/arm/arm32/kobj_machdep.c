@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2013/08/08 06:49:09 matt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2013/08/09 06:00:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2013/08/08 06:49:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2013/08/09 06:00:09 matt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -148,7 +148,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addr == 0)
 			break;
 
-		addend += ((uint32_t *)addr - (uint32_t *)where);
+		addend += (uintptr_t)addr - (uintptr_t)where;
 
 		if (addend & 3) {
 			printf ("Relocation %x unaligned @ %p\n", addend, where);
