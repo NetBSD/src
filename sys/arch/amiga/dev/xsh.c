@@ -1,4 +1,4 @@
-/*	$NetBSD: xsh.c,v 1.1 2013/08/08 21:23:52 rkujawa Exp $ */
+/*	$NetBSD: xsh.c,v 1.2 2013/08/09 12:56:31 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.1 2013/08/08 21:23:52 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.2 2013/08/09 12:56:31 rkujawa Exp $");
 
 /*
  * X-Surf 100 driver. 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.1 2013/08/08 21:23:52 rkujawa Exp $");
 
 int	xsh_match(device_t, cfdata_t , void *);
 void	xsh_attach(device_t, device_t, void *);
-static	int xsh_print(void *aux, const char *w);
+static int xsh_print(void *, const char *);
 
 struct xsh_softc {
 	device_t sc_dev;	
@@ -67,10 +67,9 @@ xsh_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap = aux;
 
-	/* X-surf ethernet card */
-	if (zap->manid == 4626 && zap->prodid == 100) {
-			return (1);
-	}
+	/* X-surf 100 ethernet card */
+	if (zap->manid == 4626 && zap->prodid == 100) 
+		return (1);
 
 	return (0);
 }
