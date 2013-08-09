@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1048 2013/08/03 10:31:52 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1049 2013/08/09 23:38:54 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -864,7 +864,7 @@ Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
 Mailing List:
-Responsible:	lukem
+Responsible:	
 License:	BSD (3-clause)
 Location:	external/bsd/openldap/dist
 Notes:
