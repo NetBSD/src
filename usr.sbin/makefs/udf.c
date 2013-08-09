@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.11 2013/08/09 11:29:44 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.12 2013/08/09 15:11:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.11 2013/08/09 11:29:44 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.12 2013/08/09 15:11:08 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,7 +90,7 @@ int	 req_enable, req_disable;
 /* --------------------------------------------------------------------- */
 
 int
-udf_write_sector(void *sector, uint32_t location)
+udf_write_sector(void *sector, uint64_t location)
 {
 	uint64_t wpos;
 	ssize_t ret;
@@ -635,8 +635,8 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	uint64_t inf_len, obj_size, logblks_rec;
 	uint32_t l_ea, l_ad, size;
 	uint32_t last_lb_num, piece_lb_num;
-	uint32_t last_len, piece_len, last_flags;
-	uint32_t rest_len, merge_len, last_end;
+	uint64_t last_len, piece_len, last_flags;
+	uint64_t rest_len, merge_len, last_end;
 	uint16_t last_part_num, piece_part_num;
 	uint16_t crclen, cur_alloc;
 	uint8_t *data, *pos;
@@ -710,7 +710,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	/* try merging */
 	rest_len  = max_len - last_len;
 
-	merge_len = MIN(udf_rw32(piece->len), rest_len);
+	merge_len = MIN(piece_len, rest_len);
 	last_end  = last_lb_num + (last_len / sector_size);
 
 	if ((piece_lb_num == last_end) && (last_part_num == piece_part_num)) {
@@ -773,7 +773,7 @@ udf_append_file_contents(union dscrptr *dscr, struct long_ad *data_icb,
 {
 	struct long_ad icb;
 	uint32_t location;
-	uint32_t phys;
+	uint64_t phys;
 	uint16_t vpart;
 	uint8_t *bpos;
 	int cnt, sects;
