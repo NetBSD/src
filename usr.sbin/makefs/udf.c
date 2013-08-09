@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.10 2013/08/06 13:15:30 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.11 2013/08/09 11:29:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.10 2013/08/06 13:15:30 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.11 2013/08/09 11:29:44 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -549,7 +549,7 @@ udf_prepare_fids(struct long_ad *dir_icb, struct long_ad *dirdata_icb,
 }
 
 static int
-udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, size_t size)
+udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 {
 	struct icb_tag *icb;
 	struct file_entry *fe;
@@ -646,9 +646,11 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	const int use_shorts = (context.data_part == context.metadata_part);
 	uint64_t max_len = UDF_ROUNDDOWN(UDF_EXT_MAXLEN, sector_size);
 
+	fe  = NULL;
+	efe = NULL;
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
 		fe          = &dscr->fe;
-		data        =    fe->data;
+		data        = fe->data;
 		l_ea        = fe->l_ea;
 		l_ad        = udf_rw32(fe->l_ad);
 		icb         = &fe->icbtag;
@@ -678,6 +680,9 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	last_len      = 0;
 	last_lb_num   = 0;
 	last_part_num = 0;
+	last_flags    = 0;
+	last_short    = NULL;
+	last_long     = NULL;
 	if (l_ad != 0) {
 		if (use_shorts) {
 			assert(cur_alloc == UDF_ICB_SHORT_ALLOC);
@@ -764,7 +769,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 
 static int
 udf_append_file_contents(union dscrptr *dscr, struct long_ad *data_icb,
-		uint8_t *fdata, size_t flen)
+		uint8_t *fdata, off_t flen)
 {
 	struct long_ad icb;
 	uint32_t location;
@@ -954,7 +959,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	union dscrptr *dscr;
 	struct long_ad data_icb;
 	fsinode *fnode;
-	size_t sz, chunk, rd;
+	off_t sz, chunk, rd;
 	uint8_t *data;
 	int nblk;
 	int i, f;
