@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.5 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: ARMADAXP,v 1.6 2013/08/09 21:19:43 aymeric Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -290,7 +290,7 @@ urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
 
 # Pseudo-Devices
 # disk/mass storage pseudo-devices
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# pseudo disks (see vnconfig)
 #pseudo-device	fss			# file system snapshot device
 
