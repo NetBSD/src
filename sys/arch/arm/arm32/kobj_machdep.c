@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2013/08/09 06:00:09 matt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2013/08/09 07:12:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2013/08/09 06:00:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2013/08/09 07:12:42 matt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -120,6 +120,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_ARM_MOVW_ABS_NC:
 	case R_ARM_MOVT_ABS:
+		if ((*where & 0x0fb00000) != 0x03000000)
+			break;
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			break;
@@ -178,7 +180,7 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 
 	if (load) {
 #ifndef _RUMPKERNEL
-		cpu_idcache_wbinv_all();
+		cpu_idcache_wbinv_range((vaddr_t)base, size);
 		cpu_tlb_flushID();
 #endif
 	}
