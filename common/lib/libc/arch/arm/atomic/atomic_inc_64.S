@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64.S,v 1.6 2013/08/10 18:45:12 matt Exp $	*/
+/*	$NetBSD: atomic_inc_64.S,v 1.7 2013/08/10 19:59:21 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,29 +32,20 @@
 
 #ifdef _ARM_ARCH_6
 
-ENTRY_NP(_atomic_inc_64)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrexd	r0, [r3]		/* load old value (return value) */
-	adds	LO, LO, #1		/* calculate new value */
-	adc	HI, HI, #0		/* zero means we carried */
-	strexd	r2, r0, [r3]		/* try to store */
-	cmp	r2, #0			/*   succeed? */
-	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
-	RET
-	END(_atomic_inc_64)
-ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
-
 ENTRY_NP(_atomic_inc_64_nv)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrexd	r0, [r3]		/* load old value */
+	mov	ip, r0			/* need r0 for return value */
+#ifdef __thumb__
+	mov	r2, #0
+#endif
+1:	ldrexd	r0, [ip]		/* load old value */
+#ifdef __thumb__
+	add	LO, LO, #1		/* calculate new value */
+	adc	HI, HI, r2		/* zero means we carried */
+#else
 	adds	LO, LO, #1		/* calculate new value (return value) */
 	adc	HI, HI, #0		/* fold carry into high */
-	strexd	r2, r0, [r3]		/* try to store */
+#endif
+	strexd	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
@@ -63,7 +54,10 @@ ENTRY_NP(_atomic_inc_64_nv)
 	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
-	END(_atomic_inc_64_nv)
+END(_atomic_inc_64_nv)
+
+STRONG_ALIAS(_atomic_inc_64,_atomic_inc_64_nv)
 ATOMIC_OP_ALIAS(atomic_inc_64_nv,_atomic_inc_64_nv)
+ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
 
 #endif /* _ARM_ARCH_6 */

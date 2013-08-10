@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.3 2013/08/10 18:38:33 matt Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.4 2013/08/10 19:59:21 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,20 +32,19 @@
 
 ENTRY_NP(_atomic_swap_64)
 	push	{r4}			/* save temporary */
-	mov	r4, r0			/* return value will be in r0 */
+	mov	ip, r0			/* return value will be in r0 */
 #ifndef __ARM_EABI__
 	mov	r3, r2			/* r2 will be overwriten by r1 */
 	mov	r2, r1			/* and r1 will be overwritten by ldrexd */
 #endif
-1:
-	ldrexd	r0, [r4]		/* load old value */
-	strexd	ip, r2, [r4]		/* store new value */
-	cmp	ip, #0			/*    succeed? */
+1:	ldrexd	r0, [ip]		/* load old value */
+	strexd	r4, r2, [ip]		/* store new value */
+	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*    no, try again */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
 	pop	{r4}			/* restore temporary */
 	RET
