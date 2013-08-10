@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64.S,v 1.3 2013/08/10 18:39:25 matt Exp $	*/
+/*	$NetBSD: atomic_and_64.S,v 1.4 2013/08/10 19:02:22 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,9 +40,9 @@ ENTRY_NP(_atomic_and_64)
 #endif
 	mov	r4, r0			/* need r0 for return value */
 1:	ldrexd	r0, [r4]		/* load old value (to be returned) */
-	and	r2, r2, r0		/* calculate new value */
-	and	r3, r3, r1		/* calculate new value */
-	strexd	ip, r2, [r4]		/* try to store */
+	and	r0, r0, r2		/* calculate new value */
+	and	r1, r1, r3		/* calculate new value */
+	strexd	ip, r0, [r4]		/* try to store */
 	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
@@ -51,7 +51,7 @@ ENTRY_NP(_atomic_and_64)
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
 	pop	{r4}			/* restore temporary */
-	RET				/* return old value */
+	RET
 	END(_atomic_and_64)
 ATOMIC_OP_ALIAS(atomic_and_64,_atomic_and_64)
 
