@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.22 2013/08/06 13:15:30 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.23 2013/08/10 23:25:35 tron Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.22 2013/08/06 13:15:30 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.23 2013/08/10 23:25:35 tron Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -646,7 +646,15 @@ udf_set_timestamp_now(struct timestamp *timestamp)
 {
 	struct timespec now;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+#ifdef CLOCK_REALTIME
+	(void)clock_gettime(CLOCK_REALTIME, &now);
+#else
+	struct timeval time_of_day;
+
+	(void)gettimeofday(&time_of_day, NULL);
+	now.tv_sec = time_of_day.tv_sec;
+	now.tv_nsec = time_of_day.tv_usec * 1000;
+#endif
 	udf_timespec_to_timestamp(&now, timestamp);
 }
 
