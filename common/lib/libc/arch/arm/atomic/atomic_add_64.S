@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.3 2012/09/13 00:36:12 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.4 2013/08/10 18:39:48 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,15 +33,15 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_add_64)
-	str	r4, [sp, #-4]!		/* save temporary */
+	push	{r4}			/* save temporary */
 	mov	r4, r0			/* need r0 for return value */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
 #endif
 1:	ldrexd	r0, [r4]		/* load old value (to be returned) */
-	adds	NLO, LO, NLO		/* calculate new value */
-	adc	NHI, HI, NHI		/* calculate new value */
+	adds	NLO, NLO, LO		/* calculate new value */
+	adc	NHI, NHI, HI		/* calculate new value */
 	strexd	ip, r2, [r4]		/* try to store */
 	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
@@ -50,13 +50,13 @@ ENTRY_NP(_atomic_add_64)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	ldr	r4, [sp], #4		/* restore temporary */
+	pop	{r4}			/* restore temporary */
 	RET				/* return old value */
 	END(_atomic_add_64)
 ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
 
 ENTRY_NP(_atomic_add_64_nv)
-	str	r4, [sp, #-4]!		/* save temporary */
+	push	{r4}			/* save temporary */
 	mov	r4, r0			/* need r0 for return value */
 #ifndef __ARM_EABI__
 	mov	r3, r2
@@ -73,7 +73,7 @@ ENTRY_NP(_atomic_add_64_nv)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	ldr	r4, [sp], #4		/* restore temporary */
+	pop	{r4}			/* restore temporary */
 	RET				/* return new value */
 	END(_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
