@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64.S,v 1.2 2012/09/13 00:36:12 matt Exp $	*/
+/*	$NetBSD: atomic_dec_64.S,v 1.3 2013/08/10 18:40:19 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,33 +33,29 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_dec_64)
-	mvn	r2, #0
 	mov	r3, r0			/* need r0 for return value */
 1:	ldrexd	r0, [r3]		/* load old value (return value) */
-	adds	LO, LO, r2		/* calculate new value */
-	adc	HI, HI, r2		/* calculate new value */
-	strexd	ip, r0, [r3]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+	subs	LO, LO, #1		/* calculate new value */
+	sbc	HI, HI, #0		/* calculate new value */
+	strexd	r2, r0, [r3]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	adds	LO, LO, #1
-	adc	HI, HI, #0
-	RET				/* return old value */
+	RET
 	END(_atomic_dec_64)
 ATOMIC_OP_ALIAS(atomic_dec_64,_atomic_dec_64)
 
 ENTRY_NP(_atomic_dec_64_nv)
-	mvn	r2, #0
 	mov	r3, r0			/* need r0 for return value */
 1:	ldrexd	r0, [r3]		/* load old value */
-	adds	LO, LO, r2		/* calculate new value */
-	adc	HI, HI, r2		/* calculate new value */
-	strexd	ip, r0, [r3]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+	subs	LO, LO, #1		/* calculate new value */
+	sbc	HI, HI, #0		/* calculate new value */
+	strexd	r2, r0, [r3]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
