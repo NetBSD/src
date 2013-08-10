@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.45 2011/11/18 22:18:08 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.45.6.1 2013/08/10 22:50:56 riz Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -171,3 +171,8 @@ file	dev/i2c/g760a.c			g760a
 device	ibmhawk: sysmon_envsys
 attach	ibmhawk at iic
 file	dev/i2c/ibmhawk.c		ibmhawk
+ 
+# Nuvoton W83795G/ADG Hardware Monitor
+device	w83795g: gpiobus, sysmon_envsys, sysmon_wdog
+attach	w83795g at iic
+file	dev/i2c/w83795g.c 		w83795g
