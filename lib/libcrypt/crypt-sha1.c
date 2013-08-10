@@ -1,4 +1,4 @@
-/* $NetBSD: crypt-sha1.c,v 1.6 2013/06/24 04:21:20 riastradh Exp $ */
+/* $NetBSD: crypt-sha1.c,v 1.7 2013/08/10 18:42:29 dholland Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crypt-sha1.c,v 1.6 2013/06/24 04:21:20 riastradh Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.7 2013/08/10 18:42:29 dholland Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -130,6 +130,8 @@ __crypt_sha1 (const char *pw, const char *salt)
     int dl;
     unsigned int iterations;
     unsigned int i;
+    /* XXX silence -Wpointer-sign (would be nice to fix this some other way) */
+    const unsigned char *pwu = (const unsigned char *)pw;
 
     /*
      * Salt format is
@@ -166,9 +168,9 @@ __crypt_sha1 (const char *pw, const char *salt)
     /*
      * Then hmac using <pw> as key, and repeat...
      */
-    __hmac_sha1(passwd, dl, pw, pl, hmac_buf);
+    __hmac_sha1((unsigned char *)passwd, dl, pwu, pl, hmac_buf);
     for (i = 1; i < iterations; i++) {
-	__hmac_sha1(hmac_buf, SHA1_SIZE, pw, pl, hmac_buf);
+	__hmac_sha1(hmac_buf, SHA1_SIZE, pwu, pl, hmac_buf);
     }
     /* Now output... */
     pl = snprintf(passwd, sizeof(passwd), "%s%u$%.*s$",
