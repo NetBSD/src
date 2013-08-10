@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.2 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.3 2013/08/10 19:59:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,3 +41,4 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 	streq	r2, [r3]
 RAS_END_ASM_HIDDEN(_atomic_cas)
 	RET
+END(_atomic_cas_up)
