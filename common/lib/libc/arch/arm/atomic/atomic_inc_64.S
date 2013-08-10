@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64.S,v 1.4 2013/08/10 18:28:15 matt Exp $	*/
+/*	$NetBSD: atomic_inc_64.S,v 1.5 2013/08/10 18:32:06 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,10 +45,7 @@ ENTRY_NP(_atomic_inc_64)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	mvn	r2, #0			/* r2 = -1 */
-	adds	LO, LO, r2		/* add it */
-	adc	HI, HI, r2		/* add with carry */
-	RET				/* return orig value */
+	RET
 	END(_atomic_inc_64)
 ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
 
