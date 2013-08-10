@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64.S,v 1.3 2012/10/29 14:09:38 chs Exp $	*/
+/*	$NetBSD: atomic_inc_64.S,v 1.4 2013/08/10 18:28:15 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -55,7 +55,7 @@ ATOMIC_OP_ALIAS(atomic_inc_64,_atomic_inc_64)
 ENTRY_NP(_atomic_inc_64_nv)
 	mov	r3, r0			/* need r0 for return value */
 1:	ldrexd	r0, [r3]		/* load old value */
-	add	LO, LO, #1		/* calculate new value (return value) */
+	adds	LO, LO, #1		/* calculate new value (return value) */
 	adc	HI, HI, #0		/* fold carry into high */
 	strexd	ip, r0, [r3]		/* try to store */
 	cmp	ip, #0			/*   succeed? */
