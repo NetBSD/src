@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.9 2011/09/06 18:33:46 joerg Exp $	*/
+/*	$NetBSD: tr.c,v 1.10 2013/08/10 23:54:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.9 2011/09/06 18:33:46 joerg Exp $");
+__RCSID("$NetBSD: tr.c,v 1.10 2013/08/10 23:54:41 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,12 +96,12 @@ __dead static void usage(void);
 int
 main(int argc, char **argv)
 {
-	int ch, cnt, lastch, *p;
+	int ch, ch2, cnt, lastch, *p;
 	int cflag, dflag, sflag, isstring2;
 
 	cflag = dflag = sflag = 0;
 	while ((ch = getopt(argc, argv, "cds")) != -1)
-		switch((char)ch) {
+		switch (ch) {
 		case 'c':
 			cflag = 1;
 			break;
@@ -198,20 +198,20 @@ main(int argc, char **argv)
 		for (cnt = NCHARS, p = string1; cnt--;)
 			*p++ = OOBCH;
 
-	if (!next(&s2))
+	if (!next(&s2, &ch2))
 		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
 	if (sflag)
-		while (next(&s1)) {
-			string1[s1.lastch] = ch = s2.lastch;
-			string2[ch] = 1;
-			(void)next(&s2);
+		while (next(&s1, &ch)) {
+			string1[ch] = ch2;
+			string2[ch2] = 1;
+			(void)next(&s2, &ch2);
 		}
 	else
-		while (next(&s1)) {
-			string1[s1.lastch] = ch = s2.lastch;
-			(void)next(&s2);
+		while (next(&s1, &ch)) {
+			string1[ch] = ch2;
+			(void)next(&s2, &ch2);
 		}
 
 	if (cflag)
@@ -236,11 +236,12 @@ static void
 setup(int *string, char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
+	int ch;
 
 	str->str = arg;
 	memset(string, 0, NCHARS * sizeof(int));
-	while (next(str))
-		string[str->lastch] = 1;
+	while (next(str, &ch))
+		string[ch] = 1;
 	if (cflag)
 		for (p = string, cnt = NCHARS; cnt--; ++p)
 			*p = !*p;

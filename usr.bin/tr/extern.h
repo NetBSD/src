@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2011/09/06 18:33:46 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2013/08/10 23:54:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,4 +45,4 @@ typedef struct {
 #define	NCHARS	(UCHAR_MAX + 1)		/* Number of possible characters. */
 #define	OOBCH	(UCHAR_MAX + 1)		/* Out of band character value. */
 
-int	 next(STR *);
+int	 next(STR *, int *);
