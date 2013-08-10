@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64.S,v 1.3 2013/08/10 18:40:19 matt Exp $	*/
+/*	$NetBSD: atomic_dec_64.S,v 1.4 2013/08/10 18:45:12 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@ ENTRY_NP(_atomic_dec_64)
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET
 	END(_atomic_dec_64)
@@ -60,7 +60,7 @@ ENTRY_NP(_atomic_dec_64_nv)
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
 	END(_atomic_dec_64_nv)
