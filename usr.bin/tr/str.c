@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.19 2011/09/08 12:00:26 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.20 2013/08/10 23:54:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.19 2011/09/08 12:00:26 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.20 2013/08/10 23:54:41 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: str.c,v 1.19 2011/09/08 12:00:26 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "extern.h"
 
@@ -58,26 +59,29 @@ static int	genrange(STR *);
 static void	genseq(STR *);
 
 int
-next(STR *s)
+next(STR *s, int *ret)
 {
 	int ch;
 
 	switch (s->state) {
 	case EOS:
+		*ret = s->lastch;
 		return 0;
 	case INFINITE:
+		*ret = s->lastch;
 		return 1;
 	case NORMAL:
 		switch (ch = *s->str) {
 		case '\0':
 			s->state = EOS;
+			*ret = s->lastch;
 			return 0;
 		case '\\':
 			s->lastch = backslash(s);
 			break;
 		case '[':
 			if (bracket(s))
-				return next(s);
+				return next(s, ret);
 			/* FALLTHROUGH */
 		default:
 			++s->str;
@@ -86,30 +90,37 @@ next(STR *s)
 		}
 
 		/* We can start a range at any time. */
-		if (s->str[0] == '-' && genrange(s))
-			return next(s);
+		if (s->str[0] == '-' && genrange(s)) {
+			return next(s, ret);
+		}
+		*ret = s->lastch;
 		return 1;
 	case RANGE:
 		if (s->cnt-- == 0) {
 			s->state = NORMAL;
-			return next(s);
+			return next(s, ret);
 		}
 		++s->lastch;
+		*ret = s->lastch;
 		return 1;
 	case SEQUENCE:
 		if (s->cnt-- == 0) {
 			s->state = NORMAL;
-			return next(s);
+			return next(s, ret);
 		}
+		*ret = s->lastch;
 		return 1;
 	case SET:
 		if ((s->lastch = s->set[s->cnt++]) == OOBCH) {
 			s->state = NORMAL;
-			return next(s);
+			return next(s, ret);
 		}
+		*ret = s->lastch;
 		return 1;
 	}
 	/* NOTREACHED */
+	assert(0);
+	*ret = s->lastch;
 	return 0;
 }
 
