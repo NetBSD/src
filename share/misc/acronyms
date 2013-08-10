@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.218 2013/06/05 21:03:57 dholland Exp $
+$NetBSD: acronyms,v 1.219 2013/08/10 22:37:58 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -492,6 +492,7 @@ TOC	table of contents
 TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
 TOH	to other half
+TP	toilet paper
 TPTB	the powers that be
 TRT	the right thing
 TTBOMK	to the best of my knowledge
