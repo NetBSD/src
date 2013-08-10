@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32.S,v 1.3 2012/08/31 23:41:52 matt Exp $	*/
+/*	$NetBSD: atomic_add_32.S,v 1.4 2013/08/10 19:59:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,19 +34,19 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_add_32)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value (to be returned) */
-	add	r2, r0, r1		/* calculate new value */
-	strex	ip, r2, [r3]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+1:	ldrex	r3, [r0]		/* load old value */
+	add	r3, r3, r1		/* calculate new value */
+	strex	r2, r3, [r0]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return old value */
-	END(_atomic_add_32)
+END(_atomic_add_32)
+
 ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_32)
@@ -56,16 +56,16 @@ STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
 
 ENTRY_NP(_atomic_add_32_nv)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value */
+	mov	ip, r0			/* need r0 for return value */
+1:	ldrex	r0, [ip]		/* load old value */
 	add	r0, r0, r1		/* calculate new value (return value) */
-	strex	r2, r0, [r3]		/* try to store */
+	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
 	END(_atomic_add_32_nv)

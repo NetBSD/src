@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32.S,v 1.4 2012/10/29 14:09:38 chs Exp $	*/
+/*	$NetBSD: atomic_inc_32.S,v 1.5 2013/08/10 19:59:21 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,16 +33,15 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_inc_32)
-	mov	r2, r0			/* need r0 for return value */
-1:	ldrex	r0, [r2]		/* load old value (return value) */
-	add	r1, r0, #1		/* calculate new value */
-	strex	r3, r1, [r2]		/* try to store */
-	cmp	r3, #0			/*   succeed? */
+1:	ldrex	r3, [r0]		/* load old value (return value) */
+	add	r3, r3, #1		/* calculate new value */
+	strex	r2, r3, [r0]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
 	END(_atomic_inc_32)
@@ -55,16 +54,16 @@ STRONG_ALIAS(_atomic_inc_ulong,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_ptr,_atomic_inc_32)
 
 ENTRY_NP(_atomic_inc_32_nv)
-	mov	r2, r0			/* need r0 for return value */
-1:	ldrex	r0, [r2]		/* load old value */
+	mov	ip, r0			/* need r0 for return value */
+1:	ldrex	r0, [ip]		/* load old value */
 	add	r0, r0, #1		/* calculate new value (return value) */
-	strex	r1, r0, [r2]		/* try to store */
-	cmp	r1, #0			/*   succeed? */
+	strex	r2, r0, [ip]		/* try to store */
+	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
 	END(_atomic_inc_32_nv)

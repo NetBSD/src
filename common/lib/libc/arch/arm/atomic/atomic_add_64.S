@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.5 2013/08/10 19:02:22 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.6 2013/08/10 19:59:21 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,50 +32,34 @@
 
 #ifdef _ARM_ARCH_6
 
-ENTRY_NP(_atomic_add_64)
-	push	{r4}			/* save temporary */
-	mov	r4, r0			/* need r0 for return value */
-#ifndef __ARM_EABI__
-	mov	r3, r2
-	mov	r2, r1
-#endif
-1:	ldrexd	r0, [r4]		/* load old value (to be returned) */
-	adds	LO, LO, NLO		/* calculate new value */
-	adc	HI, HI, NHI		/* calculate new value */
-	strexd	ip, r0, [r4]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
-	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
-#endif
-	pop	{r4}			/* restore temporary */
-	RET
-	END(_atomic_add_64)
-ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
-
 ENTRY_NP(_atomic_add_64_nv)
 	push	{r4}			/* save temporary */
-	mov	r4, r0			/* need r0 for return value */
+	mov	ip, r0			/* need r0 for return value */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
 #endif
-1:	ldrexd	r0, [r4]		/* load old value */
+1:	ldrexd	r0, [ip]		/* load old value */
+#ifdef __thumb__
+	add	LO, LO, NLO		/* calculate new value lo */
+#else
 	adds	LO, LO, NLO		/* calculate new value lo */
+#endif
 	adc	HI, HI, NHI		/* calculate new value hi */
-	strexd	ip, r0, [r4]		/* try to store */
-	cmp	ip, #0			/*   succeed? */
+	strexd	r4, r0, [ip]		/* try to store */
+	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
 	pop	{r4}			/* restore temporary */
 	RET				/* return new value */
-	END(_atomic_add_64_nv)
+END(_atomic_add_64_nv)
+
+STRONG_ALIAS(_atomic_add_64,_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
+ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
 
 #endif /* _ARM_ARCH_6 */
