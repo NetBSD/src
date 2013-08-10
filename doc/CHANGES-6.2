@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.30 2013/08/08 21:59:43 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.31 2013/08/10 22:52:34 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -473,4 +473,20 @@ sys/netinet6/nd6_rtr.c				1.86
 	Avoid crash destroying tap0 after deleting its link-local address.
 	PR/47576.
 	[msaitoh, ticket #926]
+
+sys/arch/i386/stand/boot/boot2.c		1.59
+sys/arch/i386/stand/lib/bootmenu.c		1.11
+sys/arch/i386/stand/lib/bootmenu.h		1.3
+
+	x86 bootloader changes:  add "menu" command, and allow
+	default command to be defined in boot.cfg.
+	[he, ticket #925]
+
+sys/dev/i2c/files.i2c				1.50 via patch
+sys/dev/i2c/w83795g.c				1.1
+sys/dev/i2c/w83795greg.h			1.1
+
+	Add driver for Nuvoton W83795G voltage/temp/fan/gpio monitoring
+	device, as used in the HP Microserver N36L/N40L/N54L.
+	[matt, ticket #929]
 
