@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.14 2013/06/24 11:32:21 nakayama Exp $	*/
+/*	$NetBSD: pyro.c,v 1.15 2013/08/10 00:48:04 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.14 2013/06/24 11:32:21 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.15 2013/08/10 00:48:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.14 2013/06/24 11:32:21 nakayama Exp $");
 #define PDB_BUSMAP      0x02
 #define PDB_INTR        0x04
 #define PDB_CONF        0x08
-int pyro_debug = 0x0 | PDB_INTR;
+int pyro_debug = 0x0;
 #define DPRINTF(l, s)   do { if (pyro_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
