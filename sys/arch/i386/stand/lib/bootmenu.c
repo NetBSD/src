@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.10 2011/08/18 13:20:04 christos Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.10.8.1 2013/08/10 22:42:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <bootmenu.h>
 
 #define isnum(c) ((c) >= '0' && (c) <= '9')
+
+static void docommandchoice(int);
 
 extern struct x86_boot_params boot_params;
 extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
@@ -297,11 +299,57 @@ getchoicefrominput(char *input, int def)
 	return choice;
 }
 
+static void
+docommandchoice(int choice)
+{
+	char input[80], *ic, *oc;
+
+	ic = bootconf.command[choice];
+	/* Split command string at ; into separate commands */
+	do {
+		oc = input;
+		/* Look for ; separator */
+		for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
+			*oc++ = *ic;
+		if (*input == '\0')
+			continue;
+		/* Strip out any trailing spaces */
+		oc--;
+		for (; *oc == ' ' && oc > input; oc--);
+		*++oc = '\0';
+		if (*ic == COMMAND_SEPARATOR)
+			ic++;
+		/* Stop silly command strings like ;;; */
+		if (*input != '\0')
+			docommand(input);
+		/* Skip leading spaces */
+		for (; *ic == ' '; ic++);
+	} while (*ic);
+}
+
+void
+bootdefault(void)
+{
+	int choice;
+	static int entered;
+
+	if (bootconf.nummenu > 0) {
+		if (entered) {
+			printf("default boot twice, skipping...\n");
+			return;
+		}
+		entered = 1;
+		choice = bootconf.def;
+		printf("command(s): %s\n", bootconf.command[choice]);
+		docommandchoice(choice);
+	}
+}
+
 void
 doboottypemenu(void)
 {
 	int choice;
-	char input[80], *ic, *oc;
+	char input[80];
 
 	printf("\n");
 	/* Display menu */
@@ -357,27 +405,7 @@ doboottypemenu(void)
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		} else {
-			ic = bootconf.command[choice];
-			/* Split command string at ; into separate commands */
-			do {
-				oc = input;
-				/* Look for ; separator */
-				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
-					*oc++ = *ic;
-				if (*input == '\0')
-					continue;
-				/* Strip out any trailing spaces */
-				oc--;
-				for (; *oc == ' ' && oc > input; oc--);
-				*++oc = '\0';
-				if (*ic == COMMAND_SEPARATOR)
-					ic++;
-				/* Stop silly command strings like ;;; */
-				if (*input != '\0')
-					docommand(input);
-				/* Skip leading spaces */
-				for (; *ic == ' '; ic++);
-			} while (*ic);
+			docommandchoice(choice);
 		}
 
 	}
