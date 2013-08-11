@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.14 2013/08/11 08:03:10 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: rpc_clntout.c,v 1.14 2013/08/11 08:03:10 dholland Exp $");
 #endif
 #endif
 
@@ -54,8 +54,8 @@ __RCSID("$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $");
 #include "rpc_util.h"
 
 static void write_program __P((definition *));
-static char *ampr __P((char *));
-static char *aster __P((char *));
+static const char *ampr __P((const char *));
+static const char *aster __P((const char *));
 static void printbody __P((proc_list *));
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
@@ -63,7 +63,7 @@ static char RESULT[] = "clnt_res";
 
 
 void
-write_stubs()
+write_stubs(void)
 {
 	list   *l;
 	definition *def;
@@ -81,8 +81,7 @@ write_stubs()
 }
 
 static void
-write_program(def)
-	definition *def;
+write_program(definition *def)
 {
 	version_list *vp;
 	proc_list *proc;
@@ -112,9 +111,8 @@ write_program(def)
 /* sample addargname = "clnt"; sample addargtype = "CLIENT * " */
 
 void 
-printarglist(proc, result, addargname, addargtype)
-	proc_list *proc;
-	char   *result, *addargname, *addargtype;
+printarglist(proc_list *proc, const char *result,
+	     const char *addargname, const char *addargtype)
 {
 
 	decl_list *l;
@@ -202,9 +200,8 @@ printarglist(proc, result, addargname, addargtype)
 }
 
 
-static char *
-ampr(type)
-	char   *type;
+static const char *
+ampr(const char *type)
 {
 	if (isvectordef(type, REL_ALIAS)) {
 		return ("");
@@ -213,9 +210,8 @@ ampr(type)
 	}
 }
 
-static char *
-aster(type)
-	char   *type;
+static const char *
+aster(const char *type)
 {
 	if (isvectordef(type, REL_ALIAS)) {
 		return ("");
@@ -225,8 +221,7 @@ aster(type)
 }
 
 static void
-printbody(proc)
-	proc_list *proc;
+printbody(proc_list *proc)
 {
 	decl_list *l;
 	bool_t  args2 = (proc->arg_num > 1);
