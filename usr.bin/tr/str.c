@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.24 2013/08/11 00:52:17 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.25 2013/08/11 01:00:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.24 2013/08/11 00:52:17 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.25 2013/08/11 01:00:13 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ struct str {
 	int	 lastch;		/* last character */
 	int	equiv[2];		/* equivalence set */
 	int	*set;			/* set of characters */
-	unsigned const char *str;	/* user's string */
+	const char *str;		/* user's string */
 };
 
 static int	backslash(STR *);
@@ -112,7 +112,7 @@ next(STR *s, int *ret)
 		*ret = s->lastch;
 		return 1;
 	case NORMAL:
-		switch (ch = *s->str) {
+		switch (ch = (unsigned char)*s->str) {
 		case '\0':
 			s->state = EOS;
 			*ret = s->lastch;
@@ -261,7 +261,7 @@ genequiv(STR *s)
 		if (*s->str != '=')
 			errx(1, "misplaced equivalence equals sign");
 	} else {
-		s->equiv[0] = s->str[0];
+		s->equiv[0] = (unsigned char)s->str[0];
 		if (s->str[1] != '=')
 			errx(1, "misplaced equivalence equals sign");
 	}
@@ -278,7 +278,7 @@ genrange(STR *s)
 	const char *savestart;
 
 	savestart = s->str++;
-	stopval = *s->str == '\\' ? backslash(s) : *s->str++;
+	stopval = *s->str == '\\' ? backslash(s) : (unsigned char)*s->str++;
 	if (stopval < (u_char)s->lastch) {
 		s->str = savestart;
 		return 0;
@@ -300,7 +300,7 @@ genseq(STR *s)
 	if (*s->str == '\\')
 		s->lastch = backslash(s);
 	else
-		s->lastch = *s->str++;
+		s->lastch = (unsigned char)*s->str++;
 	if (*s->str != '*')
 		errx(1, "misplaced sequence asterisk");
 
@@ -313,7 +313,7 @@ genseq(STR *s)
 		++s->str;
 		break;
 	default:
-		if (isdigit(*s->str)) {
+		if (isdigit((unsigned char)*s->str)) {
 			s->cnt = strtol(s->str, &ep, 0);
 			if (*ep == ']') {
 				s->str = ep + 1;
@@ -337,7 +337,7 @@ backslash(STR *s)
 	int ch, cnt, val;
 
 	for (cnt = val = 0;;) {
-		ch = *++s->str;
+		ch = (unsigned char)*++s->str;
 		if (!isascii(ch) || !isdigit(ch))
 			break;
 		val = val * 8 + ch - '0';
