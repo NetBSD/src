@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.23 2013/08/11 00:39:22 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.24 2013/08/11 00:52:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.23 2013/08/11 00:39:22 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.24 2013/08/11 00:52:17 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -277,8 +277,8 @@ genrange(STR *s)
 	int stopval;
 	const char *savestart;
 
-	savestart = s->str;
-	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
+	savestart = s->str++;
+	stopval = *s->str == '\\' ? backslash(s) : *s->str++;
 	if (stopval < (u_char)s->lastch) {
 		s->str = savestart;
 		return 0;
