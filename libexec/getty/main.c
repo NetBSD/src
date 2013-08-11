@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2013/08/11 05:42:41 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2013/08/11 05:48:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 2013/08/11 05:42:41 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2013/08/11 05:48:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ const unsigned char partab[] = {
 
 static void	clearscreen(void);
 
-jmp_buf timeout;
+sigjmp_buf timeout;
 
 static void
 /*ARGSUSED*/
@@ -144,10 +144,10 @@ dingdong(int signo)
 
 	(void)alarm(0);
 	(void)signal(SIGALRM, SIG_DFL);
-	longjmp(timeout, 1);
+	siglongjmp(timeout, 1);
 }
 
-jmp_buf	intrupt;
+sigjmp_buf intrupt;
 
 static void
 /*ARGSUSED*/
@@ -155,7 +155,7 @@ interrupt(int signo)
 {
 
 	(void)signal(SIGINT, interrupt);
-	longjmp(intrupt, 1);
+	siglongjmp(intrupt, 1);
 }
 
 /*
@@ -357,7 +357,7 @@ main(int argc, char *argv[], char *envp[])
 		if (IM && *IM)
 			putf(IM);
 		oflush();
-		if (setjmp(timeout)) {
+		if (sigsetjmp(timeout, 1)) {
 			tmode.c_ispeed = tmode.c_ospeed = 0;
 			(void)tcsetattr(0, TCSANOW, &tmode);
 			exit(1);
@@ -455,7 +455,7 @@ getname(void)
 	/*
 	 * Interrupt may happen if we use CBREAK mode
 	 */
-	if (setjmp(intrupt)) {
+	if (sigsetjmp(intrupt, 1)) {
 		(void)signal(SIGINT, SIG_IGN);
 		return (0);
 	}
