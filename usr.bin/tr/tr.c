@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.18 2013/08/11 00:48:37 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.19 2013/08/11 00:49:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.18 2013/08/11 00:48:37 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.19 2013/08/11 00:49:15 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -264,7 +264,6 @@ setup(int *string, const char *arg, int whichstring, int cflag)
 	STR *str;
 
 	str = str_create(whichstring, arg);
-	memset(string, 0, NCHARS * sizeof(int));
 	while (next(str, &ch))
 		string[ch] = 1;
 	if (cflag)
