@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.184 2013/02/25 00:34:14 jmmv Exp $
+# $NetBSD: mi,v 1.185 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -769,7 +769,6 @@
 ./usr/share/examples/libsaslc			misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share
@@ -777,6 +776,7 @@
 ./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
 ./usr/share/examples/lutok			misc-lutok-examples
 ./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
@@ -965,8 +965,8 @@
 ./usr/share/xml/atf				misc-atf-share
 ./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share,atf,!kyua
 ./usr/share/xml/atf/tests-results.dtd		misc-obsolete		share,kyua,obsolete
-./usr/share/xml/catalog				misc-xml-share		share,!kyua
 ./usr/share/xml/catalog				misc-obsolete		share,kyua,obsolete
+./usr/share/xml/catalog				misc-xml-share		share,!kyua
 ./usr/share/xsl					misc-xml-share
 ./usr/share/xsl/atf				misc-atf-share
 ./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf,!kyua
