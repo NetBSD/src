@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.54 2013/01/30 20:48:27 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.55 2013/08/11 13:21:25 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -123,7 +123,9 @@ Ariadne II Ethernet
 .It
 Quicknet Ethernet
 .It
-X-surf Ethernet port
+X-Surf Ethernet
+.It
+X-Surf 100 Ethernet
 .bullet)
 .It
 ARCnet controllers
