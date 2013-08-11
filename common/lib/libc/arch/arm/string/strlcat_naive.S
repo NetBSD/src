@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_naive.S,v 1.1 2013/01/18 22:49:11 matt Exp $")
+RCSID("$NetBSD: strlcat_naive.S,v 1.2 2013/08/11 05:02:35 matt Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
@@ -51,7 +51,7 @@ ENTRY(strlcat)
 	beq	3f			/*   yes, end of append */
 	add	r0, r0, #1		/* count another byte */
 	cmp	ip, r3			/* do we have enough room for it? */
-	strltb	r2, [ip], #1		/*   yes, store it */
+	strblt	r2, [ip], #1		/*   yes, store it */
 	b	2b			/* get next byte from append */
 
 3:	mov	r2, #0			/* NUL */
