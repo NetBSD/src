@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.49 2013/05/02 03:56:38 matt Exp $
+# $NetBSD: ad.arm,v 1.50 2013/08/11 22:27:44 joerg Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
@@ -64,7 +64,6 @@
 ./usr/include/acorn32/conf.h			comp-obsolete		obsolete
 ./usr/include/acorn32/cpu.h			comp-obsolete		obsolete
 ./usr/include/acorn32/db_machdep.h		comp-obsolete		obsolete
-#./usr/include/acorn32/devmap.h			comp-c-include
 ./usr/include/acorn32/disklabel.h		comp-c-include
 ./usr/include/acorn32/elf_machdep.h		comp-obsolete		obsolete
 ./usr/include/acorn32/endian.h			comp-obsolete		obsolete
