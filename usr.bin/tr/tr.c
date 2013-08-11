@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.14 2013/08/11 00:12:47 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.15 2013/08/11 00:28:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.14 2013/08/11 00:12:47 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.15 2013/08/11 00:28:46 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ __dead static void usage(void);
 int
 main(int argc, char **argv)
 {
-	int ch, ch2, cnt, lastch, *p;
+	int ch, ch2, lastch;
 	int cflag, dflag, sflag, isstring2;
 	STR *s1, *s2;
 
@@ -198,28 +198,43 @@ main(int argc, char **argv)
 	if (!isstring2)
 		usage();
 
-	str_setstring(s1, argv[0]);
+	if (cflag) {
+		setup(string1, argv[0], s1, cflag);
+		ch = -1;
+	} else {
+		str_setstring(s1, argv[0]);
+	}
 	str_setstring(s2, argv[1]);
-
-	if (cflag)
-		for (cnt = NCHARS, p = string1; cnt--;)
-			*p++ = OOBCH;
 
 	if (!next(s2, &ch2))
 		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
-	while (next(s1, &ch)) {
+	while (1) {
+		if (cflag) {
+			ch++;
+			while (ch < NCHARS && string1[ch] == 0) {
+				if (string1[ch] == 0) {
+					string1[ch] = ch;
+				}
+				ch++;
+			}
+			if (ch == NCHARS) {
+				break;
+			}
+		}
+		else {
+			if (!next(s1, &ch)) {
+				break;
+			}
+		}
+
 		string1[ch] = ch2;
 		if (sflag) {
 			string2[ch2] = 1;
 		}
 		(void)next(s2, &ch2);
 	}
-
-	if (cflag)
-		for (cnt = 0, p = string1; cnt < NCHARS; ++p, ++cnt)
-			*p = *p == OOBCH ? ch2 : cnt;
 
 	if (sflag)
 		for (lastch = OOBCH; (ch = getchar()) != EOF;) {
@@ -232,6 +247,7 @@ main(int argc, char **argv)
 	else
 		while ((ch = getchar()) != EOF)
 			(void)putchar(string1[ch]);
+
 	str_destroy(s1);
 	str_destroy(s2);
 	exit (0);
