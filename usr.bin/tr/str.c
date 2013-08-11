@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.22 2013/08/11 00:05:49 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.23 2013/08/11 00:39:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.22 2013/08/11 00:05:49 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.23 2013/08/11 00:39:22 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static int	genrange(STR *);
 static void	genseq(STR *);
 
 STR *
-str_create(int whichstring)
+str_create(int whichstring, const char *txt)
 {
 	STR *s;
 
@@ -85,7 +85,7 @@ str_create(int whichstring)
 	s->equiv[0] = 0;
 	s->equiv[1] = OOBCH;
 	s->set = NULL;
-	s->str = NULL;
+	s->str = txt;
 
 	return s;
 }
@@ -97,12 +97,6 @@ str_destroy(STR *s)
 		free(s->set);
 	}
 	free(s);
-}
-
-void
-str_setstring(STR *s, const char *txt)
-{
-	s->str = txt;
 }
 
 int
