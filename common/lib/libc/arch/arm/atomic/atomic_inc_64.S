@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64.S,v 1.7 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_inc_64.S,v 1.8 2013/08/11 04:41:17 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,17 +34,9 @@
 
 ENTRY_NP(_atomic_inc_64_nv)
 	mov	ip, r0			/* need r0 for return value */
-#ifdef __thumb__
-	mov	r2, #0
-#endif
 1:	ldrexd	r0, [ip]		/* load old value */
-#ifdef __thumb__
-	add	LO, LO, #1		/* calculate new value */
-	adc	HI, HI, r2		/* zero means we carried */
-#else
 	adds	LO, LO, #1		/* calculate new value (return value) */
-	adc	HI, HI, #0		/* fold carry into high */
-#endif
+	adcs	HI, HI, #0		/* fold carry into high */
 	strexd	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
