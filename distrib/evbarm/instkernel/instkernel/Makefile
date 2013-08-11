@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2013/08/01 21:11:41 jklos Exp $
+#	$NetBSD: Makefile,v 1.22 2013/08/11 17:18:11 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -32,7 +32,9 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
 .if \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "earm" || \
-    ${MACHINE_ARCH} == "earmhf"
+    ${MACHINE_ARCH} == "earmhf" || \
+    ${MACHINE_ARCH} == "earmv6" || \
+    ${MACHINE_ARCH} == "earmv6hf"
 # Little endian (any ABI) platforms.
 MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-
 .endif
