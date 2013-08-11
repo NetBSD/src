@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.197 2013/05/28 17:37:33 joerg Exp $
+# $NetBSD: md.amd64,v 1.198 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -68,8 +68,8 @@
 ./usr/include/amd64/varargs.h			comp-obsolete		obsolete
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
-./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/emmintrin.h		comp-obsolete		obsolete
@@ -90,8 +90,8 @@
 ./usr/include/clang-3.2/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.2/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/emmintrin.h		comp-obsolete		obsolete
@@ -116,8 +116,8 @@
 ./usr/include/clang-3.3/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.3/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.3/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/emmintrin.h		comp-obsolete		obsolete
@@ -131,8 +131,8 @@
 ./usr/include/clang-3.3/mmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/nmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/pmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/prfchwintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/popcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/prfchwintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/rdseedintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/rtmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/smmintrin.h		comp-obsolete		obsolete
@@ -144,8 +144,8 @@
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.4/ammintrin.h		comp-c-include		llvm
-./usr/include/clang-3.4/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/bmiintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/emmintrin.h		comp-c-include		llvm
@@ -159,8 +159,8 @@
 ./usr/include/clang-3.4/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/pmmintrin.h		comp-c-include		llvm
-./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rdseedintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/smmintrin.h		comp-c-include		llvm
@@ -511,14 +511,14 @@
 ./usr/lib/i386/libbz2.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libbz2_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libbz2_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libc.a				comp-c-lib		compat
-./usr/lib/i386/libc.so				comp-sys-shlib		compat,pic
-./usr/lib/i386/libc_p.a				comp-c-proflib		compat,profile
-./usr/lib/i386/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libc++.a				comp-c-lib		compat,libcxx
 ./usr/lib/i386/libc++.so			comp-sys-shlib		compat,pic,libcxx
 ./usr/lib/i386/libc++_p.a			comp-c-proflib		compat,profile,libcxx
 ./usr/lib/i386/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
+./usr/lib/i386/libc.a				comp-c-lib		compat
+./usr/lib/i386/libc.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libc_p.a				comp-c-proflib		compat,profile
+./usr/lib/i386/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libcom_err.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
@@ -532,8 +532,6 @@
 ./usr/lib/i386/libcrypt_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libcrypto.a			comp-c-lib		compat,crypto
 ./usr/lib/i386/libcrypto.so			base-sys-shlib		compat,crypto,pic
-./usr/lib/i386/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
-./usr/lib/i386/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/i386/libcrypto_idea.a			comp-obsolete		obsolete
 ./usr/lib/i386/libcrypto_idea.so		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_idea_p.a		comp-obsolete		obsolete
@@ -542,6 +540,8 @@
 ./usr/lib/i386/libcrypto_mdc2.so		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_mdc2_p.a		comp-obsolete		obsolete
 ./usr/lib/i386/libcrypto_mdc2_pic.a		comp-obsolete		obsolete
+./usr/lib/i386/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
+./usr/lib/i386/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/i386/libcrypto_rc5.a			comp-c-lib		crypto_rc5,compat
 ./usr/lib/i386/libcrypto_rc5.so			base-sys-shlib		compat,crypto,crypto_rc5,pic
 ./usr/lib/i386/libcrypto_rc5_p.a		comp-c-proflib		crypto_rc5,compat,profile
@@ -584,12 +584,12 @@
 ./usr/lib/i386/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libevent.a			comp-c-lib		compat
 ./usr/lib/i386/libevent.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/libevent_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libevent_openssl.a		comp-c-lib		compat,crypto
 ./usr/lib/i386/libevent_openssl.so		comp-sys-shlib		compat,pic,crypto
 ./usr/lib/i386/libevent_openssl_p.a		comp-c-proflib		compat,profile,crypto
 ./usr/lib/i386/libevent_openssl_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/i386/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libevent_pthreads.a		comp-c-lib		compat
 ./usr/lib/i386/libevent_pthreads.so		comp-sys-shlib		compat,pic
 ./usr/lib/i386/libevent_pthreads_p.a		comp-c-proflib		compat,profile
@@ -961,14 +961,14 @@
 ./usr/lib/i386/libtpm_unseal.so			comp-sys-shlib		compat,pic,tpm
 ./usr/lib/i386/libtpm_unseal_p.a		comp-c-proflib		compat,profile,tpm
 ./usr/lib/i386/libtpm_unseal_pic.a		comp-c-piclib		compat,pic,tpm
-./usr/lib/i386/libtspi.a			comp-c-lib		compat,tpm
-./usr/lib/i386/libtspi.so			comp-sys-shlib		compat,pic,tpm
-./usr/lib/i386/libtspi_p.a			comp-c-proflib		compat,profile,tpm
-./usr/lib/i386/libtspi_pic.a			comp-c-piclib		compat,pic,tpm
 ./usr/lib/i386/libtre.a				comp-c-lib		compat
 ./usr/lib/i386/libtre.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libtre_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libtre_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libtspi.a			comp-c-lib		compat,tpm
+./usr/lib/i386/libtspi.so			comp-sys-shlib		compat,pic,tpm
+./usr/lib/i386/libtspi_p.a			comp-c-proflib		compat,profile,tpm
+./usr/lib/i386/libtspi_pic.a			comp-c-piclib		compat,pic,tpm
 ./usr/lib/i386/libukfs.a			comp-c-lib		compat,rump
 ./usr/lib/i386/libukfs.so			comp-sys-shlib		compat,pic,rump
 ./usr/lib/i386/libukfs_p.a			comp-c-proflib		compat,profile,rump

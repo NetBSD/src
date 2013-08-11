@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1830 2013/08/06 22:33:59 soren Exp $
+#	$NetBSD: mi,v 1.1831 2013/08/11 22:29:02 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -227,7 +227,6 @@
 ./usr/include/c++/cassert			comp-cxx-include	libcxx
 ./usr/include/c++/ccomplex			comp-cxx-include	libcxx
 ./usr/include/c++/cctype			comp-cxx-include	libcxx
-./usr/include/c++/cxxabi.h			comp-cxx-include	libcxx
 ./usr/include/c++/cerrno			comp-cxx-include	libcxx
 ./usr/include/c++/cfenv				comp-cxx-include	libcxx
 ./usr/include/c++/cfloat			comp-cxx-include	libcxx
@@ -254,6 +253,7 @@
 ./usr/include/c++/ctime				comp-cxx-include	libcxx
 ./usr/include/c++/cwchar			comp-cxx-include	libcxx
 ./usr/include/c++/cwctype			comp-cxx-include	libcxx
+./usr/include/c++/cxxabi.h			comp-cxx-include	libcxx
 ./usr/include/c++/deque				comp-cxx-include	libcxx
 ./usr/include/c++/exception			comp-cxx-include	libcxx
 ./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
@@ -748,6 +748,7 @@
 ./usr/include/eti.h				comp-c-include
 ./usr/include/evdns.h				comp-c-include
 ./usr/include/event-config.h			comp-obsolete	obsolete
+./usr/include/event.h				comp-c-include
 ./usr/include/event2/buffer.h 			comp-c-include
 ./usr/include/event2/buffer_compat.h 		comp-c-include
 ./usr/include/event2/bufferevent.h 		comp-c-include
@@ -773,7 +774,6 @@
 ./usr/include/event2/tag_compat.h 		comp-c-include
 ./usr/include/event2/thread.h 			comp-c-include
 ./usr/include/event2/util.h			comp-c-include
-./usr/include/event.h				comp-c-include
 ./usr/include/evhttp.h				comp-c-include
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
@@ -1940,8 +1940,8 @@
 ./usr/include/ndbm.h				comp-c-include
 ./usr/include/net/agr/if_agrioctl.h		comp-c-include
 ./usr/include/net/bpf.h				comp-c-include
-./usr/include/net/bpfdesc.h			comp-c-include
 ./usr/include/net/bpf_jit.h			comp-c-include		obsolete
+./usr/include/net/bpfdesc.h			comp-c-include
 ./usr/include/net/bpfjit.h			comp-c-include
 ./usr/include/net/dlt.h				comp-c-include
 ./usr/include/net/ethertypes.h			comp-c-include
@@ -2714,6 +2714,13 @@
 ./usr/include/sys/xattr.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
 ./usr/include/syslog.h				comp-c-include
+./usr/include/tar.h				comp-c-include
+./usr/include/tcpd.h				comp-c-include
+./usr/include/term.h				comp-c-include
+./usr/include/termcap.h				comp-c-include
+./usr/include/termios.h				comp-c-include
+./usr/include/threadlib.h			comp-obsolete		obsolete
+./usr/include/time.h				comp-c-include
 ./usr/include/trousers/trousers.h		comp-c-include		tpm
 ./usr/include/trousers/tss.h			comp-c-include		tpm
 ./usr/include/tss/compat11b.h			comp-c-include		tpm
@@ -2739,13 +2746,6 @@
 ./usr/include/tss/tss_error_basics.h		comp-c-include		tpm
 ./usr/include/tss/tss_structs.h			comp-c-include		tpm
 ./usr/include/tss/tss_typedef.h			comp-c-include		tpm
-./usr/include/tar.h				comp-c-include
-./usr/include/tcpd.h				comp-c-include
-./usr/include/term.h				comp-c-include
-./usr/include/termcap.h				comp-c-include
-./usr/include/termios.h				comp-c-include
-./usr/include/threadlib.h			comp-obsolete		obsolete
-./usr/include/time.h				comp-c-include
 ./usr/include/ttyent.h				comp-c-include
 ./usr/include/tzfile.h				comp-c-include
 ./usr/include/ucontext.h			comp-c-include
@@ -2885,10 +2885,10 @@
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libbz2.a				comp-c-lib
 ./usr/lib/libbz2_p.a				comp-c-proflib		profile
-./usr/lib/libc.a				comp-c-lib
-./usr/lib/libc_p.a				comp-c-proflib		profile
 ./usr/lib/libc++.a				comp-c-lib		libcxx
 ./usr/lib/libc++_p.a				comp-c-proflib		libcxx,profile
+./usr/lib/libc.a				comp-c-lib
+./usr/lib/libc_p.a				comp-c-proflib		profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err.a				comp-krb5-lib		kerberos
@@ -2928,9 +2928,9 @@
 ./usr/lib/libelf.a				comp-c-lib
 ./usr/lib/libelf_p.a				comp-c-proflib		profile
 ./usr/lib/libevent.a				comp-c-lib
-./usr/lib/libevent_p.a				comp-c-proflib		profile
 ./usr/lib/libevent_openssl.a			comp-c-lib		crypto
 ./usr/lib/libevent_openssl_p.a			comp-c-proflib		profile,crypto
+./usr/lib/libevent_p.a				comp-c-proflib		profile
 ./usr/lib/libevent_pthreads.a			comp-c-lib
 ./usr/lib/libevent_pthreads_p.a			comp-c-proflib		profile
 ./usr/lib/libexecinfo.a				comp-c-lib
@@ -4995,7 +4995,6 @@
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent.0		comp-c-catman		.cat
-./usr/share/man/cat3/bufferevent_ssl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bufferevent_base_set.0	comp-c-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_disable.0	comp-c-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_enable.0	comp-c-obsolete		obsolete
@@ -5003,6 +5002,7 @@
 ./usr/share/man/cat3/bufferevent_new.0		comp-c-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_read.0		comp-c-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_settimeout.0	comp-c-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_ssl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bufferevent_write.0	comp-c-obsolete		obsolete
 ./usr/share/man/cat3/bufferevent_write_buffer.0	comp-c-obsolete		obsolete
 ./usr/share/man/cat3/byteorder.0		comp-c-catman		.cat
@@ -7039,8 +7039,8 @@
 ./usr/share/man/cat3/menu_mark.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_new.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_opts.0		comp-c-catman		.cat
-./usr/share/man/cat3/menu_opts_on.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_opts_off.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_opts_on.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_pad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_pattern.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_post.0		comp-c-catman		.cat
@@ -8840,7 +8840,6 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-obsolete		obsolete
-./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman		.cat
@@ -8873,6 +8872,7 @@
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arpintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arpresolve.0		comp-sys-catman		.cat
+./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/audio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/autoconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bawrite.0			comp-sys-catman		.cat
@@ -9639,10 +9639,10 @@
 ./usr/share/man/cat9/pcq_peek.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcq_put.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcu.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pcu_discard.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcu_load.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcu_save.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcu_save_all.0		comp-sys-catman		.cat
-./usr/share/man/cat9/pcu_discard.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcu_used_p.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/percpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/percpu_alloc.0		comp-sys-catman		.cat
@@ -11587,7 +11587,6 @@
 ./usr/share/man/html3/btowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/btree.html		comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent.html		comp-c-htmlman		html
-./usr/share/man/html3/bufferevent_ssl.html	comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent_base_set.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_disable.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_enable.html	comp-c-obsolete		obsolete
@@ -11595,6 +11594,7 @@
 ./usr/share/man/html3/bufferevent_new.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_read.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_settimeout.html	comp-c-obsolete		obsolete
+./usr/share/man/html3/bufferevent_ssl.html	comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent_write.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_write_buffer.html	comp-c-obsolete		obsolete
 ./usr/share/man/html3/byteorder.html		comp-c-htmlman		html
@@ -13549,8 +13549,8 @@
 ./usr/share/man/html3/menu_mark.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_new.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_opts.html		comp-c-htmlman		html
-./usr/share/man/html3/menu_opts_on.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_opts_off.html	comp-c-htmlman		html
+./usr/share/man/html3/menu_opts_on.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_pad.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_pattern.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_post.html		comp-c-htmlman		html
@@ -15287,7 +15287,6 @@
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VREF.html			comp-obsolete	obsolete
-./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_generic_mod_event.html	comp-sys-htmlman	html
@@ -15319,6 +15318,7 @@
 ./usr/share/man/html9/arp_ifinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpintr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpresolve.html		comp-sys-htmlman	html
+./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/audio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/autoconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bawrite.html		comp-sys-htmlman	html
@@ -15834,10 +15834,10 @@
 ./usr/share/man/html9/kcpuset_atomic_clear.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_atomic_set.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_clear.html	comp-sys-htmlman	html
-./usr/share/man/html9/kcpuset_countset.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copyin.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_copyout.html	comp-sys-htmlman	html
+./usr/share/man/html9/kcpuset_countset.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_export_32.html	comp-sys-htmlman	html
@@ -16057,10 +16057,10 @@
 ./usr/share/man/html9/pcq_peek.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcq_put.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcu.html			comp-sys-htmlman	html
+./usr/share/man/html9/pcu_discard.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcu_load.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcu_save.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcu_save_all.html		comp-sys-htmlman	html
-./usr/share/man/html9/pcu_discard.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcu_used_p.html		comp-sys-htmlman	html
 ./usr/share/man/html9/percpu.html		comp-sys-htmlman	html
 ./usr/share/man/html9/percpu_alloc.html		comp-sys-htmlman	html
@@ -18001,7 +18001,6 @@
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
 ./usr/share/man/man3/bufferevent.3		comp-c-man		.man
-./usr/share/man/man3/bufferevent_ssl.3		comp-c-man		.man
 ./usr/share/man/man3/bufferevent_base_set.3	comp-c-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_disable.3	comp-c-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_enable.3	comp-c-obsolete		obsolete
@@ -18009,6 +18008,7 @@
 ./usr/share/man/man3/bufferevent_new.3		comp-c-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_read.3		comp-c-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_settimeout.3	comp-c-obsolete		obsolete
+./usr/share/man/man3/bufferevent_ssl.3		comp-c-man		.man
 ./usr/share/man/man3/bufferevent_write.3	comp-c-obsolete		obsolete
 ./usr/share/man/man3/bufferevent_write_buffer.3	comp-c-obsolete		obsolete
 ./usr/share/man/man3/byteorder.3		comp-c-man		.man
@@ -20045,8 +20045,8 @@
 ./usr/share/man/man3/menu_mark.3		comp-c-man		.man
 ./usr/share/man/man3/menu_new.3			comp-c-man		.man
 ./usr/share/man/man3/menu_opts.3		comp-c-man		.man
-./usr/share/man/man3/menu_opts_on.3		comp-c-man		.man
 ./usr/share/man/man3/menu_opts_off.3		comp-c-man		.man
+./usr/share/man/man3/menu_opts_on.3		comp-c-man		.man
 ./usr/share/man/man3/menu_pad.3			comp-c-man		.man
 ./usr/share/man/man3/menu_pattern.3		comp-c-man		.man
 ./usr/share/man/man3/menu_post.3		comp-c-man		.man
@@ -21841,7 +21841,6 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-obsolete		obsolete
-./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man		.man
@@ -21874,6 +21873,7 @@
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
 ./usr/share/man/man9/arpintr.9			comp-sys-man		.man
 ./usr/share/man/man9/arpresolve.9		comp-sys-man		.man
+./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/audio.9			comp-sys-man		.man
 ./usr/share/man/man9/autoconf.9			comp-sys-man		.man
 ./usr/share/man/man9/bawrite.9			comp-sys-man		.man
@@ -22640,10 +22640,10 @@
 ./usr/share/man/man9/pcq_peek.9			comp-sys-man		.man
 ./usr/share/man/man9/pcq_put.9			comp-sys-man		.man
 ./usr/share/man/man9/pcu.9			comp-sys-man		.man
+./usr/share/man/man9/pcu_discard.9		comp-sys-man		.man
 ./usr/share/man/man9/pcu_load.9			comp-sys-man		.man
 ./usr/share/man/man9/pcu_save.9			comp-sys-man		.man
 ./usr/share/man/man9/pcu_save_all.9		comp-sys-man		.man
-./usr/share/man/man9/pcu_discard.9		comp-sys-man		.man
 ./usr/share/man/man9/pcu_used_p.9		comp-sys-man		.man
 ./usr/share/man/man9/percpu.9			comp-sys-man		.man
 ./usr/share/man/man9/percpu_alloc.9		comp-sys-man		.man

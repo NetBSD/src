@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.79 2013/05/30 20:10:14 macallan Exp $
+# $NetBSD: md.sparc,v 1.80 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -97,12 +97,12 @@
 ./usr/include/sparc64/ieee.h			comp-c-include
 ./usr/include/sparc64/ieeefp.h			comp-c-include
 ./usr/include/sparc64/instr.h			comp-c-include
-./usr/include/sparc64/intr.h			comp-c-include
 ./usr/include/sparc64/int_const.h		comp-c-include
 ./usr/include/sparc64/int_fmtio.h		comp-c-include
 ./usr/include/sparc64/int_limits.h		comp-c-include
 ./usr/include/sparc64/int_mwgwtypes.h		comp-c-include
 ./usr/include/sparc64/int_types.h		comp-c-include
+./usr/include/sparc64/intr.h			comp-c-include
 ./usr/include/sparc64/joystick.h		comp-c-include
 ./usr/include/sparc64/kbd.h			comp-c-include
 ./usr/include/sparc64/kbio.h			comp-c-include

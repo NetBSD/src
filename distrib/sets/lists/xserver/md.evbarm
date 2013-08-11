@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.5 2013/01/16 16:01:09 christos Exp $
+# $NetBSD: md.evbarm,v 1.6 2013/08/11 22:29:03 joerg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -23,11 +23,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg

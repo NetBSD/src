@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.170 2013/04/28 15:24:12 joerg Exp $
+# $NetBSD: md.sparc64,v 1.171 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -274,14 +274,14 @@
 ./usr/lib/sparc/libbz2.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libbz2_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libbz2_pic.a			comp-c-piclib		compat,pic
-./usr/lib/sparc/libc.a				comp-c-lib		compat
-./usr/lib/sparc/libc.so				base-sys-shlib		compat,pic
-./usr/lib/sparc/libc_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libc++.a			comp-c-lib		compat,libcxx
 ./usr/lib/sparc/libc++.so			comp-sys-shlib		compat,pic,libcxx
 ./usr/lib/sparc/libc++_p.a			comp-c-proflib		compat,profile,libcxx
 ./usr/lib/sparc/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
+./usr/lib/sparc/libc.a				comp-c-lib		compat
+./usr/lib/sparc/libc.so				base-sys-shlib		compat,pic
+./usr/lib/sparc/libc_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
@@ -295,8 +295,6 @@
 ./usr/lib/sparc/libcrypt_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libcrypto.a			comp-c-lib		compat,crypto
 ./usr/lib/sparc/libcrypto.so			base-sys-shlib		compat,crypto,pic
-./usr/lib/sparc/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
-./usr/lib/sparc/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/sparc/libcrypto_idea.a		comp-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_idea.so		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_idea_p.a		comp-obsolete		obsolete
@@ -305,6 +303,8 @@
 ./usr/lib/sparc/libcrypto_mdc2.so		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_mdc2_p.a		comp-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_mdc2_pic.a		comp-obsolete		obsolete
+./usr/lib/sparc/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
+./usr/lib/sparc/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/sparc/libcrypto_rc5.a			comp-c-lib		crypto_rc5,compat
 ./usr/lib/sparc/libcrypto_rc5.so		base-sys-shlib		compat,crypto,crypto_rc5,pic
 ./usr/lib/sparc/libcrypto_rc5_p.a		comp-c-proflib		crypto_rc5,compat,profile
@@ -347,12 +347,12 @@
 ./usr/lib/sparc/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libevent.a			comp-c-lib		compat
 ./usr/lib/sparc/libevent.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libevent_openssl.a		comp-c-lib		compat,crypto
 ./usr/lib/sparc/libevent_openssl.so		base-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libevent_openssl_p.a		comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libevent_openssl_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libevent_pthreads.a		comp-c-lib		compat
 ./usr/lib/sparc/libevent_pthreads.so		base-sys-shlib		compat,pic
 ./usr/lib/sparc/libevent_pthreads_p.a		comp-c-proflib		compat,profile

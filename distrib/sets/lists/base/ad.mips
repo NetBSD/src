@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.13 2013/07/28 20:25:34 pgoyette Exp $
+# $NetBSD: ad.mips,v 1.14 2013/08/11 22:29:02 joerg Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -77,10 +77,10 @@
 ./usr/lib/64/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
-./usr/lib/64/libatf-c.so.0			base-compat-shlib	compat,pic,atf,arch64
-./usr/lib/64/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/64/libatf-c++.so.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/64/libatf-c++.so.0.0			base-compat-shlib	compat,pic,atf,arch64
+./usr/lib/64/libatf-c.so.0			base-compat-shlib	compat,pic,atf,arch64
+./usr/lib/64/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/64/libbfd.so.12			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libbind9.so.7			base-compat-shlib	compat,pic,arch64
@@ -91,10 +91,10 @@
 ./usr/lib/64/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbz2.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libbz2.so.1.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libc.so.12				base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libc.so.12.185			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libc++.so.1			base-compat-shlib	compat,pic,libcxx,arch64
 ./usr/lib/64/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx,arch64
+./usr/lib/64/libc.so.12				base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libc.so.12.185			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic,arch64
@@ -131,6 +131,8 @@
 ./usr/lib/64/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/64/libevent_pthreads.so.4		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libevent_pthreads.so.4.0		base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libexecinfo.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libexpat.so.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libexpat.so.2.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libfetch.so.3			base-compat-shlib	compat,pic,arch64
@@ -312,8 +314,6 @@
 ./usr/lib/64/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libwrap.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libwrap.so.1.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libexecinfo.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libz.so.1				base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libz.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/lua				base-compat-shlib	compat,arch64
@@ -407,10 +407,10 @@
 ./usr/lib/o32/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
-./usr/lib/o32/libatf-c.so.0			base-compat-shlib	compat,pic,atf,arch64
-./usr/lib/o32/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/o32/libatf-c++.so.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/o32/libatf-c++.so.0.0			base-compat-shlib	compat,pic,atf,arch64
+./usr/lib/o32/libatf-c.so.0			base-compat-shlib	compat,pic,atf,arch64
+./usr/lib/o32/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf,arch64
 ./usr/lib/o32/libbfd.so.12			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libbind9.so.7			base-compat-shlib	compat,pic,arch64
@@ -421,10 +421,10 @@
 ./usr/lib/o32/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbz2.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libbz2.so.1.1			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libc.so.12			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libc.so.12.185			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libc++.so.1			base-compat-shlib	compat,pic,libcxx,arch64
 ./usr/lib/o32/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx,arch64
+./usr/lib/o32/libc.so.12			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libc.so.12.185			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic,arch64
@@ -455,6 +455,8 @@
 ./usr/lib/o32/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libevent_pthreads.so.4		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libevent_pthreads.so.4.0		base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libexecinfo.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libexpat.so.2			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libexpat.so.2.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libfetch.so.3			base-compat-shlib	compat,pic,arch64
@@ -636,8 +638,6 @@
 ./usr/lib/o32/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libwrap.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libwrap.so.1.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libexecinfo.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libz.so.1				base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libz.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/lua				base-compat-shlib	compat,arch64

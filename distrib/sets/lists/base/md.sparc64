@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.195 2013/07/28 14:02:56 pgoyette Exp $
+# $NetBSD: md.sparc64,v 1.196 2013/08/11 22:29:02 joerg Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -67,10 +67,10 @@
 ./usr/lib/sparc/libarchive.so.3.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/sparc/libatf-c.so.0			base-compat-shlib	compat,pic,atf
-./usr/lib/sparc/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/sparc/libatf-c++.so.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/sparc/libatf-c++.so.0.0		base-compat-shlib	compat,pic,atf
+./usr/lib/sparc/libatf-c.so.0			base-compat-shlib	compat,pic,atf
+./usr/lib/sparc/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/sparc/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbind9.so.7			base-compat-shlib	compat,pic
@@ -81,10 +81,10 @@
 ./usr/lib/sparc/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbz2.so.1.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/sparc/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/sparc/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
+./usr/lib/sparc/libc.so.12			base-compat-shlib	compat,pic
+./usr/lib/sparc/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -121,6 +121,8 @@
 ./usr/lib/sparc/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libevent_pthreads.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent_pthreads.so.4.0	base-compat-shlib	compat,pic
+./usr/lib/sparc/libexecinfo.so.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libexecinfo.so.0.0 		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libexpat.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3			base-compat-shlib	compat,pic
@@ -303,8 +305,6 @@
 ./usr/lib/sparc/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libwrap.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libwrap.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libexecinfo.so.0		base-compat-shlib	compat,pic
-./usr/lib/sparc/libexecinfo.so.0.0 		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libz.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/lua				base-compat-shlib	compat

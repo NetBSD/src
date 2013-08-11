@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.51 2013/03/11 15:53:05 christos Exp $
+# $NetBSD: mi,v 1.52 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,9 +7,6 @@
 #		powerpc-4xx and powerpc-booke modules are incompatible.
 #		Sorry for any inconvenience this may cause, the management.
 #
-./etc/mtree/set.modules				modules-sys-root	kmod
-./stand/@MACHINE@				base-kernel-modules	kmod
-./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod
 ./@MODULEDIR@					base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready			base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules	kmod
@@ -195,11 +192,14 @@
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/vcoda				base-kernel-modules	kmod
-./@MODULEDIR@/vcoda/vcoda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/v7fs				base-kernel-modules	kmod
 ./@MODULEDIR@/v7fs/v7fs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/vcoda				base-kernel-modules	kmod
+./@MODULEDIR@/vcoda/vcoda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
 ./@MODULEDIR@/zfs				base-kernel-modules     kmod,zfs
 ./@MODULEDIR@/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
+./etc/mtree/set.modules				modules-sys-root	kmod
+./stand/@MACHINE@				base-kernel-modules	kmod
+./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules	kmod
