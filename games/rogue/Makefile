@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/02/06 23:45:26 he Exp $
+#	$NetBSD: Makefile,v 1.18 2013/08/11 03:44:27 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -11,7 +11,6 @@ LDADD=	-lcurses -lterminfo
 HIDEGAME=hidegame
 SETGIDGAME=yes
 MAN=	rogue.6
-WARNS=	2
 
 .if make(install)
 SUBDIR+=USD.doc
