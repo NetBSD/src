@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64.S,v 1.5 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_or_64.S,v 1.6 2013/08/11 04:41:17 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,24 +33,24 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_or_64_nv)
-	push	{r4,r5}			/* save temporary */
+	push	{r4}			/* save temporary */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
 #endif
-	mov	r4, r0			/* need r0 for return value */
-1:	ldrexd	r0, [r4]		/* load old value */
-	orr	r0, r0, r2		/* calculate new value (return value) */
-	orr	r1, r1, r3		/* calculate new value (return value) */
-	strexd	r5, r0, [r4]		/* try to store */
-	cmp	r5, #0			/*   succeed? */
+	mov	ip, r0			/* need r0 for return value */
+1:	ldrexd	r0, [ip]		/* load old value */
+	orrs	r0, r0, r2		/* calculate new value (return value) */
+	orrs	r1, r1, r3		/* calculate new value (return value) */
+	strexd	r4, r0, [ip]		/* try to store */
+	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
-	mcr	p15, 0, r5, c7, c10, 5	/* data memory barrier */
+	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
-	pop	{r4,r5}			/* restore temporary */
+	pop	{r4}			/* restore temporary */
 	RET				/* return new value */
 END(_atomic_or_64_nv)
 
