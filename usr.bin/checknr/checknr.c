@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.22 2013/08/11 06:43:10 dholland Exp $	*/
+/*	$NetBSD: checknr.c,v 1.23 2013/08/11 06:45:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.22 2013/08/11 06:43:10 dholland Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.23 2013/08/11 06:45:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,18 +63,18 @@ __RCSID("$NetBSD: checknr.c,v 1.22 2013/08/11 06:43:10 dholland Exp $");
 /*
  * The stack on which we remember what we've seen so far.
  */
-struct stkstr {
+static struct stkstr {
 	int opno;	/* number of opening bracket */
 	int pl;		/* '+', '-', ' ' for \s, 1 for \f, 0 for .ft */
 	int parm;	/* parm to size, font, etc */
 	int lno;	/* line number the thing came in in */
 } stk[MAXSTK];
-int stktop;
+static int stktop;
 
 /*
  * The kinds of opening and closing brackets.
  */
-struct brstr {
+static struct brstr {
 	const char *opbr;
 	const char *clbr;
 } br[MAXBR] = {
@@ -146,7 +146,7 @@ struct brstr {
  * All commands known to nroff, plus macro packages.
  * Used so we can complain about unrecognized commands.
  */
-const char *knowncmds[MAXCMDS] = {
+static const char *knowncmds[MAXCMDS] = {
 "$c", "$f", "$h", "$p", "$s", "%A", "%B", "%C", "%D", "%I", "%J", "%N",
 "%O", "%P", "%Q", "%R", "%T", "%V", "(b", "(c", "(d", "(f", "(l", "(q",
 "(t", "(x", "(z", ")b", ")c", ")d", ")f", ")l", ")q", ")t", ")x",
@@ -191,27 +191,26 @@ const char *knowncmds[MAXCMDS] = {
 "uf", "uh", "ul", "vs", "wh", "xp", "yr", 0
 };
 
-int	lineno;		/* current line number in input file */
-const char *cfilename;	/* name of current file */
-int	nfiles;		/* number of files to process */
-int	fflag;		/* -f: ignore \f */
-int	sflag;		/* -s: ignore \s */
-int	ncmds;		/* size of knowncmds */
-int	slot;		/* slot in knowncmds found by binsrch */
+static int lineno;		/* current line number in input file */
+static const char *cfilename;	/* name of current file */
+static int nfiles;		/* number of files to process */
+static int fflag;		/* -f: ignore \f */
+static int sflag;		/* -s: ignore \s */
+static int ncmds;		/* size of knowncmds */
+static int slot;		/* slot in knowncmds found by binsrch */
 
-void	addcmd(char *);
-void	addmac(const char *);
-int	binsrch(const char *);
-void	checkknown(const char *);
-void	chkcmd(const char *);
-void	complain(int);
+static void addcmd(char *);
+static void addmac(const char *);
+static int binsrch(const char *);
+static void checkknown(const char *);
+static void chkcmd(const char *);
+static void complain(int);
 static int eq(const char *, const char *);
-int	main(int, char **);
-void	nomatch(const char *);
-void	pe(int);
-void	process(FILE *);
-void	prop(int);
-void	usage(void);
+static void nomatch(const char *);
+static void pe(int);
+static void process(FILE *);
+static void prop(int);
+static void usage(void);
 
 int
 main(int argc, char **argv)
@@ -302,7 +301,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	(void)fprintf(stderr,
@@ -311,7 +310,7 @@ usage(void)
 	exit(1);
 }
 
-void
+static void
 process(FILE *f)
 {
 	int i, n;
@@ -410,7 +409,7 @@ process(FILE *f)
 	}
 }
 
-void
+static void
 complain(int i)
 {
 	pe(stk[i].lno);
@@ -419,7 +418,7 @@ complain(int i)
 	printf("\n");
 }
 
-void
+static void
 prop(int i)
 {
 	if (stk[i].pl == 0)
@@ -438,7 +437,7 @@ prop(int i)
 	}
 }
 
-void
+static void
 chkcmd(const char *mac)
 {
 	int i;
@@ -474,7 +473,7 @@ chkcmd(const char *mac)
 	}
 }
 
-void
+static void
 nomatch(const char *mac)
 {
 	int i, j;
@@ -526,7 +525,7 @@ eq(const char *s1, const char *s2)
 }
 
 /* print the first part of an error message, given the line number */
-void
+static void
 pe(int pelineno)
 {
 	if (nfiles > 1)
@@ -534,7 +533,7 @@ pe(int pelineno)
 	printf("%d: ", pelineno);
 }
 
-void
+static void
 checkknown(const char *mac)
 {
 
@@ -552,7 +551,7 @@ checkknown(const char *mac)
 /*
  * We have a .de xx line in "line".  Add xx to the list of known commands.
  */
-void
+static void
 addcmd(char *line)
 {
 	char *mac;
@@ -583,7 +582,7 @@ addcmd(char *line)
  * me someday?)  Anyway, I claim that .de is fairly rare in user
  * nroff programs, and the register loop below is pretty fast.
  */
-void
+static void
 addmac(const char *mac)
 {
 	const char **src, **dest, **loc;
@@ -617,7 +616,7 @@ addmac(const char *mac)
  * Do a binary search in knowncmds for mac.
  * If found, return the index.  If not, return -1.
  */
-int
+static int
 binsrch(const char *mac)
 {
 	const char *p;	/* pointer to current cmd in list */
