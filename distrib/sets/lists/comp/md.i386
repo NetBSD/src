@@ -1,6 +1,6 @@
-# $NetBSD: md.i386,v 1.135 2013/05/28 17:37:33 joerg Exp $
-./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
+# $NetBSD: md.i386,v 1.136 2013/08/11 22:29:02 joerg Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/emmintrin.h		comp-obsolete		obsolete
@@ -21,8 +21,8 @@
 ./usr/include/clang-3.2/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.2/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.2/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.2/emmintrin.h		comp-obsolete		obsolete
@@ -47,8 +47,8 @@
 ./usr/include/clang-3.3/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.3/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.3/ammintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/avx2intrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/bmi2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/bmiintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/emmintrin.h		comp-obsolete		obsolete
@@ -62,8 +62,8 @@
 ./usr/include/clang-3.3/mmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/nmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/pmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-3.3/prfchwintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/popcntintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.3/prfchwintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/rdseedintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/rtmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.3/smmintrin.h		comp-obsolete		obsolete
@@ -75,8 +75,8 @@
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.4/ammintrin.h		comp-c-include		llvm
-./usr/include/clang-3.4/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/bmiintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/emmintrin.h		comp-c-include		llvm
@@ -90,8 +90,8 @@
 ./usr/include/clang-3.4/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/pmmintrin.h		comp-c-include		llvm
-./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rdseedintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/smmintrin.h		comp-c-include		llvm

@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.143 2013/06/12 21:35:30 mrg Exp $
+#	 $NetBSD: mi,v 1.144 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5667,8 +5667,8 @@
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbzip2.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
@@ -6420,21 +6420,17 @@
 ./usr/X11R7/man/cat3/FcBlanksDestroy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcBlanksIsMember.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheCopySet.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCacheCreateTagFile.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheDir.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheNumFont.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheNumSubdir.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCacheSubdir.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcCacheCreateTagFile.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcCharSetDelChar.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcGetDefaultLangs.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcLangSetDel.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcLangSetSubtract.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FcLangSetUnion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetAddChar.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCopy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCount.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCoverage.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetCreate.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcCharSetDelChar.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetDestroy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetEqual.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcCharSetFirstPage.0		-unknown-	.cat,xorg
@@ -6500,6 +6496,7 @@
 ./usr/X11R7/man/cat3/FcFreeTypeCharSetAndSpacing.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcFreeTypeQuery.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcFreeTypeQueryFace.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcGetDefaultLangs.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcGetLangs.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcGetVersion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcInit.0				-unknown-	.cat,xorg
@@ -6515,10 +6512,13 @@
 ./usr/X11R7/man/cat3/FcLangSetContains.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetCopy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetCreate.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetDel.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetDestroy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetEqual.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetHasLang.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcLangSetHash.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetSubtract.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FcLangSetUnion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcMatrixCopy.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcMatrixEqual.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcMatrixInit.0			-unknown-	.cat,xorg
@@ -9144,10 +9144,10 @@
 ./usr/X11R7/share/xcb/xfixes.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinerama.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinput.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xkb.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xprint.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xproto.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xselinux.xml			-unknown-	xorg
-./usr/X11R7/share/xcb/xkb.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xtest.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xv.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xvmc.xml				-unknown-	xorg

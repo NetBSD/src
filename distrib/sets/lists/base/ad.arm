@@ -1,5 +1,4 @@
-# $NetBSD: ad.arm,v 1.18 2013/07/28 14:02:56 pgoyette Exp $
-./sbin/ldconfig					base-sysutil-root	pic,endian=1234
+# $NetBSD: ad.arm,v 1.19 2013/08/11 22:29:02 joerg Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -12,27 +11,15 @@
 ./lib/oabi/npf/ext_rndblock.so.0		base-npf-shlib		compat,pic
 ./lib/oabi/npf/ext_rndblock.so.0.0		base-npf-shlib		compat,pic
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
+./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
-./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/apmd					base-sysutil-bin
-./usr/sbin/elftosb				base-sysutil-bin	endian=1234
-./usr/sbin/eeprom				base-sysutil-bin
-./usr/sbin/ofctl				base-sysutil-bin
-./usr/sbin/sbtool				base-sysutil-bin	endian=1234
-./usr/sbin/sbkeygen				base-sysutil-bin	endian=1234
-./usr/sbin/tpctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin
 ./usr/lib/libarm.so				base-sys-shlib		pic
 ./usr/lib/libarm.so.0				base-sys-shlib		pic
 ./usr/lib/libarm.so.0.0				base-sys-shlib		pic
 ./usr/lib/libpmc.so				base-sys-shlib		pic
 ./usr/lib/libpmc.so.1				base-sys-shlib		pic
 ./usr/lib/libpmc.so.1.0				base-sys-shlib		pic
-./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
-./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./usr/lib/oabi					base-compat-lib		compat,eabi
-./usr/lib/oabi/libarm.so.0			base-sys-shlib		compat,pic
-./usr/lib/oabi/libarm.so.0.0			base-sys-shlib		compat,pic
 ./usr/lib/oabi/i18n				base-compat-lib		compat,eabi
 ./usr/lib/oabi/i18n/libBIG5.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/oabi/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
@@ -84,12 +71,14 @@
 ./usr/lib/oabi/libamu.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libarchive.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libarchive.so.3.1		base-compat-shlib	compat,pic
+./usr/lib/oabi/libarm.so.0			base-sys-shlib		compat,pic
+./usr/lib/oabi/libarm.so.0.0			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/oabi/libatf-c.so.0			base-compat-shlib	compat,pic,atf
-./usr/lib/oabi/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/oabi/libatf-c++.so.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/oabi/libatf-c++.so.0.0		base-compat-shlib	compat,pic,atf
+./usr/lib/oabi/libatf-c.so.0			base-compat-shlib	compat,pic,atf
+./usr/lib/oabi/libatf-c.so.0.0			base-compat-shlib	compat,pic,atf
 ./usr/lib/oabi/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbind9.so.7			base-compat-shlib	compat,pic
@@ -98,16 +87,14 @@
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0.0		base-compat-shlib	compat,pic
-./usr/lib/oabi/libexecinfo.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbz2.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
+./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc.so.12			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
-./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -144,6 +131,8 @@
 ./usr/lib/oabi/libevent_openssl.so.4.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/oabi/libevent_pthreads.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libevent_pthreads.so.4.0		base-compat-shlib	compat,pic
+./usr/lib/oabi/libexecinfo.so.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libexpat.so.2			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libfetch.so.3			base-compat-shlib	compat,pic
@@ -241,13 +230,13 @@
 ./usr/lib/oabi/libpcap.so.5			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpcap.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
+./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
+./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libperfuse.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpmc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libpmc.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libpci.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libposix.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libposix.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libppath.so.0			base-compat-shlib	compat,pic
@@ -368,13 +357,15 @@
 ./usr/lib/oabi/security/pam_skey.so.4		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/oabi/security/pam_ssh.so.4		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/oabi/security/pam_unix.so.4		base-compat-shlib	compat,pic,pam
+./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
+./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
 ./usr/mdec/BBBB					base-obsolete		obsolete
 ./usr/mdec/boot26				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/boot26,ffa				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/boot32				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234,!eabi
-./usr/mdec/nbfs					base-sysutil-bin	endian=1234,!eabi
-./usr/mdec/nbfs,ffa				base-sysutil-bin	endian=1234,!eabi
+./usr/mdec/bootimx23				base-sysutil-bin	endian=1234
+./usr/mdec/bootmini2440				base-sysutil-bin
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
 ./usr/mdec/gzboot_GEMINI_0x01600000.bin		base-sysutil-bin	endian=1234
 ./usr/mdec/gzboot_IQ80310_0x00080000.bin	base-sysutil-bin	endian=1234
@@ -383,7 +374,16 @@
 ./usr/mdec/gzboot_SMDK2800_0x00000000.bin	base-sysutil-bin	endian=1234
 ./usr/mdec/gzboot_SMDK2800_0x00100000.bin	base-sysutil-bin	endian=1234
 ./usr/mdec/gzboot_TS7200_0x60660000.bin		base-sysutil-bin	endian=1234
-./usr/mdec/bootmini2440				base-sysutil-bin
-./usr/mdec/bootimx23				base-sysutil-bin	endian=1234
+./usr/mdec/nbfs					base-sysutil-bin	endian=1234,!eabi
+./usr/mdec/nbfs,ffa				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/zboot				base-sysutil-bin	endian=1234
 ./usr/mdec/zbsdmod.o				base-sysutil-bin	endian=1234
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/eeprom				base-sysutil-bin
+./usr/sbin/elftosb				base-sysutil-bin	endian=1234
+./usr/sbin/ofctl				base-sysutil-bin
+./usr/sbin/sbkeygen				base-sysutil-bin	endian=1234
+./usr/sbin/sbtool				base-sysutil-bin	endian=1234
+./usr/sbin/tpctl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.88 2013/06/05 06:27:51 mrg Exp $
+# $NetBSD: md.i386,v 1.89 2013/08/11 22:29:03 joerg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -451,10 +451,10 @@
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/elographics_drv.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/elographics_drv.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/geode_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/geode_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i740_drv.so		-unknown-	xorg
@@ -548,11 +548,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg

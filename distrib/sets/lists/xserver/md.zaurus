@@ -1,7 +1,7 @@
-# $NetBSD: md.zaurus,v 1.11 2013/01/16 16:01:09 christos Exp $
-./etc/X11/xorg.conf.sample				-unknown-	obsolete
+# $NetBSD: md.zaurus,v 1.12 2013/08/11 22:29:03 joerg Exp $
 ./etc/X11/xorg.conf.C3x00				-unknown-	xorg
 ./etc/X11/xorg.conf.C7x0				-unknown-	xorg
+./etc/X11/xorg.conf.sample				-unknown-	obsolete
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -26,11 +26,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
