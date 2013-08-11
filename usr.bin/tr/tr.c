@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.17 2013/08/11 00:39:22 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.18 2013/08/11 00:48:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.17 2013/08/11 00:39:22 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.18 2013/08/11 00:48:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,24 +156,48 @@ main(int argc, char **argv)
 	if (!isstring2)
 		usage();
 
+	/*
+	 * The first and second strings need to be matched up. This
+	 * means that if we are doing -c, we need to scan the first
+	 * string in advance, complement it, and match *that* against
+	 * the second string; otherwise we need to scan them together.
+	 */
+
 	if (cflag) {
+		/*
+		 * Scan string 1 and complement it. After this,
+		 * string1[] contains 0 for chars to leave alone and 1
+		 * for chars to translate.
+		 */
 		setup(string1, argv[0], 1, cflag);
 		s1 = NULL; /* for safety */
+		/* we will use ch to iterate over string1, so start it */
 		ch = -1;
 	} else {
+		/* Create the scanner for string 1. */
 		s1 = str_create(1, argv[0]);
 		for (ch = 0; ch < NCHARS; ch++) {
 			string1[ch] = ch;
 		}
 	}
+	/* Create the scanner for string 2. */
 	s2 = str_create(2, argv[1]);
 
+	/* Read the first char of string 2 first to make sure there is one. */
 	if (!next(s2, &ch2))
 		errx(1, "empty string2");
 
-	/* If string2 runs out of characters, use the last one specified. */
+	/*
+	 * Loop over the chars from string 1. After this loop string1[]
+	 * is a mapping from input to output chars.
+	 */
 	while (1) {
 		if (cflag) {
+			/*
+			 * Try each character in order. For characters we
+			 * skip over because we aren't translating them,
+			 * set the translation to the identity.
+			 */
 			ch++;
 			while (ch < NCHARS && string1[ch] == 0) {
 				if (string1[ch] == 0) {
@@ -186,17 +210,31 @@ main(int argc, char **argv)
 			}
 		}
 		else {
+			/* Get the next character from string 1. */
 			if (!next(s1, &ch)) {
 				break;
 			}
 		}
 
+		/* Set the translation to the character from string 2. */
 		string1[ch] = ch2;
+
+		/* Note the characters to squeeze in string2[]. */
 		if (sflag) {
 			string2[ch2] = 1;
 		}
+
+		/*
+		 * Get the next character from string 2. If it runs
+		 * out, this will keep returning the last character
+		 * over and over again.
+		 */
 		(void)next(s2, &ch2);
 	}
+
+	/*
+	 * Now do it.
+	 */
 
 	if (sflag)
 		for (lastch = OOBCH; (ch = getchar()) != EOF;) {
@@ -210,6 +248,7 @@ main(int argc, char **argv)
 		while ((ch = getchar()) != EOF)
 			(void)putchar(string1[ch]);
 
+	/* Clean up and exit. */
 	if (s1 != NULL) {
 		str_destroy(s1);
 	}
