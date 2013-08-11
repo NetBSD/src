@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.26 2013/08/11 01:29:28 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.27 2013/08/11 01:42:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.26 2013/08/11 01:29:28 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.27 2013/08/11 01:42:35 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ struct str {
 static int	backslash(STR *);
 static int	bracket(STR *);
 static int	c_class(const void *, const void *);
-static void	genclass(STR *, const char *, size_t);
+static int *genclass(const char *, size_t);
 static void	genequiv(STR *);
 static int	genrange(STR *);
 static void	genseq(STR *);
@@ -178,13 +178,17 @@ static int
 bracket(STR *s)
 {
 	const char *p;
+	int *q;
 
 	switch (s->str[1]) {
 	case ':':				/* "[:class:]" */
 		if ((p = strstr(s->str + 2, ":]")) == NULL)
 			return 0;
 		s->str += 2;
-		genclass(s, s->str, p - s->str);
+		q = genclass(s->str, p - s->str);
+		s->state = SET;
+		s->set = q;
+		s->cnt = 0;
 		s->str = p + 2;
 		return 1;
 	case '=':				/* "[=equiv=]" */
@@ -230,8 +234,8 @@ typedef struct {
 	size_t len;
 } CLASSKEY;
 
-static void
-genclass(STR *s, const char *class, size_t len)
+static int *
+genclass(const char *class, size_t len)
 {
 	int ch;
 	const CLASS *cp;
@@ -270,11 +274,7 @@ genclass(STR *s, const char *class, size_t len)
 		p[pos] = 0;
 	}
 
-	/* Update the state */
-
-	s->set = p;
-	s->cnt = 0;
-	s->state = SET;
+	return p;
 }
 
 static int
@@ -305,13 +305,16 @@ c_class(const void *av, const void *bv)
 static void
 genequiv(STR *s)
 {
-	if (*s->str == '\\') {
+	int ch;
+
+	ch = (unsigned char)s->str[0];
+	if (ch == '\\') {
 		s->equiv[0] = backslash(s);
 		if (*s->str != '=') {
 			errx(1, "Misplaced equivalence equals sign");
 		}
 	} else {
-		s->equiv[0] = (unsigned char)s->str[0];
+		s->equiv[0] = ch;
 		if (s->str[1] != '=') {
 			errx(1, "Misplaced equivalence equals sign");
 		}
@@ -391,24 +394,36 @@ backslash(STR *s)
 {
 	int ch, cnt, val;
 
-	for (cnt = val = 0;;) {
+	cnt = val = 0;
+	for (;;) {
+		/* Consume the character we're already on. */
 		s->str++;
+
+		/* Look at the next character. */
 		ch = (unsigned char)s->str[0];
 		if (!isascii(ch) || !isdigit(ch)) {
 			break;
 		}
 		val = val * 8 + ch - '0';
 		if (++cnt == 3) {
+			/* Enough digits; consume this one and stop */
 			++s->str;
 			break;
 		}
 	}
 	if (cnt) {
+		/* We saw digits, so return their value */
 		return val;
 	}
-	if (ch != '\0') {
-		++s->str;
+	if (ch == '\0') {
+		/* \<end> -> \ */
+		s->state = EOS;
+		return '\\';
 	}
+
+	/* Consume the escaped character */
+	s->str++;
+
 	switch (ch) {
 	case 'a':			/* escape characters */
 		return '\7';
@@ -426,10 +441,7 @@ backslash(STR *s)
 		return '\t';
 	case 'v':
 		return '\13';
-	case '\0':			/*  \" -> \ */
-		s->state = EOS;
-		return '\\';
-	default:			/* \x" -> x */
+	default:			/* \q -> q */
 		return ch;
 	}
 }
