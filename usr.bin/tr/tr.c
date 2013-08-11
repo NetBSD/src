@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.13 2013/08/11 00:11:46 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.14 2013/08/11 00:12:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.13 2013/08/11 00:11:46 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.14 2013/08/11 00:12:47 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -209,17 +209,13 @@ main(int argc, char **argv)
 		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
-	if (sflag)
-		while (next(s1, &ch)) {
-			string1[ch] = ch2;
+	while (next(s1, &ch)) {
+		string1[ch] = ch2;
+		if (sflag) {
 			string2[ch2] = 1;
-			(void)next(s2, &ch2);
 		}
-	else
-		while (next(s1, &ch)) {
-			string1[ch] = ch2;
-			(void)next(s2, &ch2);
-		}
+		(void)next(s2, &ch2);
+	}
 
 	if (cflag)
 		for (cnt = 0, p = string1; cnt < NCHARS; ++p, ++cnt)
