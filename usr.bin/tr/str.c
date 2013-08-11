@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.28 2013/08/11 01:49:40 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.29 2013/08/11 01:54:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.28 2013/08/11 01:49:40 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.29 2013/08/11 01:54:35 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,20 +53,20 @@ __RCSID("$NetBSD: str.c,v 1.28 2013/08/11 01:49:40 dholland Exp $");
 struct str {
 	enum { STRING1, STRING2 } which;
 	enum { EOS, INFINITE, NORMAL, RANGE, SEQUENCE, SET } state;
-	int	 cnt;			/* character count */
-	int	 lastch;		/* last character */
-	int	equiv[2];		/* equivalence set */
-	int	*set;			/* set of characters */
+	int cnt;			/* character count */
+	int lastch;			/* last character */
+	int equiv[2];			/* equivalence set */
+	int *set;			/* set of characters */
 	const char *str;		/* user's string */
 };
 
-static int	backslash(STR *);
-static int	bracket(STR *);
-static int	c_class(const void *, const void *);
+static int backslash(STR *);
+static int bracket(STR *);
+static int c_class(const void *, const void *);
 static int *genclass(const char *, size_t);
-static void	genequiv(STR *);
-static int	genrange(STR *);
-static void	genseq(STR *);
+static void genequiv(STR *);
+static int genrange(STR *);
+static void genseq(STR *);
 
 STR *
 str_create(int whichstring, const char *txt)
