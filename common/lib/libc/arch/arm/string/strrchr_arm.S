@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strrchr_arm.S,v 1.3 2013/02/08 02:19:36 matt Exp $")
+RCSID("$NetBSD: strrchr_arm.S,v 1.4 2013/08/11 04:56:32 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -105,8 +105,8 @@ ENTRY(strrchr)
 	bics	r5, r5, r4		/* clear any NUL match bits */
 	beq	.Ldone			/*   no remaining matches, we're done */
 	movs	r3, r4, lshi #8		/* shift up a byte */
-	orrnes	r3, r3, r3, lshi #8	/* if non 0, copy up to next byte */
-	orrnes	r3, r3, r3, lshi #8	/* if non 0, copy up to last byte */
+	orrsne	r3, r3, r3, lshi #8	/* if non 0, copy up to next byte */
+	orrsne	r3, r3, r3, lshi #8	/* if non 0, copy up to last byte */
 	bics	r5, r5, r3		/* clear match bits */
 	beq	.Ldone			/*   no remaining matches, we're done */
 .Lfind_match:
