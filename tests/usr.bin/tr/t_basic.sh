@@ -1,4 +1,4 @@
-# $NetBSD: t_basic.sh,v 1.1 2013/08/10 22:36:16 dholland Exp $
+# $NetBSD: t_basic.sh,v 1.2 2013/08/11 00:29:21 dholland Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,11 +172,10 @@ csubst_head() {
 csubst_body() {
 	atf_check -o inline:'abcde\n' -x \
 	    'echo abcde | tr -c '"'\0-ac-\377' b"
-	atf_expect_fail "PR bin/48113"
-	atf_check -o inline:'QUACK\n' -x \
-	    'echo ABCDE | tr -c '"'\0-@' QUACK"
 	atf_check -o inline:'abcde\n' -x \
 	    'echo abcde | tr -c '"'\0-ad-\377' bc"
+	atf_check -o inline:'QUACK\n' -x \
+	    'echo ABCDE | tr -c '"'\0-@' QUACK"
 }
 
 atf_init_test_cases() {
