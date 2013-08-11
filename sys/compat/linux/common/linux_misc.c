@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.223 2013/04/15 19:24:04 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.224 2013/08/11 09:07:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.223 2013/04/15 19:24:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.224 2013/08/11 09:07:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,6 +539,7 @@ done:
 	return error;
 }
 
+#ifdef USRSTACK
 int
 linux_sys_mprotect(struct lwp *l, const struct linux_sys_mprotect_args *uap, register_t *retval)
 {
@@ -604,6 +605,7 @@ linux_sys_mprotect(struct lwp *l, const struct linux_sys_mprotect_args *uap, reg
 	vm_map_unlock(map);
 	return uvm_map_protect(map, start, end, prot, FALSE);
 }
+#endif /* USRSTACK */
 
 /*
  * This code is partly stolen from src/lib/libc/compat-43/times.c
