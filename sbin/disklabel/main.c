@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2013/05/15 00:47:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2013/08/11 17:15:15 riz Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2013/05/15 00:47:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2013/08/11 17:15:15 riz Exp $");
 #endif
 #endif	/* not lint */
 
@@ -299,6 +299,12 @@ static const struct arch_endian {
 	{ LITTLE_ENDIAN, "arm" },
 	{ LITTLE_ENDIAN, "earm" },
 	{ LITTLE_ENDIAN, "earmhf" },
+	{ LITTLE_ENDIAN, "earmv4" },
+	{ LITTLE_ENDIAN, "earmv5" },
+	{ LITTLE_ENDIAN, "earmv6" },
+	{ LITTLE_ENDIAN, "earmv6hf" },
+	{ LITTLE_ENDIAN, "earmv7" },
+	{ LITTLE_ENDIAN, "earmv7hf" },
 	{ LITTLE_ENDIAN, "i386" },
 	{ LITTLE_ENDIAN, "ia64" },
 	{ LITTLE_ENDIAN, "mipsel" },
@@ -310,6 +316,12 @@ static const struct arch_endian {
 	{ BIG_ENDIAN, "armeb" },
 	{ BIG_ENDIAN, "earmeb" },
 	{ BIG_ENDIAN, "earmhfeb" },
+	{ BIG_ENDIAN, "earmv4eb" },
+	{ BIG_ENDIAN, "earmv5eb" },
+	{ BIG_ENDIAN, "earmv6eb" },
+	{ BIG_ENDIAN, "earmv6hfeb" },
+	{ BIG_ENDIAN, "earmv7eb" },
+	{ BIG_ENDIAN, "earmv7hfeb" },
 	{ BIG_ENDIAN, "hppa" },
 	{ BIG_ENDIAN, "m68k" },
 	{ BIG_ENDIAN, "mipseb" },
