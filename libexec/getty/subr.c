@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.34 2013/08/11 05:42:41 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.35 2013/08/11 16:36:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.34 2013/08/11 05:42:41 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.35 2013/08/11 16:36:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ setdefaults(void)
 
 	for (sp = gettystrs; sp->field; sp++)
 		if (!sp->value)
-			sp->value = estrdup(sp->defalt);
+			sp->value = sp->defalt ? estrdup(sp->defalt) : NULL;
 	for (np = gettynums; np->field; np++)
 		if (!np->set)
 			np->value = np->defalt;
