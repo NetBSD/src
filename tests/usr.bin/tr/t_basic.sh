@@ -1,4 +1,4 @@
-# $NetBSD: t_basic.sh,v 1.2 2013/08/11 00:29:21 dholland Exp $
+# $NetBSD: t_basic.sh,v 1.3 2013/08/11 01:50:02 dholland Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,14 @@ dopt_body() {
 	# see if escape codes work
 	atf_check -o inline:'splice' -x '(echo spl; echo ice) | tr -d '"'\n'"
 	atf_check -o inline:'splice' -x '(echo spl; echo ice) | tr -d '"'\012'"
+
+	# see if escape codes work when followed by other things
+	atf_check -o inline:'slice' -x '(echo spl; echo ice) | tr -d '"'\n'p"
+	atf_check -o inline:'slice' -x '(echo spl; echo ice) | tr -d '"'\012'p"
+
+	# see if the [=x=] syntax works
+	atf_check -o inline:'abde\n' -x 'echo abcde | tr -d '"'[=c=]'"
+	atf_check -o inline:'bde\n' -x 'echo abcde | tr -d '"'[=c=]'a"
 
 	# make sure 0 works
 	# (ignore stderr as dd blabbers to it)
