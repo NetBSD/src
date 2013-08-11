@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.6 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.7 2013/08/11 04:41:17 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,12 +40,8 @@ ENTRY_NP(_atomic_add_64_nv)
 	mov	r2, r1
 #endif
 1:	ldrexd	r0, [ip]		/* load old value */
-#ifdef __thumb__
-	add	LO, LO, NLO		/* calculate new value lo */
-#else
 	adds	LO, LO, NLO		/* calculate new value lo */
-#endif
-	adc	HI, HI, NHI		/* calculate new value hi */
+	adcs	HI, HI, NHI		/* calculate new value hi */
 	strexd	r4, r0, [ip]		/* try to store */
 	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */

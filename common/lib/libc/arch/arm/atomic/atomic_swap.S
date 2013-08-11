@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.6 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.7 2013/08/11 04:41:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -72,7 +72,8 @@ ENTRY_NP(_atomic_swap_32)
 #endif
 99:
 	RET
-	END(_atomic_swap_32)
+END(_atomic_swap_32)
+
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
@@ -82,13 +83,13 @@ STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
 
 ENTRY_NP(_atomic_swap_8)
-	mov	r2, r0
+	mov	ip, r0
 1:
 #ifdef _ARM_ARCH_6
-	ldrexb	r0, [r2]
-	strexb	r3, r1, [r2]
+	ldrexb	r0, [ip]
+	strexb	r3, r1, [ip]
 #else
-	swpb	r0, r1, [r2]
+	swpb	r0, r1, [ip]
 	mov	r3, #0
 #endif
 	cmp	r3, #0
@@ -99,7 +100,8 @@ ENTRY_NP(_atomic_swap_8)
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
 	RET
-	END(_atomic_swap_8)
+END(_atomic_swap_8)
+
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
