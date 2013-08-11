@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.25 2013/08/11 01:00:13 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.26 2013/08/11 01:29:28 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.25 2013/08/11 01:00:13 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.26 2013/08/11 01:29:28 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ struct str {
 static int	backslash(STR *);
 static int	bracket(STR *);
 static int	c_class(const void *, const void *);
-static void	genclass(STR *);
+static void	genclass(STR *, const char *, size_t);
 static void	genequiv(STR *);
 static int	genrange(STR *);
 static void	genseq(STR *);
@@ -112,7 +112,8 @@ next(STR *s, int *ret)
 		*ret = s->lastch;
 		return 1;
 	case NORMAL:
-		switch (ch = (unsigned char)*s->str) {
+		ch = (unsigned char)s->str[0];
+		switch (ch) {
 		case '\0':
 			s->state = EOS;
 			*ret = s->lastch;
@@ -121,8 +122,9 @@ next(STR *s, int *ret)
 			s->lastch = backslash(s);
 			break;
 		case '[':
-			if (bracket(s))
+			if (bracket(s)) {
 				return next(s, ret);
+			}
 			/* FALLTHROUGH */
 		default:
 			++s->str;
@@ -137,23 +139,30 @@ next(STR *s, int *ret)
 		*ret = s->lastch;
 		return 1;
 	case RANGE:
-		if (s->cnt-- == 0) {
+		if (s->cnt == 0) {
 			s->state = NORMAL;
 			return next(s, ret);
 		}
+		s->cnt--;
 		++s->lastch;
 		*ret = s->lastch;
 		return 1;
 	case SEQUENCE:
-		if (s->cnt-- == 0) {
+		if (s->cnt == 0) {
 			s->state = NORMAL;
 			return next(s, ret);
 		}
+		s->cnt--;
 		*ret = s->lastch;
 		return 1;
 	case SET:
-		if ((s->lastch = s->set[s->cnt++]) == OOBCH) {
+		s->lastch = s->set[s->cnt++];
+		if (s->lastch == OOBCH) {
 			s->state = NORMAL;
+			if (s->set != s->equiv) {
+				free(s->set);
+			}
+			s->set = NULL;
 			return next(s, ret);
 		}
 		*ret = s->lastch;
@@ -168,15 +177,14 @@ next(STR *s, int *ret)
 static int
 bracket(STR *s)
 {
-	char *p;
+	const char *p;
 
 	switch (s->str[1]) {
 	case ':':				/* "[:class:]" */
 		if ((p = strstr(s->str + 2, ":]")) == NULL)
 			return 0;
-		*p = '\0';
 		s->str += 2;
-		genclass(s);
+		genclass(s, s->str, p - s->str);
 		s->str = p + 2;
 		return 1;
 	case '=':				/* "[=equiv=]" */
@@ -217,36 +225,77 @@ static const CLASS classes[] = {
 	{ "xdigit", isxdigit },
 };
 
+typedef struct {
+	const char *name;
+	size_t len;
+} CLASSKEY;
+
 static void
-genclass(STR *s)
+genclass(STR *s, const char *class, size_t len)
 {
-	int cnt;
+	int ch;
 	const CLASS *cp;
-	CLASS tmp;
+	CLASSKEY key;
 	int *p;
+	unsigned pos, num;
 
-	tmp.name = s->str;
-	if ((cp = bsearch(&tmp, classes, sizeof(classes) /
-	    sizeof(*cp), sizeof(*cp), c_class)) == NULL)
-		errx(1, "unknown class %s", s->str);
+	/* Find the class */
+	key.name = class;
+	key.len = len;
+	cp = bsearch(&key, classes, __arraycount(classes), sizeof(classes[0]),
+		     c_class);
+	if (cp == NULL) {
+		errx(1, "unknown class %.*s", (int)len, class);
+	}
 
-	if ((s->set = p = malloc((NCHARS + 1) * sizeof(*p))) == NULL)
+	/*
+	 * Figure out what characters are in the class
+	 */
+
+	num = NCHARS + 1;
+	p = malloc(num * sizeof(*p));
+	if (p == NULL) {
 		err(1, "malloc");
+	}
 
-	for (cnt = 0; cnt < NCHARS; ++cnt)
-		if ((*cp->func)(cnt))
-			*p++ = cnt;
-	*p++ = OOBCH;
-	memset(p, 0, NCHARS + 1 - (p - s->set));
+	pos = 0;
+	for (ch = 0; ch < NCHARS; ch++) {
+		if (cp->func(ch)) {
+			p[pos++] = ch;
+		}
+	}
 
+	p[pos++] = OOBCH;
+	for (; pos < num; pos++) {
+		p[pos] = 0;
+	}
+
+	/* Update the state */
+
+	s->set = p;
 	s->cnt = 0;
 	s->state = SET;
 }
 
 static int
-c_class(const void *a, const void *b)
+c_class(const void *av, const void *bv)
 {
-	return strcmp(((const CLASS *)a)->name, ((const CLASS *)b)->name);
+	const CLASSKEY *a = av;
+	const CLASS *b = bv;
+	size_t blen;
+	int r;
+
+	blen = strlen(b->name);
+	r = strncmp(a->name, b->name, a->len);
+	if (r != 0) {
+		return r;
+	}
+	if (a->len < blen) {
+		/* someone gave us a prefix of the right name */
+		return -1;
+	}
+	assert(a-> len == blen);
+	return 0;
 }
 
 /*
@@ -258,12 +307,14 @@ genequiv(STR *s)
 {
 	if (*s->str == '\\') {
 		s->equiv[0] = backslash(s);
-		if (*s->str != '=')
-			errx(1, "misplaced equivalence equals sign");
+		if (*s->str != '=') {
+			errx(1, "Misplaced equivalence equals sign");
+		}
 	} else {
 		s->equiv[0] = (unsigned char)s->str[0];
-		if (s->str[1] != '=')
-			errx(1, "misplaced equivalence equals sign");
+		if (s->str[1] != '=') {
+			errx(1, "Misplaced equivalence equals sign");
+		}
 	}
 	s->str += 2;
 	s->cnt = 0;
@@ -278,8 +329,8 @@ genrange(STR *s)
 	const char *savestart;
 
 	savestart = s->str++;
-	stopval = *s->str == '\\' ? backslash(s) : (unsigned char)*s->str++;
-	if (stopval < (u_char)s->lastch) {
+	stopval = s->str[0] == '\\' ? backslash(s) : (unsigned char)*s->str++;
+	if (stopval < (unsigned char)s->lastch) {
 		s->str = savestart;
 		return 0;
 	}
@@ -294,17 +345,21 @@ genseq(STR *s)
 {
 	char *ep;
 
-	if (s->which == STRING1)
-		errx(1, "sequences only valid in string2");
+	if (s->which == STRING1) {
+		errx(1, "Sequences only valid in string2");
+	}
 
-	if (*s->str == '\\')
+	if (*s->str == '\\') {
 		s->lastch = backslash(s);
-	else
+	} else {
 		s->lastch = (unsigned char)*s->str++;
-	if (*s->str != '*')
-		errx(1, "misplaced sequence asterisk");
+	}
+	if (*s->str != '*') {
+		errx(1, "Misplaced sequence asterisk");
+	}
 
-	switch (*++s->str) {
+	s->str++;
+	switch (s->str[0]) {
 	case '\\':
 		s->cnt = backslash(s);
 		break;
@@ -313,7 +368,7 @@ genseq(STR *s)
 		++s->str;
 		break;
 	default:
-		if (isdigit((unsigned char)*s->str)) {
+		if (isdigit((unsigned char)s->str[0])) {
 			s->cnt = strtol(s->str, &ep, 0);
 			if (*ep == ']') {
 				s->str = ep + 1;
@@ -337,19 +392,23 @@ backslash(STR *s)
 	int ch, cnt, val;
 
 	for (cnt = val = 0;;) {
-		ch = (unsigned char)*++s->str;
-		if (!isascii(ch) || !isdigit(ch))
+		s->str++;
+		ch = (unsigned char)s->str[0];
+		if (!isascii(ch) || !isdigit(ch)) {
 			break;
+		}
 		val = val * 8 + ch - '0';
 		if (++cnt == 3) {
 			++s->str;
 			break;
 		}
 	}
-	if (cnt)
+	if (cnt) {
 		return val;
-	if (ch != '\0')
+	}
+	if (ch != '\0') {
 		++s->str;
+	}
 	switch (ch) {
 	case 'a':			/* escape characters */
 		return '\7';
