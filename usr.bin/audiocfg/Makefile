@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2010/09/01 09:04:16 jmcneill Exp $
+# $NetBSD: Makefile,v 1.4 2013/08/11 06:31:00 dholland Exp $
 
 PROG=	audiocfg
 SRCS=	audiodev.c drvctl.c dtmf.c
 SRCS+=	main.c
-WARNS=	3
 
 LDADD+=	-lprop -lm
 DPADD+=	$(LIBPROP) $(LIBM)
