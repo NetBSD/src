@@ -1,4 +1,4 @@
-/* $NetBSD: clzsi2.S,v 1.4 2012/09/01 11:24:36 matt Exp $ */
+/* $NetBSD: clzsi2.S,v 1.5 2013/08/11 04:58:01 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,11 +39,21 @@ ENTRY(__clzdi2)
 #define	LO	r0
 #endif
 #if defined(_ARM_ARCH_5)
+#ifdef __thumb__
+	cmp	HI, #0
+	beq	1f
+	clz	r0, HI		/* count leading zeros in high word */
+	RET
+1:	clz	r0, LO		/* yes, count in low word */
+	add	r0, r0, #32	/*      and add the bits in the high word */
+	RET
+#else
 	teq	HI, #0		/* high word all zero? */
 	clzne	r0, HI		/* count leading zeros in high word */
 	clzeq	r0, LO		/* yes, count in low word */
 	addeq	r0, r0, #32	/*      and add the bits in the high word */
 	RET
+#endif
 #else
 	movs	r3, HI
 	movne	r0, #31
