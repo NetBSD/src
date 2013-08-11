@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2013/07/29 16:42:20 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2013/08/11 14:42:04 tsutsui Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -94,12 +94,14 @@ CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
 CPPFLAGS+=-DGSSAPI
 .endif
 .if ${MKKERBEROS} != "no"
-LDADD+= -lgssapi -lkrb5
-DPADD+= ${LIBGSSAPI} ${LIBKRB5}
+LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
+	-lcom_err  -lroken -lasn1 -lwind
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
 .endif
 .if !defined (LIB) || empty(LIB)
-LDADD+= -lcrypto
-DPADD+= ${LIBCRYPTO}
+LDADD+= -lcrypto -lcrypt
+DPADD+= ${LIBCRYPTO} ${LIBCRYPT}
 .else
 .if exists(${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto)
 LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
