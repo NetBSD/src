@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.10 2013/08/10 23:54:41 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.11 2013/08/11 00:04:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.10 2013/08/10 23:54:41 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.11 2013/08/11 00:04:14 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,9 +87,6 @@ static int string1[NCHARS] = {
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 }, string2[NCHARS];
 
-STR s1 = { STRING1, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
-STR s2 = { STRING2, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
-
 static void setup(int *, char *, STR *, int);
 __dead static void usage(void);
 
@@ -98,6 +95,7 @@ main(int argc, char **argv)
 {
 	int ch, ch2, cnt, lastch, *p;
 	int cflag, dflag, sflag, isstring2;
+	STR *s1, *s2;
 
 	cflag = dflag = sflag = 0;
 	while ((ch = getopt(argc, argv, "cds")) != -1)
@@ -131,6 +129,9 @@ main(int argc, char **argv)
 		break;
 	}
 
+	s1 = str_create(1);
+	s2 = str_create(2);
+
 	/*
 	 * tr -ds [-c] string1 string2
 	 * Delete all characters (or complemented characters) in string1.
@@ -140,14 +141,16 @@ main(int argc, char **argv)
 		if (!isstring2)
 			usage();
 
-		setup(string1, argv[0], &s1, cflag);
-		setup(string2, argv[1], &s2, 0);
+		setup(string1, argv[0], s1, cflag);
+		setup(string2, argv[1], s2, 0);
 		
 		for (lastch = OOBCH; (ch = getchar()) != EOF;)
 			if (!string1[ch] && (!string2[ch] || lastch != ch)) {
 				lastch = ch;
 				(void)putchar(ch);
 			}
+		str_destroy(s1);
+		str_destroy(s2);
 		exit(0);
 	}
 
@@ -159,11 +162,13 @@ main(int argc, char **argv)
 		if (isstring2)
 			usage();
 
-		setup(string1, argv[0], &s1, cflag);
+		setup(string1, argv[0], s1, cflag);
 
 		while ((ch = getchar()) != EOF)
 			if (!string1[ch])
 				(void)putchar(ch);
+		str_destroy(s1);
+		str_destroy(s2);
 		exit(0);
 	}
 
@@ -172,13 +177,15 @@ main(int argc, char **argv)
 	 * Squeeze all characters (or complemented characters) in string1.
 	 */
 	if (sflag && !isstring2) {
-		setup(string1, argv[0], &s1, cflag);
+		setup(string1, argv[0], s1, cflag);
 
 		for (lastch = OOBCH; (ch = getchar()) != EOF;)
 			if (!string1[ch] || lastch != ch) {
 				lastch = ch;
 				(void)putchar(ch);
 			}
+		str_destroy(s1);
+		str_destroy(s2);
 		exit(0);
 	}
 
@@ -191,27 +198,27 @@ main(int argc, char **argv)
 	if (!isstring2)
 		usage();
 
-	s1.str = argv[0];
-	s2.str = argv[1];
+	str_setstring(s1, argv[0]);
+	str_setstring(s2, argv[1]);
 
 	if (cflag)
 		for (cnt = NCHARS, p = string1; cnt--;)
 			*p++ = OOBCH;
 
-	if (!next(&s2, &ch2))
+	if (!next(s2, &ch2))
 		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
 	if (sflag)
-		while (next(&s1, &ch)) {
+		while (next(s1, &ch)) {
 			string1[ch] = ch2;
 			string2[ch2] = 1;
-			(void)next(&s2, &ch2);
+			(void)next(s2, &ch2);
 		}
 	else
-		while (next(&s1, &ch)) {
+		while (next(s1, &ch)) {
 			string1[ch] = ch2;
-			(void)next(&s2, &ch2);
+			(void)next(s2, &ch2);
 		}
 
 	if (cflag)
@@ -229,6 +236,8 @@ main(int argc, char **argv)
 	else
 		while ((ch = getchar()) != EOF)
 			(void)putchar(string1[ch]);
+	str_destroy(s1);
+	str_destroy(s2);
 	exit (0);
 }
 
@@ -238,7 +247,7 @@ setup(int *string, char *arg, STR *str, int cflag)
 	int cnt, *p;
 	int ch;
 
-	str->str = arg;
+	str_setstring(str, arg);
 	memset(string, 0, NCHARS * sizeof(int));
 	while (next(str, &ch))
 		string[ch] = 1;
