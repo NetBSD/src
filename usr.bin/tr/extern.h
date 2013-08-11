@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2013/08/11 00:05:49 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2013/08/11 00:39:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,6 @@ typedef struct str STR;
 #define	NCHARS	(UCHAR_MAX + 1)		/* Number of possible characters. */
 #define	OOBCH	(UCHAR_MAX + 1)		/* Out of band character value. */
 
-STR *str_create(int);
+STR *str_create(int, const char *);
 void str_destroy(STR *);
-void str_setstring(STR *s, const char *txt);
 int	 next(STR *, int *);
