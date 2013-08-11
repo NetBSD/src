@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.6 2013/08/11 02:45:56 matt Exp $	*/
+/*	$NetBSD: blockio.S,v 1.7 2013/08/11 03:09:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.6 2013/08/11 02:45:56 matt Exp $")
+RCSID("$NetBSD: blockio.S,v 1.7 2013/08/11 03:09:41 matt Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -61,7 +61,7 @@ RCSID("$NetBSD: blockio.S,v 1.6 2013/08/11 02:45:56 matt Exp $")
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(read_multi_1)
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lrm1_l4			/* less than 4 bytes */
@@ -92,7 +92,7 @@ ENTRY(read_multi_1)
 .Lrm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
 	ldmdbeq	fp, {fp, sp, pc}
-	RETc(eq)
+	RETc(eq)				/* ??? not needed */
 	cmp	r2, #2
 	ldrb	r3, [r0]
 	strb	r3, [r1], #1
@@ -113,7 +113,7 @@ ENTRY(read_multi_1)
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(write_multi_1)
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lwm1_l4		/* less than 4 bytes */
@@ -286,7 +286,7 @@ ENTRY(insw16)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4,r5,lr}
+	push	{r4,r5,lr}
 
 .Linsw16loop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
@@ -317,7 +317,7 @@ ENTRY(insw16)
 	subs	r2, r2, #0x00000008	/* Next */
 	bgt	.Linsw16loop
 
-	ldmfd	sp!, {r4,r5,pc}		/* Restore regs and go home */
+	pop	{r4,r5,pc}		/* Restore regs and go home */
 
 
 /*
@@ -343,7 +343,7 @@ ENTRY(outsw16)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4,r5,lr}
+	push	{r4,r5,lr}
 
 .Loutsw16loop:
 	ldmia	r1!, {r4,r5,ip,lr}
@@ -384,7 +384,7 @@ ENTRY(outsw16)
 	subs	r2, r2, #0x00000008
 	bgt	.Loutsw16loop
 
-	ldmfd	sp!, {r4,r5,pc}		/* and go home */
+	pop	{r4,r5,pc}		/* and go home */
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -411,7 +411,7 @@ ENTRY(inswm8)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4-r9,lr}
+	push	{r4-r9,lr}
 
 	mov	lr, #0xff000000
 	orr	lr, lr, #0x00ff0000
@@ -480,7 +480,7 @@ ENTRY(inswm8)
 
 
 .Linswm8_l1:
-	ldmfd	sp!, {r4-r9,pc}		/* And go home */
+	pop	{r4-r9,pc}		/* And go home */
 
 /*
  * write short ints (16 bits) to an I/O address from a block of memory
@@ -507,7 +507,7 @@ ENTRY(outswm8)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4-r8,lr}
+	push	{r4-r8,lr}
 
 .Loutswm8_loop8:
 	cmp	r2, #8
@@ -584,4 +584,4 @@ ENTRY(outswm8)
 	str	r3, [r0]
 
 .Loutswm8_l1:
-	ldmfd	sp!, {r4-r8,pc}		/* And go home */
+	pop	{r4-r8,pc}		/* And go home */
