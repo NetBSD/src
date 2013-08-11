@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32.S,v 1.4 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_and_32.S,v 1.5 2013/08/11 04:41:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 ENTRY_NP(_atomic_and_32)
 1:	ldrex	r3, [r0]		/* load old value (to be returned) */
-	and	r3, r3, r1		/* calculate new value */
+	ands	r3, r3, r1		/* calculate new value */
 	strex	r2, r3, [r0]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
@@ -54,10 +54,10 @@ STRONG_ALIAS(_atomic_and_uint,_atomic_and_32)
 STRONG_ALIAS(_atomic_and_ulong,_atomic_and_32)
 
 ENTRY_NP(_atomic_and_32_nv)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value */
-	and	r0, r0, r1		/* calculate new value (return value) */
-	strex	r2, r0, [r3]		/* try to store */
+	mov	ip, r0			/* need r0 for return value */
+1:	ldrex	r0, [ip]		/* load old value */
+	ands	r0, r0, r1		/* calculate new value (return value) */
+	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7

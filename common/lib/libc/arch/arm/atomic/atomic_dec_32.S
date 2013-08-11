@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32.S,v 1.4 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_dec_32.S,v 1.5 2013/08/11 04:41:17 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 ENTRY_NP(_atomic_dec_32)
 1:	ldrex	r3, [r0]		/* load old value (return value) */
-	sub	r3, r3, #1		/* calculate new value */
+	subs	r3, r3, #1		/* calculate new value */
 	strex	r2, r3, [r0]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
@@ -57,7 +57,7 @@ STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
 ENTRY_NP(_atomic_dec_32_nv)
 	mov	ip, r0			/* need r0 for return value */
 1:	ldrex	r0, [ip]		/* load old value */
-	sub	r0, r0, #1		/* calculate new value (return value) */
+	subs	r0, r0, #1		/* calculate new value (return value) */
 	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
