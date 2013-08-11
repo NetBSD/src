@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_xsh.c,v 1.1 2013/08/08 21:23:52 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsh.c,v 1.2 2013/08/11 12:35:18 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -125,8 +125,7 @@ ne_xsh_attach(device_t parent, device_t self, void *aux)
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
-	nsc->sc_type = NE2000_TYPE_AX88790;
-	dsc->sc_flags = DP8390_NO_REMOTE_DMA_COMPLETE;
+	nsc->sc_type = NE2000_TYPE_AX88796;
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address
