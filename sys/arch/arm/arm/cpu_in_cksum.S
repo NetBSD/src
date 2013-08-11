@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.2 2008/01/27 16:58:05 chris Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.3 2013/08/11 03:00:05 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.2 2008/01/27 16:58:05 chris Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.3 2013/08/11 03:00:05 matt Exp $")
 	
 #include "assym.h"
 
@@ -60,7 +60,7 @@ RCSID("$NetBSD: cpu_in_cksum.S,v 1.2 2008/01/27 16:58:05 chris Exp $")
  */
 /* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *, int, int, uint32_t) */
 ENTRY(cpu_in_cksum)
-	stmfd	sp!, {r4-r11,lr}
+	push	{r4-r11,lr}
 	
 	mov	r8, r3			/* Accumulate sum in r8 */
 	mov	r9, r1			/* save len in r9 */
@@ -111,7 +111,8 @@ ENTRY(cpu_in_cksum)
 	add	r0, r0, r0, lsr #16
 	and	r0, r0, r1
 	eor	r0, r0, r1
-	ldmfd	sp!, {r4-r11, pc}
+	pop	{r4-r11, lr}
+	RET
 
 .Lin_cksum_whoops:
 	adr	r0, .Lin_cksum_whoops_str
@@ -153,9 +154,9 @@ ASENTRY_NP(L_cksumdata)
 	blt	.Lcksumdata_endgame
 	cmp	r7, #0x02
 	ldrb	r4, [r0], #0x01		/* Fetch 1st byte */
-	ldrgeb	r5, [r0], #0x01		/* Fetch 2nd byte */
+	ldrbge	r5, [r0], #0x01		/* Fetch 2nd byte */
 	movlt	r5, #0x00
-	ldrgtb	r6, [r0], #0x01		/* Fetch 3rd byte */
+	ldrbgt	r6, [r0], #0x01		/* Fetch 3rd byte */
 	movle	r6, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
 #ifdef __ARMEB__
@@ -173,7 +174,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4		/* All done? */
 #else
-	moveq	pc, lr			/* All done? */
+	RETc(eq)			/* All done? */
 #endif
 
 	/* Buffer is now word aligned */
@@ -269,7 +270,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 	cmp	r1, #0x20
 
@@ -306,7 +307,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 
 .Lcksumdata_less_than_32:
@@ -353,16 +354,16 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 
 	/* Deal with 1 to 3 remaining bytes, possibly misaligned */
 .Lcksumdata_endgame:
 	ldrb	r3, [r0]		/* Fetch first byte */
 	cmp	r1, #0x02
-	ldrgeb	r4, [r0, #0x01]		/* Fetch 2nd and 3rd as necessary */
+	ldrbge	r4, [r0, #0x01]		/* Fetch 2nd and 3rd as necessary */
 	movlt	r4, #0x00
-	ldrgtb	r5, [r0, #0x02]
+	ldrbgt	r5, [r0, #0x02]
 	movle	r5, #0x00
 	/* Combine the three bytes depending on endianness and alignment */
 	tst	r0, #0x01
@@ -382,5 +383,5 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldr	pc, [sp], #4
 #else
-	mov	pc, lr
+	RET
 #endif
