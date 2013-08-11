@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.22 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: rogue.h,v 1.23 2013/08/11 03:34:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -221,7 +221,7 @@ struct obj {				/* comment is monster meaning */
 	unsigned long m_flags;	/* monster flags */
 	const char *damage;		/* damage it does */
 	short quantity;			/* hit points to kill */
-	short ichar;			/* 'A' is for aquatar */
+	short ichar;			/* 'A' is for aquator */
 	short kill_exp;			/* exp for killing it */
 	short is_protected;		/* level starts */
 	short is_cursed;		/* level ends */
