@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.37 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.38 2013/08/11 10:37:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1126,7 +1126,6 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches,
 	struct nvlist *nv;
 
 	if (isioconf) {
-		fprintf(stderr, "WARNING: ioconf is an experimental feature\n");
 		if (include(_PATH_DEVNULL, ENDDEFS, 0, 0) != 0)
 			exit(1);
 		ioconfname = mch;
