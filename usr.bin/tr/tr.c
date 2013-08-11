@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.19 2013/08/11 00:49:15 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.20 2013/08/11 01:54:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.19 2013/08/11 00:49:15 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.20 2013/08/11 01:54:35 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,8 +107,8 @@ main(int argc, char **argv)
 
 		setup(string1, argv[0], 1, cflag);
 		setup(string2, argv[1], 2, 0);
-		
-		for (lastch = OOBCH; (ch = getchar()) != EOF;)
+
+		for (lastch = OOBCH; (ch = getchar()) != EOF; )
 			if (!string1[ch] && (!string2[ch] || lastch != ch)) {
 				lastch = ch;
 				(void)putchar(ch);
