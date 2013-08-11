@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.20 2013/08/10 23:54:41 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.21 2013/08/11 00:04:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.20 2013/08/10 23:54:41 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.21 2013/08/11 00:04:14 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,16 @@ __RCSID("$NetBSD: str.c,v 1.20 2013/08/10 23:54:41 dholland Exp $");
 
 #include "extern.h"
 
+struct str {
+	enum { STRING1, STRING2 } which;
+	enum { EOS, INFINITE, NORMAL, RANGE, SEQUENCE, SET } state;
+	int	 cnt;			/* character count */
+	int	 lastch;		/* last character */
+	int	equiv[2];		/* equivalence set */
+	int	*set;			/* set of characters */
+	unsigned char	*str;		/* user's string */
+};
+
 static int	backslash(STR *);
 static int	bracket(STR *);
 static int	c_class(const void *, const void *);
@@ -57,6 +67,43 @@ static void	genclass(STR *);
 static void	genequiv(STR *);
 static int	genrange(STR *);
 static void	genseq(STR *);
+
+STR *
+str_create(int whichstring)
+{
+	STR *s;
+
+	s = malloc(sizeof(*s));
+	if (s == NULL) {
+		err(1, "Out of memory");
+	}
+
+	s->which = whichstring == 2 ? STRING2 : STRING1;
+	s->state = NORMAL;
+	s->cnt = 0;
+	s->lastch = OOBCH;
+	s->equiv[0] = 0;
+	s->equiv[1] = OOBCH;
+	s->set = NULL;
+	s->str = NULL;
+
+	return s;
+}
+
+void
+str_destroy(STR *s)
+{
+	if (s->set != NULL && s->set != s->equiv) {
+		free(s->set);
+	}
+	free(s);
+}
+
+void
+str_setstring(STR *s, char *txt)
+{
+	s->str = txt;
+}
 
 int
 next(STR *s, int *ret)
