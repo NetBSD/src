@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2012/03/24 08:22:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/08/11 06:05:30 dholland Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-
-WARNS?=	4
 
 CWARNFLAGS+=	-Wno-sign-compare
 
