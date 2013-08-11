@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2013/08/11 05:48:56 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2013/08/11 09:16:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 2013/08/11 05:48:56 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2013/08/11 09:16:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,13 +183,14 @@ int
 main(int argc, char *argv[], char *envp[])
 {
 	const char *progname;
-	const char *tname;
 	int repcnt = 0, failopenlogged = 0, first_time = 1;
 	struct rlimit limit;
 	struct passwd *pw;
 	int rval;
-	/* gcc 4.5 claims longjmp can clobber this, but I don't see how */
+	/* this is used past the siglongjmp, so make sure it is not cached
+	   in registers that might become invalid. */
 	volatile int uugetty = 0;
+	const char * volatile tname = "default";
 
 	(void)signal(SIGINT, SIG_IGN);
 	openlog("getty", LOG_PID, LOG_AUTH);
@@ -294,7 +295,6 @@ main(int argc, char *argv[], char *envp[])
 
 	gettable("default", defent);
 	gendefaults();
-	tname = "default";
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
