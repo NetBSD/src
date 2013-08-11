@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.20 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.21 2013/08/11 08:03:10 dholland Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.20 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.21 2013/08/11 08:03:10 dholland Exp $");
 #endif
 #endif
 
@@ -56,20 +56,19 @@ static void pconstdef __P((definition *));
 static void pargdef __P((definition *));
 static void pstructdef __P((definition *));
 static void puniondef __P((definition *));
-static void pdefine __P((char *, char *));
-static void puldefine __P((char *, char *));
+static void pdefine __P((const char *, const char *));
+static void puldefine __P((const char *, const char *));
 static int define_printed __P((proc_list *, version_list *));
 static void pprogramdef __P((definition *));
 static void penumdef __P((definition *));
 static void ptypedef __P((definition *));
-static int undefined2 __P((char *, char *));
+static int undefined2 __P((const char *, const char *));
 
 /*
  * Print the C-version of an xdr definition
  */
 void
-print_datadef(def)
-	definition *def;
+print_datadef(definition *def)
 {
 
 	if (def->def_kind == DEF_PROGRAM)	/* handle data only */
@@ -108,8 +107,7 @@ print_datadef(def)
 
 
 void
-print_funcdef(def)
-	definition *def;
+print_funcdef(definition *def)
 {
 	switch (def->def_kind) {
 	case DEF_PROGRAM:
@@ -126,9 +124,7 @@ print_funcdef(def)
 }
 
 void
-pxdrfuncdecl(name, pointerp)
-	char   *name;
-	int     pointerp;
+pxdrfuncdecl(const char *name, int pointerp)
 {
 
 	f_print(fout, "#ifdef __cplusplus\n");
@@ -146,17 +142,16 @@ pxdrfuncdecl(name, pointerp)
 
 
 static void
-pconstdef(def)
-	definition *def;
+pconstdef(definition *def)
 {
 	pdefine(def->def_name, def->def.co);
 }
+
 /* print out the definitions for the arguments of functions in the
    header file
 */
 static void
-pargdef(def)
-	definition *def;
+pargdef(definition *def)
 {
 	decl_list *l;
 	version_list *vers;
@@ -188,11 +183,10 @@ pargdef(def)
 
 
 static void
-pstructdef(def)
-	definition *def;
+pstructdef(definition *def)
 {
 	decl_list *l;
-	char   *name = def->def_name;
+	const char *name = def->def_name;
 
 	f_print(fout, "struct %s {\n", name);
 	for (l = def->def.st.decls; l != NULL; l = l->next) {
@@ -203,11 +197,10 @@ pstructdef(def)
 }
 
 static void
-puniondef(def)
-	definition *def;
+puniondef(definition *def)
 {
 	case_list *l;
-	char   *name = def->def_name;
+	const char *name = def->def_name;
 	declaration *decl;
 
 	f_print(fout, "struct %s {\n", name);
@@ -232,25 +225,19 @@ puniondef(def)
 }
 
 static void
-pdefine(name, num)
-	char   *name;
-	char   *num;
+pdefine(const char *name, const char *num)
 {
 	f_print(fout, "#define %s %s\n", name, num);
 }
 
 static void
-puldefine(name, num)
-	char   *name;
-	char   *num;
+puldefine(const char *name, const char *num)
 {
 	f_print(fout, "#define %s %s\n", name, num);
 }
 
 static int
-define_printed(stop, start)
-	proc_list *stop;
-	version_list *start;
+define_printed(proc_list *stop, version_list *start)
 {
 	version_list *vers;
 	proc_list *proc;
@@ -271,13 +258,12 @@ define_printed(stop, start)
 }
 
 static void
-pprogramdef(def)
-	definition *def;
+pprogramdef(definition *def)
 {
 	version_list *vers;
 	proc_list *proc;
 	int     i;
-	char   *ext;
+	const char *ext;
 
 	pargdef(def);
 
@@ -325,12 +311,8 @@ pprogramdef(def)
 }
 
 void
-pprocdef(proc, vp, addargtype, server_p, mode)
-	proc_list *proc;
-	version_list *vp;
-	char   *addargtype;
-	int     server_p;
-	int     mode;
+pprocdef(proc_list *proc, version_list *vp, const char *addargtype,
+	 int server_p, int mode)
 {
 	decl_list *dl;
 
@@ -381,14 +363,13 @@ pprocdef(proc, vp, addargtype, server_p, mode)
 
 
 static void
-penumdef(def)
-	definition *def;
+penumdef(definition *def)
 {
-	char   *name = def->def_name;
+	const char *name = def->def_name;
 	enumval_list *l;
-	char   *last = NULL;
-	int     count = 0;
-	char   *first = "";
+	const char *last = NULL;
+	int count = 0;
+	const char *first = "";
 
 	f_print(fout, "enum %s {\n", name);
 	for (l = def->def.en.vals; l != NULL; l = l->next) {
@@ -411,11 +392,10 @@ penumdef(def)
 }
 
 static void
-ptypedef(def)
-	definition *def;
+ptypedef(definition *def)
 {
-	char   *name = def->def_name;
-	char   *old = def->def.ty.old_type;
+	const char *name = def->def_name;
+	const char *old = def->def.ty.old_type;
 	char    prefix[8];	/* enough to contain "struct ", including NUL */
 	relation rel = def->def.ty.rel;
 
@@ -460,15 +440,12 @@ ptypedef(def)
 }
 
 void
-pdeclaration(name, dec, tab, separator)
-	char   *name;
-	declaration *dec;
-	int     tab;
-	char   *separator;
+pdeclaration(const char *name, declaration *dec, int tab,
+	     const char *separator)
 {
 	char    buf[8];		/* enough to hold "struct ", include NUL */
-	char   *prefix;
-	char   *type;
+	const char *prefix;
+	const char *type;
 
 	if (streq(dec->type, "void")) {
 		return;
@@ -519,9 +496,7 @@ pdeclaration(name, dec, tab, separator)
 }
 
 static int
-undefined2(type, stop)
-	char   *type;
-	char   *stop;
+undefined2(const char *type, const char *stop)
 {
 	list   *l;
 	definition *def;
