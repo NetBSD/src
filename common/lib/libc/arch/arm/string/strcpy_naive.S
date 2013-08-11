@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.2 2013/01/10 02:08:22 matt Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.3 2013/08/11 05:02:35 matt Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
@@ -76,7 +76,7 @@ ENTRY(strncpy)
 	teq	r3, #0			/* was it a NUL? */
 	bne	1b			/*   no, try next byte */
 2:	cmp	ip, r2			/* are at the end of dst already? */
-	strltb	r3, [ip], #1		/*   no, write a NUL */
+	strblt	r3, [ip], #1		/*   no, write a NUL */
 	blt	2b			/*       until dst is filled */
 3:	RET				/* return dst pointer */
 END(strncpy)
