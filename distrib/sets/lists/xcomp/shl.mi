@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.33 2013/06/03 23:25:43 mrg Exp $
+#	$NetBSD: shl.mi,v 1.34 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,8 +54,8 @@
 ./usr/X11R7/lib/libICE_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libOSMesa_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libSM_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libX11_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libX11-xcb_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libX11_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXRes_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXTrap_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXau_pic.a				-unknown-	xorg
@@ -86,8 +86,8 @@
 ./usr/X11R7/lib/libXss_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXt_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXtst_pic.a				-unknown-	xorg
-./usr/X11R7/lib/libXvMC_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXvMCW_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libXvMC_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXv_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXxf86dga_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXxf86misc_pic.a			-unknown-	xorg

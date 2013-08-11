@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.21 2013/01/16 16:01:09 christos Exp $
+# $NetBSD: md.hpcmips,v 1.22 2013/08/11 22:29:03 joerg Exp $
 ./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x240-us				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
@@ -32,11 +32,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg

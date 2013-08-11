@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.41 2012/10/28 16:25:02 alnsn Exp $
+# $NetBSD: md.i386,v 1.42 2013/08/11 22:29:03 joerg Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -119,8 +119,6 @@
 ./@MODULEDIR@/powernow/powernow.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog				base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/sljit				base-kernel-modules	kmod
-./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/r128drm				base-kernel-modules	kmod
 ./@MODULEDIR@/r128drm/r128drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
@@ -129,6 +127,8 @@
 ./@MODULEDIR@/savagedrm/savagedrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/sljit				base-kernel-modules	kmod
+./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
 ./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm				base-kernel-modules	kmod

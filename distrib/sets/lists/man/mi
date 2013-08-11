@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1434 2013/08/09 11:41:24 rkujawa Exp $
+# $NetBSD: mi,v 1.1435 2013/08/11 22:29:03 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1347,8 +1347,8 @@
 ./usr/share/man/cat4/mlx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mly.0			man-sys-catman		.cat
 ./usr/share/man/cat4/module.0			man-obsolete		obsolete
-./usr/share/man/cat4/mpls.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpii.0			man-sys-catman		.cat
+./usr/share/man/cat4/mpls.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mr.0			man-obsolete		obsolete
@@ -1915,8 +1915,8 @@
 ./usr/share/man/cat4/x86/odcm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/powernow.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/soekrisgpio.0		man-sys-catman		.cat
-./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/tprof_amdpmi.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/tprof_pmi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/vmt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
@@ -2356,9 +2356,9 @@
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/bootmini2440.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/elftosb.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/sbkeygen.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/sbtool.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbppc/MAKEDEV.0		man-obsolete		obsolete
@@ -2417,8 +2417,8 @@
 ./usr/share/man/cat8/hp300/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp700/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp700/boot.0		man-sys-catman		.cat
-./usr/share/man/cat8/hp700/mkboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp700/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/hp700/mkboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcarm/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcarm/makedev.0		man-obsolete		obsolete
@@ -2977,16 +2977,16 @@
 ./usr/share/man/cat8/tpm_setownable.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat8/tpm_setpresence.0		man-tpm-catman		tpm,.cat
 ./usr/share/man/cat8/tpm_takeownership.0	man-tpm-catman		tpm,.cat
+./usr/share/man/cat8/tprof.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tprof.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trace.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
-./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
-./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
+./usr/share/man/cat8/traceroute6.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/trivial-rewrite.0		man-postfix-catman	postfix,.cat
-./usr/share/man/cat8/tprof.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
@@ -4285,8 +4285,8 @@
 ./usr/share/man/html4/mlx.html			man-sys-htmlman		html
 ./usr/share/man/html4/mly.html			man-sys-htmlman		html
 ./usr/share/man/html4/module.html		man-obsolete		obsolete
-./usr/share/man/html4/mpls.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpii.html			man-sys-htmlman		html
+./usr/share/man/html4/mpls.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpu.html			man-sys-htmlman		html
 ./usr/share/man/html4/mr.html			man-obsolete		obsolete
@@ -5177,14 +5177,14 @@
 ./usr/share/man/html8/edquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
-./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
-./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html
-./usr/share/man/html8/evbarm/sbkeygen.html	man-sysutil-htmlman	html
-./usr/share/man/html8/evbarm/sbtool.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/etcupdate.html		man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbkeygen.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbtool.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/extattrctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/faithd.html		man-router-htmlman	inet6,html
 ./usr/share/man/html8/fastboot.html		man-sysutil-htmlman	html
@@ -6485,8 +6485,8 @@
 ./usr/share/man/man4/amiga/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/bah.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/bppcsc.4		man-sys-man		.man
-./usr/share/man/man4/amiga/console.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/clockport.4		man-sys-man		.man
+./usr/share/man/man4/amiga/console.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/cv3dpb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/efa.4		man-sys-man		.man
@@ -7071,8 +7071,8 @@
 ./usr/share/man/man4/mlx.4			man-sys-man		.man
 ./usr/share/man/man4/mly.4			man-sys-man		.man
 ./usr/share/man/man4/module.4			man-obsolete		obsolete
-./usr/share/man/man4/mpls.4			man-sys-man		.man
 ./usr/share/man/man4/mpii.4			man-sys-man		.man
+./usr/share/man/man4/mpls.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
 ./usr/share/man/man4/mr.4			man-obsolete		obsolete
@@ -7830,9 +7830,9 @@
 ./usr/share/man/man5/shells.5			man-sys-man		.man
 ./usr/share/man/man5/siginfo.5			man-obsolete		obsolete
 ./usr/share/man/man5/spamd.conf.5		man-obsolete		obsolete
+./usr/share/man/man5/sqlite_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
-./usr/share/man/man5/sqlite_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
@@ -8072,16 +8072,16 @@
 ./usr/share/man/man8/emips/boot.8		man-sys-man		.man
 ./usr/share/man/man8/emips/installboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/emips/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
-./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man
-./usr/share/man/man8/evbarm/sbkeygen.8		man-sysutil-man		.man
-./usr/share/man/man8/evbarm/sbtool.8		man-sysutil-man		.man
 ./usr/share/man/man8/envstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/error.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/etcupdate.8		man-sysutil-man		.man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-obsolete		obsolete
+./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
+./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man
 ./usr/share/man/man8/evbarm/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/evbarm/sbkeygen.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/sbtool.8		man-sysutil-man		.man
 ./usr/share/man/man8/evbmips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbmips/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbppc/MAKEDEV.8		man-obsolete		obsolete
@@ -8140,8 +8140,8 @@
 ./usr/share/man/man8/hp300/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/boot.8		man-sys-man		.man
-./usr/share/man/man8/hp700/mkboot.8		man-sys-man		.man
 ./usr/share/man/man8/hp700/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/hp700/mkboot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcarm/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcarm/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcarm/makedev.8		man-obsolete		obsolete
@@ -8701,11 +8701,11 @@
 ./usr/share/man/man8/tpm_setownable.8		man-tpm-man		tpm,.man
 ./usr/share/man/man8/tpm_setpresence.8		man-tpm-man		tpm,.man
 ./usr/share/man/man8/tpm_takeownership.8	man-tpm-man		tpm,.man
+./usr/share/man/man8/tprof.8			man-sysutil-man		.man
 ./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
 ./usr/share/man/man8/traceroute6.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
-./usr/share/man/man8/tprof.8			man-sysutil-man		.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
