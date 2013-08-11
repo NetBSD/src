@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 2013/08/07 17:09:50 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.19 2013/08/11 04:39:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,8 @@
 
 #include <arm/cdefs.h>
 
+	.syntax		unified
+
 #define	__BIT(n)	(1 << (n))
 #define __BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
@@ -54,7 +56,7 @@
 #endif
 
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 0
+# define _ALIGN_TEXT .align 2
 #endif
 
 /*
@@ -171,7 +173,11 @@
 #if defined (_ARM_ARCH_4T)
 # define RET		bx		lr
 # define RETr(r)	bx		r
-# define RETc(c)	__CONCAT(bx,c)	lr
+# if defined(__thumb__)
+#  define RETc(c)	it c; __CONCAT(bx,c)	lr
+# else
+#  define RETc(c)	__CONCAT(bx,c)	lr
+# endif
 #else
 # define RET		mov		pc, lr
 # define RETr(r)	mov		pc, r
