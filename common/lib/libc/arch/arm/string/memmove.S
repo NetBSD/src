@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.4 2013/01/28 06:23:44 matt Exp $	*/
+/*	$NetBSD: memmove.S,v 1.5 2013/08/11 04:56:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ ENTRY(bcopy)
 	moveq	r0, #0			/* Quick abort for len=0 */
 	RETc(eq)
 
-	stmdb	sp!, {r0, lr}		/* memmove() returns dest addr */
+	push	{r0, lr}		/* memmove() returns dest addr */
 	subs	r2, r2, #4
 	blt	.Lmemmove_fl4		/* less than 4 bytes */
 	ands	r12, r0, #3
@@ -76,7 +76,7 @@ ENTRY(bcopy)
 	blt	.Lmemmove_fl12		/* less than 12 bytes (4 from above) */
 	subs	r2, r2, #0x14
 	blt	.Lmemmove_fl32		/* less than 32 bytes (12 from above) */
-	stmdb	sp!, {r4}		/* borrow r4 */
+	push	{r4}		/* borrow r4 */
 
 	/* blat 32 bytes at a time */
 	/* XXX for really big copies perhaps we should use more registers */
@@ -89,19 +89,19 @@ ENTRY(bcopy)
 	bge	.Lmemmove_floop32
 
 	cmn	r2, #0x10
-	ldmgeia	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
-	stmgeia	r0!, {r3, r4, r12, lr}
+	ldmiage	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
+	stmiage	r0!, {r3, r4, r12, lr}
 	subge	r2, r2, #0x10
-	ldmia	sp!, {r4}		/* return r4 */
+	pop	{r4}		/* return r4 */
 
 .Lmemmove_fl32:
 	adds	r2, r2, #0x14
 
 	/* blat 12 bytes at a time */
 .Lmemmove_floop12:
-	ldmgeia	r1!, {r3, r12, lr}
-	stmgeia	r0!, {r3, r12, lr}
-	subges	r2, r2, #0x0c
+	ldmiage	r1!, {r3, r12, lr}
+	stmiage	r0!, {r3, r12, lr}
+	subsge	r2, r2, #0x0c
 	bge	.Lmemmove_floop12
 
 .Lmemmove_fl12:
@@ -111,24 +111,24 @@ ENTRY(bcopy)
 	subs	r2, r2, #4
 	ldrlt	r3, [r1], #4
 	strlt	r3, [r0], #4
-	ldmgeia	r1!, {r3, r12}
-	stmgeia	r0!, {r3, r12}
+	ldmiage	r1!, {r3, r12}
+	stmiage	r0!, {r3, r12}
 	subge	r2, r2, #4
 
 .Lmemmove_fl4:
 	/* less than 4 bytes to go */
 	adds	r2, r2, #4
-	ldmeqia	sp!, {r0, pc}		/* done */
+	popeq	{r0, pc}		/* done */
 
 	/* copy the crud byte at a time */
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
-	ldmia	sp!, {r0, pc}
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
+	pop	{r0, pc}
 
 	/* erg - unaligned destination */
 .Lmemmove_fdestul:
@@ -138,10 +138,10 @@ ENTRY(bcopy)
 	/* align destination with byte copies */
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0], #1
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0], #1
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0], #1
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0], #1
 	subs	r2, r2, r12
 	blt	.Lmemmove_fl4		/* less the 4 bytes */
 
@@ -159,7 +159,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul1loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemmove_fsrcul1loop16:
 #ifdef __ARMEB__
@@ -188,7 +188,7 @@ ENTRY(bcopy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul1loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul1l4
 
@@ -216,7 +216,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul2loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemmove_fsrcul2loop16:
 #ifdef __ARMEB__
@@ -245,7 +245,7 @@ ENTRY(bcopy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul2loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul2l4
 
@@ -273,7 +273,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul3loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5}
+	push	{r4, r5}
 
 .Lmemmove_fsrcul3loop16:
 #ifdef __ARMEB__
@@ -302,7 +302,7 @@ ENTRY(bcopy)
 	stmia	r0!, {r3-r5, r12}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul3loop16
-	ldmia	sp!, {r4, r5}
+	pop	{r4, r5}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul3l4
 
@@ -340,7 +340,7 @@ ENTRY(bcopy)
 	/* We have aligned source and destination */
 	subs	r2, r2, #8
 	blt	.Lmemmove_bl12		/* less than 12 bytes (4 from above) */
-	stmdb	sp!, {r4, lr}
+	push	{r4, lr}
 	subs	r2, r2, #0x14		/* less than 32 bytes (12 from above) */
 	blt	.Lmemmove_bl32
 
@@ -356,14 +356,14 @@ ENTRY(bcopy)
 
 .Lmemmove_bl32:
 	cmn	r2, #0x10
-	ldmgedb	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
-	stmgedb	r0!, {r3, r4, r12, lr}
+	ldmdbge	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
+	stmdbge	r0!, {r3, r4, r12, lr}
 	subge	r2, r2, #0x10
 	adds	r2, r2, #0x14
-	ldmgedb	r1!, {r3, r12, lr}	/* blat a remaining 12 bytes */
-	stmgedb	r0!, {r3, r12, lr}
+	ldmdbge	r1!, {r3, r12, lr}	/* blat a remaining 12 bytes */
+	stmdbge	r0!, {r3, r12, lr}
 	subge	r2, r2, #0x0c
-	ldmia	sp!, {r4, lr}
+	pop	{r4, lr}
 
 .Lmemmove_bl12:
 	adds	r2, r2, #8
@@ -371,8 +371,8 @@ ENTRY(bcopy)
 	subs	r2, r2, #4
 	ldrlt	r3, [r1, #-4]!
 	strlt	r3, [r0, #-4]!
-	ldmgedb	r1!, {r3, r12}
-	stmgedb	r0!, {r3, r12}
+	ldmdbge	r1!, {r3, r12}
+	stmdbge	r0!, {r3, r12}
 	subge	r2, r2, #4
 
 .Lmemmove_bl4:
@@ -384,10 +384,10 @@ ENTRY(bcopy)
 	cmp	r2, #2
 	ldrb	r3, [r1, #-1]!
 	strb	r3, [r0, #-1]!
-	ldrgeb	r3, [r1, #-1]!
-	strgeb	r3, [r0, #-1]!
-	ldrgtb	r3, [r1, #-1]!
-	strgtb	r3, [r0, #-1]!
+	ldrbge	r3, [r1, #-1]!
+	strbge	r3, [r0, #-1]!
+	ldrbgt	r3, [r1, #-1]!
+	strbgt	r3, [r0, #-1]!
 	RET
 
 	/* erg - unaligned destination */
@@ -397,10 +397,10 @@ ENTRY(bcopy)
 	/* align destination with byte copies */
 	ldrb	r3, [r1, #-1]!
 	strb	r3, [r0, #-1]!
-	ldrgeb	r3, [r1, #-1]!
-	strgeb	r3, [r0, #-1]!
-	ldrgtb	r3, [r1, #-1]!
-	strgtb	r3, [r0, #-1]!
+	ldrbge	r3, [r1, #-1]!
+	strbge	r3, [r0, #-1]!
+	ldrbgt	r3, [r1, #-1]!
+	strbgt	r3, [r0, #-1]!
 	subs	r2, r2, r12
 	blt	.Lmemmove_bl4		/* less than 4 bytes to go */
 	ands	r12, r1, #3
@@ -417,7 +417,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul3loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5, lr}
+	push	{r4, r5, lr}
 
 .Lmemmove_bsrcul3loop16:
 #ifdef __ARMEB__
@@ -446,7 +446,7 @@ ENTRY(bcopy)
 	stmdb	r0!, {r4, r5, r12, lr}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul3loop16
-	ldmia	sp!, {r4, r5, lr}
+	pop	{r4, r5, lr}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul3l4
 
@@ -474,7 +474,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul2loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5, lr}
+	push	{r4, r5, lr}
 
 .Lmemmove_bsrcul2loop16:
 #ifdef __ARMEB__
@@ -503,7 +503,7 @@ ENTRY(bcopy)
 	stmdb	r0!, {r4, r5, r12, lr}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul2loop16
-	ldmia	sp!, {r4, r5, lr}
+	pop	{r4, r5, lr}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul2l4
 
@@ -531,7 +531,7 @@ ENTRY(bcopy)
 	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul1loop4
 	sub	r2, r2, #0x0c
-	stmdb	sp!, {r4, r5, lr}
+	push	{r4, r5, lr}
 
 .Lmemmove_bsrcul1loop32:
 #ifdef __ARMEB__
@@ -560,7 +560,7 @@ ENTRY(bcopy)
 	stmdb	r0!, {r4, r5, r12, lr}
 	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul1loop32
-	ldmia	sp!, {r4, r5, lr}
+	pop	{r4, r5, lr}
 	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul1l4
 

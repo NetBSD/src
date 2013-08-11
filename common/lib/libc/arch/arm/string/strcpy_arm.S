@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_arm.S,v 1.2 2013/01/10 04:51:49 matt Exp $")
+RCSID("$NetBSD: strcpy_arm.S,v 1.3 2013/08/11 04:56:32 matt Exp $")
 
 #ifdef STRLCPY
 #ifdef _LIBC
@@ -85,7 +85,7 @@ ENTRY(FUNCNAME)
 	cmp	r2, #1			/* is length 1 or less? */
 	bhi	1f			/*   no, do normal */
 	moveq	r3, #0			/*   = 1? load NUL */
-	streqb	r3, [r0]		/*   = 1? write NUL to dst */
+	strbeq	r3, [r0]		/*   = 1? write NUL to dst */
 	mov	r0, r1			/* move src to r0 */
 	b	PLT_SYM(_C_LABEL(strlen)) /* and tailcall strlen */
 1:
@@ -125,7 +125,7 @@ ENTRY(FUNCNAME)
 	beq	.Lend_of_string		/*   yes, we are done */
 #if defined(STRLCPY)
 	subs	r2, r2, #1		/* subtract one from count */
-	streqb	r2, [r0], #1		/*    zero? write trailing NUL */
+	strbeq	r2, [r0], #1		/*    zero? write trailing NUL */
 	beq	.Ldst_full		/*    zero? the dst has no more room */
 #endif
 	b	.Ldst_align		/* loop around for next byte */
@@ -423,7 +423,7 @@ ENTRY(FUNCNAME)
 	cmp	r2, #-1			/* tried to write 3 bytes? */
 	blt	1f			/*   less, partial word write */
 	cmp	r2, #0			/* no space left? */
-	streqb	r2, [r0]		/* write the final NUL */
+	strbeq	r2, [r0]		/* write the final NUL */
 	bicne	r5, r5, #BYTE3		/* clear trailing NUL */
 	strne	r5, [r0]		/* write last word */
 	b	.Ldst_full_word_aligned	/* the dst buffer is full */
