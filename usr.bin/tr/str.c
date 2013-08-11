@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.27 2013/08/11 01:42:35 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.28 2013/08/11 01:49:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.27 2013/08/11 01:42:35 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.28 2013/08/11 01:49:40 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -196,6 +196,7 @@ bracket(STR *s)
 			return 0;
 		s->str += 2;
 		genequiv(s);
+		s->str = p + 2;
 		return 1;
 	default:				/* "[\###*n]" or "[#*n]" */
 		if ((p = strpbrk(s->str + 2, "*]")) == NULL)
@@ -310,16 +311,19 @@ genequiv(STR *s)
 	ch = (unsigned char)s->str[0];
 	if (ch == '\\') {
 		s->equiv[0] = backslash(s);
-		if (*s->str != '=') {
-			errx(1, "Misplaced equivalence equals sign");
-		}
 	} else {
 		s->equiv[0] = ch;
-		if (s->str[1] != '=') {
-			errx(1, "Misplaced equivalence equals sign");
-		}
+		s->str++;
 	}
-	s->str += 2;
+	if (s->str[0] != '=') {
+		errx(1, "Misplaced equivalence equals sign");
+	}
+	s->str++;
+	if (s->str[0] != ']') {
+		errx(1, "Misplaced equivalence right bracket");
+	}
+	s->str++;
+
 	s->cnt = 0;
 	s->state = SET;
 	s->set = s->equiv;
