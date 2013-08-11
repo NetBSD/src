@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.5 2002/08/15 01:38:16 briggs Exp $	*/
+/*	$NetBSD: blockio.S,v 1.6 2013/08/11 02:45:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.5 2002/08/15 01:38:16 briggs Exp $")
+RCSID("$NetBSD: blockio.S,v 1.6 2013/08/11 02:45:56 matt Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -65,41 +65,41 @@ ENTRY(read_multi_1)
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lrm1_l4			/* less than 4 bytes */
-	ands	r12, r1, #3
+	ands	ip, r1, #3
 	beq	.Lrm1_main		/* aligned destination */
-	rsb	r12, r12, #4
-	cmp	r12, #2
+	rsb	ip, ip, #4
+	cmp	ip, #2
 	ldrb	r3, [r0]
 	strb	r3, [r1], #1
-	ldrgeb	r3, [r0]
-	strgeb	r3, [r1], #1
-	ldrgtb	r3, [r0]
-	strgtb	r3, [r1], #1
-	subs	r2, r2, r12
+	ldrbge	r3, [r0]
+	strbge	r3, [r1], #1
+	ldrbgt	r3, [r0]
+	strbgt	r3, [r1], #1
+	subs	r2, r2, ip
 	blt	.Lrm1_l4
 .Lrm1_main:
 .Lrm1loop:
 	ldrb	r3, [r0]
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #8
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #16
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #24
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #8
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #16
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #24
 	str	r3, [r1], #4
 	subs	r2, r2, #4
 	bge	.Lrm1loop
 .Lrm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
-	ldmeqdb	fp, {fp, sp, pc}
-	moveq	pc, r14
+	ldmdbeq	fp, {fp, sp, pc}
+	RETc(eq)
 	cmp	r2, #2
 	ldrb	r3, [r0]
 	strb	r3, [r1], #1
-	ldrgeb	r3, [r0]
-	strgeb	r3, [r1], #1
-	ldrgtb	r3, [r0]
-	strgtb	r3, [r1], #1
+	ldrbge	r3, [r0]
+	strbge	r3, [r1], #1
+	ldrbgt	r3, [r0]
+	strbgt	r3, [r1], #1
 	ldmdb	fp, {fp, sp, pc}
 
 /*
@@ -117,17 +117,17 @@ ENTRY(write_multi_1)
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lwm1_l4		/* less than 4 bytes */
-	ands	r12, r1, #3
+	ands	ip, r1, #3
 	beq	.Lwm1_main		/* aligned source */
-	rsb	r12, r12, #4
-	cmp	r12, #2
+	rsb	ip, ip, #4
+	cmp	ip, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0]
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0]
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0]
-	subs	r2, r2, r12
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0]
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0]
+	subs	r2, r2, ip
 	blt	.Lwm1_l4
 .Lwm1_main:
 .Lwm1loop:
@@ -143,14 +143,14 @@ ENTRY(write_multi_1)
 	bge	.Lwm1loop
 .Lwm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
-	ldmeqdb	fp, {fp, sp, pc}
+	ldmdbeq	fp, {fp, sp, pc}
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0]
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0]
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0]
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0]
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0]
 	ldmdb	fp, {fp, sp, pc}
 
 /*
