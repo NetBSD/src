@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.21 2013/08/11 06:39:47 dholland Exp $	*/
+/*	$NetBSD: checknr.c,v 1.22 2013/08/11 06:43:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.21 2013/08/11 06:39:47 dholland Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.22 2013/08/11 06:43:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,12 +202,12 @@ int	slot;		/* slot in knowncmds found by binsrch */
 void	addcmd(char *);
 void	addmac(const char *);
 int	binsrch(const char *);
-void	checkknown(char *);
-void	chkcmd(char *, char *);
+void	checkknown(const char *);
+void	chkcmd(const char *);
 void	complain(int);
 static int eq(const char *, const char *);
 int	main(int, char **);
-void	nomatch(char *);
+void	nomatch(const char *);
 void	pe(int);
 void	process(FILE *);
 void	prop(int);
@@ -349,7 +349,7 @@ process(FILE *f)
 			if (eq(mac, "de"))
 				addcmd(line);
 
-			chkcmd(line, mac);
+			chkcmd(mac);
 		}
 
 		/*
@@ -439,7 +439,7 @@ prop(int i)
 }
 
 void
-chkcmd(char *line, char *mac)
+chkcmd(const char *mac)
 {
 	int i;
 
@@ -475,7 +475,7 @@ chkcmd(char *line, char *mac)
 }
 
 void
-nomatch(char *mac)
+nomatch(const char *mac)
 {
 	int i, j;
 
@@ -535,7 +535,7 @@ pe(int pelineno)
 }
 
 void
-checkknown(char *mac)
+checkknown(const char *mac)
 {
 
 	if (eq(mac, "."))
