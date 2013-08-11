@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.118 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: GENERIC.in,v 1.119 2013/08/11 16:15:52 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+#ident 		"GENERIC-$Revision: 1.119 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -460,6 +460,9 @@ ne*		at zbus0		# AriadneII
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
+
+xsh*		at zbus0		# X-Surf 100
+ne*		at xshbus?		# NE2000 chip on X-Surf 100
 
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
