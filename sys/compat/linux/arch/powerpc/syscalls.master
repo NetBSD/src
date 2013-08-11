@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 2013/04/08 20:54:49 pooka Exp $  
+	$NetBSD: syscalls.master,v 1.53 2013/08/11 12:23:02 pooka Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -112,7 +112,7 @@
 24	NOARGS		{ uid_t|sys||getuid(void); }
 25	STD		{ int|linux_sys||stime(linux_time_t *t); }
 26	STD		{ int|linux_sys||ptrace(int request, int pid, \
-			    int addr, int data); }
+			    long addr, int data); }
 27	STD		{ int|linux_sys||alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int|linux_sys||pause(void); }
