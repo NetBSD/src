@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.11 2013/08/11 00:04:14 dholland Exp $	*/
+/*	$NetBSD: tr.c,v 1.12 2013/08/11 00:05:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tr.c,v 1.11 2013/08/11 00:04:14 dholland Exp $");
+__RCSID("$NetBSD: tr.c,v 1.12 2013/08/11 00:05:49 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ static int string1[NCHARS] = {
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 }, string2[NCHARS];
 
-static void setup(int *, char *, STR *, int);
+static void setup(int *, const char *, STR *, int);
 __dead static void usage(void);
 
 int
@@ -242,7 +242,7 @@ main(int argc, char **argv)
 }
 
 static void
-setup(int *string, char *arg, STR *str, int cflag)
+setup(int *string, const char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
 	int ch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.21 2013/08/11 00:04:14 dholland Exp $	*/
+/*	$NetBSD: str.c,v 1.22 2013/08/11 00:05:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: str.c,v 1.21 2013/08/11 00:04:14 dholland Exp $");
+__RCSID("$NetBSD: str.c,v 1.22 2013/08/11 00:05:49 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ struct str {
 	int	 lastch;		/* last character */
 	int	equiv[2];		/* equivalence set */
 	int	*set;			/* set of characters */
-	unsigned char	*str;		/* user's string */
+	unsigned const char *str;	/* user's string */
 };
 
 static int	backslash(STR *);
@@ -100,7 +100,7 @@ str_destroy(STR *s)
 }
 
 void
-str_setstring(STR *s, char *txt)
+str_setstring(STR *s, const char *txt)
 {
 	s->str = txt;
 }
@@ -281,7 +281,7 @@ static int
 genrange(STR *s)
 {
 	int stopval;
-	char *savestart;
+	const char *savestart;
 
 	savestart = s->str;
 	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
