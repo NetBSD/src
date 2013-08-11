@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.23 2013/08/11 03:34:48 dholland Exp $	*/
+/*	$NetBSD: rogue.h,v 1.24 2013/08/11 03:44:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -248,7 +248,7 @@ typedef struct obj object;
 #define INIT_STR	16
 #define INIT_EXPLEVEL	1
 #define INIT_EXP	0
-#define INIT_PACK	{0}
+#define INIT_PACK	{0,NULL,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,NULL}
 #define INIT_GOLD	0
 #define INIT_CHAR	'@'
 #define INIT_MOVES	1250
