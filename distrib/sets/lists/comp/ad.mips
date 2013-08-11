@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.41 2013/04/30 23:41:23 matt Exp $
+# $NetBSD: ad.mips,v 1.42 2013/08/11 22:29:02 joerg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -199,14 +199,14 @@
 ./usr/lib/64/libbz2.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libbz2_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libbz2_pic.a			comp-c-piclib		compat,pic
-./usr/lib/64/libc.a				comp-c-lib		compat
-./usr/lib/64/libc.so				base-sys-shlib		compat,pic
-./usr/lib/64/libc_p.a				comp-c-proflib		compat,profile
-./usr/lib/64/libc_pic.a				comp-c-piclib		compat,pic
 ./usr/lib/64/libc++.a				comp-c-lib		compat,libcxx
 ./usr/lib/64/libc++.so				comp-sys-shlib		compat,pic,libcxx
 ./usr/lib/64/libc++_p.a				comp-c-proflib		compat,profile,libcxx
 ./usr/lib/64/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
+./usr/lib/64/libc.a				comp-c-lib		compat
+./usr/lib/64/libc.so				base-sys-shlib		compat,pic
+./usr/lib/64/libc_p.a				comp-c-proflib		compat,profile
+./usr/lib/64/libc_pic.a				comp-c-piclib		compat,pic
 ./usr/lib/64/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
@@ -220,8 +220,6 @@
 ./usr/lib/64/libcrypt_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libcrypto.a			comp-c-lib		compat,crypto
 ./usr/lib/64/libcrypto.so			base-sys-shlib		compat,crypto,pic
-./usr/lib/64/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
-./usr/lib/64/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/64/libcrypto_idea.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_idea.so			base-obsolete		obsolete
 ./usr/lib/64/libcrypto_idea_p.a			comp-obsolete		obsolete
@@ -230,6 +228,8 @@
 ./usr/lib/64/libcrypto_mdc2.so			base-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_p.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_pic.a		comp-obsolete		obsolete
+./usr/lib/64/libcrypto_p.a			comp-c-proflib		compat,crypto,profile
+./usr/lib/64/libcrypto_pic.a			comp-c-piclib		compat,crypto,pic
 ./usr/lib/64/libcrypto_rc5.a			comp-c-lib		crypto_rc5,compat
 ./usr/lib/64/libcrypto_rc5.so			base-sys-shlib		compat,crypto,crypto_rc5,pic
 ./usr/lib/64/libcrypto_rc5_p.a			comp-c-proflib		crypto_rc5,compat,profile
@@ -272,12 +272,12 @@
 ./usr/lib/64/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libevent.a				comp-c-lib		compat
 ./usr/lib/64/libevent.so			base-sys-shlib		compat,pic
-./usr/lib/64/libevent_p.a			comp-c-proflib		compat,profile
-./usr/lib/64/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libevent_openssl.a			comp-c-lib		compat,crypto
 ./usr/lib/64/libevent_openssl.so		base-sys-shlib		compat,pic,crypto
 ./usr/lib/64/libevent_openssl_p.a		comp-c-proflib		compat,profile,crypto
 ./usr/lib/64/libevent_openssl_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/64/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libevent_pthreads.a		comp-c-lib		compat
 ./usr/lib/64/libevent_pthreads.so		base-sys-shlib		compat,pic
 ./usr/lib/64/libevent_pthreads_p.a		comp-c-proflib		compat,profile
@@ -810,14 +810,14 @@
 ./usr/lib/o32/libbz2.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libbz2_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libbz2_pic.a			comp-c-piclib		compat,pic
-./usr/lib/o32/libc.a				comp-c-lib		compat
-./usr/lib/o32/libc.so				base-sys-shlib		compat,pic
-./usr/lib/o32/libc_p.a				comp-c-proflib		compat,profile
-./usr/lib/o32/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libc++.a				comp-c-lib		compat,libcxx
 ./usr/lib/o32/libc++.so				comp-sys-shlib		compat,pic,libcxx
 ./usr/lib/o32/libc++_p.a			comp-c-proflib		compat,profile,libcxx
 ./usr/lib/o32/libc++_pic.a			comp-c-piclib		compat,pic,libcxx
+./usr/lib/o32/libc.a				comp-c-lib		compat
+./usr/lib/o32/libc.so				base-sys-shlib		compat,pic
+./usr/lib/o32/libc_p.a				comp-c-proflib		compat,profile
+./usr/lib/o32/libc_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libcom_err.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libcom_err.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libcom_err_p.a			comp-c-proflib		compat,profile,kerberos
@@ -877,12 +877,12 @@
 ./usr/lib/o32/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libevent.a			comp-c-lib		compat
 ./usr/lib/o32/libevent.so			base-sys-shlib		compat,pic
-./usr/lib/o32/libevent_p.a			comp-c-proflib		compat,profile
-./usr/lib/o32/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libevent_openssl.a		comp-c-lib		compat,crypto
 ./usr/lib/o32/libevent_openssl.so		base-sys-shlib		compat,pic,crypto
 ./usr/lib/o32/libevent_openssl_p.a		comp-c-proflib		compat,profile,crypto
 ./usr/lib/o32/libevent_openssl_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/o32/libevent_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libevent_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libevent_pthreads.a		comp-c-lib		compat
 ./usr/lib/o32/libevent_pthreads.so		base-sys-shlib		compat,pic
 ./usr/lib/o32/libevent_pthreads_p.a		comp-c-proflib		compat,profile

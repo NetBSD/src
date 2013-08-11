@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.36 2012/10/27 22:36:13 alnsn Exp $
+# $NetBSD: md.amd64,v 1.37 2013/08/11 22:29:03 joerg Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -47,10 +47,10 @@
 ./@MODULEDIR@/compat_linux32/compat_linux32.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/coretemp				base-kernel-modules	kmod
-./@MODULEDIR@/coretemp/coretemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/coram				base-kernel-modules	kmod
 ./@MODULEDIR@/coram/coram.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/coretemp				base-kernel-modules	kmod
+./@MODULEDIR@/coretemp/coretemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cx24227				base-kernel-modules	kmod
 ./@MODULEDIR@/cx24227/cx24227.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cxdtv				base-kernel-modules	kmod
