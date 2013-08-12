@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.54 2013/03/19 06:34:28 msaitoh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.55 2013/08/12 15:40:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.54 2013/03/19 06:34:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.55 2013/08/12 15:40:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,11 @@ int	ipmi_enabled = 0;
 
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
 
-#define IPMI_INVALID_SENSOR		(1L << 5)
+#define IPMI_SENSOR_SCANNING_ENABLED	(1L << 6)
+#define IPMI_SENSOR_UNAVAILABLE		(1L << 5)
+#define IPMI_INVALID_SENSOR_P(x) \
+	(((x) & (IPMI_SENSOR_SCANNING_ENABLED|IPMI_SENSOR_UNAVAILABLE)) \
+	!= IPMI_SENSOR_SCANNING_ENABLED)
 
 #define IPMI_SDR_TYPEFULL		1
 #define IPMI_SDR_TYPECOMPACT		2
@@ -1716,7 +1720,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	    s1->m, s1->m_tolerance, s1->b, s1->b_accuracy, s1->rbexp, s1->linear);
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], edata->desc);
-	if (data[1] & IPMI_INVALID_SENSOR) {
+	if (IPMI_INVALID_SENSOR_P(data[1])) {
 		/* Check if sensor is valid */
 		edata->state = ENVSYS_SINVALID;
 	} else {
