@@ -93,3 +93,6 @@ Boston, MA 02110-1301, USA.  */
        %{rdynamic:-export-dynamic} \
        %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
      %{static:-static}}"
+
+#undef TARGET_UNWIND_TABLES_DEFAULT
+#define TARGET_UNWIND_TABLES_DEFAULT true
