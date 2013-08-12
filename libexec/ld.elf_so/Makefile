@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2013/07/18 21:58:13 matt Exp $
+#	$NetBSD: Makefile,v 1.122 2013/08/12 17:15:46 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -98,7 +98,11 @@ CPPFLAGS+=	-DCOMBRELOC
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif
 #DBG=		-g
-COPTS+=		-O3 -fomit-frame-pointer
+COPTS+=		-O3
+
+.if ${MACHINE_ARCH} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
+COPTS+=		-fomit-frame-pointer
+.endif
 
 .if ${LDELFSO_MACHINE_ARCH} == "i386" || ${LDELFSO_MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
