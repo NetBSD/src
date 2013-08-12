@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.14 2012/09/03 16:35:33 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.15 2013/08/12 17:32:03 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -143,7 +143,7 @@ ASENTRY_NP(irq_entry)
 	/* address of 8259 #2 */
 	tst	r2, #(1 << IRQ_SLAVE)             /* if slave is enabled */
 	tstne	r8, #(1 << IRQ_SLAVE)             /* anything from slave? */
-	ldrneb	r1, [r0, #IO_ICU2]                /* ocw3 = irr */
+	ldrbne	r1, [r0, #IO_ICU2]                /* ocw3 = irr */
 	orrne	r8, r8, r1, lsl #8
 
 	and	r8, r8, r2                        /* clear disabled */
@@ -366,12 +366,12 @@ ENTRY(irq_setmasks)
 
 	/* see if there's any change for 8259 #1 (master) */
 	tst	r2, #0x00FF               /* bottom 8 bits different? */
-	strneb	r1, [r0, #(IO_ICU1 + 1)]  /* icu1 / ocw1 */
+	strbne	r1, [r0, #(IO_ICU1 + 1)]  /* icu1 / ocw1 */
 
 	/* anything for 8259 #2? */
 	tst	r2, #0xFF00
 	mov	r1, r1, lsr #8            /* next byte */
-	strneb	r1, [r0, #(IO_ICU2 + 1)]  /* icu2 / ocw1 */
+	strbne	r1, [r0, #(IO_ICU2 + 1)]  /* icu2 / ocw1 */
 
 	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3
