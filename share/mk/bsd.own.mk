@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.745 2013/08/12 16:38:47 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.746 2013/08/12 16:39:28 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -59,22 +59,11 @@ HAVE_GCC?=    45
 .endif
 
 
-.if \
-    ${MACHINE_CPU} == "alpha" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "hppa" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "mips" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_CPU} == "ia64"
 USE_COMPILERCRTSTUFF?=	no
-.endif
+.else
 USE_COMPILERCRTSTUFF?=	yes
+.endif
 
 HAVE_GDB?=	7
 
