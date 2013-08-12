@@ -706,6 +706,7 @@
    }
 
 #ifndef TARGET_UNWIND_TABLES_DEFAULT
+#error "Missing unwind_tables_default"
 #define TARGET_UNWIND_TABLES_DEFAULT false
 #endif
 

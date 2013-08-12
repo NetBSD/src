@@ -108,3 +108,6 @@ along with GCC; see the file COPYING3.  If not see
  %{static:%(link_gcc_c_sequence) -lmudflap}} \
  %{fmudflapth: -export-dynamic -lmudflapth -lpthread \
  %{static:%(link_gcc_c_sequence) -lmudflapth}} "
+
+#undef TARGET_UNWIND_TABLES_DEFAULT
+#define TARGET_UNWIND_TABLES_DEFAULT true
