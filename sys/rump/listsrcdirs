@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.6 2013/08/11 09:10:47 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.7 2013/08/12 10:25:05 pooka Exp $
 #
 
 #
@@ -41,6 +41,7 @@ if [ "${1}" = '-c' ]; then
 	for x in amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc; do
 		precho src/sys/arch/${x}/ include ${x} Makefile
 	done
+	echo src/sys/arch/arm/arm32
 	echo src/sys/arch/Makefile
 else
 	echo src/sys
