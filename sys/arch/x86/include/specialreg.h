@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.66 2013/07/26 05:46:19 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.67 2013/08/12 18:16:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -176,17 +176,26 @@
 #define CPUID_SEF_RTM		__BIT(11)
 #define CPUID_SEF_QM		__BIT(12)
 #define CPUID_SEF_FPUCSDS	__BIT(13)
+#define CPUID_SEF_MPX		__BIT(14)
+#define CPUID_SEF_AVX512F	__BIT(16)
 #define CPUID_SEF_RDSEED	__BIT(18)
 #define CPUID_SEF_ADX		__BIT(19)
 #define CPUID_SEF_SMAP		__BIT(20)
+#define CPUID_SEF_PT		__BIT(25)
+#define CPUID_SEF_AVX512PF	__BIT(26)
+#define CPUID_SEF_AVX512ER	__BIT(27)
+#define CPUID_SEF_AVX512CD	__BIT(28)
+#define CPUID_SEF_SHA		__BIT(29)
 
 #define CPUID_SEF_FLAGS	"\20" \
 	"\1" "FSGSBASE"	"\2" "TSCADJUST"		"\4" "BMI1"	\
 	"\5" "HLE"	"\6" "AVX2"			"\10" "SMEP"	\
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
-	"\15" "QM"	"\16" "FPUCSDS"					\
-					"\23" "RDSEED"	"\24" "ADX"	\
-	"\25" "SMAP"
+	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    			\
+	"\21" "AVX512F"			"\23" "RDSEED"	"\24" "ADX"	\
+	"\25" "SMAP"							\
+			"\32" "PT"	"\33" "AVX512PF""\34" "AVX512ER"\
+	"\35" "AVX512CD""\36" "SHA"
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
