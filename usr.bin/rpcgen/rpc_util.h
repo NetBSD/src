@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.h,v 1.6 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_util.h,v 1.7 2013/08/12 14:03:18 joerg Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -113,12 +113,12 @@ int isvectordef __P((const char *, relation));
 char *locase __P((const char *));
 void pvname_svc __P((const char *, const char *));
 void pvname __P((const char *, const char *));
-void error __P((const char *));
-void crash __P((void));
+void error(const char *) __dead;
+void crash(void) __dead;
 void record_open __P((const char *));
-void expected1 __P((tok_kind));
-void expected2 __P((tok_kind, tok_kind ));
-void expected3 __P((tok_kind, tok_kind, tok_kind));
+void expected1(tok_kind) __dead;
+void expected2(tok_kind, tok_kind) __dead;
+void expected3(tok_kind, tok_kind, tok_kind) __dead;
 void tabify __P((FILE *, int));
 char *make_argname __P((const char *, const char *));
 void add_type __P((int, const char *));
