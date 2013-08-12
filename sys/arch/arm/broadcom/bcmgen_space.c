@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmgen_space.c,v 1.2 2013/01/09 17:45:13 matt Exp $	*/
+/*	$NetBSD: bcmgen_space.c,v 1.3 2013/08/12 21:20:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.2 2013/01/09 17:45:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.3 2013/08/12 21:20:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,16 @@ bcmgen_bs_vaddr(void *t, bus_space_handle_t bsh)
 	return (void *)bsh;
 }
 
+paddr_t
+bcmgen_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
+{
+	paddr_t bus_flags = 0;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM32_MMAP_WRITECOMBINE;
+
+	return (arm_btop(bpa + offset) | bus_flags);
+}
 
 int
 bcmgen_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
