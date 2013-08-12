@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2013/08/11 09:16:42 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2013/08/12 13:54:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.63 2013/08/11 09:16:42 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.64 2013/08/12 13:54:33 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ static void	clearscreen(void);
 
 sigjmp_buf timeout;
 
-static void
+__dead static void
 /*ARGSUSED*/
 dingdong(int signo)
 {
@@ -149,7 +149,7 @@ dingdong(int signo)
 
 sigjmp_buf intrupt;
 
-static void
+__dead static void
 /*ARGSUSED*/
 interrupt(int signo)
 {
@@ -161,7 +161,7 @@ interrupt(int signo)
 /*
  * Action to take when getty is running too long.
  */
-static void
+__dead static void
 /*ARGSUSED*/
 timeoverrun(int signo)
 {
