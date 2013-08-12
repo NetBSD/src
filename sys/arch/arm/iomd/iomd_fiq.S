@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.2 2001/12/20 01:20:23 thorpej Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.3 2013/08/12 16:07:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -69,7 +69,7 @@ ENTRY_NP(floppy_read_fiq)
 	ldrb	r8, [r12]
 	strb	r8, [r11], #0x0001
 #ifndef NOFDFIQLOOPS
-	subeqs	pc, lr, #0x00000004
+	subseq	pc, lr, #0x00000004
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
@@ -99,7 +99,7 @@ ENTRY_NP(floppy_write_fiq)
 	ldrb	r8, [r11], #0x0001
 	strb	r8, [r12]
 #ifndef NOFDFIQLOOPS
-	subeqs	pc, lr, #0x00000004
+	subseq	pc, lr, #0x00000004
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
