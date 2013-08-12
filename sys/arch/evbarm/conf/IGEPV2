@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.19 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: IGEPV2,v 1.20 2013/08/12 21:17:59 matt Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -211,14 +211,10 @@ omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
+omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
+iic*		at omapiic?
 
 # On-board 16550 UARTs
 #com0		at obio0 addr 0x4806a000 intr 72 mult 4 # UART1
