@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.23 2013/08/11 06:45:23 dholland Exp $	*/
+/*	$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.23 2013/08/11 06:45:23 dholland Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ static void nomatch(const char *);
 static void pe(int);
 static void process(FILE *);
 static void prop(int);
-static void usage(void);
+static void usage(void) __dead;
 
 int
 main(int argc, char **argv)
