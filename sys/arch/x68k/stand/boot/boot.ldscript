@@ -62,5 +62,6 @@ SECTIONS
       *(.debug_ranges)
       *(.debug_str)
       *(.debug_frame)
+      *(.eh_frame)
   }
 }
