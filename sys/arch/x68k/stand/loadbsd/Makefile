@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2012/02/08 23:51:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/08/12 16:34:05 joerg Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -20,7 +20,7 @@ AOUT2HUX=	${AOUT2HUXDIR}/aout2hux
 LIBDOS!=	cd ${.CURDIR}/../libdos && ${PRINTOBJDIR}
 LIBIOCS!=	cd ${.CURDIR}/../libiocs && ${PRINTOBJDIR}
 
-CPPFLAGS=	-W -Wall -O -fomit-frame-pointer
+CPPFLAGS=	-W -Wall -O -fomit-frame-pointer -fno-unwind-tables
 CPPFLAGS+=	-m68000 -Wa,-mc68000
 CPPFLAGS+=	-nostdinc 
 CPPFLAGS+=	-I$S -I.

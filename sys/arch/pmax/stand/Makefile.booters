@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.57 2011/07/10 08:42:55 mrg Exp $
+# $NetBSD: Makefile.booters,v 1.58 2013/08/12 16:34:05 joerg Exp $
 
 NOMAN=		# defined
 
@@ -23,6 +23,7 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES \
 		-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
+CFLAGS+=	-fno-unwind-tables
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-Werror
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript

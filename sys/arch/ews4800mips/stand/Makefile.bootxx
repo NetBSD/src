@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.5 2010/05/27 06:58:13 dholland Exp $
+#	$NetBSD: Makefile.bootxx,v 1.6 2013/08/12 16:34:05 joerg Exp $
 
 NOMAN		=
 
@@ -20,7 +20,7 @@ MIPSFLAGS	= -mips1 -G 0 -mno-abicalls
 DEBUGFLAGS	= -Wall -Werror
 DEBUGFLAGS	+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 DEBUGFLAGS	+= -Wno-format-zero-length -Wno-sign-compare
-OPTFLAGS	= -Os -mmemcpy
+OPTFLAGS	= -Os -mmemcpy -fno-unwind-tables
 FLAGS		= ${MIPSFLAGS} ${DEBUGFLAGS} ${OPTFLAGS}
 AFLAGS		= -xassembler-with-cpp -D_LOCORE ${FLAGS}
 CFLAGS		= ${FLAGS} -ffreestanding
