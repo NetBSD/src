@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.3 2013/08/11 03:00:05 matt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.4 2013/08/12 15:08:13 riz Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.3 2013/08/11 03:00:05 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.4 2013/08/12 15:08:13 riz Exp $")
 	
 #include "assym.h"
 
@@ -226,7 +226,7 @@ ASENTRY_NP(L_cksumdata)
 	adcs	r2, r2, r5
 	adc	r2, r2, #0x00
 	subs	r1, r1, #0x40
-	ldrged	r4, [r0], #0x08
+	ldrdge	r4, [r0], #0x08
 	bge	.Lcksumdata_bigloop
 
 	adds	r2, r2, r6		/* r6/r7 still need summing */
@@ -275,7 +275,7 @@ ASENTRY_NP(L_cksumdata)
 	cmp	r1, #0x20
 
 #ifdef __XSCALE__
-	ldrged	r4, [r0], #0x08		/* Avoid stalling pld and result */
+	ldrdge	r4, [r0], #0x08		/* Avoid stalling pld and result */
 	blt	.Lcksumdata_less_than_32
 	pld	[r0, #0x18]
 	ldrd	r6, [r0], #0x08
