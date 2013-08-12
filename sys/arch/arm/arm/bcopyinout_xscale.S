@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.8 2013/08/11 02:53:18 matt Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.9 2013/08/12 05:54:51 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.8 2013/08/11 02:53:18 matt Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.9 2013/08/12 05:54:51 matt Exp $")	
 
 	.text
 	.align	0
@@ -63,16 +63,14 @@ ENTRY(copyin)
 	bl	.Lcopyin_guts
 	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lcopyin_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
 	popgt	{r4-r7}		/* r3 > 0 Restore r4-r7 */
 	poplt	{r4-r9}		/* r3 < 0 Restore r4-r9 */
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lcopyin_guts:
 	pld	[r0]
@@ -244,7 +242,7 @@ ENTRY(copyin)
 	ldrbtgt	ip, [r0]
 	strbge	r2, [r1], #0x01
 	strbgt	ip, [r1]
-	RETc(eq)	
+	RET
 
 /*
  * At this point, it has not been possible to word align both buffers.
@@ -484,16 +482,14 @@ ENTRY(copyout)
 	bl	.Lcopyout_guts
 	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lcopyout_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
 	popgt	{r4-r7}		/* r3 > 0 Restore r4-r7 */
 	poplt	{r4-r9}		/* r3 < 0 Restore r4-r9 */
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lcopyout_guts:
 	pld	[r0]
@@ -925,16 +921,14 @@ ENTRY(kcopy)
 	bl	.Lkcopy_guts
 	str	r11, [r10, #PCB_ONFAULT]
 	mov	r0, #0x00
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lkcopy_fault:
 	str	r11, [r10, #PCB_ONFAULT]
 	cmp	r3, #0x00
 	popgt	{r4-r7}		/* r3 > 0 Restore r4-r7 */
 	poplt	{r4-r9}		/* r3 < 0 Restore r4-r9 */
-	pop	{r10-r11, lr}
-	RET
+	pop	{r10-r11, pc}
 
 .Lkcopy_guts:
 	pld	[r0]
