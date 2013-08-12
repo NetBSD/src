@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: unwind_stub.c,v 1.1 2013/08/12 23:22:12 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: unwind_stub.c,v 1.2 2013/08/12 23:42:14 matt Exp $");
 
 #include <arm/ehabi.h>
 
@@ -39,6 +39,6 @@ __aeabi_unwind_cpp_stub(_Unwind_State state, _Unwind_Control_Block *ucbp,
 	return _URC_FAILURE;
 }
 
-__weak_alias(__aeabi_unwind_cpp_cp0, __aeabi_unwind_cpp_stub)
-__weak_alias(__aeabi_unwind_cpp_cp1, __aeabi_unwind_cpp_stub)
-__weak_alias(__aeabi_unwind_cpp_cp2, __aeabi_unwind_cpp_stub)
+__weak_alias(__aeabi_unwind_cpp_pr0, __aeabi_unwind_cpp_stub)
+__weak_alias(__aeabi_unwind_cpp_pr1, __aeabi_unwind_cpp_stub)
+__weak_alias(__aeabi_unwind_cpp_pr2, __aeabi_unwind_cpp_stub)
