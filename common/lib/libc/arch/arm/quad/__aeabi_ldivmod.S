@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.9 2013/08/13 15:45:30 matt Exp $")
+RCSID("$NetBSD: __aeabi_ldivmod.S,v 1.10 2013/08/13 15:46:31 matt Exp $")
 
 ENTRY(__aeabi_ldivmod)
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -139,7 +139,7 @@ ENTRY(__aeabi_ldivmod)
 	mvnge	ALO, #0
 	movge	AHI, ALO, lsr #1
 	movlt	ALO, #0
-	movlt	AHI, #0x800000000
+	movlt	AHI, #0x80000000
 	bl	PLT_SYM(__aeabi_ldiv0)
 	pop	{r2-r3, ip, lr}
 	RET
