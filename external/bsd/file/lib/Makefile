@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/03/23 16:15:59 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2013/08/13 19:29:45 drochner Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -38,6 +38,6 @@ COPTS.softmagic.c = -Wno-format-nonliteral
 magic.c:	magic.h
 magic.h:        magic.h.in
 	${TOOL_SED} -e "s/X.YY/514/" < ${.ALLSRC} > ${.TARGET}
-
+CLEANFILES+=	magic.h
 
 .include <bsd.lib.mk>
