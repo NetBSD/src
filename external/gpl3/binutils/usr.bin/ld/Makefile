@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/08/05 00:08:58 matt Exp $
+#	$NetBSD: Makefile,v 1.18 2013/08/13 19:29:45 drochner Exp $
 
 .include <bsd.own.mk>
 
@@ -119,7 +119,7 @@ FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .l.c .y.c .y.h:
 	@true
 
-cleanprog: __cleanldscripts 
+cleandir: __cleanldscripts 
 __cleanldscripts:
 	-rm -rf ldscripts tmpdir
 
