@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/08/06 05:35:57 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2013/08/13 19:29:45 drochner Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -46,9 +46,11 @@ GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 SRCS=		${GSRCS:.lo=.c}
 
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c \
+		pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c \
+		pex64igen.c
 
 TEXINFO=	bfd.texinfo
 INFOFLAGS=	-I${DIST}/bfd/doc
