@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2013/08/11 04:39:18 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.20 2013/08/13 00:18:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,12 @@
 
 	.syntax		unified
 
+#ifdef __thumb__
+#define THUMB_INSN(n)	n
+#else
+#define THUMB_INSN(n)
+#endif
+
 #define	__BIT(n)	(1 << (n))
 #define __BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
@@ -67,12 +73,16 @@
  */
 #define _ASM_TYPE_FUNCTION	%function
 #define _ASM_TYPE_OBJECT	%object
+#define _THUMB_ENTRY(x) \
+	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+	.thumb_func; .code 16; x:
+#define _ARM_ENTRY(x) \
+	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+	.code 32; x:
 #ifdef __thumb__
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; .thumb_func; x:
+#define	_ENTRY(x)	_THUMB_ENTRY(x)
 #else
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
+#define	_ENTRY(x)	_ARM_ENTRY(x)
 #endif
 #define	_END(x)		.size x,.-x
 
