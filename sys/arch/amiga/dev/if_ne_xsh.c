@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_xsh.c,v 1.3 2013/08/13 10:43:28 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsh.c,v 1.4 2013/08/13 15:43:25 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/ax88190var.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -138,6 +140,13 @@ ne_xsh_attach(device_t parent, device_t self, void *aux)
 	dsc->sc_enabled = 1;
 
 	nsc->sc_type = NE2000_TYPE_AX88796;
+
+	dsc->sc_mediachange = ax88190_mediachange;
+	dsc->sc_mediastatus = ax88190_mediastatus;
+	dsc->init_card = ax88190_init_card;
+	dsc->stop_card = ax88190_stop_card;
+	dsc->sc_media_init = ax88190_media_init;
+	dsc->sc_media_fini = ax88190_media_fini;
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address
