@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_xsh.c,v 1.2 2013/08/11 12:35:18 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsh.c,v 1.3 2013/08/13 10:43:28 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/bus.h>
 
+#include <machine/cpu.h>
+
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
@@ -60,8 +62,14 @@
 #include <amiga/dev/xshvar.h>
 #include <amiga/dev/zbusvar.h>
 
+/* #define NE_XSH_DEBUG 1 */
+
 int	ne_xsh_match(device_t, cfdata_t , void *);
 void	ne_xsh_attach(device_t, device_t, void *);
+#ifdef NE_XSH_DEBUG
+void	ne_xsh_debug_mapping(bus_space_tag_t, bus_space_handle_t, 
+	    bus_space_handle_t);
+#endif /* NE_XSH_DEBUG */
 
 struct ne_xsh_softc {
 	struct ne2000_softc	sc_ne2000;
@@ -92,8 +100,7 @@ ne_xsh_attach(device_t parent, device_t self, void *aux)
 
 	struct xshbus_attach_args *xap = aux;
 
-	bus_space_tag_t nict = &zsc->sc_bst;
-	bus_space_tag_t asict = nict;
+	bus_space_tag_t xsht;
 	bus_space_handle_t nich;
 	bus_space_handle_t asich;
 
@@ -104,22 +111,27 @@ ne_xsh_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	/* Map i/o space. */
-	if (bus_space_map(nict, NE2000_NIC_OFFSET, NE2000_NPORTS, 0, &nich)) {
+	xsht = &zsc->sc_bst;
+
+	/* Map the NIC and ASIC spaces. */
+	if (bus_space_map(xsht, NE2000_NIC_OFFSET, NE2000_NPORTS, 0, &nich)) {
 		aprint_error_dev(self, "can't map nic i/o space\n");
 		return;
 	}
-
-	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET, 
+	if (bus_space_subregion(xsht, nich, NE2000_ASIC_OFFSET, 
 	    NE2000_ASIC_NPORTS, &asich)) {
 		aprint_error_dev(self, "can't map asic i/o space\n");
 		return;
 	}
 
-	dsc->sc_regt = nict;
+#ifdef NE_XSH_DEBUG
+	ne_xsh_debug_mapping(xsht, nich, asich);	
+#endif /* NE_XSH_DEBUG */
+
+	dsc->sc_regt = xsht;
 	dsc->sc_regh = nich;
 
-	nsc->sc_asict = asict;
+	nsc->sc_asict = xsht;
 	nsc->sc_asich = asich;
 
 	/* This interface is always enabled. */
@@ -138,3 +150,25 @@ ne_xsh_attach(device_t parent, device_t self, void *aux)
 	zsc->sc_isr.isr_ipl = 2;
 	add_isr(&zsc->sc_isr);
 }
+
+#ifdef NE_XSH_DEBUG
+void
+ne_xsh_debug_mapping(bus_space_tag_t xsht, bus_space_handle_t nich, 
+    bus_space_handle_t asich)
+{
+	bus_addr_t va;
+	int i;
+
+	aprint_normal("xsh: NIC mapping: ");
+	for(va = nich, i = 0; i < NE2000_NIC_NPORTS; i++) {
+		aprint_normal("%x:%x ", i, kvtop((void*) (va+i)));
+	}
+	aprint_normal("\n");
+
+	aprint_normal("xsh: ASIC mapping: ");
+	for(va = asich, i = 0; i < NE2000_ASIC_NPORTS; i++) {
+		aprint_normal("%x:%x ", i, kvtop((void*) (va+i)));
+	}
+	aprint_normal("\n");
+}
+#endif /* NE_XSH_DEBUG */
