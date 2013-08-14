@@ -1,4 +1,4 @@
-.\"	$NetBSD: ne.4,v 1.18 2013/08/13 17:30:27 rkujawa Exp $
+.\"	$NetBSD: ne.4,v 1.19 2013/08/14 09:19:09 rkujawa Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,8 +80,14 @@ driver also supports such devices on various machines.
 The Realtek 8019 (ISA, ISAPnP, some PCMCIA) and Realtek 8029 (PCI)
 NE2000-compatible Ethernet chips include support for software media
 selection.
-If one of these chips is detected by the driver, the list
-of supported media will be displayed.
+.Pp
+Some cards based on AX88x9x chips (like X-Surf 100) also support media
+selection and link auto negotiation through the
+.Xr mii 4
+interface.
+.Pp 
+If one of the above chips is detected by the driver, the list of supported
+media will be displayed.
 .Pp
 For all other chips supported by the
 .Nm
