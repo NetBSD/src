@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.79 2013/08/09 20:12:38 jmcneill Exp $
+#	$NetBSD: configure.ac,v 1.80 2013/08/14 10:14:45 jmcneill Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -137,6 +137,7 @@ AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
 	struct stat.st_atim, struct stat.st_mtimensec],,, 
 	[#include <sys/stat.h>])
 AC_CHECK_MEMBERS(struct statvfs.f_iosize,,, [#include <sys/statvfs.h>])
+AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([optind, optreset],,, [
