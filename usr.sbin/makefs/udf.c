@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.12 2013/08/09 15:11:08 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.13 2013/08/14 10:16:04 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.12 2013/08/09 15:11:08 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.13 2013/08/14 10:16:04 jmcneill Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,10 @@ __RCSID("$NetBSD: udf.c,v 1.12 2013/08/09 15:11:08 reinoud Exp $");
 #include <sys/cdio.h>
 #else
 #include "udf/cdio_mmc_structs.h"
+#endif
+
+#if !HAVE_NBTOOL_CONFIG_H
+#define HAVE_STRUCT_TM_TM_GMTOFF
 #endif
 
 #include "makefs.h"
@@ -328,7 +332,11 @@ udf_prep_opts(fsinfo_t *fsopts)
 	/* use user's time zone as default */
 	(void)time(&now);
 	tm = localtime(&now);
+#ifdef HAVE_STRUCT_TM_TM_GMTOFF
 	context.gmtoff = tm->tm_gmtoff;
+#else
+	context.gmtoff = 0;
+#endif
 
 	/* return info */
 	fsopts->fs_specific = NULL;
