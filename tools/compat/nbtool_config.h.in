@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.32 2013/08/09 20:13:21 jmcneill Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.33 2013/08/14 10:15:14 jmcneill Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -494,6 +494,9 @@
 
 /* Define if `st_mtimensec' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIMENSEC
+
+/* Define if `tm_gmtoff' is member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_GMTOFF
 
 /* Define if you have the <sys/bswap.h> header file. */
 #undef HAVE_SYS_BSWAP_H
