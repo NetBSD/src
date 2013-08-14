@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: mi,v 1.30 2013/08/14 09:31:41 pooka Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
@@ -199,6 +199,7 @@
 ./usr/lib/librumpnet_net_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpnet_netbt_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpnet_netinet6_g.a		-unknown-		debuglib,rump
 ./usr/lib/librumpnet_npf_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpnet_sockin_g.a			-unknown-		debuglib,rump
