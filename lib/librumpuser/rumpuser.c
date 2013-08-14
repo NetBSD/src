@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.53 2013/05/15 15:57:01 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.54 2013/08/14 08:29:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.53 2013/05/15 15:57:01 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.54 2013/08/14 08:29:25 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -572,6 +572,8 @@ rumpuser_getparam(const char *name, void *buf, size_t blen)
 		int ncpu;
 
 		if (getenv_r("RUMP_NCPU", buf, blen) == -1) {
+			sprintf(buf, "2"); /* default */
+		} else if (strcmp(buf, "host") == 0) {
 			ncpu = gethostncpu();
 			snprintf(buf, blen, "%d", ncpu);
 		}
