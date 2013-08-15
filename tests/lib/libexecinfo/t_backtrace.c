@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.8 2013/07/05 09:55:39 joerg Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.9 2013/08/15 12:42:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.8 2013/07/05 09:55:39 joerg Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.9 2013/08/15 12:42:25 joerg Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -128,12 +128,6 @@ ATF_TC_HEAD(backtrace_fmt_basic, tc)
 
 ATF_TC_BODY(backtrace_fmt_basic, tc)
 {
-	const char *arch = atf_config_get("atf_arch");
-
-        if (strcmp(arch, "x86_64") != 0)
-        	atf_tc_skip("PR toolchain/46490: libexecinfo only"
-		    " works on amd64 currently");
-
 	myfunc(12);
 }
 
