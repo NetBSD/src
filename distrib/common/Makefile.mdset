@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.37 2013/01/30 13:47:36 he Exp $
+#	$NetBSD: Makefile.mdset,v 1.38 2013/08/15 12:39:28 joerg Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -153,7 +153,7 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${NM} ${.TARGET}.tmp | gzip -9n > ${.TARGET}.symbols.gz
 .endif
 .if !defined(MDSET_NOSTRIP.${_FILENAME}) && !defined(MDSET_NOSTRIP)
-	${STRIP} -R .comment -R .ident ${.TARGET}.tmp
+	${STRIP} -R .eh_frame -R .eh_frame_hdr -R .comment -R .ident ${.TARGET}.tmp
 .endif
 	@mv ${.TARGET}.tmp ${.TARGET}
 .if defined(MDSET_POST.${_FILENAME}) || defined(MDSET_POST)
