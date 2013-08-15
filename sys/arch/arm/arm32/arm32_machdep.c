@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.94 2013/06/12 21:34:12 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.95 2013/08/15 22:13:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.94 2013/06/12 21:34:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.95 2013/08/15 22:13:48 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -138,7 +138,7 @@ arm32_vector_init(vaddr_t va, int which)
 	 */
 #ifndef ARM_HAS_VBAR
 	if (va == ARM_VECTORS_LOW
-	    && (armreg_pfr1_read() && ARM_PFR1_SEC_MASK) != 0) {
+	    && (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0) {
 #endif
 		extern const uint32_t page0rel[];
 		vector_page = (vaddr_t)page0rel;
