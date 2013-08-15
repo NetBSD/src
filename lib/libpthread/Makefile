@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2013/08/12 17:15:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.82 2013/08/15 22:38:24 matt Exp $
 #
 
 WARNS?=	5
@@ -57,6 +57,9 @@ SRCS+=	sem.c
 # Architecture-dependent files
 .if exists(${ARCHDIR}/pthread_md.S)
 SRCS+= pthread_md.S
+.endif
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
 .endif
 
 # The PTHREAD__COMPAT flag builds a libpthread that can be dropped
