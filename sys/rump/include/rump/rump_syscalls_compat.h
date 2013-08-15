@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.12 2013/08/15 21:21:47 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.13 2013/08/15 21:29:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifdef _KERNEL
+#error rump_syscalls_compat is not for kernel consumers
+#endif
 
 #ifndef _RUMP_RUMP_SYSCALLS_COMPAT_H_
 #define _RUMP_RUMP_SYSCALLS_COMPAT_H_
