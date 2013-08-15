@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.1,v 1.1.2.18 2013/08/08 21:58:21 snj Exp $
+# $NetBSD: CHANGES-6.1.1,v 1.1.2.19 2013/08/15 03:27:37 snj Exp $
 
 A complete list of changes from the NetBSD 6.1 release to the NetBSD 6.1.1
 release:
@@ -97,6 +97,7 @@ lib/libm/arch/x86_64/fenv.c			1.3-1.4
 	got lost somewhere along the line; the i387 code has it.
 	Fix sense of fegetexcept on x86.
 	[riastradh, ticket #899]
+
 tests/lib/libm/t_atan.c				1.4 - 1.7, 1.9 via patch
 
 	Fix test of atan_inf_neg, atan_inf_pos and atan_tan on i386.
@@ -187,3 +188,10 @@ sys/netinet6/nd6_rtr.c				1.86
         PR/47576.
         [msaitoh, ticket #926]
 
+distrib/notes/common/main			patch
+doc/LAST_MINUTE					patch
+doc/README.file					patch
+sys/sys/param.h					patch
+
+	Welcome to 6.1.1!
+	[snj]
