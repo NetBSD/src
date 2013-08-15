@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.25 2013/08/15 21:48:05 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.26 2013/08/15 22:10:22 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -492,7 +492,7 @@ struct rump_sysvbfs_args {
 
 /*	NetBSD: dirent.h,v 1.28 2011/09/27 01:40:32 christos Exp 	*/
 struct rump_dirent {
-	ino_t d_fileno;			/* file number of entry */
+	uint64_t d_fileno;			/* file number of entry */
 	uint16_t d_reclen;		/* length of this record */
 	uint16_t d_namlen;		/* length of string in d_name */
 	uint8_t  d_type; 		/* file type, see below */
