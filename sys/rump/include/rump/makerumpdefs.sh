@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.19 2013/08/15 20:45:12 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.20 2013/08/15 21:47:46 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -20,6 +20,7 @@ fromvers () {
 }
 
 # not perfect, but works well enough for the cases so far
+# (also has one struct-specific hack for MAXNAMLEN)
 getstruct () {
 	sed -n '/struct[ 	]*'"$2"'[ 	]*{/{
 		a\
@@ -28,7 +29,7 @@ struct rump_'"$2"' {
 		n
 		s/^}.*;$/};/p
 		t
-		/#define/!p
+		/^#/!{/MAXNAMLEN/!p}
 		b loop
 	}' < $1
 }
