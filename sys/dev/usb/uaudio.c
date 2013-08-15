@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.136 2013/05/12 09:54:55 wiz Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.137 2013/08/15 15:26:50 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.136 2013/05/12 09:54:55 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.137 2013/08/15 15:26:50 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2593,9 +2593,9 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	}
 
 	err = uaudio_chan_open(sc, ch);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (err) {
 		uaudio_chan_free_buffers(sc, ch);
+		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2640,9 +2640,9 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	}
 
 	err = uaudio_chan_open(sc, ch);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (err) {
 		uaudio_chan_free_buffers(sc, ch);
+		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
