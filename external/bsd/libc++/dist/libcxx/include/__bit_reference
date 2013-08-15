@@ -40,7 +40,7 @@ class __bit_reference
     __storage_pointer __seg_;
     __storage_type    __mask_;
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;
@@ -130,7 +130,7 @@ class __bit_const_reference
     __storage_pointer        __seg_;
     __storage_type __mask_;
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;
@@ -173,6 +173,8 @@ __find_bool_true(__bit_iterator<_Cp, _IsConst> __first, typename _Cp::size_type 
         __storage_type __b = *__first.__seg_ & __m;
         if (__b)
             return _It(__first.__seg_, static_cast<unsigned>(_VSTD::__ctz(__b)));
+        if (__n == __dn)
+            return _It(__first.__seg_, __first.__ctz_ + __n);
         __n -= __dn;
         ++__first.__seg_;
     }
@@ -207,6 +209,8 @@ __find_bool_false(__bit_iterator<_Cp, _IsConst> __first, typename _Cp::size_type
         __storage_type __b = ~*__first.__seg_ & __m;
         if (__b)
             return _It(__first.__seg_, static_cast<unsigned>(_VSTD::__ctz(__b)));
+        if (__n == __dn)
+            return _It(__first.__seg_, __first.__ctz_ + __n);
         __n -= __dn;
         ++__first.__seg_;
     }
@@ -1104,7 +1108,11 @@ private:
     unsigned          __ctz_;
 
 public:
-    _LIBCPP_INLINE_VISIBILITY __bit_iterator() _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY __bit_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __seg_(nullptr), __ctz_(0)
+#endif
+    {}
 
     _LIBCPP_INLINE_VISIBILITY
     __bit_iterator(const __bit_iterator<_Cp, false>& __it) _NOEXCEPT
@@ -1214,7 +1222,7 @@ private:
     __bit_iterator(__storage_pointer __s, unsigned __ctz) _NOEXCEPT
         : __seg_(__s), __ctz_(__ctz) {}
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;
