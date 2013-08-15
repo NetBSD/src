@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.10 2013/01/17 23:21:20 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.11 2013/08/15 21:16:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,12 @@
 
 #ifndef _RUMP_RUMP_SYSCALLS_COMPAT_H_
 #define _RUMP_RUMP_SYSCALLS_COMPAT_H_
+
+#include <sys/types.h> /* typedefs */
+#include <sys/select.h> /* typedefs */
+#include <sys/socket.h> /* typedefs */
+
+#include <signal.h> /* typedefs */
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>

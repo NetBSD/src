@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.128 2013/03/07 19:17:46 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.129 2013/08/15 21:16:13 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -300,10 +300,6 @@ NR == 1 {
 	printf "#ifdef _KERNEL\n" > rumpcallshdr
 	printf "#error Interface not supported inside kernel\n" > rumpcallshdr
 	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
-	printf "#include <sys/types.h> /* typedefs */\n" > rumpcallshdr
-	printf "#include <sys/select.h> /* typedefs */\n" > rumpcallshdr
-	printf "#include <sys/socket.h> /* typedefs */\n\n" > rumpcallshdr
-	printf "#include <signal.h> /* typedefs */\n\n" > rumpcallshdr
 	printf "#include <rump/rump_syscalls_compat.h>\n\n" > rumpcallshdr
 
 	printf "%s", sysarghdrextra > sysarghdr
