@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/06/23 13:56:40 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2013/08/15 21:41:08 matt Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27"
 CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-march=armv4 -mabi=apcs-gnu -mfloat-abi=soft
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 CPUFLAGS=
 DBG=		
 
