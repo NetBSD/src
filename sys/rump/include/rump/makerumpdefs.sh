@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.20 2013/08/15 21:47:46 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.21 2013/08/15 22:10:04 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -29,7 +29,7 @@ struct rump_'"$2"' {
 		n
 		s/^}.*;$/};/p
 		t
-		/^#/!{/MAXNAMLEN/!p}
+		/^#/!{/MAXNAMLEN/!{s/ino_t/uint64_t/;p;}}
 		b loop
 	}' < $1
 }
