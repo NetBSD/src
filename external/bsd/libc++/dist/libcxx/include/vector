@@ -216,8 +216,10 @@ public:
     const_reference back() const;
 
     void push_back(const value_type& x);
+    template <class... Args> void emplace_back(Args&&... args);  // C++14
     void pop_back();
 
+    template <class... Args> iterator emplace(const_iterator position, Args&&... args);  // C++14
     iterator insert(const_iterator position, const value_type& x);
     iterator insert(const_iterator position, size_type n, const value_type& x);
     template <class InputIterator>
@@ -272,6 +274,12 @@ void swap(vector<T,Allocator>& x, vector<T,Allocator>& y)
 
 #include <__undef_min_max>
 
+#ifdef _LIBCPP_DEBUG2
+#   include <__debug>
+#else
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -309,14 +317,14 @@ __vector_base_common<__b>::__throw_out_of_range() const
 #endif
 }
 
-#ifdef _MSC_VER
+#ifdef _LIBCPP_MSVC
 #pragma warning( push )
 #pragma warning( disable: 4231 )
-#endif // _MSC_VER
-_LIBCPP_EXTERN_TEMPLATE(class __vector_base_common<true>)
-#ifdef _MSC_VER
+#endif // _LIBCPP_MSVC
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __vector_base_common<true>)
+#ifdef _LIBCPP_MSVC
 #pragma warning( pop )
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVC
 
 template <class _Tp, class _Allocator>
 class __vector_base
@@ -468,7 +476,7 @@ __vector_base<_Tp, _Allocator>::~__vector_base()
 }
 
 template <class _Tp, class _Allocator = allocator<_Tp> >
-class _LIBCPP_TYPE_VIS vector
+class _LIBCPP_TYPE_VIS_ONLY vector
     : private __vector_base<_Tp, _Allocator>
 {
 private:
@@ -2005,7 +2013,7 @@ struct __has_storage_type<vector<bool, _Allocator> >
 };
 
 template <class _Allocator>
-class _LIBCPP_TYPE_VIS vector<bool, _Allocator>
+class _LIBCPP_TYPE_VIS_ONLY vector<bool, _Allocator>
     : private __vector_base_common<true>
 {
 public:
@@ -2215,7 +2223,19 @@ public:
     _LIBCPP_INLINE_VISIBILITY const_reference back()  const {return __make_ref(__size_ - 1);}
 
     void push_back(const value_type& __x);
+#if _LIBCPP_STD_VER > 11
+    template <class... _Args>
+    _LIBCPP_INLINE_VISIBILITY void emplace_back(_Args&&... __args)
+        { push_back ( value_type ( _VSTD::forward<_Args>(__args)... )); }
+#endif
+
     _LIBCPP_INLINE_VISIBILITY void pop_back() {--__size_;}
+
+#if _LIBCPP_STD_VER > 11
+    template <class... _Args>
+   _LIBCPP_INLINE_VISIBILITY iterator emplace(const_iterator position, _Args&&... __args)
+        { return insert ( position, value_type ( _VSTD::forward<_Args>(__args)... )); }
+#endif
 
     iterator insert(const_iterator __position, const value_type& __x);
     iterator insert(const_iterator __position, size_type __n, const value_type& __x);
@@ -2261,7 +2281,7 @@ private:
     void allocate(size_type __n);
     void deallocate() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
-    static size_type __align(size_type __new_size) _NOEXCEPT
+    static size_type __align_it(size_type __new_size) _NOEXCEPT
         {return __new_size + (__bits_per_word-1) & ~(__bits_per_word-1);};
     _LIBCPP_INLINE_VISIBILITY  size_type __recommend(size_type __new_size) const;
     _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n, bool __x);
@@ -2363,7 +2383,7 @@ private:
     friend class __bit_iterator<vector, false>;
     friend class __bit_iterator<vector, true>;
     friend struct __bit_array<vector>;
-    friend struct _LIBCPP_TYPE_VIS hash<vector>;
+    friend struct _LIBCPP_TYPE_VIS_ONLY hash<vector>;
 };
 
 template <class _Allocator>
@@ -2434,7 +2454,7 @@ vector<bool, _Allocator>::__recommend(size_type __new_size) const
     const size_type __cap = capacity();
     if (__cap >= __ms / 2)
         return __ms;
-    return _VSTD::max(2*__cap, __align(__new_size));
+    return _VSTD::max(2*__cap, __align_it(__new_size));
 }
 
 //  Default constructs __n objects starting at __end_
@@ -3146,7 +3166,7 @@ vector<bool, _Allocator>::__hash_code() const _NOEXCEPT
 }
 
 template <class _Allocator>
-struct _LIBCPP_TYPE_VIS hash<vector<bool, _Allocator> >
+struct _LIBCPP_TYPE_VIS_ONLY hash<vector<bool, _Allocator> >
     : public unary_function<vector<bool, _Allocator>, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY

@@ -380,11 +380,11 @@ _LIBCPP_DECLARE_STRONG_ENUM(io_errc)
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(io_errc)
 
 template <>
-struct _LIBCPP_TYPE_VIS is_error_code_enum<io_errc> : public true_type { };
+struct _LIBCPP_TYPE_VIS_ONLY is_error_code_enum<io_errc> : public true_type { };
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_TYPE_VIS is_error_code_enum<io_errc::__lx> : public true_type { };
+struct _LIBCPP_TYPE_VIS_ONLY is_error_code_enum<io_errc::__lx> : public true_type { };
 #endif
 
 _LIBCPP_FUNC_VIS
@@ -560,7 +560,7 @@ ios_base::exceptions(iostate __except)
 }
 
 template <class _CharT, class _Traits>
-class _LIBCPP_TYPE_VIS basic_ios
+class _LIBCPP_TYPE_VIS_ONLY basic_ios
     : public ios_base
 {
 public:
@@ -982,6 +982,33 @@ defaultfloat(ios_base& __str)
     __str.unsetf(ios_base::floatfield);
     return __str;
 }
+
+template <class _CharT, class _Traits>
+class __save_flags
+{
+    typedef basic_ios<_CharT, _Traits> __stream_type;
+    typedef typename __stream_type::fmtflags fmtflags;
+
+    __stream_type& __stream_;
+    fmtflags       __fmtflags_;
+    _CharT         __fill_;
+
+    __save_flags(const __save_flags&);
+    __save_flags& operator=(const __save_flags&);
+public:
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __save_flags(__stream_type& __stream)
+        : __stream_(__stream),
+          __fmtflags_(__stream.flags()),
+          __fill_(__stream.fill())
+        {}
+    _LIBCPP_INLINE_VISIBILITY
+    ~__save_flags()
+    {
+        __stream_.flags(__fmtflags_);
+        __stream_.fill(__fill_);
+    }
+};
 
 _LIBCPP_END_NAMESPACE_STD
 
