@@ -68,92 +68,116 @@ template <class T> reference_wrapper<const T> cref(const T& t) noexcept;
 template <class T> void cref(const T&& t) = delete;
 template <class T> reference_wrapper<const T> cref(reference_wrapper<T> t) noexcept;
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct plus : binary_function<T, T, T>
 {
     T operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct minus : binary_function<T, T, T>
 {
     T operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct multiplies : binary_function<T, T, T>
 {
     T operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct divides : binary_function<T, T, T>
 {
     T operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct modulus : binary_function<T, T, T>
 {
     T operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct negate : unary_function<T, T>
 {
     T operator()(const T& x) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct equal_to : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct not_equal_to : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct greater : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct less : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct greater_equal : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct less_equal : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct logical_and : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct logical_or : binary_function<T, T, bool>
 {
     bool operator()(const T& x, const T& y) const;
 };
 
-template <class T>
+template <class T> // <class T=void> in C++14
 struct logical_not : unary_function<T, bool>
+{
+    bool operator()(const T& x) const;
+};
+
+template <class T> // <class T=void> in C++14
+struct bit_and : unary_function<T, bool>
+{
+    bool operator()(const T& x, const T& y) const;
+};
+
+template <class T> // <class T=void> in C++14
+struct bit_or : unary_function<T, bool>
+{
+    bool operator()(const T& x, const T& y) const;
+};
+
+template <class T> // <class T=void> in C++14
+struct bit_xor : unary_function<T, bool>
+{
+    bool operator()(const T& x, const T& y) const;
+};
+
+template <class T=void> // C++14
+struct bit_xor : unary_function<T, bool>
 {
     bool operator()(const T& x) const;
 };
@@ -473,129 +497,419 @@ POLICY:  For non-variadic implementations, the number of arguments is limited
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS plus : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY plus : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x + __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY plus<void>
+{
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) + _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS minus : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY minus : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x - __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY minus<void>
+{
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) - _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS multiplies : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY multiplies : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x * __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY multiplies<void>
+{
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) * _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS divides : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY divides : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x / __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY divides<void>
+{
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) / _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS modulus : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY modulus : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x % __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY modulus<void>
+{
+    template <class _T1, class _T2>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) % _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS negate : unary_function<_Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY negate : unary_function<_Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x) const
         {return -__x;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY negate<void>
+{
+    template <class _Tp>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
+        { return -_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS equal_to : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY equal_to : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x == __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY equal_to<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) == _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS not_equal_to : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY not_equal_to : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x != __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY not_equal_to<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) != _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS greater : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY greater : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x > __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY greater<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) > _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
 // less in <__functional_base>
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS greater_equal : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY greater_equal : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x >= __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY greater_equal<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) >= _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS less_equal : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY less_equal : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x <= __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY less_equal<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) <= _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS logical_and : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY logical_and : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x && __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY logical_and<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) && _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS logical_or : binary_function<_Tp, _Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY logical_or : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x || __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY logical_or<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) || _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS logical_not : unary_function<_Tp, bool>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY logical_not : unary_function<_Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x) const
         {return !__x;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY logical_not<void>
+{
+    template <class _Tp>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
+        { return !_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS bit_and : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY bit_and : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x & __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY bit_and<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) & _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS bit_or : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY bit_or : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x | __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY bit_or<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) | _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS bit_xor : binary_function<_Tp, _Tp, _Tp>
+#endif
+struct _LIBCPP_TYPE_VIS_ONLY bit_xor : binary_function<_Tp, _Tp, _Tp>
 {
     _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x, const _Tp& __y) const
         {return __x ^ __y;}
 };
 
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY bit_xor<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) ^ _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
+};
+#endif
+
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+struct _LIBCPP_TYPE_VIS_ONLY bit_not : unary_function<_Tp, _Tp>
+{
+    _LIBCPP_INLINE_VISIBILITY _Tp operator()(const _Tp& __x) const
+        {return ~__x;}
+};
+
+template <>
+struct _LIBCPP_TYPE_VIS_ONLY bit_not<void>
+{
+    template <class _Tp>
+    _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
+        { return ~_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
+};
+#endif
+
 template <class _Predicate>
-class _LIBCPP_TYPE_VIS unary_negate
+class _LIBCPP_TYPE_VIS_ONLY unary_negate
     : public unary_function<typename _Predicate::argument_type, bool>
 {
     _Predicate __pred_;
@@ -612,7 +926,7 @@ unary_negate<_Predicate>
 not1(const _Predicate& __pred) {return unary_negate<_Predicate>(__pred);}
 
 template <class _Predicate>
-class _LIBCPP_TYPE_VIS binary_negate
+class _LIBCPP_TYPE_VIS_ONLY binary_negate
     : public binary_function<typename _Predicate::first_argument_type,
                              typename _Predicate::second_argument_type,
                              bool>
@@ -632,7 +946,7 @@ binary_negate<_Predicate>
 not2(const _Predicate& __pred) {return binary_negate<_Predicate>(__pred);}
 
 template <class __Operation>
-class _LIBCPP_TYPE_VIS binder1st
+class _LIBCPP_TYPE_VIS_ONLY binder1st
     : public unary_function<typename __Operation::second_argument_type,
                             typename __Operation::result_type>
 {
@@ -658,7 +972,7 @@ bind1st(const __Operation& __op, const _Tp& __x)
     {return binder1st<__Operation>(__op, __x);}
 
 template <class __Operation>
-class _LIBCPP_TYPE_VIS binder2nd
+class _LIBCPP_TYPE_VIS_ONLY binder2nd
     : public unary_function<typename __Operation::first_argument_type,
                             typename __Operation::result_type>
 {
@@ -684,7 +998,7 @@ bind2nd(const __Operation& __op, const _Tp& __x)
     {return binder2nd<__Operation>(__op, __x);}
 
 template <class _Arg, class _Result>
-class _LIBCPP_TYPE_VIS pointer_to_unary_function
+class _LIBCPP_TYPE_VIS_ONLY pointer_to_unary_function
     : public unary_function<_Arg, _Result>
 {
     _Result (*__f_)(_Arg);
@@ -702,7 +1016,7 @@ ptr_fun(_Result (*__f)(_Arg))
     {return pointer_to_unary_function<_Arg,_Result>(__f);}
 
 template <class _Arg1, class _Arg2, class _Result>
-class _LIBCPP_TYPE_VIS pointer_to_binary_function
+class _LIBCPP_TYPE_VIS_ONLY pointer_to_binary_function
     : public binary_function<_Arg1, _Arg2, _Result>
 {
     _Result (*__f_)(_Arg1, _Arg2);
@@ -720,7 +1034,7 @@ ptr_fun(_Result (*__f)(_Arg1,_Arg2))
     {return pointer_to_binary_function<_Arg1,_Arg2,_Result>(__f);}
 
 template<class _Sp, class _Tp>
-class _LIBCPP_TYPE_VIS mem_fun_t : public unary_function<_Tp*, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY mem_fun_t : public unary_function<_Tp*, _Sp>
 {
     _Sp (_Tp::*__p_)();
 public:
@@ -731,7 +1045,7 @@ public:
 };
 
 template<class _Sp, class _Tp, class _Ap>
-class _LIBCPP_TYPE_VIS mem_fun1_t : public binary_function<_Tp*, _Ap, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY mem_fun1_t : public binary_function<_Tp*, _Ap, _Sp>
 {
     _Sp (_Tp::*__p_)(_Ap);
 public:
@@ -754,7 +1068,7 @@ mem_fun(_Sp (_Tp::*__f)(_Ap))
     {return mem_fun1_t<_Sp,_Tp,_Ap>(__f);}
 
 template<class _Sp, class _Tp>
-class _LIBCPP_TYPE_VIS mem_fun_ref_t : public unary_function<_Tp, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY mem_fun_ref_t : public unary_function<_Tp, _Sp>
 {
     _Sp (_Tp::*__p_)();
 public:
@@ -765,7 +1079,7 @@ public:
 };
 
 template<class _Sp, class _Tp, class _Ap>
-class _LIBCPP_TYPE_VIS mem_fun1_ref_t : public binary_function<_Tp, _Ap, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY mem_fun1_ref_t : public binary_function<_Tp, _Ap, _Sp>
 {
     _Sp (_Tp::*__p_)(_Ap);
 public:
@@ -788,7 +1102,7 @@ mem_fun_ref(_Sp (_Tp::*__f)(_Ap))
     {return mem_fun1_ref_t<_Sp,_Tp,_Ap>(__f);}
 
 template <class _Sp, class _Tp>
-class _LIBCPP_TYPE_VIS const_mem_fun_t : public unary_function<const _Tp*, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY const_mem_fun_t : public unary_function<const _Tp*, _Sp>
 {
     _Sp (_Tp::*__p_)() const;
 public:
@@ -799,7 +1113,7 @@ public:
 };
 
 template <class _Sp, class _Tp, class _Ap>
-class _LIBCPP_TYPE_VIS const_mem_fun1_t : public binary_function<const _Tp*, _Ap, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY const_mem_fun1_t : public binary_function<const _Tp*, _Ap, _Sp>
 {
     _Sp (_Tp::*__p_)(_Ap) const;
 public:
@@ -822,7 +1136,7 @@ mem_fun(_Sp (_Tp::*__f)(_Ap) const)
     {return const_mem_fun1_t<_Sp,_Tp,_Ap>(__f);}
 
 template <class _Sp, class _Tp>
-class _LIBCPP_TYPE_VIS const_mem_fun_ref_t : public unary_function<_Tp, _Sp>
+class _LIBCPP_TYPE_VIS_ONLY const_mem_fun_ref_t : public unary_function<_Tp, _Sp>
 {
     _Sp (_Tp::*__p_)() const;
 public:
@@ -833,7 +1147,7 @@ public:
 };
 
 template <class _Sp, class _Tp, class _Ap>
-class _LIBCPP_TYPE_VIS const_mem_fun1_ref_t
+class _LIBCPP_TYPE_VIS_ONLY const_mem_fun1_ref_t
     : public binary_function<_Tp, _Ap, _Sp>
 {
     _Sp (_Tp::*__p_)(_Ap) const;
@@ -932,7 +1246,7 @@ class _LIBCPP_EXCEPTION_ABI bad_function_call
 {
 };
 
-template<class _Fp> class _LIBCPP_TYPE_VIS function; // undefined
+template<class _Fp> class _LIBCPP_TYPE_VIS_ONLY function; // undefined
 
 namespace __function
 {
@@ -1083,7 +1397,7 @@ __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::target_type() const _NOEXCEPT
 }  // __function
 
 template<class _Rp, class ..._ArgTypes>
-class _LIBCPP_TYPE_VIS function<_Rp(_ArgTypes...)>
+class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_ArgTypes...)>
     : public __function::__maybe_derive_from_unary_function<_Rp(_ArgTypes...)>,
       public __function::__maybe_derive_from_binary_function<_Rp(_ArgTypes...)>
 {
@@ -1505,11 +1819,11 @@ swap(function<_Rp(_ArgTypes...)>& __x, function<_Rp(_ArgTypes...)>& __y) _NOEXCE
 {return __x.swap(__y);}
 
 template<class _Tp> struct __is_bind_expression : public false_type {};
-template<class _Tp> struct _LIBCPP_TYPE_VIS is_bind_expression
+template<class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_bind_expression
     : public __is_bind_expression<typename remove_cv<_Tp>::type> {};
 
 template<class _Tp> struct __is_placeholder : public integral_constant<int, 0> {};
-template<class _Tp> struct _LIBCPP_TYPE_VIS is_placeholder
+template<class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_placeholder
     : public __is_placeholder<typename remove_cv<_Tp>::type> {};
 
 namespace placeholders
@@ -1517,16 +1831,16 @@ namespace placeholders
 
 template <int _Np> struct __ph {};
 
-extern __ph<1>   _1;
-extern __ph<2>   _2;
-extern __ph<3>   _3;
-extern __ph<4>   _4;
-extern __ph<5>   _5;
-extern __ph<6>   _6;
-extern __ph<7>   _7;
-extern __ph<8>   _8;
-extern __ph<9>   _9;
-extern __ph<10> _10;
+_LIBCPP_FUNC_VIS extern __ph<1>   _1;
+_LIBCPP_FUNC_VIS extern __ph<2>   _2;
+_LIBCPP_FUNC_VIS extern __ph<3>   _3;
+_LIBCPP_FUNC_VIS extern __ph<4>   _4;
+_LIBCPP_FUNC_VIS extern __ph<5>   _5;
+_LIBCPP_FUNC_VIS extern __ph<6>   _6;
+_LIBCPP_FUNC_VIS extern __ph<7>   _7;
+_LIBCPP_FUNC_VIS extern __ph<8>   _8;
+_LIBCPP_FUNC_VIS extern __ph<9>   _9;
+_LIBCPP_FUNC_VIS extern __ph<10> _10;
 
 }  // placeholders
 
@@ -1888,7 +2202,7 @@ bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<bool>
+struct _LIBCPP_TYPE_VIS_ONLY hash<bool>
     : public unary_function<bool, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1896,7 +2210,7 @@ struct _LIBCPP_TYPE_VIS hash<bool>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<char>
+struct _LIBCPP_TYPE_VIS_ONLY hash<char>
     : public unary_function<char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1904,7 +2218,7 @@ struct _LIBCPP_TYPE_VIS hash<char>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<signed char>
+struct _LIBCPP_TYPE_VIS_ONLY hash<signed char>
     : public unary_function<signed char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1912,7 +2226,7 @@ struct _LIBCPP_TYPE_VIS hash<signed char>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<unsigned char>
+struct _LIBCPP_TYPE_VIS_ONLY hash<unsigned char>
     : public unary_function<unsigned char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1922,7 +2236,7 @@ struct _LIBCPP_TYPE_VIS hash<unsigned char>
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<char16_t>
+struct _LIBCPP_TYPE_VIS_ONLY hash<char16_t>
     : public unary_function<char16_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1930,7 +2244,7 @@ struct _LIBCPP_TYPE_VIS hash<char16_t>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<char32_t>
+struct _LIBCPP_TYPE_VIS_ONLY hash<char32_t>
     : public unary_function<char32_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1940,7 +2254,7 @@ struct _LIBCPP_TYPE_VIS hash<char32_t>
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<wchar_t>
+struct _LIBCPP_TYPE_VIS_ONLY hash<wchar_t>
     : public unary_function<wchar_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1948,7 +2262,7 @@ struct _LIBCPP_TYPE_VIS hash<wchar_t>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<short>
+struct _LIBCPP_TYPE_VIS_ONLY hash<short>
     : public unary_function<short, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1956,7 +2270,7 @@ struct _LIBCPP_TYPE_VIS hash<short>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<unsigned short>
+struct _LIBCPP_TYPE_VIS_ONLY hash<unsigned short>
     : public unary_function<unsigned short, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1964,7 +2278,7 @@ struct _LIBCPP_TYPE_VIS hash<unsigned short>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<int>
+struct _LIBCPP_TYPE_VIS_ONLY hash<int>
     : public unary_function<int, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1972,7 +2286,7 @@ struct _LIBCPP_TYPE_VIS hash<int>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<unsigned int>
+struct _LIBCPP_TYPE_VIS_ONLY hash<unsigned int>
     : public unary_function<unsigned int, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1980,7 +2294,7 @@ struct _LIBCPP_TYPE_VIS hash<unsigned int>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<long>
+struct _LIBCPP_TYPE_VIS_ONLY hash<long>
     : public unary_function<long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1988,7 +2302,7 @@ struct _LIBCPP_TYPE_VIS hash<long>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<unsigned long>
+struct _LIBCPP_TYPE_VIS_ONLY hash<unsigned long>
     : public unary_function<unsigned long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -1996,19 +2310,19 @@ struct _LIBCPP_TYPE_VIS hash<unsigned long>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<long long>
+struct _LIBCPP_TYPE_VIS_ONLY hash<long long>
     : public __scalar_hash<long long>
 {
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<unsigned long long>
+struct _LIBCPP_TYPE_VIS_ONLY hash<unsigned long long>
     : public __scalar_hash<unsigned long long>
 {
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<float>
+struct _LIBCPP_TYPE_VIS_ONLY hash<float>
     : public __scalar_hash<float>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -2022,7 +2336,7 @@ struct _LIBCPP_TYPE_VIS hash<float>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<double>
+struct _LIBCPP_TYPE_VIS_ONLY hash<double>
     : public __scalar_hash<double>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -2036,7 +2350,7 @@ struct _LIBCPP_TYPE_VIS hash<double>
 };
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<long double>
+struct _LIBCPP_TYPE_VIS_ONLY hash<long double>
     : public __scalar_hash<long double>
 {
     _LIBCPP_INLINE_VISIBILITY
