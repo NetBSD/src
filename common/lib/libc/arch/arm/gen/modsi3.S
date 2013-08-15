@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.3 2013/06/20 07:16:23 matt Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.4 2013/08/15 21:40:11 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,6 +16,7 @@
 
 #include <machine/asm.h>
 
+#ifndef __ARM_EABI__
 /* 
  * stack is aligned as there's a possibility of branching to .L_overflow
  * which makes a C call
@@ -33,3 +34,5 @@ ENTRY(__modsi3)
 #endif
 	RET
 END(__modsi3)
+
+#endif
