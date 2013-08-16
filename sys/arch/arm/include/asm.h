@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2013/08/13 00:18:15 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 2013/08/16 17:45:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,16 +73,20 @@
  */
 #define _ASM_TYPE_FUNCTION	%function
 #define _ASM_TYPE_OBJECT	%object
-#define _THUMB_ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+#define _THUMB_ENTRY_NS(x) \
+	_ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
 	.thumb_func; .code 16; x:
-#define _ARM_ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+#define _THUMB_ENTRY(x) .text; _THUMB_ENTRY_NS(x)
+#define _ARM_ENTRY_NS(x) \
+	_ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
 	.code 32; x:
+#define _ARM_ENTRY(x)	.text; _ARM_ENTRY_NS(x)
 #ifdef __thumb__
 #define	_ENTRY(x)	_THUMB_ENTRY(x)
+#define	_ENTRY_NS(x)	_THUMB_ENTRY_NS(x)
 #else
 #define	_ENTRY(x)	_ARM_ENTRY(x)
+#define	_ENTRY_NS(x)	_ARM_ENTRY_NS(x)
 #endif
 #define	_END(x)		.size x,.-x
 
@@ -102,7 +106,8 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(PIC)
+#if defined(PIC) || defined(__pic__)
+#define	REL_SYM(a, b)	((a) - (b))
 #ifdef __thumb__
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	PIC_SYM(x, GOTOFF)
@@ -120,10 +125,16 @@
 
 #define	GOT_INIT(got,gotsym,pclabel) \
 	ldr	got, gotsym;	\
-	add	got, got, pc;	\
-	pclabel:
+	pclabel: add	got, got, pc
+#ifdef __thumb__
 #define	GOT_INITSYM(gotsym,pclabel) \
-	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (pclabel+4))
+	.align 0;		\
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+4)
+#else
+#define	GOT_INITSYM(gotsym,pclabel) \
+	.align 0;		\
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) - (pclabel+8)
+#endif
 
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
@@ -132,6 +143,7 @@
 #endif
 
 #else
+#define	REL_SYM(a, b)	(a)
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	x
 #define	GOT_GET(x,got,sym)	\
@@ -184,7 +196,9 @@
 # define RET		bx		lr
 # define RETr(r)	bx		r
 # if defined(__thumb__)
-#  define RETc(c)	it c; __CONCAT(bx,c)	lr
+#  if defined(_ARM_ARCH_7)
+#   define RETc(c)	it c; __CONCAT(bx,c)	lr
+#  endif
 # else
 #  define RETc(c)	__CONCAT(bx,c)	lr
 # endif
