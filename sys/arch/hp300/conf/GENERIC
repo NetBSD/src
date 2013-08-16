@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: GENERIC,v 1.180 2013/08/16 13:39:47 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.180 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,7 @@ options 	HP400
 options 	HP425
 options 	HP433
 options 	FPSP		# floating point interface for 68040
+#options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options
 options 	KTRACE		# system call tracing support

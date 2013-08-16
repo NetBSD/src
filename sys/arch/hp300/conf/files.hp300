@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.85 2011/06/12 03:35:40 rmind Exp $
+#	$NetBSD: files.hp300,v 1.86 2013/08/16 13:39:47 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -208,6 +208,7 @@ file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/fpu.c
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
@@ -215,6 +216,10 @@ file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
+
+# Emulation modules
+# 6888x emulator (FPU_EMULATE)
+include "arch/m68k/fpe/files.fpe"
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"
