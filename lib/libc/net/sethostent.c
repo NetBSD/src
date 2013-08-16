@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.17 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.18 2013/08/16 15:27:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -35,7 +35,7 @@
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp ";
 #else
-__RCSID("$NetBSD: sethostent.c,v 1.17 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: sethostent.c,v 1.18 2013/08/16 15:27:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,16 +46,16 @@ __RCSID("$NetBSD: sethostent.c,v 1.17 2012/03/20 17:44:18 matt Exp $");
 #include <netdb.h>
 #include <resolv.h>
 
+#include "hostent.h"
+
 #ifdef __weak_alias
 __weak_alias(sethostent,_sethostent)
 __weak_alias(endhostent,_endhostent)
 #endif
 
-void	_endhtent(void);
 #ifndef _REENTRANT
 void	res_close(void);
 #endif
-void	_sethtent(int);
 
 void
 /*ARGSUSED*/
@@ -67,7 +67,7 @@ sethostent(int stayopen)
 	if (stayopen)
 		_res.options |= RES_STAYOPEN | RES_USEVC;
 #endif
-	_sethtent(stayopen);
+	sethostent_r(&_h_file);
 }
 
 void
@@ -77,5 +77,5 @@ endhostent(void)
 	_res.options &= ~(RES_STAYOPEN | RES_USEVC);
 	res_close();
 #endif
-	_endhtent();
+	endhostent_r(&_h_file);
 }
