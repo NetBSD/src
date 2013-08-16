@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.9 2013/08/15 22:41:15 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.10 2013/08/16 21:42:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -54,10 +54,20 @@
 	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
 	__asm(MCOUNT_ASM_NAME ":");					\
+	__asm(".cfi_startproc");					\
+	__asm(".fnstart");						\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
 	__asm("push	{r0-r3, ip, lr}");				\
+	__asm(".save {r0-r3, ip, lr}");					\
+	__asm(".cfi_def_cfa_offset 24");				\
+	__asm(".cfi_offset 14, -4");					\
+	__asm(".cfi_offset 12, -8");					\
+	__asm(".cfi_offset 3, -12");					\
+	__asm(".cfi_offset 2, -16");					\
+	__asm(".cfi_offset 1, -20");					\
+	__asm(".cfi_offset 0, -24");					\
 	/* Check what mode we're in.  EQ => 32, NE => 26 */		\
 	__asm("teq	r0, r0");					\
 	__asm("teq	pc, r15");					\
@@ -81,52 +91,32 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, lr, pc}");				\
-	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
-#elif !defined(__thumb__) || defined(_ARM_ARCH_T2)
-#define	MCOUNT								\
-	__asm(".text");							\
-	__asm(".align	0");						\
-	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
-	__asm(".global	" MCOUNT_ASM_NAME);				\
-	__asm(MCOUNT_ASM_NAME ":");					\
-	/*								\
-	 * Preserve registers that are trashed during mcount		\
-	 */								\
-	__asm("push	{r0-r3, ip, lr}");				\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * frompcindex = pc pushed by call into self.			\
-	 */								\
-	__asm("mov	r0, ip");					\
-	/*								\
-	 * selfpc = pc pushed by mcount call				\
-	 */								\
-	__asm("mov	r1, lr");					\
-	/*								\
-	 * Call the real mcount code					\
-	 */								\
-	__asm("bl	" ___STRING(_C_LABEL(_mcount)) PLTSYM);		\
-	/*								\
-	 * Restore registers that were trashed during mcount		\
-	 */								\
-	__asm("pop	{r0-r3, lr, pc}");				\
+	__asm("pop	{r0-r3, pc}");					\
+	__asm(".cfi_endproc");						\
+	__asm(".fnend");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #else
 #define	MCOUNT								\
 	__asm(".text");							\
 	__asm(".align	0");						\
-	__asm(".thumb_func");						\
 	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
+	__asm(".arm");							\
 	__asm(MCOUNT_ASM_NAME ":");					\
+	__asm(".fnstart");						\
+	__asm(".cfi_startproc");					\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	__asm("push	{r0-r4,lr}");					\
-	__asm("mov	r4, ip");					\
+	__asm("push	{r0-r4, ip, lr}");				\
+	__asm(".save {r0-r4, lr}");					\
+	__asm(".cfi_def_cfa_offset 24");				\
+	__asm(".cfi_offset 14, -4");					\
+	__asm(".cfi_offset 4, -8");					\
+	__asm(".cfi_offset 3, -12");					\
+	__asm(".cfi_offset 2, -16");					\
+	__asm(".cfi_offset 1, -20");					\
+	__asm(".cfi_offset 0, -24");					\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
@@ -145,8 +135,9 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("mov	lr, r4");					\
-	__asm("pop	{r0-r4, pc}");					\
+	__asm("pop	{r0-r4, lr, pc}");				\
+	__asm(".cfi_endproc");						\
+	__asm(".fnend");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #endif
 
