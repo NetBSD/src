@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.9 2013/08/15 12:42:25 joerg Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.10 2013/08/16 11:57:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.9 2013/08/15 12:42:25 joerg Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.10 2013/08/16 11:57:15 martin Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -42,9 +42,14 @@ __RCSID("$NetBSD: t_backtrace.c,v 1.9 2013/08/15 12:42:25 joerg Exp $");
 #define __arraycount(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
+void myfunc3(size_t ncalls);
+void myfunc2(size_t ncalls);
+void myfunc1(size_t origcalls, volatile size_t ncalls);
+void myfunc(size_t ncalls);
+
 volatile int prevent_inline;
 
-static void
+void
 myfunc3(size_t ncalls)
 {
 	static const char *top[] = { "myfunc", "atfu_backtrace_fmt_basic_body",
@@ -90,7 +95,7 @@ myfunc3(size_t ncalls)
 		vfork();
 }
 
-static void
+void
 myfunc2(size_t ncalls)
 {
 	myfunc3(ncalls);
@@ -99,7 +104,7 @@ myfunc2(size_t ncalls)
 		vfork();
 }
 
-static void
+void
 myfunc1(size_t origcalls, volatile size_t ncalls)
 {
 	if (ncalls > 1)
@@ -111,7 +116,7 @@ myfunc1(size_t origcalls, volatile size_t ncalls)
 		vfork();
 }
 
-static void
+void
 myfunc(size_t ncalls)
 {
 	myfunc1(ncalls, ncalls);
@@ -129,6 +134,9 @@ ATF_TC_HEAD(backtrace_fmt_basic, tc)
 ATF_TC_BODY(backtrace_fmt_basic, tc)
 {
 	myfunc(12);
+
+	if (prevent_inline)
+		vfork();
 }
 
 ATF_TP_ADD_TCS(tp)
