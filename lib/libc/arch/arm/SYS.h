@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.13 2013/08/16 22:20:49 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.14 2013/08/16 22:30:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
 #define	_INVOKE_CERROR()	bcs CERROR
 #else
 #define	_INVOKE_CERROR()	\
-	bcc 86f; push {r4,lr}; bl CERROR; pop {r4,pc}; 86:
+	bcc 86f; push {r3,lr}; bl CERROR; pop {r3,pc}; 86:
 #endif
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
