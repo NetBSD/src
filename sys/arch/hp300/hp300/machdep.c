@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 2012/08/10 12:29:59 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227 2013/08/16 13:39:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2012/08/10 12:29:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2013/08/16 13:39:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_fpu_emulate.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 
@@ -446,6 +447,13 @@ identifycpu(void)
 	case FPU_68881:
 		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
 		    machineid == HP_350 ? "20" : "16.67");
+		break;
+	case FPU_NONE:
+#ifdef FPU_EMULATE
+		len += sprintf(cpu_model + len, ", emulated FPU");
+#else
+		len += sprintf(cpu_model + len, ", no FPU");
+#endif
 		break;
 	default:
 		len += sprintf(cpu_model + len, ", unknown FPU");
