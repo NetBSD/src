@@ -28,9 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_simplelock.c,v 1.1 2013/08/15 22:42:50 matt Exp $");
+__RCSID("$NetBSD: atomic_simplelock.c,v 1.2 2013/08/16 01:47:41 matt Exp $");
 
 #include <sys/types.h>
+
+#if !defined(_ARM_ARCH_T2)
 /*
  * We need to use the inlines so redefine out of the way.
  */
@@ -43,12 +45,16 @@ __RCSID("$NetBSD: atomic_simplelock.c,v 1.1 2013/08/15 22:42:50 matt Exp $");
 #undef __cpu_simple_lock
 #undef __cpu_simple_lock_try
 
-#if !defined(_ARM_ARCH_T2)
 /*
  * Since we overrode lock.h we have to provide these ourselves.
  */
+#ifdef __LIBPTHREAD_SOURCE__
 __dso_hidden void __cpu_simple_lock(__cpu_simple_lock_t *);
 __dso_hidden int __cpu_simple_lock_try(__cpu_simple_lock_t *);
+#else
+void __cpu_simple_lock(__cpu_simple_lock_t *);
+int __cpu_simple_lock_try(__cpu_simple_lock_t *);
+#endif
 
 void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
