@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.3 2013/07/30 10:47:44 skrll Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.4 2013/08/16 17:09:27 matt Exp $");
 
 #include "namespace.h"
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: arm_initfini.c,v 1.3 2013/07/30 10:47:44 skrll Exp $");
 #include <stdbool.h>
 #include <stddef.h>
 
-int _libc_arm_fpu_present;
+__dso_hidden int _libc_arm_fpu_present;
 static bool _libc_aapcs_initialized;
 
 void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
