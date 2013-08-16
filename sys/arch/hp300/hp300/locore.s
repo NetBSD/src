@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165 2011/12/22 15:33:29 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.166 2013/08/16 13:39:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -576,6 +576,8 @@ Lenab1:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
+	jbsr	_C_LABEL(fpu_probe)
+	movl	%d0,_C_LABEL(fputype)
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
