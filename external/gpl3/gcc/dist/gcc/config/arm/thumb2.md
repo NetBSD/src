@@ -1208,7 +1208,7 @@
   [(set (match_operand:SI	  0 "s_register_operand" "=r")
 	(div:SI (match_operand:SI 1 "s_register_operand"  "r")
 		(match_operand:SI 2 "s_register_operand"  "r")))]
-  "TARGET_THUMB2 && arm_arch_hwdiv"
+  "(TARGET_THUMB2 || TARGET_ARM) && arm_arch_hwdiv"
   "sdiv%?\t%0, %1, %2"
   [(set_attr "predicable" "yes")
    (set_attr "insn" "sdiv")]
@@ -1218,7 +1218,7 @@
   [(set (match_operand:SI	   0 "s_register_operand" "=r")
 	(udiv:SI (match_operand:SI 1 "s_register_operand"  "r")
 		 (match_operand:SI 2 "s_register_operand"  "r")))]
-  "TARGET_THUMB2 && arm_arch_hwdiv"
+  "(TARGET_THUMB2 || TARGET_ARM) && arm_arch_hwdiv"
   "udiv%?\t%0, %1, %2"
   [(set_attr "predicable" "yes")
    (set_attr "insn" "udiv")]
