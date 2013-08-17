@@ -1,6 +1,10 @@
-/* $NetBSD: __aeabi_read_tp.S,v 1.3 2012/11/20 22:02:46 matt Exp $ */
+/* $NetBSD: __aeabi_read_tp.S,v 1.4 2013/08/17 01:08:35 matt Exp $ */
 
 #include "SYS.h"
+
+#if defined(__thumb__) && !defined(_ARM_ARCH_T2)
+#error Thumb only supported on armv7
+#endif
 
 /*
  * Implementations of this function should corrupt only the result register
@@ -17,4 +21,4 @@ ENTRY(__aeabi_read_tp)
 	mov	r1, ip			/* restore r1 */
 #endif
 	RET
-_END(__aeabi_read_tp)
+END(__aeabi_read_tp)
