@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.26 2013/06/27 01:01:08 matt Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.27 2013/08/17 19:57:09 skrll Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -10,6 +10,8 @@ LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
 .else
 # Need to convert the kernel from ELF to a.out so that the firmware
 # can load it.
+
+CFLAGS+=	-fno-unwind-tables
 
 LINKFLAGS=	-T ldscript
 
