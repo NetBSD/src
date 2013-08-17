@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.121 2013/07/02 06:07:11 matt Exp $
+#	$NetBSD: files.arm,v 1.122 2013/08/17 22:21:02 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -196,7 +196,6 @@ file	arch/arm/arm32/setstack.S		arm32
 file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
 file	arch/arm/arm32/vm_machdep.c		arm32
-file	arch/arm/arm32/atomic.S			arm32
 
 # files less common to arm32 implementations...
 file	kern/kern_cctr.c			arm11
