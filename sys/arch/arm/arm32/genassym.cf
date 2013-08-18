@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.63 2013/07/02 05:52:14 matt Exp $
+#	$NetBSD: genassym.cf,v 1.64 2013/08/18 04:52:19 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -165,13 +165,18 @@ define	PR_SCALE		offsetof(struct uprof, pr_scale)
 define	SIGTRAP			SIGTRAP
 define	SIGEMT			SIGEMT
 
+define	TF_SPSR			offsetof(struct trapframe, tf_spsr)
 define	TF_FILL			offsetof(struct trapframe, tf_fill)
 define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R4			offsetof(struct trapframe, tf_r4)
 define	TF_R6			offsetof(struct trapframe, tf_r6)
+define	TF_R8			offsetof(struct trapframe, tf_r8)
 define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_R12			offsetof(struct trapframe, tf_r12)
 define	TF_USR_SP		offsetof(struct trapframe, tf_usr_sp)
+define	TF_USR_LR		offsetof(struct trapframe, tf_usr_lr)
 define	TF_SVC_SP		offsetof(struct trapframe, tf_svc_sp)
+define	TF_SVC_LR		offsetof(struct trapframe, tf_svc_lr)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
 
 define	PROCSIZE		sizeof(struct proc)
