@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.27 2012/09/22 00:33:38 matt Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.28 2013/08/18 15:58:20 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -124,6 +124,8 @@
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -139,9 +141,7 @@
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
