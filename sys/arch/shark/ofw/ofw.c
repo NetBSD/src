@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.60 2012/09/22 00:33:41 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.61 2013/08/18 07:01:45 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.60 2012/09/22 00:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.61 2013/08/18 07:01:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.60 2012/09/22 00:33:41 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
 
@@ -56,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.60 2012/09/22 00:33:41 matt Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/bus.h>
-#include <machine/frame.h>
+
+#include <arm/locore.h>
+
 #include <machine/bootconfig.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/irqhandler.h>
 
 #include <dev/ofw/openfirm.h>
