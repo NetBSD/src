@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: intr.c,v 1.2 2013/08/18 21:57:01 matt Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2013/08/18 21:57:01 matt Exp $");
 
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
+#include <arm/locore.h>
 
 #include <arm/pic/picvar.h>
 
