@@ -154,7 +154,7 @@ struct cpu_info {
 	register_t ci_undefsave[3];
 	uint32_t ci_vfp_id;
 	uint64_t ci_lastintr;
-	struct evcnt ci_abt_evs[FAULT_TYPE_MASK+1];
+	struct evcnt ci_abt_evs[16];
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
