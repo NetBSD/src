@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.4 2013/08/12 15:08:13 riz Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.5 2013/08/18 05:54:16 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.4 2013/08/12 15:08:13 riz Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.5 2013/08/18 05:54:16 matt Exp $")
 	
 #include "assym.h"
 
@@ -96,7 +96,7 @@ ENTRY(cpu_in_cksum)
 	eor	r11, r10, r0
 	add	r10, r10, r1
 	adds	r2, r1, #0x00
-	blne	_ASM_LABEL(L_cksumdata)
+	blne	_ASM_LABEL(.L_cksumdata)
 	tst	r11, #0x01
 	movne	r2, r2, ror #8
 	adds	r8, r8, r2
@@ -120,6 +120,7 @@ ENTRY(cpu_in_cksum)
 .Lin_cksum_whoops_str:
 	.asciz	"in_cksum: out of mbufs\n"
 	.align	5
+END(cpu_in_cksum)
 
 
 /*
@@ -137,7 +138,7 @@ ENTRY(cpu_in_cksum)
  *	r0-r7
  */
 /* LINTSTUB: Ignore */
-ASENTRY_NP(L_cksumdata)
+ASENTRY_NP(.L_cksumdata)
 #ifdef __PROG26
 	str	lr, [sp, #-4]!		/* for SVC26 mode */
 #endif
@@ -385,3 +386,4 @@ ASENTRY_NP(L_cksumdata)
 #else
 	RET
 #endif
+ASEND(.L_cksumdata)
