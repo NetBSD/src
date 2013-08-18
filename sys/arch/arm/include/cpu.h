@@ -128,6 +128,9 @@ static inline int curcpl(void);
 static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
 
+#ifdef _KMEMUSER
+#include <sys/intr.h>
+#endif
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
