@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.7 2013/06/12 21:34:12 matt Exp $	*/
+/*	$NetBSD: vectors.S,v 1.8 2013/08/18 06:29:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -69,6 +69,7 @@ _C_LABEL(page0rel):
 #elif !defined(ARM_HAS_VBAR)
 	b	.Lfiqvector
 #endif
+END(page0rel)
 #endif /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
 
 #ifndef ARM_HAS_VBAR
@@ -85,6 +86,7 @@ _C_LABEL(page0):
 #ifdef __ARM_FIQ_INDIRECT
 	ldr	pc, .Lfiq_target
 #endif
+END(page0)
 #endif /* !ARM_HAS_VBAR */
 #ifndef __ARM_FIQ_INDIRECT
 .Lfiqvector:

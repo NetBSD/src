@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.90 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.90 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -96,11 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.89 2013/07/02 05:50:53 matt Exp $");
 #include <uvm/uvm.h>
 #endif
 
-#include <arm/cpuconf.h>
+#include <arm/locore.h>
 
 #include <arm/arm32/katelib.h>
 
-#include <machine/intr.h>
 #include <machine/pcb.h>
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>

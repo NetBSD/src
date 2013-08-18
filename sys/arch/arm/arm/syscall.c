@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.57 2013/06/26 06:31:53 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.58 2013/08/18 06:28:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,8 +71,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2013/06/26 06:31:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.58 2013/08/18 06:28:18 matt Exp $");
 
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -85,9 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.57 2013/06/26 06:31:53 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/swi.h>
+#include <arm/locore.h>
 
 #ifdef acorn26
 #include <machine/machdep.h>
@@ -141,12 +142,8 @@ swi_handler(trapframe_t *tf)
 
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
-		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
-		insn = fusword((void *)(tf->tf_pc - THUMB_INSN_SIZE));
-		if (insn & 0x00ff)
-			insn = (insn & 0x00ff) | 0xef000000;
-		else
-			insn = tf->tf_ip | 0xef000000;
+		insn = 0xef000000 | SWI_OS_NETBSD | tf->tf_r0;
+		tf->tf_r0 = tf->tf_ip;
 	}
 	else
 #endif
@@ -154,6 +151,9 @@ swi_handler(trapframe_t *tf)
 	/* XXX fuword? */
 #ifdef __PROG32
 		insn = *(uint32_t *)(tf->tf_pc - INSN_SIZE);
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+		insn = le32toh(insn);	/* BE armv7 insn are in LE */
+#endif
 #else
 		insn = *(uint32_t *)((tf->tf_r15 & R15_PC) - INSN_SIZE);
 #endif

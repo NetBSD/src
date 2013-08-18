@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.18 2012/09/12 23:06:15 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.19 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,11 +46,12 @@
  */
 
 #include "assym.h"
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 
-	RCSID("$NetBSD: exception.S,v 1.18 2012/09/12 23:06:15 matt Exp $")
+#include <arm/asm.h>
+
+#include <arm/locore.h>
+
+	RCSID("$NetBSD: exception.S,v 1.19 2013/08/18 06:28:18 matt Exp $")
 
 	.text	
 	.align	0
@@ -62,21 +63,22 @@ AST_ALIGNMENT_FAULT_LOCALS
  *
  *	Handler for Reset exception.
  */
-ASENTRY_NP(reset_entry)
-	adr	r0, Lreset_panicmsg
+ARM_ASENTRY_NP(reset_entry)
+	adr	r0, .Lreset_panicmsg
 	mov	r1, lr
 	bl	_C_LABEL(panic)
 	/* NOTREACHED */
-Lreset_panicmsg:
+.Lreset_panicmsg:
 	.asciz	"Reset vector called, LR = 0x%08x"
 	.balign	4
+ASEND(reset_entry)
 
 /*
  * swi_entry
  *
  *	Handler for the Software Interrupt exception.
  */
-ASENTRY_NP(swi_entry)
+ARM_ASENTRY_NP(swi_entry)
 	PUSHFRAME
 	ENABLE_ALIGNMENT_FAULTS
 
@@ -86,13 +88,14 @@ ASENTRY_NP(swi_entry)
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAME
 	movs	pc, lr			/* Exit */
+ASEND(swi_entry)
 
 /*
  * prefetch_abort_entry:
  *
  *	Handler for the Prefetch Abort exception.
  */
-ASENTRY_NP(prefetch_abort_entry)
+ARM_ASENTRY_NP(prefetch_abort_entry)
 #ifdef __XSCALE__
 	nop				/* Make absolutely sure any pending */
 	nop				/* imprecise aborts have occurred. */
@@ -102,28 +105,28 @@ ASENTRY_NP(prefetch_abort_entry)
 	PUSHFRAMEINSVC
 	ENABLE_ALIGNMENT_FAULTS
 
-	ldr	r1, Lprefetch_abort_handler_address
-	adr	lr, exception_exit
+	ldr	r1, .Lprefetch_abort_handler_address
+	adr	lr, .Lexception_exit
  	mov	r0, sp			/* pass the stack pointer as r0 */
 	ldr	pc, [r1]
 
-Lprefetch_abort_handler_address:
+.Labortprefetch:
+        adr     r0, .Labortprefetchmsg
+	b	_C_LABEL(panic)
+
+.Lprefetch_abort_handler_address:
 	.word	_C_LABEL(prefetch_abort_handler_address)
+
+.Labortprefetchmsg:
+        .asciz  "abortprefetch"
+        .align  0
+ASEND(prefetch_abort_entry)
 
 	.data
 	.p2align 2
 	.global	_C_LABEL(prefetch_abort_handler_address)
 _C_LABEL(prefetch_abort_handler_address):
-	.word	abortprefetch
-
-	.text
-abortprefetch:
-        adr     r0, abortprefetchmsg
-	b	_C_LABEL(panic)
-
-abortprefetchmsg:
-        .asciz  "abortprefetch"
-        .align  0
+	.word	.Labortprefetch
 
 /*
  * data_abort_entry:
@@ -141,28 +144,29 @@ ASENTRY_NP(data_abort_entry)
 					/* to SVC32 mode */
 	ENABLE_ALIGNMENT_FAULTS
 
-	ldr	r1, Ldata_abort_handler_address
-	adr	lr, exception_exit
+	ldr	r1, .Ldata_abort_handler_address
+	adr	lr, .Lexception_exit
 	mov	r0, sp			/* pass the stack pointer as r0 */
 	ldr	pc, [r1]
 
-Ldata_abort_handler_address:
+.Ldata_abort_handler_address:
 	.word	_C_LABEL(data_abort_handler_address)
 
 	.data
 	.p2align 2
 	.global	_C_LABEL(data_abort_handler_address)
 _C_LABEL(data_abort_handler_address):
-	.word	abortdata
+	.word	.Labortdata
 
 	.text
-abortdata:
-        adr     r0, abortdatamsg
+.Labortdata:
+        adr     r0, .Labortdatamsg
 	b	_C_LABEL(panic)
 
-abortdatamsg:
+.Labortdatamsg:
         .asciz  "abortdata"
         .align  0
+ASEND(data_abort_entry)
 
 /*
  * address_exception_entry:
@@ -177,10 +181,10 @@ ASENTRY_NP(address_exception_entry)
 	mrs	r1, cpsr_all
 	mrs	r2, spsr_all
 	mov	r3, lr
-	adr	r0, Laddress_exception_msg
+	adr	r0, .Laddress_exception_msg
 	bl	_C_LABEL(printf)	/* XXX CLOBBERS LR!! */
-	b	data_abort_entry
-Laddress_exception_msg:
+	b	_ASM_LABEL(data_abort_entry)
+.Laddress_exception_msg:
 	.asciz	"Address Exception CPSR=0x%08x SPSR=0x%08x LR=0x%08x\n"
 	.balign	4
 
@@ -199,9 +203,10 @@ Laddress_exception_msg:
  * followed by ENABLE_ALIGNMENT_FAULTS.
  */
 
-exception_exit:
+.Lexception_exit:
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
+ASEND(address_exception_entry)
 
 /*
  * undefined_entry:
@@ -220,6 +225,7 @@ ASENTRY_NP(undefined_entry)
 	ldr	r1, [sp], #0x0004
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
+ASEND(undefined_entry)
 
 /*
  * assembly bounce code for calling the kernel
@@ -232,5 +238,7 @@ ENTRY_NP(undefinedinstruction_bounce)
 	ENABLE_ALIGNMENT_FAULTS
 
 	mov	r0, sp
-	adr	lr, exception_exit
+	adr	lr, .Lexception_exit
 	b	_C_LABEL(undefinedinstruction)
+END(undefinedinstruction_bounce)
+ASEND(undefined_entry)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.9 2013/08/12 05:54:51 matt Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.10 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.9 2013/08/12 05:54:51 matt Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.10 2013/08/18 06:28:18 matt Exp $")	
 
 	.text
 	.align	0
@@ -457,6 +457,7 @@ ENTRY(copyin)
 	ldrbt	ip, [r0]
 	strb	ip, [r1]
 	RET
+END(copyin)
 
 
 /*
@@ -896,7 +897,7 @@ ENTRY(copyout)
 	ldrb	ip, [r0]
 	strbt	ip, [r1]
 	RET
-
+END(copyout)
 
 /*
  * r0 = kernel space source address
@@ -1314,3 +1315,4 @@ ENTRY(kcopy)
 	ldrb	ip, [r0]
 	strb	ip, [r1]
 	RET
+END(kcopy)

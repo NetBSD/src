@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.9 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -39,11 +39,11 @@
  */
 
 #include "assym.h"
+#include <arm/asm.h>
+#include <arm/locore.h>
 #include <arm/arm32/psl.h>
-#include <machine/asm.h>
-#include <machine/cpu.h>
 
-	RCSID("$NetBSD: spl.S,v 1.8 2008/04/27 18:58:44 matt Exp $")
+	RCSID("$NetBSD: spl.S,v 1.9 2013/08/18 06:28:18 matt Exp $")
 
 	.text
 	.align	0
