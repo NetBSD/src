@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2013/08/16 17:45:28 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.22 2013/08/18 05:06:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,32 +97,31 @@
 # define _PROF_PROLOGUE
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
-#define	END(y)		_END(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
-#define	ASEND(y)	_END(_ASM_LABEL(y))
+#define	ENTRY(y)		_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY_NP(y)		_ENTRY(_C_LABEL(y))
+#define	END(y)			_END(_C_LABEL(y))
+#define	ARM_ENTRY(y)		_ARM_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ARM_ENTRY_NP(y)		_ARM_ENTRY(_C_LABEL(y))
+#define	THUMB_ENTRY(y)		_THUMB_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	THUMB_ENTRY_NP(y)	_THUMB_ENTRY(_C_LABEL(y))
+#define	END(y)			_END(_C_LABEL(y))
+#define	ASENTRY(y)		_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ASENTRY_NP(y)		_ENTRY(_ASM_LABEL(y))
+#define	ASEND(y)		_END(_ASM_LABEL(y))
+#define	ARM_ASENTRY(y)		_ARM_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ARM_ASENTRY_NP(y)	_ARM_ENTRY(_ASM_LABEL(y))
+#define	THUMB_ASENTRY(y)	_THUMB_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	THUMB_ASENTRY_NP(y)	_THUMB_ENTRY(_ASM_LABEL(y))
 
 #define	ASMSTR		.asciz
 
 #if defined(PIC) || defined(__pic__)
 #define	REL_SYM(a, b)	((a) - (b))
-#ifdef __thumb__
-#define	PLT_SYM(x)	x
-#define	GOT_SYM(x)	PIC_SYM(x, GOTOFF)
-#define	GOT_GET(x,got,sym)	\
-	ldr	x, sym;		\
-	add	x, got;		\
-	ldr	x, [x]
-#else
 #define	PLT_SYM(x)	PIC_SYM(x, PLT)
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
 	ldr	x, [x, got]
-#endif /* __thumb__ */
-
 #define	GOT_INIT(got,gotsym,pclabel) \
 	ldr	got, gotsym;	\
 	pclabel: add	got, got, pc
