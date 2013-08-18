@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2013/08/17 20:20:18 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2013/08/18 07:36:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -86,8 +86,10 @@ extern u_int	softint_timing;
 #define	splclock()	splsched()
 #define	splserial()	splhigh()
 
-#endif	/* _KERNEL */
-
 #include <machine/intr.h>
+
+#elif defined(_KMEMUSER)
+#define	SOFTINT_COUNT	0x0004
+#endif	/* _KERNEL */
 
 #endif	/* _SYS_INTR_H_ */
