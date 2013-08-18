@@ -74,6 +74,10 @@
 #endif /* !_MODULE && _KERNEL_OPT */
 
 #ifndef _LOCORE
+#if defined(TPIDRPRW_IS_CURLWP) || defined(TPIDRPRW_IS_CURCPU)
+#include <arm/armreg.h>
+#endif
+
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
 extern int cpu_fpu_present;
