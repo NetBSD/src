@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.95 2013/08/15 22:13:48 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.96 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.95 2013/08/15 22:13:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.96 2013/08/18 06:28:18 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.95 2013/08/15 22:13:48 matt Exp 
 
 #include <dev/cons.h>
 #include <dev/mm.h>
+
+#include <arm/locore.h>
 
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>

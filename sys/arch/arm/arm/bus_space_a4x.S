@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_a4x.S,v 1.2 2012/07/15 20:48:53 matt Exp $	*/
+/*	$NetBSD: bus_space_a4x.S,v 1.3 2013/08/18 06:28:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <arm/asm.h>
-#include <arm/cpu.h>
+#include <arm/locore.h>
 #include <arm/byte_swap.h>
 
-RCSID("$NetBSD: bus_space_a4x.S,v 1.2 2012/07/15 20:48:53 matt Exp $")
+RCSID("$NetBSD: bus_space_a4x.S,v 1.3 2013/08/18 06:28:18 matt Exp $")
 
 /*
  * bus_space_read_[124](void *cookie, bus_space_handle_t handle,
@@ -120,6 +120,7 @@ ENTRY_NP(a4x_bs_w_2)
 	strh	r3, [r1, r2]
 	RET
 END(a4x_bs_w_2)
+END(a4x_bs_w_2_swap)
 #endif
 
 ENTRY_NP(a4x_bs_w_4_swap)
@@ -128,6 +129,7 @@ ENTRY_NP(a4x_bs_w_4)
 	str	r3, [r1, r2, lsl #2]
 	RET
 END(a4x_bs_w_4)
+END(a4x_bs_w_4_swap)
 
 /*
  * bus_space_write_multi_[124](void *cookie, bus_space_handle_t handle,

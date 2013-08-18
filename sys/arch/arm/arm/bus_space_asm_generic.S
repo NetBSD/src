@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.9 2013/03/19 17:11:13 skrll Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.10 2013/08/18 06:29:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -106,6 +106,7 @@ ENTRY_NP(generic_armv4_bs_w_2)
 	DSB
 	RET
 END(generic_armv4_bs_w_2)
+END(generic_armv4_bs_w_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_w_4_swap)
@@ -115,6 +116,7 @@ ENTRY_NP(generic_bs_w_4)
 	DSB
 	RET
 END(generic_bs_w_4)
+END(generic_bs_w_4_swap)
 
 /*
  * read multiple
@@ -504,6 +506,7 @@ ENTRY_NP(generic_armv4_bs_sr_2)
 	DSB
 	RET
 END(generic_armv4_bs_sr_2)
+END(generic_armv4_bs_sr_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_sr_4_swap)
@@ -522,6 +525,7 @@ ENTRY_NP(generic_bs_sr_4)
 	DSB
 	RET
 END(generic_bs_sr_4)
+END(generic_bs_sr_4_swap)
 
 /*
  * copy region
