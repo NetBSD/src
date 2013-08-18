@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.11 2013/04/13 10:21:20 joerg Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.12 2013/08/18 20:03:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.11 2013/04/13 10:21:20 joerg Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.12 2013/08/18 20:03:48 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -115,7 +115,7 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 }
 
 static __inline void
-_PREFIX(fixup)(_RuneLocale *data)
+_PREFIX(update_global)(_RuneLocale *data)
 {
 	_DIAGASSERT(data != NULL);
 
@@ -123,7 +123,6 @@ _PREFIX(fixup)(_RuneLocale *data)
 	_ctype_tab_ = data->rl_ctype_tab;
 	_tolower_tab_ = data->rl_tolower_tab;
 	_toupper_tab_ = data->rl_toupper_tab;
-	_CurrentRuneLocale = data;
 
 #ifdef __BUILD_LEGACY
 	_ctype_ = data->rl_compat_bsdctype;
@@ -135,6 +134,5 @@ _PREFIX(fixup)(_RuneLocale *data)
  */
 #define _CATEGORY_ID		LC_CTYPE
 #define _CATEGORY_NAME		"LC_CTYPE"
-#define _CATEGORY_DEFAULT	_DefaultRuneLocale
 
 #include "nb_lc_template.h"

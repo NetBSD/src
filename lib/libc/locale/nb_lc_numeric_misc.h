@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_numeric_misc.h,v 1.3 2010/03/27 15:25:22 tnozaki Exp $ */
+/* $NetBSD: nb_lc_numeric_misc.h,v 1.4 2013/08/18 20:03:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -55,11 +55,8 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 }
 
 static __inline void
-_PREFIX(fixup)(_NumericLocale *data)
+_PREFIX(update_global)(_NumericLocale *data)
 {
-	_DIAGASSERT(data != NULL);
-
-	_CurrentNumericLocale = data;
 }
 
 /*
@@ -67,6 +64,5 @@ _PREFIX(fixup)(_NumericLocale *data)
  */
 #define _CATEGORY_ID		LC_NUMERIC
 #define _CATEGORY_NAME		"LC_NUMERIC"
-#define _CATEGORY_DEFAULT	_DefaultNumericLocale
 
 #endif /*_NB_LC_NUMERIC_MISC_H_*/

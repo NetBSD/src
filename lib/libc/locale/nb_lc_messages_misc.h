@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_messages_misc.h,v 1.3 2010/03/27 15:25:22 tnozaki Exp $ */
+/* $NetBSD: nb_lc_messages_misc.h,v 1.4 2013/08/18 20:03:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -49,11 +49,8 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 }
 
 static __inline void
-_PREFIX(fixup)(_MessagesLocale *data)
+_PREFIX(update_global)(_MessagesLocale *data)
 {
-	_DIAGASSERT(data != NULL);
-
-	_CurrentMessagesLocale = data;
 }
 
 /*
@@ -61,6 +58,5 @@ _PREFIX(fixup)(_MessagesLocale *data)
  */
 #define _CATEGORY_ID		LC_MESSAGES
 #define _CATEGORY_NAME		"LC_MESSAGES"
-#define _CATEGORY_DEFAULT	_DefaultMessagesLocale
 
 #endif /*_NB_LC_MESSAGES_MISC_H_*/
