@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.17 2013/05/17 12:55:57 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.18 2013/08/18 20:03:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.17 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.18 2013/08/18 20:03:48 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,69 @@ __RCSID("$NetBSD: global_locale.c,v 1.17 2013/05/17 12:55:57 joerg Exp $");
 #ifndef NBCHAR_MAX
 #define NBCHAR_MAX (char)CHAR_MAX
 #endif
+
+static const _MessagesLocale _DefaultMessagesLocale = {
+	"^[Yy]",
+	"^[Nn]",
+	"yes",
+	"no"
+};
+
+static const _MonetaryLocale _DefaultMonetaryLocale = {
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX,
+	(char)CHAR_MAX
+};
+
+static const _NumericLocale _DefaultNumericLocale = {
+	".",
+	"",
+	""
+};
+
+static const _TimeLocale _DefaultTimeLocale = 
+{
+	{
+		"Sun","Mon","Tue","Wed","Thu","Fri","Sat",
+	},
+	{
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
+		"Friday", "Saturday"
+	},
+	{
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	},
+	{
+		"January", "February", "March", "April", "May", "June", "July",
+		"August", "September", "October", "November", "December"
+	},
+	{
+		"AM", "PM"
+	},
+	"%a %b %e %H:%M:%S %Y",
+	"%m/%d/%y",
+	"%H:%M:%S",
+	"%I:%M:%S %p"
+};
 
 static const struct lconv _C_ldata = {
 	.decimal_point		= __UNCONST("."),
