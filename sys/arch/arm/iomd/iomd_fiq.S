@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.4 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.5 2013/08/18 16:09:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -76,7 +76,7 @@ ENTRY_NP(floppy_read_fiq)
 	bne	_C_LABEL(floppy_read_fiq)
 #endif
 	subs	pc, lr, #0x00000004
-END(_floppy_read_fiq)
+END(floppy_read_fiq)
 
 	.global	_C_LABEL(floppy_read_fiq_end)
 _C_LABEL(floppy_read_fiq_end):
