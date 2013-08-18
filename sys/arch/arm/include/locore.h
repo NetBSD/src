@@ -48,16 +48,15 @@
 #ifndef _ARM_LOCORE_H_
 #define _ARM_LOCORE_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_cpuoptions.h"
+#include "opt_cputypes.h"
+#endif
+
 #include <arm/cpuconf.h>
 #include <arm/armreg.h>
 
 #include <machine/frame.h>
-
-#ifndef _LOCORE
-/* 1 == use cpu_sleep(), 0 == don't */
-extern int cpu_do_powersave;
-extern int cpu_fpu_present;
-#endif
 
 #ifdef _LOCORE
 
@@ -104,10 +103,6 @@ extern int cpu_fpu_present;
 #define IRQenable set_r15(R15_IRQ_DISABLE, 0);
 #endif
 
-#endif /* !_LOCORE */
-
-#ifndef _LOCORE
-
 /*
  * Validate a PC or PSR for a user process.  Used by various system calls
  * that take a context passed by the user and restore it.
@@ -148,6 +143,19 @@ void	arm32_vector_init(vaddr_t, int);
  * cpu device glue (belongs in cpuvar.h)
  */
 void	cpu_attach(device_t, cpuid_t);
+#endif
+
+/* 1 == use cpu_sleep(), 0 == don't */
+extern int cpu_do_powersave;
+extern int cpu_fpu_present;
+
+#if !defined(CPU_ARMV7)
+#define	CPU_IS_ARMV7_P()		false
+#elif defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
+extern bool cpu_armv7_p;
+#define	CPU_IS_ARMV7_P()		(cpu_armv7_p)
+#else
+#define	CPU_IS_ARMV7_P()		true
 #endif
 
 /*
