@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.13 2012/10/14 14:20:57 msaitoh Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.14 2013/08/18 15:58:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,26 +41,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.13 2012/10/14 14:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.14 2013/08/18 15:58:20 matt Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
+#include <dev/pci/ppbreg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
+
+#include <arm/locore.h>
 
 #include <arm/xscale/beccreg.h>
 #include <arm/xscale/beccvar.h>
-
-#include <dev/pci/ppbreg.h>
-#include <dev/pci/pciconf.h>
-
-#include "opt_pci.h"
-#include "pci.h"
 
 void		becc_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);

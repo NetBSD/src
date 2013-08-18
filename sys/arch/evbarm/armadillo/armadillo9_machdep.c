@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.26 2012/11/12 18:00:38 skrll Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.27 2013/08/18 15:58:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.26 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.27 2013/08/18 15:58:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.26 2012/11/12 18:00:38 skrl
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -141,9 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.26 2012/11/12 18:00:38 skrl
 #define	DRAM_BLOCKS	4
 #include <machine/bootconfig.h>
 #include <machine/autoconf.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 /* Define various stack sizes in pages */

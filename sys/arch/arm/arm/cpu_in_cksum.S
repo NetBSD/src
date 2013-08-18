@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.5 2013/08/18 05:54:16 matt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.6 2013/08/18 15:58:19 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.5 2013/08/18 05:54:16 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.6 2013/08/18 15:58:19 matt Exp $")
 	
 #include "assym.h"
 
@@ -91,26 +91,44 @@ ENTRY(cpu_in_cksum)
 	ldr	ip, [ip, #(M_NEXT)]
 .Lin_cksum_entry:
 	cmp	r9, r1
+#ifdef __thumb__
+	bge	1f
+	mov	r1, r9
+#else
 	movlt	r1, r9
-	sub	r9, r9, r1
+#endif
+1:	sub	r9, r9, r1
 	eor	r11, r10, r0
 	add	r10, r10, r1
 	adds	r2, r1, #0x00
+#ifdef __thumb__
+	it	ne
+#endif
 	blne	_ASM_LABEL(.L_cksumdata)
 	tst	r11, #0x01
+#ifdef __thumb__
+	it	ne
+#endif
 	movne	r2, r2, ror #8
 	adds	r8, r8, r2
 	adc	r8, r8, #0x00
 	cmp	ip, #00
 	bne	.Lin_cksum_loop
-	
-	mov	r1, #0xff
-	orr	r1, r1, #0xff00
-	and	r0, r8, r1
-	add	r0, r0, r8, lsr #16
-	add	r0, r0, r0, lsr #16
-	and	r0, r0, r1
-	eor	r0, r0, r1
+
+#ifdef __thumb__
+	mov	r0, r8
+	lsls	r2, r0, #16
+	adds	r0, r0, r2
+	bcc	1f
+	adds	r0, r0, #65536
+1:	mvns	r0, r0
+	lsrs	r0, r0, #16
+#else
+	adds	r8, r8, r8, lsl #16
+	addcs	r8, r8, #65536
+	mvn	r0, r8
+	lsr	r0, r0, #16
+#endif
 	pop	{r4-r11, lr}
 	RET
 
@@ -145,37 +163,49 @@ ASENTRY_NP(.L_cksumdata)
 #ifdef __XSCALE__
 	pld	[r0]			/* Pre-fetch the start of the buffer */
 #endif
-	mov	r2, #0
+	movs	r2, #0
 
 	/* We first have to word-align the buffer.  */
 	ands	r7, r0, #0x03
 	beq	.Lcksumdata_wordaligned
-	rsb	r7, r7, #0x04
-	cmp	r1, r7			/* Enough bytes left to make it? */
-	blt	.Lcksumdata_endgame
-	cmp	r7, #0x02
-	ldrb	r4, [r0], #0x01		/* Fetch 1st byte */
-	ldrbge	r5, [r0], #0x01		/* Fetch 2nd byte */
-	movlt	r5, #0x00
-	ldrbgt	r6, [r0], #0x01		/* Fetch 3rd byte */
-	movle	r6, #0x00
-	/* Combine the three bytes depending on endianness and alignment */
-#ifdef __ARMEB__
-	orreq	r2, r5, r4, lsl #8
-	orreq	r2, r2, r6, lsl #24
-	orrne	r2, r4, r5, lsl #8
-	orrne	r2, r2, r6, lsl #16
+	eors	r0, r0, r7		/* r0 is word aligned */
+	ldr	r2, [r0], #0x04
+#ifdef __thumb__
+	movs	r4, r7
+	lsls	r4, r4, #3
 #else
-	orreq	r2, r4, r5, lsl #8
-	orreq	r2, r2, r6, lsl #16
-	orrne	r2, r5, r4, lsl #8
-	orrne	r2, r2, r6, lsl #24
+	lsl	r4, r7, #3
 #endif
-	subs	r1, r1, r7		/* Update length */
-#ifdef __PROG26
-	ldreq	pc, [sp], #4		/* All done? */
+#if defined(__ARMEB__)
+	lsls	r2, r2, r4
+	lsrs	r2, r2, r4
 #else
-	RETc(eq)			/* All done? */
+	lsrs	r2, r2, r4
+	lsls	r2, r2, r4
+#endif
+	rsb	r7, r7, #0x04
+	subs	r1, r1, r7		/* Enough bytes left to make it? */
+	bgt	.Lcksumdata_wordaligned
+#ifdef __PROG26
+	ldreq	pc, [sp], #4		/* done */
+#else
+	RETc(eq)			/* done */
+#endif
+	adds	r7, r7, r1		/* undo sub */
+	adds	r7, r7, r1		/* r7 = offset + len */
+	rsb	r7, r7, #4
+	lsls	r7, r7, #3
+#if defined(__ARMEB__)
+	lsrs	r2, r2, r7
+	lsls	r2, r2, r7
+#else
+	lsls	r2, r2, r7
+	lsrs	r2, r2, r7
+#endif
+#ifdef __PROG26
+	ldr	pc, [sp], #4		/* done */
+#else
+	RET				/* done */
 #endif
 
 	/* Buffer is now word aligned */
@@ -225,7 +255,7 @@ ASENTRY_NP(.L_cksumdata)
 	ldrd	r6, [r0], #0x08
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x40
 	ldrdge	r4, [r0], #0x08
 	bge	.Lcksumdata_bigloop
@@ -233,7 +263,7 @@ ASENTRY_NP(.L_cksumdata)
 	adds	r2, r2, r6		/* r6/r7 still need summing */
 .Lcksumdata_bigloop_end:
 	adcs	r2, r2, r7
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 
 #else	/* !__XSCALE__ */
 
@@ -261,7 +291,7 @@ ASENTRY_NP(.L_cksumdata)
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
 	adcs	r2, r2, r7
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x40
 	bge	.Lcksumdata_bigloop
 .Lcksumdata_bigloop_end:
@@ -303,7 +333,7 @@ ASENTRY_NP(.L_cksumdata)
 	adcs	r2, r2, r5
 	adcs	r2, r2, r7
 #endif
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x20
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
@@ -315,8 +345,11 @@ ASENTRY_NP(.L_cksumdata)
 	/* There are less than 32 bytes left */
 	and	r3, r1, #0x18
 	rsb	r4, r3, #0x18
-	sub	r1, r1, r3
+	subs	r1, r1, r3
 	adds	r4, r4, r4, lsr #1	/* Side effect: Clear carry flag */
+#ifdef __thumb__
+	it	ne
+#endif
 	addne	pc, pc, r4
 
 /*
@@ -340,14 +373,14 @@ ASENTRY_NP(.L_cksumdata)
 	adcs	r2, r2, r5
 
 	/* Less than 8 bytes remaining... */
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x04
 	blt	.Lcksumdata_lessthan4
 
 	ldr	r4, [r0], #0x04
-	sub	r1, r1, #0x04
+	subs	r1, r1, #0x04
 	adds	r2, r2, r4
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 
 	/* Deal with < 4 bytes remaining */
 .Lcksumdata_lessthan4:
@@ -360,27 +393,18 @@ ASENTRY_NP(.L_cksumdata)
 
 	/* Deal with 1 to 3 remaining bytes, possibly misaligned */
 .Lcksumdata_endgame:
-	ldrb	r3, [r0]		/* Fetch first byte */
-	cmp	r1, #0x02
-	ldrbge	r4, [r0, #0x01]		/* Fetch 2nd and 3rd as necessary */
-	movlt	r4, #0x00
-	ldrbgt	r5, [r0, #0x02]
-	movle	r5, #0x00
-	/* Combine the three bytes depending on endianness and alignment */
-	tst	r0, #0x01
+	ldr	r3, [r0]		/* Fetch last word */
+	rsb	r1, r1, #4		/* get discard amount */
+	lsl	r1, r1, #3		/* turn it into bits */
 #ifdef __ARMEB__
-	orreq	r3, r4, r3, lsl #8
-	orreq	r3, r3, r5, lsl #24
-	orrne	r3, r3, r4, lsl #8
-	orrne	r3, r3, r5, lsl #16
+	lsr	r3, r3, r1		/* discard least significant bits */
+	lsl	r3, r3, r1		/* shift back filling with zeros */
 #else
-	orreq	r3, r3, r4, lsl #8
-	orreq	r3, r3, r5, lsl #16
-	orrne	r3, r4, r3, lsl #8
-	orrne	r3, r3, r5, lsl #24
+	lsl	r3, r3, r1		/* discard least significant bits */
+	lsr	r3, r3, r1		/* shift back filling with zeros */
 #endif
 	adds	r2, r2, r3
-	adc	r2, r2, #0x00
+	adcs	r2, r2, #0x00
 #ifdef __PROG26
 	ldr	pc, [sp], #4
 #else

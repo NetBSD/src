@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.46 2012/12/24 06:53:26 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.47 2013/08/18 15:58:20 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -162,13 +162,14 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
 #include <machine/db_machdep.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
+#include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
 #ifdef OVERO
@@ -178,7 +179,6 @@
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
 #endif
-#include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
