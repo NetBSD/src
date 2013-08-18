@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.96 2013/06/12 01:16:48 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.97 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2013/06/12 01:16:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.97 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2013/06/12 01:16:48 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/cpuconf.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 char cpu_model[256];
