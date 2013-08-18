@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.124 2013/08/18 06:50:31 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.125 2013/08/18 07:57:27 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.124 2013/08/18 06:50:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.125 2013/08/18 07:57:27 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -90,6 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.124 2013/08/18 06:50:31 matt Exp $");
 
 #if defined(PERFCTRS)
 struct arm_pmc_funcs *arm_pmc;
+#endif
+
+#if defined(CPU_ARMV7) && (defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6))
+bool cpu_armv7_p;
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -2062,6 +2066,9 @@ set_cpufuncs(void)
 	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = cortex_cpufuncs;
 		cpu_do_powersave = 1;			/* Enable powersave */
+#if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
+		cpu_armv7_p = true;
+#endif
 		get_cachetype_cp15();
 		pmap_pte_init_armv7();
 		if (arm_cache_prefer_mask)
@@ -2083,6 +2090,9 @@ set_cpufuncs(void)
 	    cputype == CPU_ID_ARM_88SV581X_V7) &&
 	    (armreg_pfr0_read() & ARM_PFR0_THUMBEE_MASK)) {
 			cpufuncs = pj4bv7_cpufuncs;
+#if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
+			cpu_armv7_p = true;
+#endif
 			get_cachetype_cp15();
 			pmap_pte_init_armv7();
 			return 0;
