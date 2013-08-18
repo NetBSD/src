@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.21 2012/09/22 00:33:41 matt Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.22 2013/08/18 21:50:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.21 2012/09/22 00:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.22 2013/08/18 21:50:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,10 +89,15 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.21 2012/09/22 00:33:41 matt Exp
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <dev/pci/ppbreg.h>
+#include <dev/ic/i8259reg.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -102,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.21 2012/09/22 00:33:41 matt Exp
 #include <ddb/db_extern.h>
 
 #include <acorn32/include/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
@@ -114,9 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.21 2012/09/22 00:33:41 matt Exp
 
 #include <iyonix/iyonix/iyonixreg.h>
 #include <iyonix/iyonix/obiovar.h>
-
-#include <dev/pci/ppbreg.h>
-#include <dev/ic/i8259reg.h>
 
 #include "ksyms.h"
 
