@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2012/10/21 15:46:00 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.36 2013/08/18 06:37:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,14 +51,6 @@
 #ifndef _LOCORE
 
 /*
- * System stack frames.
- */
-
-struct clockframe {
-	struct trapframe cf_tf;
-};
-
-/*
  * Switch frame.
  *
  * Should be a multiple of 8 bytes for dumpsys.
@@ -73,6 +65,14 @@ struct switchframe {
 	u_int	sf_pc;
 };
  
+/*
+ * System stack frames.
+ */
+
+struct clockframe {
+	struct trapframe cf_tf;
+};
+
 /*
  * Stack frame. Used during stack traces (db_trace.c)
  */
@@ -96,16 +96,33 @@ void validate_trapframe(trapframe_t *, int);
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
 
-#include <machine/cpu.h>
+#include <arm/locore.h>
 
 /*
  * This macro is used by DO_AST_AND_RESTORE_ALIGNMENT_FAULTS to process
  * any pending softints.
  */
+#ifdef _ARM_ARCH_4T
+#define	B_CF_CONTROL(rX)						;\
+	ldr	ip, [rX, #CF_CONTROL]	/* get function addr */		;\
+	bx	ip			/* branch to cpu_control */
+#else
+#define	B_CF_CONTROL(rX)						;\
+	ldr	pc, [rX, #CF_CONTROL]	/* branch to cpu_control */
+#endif
+#ifdef _ARM_ARCH_5T
+#define	BL_CF_CONTROL(rX)						;\
+	ldr	ip, [rX, #CF_CONTROL]	/* get function addr */		;\
+	blx	ip			/* call cpu_control */
+#else
+#define	BL_CF_CONTROL(rX)						;\
+	mov	lr, pc							;\
+	ldr	pc, [rX, #CF_CONTROL]	/* call cpu_control */
+#endif
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
 #define	DO_PENDING_SOFTINTS						\
 	ldr	r0, [r4, #CI_INTR_DEPTH]/* Get current intr depth */	;\
-	teq	r0, #0			/* Test for 0. */		;\
+	cmp	r0, #0			/* Test for 0. */		;\
 	bne	10f			/*   skip softints if != 0 */	;\
 	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
 	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
@@ -183,8 +200,7 @@ void validate_trapframe(trapframe_t *, int);
 	ldr	r2, .Laflt_cpufuncs					;\
 	ldr	r1, [r4, #CI_CTRL]	/* Fetch control register */	;\
 	mov	r0, #-1							;\
-	mov	lr, pc							;\
-	ldr	pc, [r2, #CF_CONTROL]	/* Enable alignment faults */	;\
+	BL_CF_CONTROL(r2)		/* Enable alignment faults */	;\
 1:	KERNEL_LOCK
 
 /*
@@ -211,7 +227,7 @@ void validate_trapframe(trapframe_t *, int);
 	mov	r0, #-1							;\
 	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable AFLTs */	;\
 	adr	lr, 3f							;\
-	ldr	pc, [r2, #CF_CONTROL]	/* Set new CTRL reg value */	;\
+	B_CF_CONTROL(r2)		/* Set new CTRL reg value */	;\
 	/* NOTREACHED */						\
 2:	mov	r1, #0x00000000						;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
@@ -352,6 +368,43 @@ LOCK_CAS_DEBUG_LOCALS
 	str	r0, [sp, #(-TF_R4)]!	/* Push the CPSR on the stack */
 
 /*
+ * Push a trapframe to be used by cpu_switchto
+ */
+#define PUSHSWITCHFRAME(rX)						\
+	mov	ip, sp;							\
+	sub	sp, sp, #(TRAPFRAMESIZE-TF_R12); /* Adjust the stack pointer */ \
+	push	{r4-r11};		/* Push the callee saved registers */ \
+	sub	sp, sp, #TF_R4;		/* reserve rest of trapframe */	\
+	str	ip, [sp, #TF_SVC_SP];					\
+	str	lr, [sp, #TF_SVC_LR];					\
+	str	lr, [sp, #TF_PC];					\
+	mrs	rX, cpsr_all;		/* Get the CPSR */		\
+	str	rX, [sp, #TF_SPSR]	/* save in trapframe */
+
+#define PUSHSWITCHFRAME1						   \
+	mov	ip, sp;							   \
+	sub	sp, sp, #(TRAPFRAMESIZE-TF_R8); /* Adjust the stack pointer */ \
+	push	{r4-r7};		/* Push some of the callee saved registers */ \
+	sub	sp, sp, #TF_R4;		/* reserve rest of trapframe */	\
+	str	ip, [sp, #TF_SVC_SP];					\
+	str	lr, [sp, #TF_SVC_LR];					\
+	str	lr, [sp, #TF_PC]
+
+#if defined(_ARM_ARCH_DWORD_OK) && __ARM_EABI__
+#define	PUSHSWITCHFRAME2						\
+	strd	r10, [sp, #TF_R10];	/* save r10 & r11 */		\
+	strd	r8, [sp, #TF_R8];	/* save r8 & r9 */		\
+	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
+#else
+#define	PUSHSWITCHFRAME2						\
+	add	r0, sp, #TF_R8;		/* get ptr to r8 and above */	\
+	stmia	r0, {r8-r11};		/* save rest of registers */	\
+	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
+#endif
+
+/*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
  * Since the current mode is used, the SVC lr field is ignored.
  */
@@ -369,6 +422,15 @@ LOCK_CAS_DEBUG_LOCALS
 	ldr	r4, [sp], #(TF_R6-TF_R4); /* restore callee-saved r4 */	   \
 	ldr	r6, [sp], #(TF_PC-TF_R6); /* restore callee-saved r6 */	   \
  	ldr	lr, [sp], #4		/* Pop the return address */
+
+/*
+ * Pop a trapframe to be used by cpu_switchto (don't touch r0 & r1).
+ */
+#define PULLSWITCHFRAME							\
+	add	sp, sp, #TF_R4;		/* Adjust the stack pointer */	\
+	pop	{r4-r11};		/* pop the callee saved registers */ \
+	add	sp, sp, #(TF_PC-TF_R12); /* Adjust the stack pointer */	\
+	ldr	lr, [sp], #4;		/* pop the return address */
 
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
