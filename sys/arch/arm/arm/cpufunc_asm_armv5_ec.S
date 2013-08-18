@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.3 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.4 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -36,8 +36,8 @@
  * This source was derived from that file.
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 #include "assym.h"
 

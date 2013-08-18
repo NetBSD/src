@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.12 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.13 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,8 @@
  * SA-1 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
