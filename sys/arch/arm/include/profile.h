@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.10 2013/08/16 21:42:48 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.11 2013/08/18 07:15:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -47,27 +47,18 @@
 #define	PLTSYM
 #endif
 
-#if !defined(__thumb__) && !defined(__ARM_EABI__)
+#if !defined(__ARM_EABI__)
 #define	MCOUNT								\
 	__asm(".text");							\
 	__asm(".align	0");						\
+	__asm(".arm");							\
 	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
 	__asm(MCOUNT_ASM_NAME ":");					\
-	__asm(".cfi_startproc");					\
-	__asm(".fnstart");						\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
 	__asm("push	{r0-r3, ip, lr}");				\
-	__asm(".save {r0-r3, ip, lr}");					\
-	__asm(".cfi_def_cfa_offset 24");				\
-	__asm(".cfi_offset 14, -4");					\
-	__asm(".cfi_offset 12, -8");					\
-	__asm(".cfi_offset 3, -12");					\
-	__asm(".cfi_offset 2, -16");					\
-	__asm(".cfi_offset 1, -20");					\
-	__asm(".cfi_offset 0, -24");					\
 	/* Check what mode we're in.  EQ => 32, NE => 26 */		\
 	__asm("teq	r0, r0");					\
 	__asm("teq	pc, r15");					\
@@ -92,16 +83,14 @@
 	 * Restore registers that were trashed during mcount		\
 	 */								\
 	__asm("pop	{r0-r3, pc}");					\
-	__asm(".cfi_endproc");						\
-	__asm(".fnend");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #else
 #define	MCOUNT								\
 	__asm(".text");							\
 	__asm(".align	0");						\
+	__asm(".arm");							\
 	__asm(".type	" MCOUNT_ASM_NAME ",%function");		\
 	__asm(".global	" MCOUNT_ASM_NAME);				\
-	__asm(".arm");							\
 	__asm(MCOUNT_ASM_NAME ":");					\
 	__asm(".fnstart");						\
 	__asm(".cfi_startproc");					\
