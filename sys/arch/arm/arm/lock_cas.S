@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.10 2013/08/11 04:40:05 matt Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.11 2013/08/18 06:28:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,8 +33,10 @@
 #include "opt_arm_debug.h"
 
 #include "assym.h"
+
 #include <machine/asm.h>
-#include <machine/cpu.h>
+
+#include <arm/locore.h>
 
 #if defined(MULTIPROCESSOR) && !defined(_ARM_ARCH_6)
 #error need to write MP support for ucas_* functions
@@ -142,6 +144,7 @@ _C_LABEL(ucas_32_ras_start):
 	strteq	r2, [ip]
 	mov	r0, #0
 #endif
+	.size _C_LABEL(ucas_32_ras_start), . - _C_LABEL(ucas_32_ras_start)
 	.globl _C_LABEL(ucas_32_ras_end)
 _C_LABEL(ucas_32_ras_end):
 

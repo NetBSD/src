@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.25 2012/12/08 06:46:49 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,18 +133,18 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2012/12/08 06:46:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/reg.h>
-
 #include <arm/armreg.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
+
+#include <machine/pcb.h>
+#include <machine/reg.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)

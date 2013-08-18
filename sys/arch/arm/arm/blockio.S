@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.7 2013/08/11 03:09:41 matt Exp $	*/
+/*	$NetBSD: blockio.S,v 1.8 2013/08/18 06:29:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.7 2013/08/11 03:09:41 matt Exp $")
+RCSID("$NetBSD: blockio.S,v 1.8 2013/08/18 06:29:29 matt Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -101,6 +101,7 @@ ENTRY(read_multi_1)
 	ldrbgt	r3, [r0]
 	strbgt	r3, [r1], #1
 	ldmdb	fp, {fp, sp, pc}
+END(read_multi_1)
 
 /*
  * Write bytes to an I/O address from a block of memory
@@ -152,6 +153,7 @@ ENTRY(write_multi_1)
 	ldrbgt	r3, [r1], #1
 	strbgt	r3, [r0]
 	ldmdb	fp, {fp, sp, pc}
+END(write_multi_1)
 
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
@@ -164,7 +166,7 @@ ENTRY(write_multi_1)
 ENTRY(insw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address and the size is word aligned, do it fast */
 
@@ -182,7 +184,7 @@ ENTRY(insw)
 	strb	r3, [r1], #0x0001
 	bgt	.Linswloop
 
-	mov	pc, lr
+	RET
 
 /* Word aligned insw */
 
@@ -198,7 +200,8 @@ ENTRY(insw)
 	subs	r2, r2, #0x00000002	/* Next */
 	bgt	.Lfastinswloop
 
-	mov	pc, lr
+	RET
+END(insw)
 
 
 /*
@@ -212,7 +215,7 @@ ENTRY(insw)
 ENTRY(outsw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address and the size is word aligned, do it fast */
 
@@ -231,7 +234,7 @@ ENTRY(outsw)
 	str	r3, [r0]
 	bgt	.Loutswloop
 
-	mov	pc, lr
+	RET
 
 /* Word aligned outsw */
 
@@ -259,7 +262,8 @@ ENTRY(outsw)
 
 	bgt	.Lfastoutswloop
 
-	mov	pc, lr
+	RET
+END(outsw)
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -274,7 +278,7 @@ ENTRY(outsw)
 ENTRY(insw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -318,6 +322,7 @@ ENTRY(insw16)
 	bgt	.Linsw16loop
 
 	pop	{r4,r5,pc}		/* Restore regs and go home */
+END(insw16)
 
 
 /*
@@ -331,7 +336,7 @@ ENTRY(insw16)
 ENTRY(outsw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -385,6 +390,7 @@ ENTRY(outsw16)
 	bgt	.Loutsw16loop
 
 	pop	{r4,r5,pc}		/* and go home */
+END(outsw16)
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -400,7 +406,7 @@ ENTRY(outsw16)
 ENTRY(inswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -481,6 +487,7 @@ ENTRY(inswm8)
 
 .Linswm8_l1:
 	pop	{r4-r9,pc}		/* And go home */
+END(inswm8)
 
 /*
  * write short ints (16 bits) to an I/O address from a block of memory
@@ -496,7 +503,7 @@ ENTRY(inswm8)
 ENTRY(outswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -585,3 +592,4 @@ ENTRY(outswm8)
 
 .Loutswm8_l1:
 	pop	{r4-r8,pc}		/* And go home */
+END(outswm8)

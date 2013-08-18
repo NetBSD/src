@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 2013/01/31 14:58:51 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2013/01/31 14:58:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2013/01/31 14:58:51 matt Exp $"
 #include <machine/sysarch.h>
 #include <machine/pcb.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
 
 /* Prototypes */
 static int arm32_sync_icache(struct lwp *, const void *, register_t *);

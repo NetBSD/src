@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.48 2012/11/12 18:00:35 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.49 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.48 2012/11/12 18:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.49 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -71,11 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.48 2012/11/12 18:00:35 skrll Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/frame.h>
+#include <arm/locore.h>
+#include <arm/undefined.h>
+
 #include <machine/pcb.h>
 #include <machine/trap.h>
-
-#include <arm/undefined.h>
 
 #include <arch/arm/arm/disassem.h>
 
@@ -132,7 +132,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 	struct lwp * const l = curlwp;
 
-#ifdef THUMB_CODE
+#if defined(THUMB_CODE) && !defined(CPU_ARMV7)
 	if (frame->tf_spsr & PSR_T_bit)
 		return 1;
 #endif
@@ -303,7 +303,18 @@ undefinedinstruction(trapframe_t *frame)
 
 #ifdef THUMB_CODE
 	if (frame->tf_spsr & PSR_T_bit) {
-		fault_instruction = fusword((void *)(fault_pc & ~1));
+		const uint16_t *pc = (const uint16_t *)(fault_pc & ~1);
+		fault_instruction = pc[0];
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+		fault_instruction = le16toh(fault_instruction);
+#endif
+		if (fault_instruction >= 0xe000) {
+			uint16_t tmp = pc[1];
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+			tmp = le16toh(tmp);
+#endif
+			fault_instruction = (fault_instruction << 16) | tmp;
+		}
 	}
 	else
 #endif
@@ -332,7 +343,10 @@ undefinedinstruction(trapframe_t *frame)
 		 * not really matter does it ?
 		 */
 
-		fault_instruction = *(uint32_t *)fault_pc;
+		fault_instruction = *(const uint32_t *)fault_pc;
+#if defined(__ARMEB__) && defined(_ARM_ARCH_7)
+		fault_instruction = le32toh(fault_instruction);
+#endif
 	}
 
 	/* Update vmmeter statistics */

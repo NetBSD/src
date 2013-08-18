@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.4 2013/06/12 07:14:26 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.5 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.4 2013/06/12 07:14:26 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.5 2013/08/18 06:28:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.4 2013/06/12 07:14:26 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
 

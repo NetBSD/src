@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.5 2013/05/11 07:38:42 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.6 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.5 2013/05/11 07:38:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.6 2013/08/18 06:28:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.5 2013/05/11 07:38:42 skrll Exp $
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/locore.h>
 #include <arm/arm32/machdep.h>
 
 void
