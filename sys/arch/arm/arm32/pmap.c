@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.262 2013/07/03 21:37:35 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.263 2013/08/18 06:50:31 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -202,17 +202,14 @@
 #include <sys/cdefs.h>
 #include <sys/cpu.h>
 #include <sys/sysctl.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm.h>
 
-#include <sys/bus.h>
-#include <machine/pmap.h>
-#include <machine/pcb.h>
-#include <machine/param.h>
-#include <arm/cpuconf.h>
+#include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262 2013/07/03 21:37:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2013/08/18 06:50:31 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
