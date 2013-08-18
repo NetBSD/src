@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.10 2012/09/22 00:33:40 matt Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.10 2012/09/22 00:33:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.11 2013/08/18 15:58:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,10 +124,12 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.10 2012/09/22 00:33:40 matt 
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/conf.h>
 #include <dev/cons.h>
 #include <dev/md.h>
 
@@ -139,9 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.10 2012/09/22 00:33:40 matt 
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/pte.h>
