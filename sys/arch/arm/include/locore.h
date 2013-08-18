@@ -95,6 +95,8 @@
 
 #else /* !_LOCORE */
 
+#include <arm/cpufunc.h>
+
 #ifdef __PROG32
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
 #define IRQenable __set_cpsr_c(I32_bit, 0);
