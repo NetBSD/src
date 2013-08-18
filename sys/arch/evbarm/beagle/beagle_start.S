@@ -99,7 +99,7 @@
 #include <arm/cortex/a9tmr_reg.h>
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.17 2013/06/18 15:28:36 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.18 2013/08/18 06:34:02 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -242,3 +242,5 @@ _C_LABEL(beagle_start):
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+
+END(_C_LABEL(beagle_start))
