@@ -1,12 +1,13 @@
-# $NetBSD: Makefile.inc,v 1.21 2013/04/30 01:42:03 matt Exp $
+# $NetBSD: Makefile.inc,v 1.22 2013/08/18 07:57:29 skrll Exp $
 
 .include <bsd.own.mk>
 
-SRCS+=	__aeabi_read_tp.S __sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
 CPPFLAGS += -I.
 
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
+SRCS+=	__aeabi_read_tp.S
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
 SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
 SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
