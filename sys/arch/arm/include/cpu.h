@@ -104,7 +104,7 @@ extern int cpu_fpu_present;
 	((curcpu()->ci_intr_depth > 1) ||			\
 	    ((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(frame)	(curcpu()->ci_intr_depth > 1) 
+#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1) 
 #endif
 
 /*
