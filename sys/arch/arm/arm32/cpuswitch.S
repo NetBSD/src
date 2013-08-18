@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.77 2013/02/27 17:52:44 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.78 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.77 2013/02/27 17:52:44 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.78 2013/08/18 06:28:18 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -133,7 +133,7 @@
  */
 ENTRY(cpu_switchto)
 	mov	ip, sp
-	stmfd	sp!, {r4-r7, ip, lr}
+	push	{r4-r7, ip, lr}
 
 	/* move lwps into caller saved registers */
 	mov	r6, r1
@@ -313,7 +313,7 @@ ENTRY(cpu_switchto)
 	 * Pull the registers that got pushed when cpu_switchto() was called,
 	 * and return.
 	 */
-	ldmfd	sp, {r4-r7, sp, pc}
+	pop	{r4-r7, ip, pc}
 
 .Lswitch_do_ras:
 	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
@@ -323,6 +323,7 @@ ENTRY(cpu_switchto)
 	ldrne	r1, [r6, #(L_MD_TF)]
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
+END(cpu_switchto)
 
 ENTRY_NP(lwp_trampoline)
 	/*
@@ -355,6 +356,7 @@ ENTRY_NP(lwp_trampoline)
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
+END(lwp_trampoline)
 
 AST_ALIGNMENT_FAULT_LOCALS
 
@@ -365,7 +367,7 @@ AST_ALIGNMENT_FAULT_LOCALS
  *	r1 = ipl for softint_dispatch
  */
 ENTRY_NP(softint_switch)
-	stmfd	sp!, {r4, r6, r7, lr}
+	push	{r4, r6, r7, lr}
 
 	ldr	r7, [r0, #L_CPU]		/* get curcpu */
 #if defined(TPIDRPRW_IS_CURLWP)
@@ -380,8 +382,8 @@ ENTRY_NP(softint_switch)
 	 */
 	mov	r2, sp				/* think ip */
 	adr	r3, softint_tramp		/* think lr */
-	stmfd	sp!, {r2-r3}
-	stmfd	sp!, {r4-r7}
+	push	{r2-r3}
+	push	{r4-r7}
 
 	mov	r5, r0				/* save new lwp */
 
@@ -451,8 +453,8 @@ ENTRY_NP(softint_switch)
 	/*
 	 * Grab the registers that got pushed at the start and return.
 	 */
-	ldmfd	sp!, {r4-r7, ip, lr}	/* eat switch frame */
-	ldmfd	sp!, {r4, r6, r7, pc}	/* pop stack and return */
+	pop	{r4-r7, ip, lr}		/* eat switch frame */
+	pop	{r4, r6, r7, pc}	/* pop stack and return */
 
 END(softint_switch)
 
@@ -471,6 +473,6 @@ ENTRY_NP(softint_tramp)
 	str	r3, [r0, #(L_CTXSWTCH)]		/*    the soft lwp blocked */
 
 	msr	cpsr_c, r6			/* restore interrupts */
-	ldmfd	sp!, {r4, r6, r7, pc}		/* pop stack and return */
+	pop	{r4, r6, r7, pc}		/* pop stack and return */
 END(softint_tramp)
 #endif /* __HAVE_FAST_SOFTINTS */

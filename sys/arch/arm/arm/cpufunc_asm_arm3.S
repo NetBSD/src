@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm3.S,v 1.2 2011/12/11 03:30:23 kiyohara Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm3.S,v 1.3 2013/08/18 06:28:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,8 @@
  * ARM3 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 #ifdef CPU_ARM3
 /*
