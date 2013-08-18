@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.8 2012/09/01 14:48:29 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.9 2013/08/18 15:58:19 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 #define	ARM_IRQ_HANDLER	_C_LABEL(omap_irq_handler)
 
 #ifndef _LOCORE
+
+#include <sys/device_if.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
