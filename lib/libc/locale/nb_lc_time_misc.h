@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.4 2013/04/21 17:45:46 joerg Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.5 2013/08/18 20:03:48 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -75,9 +75,8 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 }
 
 static __inline void
-_PREFIX(fixup)(_TimeLocale *data)
+_PREFIX(update_global)(_TimeLocale *data)
 {
-	_DIAGASSERT(data != NULL);
 }
 
 /*
@@ -85,6 +84,5 @@ _PREFIX(fixup)(_TimeLocale *data)
  */
 #define _CATEGORY_ID		LC_TIME
 #define _CATEGORY_NAME		"LC_TIME"
-#define _CATEGORY_DEFAULT	_DefaultTimeLocale
 
 #endif /*_NB_LC_TIME_MISC_H_*/
