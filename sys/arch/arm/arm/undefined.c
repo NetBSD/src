@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.49 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.50 2013/08/18 08:08:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.49 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.50 2013/08/18 08:08:15 matt Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -303,7 +303,7 @@ undefinedinstruction(trapframe_t *frame)
 
 #ifdef THUMB_CODE
 	if (frame->tf_spsr & PSR_T_bit) {
-		const uint16_t *pc = (const uint16_t *)(fault_pc & ~1);
+		const uint16_t * const pc = (const uint16_t *)(fault_pc & ~1);
 		fault_instruction = pc[0];
 #if defined(__ARMEB__) && defined(_ARM_ARCH_7)
 		fault_instruction = le16toh(fault_instruction);
@@ -353,7 +353,7 @@ undefinedinstruction(trapframe_t *frame)
 	curcpu()->ci_data.cpu_ntrap++;
 
 #ifdef THUMB_CODE
-	if (frame->tf_spsr & PSR_T_bit) {
+	if ((frame->tf_spsr & PSR_T_bit) && !CPU_IS_ARMV7_P()) {
 		coprocessor = THUMB_UNKNOWN_HANDLER;
 	}
 	else
@@ -372,10 +372,15 @@ undefinedinstruction(trapframe_t *frame)
 		 */
 
 		if ((fault_instruction & (1 << 27)) != 0
-		    && (fault_instruction & 0xf0000000) != 0xf0000000)
+		    && (fault_instruction & 0xf0000000) != 0xf0000000) {
 			coprocessor = (fault_instruction >> 8) & 0x0f;
-		else
+#ifdef THUMB_CODE
+		} else if ((frame->tf_spsr & PSR_T_bit) && !CPU_IS_ARMV7_P()) {
+			coprocessor = THUMB_UNKNOWN_HANDLER;
+#endif
+		} else {
 			coprocessor = CORE_UNKNOWN_HANDLER;
+		}
 	}
 
 	if (user) {
