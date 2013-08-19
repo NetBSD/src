@@ -22556,6 +22556,9 @@ static const struct arm_cpu_option_table arm_cpus[] =
   {"arm1176jzf-s",	ARM_ARCH_V6ZK,	 FPU_ARCH_VFP_V2, NULL},
   {"cortex-a5",		ARM_ARCH_V7A_MP_SEC, 
 					 FPU_NONE,	  "Cortex-A5"},
+  {"cortex-a7",	ARM_ARCH_V7A_IDIV_MP_SEC_VIRT,
+					 FPU_ARCH_NEON_VFP_V4,
+                                                          "Cortex-A7"},
   {"cortex-a8",		ARM_ARCH_V7A_SEC,
 					 ARM_FEATURE (0, FPU_VFP_V3
                                                         | FPU_NEON_EXT_V1),
