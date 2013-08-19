@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2013/08/11 05:02:35 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.4 2013/08/19 02:55:19 matt Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.3 2013/08/11 05:02:35 matt Exp $")
+RCSID("$NetBSD: ffs.S,v 1.4 2013/08/19 02:55:19 matt Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -45,17 +45,23 @@ RCSID("$NetBSD: ffs.S,v 1.3 2013/08/11 05:02:35 matt Exp $")
  * 16 Feb 1994.
  */
 WEAK_ALIAS(__ffssi2,ffs)
+#if (defined(_ARM_ARCH_5) && !defined(__thumb__)) || defined(_ARM_ARCH_T2)
+#if defined(_ARM_ARCH_T2)
 ENTRY(ffs)
-#ifdef _ARM_ARCH_5
+#else
+ARM_ENTRY(ffs)
+#endif
 	/* (X & -X) gives LSB or zero.  */
- 	rsb	r1, r0, #0
+ 	neg	r1, r0
  	and	r0, r0, r1
 	clz	r0, r0
 	rsb	r0, r0, #32
 	RET
+END(ffs)
 #else
+ARM_ENTRY(ffs)
 	/* Standard trick to isolate bottom bit in r0 or 0 if r0 = 0 on entry */
- 	rsb     r1, r0, #0
+ 	neg     r1, r0
  	ands    r0, r0, r1
 	/*
 	 * now r0 has at most one set bit, call this X
@@ -82,4 +88,5 @@ ENTRY(ffs)
 	.byte	10,  0,  0, 25,  0,  0, 21, 27  /* 40-47 */
 	.byte	31,  0,  0,  0,  0, 24,  0, 20  /* 48-55 */
 	.byte   30,  0, 23, 19, 29, 18, 17,  0  /* 56-63 */
+END(ffs)
 #endif
