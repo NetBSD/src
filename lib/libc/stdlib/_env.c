@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $ */
+/*	$NetBSD: _env.c,v 1.7 2013/08/19 22:14:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.6 2011/10/06 20:31:41 christos Exp $");
+__RCSID("$NetBSD: _env.c,v 1.7 2013/08/19 22:14:37 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -400,7 +400,7 @@ __unlockenv(void)
 #endif
 
 /* Initialize environment memory RB tree. */
-void
+void __section(".text.startup")
 __libc_env_init(void)
 {
 	rb_tree_init(&env_tree, &env_tree_ops);
