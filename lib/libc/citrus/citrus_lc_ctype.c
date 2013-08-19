@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.12 2013/08/18 20:03:48 joerg Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.13 2013/08/19 22:43:28 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.12 2013/08/18 20:03:48 joerg Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.13 2013/08/19 22:43:28 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -103,15 +103,7 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 	_DIAGASSERT(cache->items != NULL);
 	_DIAGASSERT(data != NULL);
 
-	cache->ctype_tab = data->rl_ctype_tab;
-	cache->tolower_tab = data->rl_tolower_tab;
-	cache->toupper_tab = data->rl_toupper_tab;
-	cache->mb_cur_max = _citrus_ctype_get_mb_cur_max(data->rl_citrus_ctype);
 	cache->items[(size_t)CODESET] = data->rl_codeset;
-
-#ifdef __BUILD_LEGACY
-	cache->compat_bsdctype = data->rl_compat_bsdctype;
-#endif
 }
 
 static __inline void
