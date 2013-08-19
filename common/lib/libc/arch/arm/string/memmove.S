@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.5 2013/08/11 04:56:32 matt Exp $	*/
+/*	$NetBSD: memmove.S,v 1.6 2013/08/19 02:37:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,10 +30,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(__ARM_EABI__) && !defined(BCOPY)
-STRONG_ALIAS(__aeabi_memmove, memmove)
-#endif
 
 #ifndef _BCOPY
 /* LINTSTUB: Func: void *memmove(void *, const void *, size_t) */
@@ -583,3 +579,12 @@ ENTRY(bcopy)
 .Lmemmove_bsrcul1l4:
 	add	r1, r1, #1
 	b	.Lmemmove_bl4
+#ifndef _BCOPY
+END(memmove)
+#else
+END(bcopy)
+#endif
+
+#if defined(__ARM_EABI__) && !defined(BCOPY)
+STRONG_ALIAS(__aeabi_memmove, memmove)
+#endif
