@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.14 2013/08/16 22:30:28 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.15 2013/08/19 22:13:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,6 +33,8 @@
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
+
+#define _TEXT_SECTION	.section .text.hot, "ax"
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
