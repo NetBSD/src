@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.3 2013/06/27 21:24:39 matt Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.4 2013/08/19 22:15:13 matt Exp $");
 
 typedef void (*fptr_t)(void);
 
@@ -65,7 +65,7 @@ static long dwarf_eh_object[8];
 
 static void __do_global_ctors_aux(void) __used;
 
-static void
+static void __section(".text.startup")
 __do_global_ctors_aux(void)
 {
 	static unsigned char __initialized;
@@ -100,7 +100,7 @@ __dso_hidden extern const fptr_t __DTOR_LIST_END__[];
 
 static void __do_global_dtors_aux(void) __used;
 
-static void
+static void __section(".text.exit")
 __do_global_dtors_aux(void)
 {
 	static unsigned char __finished;
