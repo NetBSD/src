@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.7 2013/08/19 02:13:13 matt Exp $")
+RCSID("$NetBSD: strlen_naive.S,v 1.8 2013/08/19 17:02:25 matt Exp $")
 
 #ifdef STRNLEN
 /* LINTSTUB: size_t strnlen(const char *, size_t) */
@@ -58,17 +58,17 @@ END(strnlen)
 #else /* STRNLEN */
 /* LINTSTUB: size_t strlen(const char *) */
 ENTRY(strlen)
-	adds	r2, r0, #1	/* start of src + NUL */
+	adds	r3, r0, #1	/* start of src + NUL */
 1:
 #ifdef __thumb__
-	ldrb	r3, [r0]	/* read a byte */
+	ldrb	r2, [r0]	/* read a byte */
 	adds	r0, r0, #1
 #else
-	ldrb	r3, [r0], #1	/* read a byte */
+	ldrb	r2, [r0], #1	/* read a byte */
 #endif
-	cmp	r3, #0		/* is it a NUL? */
+	cmp	r2, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
-	subs	r0, r0, r2	/* return difference between start and end */
+	subs	r0, r0, r3	/* return difference between start and end */
 	RET
 END(strlen)
 #endif /* !STRNLEN */
