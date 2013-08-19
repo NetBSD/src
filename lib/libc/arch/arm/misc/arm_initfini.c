@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.4 2013/08/16 17:09:27 matt Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.5 2013/08/19 22:14:37 matt Exp $");
 
 #include "namespace.h"
 
@@ -51,7 +51,7 @@ static bool _libc_aapcs_initialized;
 
 void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
 
-void
+void __section(".text.startup")
 _libc_aapcs_init(void)
 {
 	if (!_libc_aapcs_initialized) {
