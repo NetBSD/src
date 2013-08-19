@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_arm.S,v 1.2 2013/08/19 01:12:08 matt Exp $")
+RCSID("$NetBSD: strlcat_arm.S,v 1.3 2013/08/19 06:11:20 matt Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
@@ -41,10 +41,10 @@ ENTRY(strlcat)
 #ifdef __ARM_EABI__
 	.save	{r4-r6, lr}
 	.cfi_def_cfa_offset 16
-	.cfi_register 14, -4
-	.cfi_register 6, -8
-	.cfi_register 5, -12
-	.cfi_register 4, -16
+	.cfi_offset 14, -4
+	.cfi_offset 6, -8
+	.cfi_offset 5, -12
+	.cfi_offset 4, -16
 #endif
 	mov	r4, r0			/* save dst */
 	mov	r5, r1			/* save src */
