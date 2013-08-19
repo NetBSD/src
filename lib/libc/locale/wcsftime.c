@@ -1,4 +1,4 @@
-/*	 $NetBSD: wcsftime.c,v 1.4 2013/08/19 08:03:34 joerg Exp $	*/
+/*	 $NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $	*/
 /*-
  * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wcsftime.c,v 1.4 2013/08/19 08:03:34 joerg Exp $");
+__RCSID("$NetBSD: wcsftime.c,v 1.5 2013/08/19 20:41:15 joerg Exp $");
 
 #define __SETLOCALE_SOURCE__
 #include "namespace.h"
@@ -93,7 +93,7 @@ wcsftime_l(wchar_t *wcs, size_t maxsize,
 		errno = EINVAL;
 		goto error;
 	}
-	dst = malloc(maxsize * MB_CUR_MAX);
+	dst = malloc(maxsize * MB_CUR_MAX_L(loc));
 	if (dst == NULL)
 		goto error;
 	if (strftime_l(dst, maxsize, sformat, timeptr, loc) == 0)
