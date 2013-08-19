@@ -1,8 +1,8 @@
-/* $NetBSD: strnlen.S,v 1.1 2013/01/23 07:56:09 matt Exp $ */
+/* $NetBSD: strnlen.S,v 1.2 2013/08/19 01:08:29 matt Exp $ */
 
 #define	STRNLEN
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE) || defined(__thumb__)
 #include "strlen_naive.S"
 #else
 #include "strlen_arm.S"
