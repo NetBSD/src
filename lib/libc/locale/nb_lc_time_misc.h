@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.5 2013/08/18 20:03:48 joerg Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.6 2013/08/19 09:12:58 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -74,6 +74,7 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 	cache->items[(size_t)ALT_DIGITS ] = NULL;
 }
 
+/* ARGSUSED */
 static __inline void
 _PREFIX(update_global)(_TimeLocale *data)
 {
