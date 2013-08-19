@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2013/08/06 05:35:57 matt Exp $
+#	$NetBSD: Makefile,v 1.17 2013/08/19 22:25:32 matt Exp $
 
 .include <bsd.init.mk>
 
 # We don't install gmp, just provide it for GCC.
 LIBISPRIVATE?=	yes
 
-GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[67]/arm/}
+GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[5-7]/arm/}
 
 .if ${LIBISPRIVATE} != "yes"
 INCS=         gmp.h
@@ -228,5 +228,8 @@ CLEANFILES+=	mpn_${_build}
 # Don't warn about functions which cannot be stack smash protected as
 # there are a lot of them.
 COPTS += -Wno-stack-protector
+.if !empty(GMP_MACHINE_ARCH:M*arm*)
+COPTS += -marm
+.endif
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
