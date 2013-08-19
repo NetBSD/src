@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.locale,v 1.3 2013/08/11 22:09:40 joerg Exp $
+# $NetBSD: Makefile.locale,v 1.4 2013/08/19 22:34:41 joerg Exp $
 
 LANGUAGE=	af be bg ca cs da de el en es \
 		et eu fi fr hr hu hy is it ja \
 		kk ko lt nb nl nn pt pl ro ru \
-		sk sl sr_Cyrl sr_Latn sv tr uk zh zh
+		sk sl sr_Cyrl sr_Latn sv tr uk zh
 
 TERRITORY=	AM AT AU BE BG BR BY CA CH CN \
 		CZ DE DK EE ES FI FR GB GR HK \
