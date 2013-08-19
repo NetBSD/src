@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_naive.S,v 1.3 2013/08/19 02:22:25 matt Exp $")
+RCSID("$NetBSD: strchr_naive.S,v 1.4 2013/08/19 17:02:25 matt Exp $")
 
 /* LINTSTUB: char * strchr(const char *, int) */
 ENTRY(strchr)
@@ -39,12 +39,8 @@ ENTRY(strchr)
 	cmp	r3, r1		/* does it match? */
 	beq	2f		/*   yes, set return value */
 	adds	r0, r0, #1	/* advance to next byte */
-#ifdef _ARM_ARCH_T2
-	cbnz	r3, 1b		/* was it a NUL?  no, get next byte */
-#else
 	cmp	r3, #0		/* was it a NUL? */
 	bne	1b		/*   no, get next byte */
-#endif
 	movs	r0, #0		/* set return to NULL */
 2:	RET			/* return */
 #else
