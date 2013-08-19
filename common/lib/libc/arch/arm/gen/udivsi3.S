@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.2 2013/06/20 07:16:23 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.3 2013/08/19 03:51:04 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,9 +16,6 @@
 
 #include <machine/asm.h>
 
-
-ENTRY_NP(__aeabi_uidivmod)
-ENTRY_NP(__aeabi_uidiv)
 ENTRY(__udivsi3)
 #if defined(__ARM_ARCH_EXT_IDIV__)
 # if defined(__ARM_EABI__)
@@ -29,6 +26,30 @@ ENTRY(__udivsi3)
 	mls	r1, r0, r1, r3	@ return modulus in r1
 # endif
 	RET
-#else
+#elif !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	b	__udivide
+#else
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
+	push	{r4, lr}
+#ifdef __ARM_EABI__
+	.save	{r4, lr}
+	.cfi_def_cfa_offset 8
+	.cfi_offset 14, -4
+	.cfi_offset 4, -8
+#endif
+	bl	__udivide
+	pop	{r4, pc}
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
+#endif
+#endif
+END(__udivsi3)
+
+#ifdef __ARM_EABI__
+STRONG_ALIAS(__aeabi_uidivmod, __udivsi3)
+STRONG_ALIAS(__aeabi_uidiv, __udivsi3)
 #endif
