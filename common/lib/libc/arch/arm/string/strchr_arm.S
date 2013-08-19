@@ -29,7 +29,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_arm.S,v 1.7 2013/08/19 17:41:47 matt Exp $")
+RCSID("$NetBSD: strchr_arm.S,v 1.8 2013/08/19 17:50:04 matt Exp $")
+
+#if defined(__thumb__) && !defined(_ARM_ARCH_T2)
+#error Only Thumb2 or ARM supported
+#endif
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -92,13 +96,20 @@ ENTRY(strchr)
 	 * We've encountered a NUL or a match but we don't know which happened
 	 * first.
 	 */
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, .Lfind_match	/* searching for NUL? yes, find it */
+#else
 	cmp	r2, #0			/* searching for NUL? */
 	beq	.Lfind_match		/*   yes, find the match */
+#endif
 	mvns	r1, r1			/* did we encounter a NUL? */
 	beq	.Lfind_match		/*   no, find the match */
 	bics	r3, r3, r1		/* clear match for the NUL(s) */
 	beq	.Lnomatch		/*   any left set? if not, no match */
 	lshis	r1, r1, #8		/* replicate NUL bit to other bytes */
+#ifdef __thumb__
+	itt	ne
+#endif
 	orrne	r1, r1, r1, lshi #8	/* replicate NUL bit to other bytes */
 	orrne	r1, r1, r1, lshi #8	/* replicate NUL bit to other bytes */
 	bics	r3, r3, r1		/* clear any match bits after the NUL */
