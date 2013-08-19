@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/08/06 05:35:57 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2013/08/19 22:25:32 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -476,7 +476,7 @@ CPPFLAGS+=	-I. \
 		-DHAVE_ATTRIBUTE_MODE=1
 
 # Find <gmp.h>
-GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+GMP_MACHINE_ARCH=${MACHINE_ARCH:S/earmv4/arm/:C/arm[5-7]/arm/}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
 
 # XXX
@@ -515,6 +515,9 @@ CLEANFILES+= mparam.h
 
 .PATH: ${.CURDIR}/../../dist
 
+.if !empty(MACHINE_ARCH:M*arm*)
+COPTS += -marm
+.endif
 .if ${MACHINE_ARCH} == "vax"
 COPTS.set_ld.c+=	-Wno-error
 .endif
