@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.78 2013/06/24 04:21:20 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.79 2013/08/19 10:59:39 joerg Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -33,9 +33,6 @@ SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 CPPFLAGS.wcscmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wcsncmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
-
-# namespace protection wrappers
-SRCS+=	_strlcat.c _strlcpy.c _strerror_r.c
 
 .include "${ARCHDIR}/string/Makefile.inc"
 
