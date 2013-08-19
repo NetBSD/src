@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.57 2013/08/17 13:08:16 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.58 2013/08/19 04:27:22 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -93,7 +93,7 @@ __mkimage: .USE
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
-	    -K "${.ALLSRC}" -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
+	    -K ${.ALLSRC} -S ${NETBSDSRCDIR} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
 ARCHES.arm=		armv4 xscale armv5t armv6 armv7
@@ -122,8 +122,9 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 .endfor
 
-.if !empty(KERNEL_SETS:MBEAGLEBOARD)
-smp_beagleboard: ${IMAGE.kern}/netbsd-BEAGLEBOARD.ub.gz ${IMAGE.kern}/netbsd-BEAGLEBONE.ub.gz __mkimage
+.if !empty(KERNEL_SETS:MBEAGLEBOARD) && !empty(KERNEL_SETS:MBEAGLEBONE)
+smp_beagleboard: ${IMAGE.kern}/netbsd-BEAGLEBOARD.ub.gz __mkimage
+#            XXX ${IMAGE.kern}/netbsd-BEAGLEBONE.ub.gz
 .if empty(ALL_KERNELS) || (!empty(ALL_KERNELS:MBEAGLEBOARD) && !empty(ALL_KERNELS:MBEAGLEBONE))
 SNAP_MD_POST_DEPS+=	smp_beagleboard
 .endif
