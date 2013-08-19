@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.18 2013/08/18 20:03:48 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.19 2013/08/19 22:43:28 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.18 2013/08/18 20:03:48 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.19 2013/08/19 22:43:28 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -198,16 +198,8 @@ static const char * const _C_items [(size_t)ALT_DIGITS + 1] = {
 };
 
 static struct _locale_cache_t _global_cache = {
-    .ctype_tab = (const unsigned short *)&_C_ctype_tab_[0],
-    .tolower_tab = (const short *)&_C_tolower_tab_[0],
-    .toupper_tab = (const short *)&_C_toupper_tab_[0],
-    .mb_cur_max = (size_t)1,
     .ldata = __UNCONST(&_C_ldata),
     .items = __UNCONST(&_C_items[0]),
-
-#ifdef __BUILD_LEGACY
-    .compat_bsdctype = (const unsigned char *)&_C_compat_bsdctype[0],
-#endif
 };
 
 __dso_protected struct _locale _lc_global_locale = {
@@ -239,16 +231,8 @@ __dso_protected struct _locale _lc_global_locale = {
 };
 
 static const struct _locale_cache_t _C_cache = {
-    .ctype_tab = (const unsigned short *)&_C_ctype_tab_[0],
-    .tolower_tab = (const short *)&_C_tolower_tab_[0],
-    .toupper_tab = (const short *)&_C_toupper_tab_[0],
-    .mb_cur_max = (size_t)1,
     .ldata = __UNCONST(&_C_ldata),
     .items = __UNCONST(&_C_items[0]),
-
-#ifdef __BUILD_LEGACY
-    .compat_bsdctype = (const unsigned char *)&_C_compat_bsdctype[0],
-#endif
 };
 
 __dso_protected const struct _locale _lc_C_locale = {
