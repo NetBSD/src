@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.3 2013/01/23 06:59:55 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.4 2013/08/19 01:17:32 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -51,8 +51,18 @@ RCSID("$NetBSD: strlen_arm.S,v 1.3 2013/01/23 06:59:55 matt Exp $")
 
 	.text
 ENTRY(FUNCNAME)
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
 #ifdef STRNLEN
 	push	{r4,r5}			/* save some registers */
+#ifdef __ARM_EABI__
+	.save	{r4,r5}
+	.cfi_def_cfa_offset 8
+	.cfi_offset 5, -4
+	.cfi_offset 4, -8
+#endif
 	add	r5, r0, r1		/* get ptr to end of string */
 	mov	r4, r1			/* save maxlen */
 #endif
@@ -150,5 +160,9 @@ ENTRY(FUNCNAME)
 	mov	r0, r4			/* return maxlen */
 	pop	{r4, r5}		/* restore registers */
 	RET				/* return */
+#endif
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
 #endif
 END(FUNCNAME)
