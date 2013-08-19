@@ -28,17 +28,33 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strrchr_naive.S,v 1.2 2013/08/19 02:24:09 matt Exp $")
+RCSID("$NetBSD: strrchr_naive.S,v 1.3 2013/08/19 02:36:27 matt Exp $")
 
 /* LINTSTUB: char * strrchr(const char *, int) */
 ENTRY(strrchr)
 	mov	r2, r0		/* using r0 as return value */
-	mov	r0, #0		/* default to no match */
+	movs	r0, #0		/* default to no match */
+#ifdef __thumb__
+	movs	r3, #0xff
+	ands	r1, r1, r3	/* restrict to a byte value */
+1:	ldrb	r3, [r2]	/* read a byte */
+	cmp	r3, r1		/* does it match? */
+	bne	2f		/*   no, go and advance */
+	mov	r0, r2		/*   yes, set return value to point to it */
+2:	adds	r2, r2, #1	/* advance to next byte */
+#ifdef _ARM_ARCH_T2
+	cbnz	r3, 1b		/* was it a NUL?  no, get next byte */
+#else
+	cmp	r3, #0		/* was it a NUL? */
+	bne	1b		/*   no, get next byte */
+#endif
+#else
 	and	r1, r1, #0xff	/* restrict to a byte value */
 1:	ldrb	r3, [r2], #1	/* read a byte */
 	cmp	r3, r1		/* does it match? */
 	subeq	r0, r2, #1	/*   yes, set return value to point to it */
 	cmp	r3, #0		/* was it a NUL? */
 	bne	1b		/*   no, get next byte */
+#endif
 	RET
 END(strrchr)
