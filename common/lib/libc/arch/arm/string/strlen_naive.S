@@ -28,16 +28,26 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.6 2013/08/19 02:11:03 matt Exp $")
+RCSID("$NetBSD: strlen_naive.S,v 1.7 2013/08/19 02:13:13 matt Exp $")
 
 #ifdef STRNLEN
 /* LINTSTUB: size_t strnlen(const char *, size_t) */
 ENTRY(strnlen)
 	adds	r3, r0, #1	/* start of src + NUL */
+#ifdef __thumb__
+	adds	r2, r0, r1	/* &src[maxlen] */
+	mov	ip, r2
+#else
 	adds	ip, r0, r1	/* &src[maxlen] */
+#endif
 1:	cmp	r0, ip		/* is this of string? */
 	beq	2f		/*   yes it is */
+#ifdef __thumb__
+	ldrb	r2, [r0]	/* read a byte */
+	adds	r0, r0, #1	/* advance to next byte */
+#else
 	ldrb	r2, [r0], #1	/* read a byte */
+#endif
 	cmp	r2, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
 	subs	r0, r0, r3	/* get difference between start and end */
@@ -50,7 +60,12 @@ END(strnlen)
 ENTRY(strlen)
 	adds	r2, r0, #1	/* start of src + NUL */
 1:
+#ifdef __thumb__
+	ldrb	r3, [r0]	/* read a byte */
+	adds	r0, r0, #1
+#else
 	ldrb	r3, [r0], #1	/* read a byte */
+#endif
 	cmp	r3, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
 	subs	r0, r0, r2	/* return difference between start and end */
