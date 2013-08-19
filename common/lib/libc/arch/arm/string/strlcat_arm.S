@@ -29,11 +29,23 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_arm.S,v 1.1 2013/01/23 07:02:45 matt Exp $")
+RCSID("$NetBSD: strlcat_arm.S,v 1.2 2013/08/19 01:12:08 matt Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
 	push	{r4-r6, lr}
+#ifdef __ARM_EABI__
+	.save	{r4-r6, lr}
+	.cfi_def_cfa_offset 16
+	.cfi_register 14, -4
+	.cfi_register 6, -8
+	.cfi_register 5, -12
+	.cfi_register 4, -16
+#endif
 	mov	r4, r0			/* save dst */
 	mov	r5, r1			/* save src */
 	mov	r6, r2			/* save siz */
@@ -41,12 +53,15 @@ ENTRY(strlcat)
 	mov	r1, r6			/* get siz */
 	bl	PLT_SYM(strnlen)	/* find length of dst (up to siz) */
 
-	sub	r2, r6, r0		/* get remaining space in dst */
+	subs	r2, r6, r0		/* get remaining space in dst */
 	mov	r1, r5			/* restore src */
 	mov	r5, r0			/* save remaining space */
-	add	r0, r0, r4		/* set start to end of dst */
+	adds	r0, r0, r4		/* set start to end of dst */
 	bl	PLT_SYM(strlcpy)	/* attempt to copy src */
-	add	r0, r0, r5		/* add remaining to strlcpy return */
-	pop	{r4-r6, lr}		/* restore registers */
-	RET				/* return */
+	adds	r0, r0, r5		/* add remaining to strlcpy return */
+	pop	{r4-r6, pc}		/* restore registers and return */
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
+#endif
 END(strlcat)
