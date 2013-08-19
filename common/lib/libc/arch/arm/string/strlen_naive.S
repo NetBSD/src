@@ -28,17 +28,17 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.5 2013/08/19 02:08:41 matt Exp $")
+RCSID("$NetBSD: strlen_naive.S,v 1.6 2013/08/19 02:11:03 matt Exp $")
 
 #ifdef STRNLEN
 /* LINTSTUB: size_t strnlen(const char *, size_t) */
 ENTRY(strnlen)
 	adds	r3, r0, #1	/* start of src + NUL */
-	adds	r2, r0, r1	/* &src[maxlen] */
-1:	cmp	r0, r2		/* is this of string? */
+	adds	ip, r0, r1	/* &src[maxlen] */
+1:	cmp	r0, ip		/* is this of string? */
 	beq	2f		/*   yes it is */
-	ldrb	r3, [r0], #1	/* read a byte */
-	cmp	r3, #0		/* is it a NUL? */
+	ldrb	r2, [r0], #1	/* read a byte */
+	cmp	r2, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
 	subs	r0, r0, r3	/* get difference between start and end */
 	RET			/* return */
