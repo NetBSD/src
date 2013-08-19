@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigpending.S,v 1.2 2013/08/01 05:54:24 matt Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.3 2013/08/19 22:11:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,8 @@ WARN_REFERENCES(sigpending, \
 ENTRY(sigpending)
 	mov	r2, r0
 	SYSTRAP(compat_13_sigpending13)
-	bcs	CERROR
+	_INVOKE_CERROR()
 	str	r0, [r2]
-	mov	r0, #0x00000000
+	movs	r0, #0
 	RET
+END(sigpending)
