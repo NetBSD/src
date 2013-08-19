@@ -28,17 +28,17 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strchr_naive.S,v 1.1 2013/01/15 02:03:30 matt Exp $")
+RCSID("$NetBSD: strchr_naive.S,v 1.2 2013/08/19 02:20:06 matt Exp $")
 
 /* LINTSTUB: char * strchr(const char *, int) */
 ENTRY(strchr)
-	mov	ip, r0		/* using r0 as return value */
+	mov	r2, r0		/* using r0 as return value */
 	mov	r0, #0		/* default to no match */
 	and	r1, r1, #0xff	/* restrict to a byte value */
-1:	ldrb	r3, [ip], #1	/* read a byte */
+1:	ldrb	r3, [r2], #1	/* read a byte */
 	cmp	r3, r1		/* does it match? */
-	subeq	r0, ip, #1	/*   yes, set return value to point to it */
-	teqne	r3, #0		/*   no, was it a NUL? */
+	subeq	r0, r2, #1	/*   yes, set return value to point to it */
+	cmpne	r3, #0		/*   no, was it a NUL? */
 	bne	1b		/*     no, get next byte */
 	RET
 END(strchr)
