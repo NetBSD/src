@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.166 2013/04/30 00:45:04 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.167 2013/08/19 08:03:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define catopen_l	_catopen_l
 #define daylight	_daylight
 #define difftime	_difftime
 #define devname_r	_devname_r
@@ -486,6 +487,7 @@
 #if 0
 #define nlist			_nlist
 #endif
+#define nl_langinfo_l		_nl_langinfo_l
 #define nrand48			_nrand48
 #define ntp_adjtime		_ntp_adjtime
 #define nsdispatch		_nsdispatch
@@ -741,6 +743,7 @@
 #define wcscasecmp		_wcscasecmp
 #define wcscasecmp_l		_wcscasecmp_l
 #define wcsdup			_wcsdup
+#define wcsftime_l		_wcsftime_l
 #define wcsncasecmp		_wcsncasecmp
 #define wcsncasecmp_l		_wcsncasecmp_l
 #define wcstof			_wcstof

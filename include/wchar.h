@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.38 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.39 2013/08/19 08:03:33 joerg Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -221,6 +221,9 @@ int	wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 size_t	wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
 int wcscasecmp_l(const wchar_t *, const wchar_t *, locale_t);
+
+size_t	wcsftime_l(wchar_t * __restrict, size_t, const wchar_t * __restrict,
+	    const struct tm * __restrict, locale_t);
 
 float wcstof_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);
 double wcstod_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);
