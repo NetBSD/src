@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2013/05/04 18:31:47 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2013/08/19 13:03:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -27,12 +27,18 @@
 #include <stdarg.h>
 #include <ucontext.h>
 
+#ifndef __LOCALE_T_DECLARED
+typedef struct _locale		*locale_t;
+#define __LOCALE_T_DECLARED
+#endif /* __LOCALE_T_DECLARED */
+
 __BEGIN_DECLS
 extern char *__minbrk;
 int __getcwd(char *, size_t);
 int __getlogin(char *, size_t);
 int __setlogin(const char *);
 void _resumecontext(void) __dead;
+__dso_hidden int	_strerror_lr(int, char *, size_t, locale_t);
 const char *__strerror(int , char *, size_t);
 const char *__strsignal(int , char *, size_t);
 char *__dtoa(double, int, int, int *, int *, char **);

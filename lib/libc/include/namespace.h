@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.167 2013/08/19 08:03:33 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.168 2013/08/19 13:03:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define inet_pton	_inet_pton
 #define pipe		_pipe
 #define sbrk		_sbrk
+#define strerror_l	_strerror_l
 #define strerror_r	_strerror_r
 #define strlcat		_strlcat
 #define strlcpy		_strlcpy
