@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.2 2013/08/11 04:56:32 matt Exp $ */
+/*      $NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.2 2013/08/11 04:56:32 matt Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.3 2013/08/19 06:23:59 matt Exp $")
 
 ENTRY(memcmp)
 	mov	ip, r0
@@ -178,3 +178,4 @@ ENTRY(memcmp)
 	sub	r0, r3, r2		/* r0 = b1#5 - b2#5 */
 	RET
 #endif
+END(memcmp)

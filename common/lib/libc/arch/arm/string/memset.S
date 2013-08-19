@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.4 2013/08/11 04:56:32 matt Exp $	*/
+/*	$NetBSD: memset.S,v 1.5 2013/08/19 06:23:59 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -237,3 +237,8 @@ ENTRY(memset)
 	strbge	r3, [ip], #0x01		/* Set another byte */
 	strbgt	r3, [ip]		/* and a third */
 	RET				/* Exit */
+#ifdef _BZERO
+END(bzero)
+#else
+END(memset)
+#endif
