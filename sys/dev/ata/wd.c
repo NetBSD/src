@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.404 2013/08/06 19:13:13 soren Exp $ */
+/*	$NetBSD: wd.c,v 1.405 2013/08/19 14:58:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.404 2013/08/06 19:13:13 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.405 2013/08/19 14:58:57 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -1169,7 +1169,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd =
 	    device_lookup_private(&wd_cd, WDUNIT(dev));
-	int error = 0, s;
+	int error, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1183,6 +1183,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
