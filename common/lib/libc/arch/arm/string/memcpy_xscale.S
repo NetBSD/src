@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.3 2013/08/11 04:56:32 matt Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.4 2013/08/19 01:08:53 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -1890,4 +1890,5 @@ ENTRY(memcpy)
 	strh	r2, [r0, #0x09]
 	strb	r1, [r0, #0x0b]
 	RET
+END(memcpy)
 #endif	/* !_STANDALONE */
