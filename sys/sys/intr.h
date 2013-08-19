@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2013/08/18 07:36:13 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2013/08/19 03:05:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define	_SYS_INTR_H_
 
 #ifdef _KERNEL
+
+#include <sys/types.h>
 
 struct cpu_info;
 
