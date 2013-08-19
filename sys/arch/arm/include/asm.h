@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2013/08/18 05:06:49 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.23 2013/08/19 22:08:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,6 +65,9 @@
 # define _ALIGN_TEXT .align 2
 #endif
 
+#ifndef _TEXT_SECTION
+#define _TEXT_SECTION	.text
+#endif
 /*
  * gas/arm uses @ as a single comment character and thus cannot be used here
  * Instead it recognised the # instead of an @ symbols in .type directives
@@ -73,20 +76,16 @@
  */
 #define _ASM_TYPE_FUNCTION	%function
 #define _ASM_TYPE_OBJECT	%object
-#define _THUMB_ENTRY_NS(x) \
-	_ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+#define _THUMB_ENTRY(x) \
+	_TEXT_SECTION; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
 	.thumb_func; .code 16; x:
-#define _THUMB_ENTRY(x) .text; _THUMB_ENTRY_NS(x)
-#define _ARM_ENTRY_NS(x) \
-	_ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
+#define _ARM_ENTRY(x) \
+	_TEXT_SECTION; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; \
 	.code 32; x:
-#define _ARM_ENTRY(x)	.text; _ARM_ENTRY_NS(x)
 #ifdef __thumb__
 #define	_ENTRY(x)	_THUMB_ENTRY(x)
-#define	_ENTRY_NS(x)	_THUMB_ENTRY_NS(x)
 #else
 #define	_ENTRY(x)	_ARM_ENTRY(x)
-#define	_ENTRY_NS(x)	_ARM_ENTRY_NS(x)
 #endif
 #define	_END(x)		.size x,.-x
 
