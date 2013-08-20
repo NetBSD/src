@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.6 2013/08/19 09:12:58 joerg Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.7 2013/08/20 19:58:30 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -45,33 +45,8 @@ static __inline void
 _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
     _TimeLocale * __restrict data)
 {
-	size_t i;
-
 	_DIAGASSERT(cache != NULL);
-	_DIAGASSERT(cache->items != NULL);
 	_DIAGASSERT(data != NULL);
-
-        for (i = (size_t)ABDAY_1; i <= ABDAY_7;  ++i)
-		cache->items[i] = data->abday[ABDAY_IDX(i)];
-        for (i = (size_t)DAY_1;   i <= DAY_7;    ++i)
-		cache->items[i] = data->day[DAY_IDX(i)];
-        for (i = (size_t)ABMON_1; i <= ABMON_12; ++i)
-		cache->items[i] = data->abmon[ABMON_IDX(i)];
-        for (i = (size_t)MON_1;   i <= MON_12;   ++i)
-		cache->items[i] = data->mon[MON_IDX(i)];
-        for (i = (size_t)AM_STR;  i <= PM_STR;   ++i)
-		cache->items[i] = data->am_pm[AM_PM_IDX(i)];
-	cache->items[(size_t)D_T_FMT    ] = data->d_t_fmt;
-	cache->items[(size_t)D_FMT      ] = data->d_fmt;
-	cache->items[(size_t)T_FMT      ] = data->t_fmt;
-	cache->items[(size_t)T_FMT_AMPM ] = data->t_fmt_ampm;
-
-	/* NOT IMPLEMENTED YET */
-	cache->items[(size_t)ERA        ] = NULL;
-	cache->items[(size_t)ERA_D_FMT  ] = NULL;
-	cache->items[(size_t)ERA_D_T_FMT] = NULL;
-	cache->items[(size_t)ERA_T_FMT  ] = NULL;
-	cache->items[(size_t)ALT_DIGITS ] = NULL;
 }
 
 /* ARGSUSED */

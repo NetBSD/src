@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.19 2013/08/19 22:43:28 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.20 2013/08/20 19:58:30 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.19 2013/08/19 22:43:28 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.20 2013/08/20 19:58:30 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -137,69 +137,8 @@ static const struct lconv _C_ldata = {
 	.int_n_sign_posn	= NBCHAR_MAX,
 };
 
-static const char * const _C_items [(size_t)ALT_DIGITS + 1] = {
-	[(size_t)D_T_FMT    ] = "%a %b %e %H:%M:%S %Y",
-	[(size_t)D_FMT      ] = "%m/%d/%y",
-	[(size_t)T_FMT      ] = "%H:%M:%S",
-	[(size_t)T_FMT_AMPM ] = "%I:%M:%S %p",
-	[(size_t)AM_STR     ] = "AM",
-	[(size_t)PM_STR     ] = "PM",
-	[(size_t)DAY_1      ] = "Sun",
-	[(size_t)DAY_2      ] = "Mon",
-	[(size_t)DAY_3      ] = "Tue",
-	[(size_t)DAY_4      ] = "Wed",
-	[(size_t)DAY_5      ] = "Thu",
-	[(size_t)DAY_6      ] = "Fri",
-	[(size_t)DAY_7      ] = "Sat",
-	[(size_t)ABDAY_1    ] = "Sunday",
-	[(size_t)ABDAY_2    ] = "Monday",
-	[(size_t)ABDAY_3    ] = "Tuesday",
-	[(size_t)ABDAY_4    ] = "Wednesday",
-	[(size_t)ABDAY_5    ] = "Thursday",
-	[(size_t)ABDAY_6    ] = "Friday",
-	[(size_t)ABDAY_7    ] = "Saturday",
-	[(size_t)MON_1      ] = "Jan",
-	[(size_t)MON_2      ] = "Feb",
-	[(size_t)MON_3      ] = "Mar",
-	[(size_t)MON_4      ] = "Apr",
-	[(size_t)MON_5      ] = "May",
-	[(size_t)MON_6      ] = "Jun",
-	[(size_t)MON_7      ] = "Jul",
-	[(size_t)MON_8      ] = "Aug",
-	[(size_t)MON_9      ] = "Sep",
-	[(size_t)MON_10     ] = "Oct",
-	[(size_t)MON_11     ] = "Nov",
-	[(size_t)MON_12     ] = "Dec",
-	[(size_t)ABMON_1    ] = "January",
-	[(size_t)ABMON_2    ] = "February",
-	[(size_t)ABMON_3    ] = "March",
-	[(size_t)ABMON_4    ] = "April",
-	[(size_t)ABMON_5    ] = "May",
-	[(size_t)ABMON_6    ] = "June",
-	[(size_t)ABMON_7    ] = "July",
-	[(size_t)ABMON_8    ] = "August",
-	[(size_t)ABMON_9    ] = "September",
-	[(size_t)ABMON_10   ] = "October",
-	[(size_t)ABMON_11   ] = "November",
-	[(size_t)ABMON_12   ] = "December",
-	[(size_t)RADIXCHAR  ] = ".",
-	[(size_t)THOUSEP    ] = "",
-	[(size_t)YESSTR     ] = "yes",
-	[(size_t)YESEXPR    ] = "^[Yy]",
-	[(size_t)NOSTR      ] = "no",
-	[(size_t)NOEXPR     ] = "^[Nn]",
-	[(size_t)CRNCYSTR   ] = NULL,
-	[(size_t)CODESET    ] = "646",
-	[(size_t)ERA        ] = NULL,
-	[(size_t)ERA_D_FMT  ] = NULL,
-	[(size_t)ERA_D_T_FMT] = NULL,
-	[(size_t)ERA_T_FMT  ] = NULL,
-	[(size_t)ALT_DIGITS ] = NULL,
-};
-
 static struct _locale_cache_t _global_cache = {
     .ldata = __UNCONST(&_C_ldata),
-    .items = __UNCONST(&_C_items[0]),
 };
 
 __dso_protected struct _locale _lc_global_locale = {
@@ -232,7 +171,6 @@ __dso_protected struct _locale _lc_global_locale = {
 
 static const struct _locale_cache_t _C_cache = {
     .ldata = __UNCONST(&_C_ldata),
-    .items = __UNCONST(&_C_items[0]),
 };
 
 __dso_protected const struct _locale _lc_C_locale = {

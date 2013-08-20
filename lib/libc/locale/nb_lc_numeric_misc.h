@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_numeric_misc.h,v 1.5 2013/08/19 09:12:58 joerg Exp $ */
+/* $NetBSD: nb_lc_numeric_misc.h,v 1.6 2013/08/20 19:58:30 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -42,16 +42,12 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 
 	_DIAGASSERT(cache != NULL);
 	_DIAGASSERT(cache->ldata != NULL);
-	_DIAGASSERT(cache->items != NULL);
 	_DIAGASSERT(data != NULL);
 
 	ldata = cache->ldata;
 	ldata->decimal_point = __UNCONST(data->decimal_point);
 	ldata->thousands_sep = __UNCONST(data->thousands_sep);
 	ldata->grouping      = __UNCONST(data->grouping);
-
-	cache->items[(size_t)RADIXCHAR] = data->decimal_point;
-	cache->items[(size_t)THOUSEP  ] = data->thousands_sep;
 }
 
 /* ARGSUSED */
