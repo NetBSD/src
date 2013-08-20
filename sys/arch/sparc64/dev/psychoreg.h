@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.17 2011/03/16 05:49:43 mrg Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.18 2013/08/20 10:33:03 macallan Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -242,9 +242,18 @@ struct psychoreg {
 		uint64_t	strbuf_error_diag[128];	/* streaming buffer error status diag *//* 1fe.0000.b400-b7f8 */
 		uint64_t	strbuf_pg_tag_diag[16];	/* streaming buffer page tag diag */	/* 1fe.0000.b800-b878 */
 		uint64_t	pad18[16];
-		uint64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.b900-b978 */
-		uint64_t	pad19[208];
+		uint64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */ /* 1fe.0000.b900-b978 */
+		uint64_t	pad19[208];	
 	} psy_strbufdiag[2];					/* For PCI a and b */
+	
+	/* 1fe.0000.d000-f058 */
+	uint64_t	pad20[1036];
+	/* US-IIe and II'i' only */
+	uint64_t	stick_cmp_low;
+	uint64_t	stick_cmp_high;
+	uint64_t	stick_count_low;
+	uint64_t	stick_count_high;
+	uint64_t	estar_mode;
 
 	/* 
 	 * Here is the rest of the map, which we're not specifying:
@@ -301,6 +310,26 @@ struct psychoreg {
 #define	PCICTL_RTRYWAIT 0x0000000000000080LL	/* PCI error interrupt enable */
 #define	PCICTL_4ENABLE	0x000000000000000fLL	/* enable 4 PCI slots */
 #define	PCICTL_6ENABLE	0x000000000000003fLL	/* enable 6 PCI slots */
+
+/* the following registers only exist on US-IIe and US-II'i' */
+
+/* STICK_COMPARE */
+#define STICK_ENABLE	0x8000000000000000LL	/* enable STICK interrupt */
+#define STICK_MASK	0x7fffffffffffffffLL	/* counter is 63bit wide */
+
+/*
+ * ESTAR_MODE
+ * CPU clock MUST remain above 66MHz, so we can't use 1/6 on a 400MHz chip
+ */
+#define ESTAR_FULL	0	/* full CPU speed */
+#define ESTAR_DIV_2	1	/* 1/2 */
+#define ESTAR_DIV_6	2	/* 1/6 */
+/*
+ * the following exist only on US-II'i' - that is the 2nd generation of US-IIe
+ * CPUs that Sun decided to call US-IIi just to screw with everyone
+ */
+#define ESTAR_DIV_4	3	/* 1/4 */
+#define ESTAR_DIV_8	4	/* 1/8 */
 
 /*
  * these are the PROM structures we grovel
