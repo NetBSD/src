@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.204 2013/07/29 21:02:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.205 2013/08/20 17:36:20 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -33,7 +33,7 @@ SUBDIR+=	i18n_module
 SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
-		libintl libipsec libisns libkvm libm \
+		libintl libipsec libisns libkern libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
