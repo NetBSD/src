@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.8 2003/08/07 09:27:57 agc Exp $	*/
+/*	$NetBSD: gethost.c,v 1.9 2013/08/20 15:44:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -90,11 +90,11 @@ static struct in_addr host_addr;
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-void _sethtent __P((int));
-void _endhtent __P((void));
-struct hostent *_gethtent __P((void));
-struct hostent *_gethtbyname __P((const char *));
-struct hostent *_gethtbyaddr __P((const char *, int, int));
+void _sethtent(int);
+void _endhtent(void);
+struct hostent *_gethtent(void);
+struct hostent *_gethtbyname(const char *);
+struct hostent *_gethtbyaddr(const void *, socklen_t, int);
 
 
 #if PACKETSZ > 1024
@@ -106,16 +106,15 @@ struct hostent *_gethtbyaddr __P((const char *, int, int));
 extern int h_errno;
 
 struct hostent *
-gethostbyname(name)
-	const char *name;
+gethostbyname(const char *name)
 {
-	register const char *cp;
+	const char *cp;
 
 	/*
 	 * disallow names consisting only of digits/dots, unless
 	 * they end in a dot.
 	 */
-	if (isdigit(name[0]))
+	if (isdigit((unsigned char)name[0]))
 		for (cp = name;; ++cp) {
 			if (!*cp) {
 				if (*--cp == '.')
@@ -137,39 +136,37 @@ gethostbyname(name)
 				h_addr_ptrs[0] = (char *)&host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
-				return (&host);
+				return &host;
 			}
-			if (!isdigit(*cp) && *cp != '.') 
+			if (!isdigit((unsigned char)*cp) && *cp != '.') 
 				break;
 		}
 
 	/* XXX - Force host table lookup. */
-	return (_gethtbyname(name));
+	return _gethtbyname(name);
 }
 
 struct hostent *
-gethostbyaddr(addr, len, type)
-	const char *addr;
-	socklen_t len;
-	int type;
+gethostbyaddr(const void *addr, socklen_t len, int type)
 {
+#if 0
 	char qbuf[MAXDNAME];
+#endif
 
 	if (type != AF_INET)
-		return ((struct hostent *) NULL);
-	(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-		((unsigned)addr[3] & 0xff),
-		((unsigned)addr[2] & 0xff),
-		((unsigned)addr[1] & 0xff),
-		((unsigned)addr[0] & 0xff));
+		return NULL;
+#if 0
+	(void)snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
+	    ((unsigned)addr[3] & 0xff), ((unsigned)addr[2] & 0xff),
+	    ((unsigned)addr[1] & 0xff), ((unsigned)addr[0] & 0xff));
+#endif
 
 	/* XXX - Force host table lookup. */
-	return (_gethtbyaddr(addr, len, type));
+	return _gethtbyaddr(addr, len, type);
 }
 
 void
-_sethtent(f)
-	int f;
+_sethtent(int f)
 {
 	if (hostf == NULL)
 		hostf = fopen(_PATH_HOSTS, "r" );
@@ -179,7 +176,7 @@ _sethtent(f)
 }
 
 void
-_endhtent()
+_endhtent(void)
 {
 	if (hostf && !stayopen) {
 		(void) fclose(hostf);
@@ -188,16 +185,16 @@ _endhtent()
 }
 
 struct hostent *
-_gethtent()
+_gethtent(void)
 {
 	char *p;
-	register char *cp, **q;
+	char *cp, **q;
 
 	if (hostf == NULL && (hostf = fopen(_PATH_HOSTS, "r" )) == NULL)
-		return (NULL);
+		return NULL;
 again:
 	if ((p = fgets(hostbuf, BUFSIZ, hostf)) == NULL)
-		return (NULL);
+		return NULL;
 	if (*p == '#')
 		goto again;
 	cp = strpbrk(p, "#\n");
@@ -234,15 +231,14 @@ again:
 			*cp++ = '\0';
 	}
 	*q = NULL;
-	return (&host);
+	return &host;
 }
 
 struct hostent *
-_gethtbyname(name)
-	const char *name;
+_gethtbyname(const char *name)
 {
-	register struct hostent *p;
-	register char **cp;
+	struct hostent *p;
+	char **cp;
 	
 	_sethtent(0);
 	while ((p = _gethtent()) != NULL) {
@@ -254,25 +250,23 @@ _gethtbyname(name)
 	}
 found:
 	_endhtent();
-	if (p==NULL)
+	if (p == NULL)
 		h_errno = HOST_NOT_FOUND;
-	return (p);
+	return p;
 }
 
 struct hostent *
-_gethtbyaddr(addr, len, type)
-	const char *addr;
-	int len, type;
+_gethtbyaddr(const void *addr, socklen_t len, int type)
 {
-	register struct hostent *p;
+	struct hostent *p;
 
 	_sethtent(0);
 	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
-	if (p==NULL)
+	if (p == NULL)
 		h_errno = HOST_NOT_FOUND;
-	return (p);
+	return p;
 }
 
