@@ -28,7 +28,7 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strcpy_naive.S,v 1.3 2013/08/11 05:02:35 matt Exp $")
+RCSID("$NetBSD: strcpy_naive.S,v 1.4 2013/08/20 21:37:39 matt Exp $")
 
 #ifdef _LIBC
 #ifdef STRLCPY
@@ -57,7 +57,7 @@ ENTRY(strlcpy)
 	bne	1b			/*   no, do next byte */
 	b	4f			/*   yes, end of string, so return */
 2:	mov	r3, #0			/* NUL */
-	strb	r3, [r0], #1		/* write to end of string */
+	strb	r3, [r0]		/* write to end of string */
 3:	ldrb	r3, [r1], #1		/* read a byte */
 	teq	r3, #0			/* was it a NUL? */
 	bne	3b			/*   no, get next byte */
