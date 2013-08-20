@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.113 2013/06/21 20:09:58 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.114 2013/08/20 19:19:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.113 2013/06/21 20:09:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.114 2013/08/20 19:19:23 macallan Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.113 2013/06/21 20:09:58 nakayama Exp $"
 #define PDB_INTR	0x04
 #define PDB_INTMAP	0x08
 #define PDB_CONF	0x10
+#define PDB_STICK	0x20
 int psycho_debug = 0x0;
 #define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
 #else
@@ -220,6 +221,8 @@ struct psycho_names {
 	{ NULL, 0 }
 };
 
+struct psycho_softc *psycho0 = NULL;
+
 static	int
 psycho_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -307,7 +310,11 @@ psycho_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
+	sc->sc_last_stick = 0;
 
+	if (psycho0 == NULL)
+		psycho0 = sc;
+	DPRINTF(PDB_STICK, ("init psycho0 %lx\n", (long)sc));
 	/*
 	 * Identify the device.
 	 */
@@ -375,6 +382,7 @@ found:
 				ma->ma_address[0], &sc->sc_bh);
 			sc->sc_regs = (struct psychoreg *)
 				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
+
 			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
 				offsetof(struct psychoreg,  psy_pcictl),
 				sizeof(struct pci_ctl), &pci_ctl);
@@ -396,7 +404,6 @@ found:
 			panic("psycho_attach: %d not enough registers",
 				ma->ma_nreg);
 	}
-
 
 	csr = bus_space_read_8(sc->sc_bustag, sc->sc_bh,
 		offsetof(struct psychoreg, psy_csr));
@@ -1509,4 +1516,68 @@ psycho_sabre_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		    offsetof(struct psychoreg, pci_dma_write_sync));
 	}
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
+}
+
+/* US-IIe STICK support */
+
+long
+psycho_getstick(void)
+{
+	long foo;
+
+	foo = bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW) |
+	    (bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_HIGH) & 0x7fffffff) << 32;
+	return foo;
+}
+
+void
+psycho_setstick(long cnt)
+{
+
+	/*
+	 * looks like we can't actually write the STICK counter, so instead we
+	 * prepare sc_last_stick for the coming interrupt setup
+	 */
+#if 0
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_HIGH, (cnt >> 32));
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW, (uint32_t)(cnt & 0xffffffff));
+#endif
+
+	if (cnt == 0) {
+		bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+		    STICK_CMP_HIGH, 0);
+		bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+		    STICK_CMP_LOW, 0);
+		psycho0->sc_last_stick = 0;
+	}
+
+	psycho0->sc_last_stick = psycho_getstick();
+	DPRINTF(PDB_STICK, ("stick: %ld\n", psycho0->sc_last_stick));
+}
+
+void
+psycho_nextstick(long diff)
+{
+	uint64_t cmp, now;
+
+	/*
+	 * there is no way we'll ever overflow
+	 * the counter is 63 bits wide, at 12MHz that's >24000 years
+	 */
+	now = psycho_getstick() + 1000;
+	cmp = psycho0->sc_last_stick;
+	
+	while (cmp < now)
+		cmp += diff;
+	
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CMP_HIGH, (cmp >> 32) & 0x7fffffff);
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CMP_LOW, (cmp & 0xffffffff));
+	
+	psycho0->sc_last_stick = cmp;
 }
