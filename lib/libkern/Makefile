@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/08/20 17:41:58 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2013/08/20 18:06:03 matt Exp $
 
 WITHOUT_MAN=true  # defined
 
@@ -6,6 +6,7 @@ WITHOUT_MAN=true  # defined
 .include <bsd.own.mk>
 
 LIB=	kern
+LIBISPRIVATE?=	yes
 DBG=	-Os
 
 MKDEBUGLIB:=    no
