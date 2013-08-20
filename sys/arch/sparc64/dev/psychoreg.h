@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.18 2013/08/20 10:33:03 macallan Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.19 2013/08/20 19:19:23 macallan Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -249,11 +249,11 @@ struct psychoreg {
 	/* 1fe.0000.d000-f058 */
 	uint64_t	pad20[1036];
 	/* US-IIe and II'i' only */
-	uint64_t	stick_cmp_low;
-	uint64_t	stick_cmp_high;
-	uint64_t	stick_count_low;
-	uint64_t	stick_count_high;
-	uint64_t	estar_mode;
+	uint64_t        stick_cmp_low;
+	uint64_t        stick_cmp_high;
+	uint64_t        stick_count_low;
+	uint64_t        stick_count_high;
+	uint64_t        estar_mode;
 
 	/* 
 	 * Here is the rest of the map, which we're not specifying:
@@ -297,6 +297,12 @@ struct psychoreg {
 	 */
 };
 
+#define STICK_CMP_LOW	0xf060
+#define STICK_CMP_HIGH	0xf068
+#define STICK_CNT_LOW	0xf070
+#define STICK_CNT_HIGH	0xf078
+#define ESTAR_MODE	0xf080
+
 /* what the bits mean! */
 
 /* PCI [a|b] control/status register */
@@ -313,9 +319,8 @@ struct psychoreg {
 
 /* the following registers only exist on US-IIe and US-II'i' */
 
-/* STICK_COMPARE */
-#define STICK_ENABLE	0x8000000000000000LL	/* enable STICK interrupt */
-#define STICK_MASK	0x7fffffffffffffffLL	/* counter is 63bit wide */
+/* STICK_CMP_HIGH */
+#define STICK_DISABLE	0x80000000	/* disable STICK interrupt */
 
 /*
  * ESTAR_MODE

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.108 2013/05/24 23:02:08 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.109 2013/08/20 19:19:23 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108 2013/05/24 23:02:08 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.109 2013/08/20 19:19:23 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -89,6 +89,14 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.108 2013/05/24 23:02:08 nakayama Exp $")
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
+
+/* just because US-IIe STICK registers live in psycho space */
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <sparc64/dev/iommureg.h>
+#include <sparc64/dev/iommuvar.h>
+#include <sparc64/dev/psychoreg.h>
+#include <sparc64/dev/psychovar.h>
 
 
 /*
@@ -138,6 +146,7 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
 
 static u_int tick_get_timecount(struct timecounter *);
 static u_int stick_get_timecount(struct timecounter *);
+static u_int stick2e_get_timecount(struct timecounter *);
 
 /*
  * define timecounter "tick-counter"
@@ -154,6 +163,8 @@ static struct timecounter tick_timecounter = {
 	NULL			/* next timecounter */
 };
 
+/* US-III %stick */
+
 static struct timecounter stick_timecounter = {
 	stick_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -164,6 +175,20 @@ static struct timecounter stick_timecounter = {
 	0,			/* private reference - UNUSED */
 	NULL			/* next timecounter */
 };
+
+/* US-IIe STICK counter */
+
+static struct timecounter stick2e_timecounter = {
+	stick2e_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	0,                      /* frequency - set at initialisation */
+	"stick-counter",	/* name */
+	200,			/* quality */
+	0,			/* private reference - UNUSED */
+	NULL			/* next timecounter */
+};
+
 
 /*
  * tick_get_timecount provide current tick counter value
@@ -178,6 +203,12 @@ static u_int
 stick_get_timecount(struct timecounter *tc)
 {
 	return getstick();
+}
+
+static u_int
+stick2e_get_timecount(struct timecounter *tc)
+{
+	return psycho_getstick();
 }
 
 #ifdef MULTIPROCESSOR
@@ -368,6 +399,27 @@ stickintr_establish(int pil, int (*fun)(void *))
 	intr_restore(s);
 }
 
+void
+stick2eintr_establish(int pil, int (*fun)(void *))
+{
+	int s;
+	struct intrhand *ih;
+	struct cpu_info *ci = curcpu();
+
+	ih = sparc_softintr_establish(pil, fun, NULL);
+	ih->ih_number = 1;
+	if (CPU_IS_PRIMARY(ci))
+		intr_establish(pil, true, ih);
+	ci->ci_tick_ih = ih;
+
+	/* set the next interrupt time */
+	ci->ci_tick_increment = ci->ci_system_clockrate[0] / hz;
+
+	s = intr_disable();
+	psycho_nextstick(ci->ci_tick_increment);
+	intr_restore(s);
+}
+
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
@@ -413,6 +465,11 @@ cpu_initclocks(void)
 	if (ci->ci_system_clockrate[0] == 0) {
 		tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
 		tc_init(&tick_timecounter);
+	} else if(CPU_IS_HUMMINGBIRD()) {
+		psycho_setstick(0);
+		stick2e_timecounter.tc_frequency =
+		    ci->ci_system_clockrate[0];
+		tc_init(&stick2e_timecounter);
 	} else {
 		setstick(0);
 		stick_timecounter.tc_frequency = 
@@ -433,6 +490,12 @@ cpu_initclocks(void)
 
 			/* We don't have a counter-timer -- use %tick */
 			tickintr_establish(PIL_CLOCK, tickintr);
+		} else if(CPU_IS_HUMMINGBIRD()) {
+			aprint_normal("No counter-timer -- using STICK "
+			    "at %luMHz as system clock.\n",
+			    (unsigned long)ci->ci_system_clockrate[1]);
+			/* We don't have a counter-timer -- use STICK */
+			stick2eintr_establish(PIL_CLOCK, stick2eintr);
 		} else {
 			aprint_normal("No counter-timer -- using %%stick "
 			    "at %luMHz as system clock.\n",
@@ -590,6 +653,22 @@ stickintr(void *cap)
 	s = intr_disable();
 	/* Reset the interrupt */
 	next_stick(curcpu()->ci_tick_increment);
+	intr_restore(s);
+	curcpu()->ci_tick_evcnt.ev_count++;
+
+	return (1);
+}
+
+int
+stick2eintr(void *cap)
+{
+	int s;
+
+	hardclock((struct clockframe *)cap);
+
+	s = intr_disable();
+	/* Reset the interrupt */
+	psycho_nextstick(curcpu()->ci_tick_increment);
 	intr_restore(s);
 	curcpu()->ci_tick_evcnt.ev_count++;
 

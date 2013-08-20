@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.103 2012/11/08 00:34:38 macallan Exp $ */
+/*	$NetBSD: cpu.c,v 1.104 2013/08/20 19:19:23 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2012/11/08 00:34:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2013/08/20 19:19:23 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -299,9 +299,8 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		ci->ci_cpu_clockrate[1] = clk / 1000000;
 	}
 
-	if (!CPU_IS_HUMMINGBIRD()) {
-		sclk = prom_getpropint(findroot(), "stick-frequency", 0);
-	}
+	sclk = prom_getpropint(findroot(), "stick-frequency", 0);
+
 	ci->ci_system_clockrate[0] = sclk;
 	ci->ci_system_clockrate[1] = sclk / 1000000;
 

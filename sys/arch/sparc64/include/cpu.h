@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102 2013/06/21 20:09:59 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.103 2013/08/20 19:19:23 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,11 +358,14 @@ void *	reserve_dumppages(void *);
 struct timeval;
 int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	stickintr(void *);	/* system tick interrupt code */
+int	stick2eintr(void *);	/* system tick interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
 void	tickintr_establish(int, int (*)(void *));
 void	stickintr_establish(int, int (*)(void *));
+void	stick2eintr_establish(int, int (*)(void *));
+
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
