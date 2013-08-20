@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.4 2013/08/10 19:59:21 matt Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.5 2013/08/20 07:52:31 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "atomic_op_asm.h"
 
 ENTRY_NP(_atomic_swap_64)
-	push	{r4}			/* save temporary */
+	push	{r3,r4}			/* save temporary */
 	mov	ip, r0			/* return value will be in r0 */
 #ifndef __ARM_EABI__
 	mov	r3, r2			/* r2 will be overwriten by r1 */
@@ -46,7 +46,7 @@ ENTRY_NP(_atomic_swap_64)
 #else
 	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
-	pop	{r4}			/* restore temporary */
+	pop	{r3,r4}			/* restore temporary */
 	RET
 	END(_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
