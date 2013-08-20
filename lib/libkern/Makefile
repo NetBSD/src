@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/08/20 17:35:41 matt Exp $
+#	$NetBSD: Makefile,v 1.2 2013/08/20 17:41:58 matt Exp $
 
 WITHOUT_MAN=true  # defined
 
@@ -29,13 +29,16 @@ CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 .NOPATH: machine
 .endif
 
-realdepend realall: machine
+realdepend realall: machine .WAIT
 CLEANFILES+= ${MACHINE_CPU} machine
 
 machine::
-	-rm -f ${MACHINE_CPU} machine
-	ln -s ${S}/arch/${MACHINE}/include machine
-	ln -s ${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+.if ${MACHINE_CPU} == "arm"
+	ln -sf ${S}/arch/${MACHINE_CPU}/include machine
+.else
+	ln -sf ${S}/arch/${MACHINE}/include machine
+.endif
+	ln -sf ${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
 
 ${OBJS}: machine
 
@@ -49,11 +52,6 @@ KERNDIR=	${S}/lib/libkern
 	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
 	@false
 .endif
-
-cleandir distclean: .WAIT cleanlibdir
-
-cleanlibdir:
-	-rm -rf lib
 
 .include <bsd.lib.mk>
 
