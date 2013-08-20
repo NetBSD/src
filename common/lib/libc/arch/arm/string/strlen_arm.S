@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.5 2013/08/20 08:06:30 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.6 2013/08/20 16:34:47 matt Exp $")
 
 #if defined(__thumb__) && !defined(_ARM_ARCH_T2)
 #error Only Thumb2 or ARM supported
@@ -159,6 +159,9 @@ ENTRY(FUNCNAME)
 	subs	r0, r0, r2		/* subtract start to get length */
 #ifdef STRNLEN
 	cmp	r0, r4			/* is it larger than maxlen? */
+#ifdef __thumb__
+	it	gt
+#endif
 	movgt	r0, r4			/*   yes, return maxlen */
 	pop	{r4, r5}		/* restore registers */
 #endif
