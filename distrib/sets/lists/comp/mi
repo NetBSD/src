@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1833 2013/08/20 17:43:47 matt Exp $
+#	$NetBSD: mi,v 1.1834 2013/08/20 18:05:03 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2999,7 +2999,6 @@
 ./usr/lib/libkdb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkdc.a				comp-krb5-lib		kerberos
 ./usr/lib/libkdc_p.a				comp-krb5-proflib	profile,kerberos
-./usr/lib/libkern.a				comp-c-lib
 ./usr/lib/libkrb.a				comp-obsolete		obsolete
 ./usr/lib/libkrb5.a				comp-krb5-lib		kerberos
 ./usr/lib/libkrb5_p.a				comp-krb5-proflib	profile,kerberos
