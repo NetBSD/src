@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.70 2013/01/28 15:05:03 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.71 2013/08/20 12:28:12 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.70 2013/01/28 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.71 2013/08/20 12:28:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -268,7 +268,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
-	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
+	sc->sc_sih = NULL;
 	getnanotime(&sc->sc_btime);
 	sc->sc_atime = sc->sc_mtime = sc->sc_btime;
 
@@ -391,7 +391,10 @@ tap_detach(device_t self, int flags)
 	if_down(ifp);
 	splx(s);
 
-	softint_disestablish(sc->sc_sih);
+	if (sc->sc_sih != NULL) {
+		softint_disestablish(sc->sc_sih);
+		sc->sc_sih = NULL;
+	}
 
 #if defined(COMPAT_40) || defined(MODULAR)
 	/*
@@ -852,6 +855,10 @@ tap_dev_close(struct tap_softc *sc)
 	}
 	splx(s);
 
+	if (sc->sc_sih != NULL) {
+		softint_disestablish(sc->sc_sih);
+		sc->sc_sih = NULL;
+	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
 
 	return (0);
@@ -1104,10 +1111,21 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 	case FIOGETOWN:
 		return fgetown(sc->sc_pgid, cmd, data);
 	case FIOASYNC:
-		if (*(int *)data)
+		if (*(int *)data) {
+			if (sc->sc_sih == NULL) {
+				sc->sc_sih = softint_establish(SOFTINT_CLOCK,
+				    tap_softintr, sc);
+				if (sc->sc_sih == NULL)
+					return EBUSY; /* XXX */
+			}
 			sc->sc_flags |= TAP_ASYNCIO;
-		else
+		} else {
 			sc->sc_flags &= ~TAP_ASYNCIO;
+			if (sc->sc_sih != NULL) {
+				softint_disestablish(sc->sc_sih);
+				sc->sc_sih = NULL;
+			}
+		}
 		return 0;
 	case FIONBIO:
 		if (*(int *)data)
