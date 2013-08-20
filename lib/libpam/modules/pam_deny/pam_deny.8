@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_deny.8,v 1.4 2013/08/20 22:07:44 perseant Exp $
+.\" $NetBSD: pam_deny.8,v 1.5 2013/08/20 22:44:37 wiz Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpam/modules/pam_deny/pam_deny.8,v 1.4 2001/08/15 20:05:30 markm Exp $
 .\"
-.Dd July 7, 2001
+.Dd August 21, 2013
 .Dt PAM_DENY 8
 .Os
 .Sh NAME
@@ -74,9 +74,10 @@ These messages include
 reasons why the user's
 authentication attempt was declined.
 .It Cm prelim_ignore
-for password management (
-.Dq Li password
-feature), return PAM_IGNORE
+for password management
+.Dq ( Li password
+feature), return
+.Dv PAM_IGNORE
 in the preliminary phase.
 This allows the module to be used (with the
 .Dq Li required
