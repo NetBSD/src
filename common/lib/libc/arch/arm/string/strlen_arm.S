@@ -29,7 +29,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.4 2013/08/19 01:17:32 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.5 2013/08/20 08:06:30 matt Exp $")
+
+#if defined(__thumb__) && !defined(_ARM_ARCH_T2)
+#error Only Thumb2 or ARM supported
+#endif
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -63,10 +67,10 @@ ENTRY(FUNCNAME)
 	.cfi_offset 5, -4
 	.cfi_offset 4, -8
 #endif
-	add	r5, r0, r1		/* get ptr to end of string */
+	adds	r5, r0, r1		/* get ptr to end of string */
 	mov	r4, r1			/* save maxlen */
 #endif
-	add	ip, r0, #4		/* for the final post-inc */
+	adds	r2, r0, #4		/* for the final post-inc */
 1:	tst	r0, #3			/* test for word alignment */
 	beq	.Lpre_main_loop		/*   finally word aligned */
 #ifdef STRNLEN
@@ -74,10 +78,10 @@ ENTRY(FUNCNAME)
 	beq	.Lmaxed_out		/*   yes, return maxlen */
 #endif
 	ldrb	r3, [r0], #1		/* load a byte */
-	teq	r3, #0			/* is it 0? */
+	cmp	r3, #0			/* is it 0? */
 	bne	1b			/*   no, try next byte */
-	sub	ip, ip, #3		/* subtract (4 - the NUL) */
-	sub	r0, r0, ip		/* subtract start */
+	subs	r2, r2, #3		/* subtract (4 - the NUL) */
+	subs	r0, r0, r2		/* subtract start */
 #ifdef STRNLEN
 	pop	{r4, r5}		/* restore registers */
 #endif
@@ -127,7 +131,12 @@ ENTRY(FUNCNAME)
 	rev	r3, r3			/* we want this in BE for the CLZ */
 #endif
 	clz	r3, r3			/* count how many leading zeros */
+#ifdef __thumb__
+	lsrs	r3, r3, #3
+	adds	r0, r0, r3		/* divide that by 8 and add to count */
+#else
 	add	r0, r0, r3, lsr #3	/* divide that by 8 and add to count */
+#endif
 #else
 	/*
 	 * We encountered a NUL.
@@ -147,7 +156,7 @@ ENTRY(FUNCNAME)
 	 * start of the string (which also has 4 added to it to compensate for
 	 * the post-inc.
 	 */
-	sub	r0, r0, ip		/* subtract start to get length */
+	subs	r0, r0, r2		/* subtract start to get length */
 #ifdef STRNLEN
 	cmp	r0, r4			/* is it larger than maxlen? */
 	movgt	r0, r4			/*   yes, return maxlen */
