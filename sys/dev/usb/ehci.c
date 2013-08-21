@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.208 2013/08/21 17:52:10 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.208 2013/08/21 17:52:10 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2544,7 +2544,7 @@ ehci_root_ctrl_close(usbd_pipe_handle pipe)
 }
 
 Static void
-ehci_root_intr_done(usbd_xfer_handle xfer)
+ehci_root_ctrl_done(usbd_xfer_handle xfer)
 {
 	xfer->hcpriv = NULL;
 }
@@ -2613,7 +2613,7 @@ ehci_root_intr_close(usbd_pipe_handle pipe)
 }
 
 Static void
-ehci_root_ctrl_done(usbd_xfer_handle xfer)
+ehci_root_intr_done(usbd_xfer_handle xfer)
 {
 	xfer->hcpriv = NULL;
 }
