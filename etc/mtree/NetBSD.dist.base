@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.122 2013/08/21 20:22:35 tron Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.123 2013/08/21 20:52:45 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -140,7 +140,6 @@
 ./usr/include/g++/parallel
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
-./usr/include/gcc-4.1
 ./usr/include/gcc-4.5
 ./usr/include/gssapi
 ./usr/include/isofs
@@ -713,8 +712,6 @@
 ./usr/share/locale/no/LC_MESSAGES
 ./usr/share/locale/no@nynorsk
 ./usr/share/locale/no@nynorsk/LC_MESSAGES
-./usr/share/locale/no_NO.ISO8859-1
-./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES
 ./usr/share/locale/pl
 ./usr/share/locale/pl/LC_MESSAGES
 ./usr/share/locale/pl_PL.ISO8859-2
