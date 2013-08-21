@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.gzboot,v 1.24 2013/08/15 21:41:09 matt Exp $
+#	$NetBSD: Makefile.gzboot,v 1.25 2013/08/21 05:55:26 matt Exp $
 
 NOMAN=  # defined
 
 .include <bsd.obj.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 EVBARM_STAND=	${S}/arch/evbarm/stand
 
@@ -59,20 +60,6 @@ CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 CLEANFILES+= ${PROGSYM}
 SRCS+= vers.c
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine
-.endif
-
-realdepend realall: machine
-CLEANFILES+= arm machine
-
-machine::
-	-rm -f arm machine
-	ln -s ${S}/arch/evbarm/include machine
-	ln -s ${S}/arch/arm/include arm
-
-${OBJS}: machine
 
 ### find out what to use for libkern
 KERN_AS=	library
