@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.121 2013/08/11 22:09:40 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.122 2013/08/21 20:22:35 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -715,8 +715,6 @@
 ./usr/share/locale/no@nynorsk/LC_MESSAGES
 ./usr/share/locale/no_NO.ISO8859-1
 ./usr/share/locale/no_NO.ISO8859-1/LC_MESSAGES
-./usr/share/locale/no_NO.ISO8859-15
-./usr/share/locale/no_NO.ISO8859-15/LC_MESSAGES
 ./usr/share/locale/pl
 ./usr/share/locale/pl/LC_MESSAGES
 ./usr/share/locale/pl_PL.ISO8859-2
