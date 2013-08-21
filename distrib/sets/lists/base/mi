@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1039 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: mi,v 1.1040 2013/08/21 20:51:57 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3300,8 +3300,8 @@
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls,!bsdgrep
 ./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/ko_KR.UTF-8			base-locale-ko
-./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-obsolete		obsolete
+./usr/share/locale/ko_KR.UTF-8			base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko		nls
 ./usr/share/locale/ko_KR.UTF-8/LC_MESSAGES	base-locale-ko		nls
 ./usr/share/locale/ko_KR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES		base-locale-ko		nls
 ./usr/share/locale/ko_KR.UTF-8/LC_MONETARY	base-locale-ko		nls
