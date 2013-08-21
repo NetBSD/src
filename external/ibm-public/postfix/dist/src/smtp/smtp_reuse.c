@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.2 2013/08/21 20:09:56 tron Exp $	*/
 
 /*++
 /* NAME
@@ -272,7 +272,7 @@ SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, const char *addr,
      * credentials or the wrong TLS policy.
      */
     if ((var_smtp_tls_per_site && *var_smtp_tls_per_site)
-	|| (var_smtp_sasl_passwd && *var_smtp_sasl_passwd))
+	|| (var_smtp_tls_policy && *var_smtp_tls_policy))
 	return (0);
 
     /*
