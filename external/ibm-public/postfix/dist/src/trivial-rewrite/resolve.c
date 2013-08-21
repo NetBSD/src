@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.4 2013/01/02 18:59:10 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.5 2013/08/21 20:09:58 tron Exp $	*/
 
 /*++
 /* NAME
@@ -326,9 +326,18 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	    tok822_free(tree->head);
 	    tree->head = 0;
 	}
-	/* XXX must be localpart only, not user@domain form. */
-	if (tree->head == 0)
+	/* XXX Re-resolve the surrogate, in case already in user@domain form. */
+	if (tree->head == 0) {
 	    tree->head = tok822_scan(var_empty_addr, &tree->tail);
+	    continue;
+	}
+
+	/* XXX Re-resolve with @$myhostname for backwards compatibility. */
+	if (domain == 0 && saved_domain == 0) {
+	    tok822_sub_append(tree, tok822_alloc('@', (char *) 0));
+	    tok822_sub_append(tree, tok822_scan(var_myhostname, (TOK822 **) 0));
+	    continue;
+	}
 
 	/*
 	 * We're done. There are no domains left to strip off the address,
