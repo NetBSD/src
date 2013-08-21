@@ -1,7 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.24 2013/06/20 17:53:01 msaitoh Exp $
+# $NetBSD: Makefile.inc,v 1.25 2013/08/21 03:09:39 matt Exp $
 
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divide.S divsi3.S \
 	fabs.c flt_rounds.c udivsi3.S
+
+CPUFLAGS.divide.S+=		-marm
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
