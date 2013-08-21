@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.16 2013/08/15 21:41:08 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.17 2013/08/21 06:07:26 matt Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -38,15 +38,6 @@ CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding -fno-unwind-tables
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine ${MACHINE_ARCH}
-	ln -s $S/arch/${MACHINE}/include machine
-	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.endif
-
-CLEANFILES+= machine ${MACHINE_ARCH}
 
 ### find out what to use for libkern
 KERN_AS=	library
