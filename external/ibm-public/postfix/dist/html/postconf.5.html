@@ -8440,6 +8440,10 @@ D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home </p>
 an appropriate <a href="access.5.html">access(5)</a> policy for each client.
 See <a href="RESTRICTION_CLASS_README.html">RESTRICTION_CLASS_README</a>.</p>
 
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
+
 <p>This feature is available with Postfix version 2.2.</p>
 
 
@@ -10895,11 +10899,47 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 </pre>
 </blockquote>
 
-<p> Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher. </p>
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+
+<p> The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when TLS loglevel is 1 or
+higher. </p>
+
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <p> This feature is available in Postfix 2.5 and later. </p>
 
@@ -14688,11 +14728,47 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 </pre>
 </blockquote>
 
-<p> Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher. </p>
+<p> To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint. </p>
+
+<p> The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used. </p>
+<blockquote>
+<pre>
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+</pre>
+</blockquote>
+
+<p> The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when TLS loglevel is 1 or
+higher. </p>
+
+<p> <b>Note:</b> Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later. </p>
 
 <p> Example: client-certificate access table, with sha1 fingerprints: </p>
 
@@ -15583,6 +15659,25 @@ list when they are enabled. This prefix is not needed with previous
 OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="tls_legacy_public_key_fingerprints">tls_legacy_public_key_fingerprints</a>
+(default: no)</b></DT><DD>
+
+<p> A temporary migration aid for sites that use certificate
+<i>public-key</i> fingerprints with Postfix 2.9.0..2.9.5, which use
+an incorrect algorithm. This parameter has no effect on the certificate
+fingerprint support that is available since Postfix 2.2. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_legacy_public_key_fingerprint">tls_legacy_public_key_fingerprints</a> = yes" temporarily,
+pending a migration from configuration files with incorrect Postfix
+2.9.0..2.9.5 certificate public-key finger prints, to the correct
+fingerprints used by Postfix 2.9.6 and later.  To compute the correct
+certificate public-key fingerprints, see <a href="TLS_README.html">TLS_README</a>. </p>
+
+<p> This feature is available in Postfix 2.9.6 and later.  </p>
 
 
 </DD>

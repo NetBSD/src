@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.10 2013/01/02 19:18:32 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.11 2013/08/21 20:12:31 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -4889,6 +4889,10 @@ For more fine-grained control, use check_ccert_access to select
 an appropriate \fBaccess\fR(5) policy for each client.
 See RESTRICTION_CLASS_README.
 .PP
+\fBNote:\fR Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later.
+.PP
 This feature is available with Postfix version 2.2.
 .SH relay_destination_concurrency_limit (default: $default_destination_concurrency_limit)
 The maximal number of parallel deliveries to the same destination
@@ -6536,11 +6540,56 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 .ft R
 .in -4
 .PP
-Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher.
+To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint.
+.PP
+The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used.
+.sp
+.in +4
+.nf
+.na
+.ft C
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+.fi
+.ad
+.ft R
+.in -4
+.sp
+.in +4
+.nf
+.na
+.ft C
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+.fi
+.ad
+.ft R
+.in -4
+.PP
+The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when TLS loglevel is 1 or
+higher.
+.PP
+\fBNote:\fR Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later.
 .PP
 This feature is available in Postfix 2.5 and later.
 .SH smtp_tls_key_file (default: $smtp_tls_cert_file)
@@ -9428,11 +9477,56 @@ SHA1 Fingerprint=D4:6A:AB:19:24:79:F8:32:BB:A6:CB:66:82:C0:8E:9B:EE:29:A8:1A
 .ft R
 .in -4
 .PP
-Public key fingerprints are more difficult to extract, however,
-the SHA-1 public key fingerprint is often present as the value of the
-"Subject Key Identifier" extension in X.509v3 certificates. The Postfix
-SMTP server and client log the peer certificate fingerprint and public
-key fingerprint when TLS loglevel is 1 or higher.
+To extract the public key fingerprint from an X.509 certificate,
+you need to extract the public key from the certificate and compute
+the appropriate digest of its DER (ASN.1) encoding. With OpenSSL
+the "-pubkey" option of the "x509" command extracts the public
+key always in "PEM" format. We pipe the result to another OpenSSL
+command that converts the key to DER and then to the "dgst" command
+to compute the fingerprint.
+.PP
+The actual command to transform the key to DER format depends
+on the version of OpenSSL used. With OpenSSL 1.0.0 and later, the
+"pkey" command supports all key types. With OpenSSL 0.9.8 and
+earlier, the key type is always RSA (nobody uses DSA, and EC
+keys are not fully supported by 0.9.8), so the "rsa" command is
+used.
+.sp
+.in +4
+.nf
+.na
+.ft C
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl pkey -pubin -outform DER |
+    openssl dgst -sha1 -c
+(stdin)= 64:3f:1f:f6:e5:1e:d4:2a:56:8b:fc:09:1a:61:98:b5:bc:7c:60:58
+.fi
+.ad
+.ft R
+.in -4
+.sp
+.in +4
+.nf
+.na
+.ft C
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey |
+    openssl rsa -pubin -outform DER |
+    openssl dgst -md5 -c
+(stdin)= f4:62:60:f6:12:8f:d5:8d:28:4d:13:a7:db:b2:ff:50
+.fi
+.ad
+.ft R
+.in -4
+.PP
+The Postfix SMTP server and client log the peer (leaf) certificate
+fingerprint and public key fingerprint when TLS loglevel is 1 or
+higher.
+.PP
+\fBNote:\fR Postfix 2.9.0&ndash;2.9.5 computed the public key
+fingerprint incorrectly. To use public-key fingerprints, upgrade
+to Postfix 2.9.6 or later.
 .PP
 Example: client-certificate access table, with sha1 fingerprints:
 .sp
@@ -10077,6 +10171,19 @@ list when they are enabled. This prefix is not needed with previous
 OpenSSL releases.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH tls_legacy_public_key_fingerprints (default: no)
+A temporary migration aid for sites that use certificate
+\fIpublic-key\fR fingerprints with Postfix 2.9.0..2.9.5, which use
+an incorrect algorithm. This parameter has no effect on the certificate
+fingerprint support that is available since Postfix 2.2.
+.PP
+Specify "tls_legacy_public_key_fingerprints = yes" temporarily,
+pending a migration from configuration files with incorrect Postfix
+2.9.0..2.9.5 certificate public-key finger prints, to the correct
+fingerprints used by Postfix 2.9.6 and later.  To compute the correct
+certificate public-key fingerprints, see TLS_README.
+.PP
+This feature is available in Postfix 2.9.6 and later.
 .SH tls_low_cipherlist (default: ALL:!EXPORT:+RC4:@STRENGTH)
 The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in smtpd_tls_mandatory_ciphers,
