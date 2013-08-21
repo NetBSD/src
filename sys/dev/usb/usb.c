@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.141 2013/08/21 17:59:40 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.141 2013/08/21 17:59:40 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -660,7 +660,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		if (len < 0 || len > 32768)
 			return (EINVAL);
 		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->devices[addr] == 0)
+		    sc->sc_bus->devices[addr] == NULL)
 			return (EINVAL);
 		if (len != 0) {
 			iov.iov_base = (void *)ur->ucr_data;
