@@ -1,4 +1,4 @@
-/*	$NetBSD: s_rintl.c,v 1.4 2013/02/11 02:45:27 christos Exp $	*/
+/*	$NetBSD: s_rintl.c,v 1.5 2013/08/21 13:04:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_rintl.c,v 1.5 2008/02/22 11:59:05 bde Exp $");
 #else
-__RCSID("$NetBSD: s_rintl.c,v 1.4 2013/02/11 02:45:27 christos Exp $");
+__RCSID("$NetBSD: s_rintl.c,v 1.5 2013/08/21 13:04:44 martin Exp $");
 #endif
 
 #include <float.h>
@@ -46,6 +46,8 @@ shift[2] = {
 	0x1.0p63, -0x1.0p63
 #elif EXT_FRACBITS == 113
 	0x1.0p112, -0x1.0p112
+#elif EXT_FRACBITS == 112
+	0x1.0p111, -0x1.0p111
 #else
 #error "Unsupported long double format"
 #endif
