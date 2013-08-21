@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.10 2013/05/02 04:14:28 matt Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.11 2013/08/21 15:26:44 matt Exp $
 #
 
 .include <bsd.own.mk>
@@ -59,12 +59,10 @@ CLEANFILES+=	x86
 	    ln -s $S/arch/sparc/include sparc
 .endif
 .if ${KLINK_MACHINE} == "amd64"
-	@rm -f x86 && \
-	    ln -s $S/arch/x86/include x86
 	@rm -f i386 && \
 	    ln -s $S/arch/i386/include i386
 .endif
-.if ${MACHINE_CPU} == "i386"
+.if ${MACHINE_CPU} == "i386" || ${MACHINE_CPU} == "x86_64"
 	@rm -f x86 && \
 	    ln -s $S/arch/x86/include x86
 .endif
