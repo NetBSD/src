@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2013/08/20 17:36:20 matt Exp $
+#	$NetBSD: Makefile,v 1.206 2013/08/21 03:18:05 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -33,11 +33,15 @@ SUBDIR+=	i18n_module
 SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
-		libintl libipsec libisns libkern libkvm libm \
+		libintl libipsec libisns libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
+
+.if !defined(BSD_MK_COMPAT_FILE)
+SUBDIR+=	libkern
+.endif
 
 .if (${MACHINE_CPU} == "arm")
 LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
