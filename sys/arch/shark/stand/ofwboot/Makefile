@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 2013/06/30 21:54:26 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2013/08/21 06:24:42 matt Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 S=		${.CURDIR}/../../../..
 
@@ -39,15 +40,6 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CFLAGS+=	-fno-unwind-tables
 CPUFLAGS=	-mcpu=strongarm
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
-.endif
-
-.NOPATH: machine arm
-CLEANFILES+= machine arm
 
 CLEANFILES+= ${PROG}.aout
 
