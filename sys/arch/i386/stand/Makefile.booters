@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.87 2013/08/21 08:15:19 matt Exp $
+#	$NetBSD: Makefile.booters,v 1.88 2013/08/21 15:24:27 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -113,4 +113,5 @@ ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
 .include <bsd.klinks.mk>
