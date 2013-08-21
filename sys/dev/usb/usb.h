@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.103 2013/04/05 09:20:51 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.104 2013/08/21 17:25:58 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ typedef struct {
 #define  UDESC_CS_INTERFACE	0x24
 #define  UDESC_CS_ENDPOINT	0x25
 #define  UDESC_HUB		0x29
+#define  UDESC_SSHUB		0x2a
 #define UR_SET_DESCRIPTOR	0x07
 #define UR_GET_CONFIG		0x08
 #define UR_SET_CONFIG		0x09
@@ -513,6 +514,7 @@ typedef struct {
 #define  UDPROTO_FSHUB		0x00
 #define  UDPROTO_HSHUBSTT	0x01
 #define  UDPROTO_HSHUBMTT	0x02
+#define  UDPROTO_SSHUB		0x03
 #define UDCLASS_DIAGNOSTIC	0xdc
 #define UDCLASS_WIRELESS	0xe0
 #define  UDSUBCLASS_RF		0x01
