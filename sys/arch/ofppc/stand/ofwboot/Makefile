@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2011/01/24 19:27:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2013/08/21 06:46:26 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -14,6 +14,7 @@ CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-DHEAP_VARIABLE
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 DBG=		-Os -mmultiple
 
@@ -46,14 +47,6 @@ CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.endif
-.NOPATH: machine powerpc
-CLEANFILES+= machine powerpc
-
 ### find out what to use for libkern
 KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
@@ -76,6 +69,7 @@ vers.c: version
 	    ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
 	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}
