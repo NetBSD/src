@@ -14,6 +14,36 @@ specifies the release date of a stable release or snapshot release.
 If you upgrade from Postfix 2.7 or earlier, read RELEASE_NOTES-2.8
 before proceeding.
 
+Major changes with Postfix 2.9.6
+--------------------------------
+
+Thanks to OpenSSL documentation, the Postfix 2.9.0..2.9.5 SMTP
+client and server computed incorrect TLS certificate PUBLIC-KEY
+fingerprints.  Support for certificate PUBLIC-KEY finger prints
+was introduced with Postfix 2.9; there is no known problem with the
+certificate fingerprint algorithms available since Postfix 2.2.
+
+Certificate PUBLIC-KEY finger prints may be used in the Postfix
+SMTP server (with "check_ccert_access") and in the Postfix SMTP
+client (with the "fingerprint" security level).  
+
+Specify "tls_legacy_public_key_fingerprints = yes" temporarily, 
+pending a migration from configuration files with incorrect Postfix
+2.9.0..2.9.5 certificate PUBLIC-KEY finger prints, to the correct
+fingerprints used by Postfix 2.9.6 and later.
+
+To compute the correct PUBLIC-KEY finger prints:
+
+# OpenSSL 1.0 with all certificates and SHA-1 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey | \
+    openssl pkey -pubin -outform DER | \
+    openssl dgst -sha1 -c
+
+# OpenSSL 0.9.8 with RSA certificates and MD5 fingerprints.
+$ openssl x509 -in cert.pem -noout -pubkey | \
+    openssl rsa -pubin -outform DER | \
+    openssl dgst -md5 -c
+
 Major changes with Postfix 2.9.2
 --------------------------------
 
