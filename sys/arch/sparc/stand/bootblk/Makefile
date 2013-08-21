@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2010/02/13 23:38:17 eeh Exp $
+#	$NetBSD: Makefile,v 1.14 2013/08/21 06:41:52 matt Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -10,7 +10,7 @@ S=	${CURDIR}/../../../..
 PROG=	bootblk
 SRCS=		bootblk.fth
 OBJS=
-CLEANFILES=	ffs.fth.h lfs.fth.h assym.fth.h.tmp machine sparc \
+CLEANFILES=	ffs.fth.h lfs.fth.h assym.fth.h.tmp \
 		bootblk bootblk.text bootblk.text.tmp
 
 NOMAN=		# defined
@@ -20,17 +20,6 @@ USE_GENASSYM?=	no
 
 INCLUDES=	-I. -I$S/arch -I$S -I${S}/../common/include -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM -D_KERNEL
-
-#all:: bootblk.text bootblk
-
-#clean:: 
-#	rm assym.fth.h bootblk.text machine bootblk
-
-sparc:
-	ln -s ${.CURDIR}/../../../sparc/include sparc
-
-machine:
-	ln -s ${.CURDIR}/../../../${MACHINE}/include machine
 
 ffs.fth.h: genfth.cf machine sparc
 	${TOOL_GENASSYM} -f -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
@@ -61,4 +50,5 @@ fake: bootblk bootblk.text
 	../fakeboot/fakeboot -elf32 <bootblk >/bootblk
 	../fakeboot/fakeboot -elf32 <bootblk.text >/bootblk.text
 
+.include <bsd.klinks.mk>
 .include <bsd.prog.mk>
