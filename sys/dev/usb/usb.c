@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.141 2013/08/21 17:59:40 jakllsch Exp $	*/
+/*	$NetBSD: usb.c,v 1.142 2013/08/21 18:11:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.141 2013/08/21 17:59:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.142 2013/08/21 18:11:31 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -312,8 +312,8 @@ usb_doattach(device_t self)
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
-		aprint_error("%s: root hub problem, error=%d\n",
-			     device_xname(self), err);
+		aprint_error("%s: root hub problem, error=%s\n",
+			     device_xname(self), usbd_errstr(err));
 		sc->sc_dying = 1;
 	}
 
