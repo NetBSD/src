@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.1.1.5 2013/01/02 18:59:05 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.1.1.6 2013/08/21 20:09:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -996,7 +996,7 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
 	if (TLScontext->log_mask &
 	    (TLS_LOG_CERTMATCH | TLS_LOG_VERBOSE | TLS_LOG_PEERCERT))
 	    msg_info("%s: subject_CN=%s, issuer_CN=%s, "
-		     "fingerprint %s, pkey_fingerprint=%s", props->namaddr,
+		     "fingerprint=%s, pkey_fingerprint=%s", props->namaddr,
 		     TLScontext->peer_CN, TLScontext->issuer_CN,
 		     TLScontext->peer_fingerprint,
 		     TLScontext->peer_pkey_fprint);

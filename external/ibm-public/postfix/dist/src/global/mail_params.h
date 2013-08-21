@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.1.1.8 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.1.1.9 2013/08/21 20:09:52 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -3036,6 +3036,10 @@ extern bool var_tls_preempt_clist;
 #define VAR_TLS_BUG_TWEAKS	"tls_disable_workarounds"
 #define DEF_TLS_BUG_TWEAKS	TLS_BUG_TWEAKS
 extern char *var_tls_bug_tweaks;
+
+#define VAR_TLS_BC_PKEY_FPRINT	"tls_legacy_public_key_fingerprints"
+#define DEF_TLS_BC_PKEY_FPRINT	0
+extern bool var_tls_bc_pkey_fprint;
 
  /*
   * Sendmail-style mail filter support.
