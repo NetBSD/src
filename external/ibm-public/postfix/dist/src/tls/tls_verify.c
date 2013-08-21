@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_verify.c,v 1.1.1.2 2013/01/02 18:59:05 tron Exp $	*/
+/*	$NetBSD: tls_verify.c,v 1.1.1.3 2013/08/21 20:09:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,10 @@
 /*	TLS_SESS_STATE *TLScontext;
 /*
 /*	char *tls_fingerprint(peercert, dgst)
+/*	X509   *peercert;
+/*	const char *dgst;
+/*
+/*	char *tls_pkey_fprint(peercert, dgst)
 /*	X509   *peercert;
 /*	const char *dgst;
 /*
@@ -52,6 +56,11 @@
 /*	value is dynamically allocated with mymalloc(), and the caller
 /*	must eventually free it with myfree().
 /*
+/*	tls_pkey_fprint() returns a public-key fingerprint; in all
+/*	other respects the function behaves as tls_fingerprint().
+/*	The var_tls_bc_pkey_fprint variable enables an incorrect
+/*	algorithm that was used in Postfix versions 2.9.[0-5].
+/*	
 /*	tls_verify_callback() is called several times (directly or
 /*	indirectly) from crypto/x509/x509_vfy.c. It is called as
 /*	a final check, and if it returns "0", the handshake is
@@ -141,6 +150,10 @@
 #include <msg.h>
 #include <mymalloc.h>
 #include <stringops.h>
+
+/* Global library. */
+
+#include <mail_params.h>
 
 /* TLS library. */
 
@@ -492,14 +505,12 @@ char   *tls_issuer_CN(X509 *peer, const TLS_SESS_STATE *TLScontext)
     return (cn ? cn : mystrdup(""));
 }
 
-typedef int (*x509_dgst_cb) (const X509 *, const EVP_MD *, unsigned char *, unsigned int *);
+/* tls_fprint - compute and encode digest of DER-encoded object */
 
-/* tls_fprint - extract cert or pkey fingerprint from certificate */
-
-static char *tls_fprint(X509 *peercert, x509_dgst_cb x509_dgst,
-			        const char *dgst)
+static char *tls_fprint(const char *buf, int len, const char *dgst)
 {
-    const char *myname = "tls_fingerprint";
+    const char *myname = "tls_fprint";
+    EVP_MD_CTX *mdctx;
     const EVP_MD *md_alg;
     unsigned char md_buf[EVP_MAX_MD_SIZE];
     unsigned int md_len;
@@ -510,10 +521,12 @@ static char *tls_fprint(X509 *peercert, x509_dgst_cb x509_dgst,
     if ((md_alg = EVP_get_digestbyname(dgst)) == 0)
 	msg_panic("%s: digest algorithm \"%s\" not found", myname, dgst);
 
-    /* Fails when serialization to ASN.1 runs out of memory */
-    if (x509_dgst(peercert, md_alg, md_buf, &md_len) == 0)
-	msg_fatal("%s: error computing certificate %s digest (out of memory?)",
-		  myname, dgst);
+    mdctx = EVP_MD_CTX_create();
+    if (EVP_DigestInit_ex(mdctx, md_alg, NULL) == 0
+        || EVP_DigestUpdate(mdctx, buf, len) == 0
+        || EVP_DigestFinal_ex(mdctx, md_buf, &md_len) == 0)
+        msg_fatal("%s: error computing %s message digest", myname, dgst);
+    EVP_MD_CTX_destroy(mdctx);
 
     /* Check for OpenSSL contract violation */
     if (md_len > EVP_MAX_MD_SIZE || md_len >= INT_MAX / 3)
@@ -533,14 +546,55 @@ static char *tls_fprint(X509 *peercert, x509_dgst_cb x509_dgst,
 
 char   *tls_fingerprint(X509 *peercert, const char *dgst)
 {
-    return (tls_fprint(peercert, X509_digest, dgst));
+    int     len;
+    char   *buf;
+    char   *buf2;
+    char   *result;
+
+    len = i2d_X509(peercert, NULL);
+    buf2 = buf = mymalloc(len);
+    i2d_X509(peercert, (unsigned char **)&buf2);
+    if (buf2 - buf != len)
+        msg_panic("i2d_X509 invalid result length");
+
+    result = tls_fprint(buf, len, dgst);
+    myfree(buf);
+
+    return (result);
 }
 
 /* tls_pkey_fprint - extract public key fingerprint from certificate */
 
 char   *tls_pkey_fprint(X509 *peercert, const char *dgst)
 {
-    return (tls_fprint(peercert, X509_pubkey_digest, dgst));
+    if (var_tls_bc_pkey_fprint) {
+	const char *myname = "tls_pkey_fprint";
+	ASN1_BIT_STRING *key;
+	char   *result;
+
+	key = X509_get0_pubkey_bitstr(peercert);
+	if (key == 0)
+	    msg_fatal("%s: error extracting legacy public-key fingerprint: %m",
+		      myname);
+
+	result = tls_fprint((char *) key->data, key->length, dgst);
+	return (result);
+    } else {
+	int     len;
+	char   *buf;
+	char   *buf2;
+	char   *result;
+
+	len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), NULL);
+	buf2 = buf = mymalloc(len);
+	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(peercert), (unsigned char **) &buf2);
+	if (buf2 - buf != len)
+	    msg_panic("i2d_X509_PUBKEY invalid result length");
+
+	result = tls_fprint(buf, len, dgst);
+	myfree(buf);
+	return (result);
+    }
 }
 
 #endif
