@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/01/22 19:19:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2013/08/21 07:27:01 matt Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -37,16 +37,6 @@ LD_SCRIPT=	lcboot.ldscript
 CPPFLAGS+=	-DROMICE
 .endif
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
-	@[ -h mips ] || ln -s ${S}/arch/mips/include mips
-.NOPATH: machine
-.endif
-CLEANFILES+= machine mips
-
-${OBJS}: machine mips
-
 ### find out what to use for libkern
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
@@ -76,6 +66,7 @@ vers.c: ${VERSIONFILE}
 
 CLEANFILES+=	${PROG}
 ${PROG}: ${OBJS} ${LIBKERN} ${LIBSA} ${LIBZ}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG} -T ${LD_SCRIPT} ${OBJS} ${LIBLIST}
 
 CLEANFILES+=	${SREC}
@@ -84,3 +75,4 @@ ${SREC}: ${PROG}
 	${OBJCOPY} -S -O srec ${PROG} ${SREC}
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
