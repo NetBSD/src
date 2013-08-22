@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.114 2013/08/20 19:19:23 macallan Exp $	*/
+/*	$NetBSD: psycho.c,v 1.115 2013/08/22 09:57:30 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.114 2013/08/20 19:19:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.115 2013/08/22 09:57:30 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -1520,16 +1520,16 @@ psycho_sabre_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 /* US-IIe STICK support */
 
-long
+uint64_t
 psycho_getstick(void)
 {
-	long foo;
+	uint64_t stick;
 
-	foo = bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	stick = bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
 	    STICK_CNT_LOW) |
 	    (bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
 	    STICK_CNT_HIGH) & 0x7fffffff) << 32;
-	return foo;
+	return stick;
 }
 
 void
