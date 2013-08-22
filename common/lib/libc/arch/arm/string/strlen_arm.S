@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.6 2013/08/20 16:34:47 matt Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.7 2013/08/22 19:25:00 matt Exp $")
 
 #if defined(__thumb__) && !defined(_ARM_ARCH_T2)
 #error Only Thumb2 or ARM supported
@@ -55,13 +55,13 @@ RCSID("$NetBSD: strlen_arm.S,v 1.6 2013/08/20 16:34:47 matt Exp $")
 
 	.text
 ENTRY(FUNCNAME)
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
 	.fnstart
 	.cfi_startproc
 #endif
 #ifdef STRNLEN
 	push	{r4,r5}			/* save some registers */
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
 	.save	{r4,r5}
 	.cfi_def_cfa_offset 8
 	.cfi_offset 5, -4
@@ -173,7 +173,7 @@ ENTRY(FUNCNAME)
 	pop	{r4, r5}		/* restore registers */
 	RET				/* return */
 #endif
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
 	.cfi_endproc
 	.fnend
 #endif
