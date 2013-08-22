@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.20 2013/07/18 22:39:57 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2013/08/22 00:16:54 matt Exp $
 
 .if ${MKGCC} != "no"
-LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH}
-#.info LIBGCC_MACHINE_ARCH=${LIBGCC_MACHINE_ARCH}
+LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 .if exists(${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}.mk)
 .include "${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}.mk"
 .endif
@@ -46,7 +45,14 @@ LIB2FUNCS_ALL= \
 	_mulsc3 _muldc3 _mulxc3 _multc3 _divsc3 _divdc3 _divxc3        \
 	_divtc3 _bswapsi2 _bswapdi2
 
-.if ${MACHINE_ARCH} != "coldfire"
+.if ${LIBGCC_MACHINE_ARCH} != "coldfire" && empty(LIBGCC_MACHINE_ARCH:Mearm*)
+
+LIB2FUNCS_ALL+= \
+	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3
+
+.endif
+
+.if ${LIBGCC_MACHINE_ARCH} != "coldfire" && empty(LIBGCC_MACHINE_ARCH:Mearm*)
 
 # non swfloat versions 
 .for _p in _fix _fixuns
@@ -163,7 +169,7 @@ DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
 
 # XXX arm hack
-.if ${MACHINE_CPU} == "arm"
+.if !empty(LIBGCC_MACHINE_ARCH:M*arm*)
 ${SRCS}: insn-modes.h
 # XXX XXX
 ${__DPSRCS.d}: insn-modes.h
