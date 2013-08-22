@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.426 2013/07/22 13:56:46 wiz Exp $
+.\"	$NetBSD: options.4,v 1.427 2013/08/22 07:17:11 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 22, 2013
+.Dd August 22, 2013
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1928,13 +1928,6 @@ the initial size can be set to some other value.
 The initial TCP window size can be set via
 .Xr sysctl 8
 as well.
-.It Cd options PFIL_HOOKS
-This option turns on the packet filter interface hooks.
-See
-.Xr pfil 9
-for details.
-This option assumes
-.Em INET .
 .It Cd options IPFILTER_LOG
 This option, in conjunction with
 .Em pseudo-device ipfilter ,
