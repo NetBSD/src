@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.82 2013/08/19 07:18:42 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.83 2013/08/22 10:04:28 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.82 2013/08/19 07:18:42 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.83 2013/08/22 10:04:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -242,7 +242,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	int toobig = 0;
 	char tbuf[MAXDNAME];
 	char *aliases[MAXALIASES];
-	char *addr_ptrs[MAXADDRS + 1];
+	char *addr_ptrs[MAXADDRS];
 	const char *tname;
 	int (*name_ok)(const char *);
 
@@ -912,7 +912,7 @@ _hf_gethtbyname2(const char *name, int af, struct getnamaddr *info)
 	size_t len, anum, num, i;
 	FILE *hf;
 	char *aliases[MAXALIASES];
-	char *addr_ptrs[MAXADDRS + 1];
+	char *addr_ptrs[MAXADDRS];
 
 	_DIAGASSERT(name != NULL);
 
