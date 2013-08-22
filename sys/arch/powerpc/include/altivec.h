@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.15 2011/05/02 06:29:23 matt Exp $	*/
+/*	$NetBSD: altivec.h,v 1.16 2013/08/22 19:50:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ vec_save(void)
 static inline void
 vec_discard(void)
 {
-	pcu_discard(&vec_ops);
+	pcu_discard(&vec_ops, false);
 }
 
 void	vec_load_from_vreg(const struct vreg *);

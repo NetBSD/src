@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.14 2012/12/31 01:20:05 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.15 2013/08/22 19:50:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.14 2012/12/31 01:20:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.15 2013/08/22 19:50:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -385,20 +385,25 @@ pcu_load(const pcu_ops_t *pcu)
 
 /*
  * pcu_discard: discard the PCU state of current LWP.
+ * If the "usesw" flag is set, pcu_used_p() will return "true".
  */
 void
-pcu_discard(const pcu_ops_t *pcu)
+pcu_discard(const pcu_ops_t *pcu, bool usesw)
 {
 	const u_int id = pcu->pcu_id;
 	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
+	if (usesw)
+		l->l_pcu_used[PCU_USER] |= (1 << id);
+	else
+		l->l_pcu_used[PCU_USER] &= ~(1 << id);
+
 	if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
 		return;
 	}
 	pcu_lwp_op(pcu, l, PCU_RELEASE);
-	l->l_pcu_used[PCU_USER] &= ~(1 << id);
 }
 
 /*
@@ -419,6 +424,18 @@ pcu_save(const pcu_ops_t *pcu)
 }
 
 /*
+ * pcu_save_all_on_cpu: save all PCU state on current CPU
+ */
+void
+pcu_save_all_on_cpu(void)
+{
+
+	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
+		pcu_cpu_op(pcu_ops_md_defs[id], PCU_SAVE | PCU_RELEASE);
+	}
+}
+
+/*
  * pcu_used: return true if PCU was used (pcu_load() case) by the LWP.
  */
 bool
@@ -427,7 +444,7 @@ pcu_used_p(const pcu_ops_t *pcu)
 	const u_int id = pcu->pcu_id;
 	lwp_t * const l = curlwp;
 
-	return l->l_pcu_used[0] & (1 << id);
+	return l->l_pcu_used[PCU_USER] & (1 << id);
 }
 
 void

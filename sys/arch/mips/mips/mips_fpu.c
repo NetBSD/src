@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.10 2012/12/26 19:15:16 matt Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.11 2013/08/22 19:50:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.10 2012/12/26 19:15:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.11 2013/08/22 19:50:54 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,7 +60,7 @@ const pcu_ops_t mips_fpu_ops = {
 void
 fpu_discard(void)
 {
-	pcu_discard(&mips_fpu_ops);
+	pcu_discard(&mips_fpu_ops, false);
 }
 
 void
