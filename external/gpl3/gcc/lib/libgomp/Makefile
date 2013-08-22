@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/02/23 11:05:02 nonaka Exp $
+#	$NetBSD: Makefile,v 1.8 2013/08/22 00:16:54 matt Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -39,7 +39,7 @@ SRCS= \
 	fortran.c \
 	affinity.c
 
-GOMP_MACHINE_ARCH?=	${MACHINE_ARCH}
+GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
 ARCHDIR=		${.CURDIR}/arch/${GOMP_MACHINE_ARCH}
 
 CPPFLAGS+= \
