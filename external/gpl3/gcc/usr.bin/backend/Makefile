@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/05/24 16:37:32 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2013/08/22 00:17:48 matt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -97,10 +97,10 @@ gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
 	${_MKTARGET_CREATE}
 	rm -f auto-host.h
-	ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/auto-host.h .
-	if [ -f ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ]; then \
+	ln -s ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/auto-host.h .
+	if [ -f ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/sysroot-suffix.h ]; then \
 	  rm -f sysroot-suffix.h; \
-	  ln -s ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/sysroot-suffix.h ; \
+	  ln -s ${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}/sysroot-suffix.h ; \
 	fi
 	./gengtype ${DIST}/gcc gtyp-input.list.tmp
 # gengtype is the real need for options.h
@@ -307,7 +307,7 @@ vec.lo: gtype-desc.h
 gtype-desc.d gtype-desc.o: insn-constants.h
 insn-emit.d insn-emit.o: tm-constrs.h
 
-.if ${MACHINE_ARCH} == "alpha"
+.if ${GCC_MACHINE_ARCH} == "alpha"
 alpha.d alpha.o: tm-constrs.h tm_p.h
 .endif
 
@@ -315,13 +315,13 @@ alpha.d alpha.o: tm-constrs.h tm_p.h
 arm.d arm.o: insn-constants.h tm_p.h
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
 i386.d i386.o: tm-constrs.h
 .endif
 
 CFLAGS+=	-Wno-stack-protector
 
-.if ${MACHINE_ARCH} == "m68000" || ${MACHINE_ARCH} == "m68k"
+.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k"
 COPTS.lambda-code.c=		-O0
 COPTS.tree-loop-linear.c=	-O0
 .endif
