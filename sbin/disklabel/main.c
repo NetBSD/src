@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2013/08/11 17:15:15 riz Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2013/08/22 00:26:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2013/08/11 17:15:15 riz Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2013/08/22 00:26:23 matt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -260,8 +260,9 @@ static const struct disklabel_params {
 
 	{ "dreadmcast",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
 	{ "evbsh3",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
-	{ "hpcsh",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
+	{ "evbcf",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* coldfire */
 	{ "evbppc-mbr",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */
+	{ "hpcsh",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
 	{ "mmeye",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
 
 	{ "acorn26",	1, 1,   0, 16, 2, 8, LITTLE_ENDIAN },	/* arm */
@@ -314,6 +315,7 @@ static const struct arch_endian {
 	{ LITTLE_ENDIAN, "x86_64" },
 
 	{ BIG_ENDIAN, "armeb" },
+	{ BIG_ENDIAN, "coldfire" },
 	{ BIG_ENDIAN, "earmeb" },
 	{ BIG_ENDIAN, "earmhfeb" },
 	{ BIG_ENDIAN, "earmv4eb" },
@@ -323,6 +325,7 @@ static const struct arch_endian {
 	{ BIG_ENDIAN, "earmv7eb" },
 	{ BIG_ENDIAN, "earmv7hfeb" },
 	{ BIG_ENDIAN, "hppa" },
+	{ BIG_ENDIAN, "m68000" },
 	{ BIG_ENDIAN, "m68k" },
 	{ BIG_ENDIAN, "mipseb" },
 	{ BIG_ENDIAN, "mips64eb" },
