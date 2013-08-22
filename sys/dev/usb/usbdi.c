@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.154 2013/07/11 19:46:44 aymeric Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.155 2013/08/22 20:00:43 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.154 2013/07/11 19:46:44 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.155 2013/08/22 20:00:43 aymeric Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -337,7 +337,8 @@ usbd_transfer(usbd_xfer_handle xfer)
 				err = tsleep(xfer, PRIBIO, "usbsyn", 0);
 		}
 		if (err) {
-			pipe->methods->abort(xfer);
+			if (!xfer->done)
+				pipe->methods->abort(xfer);
 			break;
 		}
 	}
