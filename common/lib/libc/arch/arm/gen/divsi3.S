@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.7 2013/08/19 03:54:15 matt Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.8 2013/08/22 19:25:00 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -29,12 +29,12 @@ ENTRY(__divsi3)
 #elif !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	b	__divide
 #else
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))
 	.fnstart
 	.cfi_startproc
 #endif
 	push	{r4, lr}
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))
 	.cfi_def_cfa_offset 8
 	.cfi_offset 14, -4
 	.cfi_offset 4, -8
