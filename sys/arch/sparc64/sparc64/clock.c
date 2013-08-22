@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.109 2013/08/20 19:19:23 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.110 2013/08/22 10:00:43 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.109 2013/08/20 19:19:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.110 2013/08/22 10:00:43 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -462,19 +462,23 @@ cpu_initclocks(void)
 	/* Initialize the %tick register */
 	settick(0);
 
-	if (ci->ci_system_clockrate[0] == 0) {
-		tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
-		tc_init(&tick_timecounter);
-	} else if(CPU_IS_HUMMINGBIRD()) {
-		psycho_setstick(0);
-		stick2e_timecounter.tc_frequency =
-		    ci->ci_system_clockrate[0];
-		tc_init(&stick2e_timecounter);
-	} else {
-		setstick(0);
-		stick_timecounter.tc_frequency = 
-		    ci->ci_system_clockrate[0];
-		tc_init(&stick_timecounter);
+	/* Register timecounter "tick-counter" */
+	tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
+	tc_init(&tick_timecounter);
+
+	/* Register timecounter "stick-counter" */
+	if (ci->ci_system_clockrate[0] != 0) {
+		if (CPU_IS_HUMMINGBIRD()) {
+			psycho_setstick(0);
+			stick2e_timecounter.tc_frequency =
+			    ci->ci_system_clockrate[0];
+			tc_init(&stick2e_timecounter);
+		} else {
+			setstick(0);
+			stick_timecounter.tc_frequency =
+			    ci->ci_system_clockrate[0];
+			tc_init(&stick_timecounter);
+		}
 	}
 
 	/*
@@ -490,7 +494,7 @@ cpu_initclocks(void)
 
 			/* We don't have a counter-timer -- use %tick */
 			tickintr_establish(PIL_CLOCK, tickintr);
-		} else if(CPU_IS_HUMMINGBIRD()) {
+		} else if (CPU_IS_HUMMINGBIRD()) {
 			aprint_normal("No counter-timer -- using STICK "
 			    "at %luMHz as system clock.\n",
 			    (unsigned long)ci->ci_system_clockrate[1]);
