@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.44 2013/08/21 08:15:19 matt Exp $
+# $NetBSD: Makefile.bootxx,v 1.45 2013/08/22 00:13:00 matt Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -138,4 +138,5 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	fi
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
 .include <bsd.klinks.mk>
