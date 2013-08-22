@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_dsp.c,v 1.2 2012/12/26 19:17:48 matt Exp $	*/
+/*	$NetBSD: mips_dsp.c,v 1.3 2013/08/22 19:50:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.2 2012/12/26 19:17:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.3 2013/08/22 19:50:54 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,7 +60,7 @@ const pcu_ops_t mips_dsp_ops = {
 void
 dsp_discard(void)
 {
-	pcu_discard(&mips_dsp_ops);
+	pcu_discard(&mips_dsp_ops, false);
 }
 
 void

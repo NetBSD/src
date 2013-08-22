@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.23 2013/08/18 06:28:18 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.24 2013/08/22 19:50:54 drochner Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -601,7 +601,7 @@ vfp_savecontext(void)
 void
 vfp_discardcontext(void)
 {
-	pcu_discard(&arm_vfp_ops);
+	pcu_discard(&arm_vfp_ops, false);
 }
 
 void
@@ -656,7 +656,7 @@ vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
 void
 vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 {
-	pcu_discard(&arm_vfp_ops);
+	pcu_discard(&arm_vfp_ops, true);
 	struct pcb * const pcb = lwp_getpcb(l);
 	l->l_md.md_flags |= MDLWP_VFPUSED;
 	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
