@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.26 2012/12/26 19:05:03 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.27 2013/08/22 19:50:54 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.26 2012/12/26 19:05:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.27 2013/08/22 19:50:54 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -164,7 +164,7 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	KASSERT(l == curlwp);
 
 	/* we don't need to save the state, just drop it */
-	pcu_discard(&vec_ops);
+	pcu_discard(&vec_ops, true);
 	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
 	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
 	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
