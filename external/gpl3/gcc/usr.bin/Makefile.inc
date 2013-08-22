@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.14 2013/08/06 05:36:42 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2013/08/22 00:17:48 matt Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
 .include <bsd.own.mk>
 
+GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 GMP_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 TOP=		${NETBSDSRCDIR}
 DIST=		${TOP}/external/gpl3/gcc/dist
 
-GCCARCH=	${.CURDIR}/../gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../gcc/arch/${GCC_MACHINE_ARCH}
 
 CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
 HOST_CPPFLAGS+=	-I${.CURDIR}/..
