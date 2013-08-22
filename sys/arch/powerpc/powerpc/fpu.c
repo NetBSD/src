@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.32 2012/12/26 19:05:03 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.33 2013/08/22 19:50:54 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2012/12/26 19:05:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2013/08/22 19:50:54 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -242,7 +242,7 @@ fpu_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 #ifdef PPC_HAVE_FPU
 	/* we don't need to save the state, just drop it */
 	if (l == curlwp)
-		pcu_discard(&fpu_ops);
+		pcu_discard(&fpu_ops, true);
 #endif
 	(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
 	    sizeof (pcb->pcb_fpu.fpreg));
