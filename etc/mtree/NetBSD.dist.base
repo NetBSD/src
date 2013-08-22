@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.123 2013/08/21 20:52:45 tron Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.124 2013/08/22 07:14:38 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -140,6 +140,7 @@
 ./usr/include/g++/parallel
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
+./usr/include/gcc-4.1
 ./usr/include/gcc-4.5
 ./usr/include/gssapi
 ./usr/include/isofs
