@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.67 2013/07/28 11:46:24 prlw1 Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.68 2013/08/23 16:49:53 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.67 2013/07/28 11:46:24 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.68 2013/08/23 16:49:53 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -102,6 +102,7 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6230_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_6235,
 };
 
 /*
@@ -731,7 +732,8 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		if (pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_1 ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_1030_2 ||
 		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_1 ||
-		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_2) {
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6230_2 ||
+		    pid == PCI_PRODUCT_INTEL_WIFI_LINK_6235) {
 			sc->fwname = "iwlwifi-6000g2b-6.ucode";
 			ops->config_bt_coex = iwn_config_bt_coex_adv1;
 		}
