@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.51 2013/03/10 07:18:20 christos Exp $
+#	$NetBSD: Makefile.powerpc,v 1.52 2013/08/23 06:25:02 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -89,6 +89,7 @@ ENTRYPOINT=	__start
 
 .if defined(NEED_MDSETIMAGE) && $(NEED_MDSETIMAGE) != "no" \
     && defined(RAMDISKDIR) && exists(${RAMDISKDIR}/ramdisk.fs)
+SYSTEM_DEP+=	${RAMDISKDIR}/ramdisk.fs
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
 	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
