@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.25 2013/08/23 05:22:01 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.26 2013/08/23 18:11:47 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -189,12 +189,12 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	 */
 	if (pcb->pcb_vfp.vfp_fpexc & VFP_FPEXC_EN)
 		return 1;
-#endif
 
 	if (__predict_false(!vfp_used_p())) {
 		pcb->pcb_vfp.vfp_fpscr =
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
 	}
+#endif
 
 	/*
 	 * We know know the pcb has the saved copy.
