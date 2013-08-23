@@ -28,6 +28,10 @@
 #undef MUST_USE_SJLJ_EXCEPTIONS
 #define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
 
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES \
+  ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
+
 #define TARGET_LINKER_EABI_SUFFIX "%{!mabi=apcs-gnu:%{!mabi=atpcs:_nbsd_eabi}}"
 #define TARGET_LINKER_BIG_EMULATION "armelfb%(linker_eabi_suffix)"
 #define TARGET_LINKER_LITTLE_EMULATION "armelf%(linker_eabi_suffix)"
@@ -49,13 +53,15 @@
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS()	\
-  do					\
-    {					\
-      if (TARGET_AAPCS_BASED)		\
-	TARGET_BPABI_CPP_BUILTINS();	\
-      NETBSD_OS_CPP_BUILTINS_ELF();	\
-    }					\
+#define TARGET_OS_CPP_BUILTINS()		\
+  do						\
+    {						\
+      if (TARGET_AAPCS_BASED)			\
+	TARGET_BPABI_CPP_BUILTINS();		\
+      NETBSD_OS_CPP_BUILTINS_ELF();		\
+      if (ARM_EABI_UNWIND_TABLES)		\
+	builtin_define ("__UNWIND_TABLES__");	\
+    }						\
   while (0)
 
 #undef SUBTARGET_CPP_SPEC
