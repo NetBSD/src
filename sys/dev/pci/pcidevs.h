@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1151 2013/07/17 19:51:03 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1152 2013/08/23 16:50:24 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1159 2013/07/17 19:49:11 soren Exp
+ *	NetBSD: pcidevs,v 1.1160 2013/08/23 16:49:53 christos Exp
  */
 
 /*
@@ -2551,6 +2551,7 @@
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_1	0x0887		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6235	0x088e		/* Centrino Advanced-N 6235 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
