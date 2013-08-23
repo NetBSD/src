@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.24 2013/08/22 19:50:54 drochner Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.25 2013/08/23 05:22:01 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -191,8 +191,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		return 1;
 #endif
 
-	if (__predict_false((l->l_md.md_flags & MDLWP_VFPUSED) == 0)) {
-		l->l_md.md_flags |= MDLWP_VFPUSED;
+	if (__predict_false(!vfp_used_p())) {
 		pcb->pcb_vfp.vfp_fpscr =
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
 	}
@@ -485,9 +484,8 @@ vfp_state_load(lwp_t *l, u_int flags)
 	 * If a process has used the VFP, count a "used VFP, and took
 	 * a trap to use it again" event.
 	 */
-	if (__predict_false((l->l_md.md_flags & MDLWP_VFPUSED) == 0)) {
+	if (__predict_false((flags & PCU_LOADED) == 0)) {
 		vfpevent_use.ev_count++;
-		l->l_md.md_flags |= MDLWP_VFPUSED;
 		pcb->pcb_vfp.vfp_fpscr =	/* Runfast */
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN);
 	} else {
@@ -599,9 +597,15 @@ vfp_savecontext(void)
 }
 
 void
-vfp_discardcontext(void)
+vfp_discardcontext(bool used_p)
 {
-	pcu_discard(&arm_vfp_ops, false);
+	pcu_discard(&arm_vfp_ops, used_p);
+}
+
+bool
+vfp_used_p(void)
+{
+	return pcu_used_p(&arm_vfp_ops);
 }
 
 void
@@ -643,7 +647,7 @@ vfp_kernel_release(void)
 void
 vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
 {
-	if (l->l_md.md_flags & MDLWP_VFPUSED) {
+	if (vfp_used_p()) {
 		const struct pcb * const pcb = lwp_getpcb(l);
 		pcu_save(&arm_vfp_ops);
 		mcp->__fpu.__vfpregs.__vfp_fpscr = pcb->pcb_vfp.vfp_fpscr;
@@ -658,7 +662,6 @@ vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 {
 	pcu_discard(&arm_vfp_ops, true);
 	struct pcb * const pcb = lwp_getpcb(l);
-	l->l_md.md_flags |= MDLWP_VFPUSED;
 	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
 	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
 	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));

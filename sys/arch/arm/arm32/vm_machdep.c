@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66 2013/05/11 07:35:58 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67 2013/08/23 05:22:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66 2013/05/11 07:35:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2013/08/23 05:22:01 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -131,7 +131,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * VFP state is valid.
 	 */
 	pcb2->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
-	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
 #endif
 
 	/*

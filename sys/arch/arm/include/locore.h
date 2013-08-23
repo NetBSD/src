@@ -191,10 +191,11 @@ void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
 void	vfp_attach(void);
-void	vfp_discardcontext(void);
+void	vfp_discardcontext(bool);
 void	vfp_savecontext(void);
 void	vfp_kernel_acquire(void);
 void	vfp_kernel_release(void);
+bool	vfp_used_p(void);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */
