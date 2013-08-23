@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.37 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.38 2013/08/23 05:22:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.37 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.38 2013/08/23 05:22:01 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -187,7 +187,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
 #ifdef FPU_VFP
-	vfp_discardcontext();
+	vfp_discardcontext(false);
 #endif
 }
 
