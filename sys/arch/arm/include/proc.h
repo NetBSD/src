@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2012/12/25 22:34:36 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.14 2013/08/23 05:22:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -48,7 +48,6 @@ struct mdlwp {
 };
 
 /* Flags setttings for md_flags */
-#define MDLWP_VFPUSED		0x00000001	/* LWP used the VFP */
 #define MDLWP_NOALIGNFLT	0x00000002	/* For EXEC_AOUT */
 #define MDLWP_VFPINTR		0x00000004	/* VFP used in intr */
 
