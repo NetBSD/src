@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 2013/08/23 05:22:01 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.19 2013/08/23 14:39:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.18 2013/08/23 05:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.19 2013/08/23 14:39:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,11 @@ static int
 arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
 {
 	/* No args */
+#ifdef FPU_VFP
 	retval[0] = vfp_used_p();
+#else
+	retval[0] = false;
+#endif
 	return 0;
 }
 
