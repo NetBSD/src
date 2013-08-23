@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/08/22 00:16:54 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2013/08/23 05:02:46 matt Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -60,7 +60,7 @@ LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
 .PATH:	${ARCHDIR} ${DIST}/libgomp ${DIST}/libgomp/config/posix
 
-.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH}
+.if ${GOMP_MACHINE_ARCH} == ${MACHINE_ARCH:S/earmv5/earm/}
 # This is where GCC looks for it.
 FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
