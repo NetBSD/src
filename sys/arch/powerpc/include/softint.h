@@ -1,4 +1,4 @@
-/*	$NetBSD: softint.h,v 1.2 2013/08/23 06:18:14 matt Exp $	*/
+/*	$NetBSD: softint.h,v 1.3 2013/08/24 15:42:29 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,6 @@
 #ifndef _POWERPC_SOFTINT_H_
 #define _POWERPC_SOFTINT_H_
 
-//#include <sys/intr.h>
-
 #ifdef __HAVE_FAST_SOFTINTS
 
 #ifdef __INTR_PRIVATE
@@ -69,6 +67,7 @@
 #endif /* __INTR_PRIVATE */
 
 #ifdef _KERNEL
+struct cpu_info;
 void	powerpc_softint(struct cpu_info *, int, vaddr_t);
 void	powerpc_softint_init_md(lwp_t *, u_int, uintptr_t *);
 void	powerpc_softint_trigger(uintptr_t);
