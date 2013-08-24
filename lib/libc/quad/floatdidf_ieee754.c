@@ -1,4 +1,4 @@
-/*	$NetBSD: floatdisf_ieee754.c,v 1.2 2013/08/24 00:51:48 matt Exp $	*/
+/*	$NetBSD: floatdidf_ieee754.c,v 1.1 2013/08/24 00:51:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: floatdisf_ieee754.c,v 1.2 2013/08/24 00:51:48 matt Exp $");
+__RCSID("$NetBSD: floatdidf_ieee754.c,v 1.1 2013/08/24 00:51:48 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(SOFTFLOAT) || defined(__ARM_EABI__)
@@ -42,15 +42,15 @@ __RCSID("$NetBSD: floatdisf_ieee754.c,v 1.2 2013/08/24 00:51:48 matt Exp $");
 #include <machine/ieee.h>
 #include "quad.h"
 
-float __floatdisf(quad_t);
+double __floatdidf(quad_t);
 
 /*
- * Convert signed quad to float.
+ * Convert signed quad to double.
  */
-float
-__floatdisf(quad_t x)
+double
+__floatdidf(quad_t x)
 {
-	union ieee_single_u ux = { .sngu_f = 0.0 };
+	union ieee_double_u ux = { .dblu_d = 0.0 };
 
 	if (x == 0)
 		return 0.0;
@@ -60,31 +60,16 @@ __floatdisf(quad_t x)
 	if (x < 0) {
 		if (x == QUAD_MIN)
 			return -0x1.0p63;
-		ux.sngu_sign = 1;
+		ux.dblu_sign = 1;
 		x = -x;
 	}
-#if defined(_LP64) || defined(__mips_n32)
 	u_int l = __builtin_clzll(x);
 	x <<= (l + 1);	/* clear implicit bit */
-
-	ux.sngu_frac = (u_quad_t)x >> (64 - SNG_FRACBITS);
-#else
+	x >>= 64 - (DBL_FRACHBITS + DBL_FRACLBITS);
 	union uu u = { .uq = x };
-	uint32_t frac;
-	u_int l;
-	if (u.ul[H] == 0) {
-		l = __builtin_clz(u.ul[L]);
-		frac = u.ul[L] << (l + 1);	/* clear implicit bit */
-		l += 32;
-	} else {
-		l = __builtin_clz(u.ul[H]);
-		frac = u.ul[H] << (l + 1);	/* clear implicit bit */
-		frac |= u.ul[L] >> (32 - (l + 1));
-	}
+	ux.dblu_frach = u.ul[H];
+	ux.dblu_fracl = u.ul[L];
+	ux.dblu_exp = DBL_EXP_BIAS + 63 - l;
 
-	ux.sngu_frac = frac >> (32 - SNG_FRACBITS);
-#endif
-	ux.sngu_exp = SNG_EXP_BIAS + 63 - l;
-
-	return ux.sngu_f;
+	return ux.dblu_d;
 }
