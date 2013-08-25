@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.15 2013/08/25 21:12:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.15 2013/08/25 21:12:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -146,7 +146,6 @@ static inline u_int32_t rnd_estimate_entropy(krndsource_t *, u_int32_t);
 static inline u_int32_t rnd_counter(void);
 static        void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
-static	      void	rnd_process_events(void);
 u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
@@ -167,7 +166,10 @@ rndsave_t		*boot_rsp;
 void
 rnd_init_softint(void) {
 	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    rnd_intr, NULL);
+					rnd_intr, NULL);
+	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+				       rnd_wake, NULL);
+	rnd_process_events();
 }
 
 /*
@@ -210,7 +212,6 @@ rnd_schedule_process(void)
 		rnd_schedule_softint(rnd_process);
 		return;
 	} 
-	rnd_process_events();
 }
 
 static inline void
@@ -220,11 +221,6 @@ rnd_schedule_wakeup(void)
 		rnd_schedule_softint(rnd_wakeup);
 		return;
 	}
-	if (!cold) {
-		rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
-					       rnd_wake, NULL);
-	}
-	rnd_wakeup_readers();
 }
 
 /*
@@ -821,7 +817,7 @@ rnd_hwrng_test(rnd_sample_t *sample)
  * is, if we are "cold" -- just booted).
  *
  */
-static void
+void
 rnd_process_events(void)
 {
 	rnd_sample_t *sample = NULL;
@@ -1036,6 +1032,8 @@ u_int32_t
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	uint32_t retval;
+
+	rnd_process_events();	/* XXX extra take/release rndpool_mtx */
 
 	mutex_spin_enter(&rndpool_mtx);
 	retval = rnd_extract_data_locked(p, len, flags);
