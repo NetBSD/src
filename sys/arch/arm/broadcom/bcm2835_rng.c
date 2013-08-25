@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.6 2013/08/01 11:30:38 skrll Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.7 2013/08/25 17:08:41 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.6 2013/08/01 11:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.7 2013/08/25 17:08:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ bcmrng_get(size_t bytes, void *priv)
 	mutex_spin_enter(&sc->sc_mutex);
 
 	if (__predict_false(need < 1)) {
+		mutex_spin_exit(&sc->sc_mutex);
 		return;
 	}
 
