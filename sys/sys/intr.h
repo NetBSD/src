@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2013/08/19 03:05:17 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2013/08/25 03:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@ void	softint_block(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);
+#ifndef __HAVE_MD_SOFTINT_TRIGGER
 void	softint_trigger(uintptr_t);
+#endif
 void	softint_dispatch(lwp_t *, int);
 
 /* Flags for softint_establish(). */
