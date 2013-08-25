@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.7 2013/08/06 08:18:08 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.8 2013/08/25 14:13:47 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_write.c,v 1.7 2013/08/06 08:18:08 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.8 2013/08/25 14:13:47 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -473,10 +473,12 @@ udf_do_newfs_prefix(void)
 	if (blockingnr <= 1) {
 		/* paranoia on blockingnr */
 		switch (mmc_discinfo.mmc_profile) {
+		case 0x08 : /* CDROM */
 		case 0x09 : /* CD-R    */
 		case 0x0a : /* CD-RW   */
 			blockingnr = 32;	/* UDF requirement */
 			break;
+		case 0x10 : /* DVDROM */
 		case 0x11 : /* DVD-R (DL) */
 		case 0x12 : /* DVD-RAM */
 		case 0x1b : /* DVD+R      */
@@ -485,6 +487,7 @@ udf_do_newfs_prefix(void)
 		case 0x14 : /* DVD-RW sequential */
 			blockingnr = 16;	/* SCSI definition */
 			break;
+		case 0x40 : /* BDROM */
 		case 0x41 : /* BD-R Sequential recording (SRM) */
 		case 0x42 : /* BD-R Random recording (RRM) */
 		case 0x43 : /* BD-RE */
