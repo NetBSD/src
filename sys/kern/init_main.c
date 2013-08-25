@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.450 2013/06/20 23:21:41 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.451 2013/08/25 21:12:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.450 2013/06/20 23:21:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.451 2013/08/25 21:12:56 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -519,6 +519,9 @@ main(void)
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
 
+	/* Enable deferred processing of RNG samples */
+	rnd_init_softint();
+
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -564,8 +567,6 @@ main(void)
 	domaininit(true);
 	if_attachdomain();
 	splx(s);
-
-	rnd_init_softint();
 
 #ifdef GPROF
 	/* Initialize kernel profiling. */
