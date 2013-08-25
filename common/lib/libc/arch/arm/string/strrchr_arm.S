@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strrchr_arm.S,v 1.5 2013/08/20 08:05:49 matt Exp $")
+RCSID("$NetBSD: strrchr_arm.S,v 1.6 2013/08/25 06:15:06 matt Exp $")
 
 #ifdef __ARMEL__
 #define	BYTE0	0x000000ff
@@ -64,8 +64,8 @@ ENTRY(strrchr)
 	cmp	r3, r2			/* did it match? */
 #ifdef __thumb__
 	it	eq
-	subeq	r0, r1, #1		/*   yes, remember that it did */
 #endif
+	subeq	r0, r1, #1		/*   yes, remember that it did */
 	cmp	r3, #0			/* was it NUL? */
 	bne	2b			/*   no, try next byte */
 	RET				/* return */
