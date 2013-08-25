@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/21 05:45:16 matt Exp $
-
-WITHOUT_MAN=true  # defined
+#	$NetBSD: Makefile,v 1.6 2013/08/25 14:20:30 matt Exp $
 
 .include <bsd.obj.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
-LIB=	kern
 LIBISPRIVATE?=	yes
+LIB=	kern
 DBG=	-Os
 
 S= ${NETBSDSRCDIR}/sys
@@ -25,7 +23,7 @@ CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 KERN_AS=	library
 KERNDIR=	${S}/lib/libkern
 
-.include "${S}/lib/libkern/Makefile.libkern"
+.include "${KERNDIR}/Makefile.libkern"
 .ifndef ARCHSUBDIR
 .BEGIN:
 	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
