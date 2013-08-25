@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.9 2013/08/20 15:44:17 christos Exp $	*/
+/*	$NetBSD: gethost.c,v 1.10 2013/08/25 08:46:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -87,11 +87,11 @@ static struct hostent host;
 static char *host_aliases[MAXALIASES];
 static char hostbuf[BUFSIZ+1];
 static struct in_addr host_addr;
-static FILE *hostf = NULL;
-static int stayopen = 0;
 
-void _sethtent(int);
-void _endhtent(void);
+FILE *_h_file = NULL;
+void sethostent_r(FILE **);
+void endhostent_r(FILE **);
+
 struct hostent *_gethtent(void);
 struct hostent *_gethtbyname(const char *);
 struct hostent *_gethtbyaddr(const void *, socklen_t, int);
@@ -166,21 +166,20 @@ gethostbyaddr(const void *addr, socklen_t len, int type)
 }
 
 void
-_sethtent(int f)
+sethostent_r(FILE **hf)
 {
-	if (hostf == NULL)
-		hostf = fopen(_PATH_HOSTS, "r" );
+	if (*hf == NULL)
+		*hf = fopen(_PATH_HOSTS, "r");
 	else
-		rewind(hostf);
-	stayopen = f;
+		rewind(*hf);
 }
 
 void
-_endhtent(void)
+endhostent_r(FILE **hf)
 {
-	if (hostf && !stayopen) {
-		(void) fclose(hostf);
-		hostf = NULL;
+	if (*hf) {
+		(void)fclose(*hf);
+		*hf = NULL;
 	}
 }
 
@@ -190,10 +189,10 @@ _gethtent(void)
 	char *p;
 	char *cp, **q;
 
-	if (hostf == NULL && (hostf = fopen(_PATH_HOSTS, "r" )) == NULL)
+	if (_h_file == NULL && (_h_file = fopen(_PATH_HOSTS, "r" )) == NULL)
 		return NULL;
 again:
-	if ((p = fgets(hostbuf, BUFSIZ, hostf)) == NULL)
+	if ((p = fgets(hostbuf, BUFSIZ, _h_file)) == NULL)
 		return NULL;
 	if (*p == '#')
 		goto again;
@@ -239,8 +238,11 @@ _gethtbyname(const char *name)
 {
 	struct hostent *p;
 	char **cp;
+	FILE *hf = NULL;
 	
-	_sethtent(0);
+	sethostent_r(&hf);
+	if (hf == NULL)
+		return NULL;
 	while ((p = _gethtent()) != NULL) {
 		if (strcasecmp(p->h_name, name) == 0)
 			break;
@@ -249,7 +251,7 @@ _gethtbyname(const char *name)
 				goto found;
 	}
 found:
-	_endhtent();
+	endhostent_r(&hf);
 	if (p == NULL)
 		h_errno = HOST_NOT_FOUND;
 	return p;
@@ -259,12 +261,15 @@ struct hostent *
 _gethtbyaddr(const void *addr, socklen_t len, int type)
 {
 	struct hostent *p;
-
-	_sethtent(0);
+	FILE *hf = NULL;
+	
+	sethostent_r(&hf);
+	if (hf == NULL)
+		return NULL;
 	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
 			break;
-	_endhtent();
+	endhostent_r(&hf);
 	if (p == NULL)
 		h_errno = HOST_NOT_FOUND;
 	return p;
