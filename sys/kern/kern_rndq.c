@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.15 2013/08/25 21:12:56 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.16 2013/08/26 23:41:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.15 2013/08/25 21:12:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.16 2013/08/26 23:41:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -141,7 +141,6 @@ static krndsource_t rnd_source_no_collect = {
 void *rnd_process, *rnd_wakeup;
 struct callout skew_callout;
 
-void	      rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(krndsource_t *, u_int32_t);
 static inline u_int32_t rnd_counter(void);
 static        void	rnd_intr(void *);
@@ -169,7 +168,7 @@ rnd_init_softint(void) {
 					rnd_intr, NULL);
 	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
 				       rnd_wake, NULL);
-	rnd_process_events();
+	rnd_intr(NULL);
 }
 
 /*
@@ -816,8 +815,10 @@ rnd_hwrng_test(rnd_sample_t *sample)
  * by the add routines directly if the callout has never fired (that
  * is, if we are "cold" -- just booted).
  *
+ * Returns >0 if we got enough entropy to distribute some (wake sleepers)
+ * 0 elsewise.
  */
-void
+int
 rnd_process_events(void)
 {
 	rnd_sample_t *sample = NULL;
@@ -931,19 +932,15 @@ rnd_process_events(void)
 		rnd_sample_free(sample);
 	}
 
-	
-	/*
-	 * Wake up any potential readers waiting.
-	 */
-	if (wake) {
-		rnd_schedule_wakeup();
-	}
+	return wake;
 }
 
 static void
 rnd_intr(void *arg)
 {
-	rnd_process_events();
+	if (rnd_process_events()) {
+		rnd_schedule_wakeup();
+	}
 }
 
 static void
@@ -1031,13 +1028,19 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 u_int32_t
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
+	int wake;
 	uint32_t retval;
 
-	rnd_process_events();	/* XXX extra take/release rndpool_mtx */
+	wake = rnd_process_events(); /* XXX extra take/release rndpool_mtx */
 
 	mutex_spin_enter(&rndpool_mtx);
 	retval = rnd_extract_data_locked(p, len, flags);
 	mutex_spin_exit(&rndpool_mtx);
+
+	if (wake) {
+		rnd_wakeup_readers();
+	}
+
 	return retval;
 }
 
