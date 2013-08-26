@@ -261,3 +261,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef WINT_TYPE
 #define WINT_TYPE "int"
+
+#undef TARGET_WRITABLE_EH_FRAME
+#define TARGET_WRITABLE_EH_FRAME (flag_pic && TARGET_SHARED)
