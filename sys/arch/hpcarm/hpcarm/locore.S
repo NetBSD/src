@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2013/08/26 15:31:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,9 +41,8 @@
 #include <machine/param.h>
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>     /* for PMAP_DOMAIN_KERNEL */
 #endif
+
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
@@ -138,11 +137,11 @@ ASENTRY_NP(start)
 
 .Lmmu_init_table:	
 	/* fill all table VA==PA */
-	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP_KRW)
 	/* map SDRAM VA==PA, WT cacheable */
-	MMU_INIT(0xa0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(0xa0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 	/* map VA 0xc0000000..0xcfffffff to PA 0xa0000000..0xafffffff */
-	MMU_INIT(0xc0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(0xc0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 	.word	0,0,0	/* end of table */
 
 	.text
