@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.31 2013/08/10 22:52:34 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.32 2013/08/26 04:06:25 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -490,3 +490,10 @@ sys/dev/i2c/w83795greg.h			1.1
 	device, as used in the HP Microserver N36L/N40L/N54L.
 	[matt, ticket #929]
 
+sys/dev/mii/brgphy.c				1.60
+sys/dev/pci/if_bge.c				1.202
+sys/dev/pci/if_bgereg.h				1.57
+
+	Add support for BCM57762 and BCM57765, found in Apple's Thunderbolt
+	to Gigabit Ethernet adapter.  PR kern/46961
+	[tsutsui, ticket #652]
