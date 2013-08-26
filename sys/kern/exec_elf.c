@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.45 2013/04/09 07:39:01 skrll Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.46 2013/08/26 12:24:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.45 2013/04/09 07:39:01 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.46 2013/08/26 12:24:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -280,7 +280,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 /*
  * elf_check_header():
  *
- * Check header for validity; return 0 of ok ENOEXEC if error
+ * Check header for validity; return 0 if ok, ENOEXEC if error
  */
 int
 elf_check_header(Elf_Ehdr *eh, int type)
@@ -493,7 +493,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
 		goto bad;
 
-	if (eh.e_phnum > MAXPHNUM || eh.e_phnum == 0) {
+	if (eh.e_phnum == 0) {
 		error = ENOEXEC;
 		goto bad;
 	}
@@ -676,10 +676,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * XXX allow for executing shared objects. It seems silly
 	 * but other ELF-based systems allow it as well.
 	 */
-	if (elf_check_header(eh, ET_EXEC) != 0 && !is_dyn)
+	if (!is_dyn && elf_check_header(eh, ET_EXEC) != 0)
 		return ENOEXEC;
 
-	if (eh->e_phnum > MAXPHNUM || eh->e_phnum == 0)
+	if (eh->e_phnum == 0)
 		return ENOEXEC;
 
 	error = vn_marktext(epp->ep_vp);
