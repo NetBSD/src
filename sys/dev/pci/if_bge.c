@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.200.2.1 2013/08/26 04:00:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200.2.1 2013/08/26 04:00:16 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -564,6 +564,10 @@ static const struct bge_product {
 	  "Broadcom BCM57761 Fast Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM57762,
+	  "Broadcom BCM57762 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57765,
 	  "Broadcom BCM57765 Fast Ethernet",
 	  },
@@ -728,6 +732,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM57780, "unknown BCM57780" },
 	{ BGE_ASICREV_BCM5717, "unknown BCM5717" },
 	{ BGE_ASICREV_BCM57765, "unknown BCM57765" },
+	{ BGE_ASICREV_BCM57766, "unknown BCM57766" },
 
 	{ 0, NULL }
 };
@@ -1969,7 +1974,23 @@ bge_blockinit(struct bge_softc *sc)
 #else
 
 	/* new broadcom docs strongly recommend these: */
-	if (!BGE_IS_5705_PLUS(sc)) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x2a);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0xa0);
+	} else if (BGE_IS_5705_PLUS(sc)) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
+		} else {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
+		}
+	} else if (!BGE_IS_5705_PLUS(sc)) {
 		if (ifp->if_mtu > ETHER_MAX_LEN) {
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
@@ -1979,10 +2000,6 @@ bge_blockinit(struct bge_softc *sc)
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
 		}
-	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
@@ -2031,7 +2048,12 @@ bge_blockinit(struct bge_softc *sc)
 	/* Step 41: Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if (BGE_IS_5705_PLUS(sc))
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766)
+		rcb->bge_maxlen_flags =
+		    BGE_RCB_MAXLEN_FLAGS(512, BGE_MAX_FRAMELEN << 2);
+	else if (BGE_IS_5705_PLUS(sc))
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
 	else
 		rcb->bge_maxlen_flags =
@@ -2097,7 +2119,8 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT / 8);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765) {
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) {
 		CSR_WRITE_4(sc, BGE_STD_REPL_LWM, 4);
 		CSR_WRITE_4(sc, BGE_JUMBO_REPL_LWM, 4);
 	}
@@ -2603,6 +2626,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN2_PRODID_ASICREV);
 		else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57761 ||
+			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57762 ||
 			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57765 ||
 			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57781 ||
 			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57785 ||
@@ -2651,6 +2675,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_5755_PLUS;
 
@@ -2751,6 +2776,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57766 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780) {
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
@@ -2904,7 +2930,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    "setting short Tx thresholds\n");
 	}
 
-	if (BGE_IS_5705_PLUS(sc))
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57765 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766)
+		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
+	else if (BGE_IS_5705_PLUS(sc))
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
@@ -3297,7 +3327,8 @@ bge_reset(struct bge_softc *sc)
 	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765) {
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57766) {
 		uint32_t v;
 
 		/* Enable PCI Express bug fix */
