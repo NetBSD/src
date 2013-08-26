@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.4 2013/08/19 22:15:13 matt Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.5 2013/08/26 14:20:53 matt Exp $");
 
 typedef void (*fptr_t)(void);
 
@@ -53,7 +53,11 @@ __dso_hidden void *__dso_handle;
 #endif
 
 #if !defined(__ARM_EABI__)
-__dso_hidden const long __EH_FRAME_LIST__[0] __section(".eh_frame");
+__dso_hidden
+#if !defined(__mips__)
+	const
+#endif
+	long __EH_FRAME_LIST__[0] __section(".eh_frame");
 
 __weakref_visible void register_frame_info(const void *, const void *)
 	__weak_reference(__register_frame_info);
