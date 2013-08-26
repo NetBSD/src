@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.2 2013/08/25 21:12:56 tls Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.3 2013/08/26 23:41:24 tls Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 				      (short read ok) */
 
 uint32_t        rnd_extract_data(void *, uint32_t, uint32_t);
-void		rnd_process_events(void);	/* XXX should be static */
+int		rnd_process_events(void);	/* XXX should be static */
+void		rnd_wakeup_readers(void);	/* XXX should be static */
 
 #endif
