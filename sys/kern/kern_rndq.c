@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.16 2013/08/26 23:41:24 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.17 2013/08/27 14:01:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.16 2013/08/26 23:41:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.17 2013/08/27 14:01:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1038,7 +1038,7 @@ rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 	mutex_spin_exit(&rndpool_mtx);
 
 	if (wake) {
-		rnd_wakeup_readers();
+		rnd_schedule_wakeup();
 	}
 
 	return retval;
