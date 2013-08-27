@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.83 2013/08/22 10:04:28 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.84 2013/08/27 09:56:12 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.83 2013/08/22 10:04:28 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.84 2013/08/27 09:56:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,9 +109,6 @@ __weak_alias(gethostent,_gethostent)
 #define maybe_dnok(res, dn) maybe_ok((res), (dn), res_dnok)
 
 
-#define	MAXALIASES	35
-#define	MAXADDRS	35
-
 static const char AskedForGot[] =
     "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
 
@@ -146,8 +143,6 @@ void dns_service(void);
 #undef dn_skipname
 int dn_skipname(const u_char *, const u_char *);
 
-static struct hostent *_hf_gethtbyname2(const char *, int, struct getnamaddr *);
-
 #ifdef YP
 static struct hostent *_yp_hostent(char *, int, struct getnamaddr *);
 #endif
@@ -160,33 +155,6 @@ static const ns_src default_dns_files[] = {
 	{ NSSRC_DNS, 	NS_SUCCESS },
 	{ 0, 0 }
 };
-
-
-#define ARRAY(dst, anum, ptr, len) \
-	do { \
-		size_t _len = (anum + 1) * sizeof(*dst); \
-		if (_len > len) \
-			goto nospc; \
-		dst = (void *)ptr; \
-		ptr += _len; \
-		len -= _len; \
-	} while (/*CONSTCOND*/0)
-
-#define COPY(dst, src, slen, ptr, len) \
-	do { \
-		if ((size_t)slen > len) \
-			goto nospc; \
-		memcpy(ptr, src, (size_t)slen); \
-		dst = ptr; \
-		ptr += slen; \
-		len -= slen; \
-	} while (/* CONSTCOND */0)
-
-#define SCOPY(dst, src, ptr, len) \
-	do { \
-		size_t _len = strlen(src) + 1; \
-		COPY(dst, src, _len, ptr, len); \
-	} while (/* CONSTCOND */0)
 
 
 #ifdef DEBUG
@@ -666,8 +634,8 @@ nospc:
 	errno = ENOSPC;
 	return NULL;
 fake:
-	ARRAY(hp->h_addr_list, 1, buf, buflen);
-	ARRAY(hp->h_aliases, 0, buf, buflen);
+	HENT_ARRAY(hp->h_addr_list, 1, buf, buflen);
+	HENT_ARRAY(hp->h_aliases, 0, buf, buflen);
 
 	hp->h_aliases[0] = NULL;
 	if (size > buflen)
@@ -681,7 +649,7 @@ fake:
 	hp->h_addr_list[1] = NULL;
 	buf += size;
 	buflen -= size;
-	SCOPY(hp->h_name, name, buf, buflen);
+	HENT_SCOPY(hp->h_name, name, buf, buflen);
 	if (res->options & RES_USE_INET6)
 		map_v4v6_hostent(hp, &buf, buf + buflen);
 	*he = NETDB_SUCCESS;
@@ -746,31 +714,6 @@ gethostbyaddr_r(const void *addr, socklen_t len, int af, struct hostent *hp,
 		return NULL;
 	*he = NETDB_SUCCESS;
 	return hp;
-}
-
-static const char *_h_hosts = _PATH_HOSTS;
-
-void
-_hf_sethostsfile(const char *f) {
-	_h_hosts = f;
-}
-
-void
-sethostent_r(FILE **hf)
-{
-	if (!*hf)
-		*hf = fopen(_h_hosts, "re");
-	else
-		rewind(*hf);
-}
-
-void
-endhostent_r(FILE **hf)
-{
-	if (*hf) {
-		(void)fclose(*hf);
-		*hf = NULL;
-	}
 }
 
 struct hostent *
@@ -847,15 +790,16 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 	}
 	hent->h_length = len;
 	hent->h_addrtype = af;
-	ARRAY(hent->h_addr_list, 1, buf, buflen);
+	HENT_ARRAY(hent->h_addr_list, 1, buf, buflen);
 	anum = (size_t)(q - aliases);
-	ARRAY(hent->h_aliases, anum, buf, buflen);
-	COPY(hent->h_addr_list[0], &host_addr, hent->h_length, buf, buflen);
+	HENT_ARRAY(hent->h_aliases, anum, buf, buflen);
+	HENT_COPY(hent->h_addr_list[0], &host_addr, hent->h_length, buf,
+	    buflen);
 	hent->h_addr_list[1] = NULL;
 
-	SCOPY(hent->h_name, name, buf, buflen);
+	HENT_SCOPY(hent->h_name, name, buf, buflen);
 	for (size_t i = 0; i < anum; i++)
-		SCOPY(hent->h_aliases[i], aliases[i], buf, buflen);
+		HENT_SCOPY(hent->h_aliases[i], aliases[i], buf, buflen);
 	hent->h_aliases[anum] = NULL;
 
 	*he = NETDB_SUCCESS;
@@ -864,181 +808,6 @@ nospc:
 	errno = ENOSPC;
 	*he = NETDB_INTERNAL;
 	return NULL;
-}
-
-/*ARGSUSED*/
-int
-_hf_gethtbyname(void *rv, void *cb_data, va_list ap)
-{
-	struct hostent *hp;
-	const char *name;
-	int af;
-	struct getnamaddr *info = rv;
-
-	_DIAGASSERT(rv != NULL);
-
-	name = va_arg(ap, char *);
-	/* NOSTRICT skip string len */(void)va_arg(ap, int);
-	af = va_arg(ap, int);
-
-#if 0
-	{
-		res_state res = __res_get_state();
-		if (res == NULL)
-			return NS_NOTFOUND;
-		if (res->options & RES_USE_INET6)
-			hp = _hf_gethtbyname2(name, AF_INET6, info);
-		else
-			hp = NULL;
-		if (hp == NULL)
-			hp = _hf_gethtbyname2(name, AF_INET, info);
-		__res_put_state(res);
-	}
-#else
-	hp = _hf_gethtbyname2(name, af, info);
-#endif
-	if (hp == NULL) {
-		*info->he = HOST_NOT_FOUND;
-		return NS_NOTFOUND;
-	}
-	return NS_SUCCESS;
-}
-
-static struct hostent *
-_hf_gethtbyname2(const char *name, int af, struct getnamaddr *info)
-{
-	struct hostent *hp, hent;
-	char *buf, *ptr;
-	size_t len, anum, num, i;
-	FILE *hf;
-	char *aliases[MAXALIASES];
-	char *addr_ptrs[MAXADDRS];
-
-	_DIAGASSERT(name != NULL);
-
-	hf = NULL;
-	sethostent_r(&hf);
-	if (hf == NULL) {
-		errno = EINVAL;
-		*info->he = NETDB_INTERNAL;
-		return NULL;
-	}
-
-	if ((ptr = buf = malloc(len = info->buflen)) == NULL) {
-		*info->he = NETDB_INTERNAL;
-		return NULL;
-	}
-
-	anum = 0;		/* XXX: gcc */
-	hent.h_name = NULL;	/* XXX: gcc */
-	hent.h_addrtype = 0;	/* XXX: gcc */
-	hent.h_length = 0;	/* XXX: gcc */
-
-	for (num = 0; num < MAXADDRS;) {
-		info->hp->h_addrtype = af;
-		info->hp->h_length = 0;
-
-		hp = gethostent_r(hf, info->hp, info->buf, info->buflen,
-		    info->he);
-		if (hp == NULL)
-			break;
-
-		if (strcasecmp(hp->h_name, name) != 0) {
-			char **cp;
-			for (cp = hp->h_aliases; *cp != NULL; cp++)
-				if (strcasecmp(*cp, name) == 0)
-					break;
-			if (*cp == NULL) continue;
-		}
-
-		if (num == 0) {
-			hent.h_addrtype = af = hp->h_addrtype;
-			hent.h_length = hp->h_length;
-
-			SCOPY(hent.h_name, hp->h_name, ptr, len);
-			for (anum = 0; hp->h_aliases[anum]; anum++) {
-				if (anum >= __arraycount(aliases))
-					goto nospc;
-				SCOPY(aliases[anum], hp->h_aliases[anum],
-				    ptr, len);
-			}
-			ptr = (void *)ALIGN(ptr);
-			if ((size_t)(ptr - buf) >= info->buflen)
-				goto nospc;
-		}
-
-		if (num >= __arraycount(addr_ptrs))
-			goto nospc;
-		COPY(addr_ptrs[num], hp->h_addr_list[0], hp->h_length, ptr,
-		    len);
-		num++;
-	}
-	endhostent_r(&hf);
-
-	if (num == 0) {
-		*info->he = HOST_NOT_FOUND;
-		return NULL;
-	}
-
-	hp = info->hp;
-	ptr = info->buf;
-	len = info->buflen;
-
-	hp->h_addrtype = hent.h_addrtype;
-	hp->h_length = hent.h_length;
-
-	ARRAY(hp->h_aliases, anum, ptr, len);
-	ARRAY(hp->h_addr_list, num, ptr, len);
-
-	for (i = 0; i < num; i++)
-		COPY(hp->h_addr_list[i], addr_ptrs[i], hp->h_length, ptr, len);
-	hp->h_addr_list[num] = NULL;
-
-	SCOPY(hp->h_name, hent.h_name, ptr, len);
-
-	for (i = 0; i < anum; i++)
-		SCOPY(hp->h_aliases[i], aliases[i], ptr, len);
-	hp->h_aliases[anum] = NULL;
-
-	return hp;
-nospc:
-	*info->he = NETDB_INTERNAL;
-	errno = ENOSPC;
-	return NULL;
-}
-
-/*ARGSUSED*/
-int
-_hf_gethtbyaddr(void *rv, void *cb_data, va_list ap)
-{
-	struct hostent *hp;
-	const unsigned char *addr;
-	struct getnamaddr *info = rv;
-	FILE *hf;
-
-	_DIAGASSERT(rv != NULL);
-
-	addr = va_arg(ap, unsigned char *);
-	info->hp->h_length = va_arg(ap, int);
-	info->hp->h_addrtype = va_arg(ap, int);
-	
-	hf = NULL;
-	sethostent_r(&hf);
-	if (hf == NULL) {
-		*info->he = NETDB_INTERNAL;
-		return NS_UNAVAIL;
-	}
-	while ((hp = gethostent_r(hf, info->hp, info->buf, info->buflen,
-	    info->he)) != NULL)
-		if (!memcmp(hp->h_addr_list[0], addr, (size_t)hp->h_length))
-			break;
-	endhostent_r(&hf);
-
-	if (hp == NULL) {
-		*info->he = HOST_NOT_FOUND;
-		return NS_NOTFOUND;
-	}
-	return NS_SUCCESS;
 }
 
 static void
@@ -1403,18 +1172,18 @@ done:
 	len = info->buflen;
 
 	anum = (size_t)(q - aliases);
-	ARRAY(hp->h_addr_list, naddrs, ptr, len);
-	ARRAY(hp->h_aliases, anum, ptr, len);
+	HENT_ARRAY(hp->h_addr_list, naddrs, ptr, len);
+	HENT_ARRAY(hp->h_aliases, anum, ptr, len);
 
 	for (i = 0; i < naddrs; i++)
-		COPY(hp->h_addr_list[i], &host_addrs[i], hp->h_length,
+		HENT_COPY(hp->h_addr_list[i], &host_addrs[i], hp->h_length,
 		    ptr, len);
 	hp->h_addr_list[naddrs] = NULL;
 
-	SCOPY(hp->h_name, hp->h_name, ptr, len);
+	HENT_SCOPY(hp->h_name, hp->h_name, ptr, len);
 
 	for (i = 0; i < anum; i++)
-		SCOPY(hp->h_aliases[i], aliases[i], ptr, len);
+		HENT_SCOPY(hp->h_aliases[i], aliases[i], ptr, len);
 	hp->h_aliases[anum] = NULL;
 
 	return hp;
@@ -1559,3 +1328,4 @@ gethostent(void)
 	memset(&h_ent, 0, sizeof(h_ent));
 	return gethostent_r(_h_file, &h_ent, h_buf, sizeof(h_buf), &h_errno);
 }
+
