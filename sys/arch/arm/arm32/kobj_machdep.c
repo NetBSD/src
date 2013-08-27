@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.8 2013/08/27 06:39:43 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.9 2013/08/27 06:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2013/08/27 06:39:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.9 2013/08/27 06:41:05 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -176,7 +176,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		return 0;
 
 	case R_ARM_PREL31:	/* ((S + A) | T) -  P */
-		/* 42 R_ARM_PREL31 4 sign_extend(P[30:0]) 31 - bit 2's complement */
 		/* Sign extend if necessary */
 		if (addend & 0x40000000)
 			addend |= 0xc0000000;
