@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.45 2013/08/19 13:03:12 joerg Exp $	*/
+/*	$NetBSD: string.h,v 1.46 2013/08/27 18:29:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -89,12 +89,6 @@ size_t	strnlen(const char *, size_t);
 /* also in unistd.h */
 __aconst char *strsignal(int);
 #endif /* __STRSIGNAL_DECLARED */
-/*
- * For POSIX compliance, we still need:
- * strcoll_l
- * strerror_l
- * strxfrm_l
- */
 #endif
 __END_DECLS
 
