@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.7 2013/08/09 07:12:42 matt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.8 2013/08/27 06:39:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2013/08/09 07:12:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2013/08/27 06:39:43 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -118,7 +118,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			*where = addr;
 		return 0;
 
-	case R_ARM_MOVW_ABS_NC:
+	case R_ARM_MOVW_ABS_NC:	/* (S + A) | T */
 	case R_ARM_MOVT_ABS:
 		if ((*where & 0x0fb00000) != 0x03000000)
 			break;
@@ -131,9 +131,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		    | ((addr << 4) & 0x000f0000) | (addr & 0x00000fff);
 		return 0;
 
-	case R_ARM_CALL:
+	case R_ARM_CALL:	/* ((S + A) | T) -  P */
 	case R_ARM_JUMP24:
-	case R_ARM_PC24:
+	case R_ARM_PC24:	/* Deprecated */
 		if (local && (*where & 0x00ffffff) != 0x00fffffe)
 			return 0;
 
@@ -164,6 +164,36 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		}
 		*where = (*where & 0xff000000) | ((addend >> 2) & 0x00ffffff);
 		return 0;
+
+	case R_ARM_REL32:	/* ((S + A) | T) -  P */
+		/* T = 0 for now */
+		addr = kobj_sym_lookup(ko, symidx);
+		if (addr == 0)
+			break;
+
+		addend += (uintptr_t)addr - (uintptr_t)where;
+		*where = addend;
+		return 0;
+
+	case R_ARM_PREL31:	/* ((S + A) | T) -  P */
+		/* 42 R_ARM_PREL31 4 sign_extend(P[30:0]) 31 - bit 2's complement */
+		/* Sign extend if necessary */
+		if (addend & 0x40000000)
+			addend |= 0xc0000000;
+		/* T = 0 for now */
+		addr = kobj_sym_lookup(ko, symidx);
+		if (addr == 0)
+			break;
+
+		addend += (uintptr_t)addr - (uintptr_t)where;
+
+		if ((addend & 0x80000000) != 0x00000000 &&
+		    (addend & 0x80000000) != 0x80000000) {
+			printf ("Relocation %x too far @ %p\n", addend, where);
+			return -1;
+		}
+
+		*where = (*where & 0x80000000) | (addend & 0x7fffffff);
 
 	default:
 		break;
