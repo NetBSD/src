@@ -1,4 +1,4 @@
-/*	$NetBSD: hostent.h,v 1.1 2013/08/16 15:27:12 christos Exp $	*/
+/*	$NetBSD: hostent.h,v 1.2 2013/08/27 09:56:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -75,3 +75,32 @@ int _dns_gethtbyname(void *, void *, va_list);
 int _yp_gethtbyaddr(void *, void *, va_list);
 int _yp_gethtbyname(void *, void *, va_list);
 #endif
+
+#define HENT_ARRAY(dst, anum, ptr, len) \
+	do { \
+		size_t _len = (anum + 1) * sizeof(*dst); \
+		if (_len > len) \
+			goto nospc; \
+		dst = (void *)ptr; \
+		ptr += _len; \
+		len -= _len; \
+	} while (/*CONSTCOND*/0)
+
+#define HENT_COPY(dst, src, slen, ptr, len) \
+	do { \
+		if ((size_t)slen > len) \
+			goto nospc; \
+		memcpy(ptr, src, (size_t)slen); \
+		dst = ptr; \
+		ptr += slen; \
+		len -= slen; \
+	} while (/* CONSTCOND */0)
+
+#define HENT_SCOPY(dst, src, ptr, len) \
+	do { \
+		size_t _len = strlen(src) + 1; \
+		HENT_COPY(dst, src, _len, ptr, len); \
+	} while (/* CONSTCOND */0)
+
+#define	MAXALIASES	35
+#define	MAXADDRS	35
