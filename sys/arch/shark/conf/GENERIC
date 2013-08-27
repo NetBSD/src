@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.111 2013/06/30 21:38:58 rmind Exp $
+#	$NetBSD: GENERIC,v 1.112 2013/08/27 03:41:59 matt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.111 $"
+#ident		"GENERIC-$Revision: 1.112 $"
 
 # estimated number of users
 maxusers	32
@@ -153,7 +153,7 @@ options 	MODULAR		# new style module(7) framework
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
-options 	SYMTAB_SPACE=600000 	# reserve symbol space for DDB
+options 	SYMTAB_SPACE=620000 	# reserve symbol space for DDB
 				# (needed because we boot netbsd.aout)
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
