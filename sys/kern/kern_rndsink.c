@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.4 2013/08/26 23:41:24 tls Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.5 2013/08/27 19:30:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.4 2013/08/26 23:41:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.5 2013/08/27 19:30:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -130,8 +130,6 @@ rndpool_maybe_extract(void *buffer, size_t bytes)
 	    (0xffffffffUL / NBBY));
 
 	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
-
-	(void)rnd_process_events();  /* XXX extra take/release rndpool_mtx */
 
 	mutex_spin_enter(&rndpool_mtx);
 	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
