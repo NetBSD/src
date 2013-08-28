@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.496 2013/06/21 10:05:52 shm Exp $
+.\"	$NetBSD: main,v 1.497 2013/08/28 15:39:30 slp Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1272,6 +1272,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
 .It Ta Tonnerre Lombard Ta Mt tonnerre@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
+.It Ta Sergio Lopez Ta Mt slp@NetBSD.org
 .It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
 .It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
