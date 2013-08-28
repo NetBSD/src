@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.190 2013/08/10 21:20:03 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.191 2013/08/28 21:56:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.190 2013/08/10 21:20:03 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.191 2013/08/28 21:56:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.190 2013/08/10 21:20:03 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.191 2013/08/28 21:56:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1741,6 +1741,12 @@ Parse_IsVar(char *line)
 	    ch = *line++;
 	    wasSpace = TRUE;
 	}
+#ifdef SUNSHCMD
+	if (ch == ':' && strncmp(line, "sh", 2) == 0) {
+	    line += 2;
+	    continue;
+	}
+#endif
 	if (ch == '=')
 	    return TRUE;
 	if (*line == '=' && ISEQOPERATOR(ch))
