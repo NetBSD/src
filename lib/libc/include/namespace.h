@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.168 2013/08/19 13:03:12 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.169 2013/08/28 17:47:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -233,6 +233,7 @@
 #define closelog		_closelog
 #define closelog_r		_closelog_r
 #define confstr			_confstr
+#define consttime_memequal	_consttime_memequal
 #define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
@@ -272,6 +273,7 @@
 #define execlp			_execlp
 #define execv			_execv
 #define execvp			_execvp
+#define explicit_memset		_explicit_memset
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
