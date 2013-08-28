@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.6 2013/06/24 04:21:19 riastradh Exp $	*/
+/*	$NetBSD: dns.c,v 1.7 2013/08/28 15:24:41 riastradh Exp $	*/
 /* $OpenBSD: dns.c,v 1.28 2012/05/23 03:28:28 djm Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.6 2013/06/24 04:21:19 riastradh Exp $");
+__RCSID("$NetBSD: dns.c,v 1.7 2013/08/28 15:24:41 riastradh Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -279,7 +279,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		    hostkey_digest_type == dnskey_digest_type) {
 			if (hostkey_digest_len == dnskey_digest_len &&
 			    __consttime_memequal(hostkey_digest, dnskey_digest,
-			    hostkey_digest_len) == 0)
+			    hostkey_digest_len))
 				*flags |= DNS_VERIFY_MATCH;
 		}
 		xfree(dnskey_digest);
