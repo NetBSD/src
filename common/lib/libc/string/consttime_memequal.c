@@ -1,4 +1,4 @@
-/* $NetBSD: consttime_memequal.c,v 1.1 2013/06/24 04:21:19 riastradh Exp $ */
+/* $NetBSD: consttime_memequal.c,v 1.2 2013/08/28 15:24:41 riastradh Exp $ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
@@ -15,5 +15,5 @@ consttime_memequal(const void *b1, const void *b2, size_t len)
 
 	while (len --)
 		res |= *c1++ ^ *c2++;
-	return res;
+	return !res;
 }
