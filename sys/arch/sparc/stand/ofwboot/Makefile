@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2011/05/21 15:50:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.29.18.1 2013/08/28 23:59:22 rmind Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -8,6 +8,7 @@ S=	${CURDIR}/../../../..
 #
 
 WARNS?=		2
+KLINK_MACHINE=	sparc64
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
@@ -78,21 +79,8 @@ SAMISCCPPFLAGS+= -DCOMPAT_SOLARIS_UFS
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/sparc64/include machine)
-	@([ -h sparc64 ] || ln -s ${S}/arch/sparc64/include sparc64)
-	@([ -h sparc ] || ln -s ${S}/arch/sparc/include sparc)
-.NOPATH: machine sparc64 sparc
-.endif
-CLEANFILES+= machine sparc64 sparc
-
-cleandir distclean: .WAIT cleanlibdir
-
-cleanlibdir:
-	-rm -rf lib
-
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
@@ -102,10 +90,12 @@ CLEANFILES+= vers.c
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
 	    ${OBJS} -L${SADST} -lsa -L${ZDST} -lz -L${KERNDST} -lkern # solaris linker
 .else
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -X -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
 .endif

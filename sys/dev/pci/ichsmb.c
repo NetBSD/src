@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.30 2013/01/12 20:33:02 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.30.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.30 2013/01/12 20:33:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.30.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,6 +109,7 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_3400_SMB:
 		case PCI_PRODUCT_INTEL_6SERIES_SMB:
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
+		case PCI_PRODUCT_INTEL_8SERIES_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
@@ -222,6 +223,13 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
 	    "flags 0x%02x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
+
+	/* Clear status bits */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS,
+	    LPCIB_SMB_HS_INTR | LPCIB_SMB_HS_DEVERR |
+	    LPCIB_SMB_HS_BUSERR | LPCIB_SMB_HS_FAILED);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, 1,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);  
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {

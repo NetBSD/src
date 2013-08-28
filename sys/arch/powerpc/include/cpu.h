@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2013/04/25 00:08:48 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.96.4.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -175,14 +175,14 @@ struct cpu_hatch_data {
 };
 
 struct cpuset_info {
-	__cpuset_t cpus_running;
-	__cpuset_t cpus_hatched;
-	__cpuset_t cpus_paused;
-	__cpuset_t cpus_resumed;
-	__cpuset_t cpus_halted;
+	kcpuset_t *cpus_running;
+	kcpuset_t *cpus_hatched;
+	kcpuset_t *cpus_paused;
+	kcpuset_t *cpus_resumed;
+	kcpuset_t *cpus_halted;
 };
 
-extern volatile struct cpuset_info cpuset_info;
+extern struct cpuset_info cpuset_info;
 #endif /* MULTIPROCESSOR && !_MODULE */
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)

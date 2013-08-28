@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.30 2013/04/17 14:39:40 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.30.4.1 2013/08/28 23:59:24 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.30 2013/04/17 14:39:40 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.30.4.1 2013/08/28 23:59:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -195,6 +195,8 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 		/*FALLTHROUGH*/
 	case LINUX_FUTEX_WAIT_BITSET:
 		if ((error = ts2timo(clk, 0, ts, &tout, NULL)) != 0) {
+			if (error != ETIMEDOUT)
+				return error;
 			/*
 			 * If the user process requests a non null timeout,
 			 * make sure we do not turn it into an infinite
@@ -203,7 +205,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 			 * We use a minimal timeout of 1/hz. Maybe it would make
 			 * sense to just return ETIMEDOUT without sleeping.
 			 */
-			if (error == ETIMEDOUT && SCARG(uap, timeout) != NULL)
+			if (SCARG(uap, timeout) != NULL)
 				tout = 1;
 			else
 				tout = 0;

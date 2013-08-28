@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc_otg.c,v 1.49 2013/04/08 21:12:33 skrll Exp $	*/
+/*	$NetBSD: dwc_otg.c,v 1.49.4.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.49 2013/04/08 21:12:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_otg.c,v 1.49.4.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,6 +605,7 @@ dwc_otg_close_pipe(usbd_pipe_handle pipe)
 	struct dwc_otg_softc *sc = DWC_OTG_DPIPE2SC(dpipe);
 
 	dpipe = dpipe;
+	sc = sc;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 }
@@ -1342,6 +1343,8 @@ Static void
 dwc_otg_device_ctrl_done(usbd_xfer_handle xfer)
 {
 	struct dwc_otg_softc *sc = DWC_OTG_XFER2SC(xfer);
+
+	sc = sc;
 
 	DPRINTF("xfer=%p\n", xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));

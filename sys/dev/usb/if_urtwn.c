@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.24 2013/04/07 02:53:19 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.24.4.1 2013/08/28 23:59:27 rmind Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.24 2013/04/07 02:53:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.24.4.1 2013/08/28 23:59:27 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -149,6 +149,7 @@ static const struct usb_devno urtwn_devs[] = {
 	{ USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_RTL8188CU },
 	{ USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_RTL8188CU_2 },
 	{ USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_RTL8192CU },
+	{ USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_RTL8192CUR2 },
 	{ USB_VENDOR_TRENDNET,	USB_PRODUCT_TRENDNET_RTL8188CU },
 	{ USB_VENDOR_TRENDNET,	USB_PRODUCT_TRENDNET_RTL8192CU },
 	{ USB_VENDOR_ZYXEL,	USB_PRODUCT_ZYXEL_RTL8192CU }

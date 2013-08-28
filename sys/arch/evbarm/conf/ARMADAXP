@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.4 2013/06/09 06:29:01 kiyohara Exp $
+#	$NetBSD: ARMADAXP,v 1.4.4.1 2013/08/28 23:59:13 rmind Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -62,7 +62,6 @@ options 	INET6		# IPV6
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -291,7 +290,7 @@ urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
 
 # Pseudo-Devices
 # disk/mass storage pseudo-devices
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# pseudo disks (see vnconfig)
 #pseudo-device	fss			# file system snapshot device
 

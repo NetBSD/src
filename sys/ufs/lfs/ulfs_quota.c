@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.6 2013/06/06 00:54:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.6.4.1 2013/08/28 23:59:38 rmind Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.6 2013/06/06 00:54:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.6.4.1 2013/08/28 23:59:38 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -138,11 +138,11 @@ lfs_chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 		return 0;
 
 #ifdef LFS_QUOTA
-	if (ip->i_ump->um_flags & ULFS_QUOTA)
+	if (ip->i_lfs->um_flags & ULFS_QUOTA)
 		return lfs_chkdq1(ip, change, cred, flags);
 #endif
 #ifdef LFS_QUOTA2
-	if (ip->i_ump->um_flags & ULFS_QUOTA2)
+	if (ip->i_lfs->um_flags & ULFS_QUOTA2)
 		return lfs_chkdq2(ip, change, cred, flags);
 #endif
 	return 0;
@@ -158,11 +158,11 @@ lfs_chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 	if ((ip->i_flags & SF_SNAPSHOT) != 0)
 		return 0;
 #ifdef LFS_QUOTA
-	if (ip->i_ump->um_flags & ULFS_QUOTA)
+	if (ip->i_lfs->um_flags & ULFS_QUOTA)
 		return lfs_chkiq1(ip, change, cred, flags);
 #endif
 #ifdef LFS_QUOTA2
-	if (ip->i_ump->um_flags & ULFS_QUOTA2)
+	if (ip->i_lfs->um_flags & ULFS_QUOTA2)
 		return lfs_chkiq2(ip, change, cred, flags);
 #endif
 	return 0;
@@ -229,16 +229,17 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	struct quotastat *info;
 
 	KASSERT(args->qc_op == QUOTACTL_STAT);
 	info = args->u.stat.qc_info;
 
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA) {
+	if (fs->um_flags & ULFS_QUOTA) {
 		strcpy(info->qs_implname, "lfs quota v1");
 		info->qs_numidtypes = ULFS_MAXQUOTAS;
 		/* XXX no define for this */
@@ -250,7 +251,7 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
 	} else
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		strcpy(info->qs_implname, "lfs quota v2");
 		info->qs_numidtypes = ULFS_MAXQUOTAS;
 		info->qs_numobjtypes = N_QL;
@@ -267,6 +268,7 @@ quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int idtype;
 	struct quotaidtypestat *info;
 	const char *name;
@@ -275,7 +277,7 @@ quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l,
 	idtype = args->u.idtypestat.qc_idtype;
 	info = args->u.idtypestat.qc_info;
 
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 	/*
@@ -300,6 +302,7 @@ quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int objtype;
 	struct quotaobjtypestat *info;
 	const char *name;
@@ -309,7 +312,7 @@ quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
 	objtype = args->u.objtypestat.qc_objtype;
 	info = args->u.objtypestat.qc_info;
 
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 	/*
@@ -347,6 +350,7 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int error;
 	const struct quotakey *qk;
 	struct quotaval *qv;
@@ -355,19 +359,19 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	qk = args->u.get.qc_key;
 	qv = args->u.get.qc_val;
 
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 	
 	error = quota_get_auth(mp, l, qk->qk_id);
 	if (error != 0) 
 		return error;
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA) {
+	if (fs->um_flags & ULFS_QUOTA) {
 		error = lfsquota1_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_get(ump, qk, qv);
 	} else
 #endif
@@ -384,6 +388,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	const struct quotakey *qk;
 	const struct quotaval *qv;
 	id_t kauth_id;
@@ -393,7 +398,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	qk = args->u.put.qc_key;
 	qv = args->u.put.qc_val;
 
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
 
 	kauth_id = qk->qk_id;
@@ -409,12 +414,12 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	}
 
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA)
+	if (fs->um_flags & ULFS_QUOTA)
 		error = lfsquota1_handle_cmd_put(ump, qk, qv);
 	else
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_put(ump, qk, qv);
 	} else
 #endif
@@ -432,6 +437,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	const struct quotakey *qk;
 	id_t kauth_id;
 	int error;
@@ -444,7 +450,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 		kauth_id = 0;
 	}
 
-	if ((ump->um_flags & ULFS_QUOTA2) == 0)
+	if ((fs->um_flags & ULFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
 
 	/* avoid whitespace changes */
@@ -455,7 +461,7 @@ quota_handle_cmd_delete(struct mount *mp, struct lwp *l,
 		if (error != 0)
 			goto err;
 #ifdef LFS_QUOTA2
-		if (ump->um_flags & ULFS_QUOTA2) {
+		if (fs->um_flags & ULFS_QUOTA2) {
 			error = lfsquota2_handle_cmd_delete(ump, qk);
 		} else
 #endif
@@ -475,6 +481,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	struct quotakcursor *cursor;
 	struct quotakey *keys;
 	struct quotaval *vals;
@@ -489,7 +496,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 	maxnum = args->u.cursorget.qc_maxnum;
 	ret = args->u.cursorget.qc_ret;
 
-	if ((ump->um_flags & ULFS_QUOTA2) == 0)
+	if ((fs->um_flags & ULFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
 	
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -498,7 +505,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 		return error;
 		
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursorget(ump, cursor, keys, vals,
 						    maxnum, ret);
 	} else
@@ -514,6 +521,7 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 {
 #ifdef LFS_QUOTA2
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 #endif
 	struct quotakcursor *cursor;
 	int error;
@@ -527,7 +535,7 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 		return error;
 
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursoropen(ump, cursor);
 	} else
 #endif
@@ -542,6 +550,7 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 {
 #ifdef LFS_QUOTA2
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 #endif
 	struct quotakcursor *cursor;
 	int error;
@@ -555,7 +564,7 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 		return error;
 
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursorclose(ump, cursor);
 	} else
 #endif
@@ -570,6 +579,7 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 {
 #ifdef LFS_QUOTA2
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 #endif
 	struct quotakcursor *cursor;
 	int idtype;
@@ -580,7 +590,7 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 	idtype = args->u.cursorskipidtype.qc_idtype;
 
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
 	} else
 #endif
@@ -595,6 +605,7 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 {
 #ifdef LFS_QUOTA2
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 #endif
 	struct quotakcursor *cursor;
 	int *ret;
@@ -605,7 +616,7 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 	ret = args->u.cursoratend.qc_ret;
 
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursoratend(ump, cursor, ret);
 	} else
 #endif
@@ -620,6 +631,7 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 {
 #ifdef LFS_QUOTA2
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 #endif
 	struct quotakcursor *cursor;
 	int error;
@@ -628,7 +640,7 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 	cursor = args->u.cursorrewind.qc_cursor;
 
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		error = lfsquota2_handle_cmd_cursorrewind(ump, cursor);
 	} else
 #endif
@@ -642,6 +654,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int idtype;
 	const char *qfile;
 	int error;
@@ -650,7 +663,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 	idtype = args->u.quotaon.qc_idtype;
 	qfile = args->u.quotaon.qc_quotafile;
 
-	if ((ump->um_flags & ULFS_QUOTA2) != 0)
+	if ((fs->um_flags & ULFS_QUOTA2) != 0)
 		return EBUSY;
 	
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -672,13 +685,14 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 	int idtype;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_QUOTAOFF);
 	idtype = args->u.quotaoff.qc_idtype;
 
-	if ((ump->um_flags & ULFS_QUOTA2) != 0)
+	if ((fs->um_flags & ULFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
 	
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
@@ -761,6 +775,7 @@ int
 lfs_getinoquota(struct inode *ip)
 {
 	struct ulfsmount *ump = ip->i_ump;
+	//struct lfs *fs = ump->um_lfs; // notyet
 	struct vnode *vp = ITOV(ip);
 	int i, error;
 	u_int32_t ino_ids[ULFS_MAXQUOTAS];
@@ -804,6 +819,7 @@ int
 lfs_dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
     struct dquot **dqp)
 {
+	struct lfs *fs = ump->um_lfs;
 	struct dquot *dq, *ndq;
 	struct dqhashhead *dqh;
 	struct vnode *dqvp;
@@ -811,14 +827,14 @@ lfs_dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 
 	/* Lock to see an up to date value for QTF_CLOSING. */
 	mutex_enter(&lfs_dqlock);
-	if ((ump->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0) {
+	if ((fs->um_flags & (ULFS_QUOTA|ULFS_QUOTA2)) == 0) {
 		mutex_exit(&lfs_dqlock);
 		*dqp = NODQUOT;
 		return (ENODEV);
 	}
 	dqvp = ump->um_quotas[type];
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA) {
+	if (fs->um_flags & ULFS_QUOTA) {
 		if (dqvp == NULLVP || (ump->umq1_qflags[type] & QTF_CLOSING)) {
 			mutex_exit(&lfs_dqlock);
 			*dqp = NODQUOT;
@@ -827,7 +843,7 @@ lfs_dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 	}
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2) {
+	if (fs->um_flags & ULFS_QUOTA2) {
 		if (dqvp == NULLVP) {
 			mutex_exit(&lfs_dqlock);
 			*dqp = NODQUOT;
@@ -887,11 +903,11 @@ lfs_dqget(struct vnode *vp, u_long id, struct ulfsmount *ump, int type,
 	mutex_enter(&dq->dq_interlock);
 	mutex_exit(&lfs_dqlock);
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA)
+	if (fs->um_flags & ULFS_QUOTA)
 		error = lfs_dq1get(dqvp, id, ump, type, dq);
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2)
+	if (fs->um_flags & ULFS_QUOTA2)
 		error = lfs_dq2get(dqvp, id, ump, type, dq);
 #endif
 	/*
@@ -946,11 +962,11 @@ lfs_dqrele(struct vnode *vp, struct dquot *dq)
 			break;
 		mutex_exit(&lfs_dqlock);
 #ifdef LFS_QUOTA
-		if (dq->dq_ump->um_flags & ULFS_QUOTA)
+		if (dq->dq_ump->um_lfs->um_flags & ULFS_QUOTA)
 			(void) lfs_dq1sync(vp, dq);
 #endif
 #ifdef LFS_QUOTA2
-		if (dq->dq_ump->um_flags & ULFS_QUOTA2)
+		if (dq->dq_ump->um_lfs->um_flags & ULFS_QUOTA2)
 			(void) lfs_dq2sync(vp, dq);
 #endif
 	}
@@ -966,16 +982,18 @@ int
 lfs_qsync(struct mount *mp)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 
 	/* avoid compiler warning when quotas aren't enabled */
 	(void)ump;
+	(void)fs;
 
 #ifdef LFS_QUOTA
-	if (ump->um_flags & ULFS_QUOTA)
+	if (fs->um_flags & ULFS_QUOTA)
 		return lfs_q1sync(mp);
 #endif
 #ifdef LFS_QUOTA2
-	if (ump->um_flags & ULFS_QUOTA2)
+	if (fs->um_flags & ULFS_QUOTA2)
 		return lfs_q2sync(mp);
 #endif
 	return 0;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.25 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: TISDP2420,v 1.25.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -61,7 +61,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

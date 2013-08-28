@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.53 2012/09/22 00:33:39 matt Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.53.2.1 2013/08/28 23:59:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.53 2012/09/22 00:33:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.53.2.1 2013/08/28 23:59:14 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,27 +89,28 @@ __KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.53 2012/09/22 00:33:39 matt Ex
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <dev/pci/ppbreg.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
-
-#include <dev/pci/ppbreg.h>
 
 #include <evbarm/iq80321/iq80321reg.h>
 #include <evbarm/iq80321/iq80321var.h>

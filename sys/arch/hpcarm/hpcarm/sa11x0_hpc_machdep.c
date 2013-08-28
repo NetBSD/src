@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.7 2012/09/22 00:33:41 matt Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.7.2.1 2013/08/28 23:59:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.7 2012/09/22 00:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.7.2.1 2013/08/28 23:59:17 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.7 2012/09/22 00:33:41 matt 
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
@@ -76,14 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.7 2012/09/22 00:33:41 matt 
 
 #include <arm/arm32/machdep.h>
 #include <arm/sa11x0/sa11x0_reg.h>
-#include <arm/cpuconf.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/intr.h>
 #include <machine/io.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

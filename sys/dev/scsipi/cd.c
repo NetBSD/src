@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.311 2013/05/29 00:47:49 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.311.2.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.311 2013/05/29 00:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.311.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1782,13 +1782,13 @@ cdgetdisklabel(struct cd_softc *cd)
  * (re)invented size request method and modifiers. The failsafe way of
  * determining the total (max) capacity i.e. not the recorded capacity but the
  * total maximum capacity is to request the info on the last track and
- * calculate the total size.
+ * calculate the last lba.
  *
  * For ROM drives, we go for the CD recorded capacity. For recordable devices
  * we count.
  */
 static int
-read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
+read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *last_lba)
 {
 	struct scsipi_read_cd_capacity    cap_cmd;
 	struct scsipi_read_cd_cap_data    cap;
@@ -1803,7 +1803,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	if (periph->periph_quirks & PQUIRK_NOCAPACITY)
 		return 0;
 
-	/* first try read CD capacity for blksize and recorded size */
+	/* first try read CD capacity for blksize and last recorded lba */
 	/* issue the cd capacity request */
 	flags = XS_CTL_DATA_IN;
 	memset(&cap_cmd, 0, sizeof(cap_cmd));
@@ -1817,8 +1817,8 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 		return error;
 
 	/* retrieve values and sanity check them */
-	*blksize = _4btol(cap.length);
-	*size    = _4btol(cap.addr);
+	*blksize  = _4btol(cap.length);
+	*last_lba = _4btol(cap.addr);
 
 	/* blksize is 2048 for CD, but some drives give gibberish */
 	if ((*blksize < 512) || ((*blksize & 511) != 0))
@@ -1856,13 +1856,13 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 
 			/* overwrite only with a sane value */
 			if (track_start + track_size >= 100)
-				*size = (u_long) track_start + track_size;
+				*last_lba = (u_long) track_start + track_size -1;
 		}
 	}
 
-	/* sanity check for size */
-	if (*size < 100)
-		*size = 400000;
+	/* sanity check for lba_size */
+	if (*last_lba < 100)
+		*last_lba = 400000-1;
 
 	return 0;
 }
@@ -1874,10 +1874,10 @@ static u_long
 cd_size(struct cd_softc *cd, int flags)
 {
 	u_int blksize;
-	u_long size;
+	u_long last_lba, size;
 	int error;
 
-	error = read_cd_capacity(cd->sc_periph, &blksize, &size);
+	error = read_cd_capacity(cd->sc_periph, &blksize, &last_lba);
 	if (error)
 		goto error;
 
@@ -1885,11 +1885,13 @@ cd_size(struct cd_softc *cd, int flags)
 		if (cd_setblksize(cd) == 0) {
 			blksize = 2048;
 			error = read_cd_capacity(cd->sc_periph,
-			    &blksize, &size);
+			    &blksize, &last_lba);
 			if (error)
 				goto error;
 		}
 	}
+
+	size = last_lba + 1;
 	cd->params.blksize     = blksize;
 	cd->params.disksize    = size;
 	cd->params.disksize512 = ((u_int64_t)cd->params.disksize * blksize) / DEV_BSIZE;
@@ -1900,20 +1902,14 @@ cd_size(struct cd_softc *cd, int flags)
 	return size;
 
 error:
-	/*
-	 * Something went wrong - return fake values
-	 *
-	 * XXX - what is this good for? Should return 0 and let the caller deal
-	 */
+	/* something went wrong */
 	cd->params.blksize     = 2048;
-	cd->params.disksize    = 400000;
-	cd->params.disksize512 = ((u_int64_t)cd->params.disksize
-				  * cd->params.blksize) / DEV_BSIZE;
+	cd->params.disksize    = 0;
+	cd->params.disksize512 = 0;
 
-	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
-	    ("cd_size: failed, fake values %u %lu\n", blksize, size));
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cd_size: failed\n"));
 
-	return size;
+	return 0;
 }
 
 /*
@@ -3022,7 +3018,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	if (error)
 		goto out;
 
-	mmc_discinfo->last_possible_lba = (uint32_t) last_lba - 1;
+	mmc_discinfo->last_possible_lba = (uint32_t) last_lba;
 
 	/* Read in all features to determine device capabilities */
 	last_feature = feature = 0;

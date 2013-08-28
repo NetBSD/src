@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.13 2013/06/05 23:08:01 christos Exp $
+# $NetBSD: INSTALL,v 1.13.2.1 2013/08/28 23:59:18 rmind Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -98,7 +98,6 @@ options 	INET		# IP protocol stack support
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default

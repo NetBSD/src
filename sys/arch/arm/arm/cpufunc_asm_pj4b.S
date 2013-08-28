@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.2 2013/05/19 16:53:58 rkujawa Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.2.4.1 2013/08/28 23:59:11 rmind Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -38,8 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "assym.h"
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 #define TTB_RGN_OC_WB	(3 << 3)
 #define TTB_IRGN_WB	((1 << 0) | (1 << 6))

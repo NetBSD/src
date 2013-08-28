@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.35 2013/04/11 18:20:33 macallan Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.35.4.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2013/04/11 18:20:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35.4.1 2013/08/28 23:59:20 rmind Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -639,8 +639,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
 		register_t sr = iosrtable[va >> ADDR_SR_SHFT];
-		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
-		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
+		if (SR601_VALID_P(sr) && ((va >> ADDR_SR_SHFT) ==
+		    ((va + size - 1) >> ADDR_SR_SHFT))) {
 			pa = va;
 			va = 0;
 		} else {

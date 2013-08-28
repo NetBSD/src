@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.95 2009/01/18 20:42:11 he Exp $
+#	$NetBSD: Makefile,v 1.95.28.1 2013/08/28 23:59:35 rmind Exp $
 
 LIB=		kern
-NOPIC=		# defined
-LLIBS=		# defined
+LIBISPRIVATE?=	yes
 
 .include "Makefile.libkern"
 .ifndef ARCHSUBDIR
@@ -11,10 +10,6 @@ LLIBS=		# defined
 	@false
 .endif
 
-# only needed during build
-libinstall::
-
-.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

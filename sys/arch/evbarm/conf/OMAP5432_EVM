@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OMAP5432_EVM,v 1.2 2013/06/18 15:42:54 matt Exp $
+#	$NetBSD: OMAP5432_EVM,v 1.2.4.1 2013/08/28 23:59:14 rmind Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -62,7 +62,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

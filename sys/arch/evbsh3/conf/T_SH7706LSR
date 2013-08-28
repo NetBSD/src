@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.8 2012/10/17 14:48:12 apb Exp $
+#	$NetBSD: T_SH7706LSR,v 1.8.2.1 2013/08/28 23:59:16 rmind Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -69,7 +69,6 @@ options 	WAPBL		# File system journaling support
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

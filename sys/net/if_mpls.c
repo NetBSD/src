@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.8 2011/07/03 18:46:12 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.8.16.1 2013/08/28 23:59:36 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.8 2011/07/03 18:46:12 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.8.16.1 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.8 2011/07/03 18:46:12 kefren Exp $");
 #include <sys/param.h>
 
 #include <sys/errno.h>
-#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
@@ -96,7 +95,8 @@ static struct mbuf *mpls_label_inet6(struct mbuf *, union mpls_shim *, uint);
 static struct mbuf *mpls_prepend_shim(struct mbuf *, union mpls_shim *);
 
 extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
-	mpls_forwarding, mpls_accept, mpls_mapprec_inet, mpls_mapclass_inet6;
+	mpls_forwarding, mpls_accept, mpls_mapprec_inet, mpls_mapclass_inet6,
+	mpls_rfc4182;
 
 /* ARGSUSED */
 void
@@ -326,6 +326,19 @@ mpls_lse(struct mbuf *m)
 	if ((m = mpls_ttl_dec(m)) == NULL)
 		goto done;
 
+	/* RFC 4182 */
+	if (mpls_rfc4182 != 0)
+		while((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
+		    dst.smpls_addr.shim.label == MPLS_LABEL_IPV6NULL) &&
+		    __predict_false(dst.smpls_addr.shim.bos == 0)) {
+			m_adj(m, sizeof(union mpls_shim));
+			if (m->m_len < sizeof(union mpls_shim) &&
+			    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
+				goto done;
+			dst.smpls_addr.s_addr =
+			    ntohl(mtod(m, union mpls_shim *)->s_addr);
+		}
+
 	if (dst.smpls_addr.shim.label <= MPLS_LABEL_RESMAX) {
 		/* Don't swap reserved labels */
 		switch (dst.smpls_addr.shim.label) {
@@ -518,25 +531,21 @@ mpls_unlabel_inet(struct mbuf *m)
 static struct mbuf *
 mpls_label_inet(struct mbuf *m, union mpls_shim *ms, uint offset)
 {
-	struct ip *iphdr;
+	struct ip iphdr;
 
 	if (mpls_mapttl_inet || mpls_mapprec_inet) {
 		if ((m->m_len < sizeof(struct ip)) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip))) == 0)
 			return NULL; /* XXX */
-		iphdr = kmem_alloc(sizeof(struct ip), KM_NOSLEEP);
-		if (iphdr == NULL)
-			return NULL;
-		m_copydata(m, offset, sizeof(struct ip), iphdr);
+		m_copydata(m, offset, sizeof(struct ip), &iphdr);
 
 		/* Map TTL */
 		if (mpls_mapttl_inet)
-			ms->shim.ttl = iphdr->ip_ttl;
+			ms->shim.ttl = iphdr.ip_ttl;
 
 		/* Copy IP precedence to EXP */
 		if (mpls_mapprec_inet)
-			ms->shim.exp = ((u_int8_t)iphdr->ip_tos) >> 5;
-		kmem_free (iphdr, sizeof(struct ip));
+			ms->shim.exp = ((u_int8_t)iphdr.ip_tos) >> 5;
 	}
 
 	if ((m = mpls_prepend_shim(m, ms)) == NULL)
@@ -592,23 +601,19 @@ mpls_unlabel_inet6(struct mbuf *m)
 static struct mbuf *
 mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 {
-	struct ip6_hdr *ip6h;
+	struct ip6_hdr ip6h;
 
 	if (mpls_mapttl_inet6 || mpls_mapclass_inet6) {
 		if (m->m_len < sizeof(struct ip6_hdr) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip6_hdr))) == 0)
 			return NULL;
-		ip6h = kmem_alloc(sizeof(struct ip6_hdr), KM_NOSLEEP);
-		if (ip6h == NULL)
-			return NULL;
-		m_copydata(m, offset, sizeof(struct ip6_hdr), ip6h);
+		m_copydata(m, offset, sizeof(struct ip6_hdr), &ip6h);
 
 		if (mpls_mapttl_inet6)
-			ms->shim.ttl = ip6h->ip6_hlim;
+			ms->shim.ttl = ip6h.ip6_hlim;
 
 		if (mpls_mapclass_inet6)
-			ms->shim.exp = ip6h->ip6_vfc << 1 >> 5;
-		kmem_free(ip6h, sizeof(struct ip6_hdr));
+			ms->shim.exp = ip6h.ip6_vfc << 1 >> 5;
 	}
 
 	if ((m = mpls_prepend_shim(m, ms)) == NULL)

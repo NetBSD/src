@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.20 2013/06/24 04:21:20 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.20.2.1 2013/08/28 23:59:35 rmind Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.20 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.20.2.1 2013/08/28 23:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,6 +99,9 @@ struct cprng_strong {
 	struct rndsink	*cs_rndsink;
 	bool		cs_ready;
 	NIST_CTR_DRBG	cs_drbg;
+
+	/* XXX Kludge for /dev/random `information-theoretic' properties.   */
+	unsigned int	cs_remaining;
 };
 
 struct cprng_strong *
@@ -112,7 +115,7 @@ cprng_strong_create(const char *name, int ipl, int flags)
 	 * rndsink_request takes a spin lock at IPL_VM, so we can be no
 	 * higher than that.
 	 */
-	KASSERT(ipl <= IPL_VM);
+	KASSERT(ipl != IPL_SCHED && ipl != IPL_HIGH);
 
 	/* Initialize the easy fields.  */
 	(void)strlcpy(cprng->cs_name, name, sizeof(cprng->cs_name));
@@ -133,6 +136,11 @@ cprng_strong_create(const char *name, int ipl, int flags)
 		panic("cprng %s: NIST CTR_DRBG instantiation failed",
 		    cprng->cs_name);
 	explicit_memset(seed, 0, sizeof(seed));
+
+	if (ISSET(flags, CPRNG_HARD))
+		cprng->cs_remaining = NIST_BLOCK_KEYLEN_BYTES;
+	else
+		cprng->cs_remaining = 0;
 
 	if (!cprng->cs_ready && !ISSET(flags, CPRNG_INIT_ANY))
 		printf("cprng %s: creating with partial entropy\n",
@@ -191,6 +199,27 @@ cprng_strong(struct cprng_strong *cprng, void *buffer, size_t bytes, int flags)
 				goto out;
 			}
 		}
+	}
+
+	/*
+	 * Debit the entropy if requested.
+	 *
+	 * XXX Kludge for /dev/random `information-theoretic' properties.
+	 */
+	if (__predict_false(ISSET(cprng->cs_flags, CPRNG_HARD))) {
+		KASSERT(0 < cprng->cs_remaining);
+		KASSERT(cprng->cs_remaining <= NIST_BLOCK_KEYLEN_BYTES);
+		if (bytes < cprng->cs_remaining) {
+			cprng->cs_remaining -= bytes;
+		} else {
+			bytes = cprng->cs_remaining;
+			cprng->cs_remaining = NIST_BLOCK_KEYLEN_BYTES;
+			cprng->cs_ready = false;
+			rndsink_schedule(cprng->cs_rndsink);
+		}
+		KASSERT(bytes <= NIST_BLOCK_KEYLEN_BYTES);
+		KASSERT(0 < cprng->cs_remaining);
+		KASSERT(cprng->cs_remaining <= NIST_BLOCK_KEYLEN_BYTES);
 	}
 
 	cprng_strong_generate(cprng, buffer, bytes);
@@ -280,19 +309,6 @@ cprng_strong_poll(struct cprng_strong *cprng, int events)
 }
 
 /*
- * XXX Kludge for the current /dev/random implementation.
- */
-void
-cprng_strong_deplete(struct cprng_strong *cprng)
-{
-
-	mutex_enter(&cprng->cs_lock);
-	cprng->cs_ready = false;
-	rndsink_schedule(cprng->cs_rndsink);
-	mutex_exit(&cprng->cs_lock);
-}
-
-/*
  * XXX Move nist_ctr_drbg_reseed_advised_p and
  * nist_ctr_drbg_reseed_needed_p into the nist_ctr_drbg API and make
  * the NIST_CTR_DRBG structure opaque.
@@ -315,8 +331,7 @@ nist_ctr_drbg_reseed_needed_p(NIST_CTR_DRBG *drbg)
  * Generate some data from the underlying generator.
  */
 static void
-cprng_strong_generate(struct cprng_strong *cprng, void *buffer,
-    size_t bytes)
+cprng_strong_generate(struct cprng_strong *cprng, void *buffer, size_t bytes)
 {
 	const uint32_t cc = cprng_counter();
 
@@ -343,9 +358,6 @@ cprng_strong_generate(struct cprng_strong *cprng, void *buffer,
 	/*
 	 * If we just exhausted the generator, inform the next user
 	 * that we need a reseed.
-	 *
-	 * XXX For /dev/random CPRNGs, the criterion is supposed to be
-	 * `Has this seeding generated 32 bytes?'.
 	 */
 	if (__predict_false(nist_ctr_drbg_reseed_needed_p(&cprng->cs_drbg))) {
 		cprng->cs_ready = false;

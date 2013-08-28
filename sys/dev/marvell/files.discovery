@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.19 2012/07/27 03:00:01 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.19.4.1 2013/08/28 23:59:25 rmind Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -95,3 +95,8 @@ device	mvsdio: sdmmcbus
 file	dev/marvell/mvsdio.c		mvsdio
 defparam	opt_mvsdio.h		MVSDIO_CARD_DETECT
 					MVSDIO_WRITE_PROTECT
+
+# SPI Serial Peripheral Interface
+device 	mvspi: spibus
+attach	mvspi at mvsoc with mvspi_mbus
+file	dev/marvell/mvspi.c		mvspi

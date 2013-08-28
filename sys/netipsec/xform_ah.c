@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.40 2013/06/24 04:21:20 riastradh Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.40.2.1 2013/08/28 23:59:36 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.40 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.40.2.1 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -910,7 +910,7 @@ ah_input_cb(struct cryptop *crp)
 		ptr = (char *) (tc + 1);
 
 		/* Verify authenticator. */
-		if (consttime_memequal(ptr + skip + rplen, calc, authsize)) {
+		if (!consttime_memequal(ptr + skip + rplen, calc, authsize)) {
 			u_int8_t *pppp = ptr + skip+rplen;
 			DPRINTF(("ah_input: authentication hash mismatch " \
 			    "over %d bytes " \

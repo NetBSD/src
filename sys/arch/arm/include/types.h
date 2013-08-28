@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24 2013/05/07 23:01:55 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.24.2.1 2013/08/28 23:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,6 +67,7 @@ typedef int		register_t, register32_t;
 typedef unsigned long	pmc_evid_t;
 #define PMC_INVALID_EVID	(-1)
 typedef unsigned long	pmc_ctr_t;
+typedef unsigned short	tlb_asid_t;
 
 /*
  * This should have always been an 8-bit type, but since it's been exposed

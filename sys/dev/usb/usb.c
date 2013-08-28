@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.140.2.1 2013/08/28 23:59:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.140 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.140.2.1 2013/08/28 23:59:27 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -312,8 +312,8 @@ usb_doattach(device_t self)
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
-		aprint_error("%s: root hub problem, error=%d\n",
-			     device_xname(self), err);
+		aprint_error("%s: root hub problem, error=%s\n",
+			     device_xname(self), usbd_errstr(err));
 		sc->sc_dying = 1;
 	}
 
@@ -660,7 +660,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		if (len < 0 || len > 32768)
 			return (EINVAL);
 		if (addr < 0 || addr >= USB_MAX_DEVICES ||
-		    sc->sc_bus->devices[addr] == 0)
+		    sc->sc_bus->devices[addr] == NULL)
 			return (EINVAL);
 		if (len != 0) {
 			iov.iov_base = (void *)ur->ucr_data;

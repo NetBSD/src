@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.7 2012/10/27 17:18:22 chs Exp $ */
+/* $NetBSD: spdmem.c,v 1.7.2.1 2013/08/28 23:59:25 rmind Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7 2012/10/27 17:18:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -259,19 +259,6 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	for (i = 3; i < spd_len; i++)
 		((uint8_t *)s)[i] = (sc->sc_read)(sc, i);
 
-#ifdef DEBUG
-	for (i = 0; i < spd_len;  i += 16) {
-		unsigned int j, k;
-		aprint_debug("\n");
-		aprint_debug_dev(self, "0x%02x:", i);
-		k = (spd_len > i + 16) ? spd_len : i + 16;
-		for (j = i; j < k; j++)
-			aprint_debug(" %02x", ((uint8_t *)s)[j]);
-	}
-	aprint_debug("\n");
-	aprint_debug_dev(self, "");
-#endif
-
 	/*
 	 * Setup our sysctl subtree, hw.spdmemN
 	 */
@@ -336,9 +323,6 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 		}
 	}
 
-	aprint_naive("\n");
-	aprint_normal("\n");
-	aprint_normal_dev(self, "%s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 	if (node != NULL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
@@ -349,7 +333,9 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	if (IS_RAMBUS_TYPE) {
-		aprint_normal(", SPD Revision %s", rambus_rev);
+		aprint_naive("\n");
+		aprint_normal("\n");
+		aprint_normal_dev(self, "%s, SPD Revision %s", type, rambus_rev);
 		dimm_size = 1 << (s->sm_rdr.rdr_rows + s->sm_rdr.rdr_cols - 13);
 		if (dimm_size >= 1024)
 			aprint_normal(", %dGB\n", dimm_size / 1024);
@@ -383,6 +369,16 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	case SPDMEM_MEMTYPE_FBDIMM_PROBE:
 		decode_fbdimm(node, self, s);
 		break;
+	}
+
+	/* Dump SPD */
+	for (i = 0; i < spd_len;  i += 16) {
+		unsigned int j, k;
+		aprint_debug_dev(self, "0x%02x:", i);
+		k = (spd_len > (i + 16)) ? i + 16 : spd_len;
+		for (j = i; j < k; j++)
+			aprint_debug(" %02x", ((uint8_t *)s)[j]);
+		aprint_debug("\n");
 	}
 }
 
@@ -487,6 +483,10 @@ decode_voltage_refresh(device_t self, struct spdmem *s)
 
 static void
 decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
+
 	aprint_normal("\n");
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d banks, %dns tRAC, %dns tCAC\n",
@@ -496,6 +496,10 @@ decode_edofpm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 
 static void
 decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s) {
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
+
 	aprint_normal("\n");
 	aprint_verbose_dev(self, "%d rows, %d cols, %d banks\n",
 	    s->sm_rom.rom_rows, s->sm_rom.rom_cols, s->sm_rom.rom_banks);
@@ -505,6 +509,10 @@ static void
 decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
 	     int spd_len) {
 	int dimm_size, cycle_time, bits, tAA, i, speed, freq;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	aprint_normal("%s, %s, ",
 		(s->sm_sdr.sdr_mod_attrs & SPDMEM_SDR_MASK_REG)?
@@ -566,6 +574,10 @@ static void
 decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	int dimm_size, cycle_time, bits, tAA, i;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
+
 	aprint_normal("%s, %s, ",
 		(s->sm_ddr.ddr_mod_attrs & SPDMEM_DDR_MASK_REG)?
 			" (registered)":"",
@@ -610,6 +622,10 @@ static void
 decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	int dimm_size, cycle_time, bits, tAA, i;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
+
 	aprint_normal("%s, %s, ",
 		(s->sm_ddr2.ddr2_mod_attrs & SPDMEM_DDR2_MASK_REG)?
 			" (registered)":"",
@@ -653,6 +669,10 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 static void
 decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	int dimm_size, cycle_time, bits;
+
+	aprint_naive("\n");
+	aprint_normal(": %18s\n", s->sm_ddr3.ddr3_part);
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	if (s->sm_ddr3.ddr3_mod_type ==
 		SPDMEM_DDR3_TYPE_MINI_RDIMM ||
@@ -704,6 +724,10 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 static void
 decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	int dimm_size, cycle_time, bits;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 
 	/*
 	 * FB-DIMM module size calculation is very much like DDR3

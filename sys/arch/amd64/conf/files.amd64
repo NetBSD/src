@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.79 2012/10/13 19:42:02 alnsn Exp $
+#	$NetBSD: files.amd64,v 1.79.2.1 2013/08/28 23:59:10 rmind Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -106,13 +106,6 @@ include "arch/x86/pci/files.pci"
 #
 
 include	"dev/isa/files.isa"
-
-# PC clock
-file 	arch/x86/isa/clock.c 			isa
-file	arch/x86/isa/rtc.c			isa
-
-# TSC timecounter support
-file	arch/x86/x86/tsc.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device

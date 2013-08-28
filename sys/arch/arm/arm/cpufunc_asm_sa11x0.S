@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.3 2002/08/17 16:36:32 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa11x0.S,v 1.3.166.1 2013/08/28 23:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 	.data
 	.global	_C_LABEL(sa11x0_idle_mem)

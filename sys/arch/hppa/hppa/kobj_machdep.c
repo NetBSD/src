@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.7 2012/01/06 09:09:25 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7.10.1 2013/08/28 23:59:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2012/01/06 09:09:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7.10.1 2013/08/28 23:59:17 rmind Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -128,36 +128,25 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		/* symbol + addend */
 		addr = kobj_sym_lookup(ko, symidx);
 		value += addr;
-		if (*where != value)
-			*where = value;
-		break;
-
-	case R_TYPE(PLABEL32):
-		/* fptr(symbol) */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (*where != addr)
-			*where = addr;
-		break;
-
-	case R_TYPE(DIR14R):
-		/* RR(symbol, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
-		value = RR(addr, value);
-		*where |=
-		     (((value >>  0) & 0x1fff) << 1) |
-		     (((value >> 13) & 0x1) << 0);
 		break;
 
 	case R_TYPE(DIR21L):
 		/* LR(symbol, addend) */
 		addr = kobj_sym_lookup(ko, symidx);
 		value = LR(addr, value);
-		*where |=
-		    (((value >> 31) & 0x001) <<  0) |
-		    (((value >> 20) & 0x7ff) <<  1) |
-		    (((value >> 18) & 0x003) << 14) |
-		    (((value >> 13) & 0x01f) << 16) |
-		    (((value >> 11) & 0x003) << 12);
+		break;
+
+	case R_TYPE(DIR17R):
+		/* RR(symbol, addend) */
+		addr = kobj_sym_lookup(ko, symidx);
+		value = RR(addr, value);
+		value >>= 2;		/* bottom two bits not needed */
+		break;
+
+	case R_TYPE(DIR14R):
+		/* RR(symbol, addend) */
+		addr = kobj_sym_lookup(ko, symidx);
+		value = RR(addr, value);
 		break;
 
 	case R_TYPE(PCREL17F):
@@ -165,34 +154,24 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		addr = kobj_sym_lookup(ko, symidx);
 		value += addr - (Elf_Word)where - 8;
 		value >>= 2;		/* bottom two bits not needed */
+		break;
 
-		*where |=
-		    (((value & 0x10000) >> 16) << 0) |		/* w */
-		    (((value & 0x0f800) >> 11) << 16) |		/* w1 */
-		    (((value & 0x00400) >> 10) << 2) |
-		    (((value & 0x003ff) << 1) << 2);		/* w2 */
+	case R_TYPE(DPREL21L):
+		/* LR(symbol - GP, addend) */
+		addr = kobj_sym_lookup(ko, symidx);
+		value = LR(addr - GP, value);
 		break;
 
 	case R_TYPE(DPREL14R):
 		/* RR(symbol - GP, addend) */
 		addr = kobj_sym_lookup(ko, symidx);
 		value = RR(addr - GP, value);
-		*where |=
-		     (((value >>  0) & 0x1fff) << 1) |
-		     (((value >> 13) & 0x1) << 0);
 		break;
 
-
-	case R_TYPE(DPREL21L):
-		/* LR(symbol - GP, addend) */
+	case R_TYPE(PLABEL32):
+		/* fptr(symbol) */
 		addr = kobj_sym_lookup(ko, symidx);
-		value = LR(addr - GP, value);
-		*where |=
-		    (((value >> 31) & 0x001) <<  0) |
-		    (((value >> 20) & 0x7ff) <<  1) |
-		    (((value >> 18) & 0x003) << 14) |
-		    (((value >> 13) & 0x01f) << 16) |
-		    (((value >> 11) & 0x003) << 12);
+		value = addr;
 		break;
 
 	case R_TYPE(SEGREL32):
@@ -200,14 +179,47 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		/* XXX SB */
 		addr = kobj_sym_lookup(ko, symidx);
 		value += addr;
-		if (*where != addr)
-			*where = addr;
 		break;
 
 	default:
 		printf("%s: unexpected relocation type %d\n", __func__, rtype);
 		return -1;
 	}
+
+	switch (rtype) {
+	case R_TYPE(DIR32):
+	case R_TYPE(PLABEL32):
+	case R_TYPE(SEGREL32):
+		*where = value;
+		break;
+
+	case R_TYPE(DIR14R):
+	case R_TYPE(DPREL14R):
+		*where |=
+		     (((value >>  0) & 0x1fff) << 1) |
+		     (((value >> 13) & 0x1) << 0);
+		break;
+
+	case R_TYPE(DIR17R):
+	case R_TYPE(PCREL17F):
+		*where |=
+		    (((value & 0x10000) >> 16) << 0) |		/* w */
+		    (((value & 0x0f800) >> 11) << 16) |		/* w1 */
+		    (((value & 0x00400) >> 10) << 2) |
+		    (((value & 0x003ff) << 1) << 2);		/* w2 */
+		break;
+
+	case R_TYPE(DIR21L):
+	case R_TYPE(DPREL21L):
+		*where |=
+		    (((value >> 31) & 0x001) <<  0) |
+		    (((value >> 20) & 0x7ff) <<  1) |
+		    (((value >> 18) & 0x003) << 14) |
+		    (((value >> 13) & 0x01f) << 16) |
+		    (((value >> 11) & 0x003) << 12);
+		break;
+	}
+
 	return 0;
 }
 

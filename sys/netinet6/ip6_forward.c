@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.71 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.71.2.1 2013/08/28 23:59:36 rmind Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.71 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.71.2.1 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.71 2013/06/05 19:01:26 christos Ex
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -69,17 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.71 2013/06/05 19:01:26 christos Ex
 #include <netipsec/xform.h>
 #endif /* IPSEC */
 
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
-
 #include <net/net_osdep.h>
 
 struct	route ip6_forward_rt;
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -391,17 +385,15 @@ ip6_forward(struct mbuf *m, int srcrt)
 	in6_clearscope(&ip6->ip6_src);
 	in6_clearscope(&ip6->ip6_dst);
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, rt->rt_ifp,
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, rt->rt_ifp,
 	    PFIL_OUT)) != 0)
 		goto senderr;
 	if (m == NULL)
 		goto freecopy;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
 
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
@@ -422,9 +414,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-#ifdef PFIL_HOOKS
  senderr:
-#endif
 	if (mcopy == NULL)
 		return;
 	switch (error) {

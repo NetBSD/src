@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.50 2013/04/27 18:19:45 christos Exp $
+#	$NetBSD: MMTAICE,v 1.50.4.1 2013/08/28 23:59:19 rmind Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -125,7 +125,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

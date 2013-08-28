@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.13 2012/08/29 07:06:27 matt Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.13.4.1 2013/08/28 23:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,9 +40,9 @@
  */
 
 #include "assym.h"
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
+
 #include <machine/irqhandler.h>
 
 	.text

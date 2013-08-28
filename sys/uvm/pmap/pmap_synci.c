@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.1 2012/10/03 00:51:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.1.4.1 2013/08/28 23:59:38 rmind Exp $");
 
 #define __PMAP_PRIVATE
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_synci.c,v 1.1 2012/10/03 00:51:46 christos Exp 
 void
 pmap_syncicache_ast(struct cpu_info *ci)
 {
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
 	KASSERT(kpreempt_disabled());
 
@@ -176,7 +176,7 @@ pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
 void
 pmap_tlb_syncicache_wanted(struct cpu_info *ci)
 {
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
 	KASSERT(cpu_intr_p());
 

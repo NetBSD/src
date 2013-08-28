@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.403 2013/05/29 00:47:48 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.403.2.1 2013/08/28 23:59:24 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.403 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.403.2.1 2013/08/28 23:59:24 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -1169,7 +1169,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd =
 	    device_lookup_private(&wd_cd, WDUNIT(dev));
-	int error = 0, s;
+	int error, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1183,6 +1183,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
@@ -1530,12 +1531,12 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	case DIOCGDISCARDPARAMS: {
 		struct disk_discard_params * tp;
 
-		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA8)
+		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA7)
 		    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM))
 			return ENOTTY;
 		tp = (struct disk_discard_params *)addr;
 		tp->maxsize = 0xffff; /*wd->sc_params.max_dsm_blocks*/
-		printf("wd: maxtrimsize %ld\n", tp->maxsize);
+		aprint_debug_dev(wd->sc_dev, "TRIM maxsize %ld\n", tp->maxsize);
 		return 0;
 	}
 	case DIOCDISCARD:

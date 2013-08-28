@@ -1,18 +1,9 @@
-# $NetBSD: Makefile.booters,v 1.1 2011/01/26 01:18:53 pooka Exp $
+# $NetBSD: Makefile.booters,v 1.1.24.1 2013/08/28 23:59:13 rmind Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
-	@[ -h emips ] || ln -s $S/arch/${MACHINE}/include emips
-	@[ -h mips ] || ln -s $S/arch/mips/include mips
-.NOPATH: machine emips mips
-.endif
-CLEANFILES+= machine emips mips
 
 BINMODE?=	444
 
@@ -109,7 +100,8 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    -N ${.CURDIR}/version "emips"
 
-${PROG}: machine mips emips ${OBJS} ${LIBS}
+${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    ${LDBUG} -e start -o ${PROG}.elf ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}.elf
@@ -121,6 +113,7 @@ ${PROG}: machine mips emips ${OBJS} ${LIBS}
 	dd if=${PROG}.bin of=${PROG} bs=512 conv=sync
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
 CLEANFILES+=	${PROG}.map
 

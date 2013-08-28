@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.230 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.230.2.1 2013/08/28 23:59:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.230 2013/06/18 18:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.230.2.1 2013/08/28 23:59:38 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.230 2013/06/18 18:18:58 christos E
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>

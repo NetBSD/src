@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.20 2012/05/11 15:39:18 skrll Exp $ */
+/* $NetBSD: podulebus.c,v 1.20.4.1 2013/08/28 23:59:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,15 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20 2012/05/11 15:39:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.20.4.1 2013/08/28 23:59:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
+#include <arm/locore.h>
+
 #include <machine/irq.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>

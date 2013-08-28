@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.87 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: ch.c,v 1.87.2.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.87 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.87.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.87 2012/10/27 17:18:38 chs Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 #define CHRETRIES	2
+#define CHTIMEOUT	(5 * 60 * 1000)
+
 #define CHUNIT(x)	(minor((x)))
 
 struct ch_softc {
@@ -612,7 +614,7 @@ ch_move(struct ch_softc *sc, struct changer_move_request *cm)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 static int
@@ -666,7 +668,7 @@ ch_exchange(struct ch_softc *sc, struct changer_exchange_request *ce)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 static int
@@ -702,7 +704,7 @@ ch_position(struct ch_softc *sc, struct changer_position_request *cp)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CHRETRIES, 100000, NULL, 0));
+	    CHRETRIES, CHTIMEOUT, NULL, 0));
 }
 
 /*
@@ -1041,7 +1043,7 @@ ch_getelemstatus(struct ch_softc *sc, int first, int count, void *data,
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
 	    (void *)data, datalen,
-	    CHRETRIES, 100000, NULL, scsiflags | XS_CTL_DATA_IN));
+	    CHRETRIES, CHTIMEOUT, NULL, scsiflags | XS_CTL_DATA_IN));
 }
 
 static int
@@ -1105,7 +1107,7 @@ ch_setvoltag(struct ch_softc *sc, struct changer_set_voltag_request *csvr)
 	 * Send command to changer.
 	 */
 	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, datalen, CHRETRIES, 100000, NULL,
+	    (void *)data, datalen, CHRETRIES, CHTIMEOUT, NULL,
 	    datalen ? XS_CTL_DATA_OUT : 0));
 }
 

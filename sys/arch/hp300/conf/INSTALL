@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.54 2013/06/05 23:08:01 christos Exp $
+# $NetBSD: INSTALL,v 1.54.2.1 2013/08/28 23:59:16 rmind Exp $
 #
 # INSTALL machine description file
 #
@@ -97,7 +97,6 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	PFIL_HOOKS	# packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware
