@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.30 2012/10/23 11:53:18 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.30.2.1 2013/08/28 23:59:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.30 2012/10/23 11:53:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.30.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -350,7 +350,9 @@ agten_attach(device_t parent, device_t dev, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+
 		glyphcache_init(&sc->sc_gc,
 		    sc->sc_height + 5,
 		    (0x400000 / sc->sc_stride) - sc->sc_height - 5,

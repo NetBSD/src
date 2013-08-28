@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.6 2012/10/23 23:16:05 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.6.6.1 2013/08/28 23:59:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.6 2012/10/23 23:16:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.6.6.1 2013/08/28 23:59:13 rmind Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -238,8 +238,8 @@ initarm(void *arg)
 	    arm_cpu_max + 1, arm_cpu_max + 1 ? "s" : "",
 	    arm_cpu_hatched);
 #endif
-	printf(", CLIDR=%010o CTR=%#x",
-	    armreg_clidr_read(), armreg_ctr_read());
+	printf(", CLIDR=%010o CTR=%#x PMUSERSR=%#x",
+	    armreg_clidr_read(), armreg_ctr_read(), armreg_pmuserenr_read());
 	printf("\n");
 #endif
 

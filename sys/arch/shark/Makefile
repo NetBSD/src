@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.3.44.1 2013/08/28 23:59:21 rmind Exp $
 
 # Makefile for shark tags file and boot blocks
 
@@ -25,6 +25,7 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	compile include # stand
+SUBDIR=	compile include
+#SUBDIR+=	stand
 
 .include <bsd.subdir.mk>

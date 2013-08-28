@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.152 2013/04/04 13:27:56 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.152.4.1 2013/08/28 23:59:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.152 2013/04/04 13:27:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.152.4.1 2013/08/28 23:59:27 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -336,8 +336,11 @@ usbd_transfer(usbd_xfer_handle xfer)
 			else
 				err = tsleep(xfer, PRIBIO, "usbsyn", 0);
 		}
-		if (err)
+		if (err) {
+			if (!xfer->done)
+				pipe->methods->abort(xfer);
 			break;
+		}
 	}
 	usbd_unlock_pipe(pipe);
 	return (xfer->status);
@@ -393,7 +396,7 @@ void *
 usbd_get_buffer(usbd_xfer_handle xfer)
 {
 	if (!(xfer->rqflags & URQ_DEV_DMABUF))
-		return (0);
+		return (NULL);
 	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
@@ -539,7 +542,7 @@ usb_endpoint_descriptor_t *
 usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
 {
 	if (index >= iface->idesc->bNumEndpoints)
-		return (0);
+		return (NULL);
 	return (iface->endpoints[index].edesc);
 }
 
@@ -840,7 +843,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (!repeat) {
 		/* Remove request from queue. */
-		
+
 		KASSERTMSG(!SIMPLEQ_EMPTY(&pipe->queue),
 		    "pipe %p is empty, but xfer %p wants to complete", pipe,
 		     xfer);
@@ -1180,7 +1183,7 @@ usbd_get_endpoint_descriptor(usbd_interface_handle iface, u_int8_t address)
 		if (ep->edesc->bEndpointAddress == address)
 			return (iface->endpoints[i].edesc);
 	}
-	return (0);
+	return (NULL);
 }
 
 /*

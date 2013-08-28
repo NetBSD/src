@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.15 2012/10/30 07:42:35 msaitoh Exp $	*/
+/*	$NetBSD: pic.c,v 1.15.2.1 2013/08/28 23:59:12 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15 2012/10/30 07:42:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15.2.1 2013/08/28 23:59:12 rmind Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -256,7 +256,6 @@ void
 pic_dispatch(struct intrsource *is, void *frame)
 {
 	int rv;
-
 
 	if (__predict_false(is->is_arg == NULL)
 	    && __predict_true(frame != NULL)) {

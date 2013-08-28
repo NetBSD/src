@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.49 2013/05/06 22:04:12 rkujawa Exp $
+#	$NetBSD: files.i2c,v 1.49.4.1 2013/08/28 23:59:25 rmind Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -187,3 +187,7 @@ device	mcp980x: sysmon_envsys
 attach	mcp980x at iic
 file	dev/i2c/mcp980x.c 		mcp980x
 
+# Nuvoton W83795G/ADG Hardware Monitor
+device	w83795g: gpiobus, sysmon_envsys, sysmon_wdog
+attach	w83795g at iic
+file	dev/i2c/w83795g.c 		w83795g

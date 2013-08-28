@@ -28,8 +28,8 @@
  */
 
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 	.arch	armv7a
 

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.31 2012/12/26 19:13:19 matt Exp $ */
+/* $NetBSD: alpha.h,v 1.31.2.1 2013/08/28 23:59:10 rmind Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,7 +128,7 @@ fpu_save(void)
 static inline void
 fpu_discard(void)
 {
-	pcu_discard(&fpu_ops);
+	pcu_discard(&fpu_ops, false);
 }
 
 void	alpha_patch(bool);

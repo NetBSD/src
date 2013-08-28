@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.253.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.253 2013/05/31 17:48:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.253.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,8 +677,9 @@ static const struct bge_product {
 #define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGE_5714_FAMILY)
 #define BGE_IS_575X_PLUS(sc)		((sc)->bge_flags & BGE_575X_PLUS)
 #define BGE_IS_5755_PLUS(sc)		((sc)->bge_flags & BGE_5755_PLUS)
-#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
+#define BGE_IS_57765_FAMILY(sc)		((sc)->bge_flags & BGE_57765_FAMILY)
 #define BGE_IS_57765_PLUS(sc)		((sc)->bge_flags & BGE_57765_PLUS)
+#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
 
 static const struct bge_revision {
 	uint32_t		br_chipid;
@@ -1446,10 +1447,20 @@ bge_miibus_statchg(struct ifnet *ifp)
 	 * Get flow control negotiation result.
 	 */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
-	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->bge_flowflags) {
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->bge_flowflags)
 		sc->bge_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
-		mii->mii_media_active &= ~IFM_ETH_FMASK;
-	}
+
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
+	    mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+		BGE_STS_SETBIT(sc, BGE_STS_LINK);
+	else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
+	    (!(mii->mii_media_status & IFM_ACTIVE) ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
+		BGE_STS_CLRBIT(sc, BGE_STS_LINK);
+
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
+		return;
 
 	/* Set the port mode (MII/GMII) to match the link speed. */
 	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) &
@@ -1464,7 +1475,7 @@ bge_miibus_statchg(struct ifnet *ifp)
 
 	tx_mode &= ~BGE_TXMODE_FLOWCTL_ENABLE;
 	rx_mode &= ~BGE_RXMODE_FLOWCTL_ENABLE;
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
+	if ((mii->mii_media_active & IFM_FDX) != 0) {
 		if (sc->bge_flowflags & IFM_ETH_TXPAUSE)
 			tx_mode |= BGE_TXMODE_FLOWCTL_ENABLE;
 		if (sc->bge_flowflags & IFM_ETH_RXPAUSE)
@@ -1941,8 +1952,10 @@ bge_free_tx_ring(struct bge_softc *sc)
 static int
 bge_init_tx_ring(struct bge_softc *sc)
 {
+	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int i;
 	bus_dmamap_t dmamap;
+	bus_size_t maxsegsz;
 	struct txdmamap_pool_entry *dma;
 
 	if (sc->bge_flags & BGE_TXRING_VALID)
@@ -1964,10 +1977,18 @@ bge_init_tx_ring(struct bge_softc *sc)
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 		bge_writembx(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
+	/* Limit DMA segment size for some chips */
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) &&
+	    (ifp->if_mtu <= ETHERMTU))
+		maxsegsz = 2048;
+	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719)
+		maxsegsz = 4096;
+	else
+		maxsegsz = ETHER_MAX_LEN_JUMBO;
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_TXDMA_MAX,
-		    BGE_NTXSEG, ETHER_MAX_LEN_JUMBO, 0, BUS_DMA_NOWAIT,
+		    BGE_NTXSEG, maxsegsz, 0, BUS_DMA_NOWAIT,
 		    &dmamap))
 			return ENOBUFS;
 		if (dmamap == NULL)
@@ -2275,8 +2296,7 @@ bge_chipinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 	}
 	
-	/* XXX Should we use 57765_FAMILY? */
-	if (BGE_IS_57765_PLUS(sc)) {
+	if (BGE_IS_57765_FAMILY(sc)) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0) {
 			/* Save */
 			mode_ctl = CSR_READ_4(sc, BGE_MODE_CTL);
@@ -2393,7 +2413,7 @@ bge_chipinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
 
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_DIS_CACHE_ALIGNMENT;
 		if (sc->bge_chipid == BGE_CHIPID_BCM57765_A0)
 			dma_rw_ctl &= ~BGE_PCIDMARWCTL_CRDRDR_RDMA_MRRS_MSK;
@@ -2403,8 +2423,8 @@ bge_chipinit(struct bge_softc *sc)
 		 * a status tag update and leave interrupts permanently
 		 * disabled.
 		 */
-		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
-		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57765)
+		if (!BGE_IS_57765_FAMILY(sc) &&
+		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717)
 			dma_rw_ctl |= BGE_PCIDMARWCTL_TAGGED_STATUS_WA;
 	}
 
@@ -2625,7 +2645,7 @@ bge_blockinit(struct bge_softc *sc)
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
 	/* 5718 step 16 */
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
 		 * Bits 15-2 : Maximum RX frame size
@@ -2759,6 +2779,10 @@ bge_blockinit(struct bge_softc *sc)
 	if (BGE_IS_5700_FAMILY(sc)) {
 		/* 5700 to 5704 had 16 send rings. */
 		limit = BGE_TX_RINGS_EXTSSRAM_MAX;
+	} else if (BGE_IS_5717_PLUS(sc)) {
+		limit = BGE_TX_RINGS_5717_MAX;
+	} else if (BGE_IS_57765_FAMILY(sc)) {
+		limit = BGE_TX_RINGS_57765_MAX;
 	} else
 		limit = 1;
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
@@ -2791,15 +2815,13 @@ bge_blockinit(struct bge_softc *sc)
 	 * 'ring diabled' bit in the flags field of all the receive
 	 * return ring control blocks, located in NIC memory.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+	if (BGE_IS_5717_PLUS(sc)) {
 		/* Should be 17, use 16 until we get an SRAM map. */
 		limit = 16;
 	} else if (BGE_IS_5700_FAMILY(sc))
 		limit = BGE_RX_RINGS_MAX;
 	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_IS_57765_PLUS(sc))
+	    BGE_IS_57765_FAMILY(sc))
 		limit = 4;
 	else
 		limit = 1;
@@ -3016,6 +3038,10 @@ bge_blockinit(struct bge_softc *sc)
 
 	if (sc->bge_flags & BGE_PCIE)
 		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) {
+		if (ifp->if_mtu <= ETHERMTU)
+			val |= BGE_RDMAMODE_JMB_2K_MMRR;
+	}
 	if (sc->bge_flags & BGE_TSO)
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
@@ -3033,7 +3059,7 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780 ||
-	    BGE_IS_5717_PLUS(sc)) { /* XXX 57765? */
+	    BGE_IS_57765_PLUS(sc)) {
 		dmactl = CSR_READ_4(sc, BGE_RDMA_RSRVCTRL);
 		/*
 		 * Adjust tx margin to prevent TX data corruption and
@@ -3388,15 +3414,21 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	/* Save chipset family. */
 	switch (BGE_ASICREV(sc->bge_chipid)) {
-	case BGE_ASICREV_BCM57765:
-	case BGE_ASICREV_BCM57766:
-		sc->bge_flags |= BGE_57765_PLUS;
-		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5717:
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
-		sc->bge_flags |= BGE_5717_PLUS | BGE_5755_PLUS | BGE_575X_PLUS |
-		    BGE_5705_PLUS;
+		sc->bge_flags |= BGE_5717_PLUS;
+		/* FALLTHROUGH */
+	case BGE_ASICREV_BCM57765:
+	case BGE_ASICREV_BCM57766:
+		if (!BGE_IS_5717_PLUS(sc))
+			sc->bge_flags |= BGE_57765_FAMILY;
+		sc->bge_flags |= BGE_57765_PLUS | BGE_5755_PLUS |
+		    BGE_575X_PLUS | BGE_5705_PLUS | BGE_JUMBO_CAPABLE;
+		/* Jumbo frame on BCM5719 A0 does not work. */
+		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
+		    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0))
+			sc->bge_flags &= ~BGE_JUMBO_CAPABLE;
 		break;
 	case BGE_ASICREV_BCM5755:
 	case BGE_ASICREV_BCM5761:
@@ -3415,7 +3447,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5714_A0:
 	case BGE_ASICREV_BCM5780:
 	case BGE_ASICREV_BCM5714:
-		sc->bge_flags |= BGE_5714_FAMILY;
+		sc->bge_flags |= BGE_5714_FAMILY | BGE_JUMBO_CAPABLE;
 		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5750:
 	case BGE_ASICREV_BCM5752:
@@ -3563,7 +3595,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780 &&
-	    !BGE_IS_5717_PLUS(sc)) {
+	    !BGE_IS_57765_PLUS(sc)) {
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
@@ -4380,7 +4412,7 @@ static void
 bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
 {
 
-	if (BGE_IS_5717_PLUS(sc)) {
+	if (BGE_IS_57765_PLUS(sc)) {
 		if ((cur_rx->bge_flags & BGE_RXBDFLAG_IPV6) == 0) {
 			if ((cur_rx->bge_flags & BGE_RXBDFLAG_IP_CSUM) != 0)
 				m->m_pkthdr.csum_flags = M_CSUM_IPv4;
@@ -5230,7 +5262,7 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	const uint16_t *m;
-	uint32_t mode;
+	uint32_t mode, reg;
 	int s, error = 0;
 
 	s = splnet();
@@ -5339,8 +5371,16 @@ bge_init(struct ifnet *ifp)
 	/* 5718 step 66 */
 	DELAY(10);
 
-	/* 5718 step 12 */
-	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
+	/* 5718 step 12, 57XX step 37 */
+	/*
+	 * XXX Doucments of 5718 series and 577xx say the recommended value
+	 * is 1, but tg3 set 1 only on 57765 series.
+	 */
+	if (BGE_IS_57765_PLUS(sc))
+		reg = 1;
+	else
+		reg = 2;
+	CSR_WRITE_4_FLUSH(sc, BGE_MAX_RX_FRAME_LOWAT, reg);
 
 	/* Tell firmware we're alive. */
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
@@ -5763,11 +5803,6 @@ bge_link_upd(struct bge_softc *sc)
 			BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 		}
-	/*
-	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
-	 * This should not happen since mii callouts are locked now, but
-	 * we keep this check for debug.
-	 */
 	} else if (BGE_STS_BIT(sc, BGE_STS_AUTOPOLL)) {
 		/*
 		 * Some broken BCM chips have BGE_STATFLAG_LINKSTATE_CHANGED
@@ -5789,6 +5824,12 @@ bge_link_upd(struct bge_softc *sc)
 			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
 				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 		}
+	} else {
+		/*
+		 * For controllers that call mii_tick, we have to poll
+		 * link status.
+		 */
+		mii_pollstat(mii);
 	}
 
 	/* Clear the attention */

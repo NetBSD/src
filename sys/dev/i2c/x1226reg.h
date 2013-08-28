@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226reg.h,v 1.3 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: x1226reg.h,v 1.3.126.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -47,7 +47,7 @@
  *
  *	110 1111
  */
-#define	X1226_ADDRMASK		0x7f
+#define	X1226_ADDRMASK		0x3ff
 #define	X1226_ADDR		0x6f
 
 /* XICOR X1226 Device Identifier */

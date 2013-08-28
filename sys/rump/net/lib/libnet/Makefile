@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/06/01 10:54:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2013/08/28 23:59:37 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../compat/common
@@ -15,6 +15,8 @@ CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnetinet/opt
 CPPFLAGS+=	-DCOMPAT_OIFREQ -DCOMPAT_OIFDATA
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"
+.include "${.CURDIR}/../libnetinet6/Makefile.inc"
+.include "${.CURDIR}/../libnetmpls/Makefile.inc"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -414,6 +414,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 	dev->id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
 
+	aprint_naive("\n");
 	aprint_normal(": %s\n", dev->id_entry->name);
 	drm_load(dev);
 }

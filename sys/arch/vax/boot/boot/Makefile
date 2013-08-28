@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2012/05/14 10:05:50 abs Exp $
+#	$NetBSD: Makefile,v 1.40.4.1 2013/08/28 23:59:23 rmind Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -36,7 +36,7 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/version "${MACHINE}"
 
-${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}

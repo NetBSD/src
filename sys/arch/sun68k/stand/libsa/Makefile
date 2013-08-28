@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.28.22.1 2013/08/28 23:59:23 rmind Exp $
 
 # Logically src/sys
 S!= cd ${.CURDIR}/../../../..; pwd
@@ -15,7 +15,7 @@ INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${S}/arch
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
 CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
-COPTS= -Os -fno-defer-pop -ffreestanding
+COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 

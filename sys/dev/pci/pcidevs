@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1158 2013/06/13 06:11:34 matt Exp $
+$NetBSD: pcidevs,v 1.1158.2.1 2013/08/28 23:59:25 rmind Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -633,6 +633,7 @@ vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
 vendor ASMEDIA		0x1b21  ASMedia
 vendor FRESCO		0x1b73	Fresco Logic
+vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -2543,6 +2544,7 @@ product INTEL GDT_RAID1		0x0600	GDT RAID
 product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL WIFI_LINK_2230_1	0x0887	Centrino Wireless-N 2230
 product INTEL WIFI_LINK_2230_2	0x0888	Centrino Wireless-N 2230
+product INTEL WIFI_LINK_6235	0x088e	Centrino Advanced-N 6235
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
@@ -4500,8 +4502,27 @@ product PROMISE PDC20619	0x6629	PDC20619 Dual Ultra/133 IDE Controller
 product PROMISE PDC20277	0x7275	PDC20277 Ultra/133 IDE Controller
 
 /* Nanjing QinHeng Electronics */
-product QINHENG CH352		0x3253	CH352
-product QINHENG CH353		0x7053	CH353
+product QINHENG CH352_2S	0x3253	CH352 2S
+product QINHENG CH353_4S	0x3453	CH353 4S
+product QINHENG CH356_8S	0x3853	CH356 8S
+product QINHENG CH356_6S	0x3873	CH356 6S
+product QINHENG CH353_2S1PAR	0x5046	CH353 2S, 1P (fixed address)
+product QINHENG CH352_1S1P	0x5053	CH352 1S, 1P
+product QINHENG CH357_4S	0x5334	CH357 4S
+product QINHENG CH358_4S1P	0x5334	CH358 4S, 1P
+product QINHENG CH358_8S	0x5338	CH358 8S
+product QINHENG CH359_16S	0x5838	CH359 16S
+product QINHENG CH353_2S1P	0x7053	CH353 2S, 1P
+product QINHENG CH356_4S1P	0x7073	CH356 4S, 1P
+product QINHENG CH355_4S	0x7173	CH355 4S
+
+/* Nanjing QinHeng Electronics (PCIe) */
+product QINHENG2 CH384_4S1P	0x3450	CH384 4S, 1P
+product QINHENG2 CH384_4S	0x3470	CH384 4S
+product QINHENG2 CH382_2S1P	0x3250	CH382 2S, 1P
+product QINHENG2 CH382_2S	0x3253	CH382 2S
+product QINHENG2 CH384_8S	0x3853	CH384 8S
+product QINHENG2 CH384_28S	0x4353	CH384 28S
 
 /* QLogic products */
 product QLOGIC QLA200	0x0119	QLA200

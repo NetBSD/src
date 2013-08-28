@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.261 2013/06/27 09:57:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.261.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.261 2013/06/27 09:57:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.261.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7596,7 +7596,8 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "EEPROM not present\n");
+	DPRINTF(WM_DEBUG_NVM, ("%s: No valid NVM bank present\n",
+		device_xname(sc->sc_dev)));
 	return -1;
 }
 
@@ -7628,7 +7629,7 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
 		    __func__);
-		return error;
+		flash_bank = 0;
 	}
 
 	/*

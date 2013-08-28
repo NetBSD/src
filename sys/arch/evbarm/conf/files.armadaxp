@@ -1,4 +1,4 @@
-#	$NetBSD: files.armadaxp,v 1.1 2013/05/29 22:52:19 rkujawa Exp $
+#	$NetBSD: files.armadaxp,v 1.1.4.1 2013/08/28 23:59:14 rmind Exp $
 #
 # Marvell Armada XP configuration info
 #
@@ -15,9 +15,4 @@ defflag	opt_cputypes.h			AURORA_IO_CACHE_COHERENCY AURORA_L2_PT_WALK
 
 # CPU support and integrated peripherals
 include	"arch/arm/marvell/files.marvell"
-
-# SPI Serial Peripheral Interface
-device 	mvspi: spibus
-attach	mvspi at mvsoc with mvspi_mbus
-file	dev/marvell/mvspi.c			mvspi
 

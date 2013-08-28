@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.42 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.42.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -64,7 +64,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

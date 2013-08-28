@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.142.2.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.142.2.2 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.2 2013/08/28 23:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1211,6 +1211,8 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 
 	const size_t nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(file_t *);
+	if (nfds == 0)
+		goto noop;
 
 	int * const fdp = kmem_alloc(nfds * sizeof(int), KM_SLEEP);
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
@@ -1315,16 +1317,16 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		cm->cmsg_len = CMSG_LEN(0);
 		rights->m_len = CMSG_SPACE(0);
 	}
+	rw_exit(&p->p_cwdi->cwdi_lock);
+	kmem_free(fdp, nfds * sizeof(int));
 
+ noop:
 	/*
 	 * Don't disclose kernel memory in the alignment space.
 	 */
 	KASSERT(cm->cmsg_len <= rights->m_len);
 	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
 	    cm->cmsg_len);
-
-	rw_exit(&p->p_cwdi->cwdi_lock);
-	kmem_free(fdp, nfds * sizeof(int));
 	return error;
 }
 

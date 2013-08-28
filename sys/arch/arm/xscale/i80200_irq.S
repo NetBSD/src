@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.16 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.16.50.1 2013/08/28 23:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,9 +38,8 @@
 #include "assym.h"
 #include "opt_perfctrs.h"
 
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 #include <arm/xscale/i80200reg.h>
 

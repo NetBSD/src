@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.59 2012/10/17 20:19:55 drochner Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.59.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.59 2012/10/17 20:19:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.59.2.1 2013/08/28 23:59:35 rmind Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.59 2012/10/17 20:19:55 drochner Exp $
 #include <sys/select.h>
 #include <sys/namei.h>
 #include <sys/callout.h>
+#include <sys/pcu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -388,6 +389,10 @@ cpu_xc_offline(struct cpu_info *ci)
 		lwp_migrate(l, mci);
 	}
 	mutex_exit(proc_lock);
+
+#if PCU_UNIT_COUNT > 0
+	pcu_save_all_on_cpu();
+#endif
 
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();

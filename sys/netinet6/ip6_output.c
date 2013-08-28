@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.153.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.153.2.2 2013/08/28 23:59:36 rmind Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,12 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.153.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.153.2.2 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,9 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.153.2.1 2013/07/17 03:16:31 rmind E
 
 #include <net/if.h>
 #include <net/route.h>
-#ifdef PFIL_HOOKS
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -110,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.153.2.1 2013/07/17 03:16:31 rmind E
 
 #include <net/net_osdep.h>
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
@@ -692,16 +687,15 @@ ip6_output(
 		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
+
 	/*
 	 * Send the packet to the outgoing interface.
 	 * If necessary, do IPv6 fragmentation before sending.

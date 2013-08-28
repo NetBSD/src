@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.46 2011/11/28 08:05:05 tls Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.46.12.1 2013/08/28 23:59:27 rmind Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.46 2011/11/28 08:05:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.46.12.1 2013/08/28 23:59:27 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 #endif
 
 #include "pfsync.h"
@@ -3327,16 +3326,16 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 static int
 pf_pfil_attach(void)
 {
-	struct pfil_head *ph_inet;
+	pfil_head_t *ph_inet;
 #ifdef INET6
-	struct pfil_head *ph_inet6;
+	pfil_head_t *ph_inet6;
 #endif /* INET6 */
 	int error;
 
 	if (pf_pfil_attached)
 		return (EBUSY);
 
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 	if (ph_inet)
 		error = pfil_add_hook((void *)pfil4_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet);
@@ -3346,7 +3345,7 @@ pf_pfil_attach(void)
 		return (error);
 
 #ifdef INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 	if (ph_inet6)
 		error = pfil_add_hook((void *)pfil6_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet6);
@@ -3371,20 +3370,20 @@ bad:
 static int
 pf_pfil_detach(void)
 {
-	struct pfil_head *ph_inet;
+	pfil_head_t *ph_inet;
 #ifdef INET6
-	struct pfil_head *ph_inet6;
+	pfil_head_t *ph_inet6;
 #endif /* INET6 */
 
 	if (pf_pfil_attached == 0)
 		return (EBUSY);
 
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 	if (ph_inet)
 		pfil_remove_hook((void *)pfil4_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet);
 #ifdef INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 	if (ph_inet6)
 		pfil_remove_hook((void *)pfil6_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet6);

@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.16 2013/06/05 23:08:00 christos Exp $
+#	$NetBSD: MARVELL_NAS,v 1.16.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -77,7 +77,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT	# Compat for IP-Filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2011/12/22 15:33:29 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.166.10.1 2013/08/28 23:59:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -273,6 +273,117 @@ Lstart3:
 	movl	%a1,%d1
 	.word	0xf518			| pflusha
 	.long	0x4e7b1807		| movc %d1,%srp
+
+#if defined(DJMEMCMAX)
+	movl	%a3,%sp@-
+	cmp	#MACH_MACC610,_C_LABEL(machineid)
+	jra	Ldjmemc610
+	cmp	#MACH_MACQ610,_C_LABEL(machineid)
+	jra	Ldjmemc610
+	cmp	#MACH_MACC650,_C_LABEL(machineid)
+	jra	Ldjmemccfg
+	cmp	#MACH_MACQ650,_C_LABEL(machineid)
+	jra	Ldjmemccfg
+	cmp	#MACH_MACQ800,_C_LABEL(machineid)
+	jra	Ldjmemccfg
+
+	jra	Lnodjmemc
+       
+Ldjmemccfg:
+	movl	#0x50f0e00c,%a0
+	movl	%a0@,%d0	| determine where RAM SIMMs start
+	andl	#0x000000FF,%d0
+	addl	#0x10,%d0	| bank 3 start
+	addl	#0x10,%d0	| bank 4 start
+
+	movl	#0x50f0e014,%a0
+	movl	%d0,%a0@+	| bank 4
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 5
+	addl	#0x10,%d0
+
+	movl	%d0,%a0@+	| bank 6
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 7
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 8
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 9
+	addl	#0x10,%d0
+	jra	Ldjmemctop
+
+Ldjmemc610:
+	movl	#0x50f0e00c,%a0
+	movl	%a0@,%d0	| determine where RAM SIMMs start
+	andl	#0x000000FF,%d0
+	addl	#0x10,%d0	| bank 3 start
+
+	movl	#0x50f0e014,%a0
+	movl	%d0,%a0@+	| bank 4
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 5
+	movl	%d0,%a0@+	| bank 6
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 7
+	movl	%d0,%a0@+	| bank 8
+	addl	#0x10,%d0
+	movl	%d0,%a0@+	| bank 9
+
+Ldjmemctop:
+	movl	#0x50F0E02C,%a0
+	movl	%d0,%a0@	| memtop
+
+	| preserve ~512KB beyond 4MB just in case
+	movl	#0x400000,%a0
+	movl	#0x9000000,%a2
+	movl	#0xFFFF,%d0
+L1stbankcopy1:
+	movl	%a0@+,%a2@+
+	dbra	%d0,L1stbankcopy1
+	movl	#0xFFFF,%d0
+L1stbankcopy2:
+	movl	%a0@+,%a2@+
+	dbra	%d0,L1stbankcopy2
+
+	lea	_ASM_LABEL(Lsetup1stbank),%a0
+	movl	#0x8800000,%a2	| Pick a location that should be in bank 4
+	movl	#0x64,%d0
+Ldjcopy:
+	movl	%a0@+,%a2@+
+	dbra	%d0,Ldjcopy
+
+	movl	#0x8800000,%a0
+	lea	_ASM_LABEL(Ldjmemcdone),%a2
+	jmp	%a0@
+
+Lsetup1stbank:
+	| now configure banks 2 & 3
+	movl	#0x50f0e00c,%a0
+	movl	%a0@,%d0	| determine where RAM SIMMs start
+	andl	#0x000000FF,%d0
+	movl	%d0,%a0@+
+	addl	#0x10,%d0	| bank 3 start
+	movl	%d0,%a0@
+
+	| and return to where we came from.
+	jmp	%a2@
+
+Ldjmemcdone:
+	movl	#0x400000,%a2
+	movl	#0x9000000,%a0
+	movl	#0xFFFF,%d0
+Lcopyback1:
+	movl	%a0@+,%a2@+
+	dbra	%d0,Lcopyback1
+	movl	#0xFFFF,%d0
+Lcopyback2:
+	movl	%a0@+,%a2@+
+	dbra	%d0,Lcopyback2
+
+Lnodjmemc:
+	movl	%sp@+,%a3
+#endif
+
 #if PGSHIFT == 13
 	movl	#0xc000,%d0
 #else

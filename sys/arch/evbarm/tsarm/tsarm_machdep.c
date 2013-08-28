@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.20 2012/11/12 18:00:40 skrll Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.20.2.1 2013/08/28 23:59:15 rmind Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20 2012/11/12 18:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20.2.1 2013/08/28 23:59:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20 2012/11/12 18:00:40 skrll Exp
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -99,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.20 2012/11/12 18:00:40 skrll Exp
 #include <ddb/db_extern.h>
 
 #include <acorn32/include/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 /* Define various stack sizes in pages */

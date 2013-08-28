@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.22 2013/06/25 21:07:22 stacktic Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.22.2.1 2013/08/28 23:59:36 rmind Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -295,7 +295,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define RUMP_MSG_IOVUSRSPACE	0x4000000	
 #define RUMP_MSG_LENUSRSPACE	0x8000000	
 
-/*	NetBSD: in.h,v 1.88 2013/04/27 21:35:24 joerg Exp 	*/
+/*	NetBSD: in.h,v 1.87 2012/06/22 14:54:35 christos Exp 	*/
 #define	RUMP_IP_OPTIONS		1    
 #define	RUMP_IP_HDRINCL		2    
 #define	RUMP_IP_TOS			3    
@@ -480,7 +480,7 @@ struct rump_modctl_load {
 	size_t ml_propslen;
 };
 
-/*	NetBSD: ufsmount.h,v 1.40 2013/06/16 13:33:30 hannken Exp 	*/
+/*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
 struct rump_ufs_args {
 	char	*fspec;			/* block special device to mount */
 };
@@ -488,6 +488,15 @@ struct rump_ufs_args {
 /*	NetBSD: sysvbfs_args.h,v 1.1 2008/09/04 12:07:30 pooka Exp 	*/
 struct rump_sysvbfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
+};
+
+/*	NetBSD: dirent.h,v 1.28 2011/09/27 01:40:32 christos Exp 	*/
+struct rump_dirent {
+	uint64_t d_fileno;			/* file number of entry */
+	uint16_t d_reclen;		/* length of this record */
+	uint16_t d_namlen;		/* length of string in d_name */
+	uint8_t  d_type; 		/* file type, see below */
+	char	d_name[511 + 1];	/* name must be no longer than this */
 };
 
 #endif /* _RUMP_RUMPDEFS_H_ */

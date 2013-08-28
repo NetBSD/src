@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.3.10.1 2013/08/28 15:21:49 rmind Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.3.10.2 2013/08/28 23:59:36 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.1 2013/08/28 15:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.2 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -52,6 +52,7 @@ struct ifqueue mplsintrq;
 static int mpls_attach(struct socket *, int);
 static int mpls_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	struct mbuf *, struct lwp *);
+static void sysctl_net_mpls_setup(struct sysctllog **);
 
 #ifdef MBUFTRACE
 struct mowner mpls_owner = MOWNER_INIT("MPLS", "");
@@ -65,6 +66,7 @@ int mpls_forwarding = 0;
 int mpls_accept = 0;
 int mpls_mapprec_inet = 1;
 int mpls_mapclass_inet6 = 1;
+int mpls_rfc4182 = 1;
 
 void mpls_init(void)
 {
@@ -73,6 +75,8 @@ void mpls_init(void)
 #endif
 	memset(&mplsintrq, 0, sizeof(mplsintrq));
 	mplsintrq.ifq_maxlen = 256;
+
+	sysctl_net_mpls_setup(NULL);
 }
 
 static int
@@ -155,7 +159,8 @@ struct domain mplsdomain = {
 /*
  * Sysctl for MPLS variables.
  */
-SYSCTL_SETUP(sysctl_net_mpls_setup, "sysctl net.mpls subtree setup")
+static void
+sysctl_net_mpls_setup(struct sysctllog **clog)
 {
 
         sysctl_createv(clog, 0, NULL, NULL,
@@ -192,6 +197,12 @@ SYSCTL_SETUP(sysctl_net_mpls_setup, "sysctl net.mpls subtree setup")
 		       CTLTYPE_INT, "ifq_len",
 		       SYSCTL_DESCR("MPLS queue length"),
 		       NULL, 0, &mplsintrq.ifq_maxlen, 0,
+		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rfc4182",
+		       SYSCTL_DESCR("RFC 4182 conformance"),
+		       NULL, 0, &mpls_rfc4182, 0,
 		       CTL_NET, PF_MPLS, CTL_CREATE, CTL_EOL);
 #ifdef INET
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.141 2013/03/17 00:44:16 christos Exp $
+#	$NetBSD: files.sparc64,v 1.141.6.1 2013/08/28 23:59:22 rmind Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -37,7 +37,7 @@ attach	schizo at mainbus
 device	pyro: pcibus, sysmon_power, sysmon_taskq
 attach	pyro at mainbus
 include "dev/pci/files.pci"
-file	arch/sparc64/dev/psycho.c		psycho
+file	arch/sparc64/dev/psycho.c		psycho needs-flag
 file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
@@ -188,7 +188,7 @@ device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
-device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons, i2cexec, i2c_bitbang, ddc_read_edid, edid, videomode
+device ffb: wsemuldisplaydev, rasops32, fb, vcons, i2cexec, i2c_bitbang, ddc_read_edid, edid, videomode
 file	arch/sparc64/dev/ffb.c			ffb
 defflag opt_ffb.h FFB_DEBUG FFB_SYNC
 attach ffb at mainbus,upa with ffb_mainbus

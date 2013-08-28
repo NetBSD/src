@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2013/06/17 04:41:12 matt Exp $
+#	$NetBSD: genassym.cf,v 1.62.2.1 2013/08/28 23:59:11 rmind Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,10 +47,10 @@ include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
 include <arm/vfpreg.h>
+include <arm/locore.h>
 
 include <arm/arm32/pte.h>
 include <machine/pmap.h>
-include <machine/frame.h>
 include <machine/pcb.h>
 include <machine/vmparam.h>
 
@@ -106,6 +106,7 @@ define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
 define	L1_TABLE_SIZE		L1_TABLE_SIZE
 define	L1_TYPE_S		L1_TYPE_S
 define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
+define	L2_S_SIZE		L2_S_SIZE
 
 define	L1_C_PROTO_generic	L1_C_PROTO_generic
 
@@ -164,13 +165,18 @@ define	PR_SCALE		offsetof(struct uprof, pr_scale)
 define	SIGTRAP			SIGTRAP
 define	SIGEMT			SIGEMT
 
+define	TF_SPSR			offsetof(struct trapframe, tf_spsr)
 define	TF_FILL			offsetof(struct trapframe, tf_fill)
 define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R4			offsetof(struct trapframe, tf_r4)
 define	TF_R6			offsetof(struct trapframe, tf_r6)
+define	TF_R8			offsetof(struct trapframe, tf_r8)
 define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_R12			offsetof(struct trapframe, tf_r12)
 define	TF_USR_SP		offsetof(struct trapframe, tf_usr_sp)
+define	TF_USR_LR		offsetof(struct trapframe, tf_usr_lr)
 define	TF_SVC_SP		offsetof(struct trapframe, tf_svc_sp)
+define	TF_SVC_LR		offsetof(struct trapframe, tf_svc_lr)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
 
 define	PROCSIZE		sizeof(struct proc)

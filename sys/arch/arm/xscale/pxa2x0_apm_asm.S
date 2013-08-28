@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <machine/asm.h>
-#include <machine/cpu.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 #include <arch/arm/xscale/pxa2x0reg.h>
 #include <arch/arm/sa11x0/sa11x0_reg.h>

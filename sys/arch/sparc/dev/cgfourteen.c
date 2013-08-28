@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.75 2013/06/04 22:31:30 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.75.2.1 2013/08/28 23:59:22 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -110,7 +110,7 @@ static void	cgfourteenunblank(device_t);
 
 CFATTACH_DECL_NEW(cgfourteen, sizeof(struct cgfourteen_softc),
     cgfourteenmatch, cgfourteenattach, NULL, NULL);
-        
+
 extern struct cfdriver cgfourteen_cd;
 
 dev_type_open(cgfourteenopen);
@@ -190,14 +190,6 @@ cgfourteenmatch(device_t parent, struct cfdata *cf, void *aux)
 	/* Check driver name */
 	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
-
-/*
- * Set COLOUR_OFFSET to the offset of the video RAM.  This is to provide
- *  space for faked overlay junk for the cg8 emulation.
- *
- * As it happens, this value is correct for both cg3 and cg8 emulation!
- */
-#define COLOUR_OFFSET (256*1024)
 
 #if NWSDISPLAY > 0
 static int	cg14_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -554,6 +546,11 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 		offset = sc->sc_fbaddr + CG14_FB_PR32;
 		off -= CG14_R32_VOFF;
 #if NSX > 0
+	/*
+	 * for convenience we also map the SX ranges here:
+	 * - one page userland registers
+	 * - CG14-sized IO space at 0x800000000 ( not a typo, it's above 4GB )
+	 */
 	} else if (sc->sc_sx == NULL) {
 		return -1;
 	} else if (off >= CG14_SXREG_VOFF &&
@@ -568,12 +565,7 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 #endif
 	} else
 		return -1;
-	/*
-	 * for convenience we also map the SX ranges here:
-	 * - one page userland registers
-	 * - CG14-sized IO space at 0x800000000 ( not a typo, it's above 4GB )
-	 * bus_space_mmap() should accept 64bit bus_addr_t's by the look of it
-	 */
+	
 	return (bus_space_mmap(sc->sc_bustag, offset, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.5 2011/01/11 09:24:06 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.5.22.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5 2011/01/11 09:24:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5.22.1 2013/08/28 23:59:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -84,5 +84,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
 	sin->sin_addr.s_addr = inet_addr("127.255.255.255");
 
 	in_control(so, SIOCAIFADDR, &ia, lo0ifp, curlwp);
+	if_up(lo0ifp);
 	soclose(so);
 }

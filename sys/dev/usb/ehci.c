@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.207.2.1 2013/08/28 23:59:27 rmind Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.207 2013/06/25 15:32:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.207.2.1 2013/08/28 23:59:27 rmind Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1616,7 +1616,7 @@ ehci_open(usbd_pipe_handle pipe)
 	ehci_softc_t *sc = dev->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	u_int8_t addr = dev->address;
-	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
+	u_int8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -2544,7 +2544,7 @@ ehci_root_ctrl_close(usbd_pipe_handle pipe)
 }
 
 Static void
-ehci_root_intr_done(usbd_xfer_handle xfer)
+ehci_root_ctrl_done(usbd_xfer_handle xfer)
 {
 	xfer->hcpriv = NULL;
 }
@@ -2613,7 +2613,7 @@ ehci_root_intr_close(usbd_pipe_handle pipe)
 }
 
 Static void
-ehci_root_ctrl_done(usbd_xfer_handle xfer)
+ehci_root_intr_done(usbd_xfer_handle xfer)
 {
 	xfer->hcpriv = NULL;
 }

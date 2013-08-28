@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.270 2013/05/31 16:16:40 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.270.2.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.270 2013/05/31 16:16:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.270.2.1 2013/08/28 23:59:37 rmind Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -282,7 +282,6 @@ rump_init(void)
 	aprint_verbose("%s%s", copyright, version);
 
 	rump_intr_init(numcpu);
-	rump_tsleep_init();
 
 	/* init minimal lwp/cpu context */
 	l = &lwp0;
@@ -293,6 +292,8 @@ rump_init(void)
 	/* lwp0 isn't created like other threads, so notify hypervisor here */
 	rumpuser_curlwpop(RUMPUSER_LWP_CREATE, l);
 	rumpuser_curlwpop(RUMPUSER_LWP_SET, l);
+
+	rump_tsleep_init();
 
 	rumpuser_mutex_init(&rump_giantlock, RUMPUSER_MTX_SPIN);
 	ksyms_init();

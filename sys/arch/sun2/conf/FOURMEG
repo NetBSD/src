@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.54 2013/06/05 23:08:03 christos Exp $
+# $NetBSD: FOURMEG,v 1.54.2.1 2013/08/28 23:59:23 rmind Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.54 $"
+#ident 		"FOURMEG-$Revision: 1.54.2.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -81,7 +81,6 @@ options 	INET		# IP protocol stack support
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)

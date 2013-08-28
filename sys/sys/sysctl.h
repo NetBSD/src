@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.207 2013/02/02 14:02:09 matt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.207.2.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -159,13 +159,13 @@ struct ctlname {
 /*
  * Meta-identifiers
  */
-#define CTL_EOL		-1		/* end of createv/destroyv list */
-#define CTL_QUERY	-2		/* enumerates children of a node */
-#define CTL_CREATE	-3		/* node create request */
-#define CTL_CREATESYM	-4		/* node create request with symbol */
-#define CTL_DESTROY	-5		/* node destroy request */
-#define CTL_MMAP	-6		/* mmap request */
-#define CTL_DESCRIBE	-7		/* get node descriptions */
+#define CTL_EOL		(-1)		/* end of createv/destroyv list */
+#define CTL_QUERY	(-2)		/* enumerates children of a node */
+#define CTL_CREATE	(-3)		/* node create request */
+#define CTL_CREATESYM	(-4)		/* node create request with symbol */
+#define CTL_DESTROY	(-5)		/* node destroy request */
+#define CTL_MMAP	(-6)		/* mmap request */
+#define CTL_DESCRIBE	(-7)		/* get node descriptions */
 
 /*
  * Top-level identifiers

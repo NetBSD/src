@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.59 2013/03/01 18:25:52 joerg Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.59.6.1 2013/08/28 23:59:22 rmind Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -180,7 +180,6 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

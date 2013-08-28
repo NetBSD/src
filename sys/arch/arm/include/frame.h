@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.4.1 2013/08/28 23:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -52,7 +52,7 @@
 
 typedef struct trapframe {
 	register_t tf_spsr; /* Zero on arm26 */
-	register_t tf_fill; /* fill here so r0 will dword aligned */
+	register_t tf_fill; /* fill here so r0 will be dword aligned */
 	register_t tf_r0;
 	register_t tf_r1;
 	register_t tf_r2;

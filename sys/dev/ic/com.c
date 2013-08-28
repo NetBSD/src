@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.310 2013/05/01 07:38:00 mlelstv Exp $ */
+/* $NetBSD: com.c,v 1.310.4.1 2013/08/28 23:59:25 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.310 2013/05/01 07:38:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.310.4.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -251,7 +251,7 @@ void	com_kgdb_putc(void *, int);
 	com_data, com_data, com_dlbl, com_dlbh, com_ier, com_iir, com_fifo, \
 	com_efr, com_lcr, com_mcr, com_lsr, com_msr, 0, 0, 0, 0, 0, 0, 0, 0, \
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr }
- 
+
 #ifdef COM_16750
 const bus_size_t com_std_map[32] = COM_REG_16750;
 #else
@@ -416,7 +416,11 @@ com_attach_subr(struct com_softc *sc)
 			    (u_long)comcons_info.regs.cr_iobase);
 		}
 
-		
+#ifdef COM_16750
+		/* Use in comintr(). */
+		sc->sc_lcr = cflag2lcr(comcons_info.cflag);
+#endif
+
 		/* Make sure the console is always "hardwired". */
 		delay(10000);			/* wait for output to finish */
 		if (is_console) {
@@ -436,7 +440,7 @@ com_attach_subr(struct com_softc *sc)
 		fifo_msg = "Au1X00 UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
- 
+
 	case COM_TYPE_16550_NOERS:
 		sc->sc_fifolen = 16;
 		fifo_msg = "ns16650, no ERS, working fifo";
@@ -477,8 +481,7 @@ com_attach_subr(struct com_softc *sc)
 			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
 			if (CSR_READ_1(regsp, COM_REG_EFR) == 0) {
-				CSR_WRITE_1(regsp, COM_REG_LCR,
-				    lcr | LCR_DLAB);
+				CSR_WRITE_1(regsp, COM_REG_LCR, lcr | LCR_DLAB);
 				if (CSR_READ_1(regsp, COM_REG_EFR) == 0) {
 					CLR(sc->sc_hwflags, COM_HW_FIFO);
 					sc->sc_fifolen = 0;
@@ -2229,7 +2232,7 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 		if (type == COM_TYPE_AU1x00) {
 			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
 		} else {
-			/* no EFR on alchemy */ 
+			/* no EFR on alchemy */
 			if (type != COM_TYPE_16550_NOERS) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);

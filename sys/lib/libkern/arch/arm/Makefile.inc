@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2013/06/21 05:06:24 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.18.2.1 2013/08/28 23:59:35 rmind Exp $
 
 SRCS+=	byte_swap_2.S byte_swap_4.S
 SRCS+=	ffs.S
@@ -8,5 +8,18 @@ SRCS+=	modsi3.S umodsi3.S
 
 .if !empty(MACHINE_ARCH:Mearm*)
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S __aeabi_lcmp.c __aeabi_ulcmp.c
-.else
+SRCS+=	unwind_stub.c
+.endif
+.if empty(MACHINE_ARCH:Mearmv7*)
+CPUFLAGS.ffs.S+=	-marm
+.endif
+CPUFLAGS.divide.S+=	-marm
+CPUFLAGS.memcmp.S+=	-marm
+CPUFLAGS.memcpy.S+=	-marm
+CPUFLAGS.memmove.S+=	-marm
+CPUFLAGS.memset.S+=	-marm
+.if empty(CPPFLAGS:M-D_STANDALONE)
+CPUFLAGS.strcpy.S+=	-marm
+CPUFLAGS.strlcpy.S+=	-marm
+CPUFLAGS.strncpy.S+=	-marm
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.52 2012/08/09 00:48:06 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.52.4.1 2013/08/28 23:59:22 rmind Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.52 2012/08/09 00:48:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.52.4.1 2013/08/28 23:59:22 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -339,6 +339,7 @@ ffb_attach(device_t self)
 
 	vcons_init(&sc->vd, sc, &ffb_stdscreen, &ffb_accessops);
 	sc->vd.init_screen = ffb_init_screen;
+	ri = &ffb_console_screen.scr_ri;
 
 	/* we mess with ffb_console_screen only once */
 	if (sc->sc_console) {
@@ -354,9 +355,9 @@ ffb_attach(device_t self)
 		if (ffb_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &ffb_console_screen, 1, &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
-	ri = &ffb_console_screen.scr_ri;
 
 	ffb_stdscreen.nrows = ri->ri_rows;
 	ffb_stdscreen.ncols = ri->ri_cols;

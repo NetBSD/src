@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.29 2012/08/16 17:35:01 matt Exp $ */
+/* $NetBSD: except.c,v 1.29.4.1 2013/08/28 23:59:09 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29.4.1 2013/08/28 23:59:09 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,12 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29 2012/08/16 17:35:01 matt Exp $");
 #include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/armreg.h>
-#include <arm/cpuconf.h>
-#include <machine/intr.h>
+#include <arm/locore.h>
+
 #include <machine/machdep.h>
 #include <machine/pcb.h>
 

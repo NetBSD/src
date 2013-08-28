@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.108 2013/04/27 18:19:27 christos Exp $
+# $NetBSD: FALCON,v 1.108.4.1 2013/08/28 23:59:12 rmind Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -22,7 +22,6 @@ options INET6 # IPV6
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
-options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
 options IPFILTER_COMPAT # Compat for IP-Filter

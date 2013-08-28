@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.51.2.1 2013/08/28 23:59:13 rmind Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51.2.1 2013/08/28 23:59:13 rmind Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,9 +134,12 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
-#include "prcm.h"
+
 #include "com.h"
+#include "omapwdt32k.h"
+#include "prcm.h"
 #include "sdhc.h"
+#include "ukbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +184,9 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap2_gpio.h>
 #ifdef TI_AM335X
+# if NPRCM == 0
+#  error no prcm device configured.
+# endif
 # include <arm/omap/am335x_prcm.h>
 # if NSDHC > 0
 #  include <arm/omap/omap2_obiovar.h>
@@ -199,9 +205,6 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.51 2013/06/28 00:53:04 matt Exp
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcreg.h>
 
-#include "prcm.h"
-#include "omapwdt32k.h"
-#include "ukbd.h"
 #include <dev/usb/ukbdvar.h>
 
 BootConfig bootconfig;		/* Boot config storage */
@@ -233,6 +236,7 @@ uint32_t omap5_cnt_frq;
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
+#define	OMAP_L4_CORE_VOFFSET	(OMAP_L4_CORE_VBASE - OMAP_L4_CORE_BASE)
 
 /* Prototypes */
 
@@ -249,9 +253,6 @@ static void omap3_cpu_clk(void);
 #endif
 #if defined(OMAP_4XXX) || defined(OMAP_5XXX)
 static void omap4_cpu_clk(void);
-#endif
-#if defined(TI_AM335X)
-static void am335x_cpu_clk(void);
 #endif
 #if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 static psize_t emif_memprobe(void);
@@ -466,6 +467,9 @@ initarm(void *arg)
 	omap4_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(TI_AM335X)
+	prcm_bootstrap(OMAP2_CM_BASE + OMAP_L4_CORE_VOFFSET);
+	// find our reference clock.
+	am335x_sys_clk(TI_AM335X_CTLMOD_BASE + OMAP_L4_CORE_VOFFSET);
 	am335x_cpu_clk();		// find our CPU speed.
 #endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
@@ -485,7 +489,7 @@ initarm(void *arg)
 	    OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 	arml2cc_init(&omap_bs_tag, pl310_bh, 0);
 #endif
-#if defined(TI_AM335X)
+#if defined(TI_AM335X) && defined(VERBOSE_ARM_INIT)
 	am335x_cpu_clk();		// find our CPU speed.
 #endif
 #if 1
@@ -558,10 +562,12 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
 	    mapallmem_p);
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	/* "bootargs" env variable is passed as 4th argument to kernel */
-	if ((uboot_args[3] & 0xf0000000) == 0x80000000) {
+	if (uboot_args[3] - 0x80000000 < ram_size) {
 		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
+#endif
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
@@ -708,7 +714,7 @@ static kgdb_port_init(void)
 void
 omap3_cpu_clk(void)
 {
-	const vaddr_t prm_base = OMAP2_PRM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const vaddr_t prm_base = OMAP2_PRM_BASE + OMAP_L4_CORE_VOFFSET;
 	const uint32_t prm_clksel = *(volatile uint32_t *)(prm_base + PLL_MOD + OMAP3_PRM_CLKSEL);
 	static const uint32_t prm_clksel_freqs[] = OMAP3_PRM_CLKSEL_FREQS;
 	const uint32_t sys_clk = prm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP3_PRM_CLKSEL_CLKIN)];
@@ -731,8 +737,8 @@ omap3_cpu_clk(void)
 void
 omap4_cpu_clk(void)
 {
-	const vaddr_t prm_base = OMAP2_PRM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
-	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const vaddr_t prm_base = OMAP2_PRM_BASE + OMAP_L4_CORE_VOFFSET;
+	const vaddr_t cm_base = OMAP2_CM_BASE + OMAP_L4_CORE_VOFFSET;
 	static const uint32_t cm_clksel_freqs[] = OMAP4_CM_CLKSEL_FREQS;
 	const uint32_t prm_clksel = *(volatile uint32_t *)(prm_base + OMAP4_CM_SYS_CLKSEL);
 	const u_int clksel = __SHIFTOUT(prm_clksel, OMAP4_CM_SYS_CLKSEL_CLKIN);
@@ -804,31 +810,6 @@ omap4_cpu_clk(void)
 }
 #endif /* OMAP_4XXX || OMAP_5XXX */
 
-#if defined(TI_AM335X)
-void
-am335x_cpu_clk(void)
-{
-	static const uint32_t sys_clks[4] = {
-		[0] = 19200000, [1] = 24000000, [2] = 25000000, [3] = 26000000
-	};
-	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
-	const vaddr_t cm_wkup_base = cm_base + AM335X_PRCM_CM_WKUP;
-	const vaddr_t ctlmod_base = TI_AM335X_CTLMOD_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
-	const uint32_t control_status = *(const volatile uint32_t *)(ctlmod_base + CTLMOD_CONTROL_STATUS);
-	const uint32_t sys_clk = sys_clks[__SHIFTOUT(control_status, CTLMOD_CONTROL_STATUS_SYSBOOT1)];
-	const uint32_t clksel_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_CLKSEL_DPLL_MPU);
-	const uint32_t div_m2_dpll_mpu = *(volatile uint32_t *)(cm_wkup_base + TI_AM335X_CM_DIV_M2_DPLL_MPU);
-	const uint32_t m = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
-	const uint32_t n = __SHIFTOUT(clksel_dpll_mpu, TI_AM335X_CM_CLKSEL_DPLL_MPU_DPLL_DIV);
-	const uint32_t m2 = __SHIFTOUT(div_m2_dpll_mpu, TI_AM335X_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV);
-	/* XXX This ignores CM_CLKSEL_DPLL_MPU[DPLL_REGM4XEN].  */
-	curcpu()->ci_data.cpu_cc_freq = ((m * (sys_clk / (n + 1))) / m2);
-	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u\n",
-	    __func__, curcpu()->ci_data.cpu_cc_freq,
-	    sys_clk, m, n, n+1, m2);
-	omap_sys_clk = sys_clk;
-}
-#endif /* TI_AM335X */
 
 #if defined(OMAP_4XXX) || defined(OMAP_5XXX) || defined(TI_AM335X)
 static inline uint32_t
@@ -997,6 +978,23 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
 		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
 		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
+#if defined(TI_DM37XX)
+		/* XXX Beagleboard specific port configuration */
+		prop_dictionary_set_uint16(dict, "nports", 3);
+		prop_dictionary_set_cstring(dict, "port0-mode", "none");
+		prop_dictionary_set_cstring(dict, "port1-mode", "phy");
+		prop_dictionary_set_cstring(dict, "port2-mode", "none");
+		prop_dictionary_set_bool(dict, "phy-reset", true);
+		prop_dictionary_set_int16(dict, "port0-gpio", -1);
+		prop_dictionary_set_int16(dict, "port1-gpio", 56);
+		prop_dictionary_set_bool(dict, "port1-gpioval", true);
+		prop_dictionary_set_int16(dict, "port2-gpio", -1);
+#if 0
+		prop_dictionary_set_uint16(dict, "dpll5-m", 443);
+		prop_dictionary_set_uint16(dict, "dpll5-n", 11);
+		prop_dictionary_set_uint16(dict, "dpll5-m2", 4);
+#endif
 #endif
 #if defined(OMAP_4430)
 		prop_dictionary_set_uint16(dict, "nports", 2);

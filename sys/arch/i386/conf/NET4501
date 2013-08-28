@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.81 2013/06/05 23:08:01 christos Exp $
+# $NetBSD: NET4501,v 1.81.2.1 2013/08/28 23:59:17 rmind Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.81 $"
+#ident 		"NET4501-$Revision: 1.81.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -140,7 +140,6 @@ options 	PIM		# Protocol Independent Multicast
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

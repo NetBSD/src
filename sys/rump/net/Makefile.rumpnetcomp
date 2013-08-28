@@ -1,7 +1,14 @@
-#	$NetBSD: Makefile.rumpnetcomp,v 1.5 2012/08/15 17:56:58 rmind Exp $
+#	$NetBSD: Makefile.rumpnetcomp,v 1.5.4.1 2013/08/28 23:59:37 rmind Exp $
 #
 
-RUMPNETCOMP=	agr bridge net net80211 netbt netinet npf local shmif virtif
+.include <bsd.own.mk>
+
+RUMPNETCOMP=	agr bridge net net80211 netbt netinet netinet6 netmpls npf
+RUMPNETCOMP+=	local shmif
+
+.if ${RUMP_VIRTIF:Uyes} == "yes"
+RUMPNETCOMP+=	virtif
+.endif
 
 RUMPNETSOCKIN=	sockin
 

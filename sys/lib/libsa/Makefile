@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.78 2012/08/10 16:05:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.78.4.1 2013/08/28 23:59:35 rmind Exp $
 
 LIB=	sa
-NOPIC=	# defined
-NOPROFILE=# defined
+LIBISPRIVATE?= yes
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -80,10 +79,6 @@ SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
-# only needed during build
-libinstall::
-
-.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

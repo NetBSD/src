@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2013/04/27 21:43:19 christos Exp $
+# $NetBSD: GENERIC,v 1.59.4.1 2013/08/28 23:59:13 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -87,7 +87,6 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	PFIL_HOOKS	# packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues

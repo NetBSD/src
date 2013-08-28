@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.7 2013/06/26 08:30:40 matt Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.7.2.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,27 +68,27 @@ static inline int
 sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 	register_t *rval, int code)
 {
+	const bool do_trace = l->l_proc->p_trace_enabled &&
+	    (sy->sy_flags & SYCALL_INDIRECT) == 0;
 	int error;
 
-        if (!__predict_false(l->l_proc->p_trace_enabled)
-            || __predict_false(sy->sy_flags & SYCALL_INDIRECT)
-            || (error = trace_enter(code, uap, sy->sy_narg)) == 0) {
-                rval[0] = 0;
+	if (__predict_true(!do_trace) || (error = trace_enter(code, uap,
+	    sy->sy_narg)) == 0) {
+		rval[0] = 0;
 #if !defined(__mips__)
 		/*
 		 * Due to the mips userland code for SYS_break needing v1 to be
 		 * preserved, we can't clear this on mips. 
 		 */
-                rval[1] = 0;
+		rval[1] = 0;
 #endif
-                error = sy_call(sy, l, uap, rval);
-        }       
-        
-        if (__predict_false(l->l_proc->p_trace_enabled)
-            && !__predict_false(sy->sy_flags & SYCALL_INDIRECT)) {
-                trace_exit(code, rval, error);
-        }
-	return error;                
+		error = sy_call(sy, l, uap, rval);
+	}
+
+	if (__predict_false(do_trace)) {
+		trace_exit(code, rval, error);
+	}
+	return error;
 }
 
 /* inclusion in the kernel currently depends on SYSCALL_DEBUG */

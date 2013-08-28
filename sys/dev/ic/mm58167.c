@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.14 2009/12/12 16:12:05 tsutsui Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.14.26.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.14 2009/12/12 16:12:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.14.26.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,7 +68,7 @@ mm58167_attach(struct mm58167_softc *sc)
 	aprint_normal(": mm58167");
 
 	handle = &sc->_mm58167_todr_handle;
-	memset(handle, 0, sizeof(handle));
+	memset(handle, 0, sizeof(*handle));
 	handle->cookie = sc;
 	handle->todr_gettime_ymdhms = mm58167_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mm58167_settime_ymdhms;

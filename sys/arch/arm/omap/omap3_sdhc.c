@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.12 2013/06/28 00:50:22 matt Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.12.2.1 2013/08/28 23:59:12 rmind Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.12 2013/06/28 00:50:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.12.2.1 2013/08/28 23:59:12 rmind Exp $");
 
 #include "opt_omap.h"
 
@@ -372,9 +372,9 @@ obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
 
 	ctl = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL);
 	if (clk == 0) {
-		clk &= ~SYSCTL_CEN;
+		ctl &= ~SYSCTL_CEN;
 	} else {
-		clk |= SYSCTL_CEN;
+		ctl |= SYSCTL_CEN;
 	}
 	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL, ctl);
 

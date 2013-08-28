@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.54 2013/06/05 23:08:03 christos Exp $
+# $NetBSD: RAMDISK,v 1.54.2.1 2013/08/28 23:59:23 rmind Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -81,7 +81,6 @@ options 	INET		# IP protocol stack support
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)

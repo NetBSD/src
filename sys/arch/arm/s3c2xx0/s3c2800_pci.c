@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.19 2012/10/27 17:17:40 chs Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.19.2.1 2013/08/28 23:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.19 2012/10/27 17:17:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.19.2.1 2013/08/28 23:59:12 rmind Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.19 2012/10/27 17:17:40 chs Exp $")
 
 #include <sys/bus.h>
 
-#include <arm/s3c2xx0/s3c2800reg.h>
-#include <arm/s3c2xx0/s3c2800var.h>
-
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include "opt_pci.h"
-#include "pci.h"
+#include <arm/locore.h>
+
+#include <arm/s3c2xx0/s3c2800reg.h>
+#include <arm/s3c2xx0/s3c2800var.h>
 
 /*
  * pci tag encoding.

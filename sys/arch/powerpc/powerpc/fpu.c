@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.32 2012/12/26 19:05:03 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.32.2.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2012/12/26 19:05:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32.2.1 2013/08/28 23:59:20 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,13 +65,13 @@ const pcu_ops_t fpu_ops = {
 bool
 fpu_used_p(lwp_t *l)
 {
-	return (l->l_md.md_flags & MDLWP_USEDFPU) != 0;
+	return pcu_used_p(&fpu_ops);
 }
 
 void
 fpu_mark_used(lwp_t *l)
 {
-	l->l_md.md_flags |= MDLWP_USEDFPU;
+	pcu_discard(&fpu_ops, true);
 }
 
 #ifdef PPC_HAVE_FPU
@@ -82,7 +82,6 @@ fpu_state_load(lwp_t *l, u_int flags)
 
 	if (__predict_false(!fpu_used_p(l))) {
 		memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-		fpu_mark_used(l);
 	}
 
 	const register_t msr = mfmsr();
@@ -97,7 +96,6 @@ fpu_state_load(lwp_t *l, u_int flags)
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));
-	l->l_md.md_flags |= MDLWP_USEDFPU;
 }
 
 /*
@@ -242,7 +240,7 @@ fpu_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 #ifdef PPC_HAVE_FPU
 	/* we don't need to save the state, just drop it */
 	if (l == curlwp)
-		pcu_discard(&fpu_ops);
+		pcu_discard(&fpu_ops, true);
 #endif
 	(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
 	    sizeof (pcb->pcb_fpu.fpreg));

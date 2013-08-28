@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/01/07 04:00:02 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.1.176.1 2013/08/28 23:59:23 rmind Exp $
 
-DBG=-Os
+DBG=-Os -fno-unwind-tables

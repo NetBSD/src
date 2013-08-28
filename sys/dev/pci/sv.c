@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.47 2012/10/27 17:18:35 chs Exp $ */
+/*      $NetBSD: sv.c,v 1.47.2.1 2013/08/28 23:59:26 rmind Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.47 2012/10/27 17:18:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.47.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,11 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.47 2012/10/27 17:18:35 chs Exp $");
  * As long as bus_dmamem_alloc_range() is missing we use the ISA
  * DMA tag on i386.
  */
-#if defined(i386)
-#include "isa.h"
-#if NISA > 0
+#if defined(amd64) || defined(i386)
 #include <dev/isa/isavar.h>
-#endif
 #endif
 
 #ifdef AUDIO_DEBUG
@@ -379,7 +376,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 #if defined(alpha)
 	/* XXX Force allocation through the SGMAP. */
 	sc->sc_dmatag = alphabus_dma_get_tag(pa->pa_dmat, ALPHA_BUS_ISA);
-#elif defined(i386) && NISA > 0
+#elif defined(amd64) || defined(i386)
 /* XXX
  * The SonicVibes DMA is broken and only works on 24-bit addresses.
  * As long as bus_dmamem_alloc_range() is missing we use the ISA

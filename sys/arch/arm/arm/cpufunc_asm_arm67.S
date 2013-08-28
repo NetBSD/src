@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.5 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.5.2.1 2013/08/28 23:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,8 @@
  * ARM6/ARM7 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 /*
  * Functions to set the MMU Translation Table Base register

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.32 2011/06/16 09:21:02 hannken Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.32.16.1 2013/08/28 23:59:35 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.32 2011/06/16 09:21:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.32.16.1 2013/08/28 23:59:35 rmind Exp $");
 #endif /* not lint */
 
 
@@ -586,7 +586,7 @@ translate_again:
 
 			end_foffset = foffset + len;
 
-			if (end_foffset > lb_num * lb_size)
+			if (end_foffset > (uint64_t) lb_num * lb_size)
 				break;	/* found */
 			foffset = end_foffset;
 			slot++;
@@ -724,13 +724,13 @@ udf_translate_file_extent(struct udf_node *udf_node,
 
 		end_foffset = foffset + len;
 
-		if (end_foffset > from * lb_size)
+		if (end_foffset > (uint64_t) from * lb_size)
 			break;	/* found */
 		foffset = end_foffset;
 		slot++;
 	}
 	/* found overlapping slot */
-	ext_offset = from * lb_size - foffset;
+	ext_offset = (uint64_t) from * lb_size - foffset;
 
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
@@ -2706,8 +2706,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			error = 0;
 
 			/* set new size for uvm */
-			uvm_vnp_setsize(vp, old_size);
 			uvm_vnp_setwritesize(vp, new_size);
+			uvm_vnp_setsize(vp, new_size);
 
 #if 0
 			/* zero append space in buffer */

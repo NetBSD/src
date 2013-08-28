@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.20 2013/04/27 22:21:14 christos Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.20.4.1 2013/08/28 23:59:17 rmind Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -137,7 +137,6 @@ options 	INET6		# IPv6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

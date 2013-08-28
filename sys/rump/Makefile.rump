@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.81 2013/04/28 12:54:39 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.81.4.1 2013/08/28 23:59:36 rmind Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -16,7 +16,7 @@ CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .endif
 
 CPPFLAGS+=	-DMAXUSERS=32
-CPPFLAGS+=	-DCOMPAT_50=1
+CPPFLAGS+=	-DCOMPAT_50=1 -DCOMPAT_60=1
 
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
@@ -45,7 +45,7 @@ LDFLAGS+=	-Wl,-M ${RUMPTOP}/ldscript_sun.rump
 SRCS+=		linksyms_sun.c
 .PATH:		${RUMPTOP}
 .else
-LDFLAGS+=	-Wl,-T ${RUMPTOP}/ldscript.rump
+LDFLAGS+=	-Wl,-T,${RUMPTOP}/ldscript.rump
 .endif
 .endif
 
@@ -86,27 +86,29 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # Support for component-specific hypercalls
 #
 
+# XXX: Warning flags are not in CWARNFLAGS.  Manually add a few important ones.
 
 .ifdef RUMPCOMP_USER && !defined(RUMPTEST_BUILDSH)
 .if empty(DESTDIR)
 DESTDIR=/
 .endif
 BUILDRUMP_CPPFLAGS ?= -isysroot ${DESTDIR}
+RUMPCOMP_USER_WERROR = ${${_NOWERROR} == "no" :?-Werror:}
 rumpcomp_user.d: rumpcomp_user.c
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
 rumpcomp_user.o: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
 rumpcomp_user.pico: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} -fPIC -DPIC ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
 rumpcomp_user.po: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
-	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CPPFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
+	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
 RUMPCOMP_USEROBJ=rumpcomp_user.*o
 SRCS+=rumpcomp_user.c

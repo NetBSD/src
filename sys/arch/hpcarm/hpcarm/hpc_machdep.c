@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.101 2012/07/29 00:07:06 matt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.101.4.1 2013/08/28 23:59:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.101 2012/07/29 00:07:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.101.4.1 2013/08/28 23:59:17 rmind Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -54,10 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.101 2012/07/29 00:07:06 matt Exp $
 #include <sys/mount.h>
 #include <sys/pmf.h>
 #include <sys/reboot.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>

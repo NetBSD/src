@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.307.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.307.2.2 2013/08/28 23:59:36 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.307.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.307.2.2 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
-#include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 #include "opt_mbuftrace.h"
@@ -222,9 +221,7 @@ uint16_t ip_id;
 
 percpu_t *ipstat_percpu;
 
-#ifdef PFIL_HOOKS
-struct pfil_head inet_pfil_hook;
-#endif
+pfil_head_t *inet_pfil_hook;
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -314,15 +311,9 @@ ip_init(void)
 	ipflow_init();
 #endif
 
-#ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet_pfil_hook.ph_type = PFIL_TYPE_AF;
-	inet_pfil_hook.ph_af   = AF_INET;
-
-	if (pfil_head_register(&inet_pfil_hook)) {
-		panic("ip_init: unable to register pfil(9) hook");
-	}
-#endif /* PFIL_HOOKS */
+	inet_pfil_hook = pfil_head_create(PFIL_TYPE_AF, (void *)AF_INET);
+	KASSERT(inet_pfil_hook != NULL);
 
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&ip_tx_mowner);
@@ -519,7 +510,6 @@ ip_input(struct mbuf *m)
 	 */
 	m->m_flags |= M_CANFASTFWD;
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -540,7 +530,7 @@ ip_input(struct mbuf *m)
 		struct in_addr odst;
 
 		odst = ip->ip_dst;
-		if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
+		if (pfil_run_hooks(inet_pfil_hook, &m, m->m_pkthdr.rcvif,
 		    PFIL_IN) != 0)
 			return;
 		if (m == NULL)
@@ -563,7 +553,6 @@ ip_input(struct mbuf *m)
 		 */
 		srcrt = (odst.s_addr != ip->ip_dst.s_addr);
 	}
-#endif /* PFIL_HOOKS */
 
 #ifdef ALTQ
 	/* XXX Temporary until ALTQ is changed to use a pfil hook */

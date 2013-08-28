@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.25 2013/03/19 16:49:56 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.25.6.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.25 2013/03/19 16:49:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.25.6.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdness later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
 			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,

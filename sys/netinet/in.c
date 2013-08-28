@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.143.4.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: in.c,v 1.143.4.2 2013/08/28 23:59:36 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143.4.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143.4.2 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -114,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <net/if_ether.h>
 
@@ -130,10 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143.4.1 2013/07/17 03:16:31 rmind Exp $");
 
 #ifdef IPSELSRC
 #include <netinet/in_selsrc.h>
-#endif
-
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
 #endif
 
 static u_int in_mask2len(struct in_addr *);
@@ -502,11 +498,10 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
 		    1);
-#ifdef PFIL_HOOKS
-		if (error == 0)
-			(void)pfil_run_hooks(&if_pfil,
+		if (error == 0) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
-#endif
+		}
 		break;
 
 	case SIOCSIFNETMASK:
@@ -552,11 +547,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
-#ifdef PFIL_HOOKS
 		if (error == 0)
-			(void)pfil_run_hooks(&if_pfil,
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
-#endif
 		break;
 
 	case SIOCGIFALIAS:
@@ -574,10 +567,8 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCDIFADDR,
 		    ifp, PFIL_IFADDR);
-#endif
 		break;
 
 #ifdef MROUTING

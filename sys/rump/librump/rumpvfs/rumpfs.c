@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.117 2013/06/14 05:54:04 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.117.2.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.117 2013/06/14 05:54:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.117.2.1 2013/08/28 23:59:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1079,10 +1079,6 @@ rump_vop_remove(void *v)
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
 		return EOPNOTSUPP;
 
-	if (vp->v_type == VREG) {
-		rump_hyperfree(rn->rn_data, rn->rn_dlen);
-	}
-
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 
@@ -1668,6 +1664,13 @@ rump_vop_reclaim(void *v)
 	vp->v_data = NULL;
 
 	if (rn->rn_flags & RUMPNODE_CANRECLAIM) {
+		if (vp->v_type == VREG
+		    && (rn->rn_flags & RUMPNODE_ET_PHONE_HOST) == 0
+		    && rn->rn_data) {
+			rump_hyperfree(rn->rn_data, rn->rn_dlen);
+			rn->rn_data = NULL;
+		}
+
 		if (vp->v_type == VLNK)
 			PNBUF_PUT(rn->rn_linktarg);
 		if (rn->rn_hostpath)
@@ -1805,9 +1808,12 @@ rumpfs_unmount(struct mount *mp, int mntflags)
 	if (panicstr || mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
+	if (rfsmp->rfsmp_rvp->v_usecount > 1 && (flags & FORCECLOSE) == 0)
+		return EBUSY;
+
 	if ((error = vflush(mp, rfsmp->rfsmp_rvp, flags)) != 0)
 		return error;
-	vgone(rfsmp->rfsmp_rvp); /* XXX */
+	vgone(rfsmp->rfsmp_rvp);
 
 	kmem_free(rfsmp, sizeof(*rfsmp));
 

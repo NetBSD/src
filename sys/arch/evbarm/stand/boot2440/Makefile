@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/06/23 13:56:40 matt Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2013/08/28 23:59:15 rmind Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -7,6 +7,7 @@ SRCS=		entry.S main.c devopen.c netif.c dev_net.c dm9000.c dev_sdmmc.c
 SRCS+=		s3csdi.c vers.c
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 CLEANFILES+=	vers.c ${PROG}.elf
 CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
@@ -15,8 +16,9 @@ CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27"
 CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-march=armv4 -mabi=apcs-gnu -mfloat-abi=soft
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 CPUFLAGS=
-DBG=		
+DBG=		-Os
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -30,14 +32,6 @@ BINMODE=	444
 
 RELOC=		0x30A00000
 ENTRY=		_start
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/evbarm/include machine
-	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
-.NOPATH: machine arm
-.endif
-CLEANFILES+= machine arm
 
 ### find out what to use for libkern
 KERN_AS=	library

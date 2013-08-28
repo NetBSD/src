@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.5.2.1 2013/08/28 23:59:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.5.2.1 2013/08/28 23:59:13 rmind Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -57,6 +57,8 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $")
 #define	XPUTC(n)
 #endif
 
+#define	MD_CPU_HATCH	bcm53xx_cpu_hatch
+
 /*
  * Kernel start routine for BCM5301X boards.
  * At this point, this code has been loaded into SDRAM
@@ -66,6 +68,9 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.5 2013/06/17 20:30:49 matt Exp $")
 
 	.global	_C_LABEL(bcm53xx_start)
 _C_LABEL(bcm53xx_start):
+#ifdef __ARMEB__
+	setend	be		/* make sure we are running big endian */
+#endif
 	/*
 	 * Save any arguments u-boot passed us.
 	 */

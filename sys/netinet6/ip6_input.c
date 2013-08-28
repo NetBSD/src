@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.142 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.142.2.1 2013/08/28 23:59:36 rmind Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,13 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.142 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.142.2.1 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -92,9 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.142 2013/06/05 19:01:26 christos Exp
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#ifdef PFIL_HOOKS
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -148,9 +145,7 @@ int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
 
-#ifdef PFIL_HOOKS
-struct pfil_head inet6_pfil_hook;
-#endif
+pfil_head_t *inet6_pfil_hook;
 
 percpu_t *ip6stat_percpu;
 
@@ -194,16 +189,9 @@ ip6_init(void)
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
-
-#ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet6_pfil_hook.ph_type = PFIL_TYPE_AF;
-	inet6_pfil_hook.ph_af   = AF_INET6;
-	i = pfil_head_register(&inet6_pfil_hook);
-	if (i != 0)
-		printf("ip6_init: WARNING: unable to register pfil hook, "
-		    "error %d\n", i);
-#endif /* PFIL_HOOKS */
+	inet6_pfil_hook = pfil_head_create(PFIL_TYPE_AF, (void *)AF_INET6);
+	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
 }
@@ -345,7 +333,6 @@ ip6_input(struct mbuf *m)
 	 */
 	m->m_flags |= M_CANFASTFWD;
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -366,7 +353,7 @@ ip6_input(struct mbuf *m)
 		struct in6_addr odst;
 
 		odst = ip6->ip6_dst;
-		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+		if (pfil_run_hooks(inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
 				   PFIL_IN) != 0)
 			return;
 		if (m == NULL)
@@ -374,7 +361,6 @@ ip6_input(struct mbuf *m)
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
-#endif /* PFIL_HOOKS */
 
 	IP6_STATINC(IP6_STAT_NXTHIST + ip6->ip6_nxt);
 

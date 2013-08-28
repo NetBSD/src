@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.138 2013/06/16 20:46:24 dholland Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.138.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.138 2013/06/16 20:46:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.138.2.1 2013/08/28 23:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -995,6 +995,7 @@ spec_strategy(void *v)
 
 	if (error) {
 		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return (error);
 	}

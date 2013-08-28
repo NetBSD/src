@@ -1,4 +1,4 @@
-/* $NetBSD: gttwsireg.h,v 1.3 2013/05/01 12:25:31 rkujawa Exp $ */
+/* $NetBSD: gttwsireg.h,v 1.3.4.1 2013/08/28 23:59:25 rmind Exp $ */
 
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -74,12 +74,7 @@
 #define TWSI_RETRY_COUNT	1000		/* retry loop count */
 #define TWSI_RETRY_DELAY	1		/* retry delay */
 #define	TWSI_STAT_DELAY		1		/* poll status delay */
-#ifdef ARMADAXP
-#define	TWSI_READ_DELAY		15		/* read delay */
-#define	TWSI_WRITE_DELAY	15		/* write delay */
-#else
 #define	TWSI_READ_DELAY		2		/* read delay */
 #define	TWSI_WRITE_DELAY	2		/* write delay */
-#endif /* ARMADAXP */
 
 #endif	/* _GTTWSIREG_H_ */

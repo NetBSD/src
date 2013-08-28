@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.64 2012/02/16 07:59:46 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.64.4.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.64 2012/02/16 07:59:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.64.4.1 2013/08/28 23:59:20 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -280,8 +280,8 @@ oea_init(void (*handler)(void))
 	 * Install a branch absolute to trap0 to force a panic.
 	 */
 	if ((uintptr_t)trap0 < 0x2000000) {
-		*(uint32_t *) 0 = 0x7c6802a6;
-		*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
+		*(volatile uint32_t *) 0 = 0x7c6802a6;
+		*(volatile uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
 	}
 
 	/*

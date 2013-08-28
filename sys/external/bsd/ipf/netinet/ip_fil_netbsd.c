@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.4 2013/01/15 03:39:16 msaitoh Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.4.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.4 2013/01/15 03:39:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.4.2.1 2013/08/28 23:59:35 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -23,7 +23,6 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM)
-# include "opt_pfil_hooks.h"
 # include "opt_ipsec.h"
 #endif
 #include <sys/errno.h>
@@ -326,12 +325,12 @@ ipfattach(ipf_main_softc_t *softc)
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
-        struct pfil_head *ph_inet;
+        pfil_head_t *ph_inet;
 #  ifdef USE_INET6
-        struct pfil_head *ph_inet6;
+        pfil_head_t *ph_inet6;
 #  endif
 #  if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
-        struct pfil_head *ph_ifsync;
+        pfil_head_t *ph_ifsync;
 #  endif
 # endif
 #endif
@@ -353,9 +352,9 @@ ipfattach(ipf_main_softc_t *softc)
 #ifdef NETBSD_PF
 # if (__NetBSD_Version__ >= 104200000)
 #  if __NetBSD_Version__ >= 105110000
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 #   ifdef USE_INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 #   endif
 #   if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	ph_ifsync = pfil_head_get(PFIL_TYPE_IFNET, 0);
@@ -503,9 +502,9 @@ ipfdetach(ipf_main_softc_t *softc)
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
-	struct pfil_head *ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
+	pfil_head_t *ph_inet = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET);
 #  ifdef USE_INET6
-	struct pfil_head *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
+	pfil_head_t *ph_inet6 = pfil_head_get(PFIL_TYPE_AF, (void *)AF_INET6);
 #  endif
 #  if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 	struct pfil_head *ph_ifsync = pfil_head_get(PFIL_TYPE_IFNET, 0);

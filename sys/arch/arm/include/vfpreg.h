@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.9 2013/06/20 05:24:46 matt Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.9.2.1 2013/08/28 23:59:12 rmind Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -84,6 +84,8 @@
 #define VFP_FPSCR_Z	0x40000000	/* set if compare = result */
 #define VFP_FPSCR_C	0x20000000	/* set if compare (=,>=,UNORD) result */
 #define VFP_FPSCR_V	0x10000000	/* set if compare UNORD result */
+#define VFP_FPSCR_QC	0x08000000	/* Cumulative saturation (SIMD) */
+#define VFP_FPSCR_AHP	0x04000000	/* Alternative Half-Precision */
 #define VFP_FPSCR_DN	0x02000000	/* Default NaN mode */
 #define VFP_FPSCR_FZ	0x01000000	/* Flush-to-zero mode */
 #define VFP_FPSCR_RMODE	0x00c00000	/* Rounding Mode */

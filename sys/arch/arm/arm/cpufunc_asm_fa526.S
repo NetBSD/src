@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.5 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.5.2.1 2013/08/28 23:59:11 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 #define	CACHELINE_SIZE	16
 

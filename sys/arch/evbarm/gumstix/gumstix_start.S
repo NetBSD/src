@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.11 2012/12/29 14:22:55 kiyohara Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.11.2.1 2013/08/28 23:59:14 rmind Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gumstix_start.S,v 1.11 2012/12/29 14:22:55 kiyohara Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.11.2.1 2013/08/28 23:59:14 rmind Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -266,7 +266,7 @@ mmu_init_table:
 #define SDRAM_START	0x80000000
 
 	/* Map VA to PA, write-back cacheable (first 64M only) */
-	MMU_INIT(KERNEL_BASE, SDRAM_START,
+	MMU_INIT(KERNEL_BASE & 0xffffffff, SDRAM_START,
 	    64, L1_S_PROTO | L1_S_B | L1_S_C | L1_S_APv7_KRW)
 #endif
 

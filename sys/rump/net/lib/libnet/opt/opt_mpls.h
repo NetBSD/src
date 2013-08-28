@@ -1,3 +1,3 @@
-/* $NetBSD: opt_mpls.h,v 1.1 2010/06/26 14:24:28 kefren Exp $ */
+/* $NetBSD: opt_mpls.h,v 1.1.28.1 2013/08/28 23:59:37 rmind Exp $ */
 
-/* XXX: dummy */
+#define	MPLS 1

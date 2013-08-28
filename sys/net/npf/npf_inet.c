@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.22 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.22.2.1 2013/08/28 23:59:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.22 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.22.2.1 2013/08/28 23:59:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -391,8 +391,12 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			npc->npc_hlen += hlen;
 		}
 
-		/* Restore the offset. */
+		/*
+		 * Re-fetch the header pointers (nbufs might have been
+		 * reallocated).  Restore the original offset (if any).
+		 */
 		nbuf_reset(nbuf);
+		ip6 = nbuf_dataptr(nbuf);
 		if (off) {
 			nbuf_advance(nbuf, off, 0);
 		}
@@ -437,6 +441,7 @@ again:
 	 */
 	flags = npf_cache_ip(npc, nbuf);
 	if ((flags & NPC_IP46) == 0 || (flags & NPC_IPFRAG) != 0) {
+		nbuf_unset_flag(nbuf, NBUF_DATAREF_RESET);
 		npc->npc_info |= flags;
 		return flags;
 	}

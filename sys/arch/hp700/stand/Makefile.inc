@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/06/20 06:52:37 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8.16.1 2013/08/28 23:59:16 rmind Exp $
 
 BINDIR=		/usr/mdec
 
@@ -6,3 +6,4 @@ BINDIR=		/usr/mdec
 
 COPTS+=		-Wno-pointer-sign
 COPTS+=		-fno-strict-aliasing
+COPTS+=		-fno-unwind-tables

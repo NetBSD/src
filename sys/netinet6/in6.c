@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: in6.c,v 1.165.2.2 2013/08/28 23:59:36 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165.2.2 2013/08/28 23:59:36 rmind Exp $");
 
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -87,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $");
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.165.2.1 2013/07/17 03:16:31 rmind Exp $");
 
 #include <net/net_osdep.h>
 
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
 #ifdef COMPAT_50
 #include <compat/netinet6/in6_var.h>
 #endif
@@ -754,11 +751,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		 */
 		pfxlist_onlink_check();
 
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
 		    ifp, PFIL_IFADDR);
-#endif
-
 		break;
 	}
 
@@ -780,10 +774,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		in6_purgeaddr(&ia->ia_ifa);
 		if (pr && pr->ndpr_refcnt == 0)
 			prelist_remove(pr);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
 		    ifp, PFIL_IFADDR);
-#endif
 		break;
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.57 2013/06/05 23:08:01 christos Exp $
+#	$NetBSD: TWINTAIL,v 1.57.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -66,11 +66,9 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -135,7 +133,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
-options 	SYMTAB_SPACE=620000
+options 	SYMTAB_SPACE=640000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

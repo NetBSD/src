@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.126 2013/04/04 13:23:50 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.126.4.1 2013/08/28 23:59:27 rmind Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.126 2013/04/04 13:23:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.126.4.1 2013/08/28 23:59:27 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -406,6 +406,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 	sc->sc_flags = 0;
+
+	aprint_naive("\n");
 
 	if (!pmf_device_register(self, NULL, NULL)) {
 		aprint_normal("\n");

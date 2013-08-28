@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.25 2012/12/08 06:46:49 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.25.2.1 2013/08/28 23:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,18 +133,18 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2012/12/08 06:46:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25.2.1 2013/08/28 23:59:11 rmind Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/reg.h>
-
 #include <arm/armreg.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
+
+#include <machine/pcb.h>
+#include <machine/reg.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -227,8 +227,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 		return EINVAL;
 	}
 	struct pcb * const pcb = lwp_getpcb(l);
-	vfp_discardcontext();
-	l->l_md.md_flags |= MDLWP_VFPUSED;
+	vfp_discardcontext(true);
 	pcb->pcb_vfp = regs->fpr_vfp;
 	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
 #endif

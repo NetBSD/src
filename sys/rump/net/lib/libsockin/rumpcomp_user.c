@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.7 2013/06/01 11:46:14 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.7.4.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -129,20 +129,6 @@ translate_domain(int domain)
 }
 
 #undef translate
-#define translate_back(_a_) case _a_: return RUMP_##_a_
-static int translate_domain_back(int);
-static int
-translate_domain_back(int domain)
-{
-
-	switch (domain) {
-	translate_back(AF_INET);
-	translate_back(AF_INET6);
-	default: return RUMP_AF_UNSPEC;
-	}
-}
-
-#undef translate_back
 
 static void
 translate_sockopt(int *levelp, int *namep)
@@ -325,6 +311,20 @@ translate_sockaddr(const struct sockaddr *addr, uint32_t len)
 #endif
 	return laddr;
 }
+
+#define translate_back(_a_) case _a_: return RUMP_##_a_
+static int translate_domain_back(int);
+static int
+translate_domain_back(int domain)
+{
+
+	switch (domain) {
+	translate_back(AF_INET);
+	translate_back(AF_INET6);
+	default: return RUMP_AF_UNSPEC;
+	}
+}
+#undef translate_back
 
 static void
 translate_sockaddr_back(const struct sockaddr *laddr,
