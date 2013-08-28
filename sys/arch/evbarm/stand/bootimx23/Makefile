@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2013/06/23 13:57:27 matt Exp $
+# $Id: Makefile,v 1.6.2.1 2013/08/28 23:59:15 rmind Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -14,6 +14,7 @@ CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 #CPPFLAGS+=	-DDEBUG
 #DBG=		-g
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.53 2012/11/12 18:00:39 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.53.2.1 2013/08/28 23:59:14 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.53 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.53.2.1 2013/08/28 23:59:14 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.53 2012/11/12 18:00:39 skrll E
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.53 2012/11/12 18:00:39 skrll E
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>

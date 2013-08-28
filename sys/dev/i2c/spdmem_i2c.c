@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.6.4.1 2013/08/28 23:59:25 rmind Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6.4.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp 
 #include <dev/ic/spdmemvar.h>
 
 /* Constants for matching i2c bus address */
-#define SPDMEM_I2C_ADDRMASK 0x78
+#define SPDMEM_I2C_ADDRMASK 0x3f8
 #define SPDMEM_I2C_ADDR     0x50
 
 struct spdmem_i2c_softc {
@@ -129,7 +129,7 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint8_t reg)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		 &val, 1, 0);
+		 &val, 1, I2C_F_POLL);
 	iic_release_bus(sc->sc_tag, 0);
 
 	return val;

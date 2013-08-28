@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $ */
+/*	$NetBSD: puccn.c,v 1.10.22.1 2013/08/28 23:59:26 rmind Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10.22.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -69,18 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $");
 #endif
 #ifndef CONMODE
 #define	CONMODE		((TTYDEF_CFLAG & ~(CSIZE|CSTOPB|PARENB))|CS8) /* 8N1 */
-#endif
-
-#ifdef i386		/* Handle i386 directly */
-int
-cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
-{
-	pci_mode_detect();
-	pa->pa_iot = x86_bus_space_io;
-	pa->pa_pc = 0;
-	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
-	return 0;
-}
 #endif
 
 cons_decl(com);
@@ -110,9 +98,11 @@ pucprobe_doit(struct consdev *cn)
 	pcireg_t base;
 
 	/* Fetch our tags */
-	if (cpu_comcnprobe(cn, &pa) != 0) {
+#if defined(amd64) || defined(i386)
+	if (cpu_comcnprobe(cn, &pa) != 0)
+#endif
 		return 0;
-	}
+
 	puctag = pa.pa_iot;
 	pci_decompose_tag(pa.pa_pc, pa.pa_tag, &bus, &maxdev, NULL);
 

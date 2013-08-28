@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.13 2011/12/04 17:00:10 chs Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.13.10.1 2013/08/28 23:59:24 rmind Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -222,6 +222,7 @@ __CI_TBL(CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries"),\
 __CI_TBL(CAI_ITLB,     0x55, 0xff, 64,        4 * 1024, "2M/4M: 7 entries"), \
 __CI_TBL(CAI_DTLB2,    0x56,    4, 16, 4 * 1024 * 1024, NULL), \
 __CI_TBL(CAI_DTLB2,    0x57,    4, 16,        4 * 1024, NULL), \
+__CI_TBL(CAI_DTLB2,    0x59, 0xff, 16,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0x5a, 0xff, 64,        4 * 1024, "2M/4M: 32 entries (L0)"), \
 __CI_TBL(CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "4K/4M: 64 entries"), \
 __CI_TBL(CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries"),\
@@ -234,7 +235,8 @@ __CI_TBL(CAI_ICACHE,   0x09,    4,       32 * 1024, 64, NULL), \
 __CI_TBL(CAI_ICACHE,   0x30,    8,       32 * 1024, 64, NULL), \
 __CI_TBL(CAI_DCACHE,   0x0a,    2,        8 * 1024, 32, NULL), \
 __CI_TBL(CAI_DCACHE,   0x0c,    4,       16 * 1024, 32, NULL), \
-__CI_TBL(CAI_DCACHE,   0x0d,    4,       16 * 1024, 32, NULL), \
+__CI_TBL(CAI_DCACHE,   0x0d,    4,       16 * 1024, 64, NULL), \
+__CI_TBL(CAI_DCACHE,   0x0e,    6,       24 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x21,    8,      256 * 1024, 64, NULL), /* L2 (MLC) */ \
 __CI_TBL(CAI_L2CACHE,  0x39,    4,      128 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x3a,    6,      192 * 1024, 64, NULL), \
@@ -269,6 +271,7 @@ __CI_TBL(CAI_L2CACHE,  0x7b,    8,      512 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x7c,    8, 1 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x7d,    8, 2 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x7f,    2,      512 * 1024, 64, NULL), \
+__CI_TBL(CAI_L2CACHE,  0x80,    8,      512 * 1024, 64, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x82,    8,      256 * 1024, 32, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x83,    8,      512 * 1024, 32, NULL), \
 __CI_TBL(CAI_L2CACHE,  0x84,    8, 1 * 1024 * 1024, 32, NULL), \
@@ -299,7 +302,7 @@ __CI_TBL(CAI_L3CACHE,  0xe2,   16, 2 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xe3,   16, 4 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xe4,   16, 8 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xea,   24,12 * 1024 * 1024, 64, NULL), \
-__CI_TBL(CAI_L3CACHE,  0xeb,   24,24 * 1024 * 1024, 64, NULL), \
+__CI_TBL(CAI_L3CACHE,  0xeb,   24,18 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xec,   24,24 * 1024 * 1024, 64, NULL), \
 __CI_TBL(0,               0,    0,               0,  0, NULL)  \
 }

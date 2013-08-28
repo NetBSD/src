@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.5 2012/10/17 20:19:55 drochner Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.5.2.1 2013/08/28 23:59:24 rmind Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.5 2012/10/17 20:19:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.5.2.1 2013/08/28 23:59:24 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -129,7 +129,7 @@ compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *ucode)
 	ucode->version = uclevel;
 	return 0;
 }
-#endif
+#endif /* COMPAT60 */
 
 int
 cpu_ucode_amd_firmware_open(firmware_handle_t *fwh, const char *fwname)
@@ -324,4 +324,4 @@ err0:
 	kmem_free(mc.mc_amd, sizeof(*mc.mc_amd));
 	return error;
 }
-#endif
+#endif /* ! XEN */

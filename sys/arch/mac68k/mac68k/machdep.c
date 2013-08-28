@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.345 2012/08/04 17:18:38 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.345.4.1 2013/08/28 23:59:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345 2012/08/04 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345.4.1 2013/08/28 23:59:18 rmind Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -172,6 +172,7 @@ vaddr_t	SCSIBase;
 extern int numranges;
 extern u_long low[8];
 extern u_long high[8];
+extern int machineid;
 
 /* These are used to map NuBus space: */
 #define	NBMAXRANGES	16
@@ -899,7 +900,7 @@ getenvvars(u_long flag, char *buf)
 	/*
 	 * More misc stuff from booter.
 	 */
-	mac68k_machine.machineid = getenv("MACHINEID");
+	mac68k_machine.machineid = machineid = getenv("MACHINEID");
 	mac68k_machine.mach_processor = getenv("PROCESSOR");
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
 	mac68k_machine.do_graybars = getenv("GRAYBARS");

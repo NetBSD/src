@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.8 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.8.130.1 2013/08/28 23:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -73,8 +73,8 @@
 #endif /* ! COPY_CHUNK */
 
 #ifndef SAVE_REGS
-#define	SAVE_REGS	stmfd	sp!, {r4-r8, lr}
-#define	RESTORE_REGS	ldmfd	sp!, {r4-r8, pc}
+#define	SAVE_REGS	push	{r4-r8, lr}
+#define	RESTORE_REGS	pop	{r4-r8, pc}
 #endif
 
 ENTRY(bcopy_page)
@@ -115,6 +115,7 @@ ENTRY(bcopy_page)
 	bne	1b
 
 	RESTORE_REGS		/* ...and return. */
+END(bcopy_page)
 
 /*
  * bzero_page(dest)
@@ -130,7 +131,7 @@ ENTRY(bcopy_page)
  */
 
 ENTRY(bzero_page)
-	stmfd	sp!, {r4-r8, lr}
+	push	{r4-r8, lr}
 #ifdef BIG_LOOPS
 	mov	r2, #(PAGE_SIZE >> 9)
 #else
@@ -175,7 +176,8 @@ ENTRY(bzero_page)
 	subs	r2, r2, #1
 	bne	1b
 
-	ldmfd	sp!, {r4-r8, pc}
+	pop	{r4-r8, pc}
+END(bzero_page)
 
 #else	/* __XSCALE__ */
 
@@ -184,7 +186,7 @@ ENTRY(bzero_page)
  */
 ENTRY(bcopy_page)
 	pld	[r0]
-	stmfd	sp!, {r4, r5}
+	push	{r4, r5}
 	mov	ip, #32
 	ldr	r2, [r0], #0x04		/* 0x00 */
 	ldr	r3, [r0], #0x04		/* 0x04 */
@@ -242,8 +244,9 @@ ENTRY(bcopy_page)
 	ldrgt	r3, [r0], #0x04		/* 0x84 */
 	strd	r4, [r1], #0x08
 	bgt	1b
-	ldmfd	sp!, {r4, r5}
-	mov	pc, lr
+	pop	{r4, r5}
+	RET
+END(bcopy_page)
 
 /*
  * XSCALE version of bzero_page
@@ -270,5 +273,6 @@ ENTRY(bzero_page)
 	strd	r2, [r0], #8
 	subs	r1, r1, #128
 	bne	1b
-	mov	pc, lr
+	RET
+END(bzero_page)
 #endif	/* __XSCALE__ */

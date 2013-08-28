@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.5 2013/01/31 11:57:07 rkujawa Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.5.2.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.5 2013/01/31 11:57:07 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.5.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,9 +266,12 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
-	} else if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
+	} else {
+		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+			    &defattr);
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
 	ws_aa.console = console;

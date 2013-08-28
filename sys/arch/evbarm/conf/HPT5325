@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.17 2013/06/16 08:18:00 tsutsui Exp $
+#	$NetBSD: HPT5325,v 1.17.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -82,7 +82,6 @@ options 	INET6		# IPv6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_COMPAT	# Compat for IP-Filter

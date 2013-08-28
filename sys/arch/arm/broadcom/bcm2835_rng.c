@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.4 2013/06/13 00:55:01 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.4.2.1 2013/08/28 23:59:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.4 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.4.2.1 2013/08/28 23:59:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ bcmrng_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmrng_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835rng_softc *sc = device_private(self);
+	struct bcm2835rng_softc *sc = device_private(self);
  	struct amba_attach_args *aaa = aux;
 	uint32_t ctrl;
 
@@ -117,20 +117,22 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL);
 	ctrl |= RNG_CTRL_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL, ctrl);
+
+	/* get some initial entropy ASAP */
+	bcmrng_get(RND_POOLBITS / NBBY, sc);
 }
 
 static void
 bcmrng_get(size_t bytes, void *priv)
 {
-        struct bcm2835rng_softc *sc = priv;
+	struct bcm2835rng_softc *sc = priv;
 	uint32_t status;
 	int need = bytes, cnt;
 
-        mutex_spin_enter(&sc->sc_mutex);
-
-        printf("bcmrng: asked for %d bytes", (int)bytes);
+	mutex_spin_enter(&sc->sc_mutex);
 
 	if (__predict_false(need < 1)) {
+		mutex_spin_exit(&sc->sc_mutex);
 		return;
 	}
 

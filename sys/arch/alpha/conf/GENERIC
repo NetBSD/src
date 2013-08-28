@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.352 2013/06/05 23:08:00 christos Exp $
+# $NetBSD: GENERIC,v 1.352.2.1 2013/08/28 23:59:10 rmind Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.352 $"
+ident		"GENERIC-$Revision: 1.352.2.1 $"
 
 maxusers 32
 
@@ -111,7 +111,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

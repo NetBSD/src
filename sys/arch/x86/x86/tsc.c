@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.31 2013/06/27 00:37:34 christos Exp $	*/
+/*	$NetBSD: tsc.c,v 1.31.2.1 2013/08/28 23:59:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.31 2013/06/27 00:37:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.31.2.1 2013/08/28 23:59:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ tsc_tc_init(void)
 	ci = curcpu();
 	safe = false;
 	tsc_freq = ci->ci_data.cpu_cc_freq;
-	tsc_good = (cpu_feature[0] & CPUID_MSR) != 0 && rdmsr(MSR_TSC) != 0;
+	tsc_good = (cpu_feature[0] & CPUID_MSR) != 0 &&
+	    (rdmsr(MSR_TSC) != 0 || rdmsr(MSR_TSC) != 0);
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {
 		/*
@@ -259,8 +260,6 @@ cpu_hascounter(void)
 
 	return cpu_feature[0] & CPUID_TSC;
 }
-
-extern int cpu_msr_tsc;
 
 uint64_t
 cpu_counter_serializing(void)

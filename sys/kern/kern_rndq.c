@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.14.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14 2013/06/23 02:35:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.14.2.1 2013/08/28 23:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -168,6 +168,8 @@ void
 rnd_init_softint(void) {
 	rnd_process = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    rnd_intr, NULL);
+	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
+	    rnd_wake, NULL);
 }
 
 /*
@@ -219,10 +221,6 @@ rnd_schedule_wakeup(void)
 	if (__predict_true(rnd_wakeup)) {
 		rnd_schedule_softint(rnd_wakeup);
 		return;
-	}
-	if (!cold) {
-		rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
-					       rnd_wake, NULL);
 	}
 	rnd_wakeup_readers();
 }

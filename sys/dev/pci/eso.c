@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.62 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: eso.c,v 1.62.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.62 2012/10/27 17:18:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.62.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include "mpu.h"
 
@@ -96,10 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.62 2012/10/27 17:18:31 chs Exp $");
  * XXX engine by allocating through the ISA DMA tag.
  */
 #if defined(amd64) || defined(i386)
-#include "isa.h"
-#if NISA > 0
 #include <dev/isa/isavar.h>
-#endif
 #endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)

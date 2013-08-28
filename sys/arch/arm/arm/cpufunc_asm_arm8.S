@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.7 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.7.2.1 2013/08/28 23:59:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -35,8 +35,8 @@
  * ARM8 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 ENTRY(arm8_clock_config)
 	mrc	p15, 0, r3, c15, c0, 0	/* Read the clock register */

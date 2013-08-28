@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.107 2013/06/24 04:21:20 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.107.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -346,6 +346,6 @@ unsigned int	popcountll(unsigned long long) __constfunc;
 unsigned int	popcount32(uint32_t) __constfunc;
 unsigned int	popcount64(uint64_t) __constfunc;
 
-void	explicit_memset(void *, int, size_t);
+void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

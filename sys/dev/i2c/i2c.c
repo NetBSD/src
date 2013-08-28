@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.39 2013/02/03 16:28:51 jdc Exp $	*/
+/*	$NetBSD: i2c.c,v 1.39.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.39 2013/02/03 16:28:51 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.39.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct i2c_attach_args ia;
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
 	ia.ia_type = sc->sc_type;
 
@@ -118,13 +117,19 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_ncompat = 0;
 	ia.ia_compat = NULL;
 
-	if (ia.ia_addr != (i2c_addr_t)-1 &&
-	    ia.ia_addr <= I2C_MAX_ADDR &&
-	    !sc->sc_devices[ia.ia_addr])
-		if (config_match(parent, cf, &ia) > 0) {
+	for (ia.ia_addr = 0; ia.ia_addr <= I2C_MAX_ADDR; ia.ia_addr++) {
+		if (sc->sc_devices[ia.ia_addr] != NULL)
+			continue;
+
+		if (cf->cf_loc[IICCF_ADDR] != -1 &&
+		    cf->cf_loc[IICCF_ADDR] != ia.ia_addr)
+			continue;
+
+		if (config_match(parent, cf, &ia) > 0)
 			sc->sc_devices[ia.ia_addr] =
 			    config_attach(parent, cf, &ia, iic_print);
 	}
+
 	return 0;
 }
 
@@ -138,7 +143,7 @@ iic_child_detach(device_t parent, device_t child)
 		if (sc->sc_devices[i] == child) {
 			sc->sc_devices[i] = NULL;
 			break;
-	}
+		}
 }
 
 static int

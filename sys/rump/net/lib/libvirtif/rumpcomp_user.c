@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.c,v 1.6 2013/05/20 10:24:26 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.c,v 1.6.4.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __linux__
 #include <net/if.h>
@@ -43,6 +44,9 @@
 #endif
 
 #include <rump/rumpuser_component.h>
+
+#include "if_virt.h"
+#include "rumpcomp_user.h"
 
 struct virtif_user {
 	int viu_fd;
@@ -93,7 +97,7 @@ opentapdev(int devnum)
 }
 
 int
-rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
+VIFHYPER_CREATE(int devnum, struct virtif_user **viup)
 {
 	struct virtif_user *viu = NULL;
 	void *cookie;
@@ -124,13 +128,23 @@ rumpcomp_virtif_create(int devnum, struct virtif_user **viup)
 }
 
 void
-rumpcomp_virtif_send(struct virtif_user *viu,
+VIFHYPER_SEND(struct virtif_user *viu,
 	struct iovec *iov, size_t iovlen)
 {
 	void *cookie = rumpuser_component_unschedule();
+	ssize_t idontcare __attribute__((__unused__));
 
-	/* no need to check for return value; packets may be dropped */
-	writev(viu->viu_fd, iov, iovlen);
+	/*
+	 * no need to check for return value; packets may be dropped
+	 *
+	 * ... sorry, I spoke too soon.  We need to check it because
+	 * apparently gcc reinvented const poisoning and it's very
+	 * hard to say "thanks, I know I'm not using the result,
+	 * but please STFU and let's get on with something useful".
+	 * So let's trick gcc into letting us share the compiler
+	 * experience.
+	 */
+	idontcare = writev(viu->viu_fd, iov, iovlen);
 
 	rumpuser_component_schedule(cookie);
 }
@@ -138,7 +152,7 @@ rumpcomp_virtif_send(struct virtif_user *viu,
 /* how often to check for interface going south */
 #define POLLTIMO_MS 10
 int
-rumpcomp_virtif_recv(struct virtif_user *viu,
+VIFHYPER_RECV(struct virtif_user *viu,
 	void *data, size_t dlen, size_t *rcv)
 {
 	void *cookie = rumpuser_component_unschedule();
@@ -150,8 +164,11 @@ rumpcomp_virtif_recv(struct virtif_user *viu,
 	pfd.events = POLLIN;
 
 	for (;;) {
-		if (viu->viu_dying)
+		if (viu->viu_dying) {
+			rv = 0;
+			*rcv = 0;
 			break;
+		}
 
 		prv = poll(&pfd, 1, POLLTIMO_MS);
 		if (prv == 0)
@@ -180,7 +197,7 @@ rumpcomp_virtif_recv(struct virtif_user *viu,
 #undef POLLTIMO_MS
 
 void
-rumpcomp_virtif_dying(struct virtif_user *viu)
+VIFHYPER_DYING(struct virtif_user *viu)
 {
 
 	/* no locking necessary.  it'll be seen eventually */
@@ -188,7 +205,7 @@ rumpcomp_virtif_dying(struct virtif_user *viu)
 }
 
 void
-rumpcomp_virtif_destroy(struct virtif_user *viu)
+VIFHYPER_DESTROY(struct virtif_user *viu)
 {
 	void *cookie = rumpuser_component_unschedule();
 

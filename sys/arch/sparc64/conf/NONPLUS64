@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.39 2013/06/05 23:08:03 christos Exp $
+# 	$NetBSD: NONPLUS64,v 1.39.2.1 2013/08/28 23:59:22 rmind Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.39 $"
+#ident		"NONPLUS64-$Revision: 1.39.2.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -166,7 +166,6 @@ options 	GATEWAY		# packet forwarding ("router switch")
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device

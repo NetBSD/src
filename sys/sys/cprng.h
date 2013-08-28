@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.7 2013/06/23 02:35:24 riastradh Exp $ */
+/*	$NetBSD: cprng.h,v 1.7.2.1 2013/08/28 23:59:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -87,10 +87,12 @@ void	cprng_init(void);
 #define CPRNG_INIT_ANY		0x00000001
 #define CPRNG_REKEY_ANY		0x00000002
 #define CPRNG_USE_CV		0x00000004
+#define CPRNG_HARD		0x00000008
 #define CPRNG_FMT	"\177\020\
 b\0INIT_ANY\0\
 b\1REKEY_ANY\0\
-b\2USE_CV\0"
+b\2USE_CV\0\
+b\3HARD\0"
 
 cprng_strong_t *
 	cprng_strong_create(const char *, int, int);
@@ -100,7 +102,6 @@ size_t	cprng_strong(cprng_strong_t *, void *, size_t, int);
 struct knote;			/* XXX temp, for /dev/random */
 int	cprng_strong_kqfilter(cprng_strong_t *, struct knote *); /* XXX " */
 int	cprng_strong_poll(cprng_strong_t *, int); /* XXX " */
-void	cprng_strong_deplete(cprng_strong_t *);	  /* XXX " */
 
 extern cprng_strong_t	*kern_cprng;
 

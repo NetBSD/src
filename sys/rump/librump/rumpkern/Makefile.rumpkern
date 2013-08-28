@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.128 2013/06/23 02:35:24 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.128.2.1 2013/08/28 23:59:37 rmind Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -202,9 +202,10 @@ KERNMISCCPPFLAGS+=	-D_RUMPKERNEL
 # compare-and-swap.  This is because the kernel version is using
 # instructions or routines unavailable to us in userspace.
 #
-.if (${MACHINE_CPU} == "arm" && empty(ARMV6)) || ${MACHINE_CPU} == "hppa" \
+.if (${MACHINE_CPU} == "arm" && empty(ARMV6) && empty(ARMV7)) \
+    || ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "hppa" \
     || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
-    || ${MACHINE_CPU} == "vax" || ${MACHINE_ARCH} == "m68000"
+    || ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "m68000"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
 SRCS+=		atomic_cas_generic.c
 #SRCS+=		rump_atomic_cas_up.c

@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.31 2013/06/05 23:08:01 christos Exp $
+#	$NetBSD: VIPER,v 1.31.2.1 2013/08/28 23:59:14 rmind Exp $
 #
 #	Arcom Viper
 #
@@ -58,7 +58,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

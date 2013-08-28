@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.87 2013/05/28 10:55:34 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.87.2.1 2013/08/28 23:59:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.87 2013/05/28 10:55:34 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.87.2.1 2013/08/28 23:59:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -796,7 +796,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &mach64_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
 		    ((sc->memsize * 1024) / sc->sc_my_mode->hdisplay) -

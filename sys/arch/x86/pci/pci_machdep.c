@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.57.4.1 2013/08/28 23:59:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57.4.1 2013/08/28 23:59:24 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Ex
 #include "opt_vga.h"
 #include "pci.h"
 #include "wsdisplay.h"
+#include "com.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -136,6 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57 2013/05/03 15:42:29 jakllsch Ex
 #endif
 
 #include <machine/mpconfig.h>
+
+#if NCOM > 0
+#include <dev/pci/puccn.h>
+#endif
 
 #include "opt_pci_conf_mode.h"
 
@@ -593,53 +598,6 @@ not2:
 	return (pci_mode = 0);
 }
 
-/*
- * Determine which flags should be passed to the primary PCI bus's
- * autoconfiguration node.  We use this to detect broken chipsets
- * which cannot safely use memory-mapped device access.
- */
-int
-pci_bus_flags(void)
-{
-	int rval = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	int device, maxndevs;
-	pcitag_t tag;
-	pcireg_t id;
-
-	maxndevs = pci_bus_maxdevs(NULL, 0);
-
-	for (device = 0; device < maxndevs; device++) {
-		tag = pci_make_tag(NULL, 0, device, 0);
-		id = pci_conf_read(NULL, tag, PCI_ID_REG);
-
-		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
-		/* XXX Not invalid, but we've done this ~forever. */
-		if (PCI_VENDOR(id) == 0)
-			continue;
-
-		switch (PCI_VENDOR(id)) {
-		case PCI_VENDOR_SIS:
-			switch (PCI_PRODUCT(id)) {
-			case PCI_PRODUCT_SIS_85C496:
-				goto disable_mem;
-			}
-			break;
-		}
-	}
-
-	return (rval);
-
- disable_mem:
-	printf("Warning: broken PCI-Host bridge detected; "
-	    "disabling memory-mapped access\n");
-	rval &= ~(PCI_FLAGS_MEM_OKAY|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
-	    PCI_FLAGS_MWI_OKAY);
-	return (rval);
-}
-
 void
 pci_device_foreach(pci_chipset_tag_t pc, int maxbus,
 	void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
@@ -939,7 +897,7 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
-					    (vaddr_t)ri->ri_bits);
+					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
 				}
@@ -974,6 +932,7 @@ device_pci_register(device_t dev, void *aux)
 #endif
 			}
 			prop_dictionary_set_bool(dict, "is_console", true);
+
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
 			prop_dictionary_set_uint16(dict, "cursor-row",
@@ -997,3 +956,15 @@ device_pci_register(device_t dev, void *aux)
 	}
 	return NULL;
 }
+
+#if NCOM > 0
+int
+cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
+{
+	pci_mode_detect();
+	pa->pa_iot = x86_bus_space_io;
+	pa->pa_pc = 0;
+	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
+	return 0;
+}
+#endif

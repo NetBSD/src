@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.16 2012/12/19 13:47:20 kiyohara Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.16.2.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	else
 		flength -= (2880 * 512);
 	if (flength > 0 && !saloneflag)
-		fprintf(stderr, "%s: Image %s is %d bytes larger than single"
+		fprintf(stderr, "%s: Image %s is %ld bytes larger than single"
 		    " floppy. Can only be used for netboot.\n", getprogname(),
 		    outname, flength);
 

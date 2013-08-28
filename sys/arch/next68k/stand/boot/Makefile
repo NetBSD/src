@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2012/11/05 16:53:25 apb Exp $
+#	$NetBSD: Makefile,v 1.26.2.1 2013/08/28 23:59:19 rmind Exp $
 
 NOMAN=	# defined
 
@@ -44,7 +44,7 @@ SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
 .PATH: ${S}/lib/libsa
 SRCS+=	dev_net.c
 
-CLEANFILES+= srt0.o boot.elf boot.raw machine ${MACHINE_ARCH} limits.h
+CLEANFILES+= srt0.o boot.elf boot.raw limits.h
 CLEANFILES+= vers.c build.c build	# generated dynamically
 
 BINDIR=	/usr/mdec
@@ -65,6 +65,7 @@ function x(v) { printf "\\0\\%o\\%o\\%o", (v / 65536) % 256, (v / 256) % 256, v 
 }'
 
 ${PROG}: srt0.o ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
 	${SIZE} $@.elf
 	${OBJCOPY} -O binary $@.elf $@.raw
@@ -89,17 +90,5 @@ vers.c: version
 
 # utilities
 
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine ${MACHINE_ARCH}
-.BEGIN: machine ${MACHINE_ARCH}
-
-machine:
-	-rm -f machine
-	ln -s ${S}/arch/${MACHINE}/include machine
-
-${MACHINE_ARCH}:
-	-rm -f ${MACHINE_ARCH}
-	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.endif
-
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>

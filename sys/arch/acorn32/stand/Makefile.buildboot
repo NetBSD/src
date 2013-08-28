@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.16 2013/05/02 04:22:44 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.16.4.1 2013/08/28 23:59:10 rmind Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -44,9 +44,10 @@ CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv3m
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 CPUFLAGS=
 CFLAGS=		-O2
-CFLAGS+=	-ffreestanding
+CFLAGS+=	-ffreestanding -fno-unwind-tables
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 CLEANFILES+= machine ${MACHINE_ARCH}

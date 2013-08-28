@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.464 2013/06/28 15:32:20 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.464.2.1 2013/08/28 23:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464 2013/06/28 15:32:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.464.2.1 2013/08/28 23:59:35 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -128,11 +128,7 @@ static int do_sys_mkdirat(struct lwp *l, int, const char *, mode_t,
 static int do_sys_mkfifoat(struct lwp *, int, const char *, mode_t);
 static int do_sys_chmodat(struct lwp *, int, const char *, int, int);
 static int do_sys_chownat(struct lwp *, int, const char *, uid_t, gid_t, int);
-static int do_sys_utimensat(struct lwp *, int, struct vnode *,
-    const char *, int, const struct timespec *, enum uio_seg);
 static int do_sys_accessat(struct lwp *, int, const char *, int ,int);
-static int do_sys_statat(struct lwp *, int, const char *, unsigned int,
-    struct stat *);
 static int do_sys_symlinkat(struct lwp *, const char *, int, const char *,
     enum uio_seg);
 static int do_sys_linkat(struct lwp *, int, const char *, int, const char *,
@@ -3022,7 +3018,7 @@ do_sys_stat(const char *userpath, unsigned int nd_flag,
 	return do_sys_statat(NULL, AT_FDCWD, userpath, nd_flag, sb);
 }
 
-static int
+int
 do_sys_statat(struct lwp *l, int fdat, const char *userpath,
     unsigned int nd_flag, struct stat *sb) 
 {
@@ -3784,7 +3780,7 @@ do_sys_utimens(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	return do_sys_utimensat(l, AT_FDCWD, vp, path, flag, tptr, seg);
 }
 
-static int
+int
 do_sys_utimensat(struct lwp *l, int fdat, struct vnode *vp,
     const char *path, int flag, const struct timespec *tptr, enum uio_seg seg)
 {
@@ -4173,8 +4169,6 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	int error;
 
 	KASSERT(l != NULL || (fromfd == AT_FDCWD && tofd == AT_FDCWD));
-	KASSERT(from != NULL);
-	KASSERT(to != NULL);
 
 	error = pathbuf_maybe_copyin(from, seg, &fpb);
 	if (error)

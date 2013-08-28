@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.26 2012/07/20 19:31:53 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.26.4.1 2013/08/28 23:59:18 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.26 2012/07/20 19:31:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.26.4.1 2013/08/28 23:59:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,9 +379,30 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 	dc->dc_videobase = paddr;
 
 	/* WHITE on BLACK */
-	if (hwplanemask == 0x0f) {
-		/* XXX Need Bt454 more initialization */
+	if (hwplanemask == 0x01) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
+
+		/*
+		 * On 1bpp framebuffer, only plane P0 has framebuffer memory
+		 * and other planes seems pulled up, i.e. always 1.
+		 * Set white only for a palette (P0,P1,P2,P3) = (1,1,1,1).
+		 */
+		odac->bt_addr = 0;
+		for (i = 0; i < 15; i++) {
+			odac->bt_cmap = 0;
+			odac->bt_cmap = 0;
+			odac->bt_cmap = 0;
+		}
+		/*
+		 * The B/W video connector is connected to IOG of Bt454,
+		 * and IOR and IOB are unused.
+		 */
+		odac->bt_cmap = 0;
+		odac->bt_cmap = 255;
+		odac->bt_cmap = 0;
+	} else if (hwplanemask == 0x0f) {
+		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
+
 		odac->bt_addr = 0;
 		odac->bt_cmap = 0;
 		odac->bt_cmap = 0;

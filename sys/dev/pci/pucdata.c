@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.84 2013/06/03 16:21:50 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.84.2.1 2013/08/28 23:59:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.84 2013/06/03 16:21:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.84.2.1 2013/08/28 23:59:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,10 +1229,6 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
-/*
- * PUC_MAX_PORTS needs to be raised in order to reach these ports
- */
-#if PUC_MAX_PORTS >= 16
 		{ PUC_PORT_TYPE_COM, 0x14, 0x20, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x28, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x30, COM_FREQ * 8},
@@ -1241,7 +1237,6 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x48, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x50, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x14, 0x58, COM_FREQ * 8},
-#endif /* PUC_MAX_PORTS >= 16 */
 	    },
 	},
 
@@ -1375,9 +1370,9 @@ const struct puc_device_description puc_devices[] = {
 	 * 2 serial port converter. Product codes from
 	 * documentation (and physical 2 port serial card)
 	 */
-	{   "Nanjing QinHeng Electronics 2S",
-	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH352,
-		PCI_VENDOR_QINHENG, 0x3253 },
+	{   "Nanjing QinHeng Electronics CH352",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH352_2S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH352_2S },
 	    {	0xffff, 0xffff, 0xffff, 0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -1385,14 +1380,265 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	{   "Nanjing QinHeng Electronics 2S, 1P",
-	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353,
-		PCI_VENDOR_QINHENG, 0x7053	},
+	{   "Nanjing QinHeng Electronics CH352",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH352_1S1P,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH352_1S1P },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH353",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353_4S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353_4S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH353",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353_2S1P,
+		PCI_VENDOR_QINHENG, 0x3253 },
 	    {	0xffff, 0xffff, 0xffff, 0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH353 (fixed address)",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353_2S1PAR,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH353_2S1PAR },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH355",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH355_4S,
+		PCI_VENDOR_QINHENG, 0x3473 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH356",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH356_4S1P,
+		PCI_VENDOR_QINHENG, 0x3473 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH356",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH356_6S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH356_6S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH356",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH356_8S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH356_8S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH357",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH357_4S,
+		PCI_VENDOR_QINHENG, 0x5053 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH358",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH358_4S1P,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH358_4S1P },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH358",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH358_8S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH358_8S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH359",
+	    {	PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH359_16S,
+		PCI_VENDOR_QINHENG, PCI_PRODUCT_QINHENG_CH359_16S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x38, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH382",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH382_2S,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH382_2S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc8, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH382",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH382_2S1P,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH382_2S1P },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH384",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_4S,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_4S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd8, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH384",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_4S1P,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_4S1P },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH384",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_8S,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_8S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics CH384",
+	    {	PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_28S,
+		PCI_VENDOR_QINHENG2, PCI_PRODUCT_QINHENG2_CH384_28S },
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xc8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xd8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x40, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x50, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x60, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x70, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x48, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x58, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x68, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x78, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x80, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x90, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xa0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xb0, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x88, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x98, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xa8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0xb8, COM_FREQ },
 	    },
 	},
 

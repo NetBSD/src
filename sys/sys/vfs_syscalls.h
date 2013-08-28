@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.18 2012/03/13 18:41:02 elad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.18.4.1 2013/08/28 23:59:38 rmind Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct quotactl_args;
 
 /* Status functions to kernel 'struct stat' buffers */
 int do_sys_stat(const char *, unsigned int, struct stat *);
+int do_sys_statat(struct lwp *, int, const char *, unsigned int, struct stat *);
 int do_fhstat(struct lwp *, const void *, size_t, struct stat *);
 int do_fhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int);
 
@@ -53,7 +54,9 @@ int do_sys_getvfsstat(struct lwp *, void *, size_t, int, int (*)(const void *, v
 
 int do_sys_utimes(struct lwp *, struct vnode *, const char *, int,
     const struct timeval *, enum uio_seg);
-int do_sys_utimens(struct lwp *, struct vnode *, const char *, int flag,
+int do_sys_utimens(struct lwp *, struct vnode *, const char *, int,
+    const struct timespec *, enum uio_seg);
+int do_sys_utimensat(struct lwp *, int, struct vnode *, const char *, int,
     const struct timespec *, enum uio_seg);
 
 int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);

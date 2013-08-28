@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.11 2012/12/09 21:30:02 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.11.2.1 2013/08/28 23:59:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -93,7 +93,6 @@ struct pci_chipset_tag {
  * x86-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-int		pci_bus_flags(void);
 int		pci_mode_detect(void);
 void		pci_mode_set(int);
 

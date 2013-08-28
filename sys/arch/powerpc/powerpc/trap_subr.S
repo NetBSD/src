@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.76 2013/04/11 17:13:15 macallan Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.76.4.1 2013/08/28 23:59:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1068,13 +1068,7 @@ s_sctrap:
 	isync
 	addi	%r3,%r1,FRAME_TF
 /* Call the appropriate syscall handler: */
-#if 0
-	GET_CPUINFO(%r4)
-	ldptr	%r4,CI_CURLWP(%r4)
-	ldptr	%r4,L_PROC(%r4)
-#else
 	ldptr	%r4,L_PROC(%r13)
-#endif
 	ldptr	%r4,P_MD_SYSCALL(%r4)
 	mtctr	%r4
 	bctrl

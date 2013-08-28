@@ -248,7 +248,7 @@ EXPORT_SYMBOL(vchi_bulk_queue_receive);
  * Name: vchi_bulk_queue_transmit
  *
  * Arguments:  VCHI_BULK_HANDLE_T handle,
- *             const void *data_src,
+ *             void *data_src,
  *             uint32_t data_size,
  *             VCHI_FLAGS_T flags,
  *             void *bulk_handle

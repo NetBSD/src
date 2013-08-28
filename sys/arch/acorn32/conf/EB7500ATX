@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.54 2013/06/05 23:07:59 christos Exp $
+#	$NetBSD: EB7500ATX,v 1.54.2.1 2013/08/28 23:59:10 rmind Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.54 $"
+#ident		"EB7500ATX-$Revision: 1.54.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -76,7 +76,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.15 2013/05/02 04:22:44 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.15.4.1 2013/08/28 23:59:10 rmind Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -34,18 +34,10 @@ CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv2
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 CFLAGS=		-O2
-CFLAGS+=	-ffreestanding
+CFLAGS+=	-ffreestanding -fno-unwind-tables
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine ${MACHINE_ARCH}
-	ln -s $S/arch/${MACHINE}/include machine
-	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.endif
-
-CLEANFILES+= machine ${MACHINE_ARCH}
 
 ### find out what to use for libkern
 KERN_AS=	library

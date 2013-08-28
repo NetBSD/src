@@ -1,4 +1,4 @@
-/* $NetBSD: clzsi2.S,v 1.4 2012/09/01 11:24:36 matt Exp $ */
+/* $NetBSD: clzsi2.S,v 1.4.4.1 2013/08/28 23:59:35 rmind Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,6 @@
 #include <machine/asm.h>
 
 	.text
-ENTRY(__clzdi2)
 #ifdef __ARMEB__
 #define	HI	r0
 #define	LO	r1
@@ -39,12 +38,26 @@ ENTRY(__clzdi2)
 #define	LO	r0
 #endif
 #if defined(_ARM_ARCH_5)
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+ENTRY(__clzdi2)
+	cbz	HI, 1f
+	clz	r0, HI		/* count leading zeros in high word */
+	RET
+1:	clz	r0, LO		/* yes, count in low word */
+	adds	r0, r0, #32	/*      and add the bits in the high word */
+	RET
+END(__clzdi2)
+#else
+ARM_ENTRY(__clzdi2)
 	teq	HI, #0		/* high word all zero? */
 	clzne	r0, HI		/* count leading zeros in high word */
 	clzeq	r0, LO		/* yes, count in low word */
 	addeq	r0, r0, #32	/*      and add the bits in the high word */
 	RET
+END(__clzdi2)
+#endif
 #else
+ARM_ENTRY(__clzdi2)
 	movs	r3, HI
 	movne	r0, #31
 	bne	.L_clz
@@ -53,14 +66,20 @@ ENTRY(__clzdi2)
 	bne	.L_clz
 	mov	r0, #64
 	RET
-#endif
 END(__clzdi2)
+#endif
 
-ENTRY(__clzsi2)
 #if defined(_ARM_ARCH_5)
+#if defined(_ARM_ARCH_7)
+ENTRY(__clzsi2)
+#else
+ARM_ENTRY(__clzsi2)
+#endif
 	clz	r0, r0
 	RET
+END(__clzsi2)
 #else
+ARM_ENTRY(__clzsi2)
 	movs	r3, r0
 	moveq	r0, #32
 	RETc(eq)
@@ -105,5 +124,5 @@ ENTRY(__clzsi2)
 #endif
 #endif	/* __OPTIMIZE_SIZE__ */
 	RET
-#endif  /* _ARM_ARCH_5 */
 END(__clzsi2)
+#endif  /* _ARM_ARCH_5 */

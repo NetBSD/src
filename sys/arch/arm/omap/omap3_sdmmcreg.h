@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.6 2013/06/28 00:50:23 matt Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.6.2.1 2013/08/28 23:59:12 rmind Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define SDMMC4_BASE_4430	0x480D1000	// same for omap5
 #define SDMMC5_BASE_4430	0x480D5000	// same for omap5
 
-#define	SDMMC1_BASE_TIAM335X	0x48006100
+#define	SDMMC1_BASE_TIAM335X	0x48060100
 #define	SDMMC2_BASE_TIAM335X	0x481d8100
 #define	SDMMC3_BASE_TIAM335X	0x47810100
 

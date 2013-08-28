@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.119 2012/04/29 22:53:59 chs Exp $ */
+/* $NetBSD: udf_subr.c,v 1.119.4.1 2013/08/28 23:59:35 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.119 2012/04/29 22:53:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.119.4.1 2013/08/28 23:59:35 rmind Exp $");
 #endif /* not lint */
 
 
@@ -4458,8 +4458,8 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 /* --------------------------------------------------------------------- */
 
 
-static int
-dirhash_fill(struct udf_node *dir_node)
+int
+udf_dirhash_fill(struct udf_node *dir_node)
 {
 	struct vnode *dvp = dir_node->vnode;
 	struct dirhash *dirh;
@@ -4556,7 +4556,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 
 	/* get our dirhash and make sure its read in */
 	dirhash_get(&dir_node->dir_hash);
-	error = dirhash_fill(dir_node);
+	error = udf_dirhash_fill(dir_node);
 	if (error) {
 		dirhash_put(dir_node->dir_hash);
 		return error;
@@ -4789,7 +4789,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* get our dirhash and make sure its read in */
 	dirhash_get(&dir_node->dir_hash);
-	error = dirhash_fill(dir_node);
+	error = udf_dirhash_fill(dir_node);
 	if (error) {
 		dirhash_put(dir_node->dir_hash);
 		return error;
@@ -4938,7 +4938,7 @@ udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* get our dirhash and make sure its read in */
 	dirhash_get(&dir_node->dir_hash);
-	error = dirhash_fill(dir_node);
+	error = udf_dirhash_fill(dir_node);
 	if (error) {
 		dirhash_put(dir_node->dir_hash);
 		return error;
@@ -5061,7 +5061,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* get our dirhash and make sure its read in */
 	dirhash_get(&dir_node->dir_hash);
-	error = dirhash_fill(dir_node);
+	error = udf_dirhash_fill(dir_node);
 	if (error) {
 		dirhash_put(dir_node->dir_hash);
 		return error;

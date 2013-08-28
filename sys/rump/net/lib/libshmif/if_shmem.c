@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.56 2013/06/14 05:59:50 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.56.2.1 2013/08/28 23:59:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.56 2013/06/14 05:59:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.56.2.1 2013/08/28 23:59:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -647,6 +647,8 @@ shmif_rcv(void *arg)
 	uint32_t nextpkt;
 	bool wrap, passup;
 	int error;
+	const int align
+	    = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 
  reup:
 	mutex_enter(&sc->sc_mtx);
@@ -662,6 +664,7 @@ shmif_rcv(void *arg)
 		if (m == NULL) {
 			m = m_gethdr(M_WAIT, MT_DATA);
 			MCLGET(m, M_WAIT);
+			m->m_data += align;
 		}
 
 		DPRINTF(("waiting %d/%" PRIu64 "\n",
