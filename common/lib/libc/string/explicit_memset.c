@@ -1,4 +1,4 @@
-/* $NetBSD: explicit_memset.c,v 1.1 2013/06/24 04:21:19 riastradh Exp $ */
+/* $NetBSD: explicit_memset.c,v 1.2 2013/08/28 15:46:23 riastradh Exp $ */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
@@ -14,9 +14,9 @@
  */
 void *(* volatile explicit_memset_impl)(void *, int, size_t) = memset;
 
-void
+void *
 explicit_memset(void *b, int c, size_t len)
 {
 
-	(*explicit_memset_impl)(b, c, len);
+	return (*explicit_memset_impl)(b, c, len);
 }
