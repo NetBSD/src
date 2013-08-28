@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.7 2013/08/25 17:08:41 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.8 2013/08/28 18:32:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.7 2013/08/25 17:08:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.8 2013/08/28 18:32:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,9 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL);
 	ctrl |= RNG_CTRL_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL, ctrl);
+
+	/* get some initial entropy ASAP */
+	bcmrng_get(RND_POOLBITS / NBBY, sc);
 }
 
 static void
