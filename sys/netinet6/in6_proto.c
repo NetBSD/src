@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.99.2.1 2013/08/28 15:21:48 rmind Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.99 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.99.2.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -135,14 +135,6 @@ DOMAIN_DEFINE(inet6domain);	/* forward declare and add to link set */
 
 /* Wrappers to acquire kernel_lock. */
 
-PR_WRAP_USRREQ(rip6_usrreq)
-PR_WRAP_USRREQ(udp6_usrreq)
-PR_WRAP_USRREQ(tcp_usrreq)
-
-#define	rip6_usrreq 	rip6_usrreq_wrapper
-#define	udp6_usrreq 	udp6_usrreq_wrapper
-#define	tcp_usrreq 	tcp_usrreq_wrapper
-
 PR_WRAP_CTLINPUT(rip6_ctlinput)
 PR_WRAP_CTLINPUT(encap6_ctlinput)
 PR_WRAP_CTLINPUT(udp6_ctlinput)
@@ -190,7 +182,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = udp6_input,
 	.pr_ctlinput = udp6_ctlinput,
 	.pr_ctloutput = udp6_ctloutput,
-	.pr_usrreq = udp6_usrreq,
+	.pr_usrreqs = &udp6_usrreqs,
 	.pr_init = udp6_init,
 },
 {	.pr_type = SOCK_STREAM,
@@ -200,7 +192,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = tcp6_input,
 	.pr_ctlinput = tcp6_ctlinput,
 	.pr_ctloutput = tcp_ctloutput,
-	.pr_usrreq = tcp_usrreq,
+	.pr_usrreqs = &tcp_usrreqs,
 #ifndef INET	/* don't call initialization and timeout routines twice */
 	.pr_init = tcp_init,
 	.pr_fasttimo = tcp_fasttimo,
@@ -216,7 +208,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #ifdef GATEWAY
 {	.pr_domain = &inet6domain,
@@ -233,7 +225,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = icmp6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = icmp6_init,
 },
 {	.pr_type = SOCK_RAW,
@@ -285,7 +277,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = encap_init,
 },
 #endif
@@ -297,7 +289,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = encap_init,
 },
 #if NETHERIP > 0
@@ -309,7 +301,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif
 #if NCARP > 0
@@ -320,7 +312,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = carp6_proto_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif /* NCARP */
 {	.pr_type = SOCK_RAW,
@@ -330,7 +322,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = pim6_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = pim6_init,
 },
 /* raw wildcard */
@@ -340,7 +332,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_input = rip6_input,
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreq = rip6_usrreq,
+	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = rip6_init,
 },
 };

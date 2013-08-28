@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.142 2013/06/27 18:54:31 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.142.2.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142 2013/06/27 18:54:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.142.2.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ const struct sockaddr_un sun_noname = {
 };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
+static void unp_detach(struct socket *);
 struct mbuf *unp_addsockcred(struct lwp *, struct mbuf *);
 static void unp_mark(file_t *);
 static void unp_scan(struct mbuf *, void (*)(file_t *), int);
@@ -288,12 +289,11 @@ unp_resetlock(struct socket *so)
 static void
 unp_free(struct unpcb *unp)
 {
-
 	if (unp->unp_addr)
 		free(unp->unp_addr, M_SONAME);
 	if (unp->unp_streamlock != NULL)
 		mutex_obj_free(unp->unp_streamlock);
-	free(unp, M_PCB);
+	kmem_free(unp, sizeof(*unp));
 }
 
 int
@@ -362,47 +362,31 @@ unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
 	}
 }
 
-/*ARGSUSED*/
-int
-uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+static int
+unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	struct unpcb *unp = sotounpcb(so);
+	struct unpcb *unp;
 	struct socket *so2;
-	struct proc *p;
 	u_int newhiwat;
 	int error = 0;
 
-	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
-#ifdef DIAGNOSTIC
-	if (req != PRU_SEND && req != PRU_SENDOOB && control)
-		panic("uipc_usrreq: unexpected control mbuf");
-#endif
-	p = l ? l->l_proc : NULL;
-	if (req != PRU_ATTACH) {
-		if (unp == NULL) {
-			error = EINVAL;
-			goto release;
-		}
-		KASSERT(solocked(so));
+	if (req == PRU_CONTROL) {
+		return EOPNOTSUPP;
+	}
+	KASSERT(solocked(so));
+	unp = sotounpcb(so);
+
+	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	if (unp == NULL) {
+		error = EINVAL;
+		goto release;
 	}
 
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (unp != NULL) {
-			error = EISCONN;
-			break;
-		}
-		error = unp_attach(so);
-		break;
-
-	case PRU_DETACH:
-		unp_detach(unp);
-		break;
-
 	case PRU_BIND:
 		KASSERT(l != NULL);
 		error = unp_bind(so, nam, l);
@@ -449,7 +433,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * If the connection is fully established, break the
 		 * association with uipc_lock and give the connected
-		 * pair a seperate lock to share.
+		 * pair a separate lock to share.
 		 * There is a race here: sotounpcb(so2)->unp_streamlock
 		 * is not locked, so when changing so2->so_lock
 		 * another thread can grab it while so->so_lock is still
@@ -561,7 +545,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				m_freem(m);
 				break;
 			}
-			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
@@ -631,13 +614,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_ABORT:
 		(void)unp_drop(unp, ECONNABORTED);
-
 		KASSERT(so->so_head == NULL);
-#ifdef DIAGNOSTIC
-		if (so->so_pcb == NULL)
-			panic("uipc 5: drop killed pcb");
-#endif
-		unp_detach(unp);
+		KASSERT(so->so_pcb != NULL);
+		unp_detach(so);
 		break;
 
 	case PRU_SENSE:
@@ -781,65 +760,62 @@ u_long	unpdg_recvspace = 4*1024;
 u_int	unp_rights;			/* files in flight */
 u_int	unp_rights_ratio = 2;		/* limit, fraction of maxfiles */
 
-int
-unp_attach(struct socket *so)
+static int
+unp_attach(struct socket *so, int proto)
 {
-	struct unpcb *unp;
+	struct unpcb *unp = sotounpcb(so);
+	u_long sndspc, rcvspc;
 	int error;
 
+	KASSERT(unp == NULL);
+
 	switch (so->so_type) {
-	case SOCK_SEQPACKET: /* FALLTHROUGH */
+	case SOCK_SEQPACKET:
+		/* FALLTHROUGH */
 	case SOCK_STREAM:
 		if (so->so_lock == NULL) {
-			/* 
-			 * XXX Assuming that no socket locks are held,
-			 * as this call may sleep.
-			 */
 			so->so_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-			solock(so);
 		}
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, unpst_sendspace, unpst_recvspace);
-			if (error != 0)
-				return (error);
-		}
+		sndspc = unpst_sendspace;
+		rcvspc = unpst_recvspace;
 		break;
 
 	case SOCK_DGRAM:
 		if (so->so_lock == NULL) {
 			mutex_obj_hold(uipc_lock);
 			so->so_lock = uipc_lock;
-			solock(so);
 		}
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, unpdg_sendspace, unpdg_recvspace);
-			if (error != 0)
-				return (error);
-		}
+		sndspc = unpdg_sendspace;
+		rcvspc = unpdg_recvspace;
 		break;
 
 	default:
 		panic("unp_attach");
 	}
-	KASSERT(solocked(so));
-	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
-	if (unp == NULL)
-		return (ENOBUFS);
-	memset(unp, 0, sizeof(*unp));
+
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		error = soreserve(so, sndspc, rcvspc);
+		if (error) {
+			return error;
+		}
+	}
+
+	unp = kmem_zalloc(sizeof(*unp), KM_SLEEP);
+	nanotime(&unp->unp_ctime);
 	unp->unp_socket = so;
 	so->so_pcb = unp;
-	nanotime(&unp->unp_ctime);
-	return (0);
+	return 0;
 }
 
-void
-unp_detach(struct unpcb *unp)
+static void
+unp_detach(struct socket *so)
 {
-	struct socket *so;
+	struct unpcb *unp;
 	vnode_t *vp;
 
-	so = unp->unp_socket;
-
+	unp = sotounpcb(so);
+	KASSERT(unp != NULL);
+	KASSERT(solocked(so));
  retry:
 	if ((vp = unp->unp_vnode) != NULL) {
 		sounlock(so);
@@ -1182,13 +1158,6 @@ unp_disconnect(struct unpcb *unp)
 		break;
 	}
 }
-
-#ifdef notdef
-unp_abort(struct unpcb *unp)
-{
-	unp_detach(unp);
-}
-#endif
 
 void
 unp_shutdown(struct unpcb *unp)
@@ -1814,3 +1783,9 @@ unp_discard_later(file_t *fp)
 	}
 	mutex_exit(&filelist_lock);
 }
+
+const struct pr_usrreqs unp_usrreqs = {
+	.pr_attach	= unp_attach,
+	.pr_detach	= unp_detach,
+	.pr_generic	= unp_usrreq,
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.65 2011/12/20 23:56:28 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.65.10.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65 2011/12/20 23:56:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.65.10.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +201,9 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		else if (IOCGROUP(cmd) == 'r')
 			error = rtioctl(cmd, data, curlwp);
 		else {
-			error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-			    (struct mbuf *)cmd, (struct mbuf *)data, NULL,
-			     curlwp);
+			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+			    PRU_CONTROL, (struct mbuf *)cmd,
+			    (struct mbuf *)data, NULL, curlwp);
 		}
 		KERNEL_UNLOCK_ONE(NULL);
 		break;
@@ -240,7 +240,7 @@ soo_stat(file_t *fp, struct stat *ub)
 	ub->st_mode = S_IFSOCK;
 
 	solock(so);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_SENSE,
+	error = (*so->so_proto->pr_usrreqs->pr_generic)(so, PRU_SENSE,
 	    (struct mbuf *)ub, NULL, NULL, curlwp);
 	sounlock(so);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.264.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.264.2.2 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.264.2.2 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -792,8 +792,8 @@ again:
 		for (pr = dp->dom_protosw;
 		     pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
-			if (pr->pr_usrreq != NULL) {
-				(void) (*pr->pr_usrreq)(&so,
+			if (pr->pr_usrreqs != NULL) {
+				(void) (*pr->pr_usrreqs->pr_generic)(&so,
 				    PRU_PURGEIF, NULL, NULL,
 				    (struct mbuf *) ifp, curlwp);
 				purged = 1;
@@ -844,9 +844,10 @@ again:
 		 */
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 			so.so_proto = pr;
-			if (pr->pr_usrreq != NULL && pr->pr_flags & PR_PURGEIF)
-				(void)(*pr->pr_usrreq)(&so, PRU_PURGEIF, NULL,
-				    NULL, (struct mbuf *)ifp, curlwp);
+			if (pr->pr_usrreqs != NULL && pr->pr_flags & PR_PURGEIF)
+				(void)(*pr->pr_usrreqs->pr_generic)(&so,
+				    PRU_PURGEIF, NULL, NULL,
+				    (struct mbuf *)ifp, curlwp);
 		}
 	}
 
@@ -1905,8 +1906,8 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #ifdef COMPAT_OSOCK
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
-		error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-		    (struct mbuf *)cmd, (struct mbuf *)data,
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    PRU_CONTROL, (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, l);
 #endif
 	}

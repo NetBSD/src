@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.13.26.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13.26.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 
@@ -70,9 +70,7 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	dlc = malloc(sizeof(struct rfcomm_dlc), M_BLUETOOTH, M_NOWAIT | M_ZERO);
-	if (dlc == NULL)
-		return ENOMEM;
+	dlc = kmem_zalloc(sizeof(struct rfcomm_dlc), KM_SLEEP);
 
 	dlc->rd_state = RFCOMM_DLC_CLOSED;
 	dlc->rd_mtu = rfcomm_mtu_default;
@@ -274,7 +272,7 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
  *
  * detach RFCOMM DLC from handle
  */
-int
+void
 rfcomm_detach(struct rfcomm_dlc **handle)
 {
 	struct rfcomm_dlc *dlc = *handle;
@@ -298,10 +296,8 @@ rfcomm_detach(struct rfcomm_dlc **handle)
 		dlc->rd_flags |= RFCOMM_DLC_DETACH;
 	else {
 		callout_destroy(&dlc->rd_timeout);
-		free(dlc, M_BLUETOOTH);
+		kmem_free(dlc, sizeof(*dlc));
 	}
-
-	return 0;
 }
 
 /*

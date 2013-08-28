@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.11 2011/02/01 19:40:24 chuck Exp $	*/
+/*	$NetBSD: natm.h,v 1.11.18.1 2013/08/28 15:21:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -119,6 +119,8 @@ extern	u_int natm_sookcnt,
 		natm_sookbytes;		/* account of ok */
 #endif
 
+extern const struct pr_usrreqs natm_usrreqs;
+
 /* atm_rawioctl: kernel's version of SIOCRAWATM [for internal use only!] */
 struct atm_rawioctl {
   struct natmpcb *npcb;
@@ -129,18 +131,11 @@ struct atm_rawioctl {
 /* external functions */
 
 /* natm_pcb.c */
-struct	natmpcb *npcb_alloc(int);
+struct	natmpcb *npcb_alloc(bool);
 void	npcb_free(struct natmpcb *, int);
 struct	natmpcb *npcb_add(struct natmpcb *, struct ifnet *, int, int);
 
 /* natm.c */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-int	natm_usrreq(struct socket *, int, struct mbuf *,
-                             struct mbuf *, struct mbuf *, struct lwp *);
-#elif defined(__FreeBSD__)
-int	natm_usrreq(struct socket *, int, struct mbuf *,
-                             struct mbuf *, struct mbuf *);
-#endif
 int	natm0_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	natm5_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	natmintr(void);

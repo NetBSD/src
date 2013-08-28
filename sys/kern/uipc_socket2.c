@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp 
  *   to lock sockets are aware of this.  When so_lock is acquired, the
  *   routine locking must check to see if so_lock still points to the
  *   lock that was acquired.  If so_lock has changed in the meantime, the
- *   now irellevant lock that was acquired must be dropped and the lock
+ *   now irrelevant lock that was acquired must be dropped and the lock
  *   operation retried.  Although not proven here, this is completely safe
  *   on a multiprocessor system, even with relaxed memory ordering, given
  *   the next two rules:
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp 
  *   locking the socket must also lock the sockets attached to both queues.
  *   Again, their lock pointers must match.
  *
- * o Beyond the initial lock assigment in socreate(), assigning locks to
+ * o Beyond the initial lock assignment in socreate(), assigning locks to
  *   sockets is the responsibility of the individual protocols / protocol
  *   domains.
  */
@@ -234,33 +234,40 @@ soinit2(void)
 }
 
 /*
- * When an attempt at a new connection is noted on a socket
- * which accepts connections, sonewconn is called.  If the
- * connection is possible (subject to space constraints, etc.)
- * then we allocate a new structure, propoerly linked into the
- * data structure of the original socket, and return this.
- * Connstatus may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
+ * sonewconn: accept a new connection.
+ *
+ * When an attempt at a new connection is noted on a socket which accepts
+ * connections, sonewconn(9) is called.  If the connection is possible
+ * (subject to space constraints, etc) then we allocate a new structure,
+ * properly linked into the data structure of the original socket.
+ *
+ * => Connection status may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
+ * => Listening socket should be locked.
+ * => Returns the new socket locked.
  */
 struct socket *
 sonewconn(struct socket *head, int connstatus)
 {
-	struct socket	*so;
-	int		soqueue, error;
+	struct socket *so;
+	int soqueue, error;
 
 	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
 	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
-	if ((head->so_options & SO_ACCEPTFILTER) != 0)
+	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2) {
+		/* Listen queue overflow. */
+		return NULL;
+	}
+
+	if ((head->so_options & SO_ACCEPTFILTER) != 0) {
 		connstatus = 0;
+	}
 	soqueue = connstatus ? 1 : 0;
-	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
+
+	if ((so = soget(false)) == NULL) {
 		return NULL;
-	so = soget(false);
-	if (so == NULL)
-		return NULL;
-	mutex_obj_hold(head->so_lock);
-	so->so_lock = head->so_lock;
+	}
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
@@ -285,27 +292,45 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
 	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
 	so->so_snd.sb_flags |= head->so_snd.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
-	soqinsque(head, so, soqueue);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL,
-	    NULL, NULL);
-	KASSERT(solocked(so));
-	if (error != 0) {
-		(void) soqremque(so, soqueue);
+
+	/*
+	 * Share the lock the listening-socket, it may get unshared
+	 * once the connection is complete.
+	 */
+	mutex_obj_hold(head->so_lock);
+	so->so_lock = head->so_lock;
+	sounlock(head);
+
+	/* Finally, perform the protocol attach and re-acquire the lock. */
+	error = (*so->so_proto->pr_usrreqs->pr_attach)(so, 0);
+	solock(head);
+
+	if (error) {
 out:
 		/*
-		 * Remove acccept filter if one is present.
+		 * Remove accept filter if one is present.
 		 * XXX Is this really needed?
 		 */
 		if (so->so_accf != NULL)
 			(void)accept_filt_clear(so);
 		soput(so);
+
+		/* Note: listening socket shall stay locked. */
+		KASSERT(solocked(head));
 		return NULL;
 	}
+
+	/*
+	 * Update the connection status and wake up any waiters,
+	 * e.g. processes blocking on accept().
+	 */
+	soqinsque(head, so, soqueue);
 	if (connstatus) {
+		so->so_state |= connstatus;
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
-		so->so_state |= connstatus;
 	}
+	KASSERT(solocked2(head, so));
 	return so;
 }
 
@@ -346,16 +371,20 @@ soput(struct socket *so)
 	pool_cache_put(socket_cache, so);
 }
 
+/*
+ * soqinsque: insert socket of a new connection into the specified
+ * accept queue of the listening socket (head).
+ *
+ *	q = 0: queue of partial connections
+ *	q = 1: queue of incoming connections
+ */
 void
 soqinsque(struct socket *head, struct socket *so, int q)
 {
-
+	KASSERT(q == 0 || q == 1);
 	KASSERT(solocked2(head, so));
-
-#ifdef DIAGNOSTIC
-	if (so->so_onq != NULL)
-		panic("soqinsque");
-#endif
+	KASSERT(so->so_onq == NULL);
+	KASSERT(so->so_head == NULL);
 
 	so->so_head = head;
 	if (q == 0) {
@@ -368,28 +397,36 @@ soqinsque(struct socket *head, struct socket *so, int q)
 	TAILQ_INSERT_TAIL(so->so_onq, so, so_qe);
 }
 
-int
+/*
+ * soqremque: remove socket from the specified queue.
+ *
+ * => Returns true if socket was removed from the specified queue.
+ * => False if socket was not removed (because it was in other queue).
+ */
+bool
 soqremque(struct socket *so, int q)
 {
-	struct socket	*head;
+	struct socket *head = so->so_head;
 
-	head = so->so_head;
-
+	KASSERT(q == 0 || q == 1);
 	KASSERT(solocked(so));
+	KASSERT(so->so_onq != NULL);
+	KASSERT(head != NULL);
+
 	if (q == 0) {
 		if (so->so_onq != &head->so_q0)
-			return (0);
+			return false;
 		head->so_q0len--;
 	} else {
 		if (so->so_onq != &head->so_q)
-			return (0);
+			return false;
 		head->so_qlen--;
 	}
 	KASSERT(solocked2(so, head));
 	TAILQ_REMOVE(so->so_onq, so, so_qe);
 	so->so_onq = NULL;
 	so->so_head = NULL;
-	return (1);
+	return true;
 }
 
 /*
@@ -541,8 +578,7 @@ sb_max_set(u_long new_sbmax)
 int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
-
-	KASSERT(so->so_lock == NULL || solocked(so));
+	KASSERT(so->so_pcb == NULL || solocked(so));
 
 	/*
 	 * there's at least one application (a configure script of screen)
@@ -587,7 +623,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	rlim_t maxcc;
 	struct uidinfo *uidinfo;
 
-	KASSERT(so->so_lock == NULL || solocked(so));
+	KASSERT(so->so_pcb == NULL || solocked(so));
 	KASSERT(sb->sb_so == so);
 	KASSERT(sb_max_adj != 0);
 
@@ -1377,23 +1413,17 @@ solocked2(struct socket *so1, struct socket *so2)
 }
 
 /*
- * Assign a default lock to a new socket.  For PRU_ATTACH, and done by
- * protocols that do not have special locking requirements.
+ * sosetlock: assign a default lock to a new socket.
  */
 void
 sosetlock(struct socket *so)
 {
-	kmutex_t *lock;
-
 	if (so->so_lock == NULL) {
-		lock = softnet_lock;
+		kmutex_t *lock = softnet_lock;
+
 		so->so_lock = lock;
 		mutex_obj_hold(lock);
-		mutex_enter(lock);
 	}
-
-	/* In all cases, lock must be held on return from PRU_ATTACH. */
-	KASSERT(solocked(so));
 }
 
 /*
