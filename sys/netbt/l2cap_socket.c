@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.9.44.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.9.44.1 2013/08/28 15:21:48 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -82,6 +82,40 @@ static const struct btproto l2cap_proto = {
 int l2cap_sendspace = 4096;
 int l2cap_recvspace = 4096;
 
+static int
+l2cap_attach1(struct socket *so, int proto)
+{
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+	}
+
+	/*
+	 * For L2CAP socket PCB we just use an l2cap_channel structure
+	 * since we have nothing to add..
+	 */
+	error = soreserve(so, l2cap_sendspace, l2cap_recvspace);
+	if (error)
+		return error;
+
+	return l2cap_attach((struct l2cap_channel **)&so->so_pcb,
+				&l2cap_proto, so);
+}
+
+static void
+l2cap_detach1(struct socket *so)
+{
+	struct l2cap_channel *pcb = so->so_pcb;
+
+	KASSERT(pcb != NULL);
+	l2cap_detach((struct l2cap_channel **)&so->so_pcb);
+	KASSERT(so->so_pcb == NULL);
+}
+
 /*
  * User Request.
  * up is socket
@@ -91,7 +125,6 @@ int l2cap_recvspace = 4096;
  * nam is either
  *	optional mbuf chain containing an address
  *	ioctl data (PRU_CONTROL)
- *	optionally protocol number (PRU_ATTACH)
  *	message flags (PRU_RCVD)
  * ctl is either
  *	optional mbuf chain containing socket options
@@ -101,7 +134,7 @@ int l2cap_recvspace = 4096;
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -111,6 +144,8 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	switch (req) {
 	case PRU_CONTROL:
@@ -118,26 +153,6 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_PURGEIF:
 		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb != NULL)
-			return EINVAL;
-		/*
-		 * For L2CAP socket PCB we just use an l2cap_channel structure
-		 * since we have nothing to add..
-		 */
-		err = soreserve(up, l2cap_sendspace, l2cap_recvspace);
-		if (err)
-			return err;
-
-		return l2cap_attach((struct l2cap_channel **)&up->so_pcb,
-					&l2cap_proto, up);
 	}
 
 	if (pcb == NULL) {
@@ -153,9 +168,8 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		l2cap_disconnect(pcb, 0);
 		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		return l2cap_detach((struct l2cap_channel **)&up->so_pcb);
+		l2cap_detach1(up);
+		return 0;
 
 	case PRU_BIND:
 		KASSERT(nam != NULL);
@@ -396,3 +410,12 @@ l2cap_input(void *arg, struct mbuf *m)
 	sbappendrecord(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQ(l2cap_usrreq)
+#define	l2cap_usrreq		l2cap_usrreq_wrapper
+
+const struct pr_usrreqs l2cap_usrreqs = {
+	.pr_attach	= l2cap_attach1,
+	.pr_detach	= l2cap_detach1,
+	.pr_generic	= l2cap_usrreq,
+};

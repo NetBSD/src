@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.11.44.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.11.44.1 2013/08/28 15:21:48 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -78,6 +78,34 @@ static const struct btproto sco_proto = {
 int sco_sendspace = 4096;
 int sco_recvspace = 4096;
 
+static int
+sco_attach1(struct socket *so, int proto)
+{
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+	}
+	error = soreserve(so, sco_sendspace, sco_recvspace);
+	if (error)
+		return error;
+
+	return sco_attach((struct sco_pcb **)&so->so_pcb, &sco_proto, so);
+}
+
+static void
+sco_detach1(struct socket *so)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+
+	KASSERT(pcb != NULL);
+	sco_detach((struct sco_pcb **)&so->so_pcb);
+	KASSERT(so->so_pcb == NULL);
+}
+
 /*
  * User Request.
  * up is socket
@@ -87,14 +115,13 @@ int sco_recvspace = 4096;
  * nam is either
  *	optional mbuf chain containing an address
  *	ioctl data (PRU_CONTROL)
- *      optionally, protocol number (PRU_ATTACH)
  * ctl is optional mbuf chain containing socket options
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -104,6 +131,8 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	switch(req) {
 	case PRU_CONTROL:
@@ -111,22 +140,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_PURGEIF:
 		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb)
-			return EINVAL;
-		err = soreserve(up, sco_sendspace, sco_recvspace);
-		if (err)
-			return err;
-
-		return sco_attach((struct sco_pcb **)&up->so_pcb,
-					&sco_proto, up);
 	}
 
 	/* anything after here *requires* a pcb */
@@ -143,9 +156,8 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_ABORT:
 		sco_disconnect(pcb, 0);
 		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		return sco_detach((struct sco_pcb **)&up->so_pcb);
+		sco_detach1(up);
+		return 0;
 
 	case PRU_BIND:
 		KASSERT(nam != NULL);
@@ -365,3 +377,12 @@ sco_input(void *arg, struct mbuf *m)
 	sbappendrecord(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQ(sco_usrreq)
+#define	sco_usrreq		sco_usrreq_wrapper
+
+const struct pr_usrreqs sco_usrreqs = {
+	.pr_attach	= sco_attach1,
+	.pr_detach	= sco_detach1,
+	.pr_generic	= sco_usrreq,
+};

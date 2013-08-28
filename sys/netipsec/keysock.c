@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: keysock.c,v 1.21.16.1 2013/08/28 15:21:49 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21.16.1 2013/08/28 15:21:49 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.21 2011/07/17 20:54:54 joerg Exp $");
 #include <sys/domain.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/signalvar.h>
@@ -623,60 +623,77 @@ key_sockaddr(struct socket *so, struct sockaddr **nam)
 }
 #else /*!__FreeBSD__ -- traditional proto_usrreq() switch */
 
+static int
+key_attach(struct socket *so, int proto)
+{
+	struct keycb *kp;
+	int s, error;
+
+	KASSERT(sotorawcb(so) == NULL);
+	kp = kmem_zalloc(sizeof(*kp), KM_SLEEP);
+	so->so_pcb = kp;
+
+	s = splsoftnet();
+	error = raw_attach(so, proto);
+	if (error) {
+		PFKEY_STATINC(PFKEY_STAT_SOCKERR);
+		kmem_free(kp, sizeof(*kp));
+		so->so_pcb = NULL;
+		goto out;
+	}
+
+	kp->kp_promisc = kp->kp_registered = 0;
+
+	if (kp->kp_raw.rcb_proto.sp_protocol == PF_KEY) /* XXX: AF_KEY */
+		key_cb.key_count++;
+	key_cb.any_count++;
+	kp->kp_raw.rcb_laddr = &key_src;
+	kp->kp_raw.rcb_faddr = &key_dst;
+	soisconnected(so);
+	so->so_options |= SO_USELOOPBACK;
+out:
+	sounlock(so);
+	splx(s);
+	return error;
+}
+
+static void
+key_detach(struct socket *so)
+{
+	struct keycb *kp = (struct keycb *)sotorawcb(so);
+	int s;
+
+	KASSERT(solocked(so));
+	KASSERT(kp != NULL);
+
+	s = splsoftnet();
+	if (kp->kp_raw.rcb_proto.sp_protocol == PF_KEY) /* XXX: AF_KEY */
+		key_cb.key_count--;
+	key_cb.any_count--;
+	key_freereg(so);
+	raw_detach(so);
+	splx(s);
+}
+
 /*
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
  */
-int
-key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam, 
-	   struct mbuf *control, struct lwp *l)
+static int
+key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
-	int error = 0;
-	struct keycb *kp = (struct keycb *)sotorawcb(so);
-	int s;
+	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	s = splsoftnet();
-	if (req == PRU_ATTACH) {
-		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
-		sosetlock(so);
-		so->so_pcb = kp;
-		if (so->so_pcb)
-			memset(so->so_pcb, 0, sizeof(*kp));
-	}
-	if (req == PRU_DETACH && kp) {
-		int af = kp->kp_raw.rcb_proto.sp_protocol;
-		if (af == PF_KEY) /* XXX: AF_KEY */
-			key_cb.key_count--;
-		key_cb.any_count--;
-
-		key_freereg(so);
-	}
-
 	error = raw_usrreq(so, req, m, nam, control, l);
 	m = control = NULL;	/* reclaimed in raw_usrreq */
-	kp = (struct keycb *)sotorawcb(so);
-	if (req == PRU_ATTACH && kp) {
-		int af = kp->kp_raw.rcb_proto.sp_protocol;
-		if (error) {
-			PFKEY_STATINC(PFKEY_STAT_SOCKERR);
-			free(kp, M_PCB);
-			so->so_pcb = NULL;
-			splx(s);
-			return (error);
-		}
-
-		kp->kp_promisc = kp->kp_registered = 0;
-
-		if (af == PF_KEY) /* XXX: AF_KEY */
-			key_cb.key_count++;
-		key_cb.any_count++;
-		kp->kp_raw.rcb_laddr = &key_src;
-		kp->kp_raw.rcb_faddr = &key_dst;
-		soisconnected(so);
-		so->so_options |= SO_USELOOPBACK;
-	}
 	splx(s);
-	return (error);
+
+	return error;
 }
 #endif /*!__FreeBSD__*/
 
@@ -726,6 +743,16 @@ DOMAIN_SET(key);
 
 #else /* !__FreeBSD__ */
 
+PR_WRAP_USRREQ(key_usrreq)
+
+#define	key_usrreq	key_usrreq_wrapper
+
+const struct pr_usrreqs key_usrreqs = {
+	.pr_attach	= key_attach,
+	.pr_detach	= key_detach,
+	.pr_generic	= key_usrreq,
+};
+
 DOMAIN_DEFINE(keydomain);
 
 const struct protosw keysw[] = {
@@ -736,7 +763,7 @@ const struct protosw keysw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_output = key_output,
 	.pr_ctlinput = raw_ctlinput,
-	.pr_usrreq = key_usrreq,
+	.pr_usrreqs = &key_usrreqs,
 	.pr_init = raw_init,
     }
 };

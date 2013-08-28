@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.29 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.29.2.1 2013/08/28 15:21:49 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.29 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.29.2.1 2013/08/28 15:21:49 rmind Exp $");
 
 /*
  * IP-inside-IP processing
@@ -688,9 +688,7 @@ static struct xformsw ipe4_xformsw = {
 
 #ifdef INET
 PR_WRAP_CTLOUTPUT(rip_ctloutput)
-PR_WRAP_USRREQ(rip_usrreq)
 #define	rip_ctloutput	rip_ctloutput_wrapper
-#define	rip_usrreq	rip_usrreq_wrapper
 
 extern struct domain inetdomain;
 static struct ipprotosw ipe4_protosw = {
@@ -702,7 +700,7 @@ static struct ipprotosw ipe4_protosw = {
  .pr_output = 0,
  .pr_ctlinput = 0,
  .pr_ctloutput = rip_ctloutput,
- .pr_usrreq = rip_usrreq,
+ .pr_usrreqs = &rip_usrreqs,
  .pr_init = 0,
  .pr_fasttimo = 0,
  .pr_slowtimo =	0,
@@ -711,9 +709,7 @@ static struct ipprotosw ipe4_protosw = {
 #endif
 #ifdef INET6
 PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-PR_WRAP_USRREQ(rip6_usrreq)
 #define	rip6_ctloutput	rip6_ctloutput_wrapper
-#define	rip6_usrreq	rip6_usrreq_wrapper
 
 extern struct domain inet6domain;
 static struct ip6protosw ipe4_protosw6 = {
@@ -725,7 +721,7 @@ static struct ip6protosw ipe4_protosw6 = {
  .pr_output = 0,
  .pr_ctlinput = 0,
  .pr_ctloutput = rip6_ctloutput,
- .pr_usrreq = rip6_usrreq,
+ .pr_usrreqs = &rip6_usrreqs,
  .pr_init = 0,
  .pr_fasttimo = 0,
  .pr_slowtimo = 0,

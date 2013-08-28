@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.77.16.1 2013/08/28 15:21:48 rmind Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.77.16.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -149,11 +149,18 @@ static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
 extern struct domain inetdomain;
+
 static const struct protosw in_stf_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_stf_input, rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0
+{
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= IPPROTO_IPV6,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= in_stf_input,
+	.pr_output	= rip_output,
+	.pr_ctlinput	= NULL,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 void	stfattach(int);

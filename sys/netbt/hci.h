@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.35 2011/09/17 08:23:36 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.35.16.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.35 2011/09/17 08:23:36 plunky Exp $
+ * $Id: hci.h,v 1.35.16.1 2013/08/28 15:21:48 rmind Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2567,7 +2567,6 @@ void hci_memo_free(struct hci_memo *);
 /* hci_socket.c */
 void hci_drop(void *);
 void hci_init(void);
-int hci_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int hci_ctloutput(int, struct socket *, struct sockopt *);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 

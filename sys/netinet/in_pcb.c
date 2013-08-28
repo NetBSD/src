@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.145.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.145.2.2 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.145.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.145.2.2 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -228,8 +228,6 @@ inpcb_create(struct socket *so, inpcbtable_t *inpt)
 {
 	inpcb_t *inp;
 	inpcbhead_t *head;
-
-	KASSERT(solocked(so));
 
 	inp = pool_cache_get(inpcb_cache, PR_NOWAIT);
 	if (inp == NULL) {

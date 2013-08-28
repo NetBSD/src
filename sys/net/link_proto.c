@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.7.16.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7.16.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $"
 #include <net/route.h>
 
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
+static int link_attach(struct socket *, int);
+static void link_detach(struct socket *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -58,6 +60,12 @@ static void link_init(void);
 
 DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 
+static const struct pr_usrreqs link_usrreqs = {
+	.pr_attach	= link_attach,
+	.pr_detach	= link_detach,
+	.pr_generic	= link_usrreq,
+};
+
 const struct protosw linksw[] = {
 	{	.pr_type = SOCK_DGRAM,
 		.pr_domain = &linkdomain,
@@ -66,7 +74,7 @@ const struct protosw linksw[] = {
 		.pr_input = NULL,
 		.pr_ctlinput = NULL,
 		.pr_ctloutput = NULL,
-		.pr_usrreq = link_usrreq,
+		.pr_usrreqs = &link_usrreqs,
 		.pr_init = link_init,
 	},
 };
@@ -207,16 +215,27 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 }
 
 static int
+link_attach(struct socket *so, int proto)
+{
+	sosetlock(so);
+	return 0;
+}
+
+static void
+link_detach(struct socket *so)
+{
+	KASSERT(solocked(so));
+	sofree(so);
+}
+
+static int
 link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+
 	switch (req) {
-	case PRU_ATTACH:
-		sosetlock(so);
-		return 0;
-	case PRU_DETACH:
-		sofree(so);
-		return 0;
 	case PRU_CONTROL:
 		return link_control(so, (unsigned long)m, nam,
 		    (struct ifnet *)control, l);

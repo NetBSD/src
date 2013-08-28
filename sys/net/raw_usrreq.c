@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.37 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.37.16.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -31,8 +31,12 @@
  *	@(#)raw_usrreq.c	8.1 (Berkeley) 6/10/93
  */
 
+/*
+ * Raw protocol interface.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37.16.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -50,13 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.37 2011/07/17 20:54:52 joerg Exp $"
 #include <net/netisr.h>
 #include <net/raw_cb.h>
 
-/*
- * Initialize raw connection block q.
- */
 void
 raw_init(void)
 {
-
 	LIST_INIT(&rawcb);
 }
 
@@ -67,12 +67,8 @@ equal(const struct sockaddr *a1, const struct sockaddr *a2)
 }
 
 /*
- * Raw protocol input routine.  Find the socket
- * associated with the packet(s) and move them over.  If
- * nothing exists for this packet, drop it.
- */
-/*
- * Raw protocol interface.
+ * raw_input: find the socket associated with the packet and move it over.
+ * If nothing exists for this packet, drop it.
  */
 void
 raw_input(struct mbuf *m0, ...)
@@ -131,7 +127,6 @@ raw_input(struct mbuf *m0, ...)
 	}
 }
 
-/*ARGSUSED*/
 void *
 raw_ctlinput(int cmd, const struct sockaddr *arg, void *d)
 {
@@ -158,55 +153,29 @@ raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
 	memcpy(mtod(nam, void *), rp->rcb_faddr, (size_t)nam->m_len);
 }
 
-/*ARGSUSED*/
 int
 raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
-	struct rawcb *rp;
-	int s;
-	int error = 0;
+	struct rawcb *rp = sotorawcb(so);
+	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
 	s = splsoftnet();
 	KERNEL_LOCK(1, NULL);
-	rp = sotorawcb(so);
-#ifdef DIAGNOSTIC
-	if (req != PRU_SEND && req != PRU_SENDOOB && control)
-		panic("raw_usrreq: unexpected control mbuf");
-#endif
-	if (rp == NULL && req != PRU_ATTACH) {
+
+	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
+	if (rp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 
 	switch (req) {
-
-	/*
-	 * Allocate a raw control block and fill in the
-	 * necessary info to allow packets to be routed to
-	 * the appropriate raw interface routine.
-	 */
-	case PRU_ATTACH:
-		sosetlock(so);
-		if (l == NULL)
-			break;
-
-		/* XXX: raw socket permissions are checked in socreate() */
-
-		error = raw_attach(so, (int)(long)nam);
-		break;
-
-	/*
-	 * Destroy state just before socket deallocation.
-	 * Flush data or not depending on the options.
-	 */
-	case PRU_DETACH:
-		raw_detach(rp);
-		break;
-
 	/*
 	 * If a socket isn't bound to a single address,
 	 * the raw input routine will hand it anything
@@ -252,8 +221,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-			    NULL, nam, NULL, l);
+			error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+			    PRU_CONNECT, NULL, nam, NULL, l);
 			if (error) {
 			die:
 				m_freem(m);

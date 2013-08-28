@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.20.18.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20.18.1 2013/08/28 15:21:48 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.20 2011/01/30 17:23:23 plunky Exp $
 #include <sys/domain.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
@@ -425,6 +426,60 @@ bad:
 	return err;
 }
 
+static int
+hci_attach1(struct socket *so, int proto)
+{
+	struct hci_pcb *pcb;
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+	}
+	error = soreserve(so, hci_sendspace, hci_recvspace);
+	if (error) {
+		return error;
+	}
+
+	pcb = kmem_zalloc(sizeof(struct hci_pcb), KM_SLEEP);
+	pcb->hp_cred = kauth_cred_dup(curlwp->l_cred);
+	pcb->hp_socket = so;
+
+	/*
+	 * Set default user filter. By default, socket only passes
+	 * Command_Complete and Command_Status Events.
+	 */
+	hci_filter_set(HCI_EVENT_COMMAND_COMPL, &pcb->hp_efilter);
+	hci_filter_set(HCI_EVENT_COMMAND_STATUS, &pcb->hp_efilter);
+	hci_filter_set(HCI_EVENT_PKT, &pcb->hp_pfilter);
+
+	LIST_INSERT_HEAD(&hci_pcb, pcb, hp_next);
+	so->so_pcb = pcb;
+
+	return 0;
+}
+
+static void
+hci_detach1(struct socket *so)
+{
+	struct hci_pcb *pcb;
+
+	pcb = (struct hci_pcb *)so->so_pcb;
+	KASSERT(pcb != NULL);
+
+	if (so->so_snd.sb_mb != NULL)
+		hci_cmdwait_flush(so);
+
+	if (pcb->hp_cred != NULL)
+		kauth_cred_free(pcb->hp_cred);
+
+	so->so_pcb = NULL;
+	LIST_REMOVE(pcb, hp_next);
+	kmem_free(pcb, sizeof(*pcb));
+}
+
 /*
  * User Request.
  * up is socket
@@ -434,14 +489,13 @@ bad:
  * nam is either
  *	optional mbuf chain containing an address
  *	ioctl data (PRU_CONTROL)
- *      optionally, protocol number (PRU_ATTACH)
  * ctl is optional mbuf chain containing socket options
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
@@ -450,6 +504,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	switch(req) {
 	case PRU_CONTROL:
@@ -460,41 +516,6 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_PURGEIF:
 		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb)
-			return EINVAL;
-		err = soreserve(up, hci_sendspace, hci_recvspace);
-		if (err)
-			return err;
-
-		pcb = malloc(sizeof(struct hci_pcb), M_PCB, M_NOWAIT | M_ZERO);
-		if (pcb == NULL)
-			return ENOMEM;
-
-		up->so_pcb = pcb;
-		pcb->hp_socket = up;
-
-		if (l != NULL)
-			pcb->hp_cred = kauth_cred_dup(l->l_cred);
-
-		/*
-		 * Set default user filter. By default, socket only passes
-		 * Command_Complete and Command_Status Events.
-		 */
-		hci_filter_set(HCI_EVENT_COMMAND_COMPL, &pcb->hp_efilter);
-		hci_filter_set(HCI_EVENT_COMMAND_STATUS, &pcb->hp_efilter);
-		hci_filter_set(HCI_EVENT_PKT, &pcb->hp_pfilter);
-
-		LIST_INSERT_HEAD(&hci_pcb, pcb, hp_next);
-
-		return 0;
 	}
 
 	/* anything after here *requires* a pcb */
@@ -518,17 +539,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	case PRU_ABORT:
 		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		if (up->so_snd.sb_mb != NULL)
-			hci_cmdwait_flush(up);
-
-		if (pcb->hp_cred != NULL)
-			kauth_cred_free(pcb->hp_cred);
-
-		up->so_pcb = NULL;
-		LIST_REMOVE(pcb, hp_next);
-		free(pcb, M_PCB);
+		hci_detach1(up);
 		return 0;
 
 	case PRU_BIND:
@@ -849,3 +860,12 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 		}
 	}
 }
+
+PR_WRAP_USRREQ(hci_usrreq)
+#define	hci_usrreq		hci_usrreq_wrapper
+
+const struct pr_usrreqs hci_usrreqs = {
+	.pr_attach	= hci_attach1,
+	.pr_detach	= hci_detach1,
+	.pr_generic	= hci_usrreq,
+};

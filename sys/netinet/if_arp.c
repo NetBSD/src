@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.154 2012/01/02 22:17:11 liamjfoy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.154.10.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154 2012/01/02 22:17:11 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.10.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -249,14 +249,13 @@ const struct protosw arpsw[] = {
 	  .pr_output = 0,
 	  .pr_ctlinput = 0,
 	  .pr_ctloutput = 0,
-	  .pr_usrreq =  0,
+	  .pr_usrreqs = 0,
 	  .pr_init = arp_init,
 	  .pr_fasttimo = arp_fasttimo,
 	  .pr_slowtimo = 0,
 	  .pr_drain = arp_drainstub,
 	}
 };
-
 
 struct domain arpdomain = {
 	.dom_family = PF_ARP,

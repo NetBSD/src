@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.25.4.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.25.4.2 2013/08/28 15:21:48 rmind Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -99,6 +99,9 @@
 }
 
 #ifdef _KERNEL
+
+extern const struct pr_usrreqs udp6_usrreqs;
+
 void	*udp6_ctlinput(int, const struct sockaddr *, void *);
 int	udp6_ctloutput(int, struct socket *, struct sockopt *);
 

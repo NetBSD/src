@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $	*/
+/*	$NetBSD: natm.c,v 1.24.18.1 2013/08/28 15:21:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24.18.1 2013/08/28 15:21:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/domain.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -46,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24 2011/03/09 22:06:42 dyoung Exp $");
 #include <net/if.h>
 #include <net/if_atm.h>
 #include <net/netisr.h>
-#include <net/radix.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -59,17 +57,51 @@ u_long natm5_recvspace = 16*1024;
 u_long natm0_sendspace = 16*1024;
 u_long natm0_recvspace = 16*1024;
 
+static int
+natm_attach(struct socket *so, int proto)
+{
+	struct natmpcb *npcb;
+
+	KASSERT(so->so_pcb == NULL);
+	sosetlock(so);
+
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		if (proto == PROTO_NATMAAL5)
+			error = soreserve(so, natm5_sendspace, natm5_recvspace);
+		else
+			error = soreserve(so, natm0_sendspace, natm0_recvspace);
+		if (error)
+			return error;
+	}
+	npcb = npcb_alloc(true);
+	npcb->npcb_socket = so;
+	so->so_pcb = npcb;
+	return 0;
+}
+
+static void
+natm_detach(struct socket *so)
+{
+	struct natmpcb *npcb = (struct natmpcb *)so->so_pcb;
+
+	/*
+	 * we turn on 'drain' *before* we sofree.
+	 */
+
+	npcb_free(npcb, NPCB_DESTROY);	/* drain */
+	so->so_pcb = NULL;
+	/* sofree drops the lock */
+	sofree(so);
+	mutex_enter(softnet_lock);
+}
+
 /*
  * user requests
  */
 
-int natm_usrreq(so, req, m, nam, control, l)
-
-struct socket *so;
-int req;
-struct mbuf *m, *nam, *control;
-struct lwp *l;
-
+static int
+natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
 {
   int error = 0, s, s2;
   struct natmpcb *npcb;
@@ -80,52 +112,19 @@ struct lwp *l;
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
 
+  KASSERT(req != PRU_ATTACH);
+  KASSERT(req != PRU_DETACH);
+
   s = SPLSOFTNET();
 
   npcb = (struct natmpcb *) so->so_pcb;
 
-  if (npcb == NULL && req != PRU_ATTACH) {
+  if (npcb == NULL) {
     error = EINVAL;
     goto done;
   }
 
-
   switch (req) {
-    case PRU_ATTACH:			/* attach protocol to up */
-
-      if (npcb) {
-	error = EISCONN;
-	break;
-      }
-
-      if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-	if (proto == PROTO_NATMAAL5)
-          error = soreserve(so, natm5_sendspace, natm5_recvspace);
-	else
-          error = soreserve(so, natm0_sendspace, natm0_recvspace);
-        if (error)
-          break;
-      }
-
-      so->so_pcb = (void *) (npcb = npcb_alloc(M_WAITOK));
-      npcb->npcb_socket = so;
-
-      break;
-
-    case PRU_DETACH:			/* detach protocol from up */
-
-      /*
-       * we turn on 'drain' *before* we sofree.
-       */
-
-      npcb_free(npcb, NPCB_DESTROY);	/* drain */
-      so->so_pcb = NULL;
-      /* sofree drops the lock */
-      sofree(so);
-      mutex_enter(softnet_lock);
-
-      break;
-
     case PRU_CONNECT:			/* establish connection to peer */
 
       /*
@@ -361,7 +360,7 @@ next:
   if (npcb->npcb_flags & NPCB_DRAIN) {
     m_freem(m);
     if (npcb->npcb_inq == 0)
-      free(npcb, M_PCB);			/* done! */
+      kmem_intr_free(npcb, sizeof(*npcb));
     goto next;
   }
 
@@ -396,3 +395,13 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 
   goto next;
 }
+
+PR_WRAP_USRREQ(natm_usrreq)
+
+#define	natm_usrreq	natm_usrreq_wrapper
+
+const struct pr_usrreqs natm_usrreqs = {
+	.pr_attach	= natm_attach,
+	.pr_detach	= natm_detach,
+	.pr_generic	= natm_usrreq,
+};

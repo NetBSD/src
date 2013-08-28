@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.190.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.190.2.2 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.2 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -837,13 +837,66 @@ release:
 	return error;
 }
 
-int
+static int
+udp_attach(struct socket *so, int proto)
+{
+	inpcb_t *inp;
+	struct ip *ip;
+	int s, error;
+
+	KASSERT(sotoinpcb(so) == NULL);
+
+	s = splsoftnet();
+	sosetlock(so);
+
+#ifdef MBUFTRACE
+	so->so_mowner = &udp_mowner;
+	so->so_rcv.sb_mowner = &udp_rx_mowner;
+	so->so_snd.sb_mowner = &udp_tx_mowner;
+#endif
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		error = soreserve(so, udp_sendspace, udp_recvspace);
+		if (error) {
+			goto out;
+		}
+	}
+
+	error = inpcb_create(so, udbtable);
+	if (error) {
+		goto out;
+	}
+	inp = sotoinpcb(so);
+	ip = in_getiphdr(inp);
+	ip->ip_ttl = ip_defttl;
+out:
+	splx(s);
+	return error;
+}
+
+static void
+udp_detach(struct socket *so)
+{
+	inpcb_t *inp;
+	int s;
+
+	KASSERT(solocked(so));
+
+	s = splsoftnet();
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
+	inpcb_destroy(inp);
+	splx(s);
+}
+
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
 	inpcb_t *inp;
-	struct ip *inp_ip;
 	int s, error = 0;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	if (req == PRU_CONTROL) {
 		return in_control(so, (long)m, nam, (ifnet_t *)control, l);
@@ -859,11 +912,11 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (0);
 	}
 
-	KASSERT(req == PRU_ATTACH || solocked(so));
+	KASSERT(solocked(so));
 	inp = sotoinpcb(so);
 
 	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
-	if (inp == NULL && req != PRU_ATTACH) {
+	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
@@ -873,34 +926,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-	case PRU_ATTACH:
-		sosetlock(so);
-		if (inp) {
-			error = EISCONN;
-			break;
-		}
-#ifdef MBUFTRACE
-		so->so_mowner = &udp_mowner;
-		so->so_rcv.sb_mowner = &udp_rx_mowner;
-		so->so_snd.sb_mowner = &udp_tx_mowner;
-#endif
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, udp_sendspace, udp_recvspace);
-			if (error)
-				break;
-		}
-		error = inpcb_create(so, udbtable);
-		if (error)
-			break;
-		inp = sotoinpcb(so);
-		inp_ip = in_getiphdr(inp);
-		inp_ip->ip_ttl = ip_defttl;
-		break;
-
-	case PRU_DETACH:
-		inpcb_destroy(inp);
-		break;
-
 	case PRU_BIND:
 		error = inpcb_bind(inp, nam, l);
 		break;
@@ -1234,3 +1259,13 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	return 1;
 }
 #endif
+
+PR_WRAP_USRREQ(udp_usrreq)
+
+#define	udp_usrreq	udp_usrreq_wrapper
+
+const struct pr_usrreqs udp_usrreqs = {
+	.pr_attach	= udp_attach,
+	.pr_detach	= udp_detach,
+	.pr_generic	= udp_usrreq,
+};

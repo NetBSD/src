@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.3 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco.h,v 1.3.44.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -65,8 +65,6 @@ struct sockopt;
 /* sco_socket.c */
 extern int sco_sendspace;
 extern int sco_recvspace;
-int sco_usrreq(struct socket *, int, struct mbuf *,
-		struct mbuf *, struct mbuf *, struct lwp *);
 int sco_ctloutput(int, struct socket *, struct sockopt *);
 
 /* sco_upper.c */
@@ -76,7 +74,7 @@ int sco_sockaddr(struct sco_pcb *, struct sockaddr_bt *);
 int sco_connect(struct sco_pcb *, struct sockaddr_bt *);
 int sco_peeraddr(struct sco_pcb *, struct sockaddr_bt *);
 int sco_disconnect(struct sco_pcb *, int);
-int sco_detach(struct sco_pcb **);
+void sco_detach(struct sco_pcb **);
 int sco_listen(struct sco_pcb *);
 int sco_send(struct sco_pcb *, struct mbuf *);
 int sco_setopt(struct sco_pcb *, const struct sockopt *);
