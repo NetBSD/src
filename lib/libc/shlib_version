@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.240 2013/04/16 21:44:07 joerg Exp $
+#	$NetBSD: shlib_version,v 1.241 2013/08/28 18:01:22 riastradh Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -36,4 +36,4 @@
 # - remove ruserok() and friends to libcompat (or entirely)
 # - remove alloca fallback and expect compiler to provide a builtin version.
 major=12
-minor=185
+minor=186
