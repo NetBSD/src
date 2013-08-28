@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.3 2012/02/01 16:49:36 christos Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.3.10.1 2013/08/28 15:21:49 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3 2012/02/01 16:49:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3.10.1 2013/08/28 15:21:49 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.3 2012/02/01 16:49:36 christos Exp 
 
 struct ifqueue mplsintrq;
 
+static int mpls_attach(struct socket *, int);
 static int mpls_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	struct mbuf *, struct lwp *);
 
@@ -74,6 +75,42 @@ void mpls_init(void)
 	mplsintrq.ifq_maxlen = 256;
 }
 
+static int
+mpls_attach(struct socket *so, int proto)
+{
+	int s, error = EOPNOTSUPP;
+
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		sosetlock(so);
+		s = splsoftnet();
+		error = soreserve(so, 8192, 8192);
+		splx(s);
+	}
+	return error;
+}
+
+static void
+mpls_detach(struct socket *so)
+{
+}
+
+static int
+mpls_usrreq(struct socket *so, int req, struct mbuf *m,
+    struct mbuf *nam, struct mbuf *control, struct lwp *l)
+{
+	return EOPNOTSUPP;
+}
+
+PR_WRAP_USRREQ(mpls_usrreq)
+
+#define	mpls_usrreq	mpls_usrreq_wrapper
+
+static const struct pr_usrreqs mpls_usrreqs = {
+	.pr_attach	= mpls_attach,
+	.pr_detach	= mpls_detach,
+	.pr_generic	= mpls_usrreq,
+};
+
 DOMAIN_DEFINE(mplsdomain);
 
 const struct protosw mplssw[] = {
@@ -84,13 +121,13 @@ const struct protosw mplssw[] = {
 		.pr_type = SOCK_DGRAM,
 		.pr_domain = &mplsdomain,
 		.pr_flags = PR_ATOMIC | PR_ADDR,
-		.pr_usrreq = mpls_usrreq,
+		.pr_usrreqs = &mpls_usrreqs,
 	},
 	{
 		.pr_type = SOCK_RAW,
 		.pr_domain = &mplsdomain,
 		.pr_flags = PR_ATOMIC | PR_ADDR,
-		.pr_usrreq = mpls_usrreq,
+		.pr_usrreqs = &mpls_usrreqs,
 	},
 };
 
@@ -114,22 +151,6 @@ struct domain mplsdomain = {
 	.dom_sa_cmplen = sizeof(union mpls_shim),
 	.dom_rtcache = LIST_HEAD_INITIALIZER(mplsdomain.dom_rtcache)
 };
-
-static int
-mpls_usrreq(struct socket *so, int req, struct mbuf *m,
-        struct mbuf *nam, struct mbuf *control, struct lwp *l)
-{
-	int error = EOPNOTSUPP;
-
-	if ((req == PRU_ATTACH) &&
-	    (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0)) {
-		int s = splsoftnet();
-		error = soreserve(so, 8192, 8192);
-		splx(s);
-	}
-
-	return error;
-}
 
 /*
  * Sysctl for MPLS variables.

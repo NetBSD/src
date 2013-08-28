@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.9 2010/01/04 19:20:05 plunky Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.9.26.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.9 2010/01/04 19:20:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.9.26.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -226,7 +226,7 @@ sco_disconnect(struct sco_pcb *pcb, int linger)
  *
  *	Detach SCO pcb from handle and clear up
  */
-int
+void
 sco_detach(struct sco_pcb **handle)
 {
 	struct sco_pcb *pcb;
@@ -235,9 +235,6 @@ sco_detach(struct sco_pcb **handle)
 	pcb = *handle;
 	*handle = NULL;
 
-	if (pcb == NULL)
-		return EINVAL;
-
 	if (pcb->sp_link != NULL) {
 		sco_disconnect(pcb, 0);
 		pcb->sp_link = NULL;
@@ -245,7 +242,6 @@ sco_detach(struct sco_pcb **handle)
 
 	LIST_REMOVE(pcb, sp_next);
 	free(pcb, M_BLUETOOTH);
-	return 0;
 }
 
 /*

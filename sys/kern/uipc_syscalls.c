@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.161.2.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.161.2.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -92,23 +92,24 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos
 extern const struct fileops socketops;
 
 int
-sys___socket30(struct lwp *l, const struct sys___socket30_args *uap, register_t *retval)
+sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)	domain;
 		syscallarg(int)	type;
 		syscallarg(int)	protocol;
 	} */
-	int		fd, error;
+	int fd, error;
 
 	error = fsocreate(SCARG(uap, domain), NULL, SCARG(uap, type),
-			 SCARG(uap, protocol), l, &fd);
-	if (error == 0)
+	    SCARG(uap, protocol), &fd);
+	if (error == 0) {
 		*retval = fd;
+	}
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_bind(struct lwp *l, const struct sys_bind_args *uap, register_t *retval)
 {
@@ -145,7 +146,6 @@ do_sys_bind(struct lwp *l, int fd, struct mbuf *nam)
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 {
@@ -257,13 +257,13 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 		sigsuspendteardown(l);
 	return (error);
  bad:
- 	sounlock(so);
- 	m_freem(nam);
+	sounlock(so);
+	m_freem(nam);
 	fd_putfile(sock);
- 	fd_abort(curproc, fp2, fd);
+	fd_abort(curproc, fp2, fd);
 	if (__predict_false(mask))
 		sigsuspendteardown(l);
- 	return (error);
+	return (error);
 }
 
 int
@@ -331,7 +331,6 @@ sys_paccept(struct lwp *l, const struct sys_paccept_args *uap,
 	return error;
 }
 
-/* ARGSUSED */
 int
 sys_connect(struct lwp *l, const struct sys_connect_args *uap, register_t *retval)
 {
@@ -399,8 +398,8 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	if (error == ERESTART)
 		error = EINTR;
  out:
- 	sounlock(so);
- 	fd_putfile(fd);
+	sounlock(so);
+	fd_putfile(fd);
 	m_freem(nam);
 	return (error);
 }
@@ -409,11 +408,15 @@ static int
 makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
     int domain, int proto, struct socket *soo)
 {
-	int error;
 	struct socket *so;
+	int error;
 
-	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0)
+	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0) {
 		return error;
+	}
+	if (flags & SOCK_NONBLOCK) {
+		so->so_state |= SS_NBIO;
+	}
 
 	if ((error = fd_allocfile(fp, fd)) != 0) {
 		soclose(so);
@@ -426,8 +429,6 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
-	if (flags & SOCK_NONBLOCK)
-		so->so_state |= SS_NBIO;
 	return 0;
 }
 
@@ -643,8 +644,8 @@ bad:
 		kmem_free(ktriov, iovsz);
 	}
 
- 	if (iov != aiov)
- 		kmem_free(iov, iovsz);
+	if (iov != aiov)
+		kmem_free(iov, iovsz);
 	if (to)
 		m_freem(to);
 	if (control)
@@ -1111,9 +1112,9 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 	return error;
 }
 
-/* ARGSUSED */
 int
-sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *retval)
+sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)	s;
@@ -1131,9 +1132,9 @@ sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *ret
 	return (error);
 }
 
-/* ARGSUSED */
 int
-sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t *retval)
+sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -1174,13 +1175,13 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 
  out:
 	sockopt_destroy(&sopt);
- 	fd_putfile(SCARG(uap, s));
+	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
-/* ARGSUSED */
 int
-sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t *retval)
+sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			s;
@@ -1228,12 +1229,12 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 
  out:
 	sockopt_destroy(&sopt);
- 	fd_putfile(SCARG(uap, s));
+	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
 #ifdef PIPE_SOCKETPAIR
-/* ARGSUSED */
+
 int
 pipe1(struct lwp *l, register_t *retval, int flags)
 {
@@ -1289,7 +1290,6 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
 do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 {
@@ -1309,13 +1309,13 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 		error = ENOTCONN;
 	} else {
 		*nam = m;
-		error = (*so->so_proto->pr_usrreq)(so, which, NULL, m, NULL,
-		    NULL);
+		error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
+		    which, NULL, m, NULL, NULL);
 	}
- 	sounlock(so);
+	sounlock(so);
 	if (error != 0)
 		m_free(m);
- 	fd_putfile(fd);
+	fd_putfile(fd);
 	return error;
 }
 
@@ -1363,9 +1363,9 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
-sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap, register_t *retval)
+sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			fdes;
@@ -1389,9 +1389,9 @@ sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap, register_
 /*
  * Get name of peer for connected socket.
  */
-/* ARGSUSED */
 int
-sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap, register_t *retval)
+sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			fdes;

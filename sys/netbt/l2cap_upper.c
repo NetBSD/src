@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.11.26.1 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11.26.1 2013/08/28 15:21:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -264,7 +264,7 @@ l2cap_disconnect(struct l2cap_channel *chan, int linger)
  *
  *	Detach l2cap channel from handle & close it down
  */
-int
+void
 l2cap_detach(struct l2cap_channel **handle)
 {
 	struct l2cap_channel *chan;
@@ -288,7 +288,6 @@ l2cap_detach(struct l2cap_channel **handle)
 	 */
 
 	free(chan, M_BLUETOOTH);
-	return 0;
 }
 
 /*

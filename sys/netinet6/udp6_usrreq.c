@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.91.4.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.91.4.2 2013/08/28 15:21:48 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.91.4.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.91.4.2 2013/08/28 15:21:48 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
@@ -632,6 +632,52 @@ bad:
 extern	int udp6_sendspace;
 extern	int udp6_recvspace;
 
+static int
+udp6_attach(struct socket *so, int proto)
+{
+	struct in6pcb *in6p;
+	int s, error = 0;
+
+	KASSERT(sotoin6pcb(so) == NULL);
+	sosetlock(so);
+	solock(so);
+
+	/*
+	 * MAPPED_ADDR implementation spec:
+	 *  Always attach for IPv6, and only when necessary for IPv4.
+	 */
+	s = splsoftnet();
+	error = in6_pcballoc(so, udbtable);
+	splx(s);
+	if (error) {
+		sounlock(so);
+		return error;
+	}
+	error = soreserve(so, udp6_sendspace, udp6_recvspace);
+	if (error) {
+		sounlock(so);
+		return error;
+	}
+	in6p = sotoin6pcb(so);
+	in6p->in6p_cksum = -1;	/* just to be sure */
+	sounlock(so);
+	return 0;
+}
+
+static void
+udp6_detach(struct socket *so)
+{
+	struct in6pcb *in6p = sotoin6pcb(so);
+	int s;
+
+	KASSERT(solocked(so));
+
+	s = splsoftnet();
+	KASSERT(in6p != NULL);
+	in6_pcbdetach(in6p);
+	splx(s);
+}
+
 int
 udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
     struct mbuf *control, struct lwp *l)
@@ -639,6 +685,9 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	struct	in6pcb *in6p = sotoin6pcb(so);
 	int	error = 0;
 	int	s;
+
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
 
 	/*
 	 * MAPPED_ADDR implementation info:
@@ -663,40 +712,12 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		return 0;
 	}
 
-	if (req == PRU_ATTACH)
-		sosetlock(so);
-	else if (in6p == NULL) {
+	if (in6p == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 
 	switch (req) {
-	case PRU_ATTACH:
-		/*
-		 * MAPPED_ADDR implementation spec:
-		 *  Always attach for IPv6,
-		 *  and only when necessary for IPv4.
-		 */
-		if (in6p != NULL) {
-			error = EINVAL;
-			break;
-		}
-		s = splsoftnet();
-		error = in6_pcballoc(so, udbtable);
-		splx(s);
-		if (error)
-			break;
-		error = soreserve(so, udp6_sendspace, udp6_recvspace);
-		if (error)
-			break;
-		in6p = sotoin6pcb(so);
-		in6p->in6p_cksum = -1;	/* just to be sure */
-		break;
-
-	case PRU_DETACH:
-		in6_pcbdetach(in6p);
-		break;
-
 	case PRU_BIND:
 		s = splsoftnet();
 		error = in6_pcbbind(in6p, addr6, l);
@@ -783,6 +804,16 @@ release:
 		m_freem(m);
 	return error;
 }
+
+PR_WRAP_USRREQ(udp6_usrreq)
+
+#define	udp6_usrreq	udp6_usrreq_wrapper
+
+const struct pr_usrreqs udp6_usrreqs = {
+	.pr_attach	= udp6_attach,
+	.pr_detach	= udp6_detach,
+	.pr_generic	= udp6_usrreq,
+};
 
 static int
 sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.38.4.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.38.4.2 2013/08/28 15:21:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,7 +87,9 @@ struct	udpiphdr {
 }
 
 #ifdef _KERNEL
-extern inpcbtable_t * udbtable;
+
+extern inpcbtable_t *udbtable;
+extern const struct pr_usrreqs udp_usrreqs;
 
 void	 *udp_ctlinput(int, const struct sockaddr *, void *);
 int	 udp_ctloutput(int, struct socket *, struct sockopt *);
@@ -95,12 +97,11 @@ void	 udp_init(void);
 void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);
 int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	 udp_usrreq(struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 int	udp_input_checksum(int af, struct mbuf *, const struct udphdr *, int,
 	    int);
 void	udp_statinc(u_int);
+
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_UDP_VAR_H_ */
