@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.19 2013/08/28 12:50:18 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.20 2013/08/28 23:40:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.19 2013/08/28 12:50:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.20 2013/08/28 23:40:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -150,6 +150,7 @@ static	      void	rnd_process_events(void);
 u_int32_t     rnd_extract_data_locked(void *, u_int32_t, u_int32_t); /* XXX */
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
+static inline void	rnd_schedule_process(void);
 
 int			rnd_ready = 0;
 int			rnd_initial_entropy = 0;
@@ -170,6 +171,7 @@ rnd_init_softint(void) {
 	    rnd_intr, NULL);
 	rnd_wakeup = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
 	    rnd_wake, NULL);
+	rnd_schedule_process();
 }
 
 /*
