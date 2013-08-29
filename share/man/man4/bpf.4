@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.52 2013/08/29 14:25:41 rmind Exp $
+.\"	$NetBSD: bpf.4,v 1.53 2013/08/29 20:02:35 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd December 31, 2011
+.Dd August 29, 2013
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -632,7 +632,8 @@ that copy the index register to the accumulator or vice versa.
 .El
 .Pp
 Also, two instructions to call a "coprocessor" if initialized by the kernel
-component.  There is no coprocessor by default.
+component.
+There is no coprocessor by default.
 .Bl -column "BPF_MISC+BPF_COP" "A \*[Lt]- funcs[X](...)" -offset indent
 .It Sy BPF_MISC+BPF_COP Ta A \*[Lt]- funcs[k](..)
 .It Sy BPF_MISC+BPF_COPX Ta A \*[Lt]- funcs[X](..)
