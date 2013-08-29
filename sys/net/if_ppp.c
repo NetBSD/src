@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.138 2012/11/25 09:06:43 mbalmer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.139 2013/08/29 14:25:41 rmind Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.138 2012/11/25 09:06:43 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.139 2013/08/29 14:25:41 rmind Exp $");
 
 #include "ppp.h"
 
@@ -946,8 +946,8 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * but only if it is a data packet.
 	 */
 	if (sc->sc_pass_filt_out.bf_insns != 0
-	    && bpf_filter(sc->sc_pass_filt_out.bf_insns, (u_char *) m0,
-			  len, 0) == 0) {
+	    && bpf_filter(bpf_def_ctx, sc->sc_pass_filt_out.bf_insns,
+			  (u_char *)m0, len, 0) == 0) {
 	    error = 0;		/* drop this packet */
 	    goto bad;
 	}
@@ -956,8 +956,8 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * Update the time we sent the most recent packet.
 	 */
 	if (sc->sc_active_filt_out.bf_insns == 0
-	    || bpf_filter(sc->sc_active_filt_out.bf_insns, (u_char *) m0,
-	    		  len, 0))
+	    || bpf_filter(bpf_def_ctx, sc->sc_active_filt_out.bf_insns,
+			  (u_char *)m0, len, 0))
 	    sc->sc_last_sent = time_second;
 #else
 	/*
@@ -1584,15 +1584,15 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	 * if it counts as link activity.
 	 */
 	if (sc->sc_pass_filt_in.bf_insns != 0
-	    && bpf_filter(sc->sc_pass_filt_in.bf_insns, (u_char *) m,
-			  ilen, 0) == 0) {
+	    && bpf_filter(bpf_def_ctx, sc->sc_pass_filt_in.bf_insns,
+			  (u_char *)m, ilen, 0) == 0) {
 	    /* drop this packet */
 	    m_freem(m);
 	    return;
 	}
 	if (sc->sc_active_filt_in.bf_insns == 0
-	    || bpf_filter(sc->sc_active_filt_in.bf_insns, (u_char *) m,
-	    		  ilen, 0))
+	    || bpf_filter(bpf_def_ctx, sc->sc_active_filt_in.bf_insns,
+			  (u_char *)m, ilen, 0))
 	    sc->sc_last_recv = time_second;
 #else
 	/*
