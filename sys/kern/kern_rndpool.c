@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.4 2013/06/13 19:18:00 tls Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.5 2013/08/29 01:04:49 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.4 2013/06/13 19:18:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.5 2013/08/29 01:04:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,15 +187,16 @@ rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
  * Add a buffer's worth of data to the pool.
  */
 void
-rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
+rndpool_add_data(rndpool_t *rp,
+		 const void * const p, u_int32_t len, u_int32_t entropy)
 {
 	u_int32_t val;
-	u_int8_t *buf;
+	const u_int8_t * buf;
 
 	buf = p;
 
 	for (; len > 3; len -= 4) {
-		val = *((u_int32_t *)buf);
+		val = *((const u_int32_t *)buf);
 
 		rndpool_add_one_word(rp, val);
 		buf += 4;
