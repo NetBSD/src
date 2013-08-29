@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.20 2013/03/18 02:24:45 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.21 2013/08/29 14:25:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.20 2013/03/18 02:24:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.21 2013/08/29 14:25:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -681,7 +681,8 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
 	case NPF_CODE_BPF: {
 		struct mbuf *m = nbuf_head_mbuf(nbuf);
 		size_t pktlen = m_length(m);
-		return bpf_filter(code, (unsigned char *)m, pktlen, 0) != 0;
+		return bpf_filter(bpf_def_ctx, code, (unsigned char *)m,
+		    pktlen, 0) != 0;
 	}
 	default:
 		KASSERT(false);
