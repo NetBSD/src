@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.162 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.161 2013/06/03 23:45:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.162 2013/08/29 17:49:21 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -1289,7 +1289,6 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 /*
  * Get socket name.
  */
-/* ARGSUSED */
 int
 do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 {
@@ -1304,8 +1303,7 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 	MCLAIM(m, so->so_mowner);
 
 	solock(so);
-	if (which == PRU_PEERADDR
-	    && (so->so_state & (SS_ISCONNECTED | SS_ISCONFIRMING)) == 0) {
+	if (which == PRU_PEERADDR && (so->so_state & SS_ISCONNECTED) == 0) {
 		error = ENOTCONN;
 	} else {
 		*nam = m;
