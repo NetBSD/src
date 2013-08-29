@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $	*/
+/*	$NetBSD: sockin.c,v 1.35 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.34 2013/06/23 19:24:08 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.35 2013/08/29 17:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -280,7 +280,7 @@ sockin_accept(struct socket *so)
 		return;
 
 	mutex_enter(softnet_lock);
-	nso = sonewconn(so, SS_ISCONNECTED);
+	nso = sonewconn(so, true);
 	if (nso == NULL)
 		goto errout;
 	if (registersock(nso, news) != 0)

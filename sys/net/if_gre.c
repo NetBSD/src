@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.150 2011/11/09 19:43:22 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.151 2013/08/29 17:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.150 2011/11/09 19:43:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.151 2013/08/29 17:49:21 rmind Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -516,10 +516,10 @@ gre_sosend(struct socket *so, struct mbuf *top)
 	}
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-			if ((so->so_state & SS_ISCONFIRMING) == 0)
-				snderr(ENOTCONN);
-		} else
+			snderr(ENOTCONN);
+		} else {
 			snderr(EDESTADDRREQ);
+		}
 	}
 	space = sbspace(&so->so_snd);
 	if (resid > so->so_snd.sb_hiwat)
@@ -566,9 +566,6 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	*mp = NULL;
 
 	KASSERT(pr->pr_flags & PR_ATOMIC);
-
-	if (so->so_state & SS_ISCONFIRMING)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, curlwp);
  restart:
 	if ((error = sblock(&so->so_rcv, M_NOWAIT)) != 0) {
 		return error;
