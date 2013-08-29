@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.216 2013/08/02 20:00:33 spz Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.217 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.216 2013/08/02 20:00:33 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.217 2013/08/29 17:49:21 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -927,8 +927,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0 &&
-				    !(resid == 0 && clen != 0)) {
+				if (resid || clen == 0) {
 					error = ENOTCONN;
 					goto release;
 				}
@@ -1185,9 +1184,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 */
 	s = splsoftnet();
 	solock(so);
-	if (so->so_state & SS_ISCONFIRMING && uio->uio_resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, l);
-
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0) {
 		sounlock(so);
