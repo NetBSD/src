@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.39 2013/07/01 15:22:00 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.40 2013/08/29 01:04:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,7 +155,8 @@ void		rndpool_get_stats(rndpool_t *, void *, int);
 void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
 uint32_t	*rndpool_get_pool(rndpool_t *);
 uint32_t	rndpool_get_poolsize(void);
-void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
+void		rndpool_add_data(rndpool_t *,
+				 const void *const , uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
 void		rnd_init_softint(void);
@@ -173,8 +174,10 @@ void		rnd_seed(void *, size_t);
 static inline void
 rnd_add_uint32(krndsource_t *kr, uint32_t val)
 {
-	if (RND_ENABLED(kr)) {
+	if (__predict_true(kr) && RND_ENABLED(kr)) {
 		_rnd_add_uint32(kr, val);
+	} else {
+		rnd_add_data(NULL, &val, sizeof(val), 0);
 	}
 }
 
