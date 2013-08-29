@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.54 2013/07/30 22:23:45 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.54 2013/07/30 22:23:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.55 2013/08/29 15:46:17 riz Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -489,7 +489,7 @@ initarm(void *arg)
 	    OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
 	arml2cc_init(&omap_bs_tag, pl310_bh, 0);
 #endif
-#if defined(TI_AM335X) && defined(VERBOSE_ARM_INIT)
+#if defined(TI_AM335X) && defined(VERBOSE_INIT_ARM)
 	am335x_cpu_clk();		// find our CPU speed.
 #endif
 #if 1
