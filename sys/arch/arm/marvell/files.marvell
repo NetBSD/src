@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.8 2013/05/29 22:35:34 rkujawa Exp $
+#       $NetBSD: files.marvell,v 1.9 2013/08/29 09:46:04 kiyohara Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -80,3 +80,6 @@ attach	mvsdio at mvsoc with mvsdio_mbus
 device	mvsocts: sysmon_envsys
 attach	mvsocts at mvsoc
 file	arch/arm/marvell/mvsocts.c		mvsocts
+
+# SPI Serial Peripheral Interface
+attach	mvspi at mvsoc with mvspi_mbus
