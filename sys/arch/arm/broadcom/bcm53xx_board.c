@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.15 2013/02/19 02:30:55 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.16 2013/08/29 15:46:17 riz Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.15 2013/02/19 02:30:55 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.16 2013/08/29 15:46:17 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -458,7 +458,7 @@ bcm53xx_cpu_softc_init(struct cpu_info *ci)
 void
 bcm53xx_print_clocks(void)
 {
-#if defined(VERBOSE_ARM_INIT)
+#if defined(VERBOSE_INIT_ARM)
 	const struct bcm53xx_clock_info * const clk = &cpu_softc.cpu_clk;
 	printf("ref clk =	%u (%#x)\n", clk->clk_ref, clk->clk_ref);
 	printf("sys clk =	%u (%#x)\n", clk->clk_sys, clk->clk_sys);
