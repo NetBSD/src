@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.59 2012/03/15 00:57:56 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.60 2013/08/29 14:25:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -254,6 +254,8 @@ struct bpf_hdr32 {
 /* misc */
 #define BPF_MISCOP(code) ((code) & 0xf8)
 #define		BPF_TAX		0x00
+#define		BPF_COP		0x20
+#define		BPF_COPX	0x40
 #define		BPF_TXA		0x80
 
 /*
@@ -378,10 +380,25 @@ void     bpf_ops_handover_exit(void);
 
 void	 bpfilterattach(int);
 
-#endif
+struct bpf_ctx;
+typedef struct bpf_ctx bpf_ctx_t;
+typedef uint32_t (*bpf_copfunc_t)(const struct mbuf *, uint32_t, uint32_t *);
+extern bpf_ctx_t *bpf_def_ctx;
 
-int	 bpf_validate(const struct bpf_insn *, int);
-u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+bpf_ctx_t *bpf_create(void);
+void	bpf_destroy(bpf_ctx_t *);
+
+int	bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
+u_int	bpf_filter(bpf_ctx_t *, const struct bpf_insn *,
+	    const u_char *, u_int, u_int);
+int	bpf_validate(const struct bpf_insn *, int);
+
+#else
+
+int	bpf_validate(const struct bpf_insn *, int);
+u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+
+#endif
 
 __END_DECLS
 
