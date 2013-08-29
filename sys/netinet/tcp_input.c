@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.328 2013/08/29 17:49:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327 2013/06/06 00:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.328 2013/08/29 17:49:20 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3967,7 +3967,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * to the new one.
 	 */
 	oso = so;
-	so = sonewconn(so, SS_ISCONNECTED);
+	so = sonewconn(so, true);
 	if (so == NULL)
 		goto resetandabort;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.113 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112 2013/06/28 01:23:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.113 2013/08/29 17:49:21 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -175,7 +175,7 @@ soisconnected(struct socket *so)
 	KASSERT(solocked(so));
 	KASSERT(head == NULL || solocked2(so, head));
 
-	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
+	so->so_state &= ~(SS_ISCONNECTING | SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
 	if (head && so->so_onq == &head->so_q0) {
 		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
@@ -239,21 +239,19 @@ soinit2(void)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
  */
 struct socket *
-sonewconn(struct socket *head, int connstatus)
+sonewconn(struct socket *head, bool conncomplete)
 {
 	struct socket	*so;
 	int		soqueue, error;
 
-	KASSERT(connstatus == 0 || connstatus == SS_ISCONFIRMING ||
-	    connstatus == SS_ISCONNECTED);
 	KASSERT(solocked(head));
 
 	if ((head->so_options & SO_ACCEPTFILTER) != 0)
-		connstatus = 0;
-	soqueue = connstatus ? 1 : 0;
+		conncomplete = false;
+	soqueue = conncomplete ? 1 : 0;
+
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return NULL;
 	so = soget(false);
@@ -301,10 +299,10 @@ out:
 		soput(so);
 		return NULL;
 	}
-	if (connstatus) {
+	if (conncomplete) {
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
-		so->so_state |= connstatus;
+		so->so_state |= SS_ISCONNECTED;
 	}
 	return so;
 }

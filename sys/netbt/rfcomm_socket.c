@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.10 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.10 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.11 2013/08/29 17:49:21 rmind Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -338,7 +338,7 @@ rfcomm_newconn(void *arg, struct sockaddr_bt *laddr,
 	struct socket *so = arg;
 
 	DPRINTF("New Connection\n");
-	so = sonewconn(so, 0);
+	so = sonewconn(so, false);
 	if (so == NULL)
 		return NULL;
 
