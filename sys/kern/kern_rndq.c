@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.20 2013/08/28 23:40:43 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.21 2013/08/29 01:04:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.20 2013/08/28 23:40:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.21 2013/08/29 01:04:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -651,7 +651,13 @@ rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 	 * itself, random.  Don't estimate entropy based on
 	 * timestamp, just directly add the data.
 	 */
-	rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+	if (__predict_false(rs == NULL)) {
+		mutex_spin_enter(&rndpool_mtx);
+		rndpool_add_data(&rnd_pool, data, len, entropy);
+		mutex_spin_exit(&rndpool_mtx);
+	} else {
+		rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
+	}
 }
 
 static void
