@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.31 2013/08/29 17:49:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.31 2013/08/29 17:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -226,10 +226,10 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0)
-					snderr(ENOTCONN);
-			} else
+				snderr(ENOTCONN);
+			} else {
 				snderr(EDESTADDRREQ);
+			}
 		}
 		space = sbspace(&so->so_snd);
 		if (flags & MSG_OOB)
@@ -375,8 +375,6 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (mp)
 		*mp = NULL;
 	solock(so);
-	if (so->so_state & SS_ISCONFIRMING && resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, NULL);
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
 		return (error);
