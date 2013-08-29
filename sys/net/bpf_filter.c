@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.55 2012/10/27 22:36:14 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.56 2013/08/29 14:25:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.55 2012/10/27 22:36:14 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.56 2013/08/29 14:25:41 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -50,6 +50,41 @@ static const char rcsid[] =
 #include <sys/time.h>
 #include <sys/kmem.h>
 #include <sys/endian.h>
+
+#include <net/bpf.h>
+
+#ifdef _KERNEL
+
+struct bpf_ctx {
+	const bpf_copfunc_t *	copfuncs;
+	size_t			nfuncs;
+};
+
+/* Default BPF context (zeroed). */
+static bpf_ctx_t		bpf_def_ctx1;
+bpf_ctx_t *			bpf_def_ctx = &bpf_def_ctx1;
+
+bpf_ctx_t *
+bpf_create(void)
+{
+	return kmem_zalloc(sizeof(bpf_ctx_t), KM_SLEEP);
+}
+
+void
+bpf_destroy(bpf_ctx_t *bc)
+{
+	kmem_free(bc, sizeof(bpf_ctx_t));
+}
+
+int
+bpf_set_cop(bpf_ctx_t *bc, const bpf_copfunc_t *funcs, size_t n)
+{
+	bc->copfuncs = funcs;
+	bc->nfuncs = n;
+	return 0;
+}
+
+#endif
 
 #define EXTRACT_SHORT(p)	be16dec(p)
 #define EXTRACT_LONG(p)		be32dec(p)
@@ -143,12 +178,22 @@ m_xbyte(const struct mbuf *m, uint32_t k, int *err)
  * wirelen is the length of the original packet
  * buflen is the amount of data present
  */
+#ifdef _KERNEL
+u_int
+bpf_filter(bpf_ctx_t *bc, const struct bpf_insn *pc, const u_char *p,
+    u_int wirelen, u_int buflen)
+#else
 u_int
 bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
     u_int buflen)
+#endif
 {
 	uint32_t A, X, k;
 	uint32_t mem[BPF_MEMWORDS];
+
+#ifdef _KERNEL
+	KASSERT(bc != NULL);
+#endif
 
 	if (pc == 0) {
 		/*
@@ -465,6 +510,26 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 		case BPF_MISC|BPF_TXA:
 			A = X;
 			continue;
+
+		case BPF_MISC|BPF_COP:
+#ifdef _KERNEL
+			if (pc->k < bc->nfuncs) {
+				const bpf_copfunc_t fn = bc->copfuncs[pc->k];
+				A = fn((const struct mbuf *)p, A, mem);
+				continue;
+			}
+#endif
+			return 0;
+
+		case BPF_MISC|BPF_COPX:
+#ifdef _KERNEL
+			if (X < bc->nfuncs) {
+				const bpf_copfunc_t fn = bc->copfuncs[X];
+				A = fn((const struct mbuf *)p, A, mem);
+				continue;
+			}
+#endif
+			return 0;
 		}
 	}
 }

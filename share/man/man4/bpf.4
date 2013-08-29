@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.51 2012/10/28 20:19:30 alnsn Exp $
+.\"	$NetBSD: bpf.4,v 1.52 2013/08/29 14:25:41 rmind Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -630,6 +630,16 @@ that copy the index register to the accumulator or vice versa.
 .It Sy BPF_MISC+BPF_TAX Ta X \*[Lt]- A
 .It Sy BPF_MISC+BPF_TXA Ta A \*[Lt]- X
 .El
+.Pp
+Also, two instructions to call a "coprocessor" if initialized by the kernel
+component.  There is no coprocessor by default.
+.Bl -column "BPF_MISC+BPF_COP" "A \*[Lt]- funcs[X](...)" -offset indent
+.It Sy BPF_MISC+BPF_COP Ta A \*[Lt]- funcs[k](..)
+.It Sy BPF_MISC+BPF_COPX Ta A \*[Lt]- funcs[X](..)
+.El
+.Pp
+If the coprocessor is not set or the function index is out of range, these
+instructions will abort the program and return zero.
 .El
 .Pp
 The BPF interface provides the following macros to facilitate
