@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.85 2013/08/05 16:00:57 joerg Exp $
+#	$NetBSD: Makefile.rump,v 1.86 2013/08/30 10:29:06 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -88,7 +88,7 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 # XXX: Warning flags are not in CWARNFLAGS.  Manually add a few important ones.
 
-.ifdef RUMPCOMP_USER && !defined(RUMPTEST_BUILDSH)
+.ifdef RUMPCOMP_USER && !defined(RUMPKERN_ONLY)
 .if empty(DESTDIR)
 DESTDIR=/
 .endif
