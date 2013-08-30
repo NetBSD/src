@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.56 2013/08/29 14:25:41 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.57 2013/08/30 15:00:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.56 2013/08/29 14:25:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.57 2013/08/30 15:00:08 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -180,8 +180,8 @@ m_xbyte(const struct mbuf *m, uint32_t k, int *err)
  */
 #ifdef _KERNEL
 u_int
-bpf_filter(bpf_ctx_t *bc, const struct bpf_insn *pc, const u_char *p,
-    u_int wirelen, u_int buflen)
+bpf_filter(bpf_ctx_t *bc, void *arg, const struct bpf_insn *pc,
+    const u_char *p, u_int wirelen, u_int buflen)
 #else
 u_int
 bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
@@ -515,7 +515,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 #ifdef _KERNEL
 			if (pc->k < bc->nfuncs) {
 				const bpf_copfunc_t fn = bc->copfuncs[pc->k];
-				A = fn((const struct mbuf *)p, A, mem);
+				A = fn((const struct mbuf *)p, arg, A, mem);
 				continue;
 			}
 #endif
@@ -525,7 +525,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 #ifdef _KERNEL
 			if (X < bc->nfuncs) {
 				const bpf_copfunc_t fn = bc->copfuncs[X];
-				A = fn((const struct mbuf *)p, A, mem);
+				A = fn((const struct mbuf *)p, arg, A, mem);
 				continue;
 			}
 #endif
