@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2013/08/11 17:18:11 riz Exp $
+#	$NetBSD: Makefile,v 1.23 2013/08/30 10:13:39 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,6 @@ SSHRAMDISK=	${SSHRAMDISKDIR}/sshramdisk.fs
 # Little endian platforms.
 MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			BCM5301X_INSTALL	${RAMDISK}	-	\
-			BEAGLEBONE_INSTALL	${RAMDISK}	-	\
 			CP3100_INSTALL		${RAMDISK}	-	\
 			GEMINI_INSTALL		${RAMDISK}	-	\
 			GUMSTIX_INSTALL		${RAMDISK}	-	\
@@ -36,7 +35,8 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-
     ${MACHINE_ARCH} == "earmv6" || \
     ${MACHINE_ARCH} == "earmv6hf"
 # Little endian (any ABI) platforms.
-MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-
+MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-	\
+			BEAGLEBONE_INSTALL	${RAMDISK}	-
 .endif
 
 MDSET_RELEASEDIR=	installation/instkernel
