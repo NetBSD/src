@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.50 2012/05/21 21:34:16 dsl Exp $	 */
+/*	$NetBSD: exec.c,v 1.51 2013/08/30 16:42:17 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -175,6 +175,12 @@ void
 rnd_add(char *name)
 {
 	return module_add_common(name, BM_TYPE_RND);
+}
+
+void
+fs_add(char *name)
+{
+	return module_add_common(name, BM_TYPE_FS);
 }
 
 static void
@@ -590,6 +596,9 @@ module_init(const char *kernel_path)
 				break;
 			    case BM_TYPE_IMAGE:
 				bi->type = BI_MODULE_IMAGE;
+				break;
+			    case BM_TYPE_FS:
+				bi->type = BI_MODULE_FS;
 				break;
 			    case BM_TYPE_RND:
 			    default:

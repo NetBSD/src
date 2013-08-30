@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.58 2013/04/12 16:59:40 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.59 2013/08/30 16:42:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.58 2013/04/12 16:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.59 2013/08/30 16:42:17 jmcneill Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -71,6 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.58 2013/04/12 16:59:40 christos Ex
 #include "acpica.h"
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
+#endif
+
+#include "opt_md.h"
+#ifdef MEMORY_DISK_HOOKS
+#include <dev/md.h>
 #endif
 
 void (*x86_cpu_idle)(void);
@@ -182,6 +187,15 @@ module_init_md(void)
 			    (void *)((uintptr_t)bi->base + KERNBASE),
 			     bi->len);
 			break;
+		case BI_MODULE_FS:
+			aprint_debug("File-system image path=%s len=%d pa=%x\n",
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+#ifdef MEMORY_DISK_HOOKS
+			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
+			    bi->len);
+#endif
+			break;		
 		default:
 			aprint_debug("Skipping non-ELF module\n");
 			break;
