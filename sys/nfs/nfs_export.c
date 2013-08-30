@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.52 2013/08/30 07:25:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.52 2013/08/30 07:25:43 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ struct vfs_hooks nfs_export_hooks = {
  *
  * Releases NFS exports list resources if the given mount point has some.
  * As allocation happens lazily, it may be that it doesn't has this
- * information, although it theorically should.
+ * information, although it theoretically should.
  */
 static void
 netexport_unmount(struct mount *mp)
