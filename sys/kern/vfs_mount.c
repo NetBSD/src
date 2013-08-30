@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.19 2013/04/28 21:34:31 mlelstv Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.20 2013/08/30 12:58:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.19 2013/04/28 21:34:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.20 2013/08/30 12:58:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -878,9 +878,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mp->mnt_iflag |= IMNT_GONE;
 	mutex_exit(&mp->mnt_unmounting);
 
-	mutex_enter(&mountlist_lock);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);
 		coveredvp->v_mountedhere = NULL;
+		VOP_UNLOCK(coveredvp);
+	}
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
