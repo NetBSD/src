@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.52 2013/08/30 07:25:43 dholland Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.53 2013/08/30 07:30:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.52 2013/08/30 07:25:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.53 2013/08/30 07:30:50 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ struct vfs_hooks nfs_export_hooks = {
  * VFS unmount hook for NFS exports.
  *
  * Releases NFS exports list resources if the given mount point has some.
- * As allocation happens lazily, it may be that it doesn't has this
+ * As allocation happens lazily, it may be that it doesn't have this
  * information, although it theoretically should.
  */
 static void
@@ -255,7 +255,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	    KAUTH_REQ_NETWORK_NFS_EXPORT, NULL, NULL, NULL) != 0)
 		return EPERM;
 
-	/* Lookup the file system path. */
+	/* Look up the file system path. */
 	error = pathbuf_copyin(mel->mel_path, &pb);
 	if (error) {
 		return error;
@@ -392,7 +392,7 @@ done:
  * in the address specified by 'wh'.
  *
  * This function is used exclusively by the NFS server.  It is generally
- * invoked before VFS_FHTOVP to validate that client has access to the
+ * invoked before VFS_FHTOVP to validate that a client has access to the
  * file system.
  */
 
@@ -557,7 +557,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 	if ((rnh = nep->ne_rtable[i]) == 0) {
 		/*
 		 * Seems silly to initialize every AF when most are not
-		 * used, do so on demand here
+		 * used, do so on demand here.
 		 */
 		DOMAIN_FOREACH(dom) {
 			if (dom->dom_family == i && dom->dom_rtattach) {
@@ -734,7 +734,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	size_t fhsize;
 
 	/*
-	 * mp == NULL -> invalidate the current info, the FS is
+	 * mp == NULL --> invalidate the current info; the FS is
 	 * no longer exported. May be called from either export
 	 * or unmount, so check if it hasn't already been done.
 	 */
@@ -809,7 +809,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 }
 
 /*
- * Lookup an export entry in the exports list that matches the address
+ * Look up an export entry in the exports list that matches the address
  * stored in 'nam'.  If no entry is found, the default one is used instead
  * (if available).
  */
@@ -825,7 +825,7 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 	}
 
 	/*
-	 * Lookup in the export list first.
+	 * Look in the export list first.
 	 */
 	np = NULL;
 	if (nam != NULL) {
