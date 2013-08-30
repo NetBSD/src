@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.60 2013/08/29 14:25:41 rmind Exp $	*/
+/*	$NetBSD: bpf.h,v 1.61 2013/08/30 15:00:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -382,14 +382,15 @@ void	 bpfilterattach(int);
 
 struct bpf_ctx;
 typedef struct bpf_ctx bpf_ctx_t;
-typedef uint32_t (*bpf_copfunc_t)(const struct mbuf *, uint32_t, uint32_t *);
+typedef uint32_t (*bpf_copfunc_t)(const struct mbuf *, void *,
+    uint32_t, uint32_t *);
 extern bpf_ctx_t *bpf_def_ctx;
 
 bpf_ctx_t *bpf_create(void);
 void	bpf_destroy(bpf_ctx_t *);
 
 int	bpf_set_cop(bpf_ctx_t *, const bpf_copfunc_t *, size_t);
-u_int	bpf_filter(bpf_ctx_t *, const struct bpf_insn *,
+u_int	bpf_filter(bpf_ctx_t *, void *, const struct bpf_insn *,
 	    const u_char *, u_int, u_int);
 int	bpf_validate(const struct bpf_insn *, int);
 
