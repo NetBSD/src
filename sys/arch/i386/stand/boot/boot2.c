@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.59 2013/07/28 08:50:09 he Exp $	*/
+/*	$NetBSD: boot2.c,v 1.60 2013/08/30 16:42:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ const struct bootblk_command commands[] = {
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
 	{ "rndseed",	rnd_add },
+	{ "fs",		fs_add },
 	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
