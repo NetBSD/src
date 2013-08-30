@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.53 2013/08/30 07:30:50 dholland Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.54 2013/08/30 07:35:44 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.53 2013/08/30 07:30:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.54 2013/08/30 07:35:44 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,9 +445,11 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
 	} else {
-		/* The following assumes export_args has not changed since
-		 * export_args30 - typedef checks sizes. */
-		typedef char x[sizeof args->eargs == sizeof *mel.mel_exports ? 1 : -1];
+		/*
+		 * The following code assumes export_args has not
+		 * changed since export_args30, so check that.
+		 */
+		__CTASSERT(sizeof(args->eargs) == sizeof(*mel.mel_exports));
 
 		mel.mel_nexports = 1;
 		mel.mel_exports = (void *)&args->eargs;
