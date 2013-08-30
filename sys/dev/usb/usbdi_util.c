@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.60 2013/08/24 08:21:55 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.61 2013/08/30 12:59:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.60 2013/08/24 08:21:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.61 2013/08/30 12:59:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,19 +415,6 @@ usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
 	return (usbd_do_request(dev, &req, conf));
 }
 
-Static void usbd_bulk_transfer_cb(usbd_xfer_handle xfer,
-				  usbd_private_handle priv, usbd_status status);
-Static void
-usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		      usbd_status status)
-{
-
-	if (xfer->pipe->device->bus->lock)
-		cv_broadcast(&xfer->cv);
-	else
-		wakeup(xfer);	/* XXXSMP ok */
-}
-
 usbd_status
 usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   u_int16_t flags, u_int32_t timeout, void *buf,
@@ -435,31 +422,19 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 {
 	usbd_status err;
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
-			flags, timeout, usbd_bulk_transfer_cb);
-	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
+	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
 
+	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
 	err = usbd_sync_transfer_sig(xfer);
+
 	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
 	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
 	if (err) {
 		DPRINTF(("usbd_bulk_transfer: error=%d\n", err));
 		usbd_clear_endpoint_stall(pipe);
 	}
+
 	return (err);
-}
-
-Static void usbd_intr_transfer_cb(usbd_xfer_handle xfer,
-				  usbd_private_handle priv, usbd_status status);
-Static void
-usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		      usbd_status status)
-{
-
-	if (xfer->pipe->device->bus->lock)
-		cv_broadcast(&xfer->cv);
-	else
-		wakeup(xfer);	/* XXXSMP ok */
 }
 
 usbd_status
@@ -469,11 +444,13 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 {
 	usbd_status err;
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
-			flags, timeout, usbd_intr_transfer_cb);
+	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
+
 	DPRINTFN(1, ("usbd_intr_transfer: start transfer %d bytes\n", *size));
 	err = usbd_sync_transfer_sig(xfer);
+
 	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
+
 	DPRINTFN(1,("usbd_intr_transfer: transferred %d\n", *size));
 	if (err) {
 		DPRINTF(("usbd_intr_transfer: error=%d\n", err));
