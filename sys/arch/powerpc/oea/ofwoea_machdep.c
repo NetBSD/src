@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.33 2013/05/13 00:12:01 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.34 2013/08/31 07:33:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.33 2013/05/13 00:12:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.34 2013/08/31 07:33:15 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -199,13 +199,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			__asm volatile ("sync");
 		}
 	}
-#endif
-
-#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		pmap_setup64bridge();
-	else
-		pmap_setup32();
 #endif
 
 	oea_init(pic_ext_intr);
