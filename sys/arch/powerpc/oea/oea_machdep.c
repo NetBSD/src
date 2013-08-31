@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.66 2013/08/31 07:33:15 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.67 2013/08/31 15:01:08 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.66 2013/08/31 07:33:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.67 2013/08/31 15:01:08 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -386,6 +386,8 @@ oea_init(void (*handler)(void))
 				*ip++ = NOP;
 				*ip++ = NOP;
 				ip[0] = NOP;
+			} else if (*ip == RFID) {
+				*ip = RFI;
 			}
 		}
 
@@ -905,6 +907,8 @@ oea_install_extint(void (*handler)(void))
 				*ip++ = NOP;
 				*ip++ = NOP;
 				ip[0] = NOP;
+			} else if (*ip == RFID) {
+				*ip = RFI;
 			}
 		}
 	}
