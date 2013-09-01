@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.313 2013/09/01 04:51:24 kiyohara Exp $ */
+/* $NetBSD: com.c,v 1.314 2013/09/01 04:58:15 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.313 2013/09/01 04:51:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.314 2013/09/01 04:58:15 kiyohara Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -374,9 +374,7 @@ com_attach_subr(struct com_softc *sc)
 {
 	struct com_regs *regsp = &sc->sc_regs;
 	struct tty *tp;
-#ifdef COM_16650
 	u_int8_t lcr;
-#endif
 	const char *fifo_msg = NULL;
 	prop_dictionary_t	dict;
 	bool is_console = true;
@@ -480,6 +478,37 @@ com_attach_subr(struct com_softc *sc)
 #endif
 				sc->sc_fifolen = 16;
 
+			/*
+			 * TL16C750 can enable 64byte FIFO, only when DLAB
+			 * is 1.  However, some 16750 may always enable.  For
+			 * example, restrictions according to DLAB in a data
+			 * sheet for SC16C750 were not described.
+			 * Please enable 'options COM_16650', supposing you
+			 * use SC16C750.  Probably 32 bytes of FIFO and HW FLOW
+			 * should become effective.
+			 */
+			uint8_t iir1, iir2;
+			const uint8_t fcr = FIFO_ENABLE | FIFO_TRIGGER_14;
+
+			lcr = CSR_READ_1(regsp, COM_REG_LCR);
+			CSR_WRITE_1(regsp, COM_REG_LCR, lcr & ~LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_FIFO, fcr | FIFO_64B_ENABLE);
+			iir1 = CSR_READ_1(regsp, COM_REG_IIR);
+			CSR_WRITE_1(regsp, COM_REG_FIFO, fcr);
+			CSR_WRITE_1(regsp, COM_REG_LCR, lcr | LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_FIFO, fcr | FIFO_64B_ENABLE);
+			iir2 = CSR_READ_1(regsp, COM_REG_IIR);
+
+			CSR_WRITE_1(regsp, COM_REG_LCR, lcr);
+
+			if (!ISSET(iir1, IIR_64B_FIFO) &&
+			    ISSET(iir2, IIR_64B_FIFO)) {
+				/* It is TL16C750. */
+				sc->sc_fifolen = 64;
+				SET(sc->sc_hwflags, COM_HW_FLOW);
+			} else
+				CSR_WRITE_1(regsp, COM_REG_FIFO, fcr);
+
 #ifdef COM_16650
 			CSR_WRITE_1(regsp, COM_REG_LCR, lcr);
 			if (sc->sc_fifolen == 0)
@@ -488,6 +517,9 @@ com_attach_subr(struct com_softc *sc)
 				fifo_msg = "st16650a, working fifo";
 			else
 #endif
+			if (sc->sc_fifolen == 64)
+				fifo_msg = "tl16c750, working fifo";
+			else
 				fifo_msg = "ns16550a, working fifo";
 		} else
 			fifo_msg = "ns16550, broken fifo";
