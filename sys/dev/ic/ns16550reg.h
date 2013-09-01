@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550reg.h,v 1.8 2013/04/20 11:52:41 rkujawa Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.9 2013/09/01 04:51:24 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,11 +47,3 @@
 #define	com_lsr		5	/* line status register (R/W) */
 #define	com_msr		6	/* modem status register (R/W) */
 #define	com_scratch	7	/* scratch register (R/W) */
-
-/*
- * Additional register present in NS16750 
- */
-#ifdef COM_16750
-#define com_usr		31	/* status register (R) */
-#endif
-
