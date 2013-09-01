@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.31 2013/05/06 14:52:51 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.32 2013/09/01 11:14:46 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.31 2013/05/06 14:52:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.32 2013/09/01 11:14:46 kiyohara Exp $");
 
 #include "opt_mvsata.h"
 
@@ -106,6 +106,7 @@ int	mvsata_debug = 2;
 #define MVSATA_EPRD_MAX_SIZE	(sizeof(struct eprd) * (MAXPHYS / PAGE_SIZE))
 
 
+static void mvsata_probe_drive(struct ata_channel *);
 #ifndef MVSATA_WITHOUTDMA
 static int mvsata_bio(struct ata_drive_datas *, struct ata_bio *);
 static void mvsata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
@@ -204,8 +205,6 @@ static void mvsata_print_crqb(struct mvsata_port *, int);
 static void mvsata_print_crpb(struct mvsata_port *, int);
 static void mvsata_print_eprd(struct mvsata_port *, int);
 #endif
-
-static void mvsata_probe_drive(struct ata_channel *);
 
 struct ata_bustype mvsata_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
@@ -1695,6 +1694,7 @@ again:
 		ata_c->flags |= AT_TIMEOU;
 		goto out;
 	}
+	delay(10);	/* XXXXX: Delay more times. */
 	if (ata_c->flags & AT_READ) {
 		if ((chp->ch_status & WDCS_DRQ) == 0) {
 			ata_c->flags |= AT_TIMEOU;
