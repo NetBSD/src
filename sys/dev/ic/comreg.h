@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.18 2013/04/20 11:52:41 rkujawa Exp $	*/
+/*	$NetBSD: comreg.h,v 1.19 2013/09/01 04:51:24 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -56,15 +56,14 @@
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
 #define	IIR_RXTOUT	0xc
+/* ARMADAXP's ns16550 ports have extra value in this register */
+#define IIR_BUSY	0x7	/* Busy indicator */
 #define	IIR_RLS		0x6	/* Line status change */
 #define	IIR_RXRDY	0x4	/* Receiver ready */
 #define	IIR_TXRDY	0x2	/* Transmitter ready */
 #define	IIR_MLSC	0x0	/* Modem status */
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
-#ifdef COM_16750
-#define IIR_BUSY	0x7	/* Busy indicator */
-#endif
 
 /* fifo control register */
 #define	FIFO_ENABLE	0x01	/* Turn the FIFO on */
