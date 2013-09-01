@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.19 2013/09/01 04:51:24 kiyohara Exp $	*/
+/*	$NetBSD: comreg.h,v 1.20 2013/09/01 04:58:15 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -63,6 +63,7 @@
 #define	IIR_TXRDY	0x2	/* Transmitter ready */
 #define	IIR_MLSC	0x0	/* Modem status */
 #define	IIR_NOPEND	0x1	/* No pending interrupts */
+#define	IIR_64B_FIFO	0x20	/* 64byte FIFO Enabled (16750) */
 #define	IIR_FIFO_MASK	0xc0	/* set if FIFOs are enabled */
 
 /* fifo control register */
@@ -70,6 +71,7 @@
 #define	FIFO_RCV_RST	0x02	/* Reset RX FIFO */
 #define	FIFO_XMT_RST	0x04	/* Reset TX FIFO */
 #define	FIFO_DMA_MODE	0x08
+#define	FIFO_64B_ENABLE	0x20	/* 64byte FIFO Enable (16750) */
 #define	FIFO_TRIGGER_1	0x00	/* Trigger RXRDY intr on 1 character */
 #define	FIFO_TRIGGER_4	0x40	/* ibid 4 */
 #define	FIFO_TRIGGER_8	0x80	/* ibid 8 */
