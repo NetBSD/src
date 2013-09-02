@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/02/20 14:13:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2013/09/02 14:34:57 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -9,7 +9,7 @@
 .include "Makefile.inc"
 .include "${LLVM_TOPLEVEL}/lib/Makefile.inc"
 
-realdepends realall: config/config.status need-dl
+realdepends realall: config/config.status need-dl need-terminfo
 
 config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
@@ -30,7 +30,16 @@ need-dl:
 		echo > ${.TARGET}; \
 	fi
 
-CLEANFILES+=	need-dl need-dl.c need-dl.out
+need-terminfo:
+	printf '#include <term.h>\nint main(void){return setupterm(0, 0, 0);}' > need-terminfo.c
+	for lib in tinfo terminfo ncurses curses; do \
+		if ${HOST_CC} -o need-terminfo.out need-terminfo.c -l$$lib > /dev/null 2>&1; then \
+			echo -l$$lib > ${.TARGET}; \
+			break; \
+		fi; \
+	done
+
+CLEANFILES+=	need-dl need-dl.c need-dl.out need-terminfo need-terminfo.c need-terminfo.out
 
 cleandir: cleandir-llvm
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2013/07/07 21:36:43 joerg Exp $
+# $NetBSD: Makefile,v 1.33 2013/09/02 14:34:55 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -117,7 +117,25 @@ SUBDIR+= \
 	libclangASTMatchers \
 	libclangASTMatchersDynamic \
 	libclangFormat \
+	libclangIndex \
 	libclangTooling
+.endif
+
+.if ${MKLLD} != "no"
+SUBDIR+= \
+	liblldCore \
+	liblldDriver \
+	liblldPasses \
+	liblldReaderWriter \
+	liblldReaderWriterELF \
+	liblldReaderWriterELFHexagon \
+	liblldReaderWriterELFPPC \
+	liblldReaderWriterELFX86 \
+	liblldReaderWriterELFX86_64 \
+	liblldReaderWriterMachO \
+	liblldReaderWriterNative \
+	liblldReaderWriterPECOFF \
+	liblldReaderWriterYAML
 .endif
 
 .if ${MKMCLINKER} != "no"

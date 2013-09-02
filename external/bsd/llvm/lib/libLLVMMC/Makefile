@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/05/28 17:37:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2013/09/02 14:34:56 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -32,6 +32,7 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCModule.cpp \
 	MCMachOStreamer.cpp \
 	MCMachObjectTargetWriter.cpp \
+	MCModuleYAML.cpp \
 	MCNullStreamer.cpp \
 	MCObjectDisassembler.cpp \
 	MCObjectFileInfo.cpp \

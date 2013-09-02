@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/04/25 13:59:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/09/02 14:34:56 joerg Exp $
 
 LIB=	clangFormat
 
@@ -7,7 +7,9 @@ LIB=	clangFormat
 .PATH: ${CLANG_SRCDIR}/lib/Format
 
 SRCS+=	BreakableToken.cpp \
+	ContinuationIndenter.cpp \
 	Format.cpp \
+	FormatToken.cpp \
 	TokenAnnotator.cpp \
 	UnwrappedLineParser.cpp \
 	WhitespaceManager.cpp

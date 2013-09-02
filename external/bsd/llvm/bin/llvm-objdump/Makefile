@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/07/07 21:36:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/09/02 14:34:55 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -13,7 +13,6 @@ SRCS=	llvm-objdump.cpp \
 	MachODump.cpp
 
 LLVM_LIBS+= \
-	Object \
 	AArch64Disassembler \
 	AArch64TargetInfo \
 	AArch64MCTargetDesc \
@@ -45,6 +44,7 @@ LLVM_LIBS+= \
 	DebugInfo \
 	MCParser \
 	MC \
+	Object \
 	IR \
 	Support
 

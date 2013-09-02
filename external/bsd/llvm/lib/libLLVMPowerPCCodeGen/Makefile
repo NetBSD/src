@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/05/28 17:37:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2013/09/02 14:34:56 joerg Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -14,6 +14,7 @@ SRCS+=	PPCAsmPrinter.cpp \
 	PPCInstrInfo.cpp \
 	PPCISelDAGToDAG.cpp \
 	PPCISelLowering.cpp \
+	PPCFastISel.cpp \
 	PPCFrameLowering.cpp \
 	PPCJITInfo.cpp \
 	PPCMachineFunctionInfo.cpp \
@@ -31,6 +32,7 @@ TABLEGEN_OUTPUT= \
 	PPCGenAsmWriter.inc|-gen-asm-writer \
 	PPCGenAsmMatcher.inc|-gen-asm-matcher \
 	PPCGenCodeEmitter.inc|-gen-emitter \
+	PPCGenFastISel.inc|-gen-fast-isel \
 	PPCGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	PPCGenRegisterInfo.inc|-gen-register-info \
 	PPCGenInstrInfo.inc|-gen-instr-info \
