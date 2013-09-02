@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/28 17:37:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/09/02 14:34:56 joerg Exp $
 
 LIB=	LLVMPowerPCMCTargetDesc
 
@@ -15,6 +15,7 @@ SRCS+=	PPCAsmBackend.cpp \
 	PPCMCCodeEmitter.cpp \
 	PPCMCExpr.cpp \
 	PPCMCTargetDesc.cpp \
+	PPCMachObjectWriter.cpp \
 	PPCPredicates.cpp
 
 .if defined(HOSTLIB)
