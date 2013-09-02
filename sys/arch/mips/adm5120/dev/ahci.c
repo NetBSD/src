@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.9 2012/10/27 17:18:01 chs Exp $	*/
+/*	$NetBSD: ahci.c,v 1.10 2013/09/02 15:48:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.9 2012/10/27 17:18:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.10 2013/09/02 15:48:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,67 +171,67 @@ void		print_xfer(usbd_xfer_handle);
 
 
 struct usbd_bus_methods ahci_bus_methods = {
-	ahci_open,
-	ahci_softintr,
-	ahci_poll,
-	ahci_allocm,
-	ahci_freem,
-	ahci_allocx,
-	ahci_freex,
+	.open_pipe = ahci_open,
+	.soft_intr = ahci_softintr,
+	.do_poll = ahci_poll,
+	.allocm = ahci_allocm,
+	.freem = ahci_freem,
+	.allocx = ahci_allocx,
+	.freex = ahci_freex,
 };
 
 struct usbd_pipe_methods ahci_root_ctrl_methods = {
-	ahci_root_ctrl_transfer,
-	ahci_root_ctrl_start,
-	ahci_root_ctrl_abort,
-	ahci_root_ctrl_close,
-	ahci_noop,
-	ahci_root_ctrl_done,
+	.transfer = ahci_root_ctrl_transfer,
+	.start = ahci_root_ctrl_start,
+	.abort = ahci_root_ctrl_abort,
+	.close = ahci_root_ctrl_close,
+	.cleartoggle = ahci_noop,
+	.done = ahci_root_ctrl_done,
 };
 
 struct usbd_pipe_methods ahci_root_intr_methods = {
-	ahci_root_intr_transfer,
-	ahci_root_intr_start,
-	ahci_root_intr_abort,
-	ahci_root_intr_close,
-	ahci_noop,
-	ahci_root_intr_done,
+	.transfer = ahci_root_intr_transfer,
+	.start = ahci_root_intr_start,
+	.abort = ahci_root_intr_abort,
+	.close = ahci_root_intr_close,
+	.cleartoggle = ahci_noop,
+	.done = ahci_root_intr_done,
 };
 
 struct usbd_pipe_methods ahci_device_ctrl_methods = {
-	ahci_device_ctrl_transfer,
-	ahci_device_ctrl_start,
-	ahci_device_ctrl_abort,
-	ahci_device_ctrl_close,
-	ahci_noop,
-	ahci_device_ctrl_done,
+	.transfer = ahci_device_ctrl_transfer,
+	.start = ahci_device_ctrl_start,
+	.abort = ahci_device_ctrl_abort,
+	.close = ahci_device_ctrl_close,
+	.cleartoggle = ahci_noop,
+	.done = ahci_device_ctrl_done,
 };
 
 struct usbd_pipe_methods ahci_device_intr_methods = {
-	ahci_device_intr_transfer,
-	ahci_device_intr_start,
-	ahci_device_intr_abort,
-	ahci_device_intr_close,
-	ahci_device_clear_toggle,
-	ahci_device_intr_done,
+	.transfer = ahci_device_intr_transfer,
+	.start = ahci_device_intr_start,
+	.abort = ahci_device_intr_abort,
+	.close = ahci_device_intr_close,
+	.cleartoggle = ahci_device_clear_toggle,
+	.done = ahci_device_intr_done,
 };
 
 struct usbd_pipe_methods ahci_device_isoc_methods = {
-	ahci_device_isoc_transfer,
-	ahci_device_isoc_start,
-	ahci_device_isoc_abort,
-	ahci_device_isoc_close,
-	ahci_noop,
-	ahci_device_isoc_done,
+	.transfer = ahci_device_isoc_transfer,
+	.start = ahci_device_isoc_start,
+	.abort = ahci_device_isoc_abort,
+	.close = ahci_device_isoc_close,
+	.cleartoggle = ahci_noop,
+	.done = ahci_device_isoc_done,
 };
 
 struct usbd_pipe_methods ahci_device_bulk_methods = {
-	ahci_device_bulk_transfer,
-	ahci_device_bulk_start,
-	ahci_device_bulk_abort,
-	ahci_device_bulk_close,
-	ahci_device_clear_toggle,
-	ahci_device_bulk_done,
+	.transfer = ahci_device_bulk_transfer,
+	.start = ahci_device_bulk_start,
+	.abort = ahci_device_bulk_abort,
+	.close = ahci_device_bulk_close,
+	.cleartoggle = ahci_device_clear_toggle,
+	.done = ahci_device_bulk_done,
 };
 
 struct ahci_pipe {
