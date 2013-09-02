@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.34 2013/09/02 12:20:59 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.35 2013/09/02 12:27:18 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.34 2013/09/02 12:20:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.35 2013/09/02 12:27:18 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -708,32 +708,32 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #endif
 
 const struct usbd_bus_methods slhci_bus_methods = {
-	slhci_open,
-	slhci_void,
-	slhci_poll,
-	slhci_allocm,
-	slhci_freem,
-	slhci_allocx,
-	slhci_freex,
-	NULL, /* slhci_get_lock */
+	.open_pipe = slhci_open,
+	.soft_intr = slhci_void,
+	.do_poll = slhci_poll,
+	.allocm = slhci_allocm,
+	.freem = slhci_freem,
+	.allocx = slhci_allocx,
+	.freex = slhci_freex,
+	.get_lock = NULL,
 };
 
 const struct usbd_pipe_methods slhci_pipe_methods = {
-	slhci_transfer,
-	slhci_start,
-	slhci_abort,
-	slhci_close,
-	slhci_clear_toggle,
-	slhci_done,
+	.transfer = slhci_transfer,
+	.start = slhci_start,
+	.abort = slhci_abort,
+	.close = slhci_close,
+	.cleartoggle = slhci_clear_toggle,
+	.done = slhci_done,
 };
 
 const struct usbd_pipe_methods slhci_root_methods = {
-	slhci_transfer,
-	slhci_root_start,
-	slhci_abort,
-	(void (*)(struct usbd_pipe *))slhci_void, /* XXX safe? */
-	slhci_clear_toggle,
-	slhci_done,
+	.transfer = slhci_transfer,
+	.start = slhci_root_start,
+	.abort = slhci_abort,
+	.close = (void (*)(struct usbd_pipe *))slhci_void, /* XXX safe? */
+	.cleartoggle = slhci_clear_toggle,
+	.done = slhci_done,
 };
 
 /* Queue inlines */
