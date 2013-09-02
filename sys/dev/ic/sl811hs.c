@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.33 2012/06/10 06:15:52 mrg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.34 2013/09/02 12:20:59 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -74,7 +74,8 @@
  * released last when clearing the wait queue.
  */
 
-/* XXX TODO:
+/*
+ * XXX TODO:
  *   copy next output packet while transfering
  *   usb suspend
  *   could keep track of known values of all buffer space?
@@ -84,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.33 2012/06/10 06:15:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.34 2013/09/02 12:20:59 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -188,20 +189,24 @@ pnames(int ptype)
 
 #define SLHCI_XFER_TYPE(x) (((struct slhci_pipe *)((x)->pipe))->ptype)
 
-/* Maximum allowable reserved bus time.  Since intr/isoc transfers have 
+/*
+ * Maximum allowable reserved bus time.  Since intr/isoc transfers have
  * unconditional priority, this is all that ensures control and bulk transfers 
  * get a chance.  It is a single value for all frames since all transfers can 
  * use multiple consecutive frames if an error is encountered.  Note that it 
  * is not really possible to fill the bus with transfers, so this value should 
  * be on the low side.  Defaults to giving a warning unless SLHCI_NO_OVERTIME 
- * is defined.  Full time is 12000 - END_BUSTIME. */
+ * is defined.  Full time is 12000 - END_BUSTIME.
+ */
 #ifndef SLHCI_RESERVED_BUSTIME
 #define SLHCI_RESERVED_BUSTIME 5000
 #endif
 
-/* Rate for "exceeds reserved bus time" warnings (default) or errors.  
+/*
+ * Rate for "exceeds reserved bus time" warnings (default) or errors.
  * Warnings only happen when an endpoint open causes the time to go above 
- * SLHCI_RESERVED_BUSTIME, not if it is already above. */
+ * SLHCI_RESERVED_BUSTIME, not if it is already above.
+ */
 #ifndef SLHCI_OVERTIME_WARNING_RATE
 #define SLHCI_OVERTIME_WARNING_RATE { 60, 0 } /* 60 seconds */
 #endif
@@ -213,10 +218,12 @@ static const struct timeval reserved_warn_rate = SLHCI_OVERTIME_WARNING_RATE;
 #endif
 static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 
-/* For EOF, the spec says 42 bit times, plus (I think) a possible hub skew of 
+/*
+ * For EOF, the spec says 42 bit times, plus (I think) a possible hub skew of
  * 20 bit times.  By default leave 66 bit times to start the transfer beyond
  * the required time.  Units are full-speed bit times (a bit over 5us per 64).
- * Only multiples of 64 are significant. */
+ * Only multiples of 64 are significant.
+ */
 #define SLHCI_STANDARD_END_BUSTIME 128
 #ifndef SLHCI_EXTRA_END_BUSTIME
 #define SLHCI_EXTRA_END_BUSTIME 0
@@ -224,18 +231,22 @@ static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 
 #define SLHCI_END_BUSTIME (SLHCI_STANDARD_END_BUSTIME+SLHCI_EXTRA_END_BUSTIME)
 
-/* This is an approximation of the USB worst-case timings presented on p. 54 of 
+/*
+ * This is an approximation of the USB worst-case timings presented on p. 54 of
  * the USB 1.1 spec translated to full speed bit times.  
  * FS = full speed with handshake, FSII = isoc in, FSIO = isoc out, 
- * FSI = isoc (worst case), LS = low speed */
+ * FSI = isoc (worst case), LS = low speed
+ */
 #define SLHCI_FS_CONST		114
 #define SLHCI_FSII_CONST	92
 #define SLHCI_FSIO_CONST	80
 #define SLHCI_FSI_CONST		92
 #define SLHCI_LS_CONST		804
 #ifndef SLHCI_PRECICE_BUSTIME
-/* These values are < 3% too high (compared to the multiply and divide) for 
- * max sized packets. */
+/*
+ * These values are < 3% too high (compared to the multiply and divide) for
+ * max sized packets.
+ */
 #define SLHCI_FS_DATA_TIME(len) (((u_int)(len)<<3)+(len)+((len)>>1))
 #define SLHCI_LS_DATA_TIME(len) (((u_int)(len)<<6)+((u_int)(len)<<4))
 #else
@@ -243,7 +254,8 @@ static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 #define SLHCI_LS_DATA_TIME(len) (449*(len)/6)
 #endif
 
-/* Set SLHCI_WAIT_SIZE to the desired maximum size of single FS transfer 
+/*
+ * Set SLHCI_WAIT_SIZE to the desired maximum size of single FS transfer
  * to poll for after starting a transfer.  64 gets all full speed transfers.
  * Note that even if 0 polling will occur if data equal or greater than the 
  * transfer size is copied to the chip while the transfer is in progress.
@@ -307,8 +319,10 @@ struct slhci_pipe {
 
 #ifdef SLHCI_PROFILE_TRANSFER
 #if defined(__mips__)
-/* MIPS cycle counter does not directly count cpu cycles but is a different 
- * fraction of cpu cycles depending on the cpu. */
+/*
+ * MIPS cycle counter does not directly count cpu cycles but is a different
+ * fraction of cpu cycles depending on the cpu.
+ */
 typedef u_int32_t cc_type;
 #define CC_TYPE_FMT "%u"
 #define slhci_cc_set(x) __asm volatile ("mfc0 %[cc], $9\n\tnop\n\tnop\n\tnop" \
@@ -441,8 +455,10 @@ usbd_status slhci_start(struct usbd_xfer *);
 usbd_status slhci_root_start(struct usbd_xfer *);
 usbd_status slhci_open(struct usbd_pipe *);
 
-/* slhci_supported_rev, slhci_preinit, slhci_attach, slhci_detach, 
- * slhci_activate */
+/*
+ * slhci_supported_rev, slhci_preinit, slhci_attach, slhci_detach,
+ * slhci_activate
+ */
 
 void slhci_abort(struct usbd_xfer *);
 void slhci_close(struct usbd_pipe *);
@@ -568,7 +584,8 @@ int slhci_usbdebug = -1; /* value to set usbdebug on attach, -1 = leave alone */
  * enabling SLHCI_DEBUG.
  */
 
-/* Add KERNHIST history for debugging: 
+/*
+ * Add KERNHIST history for debugging:
  *
  *   Before kern_hist in sys/kern/subr_kernhist.c add:
  *      KERNHIST_DECL(slhcihist);
@@ -599,10 +616,12 @@ struct kern_history_ent slhci_he[SLHCI_NHIST];
     u_long _kernhist_call = 0; KERNHIST_LOG(slhcihist, f, a, b, c, d);	     \
 } while (/*CONSTCOND*/0)
 #define DLOG(x, f, a, b, c, d) SLHCI_DEXEC(x, DDOLOG(f, a, b, c, d))
-/* DLOGFLAG8 is a macro not a function so that flag name expressions are not 
+/*
+ * DLOGFLAG8 is a macro not a function so that flag name expressions are not
  * evaluated unless the flag bit is set (which could save a register read). 
  * x is debug mask, y is flag identifier, z is flag variable, 
- * a-h are flag names (must evaluate to string constants, msb first). */
+ * a-h are flag names (must evaluate to string constants, msb first).
+ */
 #define DDOLOGFLAG8(y, z, a, b, c, d, e, f, g, h) do { uint8_t _DLF8 = (z);   \
     const char *_kernhist_name = __func__; u_long _kernhist_call = 0;	      \
     if (_DLF8 & 0xf0) KERNHIST_LOG(slhcihist, y " %s %s %s %s", _DLF8 & 0x80 ?  \
@@ -613,8 +632,10 @@ struct kern_history_ent slhci_he[SLHCI_NHIST];
 } while (/*CONSTCOND*/ 0)
 #define DLOGFLAG8(x, y, z, a, b, c, d, e, f, g, h) \
     SLHCI_DEXEC(x, DDOLOGFLAG8(y, z, a, b, c, d, e, f, g, h))
-/* DDOLOGBUF logs a buffer up to 8 bytes at a time. No identifier so that we 
- * can make it a real function. */
+/*
+ * DDOLOGBUF logs a buffer up to 8 bytes at a time. No identifier so that we
+ * can make it a real function.
+ */
 static void
 DDOLOGBUF(uint8_t *buf, unsigned int length)
 {
@@ -774,8 +795,10 @@ struct slhci_mem {
 	uint8_t data[];
 };
 
-/* The SL811HS does not do DMA as a host controller, but NetBSD's USB interface 
- * assumes DMA is used.  So we fake the DMA block. */
+/*
+ * The SL811HS does not do DMA as a host controller, but NetBSD's USB interface
+ * assumes DMA is used.  So we fake the DMA block.
+ */
 usbd_status
 slhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
@@ -882,8 +905,10 @@ slhci_transfer(struct usbd_xfer *xfer)
 	 * so start it first.
 	 */
 
-	/* Start next is always done at splusb, so we do this here so 
-	 * start functions are always called at softusb. XXX */
+	/*
+	 * Start next is always done at splusb, so we do this here so
+	 * start functions are always called at softusb. XXX
+	 */
 	s = splusb();
 	error = xfer->pipe->methods->start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 	splx(s);
@@ -975,15 +1000,19 @@ slhci_start(struct usbd_xfer *xfer)
 	else
 		spipe->wantshort = 0;
 
-	/* The goal of newbustime and newlen is to avoid bustime calculation 
+	/*
+	 * The goal of newbustime and newlen is to avoid bustime calculation
 	 * in the interrupt.  The calculations are not too complex, but they 
 	 * complicate the conditional logic somewhat and doing them all in the 
 	 * same place shares constants. Index 0 is "short length" for bulk and 
 	 * ctrl data and 1 is "full length" for ctrl data (bulk/intr are 
-	 * already set to full length). */
+	 * already set to full length).
+	 */
 	if (spipe->pflags & PF_LS) {
-		/* Setting PREAMBLE for directly connnected LS devices will
-		 * lock up the chip. */
+		/*
+		 * Setting PREAMBLE for directly connnected LS devices will
+		 * lock up the chip.
+		 */
 		if (spipe->pflags & PF_PREAMBLE)
 			spipe->control |= SL11_EPCTRL_PREAMBLE;
 		if (max_packet <= 8) {
@@ -1009,9 +1038,11 @@ slhci_start(struct usbd_xfer *xfer)
 			xfer->status = USBD_INVAL;
 	}
 
-	/* The datasheet incorrectly indicates that DIRECTION is for 
+	/*
+	 * The datasheet incorrectly indicates that DIRECTION is for
 	 * "transmit to host".  It is for OUT and SETUP.  The app note 
-	 * describes its use correctly. */
+	 * describes its use correctly.
+	 */
 	if ((spipe->tregs[PID] & SL11_PID_BITS) != SL11_PID_IN) 
 		spipe->control |= SL11_EPCTRL_DIRECTION;
 
@@ -1061,9 +1092,11 @@ slhci_open(struct usbd_pipe *pipe)
 	gcq_init(&spipe->to);
 	gcq_init(&spipe->xq);
 
-	/* The endpoint descriptor will not have been set up yet in the case 
+	/*
+	 * The endpoint descriptor will not have been set up yet in the case
 	 * of the standard control pipe, so the max packet checks are also 
-	 * necessary in start. */
+	 * necessary in start.
+	 */
 
 	max_packet = UGETW(ed->wMaxPacketSize);
 
@@ -1138,9 +1171,11 @@ slhci_supported_rev(uint8_t rev)
 	return (rev >= SLTYPE_SL811HS_R12 && rev <= SLTYPE_SL811HS_R15);
 }
 
-/* Must be called before the ISR is registered. Interrupts can be shared so 
+/*
+ * Must be called before the ISR is registered. Interrupts can be shared so
  * slhci_intr could be called as soon as the ISR is registered. 
- * Note max_current argument is actual current, but stored as current/2 */
+ * Note max_current argument is actual current, but stored as current/2
+ */
 void
 slhci_preinit(struct slhci_softc *sc, PowerFunc pow, bus_space_tag_t iot, 
     bus_space_handle_t ioh, uint16_t max_current, uint32_t stride)
@@ -1211,9 +1246,11 @@ slhci_detach(struct slhci_softc *sc, int flags)
 
 	KASSERT(!(t->flags & F_ACTIVE));
 
-	/* To be MPSAFE is not sufficient to cancel callouts and soft
+	/*
+	 * To be MPSAFE is not sufficient to cancel callouts and soft
 	 * interrupts and assume they are dead since the code could already be
-	 * running or about to run.  Wait until they are known to be done.  */
+	 * running or about to run.  Wait until they are known to be done.
+	 */
 	while (t->flags & (F_RESET|F_CALLBACK))
 		tsleep(&sc, PPAUSE, "slhci_detach", hz);
 
@@ -1366,11 +1403,13 @@ slhci_reset_entry(void *arg)
 	s = splhardusb();
 	simple_lock(&sc->sc_lock);
 	slhci_reset(sc);
-	/* We cannot call the calback directly since we could then be reset 
+	/*
+	 * We cannot call the calback directly since we could then be reset
 	 * again before finishing and need the callout delay for timing.  
 	 * Scheduling the callout again before we exit would defeat the reap 
 	 * mechanism since we could be unlocked while the reset flag is not 
-	 * set. The callback code will check the wait queue. */
+	 * set. The callback code will check the wait queue.
+	 */
 	slhci_callback_schedule(sc);
 	simple_unlock(&sc->sc_lock);
 	splx(s);
@@ -1702,10 +1741,12 @@ slhci_read_multi(struct slhci_softc *sc, uint8_t addr, uint8_t *buf, int l)
 }
 #endif
 
-/* After calling waitintr it is necessary to either call slhci_callback or 
+/*
+ * After calling waitintr it is necessary to either call slhci_callback or
  * schedule the callback if necessary.  The callback cannot be called directly 
  * from the hard interrupt since it interrupts at a high IPL and callbacks 
- * can do copyout and such. */
+ * can do copyout and such.
+ */
 static void
 slhci_waitintr(struct slhci_softc *sc, int wait_time)
 {
@@ -1798,10 +1839,12 @@ slhci_dointr(struct slhci_softc *sc)
 
 		gcq_merge_tail(&t->q[Q_CB], &t->q[Q_NEXT_CB]);
 
-		/* SOFCHECK flags are cleared in tstart.  Two flags are needed 
+		/*
+		 * SOFCHECK flags are cleared in tstart.  Two flags are needed
 		 * since the first SOF interrupt processed after the transfer 
 		 * is started might have been generated before the transfer 
-		 * was started.  */
+		 * was started.
+		 */
 		if (__predict_false(t->flags & F_SOFCHECK2 && t->flags & 
 		    (F_AINPROG|F_BINPROG))) {
 			printf("%s: Missed transfer completion. halted\n",
@@ -1825,8 +1868,10 @@ slhci_dointr(struct slhci_softc *sc)
 			enter_callback(t, tosp);
 		}
 
-		/* Start any waiting transfers right away.  If none, we will
-		 * start any new transfers later. */
+		/*
+		 * Start any waiting transfers right away.  If none, we will
+		 * start any new transfers later.
+		 */
 		slhci_tstart(sc);
 	}
 
@@ -1841,7 +1886,8 @@ slhci_dointr(struct slhci_softc *sc)
 			LK_SLASSERT((t->flags & (F_AINPROG|F_BINPROG)) != 
 			    (F_AINPROG|F_BINPROG), sc, NULL, NULL, return 1);
 
-			/* This should never happen (unless card removal just 
+			/*
+			 * This should never happen (unless card removal just
 			 * occurred) but appeared frequently when both
 			 * transfers were started at the same time and was 
 			 * accompanied by data corruption.  It still happens 
@@ -1867,7 +1913,8 @@ slhci_dointr(struct slhci_softc *sc)
 		else 
 			ab = B;
 
-		/* This happens when a low speed device is attached to 
+		/*
+		 * This happens when a low speed device is attached to
 		 * a hub with chip rev 1.5.  SOF stops, but a few transfers 
 		 * still work before causing this error.
 		 */
@@ -1916,8 +1963,10 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 
 	spipe = t->spipe[ab];
 
-	/* skip this one if aborted; do not call return from the rest of the 
-	 * function unless halting, else t->len will not be cleared. */
+	/*
+	 * skip this one if aborted; do not call return from the rest of the
+	 * function unless halting, else t->len will not be cleared.
+	 */
 	if (spipe == NULL)
 		goto done;
 
@@ -2136,17 +2185,21 @@ status_setup:
 			if (spipe->ptype == PT_INTR) {
 				spipe->lastframe += 
 				    spipe->pipe.interval;
-				/* If ack, we try to keep the 
+				/*
+				 * If ack, we try to keep the
 				 * interrupt rate by using lastframe 
-				 * instead of the current frame. */
+				 * instead of the current frame.
+				 */
 				spipe->frame = spipe->lastframe +
 				    spipe->pipe.interval;
 			}
 
-			/* Set the toggle for the next transfer.  It 
+			/*
+			 * Set the toggle for the next transfer.  It
 			 * has already been toggled above, so the 
 			 * current setting will apply to the next 
-			 * transfer. */ 
+			 * transfer.
+			 */
 			if (spipe->control & SL11_EPCTRL_DATATOGGLE)
 				spipe->pflags |= PF_TOGGLE;
 			else
@@ -2207,7 +2260,8 @@ slhci_tstart(struct slhci_softc *sc)
 	if (t->flags & (F_AINPROG|F_BINPROG|F_DISABLED))
 		return;
 
-	/* We have about 6 us to get from the bus time check to 
+	/*
+	 * We have about 6 us to get from the bus time check to
 	 * starting the transfer or we might babble or the chip might fail to 
 	 * signal transfer complete.  This leaves no time for any other 
 	 * interrupts.
@@ -2216,10 +2270,12 @@ slhci_tstart(struct slhci_softc *sc)
 	remaining_bustime = (int)(slhci_read(sc, SL811_CSOF)) << 6;
 	remaining_bustime -= SLHCI_END_BUSTIME;
 
-	/* Start one transfer only, clearing any aborted transfers that are 
+	/*
+	 * Start one transfer only, clearing any aborted transfers that are
 	 * not yet in progress and skipping missed isoc. It is easier to copy 
 	 * & paste most of the A/B sections than to make the logic work 
-	 * otherwise and this allows better constant use. */
+	 * otherwise and this allows better constant use.
+	 */
 	if (t->flags & F_AREADY) {
 		spipe = t->spipe[A];
 		if (spipe == NULL) {
@@ -2327,8 +2383,10 @@ slhci_dotransfer(struct slhci_softc *sc)
 	}
 }
 
-/* slhci_callback is called after the lock is taken from splusb.
- * s is pointer to old spl (splusb). */
+/*
+ * slhci_callback is called after the lock is taken from splusb.
+ * s is pointer to old spl (splusb).
+ */
 static void
 slhci_callback(struct slhci_softc *sc, int *s)
 {
@@ -2653,7 +2711,8 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timer, slhci_reset_entry, sc);
 
-	/* It is not safe to call the soft interrupt directly as 
+	/*
+	 * It is not safe to call the soft interrupt directly as
 	 * usb_schedsoftintr does in the use_polling case (due to locking).  
 	 */
 	sc->sc_cb_softintr = softint_establish(SOFTINT_NET, 
@@ -2709,7 +2768,8 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 	return USBD_NORMAL_COMPLETION;
 }
 
-/* Called to deactivate or stop use of the controller instead of panicing. 
+/*
+ * Called to deactivate or stop use of the controller instead of panicing.
  * Will cancel the xfer correctly even when not on a list.
  */
 static usbd_status
@@ -2739,7 +2799,8 @@ slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 
 	if (t->flags & F_ACTIVE) {
 		slhci_intrchange(sc, 0);
-		/* leave power on when halting in case flash devices or disks 
+		/*
+		 * leave power on when halting in case flash devices or disks
 		 * are attached, which may be writing and could be damaged 
 		 * by abrupt power loss.  The root hub clear power feature 
 		 * should still work after halting.
@@ -2758,7 +2819,8 @@ slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 	return USBD_NORMAL_COMPLETION;
 }
 
-/* There are three interrupt states: no interrupts during reset and after 
+/*
+ * There are three interrupt states: no interrupts during reset and after
  * device deactivation, INSERT only for no device present but power on, and 
  * SOF, INSERT, ADONE, and BDONE when device is present.
  */
@@ -2773,8 +2835,10 @@ slhci_intrchange(struct slhci_softc *sc, uint8_t new_ier)
 	}
 }
 
-/* Drain: cancel all pending transfers and put them on the callback list and
- * set the UDISABLED flag.  UDISABLED is cleared only by reset. */
+/*
+ * Drain: cancel all pending transfers and put them on the callback list and
+ * set the UDISABLED flag.  UDISABLED is cleared only by reset.
+ */
 static void
 slhci_drain(struct slhci_softc *sc)
 {
@@ -2804,8 +2868,10 @@ slhci_drain(struct slhci_softc *sc)
 	gcq_merge_tail(&t->q[Q_CALLBACKS], &t->q[Q_NEXT_CB]);
 	gcq_merge_tail(&t->q[Q_CALLBACKS], &t->timed);
 
-	/* Cancel all pipes.  Note that not all of these may be on the 
-	 * callback queue yet; some could be in slhci_start, for example. */
+	/*
+	 * Cancel all pipes.  Note that not all of these may be on the
+	 * callback queue yet; some could be in slhci_start, for example.
+	 */
 	FOREACH_AP(q, t, spipe) {
 		spipe->pflags |= PF_GONE;
 		spipe->pipe.repeat = 0;
@@ -2820,7 +2886,8 @@ slhci_drain(struct slhci_softc *sc)
 	t->flags &= ~(F_AREADY|F_BREADY|F_AINPROG|F_BINPROG|F_LOWSPEED);
 }
 
-/* RESET: SL11_CTRL_RESETENGINE=1 and SL11_CTRL_JKSTATE=0 for 50ms
+/*
+ * RESET: SL11_CTRL_RESETENGINE=1 and SL11_CTRL_JKSTATE=0 for 50ms
  * reconfigure SOF after reset, must wait 2.5us before USB bus activity (SOF)
  * check attached device speed. 
  * must wait 100ms before USB transaction according to app note, 10ms 
@@ -2861,9 +2928,11 @@ slhci_reset(struct slhci_softc *sc)
 
 	if (r & SL11_ISR_NODEV) {
 		DLOG(D_MSG, "NC", 0,0,0,0);
-		/* Normally, the hard interrupt insert routine will issue 
+		/*
+		 * Normally, the hard interrupt insert routine will issue
 		 * CCONNECT, however we need to do it here if the detach 
-		 * happened during reset. */
+		 * happened during reset.
+		 */
 		if (!(t->flags & F_NODEV))
 			t->flags |= F_CCONNECT|F_ROOTINTR|F_NODEV;
 		slhci_intrchange(sc, SL11_IER_INSERT);
@@ -2887,18 +2956,22 @@ slhci_reset(struct slhci_softc *sc)
 		slhci_write(sc, SL811_CSOF, pol|SL811_CSOF_MASTER|0x2e);
 		slhci_write(sc, SL11_CTRL, ctrl|SL11_CTRL_ENABLESOF);
 
-		/* According to the app note, ARM must be set 
+		/*
+		 * According to the app note, ARM must be set
 		 * for SOF generation to work.  We initialize all 
-		 * USBA registers here for current_tregs. */
+		 * USBA registers here for current_tregs.
+		 */
 		slhci_write(sc, SL11_E0ADDR, SL11_BUFFER_START);
 		slhci_write(sc, SL11_E0LEN, 0);
 		slhci_write(sc, SL11_E0PID, SL11_PID_SOF);
 		slhci_write(sc, SL11_E0DEV, 0);
 		slhci_write(sc, SL11_E0CTRL, SL11_EPCTRL_ARM);
 
-		/* Initialize B registers.  This can't be done earlier since 
+		/*
+		 * Initialize B registers.  This can't be done earlier since
 		 * they are not valid until the SL811_CSOF register is written 
-		 * above due to SL11H compatability. */
+		 * above due to SL11H compatability.
+		 */
 		slhci_write(sc, SL11_E1ADDR, SL11_BUFFER_END - 8);
 		slhci_write(sc, SL11_E1LEN, 0);
 		slhci_write(sc, SL11_E1PID, 0);
@@ -3193,9 +3266,11 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 
 	SLHCI_LOCKASSERT(sc, locked, unlocked);
 
-	/* We do not have a way to detect over current or bable and 
+	/*
+	 * We do not have a way to detect over current or bable and
 	 * suspend is currently not implemented, so connect and reset 
-	 * are the only changes that need to be reported.  */
+	 * are the only changes that need to be reported.
+	 */
 	change = 0;
 	if (t->flags & F_CCONNECT)
 		change |= UPS_C_CONNECT_STATUS;
