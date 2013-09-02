@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/07/07 21:36:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2013/09/02 14:34:56 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -109,6 +109,10 @@ SRCS+=	Host.inc \
 	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
+
+.for src in ${SRCS:M*.c}
+COPTS.${src}+=	-std=gnu99
+.endfor
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
