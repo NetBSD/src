@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsreg.h,v 1.2 2007/08/15 03:53:10 kiyohara Exp $	*/
+/*	$NetBSD: sl811hsreg.h,v 1.3 2013/09/02 12:20:59 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -13,7 +13,8 @@
  * ScanLogic SL811HS USB Host Controller
  */
 
-/* note: pcmcia attachment uses 4 byte port with data repeated the last three 
+/*
+ * note: pcmcia attachment uses 4 byte port with data repeated the last three
  * bytes; using 0x2 instead of 0x1 solves bus corruption on the Vadem Clio 
  * C-1000.  The main driver does not use these IDX and PORT values.
  */
