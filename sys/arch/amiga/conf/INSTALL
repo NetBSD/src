@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.121 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: INSTALL,v 1.122 2013/09/02 07:24:17 skrll Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.110 2013/01/29 21:04:55 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.119 2013/08/11 16:15:52 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 makeoptions	COPTS="-Os"
 
@@ -324,6 +324,9 @@ ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
+xsh*		at zbus0		# X-Surf 100
+ne*		at xshbus?		# NE2000 chip on X-Surf 100
+
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
@@ -481,6 +484,16 @@ bthidev* at bthub?
 
 # Bluetooth Audio support
 #btsco* at bthub?
+
+# USB
+slhci*		at zbus?                # Thylacine
+usb*		at slhci?
+
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+uhidev*		at uhub? port ? configuration ? interface ?
+uhid*		at uhidev? reportid ?
 
 
 pseudo-device	loop			# loopback network interface
