@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.6 2013/04/19 16:50:22 matt Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.7 2013/09/03 00:30:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,17 +46,50 @@
  */
 
 ENTRY(__sigsetjmp14)
-	teq	r1, #0
-	beq	PIC_SYM(_C_LABEL(_setjmp), PLT)
-	b	PIC_SYM(_C_LABEL(__setjmp14), PLT)
-
-.L_setjmp_magic:
-	.word	_JB_MAGIC__SETJMP
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbnz	r1, 1f
+	b	PLT_SYM(_C_LABEL(_setjmp))
+1:	b	PLT_SYM(_C_LABEL(__setjmp14))
+#elif !defined(__thumb__)
+	cmp	r1, #0
+	beq	PLT_SYM(_C_LABEL(_setjmp))
+	b	PLT_SYM(_C_LABEL(__setjmp14))
+#else
+	push	{r3, lr}
+	beq	1f
+	bl	PLT_SYM(_C_LABEL(__setjmp14))
+	b	2f
+1:	bl	PLT_SYM(_C_LABEL(_setjmp))
+2:	pop	{r3, pc}
+#endif
+END(__sigsetjmp14)
 
 ENTRY(__siglongjmp14)
-	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
-	bic	r3, r3, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
-	teq	r2, r3
+#if !defined(__thumb__)
+	bics	r3, r3, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
+#else
+	movs	r2, #(_JB_MAGIC_SETJMP ^ _JB_MAGIC_SETJMP_VFP)
+	bics	r3, r3, r2
+#endif
+	ldr	r2, .L_setjmp_magic
+	cmp	r2, r3
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+#ifdef __thumb__
+	it	eq
+#endif
 	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
 	b	PIC_SYM(_C_LABEL(__longjmp14), PLT)
+#else
+	push	{r3, lr}
+	beq	11f
+	bl	PIC_SYM(_C_LABEL(__longjmp14), PLT)
+	pop	{r3, pc}
+11:	bl	PIC_SYM(_C_LABEL(_longjmp), PLT)
+	pop	{r3, pc}
+#endif
+
+	.align	0
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+END(__siglongjmp14)
