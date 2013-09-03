@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.61 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.62 2013/09/03 02:25:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.61 2013/06/23 02:06:05 dholland Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.62 2013/09/03 02:25:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,12 +414,14 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		printf("soft-updates ");
 	if (fs->fs_flags & FS_NEEDSFSCK)
 		printf("needs fsck run ");
-	if (fs->fs_flags & FS_INDEXDIRS)
-		printf("indexed directories ");
+	if (fs->fs_flags & FS_SUJ)
+		printf("journaled soft-updates ");
 	if (fs->fs_flags & FS_ACLS)
 		printf("acls ");
 	if (fs->fs_flags & FS_MULTILABEL)
 		printf("multilabel ");
+	if (fs->fs_flags & FS_GJOURNAL)
+		printf("gjournal ");
 	if (fs->fs_flags & FS_FLAGS_UPDATED)
 		printf("fs_flags expanded ");
 	if (fs->fs_flags & FS_DOWAPBL)
@@ -427,8 +429,13 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	if (fs->fs_flags & FS_DOQUOTA2)
 		printf("quotas ");
 	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK |
-			FS_INDEXDIRS | FS_ACLS | FS_MULTILABEL |
+			FS_SUJ | FS_ACLS | FS_MULTILABEL | FS_GJOURNAL |
 			FS_FLAGS_UPDATED | FS_DOWAPBL | FS_DOQUOTA2);
+#ifdef FS_INDEXDIRS
+	if (fs->fs_flags & FS_INDEXDIRS)
+		printf("indexed directories ");
+	fsflags &= ~FS_INDEXDIRS
+#endif
 	if (fsflags != 0)
 		printf("unknown flags (%#x)", fsflags);
 	printf("\nfsmnt\t%s\n", fs->fs_fsmnt);
