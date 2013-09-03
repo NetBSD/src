@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.86 2013/08/30 10:29:06 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.87 2013/09/03 19:57:02 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -110,7 +110,7 @@ rumpcomp_user.po: rumpcomp_user.c
 	${_MKTARGET_COMPILE}
 	${CC} -o ${.TARGET} ${PROFFLAGS} -pg ${DBG} ${CWARNFLAGS} ${RUMPCOMP_USER_WERROR} -Wall -Wmissing-prototypes ${BUILDRUMP_CPPFLAGS} ${BUILDRUMP_CFLAGS} ${RUMPCOMP_USER_CPPFLAGS} ${RUMPCOMP_USER_CFLAGS} -c ${.ALLSRC:O:u:M*rumpcomp_user.c}
 
-RUMPCOMP_USEROBJ=rumpcomp_user.*o
+RUMPOBJ_NORENAME+=rumpcomp_user.*o
 SRCS+=rumpcomp_user.c
 .endif
 
@@ -174,7 +174,7 @@ __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 .endif
-	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPCOMP_USEROBJ}}}; do \
+	for obj in ${RUMP_SYMREN:U${.ALLSRC:N${RUMPOBJ_NORENAME}}}; do \
 		${NM} -go $${obj} | ${TOOL_AWK} ' \
 		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 		      {s=$$NF;sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}'\
