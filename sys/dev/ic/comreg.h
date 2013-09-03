@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.20 2013/09/01 04:58:15 kiyohara Exp $	*/
+/*	$NetBSD: comreg.h,v 1.21 2013/09/03 15:32:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -111,6 +111,7 @@
 #define MCR_PRESCALE	0x80	/* 16650/16950: Baud rate prescaler select */
 #define MCR_TCR_TLR	0x40	/* OMAP: enables access to the TCR & TLR regs */
 #define MCR_XONENABLE	0x20	/* OMAP XON_EN */
+#define MCR_AFE		0x20	/* tl16c750: Flow Control Enable */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
 #define	MCR_IENABLE	0x08	/* Out2: enables UART interrupts */
 #define	MCR_DRS		0x04	/* Out1: resets some internal modems */
