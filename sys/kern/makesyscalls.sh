@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.131 2013/09/03 20:54:03 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.132 2013/09/03 21:28:24 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -255,6 +255,12 @@ NR == 1 {
 	    > rumpcalls
 	printf "\t__weak_alias(nam,rump_enosys);\n" > rumpcalls
 	printf "#endif\n\n" > rumpcalls
+
+	printf "#ifdef RUMP_KERNEL_IS_LIBC\n" > rumpcalls
+	printf "#define rsys_aliases(what,where) \\\n" > rumpcalls
+	printf "\t__strong_alias(what,where); \\\n" > rumpcalls
+	printf "\t__strong_alias(_##what,where);\n" > rumpcalls
+	printf "#else\n#define rsys_aliases(a,b)\n#endif\n\n" > rumpcalls
 
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -869,6 +875,8 @@ function putent(type, compatwrap) {
 	printf("}\n") > rumpcalls
 	printf("rsys_define(rumpns_%s%s);\n", \
 	    compatwrap_, funcname) > rumpcalls
+	printf("rsys_aliases(%s%s,rump___sysimpl_%s);\n", \
+	    compatwrap_, funcalias, rumpfname) > rumpcalls
 
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" \
@@ -940,6 +948,7 @@ END {
 		printf("\t\tfd[1] = retval[1];\n\t}\n") > rumpcalls
 		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
 		printf("rsys_define(rumpns_sys_pipe);\n") > rumpcalls
+		printf "rsys_aliases(pipe,rump_sys_pipe);\n" > rumpcalls
 	}
 
 	# print default rump syscall interfaces
