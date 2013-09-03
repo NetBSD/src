@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.314 2013/09/01 04:58:15 kiyohara Exp $ */
+/* $NetBSD: com.c,v 1.315 2013/09/03 15:32:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.314 2013/09/01 04:58:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.315 2013/09/03 15:32:55 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -505,7 +505,7 @@ com_attach_subr(struct com_softc *sc)
 			    ISSET(iir2, IIR_64B_FIFO)) {
 				/* It is TL16C750. */
 				sc->sc_fifolen = 64;
-				SET(sc->sc_hwflags, COM_HW_FLOW);
+				SET(sc->sc_hwflags, COM_HW_AFE);
 			} else
 				CSR_WRITE_1(regsp, COM_REG_FIFO, fcr);
 
@@ -1358,7 +1358,11 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_mcr_dtr = MCR_DTR;
 		sc->sc_mcr_rts = MCR_RTS;
 		sc->sc_msr_cts = MSR_CTS;
-		sc->sc_efr = EFR_AUTORTS | EFR_AUTOCTS;
+		if (ISSET(sc->sc_hwflags, COM_HW_AFE)) {
+			SET(sc->sc_mcr, MCR_AFE);
+		} else {
+			sc->sc_efr = EFR_AUTORTS | EFR_AUTOCTS;
+		}
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
 		 * For DTR/DCD flow control, make sure we don't toggle DTR for
@@ -1367,7 +1371,11 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_mcr_dtr = 0;
 		sc->sc_mcr_rts = MCR_DTR;
 		sc->sc_msr_cts = MSR_DCD;
-		sc->sc_efr = 0;
+		if (ISSET(sc->sc_hwflags, COM_HW_AFE)) {
+			CLR(sc->sc_mcr, MCR_AFE);
+		} else {
+			sc->sc_efr = 0;
+		}
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
@@ -1377,7 +1385,11 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_mcr_dtr = MCR_DTR | MCR_RTS;
 		sc->sc_mcr_rts = 0;
 		sc->sc_msr_cts = 0;
-		sc->sc_efr = 0;
+		if (ISSET(sc->sc_hwflags, COM_HW_AFE)) {
+			CLR(sc->sc_mcr, MCR_AFE);
+		} else {
+			sc->sc_efr = 0;
+		}
 		if (ISSET(sc->sc_mcr, MCR_DTR))
 			SET(sc->sc_mcr, MCR_RTS);
 		else
