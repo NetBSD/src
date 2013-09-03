@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2013/09/03 14:54:00 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -111,7 +111,7 @@ SRCS+=	Host.inc \
 	TimeValue.inc
 
 .for src in ${SRCS:M*.c}
-COPTS.${src}+=	-std=gnu99
+CPPFLAGS.${src}+=	-std=gnu99
 .endfor
 
 .if defined(HOSTLIB)
