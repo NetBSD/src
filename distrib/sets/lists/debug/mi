@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2013/08/16 15:34:05 christos Exp $
+# $NetBSD: mi,v 1.32 2013/09/03 13:21:53 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
@@ -820,6 +820,7 @@
 ./usr/libdata/debug/usr/games/caesar.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/canfield.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/cfscores.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/games/cgram.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/colorbars.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/cribbage.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/dab.debug		comp-games-debug	debug
