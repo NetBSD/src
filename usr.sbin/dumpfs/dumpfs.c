@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.62 2013/09/03 02:25:36 dholland Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.63 2013/09/03 04:02:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.62 2013/09/03 02:25:36 dholland Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.63 2013/09/03 04:02:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,9 +428,11 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		printf("wapbl ");
 	if (fs->fs_flags & FS_DOQUOTA2)
 		printf("quotas ");
+	if (fs->fs_flags & FS_TRIM)
+		printf("trim ");
 	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK |
 			FS_SUJ | FS_ACLS | FS_MULTILABEL | FS_GJOURNAL |
-			FS_FLAGS_UPDATED | FS_DOWAPBL | FS_DOQUOTA2);
+			FS_FLAGS_UPDATED | FS_DOWAPBL | FS_DOQUOTA2 | FS_TRIM);
 #ifdef FS_INDEXDIRS
 	if (fs->fs_flags & FS_INDEXDIRS)
 		printf("indexed directories ");
