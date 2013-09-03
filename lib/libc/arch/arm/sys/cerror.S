@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.9 2013/08/01 05:54:24 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,39 +33,70 @@
 
 #include "SYS.h"
 
-ASENTRY(CERROR)
+ENTRY_NP(CERROR)
 #ifdef _REENTRANT
-	stmfd	sp!, {r4, lr}
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
+	push	{r4, lr}
+#ifdef __ARM_EABI__
+	.save	{r4, lr}
+	.cfi_def_cfa_offset 8
+	.cfi_offset 14, -4
+	.cfi_offset 4, -8
+#endif
 	mov	r4, r0
 	bl	PIC_SYM(_C_LABEL(__errno), PLT)
 	str	r4, [r0]
-	mvn	r0, #0x00000000
-	mvn	r1, #0x00000000
-	ldmfd	sp!, {r4, pc}
+#ifdef __thumb__
+	movs	r0, #0
+	mvns	r0, r0
 #else
+	mvn	r0, #0
+#endif
+	mov	r1, r0
+	pop	{r4, pc}
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
+#endif
+#else /* !_REENTRANT */
+#ifdef __ARM_EABI__
+	.fnstart
+	.cfi_startproc
+#endif
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
+	add	r3, r3, pc	/* pc = &.LPIC0 */
 	ldr	r1, .Lerrno
-	ldr	r1, [r3, r1]
+.LPIC0:	ldr	r1, [r3, r1]
 #else
 	ldr	r1, .Lerrno
 #endif /* PIC */
 	str	r0, [r1]
-	mvn	r0, #0x00000000
-	mvn	r1, #0x00000000
+#ifdef __thumb__
+	movs	r0, #0
+	mvns	r0, r0
+#else
+	mvn	r0, #0
+#endif /* __thumb__ */
+	mov	r1, r0
 	RET
+#ifdef __ARM_EABI__
+	.cfi_endproc
+	.fnend
+#endif
 
 #ifdef PIC
 	.align	0
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - .LPIC0
 #endif /* PIC */
-
 	.globl	_C_LABEL(errno)
 
 .Lerrno:
 	.word	PIC_SYM(_C_LABEL(errno), GOT)
 #endif /* _REENTRANT */
+END(CERROR)

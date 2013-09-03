@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.9 2013/08/01 05:54:24 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.9 2013/08/01 05:54:24 matt Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -43,13 +43,19 @@ WEAK_ALIAS(getcontext, _getcontext)
 ENTRY(_getcontext)
 	mov	r2, r0			/* Must save argument pointer. */
 	SYSTRAP (getcontext)
-	bcs	CERROR
+	_INVOKE_CERROR()
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	str	lr, [r2, #_UC_REGS_PC]	/* Adjust PC. */
+#else
+	mov	r3, lr
+	str	r3, [r2, #_UC_REGS_PC]	/* Adjust PC. */
+#endif
 #ifdef SOFTFLOAT
 	/* Ahem. */
 	/* Judging from the softfloat code we should at least save
 	   the exception codes and rounding mode here. */
 #endif
-	mov	r0, #0
+	movs	r0, #0
 	str	r0, [r2, #_UC_REGS_R0]	/* Return 0. */
 	RET
+END(_getcontext)
