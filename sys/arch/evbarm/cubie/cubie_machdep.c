@@ -1,0 +1,685 @@
+/*	$NetBSD: cubie_machdep.c,v 1.1 2013/09/03 18:01:33 matt Exp $ */
+
+/*
+ * Machine dependent functions for kernel setup for TI OSK5912 board.
+ * Based on lubbock_machdep.c which in turn was based on iq80310_machhdep.c
+ *
+ * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
+ * Written by Hiroyuki Bessho for Genetec Corporation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Genetec Corporation may not be used to endorse or
+ *    promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY GENETEC CORPORATION ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL GENETEC CORPORATION
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright (c) 1997,1998 Mark Brinicombe.
+ * Copyright (c) 1997,1998 Causality Limited.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
+ * 4. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * Copyright (c) 2007 Microsoft
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Microsoft
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTERS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.1 2013/09/03 18:01:33 matt Exp $");
+
+#include "opt_machdep.h"
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
+#include "opt_ipkdb.h"
+#include "opt_md.h"
+#include "opt_com.h"
+#include "opt_allwinner.h"
+
+#include "com.h"
+#include "sdhc.h"
+#include "ukbd.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/exec.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/termios.h>
+#include <sys/gpio.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <sys/conf.h>
+#include <dev/cons.h>
+#include <dev/md.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
+#include <machine/bootconfig.h>
+#include <arm/armreg.h>
+#include <arm/undefined.h>
+
+#include <arm/arm32/machdep.h>
+#include <arm/mainbus/mainbus.h>
+
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
+
+#include <arm/allwinner/awin_reg.h>
+#include <arm/allwinner/awin_var.h>
+
+#include <evbarm/include/autoconf.h>
+#include <evbarm/cubie/platform.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/ddcreg.h>
+
+#include <dev/usb/ukbdvar.h>
+
+BootConfig bootconfig;		/* Boot config storage */
+static char bootargs[MAX_BOOT_STRING];
+char *boot_args = NULL;
+char *boot_file = NULL;
+
+u_int uboot_args[4] = { 0 };	/* filled in by cubie_start.S (not in bss) */
+
+/* Same things, but for the free (unused by the kernel) memory. */
+
+extern char KERNEL_BASE_phys[];
+extern char _end[];
+
+#if NCOM > 0
+int use_fb_console = false;
+#else
+int use_fb_console = true;
+#endif
+
+#ifdef CPU_CORTEXA7
+uint32_t arm_cnt_frq;
+#endif
+
+/*
+ * Macros to translate between physical and virtual for a subset of the
+ * kernel address space.  *Not* for general use.
+ */
+#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
+#define	AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
+
+/* Prototypes */
+
+void consinit(void);
+#ifdef KGDB
+static void kgdb_port_init(void);
+#endif
+
+static void init_clocks(void);
+static void cubie_device_register(device_t, void *);
+static void cubie_reset(void);
+static void awin_cpu_clk(void);
+static psize_t awin_memprobe(void);
+
+bs_protos(bs_notimpl);
+
+#if NCOM > 0
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
+
+/*
+ * Static device mappings. These peripheral registers are mapped at
+ * fixed virtual addresses very early in initarm() so that we can use
+ * them while booting the kernel, and stay at the same address
+ * throughout whole kernel's life time.
+ *
+ * We use this table twice; once with bootstrap page table, and once
+ * with kernel's page table which we build up in initarm().
+ *
+ * Since we map these registers into the bootstrap page table using
+ * pmap_devmap_bootstrap() which calls pmap_map_chunk(), we map
+ * registers segment-aligned and segment-rounded in order to avoid
+ * using the 2nd page tables.
+ */
+
+#define	_A(a)	((a) & ~L1_S_OFFSET)
+#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
+
+static const struct pmap_devmap devmap[] = {
+	{
+		/*
+		 * Map all of core area, this gets us everything and
+		 * it's only 3MB.
+		 */
+		.pd_va = _A(AWIN_CORE_VBASE),
+		.pd_pa = _A(AWIN_CORE_PBASE),
+		.pd_size = _S(AWIN_CORE_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * Map all 1MB of SRAM area.
+		 */
+		.pd_va = _A(AWIN_SRAM_VBASE),
+		.pd_pa = _A(AWIN_SRAM_PBASE),
+		.pd_size = _S(AWIN_SRAM_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_CACHE
+	},
+	{0}
+};
+
+#undef	_A
+#undef	_S
+
+#ifdef DDB
+static void
+cubie_db_trap(int where)
+{
+	static bool oldstate;
+
+	if (where) {
+		oldstate = awinwdt_enable(false);
+	} else {
+		awinwdt_enable(oldstate);
+	}
+}
+#endif
+
+void cubie_putchar(char c);
+void
+cubie_putchar(char c)
+{
+#if NCOM > 0
+	volatile uint32_t *com0addr = (volatile uint32_t *)CONADDR_VA;
+	int timo = 150000;
+
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
+		if (--timo == 0)
+			break;
+	}
+
+	com0addr[com_data] = c;
+
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
+		if (--timo == 0)
+			break;
+	}
+#endif
+}
+
+/*
+ * u_int initarm(...)
+ *
+ * Initial entry point on startup. This gets called before main() is
+ * entered.
+ * It should be responsible for setting up everything that must be
+ * in place when main is called.
+ * This includes
+ *   Taking a copy of the boot configuration structure.
+ *   Initialising the physical console so characters can be printed.
+ *   Setting up page tables for the kernel
+ *   Relocating the kernel to the bottom of physical memory
+ */
+u_int
+initarm(void *arg)
+{
+	psize_t ram_size = 0;
+	char *ptr;
+
+#if 1
+	cubie_putchar('d');
+#endif
+
+	/*
+	 * When we enter here, we are using a temporary first level translation 
+	 * table with section entries in it to cover the core peripherals and
+	 * SDRAM.  The temporary first level translation table is well after
+	 * the kernel.
+	 */
+	awin_cpu_clk();		// find our CPU speed.
+
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
+	init_clocks();
+
+	/* The console is going to try to map things.  Give pmap a devmap. */
+	pmap_devmap_register(devmap);
+	consinit();
+#if defined(TI_AM335X) && defined(VERBOSE_INIT_ARM)
+	am335x_cpu_clk();		// find our CPU speed.
+#endif
+	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+
+#ifdef KGDB
+	kgdb_port_init();
+#endif
+
+	cpu_reset_address = cubie_reset;
+
+#ifdef VERBOSE_INIT_ARM
+	/* Talk to the user */
+	printf("\nNetBSD/evbarm (cubie) booting ...\n");
+#endif
+
+#ifdef BOOT_ARGS
+	char mi_bootargs[] = BOOT_ARGS;
+	parse_mi_bootargs(mi_bootargs);
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+	printf("initarm: Configuring system ...\n");
+#endif
+
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15)
+	printf("initarm: cbar=%#x\n", armreg_cbar_read());
+#endif
+
+	/*
+	 * Set up the variables that define the availability of physical
+	 * memory.
+	 */
+	ram_size = awin_memprobe();
+
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+	/* Fake bootconfig structure for the benefit of pmap.c. */
+	bootconfig.dramblocks = 1;
+	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
+	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
+#else
+	const bool mapallmem_p = false;
+#endif
+	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
+
+	/* "bootargs" env variable is passed as 4th argument to kernel */
+	if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
+		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
+	}
+
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	    KERNEL_BASE_PHYS);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
+	    mapallmem_p);
+
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
+
+	/* we've a specific device_register routine */
+	evbarm_device_register = cubie_device_register;
+
+	db_trap_callback = cubie_db_trap;
+
+	if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
+	
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
+}
+
+static void
+init_clocks(void)
+{
+}
+
+#if NCOM > 0
+#ifndef CONADDR
+#define	CONADDR		(AWIN_CORE_PBASE + AWIN_UART0_OFFSET)
+#endif
+#ifndef CONSPEED
+#define CONSPEED 115200
+#endif
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+
+static const bus_addr_t conaddr = CONADDR;
+static const int conspeed = CONSPEED;
+static const int conmode = CONMODE;
+#endif
+
+void
+consinit(void)
+{
+#if NCOM > 0
+	bus_space_handle_t bh;
+#endif
+	static int consinit_called = 0;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+
+	cubie_putchar('e');
+
+#if NCOM > 0
+	if (bus_space_map(&awin_a4x_bs_tag, conaddr, AWIN_UART_SIZE, 0, &bh))
+		panic("Serial console can not be mapped.");
+
+	if (comcnattach(&awin_a4x_bs_tag, conaddr, conspeed, AWIN_UART_FREQ,
+		    COM_TYPE_NORMAL, conmode))
+		panic("Serial console can not be initialized.");
+
+	bus_space_unmap(&awin_a4x_bs_tag, bh, AWIN_UART_SIZE);
+#else
+#error only COM console is supported
+
+#if NUKBD > 0
+	ukbd_cnattach();	/* allow USB keyboard to become console */
+#endif
+#endif
+
+	cubie_putchar('f');
+	cubie_putchar('g');
+}
+
+void
+cubie_reset(void)
+{
+	*(volatile uint32_t *)(AWIN_CORE_VBASE + AWIN_CPUCNF_OFFSET + AWIN_CPU0_RST_CTRL_REG) = AWIN_CPU_RESET;
+}
+
+#ifdef KGDB
+#ifndef KGDB_DEVADDR
+#error Specify the address of the kgdb UART with the KGDB_DEVADDR option.
+#endif
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE 115200
+#endif
+
+#ifndef KGDB_DEVMODE
+#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+static const vaddr_t comkgdbaddr = KGDB_DEVADDR;
+static const int comkgdbspeed = KGDB_DEVRATE;
+static const int comkgdbmode = KGDB_DEVMODE;
+
+void
+static kgdb_port_init(void)
+{
+	static int kgdbsinit_called = 0;
+
+	if (kgdbsinit_called != 0)
+		return;
+
+	kgdbsinit_called = 1;
+
+	bus_space_handle_t bh;
+	if (bus_space_map(&awin_a4x_bs_tag, comkgdbaddr, OMAP_COM_SIZE, 0, &bh))
+		panic("kgdb port can not be mapped.");
+
+	if (com_kgdb_attach(&awin_a4x_bs_tag, comkgdbaddr, comkgdbspeed,
+			OMAP_COM_FREQ, COM_TYPE_NORMAL, comkgdbmode))
+		panic("KGDB uart can not be initialized.");
+
+	bus_space_unmap(&awin_a4x_bs_tag, bh, OMAP_COM_SIZE);
+}
+#endif
+
+void
+awin_cpu_clk(void)
+{
+	struct cpu_info * const ci = curcpu();
+	const vaddr_t ccu_base = AWIN_CORE_VBASE + AWIN_CCM_OFFSET;
+	const uint32_t cpu0_cfg = *(const volatile uint32_t *)(ccu_base + AWIN_CPU_AHB_APB0_CFG_REG);
+	const u_int cpu_clk_sel = __SHIFTIN(cpu0_cfg, AWIN_CPU_CLK_SRC_SEL);
+	switch (cpu_clk_sel) {
+	case AWIN_CPU_CLK_SRC_SEL_LOSC:
+		ci->ci_data.cpu_cc_freq = 32768;
+		break;
+	case AWIN_CPU_CLK_SRC_SEL_OSC24M:
+		ci->ci_data.cpu_cc_freq = 24000000;
+		break;
+	case AWIN_CPU_CLK_SRC_SEL_PLL1: {
+		const uint32_t pll1_cfg = *(const volatile uint32_t *)(ccu_base + AWIN_PLL1_CFG_REG);
+		u_int p = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_OUT_EXP_DIVP);
+		u_int n = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_N);
+		u_int k = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
+		u_int m = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+		ci->ci_data.cpu_cc_freq = (24000000 * (n ? n : 1) * k / m) >> p;
+		break;
+	}
+	case AWIN_CPU_CLK_SRC_SEL_200MHZ:
+		ci->ci_data.cpu_cc_freq = 200000000;
+		break;
+	}
+
+#if defined(CPU_CORTEXA7) && 0
+	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
+		cubie_putchar('0');
+		uint32_t voffset = OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
+		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR; 
+		uint32_t frac2_reg = OMAP5_PRM_FRAC_INCREMENTER_DENUMERATOR_RELOAD; 
+		uint32_t frac1 = *(volatile uint32_t *)(frac1_reg + voffset);
+		cubie_putchar('1');
+		uint32_t frac2 = *(volatile uint32_t *)(frac2_reg + voffset);
+		cubie_putchar('2');
+		uint32_t numer = __SHIFTOUT(frac1, PRM_FRAC_INCR_NUM_SYS_MODE);
+		uint32_t denom = __SHIFTOUT(frac2, PRM_FRAC_INCR_DENUM_DENOMINATOR);
+		uint32_t freq = (uint64_t)awin_sys_clk * numer / denom;
+#if 1
+		if (freq != OMAP5_GTIMER_FREQ) {
+			static uint16_t numer_demon[8][2] = {
+			    {         0,          0 },	/* not used */
+			    {  26 *  64,  26 *  125 },	/* 12.0Mhz */
+			    {   2 * 768,   2 * 1625 },	/* 13.0Mhz */
+			    {         0,          0 },	/* 16.8Mhz (not used) */
+			    { 130 *   8, 130 *   25 },	/* 19.2Mhz */
+			    {   2 * 384,   2 * 1625 },	/* 26.0Mhz */
+			    {   3 * 256,   3 * 1125 },	/* 27.0Mhz */
+			    { 130 *   4, 130 *   25 },	/* 38.4Mhz */
+			};
+			if (numer_demon[clksel][0] != numer) {
+				frac1 &= ~PRM_FRAC_INCR_NUM_SYS_MODE;
+				frac1 |= numer_demon[clksel][0];
+			}
+			if (numer_demon[clksel][1] != denom) {
+				frac2 &= ~PRM_FRAC_INCR_DENUM_DENOMINATOR;
+				frac2 |= numer_demon[clksel][1];
+			}
+			*(volatile uint32_t *)(frac1_reg + voffset) = frac1;
+			*(volatile uint32_t *)(frac2_reg + voffset) = frac2
+			    | PRM_FRAC_INCR_DENUM_RELOAD;
+			freq = OMAP5_GTIMER_FREQ;
+		}
+#endif
+		cubie_putchar('3');
+#if 0
+		if (gtimer_freq != freq) {
+			armreg_cnt_frq_write(freq);	// secure only
+		}
+#endif
+		omap5_cnt_frq = freq;
+		cubie_putchar('4');
+	}
+#endif
+}
+
+static psize_t 
+awin_memprobe(void)
+{
+	const uint32_t dcr = *(const volatile uint32_t *)(AWIN_CORE_VBASE + AWIN_DRAM_OFFSET + AWIN_DRAM_DCR_REG);
+
+	psize_t memsize = __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
+	memsize <<= __SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY) + 28 - 3;
+#ifdef VERBOSE_INIT_ARM
+	printf("sdram_config = %#x, memsize = %uMB\n", dcr,
+	    (u_int)(memsize >> 20));
+#endif
+	return memsize;
+}
+
+void
+cubie_device_register(device_t self, void *aux)
+{
+	prop_dictionary_t dict = device_properties(self);
+
+	if (device_is_a(self, "armperiph")
+	    && device_is_a(device_parent(self), "mainbus")) {
+		/*
+		 * XXX KLUDGE ALERT XXX
+		 * The iot mainbus supplies is completely wrong since it scales
+		 * addresses by 2.  The simpliest remedy is to replace with our
+		 * bus space used for the armcore regisers (which armperiph uses). 
+		 */
+		struct mainbus_attach_args * const mb = aux;
+		mb->mb_iot = &awin_bs_tag;
+		return;
+	}
+ 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+	if (device_is_a(self, "armgtmr")) {
+		/*
+		 * The frequency of the generic timer was figured out when
+		 * determined the cpu frequency.
+		 */
+                prop_dictionary_set_uint32(dict, "frequency", arm_cnt_frq);
+	}
+#endif
+
+	if (device_is_a(self, "ehci")) {
+		return;
+	}
+
+	if (device_is_a(self, "sdhc")) {
+#if 0
+		prop_dictionary_set_uint32(dict, "clkmask", 0);
+		prop_dictionary_set_bool(dict, "8bit", true);
+#endif
+		return;
+	}
+
+	if (device_is_a(self, "com")) {
+		if (use_fb_console)
+			prop_dictionary_set_bool(dict, "is_console", false);
+	}
+}
