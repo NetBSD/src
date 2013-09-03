@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.11 2013/08/01 05:54:24 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.12 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,15 +52,10 @@ _C_LABEL(__minbrk):
  * Change the data segment size
  */
 ENTRY(_brk)
+	ldr	r1, .Lminbrk
 #ifdef PIC
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
-	ldr	r1, .Lminbrk
-	add	r1, r3, r1
-#else
-	ldr	r1, .Lminbrk
+	adr	r3, .Lminbrk
+	adds	r1, r1, r3
 #endif
 	/* Get the minimum allowable brk address */
 	ldr	r1, [r1]
@@ -70,30 +65,31 @@ ENTRY(_brk)
 	 * if the address is below minbrk.
 	 */
 	cmp	r0, r1
+#ifdef __thumb__
+	bcs	1f
+	mov	r0, r1
+1:
+#else
 	movcc	r0, r1
+#endif
 	mov	r2, r0
 	SYSTRAP(break)
-	bcs	CERROR
+	_INVOKE_CERROR()
 
+	ldr	r1, .Lcurbrk
 #ifdef PIC
-	ldr	r1, .Lcurbrk
-	add	r1, r3, r1
-#else
-	ldr	r1, .Lcurbrk
+	adds	r1, r1, r3
 #endif
 	/* Store the new address in curbrk */
 	str	r2, [r1]
 
 	/* Return 0 for success */
-	mov	r0, #0x00000000
+	movs	r0, #0
 	RET
 
-	.align	2
-#ifdef PIC
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif
+	.align	0
 .Lminbrk:
-	.word	PIC_SYM(_C_LABEL(__minbrk), GOTOFF)
+	.word	REL_SYM(_C_LABEL(__minbrk), .Lminbrk)
 .Lcurbrk:
-	.word	PIC_SYM(_C_LABEL(__curbrk), GOTOFF)
+	.word	REL_SYM(_C_LABEL(__curbrk), .Lminbrk)
+END(_brk)
