@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/09/03 14:54:00 joerg Exp $
 
 LIB=	LLVMX86Disassembler
 
@@ -13,7 +13,7 @@ SRCS+=	X86Disassembler.cpp \
 	X86DisassemblerDecoder.c
 
 .for src in ${SRCS:M*.c}
-COPTS.${src}+=	-std=gnu99
+CPPFLAGS.${src}+=	-std=gnu99
 .endfor
 
 .if defined(HOSTLIB)
