@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.10 2013/08/01 05:32:33 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.11 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,25 +51,24 @@ _C_LABEL(__curbrk):
  * Change the data segment size
  */
 ENTRY(_sbrk)
-	/* get address or PC offset to __curbrk */
+	/* get address or offset to __curbrk */
 	ldr	r2, .Lcurbrk
 #ifdef PIC
-	add	r2, pc, r2
-.L1:
+	add	r2, r2, pc	/* pc = &.LPIC0 */
 #endif
 
 	/* Get the current brk address */
 	ldr	r1, [r2]
 
 	/* Calculate new value */
-	mov	r3, r0
-	add	r0, r0, r1
+.LPIC0:	mov	r3, r0
+	adds	r0, r0, r1
 	SYSTRAP(break)
-	bcs	CERROR
+	_INVOKE_CERROR()
 
 	/* Store new curbrk value */
 	ldr	r0, [r2]
-	add	r1, r0, r3
+	adds	r1, r0, r3
 	str	r1, [r2]
 
 	/* Return old curbrk value */
@@ -77,8 +76,5 @@ ENTRY(_sbrk)
 
 	.align	0
 .Lcurbrk:
-#ifdef PIC
-	.word	_C_LABEL(__curbrk) - (.L1+4)
-#else
-	.word	_C_LABEL(__curbrk)
-#endif
+	.word	REL_SYM(_C_LABEL(__curbrk), .LPIC0)
+END(_sbrk)

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.9 2012/11/28 02:18:24 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,22 +33,53 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.9 2012/11/28 02:18:24 matt Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
-	stmfd	sp!, {r0-r1, lr}	/* Must save oucp, ucp, lr. */
-	sub	sp, sp, #4
+	.fnstart
+	.cfi_startproc
+	push	{r0-r2, lr}	/* Must save oucp, ucp, lr. */
+	.save	{r0-r2, lr}
+	.cfi_def_cfa_offset 16
+	.cfi_offset 14, -4
+	.cfi_offset 2, -8
+	.cfi_offset 1, -12
+	.cfi_offset 0, -16
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
-	add	sp, sp, #4
-	ldmfd	sp!, {r0-r1, lr}
+#if !defined(__thumb__)
+	pop	{r0-r2, lr}
+	.cfi_def_cfa_offset 0
 	RETc(ne)
+#else
+	pop	{r0-r3}
+	beq	1f
+	.cfi_def_cfa_offset 0
+	.cfi_register 14, 3
+	RETr(r3)
+1:
+#endif
+#if !defined(__thumb__)
 	str	sp, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
-	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved PC. */
+	str	lr, [r0, #_UC_REGS_PC]	/* Adjust saved SP. */
+#else
+	mov	r2, sp
+	str	r2, [r0, #_UC_REGS_SP]	/* Adjust saved SP. */
+	str	r3, [r0, #_UC_REGS_PC]	/* Adjust saved PC. */
+	mov	lr, r3
+#endif
 #ifdef SOFTFLOAT
 	/* Ahem. */
 #endif
 	mov	r0, r1
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
+	b	PIC_SYM(_C_LABEL(setcontext), PLT)
+#else
+	push	{lr}
 	bl	PIC_SYM(_C_LABEL(setcontext), PLT)
-	RET
+	pop	{pc}
+#endif
+	.cfi_endproc
+	.fnend
+END(swapcontext)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.9 2013/08/16 22:27:32 matt Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,9 +40,6 @@
  * r1 == 0 in parent process, r1 == 1 in child process.
  * r0 == pid of child in parent, r0 == pid of parent in child.
  */
-	.text
-	.align	0
-
 ENTRY(__vfork14)
 	mov	r2, lr
 	SYSTRAP(__vfork14)
