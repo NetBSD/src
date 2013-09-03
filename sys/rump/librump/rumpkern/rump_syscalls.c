@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.89 2013/08/30 10:34:39 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.90 2013/09/03 21:30:43 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.89 2013/08/30 10:34:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.90 2013/09/03 21:30:43 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -34,7 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.89 2013/08/30 10:34:39 pooka Exp
 #define rsys_syscall(num, data, dlen, retval)	\
     rumpclient_syscall(num, data, dlen, retval)
 #define rsys_seterrno(error) errno = error
-#define rsys_alias(a,b)
+#define rsys_define(nam)
 #else
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -44,30 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.89 2013/08/30 10:34:39 pooka Exp
 #include <rump/rumpuser.h>
 #include "rump_private.h"
 
-static int
-rsys_syscall(int num, void *data, size_t dlen, register_t *retval)
-{
-	struct proc *p;
-	struct emul *e;
-	struct sysent *callp;
-	int rv;
-
-	rump_schedule();
-	p = curproc;
-	e = p->p_emul;
-#ifndef __HAVE_MINIMAL_EMUL
-	KASSERT(num > 0 && num < e->e_nsysent);
-#endif
-	callp = e->e_sysent + num;
-
-	rv = sy_call(callp, curlwp, data, retval);
-	rump_unschedule();
-
-	return rv;
-}
+#define rsys_syscall(num, data, dlen, retval)	\
+    rump_syscall(num, data, dlen, retval)
 
 #define rsys_seterrno(error) rumpuser_seterrno(error)
-#define rsys_alias(a,b) __weak_alias(a,b);
+#define rsys_define(nam) \
+	int nam(struct lwp *, const void *, register_t *);	\
+	__weak_alias(nam,rump_enosys);
+#endif
+
+#ifdef RUMP_KERNEL_IS_LIBC
+#define rsys_aliases(what,where) \
+	__strong_alias(what,where); \
+	__strong_alias(_##what,where);
+#else
+#define rsys_aliases(a,b)
 #endif
 
 #if	BYTE_ORDER == BIG_ENDIAN
@@ -85,6 +76,8 @@ rump_enosys()
 	return ENOSYS;
 }
 #endif
+
+void rumpns_sys_nomodule(void);
 
 ssize_t rump___sysimpl_read(int, void *, size_t);
 ssize_t
@@ -109,7 +102,8 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 	}
 	return rv;
 }
-rsys_alias(sys_read,rump_enosys)
+rsys_define(rumpns_sys_read);
+rsys_aliases(read,rump___sysimpl_read);
 
 ssize_t rump___sysimpl_write(int, const void *, size_t);
 ssize_t
@@ -134,7 +128,8 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 	}
 	return rv;
 }
-rsys_alias(sys_write,rump_enosys)
+rsys_define(rumpns_sys_write);
+rsys_aliases(write,rump___sysimpl_write);
 
 int rump___sysimpl_open(const char *, int, mode_t);
 int
@@ -159,7 +154,8 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_open,rump_enosys)
+rsys_define(rumpns_sys_open);
+rsys_aliases(open,rump___sysimpl_open);
 
 int rump___sysimpl_close(int);
 int
@@ -182,7 +178,8 @@ rump___sysimpl_close(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_close,rump_enosys)
+rsys_define(rumpns_sys_close);
+rsys_aliases(close,rump___sysimpl_close);
 
 int rump___sysimpl_link(const char *, const char *);
 int
@@ -206,7 +203,8 @@ rump___sysimpl_link(const char * path, const char * link)
 	}
 	return rv;
 }
-rsys_alias(sys_link,rump_enosys)
+rsys_define(rumpns_sys_link);
+rsys_aliases(link,rump___sysimpl_link);
 
 int rump___sysimpl_unlink(const char *);
 int
@@ -229,7 +227,8 @@ rump___sysimpl_unlink(const char * path)
 	}
 	return rv;
 }
-rsys_alias(sys_unlink,rump_enosys)
+rsys_define(rumpns_sys_unlink);
+rsys_aliases(unlink,rump___sysimpl_unlink);
 
 int rump___sysimpl_chdir(const char *);
 int
@@ -252,7 +251,8 @@ rump___sysimpl_chdir(const char * path)
 	}
 	return rv;
 }
-rsys_alias(sys_chdir,rump_enosys)
+rsys_define(rumpns_sys_chdir);
+rsys_aliases(chdir,rump___sysimpl_chdir);
 
 int rump___sysimpl_fchdir(int);
 int
@@ -275,7 +275,8 @@ rump___sysimpl_fchdir(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_fchdir,rump_enosys)
+rsys_define(rumpns_sys_fchdir);
+rsys_aliases(fchdir,rump___sysimpl_fchdir);
 
 int rump___sysimpl_mknod(const char *, mode_t, uint32_t);
 int
@@ -300,7 +301,8 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_mknod,rump_enosys)
+rsys_define(rumpns_compat_50_sys_mknod);
+rsys_aliases(compat_50_mknod,rump___sysimpl_mknod);
 
 int rump___sysimpl_chmod(const char *, mode_t);
 int
@@ -324,7 +326,8 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_chmod,rump_enosys)
+rsys_define(rumpns_sys_chmod);
+rsys_aliases(chmod,rump___sysimpl_chmod);
 
 int rump___sysimpl_chown(const char *, uid_t, gid_t);
 int
@@ -349,7 +352,8 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_alias(sys_chown,rump_enosys)
+rsys_define(rumpns_sys_chown);
+rsys_aliases(chown,rump___sysimpl_chown);
 
 pid_t rump___sysimpl_getpid(void);
 pid_t
@@ -365,7 +369,8 @@ rump___sysimpl_getpid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_getpid_with_ppid,rump_enosys)
+rsys_define(rumpns_sys_getpid_with_ppid);
+rsys_aliases(getpid,rump___sysimpl_getpid);
 
 int rump___sysimpl_unmount(const char *, int);
 int
@@ -389,7 +394,8 @@ rump___sysimpl_unmount(const char * path, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_unmount,rump_enosys)
+rsys_define(rumpns_sys_unmount);
+rsys_aliases(unmount,rump___sysimpl_unmount);
 
 int rump___sysimpl_setuid(uid_t);
 int
@@ -412,7 +418,8 @@ rump___sysimpl_setuid(uid_t uid)
 	}
 	return rv;
 }
-rsys_alias(sys_setuid,rump_enosys)
+rsys_define(rumpns_sys_setuid);
+rsys_aliases(setuid,rump___sysimpl_setuid);
 
 uid_t rump___sysimpl_getuid(void);
 uid_t
@@ -428,7 +435,8 @@ rump___sysimpl_getuid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_getuid_with_euid,rump_enosys)
+rsys_define(rumpns_sys_getuid_with_euid);
+rsys_aliases(getuid,rump___sysimpl_getuid);
 
 uid_t rump___sysimpl_geteuid(void);
 uid_t
@@ -444,7 +452,8 @@ rump___sysimpl_geteuid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_geteuid,rump_enosys)
+rsys_define(rumpns_sys_geteuid);
+rsys_aliases(geteuid,rump___sysimpl_geteuid);
 
 ssize_t rump___sysimpl_recvmsg(int, struct msghdr *, int);
 ssize_t
@@ -469,7 +478,8 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_recvmsg,rump_enosys)
+rsys_define(rumpns_sys_recvmsg);
+rsys_aliases(recvmsg,rump___sysimpl_recvmsg);
 
 ssize_t rump___sysimpl_sendmsg(int, const struct msghdr *, int);
 ssize_t
@@ -494,7 +504,8 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_sendmsg,rump_enosys)
+rsys_define(rumpns_sys_sendmsg);
+rsys_aliases(sendmsg,rump___sysimpl_sendmsg);
 
 ssize_t rump___sysimpl_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t
@@ -522,7 +533,8 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 	}
 	return rv;
 }
-rsys_alias(sys_recvfrom,rump_enosys)
+rsys_define(rumpns_sys_recvfrom);
+rsys_aliases(recvfrom,rump___sysimpl_recvfrom);
 
 int rump___sysimpl_accept(int, struct sockaddr *, socklen_t *);
 int
@@ -547,7 +559,8 @@ rump___sysimpl_accept(int s, struct sockaddr * name, socklen_t * anamelen)
 	}
 	return rv;
 }
-rsys_alias(sys_accept,rump_enosys)
+rsys_define(rumpns_sys_accept);
+rsys_aliases(accept,rump___sysimpl_accept);
 
 int rump___sysimpl_getpeername(int, struct sockaddr *, socklen_t *);
 int
@@ -572,7 +585,8 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, socklen_t * alen)
 	}
 	return rv;
 }
-rsys_alias(sys_getpeername,rump_enosys)
+rsys_define(rumpns_sys_getpeername);
+rsys_aliases(getpeername,rump___sysimpl_getpeername);
 
 int rump___sysimpl_getsockname(int, struct sockaddr *, socklen_t *);
 int
@@ -597,7 +611,8 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, socklen_t * alen)
 	}
 	return rv;
 }
-rsys_alias(sys_getsockname,rump_enosys)
+rsys_define(rumpns_sys_getsockname);
+rsys_aliases(getsockname,rump___sysimpl_getsockname);
 
 int rump___sysimpl_access(const char *, int);
 int
@@ -621,7 +636,8 @@ rump___sysimpl_access(const char * path, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_access,rump_enosys)
+rsys_define(rumpns_sys_access);
+rsys_aliases(access,rump___sysimpl_access);
 
 int rump___sysimpl_chflags(const char *, u_long);
 int
@@ -645,7 +661,8 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 	}
 	return rv;
 }
-rsys_alias(sys_chflags,rump_enosys)
+rsys_define(rumpns_sys_chflags);
+rsys_aliases(chflags,rump___sysimpl_chflags);
 
 int rump___sysimpl_fchflags(int, u_long);
 int
@@ -669,7 +686,8 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 	}
 	return rv;
 }
-rsys_alias(sys_fchflags,rump_enosys)
+rsys_define(rumpns_sys_fchflags);
+rsys_aliases(fchflags,rump___sysimpl_fchflags);
 
 void rump___sysimpl_sync(void);
 void
@@ -679,7 +697,8 @@ rump___sysimpl_sync(void )
 
 	rsys_syscall(SYS_sync, NULL, 0, retval);
 }
-rsys_alias(sys_sync,rump_enosys)
+rsys_define(rumpns_sys_sync);
+rsys_aliases(sync,rump___sysimpl_sync);
 
 pid_t rump___sysimpl_getppid(void);
 pid_t
@@ -695,7 +714,8 @@ rump___sysimpl_getppid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_getppid,rump_enosys)
+rsys_define(rumpns_sys_getppid);
+rsys_aliases(getppid,rump___sysimpl_getppid);
 
 int rump___sysimpl_dup(int);
 int
@@ -718,7 +738,8 @@ rump___sysimpl_dup(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_dup,rump_enosys)
+rsys_define(rumpns_sys_dup);
+rsys_aliases(dup,rump___sysimpl_dup);
 
 gid_t rump___sysimpl_getegid(void);
 gid_t
@@ -734,7 +755,8 @@ rump___sysimpl_getegid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_getegid,rump_enosys)
+rsys_define(rumpns_sys_getegid);
+rsys_aliases(getegid,rump___sysimpl_getegid);
 
 gid_t rump___sysimpl_getgid(void);
 gid_t
@@ -750,7 +772,8 @@ rump___sysimpl_getgid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_getgid_with_egid,rump_enosys)
+rsys_define(rumpns_sys_getgid_with_egid);
+rsys_aliases(getgid,rump___sysimpl_getgid);
 
 int rump___sysimpl___getlogin(char *, size_t);
 int
@@ -774,7 +797,8 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 	}
 	return rv;
 }
-rsys_alias(sys___getlogin,rump_enosys)
+rsys_define(rumpns_sys___getlogin);
+rsys_aliases(__getlogin,rump___sysimpl___getlogin);
 
 int rump___sysimpl___setlogin(const char *);
 int
@@ -797,7 +821,8 @@ rump___sysimpl___setlogin(const char * namebuf)
 	}
 	return rv;
 }
-rsys_alias(sys___setlogin,rump_enosys)
+rsys_define(rumpns_sys___setlogin);
+rsys_aliases(__setlogin,rump___sysimpl___setlogin);
 
 int rump___sysimpl_ioctl(int, u_long, void *);
 int
@@ -822,7 +847,8 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 	}
 	return rv;
 }
-rsys_alias(sys_ioctl,rump_enosys)
+rsys_define(rumpns_sys_ioctl);
+rsys_aliases(ioctl,rump___sysimpl_ioctl);
 
 int rump___sysimpl_revoke(const char *);
 int
@@ -845,7 +871,8 @@ rump___sysimpl_revoke(const char * path)
 	}
 	return rv;
 }
-rsys_alias(sys_revoke,rump_enosys)
+rsys_define(rumpns_sys_revoke);
+rsys_aliases(revoke,rump___sysimpl_revoke);
 
 int rump___sysimpl_symlink(const char *, const char *);
 int
@@ -869,7 +896,8 @@ rump___sysimpl_symlink(const char * path, const char * link)
 	}
 	return rv;
 }
-rsys_alias(sys_symlink,rump_enosys)
+rsys_define(rumpns_sys_symlink);
+rsys_aliases(symlink,rump___sysimpl_symlink);
 
 ssize_t rump___sysimpl_readlink(const char *, char *, size_t);
 ssize_t
@@ -894,7 +922,8 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 	}
 	return rv;
 }
-rsys_alias(sys_readlink,rump_enosys)
+rsys_define(rumpns_sys_readlink);
+rsys_aliases(readlink,rump___sysimpl_readlink);
 
 mode_t rump___sysimpl_umask(mode_t);
 mode_t
@@ -917,7 +946,8 @@ rump___sysimpl_umask(mode_t newmask)
 	}
 	return rv;
 }
-rsys_alias(sys_umask,rump_enosys)
+rsys_define(rumpns_sys_umask);
+rsys_aliases(umask,rump___sysimpl_umask);
 
 int rump___sysimpl_chroot(const char *);
 int
@@ -940,7 +970,8 @@ rump___sysimpl_chroot(const char * path)
 	}
 	return rv;
 }
-rsys_alias(sys_chroot,rump_enosys)
+rsys_define(rumpns_sys_chroot);
+rsys_aliases(chroot,rump___sysimpl_chroot);
 
 int rump___sysimpl_getgroups(int, gid_t *);
 int
@@ -964,7 +995,8 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 	}
 	return rv;
 }
-rsys_alias(sys_getgroups,rump_enosys)
+rsys_define(rumpns_sys_getgroups);
+rsys_aliases(getgroups,rump___sysimpl_getgroups);
 
 int rump___sysimpl_setgroups(int, const gid_t *);
 int
@@ -988,7 +1020,8 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 	}
 	return rv;
 }
-rsys_alias(sys_setgroups,rump_enosys)
+rsys_define(rumpns_sys_setgroups);
+rsys_aliases(setgroups,rump___sysimpl_setgroups);
 
 int rump___sysimpl_getpgrp(void);
 int
@@ -1008,7 +1041,8 @@ rump___sysimpl_getpgrp(void )
 	}
 	return rv;
 }
-rsys_alias(sys_getpgrp,rump_enosys)
+rsys_define(rumpns_sys_getpgrp);
+rsys_aliases(getpgrp,rump___sysimpl_getpgrp);
 
 int rump___sysimpl_setpgid(pid_t, pid_t);
 int
@@ -1032,7 +1066,8 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 	}
 	return rv;
 }
-rsys_alias(sys_setpgid,rump_enosys)
+rsys_define(rumpns_sys_setpgid);
+rsys_aliases(setpgid,rump___sysimpl_setpgid);
 
 int rump___sysimpl_dup2(int, int);
 int
@@ -1056,7 +1091,8 @@ rump___sysimpl_dup2(int from, int to)
 	}
 	return rv;
 }
-rsys_alias(sys_dup2,rump_enosys)
+rsys_define(rumpns_sys_dup2);
+rsys_aliases(dup2,rump___sysimpl_dup2);
 
 int rump___sysimpl_fcntl(int, int, void *);
 int
@@ -1081,7 +1117,8 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 	}
 	return rv;
 }
-rsys_alias(sys_fcntl,rump_enosys)
+rsys_define(rumpns_sys_fcntl);
+rsys_aliases(fcntl,rump___sysimpl_fcntl);
 
 int rump___sysimpl_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int
@@ -1108,7 +1145,8 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_select,rump_enosys)
+rsys_define(rumpns_compat_50_sys_select);
+rsys_aliases(compat_50_select,rump___sysimpl_select);
 
 int rump___sysimpl_fsync(int);
 int
@@ -1131,7 +1169,8 @@ rump___sysimpl_fsync(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_fsync,rump_enosys)
+rsys_define(rumpns_sys_fsync);
+rsys_aliases(fsync,rump___sysimpl_fsync);
 
 int rump___sysimpl_connect(int, const struct sockaddr *, socklen_t);
 int
@@ -1156,7 +1195,8 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, socklen_t namelen)
 	}
 	return rv;
 }
-rsys_alias(sys_connect,rump_enosys)
+rsys_define(rumpns_sys_connect);
+rsys_aliases(connect,rump___sysimpl_connect);
 
 int rump___sysimpl_bind(int, const struct sockaddr *, socklen_t);
 int
@@ -1181,7 +1221,8 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, socklen_t namelen)
 	}
 	return rv;
 }
-rsys_alias(sys_bind,rump_enosys)
+rsys_define(rumpns_sys_bind);
+rsys_aliases(bind,rump___sysimpl_bind);
 
 int rump___sysimpl_setsockopt(int, int, int, const void *, socklen_t);
 int
@@ -1208,7 +1249,8 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, socklen_
 	}
 	return rv;
 }
-rsys_alias(sys_setsockopt,rump_enosys)
+rsys_define(rumpns_sys_setsockopt);
+rsys_aliases(setsockopt,rump___sysimpl_setsockopt);
 
 int rump___sysimpl_listen(int, int);
 int
@@ -1232,7 +1274,8 @@ rump___sysimpl_listen(int s, int backlog)
 	}
 	return rv;
 }
-rsys_alias(sys_listen,rump_enosys)
+rsys_define(rumpns_sys_listen);
+rsys_aliases(listen,rump___sysimpl_listen);
 
 int rump___sysimpl_getsockopt(int, int, int, void *, socklen_t *);
 int
@@ -1259,7 +1302,8 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, socklen_t * av
 	}
 	return rv;
 }
-rsys_alias(sys_getsockopt,rump_enosys)
+rsys_define(rumpns_sys_getsockopt);
+rsys_aliases(getsockopt,rump___sysimpl_getsockopt);
 
 ssize_t rump___sysimpl_readv(int, const struct iovec *, int);
 ssize_t
@@ -1284,7 +1328,8 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 	}
 	return rv;
 }
-rsys_alias(sys_readv,rump_enosys)
+rsys_define(rumpns_sys_readv);
+rsys_aliases(readv,rump___sysimpl_readv);
 
 ssize_t rump___sysimpl_writev(int, const struct iovec *, int);
 ssize_t
@@ -1309,7 +1354,8 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 	}
 	return rv;
 }
-rsys_alias(sys_writev,rump_enosys)
+rsys_define(rumpns_sys_writev);
+rsys_aliases(writev,rump___sysimpl_writev);
 
 int rump___sysimpl_fchown(int, uid_t, gid_t);
 int
@@ -1334,7 +1380,8 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_alias(sys_fchown,rump_enosys)
+rsys_define(rumpns_sys_fchown);
+rsys_aliases(fchown,rump___sysimpl_fchown);
 
 int rump___sysimpl_fchmod(int, mode_t);
 int
@@ -1358,7 +1405,8 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_fchmod,rump_enosys)
+rsys_define(rumpns_sys_fchmod);
+rsys_aliases(fchmod,rump___sysimpl_fchmod);
 
 int rump___sysimpl_setreuid(uid_t, uid_t);
 int
@@ -1382,7 +1430,8 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 	}
 	return rv;
 }
-rsys_alias(sys_setreuid,rump_enosys)
+rsys_define(rumpns_sys_setreuid);
+rsys_aliases(setreuid,rump___sysimpl_setreuid);
 
 int rump___sysimpl_setregid(gid_t, gid_t);
 int
@@ -1406,7 +1455,8 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 	}
 	return rv;
 }
-rsys_alias(sys_setregid,rump_enosys)
+rsys_define(rumpns_sys_setregid);
+rsys_aliases(setregid,rump___sysimpl_setregid);
 
 int rump___sysimpl_rename(const char *, const char *);
 int
@@ -1430,7 +1480,8 @@ rump___sysimpl_rename(const char * from, const char * to)
 	}
 	return rv;
 }
-rsys_alias(sys_rename,rump_enosys)
+rsys_define(rumpns_sys_rename);
+rsys_aliases(rename,rump___sysimpl_rename);
 
 int rump___sysimpl_flock(int, int);
 int
@@ -1454,7 +1505,8 @@ rump___sysimpl_flock(int fd, int how)
 	}
 	return rv;
 }
-rsys_alias(sys_flock,rump_enosys)
+rsys_define(rumpns_sys_flock);
+rsys_aliases(flock,rump___sysimpl_flock);
 
 int rump___sysimpl_mkfifo(const char *, mode_t);
 int
@@ -1478,7 +1530,8 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_mkfifo,rump_enosys)
+rsys_define(rumpns_sys_mkfifo);
+rsys_aliases(mkfifo,rump___sysimpl_mkfifo);
 
 ssize_t rump___sysimpl_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
 ssize_t
@@ -1506,7 +1559,8 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 	}
 	return rv;
 }
-rsys_alias(sys_sendto,rump_enosys)
+rsys_define(rumpns_sys_sendto);
+rsys_aliases(sendto,rump___sysimpl_sendto);
 
 int rump___sysimpl_shutdown(int, int);
 int
@@ -1530,7 +1584,8 @@ rump___sysimpl_shutdown(int s, int how)
 	}
 	return rv;
 }
-rsys_alias(sys_shutdown,rump_enosys)
+rsys_define(rumpns_sys_shutdown);
+rsys_aliases(shutdown,rump___sysimpl_shutdown);
 
 int rump___sysimpl_socketpair(int, int, int, int *);
 int
@@ -1556,7 +1611,8 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 	}
 	return rv;
 }
-rsys_alias(sys_socketpair,rump_enosys)
+rsys_define(rumpns_sys_socketpair);
+rsys_aliases(socketpair,rump___sysimpl_socketpair);
 
 int rump___sysimpl_mkdir(const char *, mode_t);
 int
@@ -1580,7 +1636,8 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_mkdir,rump_enosys)
+rsys_define(rumpns_sys_mkdir);
+rsys_aliases(mkdir,rump___sysimpl_mkdir);
 
 int rump___sysimpl_rmdir(const char *);
 int
@@ -1603,7 +1660,8 @@ rump___sysimpl_rmdir(const char * path)
 	}
 	return rv;
 }
-rsys_alias(sys_rmdir,rump_enosys)
+rsys_define(rumpns_sys_rmdir);
+rsys_aliases(rmdir,rump___sysimpl_rmdir);
 
 int rump___sysimpl_utimes(const char *, const struct timeval *);
 int
@@ -1627,7 +1685,8 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_utimes,rump_enosys)
+rsys_define(rumpns_compat_50_sys_utimes);
+rsys_aliases(compat_50_utimes,rump___sysimpl_utimes);
 
 int rump___sysimpl_setsid(void);
 int
@@ -1647,7 +1706,8 @@ rump___sysimpl_setsid(void )
 	}
 	return rv;
 }
-rsys_alias(sys_setsid,rump_enosys)
+rsys_define(rumpns_sys_setsid);
+rsys_aliases(setsid,rump___sysimpl_setsid);
 
 int rump___sysimpl_nfssvc(int, void *);
 int
@@ -1671,7 +1731,8 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 	}
 	return rv;
 }
-rsys_alias(sys_nfssvc,rump_enosys)
+rsys_define(rumpns_sys_nfssvc);
+rsys_aliases(nfssvc,rump___sysimpl_nfssvc);
 
 ssize_t rump___sysimpl_pread(int, void *, size_t, off_t);
 ssize_t
@@ -1698,7 +1759,8 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 	}
 	return rv;
 }
-rsys_alias(sys_pread,rump_enosys)
+rsys_define(rumpns_sys_pread);
+rsys_aliases(pread,rump___sysimpl_pread);
 
 ssize_t rump___sysimpl_pwrite(int, const void *, size_t, off_t);
 ssize_t
@@ -1725,7 +1787,8 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 	}
 	return rv;
 }
-rsys_alias(sys_pwrite,rump_enosys)
+rsys_define(rumpns_sys_pwrite);
+rsys_aliases(pwrite,rump___sysimpl_pwrite);
 
 int rump___sysimpl_setgid(gid_t);
 int
@@ -1748,7 +1811,8 @@ rump___sysimpl_setgid(gid_t gid)
 	}
 	return rv;
 }
-rsys_alias(sys_setgid,rump_enosys)
+rsys_define(rumpns_sys_setgid);
+rsys_aliases(setgid,rump___sysimpl_setgid);
 
 int rump___sysimpl_setegid(gid_t);
 int
@@ -1771,7 +1835,8 @@ rump___sysimpl_setegid(gid_t egid)
 	}
 	return rv;
 }
-rsys_alias(sys_setegid,rump_enosys)
+rsys_define(rumpns_sys_setegid);
+rsys_aliases(setegid,rump___sysimpl_setegid);
 
 int rump___sysimpl_seteuid(uid_t);
 int
@@ -1794,7 +1859,8 @@ rump___sysimpl_seteuid(uid_t euid)
 	}
 	return rv;
 }
-rsys_alias(sys_seteuid,rump_enosys)
+rsys_define(rumpns_sys_seteuid);
+rsys_aliases(seteuid,rump___sysimpl_seteuid);
 
 long rump___sysimpl_pathconf(const char *, int);
 long
@@ -1818,7 +1884,8 @@ rump___sysimpl_pathconf(const char * path, int name)
 	}
 	return rv;
 }
-rsys_alias(sys_pathconf,rump_enosys)
+rsys_define(rumpns_sys_pathconf);
+rsys_aliases(pathconf,rump___sysimpl_pathconf);
 
 long rump___sysimpl_fpathconf(int, int);
 long
@@ -1842,7 +1909,8 @@ rump___sysimpl_fpathconf(int fd, int name)
 	}
 	return rv;
 }
-rsys_alias(sys_fpathconf,rump_enosys)
+rsys_define(rumpns_sys_fpathconf);
+rsys_aliases(fpathconf,rump___sysimpl_fpathconf);
 
 int rump___sysimpl_getrlimit(int, struct rlimit *);
 int
@@ -1866,7 +1934,8 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 	}
 	return rv;
 }
-rsys_alias(sys_getrlimit,rump_enosys)
+rsys_define(rumpns_sys_getrlimit);
+rsys_aliases(getrlimit,rump___sysimpl_getrlimit);
 
 int rump___sysimpl_setrlimit(int, const struct rlimit *);
 int
@@ -1890,7 +1959,8 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 	}
 	return rv;
 }
-rsys_alias(sys_setrlimit,rump_enosys)
+rsys_define(rumpns_sys_setrlimit);
+rsys_aliases(setrlimit,rump___sysimpl_setrlimit);
 
 off_t rump___sysimpl_lseek(int, off_t, int);
 off_t
@@ -1916,7 +1986,8 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 	}
 	return rv;
 }
-rsys_alias(sys_lseek,rump_enosys)
+rsys_define(rumpns_sys_lseek);
+rsys_aliases(lseek,rump___sysimpl_lseek);
 
 int rump___sysimpl_truncate(const char *, off_t);
 int
@@ -1941,7 +2012,8 @@ rump___sysimpl_truncate(const char * path, off_t length)
 	}
 	return rv;
 }
-rsys_alias(sys_truncate,rump_enosys)
+rsys_define(rumpns_sys_truncate);
+rsys_aliases(truncate,rump___sysimpl_truncate);
 
 int rump___sysimpl_ftruncate(int, off_t);
 int
@@ -1966,7 +2038,8 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 	}
 	return rv;
 }
-rsys_alias(sys_ftruncate,rump_enosys)
+rsys_define(rumpns_sys_ftruncate);
+rsys_aliases(ftruncate,rump___sysimpl_ftruncate);
 
 int rump___sysimpl___sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
 int
@@ -1994,7 +2067,8 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * old, size_t * ol
 	}
 	return rv;
 }
-rsys_alias(sys___sysctl,rump_enosys)
+rsys_define(rumpns_sys___sysctl);
+rsys_aliases(__sysctl,rump___sysimpl___sysctl);
 
 int rump___sysimpl_futimes(int, const struct timeval *);
 int
@@ -2018,7 +2092,8 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_futimes,rump_enosys)
+rsys_define(rumpns_compat_50_sys_futimes);
+rsys_aliases(compat_50_futimes,rump___sysimpl_futimes);
 
 pid_t rump___sysimpl_getpgid(pid_t);
 pid_t
@@ -2041,7 +2116,8 @@ rump___sysimpl_getpgid(pid_t pid)
 	}
 	return rv;
 }
-rsys_alias(sys_getpgid,rump_enosys)
+rsys_define(rumpns_sys_getpgid);
+rsys_aliases(getpgid,rump___sysimpl_getpgid);
 
 int rump___sysimpl_reboot(int, char *);
 int
@@ -2065,7 +2141,8 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 	}
 	return rv;
 }
-rsys_alias(sys_reboot,rump_enosys)
+rsys_define(rumpns_sys_reboot);
+rsys_aliases(reboot,rump___sysimpl_reboot);
 
 int rump___sysimpl_poll(struct pollfd *, u_int, int);
 int
@@ -2090,7 +2167,8 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 	}
 	return rv;
 }
-rsys_alias(sys_poll,rump_enosys)
+rsys_define(rumpns_sys_poll);
+rsys_aliases(poll,rump___sysimpl_poll);
 
 int rump___sysimpl_fdatasync(int);
 int
@@ -2113,7 +2191,8 @@ rump___sysimpl_fdatasync(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_fdatasync,rump_enosys)
+rsys_define(rumpns_sys_fdatasync);
+rsys_aliases(fdatasync,rump___sysimpl_fdatasync);
 
 int rump___sysimpl_modctl(int, void *);
 int
@@ -2137,7 +2216,8 @@ rump___sysimpl_modctl(int cmd, void * arg)
 	}
 	return rv;
 }
-rsys_alias(sys_modctl,rump_enosys)
+rsys_define(rumpns_sys_modctl);
+rsys_aliases(modctl,rump___sysimpl_modctl);
 
 int rump___sysimpl__ksem_init(unsigned int, intptr_t *);
 int
@@ -2161,7 +2241,8 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_init,rump_enosys)
+rsys_define(rumpns_sys__ksem_init);
+rsys_aliases(_ksem_init,rump___sysimpl__ksem_init);
 
 int rump___sysimpl__ksem_open(const char *, int, mode_t, unsigned int, intptr_t *);
 int
@@ -2188,7 +2269,8 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_open,rump_enosys)
+rsys_define(rumpns_sys__ksem_open);
+rsys_aliases(_ksem_open,rump___sysimpl__ksem_open);
 
 int rump___sysimpl__ksem_unlink(const char *);
 int
@@ -2211,7 +2293,8 @@ rump___sysimpl__ksem_unlink(const char * name)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_unlink,rump_enosys)
+rsys_define(rumpns_sys__ksem_unlink);
+rsys_aliases(_ksem_unlink,rump___sysimpl__ksem_unlink);
 
 int rump___sysimpl__ksem_close(intptr_t);
 int
@@ -2234,7 +2317,8 @@ rump___sysimpl__ksem_close(intptr_t id)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_close,rump_enosys)
+rsys_define(rumpns_sys__ksem_close);
+rsys_aliases(_ksem_close,rump___sysimpl__ksem_close);
 
 int rump___sysimpl__ksem_post(intptr_t);
 int
@@ -2257,7 +2341,8 @@ rump___sysimpl__ksem_post(intptr_t id)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_post,rump_enosys)
+rsys_define(rumpns_sys__ksem_post);
+rsys_aliases(_ksem_post,rump___sysimpl__ksem_post);
 
 int rump___sysimpl__ksem_wait(intptr_t);
 int
@@ -2280,7 +2365,8 @@ rump___sysimpl__ksem_wait(intptr_t id)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_wait,rump_enosys)
+rsys_define(rumpns_sys__ksem_wait);
+rsys_aliases(_ksem_wait,rump___sysimpl__ksem_wait);
 
 int rump___sysimpl__ksem_trywait(intptr_t);
 int
@@ -2303,7 +2389,8 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_trywait,rump_enosys)
+rsys_define(rumpns_sys__ksem_trywait);
+rsys_aliases(_ksem_trywait,rump___sysimpl__ksem_trywait);
 
 int rump___sysimpl__ksem_getvalue(intptr_t, unsigned int *);
 int
@@ -2327,7 +2414,8 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_getvalue,rump_enosys)
+rsys_define(rumpns_sys__ksem_getvalue);
+rsys_aliases(_ksem_getvalue,rump___sysimpl__ksem_getvalue);
 
 int rump___sysimpl__ksem_destroy(intptr_t);
 int
@@ -2350,7 +2438,8 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_destroy,rump_enosys)
+rsys_define(rumpns_sys__ksem_destroy);
+rsys_aliases(_ksem_destroy,rump___sysimpl__ksem_destroy);
 
 int rump___sysimpl__ksem_timedwait(intptr_t, const struct timespec *);
 int
@@ -2374,7 +2463,8 @@ rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 	}
 	return rv;
 }
-rsys_alias(sys__ksem_timedwait,rump_enosys)
+rsys_define(rumpns_sys__ksem_timedwait);
+rsys_aliases(_ksem_timedwait,rump___sysimpl__ksem_timedwait);
 
 int rump___sysimpl_lchmod(const char *, mode_t);
 int
@@ -2398,7 +2488,8 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_lchmod,rump_enosys)
+rsys_define(rumpns_sys_lchmod);
+rsys_aliases(lchmod,rump___sysimpl_lchmod);
 
 int rump___sysimpl_lchown(const char *, uid_t, gid_t);
 int
@@ -2423,7 +2514,8 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 	}
 	return rv;
 }
-rsys_alias(sys_lchown,rump_enosys)
+rsys_define(rumpns_sys_lchown);
+rsys_aliases(lchown,rump___sysimpl_lchown);
 
 int rump___sysimpl_lutimes(const char *, const struct timeval *);
 int
@@ -2447,7 +2539,8 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_lutimes,rump_enosys)
+rsys_define(rumpns_compat_50_sys_lutimes);
+rsys_aliases(compat_50_lutimes,rump___sysimpl_lutimes);
 
 pid_t rump___sysimpl_getsid(pid_t);
 pid_t
@@ -2470,7 +2563,8 @@ rump___sysimpl_getsid(pid_t pid)
 	}
 	return rv;
 }
-rsys_alias(sys_getsid,rump_enosys)
+rsys_define(rumpns_sys_getsid);
+rsys_aliases(getsid,rump___sysimpl_getsid);
 
 ssize_t rump___sysimpl_preadv(int, const struct iovec *, int, off_t);
 ssize_t
@@ -2497,7 +2591,8 @@ rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offse
 	}
 	return rv;
 }
-rsys_alias(sys_preadv,rump_enosys)
+rsys_define(rumpns_sys_preadv);
+rsys_aliases(preadv,rump___sysimpl_preadv);
 
 ssize_t rump___sysimpl_pwritev(int, const struct iovec *, int, off_t);
 ssize_t
@@ -2524,7 +2619,8 @@ rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offs
 	}
 	return rv;
 }
-rsys_alias(sys_pwritev,rump_enosys)
+rsys_define(rumpns_sys_pwritev);
+rsys_aliases(pwritev,rump___sysimpl_pwritev);
 
 int rump___sysimpl___getcwd(char *, size_t);
 int
@@ -2548,7 +2644,8 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 	}
 	return rv;
 }
-rsys_alias(sys___getcwd,rump_enosys)
+rsys_define(rumpns_sys___getcwd);
+rsys_aliases(__getcwd,rump___sysimpl___getcwd);
 
 int rump___sysimpl_fchroot(int);
 int
@@ -2571,7 +2668,8 @@ rump___sysimpl_fchroot(int fd)
 	}
 	return rv;
 }
-rsys_alias(sys_fchroot,rump_enosys)
+rsys_define(rumpns_sys_fchroot);
+rsys_aliases(fchroot,rump___sysimpl_fchroot);
 
 int rump___sysimpl_lchflags(const char *, u_long);
 int
@@ -2595,7 +2693,8 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 	}
 	return rv;
 }
-rsys_alias(sys_lchflags,rump_enosys)
+rsys_define(rumpns_sys_lchflags);
+rsys_aliases(lchflags,rump___sysimpl_lchflags);
 
 int rump___sysimpl_issetugid(void);
 int
@@ -2611,7 +2710,8 @@ rump___sysimpl_issetugid(void )
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys_issetugid,rump_enosys)
+rsys_define(rumpns_sys_issetugid);
+rsys_aliases(issetugid,rump___sysimpl_issetugid);
 
 int rump___sysimpl_kqueue(void);
 int
@@ -2631,7 +2731,8 @@ rump___sysimpl_kqueue(void )
 	}
 	return rv;
 }
-rsys_alias(sys_kqueue,rump_enosys)
+rsys_define(rumpns_sys_kqueue);
+rsys_aliases(kqueue,rump___sysimpl_kqueue);
 
 int rump___sysimpl_kevent(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *);
 int
@@ -2659,7 +2760,8 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_kevent,rump_enosys)
+rsys_define(rumpns_compat_50_sys_kevent);
+rsys_aliases(compat_50_kevent,rump___sysimpl_kevent);
 
 int rump___sysimpl_fsync_range(int, int, off_t, off_t);
 int
@@ -2685,7 +2787,8 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 	}
 	return rv;
 }
-rsys_alias(sys_fsync_range,rump_enosys)
+rsys_define(rumpns_sys_fsync_range);
+rsys_aliases(fsync_range,rump___sysimpl_fsync_range);
 
 int rump___sysimpl_getvfsstat(struct statvfs *, size_t, int);
 int
@@ -2710,7 +2813,8 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_getvfsstat,rump_enosys)
+rsys_define(rumpns_sys_getvfsstat);
+rsys_aliases(getvfsstat,rump___sysimpl_getvfsstat);
 
 int rump___sysimpl_statvfs1(const char *, struct statvfs *, int);
 int
@@ -2735,7 +2839,8 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_statvfs1,rump_enosys)
+rsys_define(rumpns_sys_statvfs1);
+rsys_aliases(statvfs1,rump___sysimpl_statvfs1);
 
 int rump___sysimpl_fstatvfs1(int, struct statvfs *, int);
 int
@@ -2760,7 +2865,8 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_fstatvfs1,rump_enosys)
+rsys_define(rumpns_sys_fstatvfs1);
+rsys_aliases(fstatvfs1,rump___sysimpl_fstatvfs1);
 
 int rump___sysimpl_extattrctl(const char *, int, const char *, int, const char *);
 int
@@ -2787,7 +2893,8 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 	}
 	return rv;
 }
-rsys_alias(sys_extattrctl,rump_enosys)
+rsys_define(rumpns_sys_extattrctl);
+rsys_aliases(extattrctl,rump___sysimpl_extattrctl);
 
 int rump___sysimpl_extattr_set_file(const char *, int, const char *, const void *, size_t);
 int
@@ -2814,7 +2921,8 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_set_file,rump_enosys)
+rsys_define(rumpns_sys_extattr_set_file);
+rsys_aliases(extattr_set_file,rump___sysimpl_extattr_set_file);
 
 ssize_t rump___sysimpl_extattr_get_file(const char *, int, const char *, void *, size_t);
 ssize_t
@@ -2841,7 +2949,8 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_get_file,rump_enosys)
+rsys_define(rumpns_sys_extattr_get_file);
+rsys_aliases(extattr_get_file,rump___sysimpl_extattr_get_file);
 
 int rump___sysimpl_extattr_delete_file(const char *, int, const char *);
 int
@@ -2866,7 +2975,8 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_delete_file,rump_enosys)
+rsys_define(rumpns_sys_extattr_delete_file);
+rsys_aliases(extattr_delete_file,rump___sysimpl_extattr_delete_file);
 
 int rump___sysimpl_extattr_set_fd(int, int, const char *, const void *, size_t);
 int
@@ -2893,7 +3003,8 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_set_fd,rump_enosys)
+rsys_define(rumpns_sys_extattr_set_fd);
+rsys_aliases(extattr_set_fd,rump___sysimpl_extattr_set_fd);
 
 ssize_t rump___sysimpl_extattr_get_fd(int, int, const char *, void *, size_t);
 ssize_t
@@ -2920,7 +3031,8 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_get_fd,rump_enosys)
+rsys_define(rumpns_sys_extattr_get_fd);
+rsys_aliases(extattr_get_fd,rump___sysimpl_extattr_get_fd);
 
 int rump___sysimpl_extattr_delete_fd(int, int, const char *);
 int
@@ -2945,7 +3057,8 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_delete_fd,rump_enosys)
+rsys_define(rumpns_sys_extattr_delete_fd);
+rsys_aliases(extattr_delete_fd,rump___sysimpl_extattr_delete_fd);
 
 int rump___sysimpl_extattr_set_link(const char *, int, const char *, const void *, size_t);
 int
@@ -2972,7 +3085,8 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_set_link,rump_enosys)
+rsys_define(rumpns_sys_extattr_set_link);
+rsys_aliases(extattr_set_link,rump___sysimpl_extattr_set_link);
 
 ssize_t rump___sysimpl_extattr_get_link(const char *, int, const char *, void *, size_t);
 ssize_t
@@ -2999,7 +3113,8 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_get_link,rump_enosys)
+rsys_define(rumpns_sys_extattr_get_link);
+rsys_aliases(extattr_get_link,rump___sysimpl_extattr_get_link);
 
 int rump___sysimpl_extattr_delete_link(const char *, int, const char *);
 int
@@ -3024,7 +3139,8 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_delete_link,rump_enosys)
+rsys_define(rumpns_sys_extattr_delete_link);
+rsys_aliases(extattr_delete_link,rump___sysimpl_extattr_delete_link);
 
 ssize_t rump___sysimpl_extattr_list_fd(int, int, void *, size_t);
 ssize_t
@@ -3050,7 +3166,8 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_list_fd,rump_enosys)
+rsys_define(rumpns_sys_extattr_list_fd);
+rsys_aliases(extattr_list_fd,rump___sysimpl_extattr_list_fd);
 
 ssize_t rump___sysimpl_extattr_list_file(const char *, int, void *, size_t);
 ssize_t
@@ -3076,7 +3193,8 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_list_file,rump_enosys)
+rsys_define(rumpns_sys_extattr_list_file);
+rsys_aliases(extattr_list_file,rump___sysimpl_extattr_list_file);
 
 ssize_t rump___sysimpl_extattr_list_link(const char *, int, void *, size_t);
 ssize_t
@@ -3102,7 +3220,8 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 	}
 	return rv;
 }
-rsys_alias(sys_extattr_list_link,rump_enosys)
+rsys_define(rumpns_sys_extattr_list_link);
+rsys_aliases(extattr_list_link,rump___sysimpl_extattr_list_link);
 
 int rump___sysimpl_pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *, const sigset_t *);
 int
@@ -3130,7 +3249,8 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_pselect,rump_enosys)
+rsys_define(rumpns_compat_50_sys_pselect);
+rsys_aliases(compat_50_pselect,rump___sysimpl_pselect);
 
 int rump___sysimpl_pollts(struct pollfd *, u_int, const struct timespec *, const sigset_t *);
 int
@@ -3156,7 +3276,8 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys_pollts,rump_enosys)
+rsys_define(rumpns_compat_50_sys_pollts);
+rsys_aliases(compat_50_pollts,rump___sysimpl_pollts);
 
 int rump___sysimpl_setxattr(const char *, const char *, const void *, size_t, int);
 int
@@ -3183,7 +3304,8 @@ rump___sysimpl_setxattr(const char * path, const char * name, const void * value
 	}
 	return rv;
 }
-rsys_alias(sys_setxattr,rump_enosys)
+rsys_define(rumpns_sys_setxattr);
+rsys_aliases(setxattr,rump___sysimpl_setxattr);
 
 int rump___sysimpl_lsetxattr(const char *, const char *, const void *, size_t, int);
 int
@@ -3210,7 +3332,8 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, const void * valu
 	}
 	return rv;
 }
-rsys_alias(sys_lsetxattr,rump_enosys)
+rsys_define(rumpns_sys_lsetxattr);
+rsys_aliases(lsetxattr,rump___sysimpl_lsetxattr);
 
 int rump___sysimpl_fsetxattr(int, const char *, const void *, size_t, int);
 int
@@ -3237,7 +3360,8 @@ rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t s
 	}
 	return rv;
 }
-rsys_alias(sys_fsetxattr,rump_enosys)
+rsys_define(rumpns_sys_fsetxattr);
+rsys_aliases(fsetxattr,rump___sysimpl_fsetxattr);
 
 int rump___sysimpl_getxattr(const char *, const char *, void *, size_t);
 int
@@ -3263,7 +3387,8 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 	}
 	return rv;
 }
-rsys_alias(sys_getxattr,rump_enosys)
+rsys_define(rumpns_sys_getxattr);
+rsys_aliases(getxattr,rump___sysimpl_getxattr);
 
 int rump___sysimpl_lgetxattr(const char *, const char *, void *, size_t);
 int
@@ -3289,7 +3414,8 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 	}
 	return rv;
 }
-rsys_alias(sys_lgetxattr,rump_enosys)
+rsys_define(rumpns_sys_lgetxattr);
+rsys_aliases(lgetxattr,rump___sysimpl_lgetxattr);
 
 int rump___sysimpl_fgetxattr(int, const char *, void *, size_t);
 int
@@ -3315,7 +3441,8 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 	}
 	return rv;
 }
-rsys_alias(sys_fgetxattr,rump_enosys)
+rsys_define(rumpns_sys_fgetxattr);
+rsys_aliases(fgetxattr,rump___sysimpl_fgetxattr);
 
 int rump___sysimpl_listxattr(const char *, char *, size_t);
 int
@@ -3340,7 +3467,8 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_alias(sys_listxattr,rump_enosys)
+rsys_define(rumpns_sys_listxattr);
+rsys_aliases(listxattr,rump___sysimpl_listxattr);
 
 int rump___sysimpl_llistxattr(const char *, char *, size_t);
 int
@@ -3365,7 +3493,8 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_alias(sys_llistxattr,rump_enosys)
+rsys_define(rumpns_sys_llistxattr);
+rsys_aliases(llistxattr,rump___sysimpl_llistxattr);
 
 int rump___sysimpl_flistxattr(int, char *, size_t);
 int
@@ -3390,7 +3519,8 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 	}
 	return rv;
 }
-rsys_alias(sys_flistxattr,rump_enosys)
+rsys_define(rumpns_sys_flistxattr);
+rsys_aliases(flistxattr,rump___sysimpl_flistxattr);
 
 int rump___sysimpl_removexattr(const char *, const char *);
 int
@@ -3414,7 +3544,8 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 	}
 	return rv;
 }
-rsys_alias(sys_removexattr,rump_enosys)
+rsys_define(rumpns_sys_removexattr);
+rsys_aliases(removexattr,rump___sysimpl_removexattr);
 
 int rump___sysimpl_lremovexattr(const char *, const char *);
 int
@@ -3438,7 +3569,8 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 	}
 	return rv;
 }
-rsys_alias(sys_lremovexattr,rump_enosys)
+rsys_define(rumpns_sys_lremovexattr);
+rsys_aliases(lremovexattr,rump___sysimpl_lremovexattr);
 
 int rump___sysimpl_fremovexattr(int, const char *);
 int
@@ -3462,7 +3594,8 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 	}
 	return rv;
 }
-rsys_alias(sys_fremovexattr,rump_enosys)
+rsys_define(rumpns_sys_fremovexattr);
+rsys_aliases(fremovexattr,rump___sysimpl_fremovexattr);
 
 int rump___sysimpl_stat30(const char *, struct stat *);
 int
@@ -3486,7 +3619,8 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys___stat30,rump_enosys)
+rsys_define(rumpns_compat_50_sys___stat30);
+rsys_aliases(compat_50___stat30,rump___sysimpl_stat30);
 
 int rump___sysimpl_fstat30(int, struct stat *);
 int
@@ -3510,7 +3644,8 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys___fstat30,rump_enosys)
+rsys_define(rumpns_compat_50_sys___fstat30);
+rsys_aliases(compat_50___fstat30,rump___sysimpl_fstat30);
 
 int rump___sysimpl_lstat30(const char *, struct stat *);
 int
@@ -3534,7 +3669,8 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys___lstat30,rump_enosys)
+rsys_define(rumpns_compat_50_sys___lstat30);
+rsys_aliases(compat_50___lstat30,rump___sysimpl_lstat30);
 
 int rump___sysimpl_getdents30(int, char *, size_t);
 int
@@ -3559,7 +3695,8 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 	}
 	return rv;
 }
-rsys_alias(sys___getdents30,rump_enosys)
+rsys_define(rumpns_sys___getdents30);
+rsys_aliases(__getdents30,rump___sysimpl_getdents30);
 
 int rump___sysimpl_socket30(int, int, int);
 int
@@ -3584,7 +3721,8 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 	}
 	return rv;
 }
-rsys_alias(sys___socket30,rump_enosys)
+rsys_define(rumpns_sys___socket30);
+rsys_aliases(__socket30,rump___sysimpl_socket30);
 
 int rump___sysimpl_getfh30(const char *, void *, size_t *);
 int
@@ -3609,7 +3747,8 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 	}
 	return rv;
 }
-rsys_alias(sys___getfh30,rump_enosys)
+rsys_define(rumpns_sys___getfh30);
+rsys_aliases(__getfh30,rump___sysimpl_getfh30);
 
 int rump___sysimpl_fhopen40(const void *, size_t, int);
 int
@@ -3634,7 +3773,8 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys___fhopen40,rump_enosys)
+rsys_define(rumpns_sys___fhopen40);
+rsys_aliases(__fhopen40,rump___sysimpl_fhopen40);
 
 int rump___sysimpl_fhstatvfs140(const void *, size_t, struct statvfs *, int);
 int
@@ -3660,7 +3800,8 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 	}
 	return rv;
 }
-rsys_alias(sys___fhstatvfs140,rump_enosys)
+rsys_define(rumpns_sys___fhstatvfs140);
+rsys_aliases(__fhstatvfs140,rump___sysimpl_fhstatvfs140);
 
 int rump___sysimpl_fhstat40(const void *, size_t, struct stat *);
 int
@@ -3685,7 +3826,8 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 	}
 	return rv;
 }
-rsys_alias(compat_50_sys___fhstat40,rump_enosys)
+rsys_define(rumpns_compat_50_sys___fhstat40);
+rsys_aliases(compat_50___fhstat40,rump___sysimpl_fhstat40);
 
 int rump___sysimpl_mount50(const char *, const char *, int, void *, size_t);
 int
@@ -3712,7 +3854,8 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 	}
 	return rv;
 }
-rsys_alias(sys___mount50,rump_enosys)
+rsys_define(rumpns_sys___mount50);
+rsys_aliases(__mount50,rump___sysimpl_mount50);
 
 int rump___sysimpl_posix_fadvise50(int, off_t, off_t, int);
 int
@@ -3735,7 +3878,8 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 		rv = *retval;
 	return rv;
 }
-rsys_alias(sys___posix_fadvise50,rump_enosys)
+rsys_define(rumpns_sys___posix_fadvise50);
+rsys_aliases(__posix_fadvise50,rump___sysimpl_posix_fadvise50);
 
 int rump___sysimpl_select50(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int
@@ -3762,7 +3906,8 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 	}
 	return rv;
 }
-rsys_alias(sys___select50,rump_enosys)
+rsys_define(rumpns_sys___select50);
+rsys_aliases(__select50,rump___sysimpl_select50);
 
 int rump___sysimpl_utimes50(const char *, const struct timeval *);
 int
@@ -3786,7 +3931,8 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(sys___utimes50,rump_enosys)
+rsys_define(rumpns_sys___utimes50);
+rsys_aliases(__utimes50,rump___sysimpl_utimes50);
 
 int rump___sysimpl_futimes50(int, const struct timeval *);
 int
@@ -3810,7 +3956,8 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(sys___futimes50,rump_enosys)
+rsys_define(rumpns_sys___futimes50);
+rsys_aliases(__futimes50,rump___sysimpl_futimes50);
 
 int rump___sysimpl_lutimes50(const char *, const struct timeval *);
 int
@@ -3834,7 +3981,8 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 	}
 	return rv;
 }
-rsys_alias(sys___lutimes50,rump_enosys)
+rsys_define(rumpns_sys___lutimes50);
+rsys_aliases(__lutimes50,rump___sysimpl_lutimes50);
 
 int rump___sysimpl_kevent50(int, const struct kevent *, size_t, struct kevent *, size_t, const struct timespec *);
 int
@@ -3862,7 +4010,8 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 	}
 	return rv;
 }
-rsys_alias(sys___kevent50,rump_enosys)
+rsys_define(rumpns_sys___kevent50);
+rsys_aliases(__kevent50,rump___sysimpl_kevent50);
 
 int rump___sysimpl_pselect50(int, fd_set *, fd_set *, fd_set *, const struct timespec *, const sigset_t *);
 int
@@ -3890,7 +4039,8 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 	}
 	return rv;
 }
-rsys_alias(sys___pselect50,rump_enosys)
+rsys_define(rumpns_sys___pselect50);
+rsys_aliases(__pselect50,rump___sysimpl_pselect50);
 
 int rump___sysimpl_pollts50(struct pollfd *, u_int, const struct timespec *, const sigset_t *);
 int
@@ -3916,7 +4066,8 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 	}
 	return rv;
 }
-rsys_alias(sys___pollts50,rump_enosys)
+rsys_define(rumpns_sys___pollts50);
+rsys_aliases(__pollts50,rump___sysimpl_pollts50);
 
 int rump___sysimpl_stat50(const char *, struct stat *);
 int
@@ -3940,7 +4091,8 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_alias(sys___stat50,rump_enosys)
+rsys_define(rumpns_sys___stat50);
+rsys_aliases(__stat50,rump___sysimpl_stat50);
 
 int rump___sysimpl_fstat50(int, struct stat *);
 int
@@ -3964,7 +4116,8 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 	}
 	return rv;
 }
-rsys_alias(sys___fstat50,rump_enosys)
+rsys_define(rumpns_sys___fstat50);
+rsys_aliases(__fstat50,rump___sysimpl_fstat50);
 
 int rump___sysimpl_lstat50(const char *, struct stat *);
 int
@@ -3988,7 +4141,8 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 	}
 	return rv;
 }
-rsys_alias(sys___lstat50,rump_enosys)
+rsys_define(rumpns_sys___lstat50);
+rsys_aliases(__lstat50,rump___sysimpl_lstat50);
 
 int rump___sysimpl_mknod50(const char *, mode_t, dev_t);
 int
@@ -4013,7 +4167,8 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 	}
 	return rv;
 }
-rsys_alias(sys___mknod50,rump_enosys)
+rsys_define(rumpns_sys___mknod50);
+rsys_aliases(__mknod50,rump___sysimpl_mknod50);
 
 int rump___sysimpl_fhstat50(const void *, size_t, struct stat *);
 int
@@ -4038,7 +4193,8 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 	}
 	return rv;
 }
-rsys_alias(sys___fhstat50,rump_enosys)
+rsys_define(rumpns_sys___fhstat50);
+rsys_aliases(__fhstat50,rump___sysimpl_fhstat50);
 
 int rump___sysimpl_pipe2(int *, int);
 int
@@ -4062,7 +4218,8 @@ rump___sysimpl_pipe2(int * fildes, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_pipe2,rump_enosys)
+rsys_define(rumpns_sys_pipe2);
+rsys_aliases(pipe2,rump___sysimpl_pipe2);
 
 int rump___sysimpl_dup3(int, int, int);
 int
@@ -4087,7 +4244,8 @@ rump___sysimpl_dup3(int from, int to, int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_dup3,rump_enosys)
+rsys_define(rumpns_sys_dup3);
+rsys_aliases(dup3,rump___sysimpl_dup3);
 
 int rump___sysimpl_kqueue1(int);
 int
@@ -4110,7 +4268,8 @@ rump___sysimpl_kqueue1(int flags)
 	}
 	return rv;
 }
-rsys_alias(sys_kqueue1,rump_enosys)
+rsys_define(rumpns_sys_kqueue1);
+rsys_aliases(kqueue1,rump___sysimpl_kqueue1);
 
 int rump___sysimpl_paccept(int, struct sockaddr *, socklen_t *, const sigset_t *, int);
 int
@@ -4137,7 +4296,8 @@ rump___sysimpl_paccept(int s, struct sockaddr * name, socklen_t * anamelen, cons
 	}
 	return rv;
 }
-rsys_alias(sys_paccept,rump_enosys)
+rsys_define(rumpns_sys_paccept);
+rsys_aliases(paccept,rump___sysimpl_paccept);
 
 int rump___sysimpl_linkat(int, const char *, int, const char *, int);
 int
@@ -4164,7 +4324,8 @@ rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, 
 	}
 	return rv;
 }
-rsys_alias(sys_linkat,rump_enosys)
+rsys_define(rumpns_sys_linkat);
+rsys_aliases(linkat,rump___sysimpl_linkat);
 
 int rump___sysimpl_renameat(int, const char *, int, const char *);
 int
@@ -4190,7 +4351,8 @@ rump___sysimpl_renameat(int fromfd, const char * from, int tofd, const char * to
 	}
 	return rv;
 }
-rsys_alias(sys_renameat,rump_enosys)
+rsys_define(rumpns_sys_renameat);
+rsys_aliases(renameat,rump___sysimpl_renameat);
 
 int rump___sysimpl_mkfifoat(int, const char *, mode_t);
 int
@@ -4215,7 +4377,8 @@ rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_mkfifoat,rump_enosys)
+rsys_define(rumpns_sys_mkfifoat);
+rsys_aliases(mkfifoat,rump___sysimpl_mkfifoat);
 
 int rump___sysimpl_mknodat(int, const char *, mode_t, uint32_t);
 int
@@ -4241,7 +4404,8 @@ rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, uint32_t dev)
 	}
 	return rv;
 }
-rsys_alias(sys_mknodat,rump_enosys)
+rsys_define(rumpns_sys_mknodat);
+rsys_aliases(mknodat,rump___sysimpl_mknodat);
 
 int rump___sysimpl_mkdirat(int, const char *, mode_t);
 int
@@ -4266,7 +4430,8 @@ rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_mkdirat,rump_enosys)
+rsys_define(rumpns_sys_mkdirat);
+rsys_aliases(mkdirat,rump___sysimpl_mkdirat);
 
 int rump___sysimpl_faccessat(int, const char *, int, int);
 int
@@ -4292,7 +4457,8 @@ rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
 	}
 	return rv;
 }
-rsys_alias(sys_faccessat,rump_enosys)
+rsys_define(rumpns_sys_faccessat);
+rsys_aliases(faccessat,rump___sysimpl_faccessat);
 
 int rump___sysimpl_fchmodat(int, const char *, mode_t, int);
 int
@@ -4318,7 +4484,8 @@ rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
 	}
 	return rv;
 }
-rsys_alias(sys_fchmodat,rump_enosys)
+rsys_define(rumpns_sys_fchmodat);
+rsys_aliases(fchmodat,rump___sysimpl_fchmodat);
 
 int rump___sysimpl_fchownat(int, const char *, uid_t, gid_t, int);
 int
@@ -4345,7 +4512,8 @@ rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int
 	}
 	return rv;
 }
-rsys_alias(sys_fchownat,rump_enosys)
+rsys_define(rumpns_sys_fchownat);
+rsys_aliases(fchownat,rump___sysimpl_fchownat);
 
 int rump___sysimpl_fstatat(int, const char *, struct stat *, int);
 int
@@ -4371,7 +4539,8 @@ rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
 	}
 	return rv;
 }
-rsys_alias(sys_fstatat,rump_enosys)
+rsys_define(rumpns_sys_fstatat);
+rsys_aliases(fstatat,rump___sysimpl_fstatat);
 
 int rump___sysimpl_utimensat(int, const char *, const struct timespec *, int);
 int
@@ -4397,7 +4566,8 @@ rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr
 	}
 	return rv;
 }
-rsys_alias(sys_utimensat,rump_enosys)
+rsys_define(rumpns_sys_utimensat);
+rsys_aliases(utimensat,rump___sysimpl_utimensat);
 
 int rump___sysimpl_openat(int, const char *, int, mode_t);
 int
@@ -4423,7 +4593,8 @@ rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 	}
 	return rv;
 }
-rsys_alias(sys_openat,rump_enosys)
+rsys_define(rumpns_sys_openat);
+rsys_aliases(openat,rump___sysimpl_openat);
 
 int rump___sysimpl_readlinkat(int, const char *, char *, size_t);
 int
@@ -4449,7 +4620,8 @@ rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 	}
 	return rv;
 }
-rsys_alias(sys_readlinkat,rump_enosys)
+rsys_define(rumpns_sys_readlinkat);
+rsys_aliases(readlinkat,rump___sysimpl_readlinkat);
 
 int rump___sysimpl_symlinkat(const char *, int, const char *);
 int
@@ -4474,7 +4646,8 @@ rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
 	}
 	return rv;
 }
-rsys_alias(sys_symlinkat,rump_enosys)
+rsys_define(rumpns_sys_symlinkat);
+rsys_aliases(symlinkat,rump___sysimpl_symlinkat);
 
 int rump___sysimpl_unlinkat(int, const char *, int);
 int
@@ -4499,7 +4672,8 @@ rump___sysimpl_unlinkat(int fd, const char * path, int flag)
 	}
 	return rv;
 }
-rsys_alias(sys_unlinkat,rump_enosys)
+rsys_define(rumpns_sys_unlinkat);
+rsys_aliases(unlinkat,rump___sysimpl_unlinkat);
 
 int rump___sysimpl_futimens(int, const struct timespec *);
 int
@@ -4523,7 +4697,8 @@ rump___sysimpl_futimens(int fd, const struct timespec * tptr)
 	}
 	return rv;
 }
-rsys_alias(sys_futimens,rump_enosys)
+rsys_define(rumpns_sys_futimens);
+rsys_aliases(futimens,rump___sysimpl_futimens);
 
 int rump___sysimpl___quotactl(const char *, struct quotactl_args *);
 int
@@ -4547,7 +4722,8 @@ rump___sysimpl___quotactl(const char * path, struct quotactl_args * args)
 	}
 	return rv;
 }
-rsys_alias(sys___quotactl,rump_enosys)
+rsys_define(rumpns_sys___quotactl);
+rsys_aliases(__quotactl,rump___sysimpl___quotactl);
 
 int rump___sysimpl_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int, struct timespec *);
 int
@@ -4574,7 +4750,8 @@ rump___sysimpl_recvmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	}
 	return rv;
 }
-rsys_alias(sys_recvmmsg,rump_enosys)
+rsys_define(rumpns_sys_recvmmsg);
+rsys_aliases(recvmmsg,rump___sysimpl_recvmmsg);
 
 int rump___sysimpl_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
 int
@@ -4600,7 +4777,8 @@ rump___sysimpl_sendmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	}
 	return rv;
 }
-rsys_alias(sys_sendmmsg,rump_enosys)
+rsys_define(rumpns_sys_sendmmsg);
+rsys_aliases(sendmmsg,rump___sysimpl_sendmmsg);
 
 int rump_sys_pipe(int *);
 int
@@ -4618,6 +4796,8 @@ rump_sys_pipe(int *fd)
 	}
 	return error ? -1 : 0;
 }
+rsys_define(rumpns_sys_pipe);
+rsys_aliases(pipe,rump_sys_pipe);
 
 #ifndef RUMP_CLIENT
 #define	s(type)	sizeof(type)
@@ -4632,131 +4812,131 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 2 = fork */
 	{ ns(struct sys_read_args), 0,
-	    (sy_call_t *)sys_read },		/* 3 = read */
+	    (sy_call_t *)rumpns_sys_read },	/* 3 = read */
 	{ ns(struct sys_write_args), 0,
-	    (sy_call_t *)sys_write },		/* 4 = write */
+	    (sy_call_t *)rumpns_sys_write },	/* 4 = write */
 	{ ns(struct sys_open_args), 0,
-	    (sy_call_t *)sys_open },		/* 5 = open */
+	    (sy_call_t *)rumpns_sys_open },	/* 5 = open */
 	{ ns(struct sys_close_args), 0,
-	    (sy_call_t *)sys_close },		/* 6 = close */
+	    (sy_call_t *)rumpns_sys_close },	/* 6 = close */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 7 = wait4 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 7 = wait4 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 8 = ocreat */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 8 = ocreat */
 	{ ns(struct sys_link_args), 0,
-	    (sy_call_t *)sys_link },		/* 9 = link */
+	    (sy_call_t *)rumpns_sys_link },	/* 9 = link */
 	{ ns(struct sys_unlink_args), 0,
-	    (sy_call_t *)sys_unlink },		/* 10 = unlink */
+	    (sy_call_t *)rumpns_sys_unlink },	/* 10 = unlink */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 11 = obsolete execv */
 	{ ns(struct sys_chdir_args), 0,
-	    (sy_call_t *)sys_chdir },		/* 12 = chdir */
+	    (sy_call_t *)rumpns_sys_chdir },	/* 12 = chdir */
 	{ ns(struct sys_fchdir_args), 0,
-	    (sy_call_t *)sys_fchdir },		/* 13 = fchdir */
+	    (sy_call_t *)rumpns_sys_fchdir },	/* 13 = fchdir */
 	{ ns(struct compat_50_sys_mknod_args), 0,
-	    (sy_call_t *)compat_50_sys_mknod },	/* 14 = compat_50_mknod */
+	    (sy_call_t *)rumpns_compat_50_sys_mknod },/* 14 = compat_50_mknod */
 	{ ns(struct sys_chmod_args), 0,
-	    (sy_call_t *)sys_chmod },		/* 15 = chmod */
+	    (sy_call_t *)rumpns_sys_chmod },	/* 15 = chmod */
 	{ ns(struct sys_chown_args), 0,
-	    (sy_call_t *)sys_chown },		/* 16 = chown */
+	    (sy_call_t *)rumpns_sys_chown },	/* 16 = chown */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 17 = break */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 18 = getfsstat */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 18 = getfsstat */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 19 = olseek */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 19 = olseek */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getpid_with_ppid },/* 20 = getpid */
+	    (sy_call_t *)rumpns_sys_getpid_with_ppid },/* 20 = getpid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 21 = mount */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 21 = mount */
 	{ ns(struct sys_unmount_args), 0,
-	    (sy_call_t *)sys_unmount },		/* 22 = unmount */
+	    (sy_call_t *)rumpns_sys_unmount },	/* 22 = unmount */
 	{ ns(struct sys_setuid_args), 0,
-	    (sy_call_t *)sys_setuid },		/* 23 = setuid */
+	    (sy_call_t *)rumpns_sys_setuid },	/* 23 = setuid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getuid_with_euid },/* 24 = getuid */
+	    (sy_call_t *)rumpns_sys_getuid_with_euid },/* 24 = getuid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_geteuid },		/* 25 = geteuid */
+	    (sy_call_t *)rumpns_sys_geteuid },	/* 25 = geteuid */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 26 = ptrace */
 	{ ns(struct sys_recvmsg_args), 0,
-	    (sy_call_t *)sys_recvmsg },		/* 27 = recvmsg */
+	    (sy_call_t *)rumpns_sys_recvmsg },	/* 27 = recvmsg */
 	{ ns(struct sys_sendmsg_args), 0,
-	    (sy_call_t *)sys_sendmsg },		/* 28 = sendmsg */
+	    (sy_call_t *)rumpns_sys_sendmsg },	/* 28 = sendmsg */
 	{ ns(struct sys_recvfrom_args), 0,
-	    (sy_call_t *)sys_recvfrom },	/* 29 = recvfrom */
+	    (sy_call_t *)rumpns_sys_recvfrom },	/* 29 = recvfrom */
 	{ ns(struct sys_accept_args), 0,
-	    (sy_call_t *)sys_accept },		/* 30 = accept */
+	    (sy_call_t *)rumpns_sys_accept },	/* 30 = accept */
 	{ ns(struct sys_getpeername_args), 0,
-	    (sy_call_t *)sys_getpeername },	/* 31 = getpeername */
+	    (sy_call_t *)rumpns_sys_getpeername },/* 31 = getpeername */
 	{ ns(struct sys_getsockname_args), 0,
-	    (sy_call_t *)sys_getsockname },	/* 32 = getsockname */
+	    (sy_call_t *)rumpns_sys_getsockname },/* 32 = getsockname */
 	{ ns(struct sys_access_args), 0,
-	    (sy_call_t *)sys_access },		/* 33 = access */
+	    (sy_call_t *)rumpns_sys_access },	/* 33 = access */
 	{ ns(struct sys_chflags_args), 0,
-	    (sy_call_t *)sys_chflags },		/* 34 = chflags */
+	    (sy_call_t *)rumpns_sys_chflags },	/* 34 = chflags */
 	{ ns(struct sys_fchflags_args), 0,
-	    (sy_call_t *)sys_fchflags },	/* 35 = fchflags */
+	    (sy_call_t *)rumpns_sys_fchflags },	/* 35 = fchflags */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_sync },		/* 36 = sync */
+	    (sy_call_t *)rumpns_sys_sync },	/* 36 = sync */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 37 = kill */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 38 = stat43 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 38 = stat43 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getppid },		/* 39 = getppid */
+	    (sy_call_t *)rumpns_sys_getppid },	/* 39 = getppid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 40 = lstat43 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 40 = lstat43 */
 	{ ns(struct sys_dup_args), 0,
-	    (sy_call_t *)sys_dup },		/* 41 = dup */
+	    (sy_call_t *)rumpns_sys_dup },	/* 41 = dup */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_pipe },		/* 42 = pipe */
+	    (sy_call_t *)rumpns_sys_pipe },	/* 42 = pipe */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getegid },		/* 43 = getegid */
+	    (sy_call_t *)rumpns_sys_getegid },	/* 43 = getegid */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 44 = profil */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 45 = ktrace */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 46 = sigaction13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 46 = sigaction13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getgid_with_egid },/* 47 = getgid */
+	    (sy_call_t *)rumpns_sys_getgid_with_egid },/* 47 = getgid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 48 = sigprocmask13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 48 = sigprocmask13 */
 	{ ns(struct sys___getlogin_args), 0,
-	    (sy_call_t *)sys___getlogin },	/* 49 = __getlogin */
+	    (sy_call_t *)rumpns_sys___getlogin },/* 49 = __getlogin */
 	{ ns(struct sys___setlogin_args), 0,
-	    (sy_call_t *)sys___setlogin },	/* 50 = __setlogin */
+	    (sy_call_t *)rumpns_sys___setlogin },/* 50 = __setlogin */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 51 = acct */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 52 = sigpending13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 52 = sigpending13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 53 = sigaltstack13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 53 = sigaltstack13 */
 	{ ns(struct sys_ioctl_args), 0,
-	    (sy_call_t *)sys_ioctl },		/* 54 = ioctl */
+	    (sy_call_t *)rumpns_sys_ioctl },	/* 54 = ioctl */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 55 = oreboot */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 55 = oreboot */
 	{ ns(struct sys_revoke_args), 0,
-	    (sy_call_t *)sys_revoke },		/* 56 = revoke */
+	    (sy_call_t *)rumpns_sys_revoke },	/* 56 = revoke */
 	{ ns(struct sys_symlink_args), 0,
-	    (sy_call_t *)sys_symlink },		/* 57 = symlink */
+	    (sy_call_t *)rumpns_sys_symlink },	/* 57 = symlink */
 	{ ns(struct sys_readlink_args), 0,
-	    (sy_call_t *)sys_readlink },	/* 58 = readlink */
+	    (sy_call_t *)rumpns_sys_readlink },	/* 58 = readlink */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 59 = execve */
 	{ ns(struct sys_umask_args), 0,
-	    (sy_call_t *)sys_umask },		/* 60 = umask */
+	    (sy_call_t *)rumpns_sys_umask },	/* 60 = umask */
 	{ ns(struct sys_chroot_args), 0,
-	    (sy_call_t *)sys_chroot },		/* 61 = chroot */
+	    (sy_call_t *)rumpns_sys_chroot },	/* 61 = chroot */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 62 = fstat43 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 62 = fstat43 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 63 = ogetkerninfo */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 63 = ogetkerninfo */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 64 = ogetpagesize */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 64 = ogetpagesize */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 65 = msync */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 65 = msync */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 66 = vfork */
 	{ 0, 0, SYCALL_NOSYS,
@@ -4768,7 +4948,7 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 70 = sstk */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 71 = ommap */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 71 = ommap */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 72 = vadvise */
 	{ 0, 0, SYCALL_NOSYS,
@@ -4784,149 +4964,149 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 78 = mincore */
 	{ ns(struct sys_getgroups_args), 0,
-	    (sy_call_t *)sys_getgroups },	/* 79 = getgroups */
+	    (sy_call_t *)rumpns_sys_getgroups },/* 79 = getgroups */
 	{ ns(struct sys_setgroups_args), 0,
-	    (sy_call_t *)sys_setgroups },	/* 80 = setgroups */
+	    (sy_call_t *)rumpns_sys_setgroups },/* 80 = setgroups */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_getpgrp },		/* 81 = getpgrp */
+	    (sy_call_t *)rumpns_sys_getpgrp },	/* 81 = getpgrp */
 	{ ns(struct sys_setpgid_args), 0,
-	    (sy_call_t *)sys_setpgid },		/* 82 = setpgid */
+	    (sy_call_t *)rumpns_sys_setpgid },	/* 82 = setpgid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 83 = setitimer */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 83 = setitimer */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 84 = owait */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 84 = owait */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 85 = oswapon */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 85 = oswapon */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 86 = getitimer */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 86 = getitimer */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 87 = ogethostname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 87 = ogethostname */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 88 = osethostname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 88 = osethostname */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 89 = ogetdtablesize */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 89 = ogetdtablesize */
 	{ ns(struct sys_dup2_args), 0,
-	    (sy_call_t *)sys_dup2 },		/* 90 = dup2 */
+	    (sy_call_t *)rumpns_sys_dup2 },	/* 90 = dup2 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 91 = unimplemented getdopt */
 	{ ns(struct sys_fcntl_args), 0,
-	    (sy_call_t *)sys_fcntl },		/* 92 = fcntl */
+	    (sy_call_t *)rumpns_sys_fcntl },	/* 92 = fcntl */
 	{ ns(struct compat_50_sys_select_args), 0,
-	    (sy_call_t *)compat_50_sys_select },/* 93 = compat_50_select */
+	    (sy_call_t *)rumpns_compat_50_sys_select },/* 93 = compat_50_select */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 94 = unimplemented setdopt */
 	{ ns(struct sys_fsync_args), 0,
-	    (sy_call_t *)sys_fsync },		/* 95 = fsync */
+	    (sy_call_t *)rumpns_sys_fsync },	/* 95 = fsync */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 96 = setpriority */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 97 = socket */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 97 = socket */
 	{ ns(struct sys_connect_args), 0,
-	    (sy_call_t *)sys_connect },		/* 98 = connect */
+	    (sy_call_t *)rumpns_sys_connect },	/* 98 = connect */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 99 = oaccept */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 99 = oaccept */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 100 = getpriority */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 101 = osend */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 101 = osend */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 102 = orecv */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 102 = orecv */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 103 = sigreturn13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 103 = sigreturn13 */
 	{ ns(struct sys_bind_args), 0,
-	    (sy_call_t *)sys_bind },		/* 104 = bind */
+	    (sy_call_t *)rumpns_sys_bind },	/* 104 = bind */
 	{ ns(struct sys_setsockopt_args), 0,
-	    (sy_call_t *)sys_setsockopt },	/* 105 = setsockopt */
+	    (sy_call_t *)rumpns_sys_setsockopt },/* 105 = setsockopt */
 	{ ns(struct sys_listen_args), 0,
-	    (sy_call_t *)sys_listen },		/* 106 = listen */
+	    (sy_call_t *)rumpns_sys_listen },	/* 106 = listen */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 107 = obsolete vtimes */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 108 = osigvec */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 108 = osigvec */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 109 = osigblock */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 109 = osigblock */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 110 = osigsetmask */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 110 = osigsetmask */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 111 = sigsuspend13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 111 = sigsuspend13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 112 = osigstack */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 112 = osigstack */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 113 = orecvmsg */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 113 = orecvmsg */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 114 = osendmsg */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 114 = osendmsg */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 115 = obsolete vtrace */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 116 = gettimeofday */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 116 = gettimeofday */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 117 = getrusage */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 117 = getrusage */
 	{ ns(struct sys_getsockopt_args), 0,
-	    (sy_call_t *)sys_getsockopt },	/* 118 = getsockopt */
+	    (sy_call_t *)rumpns_sys_getsockopt },/* 118 = getsockopt */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 119 = obsolete resuba */
 	{ ns(struct sys_readv_args), 0,
-	    (sy_call_t *)sys_readv },		/* 120 = readv */
+	    (sy_call_t *)rumpns_sys_readv },	/* 120 = readv */
 	{ ns(struct sys_writev_args), 0,
-	    (sy_call_t *)sys_writev },		/* 121 = writev */
+	    (sy_call_t *)rumpns_sys_writev },	/* 121 = writev */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 122 = settimeofday */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 122 = settimeofday */
 	{ ns(struct sys_fchown_args), 0,
-	    (sy_call_t *)sys_fchown },		/* 123 = fchown */
+	    (sy_call_t *)rumpns_sys_fchown },	/* 123 = fchown */
 	{ ns(struct sys_fchmod_args), 0,
-	    (sy_call_t *)sys_fchmod },		/* 124 = fchmod */
+	    (sy_call_t *)rumpns_sys_fchmod },	/* 124 = fchmod */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 125 = orecvfrom */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 125 = orecvfrom */
 	{ ns(struct sys_setreuid_args), 0,
-	    (sy_call_t *)sys_setreuid },	/* 126 = setreuid */
+	    (sy_call_t *)rumpns_sys_setreuid },	/* 126 = setreuid */
 	{ ns(struct sys_setregid_args), 0,
-	    (sy_call_t *)sys_setregid },	/* 127 = setregid */
+	    (sy_call_t *)rumpns_sys_setregid },	/* 127 = setregid */
 	{ ns(struct sys_rename_args), 0,
-	    (sy_call_t *)sys_rename },		/* 128 = rename */
+	    (sy_call_t *)rumpns_sys_rename },	/* 128 = rename */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 129 = otruncate */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 129 = otruncate */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 130 = oftruncate */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 130 = oftruncate */
 	{ ns(struct sys_flock_args), 0,
-	    (sy_call_t *)sys_flock },		/* 131 = flock */
+	    (sy_call_t *)rumpns_sys_flock },	/* 131 = flock */
 	{ ns(struct sys_mkfifo_args), 0,
-	    (sy_call_t *)sys_mkfifo },		/* 132 = mkfifo */
+	    (sy_call_t *)rumpns_sys_mkfifo },	/* 132 = mkfifo */
 	{ ns(struct sys_sendto_args), 0,
-	    (sy_call_t *)sys_sendto },		/* 133 = sendto */
+	    (sy_call_t *)rumpns_sys_sendto },	/* 133 = sendto */
 	{ ns(struct sys_shutdown_args), 0,
-	    (sy_call_t *)sys_shutdown },	/* 134 = shutdown */
+	    (sy_call_t *)rumpns_sys_shutdown },	/* 134 = shutdown */
 	{ ns(struct sys_socketpair_args), 0,
-	    (sy_call_t *)sys_socketpair },	/* 135 = socketpair */
+	    (sy_call_t *)rumpns_sys_socketpair },/* 135 = socketpair */
 	{ ns(struct sys_mkdir_args), 0,
-	    (sy_call_t *)sys_mkdir },		/* 136 = mkdir */
+	    (sy_call_t *)rumpns_sys_mkdir },	/* 136 = mkdir */
 	{ ns(struct sys_rmdir_args), 0,
-	    (sy_call_t *)sys_rmdir },		/* 137 = rmdir */
+	    (sy_call_t *)rumpns_sys_rmdir },	/* 137 = rmdir */
 	{ ns(struct compat_50_sys_utimes_args), 0,
-	    (sy_call_t *)compat_50_sys_utimes },/* 138 = compat_50_utimes */
+	    (sy_call_t *)rumpns_compat_50_sys_utimes },/* 138 = compat_50_utimes */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 139 = obsolete 4.2 sigreturn */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 140 = adjtime */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 140 = adjtime */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 141 = ogetpeername */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 141 = ogetpeername */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 142 = ogethostid */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 142 = ogethostid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 143 = osethostid */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 143 = osethostid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 144 = ogetrlimit */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 144 = ogetrlimit */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 145 = osetrlimit */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 145 = osetrlimit */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 146 = okillpg */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 146 = okillpg */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_setsid },		/* 147 = setsid */
+	    (sy_call_t *)rumpns_sys_setsid },	/* 147 = setsid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 148 = quotactl */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 148 = quotactl */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 149 = oquota */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 149 = oquota */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 150 = ogetsockname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 150 = ogetsockname */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 151 = unimplemented */
 	{ 0, 0, SYCALL_NOSYS,
@@ -4936,25 +5116,25 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 154 = unimplemented */
 	{ ns(struct sys_nfssvc_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 155 = nfssvc */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 155 = nfssvc */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 156 = ogetdirentries */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 156 = ogetdirentries */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 157 = statfs */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 157 = statfs */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 158 = fstatfs */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 158 = fstatfs */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 159 = unimplemented */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 160 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 161 = getfh */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 161 = getfh */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 162 = ogetdomainname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 162 = ogetdomainname */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 163 = osetdomainname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 163 = osetdomainname */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 164 = ouname */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 164 = ouname */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 165 = sysarch */
 	{ 0, 0, SYCALL_NOSYS,
@@ -4965,21 +5145,21 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },		/* 168 = unimplemented */
 #if (defined(SYSVSEM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 169 = osemsys */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 169 = osemsys */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 169 = excluded 1.0 semsys */
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 170 = omsgsys */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 170 = omsgsys */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 170 = excluded 1.0 msgsys */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 171 = oshmsys */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 171 = oshmsys */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 171 = excluded 1.0 shmsys */
@@ -4987,9 +5167,9 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 172 = unimplemented */
 	{ ns(struct sys_pread_args), 0,
-	    (sy_call_t *)sys_pread },		/* 173 = pread */
+	    (sy_call_t *)rumpns_sys_pread },	/* 173 = pread */
 	{ ns(struct sys_pwrite_args), 0,
-	    (sy_call_t *)sys_pwrite },		/* 174 = pwrite */
+	    (sy_call_t *)rumpns_sys_pwrite },	/* 174 = pwrite */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 175 = ntp_gettime */
 #if defined(NTP) || !defined(_KERNEL_OPT)
@@ -5008,49 +5188,49 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 180 = unimplemented */
 	{ ns(struct sys_setgid_args), 0,
-	    (sy_call_t *)sys_setgid },		/* 181 = setgid */
+	    (sy_call_t *)rumpns_sys_setgid },	/* 181 = setgid */
 	{ ns(struct sys_setegid_args), 0,
-	    (sy_call_t *)sys_setegid },		/* 182 = setegid */
+	    (sy_call_t *)rumpns_sys_setegid },	/* 182 = setegid */
 	{ ns(struct sys_seteuid_args), 0,
-	    (sy_call_t *)sys_seteuid },		/* 183 = seteuid */
+	    (sy_call_t *)rumpns_sys_seteuid },	/* 183 = seteuid */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 184 = lfs_bmapv */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 184 = lfs_bmapv */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 185 = lfs_markv */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 185 = lfs_markv */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 186 = lfs_segclean */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 186 = lfs_segclean */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 187 = lfs_segwait */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 187 = lfs_segwait */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 188 = stat12 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 188 = stat12 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 189 = fstat12 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 189 = fstat12 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 190 = lstat12 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 190 = lstat12 */
 	{ ns(struct sys_pathconf_args), 0,
-	    (sy_call_t *)sys_pathconf },	/* 191 = pathconf */
+	    (sy_call_t *)rumpns_sys_pathconf },	/* 191 = pathconf */
 	{ ns(struct sys_fpathconf_args), 0,
-	    (sy_call_t *)sys_fpathconf },	/* 192 = fpathconf */
+	    (sy_call_t *)rumpns_sys_fpathconf },/* 192 = fpathconf */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 193 = unimplemented */
 	{ ns(struct sys_getrlimit_args), 0,
-	    (sy_call_t *)sys_getrlimit },	/* 194 = getrlimit */
+	    (sy_call_t *)rumpns_sys_getrlimit },/* 194 = getrlimit */
 	{ ns(struct sys_setrlimit_args), 0,
-	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
+	    (sy_call_t *)rumpns_sys_setrlimit },/* 195 = setrlimit */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 196 = getdirentries */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 196 = getdirentries */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 197 = mmap */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 198 = __syscall */
 	{ ns(struct sys_lseek_args), 0,
-	    (sy_call_t *)sys_lseek },		/* 199 = lseek */
+	    (sy_call_t *)rumpns_sys_lseek },	/* 199 = lseek */
 	{ ns(struct sys_truncate_args), 0,
-	    (sy_call_t *)sys_truncate },	/* 200 = truncate */
+	    (sy_call_t *)rumpns_sys_truncate },	/* 200 = truncate */
 	{ ns(struct sys_ftruncate_args), 0,
-	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
+	    (sy_call_t *)rumpns_sys_ftruncate },/* 201 = ftruncate */
 	{ ns(struct sys___sysctl_args), 0,
-	    (sy_call_t *)sys___sysctl },	/* 202 = __sysctl */
+	    (sy_call_t *)rumpns_sys___sysctl },	/* 202 = __sysctl */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 203 = mlock */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5058,15 +5238,15 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 205 = undelete */
 	{ ns(struct compat_50_sys_futimes_args), 0,
-	    (sy_call_t *)compat_50_sys_futimes },/* 206 = compat_50_futimes */
+	    (sy_call_t *)rumpns_compat_50_sys_futimes },/* 206 = compat_50_futimes */
 	{ ns(struct sys_getpgid_args), 0,
-	    (sy_call_t *)sys_getpgid },		/* 207 = getpgid */
+	    (sy_call_t *)rumpns_sys_getpgid },	/* 207 = getpgid */
 	{ ns(struct sys_reboot_args), 0,
-	    (sy_call_t *)sys_reboot },		/* 208 = reboot */
+	    (sy_call_t *)rumpns_sys_reboot },	/* 208 = reboot */
 	{ ns(struct sys_poll_args), 0,
-	    (sy_call_t *)sys_poll },		/* 209 = poll */
+	    (sy_call_t *)rumpns_sys_poll },	/* 209 = poll */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 210 = afssys */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 210 = afssys */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 211 = unimplemented */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5087,7 +5267,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },		/* 219 = unimplemented */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 220 = __semctl */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 220 = __semctl */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 221 = semget */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5106,7 +5286,7 @@ struct sysent rump_sysent[] = {
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 224 = msgctl */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 224 = msgctl */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 225 = msgget */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5127,7 +5307,7 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 228 = shmat */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 229 = shmctl */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 229 = shmctl */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 230 = shmdt */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5143,75 +5323,75 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },		/* 231 = excluded shmget */
 #endif
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 232 = clock_gettime */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 232 = clock_gettime */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 233 = clock_settime */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 233 = clock_settime */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 234 = clock_getres */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 234 = clock_getres */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 235 = timer_create */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 236 = timer_delete */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 237 = timer_settime */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 237 = timer_settime */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 238 = timer_gettime */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 238 = timer_gettime */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 239 = timer_getoverrun */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 240 = nanosleep */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 240 = nanosleep */
 	{ ns(struct sys_fdatasync_args), 0,
-	    (sy_call_t *)sys_fdatasync },	/* 241 = fdatasync */
+	    (sy_call_t *)rumpns_sys_fdatasync },/* 241 = fdatasync */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 242 = mlockall */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 243 = munlockall */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 244 = __sigtimedwait */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 244 = __sigtimedwait */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 245 = sigqueueinfo */
 	{ ns(struct sys_modctl_args), 0,
-	    (sy_call_t *)sys_modctl },		/* 246 = modctl */
+	    (sy_call_t *)rumpns_sys_modctl },	/* 246 = modctl */
 	{ ns(struct sys__ksem_init_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 247 = _ksem_init */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 247 = _ksem_init */
 	{ ns(struct sys__ksem_open_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 248 = _ksem_open */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 248 = _ksem_open */
 	{ ns(struct sys__ksem_unlink_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 249 = _ksem_unlink */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 249 = _ksem_unlink */
 	{ ns(struct sys__ksem_close_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 250 = _ksem_close */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 250 = _ksem_close */
 	{ ns(struct sys__ksem_post_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 251 = _ksem_post */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 251 = _ksem_post */
 	{ ns(struct sys__ksem_wait_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 252 = _ksem_wait */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 252 = _ksem_wait */
 	{ ns(struct sys__ksem_trywait_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 253 = _ksem_trywait */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 253 = _ksem_trywait */
 	{ ns(struct sys__ksem_getvalue_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 254 = _ksem_getvalue */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 254 = _ksem_getvalue */
 	{ ns(struct sys__ksem_destroy_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 255 = _ksem_destroy */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 255 = _ksem_destroy */
 	{ ns(struct sys__ksem_timedwait_args), 0,
-	    (sy_call_t *)sys_nomodule },	/* 256 = _ksem_timedwait */
+	    (sy_call_t *)rumpns_sys_nomodule },	/* 256 = _ksem_timedwait */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 257 = mq_open */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 257 = mq_open */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 258 = mq_close */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 258 = mq_close */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 259 = mq_unlink */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 259 = mq_unlink */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 260 = mq_getattr */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 260 = mq_getattr */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 261 = mq_setattr */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 261 = mq_setattr */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 262 = mq_notify */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 262 = mq_notify */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 263 = mq_send */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 263 = mq_send */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 264 = mq_receive */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 264 = mq_receive */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 265 = mq_timedsend */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 265 = mq_timedsend */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 266 = mq_timedreceive */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 266 = mq_timedreceive */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 267 = unimplemented */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5223,23 +5403,23 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 271 = swapctl */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 272 = getdents */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 272 = getdents */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 273 = minherit */
 	{ ns(struct sys_lchmod_args), 0,
-	    (sy_call_t *)sys_lchmod },		/* 274 = lchmod */
+	    (sy_call_t *)rumpns_sys_lchmod },	/* 274 = lchmod */
 	{ ns(struct sys_lchown_args), 0,
-	    (sy_call_t *)sys_lchown },		/* 275 = lchown */
+	    (sy_call_t *)rumpns_sys_lchown },	/* 275 = lchown */
 	{ ns(struct compat_50_sys_lutimes_args), 0,
-	    (sy_call_t *)compat_50_sys_lutimes },/* 276 = compat_50_lutimes */
+	    (sy_call_t *)rumpns_compat_50_sys_lutimes },/* 276 = compat_50_lutimes */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 277 = __msync13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 278 = __stat13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 278 = __stat13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 279 = __fstat13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 279 = __fstat13 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 280 = __lstat13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 280 = __lstat13 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 281 = __sigaltstack14 */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5251,17 +5431,17 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 285 = __posix_lchown */
 	{ ns(struct sys_getsid_args), 0,
-	    (sy_call_t *)sys_getsid },		/* 286 = getsid */
+	    (sy_call_t *)rumpns_sys_getsid },	/* 286 = getsid */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 287 = __clone */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 288 = fktrace */
 	{ ns(struct sys_preadv_args), 0,
-	    (sy_call_t *)sys_preadv },		/* 289 = preadv */
+	    (sy_call_t *)rumpns_sys_preadv },	/* 289 = preadv */
 	{ ns(struct sys_pwritev_args), 0,
-	    (sy_call_t *)sys_pwritev },		/* 290 = pwritev */
+	    (sy_call_t *)rumpns_sys_pwritev },	/* 290 = pwritev */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 291 = __sigaction14 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 291 = __sigaction14 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 292 = __sigpending14 */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5269,42 +5449,42 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 294 = __sigsuspend14 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 295 = __sigreturn14 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 295 = __sigreturn14 */
 	{ ns(struct sys___getcwd_args), 0,
-	    (sy_call_t *)sys___getcwd },	/* 296 = __getcwd */
+	    (sy_call_t *)rumpns_sys___getcwd },	/* 296 = __getcwd */
 	{ ns(struct sys_fchroot_args), 0,
-	    (sy_call_t *)sys_fchroot },		/* 297 = fchroot */
+	    (sy_call_t *)rumpns_sys_fchroot },	/* 297 = fchroot */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 298 = fhopen */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 298 = fhopen */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 299 = fhstat */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 299 = fhstat */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 300 = fhstatfs */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 300 = fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 301 = ____semctl13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 301 = ____semctl13 */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 302 = __msgctl13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 302 = __msgctl13 */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 302 = excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 303 = __shmctl13 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 303 = __shmctl13 */
 #else
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 303 = excluded __shmctl13 */
 #endif
 	{ ns(struct sys_lchflags_args), 0,
-	    (sy_call_t *)sys_lchflags },	/* 304 = lchflags */
+	    (sy_call_t *)rumpns_sys_lchflags },	/* 304 = lchflags */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_issetugid },	/* 305 = issetugid */
+	    (sy_call_t *)rumpns_sys_issetugid },/* 305 = issetugid */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 306 = utrace */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5334,7 +5514,7 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 319 = _lwp_detach */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 320 = _lwp_park */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 320 = _lwp_park */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 321 = _lwp_unpark */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5382,9 +5562,9 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 343 = rasctl */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_kqueue },		/* 344 = kqueue */
+	    (sy_call_t *)rumpns_sys_kqueue },	/* 344 = kqueue */
 	{ ns(struct compat_50_sys_kevent_args), 0,
-	    (sy_call_t *)compat_50_sys_kevent },/* 345 = compat_50_kevent */
+	    (sy_call_t *)rumpns_compat_50_sys_kevent },/* 345 = compat_50_kevent */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 346 = _sched_setparam */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5402,111 +5582,111 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 353 = unimplemented */
 	{ ns(struct sys_fsync_range_args), 0,
-	    (sy_call_t *)sys_fsync_range },	/* 354 = fsync_range */
+	    (sy_call_t *)rumpns_sys_fsync_range },/* 354 = fsync_range */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 355 = uuidgen */
 	{ ns(struct sys_getvfsstat_args), 0,
-	    (sy_call_t *)sys_getvfsstat },	/* 356 = getvfsstat */
+	    (sy_call_t *)rumpns_sys_getvfsstat },/* 356 = getvfsstat */
 	{ ns(struct sys_statvfs1_args), 0,
-	    (sy_call_t *)sys_statvfs1 },	/* 357 = statvfs1 */
+	    (sy_call_t *)rumpns_sys_statvfs1 },	/* 357 = statvfs1 */
 	{ ns(struct sys_fstatvfs1_args), 0,
-	    (sy_call_t *)sys_fstatvfs1 },	/* 358 = fstatvfs1 */
+	    (sy_call_t *)rumpns_sys_fstatvfs1 },/* 358 = fstatvfs1 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 359 = fhstatvfs1 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 359 = fhstatvfs1 */
 	{ ns(struct sys_extattrctl_args), 0,
-	    (sy_call_t *)sys_extattrctl },	/* 360 = extattrctl */
+	    (sy_call_t *)rumpns_sys_extattrctl },/* 360 = extattrctl */
 	{ ns(struct sys_extattr_set_file_args), 0,
-	    (sy_call_t *)sys_extattr_set_file },/* 361 = extattr_set_file */
+	    (sy_call_t *)rumpns_sys_extattr_set_file },/* 361 = extattr_set_file */
 	{ ns(struct sys_extattr_get_file_args), 0,
-	    (sy_call_t *)sys_extattr_get_file },/* 362 = extattr_get_file */
+	    (sy_call_t *)rumpns_sys_extattr_get_file },/* 362 = extattr_get_file */
 	{ ns(struct sys_extattr_delete_file_args), 0,
-	    (sy_call_t *)sys_extattr_delete_file },/* 363 = extattr_delete_file */
+	    (sy_call_t *)rumpns_sys_extattr_delete_file },/* 363 = extattr_delete_file */
 	{ ns(struct sys_extattr_set_fd_args), 0,
-	    (sy_call_t *)sys_extattr_set_fd },	/* 364 = extattr_set_fd */
+	    (sy_call_t *)rumpns_sys_extattr_set_fd },/* 364 = extattr_set_fd */
 	{ ns(struct sys_extattr_get_fd_args), 0,
-	    (sy_call_t *)sys_extattr_get_fd },	/* 365 = extattr_get_fd */
+	    (sy_call_t *)rumpns_sys_extattr_get_fd },/* 365 = extattr_get_fd */
 	{ ns(struct sys_extattr_delete_fd_args), 0,
-	    (sy_call_t *)sys_extattr_delete_fd },/* 366 = extattr_delete_fd */
+	    (sy_call_t *)rumpns_sys_extattr_delete_fd },/* 366 = extattr_delete_fd */
 	{ ns(struct sys_extattr_set_link_args), 0,
-	    (sy_call_t *)sys_extattr_set_link },/* 367 = extattr_set_link */
+	    (sy_call_t *)rumpns_sys_extattr_set_link },/* 367 = extattr_set_link */
 	{ ns(struct sys_extattr_get_link_args), 0,
-	    (sy_call_t *)sys_extattr_get_link },/* 368 = extattr_get_link */
+	    (sy_call_t *)rumpns_sys_extattr_get_link },/* 368 = extattr_get_link */
 	{ ns(struct sys_extattr_delete_link_args), 0,
-	    (sy_call_t *)sys_extattr_delete_link },/* 369 = extattr_delete_link */
+	    (sy_call_t *)rumpns_sys_extattr_delete_link },/* 369 = extattr_delete_link */
 	{ ns(struct sys_extattr_list_fd_args), 0,
-	    (sy_call_t *)sys_extattr_list_fd },	/* 370 = extattr_list_fd */
+	    (sy_call_t *)rumpns_sys_extattr_list_fd },/* 370 = extattr_list_fd */
 	{ ns(struct sys_extattr_list_file_args), 0,
-	    (sy_call_t *)sys_extattr_list_file },/* 371 = extattr_list_file */
+	    (sy_call_t *)rumpns_sys_extattr_list_file },/* 371 = extattr_list_file */
 	{ ns(struct sys_extattr_list_link_args), 0,
-	    (sy_call_t *)sys_extattr_list_link },/* 372 = extattr_list_link */
+	    (sy_call_t *)rumpns_sys_extattr_list_link },/* 372 = extattr_list_link */
 	{ ns(struct compat_50_sys_pselect_args), 0,
-	    (sy_call_t *)compat_50_sys_pselect },/* 373 = compat_50_pselect */
+	    (sy_call_t *)rumpns_compat_50_sys_pselect },/* 373 = compat_50_pselect */
 	{ ns(struct compat_50_sys_pollts_args), 0,
-	    (sy_call_t *)compat_50_sys_pollts },/* 374 = compat_50_pollts */
+	    (sy_call_t *)rumpns_compat_50_sys_pollts },/* 374 = compat_50_pollts */
 	{ ns(struct sys_setxattr_args), 0,
-	    (sy_call_t *)sys_setxattr },	/* 375 = setxattr */
+	    (sy_call_t *)rumpns_sys_setxattr },	/* 375 = setxattr */
 	{ ns(struct sys_lsetxattr_args), 0,
-	    (sy_call_t *)sys_lsetxattr },	/* 376 = lsetxattr */
+	    (sy_call_t *)rumpns_sys_lsetxattr },/* 376 = lsetxattr */
 	{ ns(struct sys_fsetxattr_args), 0,
-	    (sy_call_t *)sys_fsetxattr },	/* 377 = fsetxattr */
+	    (sy_call_t *)rumpns_sys_fsetxattr },/* 377 = fsetxattr */
 	{ ns(struct sys_getxattr_args), 0,
-	    (sy_call_t *)sys_getxattr },	/* 378 = getxattr */
+	    (sy_call_t *)rumpns_sys_getxattr },	/* 378 = getxattr */
 	{ ns(struct sys_lgetxattr_args), 0,
-	    (sy_call_t *)sys_lgetxattr },	/* 379 = lgetxattr */
+	    (sy_call_t *)rumpns_sys_lgetxattr },/* 379 = lgetxattr */
 	{ ns(struct sys_fgetxattr_args), 0,
-	    (sy_call_t *)sys_fgetxattr },	/* 380 = fgetxattr */
+	    (sy_call_t *)rumpns_sys_fgetxattr },/* 380 = fgetxattr */
 	{ ns(struct sys_listxattr_args), 0,
-	    (sy_call_t *)sys_listxattr },	/* 381 = listxattr */
+	    (sy_call_t *)rumpns_sys_listxattr },/* 381 = listxattr */
 	{ ns(struct sys_llistxattr_args), 0,
-	    (sy_call_t *)sys_llistxattr },	/* 382 = llistxattr */
+	    (sy_call_t *)rumpns_sys_llistxattr },/* 382 = llistxattr */
 	{ ns(struct sys_flistxattr_args), 0,
-	    (sy_call_t *)sys_flistxattr },	/* 383 = flistxattr */
+	    (sy_call_t *)rumpns_sys_flistxattr },/* 383 = flistxattr */
 	{ ns(struct sys_removexattr_args), 0,
-	    (sy_call_t *)sys_removexattr },	/* 384 = removexattr */
+	    (sy_call_t *)rumpns_sys_removexattr },/* 384 = removexattr */
 	{ ns(struct sys_lremovexattr_args), 0,
-	    (sy_call_t *)sys_lremovexattr },	/* 385 = lremovexattr */
+	    (sy_call_t *)rumpns_sys_lremovexattr },/* 385 = lremovexattr */
 	{ ns(struct sys_fremovexattr_args), 0,
-	    (sy_call_t *)sys_fremovexattr },	/* 386 = fremovexattr */
+	    (sy_call_t *)rumpns_sys_fremovexattr },/* 386 = fremovexattr */
 	{ ns(struct compat_50_sys___stat30_args), 0,
-	    (sy_call_t *)compat_50_sys___stat30 },/* 387 = compat_50___stat30 */
+	    (sy_call_t *)rumpns_compat_50_sys___stat30 },/* 387 = compat_50___stat30 */
 	{ ns(struct compat_50_sys___fstat30_args), 0,
-	    (sy_call_t *)compat_50_sys___fstat30 },/* 388 = compat_50___fstat30 */
+	    (sy_call_t *)rumpns_compat_50_sys___fstat30 },/* 388 = compat_50___fstat30 */
 	{ ns(struct compat_50_sys___lstat30_args), 0,
-	    (sy_call_t *)compat_50_sys___lstat30 },/* 389 = compat_50___lstat30 */
+	    (sy_call_t *)rumpns_compat_50_sys___lstat30 },/* 389 = compat_50___lstat30 */
 	{ ns(struct sys___getdents30_args), 0,
-	    (sy_call_t *)sys___getdents30 },	/* 390 = __getdents30 */
+	    (sy_call_t *)rumpns_sys___getdents30 },/* 390 = __getdents30 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 391 = ignored old posix_fadvise */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 392 = __fhstat30 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 392 = __fhstat30 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 393 = __ntp_gettime30 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 393 = __ntp_gettime30 */
 	{ ns(struct sys___socket30_args), 0,
-	    (sy_call_t *)sys___socket30 },	/* 394 = __socket30 */
+	    (sy_call_t *)rumpns_sys___socket30 },/* 394 = __socket30 */
 	{ ns(struct sys___getfh30_args), 0,
-	    (sy_call_t *)sys___getfh30 },	/* 395 = __getfh30 */
+	    (sy_call_t *)rumpns_sys___getfh30 },/* 395 = __getfh30 */
 	{ ns(struct sys___fhopen40_args), 0,
-	    (sy_call_t *)sys___fhopen40 },	/* 396 = __fhopen40 */
+	    (sy_call_t *)rumpns_sys___fhopen40 },/* 396 = __fhopen40 */
 	{ ns(struct sys___fhstatvfs140_args), 0,
-	    (sy_call_t *)sys___fhstatvfs140 },	/* 397 = __fhstatvfs140 */
+	    (sy_call_t *)rumpns_sys___fhstatvfs140 },/* 397 = __fhstatvfs140 */
 	{ ns(struct compat_50_sys___fhstat40_args), 0,
-	    (sy_call_t *)compat_50_sys___fhstat40 },/* 398 = compat_50___fhstat40 */
+	    (sy_call_t *)rumpns_compat_50_sys___fhstat40 },/* 398 = compat_50___fhstat40 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 399 = aio_cancel */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 399 = aio_cancel */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 400 = aio_error */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 400 = aio_error */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 401 = aio_fsync */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 401 = aio_fsync */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 402 = aio_read */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 402 = aio_read */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 403 = aio_return */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 403 = aio_return */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 404 = aio_suspend */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 404 = aio_suspend */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 405 = aio_write */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 405 = aio_write */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 406 = lio_listio */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 406 = lio_listio */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 407 = unimplemented */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5514,7 +5694,7 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 409 = unimplemented */
 	{ ns(struct sys___mount50_args), 0,
-	    (sy_call_t *)sys___mount50 },	/* 410 = __mount50 */
+	    (sy_call_t *)rumpns_sys___mount50 },/* 410 = __mount50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 411 = mremap */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5526,23 +5706,23 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 415 = _pset_bind */
 	{ ns(struct sys___posix_fadvise50_args), 0,
-	    (sy_call_t *)sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
+	    (sy_call_t *)rumpns_sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
 	{ ns(struct sys___select50_args), 0,
-	    (sy_call_t *)sys___select50 },	/* 417 = __select50 */
+	    (sy_call_t *)rumpns_sys___select50 },/* 417 = __select50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 418 = __gettimeofday50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 419 = __settimeofday50 */
 	{ ns(struct sys___utimes50_args), 0,
-	    (sy_call_t *)sys___utimes50 },	/* 420 = __utimes50 */
+	    (sy_call_t *)rumpns_sys___utimes50 },/* 420 = __utimes50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 421 = __adjtime50 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 422 = __lfs_segwait50 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 422 = __lfs_segwait50 */
 	{ ns(struct sys___futimes50_args), 0,
-	    (sy_call_t *)sys___futimes50 },	/* 423 = __futimes50 */
+	    (sy_call_t *)rumpns_sys___futimes50 },/* 423 = __futimes50 */
 	{ ns(struct sys___lutimes50_args), 0,
-	    (sy_call_t *)sys___lutimes50 },	/* 424 = __lutimes50 */
+	    (sy_call_t *)rumpns_sys___lutimes50 },/* 424 = __lutimes50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 425 = __setitimer50 */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5558,25 +5738,25 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 431 = ____sigtimedwait50 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 432 = __mq_timedsend50 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 432 = __mq_timedsend50 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 433 = __mq_timedreceive50 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 433 = __mq_timedreceive50 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 434 = _lwp_park */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 434 = _lwp_park */
 	{ ns(struct sys___kevent50_args), 0,
-	    (sy_call_t *)sys___kevent50 },	/* 435 = __kevent50 */
+	    (sy_call_t *)rumpns_sys___kevent50 },/* 435 = __kevent50 */
 	{ ns(struct sys___pselect50_args), 0,
-	    (sy_call_t *)sys___pselect50 },	/* 436 = __pselect50 */
+	    (sy_call_t *)rumpns_sys___pselect50 },/* 436 = __pselect50 */
 	{ ns(struct sys___pollts50_args), 0,
-	    (sy_call_t *)sys___pollts50 },	/* 437 = __pollts50 */
+	    (sy_call_t *)rumpns_sys___pollts50 },/* 437 = __pollts50 */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_nomodule }, 	/* 438 = __aio_suspend50 */
+	    (sy_call_t *)rumpns_sys_nomodule }, 	/* 438 = __aio_suspend50 */
 	{ ns(struct sys___stat50_args), 0,
-	    (sy_call_t *)sys___stat50 },	/* 439 = __stat50 */
+	    (sy_call_t *)rumpns_sys___stat50 },	/* 439 = __stat50 */
 	{ ns(struct sys___fstat50_args), 0,
-	    (sy_call_t *)sys___fstat50 },	/* 440 = __fstat50 */
+	    (sy_call_t *)rumpns_sys___fstat50 },/* 440 = __fstat50 */
 	{ ns(struct sys___lstat50_args), 0,
-	    (sy_call_t *)sys___lstat50 },	/* 441 = __lstat50 */
+	    (sy_call_t *)rumpns_sys___lstat50 },/* 441 = __lstat50 */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 442 = ____semctl50 */
@@ -5614,59 +5794,59 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 449 = __wait450 */
 	{ ns(struct sys___mknod50_args), 0,
-	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
+	    (sy_call_t *)rumpns_sys___mknod50 },/* 450 = __mknod50 */
 	{ ns(struct sys___fhstat50_args), 0,
-	    (sy_call_t *)sys___fhstat50 },	/* 451 = __fhstat50 */
+	    (sy_call_t *)rumpns_sys___fhstat50 },/* 451 = __fhstat50 */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 452 = obsolete 5.99 quotactl */
 	{ ns(struct sys_pipe2_args), 0,
-	    (sy_call_t *)sys_pipe2 },		/* 453 = pipe2 */
+	    (sy_call_t *)rumpns_sys_pipe2 },	/* 453 = pipe2 */
 	{ ns(struct sys_dup3_args), 0,
-	    (sy_call_t *)sys_dup3 },		/* 454 = dup3 */
+	    (sy_call_t *)rumpns_sys_dup3 },	/* 454 = dup3 */
 	{ ns(struct sys_kqueue1_args), 0,
-	    (sy_call_t *)sys_kqueue1 },		/* 455 = kqueue1 */
+	    (sy_call_t *)rumpns_sys_kqueue1 },	/* 455 = kqueue1 */
 	{ ns(struct sys_paccept_args), 0,
-	    (sy_call_t *)sys_paccept },		/* 456 = paccept */
+	    (sy_call_t *)rumpns_sys_paccept },	/* 456 = paccept */
 	{ ns(struct sys_linkat_args), 0,
-	    (sy_call_t *)sys_linkat },		/* 457 = linkat */
+	    (sy_call_t *)rumpns_sys_linkat },	/* 457 = linkat */
 	{ ns(struct sys_renameat_args), 0,
-	    (sy_call_t *)sys_renameat },	/* 458 = renameat */
+	    (sy_call_t *)rumpns_sys_renameat },	/* 458 = renameat */
 	{ ns(struct sys_mkfifoat_args), 0,
-	    (sy_call_t *)sys_mkfifoat },	/* 459 = mkfifoat */
+	    (sy_call_t *)rumpns_sys_mkfifoat },	/* 459 = mkfifoat */
 	{ ns(struct sys_mknodat_args), 0,
-	    (sy_call_t *)sys_mknodat },		/* 460 = mknodat */
+	    (sy_call_t *)rumpns_sys_mknodat },	/* 460 = mknodat */
 	{ ns(struct sys_mkdirat_args), 0,
-	    (sy_call_t *)sys_mkdirat },		/* 461 = mkdirat */
+	    (sy_call_t *)rumpns_sys_mkdirat },	/* 461 = mkdirat */
 	{ ns(struct sys_faccessat_args), 0,
-	    (sy_call_t *)sys_faccessat },	/* 462 = faccessat */
+	    (sy_call_t *)rumpns_sys_faccessat },/* 462 = faccessat */
 	{ ns(struct sys_fchmodat_args), 0,
-	    (sy_call_t *)sys_fchmodat },	/* 463 = fchmodat */
+	    (sy_call_t *)rumpns_sys_fchmodat },	/* 463 = fchmodat */
 	{ ns(struct sys_fchownat_args), 0,
-	    (sy_call_t *)sys_fchownat },	/* 464 = fchownat */
+	    (sy_call_t *)rumpns_sys_fchownat },	/* 464 = fchownat */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 465 = fexecve */
 	{ ns(struct sys_fstatat_args), 0,
-	    (sy_call_t *)sys_fstatat },		/* 466 = fstatat */
+	    (sy_call_t *)rumpns_sys_fstatat },	/* 466 = fstatat */
 	{ ns(struct sys_utimensat_args), 0,
-	    (sy_call_t *)sys_utimensat },	/* 467 = utimensat */
+	    (sy_call_t *)rumpns_sys_utimensat },/* 467 = utimensat */
 	{ ns(struct sys_openat_args), 0,
-	    (sy_call_t *)sys_openat },		/* 468 = openat */
+	    (sy_call_t *)rumpns_sys_openat },	/* 468 = openat */
 	{ ns(struct sys_readlinkat_args), 0,
-	    (sy_call_t *)sys_readlinkat },	/* 469 = readlinkat */
+	    (sy_call_t *)rumpns_sys_readlinkat },/* 469 = readlinkat */
 	{ ns(struct sys_symlinkat_args), 0,
-	    (sy_call_t *)sys_symlinkat },	/* 470 = symlinkat */
+	    (sy_call_t *)rumpns_sys_symlinkat },/* 470 = symlinkat */
 	{ ns(struct sys_unlinkat_args), 0,
-	    (sy_call_t *)sys_unlinkat },	/* 471 = unlinkat */
+	    (sy_call_t *)rumpns_sys_unlinkat },	/* 471 = unlinkat */
 	{ ns(struct sys_futimens_args), 0,
-	    (sy_call_t *)sys_futimens },	/* 472 = futimens */
+	    (sy_call_t *)rumpns_sys_futimens },	/* 472 = futimens */
 	{ ns(struct sys___quotactl_args), 0,
-	    (sy_call_t *)sys___quotactl },	/* 473 = __quotactl */
+	    (sy_call_t *)rumpns_sys___quotactl },/* 473 = __quotactl */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 474 = posix_spawn */
 	{ ns(struct sys_recvmmsg_args), 0,
-	    (sy_call_t *)sys_recvmmsg },	/* 475 = recvmmsg */
+	    (sy_call_t *)rumpns_sys_recvmmsg },	/* 475 = recvmmsg */
 	{ ns(struct sys_sendmmsg_args), 0,
-	    (sy_call_t *)sys_sendmmsg },	/* 476 = sendmmsg */
+	    (sy_call_t *)rumpns_sys_sendmmsg },	/* 476 = sendmmsg */
 	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 477 = clock_nanosleep */
 	{ 0, 0, SYCALL_NOSYS,
@@ -5739,5 +5919,5 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },		/* 511 = filler */
 };
 CTASSERT(__arraycount(rump_sysent) == SYS_NSYSENT);
-__strong_alias(sysent,rump_sysent);
+__strong_alias(rumpns_sysent,rump_sysent);
 #endif /* RUMP_CLIENT */
