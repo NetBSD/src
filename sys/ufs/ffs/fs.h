@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.64 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: fs.h,v 1.65 2013/09/03 02:24:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -422,13 +422,16 @@ struct fs {
 #define	FS_UNCLEAN	0x001	/* file system not clean at mount (unused) */
 #define	FS_DOSOFTDEP	0x002	/* file system using soft dependencies */
 #define	FS_NEEDSFSCK	0x004	/* needs sync fsck (FreeBSD compat, unused) */
-#define	FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
+#define	FS_SUJ		0x008	/* file system using journaled softupdates */
 #define	FS_ACLS		0x010	/* file system has ACLs enabled */
 #define	FS_MULTILABEL	0x020	/* file system is MAC multi-label */
 #define	FS_GJOURNAL	0x40	/* gjournaled file system */
 #define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
 #define	FS_DOWAPBL	0x100	/* Write ahead physical block logging */
+/*     	FS_NFS4ACLS	0x100	   file system has NFSv4 ACLs enabled (FBSD) */
 #define	FS_DOQUOTA2	0x200	/* in-filesystem quotas */
+/*     	FS_INDEXDIRS	0x200	   kernel supports indexed directories (FBSD)*/
+#define	FS_TRIM		0x400	/* discard deleted blocks in storage layer */
 
 /* File system flags that are ok for NetBSD if set in fs_flags */
 #define	FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL | FS_DOQUOTA2)
