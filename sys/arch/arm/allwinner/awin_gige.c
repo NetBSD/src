@@ -1,4 +1,3 @@
-/* $NetBSD: awin_var.h,v 1.2 2013/09/04 02:39:01 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,43 +27,61 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_ALLWINNER_AWIN_VAR_H_
-#define _ARM_ALLWINNER_AWIN_VAR_H_
+#include "locators.h"
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+
 #include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
 
-struct awin_locators {
-	const char *loc_name;
-	bus_size_t loc_offset;
-	bus_size_t loc_size;
-	int loc_port; 
-	int loc_intr;
-#define	AWINIO_INTR_DEFAULT	0
-	int loc_flags;
-#define	AWINIO_REQUIRED		__BIT(8)
-#define	AWINIO_ONLY		__BITS(7,0)
-#define	AWINIO_ONLY_A20		__BIT(1)
-#define	AWINIO_ONLY_A10		__BIT(0)
+#include <arm/allwinner/awin_reg.h>
+#include <arm/allwinner/awin_var.h>
+
+static int awin_gige_match(device_t, cfdata_t, void *);
+static void awin_gige_attach(device_t, device_t, void *);
+
+struct awin_gige_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_dma_tag_t sc_dmat;
 };
 
-struct awinio_attach_args {
-	struct awin_locators aio_loc;
-	bus_space_tag_t aio_core_bst;
-	bus_space_tag_t aio_core_a4x_bst;
-	bus_space_handle_t aio_core_bsh;
-	bus_dma_tag_t aio_dmat;
-};
+CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
+	awin_gige_match, awin_gige_attach, NULL, NULL);
 
-extern struct bus_space awin_bs_tag;
-extern struct bus_space awin_a4x_bs_tag;
-extern bus_space_handle_t awin_core_bsh;
-extern struct arm32_bus_dma_tag awin_dma_tag;
+static int
+awin_gige_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct awinio_attach_args * const aio = aux;
+	const struct awin_locators * const loc = &aio->aio_loc;
 
-psize_t awin_memprobe(void);
-void	awin_bootstrap(vaddr_t, vaddr_t); 
-void	awin_reset(void);
+	if (strcmp(cf->cf_name, loc->loc_name))
+		return 0;
 
-bool	awin_wdt_enable(bool);
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT);
 
-#endif /* _ARM_ALLWINNER_AWIN_VAR_H_ */
+	return 1;
+}
+
+static void
+awin_gige_attach(device_t parent, device_t self, void *aux)
+{
+	struct awin_gige_softc * const sc = device_private(self);
+	struct awinio_attach_args * const aio = aux;
+	const struct awin_locators * const loc = &aio->aio_loc;
+
+	sc->sc_dev = self;
+
+	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_dmat = aio->aio_dmat;
+	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
+	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+}
