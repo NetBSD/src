@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.11 2013/09/04 21:17:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,19 +33,23 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.10 2013/09/03 00:30:19 matt Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.11 2013/09/04 21:17:15 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
+#endif
 	push	{r0-r2, lr}	/* Must save oucp, ucp, lr. */
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.save	{r0-r2, lr}
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
 	.cfi_offset 2, -8
 	.cfi_offset 1, -12
 	.cfi_offset 0, -16
+#endif
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
 #if !defined(__thumb__)
@@ -55,8 +59,10 @@ ENTRY(swapcontext)
 #else
 	pop	{r0-r3}
 	beq	1f
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_def_cfa_offset 0
 	.cfi_register 14, 3
+#endif
 	RETr(r3)
 1:
 #endif
@@ -80,6 +86,8 @@ ENTRY(swapcontext)
 	bl	PIC_SYM(_C_LABEL(setcontext), PLT)
 	pop	{pc}
 #endif
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
+#endif
 END(swapcontext)
