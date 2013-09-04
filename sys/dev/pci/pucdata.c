@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.85 2013/07/17 19:49:11 soren Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.86 2013/09/04 17:38:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.85 2013/07/17 19:49:11 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.86 2013/09/04 17:38:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,6 +1011,17 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+	    },
+	},
+
+	/* Oxford Semiconductor OXuPCI952 950 PCI UARTs */
+	{   "Oxford Semiconductor OXuPCI952 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_OXUPCI952,
+		0, 0 },
+	    {	0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
