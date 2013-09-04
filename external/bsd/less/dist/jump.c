@@ -1,4 +1,4 @@
-/*	$NetBSD: jump.c,v 1.3 2013/09/04 19:44:21 tron Exp $	*/
+/*	$NetBSD: jump.c,v 1.4 2013/09/04 20:02:10 tron Exp $	*/
 
 /*
  * Copyright (C) 1984-2012  Mark Nudelman
@@ -198,7 +198,7 @@ jump_loc(pos, sline)
 		nline -= sline;
 		if (nline > 0)
 			forw(nline, position(BOTTOM_PLUS_ONE), 1, 0, 0);
-		else
+		else if (nline < 0)
 			back(-nline, position(TOP), 1, 0);
 #if HILITE_SEARCH
 		if (show_attn)
