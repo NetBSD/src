@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.272 2013/09/03 19:55:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.273 2013/09/04 17:56:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.272 2013/09/03 19:55:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.273 2013/09/04 17:56:08 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -158,23 +158,37 @@ rump_proc_vfs_release_fn rump_proc_vfs_release;
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
 
 /*
- * Create kern.hostname.  why only this you ask.  well, init_sysctl
+ * Create some sysctl nodes.  why only this you ask.  well, init_sysctl
  * is a kitchen sink in need of some gardening.  but i want to use
- * kern.hostname today.
+ * others today.  Furthermore, creating a whole kitchen sink full of
+ * sysctl nodes is a waste of cycles for rump kernel bootstrap.
  */
 static void
 mksysctls(void)
 {
 
+	/* kern.hostname */
 	sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "kern", NULL,
 	    NULL, 0, NULL, 0, CTL_KERN, CTL_EOL);
-
 	/* XXX: setting hostnamelen is missing */
 	sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRING, "hostname",
 	    SYSCTL_DESCR("System hostname"), NULL, 0,
 	    hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
+
+	/* hw.pagesize */
+	sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+	    CTLTYPE_INT, "pagesize",
+	    SYSCTL_DESCR("Software page size"),
+	    NULL, PAGE_SIZE, NULL, 0,
+	    CTL_HW, HW_PAGESIZE, CTL_EOL);
 }
 
 /* there's no convenient kernel entry point for this, so just craft out own */
