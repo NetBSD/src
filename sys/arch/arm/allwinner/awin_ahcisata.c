@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.2 2013/09/04 09:09:25 jmcneill Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -99,6 +99,8 @@ awin_ahci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n",
 	     loc->loc_intr);
+
+	ahci_attach(sc);
 
 	return;
 
