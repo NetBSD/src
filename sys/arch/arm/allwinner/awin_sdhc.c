@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_sdhc.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_sdhc.c,v 1.2 2013/09/04 09:14:57 jmcneill Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -85,6 +85,7 @@ awin_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct sdhc_softc * const sc = &asc->asc_sc;
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	int error;
 
 	awinsdhc_ports |= __BIT(loc->loc_port);
 	asc->asc_bst = aio->aio_core_bst;
@@ -102,16 +103,6 @@ awin_sdhc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": SDHC controller%s\n",
 	   (sc->sc_flags & SDHC_FLAG_USE_DMA) ? " (DMA enabled)" : "");
 
-#if 1
-	int error = sdhc_host_found(sc, asc->asc_bst, asc->asc_bsh,
-	    loc->loc_size);
-	if (error != 0) {
-		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
-		    error);
-		goto fail;
-	}
-#endif
-
 	asc->asc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL,
 	    sdhc_intr, sc);
 	if (asc->asc_ih == NULL) {
@@ -122,9 +113,17 @@ awin_sdhc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n",
 	     loc->loc_intr);
 
-	return;
+	error = sdhc_host_found(sc, asc->asc_bst, asc->asc_bsh,
+	    loc->loc_size);
+	if (error != 0) {
+		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
+		    error);
+		goto fail;
+	}
 
+	return;
 fail:
+
 	if (asc->asc_ih) {
 		intr_disestablish(asc->asc_ih);
 		asc->asc_ih = NULL;
