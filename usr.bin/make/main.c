@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.223 2013/08/04 16:48:15 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.223 2013/08/04 16:48:15 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.223 2013/08/04 16:48:15 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1384,7 +1384,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 
 	if (!strcmp(fname, "-")) {
 		Parse_File(NULL /*stdin*/, -1);
-		Var_Set("MAKEFILE", "", VAR_GLOBAL, 0);
+		Var_Set("MAKEFILE", "", VAR_INTERNAL, 0);
 	} else {
 		/* if we've chdir'd, rebuild the path name */
 		if (strcmp(curdir, objdir) && *fname != '/') {
@@ -1433,7 +1433,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 		 */
 found:
 		if (!doing_depend)
-			Var_Set("MAKEFILE", fname, VAR_GLOBAL, 0);
+			Var_Set("MAKEFILE", fname, VAR_INTERNAL, 0);
 		Parse_File(fname, fd);
 	}
 	free(path);
