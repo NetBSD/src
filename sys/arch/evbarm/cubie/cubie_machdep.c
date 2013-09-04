@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.1 2013/09/03 18:01:33 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.2 2013/09/04 02:39:01 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.1 2013/09/03 18:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.2 2013/09/04 02:39:01 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -225,9 +225,6 @@ static void kgdb_port_init(void);
 
 static void init_clocks(void);
 static void cubie_device_register(device_t, void *);
-static void cubie_reset(void);
-static void awin_cpu_clk(void);
-static psize_t awin_memprobe(void);
 
 bs_protos(bs_notimpl);
 
@@ -289,34 +286,12 @@ cubie_db_trap(int where)
 	static bool oldstate;
 
 	if (where) {
-		oldstate = awinwdt_enable(false);
+		oldstate = awin_wdt_enable(false);
 	} else {
-		awinwdt_enable(oldstate);
+		awin_wdt_enable(oldstate);
 	}
 }
 #endif
-
-void cubie_putchar(char c);
-void
-cubie_putchar(char c)
-{
-#if NCOM > 0
-	volatile uint32_t *com0addr = (volatile uint32_t *)CONADDR_VA;
-	int timo = 150000;
-
-	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
-
-	com0addr[com_data] = c;
-
-	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
-#endif
-}
 
 /*
  * u_int initarm(...)
@@ -337,17 +312,7 @@ initarm(void *arg)
 	psize_t ram_size = 0;
 	char *ptr;
 
-#if 1
-	cubie_putchar('d');
-#endif
-
-	/*
-	 * When we enter here, we are using a temporary first level translation 
-	 * table with section entries in it to cover the core peripherals and
-	 * SDRAM.  The temporary first level translation table is well after
-	 * the kernel.
-	 */
-	awin_cpu_clk();		// find our CPU speed.
+	awin_bootstrap(AWIN_CORE_VBASE, CONADDR_VA);
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
@@ -358,9 +323,7 @@ initarm(void *arg)
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
 	consinit();
-#if defined(TI_AM335X) && defined(VERBOSE_INIT_ARM)
-	am335x_cpu_clk();		// find our CPU speed.
-#endif
+
 	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
@@ -368,7 +331,7 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
-	cpu_reset_address = cubie_reset;
+	cpu_reset_address = awin_reset;
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
@@ -479,8 +442,6 @@ consinit(void)
 
 	consinit_called = 1;
 
-	cubie_putchar('e');
-
 #if NCOM > 0
 	if (bus_space_map(&awin_a4x_bs_tag, conaddr, AWIN_UART_SIZE, 0, &bh))
 		panic("Serial console can not be mapped.");
@@ -497,15 +458,6 @@ consinit(void)
 	ukbd_cnattach();	/* allow USB keyboard to become console */
 #endif
 #endif
-
-	cubie_putchar('f');
-	cubie_putchar('g');
-}
-
-void
-cubie_reset(void)
-{
-	*(volatile uint32_t *)(AWIN_CORE_VBASE + AWIN_CPUCNF_OFFSET + AWIN_CPU0_RST_CTRL_REG) = AWIN_CPU_RESET;
 }
 
 #ifdef KGDB
@@ -546,99 +498,6 @@ static kgdb_port_init(void)
 #endif
 
 void
-awin_cpu_clk(void)
-{
-	struct cpu_info * const ci = curcpu();
-	const vaddr_t ccu_base = AWIN_CORE_VBASE + AWIN_CCM_OFFSET;
-	const uint32_t cpu0_cfg = *(const volatile uint32_t *)(ccu_base + AWIN_CPU_AHB_APB0_CFG_REG);
-	const u_int cpu_clk_sel = __SHIFTIN(cpu0_cfg, AWIN_CPU_CLK_SRC_SEL);
-	switch (cpu_clk_sel) {
-	case AWIN_CPU_CLK_SRC_SEL_LOSC:
-		ci->ci_data.cpu_cc_freq = 32768;
-		break;
-	case AWIN_CPU_CLK_SRC_SEL_OSC24M:
-		ci->ci_data.cpu_cc_freq = 24000000;
-		break;
-	case AWIN_CPU_CLK_SRC_SEL_PLL1: {
-		const uint32_t pll1_cfg = *(const volatile uint32_t *)(ccu_base + AWIN_PLL1_CFG_REG);
-		u_int p = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_OUT_EXP_DIVP);
-		u_int n = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_N);
-		u_int k = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
-		u_int m = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
-		ci->ci_data.cpu_cc_freq = (24000000 * (n ? n : 1) * k / m) >> p;
-		break;
-	}
-	case AWIN_CPU_CLK_SRC_SEL_200MHZ:
-		ci->ci_data.cpu_cc_freq = 200000000;
-		break;
-	}
-
-#if defined(CPU_CORTEXA7) && 0
-	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
-		cubie_putchar('0');
-		uint32_t voffset = OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
-		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR; 
-		uint32_t frac2_reg = OMAP5_PRM_FRAC_INCREMENTER_DENUMERATOR_RELOAD; 
-		uint32_t frac1 = *(volatile uint32_t *)(frac1_reg + voffset);
-		cubie_putchar('1');
-		uint32_t frac2 = *(volatile uint32_t *)(frac2_reg + voffset);
-		cubie_putchar('2');
-		uint32_t numer = __SHIFTOUT(frac1, PRM_FRAC_INCR_NUM_SYS_MODE);
-		uint32_t denom = __SHIFTOUT(frac2, PRM_FRAC_INCR_DENUM_DENOMINATOR);
-		uint32_t freq = (uint64_t)awin_sys_clk * numer / denom;
-#if 1
-		if (freq != OMAP5_GTIMER_FREQ) {
-			static uint16_t numer_demon[8][2] = {
-			    {         0,          0 },	/* not used */
-			    {  26 *  64,  26 *  125 },	/* 12.0Mhz */
-			    {   2 * 768,   2 * 1625 },	/* 13.0Mhz */
-			    {         0,          0 },	/* 16.8Mhz (not used) */
-			    { 130 *   8, 130 *   25 },	/* 19.2Mhz */
-			    {   2 * 384,   2 * 1625 },	/* 26.0Mhz */
-			    {   3 * 256,   3 * 1125 },	/* 27.0Mhz */
-			    { 130 *   4, 130 *   25 },	/* 38.4Mhz */
-			};
-			if (numer_demon[clksel][0] != numer) {
-				frac1 &= ~PRM_FRAC_INCR_NUM_SYS_MODE;
-				frac1 |= numer_demon[clksel][0];
-			}
-			if (numer_demon[clksel][1] != denom) {
-				frac2 &= ~PRM_FRAC_INCR_DENUM_DENOMINATOR;
-				frac2 |= numer_demon[clksel][1];
-			}
-			*(volatile uint32_t *)(frac1_reg + voffset) = frac1;
-			*(volatile uint32_t *)(frac2_reg + voffset) = frac2
-			    | PRM_FRAC_INCR_DENUM_RELOAD;
-			freq = OMAP5_GTIMER_FREQ;
-		}
-#endif
-		cubie_putchar('3');
-#if 0
-		if (gtimer_freq != freq) {
-			armreg_cnt_frq_write(freq);	// secure only
-		}
-#endif
-		omap5_cnt_frq = freq;
-		cubie_putchar('4');
-	}
-#endif
-}
-
-static psize_t 
-awin_memprobe(void)
-{
-	const uint32_t dcr = *(const volatile uint32_t *)(AWIN_CORE_VBASE + AWIN_DRAM_OFFSET + AWIN_DRAM_DCR_REG);
-
-	psize_t memsize = __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
-	memsize <<= __SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY) + 28 - 3;
-#ifdef VERBOSE_INIT_ARM
-	printf("sdram_config = %#x, memsize = %uMB\n", dcr,
-	    (u_int)(memsize >> 20));
-#endif
-	return memsize;
-}
-
-void
 cubie_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
@@ -662,7 +521,7 @@ cubie_device_register(device_t self, void *aux)
 		 * The frequency of the generic timer was figured out when
 		 * determined the cpu frequency.
 		 */
-                prop_dictionary_set_uint32(dict, "frequency", arm_cnt_frq);
+                prop_dictionary_set_uint32(dict, "frequency", AWIN_REF_FREQ);
 	}
 #endif
 

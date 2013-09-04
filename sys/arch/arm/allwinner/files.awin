@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.1 2013/09/03 18:02:26 matt Exp $
+#	$NetBSD: files.awin,v 1.2 2013/09/04 02:39:01 matt Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -12,8 +12,7 @@ file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/allwinner/awin_board.c
-file	arch/arm/allwinner/awingen_space.c
-file	arch/arm/allwinner/awin_a4x_space.c
+file	arch/arm/allwinner/awin_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
 # Console parameters
@@ -29,73 +28,73 @@ defflag opt_allwinner.h				ALLWINNER_A31
 
 # SoC I/O attach point
 device	awinio { [port=-1] } : bus_space_generic
-attach	awinio at mainbus
-file	arch/arm/allwinner/awinio.c		awinio
+attach	awinio at mainbus with awin_io
+file	arch/arm/allwinner/awin_io.c		awin_io
 
 # A10 Interrupt Controller
 device	awinicu
-attach	awinicu at awinio
-file	arch/arm/allwinner/awinicu.c		awinicu
+attach	awinicu at awinio with awin_icu
+file	arch/arm/allwinner/awin_icu.c		awin_icu
 
 # A10/A20 Watchdog
 device	awinwdt
-attach	awinwdt at awinio
-file	arch/arm/allwinner/awinwdt.c		awinwdt
+attach	awinwdt at awinio with awin_wdt
+file	arch/arm/allwinner/awin_wdt.c		awin_wdt
 
 # A10 Timers
 device	awintmr
-attach	awintmr at awinio
-file	arch/arm/allwinner/awintmr.c		awintmr
+attach	awintmr at awinio with awin_tmr
+file	arch/arm/allwinner/awin_tmr.c		awin_tmr
 
 # A10/A20 UART
-attach	com at awinio with com_awinio
-file	arch/arm/allwinner/awin_com.c		com_awinio
+attach	com at awinio with awin_com
+file	arch/arm/allwinner/awin_com.c		awin_com
 
 # A10/A20 GPIO
 device	awingpio : gpiobus
-attach	awingpio at awinio
-file	arch/arm/allwinner/awin_gpio.c		awingpio
+attach	awingpio at awinio with awin_gpio
+file	arch/arm/allwinner/awin_gpio.c		awin_gpio
 
 # A10/A20 TWI (IIC)
 device	awiniic : i2cbus, i2cexec
-attach	awiniic at awinio
-file	arch/arm/allwinner/awin_twi.c		awiniic
+attach	awiniic at awinio with awin_twi
+file	arch/arm/allwinner/awin_twi.c		awin_twi
 
 # A10/A20 NAND controller
 device	awinnand : nandbus
-attach	awinnand at awinio
-file	arch/arm/allwinner/awin_nand.c		awinnand
+attach	awinnand at awinio with awin_nand
+file	arch/arm/allwinner/awin_nand.c		awin_nand
 
 # A10/A20 Security System
 device	awincrypto : opencrypto
-attach	awincrypto at awinio
-file	arch/arm/allwinner/awin_rng.c		awinrng		needs-flag
+attach	awincrypto at awinio with awin_crypto
+file	arch/arm/allwinner/awin_crypto.c	awin_crypto
 
 # A10/A20 EMAC
 device	awinfe { } : ether, ifnet, arp
-attach	awinfe at awinio
-file	arch/arm/allwinner/awin_eth.c		awinfe
+attach	awinfe at awinio with awin_eth
+file	arch/arm/allwinner/awin_eth.c		awin_eth
 
 # A20 GMAC
 device	awinge { } : ether, ifnet, arp
-attach	awinge at awinio
-file	arch/arm/allwinner/awin_gige.c		awinge
+attach	awinge at awinio with awin_gige
+file	arch/arm/allwinner/awin_gige.c		awin_gige
 
 # USB2 Host Controller (EHCI/OHCI)
 device	awinusb { }
-attach	awinusb at awinio
+attach	awinusb at awinio with awin_usb
 attach	ohci at awinusb with ohci_awinusb
 attach	ehci at awinusb with ehci_awinusb
-file	arch/arm/allwinner/awin_usb.c		awinusb
+file	arch/arm/allwinner/awin_usb.c		awin_usb
 
 # A10/A20 SD/MMC Controller (SDHC)
-attach	sdhc at awinio with sdhc_awin
-file	arch/arm/allwinner/awin_sdhc.c		sdhc_awin
+attach	sdhc at awinio with awin_sdhc
+file	arch/arm/allwinner/awin_sdhc.c		awin_sdhc
 
 # A10 WDC Controller (PATA)
-attach	wdc at awinio with wdc_awin
-file	arch/arm/allwinner/awin_wdc.c		wdc_awin
+attach	wdc at awinio with awin_wdc
+file	arch/arm/allwinner/awin_wdc.c		awin_wdc
 
 # A20 AHCI Controller (SATA)
-attach	ahcisata at awinio with ahcisata_awin
-file	arch/arm/allwinner/awin_ahcisata.c	ahcisata_awin
+attach	ahcisata at awinio with awin_ahcisata
+file	arch/arm/allwinner/awin_ahcisata.c	awin_ahcisata

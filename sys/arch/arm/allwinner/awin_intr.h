@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.1 2013/09/03 18:02:26 matt Exp $ */
+/* $NetBSD: awin_intr.h,v 1.2 2013/09/04 02:39:01 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
  * The Allwinner can use a generic interrupt controller so pull in that stuff.
  */
 #include <arm/cortex/gic_intr.h>
-#include <arm/cortex/a9tmr_intr.h>	/* A7/A9/A15 Timer PPIs */
+#include <arm/cortex/gtmr_intr.h>	/* A7/A9/A15 Timer PPIs */
 
 /*
  * There are for the A20 but the A10 are the same but offset by 32 less.
