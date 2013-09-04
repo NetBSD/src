@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.10 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.11 2013/09/04 21:17:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,12 +35,12 @@
 
 ENTRY_NP(CERROR)
 #ifdef _REENTRANT
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
 	push	{r4, lr}
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.save	{r4, lr}
 	.cfi_def_cfa_offset 8
 	.cfi_offset 14, -4
@@ -57,12 +57,12 @@ ENTRY_NP(CERROR)
 #endif
 	mov	r1, r0
 	pop	{r4, pc}
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
 #else /* !_REENTRANT */
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
@@ -84,7 +84,7 @@ ENTRY_NP(CERROR)
 #endif /* __thumb__ */
 	mov	r1, r0
 	RET
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
