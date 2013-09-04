@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.40 2013/04/27 08:12:35 mlelstv Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.41 2013/09/04 10:16:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.40 2013/04/27 08:12:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.41 2013/09/04 10:16:16 skrll Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -483,7 +483,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * pending readers.  If waking one specific writer, the writer
 	 * is handed the lock here.  If waking multiple writers, we
 	 * set WRITE_WANTED to block out new readers, and let them
-	 * do the work of acquring the lock in rw_vector_enter().
+	 * do the work of acquiring the lock in rw_vector_enter().
 	 */
 	if (rcnt == 0 || decr == RW_READ_INCR) {
 		RW_DASSERT(rw, wcnt != 0);
