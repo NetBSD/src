@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.12 2013/09/04 22:38:09 htodd Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.13 2013/09/04 23:08:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.12 2013/09/04 22:38:09 htodd Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.13 2013/09/04 23:08:29 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -52,9 +52,11 @@ ENTRY(swapcontext)
 #endif
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
-#if !defined(__thumb__) && defined(__UNWIND_TABLES__)
+#if !defined(__thumb__)
 	pop	{r0-r2, lr}
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_def_cfa_offset 0
+#endif
 	RETc(ne)
 #else
 	pop	{r0-r3}
