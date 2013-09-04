@@ -1,13 +1,12 @@
-/*	$NetBSD	*/
+/*	$NetBSD: position.c,v 1.1.1.2 2013/09/04 19:35:04 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -165,7 +164,7 @@ empty_lines(s, e)
 	register int i;
 
 	for (i = s;  i <= e;  i++)
-		if (table[i] != NULL_POSITION)
+		if (table[i] != NULL_POSITION && table[i] != 0)
 			return (0);
 	return (1);
 }

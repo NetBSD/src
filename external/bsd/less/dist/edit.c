@@ -1,13 +1,12 @@
-/*	$NetBSD	*/
+/*	$NetBSD: edit.c,v 1.1.1.2 2013/09/04 19:35:03 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -312,6 +311,10 @@ edit_ifile(ifile)
 		 */
 		__djgpp_set_ctrl_c(1);
 #endif
+	} else if (strcmp(open_filename, FAKE_EMPTYFILE) == 0)
+	{
+		f = -1;
+		chflags |= CH_NODATA;
 	} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
 	{
 		f = -1;

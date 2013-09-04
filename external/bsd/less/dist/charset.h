@@ -1,13 +1,12 @@
-/*	$NetBSD	*/
+/*	$NetBSD: charset.h,v 1.1.1.2 2013/09/04 19:35:03 tron Exp $	*/
 
 /*
- * Copyright (C) 2005-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 #define IS_ASCII_OCTET(c)   (((c) & 0x80) == 0)

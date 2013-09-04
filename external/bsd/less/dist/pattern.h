@@ -1,14 +1,20 @@
-/*	$NetBSD	*/
+/*	$NetBSD: pattern.h,v 1.1.1.2 2013/09/04 19:35:04 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
+
+#if HAVE_GNU_REGEX
+#define __USE_GNU 1
+#include <regex.h>
+#define DEFINE_PATTERN(name)  struct re_pattern_buffer *name
+#define CLEAR_PATTERN(name)   name = NULL
+#endif
 
 #if HAVE_POSIX_REGCOMP
 #include <regex.h>
@@ -48,3 +54,7 @@ extern char *__loc1;
 #define CLEAR_PATTERN(name)   name = NULL
 #endif
 
+#if NO_REGEX
+#define DEFINE_PATTERN(name)  
+#define CLEAR_PATTERN(name)   
+#endif

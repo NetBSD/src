@@ -1,13 +1,12 @@
-/*	$NetBSD	*/
+/*	$NetBSD: cmdbuf.c,v 1.1.1.2 2013/09/04 19:35:03 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -32,6 +31,7 @@ static int prompt_col;		/* Column of cursor just after prompt */
 static char *cp;		/* Pointer into cmdbuf */
 static int cmd_offset;		/* Index into cmdbuf of first displayed char */
 static int literal;		/* Next input char should not be interpreted */
+static int updown_match = -1;	/* Prefix length in up/down movement */
 
 #if TAB_COMPLETE_FILENAME
 static int cmd_complete();
@@ -124,6 +124,7 @@ cmd_reset()
 	cmd_offset = 0;
 	literal = 0;
 	cmd_mbc_buf_len = 0;
+	updown_match = -1;
 }
 
 /*
@@ -134,6 +135,7 @@ clear_cmd()
 {
 	cmd_col = prompt_col = 0;
 	cmd_mbc_buf_len = 0;
+	updown_match = -1;
 }
 
 /*
@@ -506,6 +508,7 @@ cmd_ichar(cs, clen)
 	/*
 	 * Reprint the tail of the line from the inserted char.
 	 */
+	updown_match = -1;
 	cmd_repaint(cp);
 	cmd_right();
 	return (CC_OK);
@@ -549,6 +552,7 @@ cmd_erase()
 	/*
 	 * Repaint the buffer after the erased char.
 	 */
+	updown_match = -1;
 	cmd_repaint(cp);
 	
 	/*
@@ -645,6 +649,7 @@ cmd_kill()
 	cmd_offset = 0;
 	cmd_home();
 	*cp = '\0';
+	updown_match = -1;
 	cmd_repaint(cp);
 
 	/*
@@ -677,12 +682,15 @@ set_mlist(mlist, cmdflags)
 #if CMD_HISTORY
 /*
  * Move up or down in the currently selected command history list.
+ * Only consider entries whose first updown_match chars are equal to
+ * cmdbuf's corresponding chars.
  */
 	static int
 cmd_updown(action)
 	int action;
 {
 	char *s;
+	struct mlist *ml;
 	
 	if (curr_mlist == NULL)
 	{
@@ -692,24 +700,47 @@ cmd_updown(action)
 		bell();
 		return (CC_OK);
 	}
-	cmd_home();
-	clear_eol();
+
+	if (updown_match < 0)
+	{
+		updown_match = cp - cmdbuf;
+	}
+
 	/*
-	 * Move curr_mp to the next/prev entry.
+	 * Find the next history entry which matches.
 	 */
-	if (action == EC_UP)
-		curr_mlist->curr_mp = curr_mlist->curr_mp->prev;
-	else
-		curr_mlist->curr_mp = curr_mlist->curr_mp->next;
+	for (ml = curr_mlist->curr_mp;;)
+	{
+		ml = (action == EC_UP) ? ml->prev : ml->next;
+		if (ml == curr_mlist)
+		{
+			/*
+			 * We reached the end (or beginning) of the list.
+			 */
+			break;
+		}
+		if (strncmp(cmdbuf, ml->string, updown_match) == 0)
+		{
+			/*
+			 * This entry matches; stop here.
+			 * Copy the entry into cmdbuf and echo it on the screen.
+			 */
+			curr_mlist->curr_mp = ml;
+			s = ml->string;
+			if (s == NULL)
+				s = "";
+			cmd_home();
+			clear_eol();
+			strcpy(cmdbuf, s);
+			for (cp = cmdbuf;  *cp != '\0';  )
+				cmd_right();
+			return (CC_OK);
+		}
+	}
 	/*
-	 * Copy the entry into cmdbuf and echo it on the screen.
+	 * We didn't find a history entry that matches.
 	 */
-	s = curr_mlist->curr_mp->string;
-	if (s == NULL)
-		s = "";
-	strcpy(cmdbuf, s);
-	for (cp = cmdbuf;  *cp != '\0';  )
-		cmd_right();
+	bell();
 	return (CC_OK);
 }
 #endif
@@ -1058,7 +1089,11 @@ init_compl()
 		tk_text = fcomplete(word);
 	} else
 	{
+#if MSDOS_COMPILER
+		char *qword = NULL;
+#else
 		char *qword = shell_quote(word+1);
+#endif
 		if (qword == NULL)
 			tk_text = fcomplete(word+1);
 		else
@@ -1459,9 +1494,6 @@ save_cmdhist()
 	FILE *f;
 	int modified = 0;
 
-	filename = histfile_name();
-	if (filename == NULL)
-		return;
 	if (mlist_search.modified)
 		modified = 1;
 #if SHELL_ESCAPE || PIPEC
@@ -1469,6 +1501,9 @@ save_cmdhist()
 		modified = 1;
 #endif
 	if (!modified)
+		return;
+	filename = histfile_name();
+	if (filename == NULL)
 		return;
 	f = fopen(filename, "w");
 	free(filename);

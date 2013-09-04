@@ -1,13 +1,12 @@
-/*	$NetBSD	*/
+/*	$NetBSD: ch.c,v 1.1.1.2 2013/09/04 19:35:03 tron Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 
@@ -584,6 +583,8 @@ ch_length()
 		return (NULL_POSITION);
 	if (ch_flags & CH_HELPFILE)
 		return (size_helpdata);
+	if (ch_flags & CH_NODATA)
+		return (0);
 	return (ch_fsize);
 }
 
@@ -806,6 +807,17 @@ seekable(f)
 #endif
 	return (lseek(f, (off_t)1, SEEK_SET) != BAD_LSEEK);
 }
+
+/*
+ * Force EOF to be at the current read position.
+ * This is used after an ignore_eof read, during which the EOF may change.
+ */
+	public void
+ch_set_eof()
+{
+	ch_fsize = ch_fpos;
+}
+
 
 /*
  * Initialize file state for a new file.
