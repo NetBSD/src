@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.2 2013/09/04 02:39:01 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.3 2013/09/04 17:45:40 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,8 +63,7 @@ extern struct arm32_bus_dma_tag awin_dma_tag;
 
 psize_t awin_memprobe(void);
 void	awin_bootstrap(vaddr_t, vaddr_t); 
-void	awin_reset(void);
 
-bool	awin_wdt_enable(bool);
+void	awin_wdog_reset(void);
 
 #endif /* _ARM_ALLWINNER_AWIN_VAR_H_ */

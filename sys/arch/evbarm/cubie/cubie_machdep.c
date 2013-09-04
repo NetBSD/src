@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.2 2013/09/04 02:39:01 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.3 2013/09/04 17:45:40 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.2 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.3 2013/09/04 17:45:40 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -279,20 +279,6 @@ static const struct pmap_devmap devmap[] = {
 #undef	_A
 #undef	_S
 
-#ifdef DDB
-static void
-cubie_db_trap(int where)
-{
-	static bool oldstate;
-
-	if (where) {
-		oldstate = awin_wdt_enable(false);
-	} else {
-		awin_wdt_enable(oldstate);
-	}
-}
-#endif
-
 /*
  * u_int initarm(...)
  *
@@ -331,7 +317,7 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
-	cpu_reset_address = awin_reset;
+	cpu_reset_address = awin_wdog_reset;
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
@@ -396,8 +382,6 @@ initarm(void *arg)
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = cubie_device_register;
-
-	db_trap_callback = cubie_db_trap;
 
 	if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {

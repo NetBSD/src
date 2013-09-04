@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.1 2013/09/04 02:39:01 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.2 2013/09/04 17:45:40 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.2 2013/09/04 17:45:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,11 +169,4 @@ awin_memprobe(void)
 	    (u_int)(memsize >> 20));
 #endif
 	return memsize;
-}
-
-void
-awin_reset(void)
-{
-	bus_space_write_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_CPUCNF_OFFSET + AWIN_CPU0_RST_CTRL_REG, AWIN_CPU_RESET);
 }
