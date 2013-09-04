@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1052 2013/08/28 07:34:13 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1053 2013/09/04 19:51:37 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -613,8 +613,8 @@ Use external/bsd/kyua-testers/prepare-import.sh to regenerate the dist/
 directory.
 
 Package:	less
-Version:	less-444
-Current Vers:	less-451
+Version:	less-458
+Current Vers:	less-458
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
