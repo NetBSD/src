@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.219 2012/11/24 15:07:44 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.220 2013/09/05 12:23:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.219 2012/11/24 15:07:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.220 2013/09/05 12:23:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1170,6 +1170,7 @@ fd_abort(proc_t *p, file_t *fp, unsigned fd)
 
 	fdp = p->p_fd;
 	ff = fdp->fd_dt->dt_ff[fd];
+	ff->ff_exclose = false;
 
 	KASSERT(fd >= NDFDFILE || ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 
