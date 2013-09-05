@@ -33,12 +33,12 @@
  * Implementation of strcat using strlen/strcpy.
  */
 ENTRY(strcat)
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
 	push	{r3-r5, lr}		/* save registers */
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.save	{r3-r5, lr}
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
@@ -58,7 +58,7 @@ ENTRY(strcat)
 
 	mov	r0, r4			/* restore dst as return value */
 	pop	{r3-r5, pc}		/* restore registers */
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif

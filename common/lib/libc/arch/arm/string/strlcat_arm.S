@@ -29,16 +29,16 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_arm.S,v 1.4 2013/08/22 19:25:00 matt Exp $")
+RCSID("$NetBSD: strlcat_arm.S,v 1.5 2013/09/05 05:15:47 matt Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
 	push	{r4-r6, lr}
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.save	{r4-r6, lr}
 	.cfi_def_cfa_offset 16
 	.cfi_offset 14, -4
@@ -60,7 +60,7 @@ ENTRY(strlcat)
 	bl	PLT_SYM(strlcpy)	/* attempt to copy src */
 	adds	r0, r0, r5		/* add remaining to strlcpy return */
 	pop	{r4-r6, pc}		/* restore registers and return */
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))    
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
