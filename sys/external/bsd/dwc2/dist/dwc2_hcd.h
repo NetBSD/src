@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.1.1.1 2013/09/05 07:53:12 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -132,6 +132,7 @@ struct dwc2_host_chan {
 
 	unsigned multi_count:2;
 
+	usb_dma_t *xfer_usbdma;
 	u8 *xfer_buf;
 	dma_addr_t xfer_dma;
 	dma_addr_t align_buf;
@@ -181,10 +182,12 @@ struct dwc2_hcd_iso_packet_desc {
 struct dwc2_qtd;
 
 struct dwc2_hcd_urb {
-	void *priv;
+	void *priv;		/* the xfer handle */
 	struct dwc2_qtd *qtd;
-	void *buf;
+	usb_dma_t *usbdma;
+	u8 *buf;
 	dma_addr_t dma;
+	usb_dma_t *setup_usbdma;
 	void *setup_packet;
 	dma_addr_t setup_dma;
 	u32 length;
@@ -279,11 +282,13 @@ struct dwc2_qh {
 	u16 frame_usecs[8];
 	u16 start_split_frame;
 	u16 ntd;
+	usb_dma_t dw_align_buf_usbdma;
 	u8 *dw_align_buf;
 	dma_addr_t dw_align_buf_dma;
 	struct list_head qtd_list;
 	struct dwc2_host_chan *channel;
 	struct list_head qh_list_entry;
+	usb_dma_t desc_list_usbdma;
 	struct dwc2_hcd_dma_desc *desc_list;
 	dma_addr_t desc_list_dma;
 	u32 *n_bytes;
@@ -373,10 +378,10 @@ static inline struct usb_hcd *dwc2_hsotg_to_hcd(struct dwc2_hsotg *hsotg)
  */
 static inline void disable_hc_int(struct dwc2_hsotg *hsotg, int chnum, u32 intr)
 {
-	u32 mask = readl(hsotg->regs + HCINTMSK(chnum));
+	u32 mask = DWC2_READ_4(hsotg, HCINTMSK(chnum));
 
 	mask &= ~intr;
-	writel(mask, hsotg->regs + HCINTMSK(chnum));
+	DWC2_WRITE_4(hsotg, HCINTMSK(chnum), mask);
 }
 
 /*
@@ -384,11 +389,12 @@ static inline void disable_hc_int(struct dwc2_hsotg *hsotg, int chnum, u32 intr)
  */
 static inline int dwc2_is_host_mode(struct dwc2_hsotg *hsotg)
 {
-	return (readl(hsotg->regs + GINTSTS) & GINTSTS_CURMODE_HOST) != 0;
+	return (DWC2_READ_4(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) != 0;
 }
+
 static inline int dwc2_is_device_mode(struct dwc2_hsotg *hsotg)
 {
-	return (readl(hsotg->regs + GINTSTS) & GINTSTS_CURMODE_HOST) == 0;
+	return (DWC2_READ_4(hsotg, GINTSTS) & GINTSTS_CURMODE_HOST) == 0;
 }
 
 /*
@@ -397,7 +403,7 @@ static inline int dwc2_is_device_mode(struct dwc2_hsotg *hsotg)
  */
 static inline u32 dwc2_read_hprt0(struct dwc2_hsotg *hsotg)
 {
-	u32 hprt0 = readl(hsotg->regs + HPRT0);
+	u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
 
 	hprt0 &= ~(HPRT0_ENA | HPRT0_CONNDET | HPRT0_ENACHG | HPRT0_OVRCURRCHG);
 	return hprt0;
@@ -453,7 +459,7 @@ static inline u8 dwc2_hcd_is_pipe_out(struct dwc2_hcd_pipe_info *pipe)
 	return !dwc2_hcd_is_pipe_in(pipe);
 }
 
-extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg, int irq,
+extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 			 const struct dwc2_core_params *params);
 extern void dwc2_hcd_remove(struct dwc2_hsotg *hsotg);
 extern int dwc2_set_parameters(struct dwc2_hsotg *hsotg,
@@ -477,16 +483,12 @@ extern void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 extern void dwc2_hcd_qtd_init(struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb);
 extern int dwc2_hcd_qtd_add(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-			    struct dwc2_qh **qh, gfp_t mem_flags);
+			    struct dwc2_qh **qh, int mem_flags);
 
-/* Unlinks and frees a QTD */
-static inline void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
-						struct dwc2_qtd *qtd,
-						struct dwc2_qh *qh)
-{
-	list_del(&qtd->qtd_list_entry);
-	kfree(qtd);
-}
+/* Removes and frees a QTD */
+extern void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
+					 struct dwc2_qtd *qtd,
+					 struct dwc2_qh *qh);
 
 /* Descriptor DMA support functions */
 extern void dwc2_hcd_start_xfer_ddma(struct dwc2_hsotg *hsotg,
@@ -522,11 +524,6 @@ static inline bool dbg_qh(struct dwc2_qh *qh)
 	       qh->ep_type == USB_ENDPOINT_XFER_CONTROL;
 }
 
-static inline bool dbg_urb(struct urb *urb)
-{
-	return usb_pipetype(urb->pipe) == PIPE_BULK ||
-	       usb_pipetype(urb->pipe) == PIPE_CONTROL;
-}
 
 static inline bool dbg_perio(void) { return false; }
 #endif
@@ -583,7 +580,7 @@ static inline u16 dwc2_micro_frame_num(u16 frame)
  */
 static inline u32 dwc2_read_core_intr(struct dwc2_hsotg *hsotg)
 {
-	return readl(hsotg->regs + GINTSTS) & readl(hsotg->regs + GINTMSK);
+	return DWC2_READ_4(hsotg, GINTSTS) & DWC2_READ_4(hsotg, GINTMSK);
 }
 
 static inline u32 dwc2_hcd_urb_get_status(struct dwc2_hcd_urb *dwc2_urb)
@@ -623,9 +620,10 @@ static inline u32 dwc2_hcd_urb_get_iso_desc_actual_length(
 }
 
 static inline int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
-						  struct usb_host_endpoint *ep)
+						  usbd_xfer_handle xfer)
 {
-	struct dwc2_qh *qh = ep->hcpriv;
+	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
+	struct dwc2_qh *qh = dpipe->priv;
 
 	if (qh && !list_empty(&qh->qh_list_entry))
 		return 1;
@@ -633,18 +631,6 @@ static inline int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
 	return 0;
 }
 
-static inline u16 dwc2_hcd_get_ep_bandwidth(struct dwc2_hsotg *hsotg,
-					    struct usb_host_endpoint *ep)
-{
-	struct dwc2_qh *qh = ep->hcpriv;
-
-	if (!qh) {
-		WARN_ON(1);
-		return 0;
-	}
-
-	return qh->usecs;
-}
 
 extern void dwc2_hcd_save_data_toggle(struct dwc2_hsotg *hsotg,
 				      struct dwc2_host_chan *chan, int chnum,
@@ -745,7 +731,7 @@ do {									\
 			   qtd_list_entry);				\
 	if (usb_pipeint(_qtd_->urb->pipe) &&				\
 	    (_qh_)->start_split_frame != 0 && !_qtd_->complete_split) {	\
-		_hfnum_.d32 = readl((_hcd_)->regs + HFNUM);		\
+		_hfnum_.d32 = DWC2_READ_4(hsotg, (_hcd_)->regs + HFNUM);		\
 		switch (_hfnum_.b.frnum & 0x7) {			\
 		case 7:							\
 			(_hcd_)->hfnum_7_samples_##_letter_++;		\
@@ -768,5 +754,26 @@ do {									\
 #else
 #define dwc2_sample_frrem(_hcd_, _qh_, _letter_)	do {} while (0)
 #endif
+
+
+void dwc2_wakeup_detected(void *);
+
+int dwc2_hcd_urb_dequeue(struct dwc2_hsotg *, struct dwc2_hcd_urb *);
+void dwc2_hcd_reinit(struct dwc2_hsotg *);
+int dwc2_hcd_hub_control(struct dwc2_hsotg *, u16, u16, u16, char *, u16);
+struct dwc2_hsotg *dwc2_hcd_to_hsotg(struct usb_hcd *);
+int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *, struct dwc2_hcd_urb *, void **,
+			 gfp_t);
+void dwc2_hcd_urb_set_pipeinfo(struct dwc2_hsotg *, struct dwc2_hcd_urb *,
+			       u8 ,u8, u8, u8, u16);
+
+void dwc2_conn_id_status_change(struct work *);
+void dwc2_hcd_start_func(struct work *);
+void dwc2_hcd_reset_func(struct work *);
+
+struct dwc2_hcd_urb * dwc2_hcd_urb_alloc(struct dwc2_hsotg *, int, gfp_t);
+void dwc2_hcd_urb_free(struct dwc2_hsotg *, struct dwc2_hcd_urb *, int);
+
+int _dwc2_hcd_start(struct dwc2_hsotg *);
 
 #endif /* __DWC2_HCD_H__ */

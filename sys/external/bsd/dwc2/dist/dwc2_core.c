@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.1.1.1 2013/09/05 07:53:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -41,22 +41,31 @@
  * DWC_otg hardware. These services are used by both the Host Controller
  * Driver and the Peripheral Controller Driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+
+#include <sys/types.h>
+#include <sys/bus.h>
+#include <sys/proc.h>
+#include <sys/callout.h>
+#include <sys/mutex.h>
+#include <sys/pool.h>
+#include <sys/workqueue.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
+
 #include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#include <linux/list.h>
 
-#include <linux/usb/hcd.h>
-#include <linux/usb/ch11.h>
+#include <dwc2/dwc2.h>
+#include <dwc2/dwc2var.h>
 
-#include "core.h"
-#include "hcd.h"
+#include "dwc2_core.h"
+#include "dwc2_hcd.h"
 
 /**
  * dwc2_enable_common_interrupts() - Initializes the commmon interrupts,
@@ -69,10 +78,10 @@ static void dwc2_enable_common_interrupts(struct dwc2_hsotg *hsotg)
 	u32 intmsk;
 
 	/* Clear any pending OTG Interrupts */
-	writel(0xffffffff, hsotg->regs + GOTGINT);
+	DWC2_WRITE_4(hsotg, GOTGINT, 0xffffffff);
 
 	/* Clear any pending interrupts */
-	writel(0xffffffff, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, 0xffffffff);
 
 	/* Enable the interrupts in the GINTMSK */
 	intmsk = GINTSTS_MODEMIS | GINTSTS_OTGINT;
@@ -83,7 +92,7 @@ static void dwc2_enable_common_interrupts(struct dwc2_hsotg *hsotg)
 	intmsk |= GINTSTS_CONIDSTSCHNG | GINTSTS_WKUPINT | GINTSTS_USBSUSP |
 		  GINTSTS_SESSREQINT;
 
-	writel(intmsk, hsotg->regs + GINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
 }
 
 /*
@@ -108,10 +117,10 @@ static void dwc2_init_fs_ls_pclk_sel(struct dwc2_hsotg *hsotg)
 	}
 
 	dev_dbg(hsotg->dev, "Initializing HCFG.FSLSPClkSel to %08x\n", val);
-	hcfg = readl(hsotg->regs + HCFG);
+	hcfg = DWC2_READ_4(hsotg, HCFG);
 	hcfg &= ~HCFG_FSLSPCLKSEL_MASK;
 	hcfg |= val;
-	writel(hcfg, hsotg->regs + HCFG);
+	DWC2_WRITE_4(hsotg, HCFG, hcfg);
 }
 
 /*
@@ -128,7 +137,7 @@ static void dwc2_core_reset(struct dwc2_hsotg *hsotg)
 	/* Wait for AHB master IDLE state */
 	do {
 		usleep_range(20000, 40000);
-		greset = readl(hsotg->regs + GRSTCTL);
+		greset = DWC2_READ_4(hsotg, GRSTCTL);
 		if (++count > 50) {
 			dev_warn(hsotg->dev,
 				 "%s() HANG! AHB Idle GRSTCTL=%0x\n",
@@ -140,10 +149,10 @@ static void dwc2_core_reset(struct dwc2_hsotg *hsotg)
 	/* Core Soft Reset */
 	count = 0;
 	greset |= GRSTCTL_CSFTRST;
-	writel(greset, hsotg->regs + GRSTCTL);
+	DWC2_WRITE_4(hsotg, GRSTCTL, greset);
 	do {
 		usleep_range(20000, 40000);
-		greset = readl(hsotg->regs + GRSTCTL);
+		greset = DWC2_READ_4(hsotg, GRSTCTL);
 		if (++count > 50) {
 			dev_warn(hsotg->dev,
 				 "%s() HANG! Soft Reset GRSTCTL=%0x\n",
@@ -169,9 +178,9 @@ static void dwc2_fs_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 	 */
 	if (select_phy) {
 		dev_dbg(hsotg->dev, "FS PHY selected\n");
-		usbcfg = readl(hsotg->regs + GUSBCFG);
+		usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 		usbcfg |= GUSBCFG_PHYSEL;
-		writel(usbcfg, hsotg->regs + GUSBCFG);
+		DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 
 		/* Reset after a PHY select */
 		dwc2_core_reset(hsotg);
@@ -189,18 +198,18 @@ static void dwc2_fs_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 		dev_dbg(hsotg->dev, "FS PHY enabling I2C\n");
 
 		/* Program GUSBCFG.OtgUtmiFsSel to I2C */
-		usbcfg = readl(hsotg->regs + GUSBCFG);
+		usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 		usbcfg |= GUSBCFG_OTG_UTMI_FS_SEL;
-		writel(usbcfg, hsotg->regs + GUSBCFG);
+		DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 
 		/* Program GI2CCTL.I2CEn */
-		i2cctl = readl(hsotg->regs + GI2CCTL);
+		i2cctl = DWC2_READ_4(hsotg, GI2CCTL);
 		i2cctl &= ~GI2CCTL_I2CDEVADDR_MASK;
 		i2cctl |= 1 << GI2CCTL_I2CDEVADDR_SHIFT;
 		i2cctl &= ~GI2CCTL_I2CEN;
-		writel(i2cctl, hsotg->regs + GI2CCTL);
+		DWC2_WRITE_4(hsotg, GI2CCTL, i2cctl);
 		i2cctl |= GI2CCTL_I2CEN;
-		writel(i2cctl, hsotg->regs + GI2CCTL);
+		DWC2_WRITE_4(hsotg, GI2CCTL, i2cctl);
 	}
 }
 
@@ -211,7 +220,7 @@ static void dwc2_hs_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 	if (!select_phy)
 		return;
 
-	usbcfg = readl(hsotg->regs + GUSBCFG);
+	usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 
 	/*
 	 * HS PHY parameters. These parameters are preserved during soft reset
@@ -239,7 +248,7 @@ static void dwc2_hs_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 		break;
 	}
 
-	writel(usbcfg, hsotg->regs + GUSBCFG);
+	DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 
 	/* Reset after setting the PHY parameters */
 	dwc2_core_reset(hsotg);
@@ -265,21 +274,21 @@ static void dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 	    fs_phy_type == GHWCFG2_FS_PHY_TYPE_DEDICATED &&
 	    hsotg->core_params->ulpi_fs_ls > 0) {
 		dev_dbg(hsotg->dev, "Setting ULPI FSLS\n");
-		usbcfg = readl(hsotg->regs + GUSBCFG);
+		usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 		usbcfg |= GUSBCFG_ULPI_FS_LS;
 		usbcfg |= GUSBCFG_ULPI_CLK_SUSP_M;
-		writel(usbcfg, hsotg->regs + GUSBCFG);
+		DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 	} else {
-		usbcfg = readl(hsotg->regs + GUSBCFG);
+		usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 		usbcfg &= ~GUSBCFG_ULPI_FS_LS;
 		usbcfg &= ~GUSBCFG_ULPI_CLK_SUSP_M;
-		writel(usbcfg, hsotg->regs + GUSBCFG);
+		DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 	}
 }
 
 static int dwc2_gahbcfg_init(struct dwc2_hsotg *hsotg)
 {
-	u32 ahbcfg = readl(hsotg->regs + GAHBCFG);
+	u32 ahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 	switch (hsotg->hwcfg2 & GHWCFG2_ARCHITECTURE_MASK) {
 	case GHWCFG2_EXT_DMA_ARCH:
@@ -318,7 +327,7 @@ static int dwc2_gahbcfg_init(struct dwc2_hsotg *hsotg)
 	if (hsotg->core_params->dma_enable > 0)
 		ahbcfg |= GAHBCFG_DMA_EN;
 
-	writel(ahbcfg, hsotg->regs + GAHBCFG);
+	DWC2_WRITE_4(hsotg, GAHBCFG, ahbcfg);
 
 	return 0;
 }
@@ -327,7 +336,7 @@ static void dwc2_gusbcfg_init(struct dwc2_hsotg *hsotg)
 {
 	u32 usbcfg;
 
-	usbcfg = readl(hsotg->regs + GUSBCFG);
+	usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 	usbcfg &= ~(GUSBCFG_HNPCAP | GUSBCFG_SRPCAP);
 
 	switch (hsotg->hwcfg2 & GHWCFG2_OP_MODE_MASK) {
@@ -355,7 +364,7 @@ static void dwc2_gusbcfg_init(struct dwc2_hsotg *hsotg)
 		break;
 	}
 
-	writel(usbcfg, hsotg->regs + GUSBCFG);
+	DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 }
 
 /**
@@ -366,14 +375,14 @@ static void dwc2_gusbcfg_init(struct dwc2_hsotg *hsotg)
  * @select_phy: If true then also set the Phy type
  * @irq:        If >= 0, the irq to register
  */
-int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy, int irq)
+int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy)
 {
 	u32 usbcfg, otgctl;
 	int retval;
 
 	dev_dbg(hsotg->dev, "%s(%p)\n", __func__, hsotg);
 
-	usbcfg = readl(hsotg->regs + GUSBCFG);
+	usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 
 	/* Set ULPI External VBUS bit if needed */
 	usbcfg &= ~GUSBCFG_ULPI_EXT_VBUS_DRV;
@@ -386,7 +395,7 @@ int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy, int irq)
 	if (hsotg->core_params->ts_dline > 0)
 		usbcfg |= GUSBCFG_TERMSELDLPULSE;
 
-	writel(usbcfg, hsotg->regs + GUSBCFG);
+	DWC2_WRITE_4(hsotg, GUSBCFG, usbcfg);
 
 	/* Reset the Controller */
 	dwc2_core_reset(hsotg);
@@ -398,9 +407,9 @@ int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy, int irq)
 
 	hsotg->total_fifo_size = hsotg->hwcfg3 >> GHWCFG3_DFIFO_DEPTH_SHIFT &
 			GHWCFG3_DFIFO_DEPTH_MASK >> GHWCFG3_DFIFO_DEPTH_SHIFT;
-	hsotg->rx_fifo_size = readl(hsotg->regs + GRXFSIZ);
+	hsotg->rx_fifo_size = DWC2_READ_4(hsotg, GRXFSIZ);
 	hsotg->nperio_tx_fifo_size =
-			readl(hsotg->regs + GNPTXFSIZ) >> 16 & 0xffff;
+			DWC2_READ_4(hsotg, GNPTXFSIZ) >> 16 & 0xffff;
 
 	dev_dbg(hsotg->dev, "Total FIFO SZ=%d\n", hsotg->total_fifo_size);
 	dev_dbg(hsotg->dev, "RxFIFO SZ=%d\n", hsotg->rx_fifo_size);
@@ -420,25 +429,15 @@ int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy, int irq)
 	dwc2_gusbcfg_init(hsotg);
 
 	/* Program the GOTGCTL register */
-	otgctl = readl(hsotg->regs + GOTGCTL);
+	otgctl = DWC2_READ_4(hsotg, GOTGCTL);
 	otgctl &= ~GOTGCTL_OTGVER;
 	if (hsotg->core_params->otg_ver > 0)
 		otgctl |= GOTGCTL_OTGVER;
-	writel(otgctl, hsotg->regs + GOTGCTL);
+	DWC2_WRITE_4(hsotg, GOTGCTL, otgctl);
 	dev_dbg(hsotg->dev, "OTG VER PARAM: %d\n", hsotg->core_params->otg_ver);
 
 	/* Clear the SRP success bit for FS-I2c */
 	hsotg->srp_success = 0;
-
-	if (irq >= 0) {
-		dev_dbg(hsotg->dev, "registering common handler for irq%d\n",
-			irq);
-		retval = devm_request_irq(hsotg->dev, irq,
-					  dwc2_handle_common_intr, IRQF_SHARED,
-					  dev_name(hsotg->dev), hsotg);
-		if (retval)
-			return retval;
-	}
 
 	/* Enable common interrupts */
 	dwc2_enable_common_interrupts(hsotg);
@@ -470,19 +469,19 @@ void dwc2_enable_host_interrupts(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "%s()\n", __func__);
 
 	/* Disable all interrupts */
-	writel(0, hsotg->regs + GINTMSK);
-	writel(0, hsotg->regs + HAINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, 0);
+	DWC2_WRITE_4(hsotg, HAINTMSK, 0);
 
 	/* Clear any pending interrupts */
-	writel(0xffffffff, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, 0xffffffff);
 
 	/* Enable the common interrupts */
 	dwc2_enable_common_interrupts(hsotg);
 
 	/* Enable host mode interrupts without disturbing common interrupts */
-	intmsk = readl(hsotg->regs + GINTMSK);
+	intmsk = DWC2_READ_4(hsotg, GINTMSK);
 	intmsk |= GINTSTS_DISCONNINT | GINTSTS_PRTINT | GINTSTS_HCHINT;
-	writel(intmsk, hsotg->regs + GINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
 }
 
 /**
@@ -492,12 +491,12 @@ void dwc2_enable_host_interrupts(struct dwc2_hsotg *hsotg)
  */
 void dwc2_disable_host_interrupts(struct dwc2_hsotg *hsotg)
 {
-	u32 intmsk = readl(hsotg->regs + GINTMSK);
+	u32 intmsk = DWC2_READ_4(hsotg, GINTMSK);
 
 	/* Disable host mode interrupts without disturbing common interrupts */
 	intmsk &= ~(GINTSTS_SOF | GINTSTS_PRTINT | GINTSTS_HCHINT |
 		    GINTSTS_PTXFEMP | GINTSTS_NPTXFEMP);
-	writel(intmsk, hsotg->regs + GINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
 }
 
 static void dwc2_config_fifos(struct dwc2_hsotg *hsotg)
@@ -517,32 +516,32 @@ static void dwc2_config_fifos(struct dwc2_hsotg *hsotg)
 
 	/* Rx FIFO */
 	dev_dbg(hsotg->dev, "initial grxfsiz=%08x\n",
-		readl(hsotg->regs + GRXFSIZ));
-	writel(params->host_rx_fifo_size, hsotg->regs + GRXFSIZ);
-	dev_dbg(hsotg->dev, "new grxfsiz=%08x\n", readl(hsotg->regs + GRXFSIZ));
+		DWC2_READ_4(hsotg, GRXFSIZ));
+	DWC2_WRITE_4(hsotg, GRXFSIZ, params->host_rx_fifo_size);
+	dev_dbg(hsotg->dev, "new grxfsiz=%08x\n", DWC2_READ_4(hsotg, GRXFSIZ));
 
 	/* Non-periodic Tx FIFO */
 	dev_dbg(hsotg->dev, "initial gnptxfsiz=%08x\n",
-		readl(hsotg->regs + GNPTXFSIZ));
+		DWC2_READ_4(hsotg, GNPTXFSIZ));
 	nptxfsiz = params->host_nperio_tx_fifo_size <<
 		   FIFOSIZE_DEPTH_SHIFT & FIFOSIZE_DEPTH_MASK;
 	nptxfsiz |= params->host_rx_fifo_size <<
 		    FIFOSIZE_STARTADDR_SHIFT & FIFOSIZE_STARTADDR_MASK;
-	writel(nptxfsiz, hsotg->regs + GNPTXFSIZ);
+	DWC2_WRITE_4(hsotg, GNPTXFSIZ, nptxfsiz);
 	dev_dbg(hsotg->dev, "new gnptxfsiz=%08x\n",
-		readl(hsotg->regs + GNPTXFSIZ));
+		DWC2_READ_4(hsotg, GNPTXFSIZ));
 
 	/* Periodic Tx FIFO */
 	dev_dbg(hsotg->dev, "initial hptxfsiz=%08x\n",
-		readl(hsotg->regs + HPTXFSIZ));
+		DWC2_READ_4(hsotg, HPTXFSIZ));
 	ptxfsiz = params->host_perio_tx_fifo_size <<
 		  FIFOSIZE_DEPTH_SHIFT & FIFOSIZE_DEPTH_MASK;
 	ptxfsiz |= (params->host_rx_fifo_size +
 		    params->host_nperio_tx_fifo_size) <<
 		   FIFOSIZE_STARTADDR_SHIFT & FIFOSIZE_STARTADDR_MASK;
-	writel(ptxfsiz, hsotg->regs + HPTXFSIZ);
+	DWC2_WRITE_4(hsotg, HPTXFSIZ, ptxfsiz);
 	dev_dbg(hsotg->dev, "new hptxfsiz=%08x\n",
-		readl(hsotg->regs + HPTXFSIZ));
+		DWC2_READ_4(hsotg, HPTXFSIZ));
 
 	if (hsotg->core_params->en_multiple_tx_fifo > 0 &&
 	    hsotg->snpsid <= DWC2_CORE_REV_2_94a) {
@@ -550,15 +549,15 @@ static void dwc2_config_fifos(struct dwc2_hsotg *hsotg)
 		 * Global DFIFOCFG calculation for Host mode -
 		 * include RxFIFO, NPTXFIFO and HPTXFIFO
 		 */
-		dfifocfg = readl(hsotg->regs + GDFIFOCFG);
-		rxfsiz = readl(hsotg->regs + GRXFSIZ) & 0x0000ffff;
-		nptxfsiz = readl(hsotg->regs + GNPTXFSIZ) >> 16 & 0xffff;
-		hptxfsiz = readl(hsotg->regs + HPTXFSIZ) >> 16 & 0xffff;
+		dfifocfg = DWC2_READ_4(hsotg, GDFIFOCFG);
+		rxfsiz = DWC2_READ_4(hsotg, GRXFSIZ) & 0x0000ffff;
+		nptxfsiz = DWC2_READ_4(hsotg, GNPTXFSIZ) >> 16 & 0xffff;
+		hptxfsiz = DWC2_READ_4(hsotg, HPTXFSIZ) >> 16 & 0xffff;
 		dfifocfg &= ~GDFIFOCFG_EPINFOBASE_MASK;
 		dfifocfg |= (rxfsiz + nptxfsiz + hptxfsiz) <<
-			    GDFIFOCFG_EPINFOBASE_SHIFT &
-			    GDFIFOCFG_EPINFOBASE_MASK;
-		writel(dfifocfg, hsotg->regs + GDFIFOCFG);
+				GDFIFOCFG_EPINFOBASE_SHIFT &
+				GDFIFOCFG_EPINFOBASE_MASK;
+		DWC2_WRITE_4(hsotg, GDFIFOCFG, dfifocfg);
 	}
 }
 
@@ -579,14 +578,14 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "%s(%p)\n", __func__, hsotg);
 
 	/* Restart the Phy Clock */
-	writel(0, hsotg->regs + PCGCTL);
+	DWC2_WRITE_4(hsotg, PCGCTL, 0);
 
 	/* Initialize Host Configuration Register */
 	dwc2_init_fs_ls_pclk_sel(hsotg);
 	if (hsotg->core_params->speed == DWC2_SPEED_PARAM_FULL) {
-		hcfg = readl(hsotg->regs + HCFG);
+		hcfg = DWC2_READ_4(hsotg, HCFG);
 		hcfg |= HCFG_FSLSSUPP;
-		writel(hcfg, hsotg->regs + HCFG);
+		DWC2_WRITE_4(hsotg, HCFG, hcfg);
 	}
 
 	/*
@@ -595,9 +594,9 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 	 * and its value must not be changed during runtime.
 	 */
 	if (hsotg->core_params->reload_ctl > 0) {
-		hfir = readl(hsotg->regs + HFIR);
+		hfir = DWC2_READ_4(hsotg, HFIR);
 		hfir |= HFIR_RLDCTRL;
-		writel(hfir, hsotg->regs + HFIR);
+		DWC2_WRITE_4(hsotg, HFIR, hfir);
 	}
 
 	if (hsotg->core_params->dma_desc_enable > 0) {
@@ -614,9 +613,9 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 				"falling back to buffer DMA mode.\n");
 			hsotg->core_params->dma_desc_enable = 0;
 		} else {
-			hcfg = readl(hsotg->regs + HCFG);
+			hcfg = DWC2_READ_4(hsotg, HCFG);
 			hcfg |= HCFG_DESCDMA;
-			writel(hcfg, hsotg->regs + HCFG);
+			DWC2_WRITE_4(hsotg, HCFG, hcfg);
 		}
 	}
 
@@ -625,18 +624,18 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 
 	/* TODO - check this */
 	/* Clear Host Set HNP Enable in the OTG Control Register */
-	otgctl = readl(hsotg->regs + GOTGCTL);
+	otgctl = DWC2_READ_4(hsotg, GOTGCTL);
 	otgctl &= ~GOTGCTL_HSTSETHNPEN;
-	writel(otgctl, hsotg->regs + GOTGCTL);
+	DWC2_WRITE_4(hsotg, GOTGCTL, otgctl);
 
 	/* Make sure the FIFOs are flushed */
 	dwc2_flush_tx_fifo(hsotg, 0x10 /* all TX FIFOs */);
 	dwc2_flush_rx_fifo(hsotg);
 
 	/* Clear Host Set HNP Enable in the OTG Control Register */
-	otgctl = readl(hsotg->regs + GOTGCTL);
+	otgctl = DWC2_READ_4(hsotg, GOTGCTL);
 	otgctl &= ~GOTGCTL_HSTSETHNPEN;
-	writel(otgctl, hsotg->regs + GOTGCTL);
+	DWC2_WRITE_4(hsotg, GOTGCTL, otgctl);
 
 	if (hsotg->core_params->dma_desc_enable <= 0) {
 		int num_channels, i;
@@ -645,25 +644,25 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 		/* Flush out any leftover queued requests */
 		num_channels = hsotg->core_params->host_channels;
 		for (i = 0; i < num_channels; i++) {
-			hcchar = readl(hsotg->regs + HCCHAR(i));
+			hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
 			hcchar &= ~HCCHAR_CHENA;
 			hcchar |= HCCHAR_CHDIS;
 			hcchar &= ~HCCHAR_EPDIR;
-			writel(hcchar, hsotg->regs + HCCHAR(i));
+			DWC2_WRITE_4(hsotg, HCCHAR(i), hcchar);
 		}
 
 		/* Halt all channels to put them into a known state */
 		for (i = 0; i < num_channels; i++) {
 			int count = 0;
 
-			hcchar = readl(hsotg->regs + HCCHAR(i));
+			hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
 			hcchar |= HCCHAR_CHENA | HCCHAR_CHDIS;
 			hcchar &= ~HCCHAR_EPDIR;
-			writel(hcchar, hsotg->regs + HCCHAR(i));
+			DWC2_WRITE_4(hsotg, HCCHAR(i), hcchar);
 			dev_dbg(hsotg->dev, "%s: Halt channel %d\n",
 				__func__, i);
 			do {
-				hcchar = readl(hsotg->regs + HCCHAR(i));
+				hcchar = DWC2_READ_4(hsotg, HCCHAR(i));
 				if (++count > 1000) {
 					dev_err(hsotg->dev,
 						"Unable to clear enable on channel %d\n",
@@ -684,7 +683,7 @@ void dwc2_core_host_init(struct dwc2_hsotg *hsotg)
 			!!(hprt0 & HPRT0_PWR));
 		if (!(hprt0 & HPRT0_PWR)) {
 			hprt0 |= HPRT0_PWR;
-			writel(hprt0, hsotg->regs + HPRT0);
+			DWC2_WRITE_4(hsotg, HPRT0, hprt0);
 		}
 	}
 
@@ -764,7 +763,7 @@ static void dwc2_hc_enable_slave_ints(struct dwc2_hsotg *hsotg,
 		break;
 	}
 
-	writel(hcintmsk, hsotg->regs + HCINTMSK(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCINTMSK(chan->hc_num), hcintmsk);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "set HCINTMSK to %08x\n", hcintmsk);
 }
@@ -801,7 +800,7 @@ static void dwc2_hc_enable_dma_ints(struct dwc2_hsotg *hsotg,
 		}
 	}
 
-	writel(hcintmsk, hsotg->regs + HCINTMSK(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCINTMSK(chan->hc_num), hcintmsk);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "set HCINTMSK to %08x\n", hcintmsk);
 }
@@ -822,16 +821,16 @@ static void dwc2_hc_enable_ints(struct dwc2_hsotg *hsotg,
 	}
 
 	/* Enable the top level host channel interrupt */
-	intmsk = readl(hsotg->regs + HAINTMSK);
+	intmsk = DWC2_READ_4(hsotg, HAINTMSK);
 	intmsk |= 1 << chan->hc_num;
-	writel(intmsk, hsotg->regs + HAINTMSK);
+	DWC2_WRITE_4(hsotg, HAINTMSK, intmsk);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "set HAINTMSK to %08x\n", intmsk);
 
 	/* Make sure host channel interrupts are enabled */
-	intmsk = readl(hsotg->regs + GINTMSK);
+	intmsk = DWC2_READ_4(hsotg, GINTMSK);
 	intmsk |= GINTSTS_HCHINT;
-	writel(intmsk, hsotg->regs + GINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "set GINTMSK to %08x\n", intmsk);
 }
@@ -860,7 +859,7 @@ void dwc2_hc_init(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 	/* Clear old interrupt conditions for this host channel */
 	hcintmsk = 0xffffffff;
 	hcintmsk &= ~HCINTMSK_RESERVED14_31;
-	writel(hcintmsk, hsotg->regs + HCINT(hc_num));
+	DWC2_WRITE_4(hsotg, HCINT(hc_num), hcintmsk);
 
 	/* Enable channel interrupts required for this transfer */
 	dwc2_hc_enable_ints(hsotg, chan);
@@ -877,7 +876,7 @@ void dwc2_hc_init(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 		hcchar |= HCCHAR_LSPDDEV;
 	hcchar |= chan->ep_type << HCCHAR_EPTYPE_SHIFT & HCCHAR_EPTYPE_MASK;
 	hcchar |= chan->max_packet << HCCHAR_MPS_SHIFT & HCCHAR_MPS_MASK;
-	writel(hcchar, hsotg->regs + HCCHAR(hc_num));
+	DWC2_WRITE_4(hsotg, HCCHAR(hc_num), hcchar);
 	if (dbg_hc(chan)) {
 		dev_vdbg(hsotg->dev, "set HCCHAR(%d) to %08x\n",
 			 hc_num, hcchar);
@@ -938,7 +937,7 @@ void dwc2_hc_init(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 		}
 	}
 
-	writel(hcsplt, hsotg->regs + HCSPLT(hc_num));
+	DWC2_WRITE_4(hsotg, HCSPLT(hc_num), hcsplt);
 }
 
 /**
@@ -990,14 +989,14 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 		u32 hcintmsk = HCINTMSK_CHHLTD;
 
 		dev_vdbg(hsotg->dev, "dequeue/error\n");
-		writel(hcintmsk, hsotg->regs + HCINTMSK(chan->hc_num));
+		DWC2_WRITE_4(hsotg, HCINTMSK(chan->hc_num), hcintmsk);
 
 		/*
 		 * Make sure no other interrupts besides halt are currently
 		 * pending. Handling another interrupt could cause a crash due
 		 * to the QTD and QH state.
 		 */
-		writel(~hcintmsk, hsotg->regs + HCINT(chan->hc_num));
+		DWC2_WRITE_4(hsotg, HCINT(chan->hc_num), ~hcintmsk);
 
 		/*
 		 * Make sure the halt status is set to URB_DEQUEUE or AHB_ERR
@@ -1006,7 +1005,7 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 		 */
 		chan->halt_status = halt_status;
 
-		hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+		hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 		if (!(hcchar & HCCHAR_CHENA)) {
 			/*
 			 * The channel is either already halted or it hasn't
@@ -1034,7 +1033,7 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 		return;
 	}
 
-	hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+	hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 
 	/* No need to set the bit in DDMA for disabling the channel */
 	/* TODO check it everywhere channel is disabled */
@@ -1057,7 +1056,7 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 		if (chan->ep_type == USB_ENDPOINT_XFER_CONTROL ||
 		    chan->ep_type == USB_ENDPOINT_XFER_BULK) {
 			dev_vdbg(hsotg->dev, "control/bulk\n");
-			nptxsts = readl(hsotg->regs + GNPTXSTS);
+			nptxsts = DWC2_READ_4(hsotg, GNPTXSTS);
 			if ((nptxsts & TXSTS_QSPCAVAIL_MASK) == 0) {
 				dev_vdbg(hsotg->dev, "Disabling channel\n");
 				hcchar &= ~HCCHAR_CHENA;
@@ -1065,7 +1064,7 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 		} else {
 			if (dbg_perio())
 				dev_vdbg(hsotg->dev, "isoc/intr\n");
-			hptxsts = readl(hsotg->regs + HPTXSTS);
+			hptxsts = DWC2_READ_4(hsotg, HPTXSTS);
 			if ((hptxsts & TXSTS_QSPCAVAIL_MASK) == 0 ||
 			    hsotg->queuing_high_bandwidth) {
 				if (dbg_perio())
@@ -1078,7 +1077,7 @@ void dwc2_hc_halt(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan,
 			dev_vdbg(hsotg->dev, "DMA enabled\n");
 	}
 
-	writel(hcchar, hsotg->regs + HCCHAR(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCCHAR(chan->hc_num), hcchar);
 	chan->halt_status = halt_status;
 
 	if (hcchar & HCCHAR_CHENA) {
@@ -1125,10 +1124,10 @@ void dwc2_hc_cleanup(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 	 * Clear channel interrupt enables and any unhandled channel interrupt
 	 * conditions
 	 */
-	writel(0, hsotg->regs + HCINTMSK(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCINTMSK(chan->hc_num), 0);
 	hcintmsk = 0xffffffff;
 	hcintmsk &= ~HCINTMSK_RESERVED14_31;
-	writel(hcintmsk, hsotg->regs + HCINT(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCINT(chan->hc_num), hcintmsk);
 }
 
 /**
@@ -1195,13 +1194,13 @@ static void dwc2_hc_write_packet(struct dwc2_hsotg *hsotg,
 	u32 remaining_count;
 	u32 byte_count;
 	u32 dword_count;
-	u32 __iomem *data_fifo;
 	u32 *data_buf = (u32 *)chan->xfer_buf;
+	u32 data_fifo;
 
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
-	data_fifo = (u32 __iomem *)(hsotg->regs + HCFIFO(chan->hc_num));
+	data_fifo = HCFIFO(chan->hc_num);
 
 	remaining_count = chan->xfer_len - chan->xfer_count;
 	if (remaining_count > chan->max_packet)
@@ -1214,13 +1213,13 @@ static void dwc2_hc_write_packet(struct dwc2_hsotg *hsotg,
 	if (((unsigned long)data_buf & 0x3) == 0) {
 		/* xfer_buf is DWORD aligned */
 		for (i = 0; i < dword_count; i++, data_buf++)
-			writel(*data_buf, data_fifo);
+			DWC2_WRITE_4(hsotg, data_fifo, *data_buf);
 	} else {
 		/* xfer_buf is not DWORD aligned */
 		for (i = 0; i < dword_count; i++, data_buf++) {
 			u32 data = data_buf[0] | data_buf[1] << 8 |
 				   data_buf[2] << 16 | data_buf[3] << 24;
-			writel(data, data_fifo);
+			DWC2_WRITE_4(hsotg, data_fifo, data);
 		}
 	}
 
@@ -1373,7 +1372,7 @@ void dwc2_hc_start_transfer(struct dwc2_hsotg *hsotg,
 	hctsiz |= num_packets << TSIZ_PKTCNT_SHIFT & TSIZ_PKTCNT_MASK;
 	hctsiz |= chan->data_pid_start << TSIZ_SC_MC_PID_SHIFT &
 		  TSIZ_SC_MC_PID_MASK;
-	writel(hctsiz, hsotg->regs + HCTSIZ(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCTSIZ(chan->hc_num), hctsiz);
 	if (dbg_hc(chan)) {
 		dev_vdbg(hsotg->dev, "Wrote %08x to HCTSIZ(%d)\n",
 			 hctsiz, chan->hc_num);
@@ -1401,7 +1400,7 @@ void dwc2_hc_start_transfer(struct dwc2_hsotg *hsotg,
 		} else {
 			dma_addr = chan->xfer_dma;
 		}
-		writel((u32)dma_addr, hsotg->regs + HCDMA(chan->hc_num));
+		DWC2_WRITE_4(hsotg, HCDMA(chan->hc_num), (u32)dma_addr);
 		if (dbg_hc(chan))
 			dev_vdbg(hsotg->dev, "Wrote %08lx to HCDMA(%d)\n",
 				 (unsigned long)dma_addr, chan->hc_num);
@@ -1409,13 +1408,13 @@ void dwc2_hc_start_transfer(struct dwc2_hsotg *hsotg,
 
 	/* Start the split */
 	if (chan->do_split) {
-		u32 hcsplt = readl(hsotg->regs + HCSPLT(chan->hc_num));
+		u32 hcsplt = DWC2_READ_4(hsotg, HCSPLT(chan->hc_num));
 
 		hcsplt |= HCSPLT_SPLTENA;
-		writel(hcsplt, hsotg->regs + HCSPLT(chan->hc_num));
+		DWC2_WRITE_4(hsotg, HCSPLT(chan->hc_num), hcsplt);
 	}
 
-	hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+	hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 	hcchar &= ~HCCHAR_MULTICNT_MASK;
 	hcchar |= chan->multi_count << HCCHAR_MULTICNT_SHIFT &
 		  HCCHAR_MULTICNT_MASK;
@@ -1435,7 +1434,7 @@ void dwc2_hc_start_transfer(struct dwc2_hsotg *hsotg,
 			 hcchar >> HCCHAR_MULTICNT_SHIFT &
 			 HCCHAR_MULTICNT_MASK >> HCCHAR_MULTICNT_SHIFT);
 
-	writel(hcchar, hsotg->regs + HCCHAR(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCCHAR(chan->hc_num), hcchar);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "Wrote %08x to HCCHAR(%d)\n", hcchar,
 			 chan->hc_num);
@@ -1494,18 +1493,18 @@ void dwc2_hc_start_transfer_ddma(struct dwc2_hsotg *hsotg,
 		dev_vdbg(hsotg->dev, "	 NTD: %d\n", chan->ntd - 1);
 	}
 
-	writel(hctsiz, hsotg->regs + HCTSIZ(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCTSIZ(chan->hc_num), hctsiz);
 
 	hc_dma = (u32)chan->desc_list_addr & HCDMA_DMA_ADDR_MASK;
 
 	/* Always start from first descriptor */
 	hc_dma &= ~HCDMA_CTD_MASK;
-	writel(hc_dma, hsotg->regs + HCDMA(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCDMA(chan->hc_num), hc_dma);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "Wrote %08x to HCDMA(%d)\n",
 			 hc_dma, chan->hc_num);
 
-	hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+	hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 	hcchar &= ~HCCHAR_MULTICNT_MASK;
 	hcchar |= chan->multi_count << HCCHAR_MULTICNT_SHIFT &
 		  HCCHAR_MULTICNT_MASK;
@@ -1524,7 +1523,7 @@ void dwc2_hc_start_transfer_ddma(struct dwc2_hsotg *hsotg,
 			 hcchar >> HCCHAR_MULTICNT_SHIFT &
 			 HCCHAR_MULTICNT_MASK >> HCCHAR_MULTICNT_SHIFT);
 
-	writel(hcchar, hsotg->regs + HCCHAR(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCCHAR(chan->hc_num), hcchar);
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "Wrote %08x to HCCHAR(%d)\n", hcchar,
 			 chan->hc_num);
@@ -1581,7 +1580,7 @@ int dwc2_hc_continue_transfer(struct dwc2_hsotg *hsotg,
 		 * transfer completes, the extra requests for the channel will
 		 * be flushed.
 		 */
-		u32 hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+		u32 hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 
 		dwc2_hc_set_even_odd_frame(hsotg, chan, &hcchar);
 		hcchar |= HCCHAR_CHENA;
@@ -1589,7 +1588,7 @@ int dwc2_hc_continue_transfer(struct dwc2_hsotg *hsotg,
 		if (dbg_hc(chan))
 			dev_vdbg(hsotg->dev, "	 IN xfer: hcchar = 0x%08x\n",
 				 hcchar);
-		writel(hcchar, hsotg->regs + HCCHAR(chan->hc_num));
+		DWC2_WRITE_4(hsotg, HCCHAR(chan->hc_num), hcchar);
 		chan->requests++;
 		return 1;
 	}
@@ -1599,8 +1598,7 @@ int dwc2_hc_continue_transfer(struct dwc2_hsotg *hsotg,
 	if (chan->xfer_count < chan->xfer_len) {
 		if (chan->ep_type == USB_ENDPOINT_XFER_INT ||
 		    chan->ep_type == USB_ENDPOINT_XFER_ISOC) {
-			u32 hcchar = readl(hsotg->regs +
-					   HCCHAR(chan->hc_num));
+			u32 hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 
 			dwc2_hc_set_even_odd_frame(hsotg, chan,
 						   &hcchar);
@@ -1636,12 +1634,12 @@ void dwc2_hc_do_ping(struct dwc2_hsotg *hsotg, struct dwc2_host_chan *chan)
 
 	hctsiz = TSIZ_DOPNG;
 	hctsiz |= 1 << TSIZ_PKTCNT_SHIFT;
-	writel(hctsiz, hsotg->regs + HCTSIZ(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCTSIZ(chan->hc_num), hctsiz);
 
-	hcchar = readl(hsotg->regs + HCCHAR(chan->hc_num));
+	hcchar = DWC2_READ_4(hsotg, HCCHAR(chan->hc_num));
 	hcchar |= HCCHAR_CHENA;
 	hcchar &= ~HCCHAR_CHDIS;
-	writel(hcchar, hsotg->regs + HCCHAR(chan->hc_num));
+	DWC2_WRITE_4(hsotg, HCCHAR(chan->hc_num), hcchar);
 }
 
 /**
@@ -1661,9 +1659,9 @@ u32 dwc2_calc_frame_interval(struct dwc2_hsotg *hsotg)
 	u32 hprt0;
 	int clock = 60;	/* default value */
 
-	usbcfg = readl(hsotg->regs + GUSBCFG);
-	hwcfg2 = readl(hsotg->regs + GHWCFG2);
-	hprt0 = readl(hsotg->regs + HPRT0);
+	usbcfg = DWC2_READ_4(hsotg, GUSBCFG);
+	hwcfg2 = DWC2_READ_4(hsotg, GHWCFG2);
+	hprt0 = DWC2_READ_4(hsotg, HPRT0);
 
 	if (!(usbcfg & GUSBCFG_PHYSEL) && (usbcfg & GUSBCFG_ULPI_UTMI_SEL) &&
 	    !(usbcfg & GUSBCFG_PHYIF16))
@@ -1706,7 +1704,7 @@ u32 dwc2_calc_frame_interval(struct dwc2_hsotg *hsotg)
  */
 void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes)
 {
-	u32 __iomem *fifo = hsotg->regs + HCFIFO(0);
+	bus_size_t fifo = HCFIFO(0);
 	u32 *data_buf = (u32 *)dest;
 	int word_count = (bytes + 3) / 4;
 	int i;
@@ -1720,7 +1718,7 @@ void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes)
 	dev_vdbg(hsotg->dev, "%s(%p,%p,%d)\n", __func__, hsotg, dest, bytes);
 
 	for (i = 0; i < word_count; i++, data_buf++)
-		*data_buf = readl(fifo);
+		*data_buf = DWC2_READ_4(hsotg, fifo);
 }
 
 /**
@@ -1734,62 +1732,62 @@ void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes)
 void dwc2_dump_host_registers(struct dwc2_hsotg *hsotg)
 {
 #ifdef DEBUG
-	u32 __iomem *addr;
+	bus_size_t addr;
 	int i;
 
 	dev_dbg(hsotg->dev, "Host Global Registers\n");
-	addr = hsotg->regs + HCFG;
+	addr = HCFG;
 	dev_dbg(hsotg->dev, "HCFG	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HFIR;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HFIR;
 	dev_dbg(hsotg->dev, "HFIR	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HFNUM;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HFNUM;
 	dev_dbg(hsotg->dev, "HFNUM	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HPTXSTS;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HPTXSTS;
 	dev_dbg(hsotg->dev, "HPTXSTS	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HAINT;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HAINT;
 	dev_dbg(hsotg->dev, "HAINT	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HAINTMSK;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HAINTMSK;
 	dev_dbg(hsotg->dev, "HAINTMSK	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 	if (hsotg->core_params->dma_desc_enable > 0) {
-		addr = hsotg->regs + HFLBADDR;
+		addr = HFLBADDR;
 		dev_dbg(hsotg->dev, "HFLBADDR @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 	}
 
-	addr = hsotg->regs + HPRT0;
+	addr = HPRT0;
 	dev_dbg(hsotg->dev, "HPRT0	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 
 	for (i = 0; i < hsotg->core_params->host_channels; i++) {
 		dev_dbg(hsotg->dev, "Host Channel %d Specific Registers\n", i);
-		addr = hsotg->regs + HCCHAR(i);
+		addr = HCCHAR(i);
 		dev_dbg(hsotg->dev, "HCCHAR	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
-		addr = hsotg->regs + HCSPLT(i);
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+		addr = HCSPLT(i);
 		dev_dbg(hsotg->dev, "HCSPLT	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
-		addr = hsotg->regs + HCINT(i);
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+		addr = HCINT(i);
 		dev_dbg(hsotg->dev, "HCINT	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
-		addr = hsotg->regs + HCINTMSK(i);
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+		addr = HCINTMSK(i);
 		dev_dbg(hsotg->dev, "HCINTMSK	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
-		addr = hsotg->regs + HCTSIZ(i);
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+		addr = HCTSIZ(i);
 		dev_dbg(hsotg->dev, "HCTSIZ	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
-		addr = hsotg->regs + HCDMA(i);
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+		addr = HCDMA(i);
 		dev_dbg(hsotg->dev, "HCDMA	 @0x%08lX : 0x%08X\n",
-			(unsigned long)addr, readl(addr));
+			(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 		if (hsotg->core_params->dma_desc_enable > 0) {
-			addr = hsotg->regs + HCDMAB(i);
+			addr = HCDMAB(i);
 			dev_dbg(hsotg->dev, "HCDMAB	 @0x%08lX : 0x%08X\n",
-				(unsigned long)addr, readl(addr));
+				(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 		}
 	}
 #endif
@@ -1806,85 +1804,85 @@ void dwc2_dump_host_registers(struct dwc2_hsotg *hsotg)
 void dwc2_dump_global_registers(struct dwc2_hsotg *hsotg)
 {
 #ifdef DEBUG
-	u32 __iomem *addr;
+	bus_size_t addr;
 
 	dev_dbg(hsotg->dev, "Core Global Registers\n");
-	addr = hsotg->regs + GOTGCTL;
+	addr = GOTGCTL;
 	dev_dbg(hsotg->dev, "GOTGCTL	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GOTGINT;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GOTGINT;
 	dev_dbg(hsotg->dev, "GOTGINT	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GAHBCFG;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GAHBCFG;
 	dev_dbg(hsotg->dev, "GAHBCFG	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GUSBCFG;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GUSBCFG;
 	dev_dbg(hsotg->dev, "GUSBCFG	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GRSTCTL;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GRSTCTL;
 	dev_dbg(hsotg->dev, "GRSTCTL	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GINTSTS;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GINTSTS;
 	dev_dbg(hsotg->dev, "GINTSTS	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GINTMSK;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GINTMSK;
 	dev_dbg(hsotg->dev, "GINTMSK	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GRXSTSR;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GRXSTSR;
 	dev_dbg(hsotg->dev, "GRXSTSR	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GRXFSIZ;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GRXFSIZ;
 	dev_dbg(hsotg->dev, "GRXFSIZ	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GNPTXFSIZ;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GNPTXFSIZ;
 	dev_dbg(hsotg->dev, "GNPTXFSIZ	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GNPTXSTS;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GNPTXSTS;
 	dev_dbg(hsotg->dev, "GNPTXSTS	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GI2CCTL;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GI2CCTL;
 	dev_dbg(hsotg->dev, "GI2CCTL	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GPVNDCTL;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GPVNDCTL;
 	dev_dbg(hsotg->dev, "GPVNDCTL	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GGPIO;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GGPIO;
 	dev_dbg(hsotg->dev, "GGPIO	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GUID;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GUID;
 	dev_dbg(hsotg->dev, "GUID	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GSNPSID;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GSNPSID;
 	dev_dbg(hsotg->dev, "GSNPSID	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GHWCFG1;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GHWCFG1;
 	dev_dbg(hsotg->dev, "GHWCFG1	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GHWCFG2;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GHWCFG2;
 	dev_dbg(hsotg->dev, "GHWCFG2	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GHWCFG3;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GHWCFG3;
 	dev_dbg(hsotg->dev, "GHWCFG3	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GHWCFG4;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GHWCFG4;
 	dev_dbg(hsotg->dev, "GHWCFG4	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GLPMCFG;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GLPMCFG;
 	dev_dbg(hsotg->dev, "GLPMCFG	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GPWRDN;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GPWRDN;
 	dev_dbg(hsotg->dev, "GPWRDN	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + GDFIFOCFG;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = GDFIFOCFG;
 	dev_dbg(hsotg->dev, "GDFIFOCFG	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
-	addr = hsotg->regs + HPTXFSIZ;
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
+	addr = HPTXFSIZ;
 	dev_dbg(hsotg->dev, "HPTXFSIZ	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 
-	addr = hsotg->regs + PCGCTL;
+	addr = PCGCTL;
 	dev_dbg(hsotg->dev, "PCGCTL	 @0x%08lX : 0x%08X\n",
-		(unsigned long)addr, readl(addr));
+		(unsigned long)addr, DWC2_READ_4(hsotg, addr));
 #endif
 }
 
@@ -1903,15 +1901,15 @@ void dwc2_flush_tx_fifo(struct dwc2_hsotg *hsotg, const int num)
 
 	greset = GRSTCTL_TXFFLSH;
 	greset |= num << GRSTCTL_TXFNUM_SHIFT & GRSTCTL_TXFNUM_MASK;
-	writel(greset, hsotg->regs + GRSTCTL);
+	DWC2_WRITE_4(hsotg, GRSTCTL, greset);
 
 	do {
-		greset = readl(hsotg->regs + GRSTCTL);
+		greset = DWC2_READ_4(hsotg, GRSTCTL);
 		if (++count > 10000) {
 			dev_warn(hsotg->dev,
 				 "%s() HANG! GRSTCTL=%0x GNPTXSTS=0x%08x\n",
 				 __func__, greset,
-				 readl(hsotg->regs + GNPTXSTS));
+				 DWC2_READ_4(hsotg, GNPTXSTS));
 			break;
 		}
 		udelay(1);
@@ -1934,10 +1932,10 @@ void dwc2_flush_rx_fifo(struct dwc2_hsotg *hsotg)
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
 	greset = GRSTCTL_RXFFLSH;
-	writel(greset, hsotg->regs + GRSTCTL);
+	DWC2_WRITE_4(hsotg, GRSTCTL, greset);
 
 	do {
-		greset = readl(hsotg->regs + GRSTCTL);
+		greset = DWC2_READ_4(hsotg, GRSTCTL);
 		if (++count > 10000) {
 			dev_warn(hsotg->dev, "%s() HANG! GRSTCTL=%0x\n",
 				 __func__, greset);
@@ -2115,7 +2113,7 @@ int dwc2_set_param_host_rx_fifo_size(struct dwc2_hsotg *hsotg, int val)
 	int valid = 1;
 	int retval = 0;
 
-	if (val < 16 || val > readl(hsotg->regs + GRXFSIZ))
+	if (val < 16 || val > DWC2_READ_4(hsotg, GRXFSIZ))
 		valid = 0;
 
 	if (!valid) {
@@ -2123,7 +2121,7 @@ int dwc2_set_param_host_rx_fifo_size(struct dwc2_hsotg *hsotg, int val)
 			dev_err(hsotg->dev,
 				"%d invalid for host_rx_fifo_size. Check HW configuration.\n",
 				val);
-		val = readl(hsotg->regs + GRXFSIZ);
+		val = DWC2_READ_4(hsotg, GRXFSIZ);
 		dev_dbg(hsotg->dev, "Setting host_rx_fifo_size to %d\n", val);
 		retval = -EINVAL;
 	}
@@ -2137,7 +2135,7 @@ int dwc2_set_param_host_nperio_tx_fifo_size(struct dwc2_hsotg *hsotg, int val)
 	int valid = 1;
 	int retval = 0;
 
-	if (val < 16 || val > (readl(hsotg->regs + GNPTXFSIZ) >> 16 & 0xffff))
+	if (val < 16 || val > (DWC2_READ_4(hsotg, GNPTXFSIZ) >> 16 & 0xffff))
 		valid = 0;
 
 	if (!valid) {
@@ -2145,7 +2143,7 @@ int dwc2_set_param_host_nperio_tx_fifo_size(struct dwc2_hsotg *hsotg, int val)
 			dev_err(hsotg->dev,
 				"%d invalid for host_nperio_tx_fifo_size. Check HW configuration.\n",
 				val);
-		val = readl(hsotg->regs + GNPTXFSIZ) >> 16 & 0xffff;
+		val = DWC2_READ_4(hsotg, GNPTXFSIZ) >> 16 & 0xffff;
 		dev_dbg(hsotg->dev, "Setting host_nperio_tx_fifo_size to %d\n",
 			val);
 		retval = -EINVAL;
@@ -2692,7 +2690,7 @@ u16 dwc2_get_otg_version(struct dwc2_hsotg *hsotg)
 
 int dwc2_check_core_status(struct dwc2_hsotg *hsotg)
 {
-	if (readl(hsotg->regs + GSNPSID) == 0xffffffff)
+	if (DWC2_READ_4(hsotg, GSNPSID) == 0xffffffff)
 		return -1;
 	else
 		return 0;
@@ -2706,10 +2704,10 @@ int dwc2_check_core_status(struct dwc2_hsotg *hsotg)
  */
 void dwc2_enable_global_interrupts(struct dwc2_hsotg *hsotg)
 {
-	u32 ahbcfg = readl(hsotg->regs + GAHBCFG);
+	u32 ahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 	ahbcfg |= GAHBCFG_GLBL_INTR_EN;
-	writel(ahbcfg, hsotg->regs + GAHBCFG);
+	DWC2_WRITE_4(hsotg, GAHBCFG, ahbcfg);
 }
 
 /**
@@ -2720,12 +2718,8 @@ void dwc2_enable_global_interrupts(struct dwc2_hsotg *hsotg)
  */
 void dwc2_disable_global_interrupts(struct dwc2_hsotg *hsotg)
 {
-	u32 ahbcfg = readl(hsotg->regs + GAHBCFG);
+	u32 ahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 	ahbcfg &= ~GAHBCFG_GLBL_INTR_EN;
-	writel(ahbcfg, hsotg->regs + GAHBCFG);
+	DWC2_WRITE_4(hsotg, GAHBCFG, ahbcfg);
 }
-
-MODULE_DESCRIPTION("DESIGNWARE HS OTG Core");
-MODULE_AUTHOR("Synopsys, Inc.");
-MODULE_LICENSE("Dual BSD/GPL");

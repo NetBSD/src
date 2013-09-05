@@ -1,5 +1,3 @@
-/*	$NetBSD: dwc2_coreintr.c,v 1.1.1.1 2013/09/05 07:53:10 skrll Exp $	*/
-
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
  *
@@ -39,22 +37,32 @@
 /*
  * This file contains the common interrupt handlers
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/pool.h>
+#include <sys/bus.h>
+#include <sys/callout.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
+
 #include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#include <linux/list.h>
 
-#include <linux/usb/hcd.h>
-#include <linux/usb/ch11.h>
+#include <dwc2/dwc2.h>
+#include <dwc2/dwc2var.h>
 
-#include "core.h"
-#include "hcd.h"
+#include "dwc2_core.h"
+#include "dwc2_hcd.h"
 
+#ifdef DWC2_DEBUG
 static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 {
 #ifdef DEBUG
@@ -76,6 +84,7 @@ static const char *dwc2_op_state_str(struct dwc2_hsotg *hsotg)
 	return "";
 #endif
 }
+#endif
 
 /**
  * dwc2_handle_mode_mismatch_intr() - Logs a mode mismatch warning message
@@ -88,7 +97,7 @@ static void dwc2_handle_mode_mismatch_intr(struct dwc2_hsotg *hsotg)
 		 dwc2_is_host_mode(hsotg) ? "Host" : "Device");
 
 	/* Clear interrupt */
-	writel(GINTSTS_MODEMIS, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_MODEMIS);
 }
 
 /**
@@ -103,8 +112,8 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 	u32 gotgctl;
 	u32 gintmsk;
 
-	gotgint = readl(hsotg->regs + GOTGINT);
-	gotgctl = readl(hsotg->regs + GOTGCTL);
+	gotgint = DWC2_READ_4(hsotg, GOTGINT);
+	gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 	dev_dbg(hsotg->dev, "++OTG Interrupt gotgint=%0x [%s]\n", gotgint,
 		dwc2_op_state_str(hsotg));
 
@@ -112,7 +121,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 		dev_dbg(hsotg->dev,
 			" ++OTG Interrupt: Session End Detected++ (%s)\n",
 			dwc2_op_state_str(hsotg));
-		gotgctl = readl(hsotg->regs + GOTGCTL);
+		gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 
 		if (hsotg->op_state == OTG_STATE_B_HOST) {
 			hsotg->op_state = OTG_STATE_B_PERIPHERAL;
@@ -135,15 +144,15 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 			hsotg->lx_state = DWC2_L0;
 		}
 
-		gotgctl = readl(hsotg->regs + GOTGCTL);
+		gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 		gotgctl &= ~GOTGCTL_DEVHNPEN;
-		writel(gotgctl, hsotg->regs + GOTGCTL);
+		DWC2_WRITE_4(hsotg, GOTGCTL, gotgctl);
 	}
 
 	if (gotgint & GOTGINT_SES_REQ_SUC_STS_CHNG) {
 		dev_dbg(hsotg->dev,
 			" ++OTG Interrupt: Session Request Success Status Change++\n");
-		gotgctl = readl(hsotg->regs + GOTGCTL);
+		gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 		if (gotgctl & GOTGCTL_SESREQSCS) {
 			if (hsotg->core_params->phy_type ==
 					DWC2_PHY_TYPE_PARAM_FS
@@ -151,9 +160,9 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 				hsotg->srp_success = 1;
 			} else {
 				/* Clear Session Request */
-				gotgctl = readl(hsotg->regs + GOTGCTL);
+				gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 				gotgctl &= ~GOTGCTL_SESREQ;
-				writel(gotgctl, hsotg->regs + GOTGCTL);
+				DWC2_WRITE_4(hsotg, GOTGCTL, gotgctl);
 			}
 		}
 	}
@@ -163,7 +172,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 		 * Print statements during the HNP interrupt handling
 		 * can cause it to fail
 		 */
-		gotgctl = readl(hsotg->regs + GOTGCTL);
+		gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 		/*
 		 * WA for 3.00a- HW is not setting cur_mode, even sometimes
 		 * this does not help
@@ -183,9 +192,9 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 				 * interrupt does not get handled and Linux
 				 * complains loudly.
 				 */
-				gintmsk = readl(hsotg->regs + GINTMSK);
+				gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 				gintmsk &= ~GINTSTS_SOF;
-				writel(gintmsk, hsotg->regs + GINTMSK);
+				DWC2_WRITE_4(hsotg, GINTMSK, gintmsk);
 
 				/*
 				 * Call callback function with spin lock
@@ -199,9 +208,9 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 				hsotg->op_state = OTG_STATE_B_HOST;
 			}
 		} else {
-			gotgctl = readl(hsotg->regs + GOTGCTL);
+			gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
 			gotgctl &= ~(GOTGCTL_HNPREQ | GOTGCTL_DEVHNPEN);
-			writel(gotgctl, hsotg->regs + GOTGCTL);
+			DWC2_WRITE_4(hsotg, GOTGCTL, gotgctl);
 			dev_dbg(hsotg->dev, "HNP Failed\n");
 			dev_err(hsotg->dev,
 				"Device Not Connected/Responding\n");
@@ -227,9 +236,9 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 			hsotg->op_state = OTG_STATE_A_PERIPHERAL;
 		} else {
 			/* Need to disable SOF interrupt immediately */
-			gintmsk = readl(hsotg->regs + GINTMSK);
+			gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 			gintmsk &= ~GINTSTS_SOF;
-			writel(gintmsk, hsotg->regs + GINTMSK);
+			DWC2_WRITE_4(hsotg, GINTMSK, gintmsk);
 			spin_unlock(&hsotg->lock);
 			dwc2_hcd_start(hsotg);
 			spin_lock(&hsotg->lock);
@@ -244,7 +253,7 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
 		dev_dbg(hsotg->dev, " ++OTG Interrupt: Debounce Done++\n");
 
 	/* Clear GOTGINT */
-	writel(gotgint, hsotg->regs + GOTGINT);
+	DWC2_WRITE_4(hsotg, GOTGINT, gotgint);
 }
 
 /**
@@ -259,11 +268,11 @@ static void dwc2_handle_otg_intr(struct dwc2_hsotg *hsotg)
  */
 static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 {
-	u32 gintmsk = readl(hsotg->regs + GINTMSK);
+	u32 gintmsk = DWC2_READ_4(hsotg, GINTMSK);
 
 	/* Need to disable SOF interrupt immediately */
 	gintmsk &= ~GINTSTS_SOF;
-	writel(gintmsk, hsotg->regs + GINTMSK);
+	DWC2_WRITE_4(hsotg, GINTMSK, gintmsk);
 
 	dev_dbg(hsotg->dev, " ++Connector ID Status Change Interrupt++  (%s)\n",
 		dwc2_is_host_mode(hsotg) ? "Host" : "Device");
@@ -274,11 +283,11 @@ static void dwc2_handle_conn_id_status_change_intr(struct dwc2_hsotg *hsotg)
 	 * scheduling.
 	 */
 	spin_unlock(&hsotg->lock);
-	queue_work(hsotg->wq_otg, &hsotg->wf_otg);
+	workqueue_enqueue(hsotg->wq_otg, &hsotg->wf_otg, NULL);
 	spin_lock(&hsotg->lock);
 
 	/* Clear interrupt */
-	writel(GINTSTS_CONIDSTSCHNG, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_CONIDSTSCHNG);
 }
 
 /**
@@ -297,7 +306,7 @@ static void dwc2_handle_session_req_intr(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "++Session Request Interrupt++\n");
 
 	/* Clear interrupt */
-	writel(GINTSTS_SESSREQINT, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SESSREQINT);
 }
 
 /*
@@ -313,25 +322,25 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "%s lxstate = %d\n", __func__, hsotg->lx_state);
 
 	if (dwc2_is_device_mode(hsotg)) {
-		dev_dbg(hsotg->dev, "DSTS=0x%0x\n", readl(hsotg->regs + DSTS));
+		dev_dbg(hsotg->dev, "DSTS=0x%0x\n", DWC2_READ_4(hsotg, DSTS));
 		if (hsotg->lx_state == DWC2_L2) {
-			u32 dctl = readl(hsotg->regs + DCTL);
+			u32 dctl = DWC2_READ_4(hsotg, DCTL);
 
 			/* Clear Remote Wakeup Signaling */
 			dctl &= ~DCTL_RMTWKUPSIG;
-			writel(dctl, hsotg->regs + DCTL);
+			DWC2_WRITE_4(hsotg, DCTL, dctl);
 		}
 		/* Change to L0 state */
 		hsotg->lx_state = DWC2_L0;
 	} else {
 		if (hsotg->lx_state != DWC2_L1) {
-			u32 pcgcctl = readl(hsotg->regs + PCGCTL);
+			u32 pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
 
 			/* Restart the Phy Clock */
 			pcgcctl &= ~PCGCTL_STOPPCLK;
-			writel(pcgcctl, hsotg->regs + PCGCTL);
-			mod_timer(&hsotg->wkp_timer,
-				  jiffies + msecs_to_jiffies(71));
+			DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+			callout_reset(&hsotg->wkp_timer, mstohz(71),
+			    dwc2_wakeup_detected, hsotg);
 		} else {
 			/* Change to L0 state */
 			hsotg->lx_state = DWC2_L0;
@@ -339,7 +348,7 @@ static void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 	}
 
 	/* Clear interrupt */
-	writel(GINTSTS_WKUPINT, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_WKUPINT);
 }
 
 /*
@@ -355,7 +364,7 @@ static void dwc2_handle_disconnect_intr(struct dwc2_hsotg *hsotg)
 	/* Change to L3 (OFF) state */
 	hsotg->lx_state = DWC2_L3;
 
-	writel(GINTSTS_DISCONNINT, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_DISCONNINT);
 }
 
 /*
@@ -377,7 +386,7 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 		 * Check the Device status register to determine if the Suspend
 		 * state is active
 		 */
-		dsts = readl(hsotg->regs + DSTS);
+		dsts = DWC2_READ_4(hsotg, DSTS);
 		dev_dbg(hsotg->dev, "DSTS=0x%0x\n", dsts);
 		dev_dbg(hsotg->dev,
 			"DSTS.Suspend Status=%d HWCFG4.Power Optimize=%d\n",
@@ -399,7 +408,7 @@ static void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 	hsotg->lx_state = DWC2_L2;
 
 	/* Clear interrupt */
-	writel(GINTSTS_USBSUSP, hsotg->regs + GINTSTS);
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_USBSUSP);
 }
 
 #define GINTMSK_COMMON	(GINTSTS_WKUPINT | GINTSTS_SESSREQINT |		\
@@ -417,9 +426,9 @@ static u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
 	u32 gahbcfg;
 	u32 gintmsk_common = GINTMSK_COMMON;
 
-	gintsts = readl(hsotg->regs + GINTSTS);
-	gintmsk = readl(hsotg->regs + GINTMSK);
-	gahbcfg = readl(hsotg->regs + GAHBCFG);
+	gintsts = DWC2_READ_4(hsotg, GINTSTS);
+	gintmsk = DWC2_READ_4(hsotg, GINTMSK);
+	gahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 #ifdef DEBUG
 	/* If any common interrupts set */
@@ -447,7 +456,7 @@ static u32 dwc2_read_common_intr(struct dwc2_hsotg *hsotg)
  * - Resume / Remote Wakeup Detected Interrupt
  * - Suspend Interrupt
  */
-irqreturn_t dwc2_handle_common_intr(int irq, void *dev)
+irqreturn_t dwc2_handle_common_intr(void *dev)
 {
 	struct dwc2_hsotg *hsotg = dev;
 	u32 gintsts;
@@ -488,7 +497,7 @@ irqreturn_t dwc2_handle_common_intr(int irq, void *dev)
 			dev_dbg(hsotg->dev,
 				" --Port interrupt received in Device mode--\n");
 			gintsts = GINTSTS_PRTINT;
-			writel(gintsts, hsotg->regs + GINTSTS);
+			DWC2_WRITE_4(hsotg, GINTSTS, gintsts);
 			retval = 1;
 		}
 	}
@@ -497,4 +506,3 @@ irqreturn_t dwc2_handle_common_intr(int irq, void *dev)
 out:
 	return retval;
 }
-EXPORT_SYMBOL_GPL(dwc2_handle_common_intr);
