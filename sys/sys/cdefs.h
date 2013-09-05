@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.108 2013/09/05 09:03:13 gsutre Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.109 2013/09/05 21:00:15 gsutre Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -553,13 +553,9 @@
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
 
-#ifndef __ASSEMBLER__
-static __inline long long __zeroll(void) { return 0; }
-static __inline int __negative_p(double x) { return x < 0; }
-#else
 #define __zeroll() (0LL)
-#define __negative_p(x) ((x) < 0)
-#endif
+#define __zeroull() (0ULL)
+#define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
 #define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
 #define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
@@ -570,8 +566,8 @@ static __inline int __negative_p(double x) { return x < 0; }
 #define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 
-#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
-    (((a) & __type_mask(t)) == 0) : !__negative_p(a))
+#define __type_fit_u(t, a) (/*LINTED*/!__negative_p(a) && \
+    (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
 
 #define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
     ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
