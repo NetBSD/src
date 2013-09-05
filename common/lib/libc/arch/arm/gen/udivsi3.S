@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.4 2013/08/22 19:25:00 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.5 2013/09/05 05:16:08 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -29,12 +29,12 @@ ENTRY(__udivsi3)
 #elif !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	b	__udivide
 #else
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.fnstart
 	.cfi_startproc
 #endif
 	push	{r4, lr}
-#if defined(__ARM_EABI__) && (!defined(_KERNEL) && !defined(_STANDALONE))
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.save	{r4, lr}
 	.cfi_def_cfa_offset 8
 	.cfi_offset 14, -4
@@ -42,7 +42,7 @@ ENTRY(__udivsi3)
 #endif
 	bl	__udivide
 	pop	{r4, pc}
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
 	.cfi_endproc
 	.fnend
 #endif
