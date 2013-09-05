@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.1.1.1 2013/09/05 07:53:12 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -39,20 +39,28 @@
 /*
  * This file contains the Descriptor DMA implementation for Host mode
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/cpu.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
+
 #include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#include <linux/list.h>
 
-#include <linux/usb/hcd.h>
-#include <linux/usb/ch11.h>
+#include <dwc2/dwc2.h>
+#include <dwc2/dwc2var.h>
 
-#include "core.h"
-#include "hcd.h"
+#include "dwc2_core.h"
+#include "dwc2_hcd.h"
 
 static u16 dwc2_frame_list_idx(u16 frame)
 {
@@ -89,10 +97,19 @@ static u16 dwc2_frame_incr_val(struct dwc2_qh *qh)
 static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 				gfp_t flags)
 {
-	qh->desc_list = dma_alloc_coherent(hsotg->dev,
-				sizeof(struct dwc2_hcd_dma_desc) *
-				dwc2_max_desc_num(qh), &qh->desc_list_dma,
-				flags);
+	int err;
+
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+
+	qh->desc_list = NULL;
+	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus,
+	    sizeof(struct dwc2_hcd_dma_desc) * dwc2_max_desc_num(qh), 0,
+	    &qh->desc_list_usbdma);
+
+	if (!err) {
+		qh->desc_list = KERNADDR(&qh->desc_list_usbdma, 0);
+		qh->desc_list_dma = DMAADDR(&qh->desc_list_usbdma, 0);
+	}
 
 	if (!qh->desc_list)
 		return -ENOMEM;
@@ -100,11 +117,9 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	memset(qh->desc_list, 0,
 	       sizeof(struct dwc2_hcd_dma_desc) * dwc2_max_desc_num(qh));
 
-	qh->n_bytes = kzalloc(sizeof(u32) * dwc2_max_desc_num(qh), flags);
+	qh->n_bytes = kmem_zalloc(sizeof(u32) * dwc2_max_desc_num(qh), KM_SLEEP);
 	if (!qh->n_bytes) {
-		dma_free_coherent(hsotg->dev, sizeof(struct dwc2_hcd_dma_desc)
-				  * dwc2_max_desc_num(qh), qh->desc_list,
-				  qh->desc_list_dma);
+		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
 		qh->desc_list = NULL;
 		return -ENOMEM;
 	}
@@ -115,25 +130,31 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 static void dwc2_desc_list_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	if (qh->desc_list) {
-		dma_free_coherent(hsotg->dev, sizeof(struct dwc2_hcd_dma_desc)
-				  * dwc2_max_desc_num(qh), qh->desc_list,
-				  qh->desc_list_dma);
+		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
 		qh->desc_list = NULL;
 	}
 
-	kfree(qh->n_bytes);
+	kmem_free(qh->n_bytes, sizeof(u32) * dwc2_max_desc_num(qh));
 	qh->n_bytes = NULL;
 }
 
 static int dwc2_frame_list_alloc(struct dwc2_hsotg *hsotg, gfp_t mem_flags)
 {
+	int err;
+
 	if (hsotg->frame_list)
 		return 0;
 
-	hsotg->frame_list = dma_alloc_coherent(hsotg->dev,
-					       4 * FRLISTEN_64_SIZE,
-					       &hsotg->frame_list_dma,
-					       mem_flags);
+	/* XXXNH - pool_cache_t */
+	hsotg->frame_list = NULL;
+	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, 4 * FRLISTEN_64_SIZE,
+	    0, &hsotg->frame_list_usbdma);
+
+	if (!err) {
+		hsotg->frame_list = KERNADDR(&hsotg->frame_list_usbdma, 0);
+		hsotg->frame_list_dma = DMAADDR(&hsotg->frame_list_usbdma, 0);
+	}
+
 	if (!hsotg->frame_list)
 		return -ENOMEM;
 
@@ -160,8 +181,7 @@ static void dwc2_frame_list_free(struct dwc2_hsotg *hsotg)
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 
-	dma_free_coherent(hsotg->dev, 4 * FRLISTEN_64_SIZE, frame_list,
-			  frame_list_dma);
+	usb_freemem(&hsotg->hsotg_sc->sc_bus, &hsotg->frame_list_usbdma);
 }
 
 static void dwc2_per_sched_enable(struct dwc2_hsotg *hsotg, u32 fr_list_en)
@@ -171,19 +191,19 @@ static void dwc2_per_sched_enable(struct dwc2_hsotg *hsotg, u32 fr_list_en)
 
 	spin_lock_irqsave(&hsotg->lock, flags);
 
-	hcfg = readl(hsotg->regs + HCFG);
+	hcfg = DWC2_READ_4(hsotg, HCFG);
 	if (hcfg & HCFG_PERSCHEDENA) {
 		/* already enabled */
 		spin_unlock_irqrestore(&hsotg->lock, flags);
 		return;
 	}
 
-	writel(hsotg->frame_list_dma, hsotg->regs + HFLBADDR);
+	DWC2_WRITE_4(hsotg, HFLBADDR, hsotg->frame_list_dma);
 
 	hcfg &= ~HCFG_FRLISTEN_MASK;
 	hcfg |= fr_list_en | HCFG_PERSCHEDENA;
 	dev_vdbg(hsotg->dev, "Enabling Periodic schedule\n");
-	writel(hcfg, hsotg->regs + HCFG);
+	DWC2_WRITE_4(hsotg, HCFG, hcfg);
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
@@ -195,7 +215,7 @@ static void dwc2_per_sched_disable(struct dwc2_hsotg *hsotg)
 
 	spin_lock_irqsave(&hsotg->lock, flags);
 
-	hcfg = readl(hsotg->regs + HCFG);
+	hcfg = DWC2_READ_4(hsotg, HCFG);
 	if (!(hcfg & HCFG_PERSCHEDENA)) {
 		/* already disabled */
 		spin_unlock_irqrestore(&hsotg->lock, flags);
@@ -204,7 +224,7 @@ static void dwc2_per_sched_disable(struct dwc2_hsotg *hsotg)
 
 	hcfg &= ~HCFG_PERSCHEDENA;
 	dev_vdbg(hsotg->dev, "Disabling Periodic schedule\n");
-	writel(hcfg, hsotg->regs + HCFG);
+	DWC2_WRITE_4(hsotg, HCFG, hcfg);
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 }
@@ -220,7 +240,7 @@ static void dwc2_update_frame_list(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	u16 i, j, inc;
 
 	if (!hsotg) {
-		pr_err("hsotg = %p\n", hsotg);
+		printf("hsotg = %p\n", hsotg);
 		return;
 	}
 
@@ -522,7 +542,7 @@ static void dwc2_fill_host_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 	else
 		qh->n_bytes[idx] = frame_desc->length;
 
-	dma_desc->buf = (u32)(qtd->urb->dma + frame_desc->offset);
+	dma_desc->buf = (u32)(DMAADDR(qtd->urb->usbdma, frame_desc->offset));
 	dma_desc->status = qh->n_bytes[idx] << HOST_DMA_ISOC_NBYTES_SHIFT &
 			   HOST_DMA_ISOC_NBYTES_MASK;
 
@@ -656,7 +676,7 @@ static void dwc2_fill_host_dma_desc(struct dwc2_hsotg *hsotg,
 	if (len > chan->xfer_len) {
 		chan->xfer_len = 0;
 	} else {
-		chan->xfer_dma += len;
+		chan->xfer_dma += len;		/* XXXNH safe */
 		chan->xfer_len -= len;
 	}
 }
@@ -683,8 +703,8 @@ static void dwc2_init_non_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 
 		if (n_desc) {
 			/* SG request - more than 1 QTD */
-			chan->xfer_dma = qtd->urb->dma +
-					qtd->urb->actual_length;
+			chan->xfer_dma = DMAADDR(qtd->urb->usbdma,
+					qtd->urb->actual_length);
 			chan->xfer_len = qtd->urb->length -
 					qtd->urb->actual_length;
 			dev_vdbg(hsotg->dev, "buf=%08lx len=%d\n",
@@ -811,7 +831,7 @@ static int dwc2_cmpl_host_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 		return -EINVAL;
 
 	frame_desc = &qtd->urb->iso_descs[qtd->isoc_frame_index_last];
-	dma_desc->buf = (u32)(qtd->urb->dma + frame_desc->offset);
+	dma_desc->buf = (u32)(DMAADDR(qtd->urb->usbdma, frame_desc->offset));
 	if (chan->ep_is_in)
 		remain = dma_desc->status >> HOST_DMA_ISOC_NBYTES_SHIFT &
 			HOST_DMA_ISOC_NBYTES_MASK >> HOST_DMA_ISOC_NBYTES_SHIFT;

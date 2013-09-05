@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.h,v 1.1.1.1 2013/09/05 07:53:10 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.h,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
 
 /*
  * core.h - DesignWare HS OTG Controller common declarations
@@ -39,19 +39,16 @@
 #ifndef __DWC2_CORE_H__
 #define __DWC2_CORE_H__
 
-#include <linux/usb/phy.h>
-#include "hw.h"
+#include <sys/stdint.h>
+#include <sys/workqueue.h>
+#include <sys/pool.h>
+#include <sys/queue.h>
+#include <sys/device.h>
 
-#ifdef DWC2_LOG_WRITES
-static inline void do_write(u32 value, void *addr)
-{
-	writel(value, addr);
-	pr_info("INFO:: wrote %08x to %p\n", value, addr);
-}
+#include <machine/intr.h>
+#include <sys/bus.h>
 
-#undef writel
-#define writel(v, a)	do_write(v, a)
-#endif
+#include "dwc2_hw.h"
 
 /* Maximum number of Endpoints/HostChannels */
 #define MAX_EPS_CHANNELS	16
@@ -302,8 +299,8 @@ struct dwc2_core_params {
  * @next_sched_frame:   Next scheduled frame, used by the NAK holdoff code
  */
 struct dwc2_hsotg {
-	struct device *dev;
-	void __iomem *regs;
+	device_t dev;
+	struct dwc2_softc *hsotg_sc;
 	struct dwc2_core_params *core_params;
 	u32 hwcfg1;
 	u32 hwcfg2;
@@ -319,9 +316,9 @@ struct dwc2_hsotg {
 	unsigned int queuing_high_bandwidth:1;
 	unsigned int srp_success:1;
 
-	struct workqueue_struct *wq_otg;
-	struct work_struct wf_otg;
-	struct timer_list wkp_timer;
+	struct workqueue *wq_otg;
+	struct work wf_otg;
+	struct callout wkp_timer;
 	enum dwc2_lx_state lx_state;
 
 	union dwc2_hcd_internal_flags {
@@ -364,6 +361,7 @@ struct dwc2_hsotg {
 	int non_periodic_channels;
 	int available_host_channels;
 	struct dwc2_host_chan *hc_ptr_array[MAX_EPS_CHANNELS];
+	usb_dma_t status_buf_usbdma;
 	u8 *status_buf;
 	dma_addr_t status_buf_dma;
 #define DWC2_HCD_STATUS_BUF_SIZE 64
@@ -373,6 +371,7 @@ struct dwc2_hsotg {
 	spinlock_t lock;
 	void *priv;
 	u8 otg_port;
+	usb_dma_t frame_list_usbdma;
 	u32 *frame_list;
 	dma_addr_t frame_list_dma;
 	int next_sched_frame;
@@ -461,12 +460,12 @@ extern void dwc2_read_packet(struct dwc2_hsotg *hsotg, u8 *dest, u16 bytes);
 extern void dwc2_flush_tx_fifo(struct dwc2_hsotg *hsotg, const int num);
 extern void dwc2_flush_rx_fifo(struct dwc2_hsotg *hsotg);
 
-extern int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy, int irq);
+extern int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy);
 extern void dwc2_enable_global_interrupts(struct dwc2_hsotg *hcd);
 extern void dwc2_disable_global_interrupts(struct dwc2_hsotg *hcd);
 
 /* This function should be called on every hardware interrupt. */
-extern irqreturn_t dwc2_handle_common_intr(int irq, void *dev);
+extern irqreturn_t dwc2_handle_common_intr(void *dev);
 
 /* OTG Core Parameters */
 
@@ -658,6 +657,8 @@ extern int dwc2_set_param_reload_ctl(struct dwc2_hsotg *hsotg, int val);
 extern int dwc2_set_param_ahbcfg(struct dwc2_hsotg *hsotg, int val);
 
 extern int dwc2_set_param_otg_ver(struct dwc2_hsotg *hsotg, int val);
+
+extern int dwc2_set_param_uframe_sched(struct dwc2_hsotg *hsotg, int val);
 
 /*
  * Dump core registers and SPRAM
