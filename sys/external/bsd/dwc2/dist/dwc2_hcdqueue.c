@@ -1,5 +1,3 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.1.1.1 2013/09/05 07:53:12 skrll Exp $	*/
-
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
  *
@@ -40,20 +38,30 @@
  * This file contains the functions to manage Queue Heads and Queue
  * Transfer Descriptors for Host mode
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+
+#include <sys/types.h>
+#include <sys/kmem.h>
+#include <sys/pool.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
+
+#include <machine/param.h>
+
 #include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
 
-#include <linux/usb/hcd.h>
-#include <linux/usb/ch11.h>
+#include <dwc2/dwc2.h>
+#include <dwc2/dwc2var.h>
 
-#include "core.h"
-#include "hcd.h"
+#include "dwc2_core.h"
+#include "dwc2_hcd.h"
+
+static u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
 
 /**
  * dwc2_qh_init() - Initializes a QH structure
@@ -68,7 +76,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			 struct dwc2_hcd_urb *urb)
 {
 	int dev_speed, hub_addr, hub_port;
-	char *speed, *type;
+	const char *speed, *type;
 
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
@@ -105,10 +113,10 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		int bytecount =
 			dwc2_hb_mult(qh->maxp) * dwc2_max_packet(qh->maxp);
 
-		qh->usecs = NS_TO_US(usb_calc_bus_time(qh->do_split ?
+		qh->usecs = dwc2_calc_bus_time(hsotg, qh->do_split ?
 				USB_SPEED_HIGH : dev_speed, qh->ep_is_in,
 				qh->ep_type == USB_ENDPOINT_XFER_ISOC,
-				bytecount));
+				bytecount);
 		/* Start in a slightly future (micro)frame */
 		qh->sched_frame = dwc2_frame_num_inc(hsotg->frame_number,
 						     SCHEDULE_SLOP);
@@ -118,7 +126,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		if (qh->ep_type == USB_ENDPOINT_XFER_INT)
 			qh->interval = 8;
 #endif
-		hprt = readl(hsotg->regs + HPRT0);
+		hprt = DWC2_READ_4(hsotg, HPRT0);
 		prtspd = hprt & HPRT0_SPD_MASK;
 		if (prtspd == HPRT0_SPD_HIGH_SPEED &&
 		    (dev_speed == USB_SPEED_LOW ||
@@ -198,16 +206,18 @@ static struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 					  struct dwc2_hcd_urb *urb,
 					  gfp_t mem_flags)
 {
+	struct dwc2_softc *sc = hsotg->hsotg_sc;
 	struct dwc2_qh *qh;
 
 	if (!urb->priv)
 		return NULL;
 
 	/* Allocate memory */
-	qh = kzalloc(sizeof(*qh), mem_flags);
+	qh = pool_cache_get(sc->sc_qhpool, PR_NOWAIT);
 	if (!qh)
 		return NULL;
 
+	memset(qh, 0, sizeof(*qh));
 	dwc2_qh_init(hsotg, qh, urb);
 
 	if (hsotg->core_params->dma_desc_enable > 0 &&
@@ -232,6 +242,7 @@ static struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
  */
 void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
+	struct dwc2_softc *sc = hsotg->hsotg_sc;
 	u32 buf_size;
 
 	if (hsotg->core_params->dma_desc_enable > 0) {
@@ -241,11 +252,11 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			buf_size = 4096;
 		else
 			buf_size = hsotg->core_params->max_transfer_size;
-		dma_free_coherent(hsotg->dev, buf_size, qh->dw_align_buf,
-				  qh->dw_align_buf_dma);
+		/* XXXNH */
+		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->dw_align_buf_usbdma);
 	}
 
-	kfree(qh);
+	pool_cache_put(sc->sc_qhpool, qh);
 }
 
 /**
@@ -557,6 +568,7 @@ static int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (hsotg->core_params->dma_desc_enable > 0) {
 		/* Don't rely on SOF and start in ready schedule */
 		list_add_tail(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
+		dev_dbg(hsotg->dev, "periodic_sched_ready\n");
 	} else {
 		if (list_empty(&hsotg->periodic_sched_inactive) ||
 		    dwc2_frame_num_le(qh->sched_frame, hsotg->next_sched_frame))
@@ -636,9 +648,9 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		status = dwc2_schedule_periodic(hsotg, qh);
 		if (status == 0) {
 			if (!hsotg->periodic_qh_count) {
-				intr_mask = readl(hsotg->regs + GINTMSK);
+				intr_mask = DWC2_READ_4(hsotg, GINTMSK);
 				intr_mask |= GINTSTS_SOF;
-				writel(intr_mask, hsotg->regs + GINTMSK);
+				DWC2_WRITE_4(hsotg, GINTMSK, intr_mask);
 			}
 			hsotg->periodic_qh_count++;
 		}
@@ -673,9 +685,9 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		dwc2_deschedule_periodic(hsotg, qh);
 		hsotg->periodic_qh_count--;
 		if (!hsotg->periodic_qh_count) {
-			intr_mask = readl(hsotg->regs + GINTMSK);
+			intr_mask = DWC2_READ_4(hsotg, GINTMSK);
 			intr_mask &= ~GINTSTS_SOF;
-			writel(intr_mask, hsotg->regs + GINTMSK);
+			DWC2_WRITE_4(hsotg, GINTMSK, intr_mask);
 		}
 	}
 }
@@ -872,4 +884,76 @@ fail:
 	}
 
 	return retval;
+}
+
+void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
+				  struct dwc2_qtd *qtd,
+				  struct dwc2_qh *qh)
+{
+	struct dwc2_softc *sc = hsotg->hsotg_sc;
+	
+	list_del_init(&qtd->qtd_list_entry);
+ 	pool_cache_put(sc->sc_qtdpool, qtd);
+}
+
+#define BITSTUFFTIME(bytecount)	((8 * 7 * (bytecount)) / 6)
+#define HS_HOST_DELAY		5	/* nanoseconds */
+#define FS_LS_HOST_DELAY	1000	/* nanoseconds */
+#define HUB_LS_SETUP		333	/* nanoseconds */
+
+static u32 dwc2_calc_bus_time(struct dwc2_hsotg *hsotg, int speed, int is_in,
+			      int is_isoc, int bytecount)
+{
+	unsigned long retval;
+
+	switch (speed) {
+	case USB_SPEED_HIGH:
+		if (is_isoc)
+			retval =
+			    ((38 * 8 * 2083) +
+			     (2083 * (3 + BITSTUFFTIME(bytecount)))) / 1000 +
+			    HS_HOST_DELAY;
+		else
+			retval =
+			    ((55 * 8 * 2083) +
+			     (2083 * (3 + BITSTUFFTIME(bytecount)))) / 1000 +
+			    HS_HOST_DELAY;
+		break;
+	case USB_SPEED_FULL:
+		if (is_isoc) {
+			retval =
+			    (8354 * (31 + 10 * BITSTUFFTIME(bytecount))) / 1000;
+			if (is_in)
+				retval = 7268 + FS_LS_HOST_DELAY + retval;
+			else
+				retval = 6265 + FS_LS_HOST_DELAY + retval;
+		} else {
+			retval =
+			    (8354 * (31 + 10 * BITSTUFFTIME(bytecount))) / 1000;
+			retval = 9107 + FS_LS_HOST_DELAY + retval;
+		}
+		break;
+	case USB_SPEED_LOW:
+		if (is_in) {
+			retval =
+			    (67667 * (31 + 10 * BITSTUFFTIME(bytecount))) /
+			    1000;
+			retval =
+			    64060 + (2 * HUB_LS_SETUP) + FS_LS_HOST_DELAY +
+			    retval;
+		} else {
+			retval =
+			    (66700 * (31 + 10 * BITSTUFFTIME(bytecount))) /
+			    1000;
+			retval =
+			    64107 + (2 * HUB_LS_SETUP) + FS_LS_HOST_DELAY +
+			    retval;
+		}
+		break;
+	default:
+		dev_warn(hsotg->dev, "Unknown device speed\n");
+		retval = -1;
+	}
+
+	return NS_TO_US(retval);
 }
