@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.107 2013/05/29 19:02:30 martin Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.108 2013/09/05 09:03:13 gsutre Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -575,7 +575,8 @@ static __inline int __negative_p(double x) { return x < 0; }
 
 #define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
     ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
-    ((intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+    ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 && \
+     (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
 
 /*
  * return true if value 'a' fits in type 't'
