@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.9 2013/08/03 07:39:31 kiyohara Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.10 2013/09/05 22:28:57 matt Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.9 2013/08/03 07:39:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.10 2013/09/05 22:28:57 matt Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ struct gttwsi_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
-	uint8_t sc_started;
+	bool sc_started;
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_buslock;
 	kmutex_t sc_mtx;
@@ -188,7 +188,7 @@ gttwsi_attach(device_t parent, device_t self, void *args)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, "gttwsi");
 
-	sc->sc_started = 0;
+	sc->sc_started = false;
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = gttwsi_acquire_bus;
 	sc->sc_i2c.ic_release_bus = gttwsi_release_bus;
@@ -259,7 +259,7 @@ gttwsi_send_start(void *v, int flags)
 		expect = STAT_RSCT;
 	else
 		expect = STAT_SCT;
-	sc->sc_started = 1;
+	sc->sc_started = true;
 	return gttwsi_wait(sc, CONTROL_START, expect, flags);
 }
 
@@ -269,7 +269,7 @@ gttwsi_send_stop(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
 
-	sc->sc_started = 0;
+	sc->sc_started = false;
 
 	/* Interrupt is not generated for STAT_NRS. */
 	WREG(sc, TWSI_CONTROL, CONTROL_STOP | CONTROL_TWSIEN);
