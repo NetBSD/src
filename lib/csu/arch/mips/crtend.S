@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.S,v 1.2 2013/07/11 16:23:40 matt Exp $	*/
+/*	$NetBSD: crtend.S,v 1.3 2013/09/05 00:28:11 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: crtend.S,v 1.2 2013/07/11 16:23:40 matt Exp $")
+RCSID("$NetBSD: crtend.S,v 1.3 2013/09/05 00:28:11 matt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 	PTR_SCALESHIFT
@@ -46,7 +46,7 @@ __CTOR_LIST_END__:
 __DTOR_LIST_END__:
 	.word		0
 
-	.section	.eh_frame, "a", @progbits
+	.section	.eh_frame, "aw", @progbits
 	.p2align	 PTR_SCALESHIFT
 	.space		_MIPS_SZPTR / 8
 
