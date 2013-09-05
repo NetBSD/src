@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.45 2013/05/01 07:38:01 mlelstv Exp $	*/
+/*	$NetBSD: plcom.c,v 1.46 2013/09/05 07:09:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -27,7 +27,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Copyright (c) 1998, 1999, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.45 2013/05/01 07:38:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.46 2013/09/05 07:09:14 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -218,9 +218,9 @@ static struct cnm_state plcom_cnm_state;
 
 static int ppscap =
 	PPS_TSFMT_TSPEC |
-	PPS_CAPTUREASSERT | 
+	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
-#ifdef  PPS_SYNC 
+#ifdef  PPS_SYNC
 	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
 #endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
@@ -328,10 +328,10 @@ pl011comspeed(long speed, long frequency)
 	int denom = 16 * speed;
 	int div = frequency / denom;
 	int rem = frequency % denom;
-	
+
 	int ibrd = div << 6;
 	int fbrd = (((8 * rem) / speed) + 1) / 2;
-	
+
 	/* Tolerance? */
 	return ibrd | fbrd;
 }
@@ -463,7 +463,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 		 * hang when trying to print.
 		 */
 		sc->sc_cr = PL01X_CR_UARTEN;
-		if (pi->pi_type == PLCOM_TYPE_PL011) 
+		if (pi->pi_type == PLCOM_TYPE_PL011)
 			SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
 	}
 
@@ -471,12 +471,12 @@ plcom_attach_subr(struct plcom_softc *sc)
 	case PLCOM_TYPE_PL010:
 		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
 		break;
-		
+
 	case PLCOM_TYPE_PL011:
 		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
-	}		
+	}
 
 	if (sc->sc_fifolen == 0) {
 		switch (pi->pi_type) {
@@ -514,7 +514,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	sc->sc_rbavail = plcom_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate ring buffer\n");		
+		    "unable to allocate ring buffer\n");
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (plcom_rbuf_size << 1);
@@ -579,12 +579,12 @@ plcom_config(struct plcom_softc *sc)
 	case PLCOM_TYPE_PL010:
 		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
 		break;
-		
+
 	case PLCOM_TYPE_PL011:
 		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
-	}		
+	}
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE|PLCOM_HW_KGDB))
 		plcom_enable_debugport(sc);
@@ -618,7 +618,7 @@ plcom_detach(device_t self, int flags)
 		/*
 		 * Ring buffer allocation failed in the plcom_attach_subr,
 		 * only the tty is allocated, and nothing else.
-		 */         
+		 */
 		tty_free(sc->sc_tty);
 		return 0;
 	}
@@ -697,7 +697,7 @@ plcom_shutdown(struct plcom_softc *sc)
 	/* Turn off interrupts. */
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE)) {
 		/* interrupt on break */
-	
+
 		sc->sc_cr = PL01X_CR_UARTEN;
 		sc->sc_imsc = 0;
 		switch (pi->pi_type) {
@@ -872,7 +872,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		mutex_spin_exit(&sc->sc_lock);
 	}
-	
+
 	splx(s);
 
 	error = ttyopen(tp, PLCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
@@ -896,7 +896,7 @@ bad:
 
 	return error;
 }
- 
+
 int
 plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -925,7 +925,7 @@ plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	return 0;
 }
- 
+
 int
 plcomread(dev_t dev, struct uio *uio, int flag)
 {
@@ -935,10 +935,10 @@ plcomread(dev_t dev, struct uio *uio, int flag)
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
- 
+
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
- 
+
 int
 plcomwrite(dev_t dev, struct uio *uio, int flag)
 {
@@ -948,7 +948,7 @@ plcomwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
- 
+
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
@@ -961,7 +961,7 @@ plcompoll(dev_t dev, int events, struct lwp *l)
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
- 
+
 	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
@@ -1074,7 +1074,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 		}
 		sc->ppsparam = *pp;
-	 	/* 
+	 	/*
 		 * Compute msr masks from user-specified timestamp state.
 		 */
 		mode = sc->ppsparam.mode;
@@ -1092,13 +1092,13 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		case 0:
 			sc->sc_ppsmask = 0;
 			break;
-	
+
 		case PPS_CAPTUREASSERT:
 			sc->sc_ppsmask = PL01X_MSR_DCD;
 			sc->sc_ppsassert = PL01X_MSR_DCD;
 			sc->sc_ppsclear = -1;
 			break;
-	
+
 		case PPS_CAPTURECLEAR:
 			sc->sc_ppsmask = PL01X_MSR_DCD;
 			sc->sc_ppsassert = -1;
@@ -1135,7 +1135,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		/*
 		 * Some GPS clocks models use the falling rather than
-		 * rising edge as the on-the-second signal. 
+		 * rising edge as the on-the-second signal.
 		 * The old API has no way to specify PPS polarity.
 		 */
 		mutex_spin_enter(&timecounter_lock);
@@ -1143,12 +1143,12 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifndef PPS_TRAILING_EDGE
 		sc->sc_ppsassert = PL01X_MSR_DCD;
 		sc->sc_ppsclear = -1;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.assert_timestamp);
 #else
 		sc->sc_ppsassert = -1
 		sc->sc_ppsclear = 0;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.clear_timestamp);
 #endif
 		mutex_spin_exit(&timecounter_lock);
@@ -1230,7 +1230,7 @@ tiocm_to_plcom(struct plcom_softc *sc, u_long how, int ttybits)
 		SET(plcombits, PL01X_MCR_DTR);
 	if (ISSET(ttybits, TIOCM_RTS))
 		SET(plcombits, PL01X_MCR_RTS);
- 
+
 	switch (how) {
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, plcombits);
@@ -1569,7 +1569,7 @@ plcomhwiflow(struct tty *tp, int block)
 		return 0;
 
 	mutex_spin_enter(&sc->sc_lock);
-	
+
 	if (block) {
 		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
 			SET(sc->sc_rx_flags, RX_TTY_BLOCKED);
@@ -1589,7 +1589,7 @@ plcomhwiflow(struct tty *tp, int block)
 	mutex_spin_exit(&sc->sc_lock);
 	return 1;
 }
-	
+
 /*
  * (un)block input via hw flowcontrol
  */
@@ -1891,7 +1891,7 @@ plcomsoft(void *arg)
 		return;
 
 	tp = sc->sc_tty;
-		
+
 	if (sc->sc_rx_ready) {
 		sc->sc_rx_ready = 0;
 		plcom_rxsoft(sc, tp);
@@ -1927,7 +1927,7 @@ plcom_intstatus(struct plcom_instance *pi, u_int *istatus)
 	*istatus = stat;
 
 	return ret;
-}	
+}
 
 int
 plcomintr(void *arg)
@@ -2108,7 +2108,7 @@ plcomintr(void *arg)
 		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
 				/* XXX nanotime() */
 				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv, 
+				TIMEVAL_TO_TIMESPEC(&tv,
 				    &sc->ppsinfo.assert_timestamp);
 				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
 					timespecadd(&sc->ppsinfo.assert_timestamp,
@@ -2126,7 +2126,7 @@ plcomintr(void *arg)
 			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
 				/* XXX nanotime() */
 				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv, 
+				TIMEVAL_TO_TIMESPEC(&tv,
 				    &sc->ppsinfo.clear_timestamp);
 				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
 					timespecadd(&sc->ppsinfo.clear_timestamp,
@@ -2166,12 +2166,12 @@ plcomintr(void *arg)
 			sc->sc_st_check = 1;
 		}
 
-		/* 
+		/*
 		 * Done handling any receive interrupts. See if data
 		 * can be transmitted as well. Schedule tx done
 		 * event if no data left and tty was marked busy.
 		 */
-		
+
 		switch (pi->pi_type) {
 		case PLCOM_TYPE_PL010:
 			txintr = ISSET(istatus, PL010_IIR_TIS);
@@ -2193,7 +2193,7 @@ plcomintr(void *arg)
 				sc->sc_heldtbc = 0;
 			}
 
-			/* 
+			/*
 			 * Output the next chunk of the contiguous
 			 * buffer, if any.
 			 */
@@ -2253,7 +2253,7 @@ plcomintr(void *arg)
 /*
  * The following functions are polled getc and putc routines, shared
  * by the console and kgdb glue.
- * 
+ *
  * The read-ahead code is so that you can detect pending in-band
  * cn_magic in polled mode while doing output rather than having to
  * wait until the kernel decides it needs input.
@@ -2306,7 +2306,7 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 	int timo;
 
 	int cin, stat;
-	if (plcom_readaheadcount < MAX_READAHEAD 
+	if (plcom_readaheadcount < MAX_READAHEAD
 	     && !ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)) {
 		int cn_trapped = 0;
 		cin = PREAD1(pi, PL01XCOM_DR);
@@ -2496,7 +2496,7 @@ plcom_kgdb_putc(void *arg, int c)
 /* helper function to identify the plcom ports used by
  console or KGDB (and not yet autoconf attached) */
 int
-plcom_is_console(bus_space_tag_t iot, bus_addr_t iobase, 
+plcom_is_console(bus_space_tag_t iot, bus_addr_t iobase,
     bus_space_handle_t *ioh)
 {
 	bus_space_handle_t help;
