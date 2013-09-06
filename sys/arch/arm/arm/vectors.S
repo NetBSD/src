@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.9 2013/09/06 09:43:32 skrll Exp $	*/
+/*	$NetBSD: vectors.S,v 1.10 2013/09/06 21:25:34 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -67,12 +67,14 @@ _C_LABEL(page0rel):
 #ifdef __ARM_FIQ_INDIRECT
 	b	_C_LABEL(fiqvector)
 #else
-_C_LABEL(fiqvector):
+_C_LABEL(fiqbranch):
 	subs	pc, lr, #4
 #endif
 END(page0rel)
 
-#else /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
+#endif /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
+
+#if !defined(ARM_HAS_VBAR)
 
 	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.align	0
