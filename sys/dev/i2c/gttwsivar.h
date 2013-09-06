@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $	*/
+/*	$NetBSD: gttwsivar.h,v 1.1 2013/09/06 00:56:12 matt Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -59,15 +59,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-//#define TWSI_DEBUG
+
+#ifndef _DEV_MARVELL_GTTWSIVAR_H_
+#define _DEV_MARVELL_GTTWSIVAR_H_
 
 /*
  * Marvell Two-Wire Serial Interface (aka I2C) master driver
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $");
-#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,56 +76,22 @@ __KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $");
 #include <sys/mutex.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
-#include <machine/param.h>
-
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/gttwsireg.h>
-#include <dev/i2c/gttwsivar.h>
 
-#include <dev/marvell/marvellvar.h>
+struct gttwsi_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_bust;
+	bus_space_handle_t sc_bush;
+	bool sc_started;
+	struct i2c_controller sc_i2c;
+	kmutex_t sc_buslock;
+	kmutex_t sc_mtx;
+	kcondvar_t sc_cv;
+};
 
-static int	gttwsi_match(device_t, cfdata_t, void *);
-static void	gttwsi_attach(device_t, device_t, void *);
+void	gttwsi_attach_subr(device_t, bus_space_tag_t, bus_space_handle_t);
+void	gttwsi_config_children(device_t);
 
-CFATTACH_DECL_NEW(gttwsi_gt, sizeof(struct gttwsi_softc),
-    gttwsi_match, gttwsi_attach, NULL, NULL);
-CFATTACH_DECL_NEW(gttwsi_mbus, sizeof(struct gttwsi_softc),
-    gttwsi_match, gttwsi_attach, NULL, NULL);
+int	gttwsi_intr(void *);
 
-/* ARGSUSED */
-static int
-gttwsi_match(device_t parent, cfdata_t match, void *aux)
-{
-	struct marvell_attach_args *mva = aux;
-
-	if (strcmp(mva->mva_name, match->cf_name) != 0)
-		return 0;
-	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
-	    mva->mva_irq == MVA_IRQ_DEFAULT)
-		return 0;
-
-	mva->mva_size = GTTWSI_SIZE;
-	return 1;
-}
-
-/* ARGSUSED */
-static void
-gttwsi_attach(device_t parent, device_t self, void *args)
-{
-	struct marvell_attach_args *mva = args;
-	bus_space_handle_t ioh;
-
-	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
-	    mva->mva_size, &ioh)) {
-		aprint_error(": cannot map registers\n");
-		return;
-	}
-
-	gttwsi_attach_subr(self, mva->mva_iot, ioh);
-
-	marvell_intr_establish(mva->mva_irq, IPL_BIO, gttwsi_intr,
-	    device_private(self));
-
-	gttwsi_config_children(self);
-}
+#endif /* _DEV_MARVELL_GTTSWI_VAR_H_ */
