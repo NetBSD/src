@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.50 2013/08/06 15:58:25 soren Exp $
+#	$NetBSD: files.i2c,v 1.51 2013/09/06 00:56:12 matt Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -52,6 +52,8 @@ file	dev/i2c/cx24227.c			cx24227
 #
 define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
+define	mvi2c
+file	dev/i2c/gttwsi_core.c			mvi2c
 
 #
 # I2C client devices
@@ -151,6 +153,11 @@ file	dev/i2c/spdmem_i2c.c		spdmem_iic
 device	sdtemp: sysmon_envsys
 attach	sdtemp at iic
 file	dev/i2c/sdtemp.c		sdtemp
+
+# DS1672 Real Time Clock
+device	ds1672rtc
+attach	ds1672rtc at iic
+file	dev/i2c/ds1672.c		ds1672rtc
 
 # ADM1021
 device	admtemp: sysmon_envsys
