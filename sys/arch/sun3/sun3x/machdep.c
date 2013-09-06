@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2012/07/28 19:08:26 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 2013/09/06 17:43:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2012/07/28 19:08:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2013/09/06 17:43:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,7 +107,7 @@ extern char etext[];
 const vaddr_t kernbase = KERNBASE3X;
 const vaddr_t kern_end = KERN_END3X;
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -134,7 +134,7 @@ static void initcpu(void);
  * to use the console for output immediately (via PROM)
  * but can not use it for input until after this point.
  */
-void 
+void
 consinit(void)
 {
 
@@ -177,7 +177,7 @@ consinit(void)
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void 
+void
 cpu_startup(void)
 {
 	char *v;
@@ -256,7 +256,7 @@ char	cpu_model[120];
  */
 int delay_divisor = 62;		/* assume the fastest (33 MHz) */
 
-void 
+void
 identifycpu(void)
 {
 	u_char machtype;
@@ -370,7 +370,7 @@ reboot_sync(void)
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void 
+__dead void
 cpu_reboot(int howto, char *user_boot_string)
 {
 	/* Note: this string MUST be static! */
@@ -463,7 +463,7 @@ long	dumplo = 0; 		/* blocks */
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
-void 
+void
 cpu_dumpconf(void)
 {
 	int devblks;	/* size of dump device in blocks */
@@ -506,7 +506,7 @@ struct pcb dumppcb;
  *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
-void 
+void
 dumpsys(void)
 {
 	const struct bdevsw *dsw;
@@ -618,7 +618,7 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void 
+static void
 initcpu(void)
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -644,7 +644,7 @@ initcpu(void)
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int 
+int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
@@ -662,7 +662,7 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
 	extern paddr_t avail_start;
 
-	if (paddr >= avail_start) 
+	if (paddr >= avail_start)
 		return false;
 	*vaddr = KERNBASE3X + paddr;
 	return true;
