@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.41 2012/01/27 18:53:04 para Exp $	*/
+/*	$NetBSD: dvma.c,v 1.42 2013/09/06 17:43:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.41 2012/01/27 18:53:04 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.42 2013/09/06 17:43:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.41 2012/01/27 18:53:04 para Exp $");
 /* Number of slots in dvmamap. */
 struct extent *dvma_extent;
 
-void 
+void
 dvma_init(void)
 {
 
@@ -131,7 +131,7 @@ dvma_init(void)
  * would be used by some OTHER bus-master besides the CPU.
  * (Examples: on-board ie/le, VME xy board).
  */
-u_long 
+u_long
 dvma_kvtopa(void *kva, int bustype)
 {
 	u_long addr, mask;
@@ -196,8 +196,8 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	splx(s);
 	if (error)
 		return NULL;
-	
-	/* 
+
+	/*
 	 * Tva is the starting page to which the data buffer will be double
 	 * mapped.  Dvma_addr is the starting address of the buffer within
 	 * that page and is the return value of the function.
@@ -233,7 +233,7 @@ dvma_mapin(void *kmem_va, int len, int canwait)
  *       synchronization between the DVMA cache and central RAM
  *       on the 3/470.
  */
-void 
+void
 dvma_mapout(void *dvma_addr, int len)
 {
 	u_long kva;
@@ -278,7 +278,7 @@ dvma_malloc(size_t bytes)
 /*
  * Free pages from dvma_malloc()
  */
-void 
+void
 dvma_free(void *addr, size_t size)
 {
 	vsize_t sz = m68k_round_page(size);
@@ -288,7 +288,7 @@ dvma_free(void *addr, size_t size)
 	   Oh well, we never call this anyway. */
 }
 
-int 
+int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
     int nsegs, bus_size_t size, int flags)
 {
@@ -363,7 +363,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return 0;
 }
 
-void 
+void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs;
