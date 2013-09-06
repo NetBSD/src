@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.16 2012/10/13 06:37:17 tsutsui Exp $	*/
+/*	$NetBSD: vme.c,v 1.17 2013/09/06 17:43:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16 2012/10/13 06:37:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17 2013/09/06 17:43:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ static struct sun68k_bus_space_tag vme_space_tag = {
 
 static struct sun68k_bus_dma_tag vme_dma_tag;
 
-static int 
+static int
 vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -124,7 +124,7 @@ vme_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 vme_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs *ca = aux;
