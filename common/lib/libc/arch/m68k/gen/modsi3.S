@@ -1,4 +1,4 @@
-/*	$NetBSD: modsi3.S,v 1.5 2013/07/16 23:24:18 matt Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.6 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)modsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: modsi3.S,v 1.5 2013/07/16 23:24:18 matt Exp $")
+	RCSID("$NetBSD: modsi3.S,v 1.6 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,13 +59,13 @@ ENTRY(__modsi3)
 	bpl	1f
 	negl	4(%sp)		| store abs(divisor)
 1:	movel	(%sp), %d0	| load the dividend
-	pea	(Lret,%pc)	| push our return address
+	pea	(.Lret,%pc)	| push our return address
 	bpl	2f
 	negl	4(%sp)		| store abs(dividend)
 	subql	#2, (%sp)	| adjust return address
 2:	jmp	_C_LABEL(__udivsi3)
 	negl	%d1		| negate modulus
-Lret:	movl	%d1, %d0	| move modulus into %d0
+.Lret:	movl	%d1, %d0	| move modulus into %d0
 	jmp	(%a0)
 END(__modsi3)
 #endif /* __mc68010__ */

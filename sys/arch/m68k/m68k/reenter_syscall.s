@@ -1,4 +1,4 @@
-/*	$NetBSD: reenter_syscall.s,v 1.3 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: reenter_syscall.s,v 1.4 2013/09/07 19:06:29 chs Exp $	*/
 
 /*
  * Written by ITOH Yasufumi.
@@ -35,8 +35,8 @@ ENTRY_NOPROFILE(reenter_syscall)
 
 	| copy down frame (16*4 + 2 + 2 + 2 + 4 + 2 = 76 bytes = 19 longs)
 	moveq	#19-1,%d0
-Lcpfr:	movel	(%a0)+,(%a1)+
-	dbra	%d0,Lcpfr
+.Lcpfr:	movel	(%a0)+,(%a1)+
+	dbra	%d0,.Lcpfr
 
 	movew	%d1,%sp@(16*4+2)	| set stack adjust count
 	movel	(%sp),-(%sp)		| push syscall no (original d0 value)
@@ -44,13 +44,12 @@ Lcpfr:	movel	(%a0)+,(%a1)+
 	addql	#4,%sp			| pop syscall no
 #ifdef DEBUG
 	tstw	%sp@(16*4+2)		| stack adjust must be zero
-	jeq	Ladjzero
+	jeq	.Ladjzero
 	PANIC("reenter_syscall")
-Ladjzero:
+.Ladjzero:
 #endif
 	moveal	%sp@(15*4),%a0		| grab and restore
 	movel	%a0,%usp		|   user SP
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| rte
-
