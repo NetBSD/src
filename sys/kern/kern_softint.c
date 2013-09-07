@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.39 2013/01/07 23:21:31 rmind Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.40 2013/09/07 03:34:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.39 2013/01/07 23:21:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.40 2013/09/07 03:34:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -403,7 +403,8 @@ softint_disestablish(void *arg)
 	u_int flags;
 
 	offset = (uintptr_t)arg;
-	KASSERT(offset != 0 && offset < softint_bytes);
+	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	    offset, softint_bytes);
 
 	/*
 	 * Run a cross call so we see up to date values of sh_flags from
@@ -462,7 +463,8 @@ softint_schedule(void *arg)
 
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
-	KASSERT(offset != 0 && offset < softint_bytes);
+	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	    offset, softint_bytes);
 	sh = (softhand_t *)((uint8_t *)curcpu()->ci_data.cpu_softcpu + offset);
 
 	/* If it's already pending there's nothing to do. */
