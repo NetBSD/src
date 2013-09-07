@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.273 2013/09/04 17:56:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.274 2013/09/07 17:58:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.273 2013/09/04 17:56:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.274 2013/09/07 17:58:00 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -251,7 +251,7 @@ rump_init(void)
 	struct timespec ts;
 	int64_t sec;
 	long nsec;
-	struct lwp *l;
+	struct lwp *l, *initlwp;
 	int i, numcpu;
 
 	/* not reentrant */
@@ -471,10 +471,10 @@ rump_init(void)
 		vmem_rehash_start();
 
 	/*
-	 * Create init, used to attach implicit threads in rump.
+	 * Create init (proc 1), used to attach implicit threads in rump.
 	 * (note: must be done after vfsinit to get cwdi)
 	 */
-	(void)rump__lwproc_alloclwp(NULL); /* dummy thread for initproc */
+	initlwp = rump__lwproc_alloclwp(NULL);
 	mutex_enter(proc_lock);
 	initproc = proc_find_raw(1);
 	mutex_exit(proc_lock);
@@ -542,8 +542,14 @@ rump_init(void)
 
 	rump_component_init(RUMP_COMPONENT_POSTINIT);
 
-	/* release cpu */
+	/* component inits done */
 	bootlwp = NULL;
+
+	/* open 0/1/2 for init */
+	rump_lwproc_switch(initlwp);
+	rump_consdev_init();
+
+	/* release cpu */
 	rump_unschedule();
 
 	return 0;
