@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.20.7 2013/06/19 07:50:15 bouyer Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.20.8 2013/09/07 17:10:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/******************************************************************************
+
+  Copyright (c) 2001-2012, Intel Corporation 
+  All rights reserved.
+  
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are met:
+  
+   1. Redistributions of source code must retain the above copyright notice, 
+      this list of conditions and the following disclaimer.
+  
+   2. Redistributions in binary form must reproduce the above copyright 
+      notice, this list of conditions and the following disclaimer in the 
+      documentation and/or other materials provided with the distribution.
+  
+   3. Neither the name of the Intel Corporation nor the names of its 
+      contributors may be used to endorse or promote products derived from 
+      this software without specific prior written permission.
+  
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+******************************************************************************/
 
 /*
  * Register description for the Intel i82542 (``Wiseman''),
@@ -200,6 +233,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_SWDPIO_SHIFT	22
 #define	CTRL_SWDPIO_MASK	0x0f
 #define	CTRL_SWDPIO(x)		(1U << (CTRL_SWDPIO_SHIFT + (x)))
+#define CTRL_MEHE	(1U << 17)	/* Memory Error Handling Enable(I217)*/
 #define	CTRL_RST	(1U << 26)	/* device reset */
 #define	CTRL_RFCE	(1U << 27)	/* Rx flow control enable */
 #define	CTRL_TFCE	(1U << 28)	/* Tx flow control enable */
@@ -684,12 +718,18 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_26K		0x001a
 #define	PBA_30K		0x001e
 #define	PBA_32K		0x0020
+#define	PBA_34K		0x0022
 #define	PBA_35K		0x0023
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 #define	PBA_64K		0x0040
 
 #define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
+
+#define	WMREG_PBECCSTS	0x100c	/* Packet Buffer ECC Status (PCH_LPT) */
+#define	PBECCSTS_CORR_ERR_CNT_MASK	0x000000ff
+#define	PBECCSTS_UNCORR_ERR_CNT_MASK	0x0000ff00
+#define	PBECCSTS_UNCORR_ECC_ENABLE	0x00010000
 
 #define WMREG_EEMNGCTL	0x1010	/* MNG EEprom Control */
 #define EEMNGCTL_CFGDONE_0 0x040000	/* MNG config cycle done */
@@ -708,6 +748,13 @@ struct livengood_tcpip_ctxdesc {
 #define I2CCMD_ERROR		0x80000000
 #define MAX_SGMII_PHY_REG_ADDR	255
 #define I2CCMD_PHY_TIMEOUT	200
+
+#define WMREG_PBA_ECC	0x01100	/* PBA ECC */
+#define PBA_ECC_COUNTER_MASK	0xfff00000 /* ECC counter mask */
+#define PBA_ECC_COUNTER_SHIFT	20	   /* ECC counter shift value */
+#define	PBA_ECC_CORR_EN		0x00000001 /* Enable ECC error correction */
+#define	PBA_ECC_STAT_CLR	0x00000002 /* Clear ECC error counter */
+#define	PBA_ECC_INT_EN		0x00000004 /* Enable ICR bit 5 on ECC error */
 
 #define WMREG_EICS	0x01520  /* Ext. Interrupt Cause Set - WO */
 #define WMREG_EIMS	0x01524  /* Ext. Interrupt Mask Set/Read - RW */
