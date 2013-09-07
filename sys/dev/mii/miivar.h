@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.59 2010/05/30 17:44:08 pgoyette Exp $	*/
+/*	$NetBSD: miivar.h,v 1.59.14.1 2013/09/07 16:39:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ struct mii_softc {
 
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
+	uint32_t mii_mpd_oui;		/* the PHY's OUI (MII_OUI())*/
 	uint32_t mii_mpd_model;		/* the PHY's model (MII_MODEL())*/
 	uint32_t mii_mpd_rev;		/* the PHY's revision (MII_REV())*/
 	int mii_phy;			/* our MII address */
