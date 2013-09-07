@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.5 2013/09/07 02:46:26 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.6 2013/09/07 22:52:12 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -251,9 +251,9 @@ awinwdt*	at awinio?
 # On-board USB
 awinusb0	at awinio0 port 0
 awinusb1	at awinio0 port 1
-#ohci*		at awinusb?
+ohci*		at awinusb?
 ehci*		at awinusb?
-#usb*		at ohci?
+usb*		at ohci?
 usb*		at ehci?
 
 # SATA (A20)
