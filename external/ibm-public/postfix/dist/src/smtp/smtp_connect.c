@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.2 2010/06/17 18:07:02 tron Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.2.8.1 2013/09/07 16:28:34 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -458,12 +458,12 @@ static void smtp_cache_policy(SMTP_STATE *state, const char *dest)
     state->misc_flags &= ~SMTP_MISC_FLAG_CONN_CACHE_MASK;
 
     /*
-     * XXX Disable connection caching when sender-dependent authentication is
+     * XXX Disable connection caching when SASL authentication is
      * enabled. We must not send someone elses mail over an authenticated
      * connection, and we must not send mail that requires authentication
      * over a connection that wasn't authenticated.
      */
-    if (var_smtp_sender_auth)
+    if (var_smtp_sasl_passwd && *var_smtp_sasl_passwd)
 	return;
 
     if (smtp_cache_dest && string_list_match(smtp_cache_dest, dest)) {

@@ -16876,3 +16876,42 @@ Apologies for any names omitted.
 	20101108 change that removes datalink suffixes in the SMTP
 	and QMQP servers, but we leave that code alone.  File:
 	util/myaddrinfo.c.
+
+20130131
+
+	Bugfix: the local(8) delivery agent dereferenced a null
+	pointer while delivering to null command (for example, "|"
+	in a .forward file).  Reported by Gilles Chehade.
+
+20130203
+
+	Bugfix: the 20121010 fix for tls_misc.c was documented but
+	not included.
+
+20130403
+
+	Bugfix (introduced: Postfix 2.3): don't reuse TCP connections
+	when smtp_tls_policy_maps is specified. Victor Duchovni.
+	Found during Postfix 2.11 code maintenance.  File:
+	smtp/smtp_reuse.c.
+
+20130423
+
+	Bugfix (introduced: Postfix 2.0): when myhostname is not
+	listed in mydestination, the trivial-rewrite resolver may
+	log "do not list <myhostname value> in both mydestination
+	and <name of non-mydestination domain list>".  The fix is
+	to re-resolve a domain-less address after adding $myhostname
+	as the surrogate domain, so that it pops out with the right
+	address-class label.  Problem reported by Quanah Gibson-Mount.
+	File: trivial-rewrite/resolve.c.
+
+20130425
+
+	Bugfix (introduced: Postfix 2.2): don't reuse TCP connections
+	when SASL authentication is enabled. SASL passwords may
+	depend on the remote SMTP server hostname, but the Postfix
+	<2.11 SMTP connection cache client does not distinguish
+	between different hostnames that resolve to the same IP
+	address.  Found during Postfix 2.11 code maintenance.  File:
+	smtp/smtp_connect.c.
