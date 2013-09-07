@@ -29,10 +29,12 @@
 #define USBH_PRIVATE
 
 #include "locators.h"
+#include "ohci.h"
+#include "ehci.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.3 2013/09/07 02:10:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.4 2013/09/07 02:32:53 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -47,11 +49,15 @@ __KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.3 2013/09/07 02:10:37 matt Exp $");
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
+#if NOHCI > 0
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
+#endif
 
+#if NEHCI > 0
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
+#endif
 
 #include <dev/pci/pcidevs.h>
 
@@ -78,13 +84,10 @@ struct awinusb_attach_args {
 	int usbaa_port;
 };
 
+#if NOHCI > 0
 static const int awinusb_ohci_irqs[2] = { AWIN_IRQ_USB3, AWIN_IRQ_USB4 };
-static const int awinusb_ehci_irqs[2] = { AWIN_IRQ_USB1, AWIN_IRQ_USB2 };
 static const uint32_t awinusb_ohci_ahb_gating[2] = {
 	AWIN_AHB_GATING0_USB_OHCI0, AWIN_AHB_GATING0_USB_OHCI1,
-};
-static const uint32_t awinusb_ehci_ahb_gating[2] = {
-	AWIN_AHB_GATING0_USB_EHCI0, AWIN_AHB_GATING0_USB_EHCI1,
 };
 static const uint32_t awinusb_ohci_usb_clk_set[2] = {
 	AWIN_USB_CLK_OHCI0_ENABLE|AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY1_ENABLE,
@@ -161,7 +164,9 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", irq);
 }
+#endif /* NOHCI > 0 */
 
+#if NEHCI > 0
 #ifdef EHCI_DEBUG
 #define EHCI_DPRINTF(x)	if (ehcidebug) printf x
 extern int ehcidebug;
@@ -171,6 +176,11 @@ extern int ehcidebug;
 
 static int ehci_awinusb_match(device_t, cfdata_t, void *);
 static void ehci_awinusb_attach(device_t, device_t, void *);
+
+static const int awinusb_ehci_irqs[2] = { AWIN_IRQ_USB1, AWIN_IRQ_USB2 };
+static const uint32_t awinusb_ehci_ahb_gating[2] = {
+	AWIN_AHB_GATING0_USB_EHCI0, AWIN_AHB_GATING0_USB_EHCI1,
+};
 
 CFATTACH_DECL_NEW(ehci_awinusb, sizeof(struct ehci_softc),
 	ehci_awinusb_match, ehci_awinusb_attach, NULL, NULL);
@@ -234,6 +244,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", irq);
 }
+#endif /* NEHCI > 0 */
 
 static int awinusb_match(device_t, cfdata_t, void *);
 static void awinusb_attach(device_t, device_t, void *);
@@ -248,16 +259,11 @@ awinusb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	const int port = cf->cf_loc[AWINIOCF_PORT];
 
 	KASSERT(loc->loc_port != AWINIOCF_PORT_DEFAULT);
-
-	if (strcmp(cf->cf_name, loc->loc_name) != 0)
-		return 0;
-
-	if (port == AWINIOCF_PORT_DEFAULT || port != loc->loc_port)
-		return 0;
-
+	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT 
+	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 	KASSERT((awinusb_ports & __BIT(loc->loc_port)) == 0);
 
 	return 1;
@@ -281,33 +287,24 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset + AWIN_OHCI_OFFSET, AWIN_OHCI_SIZE,
 	    &usbsc->usbsc_ohci_bsh);
 
-#if 0
-	/*
-	 * Bring the PHYs out of reset.
-	 */
-	uint32_t v = bus_space_read_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-	    AWIN_USB_CLK_REG);
-	
-	v &= ~(loc->loc_port == 0 ? AWIN_USB_CLK_PHY1_RST : AWIN_USB_CLK_PHY2_RST);
-	bus_space_write_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-	    USBH_PHY_CTRL_P0, USBH_PHY_CTRL_INIT);
-	bus_space_write_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-	    USBH_PHY_CTRL_P1, USBH_PHY_CTRL_INIT);
-#endif
-
 	/*
 	 * Disable interrupts
 	 */
+#if NOHCI > 0
 	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ohci_bsh,
 	    OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
+#endif
+#if NEHCI > 0
 	bus_size_t caplength = bus_space_read_1(usbsc->usbsc_bst,
 	    usbsc->usbsc_ehci_bsh, EHCI_CAPLENGTH);
 	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
 	    caplength + EHCI_USBINTR, 0);
+#endif
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+#if NOHCI > 0
 	struct awinusb_attach_args usbaa_ohci = {
 		.usbaa_name = "ohci",
 		.usbaa_dmat = usbsc->usbsc_dmat,
@@ -319,7 +316,9 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	};
 
 	usbsc->usbsc_ohci_dev = config_found(self, &usbaa_ohci, NULL);
+#endif
 
+#if NEHCI > 0
 	struct awinusb_attach_args usbaa_ehci = {
 		.usbaa_name = "ehci",
 		.usbaa_dmat = usbsc->usbsc_dmat,
@@ -331,5 +330,5 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	};
 
 	config_found(self, &usbaa_ehci, NULL);
-
+#endif
 }
