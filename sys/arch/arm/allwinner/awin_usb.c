@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.6 2013/09/07 10:46:18 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.7 2013/09/07 19:48:57 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -67,6 +67,9 @@ struct awinusb_softc {
 	bus_space_tag_t usbsc_bst;
 	bus_space_handle_t usbsc_ehci_bsh;
 	bus_space_handle_t usbsc_ohci_bsh;
+	bus_space_handle_t usbsc_usb0_phy_csr_bsh;
+	u_int usbsc_number;
+	struct awin_gpio_pindata usbsc_drv_pin;
 
 	device_t usbsc_ohci_dev;
 	device_t usbsc_ehci_dev;
@@ -246,6 +249,42 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 }
 #endif /* NEHCI > 0 */
 
+static void
+awin_usb_phy_write(struct awinusb_softc *usbsc, u_int bit_addr, u_int bits,
+	u_int len)
+{
+	bus_space_tag_t bst = usbsc->usbsc_bst;
+	bus_space_handle_t bsh = usbsc->usbsc_usb0_phy_csr_bsh;
+	uint32_t clk = AWIN_USB0_PHY_CSR_CLK0 << usbsc->usbsc_number;
+
+	uint32_t v = bus_space_read_4(bst, bsh, 0);
+
+	KASSERT((v & AWIN_USB0_PHY_CSR_CLK0) == 0);
+	KASSERT((v & AWIN_USB0_PHY_CSR_CLK1) == 0);
+	KASSERT((v & AWIN_USB0_PHY_CSR_CLK2) == 0);
+
+	v &= ~AWIN_USB0_PHY_CSR_ADDR;
+	v &= ~AWIN_USB0_PHY_CSR_DAT;
+
+	v |= __SHIFTIN(bit_addr, AWIN_USB0_PHY_CSR_ADDR);
+
+	/*
+	 * Bitbang the data to the phy, bit by bit, incrementing bit address
+	 * as we go.
+	 */
+	for (; len > 0; bit_addr++, bits >>= 1, len--) {
+		v |= __SHIFTIN(bits & 1, AWIN_USB0_PHY_CSR_DAT);
+		bus_space_write_4(bst, bsh, 0, v);
+		delay(1);
+		bus_space_write_4(bst, bsh, 0, v | clk);
+		delay(1);
+		bus_space_write_4(bst, bsh, 0, v);
+		delay(1);
+		v += __LOWEST_SET_BIT(AWIN_USB0_PHY_CSR_ADDR);
+		v &= ~AWIN_USB0_PHY_CSR_DAT;
+	}
+}
+
 static int awinusb_match(device_t, cfdata_t, void *);
 static void awinusb_attach(device_t, device_t, void *);
 
@@ -253,6 +292,12 @@ CFATTACH_DECL_NEW(awin_usb, sizeof(struct awinusb_softc),
 	awinusb_match, awinusb_attach, NULL, NULL);
 
 static int awinusb_ports;
+
+static const char awinusb_drvpin_names[2][8] = { "usb1drv", "usb2drv" };
+static const bus_size_t awinusb_dram_hpcr_regs[2] = {
+	AWIN_DRAM_HPCR_USB1_REG,
+	AWIN_DRAM_HPCR_USB2_REG,
+};
 
 int
 awinusb_match(device_t parent, cfdata_t cf, void *aux)
@@ -277,8 +322,10 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	const struct awin_locators * const loc = &aio->aio_loc;
 
 	awinusb_ports |= __BIT(loc->loc_port);
+
 	usbsc->usbsc_bst = aio->aio_core_bst;
 	usbsc->usbsc_dmat = aio->aio_dmat;
+	usbsc->usbsc_number = loc->loc_port + 1;
 
 	bus_space_subregion(usbsc->usbsc_bst, aio->aio_core_bsh,
 	    loc->loc_offset + AWIN_EHCI_OFFSET, AWIN_EHCI_SIZE,
@@ -286,6 +333,46 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(usbsc->usbsc_bst, aio->aio_core_bsh,
 	    loc->loc_offset + AWIN_OHCI_OFFSET, AWIN_OHCI_SIZE,
 	    &usbsc->usbsc_ohci_bsh);
+	bus_space_subregion(usbsc->usbsc_bst, aio->aio_core_bsh,
+	    AWIN_USB0_OFFSET + AWIN_USB0_PHY_CSR_REG, 4,
+	    &usbsc->usbsc_usb0_phy_csr_bsh);
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	/*
+	 * Access to the USB phy is off USB0 so make sure it's on.
+	*/
+	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+	    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_USB0, 0);
+
+	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_core_bsh,
+	    loc->loc_offset + AWIN_USB_PMU_IRQ_REG,
+	    AWIN_USB_PMU_IRQ_AHB_INCR8 | AWIN_USB_PMU_IRQ_AHB_INCR4
+	       | AWIN_USB_PMU_IRQ_AHB_INCRX | AWIN_USB_PMU_IRQ_ULPI_BYPASS,
+	    0);
+
+	/*
+	 * Allow USB DMA engine access to the DRAM.
+	 */
+	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_core_bsh,
+	    AWIN_DRAM_OFFSET + awinusb_dram_hpcr_regs[loc->loc_port],
+	    AWIN_DRAM_HPCR_ACCESS_EN, 0);
+
+	/* initialize the USB phy */
+	awin_usb_phy_write(usbsc, 0x20, 0x14, 5);
+	awin_usb_phy_write(usbsc, 0x2a, 0x03, 2);
+
+	/*
+	 * Now get the GPIO that enables the power to the port and
+	 * turn it on.
+	 */
+	if (awin_gpio_pin_reserve(awinusb_drvpin_names[loc->loc_port],
+		    &usbsc->usbsc_drv_pin)) {
+		awin_gpio_pindata_write(&usbsc->usbsc_drv_pin, 1);
+	} else {
+		aprint_error_dev(self, "no power gpio found\n");
+	}
 
 	/*
 	 * Disable interrupts
@@ -300,9 +387,6 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
 	    caplength + EHCI_USBINTR, 0);
 #endif
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 #if NOHCI > 0
 	struct awinusb_attach_args usbaa_ohci = {
