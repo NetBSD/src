@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.2 2013/06/20 05:30:21 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.3 2013/09/07 01:42:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.2 2013/06/20 05:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.3 2013/09/07 01:42:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,37 +128,50 @@ void
 gtmr_init_cpu_clock(struct cpu_info *ci)
 {
 	struct gtmr_softc * const sc = &gtmr_sc;
-	uint64_t now = armreg_cntv_ct_read();
 
 	KASSERT(ci == curcpu());
 
-	ci->ci_lastintr = now;
-
-	/*
-	 * Schedule the next interrupt.
-	 */
-	now += sc->sc_autoinc;
-	armreg_cntv_tval_write(sc->sc_autoinc);
-
+	int s = splsched();
 	/*
 	 * enable timer and stop masking the timer.
 	 */
 	armreg_cntv_ctl_write(ARM_CNTCTL_ENABLE);
+
+	/*
+	 * Get now and update the compare timer.
+	 */
+	ci->ci_lastintr = armreg_cntv_ct_read();
+	armreg_cntv_tval_write(sc->sc_autoinc);
+#if 0
+	printf("%s: %s: delta cval = %"PRIu64"\n",
+	    __func__, ci->ci_data.cpu_name,
+	    armreg_cntv_cval_read() - ci->ci_lastintr);
+#endif
+	splx(s);
 #if 0
 	printf("%s: %s: ctl %#x cmp %#"PRIx64" now %#"PRIx64"\n",
 	    __func__, ci->ci_data.cpu_name, armreg_cntv_ctl_read(),
 	    armreg_cntv_cval_read(), armreg_cntv_ct_read());
 
-	int s = splsched();
-	uint64_t when = now;
-	u_int n = 0;
-	while ((now = armreg_cntv_ct_read()) < when) {
-		/* spin */
-		n++;
-		KASSERTMSG(n <= sc->sc_autoinc,
-		    "spun %u times but only %"PRIu64" has passed",
-		    n, when - now);
-	}
+	s = splsched();
+
+	uint64_t now64;
+	uint64_t start64 = armreg_cntv_ct_read();
+	do {
+		now64 = armreg_cntv_ct_read();
+	} while (start64 == now64);
+	start64 = now64;
+	uint64_t end64 = start64 + 64;
+	uint32_t start32 = armreg_pmccntr_read();
+	do {
+		now64 = armreg_cntv_ct_read();
+	} while (end64 != now64);
+	uint32_t end32 = armreg_pmccntr_read();
+
+	uint32_t diff32 = end64 - start64;
+	printf("%s: %s: %u cycles per tick\n", 
+	    __func__, ci->ci_data.cpu_name, (end32 - start32) / diff32);
+
 	printf("%s: %s: status %#x cmp %#"PRIx64" now %#"PRIx64"\n",
 	    __func__, ci->ci_data.cpu_name, armreg_cntv_ctl_read(),
 	    armreg_cntv_cval_read(), armreg_cntv_ct_read());
@@ -226,25 +239,33 @@ clockhandler(void *arg)
 	const uint64_t now = armreg_cntv_ct_read();
 	uint64_t delta = now - ci->ci_lastintr;
 
+#ifdef DIAGNOSTIC
+	const uint64_t then = armreg_cntv_cval_read();
+	KASSERTMSG(then <= now, "%"PRId64, now - then);
+	KASSERTMSG(then - ci->ci_lastintr >= sc->sc_autoinc, "%"PRId64,
+	    then - ci->ci_lastintr - sc->sc_autoinc);
+#endif
+
 #if 0
 	printf("%s(%p): %s: now %#"PRIx64" delta %"PRIu64"\n", 
 	     __func__, cf, ci->ci_data.cpu_name, now, delta);
 #endif
 	KASSERTMSG(delta > sc->sc_autoinc / 100,
-	    "%s: interrupting too quickly (delta=%"PRIu64")",
-	    ci->ci_data.cpu_name, delta);
+	    "%s: interrupting too quickly (delta=%"PRIu64") autoinc=%lu",
+	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
 
 	/*
 	 * If we got interrutped too soon (delta < sc->sc_autoinc) or
 	 * we missed a tick (delta >= 2 * sc->sc_autoinc), don't try to
 	 * adjust for jitter.
 	 */
-	if (delta < sc->sc_autoinc || delta >= 2 * sc->sc_autoinc) {
+	delta -= sc->sc_autoinc;
+	if (delta < 0 || delta >= sc->sc_autoinc) {
 		delta = 0;
 	}
 	armreg_cntv_tval_write(sc->sc_autoinc - delta);
 
-	ci->ci_lastintr = now;
+	ci->ci_lastintr = now - delta;
 
 	hardclock(cf);
 
