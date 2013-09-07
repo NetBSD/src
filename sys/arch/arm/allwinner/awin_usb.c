@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.3 2013/09/07 02:10:37 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -80,6 +80,17 @@ struct awinusb_attach_args {
 
 static const int awinusb_ohci_irqs[2] = { AWIN_IRQ_USB3, AWIN_IRQ_USB4 };
 static const int awinusb_ehci_irqs[2] = { AWIN_IRQ_USB1, AWIN_IRQ_USB2 };
+static const uint32_t awinusb_ohci_ahb_gating[2] = {
+	AWIN_AHB_GATING0_USB_OHCI0, AWIN_AHB_GATING0_USB_OHCI1,
+};
+static const uint32_t awinusb_ehci_ahb_gating[2] = {
+	AWIN_AHB_GATING0_USB_EHCI0, AWIN_AHB_GATING0_USB_EHCI1,
+};
+static const uint32_t awinusb_ohci_usb_clk_set[2] = {
+	AWIN_USB_CLK_OHCI0_ENABLE|AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY1_ENABLE,
+	AWIN_USB_CLK_OHCI1_ENABLE|AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY2_ENABLE,
+};
+
 
 #ifdef OHCI_DEBUG
 #define OHCI_DPRINTF(x)	if (ohcidebug) printf x
@@ -114,10 +125,11 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-#if 0
-	awinusb_enable(usbaa->usbaa_bst, usbaa->usbaa_ccm_bsh,
-	    AWIN_USB_CLK_USBPHY1_RST, AWIN_APB_GATING1_OHCI0);
-#endif
+	awin_reg_set_clear(usbaa->usbaa_bst, usbaa->usbaa_ccm_bsh,
+	    AWIN_AHB_GATING0_REG, awinusb_ohci_ahb_gating[usbaa->usbaa_port],
+	    0);
+	awin_reg_set_clear(usbaa->usbaa_bst, usbaa->usbaa_ccm_bsh,
+	    AWIN_USB_CLK_REG, awinusb_ohci_usb_clk_set[usbaa->usbaa_port], 0);
 
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
@@ -182,6 +194,10 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	struct awinusb_attach_args * const usbaa = aux;
 
 	sc->sc_dev = self;
+
+	awin_reg_set_clear(usbaa->usbaa_bst, usbaa->usbaa_ccm_bsh,
+	    AWIN_AHB_GATING0_REG, awinusb_ehci_ahb_gating[usbaa->usbaa_port],
+	    0);
 
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
