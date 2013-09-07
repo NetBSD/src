@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.32 2013/08/26 04:06:25 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.33 2013/09/07 16:44:13 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -497,3 +497,185 @@ sys/dev/pci/if_bgereg.h				1.57
 	Add support for BCM57762 and BCM57765, found in Apple's Thunderbolt
 	to Gigabit Ethernet adapter.  PR kern/46961
 	[tsutsui, ticket #652]
+sys/fs/udf/udf_allocation.c			1.34
+
+	Fix 32 bit issue in main file read-in function. On both 32 bit and
+	64 bit hosts a missing cast would result in `garbage' after the
+	4Gbyte limit.
+	[reinoud, ticket #930]
+
+sys/dev/pci/virtio.c				1.4
+
+	Make sure to check if the driver has a valid intr handler in
+	virtio_detach().
+	Fixes a panic during shutdown on KVM under ubuntu 13.04 with virtio,
+	as reported in PR kern/48105 by Richard Hansen.
+	[tsutsui, ticket #931]
+
+sys/dev/pci/mpii.c				1.2, 1.3
+
+	allow more than 1 LUN (changers on LUN 1 can now be found)
+	fix short read (underruns)
+	[kardel, ticket #932]
+
+sys/nfs/nfs_bio.c				1.189
+
+	Change nfs_vinvalbuf() to keep errors from vinvalbuf() for fsync() or
+	close().
+	Fix for PR kern/47980 (NFS over-quota not detected if utimes() called
+	before fsync()/close())
+	[hannken, ticket #933]
+
+lib/libc/locale/global_locale.c			patch
+
+	provide consistent and correct data for the C locale.
+	[joerg, ticket #934]
+
+sys/arch/amiga/amiga/amiga_init.c		1.127
+sys/arch/m68k/m68k/pmap_motorola.c		1.66
+
+	Set user page table base address dynamically on amiga. This unbreaks
+	machines with large Zorro III I/O spaces.
+	Patch originally by Michael L. Hitch.
+	[rkujawa, ticket #935]
+
+sys/dev/usb/u3g.c				1.30
+sys/dev/usb/usbdevs				1.653
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	PR/48172: Reinhard Speyerer:
+	u3g(4): add 4G Systems XS Stick W14 support
+	[dholland, ticket #937]
+
+external/ibm-public/postfix/dist/HISTORY			patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/smtp/smtp_connect.c	patch
+external/ibm-public/postfix/dist/src/smtp/smtp_reuse.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_misc.c		patch
+external/ibm-public/postfix/dist/src/trivial-rewrite/resolve.c	patch
+external/ibm-public/postfix/dist/src/util/exec_command.c	patch
+
+	Update postfix to 2.8.15, fixing several bugs
+	[tron, ticket #938]
+
+sys/dev/pci/if_bge.c		1.203-1.237, 1.239-1.241, 1.243-1.258 via patch
+sys/dev/pci/if_bgereg.h		1.58-1.74, 1.76-1.83 via patch
+sys/dev/pci/if_bgevar.h		1.10-1.16 via patch
+sys/dev/pci/pcidevs		1.1149 via patch
+sys/dev/pci/pcidevs.h		regen
+sys/dev/pci/pcidevs_data.h	regen
+sys/dev/mii/brgphy.c		1.61-1.63, 1.65, 1.67 via patch
+sys/dev/mii/miivar.h		1.61 via patch
+sys/dev/mii/miidevs		1.112-1.113 via patch
+sys/dev/mii/miidevs.h		regen
+sys/dev/mii/miidevs_data.h	regen
+share/man/man4/bge.4		1.13-1.15 via patch
+
+	Add some device support, fix a lot of bugs and add some enahcements.
+	- Add Altima AC1003, APPLE BCM5701, Broadcom BCM5785F,
+	  BCM5785G, BCM5787F, BCM5719, BCM5720, BCM57766, BCM57782 and BCM57786.
+	- brgphy(4): Add BCM5756, BCM5717C, BCM5719C, BCM5720C and BCM57780.
+	- Add some bugfixes and enhancement from FreeBSD:
+	  - Workaround for BCM5906 silicon bug. When auto-negotiation results in
+	   half-duplex operation, excess collision on the ethernet link may
+	   cause internal chip delays that may result in subsequent valid
+	   frames being dropped due to insufficient receive buffer resources.
+	   (FreeBSD: r214219, r214251, r214292)
+	  - Allow write DMA to request larger DMA burst size to get better
+	   performance on BCM5785.
+	   (FreeBSD r213333: OpenBSD 1.294)
+	  - Enable TX MAC state machine lockup fix for both BCM5755 or higher
+	   and BCM5906. Publicly available data sheet just says it may happen
+	   due to corrupted TxMbuf.
+	   (FreeBSD r214216)
+	  - Follow Broadcom datasheet:
+	   Delay 100 microseconds after enabling transmit MAC.
+	   Delay 10 microseconds after enabling receive MAC.
+	   (FreeBSD r241220)
+	- Insert the completion barrier between register write and the
+	  consecutive delay(). It will fix some device timeout problems
+	  we have seen before.
+	- Add DELAY(40) after turning on write DMA state machine.
+	- Add some workarounds for 5717 A0 and 5776[56] to be stable.
+	  From Linux tg3 driver.
+	- Sync with *BSD. No functional change:
+	  - make bge_chipid() and use it.
+	  - use switch() instead of a lot of if()s.
+	- Check BGE_RXBDFLAG_IPV6 flag for 5717_PLUS case.
+	  Note that {tcp,udp}6csum flag is currently not added in the
+	  capability.
+	- Add delay after clearing BGE_MACMODE_TBI_SEND_CFGS for the link
+	  checking.  FreeBSD has the same delay().
+	- Rename PHY related flags for the consistency. It's the same as
+	  FreeBSD.
+	- Remove BGE_10_100_ONLY flag because this was not used.
+	  For 10/100 devices, when calling mii_attach(), mask BMSR_EXTSTAT
+	  flag to not to check Gigabit flags. It's the same as FreeBSD.
+	- In brgphyattach(), set sc_isbge, sc_isbnx and sc_phyflags before
+	  PHY_RESET() because brgphy_reset() refers those flags.
+	- Call brgpy specific autonego function in MII_TICK. Before this commit,
+	  only MII_MEDIACHG calls brgphy_mii_phy_auto() and MII_TICK calls MI
+	  mii_phy_auto(). That was not intended.
+	- Sync with FreeBSD and OpenBSD. Almost the same as OpenBSD rev. 1.325:
+	  - Sync the ring setup code closer to FreeBSD's driver
+	  - Do not touch the jumbo replenish threshold register on chips that
+	    do not have jumbo support
+	- Wait for the bootcode to complete initialization for 5717 and newer
+	  devices.  See BCM5718 programmer's guide's "step 13,
+	  Device reset Procedure, Section7".
+	  57781's document has the same note.
+	- 5718 and 57785 document say we should wait 100us.
+	- Change the order of register settings a little to match both
+	  Broadcom's document and Linux tg3.
+	- Add detach function.
+	- Fix a bug that chips which have BCM5906 ASIC touch GPIO wrongly.
+	- Fix a bug that the NVRAM lock timeout occured on sparc64 onboard bge.
+	- Check BGE_SGDIG_STS when the chip is NOT a 5717 A0, like freebsd
+	  (OpenBSD rev. 1.327).
+	- Fix the setting of Tx Random Backoff Register.
+	- Add BGE_PCIMISCCTL_PCISTATE_RW in BGE_INIT. It's required to set the
+	  PCISTATE register correctly.
+	- Update comments from 57XX-PG105-R.pdf and 5718-PG106-R.pdf.
+	- Add missing bus_dmamap_sync() in bge_intr(). The status word is
+	  in DMAed area. Same as other *BSDs.
+	- Check the hardware config words and print them. This change only
+	  read them and print the values.
+	- Set BGE_MISC_CTL's byte/word swap options before using
+	  bge_readmem_ind().
+	- For BGE_IS_575X_PLUS() devices, don't set
+	  BGE_RXLPSTATCONTROL_DACK_FIX bits because these bits are reserved.
+	- bge_init_tx_ring() uses BGE_RSLOTS (==256) but bge_free_tx_ring() uses
+	  BGE_TX_RING_CNT (== 512). Delete BGE_RSLOTS and use BGE_TX_RING_CNT.
+	  Same as OpenBSD's if_bge.c rev. 1.86.
+	- Document says 5717 and newer chips have no
+	  BGE_PCISTATE_INTR_NOT_ACTIVE bit, so don't use the bit on those
+	  chips. Same as OpenBSD.
+	- Fix a bug that the PHY address bits in MI_MODE register is wrongly
+	  cleard.  Set the PHY address correctly.
+	- Use BGE_SETBIT() instead of CSR_WRITE_4() for the BGE_MISC_LOCAL_CTL
+	  register to not to modify some GPIO bits.
+	- Call bge_poll_fw() before writing BGE_MODE_CTL register like the
+	  latest linux tg3 dirver.
+	- Set DMA watermark depend on the PCI max payload size.
+	- Add BGE_JUMBO_CAPABLE flag to some chips. With this commit, 5714,
+	  5780, 5717, 5718, 5719 (exclude rev. A0), 5720, 57765 and 57766 are
+	  added to support jumbo frame.
+	- Fix the setting of sc->bge_flags for 5717 and newer devices.
+	- Fix a link detect bug on non-autopoll systems. Same as OpenBSD
+	  (rev.1.329 and 1.336) and FreeBSD (r213710).
+	- 57765 series is not based on 5717 series. 5717 series is based on
+	  57765 series.
+	- Set the TX DMA segment size based on the MTU size.
+	- Change the TX ring size for 5717 series and 57764 series.
+	- For 57766, set BGE_RDMAMODE_JMB_2K_MMRR for non-jumbo frame.
+	  Same as Linux tg3.
+	- For 57765 and newer devices, set BGE_MAX_RX_FRAME_LOWAT to 1.
+	  This value is recommended by the document.
+	- Change sysctl related functions for consistency.
+	- Style change.
+	- Use macro. Remove duplicated macro. Remove unused variable.
+	- Fix comments. Add comments.
+	- Remove extra semicolon. Remove unused code.
+	[msaitoh, ticket #939]
+
