@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.209 2013/08/25 06:16:19 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.210 2013/09/07 16:43:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.209 2013/08/25 06:16:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.210 2013/09/07 16:43:48 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -809,7 +809,7 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 #endif
 	/*
 	 * If the last TD is still active we need to check whether there
-	 * is a an error somewhere in the middle, or whether there was a
+	 * is an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
 	usb_syncmem(&lsqtd->dma,
