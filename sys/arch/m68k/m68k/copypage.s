@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.15 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: copypage.s,v 1.16 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,10 +53,10 @@ ENTRY(copypage040)
 	movl	4(%sp),%a0		| source address
 	movl	8(%sp),%a1		| destiniation address
 	movw	#PAGE_SIZE/32-1,%d0	| number of 32 byte chunks - 1
-Lm16loop:
+.Lm16loop:
 	.long	0xf6209000		| move16 (%a0)+,(%a1)+
 	.long	0xf6209000		| move16 (%a0)+,(%a1)+
-	dbf	%d0,Lm16loop
+	dbf	%d0,.Lm16loop
 	rts
 #endif /* M68040 || M68060 */
 
@@ -70,7 +70,7 @@ ENTRY(copypage)
 	movl	8(%sp),%a1		| destiniation address
 #ifndef	__mc68010__
 	movw	#PAGE_SIZE/32-1,%d0	| number of 32 byte chunks - 1
-Lmlloop:
+.Lmlloop:
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
@@ -79,12 +79,12 @@ Lmlloop:
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
-	dbf	%d0,Lmlloop
+	dbf	%d0,.Lmlloop
 #else	/* __mc68010__ */	
 	movw	#PAGE_SIZE/4-1,%d0	| number of 4 byte chunks - 1
-Lmlloop:
+.Lmlloop:
 	movl	(%a0)+,(%a1)+
-	dbf	%d0,Lmlloop		| use the 68010 loop mode
+	dbf	%d0,.Lmlloop		| use the 68010 loop mode
 #endif	/* __mc68010__ */	
 	rts
 
@@ -107,7 +107,7 @@ ENTRY(zeropage)
 	movql	#0,%d7
 	movl	%d1,%a1
 	lea	PAGE_SIZE(%a0),%a0
-Lzloop:
+.Lzloop:
 	movml	%d1-%d7/%a1,-(%a0)
 	movml	%d1-%d7/%a1,-(%a0)
 	movml	%d1-%d7/%a1,-(%a0)
@@ -116,12 +116,12 @@ Lzloop:
 	movml	%d1-%d7/%a1,-(%a0)
 	movml	%d1-%d7/%a1,-(%a0)
 	movml	%d1-%d7/%a1,-(%a0)
-	dbf	%d0,Lzloop
+	dbf	%d0,.Lzloop
 	movml	(%sp)+,%d2-%d7
 #else	/* __mc68010__ */
 	movw	#PAGE_SIZE/4-1,%d0	| number of 4 byte chunks - 1
-Lzloop:
+.Lzloop:
 	clrl	(%a0)+
-	dbf	%d0,Lzloop		| use the 68010 loop mode
+	dbf	%d0,.Lzloop		| use the 68010 loop mode
 #endif	/* __mc68010__ */
 	rts

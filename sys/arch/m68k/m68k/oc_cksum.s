@@ -1,4 +1,4 @@
-|	$NetBSD: oc_cksum.s,v 1.8 2013/07/22 03:37:17 matt Exp $
+|	$NetBSD: oc_cksum.s,v 1.9 2013/09/07 19:06:29 chs Exp $
 
 | Copyright (c) 1988 Regents of the University of California.
 | All rights reserved.
@@ -104,10 +104,10 @@ ENTRY(oc_cksum)
 	| bits of the count in d1.)
 
 	btst	#0,%d1
-	jne	L5		| if one or three bytes excess
+	jne	.L5		| if one or three bytes excess
 	btst	#1,%d1
-	jne	L7		| if two bytes excess
-L1:
+	jne	.L7		| if two bytes excess
+.L1:
 #ifdef __mcoldfire__
 	movq	#-4,%d2		| mask to clear bottom two bits
 	andl	%d2,%d1		| longword truncate length
@@ -125,8 +125,8 @@ L1:
 	negl	%d2
 	andb	#0xf,%cc	| clear X
 #endif
-	jmp	(L3-.-2:b,%pc,%d2)
-L2:
+	jmp	(.L3-.-2:b,%pc,%d2)
+.L2:
 	movl	(%a0)+,%d2
 	addxl	%d2,%d0
 	movl	(%a0)+,%d2
@@ -159,12 +159,12 @@ L2:
 	addxl	%d2,%d0
 	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-L3:
+.L3:
 #ifdef __mcoldfire__
 	cmpal	%a0,%a1		| cmpa doesn't affect X
-	bne	L2		| loop until reached
+	bne	.L2		| loop until reached
 #else
-	dbra	%d1,L2		| (NB- dbra doesn't affect X)
+	dbra	%d1,.L2		| (NB- dbra doesn't affect X)
 #endif
 
 	movl	%d0,%d1		| fold 32 bit sum to 16 bits
@@ -173,14 +173,14 @@ L3:
 	mvzw	%d1,%d1		| zero extend %d1 (doesn't affect X)
 	mvzw	%d0,%d0		| zero extend %d0 (doesn't affect X)
 	addxl	%d1,%d0		| 
-	jcc	L4
+	jcc	.L4
 	addql	#1,%d0
 #else
 	addxw	%d1,%d0
-	jcc	L4
+	jcc	.L4
 	addw	#1,%d0
 #endif
-L4:
+.L4:
 #ifdef __mcoldfire__
 	mvzw	%d0,%d0
 #else
@@ -189,9 +189,9 @@ L4:
 	movl	(%sp)+,%d2
 	rts
 
-L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
+.L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
 	btst	#1,%d1
-	jeq	L6		| if 1 excess
+	jeq	.L6		| if 1 excess
 
 	| 3 bytes excess
 #ifdef __mcoldfire__
@@ -202,7 +202,7 @@ L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
 #endif
 	addl	%d2,%d0		|  through to pick up last byte
 
-L6:	| 1 byte excess
+.L6:	| 1 byte excess
 #ifdef __mcoldfire__
 	mvzb	(-1,%a0,%d1:l),%d2
 #else
@@ -211,9 +211,9 @@ L6:	| 1 byte excess
 #endif
 	lsll	#8,%d2
 	addl	%d2,%d0
-	jra	L1
+	jra	.L1
 
-L7:	| 2 bytes excess
+.L7:	| 2 bytes excess
 #ifdef __mcoldfire__
 	mvzw	(-2,%a0,%d1:l),%d2
 #else
@@ -221,4 +221,4 @@ L7:	| 2 bytes excess
 	movw	(-2,%a0,%d1:l),%d2
 #endif
 	addl	%d2,%d0
-	jra	L1
+	jra	.L1
