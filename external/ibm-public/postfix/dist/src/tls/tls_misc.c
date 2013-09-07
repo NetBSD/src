@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.3.6.1 2012/06/13 19:29:04 riz Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.3.6.2 2013/09/07 16:28:34 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -455,8 +455,10 @@ int     tls_protocol_mask(const char *plist)
 	else
 	    include |= code =
 		name_code(protocol_table, NAME_CODE_FLAG_NONE, tok);
-	if (code == TLS_PROTOCOL_INVALID)
+	if (code == TLS_PROTOCOL_INVALID) {
+	    myfree(save);
 	    return TLS_PROTOCOL_INVALID;
+	}
     }
     myfree(save);
 
