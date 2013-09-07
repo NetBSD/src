@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.3 2013/09/07 00:29:22 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.4 2013/09/07 02:34:01 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -198,15 +198,7 @@ flash4		at nand0 offset 0x680000 size 0			# filesystem
 
 # Interrupt Controller
 awinicu0	at awinio0 
-awingpio0	at awinio0 port 0		# 18 pins
-awingpio1	at awinio0 port 1		# 24 pins
-awingpio2	at awinio0 port 2		# 25 pins
-awingpio3	at awinio0 port 3		# 28 pins
-awingpio4	at awinio0 port 4		# 12 pins
-awingpio5	at awinio0 port 5		#  6 pins
-awingpio6	at awinio0 port 6		# 12 pins
-awingpio7	at awinio0 port 7		# 28 pins
-awingpio8	at awinio0 port 8		# 22 pins
+awingpio0	at awinio0
 
 gpio*		at awingpio?
 
@@ -258,10 +250,11 @@ awinwdt*	at awinio?
 
 # On-board USB
 awinusb0	at awinio0 port 0
-ohci*		at awinusb?
+awinusb1	at awinio0 port 1
+#ohci*		at awinusb?
 ehci*		at awinusb?
+#usb*		at ohci?
 usb*		at ehci?
-usb*		at ohci?
 
 # SATA (A20)
 ahcisata*	at awinio0
