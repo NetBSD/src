@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_sigreturn14.s,v 1.4 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.5 2013/09/07 19:06:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,18 +62,18 @@ ENTRY_NOPROFILE(m68k_compat_16_sigreturn14_stub)
 	movl	%a0,%usp		|   user SP
 	lea	FR_HW(%sp),%a1		| pointer to HW frame
 	movw	FR_ADJ(%sp),%d0	| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
+	jeq	.Lsigr1			| no, just continue
 	moveq	#92,%d1			| total size
 	subw	%d0,%d1			|  - hole size = frame size
 	lea	92(%a1),%a0		| destination
 	addw	%d1,%a1			| source
 	lsrw	#1,%d1			| convert to word count
 	subqw	#1,%d1			| minus 1 for dbf
-Lsigrlp:
+.Lsigrlp:
 	movw	-(%a1),-(%a0)		| copy a word
-	dbf	%d1,Lsigrlp		| continue
+	dbf	%d1,.Lsigrlp		| continue
 	movl	%a0,%a1			| new HW frame base
-Lsigr1:
+.Lsigr1:
 	movl	%a1,FR_SP(%sp)		| new SP value
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	movl	(%sp),%sp		| and our SP
