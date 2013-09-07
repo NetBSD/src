@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.87 2013/01/22 13:27:59 jmcneill Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.88 2013/09/07 16:47:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -278,9 +278,16 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
+
+/*
+ * IPL_USB is defined as IPL_VM for drivers that have not been made MP safe.
+ * IPL_VM (currently) takes the kernel lock.
+ *
+ * Eventually, IPL_USB can/should be changed
+ */
 #define splusb splsoftnet
-#define splhardusb splbio
-#define IPL_USB IPL_BIO
+#define splhardusb splvm
 #define IPL_SOFTUSB IPL_SOFTNET
+#define IPL_USB IPL_VM
 
 #endif /* _USBDI_H_ */
