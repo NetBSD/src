@@ -95,7 +95,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/cubie/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.1 2013/09/03 18:01:33 matt Exp $")
+RCSID("$NetBSD: cubie_start.S,v 1.2 2013/09/07 00:30:17 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -164,11 +164,7 @@ _C_LABEL(cubie_start):
 	movw	ip, #:lower16:start
 	movt	ip, #:upper16:start
 	bx	ip		/* Jump to start (flushes pipeline). */
-	nop
-	nop
-	nop
-	nop
-	
+
 	/* NOTREACHED */
 
 #include <arm/cortex/a9_mpsubr.S>
@@ -189,6 +185,10 @@ _C_LABEL(cubie_start):
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 
+	/* Map AWIN CORE (so console will work) */
+	MMU_INIT(AWIN_CORE_PBASE, AWIN_CORE_PBASE,
+		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
 
