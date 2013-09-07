@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.103 2013/03/24 22:38:45 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.104 2013/09/07 16:47:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 /*
  * Discussion about locking in the USB code:
  *
- * The host controller presents one lock at IPL_SOFTUSB.
+ * The host controller presents one lock at IPL_SOFTUSB (aka IPL_SOFTNET).
  *
  * List of hardware interface methods, and whether the lock is held
  * when each is called by this module:
