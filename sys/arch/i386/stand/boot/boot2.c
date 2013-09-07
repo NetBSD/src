@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.38.4.2 2010/02/14 14:01:08 bouyer Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38.4.3 2013/09/07 17:23:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -131,9 +131,16 @@ void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+#ifndef SMALL
+void	command_menu(char *);
+#endif
 void	command_modules(char *);
 void	command_load(char *);
 void	command_multiboot(char *);
+#ifndef SMALL
+void	bootdefault(void);
+void	docommandchoice(int);
+#endif
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -143,6 +150,9 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+#ifndef SMALL
+	{ "menu",	command_menu },
+#endif
 	{ "modules",	command_modules },
 	{ "load",	command_load },
 	{ "multiboot",	command_multiboot },
@@ -508,10 +518,58 @@ static int getchoicefrominput(char *input, int def)
 }
 
 void
+docommandchoice(int choice)
+{
+	char input[80], *ic, *oc;
+ 
+	ic = bootconf.command[choice];
+	/* Split command string at ; into separate commands */
+	do {
+		oc = input;
+		/* Look for ; separator */
+		for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
+			*oc++ = *ic;
+		if (*input == '\0')
+			continue;
+		/* Strip out any trailing spaces */
+		oc--;
+		for (; *oc == ' ' && oc > input; oc--);
+		*++oc = '\0';
+		if (*ic == COMMAND_SEPARATOR)
+			ic++;
+		/* Stop silly command strings like ;;; */
+		if (*input != '\0')
+			docommand(input);
+		/* Skip leading spaces */
+		for (; *ic == ' '; ic++);
+	} while (*ic);
+}
+
+void
+bootdefault(void)
+{
+        int choice;
+        static int entered;
+ 
+        if (bootconf.nummenu > 0) {
+                if (entered) {
+                        printf("default boot twice, skipping...\n");
+                        return;
+                }
+                entered = 1;
+                choice = bootconf.def;
+                printf("command(s): %s\n", bootconf.command[choice]);
+                docommandchoice(choice);
+        }
+}
+
+
+
+void
 doboottypemenu(void)
 {
 	int choice;
-	char input[80], *ic, *oc;
+	char input[80];
 		
 	printf("\n");
 	/* Display menu */
@@ -567,27 +625,7 @@ doboottypemenu(void)
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		} else {
-			ic = bootconf.command[choice];
-			/* Split command string at ; into separate commands */
-			do {
-				oc = input;
-				/* Look for ; separator */
-				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
-					*oc++ = *ic;
-				if (*input == '\0')
-					continue;
-				/* Strip out any trailing spaces */
-				oc--;
-				for (; *oc ==' ' && oc > input; oc--);
-				*++oc = '\0';
-				if (*ic == COMMAND_SEPARATOR)
-					ic++;
-				/* Stop silly command strings like ;;; */
-				if (*input != '\0')
-					docommand(input);
-				/* Skip leading spaces */
-				for (; *ic == ' '; ic++);
-			} while (*ic);
+			docommandchoice(choice);
 		}
 			
 	}
@@ -707,6 +745,9 @@ command_help(char *arg)
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "modules {enabled|disabled}\n"
+#ifndef SMALL
+	       "menu (reenters boot menu, if defined in boot.cfg)\n"
+#endif
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "help|?\n"
@@ -740,10 +781,25 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto;
+	int howto, tell;
 
-	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, 1);
+	if (!parseboot(arg, &filename, &howto))
+		return;
+
+	tell = ((howto & AB_VERBOSE) != 0);
+	if (filename != NULL) {
+		bootit(filename, howto, tell);
+	} else {
+		int i;
+
+#ifndef SMALL
+		bootdefault();
+#endif
+		for (i = 0; i < NUMNAMES; i++) {
+			bootit(names[i][0], howto, tell);
+			bootit(names[i][1], howto, tell);
+		}
+	}
 }
 
 void
@@ -802,6 +858,21 @@ command_consdev(char *arg)
 	}
 	printf("invalid console device.\n");
 }
+
+#ifndef SMALL
+/* ARGSUSED */
+void
+command_menu(char *arg)
+{
+
+	if (bootconf.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	} else {
+		printf("No menu defined in boot.cfg\n");
+	}
+}
+#endif /* !SMALL */
 
 void
 command_modules(char *arg)
