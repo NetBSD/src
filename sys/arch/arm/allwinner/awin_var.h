@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.4 2013/09/07 00:35:52 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.5 2013/09/07 02:10:02 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,5 +78,16 @@ void	awin_gpio_pinset_acquire(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
 
 void	awin_wdog_reset(void);
+
+static void inline
+awin_reg_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t o, uint32_t set_mask, uint32_t clr_mask)
+{
+	const uint32_t old = bus_space_read_4(bst, bsh, o);
+	const uint32_t new = set_mask | (old & ~clr_mask);
+	if (old != new) {
+		bus_space_write_4(bst, bsh, o, new);
+	}
+}
 
 #endif /* _ARM_ALLWINNER_AWIN_VAR_H_ */
