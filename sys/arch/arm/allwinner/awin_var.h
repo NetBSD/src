@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.5 2013/09/07 02:10:02 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.6 2013/09/07 19:47:28 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,9 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
+
+#include <dev/gpio/gpiovar.h>
 
 struct awin_locators {
 	const char *loc_name;
@@ -63,6 +66,11 @@ struct awin_gpio_pinset {
 	uint32_t pinset_mask;
 };
 
+struct awin_gpio_pindata {
+	gpio_chipset_tag_t pd_gc;
+	int pd_pin;
+};
+
 extern struct bus_space awin_bs_tag;
 extern struct bus_space awin_a4x_bs_tag;
 extern bus_space_handle_t awin_core_bsh;
@@ -76,8 +84,15 @@ void	awin_gpio_init(void);
 bool	awin_gpio_pinset_available(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_acquire(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
+bool	awin_gpio_pin_reserve(const char *, struct awin_gpio_pindata *);
 
 void	awin_wdog_reset(void);
+
+static inline void
+awin_gpio_pindata_write(const struct awin_gpio_pindata *pd, int value)
+{
+	gpiobus_pin_write(pd->pd_gc, pd->pd_pin, value);
+}
 
 static void inline
 awin_reg_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,
