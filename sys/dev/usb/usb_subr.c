@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.191 2013/08/21 17:59:40 jakllsch Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.192 2013/09/07 16:39:15 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.191 2013/08/21 17:59:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.192 2013/09/07 16:39:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1253,14 +1253,6 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->address = addr;	/* new device address now */
 	bus->devices[addr] = dev;
 
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-			      "failed\n", addr));
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);
 	err = usbd_setup_pipe_flags(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
@@ -1269,6 +1261,14 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
 		usbd_remove_device(dev, up);
 		return err;
+	}
+
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
+		usbd_remove_device(dev, up);
+		return (err);
 	}
 
 	/* Assume 100mA bus powered for now. Changed when configured. */
