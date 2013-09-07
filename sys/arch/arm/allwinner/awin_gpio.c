@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.4 2013/09/07 19:47:28 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.5 2013/09/07 23:47:33 jmcneill Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -569,7 +569,7 @@ awin_gpio_pin_ctl(void *cookie, int pin, int flags)
 	if (flags & GPIO_PIN_INPUT) {
 		awin_gpio_set_pin_func(&ncfg, pin, AWIN_PIO_FUNC_INPUT);
 	} else if (flags & GPIO_PIN_OUTPUT) {
-		awin_gpio_set_pin_func(&ncfg, pin, AWIN_PIO_FUNC_INPUT);
+		awin_gpio_set_pin_func(&ncfg, pin, AWIN_PIO_FUNC_OUTPUT);
 	}
 
 	/*
