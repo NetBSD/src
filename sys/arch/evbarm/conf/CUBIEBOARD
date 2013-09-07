@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.2 2013/09/04 02:39:01 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.3 2013/09/07 00:29:22 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -23,6 +23,7 @@ options 	CPU_CORTEXA7
 options 	ALLWINNER_A10
 options 	ALLWINNER_A20
 options 	PMAPCOUNTERS
+options 	AWIN_CONSOLE_EARLY
 
 # Architecture options
 
@@ -174,10 +175,10 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 awinio0		at mainbus?
 
 # SDHC controllers
-sdhc0		at awinio0 port 0
-sdhc*		at awinio0 port ?
-sdmmc*		at sdhc?		# SD/MMC bus
-ld*		at sdmmc?
+#sdhc0		at awinio0 port 0
+#sdhc*		at awinio0 port ?
+#sdmmc*		at sdhc?		# SD/MMC bus
+#ld*		at sdmmc?
 
 # NAND controller
 awinnand0	at awinio0
