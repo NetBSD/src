@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.3 2013/09/07 02:08:56 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.4 2013/09/07 02:46:06 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -109,11 +109,11 @@ static const struct awin_locators awin_locators[] = {
 	{ "sdhc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, AANY },
 	{ "sdhc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, AANY },
 	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, AANY },
-	{ "twi", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, AANY },
-	{ "twi", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, AANY },
-	{ "twi", OFFANDSIZE(TWI2), 2, AWIN_IRQ_TWI2, AANY },
-	{ "twi", OFFANDSIZE(TWI3), 3, AWIN_IRQ_TWI3, AANY },
-	{ "twi", OFFANDSIZE(TWI4), 4, AWIN_IRQ_TWI4, AANY },
+	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, AANY },
+	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, AANY },
+	{ "awiniic", OFFANDSIZE(TWI2), 2, AWIN_IRQ_TWI2, AANY },
+	{ "awiniic", OFFANDSIZE(TWI3), 3, AWIN_IRQ_TWI3, AANY },
+	{ "awiniic", OFFANDSIZE(TWI4), 4, AWIN_IRQ_TWI4, AANY },
 	{ "spi", OFFANDSIZE(SPI0), 0, AWIN_IRQ_SPI0, AANY },
 	{ "spi", OFFANDSIZE(SPI1), 1, AWIN_IRQ_SPI1, AANY },
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
