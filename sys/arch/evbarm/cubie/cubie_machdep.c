@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.4 2013/09/07 00:31:10 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.5 2013/09/07 03:34:20 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.4 2013/09/07 00:31:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.5 2013/09/07 03:34:20 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -506,8 +506,8 @@ cubie_device_register(device_t self, void *aux)
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
 	if (device_is_a(self, "armgtmr")) {
 		/*
-		 * The frequency of the generic timer was figured out when
-		 * determined the cpu frequency.
+		 * The frequency of the generic timer is the reference
+		 * frequency.
 		 */
                 prop_dictionary_set_uint32(dict, "frequency", AWIN_REF_FREQ);
 	}
