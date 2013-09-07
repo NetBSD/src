@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.6 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.6 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,26 +69,26 @@ END(ffs)
 ENTRY(ffs)
 	clrl	%d0
 	movl	4(%sp),%d1
-	jeq	L2		| return 0 if 0
-L1:
+	jeq	.L2		| return 0 if 0
+.L1:
 	addql	#1,%d0
 	lsrl	#1,%d1		| shift low bit into carry
-	jcc	L1		| keep looping while carry is clear.
-L2:
+	jcc	.L1		| keep looping while carry is clear.
+.L2:
 	rts
 
 #else	/* __mc68010__ */
 
 ENTRY(ffs)
 	movl	4(%sp),%d0
-	jeq	L2
+	jeq	.L2
 	movql	#31,%d1
-L1:	
+.L1:	
 	lsrl	#1,%d0
-	dbcs	%d1,L1
+	dbcs	%d1,.L1
 	movql	#32,%d0
 	subl	%d1,%d0
-L2:
+.L2:
 	rts
 END(ffs)
 

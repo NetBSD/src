@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 2013/07/16 07:31:40 jklos Exp $	*/
+/*	$NetBSD: locore.s,v 1.168 2013/09/07 19:06:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -754,13 +754,13 @@ ENTRY_NOPROFILE(trap0)
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
 	tstl	_C_LABEL(astpending)
-	jne	Lrei2
+	jne	.Lrei2
 	tstb	_C_LABEL(ssir)
-	jeq	Ltrap1
+	jeq	.Ltrap1
 	movw	#SPL1,%sr
 	tstb	_C_LABEL(ssir)
-	jne	Lsir1
-Ltrap1:
+	jne	.Lsir1
+.Ltrap1:
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   %USP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -999,16 +999,16 @@ ENTRY_NOPROFILE(rtclock_intr)
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Lchksir			| no, go check for SIR
-Lrei1:
+	jeq	.Lchksir		| no, go check for SIR
+.Lrei1:
 	btst	#5,%sp@			| yes, are we returning to user mode?
-	jne	Lchksir			| no, go check for SIR
+	jne	.Lchksir		| no, go check for SIR
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    %USP
-Lrei2:
+.Lrei2:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
@@ -1018,11 +1018,11 @@ Lrei2:
 	movl	%sp@(FR_SP),%a0		| restore %USP
 	movl	%a0,%usp		|   from save area
 	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	Laststkadj		| yes, go to it
+	jne	.Laststkadj		| yes, go to it
 	moveml	%sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,%sp			| toss %SP and stack adjust
 	rte				| and do real RTE
-Laststkadj:
+.Laststkadj:
 	lea	%sp@(FR_HW),%a1		| pointer to HW frame
 	addql	#8,%a1			| source pointer
 	movl	%a1,%a0			| source
@@ -1033,23 +1033,23 @@ Laststkadj:
 	moveml	%sp@+,#0x7FFF		| restore user registers
 	movl	%sp@,%sp		| and our %SP
 	rte				| and do real RTE
-Lchksir:
+.Lchksir:
 	tstb	_C_LABEL(ssir)		| SIR pending?
-	jeq	Ldorte			| no, all done
+	jeq	.Ldorte			| no, all done
 	movl	%d0,%sp@-		| need a scratch register
 	movw	%sp@(4),%d0		| get SR
 	andw	#PSL_IPL7,%d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
+	jne	.Lnosir			| came from interrupt, no can do
 	movl	%sp@+,%d0		| restore scratch register
-Lgotsir:
+.Lgotsir:
 	movw	#SPL1,%sr		| prevent others from servicing int
 	tstb	_C_LABEL(ssir)		| too late?
-	jeq	Ldorte			| yes, oh well...
+	jeq	.Ldorte			| yes, oh well...
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    %USP
-Lsir1:	
+.Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
@@ -1061,9 +1061,9 @@ Lsir1:
 	moveml	%sp@+,#0x7FFF		| and all remaining registers
 	addql	#8,%sp			| pop %SP and stack adjust
 	rte
-Lnosir:
+.Lnosir:
 	movl	%sp@+,%d0		| restore scratch register
-Ldorte:
+.Ldorte:
 	rte				| real return
 
 /*
@@ -1161,13 +1161,13 @@ ENTRY(spl0)
 	movw	%sr,%d0			| get old SR for return
 	movw	#PSL_LOWIPL,%sr		| restore new SR
 	tstb	_C_LABEL(ssir)		| software interrupt pending?
-	jeq	Lspldone		| no, all done
+	jeq	.Lspldone		| no, all done
 	subql	#4,%sp			| make room for RTE frame
 	movl	%sp@(4),%sp@(2)		| position return address
 	clrw	%sp@(6)			| set frame type 0
 	movw	#PSL_LOWIPL,%sp@	| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
+	jra	.Lgotsir		| go handle it
+.Lspldone:
 	rts
 
 /*
@@ -1189,30 +1189,30 @@ ALTENTRY(_delay, _delay)
 ENTRY(delay)
 	movl	%sp@(4),%d0		| get microseconds to delay
 	cmpl	#0x40000,%d0		| is it a "large" delay?
-	bls	Ldelayshort		| no, normal calculation
+	bls	.Ldelayshort		| no, normal calculation
 	movql	#0x7f,%d1		| adjust for scaled multipler (to
 	addl	%d1,%d0			|   avoid overflow)
 	lsrl	#7,%d0
 	mulul	_C_LABEL(delay_factor),%d0 | calculate number of loop iterations
-	bra	Ldelaysetup		| go do it!
-Ldelayshort:
+	bra	.Ldelaysetup		| go do it!
+.Ldelayshort:
 	mulul	_C_LABEL(delay_factor),%d0 | calculate number of loop iterations
 	lsrl	#7,%d0			| adjust for scaled multiplier
-Ldelaysetup:
-	jeq	Ldelayexit		| bail out if nothing to do
+.Ldelaysetup:
+	jeq	.Ldelayexit		| bail out if nothing to do
 	movql	#0,%d1			| put bits 15-0 in %d1 for the
 	movw	%d0,%d1			|   inner loop, and move bits
 	movw	#0,%d0			|   31-16 to the low-order word
 	subql	#1,%d1			|   of %d0 for the outer loop
 	swap	%d0
-Ldelay:
+.Ldelay:
 	tstl	_C_LABEL(delay_flag)	| this never changes for delay()!
-	dbeq	%d1,Ldelay		|   (used only for timing purposes)
-	dbeq	%d0,Ldelay
+	dbeq	%d1,.Ldelay		|   (used only for timing purposes)
+	dbeq	%d0,.Ldelay
 	addqw	#1,%d1			| adjust end count and
 	swap	%d0			|    return the longword result
 	orl	%d1,%d0
-Ldelayexit:
+.Ldelayexit:
 	rts
 
 /*
