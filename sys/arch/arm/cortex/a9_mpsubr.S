@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.8 2013/08/05 00:59:19 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.9 2013/09/07 00:33:32 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -166,14 +166,10 @@ arm_cpuinit:
 	mov     r1, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r1, c3, c0, 0
 
-	XPUTC(#74)
-	mov	r0, #0			/* make sure TTBCR is 0 */
-	mcr	p15, 0, r0, c1, c0, 2
-	
 	/*
 	 * Enable the MMU, etc.
 	 */
-	XPUTC(#75)
+	XPUTC(#74)
 	mrc	p15, 0, r0, c1, c0, 0
 
 	movw	r3, #:lower16:CPU_CONTROL_SET
