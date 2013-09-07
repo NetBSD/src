@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.257 2013/04/04 13:27:56 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.258 2013/09/07 16:17:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.257 2013/04/04 13:27:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.258 2013/09/07 16:17:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1430,11 +1430,6 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 		return;
 	}
 #endif
-	/*
-	 * If the last TD is still active we need to check whether there
-	 * is an error somewhere in the middle, or whether there was a
-	 * short packet (SPD and not ACTIVE).
-	 */
 	usb_syncmem(&lstd->dma,
 	    lstd->offs + offsetof(uhci_td_t, td_status),
 	    sizeof(lstd->td.td_status),
@@ -1444,41 +1439,80 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 	    lstd->offs + offsetof(uhci_td_t, td_status),
 	    sizeof(lstd->td.td_status),
 	    BUS_DMASYNC_PREREAD);
-	if (status & UHCI_TD_ACTIVE) {
-		DPRINTFN(12, ("uhci_check_intr: active ii=%p\n", ii));
-		for (std = ii->stdstart; std != lstd; std = std->link.std) {
-			usb_syncmem(&std->dma,
-			    std->offs + offsetof(uhci_td_t, td_status),
-			    sizeof(std->td.td_status),
-			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-			status = le32toh(std->td.td_status);
-			usb_syncmem(&std->dma,
-			    std->offs + offsetof(uhci_td_t, td_status),
-			    sizeof(std->td.td_status), BUS_DMASYNC_PREREAD);
-			/* If there's an active TD the xfer isn't done. */
-			if (status & UHCI_TD_ACTIVE)
-				break;
-			/* Any kind of error makes the xfer done. */
-			if (status & UHCI_TD_STALLED)
-				goto done;
-			/* We want short packets, and it is short: it's done */
-			usb_syncmem(&std->dma,
-			    std->offs + offsetof(uhci_td_t, td_token),
-			    sizeof(std->td.td_token),
-			    BUS_DMASYNC_POSTWRITE);
-			if ((status & UHCI_TD_SPD) &&
-			      UHCI_TD_GET_ACTLEN(status) <
-			      UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token)))
-				goto done;
-		}
-		DPRINTFN(12, ("uhci_check_intr: ii=%p std=%p still active\n",
-			      ii, ii->stdstart));
+
+	/* If the last TD is not marked active we can complete */
+	if (!(status & UHCI_TD_ACTIVE)) {
+ done:
+		DPRINTFN(12, ("uhci_check_intr: ii=%p done\n", ii));
+		callout_stop(&ii->xfer->timeout_handle);
+		uhci_idone(ii);
 		return;
 	}
- done:
-	DPRINTFN(12, ("uhci_check_intr: ii=%p done\n", ii));
-	callout_stop(&ii->xfer->timeout_handle);
-	uhci_idone(ii);
+
+	/*
+	 * If the last TD is still active we need to check whether there
+	 * is an error somewhere in the middle, or whether there was a
+	 * short packet (SPD and not ACTIVE).
+	 */
+	DPRINTFN(12, ("uhci_check_intr: active ii=%p\n", ii));
+	for (std = ii->stdstart; std != lstd; std = std->link.std) {
+		usb_syncmem(&std->dma,
+		    std->offs + offsetof(uhci_td_t, td_status),
+		    sizeof(std->td.td_status),
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+		status = le32toh(std->td.td_status);
+		usb_syncmem(&std->dma,
+		    std->offs + offsetof(uhci_td_t, td_status),
+		    sizeof(std->td.td_status), BUS_DMASYNC_PREREAD);
+
+		/* If there's an active TD the xfer isn't done. */
+		if (status & UHCI_TD_ACTIVE) {
+			DPRINTFN(12, ("%s: ii=%p std=%p still active\n",
+			    __func__, ii, std));
+			return;
+		}
+
+		/* Any kind of error makes the xfer done. */
+		if (status & UHCI_TD_STALLED)
+			goto done;
+
+		/*
+		 * If the data phase of a control transfer is short, we need
+		 * to complete the status stage
+		 */
+		usbd_xfer_handle xfer = ii->xfer;
+		usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
+		uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+
+		if ((status & UHCI_TD_SPD) && xfertype == UE_CONTROL) {
+			struct uhci_pipe *upipe =
+			    (struct uhci_pipe *)xfer->pipe;
+			uhci_soft_qh_t *sqh = upipe->u.ctl.sqh;
+			uhci_soft_td_t *stat = upipe->u.ctl.stat;
+
+			DPRINTFN(12, ("%s: ii=%p std=%p control status"
+			    "phase needs completion\n", __func__, ii,
+			    ii->stdstart));
+
+			sqh->qh.qh_elink =
+			    htole32(stat->physaddr | UHCI_PTR_TD);
+			usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
+			    BUS_DMASYNC_PREWRITE);
+			break;
+		}
+
+		/* We want short packets, and it is short: it's done */
+		usb_syncmem(&std->dma,
+		    std->offs + offsetof(uhci_td_t, td_token),
+		    sizeof(std->td.td_token),
+		    BUS_DMASYNC_POSTWRITE);
+
+		if ((status & UHCI_TD_SPD) &&
+			UHCI_TD_GET_ACTLEN(status) <
+			UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token))) {
+			goto done;
+		}
+	}
 }
 
 /* Called with USB lock held. */
@@ -2493,7 +2527,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 			return (err);
 		next = data;
 		dataend->link.std = stat;
-		dataend->td.td_link = htole32(stat->physaddr | UHCI_PTR_VF | UHCI_PTR_TD);
+		dataend->td.td_link = htole32(stat->physaddr | UHCI_PTR_TD);
 		usb_syncmem(&dataend->dma,
 		    dataend->offs + offsetof(uhci_td_t, td_link),
 		    sizeof(dataend->td.td_link),
@@ -2507,7 +2541,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	usb_syncmem(&upipe->u.ctl.reqdma, 0, sizeof *req, BUS_DMASYNC_PREWRITE);
 
 	setup->link.std = next;
-	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_VF | UHCI_PTR_TD);
+	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_TD);
 	setup->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
 		UHCI_TD_ACTIVE);
 	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof *req, endpt, addr));
