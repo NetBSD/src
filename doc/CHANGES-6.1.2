@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.2,v 1.1.2.1 2013/09/07 16:55:43 bouyer Exp $
+# $NetBSD: CHANGES-6.1.2,v 1.1.2.2 2013/09/07 16:56:48 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -9,4 +9,35 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.1.1_PATCH.
 	[bouyer]
+
+sys/fs/udf/udf_allocation.c			1.34
+
+	Fix 32 bit issue in main file read-in function. On both 32 bit and
+	64 bit hosts a missing cast would result in `garbage' after the
+	4Gbyte limit.
+	[reinoud, ticket #930]
+
+sys/dev/pci/virtio.c				1.4
+
+	Make sure to check if the driver has a valid intr handler in
+	virtio_detach().
+	Fixes a panic during shutdown on KVM under ubuntu 13.04 with virtio,
+	as reported in PR kern/48105 by Richard Hansen.
+	[tsutsui, ticket #931]
+
+sys/nfs/nfs_bio.c				1.189
+
+	Change nfs_vinvalbuf() to keep errors from vinvalbuf() for fsync() or
+	close().
+	Fix for PR kern/47980 (NFS over-quota not detected if utimes() called
+	before fsync()/close())
+	[hannken, ticket #933]
+
+sys/arch/amiga/amiga/amiga_init.c		1.127
+sys/arch/m68k/m68k/pmap_motorola.c		1.66
+
+	Set user page table base address dynamically on amiga. This unbreaks
+	machines with large Zorro III I/O spaces.
+	Patch originally by Michael L. Hitch.
+	[rkujawa, ticket #935]
 
