@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.3 2013/09/07 00:35:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.4 2013/09/07 02:10:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,17 +72,6 @@ awin_ahci_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void inline
-awin_ahci_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_size_t o, uint32_t set_mask, uint32_t clr_mask)
-{
-	const uint32_t old = bus_space_read_4(bst, bsh, o);
-	const uint32_t new = set_mask | (old & ~clr_mask);
-	if (old != new) {
-		bus_space_write_4(bst, bsh, o, new);
-	}
-}
-
 static void
 awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 {
@@ -94,7 +83,7 @@ awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 	/*
 	 * Make sure it's enabled for the AHB.
 	 */
-	awin_ahci_set_clear(bst, bsh, AWIN_AHB_GATING0_REG,
+	awin_reg_set_clear(bst, bsh, AWIN_AHB_GATING0_REG,
 	    AWIN_AHB_GATING0_SATA, 0);
 	delay(10000);
 
