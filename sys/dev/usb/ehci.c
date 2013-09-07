@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.210 2013/09/07 16:43:48 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.211 2013/09/07 19:53:24 matt Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.210 2013/09/07 16:43:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.211 2013/09/07 19:53:24 matt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -358,8 +358,10 @@ ehci_init(ehci_softc_t *sc)
 
 	sc->sc_doorbell_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    ehci_doorbell, sc);
+	KASSERT(sc->sc_doorbell_si != NULL);
 	sc->sc_pcd_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    ehci_pcd, sc);
+	KASSERT(sc->sc_pcd_si != NULL);
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
@@ -653,6 +655,7 @@ ehci_intr1(ehci_softc_t *sc)
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
 		kpreempt_disable();
+		KASSERT(sc->sc_doorbell_si != NULL);
 		softint_schedule(sc->sc_doorbell_si);
 		kpreempt_enable();
 		eintrs &= ~EHCI_STS_IAA;
@@ -671,6 +674,7 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 	if (eintrs & EHCI_STS_PCD) {
 		kpreempt_disable();
+		KASSERT(sc->sc_pcd_si != NULL);
 		softint_schedule(sc->sc_pcd_si);
 		kpreempt_enable();
 		eintrs &= ~EHCI_STS_PCD;
