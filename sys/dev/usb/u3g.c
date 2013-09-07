@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.24.2.1 2013/02/11 21:44:22 riz Exp $	*/
+/*	$NetBSD: u3g.c,v 1.24.2.2 2013/09/07 16:22:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24.2.1 2013/02/11 21:44:22 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24.2.2 2013/09/07 16:22:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,6 +251,7 @@ static const struct usb_devno u3g_devs[] = {
 
 	/* 4G Systems */
 	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_P14 },
+	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_W14 },
 };
 
 static int
