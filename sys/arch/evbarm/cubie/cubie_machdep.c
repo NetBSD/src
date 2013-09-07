@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.5 2013/09/07 03:34:20 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.6 2013/09/07 19:47:28 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.5 2013/09/07 03:34:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.6 2013/09/07 19:47:28 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -517,14 +517,16 @@ cubie_device_register(device_t self, void *aux)
 		/*
 		 * These are GPIOs being used for various functions.
 		 */
-		prop_dictionary_set_cstring(dict, "out-satapwren", "PB8");
-		prop_dictionary_set_cstring(dict, "out-usb0drv", "PB9");
-		prop_dictionary_set_cstring(dict, "out-usb1drv", "PH6");
-		prop_dictionary_set_cstring(dict, "out-usb2drv", "PH3");
-		prop_dictionary_set_cstring(dict, "out-hdd5ven", "PH17");
-		prop_dictionary_set_cstring(dict, "out-emacpwren", "PH19");
-		prop_dictionary_set_cstring(dict, "out-status-led1", "PH21");
-		prop_dictionary_set_cstring(dict, "out-status-led2", "PH20");
+		prop_dictionary_set_cstring(dict, "satapwren", ">PB8");
+		prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
+		prop_dictionary_set_cstring(dict, "usb2drv", ">PH3");
+		prop_dictionary_set_cstring(dict, "usb0iddet", "<PH4");
+		prop_dictionary_set_cstring(dict, "usb0vbusdet", "<PH5");
+		prop_dictionary_set_cstring(dict, "usb1drv", ">PH6");
+		prop_dictionary_set_cstring(dict, "hdd5ven", ">PH17");
+		prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
+		prop_dictionary_set_cstring(dict, "status-led1", ">PH21");
+		prop_dictionary_set_cstring(dict, "status-led2", ">PH20");
 
 		/*
 		 * These pins have no connections.
