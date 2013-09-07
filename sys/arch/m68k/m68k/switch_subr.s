@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.30 2013/08/01 13:42:52 matt Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.31 2013/09/07 19:06:29 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -95,7 +95,7 @@ ENTRY(cpu_switchto)
 #else
 	tstl	%a1			| Old LWP exited?
 #endif
-	jeq	Lcpu_switch_noctxsave	| Yup. Don't bother saving context
+	jeq	.Lcpu_switch_noctxsave	| Yup. Don't bother saving context
 
 	/*
 	 * Save state of previous process in its pcb.
@@ -111,37 +111,37 @@ ENTRY(cpu_switchto)
 #ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
-	jeq	Lcpu_switch_nofpsave	| No  Then don't attempt save.
+	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
 #endif
 	lea	PCB_FPCTX(%a1),%a2	| pointer to FP save area
 	fsave	(%a2)			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lcpu_switch_savfp60                
+	jeq	.Lcpu_switch_savfp60                
 #endif  
 	tstb	(%a2)			| null state frame?
-	jeq	Lcpu_switch_nofpsave	| yes, all done
+	jeq	.Lcpu_switch_nofpsave	| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a2) | save FP control registers
 #if defined(M68060)
-	jra	Lcpu_switch_nofpsave 
+	jra	.Lcpu_switch_nofpsave 
 #endif  
 #endif  
 #if defined(M68060)
-Lcpu_switch_savfp60:
+.Lcpu_switch_savfp60:
 	tstb	2(%a2)			| null state frame?
-	jeq	Lcpu_switch_nofpsave	| yes, all done 
+	jeq	.Lcpu_switch_nofpsave	| yes, all done 
 	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers 
 	fmovem	%fpcr,FPF_FPCR(%a2)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a2)
 	fmovem	%fpi,FPF_FPI(%a2)
 #endif
-Lcpu_switch_nofpsave:
+.Lcpu_switch_nofpsave:
 #endif	/* FPCOPROC */
 #endif	/* !_M68K_CUSTOM_FPU_CTX */
 
-Lcpu_switch_noctxsave:
+.Lcpu_switch_noctxsave:
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)
 	movl	L_PCB(%a0),%a1		| get its pcb
@@ -167,14 +167,14 @@ Lcpu_switch_noctxsave:
 	movl	VM_PMAP(%a2),%a2 	| pmap = vm->vm_map.pmap
 	movl	PM_A_PHYS(%a2),%d0	| phys = pmap->pm_a_phys
 	cmpl	4(%a3),%d0		|  == kernel_crp.rp_addr ?
-	jeq	Lsame_mmuctx		| skip loadcrp/flush
+	jeq	.Lsame_mmuctx		| skip loadcrp/flush
 	/* OK, it is a new MMU context.  Load it up. */
 	movl	%d0,4(%a3)
 	movl	#CACHE_CLR,%d0
 	movc	%d0,%cacr		| invalidate cache(s)
 	pflusha				| flush entire TLB
 	pmove	(%a3),%crp		| load new user root pointer
-Lsame_mmuctx:
+.Lsame_mmuctx:
 #endif	/* !defined(_SUN3X_) || defined(PMAP_DEBUG) */
 #else	/* !defined(sun2) && !defined(sun3) */
 	/*
@@ -224,43 +224,43 @@ Lsame_mmuctx:
 #ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
-	jeq	Lcpu_switch_nofprest	| No  Then don't attempt restore.
+	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
 #endif
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lcpu_switch_resfp60rest1
+	jeq	.Lcpu_switch_resfp60rest1
 #endif  
 	tstb	(%a0)			| null state frame?
-	jeq	Lcpu_switch_resfprest	| yes, easy
+	jeq	.Lcpu_switch_resfprest	| yes, easy
 	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
 	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
 #if defined(M68060)
-	jra	Lcpu_switch_resfprest
+	jra	.Lcpu_switch_resfprest
 #endif
 #endif
 
 #if defined(M68060)
-Lcpu_switch_resfp60rest1:
+.Lcpu_switch_resfp60rest1:
 	tstb	2(%a0)			| null state frame?
-	jeq	Lcpu_switch_resfprest	| yes, easy
+	jeq	.Lcpu_switch_resfprest	| yes, easy
 	fmovem	FPF_FPCR(%a0),%fpcr	| restore FP control registers
 	fmovem	FPF_FPSR(%a0),%fpsr
 	fmovem	FPF_FPI(%a0),%fpi
 	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
 #endif
-Lcpu_switch_resfprest:
+.Lcpu_switch_resfprest:
 	frestore (%a0)			| restore state
 #endif /* FPCOPROC */
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 
-Lcpu_switch_nofprest:
+.Lcpu_switch_nofprest:
 	movl	%d1,%d0
 	movl	%d0,%a0
 	rts
 
-Lcpu_switch_badsw:
+.Lcpu_switch_badsw:
 	PANIC("switch")
 	/*NOTREACHED*/
 
@@ -281,33 +281,33 @@ ENTRY(savectx)
 #ifdef FPCOPROC
 #ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
-	jeq	Lsavectx_nofpsave	| No?  Then don't save state.
+	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
 #endif
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
 	fsave	(%a0)			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lsavectx_savfp60
+	jeq	.Lsavectx_savfp60
 #endif  
 	tstb	(%a0)			| null state frame?
-	jeq	Lsavectx_nofpsave	| yes, all done
+	jeq	.Lsavectx_nofpsave	| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
 #if defined(M68060)
-	jra	Lsavectx_nofpsave
+	jra	.Lsavectx_nofpsave
 #endif
 #endif  
 #if defined(M68060)
-Lsavectx_savfp60:
+.Lsavectx_savfp60:
 	tstb	2(%a0)			| null state frame?
-	jeq	Lsavectx_nofpsave	| yes, all done
+	jeq	.Lsavectx_nofpsave	| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0) | save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
 #endif  
-Lsavectx_nofpsave:
+.Lsavectx_nofpsave:
 #endif /* FPCOPROC */
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 	moveq	#0,%d0			| return 0
@@ -355,25 +355,25 @@ ENTRY(m68881_save)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lm68060fpsave
+	jeq	.Lm68060fpsave
 #endif
-Lm68881fpsave:  
+.Lm68881fpsave:  
 	tstb	(%a0)			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
+	jeq	.Lm68881sdone		| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
-Lm68881sdone:
+.Lm68881sdone:
 	rts
 #endif
 #if defined(M68060)
-Lm68060fpsave:
+.Lm68060fpsave:
 	tstb	2(%a0)			| null state frame?
-	jeq	Lm68060sdone		| yes, all done
+	jeq	.Lm68060sdone		| yes, all done
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a0)           
 	fmovem	%fpi,FPF_FPI(%a0)
-Lm68060sdone:   
+.Lm68060sdone:   
         rts
 #endif  
 
@@ -382,26 +382,26 @@ ENTRY(m68881_restore)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lm68060fprestore
+	jeq	.Lm68060fprestore
 #endif
-Lm68881fprestore:
+.Lm68881fprestore:
 	tstb	(%a0)			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
+	jeq	.Lm68881rdone		| yes, easy
 	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
 	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
-Lm68881rdone:
+.Lm68881rdone:
 	frestore (%a0)			| restore state
 	rts
 #endif
 #if defined(M68060)
-Lm68060fprestore:
+.Lm68060fprestore:
 	tstb	2(%a0)			| null state frame?
-	jeq	Lm68060fprdone		| yes, easy
+	jeq	.Lm68060fprdone		| yes, easy
 	fmovem	FPF_FPCR(%a0),%fpcr	| restore FP control registers
 	fmovem	FPF_FPSR(%a0),%fpsr
 	fmovem	FPF_FPI(%a0),%fpi
 	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
-Lm68060fprdone:
+.Lm68060fprdone:
 	frestore (%a0)			| restore state
 	rts
 #endif
