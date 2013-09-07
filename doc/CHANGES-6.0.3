@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.17 2013/08/08 21:56:59 snj Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.18 2013/09/07 16:44:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -174,4 +174,27 @@ sys/netinet6/nd6_rtr.c				1.86
 	Avoid crash destroying tap0 after deleting its link-local address.
 	PR/47576.
 	[msaitoh, ticket #926]
+
+sys/fs/udf/udf_allocation.c			1.34
+
+	Fix 32 bit issue in main file read-in function. On both 32 bit and
+	64 bit hosts a missing cast would result in `garbage' after the
+	4Gbyte limit.
+	[reinoud, ticket #930]
+
+sys/dev/pci/virtio.c				1.4
+
+	Make sure to check if the driver has a valid intr handler in
+	virtio_detach().
+	Fixes a panic during shutdown on KVM under ubuntu 13.04 with virtio,
+	as reported in PR kern/48105 by Richard Hansen.
+	[tsutsui, ticket #931]
+
+sys/nfs/nfs_bio.c				1.189
+
+	Change nfs_vinvalbuf() to keep errors from vinvalbuf() for fsync() or
+	close().
+	Fix for PR kern/47980 (NFS over-quota not detected if utimes() called
+	before fsync()/close())
+	[hannken, ticket #933]
 
