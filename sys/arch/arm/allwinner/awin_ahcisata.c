@@ -31,8 +31,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.2 2013/09/04 09:09:25 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.3 2013/09/07 00:35:52 matt Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
@@ -71,6 +72,38 @@ awin_ahci_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
+static void inline
+awin_ahci_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t o, uint32_t set_mask, uint32_t clr_mask)
+{
+	const uint32_t old = bus_space_read_4(bst, bsh, o);
+	const uint32_t new = set_mask | (old & ~clr_mask);
+	if (old != new) {
+		bus_space_write_4(bst, bsh, o, new);
+	}
+}
+
+static void
+awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
+{
+	/*
+	 * SATA needs PLL6 to be a 100MHz clock.
+	 */
+	awin_pll6_enable();
+
+	/*
+	 * Make sure it's enabled for the AHB.
+	 */
+	awin_ahci_set_clear(bst, bsh, AWIN_AHB_GATING0_REG,
+	    AWIN_AHB_GATING0_SATA, 0);
+	delay(10000);
+
+	/*
+	 * Now turn it on.
+	 */
+	bus_space_write_4(bst, bsh, AWIN_SATA_CLK_REG, AWIN_CLK_ENABLE);
+}
+
 static void
 awin_ahci_attach(device_t parent, device_t self, void *aux)
 {
@@ -78,6 +111,8 @@ awin_ahci_attach(device_t parent, device_t self, void *aux)
 	struct ahci_softc * const sc = &asc->asc_sc;
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+
+	awin_ahci_enable(aio->aio_core_bst, aio->aio_ccm_bsh);
 
         sc->sc_atac.atac_dev = self;
 	sc->sc_dmat = aio->aio_dmat;

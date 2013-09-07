@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -53,6 +53,7 @@ static struct awinio_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_tag_t sc_a4x_bst;
 	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_ccm_bsh;
 	bus_dma_tag_t sc_dmat;
 } awinio_sc;
 
@@ -99,12 +100,13 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, AANY },
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, AANY },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
-	{ "awinusb", OFFANDSIZE(USB1), 0, AWIN_IRQ_USB1, AANY },
-	{ "awinusb", OFFANDSIZE(USB2), 1, AWIN_IRQ_USB2, AANY },
+	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, AANY },
+	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, AANY },
 	{ "sdhc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, AANY },
 	{ "sdhc", OFFANDSIZE(SDMMC1), 1, AWIN_IRQ_SDMMC1, AANY },
 	{ "sdhc", OFFANDSIZE(SDMMC2), 2, AWIN_IRQ_SDMMC2, AANY },
 	{ "sdhc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, AANY },
+	{ "sdhc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, AANY },
 	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, AANY },
 	{ "twi", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, AANY },
 	{ "twi", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, AANY },
@@ -148,6 +150,9 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bsh = awin_core_bsh;
 	sc->sc_dmat = &awin_dma_tag;
 
+	bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET, 0x1000,
+	    &sc->sc_ccm_bsh);
+
 	aprint_naive("\n");
 	aprint_normal("\n");
 
@@ -165,6 +170,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			.aio_core_bst = sc->sc_bst,
 			.aio_core_a4x_bst = sc->sc_a4x_bst,
 			.aio_core_bsh = sc->sc_bsh,
+			.aio_ccm_bsh = sc->sc_ccm_bsh,
 			.aio_dmat = sc->sc_dmat,
 		};
 		cfdata_t cf = config_search_ia(awinio_find,

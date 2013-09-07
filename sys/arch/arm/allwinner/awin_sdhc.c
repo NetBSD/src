@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_sdhc.c,v 1.2 2013/09/04 09:14:57 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_sdhc.c,v 1.3 2013/09/07 00:35:52 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -55,25 +55,40 @@ struct awin_sdhc_softc {
 	void *asc_ih;
 };
 
+static const struct awin_gpio_pinset awin_sdhc_pinsets[] = {
+	{ 'F', AWIN_PIO_PF_SDC0_FUNC, AWIN_PIO_PF_SDC0_PINS },
+	{ 'G', AWIN_PIO_PG_SDC1_FUNC, AWIN_PIO_PG_SDC1_PINS },
+	{ 'C', AWIN_PIO_PC_SDC2_FUNC, AWIN_PIO_PC_SDC2_PINS },
+	{ 'I', AWIN_PIO_PI_SDC3_FUNC, AWIN_PIO_PI_SDC3_PINS },
+};
+
+static const struct awin_gpio_pinset awin_sdhc_alt_pinsets[] = {
+	{ 0, 0, 0 },
+	{ 'H', AWIN_PIO_PH_SDC1_FUNC, AWIN_PIO_PH_SDC1_PINS },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+};
+
 CFATTACH_DECL_NEW(awin_sdhc, sizeof(struct awin_sdhc_softc),
 	awin_sdhc_match, awin_sdhc_attach, NULL, NULL);
 
-static int awinsdhc_ports;
+static int awin_sdhc_ports;
 
 static int
 awin_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	const int port = cf->cf_loc[AWINIOCF_PORT];
+	const struct awin_gpio_pinset * const pinset = loc->loc_port
+	    + ((cf->cf_flags & 1) ? awin_sdhc_alt_pinsets : awin_sdhc_pinsets);
 
-	if (strcmp(cf->cf_name, loc->loc_name))
+	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
+	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
+	KASSERT((awin_sdhc_ports & __BIT(loc->loc_port)) == 0);
+
+	if (!awin_gpio_pinset_available(pinset))
 		return 0;
-
-	if (port != AWINIOCF_PORT_DEFAULT && port != loc->loc_port)
-		return 0;
-
-	KASSERT((awinsdhc_ports & __BIT(loc->loc_port)) == 0);
 
 	return 1;
 }
@@ -85,9 +100,15 @@ awin_sdhc_attach(device_t parent, device_t self, void *aux)
 	struct sdhc_softc * const sc = &asc->asc_sc;
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	cfdata_t cf = device_cfdata(self);
+	const struct awin_gpio_pinset * const pinset = loc->loc_port
+	    + ((cf->cf_flags & 1) ? awin_sdhc_alt_pinsets : awin_sdhc_pinsets);
 	int error;
 
-	awinsdhc_ports |= __BIT(loc->loc_port);
+	awin_sdhc_ports |= __BIT(loc->loc_port);
+
+	awin_gpio_pinset_acquire(pinset);
+
 	asc->asc_bst = aio->aio_core_bst;
 	bus_space_subregion(asc->asc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &asc->asc_bsh);

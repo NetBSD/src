@@ -31,12 +31,16 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
+
+#include <sys/gpio.h>
+
+#include <dev/gpio/gpiovar.h>
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
@@ -44,10 +48,45 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
 static int awin_gpio_match(device_t, cfdata_t, void *);
 static void awin_gpio_attach(device_t, device_t, void *);
 
-struct awin_gpio_softc {
+static const int ist_maps[] = {
+	[IST_LEVEL_LOW] =	AWIN_PIO_EINT_LOW_LEVEL,
+	[IST_LEVEL_HIGH] =	AWIN_PIO_EINT_HIGH_LEVEL,
+	[IST_EDGE_FALLING] =	AWIN_PIO_EINT_POSITIVE_EDGE,
+	[IST_EDGE_RISING] =	AWIN_PIO_EINT_NEGATIVE_EDGE,
+	[IST_EDGE_BOTH] =	AWIN_PIO_EINT_DOUBLE_EDGE,
+};
+
+struct awin_gpio_pin_cfg {
+	uint32_t val[4];
+};
+
+static struct awin_gpio_pin_group {
+	uint32_t grp_pin_mask;
+	uint32_t grp_pin_inuse_mask;
+	bus_space_handle_t grp_bsh;
+	struct awin_gpio_pin_cfg grp_cfg;
+} pin_groups[] = {
+	[0] = { .grp_pin_mask = __BIT(AWIN_PIO_PA_PINS) - 1 },
+	[1] = { .grp_pin_mask = __BIT(AWIN_PIO_PB_PINS) - 1 },
+	[2] = { .grp_pin_mask = __BIT(AWIN_PIO_PC_PINS) - 1 },
+	[3] = { .grp_pin_mask = __BIT(AWIN_PIO_PD_PINS) - 1 },
+	[4] = { .grp_pin_mask = __BIT(AWIN_PIO_PE_PINS) - 1 },
+	[5] = { .grp_pin_mask = __BIT(AWIN_PIO_PF_PINS) - 1 },
+	[6] = { .grp_pin_mask = __BIT(AWIN_PIO_PG_PINS) - 1 },
+	[7] = { .grp_pin_mask = __BIT(AWIN_PIO_PH_PINS) - 1 },
+	[8] = { .grp_pin_mask = __BIT(AWIN_PIO_PI_PINS) - 1 },
+};
+
+struct awin_eint_info {
+	uint32_t grp_pin ;
+};
+
+static struct awin_gpio_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+} awin_gpio_sc = {
+	.sc_bst = &awin_bs_tag,
 };
 
 CFATTACH_DECL_NEW(awin_gpio, sizeof(struct awin_gpio_softc),
@@ -59,10 +98,12 @@ awin_gpio_match(device_t parent, cfdata_t cf, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 
-	if (strcmp(cf->cf_name, loc->loc_name))
-		return 0;
-
+	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+	KASSERT(loc->loc_port == AWINIOCF_PORT_DEFAULT);
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT);
+
+	if (awin_gpio_sc.sc_dev != NULL)
+		return 0;
 
 	return 1;
 }
@@ -70,7 +111,7 @@ awin_gpio_match(device_t parent, cfdata_t cf, void *aux)
 static void
 awin_gpio_attach(device_t parent, device_t self, void *aux)
 {
-	struct awin_gpio_softc * const sc = device_private(self);
+	struct awin_gpio_softc * const sc = &awin_gpio_sc;
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 
@@ -82,4 +123,205 @@ awin_gpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+}
+
+static u_int
+awin_gpio_get_pin_func(const struct awin_gpio_pin_cfg *cfg, u_int pin)
+{
+	const u_int shift = (pin & 7) << 2;
+	const u_int i = pin >> 3;
+	return (cfg->val[i] >> shift) & 0x0f;
+}
+
+static void
+awin_gpio_set_pin_func(struct awin_gpio_pin_cfg *cfg, u_int pin, u_int func)
+{
+	const u_int shift = (pin & 7) << 2;
+	const u_int i = pin >> 3;
+	
+	cfg->val[i] &= ~(0x0f << shift);
+	cfg->val[i] |= func << shift;
+}
+
+static void
+awin_gpio_update_cfg_regs(bus_space_tag_t bst, struct awin_gpio_pin_group *grp,
+    const struct awin_gpio_pin_cfg *ncfg)
+{
+	for (u_int i = 0; i < 4; i++) {
+		if (grp->grp_cfg.val[i] != ncfg->val[i]) {
+			bus_space_write_4(bst, grp->grp_bsh,
+			    AWIN_PIO_CFG0_REG + 4 * i, ncfg->val[i]);	
+			grp->grp_cfg.val[i] = ncfg->val[i];
+		}
+	}
+}
+
+void
+awin_gpio_init(void)
+{
+	struct awin_gpio_softc * const sc = &awin_gpio_sc;
+	bus_size_t offset = AWIN_PIO_OFFSET;
+
+	printf(" free");
+	for (u_int i = 0;
+	     i < __arraycount(pin_groups);
+	     i++, offset += AWIN_PIO_GRP_SIZE) {
+		struct awin_gpio_pin_group * const grp = &pin_groups[i];
+		bus_space_subregion(sc->sc_bst, awin_core_bsh,
+		    offset, AWIN_PIO_GRP_SIZE, &grp->grp_bsh);
+
+		for (u_int j = 0; j < 4; j++) {
+			grp->grp_cfg.val[j] = bus_space_read_4(sc->sc_bst,
+			    grp->grp_bsh, AWIN_PIO_CFG0_REG + j * 4);
+		}
+
+		for (uint32_t j = 0, mask = 1;
+		     (mask & grp->grp_pin_mask) != 0;
+		     j++, mask <<= 1) {
+			u_int func = awin_gpio_get_pin_func(&grp->grp_cfg, j);
+			if (func > AWIN_PIO_FUNC_OUTPUT) {
+				grp->grp_pin_inuse_mask |= mask;
+			}
+		}
+		printf(" P%c=%d", 'A' + i,
+		    popcount32(grp->grp_pin_mask & ~grp->grp_pin_inuse_mask));
+	}
+}
+
+bool
+awin_gpio_pinset_available(const struct awin_gpio_pinset *req)
+{
+	KASSERT(req != NULL);
+
+	if (!req->pinset_group)
+		return false;
+
+	KASSERT('A' <= req->pinset_group && req->pinset_group <= 'I');
+
+	struct awin_gpio_pin_group * const grp =
+	    &pin_groups[req->pinset_group - 'A'];
+
+	/*
+	 * If there are unconnected pins, then they've been remove from
+	 * the groups pin mask.  If we want pins that are unconnected,
+	 * fail the request.
+	 */
+	if (req->pinset_mask & ~grp->grp_pin_mask)
+		return false;
+
+	/*
+	 * If none of the pins are in use, they must be available.
+	 */
+	if (req->pinset_mask & ~grp->grp_pin_inuse_mask)
+		return true;
+
+	/*
+	 * Check to see if the pins are already setup for this function. 
+	 */
+	for (uint32_t j = 0, inuse = req->pinset_mask & grp->grp_pin_inuse_mask;
+	     inuse != 0;
+	     j++, inuse >>= 1) {
+		const u_int n = ffs(inuse) - 1;
+		j += n;
+		inuse >>= n;
+		/*
+		 * If this pin is in use but it's for a different
+		 * function, fail the request.
+		 */
+		if (awin_gpio_get_pin_func(&grp->grp_cfg, j) != req->pinset_func)
+			return false;
+	}
+
+	/*
+	 * Nothing incompatible encountered so the pins must be available.
+	 */
+	return true;
+}
+
+void
+awin_gpio_pinset_acquire(const struct awin_gpio_pinset *req)
+{
+	KASSERT(awin_gpio_pinset_available(req));
+
+	struct awin_gpio_pin_group * const grp =
+	    &pin_groups[req->pinset_group - 'A'];
+
+
+	/*
+	 * If all the pins already have right function, just return.
+	 */
+	if ((req->pinset_mask & ~grp->grp_pin_inuse_mask) == 0) {
+		return;
+	}
+
+	/*
+	 * Copy the current config.
+	 */
+	struct awin_gpio_pin_cfg ncfg = grp->grp_cfg;
+
+	/*
+	 * For each pin not inuse, update the cloned config's function for it.
+	 */
+	for (uint32_t j = 0, todo = req->pinset_mask & ~grp->grp_pin_inuse_mask;
+	     todo != 0;
+	     j++, todo >>= 1) {
+		const u_int n = ffs(todo) - 1;
+		j += n;
+		todo >>= n;
+		/*
+		 * Change the function of this pin.
+		 */
+		awin_gpio_set_pin_func(&ncfg, j, req->pinset_func);
+	}
+
+	/*
+	 * Now update any config register that changed.
+	 */
+	awin_gpio_update_cfg_regs(&awin_bs_tag, grp, &ncfg);
+
+	/*
+	 * Mark all these pins as in use.
+	 */
+	grp->grp_pin_inuse_mask |= req->pinset_mask;
+}
+
+void
+awin_gpio_pinset_release(const struct awin_gpio_pinset *req)
+{
+	KASSERT(awin_gpio_pinset_available(req));
+
+	struct awin_gpio_pin_group * const grp =
+	    &pin_groups[req->pinset_group - 'A'];
+
+#if 0
+	/*
+	 * Copy the current config.
+	 */
+	struct awin_gpio_pin_cfg ncfg = grp->grp_cfg;
+
+	/*
+	 * For each pin not inuse, update the cloned config's function for it.
+	 */
+	for (uint32_t j = 0, todo = req->pinset_mask;
+	     todo != 0;
+	     j++, todo >>= 1) {
+		const u_int n = ffs(todo) - 1;
+		j += n;
+		todo >>= n;
+		/*
+		 * Change the function of this pin.
+		 */
+		awin_gpio_set_pin_func(&ncfg, AWIN_PIO_FUNC_INPUT);
+	}
+
+	/*
+	 * Now update any config register that changed.
+	 */
+	awin_gpio_update_cfg_regs(sc->sc_bst, grp, &ncfg);
+#endif
+
+	/*
+	 * Clear these pins as being in use.
+	 */
+	grp->grp_pin_inuse_mask &= ~req->pinset_mask;
 }

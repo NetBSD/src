@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.3 2013/09/04 17:45:40 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.4 2013/09/07 00:35:52 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,7 +53,14 @@ struct awinio_attach_args {
 	bus_space_tag_t aio_core_bst;
 	bus_space_tag_t aio_core_a4x_bst;
 	bus_space_handle_t aio_core_bsh;
+	bus_space_handle_t aio_ccm_bsh;
 	bus_dma_tag_t aio_dmat;
+};
+
+struct awin_gpio_pinset {
+	uint8_t pinset_group;
+	uint8_t pinset_func;
+	uint32_t pinset_mask;
 };
 
 extern struct bus_space awin_bs_tag;
@@ -63,6 +70,12 @@ extern struct arm32_bus_dma_tag awin_dma_tag;
 
 psize_t awin_memprobe(void);
 void	awin_bootstrap(vaddr_t, vaddr_t); 
+void	awin_pll6_enable(void);
+
+void	awin_gpio_init(void);
+bool	awin_gpio_pinset_available(const struct awin_gpio_pinset *);
+void	awin_gpio_pinset_acquire(const struct awin_gpio_pinset *);
+void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
 
 void	awin_wdog_reset(void);
 
