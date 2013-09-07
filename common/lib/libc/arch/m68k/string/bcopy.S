@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.5 2013/07/18 22:42:50 matt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.5 2013/07/18 22:42:50 matt Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6 2013/09/07 19:06:29 chs Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,14 +92,14 @@ ENTRY(XCOPY)
 	movl	12(%sp),%d1		| count
 
 	cmpl	%a1,%a0			| src after dest?
-	jlt	Lbcback			| yes, must copy backwards
+	jlt	.Lbcback			| yes, must copy backwards
 
 	/* 
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
 	cmpl	#8,%d1
-	jlt	Lbcfbyte
+	jlt	.Lbcfbyte
 
 #ifdef	__mc68010__
 	/*
@@ -110,29 +110,29 @@ ENTRY(XCOPY)
 	movl	%a0,%d0
 	addl	%a1,%d0
 	btst	#0,%d0
-	jne	Lbcfbyte
+	jne	.Lbcfbyte
 #endif	/* __mc68010__ */
 	
 	/* word align */
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
-	jeq	Lbcfalgndw	| 
+	jeq	.Lbcfalgndw	| 
 	movb	(%a0)+,(%a1)+	|	*(char *)dst++ = *(char *) src++
 	subql	#1,%d1		|	len--
-Lbcfalgndw:
+.Lbcfalgndw:
 	/* long word align */
 	btst	#1,%d0		| if (dst & 2)
-	jeq	Lbcfalgndl
+	jeq	.Lbcfalgndl
 	movw	(%a0)+,(%a1)+	|	*(short *)dst++ = *(short *) dst++
 	subql	#2,%d1		|	len -= 2
-Lbcfalgndl:
+.Lbcfalgndl:
 	/* copy by 8 longwords */
 	movel	%d1,%d0
 	lsrl	#5,%d0		| cnt = len / 32
-	jeq	Lbcflong	| if (cnt)
+	jeq	.Lbcflong	| if (cnt)
 	andl	#31,%d1		|	len %= 32
 	subql	#1,%d0		|	set up for dbf
-Lbcf32loop:
+.Lbcf32loop:
 	movl	(%a0)+,(%a1)+	|	copy 8 long words
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
@@ -142,40 +142,40 @@ Lbcf32loop:
 	movl	(%a0)+,(%a1)+
 	movl	(%a0)+,(%a1)+
 #ifndef __mcoldfire__
-	dbf	%d0,Lbcf32loop	|	till done
+	dbf	%d0,.Lbcf32loop	|	till done
 	clrw	%d0
 #endif
 	subql	#1,%d0
-	jcc	Lbcf32loop
+	jcc	.Lbcf32loop
 
-Lbcflong:
+.Lbcflong:
 	/* copy by longwords */
 	movel	%d1,%d0
 	lsrl	#2,%d0		| cnt = len / 4
-	jeq	Lbcfbyte	| if (cnt)
+	jeq	.Lbcfbyte	| if (cnt)
 	subql	#1,%d0		|	set up for dbf
-Lbcflloop:
+.Lbcflloop:
 	movl	(%a0)+,(%a1)+	|	copy longwords
 #ifdef __mcoldfire__
 	subql	#1,%d0		|	decrement
-	jcc	Lbcflloop	|	til done
+	jcc	.Lbcflloop	|	til done
 #else
-	dbf	%d0,Lbcflloop	|	til done
+	dbf	%d0,.Lbcflloop	|	til done
 #endif
 	andl	#3,%d1		|	len %= 4
-	jeq	Lbcdone
+	jeq	.Lbcdone
 
 	subql	#1,%d1		| set up for dbf
-Lbcfbloop:
+.Lbcfbloop:
 	movb	(%a0)+,(%a1)+	| copy bytes
-Lbcfbyte:
+.Lbcfbyte:
 #ifdef __mcoldfire__
 	subql	#1,%d0		|	decrement
-	jcc	Lbcfbloop	|	til done
+	jcc	.Lbcfbloop	|	til done
 #else
-	dbf	%d1,Lbcfbloop	| till done
+	dbf	%d1,.Lbcfbloop	| till done
 #endif
-Lbcdone:
+.Lbcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	4(%sp),%d0	| dest address
 #if defined(__SVR4_ABI__)
@@ -185,7 +185,7 @@ Lbcdone:
 	rts
 
 
-Lbcback:
+.Lbcback:
 	addl	%d1,%a0		| src pointer to end
 	addl	%d1,%a1		| dest pointer to end
 
@@ -194,7 +194,7 @@ Lbcback:
 	 * if the string is too short.
 	 */
 	cmpl	#8,%d1
-	jlt	Lbcbbyte
+	jlt	.Lbcbbyte
 
 #ifdef	__mc68010__
 	/*
@@ -205,29 +205,29 @@ Lbcback:
 	movl	%a0,%d0
 	addl	%a1,%d0
 	btst	#0,%d0
-	jne	Lbcbbyte
+	jne	.Lbcbbyte
 #endif	/* __mc68010__ */
 	
 	/* word align */
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
-	jeq	Lbcbalgndw	| 
+	jeq	.Lbcbalgndw	| 
 	movb	-(%a0),-(%a1)	|	*(char *)dst-- = *(char *) src--
 	subql	#1,%d1		|	len--
-Lbcbalgndw:
+.Lbcbalgndw:
 	/* long word align */
 	btst	#1,%d0		| if (dst & 2)
-	jeq	Lbcbalgndl
+	jeq	.Lbcbalgndl
 	movw	-(%a0),-(%a1)	|	*(short *)dst-- = *(short *) dst--
 	subql	#2,%d1		|	len -= 2
-Lbcbalgndl:
+.Lbcbalgndl:
 	/* copy by 8 longwords */
 	movel	%d1,%d0
 	lsrl	#5,%d0		| cnt = len / 32
-	jeq	Lbcblong	| if (cnt)
+	jeq	.Lbcblong	| if (cnt)
 	andl	#31,%d1		|	len %= 32
 	subql	#1,%d0		|	set up for dbf
-Lbcb32loop:
+.Lbcb32loop:
 	movl	-(%a0),-(%a1)	|	copy 8 long words
 	movl	-(%a0),-(%a1)
 	movl	-(%a0),-(%a1)
@@ -237,38 +237,38 @@ Lbcb32loop:
 	movl	-(%a0),-(%a1)
 	movl	-(%a0),-(%a1)
 #ifndef __mcoldfire__
-	dbf	%d0,Lbcb32loop	|	till done
+	dbf	%d0,.Lbcb32loop	|	till done
 	clrw	%d0
 #endif
 	subql	#1,%d0
-	jcc	Lbcb32loop
+	jcc	.Lbcb32loop
 	
-Lbcblong:
+.Lbcblong:
 	/* copy by longwords */
 	movel	%d1,%d0
 	lsrl	#2,%d0		| cnt = len / 4
-	jeq	Lbcbbyte	| if (cnt)
+	jeq	.Lbcbbyte	| if (cnt)
 	subql	#1,%d0		|	set up for dbf
-Lbcblloop:
+.Lbcblloop:
 	movl	-(%a0),-(%a1)	|	copy longwords
 #ifdef __mcoldfire__
 	subql	#1,%d0		|	decrement
-	jcc	Lbcblloop	|	til done
+	jcc	.Lbcblloop	|	til done
 #else
-	dbf	%d0,Lbcblloop	|	til done
+	dbf	%d0,.Lbcblloop	|	til done
 #endif
 	andl	#3,%d1		|	len %= 4
-	jeq	Lbcdone
+	jeq	.Lbcdone
 
 	subql	#1,%d1		| set up for dbf
-Lbcbbloop:
+.Lbcbbloop:
 	movb	-(%a0),-(%a1)	| copy bytes
-Lbcbbyte:
+.Lbcbbyte:
 #ifdef __mcoldfire__
 	subql	#1,%d0		| decrement
-	jcc	Lbcbbloop	| til done
+	jcc	.Lbcbbloop	| til done
 #else
-	dbf	%d1,Lbcbbloop	| till done
+	dbf	%d1,.Lbcbbloop	| till done
 #endif
 
 #if defined(MEMCOPY) || defined(MEMMOVE)

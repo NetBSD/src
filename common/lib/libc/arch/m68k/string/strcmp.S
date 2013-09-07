@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.7 2013/09/07 19:06:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strcmp.S,v 1.6 2013/07/19 16:42:12 matt Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.7 2013/09/07 19:06:29 chs Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __mcoldfire__
@@ -47,28 +47,28 @@
 ENTRY(strcmp)
 	movl	4(%sp),%a0
 	movl	8(%sp),%a1
-L1:				/* unrolled by 4 for 680[23]0's */
+.L1:				/* unrolled by 4 for 680[23]0's */
 	GETC((%a0)+,%d1)
-	jeq	L2
+	jeq	.L2
 	SUBC((%a1)+,%d1)
-	jne	L3
+	jne	.L3
 
 	GETC((%a0)+,%d1)
-	jeq	L2
+	jeq	.L2
 	SUBC((%a1)+,%d1)
-	jne	L3
+	jne	.L3
 
 	GETC((%a0)+,%d1)
-	jeq	L2
+	jeq	.L2
 	SUBC((%a1)+,%d1)
-	jne	L3
+	jne	.L3
 
 	GETC((%a0)+,%d1)
-	jeq	L2
+	jeq	.L2
 	SUBC((%a1)+,%d1)
-	jeq	L1
+	jeq	.L1
 
-L3:
+.L3:
 #ifdef __mcoldfire__
 	movl	%d1,%d0
 #else
@@ -78,7 +78,7 @@ L3:
 #endif
 	rts
 
-L2:	movq	#0,%d0
+.L2:	movq	#0,%d0
 	movb	(%a1),%d0
 	negl	%d0
 	rts
