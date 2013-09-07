@@ -31,12 +31,15 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/gttwsivar.h>
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
@@ -45,10 +48,18 @@ static int awin_twi_match(device_t, cfdata_t, void *);
 static void awin_twi_attach(device_t, device_t, void *);
 
 struct awin_twi_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	bus_dma_tag_t sc_dmat;
+	struct gttwsi_softc asc_sc;
+	void *asc_ih;
+};
+
+static int awin_twi_ports;
+
+static const struct awin_gpio_pinset awin_twi_pinsets[] = {
+	[0] = { 'B', AWIN_PIO_PB_TWI0_FUNC, AWIN_PIO_PB_TWI0_PINS },
+	[1] = { 'B', AWIN_PIO_PB_TWI1_FUNC, AWIN_PIO_PB_TWI1_PINS },
+	[2] = { 'B', AWIN_PIO_PB_TWI2_FUNC, AWIN_PIO_PB_TWI2_PINS },
+	[3] = { 'I', AWIN_PIO_PI_TWI3_FUNC, AWIN_PIO_PI_TWI3_PINS },
+	[4] = { 'I', AWIN_PIO_PI_TWI4_FUNC, AWIN_PIO_PI_TWI4_PINS },
 };
 
 CFATTACH_DECL_NEW(awin_twi, sizeof(struct awin_twi_softc),
@@ -60,10 +71,20 @@ awin_twi_match(device_t parent, cfdata_t cf, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 
-	if (strcmp(cf->cf_name, loc->loc_name))
+	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
+	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
+	KASSERT((awin_twi_ports & __BIT(loc->loc_port)) == 0);
+
+	/*
+	 * We don't have alternative mappings so if one is requested
+	 * fail the match.
+	 */
+	if (cf->cf_flags & 1)
 		return 0;
 
-	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT);
+	if (!awin_gpio_pinset_available(&awin_twi_pinsets[loc->loc_port]))
+		return 0;
 
 	return 1;
 }
@@ -71,17 +92,43 @@ awin_twi_match(device_t parent, cfdata_t cf, void *aux)
 static void
 awin_twi_attach(device_t parent, device_t self, void *aux)
 {
-	struct awin_twi_softc * const sc = device_private(self);
+	struct awin_twi_softc * const asc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	bus_space_handle_t bsh;
 
-	sc->sc_dev = self;
+	awin_twi_ports |= __BIT(loc->loc_port);
 
-	sc->sc_bst = aio->aio_core_bst;
-	sc->sc_dmat = aio->aio_dmat;
-	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	/*
+	 * Acquite the PIO pins needed for the TWI port.
+	 */
+	awin_gpio_pinset_acquire(&awin_twi_pinsets[loc->loc_port]);
 
-	aprint_naive("\n");
-	aprint_normal("\n");
+	/*
+	 * Get a bus space handle for this TWI port.
+	 */
+	bus_space_subregion(aio->aio_core_bst, aio->aio_core_bsh,
+	    loc->loc_offset, loc->loc_size, &bsh);
+
+	/*
+	 * Do the MI attach
+	 */
+	gttwsi_attach_subr(self, aio->aio_core_bst, bsh);
+
+	/*
+	 * Establish interrupt for it
+	 */
+	asc->asc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_LEVEL,
+	    gttwsi_intr, &asc->asc_sc);
+	if (asc->asc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %d\n",
+		    loc->loc_intr);
+                return;
+        }
+	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	/*
+	 * Configure its children
+	 */
+	gttwsi_config_children(self);
 }
