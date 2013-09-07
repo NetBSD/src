@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.23 2013/07/30 02:29:49 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.24 2013/09/07 17:30:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -461,3 +461,82 @@ usr.bin/mklocale/mklocaledb.c			1.3
 	Swap order of _CITRUS_LC_MONETARY_SYM_INT_N_CS_PRECEDES and
 	_CITRUS_LC_MONETARY_SYM_INT_P_SEP_BY_SPACE to match data files.
 	[joerg, ticket #1869]
+sys/dev/pci/if_wm.c			1.246-1.247, 1.249-1.258 via patch
+sys/dev/pci/if_wmreg.h			1.51, 1.53 via patch
+sys/dev/pci/if_wmvar.h			1.15-1.16 via patch
+sys/dev/pci/pcidevs			1.1152-1.1153 via patch
+sys/dev/pci/pcidevs.h			regen
+sys/dev/pci/pcidevs_data.h		regen
+
+	Add I21[0178] support.
+	Fix a bug that wm_attach() may fail on some PCH2 or newer system.
+	wm_valid_nvm_bank_detect_ich8lan() misunderstood the NVM's bank
+	number. Fixes PR#47878.
+	Fix a bug that the check of reset complete fails on Intel 8 series
+	with "wm_lan_init_done: lan_init_done failed to complete" message.
+	The broken code was used for ICH8, 9... and PCH2.
+	The wm_linkintr_gmii() function is called from interrupt. That's
+	not tick, so call mii_pollstat() instead of mii_tick().
+	Add ECC support for the packet buffer. Only 82571 and I21[78] support
+	ECC.
+	Fix a bug that wrong semaphore is used in wm_gmii_hv_{read,write}reg.
+	Add comments, fix some comments, use macros and remove trailing
+	whitespaces.
+	[msaitoh, ticket #1867]
+
+doc/3RDPARTY							patch
+share/zoneinfo/africa						patch
+share/zoneinfo/asia						patch
+share/zoneinfo/australasia					patch
+share/zoneinfo/europe						patch
+share/zoneinfo/iso3166.tab					patch
+share/zoneinfo/southamerica					patch
+share/zoneinfo/zone.tab						patch
+
+	Import tzdata2013d from
+	    ftp://ftp.iana.org/tz/releases/tzdata2013d.tar.gz
+	Summary of changes from tzdata2013c to tzdata2013d:
+	   Changes affecting current and future time stamps:
+	     Morocco's midsummer transitions this year are July 7 and August 10,
+	     not July 9 and August 8.  (Thanks to Andrew Paprocki.)
+
+	     Israel now falls back on the last Sunday of October.
+	     (Thanks to Ephraim Silverberg.)
+
+	   Changes affecting past time stamps:
+	     Specify Jerusalem's location more precisely; this changes the
+	     pre-1880 times by 2 s.
+
+	   Changing affecting metadata only:
+	     Fix typos in the entries for country codes BQ and SX.
+
+	   Changes affecting documentation and commentary:
+	     Deemphasize the significance of national borders.
+
+	     Update the zdump man page.
+
+	     Remove obsolete NOID comment (thanks to Denis Excoffier).
+
+	     Update several URLs and comments in the web pages.
+
+	     Spelling fixes (thanks to Kevin Lyda and Jonathan Leffler).
+
+	     Update URL for CLDR Zone->Tzid table (thanks to Yoshito Umaoka).
+	[apb, ticket #1870]
+
+sys/arch/i386/stand/boot/boot2.c		1.59 via patch
+
+	Two changes for the i386 boot loader related to the boot menu which
+	can be defined in boot.cfg:
+
+	 * Add a "menu" command which re-displays the menu and initiates
+	   the timed countdown
+	 * Use any default command defined in boot.cfg as default args
+	   if the user runs "boot" with no arguments
+
+	This is useful in circumstances where you e.g. need to interrupt
+	the normal boot process to switch to serial console, and where
+	simply "boot netbsd" is no longer sufficient (e.g. as with install
+	media which needs the miniroot kernel module loaded).
+	[he, ticket #1872]
+
