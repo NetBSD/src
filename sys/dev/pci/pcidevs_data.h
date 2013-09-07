@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.18 2013/06/19 07:50:54 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.19 2013/09/07 17:11:18 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.18 2013/06/19 07:50:15 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.19 2013/09/07 17:10:18 bouyer Exp
  */
 
 /*
@@ -8108,6 +8108,50 @@ static const struct pci_product pci_products[] = {
 	    "82580 quad-1000BaseX Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_T1,
+	    "I210-T1 Ethernet Server Adapter",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_OEM1,
+	    "I210 Ethernet (COPPER OEM)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_COPPER_IT,
+	    "I210 Ethernet (COPPER IT)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_FIBER,
+	    "I210 Ethernet (FIBER)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SERDES,
+	    "I210 Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I210_SGMII,
+	    "I210 Ethernet (SGMII)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I211_COPPER,
+	    "I211 Ethernet (COPPER)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_LM,
+	    "I217-LM Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I217_V,
+	    "I217-V Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V,
+	    "I218-V Ethernet Connection",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM,
+	    "I218-LM Ethernet Connection",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
 	    "ROB-in i960RP Microprocessor",
 	},
@@ -15120,4 +15164,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3179;
+const int pci_nproducts = 3190;

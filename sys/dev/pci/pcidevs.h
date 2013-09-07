@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.18 2013/06/19 07:50:54 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.19 2013/09/07 17:11:18 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.18 2013/06/19 07:50:15 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962.4.19 2013/09/07 17:10:18 bouyer Exp
  */
 
 /*
@@ -2320,6 +2320,17 @@
 #define	PCI_PRODUCT_INTEL_I350_SGMII	0x1524		/* I350 Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
+#define	PCI_PRODUCT_INTEL_I210_T1	0x1533		/* I210-T1 Ethernet Server Adapter */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210 Ethernet (COPPER OEM) */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210 Ethernet (COPPER IT) */
+#define	PCI_PRODUCT_INTEL_I210_FIBER	0x1536		/* I210 Ethernet (FIBER) */
+#define	PCI_PRODUCT_INTEL_I210_SERDES	0x1537		/* I210 Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_I210_SGMII	0x1538		/* I210 Ethernet (SGMII) */
+#define	PCI_PRODUCT_INTEL_I211_COPPER	0x1539		/* I211 Ethernet (COPPER) */
+#define	PCI_PRODUCT_INTEL_I217_LM	0x153a		/* I217-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_80960RM_2	0x1962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
