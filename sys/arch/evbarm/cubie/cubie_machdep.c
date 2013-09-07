@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.3 2013/09/04 17:45:40 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.4 2013/09/07 00:31:10 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.3 2013/09/04 17:45:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.4 2013/09/07 00:31:10 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -298,6 +298,7 @@ initarm(void *arg)
 	psize_t ram_size = 0;
 	char *ptr;
 
+	pmap_devmap_register(devmap);
 	awin_bootstrap(AWIN_CORE_VBASE, CONADDR_VA);
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
@@ -307,7 +308,6 @@ initarm(void *arg)
 	init_clocks();
 
 	/* The console is going to try to map things.  Give pmap a devmap. */
-	pmap_devmap_register(devmap);
 	consinit();
 
 	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
@@ -367,10 +367,14 @@ initarm(void *arg)
 #endif
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 
+#if 0
 	/* "bootargs" env variable is passed as 4th argument to kernel */
+	printf("Copy bootargs");
 	if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
 		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
 	}
+	printf("\n");
+#endif
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
@@ -509,7 +513,36 @@ cubie_device_register(device_t self, void *aux)
 	}
 #endif
 
+	if (device_is_a(self, "awingpio")) {
+		/*
+		 * These are GPIOs being used for various functions.
+		 */
+		prop_dictionary_set_cstring(dict, "out-satapwren", "PB8");
+		prop_dictionary_set_cstring(dict, "out-usb0drv", "PB9");
+		prop_dictionary_set_cstring(dict, "out-usb1drv", "PH6");
+		prop_dictionary_set_cstring(dict, "out-usb2drv", "PH3");
+		prop_dictionary_set_cstring(dict, "out-hdd5ven", "PH17");
+		prop_dictionary_set_cstring(dict, "out-emacpwren", "PH19");
+		prop_dictionary_set_cstring(dict, "out-status-led1", "PH21");
+		prop_dictionary_set_cstring(dict, "out-status-led2", "PH20");
+
+		/*
+		 * These pins have no connections.
+		 */
+		prop_dictionary_set_uint32(dict, "nc-b", 0x0003d0e8);
+		prop_dictionary_set_uint32(dict, "nc-c", 0x00ff0000);
+		prop_dictionary_set_uint32(dict, "nc-h", 0x03c53f04);
+		prop_dictionary_set_uint32(dict, "nc-i", 0x003fc03f);
+		return;
+	}
+
 	if (device_is_a(self, "ehci")) {
+		return;
+	}
+
+	if (device_is_a(self, "ahcisata")) {
+		/* PIO PB<8> output */
+		prop_dictionary_set_cstring(dict, "power-gpio", "satapwren");
 		return;
 	}
 
