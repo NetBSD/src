@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.1,v 1.1.2.12 2013/07/30 02:30:13 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.1,v 1.1.2.13 2013/09/07 17:19:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -194,3 +194,43 @@ usr.bin/netstat/netstat.h			1.47
 	pcb first!
 	Not all pointers are 64bit - use uintptr_t instead of uint64_t.
 	[christos, ticket #1868]
+doc/3RDPARTY							patch
+share/zoneinfo/africa						patch
+share/zoneinfo/asia						patch
+share/zoneinfo/australasia					patch
+share/zoneinfo/europe						patch
+share/zoneinfo/iso3166.tab					patch
+share/zoneinfo/southamerica					patch
+share/zoneinfo/zone.tab						patch
+
+	Import tzdata2013d from
+	    ftp://ftp.iana.org/tz/releases/tzdata2013d.tar.gz
+	Summary of changes from tzdata2013c to tzdata2013d:
+	   Changes affecting current and future time stamps:
+	     Morocco's midsummer transitions this year are July 7 and August 10,
+	     not July 9 and August 8.  (Thanks to Andrew Paprocki.)
+
+	     Israel now falls back on the last Sunday of October.
+	     (Thanks to Ephraim Silverberg.)
+
+	   Changes affecting past time stamps:
+	     Specify Jerusalem's location more precisely; this changes the
+	     pre-1880 times by 2 s.
+
+	   Changing affecting metadata only:
+	     Fix typos in the entries for country codes BQ and SX.
+
+	   Changes affecting documentation and commentary:
+	     Deemphasize the significance of national borders.
+
+	     Update the zdump man page.
+
+	     Remove obsolete NOID comment (thanks to Denis Excoffier).
+
+	     Update several URLs and comments in the web pages.
+
+	     Spelling fixes (thanks to Kevin Lyda and Jonathan Leffler).
+
+	     Update URL for CLDR Zone->Tzid table (thanks to Yoshito Umaoka).
+	[apb, ticket #1870]
+
