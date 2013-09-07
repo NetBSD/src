@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.3 2013/09/07 02:09:23 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -162,7 +162,9 @@ awin_gpio_init(void)
 	struct awin_gpio_softc * const sc = &awin_gpio_sc;
 	bus_size_t offset = AWIN_PIO_OFFSET;
 
+#ifdef VERBOSE_INIT_ARM
 	printf(" free");
+#endif
 	for (u_int i = 0;
 	     i < __arraycount(pin_groups);
 	     i++, offset += AWIN_PIO_GRP_SIZE) {
@@ -183,8 +185,10 @@ awin_gpio_init(void)
 				grp->grp_pin_inuse_mask |= mask;
 			}
 		}
+#ifdef VERBOSE_INIT_ARM
 		printf(" P%c=%d", 'A' + i,
 		    popcount32(grp->grp_pin_mask & ~grp->grp_pin_inuse_mask));
+#endif
 	}
 }
 
