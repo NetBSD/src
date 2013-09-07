@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.607.2.8 2013/05/19 21:51:00 riz Exp $
+$NetBSD: usbdevs,v 1.607.2.9 2013/09/07 16:22:29 bouyer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -583,6 +583,7 @@ product 3COMUSR HOMECONN	0x009d	3Com HomeConnect camera
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* 4G Systems products */
+product 4GSYSTEMS XSSTICK_W14	0x9603	4G Systems XSStick W14
 product 4GSYSTEMS XSSTICK_P14	0x9605	4G Systems XSStick P14
 product 4GSYSTEMS XSSTICK_P14_INSTALLER	0xf000	4G Systems XSStick P14 - Windows driver
 
