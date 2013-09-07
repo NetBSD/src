@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2011/12/22 15:33:30 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 2013/09/07 15:56:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -257,7 +257,7 @@ sun3_mmu_specific:
 	movsb BUSERR_REG,%d0		| get value of bus error register
 	movc %d1,%sfc			| restore %sfc
 	movl %sp@+,%d1			| restore %d1
-	andb #BUSERR_MMU,%d0 		| is this an MMU fault?
+	andb #BUSERR_MMU,%d0		| is this an MMU fault?
 	jeq Lisberr			| non-MMU bus error
 /* End of sun3 specific code. */
 
@@ -403,7 +403,7 @@ ASLOCAL(kbrkpt)
 	| (so debugger can change the stack pointer)
 	movl	%a6,%d1
 	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2 		| already on tmpstk
+	jls	Lbrkpt2			| already on tmpstk
 	| Copy frame to the temporary stack
 	movl	%sp,%a0			| %a0=src
 	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
@@ -681,7 +681,7 @@ ENTRY(_splraise)
 	clrl	%d0
 	movw	%sr,%d0
 	movl	%d0,%d1
-	andl	#PSL_HIGHIPL,%d1 	| old &= PSL_HIGHIPL
+	andl	#PSL_HIGHIPL,%d1	| old &= PSL_HIGHIPL
 	cmpl	%sp@(4),%d1		| (old - new)
 	bge	Lsplr
 	movl	%sp@(4),%d1
