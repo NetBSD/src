@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.4 2013/09/07 02:34:01 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.5 2013/09/07 02:46:26 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -207,7 +207,7 @@ gpio*		at awingpio?
 
 # I2C Controller
 awiniic0	at awinio? port 0
-awiniic*	at awinio? port ?
+#awiniic*	at awinio? port ?
 iic*		at awiniic?
 
 # On-board 16550 UARTs
