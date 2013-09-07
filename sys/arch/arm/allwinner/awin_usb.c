@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.2 2013/09/07 00:35:52 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -64,9 +64,8 @@ struct awinusb_softc {
 
 	device_t usbsc_ohci_dev;
 	device_t usbsc_ehci_dev;
-	void *usbsc_ohci_sc;
-	void *usbsc_ehci_sc;
-	void *usbsc_ih;
+	void *usbsc_ohci_ih;
+	void *usbsc_ehci_ih;
 };
 
 struct awinusb_attach_args {
@@ -74,8 +73,13 @@ struct awinusb_attach_args {
 	bus_dma_tag_t usbaa_dmat;
 	bus_space_tag_t usbaa_bst;
 	bus_space_handle_t usbaa_bsh;
+	bus_space_handle_t usbaa_ccm_bsh;
 	bus_size_t usbaa_size;
+	int usbaa_port;
 };
+
+static const int awinusb_ohci_irqs[2] = { AWIN_IRQ_USB3, AWIN_IRQ_USB4 };
+static const int awinusb_ehci_irqs[2] = { AWIN_IRQ_USB1, AWIN_IRQ_USB2 };
 
 #ifdef OHCI_DEBUG
 #define OHCI_DPRINTF(x)	if (ohcidebug) printf x
@@ -104,10 +108,16 @@ ohci_awinusb_match(device_t parent, cfdata_t cf, void *aux)
 static void
 ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 {
+	struct awinusb_softc * const usbsc = device_private(parent);
 	struct ohci_softc * const sc = device_private(self);
 	struct awinusb_attach_args * const usbaa = aux;
 
 	sc->sc_dev = self;
+
+#if 0
+	awinusb_enable(usbaa->usbaa_bst, usbaa->usbaa_ccm_bsh,
+	    AWIN_USB_CLK_USBPHY1_RST, AWIN_APB_GATING1_OHCI0);
+#endif
 
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
@@ -128,6 +138,16 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 		/* Attach usb device. */
 		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 	}
+
+	const int irq = awinusb_ohci_irqs[usbaa->usbaa_port];
+	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_USB,
+	    IST_LEVEL, ohci_intr, sc);
+	if (usbsc->usbsc_ohci_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %d\n",
+		     irq);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on irq %d\n", irq);
 }
 
 #ifdef EHCI_DEBUG
@@ -187,24 +207,16 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 		/* Attach usb device. */
 		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 	}
-}
 
-/*
- * There's only IRQ shared between both OCHI and EHCI devices.
- */
-static int
-awinusb_intr(void *arg)
-{
-	struct awinusb_softc * const usbsc = arg;
-	int rv0 = 0, rv1 = 0;
-
-	if (usbsc->usbsc_ohci_sc)
-		rv0 = ohci_intr(usbsc->usbsc_ohci_sc);
-
-	if (usbsc->usbsc_ehci_sc)
-		rv1 = ehci_intr(usbsc->usbsc_ehci_sc);
-
-	return rv0 ? rv0 : rv1;
+	const int irq = awinusb_ehci_irqs[usbaa->usbaa_port];
+	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_USB,
+	    IST_LEVEL, ehci_intr, sc);
+	if (usbsc->usbsc_ehci_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %d\n",
+		     irq);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on irq %d\n", irq);
 }
 
 static int awinusb_match(device_t, cfdata_t, void *);
@@ -257,9 +269,13 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Bring the PHYs out of reset.
 	 */
-	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
+	uint32_t v = bus_space_read_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+	    AWIN_USB_CLK_REG);
+	
+	v &= ~(loc->loc_port == 0 ? AWIN_USB_CLK_PHY1_RST : AWIN_USB_CLK_PHY2_RST);
+	bus_space_write_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
 	    USBH_PHY_CTRL_P0, USBH_PHY_CTRL_INIT);
-	bus_space_write_4(usbsc->usbsc_bst, usbsc->usbsc_ehci_bsh,
+	bus_space_write_4(usbsc->usbsc_bst, aio->aio_ccm_bsh,
 	    USBH_PHY_CTRL_P1, USBH_PHY_CTRL_INIT);
 #endif
 
@@ -281,31 +297,23 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 		.usbaa_dmat = usbsc->usbsc_dmat,
 		.usbaa_bst = usbsc->usbsc_bst,
 		.usbaa_bsh = usbsc->usbsc_ohci_bsh,
+		.usbaa_ccm_bsh = aio->aio_ccm_bsh,
 		.usbaa_size = AWIN_OHCI_SIZE,
+		.usbaa_port = loc->loc_port,
 	};
 
 	usbsc->usbsc_ohci_dev = config_found(self, &usbaa_ohci, NULL);
-	if (usbsc->usbsc_ohci_dev != NULL)
-		usbsc->usbsc_ohci_sc = device_private(usbsc->usbsc_ohci_dev);
 
 	struct awinusb_attach_args usbaa_ehci = {
 		.usbaa_name = "ehci",
 		.usbaa_dmat = usbsc->usbsc_dmat,
 		.usbaa_bst = usbsc->usbsc_bst,
 		.usbaa_bsh = usbsc->usbsc_ehci_bsh,
+		.usbaa_ccm_bsh = aio->aio_ccm_bsh,
 		.usbaa_size = AWIN_EHCI_SIZE,
+		.usbaa_port = loc->loc_port,
 	};
 
-	usbsc->usbsc_ehci_dev = config_found(self, &usbaa_ehci, NULL);
-	if (usbsc->usbsc_ehci_dev != NULL)
-		usbsc->usbsc_ehci_sc = device_private(usbsc->usbsc_ehci_dev);
+	config_found(self, &usbaa_ehci, NULL);
 
-	usbsc->usbsc_ih = intr_establish(loc->loc_intr, IPL_USB, IST_LEVEL,
-	    awinusb_intr, usbsc);
-	if (usbsc->usbsc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     loc->loc_intr);
-		return;
-	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 }
