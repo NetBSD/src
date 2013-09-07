@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.7 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: enable.c,v 1.8 2013/09/07 15:56:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.7 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.8 2013/09/07 15:56:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <dev/sun/fbio.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.7 2008/04/28 20:23:38 martin Exp $");
  * External interfaces to the system enable register.
  */
 
-void 
+void
 enable_fpu(int on)
 {
 	int s, ena;
@@ -61,7 +61,7 @@ enable_fpu(int on)
 	splx(s);
 }
 
-void 
+void
 enable_video(int on)
 {
 	int s, ena;
