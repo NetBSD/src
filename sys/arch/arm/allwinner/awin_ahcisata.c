@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.4 2013/09/07 02:10:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.5 2013/09/07 19:48:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ static void awin_ahci_attach(device_t, device_t, void *);
 
 struct awin_ahci_softc {
 	struct ahci_softc asc_sc;
+	struct awin_gpio_pindata asc_gpio_pin;
 	void *asc_ih;
 };
 
@@ -73,6 +74,70 @@ awin_ahci_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
+awin_ahci_phy_init(struct awin_ahci_softc *asc)
+{
+	bus_space_tag_t bst = asc->asc_sc.sc_ahcit;
+	bus_space_handle_t bsh = asc->asc_sc.sc_ahcih;
+	u_int timeout;
+	uint32_t v;
+
+	/*
+	 * This is dark magic.
+	 */
+	bus_space_write_4(bst, bsh, AWIN_AHCI_RWCR_REG, 0);
+	delay(2);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG, __BIT(19), 0);
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
+	    __BIT(23)|__BIT(18)|__SHIFTIN(5, __BITS(26,24)),
+	    __BITS(26,24));
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
+	    __BIT(17)|__BITS(10,9)|__BIT(7),
+	    __BIT(16)|__BITS(12,11)|__BIT(8)|__BIT(6));
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
+	    __BIT(28)|__BIT(15), 0);
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG, 0, __BIT(19));
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG,
+	    __BITS(21,20), __BIT(22));
+	delay(1);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG,
+	    __BITS(9,8)|__BIT(5), __BITS(7,6));
+	delay(2);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG, __BIT(19), 0);
+	delay(2);
+
+	timeout = 100000;
+	do {
+		delay(1);
+		v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
+	} while (--timeout && __SHIFTOUT(v, __BITS(30,28)) != 2);
+
+	if (!timeout) {
+		aprint_error_dev(
+		    asc->asc_sc.sc_atac.atac_dev,
+		    "SATA PHY power failed (%#x)\n", v);
+	}
+
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG, __BIT(24), 0);
+	timeout = 100000;
+	do {
+		delay(1);
+		v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
+	} while (--timeout && (v & __BIT(24)));
+
+	if (!timeout) {
+		aprint_error_dev(
+		    asc->asc_sc.sc_atac.atac_dev,
+		    "SATA PHY calibration failed (%#x)\n", v);
+	}
+	bus_space_write_4(bst, bsh, AWIN_AHCI_RWCR_REG, 7);
+}
+
+static void
 awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 {
 	/*
@@ -85,7 +150,7 @@ awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 	 */
 	awin_reg_set_clear(bst, bsh, AWIN_AHB_GATING0_REG,
 	    AWIN_AHB_GATING0_SATA, 0);
-	delay(10000);
+	delay(1000);
 
 	/*
 	 * Now turn it on.
@@ -114,6 +179,28 @@ awin_ahci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": AHCI SATA controller\n");
 	aprint_normal(": AHCI SATA controller\n");
 
+	/*
+	 * Bring up the PHY.
+	 */
+	awin_ahci_phy_init(asc);
+
+	/*
+	 * If there is a GPIO to turn on power, do it now.
+	 */
+	const char *pin_name;
+	prop_dictionary_t dict = device_properties(self);
+	if (prop_dictionary_get_cstring_nocopy(dict, "power-gpio", &pin_name)) {
+		if (awin_gpio_pin_reserve(pin_name, &asc->asc_gpio_pin)) {
+			awin_gpio_pindata_write(&asc->asc_gpio_pin, 1);
+		} else {
+			aprint_error_dev(self,
+			    "failed to reserve GPIO \"%s\"\n", pin_name);
+		}
+	}
+
+	/*
+	 * Establish the interrupt
+	 */
 	asc->asc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL,
 	    ahci_intr, sc);
 	if (asc->asc_ih == NULL) {
