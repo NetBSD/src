@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.1 2013/09/07 17:58:00 pooka Exp $	*/
+/*	$NetBSD: cons.c,v 1.2 2013/09/07 18:17:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.1 2013/09/07 17:58:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.2 2013/09/07 18:17:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -102,7 +102,7 @@ rumpcons_write(struct file *fp, off_t *off, struct uio *uio,
 {
 	char *buf;
 	size_t len, n;
-	int error;
+	int error = 0;
 
 	buf = kmem_alloc(PAGE_SIZE, KM_SLEEP);
 	while (uio->uio_resid > 0) {
