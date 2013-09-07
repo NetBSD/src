@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.65 2012/01/27 19:48:38 para Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.65.2.1 2013/09/07 16:16:00 bouyer Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.65 2012/01/27 19:48:38 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.65.2.1 2013/09/07 16:16:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,8 @@ vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
 
 bool		pmap_initialized = false;	/* Has pmap_init completed? */
+
+vaddr_t		m68k_uptbase = M68K_PTBASE;
 
 struct pv_header {
 	struct pv_entry		pvh_first;	/* first PV entry */
@@ -514,7 +516,7 @@ pmap_init(void)
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, false,
 	    &st_map_store);
 
-	addr = M68K_PTBASE;
+	addr = m68k_uptbase;
 	if ((M68K_PTMAXSIZE / M68K_MAX_PTSIZE) < maxproc) {
 		s = M68K_PTMAXSIZE;
 		/*
