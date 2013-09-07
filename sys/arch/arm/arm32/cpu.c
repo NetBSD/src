@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.98 2013/09/07 00:32:54 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.99 2013/09/07 23:10:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.98 2013/09/07 00:32:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2013/09/07 23:10:02 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -772,6 +772,8 @@ identify_features(device_t dv)
 	cpu_instruction_set_attributes[4] = armreg_isar4_read();
 	cpu_instruction_set_attributes[5] = armreg_isar5_read();
 
+	cpu_hwdiv_present =
+	    ((cpu_instruction_set_attributes[0] >> 24) & 0x0f) >= 2;
 	cpu_simd_present =
 	    ((cpu_instruction_set_attributes[3] >> 4) & 0x0f) >= 3;
 	cpu_simdex_present = cpu_simd_present

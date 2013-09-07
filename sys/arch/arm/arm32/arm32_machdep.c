@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.96 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.97 2013/09/07 23:10:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.96 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.97 2013/09/07 23:10:02 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -100,6 +100,7 @@ extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
 int cpu_fpu_present;
+int cpu_hwdiv_present;
 int cpu_neon_present;
 int cpu_simd_present;
 int cpu_simdex_present;
@@ -430,6 +431,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "fpu_present", NULL,
 		       NULL, 0, &cpu_fpu_present, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "hwdiv_present", NULL,
+		       NULL, 0, &cpu_hwdiv_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
