@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.75 2013/09/03 19:55:13 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.76 2013/09/07 17:58:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -144,5 +144,7 @@ void	rump_xc_highpri(struct cpu_info *);
 
 void	rump_thread_init(void);
 void	rump_thread_allow(void);
+
+void	rump_consdev_init(void);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */
