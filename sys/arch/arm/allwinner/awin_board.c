@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.3 2013/09/07 00:35:52 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.4 2013/09/07 02:09:23 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.3 2013/09/07 00:35:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.4 2013/09/07 02:09:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,13 +146,21 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		    __func__, "io", error);
 	KASSERT(awin_core_bsh == iobase);
 
+#ifdef VERBOSE_INIT_ARM
 	printf("CPU Speed is");
+#endif
 	awin_cpu_clk();
+#ifdef VERBOSE_INIT_ARM
 	printf(" %"PRIu64"\n", curcpu()->ci_data.cpu_cc_freq);
+#endif
 
+#ifdef VERBOSE_INIT_ARM
 	printf("Determining GPIO configuration");
+#endif
 	awin_gpio_init();
+#ifdef VERBOSE_INIT_ARM
 	printf("\n");
+#endif
 }
 
 #ifdef MULTIPROCESSOR
