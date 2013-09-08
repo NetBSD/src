@@ -355,7 +355,7 @@ static void notify_ring(struct drm_device *dev,
 	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
 #ifdef __NetBSD__
-	DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+	DRM_WAKEUP_ALL(&ring->irq_queue, &dev->struct_mutex);
 #else
 	wake_up_all(&ring->irq_queue);
 #endif
@@ -1168,7 +1168,7 @@ static void i915_record_ring_state(struct drm_device *dev,
 
 #ifdef __NetBSD__
 	error->waiting[ring->id] = DRM_WAITERS_P(&ring->irq_queue,
-	    &drm_global_mutex);
+	    &dev->struct_mutex);
 #else
 	error->waiting[ring->id] = waitqueue_active(&ring->irq_queue);
 #endif
@@ -1487,7 +1487,7 @@ void i915_handle_error(struct drm_device *dev, bool wedged)
 		 */
 		for_each_ring(ring, dev_priv, i)
 #ifdef __NetBSD__
-			DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+			DRM_WAKEUP_ALL(&ring->irq_queue, &dev->struct_mutex);
 #else
 			wake_up_all(&ring->irq_queue);
 #endif
@@ -1696,12 +1696,21 @@ static bool i915_hangcheck_ring_idle(struct intel_ring_buffer *ring, bool *err)
 			      ring_last_seqno(ring))) {
 		/* Issue a wake-up to catch stuck h/w. */
 #ifdef __NetBSD__
-		if (DRM_WAITERS_P(&ring->irq_queue, &drm_global_mutex)) {
+		/*
+		 * XXX mutex_lock here is a load of bollocks, but I'm
+		 * not sure what invariants the irq_queue is actually
+		 * relying on.
+		 */
+		mutex_lock(&ring->dev->struct_mutex);
+		if (DRM_WAITERS_P(&ring->irq_queue,
+			&ring->dev->struct_mutex)) {
 			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",
 				  ring->name);
-			DRM_WAKEUP_ALL(&ring->irq_queue, &drm_global_mutex);
+			DRM_WAKEUP_ALL(&ring->irq_queue,
+			    &ring->dev->struct_mutex);
 			*err = true;
 		}
+		mutex_unlock(&ring->dev->struct_mutex);
 #else
 		if (waitqueue_active(&ring->irq_queue)) {
 			DRM_ERROR("Hangcheck timer elapsed... %s idle\n",

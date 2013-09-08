@@ -1197,7 +1197,8 @@ static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
 		 * XXX This wait is always interruptible; we should
 		 * heed the flag `interruptible'.
 		 */
-		DRM_TIMED_WAIT_UNTIL(end, &ring->irq_queue, &drm_global_mutex,
+		DRM_TIMED_WAIT_UNTIL(end, &ring->irq_queue,
+		    &ring->dev->struct_mutex,
 		    timeout_jiffies,
 		    EXIT_COND);
 #else
