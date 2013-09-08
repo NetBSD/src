@@ -41,8 +41,6 @@
 #include <drm/drm_fourcc.h>
 
 /* Avoid boilerplate.  I'm tired of typing. */
-#ifdef __NetBSD__
-/* XXX Does nobody build this code with -Wwrite-strings?  */
 #define DRM_ENUM_NAME_FN(fnname, list)				\
 	const char *fnname(int val)				\
 	{							\
@@ -53,18 +51,6 @@
 		}						\
 		return "(unknown)";				\
 	}
-#else
-#define DRM_ENUM_NAME_FN(fnname, list)				\
-	char *fnname(int val)					\
-	{							\
-		int i;						\
-		for (i = 0; i < ARRAY_SIZE(list); i++) {	\
-			if (list[i].type == val)		\
-				return list[i].name;		\
-		}						\
-		return "(unknown)";				\
-	}
-#endif
 
 /*
  * Global properties
@@ -155,11 +141,7 @@ DRM_ENUM_NAME_FN(drm_get_dirty_info_name,
 
 struct drm_conn_prop_enum_list {
 	int type;
-#ifdef __NetBSD__
 	const char *name;
-#else
-	char *name;
-#endif
 	int count;
 };
 
@@ -858,13 +840,8 @@ EXPORT_SYMBOL(drm_mode_create_dvi_i_properties);
  * responsible for allocating a list of format names and passing them to
  * this routine.
  */
-#ifdef __NetBSD__		/* XXX const */
 int drm_mode_create_tv_properties(struct drm_device *dev, int num_modes,
 				  const char *modes[])
-#else
-int drm_mode_create_tv_properties(struct drm_device *dev, int num_modes,
-				  char *modes[])
-#endif
 {
 	struct drm_property *tv_selector;
 	struct drm_property *tv_subconnector;
@@ -1047,10 +1024,8 @@ void drm_mode_config_init(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_mode_config_init);
 
-#ifdef __NetBSD__
-static
-#endif
-int drm_mode_group_init(struct drm_device *dev, struct drm_mode_group *group)
+static int drm_mode_group_init(struct drm_device *dev,
+			       struct drm_mode_group *group)
 {
 	uint32_t total_objects = 0;
 
@@ -2667,12 +2642,7 @@ int drm_mode_attachmode_crtc(struct drm_device *dev, struct drm_crtc *crtc,
 		if (!connector->encoder)
 			continue;
 		if (connector->encoder->crtc == crtc)
-#ifdef __NetBSD__
-			list_move_tail(list_next(&list),
-			    &connector->user_modes);
-#else
 			list_move_tail(list.next, &connector->user_modes);
-#endif
 	}
 
 	WARN_ON(!list_empty(&list));
@@ -3531,21 +3501,13 @@ int drm_mode_gamma_set_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-#ifdef __NetBSD__
 	g_base = (char *)r_base + size;
-#else
-	g_base = r_base + size;
-#endif
 	if (copy_from_user(g_base, (void __user *)(unsigned long)crtc_lut->green, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-#ifdef __NetBSD__
 	b_base = (char *)g_base + size;
-#else
-	b_base = g_base + size;
-#endif
 	if (copy_from_user(b_base, (void __user *)(unsigned long)crtc_lut->blue, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -3593,21 +3555,13 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-#ifdef __NetBSD__
 	g_base = (char *)r_base + size;
-#else
-	g_base = r_base + size;
-#endif
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-#ifdef __NetBSD__
 	b_base = (char *)g_base + size;
-#else
-	b_base = g_base + size;
-#endif
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->blue, b_base, size)) {
 		ret = -EFAULT;
 		goto out;
