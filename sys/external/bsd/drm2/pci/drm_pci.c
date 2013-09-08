@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.9 2013/09/08 15:46:22 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.10 2013/09/08 16:15:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.9 2013/09/08 15:46:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.10 2013/09/08 16:15:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -105,7 +105,8 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	/* XXX Set the power state to D0?  */
 
 	dev->bst = pa->pa_memt;
-	dev->bus_dmat = pa->pa_dmat; /* XXX dmat64?  */
+	/* XXX Let the driver say something about 32-bit vs 64-bit DMA?  */
+	dev->bus_dmat = (pci_dma64_available(pa)? pa->pa_dmat64 : pa->pa_dmat);
 	dev->dmat = dev->bus_dmat;
 	dev->dmat_subregion_p = false;
 
