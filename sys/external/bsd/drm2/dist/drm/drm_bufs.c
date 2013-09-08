@@ -942,11 +942,7 @@ int drm_addbufs_pci(struct drm_device * dev, struct drm_buf_desc * request)
 			buf->order = order;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-#ifdef __NetBSD__
 			buf->address = (void *)((char *)dmah->vaddr + offset);
-#else
-			buf->address = (void *)(dmah->vaddr + offset);
-#endif
 			buf->bus_address = dmah->busaddr + offset;
 			buf->next = NULL;
 			buf->waiting = 0;
