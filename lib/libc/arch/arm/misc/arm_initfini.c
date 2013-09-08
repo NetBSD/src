@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: arm_initfini.c,v 1.6 2013/09/08 12:11:56 matt Exp $");
+__RCSID("$NetBSD: arm_initfini.c,v 1.7 2013/09/08 13:15:53 matt Exp $");
 
 #include "namespace.h"
 
@@ -47,7 +47,9 @@ __RCSID("$NetBSD: arm_initfini.c,v 1.6 2013/09/08 12:11:56 matt Exp $");
 #include <stddef.h>
 
 __dso_hidden int _libc_arm_fpu_present;
+#ifndef __ARM_ARCH_EXT_IDIV__
 __dso_hidden int _libc_arm_hwdiv_present;
+#endif
 static bool _libc_aapcs_initialized;
 
 void	_libc_aapcs_init(void) __attribute__((__constructor__, __used__));
@@ -60,7 +62,9 @@ _libc_aapcs_init(void)
 		_libc_aapcs_initialized = true;
 		(void)sysctlbyname("machdep.fpu_present",
 		    &_libc_arm_fpu_present, &len, NULL, 0);
+#ifndef __ARM_ARCH_EXT_IDIV__
 		(void)sysctlbyname("machdep.hwdiv_present",
 		    &_libc_arm_hwdiv_present, &len, NULL, 0);
+#endif
 	}
 }
