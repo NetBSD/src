@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.112 2013/05/01 05:36:25 agc Exp $
+#	$NetBSD: security,v 1.113 2013/09/08 08:19:40 prlw1 Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -30,6 +30,7 @@ fi
 backup_dir=${backup_dir:-/var/backups}
 max_loginlen=${max_loginlen:-8}
 max_grouplen=${max_grouplen:-8}
+pkg_admin=${pkg_admin:-/usr/sbin/pkg_admin}
 pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 # Other configurable variables
