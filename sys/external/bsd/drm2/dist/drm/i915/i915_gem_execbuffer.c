@@ -32,6 +32,8 @@
 #include "i915_trace.h"
 #include "intel_drv.h"
 #include <linux/dma_remapping.h>
+#include <linux/log2.h>
+#include <linux/pagemap.h>
 
 struct eb_objects {
 	int and;
