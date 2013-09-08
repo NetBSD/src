@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.258 2013/09/07 16:17:12 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.259 2013/09/08 06:37:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.258 2013/09/07 16:17:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.259 2013/09/08 06:37:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1528,7 +1528,7 @@ uhci_idone(uhci_intr_info_t *ii)
 	u_int32_t status = 0, nstatus;
 	int actlen;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(12, ("uhci_idone: ii=%p\n", ii));
 #ifdef DIAGNOSTIC
@@ -1649,7 +1649,7 @@ uhci_idone(uhci_intr_info_t *ii)
 
  end:
 	usb_transfer_complete(xfer);
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 	DPRINTFN(12, ("uhci_idone: ii=%p done\n", ii));
 }
 
