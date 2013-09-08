@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.1.2.2 2013/07/24 03:44:39 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.1.2.3 2013/09/08 15:37:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,12 +32,60 @@
 #ifndef _LINUX_BITOPS_H_
 #define _LINUX_BITOPS_H_
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/cdefs.h>
+
+#include <machine/limits.h>
+
 #include <lib/libkern/libkern.h>
 
 static inline unsigned int
 hweight16(uint16_t n)
 {
 	return popcount32(n);
+}
+
+/*
+ * XXX Don't define BITS_PER_LONG as sizeof(unsigned long)*CHAR_BIT
+ * because that won't work in preprocessor conditionals, where it often
+ * turns up.
+ */
+
+#define	BITS_TO_LONGS(n)						\
+	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
+
+static inline int
+test_bit(unsigned int n, const volatile unsigned long *p)
+{
+	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
+
+	return ((p[n / units] & (1UL << (n % units))) != 0);
+}
+
+static inline void
+__set_bit(unsigned int n, volatile unsigned long *p)
+{
+	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
+
+	p[n / units] |= (1UL << (n % units));
+}
+
+static inline void
+__clear_bit(unsigned int n, volatile unsigned long *p)
+{
+	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
+
+	p[n / units] &= ~(1UL << (n % units));
+}
+
+static inline void
+__change_bit(unsigned int n, volatile unsigned long *p)
+{
+	const unsigned units = (sizeof(unsigned long) * CHAR_BIT);
+
+	p[n / units] ^= (1UL << (n % units));
 }
 
 #endif  /* _LINUX_BITOPS_H_ */
