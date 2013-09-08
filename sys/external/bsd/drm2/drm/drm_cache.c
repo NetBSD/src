@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.1.2.1 2013/09/08 15:41:07 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.1.2.2 2013/09/08 15:54:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.1.2.1 2013/09/08 15:41:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.1.2.2 2013/09/08 15:54:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -94,13 +94,13 @@ drm_md_clflush_finegrained_p(void)
 static void
 drm_x86_clflush_cpu(void)
 {
-	__asm__ __volatile__ ("wbinvd");
+	asm volatile ("wbinvd");
 }
 
 static void
 drm_x86_clflush(const void *vaddr)
 {
-	__asm__ __volatile__ ("clflush %0" : : "=r" (vaddr));
+	asm volatile ("clflush %0" : : "m" (*(const char *)vaddr));
 }
 
 static size_t
@@ -119,7 +119,7 @@ drm_x86_clflush_xc(void *arg0 __unused, void *arg1 __unused)
 static void
 drm_md_clflush_all(void)
 {
-	xc_wait(xc_broadcast(0, &drm_md_clflush_xc, NULL, NULL));
+	xc_wait(xc_broadcast(0, &drm_x86_clflush_xc, NULL, NULL));
 }
 
 static void
@@ -142,7 +142,7 @@ drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
 
 	KASSERT(drm_md_clflush_finegrained_p());
 	for (p = start; p < end; p += clflush_size)
-		drm_clflush(p);
+		drm_x86_clflush(p);
 }
 
 #endif	/* defined(__i386__) || defined(__x86_64__) */
