@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.7 2013/09/08 10:43:51 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.8 2013/09/08 11:47:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -180,6 +180,7 @@ awin_ahci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aio->aio_dmat;
 	sc->sc_ahcit = aio->aio_core_bst;
 	sc->sc_ahcis = loc->loc_size;
+	sc->sc_ahci_ports = 1;
 
 	bus_space_subregion(aio->aio_core_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_ahcih);
