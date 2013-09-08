@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.1.2.4 2013/09/08 15:38:04 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.1.2.5 2013/09/08 15:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,12 @@ static inline unsigned int
 msecs_to_jiffies(unsigned int msec)
 {
 	return mstohz(msec);
+}
+
+static inline unsigned int
+jiffies_to_msecs(unsigned int j)
+{
+	return hztoms(j);
 }
 
 static inline unsigned int
