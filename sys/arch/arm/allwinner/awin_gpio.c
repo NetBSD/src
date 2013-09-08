@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.5 2013/09/07 23:47:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.6 2013/09/08 00:55:25 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -608,6 +608,11 @@ awin_gpio_pin_reserve(const char *name, struct awin_gpio_pindata *pd)
 	struct awin_gpio_pin_cfg ncfg = grp->grp_cfg;
 	awin_gpio_set_pin_func(&ncfg, pin,
 	   pin_data[0] == '<' ? AWIN_PIO_FUNC_INPUT : AWIN_PIO_FUNC_OUTPUT);
+
+	/*
+	 * Now update any config register that changed.
+	 */
+	awin_gpio_update_cfg_regs(sc->sc_bst, grp, &ncfg);
 
 	grp->grp_pin_inuse_mask &= ~__BIT(pin);
 
