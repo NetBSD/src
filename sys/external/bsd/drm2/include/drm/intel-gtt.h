@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.1.2.1 2013/07/24 03:49:20 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.1.2.2 2013/09/08 15:40:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,16 +32,22 @@
 #ifndef _DRM_INTEL_GTT_H_
 #define _DRM_INTEL_GTT_H_
 
+#include <sys/bus.h>
+
+#include "drm/bus_dma_hacks.h"
+
+#include <linux/pci.h>
+
+#include <drm/drm_agp_netbsd.h>
+
 struct intel_gtt {
-	unsigned int	stolen_size;
-	unsigned int	gtt_total_entries;
-	unsigned int	gtt_mappable_entries;
-	bool		needs_dmar;
-	bool		do_idle_maps;
-	bus_addr_t	scratch_page_dma;
-	struct vm_page	*scratch_page; /* XXX Sensible?  */
-	bus_size_t	gtt;
-	paddr_t		gma_bus_addr;
+	paddr_t			gma_bus_addr;
+	unsigned int		stolen_size;
+	unsigned int		gtt_total_entries;
+	unsigned int		gtt_mappable_entries;
+	bus_dma_segment_t	gtt_scratch_seg;
+	bus_dmamap_t		gtt_scratch_map;
+	bus_space_handle_t	gtt_bsh;
 };
 
 struct intel_gtt *
