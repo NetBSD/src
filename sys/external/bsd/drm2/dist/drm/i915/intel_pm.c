@@ -3386,6 +3386,10 @@ void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 
 void intel_gpu_ips_teardown(void)
 {
+#ifdef __NetBSD__
+	if (i915_mch_dev == NULL)
+		return;
+#endif
 	spin_lock_irq(&mchdev_lock);
 	i915_mch_dev = NULL;
 	spin_unlock_irq(&mchdev_lock);
@@ -4449,6 +4453,16 @@ void intel_gt_init(struct drm_device *dev)
 	INIT_DELAYED_WORK(&dev_priv->rps.delayed_resume_work,
 			  intel_gen6_powersave_work);
 }
+
+#ifdef __NetBSD__		/* XXX gt fini */
+void
+intel_gt_fini(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = dev->dev_private;
+
+	spin_lock_destroy(&dev_priv->gt_lock);
+}
+#endif
 
 int sandybridge_pcode_read(struct drm_i915_private *dev_priv, u8 mbox, u32 *val)
 {

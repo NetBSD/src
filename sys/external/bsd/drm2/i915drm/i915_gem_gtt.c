@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.2 2013/09/08 15:57:01 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.3 2013/09/08 16:00:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.2 2013/09/08 15:57:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.3 2013/09/08 16:00:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,6 +238,14 @@ i915_gem_init_global_gtt(struct drm_device *dev, unsigned long start,
 
 	i915_ggtt_clear_range(dev, (start >> PAGE_SHIFT),
 	    ((end - start) >> PAGE_SHIFT));
+}
+
+void
+i915_gem_fini_global_gtt(struct drm_device *dev)
+{
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	drm_mm_takedown(&dev_priv->mm.gtt_space);
 }
 
 static void
