@@ -2914,12 +2914,6 @@ struct drm_property *drm_property_create_bitmask(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_property_create_bitmask);
 
-#ifdef __NetBSD__
-/* XXX Whattakludge...  */
-#  define	min	min_hack
-#  define	max	max_hack
-#endif
-
 struct drm_property *drm_property_create_range(struct drm_device *dev, int flags,
 					 const char *name,
 					 uint64_t min, uint64_t max)
@@ -2938,11 +2932,6 @@ struct drm_property *drm_property_create_range(struct drm_device *dev, int flags
 	return property;
 }
 EXPORT_SYMBOL(drm_property_create_range);
-
-#ifdef __NetBSD__
-#  undef	min
-#  undef	max
-#endif
 
 int drm_property_add_enum(struct drm_property *property, int index,
 			  uint64_t value, const char *name)
