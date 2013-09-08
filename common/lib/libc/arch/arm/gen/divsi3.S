@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.9 2013/09/05 05:16:08 matt Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.10 2013/09/08 13:24:16 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,7 +16,11 @@
 
 #include <machine/asm.h>
 
+#if defined(__thumb__) && !defined(_ARM_ARCH_T2)
+ARM_ENTRY(__divsi3)
+#else
 ENTRY(__divsi3)
+#endif
 #if defined(__ARM_ARCH_EXT_IDIV__)
 # if defined(__ARM_EABI__)
 	mov	r3, r0		@ save for mls
@@ -26,25 +30,38 @@ ENTRY(__divsi3)
 	mls	r1, r0, r1, r3	@ return modulus in r1
 # endif
 	RET
-#elif !defined(__thumb__) || defined(_ARM_ARCH_T2)
-	b	__divide
+#elif defined(__ARM_EABI__) && defined(_LIBC)
+#ifdef _ARM_ARCH_7
+	movw	r2, #:lower16:REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
+	movt	r2, #:upper16:REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
 #else
-#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
-	.fnstart
-	.cfi_startproc
+	ldr	r2, .Lhwdiv_present
 #endif
-	push	{r4, lr}
-#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
-	.cfi_def_cfa_offset 8
-	.cfi_offset 14, -4
-	.cfi_offset 4, -8
+# ifdef PIC
+	add	r2, r2, pc
+# endif
+	ldr	r2, [r2]
+.LPIC0:	cmp	r2, #0
+	beq	__divide
+	mov	r3, r0
+#if defined(__ARM_ARCH_EXT_IDIV__)
+	sdiv	r0, r0, r1
+	mls	r1, r0, r1, r3	/* return modulus in r1 */
+#elif defined(__thumb__) && defined(_ARM_ARCH_T2)
+	.inst.w	0xfb90f0f1
+	.inst.w	0xfb003111
+#else
+	.inst	0xe710f110
+	.inst	0xe0613190
 #endif
-	bl	__divide
-	pop	{r4, pc}
-#if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
-	.cfi_endproc
-	.fnend
+	RET
+#ifndef _ARM_ARCH_7
+	.align	0
+.Lhwdiv_present:
+	.word	REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
 #endif
+#else /* !__ARM_EABI__ */
+	b	__divide
 #endif
 END(__divsi3)
 
