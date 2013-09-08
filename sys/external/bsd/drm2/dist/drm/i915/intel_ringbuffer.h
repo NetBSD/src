@@ -39,6 +39,10 @@ struct  intel_hw_status_page {
 #define I915_READ_SYNC_0(ring) I915_READ(RING_SYNC_0((ring)->mmio_base))
 #define I915_READ_SYNC_1(ring) I915_READ(RING_SYNC_1((ring)->mmio_base))
 
+#ifdef __NetBSD__
+#  define	__ring_iomem
+#endif
+
 struct  intel_ring_buffer {
 	const char	*name;
 	enum intel_ring_id {
@@ -50,7 +54,7 @@ struct  intel_ring_buffer {
 	u32		mmio_base;
 #ifdef __NetBSD__
 	struct drm_local_map	virtual_start_map;
-	bool			virtual_start_mapped;
+	void __ring_iomem	*virtual_start;
 #else
 	void		__iomem *virtual_start;
 #endif
