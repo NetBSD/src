@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.1 2013/09/04 02:39:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.2 2013/09/08 04:06:44 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -51,6 +51,10 @@ struct awin_gige_softc {
 	bus_dma_tag_t sc_dmat;
 };
 
+static const struct awin_gpio_pinset awin_gige_gpio_pinset = {
+	'A', AWIN_PIO_PA_GMAC_FUNC, AWIN_PIO_PA_GMAC_PINS,
+};
+
 CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
 	awin_gige_match, awin_gige_attach, NULL, NULL);
 
@@ -58,12 +62,18 @@ static int
 awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
+#ifdef DIAGNOSTIC
 	const struct awin_locators * const loc = &aio->aio_loc;
-
-	if (strcmp(cf->cf_name, loc->loc_name))
+#endif
+	if (cf->cf_flags & 1)
 		return 0;
 
-	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT);
+	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
+	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
+
+	if (!awin_gpio_pinset_available(&awin_gige_pinset))
+		return 0;
 
 	return 1;
 }
@@ -77,11 +87,13 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
+	awin_gpio_pinset_acquire(&awin_gige_pinset);
+
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.6 2013/09/07 19:47:28 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.7 2013/09/08 04:06:44 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.6 2013/09/07 19:47:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.7 2013/09/08 04:06:44 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -510,8 +510,14 @@ cubie_device_register(device_t self, void *aux)
 		 * frequency.
 		 */
                 prop_dictionary_set_uint32(dict, "frequency", AWIN_REF_FREQ);
+		return;
 	}
 #endif
+
+	if (device_is_a(self, "awinio")) {
+		prop_dictionary_set_bool(dict, "no-awge", true);
+		return;
+	}
 
 	if (device_is_a(self, "awingpio")) {
 		/*

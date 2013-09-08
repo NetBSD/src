@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.7 2013/09/08 00:03:40 matt Exp $
+#	$NetBSD: CUBIEBOARD,v 1.8 2013/09/08 04:06:44 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -113,6 +113,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_DYNAMIC
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+options 	DKWEDGE_AUTODISCOVER
+options 	DKWEDGE_METHOD_GPT
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -256,18 +259,13 @@ ehci*		at awinusb?
 usb*		at ohci?
 usb*		at ehci?
 
-# SATA (A20)
+# SATA
 ahcisata*	at awinio0
-# PATA (A10)
-wdc*		at awinio0
-
 atabus*		at ata?
 wd*		at atabus? drive ?
 
-# 10/100 Ethernet (A10/A20)
-awinfe0		at awinio0
-# Gigabit Ethernet (A20)
-awinge0		at awinio0
+# 10/100/1000 Ethernet (A10/A20)
+awe0		at awinio0 port ?
 
 include "dev/usb/usbdevices.config"
 
@@ -281,6 +279,7 @@ ukphy*		at mii? phy ?
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
+pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
