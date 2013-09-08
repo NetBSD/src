@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1.2.3 2013/07/24 03:29:43 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1.2.4 2013/09/08 16:00:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,6 +68,16 @@ init_completion(struct completion *completion)
 	mutex_init(&completion->c_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&completion->c_cv, "lnxcmplt");
 	completion->c_done = 0;
+}
+
+/*
+ * Destroy a completion object.
+ */
+static inline void
+destroy_completion(struct completion *completion)
+{
+	KASSERT(!cv_has_waiters(&completion->c_cv));
+	cv_destroy(&completion->c_cv);
 }
 
 /*
