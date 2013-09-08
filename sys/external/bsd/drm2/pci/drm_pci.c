@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.1.2.8 2013/07/24 04:05:34 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.1.2.9 2013/09/08 15:46:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.8 2013/07/24 04:05:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.1.2.9 2013/09/08 15:46:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -106,6 +106,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 
 	dev->bst = pa->pa_memt;
 	dev->bus_dmat = pa->pa_dmat; /* XXX dmat64?  */
+	dev->dmat = dev->bus_dmat;
 	dev->dmat_subregion_p = false;
 
 	CTASSERT(PCI_NMAPREGS < (SIZE_MAX / sizeof(dev->bus_maps[0])));
