@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.8 2013/09/07 22:51:41 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.9 2013/09/08 01:01:33 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -144,7 +144,7 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	const int irq = awinusb_ohci_irqs[usbaa->usbaa_port];
-	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_SCHED,
+	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_USB,
 	    IST_LEVEL, ohci_intr, sc);
 	if (usbsc->usbsc_ohci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
@@ -217,7 +217,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	const int irq = awinusb_ehci_irqs[usbaa->usbaa_port];
-	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_SCHED,
+	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_USB,
 	    IST_LEVEL, ehci_intr, sc);
 	if (usbsc->usbsc_ehci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
