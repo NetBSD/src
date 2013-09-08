@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2 2013/09/07 18:17:35 pooka Exp $	*/
+/*	$NetBSD: cons.c,v 1.3 2013/09/08 04:37:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -31,19 +31,22 @@
  * environments where there is no Unix-like host (e.g. Xen DomU).
  * It's currently a truly half duplex console since there is support
  * only for writing to the console (there is no hypercall for reading
- * the host console).
+ * the host console).  The driver attempts to look like a tty just
+ * enough to fool isatty().  Let's see how far that gets us.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.2 2013/09/07 18:17:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.3 2013/09/08 04:37:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/termios.h>
 
 #include <rump/rumpuser.h>
 
@@ -51,12 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.2 2013/09/07 18:17:35 pooka Exp $");
 
 static int rumpcons_write(struct file *, off_t *, struct uio *,
 			  kauth_cred_t, int);
+static int rumpcons_ioctl(struct file *, u_long, void *);
 static int rumpcons_stat(struct file *, struct stat *);
 
 static const struct fileops rumpcons_fileops = {
 	.fo_read = (void *)nullop,
 	.fo_write = rumpcons_write,
-	.fo_ioctl = fbadop_ioctl,
+	.fo_ioctl = rumpcons_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = fnullop_poll,
 	.fo_stat = rumpcons_stat,
@@ -121,11 +125,21 @@ rumpcons_write(struct file *fp, off_t *off, struct uio *uio,
 }
 
 static int
+rumpcons_ioctl(struct file *fp, u_long cmd, void *data)
+{
+
+	if (cmd == TIOCGETA)
+		return 0;
+
+	return ENOTTY; /* considering how we are cheating, lol */
+}
+
+static int
 rumpcons_stat(struct file *fp, struct stat *sb)
 {
 
 	memset(sb, 0, sizeof(*sb));
-	sb->st_mode = 0600;
+	sb->st_mode = 0600 | _S_IFCHR;
 	sb->st_atimespec = sb->st_mtimespec = sb->st_ctimespec = boottime;
 	sb->st_birthtimespec = boottime;
 
