@@ -1555,7 +1555,12 @@ out:
 
 /*
  * XXX i915_udv_fault is copypasta of udv_fault from uvm_device.c.
+ *
+ * XXX pmap_enter_default instead of pmap_enter because of a problem
+ * with using weak aliases in kernel modules or something.
  */
+int	pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, unsigned);
+
 static int
 i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
     int npages, int centeridx, vm_prot_t access_type, int flags,
@@ -1615,7 +1620,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
-		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot,
+		if (pmap_enter_default(ufi->orig_map->pmap, curr_va, paddr, mapprot,
 		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			/*
 			 * pmap_enter() didn't have the resource to
