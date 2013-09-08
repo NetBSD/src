@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.89 2013/05/01 05:36:25 agc Exp $
+#	$NetBSD: daily,v 1.90 2013/09/08 08:19:40 prlw1 Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -17,6 +17,9 @@ fi
 host="$(hostname)"
 date="$(date)"
 rcvar_manpage='daily.conf(5)'
+
+pkg_admin=${pkg_admin:-/usr/sbin/pkg_admin}
+pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host daily output for $date"
