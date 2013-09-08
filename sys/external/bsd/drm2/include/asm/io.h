@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.1.2.3 2013/07/24 03:44:10 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.1.2.4 2013/09/08 15:35:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,12 @@
 #ifndef _ASM_IO_H_
 #define _ASM_IO_H_
 
+#include <sys/bus.h>
+
+#include <uvm/uvm_page.h>
+
+#include <linux/mm_types.h>
+
 /*
  * XXX This is bollocks, and is wrong on various architectures (should
  * work for x86; who knows what else), but bus_space_barrier won't work
@@ -42,5 +48,17 @@
 #define	memcpy_fromio	memcpy
 #define	memcpy_toio	memcpy
 #define	memset_io	memset
+
+/*
+ * XXX Not sure why this is here, but so it is in Linux...  Also, not
+ * sure what the right type is: Linux uses dma_addr_t, but I don't
+ * think bus_addr_t is right here -- paddr_t sounds more appropriate.
+ */
+
+static inline bus_addr_t
+page_to_phys(struct page *page)
+{
+	return VM_PAGE_TO_PHYS(&page->p_vmp);
+}
 
 #endif  /* _ASM_IO_H_ */
