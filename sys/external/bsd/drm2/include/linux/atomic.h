@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.2.10 2013/09/08 15:37:04 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.2.11 2013/09/08 16:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@ struct atomic {
 	} a_u;
 };
 
+#define	ATOMIC_INIT(i)	{ .a_u = { .au_int = (i) } }
+
 typedef struct atomic atomic_t;
 
 static inline int
@@ -85,6 +87,18 @@ static inline void
 atomic_dec(atomic_t *atomic)
 {
 	atomic_dec_uint(&atomic->a_u.au_uint);
+}
+
+static inline int
+atomic_inc_return(atomic_t *atomic)
+{
+	return (int)atomic_inc_uint_nv(&atomic->a_u.au_uint);
+}
+
+static inline int
+atomic_dec_return(atomic_t *atomic)
+{
+	return (int)atomic_dec_uint_nv(&atomic->a_u.au_uint);
 }
 
 static inline int
