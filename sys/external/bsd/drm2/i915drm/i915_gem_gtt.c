@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.3 2013/09/08 16:00:22 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.4 2013/09/08 16:13:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.3 2013/09/08 16:00:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.4 2013/09/08 16:13:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ typedef uint32_t gtt_pte_t;
 static uint32_t
 gen6_pte_addr_encode(bus_addr_t addr)
 {
-	/* XXX KASSERT bounds?  Must be at most 36-bit, it seems.  */
+	KASSERT(addr <= __BITS(39, 0));
 	return (addr | ((addr >> 28) & 0xff0));
 }
 
@@ -392,6 +392,7 @@ gen6_ggtt_bind_object(struct drm_i915_gem_object *obj,
 		len = obj->igo_dmamap->dm_segs[seg].ds_len;
 		do {
 			KASSERT(PAGE_SIZE <= len);
+			KASSERT(0 == (len % PAGE_SIZE));
 			bus_space_write_4(bst, bsh, 4*(first_entry + i),
 			    pte_encode(dev, addr, cache_level));
 			addr += PAGE_SIZE;
