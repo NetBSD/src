@@ -2240,13 +2240,6 @@ intel_pipe_set_base_atomic(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	return dev_priv->display.update_plane(crtc, fb, x, y);
 }
 
-#ifdef __NetBSD__		/* XXX fb */
-static int
-intel_finish_fb(struct drm_framebuffer *old_fb __unused)
-{
-	return 0;
-}
-#else
 static int
 intel_finish_fb(struct drm_framebuffer *old_fb)
 {
@@ -2255,9 +2248,20 @@ intel_finish_fb(struct drm_framebuffer *old_fb)
 	bool was_interruptible = dev_priv->mm.interruptible;
 	int ret;
 
+#ifdef __NetBSD__		/* XXX DRM_WAIT_UNINTERRUPTIBLE_UNTIL */
+	mutex_lock(&dev_priv->pending_flip_lock);
+	do {
+		DRM_WAIT_UNTIL(ret, &dev_priv->pending_flip_queue,
+		    &dev_priv->pending_flip_lock,
+		    (atomic_read(&dev_priv->mm.wedged) ||
+			atomic_read(&obj->pending_flip) == 0));
+	} while (ret);
+	mutex_unlock(&dev_priv->pending_flip_lock);
+#else
 	wait_event(dev_priv->pending_flip_queue,
 		   atomic_read(&dev_priv->mm.wedged) ||
 		   atomic_read(&obj->pending_flip) == 0);
+#endif
 
 	/* Big Hammer, we also need to ensure that any pending
 	 * MI_WAIT_FOR_EVENT inside a user batch buffer on the
@@ -2273,7 +2277,6 @@ intel_finish_fb(struct drm_framebuffer *old_fb)
 
 	return ret;
 }
-#endif
 
 static void intel_crtc_update_sarea_pos(struct drm_crtc *crtc, int x, int y)
 {
@@ -6638,38 +6641,36 @@ intel_framebuffer_create(struct drm_device *dev,
 	return &intel_fb->base;
 }
 
-#ifndef __NetBSD__		/* XXX fb */
 static u32
 intel_framebuffer_pitch_for_width(int width, int bpp)
 {
 	u32 pitch = DIV_ROUND_UP(width * bpp, 8);
+#ifdef __NetBSD__		/* XXX ALIGN already means something.  */
+	return round_up(pitch, 64);
+#else
 	return ALIGN(pitch, 64);
+#endif
 }
 
 static u32
 intel_framebuffer_size_for_mode(struct drm_display_mode *mode, int bpp)
 {
 	u32 pitch = intel_framebuffer_pitch_for_width(mode->hdisplay, bpp);
-	return ALIGN(pitch * mode->vdisplay, PAGE_SIZE);
-}
-#endif
-
-#ifdef __NetBSD__		/* XXX fb */
-static struct drm_framebuffer *
-intel_framebuffer_create_for_mode(struct drm_device *dev __unused,
-    struct drm_display_mode *mode __unused,
-    int depth __unused, int bpp __unused)
-{
-	return NULL;
-}
+#ifdef __NetBSD__		/* XXX ALIGN already means something.  */
+	return round_up(pitch * mode->vdisplay, PAGE_SIZE);
 #else
+	return ALIGN(pitch * mode->vdisplay, PAGE_SIZE);
+#endif
+}
+
 static struct drm_framebuffer *
 intel_framebuffer_create_for_mode(struct drm_device *dev,
 				  struct drm_display_mode *mode,
 				  int depth, int bpp)
 {
 	struct drm_i915_gem_object *obj;
-	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
+	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
 
 	obj = i915_gem_alloc_object(dev,
 				    intel_framebuffer_size_for_mode(mode, bpp));
@@ -6684,16 +6685,7 @@ intel_framebuffer_create_for_mode(struct drm_device *dev,
 
 	return intel_framebuffer_create(dev, &mode_cmd, obj);
 }
-#endif
 
-#ifdef __NetBSD__		/* XXX fb */
-static struct drm_framebuffer *
-mode_fits_in_fbdev(struct drm_device *dev __unused,
-    struct drm_display_mode *mode __unused)
-{
-	return NULL;
-}
-#else
 static struct drm_framebuffer *
 mode_fits_in_fbdev(struct drm_device *dev,
 		   struct drm_display_mode *mode)
@@ -6719,7 +6711,6 @@ mode_fits_in_fbdev(struct drm_device *dev,
 
 	return fb;
 }
-#endif
 
 bool intel_get_load_detect_pipe(struct drm_connector *connector,
 				struct drm_display_mode *mode,

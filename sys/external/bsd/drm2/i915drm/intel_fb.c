@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fb.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $	*/
+/*	$NetBSD: intel_fb.c,v 1.1.2.2 2013/09/08 16:38:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,17 +32,37 @@
 /* intel_fb.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fb.c,v 1.1.2.1 2013/07/24 03:52:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fb.c,v 1.1.2.2 2013/09/08 16:38:51 riastradh Exp $");
+
+#include <drm/drmP.h>
+#include <drm/drm_fb_helper.h>
 
 #include "i915_drv.h"
+#include "intel_drv.h"
 
 void
 intel_fb_output_poll_changed(struct drm_device *dev __unused)
 {
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+
+	drm_fb_helper_hotplug_event(&dev_priv->fbdev->helper);
 }
 
 void
 intel_fb_restore_mode(struct drm_device *dev __unused)
 {
-}
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct drm_plane *plane;
+	int ret;
 
+	mutex_lock(&dev->mode_config.mutex);
+
+	ret = drm_fb_helper_restore_fbdev_mode(&dev_priv->fbdev->helper);
+	if (ret)
+		DRM_ERROR("failed to restore fbdev mode: %d\n", ret);
+
+	list_for_each_entry(plane, &dev->mode_config.plane_list, head)
+		(*plane->funcs->disable_plane)(plane);
+
+	mutex_unlock(&dev->mode_config.mutex);
+}
