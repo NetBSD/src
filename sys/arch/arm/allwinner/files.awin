@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.4 2013/09/07 00:35:52 matt Exp $
+#	$NetBSD: files.awin,v 1.5 2013/09/08 00:03:59 matt Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -72,12 +72,12 @@ attach	awincrypto at awinio with awin_crypto
 file	arch/arm/allwinner/awin_crypto.c	awin_crypto
 
 # A10/A20 EMAC
-device	awinfe { } : ether, ifnet, arp
+device	awinfe { } : ether, ifnet, arp, mii
 attach	awinfe at awinio with awin_eth
 file	arch/arm/allwinner/awin_eth.c		awin_eth
 
 # A20 GMAC
-device	awinge { } : ether, ifnet, arp
+device	awinge { } : ether, ifnet, arp, mii
 attach	awinge at awinio with awin_gige
 file	arch/arm/allwinner/awin_gige.c		awin_gige
 
