@@ -114,7 +114,6 @@ enum drm_mode_status {
 #define DRM_MODE_TYPE_CLOCK_CRTC_C (DRM_MODE_TYPE_CLOCK_C | \
 				    DRM_MODE_TYPE_CRTC_C)
 
-#ifdef __NetBSD__
 #define DRM_MODE(nm, t, c, hd, hss, hse, ht, hsk, vd, vss, vse, vt, vs, f) \
 	.name = nm, .status = 0, .type = (t), .clock = (c), \
 	.hdisplay = (hd), .hsync_start = (hss), .hsync_end = (hse), \
@@ -122,15 +121,6 @@ enum drm_mode_status {
 	.vsync_start = (vss), .vsync_end = (vse), .vtotal = (vt), \
 	.vscan = (vs), .flags = (f), .vrefresh = 0, \
 	.base = { .type = DRM_MODE_OBJECT_MODE }
-#else
-#define DRM_MODE(nm, t, c, hd, hss, hse, ht, hsk, vd, vss, vse, vt, vs, f) \
-	.name = nm, .status = 0, .type = (t), .clock = (c), \
-	.hdisplay = (hd), .hsync_start = (hss), .hsync_end = (hse), \
-	.htotal = (ht), .hskew = (hsk), .vdisplay = (vd), \
-	.vsync_start = (vss), .vsync_end = (vse), .vtotal = (vt), \
-	.vscan = (vs), .flags = (f), .vrefresh = 0, \
-	.base.type = DRM_MODE_OBJECT_MODE
-#endif
 
 #define CRTC_INTERLACE_HALVE_V 0x1 /* halve V values for interlacing */
 
@@ -849,11 +839,7 @@ struct drm_mode_config {
 
 struct drm_prop_enum_list {
 	int type;
-#ifdef __NetBSD__
 	const char *name;
-#else
-	char *name;
-#endif
 };
 
 extern int drm_crtc_init(struct drm_device *dev,
@@ -886,19 +872,11 @@ extern void drm_plane_cleanup(struct drm_plane *plane);
 extern void drm_encoder_cleanup(struct drm_encoder *encoder);
 
 extern char *drm_get_connector_name(struct drm_connector *connector);
-#ifdef __NetBSD__
 extern const char *drm_get_dpms_name(int val);
 extern const char *drm_get_dvi_i_subconnector_name(int val);
 extern const char *drm_get_dvi_i_select_name(int val);
 extern const char *drm_get_tv_subconnector_name(int val);
 extern const char *drm_get_tv_select_name(int val);
-#else
-extern char *drm_get_dpms_name(int val);
-extern char *drm_get_dvi_i_subconnector_name(int val);
-extern char *drm_get_dvi_i_select_name(int val);
-extern char *drm_get_tv_subconnector_name(int val);
-extern char *drm_get_tv_select_name(int val);
-#endif
 extern void drm_fb_release(struct drm_file *file_priv);
 extern int drm_mode_group_init_legacy_group(struct drm_device *dev, struct drm_mode_group *group);
 extern bool drm_probe_ddc(struct i2c_adapter *adapter);
@@ -983,13 +961,8 @@ extern void drm_property_destroy(struct drm_device *dev, struct drm_property *pr
 extern int drm_property_add_enum(struct drm_property *property, int index,
 				 uint64_t value, const char *name);
 extern int drm_mode_create_dvi_i_properties(struct drm_device *dev);
-#ifdef __NetBSD__		/* XXX const */
 extern int drm_mode_create_tv_properties(struct drm_device *dev, int num_formats,
 				     const char *formats[]);
-#else
-extern int drm_mode_create_tv_properties(struct drm_device *dev, int num_formats,
-				     char *formats[]);
-#endif
 extern int drm_mode_create_scaling_mode_property(struct drm_device *dev);
 extern int drm_mode_create_dithering_property(struct drm_device *dev);
 extern int drm_mode_create_dirty_info_property(struct drm_device *dev);
