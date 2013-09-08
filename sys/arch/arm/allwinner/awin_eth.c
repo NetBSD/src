@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.2 2013/09/08 00:05:27 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.3 2013/09/08 04:06:44 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -89,7 +89,9 @@ static int
 awin_eth_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
+#ifdef DIAGNOSTIC
 	const struct awin_locators * const loc = &aio->aio_loc;
+#endif
 	const struct awin_gpio_pinset * const pinset =
 	    &awin_eth_pinsets[cf->cf_flags & 1];
 
@@ -127,7 +129,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": 10/100 Ethernet Controller\n");
 
 	ifp->if_softc = sc;
 
