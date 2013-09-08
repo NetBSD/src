@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.1 2013/09/08 15:52:20 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.2 2013/09/08 15:57:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.1 2013/09/08 15:52:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.2 2013/09/08 15:57:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ i915_gem_gtt_init(struct drm_device *dev)
 	}
 
 	/* GGMS: GTT Graphics Memory Size.  */
-	ggms = __SHIFTOUT(snb_gmch_ctl, SNB_GMCH_GGMS) << 20;
+	ggms = __SHIFTOUT(snb_gmch_ctl, SNB_GMCH_GGMS);
 	gtt->gtt_total_entries = (ggms << 20) / sizeof(gtt_pte_t);
 
 	gtt->gtt_mappable_entries = (dev->bus_maps[2].bm_size >> PAGE_SHIFT);
