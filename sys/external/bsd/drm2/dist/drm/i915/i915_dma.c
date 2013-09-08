@@ -1432,7 +1432,6 @@ void i915_master_destroy(struct drm_device *dev, struct drm_master *master)
 	master->driver_priv = NULL;
 }
 
-#ifndef __NetBSD__		/* XXX gtt */
 static void
 i915_mtrr_setup(struct drm_i915_private *dev_priv, unsigned long base,
 		unsigned long size)
@@ -1455,7 +1454,6 @@ i915_mtrr_setup(struct drm_i915_private *dev_priv, unsigned long base,
 			 "performance may suffer.\n");
 	}
 }
-#endif
 
 #ifndef __NetBSD__		/* XXX fb */
 static void i915_kick_out_firmware_fb(struct drm_i915_private *dev_priv)
@@ -1511,9 +1509,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	struct drm_i915_private *dev_priv;
 	struct intel_device_info *info;
 	int ret = 0, mmio_bar, mmio_size;
-#ifndef __NetBSD__		/* XXX gtt */
 	uint32_t aperture_size;
-#endif
 
 	info = (struct intel_device_info *) flags;
 
@@ -1624,7 +1620,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	}
 #endif
 
-#ifndef __NetBSD__		/* XXX gtt */
 	aperture_size = dev_priv->mm.gtt->gtt_mappable_entries << PAGE_SHIFT;
 	dev_priv->mm.gtt_base_addr = dev_priv->mm.gtt->gma_bus_addr;
 
@@ -1644,7 +1639,6 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 
 	i915_mtrr_setup(dev_priv, dev_priv->mm.gtt_base_addr,
 			aperture_size);
-#endif	/* __NetBSD__ */
 
 	/* The i915 workqueue is primarily used for batched retirement of
 	 * requests (and thus managing bo) once the task has been completed
@@ -1769,7 +1763,6 @@ out_gem_unload:
 #endif
 	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
-#ifndef __NetBSD__		/* XXX gtt */
 	if (dev_priv->mm.gtt_mtrr >= 0) {
 		mtrr_del(dev_priv->mm.gtt_mtrr,
 			 dev_priv->mm.gtt_base_addr,
@@ -1778,7 +1771,6 @@ out_mtrrfree:
 	}
 	io_mapping_free(dev_priv->mm.gtt_mapping);
 out_rmmap:
-#endif
 #ifdef __NetBSD__
 	(void)drm_rmmap(dev, dev_priv->regs_map);
 #else
