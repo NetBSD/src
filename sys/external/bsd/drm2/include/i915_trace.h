@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.1.2.4 2013/07/24 03:29:14 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.1.2.5 2013/09/08 15:36:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -101,6 +101,11 @@ trace_i915_gem_object_pread(struct drm_i915_gem_object *obj __unused,
 static inline void
 trace_i915_gem_object_pwrite(struct drm_i915_gem_object *obj __unused,
     uint32_t offset __unused, uint32_t size __unused)
+{
+}
+
+static inline void
+trace_i915_gem_object_unbind(struct drm_i915_gem_object *obj __unused)
 {
 }
 
