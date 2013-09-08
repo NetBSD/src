@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.1.2.2 2013/09/08 15:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,27 @@
 
 #ifndef _LINUX_KGDB_H_
 #define _LINUX_KGDB_H_
+
+#if 0				/* XXX */
+#include "opt_ddb.h"
+#else
+#define	DDB
+#endif
+
+#ifdef DDB
+extern int	db_active;
+
+static inline bool
+in_dbg_master(void)
+{
+	return db_active;
+}
+#else
+static inline bool
+in_dbg_master(void)
+{
+	return false;
+}
+#endif
 
 #endif  /* _LINUX_KGDB_H_ */

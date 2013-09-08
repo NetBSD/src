@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.8 2013/09/08 15:39:05 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.9 2013/09/08 15:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -86,16 +86,28 @@ schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 	callout_schedule(&dw->work.ws_callout, (int)ticks);
 }
 
-static inline void
-cancel_work_sync(struct work_struct *work)
+static inline bool
+cancel_work(struct work_struct *work)
 {
-	callout_halt(&work->ws_callout, NULL);
+	return !callout_stop(&work->ws_callout);
 }
 
-static inline void
+static inline bool
+cancel_work_sync(struct work_struct *work)
+{
+	return !callout_halt(&work->ws_callout, NULL);
+}
+
+static inline bool
+cancel_delayed_work(struct delayed_work *dw)
+{
+	return cancel_work(&dw->work);
+}
+
+static inline bool
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
-	cancel_work_sync(&dw->work);
+	return cancel_work_sync(&dw->work);
 }
 
 /*
