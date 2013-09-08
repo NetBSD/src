@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.1.2.2 2013/07/24 01:57:50 riastradh Exp $	*/
+/*	$NetBSD: errno.h,v 1.1.2.3 2013/09/08 15:36:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,5 +33,7 @@
 #define _LINUX_ERRNO_H_
 
 #include <sys/errno.h>
+
+#define	ERESTARTSYS	ERESTART
 
 #endif  /* _LINUX_ERRNO_H_ */
