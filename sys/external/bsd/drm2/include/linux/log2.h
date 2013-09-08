@@ -1,4 +1,4 @@
-/*	$NetBSD: log2.h,v 1.1.2.2 2013/07/24 02:03:00 riastradh Exp $	*/
+/*	$NetBSD: log2.h,v 1.1.2.3 2013/09/08 15:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,5 +33,11 @@
 #define _LINUX_LOG2_H_
 
 #include <sys/bitops.h>
+
+static inline bool
+is_power_of_2(unsigned long x)
+{
+	return ((x != 0) && (((x - 1) & x) == 0));
+}
 
 #endif  /* _LINUX_LOG2_H_ */

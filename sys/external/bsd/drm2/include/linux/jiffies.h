@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.1.2.3 2013/07/24 03:03:23 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.1.2.4 2013/09/08 15:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,12 @@ static inline unsigned int
 usecs_to_jiffies(unsigned int usec)
 {
 	return mstohz((usec + (1000 / hz) - 1) / (1000 / hz));
+}
+
+static inline unsigned int
+timespec_to_jiffies(const struct timespec *ts)
+{
+	return tstohz(ts);
 }
 
 /* XXX long is the wrong type here times...  */

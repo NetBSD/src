@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.2.1 2013/07/24 03:18:46 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.1.2.2 2013/09/08 15:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,68 @@ static inline time_t
 get_seconds(void)
 {
 	return time_second;
+}
+
+static inline void
+getrawmonotonic(struct timespec *ts)
+{
+	getnanouptime(ts);
+}
+
+static inline bool
+timespec_valid(const struct timespec *ts)
+{
+	if (ts->tv_sec < 0)
+		return false;
+	if (1000000000L <= ts->tv_nsec)
+		return false;
+	return true;
+}
+
+static inline struct timespec
+ns_to_timespec(const int64_t nsec)
+{
+	struct timespec ts;
+
+	ts.tv_sec = (nsec / 1000000000L);
+	ts.tv_nsec = (nsec % 1000000000L);
+	if (ts.tv_nsec < 0) {
+		ts.tv_sec -= 1;
+		ts.tv_nsec += 1000000000L;
+	}
+
+	return ts;
+}
+
+static inline int64_t
+timespec_to_ns(const struct timespec *ts)
+{
+	return (((int64_t)ts->tv_sec * 1000000000LL) + ts->tv_nsec);
+}
+
+static inline struct timespec
+timespec_sub(struct timespec a, struct timespec b)
+{
+	struct timespec d;
+
+	timespecsub(&a, &b, &d);
+
+	return d;
+}
+
+static inline void
+set_normalized_timespec(struct timespec *ts, time_t sec, int64_t nsec)
+{
+	while (nsec >= 1000000000L) {
+		nsec -= 1000000000L;
+		sec += 1;
+	}
+	while (nsec < 0) {
+		nsec += 1000000000L;
+		sec -= 1;
+	}
+	ts->tv_sec = sec;
+	ts->tv_nsec = nsec;
 }
 
 #endif  /* _LINUX_TIME_H_ */

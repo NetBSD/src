@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.2.7 2013/07/24 02:50:51 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.1.2.8 2013/09/08 15:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,5 +59,8 @@ typedef paddr_t phys_addr_t;
 
 /* XXX Is this the right type?  */
 typedef unsigned long long cycles_t;
+
+/* XXX Not sure this is correct.  */
+typedef off_t loff_t;
 
 #endif  /* _LINUX_TYPES_H_ */
