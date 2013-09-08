@@ -1209,6 +1209,7 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	ring->virtual_start_map.offset = (dev_priv->mm.gtt->gma_bus_addr +
 	    obj->gtt_offset);
 	ring->virtual_start_map.size = ring->size;
+	ring->virtual_start_map.type = _DRM_REGISTERS;
 	ring->virtual_start_map.flags = 0;
 	ring->virtual_start_map.flags |= _DRM_RESTRICTED;
 	ring->virtual_start_map.flags |= _DRM_KERNEL;
