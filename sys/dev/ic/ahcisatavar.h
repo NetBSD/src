@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.14 2012/09/20 17:53:48 matt Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.15 2013/09/08 11:47:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -62,6 +62,7 @@ struct ahci_softc {
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
 	int sc_ncmds; /* number of command slots */
+	uint32_t sc_ahci_ports;
 	struct ata_channel *sc_chanarray[AHCI_MAX_PORTS];
 	struct ahci_channel {
 		struct ata_channel ata_channel; /* generic part */
