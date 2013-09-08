@@ -239,19 +239,11 @@ static int i915_dma_resume(struct drm_device * dev)
 
 	DRM_DEBUG_DRIVER("%s\n", __func__);
 
-#ifdef __NetBSD__
-	if (!ring->virtual_start_mapped) {
-		DRM_ERROR("can not ioremap virtual address for"
-			  " ring buffer\n");
-		return -ENOMEM;
-	}
-#else
 	if (ring->virtual_start == NULL) {
 		DRM_ERROR("can not ioremap virtual address for"
 			  " ring buffer\n");
 		return -ENOMEM;
 	}
-#endif
 
 	/* Program Hardware Status Page */
 	if (!ring->status_page.page_addr) {
@@ -834,17 +826,10 @@ static int i915_irq_emit(struct drm_device *dev, void *data,
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		return -ENODEV;
 
-#ifdef __NetBSD__
-	if (!dev_priv || !LP_RING(dev_priv)->virtual_start_mapped) {
-		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
-	}
-#else
 	if (!dev_priv || !LP_RING(dev_priv)->virtual_start) {
 		DRM_ERROR("called with no initialization\n");
 		return -EINVAL;
 	}
-#endif
 
 	RING_LOCK_TEST_WITH_RETURN(dev, file_priv);
 
