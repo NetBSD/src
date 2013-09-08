@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.1.2.6 2013/09/08 15:26:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.6 2013/09/08 15:26:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -38,6 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.1.2.5 2013/07/24 03:51:04 riastradh
 #include <sys/systm.h>
 
 #include <linux/highmem.h>
+#include <linux/mutex.h>
+
+#include <drm/drmP.h>
 
 /*
  * XXX I2C stuff should be moved to a separate drm2edid module.
@@ -65,6 +68,7 @@ drm2_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		linux_mutex_init(&drm_global_mutex);
 		error = linux_kmap_init();
 		if (error) {
 			aprint_error("drm: unable to initialize linux kmap:"
@@ -105,6 +109,7 @@ drm2_modcmd(modcmd_t cmd, void *arg __unused)
 			return error;
 #endif
 		linux_kmap_fini();
+		linux_mutex_destroy(&drm_global_mutex);
 		return 0;
 
 	default:
