@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.1.2.4 2013/09/08 16:00:50 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.1.2.5 2013/09/08 16:01:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ destroy_completion(struct completion *completion)
 {
 	KASSERT(!cv_has_waiters(&completion->c_cv));
 	cv_destroy(&completion->c_cv);
+	mutex_destroy(&completion->c_lock);
 }
 
 /*
