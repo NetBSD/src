@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.20 2013/07/24 03:45:24 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.21 2013/09/08 15:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,13 @@
 /* XXX These will multiply evaluate their arguments.  */
 #define	max_t(T, X, Y)	MAX(X, Y)
 #define	min_t(T, X, Y)	MIN(X, Y)
+
+/*
+ * Rounding to nearest.
+ */
+#define	DIV_ROUND_CLOSEST(N, D)						\
+	((0 < (N)) ? (((N) + ((D) / 2)) / (D))				\
+	    : (((N) - ((D) / 2)) / (D)))
 
 /*
  * Rounding to what may or may not be powers of two.
