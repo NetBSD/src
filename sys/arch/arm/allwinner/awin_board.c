@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.4 2013/09/07 02:09:23 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.5 2013/09/08 10:32:56 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.4 2013/09/07 02:09:23 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.5 2013/09/08 10:32:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,7 +195,8 @@ awin_pll6_enable(void)
 	/*
 	 * SATA needs PLL6 to be a 100MHz clock.
 	 */
-	const uint32_t ocfg = bus_space_read_4(bst, bsh, AWIN_PLL6_CFG_REG);
+	const uint32_t ocfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG);
 	const u_int k = __SHIFTOUT(ocfg, AWIN_PLL_CFG_FACTOR_K);
 
 	/*
@@ -208,6 +209,7 @@ awin_pll6_enable(void)
 	ncfg |= __SHIFTIN(25, AWIN_PLL_CFG_FACTOR_N);
 	ncfg |= AWIN_PLL_CFG_ENABLE | AWIN_PLL6_CFG_SATA_CLK_EN;
 	if (ncfg != ocfg) {
-		bus_space_write_4(bst, bsh, AWIN_PLL6_CFG_REG, ncfg);
+		bus_space_write_4(bst, bsh,
+		    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG, ncfg);
 	}
 }
