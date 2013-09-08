@@ -2034,7 +2034,6 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 
 	/* XXX Maintain dirty flag?  */
 
-	bus_dmamap_unload(dev->dmat, obj->igo_dmamap);
 	bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
 	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
 	    obj->base.size, obj->pages, obj->igo_nsegs);
@@ -2198,12 +2197,6 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	if (error)
 		goto fail2;
 
-	/* XXX errno NetBSD->Linux */
-	error = -bus_dmamap_load_raw(dev->dmat, obj->igo_dmamap, obj->pages,
-	    obj->igo_nsegs, obj->base.size, BUS_DMA_NOWAIT);
-	if (error)
-		goto fail3;
-
 	/* XXX Cargo-culted from the Linux code.  */
 	if (i915_gem_object_needs_bit17_swizzle(obj))
 		i915_gem_object_do_bit_17_swizzle(obj);
@@ -2211,7 +2204,6 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	/* Success!  */
 	return 0;
 
-fail3:	bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
 fail2:	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
 	    obj->base.size, obj->pages, (obj->base.size / PAGE_SIZE));
 fail1:	kfree(obj->pages);
