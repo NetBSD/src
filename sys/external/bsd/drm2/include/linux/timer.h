@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.2.3 2013/07/24 03:50:16 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.2.4 2013/09/08 15:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,6 +74,12 @@ del_timer_sync(struct timer_list *timer)
 
 static inline unsigned long
 round_jiffies_up(unsigned long j)
+{
+	return roundup(j, hz);
+}
+
+static inline unsigned long
+round_jiffies_up_relative(unsigned long j)
 {
 	return roundup(j, hz);
 }
