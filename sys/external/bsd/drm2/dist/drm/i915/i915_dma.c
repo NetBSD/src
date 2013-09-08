@@ -1758,9 +1758,7 @@ out_gem_unload:
 
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);
-#ifdef __NetBSD__		/* XXX gt fini */
 	intel_gt_fini(dev);
-#endif
 	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
 	if (dev_priv->mm.gtt_mtrr >= 0) {
@@ -1873,6 +1871,7 @@ int i915_driver_unload(struct drm_device *dev)
 		i915_gem_context_fini(dev);
 		mutex_unlock(&dev->struct_mutex);
 		i915_gem_cleanup_aliasing_ppgtt(dev);
+		i915_gem_fini_global_gtt(dev);
 		i915_gem_cleanup_stolen(dev);
 		drm_mm_takedown(&dev_priv->mm.stolen);
 
@@ -1906,9 +1905,11 @@ int i915_driver_unload(struct drm_device *dev)
 
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);
+	intel_gt_fini(dev);
 
 	destroy_workqueue(dev_priv->wq);
 
+	i915_gem_gtt_fini(dev);
 	pci_dev_put(dev_priv->bridge_dev);
 	kfree(dev->dev_private);
 
