@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.51 2013/09/06 00:56:12 matt Exp $
+#	$NetBSD: files.i2c,v 1.52 2013/09/08 14:59:42 rkujawa Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -198,3 +198,9 @@ file	dev/i2c/mcp980x.c 		mcp980x
 device	w83795g: gpiobus, sysmon_envsys, sysmon_wdog
 attach	w83795g at iic
 file	dev/i2c/w83795g.c 		w83795g
+
+# Freescale MPL115A2
+device  mpl115a: sysmon_envsys
+attach  mpl115a at iic
+file    dev/i2c/mpl115a.c		mpl115a
+
