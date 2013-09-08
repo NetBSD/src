@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.1.2.2 2013/07/24 01:51:36 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.1.2.3 2013/09/08 15:33:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ kref_get(struct kref *kref)
 	const unsigned int count __unused =
 	    atomic_inc_uint_nv(&kref->kr_count);
 
-	KASSERT(count > 1);
+	KASSERTMSG((count > 1), "getting released kref");
 }
 
 static inline int
@@ -64,9 +64,10 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 
 	do {
 		old = kref->kr_count;
-		KASSERT(count <= old);
+		KASSERTMSG((count <= old), "overreleasing kref: %u - %u",
+		    old, count);
 		new = (old - count);
-	} while (atomic_cas_uint(&kref->kr_count, old, new) == old);
+	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
 
 	if (new == 0) {
 		(*release)(kref);
