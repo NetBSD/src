@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1077.2.1 2013/07/24 03:53:14 riastradh Exp $
+#	$NetBSD: files,v 1.1077.2.2 2013/09/08 15:33:06 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1093,7 +1093,7 @@ device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
 # DRM - Direct Rendering Infrastructure: dev/drm
-#define drm {}
+define drm {}
 #include "external/bsd/drm/conf/files.drm"
 #include "dev/drm/files.drm"
 
