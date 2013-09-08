@@ -1180,12 +1180,12 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	if (I915_NEED_GFX_HWS(dev)) {
 		ret = init_status_page(ring);
 		if (ret)
-			return ret;
+			goto err_waitqueue;
 	} else {
 		BUG_ON(ring->id != RCS);
 		ret = init_phys_hws_pga(ring);
 		if (ret)
-			return ret;
+			goto err_waitqueue;
 	}
 
 	obj = i915_gem_alloc_object(dev, ring->size);
@@ -1254,6 +1254,10 @@ err_unref:
 	ring->obj = NULL;
 err_hws:
 	cleanup_status_page(ring);
+err_waitqueue:
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&ring->irq_queue);
+#endif
 	return ret;
 }
 
