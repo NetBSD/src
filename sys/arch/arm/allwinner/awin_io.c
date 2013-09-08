@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.4 2013/09/07 02:46:06 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.5 2013/09/08 04:06:44 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -118,8 +118,8 @@ static const struct awin_locators awin_locators[] = {
 	{ "spi", OFFANDSIZE(SPI1), 1, AWIN_IRQ_SPI1, AANY },
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
 	{ "spi", OFFANDSIZE(SPI3), 3, AWIN_IRQ_SPI3, AANY },
-	{ "awinfe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, AANY },
-	{ "awinge", AWIN_GMAC_OFFSET, AWIN_GMAC_SIZE, NOPORT, AWIN_IRQ_GMAC, A20 },
+	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, AANY },
+	{ "awge", AWIN_GMAC_OFFSET, AWIN_GMAC_SIZE, NOPORT, AWIN_IRQ_GMAC, A20 },
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
 };
 
@@ -143,6 +143,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	struct awinio_softc * const sc = &awinio_sc;
 	const bool a10_p = CPU_ID_CORTEX_A8_P(curcpu()->ci_arm_cpuid);
 	const bool a20_p = CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid);
+	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
 
@@ -160,12 +161,25 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	const struct awin_locators * const eloc =
 	    awin_locators + __arraycount(awin_locators);
 	for (const struct awin_locators *loc = awin_locators; loc < eloc; loc++) {
+		char prop_name[31];
+		bool skip;
+		if (loc->loc_port == AWINIOCF_PORT_DEFAULT) {
+			snprintf(prop_name, sizeof(prop_name),
+			    "no-%s", loc->loc_name);
+		} else {
+			snprintf(prop_name, sizeof(prop_name),
+			    "no-%s-%d", loc->loc_name, loc->loc_port);
+		}
+		if (prop_dictionary_get_bool(dict, prop_name, &skip) && skip)
+			continue;
+
 		if (loc->loc_flags & AWINIO_ONLY) {
 			if (a10_p && !(loc->loc_flags & AWINIO_ONLY_A10))
 				continue;
 			if (a20_p && !(loc->loc_flags & AWINIO_ONLY_A20))
 				continue;
 		}
+
 		struct awinio_attach_args aio = {
 			.aio_loc = *loc,
 			.aio_core_bst = sc->sc_bst,
