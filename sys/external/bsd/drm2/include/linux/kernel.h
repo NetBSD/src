@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.1.2.21 2013/09/08 15:58:24 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.1.2.22 2013/09/08 16:32:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -108,5 +108,7 @@ abs64(int64_t x)
 {
 	return (x < 0? (-x) : x);
 }
+
+static int panic_timeout __unused = 0;
 
 #endif  /* _LINUX_KERNEL_H_ */

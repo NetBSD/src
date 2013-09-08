@@ -1,4 +1,4 @@
-/*	$NetBSD: notifier.h,v 1.1.2.1 2013/07/24 03:49:42 riastradh Exp $	*/
+/*	$NetBSD: notifier.h,v 1.1.2.2 2013/09/08 16:32:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,31 @@
 #ifndef _LINUX_NOTIFIER_H_
 #define _LINUX_NOTIFIER_H_
 
+#include <sys/cdefs.h>
+
+#define	NOTIFY_OK	0
+
 struct notifier_block {
 	int	(*notifier_call)(struct notifier_block *, unsigned long,
 		    void *);
 };
 
-#define	NOTIFY_OK	0
+struct atomic_notifier_head {
+	char	anh_blahdittyblahblah;
+};
+
+static struct atomic_notifier_head panic_notifier_list __unused;
+
+static inline void
+atomic_notifier_chain_register(struct atomic_notifier_head *head __unused,
+    struct notifier_block *block __unused)
+{
+}
+
+static inline void
+atomic_notifier_chain_unregister(struct atomic_notifier_head *head __unused,
+    struct notifier_block *block __unused)
+{
+}
 
 #endif  /* _LINUX_NOTIFIER_H_ */
