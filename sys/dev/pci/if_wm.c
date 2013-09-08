@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.262 2013/07/16 10:30:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.263 2013/09/08 03:17:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.262 2013/07/16 10:30:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.263 2013/09/08 03:17:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1687,10 +1687,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0) {
-			printf ("get hw control (1)\n");
+		if (wm_check_mng_mode(sc) != 0)
 			wm_get_hw_control(sc);
-		}
 		break;
 	default:
 		break;
