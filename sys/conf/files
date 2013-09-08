@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1078 2013/07/27 07:02:03 kiyohara Exp $
+#	$NetBSD: files,v 1.1079 2013/09/08 12:51:14 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -956,8 +956,9 @@ define	ata_udma
 define	ata_piobm
 device	wdc: ata, wdc_common
 
-defflag	opt_ata.h	ATADEBUG
-defflag	opt_wdc.h	WDC_NO_IDS
+defflag opt_ata.h	ATADEBUG
+defparam opt_ata.h	ATADEBUG_MASK
+defflag opt_wdc.h	WDC_NO_IDS
 
 device	atabus: atapi,ata_hl
 attach	atabus at ata
