@@ -1084,7 +1084,14 @@ struct drm_i915_gem_object {
 	unsigned int has_global_gtt_mapping:1;
 	unsigned int has_dma_mapping:1;
 
+#ifdef __NetBSD__
+	struct pglist igo_pageq;
+	bus_dma_segment_t *pages; /* `pages' is an expedient misnomer.  */
+	int igo_nsegs;
+	bus_dmamap_t igo_dmamap;
+#else
 	struct sg_table *pages;
+#endif
 	int pages_pin_count;
 
 	/* prime dma-buf support */
@@ -1436,7 +1443,23 @@ void i915_gem_release_mmap(struct drm_i915_gem_object *obj);
 void i915_gem_lastclose(struct drm_device *dev);
 
 int __must_check i915_gem_object_get_pages(struct drm_i915_gem_object *obj);
-#ifndef __NetBSD__		/* XXX */
+#ifdef __NetBSD__		/* XXX */
+static inline struct page *
+i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
+{
+
+	/*
+	 * Pages must be pinned so that we need not hold the lock to
+	 * prevent them from disappearing.
+	 */
+	KASSERT(obj->pages != NULL);
+	mutex_enter(obj->base.gemo_uvmobj.vmobjlock);
+	struct vm_page *const page = uvm_pagelookup(obj->base.gemo_shm_uao, n);
+	mutex_exit(obj->base.gemo_uvmobj.vmobjlock);
+
+	return container_of(page, struct page, p_vmp);
+}
+#else
 static inline struct page *i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 {
 	struct scatterlist *sg = obj->pages->sgl;
@@ -1534,7 +1557,10 @@ int i915_add_request(struct intel_ring_buffer *ring,
 		     u32 *seqno);
 int __must_check i915_wait_seqno(struct intel_ring_buffer *ring,
 				 uint32_t seqno);
-#ifndef __NetBSD__		/* XXX */
+#ifdef __NetBSD__		/* XXX */
+int i915_gem_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
+    int, int, vm_prot_t, int);
+#else
 int i915_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 #endif
 int __must_check
