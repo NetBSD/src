@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.4 2013/09/08 16:13:10 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.5 2013/09/08 16:13:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.4 2013/09/08 16:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.5 2013/09/08 16:13:55 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -409,9 +409,10 @@ gen6_ggtt_bind_object(struct drm_i915_gem_object *obj,
 	if (0 < i) {
 		/* Posting read and sanity check.  */
 		/* XXX Shouldn't there be a bus_space_sync?  */
-		const uint32_t expected = pte_encode(dev, addr, cache_level);
+		const uint32_t expected = pte_encode(dev, addr - PAGE_SIZE,
+		    cache_level);
 		const uint32_t actual = bus_space_read_4(bst, bsh,
-		    (first_entry + (4*(i-1))));
+		    4*(first_entry + i-1));
 		if (actual != expected)
 			aprint_error_dev(dev->dev, "mismatched PTE"
 			    ": 0x%"PRIxMAX" != 0x%"PRIxMAX"\n",
