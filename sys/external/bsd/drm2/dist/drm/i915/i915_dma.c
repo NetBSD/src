@@ -1599,23 +1599,21 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 		mmio_size = 2*1024*1024;
 
 #ifdef __NetBSD__
-	/* XXX Maybe it would be better to just use pci_mapreg_map...  */
-	{
-		bus_addr_t addr;
-		bus_size_t size;
+	if (dev->bus_maps[mmio_bar].bm_size < mmio_size) {
+		DRM_ERROR("MMIO BAR %d is too small"
+		    ": %"PRIxMAX" < %"PRIxMAX"\n",
+		    mmio_bar,
+		    (uintmax_t)dev->bus_maps[mmio_bar].bm_size,
+		    (uintmax_t)mmio_size);
+		ret = -EIO;
+		goto put_gmch;
+	}
 
-		if (pci_mapreg_info(dev->pdev->pd_pa.pa_pc,
-			dev->pdev->pd_pa.pa_tag, PCI_BAR(mmio_bar),
-			PCI_MAPREG_TYPE_MEM,
-			&addr, &size, NULL /* XXX flags? */)) {
-			ret = -EIO;	    /* XXX */
-			goto put_gmch;
-		}
-
-		ret = drm_addmap(dev, addr, size, _DRM_REGISTERS,
-		    (_DRM_KERNEL | _DRM_DRIVER), &dev_priv->regs_map);
-		if (ret)
-			goto put_gmch;
+	ret = drm_addmap(dev, dev->bus_maps[mmio_bar].bm_base, mmio_size,
+	    _DRM_REGISTERS, (_DRM_KERNEL | _DRM_DRIVER), &dev_priv->regs_map);
+	if (ret) {
+		DRM_ERROR("Failed to map MMIO BAR %d: %d\n", mmio_bar, ret);
+		goto put_gmch;
 	}
 #else
 	dev_priv->regs = pci_iomap(dev->pdev, mmio_bar, mmio_size);
