@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.1.2.7 2013/07/24 03:14:15 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.1.2.8 2013/09/08 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.7 2013/07/24 03:14:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.2.8 2013/09/08 16:30:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "agp_i810.h"
@@ -79,7 +79,6 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 {
 	const bus_space_tag_t bst = dev->bst;
 	unsigned int unit;
-	int error;
 
 	/*
 	 * Search dev's bus maps for a match.
@@ -95,132 +94,44 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 		if (bm->bm_size < map->size)
 			continue;
 
-		/*
-		 * Reject maps that the request doesn't fit in.  (Make
-		 * sure to avoid integer overflow.)
-		 */
+		/* Reject maps that the request doesn't fit in.  */
 		if ((bm->bm_size - map->size) <
 		    (map->offset - bm->bm_base))
 			continue;
 
-		/* Has it been mapped yet?  If not, map it.  */
-		if (bm->bm_mapped == 0) {
-			KASSERT(ISSET(bm->bm_flags, BUS_SPACE_MAP_LINEAR));
-			error = bus_space_map(bst, bm->bm_base,
-			    bm->bm_size, bm->bm_flags, &bm->bm_bsh);
-			if (error) {
-				if (drm_bus_borrow(map->offset,
-					&map->lm_data.bus_space.bsh)) {
-					map->lm_data.bus_space.bus_map = NULL;
-					goto win;
-				}
-				return NULL;
-			}
-		}
+		/* Ensure we can map the space into virtual memory.  */
+		if (!ISSET(bm->bm_flags, BUS_SPACE_MAP_LINEAR))
+			continue;
 
-		/* Mark it used and make a subregion just for the request.  */
-		if (bm->bm_mapped == UINT_MAX)
-			return NULL;
-		bm->bm_mapped++;
-		error = bus_space_subregion(bst, bm->bm_bsh,
-		    map->offset - bm->bm_base, map->size,
-		    &map->lm_data.bus_space.bsh);
-		if (error) {
-			/*
-			 * Back out: unmark it and, if nobody else was
-			 * using it, unmap it.
-			 */
-			KASSERT(bm->bm_mapped > 0);
-			if (--bm->bm_mapped == 0)
-				bus_space_unmap(bst, bm->bm_bsh,
-				    bm->bm_size);
-			return NULL;
-		}
+		/* Map it.  */
+		if (bus_space_map(bst, map->offset, map->size,
+			bm->bm_flags, &map->lm_data.bus_space.bsh))
+			break;
 
-		/* Got it!  */
 		map->lm_data.bus_space.bus_map = bm;
 		goto win;
 	}
 
-	/*
-	 * No dice.  Try mapping it directly ourselves.
-	 *
-	 * XXX Is this sensible?  What prevents us from clobbering some
-	 * existing map?  And what does this have to do with agp?
-	 */
-	for (unit = 0; unit < dev->agp_nmaps; unit++) {
-		struct drm_bus_map *const bm = &dev->agp_maps[unit];
-
-		/* Is this one allocated? */
-		if (bm->bm_mapped > 0) {
-			/*
-			 * Make sure it has the same base.
-			 *
-			 * XXX Why must it be the same base?  Can't we
-			 * subregion here too?
-			 */
-			if (bm->bm_base != map->offset)
-				continue;
-
-			/* Make sure it's big enough.  */
-			if (bm->bm_size < map->size)
-				continue;
-
-			/* Mark it used and return it.  */
-			if (bm->bm_mapped == UINT_MAX)
-				return NULL;
-			bm->bm_mapped++;
-
-			/* XXX size is an input/output parameter too...?  */
-			map->size = bm->bm_size;
-
-			map->lm_data.bus_space.bsh = bm->bm_bsh;
-			map->lm_data.bus_space.bus_map = bm;
-			goto win;
-		} else {
-			const int flags = BUS_SPACE_MAP_PREFETCHABLE |
-			    BUS_SPACE_MAP_LINEAR;
-
-			/* Try mapping the request.  */
-			error = bus_space_map(bst, map->offset, map->size,
-			    flags, &bm->bm_bsh);
-			if (error)
-				return NULL; /* XXX Why not continue?  */
-
-			/* Got it.  Allocate this bus map.  */
-			KASSERT(bm->bm_mapped == 0);
-			bm->bm_mapped++;
-			bm->bm_base = map->offset;
-			bm->bm_size = map->size;
-			bm->bm_flags = flags; /* XXX What for?  */
-
-			map->lm_data.bus_space.bsh = bm->bm_bsh;
-			map->lm_data.bus_space.bus_map = bm;
-			goto win;
-		}
+	/* Couldn't map it.  Try borrowing from someone else.  */
+	if (drm_bus_borrow(map->offset, &map->lm_data.bus_space.bsh)) {
+		map->lm_data.bus_space.bus_map = NULL;
+		goto win;
 	}
 
+	/* Failure!  */
 	return NULL;
 
-win:
-	map->lm_data.bus_space.bst = bst;
+win:	map->lm_data.bus_space.bst = bst;
 	return bus_space_vaddr(bst, map->lm_data.bus_space.bsh);
 }
 
 void
 drm_iounmap(struct drm_device *dev, struct drm_local_map *map)
 {
-	const bus_space_tag_t bst = dev->bst;
-	struct drm_bus_map *const bm = map->lm_data.bus_space.bus_map;
-
-	/*
-	 * bm may be null if we have committed the horrible deed of
-	 * borrowing from agp_i810 or genfb.
-	 */
-	if (bm != NULL) {
-		KASSERT(bm->bm_mapped > 0);
-		if (--bm->bm_mapped == 0)
-			bus_space_unmap(bst, bm->bm_bsh, bm->bm_size);
+	if (map->lm_data.bus_space.bus_map != NULL) {
+		bus_space_unmap(map->lm_data.bus_space.bst,
+		    map->lm_data.bus_space.bsh, map->size);
+		map->lm_data.bus_space.bus_map = NULL;
 	}
 }
 

@@ -647,7 +647,6 @@ struct drm_bus_map {
 	bus_size_t		bm_size;
 	bus_space_handle_t	bm_bsh;
 	int			bm_flags;
-	unsigned int		bm_mapped;
 };
 #endif
 
