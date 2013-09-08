@@ -1601,7 +1601,11 @@ extern int drm_authmagic(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 extern int drm_remove_magic(struct drm_master *master, drm_magic_t magic);
 
-#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
+#ifdef __NetBSD__		/* XXX drm clflush */
+void drm_clflush_pglist(struct pglist *);
+void drm_clflush_page(struct page *);
+void drm_clflush_virt_range(const void *, size_t);
+#else
 /* Cache management (drm_cache.c) */
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 void drm_clflush_sg(struct sg_table *st);
