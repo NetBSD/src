@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.85 2013/09/07 18:55:29 chs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.86 2013/09/08 14:27:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.85 2013/09/07 18:55:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.86 2013/09/08 14:27:39 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.85 2013/09/07 18:55:29 chs Exp $");
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
 
-static const char *smc91cxx_idstrs[] = {
+const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */
 	NULL,				/* 1 */
 	NULL,				/* 2 */
