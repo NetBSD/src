@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.6 2013/09/08 04:07:45 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.7 2013/09/08 10:43:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ awin_ahci_phy_init(struct awin_ahci_softc *asc)
 		timeout = 1000;
 		do {
 			delay(10);
-			v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
+			v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS2R_REG);
 		} while (--timeout && (v & __BIT(24)));
 
 		if (!timeout) {
