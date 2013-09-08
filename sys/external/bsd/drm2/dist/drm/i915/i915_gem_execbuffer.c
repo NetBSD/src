@@ -101,6 +101,19 @@ static inline int use_cpu_reloc(struct drm_i915_gem_object *obj)
 		obj->cache_level != I915_CACHE_NONE);
 }
 
+#ifdef __NetBSD__
+#  define	__gtt_iomem
+#  define	__iomem	__gtt_iomem
+
+static inline void
+iowrite32(uint32_t value, uint32_t __acpi_iomem *ptr)
+{
+
+	__insn_barrier();
+	*ptr = value;
+}
+#endif
+
 static int
 i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 				   struct eb_objects *eb,
@@ -190,9 +203,11 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 		return ret;
 	}
 
+#ifndef __NetBSD__              /* XXX atomic GEM reloc fast path */
 	/* We can't wait for rendering with pagefaults disabled */
 	if (obj->active && in_atomic())
 		return -EFAULT;
+#endif
 
 	reloc->delta += target_offset;
 	if (use_cpu_reloc(obj)) {
@@ -225,9 +240,13 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 		reloc_page = io_mapping_map_atomic_wc(dev_priv->mm.gtt_mapping,
 						      reloc->offset & PAGE_MASK);
 		reloc_entry = (uint32_t __iomem *)
-			(reloc_page + (reloc->offset & ~PAGE_MASK));
+			((char *)reloc_page + (reloc->offset & ~PAGE_MASK));
 		iowrite32(reloc->delta, reloc_entry);
+#ifdef __NetBSD__               /* XXX io mapping */
+                io_mapping_unmap_atomic(dev_priv->mm.gtt_mapping, reloc_page);
+#else
 		io_mapping_unmap_atomic(reloc_page);
+#endif
 	}
 
 	/* and update the user's relocation entry */
@@ -236,6 +255,12 @@ i915_gem_execbuffer_relocate_entry(struct drm_i915_gem_object *obj,
 	return 0;
 }
 
+#ifdef __NetBSD__
+#  undef	__gtt_iomem
+#  undef	__iomem
+#endif
+
+#ifndef __NetBSD__              /* XXX atomic GEM reloc fast path */
 static int
 i915_gem_execbuffer_relocate_object(struct drm_i915_gem_object *obj,
 				    struct eb_objects *eb)
@@ -281,6 +306,7 @@ i915_gem_execbuffer_relocate_object(struct drm_i915_gem_object *obj,
 	return 0;
 #undef N_RELOC
 }
+#endif
 
 static int
 i915_gem_execbuffer_relocate_object_slow(struct drm_i915_gem_object *obj,
@@ -304,9 +330,14 @@ i915_gem_execbuffer_relocate(struct drm_device *dev,
 			     struct eb_objects *eb,
 			     struct list_head *objects)
 {
+#ifndef __NetBSD__
 	struct drm_i915_gem_object *obj;
+#endif
 	int ret = 0;
 
+#ifdef __NetBSD__              /* XXX atomic GEM reloc fast path */
+        ret = -EFAULT;
+#else
 	/* This is the fast path and we cannot handle a pagefault whilst
 	 * holding the struct mutex lest the user pass in the relocations
 	 * contained within a mmaped bo. For in such a case we, the page
@@ -321,6 +352,7 @@ i915_gem_execbuffer_relocate(struct drm_device *dev,
 			break;
 	}
 	pagefault_enable();
+#endif
 
 	return ret;
 }
@@ -826,8 +858,13 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 
 	flags = 0;
 	if (args->flags & I915_EXEC_SECURE) {
+#ifdef __NetBSD__
+		if (!file->is_master || !DRM_SUSER())
+		    return -EPERM;
+#else
 		if (!file->is_master || !capable(CAP_SYS_ADMIN))
 		    return -EPERM;
+#endif
 
 		flags |= I915_DISPATCH_SECURE;
 	}
