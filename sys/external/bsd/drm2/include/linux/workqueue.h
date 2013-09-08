@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1.2.7 2013/07/24 03:59:06 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.1.2.8 2013/09/08 15:39:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct work_struct {
 };
 
 struct delayed_work {
-	struct work_struct dw_work;
+	struct work_struct work;
 };
 
 static inline void
@@ -64,13 +64,13 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 static inline void
 INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 {
-	INIT_WORK(&dw->dw_work, fn);
+	INIT_WORK(&dw->work, fn);
 }
 
 static inline struct delayed_work *
 to_delayed_work(struct work_struct *work)
 {
-	return container_of(work, struct delayed_work, dw_work);
+	return container_of(work, struct delayed_work, work);
 }
 
 static inline void
@@ -83,7 +83,7 @@ static inline void
 schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 {
 	KASSERT(ticks < INT_MAX);
-	callout_schedule(&dw->dw_work.ws_callout, (int)ticks);
+	callout_schedule(&dw->work.ws_callout, (int)ticks);
 }
 
 static inline void
@@ -95,7 +95,7 @@ cancel_work_sync(struct work_struct *work)
 static inline void
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
-	cancel_work_sync(&dw->dw_work);
+	cancel_work_sync(&dw->work);
 }
 
 /*
