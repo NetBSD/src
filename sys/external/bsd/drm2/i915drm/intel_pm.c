@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.1.2.4 2013/07/24 04:02:12 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.1.2.5 2013/09/08 15:54:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* intel_pm.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.4 2013/07/24 04:02:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.1.2.5 2013/09/08 15:54:20 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -110,6 +110,12 @@ gen6_set_rps(struct drm_device *dev, u8 val)
 }
 
 /* XXX END KLUDGEY COPYPASTA FROM intel_pm.c */
+
+void
+i915_update_gfx_val(struct drm_i915_private *dev_priv)
+{
+	KASSERT(dev_priv->info->gen != 5); /* XXX gen<6 */
+}
 
 void
 intel_disable_fbc(struct drm_device *dev __unused)

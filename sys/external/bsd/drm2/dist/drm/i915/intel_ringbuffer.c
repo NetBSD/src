@@ -464,7 +464,12 @@ init_pipe_control(struct intel_ring_buffer *ring)
 		goto err_unref;
 
 	pc->gtt_offset = obj->gtt_offset;
+#ifdef __NetBSD__
+	pc->cpu_page = kmap(container_of(TAILQ_FIRST(&obj->igo_pageq),
+		struct page, p_vmp));
+#else
 	pc->cpu_page =  kmap(sg_page(obj->pages->sgl));
+#endif
 	if (pc->cpu_page == NULL)
 		goto err_unpin;
 
@@ -492,7 +497,11 @@ cleanup_pipe_control(struct intel_ring_buffer *ring)
 
 	obj = pc->obj;
 
+#ifdef __NetBSD__
+	kunmap(container_of(TAILQ_FIRST(&obj->igo_pageq), struct page, p_vmp));
+#else
 	kunmap(sg_page(obj->pages->sgl));
+#endif
 	i915_gem_object_unpin(obj);
 	drm_gem_object_unreference(&obj->base);
 
@@ -1067,7 +1076,11 @@ static void cleanup_status_page(struct intel_ring_buffer *ring)
 	if (obj == NULL)
 		return;
 
+#ifdef __NetBSD__
+	kunmap(container_of(TAILQ_FIRST(&obj->igo_pageq), struct page, p_vmp));
+#else
 	kunmap(sg_page(obj->pages->sgl));
+#endif
 	i915_gem_object_unpin(obj);
 	drm_gem_object_unreference(&obj->base);
 	ring->status_page.obj = NULL;
@@ -1094,7 +1107,13 @@ static int init_status_page(struct intel_ring_buffer *ring)
 	}
 
 	ring->status_page.gfx_addr = obj->gtt_offset;
+#ifdef __NetBSD__
+	ring->status_page.page_addr =
+	    kmap(container_of(TAILQ_FIRST(&obj->igo_pageq), struct page,
+		    p_vmp));
+#else
 	ring->status_page.page_addr = kmap(sg_page(obj->pages->sgl));
+#endif
 	if (ring->status_page.page_addr == NULL) {
 		ret = -ENOMEM;
 		goto err_unpin;
@@ -1195,22 +1214,17 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 	ring->virtual_start_map.flags |= _DRM_KERNEL;
 	ring->virtual_start_map.flags |= _DRM_WRITE_COMBINING;
 	ring->virtual_start_map.flags |= _DRM_DRIVER;
-	ret = drm_ioremap(dev, &ring->virtual_start_map);
-	if (ret) {
-		DRM_ERROR("failed to map ring buffer\n");
-		goto err_unpin;
-	}
-	ring->virtual_start_mapped = true;
+	ring->virtual_start = drm_ioremap(dev, &ring->virtual_start_map);
 #else
 	ring->virtual_start =
 		ioremap_wc(dev_priv->mm.gtt->gma_bus_addr + obj->gtt_offset,
 			   ring->size);
+#endif
 	if (ring->virtual_start == NULL) {
 		DRM_ERROR("Failed to map ringbuffer.\n");
 		ret = -EINVAL;
 		goto err_unpin;
 	}
-#endif
 
 	ret = ring->init(ring);
 	if (ret)
@@ -1229,7 +1243,7 @@ static int intel_init_ring_buffer(struct drm_device *dev,
 err_unmap:
 #ifdef __NetBSD__
 	drm_iounmap(dev, &ring->virtual_start_map);
-	ring->virtual_start_mapped = false;
+	ring->virtual_start = NULL;
 #else
 	iounmap(ring->virtual_start);
 #endif
@@ -1262,7 +1276,7 @@ void intel_cleanup_ring_buffer(struct intel_ring_buffer *ring)
 
 #ifdef __NetBSD__
 	drm_iounmap(dev_priv->dev, &ring->virtual_start_map);
-	ring->virtual_start_mapped = false;
+	ring->virtual_start = NULL;
 #else
 	iounmap(ring->virtual_start);
 #endif
@@ -1388,6 +1402,18 @@ static int ring_wait_for_space(struct intel_ring_buffer *ring, int n)
 	return -EBUSY;
 }
 
+#ifdef __NetBSD__		/* XXX */
+#  define	__iomem	__ring_iomem
+
+static inline void
+iowrite32(uint32_t value, uint32_t __ring_iomem *ptr)
+{
+
+	__insn_barrier();
+	*ptr = value;
+}
+#endif
+
 static int intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
 {
 	uint32_t __iomem *virt;
@@ -1399,7 +1425,8 @@ static int intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
 			return ret;
 	}
 
-	virt = ring->virtual_start + ring->tail;
+	virt = (void __iomem *)((char __iomem *)ring->virtual_start +
+	    ring->tail);
 	rem /= 4;
 	while (rem--)
 		iowrite32(MI_NOOP, virt++);
@@ -1409,6 +1436,8 @@ static int intel_wrap_ring_buffer(struct intel_ring_buffer *ring)
 
 	return 0;
 }
+
+#undef	__iomem
 
 int intel_ring_idle(struct intel_ring_buffer *ring)
 {
@@ -1763,12 +1792,11 @@ int intel_render_ring_init_dri(struct drm_device *dev, u64 start, u32 size)
 	ring->virtual_start_map.flags |= _DRM_KERNEL;
 	ring->virtual_start_map.flags |= _DRM_WRITE_COMBINING;
 	ring->virtual_start_map.flags |= _DRM_DRIVER;
-	ret = drm_ioremap(dev, &ring->virtual_start_map);
-	if (ret) {
+	ring->virtual_start = drm_ioremap(dev, &ring->virtual_start_map);
+	if (ring->virtual_start == NULL) {
 		DRM_ERROR("cannot ioremap virtual address for ring buffer\n");
-		return ret;
+		return -EIO;
 	}
-	ring->virtual_start_mapped = true;
 #else
 	ring->virtual_start = ioremap_wc(start, size);
 	if (ring->virtual_start == NULL) {
