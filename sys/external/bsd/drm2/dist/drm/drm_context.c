@@ -121,9 +121,7 @@ void drm_ctxbitmap_cleanup(struct drm_device * dev)
 {
 	mutex_lock(&dev->struct_mutex);
 	idr_remove_all(&dev->ctx_idr);
-#ifdef __NetBSD__
 	idr_destroy(&dev->ctx_idr);
-#endif
 	mutex_unlock(&dev->struct_mutex);
 }
 
@@ -267,10 +265,7 @@ static int drm_context_switch_complete(struct drm_device *dev,
 				       struct drm_file *file_priv, int new)
 {
 	dev->last_context = new;	/* PRE/POST: This is the _only_ writer. */
-#ifndef __NetBSD__
-	/* XXX Nobody seems to use last_switch. */
 	dev->last_switch = jiffies;
-#endif
 
 	if (!_DRM_LOCK_IS_HELD(file_priv->master->lock.hw_lock->lock)) {
 		DRM_ERROR("Lock isn't held after context switch\n");

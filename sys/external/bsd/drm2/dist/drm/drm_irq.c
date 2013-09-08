@@ -346,11 +346,7 @@ int drm_irq_install(struct drm_device *dev)
 {
 	int ret;
 	unsigned long sh_flags = 0;
-#ifdef __NetBSD__
 	const char *irqname;
-#else
-	char *irqname;
-#endif
 
 	if (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
 		return -EINVAL;

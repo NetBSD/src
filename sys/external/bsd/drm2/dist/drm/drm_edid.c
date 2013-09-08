@@ -440,16 +440,6 @@ EXPORT_SYMBOL(drm_get_edid);
  */
 static bool edid_vendor(struct edid *edid, char *vendor)
 {
-#ifdef __NetBSD__		/* XXX Avoid shadowing global definition.  */
-	char edidv[3];
-
-	edidv[0] = ((edid->mfg_id[0] & 0x7c) >> 2) + '@';
-	edidv[1] = (((edid->mfg_id[0] & 0x3) << 3) |
-			  ((edid->mfg_id[1] & 0xe0) >> 5)) + '@';
-	edidv[2] = (edid->mfg_id[1] & 0x1f) + '@';
-
-	return !strncmp(edidv, vendor, 3);
-#else
 	char edid_vendor[3];
 
 	edid_vendor[0] = ((edid->mfg_id[0] & 0x7c) >> 2) + '@';
@@ -458,7 +448,6 @@ static bool edid_vendor(struct edid *edid, char *vendor)
 	edid_vendor[2] = (edid->mfg_id[1] & 0x1f) + '@';
 
 	return !strncmp(edid_vendor, vendor, 3);
-#endif
 }
 
 /**
@@ -1536,19 +1525,11 @@ EXPORT_SYMBOL(drm_find_cea_extension);
  */
 u8 drm_match_cea_mode(struct drm_display_mode *to_match)
 {
-#ifdef __NetBSD__
 	const struct drm_display_mode *cea_mode;
-#else
-	struct drm_display_mode *cea_mode;
-#endif
 	u8 mode;
 
 	for (mode = 0; mode < drm_num_cea_modes; mode++) {
-#ifdef __NetBSD__
 		cea_mode = &edid_cea_modes[mode];
-#else
-		cea_mode = (struct drm_display_mode *)&edid_cea_modes[mode];
-#endif
 
 		if (drm_mode_equal(to_match, cea_mode))
 			return mode + 1;

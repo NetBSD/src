@@ -131,8 +131,8 @@ drm_gem_destroy(struct drm_device *dev)
 	kfree(mm);
 	dev->mm_private = NULL;
 
-#ifdef __NetBSD__
 	idr_destroy(&dev->object_name_idr);
+#ifdef __NetBSD__
 	spin_lock_destroy(&dev->object_name_lock);
 #endif
 }
@@ -215,12 +215,7 @@ drm_gem_object_alloc(struct drm_device *dev, size_t size)
 	}
 	return obj;
 fput:
-#ifdef __NetBSD__
 	drm_gem_object_release(obj);
-#else
-	/* Object_init mangles the global counters - readjust them. */
-	fput(obj->filp);
-#endif
 free:
 	kfree(obj);
 	return NULL;
@@ -274,7 +269,7 @@ drm_gem_handle_delete(struct drm_file *filp, u32 handle)
 	idr_remove(&filp->object_idr, handle);
 	spin_unlock(&filp->table_lock);
 
-#ifndef __NetBSD__
+#ifndef __NetBSD__			/* XXX drm prime */
 	drm_gem_remove_prime_handles(obj, filp);
 #endif
 
