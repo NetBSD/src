@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.3 2013/05/01 12:30:02 rkujawa Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.4 2013/09/08 04:10:23 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.3 2013/05/01 12:30:02 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.4 2013/09/08 04:10:23 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ extern int ehcidebug;
 #endif
 
 
-#define MARVELL_USB_SIZE		0x2000
+#define MARVELL_USB_SIZE		0x1000
 
 #define MARVELL_USB_NWINDOW		4
 
@@ -70,7 +70,7 @@ extern int ehcidebug;
 
 /* ehci generic registers */
 #define MARVELL_USB_EHCI_BASE		0x100
-#define MARVELL_USB_EHCI_SIZE		0x1000
+#define MARVELL_USB_EHCI_SIZE		0x100
 
 /* ehci vendor extension registers */
 #define MARVELL_USB_EHCI_PS_PSPD	0x0c000000	/* Port speed */
