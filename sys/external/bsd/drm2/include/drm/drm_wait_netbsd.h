@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.6 2013/07/24 03:08:03 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.7 2013/09/08 16:02:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -112,13 +112,28 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 
 #define	DRM_TIMED_WAIT_UNTIL(RET, Q, INTERLOCK, TICKS, CONDITION) do	\
 {									\
+	extern int hardclock_ticks;					\
+	const int _dtwu_start = hardclock_ticks;			\
+	int _dtwu_ticks = (TICKS);					\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
-	while (!(CONDITION)) {						\
+	for (;;) {							\
+		if (CONDITION) {					\
+			(RET) = _dtwu_ticks;				\
+			break;						\
+		}							\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->mtx_lock,	\
-		    (TICKS));						\
+		    _dtwu_ticks);					\
 		if (RET)						\
 			break;						\
+		const int _dtwu_now = hardclock_ticks;			\
+		KASSERT(_dtwu_start <= _dtwu_now);			\
+		if ((_dtwu_now - _dtwu_start) < _dtwu_ticks) {		\
+			_dtwu_ticks -= (_dtwu_now - _dtwu_start);	\
+		} else {						\
+			(RET) = 0;					\
+			break;						\
+		}							\
 	}								\
 } while (0)
 
@@ -136,13 +151,28 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	DRM_SPIN_TIMED_WAIT_UNTIL(RET, Q, INTERLOCK, TICKS, CONDITION)	\
 	do								\
 {									\
+	extern int hardclock_ticks;					\
+	const int _dstwu_start = hardclock_ticks;			\
+	int _dstwu_ticks = (TICKS);					\
 	KASSERT(spin_is_locked((INTERLOCK)));				\
-	while (!(CONDITION)) {						\
+	for (;;) {							\
+		if (CONDITION) {					\
+			(RET) = _dstwu_ticks;				\
+			break;						\
+		}							\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock,	\
-		    (TICKS));						\
+		    _dstwu_ticks);					\
 		if (RET)						\
 			break;						\
+		const int _dstwu_now = hardclock_ticks;			\
+		KASSERT(_dstwu_start <= _dstwu_now);			\
+		if ((_dstwu_now - _dstwu_start) < _dstwu_ticks) {	\
+			_dstwu_ticks -= (_dstwu_now - _dstwu_start);	\
+		} else {						\
+			(RET) = 0;					\
+			break;						\
+		}							\
 	}								\
 } while (0)
 
