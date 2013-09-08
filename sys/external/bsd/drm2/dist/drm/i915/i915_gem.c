@@ -2166,6 +2166,7 @@ static int
 i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 {
 	struct drm_device *const dev = obj->base.dev;
+	struct vm_page *page;
 	int error;
 
 	/* XXX Cargo-culted from the Linux code.  */
@@ -2190,6 +2191,21 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 		goto fail1;
 	KASSERT(0 < obj->igo_nsegs);
 	KASSERT(obj->igo_nsegs <= (obj->base.size / PAGE_SIZE));
+
+	/*
+	 * Check that the paddrs will fit in 40 bits.
+	 *
+	 * XXX This is wrong; we ought to pass this constraint to
+	 * bus_dmamem_wire_uvm_object instead.
+	 */
+	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+		if (VM_PAGE_TO_PHYS(page) & ~0xffffffffffULL) {
+			DRM_ERROR("GEM physical address exceeds 40 bits"
+			    ": %"PRIxMAX"\n",
+			    (uintmax_t)VM_PAGE_TO_PHYS(page));
+			goto fail2;
+		}
+	}
 
 	/* XXX errno NetBSD->Linux */
 	error = -bus_dmamap_create(dev->dmat, obj->base.size, obj->igo_nsegs,
