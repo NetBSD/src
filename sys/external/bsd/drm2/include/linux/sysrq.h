@@ -1,4 +1,4 @@
-/*	$NetBSD: sysrq.h,v 1.1.2.1 2013/07/24 00:33:12 riastradh Exp $	*/
+/*	$NetBSD: sysrq.h,v 1.1.2.2 2013/09/08 16:32:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,19 @@
 
 #ifndef _LINUX_SYSRQ_H_
 #define _LINUX_SYSRQ_H_
+
+struct sysrq_key_op {
+	char sko_blahdittyblahblah;
+};
+
+static inline void
+register_sysrq_key(char key __unused, struct sysrq_key_op *op __unused)
+{
+}
+
+static inline void
+unregister_sysrq_key(char key __unused, struct sysrq_key_op *op __unused)
+{
+}
 
 #endif  /* _LINUX_SYSRQ_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1.2.4 2013/07/24 03:26:18 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.1.2.5 2013/09/08 16:32:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 
 #define	dev_err(DEV, FMT, ...)					\
 	device_printf((DEV), "error: " FMT, ##__VA_ARGS__)
+
+#define	dev_info(DEV, FMT, ...)					\
+	device_printf((DEV), "info: " FMT, ##__VA_ARGS__)
 
 #define	dev_warn(DEV, FMT, ...)					\
 	device_printf((DEV), "warning: " FMT, ##__VA_ARGS__)
