@@ -32,6 +32,11 @@
 #include "../../../platform/x86/intel_ips.h"
 #endif
 #include <linux/module.h>
+#include <linux/kgdb.h>
+#include <linux/log2.h>
+#include <linux/math64.h>
+#include <linux/time.h>
+#include <asm/param.h>
 
 #define FORCEWAKE_ACK_TIMEOUT_MS 2
 
