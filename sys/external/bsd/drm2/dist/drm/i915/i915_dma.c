@@ -1757,6 +1757,8 @@ out_gem_unload:
 	spin_lock_destroy(&dev_priv->rps.lock);
 	spin_lock_destroy(&dev_priv->dpio_lock);
 	linux_mutex_destroy(&dev_priv->rps.hw_lock);
+	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
+	destroy_completion(&dev_priv->error_completion);
 #endif
 
 	if (dev->pdev->msi_enabled)
@@ -1889,6 +1891,12 @@ int i915_driver_unload(struct drm_device *dev)
 		if (!I915_NEED_GFX_HWS(dev))
 			i915_free_hws(dev);
 	}
+
+#ifdef __NetBSD__
+	/* XXX Not sure this is the right place, but it looks safe.  */
+	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
+	destroy_completion(&dev_priv->error_completion);
+#endif
 
 #ifdef __NetBSD__
 	if (dev_priv->regs_map != NULL)
