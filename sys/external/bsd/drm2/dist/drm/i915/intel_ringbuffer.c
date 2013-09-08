@@ -27,6 +27,7 @@
  *
  */
 
+#include <asm/param.h>
 #include <drm/drmP.h>
 #include "i915_drv.h"
 #include <drm/i915_drm.h>
