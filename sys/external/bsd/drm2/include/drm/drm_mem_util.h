@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mem_util.h,v 1.1.2.1 2013/07/24 01:56:19 riastradh Exp $	*/
+/*	$NetBSD: drm_mem_util.h,v 1.1.2.2 2013/09/08 15:47:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,53 +32,27 @@
 #ifndef _DRM_MEM_UTIL_H_
 #define _DRM_MEM_UTIL_H_
 
-#include <sys/types.h>
-#include <sys/kmem.h>
-#include <sys/systm.h>
+#include <linux/slab.h>
 
 static inline void *
 drm_calloc_large(size_t n, size_t size)
 {
-
-#if 1
-	KASSERT(size != 0);	/* XXX Let's see whether this ever happens.  */
-#else
-	if (size == 0)
-		return NULL;	/* XXX OK?  */
-#endif
-
-	if (n > (SIZE_MAX / size))
-		return NULL;
-
-	return kmem_zalloc((n * size), KM_SLEEP);
+	return kcalloc(n, size, GFP_KERNEL);
 }
 
 static inline void *
 drm_malloc_ab(size_t n, size_t size)
 {
+	if (size > (SIZE_MAX / n))
+		return NULL;
 
-#if 1
-	KASSERT(size != 0);	/* XXX Let's see whether this ever happens.  */
-#else
-	if (size == 0)
-		return NULL;	/* XXX OK?  */
-#endif
-
-	return kmem_alloc((n * size), KM_SLEEP);
+	return kmalloc((n * size), GFP_KERNEL);
 }
 
 static inline void
-drm_free_large(void *ptr, size_t n, size_t size)
+drm_free_large(void *ptr)
 {
-
-#if 0				/* XXX */
-	if (ptr != NULL)
-#endif
-	{
-		KASSERT(size != 0);
-		KASSERT(n <= (SIZE_MAX / size));
-		kmem_free(ptr, (n * size));
-	}
+	kfree(ptr);
 }
 
 #endif  /* _DRM_MEM_UTIL_H_ */
