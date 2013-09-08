@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.7 2013/09/08 16:02:50 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.1.2.8 2013/09/08 16:35:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -102,7 +102,11 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	DRM_WAIT_UNTIL(RET, Q, INTERLOCK, CONDITION)	do		\
 {									\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
-	while (!(CONDITION)) {						\
+	for (;;) {							\
+		if (CONDITION) {					\
+			(RET) = 0;					\
+			break;						\
+		}							\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -cv_wait_sig((Q), &(INTERLOCK)->mtx_lock);	\
 		if (RET)						\
