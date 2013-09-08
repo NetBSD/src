@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.5 2013/09/07 19:48:57 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_ahcisata.c,v 1.6 2013/09/08 04:07:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,35 +84,40 @@ awin_ahci_phy_init(struct awin_ahci_softc *asc)
 	/*
 	 * This is dark magic.
 	 */
+	delay(5000);
 	bus_space_write_4(bst, bsh, AWIN_AHCI_RWCR_REG, 0);
-	delay(2);
+	delay(10);
+
 	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG, __BIT(19), 0);
-	delay(1);
+	delay(10);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG,
+	    __BIT(26)|__BIT(24)|__BIT(23)|__BIT(18),
+	    __BIT(25));
+	delay(10);
 	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
-	    __BIT(23)|__BIT(18)|__SHIFTIN(5, __BITS(26,24)),
-	    __BITS(26,24));
-	delay(1);
-	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
-	    __BIT(17)|__BITS(10,9)|__BIT(7),
-	    __BIT(16)|__BITS(12,11)|__BIT(8)|__BIT(6));
-	delay(1);
+	    __BIT(17)|__BIT(10)|__BIT(9)|__BIT(7),
+	    __BIT(16)|__BIT(12)|__BIT(11)|__BIT(8)|__BIT(6));
+	delay(10);
 	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG,
 	    __BIT(28)|__BIT(15), 0);
-	delay(1);
+	delay(10);
 	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS1R_REG, 0, __BIT(19));
-	delay(1);
-	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG,
-	    __BITS(21,20), __BIT(22));
-	delay(1);
-	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG,
-	    __BITS(9,8)|__BIT(5), __BITS(7,6));
-	delay(2);
-	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG, __BIT(19), 0);
-	delay(2);
+	delay(10);
 
-	timeout = 100000;
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG,
+	    __BIT(21)|__BIT(20), __BIT(22));
+	delay(10);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG,
+	    __BIT(9)|__BIT(8)|__BIT(5), __BIT(7)|__BIT(6));
+	delay(20);
+
+	delay(5000);
+	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS0R_REG, __BIT(19), 0);
+	delay(20);
+
+	timeout = 1000;
 	do {
-		delay(1);
+		delay(10);
 		v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
 	} while (--timeout && __SHIFTOUT(v, __BITS(30,28)) != 2);
 
@@ -120,20 +125,23 @@ awin_ahci_phy_init(struct awin_ahci_softc *asc)
 		aprint_error_dev(
 		    asc->asc_sc.sc_atac.atac_dev,
 		    "SATA PHY power failed (%#x)\n", v);
-	}
+	} else {
 
-	awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG, __BIT(24), 0);
-	timeout = 100000;
-	do {
-		delay(1);
-		v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
-	} while (--timeout && (v & __BIT(24)));
+		awin_reg_set_clear(bst, bsh, AWIN_AHCI_PHYCS2R_REG,
+		    __BIT(24), 0);
+		timeout = 1000;
+		do {
+			delay(10);
+			v = bus_space_read_4(bst, bsh, AWIN_AHCI_PHYCS0R_REG);
+		} while (--timeout && (v & __BIT(24)));
 
-	if (!timeout) {
-		aprint_error_dev(
-		    asc->asc_sc.sc_atac.atac_dev,
-		    "SATA PHY calibration failed (%#x)\n", v);
+		if (!timeout) {
+			aprint_error_dev(
+			    asc->asc_sc.sc_atac.atac_dev,
+			    "SATA PHY calibration failed (%#x)\n", v);
+		}
 	}
+	delay(15000);
 	bus_space_write_4(bst, bsh, AWIN_AHCI_RWCR_REG, 7);
 }
 
@@ -153,7 +161,7 @@ awin_ahci_enable(bus_space_tag_t bst, bus_space_handle_t bsh)
 	delay(1000);
 
 	/*
-	 * Now turn it on.
+	 * Now turn it on (forcing it to use PLL6).
 	 */
 	bus_space_write_4(bst, bsh, AWIN_SATA_CLK_REG, AWIN_CLK_ENABLE);
 }
