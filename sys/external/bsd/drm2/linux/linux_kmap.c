@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.1.2.2 2013/07/24 03:46:22 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.1.2.3 2013/09/08 16:16:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.2 2013/07/24 03:46:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.3 2013/09/08 16:16:37 riastradh Exp $");
 
 #include <sys/types.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/rbtree.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -55,6 +57,51 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.1.2.2 2013/07/24 03:46:22 riastradh
 static kmutex_t linux_kmap_atomic_lock;
 static vaddr_t linux_kmap_atomic_vaddr;
 
+static kmutex_t linux_kmap_lock;
+static rb_tree_t linux_kmap_entries;
+
+struct linux_kmap_entry {
+	paddr_t		lke_paddr;
+	vaddr_t		lke_vaddr;
+	unsigned int	lke_refcnt;
+	rb_node_t	lke_node;
+};
+
+static int
+lke_compare_nodes(void *ctx __unused, const void *an, const void *bn)
+{
+	const struct linux_kmap_entry *const a = an;
+	const struct linux_kmap_entry *const b = bn;
+
+	if (a->lke_paddr < b->lke_paddr)
+		return -1;
+	else if (a->lke_paddr > b->lke_paddr)
+		return +1;
+	else
+		return 0;
+}
+
+static int
+lke_compare_key(void *ctx __unused, const void *node, const void *key)
+{
+	const struct linux_kmap_entry *const lke = node;
+	const paddr_t *const paddrp = key;
+
+	if (lke->lke_paddr < *paddrp)
+		return -1;
+	else if (lke->lke_paddr > *paddrp)
+		return +1;
+	else
+		return 0;
+}
+
+static const rb_tree_ops_t linux_kmap_entry_ops = {
+	.rbto_compare_nodes = &lke_compare_nodes,
+	.rbto_compare_key = &lke_compare_key,
+	.rbto_node_offset = offsetof(struct linux_kmap_entry, lke_node),
+	.rbto_context = NULL,
+};
+
 int
 linux_kmap_init(void)
 {
@@ -68,12 +115,22 @@ linux_kmap_init(void)
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
 
+	mutex_init(&linux_kmap_lock, MUTEX_DEFAULT, IPL_VM);
+	rb_tree_init(&linux_kmap_entries, &linux_kmap_entry_ops);
+
 	return 0;
 }
 
 void
 linux_kmap_fini(void)
 {
+
+	KASSERT(rb_tree_iterate(&linux_kmap_entries, NULL, RB_DIR_RIGHT) ==
+	    NULL);
+#if 0				/* XXX no rb_tree_destroy*/
+	rb_tree_destroy(&linux_kmap_entries);
+#endif
+	mutex_destroy(&linux_kmap_lock);
 
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
@@ -121,16 +178,25 @@ kunmap_atomic(void *addr)
 void *
 kmap(struct page *page)
 {
-	int s;
-
+	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 	const vaddr_t vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
 	KASSERT(vaddr != 0);
 
-	s = splvm();
+	struct linux_kmap_entry *const lke = kmem_alloc(sizeof(*lke),
+	    KM_SLEEP);
+	lke->lke_paddr = paddr;
+	lke->lke_vaddr = vaddr;
+
+	mutex_spin_enter(&linux_kmap_lock);
+	struct linux_kmap_entry *const collision __unused =
+	    rb_tree_insert_node(&linux_kmap_entries, lke);
+	KASSERT(collision == lke);
+	mutex_spin_exit(&linux_kmap_lock);
+
+	const int s = splvm();
 
 	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
-	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
 	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
 	const int flags = 0;
 	pmap_kenter_pa(vaddr, paddr, prot, flags);
@@ -142,12 +208,21 @@ kmap(struct page *page)
 }
 
 void
-kunmap(void *addr)
+kunmap(struct page *page)
 {
-	const vaddr_t vaddr = (vaddr_t)addr;
-	int s;
+	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 
-	s = splvm();
+	mutex_spin_enter(&linux_kmap_lock);
+	struct linux_kmap_entry *const lke =
+	    rb_tree_find_node(&linux_kmap_entries, &paddr);
+	KASSERT(lke != NULL);
+	rb_tree_remove_node(&linux_kmap_entries, lke);
+	mutex_spin_exit(&linux_kmap_lock);
+
+	const vaddr_t vaddr = lke->lke_vaddr;
+	kmem_free(lke, sizeof(*lke));
+
+	const int s = splvm();
 
 	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
 
