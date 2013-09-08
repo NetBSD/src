@@ -34,6 +34,7 @@
 #include <sys/param.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>

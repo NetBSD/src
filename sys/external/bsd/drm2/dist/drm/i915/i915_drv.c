@@ -915,7 +915,16 @@ int i915_reset(struct drm_device *dev)
 	return 0;
 }
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+
+static const struct uvm_pagerops i915_gem_uvm_ops = {
+	.pgo_reference = drm_gem_pager_reference,
+	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = i915_gem_fault,
+};
+
+#else
+
 static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	struct intel_device_info *intel_info =
@@ -1048,6 +1057,7 @@ static const struct file_operations i915_driver_fops = {
 #endif
 	.llseek = noop_llseek,
 };
+
 #endif	/* defined(__NetBSD__) */
 
 static struct drm_driver driver = {
@@ -1078,7 +1088,7 @@ static struct drm_driver driver = {
 	.gem_init_object = i915_gem_init_object,
 	.gem_free_object = i915_gem_free_object,
 #ifdef __NetBSD__
-	.gem_uvm_ops = NULL,
+	.gem_uvm_ops = &i915_gem_uvm_ops,
 #else
 	.gem_vm_ops = &i915_gem_vm_ops,
 #endif
