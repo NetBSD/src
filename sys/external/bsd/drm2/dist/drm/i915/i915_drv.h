@@ -1360,6 +1360,9 @@ void i915_handle_error(struct drm_device *dev, bool wedged);
 
 extern void intel_irq_init(struct drm_device *dev);
 extern void intel_gt_init(struct drm_device *dev);
+#ifdef __NetBSD__		/* XXX gt fini */
+extern void intel_gt_fini(struct drm_device *dev);
+#endif
 extern void intel_gt_reset(struct drm_device *dev);
 
 void i915_error_state_free(struct kref *error_ref);
@@ -1625,6 +1628,9 @@ void i915_gem_init_global_gtt(struct drm_device *dev,
 			      unsigned long start,
 			      unsigned long mappable_end,
 			      unsigned long end);
+#ifdef __NetBSD__		/* XXX fini global gtt */
+void i915_gem_fini_global_gtt(struct drm_device *dev);
+#endif
 int i915_gem_gtt_init(struct drm_device *dev);
 void i915_gem_gtt_fini(struct drm_device *dev);
 static inline void i915_gem_chipset_flush(struct drm_device *dev)

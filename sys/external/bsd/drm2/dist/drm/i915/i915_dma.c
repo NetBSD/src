@@ -1396,6 +1396,7 @@ cleanup_gem:
 	mutex_unlock(&dev->struct_mutex);
 	i915_gem_cleanup_aliasing_ppgtt(dev);
 cleanup_gem_stolen:
+	intel_modeset_cleanup(dev);
 	i915_gem_cleanup_stolen(dev);
 cleanup_vga_switcheroo:
 #ifndef __NetBSD__		/* XXX vga */
@@ -1725,7 +1726,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 		ret = i915_load_modeset_init(dev);
 		if (ret < 0) {
 			DRM_ERROR("failed to init modeset\n");
-			goto out_gem_unload;
+			goto out_vblank_cleanup;
 		}
 	}
 
@@ -1742,6 +1743,9 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 		intel_gpu_ips_init(dev_priv);
 
 	return 0;
+
+out_vblank_cleanup:
+	drm_vblank_cleanup(dev);
 
 out_gem_unload:
 	if (dev_priv->mm.inactive_shrinker.shrink)
@@ -1760,6 +1764,9 @@ out_gem_unload:
 
 	intel_teardown_gmbus(dev);
 	intel_teardown_mchbar(dev);
+#ifdef __NetBSD__		/* XXX gt fini */
+	intel_gt_fini(dev);
+#endif
 	destroy_workqueue(dev_priv->wq);
 out_mtrrfree:
 #ifndef __NetBSD__		/* XXX gtt */

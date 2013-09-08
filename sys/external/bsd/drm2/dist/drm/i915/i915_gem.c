@@ -4462,6 +4462,9 @@ int i915_gem_init(struct drm_device *dev)
 
 		ret = i915_gem_init_aliasing_ppgtt(dev);
 		if (ret) {
+#ifdef __NetBSD__		/* XXX fini global gtt */
+			i915_gem_fini_global_gtt(dev);
+#endif
 			mutex_unlock(&dev->struct_mutex);
 			return ret;
 		}
@@ -4481,6 +4484,10 @@ int i915_gem_init(struct drm_device *dev)
 	}
 
 	ret = i915_gem_init_hw(dev);
+#ifdef __NetBSD__		/* XXX fini global gtt */
+	if (ret)
+		i915_gem_fini_global_gtt(dev);
+#endif
 	mutex_unlock(&dev->struct_mutex);
 	if (ret) {
 		i915_gem_cleanup_aliasing_ppgtt(dev);
