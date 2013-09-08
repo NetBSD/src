@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.5 2013/09/08 16:13:55 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.1.2.6 2013/09/08 16:28:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.5 2013/09/08 16:13:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.1.2.6 2013/09/08 16:28:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -244,6 +244,17 @@ void
 i915_gem_fini_global_gtt(struct drm_device *dev)
 {
 	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct drm_i915_gem_object *obj, *next;
+	int ret;
+
+	/* Empty the mm before taking it down.  */
+	list_for_each_entry_safe(obj, next, &dev_priv->mm.unbound_list,
+	    gtt_list) {
+		ret = i915_gem_object_unbind(obj);
+		if (ret)
+			DRM_ERROR("Unable to unbind object %p: %d\n", obj,
+			    ret);
+	}
 
 	drm_mm_takedown(&dev_priv->mm.gtt_space);
 }
