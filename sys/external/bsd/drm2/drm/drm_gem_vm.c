@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.1.2.3 2013/09/08 15:56:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.3 2013/09/08 15:56:32 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -56,7 +56,7 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 	struct drm_gem_object *const obj = container_of(uobj,
 	    struct drm_gem_object, gemo_uvmobj);
 
-	drm_gem_object_unreference(obj);
+	drm_gem_object_unreference_unlocked(obj);
 }
 
 int
