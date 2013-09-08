@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58 2013/08/19 04:27:22 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.59 2013/09/08 16:34:06 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -70,6 +70,8 @@ EVBARM_BOARDS.armv7+=		BEAGLEBOARDXM
 EVBARM_BOARDS.armv7hf+= 	BEAGLEBOARDXM
 EVBARM_BOARDS.armv7+=		BEAGLEBONE
 EVBARM_BOARDS.armv7hf+= 	BEAGLEBONE
+EVBARM_BOARDS.armv7+=		CUBIEBOARD
+EVBARM_BOARDS.armv7hf+= 	CUBIEBOARD
 #EVBARM_BOARDS.armv7+=		IGEPV2
 #EVBARM_BOARDS.armv7+=		N900
 #EVBARM_BOARDS.armv7+=		NETWALKER
