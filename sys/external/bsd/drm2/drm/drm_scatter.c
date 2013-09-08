@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.1.2.2 2013/07/24 03:27:52 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.1.2.3 2013/09/08 15:44:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.1.2.2 2013/07/24 03:27:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.1.2.3 2013/09/08 15:44:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -123,7 +123,7 @@ drm_sg_alloc_mem(struct drm_device *dev, size_t size, struct drm_sg_mem **sgp)
 	KASSERT(drm_core_check_feature(dev, DRIVER_SG));
 
 	KASSERT(size <= (size_t)0xffffffffUL); /* XXX 32-bit sizes only?  */
-	const size_t nbytes = round_page(size);
+	const size_t nbytes = PAGE_ALIGN(size);
 	const size_t npages = nbytes >> PAGE_SHIFT;
 	KASSERT(npages <= (size_t)INT_MAX);
 

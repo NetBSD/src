@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.1.2.1 2013/07/24 02:54:09 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.1 2013/07/24 02:54:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.1.2.2 2013/09/08 15:44:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -85,7 +85,7 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t *byte_offsetp,
 	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
 	KASSERT(dev->driver->gem_uvm_ops != NULL);
 
-	if (byte_offset != trunc_page(byte_offset)) /* XXX kassert?  */
+	if (byte_offset != (byte_offset & ~(PAGE_SIZE-1))) /* XXX kassert?  */
 		return -EINVAL;
 
 	if (drm_ht_find_item(&mm->offset_hash, page_offset, &hash) != 0) {
