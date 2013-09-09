@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.7 2013/09/09 00:34:10 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.8 2013/09/09 07:33:54 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -31,35 +31,38 @@ ENTRY(__udivsi3)
 # endif
 	RET
 #elif defined(__ARM_EABI__) && defined(_LIBC)
-#ifdef _ARM_ARCH_7
-	movw	r2, #:lower16:REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
-	movt	r2, #:upper16:REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
-#else
+	cmp	r1, #0
+	beq	.Ldiv0
 	ldr	r2, .Lhwdiv_present
-#endif
-#ifdef PIC
-	add	r2, r2, pc
-#endif
+# ifdef PIC
+	add	r2, r2, pc	/* pc = &.LPIC0 */
+# endif
 	ldr	r2, [r2]
 .LPIC0:	cmp	r2, #0
 	beq	__udivide
 	mov	r3, r0
-#if defined(__ARM_ARCH_EXT_IDIV__)
+# if defined(__ARM_ARCH_EXT_IDIV__)
 	udiv	r0, r0, r1
 	mls	r1, r0, r1, r3	/* return modulus in r1 */
-#elif defined(__thumb__) && defined(_ARM_ARCH_T2)
+# elif defined(__thumb__) && defined(_ARM_ARCH_T2)
 	.inst.w 0xfbb0f0f1
 	.inst.w	0xfb003111
-#else
+# else
 	.inst	0xe730f110
 	.inst	0xe0613190
-#endif
+# endif
 	RET
-#ifndef _ARM_ARCH_7
+
 	.align 0
 .Lhwdiv_present:
 	.word	REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
-#endif
+
+	/* Handle divide by zero */
+	.align	0
+.Ldiv0:	push	{r0, lr}	/* save r0 */
+	mvns	r0, #0		/* thumb2 */
+	bl	_C_LABEL(__aeabi_idiv0)
+	pop	{r1, pc}	/* restore r0 as r1 */
 #else
 	b	__udivide
 #endif
