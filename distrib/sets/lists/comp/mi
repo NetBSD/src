@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1834 2013/08/20 18:05:03 matt Exp $
+#	$NetBSD: mi,v 1.1835 2013/09/09 13:04:57 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -50,6 +50,7 @@
 ./usr/bin/ld.mcld				comp-c-bin		mclinker
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
+./usr/bin/lld					comp-c-bin		lld
 ./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/luac					comp-util-bin
