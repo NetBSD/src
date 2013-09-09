@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.157 2013/07/14 15:44:00 htodd Exp $
+# $NetBSD: postinstall,v 1.158 2013/09/09 15:04:12 prlw1 Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -762,7 +762,7 @@ do_defaults()
 
 	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
 		444 \
-		daily.conf monthly.conf security.conf \
+		daily.conf monthly.conf pkgpath.conf security.conf \
 		weekly.conf ${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
