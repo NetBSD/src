@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.10 2013/09/08 13:24:16 matt Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.11 2013/09/09 00:34:10 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -32,8 +32,8 @@ ENTRY(__divsi3)
 	RET
 #elif defined(__ARM_EABI__) && defined(_LIBC)
 #ifdef _ARM_ARCH_7
-	movw	r2, #:lower16:REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
-	movt	r2, #:upper16:REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
+	movw	r2, #:lower16:REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
+	movt	r2, #:upper16:REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
 #else
 	ldr	r2, .Lhwdiv_present
 #endif
@@ -58,7 +58,7 @@ ENTRY(__divsi3)
 #ifndef _ARM_ARCH_7
 	.align	0
 .Lhwdiv_present:
-	.word	REL_SYM(__libc_arm_hwdiv_present, .LPIC0)
+	.word	REL_SYM(_libc_arm_hwdiv_present, .LPIC0)
 #endif
 #else /* !__ARM_EABI__ */
 	b	__divide
