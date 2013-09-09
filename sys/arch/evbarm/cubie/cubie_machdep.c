@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.7 2013/09/08 04:06:44 matt Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.8 2013/09/09 17:54:38 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.7 2013/09/08 04:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.8 2013/09/09 17:54:38 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -192,29 +192,32 @@ static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-u_int uboot_args[4] = { 0 };	/* filled in by cubie_start.S (not in bss) */
+/*
+ * uboot_args are filled in by cubie_start.S and must be in .data
+ * and not .bbs since .bss is cleared after uboot_args are filled in.
+ */
+uintptr_t uboot_args[4] = { 0 };
 
 /* Same things, but for the free (unused by the kernel) memory. */
 
-extern char KERNEL_BASE_phys[];
-extern char _end[];
+extern char KERNEL_BASE_phys[];	/* physical start of kernel */
+extern char _end[];		/* physical end of kernel */
 
+#if NAWIN_FB > 0
 #if NCOM > 0
 int use_fb_console = false;
 #else
 int use_fb_console = true;
 #endif
-
-#ifdef CPU_CORTEXA7
-uint32_t arm_cnt_frq;
 #endif
 
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
-#define	AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
+#define KERNEL_BASE_PHYS	((paddr_t)KERNEL_BASE_phys)
+#define KERNEL_PHYS_VOFFSET	(KERNEL_BASE - AWIN_SDRAM_PBASE)
+#define AWIN_CORE_VOFFSET	(AWIN_CORE_VBASE - AWIN_CORE_PBASE)
 
 /* Prototypes */
 
@@ -223,10 +226,7 @@ void consinit(void);
 static void kgdb_port_init(void);
 #endif
 
-static void init_clocks(void);
 static void cubie_device_register(device_t, void *);
-
-bs_protos(bs_notimpl);
 
 #if NCOM > 0
 #include <dev/ic/comreg.h>
@@ -248,8 +248,8 @@ bs_protos(bs_notimpl);
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
+#define _A(a)	((a) & ~L1_S_OFFSET)
+#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap devmap[] = {
 	{
@@ -295,9 +295,6 @@ static const struct pmap_devmap devmap[] = {
 u_int
 initarm(void *arg)
 {
-	psize_t ram_size = 0;
-	char *ptr;
-
 	pmap_devmap_register(devmap);
 	awin_bootstrap(AWIN_CORE_VBASE, CONADDR_VA);
 
@@ -305,13 +302,13 @@ initarm(void *arg)
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	init_clocks();
-
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	consinit();
 
+#ifdef VERBOSE_INIT_ARM
 	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+#endif
 
 #ifdef KGDB
 	kgdb_port_init();
@@ -331,17 +328,17 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
-#endif
 
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15)
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
+#endif
 #endif
 
 	/*
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
-	ram_size = awin_memprobe();
+	psize_t ram_size = awin_memprobe();
 
 	/*
 	 * If MEMSIZE specified less than what we really have, limit ourselves
@@ -356,7 +353,7 @@ initarm(void *arg)
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = KERNEL_BASE_PHYS & -0x400000;
+	bootconfig.dram[0].address = AWIN_SDRAM_PBASE;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
@@ -367,19 +364,23 @@ initarm(void *arg)
 #endif
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 
-#if 0
-	/* "bootargs" env variable is passed as 4th argument to kernel */
-	printf("Copy bootargs");
-	if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
-		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
-	}
-	printf("\n");
-#endif
-
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
 	    mapallmem_p);
+
+	if (mapallmem_p) {
+		/*
+		 * "bootargs" env variable is passed as 4th argument
+		 * to kernel but it's using the physical address and
+		 * we to convert that to a virtual address.
+		 */
+		if (uboot_args[3] - AWIN_SDRAM_PBASE < ram_size) {
+			const char * const args = (const char *)
+			     (uboot_args[3] + KERNEL_PHYS_VOFFSET);
+			strlcpy(bootargs, args, sizeof(bootargs));
+		}
+	}
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -387,23 +388,21 @@ initarm(void *arg)
 	/* we've a specific device_register routine */
 	evbarm_device_register = cubie_device_register;
 
+#if NAWIN_FB > 0
+	char *ptr;
 	if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
 		use_fb_console = true;
 	}
+#endif
 	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }
 
-static void
-init_clocks(void)
-{
-}
-
 #if NCOM > 0
 #ifndef CONADDR
-#define	CONADDR		(AWIN_CORE_PBASE + AWIN_UART0_OFFSET)
+#define CONADDR		(AWIN_CORE_PBASE + AWIN_UART0_OFFSET)
 #endif
 #ifndef CONSPEED
 #define CONSPEED 115200
@@ -412,6 +411,9 @@ init_clocks(void)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
+__CTASSERT(AWIN_CORE_PBASE + AWIN_UART0_OFFSET <= CONADDR);
+__CTASSERT(CONADDR <= AWIN_CORE_PBASE + AWIN_UART7_OFFSET);
+__CTASSERT(CONADDR % AWIN_UART_SIZE == 0);
 static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
@@ -420,6 +422,7 @@ static const int conmode = CONMODE;
 void
 consinit(void)
 {
+	bus_space_tag_t bst = &awin_a4x_bs_tag;
 #if NCOM > 0
 	bus_space_handle_t bh;
 #endif
@@ -431,14 +434,14 @@ consinit(void)
 	consinit_called = 1;
 
 #if NCOM > 0
-	if (bus_space_map(&awin_a4x_bs_tag, conaddr, AWIN_UART_SIZE, 0, &bh))
+	if (bus_space_map(bst, conaddr, AWIN_UART_SIZE, 0, &bh))
 		panic("Serial console can not be mapped.");
 
-	if (comcnattach(&awin_a4x_bs_tag, conaddr, conspeed, AWIN_UART_FREQ,
+	if (comcnattach(bst, conaddr, conspeed, AWIN_UART_FREQ,
 		    COM_TYPE_NORMAL, conmode))
 		panic("Serial console can not be initialized.");
 
-	bus_space_unmap(&awin_a4x_bs_tag, bh, AWIN_UART_SIZE);
+	bus_space_unmap(bst, bh, AWIN_UART_SIZE);
 #else
 #error only COM console is supported
 
@@ -459,6 +462,12 @@ consinit(void)
 #ifndef KGDB_DEVMODE
 #define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+
+__CTASSERT(KGDB_DEVADDR != CONADDR);
+__CTASSERT(AWIN_CORE_PBASE + AWIN_UART0_OFFSET <= KGDB_DEVADDR);
+__CTASSERT(KGDB_DEVADDR <= AWIN_CORE_PBASE + AWIN_UART7_OFFSET);
+__CTASSERT(KGDB_DEVADDR % AWIN_UART_SIZE == 0);
+
 static const vaddr_t comkgdbaddr = KGDB_DEVADDR;
 static const int comkgdbspeed = KGDB_DEVRATE;
 static const int comkgdbmode = KGDB_DEVMODE;
@@ -466,22 +475,23 @@ static const int comkgdbmode = KGDB_DEVMODE;
 void
 static kgdb_port_init(void)
 {
-	static int kgdbsinit_called = 0;
+	bus_space_tag_t bst = &awin_a4x_bs_tag;
+	static bool kgdbsinit_called;
 
-	if (kgdbsinit_called != 0)
+	if (kgdbsinit_called)
 		return;
 
-	kgdbsinit_called = 1;
+	kgdbsinit_called = true;
 
 	bus_space_handle_t bh;
-	if (bus_space_map(&awin_a4x_bs_tag, comkgdbaddr, OMAP_COM_SIZE, 0, &bh))
+	if (bus_space_map(bst, comkgdbaddr, AWIN_UART_SIZE, 0, &bh))
 		panic("kgdb port can not be mapped.");
 
-	if (com_kgdb_attach(&awin_a4x_bs_tag, comkgdbaddr, comkgdbspeed,
-			OMAP_COM_FREQ, COM_TYPE_NORMAL, comkgdbmode))
+	if (com_kgdb_attach(bst, comkgdbaddr, comkgdbspeed, AWIN_REF_FREQ,
+		    COM_TYPE_NORMAL, comkgdbmode))
 		panic("KGDB uart can not be initialized.");
 
-	bus_space_unmap(&awin_a4x_bs_tag, bh, OMAP_COM_SIZE);
+	bus_space_unmap(bst, bh, AWIN_UART_SIZE);
 }
 #endif
 
@@ -563,7 +573,10 @@ cubie_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "com")) {
+#if NAWIN_FB > 0
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", false);
+#endif
+		return;
 	}
 }
