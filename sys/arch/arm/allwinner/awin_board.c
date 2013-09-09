@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.5 2013/09/08 10:32:56 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.6 2013/09/09 17:53:36 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.5 2013/09/08 10:32:56 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.6 2013/09/09 17:53:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,6 +205,7 @@ awin_pll6_enable(void)
 	 */
 	uint32_t ncfg = ocfg;
 	ncfg &= ~(AWIN_PLL_CFG_FACTOR_M|AWIN_PLL_CFG_FACTOR_N);
+	ncfg &= ~(AWIN_PLL_CFG_BYPASS);
 	ncfg |= __SHIFTIN(k, AWIN_PLL_CFG_FACTOR_M);
 	ncfg |= __SHIFTIN(25, AWIN_PLL_CFG_FACTOR_N);
 	ncfg |= AWIN_PLL_CFG_ENABLE | AWIN_PLL6_CFG_SATA_CLK_EN;
@@ -212,4 +213,11 @@ awin_pll6_enable(void)
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG, ncfg);
 	}
+#if 0
+	printf(" [pll6=%#x->%#x:n=%ju k=%ju m=%ju] ",
+	    ocfg, ncfg,
+	    __SHIFTOUT(ncfg, AWIN_PLL_CFG_FACTOR_N),
+	    __SHIFTOUT(ncfg, AWIN_PLL_CFG_FACTOR_K),
+	    __SHIFTOUT(ncfg, AWIN_PLL_CFG_FACTOR_M));
+#endif
 }
