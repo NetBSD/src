@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.361 2013/06/09 01:13:47 riz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.362 2013/09/10 21:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.361 2013/06/09 01:13:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.362 2013/09/10 21:30:21 matt Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -657,6 +657,8 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	data->ed_pack.ep_interp = NULL;
 	data->ed_pack.ep_esch = NULL;
 	data->ed_pack.ep_pax_flags = 0;
+	memset(data->ed_pack.ep_machine_arch, 0,
+	    sizeof(data->ed_pack.ep_machine_arch));
 
 	rw_enter(&exec_lock, RW_READER);
 
