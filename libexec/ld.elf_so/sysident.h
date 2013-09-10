@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.15 2013/05/06 08:02:20 skrll Exp $ */
+/* $NetBSD: sysident.h,v 1.16 2013/09/10 16:35:10 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -89,3 +89,20 @@ __asm(
 	"\t.previous\n"
 	"\t.p2align\t2\n"
 );
+
+#ifdef ELF_NOTE_MARCH_DESC
+__asm(
+	".section\t\".note.netbsd.march\", \"a\"\n"
+	"\t.p2align\t2\n\n"
+
+	"\t.long\t" __S(ELF_NOTE_MARCH_NAMESZ) "\n"
+	"\t.long\t2f-1f\n"
+	"\t.long\t" __S(ELF_NOTE_TYPE_MARCH_TAG) "\n"
+	"\t.ascii\t" __S(ELF_NOTE_MARCH_NAME) "\n"
+	"1:\t.asciz\t" __S(ELF_NOTE_MARCH_DESC) "\n"
+	"2:\n"
+
+	"\t.previous\n"
+	"\t.p2align\t2\n"
+);
+#endif
