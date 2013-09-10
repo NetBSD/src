@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.25 2013/09/10 19:42:32 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.26 2013/09/10 20:36:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.25 2013/09/10 19:42:32 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.26 2013/09/10 20:36:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.25 2013/09/10 19:42:32 pooka Exp $");
 #endif
 
 #include <dlfcn.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -73,7 +72,7 @@ __dead static void
 die(int sflag, int error, const char *reason)
 {
 
-	warnx("%s: %s", reason, strerror(error));
+	fprintf(stderr, "%s: %s", reason, strerror(error));
 	if (!sflag)
 		rump_daemonize_done(error);
 	exit(1);
@@ -283,7 +282,7 @@ main(int argc, char *argv[])
 			if (netfs - curetfs == 0) {
 				etfs = realloc(etfs, (netfs+16)*sizeof(*etfs));
 				if (etfs == NULL)
-					err(1, "realloc etfs");
+					die(1, errno, "realloc etfs");
 				netfs += 16;
 			}
 
@@ -304,8 +303,7 @@ main(int argc, char *argv[])
 
 				snprintf(pb, sizeof(pb), "lib%s.so", optarg);
 				if (dlopen(pb, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
-					errx(1, "dlopen %s failed: %s",
-					    pb, dlerror());
+					die(1, 0, "dlopen lib");
 				}
 			}
 			break;
@@ -316,7 +314,7 @@ main(int argc, char *argv[])
 				modarray = realloc(modarray,
 				    (nmods+16) * sizeof(char *));
 				if (modarray == NULL)
-					err(1, "realloc");
+					die(1, errno, "realloc");
 				nmods += 16;
 			}
 			modarray[curmod++] = optarg;
@@ -348,7 +346,7 @@ main(int argc, char *argv[])
 	if (!sflag) {
 		error = rump_daemonize_begin();
 		if (error)
-			errx(1, "rump daemonize: %s", strerror(error));
+			die(1, error, "rump daemonize");
 	}
 
 	error = rump_init();
