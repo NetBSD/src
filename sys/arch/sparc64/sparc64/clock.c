@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.111 2013/08/27 13:12:29 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.112 2013/09/10 16:03:48 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.111 2013/08/27 13:12:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.112 2013/09/10 16:03:48 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -108,7 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.111 2013/08/27 13:12:29 macallan Exp $")
  *  counter-timer	 timer#0	 timer#1	 %tick
  *  counter-timer + SMP	 timer#0/%tick	 -		 timer#1 or %tick
  *  no counter-timer	 %tick		 -		 %tick
+ *  US-IIe		 STICK		 -		 STICK
  *  US-IIIi		 %stick		 -		 %stick
+ *
+ * US-IIe and US-IIIi could use %tick as statclock
  */
 
 /*
