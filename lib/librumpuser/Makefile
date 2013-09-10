@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/05/15 20:47:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.15 2013/09/10 16:51:24 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SRCS+=		rumpuser_component.c rumpuser_errtrans.c rumpuser_bio.c
 SRCS+=		rumpuser_dl.c rumpuser_sp.c rumpuser_daemonize.c
 
 INCSDIR=	/usr/include/rump
-INCS=		rumpuser.h rumpuser_component.h
+INCS=		rumpuser.h rumpuser_component.h rumpuser_port.h
 
 MAN=		rumpuser.3
 
