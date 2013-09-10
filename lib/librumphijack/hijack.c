@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.105 2013/07/31 12:23:25 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.106 2013/09/10 16:53:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -25,10 +25,10 @@
  * SUCH DAMAGE.
  */
 
-#include "rumpuser_port.h"
+#include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.105 2013/07/31 12:23:25 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.106 2013/09/10 16:53:06 pooka Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/05/15 20:27:00 pooka Exp $
+#	$NetBSD: Makefile,v 1.9 2013/09/10 16:53:06 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -18,7 +18,7 @@ LIBDPLIBS+=	${lib} lib
 .endfor
 
 CPPFLAGS+=	-DRUMP_CLIENT
-CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../librumpuser
+CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}
 SRCS=		rumpclient.c
 SRCS+=		rump_syscalls.c
 
