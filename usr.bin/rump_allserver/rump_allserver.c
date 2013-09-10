@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.23 2013/09/10 17:13:29 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.24 2013/09/10 17:59:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -25,18 +25,24 @@
  * SUCH DAMAGE.
  */
 
+#include <rump/rumpuser_port.h>
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.23 2013/09/10 17:13:29 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.24 2013/09/10 17:59:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/signal.h>
-#include <sys/module.h>
+#include <sys/stat.h>
 
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
+#ifdef PLATFORM_HAS_NBMODULES
+#include <sys/module.h>
+#endif
+#ifdef PLATFORM_HAS_DISKLABEL
+#include <sys/disklabel.h>
+#include <util.h>
+#endif
 
 #include <dlfcn.h>
 #include <err.h>
@@ -45,14 +51,20 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.23 2013/09/10 17:13:29 pooka Exp $");
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
+
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 
 __dead static void
 usage(void)
 {
 
+#ifndef PLATFORM_HAS_SETGETPROGNAME
+#define getprogname() "rump_server"
+#endif
 	fprintf(stderr, "usage: %s [-s] [-c ncpu] [-d drivespec] [-l libs] "
 	    "[-m modules] bindurl\n", getprogname());
 	exit(1);
@@ -115,14 +127,20 @@ int
 main(int argc, char *argv[])
 {
 	const char *serverurl;
-	char **modarray = NULL;
-	unsigned nmods = 0, curmod = 0, i;
 	struct etfsreg *etfs = NULL;
 	unsigned netfs = 0, curetfs = 0;
 	int error;
 	int ch, sflag;
+	unsigned i;
 
+#ifdef PLATFORM_HAS_NBMODULES
+	char **modarray = NULL;
+	unsigned nmods = 0, curmod = 0;
+#endif
+
+#ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
+#endif
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "c:d:l:m:r:sv")) != -1) {
@@ -179,9 +197,14 @@ main(int argc, char *argv[])
 						}
 						flen = DSIZE_E;
 					} else {
+#ifdef PLATFORM_HAS_STRSUFTOLL
 						/* XXX: off_t max? */
 						flen = strsuftoll("-d size",
 						    value, 0, LLONG_MAX);
+#else
+						flen = strtoull(value,
+						    NULL, 10);
+#endif
 					}
 					break;
 				case DOFFSET:
@@ -196,9 +219,13 @@ main(int argc, char *argv[])
 						    "size=host\n");
 						usage();
 					}
+#ifdef PLATFORM_HAS_STRSUFTOLL
 					/* XXX: off_t max? */
 					foffset = strsuftoll("-d offset", value,
 					    0, LLONG_MAX);
+#else
+					foffset = strtoull(value, NULL, 10);
+#endif
 					break;
 
 				case DLABEL:
@@ -283,7 +310,9 @@ main(int argc, char *argv[])
 				}
 			}
 			break;
-		case 'm':
+#ifdef PLATFORM_HAS_NBMODULES
+		case 'm': {
+
 			if (nmods - curmod == 0) {
 				modarray = realloc(modarray,
 				    (nmods+16) * sizeof(char *));
@@ -292,7 +321,8 @@ main(int argc, char *argv[])
 				nmods += 16;
 			}
 			modarray[curmod++] = optarg;
-			break;
+			break; }
+#endif
 		case 'r':
 			setenv("RUMP_MEMLIMIT", optarg, 1);
 			break;
@@ -326,6 +356,7 @@ main(int argc, char *argv[])
 	if (error)
 		die(sflag, error, "rump init failed");
 
+#ifdef PLATFORM_HAS_NBMODULES
 	/* load modules */
 	for (i = 0; i < curmod; i++) {
 		struct modctl_load ml;
@@ -341,11 +372,10 @@ main(int argc, char *argv[])
 		rump_pub_etfs_remove(ETFSKEY);
 #undef ETFSKEY
 	}
+#endif /* PLATFORM_HAS_NBMODULES */
 
 	/* register host drives */
 	for (i = 0; i < curetfs; i++) {
-		char buf[1<<16];
-		struct disklabel dl;
 		struct stat sb;
 		off_t foffset, flen, fendoff;
 		int fd, oflags;
@@ -355,7 +385,10 @@ main(int argc, char *argv[])
 		if (fd == -1)
 			die(sflag, errno, "etfs hostpath open");
 
+#ifdef PLATFORM_HAS_DISKLABEL
 		if (etfs[i].partition) {
+			struct disklabel dl;
+			char buf[1<<16];
 			int partition = etfs[i].partition - 'a';
 
 			pread(fd, buf, sizeof(buf), 0);
@@ -370,6 +403,9 @@ main(int argc, char *argv[])
 			flen = dl.d_partitions[partition].p_size
 			    << DEV_BSHIFT;
 		} else {
+#else
+		{
+#endif
 			foffset = etfs[i].foffset;
 			flen = etfs[i].flen;
 		}
