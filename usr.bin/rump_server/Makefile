@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/09/10 18:22:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2013/09/10 18:28:46 pooka Exp $
 #
 
 .PATH: ${.CURDIR}/../rump_allserver
@@ -8,6 +8,8 @@ SRCS=		rump_allserver.c
 NOMAN=		installed by ../rump_allserver
 
 LDADD+= -lrump -lrumpuser -lpthread
+
+.include <bsd.own.mk>
 
 .if ${RUMP_SERVER_LIBUTIL:Uyes} == "yes"
 DPADD+=	${LIBUTIL}
