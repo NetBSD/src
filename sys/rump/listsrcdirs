@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.7 2013/08/12 10:25:05 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.8 2013/09/10 17:08:57 pooka Exp $
 #
 
 #
@@ -29,6 +29,7 @@ precho src/external/cddl/	osnet
 precho src/external/historical/	nawk
 precho src/usr.bin/		make xinstall config mktemp sed tsort
 precho src/usr.bin/		lorder join cksum m4 mkdep
+precho src/usr.bin/		Makefile.inc rump_server rump_allserver
 precho src/usr.sbin/		mtree
 
 # If -c is given, use CVS syntax to exclude large subdirectories
