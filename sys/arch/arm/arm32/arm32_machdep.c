@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.97 2013/09/07 23:10:02 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.98 2013/09/10 21:30:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.97 2013/09/07 23:10:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.98 2013/09/10 21:30:21 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -376,6 +376,15 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 	return (0);
 }
 
+static int
+sysctl_hw_machine_arch(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	node.sysctl_data = l->l_proc->p_md.md_march;
+	node.sysctl_size = strlen(l->l_proc->p_md.md_march) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
@@ -480,6 +489,22 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "simdex_present", NULL,
 		       NULL, 0, &cpu_simdex_present, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	/*
+	 * We need override the usual CTL_HW HW_MACHINE_ARCH so we
+	 * return the right machine_arch based on the running executable.
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRING, "machine_arch",
+		       SYSCTL_DESCR("Machine CPU class"),
+		       sysctl_hw_machine_arch, 0, NULL, 0,
+		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 
 void

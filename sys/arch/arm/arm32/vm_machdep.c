@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2013/08/23 05:22:01 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68 2013/09/10 21:30:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2013/08/23 05:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2013/09/10 21:30:21 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -93,6 +93,10 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 		p2->p_md.pmc_state = NULL;
 	}
 #endif
+	/*
+	 * Copy machine arch string (it's small so just memcpy it).
+	 */
+	memcpy(p2->p_md.md_march, p1->p_md.md_march, sizeof(p2->p_md.md_march));
 }
 
 /*

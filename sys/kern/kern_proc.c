@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.187 2013/06/10 14:53:52 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.188 2013/09/10 21:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.187 2013/06/10 14:53:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.188 2013/09/10 21:30:21 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -201,6 +201,9 @@ struct proc proc0 = {
 	.p_vmspace = &vmspace0,
 	.p_stats = &pstat0,
 	.p_sigacts = &sigacts0,
+#ifdef PROC0_MD_INITIALIZERS
+	PROC0_MD_INITIALIZERS
+#endif
 };
 kauth_cred_t cred0;
 
