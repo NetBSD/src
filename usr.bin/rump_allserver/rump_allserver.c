@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.22 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.23 2013/09/10 17:13:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.22 2011/09/16 15:39:28 joerg Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.23 2013/09/10 17:13:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -121,7 +121,6 @@ main(int argc, char *argv[])
 	unsigned netfs = 0, curetfs = 0;
 	int error;
 	int ch, sflag;
-	int ncpu;
 
 	setprogname(argv[0]);
 
@@ -129,11 +128,6 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "c:d:l:m:r:sv")) != -1) {
 		switch (ch) {
 		case 'c':
-			ncpu = atoi(optarg);
-			/* XXX: MAXCPUS is from host, not from kernel */
-			if (ncpu < 1 || ncpu > MAXCPUS)
-				err(1, "CPU count needs to be between "
-				    "1 and %d\n", MAXCPUS);
 			setenv("RUMP_NCPU", optarg, 1);
 			break;
 		case 'd': {
