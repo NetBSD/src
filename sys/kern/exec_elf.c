@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.46 2013/08/26 12:24:10 martin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.47 2013/09/10 21:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.46 2013/08/26 12:24:10 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.47 2013/09/10 21:30:21 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -945,6 +945,24 @@ bad:
 			    ndata + ELF_NOTE_PAX_NAMESZ,
 			    sizeof(epp->ep_pax_flags));
 			break;
+
+		case ELF_NOTE_TYPE_MARCH_TAG:
+			/*
+			 * Copy the machine arch into the package.
+			 */
+			if (np->n_namesz == ELF_NOTE_MARCH_NAMESZ
+			    && memcmp(ndata, ELF_NOTE_MARCH_NAME,
+				    ELF_NOTE_MARCH_NAMESZ) == 0) {
+				strlcpy(epp->ep_machine_arch,
+				    ndata + roundup(ELF_NOTE_MARCH_NAMESZ, 4),
+				    sizeof(epp->ep_machine_arch));
+				break;
+			}
+
+			/*
+			 * Dunno, warn for diagnostic
+			 */
+			goto bad;
 
 		case ELF_NOTE_TYPE_SUSE_VERSION_TAG:
 			break;
