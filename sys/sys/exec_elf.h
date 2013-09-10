@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.128 2013/06/21 01:40:24 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.129 2013/09/10 16:24:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -960,6 +960,20 @@ struct netbsd_elfcore_procinfo {
 	/* Add version 2 fields below here. */
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
+
+/*
+ * NetBSD-specific note type: MACHINE_ARCH.
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * desc:	string
+ * descsz:	variable
+ */
+#define ELF_NOTE_TYPE_MARCH_TAG		5
+/* NetBSD-specific note name and description sizes */
+#define ELF_NOTE_MARCH_NAMESZ		ELF_NOTE_NETBSD_NAMESZ
+/* NetBSD-specific note name */
+#define ELF_NOTE_MARCH_NAME		ELF_NOTE_NETBSD_NAME
 
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
 #define ELFSIZE ARCH_ELFSIZE
