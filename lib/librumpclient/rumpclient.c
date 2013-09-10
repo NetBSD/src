@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.54 2013/01/17 20:47:44 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.55 2013/09/10 16:53:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  * Client side routines for rump syscall proxy.
  */
 
-#include "rumpuser_port.h"
+#include <rump/rumpuser_port.h>
 
 /*
  * We use kqueue on NetBSD, poll elsewhere.  Theoretically we could
@@ -48,7 +48,7 @@
 #define USE_KQUEUE
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.54 2013/01/17 20:47:44 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.55 2013/09/10 16:53:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
