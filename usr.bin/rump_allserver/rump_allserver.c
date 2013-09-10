@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.24 2013/09/10 17:59:52 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.25 2013/09/10 19:42:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,8 @@
 
 #include <rump/rumpuser_port.h>
 
-#include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.24 2013/09/10 17:59:52 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.25 2013/09/10 19:42:32 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
