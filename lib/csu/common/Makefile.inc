@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2013/08/05 13:38:35 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2013/09/10 16:45:33 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -94,6 +94,7 @@ crtfm.o: crtfm.c
 	rm -f ${.TARGET}.o
 .endif
 
+GENASSYM_CONF=	${COMMON_DIR}/sysident_assym.cf 
 sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
@@ -103,7 +104,7 @@ sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 
 CLEANFILES+=	sysident_assym.h
 
-crti.o: crti.S sysident_assym.h
+crti.o: crti.S sysident_assym.h sysident.S
 crtn.o: crtn.S
 
 FILES=${OBJS}
