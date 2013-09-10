@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.104 2013/07/09 09:41:30 njoly Exp $
+.\"	$NetBSD: hier.7,v 1.105 2013/09/10 00:41:51 jnemeth Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd February 5, 2013
+.Dd September 9, 2013
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -1174,7 +1174,7 @@ and
 .It Sy spool/
 miscellaneous printer and mail system spooling directories
 .Pp
-.Bl -tag -width "uucppublic/" -compact
+.Bl -tag -width "postfix/" -compact
 .It Sy ftp/
 commonly
 .Dq ~ftp ,
@@ -1192,13 +1192,6 @@ printer spooling directories
 postfix mail queue;
 see
 .Xr postfix 1
-.It Sy uucp/
-uucp spool directory
-.It Sy uucppublic/
-commonly
-.Dq ~uucp ,
-the uucp public temporary directory; see
-.Xr uucp 1
 .El
 .Pp
 .It Sy tmp/
