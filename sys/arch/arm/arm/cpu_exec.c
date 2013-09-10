@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.4 2013/08/05 00:57:24 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.5 2013/09/10 21:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.4 2013/08/05 00:57:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.5 2013/09/10 21:30:21 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -102,6 +102,14 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 
 	if (itp_suffix != NULL)
 		(void)compat_elf_check_interp(epp, itp, itp_suffix);
+
+	/*
+	 * Copy (if any) the machine_arch of the executable to the proc.
+	 */
+	if (epp->ep_machine_arch[0] != 0) {
+		strlcpy(l->l_proc->p_md.md_march, epp->ep_machine_arch,
+		    sizeof(l->l_proc->p_md.md_march));
+	}
 	return 0;
 }
 #endif
