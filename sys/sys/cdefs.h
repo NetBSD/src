@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.109 2013/09/05 21:00:15 gsutre Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.110 2013/09/10 12:54:14 gsutre Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -553,8 +553,14 @@
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
 
+#ifndef __ASSEMBLER__
+static __inline long long __zeroll(void) { return 0; }
+static __inline unsigned long long __zeroull(void) { return 0; }
+#else
 #define __zeroll() (0LL)
 #define __zeroull() (0ULL)
+#endif
+
 #define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
 #define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
