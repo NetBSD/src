@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/07/27 19:23:14 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2013/09/11 23:04:10 joerg Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -9,6 +9,8 @@ LIB=dns
 
 DIST=	${IDIST}/lib/dns
 .include "${DIST}/api"
+
+LIBDPLIBS+=	isc	${.CURDIR}/../libisc
 
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/dns -I${DIST}

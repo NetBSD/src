@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/01/18 16:22:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/09/11 23:04:10 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -25,5 +25,7 @@ INCSDIR=	/usr/include
 CPPFLAGS+=	-I${.CURDIR}
 
 WITHOUT_MAN=	yes
+
+LIBDPLIBS+=	elf		${NETBSDSRCDIR}/external/bsd/libelf/lib
 
 .include <bsd.lib.mk>

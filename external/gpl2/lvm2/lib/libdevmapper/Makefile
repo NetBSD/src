@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/05/26 12:56:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2013/09/11 23:04:10 joerg Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -21,7 +21,7 @@ CPPFLAGS+=	-I${LIBDEVMAPPER_DISTDIR} \
 
 CPPFLAGS+=	-D__LIB_DEVMAPPER__ 
 
-LIBDPLIBS+=	prop ${NETBSDSRCDIR}/lib/libprop
+LIBDPLIBS+=	dm ${NETBSDSRCDIR}/lib/libdm
 
 SRCS+=		bitset.c hash.c list.c libdm-common.c libdm-file.c \
 		libdm-deptree.c	libdm-string.c libdm-report.c \
