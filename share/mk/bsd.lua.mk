@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.4 2011/10/16 00:45:09 mbalmer Exp $
+#	$NetBSD: bsd.lua.mk,v 1.5 2013/09/11 23:04:11 joerg Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -143,6 +143,9 @@ ${LUA_TARG.${_M}}:	${LUA_OBJS.${_M}} ${DPADD} ${DPADD.${_M}}
 	    ${LDADD} ${LDADD.${_M}} ${LDFLAGS} ${LDFLAGS.${_M}}
 
 .endif
+
+DPADD+=	${LIBLUA}
+LDADD+=	-llua
 
 ##
 ## module install rules

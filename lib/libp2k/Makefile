@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2008/11/27 16:14:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2013/09/11 23:04:10 joerg Exp $
 #
 
 LIB=		p2k
-LIBDPLIBS+=	rump	${.CURDIR}/../librump		\
+LIBDPLIBS+=	puffs	${.CURDIR}/../libpuffs		\
+		rump	${.CURDIR}/../librump		\
 		rumpvfs	${.CURDIR}/../librumpvfs	\
 		ukfs	${.CURDIR}/../libukfs
 

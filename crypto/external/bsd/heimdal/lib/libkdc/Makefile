@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:53 elric Exp $
+# $NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -11,7 +11,10 @@ NOLINT=
 LIB=		kdc
 
 LIBDPLIBS+=	krb5		${.CURDIR}/../libkrb5		\
+		crypto		${SSLBASE}/lib/libcrypto	\
 		hdb		${.CURDIR}/../libhdb		\
+		hx509		${.CURDIR}/../libhx509		\
+		asn1		${.CURDIR}/../libasn1		\
 		heimntlm	${.CURDIR}/../libheimntlm	\
 		roken		${.CURDIR}/../libroken
 

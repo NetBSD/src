@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/03/21 05:37:42 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2013/09/11 23:04:10 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,7 @@ INCS=	isns.h isns_defs.h
 INCSDIR=/usr/include
 
 WARNS?=	5
+
+LIBDPLIBS+=	pthread	${.CURDIR}/../libpthread
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.206 2013/08/21 03:18:05 matt Exp $
+#	$NetBSD: Makefile,v 1.207 2013/09/11 23:04:10 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -33,7 +33,7 @@ SUBDIR+=	i18n_module
 SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
-		libintl libipsec libisns libkvm libm \
+		libintl libipsec libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
@@ -69,7 +69,6 @@ SUBDIR+=	../external/bsd/am-utils/lib
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
-SUBDIR+=	../external/bsd/libdwarf/lib
 SUBDIR+=	../external/bsd/libelf/lib
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
@@ -105,6 +104,7 @@ SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+SUBDIR+=	../external/bsd/libdwarf/lib # depends on libelf
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
@@ -113,6 +113,7 @@ SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
+SUBDIR+=	libisns 	# depends on libpthread
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	librumphijack	# depends on librumpclient and libpthread

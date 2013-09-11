@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/24 12:18:37 tron Exp $
+#	$NetBSD: Makefile,v 1.5 2013/09/11 23:04:10 joerg Exp $
 #
 #
 
@@ -14,6 +14,7 @@ SUBDIR+=	libavl
 SUBDIR+=	libnvpair
 SUBDIR+=	libumem
 SUBDIR+=	libuutil
+SUBDIR+=	.WAIT
 SUBDIR+=	libzfs
 SUBDIR+=	libzpool
 .endif
