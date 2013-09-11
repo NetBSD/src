@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2013/09/11 09:58:02 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2013/09/11 09:59:13 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -61,13 +61,9 @@ CPPFLAGS+=	-DHAS_LDAP
 . if defined(PROG)
 LDADD+=		-lldap -llber
 DPADD+=		${LIBLDAP} ${LIBLBER}
-.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
-LDADD+=		-llber
-DPADD+=		${LIBLBER}
-.   if ${MKCRYPTO} != "no" 
+.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "")) && ${MKCRYPTO} != "no"
 DPADD+=		${LIBSSL} ${LIBCRYPTO}
 LDADD+=		-lssl -lcrypto
-.   endif
 .  endif
 . endif
 .endif # USE_LDAP != no
