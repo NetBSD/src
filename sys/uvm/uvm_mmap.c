@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.145 2013/09/11 18:26:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.145 2013/09/11 18:26:14 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -88,6 +88,7 @@ range_test(vaddr_t addr, vsize_t size, bool ismmap)
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;
 	vaddr_t eaddr = addr + size;
+	int res = 0;
 
 	if (addr < vm_min_address)
 		return EINVAL;
@@ -95,7 +96,12 @@ range_test(vaddr_t addr, vsize_t size, bool ismmap)
 		return ismmap ? EFBIG : EINVAL;
 	if (addr > eaddr) /* no wrapping! */
 		return ismmap ? EOVERFLOW : EINVAL;
-	return 0;
+
+#ifdef MD_MMAP_RANGE_TEST
+	res = MD_MMAP_RANGE_TEST(addr, eaddr);
+#endif
+
+	return res;
 }
 
 /*
