@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2012/03/04 16:12:24 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2013/09/11 09:58:02 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -59,8 +59,8 @@ CPPFLAGS+=	-DHAS_LDAP
 
 # Automatically link in libldap for a program.
 . if defined(PROG)
-LDADD+=		-lldap
-DPADD+=		${LIBLDAP}
+LDADD+=		-lldap -llber
+DPADD+=		${LIBLDAP} ${LIBLBER}
 .  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
 LDADD+=		-llber
 DPADD+=		${LIBLBER}
