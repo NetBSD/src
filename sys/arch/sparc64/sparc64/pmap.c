@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.280 2013/01/25 17:12:33 hannken Exp $	*/
+/*	$NetBSD: pmap.c,v 1.281 2013/09/11 18:27:44 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2013/01/25 17:12:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2013/09/11 18:27:44 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1839,6 +1839,11 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
  retry:
 	i = pseg_set(pm, va, tte.data, ptp);
+	if (i == -2) {
+		if (flags & PMAP_CANFAIL)
+			return (ENOMEM);
+		panic("pmap_enter: invalid VA (inside hole)");
+	}
 	if (i & 4) {
 		/* ptp used as L3 */
 		KASSERT(ptp != 0);
@@ -3735,3 +3740,19 @@ pmap_zero_page(paddr_t pa)
 		dcache_flush_page_all(pa);
 	pmap_zero_page_phys(pa);
 }
+
+#ifdef _LP64
+int
+sparc64_mmap_range_test(vaddr_t addr, vaddr_t eaddr)
+{
+	const vaddr_t hole_start = 0x000007ffffffffff;
+	const vaddr_t hole_end   = 0xfffff80000000000;
+
+	if (addr >= hole_end)
+		return 0;
+	if (eaddr <= hole_start)
+		return 0;
+
+	return EINVAL;
+}
+#endif
