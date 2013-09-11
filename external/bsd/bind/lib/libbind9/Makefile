@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:10 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2013/09/11 23:04:10 joerg Exp $
 
 LIB=bind9
 
@@ -12,5 +12,9 @@ DIST=	${IDIST}/lib/bind9
 .PATH.c:	${DIST}
 
 SRCS=	check.c getaddresses.c version.c
+
+LIBDPLIBS+=	isc	${.CURDIR}/../libisc \
+		dns	${.CURDIR}/../libdns \
+		isccfg	${.CURDIR}/../libisccfg \
 
 .include <bsd.lib.mk>
