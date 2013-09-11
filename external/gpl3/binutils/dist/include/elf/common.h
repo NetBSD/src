@@ -594,6 +594,7 @@
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
 
 #define NT_NETBSD_IDENT		1
+#define NT_NETBSD_MARCH		5
 
 /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
 
