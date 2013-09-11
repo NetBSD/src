@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: net.c,v 1.1.1.22 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: net.c,v 1.2 2013/09/11 18:50:00 drochner Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -170,7 +170,7 @@ carrier_status(struct interface *iface)
 #endif
 
 	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == -1)
-		return -1;
+		return LINK_UNKNOWN;
 	iface->flags = ifr.ifr_flags;
 
 	ret = LINK_UNKNOWN;
@@ -318,7 +318,7 @@ discover_interfaces(int argc, char * const *argv)
 		/* Bring the interface up if not already */
 		if (!(ifp->flags & IFF_UP)
 #ifdef SIOCGIFMEDIA
-		    && carrier_status(ifp) != -1
+		    && carrier_status(ifp) != LINK_UNKNOWN
 #endif
 		   )
 		{
