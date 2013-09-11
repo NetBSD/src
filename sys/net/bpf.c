@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.168 2011/12/16 03:05:23 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.168.6.1 2013/09/11 04:01:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.168 2011/12/16 03:05:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.168.6.1 2013/09/11 04:01:10 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1560,11 +1560,8 @@ static void
 catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
     void *(*cpfn)(void *, const void *, size_t), struct timespec *ts)
 {
-	struct bpf_hdr *hp;
-#ifdef _LP64
-	struct bpf_hdr32 *hp32;
-#endif
-	int totlen, curlen;
+	char *h;
+	int totlen, curlen, caplen;
 	int hdrlen = bpf_hdrlen(d);
 	int do_wakeup = 0;
 
@@ -1579,6 +1576,13 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	totlen = hdrlen + min(snaplen, pktlen);
 	if (totlen > d->bd_bufsize)
 		totlen = d->bd_bufsize;
+	/*
+	 * If we adjusted totlen to fit the bufsize, it could be that
+	 * totlen is smaller than hdrlen because of the link layer header.
+	 */
+	caplen = totlen - hdrlen;
+	if (caplen < 0)
+		caplen = 0;
 
 	/*
 	 * Round up the end of the previous packet to the next longword.
@@ -1619,33 +1623,34 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	/*
 	 * Append the bpf header.
 	 */
+	h = (char *)d->bd_sbuf + curlen;
 #ifdef _LP64
 	if (d->bd_compat32) {
-		hp32 = (struct bpf_hdr32 *)((char *)d->bd_sbuf + curlen);
+		struct bpf_hdr32 *hp32;
+
+		hp32 = (struct bpf_hdr32 *)h;
 		hp32->bh_tstamp.tv_sec = ts->tv_sec;
 		hp32->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
 		hp32->bh_datalen = pktlen;
 		hp32->bh_hdrlen = hdrlen;
-		/*
-		 * Copy the packet data into the store buffer and update its length.
-		 */
-		(*cpfn)((u_char *)hp32 + hdrlen, pkt,
-		    (hp32->bh_caplen = totlen - hdrlen));
+		hp32->bh_caplen = caplen;
 	} else
 #endif
 	{
-		hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
+		struct bpf_hdr *hp;
+
+		hp = (struct bpf_hdr *)h;
 		hp->bh_tstamp.tv_sec = ts->tv_sec;
 		hp->bh_tstamp.tv_usec = ts->tv_nsec / 1000;
 		hp->bh_datalen = pktlen;
 		hp->bh_hdrlen = hdrlen;
-		/*
-		 * Copy the packet data into the store buffer and update
-		 * its length.
-		 */
-		(*cpfn)((u_char *)hp + hdrlen, pkt,
-		    (hp->bh_caplen = totlen - hdrlen));
+		hp->bh_caplen = caplen;
 	}
+
+	/*
+	 * Copy the packet data into the store buffer and update its length.
+	 */
+	(*cpfn)(h + hdrlen, pkt, caplen);
 	d->bd_slen = curlen + totlen;
 
 	/*
