@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.34 2013/09/09 04:13:30 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.35 2013/09/11 04:00:18 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -680,3 +680,8 @@ share/man/man4/bge.4		1.13-1.15 via patch
 	- Remove extra semicolon. Remove unused code.
 	[msaitoh, ticket #939]
 
+sys/net/bpf.c					1.176
+
+	Avoid kernel panic caused by setting a very small bpf buffer size.
+	Fixes PR/48198 reported by Peter Bex.
+	[spz, ticket #941]
