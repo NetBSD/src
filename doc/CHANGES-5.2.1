@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.1,v 1.1.2.13 2013/09/07 17:19:19 bouyer Exp $
+# $NetBSD: CHANGES-5.2.1,v 1.1.2.14 2013/09/11 07:05:29 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -234,3 +234,8 @@ share/zoneinfo/zone.tab						patch
 	     Update URL for CLDR Zone->Tzid table (thanks to Yoshito Umaoka).
 	[apb, ticket #1870]
 
+sys/net/bpf.c					1.176 via patch
+
+	Avoid kernel panic caused by setting a very small bpf buffer size.
+	Fixes PR/48198 reported by Peter Bex.
+	[spz, ticket #1874]
