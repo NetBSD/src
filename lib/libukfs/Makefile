@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2012/03/21 05:38:49 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2013/09/11 23:04:11 joerg Exp $
 #
 
 WARNS=		2
 
 LIB=		ukfs
 LIBDPLIBS+=	rump	${.CURDIR}/../librump		\
-		rumpvfs	${.CURDIR}/../librumpvfs
+		rumpvfs	${.CURDIR}/../librumpvfs \
+		pthread	${.CURDIR}/../libpthread
 CPPFLAGS+=	-I${.CURDIR}
 
 INCS=		ukfs.h
