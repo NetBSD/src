@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/06/21 19:16:01 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2013/09/11 23:04:10 joerg Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -9,9 +9,14 @@
 .PATH: ${.CURDIR}/../../dist/uts/common/fs/zfs
 .PATH: ${.CURDIR}/../../dist/uts/common/os
 
+LIBDPLIBS+= \
+	avl	${.CURDIR}/../libavl \
+	nvpair	${.CURDIR}/../libnvpair \
+	pthread	${NETBSDSRCDIR}/lib/libpthread \
+	umem	${.CURDIR}/../libumem \
+	z	${NETBSDSRCDIR}/lib/libz \
+
 LIB=		zpool
-DPADD=		${LIBPTHREAD} ${LIBZ}
-LDADD=		-lpthread -lz
 CPPFLAGS+=	-std=c99
 #CPPFLAGS+=-Wall -Wno-unknown-pragmas
 

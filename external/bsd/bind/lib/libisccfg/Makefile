@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:10 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2013/09/11 23:04:10 joerg Exp $
 
 LIB=isccfg
 
 .include <bsd.own.mk>
 
 .include "${.CURDIR}/../Makefile.inc"
+
+LIBDPLIBS+=	isc	${.CURDIR}/../libisc \
+		dns	${.CURDIR}/../libdns
 
 DIST=	${IDIST}/lib/isccfg
 .include "${DIST}/api"

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2013/04/11 16:59:16 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/09/11 23:04:10 joerg Exp $
 .include <bsd.own.mk>
 
-SUBDIR=	 libevent
+SUBDIR=	 libevent .WAIT
 .if ${MKCRYPTO} != "no"
 SUBDIR+=	libevent_openssl
 .endif
