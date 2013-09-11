@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2013/08/23 05:22:01 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.15 2013/09/11 04:24:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -56,6 +56,9 @@ struct mdproc {
 	void	(*md_syscall)(struct trapframe *, struct lwp *, uint32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
+	char	md_march[12];		/* machine arch of executable */
 };
+
+#define	PROC0_MD_INITIALIZERS .p_md = { .md_march = MACHINE_ARCH },
 
 #endif /* _ARM32_PROC_H_ */
