@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.24 2013/09/07 17:30:22 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.25 2013/09/11 07:03:18 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -540,3 +540,8 @@ sys/arch/i386/stand/boot/boot2.c		1.59 via patch
 	media which needs the miniroot kernel module loaded).
 	[he, ticket #1872]
 
+sys/net/bpf.c					1.176 via patch
+
+	Avoid kernel panic caused by setting a very small bpf buffer size.
+	Fixes PR/48198 reported by Peter Bex.
+	[spz, ticket #1874]
