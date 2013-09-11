@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2011/10/06 06:55:34 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.56 2013/09/11 18:27:44 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,6 +89,11 @@
 #define STMASK		(STSZ-1)
 
 #ifndef _LOCORE
+
+#ifdef _LP64
+int	sparc64_mmap_range_test(vaddr_t, vaddr_t);
+#define	MD_MMAP_RANGE_TEST(MINVA, MAXVA)	sparc64_mmap_range_test(MINVA, MAXVA)
+#endif
 
 /*
  * Support for big page sizes.  This maps the page size to the
