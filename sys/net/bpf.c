@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.141.6.2 2011/04/05 06:10:50 riz Exp $	*/
+/*	$NetBSD: bpf.c,v 1.141.6.2.2.1 2013/09/11 07:04:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.141.6.2 2011/04/05 06:10:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.141.6.2.2.1 2013/09/11 07:04:32 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1453,7 +1453,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
     void *(*cpfn)(void *, const void *, size_t), struct timeval *tv)
 {
 	struct bpf_hdr *hp;
-	int totlen, curlen;
+	int totlen, curlen, caplen;
 	int hdrlen = d->bd_bif->bif_hdrlen;
 	int do_wakeup = 0;
 
@@ -1468,6 +1468,13 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	totlen = hdrlen + min(snaplen, pktlen);
 	if (totlen > d->bd_bufsize)
 		totlen = d->bd_bufsize;
+	/*
+	 * If we adjusted totlen to fit the bufsize, it could be that
+	 * totlen is smaller than hdrlen because of the link layer header.
+	 */
+	caplen = totlen - hdrlen;
+	if (caplen < 0)
+		caplen = 0;
 
 	/*
 	 * Round up the end of the previous packet to the next longword.
@@ -1507,10 +1514,11 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	hp->bh_tstamp = *tv;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
+	hp->bh_caplen = caplen;
 	/*
 	 * Copy the packet data into the store buffer and update its length.
 	 */
-	(*cpfn)((u_char *)hp + hdrlen, pkt, (hp->bh_caplen = totlen - hdrlen));
+	(*cpfn)((u_char *)hp + hdrlen, pkt, caplen);
 	d->bd_slen = curlen + totlen;
 
 	/*
