@@ -1,4 +1,4 @@
-/*	$NetBSD: prefix.h,v 1.1 2002/06/06 20:03:39 fredette Exp $	*/
+/*	$NetBSD: prefix.h,v 1.2 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*	$OpenBSD: prefix.h,v 1.2 2001/03/29 04:08:21 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
 
 #define DEFINE(name, value)name:	.EQU	value
 #ifdef milliext
-#ifdef PIC
+#ifdef __PIC__
 #define MILLI_BE(lbl) \
   BL    .+8,r1\
   ! ADDIL L%lbl-labl/**/lbl,r1\

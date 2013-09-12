@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.32 2013/07/18 22:21:31 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.33 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #define __IMMEDIATE		#
 
-#if defined(PIC) || defined(__pic__)
+#ifdef __PIC__
 #define PIC_PLT(name)		name@PLTPC
 #ifdef __mcoldfire__
 #define LEA_LCL(name,reg) \
