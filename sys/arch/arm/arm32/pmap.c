@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.263 2013/08/18 06:50:31 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.264 2013/09/12 14:45:18 kiyohara Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2013/08/18 06:50:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2013/09/12 14:45:18 kiyohara Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2992,7 +2992,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			oflags = pv->pv_flags;
 
 #ifdef PMAP_CACHE_VIVT
-			if (!(oflags & PVF_NC) == 0 && l2pte_valid(opte)) {
+			if (!(oflags & PVF_NC) && l2pte_valid(opte)) {
 				pmap_cache_wbinv_page(pm, va, true, oflags);
 			}
 #endif
@@ -3624,7 +3624,8 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				 * write-protect operation.  If the pmap is
 				 * active, write-back the page.
 				 */
-				pmap_cache_wbinv_page(pm, sva, false, PVF_REF);
+				pmap_cache_wbinv_page(pm, sva, false,
+				    PVF_REF | PVF_WRITE);
 #endif
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(pte));
