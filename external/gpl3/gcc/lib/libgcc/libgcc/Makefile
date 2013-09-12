@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/08/22 00:16:54 matt Exp $
+#	$NetBSD: Makefile,v 1.15 2013/09/12 15:36:14 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -69,7 +69,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
 .S.o .s.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
+	${COMPILE.S} ${PICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
 	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
 	    ${CC} ${COPTS} -Wl,-x -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -

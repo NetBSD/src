@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.3 2009/01/05 01:16:09 pooka Exp $	*/
+/*	$NetBSD: random.S,v 1.4 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -50,7 +50,7 @@ randseed:
 ENTRY(random)
 	sethi	%hi(16807), %o1
 	wr	%o1, %lo(16807), %y
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5, %o2)
 	set	randseed, %g1
 	ldx	[%o5 + %g1], %g1
@@ -87,7 +87,7 @@ ENTRY(random)
 	bneg	1f
 	sethi	%hi(0x7fffffff), %o1
 	retl
-#ifdef PIC
+#ifdef __PIC__
 	st	%o0, [%g1]
 #else
 	st	%o0, [%g1 + %lo(randseed)]
@@ -97,7 +97,7 @@ ENTRY(random)
 	add	%o0, 1, %o0
 	and	%o1, %o0, %o0
 	retl
-#ifdef PIC
+#ifdef __PIC__
 	st	%o0, [%g1]
 #else
 	st	%o0, [%g1 + %lo(randseed)]

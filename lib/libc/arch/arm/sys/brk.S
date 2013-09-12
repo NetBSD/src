@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.12 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.13 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@ _C_LABEL(__minbrk):
  */
 ENTRY(_brk)
 	ldr	r1, .Lminbrk
-#ifdef PIC
+#ifdef __PIC__
 	adr	r3, .Lminbrk
 	adds	r1, r1, r3
 #endif
@@ -77,7 +77,7 @@ ENTRY(_brk)
 	_INVOKE_CERROR()
 
 	ldr	r1, .Lcurbrk
-#ifdef PIC
+#ifdef __PIC__
 	adds	r1, r1, r3
 #endif
 	/* Store the new address in curbrk */

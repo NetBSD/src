@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.11 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.12 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@ _C_LABEL(__curbrk):
 ENTRY(_sbrk)
 	/* get address or offset to __curbrk */
 	ldr	r2, .Lcurbrk
-#ifdef PIC
+#ifdef __PIC__
 	add	r2, r2, pc	/* pc = &.LPIC0 */
 #endif
 

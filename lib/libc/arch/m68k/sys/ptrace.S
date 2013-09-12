@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.14 2013/07/24 15:38:07 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.15 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ptrace.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ptrace.S,v 1.14 2013/07/24 15:38:07 matt Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.15 2013/09/12 15:36:15 joerg Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,13 +57,13 @@ ENTRY(ptrace)
 #endif
 	clrl	(%a0)
 #else
-#ifdef	PIC
+#ifdef __PIC__
 	GOT_SETUP(%a0)
 	movl	_C_LABEL(errno)@GOT:w(%a0),%a0
 	clrl	(%a0)
 #else
 	clrl	_C_LABEL(errno)
-#endif	/* PIC */
+#endif	/* __PIC__ */
 #endif	/* _REENTRANT */
 	SYSTRAP(ptrace)
 	jcs	CERROR

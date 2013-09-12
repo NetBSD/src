@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.23 2013/08/19 22:08:31 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.24 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,7 +114,7 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(PIC) || defined(__pic__)
+#ifdef __PIC__
 #define	REL_SYM(a, b)	((a) - (b))
 #define	PLT_SYM(x)	PIC_SYM(x, PLT)
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
@@ -149,7 +149,7 @@
 #define	GOT_INIT(got,gotsym,pclabel)
 #define	GOT_INITSYM(gotsym,pclabel)
 #define	PIC_SYM(x,y)	x
-#endif	/* PIC */
+#endif	/* __PIC__ */
 
 #define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 

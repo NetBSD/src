@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.13 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.14 2013/09/12 15:36:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -61,7 +61,7 @@ ENTRY(_setjmp)
 
 #if defined(__ARM_EABI__) && (!defined(__thumb__) || defined(_ARM_ARCH_T2))
 	ldr	r2, .Lfpu_present
-#ifdef PIC
+#ifdef __PIC__
 	add	r2, r2, pc	/* pc = &.LPIC0 */
 #endif
 	ldr	r2, [r2]

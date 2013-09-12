@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.8 2013/09/09 07:33:54 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.9 2013/09/12 15:36:14 joerg Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -34,7 +34,7 @@ ENTRY(__udivsi3)
 	cmp	r1, #0
 	beq	.Ldiv0
 	ldr	r2, .Lhwdiv_present
-# ifdef PIC
+#ifdef __PIC__
 	add	r2, r2, pc	/* pc = &.LPIC0 */
 # endif
 	ldr	r2, [r2]

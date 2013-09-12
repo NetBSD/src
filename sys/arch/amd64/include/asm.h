@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 2013/06/22 07:31:36 uebayasi Exp $	*/
+/*	$NetBSD: asm.h,v 1.18 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifdef __x86_64__
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_PLT(x)	x@PLT
 #define PIC_GOT(x)	x@GOTPCREL(%rip)
 #else
