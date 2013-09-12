@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.312 2013/07/02 15:05:53 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.313 2013/09/12 12:26:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.312 2013/07/02 15:05:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.313 2013/09/12 12:26:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3179,12 +3179,12 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	struct scsipi_read_toc            gtoc_cmd;
 	struct scsipi_toc_header         *toc_hdr;
 	struct scsipi_toc_rawtoc         *rawtoc;
-	uint32_t track_start, track_end, track_size;
+	uint32_t track_start, track_size;
 	uint32_t last_recorded, next_writable;
 	uint32_t lba, next_track_start, lead_out;
 	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
 	uint8_t *buffer;
-	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
+	uint8_t track_sessionnr, sessionnr, adr, tno, point;
 	uint8_t control, tmin, tsec, tframe, pmin, psec, pframe;
 	int size, req_size;
 	int error, flags;
@@ -3243,13 +3243,11 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	rawtoc  = (struct scsipi_toc_rawtoc *) (buffer + 4);
 
 	track_start      = 0;
-	track_end        = 0;
 	track_size       = 0;
 	last_recorded    = 0;
 	next_writable    = 0;
 	flags            = 0;
 
-	last_tracknr     = 1;
 	next_track_start = 0;
 	track_sessionnr  = MAXTRACK;	/* by definition */
 	lead_out         = 0;
@@ -3285,7 +3283,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 			}
 			if (point <= 0x63) {
 				/* CD's ok, DVD are glued */
-				last_tracknr = point;
+				/* last_tracknr = point; */
 			}
 			if (sessionnr == track_sessionnr) {
 				last_recorded = lead_out;
