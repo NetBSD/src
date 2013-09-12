@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.112 2013/09/10 16:03:48 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.113 2013/09/12 12:45:53 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.112 2013/09/10 16:03:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.113 2013/09/12 12:45:53 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -352,10 +352,11 @@ timerattach(device_t parent, device_t self, void *aux)
 void
 stopcounter(struct timer_4u *creg)
 {
+	volatile struct timer_4u *reg = creg;
+
 	/* Stop the clock */
-	volatile int discard;
-	discard = creg->t_limit;
-	creg->t_limit = 0;
+	(void)reg->t_limit;
+	reg->t_limit = 0;
 }
 
 /*
