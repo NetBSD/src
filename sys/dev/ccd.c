@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.144 2013/04/27 17:13:32 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.145 2013/09/12 12:22:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.144 2013/04/27 17:13:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.145 2013/09/12 12:22:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1560,9 +1560,11 @@ MODULE(MODULE_CLASS_DRIVER, ccd, NULL);
 static int
 ccd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor, cmajor, error = 0;
+	int error = 0;
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+#endif
 
-	bmajor = cmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
