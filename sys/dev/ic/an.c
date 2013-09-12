@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.59 2010/04/05 07:19:33 joerg Exp $	*/
+/*	$NetBSD: an.c,v 1.60 2013/09/12 11:42:26 martin Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59 2010/04/05 07:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.60 2013/09/12 11:42:26 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1800,11 +1800,9 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct an_softc *sc = (struct an_softc *)ic->ic_ifp->if_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	enum ieee80211_state ostate;
 	int buflen;
 
-	ostate = ic->ic_state;
-	DPRINTF(("an_newstate: %s -> %s\n", ieee80211_state_name[ostate],
+	DPRINTF(("an_newstate: %s -> %s\n", ieee80211_state_name[ic->ic_state],
 	    ieee80211_state_name[nstate]));
 
 	switch (nstate) {
