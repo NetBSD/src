@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.68 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: dpt.c,v 1.69 2013/09/12 19:49:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.68 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.69 2013/09/12 19:49:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ dpt_intr(void *cookie)
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sp *sp;
-	volatile int junk;
 	int forus;
 
 	sc = cookie;
@@ -279,7 +278,7 @@ dpt_intr(void *cookie)
 
 			/* Ack the interrupt */
 			sp->sp_ccbid = -1;
-			junk = dpt_inb(sc, HA_STATUS);
+			(void)dpt_inb(sc, HA_STATUS);
 			continue;
 		}
 
@@ -301,7 +300,7 @@ dpt_intr(void *cookie)
 		 */
 		sp->sp_ccbid = -1;
 		ccb->ccb_flg |= CCB_INTR;
-		junk = dpt_inb(sc, HA_STATUS);
+		(void)dpt_inb(sc, HA_STATUS);
 		if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
 			dpt_ccb_done(sc, ccb);
 		else if ((ccb->ccb_flg & CCB_WAIT) != 0)
