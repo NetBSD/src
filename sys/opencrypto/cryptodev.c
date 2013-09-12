@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.69 2013/09/12 13:02:37 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.69 2013/09/12 13:02:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1767,7 +1767,7 @@ cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 		mutex_enter(&crypto_mtx);
 	}
 	mutex_exit(&crypto_mtx);
-	return 0;
+	return error;
 }
 
 /*
