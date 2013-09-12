@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.42 2013/06/24 04:21:20 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.43 2013/09/12 13:12:35 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.42 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.43 2013/09/12 13:12:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,7 +1045,6 @@ swcr_freesession(void *arg, u_int64_t tid)
 	struct swcr_data *swd;
 	const struct swcr_enc_xform *txf;
 	const struct swcr_auth_hash *axf;
-	const struct swcr_comp_algo *cxf;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
 	if (sid > swcr_sesnum || swcr_sessions == NULL ||
@@ -1130,7 +1129,6 @@ swcr_freesession(void *arg, u_int64_t tid)
 		case CRYPTO_DEFLATE_COMP:
 		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
-			cxf = swd->sw_cxf;
 			break;
 		}
 
