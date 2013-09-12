@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.211 2013/09/07 19:53:24 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.212 2013/09/12 19:53:41 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.211 2013/09/07 19:53:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.212 2013/09/12 19:53:41 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -706,7 +706,6 @@ ehci_pcd(void *addr)
 {
 	ehci_softc_t *sc = addr;
 	usbd_xfer_handle xfer;
-	usbd_pipe_handle pipe;
 	u_char *p;
 	int i, m;
 
@@ -717,8 +716,6 @@ ehci_pcd(void *addr)
 		/* Just ignore the change. */
 		goto done;
 	}
-
-	pipe = xfer->pipe;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
@@ -3934,7 +3931,6 @@ Static usbd_status
 ehci_device_isoc_start(usbd_xfer_handle xfer)
 {
 	struct ehci_pipe *epipe;
-	usbd_device_handle dev;
 	ehci_softc_t *sc;
 	struct ehci_xfer *exfer;
 	ehci_soft_itd_t *itd, *prev, *start, *stop;
@@ -3950,7 +3946,6 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	total_length = 0;
 	exfer = (struct ehci_xfer *) xfer;
 	sc = xfer->pipe->device->bus->hci_private;
-	dev = xfer->pipe->device;
 	epipe = (struct ehci_pipe *)xfer->pipe;
 
 	/*
