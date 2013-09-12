@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.57 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.58 2013/09/12 20:44:02 martin Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.57 2011/12/31 20:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.58 2013/09/12 20:44:02 martin Exp $");
 #endif
 
 /*
@@ -1615,7 +1615,7 @@ ieee80211_ioctl_setoptie(struct ieee80211com *ic, struct ieee80211req *ireq)
 		free(ic->ic_opt_ie, M_DEVBUF);
 	ic->ic_opt_ie = ie;
 	ic->ic_opt_ie_len = ireq->i_len;
-	return 0;
+	return error;
 }
 
 static int
