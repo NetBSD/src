@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.12 2011/05/20 22:29:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2013/09/12 05:54:38 joerg Exp $
 
 S=		${.CURDIR}/../../../..
 
 AFLAGS.cdboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 
 NOMAN=		# defined
 .include <bsd.own.mk>
