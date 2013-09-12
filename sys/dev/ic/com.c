@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.315 2013/09/03 15:32:55 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.316 2013/09/12 12:54:39 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.315 2013/09/03 15:32:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.316 2013/09/12 12:54:39 martin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.315 2013/09/03 15:32:55 jmcneill Exp $");
 	do {					\
 		console_debugger();		\
 		cn_trapped = 1;			\
+		(void)cn_trapped;		\
 	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
@@ -1964,7 +1965,7 @@ again:	do {
 
 		lsr = CSR_READ_1(regsp, COM_REG_LSR);
 		if (ISSET(lsr, LSR_BI)) {
-			int cn_trapped = 0;
+			int cn_trapped = 0; /* see above: cn_trap() */
 
 			cn_check_magic(sc->sc_tty->t_dev,
 				       CNC_BREAK, com_cnm_state);
@@ -2184,7 +2185,7 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 	c = CSR_READ_1(regsp, COM_REG_RXDATA);
 	stat = CSR_READ_1(regsp, COM_REG_IIR);
 	{
-		int cn_trapped = 0; /* unused */
+		int cn_trapped = 0;	/* required by cn_trap, see above */
 #ifdef DDB
 		extern int db_active;
 		if (!db_active)
