@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.41 2013/01/29 15:45:43 kiyohara Exp $	*/
+/*	$NetBSD: asm.h,v 1.42 2013/09/12 15:36:17 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,7 @@
 
 #else
 
-# ifdef PIC
+# ifdef __PIC__
 #  define PIC_PROLOGUE	XXX
 #  define PIC_EPILOGUE	XXX
 #  define PIC_PLT(x)	x+32768@plt
@@ -71,7 +71,7 @@
 #   define PIC_GOT(x)	XXX
 #   define PIC_GOTOFF(x)	XXX
 #  endif /* __STDC__ */
-# else /* !PIC */
+# else /* !__PIC__ */
 #  define PIC_PROLOGUE
 #  define PIC_EPILOGUE
 #  define PIC_PLT(x)	x
@@ -79,7 +79,7 @@
 #  define PIC_GOTOFF(x)	x
 #  define PIC_GOTSETUP(r)
 #  define PIC_TOCSETUP(n, r)
-# endif /* PIC */
+# endif /* __PIC__ */
 
 #endif /* __LP64__ */
 

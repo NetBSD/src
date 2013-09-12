@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.13 2013/08/30 21:28:59 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.13 2013/08/30 21:28:59 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.14 2013/09/12 15:36:15 joerg Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #include "assym.h"
@@ -71,7 +71,7 @@ cb_memset:
 
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
-#ifdef PIC
+#ifdef __PIC__
 		/* First get cache line size */
 		mflr	%r9
 		bcl	20,31,1f
