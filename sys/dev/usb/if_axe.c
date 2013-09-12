@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.64 2013/01/22 12:40:42 jmcneill Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.65 2013/09/12 21:03:11 martin Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.64 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.65 2013/09/12 21:03:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -464,7 +464,9 @@ axe_reset(struct axe_softc *sc)
 static void
 axe_ax88178_init(struct axe_softc *sc)
 {
+#ifdef AXE_DEBUG
 	int gpio0 = 0, phymode = 0;
+#endif
 	uint16_t eeprom;
 
 	axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
@@ -477,6 +479,7 @@ axe_ax88178_init(struct axe_softc *sc)
 	DPRINTF((" EEPROM is 0x%x\n", eeprom));
 
 	/* if EEPROM is invalid we have to use to GPIO0 */
+#ifdef AXE_DEBUG
 	if (eeprom == 0xffff) {
 		phymode = 0;
 		gpio0 = 1;
@@ -484,6 +487,7 @@ axe_ax88178_init(struct axe_softc *sc)
 		phymode = eeprom & 7;
 		gpio0 = (eeprom & 0x80) ? 0 : 1;
 	}
+#endif
 
 	DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
 
