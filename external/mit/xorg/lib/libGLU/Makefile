@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/05/24 17:18:12 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2013/09/12 17:14:20 joerg Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -77,10 +77,8 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		Xxf86vm	${.CURDIR}/../libXxf86vm \
 		Xfixes	${.CURDIR}/../libXfixes \
 		Xdamage	${.CURDIR}/../libXdamage \
-		drm	${.CURDIR}/../libdrm
-
-LDADD+=		-lstdc++ -lm
-DPADD+=		${LIBSTDCXX} ${LIBM}
+		drm	${.CURDIR}/../libdrm \
+		m	${NETBSDSRCDIR}/lib/libm
 
 PKGCONFIG=	glu
 PKGDIST.glu=	${X11SRCDIR.MesaLib}/src/glu
