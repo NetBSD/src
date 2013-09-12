@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.362 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.363 2013/09/12 19:01:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.362 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.363 2013/09/12 19:01:38 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -557,7 +557,7 @@ exec_autoload(void)
 
 	list = (nexecs == 0 ? native : compat);
 	for (i = 0; list[i] != NULL; i++) {
-		if (module_autoload(list[i], MODULE_CLASS_MISC) != 0) {
+		if (module_autoload(list[i], MODULE_CLASS_EXEC) != 0) {
 		    	continue;
 		}
 	   	yield();
