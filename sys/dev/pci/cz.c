@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.56 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: cz.c,v 1.57 2013/09/12 19:37:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.56 2012/10/27 17:18:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.57 2013/09/12 19:37:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ static int
 cz_intr(void *arg)
 {
 	int	rval = 0;
-	u_int	command, channel, param;
+	u_int	command, channel;
 	struct	cz_softc *cz = arg;
 	struct	cztty_softc *sc;
 	struct	tty *tp;
@@ -693,7 +693,8 @@ cz_intr(void *arg)
 	while ((command = (CZ_PLX_READ(cz, PLX_LOCAL_PCI_DOORBELL) & 0xff))) {
 		rval = 1;
 		channel = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_CHANNEL);
-		param = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
+		/* XXX - is this needed? */
+		(void)CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
 
 		/* now clear this interrupt, posslibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
