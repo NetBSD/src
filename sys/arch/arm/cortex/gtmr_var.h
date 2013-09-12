@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.2 2013/06/20 05:30:21 matt Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.3 2013/09/12 15:38:04 matt Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,9 @@ struct gtmr_softc {
 	uint32_t sc_freq;
 	u_long sc_autoinc;
 	void *sc_global_ih;
+#ifdef DIAGNOSTIC
+	percpu_t *sc_percpu;
+#endif
 };
 
 #ifdef _KERNEL
