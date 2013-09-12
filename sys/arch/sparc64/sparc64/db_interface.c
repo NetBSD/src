@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.131 2013/01/03 07:51:48 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.132 2013/09/12 19:38:59 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.131 2013/01/03 07:51:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.132 2013/09/12 19:38:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -487,10 +487,9 @@ void
 db_dump_pmap(struct pmap *pm)
 {
 	/* print all valid pages in the kernel pmap */
-	unsigned long long i, j, k, n, data0, data1;
+	unsigned long long i, j, k, data0, data1;
 	paddr_t *pdir, *ptbl;
 	
-	n = 0;
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED);
 		if (!pdir) {
@@ -787,7 +786,7 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 void
 db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct proc *p, *pp;
+	struct proc *p;
 	int ctx;
 
 	if (!have_addr) {
@@ -796,7 +795,6 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 
 	LIST_FOREACH(p, &allproc, p_list) {
-		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			if (p->p_vmspace->vm_map.pmap == pmap_kernel()) {
 				db_printf("PID %ld has a kernel context.\n",
