@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/06/06 09:13:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/09/12 04:42:49 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -23,8 +23,14 @@ LIBDPLIBS=\
 	Xinerama	${.CURDIR}/../libXinerama \
 	Xft	${.CURDIR}/../libXft \
 	Xpm	${.CURDIR}/../libXpm \
-	X11	${.CURDIR}/../libX11/dynamic \
-	pam	${.CURDIR}/../../../../../lib/libpam/libpam \
+	X11	${.CURDIR}/../libX11/dynamic
+
+.if ${USE_PAM} != "no"
+LIBDPLIBS+=\
+	pam	${.CURDIR}/../../../../../lib/libpam/libpam
+.endif
+
+LIBDPLIBS+=\
 	crypt	${.CURDIR}/../../../../../lib/libcrypt \
 	util	${.CURDIR}/../../../../../lib/libutil
 
