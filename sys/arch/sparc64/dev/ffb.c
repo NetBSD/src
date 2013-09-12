@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.53 2013/07/30 19:16:50 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.54 2013/09/12 19:57:43 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.53 2013/07/30 19:16:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.54 2013/09/12 19:57:43 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,7 +201,7 @@ ffb_attach(device_t self)
 	const char *model, *out_dev;
 	int btype;
 	uint32_t dac;
-	int maxrow, maxcol;
+	int maxrow;
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
 	char buf[6+1];
 	int i, try_edid;
@@ -233,10 +233,6 @@ ffb_attach(device_t self)
 	sc->sc_locked = 0;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	
-	maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
-		? strtoul(buf, NULL, 10)
-		: 80;
-
 	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
 		? strtoul(buf, NULL, 10)
 		: 34;
