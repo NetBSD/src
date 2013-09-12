@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.141 2013/09/12 20:40:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.141 2013/09/12 20:40:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1217,11 +1217,9 @@ fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
 	csum_data = 0;
 
 	if ((sc->sc_flags & FXPF_EXT_RFA) != 0) {
-		uint8_t rxparsestat;
 		uint8_t csum_stat;
 
 		csum_stat = rfa->cksum_stat;
-		rxparsestat = rfa->rx_parse_stat;
 		if ((rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)) == 0)
 			goto out;
 
