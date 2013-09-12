@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.337 2013/07/19 11:43:18 pooka Exp $
+#	$NetBSD: bsd.lib.mk,v 1.338 2013/09/12 15:36:16 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -129,7 +129,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 
 # Set PICFLAGS to cc flags for producing position-independent code,
-# if not already set.  Includes -DPIC, if required.
+# if not already set.
 
 # Data-driven table using make variables to control how shared libraries
 # are built for different platforms and object formats.
@@ -143,48 +143,11 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
-# FPICFLAGS:		flags for ${FC} to compile .[fF] files to .pico objects.
-# CPPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
-# CPICFLAGS:		flags for ${CC} to compile .[cC] files to pic objects.
-# CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .pico objects.
-#			(usually includes ${CPICFLAGS})
-# CAPICFLAGS:		flags for ${CC} to compiling .[Ss] files
-#		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
-# APICFLAGS:		flags for ${AS} to assemble .[sS] to .pico objects.
 
-.if ${MACHINE_ARCH} == "alpha"						# {
-
-FPICFLAGS ?= -fPIC
-CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?=
-
-.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") 	# } {
-
-# If you use -fPIC you need to define BIGPIC to turn on 32-bit
-# relocations in asm code
-FPICFLAGS ?= -fPIC
-CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC -DBIGPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?= -KPIC
-
-.else									# } {
-
-# Platform-independent flags for NetBSD shared libraries
-SHLIB_SOVERSION=${SHLIB_FULLVERSION}
-SHLIB_SHFLAGS=
-FPICFLAGS ?= -fPIC
-CPICFLAGS?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS?= -k
-
-.endif									# }
+PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${CPICFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS}
 .endif
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
@@ -321,7 +284,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .f.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -414,14 +377,14 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .s.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.s} ${PICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .S.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.S} ${PICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
