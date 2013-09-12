@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.38 2012/06/02 21:36:44 dsl Exp $ */
+/*	$NetBSD: dbcool.c,v 1.39 2013/09/12 19:46:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.38 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.39 2013/09/12 19:46:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -836,21 +836,20 @@ bool dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 	return true;
 }
 
-/* On resume, we restore the previous state of the SHDN bit */
+/* On resume, we restore the previous state of the SHDN bit (which
+   we saved in sc_suspend) */
 bool dbcool_pmf_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct dbcool_softc *sc = device_private(dev);
-	uint8_t reg, bit, cfg;
+	uint8_t reg, cfg;
 
 	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
 		return true;
  
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		reg = DBCOOL_ADT7466_CONFIG2;
-		bit = DBCOOL_ADT7466_CFG2_SHDN;
 	} else {
 		reg = DBCOOL_CONFIG2_REG;
-		bit = DBCOOL_CFG2_SHDN;
 	}
 	cfg = sc->sc_dc.dc_readreg(&sc->sc_dc, reg);
 	cfg &= ~sc->sc_suspend;
@@ -1752,7 +1751,7 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 static void
 dbcool_setup_controllers(struct dbcool_softc *sc)
 {
-	int i, j, ret, rw_flag;
+	int i, j, rw_flag;
 	uint8_t sysctl_reg;
 	struct chip_id *chip = sc->sc_dc.dc_chip;
 	const struct sysctlnode *me2 = NULL;
@@ -1761,7 +1760,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 
 	for (i = 0; chip->power[i].desc != NULL; i++) {
 		snprintf(name, sizeof(name), "fan_ctl_%d", i);
-		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me2,
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me2,
 		       CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 		       CTLTYPE_NODE, name, NULL,
 		       NULL, 0, NULL, 0,
@@ -1779,7 +1778,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 				rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
 			else
 				rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
-			ret = (sysctl_createv)(&sc->sc_sysctl_log, 0, NULL,
+			(sysctl_createv)(&sc->sc_sysctl_log, 0, NULL,
 				&node, rw_flag,
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
