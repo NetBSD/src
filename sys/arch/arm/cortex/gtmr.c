@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.3 2013/09/07 01:42:44 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.4 2013/09/12 15:38:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.3 2013/09/07 01:42:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.4 2013/09/12 15:38:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
@@ -55,6 +56,10 @@ static int clockhandler(void *);
 static u_int gtmr_get_timecount(struct timecounter *);
 
 static struct gtmr_softc gtmr_sc;
+
+struct gtmr_percpu {
+	uint32_t pc_delta;
+};
 
 static struct timecounter gtmr_timecounter = {
 	.tc_get_timecount = gtmr_get_timecount,
@@ -109,9 +114,12 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	 */
 	armreg_cntk_ctl_write(armreg_cntk_ctl_read() | ARM_CNTKCTL_PL0VCTEN);
 
-
 	self->dv_private = sc;
 	sc->sc_dev = self;
+
+#ifdef DIAGNOSTIC
+	sc->sc_percpu = percpu_alloc(sizeof(struct gtmr_percpu));
+#endif
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
@@ -120,8 +128,17 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, clockhandler, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n",
+	aprint_normal_dev(self, "interrupting on irq %d\n",
 	    IRQ_GTMR_PPI_VTIMER);
+
+	const uint32_t cnt_frq = armreg_cnt_frq_read();
+	if (cnt_frq == 0) {
+		aprint_verbose_dev(self, "cp15 CNT_FRQ not set\n");
+	} else if (cnt_frq != sc->sc_freq) {
+		aprint_verbose_dev(self,
+		    "cp15 CNT_FRQ (%u) differs from supplied frequency\n",
+		    cnt_frq);
+	}
 }
 
 void
@@ -185,7 +202,7 @@ void
 cpu_initclocks(void)
 {
 	struct gtmr_softc * const sc = &gtmr_sc;
-	
+
 	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_freq != 0);
 
@@ -206,7 +223,7 @@ gtmr_delay(unsigned int n)
 
 	KASSERT(sc != NULL);
 
-	uint32_t freq = sc->sc_freq ? sc->sc_freq : curcpu()->ci_data.cpu_cc_freq / 2;
+	uint32_t freq = sc->sc_freq ? sc->sc_freq : armreg_cnt_frq_read();
 	KASSERT(freq != 0);
 
 	/*
@@ -232,18 +249,18 @@ gtmr_delay(unsigned int n)
 static int
 clockhandler(void *arg)
 {
+	const uint64_t now = armreg_cntv_ct_read();
+	struct cpu_info * const ci = curcpu();
+	uint64_t delta = now - ci->ci_lastintr;
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
-	struct cpu_info * const ci = curcpu();
-	
-	const uint64_t now = armreg_cntv_ct_read();
-	uint64_t delta = now - ci->ci_lastintr;
 
 #ifdef DIAGNOSTIC
 	const uint64_t then = armreg_cntv_cval_read();
+	struct gtmr_percpu * const pc = percpu_getref(sc->sc_percpu);
 	KASSERTMSG(then <= now, "%"PRId64, now - then);
-	KASSERTMSG(then - ci->ci_lastintr >= sc->sc_autoinc, "%"PRId64,
-	    then - ci->ci_lastintr - sc->sc_autoinc);
+	KASSERTMSG(then + pc->pc_delta >= ci->ci_lastintr + sc->sc_autoinc,
+	    "%"PRId64, then + pc->pc_delta - ci->ci_lastintr - sc->sc_autoinc);
 #endif
 
 #if 0
@@ -255,7 +272,7 @@ clockhandler(void *arg)
 	    ci->ci_data.cpu_name, delta, sc->sc_autoinc);
 
 	/*
-	 * If we got interrutped too soon (delta < sc->sc_autoinc) or
+	 * If we got interrupted too soon (delta < sc->sc_autoinc) or
 	 * we missed a tick (delta >= 2 * sc->sc_autoinc), don't try to
 	 * adjust for jitter.
 	 */
@@ -265,12 +282,17 @@ clockhandler(void *arg)
 	}
 	armreg_cntv_tval_write(sc->sc_autoinc - delta);
 
-	ci->ci_lastintr = now - delta;
+	ci->ci_lastintr = now;
+
+#ifdef DIAGNOSTIC
+	KASSERT(delta == (uint32_t) delta);
+	pc->pc_delta = delta;
+	percpu_putref(sc->sc_percpu);
+#endif
 
 	hardclock(cf);
 
-	if (delta > 2 * sc->sc_autoinc)
-		sc->sc_ev_missing_ticks.ev_count += (delta / sc->sc_autoinc) - 1;
+	sc->sc_ev_missing_ticks.ev_count += delta / sc->sc_autoinc;
 
 	return 1;
 }
