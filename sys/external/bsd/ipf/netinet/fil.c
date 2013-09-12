@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.10 2013/08/30 15:00:08 rmind Exp $	*/
+/*	$NetBSD: fil.c,v 1.11 2013/09/12 20:03:10 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.10 2013/08/30 15:00:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.11 2013/09/12 20:03:10 martin Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -4330,13 +4330,12 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 {
 	int error = 0, in, family, addrem, need_free = 0;
 	frentry_t frd, *fp, *f, **fprev, **ftail;
-	void *ptr, *uptr, *cptr;
+	void *ptr, *uptr;
 	u_int *p, *pp;
 	frgroup_t *fg;
 	char *group;
 
 	ptr = NULL;
-	cptr = NULL;
 	fg = NULL;
 	fp = &frd;
 	if (makecopy != 0) {
@@ -4446,7 +4445,6 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 	}
 
 	ptr = NULL;
-	cptr = NULL;
 
 	if (FR_ISACCOUNT(fp->fr_flags))
 		unit = IPL_LOGCOUNT;
