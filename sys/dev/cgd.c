@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $ */
+/* $NetBSD: cgd.c,v 1.82 2013/09/12 12:28:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.81 2013/05/30 08:28:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.82 2013/09/12 12:28:49 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -518,7 +518,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
-	struct	disk *dk;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 
@@ -529,7 +528,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case CGDIOCGET: /* don't call cgd_spawn() if the device isn't there */
 		cs = NULL;
 		dksc = NULL;
-		dk = NULL;
 		break;
 	case CGDIOCSET:
 	case CGDIOCCLR:
@@ -539,7 +537,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	default:
 		GETCGD_SOFTC(cs, dev);
 		dksc = &cs->sc_dksc;
-		dk = &dksc->sc_dkdev;
 		break;
 	}
 
@@ -985,9 +982,11 @@ CFDRIVER_DECL(cgd, DV_DISK, NULL);
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor, cmajor, error = 0;
+	int error = 0;
 
-	bmajor = cmajor = -1;
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
