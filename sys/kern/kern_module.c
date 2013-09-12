@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.91 2013/03/24 22:06:37 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.92 2013/09/12 19:02:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.91 2013/03/24 22:06:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.92 2013/09/12 19:02:05 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -926,8 +926,15 @@ module_do_load(const char *name, bool isdep, int flags,
 					    &filedict);
 		if (error != 0) {
 #ifdef DEBUG
-			module_error("vfs load failed for `%s', error %d",
-			    name, error);
+			/*
+			 * The exec class of modules contains a list of
+			 * modules that is the union of all the modules
+			 * available for each architecture, so we don't
+			 * print an error if they are missing.
+			 */
+			if (class != MODULE_CLASS_EXEC || errno != ENOENT)
+				module_error("vfs load failed for `%s', "
+				    "error %d", name, error);
 #endif
 			kmem_free(mod, sizeof(*mod));
 			depth--;
