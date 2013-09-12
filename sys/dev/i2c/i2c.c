@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.40 2013/08/07 19:38:45 soren Exp $	*/
+/*	$NetBSD: i2c.c,v 1.41 2013/09/12 20:20:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.40 2013/08/07 19:38:45 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.41 2013/09/12 20:20:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,6 @@ iic_smbus_intr_thread(void *aux)
 {
 	i2c_tag_t ic;
 	struct ic_intr_list *il;
-	int rv;
 
 	ic = (i2c_tag_t)aux;
 	ic->ic_running = 1;
@@ -314,7 +313,7 @@ iic_smbus_intr_thread(void *aux)
 
 	while (ic->ic_running) {
 		if (ic->ic_pending == 0)
-			rv = tsleep(ic, PZERO, "iicintr", hz);
+			tsleep(ic, PZERO, "iicintr", hz);
 		if (ic->ic_pending > 0) {
 			LIST_FOREACH(il, &(ic->ic_proc_list), il_next) {
 				(*il->il_intr)(il->il_intrarg);
