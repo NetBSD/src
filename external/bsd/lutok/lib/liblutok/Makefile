@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/02/22 15:14:31 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2013/09/12 17:14:20 joerg Exp $
 
 #NOLINT=		# defined
 
@@ -8,11 +8,6 @@ LIB=		lutok
 LIBISCXX=	yes
 
 LIBDPLIBS+=     lua	${.CURDIR}/../../../../mit/lua/lib/liblua
-.if ${HAVE_GCC} == 4
-LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../gnu/lib/libstdc++-v3_4
-.else
-LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/gcc/lib/libstdc++-v3
-.endif
 LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/lutok/dist

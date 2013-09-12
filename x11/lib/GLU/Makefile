@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2013/05/24 17:44:27 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2013/09/12 17:14:20 joerg Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
 .include <bsd.own.mk>
 
 LIB=		GLU
+LIBISCXX=	yes
 
 GLUDIR=		${X11SRCDIR.xc}/extras/ogl-sample/main/gfx/lib/glu
 
@@ -61,10 +62,8 @@ SRCS=		${SRCS.libutil} ${SRCS.libtess} \
 		${SRCS.interface} ${SRCS.internals} ${SRCS.nurbtess}
 
 LIBDPLIBS=\
-	GL	${.CURDIR}/../GL
-
-LDADD+=		-lstdc++ -lm
-DPADD+=		${LIBSTDCXX} ${LIBM}
+	GL	${.CURDIR}/../GL \
+	m	${NETBSDSRCDIR}/lib/libm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
