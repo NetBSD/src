@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.61 2013/07/30 19:24:26 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.62 2013/09/12 12:42:18 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.61 2013/07/30 19:24:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.62 2013/09/12 12:42:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,12 +285,12 @@ int cgsix_use_rasterconsole = 1;
 /*
  * Run a blitter command
  */
-#define CG6_BLIT(f) { volatile uint32_t foo; foo = f->fbc_blit; }
+#define CG6_BLIT(f) { (void)f->fbc_blit; }
 
 /*
  * Run a drawing command
  */
-#define CG6_DRAW(f) { volatile uint32_t foo; foo = f->fbc_draw; }
+#define CG6_DRAW(f) { (void)f->fbc_draw; }
 
 /*
  * Wait for the whole engine to go idle.  This may not matter in our case;
