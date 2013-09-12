@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.139 2013/09/12 20:00:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.138 2013/06/23 22:03:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.139 2013/09/12 20:00:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1630,11 +1630,16 @@ ffs_discardcb(struct work *wk, void *arg)
 	struct discarddata *ts = arg;
 	struct fs *fs = ts->fs;
 	struct disk_discard_range ta;
+#ifdef TRIMDEBUG
 	int error;
+#endif
 
 	ta.bno = FFS_FSBTODB(fs, td->bno);
 	ta.size = td->size >> DEV_BSHIFT;
-	error = VOP_IOCTL(td->devvp, DIOCDISCARD, &ta, FWRITE, FSCRED);
+#ifdef TRIMDEBUG
+	error =
+#endif
+		VOP_IOCTL(td->devvp, DIOCDISCARD, &ta, FWRITE, FSCRED);
 #ifdef TRIMDEBUG
 	printf("trim(%" PRId64 ",%ld):%d\n", td->bno, td->size, error);
 #endif
