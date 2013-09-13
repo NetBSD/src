@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.74 2013/06/11 16:37:10 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.75 2013/09/13 21:13:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.74 2013/06/11 16:37:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.75 2013/09/13 21:13:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2304,9 +2304,12 @@ sk_intr_xmac(struct sk_if_softc	*sc_if)
 void
 sk_intr_yukon(struct sk_if_softc *sc_if)
 {
+#ifdef SK_DEBUG
 	int status;
 
-	status = SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
+	status = 
+#endif
+		SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
 
 	DPRINTFN(3, ("sk_intr_yukon status=%#x\n", status));
 }
