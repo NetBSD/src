@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.10 2013/09/13 22:18:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.10 2013/09/13 22:18:42 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -533,12 +533,6 @@ flash_get_size(dev_t dev)
 	sc = flash_get_softc(dev);
 
 	return sc->sc_partinfo.part_size;
-}
-
-static inline flash_off_t
-flash_get_part_offset(struct flash_softc * const sc, size_t poffset)
-{
-	return sc->sc_partinfo.part_offset + poffset;
 }
 
 int
