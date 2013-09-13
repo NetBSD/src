@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.57 2013/07/22 21:12:03 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.58 2013/09/13 20:38:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.57 2013/07/22 21:12:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.58 2013/09/13 20:38:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,8 +98,6 @@ struct shmif_sc {
 	struct lwp *sc_rcvl;
 	bool sc_dying;
 };
-
-static const uint32_t busversion = SHMIF_VERSION;
 
 static void shmif_rcv(void *);
 
