@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.3 2010/09/12 16:03:39 drochner Exp $	*/
+/*	$NetBSD: eap.c,v 1.4 2013/09/13 21:07:54 joerg Exp $	*/
 
 /*
  * eap.c - Extensible Authentication Protocol for PPP (RFC 2284)
@@ -50,7 +50,7 @@
 #if 0
 #define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp"
 #else
-__RCSID("$NetBSD: eap.c,v 1.3 2010/09/12 16:03:39 drochner Exp $");
+__RCSID("$NetBSD: eap.c,v 1.4 2013/09/13 21:07:54 joerg Exp $");
 #endif
 #endif
 
@@ -153,6 +153,7 @@ struct protent eap_protent = {
 /*
  * A well-known 2048 bit modulus.
  */
+#ifdef USE_SRP
 static const u_char wkmodulus[] = {
 	0xAC, 0x6B, 0xDB, 0x41, 0x32, 0x4A, 0x9A, 0x9B,
 	0xF1, 0x66, 0xDE, 0x5E, 0x13, 0x89, 0x58, 0x2F,
@@ -187,6 +188,7 @@ static const u_char wkmodulus[] = {
 	0x9B, 0x65, 0xE3, 0x72, 0xFC, 0xD6, 0x8E, 0xF2,
 	0x0F, 0xA7, 0x11, 0x1F, 0x9E, 0x4A, 0xFF, 0x73
 };
+#endif
 
 /* Local forward declarations. */
 static void eap_server_timeout __P((void *arg));
