@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.15 2013/04/30 00:03:52 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.16 2013/09/13 20:38:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.15 2013/04/30 00:03:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.16 2013/09/13 20:38:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -911,15 +911,6 @@ static const struct usbd_pipe_methods rumpusb_device_bulk_methods = {
 	.close =	rumpusb_device_bulk_close,
 	.cleartoggle =	rumpusb_device_bulk_cleartoggle,
 	.done =		rumpusb_device_bulk_done,
-};
-
-static const struct usbd_pipe_methods rumpusb_device_intr_methods = {
-	.transfer =	rumpusb_root_intr_transfer,
-	.start =	rumpusb_root_intr_start,
-	.abort =	rumpusb_root_intr_abort,
-	.close =	rumpusb_root_intr_close,
-	.cleartoggle =	rumpusb_root_intr_cleartoggle,
-	.done =		rumpusb_root_intr_done,
 };
 
 static usbd_status
