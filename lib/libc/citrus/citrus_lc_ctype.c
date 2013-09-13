@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.14 2013/08/20 19:58:30 joerg Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.14 2013/08/20 19:58:30 joerg Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -93,14 +93,6 @@ _citrus_LC_CTYPE_create_impl(const char * __restrict root,
 		_citrus_unmap_file(&r);
 	}
 	return ret;
-}
-
-static __inline void
-_PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
-    _RuneLocale * __restrict data)
-{
-	_DIAGASSERT(cache != NULL);
-	_DIAGASSERT(data != NULL);
 }
 
 static __inline void

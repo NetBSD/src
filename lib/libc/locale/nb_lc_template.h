@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template.h,v 1.7 2013/08/18 20:03:48 joerg Exp $ */
+/* $NetBSD: nb_lc_template.h,v 1.8 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)1999, 2008 Citrus Project,
@@ -234,7 +234,6 @@ _PREFIX(setlocale)(const char * __restrict name,
 				return NULL;
 			locale->part_name[(size_t)_CATEGORY_ID] = loaded_name;
 			locale->part_impl[(size_t)_CATEGORY_ID] = loaded_impl;
-			_PREFIX(build_cache)(locale->cache, loaded_impl);
 			if (locale == &_lc_global_locale)
 				_PREFIX(update_global)(loaded_impl);
 		}
