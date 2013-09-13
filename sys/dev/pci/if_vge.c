@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.54 2013/03/30 03:21:08 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.55 2013/09/13 21:14:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.54 2013/03/30 03:21:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.55 2013/09/13 21:14:58 martin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -2027,11 +2027,9 @@ static int
 vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
-	struct ifreq *ifr;
 	int s, error;
 
 	sc = ifp->if_softc;
-	ifr = (struct ifreq *)data;
 	error = 0;
 
 	s = splnet();
