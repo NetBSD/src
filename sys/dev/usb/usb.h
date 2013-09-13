@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.104 2013/08/21 17:25:58 jakllsch Exp $	*/
+/*	$NetBSD: usb.h,v 1.105 2013/09/13 23:30:47 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -268,6 +268,8 @@ typedef struct {
 
 #define USB_2_MAX_CTRL_PACKET	64
 #define USB_2_MAX_BULK_PACKET	512
+
+#define USB_3_MAX_CTRL_PACKET	512
 
 typedef struct {
 	uByte		bLength;
@@ -759,6 +761,7 @@ struct usb_device_info {
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
+#define USB_SPEED_SUPER 4
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
