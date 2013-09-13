@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $	*/
+/*	$NetBSD: deroff.c,v 1.10 2013/09/13 20:51:20 joerg Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -64,21 +64,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.9 2011/08/31 13:38:19 joerg Exp $";
-#endif
-#endif /* not lint */
-
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: deroff.c,v 1.10 2013/09/13 20:51:20 joerg Exp $");
+
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
