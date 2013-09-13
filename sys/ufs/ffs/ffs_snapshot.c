@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.127 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.128 2013/09/13 20:15:33 joerg Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.127 2013/06/23 22:03:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.128 2013/09/13 20:15:33 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,7 +124,6 @@ static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
 static inline void db_assign(struct inode *, int, daddr_t);
 static inline daddr_t ib_get(struct inode *, int);
-static inline void ib_assign(struct inode *, int, daddr_t);
 static inline daddr_t idb_get(struct inode *, void *, int);
 static inline void idb_assign(struct inode *, void *, int, daddr_t);
 
@@ -2305,15 +2304,6 @@ ib_get(struct inode *ip, int loc)
 		return ufs_rw32(ip->i_ffs1_ib[loc], UFS_IPNEEDSWAP(ip));
 	else
 		return ufs_rw64(ip->i_ffs2_ib[loc], UFS_IPNEEDSWAP(ip));
-}
-
-static inline void
-ib_assign(struct inode *ip, int loc, daddr_t val)
-{
-	if (ip->i_ump->um_fstype == UFS1)
-		ip->i_ffs1_ib[loc] = ufs_rw32(val, UFS_IPNEEDSWAP(ip));
-	else
-		ip->i_ffs2_ib[loc] = ufs_rw64(val, UFS_IPNEEDSWAP(ip));
 }
 
 static inline daddr_t
