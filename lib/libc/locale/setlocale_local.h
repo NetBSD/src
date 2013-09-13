@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.14 2013/08/20 19:58:30 joerg Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.15 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -29,6 +29,9 @@
 #ifndef _SETLOCALE_LOCAL_H_
 #define _SETLOCALE_LOCAL_H_
 
+#include <sys/queue.h>
+#include <locale.h>
+
 #include "ctype_local.h"
 
 #define _LOCALENAME_LEN_MAX 33
@@ -42,11 +45,14 @@ extern const char		*_PathLocale;
 typedef void *_locale_part_t;
 
 struct _locale_cache_t {
-	struct lconv *ldata;
+	SLIST_ENTRY(_locale_cache_t) cache_link;
+	const char *monetary_name;
+	const char *numeric_name;
+	struct lconv ldata;
 };
 
 struct _locale {
-	struct _locale_cache_t *cache;
+	const struct _locale_cache_t *cache;
 	char query[_LOCALENAME_LEN_MAX * (_LC_LAST - 1)];
 	const char *part_name[_LC_LAST];
 	_locale_part_t part_impl[_LC_LAST];
@@ -74,21 +80,18 @@ const char *_citrus_LC_TIME_setlocale(
     const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_MESSAGES_setlocale(
     const char * __restrict, struct _locale * __restrict);
+
+int _setlocale_cache(locale_t, struct _locale_cache_t *);
 __END_DECLS
 
 #ifdef _LIBC
 extern __dso_protected struct _locale	_lc_global_locale;
+extern __dso_hidden const struct _locale_cache_t _C_cache;
 
 static __inline struct _locale *
 _current_locale(void)
 {
 	return &_lc_global_locale;
-}
-
-static __inline struct _locale_cache_t *
-_current_cache(void)
-{
-	return _lc_global_locale.cache;
 }
 #endif
 
