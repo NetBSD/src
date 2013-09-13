@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.19 2012/10/13 19:19:39 dholland Exp $	*/
+/*	$NetBSD: subs.c,v 1.20 2013/09/13 20:46:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.19 2012/10/13 19:19:39 dholland Exp $");
+__RCSID("$NetBSD: subs.c,v 1.20 2013/09/13 20:46:50 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,19 +46,6 @@ static char outbuff[BUFSIZ];
 static const char plred[] = "Player is red, computer is white.";
 static const char plwhite[] = "Player is white, computer is red.";
 static const char nocomp[] = "(No computer play.)";
-
-static const char *const descr[] = {
-	"Usage:  backgammon [-] [n r w b pr pw pb t3a]\n",
-	"\t-\tgets this list\n\tn\tdon't ask for rules or instructions",
-	"\tr\tplayer is red (implies n)\n\tw\tplayer is white (implies n)",
-	"\tb\ttwo players, red and white (implies n)",
-	"\tpr\tprint the board before red's turn",
-	"\tpw\tprint the board before white's turn",
-	"\tpb\tprint the board before both player's turn",
-	"\tterm\tterminal is a term",
-	"\tsfile\trecover saved game from file",
-	0
-};
 
 void
 errexit(const char *s)
