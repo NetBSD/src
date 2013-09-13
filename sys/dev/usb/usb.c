@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.142 2013/08/21 18:11:31 jakllsch Exp $	*/
+/*	$NetBSD: usb.c,v 1.143 2013/09/13 23:42:12 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.142 2013/08/21 18:11:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.143 2013/09/13 23:42:12 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -202,6 +202,17 @@ usb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
+	/* XXX we should have our own level */
+	sc->sc_bus->soft = softint_establish(
+	    SOFTINT_NET | (mpsafe ? SOFTINT_MPSAFE : 0),
+	    usb_soft_intr, sc->sc_bus);
+	if (sc->sc_bus->soft == NULL) {
+		aprint_error("%s: can't register softintr\n",
+			     device_xname(self));
+		sc->sc_dying = 1;
+		return;
+	}
+
 	if (mpsafe)
 		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
 	else
@@ -254,7 +265,6 @@ usb_doattach(device_t self)
 	usbd_status err;
 	int speed;
 	struct usb_event *ue;
-	const bool mpsafe = sc->sc_bus->methods->get_lock ? true : false;
 
 	DPRINTF(("usbd_doattach\n"));
 
@@ -278,17 +288,6 @@ usb_doattach(device_t self)
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
-
-	/* XXX we should have our own level */
-	sc->sc_bus->soft = softint_establish(
-	    SOFTINT_NET | (mpsafe ? SOFTINT_MPSAFE : 0),
-	    usb_soft_intr, sc->sc_bus);
-	if (sc->sc_bus->soft == NULL) {
-		aprint_error("%s: can't register softintr\n",
-			     device_xname(self));
-		sc->sc_dying = 1;
-		return;
-	}
 
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
