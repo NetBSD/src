@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2013/08/20 19:19:23 macallan Exp $ */
+/*	$NetBSD: cpu.h,v 1.104 2013/09/13 21:36:38 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,7 +221,7 @@ extern struct pool_cache *fpstate_cache;
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 #define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpus; ci != NULL; \
+#define CPU_INFO_FOREACH(cii, ci)	(void)cii, ci = cpus; ci != NULL; \
 					ci = ci->ci_next
 
 #define curlwp		curcpu()->ci_curlwp
