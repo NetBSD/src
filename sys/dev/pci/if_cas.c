@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.19 2013/03/30 03:21:04 christos Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.20 2013/09/13 20:56:17 martin Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.19 2013/03/30 03:21:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.20 2013/09/13 20:56:17 martin Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -963,10 +963,7 @@ cas_disable_tx(struct cas_softc *sc)
 int
 cas_meminit(struct cas_softc *sc)
 {
-	struct cas_rxsoft *rxs;
-	int i, error;
-
-	rxs = (void *)&error;
+	int i;
 
 	/*
 	 * Initialize the transmit descriptor ring.
