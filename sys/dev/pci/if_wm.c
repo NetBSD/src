@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.263 2013/09/08 03:17:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.264 2013/09/13 21:22:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.263 2013/09/08 03:17:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.264 2013/09/13 21:22:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -5355,9 +5355,11 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 static int
 wm_validate_eeprom_checksum(struct wm_softc *sc)
 {
-	uint16_t checksum, valid_checksum;
+	uint16_t checksum;
 	uint16_t eeprom_data;
-	uint16_t csum_wordaddr;
+#ifdef WM_DEBUG
+	uint16_t csum_wordaddr, valid_checksum;
+#endif
 	int i;
 
 	checksum = 0;
@@ -5366,6 +5368,7 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_I211)
 		return 0;
 
+#ifdef WM_DEBUG
 	if (sc->sc_type == WM_T_PCH_LPT) {
 		csum_wordaddr = NVM_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
@@ -5374,7 +5377,6 @@ wm_validate_eeprom_checksum(struct wm_softc *sc)
 		valid_checksum = NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM;
 	}
 
-#ifdef WM_DEBUG
 	/* Dump EEPROM image for debug */
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
@@ -6073,12 +6075,13 @@ wm_tbi_check_link(struct wm_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
-	uint32_t rxcw, ctrl, status;
+	uint32_t status;
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
-	rxcw = CSR_READ(sc, WMREG_RXCW);
-	ctrl = CSR_READ(sc, WMREG_CTRL);
+	/* XXX is this needed? */
+	(void)CSR_READ(sc, WMREG_RXCW);
+	(void)CSR_READ(sc, WMREG_CTRL);
 
 	/* set link status */
 	if ((status & STATUS_LU) == 0) {
