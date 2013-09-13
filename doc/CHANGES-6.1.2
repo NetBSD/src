@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.2,v 1.1.2.3 2013/09/11 04:03:45 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.2,v 1.1.2.4 2013/09/13 04:18:50 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -46,3 +46,12 @@ sys/net/bpf.c					1.176
 	Avoid kernel panic caused by setting a very small bpf buffer size.
 	Fixes PR/48198 reported by Peter Bex.
 	[spz, ticket #941]
+
+sys/net/npf/npf_inet.c				1.23
+
+	Fix bugs to prevent panic:
+	- npf_cache_ip: re-fetch IPv6 header since nbufs might have been
+          reallocated.
+	- npf_cache_all: clear NBUF_DATAREF_RESET since npf_cache_ip() handles
+	  it.
+	[riz, ticket #942]
