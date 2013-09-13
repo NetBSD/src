@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.151 2013/08/29 17:49:21 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.152 2013/09/13 21:05:02 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.151 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.152 2013/09/13 21:05:02 martin Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -491,7 +491,6 @@ out:
 static int
 gre_sosend(struct socket *so, struct mbuf *top)
 {
-	struct mbuf	**mp;
 	struct proc	*p;
 	long		space, resid;
 	int		error;
@@ -526,7 +525,6 @@ gre_sosend(struct socket *so, struct mbuf *top)
 		snderr(EMSGSIZE);
 	if (space < resid)
 		snderr(EWOULDBLOCK);
-	mp = &top;
 	/*
 	 * Data is prepackaged in "top".
 	 */
@@ -534,7 +532,6 @@ gre_sosend(struct socket *so, struct mbuf *top)
 		snderr(EPIPE);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, top, NULL, NULL, l);
 	top = NULL;
-	mp = &top;
  release:
 	sbunlock(&so->so_snd);
  out:
