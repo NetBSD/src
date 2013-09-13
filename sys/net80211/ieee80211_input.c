@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.76 2013/03/30 19:03:02 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.77 2013/09/13 20:19:53 joerg Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.76 2013/03/30 19:03:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.77 2013/09/13 20:19:53 joerg Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1376,12 +1376,6 @@ iswmeinfo(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&
 		frm[6] == WME_INFO_OUI_SUBTYPE;
-}
-
-static __inline int
-isatherosoui(const u_int8_t *frm)
-{
-	return frm[1] > 3 && LE_READ_4(frm+2) == ((ATH_OUI_TYPE<<24)|ATH_OUI);
 }
 
 /*
