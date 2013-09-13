@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.40 2013/07/16 09:54:30 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.41 2013/09/13 06:21:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.40 2013/07/16 09:54:30 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.41 2013/09/13 06:21:43 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,9 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
- * Source: Intel Processor Identification and the CPUID Instruction, AP-485
+ * Source: Table 3-24, Mapping of Brand Indices; and Intel 64 and IA-32
+ * Processor Brand Strings, Chapter 3 in "Intel (R) 64 and IA-32
+ * Architectures Software Developer's Manual, Volume 2A".
  */
 static const char * const i386_intel_brand[] = {
 	"",		    /* Unsupported */
@@ -159,7 +161,7 @@ static const char * const i386_intel_brand[] = {
 	"Pentium III",      /* Intel (R) Pentium (R) III processor */
 	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
 	"Pentium III",      /* Intel (R) Pentium (R) III processor */
-	"",		    /* Reserved */
+	"",		    /* 0x05: Reserved */
 	"Mobile Pentium III", /* Mobile Intel (R) Pentium (R) III processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
 	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
@@ -167,8 +169,16 @@ static const char * const i386_intel_brand[] = {
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
 	"Xeon",		    /* Intel (R) Xeon (TM) processor */
 	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
-	"",		    /* Reserved */
+	"",		    /* 0x0d: Reserved */
 	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
+	"",		    /* 0x10: Reserved */
+	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
+	"Celeron M",        /* Intel (R) Celeron (R) M processor */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
+	"Celeron",          /* Intel (R) Celeron (R) processor */
+	"Mobile Genuine",   /* Moblie Genuine Intel (R) processor */
+	"Pentium M",        /* Intel (R) Pentium (R) M processor */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
 
@@ -246,6 +256,11 @@ const char *modifiers[] = {
 
 const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
+		/*
+		 * For Intel processors, check Chapter 35Model-specific
+		 * registers (MSRS), in "Intel (R) 64 and IA-32 Architectures
+		 * Software Developer's Manual, Volume 3C".
+		 */
 		"GenuineIntel",
 		CPUVENDOR_INTEL,
 		"Intel",
@@ -281,7 +296,6 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				/* Updated from intel_x86_325486.pdf Aug 2012 */
 				[0x00] = "Pentium Pro (A-step)",
 				[0x01] = "Pentium Pro",
 				[0x03] = "Pentium II (Klamath)",
@@ -320,17 +334,20 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x2e] = "Xeon 75xx & 65xx",
 				[0x2f] = "Xeon E7 family",
 				[0x35] = "Atom Family",
-				[0x36] = "Atom S",
+				[0x36] = "Atom S1000",
+				[0x37] = "Atom C2000, E3000",
 				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, "
 					 "Ivy bridge",
 				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
+				[0x3d] = "Next gen Core",
 				[0x3e] = "Next gen Xeon E5/E7, Ivy bridge",
 				[0x3f] = "Future gen Xeon",
 				[0x45] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
 				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
+				[0x4d] = "Atom C2000, E3000",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
