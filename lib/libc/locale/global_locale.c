@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.20 2013/08/20 19:58:30 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.21 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.20 2013/08/20 19:58:30 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.21 2013/09/13 13:13:32 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -110,7 +110,10 @@ static const _TimeLocale _DefaultTimeLocale =
 	"%I:%M:%S %p"
 };
 
-static const struct lconv _C_ldata = {
+static const char _lc_C_locale_name[] = _C_LOCALE;
+
+__dso_hidden const struct _locale_cache_t _C_cache = {
+    .ldata = {
 	.decimal_point		= __UNCONST("."),
 	.thousands_sep		= __UNCONST(""),
 	.grouping		= __UNCONST(""),
@@ -135,23 +138,22 @@ static const struct lconv _C_ldata = {
 	.int_n_sep_by_space	= NBCHAR_MAX,
 	.int_p_sign_posn	= NBCHAR_MAX,
 	.int_n_sign_posn	= NBCHAR_MAX,
-};
-
-static struct _locale_cache_t _global_cache = {
-    .ldata = __UNCONST(&_C_ldata),
+    },
+    .monetary_name = _lc_C_locale_name,
+    .numeric_name = _lc_C_locale_name,
 };
 
 __dso_protected struct _locale _lc_global_locale = {
-    .cache = &_global_cache,
+    .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
-	[(size_t)LC_ALL     ] = _C_LOCALE,
-	[(size_t)LC_COLLATE ] = _C_LOCALE,
-	[(size_t)LC_CTYPE   ] = _C_LOCALE,
-	[(size_t)LC_MONETARY] = _C_LOCALE,
-	[(size_t)LC_NUMERIC ] = _C_LOCALE,
-	[(size_t)LC_TIME    ] = _C_LOCALE,
-	[(size_t)LC_MESSAGES] = _C_LOCALE,
+	[(size_t)LC_ALL     ] = _lc_C_locale_name,
+	[(size_t)LC_COLLATE ] = _lc_C_locale_name,
+	[(size_t)LC_CTYPE   ] = _lc_C_locale_name,
+	[(size_t)LC_MONETARY] = _lc_C_locale_name,
+	[(size_t)LC_NUMERIC ] = _lc_C_locale_name,
+	[(size_t)LC_TIME    ] = _lc_C_locale_name,
+	[(size_t)LC_MESSAGES] = _lc_C_locale_name,
     },
     .part_impl = {
 	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
@@ -169,21 +171,17 @@ __dso_protected struct _locale _lc_global_locale = {
     },
 };
 
-static const struct _locale_cache_t _C_cache = {
-    .ldata = __UNCONST(&_C_ldata),
-};
-
 __dso_protected const struct _locale _lc_C_locale = {
-    .cache = __UNCONST(&_C_cache),
+    .cache = &_C_cache,
     .query = { _C_LOCALE },
     .part_name = {
-	[(size_t)LC_ALL     ] = _C_LOCALE,
-	[(size_t)LC_COLLATE ] = _C_LOCALE,
-	[(size_t)LC_CTYPE   ] = _C_LOCALE,
-	[(size_t)LC_MONETARY] = _C_LOCALE,
-	[(size_t)LC_NUMERIC ] = _C_LOCALE,
-	[(size_t)LC_TIME    ] = _C_LOCALE,
-	[(size_t)LC_MESSAGES] = _C_LOCALE,
+	[(size_t)LC_ALL     ] = _lc_C_locale_name,
+	[(size_t)LC_COLLATE ] = _lc_C_locale_name,
+	[(size_t)LC_CTYPE   ] = _lc_C_locale_name,
+	[(size_t)LC_MONETARY] = _lc_C_locale_name,
+	[(size_t)LC_NUMERIC ] = _lc_C_locale_name,
+	[(size_t)LC_TIME    ] = _lc_C_locale_name,
+	[(size_t)LC_MESSAGES] = _lc_C_locale_name,
     },
     .part_impl = {
 	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,

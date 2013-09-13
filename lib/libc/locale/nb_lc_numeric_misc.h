@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_numeric_misc.h,v 1.6 2013/08/20 19:58:30 joerg Exp $ */
+/* $NetBSD: nb_lc_numeric_misc.h,v 1.7 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -33,22 +33,6 @@
  * macro required by nb_lc_template(_decl).h
  */
 #define _CATEGORY_TYPE		_NumericLocale
-
-static __inline void
-_PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
-    _NumericLocale * __restrict data)
-{
-	struct lconv *ldata;
-
-	_DIAGASSERT(cache != NULL);
-	_DIAGASSERT(cache->ldata != NULL);
-	_DIAGASSERT(data != NULL);
-
-	ldata = cache->ldata;
-	ldata->decimal_point = __UNCONST(data->decimal_point);
-	ldata->thousands_sep = __UNCONST(data->thousands_sep);
-	ldata->grouping      = __UNCONST(data->grouping);
-}
 
 /* ARGSUSED */
 static __inline void

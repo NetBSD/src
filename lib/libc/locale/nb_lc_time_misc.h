@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.7 2013/08/20 19:58:30 joerg Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.8 2013/09/13 13:13:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -39,15 +39,6 @@
 #define ABMON_IDX(idx)	((size_t)idx - (size_t)ABMON_1)
 #define MON_IDX(idx)	((size_t)idx - (size_t)MON_1)
 #define AM_PM_IDX(idx)	((size_t)idx - (size_t)AM_STR)
-
-static __inline void
-/*ARGSUSED*/
-_PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
-    _TimeLocale * __restrict data)
-{
-	_DIAGASSERT(cache != NULL);
-	_DIAGASSERT(data != NULL);
-}
 
 /* ARGSUSED */
 static __inline void
