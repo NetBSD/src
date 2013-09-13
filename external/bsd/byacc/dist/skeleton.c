@@ -1,11 +1,11 @@
-/*	$NetBSD: skeleton.c,v 1.11 2013/04/06 14:52:24 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.12 2013/09/13 17:38:17 joerg Exp $	*/
 
 /* Id: skeleton.c,v 1.32 2013/03/04 23:19:39 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.11 2013/04/06 14:52:24 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.12 2013/09/13 17:38:17 joerg Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/
@@ -22,6 +22,9 @@ __RCSID("$NetBSD: skeleton.c,v 1.11 2013/04/06 14:52:24 christos Exp $");
 const char *const banner[] =
 {
     "#ifndef lint",
+    "#if __GNUC__ - 0 >= 4 || (__GNUC__ 0 == 3 && __GNUC_MINOR__ >= 1)",
+    "__attribute__((__used__))",
+    "#endif",
     "static const char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#endif",
     "",
