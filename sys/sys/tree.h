@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.18 2013/03/29 21:24:31 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.19 2013/09/13 19:43:38 joerg Exp $	*/
 /*	$OpenBSD: tree.h,v 1.13 2011/07/09 00:19:45 pirofti Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -144,7 +144,7 @@ name##_SPLAY_NEXT(struct name *head, struct type *elm)			\
 	return (elm);							\
 }									\
 									\
-static __inline struct type *						\
+static __unused __inline struct type *					\
 name##_SPLAY_MIN_MAX(struct name *head, int val)			\
 {									\
 	name##_SPLAY_MINMAX(head, val);					\
