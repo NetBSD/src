@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.4 2013/09/14 11:41:45 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.4 2013/09/14 11:41:45 martin Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif
@@ -995,7 +995,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 {
 	iphtent_t ipe, *ent;
 	u_int hv;
-	int bits;
 
 	bcopy((char *)ipeo, (char *)&ipe, sizeof(ipe));
 	ipe.ipe_addr.i6[0] &= ipe.ipe_mask.i6[0];
@@ -1003,7 +1002,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 	ipe.ipe_addr.i6[2] &= ipe.ipe_mask.i6[2];
 	ipe.ipe_addr.i6[3] &= ipe.ipe_mask.i6[3];
 	if (ipe.ipe_family == AF_INET) {
-		bits = count4bits(ipe.ipe_mask.in4_addr);
 		ipe.ipe_addr.i6[1] = 0;
 		ipe.ipe_addr.i6[2] = 0;
 		ipe.ipe_addr.i6[3] = 0;
@@ -1015,7 +1013,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 	} else
 #ifdef USE_INET6
 	if (ipe.ipe_family == AF_INET6) {
-		bits = count6bits(ipe.ipe_mask.i6);
 		hv = IPE_V6_HASH_FN(ipe.ipe_addr.i6,
 				    ipe.ipe_mask.i6, iph->iph_size);
 	} else
