@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.99 2012/09/13 11:53:45 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.100 2013/09/14 21:09:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.99 2012/09/13 11:53:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.100 2013/09/14 21:09:56 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -180,7 +180,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sparc32_sigframe *fp;
 	struct trapframe64 *tf;
 	int addr, onstack, error;
-	struct rwindow32 *kwin, *oldsp, *newsp;
+	struct rwindow32 *oldsp, *newsp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
 	extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -251,7 +251,6 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)((char *)tf - CCFSZ);
 	error = (rwindow_save(l) || 
 	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
