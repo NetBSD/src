@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.44 2013/03/01 18:25:55 joerg Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.45 2013/09/14 13:09:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.44 2013/03/01 18:25:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.45 2013/09/14 13:09:18 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -215,6 +215,7 @@ dmac_read_2(sca_port_t *scp, u_int reg)
 	return sca_read_2(scp->sca, scp->dmac_off + reg);
 }
 
+#if SCA_DEBUG_LEVEL > 0
 /*
  * read the chain pointer
  */
@@ -226,6 +227,7 @@ sca_desc_read_chainp(struct sca_softc *sc, struct sca_desc *dp)
 	return (bus_space_read_2(sc->scu_memt, sc->scu_memh,
 	    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_chainp)));
 }
+#endif
 
 /*
  * write the chain pointer
@@ -241,6 +243,7 @@ sca_desc_write_chainp(struct sca_softc *sc, struct sca_desc *dp, u_int16_t cp)
 		    + offsetof(struct sca_desc, sd_chainp), cp);
 }
 
+#if SCA_DEBUG_LEVEL > 0
 /*
  * read the buffer pointer
  */
@@ -260,6 +263,7 @@ sca_desc_read_bufp(struct sca_softc *sc, struct sca_desc *dp)
 	}
 	return (address);
 }
+#endif
 
 /*
  * write the buffer pointer
