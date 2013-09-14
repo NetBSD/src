@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.55 2013/02/09 00:32:12 christos Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.56 2013/09/14 13:19:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.55 2013/02/09 00:32:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.56 2013/09/14 13:19:50 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -209,8 +209,6 @@ static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 
 static int wapbl_replay_process(struct wapbl_replay *wr, off_t, off_t);
 
-static inline size_t wapbl_space_free(size_t avail, off_t head,
-	off_t tail);
 static inline size_t wapbl_space_used(size_t avail, off_t head,
 	off_t tail);
 
@@ -1124,6 +1122,18 @@ wapbl_resize_buf(struct wapbl *wl, struct buf *bp, long oldsz, long oldcnt)
 /****************************************************************/
 /* Some utility inlines */
 
+static inline size_t
+wapbl_space_used(size_t avail, off_t head, off_t tail)
+{
+
+	if (tail == 0) {
+		KASSERT(head == 0);
+		return 0;
+	}
+	return ((head + (avail - 1) - tail) % avail) + 1;
+}
+
+#ifdef _KERNEL
 /* This is used to advance the pointer at old to new value at old+delta */
 static inline off_t
 wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
@@ -1151,17 +1161,6 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	KASSERT((new == 0) || ((size_t)new >= off));
 	KASSERT((size_t)new < (size + off));
 	return new;
-}
-
-static inline size_t
-wapbl_space_used(size_t avail, off_t head, off_t tail)
-{
-
-	if (tail == 0) {
-		KASSERT(head == 0);
-		return 0;
-	}
-	return ((head + (avail - 1) - tail) % avail) + 1;
 }
 
 static inline size_t
@@ -1202,7 +1201,6 @@ wapbl_advance_tail(size_t size, size_t off, size_t delta, off_t *headp,
 	*tailp = tail;
 }
 
-#ifdef _KERNEL
 
 /****************************************************************/
 
