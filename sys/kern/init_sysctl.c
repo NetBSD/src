@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.197 2013/03/18 13:36:22 para Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.198 2013/09/14 13:18:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.197 2013/03/18 13:36:22 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.198 2013/09/14 13:18:02 joerg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -76,45 +76,6 @@ char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
-
-static const u_int sysctl_flagmap[] = {
-	PK_ADVLOCK, P_ADVLOCK,
-	PK_EXEC, P_EXEC,
-	PK_NOCLDWAIT, P_NOCLDWAIT,
-	PK_32, P_32,
-	PK_CLDSIGIGN, P_CLDSIGIGN,
-	PK_SUGID, P_SUGID,
-	0
-};
-
-static const u_int sysctl_sflagmap[] = {
-	PS_NOCLDSTOP, P_NOCLDSTOP,
-	PS_WEXIT, P_WEXIT,
-	PS_STOPFORK, P_STOPFORK,
-	PS_STOPEXEC, P_STOPEXEC,
-	PS_STOPEXIT, P_STOPEXIT,
-	0
-};
-
-static const u_int sysctl_slflagmap[] = {
-	PSL_TRACED, P_TRACED,
-	PSL_FSTRACE, P_FSTRACE,
-	PSL_CHTRACED, P_CHTRACED,
-	PSL_SYSCALL, P_SYSCALL,
-	0
-};
-
-static const u_int sysctl_lflagmap[] = {
-	PL_CONTROLT, P_CONTROLT,
-	PL_PPWAIT, P_PPWAIT,
-	0
-};
-
-static const u_int sysctl_stflagmap[] = {
-	PST_PROFIL, P_PROFIL,
-	0
-
-};
 
 static const u_int sysctl_lwpprflagmap[] = {
 	LPR_DETACHED, L_DETACHED,
