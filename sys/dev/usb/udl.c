@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.8 2013/01/14 18:24:05 christos Exp $	*/
+/*	$NetBSD: udl.c,v 1.9 2013/09/14 13:15:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.8 2013/01/14 18:24:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.9 2013/09/14 13:15:53 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,8 +151,10 @@ static inline void	udl_copy_line(struct udl_softc *, int, int, int);
 static inline void	udl_fill_line(struct udl_softc *, uint16_t, int, int);
 static inline void	udl_draw_line(struct udl_softc *, uint16_t *, int,
 			    int);
+#ifdef notyet
 static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *, int,
 			    int);
+#endif
 
 static int		udl_cmd_send(struct udl_softc *);
 static void		udl_cmd_send_async(struct udl_softc *);
@@ -1300,6 +1302,7 @@ udl_draw_line(struct udl_softc *sc, uint16_t *buf, int off, int width)
 	udl_cmd_add_buf(sc, buf, width);
 }
 
+#ifdef notyet
 static inline int
 udl_cmd_add_buf_comp(struct udl_softc *sc, uint16_t *buf, int width)
 {
@@ -1409,6 +1412,7 @@ udl_draw_line_comp(struct udl_softc *sc, uint16_t *buf, int off, int width)
 		width -= width_cur;
 	}
 }
+#endif
 
 static int
 udl_cmd_send(struct udl_softc *sc)
