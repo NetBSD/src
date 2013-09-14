@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.19 2013/09/11 04:04:45 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.20 2013/09/14 13:44:48 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -203,3 +203,11 @@ sys/net/bpf.c					1.176
 	Avoid kernel panic caused by setting a very small bpf buffer size.
 	Fixes PR/48198 reported by Peter Bex.
 	[spz, ticket #941]
+lib/libc/stdlib/_env.c				1.8
+
+	Don't scrub the environment unless we are going to change it.
+	This should prevent crashes in applications which carefully and
+	manually construct a temporary environment and later restore the
+	original environment like Emacs 24.
+	[tron, ticket #940]
+
