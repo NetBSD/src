@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.161 2012/02/19 21:06:51 rmind Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.162 2013/09/14 20:20:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.161 2012/02/19 21:06:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.162 2013/09/14 20:20:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1008,7 +1008,6 @@ ktr_mib(const int *name, u_int namelen)
 int
 ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 {
-	struct proc *curp;
 	struct proc *p;
 	struct pgrp *pg;
 	struct ktr_desc *ktd = NULL;
@@ -1017,7 +1016,6 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 	int error = 0;
 	int descend;
 
-	curp = curl->l_proc;
 	descend = ops & KTRFLAG_DESCEND;
 	facs = facs & ~((unsigned) KTRFAC_PERSISTENT);
 
@@ -1324,7 +1322,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
  	mutex_exit(&ktrace_lock);
  	mutex_exit(p->p_lock);
 
-	return (1);
+	return error ? 1 : 0;
 }
 
 int
