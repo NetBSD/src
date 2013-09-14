@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.36 2013/09/13 04:15:36 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.37 2013/09/14 13:43:52 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -694,3 +694,11 @@ sys/net/npf/npf_inet.c				1.23
 	- npf_cache_all: clear NBUF_DATAREF_RESET since npf_cache_ip() handles
 	  it.
 	[riz, ticket #942]
+lib/libc/stdlib/_env.c				1.8
+
+	Don't scrub the environment unless we are going to change it.
+	This should prevent crashes in applications which carefully and
+	manually construct a temporary environment and later restore the
+	original environment like Emacs 24.
+	[tron, ticket #940]
+
