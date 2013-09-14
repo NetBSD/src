@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.225 2013/09/14 15:09:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.225 2013/09/14 15:09:34 matt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.225 2013/09/14 15:09:34 matt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -118,6 +118,9 @@ __RCSID("$NetBSD: main.c,v 1.224 2013/09/04 15:38:26 sjg Exp $");
 #include <sys/param.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#ifdef MAKE_NATIVE
+#include <sys/sysctl.h>
+#endif
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
@@ -879,6 +882,20 @@ main(int argc, char **argv)
 	}
 
 	if (!machine_arch) {
+#ifdef MAKE_NATIVE
+	    static char machine_arch_buf[sizeof(utsname.machine)];
+	    const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+	    size_t len = sizeof(machine_arch_buf);
+                
+	    if (sysctl(mib, __arraycount(mib), machine_arch_buf,
+		    &len, NULL, 0) < 0) {
+		(void)fprintf(stderr, "%s: sysctl failed (%s).\n", progname,
+		    strerror(errno));
+		exit(2);
+	    }
+
+	    machine_arch = machine_arch_buf;
+#else
 #ifndef MACHINE_ARCH
 #ifdef MAKE_MACHINE_ARCH
             machine_arch = MAKE_MACHINE_ARCH;
@@ -887,6 +904,7 @@ main(int argc, char **argv)
 #endif
 #else
 	    machine_arch = MACHINE_ARCH;
+#endif
 #endif
 	}
 
