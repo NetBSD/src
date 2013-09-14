@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.11 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.12 2013/09/14 05:38:00 nakayama Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -68,7 +68,7 @@ ENTRY(__siglongjmp14)
 	 nop
 	unimp 0
 
-#if __PIC__ - 0 >= 1
+#elif __PIC__ - 0 >= 1
 
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
