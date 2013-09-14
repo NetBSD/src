@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.127 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.128 2013/09/14 11:43:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.127 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.128 2013/09/14 11:43:22 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1054,11 +1054,7 @@ add_mfc(struct sockopt *sopt)
 	struct rtdetq *rte, *nrte;
 	u_short nstl;
 	int s;
-	int mfcctl_size = sizeof(struct mfcctl);
 	int error;
-
-	if (mrt_api_config & MRT_API_FLAGS_ALL)
-		mfcctl_size = sizeof(struct mfcctl2);
 
 	/*
 	 * select data size depending on API version.
