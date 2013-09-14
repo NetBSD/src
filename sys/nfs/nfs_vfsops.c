@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.221 2013/01/22 09:39:14 dholland Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.222 2013/09/14 22:27:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.221 2013/01/22 09:39:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.222 2013/09/14 22:27:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -596,14 +596,12 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct sockaddr *sa;
 	struct vnode *vp;
 	char *pth, *hst;
-	struct proc *p;
 	size_t len;
 	u_char *nfh;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 
 		if (nmp == NULL)
