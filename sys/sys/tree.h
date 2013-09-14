@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.19 2013/09/13 19:43:38 joerg Exp $	*/
+/*	$NetBSD: tree.h,v 1.20 2013/09/14 13:20:45 joerg Exp $	*/
 /*	$OpenBSD: tree.h,v 1.13 2011/07/09 00:19:45 pirofti Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -130,7 +130,7 @@ name##_SPLAY_FIND(struct name *head, struct type *elm)			\
 	return (NULL);							\
 }									\
 									\
-static __inline struct type *						\
+static __inline __unused struct type *					\
 name##_SPLAY_NEXT(struct name *head, struct type *elm)			\
 {									\
 	name##_SPLAY(head, elm);					\
