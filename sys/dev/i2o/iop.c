@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.82 2012/10/27 17:18:17 chs Exp $	*/
+/*	$NetBSD: iop.c,v 1.83 2013/09/14 13:08:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.82 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.83 2013/09/14 13:08:31 joerg Exp $");
 
 #include "iop.h"
 
@@ -180,6 +180,7 @@ static struct iop_class {
 	},
 };
 
+#ifdef I2ODEBUG
 static const char * const iop_status[] = {
 	"success",
 	"abort (dirty)",
@@ -194,6 +195,7 @@ static const char * const iop_status[] = {
 	"process abort (partial transfer)",
 	"transaction error",
 };
+#endif
 
 static inline u_int32_t	iop_inl(struct iop_softc *, int);
 static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
