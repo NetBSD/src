@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.5 2012/12/03 18:30:25 christos Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.6 2013/09/14 12:39:09 joerg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -72,9 +72,7 @@ struct file;
 # include "md5.h"
 #endif
 
-#if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:45:11 darrenr Exp";
-#endif
+__KERNEL_RCSID(0, "@(#)Id: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:45:11 darrenr Exp");
 
 typedef struct ipf_dstl_softc_s {
 	ippool_dst_t	*dstlist[LOOKUP_POOL_SZ];
