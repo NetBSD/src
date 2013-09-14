@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.67 2013/08/12 18:16:19 drochner Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.68 2013/09/14 17:18:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -210,10 +210,13 @@
 
 /* Intel Fn80000001 extended features - %ecx */
 #define	CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
+		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
+#define	CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
 
-#define	CPUID_INTEL_FLAGS4	"\20" \
-	"\1" "LAHF"	"\02" "B01"	"\03" "B02"
-
+#define	CPUID_INTEL_FLAGS4	"\20"				\
+	"\1" "LAHF"	"\02" "B01"	"\03" "B02"		\
+			"\06" "LZCNT"				\
+	"\11" "PREFETCHW"
 
 /* AMD/VIA Fn80000001 extended features - %edx */
 /*	CPUID_SYSCALL			   SYSCALL/SYSRET */
