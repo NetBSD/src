@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.7 2012/02/06 02:03:32 christos Exp $	*/
+/*	$NetBSD: tpm.c,v 1.8 2013/09/14 13:09:55 joerg Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.7 2012/02/06 02:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.8 2013/09/14 13:09:55 joerg Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -803,14 +803,6 @@ tpm_legacy_in(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
 {
 	bus_space_write_1(iot, ioh, 0, reg);
 	return bus_space_read_1(iot, ioh, 1);
-}
-
-/* Write single byte using legacy interface. */
-static inline void
-tpm_legacy_out(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint8_t v)
-{
-	bus_space_write_1(iot, ioh, 0, reg);
-	bus_space_write_1(iot, ioh, 1, v);
 }
 
 /* Probe for TPM using legacy interface. */

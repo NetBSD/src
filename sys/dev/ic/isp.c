@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.124 2013/09/14 12:43:08 martin Exp $ */
+/* $NetBSD: isp.c,v 1.125 2013/09/14 13:09:55 joerg Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.124 2013/09/14 12:43:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.125 2013/09/14 13:09:55 joerg Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -76,7 +76,6 @@ __FBSDID("$FreeBSD$");
 static const char fconf[] = "Chan %d PortDB[%d] changed:\n current =(0x%x@0x%06x 0x%08x%08x 0x%08x%08x)\n database=(0x%x@0x%06x 0x%08x%08x 0x%08x%08x)";
 static const char notresp[] = "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d) nlooked %d";
 static const char topology[] = "Chan %d WWPN 0x%08x%08x PortID 0x%06x N-Port Handle %d, Connection '%s'";
-static const char sc4[] = "NVRAM";
 static const char bun[] = "bad underrun (count %d, resid %d, status %s)";
 static const char lipd[] = "Chan %d LIP destroyed %d active commands";
 static const char sacq[] = "unable to acquire scratch area";
