@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1161 2013/09/04 17:38:37 christos Exp $
+$NetBSD: pcidevs,v 1.1162 2013/09/14 20:26:51 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1042,12 +1042,18 @@ product AMD HUDSON_HDAUDIO	0x780d	Hudson HD Audio Controller
 product AMD HUDSON_LPC		0x780e	Hudson LPC Bridge
 product AMD HUDSON_PCI		0x780f	Hudson PCI Bridge
 product AMD HUDSON_XHCI		0x7812	Hudson USB xHCI Controller
-product AMD RS880_HB		0x9601	RS880 Host Bridge
-product AMD RS780_PPB_GFX	0x9602	RS780 PCI-PCI Bridge (int gfx)
+product AMD RS780_HB		0x9600	RS780 Host Bridge
+product AMD RS880_HB		0x9601	RS785/RS880 Host Bridge
+product AMD RS780_PPB_GFX	0x9602	RS780/RS880 PCI-PCI Bridge (int gfx)
 product AMD RS780_PPB_GFX0	0x9603	RS780 PCI-PCI Bridge (ext gfx port 0)
-product AMD RS780_PPB0		0x9604	RS780 PCI-PCIE Bridge (port 0)
-product AMD RS780_PPB1		0x9605	RS780 PCI-PCIE Bridge (port 1)
+product AMD RS780_PPB0		0x9604	RS780/RS880 PCI-PCIE Bridge (port 0)
+product AMD RS780_PPB1		0x9605	RS780/RS880 PCI-PCIE Bridge (port 1)
 product AMD RS780_PPB2		0x9606	RS780 PCI-PCIE Bridge (port 2)
+product AMD RS780_PPB3		0x9607	RS780 PCI-PCIE Bridge (port 3)
+product AMD RS780_PPB4		0x9608	RS780/RS880 PCI-PCIE Bridge (port 4)
+product AMD RS780_PPB5		0x9609	RS780/RS880 PCI-PCIE Bridge (port 5)
+product AMD RS780_PPB6		0x960a	RS780 PCI-PCIE Bridge (NB-SB link)
+product AMD RS780_PPB7		0x960b	RS780 PCI-PCIE Bridge (ext gfx port 1)
 
 /* American Megatrends products */
 product AMI MEGARAID		0x9010	MegaRAID
@@ -1231,9 +1237,9 @@ product ATI SB400_SATA_2	0x437a	SB400 SATA Controller
 product ATI SB600_SATA_1 	0x4380	SB600 SATA Controller
 product ATI SB600_SATA_2 	0x4381	SB600 SATA Controller
 product ATI SB600_AC97_AUDIO	0x4382	SB600 AC97 Audio
-product ATI SB600_AZALIA	0x4383	SB600 Azalia
-product ATI SB600_PPB_4384	0x4384	SB600 PCI to PCI Bridge
-product ATI SB600_SMB		0x4385	SB600/SB700/SB800 SMBus Controller
+product ATI SB600_AZALIA	0x4383	SBx00 Azalia
+product ATI SB600_PPB		0x4384	SBx00 PCI to PCI Bridge
+product ATI SB600_SMB		0x4385	SBx00 SMBus Controller
 product ATI SB600_USB_EHCI	0x4386	SB600 USB EHCI Controller
 product ATI SB600_USB_OHCI0	0x4387	SB600 USB OHCI0 Controller
 product ATI SB600_USB_OHCI1	0x4388	SB600 USB OHCI1 Controller
@@ -1243,19 +1249,23 @@ product ATI SB600_USB_OHCI4	0x438b	SB600 USB OHCI4 Controller
 product ATI SB600_AC97_MODEM	0x438e	SB600 AC97 Modem
 product ATI IXP_IDE_600 	0x438c	SB600 IXP IDE Controller
 product ATI SB600_PLB_438D	0x438d	SB600 PCI to LPC Bridge
-product	ATI SB700_SATA_IDE	0x4390	SB700/SB800 SATA Controller (IDE mode)
-product	ATI SB700_SATA_AHCI	0x4391	SB700/SB800 SATA Controller (AHCI mode)
-product	ATI SB700_SATA_RAID	0x4392	SB700/SB800 RAID SATA Controller
-product	ATI SB700_SATA_RAID5	0x4393	SB700/SB800 RAID5 SATA Controller
-product	ATI SB700_SATA_FC	0x4394	SB700/SB800 FC SATA Controller
-product	ATI SB700_SATA_AHCI2	0x4395	SB700/SB800 SATA Controller (AHCI mode)
-product	ATI SB700_USB_EHCI	0x4396	SB700/SB800 USB EHCI Controller
-product	ATI SB800_SATA		0x4395	SB800 SATA Controller
-product	ATI SB700_USB_OHCI0	0x4397	SB700/SB800 USB OHCI Controller
-product	ATI SB700_USB_OHCI1	0x4398	SB700/SB800 USB OHCI Controller
-product	ATI SB700_USB_OHCI2	0x4399	SB700/SB800 USB OHCI Controller
-product	ATI SB700_IDE		0x439c	SB700/SB800 IDE Controller
-product	ATI SB700_LPC		0x439d	SB700/SB800 LPC Host Controller
+product ATI SB700_SATA_IDE	0x4390	SB700-SB900 SATA Controller (IDE mode)
+product ATI SB700_SATA_AHCI	0x4391	SB700-SB900 SATA Controller (AHCI mode)
+product ATI SB700_SATA_RAID	0x4392	SB700-SB900 RAID SATA Controller
+product ATI SB700_SATA_RAID5	0x4393	SB700-SB900 RAID5 SATA Controller
+product ATI SB700_SATA_FC	0x4394	SB700-SB900 FC SATA Controller
+product ATI SB700_SATA_AHCI2	0x4395	SB700-SB900 SATA Controller (AHCI mode)
+product ATI SB700_USB_EHCI	0x4396	SB700-SB900 USB EHCI Controller
+product ATI SB800_SATA		0x4395	SB800/SB900 SATA Controller
+product ATI SB700_USB_OHCI0	0x4397	SB700-SB900 USB OHCI Controller
+product ATI SB700_USB_OHCI1	0x4398	SB700-SB900 USB OHCI Controller
+product ATI SB700_USB_OHCI2	0x4399	SB700-SB900 USB OHCI Controller
+product ATI SB700_IDE		0x439c	SB700-SB900 IDE Controller
+product ATI SB700_LPC		0x439d	SB700-SB900 LPC Host Controller
+product ATI SB700_PCIE0		0x43a0	SB700-SB900 PCI to PCI bridge (PCIe 0)
+product ATI SB700_PCIE1		0x43a1	SB700-SB900 PCI to PCI bridge (PCIe 1)
+product ATI SB900_PCIE2		0x43a2	SB900 PCI to PCI bridge (PCIe 2)
+product ATI SB900_PCIE3		0x43a3	SB900 PCI to PCI bridge (PCIe 3)
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RADEON_RS250_D7	0x4437	Radeon Mobility 7000 IGP
@@ -2380,6 +2390,7 @@ product HP HPSA_10		0x3239	Smart Array
 product HP HPSA_11		0x323a	Smart Array
 product HP HPSA_12		0x323b	Smart Array
 product HP HPSA_13		0x323c	Smart Array
+product HP RS780_PPB_GFX	0x9602  (AMD) RS780 PCI-PCI Bridge (int gfx)
 
 /* Hifn products */
 product HIFN 7751	0x0005	7751
@@ -3996,8 +4007,10 @@ product NETMOS NM9845	0x9845	Quad UART and 1284 Printer Port
 product NETMOS NM9855	0x9855	9855 Quad UART and 1284 Printer Port
 product NETMOS NM9865	0x9865	9865 Quad UART and 1284 Printer Port
 product NETMOS MCS9990	0x9990	MCS9990 Quad USB 2.0 Port
+product NETMOS NM9900	0x9900	Single PCI-E UART
 product NETMOS NM9901	0x9901	Dual PCI-E UART
 product NETMOS NM9904	0x9904	Quad PCI-E UART
+product NETMOS NM9912	0x9912	Dual PCI-E UART and 1284 Printer Port
 product NETMOS NM9922	0x9922	Dual PCI-E UART
 
 /* Network Security Technologies */
@@ -4646,11 +4659,16 @@ product REALTEK RTL8188CE	0x8176	RTL8188CE Wireless LAN 802.11n PCI-E NIC
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
 
-/* RENESAS products */
-product RENESAS SH7780	0x0002	SH7780 PCI Controller
-product RENESAS SH7785	0x0007	SH7785 PCI Controller
+/* Renesas products */
+product RENESAS SH7780		0x0002	SH7780 PCI Controller
+product RENESAS SH7785		0x0007	SH7785 PCI Controller
+product RENESAS SH7757_PBI	0x0011	SH7757 PCIe End-Point [PBI]
+product RENESAS SH7757_PPB	0x0012	SH7757 PCIe-PCI Bridge [PPB]
+product RENESAS SH7757_PS	0x0013	SH7757 PCIe Switch [PS]
+product RENESAS PD720201	0x0014	uPD720201 USB 3.0 Host Controller
+product RENESAS PD720202	0x0015	uPD720202 USB 3.0 Host Controller
 
-/* RICOH products */
+/* Ricoh products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus Bridge
 product RICOH Rx5C466	0x0466 5C466 PCI-CardBus Bridge
 product RICOH Rx5C475	0x0475 5C475 PCI-CardBus Bridge
