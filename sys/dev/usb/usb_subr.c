@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.192 2013/09/07 16:39:15 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.193 2013/09/14 00:40:31 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.192 2013/09/07 16:39:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.193 2013/09/14 00:40:31 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -82,12 +82,8 @@ Static int usbd_getnewaddr(usbd_bus_handle);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
 Static void usbd_free_iface_data(usbd_device_handle, int);
-Static void usbd_kill_pipe(usbd_pipe_handle);
-usbd_status usbd_attach_roothub(device_t, usbd_device_handle);
-Static usbd_status usbd_probe_and_attach(device_t, usbd_device_handle, int,
-    int);
 
-Static u_int32_t usb_cookie_no = 0;
+uint32_t usb_cookie_no = 0;
 
 Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
@@ -1064,7 +1060,7 @@ usbd_reattach_device(device_t parent, usbd_device_handle dev,
  * recognize the initial descriptor fetch (before the control endpoint's
  * MaxPacketSize is known by the host) by exactly this length.
  */
-static usbd_status
+usbd_status
 usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
 {
 	usb_device_request_t req;
@@ -1107,6 +1103,11 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
+
+	if (bus->methods->new_device != NULL)
+		return (bus->methods->new_device)(parent, bus, depth, speed,
+		    port, up);
+
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
