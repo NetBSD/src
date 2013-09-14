@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.299 2013/03/18 19:35:45 plunky Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.300 2013/09/14 22:29:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.299 2013/03/18 19:35:45 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.300 2013/09/14 22:29:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -290,7 +290,7 @@ nfs_null(struct vnode *vp, kauth_cred_t cred, struct lwp *l)
 {
 	char *bpos, *dpos;
 	int error = 0;
-	struct mbuf *mreq, *mrep, *md, *mb;
+	struct mbuf *mreq, *mrep, *md, *mb __unused;
 	struct nfsnode *np = VTONFS(vp);
 
 	nfsm_reqhead(np, NFSPROC_NULL, 0);
