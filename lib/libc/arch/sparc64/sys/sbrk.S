@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.10 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.11 2013/09/14 05:38:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.10 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.11 2013/09/14 05:38:00 nakayama Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ ENTRY(_sbrk)
 	retl					/* and update curbrk */
 	 stx	%o4, [%o2]
 
-#if __PIC__ - 0 >= 1
+#elif __PIC__ - 0 >= 1
 
 ENTRY(_sbrk)
 	PIC_PROLOGUE(%o5,%o4)
