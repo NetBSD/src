@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.41 2013/09/13 06:21:43 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.42 2013/09/14 17:23:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.41 2013/09/13 06:21:43 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.42 2013/09/14 17:23:18 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1961,23 +1961,33 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
+	if (ci->ci_cinfo[CAI_L2_STLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB", NULL);
+		sep = print_tlb_config(ci, CAI_L2_STLB2, NULL, sep);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
 	if (ci->ci_cinfo[CAI_L1_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB", NULL);
+		sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB",
+		    NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L1_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB", NULL);
+		sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB",
+		    NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L2_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB", NULL);
+		sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB",
+		    NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L2_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB", NULL);
+		sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB",
+		    NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
