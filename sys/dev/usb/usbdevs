@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.653 2013/09/02 07:39:03 christos Exp $
+$NetBSD: usbdevs,v 1.654 2013/09/14 20:28:15 soren Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -873,6 +873,8 @@ product ASKEY VOYAGER1010	0x0821	Voyager 1010
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	AX88172 USB 2.0 10/100 ethernet controller
 product ASIX AX88178		0x1780	AX88178 USB 2.0 gigabit ethernet controller
+product ASIX AX88178A		0x178a	AX88178A USB 2.0 gigabit ethernet controller
+product ASIX AX88179		0x1790	AX88179 USB 3.0 gigabit ethernet controller
 product ASIX AX88772		0x7720	AX88772 USB 2.0 10/100 ethernet controller
 product ASIX AX88772A		0x772a	AX88772A USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B		0x772b	AX88772B USB 2.0 10/100 Ethernet adapter
@@ -1926,6 +1928,7 @@ product LACIE CDRW		0xa602	CD R/W
 
 /* Lenovo products */
 product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
+product LENOVO AX88179		0x304b	AX88179 USB 3.0 gigabit ethernet controller
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
@@ -2907,6 +2910,7 @@ product SITECOMEU RT3072_5	0x005f	RT3072
 product SITECOMEU WLA4000	0x0060	WLA-4000
 product SITECOMEU RTL8192CU	0x0061	RTL8192CU
 product SITECOMEU WLA5000	0x0062	WLA-5000
+product SITECOMEU AX88179	0x0072	AX88179 USB 3.0 gigabit ethernet controller
 product SITECOMEU LN028		0x061c	LN-028
 product SITECOMEU RTL8192CUR2	0x0070	RTL8192CU rev 2/2
 product SITECOMEU WL113		0x9071	WL-113
@@ -3108,6 +3112,7 @@ product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
 product TOSHIBA RT3070		0x0a07	RT3070
+product TOSHIBA AX88179		0x0a13	AX88179 USB 3.0 gigabit ethernet controller
 product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* Trek Technology products */
