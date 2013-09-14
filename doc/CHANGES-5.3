@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.25 2013/09/11 07:03:18 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.26 2013/09/14 13:39:00 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -545,3 +545,9 @@ sys/net/bpf.c					1.176 via patch
 	Avoid kernel panic caused by setting a very small bpf buffer size.
 	Fixes PR/48198 reported by Peter Bex.
 	[spz, ticket #1874]
+
+lib/libc/locale/global_locale.c                 patch
+
+	provide consistent and correct data for the C locale.
+	[joerg, ticket #1873] 
+
