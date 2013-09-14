@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.189 2011/03/23 17:42:11 tls Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.190 2013/09/14 22:29:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.189 2011/03/23 17:42:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.190 2013/09/14 22:29:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -605,6 +605,8 @@ nfs_rephead(int siz, struct nfsrv_descript *nd, struct nfssvc_sock *slp, int err
 				 */
 #ifdef NFSKERB
 				XXX
+#else
+				(void)ktvin.tv_sec;
 #endif
 
 				*tl++ = rpc_auth_kerb;
@@ -1165,6 +1167,8 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 			 */
 #ifdef NFSKERB
 			XXX
+#else
+			(void)tvin.tv_sec;
 #endif
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
