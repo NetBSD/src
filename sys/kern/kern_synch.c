@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.306 2013/09/14 20:49:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.306 2013/09/14 20:49:31 martin Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1223,7 +1223,9 @@ sched_pstats(void)
 	/* Load average calculation. */
 	if (__predict_false(lavg_count == 0)) {
 		int i;
+		__CT_LOCAL_PROLOGUE
 		CTASSERT(__arraycount(cexp) == __arraycount(avg->ldavg));
+		__CT_LOCAL_EPILOGUE
 		for (i = 0; i < __arraycount(cexp); i++) {
 			avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
 			    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
