@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.153 2011/04/02 08:11:32 mbalmer Exp $  */
+/*	$NetBSD: atw.c,v 1.154 2013/09/14 13:10:25 joerg Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.153 2011/04/02 08:11:32 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.154 2013/09/14 13:10:25 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -3024,6 +3024,7 @@ atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 	}
 }
 
+#if 0
 static inline int
 atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame_min *wh)
 {
@@ -3033,6 +3034,7 @@ atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame_min *wh)
 		return 0;
 	return (sc->sc_wepctl & ATW_WEPCTL_WEPRXBYP) == 0;
 }
+#endif
 
 /*
  * atw_rxintr:
