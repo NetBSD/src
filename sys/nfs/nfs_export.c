@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.54 2013/08/30 07:35:44 dholland Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.55 2013/09/14 21:11:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.54 2013/08/30 07:35:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.55 2013/09/14 21:11:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,9 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		 * The following code assumes export_args has not
 		 * changed since export_args30, so check that.
 		 */
+		__CT_LOCAL_PROLOGUE
 		__CTASSERT(sizeof(args->eargs) == sizeof(*mel.mel_exports));
+		__CT_LOCAL_EPILOGUE
 
 		mel.mel_nexports = 1;
 		mel.mel_exports = (void *)&args->eargs;
