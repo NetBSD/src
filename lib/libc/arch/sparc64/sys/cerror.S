@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.7 2013/09/12 15:36:16 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.8 2013/09/14 05:38:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: cerror.S,v 1.7 2013/09/12 15:36:16 joerg Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.8 2013/09/14 05:38:00 nakayama Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ FUNC(__cerror)
 	retl
 	 mov	-1, %o1
 
-#if __PIC__ - 0 >= 1
+#elif __PIC__ - 0 >= 1
 
 FUNC(__cerror)
 	PIC_PROLOGUE(%g1, %o3)
