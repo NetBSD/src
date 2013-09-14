@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.241 2013/04/04 13:28:57 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.242 2013/09/14 13:13:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.241 2013/04/04 13:28:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.242 2013/09/14 13:13:59 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,21 +200,6 @@ Static void		ohci_dump_itds(ohci_softc_t *, ohci_soft_itd_t *);
  do { OBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
 #define OWRITE4(sc, r, x) \
  do { OBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
-static __inline uint8_t
-OREAD1(ohci_softc_t *sc, bus_size_t r)
-{
-
-	OBARR(sc);
-	return bus_space_read_1(sc->iot, sc->ioh, r);
-}
-
-static __inline uint16_t
-OREAD2(ohci_softc_t *sc, bus_size_t r)
-{
-
-	OBARR(sc);
-	return bus_space_read_2(sc->iot, sc->ioh, r);
-}
 
 static __inline uint32_t
 OREAD4(ohci_softc_t *sc, bus_size_t r)
