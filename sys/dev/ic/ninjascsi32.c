@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.23 2013/09/14 13:09:55 joerg Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.24 2013/09/14 21:52:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.23 2013/09/14 13:09:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.24 2013/09/14 21:52:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,7 +714,7 @@ njsc32_detach(struct njsc32_softc *sc, int flags)
 		    sc->sc_cmdpg_nsegs);
 	}
 
-	return 0;
+	return rv;
 }
 
 static inline void
