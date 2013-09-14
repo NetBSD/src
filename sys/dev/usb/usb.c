@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.143 2013/09/13 23:42:12 jakllsch Exp $	*/
+/*	$NetBSD: usb.c,v 1.144 2013/09/14 14:06:40 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.143 2013/09/13 23:42:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.144 2013/09/14 14:06:40 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -707,7 +707,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
 
-		if (addr < 1 || addr >= USB_MAX_DEVICES)
+		if (addr < 0 || addr >= USB_MAX_DEVICES)
 			return EINVAL;
 		if ((dev = sc->sc_bus->devices[addr]) == NULL)
 			return ENXIO;
