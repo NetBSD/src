@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.29 2013/07/08 14:47:18 jakllsch Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.30 2013/09/14 14:07:56 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ usbdump(int f)
 {
 	int a;
 
-	for (a = 1; a < USB_MAX_DEVICES; a++) {
+	for (a = 0; a < USB_MAX_DEVICES; a++) {
 		if (!done[a])
 			usbdev(f, a, 1);
 	}
@@ -187,7 +187,7 @@ dumpone(char *name, int f, int addr)
 		printf("Controller %s:\n", name);
 	indent = 0;
 	memset(done, 0, sizeof done);
-	if (addr)
+	if (addr >= 0)
 		usbdev(f, addr, 0);
 	else
 		usbdump(f);
@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	int ch, i, f;
 	char buf[50];
 	char *dev = NULL;
-	int addr = 0;
+	int addr = -1;
 	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
