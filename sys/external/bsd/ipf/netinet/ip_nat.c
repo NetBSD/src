@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.9 2013/01/09 13:23:20 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.10 2013/09/14 11:51:47 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.9 2013/01/09 13:23:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.10 2013/09/14 11:51:47 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -3244,12 +3244,9 @@ ipf_nat_finalise(fr_info_t *fin, nat_t *nat)
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_32_t sum1, sum2, sumd;
 	frentry_t *fr;
-	u_32_t flags;
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_M_CTL_MAGIC)
 	qpktinfo_t *qpi = fin->fin_qpi;
 #endif
-
-	flags = nat->nat_flags;
 
 	switch (nat->nat_pr[0])
 	{
@@ -3557,8 +3554,8 @@ ipf_nat_icmperrorlookup(fr_info_t *fin, int dir)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	int flags = 0, type, minlen;
-	icmphdr_t *icmp, *orgicmp;
+	int flags = 0, minlen;
+	icmphdr_t *orgicmp;
 	nat_stat_side_t *nside;
 	tcphdr_t *tcp = NULL;
 	u_short data[2];
@@ -3566,8 +3563,6 @@ ipf_nat_icmperrorlookup(fr_info_t *fin, int dir)
 	ip_t *oip;
 	u_int p;
 
-	icmp = fin->fin_dp;
-	type = icmp->icmp_type;
 	nside = &softn->ipf_nat_stats.ns_side[fin->fin_out];
 	/*
 	 * Does it at least have the return (basic) IP header ?
@@ -4018,9 +4013,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	grehdr_t *gre;
 	ipnat_t *ipn;
-	u_int sflags;
 	nat_t *nat;
 	int nflags;
 	u_32_t dst;
@@ -4028,9 +4021,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	u_int hv, rhv;
 
 	ifp = fin->fin_ifp;
-	gre = NULL;
 	dst = mapdst.s_addr;
-	sflags = flags & NAT_TCPUDPICMP;
 
 	switch (p)
 	{
@@ -4355,14 +4346,12 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	u_int sflags;
 	ipnat_t *ipn;
 	nat_t *nat;
 	void *ifp;
 	u_int hv;
 
 	ifp = fin->fin_ifp;
-	sflags = flags & IPN_TCPUDPICMP;
 	sport = 0;
 	dport = 0;
 
@@ -4783,7 +4772,6 @@ ipf_nat_checkout(fr_info_t *fin, u_32_t *passp)
 	struct ifnet *ifp, *sifp;
 	ipf_main_softc_t *softc;
 	ipf_nat_softc_t *softn;
-	icmphdr_t *icmp = NULL;
 	tcphdr_t *tcp = NULL;
 	int rval, natfailed;
 	u_int nflags = 0;
@@ -4829,7 +4817,6 @@ ipf_nat_checkout(fr_info_t *fin, u_32_t *passp)
 			nflags = IPN_UDP;
 			break;
 		case IPPROTO_ICMP :
-			icmp = fin->fin_dp;
 
 			/*
 			 * This is an incoming packet, so the destination is
