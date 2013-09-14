@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.11 2012/12/27 06:42:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $");
 
 #include <sys/types.h>
 
@@ -130,12 +130,6 @@ xen_ipi_init(void)
 	}
 
 	hypervisor_enable_event(evtchn);
-}
-
-/* prefer this to global variable */
-static inline u_int max_cpus(void)
-{
-	return maxcpus;
 }
 
 static inline bool /* helper */
