@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.181 2012/07/22 14:32:58 matt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.182 2013/09/14 13:09:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.181 2012/07/22 14:32:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.182 2013/09/14 13:09:55 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -76,9 +76,6 @@ static const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
 
 static const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10_100;
-
-static const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
-    TLP_TXTHRESH_TAB_WINB;
 
 static const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
     TLP_TXTHRESH_TAB_DM9102;
