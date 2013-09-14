@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.43 2013/06/27 14:51:30 christos Exp $
+# $NetBSD: mkimage,v 1.44 2013/09/14 12:51:27 ast Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,9 +39,9 @@ PROG="$(basename "$0")"
 
 DISKLABEL=${TOOL_DISKLABEL:-disklabel}
 FDISK=${TOOL_FDISK:-fdisk}
-GZIP=${TOOL_GZIP:-gzip}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
+GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
 release="/usr/obj/evbarm/release"
@@ -200,7 +200,7 @@ fi
 if $compress; then
 	echo ${bar} Compressing image ${bar}
 	rm -f "${image}.gz"
-	${GZIP} -9 ${image}
+	${GZIP_CMD} -9 ${image}
 	image="${image}.gz"
 fi
 
