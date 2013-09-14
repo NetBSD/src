@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.259 2013/09/08 06:37:23 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.260 2013/09/14 13:17:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.259 2013/09/08 06:37:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.260 2013/09/14 13:17:21 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,7 @@ UREAD2(uhci_softc_t *sc, bus_size_t r)
 	return bus_space_read_2(sc->iot, sc->ioh, r);
 }
 
+#ifdef UHCI_DEBUG
 static __inline uint32_t
 UREAD4(uhci_softc_t *sc, bus_size_t r)
 {
@@ -270,6 +271,7 @@ UREAD4(uhci_softc_t *sc, bus_size_t r)
 	UBARR(sc);
 	return bus_space_read_4(sc->iot, sc->ioh, r);
 }
+#endif
 
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
