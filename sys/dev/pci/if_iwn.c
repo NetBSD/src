@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.68 2013/08/23 16:49:53 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.69 2013/09/14 13:11:31 joerg Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.68 2013/08/23 16:49:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.69 2013/09/14 13:11:31 joerg Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -918,6 +918,7 @@ iwn_mem_write(struct iwn_softc *sc, uint32_t addr, uint32_t data)
 	IWN_WRITE(sc, IWN_MEM_WDATA, data);
 }
 
+#ifndef IEEE80211_NO_HT
 static __inline void
 iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 {
@@ -930,6 +931,7 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 		tmp = (tmp & 0xffff0000) | data;
 	iwn_mem_write(sc, addr & ~3, tmp);
 }
+#endif
 
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
