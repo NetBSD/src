@@ -563,7 +563,7 @@ void mach64_dump_ring_info(drm_mach64_private_t *dev_priv)
  *
  * \sa mach64_clear_dma_eol
  */ 
-static __inline__ void mach64_set_dma_eol(volatile u32 *addr)
+static __inline__ __unused void mach64_set_dma_eol(volatile u32 *addr)
 {
 #if defined(__i386__)
 	int nr = 31;
