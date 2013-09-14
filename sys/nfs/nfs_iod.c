@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.4 2009/12/31 19:38:16 christos Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.5 2013/09/14 21:17:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.4 2009/12/31 19:38:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.5 2013/09/14 21:17:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,10 @@ int
 nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
     int *auth_len, char *verf_str, int verf_len)
 {
-	struct timeval ktvin, ktvout, tv;
+#ifdef NFSKERB
+	struct timeval ktvin;
+#endif
+	struct timeval ktvout, tv;
 	struct nfsuid *nuidp;
 	u_int32_t *nickp, *verfp;
 
@@ -360,6 +363,7 @@ nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
 		nuidp->nu_timestamp = tv;
 	else
 		nuidp->nu_timestamp.tv_usec++;
+#ifdef NFSKERB
 	ktvin.tv_sec = txdr_unsigned(nuidp->nu_timestamp.tv_sec);
 	ktvin.tv_usec = txdr_unsigned(nuidp->nu_timestamp.tv_usec);
 
@@ -367,7 +371,6 @@ nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
 	 * Now encrypt the timestamp verifier in ecb mode using the session
 	 * key.
 	 */
-#ifdef NFSKERB
 	XXX
 #endif
 
@@ -405,6 +408,8 @@ nfs_savenickauth(struct nfsmount *nmp, kauth_cred_t cred, int len, NFSKERBKEY_T 
 		 */
 #ifdef NFSKERB
 		XXX
+#else
+		(void)ktvin.tv_sec;
 #endif
 		ktvout.tv_sec = fxdr_unsigned(long, ktvout.tv_sec);
 		ktvout.tv_usec = fxdr_unsigned(long, ktvout.tv_usec);
