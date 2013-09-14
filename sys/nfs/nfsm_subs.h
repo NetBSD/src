@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.51 2009/04/10 18:58:50 bouyer Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.52 2013/09/14 21:48:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -254,6 +254,14 @@
 /* Used as (f) for nfsm_wcc_data() */
 #define NFSV3_WCCRATTR	0
 #define NFSV3_WCCCHK	1
+
+#if __GNUC_PREREQ__(4, 8)
+/*
+ * With all the macros in here, it is hard to track set-but-not-used cases
+ * and avoid them without cluttering the code.
+ */
+_Pragma("GCC diagnostic ignored \"-Wunused-but-set-variable\"")
+#endif
 
 #define	nfsm_wcc_data(v, f, flags, docheck) \
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
