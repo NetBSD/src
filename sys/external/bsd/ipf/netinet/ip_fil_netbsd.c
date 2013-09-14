@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.5 2013/06/29 21:06:57 rmind Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.6 2013/09/14 11:39:08 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.5 2013/06/29 21:06:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.6 2013/09/14 11:39:08 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1347,13 +1347,11 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 	struct rtentry *rt;
 	struct ifnet *ifp;
-	frentry_t *fr;
 	u_long mtu;
 	int error;
 
 	error = 0;
 	ro = &ip6route;
-	fr = fin->fin_fr;
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ptr;
@@ -1404,7 +1402,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 
 	{
-# if (__NetBSD_Version__ >= 106010000)
+# if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU)
 		struct in6_ifextra *ife;
 # endif
 		if (rt->rt_flags & RTF_GATEWAY)
@@ -1419,10 +1417,10 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # if (__NetBSD_Version__ <= 106009999)
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 # else
-		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 #  ifdef IN6_LINKMTU
 		mtu = IN6_LINKMTU(ifp);
 #  else
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 #  endif
 # endif
