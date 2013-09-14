@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.32 2013/03/08 08:36:37 apb Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.33 2013/09/14 13:18:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.32 2013/03/08 08:36:37 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.33 2013/09/14 13:18:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +85,9 @@ lockops_t cv_lockops = {
 };
 
 static const char deadcv[] = "deadcv";
+#ifdef LOCKDEBUG
 static const char nodebug[] = "nodebug";
+#endif
 
 /*
  * cv_init:
