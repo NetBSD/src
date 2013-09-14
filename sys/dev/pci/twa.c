@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.43 2012/11/02 14:59:11 chs Exp $ */
+/*	$NetBSD: twa.c,v 1.44 2013/09/14 13:12:03 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.43 2012/11/02 14:59:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.44 2013/09/14 13:12:03 joerg Exp $");
 
 //#define TWA_DEBUG
 
@@ -262,6 +262,7 @@ static const char	*twa_aen_severity_table[] = {
 	NULL
 };
 
+#if 0
 /* Error messages. */
 static const struct twa_message	twa_error_table[] = {
 	{0x0100, "SGL entry contains zero data"},
@@ -368,7 +369,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x0253, "Inadequate disk space to support descriptor in CreateUnit"},
 	{0x0254, "Unable to create data channel for this unit descriptor"},
 	{0x0255, "CreateUnit descriptor specifies a drive already in use"},
-       {0x0256, "Unable to write configuration to all disks during CreateUnit"},
+	{0x0256, "Unable to write configuration to all disks during CreateUnit"},
 	{0x0257, "CreateUnit does not support this descriptor version"},
 	{0x0258, "Invalid subunit for RAID 0 or 5 in CreateUnit"},
 	{0x0259, "Too many descriptors in CreateUnit"},
@@ -378,6 +379,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x0260, "SMART attribute exceeded threshold"},
 	{0xFFFFFFFF, NULL}
 };
+#endif
 
 struct twa_pci_identity {
 	uint32_t	vendor_id;
