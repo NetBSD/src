@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.5 2013/08/27 19:30:10 riastradh Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.6 2013/09/14 20:47:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.5 2013/08/27 19:30:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.6 2013/09/14 20:47:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,16 +118,18 @@ rndpool_extract(void *buffer, size_t bytes)
  * and return true.  Otherwise, leave the buffer alone and return
  * false.
  */
+
+CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
+CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
+CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
+	    (0xffffffffUL / NBBY));
+
 static bool
 rndpool_maybe_extract(void *buffer, size_t bytes)
 {
 	bool ok;
 
 	KASSERT(bytes <= RNDSINK_MAX_BYTES);
-	CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
-	CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
-	CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
-	    (0xffffffffUL / NBBY));
 
 	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
 
