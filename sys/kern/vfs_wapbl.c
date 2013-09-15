@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.56 2013/09/14 13:19:50 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.57 2013/09/15 08:11:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.56 2013/09/14 13:19:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.57 2013/09/15 08:11:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.56 2013/09/14 13:19:50 joerg Exp $")
 static struct sysctllog *wapbl_sysctl;
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
+
+static inline size_t wapbl_space_free(size_t, off_t, off_t);
 
 #else /* !_KERNEL */
 #include <assert.h>
