@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.88 2013/01/31 14:30:47 joerg Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.89 2013/09/15 15:37:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.88 2013/01/31 14:30:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.89 2013/09/15 15:37:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -458,13 +458,12 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 static int
 sysctl_unpcblist(SYSCTLFN_ARGS)
 {
-	struct file *fp, *dfp, *np;
+	struct file *fp, *dfp;
 	struct socket *so;
 	struct kinfo_pcb pcb;
 	char *dp;
-	u_int op, arg;
 	size_t len, needed, elem_size, out_size;
-	int error, elem_count, pf, type, pf2;
+	int error, elem_count, pf, type;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
@@ -485,8 +484,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	}
 	error = 0;
 	dp = oldp;
-	op = name[0];
-	arg = name[1];
 	out_size = elem_size;
 	needed = 0;
 
@@ -495,7 +492,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	type = oname[2];
-	pf2 = (oldp == NULL) ? 0 : pf;
 
 	/*
 	 * allocate dummy file descriptor to make position in list.
@@ -512,7 +508,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 */
 	mutex_enter(&filelist_lock);
 	LIST_FOREACH(fp, &filehead, f_list) {
-	    	np = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
 		    fp->f_data == NULL)
 			continue;
@@ -534,7 +529,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			error = copyout(&pcb, dp, out_size);
 			closef(fp);
 			mutex_enter(&filelist_lock);
-			np = LIST_NEXT(dfp, f_list);
 			LIST_REMOVE(dfp, f_list);
 			if (error)
 				break;
