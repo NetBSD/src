@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.31 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.32 2013/09/15 12:20:28 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.31 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.32 2013/09/15 12:20:28 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -161,9 +161,12 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 				      int (*redFunc) (RF_DagNode_t *),
 				      int allowBufferRecycle)
 {
-	int     nNodes, nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
+	int     nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
 	        rdnodesFaked;
-	RF_DagNode_t *blockNode, *unblockNode, *wnpNode, *wnqNode, *termNode;
+	RF_DagNode_t *blockNode, *unblockNode, *wnpNode, *termNode;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+	RF_DagNode_t *wnqNode;
+#endif
 	RF_DagNode_t *wndNodes, *rrdNodes, *xorNode, *commitNode;
 	RF_DagNode_t *tmpNode, *tmpwndNode, *tmprrdNode;
 	RF_SectorCount_t sectorsPerSU;
@@ -226,8 +229,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	} else {
 		rdnodesFaked = 0;
 	}
-	/* lock, unlock, xor, Wnd, Rrd, W(nfaults) */
-	nNodes = 5 + nfaults + nWndNodes + nRrdNodes;
 
 	blockNode = rf_AllocDAGNode();
 	blockNode->list_next = dag_h->nodes;
@@ -273,9 +274,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		wnqNode->list_next = dag_h->nodes;
 		dag_h->nodes = wnqNode;
 	} else {
-#endif
 		wnqNode = NULL;
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
 
