@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.226 2013/09/15 16:05:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.225 2013/06/09 13:26:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.226 2013/09/15 16:05:51 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -601,7 +601,6 @@ vndthread(void *arg)
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
 		struct vndxfer *vnx;
-		int flags;
 		struct buf *obp;
 		struct buf *bp;
 
@@ -617,7 +616,6 @@ vndthread(void *arg)
 				wakeup(&vnd->sc_pending);
 		}
 		splx(s);
-		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
 			printf("vndthread(%p)\n", obp);
@@ -629,7 +627,7 @@ vndthread(void *arg)
 		}
 #ifdef VND_COMPRESSION
 		/* handle a compressed read */
-		if ((flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
+		if ((obp->b_flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
 			off_t bn;
 			
 			/* Convert to a byte offset within the file. */

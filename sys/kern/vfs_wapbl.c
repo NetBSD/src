@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.57 2013/09/15 08:11:33 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.58 2013/09/15 15:59:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.57 2013/09/15 08:11:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.58 2013/09/15 15:59:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -687,7 +687,6 @@ wapbl_discard(struct wapbl *wl)
 int
 wapbl_stop(struct wapbl *wl, int force)
 {
-	struct vnode *vp;
 	int error;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_stop called\n"));
@@ -715,8 +714,6 @@ wapbl_stop(struct wapbl *wl, int force)
 	KASSERT(wl->wl_dealloccnt == 0);
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
-
-	vp = wl->wl_logvp;
 
 	wapbl_free(wl->wl_wc_scratch, wl->wl_wc_header->wc_len);
 	wapbl_free(wl->wl_wc_header, wl->wl_wc_header->wc_len);
