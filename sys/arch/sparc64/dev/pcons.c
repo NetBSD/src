@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.31 2011/06/03 03:20:39 christos Exp $	*/
+/*	$NetBSD: pcons.c,v 1.32 2013/09/15 09:25:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.31 2011/06/03 03:20:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.32 2013/09/15 09:25:22 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,9 +123,6 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pconssoftc *sc;
 	struct tty *tp;
-	struct proc *p;
-
-	p = l->l_proc;
 	
 	sc = device_lookup_private(&pcons_cd, minor(dev));
 	if (!sc)
