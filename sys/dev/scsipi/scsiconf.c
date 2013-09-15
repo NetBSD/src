@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.269 2012/08/21 14:19:02 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.270 2013/09/15 13:53:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.269 2012/08/21 14:19:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.270 2013/09/15 13:53:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,6 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	struct scsipibus_attach_args sa;
 	cfdata_t cf;
 	int locs[SCSIBUSCF_NLOCS];
-	device_t chld;
 
 	/*
 	 * Assume no more luns to search after this one.
@@ -1001,7 +1000,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		 * XXX need it before config_attach() returns.  Must
 		 * XXX assign it in periph driver.
 		 */
-		chld = config_attach_loc(sc->sc_dev, cf, locs, &sa,
+		config_attach_loc(sc->sc_dev, cf, locs, &sa,
 					 scsibusprint);
 	} else {
 		scsibusprint(&sa, device_xname(sc->sc_dev));
