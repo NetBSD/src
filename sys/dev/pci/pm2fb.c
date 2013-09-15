@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.23 2013/07/30 19:21:50 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.24 2013/09/15 09:34:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.23 2013/07/30 19:21:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.24 2013/09/15 09:34:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -859,7 +859,7 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 {
 	struct pm2fb_softc *sc = cookie;
 	uint32_t dir = 0;
-	int rxs, rxd, rwi, rxdelta;
+	int rxd, rwi, rxdelta;
 
 	if (yd <= ys) {
 		dir |= PM2RE_INC_Y;
@@ -891,7 +891,6 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			    PM2RECFG_WRITE_EN | PM2RECFG_PACKED |
 			    PM2RECFG_ROP_EN | (rop << 6));
 		}
-		rxs = xs >> 2;
 		rxd = xd >> 2;
 		rwi = (wi + 7) >> 2;
 		rxdelta = (xs & 0xffc) - (xd & 0xffc);
@@ -915,7 +914,6 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			    PM2RECFG_WRITE_EN | PM2RECFG_PACKED |
 			    PM2RECFG_ROP_EN | (rop << 6));
 		}
-		rxs = xs;
 		rxd = xd;
 		rwi = wi;
 		rxdelta = xs - xd;
@@ -1450,7 +1448,8 @@ pm2fb_i2c_write_byte(void *cookie, uint8_t val, int flags)
 static int
 pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 {
-	int m, n, p, diff, out_freq, bm, bn, bp, bdiff = 1000000, bfreq;
+	int m, n, p, diff, out_freq, bm = 1, bn = 3, bp = 0,
+	    bdiff = 1000000 /* , bfreq */;
 	int fi;
 	uint8_t temp;
 
@@ -1465,7 +1464,7 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 				diff = abs(out_freq - freq);
 				if (diff < bdiff) {
 					bdiff = diff;
-					bfreq = out_freq;
+					/* bfreq = out_freq; */
 					bm = m;
 					bn = n;
 					bp = p;
