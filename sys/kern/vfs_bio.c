@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.246 2013/09/15 15:57:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.245 2013/06/28 15:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.246 2013/09/15 15:57:26 martin Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1593,9 +1593,8 @@ int
 buf_syncwait(void)
 {
 	buf_t *bp;
-	int iter, nbusy, nbusy_prev = 0, dcount, ihash;
+	int iter, nbusy, nbusy_prev = 0, ihash;
 
-	dcount = 10000;
 	for (iter = 0; iter < 20;) {
 		mutex_enter(&bufcache_lock);
 		nbusy = 0;
