@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.132 2012/10/20 00:21:10 apb Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.133 2013/09/15 14:56:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.132 2012/10/20 00:21:10 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.133 2013/09/15 14:56:26 martin Exp $");
 
 #include "opt_ptm.h"
 
@@ -855,10 +855,8 @@ static void
 filt_ptcrdetach(struct knote *kn)
 {
 	struct pt_softc *pti;
-	struct tty	*tp;
 
 	pti = kn->kn_hook;
-	tp = pti->pt_tty;
 
 	mutex_spin_enter(&tty_lock);
 	SLIST_REMOVE(&pti->pt_selr.sel_klist, kn, knote, kn_selnext);
@@ -907,10 +905,8 @@ static void
 filt_ptcwdetach(struct knote *kn)
 {
 	struct pt_softc *pti;
-	struct tty	*tp;
 
 	pti = kn->kn_hook;
-	tp = pti->pt_tty;
 
 	mutex_spin_enter(&tty_lock);
 	SLIST_REMOVE(&pti->pt_selw.sel_klist, kn, knote, kn_selnext);
