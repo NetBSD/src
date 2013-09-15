@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.111 2013/09/14 13:46:30 martin Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.112 2013/09/15 13:01:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -148,20 +148,8 @@
 #else
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
 #endif
-#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
-
-/*
- * Provide a prologue/epilogue for __CTASSERT uses within a local function
- * to supress warnings about unused local typedefs
- */
-#if __GNUC_PREREQ__(4, 8)
-#define	__CT_LOCAL_PROLOGUE	_Pragma("GCC diagnostic push") 	_Pragma("GCC diagnostic ignored \"-Wunused-local-typedefs\"")
-#define	__CT_LOCAL_EPILOGUE	_Pragma("GCC diagnostic pop")
-#else
-#define	__CT_LOCAL_PROLOGUE
-#define	__CT_LOCAL_EPILOGUE
-#endif
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
 
 /*
  * The following macro is used to remove const cast-away warnings
