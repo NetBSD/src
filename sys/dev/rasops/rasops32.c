@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.28 2013/07/31 19:58:23 macallan Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.29 2013/09/15 09:39:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.28 2013/07/31 19:58:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.29 2013/09/15 09:39:47 martin Exp $");
 
 #include "opt_rasops.h"
 
@@ -162,7 +162,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 {
-	int width, height, cnt, fs, clr[2];
+	int width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *dp, *rp;
@@ -204,7 +204,6 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		fr = WSFONT_GLYPH(uc, font);
-		fs = font->stride;
 
 		r0 = (clr[0] >> 16) & 0xff;
 		r1 = (clr[1] >> 16) & 0xff;

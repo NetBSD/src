@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.c,v 1.3 2012/07/22 14:27:52 darrenr Exp $	*/
+/*	$NetBSD: radix_ipf.c,v 1.4 2013/09/15 09:38:28 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -99,7 +99,6 @@ static void
 buildnodes(addrfamily_t *addr, addrfamily_t *mask, ipf_rdx_node_t nodes[2])
 {
 	u_32_t maskbits;
-	u_32_t lastbits;
 	u_32_t lastmask;
 	u_32_t *last;
 	int masklen;
@@ -113,7 +112,6 @@ buildnodes(addrfamily_t *addr, addrfamily_t *mask, ipf_rdx_node_t nodes[2])
 		masklen = last - (u_32_t *)mask;
 		lastmask = *last;
 	}
-	lastbits = maskbits & 0x1f;
 
 	bzero(&nodes[0], sizeof(ipf_rdx_node_t) * 2);
 	nodes[0].maskbitcount = maskbits;
