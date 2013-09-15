@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.224 2013/08/11 09:07:15 pooka Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.225 2013/09/15 12:58:34 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.224 2013/08/11 09:07:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.225 2013/09/15 12:58:34 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1381,7 +1381,6 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
         return 0;
 }
 
-#ifndef __alpha__
 int
 linux_sys_utimes(struct lwp *l, const struct linux_sys_utimes_args *uap, register_t *retval)
 {
@@ -1438,5 +1437,4 @@ linux_sys_lutimes(struct lwp *l, const struct linux_sys_utimes_args *uap, regist
 	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
 	    tptr, UIO_SYSSPACE);
 }
-#endif /* __alpha__ */
 #endif /* !COMPAT_LINUX32 */
