@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.93 2013/09/15 15:46:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.93 2013/09/15 15:46:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,7 +869,7 @@ void
 ulpt_tick(void *xsc)
 {
 	struct ulpt_softc *sc = xsc;
-	usbd_status err;
+	usbd_status err __unused;
 
 	if (sc == NULL || sc->sc_dying)
 		return;
@@ -885,9 +885,11 @@ int
 ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
+#if 0
 	struct ulpt_softc *sc;
 
 	sc = device_lookup_private(&ulpt_cd, ULPTUNIT(dev));
+#endif
 
 	switch (cmd) {
 	case FIONBIO:
