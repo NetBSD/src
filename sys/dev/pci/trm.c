@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.33 2012/05/10 03:16:50 macallan Exp $	*/
+/*	$NetBSD: trm.c,v 1.34 2013/09/15 14:53:03 martin Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.33 2012/05/10 03:16:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.34 2013/09/15 14:53:03 martin Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -689,7 +689,7 @@ trm_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct trm_softc *sc;
 	struct trm_srb *srb;
 	struct scsipi_xfer *xs;
-	int error, i, target, lun, s;
+	int error, i, s;
 
 	sc = device_private(chan->chan_adapter->adapt_dev);
 	iot = sc->sc_iot;
@@ -698,10 +698,9 @@ trm_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
-		target = xs->xs_periph->periph_target;
-		lun = xs->xs_periph->periph_lun;
 		DPRINTF(("trm_scsipi_request.....\n"));
-		DPRINTF(("target= %d lun= %d\n", target, lun));
+		DPRINTF(("target= %d lun= %d\n", xs->xs_periph->periph_target,
+		    xs->xs_periph->periph_lun));
 		if (xs->xs_control & XS_CTL_RESET) {
 			trm_reset(sc);
 			xs->error = XS_NOERROR | XS_RESET;
