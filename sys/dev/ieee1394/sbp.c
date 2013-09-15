@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.34 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: sbp.c,v 1.35 2013/09/15 13:52:23 martin Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.34 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.35 2013/09/15 13:52:23 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1112,7 +1112,6 @@ static void
 sbp_mgm_callback(struct fw_xfer *xfer)
 {
 	struct sbp_dev *sdev;
-	int resp;
 
 	sdev = (struct sbp_dev *)xfer->sc;
 
@@ -1120,7 +1119,6 @@ SBP_DEBUG(1)
 	printf("%s: sbp_mgm_callback: %s\n",
 	    device_xname(sdev->target->sbp->sc_fd.dev), sdev->bustgtlun);
 END_DEBUG
-	resp = xfer->resp;
 	sbp_xfer_free(xfer);
 	return;
 }
@@ -2140,12 +2138,10 @@ END_DEBUG
 static void
 sbp_target_reset(struct sbp_dev *sdev, int method)
 {
-	struct sbp_softc *sc;
 	struct sbp_target *target = sdev->target;
 	struct sbp_dev *tsdev;
 	int i;
 
-	sc = target->sbp;
 	for (i = 0; i < target->num_lun; i++) {
 		tsdev = target->luns[i];
 		if (tsdev == NULL)
@@ -2408,7 +2404,6 @@ sbp_dequeue_ocb(struct sbp_dev *sdev, struct sbp_status *sbp_status)
 	struct sbp_ocb *ocb;
 	struct sbp_ocb *next;
 	int order = 0;
-	int flags;
 
 SBP_DEBUG(1)
 	printf("%s:%s:%s: 0x%08x src %d\n", device_xname(sc->sc_fd.dev),
@@ -2418,7 +2413,6 @@ END_DEBUG
 	mutex_enter(&sc->sc_mtx);
 	for (ocb = STAILQ_FIRST(&sdev->ocbs); ocb != NULL; ocb = next) {
 		next = STAILQ_NEXT(ocb, ocb);
-		flags = ocb->flags;
 		if (OCB_MATCH(ocb, sbp_status)) {
 			/* found */
 			SBP_ORB_DMA_SYNC(sdev->dma, ocb->index,
