@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.98 2012/12/02 15:34:36 chs Exp $	*/
+/*	$NetBSD: twe.c,v 1.99 2013/09/15 15:00:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.98 2012/12/02 15:34:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.99 2013/09/15 15:00:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,7 +663,6 @@ twe_reset(struct twe_softc *sc)
 {
 	uint16_t aen;
 	u_int status;
-	volatile u_int32_t junk;
 	int got, rv;
 
 	/* Issue a soft reset. */
@@ -731,7 +730,7 @@ twe_reset(struct twe_softc *sc)
 		}
 		if ((status & TWE_STS_RESP_QUEUE_EMPTY) != 0)
 			break;
-		junk = twe_inl(sc, TWE_REG_RESP_QUEUE);
+		(void)twe_inl(sc, TWE_REG_RESP_QUEUE);
 	}
 
 	return (0);
@@ -1476,7 +1475,7 @@ int
 twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 {
 	struct twe_cmd *tc;
-	int flags, nsegs, i, s, rv, rc;
+	int flags, nsegs, i, s, rv;
 	void *data;
 
 	/*
@@ -1485,7 +1484,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
 		s = splvm();
 		/* XXX */
-		rc = uvm_km_kmem_alloc(kmem_va_arena,
+		rv = uvm_km_kmem_alloc(kmem_va_arena,
 		    ccb->ccb_datasize, (VM_NOSLEEP | VM_INSTANTFIT),
 		    (vmem_addr_t *)&ccb->ccb_abuf);
 		splx(s);
