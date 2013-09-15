@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.30 2012/10/13 17:51:28 jdc Exp $ */
+/* $NetBSD: pckbd.c,v 1.31 2013/09/15 09:24:05 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.30 2012/10/13 17:51:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.31 2013/09/15 09:24:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1081,7 +1081,7 @@ pckbd_cnattach(pckbport_tag_t kbctag, int kbcslot)
 
 	wskbd_cnattach(&pckbd_consops, &pckbd_consdata, &pckbd_keymapdata);
 
-	return 0;
+	return res;
 }
 
 /* ARGSUSED */
