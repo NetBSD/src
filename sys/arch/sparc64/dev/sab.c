@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.49 2012/10/03 07:16:49 mlelstv Exp $	*/
+/*	$NetBSD: sab.c,v 1.50 2013/09/15 13:45:31 martin Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.49 2012/10/03 07:16:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.50 2013/09/15 13:45:31 martin Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -662,7 +662,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sabtty_softc *sc;
 	struct tty *tp;
-	struct proc *p;
 	int s, s1;
 
 	sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
@@ -671,7 +670,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
-	p = l->l_proc;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
