@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.124 2013/06/16 13:33:30 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.125 2013/09/15 15:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.124 2013/06/16 13:33:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.125 2013/09/15 15:08:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -813,7 +813,6 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
     struct componentname *cnp, struct buf *newdirbp)
 {
 	kauth_cred_t cr;
-	struct lwp *l;
 	int newentrysize;
 	struct inode *dp;
 	struct buf *bp;
@@ -830,7 +829,6 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 	error = 0;
 	cr = cnp->cn_cred;
-	l = curlwp;
 
 	dp = VTOI(dvp);
 	newentrysize = UFS_DIRSIZ(0, dirp, 0);
