@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.28 2011/07/18 00:58:52 mrg Exp $	*/
+/*	$NetBSD: spif.c,v 1.29 2013/09/15 14:04:04 martin Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.28 2011/07/18 00:58:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.29 2013/09/15 14:04:04 martin Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -742,7 +742,7 @@ int
 spif_stcintr_rx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
-	uint8_t channel, *ptr, cnt, rcsr;
+	uint8_t channel, *ptr, cnt;
 	int i;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
@@ -751,7 +751,7 @@ spif_stcintr_rx(struct spif_softc *sc, int *needsoftp)
 	cnt = STC_READ(sc, STC_RDCR);
 	for (i = 0; i < cnt; i++) {
 		*ptr++ = 0;
-		rcsr = STC_READ(sc, STC_RCSR);
+		(void)STC_READ(sc, STC_RCSR);
 		*ptr++ = STC_READ(sc, STC_RDR);
 		if (ptr == sp->sp_rend)
 			ptr = sp->sp_rbuf;
@@ -877,7 +877,7 @@ spif_softintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
-	int r = 0, i, data, s, flags;
+	int i, data, s, flags;
 	uint8_t stat, msvr;
 	struct stty_port *sp;
 	struct tty *tp;
@@ -904,7 +904,6 @@ spif_softintr(void *vsc)
 					data |= TTY_PE;
 
 				(*tp->t_linesw->l_rint)(data, tp);
-				r = 1;
 			}
 
 			s = splhigh();
@@ -922,13 +921,11 @@ spif_softintr(void *vsc)
 				sp->sp_carrier = msvr & CD180_MSVR_CD;
 				(*tp->t_linesw->l_modem)(tp,
 				    sp->sp_carrier);
-				r = 1;
 			}
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
 				log(LOG_WARNING, "%s-%x: ring overflow\n",
 					device_xname(stc->sc_dev), i);
-				r = 1;
 			}
 
 			if (ISSET(flags, STTYF_DONE)) {
@@ -936,7 +933,6 @@ spif_softintr(void *vsc)
 				    sp->sp_txp - tp->t_outq.c_cf);
 				CLR(tp->t_state, TS_BUSY);
 				(*tp->t_linesw->l_start)(tp);
-				r = 1;
 			}
 		}
 	}
