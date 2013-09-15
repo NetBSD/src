@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.123 2013/06/25 15:37:17 jakllsch Exp $	*/
+/*	$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.123 2013/06/25 15:37:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.124 2013/09/15 15:33:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,13 +641,13 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	usbd_device_handle dev;
-	int port, err;
+	int port;
 
 	for (port = 0; port < hub->hubdesc.bNbrPorts; port++) {
 		dev = hub->ports[port].device;
 		if (dev == NULL)
 			continue;
-		err = usbd_reattach_device(sc->sc_dev, dev, port, locators);
+		usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
 	return 0;
 }
