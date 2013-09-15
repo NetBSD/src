@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.77 2013/09/15 09:36:02 martin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.78 2013/09/15 09:37:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.77 2013/09/15 09:36:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.78 2013/09/15 09:37:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3246,7 +3246,6 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 {
 	struct radeonfb_softc	*sc = dp->rd_softc;
 	uint32_t		pitch;
-	volatile uint32_t	junk;
 
 	/* no 3D */
 	PUT32(sc, RADEON_RB3D_CNTL, 0);
@@ -3268,7 +3267,7 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 	PUT32(sc, RADEON_SRC_PITCH_OFFSET,
 	    (pitch << 22) | (sc->sc_aperbase >> 10));
 
-	junk = GET32(sc, RADEON_DP_DATATYPE);
+	(void)GET32(sc, RADEON_DP_DATATYPE);
 
 	/* default scissors -- no clipping */
 	radeonfb_wait_fifo(sc, 1);
