@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.49 2012/10/27 17:18:35 chs Exp $	*/
+/*	$NetBSD: satalink.c,v 1.50 2013/09/15 13:49:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.49 2012/10/27 17:18:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.50 2013/09/15 13:49:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,7 +795,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint32_t scontrol, sstatus;
-	uint8_t scnt, sn, cl, ch;
+	uint8_t /* scnt, sn, */ cl, ch;
 	int s;
 
 	/*
@@ -857,10 +857,12 @@ sii3112_drv_probe(struct ata_channel *chp)
 		    WDSD_IBM | (0 << 4));
 		delay(10);	/* 400ns delay */
 		/* Save register contents. */
+#if 0
 		scnt = bus_space_read_1(wdr->cmd_iot,
 				        wdr->cmd_iohs[wd_seccnt], 0);
 		sn = bus_space_read_1(wdr->cmd_iot,
 				      wdr->cmd_iohs[wd_sector], 0);
+#endif
 		cl = bus_space_read_1(wdr->cmd_iot,
 				      wdr->cmd_iohs[wd_cyl_lo], 0);
 		ch = bus_space_read_1(wdr->cmd_iot,
