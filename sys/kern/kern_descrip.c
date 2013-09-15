@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.221 2013/09/14 13:46:52 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.222 2013/09/15 13:03:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.221 2013/09/14 13:46:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.222 2013/09/15 13:03:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1323,9 +1323,7 @@ filedesc_ctor(void *arg, void *obj, int flag)
 	fdp->fd_himap = fdp->fd_dhimap;
 	fdp->fd_lomap = fdp->fd_dlomap;
 
-	__CT_LOCAL_PROLOGUE
 	CTASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
-	__CT_LOCAL_EPILOGUE
 	for (i = 0, ffp = fdp->fd_dt->dt_ff; i < NDFDFILE; i++, ffp++) {
 		*ffp = (fdfile_t *)fdp->fd_dfdfile[i];
 		(void)fdfile_ctor(NULL, fdp->fd_dfdfile[i], PR_WAITOK);
