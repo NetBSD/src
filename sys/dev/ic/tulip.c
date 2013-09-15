@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.182 2013/09/14 13:09:55 joerg Exp $	*/
+/*	$NetBSD: tulip.c,v 1.183 2013/09/15 14:58:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.182 2013/09/14 13:09:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.183 2013/09/15 14:58:32 martin Exp $");
 
 
 #include <sys/param.h>
@@ -5747,12 +5747,13 @@ static void
 tlp_pnic_nway_auto_timeout(void *arg)
 {
 	struct tulip_softc *sc = arg;
-	uint32_t reg;
+	/* uint32_t reg; */
 	int s;
 
 	s = splnet();
 	sc->sc_flags &= ~TULIPF_DOINGAUTO;
-	reg = TULIP_READ(sc, CSR_PNIC_NWAY);
+	/* reg = */
+	TULIP_READ(sc, CSR_PNIC_NWAY);
 #if 0
 	if ((reg & PNIC_NWAY_LPAR_MASK) == 0)
 		aprint_error_dev(sc->sc_dev, "autonegotiation failed to complete\n");
