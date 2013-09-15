@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.62 2013/02/05 13:39:28 christos Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.63 2013/09/15 15:47:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.62 2013/02/05 13:39:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.63 2013/09/15 15:47:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,9 +486,8 @@ out0:
 void
 usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 {
-	int error;	/* XXX: why? */
 
-	error = extent_free(rs->extent,
+	extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
 	kmem_free(dma->block->segs, dma->block->nsegs *
 	    sizeof(*dma->block->segs));
