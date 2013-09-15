@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.48 2013/04/27 21:18:42 christos Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.49 2013/09/15 12:45:11 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.48 2013/04/27 21:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.49 2013/09/15 12:45:11 martin Exp $");
 
 #include <sys/errno.h>
 
@@ -631,9 +631,11 @@ PropagateResults(RF_DagNode_t *node, int context)
 static void
 ProcessNode(RF_DagNode_t *node, int context)
 {
+#if RF_DEBUG_ENGINE
 	RF_Raid_t *raidPtr;
 
 	raidPtr = node->dagHdr->raidPtr;
+#endif
 
 	switch (node->status) {
 	case rf_good:
