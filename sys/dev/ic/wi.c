@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.236 2013/09/15 16:10:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.236 2013/09/15 16:10:45 martin Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -3112,7 +3112,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	u_int16_t val;
 	struct wi_ssid ssid;
 	struct wi_macaddr bssid, old_bssid;
-	enum ieee80211_state ostate;
+	enum ieee80211_state ostate __unused;
 #ifdef WI_DEBUG
 	static const char *stname[] =
 	    { "INIT", "SCAN", "AUTH", "ASSOC", "RUN" };
