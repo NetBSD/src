@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.194 2012/02/19 00:05:55 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.195 2013/09/15 15:52:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.194 2012/02/19 00:05:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.195 2013/09/15 15:52:35 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1170,7 +1170,7 @@ uvm_fault_upper_lookup(
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	int lcv;
 	vaddr_t currva;
-	bool shadowed;
+	bool shadowed __unused;
 	UVMHIST_FUNC("uvm_fault_upper_lookup"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there) */
