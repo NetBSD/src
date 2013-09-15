@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.242 2013/09/14 13:13:59 joerg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.243 2013/09/15 09:16:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.242 2013/09/14 13:13:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.243 2013/09/15 09:16:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,7 +635,7 @@ ohci_init(ohci_softc_t *sc)
 	ohci_soft_ed_t *sed, *psed;
 	usbd_status err;
 	int i;
-	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
+	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca /*, descb */;
 
 	DPRINTF(("ohci_init: start\n"));
 	aprint_normal_dev(sc->sc_dev, "");
@@ -763,7 +763,7 @@ ohci_init(ohci_softc_t *sc)
 	rwc = ctl & OHCI_RWC;
 	fm = OREAD4(sc, OHCI_FM_INTERVAL);
 	desca = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
-	descb = OREAD4(sc, OHCI_RH_DESCRIPTOR_B);
+	/* descb = OREAD4(sc, OHCI_RH_DESCRIPTOR_B); */
 
 	/* Determine in what context we are running. */
 	if (ctl & OHCI_IR) {
@@ -1570,10 +1570,9 @@ ohci_rhsc_softint(void *arg)
 void
 ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	usbd_pipe_handle pipe;
 	u_char *p;
 	int i, m;
-	int hstatus;
+	int hstatus __unused;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1585,8 +1584,6 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 		/* Just ignore the change. */
 		return;
 	}
-
-	pipe = xfer->pipe;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
