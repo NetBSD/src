@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.137 2013/08/15 15:26:50 aymeric Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.138 2013/09/15 15:04:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.137 2013/08/15 15:26:50 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.138 2013/09/15 15:04:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1557,10 +1557,10 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	const usb_endpoint_descriptor_audio_t *ed;
 	const usb_endpoint_descriptor_audio_t *epdesc1;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
-	int format, chan, prec, enc;
+	int format, chan __unused, prec, enc;
 	int dir, type, sync;
 	struct as_info ai;
-	const char *format_str;
+	const char *format_str __unused;
 
 	asid = (const void *)(tbuf + offs);
 	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
@@ -2374,7 +2374,7 @@ uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 {
 	usb_device_request_t req;
 	u_int8_t data[4];
-	usbd_status err;
+	int err __unused;
 
 	if (wValue == -1)
 		return;
