@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.178 2013/06/21 20:09:59 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.179 2013/09/15 14:49:50 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2013/06/21 20:09:59 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2013/09/15 14:49:50 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -709,12 +709,16 @@ badtrap:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
 		{
-		int64_t dsfsr, dsfar=0, isfsr;
-
+		int64_t dsfsr, dsfar=0;
+#ifdef DEBUG
+		int64_t isfsr;
+#endif
 		dsfsr = ldxa(SFSR, ASI_DMMU);
 		if (dsfsr & SFSR_FV)
 			dsfar = ldxa(SFAR, ASI_DMMU);
+#ifdef DEBUG
 		isfsr = ldxa(SFSR, ASI_IMMU);
+#endif
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */
