@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.167 2013/09/15 14:45:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166 2013/04/10 00:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.167 2013/09/15 14:45:50 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1403,7 +1403,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	struct tcpcb *tp;
 	struct kinfo_pcb pcb;
 	char *dp;
-	u_int op, arg;
 	size_t len, needed, elem_size, out_size;
 	int error, elem_count, pf, proto, pf2;
 
@@ -1423,8 +1422,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	}
 	error = 0;
 	dp = oldp;
-	op = name[0];
-	arg = name[1];
 	out_size = elem_size;
 	needed = 0;
 
