@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.76 2013/03/28 17:25:10 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.77 2013/09/15 09:36:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.76 2013/03/28 17:25:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.77 2013/09/15 09:36:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3494,7 +3494,7 @@ static void
 radeonfb_cursor_shape(struct radeonfb_display *dp)
 {
 	uint8_t	and[512], xor[512];
-	int	i, j, src, dst, pitch;
+	int	i, j, src, dst /* , pitch */;
 	const uint8_t	*msk = dp->rd_cursor.rc_mask;
 	const uint8_t	*img = dp->rd_cursor.rc_image;
 
@@ -3529,7 +3529,7 @@ radeonfb_cursor_shape(struct radeonfb_display *dp)
 	 * hence:	AND = ~(mask);	XOR = color & ~(mask);
 	 */
 
-	pitch = ((dp->rd_cursor.rc_size.x + 7) / 8);
+	/* pitch = ((dp->rd_cursor.rc_size.x + 7) / 8); */
 
 	/* start by assuming all bits are transparent */
 	memset(and, 0xff, 512);
