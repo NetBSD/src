@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.127 2013/07/22 13:43:49 soren Exp $        */
+/*      $NetBSD: ukbd.c,v 1.128 2013/09/15 15:44:53 martin Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.127 2013/07/22 13:43:49 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.128 2013/09/15 15:44:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -820,9 +820,11 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	if (sc->sc_rawkbd) {
 		u_char cbuf[MAXKEYS * 2];
 		int c;
-		int npress;
+#if defined(UKBD_REPEAT)
+		int npress = 0;
+#endif
 
-		for (npress = i = j = 0; i < nkeys; i++) {
+		for (i = j = 0; i < nkeys; i++) {
 			key = ibuf[i];
 			c = ukbd_trtab[key & CODEMASK];
 			if (c == NN)
