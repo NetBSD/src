@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.35 2013/01/09 23:02:59 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.36 2013/09/15 15:06:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.35 2013/01/09 23:02:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.36 2013/09/15 15:06:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ ucycomstart(struct tty *tp)
 {
 	struct ucycom_softc *sc =
 	    device_lookup_private(&ucycom_cd, UCYCOMUNIT(tp->t_dev));
-	usbd_status err;
+	usbd_status err __unused;
 	u_char *data;
 	int cnt, len, s;
 
