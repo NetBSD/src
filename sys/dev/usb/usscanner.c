@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.37 2013/09/15 15:49:38 martin Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38 2013/09/15 19:27:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.37 2013/09/15 15:49:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38 2013/09/15 19:27:22 martin Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -713,7 +713,8 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 		    device_xname(sc->sc_dev),
 		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
 		    xs, xs->cmd->opcode, xs->datalen,
-		    periph->periph_quirks, xs->xs_control & XS_CTL_POLL));
+		    xs->xs_periph->periph_quirks,
+		    xs->xs_control & XS_CTL_POLL));
 
 		if (sc->sc_dying) {
 			xs->error = XS_DRIVER_STUFFUP;
