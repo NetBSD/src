@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.109 2013/01/23 18:04:33 mbalmer Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.110 2013/09/15 14:40:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.109 2013/01/23 18:04:33 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.110 2013/09/15 14:40:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -705,7 +705,6 @@ sme_events_check(void *arg)
 {
 	struct sysmon_envsys *sme = arg;
 	sme_event_t *see;
-	uint64_t timo;
 
 	KASSERT(sme != NULL);
 
@@ -714,10 +713,6 @@ sme_events_check(void *arg)
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
 		see->see_edata->flags |= ENVSYS_FNEED_REFRESH;
 	}
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
 	if (!sysmon_low_power)
 		sme_schedule_callout(sme);
 	mutex_exit(&sme->sme_callout_mtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.328 2013/08/29 17:49:20 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.329 2013/09/15 14:42:38 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.328 2013/08/29 17:49:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.329 2013/09/15 14:42:38 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -997,13 +997,12 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			  struct mbuf *m, int tlen, int multicast)
 {
 	int		tiflags;
-	int		todrop, dupseg;
+	int		todrop;
 	uint32_t	t_flags = 0;
 	uint64_t	*tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
-	dupseg  = false;
 
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
@@ -1033,7 +1032,6 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			 */
 			t_flags |= TF_ACKNOW;
 			todrop = tlen;
-			dupseg = true;
 			tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_RCVDUPPACK] += 1;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
