@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.113 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.114 2013/09/15 15:41:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.113 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.114 2013/09/15 15:41:11 martin Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -1006,7 +1006,6 @@ int
 sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 		  struct mbuf *m0, int sbprio)
 {
-	int space;
 	struct mbuf *m, *n, *n0, *nlast;
 	int error;
 
@@ -1030,9 +1029,9 @@ sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
 	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
 		panic("sbappendaddrchain");
 
+#ifdef notyet
 	space = sbspace(sb);
 
-#ifdef notyet
 	/*
 	 * Enforce SB_PRIO_* limits as described above.
 	 */
@@ -1097,7 +1096,7 @@ bad:
 		n0 = n->m_nextpkt;	/* iterate at next prepended address */
 		MFREE(n, np);		/* free prepended address (not data) */
 	}
-	return 0;
+	return error;
 }
 
 
