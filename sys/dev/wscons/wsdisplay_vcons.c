@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.28 2013/05/28 11:04:04 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.29 2013/09/15 16:12:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.28 2013/05/28 11:04:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.29 2013/09/15 16:12:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -907,7 +907,6 @@ vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct vcons_data *vd = scr->scr_vd;
-	int dist;
 
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		int pos, l, c, offset, ppos;
@@ -917,7 +916,6 @@ vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
 #else
 		offset = 0;
 #endif
-		dist = (dstrow - srcrow) * ri->ri_cols;
 		ppos = ri->ri_cols * dstrow;
 		pos = ppos + offset;
 		for (l = dstrow; l < (dstrow + nrows); l++) {
