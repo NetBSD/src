@@ -1,4 +1,4 @@
-/* $NetBSD: t_isnan.c,v 1.1 2011/09/19 05:25:50 jruoho Exp $ */
+/* $NetBSD: t_isnan.c,v 1.2 2013/09/16 15:22:51 martin Exp $ */
 
 /*
  * This file is in the Public Domain.
@@ -21,9 +21,11 @@ ATF_TC_HEAD(isnan_basic, tc)
 
 ATF_TC_BODY(isnan_basic, tc)
 {
+#ifdef NAN
 	/* NAN is meant to be a (float)NaN. */
 	ATF_CHECK(isnan(NAN) != 0);
 	ATF_CHECK(isnan((double)NAN) != 0);
+#endif
 }
 
 ATF_TC(isinf_basic);
@@ -51,10 +53,12 @@ ATF_TP_ADD_TCS(tp)
 
 	arch = atf_config_get("atf_arch");
 
-	if (strcmp("vax", arch) == 0 || strcmp("m68000", arch) == 0)
+	if (strcmp("m68000", arch) == 0)
 		atf_tc_skip("Test not applicable on %s", arch);
 	else {
+#ifdef NAN
 		ATF_TP_ADD_TC(tp, isnan_basic);
+#endif
 		ATF_TP_ADD_TC(tp, isinf_basic);
 	}
 
