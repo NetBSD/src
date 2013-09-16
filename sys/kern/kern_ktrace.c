@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.162 2013/09/14 20:20:09 martin Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.163 2013/09/16 09:25:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.162 2013/09/14 20:20:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.163 2013/09/16 09:25:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1322,7 +1322,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
  	mutex_exit(&ktrace_lock);
  	mutex_exit(p->p_lock);
 
-	return error ? 1 : 0;
+	return error ? 0 : 1;
 }
 
 int
