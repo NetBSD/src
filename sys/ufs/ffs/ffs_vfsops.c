@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.287 2013/08/11 04:36:17 dholland Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.288 2013/09/16 12:36:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.287 2013/08/11 04:36:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.288 2013/09/16 12:36:54 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -803,8 +803,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		space = (char *)space + bsize;
 		brelse(bp, 0);
 	}
-	if (fs->fs_snapinum[0] != 0)
-		ffs_snapshot_mount(mp);
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
