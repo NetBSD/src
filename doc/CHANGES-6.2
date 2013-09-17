@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.37 2013/09/14 13:43:52 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.38 2013/09/17 19:39:38 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -702,3 +702,10 @@ lib/libc/stdlib/_env.c				1.8
 	original environment like Emacs 24.
 	[tron, ticket #940]
 
+external/bsd/pkg_install/dist/lib/pkg_signature.c 1.2
+
+	Fixed installation of signed packages. Some variables part of struct
+	signature_archive were not initialized properly, therefore randomly
+	failing in the verify_signature_read_cb() callback.
+	Partly closes PR pkg/48194; pkgsrc needs to be updated as well.
+	[khorben, ticket #943]
