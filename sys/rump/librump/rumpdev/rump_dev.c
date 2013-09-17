@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.22 2013/01/14 16:50:54 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.23 2013/09/17 23:55:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.22 2013/01/14 16:50:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.23 2013/09/17 23:55:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,7 +55,13 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 	rump_pdev_finalize();
 
 	cold = 0;
-	if (rump_component_count(RUMP_COMPONENT_DEV) > 0) {
+
+	/*
+	 * XXX: does the "if" make any sense?  What if someone wants
+	 * to dynamically load a driver later on?
+	 */
+	if (rump_component_count(RUMP_COMPONENT_DEV) > 0
+	    || rump_component_count(RUMP_COMPONENT_DEV_AFTERMAINBUS) > 0) {
 		extern struct cfdriver mainbus_cd;
 		extern struct cfattach mainbus_ca;
 		extern struct cfdata cfdata[];
@@ -66,6 +72,7 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 		if (config_rootfound("mainbus", NULL) == NULL)
 			panic("no mainbus");
 
+		rump_component_init(RUMP_COMPONENT_DEV_AFTERMAINBUS);
 	}
 	config_finalize();
 
