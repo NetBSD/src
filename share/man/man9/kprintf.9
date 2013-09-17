@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.32 2012/11/21 17:18:11 christos Exp $
+.\"     $NetBSD: kprintf.9,v 1.33 2013/09/17 19:58:03 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -263,6 +263,8 @@ The
 function returns
 .Dv NULL
 if no terminal handle could be acquired.
+.Sh CODE REFERENCES
+.Pa sys/kern/subr_prf.c
 .Sh SEE ALSO
 .Xr printf 1 ,
 .Xr printf 3 ,
@@ -270,8 +272,6 @@ if no terminal handle could be acquired.
 .Xr boot 8 ,
 .Xr autoconf 9 ,
 .Xr boothowto 9
-.Sh CODE REFERENCES
-.Pa sys/kern/subr_prf.c
 .Sh HISTORY
 The
 .Fn sprintf
