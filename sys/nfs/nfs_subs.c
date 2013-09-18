@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.223 2013/09/18 16:33:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.223 2013/09/18 16:33:14 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1502,27 +1502,40 @@ nfs_init0(void)
 	return 0;
 }
 
+static volatile uint32_t nfs_mutex;
+static uint32_t nfs_refcount;
+
+#define nfs_p()	while (atomic_cas_32(&nfs_mutex, 0, 1) == 0) continue;
+#define nfs_v()	while (atomic_cas_32(&nfs_mutex, 1, 0) == 1) continue;
+
 /*
  * This is disgusting, but it must support both modular and monolothic
- * configurations.  For monolithic builds NFSSERVER may not imply NFS.
+ * configurations, plus the code is shared between server and client.
+ * For monolithic builds NFSSERVER may not imply NFS. Unfortunately we
+ * can't use regular mutexes here that would require static initialization
+ * and we can get initialized from multiple places, so we improvise.
  *
  * Yuck.
  */
 void
 nfs_init(void)
 {
-	static ONCE_DECL(nfs_init_once);
-
-	RUN_ONCE(&nfs_init_once, nfs_init0);
+	nfs_p();
+	if (nfs_refcount++ == 0)
+		nfs_init0();
+	nfs_v();
 }
 
 void
 nfs_fini(void)
 {
-
-	nfsdreq_fini();
-	nfs_timer_fini();
-	MOWNER_DETACH(&nfs_mowner);
+	nfs_p();
+	if (--nfs_refcount == 0) {
+		MOWNER_DETACH(&nfs_mowner);
+		nfs_timer_fini();
+		nfsdreq_fini();
+	}
+	nfs_v();
 }
 
 /*
