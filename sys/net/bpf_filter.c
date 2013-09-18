@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.57 2013/08/30 15:00:08 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.58 2013/09/18 23:34:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.57 2013/08/30 15:00:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.58 2013/09/18 23:34:55 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -61,8 +61,7 @@ struct bpf_ctx {
 };
 
 /* Default BPF context (zeroed). */
-static bpf_ctx_t		bpf_def_ctx1;
-bpf_ctx_t *			bpf_def_ctx = &bpf_def_ctx1;
+static bpf_ctx_t		bpf_def_ctx;
 
 bpf_ctx_t *
 bpf_create(void)
@@ -179,8 +178,16 @@ m_xbyte(const struct mbuf *m, uint32_t k, int *err)
  * buflen is the amount of data present
  */
 #ifdef _KERNEL
+
 u_int
-bpf_filter(bpf_ctx_t *bc, void *arg, const struct bpf_insn *pc,
+bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
+    u_int buflen)
+{
+	return bpf_filter_ext(&bpf_def_ctx, NULL, pc, p, wirelen, buflen);
+}
+
+u_int
+bpf_filter_ext(bpf_ctx_t *bc, void *arg, const struct bpf_insn *pc,
     const u_char *p, u_int wirelen, u_int buflen)
 #else
 u_int
@@ -547,8 +554,20 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  */
 __CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
 
+#if defined(KERNEL) || defined(_KERNEL)
+
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
+{
+	return bpf_validate_ext(&bpf_def_ctx, f, signed_len);
+}
+
+int
+bpf_validate_ext(bpf_ctx_t *bc, const struct bpf_insn *f, int signed_len)
+#else
+int
+bpf_validate(const struct bpf_insn *f, int signed_len)
+#endif
 {
 	u_int i, from, len, ok = 0;
 	const struct bpf_insn *p;
