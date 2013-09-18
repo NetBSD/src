@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.39 2013/08/07 17:36:11 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.40 2013/09/18 09:25:20 martin Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -34,6 +34,11 @@ CFLAGS+=	-mlong-calls
 CFLAGS+=	-mlongcall
 .elif ${MACHINE_CPU} == "vax"
 CFLAGS+=	-fno-pic
+.endif
+
+.if ${MACHINE} == "sparc64"
+# force same memory model as rest of the kernel
+CFLAGS+=	-mcmodel=medlow
 .endif
 
 # evbppc needs some special help
