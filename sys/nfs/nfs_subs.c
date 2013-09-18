@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.223 2013/09/18 16:33:14 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.224 2013/09/18 23:27:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.223 2013/09/18 16:33:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.224 2013/09/18 23:27:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1520,6 +1520,7 @@ static uint32_t nfs_refcount;
 void
 nfs_init(void)
 {
+
 	nfs_p();
 	if (nfs_refcount++ == 0)
 		nfs_init0();
@@ -1529,6 +1530,7 @@ nfs_init(void)
 void
 nfs_fini(void)
 {
+
 	nfs_p();
 	if (--nfs_refcount == 0) {
 		MOWNER_DETACH(&nfs_mowner);
