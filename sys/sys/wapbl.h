@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.13 2011/11/21 04:36:06 christos Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.14 2013/09/18 14:37:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -206,10 +206,7 @@ wapbl_vphaswapbl(struct vnode *vp)
 		return false;
 
 	mp = wapbl_vptomp(vp);
-	if (mp && mp->mnt_wapbl)
-		return true;
-	else
-		return false;
+	return mp && mp->mnt_wapbl;
 }
 
 #endif /* _KERNEL */
