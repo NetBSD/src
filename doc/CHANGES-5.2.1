@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.1,v 1.1.2.14 2013/09/11 07:05:29 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.1,v 1.1.2.15 2013/09/18 03:44:01 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -239,3 +239,9 @@ sys/net/bpf.c					1.176 via patch
 	Avoid kernel panic caused by setting a very small bpf buffer size.
 	Fixes PR/48198 reported by Peter Bex.
 	[spz, ticket #1874]
+
+sys/netinet6/in6.c				1.167 via patch
+
+	Include BRDADDR and NETMASK to the v4 ioctls we ban for v6; from
+	FreeBSD.
+	[spz, ticket #1876]
