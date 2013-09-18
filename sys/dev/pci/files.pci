@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.366 2013/08/21 18:08:29 jakllsch Exp $
+#	$NetBSD: files.pci,v 1.367 2013/09/18 14:30:45 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1133,3 +1133,9 @@ defflag	opt_tdvfb.h		TDVFB_CONSOLE
 device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb	
+
+# nvidia geforce framebuffer console driver
+device	gffb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang, glyphcache
+attach	gffb at pci
+file	dev/pci/gffb.c		gffb
+defflag	opt_gffb.h	GFFB_DEBUG
