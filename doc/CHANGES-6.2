@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.41 2013/09/18 19:53:23 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.42 2013/09/18 20:01:20 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -723,4 +723,12 @@ xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c	patch
 	Check the XkbGetNames reply when names->keys was just allocated
 	Should fix PR lib/48170.
 	[riz, ticket #945]
+
+sys/arch/sandpoint/stand/altboot/brdsetup.c	1.32
+sys/arch/sandpoint/stand/altboot/rge.c		1.7
+sys/dev/ic/rtl8169.c				1.138
+
+	Fix ethernet address for the onboard re(4) for boards without eeprom
+	(QNAP V200) and some sandpoint NAS.
+	[phx, ticket #946]
 
