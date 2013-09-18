@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.159.10.1 2013/07/08 07:40:56 jdc Exp $	*/
+/*	$NetBSD: in6.c,v 1.159.10.2 2013/09/18 03:23:56 msaitoh Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.159.10.1 2013/07/08 07:40:56 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.159.10.2 2013/09/18 03:23:56 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -367,6 +367,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 #ifdef SIOCSIFCONF_X25
 	case SIOCSIFCONF_X25:
 #endif
+	case SIOCSIFBRDADDR:
+	case SIOCSIFNETMASK:
 		return EOPNOTSUPP;
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
