@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.18 2013/09/12 15:36:15 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2013/09/18 22:53:39 uwe Exp $
 
 .include <bsd.own.mk>
+
+# XXX: FIXME: This is defined in bsd.lib.mk
+PICFLAGS ?= -fPIC
 
 COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
@@ -38,11 +41,11 @@ crtbegin.o: crtbegin.c crtbegin.h
 .if exists(${ARCHDIR}/crtbegin.S)
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DPIC -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} ${PICFLAGS} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
 .else
 crtbeginS.o: crtbegin.c crtbegin.h
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -fPIC -DPIC -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
+	${COMPILE.c} ${PICFLAGS} -DSHARED ${COMMON_DIR}/crtbegin.c -o ${.TARGET}.o
 .endif
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
