@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.26 2013/09/14 13:39:00 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.27 2013/09/18 03:42:21 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -551,3 +551,8 @@ lib/libc/locale/global_locale.c                 patch
 	provide consistent and correct data for the C locale.
 	[joerg, ticket #1873] 
 
+sys/netinet6/in6.c				1.167 via patch
+
+	Include BRDADDR and NETMASK to the v4 ioctls we ban for v6; from
+	FreeBSD.
+	[spz, ticket #1876]
