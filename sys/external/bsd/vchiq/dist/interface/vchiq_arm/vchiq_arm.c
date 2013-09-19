@@ -682,6 +682,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				waiter->bulk_waiter.bulk->userdata = NULL;
 				spin_unlock(&bulk_waiter_spinlock);
 			}
+			_sema_destroy(&waiter->bulk_waiter.event);
 			kfree(waiter);
 		} else {
 			const VCHIQ_BULK_MODE_T mode_waiting =
@@ -810,6 +811,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				if (completion->reason ==
 					VCHIQ_SERVICE_CLOSED) {
 					unlock_service(service1);
+					_sema_destroy(&user_service->insert_event);
+					_sema_destroy(&user_service->remove_event);
 					kfree(user_service);
 				}
 
@@ -1159,6 +1162,8 @@ vchiq_close(struct file *fp)
 			spin_unlock(&msg_queue_spinlock);
 
 			unlock_service(service);
+			_sema_destroy(&user_service->insert_event);
+			_sema_destroy(&user_service->remove_event);
 			kfree(user_service);
 		}
 
@@ -1192,6 +1197,7 @@ vchiq_close(struct file *fp)
 					"bulk_waiter - cleaned up %x "
 					"for pid %d",
 					(unsigned int)waiter, waiter->pid);
+		                _sema_destroy(&waiter->bulk_waiter.event);
 				kfree(waiter);
 			}
 		}
