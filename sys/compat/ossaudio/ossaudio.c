@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.67 2011/10/14 09:23:29 hannken Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.68 2013/09/19 18:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.67 2011/10/14 09:23:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.68 2013/09/19 18:50:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.67 2011/10/14 09:23:29 hannken Exp $"
 #include <compat/ossaudio/ossaudio.h>
 #include <compat/ossaudio/ossaudiovar.h>
 
-MODULE(MODULE_CLASS_MISC, compat_ossaudio, NULL);
+MODULE(MODULE_CLASS_EXEC, compat_ossaudio, NULL);
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x) if (ossdebug) printf x

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_mod.c,v 1.1 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: svr4_32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_mod.c,v 1.1 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_mod.c,v 1.1 2008/11/19 18:36:06 ad Exp $");
 # define	MD1	""
 #endif
 
-MODULE(MODULE_CLASS_MISC, compat_svr4_32, "compat,compat_netbsd32" MD1);
+MODULE(MODULE_CLASS_EXEC, compat_svr4_32, "compat,compat_netbsd32" MD1);
 
 static struct execsw svr4_32_execsw[] = {
 #if defined(EXEC_ELF32)

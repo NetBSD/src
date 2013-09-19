@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.138 2013/09/19 18:50:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.138 2013/09/19 18:50:59 christos Exp $");
 
 #define	ELFSIZE	32
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $");
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_elf32, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_elf32, DEP);
 
 static struct execsw exec_elf32_execsw[] = {
 	{ sizeof (Elf32_Ehdr),

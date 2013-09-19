@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.16 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.17 2013/09/19 18:50:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.16 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.17 2013/09/19 18:50:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.16 2008/11/19 18:36:06 ad Exp $");
 #endif
 
 #ifdef COREDUMP
-MODULE(MODULE_CLASS_MISC, exec_vax1k, "coredump");
+MODULE(MODULE_CLASS_EXEC, exec_vax1k, "coredump");
 #else
-MODULE(MODULE_CLASS_MISC, exec_vax1k, NULL);
+MODULE(MODULE_CLASS_EXEC, exec_vax1k, NULL);
 #endif
 
 int	exec_vax1k_prep_anymagic(struct lwp *, struct exec_package *,

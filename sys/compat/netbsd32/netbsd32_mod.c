@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-MODULE(MODULE_CLASS_MISC, compat_netbsd32, MODDEPS);
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32, MODDEPS);
 
 static struct execsw netbsd32_execsw[] = {
 #ifdef EXEC_AOUT

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $	*/
+/*	$NetBSD: freebsd_mod.c,v 1.3 2013/09/19 18:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.3 2013/09/19 18:50:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-MODULE(MODULE_CLASS_MISC, compat_freebsd, "compat,compat_ossaudio" MD1 MD2);
+MODULE(MODULE_CLASS_EXEC, compat_freebsd, "compat,compat_ossaudio" MD1 MD2);
 
 static struct execsw freebsd_execsw[] = {
 #ifdef EXEC_ELF32
