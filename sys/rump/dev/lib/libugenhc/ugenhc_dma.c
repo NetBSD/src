@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdma.c,v 1.3 2011/07/15 23:40:56 dyoung Exp $	*/
+/*	$NetBSD: ugenhc_dma.c,v 1.1 2013/09/19 17:55:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,9 +34,7 @@
 #include <sys/bus.h>
 
 /*
- * bus dma "implementation" for rump.
- *
- * In it's current sorry state, this functions with USB drivers.
+ * bus_dma(9) that works for USB drivers
  */
 
 int
