@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: aoutm68k_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_mod.c,v 1.1 2008/11/19 18:36:02 ad Exp $");
 
 extern struct emul emul_netbsd_aoutm68k;
 
-MODULE(MODULE_CLASS_MISC, compat_aoutm68k, "exec_aout");
+MODULE(MODULE_CLASS_EXEC, compat_aoutm68k, "exec_aout");
 
 static struct execsw aoutm68k_execsw[] = {
 	{ sizeof(struct exec),

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.2 2013/09/19 18:50:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
 
 #include <compat/netbsd32/netbsd32_exec.h>
 
-MODULE(MODULE_CLASS_MISC, compat_sunos, "compat,compat_netbsd32,exec_aout");
+MODULE(MODULE_CLASS_EXEC, compat_sunos, "compat,compat_netbsd32,exec_aout");
 
 static struct execsw sunos_execsw[] = {
 	{ SUNOS32_AOUT_HDR_SIZE,

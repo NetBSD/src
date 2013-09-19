@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ndis.c,v 1.23 2012/09/23 01:14:40 chs Exp $	*/
+/*	$NetBSD: kern_ndis.c,v 1.24 2013/09/19 18:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.23 2012/09/23 01:14:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.24 2013/09/19 18:50:35 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.23 2012/09/23 01:14:40 chs Exp $");
 #include <compat/ndis/usbd_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
-MODULE(MODULE_CLASS_MISC, ndis, NULL);
+MODULE(MODULE_CLASS_EXEC, ndis, NULL);
 
 #define NDIS_DUMMY_PATH "\\\\some\\bogus\\path"
 
