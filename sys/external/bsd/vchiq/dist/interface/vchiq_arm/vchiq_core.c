@@ -276,6 +276,10 @@ unlock_service(VCHIQ_SERVICE_T *service)
 		if (!service->ref_count) {
 			BUG_ON(service->srvstate != VCHIQ_SRVSTATE_FREE);
 			state->services[service->localport] = NULL;
+
+			_sema_destroy(&service->remove_event);
+			_sema_destroy(&service->bulk_remove_event);
+			lmutex_destroy(&service->bulk_mutex);
 		} else
 			service = NULL;
 	}
@@ -2588,6 +2592,10 @@ vchiq_add_service_internal(VCHIQ_STATE_T *state,
 		lmutex_unlock(&state->mutex);
 
 		if (!pservice) {
+			_sema_destroy(&service->remove_event);
+			_sema_destroy(&service->bulk_remove_event);
+			lmutex_destroy(&service->bulk_mutex);
+
 			kfree(service);
 			service = NULL;
 		}
