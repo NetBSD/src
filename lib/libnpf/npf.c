@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.20 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.21 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.20 2013/09/19 01:04:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.21 2013/09/19 01:49:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -661,53 +661,6 @@ npf_rule_getproc(nl_rule_t *rl)
 	return rpname;
 }
 
-#if 1
-static int
-_npf_rule_foreach1(prop_array_t rules, nl_rule_callback_t func)
-{
-	prop_dictionary_t rldict;
-	prop_object_iterator_t it;
-	unsigned reduce[16], n;
-	unsigned nlevel;
-
-	if (!rules || prop_object_type(rules) != PROP_TYPE_ARRAY) {
-		return ENOENT;
-	}
-	it = prop_array_iterator(rules);
-	if (it == NULL) {
-		return ENOMEM;
-	}
-
-	nlevel = 0;
-	reduce[nlevel] = 0;
-	n = 0;
-
-	while ((rldict = prop_object_iterator_next(it)) != NULL) {
-		nl_rule_t nrl = { .nrl_dict = rldict };
-		uint32_t skipto = 0;
-
-		prop_dictionary_get_uint32(rldict, "skip-to", &skipto);
-		(*func)(&nrl, nlevel);
-		if (skipto) {
-			nlevel++;
-			reduce[nlevel] = skipto;
-		}
-		if (reduce[nlevel] == ++n) {
-			assert(nlevel > 0);
-			nlevel--;
-		}
-	}
-	prop_object_iterator_release(it);
-	return 0;
-}
-
-int
-_npf_rule_foreach(nl_config_t *ncf, nl_rule_callback_t func)
-{
-	return _npf_rule_foreach1(ncf->ncf_rules_list, func);
-}
-#endif
-
 int
 _npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
 {
@@ -733,31 +686,6 @@ _npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
 	}
 	return error;
 }
-
-#if 1
-pri_t
-_npf_rule_getinfo(nl_rule_t *nrl, const char **rname, uint32_t *attr,
-    u_int *if_idx)
-{
-	prop_dictionary_t rldict = nrl->nrl_dict;
-	pri_t prio;
-
-	prop_dictionary_get_cstring_nocopy(rldict, "name", rname);
-	prop_dictionary_get_uint32(rldict, "attributes", attr);
-	prop_dictionary_get_int32(rldict, "priority", &prio);
-	prop_dictionary_get_uint32(rldict, "interface", if_idx);
-	return prio;
-}
-
-const void *
-_npf_rule_ncode(nl_rule_t *nrl, size_t *size)
-{
-	prop_dictionary_t rldict = nrl->nrl_dict;
-	prop_object_t obj = prop_dictionary_get(rldict, "code");
-	*size = prop_data_size(obj);
-	return prop_data_data_nocopy(obj);
-}
-#endif
 
 void
 npf_rule_destroy(nl_rule_t *rl)
@@ -959,30 +887,6 @@ npf_nat_getmap(nl_nat_t *nt, npf_addr_t *addr, size_t *alen, in_port_t *port)
 	prop_dictionary_get_uint16(rldict, "translation-port", port);
 }
 
-#if 1
-int
-_npf_nat_foreach(nl_config_t *ncf, nl_rule_callback_t func)
-{
-	return _npf_rule_foreach1(ncf->ncf_nat_list, func);
-}
-
-void
-_npf_nat_getinfo(nl_nat_t *nt, int *type, u_int *flags, npf_addr_t *addr,
-    size_t *alen, in_port_t *port)
-{
-	prop_dictionary_t rldict = nt->nrl_dict;
-
-	prop_dictionary_get_int32(rldict, "type", type);
-	prop_dictionary_get_uint32(rldict, "flags", flags);
-
-	prop_object_t obj = prop_dictionary_get(rldict, "translation-ip");
-	*alen = prop_data_size(obj);
-	memcpy(addr, prop_data_data_nocopy(obj), *alen);
-
-	prop_dictionary_get_uint16(rldict, "translation-port", port);
-}
-#endif
-
 /*
  * TABLE INTERFACE.
  */
@@ -1132,26 +1036,6 @@ npf_table_destroy(nl_table_t *tl)
 	prop_object_release(tl->ntl_dict);
 	free(tl);
 }
-
-#if 1
-void
-_npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
-{
-	prop_dictionary_t tldict;
-	prop_object_iterator_t it;
-
-	it = prop_array_iterator(ncf->ncf_table_list);
-	while ((tldict = prop_object_iterator_next(it)) != NULL) {
-		u_int id;
-		int type;
-
-		prop_dictionary_get_uint32(tldict, "id", &id);
-		prop_dictionary_get_int32(tldict, "type", &type);
-		(*func)(id, type);
-	}
-	prop_object_iterator_release(it);
-}
-#endif
 
 /*
  * ALG INTERFACE.
