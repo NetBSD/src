@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.24 2013/05/19 20:45:34 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.25 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -720,10 +720,7 @@ icmp_type_and_code
 		$$ = npfctl_parse_icmp($<num>0, $2,
 		    npfctl_icmpcode($<num>0, $2, s));
 	}
-	|
-	{
-		$$ = npfctl_parse_icmp($<num>0, -1, -1);
-	}
+	|		{ $$ = NULL; }
 	;
 
 tcp_flags_and_mask

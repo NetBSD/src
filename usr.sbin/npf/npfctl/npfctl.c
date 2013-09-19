@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.37 2013/05/19 20:45:34 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.38 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.37 2013/05/19 20:45:34 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.38 2013/09/19 01:04:45 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -88,22 +88,23 @@ static const struct operations_s {
 	{	NULL,			0			}
 };
 
-static bool
-join(char *buf, size_t buflen, int count, char **args)
+bool
+join(char *buf, size_t buflen, int count, char **args, const char *sep)
 {
+	const u_int seplen = strlen(sep);
 	char *s = buf, *p = NULL;
 
 	for (int i = 0; i < count; i++) {
 		size_t len;
 
 		p = stpncpy(s, args[i], buflen);
-		len = p - s + 1;
+		len = p - s + seplen;
 		if (len >= buflen) {
 			return false;
 		}
 		buflen -= len;
-		*p = ' ';
-		s = p + 1;
+		strcpy(p, sep);
+		s = p + seplen;
 	}
 	*p = '\0';
 	return true;
@@ -233,7 +234,7 @@ npfctl_print_error(const nl_error_t *ne)
 }
 
 char *
-npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
+npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 {
 	struct sockaddr_storage ss;
 	char *buf = ecalloc(1, 64);
@@ -261,7 +262,7 @@ npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 		assert(false);
 	}
 	len = sockaddr_snprintf(buf, 64, "%a", (struct sockaddr *)&ss);
-	if (mask) {
+	if (mask && mask != NPF_NO_NETMASK) {
 		snprintf(&buf[len], 64 - len, "/%u", mask);
 	}
 	return buf;
@@ -384,7 +385,7 @@ npfctl_parse_rule(int argc, char **argv)
 	nl_rule_t *rl;
 
 	/* Get the rule string and parse it. */
-	if (!join(rule_string, sizeof(rule_string), argc, argv)) {
+	if (!join(rule_string, sizeof(rule_string), argc, argv, " ")) {
 		errx(EXIT_FAILURE, "command too long");
 	}
 	npfctl_parse_string(rule_string);
