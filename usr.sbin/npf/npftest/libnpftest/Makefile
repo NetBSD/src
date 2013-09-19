@@ -13,6 +13,7 @@ SRCS+=		npf_mbuf_subr.c
 
 SRCS+=		npf_nbuf_test.c
 SRCS+=		npf_processor_test.c
+SRCS+=		npf_bpf_test.c
 SRCS+=		npf_table_test.c
 SRCS+=		npf_state_test.c
 SRCS+=		npf_rule_test.c
