@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.30 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.31 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -141,83 +141,32 @@ int		npf_extmod_param(npf_extmod_t *, nl_ext_t *,
  * BFF byte-code generation interface.
  */
 
-#define	NPFCTL_USE_BPF	1
-
 typedef struct npf_bpf npf_bpf_t;
 
 #define	MATCH_DST	0x01
 #define	MATCH_SRC	0x02
 
 enum {
-	BM_IPVER,
-	BM_PROTO,
-	BM_SRC_CIDR,
-	BM_SRC_TABLE,
-	BM_DST_CIDR,
-	BM_DST_TABLE,
-	BM_SRC_PORTS,
-	BM_DST_PORTS,
-	BM_TCPFL,
-	BM_ICMP_TYPE,
+	BM_IPVER, BM_PROTO, BM_SRC_CIDR, BM_SRC_TABLE, BM_DST_CIDR,
+	BM_DST_TABLE, BM_SRC_PORTS, BM_DST_PORTS, BM_TCPFL, BM_ICMP_TYPE,
 	BM_ICMP_CODE,
 };
 
-npf_bpf_t *npfctl_bpf_create(void);
+npf_bpf_t *	npfctl_bpf_create(void);
 struct bpf_program *npfctl_bpf_complete(npf_bpf_t *);
-const void *npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
-void	npfctl_bpf_destroy(npf_bpf_t *);
+const void *	npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
+void		npfctl_bpf_destroy(npf_bpf_t *);
 
-void	npfctl_bpf_group(npf_bpf_t *);
-void	npfctl_bpf_endgroup(npf_bpf_t *);
+void		npfctl_bpf_group(npf_bpf_t *);
+void		npfctl_bpf_endgroup(npf_bpf_t *);
 
-void	npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
-void	npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
-	    const npf_addr_t *, const npf_netmask_t);
-void	npfctl_bpf_ports(npf_bpf_t *, u_int, in_port_t, in_port_t);
-void	npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t);
-void	npfctl_bpf_icmp(npf_bpf_t *, int, int);
-void	npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
-
-/*
- * N-code generation interface.
- */
-
-typedef struct nc_ctx nc_ctx_t;
-
-#define	NC_MATCH_DST		0x01
-#define	NC_MATCH_SRC		0x02
-
-#define	NC_MATCH_TCP		0x04
-#define	NC_MATCH_UDP		0x08
-#define	NC_MATCH_ICMP		0x10
-#define	NC_MATCH_ICMP6		0x20
-
-nc_ctx_t *	npfctl_ncgen_create(void);
-void *		npfctl_ncgen_complete(nc_ctx_t *, size_t *);
-void		npfctl_ncgen_print(const void *, size_t);
-
-void		npfctl_ncgen_group(nc_ctx_t *);
-void		npfctl_ncgen_endgroup(nc_ctx_t *);
-
-void		npfctl_gennc_v4cidr(nc_ctx_t *, int, const npf_addr_t *,
-		    const npf_netmask_t);
-void		npfctl_gennc_v6cidr(nc_ctx_t *, int, const npf_addr_t *,
-		    const npf_netmask_t);
-void		npfctl_gennc_ports(nc_ctx_t *, int, in_port_t, in_port_t);
-void		npfctl_gennc_icmp(nc_ctx_t *, int, int);
-void		npfctl_gennc_icmp6(nc_ctx_t *, int, int);
-void		npfctl_gennc_tbl(nc_ctx_t *, int, u_int);
-void		npfctl_gennc_tcpfl(nc_ctx_t *, uint8_t, uint8_t);
-void		npfctl_gennc_proto(nc_ctx_t *ctx, uint8_t, uint8_t);
-
-/*
- * N-code disassembler.
- */
-
-typedef struct nc_inf nc_inf_t;
-
-nc_inf_t *	npfctl_ncode_disinf(FILE *);
-int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
+void		npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
+void		npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
+		    const npf_addr_t *, const npf_netmask_t);
+void		npfctl_bpf_ports(npf_bpf_t *, u_int, in_port_t, in_port_t);
+void		npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t);
+void		npfctl_bpf_icmp(npf_bpf_t *, int, int);
+void		npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
 
 /*
  * Configuration building interface.

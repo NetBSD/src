@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.28 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.29 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.28 2013/09/19 01:04:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.29 2013/09/19 01:49:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.28 2013/09/19 01:04:46 rmind Exp $");
 
 #include <prop/proplib.h>
 
-#include "npf_ncode.h"
 #include "npf_impl.h"
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
@@ -250,37 +249,21 @@ npf_mk_code(prop_object_t obj, int type, void **code, size_t *csize,
     prop_dictionary_t errdict)
 {
 	const void *cptr;
-	int cerr, errat;
 	size_t clen;
 	void *bc;
 
+	if (type != NPF_CODE_BPF) {
+		return ENOTSUP;
+	}
 	cptr = prop_data_data_nocopy(obj);
 	if (cptr == NULL || (clen = prop_data_size(obj)) == 0) {
 		NPF_ERR_DEBUG(errdict);
 		return EINVAL;
 	}
-
-	switch (type) {
-	case NPF_CODE_NC:
-		if (clen > NPF_NCODE_LIMIT) {
-			NPF_ERR_DEBUG(errdict);
-			return ERANGE;
-		}
-		if ((cerr = npf_ncode_validate(cptr, clen, &errat)) != 0) {
-			prop_dictionary_set_int32(errdict, "code-error", cerr);
-			prop_dictionary_set_int32(errdict, "code-errat", errat);
-			return EINVAL;
-		}
-		break;
-	case NPF_CODE_BPF:
-		if (!npf_bpf_validate(cptr, clen)) {
-			return EINVAL;
-		}
-		break;
-	default:
-		return ENOTSUP;
+	if (!npf_bpf_validate(cptr, clen)) {
+		NPF_ERR_DEBUG(errdict);
+		return EINVAL;
 	}
-
 	bc = kmem_alloc(clen, KM_SLEEP);
 	memcpy(bc, cptr, clen);
 
