@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.31 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.32 2013/09/19 12:05:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <util.h>
 
 #define	NPF_BPFCOP
-#include <net/npf_ncode.h>
 #include <net/npf.h>
 
 #define	_NPF_PRIVATE
