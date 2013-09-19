@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.58 2013/09/18 23:34:55 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.59 2013/09/19 00:48:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.58 2013/09/18 23:34:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.59 2013/09/19 00:48:48 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -729,6 +729,19 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		case BPF_RET:
 			break;
 		case BPF_MISC:
+#if defined(KERNEL) || defined(_KERNEL)
+			switch (BPF_MISCOP(p->code)) {
+			case BPF_COP:
+			case BPF_COPX:
+				/* In-kernel COP use only. */
+				if (bc->copfuncs) {
+					invalid = 0;
+				}
+				break;
+			default:
+				break;
+			}
+#endif
 			break;
 		default:
 			goto out;
