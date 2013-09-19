@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.67 2013/09/19 18:50:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.67 2013/09/19 18:50:59 christos Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.66 2010/11/19 06:44:42 dholland Ex
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
 
-MODULE(MODULE_CLASS_MISC, exec_script, NULL);
+MODULE(MODULE_CLASS_EXEC, exec_script, NULL);
 
 static struct execsw exec_script_execsw[] = {
 	{ SCRIPT_HDR_SIZE,

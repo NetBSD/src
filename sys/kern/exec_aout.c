@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.36 2013/09/19 18:50:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.36 2013/09/19 18:50:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $")
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_aout, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_aout, DEP);
 
 static struct execsw exec_aout_execsw[] = {
 	{ sizeof(struct exec),

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $	*/
+/*	$NetBSD: osf1_mod.c,v 1.3 2013/09/19 18:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.3 2013/09/19 18:50:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $");
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 
-MODULE(MODULE_CLASS_MISC, compat_osf1, "compat,exec_ecoff");
+MODULE(MODULE_CLASS_EXEC, compat_osf1, "compat,exec_ecoff");
 
 static struct execsw osf1_execsw[] = {
 	{ ECOFF_HDR_SIZE,
