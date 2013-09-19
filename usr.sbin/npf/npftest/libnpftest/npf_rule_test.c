@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.7 2013/02/18 23:09:20 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.8 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -101,9 +101,9 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 }
 
 static int
-npf_test_first(bool verbose)
+npf_test_case(u_int i, bool verbose)
 {
-	const struct test_case *t = &test_cases[0];
+	const struct test_case *t = &test_cases[i];
 	ifnet_t *ifp = ifunit(t->ifname);
 	int error;
 
@@ -159,7 +159,11 @@ npf_rule_test(bool verbose)
 		fail |= (serror != t->stateful_ret || error != t->ret);
 	}
 
-	error = npf_test_first(verbose);
+	/*
+	 * Test dynamic NPF rules.
+	 */
+
+	error = npf_test_case(0, verbose);
 	assert(error == RESULT_PASS);
 
 	npf_config_enter();
@@ -169,7 +173,7 @@ npf_rule_test(bool verbose)
 	error = npf_ruleset_add(rlset, "test-rules", rl);
 	fail |= error != 0;
 
-	error = npf_test_first(verbose);
+	error = npf_test_case(0, verbose);
 	fail |= (error != RESULT_BLOCK);
 
 	id = npf_rule_getid(rl);
@@ -178,7 +182,7 @@ npf_rule_test(bool verbose)
 
 	npf_config_exit();
 
-	error = npf_test_first(verbose);
+	error = npf_test_case(0, verbose);
 	fail |= (error != RESULT_PASS);
 
 	return !fail;

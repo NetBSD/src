@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.31 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.32 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
 #include <sys/rbtree.h>
 #include <sys/ptree.h>
 #include <sys/rwlock.h>
+
+#include <net/bpf.h>
+#include <net/bpfjit.h>
 #include <net/if.h>
 
 #include "npf.h"
@@ -192,6 +195,13 @@ int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
 bool		npf_fetch_tcpopts(npf_cache_t *, nbuf_t *, uint16_t *, int *);
 bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
+
+/* BPF interface. */
+void		npf_bpf_sysinit(void);
+void		npf_bpf_sysfini(void);
+int		npf_bpf_filter(npf_cache_t *, nbuf_t *,
+		    const void *, bpfjit_function_t);
+bool		npf_bpf_validate(const void *, size_t);
 
 /* Complex instructions. */
 int		npf_match_ether(nbuf_t *, int, uint16_t, uint32_t *);

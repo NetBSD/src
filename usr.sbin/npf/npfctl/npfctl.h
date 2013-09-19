@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.29 2013/03/20 00:29:47 christos Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.30 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <assert.h>
 #include <util.h>
 
+#define	NPF_BPFCOP
 #include <net/npf_ncode.h>
 #include <net/npf.h>
 
@@ -103,12 +104,13 @@ typedef struct proc_param {
 
 enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
 
+bool		join(char *, size_t, int, char **, const char *);
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void		npfctl_parse_file(const char *);
 void		npfctl_parse_string(const char *);
 
 void		npfctl_print_error(const nl_error_t *);
-char *		npfctl_print_addrmask(int, npf_addr_t *, npf_netmask_t);
+char *		npfctl_print_addrmask(int, const npf_addr_t *, npf_netmask_t);
 bool		npfctl_table_exists_p(const char *);
 int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
@@ -134,6 +136,47 @@ typedef struct npf_extmod npf_extmod_t;
 npf_extmod_t *	npf_extmod_get(const char *, nl_ext_t **);
 int		npf_extmod_param(npf_extmod_t *, nl_ext_t *,
 		    const char *, const char *);
+
+/*
+ * BFF byte-code generation interface.
+ */
+
+#define	NPFCTL_USE_BPF	1
+
+typedef struct npf_bpf npf_bpf_t;
+
+#define	MATCH_DST	0x01
+#define	MATCH_SRC	0x02
+
+enum {
+	BM_IPVER,
+	BM_PROTO,
+	BM_SRC_CIDR,
+	BM_SRC_TABLE,
+	BM_DST_CIDR,
+	BM_DST_TABLE,
+	BM_SRC_PORTS,
+	BM_DST_PORTS,
+	BM_TCPFL,
+	BM_ICMP_TYPE,
+	BM_ICMP_CODE,
+};
+
+npf_bpf_t *npfctl_bpf_create(void);
+struct bpf_program *npfctl_bpf_complete(npf_bpf_t *);
+const void *npfctl_bpf_bmarks(npf_bpf_t *, size_t *);
+void	npfctl_bpf_destroy(npf_bpf_t *);
+
+void	npfctl_bpf_group(npf_bpf_t *);
+void	npfctl_bpf_endgroup(npf_bpf_t *);
+
+void	npfctl_bpf_proto(npf_bpf_t *, sa_family_t, int);
+void	npfctl_bpf_cidr(npf_bpf_t *, u_int, sa_family_t,
+	    const npf_addr_t *, const npf_netmask_t);
+void	npfctl_bpf_ports(npf_bpf_t *, u_int, in_port_t, in_port_t);
+void	npfctl_bpf_tcpfl(npf_bpf_t *, uint8_t, uint8_t);
+void	npfctl_bpf_icmp(npf_bpf_t *, int, int);
+void	npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
 
 /*
  * N-code generation interface.
