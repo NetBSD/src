@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.37 2013/09/19 00:18:52 uwe Exp $	*/
+/*	$NetBSD: strfile.c,v 1.38 2013/09/19 00:34:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,12 +47,10 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.37 2013/09/19 00:18:52 uwe Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.38 2013/09/19 00:34:00 uwe Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
-
-/* n.b.: this file is used at build-time - i.e. during build.sh. */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,14 +68,6 @@ __RCSID("$NetBSD: strfile.c,v 1.37 2013/09/19 00:18:52 uwe Exp $");
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	1024
 #endif	/* MAXPATHLEN */
-
-#if defined(__NetBSD__) || defined(__dead)
-#define NORETURN	__dead
-#elif defined __GNUC__
-#define NORETURN	__attribute__((__noreturn__))
-#else
-#define NORETURN
-#endif
 
 /*
  *	This program takes a file composed of strings separated by
@@ -141,7 +131,7 @@ static STR *Firstch;			/* first chars of each string */
 
 static uint32_t h2nl(uint32_t h);
 static void getargs(int argc, char **argv);
-static void usage(void) NORETURN;
+static void usage(void) __dead;
 static void add_offset(FILE *fp, off_t off);
 static void do_order(void);
 static int cmp_str(const void *vp1, const void *vp2);
