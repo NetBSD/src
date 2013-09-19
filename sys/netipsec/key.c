@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.82 2013/06/24 04:21:20 riastradh Exp $	*/
+/*	$NetBSD: key.c,v 1.83 2013/09/19 19:29:35 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.82 2013/06/24 04:21:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.83 2013/09/19 19:29:35 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -329,9 +329,9 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 #else
 #define KMALLOC(p, t, n) \
 do { \
-	((p) = (t)malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
+	((p) = malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
 	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
-		__FILE__, __LINE__, (p), #t, n);                             \
+	    __FILE__, __LINE__, (p), #t, n);                             	\
 } while (0)
 
 #define KFREE(p)                                                             \
@@ -597,7 +597,7 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 		("key_allocsp: invalid direction %u", dir));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
@@ -628,8 +628,8 @@ found:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -654,7 +654,7 @@ key_allocsp2(u_int32_t spi,
 		("key_allocsp2: invalid direction %u", dir));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp2 from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
@@ -692,8 +692,8 @@ found:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp2 return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -715,7 +715,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	struct secpolicyindex spidx;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_gettunnel from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	if (isrc->sa_family != idst->sa_family) {
 		ipseclog((LOG_ERR, "protocol family mismatched %d != %d\n.",
@@ -769,8 +769,8 @@ found:
 	splx(s);
 done:
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_gettunnel return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -1050,9 +1050,8 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 	if (candidate) {
 		SA_ADDREF(candidate);
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP allocsa_policy cause "
-				"refcnt++:%d SA:%p\n",
-				candidate->refcnt, candidate));
+			printf("DP %s cause refcnt++:%d SA:%p\n", __func__,
+			    candidate->refcnt, candidate));
 	}
 	return candidate;
 }
@@ -1102,7 +1101,7 @@ key_allocsa(
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsa from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/*
 	 * XXX IPCOMP case
@@ -1178,8 +1177,8 @@ done:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsa return SA:%p; refcnt %u\n",
-			sav, sav ? sav->refcnt : 0));
+		printf("DP %s return SA:%p; refcnt %u\n", __func__,
+		    sav, sav ? sav->refcnt : 0));
 	return sav;
 }
 
@@ -1197,8 +1196,8 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 	SP_DELREF(sp);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_freesp SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
-			sp, sp->id, where, tag, sp->refcnt));
+		printf("DP %s SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
+		    __func__, sp, sp->id, where, tag, sp->refcnt));
 
 	if (sp->refcnt == 0) {
 		*spp = NULL;
@@ -1289,9 +1288,9 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 	SA_DELREF(sav);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_freesav SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
-			sav, (u_long)ntohl(sav->spi),
-		       where, tag, sav->refcnt));
+		printf("DP %s SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
+		    __func__, sav, (u_long)ntohl(sav->spi), where, tag,
+		    sav->refcnt));
 
 	if (sav->refcnt == 0) {
 		*psav = NULL;
@@ -1406,8 +1405,8 @@ key_newsp(const char* where, int tag)
 	}
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_newsp from %s:%u return SP:%p\n",
-			where, tag, newsp));
+		printf("DP %s from %s:%u return SP:%p\n", __func__,
+		    where, tag, newsp));
 	return newsp;
 }
 
@@ -2621,8 +2620,6 @@ key_nat_map(struct socket *so, struct mbuf *m,
 	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
 	frag = (struct sadb_x_nat_t_frag *) mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
-	printf("sadb_nat_map called\n");
-
 	/*
 	 * XXX handle that, it should also contain a SA, or anything
 	 * that enable to update the SA information.
@@ -3001,8 +2998,8 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 			secasvar, chain);
 done:
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_newsav from %s:%u return SP:%p\n",
-			where, tag, newsav));
+		printf("DP %s from %s:%u return SP:%p\n", __func__,
+		    where, tag, newsav));
 
 	return newsav;
 }
@@ -3779,7 +3776,7 @@ key_portfromsaddr(const union sockaddr_union *saddr)
 	}
 #endif
 	default:
-		printf("key_portfromsaddr: unexpected address family\n");
+		printf("%s: unexpected address family\n", __func__);
 		port = 0;
 		break;
 	}
@@ -3806,8 +3803,8 @@ key_porttosaddr(union sockaddr_union *saddr, u_int16_t port)
 	}
 #endif
 	default:
-		printf("key_porttosaddr: unexpected address family %d\n",
-			saddr->sa.sa_family);
+		printf("%s: unexpected address family %d\n", __func__,
+		    saddr->sa.sa_family);
 		break;
 	}
 
@@ -3832,7 +3829,7 @@ key_checksalen(const union sockaddr_union *saddr)
                 break;
 #endif
         default:
-                printf("key_checksalen: unexpected sa_family %d\n",
+                printf("%s: unexpected sa_family %d\n", __func__,
                     saddr->sa.sa_family);
                 return -1;
                 break;
@@ -5384,9 +5381,8 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 		if (sav->seq == seq) {
 			SA_ADDREF(sav);
 			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-				printf("DP key_getsavbyseq cause "
-					"refcnt++:%d SA:%p\n",
-					sav->refcnt, sav));
+				printf("DP %s cause refcnt++:%d SA:%p\n",
+				    __func__, sav->refcnt, sav));
 			return sav;
 		}
 	}
