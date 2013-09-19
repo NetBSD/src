@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.16 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.17 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.16 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.17 2013/09/19 01:04:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,6 +88,7 @@ npf_init(void)
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf_sysctl = NULL;
 
+	npf_bpf_sysinit();
 	npf_worker_sysinit();
 	npf_tableset_sysinit();
 	npf_session_sysinit();
@@ -112,7 +113,6 @@ npf_init(void)
 static int
 npf_fini(void)
 {
-
 	/* At first, detach device and remove pfil hooks. */
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
@@ -129,6 +129,7 @@ npf_fini(void)
 	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
+	npf_bpf_sysfini();
 
 	/* Note: worker is the last. */
 	npf_worker_sysfini();
