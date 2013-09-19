@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.19 2012/11/26 20:34:28 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.19 2012/11/26 20:34:28 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -567,23 +567,11 @@ npfvar_t *
 npfctl_parse_icmp(int proto, int type, int code)
 {
 	npfvar_t *vp = npfvar_create(".icmp");
-	int varnum;
 
-	switch (proto) {
-	case IPPROTO_ICMP:
-		varnum = NPFVAR_ICMP;
-		break;
-	case IPPROTO_ICMPV6:
-		varnum = NPFVAR_ICMP6;
-		break;
-	default:
-		assert(false);
-	}
-
-	if (!npfvar_add_element(vp, varnum, &type, sizeof(type)))
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
 		goto out;
 
-	if (!npfvar_add_element(vp, varnum, &code, sizeof(code)))
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &code, sizeof(code)))
 		goto out;
 
 	return vp;
