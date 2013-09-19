@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1836 2013/09/10 16:51:24 pooka Exp $
+#	$NetBSD: mi,v 1.1837 2013/09/19 01:49:07 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1980,7 +1980,7 @@
 ./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
 ./usr/include/net/npf.h				comp-c-include
-./usr/include/net/npf_ncode.h			comp-c-include
+./usr/include/net/npf_ncode.h			comp-obsolete		obsolete
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
 ./usr/include/net/pfvar.h			comp-c-include

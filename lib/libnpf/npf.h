@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.17 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.18 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -142,16 +142,6 @@ const char *	npf_rproc_getname(nl_rproc_t *);
 void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);
 int		_npf_ruleset_list(int, const char *, nl_config_t *);
-#if 1
-int		_npf_rule_foreach(nl_config_t *, nl_rule_callback_t);
-pri_t		_npf_rule_getinfo(nl_rule_t *, const char **, uint32_t *,
-		    u_int *);
-const void *	_npf_rule_ncode(nl_rule_t *, size_t *);
-int		_npf_nat_foreach(nl_config_t *, nl_rule_callback_t);
-void		_npf_nat_getinfo(nl_nat_t *, int *, u_int *, npf_addr_t *,
-		    size_t *, in_port_t *);
-void		_npf_table_foreach(nl_config_t *, nl_table_callback_t);
-#endif
 void		_npf_debug_addif(nl_config_t *, struct ifaddrs *, u_int);
 
 /* The ALG interface is experimental */

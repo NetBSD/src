@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.14 2013/09/19 01:04:46 rmind Exp $
+# $NetBSD: files.npf,v 1.15 2013/09/19 01:49:07 rmind Exp $
 #
 # Public Domain.
 #
@@ -14,9 +14,7 @@ file	net/npf/npf.c				npf
 file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf
-file	net/npf/npf_instr.c			npf
 file	net/npf/npf_mbuf.c			npf
-file	net/npf/npf_processor.c			npf
 file	net/npf/npf_bpf.c			npf
 file	net/npf/npf_ruleset.c			npf
 file	net/npf/npf_rproc.c			npf
