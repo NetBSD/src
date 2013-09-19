@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdev,v 1.6 2013/03/15 12:09:58 pooka Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.7 2013/09/19 17:55:22 pooka Exp $
 #
 
 LIB=	rumpdev
@@ -6,7 +6,7 @@ LIB=	rumpdev
 .PATH:	${RUMPTOP}/librump/rumpdev				\
 	${RUMPTOP}/../kern
 
-SRCS=	rump_dev.c autoconf.c rumpdma.c
+SRCS=	rump_dev.c autoconf.c
 
 # sys/kern
 SRCS+=	kern_pmf.c subr_autoconf.c
