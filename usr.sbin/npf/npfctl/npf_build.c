@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.25 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.26 2013/09/19 12:05:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.25 2013/09/19 01:04:45 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.26 2013/09/19 12:05:11 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -463,7 +463,7 @@ npfctl_build_group_end(void)
 }
 
 /*
- * npfctl_build_rule: create a rule, build n-code from filter options,
+ * npfctl_build_rule: create a rule, build byte-code from filter options,
  * if any, and insert into the ruleset of current group, or set the rule.
  */
 void
