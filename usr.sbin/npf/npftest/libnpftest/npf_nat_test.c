@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.2 2012/12/24 19:05:47 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.3 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -154,6 +154,9 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 		printf(" dst %s (%d)\n",
 		    inet_ntoa(ip->ip_dst), ntohs(uh->uh_dport));
 	}
+	if (error != t->ret) {
+		return false;
+	}
 
 	const bool forw = t->di == PFIL_OUT;
 	const char *saddr = forw ? t->taddr : t->src;
@@ -166,8 +169,7 @@ checkresult(bool verbose, unsigned i, struct mbuf *m, ifnet_t *ifp, int error)
 	defect |= sport != ntohs(uh->uh_sport);
 	defect |= nmatch_addr(daddr, &ip->ip_dst);
 	defect |= dport != ntohs(uh->uh_dport);
-
-	return !defect && error == t->ret;
+	return !defect;
 }
 
 static struct mbuf *

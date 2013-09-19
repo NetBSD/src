@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.6 2012/11/26 20:34:28 rmind Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.7 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -48,8 +48,7 @@
 #define	NPFVAR_PROC_PARAM	8
 #define	NPFVAR_TCPFLAG		9
 #define	NPFVAR_ICMP		10
-#define	NPFVAR_ICMP6		11
-#define	NPFVAR_INTERFACE	12
+#define	NPFVAR_INTERFACE	11
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
@@ -64,7 +63,6 @@ static const char *npfvar_types[ ] = {
 	[NPFVAR_PROC_PARAM]	= "procedure-parameter",
 	[NPFVAR_TCPFLAG]	= "tcp-flag",
 	[NPFVAR_ICMP]		= "icmp",
-	[NPFVAR_ICMP6]		= "icmp6",
 	[NPFVAR_INTERFACE]	= "interface"
 };
 #endif

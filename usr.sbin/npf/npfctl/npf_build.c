@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.24 2013/05/19 20:45:34 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.25 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.24 2013/05/19 20:45:34 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.25 2013/09/19 01:04:45 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: npf_build.c,v 1.24 2013/05/19 20:45:34 rmind Exp $");
 #include <string.h>
 #include <errno.h>
 #include <err.h>
+
+#include <pcap/pcap.h>
 
 #include "npfctl.h"
 
@@ -87,7 +89,9 @@ npfctl_config_send(int fd, const char *out)
 		_npf_config_error(npf_conf, &ne);
 		npfctl_print_error(&ne);
 	}
-	npf_config_destroy(npf_conf);
+	if (fd) {
+		npf_config_destroy(npf_conf);
+	}
 	return error;
 }
 
@@ -154,7 +158,7 @@ npfctl_get_singlefam(const npfvar_t *vp)
 }
 
 static bool
-npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
+npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
     fam_addr_mask_t *fam, int opts)
 {
 	/*
@@ -169,6 +173,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 		}
 		return false;
 	}
+	family = fam->fam_family;
 
 	/*
 	 * Optimise 0.0.0.0/0 case to be NOP.  Otherwise, address with
@@ -184,28 +189,20 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 		return false;
 	}
 
-	switch (fam->fam_family) {
-	case AF_INET:
-		npfctl_gennc_v4cidr(nc, opts,
-		    &fam->fam_addr, fam->fam_mask);
-		break;
-	case AF_INET6:
-		npfctl_gennc_v6cidr(nc, opts,
-		    &fam->fam_addr, fam->fam_mask);
-		break;
-	default:
-		yyerror("family %d is not supported", fam->fam_family);
+	if (family != AF_INET && family != AF_INET6) {
+		yyerror("family %d is not supported", family);
 	}
+	npfctl_bpf_cidr(ctx, opts, family, &fam->fam_addr, fam->fam_mask);
 	return true;
 }
 
 static void
-npfctl_build_vars(nc_ctx_t *nc, sa_family_t family, npfvar_t *vars, int opts)
+npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 {
 	const int type = npfvar_get_type(vars, 0);
 	size_t i;
 
-	npfctl_ncgen_group(nc);
+	npfctl_bpf_group(ctx);
 	for (i = 0; i < npfvar_get_count(vars); i++) {
 		void *data = npfvar_get_data(vars, type, i);
 		assert(data != NULL);
@@ -213,189 +210,140 @@ npfctl_build_vars(nc_ctx_t *nc, sa_family_t family, npfvar_t *vars, int opts)
 		switch (type) {
 		case NPFVAR_FAM: {
 			fam_addr_mask_t *fam = data;
-			npfctl_build_fam(nc, family, fam, opts);
+			npfctl_build_fam(ctx, family, fam, opts);
 			break;
 		}
 		case NPFVAR_PORT_RANGE: {
 			port_range_t *pr = data;
-			if (opts & NC_MATCH_TCP) {
-				npfctl_gennc_ports(nc, opts & ~NC_MATCH_UDP,
-				    pr->pr_start, pr->pr_end);
-			}
-			if (opts & NC_MATCH_UDP) {
-				npfctl_gennc_ports(nc, opts & ~NC_MATCH_TCP,
-				    pr->pr_start, pr->pr_end);
-			}
+			npfctl_bpf_ports(ctx, opts, pr->pr_start, pr->pr_end);
 			break;
 		}
 		case NPFVAR_TABLE: {
 			u_int tid = atoi(data);
-			npfctl_gennc_tbl(nc, opts, tid);
+			npfctl_bpf_table(ctx, opts, tid);
 			break;
 		}
 		default:
 			assert(false);
 		}
 	}
-	npfctl_ncgen_endgroup(nc);
+	npfctl_bpf_endgroup(ctx);
 }
 
-static int
-npfctl_build_proto(nc_ctx_t *nc, sa_family_t family,
-    const opt_proto_t *op, bool noaddrs, bool noports)
+static void
+npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
 {
 	const npfvar_t *popts = op->op_opts;
 	const int proto = op->op_proto;
-	int pflag = 0;
+
+	/* IP version and/or L4 protocol matching. */
+	if (family != AF_UNSPEC || proto != -1) {
+		npfctl_bpf_proto(ctx, family, proto);
+	}
 
 	switch (proto) {
 	case IPPROTO_TCP:
-		pflag = NC_MATCH_TCP;
-		if (!popts) {
-			break;
+		/* Build TCP flags matching (optional). */
+		if (popts) {
+			uint8_t *tf, *tf_mask;
+
+			assert(npfvar_get_count(popts) == 2);
+			tf = npfvar_get_data(popts, NPFVAR_TCPFLAG, 0);
+			tf_mask = npfvar_get_data(popts, NPFVAR_TCPFLAG, 1);
+			npfctl_bpf_tcpfl(ctx, *tf, *tf_mask);
 		}
-		assert(npfvar_get_count(popts) == 2);
-
-		/* Build TCP flags block (optional). */
-		uint8_t *tf, *tf_mask;
-
-		tf = npfvar_get_data(popts, NPFVAR_TCPFLAG, 0);
-		tf_mask = npfvar_get_data(popts, NPFVAR_TCPFLAG, 1);
-		npfctl_gennc_tcpfl(nc, *tf, *tf_mask);
-		noports = false;
-		break;
-	case IPPROTO_UDP:
-		pflag = NC_MATCH_UDP;
 		break;
 	case IPPROTO_ICMP:
-		/*
-		 * Build ICMP block.
-		 */
-		if (!noports) {
-			goto invop;
-		}
-		assert(npfvar_get_count(popts) == 2);
-
-		int *icmp_type, *icmp_code;
-		icmp_type = npfvar_get_data(popts, NPFVAR_ICMP, 0);
-		icmp_code = npfvar_get_data(popts, NPFVAR_ICMP, 1);
-		npfctl_gennc_icmp(nc, *icmp_type, *icmp_code);
-		noports = false;
-		break;
 	case IPPROTO_ICMPV6:
-		/*
-		 * Build ICMP block.
-		 */
-		if (!noports) {
-			goto invop;
-		}
-		assert(npfvar_get_count(popts) == 2);
+		/* Build ICMP/ICMPv6 type and/or code matching. */
+		if (popts) {
+			int *icmp_type, *icmp_code;
 
-		int *icmp6_type, *icmp6_code;
-		icmp6_type = npfvar_get_data(popts, NPFVAR_ICMP6, 0);
-		icmp6_code = npfvar_get_data(popts, NPFVAR_ICMP6, 1);
-		npfctl_gennc_icmp6(nc, *icmp6_type, *icmp6_code);
-		noports = false;
-		break;
-	case -1:
-		pflag = NC_MATCH_TCP | NC_MATCH_UDP;
-		noports = false;
+			assert(npfvar_get_count(popts) == 2);
+			icmp_type = npfvar_get_data(popts, NPFVAR_ICMP, 0);
+			icmp_code = npfvar_get_data(popts, NPFVAR_ICMP, 1);
+			npfctl_bpf_icmp(ctx, *icmp_type, *icmp_code);
+		}
 		break;
 	default:
-		/*
-		 * No filter options are supported for other protocols,
-		 * only the IP addresses are allowed.
-		 */
-		if (noports) {
-			break;
-		}
-invop:
-		yyerror("invalid filter options for protocol %d", proto);
+		/* No options for other protocols. */
+		break;
 	}
-
-	/*
-	 * Build the protocol block, unless other blocks will implicitly
-	 * perform the family/protocol checks for us.
-	 */
-	if ((family != AF_UNSPEC && noaddrs) || (proto != -1 && noports)) {
-		uint8_t addrlen;
-
-		switch (family) {
-		case AF_INET:
-			addrlen = sizeof(struct in_addr);
-			break;
-		case AF_INET6:
-			addrlen = sizeof(struct in6_addr);
-			break;
-		default:
-			addrlen = 0;
-		}
-		npfctl_gennc_proto(nc,
-		    noaddrs ? addrlen : 0,
-		    noports ? proto : 0xff);
-	}
-	return pflag;
 }
 
 static bool
-npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
+npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
     const filt_opts_t *fopts, bool invert)
 {
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
 	const int proto = op->op_proto;
-	bool noaddrs, noports;
-	nc_ctx_t *nc;
-	void *code;
+	bool noproto, noaddrs, noports;
+	npf_bpf_t *bc;
 	size_t len;
 
-	/*
-	 * If none specified, no n-code.
-	 */
+	/* If none specified, then no byte-code. */
+	noproto = family == AF_UNSPEC && proto == -1 && !op->op_opts;
 	noaddrs = !apfrom->ap_netaddr && !apto->ap_netaddr;
 	noports = !apfrom->ap_portrange && !apto->ap_portrange;
-	if (family == AF_UNSPEC && proto == -1 && !op->op_opts &&
-	    noaddrs && noports)
+	if (noproto && noaddrs && noports) {
 		return false;
-
-	int srcflag = NC_MATCH_SRC;
-	int dstflag = NC_MATCH_DST;
-
-	if (invert) {
-		srcflag = NC_MATCH_DST;
-		dstflag = NC_MATCH_SRC;
 	}
 
-	nc = npfctl_ncgen_create();
+	/*
+	 * Sanity check: ports can only be used with TCP or UDP protocol.
+	 * No filter options are supported for other protocols, only the
+	 * IP addresses are allowed.
+	 */
+	if (!noports) {
+		switch (proto) {
+		case IPPROTO_TCP:
+		case IPPROTO_UDP:
+		case -1:
+			break;
+		default:
+			yyerror("invalid filter options for protocol %d", proto);
+		}
+	}
+
+	const int srcflag = invert ? MATCH_DST : MATCH_SRC;
+	const int dstflag = invert ? MATCH_SRC : MATCH_DST;
+
+	bc = npfctl_bpf_create();
 
 	/* Build layer 4 protocol blocks. */
-	int pflag = npfctl_build_proto(nc, family, op, noaddrs, noports);
+	npfctl_build_proto(bc, family, op);
 
 	/* Build IP address blocks. */
-	npfctl_build_vars(nc, family, apfrom->ap_netaddr, srcflag);
-	npfctl_build_vars(nc, family, apto->ap_netaddr, dstflag);
+	npfctl_build_vars(bc, family, apfrom->ap_netaddr, srcflag);
+	npfctl_build_vars(bc, family, apto->ap_netaddr, dstflag);
 
 	/* Build port-range blocks. */
-	npfctl_build_vars(nc, family, apfrom->ap_portrange, srcflag | pflag);
-	npfctl_build_vars(nc, family, apto->ap_portrange, dstflag | pflag);
+	npfctl_build_vars(bc, family, apfrom->ap_portrange, srcflag);
+	npfctl_build_vars(bc, family, apto->ap_portrange, dstflag);
 
-	/*
-	 * Complete n-code (destroys the context) and pass to the rule.
-	 */
-	code = npfctl_ncgen_complete(nc, &len);
+	/* Set the byte-code marks, if any. */
+	const void *bmarks = npfctl_bpf_bmarks(bc, &len);
+	if (npf_rule_setinfo(rl, bmarks, len) == -1) {
+		errx(EXIT_FAILURE, "npf_rule_setinfo failed");
+	}
+
+	/* Complete BPF byte-code and pass to the rule. */
+	struct bpf_program *bf = npfctl_bpf_complete(bc);
 	if (npf_debug) {
 		extern char *yytext;
 		extern int yylineno;
 
-		printf("RULE AT LINE %d\n", yylineno - (int)(*yytext == '\n'));
-		npfctl_ncgen_print(code, len);
+		printf("\nRULE AT LINE %d\n", yylineno - (int)(*yytext == '\n'));
+		bpf_dump(bf, 0);
 	}
-	assert(code && len > 0);
+	len = bf->bf_len * sizeof(struct bpf_insn);
 
-	if (npf_rule_setcode(rl, NPF_CODE_NC, code, len) == -1) {
+	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf->bf_insns, len) == -1) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
-	free(code);
+	npfctl_bpf_destroy(bc);
+
 	return true;
 }
 
@@ -527,7 +475,7 @@ npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 
 	rl = npf_rule_create(NULL, attr, if_idx);
-	npfctl_build_ncode(rl, family, op, fopts, false);
+	npfctl_build_code(rl, family, op, fopts, false);
 	if (rproc) {
 		npf_rule_setproc(rl, rproc);
 	}
@@ -599,7 +547,7 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
 		assert(false);
 	}
 
-	npfctl_build_ncode(nat, family, &op, fopts, false);
+	npfctl_build_code(nat, family, &op, fopts, false);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
 }
 
@@ -714,7 +662,7 @@ npfctl_build_table(const char *tid, u_int type, const char *fname)
 }
 
 /*
- * npfctl_build_alg: create an NPF application level gatewayl and add it
+ * npfctl_build_alg: create an NPF application level gateway and add it
  * to the configuration.
  */
 void

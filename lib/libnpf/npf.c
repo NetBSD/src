@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.19 2013/03/20 00:29:46 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.20 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.19 2013/03/20 00:29:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.20 2013/09/19 01:04:46 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -46,23 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.19 2013/03/20 00:29:46 christos Exp $");
 
 #define	_NPF_PRIVATE
 #include "npf.h"
-
-struct nl_config {
-	/* Rules, translations, tables, procedures. */
-	prop_dictionary_t	ncf_dict;
-	prop_array_t		ncf_alg_list;
-	prop_array_t		ncf_rules_list;
-	prop_array_t		ncf_rproc_list;
-	prop_array_t		ncf_table_list;
-	prop_array_t		ncf_nat_list;
-	/* Debug information. */
-	prop_dictionary_t	ncf_debug;
-	/* Error report. */
-	prop_dictionary_t	ncf_err;
-	/* Custom file to externalise property-list. */
-	const char *		ncf_plist;
-	bool			ncf_flush;
-};
 
 struct nl_rule {
 	prop_dictionary_t	nrl_dict;
@@ -83,6 +66,37 @@ struct nl_alg {
 struct nl_ext {
 	const char *		nxt_name;
 	prop_dictionary_t	nxt_dict;
+};
+
+struct nl_config {
+	/* Rules, translations, tables, procedures. */
+	prop_dictionary_t	ncf_dict;
+	prop_array_t		ncf_alg_list;
+	prop_array_t		ncf_rules_list;
+	prop_array_t		ncf_rproc_list;
+	prop_array_t		ncf_table_list;
+	prop_array_t		ncf_nat_list;
+
+	/* Iterators. */
+	prop_object_iterator_t	ncf_rule_iter;
+	unsigned		ncf_reduce[16];
+	unsigned		ncf_nlevel;
+	unsigned		ncf_counter;
+	nl_rule_t		ncf_cur_rule;
+
+	prop_object_iterator_t	ncf_table_iter;
+	nl_table_t		ncf_cur_table;
+
+	prop_object_iterator_t	ncf_rproc_iter;
+	nl_rproc_t		ncf_cur_rproc;
+
+	/* Error report and debug information. */
+	prop_dictionary_t	ncf_err;
+	prop_dictionary_t	ncf_debug;
+
+	/* Custom file to externalise property-list. */
+	const char *		ncf_plist;
+	bool			ncf_flush;
 };
 
 static prop_array_t	_npf_ruleset_transform(prop_array_t);
@@ -131,9 +145,10 @@ npf_config_submit(nl_config_t *ncf, int fd)
 		prop_object_release(npf_dict);
 		return ENOMEM;
 	}
-	prop_dictionary_set(npf_dict, "rules", rlset);
-	prop_object_release(rlset);
+	prop_object_release(ncf->ncf_rules_list);
+	ncf->ncf_rules_list = rlset;
 
+	prop_dictionary_set(npf_dict, "rules", ncf->ncf_rules_list);
 	prop_dictionary_set(npf_dict, "algs", ncf->ncf_alg_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
@@ -150,16 +165,16 @@ npf_config_submit(nl_config_t *ncf, int fd)
 		prop_object_release(npf_dict);
 		return error;
 	}
-
-	error = prop_dictionary_sendrecv_ioctl(npf_dict, fd,
-	    IOC_NPF_RELOAD, &ncf->ncf_err);
-	if (error) {
-		prop_object_release(npf_dict);
-		assert(ncf->ncf_err == NULL);
-		return error;
+	if (fd) {
+		error = prop_dictionary_sendrecv_ioctl(npf_dict, fd,
+		    IOC_NPF_RELOAD, &ncf->ncf_err);
+		if (error) {
+			prop_object_release(npf_dict);
+			assert(ncf->ncf_err == NULL);
+			return error;
+		}
+		prop_dictionary_get_int32(ncf->ncf_err, "errno", &error);
 	}
-
-	prop_dictionary_get_int32(ncf->ncf_err, "errno", &error);
 	prop_object_release(npf_dict);
 	return error;
 }
@@ -226,7 +241,6 @@ _npf_config_error(nl_config_t *ncf, nl_error_t *ne)
 void
 npf_config_destroy(nl_config_t *ncf)
 {
-
 	if (!ncf->ncf_dict) {
 		prop_object_release(ncf->ncf_alg_list);
 		prop_object_release(ncf->ncf_rules_list);
@@ -246,7 +260,6 @@ npf_config_destroy(nl_config_t *ncf)
 void
 _npf_config_setsubmit(nl_config_t *ncf, const char *plist_file)
 {
-
 	ncf->ncf_plist = plist_file;
 }
 
@@ -487,6 +500,20 @@ npf_rule_setkey(nl_rule_t *rl, const void *key, size_t len)
 }
 
 int
+npf_rule_setinfo(nl_rule_t *rl, const void *info, size_t len)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	prop_data_t idata;
+
+	if ((idata = prop_data_create_data(info, len)) == NULL) {
+		return ENOMEM;
+	}
+	prop_dictionary_set(rldict, "info", idata);
+	prop_object_release(idata);
+	return 0;
+}
+
+int
 npf_rule_setprio(nl_rule_t *rl, pri_t pri)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;
@@ -544,6 +571,97 @@ npf_rule_insert(nl_config_t *ncf, nl_rule_t *parent, nl_rule_t *rl)
 	return 0;
 }
 
+static nl_rule_t *
+_npf_rule_iterate1(nl_config_t *ncf, prop_array_t rlist, unsigned *level)
+{
+	prop_dictionary_t rldict;
+	uint32_t skipto = 0;
+
+	if (!ncf->ncf_rule_iter) {
+		/* Initialise the iterator. */
+		ncf->ncf_rule_iter = prop_array_iterator(rlist);
+		ncf->ncf_nlevel = 0;
+		ncf->ncf_reduce[0] = 0;
+		ncf->ncf_counter = 0;
+	}
+
+	rldict = prop_object_iterator_next(ncf->ncf_rule_iter);
+	if ((ncf->ncf_cur_rule.nrl_dict = rldict) == NULL) {
+		prop_object_iterator_release(ncf->ncf_rule_iter);
+		ncf->ncf_rule_iter = NULL;
+		return NULL;
+	}
+	*level = ncf->ncf_nlevel;
+
+	prop_dictionary_get_uint32(rldict, "skip-to", &skipto);
+	if (skipto) {
+		ncf->ncf_nlevel++;
+		ncf->ncf_reduce[ncf->ncf_nlevel] = skipto;
+	}
+	if (ncf->ncf_reduce[ncf->ncf_nlevel] == ++ncf->ncf_counter) {
+		assert(ncf->ncf_nlevel > 0);
+		ncf->ncf_nlevel--;
+	}
+	return &ncf->ncf_cur_rule;
+}
+
+nl_rule_t *
+npf_rule_iterate(nl_config_t *ncf, unsigned *level)
+{
+	return _npf_rule_iterate1(ncf, ncf->ncf_rules_list, level);
+}
+
+const char *
+npf_rule_getname(nl_rule_t *rl)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	const char *rname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "name", &rname);
+	return rname;
+}
+
+uint32_t
+npf_rule_getattr(nl_rule_t *rl)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	uint32_t attr = 0;
+
+	prop_dictionary_get_uint32(rldict, "attributes", &attr);
+	return attr;
+}
+
+unsigned
+npf_rule_getinterface(nl_rule_t *rl)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	unsigned if_idx = 0;
+
+	prop_dictionary_get_uint32(rldict, "interface", &if_idx);
+	return if_idx;
+}
+
+const void *
+npf_rule_getinfo(nl_rule_t *rl, size_t *len)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	prop_object_t obj = prop_dictionary_get(rldict, "info");
+
+	*len = prop_data_size(obj);
+	return prop_data_data_nocopy(obj);
+}
+
+const char *
+npf_rule_getproc(nl_rule_t *rl)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	const char *rpname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rpname);
+	return rpname;
+}
+
+#if 1
 static int
 _npf_rule_foreach1(prop_array_t rules, nl_rule_callback_t func)
 {
@@ -588,6 +706,7 @@ _npf_rule_foreach(nl_config_t *ncf, nl_rule_callback_t func)
 {
 	return _npf_rule_foreach1(ncf->ncf_rules_list, func);
 }
+#endif
 
 int
 _npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
@@ -615,6 +734,7 @@ _npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
 	return error;
 }
 
+#if 1
 pri_t
 _npf_rule_getinfo(nl_rule_t *nrl, const char **rname, uint32_t *attr,
     u_int *if_idx)
@@ -637,16 +757,7 @@ _npf_rule_ncode(nl_rule_t *nrl, size_t *size)
 	*size = prop_data_size(obj);
 	return prop_data_data_nocopy(obj);
 }
-
-const char *
-_npf_rule_rproc(nl_rule_t *nrl)
-{
-	prop_dictionary_t rldict = nrl->nrl_dict;
-	const char *rpname = NULL;
-
-	prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rpname);
-	return rpname;
-}
+#endif
 
 void
 npf_rule_destroy(nl_rule_t *rl)
@@ -710,7 +821,6 @@ npf_rproc_extcall(nl_rproc_t *rp, nl_ext_t *ext)
 bool
 npf_rproc_exists_p(nl_config_t *ncf, const char *name)
 {
-
 	return _npf_prop_array_lookup(ncf->ncf_rproc_list, "name", name);
 }
 
@@ -728,6 +838,34 @@ npf_rproc_insert(nl_config_t *ncf, nl_rproc_t *rp)
 	}
 	prop_array_add(ncf->ncf_rproc_list, rpdict);
 	return 0;
+}
+
+nl_rproc_t *
+npf_rproc_iterate(nl_config_t *ncf)
+{
+	prop_dictionary_t rpdict;
+
+	if (!ncf->ncf_rproc_iter) {
+		/* Initialise the iterator. */
+		ncf->ncf_rproc_iter = prop_array_iterator(ncf->ncf_rproc_list);
+	}
+	rpdict = prop_object_iterator_next(ncf->ncf_rproc_iter);
+	if ((ncf->ncf_cur_rproc.nrp_dict = rpdict) == NULL) {
+		prop_object_iterator_release(ncf->ncf_rproc_iter);
+		ncf->ncf_rproc_iter = NULL;
+		return NULL;
+	}
+	return &ncf->ncf_cur_rproc;
+}
+
+const char *
+npf_rproc_getname(nl_rproc_t *rp)
+{
+	prop_dictionary_t rpdict = rp->nrp_dict;
+	const char *rpname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(rpdict, "name", &rpname);
+	return rpname;
 }
 
 /*
@@ -791,6 +929,37 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri __unused)
 	return 0;
 }
 
+nl_nat_t *
+npf_nat_iterate(nl_config_t *ncf)
+{
+	u_int level;
+	return _npf_rule_iterate1(ncf, ncf->ncf_nat_list, &level);
+}
+
+int
+npf_nat_gettype(nl_nat_t *nt)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+	int type = 0;
+
+	prop_dictionary_get_int32(rldict, "type", &type);
+	return type;
+}
+
+void
+npf_nat_getmap(nl_nat_t *nt, npf_addr_t *addr, size_t *alen, in_port_t *port)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+	prop_object_t obj = prop_dictionary_get(rldict, "translation-ip");
+
+	*alen = prop_data_size(obj);
+	memcpy(addr, prop_data_data_nocopy(obj), *alen);
+
+	*port = 0;
+	prop_dictionary_get_uint16(rldict, "translation-port", port);
+}
+
+#if 1
 int
 _npf_nat_foreach(nl_config_t *ncf, nl_rule_callback_t func)
 {
@@ -812,6 +981,7 @@ _npf_nat_getinfo(nl_nat_t *nt, int *type, u_int *flags, npf_addr_t *addr,
 
 	prop_dictionary_get_uint16(rldict, "translation-port", port);
 }
+#endif
 
 /*
  * TABLE INTERFACE.
@@ -891,10 +1061,10 @@ npf_table_exists_p(nl_config_t *ncf, u_int tid)
 {
 	prop_dictionary_t tldict;
 	prop_object_iterator_t it;
+	u_int i;
 
 	it = prop_array_iterator(ncf->ncf_table_list);
 	while ((tldict = prop_object_iterator_next(it)) != NULL) {
-		u_int i;
 		if (prop_dictionary_get_uint32(tldict, "id", &i) && tid == i)
 			break;
 	}
@@ -918,14 +1088,52 @@ npf_table_insert(nl_config_t *ncf, nl_table_t *tl)
 	return 0;
 }
 
+nl_table_t *
+npf_table_iterate(nl_config_t *ncf)
+{
+	prop_dictionary_t tldict;
+
+	if (!ncf->ncf_table_iter) {
+		/* Initialise the iterator. */
+		ncf->ncf_table_iter = prop_array_iterator(ncf->ncf_table_list);
+	}
+	tldict = prop_object_iterator_next(ncf->ncf_table_iter);
+	if ((ncf->ncf_cur_table.ntl_dict = tldict) == NULL) {
+		prop_object_iterator_release(ncf->ncf_table_iter);
+		ncf->ncf_table_iter = NULL;
+		return NULL;
+	}
+	return &ncf->ncf_cur_table;
+}
+
+unsigned
+npf_table_getid(nl_table_t *tl)
+{
+	prop_dictionary_t tldict = tl->ntl_dict;
+	u_int id = 0;
+
+	prop_dictionary_get_uint32(tldict, "id", &id);
+	return id;
+}
+
+int
+npf_table_gettype(nl_table_t *tl)
+{
+	prop_dictionary_t tldict = tl->ntl_dict;
+	int type = 0;
+
+	prop_dictionary_get_int32(tldict, "type", &type);
+	return type;
+}
+
 void
 npf_table_destroy(nl_table_t *tl)
 {
-
 	prop_object_release(tl->ntl_dict);
 	free(tl);
 }
 
+#if 1
 void
 _npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
 {
@@ -943,6 +1151,7 @@ _npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
 	}
 	prop_object_iterator_release(it);
 }
+#endif
 
 /*
  * ALG INTERFACE.
@@ -966,7 +1175,6 @@ _npf_alg_load(nl_config_t *ncf, const char *name)
 int
 _npf_alg_unload(nl_config_t *ncf, const char *name)
 {
-
 	if (!_npf_prop_array_lookup(ncf->ncf_alg_list, "name", name))
 		return ENOENT;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.8 2012/09/14 15:37:03 joerg Exp $	*/
+/*	$NetBSD: npftest.c,v 1.9 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -218,6 +218,12 @@ main(int argc, char **argv)
 		if (!testname || strcmp("nbuf", testname) == 0) {
 			ok = rumpns_npf_nbuf_test(verbose);
 			fail |= result("nbuf", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("bpf", testname) == 0) {
+			ok = rumpns_npf_bpf_test(verbose);
+			fail |= result("bpf", ok);
 			tname_matched = true;
 		}
 

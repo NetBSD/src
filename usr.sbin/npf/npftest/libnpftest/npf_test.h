@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.6 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.7 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -40,6 +40,7 @@ void		mbuf_icmp_append(struct mbuf *, struct mbuf *);
 
 bool		npf_nbuf_test(bool);
 bool		npf_processor_test(bool);
+bool		npf_bpf_test(bool);
 bool		npf_table_test(bool);
 bool		npf_state_test(bool);
 

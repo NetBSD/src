@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.27 2013/09/19 00:50:56 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.28 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.27 2013/09/19 00:50:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.28 2013/09/19 01:04:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -273,7 +273,7 @@ npf_mk_code(prop_object_t obj, int type, void **code, size_t *csize,
 		}
 		break;
 	case NPF_CODE_BPF:
-		if (!bpf_validate(cptr, clen / sizeof(struct bpf_insn))) {
+		if (!npf_bpf_validate(cptr, clen)) {
 			return EINVAL;
 		}
 		break;

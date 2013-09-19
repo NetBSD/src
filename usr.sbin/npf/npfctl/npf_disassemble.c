@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.17 2013/02/16 21:11:14 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.18 2013/09/19 01:04:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.17 2013/02/16 21:11:14 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.18 2013/09/19 01:04:45 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -640,7 +640,7 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 		printf("all ");
 	}
 
-	if ((rproc = _npf_rule_rproc(nrl)) != NULL) {
+	if ((rproc = npf_rule_getproc(nrl)) != NULL) {
 		printf("apply \"%s\"", rproc);
 	}
 	puts("");

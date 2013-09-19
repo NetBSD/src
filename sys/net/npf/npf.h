@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.30 2013/03/11 17:20:02 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.31 2013/09/19 01:04:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		9
+#define	NPF_VERSION		10
 
 /*
  * Public declarations and definitions.
@@ -57,6 +57,16 @@ typedef uint8_t			npf_netmask_t;
 
 #define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
+
+/* BPF coprocessor. */
+#if defined(NPF_BPFCOP)
+#define	NPF_COP_L3		0
+#define	NPF_COP_TABLE		1
+
+#define	BPF_MW_IPVER		0
+#define	BPF_MW_L4OFF		1
+#define	BPF_MW_L4PROTO		2
+#endif
 
 #if defined(_KERNEL)
 
