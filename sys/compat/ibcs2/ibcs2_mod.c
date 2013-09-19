@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $	*/
+/*	$NetBSD: ibcs2_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.2 2013/09/19 18:50:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $");
 # define	MD1	""
 #endif
 
-MODULE(MODULE_CLASS_MISC, compat_ibcs2, "compat" MD1);
+MODULE(MODULE_CLASS_EXEC, compat_ibcs2, "compat" MD1);
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
