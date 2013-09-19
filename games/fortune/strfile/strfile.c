@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.36 2013/09/18 23:18:14 uwe Exp $	*/
+/*	$NetBSD: strfile.c,v 1.37 2013/09/19 00:18:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.36 2013/09/18 23:18:14 uwe Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.37 2013/09/19 00:18:52 uwe Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -102,9 +102,6 @@ __RCSID("$NetBSD: strfile.c,v 1.36 2013/09/18 23:18:14 uwe Exp $");
  *	Added ordering options.
  */
 
-# define	TRUE	1
-# define	FALSE	0
-
 # define	STORING_PTRS	(Oflag || Rflag)
 # define	CHUNKSIZE	512
 
@@ -126,11 +123,11 @@ static char *Infile = NULL;		/* input file name */
 static char Outfile[MAXPATHLEN] = "";	/* output file name */
 static char Delimch = '%';		/* delimiting character */
 
-static int Sflag	= FALSE;	/* silent run flag */
-static int Oflag	= FALSE;	/* ordering flag */
-static int Iflag	= FALSE;	/* ignore case flag */
-static int Rflag	= FALSE;	/* randomize order flag */
-static int Xflag	= FALSE;	/* set rotated bit */
+static int Sflag	= 0;		/* silent run flag */
+static int Oflag	= 0;		/* ordering flag */
+static int Iflag	= 0;		/* ignore case flag */
+static int Rflag	= 0;		/* randomize order flag */
+static int Xflag	= 0;		/* set rotated bit */
 static long Num_pts	= 0;		/* number of pointers/strings */
 
 static off_t *Seekpts;
@@ -223,7 +220,7 @@ main(int ac, char **av)
 			else
 				fp->first = *nsp;
 			fp->pos = Seekpts[Num_pts - 1];
-			first = FALSE;
+			first = 0;
 		}
 	} while (sp != NULL);
 
@@ -397,8 +394,8 @@ cmp_str(const void *vp1, const void *vp2)
 	(void) fseek(Sort_1, p1->pos, SEEK_SET);
 	(void) fseek(Sort_2, p2->pos, SEEK_SET);
 
-	n1 = FALSE;
-	n2 = FALSE;
+	n1 = 0;
+	n2 = 0;
 	while (!isalnum(c1 = getc(Sort_1)) && c1 != '\0')
 		SET_N(n1, c1);
 	while (!isalnum(c2 = getc(Sort_2)) && c2 != '\0')
