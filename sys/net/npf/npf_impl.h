@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.32 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.33 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@
 #include <net/if.h>
 
 #include "npf.h"
-#include "npf_ncode.h"
 
 #ifdef _NPF_DEBUG
 #define	NPF_PRINTF(x)	printf x
@@ -101,7 +100,6 @@ typedef bool (*npf_alg_func_t)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
 typedef void (*npf_workfunc_t)(void);
 
-#define	NPF_NCODE_LIMIT		1024
 #define	NPF_TABLE_SLOTS		32
 
 /*
@@ -202,18 +200,6 @@ void		npf_bpf_sysfini(void);
 int		npf_bpf_filter(npf_cache_t *, nbuf_t *,
 		    const void *, bpfjit_function_t);
 bool		npf_bpf_validate(const void *, size_t);
-
-/* Complex instructions. */
-int		npf_match_ether(nbuf_t *, int, uint16_t, uint32_t *);
-int		npf_match_proto(const npf_cache_t *, uint32_t);
-int		npf_match_table(const npf_cache_t *, int, u_int);
-int		npf_match_ipmask(const npf_cache_t *, int,
-		    const npf_addr_t *, npf_netmask_t);
-int		npf_match_tcp_ports(const npf_cache_t *, int, uint32_t);
-int		npf_match_udp_ports(const npf_cache_t *, int, uint32_t);
-int		npf_match_icmp4(const npf_cache_t *, uint32_t);
-int		npf_match_icmp6(const npf_cache_t *, uint32_t);
-int		npf_match_tcpfl(const npf_cache_t *, uint32_t);
 
 /* Tableset interface. */
 void		npf_tableset_sysinit(void);
@@ -352,7 +338,6 @@ npf_session_t *	npf_alg_session(npf_cache_t *, nbuf_t *, int);
 
 /* Debugging routines. */
 void		npf_addr_dump(const npf_addr_t *);
-void		npf_rulenc_dump(const npf_rule_t *);
 void		npf_sessions_dump(void);
 void		npf_state_dump(const npf_state_t *);
 void		npf_nat_dump(const npf_nat_t *);
