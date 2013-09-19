@@ -18,7 +18,6 @@ int		rumpns_npf_test_handlepkt(const void *, size_t,
 		    unsigned, bool, int64_t *);
 
 bool		rumpns_npf_nbuf_test(bool);
-bool		rumpns_npf_processor_test(bool);
 bool		rumpns_npf_bpf_test(bool);
 bool		rumpns_npf_table_test(bool);
 bool		rumpns_npf_state_test(bool);
