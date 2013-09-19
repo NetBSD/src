@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfile.8,v 1.14 2012/08/04 22:29:59 jdf Exp $
+.\"	$NetBSD: strfile.8,v 1.15 2013/09/19 00:53:55 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ Any initial non-alphanumeric characters are ignored.
 This option causes the
 .Dv STR_ORDERED
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .It Fl r
 Randomize access to the strings.
@@ -82,7 +82,7 @@ Entries in the offset table will be randomly ordered.
 This option causes the
 .Dv STR_RANDOM
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .It Fl s
 Run silently; don't give a summary message when finished.
@@ -92,7 +92,7 @@ Note that each alphabetic character in the groups of lines is rotated
 This option causes the
 .Dv STR_ROTATED
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .El
 .Pp
