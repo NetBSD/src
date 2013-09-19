@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.8 2013/09/10 17:08:57 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.9 2013/09/19 16:16:03 pooka Exp $
 #
 
 #
@@ -35,8 +35,7 @@ precho src/usr.sbin/		mtree
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
 if [ "${1}" = '-c' ]; then
-	echo \!src/sys/arch \!src/sys/dev/microcode	\
-	    \!src/sys/dev/pci src/sys
+	echo \!src/sys/arch src/sys
 
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for x in amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc; do
