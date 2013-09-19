@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.8 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.9 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -89,9 +89,6 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 	rl = npf_ruleset_inspect(&npc, &nbuf, npf_config_ruleset(),
 	    di, NPF_LAYER_3);
 	if (rl) {
-		if (verbose) {
-			npf_rulenc_dump(rl);
-		}
 		error = npf_rule_conclude(rl, &retfl);
 	} else {
 		error = ENOENT;

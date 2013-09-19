@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2010/08/22 18:56:22 rmind Exp $
+# $NetBSD: Makefile,v 1.2 2013/09/19 01:49:07 rmind Exp $
 #
 # Public Domain.
 #
 
 INCSDIR=	/usr/include/net
-INCS=		npf.h npf_ncode.h
+INCS=		npf.h
 
 .include <bsd.kinc.mk>

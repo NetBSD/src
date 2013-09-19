@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.9 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.10 2013/09/19 01:49:07 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -52,7 +52,7 @@ __dead static void
 describe_tests(void)
 {
 	printf(	"nbuf\tbasic npf mbuf handling\n"
-		"processor\tncode processing\n"
+		"bpf\tBPF coprocessor\n"
 		"table\ttable handling\n"
 		"state\tstate handling and processing\n"
 		"rule\trule processing\n"
@@ -224,12 +224,6 @@ main(int argc, char **argv)
 		if (!testname || strcmp("bpf", testname) == 0) {
 			ok = rumpns_npf_bpf_test(verbose);
 			fail |= result("bpf", ok);
-			tname_matched = true;
-		}
-
-		if (!testname || strcmp("processor", testname) == 0) {
-			ok = rumpns_npf_processor_test(verbose);
-			fail |= result("processor", ok);
 			tname_matched = true;
 		}
 
