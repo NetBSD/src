@@ -153,8 +153,13 @@ VCHIQ_STATUS_T vchiq_shutdown(VCHIQ_INSTANCE_T instance)
 					"bulk_waiter - cleaned up %x "
 					"for pid %d",
 					(unsigned int)waiter, waiter->pid);
+			_sema_destroy(&waiter->bulk_waiter.event);
+
 			kfree(waiter);
 		}
+
+		lmutex_destroy(&instance->bulk_waiter_list_mutex);
+
 		kfree(instance);
 	}
 
@@ -436,6 +441,8 @@ vchiq_blocking_bulk_transfer(VCHIQ_SERVICE_HANDLE_T handle, void *data,
 			bulk->userdata = NULL;
 			spin_unlock(&bulk_waiter_spinlock);
 		}
+		_sema_destroy(&waiter->bulk_waiter.event);
+
 		kfree(waiter);
 	} else {
 		waiter->pid = current->l_proc->p_pid;
