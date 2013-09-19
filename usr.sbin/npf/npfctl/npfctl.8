@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.13 2013/02/16 21:11:15 rmind Exp $
+.\"	$NetBSD: npfctl.8,v 1.14 2013/09/19 12:05:11 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2013
+.Dd September 19, 2013
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -154,7 +154,7 @@ Administrator may want to start packet inspection after the session loading.
 .It Ic stats
 Print various statistics.
 .It Ic debug
-Process the configuration file, print the n-code of each rule
+Process the configuration file, print the byte-code of each rule
 and dump the raw configuration.
 This is primarily for developer use.
 .El
@@ -189,8 +189,8 @@ Addition and removal of entries in the table whose ID is 2:
 .Ed
 .\" -----
 .Sh SEE ALSO
-.Xr npf.conf 5 ,
-.Xr npf_ncode 9
+.Xr bpf 4 ,
+.Xr npf.conf 5
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .
