@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.22 2009/08/17 06:00:05 cegger Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.23 2013/09/19 18:50:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.22 2009/08/17 06:00:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.23 2013/09/19 18:50:35 christos Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.22 2009/08/17 06:00:05 cegger Exp 
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_m68k4k, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_m68k4k, DEP);
 
 static struct execsw exec_m68k4k_execsw[] = {
 	{ sizeof(struct exec),
