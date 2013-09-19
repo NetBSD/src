@@ -375,8 +375,6 @@ int fatal_signal_pending(VCHIQ_THREAD_T);
 
 #define __user
 
-#define likely(x)		__builtin_expect(!!(x), 1)
-#define unlikely(x)		__builtin_expect(!!(x), 0)
 #define	current			curlwp
 #define EXPORT_SYMBOL(x) 
 #define PAGE_ALIGN(addr)	round_page(addr)
