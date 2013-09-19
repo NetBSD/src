@@ -35,7 +35,7 @@
 #define VCHIQ_CORE_H
 
 #include <interface/compat/vchi_bsd.h>
-#include <interface/compat/list.h>
+#include <linux/list.h>
 
 #include "vchiq_cfg.h"
 
