@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.6 2013/07/29 20:39:28 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.7 2013/09/20 10:56:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1702,7 +1702,6 @@ dhcp_rebind(void *arg)
 	send_rebind(ifp);
 }
 
-
 void
 dhcp_bind(void *arg)
 {
@@ -1724,10 +1723,10 @@ dhcp_bind(void *arg)
 	state->offer = NULL;
 	get_lease(lease, state->new);
 	if (ifo->options & DHCPCD_STATIC) {
-		syslog(LOG_INFO, "%s: using static address %s",
-		    iface->name, inet_ntoa(lease->addr));
+		syslog(LOG_INFO, "%s: using static address %s/%d",
+		    iface->name, inet_ntoa(lease->addr),
+		    inet_ntocidr(lease->net));
 		lease->leasetime = ~0U;
-		lease->net.s_addr = ifo->req_mask.s_addr;
 		state->reason = "STATIC";
 	} else if (state->new->cookie != htonl(MAGIC_COOKIE)) {
 		syslog(LOG_INFO, "%s: using IPv4LL address %s",
@@ -1834,7 +1833,7 @@ dhcp_timeout(void *arg)
 }
 
 struct dhcp_message *
-dhcp_message_new(struct in_addr *addr, struct in_addr *mask)
+dhcp_message_new(const struct in_addr *addr, const struct in_addr *mask)
 {
 	struct dhcp_message *dhcp;
 	uint8_t *p;
@@ -1854,60 +1853,65 @@ dhcp_message_new(struct in_addr *addr, struct in_addr *mask)
 	return dhcp;
 }
 
-static int
-handle_3rdparty(struct interface *ifp)
-{
-	struct if_options *ifo;
-	struct dhcp_state *state;
-	struct in_addr addr, net, dst;
-
-	ifo = ifp->options;
-	if (ifo->req_addr.s_addr != INADDR_ANY)
-		return 0;
-
-	if (ipv4_getaddress(ifp->name, &addr, &net, &dst) == 1)
-		ipv4_handleifa(RTM_NEWADDR, ifp->name, &addr, &net, &dst);
-	else {
-		syslog(LOG_INFO,
-		    "%s: waiting for 3rd party to configure IP address",
-		    ifp->name);
-		state = D_STATE(ifp);
-		state->reason = "3RDPARTY";
-		script_runreason(ifp, state->reason);
-	}
-	return 1;
-}
-
 static void
 dhcp_static(struct interface *ifp)
 {
 	struct if_options *ifo;
 	struct dhcp_state *state;
 
-	if (handle_3rdparty(ifp))
-		return;
-	ifo = ifp->options;
 	state = D_STATE(ifp);
+	ifo = ifp->options;
+	if (ifo->req_addr.s_addr == INADDR_ANY) {
+		syslog(LOG_INFO,
+		    "%s: waiting for 3rd party to "
+		    "configure IP address",
+		    ifp->name);
+		state->reason = "3RDPARTY";
+		script_runreason(ifp, state->reason);
+		return;
+	}
 	state->offer = dhcp_message_new(&ifo->req_addr, &ifo->req_mask);
-	eloop_timeout_delete(NULL, ifp);
-	dhcp_bind(ifp);
+	if (state->offer) {
+		eloop_timeout_delete(NULL, ifp);
+		dhcp_bind(ifp);
+	}
 }
 
 void
 dhcp_inform(struct interface *ifp)
 {
 	struct dhcp_state *state;
-
-	if (handle_3rdparty(ifp))
-		return;
+	struct if_options *ifo;
+	struct ipv4_addr *ap;
 
 	state = D_STATE(ifp);
+	ifo = ifp->options;
 	if (options & DHCPCD_TEST) {
-		state->addr.s_addr = ifp->options->req_addr.s_addr;
-		state->net.s_addr = ifp->options->req_mask.s_addr;
+		state->addr.s_addr = ifo->req_addr.s_addr;
+		state->net.s_addr = ifo->req_mask.s_addr;
 	} else {
-		ifp->options->options |= DHCPCD_STATIC;
-		dhcp_static(ifp);
+		if (ifo->req_addr.s_addr == INADDR_ANY) {
+			state = D_STATE(ifp);
+			ap = ipv4_findaddr(ifp, NULL, NULL);
+			if (ap == NULL) {
+				syslog(LOG_INFO,
+					"%s: waiting for 3rd party to "
+					"configure IP address",
+					ifp->name);
+				state->reason = "3RDPARTY";
+				script_runreason(ifp, state->reason);
+				return;
+			}
+			state->offer =
+			    dhcp_message_new(&ap->addr, &ap->net);
+		} else
+			state->offer =
+			    dhcp_message_new(&ifo->req_addr, &ifo->req_mask);
+		if (state->offer) {
+			ifo->options |= DHCPCD_STATIC;
+			dhcp_bind(ifp);
+			ifo->options &= ~DHCPCD_STATIC;
+		}
 	}
 
 	state->state = DHS_INFORM;
@@ -2220,6 +2224,8 @@ dhcp_handle(struct interface *iface, struct dhcp_message **dhcpp,
 
 		if (!(ifo->options & DHCPCD_INFORM))
 			log_dhcp(LOG_DEBUG, "acknowledged", iface, dhcp, from);
+		else
+		    ifo->options &= ~DHCPCD_STATIC;
 	}
 
 	/* BOOTP could have already assigned this above, so check we still
@@ -2244,7 +2250,7 @@ dhcp_handle(struct interface *iface, struct dhcp_message **dhcpp,
 		/* If the interface already has the address configured
 		 * then we can't ARP for duplicate detection. */
 		addr.s_addr = state->offer->yiaddr;
-		if (ipv4_hasaddress(iface->name, &addr, NULL) != 1) {
+		if (!ipv4_findaddr(iface, &addr, NULL)) {
 			state->claims = 0;
 			state->probes = 0;
 			state->conflicts = 0;
@@ -2686,4 +2692,71 @@ dhcp_start(struct interface *ifp)
 		ipv4ll_start(ifp);
 	else
 		dhcp_reboot(ifp);
+}
+
+void
+dhcp_handleifa(int type, struct interface *ifp,
+	const struct in_addr *addr,
+	const struct in_addr *net,
+	const struct in_addr *dst)
+{
+	struct dhcp_state *state;
+	struct if_options *ifo;
+	int i;
+
+	state = D_STATE(ifp);
+	if (state == NULL)
+		return;
+
+	if (type == RTM_DELADDR) {
+		if (state->new &&
+		    (state->new->yiaddr == addr->s_addr ||
+		    (state->new->yiaddr == INADDR_ANY &&
+		     state->new->ciaddr == addr->s_addr)))
+		{
+			syslog(LOG_INFO, "%s: removing IP address %s/%d",
+			    ifp->name, inet_ntoa(state->lease.addr),
+			    inet_ntocidr(state->lease.net));
+			dhcp_drop(ifp, "EXPIRE");
+		}
+		return;
+	}
+
+	if (type != RTM_NEWADDR)
+		return;
+
+	ifo = ifp->options;
+	if (ifo->options & DHCPCD_INFORM) {
+		if (state->state != DHS_INFORM)
+			dhcp_inform(ifp);
+		return;
+	}
+
+	if (!(ifo->options & DHCPCD_STATIC))
+		return;
+	if (ifo->req_addr.s_addr != INADDR_ANY)
+		return;
+
+	free(state->old);
+	state->old = state->new;
+	state->new = dhcp_message_new(addr, net);
+	if (state->new == NULL)
+		return;
+	state->dst.s_addr = dst ? dst->s_addr : INADDR_ANY;
+	if (dst) {
+		for (i = 1; i < 255; i++)
+			if (i != DHO_ROUTER && has_option_mask(ifo->dstmask,i))
+				dhcp_message_add_addr(state->new, i, *dst);
+	}
+	state->reason = "STATIC";
+	ipv4_buildroutes();
+	script_runreason(ifp, state->reason);
+	if (ifo->options & DHCPCD_INFORM) {
+		state->state = DHS_INFORM;
+		state->xid = dhcp_xid(ifp);
+		state->lease.server.s_addr = dst ? dst->s_addr : INADDR_ANY;
+		state->addr = *addr;
+		state->net = *net;
+		dhcp_inform(ifp);
+	}
 }
