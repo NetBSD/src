@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.23 2013/09/17 23:55:16 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.24 2013/09/20 16:49:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.23 2013/09/17 23:55:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.24 2013/09/20 16:49:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,7 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 
 	KERNEL_LOCK(1, curlwp);
 
+	rump_mainbus_init();
 	config_init_mi();
 
 	rump_component_init(RUMP_COMPONENT_DEV);
@@ -62,13 +63,7 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 	 */
 	if (rump_component_count(RUMP_COMPONENT_DEV) > 0
 	    || rump_component_count(RUMP_COMPONENT_DEV_AFTERMAINBUS) > 0) {
-		extern struct cfdriver mainbus_cd;
-		extern struct cfattach mainbus_ca;
-		extern struct cfdata cfdata[];
-
-		config_cfdata_attach(cfdata, 0);
-		config_cfdriver_attach(&mainbus_cd);
-		config_cfattach_attach("mainbus", &mainbus_ca);
+		rump_mainbus_attach();
 		if (config_rootfound("mainbus", NULL) == NULL)
 			panic("no mainbus");
 
