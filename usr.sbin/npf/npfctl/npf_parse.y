@@ -1,11 +1,11 @@
-/*	$NetBSD: npf_parse.y,v 1.25 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.26 2013/09/20 03:03:52 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann and Christos Zoulas.
+ * by Martin Husemann, Christos Zoulas and Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,6 +123,7 @@ yyerror(const char *fmt, ...)
 %token			PAR_CLOSE
 %token			PAR_OPEN
 %token			PASS
+%token			PCAP_FILTER
 %token			PORT
 %token			PROCEDURE
 %token			PROTO
@@ -158,7 +159,7 @@ yyerror(const char *fmt, ...)
 %type	<str>		proc_param_val, opt_apply
 %type	<num>		ifindex, port, opt_final, on_ifindex, number
 %type	<num>		afamily, opt_family
-%type	<num>		block_or_pass, rule_dir, block_opts
+%type	<num>		block_or_pass, rule_dir, group_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
 %type	<var>		ifnet, addr_or_ifnet, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
@@ -166,7 +167,7 @@ yyerror(const char *fmt, ...)
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
-%type	<rulegroup>	group_attr, group_opt
+%type	<rulegroup>	group_opts
 
 %union {
 	char *		str;
@@ -313,9 +314,9 @@ map
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
-	| MAP RULESET PAR_OPEN group_attr PAR_CLOSE
+	| MAP RULESET group_opts
 	{
-		npfctl_build_maprset($4.rg_name, $4.rg_attr, $4.rg_ifnum);
+		npfctl_build_maprset($3.rg_name, $3.rg_attr, $3.rg_ifnum);
 	}
 	;
 
@@ -384,11 +385,11 @@ proc_param_val
 	;
 
 group
-	: GROUP PAR_OPEN group_attr PAR_CLOSE
+	: GROUP group_opts
 	{
 		/* Build a group.  Increases the nesting level. */
-		npfctl_build_group($3.rg_name, $3.rg_attr,
-		    $3.rg_ifnum, $3.rg_default);
+		npfctl_build_group($2.rg_name, $2.rg_attr,
+		    $2.rg_ifnum, $2.rg_default);
 	}
 	  ruleset_block
 	{
@@ -398,70 +399,32 @@ group
 	;
 
 ruleset
-	: RULESET PAR_OPEN group_attr PAR_CLOSE
+	: RULESET group_opts
 	{
 		/* Ruleset is a dynamic group. */
-		npfctl_build_group($3.rg_name, $3.rg_attr | NPF_RULE_DYNAMIC,
-		    $3.rg_ifnum, $3.rg_default);
+		npfctl_build_group($2.rg_name, $2.rg_attr | NPF_RULE_DYNAMIC,
+		    $2.rg_ifnum, $2.rg_default);
 		npfctl_build_group_end();
 	}
-
-group_attr
-	: group_opt COMMA group_attr
-	{
-		$$ = $3;
-
-		if (($1.rg_name && $$.rg_name) ||
-		    ($1.rg_ifnum && $$.rg_ifnum) ||
-		    ($1.rg_attr & $$.rg_attr) != 0)
-			yyerror("duplicate group option");
-
-		if ($1.rg_name) {
-			$$.rg_name = $1.rg_name;
-		}
-		if ($1.rg_attr) {
-			$$.rg_attr |= $1.rg_attr;
-		}
-		if ($1.rg_ifnum) {
-			$$.rg_ifnum = $1.rg_ifnum;
-		}
-		if ($1.rg_default) {
-			$$.rg_default = $1.rg_default;
-		}
-	}
-	| group_opt		{ $$ = $1; }
 	;
 
-group_opt
+group_dir
+	: FORW		{ $$ = NPF_RULE_FORW; }
+	| rule_dir
+	;
+
+group_opts
 	: DEFAULT
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_default = true;
 	}
-	| NAME STRING
+	| STRING group_dir on_ifindex
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
-		$$.rg_name = $2;
-	}
-	| INTERFACE ifindex
-	{
-		memset(&$$, 0, sizeof(rule_group_t));
-		$$.rg_ifnum = $2;
-	}
-	| TDYNAMIC
-	{
-		memset(&$$, 0, sizeof(rule_group_t));
-		$$.rg_attr = NPF_RULE_DYNAMIC;
-	}
-	| FORW
-	{
-		memset(&$$, 0, sizeof(rule_group_t));
-		$$.rg_attr = NPF_RULE_FORW;
-	}
-	| rule_dir
-	{
-		memset(&$$, 0, sizeof(rule_group_t));
-		$$.rg_attr = $1;
+		$$.rg_name = $1;
+		$$.rg_attr = $2;
+		$$.rg_ifnum = $3;
 	}
 	;
 
@@ -486,7 +449,13 @@ rule
 	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
-		    $6, &$7, &$8, $9);
+		    $6, &$7, &$8, NULL, $9);
+	}
+	| block_or_pass opt_stateful rule_dir opt_final on_ifindex
+	  PCAP_FILTER STRING opt_apply
+	{
+		npfctl_build_rule($1 | $2 | $3 | $4, $5,
+		    AF_UNSPEC, NULL, NULL, $7, $8);
 	}
 	;
 

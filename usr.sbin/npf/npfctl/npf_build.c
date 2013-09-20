@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.26 2013/09/19 12:05:11 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.27 2013/09/20 03:03:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.26 2013/09/19 12:05:11 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.27 2013/09/20 03:03:52 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -58,6 +58,8 @@ static nl_rule_t *		the_rule = NULL;
 static nl_rule_t *		current_group[MAX_RULE_NESTING];
 static unsigned			rule_nesting_level = 0;
 static nl_rule_t *		defgroup = NULL;
+
+static void			npfctl_dump_bpf(struct bpf_program *);
 
 void
 npfctl_config_init(bool debug)
@@ -273,7 +275,7 @@ npfctl_build_proto(npf_bpf_t *ctx, sa_family_t family, const opt_proto_t *op)
 
 static bool
 npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
-    const filt_opts_t *fopts, bool invert)
+    const filt_opts_t *fopts)
 {
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
@@ -306,21 +308,18 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 		}
 	}
 
-	const int srcflag = invert ? MATCH_DST : MATCH_SRC;
-	const int dstflag = invert ? MATCH_SRC : MATCH_DST;
-
 	bc = npfctl_bpf_create();
 
 	/* Build layer 4 protocol blocks. */
 	npfctl_build_proto(bc, family, op);
 
 	/* Build IP address blocks. */
-	npfctl_build_vars(bc, family, apfrom->ap_netaddr, srcflag);
-	npfctl_build_vars(bc, family, apto->ap_netaddr, dstflag);
+	npfctl_build_vars(bc, family, apfrom->ap_netaddr, MATCH_SRC);
+	npfctl_build_vars(bc, family, apto->ap_netaddr, MATCH_DST);
 
 	/* Build port-range blocks. */
-	npfctl_build_vars(bc, family, apfrom->ap_portrange, srcflag);
-	npfctl_build_vars(bc, family, apto->ap_portrange, dstflag);
+	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
+	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
 
 	/* Set the byte-code marks, if any. */
 	const void *bmarks = npfctl_bpf_bmarks(bc, &len);
@@ -330,21 +329,35 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 
 	/* Complete BPF byte-code and pass to the rule. */
 	struct bpf_program *bf = npfctl_bpf_complete(bc);
-	if (npf_debug) {
-		extern char *yytext;
-		extern int yylineno;
-
-		printf("\nRULE AT LINE %d\n", yylineno - (int)(*yytext == '\n'));
-		bpf_dump(bf, 0);
-	}
 	len = bf->bf_len * sizeof(struct bpf_insn);
 
 	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf->bf_insns, len) == -1) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
+	npfctl_dump_bpf(bf);
 	npfctl_bpf_destroy(bc);
 
 	return true;
+}
+
+static void
+npfctl_build_pcap(nl_rule_t *rl, const char *filter)
+{
+	const size_t maxsnaplen = 64 * 1024;
+	struct bpf_program bf;
+	size_t len;
+
+	if (pcap_compile_nopcap(maxsnaplen, DLT_RAW, &bf,
+	    filter, 1, PCAP_NETMASK_UNKNOWN) == -1) {
+		yyerror("invalid pcap-filter(7) syntax");
+	}
+	len = bf.bf_len * sizeof(struct bpf_insn);
+
+	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf.bf_insns, len) == -1) {
+		errx(EXIT_FAILURE, "npf_rule_setcode failed");
+	}
+	npfctl_dump_bpf(&bf);
+	pcap_freecode(&bf);
 }
 
 static void
@@ -468,14 +481,20 @@ npfctl_build_group_end(void)
  */
 void
 npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
-    const opt_proto_t *op, const filt_opts_t *fopts, const char *rproc)
+    const opt_proto_t *op, const filt_opts_t *fopts,
+    const char *pcap_filter, const char *rproc)
 {
 	nl_rule_t *rl;
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 
 	rl = npf_rule_create(NULL, attr, if_idx);
-	npfctl_build_code(rl, family, op, fopts, false);
+	if (pcap_filter) {
+		npfctl_build_pcap(rl, pcap_filter);
+	} else {
+		npfctl_build_code(rl, family, op, fopts);
+	}
+
 	if (rproc) {
 		npf_rule_setproc(rl, rproc);
 	}
@@ -547,7 +566,7 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
 		assert(false);
 	}
 
-	npfctl_build_code(nat, family, &op, fopts, false);
+	npfctl_build_code(nat, family, &op, fopts);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
 }
 
@@ -670,5 +689,18 @@ npfctl_build_alg(const char *al_name)
 {
 	if (_npf_alg_load(npf_conf, al_name) != 0) {
 		errx(EXIT_FAILURE, "ALG '%s' already loaded", al_name);
+	}
+}
+
+static void
+npfctl_dump_bpf(struct bpf_program *bf)
+{
+	if (npf_debug) {
+		extern char *yytext;
+		extern int yylineno;
+
+		int rule_line = yylineno - (int)(*yytext == '\n');
+		printf("\nRULE AT LINE %d\n", rule_line);
+		bpf_dump(bf, 0);
 	}
 }
