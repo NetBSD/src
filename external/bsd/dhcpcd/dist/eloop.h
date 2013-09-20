@@ -1,4 +1,4 @@
-/* $NetBSD: eloop.h,v 1.1.1.7 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: eloop.h,v 1.1.1.8 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -45,8 +45,8 @@
 #define eloop_timeouts_delete(a, ...) \
     eloop_q_timeouts_delete(ELOOP_QUEUE, a, __VA_ARGS__)
 
-int eloop_event_add(int fd, void (*)(void *), void *);
-void eloop_event_delete(int fd);
+int eloop_event_add(int, void (*)(void *), void *);
+void eloop_event_delete(int);
 int eloop_q_timeout_add_sec(int queue, time_t, void (*)(void *), void *);
 int eloop_q_timeout_add_tv(int queue, const struct timeval *, void (*)(void *),
     void *);
