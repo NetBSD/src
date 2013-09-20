@@ -6,7 +6,7 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2013d
+VERSION=	2013e
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -28,7 +28,7 @@ LOCALTIME=	GMT
 # time zone files, or adding it to a time zone file).
 # (When a POSIX-style environment variable is handled, the rules in the
 # template file are used to determine "spring forward" and "fall back" days and
-# times; the environment variable itself specifies UTC offsets of standard and
+# times; the environment variable itself specifies UT offsets of standard and
 # summer time.)
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -p rightzone
@@ -51,7 +51,8 @@ TOPDIR=		/usr/local
 # (and subdirectories).
 # Use an absolute path name for TZDIR unless you're just testing the software.
 
-TZDIR=		$(TOPDIR)/etc/zoneinfo
+TZDIR_BASENAME=	zoneinfo
+TZDIR=		$(TOPDIR)/etc/$(TZDIR_BASENAME)
 
 # Types to try, as an alternative to time_t.  int64_t should be first.
 TIME_T_ALTERNATIVES= int64_t int32_t uint32_t uint64_t
@@ -120,7 +121,6 @@ LDLIBS=
 #  -DNO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU=1
 #	if you do not want run time warnings about formats that may cause
 #	year 2000 grief
-#  -DTIME_T_FLOATING=1 if your time_t (or time_tz) is floating point
 #  -Dtime_tz=\"T\" to use T as the time_t type, rather than the system time_t
 #  -DTZ_DOMAIN=\"foo\" to use "foo" for gettext domain name; default is "tz"
 #  -TTZ_DOMAINDIR=\"/path\" to use "/path" for gettext directory;
@@ -188,7 +188,7 @@ GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
 # that gives an offset to add to the time_t when converting it.
 # "timelocal" is equivalent to "mktime".
 # "timegm" is like "timelocal" except that it turns a struct tm into
-# a time_t using UTC (rather than local time as "timelocal" does).
+# a time_t using UT (rather than local time as "timelocal" does).
 # "timeoff" is like "timegm" except that it accepts a second (long) argument
 # that gives an offset to use when converting to a time_t.
 # "posix2time" and "time2posix" are described in an included manual page.
@@ -241,6 +241,8 @@ LDFLAGS=	$(LFLAGS)
 
 zic=		./zic
 ZIC=		$(zic) $(ZFLAGS)
+
+ZFLAGS=
 
 # The name of a Posix-compliant `awk' on your system.
 AWK=		awk
@@ -319,10 +321,12 @@ NDATA=		systemv factory
 SDATA=		solar87 solar88 solar89
 TDATA=		$(YDATA) $(NDATA) $(SDATA)
 TABDATA=	iso3166.tab zone.tab
-DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) leapseconds yearistype.sh
+DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) \
+			leap-seconds.list yearistype.sh
 WEB_PAGES=	tz-art.htm tz-link.htm
+AWK_SCRIPTS=	checktab.awk leapseconds.awk
 MISC=		usno1988 usno1989 usno1989a usno1995 usno1997 usno1998 \
-			$(WEB_PAGES) checktab.awk workman.sh \
+			$(WEB_PAGES) $(AWK_SCRIPTS) workman.sh \
 			zoneinfo2tdf.pl
 ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
 
@@ -331,35 +335,38 @@ ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
 
 SHELL=		/bin/sh
 
-all:		tzselect zic zdump $(LIBOBJS)
+all:		tzselect zic zdump $(LIBOBJS) $(TABDATA)
 
 ALL:		all date
 
-install:	all $(DATA) $(REDO) $(TZLIB) $(MANS) $(TABDATA)
+install:	all $(DATA) $(REDO) $(DESTDIR)$(TZLIB) $(MANS)
 		$(ZIC) -y $(YEARISTYPE) \
-			-d $(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
-		-rm -f $(TZDIR)/iso3166.tab $(TZDIR)/zone.tab
-		cp iso3166.tab zone.tab $(TZDIR)/.
-		-mkdir $(TOPDIR) $(ETCDIR)
-		cp tzselect zic zdump $(ETCDIR)/.
-		-mkdir $(TOPDIR) $(MANDIR) \
-			$(MANDIR)/man3 $(MANDIR)/man5 $(MANDIR)/man8
-		-rm -f $(MANDIR)/man3/newctime.3 \
-			$(MANDIR)/man3/newtzset.3 \
-			$(MANDIR)/man5/tzfile.5 \
-			$(MANDIR)/man8/tzselect.8 \
-			$(MANDIR)/man8/zdump.8 \
-			$(MANDIR)/man8/zic.8
-		cp newctime.3 newtzset.3 $(MANDIR)/man3/.
-		cp tzfile.5 $(MANDIR)/man5/.
-		cp tzselect.8 zdump.8 zic.8 $(MANDIR)/man8/.
+			-d $(DESTDIR)$(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
+		-rm -f $(DESTDIR)$(TZDIR)/iso3166.tab \
+			$(DESTDIR)$(TZDIR)/zone.tab
+		cp iso3166.tab zone.tab $(DESTDIR)$(TZDIR)/.
+		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(ETCDIR)
+		cp tzselect zic zdump $(DESTDIR)$(ETCDIR)/.
+		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(MANDIR) \
+			$(DESTDIR)$(MANDIR)/man3 $(DESTDIR)$(MANDIR)/man5 \
+			$(DESTDIR)$(MANDIR)/man8
+		-rm -f $(DESTDIR)$(MANDIR)/man3/newctime.3 \
+			$(DESTDIR)$(MANDIR)/man3/newtzset.3 \
+			$(DESTDIR)$(MANDIR)/man5/tzfile.5 \
+			$(DESTDIR)$(MANDIR)/man8/tzselect.8 \
+			$(DESTDIR)$(MANDIR)/man8/zdump.8 \
+			$(DESTDIR)$(MANDIR)/man8/zic.8
+		cp newctime.3 newtzset.3 $(DESTDIR)$(MANDIR)/man3/.
+		cp tzfile.5 $(DESTDIR)$(MANDIR)/man5/.
+		cp tzselect.8 zdump.8 zic.8 $(DESTDIR)$(MANDIR)/man8/.
 
 INSTALL:	ALL install date.1
-		-mkdir $(TOPDIR) $(BINDIR)
-		cp date $(BINDIR)/.
-		-mkdir $(TOPDIR) $(MANDIR) $(MANDIR)/man1
-		-rm -f $(MANDIR)/man1/date.1
-		cp date.1 $(MANDIR)/man1/.
+		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(BINDIR)
+		cp date $(DESTDIR)$(BINDIR)/.
+		-mkdir $(DESTDIR)$(TOPDIR) $(DESTDIR)$(MANDIR) \
+			$(DESTDIR)$(MANDIR)/man1
+		-rm -f $(DESTDIR)$(MANDIR)/man1/date.1
+		cp date.1 $(DESTDIR)$(MANDIR)/man1/.
 
 version.h:
 		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
@@ -376,11 +383,16 @@ yearistype:	yearistype.sh
 		cp yearistype.sh yearistype
 		chmod +x yearistype
 
+leapseconds:	leapseconds.awk leap-seconds.list
+		$(AWK) -f leapseconds.awk leap-seconds.list >$@
+
 posix_only:	zic $(TDATA)
-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR) -L /dev/null $(TDATA)
+		$(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR) \
+			-L /dev/null $(TDATA)
 
 right_only:	zic leapseconds $(TDATA)
-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR) -L leapseconds $(TDATA)
+		$(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR) \
+			-L leapseconds $(TDATA)
 
 # In earlier versions of this makefile, the other two directories were
 # subdirectories of $(TZDIR).  However, this led to configuration errors.
@@ -391,19 +403,26 @@ right_only:	zic leapseconds $(TDATA)
 # Therefore, the other two directories are now siblings of $(TZDIR).
 # You must replace all of $(TZDIR) to switch from not using leap seconds
 # to using them, or vice versa.
-other_two:	zic leapseconds $(TDATA)
-		$(ZIC) -y $(YEARISTYPE) -d $(TZDIR)-posix -L /dev/null $(TDATA)
-		$(ZIC) -y $(YEARISTYPE) \
-			-d $(TZDIR)-leaps -L leapseconds $(TDATA)
+right_posix:	right_only leapseconds
+		rm -fr $(DESTDIR)$(TZDIR)-leaps
+		ln -s $(TZDIR_BASENAME) $(DESTDIR)$(TZDIR)-leaps || \
+		  $(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR)-leaps \
+			-L leapseconds $(TDATA)
+		$(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR)-posix \
+			-L /dev/null $(TDATA)
 
-posix_right:	posix_only other_two
-
-right_posix:	right_only other_two
+posix_right:	posix_only leapseconds
+		rm -fr $(DESTDIR)$(TZDIR)-posix
+		ln -s $(TZDIR_BASENAME) $(DESTDIR)$(TZDIR)-posix || \
+		  $(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR)-posix \
+			-L /dev/null $(TDATA)
+		$(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR)-leaps \
+			-L leapseconds $(TDATA)
 
 zones:		$(REDO)
 
-$(TZLIB):	$(LIBOBJS)
-		-mkdir $(TOPDIR) $(LIBDIR)
+$(DESTDIR)$(TZLIB): $(LIBOBJS)
+		-mkdir -p $(DESTDIR)$(TOPDIR) $(DESTDIR)$(LIBDIR)
 		ar ru $@ $(LIBOBJS)
 		if [ -x /usr/ucb/ranlib ] || [ -x /usr/bin/ranlib ]; \
 			then ranlib $@ ; fi
@@ -435,7 +454,7 @@ check_web:	$(WEB_PAGES)
 
 clean_misc:
 		rm -f core *.o *.out \
-		  date tzselect version.h zdump zic yearistype
+		  date leapseconds tzselect version.h zdump zic yearistype
 clean:		clean_misc
 		rm -f -r tzpublic
 
@@ -535,7 +554,7 @@ tzdata$(VERSION).tar.gz.asc: tzdata$(VERSION).tar.gz
 
 typecheck:
 		make clean
-		for i in "long long" unsigned double; \
+		for i in "long long" unsigned; \
 		do \
 			make CFLAGS="-DTYPECHECK -D__time_t_defined -D_TIME_T \"-Dtime_t=$$i\"" ; \
 			./zdump -v Europe/Rome ; \

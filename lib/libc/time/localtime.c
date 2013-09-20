@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.77 2013/07/30 15:30:37 joerg Exp $	*/
+/*	$NetBSD: localtime.c,v 1.78 2013/09/20 19:06:54 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.77 2013/07/30 15:30:37 joerg Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.78 2013/09/20 19:06:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -22,6 +22,7 @@ __RCSID("$NetBSD: localtime.c,v 1.77 2013/07/30 15:30:37 joerg Exp $");
 /*LINTLIBRARY*/
 
 #include "namespace.h"
+#include <assert.h>
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
@@ -31,8 +32,6 @@ __RCSID("$NetBSD: localtime.c,v 1.77 2013/07/30 15:30:37 joerg Exp $");
 __weak_alias(daylight,_daylight)
 __weak_alias(tzname,_tzname)
 #endif
-
-#include "float.h"	/* for FLT_MAX and DBL_MAX */
 
 #ifndef TZ_ABBR_MAX_LEN
 #define TZ_ABBR_MAX_LEN	16
@@ -97,11 +96,11 @@ static const char	gmt[] = "GMT";
 #endif /* !defined TZDEFDST */
 
 struct ttinfo {				/* time type information */
-	int_fast32_t	tt_gmtoff;	/* UTC offset in seconds */
+	int_fast32_t	tt_gmtoff;	/* UT offset in seconds */
 	int		tt_isdst;	/* used to set tm_isdst */
 	int		tt_abbrind;	/* abbreviation list index */
 	int		tt_ttisstd;	/* TRUE if transition is std time */
-	int		tt_ttisgmt;	/* TRUE if transition is UTC */
+	int		tt_ttisgmt;	/* TRUE if transition is UT */
 };
 
 struct lsinfo {				/* leap second information */
@@ -357,9 +356,8 @@ settzname(void)
 static int
 differ_by_repeat(const time_t t1, const time_t t0)
 {
-	if (TYPE_INTEGRAL(time_t) &&
-		TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
-			return 0;
+	if (TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
+		return 0;
 	return (int_fast64_t)t1 - (int_fast64_t)t0 == SECSPERREPEAT;
 }
 
@@ -566,11 +564,9 @@ tzload(timezone_t sp, const char *name, const int doextend)
 		for (i = 0; i < nread; ++i)
 			up->buf[i] = p[i];
 		/*
-		** If this is a narrow integer time_t system, we're done.
+		** If this is a narrow time_t system, we're done.
 		*/
-		if (stored >= (int) sizeof(time_t)
-/* CONSTCOND */
-				&& TYPE_INTEGRAL(time_t))
+		if (stored >= (int) sizeof(time_t))
 			break;
 	}
 	if (doextend && nread > 2 &&
@@ -880,14 +876,14 @@ getrule(const char *strp, struct rule *const rulep)
 		** Time specified.
 		*/
 		++strp;
-		strp = getsecs(strp, &rulep->r_time);
+		strp = getoffset(strp, &rulep->r_time);
 	} else	rulep->r_time = 2 * SECSPERHOUR;	/* default = 2:00:00 */
 	return strp;
 }
 
 /*
 ** Given the Epoch-relative time of January 1, 00:00:00 UTC, in a year, the
-** year, a rule, and the offset from UTC at the time that rule takes effect,
+** year, a rule, and the offset from UT at the time that rule takes effect,
 ** calculate the Epoch-relative time that rule takes effect.
 */
 
@@ -970,10 +966,10 @@ transtime(const time_t janfirst, const int year, const struct rule *const rulep,
 	}
 
 	/*
-	** "value" is the Epoch-relative time of 00:00:00 UTC on the day in
+	** "value" is the Epoch-relative time of 00:00:00 UT on the day in
 	** question. To get the Epoch-relative time of the specified local
 	** time on that day, add the transition time and the current offset
-	** from UTC.
+	** from UT.
 	*/
 	return (time_t)(value + rulep->r_time + offset);
 }
@@ -1050,8 +1046,9 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 		if (*name == ',' || *name == ';') {
 			struct rule	start;
 			struct rule	end;
-			int	year;
-			time_t	janfirst;
+			int		year;
+			int		yearlim;
+			time_t		janfirst;
 			time_t		starttime;
 			time_t		endtime;
 
@@ -1079,34 +1076,44 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			typep = sp->types;
 			janfirst = 0;
 			sp->timecnt = 0;
-			for (year = EPOCH_YEAR;
-			    sp->timecnt + 2 <= TZ_MAX_TIMES;
-			    ++year) {
-			    	time_t	newfirst;
+			yearlim = EPOCH_YEAR + YEARSPERREPEAT;
+			for (year = EPOCH_YEAR; year < yearlim; year++) {
+				int_fast32_t yearsecs;
 
 				starttime = transtime(janfirst, year, &start,
 					stdoffset);
 				endtime = transtime(janfirst, year, &end,
 					dstoffset);
-				if (starttime > endtime) {
-					*atp++ = endtime;
-					*typep++ = 1;	/* DST ends */
-					*atp++ = starttime;
-					*typep++ = 0;	/* DST begins */
-				} else {
-					*atp++ = starttime;
-					*typep++ = 0;	/* DST begins */
-					*atp++ = endtime;
-					*typep++ = 1;	/* DST ends */
+				yearsecs = (year_lengths[isleap(year)]
+					    * SECSPERDAY);
+				if (starttime > endtime
+				    || (starttime < endtime
+					&& (endtime - starttime
+					    < (yearsecs
+					       + (stdoffset - dstoffset))))) {
+					if (&sp->ats[TZ_MAX_TIMES - 2] < atp)
+						break;
+					yearlim = year + YEARSPERREPEAT + 1;
+					if (starttime > endtime) {
+						*atp++ = endtime;
+						*typep++ = 1;	/* DST ends */
+						*atp++ = starttime;
+						*typep++ = 0;	/* DST begins */
+					} else {
+						*atp++ = starttime;
+						*typep++ = 0;	/* DST begins */
+						*atp++ = endtime;
+						*typep++ = 1;	/* DST ends */
+					}
 				}
-				sp->timecnt += 2;
-				newfirst = janfirst;
-				newfirst += (time_t)
-				    (year_lengths[isleap(year)] * SECSPERDAY);
-				if (newfirst <= janfirst)
+				if (time_t_max - janfirst < yearsecs)
 					break;
-				janfirst = newfirst;
+				janfirst += yearsecs;
 			}
+			_DIAGASSERT(__type_fit(int, atp - sp->ats));
+			sp->timecnt = (int)(atp - sp->ats);
+			if (!sp->timecnt)
+				sp->typecnt = 1;	/* Perpetual DST.  */
 		} else {
 			int_fast32_t	theirstdoffset;
 			int_fast32_t	theirdstoffset;
@@ -1362,22 +1369,14 @@ localsub(const timezone_t sp, const time_t * const timep, const int_fast32_t off
 		(sp->goahead && t > sp->ats[sp->timecnt - 1])) {
 			time_t			newt = t;
 			time_t		seconds;
-			time_t		tcycles;
-			int_fast64_t	icycles;
+			time_t		years;
 
 			if (t < sp->ats[0])
 				seconds = sp->ats[0] - t;
 			else	seconds = t - sp->ats[sp->timecnt - 1];
 			--seconds;
-			tcycles = (time_t)
-			    (seconds / YEARSPERREPEAT / AVGSECSPERYEAR);
-			++tcycles;
-			icycles = tcycles;
-			if (tcycles - icycles >= 1 || icycles - tcycles >= 1)
-				return NULL;
-			seconds = (time_t) icycles;
-			seconds *= YEARSPERREPEAT;
-			seconds *= AVGSECSPERYEAR;
+			years = (time_t)((seconds / SECSPERREPEAT + 1) * YEARSPERREPEAT);
+			seconds = (time_t)(years * AVGSECSPERYEAR);
 			if (t < sp->ats[0])
 				newt += seconds;
 			else	newt -= seconds;
@@ -1390,8 +1389,8 @@ localsub(const timezone_t sp, const time_t * const timep, const int_fast32_t off
 
 				newy = tmp->tm_year;
 				if (t < sp->ats[0])
-					newy -= (time_t)icycles * YEARSPERREPEAT;
-				else	newy += (time_t)icycles * YEARSPERREPEAT;
+					newy -= years;
+				else	newy += years;
 				tmp->tm_year = (int)newy;
 				if (tmp->tm_year != newy)
 					return NULL;
@@ -1490,7 +1489,7 @@ gmtsub(const timezone_t sp, const time_t *const timep,
 #ifdef TM_ZONE
 	/*
 	** Could get fancy here and deliver something such as
-	** "UTC+xxxx" or "UTC-xxxx" if offset is non-zero,
+	** "UT+xxxx" or "UT-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
@@ -1627,9 +1626,10 @@ timesub(const timezone_t sp, const time_t *const timep,
 		int	leapdays;
 
 		tdelta = tdays / DAYSPERLYEAR;
-		idelta = (int) tdelta;
-		if (tdelta - idelta >= 1 || idelta - tdelta >= 1)
+		if (! ((! TYPE_SIGNED(time_t) || INT_MIN <= tdelta)
+		       && tdelta <= INT_MAX))
 			return NULL;
+		idelta = tdelta;
 		if (idelta == 0)
 			idelta = (tdays < 0) ? -1 : 1;
 		newy = y;
@@ -1643,9 +1643,8 @@ timesub(const timezone_t sp, const time_t *const timep,
 	}
 	{
 		int_fast32_t seconds;
-		const time_t half_second = (time_t)0.5;
 
-		seconds = (int_fast32_t)(tdays * SECSPERDAY + half_second);
+		seconds = (int_fast32_t)(tdays * SECSPERDAY);
 		tdays = (time_t)(seconds / SECSPERDAY);
 		rem += (int_fast64_t)(seconds - tdays * SECSPERDAY);
 	}
@@ -1819,8 +1818,9 @@ tmcomp(const struct tm *const atmp, const struct tm *const btmp)
 {
 	int	result;
 
-	if ((result = (atmp->tm_year - btmp->tm_year)) == 0 &&
-		(result = (atmp->tm_mon - btmp->tm_mon)) == 0 &&
+	if (atmp->tm_year != btmp->tm_year)
+		return atmp->tm_year < btmp->tm_year ? -1 : 1;
+	if ((result = (atmp->tm_mon - btmp->tm_mon)) == 0 &&
 		(result = (atmp->tm_mday - btmp->tm_mday)) == 0 &&
 		(result = (atmp->tm_hour - btmp->tm_hour)) == 0 &&
 		(result = (atmp->tm_min - btmp->tm_min)) == 0)
@@ -1923,15 +1923,6 @@ again:
 	if (!TYPE_SIGNED(time_t)) {
 		lo = 0;
 		hi = lo - 1;
-	/* LINTED const not */
-	} else if (!TYPE_INTEGRAL(time_t)) {
-		/* CONSTCOND */
-		if (sizeof(time_t) > sizeof(float))
-			/* LINTED assumed double */
-			hi = (time_t) DBL_MAX;
-			/* LINTED assumed float */
-		else	hi = (time_t) FLT_MAX;
-		lo = -hi;
 	} else {
 		lo = 1;
 		for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
@@ -1957,14 +1948,14 @@ again:
 		} else	dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
 			if (t == lo) {
-				++t;
-				if (t <= lo)
+				if (t == time_t_max)
 					goto overflow;
+				++t;
 				++lo;
 			} else if (t == hi) {
-				--t;
-				if (t >= hi)
+				if (t == time_t_min)
 					goto overflow;
+				--t;
 				--hi;
 			}
 #ifdef NO_ERROR_IN_DST_GAP
@@ -2208,7 +2199,7 @@ timeoff(struct tm *const tmp, long offset)
 ** previous versions of the CMUCS runtime library.
 */
 
-int_fast32_t
+long
 gtime(struct tm *const tmp)
 {
 	const time_t t = mktime(tmp);
