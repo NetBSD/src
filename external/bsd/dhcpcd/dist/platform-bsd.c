@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.8 2013/07/19 11:52:56 roy Exp $");
+ __RCSID("$NetBSD: platform-bsd.c,v 1.1.1.9 2013/09/20 10:51:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -47,6 +47,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "dhcpcd.h"
 #include "if-options.h"
 #include "platform.h"
