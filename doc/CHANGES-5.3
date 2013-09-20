@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.29 2013/09/18 19:49:16 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.30 2013/09/20 03:12:18 riz Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -565,4 +565,9 @@ xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c	patch
 	Check the XkbGetNames reply when names->keys was just allocated
 	Should fix PR lib/48170.
 	[riz, ticket #1877]
+
+etc/ssh/ssh_known_hosts				1.7-1.8
+
+	Update for project hosts whose keys changed.
+	[spz, ticket #1878]
 
