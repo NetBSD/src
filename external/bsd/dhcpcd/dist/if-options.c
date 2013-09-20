@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.20 2013/07/29 20:35:32 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.21 2013/09/20 10:51:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -71,6 +71,10 @@ unsigned long long options = 0;
 #define O_IA_TA			O_BASE + 11
 #define O_IA_PD			O_BASE + 12
 #define O_HOSTNAME_SHORT	O_BASE + 13
+#define O_DEV			O_BASE + 14
+#define O_NODEV			O_BASE + 15
+
+char *dev_load;
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -93,7 +97,7 @@ const struct option cf_options[] = {
 	{"timeout",         required_argument, NULL, 't'},
 	{"userclass",       required_argument, NULL, 'u'},
 	{"vendor",          required_argument, NULL, 'v'},
-	{"waitip",          no_argument,       NULL, 'w'},
+	{"waitip",          optional_argument, NULL, 'w'},
 	{"exit",            no_argument,       NULL, 'x'},
 	{"allowinterfaces", required_argument, NULL, 'z'},
 	{"reboot",          required_argument, NULL, 'y'},
@@ -133,6 +137,8 @@ const struct option cf_options[] = {
 	{"ia_ta",           no_argument,       NULL, O_IA_TA},
 	{"ia_pd",           no_argument,       NULL, O_IA_PD},
 	{"hostname_short",  no_argument,       NULL, O_HOSTNAME_SHORT},
+	{"dev",             required_argument, NULL, O_DEV},
+	{"nodev",           no_argument,       NULL, O_NODEV},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -643,6 +649,12 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		break;
 	case 'w':
 		ifo->options |= DHCPCD_WAITIP;
+		if (arg != NULL && arg[0] != '\0') {
+			if (arg[0] == '4' || arg[1] == '4')
+				ifo->options |= DHCPCD_WAITIP4;
+			if (arg[0] == '6' || arg[1] == '6')
+				ifo->options |= DHCPCD_WAITIP6;
+		}
 		break;
 	case 'y':
 		ifo->reboot = atoint(arg);
@@ -1019,6 +1031,8 @@ got_iaid:
 			iaid->sla = NULL;
 			iaid->sla_len = 0;
 		}
+		if (ifo->ia_type != D6_OPTION_IA_PD)
+			break;
 		for (p = fp; p; p = fp) {
 			fp = strchr(p, ' ');
 			if (fp)
@@ -1084,10 +1098,18 @@ got_iaid:
 			}
 		}
 		break;
+#endif
 	case O_HOSTNAME_SHORT:
 		ifo->options |= DHCPCD_HOSTNAME | DHCPCD_HOSTNAME_SHORT;
 		break;
-#endif
+	case O_DEV:
+		if (dev_load)
+			free(dev_load);
+		dev_load = strdup(arg);
+		break;
+	case O_NODEV:
+		ifo->options &= ~DHCPCD_DEV;
+		break;
 	default:
 		return 0;
 	}
@@ -1120,7 +1142,7 @@ parse_config_line(struct if_options *ifo, const char *opt, char *line)
 }
 
 static void
-finish_config(struct if_options *ifo, const char *ifname)
+finish_config(struct if_options *ifo)
 {
 
 	/* Terminate the encapsulated options */
@@ -1128,8 +1150,13 @@ finish_config(struct if_options *ifo, const char *ifname)
 		ifo->vendor[0]++;
 		ifo->vendor[ifo->vendor[0]] = DHO_END;
 	}
+}
 
 #ifdef INET6
+static void
+finish_config6(struct if_options *ifo, const char *ifname)
+{
+
 	if (!(ifo->options & DHCPCD_IPV6))
 		ifo->options &= ~DHCPCD_IPV6RS;
 
@@ -1155,8 +1182,8 @@ finish_config(struct if_options *ifo, const char *ifname)
 			ifo->iaid->sla_len = 0;
 		}
 	}
-#endif
 }
+#endif
 
 struct if_options *
 read_config(const char *file,
@@ -1174,6 +1201,9 @@ read_config(const char *file,
 		return NULL;
 	}
 	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_LINK;
+#ifdef PLUGIN_DEV
+	ifo->options |= DHCPCD_DEV;
+#endif
 #ifdef INET
 	ifo->options |= DHCPCD_IPV4 | DHCPCD_IPV4LL;
 	ifo->options |= DHCPCD_GATEWAY | DHCPCD_ARP;
@@ -1245,7 +1275,10 @@ read_config(const char *file,
 		ifo = NULL;
 	}
 
-	finish_config(ifo, ifname);
+	finish_config(ifo);
+#ifdef INET6
+	finish_config6(ifo, ifname);
+#endif
 	return ifo;
 }
 
@@ -1266,7 +1299,10 @@ add_options(struct if_options *ifo, int argc, char **argv)
 			break;
 	}
 
-	finish_config(ifo, NULL);
+	finish_config(ifo);
+#ifdef INET6
+	finish_config6(ifo, NULL);
+#endif
 	return r;
 }
 

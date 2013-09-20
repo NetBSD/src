@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.1.1.1 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.2 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,21 +43,39 @@ struct rt {
 };
 TAILQ_HEAD(rt_head, rt);
 
+struct ipv4_addr {
+	TAILQ_ENTRY(ipv4_addr) next;
+	struct in_addr addr;
+	struct in_addr net;
+	struct in_addr dst;
+};
+TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
+
+struct ipv4_state {
+	struct ipv4_addrhead addrs;
+};
+
+#define IPV4_STATE(ifp)							       \
+	((struct ipv4_state *)(ifp)->if_data[IF_DATA_IPV4])
+#define IPV4_CSTATE(ifp)						       \
+	((const struct ipv4_state *)(ifp)->if_data[IF_DATA_IPV4])
+
 #ifdef INET
 int ipv4_init(void);
 int inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
+int ipv4_addrexists(const struct in_addr *);
 
 void ipv4_buildroutes(void);
 void ipv4_applyaddr(void *);
 int ipv4_routedeleted(const struct rt *);
 
-void ipv4_handleifa(int, const char *,
-    struct in_addr *, struct in_addr *, struct in_addr *);
+struct ipv4_addr *ipv4_findaddr(struct interface *,
+    const struct in_addr *, const struct in_addr *);
+void ipv4_handleifa(int, struct if_head *, const char *,
+    const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
-int ipv4_doaddress(const char *,
-    struct in_addr *, struct in_addr *, struct in_addr *, int);
 int if_address(const struct interface *,
     const struct in_addr *, const struct in_addr *,
     const struct in_addr *, int);
@@ -67,10 +85,6 @@ int if_address(const struct interface *,
 	if_address(iface, addr, net, brd, 2)
 #define ipv4_deleteaddress(iface, addr, net)				      \
 	if_address(iface, addr, net, NULL, -1)
-#define ipv4_hasaddress(iface, addr, net)				      \
-	ipv4_doaddress(iface, addr, net, NULL, 0)
-#define ipv4_getaddress(iface, addr, net, dst)				      \
-	ipv4_doaddress(iface, addr, net, dst, 1)
 
 int if_route(const struct rt *rt, int);
 #define ipv4_addroute(rt) if_route(rt, 1)
@@ -83,6 +97,7 @@ int ipv4_opensocket(struct interface *, int);
 ssize_t ipv4_sendrawpacket(const struct interface *,
     int, const void *, ssize_t);
 ssize_t ipv4_getrawpacket(struct interface *, int, void *, ssize_t, int *);
+void ipv4_free(struct interface *);
 #else
 #define ipv4_init() -1
 #define ipv4_applyaddr(a) {}

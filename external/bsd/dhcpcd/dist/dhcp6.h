@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.2 2013/06/22 09:25:34 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.3 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -232,7 +232,7 @@ void dhcp6_handleifa(int, const char *, const struct in6_addr *addr, int);
 void dhcp6_drop(struct interface *, const char *);
 #else
 #define dhcp6_printoptions()
-#define dhcp6_addrexists(a)
+#define dhcp6_addrexists(a) 0
 #define dhcp6_find_delegates(a) 0
 #define dhcp6_start(a, b) 0
 #define dhcp6_reboot(a)

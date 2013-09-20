@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.32 2013/09/20 10:51:30 roy Exp $ */
+/* $NetBSD: dev.h,v 1.1.1.1 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -26,35 +26,36 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef DEV_H
+#define DEV_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"6.1.0"
+// dev plugin setup
+struct dev {
+	const char *name;
+	int (*initialized)(const char *);
+	int (*listening)(void);
+	int (*handle_device)(void);
+	int (*start)(void);
+	void (*stop)(void);
+};
 
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#ifndef DEVDIR
-# define DEVDIR			LIBDIR "/" PACKAGE "/dev"
-#endif
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef LEASEFILE6
-# define LEASEFILE6		DBDIR "/" PACKAGE "-%s.lease6"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
+struct dev_dhcpcd {
+	void (*handle_interface)(int, const char *);
+};
+
+int dev_init(struct dev *, const struct dev_dhcpcd *);
+
+// hooks for dhcpcd
+#ifdef PLUGIN_DEV
+int dev_initialized(const char *);
+int dev_listening(void);
+int dev_start(const char *);
+void dev_stop(void);
+#else
+#define dev_initialized(a) 1
+#define dev_listening() 0
+#define dev_start(a) {}
+#define dev_stop() {}
 #endif
 
 #endif

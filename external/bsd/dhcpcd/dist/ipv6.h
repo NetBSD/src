@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.1.1.4 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.5 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -68,7 +68,7 @@
 #  endif
 #endif
 
-#ifdef LISTEN_DAD
+#if defined(LISTEN_DAD) && defined(INET6)
 #  warning kernel does not report DAD results to userland
 #  warning listening to duplicated addresses on the wire
 #endif
@@ -108,7 +108,6 @@ struct rt6 {
 	struct in6_addr net;
 	struct in6_addr gate;
 	const struct interface *iface;
-	const struct ra *ra;
 	int metric;
 	unsigned int mtu;
 };

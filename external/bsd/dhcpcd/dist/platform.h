@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1.1.5 2013/07/19 11:52:57 roy Exp $ */
+/* $NetBSD: platform.h,v 1.1.1.6 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -35,7 +35,7 @@ char *hardware_platform(void);
 int check_ipv6(const char *, int);
 int ipv6_dadtransmits(const char *);
 #else
-#define check_ipv6(a) 0
+#define check_ipv6(a, b) -1
 #endif
 
 #endif

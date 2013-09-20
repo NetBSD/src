@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.1.1.1 2013/06/21 19:33:07 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.1.1.2 2013/09/20 10:51:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -51,7 +51,7 @@
 #include "dhcp6.h"
 #include "if-options.h"
 #include "if-pref.h"
-#include "ipv6rs.h"
+#include "ipv6nd.h"
 #include "net.h"
 #include "script.h"
 
@@ -217,7 +217,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #ifdef INET6
 		if (d6_state && d6_state->new)
 			dhcp6 = 1;
-		else if (ipv6rs_has_ra(ifp))
+		else if (ipv6nd_has_ra(ifp))
 			ra = 1;
 		else
 #endif
@@ -283,7 +283,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	} else if ((dhcp && state && state->new)
 #ifdef INET6
 	    || (dhcp6 && d6_state && d6_state->new)
-	    || (ra && ipv6rs_has_ra(ifp))
+	    || (ra && ipv6nd_has_ra(ifp))
 #endif
 	    )
 	{
@@ -392,13 +392,13 @@ dumplease:
 		}
 	}
 	if (ra) {
-		e = ipv6rs_env(NULL, NULL, ifp);
+		e = ipv6nd_env(NULL, NULL, ifp);
 		if (e > 0) {
 			nenv = realloc(env, sizeof(char *) * (elen + e + 1));
 			if (nenv == NULL)
 				goto eexit;
 			env = nenv;
-			l = ipv6rs_env(env + elen, NULL, ifp);
+			l = ipv6nd_env(env + elen, NULL, ifp);
 			if (l == -1)
 				goto eexit;
 			elen += l;
@@ -481,7 +481,7 @@ send_interface(int fd, const struct interface *iface)
 #endif
 
 #ifdef INET6
-	if (ipv6rs_has_ra(iface)) {
+	if (ipv6nd_has_ra(iface)) {
 		onestate = 1;
 		if (send_interface1(fd, iface, "ROUTERADVERT") == -1)
 			retval = -1;
