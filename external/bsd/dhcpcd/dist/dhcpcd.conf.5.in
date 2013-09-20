@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.4 2013/09/20 10:56:32 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.5 2013/09/20 21:39:59 wiz Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd September 12, 2013
-.Dt DHCPCD.CONF 5 SMM
+.Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
 .Nm dhcpcd.conf
@@ -439,10 +439,10 @@ Use the last four bytes of the hardware address as the DHCP xid instead
 of a randomly generated number.
 .El
 .Sh SEE ALSO
-.Xr dhcpcd-run-hooks 8 ,
-.Xr dhcpcd 8 ,
+.Xr fnmatch 3 ,
 .Xr if_nametoindex 3 ,
-.Xr fnmatch 3
+.Xr dhcpcd 8 ,
+.Xr dhcpcd-run-hooks 8
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
