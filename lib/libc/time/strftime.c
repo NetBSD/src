@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.28 2013/07/17 23:09:26 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.29 2013/09/20 19:06:54 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.28 2013/07/17 23:09:26 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.29 2013/09/20 19:06:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -504,7 +504,7 @@ label:
 				diff = (int)t->TM_GMTOFF;
 #else /* !defined TM_GMTOFF */
 				/*
-				** C99 says that the UTC offset must
+				** C99 says that the UT offset must
 				** be computed by looking only at
 				** tm_isdst. This requirement is
 				** incorrect, since it means the code
