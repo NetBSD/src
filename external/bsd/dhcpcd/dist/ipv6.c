@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.1.1.6 2013/07/19 11:52:57 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.1.1.7 2013/09/20 10:51:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -62,7 +62,7 @@
 #include "dhcp6.h"
 #include "eloop.h"
 #include "ipv6.h"
-#include "ipv6rs.h"
+#include "ipv6nd.h"
 
 /* Hackery at it's finest. */
 #ifndef s6_addr32
@@ -460,7 +460,10 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 		 * This is safe because the RA is removed from the list
 		 * before we are called. */
 		if (drop && ap->flags & IPV6_AF_ADDED &&
-		    !ipv6rs_addrexists(ap) && !dhcp6_addrexists(ap))
+		    !ipv6nd_addrexists(ap) && !dhcp6_addrexists(ap) &&
+		    (ap->iface->options->options &
+		    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
+		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
 			syslog(LOG_INFO, "%s: deleting address %s",
 			    ap->iface->name, ap->saddr);
@@ -538,7 +541,7 @@ ipv6_handleifa(int cmd, struct if_head *ifs, const char *ifname,
 		return;
 
 	if (!IN6_IS_ADDR_LINKLOCAL(addr)) {
-		ipv6rs_handleifa(cmd, ifname, addr, flags);
+		ipv6nd_handleifa(cmd, ifname, addr, flags);
 		dhcp6_handleifa(cmd, ifname, addr, flags);
 	}
 
@@ -800,7 +803,6 @@ make_route(const struct interface *ifp, const struct ra *rap)
 		syslog(LOG_ERR, "%s: %m", __func__);
 		return NULL;
 	}
-	r->ra = rap;
 	r->iface = ifp;
 	r->metric = ifp->metric;
 	if (rap)
@@ -816,7 +818,13 @@ make_prefix(const struct interface * ifp, const struct ra *rap,
 {
 	struct rt6 *r;
 
-	if (addr == NULL || addr->prefix_len > 128)
+	if (addr == NULL || addr->prefix_len > 128) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* There is no point in trying to manage a /128 prefix. */
+	if (addr->prefix_len == 128)
 		return NULL;
 
 	r = make_route(ifp, rap);
@@ -1029,7 +1037,9 @@ ipv6_buildroutes(void)
 				/* no need to add it back to our routing table
 				 * as we delete an exiting route when we add
 				 * a new one */
-			else
+			else if ((rt->iface->options->options &
+				(DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
+				(DHCPCD_EXITING | DHCPCD_PERSISTENT))
 				d_route(rt);
 		}
 		free(rt);

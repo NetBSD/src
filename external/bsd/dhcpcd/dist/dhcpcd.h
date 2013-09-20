@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.14 2013/07/19 11:52:57 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.15 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -45,11 +45,12 @@
 #define LINK_UNKNOWN	0
 #define LINK_DOWN	-1
 
-#define IF_DATA_DHCP	0
-#define IF_DATA_IPV6	1
-#define IF_DATA_IPV6RS	2
-#define IF_DATA_DHCP6	3
-#define IF_DATA_MAX	4
+#define IF_DATA_IPV4	0
+#define IF_DATA_DHCP	1	
+#define IF_DATA_IPV6	2
+#define IF_DATA_IPV6ND	3
+#define IF_DATA_DHCP6	4
+#define IF_DATA_MAX	5
 
 struct interface {
 	TAILQ_ENTRY(interface) next;

@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.17 2013/07/29 20:35:33 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.18 2013/09/20 10:51:30 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -37,8 +37,6 @@
 #include <getopt.h>
 #include <limits.h>
 #include <stdint.h>
-
-#include "ipv4.h"
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
@@ -97,6 +95,10 @@
 #define DHCPCD_STOPPING			(1ULL << 41)
 #define DHCPCD_DEPARTED			(1ULL << 42)
 #define DHCPCD_HOSTNAME_SHORT		(1ULL << 43)
+#define DHCPCD_EXITING			(1ULL << 44)
+#define DHCPCD_WAITIP4			(1ULL << 45)
+#define DHCPCD_WAITIP6			(1ULL << 46)
+#define DHCPCD_DEV			(1ULL << 47)
 
 extern const struct option cf_options[];
 
@@ -159,6 +161,7 @@ struct if_options {
 };
 
 extern unsigned long long options;
+extern char *dev_load;
 
 struct if_options *read_config(const char *,
     const char *, const char *, const char *);
