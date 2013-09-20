@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: net.c,v 1.2 2013/09/11 18:50:00 drochner Exp $");
+ __RCSID("$NetBSD: net.c,v 1.3 2013/09/20 10:56:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -70,10 +70,12 @@
 
 #include "config.h"
 #include "common.h"
+#include "dev.h"
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "if-options.h"
-#include "ipv6rs.h"
+#include "ipv4.h"
+#include "ipv6nd.h"
 #include "net.h"
 
 int socket_afnet = -1;
@@ -141,10 +143,11 @@ free_interface(struct interface *ifp)
 
 	if (ifp == NULL)
 		return;
+	ipv4_free(ifp);
 	dhcp_free(ifp);
 	ipv6_free(ifp);
 	dhcp6_free(ifp);
-	ipv6rs_free(ifp);
+	ipv6nd_free(ifp);
 	free_options(ifp->options);
 	free(ifp);
 }
@@ -226,6 +229,10 @@ discover_interfaces(int argc, char * const *argv)
 #ifdef __linux__
 	char ifn[IF_NAMESIZE];
 #endif
+#ifdef INET
+	const struct sockaddr_in *addr;
+	const struct sockaddr_in *net;
+	const struct sockaddr_in *dst;
 #ifdef INET6
 	const struct sockaddr_in6 *sin6;
 	int ifa_flags;
@@ -263,6 +270,10 @@ discover_interfaces(int argc, char * const *argv)
 				continue;
 #endif
 		}
+
+		/* Ensure that the interface name has settled */
+		if (!dev_initialized(ifa->ifa_name))
+			continue;
 
 		/* It's possible for an interface to have >1 AF_LINK.
 		 * For our purposes, we use the first one. */
@@ -444,11 +455,29 @@ discover_interfaces(int argc, char * const *argv)
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
-#ifdef INET6
 	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr != NULL &&
-		    ifa->ifa_addr->sa_family == AF_INET6)
-		{
+		if (ifa->ifa_addr == NULL)
+			continue;
+		switch(ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			addr = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_addr;
+			net = (const struct sockaddr_in *)
+			    (void *)ifa->ifa_netmask;
+			if (ifa->ifa_flags & IFF_POINTOPOINT)
+				dst = (const struct sockaddr_in *)
+				    (void *)ifa->ifa_dstaddr;
+			else
+				dst = NULL;
+			ipv4_handleifa(RTM_NEWADDR, ifs, ifa->ifa_name,
+				&addr->sin_addr,
+				&net->sin_addr,
+				dst ? &dst->sin_addr : NULL);
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
 			sin6 = (const struct sockaddr_in6 *)
 			    (void *)ifa->ifa_addr;
 			ifa_flags = in6_addr_flags(ifa->ifa_name,
@@ -457,6 +486,8 @@ discover_interfaces(int argc, char * const *argv)
 				ipv6_handleifa(RTM_NEWADDR, ifs,
 				    ifa->ifa_name,
 				    &sin6->sin6_addr, ifa_flags);
+			break;
+#endif
 		}
 	}
 #endif
