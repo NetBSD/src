@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.151 2013/06/28 01:23:05 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.152 2013/09/20 19:13:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.151 2013/06/28 01:23:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.152 2013/09/20 19:13:39 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -1735,6 +1735,7 @@ m_ext_free(struct mbuf *m)
 		}
 	}
 	if (dofree) {
+		m->m_type = MT_FREE;
 		pool_cache_put(mb_cache, m);
 	}
 }
