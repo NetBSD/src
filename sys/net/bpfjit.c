@@ -1,3 +1,5 @@
+/*	$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
  * All rights reserved.
@@ -29,52 +31,40 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.2 2012/11/10 22:12:31 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.2 2012/11/10 22:12:31 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $");
 #endif
 
-#include <net/bpfjit.h>
+#include <sys/types.h>
+#include <sys/queue.h>
 
 #ifndef _KERNEL
+#include <stdlib.h>
 #include <assert.h>
+#define BPFJIT_ALLOC(sz) malloc(sz)
+#define BPFJIT_FREE(p, sz) free(p)
 #define BPFJIT_ASSERT(c) assert(c)
 #else
+#include <sys/kmem.h>
+#define BPFJIT_ALLOC(sz) kmem_alloc(sz, KM_SLEEP)
+#define BPFJIT_FREE(p, sz) kmem_free(p, sz)
 #define BPFJIT_ASSERT(c) KASSERT(c)
 #endif
 
 #ifndef _KERNEL
-#include <stdlib.h>
-#define BPFJIT_MALLOC(sz) malloc(sz)
-#define BPFJIT_FREE(p) free(p)
-#else
-#include <sys/malloc.h>
-#define BPFJIT_MALLOC(sz) kern_malloc(sz, M_WAITOK)
-#define BPFJIT_FREE(p) kern_free(p)
-#endif
-
-#ifndef _KERNEL
 #include <limits.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #else
-#include <machine/limits.h>
-#include <sys/null.h>
-#include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
 #endif
 
-#include <sys/queue.h>
-#include <sys/types.h>
-
+#include <net/bpfjit.h>
 #include <sljitLir.h>
-
-#if !defined(_KERNEL) && defined(SLJIT_VERBOSE) && SLJIT_VERBOSE
-#include <stdio.h> /* for stderr */
-#endif
-
 
 #define BPFJIT_A	SLJIT_TEMPORARY_REG1
 #define BPFJIT_X	SLJIT_TEMPORARY_EREG1
@@ -91,12 +81,10 @@ __RCSID("$NetBSD: bpfjit.c,v 1.2 2012/11/10 22:12:31 alnsn Exp $");
 #define BPFJIT_INIT_X 0x10000
 #define BPFJIT_INIT_A 0x20000
 
-
 /*
  * Node of bj_jumps list.
  */
-struct bpfjit_jump
-{
+struct bpfjit_jump {
 	struct sljit_jump *bj_jump;
 	SLIST_ENTRY(bpfjit_jump) bj_entries;
 	uint32_t bj_safe_length;
@@ -105,8 +93,7 @@ struct bpfjit_jump
 /*
  * Data for BPF_JMP instruction.
  */
-struct bpfjit_jump_data
-{
+struct bpfjit_jump_data {
 	/*
 	 * These entries make up bj_jumps list:
 	 * bj_jtf[0] - when coming from jt path,
@@ -119,8 +106,7 @@ struct bpfjit_jump_data
  * Data for "read from packet" instructions.
  * See also read_pkt_insn() function below.
  */
-struct bpfjit_read_pkt_data
-{
+struct bpfjit_read_pkt_data {
 	/*
 	 * If positive, emit "if (buflen < bj_check_length) return 0".
 	 * We assume that buflen is never equal to UINT32_MAX (otherwise,
@@ -132,8 +118,7 @@ struct bpfjit_read_pkt_data
 /*
  * Additional (optimization-related) data for bpf_insn.
  */
-struct bpfjit_insn_data
-{
+struct bpfjit_insn_data {
 	/* List of jumps to this insn. */
 	SLIST_HEAD(, bpfjit_jump) bj_jumps;
 
@@ -1223,7 +1208,7 @@ bpfjit_generate_code(struct bpf_insn *insns, size_t insn_count)
 
 	/* a list of jumps to out-of-bound return from a generated function */
 	struct sljit_jump **ret0;
-	size_t ret0_size, ret0_maxsize;
+	size_t ret0_size = 0, ret0_maxsize = 0;
 
 	struct bpfjit_insn_data *insn_dat;
 
@@ -1258,7 +1243,7 @@ bpfjit_generate_code(struct bpf_insn *insns, size_t insn_count)
 	if (returns_maxsize  == 0)
 		goto fail;
 
-	insn_dat = BPFJIT_MALLOC(insn_count * sizeof(insn_dat[0]));
+	insn_dat = BPFJIT_ALLOC(insn_count * sizeof(insn_dat[0]));
 	if (insn_dat == NULL)
 		goto fail;
 
@@ -1268,13 +1253,13 @@ bpfjit_generate_code(struct bpf_insn *insns, size_t insn_count)
 	ret0_size = 0;
 	ret0_maxsize = get_ret0_size(insns, insn_dat, insn_count);
 	if (ret0_maxsize > 0) {
-		ret0 = BPFJIT_MALLOC(ret0_maxsize * sizeof(ret0[0]));
+		ret0 = BPFJIT_ALLOC(ret0_maxsize * sizeof(ret0[0]));
 		if (ret0 == NULL)
 			goto fail;
 	}
 
 	returns_size = 0;
-	returns = BPFJIT_MALLOC(returns_maxsize * sizeof(returns[0]));
+	returns = BPFJIT_ALLOC(returns_maxsize * sizeof(returns[0]));
 	if (returns == NULL)
 		goto fail;
 
@@ -1734,13 +1719,13 @@ fail:
 		sljit_free_compiler(compiler);
 
 	if (insn_dat != NULL)
-		BPFJIT_FREE(insn_dat);
+		BPFJIT_FREE(insn_dat, insn_count * sizeof(insn_dat[0]));
 
 	if (returns != NULL)
-		BPFJIT_FREE(returns);
+		BPFJIT_FREE(returns, returns_maxsize * sizeof(returns[0]));
 
 	if (ret0 != NULL)
-		BPFJIT_FREE(ret0);
+		BPFJIT_FREE(ret0, ret0_maxsize * sizeof(ret0[0]));
 
 	return (bpfjit_function_t)rv;
 }
