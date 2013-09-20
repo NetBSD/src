@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.38 2013/07/19 11:52:56 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.39 2013/09/20 10:51:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -57,6 +57,7 @@ const char copyright[] = "Copyright (c) 2006-2013 Roy Marples";
 #include "config.h"
 #include "common.h"
 #include "control.h"
+#include "dev.h"
 #include "dhcpcd.h"
 #include "dhcp6.h"
 #include "eloop.h"
@@ -64,8 +65,7 @@ const char copyright[] = "Copyright (c) 2006-2013 Roy Marples";
 #include "if-pref.h"
 #include "ipv4.h"
 #include "ipv6.h"
-#include "ipv6ns.h"
-#include "ipv6rs.h"
+#include "ipv6nd.h"
 #include "net.h"
 #include "platform.h"
 #include "script.h"
@@ -162,6 +162,7 @@ cleanup(void)
 	free(ifdv);
 #endif
 
+	dev_stop();
 	if (linkfd != -1)
 		close(linkfd);
 	if (pidfd > -1) {
@@ -209,6 +210,23 @@ daemonise(void)
 	pid_t pid;
 	char buf = '\0';
 	int sidpipe[2], fd;
+
+	if (options & DHCPCD_DAEMONISE && !(options & DHCPCD_DAEMONISED)) {
+		if (options & DHCPCD_WAITIP4 &&
+		    !ipv4_addrexists(NULL))
+			return -1;
+		if (options & DHCPCD_WAITIP6 &&
+		    !ipv6nd_addrexists(NULL) &&
+		    !dhcp6_addrexists(NULL))
+			return -1;
+		if ((options &
+		    (DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) ==
+		    DHCPCD_WAITIP &&
+		    !ipv4_addrexists(NULL) &&
+		    !ipv6nd_addrexists(NULL) &&
+		    !dhcp6_addrexists(NULL))
+			return -1;
+	}
 
 	eloop_timeout_delete(handle_exit_timeout, NULL);
 	if (options & DHCPCD_DAEMONISED || !(options & DHCPCD_DAEMONISE))
@@ -282,7 +300,7 @@ stop_interface(struct interface *ifp)
 	// Remove the interface from our list
 	TAILQ_REMOVE(ifaces, ifp, next);
 	dhcp6_drop(ifp, NULL);
-	ipv6rs_drop(ifp);
+	ipv6nd_drop(ifp);
 	dhcp_drop(ifp, "STOP");
 	dhcp_close(ifp);
 	eloop_timeout_delete(NULL, ifp);
@@ -384,14 +402,8 @@ handle_carrier(int carrier, int flags, const char *ifname)
 {
 	struct interface *ifp;
 
-	if (!(options & DHCPCD_LINK))
-		return;
 	ifp = find_interface(ifname);
-	if (ifp == NULL) {
-		handle_interface(1, ifname);
-		return;
-	}
-	if (!(ifp->options->options & DHCPCD_LINK))
+	if (ifp == NULL || !(ifp->options->options & DHCPCD_LINK))
 		return;
 
 	if (carrier == LINK_UNKNOWN)
@@ -409,7 +421,7 @@ handle_carrier(int carrier, int flags, const char *ifname)
 			ifp->carrier = LINK_DOWN;
 			dhcp_close(ifp);
 			dhcp6_drop(ifp, "EXPIRE6");
-			ipv6rs_drop(ifp);
+			ipv6nd_drop(ifp);
 			/* Don't blindly delete our knowledge of LL addresses.
 			 * We need to listen to what the kernel does with
 			 * them as some OS's will remove, mark tentative or
@@ -452,7 +464,7 @@ start_interface(void *arg)
 	if (ifo->options & DHCPCD_IPV6) {
 		if (ifo->options & DHCPCD_IPV6RS &&
 		    !(ifo->options & DHCPCD_INFORM))
-			ipv6rs_start(ifp);
+			ipv6nd_startrs(ifp);
 
 		if (!(ifo->options & DHCPCD_IPV6RS)) {
 			if (ifo->options & DHCPCD_IA_FORCED)
@@ -515,11 +527,11 @@ init_state(struct interface *ifp, int argc, char **argv)
 
 	if (ifo->options & DHCPCD_LINK) {
 		switch (carrier_status(ifp)) {
-		case 0:
+		case LINK_DOWN:
 			ifp->carrier = LINK_DOWN;
 			reason = "NOCARRIER";
 			break;
-		case 1:
+		case LINK_UP:
 			ifp->carrier = LINK_UP;
 			reason = "CARRIER";
 			break;
@@ -751,6 +763,7 @@ handle_signal(int sig, siginfo_t *siginfo, __unused void *context)
 			break;
 		if (do_release)
 			ifp->options->options |= DHCPCD_RELEASE;
+		ifp->options->options |= DHCPCD_EXITING;
 		stop_interface(ifp);
 	}
 	exit(EXIT_FAILURE);
@@ -798,7 +811,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 					len++;
 					if (D6_STATE_RUNNING(ifp))
 						len++;
-					if (ipv6rs_has_ra(ifp))
+					if (ipv6nd_has_ra(ifp))
 						len++;
 				}
 				len = write(fd->fd, &len, sizeof(len));
@@ -816,7 +829,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 						len++;
 						if (D6_STATE_RUNNING(ifp))
 							len++;
-						if (ipv6rs_has_ra(ifp))
+						if (ipv6nd_has_ra(ifp))
 							len++;
 					}
 				}
@@ -888,6 +901,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 				continue;
 			if (do_release)
 				ifp->options->options |= DHCPCD_RELEASE;
+			ifp->options->options |= DHCPCD_EXITING;
 			stop_interface(ifp);
 		}
 		return 0;
@@ -1188,7 +1202,7 @@ main(int argc, char **argv)
 
 #if 0
 	if (options & DHCPCD_IPV6RS && disable_rtadv() == -1) {
-		syslog(LOG_ERR, "ipv6rs: %m");
+		syslog(LOG_ERR, "disable_rtadvd: %m");
 		options &= ~DHCPCD_IPV6RS;
 	}
 #endif
@@ -1213,6 +1227,12 @@ main(int argc, char **argv)
 		else
 			eloop_event_add(linkfd, handle_link, NULL);
 	}
+
+	/* Start any dev listening plugin which may want to
+	 * change the interface name provided by the kernel */
+	if ((options & (DHCPCD_MASTER | DHCPCD_DEV)) ==
+	    (DHCPCD_MASTER | DHCPCD_DEV))
+		dev_start(dev_load);
 
 	ifaces = discover_interfaces(ifc, ifv);
 	for (i = 0; i < ifc; i++) {
