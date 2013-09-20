@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2013/06/21 21:09:34 roy Exp $
+# $NetBSD: Makefile,v 1.16 2013/09/20 10:58:16 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -14,7 +14,7 @@ SRCS+=		arp.c dhcp.c ipv4.c ipv4ll.c
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
-SRCS+=		ipv6.c ipv6rs.c ipv6ns.c dhcp6.c
+SRCS+=		ipv6.c ipv6nd.c dhcp6.c
 .endif
 
 DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
@@ -46,6 +46,7 @@ SERVICESTATUS=		service_command $$1 status >/dev/null 2>\&1
 .for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 ${f}:	${f}.in
 	${TOOL_SED} -e 's:@SYSCONFDIR@:/etc:g' -e 's:@DBDIR@:/var/db:g' \
+	    -e 's:@LIBDIR@:/lib:g' \
 	    -e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
 	    -e 's:@SCRIPT@:/libexec/dhcpcd-run-hooks:g' \
 	    -e 's:@SERVICEEXISTS@:[ -x /etc/rc.d/$$1 ]:g' \
