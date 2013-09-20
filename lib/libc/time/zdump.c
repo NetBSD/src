@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.30 2013/07/17 23:09:26 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.31 2013/09/20 19:06:54 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.30 2013/07/17 23:09:26 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.31 2013/09/20 19:06:54 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -27,7 +27,6 @@ __RCSID("$NetBSD: zdump.c,v 1.30 2013/07/17 23:09:26 christos Exp $");
 #include "time.h"	/* for struct tm */
 #include "stdlib.h"	/* for exit, malloc, atoi */
 #include <err.h>
-#include "float.h"	/* for FLT_MAX and DBL_MAX */
 #include "ctype.h"	/* for isalpha et al. */
 #ifndef isascii
 #define isascii(x) 1
@@ -64,9 +63,15 @@ typedef int int_fast32_t;
 # if defined LLONG_MAX || defined __LONG_LONG_MAX__
 typedef long long intmax_t;
 #  define PRIdMAX "lld"
+#  ifdef LLONG_MAX
+#   define INTMAX_MAX LLONG_MAX
+#  else
+#   define INTMAX_MAX __LONG_LONG_MAX__
+#  endif
 # else
 typedef long intmax_t;
 #  define PRIdMAX "ld"
+#  define INTMAX_MAX LONG_MAX
 # endif
 #endif
 #ifndef SCNdMAX
@@ -144,6 +149,17 @@ typedef long intmax_t;
 #define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
+#define SECSPER400YEARS	(SECSPERNYEAR * (intmax_t) (300 + 3)	\
+			 + SECSPERLYEAR * (intmax_t) (100 - 3))
+
+/*
+** True if SECSPER400YEARS is known to be representable as an
+** intmax_t.  It's OK that SECSPER400YEARS_FITS can in theory be false
+** even if SECSPER400YEARS is representable, because when that happens
+** the code merely runs a bit more slowly, and this slowness doesn't
+** occur on any practical platform.
+*/
+enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 
 #ifndef HAVE_GETTEXT
 #define HAVE_GETTEXT 0
@@ -205,26 +221,12 @@ extern int	optind;
 
 /* The minimum and maximum finite time values.  */
 static time_t	absolute_min_time =
-   ((time_t) 0.5 == 0.5
-    ? (sizeof (time_t) == sizeof (float) ? (time_t) -FLT_MAX
-       : sizeof (time_t) == sizeof (double) ? (time_t) -DBL_MAX
-       : sizeof (time_t) == sizeof (long double) ? (time_t) -LDBL_MAX
-       : 0)
-#ifndef TIME_T_FLOATING
-    : (time_t) -1 < 0
+  ((time_t) -1 < 0
     ? (time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1)
-#endif
     : 0);
 static time_t	absolute_max_time =
-  ((time_t) 0.5 == 0.5
-   ? (sizeof (time_t) == sizeof (float) ? (time_t) FLT_MAX
-      : sizeof (time_t) == sizeof (double) ? (time_t) DBL_MAX
-      : sizeof (time_t) == sizeof (long double) ? (time_t) LDBL_MAX
-      : -1)
-#ifndef TIME_T_FLOATING
-   : (time_t) -1 < 0
-   ? - (~ 0 < 0) - ((time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1))
-#endif
+  ((time_t) -1 < 0
+    ? - (~ 0 < 0) - ((time_t) -1 << (CHAR_BIT * sizeof (time_t) - 1))
    : -1);
 static size_t	longest;
 static char *	progname;
@@ -235,7 +237,6 @@ static void	abbrok(const char * abbrp, const char * zone);
 static intmax_t	delta(struct tm * newp, struct tm * oldp) ATTRIBUTE_PURE;
 static void	dumptime(const struct tm * tmp);
 static time_t	hunt(char * name, time_t lot, time_t	hit);
-static void	checkabsolutes(void);
 static void	show(char * zone, time_t t, int v);
 static const char *	tformat(void);
 static time_t	yeartot(long y) ATTRIBUTE_PURE;
@@ -255,7 +256,7 @@ my_localtime(time_t *tp)
 
 		tm = *tmp;
 		t = mktime(&tm);
-		if (t - *tp >= 1 || *tp - t >= 1) {
+		if (t != *tp) {
 			(void) fflush(stdout);
 			(void) fprintf(stderr, "\n%s: ", progname);
 			(void) fprintf(stderr, tformat(), *tp);
@@ -395,7 +396,6 @@ main(int argc, char *argv[])
 				exit(EXIT_FAILURE);
 			}
 		}
-		checkabsolutes();
 		if (cutarg != NULL || cuttimes == NULL) {
 			cutlotime = yeartot(cutloyear);
 			cuthitime = yeartot(cuthiyear);
@@ -464,7 +464,7 @@ main(int argc, char *argv[])
 		t = absolute_min_time;
 		if (!Vflag) {
 			show(argv[i], t, TRUE);
-			t += SECSPERHOUR * HOURSPERDAY;
+			t += SECSPERDAY;
 			show(argv[i], t, TRUE);
 		}
 		if (t < cutlotime)
@@ -475,9 +475,11 @@ main(int argc, char *argv[])
 			(void) strncpy(buf, abbr(&tm), (sizeof buf) - 1);
 		}
 		for ( ; ; ) {
-			if (t >= cuthitime || t >= cuthitime - SECSPERHOUR * 12)
+			newt = (t < absolute_max_time - SECSPERDAY / 2
+				? t + SECSPERDAY / 2
+				: absolute_max_time);
+			if (cuthitime <= newt)
 				break;
-			newt = t + SECSPERHOUR * 12;
 			newtmp = localtime(&newt);
 			if (newtmp != NULL)
 				newtm = *newtmp;
@@ -500,9 +502,9 @@ main(int argc, char *argv[])
 		}
 		if (!Vflag) {
 			t = absolute_max_time;
-			t -= SECSPERHOUR * HOURSPERDAY;
+			t -= SECSPERDAY;
 			show(argv[i], t, TRUE);
-			t += SECSPERHOUR * HOURSPERDAY;
+			t += SECSPERDAY;
 			show(argv[i], t, TRUE);
 		}
 	}
@@ -514,44 +516,45 @@ main(int argc, char *argv[])
 	return EXIT_FAILURE;
 }
 
-static void
-checkabsolutes(void)
-{
-	if (absolute_max_time < absolute_min_time) {
-		(void) fprintf(stderr,
-_("%s: use of -v on system with floating time_t other than float or double\n"),
-			       progname);
-		exit(EXIT_FAILURE);
-	}
-}
-
 static time_t
 yeartot(const long y)
 {
-	intmax_t	myy;
-	int_fast32_t	seconds;
+	intmax_t	myy, seconds, years;
 	time_t		t;
 
 	myy = EPOCH_YEAR;
 	t = 0;
-	while (myy != y) {
-		if (myy < y) {
+	while (myy < y) {
+		if (SECSPER400YEARS_FITS && 400 <= y - myy) {
+			intmax_t diff400 = (y - myy) / 400;
+			if (INTMAX_MAX / SECSPER400YEARS < diff400)
+				return absolute_max_time;
+			seconds = diff400 * SECSPER400YEARS;
+			years = diff400 * 400;
+                } else {
 			seconds = isleap(myy) ? SECSPERLYEAR : SECSPERNYEAR;
-			++myy;
-			if (t > absolute_max_time - seconds) {
-				t = absolute_max_time;
-				break;
-			}
-			t += seconds;
-		} else {
-			--myy;
-			seconds = isleap(myy) ? SECSPERLYEAR : SECSPERNYEAR;
-			if (t < absolute_min_time + seconds) {
-				t = absolute_min_time;
-				break;
-			}
-			t -= seconds;
+			years = 1;
 		}
+		myy += years;
+		if (t > absolute_max_time - seconds)
+			return absolute_max_time;
+		t += seconds;
+	}
+	while (y < myy) {
+		if (SECSPER400YEARS_FITS && y + 400 <= myy && myy < 0) {
+			intmax_t diff400 = (myy - y) / 400;
+			if (INTMAX_MAX / SECSPER400YEARS < diff400)
+				return absolute_min_time;
+			seconds = diff400 * SECSPER400YEARS;
+			years = diff400 * 400;
+		} else {
+			seconds = isleap(myy - 1) ? SECSPERLYEAR : SECSPERNYEAR;
+			years = 1;
+		}
+		myy -= years;
+		if (t < absolute_min_time + seconds)
+			return absolute_min_time;
+		t -= seconds;
 	}
 	return t;
 }
@@ -635,7 +638,7 @@ show(char *zone, time_t t, int v)
 			(void) printf(tformat(), t);
 		} else {
 			dumptime(tmp);
-			(void) printf(" UTC");
+			(void) printf(" UT");
 		}
 		(void) printf(" = ");
 	}
@@ -676,11 +679,6 @@ abbr(struct tm *tmp)
 static const char *
 tformat(void)
 {
-	if (0.5 == (time_t) 0.5) {	/* floating */
-		if (sizeof (time_t) > sizeof (double))
-			return "%Lg";
-		return "%g";
-	}
 	if (0 > (time_t) -1) {		/* signed */
 		if (sizeof (time_t) == sizeof (intmax_t))
 			return "%"PRIdMAX;
