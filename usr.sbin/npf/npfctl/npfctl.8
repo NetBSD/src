@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.14 2013/09/19 12:05:11 rmind Exp $
+.\"	$NetBSD: npfctl.8,v 1.15 2013/09/20 21:30:49 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@ Remove a rule from a dynamic ruleset specified by
 .Ar name .
 This method uses SHA1 hash computed on a rule to identify it.
 Although very unlikely, it is subject to hash collisions.
-For a fully reliable and more efficient method, it is recommended to use 
+For a fully reliable and more efficient method, it is recommended to use
 .Ic rem-id
 command.
 .It Ic rule Ar name Ic rem-id Aq id
