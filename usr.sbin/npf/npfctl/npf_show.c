@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.1 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.2 2013/09/20 03:03:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.1 2013/09/19 01:04:45 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.2 2013/09/20 03:03:52 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -482,7 +482,6 @@ npfctl_ruleset_show(int fd, const char *ruleset_name)
 		return error;
 	}
 	while ((rl = npf_rule_iterate(ncf, &level)) != NULL) {
-		print_indent(ctx, level);
 		npfctl_print_rule(ctx, rl);
 	}
 	npf_config_destroy(ncf);
