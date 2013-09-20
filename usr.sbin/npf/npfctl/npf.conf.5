@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.30 2013/09/19 12:05:11 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.31 2013/09/20 03:03:52 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2013
+.Dd September 20, 2013
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -236,19 +236,21 @@ proc		= "procedure" proc-name "{" *( proc-call [ new-line ] ) "}"
 proc-opts	= key " " val [ "," proc-opts ]
 proc-call	= call-name ":" proc-opts new-line
 
-; Group definition and the ruleset.
+; Group definition and the rule list.
 
-group		= "group" "(" ( "default" | group-opts ) ")" "{" ruleset "}"
-group-opts	= [ "name" string ] [ "interface" interface ] [ "in" | "out" ]
-ruleset		= [ rule new-line ] [ ruleset ]
+group		= "group" ( "default" | group-opts ) "{" rule-list "}"
+group-opts	= name-string [ "in" | "out" ] [ "on" interface ]
+rule-list	= [ rule new-line ] rule-list
 
-rule		= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
-		  [ "in" | out" ] [ "final" ] [ "on" iface ]
-		  [ "family" fam-opt ] [ "proto" protocol [ proto-opts ] ]
+static-rule	= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
+		  [ "in" | out" ] [ "final" ] [ "on" interface ]
+		  [ "family" family-opt ] [ "proto" protocol [ proto-opts ] ]
 		  ( "all" | filt-opts ) [ "apply" proc-name ]
+dynamic-ruleset	= "ruleset" group-opts
+rule		= static-rule | dynamic-ruleset
 
 block-opts	= "return-rst" | "return-icmp" | "return"
-fam-opt		= "inet" | "inet6"
+family-opt	= "inet" | "inet6"
 proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 
@@ -291,7 +293,7 @@ procedure "log" {
 	log: npflog0
 }
 
-group (name "external", interface $ext_if) {
+group "external" on $ext_if {
 	pass stateful out final all
 
 	block in final from \*[Lt]1\*[Gt]
@@ -302,13 +304,16 @@ group (name "external", interface $ext_if) {
 	pass stateful in final proto udp to $ext_if port 33434-33600	# Traceroute
 }
 
-group (name "internal", interface $int_if) {
+group "internal" on $int_if {
 	block in all
-	pass in final from \*[Lt]2\*[Gt]
+	block in final from \*[Lt]2\*[Gt]
+
+	# Ingress filtering as per RFC 2827.
+	pass in final from $localnet
 	pass out final all
 }
 
-group (default) {
+group default {
 	pass final on lo0 all
 	block all
 }
