@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.22 2013/09/20 10:56:32 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.23 2013/09/20 21:40:56 wiz Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -311,7 +311,7 @@ process running on the
 .Ar interface
 to release its lease and de-configure the
 .Ar interface .
-If no 
+If no
 .Ar interface
 is specified then this applies to all interfaces.
 If no interfaces are left running,
@@ -334,7 +334,7 @@ An extra 100 will be added for wireless interfaces.
 Notifies
 .Nm
 to reload its configuration and rebind the specified
-.Ar interface . 
+.Ar interface .
 If no interface is specified then this applies to all interfaces.
 If
 .Nm
