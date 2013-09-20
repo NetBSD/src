@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.43 2013/09/20 03:14:37 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.44 2013/09/20 03:49:23 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -736,4 +736,10 @@ etc/ssh/ssh_known_hosts				1.8
 
 	Update project host keys.
 	[spz, ticket #947]
+
+sys/dev/pci/piixpm.c				1.42 via patch
+sys/dev/pci/piixpmreg.h				1.6
+
+	Expose iic busses.  (Needed for ticket #929)
+	[fair, ticket #936]
 
