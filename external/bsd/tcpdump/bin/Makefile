@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2013/04/06 19:33:07 christos Exp $	
+#	$NetBSD: Makefile,v 1.9 2013/09/21 22:28:12 joerg Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
-CWARNFLAGS.clang+=	-Wno-constant-logical-operand
+CWARNFLAGS.clang+=	-Wno-constant-logical-operand -Wno-error=unused-function
 
 .include <bsd.own.mk>
 

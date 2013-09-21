@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.136 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.i386,v 1.137 2013/09/21 22:28:12 joerg Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -94,6 +94,7 @@
 ./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rdseedintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rtmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/shaintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/wmmintrin.h		comp-c-include		llvm
