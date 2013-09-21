@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.198 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.amd64,v 1.199 2013/09/21 22:28:12 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -163,6 +163,7 @@
 ./usr/include/clang-3.4/prfchwintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rdseedintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/rtmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.4/shaintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.4/wmmintrin.h		comp-c-include		llvm
