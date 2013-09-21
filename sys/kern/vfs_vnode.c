@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.19 2013/02/13 14:03:48 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.20 2013/09/21 19:51:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -121,10 +121,12 @@
  *
  *	Note: if VI_CLEAN is set, vnode_t::v_interlock will be released while
  *	mntvnode_lock is still held.
+ *
+ *	See PR 41374.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.19 2013/02/13 14:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.20 2013/09/21 19:51:33 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
