@@ -1,2 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/04/11 16:59:16 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2013/09/21 22:28:12 joerg Exp $
 .include "../Makefile.inc"
+
+CWARNFLAGS.clang+=	-Wno-error=unused-function
