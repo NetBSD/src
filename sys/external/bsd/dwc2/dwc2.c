@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.1 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.2 2013/09/21 13:17:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.1 2013/09/05 20:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.2 2013/09/21 13:17:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1240,10 +1240,11 @@ dwc2_device_start(usbd_xfer_handle xfer)
 		usb_device_request_t *req = &xfer->request;
 
 		DPRINTFN(3, "xfer=%p, type=0x%02x, request=0x%02x, wValue=0x%04x,"
-		    "wIndex=0x%04x len=%d, addr=%d, endpt=%d, dir=%s, speed=%d\n",
+		    "wIndex=0x%04x len=%d, addr=%d, endpt=%d, dir=%s, speed=%d"
+		    "mps=%d\n",
 		    xfer, req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), UGETW(req->wLength), dev->address,
-		    epnum, dir == UT_READ ? "in" :"out", dev->speed);
+		    epnum, dir == UT_READ ? "in" :"out", dev->speed, mps);
 
 		/* Copy request packet to our DMA buffer */
 		memcpy(KERNADDR(&dpipe->req_dma, 0), req, sizeof(*req));
@@ -1261,8 +1262,8 @@ dwc2_device_start(usbd_xfer_handle xfer)
 		    len, dir == UE_DIR_IN ? "in" : "out");
 	} else {
 		DPRINTFN(3, "xfer=%p, len=%d, flags=%d, addr=%d, endpt=%d,"
-		    " dir %s\n", xfer, xfer->length, xfer->flags, addr, epnum,
-		    dir == UT_READ ? "in" :"out");
+		    " mps=%d dir %s\n", xfer, xfer->length, xfer->flags, addr,
+		    epnum, mps, dir == UT_READ ? "in" :"out");
 
 		len = xfer->length;
 	}
