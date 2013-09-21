@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1079 2013/09/08 12:51:14 jmcneill Exp $
+#	$NetBSD: files,v 1.1080 2013/09/21 13:22:48 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1212,6 +1212,10 @@ file	dev/ic/sl811hs.c		slhci			needs-flag
 #
 device dotg: usbus, usbroothub, usb_dma
 file	dev/usb/dwc_otg.c		dotg			needs-flag
+
+# DesignWare HS OTG host controller
+#
+include "external/bsd/dwc2/conf/files.dwc2"
 
 # USB HID processing (as used by bluetooth and usb code)
 define	hid
