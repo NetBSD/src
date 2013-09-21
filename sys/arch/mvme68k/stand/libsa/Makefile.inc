@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/01/02 05:30:12 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2013/09/21 08:32:39 tsutsui Exp $
 
 S!= cd ${SA_EXTRADIR}/../../../..; pwd
 
@@ -9,8 +9,7 @@ SRC_sa=   dev_net.c
 
 SRC_mvme= exec_mvme.c
 
-SRC_here= SRT0.S \
-	  bugdev.c \
+SRC_here= bugdev.c \
 	  chiptotime.c clock.c \
 	  parse_args.c
 
