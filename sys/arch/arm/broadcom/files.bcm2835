@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.16 2013/03/24 19:55:19 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.17 2013/09/21 13:22:48 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -58,6 +58,10 @@ file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 # USB (BCM2835_USB_BASE)
 attach dotg at obio with dotg_amba
 file	arch/arm/broadcom/bcm2835_dotg.c	dotg	needs-flag
+
+# USB (BCM2835_USB_BASE)
+attach dwctwo at obio with bcmdwctwo
+file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 # GPIO misc. functions
 define	bcm2835_gpio_subr
