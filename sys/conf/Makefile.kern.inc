@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.161 2013/08/09 09:08:47 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.162 2013/09/21 22:28:12 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -88,6 +88,8 @@ CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":? \
     -Wno-shift-count-negative -Wno-shift-count-overflow:}
+
+CWARNFLAGS.ioconf.c= ${${ACTIVE_CC} == "clang":? -Wno-unused-const-variable :}
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}

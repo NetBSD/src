@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/07/07 21:36:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2013/09/21 22:28:12 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -27,6 +27,7 @@ INCS=	__wmmintrin_aes.h \
 	prfchwintrin.h \
 	rdseedintrin.h \
 	rtmintrin.h \
+	shaintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
 	wmmintrin.h \
@@ -71,10 +72,11 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
 	clang/Parse/AttrExprArgs.inc|-gen-clang-attr-expr-args-list \
 	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
-	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
+	clang/Sema/AttrParsedAttrImpl.inc|-gen-clang-attr-parsed-attr-impl \
 	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \
 	clang/Sema/AttrParsedAttrList.inc|-gen-clang-attr-parsed-attr-list \
 	clang/Sema/AttrSpellingListIndex.inc|-gen-clang-attr-spelling-index \
+	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
 	clang/Serialization/AttrPCHRead.inc|-gen-clang-attr-pch-read \
 	clang/Serialization/AttrPCHWrite.inc|-gen-clang-attr-pch-write
 

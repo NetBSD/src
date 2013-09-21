@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2013/08/11 14:42:04 tsutsui Exp $
+# $NetBSD: Makefile.inc,v 1.8 2013/09/21 22:28:12 joerg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -7,7 +7,7 @@ WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 USE_FORT?= yes	# network client/server
 CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-conversion -Wno-constant-logical-operand \
-			-Wno-format-security
+			-Wno-format-security -Wno-error=unused-const-variable
 
 DIST:=	${.PARSEDIR}/dist
 BIND:=	${.PARSEDIR}/../bind/dist
