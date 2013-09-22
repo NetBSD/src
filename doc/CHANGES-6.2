@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.49 2013/09/22 17:34:22 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.50 2013/09/22 20:30:55 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -497,6 +497,7 @@ sys/dev/pci/if_bgereg.h				1.57
 	Add support for BCM57762 and BCM57765, found in Apple's Thunderbolt
 	to Gigabit Ethernet adapter.  PR kern/46961
 	[tsutsui, ticket #652]
+
 sys/fs/udf/udf_allocation.c			1.34
 
 	Fix 32 bit issue in main file read-in function. On both 32 bit and
@@ -694,6 +695,7 @@ sys/net/npf/npf_inet.c				1.23
 	- npf_cache_all: clear NBUF_DATAREF_RESET since npf_cache_ip() handles
 	  it.
 	[riz, ticket #942]
+
 lib/libc/stdlib/_env.c				1.8
 
 	Don't scrub the environment unless we are going to change it.
@@ -715,6 +717,7 @@ sys/netinet6/in6.c				1.167 via patch
 	Include BRDADDR and NETMASK to the v4 ioctls we ban for v6; from
 	FreeBSD.
 	[spz, ticket #944]
+
 xsrc/external/mit/libX11/dist/src/xkb/XKBNames.c	patch
 xsrc/external/mit/libX11/dist/src/xkb/XKBGetMap.c	patch
 
