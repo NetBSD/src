@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.2,v 1.1.2.13 2013/09/22 05:15:57 riz Exp $
+# $NetBSD: CHANGES-6.1.2,v 1.1.2.14 2013/09/22 17:28:34 riz Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -107,4 +107,9 @@ usr.bin/flock/flock.1				1.9
 
 	flock(1) really appeared first in NetBSD 6.1
 	[khorben, ticket #951]
+
+sys/net/npf/npf_ctl.c				1.27
+
+	npfctl_rule: fix filtering of dynamic rules.
+	[rmind, ticket #952]
 
