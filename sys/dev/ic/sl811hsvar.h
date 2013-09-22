@@ -1,11 +1,11 @@
-/*	$NetBSD: sl811hsvar.h,v 1.9 2012/10/27 17:18:22 chs Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.10 2013/09/22 06:54:35 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
- * This file is public domain, meaning anyone can make any use of part or all 
- * of this file including copying into other works without credit.  Any use, 
- * modified or not, is solely the responsibility of the user.  If this file is 
- * part of a collection then use in the collection is governed by the terms of 
+ * This file is public domain, meaning anyone can make any use of part or all
+ * of this file including copying into other works without credit.  Any use,
+ * modified or not, is solely the responsibility of the user.  If this file is
+ * part of a collection then use in the collection is governed by the terms of
  * the collection.
  */
 
@@ -87,7 +87,7 @@ struct slhci_softc {
 /* last preinit arguments are: max current (in mA, not mA/2), port stride */
 /* register access uses byte access, but stride offsets the data port */
 int  slhci_supported_rev(uint8_t);
-void slhci_preinit(struct slhci_softc *, PowerFunc, bus_space_tag_t, 
+void slhci_preinit(struct slhci_softc *, PowerFunc, bus_space_tag_t,
     bus_space_handle_t, uint16_t, uint32_t);
 int  slhci_attach(struct slhci_softc *);
 int  slhci_detach(struct slhci_softc *, int);

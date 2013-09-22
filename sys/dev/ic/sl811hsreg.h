@@ -1,11 +1,11 @@
-/*	$NetBSD: sl811hsreg.h,v 1.3 2013/09/02 12:20:59 skrll Exp $	*/
+/*	$NetBSD: sl811hsreg.h,v 1.4 2013/09/22 06:54:35 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
- * This file is public domain, meaning anyone can make any use of part or all 
- * of this file including copying into other works without credit.  Any use, 
- * modified or not, is solely the responsibility of the user.  If this file is 
- * part of a collection then use in the collection is governed by the terms of 
+ * This file is public domain, meaning anyone can make any use of part or all
+ * of this file including copying into other works without credit.  Any use,
+ * modified or not, is solely the responsibility of the user.  If this file is
+ * part of a collection then use in the collection is governed by the terms of
  * the collection.
  */
 
@@ -15,7 +15,7 @@
 
 /*
  * note: pcmcia attachment uses 4 byte port with data repeated the last three
- * bytes; using 0x2 instead of 0x1 solves bus corruption on the Vadem Clio 
+ * bytes; using 0x2 instead of 0x1 solves bus corruption on the Vadem Clio
  * C-1000.  The main driver does not use these IDX and PORT values.
  */
 #define SL11_IDX_ADDR	(0x00)
