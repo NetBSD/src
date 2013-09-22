@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.37 2013/09/22 06:54:35 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.38 2013/09/22 09:21:56 adam Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.37 2013/09/22 06:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.38 2013/09/22 09:21:56 adam Exp $");
 
 #include "opt_slhci.h"
 
@@ -2321,12 +2321,6 @@ slhci_dotransfer(struct slhci_softc *sc)
  	while ((t->len[A] == -1 || t->len[B] == -1) &&
 	    (GOT_FIRST_TIMED_COND(spipe, t, spipe->frame <= t->frame) ||
 	    GOT_FIRST_CB(spipe, t))) {
-		LK_SLASSERT(spipe->xfer != NULL, sc, spipe, NULL, return);
-		LK_SLASSERT(spipe->ptype != PT_ROOT_CTRL && spipe->ptype !=
-		    PT_ROOT_INTR, sc, spipe, NULL, return);
-
-		/* Check that this transfer can fit in the remaining memory. */
-		spipe, t))) {
 		LK_SLASSERT(spipe->xfer != NULL, sc, spipe, NULL, return);
 		LK_SLASSERT(spipe->ptype != PT_ROOT_CTRL && spipe->ptype !=
 		    PT_ROOT_INTR, sc, spipe, NULL, return);
