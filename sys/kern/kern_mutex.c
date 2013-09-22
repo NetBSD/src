@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.55 2013/09/14 13:19:18 joerg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.56 2013/09/22 14:55:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.55 2013/09/14 13:19:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.56 2013/09/22 14:55:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -218,7 +218,7 @@ MUTEX_RELEASE(kmutex_t *mtx)
 	MUTEX_INHERITDEBUG(new, mtx->mtx_owner);
 	mtx->mtx_owner = new;
 }
-#else
+
 static inline void
 MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
 {
