@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.16 2012/11/27 18:12:23 riz Exp $
+.\"	$NetBSD: main,v 1.425.2.16.2.1 2013/09/22 22:43:10 riz Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -454,325 +454,74 @@ wouldn't exist.
 .if \n[FOR_RELEASE] \{\
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.2:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.2/CHANGES-5.2
-file in the top level directory of the NetBSD 5.2 release tree. An abbreviated list is as follows:
+CHANGES-5.2.1:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.2.1/CHANGES-5.2.1
+file in the top level directory of the NetBSD 5.2.1 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2010-012:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-012.txt.asc ,
-OpenSSL TLS extension parsing race condition
+NetBSD-SA2013-004:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc
+Vulnerabilities in grep
 .It
-NetBSD-SA2011-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-001.txt.asc ,
-BIND DoS due to improper handling of RRSIG records
+NetBSD-SA2013-005:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc
+bind Denial of Service (CVE-2013-4854)
 .It
-NetBSD-SA2011-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-002.txt.asc ,
-OpenSSL TLS extension parsing race condition
+NetBSD-SA2013-006:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc
+Arbitrary Kernel Read with netstat -P
 .It
-NetBSD-SA2011-003:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-003.txt.asc ,
-Exhausting kernel memory from user controlled value
+NetBSD-SA2013-007:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc
+Protocol handling issues in X Window System client libraries
 .It
-NetBSD-SA2011-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-004.txt.asc ,
-Kernel stack overflow via nested IPCOMP packet (CVE-2011-1547)
-.It
-NetBSD-SA2011-005:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-005.txt.asc ,
-ISC dhclient does not strip shell meta-characters (CVE-2011-0997)
-.It
-NetBSD-SA2011-006:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-006.txt.asc ,
-BIND DoS via packet with rrtype zero
-.It
-NetBSD-SA2011-007:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-007.txt.asc ,
-LZW decoding loop on manipulated compressed files
-.It
-NetBSD-SA2011-008:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-008.txt.asc ,
-OpenPAM privilege escalation (CVE-2010-1166)
-.It
-NetBSD-SA2011-009:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-009.txt.asc ,
-BIND resolver DoS
-.It
-NetBSD-SA2012-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-001.txt.asc ,
-OpenSSL buffer overflow in DER read function
-.It
-NetBSD-SA2012-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-002.txt.asc ,
-OpenSSL Invalid TLS/DTLS record attack
-.It
-NetBSD-SA2012-003:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-003.txt.asc ,
-Intel processors sysret to non-canonical address behaviour
-.It
-NetBSD-SA2012-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-004.txt.asc ,
-BIND resolver DoS when using DNSSEC Validation
+NetBSD-SA2013-009:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
+user settable small BPF buffer can cause a panic
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2010-012 do not affect
-NetBSD 5.2:
-.Lk http://www.NetBSD.org/support/security/patches-5.2.html .
-.Ss2 Other Security Fixes
-.(bullet
-openssl: Fix CVE-2010-3864, CVE-2010-4180, CVE-2011-0014, CVE-2011-4109, CVE-2011-4576, CVE-2012-0050, CVE-2012-2110, and CVE-2012-2333.
-.It
-postfix: Fix CVE-2011-0411 and CVE-2011-1720.
-.It
-xrdb: Fix CVE-2011-0465.
-.It
-.Xr dhcpcd 8 :
-Fix CVE-2011-996.
-.It
-BIND: Fix CVE-2011-1910, CVE-2011-0414, CVE-2011-2464, CVE-2011-4313, CVE-2012-3817, CVE-2012-4244, and CVE-2012-5166.
-.It
-Address CVE-2011-2895, buffer overflow in decompression, affecting multiple system utilities.
-.It
-.Xr bpf 4 :
-avoid stack memory disclosure.
-.bullet)
-.
+Advisories prior to NetBSD-SA2013-004 do not affect
+NetBSD 5.2.1:
+.Lk http://www.NetBSD.org/support/security/patches-5.2.1.html .
 .Ss2 Kernel
 .(bullet
-Fix
-.Xr ptrace 2
-PT_SYSCALL.
-.bullet)
-.
-.Ss2 File Systems
-.(bullet
-WAPBL: Fix an error that could lead to file system corruption and "freeing free block" panics.
+Fixed a panic triggered when killing a process waiting to start.
+(PR#44935):
+.Lk http://gnats.NetBSD.org/44935
 .It
-ext2fs: support inodes > 128 bytes, variable inode sizes, and 32 bit UID fields.
+Fixed a LOCKDEBUG panic in sysctl path.
+(PR#45827):
+.Lk http://gnats.netbsd.org/45827
 .It
-.Xr fss 4 :
-various fixes for snapshots.
-.It
-Numerous fixes for extended attributes on UFS1 file systems.
-.It
-Fix rename locking for UFS.
+Fixed diagnostic panic when killing a traced process.
+(PR#42309):
+.Lk http://gnats.netbsd.org/42309
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-.Xr wm 4 :
-add support for more chips, work around some other issues.
-.It
-.Xr bge 4 :
-add support for many more chips, and many bugfixes.
-.It
-.Xr ne 4 :
-add NE2000 with 8bit bus width support, and EtherNEC support.
-.It
-Fix NULL pointer dereferences in IPv6 ESP code paths.
-.It
-Make EtherIP in IPv6 input path work.
-.It
-Fix MPPE in pppd.
-.It
-Clean up setting ECN bit in TOS.
-.It
-Added SOCK_SEQPACKET to PL_LOCAL sockets.
-.It
-Prevent a crash when destroying an interface.
+Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
 .bullet)
 .
-.Ss2 Miscellaneous Drivers
+.Ss2 File Systems
 .(bullet
-.Xr btmagic 4 :
-add Apple Magic Mouse driver.
+.Xr fss 4 :
+Don't crash when running multiple "dump -X".
+(PR#47514):
+.Lk http://gnats.netbsd.org/47514
 .It
-.Xr rnd 4 :
-prevent crash if len field in ioctl(RNDADDDATA) is garbage.
-.It
-.Xr uts 4 :
-driver for USB touchscreens.
-.bullet)
-.
-.Ss2 Audio
-.(bullet
-.Xr hdaudio 4 :
-.(bullet
-Add support for NVidia controllers.
-.It
-Fix 32KHz playback. PR#43542.
-.bullet)
-.
-.bullet)
-.
-.Ss2 Storage
-.(bullet
-.Xr esiop 4
-/
-.Xr siop 4 :
-Improve error paths. PR#43278.
-.It
-.Xr aac 4 :
-support more boards.
-.It
-.Xr dk 4 :
-avoid a LOCKDEBUG panic on
-.Xr raid 4 .
-.It
-.Xr ciss 4 :
-Fix a performance problem. Also fix a DIAGNOSTIC panic.
-.It
-Fix an issue with >2TB disks.
-.It
-.(bullet
-.Xr raid 4 :
-.It
-Add support for >2TB raid devices.
-.It
-Add support for non-512-byte sector disks (up to 16KB).
-.It
-Add a hack to fix up disks with very old raidframe component labels.
-.bullet)
-.
-.It
-.Xr mpt 4 :
-Add byte-swapping so this works on bigendian platforms. Allow
-.Xr mpt 4
-to use tagged queueing on SAS adapters.
-.It
-.Xr vnd 4 :
-fix using sparse files as backing store.
-.It
-.Xr raid 4 :
-parity maps always have at least one parity region.
-.bullet)
-.
-.Ss2 Platform specific
-.(bullet
-x86 (amd64 and i386)
-.(bullet
-Fix an array overflow when cpuid >= 32.
-.It
-Xorg: add more support for Intel HD3000/4000 and some for HD5000.
-.It
-Various fixes to allow NetBSD to run unmodified under Linux KVM.
-.bullet)
-.
-.It
-amiga
-.(bullet
-Raise address of user stack to highest safe address, which increases available user address space by 256MB.
-.bullet)
-.
-.It
-atari
-.(bullet
-Add support for the SMC Elite Ultra Ethernet.
-.It
-Allow users to change serial console behavior with
-.Xr binpatch 8 .
-.It
-Fixes for scheduling callback functions.
-.bullet)
-.
-.It
-dreamcast: Add workaround to make audio work.
-.It
-hp300: Make install.md probe
-.Xr cd 4
-devices properly.
-.It
-hpcmips: Fix pcic kthread creation timing. PRs 41791 and 41164.
-.It
-m68k:
-.(bullet
-Ensure functions like
-.Xr mmap 2 ,
-.Xr mremap 2 ,
-.Xr shmat 2
-or
-.Xr sbrk 2
-return -1 in case of an error. A side benefit of this is to fix a segfault caused by jemalloc when
-.Xr mmap 2
-failed.
-.It
-Fix some bad results in FPE.
-.bullet)
-.
-.It
-macppc: pbms(4): Avoid an immediate crash during attach, and fix the aspect ratio of the trackpad on the geyser2 model.
-.It
-pmax: Make
-.Xr ksyms 4
-actually work.
-.It
-sh3: Fix logic error in copyinstr() when deciding whether to return EFAULT or ENAMETOOLONG.
-.It
-sparc
-.(bullet
-Many fixes for sparc SMP.
-.bullet)
-.
-.It
-vax
-.(bullet
-Corrected the definition of leap year for vax.
-.bullet)
-.
-.It
-x68k:
-.(bullet
-Fix boot problem on X68030+060turbo in 060 mode.
-.It
-Fix panics on heavy key strokes while running X.
-.bullet)
-.
-.It
-xen
-.(bullet
-Fix xennet hotplug and implement feature-rx-copy, improving support under Linux Dom0.
-.It
-xbdback: prevent dom0 pool corruption.
-.It
-Fix xenbus probe so NetBSD DomU can boot on Linux Dom0 with xl.
-.It
-Fix random kernel panics on domains with large memory.
-.It
-Expose Xen kernfs entries inside a domU to make it possible to use xentools inside a domU to query XenStore entries.
-.bullet)
-.
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-.Xr passwd 1 :
-Log successful and unsuccessful attempts to change passwords, via -l or PAM.
+Update tzdata to 2013e.
 .It
-.Xr ftp 1 :
-.(bullet
-Avoid NULL dereference in log output.
+Update IPv6 DNS servers in sysinst.
 .It
-Parse HTTP 'Date' entries in the 'C' locale rather than the user's.
-.bullet)
-.
+MAKEDEV: the console major number is not always 0.
 .It
-Improve 'boot -z' support.
-.It
-Update to libfetch 2.31.
-.It
-.Xr top 1 :
-improve the default display for large numbers of CPUs.
-.It
-Updated 32/64-bit compat to version 2.
-.It
-Stop
-.Xr nfsd 8
-from exiting prematurely during port-scan.
-.It
-.Xr resize_ffs 8 :
-support growing and shrinking all FFSv1 and growing all FFSv2 file systems.
+Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
 .bullet)
 .
 .\} \" \n[FOR_RELEASE]
@@ -855,6 +604,8 @@ Changes between the initial 5.0 branch and final release of 5.0.
 Changes between the 5.0 and 5.1 releases.
 .It Li CHANGES-5.2
 Changes between the 5.1 and 5.2 releases.
+.It Li CHANGES-5.2.1
+Changes between the 5.2 and 5.2.1 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
