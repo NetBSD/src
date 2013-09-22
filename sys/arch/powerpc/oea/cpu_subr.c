@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.78 2013/09/22 18:49:10 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.79 2013/09/22 18:56:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.78 2013/09/22 18:49:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.79 2013/09/22 18:56:11 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -302,7 +302,7 @@ cpu_model_init(void)
 		/* Enable address broadcasting for MP systems */
 		hid1 |= HID1_SYNCBE | HID1_ABE;
 
-		mtspr(SPR_HID0, hid1);
+		mtspr(SPR_HID1, hid1);
 		__asm volatile("sync;isync");
 
 	} else if (vers == IBM750FX || vers == IBM750GX) {
