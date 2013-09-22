@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.2 2012/02/02 08:23:02 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.3 2013/09/22 22:12:05 riz Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -451,152 +451,112 @@ possible, it's likely that
 .Nx
 wouldn't exist.
 .
-.Ss "Dedication"
-.Pp
-.
-.Nx
-5.1.2 is dedicated to the memory of Yoshihiro Masuda, who passed away
-in May 2011.
-.Pp
-He was a spiritual pillar of the BSD community in Japan.
-Through an impressive number of books and articles on BSD, he gave courage
-to BSD developers.
-We remember his passion and deep love for BSD.
-.
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between the NetBSD 5.1 and 5.1.2 Releases
-.Pp
-.Nx
-\*V
-is the second critical/security update of the NetBSD 5.1 release branch.
-It represents a selected subset of fixes deemed critical for security or
-stability reasons.
-.Pp
-Please note that all fixes in security/critical updates (i.e., NetBSD 5.0.1,
-5.0.2, etc.) are cumulative, so the latest update contains all such fixes
-since the corresponding minor release.
-These fixes also appear in minor releases (i.e., NetBSD 5.1, 5.2, etc.).
-.
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.1.2:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.2/CHANGES-5.1.2
-file in the top level directory of the NetBSD 5.1.2 release tree.
-Note that since 5.1.1 was not announced, the changes below are relative to
-5.1, not 5.1.1.
-An abbreviated list is as follows:
+CHANGES-5.1.3:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.3/CHANGES-5.1.3
+file in the top level directory of the NetBSD 5.1.3 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2010-012:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-012.txt.asc ,
-OpenSSL TLS extension parsing race condition.
+NetBSD-SA2012-001:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-001.txt.asc
+OpenSSL buffer overflow in DER read function
 .It
-NetBSD-SA2011-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-001.txt.asc ,
-BIND DoS due to improper handling of RRSIG records.
+NetBSD-SA2012-002:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-002.txt.asc
+OpenSSL Invalid TLS/DTLS record attack
 .It
-NetBSD-SA2011-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-002.txt.asc ,
-OpenSSL TLS extension parsing race condition.
+NetBSD-SA2012-003:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-003.txt.asc
+Intel processors sysret to non-canonical address behaviour
 .It
-NetBSD-SA2011-003:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-003.txt.asc ,
-Exhausting kernel memory from user controlled value.
+NetBSD-SA2012-004:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2012-004.txt.asc
+BIND resolver DoS when using DNSSEC Validation
 .It
-NetBSD-SA2011-004:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-004.txt.asc ,
-Kernel stack overflow via nested IPCOMP packet.
+NetBSD-SA2013-004:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc
+Vulnerabilities in grep
 .It
-NetBSD-SA2011-005:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-005.txt.asc ,
-ISC dhclient does not strip shell meta-characters in environment variables passed to scripts.
+NetBSD-SA2013-005:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc
+bind Denial of Service (CVE-2013-4854)
 .It
-NetBSD-SA2011-006:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-006.txt.asc ,
-BIND DoS via packet with rrtype zero.
+NetBSD-SA2013-006:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc
+Arbitrary Kernel Read with netstat -P
 .It
-NetBSD-SA2011-007:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-007.txt.asc ,
-LZW decoding loop on manipulated compressed files.
+NetBSD-SA2013-007:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc
+Protocol handling issues in X Window System client libraries
 .It
-NetBSD-SA2011-008:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-008.txt.asc ,
-OpenPAM privilege escalation.
-.It
-NetBSD-SA2011-009:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2011-009.txt.asc ,
-BIND resolver DoS.
+NetBSD-SA2013-009:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
+user settable small BPF buffer can cause a panic
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2010-012 do not affect
-NetBSD 5.1.2:
-.Lk http://www.NetBSD.org/support/security/patches-5.1.2.html .
+Advisories prior to NetBSD-SA2012-001 do not affect
+NetBSD 5.1.3:
+.Lk http://www.NetBSD.org/support/security/patches-5.1.3.html .
 .Ss2 Other Security Fixes
 .(bullet
-Fix a buffer overflow in libtelnet.
-.It
-OpenSSL: Fix CVE-2010-4180, CVE-2012-0050, CVE-2011-4109, CVE-2011-4109,
-and CVE-2011-4576.
-.It
-Postfix: Update to 2.6.9, fixing CVE-2011-0411.
-.It
-dhcpcd: Fix CVE-2011-0996.
-.It
-xrdb: Fix CVE-2011-0465.
-.It
-.Xr glob 3 :
-Prevent resource DoS from brace expansion.
-.It
-OpenSSH: Fix CVE-2012-0814.
+OpenSSL: Fix CVE-2012-2110, CVE-2012-2333.
 .bullet)
 .
 .Ss2 Kernel
 .(bullet
-.Xr wapbl 4 :
-Fix errors that can lead to file system corruption and panics.
+Fixed a panic triggered when killing a process waiting to start.
+(PR#44935):
+.Lk http://gnats.NetBSD.org/44935
 .It
-Several stability fixes.
+Fixed a LOCKDEBUG panic in sysctl path.
+(PR#45827):
+.Lk http://gnats.netbsd.org/45827
+.It
+Fixed diagnostic panic when killing a traced process.
+(PR#42309):
+.Lk http://gnats.netbsd.org/42309
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-Clean up setting ECN bit in TOS. PR 44742.
+Fixed a regression in netsmb introduced in NetBSD 5.1.2.
+(PR#44092):
+.Lk http://gnats.netbsd.org/44092
 .It
-Prevent NFS server hang under load. PR 45093.
+Disallow passing of kqueue descriptors via SCM_RIGHT anxiliary socket messages.
+(PR#46463):
+.Lk http://gnats.netbsd.org/46463
 .It
-.Xr gem 4 :
-Fix corrupted packet problem on 100Mb/s half duplex links.
+Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
+.bullet)
+.
+.Ss2 File Systems
+.(bullet
+.Xr fss 4 :
+Don't crash when running multiple "dump -X".
+(PR#47514):
+.Lk http://gnats.netbsd.org/47514
+.It
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-Update and add some TNF ssh keys to /etc/ssh/ssh_known_hosts.
+Update tzdata to 2013e.
 .It
-Update tzdata to 2011n.
+sparc64: Fixed the root cause of the hack "disable optimizations for uvm_bio.c on 32 bit kernels."
+.It
+x68k: Fix the clock when timecounter uses "mfp" (the default)
+.It
+Update IPv6 DNS servers in sysinst.
+.It
+MAKEDEV: the console major number is not always 0.
+.It
+Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
 .bullet)
 .
-.Ss2 "Known Problems"
-.Pp
-Using block device nodes (e.g., wd0a) directly for I/O may cause a kernel
-crash when the file system containing
-.Pa /dev
-is FFS and is mounted with -o log.
-Workaround: use raw disk devices (e.g., rwd0a), or remount the file system
-without -o log.
-.Pp
-Occassionally, gdb may cause a process that is being debugged to hang
-when
-.Dq single stepped .
-Workaround: kill and restart the affected process.
-.Pp
-gdb cannot debug running threaded programs correctly.
-Workaround: generate a core file from the program using
-.Xr gcore 1
-and pass the core to gdb, instead of debugging the running program.
-.
-.Pp
-The sparc port does not have functional SMP support in this release.
 .\} \" \n[FOR_RELEASE]
 .
 .Ss "Features to be removed in a later release"
