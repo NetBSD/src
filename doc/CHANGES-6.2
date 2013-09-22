@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.48 2013/09/22 17:29:34 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.49 2013/09/22 17:34:22 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -763,4 +763,10 @@ sys/net/npf/npf_ctl.c				1.27
 
 	npfctl_rule: fix filtering of dynamic rules.
 	[rmind, ticket #952]
+
+sys/arch/mvme68k/mvme68k/pmap_bootstrap.c	1.52
+
+	Fix panic: pmap_enter_ptpage: can't get KPT page.
+	Addresses mvme68k-specific part of PR#45915.
+	[tsutsui, ticket #953]
 
