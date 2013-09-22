@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2011/07/15 23:40:56 dyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2013/09/22 20:51:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -29,20 +29,19 @@
 #define _SYS_RUMP_BUS_H_
 
 /*
- * This is a blanket header for archs which are inline/macro-happy
- * in their bus.h header.  Currently, this is anything but x86.
- * After an arch is cured from inline scurvy, the native bus.h
- * should be used.
+ * This is a blanket header since archs are inline/macro-happy.
+ *
+ * XXX: this file should NOT exist here
  */
 
 /* bus space defs */
-typedef int bus_addr_t;
-typedef int bus_size_t;
+typedef unsigned long bus_addr_t;
+typedef unsigned long bus_size_t;
 typedef int bus_space_tag_t;
 typedef int bus_space_handle_t;
 
 /* bus dma defs */
-typedef int *bus_dma_tag_t;
+typedef void *bus_dma_tag_t;
 
 typedef struct {
 	bus_addr_t ds_addr;
@@ -50,6 +49,14 @@ typedef struct {
 } bus_dma_segment_t;
 
 typedef struct {
+	bus_size_t _dm_size;
+	int _dm_segcnt;
+	bus_size_t _dm_maxmaxsegsz;
+	bus_size_t _dm_boundary;
+	bus_addr_t _dm_bounce_thresh;
+	int _dm_flags;
+	void *_dm_cookie;
+
 	bus_size_t dm_maxsegsz;
 	bus_size_t dm_mapsize;
 	int dm_nsegs;
