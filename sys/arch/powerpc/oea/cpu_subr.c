@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.76 2012/10/20 14:42:15 kiyohara Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.77 2013/09/22 18:05:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.76 2012/10/20 14:42:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.77 2013/09/22 18:05:16 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -278,15 +278,31 @@ cpu_model_init(void)
 	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
-	} else if (MPC745X_P(vers) && vers != MPC7450) {
-		oeacpufeat |= OEACPU_HIGHSPRG;
-		oeacpufeat |= OEACPU_XBSEN;
-		oeacpufeat |= OEACPU_HIGHBAT;
-		/* Enable more and larger BAT registers */
+	} else if (MPC745X_P(vers)) {
 		register_t hid0 = mfspr(SPR_HID0);
+		register_t hid1 = mfspr(SPR_HID1);
+
+		if (vers != MPC7450) {
+			/* Enable more SPRG registers */
+			oeacpufeat |= OEACPU_HIGHSPRG;
+
+			/* Enable more BAT registers */
+			oeacpufeat |= OEACPU_HIGHBAT;
+			hid0 |= HID0_HIGH_BAT_EN;
+		}
+
+		/* Enable larger BAT registers */
+		oeacpufeat |= OEACPU_XBSEN;
 		hid0 |= HID0_XBSEN;
-		hid0 |= HID0_HIGH_BAT_EN;
+
+		/* Enable address broadcasting for MP systems */
+		hid1 |= HID1_SYNCBE | HID1_ABE;
+
 		mtspr(SPR_HID0, hid0);
+		__asm volatile("sync;isync");
+
+		mtspr(SPR_HID0, hid1);
+		__asm volatile("sync;isync");
 
 	} else if (vers == IBM750FX || vers == IBM750GX) {
 		oeacpufeat |= OEACPU_HIGHBAT;
