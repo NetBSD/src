@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.12.2.9 2013/02/18 18:26:14 riz Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.12.2.10 2013/09/22 17:29:05 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.9 2013/02/18 18:26:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.10 2013/09/22 17:29:05 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -244,7 +244,7 @@ npf_mk_code(prop_object_t obj, int type, void **code, size_t *csize,
 		}
 		break;
 	case NPF_CODE_BPF:
-		if (!bpf_validate(cptr, clen)) {
+		if (!bpf_validate(cptr, clen / sizeof(struct bpf_insn))) {
 			return EINVAL;
 		}
 		break;
@@ -550,14 +550,16 @@ npfctl_rule(u_long cmd, void *data)
 	prop_dictionary_get_uint32(npf_rule, "command", &rcmd);
 	if (!prop_dictionary_get_cstring_nocopy(npf_rule,
 	    "ruleset-name", &ruleset_name)) {
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (rcmd == NPF_CMD_RULE_ADD) {
-		if ((rl = npf_rule_alloc(npf_rule)) == NULL) {
-			return EINVAL;
-		}
 		retdict = prop_dictionary_create();
+		if (npf_mk_singlerule(npf_rule, NULL, &rl, retdict) != 0) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	npf_config_enter();
@@ -618,6 +620,7 @@ npfctl_rule(u_long cmd, void *data)
 	if (rl) {
 		npf_rule_free(rl);
 	}
+out:
 	if (retdict) {
 		prop_object_release(npf_rule);
 		prop_dictionary_copyout_ioctl(pref, cmd, retdict);
