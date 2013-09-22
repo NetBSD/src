@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.10 2013/09/02 15:48:08 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.11 2013/09/22 07:26:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.10 2013/09/02 15:48:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.11 2013/09/22 07:26:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	REG_WRITE(ADMHCD_REG_INTENABLE, 0); /* disable interrupts */
 	REG_WRITE(ADMHCD_REG_CONTROL, ADMHCD_SW_RESET); /* reset */
 	delay_ms(10);
-        while (REG_READ(ADMHCD_REG_CONTROL) & ADMHCD_SW_RESET) 
+        while (REG_READ(ADMHCD_REG_CONTROL) & ADMHCD_SW_RESET)
                 delay_ms(1);
 
 	REG_WRITE(ADMHCD_REG_CONTROL, ADMHCD_HOST_EN);
@@ -354,7 +354,7 @@ ahci_intr(void *arg)
 	    ? "\20\x8""D+\7RESUME\6INSERT\5SOF\4res\3""BABBLE\2USBB\1USBA"
 	    : "\20\x8""D+\7RESET\6INSERT\5SOF\4res\3""BABBLE\2USBB\1USBA"),
 	    r);
-		
+
 	DPRINTF(D_XFER, ("I=%s ", bitbuf));
 #endif /* AHCI_DEBUG */
 #endif
@@ -1048,7 +1048,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
         usb_device_request_t *req = &xfer->request;
 	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
 	int len, isread;
-	
+
 
 #if 0
 	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->pipe;
@@ -1070,11 +1070,11 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 #define KSEG1ADDR(x) (0xa0000000 | (((u_int32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 	if (!ep) {
-	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v); 
-		td = (struct admhcd_td *)KSEG1ADDR(&td_v[0]); 
-		td1 = (struct admhcd_td *)KSEG1ADDR(&td_v[1]); 
-		td2 = (struct admhcd_td *)KSEG1ADDR(&td_v[2]); 
-		td3 = (struct admhcd_td *)KSEG1ADDR(&td_v[3]); 
+	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
+		td = (struct admhcd_td *)KSEG1ADDR(&td_v[0]);
+		td1 = (struct admhcd_td *)KSEG1ADDR(&td_v[1]);
+		td2 = (struct admhcd_td *)KSEG1ADDR(&td_v[2]);
+		td3 = (struct admhcd_td *)KSEG1ADDR(&td_v[3]);
 		err = usb_allocmem(&sc->sc_bus,
 			sizeof(usb_device_request_t),
 			0, &reqdma);
@@ -1242,7 +1242,7 @@ ahci_device_intr_start(usbd_xfer_handle xfer)
 
 	/* initialize callout */
 	callout_init(&sx->sx_callout_t, 0);
-	callout_reset(&sx->sx_callout_t, 
+	callout_reset(&sx->sx_callout_t,
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		ahci_poll_device, sx);
 
@@ -1400,9 +1400,9 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 /* 	printf("bulk_start>>>\n"); */
 
 	if (!ep) {
-	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v); 
+	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
 		for (i=0; i<NBULK_TDS; i++) {
-			td[i] = (struct admhcd_td *)KSEG1ADDR(&td_v[i]); 
+			td[i] = (struct admhcd_td *)KSEG1ADDR(&td_v[i]);
 		};
 /*		printf("ep: %p\n",ep);*/
 	};
@@ -1489,7 +1489,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 			status = USBD_IOERROR;
                         break;
                 };
-		
+
 		i++;
 		if (i==segs) {
 			status = USBD_NORMAL_COMPLETION;
