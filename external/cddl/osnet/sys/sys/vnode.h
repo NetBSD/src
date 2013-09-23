@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.9 2011/06/12 04:43:11 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.10 2013/09/23 19:44:21 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -294,7 +294,12 @@ int	vn_is_readonly(vnode_t *);
 #define vn_renamepath(tdvp, svp, tnm, lentnm)   do { } while (0)
 
 #define	VN_HOLD(v)	vref(v)
-#define	VN_RELE(v)	vrele(v)
+#define	VN_RELE(v)	do { \
+	    if ((v)->v_usecount == 0) \
+		    printf("%s, %d: %p unused\n", __FILE__, __LINE__, v); \
+	    else \
+		    vrele(v); \
+    } while (/*CONSTCOND*/0)
 #define	VN_URELE(v)	vput(v)
 #define	VN_SET_VFS_TYPE_DEV(vp, vfs, type, flag)	(0)
 
