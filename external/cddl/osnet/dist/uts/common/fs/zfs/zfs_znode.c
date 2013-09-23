@@ -1618,6 +1618,7 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 
 	ASSERT(error == 0);
 
+	mutex_destroy(&zfsvfs.z_znodes_lock);
 	for (i = 0; i != ZFS_OBJ_MTX_SZ; i++)
 		mutex_destroy(&zfsvfs.z_hold_mtx[i]);
 }
