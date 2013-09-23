@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.30 2013/05/15 14:52:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.31 2013/09/23 10:35:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.30 2013/05/15 14:52:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.31 2013/09/23 10:35:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -54,7 +54,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 	pthread_t ptid;
 	pthread_t *ptidp;
 	pthread_attr_t pattr;
-	int rv;
+	int rv, i;
 
 	if ((rv = pthread_attr_init(&pattr)) != 0)
 		return rv;
@@ -67,7 +67,15 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
 	}
 
-	rv = pthread_create(ptidp, &pattr, f, arg);
+	for (i = 0; i < 10; i++) {
+		const struct timespec ts = {0, 10*1000*1000};
+
+		rv = pthread_create(ptidp, &pattr, f, arg);
+		if (rv != EAGAIN)
+			break;
+		nanosleep(&ts, NULL);
+	}
+
 #if defined(__NetBSD__)
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname, NULL);
