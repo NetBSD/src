@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.10 2013/09/23 19:44:21 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.11 2013/09/23 20:44:24 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -577,7 +577,7 @@ zfs_vn_rdwr(enum uio_rw rw, vnode_t *vp, caddr_t base, ssize_t len,
 	ASSERT(ioflag == 0);
 	ASSERT(ulimit == RLIM64_INFINITY);
 
-	ioflag = IO_APPEND | IO_UNIT;
+	ioflag = IO_UNIT;
 
 	error = vn_rdwr(rw, vp, base, len, offset, seg, ioflag, cr,
 	    &resid, curlwp);
