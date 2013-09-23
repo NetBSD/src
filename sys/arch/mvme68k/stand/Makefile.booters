@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.22 2011/01/22 19:19:20 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.22.10.1 2013/09/23 14:20:42 riz Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -58,6 +58,8 @@ LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
 LIBSA=		${LIBSA_DIR}/lib/sa/libsa.a
 LIBKERN=	${LIBSA_DIR}/lib/kern/libkern.a
+
+SRTOBJ?= ${LIBSA_DIR}/SRT0.o
 
 LIB_BUG_DIR=	${.CURDIR}/../libbug
 LIBBUG_DIR!=	cd ${LIB_BUG_DIR} && ${PRINTOBJDIR}
