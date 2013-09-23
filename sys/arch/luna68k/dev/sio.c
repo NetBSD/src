@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $ */
+/* $NetBSD: sio.c,v 1.12 2013/09/23 17:27:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.12 2013/09/23 17:27:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ xsiointr(void *arg)
 {
 	struct sio_softc *sc = arg;
 
-	(*sc->scp_intr[0])(0); 	/* 0: ttya system serial port */
+	(*sc->scp_intr[0])(0);	/* 0: ttya system serial port */
 	(*sc->scp_intr[1])(1);	/* 1: keyboard and mouse */
 	return 1;
 }

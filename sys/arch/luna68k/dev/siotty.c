@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.35 2013/01/22 15:44:25 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.36 2013/09/23 17:27:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.35 2013/01/22 15:44:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.36 2013/09/23 17:27:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -279,7 +279,7 @@ sioparam(struct tty *tp, struct termios *t)
 		if ((tp->t_cflag & PARODD) == 0)
 			wr4 |= WR4_EPARITY;
 	}
-	wr4 |= (tp->t_cflag & CSTOPB) ? WR4_STOP2 : WR4_STOP1;	
+	wr4 |= (tp->t_cflag & CSTOPB) ? WR4_STOP2 : WR4_STOP1;
 	sc->sc_wr[WR4] = wr4;
 
 	s = splserial();
