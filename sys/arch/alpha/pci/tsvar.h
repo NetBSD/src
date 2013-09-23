@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.10 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: tsvar.h,v 1.11 2013/09/23 16:41:57 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -44,6 +44,7 @@ struct tsp_config {
 	int	pc_initted;		/* Initialized */
 	uint64_t pc_iobase;		/* All Pchip space starts here */
 	struct	ts_pchip *pc_csr;	/* Pchip CSR space starts here */
+	volatile uint64_t *pc_tlbia;  	/* Pchip TLBIA register address */ 
 
 	struct	alpha_bus_space pc_iot, pc_memt;
 	struct	alpha_pci_chipset pc_pc;
