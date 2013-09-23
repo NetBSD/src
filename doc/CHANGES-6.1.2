@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.2,v 1.1.2.16 2013/09/23 14:21:56 riz Exp $
+# $NetBSD: CHANGES-6.1.2,v 1.1.2.17 2013/09/23 14:28:03 riz Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -128,4 +128,11 @@ sys/arch/mvme68k/stand/libsa/Makefile.inc	1.6
 
 	Fixed a bootloader problem and gcc 4.5 problem on mvme68k.
 	[tsutsui, ticket #954]
+
+sys/arch/mvmeppc/stand/Makefile.booters		1.13
+sys/arch/mvmeppc/stand/libsa/Makefile		1.11
+sys/arch/mvmeppc/stand/libsa/Makefile.inc	1.2
+
+	Fix the mvmeppc bootloader.
+	[tsutsui, ticket #955]
 
