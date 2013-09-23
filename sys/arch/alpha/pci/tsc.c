@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.20 2013/09/23 16:41:57 tsutsui Exp $ */
+/* $NetBSD: tsc.c,v 1.21 2013/09/23 16:44:30 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.20 2013/09/23 16:41:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.21 2013/09/23 16:44:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ tscattach(device_t parent, device_t self, void * aux)
 static int
 tscprint(void *aux, const char *p)
 {
-	register struct tsp_attach_args *tsp = aux;
+	struct tsp_attach_args *tsp = aux;
 
 	if(p)
 		aprint_normal("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
