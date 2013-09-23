@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.26 2013/05/14 13:28:01 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.27 2013/09/23 17:27:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.26 2013/05/14 13:28:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.27 2013/09/23 17:27:09 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -152,7 +152,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
 	scp->scp_intr[1] = wsintr;
-	
+
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
 	setsioreg(sc->sc_ctl, WR3, sc->sc_wr[WR3]);
@@ -179,7 +179,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	{
 	struct wsmousedev_attach_args b;
 	b.accessops = &omms_accessops;
-	b.accesscookie = (void *)sc;	
+	b.accesscookie = (void *)sc;
 	sc->sc_wsmousedev =
 	    config_found_ia(self, "wsmousedev", &b, wsmousedevprint);
 	sc->sc_msreport = 0;
@@ -227,7 +227,7 @@ wssoftintr(void *arg)
 		/*
 		 * if (code >= 0x80 && code <= 0x87), then
 		 * it's the first byte of 3 byte long mouse report
-		 * 	code[0] & 07 -> LMR button condition
+		 *	code[0] & 07 -> LMR button condition
 		 *	code[1], [2] -> x,y delta
 		 * otherwise, key press or release event.
 		 */
@@ -269,7 +269,7 @@ omkbd_input(void *v, int data)
 	int key;
 
 	if (omkbd_decode(v, data, &type, &key))
-		wskbd_input(sc->sc_wskbddev, type, key);	
+		wskbd_input(sc->sc_wskbddev, type, key);
 }
 
 static int
@@ -285,8 +285,8 @@ omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 
 static const keysym_t omkbd_keydesc_1[] = {
 /*  pos      command		normal		shifted */
-    KC(0x9), 			KS_Tab,
-    KC(0xa),  			KS_Control_L,
+    KC(0x9),			KS_Tab,
+    KC(0xa),			KS_Control_L,
     KC(0xb),			KS_Mode_switch,	/* Kana */
     KC(0xc),			KS_Shift_R,
     KC(0xd),			KS_Shift_L,
@@ -309,7 +309,7 @@ static const keysym_t omkbd_keydesc_1[] = {
     KC(0x1f),			KS_KP_Down,
  /* KC(0x20),			KS_f11, */
  /* KC(0x21),			KS_f12, */
-    KC(0x22),  			KS_1,		KS_exclam,
+    KC(0x22),			KS_1,		KS_exclam,
     KC(0x23),			KS_2,		KS_quotedbl,
     KC(0x24),			KS_3,		KS_numbersign,
     KC(0x25),			KS_4,		KS_dollar,
