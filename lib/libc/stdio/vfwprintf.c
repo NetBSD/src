@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.32 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.32 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.33 2013/09/23 12:41:37 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -821,13 +821,12 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 
 	_SET_ORIENTATION(fp, -1);
 
-	ndig = -1;	/* XXX gcc */
-
 	thousands_sep = '\0';
 	grouping = NULL;
 #ifndef NO_FLOATING_POINT
 	decimal_point = localeconv_l(loc)->decimal_point;
 	expsize = 0;		/* XXXGCC -Wuninitialized [sh3,m68000] */
+	ndig = -1;	/* XXX gcc */
 #endif
 	convbuf = NULL;
 	/* sorry, f{w,}printf(read_only_file, L"") returns {W,}EOF, not 0 */
@@ -879,9 +878,11 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 		prec = -1;
 		sign = '\0';
 		ox[1] = '\0';
+#ifndef NO_FLOATING_POINT
 		expchar = '\0';
 		lead = 0;
 		nseps = nrepeats = 0;
+#endif
 		ulval = 0;
 		ujval = 0;
 		xdigs = NULL;
