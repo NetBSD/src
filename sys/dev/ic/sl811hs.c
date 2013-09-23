@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.38 2013/09/22 09:21:56 adam Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.39 2013/09/23 10:46:35 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.38 2013/09/22 09:21:56 adam Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.39 2013/09/23 10:46:35 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1405,7 +1405,7 @@ slhci_reset_entry(void *arg)
 	simple_lock(&sc->sc_lock);
 	slhci_reset(sc);
 	/*
-	 * We cannot call the calback directly since we could then be reset
+	 * We cannot call the callback directly since we could then be reset
 	 * again before finishing and need the callout delay for timing.
 	 * Scheduling the callout again before we exit would defeat the reap
 	 * mechanism since we could be unlocked while the reset flag is not
