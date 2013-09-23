@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/01/02 09:40:52 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10.14.1 2013/09/23 14:28:13 riz Exp $
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
@@ -32,7 +32,9 @@ LIBKERN= ${KERNLIB}
 
 LIBS= ${LIBSA} ${LIBKERN}
 
-all realall: ${LIBS}
+CLEANFILES+=	srt0.o
+
+all realall: ${LIBS} srt0.o
 
 cleandir distclean: .WAIT cleanlibdir
  
