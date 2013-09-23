@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.19 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: tsc.c,v 1.20 2013/09/23 16:41:57 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.19 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.20 2013/09/23 16:41:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ CFATTACH_DECL_NEW(tsc, 0, tscmatch, tscattach, NULL, NULL);
 
 extern struct cfdriver tsc_cd;
 
-struct tsp_config tsp_configuration[2];
+struct tsp_config tsp_configuration[4];
 
 static int tscprint(void *, const char *pnp);
 
@@ -91,9 +91,13 @@ tscmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return cputype == ST_DEC_6600
-	    && strcmp(ma->ma_name, tsc_cd.cd_name) == 0
-	    && !tscfound;
+	switch (cputype) {
+	case ST_DEC_6600:
+	case ST_DEC_TITAN:
+		return strcmp(ma->ma_name, tsc_cd.cd_name) == 0 && !tscfound;
+	default:
+		return 0;
+	}
 }
 
 static void
@@ -104,15 +108,16 @@ tscattach(device_t parent, device_t self, void * aux)
 	uint64_t csc, aar;
 	struct tsp_attach_args tsp;
 	struct mainbus_attach_args *ma = aux;
+	int titan = cputype == ST_DEC_TITAN;
 
 	tscfound = 1;
 
 	csc = LDQP(TS_C_CSC);
 
 	nbus = 1 + (CSC_BC(csc) >= 2);
-	printf(": 21272 Core Logic Chipset, Cchip rev %d\n"
+	printf(": 2127%c Core Logic Chipset, Cchip rev %d\n"
 		"%s%d: %c Dchips, %d memory bus%s of %d bytes\n",
-		(int)MISC_REV(LDQP(TS_C_MISC)),
+		titan ? '4' : '2', (int)MISC_REV(LDQP(TS_C_MISC)),
 		ma->ma_name, ma->ma_slot, "2448"[CSC_BC(csc)],
 		nbus, nbus > 1 ? "es" : "", 16 + 16 * ((csc & CSC_AW) != 0));
 	printf("%s%d: arrays present: ", ma->ma_name, ma->ma_slot);
@@ -125,11 +130,21 @@ tscattach(device_t parent, device_t self, void * aux)
 
 	memset(&tsp, 0, sizeof tsp);
 	tsp.tsp_name = "tsp";
-	config_found(self, &tsp, NULL);
-
-	if(LDQP(TS_C_CSC) & CSC_P1P) {
-		++tsp.tsp_slot;
+	tsp.tsp_slot = 0; 
+	
+	config_found(self, &tsp, tscprint);
+	if (titan) {
+		tsp.tsp_slot += 2;
 		config_found(self, &tsp, tscprint);
+	}
+
+	if (csc & CSC_P1P) {
+		tsp.tsp_slot = 1;
+		config_found(self, &tsp, tscprint);
+		if (titan) {
+			tsp.tsp_slot += 2;
+			config_found(self, &tsp, tscprint);
+		}
 	}
 }
 
@@ -150,8 +165,13 @@ tspmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tsp_attach_args *t = aux;
 
-	return  cputype == ST_DEC_6600
-	    && strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
+	switch (cputype) {
+	case ST_DEC_6600:
+	case ST_DEC_TITAN:
+		return strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
+	default:
+		return 0;
+	}
 }
 
 static void
@@ -193,12 +213,24 @@ tsp_init(int mallocsafe, int n)
 	/* n:	 Pchip number */
 {
 	struct tsp_config *pcp;
+	int titan = cputype == ST_DEC_TITAN;
 
-	KASSERT((n | 1) == 1);
+	KASSERT(n >= 0 && n < __arraycount(tsp_configuration));
 	pcp = &tsp_configuration[n];
 	pcp->pc_pslot = n;
 	pcp->pc_iobase = TS_Pn(n, 0);
-	pcp->pc_csr = S_PAGE(TS_Pn(n, P_CSRBASE));
+	pcp->pc_csr = S_PAGE(TS_Pn(n & 1, P_CSRBASE));
+	if (n & 2) {
+		/* `A' port of PA Chip */
+		pcp->pc_csr++;
+	}
+	if (titan) {
+		/* same address on G and A ports */
+		pcp->pc_tlbia = &pcp->pc_csr->port.g.tsp_tlbia.tsg_r;
+	} else {
+		pcp->pc_tlbia = &pcp->pc_csr->port.p.tsp_tlbia.tsg_r;
+	}
+
 	if (!pcp->pc_initted) {
 		tsp_bus_io_init(&pcp->pc_iot, pcp);
 		tsp_bus_mem_init(&pcp->pc_memt, pcp);
