@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.28 2013/09/22 17:35:09 riz Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.29 2013/09/23 14:22:25 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -256,4 +256,14 @@ sys/arch/mvme68k/mvme68k/pmap_bootstrap.c	1.52
 	Fix panic: pmap_enter_ptpage: can't get KPT page.
 	Addresses mvme68k-specific part of PR#45915.
 	[tsutsui, ticket #953]
+
+sys/arch/mvme68k/include/prom.h			1.18
+sys/arch/mvme68k/stand/Makefile.booters		1.24
+sys/arch/mvme68k/stand/libbug/outln.c		1.4
+sys/arch/mvme68k/stand/libbug/outstr.c		1.4
+sys/arch/mvme68k/stand/libsa/Makefile		1.34
+sys/arch/mvme68k/stand/libsa/Makefile.inc	1.6
+
+	Fixed a bootloader problem and gcc 4.5 problem on mvme68k.
+	[tsutsui, ticket #954]
 
