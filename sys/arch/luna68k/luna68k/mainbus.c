@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.11 2013/09/23 17:02:18 tsutsui Exp $ */
+/* $NetBSD: mainbus.c,v 1.12 2013/09/23 17:11:22 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2013/09/23 17:02:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2013/09/23 17:11:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +67,13 @@ CFATTACH_DECL_NEW(mainbus, 0,
 static int
 mainbus_match(device_t parent, cfdata_t cf, void *args)
 {
-	static int mainbus_matched;
+	static bool mainbus_matched;
 
 	if (mainbus_matched)
-		return (0);
+		return 0;
 
-	return ((mainbus_matched = 1));
+	mainbus_matched = true;
+	return 1;
 }
 
 static void
@@ -89,7 +90,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 		devs = luna_devs;
 		ndevs = __arraycount(luna_devs);
 	}
-	printf("\n");
+	aprint_normal("\n");
 	for (i = 0; i < ndevs; i++) {
 		ma = devs[i];
 		config_found(self, &ma, mainbus_print);
@@ -104,5 +105,5 @@ mainbus_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ma->ma_name, pnp);
 
-	return (UNCONF);
+	return UNCONF;
 }
