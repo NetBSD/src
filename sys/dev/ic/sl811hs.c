@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.39 2013/09/23 10:46:35 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.40 2013/09/23 11:27:45 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.39 2013/09/23 10:46:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.40 2013/09/23 11:27:45 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1801,8 +1801,10 @@ slhci_dointr(struct slhci_softc *sc)
 	}
 #endif
 
-	/* check IER for corruption occasionally.  Assume that the above
-	 * sc_ier == 0 case works correctly. */
+	/*
+	 * check IER for corruption occasionally.  Assume that the above
+	 * sc_ier == 0 case works correctly.
+	 */
 	if (__predict_false(sc->sc_ier_check++ > SLHCI_IER_CHECK_FREQUENCY)) {
 		sc->sc_ier_check = 0;
 		if (sc->sc_ier != slhci_read(sc, SL11_IER)) {
