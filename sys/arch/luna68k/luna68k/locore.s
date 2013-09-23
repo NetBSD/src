@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.52 2013/01/21 15:21:30 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.53 2013/09/23 17:02:18 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,9 +195,9 @@ Lstart1:
 	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
 	jra	Lstart2
 1:
-	/* Config botch; no hope. */	
+	/* Config botch; no hope. */
 	PANIC("Config botch in locore")
-	
+
 Lstart2:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
@@ -230,7 +230,7 @@ Lstart2:
 1:
 	RELOC(esym,%a0)
 	movl	%d0,%a0@
-	
+
 /* configure kernel and lwp0 VA space so we can get going */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms

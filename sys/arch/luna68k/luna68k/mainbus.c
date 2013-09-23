@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.10 2011/11/12 13:44:26 tsutsui Exp $ */
+/* $NetBSD: mainbus.c,v 1.11 2013/09/23 17:02:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2011/11/12 13:44:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2013/09/23 17:02:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	int i, ndevs;
 	const struct mainbus_attach_args *devs;
 	struct mainbus_attach_args ma;
-	
+
 	if (machtype == LUNA_II) {
 		devs = luna2_devs;
 		ndevs = __arraycount(luna2_devs);
