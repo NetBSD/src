@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.123.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.123.2.2 2013/09/23 00:57:53 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.123.2.2 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -317,7 +317,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			struct inpcb *t;
 			struct vestigial_inpcb vestige;
 
-			t = inpcb_lookup_port(table,
+			t = inpcb_lookup_local(table,
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
 			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)

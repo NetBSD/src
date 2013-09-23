@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.190.2.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.190.2.3 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.3 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -575,11 +575,10 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		 */
 		struct socket *so;
 
-		inp = inpcb_lookup_connect(udbtable, *src4, *sport, *dst4,
-		    *dport, 0);
+		inp = inpcb_lookup(udbtable, *src4, *sport, *dst4, *dport, NULL);
 		if (inp == NULL) {
 			UDP_STATINC(UDP_STAT_PCBHASHMISS);
-			inp = inpcb_lookup_bind(udbtable, *dst4, *dport);
+			inp = inpcb_lookup_bound(udbtable, *dst4, *dport);
 			if (inp == NULL)
 				return rcvcnt;
 		}
@@ -753,32 +752,24 @@ end:
 	return error;
 }
 
-
-int
-udp_output(struct mbuf *m, ...)
+static int
+udp_output(struct mbuf *m, inpcb_t *inp)
 {
-	inpcb_t *inp;
 	struct socket *so;
 	struct udpiphdr *ui;
 	struct route *ro;
 	int len = m->m_pkthdr.len;
 	int error = 0;
-	va_list ap;
 
 	MCLAIM(m, &udp_tx_mowner);
-	va_start(ap, m);
-	inp = va_arg(ap, inpcb_t *);
-	va_end(ap);
-
 	so = inpcb_get_socket(inp);
 	KASSERT(solocked(so));
 
 	/*
-	 * Calculate data length and get a mbuf
-	 * for UDP and IP headers.
+	 * Calculate data length and get a mbuf for UDP and IP headers.
 	 */
 	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
-	if (m == 0) {
+	if (m == NULL) {
 		error = ENOBUFS;
 		goto release;
 	}
@@ -793,15 +784,13 @@ udp_output(struct mbuf *m, ...)
 	}
 
 	/*
-	 * Fill in mbuf with extended UDP header
-	 * and addresses and length put into network format.
+	 * Fill in mbuf with extended UDP header.
 	 */
 	ui = mtod(m, struct udpiphdr *);
 	ui->ui_pr = IPPROTO_UDP;
-
 	inpcb_get_addrs(inp, &ui->ui_src, &ui->ui_dst);
 	inpcb_get_ports(inp, &ui->ui_sport, &ui->ui_dport);
-	ui->ui_ulen = htons((u_int16_t)len + sizeof(struct udphdr));
+	ui->ui_ulen = htons((uint16_t)len + sizeof(struct udphdr));
 
 	ro = inpcb_get_route(inp);
 
@@ -821,11 +810,12 @@ udp_output(struct mbuf *m, ...)
 	} else
 		ui->ui_sum = 0;
 
-	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
+	struct ip *ui_ip = (struct ip *)ui;
+	ui_ip->ip_len = htons(sizeof (struct udpiphdr) + len);
 
 	struct ip *inp_ip = in_getiphdr(inp);
-	((struct ip *)ui)->ip_ttl = inp_ip->ip_ttl;	/* XXX */
-	((struct ip *)ui)->ip_tos = inp_ip->ip_tos;	/* XXX */
+	ui_ip->ip_ttl = inp_ip->ip_ttl;	/* XXX */
+	ui_ip->ip_tos = inp_ip->ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
 
 	return (ip_output(m, inpcb_get_options(inp), ro,
@@ -889,6 +879,49 @@ udp_detach(struct socket *so)
 }
 
 static int
+udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	inpcb_t *inp;
+	struct in_addr laddr;
+	int error;
+
+	KASSERT(solocked(so));
+	inp = sotoinpcb(so);
+
+	if (control && control->m_len) {
+		m_freem(control);
+		m_freem(m);
+		return EINVAL;
+	}
+
+	if ((so->so_state & SS_ISCONNECTED) != 0) {
+		m_freem(m);
+		return nam ? EISCONN : ENOTCONN;
+	}
+
+	if (nam) {
+		/*
+		 * XXX: sendto() case - temporarily connect the socket
+		 * to the destination, send and then disconnect.  Also,
+		 * preserve the local address as it may be changed.
+		 */
+		inpcb_get_addrs(inp, &laddr, NULL);
+		if ((error = inpcb_connect(inp, nam, curlwp)) != 0) {
+			m_freem(m);
+			return error;
+		}
+	}
+	error = udp_output(m, inp);
+	if (nam) {
+		inpcb_disconnect(inp);
+		inpcb_set_addrs(inp, &laddr, NULL);
+		inpcb_set_state(inp, INP_BOUND);
+	}
+	return error;
+}
+
+static int
 udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
@@ -921,10 +954,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		goto release;
 	}
 
-	/*
-	 * Note: need to block udp_input while changing
-	 * the udp pcb queue and/or pcb addresses.
-	 */
 	switch (req) {
 	case PRU_BIND:
 		error = inpcb_bind(inp, nam, l);
@@ -949,8 +978,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*soisdisconnected(so);*/
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
 		inpcb_disconnect(inp);
-		inpcb_set_addrs(inp, &zeroin_addr, NULL);	/* XXX */
-		inpcb_set_state(inp, INP_BOUND);		/* XXX */
 		break;
 
 	case PRU_SHUTDOWN:
@@ -962,47 +989,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_SEND:
-		if (control && control->m_len) {
-			m_freem(control);
-			m_freem(m);
-			error = EINVAL;
-			break;
-		}
-	{
-		/*
-		 * Note: sendto case - temporarily connect the socket
-		 * to the destination, send and then disconnect.
-		 * XXX: save the local address, restore after.
-		 */
-		struct in_addr laddr;
-
-		memset(&laddr, 0, sizeof laddr);
-		if (nam) {
-			inpcb_get_addrs(inp, &laddr, NULL);
-			if ((so->so_state & SS_ISCONNECTED) != 0) {
-				error = EISCONN;
-				goto die;
-			}
-			error = inpcb_connect(inp, nam, l);
-			if (error)
-				goto die;
-		} else {
-			if ((so->so_state & SS_ISCONNECTED) == 0) {
-				error = ENOTCONN;
-				goto die;
-			}
-		}
-		error = udp_output(m, inp);
-		m = NULL;
-		if (nam) {
-			inpcb_disconnect(inp);
-			inpcb_set_addrs(inp, &laddr, NULL);
-			inpcb_set_state(inp, INP_BOUND);
-		}
-die:
-		if (m)
-			m_freem(m);
-	}
+		error = udp_send(so, m, nam, control);
 		break;
 
 	case PRU_SENSE:
