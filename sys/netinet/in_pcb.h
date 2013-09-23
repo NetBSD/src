@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.51.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.51.2.2 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -196,11 +196,11 @@ int	inpcb_bind(inpcb_t *, struct mbuf *, struct lwp *);
 int	inpcb_connect(inpcb_t *, struct mbuf *, struct lwp *);
 void	inpcb_destroy(inpcb_t *);
 void	inpcb_disconnect(inpcb_t *);
-inpcb_t *inpcb_lookup_port(inpcbtable_t *, struct in_addr, u_int, int,
+inpcb_t *inpcb_lookup_local(inpcbtable_t *, struct in_addr, in_port_t, int,
     struct vestigial_inpcb *);
-inpcb_t *inpcb_lookup_bind(inpcbtable_t *, struct in_addr, u_int);
-inpcb_t *inpcb_lookup_connect(inpcbtable_t *, struct in_addr, u_int,
-    struct in_addr, u_int, struct vestigial_inpcb *);
+inpcb_t *inpcb_lookup_bound(inpcbtable_t *, struct in_addr, in_port_t);
+inpcb_t *inpcb_lookup(inpcbtable_t *, struct in_addr, in_port_t,
+    struct in_addr, in_port_t, struct vestigial_inpcb *);
 int	inpcb_notify(inpcbtable_t *, struct in_addr, u_int,
 	    struct in_addr, u_int, int, void (*)(inpcb_t *, int));
 void	inpcb_notifyall(inpcbtable_t *, struct in_addr, int,

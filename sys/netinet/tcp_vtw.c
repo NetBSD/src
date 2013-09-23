@@ -124,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.4.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.4.2 2013/09/23 00:57:53 rmind Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1570,7 +1570,7 @@ vtw_tick(void *arg)
 	mutex_exit(softnet_lock);
 }
 
-/* inpcb_lookup_ports assist for handling vestigial entries.
+/* inpcb_lookup_local() assist for handling vestigial entries.
  */
 static void *
 tcp_init_ports_v4(struct in_addr addr, u_int port, int wild)
@@ -1669,7 +1669,7 @@ tcp_lookup_v4(struct in_addr faddr, uint16_t fport,
 	return vtw_export_v4(ctl, vtw, res);
 }
 
-/* inpcb_lookup_ports assist for handling vestigial entries.
+/* inpcb_lookup_local() assist for handling vestigial entries.
  */
 static void *
 tcp_init_ports_v6(const struct in6_addr *addr, u_int port, int wild)
