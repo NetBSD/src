@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.21 2013/09/23 16:44:30 tsutsui Exp $ */
+/* $NetBSD: tsc.c,v 1.22 2013/09/23 16:50:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.21 2013/09/23 16:44:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.22 2013/09/23 16:50:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ tscattach(device_t parent, device_t self, void * aux)
 		ma->ma_name, ma->ma_slot, "2448"[CSC_BC(csc)],
 		nbus, nbus > 1 ? "es" : "", 16 + 16 * ((csc & CSC_AW) != 0));
 	printf("%s%d: arrays present: ", ma->ma_name, ma->ma_slot);
-	for(i = 0; i < 4; ++i) {
+	for (i = 0; i < 4; ++i) {
 		aar = LDQP(TS_C_AAR0 + i * TS_STEP);
 		printf("%s%dMB%s", i ? ", " : "", (8 << AAR_ASIZ(aar)) & ~0xf,
 		    aar & AAR_SPLIT ? " (split)" : "");
@@ -130,8 +130,8 @@ tscattach(device_t parent, device_t self, void * aux)
 
 	memset(&tsp, 0, sizeof tsp);
 	tsp.tsp_name = "tsp";
-	tsp.tsp_slot = 0; 
-	
+	tsp.tsp_slot = 0;
+
 	config_found(self, &tsp, tscprint);
 	if (titan) {
 		tsp.tsp_slot += 2;
@@ -153,7 +153,7 @@ tscprint(void *aux, const char *p)
 {
 	struct tsp_attach_args *tsp = aux;
 
-	if(p)
+	if (p)
 		aprint_normal("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
 	return UNCONF;
 }
@@ -185,7 +185,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	pcp = tsp_init(1, t->tsp_slot);
 
 	tsp_dma_init(pcp);
-	
+
 	/*
 	 * Do PCI memory initialization that needs to be deferred until
 	 * malloc is safe.  On the Tsunami, we need to do this after
@@ -269,12 +269,12 @@ tsp_bus_get_window(int type, int window,
 
 	error = alpha_bus_space_get_window(st, window, abst);
 	if (error)
-		return (error);
+		return error;
 
 	abst->abst_sys_start = TS_PHYSADDR(abst->abst_sys_start);
 	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
 
-	return (0);
+	return 0;
 }
 
 void
