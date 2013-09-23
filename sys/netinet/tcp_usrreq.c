@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.166.4.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.166.4.3 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166.4.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.166.4.3 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1235,7 +1235,7 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 	inpcb_t *inp;
 	struct socket *so;
 
-	inp = inpcb_lookup_connect(tcbtable, raddr, rport, laddr, lport, 0);
+	inp = inpcb_lookup(tcbtable, raddr, rport, laddr, lport, NULL);
 	if (inp == NULL || (so = inpcb_get_socket(inp)) == NULL)
 		return ESRCH;
 

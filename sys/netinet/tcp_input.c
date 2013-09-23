@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.327.2.1 2013/07/17 03:16:31 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.327.2.2 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327.2.1 2013/07/17 03:16:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.327.2.2 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1407,11 +1407,11 @@ findpcb:
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		inp = inpcb_lookup_connect(tcbtable, ip->ip_src, th->th_sport,
+		inp = inpcb_lookup(tcbtable, ip->ip_src, th->th_sport,
 		    ip->ip_dst, th->th_dport, &vestige);
 		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			inp = inpcb_lookup_bind(tcbtable, ip->ip_dst, th->th_dport);
+			inp = inpcb_lookup_bound(tcbtable, ip->ip_dst, th->th_dport);
 		}
 #ifdef INET6
 		if (inp == NULL && !vestige.valid) {

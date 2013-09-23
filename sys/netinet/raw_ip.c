@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.116.2.2 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.116.2.3 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.116.2.2 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.116.2.3 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -573,6 +573,7 @@ rip_attach(struct socket *so, int proto)
 
 	return 0;
 }
+
 static void
 rip_detach(struct socket *so)
 {

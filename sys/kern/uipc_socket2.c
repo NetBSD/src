@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.112.2.2 2013/09/23 00:57:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.2 2013/09/23 00:57:53 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -81,6 +81,37 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind
 
 /*
  * Primitive routines for operating on sockets and socket buffers.
+ *
+ * Connection life-cycle:
+ *
+ *	Normal sequence from the active (originating) side:
+ *
+ *	- soisconnecting() is called during processing of connect() call,
+ *	- resulting in an eventual call to soisconnected() if/when the
+ *	  connection is established.
+ *
+ *	When the connection is torn down during processing of disconnect():
+ *
+ *	- soisdisconnecting() is called and,
+ *	- soisdisconnected() is called when the connection to the peer
+ *	  is totally severed.
+ *
+ *	The semantics of these routines are such that connectionless protocols
+ *	can call soisconnected() and soisdisconnected() only, bypassing the
+ *	in-progress calls when setting up a ``connection'' takes no time.
+ *
+ *	From the passive side, a socket is created with two queues of sockets:
+ *
+ *	- so_q0 (0) for partial connections (i.e. connections in progress)
+ *	- so_q (1) for connections already made and awaiting user acceptance.
+ *
+ *	As a protocol is preparing incoming connections, it creates a socket
+ *	structure queued on so_q0 by calling sonewconn().  When the connection
+ *	is established, soisconnected() is called, and transfers the
+ *	socket structure to so_q, making it available to accept().
+ *
+ *	If a socket is closed with sockets on either so_q0 or so_q, these
+ *	sockets are dropped.
  *
  * Locking rules and assumptions:
  *
@@ -120,40 +151,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.1 2013/08/28 15:21:48 rmind
  *   domains.
  */
 
-static pool_cache_t socket_cache;
-
-u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
-static u_long sb_max_adj;	/* adjusted sb_max */
-
-/*
- * Procedures to manipulate state flags of socket
- * and do appropriate wakeups.  Normal sequence from the
- * active (originating) side is that soisconnecting() is
- * called during processing of connect() call,
- * resulting in an eventual call to soisconnected() if/when the
- * connection is established.  When the connection is torn down
- * soisdisconnecting() is called during processing of disconnect() call,
- * and soisdisconnected() is called when the connection to the peer
- * is totally severed.  The semantics of these routines are such that
- * connectionless protocols can call soisconnected() and soisdisconnected()
- * only, bypassing the in-progress calls when setting up a ``connection''
- * takes no time.
- *
- * From the passive side, a socket is created with
- * two queues of sockets: so_q0 for connections in progress
- * and so_q for connections already made and awaiting user acceptance.
- * As a protocol is preparing incoming connections, it creates a socket
- * structure queued on so_q0 by calling sonewconn().  When the connection
- * is established, soisconnected() is called, and transfers the
- * socket structure to so_q, making it available to accept().
- *
- * If a socket is closed with sockets on either
- * so_q0 or so_q, these sockets are dropped.
- *
- * If higher level protocols are implemented in
- * the kernel, the wakeups done here will sometimes
- * cause software-interrupt process scheduling.
- */
+static pool_cache_t	socket_cache;
+u_long			sb_max = SB_MAX;/* maximum socket buffer size */
+static u_long		sb_max_adj;	/* adjusted sb_max */
 
 void
 soisconnecting(struct socket *so)
@@ -179,6 +179,10 @@ soisconnected(struct socket *so)
 	so->so_state |= SS_ISCONNECTED;
 	if (head && so->so_onq == &head->so_q0) {
 		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
+			/*
+			 * Re-enqueue and wake up any waiters, e.g.
+			 * processes blocking on accept().
+			 */
 			soqremque(so, 0);
 			soqinsque(head, so, 1);
 			sorwakeup(head);
@@ -242,6 +246,7 @@ soinit2(void)
  * properly linked into the data structure of the original socket.
  *
  * => Connection status may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
+ * => May be called from soft-interrupt context.
  * => Listening socket should be locked.
  * => Returns the new socket locked.
  */
@@ -269,7 +274,7 @@ sonewconn(struct socket *head, int connstatus)
 		return NULL;
 	}
 	so->so_type = head->so_type;
-	so->so_options = head->so_options &~ SO_ACCEPTCONN;
+	so->so_options = head->so_options & ~SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
 	so->so_state = head->so_state | SS_NOFDREF;
 	so->so_proto = head->so_proto;
@@ -430,29 +435,29 @@ soqremque(struct socket *so, int q)
 }
 
 /*
- * Socantsendmore indicates that no more data will be sent on the
+ * socantsendmore(): indicates that no more data will be sent on the
  * socket; it would normally be applied to a socket when the user
  * informs the system that no more data is to be sent, by the protocol
- * code (in case PRU_SHUTDOWN).  Socantrcvmore indicates that no more data
- * will be received, and will normally be applied to the socket by a
- * protocol when it detects that the peer will send no more data.
- * Data queued for reading in the socket may yet be read.
+ * code (in case PRU_SHUTDOWN).
  */
-
 void
 socantsendmore(struct socket *so)
 {
-
 	KASSERT(solocked(so));
 
 	so->so_state |= SS_CANTSENDMORE;
 	sowwakeup(so);
 }
 
+/*
+ * socantrcvmore(): indicates that no more data will be received and
+ * will normally be applied to the socket by a protocol when it detects
+ * that the peer will send no more data.  Data queued for reading in
+ * the socket may yet be read.
+ */
 void
 socantrcvmore(struct socket *so)
 {
-
 	KASSERT(solocked(so));
 
 	so->so_state |= SS_CANTRCVMORE;
