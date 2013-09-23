@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.10 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.11 2013/09/23 12:41:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.10 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.11 2013/09/23 12:41:37 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,7 +102,9 @@ __RCSID("$NetBSD: vfwscanf.c,v 1.10 2013/05/17 12:55:57 joerg Exp $");
 #define	CT_INT		3	/* %[dioupxX] conversion */
 #define	CT_FLOAT	4	/* %[efgEFG] conversion */
 
+#ifndef NO_FLOATING_POINT
 static int parsefloat(FILE *, wchar_t *, wchar_t *, locale_t);
+#endif
 
 #define	INCCL(_c)	\
 	(cclcompl ? (wmemchr(ccls, (_c), (size_t)(ccle - ccls)) == NULL) : \
