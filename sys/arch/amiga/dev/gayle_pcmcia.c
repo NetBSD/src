@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.26 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.27 2013/09/23 08:39:28 jandberg Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.26 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.27 2013/09/23 08:39:28 jandberg Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -185,12 +185,12 @@ pccard_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->intr6.isr_intr = pccard_intr6;
-	sc->intr6.isr_arg = self;
+	sc->intr6.isr_arg = sc;
 	sc->intr6.isr_ipl = 6;
 	add_isr(&sc->intr6);
 
 	sc->intr2.isr_intr = pccard_intr2;
-	sc->intr2.isr_arg = self;
+	sc->intr2.isr_arg = sc;
 	sc->intr2.isr_ipl = 2;
 	add_isr(&sc->intr2);
 
