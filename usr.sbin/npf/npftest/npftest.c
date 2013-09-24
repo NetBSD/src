@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.11 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.12 2013/09/24 02:44:20 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -137,12 +137,12 @@ arc4random(void)
 int
 main(int argc, char **argv)
 {
-	bool benchmark, test, ok, fail, tname_matched;
-	char *config, *interface, *stream, *testname;
+	bool test, ok, fail, tname_matched;
+	char *benchmark, *config, *interface, *stream, *testname;
 	unsigned nthreads = 0;
 	int idx = -1, ch;
 
-	benchmark = false;
+	benchmark = NULL;
 	test = false;
 
 	tname_matched = false;
@@ -154,10 +154,10 @@ main(int argc, char **argv)
 	verbose = false;
 	quiet = false;
 
-	while ((ch = getopt(argc, argv, "bqvc:i:s:tT:Lp:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:qvc:i:s:tT:Lp:")) != -1) {
 		switch (ch) {
 		case 'b':
-			benchmark = true;
+			benchmark = optarg;
 			break;
 		case 'q':
 			quiet = true;
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	 * interface should be specified.  If benchmark, then the
 	 * config should be loaded.
 	 */
-	if (benchmark == test && (stream && !interface)) {
+	if ((benchmark != NULL) == test && (stream && !interface)) {
 		usage();
 	}
 	if (benchmark && (!config || !nthreads)) {
@@ -276,7 +276,12 @@ main(int argc, char **argv)
 	}
 
 	if (benchmark) {
-		rumpns_npf_test_conc(nthreads);
+		if (strcmp("rule", benchmark) == 0) {
+			rumpns_npf_test_conc(false, nthreads);
+		}
+		if (strcmp("state", benchmark) == 0) {
+			rumpns_npf_test_conc(true, nthreads);
+		}
 	}
 
 	rump_unschedule();
