@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl.1,v 1.15 2013/09/12 07:26:13 wiz Exp $
+.\"	$NetBSD: nl.1,v 1.16 2013/09/24 22:08:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,12 +51,16 @@
 The
 .Nm
 utility reads lines from the named
-.Ar file
-or the standard input if the
-.Ar file
-argument is omitted,
+.Ar file ,
 applies a configurable line numbering filter operation,
 and writes the result to the standard output.
+If
+.Ar file
+is a single dash
+.Pq Sq \&-
+or absent,
+.Nm
+reads from the standard input.
 .Pp
 The
 .Nm
