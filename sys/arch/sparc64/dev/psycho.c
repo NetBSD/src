@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.115 2013/08/22 09:57:30 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.116 2013/09/24 18:23:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.115 2013/08/22 09:57:30 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.116 2013/09/24 18:23:07 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,6 +109,7 @@ static pci_chipset_tag_t psycho_alloc_chipset(struct psycho_pbm *, int,
 static struct extent *psycho_alloc_extent(struct psycho_pbm *, int, int,
 	const char *);
 static void psycho_get_bus_range(int, int *);
+static void psycho_fixup_bus_range(int, int *);
 static void psycho_get_ranges(int, struct psycho_ranges **, int *);
 static void psycho_set_intr(struct psycho_softc *, int, void *, uint64_t *,
 	uint64_t *);
@@ -474,6 +475,10 @@ found:
 
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
+
+	/* Fix up invalid 0x00-0xff bus-range, as found on SPARCle */
+	if (psycho_br[0] == 0 && psycho_br[1] == 0xff)
+		psycho_fixup_bus_range(sc->sc_node, psycho_br);
 
 	aprint_normal("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	aprint_normal("; PCI bus %d", psycho_br[0]);
@@ -863,6 +868,44 @@ psycho_get_bus_range(int node, int *brp)
 		panic("broken psycho bus-range");
 	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
 			   node, brp[0], brp[1]));
+}
+
+static void
+psycho_fixup_bus_range(int node0, int *brp0)
+{
+	int node;
+	int len, busrange[2], *brp;
+
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: fixing up `bus-range' for node %08x: %u - %u\n",
+	    node0, brp0[0], brp0[1]));
+
+	/*
+	 * Check all nodes under this one and increase the bus range to
+	 * match.  Recurse through PCI-PCI bridges.  Cardbus bridges are
+	 * fixed up in pccbb_attach_hook().  Assumes that "bus-range" for
+	 * PCI-PCI bridges apart from this one is correct.
+	 */
+	brp0[1] = brp0[0];
+	node = prom_firstchild(node0);
+	for (node = ((node)); node; node = prom_nextsibling(node)) {
+		len = 2;
+		brp = busrange;
+		if (prom_getprop(node, "bus-range", sizeof(*brp),
+		    &len, &brp) != 0)
+			break;
+		if (len != 2)
+			break;
+		psycho_fixup_bus_range(node, busrange);
+		if (brp0[0] > busrange[0] && busrange[0] >= 0)
+			brp0[0] = busrange[0];
+		if (brp0[1] < busrange[1] && busrange[1] < 256)
+			brp0[1] = busrange[1];
+	}
+
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: fixed up `bus-range' for node %08x: %u - %u\n",
+	    node0, brp[0], brp[1]));
 }
 
 static void
