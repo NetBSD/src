@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.h,v 1.8 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npftest.h,v 1.9 2013/09/24 02:44:20 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -17,7 +17,7 @@ unsigned	rumpns_npf_test_getif(const char *);
 
 int		rumpns_npf_test_statetrack(const void *, size_t,
 		    unsigned, bool, int64_t *);
-void		rumpns_npf_test_conc(unsigned);
+void		rumpns_npf_test_conc(bool, unsigned);
 
 bool		rumpns_npf_nbuf_test(bool);
 bool		rumpns_npf_bpf_test(bool);

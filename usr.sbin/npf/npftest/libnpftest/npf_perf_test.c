@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_perf_test.c,v 1.1 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npf_perf_test.c,v 1.2 2013/09/24 02:44:20 rmind Exp $	*/
 
 /*
  * NPF benchmarking.
@@ -16,24 +16,30 @@
 #include "npf_impl.h"
 #include "npf_test.h"
 
-#define	NSECS		1 /* seconds */
+#define	NSECS		10 /* seconds */
 
 static volatile int	run;
 static volatile int	done;
 
+static uint64_t *	npackets;
+static bool		stateful;
+
 static struct mbuf *
-fill_packet(void)
+fill_packet(unsigned i)
 {
 	struct mbuf *m;
 	struct ip *ip;
-	struct tcphdr *th;
+	struct udphdr *uh;
+	char buf[32];
 
-	m = mbuf_construct(IPPROTO_TCP);
-	th = mbuf_return_hdrs(m, false, &ip);
+	m = mbuf_construct(IPPROTO_UDP);
+	uh = mbuf_return_hdrs(m, false, &ip);
+
+	snprintf(buf, sizeof(buf), "192.0.2.%u", i + i);
 	ip->ip_src.s_addr = inet_addr(PUB_IP1);
-	ip->ip_dst.s_addr = inet_addr(LOCAL_IP3);
-	th->th_sport = htons(80);
-	th->th_dport = htons(15000);
+	ip->ip_dst.s_addr = inet_addr(stateful ? LOCAL_IP2 : LOCAL_IP3);
+	uh->uh_sport = htons(80);
+	uh->uh_dport = htons(15000 + i);
 	return m;
 }
 
@@ -41,8 +47,9 @@ static void
 worker(void *arg)
 {
 	ifnet_t *ifp = ifunit(IFNAME_INT);
-	uint64_t n = 0, *npackets = arg;
-	struct mbuf *m = fill_packet();
+	unsigned int i = (uintptr_t)arg;
+	struct mbuf *m = fill_packet(i);
+	uint64_t n = 0;
 
 	while (!run)
 		/* spin-wait */;
@@ -53,28 +60,29 @@ worker(void *arg)
 		KASSERT(error == 0);
 		n++;
 	}
-	*npackets = n;
+	npackets[i] = n;
 	kthread_exit(0);
 }
 
 void
-npf_test_conc(unsigned nthreads)
+npf_test_conc(bool st, unsigned nthreads)
 {
-	uint64_t total = 0, *npackets;
+	uint64_t total = 0;
 	int error;
 	lwp_t **l;
+
+	printf("THREADS\tPKTS\n");
+	stateful = st;
+	done = false;
+	run = false;
 
 	npackets = kmem_zalloc(sizeof(uint64_t) * nthreads, KM_SLEEP);
 	l = kmem_zalloc(sizeof(lwp_t *) * nthreads, KM_SLEEP);
 
-	printf("THREADS\tPKTS\n");
-	done = false;
-	run = false;
-
 	for (unsigned i = 0; i < nthreads; i++) {
 		const int flags = KTHREAD_MUSTJOIN | KTHREAD_MPSAFE;
 		error = kthread_create(PRI_NONE, flags, NULL,
-		    worker, &npackets[i], &l[i], "npfperf");
+		    worker, (void *)(uintptr_t)i, &l[i], "npfperf");
 		KASSERT(error == 0);
 	}
 
