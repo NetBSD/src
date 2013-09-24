@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_perf_test.c,v 1.2 2013/09/24 02:44:20 rmind Exp $	*/
+/*	$NetBSD: npf_perf_test.c,v 1.3 2013/09/24 22:52:14 joerg Exp $	*/
 
 /*
  * NPF benchmarking.
@@ -43,7 +43,7 @@ fill_packet(unsigned i)
 	return m;
 }
 
-static void
+__dead static void
 worker(void *arg)
 {
 	ifnet_t *ifp = ifunit(IFNAME_INT);
