@@ -45,7 +45,7 @@ unsigned	npf_test_getif(const char *);
 
 int		npf_test_statetrack(const void *, size_t, unsigned,
 		    bool, int64_t *);
-void		npf_test_conc(unsigned);
+void		npf_test_conc(bool, unsigned);
 
 struct mbuf *	mbuf_getwithdata(const void *, size_t);
 struct mbuf *	mbuf_construct_ether(int);
