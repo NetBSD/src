@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2013/09/19 01:49:07 rmind Exp $
+# $NetBSD: Makefile,v 1.7 2013/09/24 02:04:21 rmind Exp $
 #
 # Public Domain
 #
@@ -17,6 +17,8 @@ SRCS+=		npf_table_test.c
 SRCS+=		npf_state_test.c
 SRCS+=		npf_rule_test.c
 SRCS+=		npf_nat_test.c
+
+SRCS+=		npf_perf_test.c
 
 CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../../sys/net/npf

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat_test.c,v 1.3 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf_nat_test.c,v 1.4 2013/09/24 02:04:21 rmind Exp $	*/
 
 /*
  * NPF NAT test.
@@ -10,18 +10,6 @@
 
 #include "npf_impl.h"
 #include "npf_test.h"
-
-#define	IFNAME_EXT	"npftest0"
-#define	IFNAME_INT	"npftest1"
-
-#define	LOCAL_IP1	"10.1.1.1"
-#define	LOCAL_IP2	"10.1.1.2"
-
-/* Note: RFC 5737 compliant addresses. */
-#define	PUB_IP1		"192.0.2.1"
-#define	PUB_IP2		"192.0.2.2"
-#define	REMOTE_IP1	"192.0.2.3"
-#define	REMOTE_IP2	"192.0.2.4"
 
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH

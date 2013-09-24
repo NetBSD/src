@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.4 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.5 2013/09/24 02:04:21 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -72,7 +72,7 @@ npf_state_sample(npf_state_t *nst, bool retval)
 }
 
 int
-npf_test_handlepkt(const void *data, size_t len, unsigned idx,
+npf_test_statetrack(const void *data, size_t len, unsigned idx,
     bool forw, int64_t *result)
 {
 	ifnet_t ifp = { .if_index = idx };

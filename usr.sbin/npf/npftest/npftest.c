@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.10 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.11 2013/09/24 02:04:21 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -139,6 +139,7 @@ main(int argc, char **argv)
 {
 	bool benchmark, test, ok, fail, tname_matched;
 	char *config, *interface, *stream, *testname;
+	unsigned nthreads = 0;
 	int idx = -1, ch;
 
 	benchmark = false;
@@ -153,7 +154,7 @@ main(int argc, char **argv)
 	verbose = false;
 	quiet = false;
 
-	while ((ch = getopt(argc, argv, "bqvc:i:s:tT:L")) != -1) {
+	while ((ch = getopt(argc, argv, "bqvc:i:s:tT:Lp:")) != -1) {
 		switch (ch) {
 		case 'b':
 			benchmark = true;
@@ -182,17 +183,33 @@ main(int argc, char **argv)
 			break;
 		case 'L':
 			describe_tests();
+			break;
+		case 'p':
+			/* Note: RUMP_NCPU must be high enough. */
+			if ((nthreads = atoi(optarg)) > 0 &&
+			    getenv("RUMP_NCPU") == NULL) {
+				char *val;
+				asprintf(&val, "%u", nthreads + 1);
+				setenv("RUMP_NCPU", val, 1);
+				free(val);
+			}
+			break;
 		default:
 			usage();
 		}
 	}
 
 	/*
-	 * Either benchmark or test.  If stream analysis, then the interface
-	 * is needed as well.
+	 * Either benchmark or test.  If stream analysis, then the
+	 * interface should be specified.  If benchmark, then the
+	 * config should be loaded.
 	 */
 	if (benchmark == test && (stream && !interface)) {
 		usage();
+	}
+	if (benchmark && (!config || !nthreads)) {
+		errx(EXIT_FAILURE, "missing config for the benchmark or "
+		    "invalid thread count");
 	}
 
 	/* XXX rn_init */
@@ -256,6 +273,10 @@ main(int argc, char **argv)
 
 	if (stream) {
 		process_stream(stream, NULL, idx);
+	}
+
+	if (benchmark) {
+		rumpns_npf_test_conc(nthreads);
 	}
 
 	rump_unschedule();
