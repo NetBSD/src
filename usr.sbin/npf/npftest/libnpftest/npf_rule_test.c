@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.9 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.10 2013/09/24 02:04:21 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -10,9 +10,6 @@
 
 #include "npf_impl.h"
 #include "npf_test.h"
-
-#define	IFNAME_EXT	"npftest0"
-#define	IFNAME_INT	"npftest1"
 
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH
