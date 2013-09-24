@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.41 2013/09/12 20:20:03 martin Exp $	*/
+/*	$NetBSD: i2c.c,v 1.42 2013/09/24 18:04:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.41 2013/09/12 20:20:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.42 2013/09/24 18:04:53 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +166,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
 	prop_array_t child_devices;
+	prop_dictionary_t props;
 	char *buf;
 	i2c_tag_t ic;
 	int rv;
+	bool indirect_config;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
@@ -190,8 +192,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	child_devices = prop_dictionary_get(device_properties(parent),
-		"i2c-child-devices");
+	props = device_properties(parent);
+	if (!prop_dictionary_get_bool(props, "i2c-indirect-config",
+	    &indirect_config))
+		indirect_config = true;
+	child_devices = prop_dictionary_get(props, "i2c-child-devices");
 	if (child_devices) {
 		unsigned int i, count;
 		prop_dictionary_t dev;
@@ -250,7 +255,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (buf)
 				free(buf, M_TEMP);
 		}
-	} else {
+	} else if (indirect_config) {
 		/*
 		 * Attach all i2c devices described in the kernel
 		 * configuration file.
