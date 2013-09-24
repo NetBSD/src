@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2013/04/08 20:54:48 pooka Exp $  
+	$NetBSD: syscalls.master,v 1.46 2013/09/24 13:27:50 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -506,7 +506,8 @@
 313	UNIMPL		epoll_pwait
 314	UNIMPL		ioprio_set
 315	UNIMPL		ioprio_get
-316	UNIMPL		utimensat
+316	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
+			    struct linux_timespec *times, int flag); }
 317	UNIMPL		signalfd
 318	UNIMPL		timerfd
 319	UNIMPL		eventfd
