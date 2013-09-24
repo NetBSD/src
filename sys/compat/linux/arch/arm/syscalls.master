@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2013/04/08 20:54:48 pooka Exp $
+	$NetBSD: syscalls.master,v 1.51 2013/09/24 13:27:49 njoly Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -534,7 +534,8 @@
 345	UNIMPL		getcpu
 346	UNIMPL		epoll_wait
 347	UNIMPL		kexec_load
-348	UNIMPL		utimensat
+348	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
+			    struct linux_timespec *times, int flag); }
 349	UNIMPL		signalfd
 350	UNIMPL		timerfd_create
 351	UNIMPL		eventfd

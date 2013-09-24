@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.225 2013/09/15 12:58:34 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.226 2013/09/24 13:27:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.225 2013/09/15 12:58:34 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.226 2013/09/24 13:27:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1407,6 +1407,49 @@ linux_sys_utimes(struct lwp *l, const struct linux_sys_utimes_args *uap, registe
 
 	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
 	    tptr, UIO_SYSSPACE);
+}
+
+int
+linux_sys_utimensat(struct lwp *l, const struct linux_sys_utimensat_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(const struct linux_timespec *) times;
+		syscallarg(int) flag;
+	} */
+	int follow, error;
+	struct linux_timespec lts[2];
+	struct timespec *tsp = NULL, ts[2];
+
+	follow = (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW) ?
+	    NOFOLLOW : FOLLOW;
+
+	if (SCARG(uap, times)) {
+		error = copyin(SCARG(uap, times), &lts, sizeof(lts));
+		if (error != 0)
+			return error;
+		linux_to_native_timespec(&ts[0], &lts[0]);
+		linux_to_native_timespec(&ts[1], &lts[1]);
+		tsp = ts;
+	}
+
+	if (SCARG(uap, path) == NULL && SCARG(uap, fd) != AT_FDCWD) {
+		file_t *fp;
+
+		/* fd_getvnode() will use the descriptor for us */
+		if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+			return error;
+		error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
+		    tsp, UIO_SYSSPACE);
+		fd_putfile(SCARG(uap, fd));
+		return error;
+	}
+
+	return do_sys_utimensat(l, SCARG(uap, fd), NULL,
+	    SCARG(uap, path), follow, tsp, UIO_SYSSPACE);
+
 }
 
 int linux_sys_lutimes(struct lwp *, const struct linux_sys_utimes_args *, register_t *);

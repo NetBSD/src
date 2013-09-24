@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.109 2013/04/08 20:54:48 pooka Exp $
+	$NetBSD: syscalls.master,v 1.110 2013/09/24 13:27:49 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -506,7 +506,8 @@
 317	UNIMPL		move_pages
 318	UNIMPL		getcpu
 319	UNIMPL		epoll_wait
-320	UNIMPL		utimensat
+320	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
+			    struct linux_timespec *times, int flag); }
 321	UNIMPL		signalfd
 322	UNIMPL		timerfd_create
 323	UNIMPL		eventfd
