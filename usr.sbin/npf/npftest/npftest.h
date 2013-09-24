@@ -7,15 +7,17 @@
 #ifndef _NPF_TEST_H_
 #define _NPF_TEST_H_
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 
 void		rumpns_npf_test_init(void);
 int		rumpns_npf_test_load(const void *);
 unsigned	rumpns_npf_test_addif(const char *, unsigned, bool);
 unsigned	rumpns_npf_test_getif(const char *);
-int		rumpns_npf_test_handlepkt(const void *, size_t,
+
+int		rumpns_npf_test_statetrack(const void *, size_t,
 		    unsigned, bool, int64_t *);
+void		rumpns_npf_test_conc(unsigned);
 
 bool		rumpns_npf_nbuf_test(bool);
 bool		rumpns_npf_bpf_test(bool);
