@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.104 2011/10/14 09:23:28 hannken Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.105 2013/09/24 13:27:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.104 2011/10/14 09:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.105 2013/09/24 13:27:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,6 +642,23 @@ linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
 
 	return 0;
 }
+
+
+int
+linux_to_bsd_atflags(int lflags)
+{
+	int bflags = 0;
+
+	if (lflags & LINUX_AT_SYMLINK_NOFOLLOW)
+		bflags |= AT_SYMLINK_NOFOLLOW;
+	if (lflags & LINUX_AT_REMOVEDIR)
+		bflags |= AT_REMOVEDIR;
+	if (lflags & LINUX_AT_SYMLINK_FOLLOW)
+		bflags |= AT_SYMLINK_FOLLOW;
+
+	return bflags;
+}
+
 
 #define LINUX_NOT_SUPPORTED(fun) \
 int \
