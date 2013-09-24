@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.191 2012/11/02 17:47:29 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.192 2013/09/24 18:11:54 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.191 2012/11/02 17:47:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.192 2013/09/24 18:11:54 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1087,6 +1087,31 @@ noether:
 				of_enter_i2c_devs(props, busnode,
 				    sizeof(cell_t));
 			}
+		}
+
+		/*
+		 * Add SPARCle spdmem devices (0x50 and 0x51) that the
+		 * firmware does not know about.
+		 */
+		if (!strcmp(machine_model, "TAD,SPARCLE")) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_array_t cfg = prop_array_create();
+			int i;
+
+			DPRINTF(ACDB_PROBE, ("\nAdding spdmem for SPARCle "));
+			for (i = 0x50; i <= 0x51; i++) {
+				prop_dictionary_t spd =
+				    prop_dictionary_create();
+				prop_dictionary_set_cstring(spd, "name",
+				    "dimm-spd");
+				prop_dictionary_set_uint32(spd, "addr", i);
+				prop_dictionary_set_uint64(spd, "cookie", 0);
+				prop_array_add(cfg, spd);
+				prop_object_release(spd);
+			}
+			prop_dictionary_set(props, "i2c-child-devices", cfg);
+			prop_object_release(cfg);
+			
 		}
 	}
 
