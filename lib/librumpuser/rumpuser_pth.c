@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.31 2013/09/23 10:35:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.32 2013/09/24 23:45:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,10 +28,13 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.31 2013/09/23 10:35:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.32 2013/09/24 23:45:16 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
+#if defined(__NetBSD__)
+#include <sys/atomic.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -242,7 +245,7 @@ rumpuser_mutex_owner(struct rumpuser_mtx *mtx, struct lwp **lp)
 struct rumpuser_rw {
 	pthread_rwlock_t pthrw;
 	pthread_spinlock_t spin;
-	int readers;
+	unsigned int readers;
 	struct lwp *writer;
 	int downgrade; /* someone is downgrading (hopefully lock holder ;) */
 };
@@ -251,14 +254,15 @@ static int
 rw_amwriter(struct rumpuser_rw *rw)
 {
 
-	return rw->writer == rumpuser_curlwp() && rw->readers == -1;
+	return rw->writer == rumpuser_curlwp() && rw->readers == (unsigned)-1;
 }
 
 static int
 rw_nreaders(struct rumpuser_rw *rw)
 {
+	unsigned nreaders = rw->readers;
 
-	return rw->readers > 0 ? rw->readers : 0;
+	return nreaders != (unsigned)-1 ? nreaders : 0;
 }
 
 static int
@@ -283,7 +287,7 @@ rw_setwriter(struct rumpuser_rw *rw, int retry)
 	}
 	assert(rw->readers == 0);
 	rw->writer = rumpuser_curlwp();
-	rw->readers = -1;
+	rw->readers = (unsigned)-1;
 	return 0;
 }
 
@@ -300,20 +304,27 @@ static void
 rw_readup(struct rumpuser_rw *rw)
 {
 
+#if defined(__NetBSD__)
+	atomic_inc_uint(&rw->readers);
+#else
 	pthread_spin_lock(&rw->spin);
-	assert(rw->readers >= 0);
 	++rw->readers;
 	pthread_spin_unlock(&rw->spin);
+#endif
 }
 
 static void
 rw_readdown(struct rumpuser_rw *rw)
 {
 
+#if defined(__NetBSD__)
+	atomic_dec_uint(&rw->readers);
+#else
 	pthread_spin_lock(&rw->spin);
 	assert(rw->readers > 0);
 	--rw->readers;
 	pthread_spin_unlock(&rw->spin);
+#endif
 }
 
 void
