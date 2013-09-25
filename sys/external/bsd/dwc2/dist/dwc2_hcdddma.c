@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -833,8 +833,8 @@ static int dwc2_cmpl_host_isoc_dma_desc(struct dwc2_hsotg *hsotg,
 	frame_desc = &qtd->urb->iso_descs[qtd->isoc_frame_index_last];
 	dma_desc->buf = (u32)(DMAADDR(qtd->urb->usbdma, frame_desc->offset));
 	if (chan->ep_is_in)
-		remain = dma_desc->status >> HOST_DMA_ISOC_NBYTES_SHIFT &
-			HOST_DMA_ISOC_NBYTES_MASK >> HOST_DMA_ISOC_NBYTES_SHIFT;
+		remain = (dma_desc->status & HOST_DMA_ISOC_NBYTES_MASK) >>
+			 HOST_DMA_ISOC_NBYTES_SHIFT;
 
 	if ((dma_desc->status & HOST_DMA_STS_MASK) == HOST_DMA_STS_PKTERR) {
 		/*
@@ -962,8 +962,8 @@ static int dwc2_update_non_isoc_urb_state_ddma(struct dwc2_hsotg *hsotg,
 	u16 remain = 0;
 
 	if (chan->ep_is_in)
-		remain = dma_desc->status >> HOST_DMA_NBYTES_SHIFT &
-			 HOST_DMA_NBYTES_MASK >> HOST_DMA_NBYTES_SHIFT;
+		remain = (dma_desc->status & HOST_DMA_NBYTES_MASK) >>
+			 HOST_DMA_NBYTES_SHIFT;
 
 	dev_vdbg(hsotg->dev, "remain=%d dwc2_urb=%p\n", remain, urb);
 
