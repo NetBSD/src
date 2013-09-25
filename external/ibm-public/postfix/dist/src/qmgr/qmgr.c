@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.3 2011/03/02 19:32:29 tron Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.4 2013/09/25 19:06:34 tron Exp $	*/
 
 /*++
 /* NAME
@@ -179,7 +179,7 @@
 /*	The maximal number of messages in the active queue.
 /* .IP "\fBqmgr_message_recipient_limit (20000)\fR"
 /*	The maximal number of recipients held in memory by the Postfix
-/*	queue manager, and the maximal size of the size of the short-term,
+/*	queue manager, and the maximal size of the short-term,
 /*	in-memory "dead" destination status cache.
 /* .IP "\fBqmgr_message_recipient_minimum (10)\fR"
 /*	The minimal number of in-memory recipients for any message.
@@ -297,8 +297,8 @@
 /*	Available in Postfix version 2.5 and later:
 /* .IP "\fBdefault_destination_rate_delay (0s)\fR"
 /*	The default amount of delay that is inserted between individual
-/*	deliveries to the same destination; with per-destination recipient
-/*	limit > 1, a destination is a domain, otherwise it is a recipient.
+/*	deliveries to the same destination; the resulting behavior depends
+/*	on the value of the corresponding per-destination recipient limit.
 /* .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
 /*	Idem, for delivery via the named message \fItransport\fR.
 /* SAFETY CONTROLS

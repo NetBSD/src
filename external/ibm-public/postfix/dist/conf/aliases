@@ -56,9 +56,15 @@ decode:		root
 #        newaliases  in  order  to  rebuild  the indexed file after
 #        changing the Postfix alias database.
 # 
-#        The input and output file formats are expected to be  com-
-#        patible  with  Sendmail  version 8, and are expected to be
-#        suitable for the use as NIS maps.
+#        When the table is provided via other means  such  as  NIS,
+#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        indexed files.
+# 
+#        Alternatively, the table can be  provided  as  a  regular-
+#        expression map where patterns are given as regular expres-
+#        sions. In this case, the lookups are done  in  a  slightly
+#        different way as described below under "REGULAR EXPRESSION
+#        TABLES".
 # 
 #        Users can control delivery of their own mail by setting up
 #        .forward files in their home directory.  Lines in per-user
@@ -142,6 +148,25 @@ decode:		root
 # CASE FOLDING
 #        The local(8) delivery agent always folds the search string
 #        to lowercase before database lookup.
+# 
+# REGULAR EXPRESSION TABLES
+#        This section describes how the table lookups  change  when
+#        the table is given in the form of regular expressions. For
+#        a description of regular expression lookup  table  syntax,
+#        see  regexp_table(5) or pcre_table(5). NOTE: these formats
+#        do not use ":" at the end of a pattern.
+# 
+#        Each regular expression is applied to  the  entire  search
+#        string.  Thus,  a  search string user+foo is not broken up
+#        into user and foo.
+# 
+#        Regular expressions are applied in the order as  specified
+#        in  the  table,  until  a regular expression is found that
+#        matches the search string.
+# 
+#        Lookup results are the same as with indexed file  lookups.
+#        For  security  reasons there is no support for $1, $2 etc.
+#        substring interpolation.
 # 
 # SECURITY
 #        The local(8) delivery agent disallows  regular  expression

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.c,v 1.1.1.3 2013/01/02 18:58:54 tron Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.1.1.4 2013/09/25 19:06:29 tron Exp $	*/
 
 /*++
 /* NAME
@@ -327,8 +327,8 @@
 /*	The maximal number of digits after the decimal point when logging
 /*	sub-second delay values.
 /* .IP "\fBdelay_warning_time (0h)\fR"
-/*	The time after which the sender receives the message headers of
-/*	mail that is still queued.
+/*	The time after which the sender receives a copy of the message
+/*	headers of mail that is still queued.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.

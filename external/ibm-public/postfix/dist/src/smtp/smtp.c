@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.5 2013/01/02 18:59:07 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.6 2013/09/25 19:06:34 tron Exp $	*/
 
 /*++
 /* NAME
@@ -97,6 +97,7 @@
 /*	RFC 3461 (SMTP DSN Extension)
 /*	RFC 3463 (Enhanced Status Codes)
 /*	RFC 4954 (AUTH command)
+/*	RFC 5321 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -165,7 +166,7 @@
 /* .IP "\fBsmtp_quote_rfc821_envelope (yes)\fR"
 /*	Quote addresses in Postfix SMTP client MAIL FROM and RCPT TO commands
 /*	as required
-/*	by RFC 2821.
+/*	by RFC 5321.
 /* .IP "\fBsmtp_reply_filter (empty)\fR"
 /*	A mechanism to transform replies from remote SMTP servers one
 /*	line at a time.

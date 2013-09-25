@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.5 2013/01/02 18:58:47 tron Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.6 2013/09/25 19:06:26 tron Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -64,6 +64,7 @@ RFC 3463 (Enhanced status codes)
 RFC 3848 (ESMTP transmission types)
 RFC 4409 (Message submission)
 RFC 4954 (AUTH command)
+RFC 5321 (SMTP protocol)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -174,6 +175,18 @@ $mydomain; either don't rewrite message headers from other clients
 at all, or rewrite message headers and update incomplete addresses
 with the domain specified in the remote_header_rewrite_domain
 parameter.
+.SH "BEFORE-SMTPD PROXY AGENT"
+.na
+.nf
+.ad
+.fi
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_upstream_proxy_protocol (empty)\fR"
+The name of the proxy protocol used by an optional before-smtpd
+proxy agent.
+.IP "\fBsmtpd_upstream_proxy_timeout (5s)\fR"
+The time limit for the proxy protocol specified with the
+smtpd_upstream_proxy_protocol parameter.
 .SH "AFTER QUEUE EXTERNAL CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -554,6 +567,11 @@ the sender.
 Available in Postfix version 2.1 and later:
 .IP "\fBsmtpd_authorized_xclient_hosts (empty)\fR"
 What remote SMTP clients are allowed to use the XCLIENT feature.
+.PP
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_log_access_permit_actions (empty)\fR"
+Enable logging of the named "permit" actions in SMTP server
+access lists.
 .SH "KNOWN VERSUS UNKNOWN RECIPIENT CONTROLS"
 .na
 .nf
@@ -762,24 +780,24 @@ evaluating $smtpd_client_restrictions and $smtpd_helo_restrictions.
 What Postfix features match subdomains of "domain.tld" automatically,
 instead of requiring an explicit ".domain.tld" pattern.
 .IP "\fBsmtpd_client_restrictions (empty)\fR"
-Optional Postfix SMTP server access restrictions in the context of
-a remote SMTP client connection request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client connection request.
 .IP "\fBsmtpd_helo_required (no)\fR"
 Require that a remote SMTP client introduces itself with the HELO
 or EHLO command before sending the MAIL command or other commands
 that require EHLO negotiation.
 .IP "\fBsmtpd_helo_restrictions (empty)\fR"
 Optional restrictions that the Postfix SMTP server applies in the
-context of the SMTP HELO command.
+context of a client HELO command.
 .IP "\fBsmtpd_sender_restrictions (empty)\fR"
 Optional restrictions that the Postfix SMTP server applies in the
-context of the MAIL FROM command.
-.IP "\fBsmtpd_recipient_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
-The access restrictions that the Postfix SMTP server applies in
-the context of the RCPT TO command.
+context of a client MAIL FROM command.
+.IP "\fBsmtpd_recipient_restrictions (see 'postconf -d' output)\fR"
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client RCPT TO command, after smtpd_relay_restrictions.
 .IP "\fBsmtpd_etrn_restrictions (empty)\fR"
-Optional SMTP server access restrictions in the context of a client
-ETRN request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client ETRN command.
 .IP "\fBallow_untrusted_routing (no)\fR"
 Forward mail with sender-specified routing (user[@%!]remote[@%!]site)
 from untrusted clients to destinations matching $relay_domains.
@@ -814,6 +832,12 @@ Available in Postfix version 2.2 and later:
 .IP "\fBsmtpd_end_of_data_restrictions (empty)\fR"
 Optional access restrictions that the Postfix SMTP server
 applies in the context of the SMTP END-OF-DATA command.
+.PP
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_relay_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
+Access restrictions for mail relay control that the Postfix
+SMTP server applies in the context of the RCPT TO command, before
+smtpd_recipient_restrictions.
 .SH "SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS"
 .na
 .nf

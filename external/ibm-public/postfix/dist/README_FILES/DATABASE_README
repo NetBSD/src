@@ -246,6 +246,11 @@ To find out what database types your Postfix system supports, use the "ppooss
         with the postmap(1) or postalias(1) command. The lookup table name as
         used in "sdbm:table" is the database file name without the ".dir" or
         ".pag" suffix.
+    ssoocckkeettmmaapp (read-only)
+        Query a Sendmail-style socketmap server. The name of the table
+        specifies iinneett:host:port:socketmap-name for a TCP-based server, or
+        uunniixx:pathname:socketmap-name for a UNIX-domain server. In both cases
+        socketmap-name is the name of the socketmap.
     ssqqlliittee (read-only)
         Perform SQLite database lookups. Configuration details are given in
         sqlite_table(5).

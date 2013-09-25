@@ -147,7 +147,7 @@ Their DSA counterparts:
         smtpd_tls_dcert_file = /etc/postfix/server-dsa.pem
         smtpd_tls_dkey_file = $smtpd_tls_dcert_file
 
-Their ECDSA counterparts (Postfix >= 2.6 + OpenSSL >= 0.9.9):
+Their ECDSA counterparts (Postfix >= 2.6 + OpenSSL >= 1.0.0):
 
     /etc/postfix/main.cf:
         # Most clients will not be ECDSA capable, so you will likely also need
@@ -445,12 +445,23 @@ employee leaving).
 
 Example:
 
+    # With Postfix 2.10 and later, the mail relay policy is
+    # preferably specified under smtpd_relay_restrictions.
     /etc/postfix/main.cf:
-        smtpd_recipient_restrictions =
-            ...
+        smtpd_relay_restrictions =
+            permit_mynetworks
             permit_tls_clientcerts
             reject_unauth_destination
-            ...
+
+    # Older configurations combine relay control and spam control under
+    # smtpd_recipient_restrictions. To use this example with Postfix >=
+    # 2.10 specify "smtpd_relay_restrictions=".
+    /etc/postfix/main.cf:
+        smtpd_recipient_restrictions =
+            permit_mynetworks
+            permit_tls_clientcerts
+            reject_unauth_destination
+            ...other rules...
 
 Example: Postfix lookup tables are in the form of (key, value) pairs. Since we
 only need the key, the value can be chosen freely, e.g. the name of the user or
@@ -557,7 +568,7 @@ To generate your own set of DH parameters, use:
     % ooppeennssssll ggeennddhh --oouutt //eettcc//ppoossttffiixx//ddhh__11002244..ppeemm --22 11002244
 
 Support for elliptic curve cryptography is available with Postfix 2.6 and
-OpenSSL 0.9.9 or later. To enable ephemeral elliptic curve Diffie-Hellman
+OpenSSL 1.0.0 or later. To enable ephemeral elliptic curve Diffie-Hellman
 (EECDH) key-exchange, set "smtpd_tls_eecdh_grade = strong" or
 "smtpd_tls_eecdh_grade = ultra". The "ultra" setting is substantially more CPU
 intensive, and "strong" is sufficiently secure for most situations.
@@ -579,7 +590,7 @@ By default, the OpenSSL server selects the client's most preferred cipher that
 the server supports. With SSLv3 and later, the server may choose its own most
 preferred cipher that is supported (offered) by the client. Setting
 "tls_preempt_cipherlist = yes" enables server cipher preferences. The default
-OpenSSL behaviour applies with "tls_preempt_cipherlist = no".
+OpenSSL behavior applies with "tls_preempt_cipherlist = no".
 
 While server cipher selection may in some cases lead to a more secure or
 performant cipher choice, there is some risk of interoperability issues. In the
@@ -1130,7 +1141,7 @@ Their DSA counterparts:
         smtp_tls_dcert_file = /etc/postfix/client-dsa.pem
         smtp_tls_dkey_file = $smtp_tls_dcert_file
 
-Their ECDSA counterparts (Postfix >= 2.6 + OpenSSL >= 0.9.9):
+Their ECDSA counterparts (Postfix >= 2.6 + OpenSSL >= 1.0.0):
 
     /etc/postfix/main.cf:
         smtp_tls_eccert_file = /etc/postfix/client-ecdsa.pem
@@ -1648,10 +1659,11 @@ In the examples below, user input is shown in bboolldd font, and a "#" promp
 indicates a super-user shell.
 
   * Become your own Certificate Authority, so that you can sign your own public
-    keys. This example uses the CA.pl script that ships with OpenSSL. By
-    default, OpenSSL installs this as /usr/local/ssl/misc/CA.pl, but your
-    mileage may vary. The script creates a private key in ./demoCA/private/
-    cakey.pem and a public key in ./demoCA/cacert.pem.
+    keys. This example uses the CA.pl script that ships with OpenSSL. On some
+    systems, OpenSSL installs this as /usr/local/ssl/misc/CA.pl. Some systems
+    install this as part of a package named openssl-perl or something similar.
+    The script creates a private key in ./demoCA/private/cakey.pem and a public
+    key in ./demoCA/cacert.pem.
 
         % //uussrr//llooccaall//ssssll//mmiisscc//CCAA..ppll --nneewwccaa
         CA certificate filename (or enter to create)

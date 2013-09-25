@@ -55,7 +55,8 @@ different steps:
     addresses the client may use.
 
 Successful authentication in the Postfix SMTP server requires a functional SASL
-framework. Configuring SASL should therefore always be the first step.
+framework. Configuring SASL should therefore always be the first step, before
+configuring Postfix.
 
 You can read more about the following topics:
 
@@ -832,17 +833,26 @@ These permissions are not enabled by default.
 
 MMaaiill rreellaayy aauutthhoorriizzaattiioonn
 
-The permit_sasl_authenticated restriction allows SASL-authenticated SMTP
-clients to send mail to remote destinations. Add it to the list of
-smtpd_recipient_restrictions as follows:
+With permit_sasl_authenticated the Postfix SMTP server can allow SASL-
+authenticated SMTP clients to send mail to remote destinations. Examples:
 
+    # With Postfix 2.10 and later, the mail relay policy is
+    # preferably specified under smtpd_relay_restrictions.
+    /etc/postfix/main.cf:
+        smtpd_relay_restrictions =
+    	permit_mynetworks
+    	ppeerrmmiitt__ssaassll__aauutthheennttiiccaatteedd
+    	reject_unauth_destination
+
+    # Older configurations combine relay control and spam control under
+    # smtpd_recipient_restrictions. To use this example with Postfix >=
+    # 2.10 specify "smtpd_relay_restrictions=".
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
-        ...
-        permit_mynetworks
-        ppeerrmmiitt__ssaassll__aauutthheennttiiccaatteedd
-        reject_unauth_destination
-        ...
+    	permit_mynetworks
+    	ppeerrmmiitt__ssaassll__aauutthheennttiiccaatteedd
+    	reject_unauth_destination
+    	...other rules...
 
 EEnnvveellooppee sseennddeerr aaddddrreessss aauutthhoorriizzaattiioonn
 
@@ -862,9 +872,7 @@ authenticated client is allowed to use a particular envelope sender address:
         smtpd_recipient_restrictions =
             ...
             rreejjeecctt__sseennddeerr__llooggiinn__mmiissmmaattcchh
-            permit_sasl_authenticated
-            permit_mynetworks
-            reject_unauth_destination
+    	permit_sasl_authenticated
             ...
 
 The controlled_envelope_senders table specifies the binding between a sender
@@ -1209,7 +1217,7 @@ example. Information sent by the client (that is, you) is shown in bboolldd 
     250-STARTTLS
     ...
 
-Instead of port 25 (smtp), specify port 587 (submission) where appriopriate.
+Instead of port 25 (smtp), specify port 587 (submission) where appropriate.
 
 EEnnccrryypptteedd SSMMTTPP sseessssiioonn ((TTLLSS))
 
