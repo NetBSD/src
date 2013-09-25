@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_send.c,v 1.1.1.3 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postscreen_send.c,v 1.1.1.4 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -63,11 +63,14 @@
 #include <msg.h>
 #include <iostuff.h>
 #include <connect.h>
+#include <attr.h>
+#include <vstream.h>
 
 /* Global library. */
 
 #include <mail_params.h>
 #include <smtp_reply_footer.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -165,6 +168,8 @@ void    psc_send_socket(PSC_STATE *state)
 {
     const char *myname = "psc_send_socket";
     int     server_fd;
+    int     pass_err;
+    VSTREAM *fp;
 
     if (msg_verbose > 1)
 	msg_info("%s: sq=%d cq=%d send socket %d from [%s]:%s",
@@ -189,8 +194,8 @@ void    psc_send_socket(PSC_STATE *state)
      * Postfix-specific.
      */
     if ((server_fd =
-	 PASS_CONNECT(psc_smtpd_service_name, NON_BLOCKING,
-		      PSC_SEND_SOCK_CONNECT_TIMEOUT)) < 0) {
+	 LOCAL_CONNECT(psc_smtpd_service_name, NON_BLOCKING,
+		       PSC_SEND_SOCK_CONNECT_TIMEOUT)) < 0) {
 	msg_warn("cannot connect to service %s: %m", psc_smtpd_service_name);
 	if (state->flags & PSC_STATE_FLAG_PREGR_TODO) {
 	    PSC_SMTPD_X21(state, "421 4.3.2 No system resources\r\n");
@@ -200,8 +205,19 @@ void    psc_send_socket(PSC_STATE *state)
 	}
 	return;
     }
-    if (LOCAL_SEND_FD(server_fd,
-		      vstream_fileno(state->smtp_client_stream)) < 0) {
+    /* XXX Note: no dummy read between LOCAL_SEND_FD() and attr_print(). */
+    fp = vstream_fdopen(server_fd, O_RDWR);
+    pass_err =
+	(LOCAL_SEND_FD(server_fd,
+		       vstream_fileno(state->smtp_client_stream)) < 0
+	 || (attr_print(fp, ATTR_FLAG_NONE,
+	  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, state->smtp_client_addr,
+	  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_PORT, state->smtp_client_port,
+	  ATTR_TYPE_STR, MAIL_ATTR_ACT_SERVER_ADDR, state->smtp_server_addr,
+	  ATTR_TYPE_STR, MAIL_ATTR_ACT_SERVER_PORT, state->smtp_server_port,
+			ATTR_TYPE_END) || vstream_fflush(fp)));
+    (void) vstream_fdclose(fp);
+    if (pass_err != 0) {
 	msg_warn("cannot pass connection to service %s: %m",
 		 psc_smtpd_service_name);
 	(void) close(server_fd);

@@ -17203,6 +17203,7 @@ Apologies for any names omitted.
 	smtp/smtp_params.c, smtp/smtp_proto.c, smtpd/smtpd.c,
 	tls/tls.h, tls/tls_client.c, tls/tls_misc.c, tls/tls_server.c,
 	tlsmgr/tlsmgr.c, tlsproxy/tlsproxy.c.
+
 20111203
 
 	Cleanup: time-dependent sender addresses of address
@@ -17603,10 +17604,10 @@ Apologies for any names omitted.
 20120130
 
 	Bugfix (introduced: Postfix 2.3): the trace service did not
-	distinguish between notifications for a non-bounce or a
-	bounce message. This code pre-dates DSN support and should
-	have been updated when it was re-purposed to handle DSN
-	SUCCESS notifications. Problem reported by Sabahattin
+	distinguish between DSN SUCCESS notifications for a non-bounce
+	or a bounce message. This code pre-dates DSN support and
+	should have been updated when it was re-purposed to handle
+	DSN SUCCESS notifications. Problem reported by Sabahattin
 	Gucukoglu.  File: bounce/bounce_trace_service.c.
 
 20120202
@@ -17619,9 +17620,9 @@ Apologies for any names omitted.
 
 20120214
 
-	Bugfix (introduced: Postfix 2.4): extraneous null assignment
-	caused core dump when postlog emitted the "usage" message.
-	Reported by Kant (fnord.hammer). File: postlog/postlog.c.
+        Bugfix (introduced: Postfix 2.4): extraneous null assignment
+        caused core dump when postlog emitted the "usage" message.
+        Reported by Kant (fnord.hammer). File: postlog/postlog.c.
 
 20120217
 
@@ -17630,11 +17631,99 @@ Apologies for any names omitted.
 	call was moved closer to the command processor loop. Fix
 	by Bartek Szady. File: smtpd/smtpd.c.
 
+20120220
+
+	Cleanup: documentation of how to use only system-supplied
+	certificates with *CAfile and *CApath. File: proto/postconf.proto.
+
+	Cleanup: documentation of smtp_sasl_mechanism_filter.  File:
+	proto/postconf.proto.
+
+20120222
+
+	Cleanup: when multiple DNSBLs block an SMTP client, the
+	postscreen "reject" message now gives credit to the DNSBL
+	with the largest weight, instead of the DNSBL that replies
+	first. File: postscreen/postscreeb_dnsbl.c.
+
+	Cleanup: memcache_table(5) manpage. File proto/memcache_table.
+
+20120225
+
+	Cleanup: eliminated the build-time Perl dependency.  File:
+	bounce/annotate.sh.
+
+	Cleanup: when -DNO_DB support was added, the makedefs script
+	was not updated to skip the Linux Berkeley DB tests.
+
+	FreeBSD9 is now a supported platform. Files: makedefs,
+	util/sys_defs.h.
+
+20120226
+
+	Cleanup: documentation in postfix-install.
+
+20120229
+
+	Feature: smtpd_log_access_permit_actions to enable logging
+	of specific permit-like actions in Postfix SMTP server
+	access lists.  Files: mantools/postlink, proto/postconf.proto,
+	global/mail_params.h, smtpd/smtpd.c, smtpd/smtpd_check.c.
+
+20120306
+
+	To improve the interaction with start-up scripts, "postfix
+	start" now waits for master daemon process initialization
+	to complete, and returns a non-zero exit status if daemon
+	initialization failed or if it did not complete in a
+	reasonable amount of time. This involves a new "-w" master
+	option.  Files: conf/postfix-script, master/master.c,
+	master/master.h.  master/master_monitor.c.
+
+20120307
+
+	postconf -X option to exclude parameters from main.cf
+	(require two-finger action, because this is irreversible).
+	Files: postconf/postconf.[hc], postconf/postconf_edit.c.
+
+20120317
+
+	Feature: Sendmail-style socketmap.  Files: util/dict_sockmap.[hc],
+	util/netstring.[hc], proto/DATABASE_README.html,
+	postconf/postconf.c.
+
+20120330
+
+	Workaround: specify "\c" at the start of an smtp_reject_footer
+	template to suppress the line break between the reply text
+	and the footer text. Files: global/smtp_reply_footer.c,
+	proto/postconf.proto.
+
 20120401
+
+	Bugfix (introduced Postfix 2.6): irrelevant memory leak
+	that was introduced with postconf -#. File:
+	postconf/postconf_edit.c.
 
 	Bitrot: shut up useless warnings about Cyrus SASL call-back
 	function pointer type mis-matches. Files: xsasl/xsasl_cyrus.h,
 	xsasl/xsasl_cyrus_server.c, xsasl/xsasl_client.c.
+
+20120404
+
+	Cleanup: added smtpd_sender_login_maps to the default
+	proxy_read_maps value. Files: global/mail_params.h,
+	proxymap/proxymap.c.
+
+	Cleanup: weed out stale TODO's from the WISHLIST, and moved
+	some CYA text from WISHLIST into the code. Files: WISHLIST,
+	smtpd/smtpd_proxy.c.
+
+20120407
+
+	Bugfix (introduced: 20120330): don't replace <reply-code>
+	<space> by <reply-code> <hyphen> when a reply footer starts
+	with \c and contains no \n. File: global/smtp_reply_footer.c.
 
 20120422
 
@@ -17649,16 +17738,22 @@ Apologies for any names omitted.
 
 	Workaround: bugs in 10-year old gcc versions break compilation
 	with #ifdef inside a macro invocation (NOT: definition).
-	This synchronizes the Postfix 2.9 TLS implementation with
-	Postfix 2.10 to simplify code maintenance.  Files: tls/tls.h,
-	tls/tls_client.c, tls/tls_server.c.
+	Files: tls/tls.h, tls/tls_client.c, tls/tls_server.c.
 
 20120426
 
 	Bugfix (introduced Postfix 2.9): the postconf command flagged
 	parameters defined in master.cf as "unused" when they were
 	used only in main.cf. Problem reported by Michael Tokarev.
-	Files: postconf/postconf_user.c.
+	Files: postconf/postconf_user.c, postconf/test4b.ref,
+	postconf Makefile.in.
+
+20120513
+
+	Cleanup: report both the first and last line number when a
+	malformed main.cf entry spans multiple lines, instead of
+	reporting the last line number only. File: util/dict.c,
+	util/line_number.[hc].
 
 20120516
 
@@ -17677,6 +17772,10 @@ Apologies for any names omitted.
 	This one-line code change eliminates the accept() race
 	without any Postfix performance impact.  Problem reported
 	by Sahil Tandon.  File: dnsblog/dnsblog.c.
+
+	Logging: postscreen now logs a warning when a dnsblog(8)
+	request takes longer than the hard-coded time limit of 10s.
+	File: postscreen/postscreen_dnsbl.c.
 
 20120517
 
@@ -17702,11 +17801,88 @@ Apologies for any names omitted.
 	and qmgr servers before closing the UNIX-domain request
 	sockets.  Files: postqueue/postqueue.c, postqueue/Makefile.in.
 
+20120522
+
+	Robustness: set LC_ALL=C in post-install to avoid surprises
+	when parsing output from Postfix or non-Postfix commands.
+	File: postfix-install.
+
+20120611
+
+	Bugfix (introduced: 20031216-21): with soft_bounce=yes, the
+	SMTP client did not move on to the next MX host or fallback
+	relay after a 5xx reply. File: smtp/smtp_trouble.c.
+
+20120527-8
+
+	Infrastructure: limited support to shrink VSTREAM buffers.
+	The change takes place when reading from (a stream for the
+	first time | an empty buffer) or when writing to (a stream
+	for the first time | a full buffer). TODO: the change should
+	also happen after purging or flushing a buffer.  File:
+	util/vstream.c.
+
+20120531-617
+
+	Feature: haproxy support in postscreen(8) and smtpd(8).  To
+	enable, specify "smtpd_upstream_proxy_protocol = haproxy"
+	or "postscreen_upstream_proxy_protocol = haproxy".  Files:
+	mantools/postlink, proto/postconf.proto, global/Makefile.in,
+	global/haproxy_srvr.c, global/haproxy_srvr.h, global/mail_params.h,
+	global/mail_proto.h, master/single_server.c, master/multi_server.c,
+	master/event_server.c, postscreen/Makefile.in,
+	postscreen/postscreen.c, postscreen/postscreen.h,
+	postscreen/postscreen_endpt.c, postscreen/postscreen_haproxy.c,
+	postscreen/postscreen_haproxy.h, postscreen/postscreen_send.c,
+	postscreen/postscreen_state.c, smtpd/Makefile.in, smtpd/smtpd.h,
+	smtpd/smtpd_peer.c, smtpd/smtpd_sasl_glue.c, smtpd/smtpd_haproxy.c,
+	util/Makefile.in, util/listen.h, util/recv_pass_attr.c,
+	util/stream_listen.c, util/sys_defs.h, util/unix_pass_listen.c.
+
+
+20120618
+
+	Cleanup: made the postscreen-to-smtpd haproxy attribute
+	transmission more robust for Solaris. Files: util/sys_defs.h,
+	util/connect.h, util/steam_listen.c, postscreen/postscreen_send.c.
+
+	Cleanup: simplified the "stream used" workaround. Files:
+	util/vstream.h, master/event_server.c, master/multi_server.c.
+
 20120621
 
-	Bugfix (introduced: Postfix 2.8): the unused "pass" trigger
-	client could close the wrong file descriptors.  File:
-	util/unix_pass_trigger.c.
+	Cleanup: simplified workarounds for Solaris streams versus
+	UNIX-domain sockets.  Files: util/pass_accept.c (new),
+	util/pass_trigger.c (new), util/stream_pass_connect.c
+	(deleted), util/unix_pass_listen.c (deleted),
+	util/unix_pass_trigger.c (deleted), updated header files,
+	and replaced PASS_XXX macros by pass_xxx function calls.
+
+	Cleanup: don't clobber errno when logging a problem.
+	File util/msg_output.c.
+
+20120627
+
+	Bugfix (introduced: 20120531-617): in the postscreen module
+	for HAproxy sypport, a VSTREAM buffer size request was not
+	LP64-clean.  File: postscreen/postscreen_haproxy.c.
+
+	Cleanup: avoid single-character reads in the postscreen
+	HAproxy module. File: postscreen/postscreen_haproxy.c.
+
+20120628
+
+	Workaround: heuristic to detect missing (ssize_t) type-cast
+	in VSTREAM buffer size requests. File: util/vstream.c.
+
+20120629
+
+	Workaround: "sendmail -bl" emulation. File: sendmail/sendmail.c.
+
+20120630
+
+	Cleanup: sub-optimal hash performance on systems where the
+	"char" type is signed.  Files: util/htable.c, util/binhash.c.
 
 20120702
 
@@ -17714,16 +17890,140 @@ Apologies for any names omitted.
 	unprivileged UDP socket. Fix by Jaroslav Skarvada.  File:
 	local/biff_notify.c.
 
+20120713
+
+	Bugfix (introduced: 20120527-8): infrastructure to specify
+	a smaller-than-default VSTREAM buffer, without the complex
+	run-time checks. File: util/vstream.c, vstream_tweak.c.
+
+20120714
+
+	Cleanup: semantics of requests to query or modify the VSTREAM
+	buffer size that will be used with the next read(2) or
+	write(2) operation. Files: util/vstream.c, util/vstream.h,
+	util/vstream_tweak.c.
+
+20120717
+
+	Documentation: update to RFC5321.
+
 20120730
 
 	Bugfix (introduced: 20000314): AUTH is not allowed after
-	MAIL. Timo Sirainen.  File: smtpd/smtpd_sasl_proto.c.
+	MAIL. Timo Sirainen.  Files: smtpd/smtpd.c, smtpd/smtpd.h,
+	smtpd/smtpd_sasl_proto.c.
+
+20120801
+
+	Documentation: point of what virtual_xxx parameters are
+	specific to the virtual(8) delivery agent, and will have
+	no effect when mail is delivered with a different program.
+	Files: proto/postconf.proto, proto/VIRTUAL_README.html.
+
+20120824
+
+	Feature: support for "sendmail -R hdrs|full". Jan Kundrát.
+	File: sendmail/sendmail.c.
+
+20120902
+
+	Documentation: updated TUNING_README with new pointers to
+	the STRESS_README and POSTSCREEN_README documents. Miscellaneous
+	documentation clarifications based on postfix-users discussions.
+
+20120903
+
+	Bugfix (introduced 20120317): the socketmap client should
+	not share unrelated client endpoint handles. File:
+	util/dict_sockmap.c.
+
+20120907
+
+	Cleanup (for change 20120824): the DSN RET attribute should
+	not be stored once per recipient. It is a message property
+	just like DSN ENVID.  File: sendmail/sendmail.c.
+
+20120911
+
+	Documentation: more explicit enumeration of what happens
+	when setting a per-destination recipient limit value to 1.
+	File: proto/postconf.proto.
+
+20120918
+
+	Documentation: clarified the bounce/queue_life-time parameter
+	descriptions. File: proto/postconf.proto.
+
+20120920
+
+	Documentation: the postscreen_whitelist_interfaces parameter
+	syntax was defined only by example. File: proto/postconf.proto.
+
+20120923
+
+	Infrastructure: cleaned up the support for database
+	lock-on-open. This is needed for databases that are not
+	multi-updater safe.  Files: util/dict_alloc.c, util/dict.c,
+	util/dict_open.c, util/dict.h.  tls/tls_scache.c.
+
+20120924
+
+	Documentation: some people are read-challenged distribute
+	their own incorrect understanding of master.cf syntax.
+	File: proto/master.
+
+	Cleanup: don't emulate UNIX-domain sockets over FIFOs on
+	Solaris systems less than 10 years old. This allows us to
+	globally s/fifo/unix/ in master.cf.  Files: makedefs,
+	util/sys_defs.h.
+
+	Laptop-friendliness: avoid disk spin-up on idle systems by
+	s/fifo/unix/ in master.cf.  Files: conf/master.cf.
+
+20120928-30
+
+	Feature: smtpd_relay_restrictions, proposed long ago by
+	Victor. The idea is to separate the mail relay policy from
+	the spam blocking policy, so that a permissive spam blocking
+	policy under smtpd_recipient_restrictions will no longer
+	unexpectedly result in a permissive mail relay policy.
+
+	This involves a change in default settings.  Similar to the
+	way that local_recipient_maps was introduced, there is a
+	safety net that prevents unexpected mail bounces when a
+	site upgrades to Postfix 2.10 or later, and there is no
+	change in documented smtpd_recipient_restrictions behavior.
+	See the RELEASE_NOTES file for details.  Files:
+	global/mail_params.h, smtpd/smtpd.c, smtpd/smtpd_check.c,
+	proto/postconf.proto, proto/SMTPD_ACCESS_README.html,
+	mantools/postlink, conf/post-install, RELEASE_NOTES.
+
+20120931-1001
+
+	Documentation: updated the remainder of the README files
+	and manual pages that discuss smtpd_recipient_restrictions.
+
+20121001
+
+	Cleanup: prepend 5.1.1 status code to "User unknown in
+	virtual alias table". File: trivial-rewrite/resolve.c.
 
 20121003
 
 	Bugfix: the postscreen_access_list feature was case-sensitive
 	in the first character of permit, reject, etc. Reported by
 	Francis Picabia. File: global/server_acl.c.
+
+20121009
+
+	Documentation: interaction between delay_warning_time,
+	notify_classes and delay_notice_recipient. File:
+	proto/postconf.proto.
+
+20101009
+
+	Human factors: log a warning that the postcat option -m
+	without -h or -b has no effect. File: postcat/postcat.c.
 
 20121010
 
@@ -17733,21 +18033,106 @@ Apologies for any names omitted.
 	Bugfix (introduced: Postfix 2.3): memory leak in the unused
 	oqmgr program. Reported by Coverity. File: oqmgr/qmgr_message.c.
 
+20121011
+
+	Documentation: how to enable /etc/hosts multi-record lookups
+	with main.cf settings.  File: proto/LINUX_README.html.
+
+	Documentation: clarified the postscreen-tlsproxy interface.
+	File: tlsproxy/tlsproxy.c.
+
+20121012
+
+	Documentation: a simpler null-client example.  File:
+	proto/STANDARD_CONFIGURATION_README.html
+
 20121013
 
 	Cleanup: to compute the LDAP connection cache lookup key,
 	join the numeric fields with null, just like string fields.
 	Viktor Dukhovni. File: global/dict_ldap.c.
 
-20121029
+20121015
+
+	Documentation: added section on regular-expression tables
+	to the aliases(5) manpage. File: proto/aliases.
+
+	Documentation: why "smtp_address_preference = any" is the
+	preferred setting. File: proto/postconf.proto.
+
+20121022
+
+	Bugfix (introduced 20101009) don't complain about stray -m
+	option if none of -[bhm] is specified. Ralf Hildebrandt.
+	File: postmap/postmap.c.
+
+20121029 
 
 	Workaround: strip datalink suffix from IPv6 addresses
 	returned by the system getaddrinfo() routine.  Such suffixes
 	mess up the default mynetworks value, host name/address
 	verification and possibly more. This change obsoletes the
 	20101108 change that removes datalink suffixes in the SMTP
-	and QMQP servers, but we leave that code alone.  File:
-	util/myaddrinfo.c.
+	and QMQP servers.  Files: util/myaddrinfo.c, smtpd/smtpd_peer.c,
+	qmqpd/qmqpd_peer.c.
+
+20121031
+
+	Bugfix: smtpd_relay_restrictions compatibility shim did not
+	detect "empty" value.  Sahil Tandon. The same problem existed
+	with the inet_protocols shim. File: conf/post-install.
+
+20121105
+
+	Cleanup: the postscreen(8) "deep protocol" tests now log
+	the SMTP command that precedes a protocol violation.  Files:
+	postscreen/postscreen_smtpd.c, proto/POSTSCREEN_README.html.
+
+	Bugfix (introduced: Postfix 1.1): wrong string termination
+	when handling an MBOX From_ line at the start of a message.
+	File: qmqpd/qmqpd.c.
+
+20121110
+
+	Cleanup: specify $(WARN) on the MacOS X compiler command
+	line to suppress "nested comment" and possibly other unwanted
+	warnings. Problem reported by Jim Reid. File: makedefs,
+	Makefile.in.
+
+20121119
+
+	Documentation: added a note that key_format is required
+	when postscreen(8) and verify(8) share the same memcache
+	(with different persistent backup databases, or course)
+	otherwise automatic cache cleanup breaks due to a name
+	collision for the "last cache cleanup" database record.
+	File: proto/memcache.
+
+20121122
+
+	Cleanup: the safety-check for smtpd_recipient_restrictions
+	and smtpd_relay_restrictions now detects permit before
+	reject.  File: smtpd/smtpd_check.c.
+
+	Cleanup: the safety-check for smtpd_recipient_restrictions
+	and smtpd_relay_restrictions is no longer case-sensitive.
+	File: smtpd/smtpd_check.c.
+
+20121123
+
+	Cleanup: consistent escaping of commands in postscreen deep
+	protocol test logging. File: postscreen/postscreen_smtpd.c.
+
+20121124
+
+	Documentation: the bounce behavior for automatically-added
+	BCC recipients has changed with Postfix 2.3 when DSN support
+	was introduced.  File: proto/postconf.proto.
+
+20121203
+
+	Documentation: added explicit example for -o name=value.
+	File: proto/master.
 
 20121210
 
@@ -17757,12 +18142,89 @@ Apologies for any names omitted.
 	testing.  Files: util/ip_match.c, util/ip_match.in,
 	util/ip_match.ref.
 
+20121215
+
+	Bugfix (introduced: 19980218, when recipient_delimiter
+	support was added): The error message for unknown local
+	users (or missing required aliases) should report the user
+	name instead of the full localpart which may contain an
+	address extension.  Problem reported by Christian Holler.
+	File: local/unknown.c.
+
+20121221
+
+	Feature: "postconf -x" support to expand $name in main.cf
+	parameter values. Files: postconf/postconf_main.c,
+	postconf/postconf.h, postconf/postconf_node.c, postconf/postconf.c.
+
+20121222
+
+	Feature: postconf support to warn about an attempt to modify
+	a read-only parameter (process_name etc.) in main.cf or
+	master.cf. Files: postconf/postconf_readonly.c,
+	postconf/postconf_builtin.c.
+
+20121223
+
+	Feature: postconf support to warn about an undefined $name
+	in a parameter value in main.cf or master.cf (except for
+	backwards-compatibility parameters such as $virtual_maps)
+	Files: postconf/postconf_user.c, postconf_dbms.c,
+	postconf_builtin.c, util/dict_ht.c, util/htable.c.
+
+	Feature: "postconf -Mx" support to expand $name in master.cf
+	parameter values.  Files: postconf/postconf_master.c,
+	postconf/postconf_lookup.c, postconf/postconf_main.c,
+	postconf/postconf.c.
+
+20121224
+
+	Feature: "postconf -Mn" support to print only master.cf
+	entries that have "-o name=value" parameter setttings.
+	Files: postconf/postconf_master.c.
+
+20121226
+
+	Miscellaneous cleanups of postconf internal APIs, identifiers
+	and comments. No changes in behavior.
+
+	Bugfix (omission in feature 20111203): the SMTP server only
+	supported time-dependent address-verification sender addresses
+	with RCPT TO but not with MAIL FROM. File: smtpd/smtpd.c.
+
+20121227
+
+	Feature: "postconf -o name=value" support to override main.cf
+	settings (for example, "postconf -x -o stress=whatever"
+	shows effective settings under overload). Files:
+	postconf/postconf.c, postconf/postconf_main.c.
+
 20121230
+
+	Cleanup: postconf(1) master.cf options parser. Files:
+	postconf/postconf_master.c, postconf/postconf_user.c.
 
 	Bugfix (omission in feature 20111106): the postconf(1)
 	master.cf options parser didn't support "clusters" of
-	command-line option letters. File: postconf/postconf_master.c,
+	command-line option letters. Files: postconf/postconf_master.c,
 	postconf/test40.ref.
+
+20130105
+
+	Undo a change made around 20121224, and always whitelist
+	configuration parameter names for legacy-style proxy:ldap:prefix
+	etc.  lookup tables.  Files: postconf/postconf_dbms.c,
+	postconf/test28.ref, postconf/test29.ref, postconf/Makefile.in.
+
+20130107
+
+	Factor out the master.cf line parser so that it can be
+	reused for "postconf -Me". File: postconf/postconf_master.c.
+
+20130121
+
+	Bugfix (introduced 20120307): the postconf -X option erased
+	other options.  File: postconf/postconf.c.
 
 20130131
 
@@ -17781,8 +18243,10 @@ Apologies for any names omitted.
 	Duchovni, BC added by Wietse.  Files: tls/tls_verify.c,
 	tls/tls_misc.c, proto/TLS_README.html, global/mail_params.h.
 
-	Bugfix: the 20121010 fix for tls_misc.c was documented but
-	not included.
+20130210
+
+	Bugfix: an error handler for smtp_tls_policy_maps lookups
+	was never invoked.  File: smtp/smtp_session.c.
 
 20130403
 
@@ -17811,3 +18275,34 @@ Apologies for any names omitted.
 	between different hostnames that resolve to the same IP
 	address.  Found during Postfix 2.11 code maintenance.  File:
 	smtp/smtp_connect.c.
+
+20130518
+
+	Bugfix (introduced: 1997): memory leak after error while
+	forwarding mail through the cleanup server. Viktor found
+	one, Wietse eliminated the rest.  File: local/forward.c.
+
+20130613
+
+	Workaround: unhelpful down-stream maintainers fail to install
+	the new smtpd_relay_restrictions safety net, causing breakage
+	that could have been avoided. We now hard-code the safety
+	net instead.  Files: global/mail_params.h, conf/post-install,
+	RELEASE_NOTES.
+
+20130615
+
+	TLS Interoperability: turn on SHA-2 digests by force.  This
+	improves interoperability with clients and servers that
+	deploy SHA-2 digests without the required support for
+	TLSv1.2-style digest negotiation.  Based on patch by Viktor
+	Dukhovni.  Files: tls/tls_client.c, tls/tls_server.c.
+
+20130616
+
+	TLS Performance: the Postfix SMTP server TLS session cache
+	was ineffective because recent OpenSSL versions enable
+	session tickets by default, resulting in a different ticket
+	encryption key for each smtpd(8) process.  The workaround
+	turns off session tickets. In 2.11 we'll enable session
+	tickets properly.  Viktor Dukhovni. File: tls/tls_server.c.

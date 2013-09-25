@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_scache.c,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -449,7 +449,7 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
      * opening a damaged file after some process terminated abnormally.
      */
 #ifdef SINGLE_UPDATER
-#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE)
+#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_OPEN_LOCK)
 #else
 #define DICT_FLAGS \
 	(DICT_FLAG_DUP_REPLACE | DICT_FLAG_LOCK | DICT_FLAG_SYNC_UPDATE)
@@ -460,13 +460,6 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
     /*
      * Sanity checks.
      */
-    if (dict->lock_fd < 0)
-	msg_fatal("dictionary %s is not a regular file", dbname);
-#ifdef SINGLE_UPDATER
-    if (myflock(dict->lock_fd, INTERNAL_LOCK,
-		MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
-	msg_fatal("cannot lock dictionary %s for exclusive use: %m", dbname);
-#endif
     if (dict->update == 0)
 	msg_fatal("dictionary %s does not support update operations", dbname);
     if (dict->delete == 0)

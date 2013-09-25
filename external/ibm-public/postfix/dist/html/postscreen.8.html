@@ -13,19 +13,23 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
        <b>postscreen</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The Postfix <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server performs triage on multi-
-       ple inbound SMTP connections at the  same  time.  While  a
-       single  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  process  keeps  spambots  away from
-       Postfix SMTP server processes, more  Postfix  SMTP  server
-       processes remain available for legitimate clients.
+       The  Postfix <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server provides additional pro-
+       tection against mail server  overload.  One  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>
+       process  handles  multiple  inbound  SMTP connections, and
+       decides which clients may talk to a  Postfix  SMTP  server
+       process.   By  keeping spambots away, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> leaves
+       more  SMTP  server  processes  available  for   legitimate
+       clients,  and  delays  the onset of server overload condi-
+       tions.
 
        This program should not be used on SMTP ports that receive
-       mail from end-user clients (MUAs). In  a  typical  deploy-
-       ment,  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  is  used  on  the "port 25" service,
-       while MUA clients submit mail via the <b>submission</b>  service,
-       or  via  a  "port  25"  server that provides no MX service
-       (i.e.  a dedicated server that provides <b>submission</b> service
-       on port 25).
+       mail  from  end-user  clients (MUAs). In a typical deploy-
+       ment, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> handles the MX service on TCP port 25,
+       while  MUA  clients submit mail via the <b>submission</b> service
+       on TCP port  587  which  requires  client  authentication.
+       Alternatively,  a  site  could  set  up  a dedicated, non-
+       postscreen, "port 25" server that provides <b>submission</b> ser-
+       vice and client authentication, but no MX service.
 
        <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  maintains a temporary whitelist for clients
        that have passed a number of tests.  When an  SMTP  client
@@ -76,24 +80,24 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
 <b>BUGS</b>
        The <a href="postscreen.8.html"><b>postscreen</b>(8)</a> built-in SMTP protocol engine  currently
        does  not  announce support for AUTH, XCLIENT or XFORWARD.
-       Support for AUTH may be added in the future.  In the  mean
-       time, if you need to make these services available on port
-       25, then do not enable  the  optional  "after  220  server
-       greeting" tests, and do not use DNSBLs that reject traffic
-       from dial-up and residential networks.
+       If you need to make these services available on  port  25,
+       then  do  not enable the optional "after 220 server greet-
+       ing" tests, and do not use DNSBLs that reject traffic from
+       dial-up and residential networks.
 
-       The optional "after 220  server  greeting"  tests  involve
-       <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s  built-in SMTP protocol engine. When these
+       The  optional  "after  220  server greeting" tests involve
+       <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s built-in SMTP protocol engine. When  these
        tests succeed, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> adds the client to the tempo-
-       rary  whitelist but it cannot not hand off the "live" con-
-       nection to a Postfix SMTP server process in the middle  of
-       a  session.   Instead,  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  defers  attempts to
-       deliver mail with a 4XX status, and waits for  the  client
-       to  disconnect.   The next time a good client connects, it
-       will be allowed to talk to a Postfix SMTP  server  process
-       to  deliver  mail.  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  mitigates the impact of
-       this limitation by giving such  tests  a  long  expiration
-       time.
+       rary whitelist, but it cannot not hand off the "live" con-
+       nection  to a Postfix SMTP server process in the middle of
+       a session.   Instead,  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  defers  attempts  to
+       deliver  mail  with a 4XX status, and waits for the client
+       to  disconnect.    When   the   client   connects   again,
+       <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  will  allow the client to talk to a Postfix
+       SMTP server process (provided that  the  whitelist  status
+       has  not  expired).  <a href="postscreen.8.html"><b>postscreen</b>(8)</a> mitigates the impact of
+       this limitation by giving the "after 220 server  greeting"
+       tests a long expiration time.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes  to  <a href="postconf.5.html">main.cf</a>  are  not picked up automatically, as
@@ -144,10 +148,22 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               Safety net to keep mail queued that would otherwise
               be returned to the sender.
 
+<b>BEFORE-POSTSCREEN PROXY AGENT</b>
+       Available in Postfix version 2.10 and later:
+
+       <b><a href="postconf.5.html#postscreen_upstream_proxy_protocol">postscreen_upstream_proxy_protocol</a> (empty)</b>
+              The name of the proxy protocol used by an  optional
+              before-postscreen proxy agent.
+
+       <b><a href="postconf.5.html#postscreen_upstream_proxy_timeout">postscreen_upstream_proxy_timeout</a> (5s)</b>
+              The  time  limit  for  the proxy protocol specified
+              with the <a href="postconf.5.html#postscreen_upstream_proxy_protocol">postscreen_upstream_proxy_protocol</a> parame-
+              ter.
+
 <b>PERMANENT WHITE/BLACKLIST TEST</b>
-       This test is executed  immediately  after  a  remote  SMTP
-       client  connects.  If a client is permanently whitelisted,
-       the client will be handed off  immediately  to  a  Postfix
+       This  test  is  executed  immediately  after a remote SMTP
+       client connects. If a client is  permanently  whitelisted,
+       the  client  will  be  handed off immediately to a Postfix
        SMTP server process.
 
        <b><a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a> (<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>)</b>
@@ -155,19 +171,18 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               addresses.
 
        <b><a href="postconf.5.html#postscreen_blacklist_action">postscreen_blacklist_action</a> (ignore)</b>
-              The action that <a href="postscreen.8.html"><b>postscreen</b>(8)</a> takes when  a  remote
-              SMTP  client  is  permanently  blacklisted with the
+              The  action  that <a href="postscreen.8.html"><b>postscreen</b>(8)</a> takes when a remote
+              SMTP client is  permanently  blacklisted  with  the
               <a href="postconf.5.html#postscreen_access_list">postscreen_access_list</a> parameter.
 
 <b>MAIL EXCHANGER POLICY TESTS</b>
-       When a remote SMTP client is not on the  permanent  access
-       list,  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  can  implement a number of whitelist
-       tests before it grants the client  a  temporary  whitelist
-       status to talk to a Postfix SMTP server process.
-
-       By  listening  on  both  primary  and backup MX addresses,
-       <a href="postscreen.8.html"><b>postscreen</b>(8)</a> can deny the temporary whitelist  status  to
-       clients that connect only to backup MX hosts.
+       When  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  is  configured to monitor all primary
+       and backup  MX  addresses,  it  can  refuse  to  whitelist
+       clients  that  connect  to  a  backup MX address only. For
+       small sites, this requires configuring primary and  backup
+       MX  addresses  on the same MTA. Larger sites would have to
+       share the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> cache between primary  and  backup
+       MTAs, which would introduce a common point of failure.
 
        <b><a href="postconf.5.html#postscreen_whitelist_interfaces">postscreen_whitelist_interfaces</a> (<a href="DATABASE_README.html#types">static</a>:all)</b>
               A  list  of local <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server IP addresses

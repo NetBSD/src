@@ -137,10 +137,8 @@ the DNS requests or replies.  </p>
 
 <li> <p> If the number of smtpd(8) processes has reached the process
 limit as specified in master.cf, new SMTP clients must wait until
-a process becomes available.  Increase the number of processes if
-memory permits. See the instructions given under "<a
-href="#proc_limit">Tuning the number of Postfix processes</a>".
-</p>
+a process becomes available.  See the STRESS_README and POSTSCREEN_README
+documents for measures that help to prevent SMTP server overload.  </p>
 
 </ul>
 
@@ -391,7 +389,7 @@ default. They should be used only for transports that deliver mail
 to a small number of high volume domains.  </p>
 
 <p> A common situation where high concurrency is called for is on
-gateways relaying a high volume of mail from between the Internet
+gateways relaying a high volume of mail between the Internet
 and an intranet mail environment. Approximately half the mail
 (assuming equal volumes inbound and outbound) will be destined
 for the internal mail hubs.  Since the internal mail hubs will be
@@ -441,7 +439,7 @@ recipients into smaller lists. Postfix will attempt to send multiple
 copies of the message in parallel. </p>
 
 <p> IMPORTANT: Be careful when increasing the recipient limit per
-message delivery; some smtpd(8) servers abort the connection when they
+message delivery; some SMTP servers abort the connection when they
 run out of memory or when a hard recipient limit is reached, so
 that the message will never be delivered. </p>
 
@@ -568,13 +566,13 @@ and so on: </p>
 </blockquote>
 
 <p> You need to execute "postfix reload" to make the change effective.
-The limits are enforced by the Postfix master(8) daemon which does
+This limit is enforced by the Postfix master(8) daemon which does
 not automatically read main.cf when it changes. </p>
 
 <p> You can override the process limit for specific Postfix daemons
 by editing the master.cf file.  For example, if you do not wish to
 receive 100 SMTP messages at the same time, but do not want to
-change the process limits for local mail deliveries, you could
+change the process limits for other Postfix daemons, you could
 specify: </p>
 
 <blockquote>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.5 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.6 2013/09/25 19:06:37 tron Exp $	*/
 
 /*++
 /* NAME
@@ -83,12 +83,12 @@
 /*	With maps where this is appropriate, acquire an exclusive lock
 /*	before writing, and acquire a shared lock before reading.
 /* .IP DICT_FLAG_OPEN_LOCK
-/*	With maps where this is appropriate, acquire an exclusive
-/*	lock upon open, and report a fatal run-time error if the
-/*	table is already locked.
+/*	With databases that are not multi-writer safe, request that
+/*	dict_open() acquires an exclusive lock, or that it terminates
+/*	with a fatal run-time error.
 /* .IP DICT_FLAG_FOLD_FIX
 /*	With databases whose lookup fields are fixed-case strings,
-/*	fold the search key to lower case before accessing the
+/*	fold the search string to lower case before accessing the
 /*	database.  This includes hash:, cdb:, dbm:. nis:, ldap:,
 /*	*sql.
 /* .IP DICT_FLAG_FOLD_MUL
@@ -101,18 +101,21 @@
 /*	With file-based maps, flush I/O buffers to file after each update.
 /*	Thus feature is not supported with some file-based dictionaries.
 /* .IP DICT_FLAG_NO_REGSUB
-/*	Disallow regular expression substitution from left-hand side data
-/*	into the right-hand side.
+/*	Disallow regular expression substitution from the lookup string
+/*	into the lookup result, to block data injection attacks.
 /* .IP DICT_FLAG_NO_PROXY
-/*	Disallow access through the \fBproxymap\fR service.
+/*	Disallow access through the unprivileged \fBproxymap\fR
+/*	service, to block privilege escalation attacks.
 /* .IP DICT_FLAG_NO_UNAUTH
-/*	Disallow network lookup mechanisms that lack any form of
-/*	authentication (example: tcp_table; even NIS can be secured
-/*	to some extent by requiring that the server binds to a
-/*	privileged port).
+/*	Disallow lookup mechanisms that lack any form of authentication,
+/*	to block privilege escalation attacks (example: tcp_table;
+/*	even NIS can be secured to some extent by requiring that
+/*	the server binds to a privileged port).
 /* .IP DICT_FLAG_PARANOID
 /*	A combination of all the paranoia flags: DICT_FLAG_NO_REGSUB,
 /*	DICT_FLAG_NO_PROXY and DICT_FLAG_NO_UNAUTH.
+/* .IP DICT_FLAG_DEBUG
+/*	Enable additional logging.
 /* .PP
 /*	Specify DICT_FLAG_NONE for no special processing.
 /*
@@ -237,6 +240,7 @@
 #include <dict_cidr.h>
 #include <dict_ht.h>
 #include <dict_thash.h>
+#include <dict_sockmap.h>
 #include <dict_fail.h>
 #include <stringops.h>
 #include <split_at.h>
@@ -287,6 +291,7 @@ static const DICT_OPEN_INFO dict_open_info[] = {
     DICT_TYPE_STATIC, dict_static_open,
     DICT_TYPE_CIDR, dict_cidr_open,
     DICT_TYPE_THASH, dict_thash_open,
+    DICT_TYPE_SOCKMAP, dict_sockmap_open,
     DICT_TYPE_FAIL, dict_fail_open,
     0,
 };
@@ -349,12 +354,11 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
     if (msg_verbose)
 	msg_info("%s: %s:%s", myname, dict_type, dict_name);
     /* XXX the choice between wait-for-lock or no-wait is hard-coded. */
-    if (dict->lock_fd >= 0 && (dict_flags & DICT_FLAG_OPEN_LOCK) != 0) {
+    if (dict_flags & DICT_FLAG_OPEN_LOCK) {
 	if (dict_flags & DICT_FLAG_LOCK)
 	    msg_panic("%s: attempt to open %s:%s with both \"open\" lock and \"access\" lock",
 		      myname, dict_type, dict_name);
-	if (myflock(dict->lock_fd, INTERNAL_LOCK,
-		    MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
+	if (dict->lock(dict, MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
 	    msg_fatal("%s:%s: unable to get exclusive lock: %m",
 		      dict_type, dict_name);
     }

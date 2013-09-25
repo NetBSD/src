@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.1.1.1 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,24 +10,23 @@
 /*
 /*	void	read_parameters()
 /*
-/*	void	set_parameters()
-/*
-/*	void	show_parameters(mode, param_class, names)
+/*	void	show_parameters(fp, mode, param_class, names)
+/*	VSTREAM	*fp;
 /*	int	mode;
 /*	int	param_class;
 /*	char	**names;
 /* DESCRIPTION
 /*	read_parameters() reads parameters from main.cf.
 /*
-/*	set_parameters() does nothing. It is a place holder for
-/*	code that assigns actual or default parameter values, which
-/*	could be needed to implement "postconf -e" parameter value
-/*	expansion.
+/*	set_parameters() takes an array of \fIname=value\fR pairs
+/*	and overrides settings read with read_parameters().
 /*
-/*	show_parameters() writes main.cf parameters to the standard
+/*	show_parameters() writes main.cf parameters to the specified
 /*	output stream.
 /*
 /*	Arguments:
+/* .IP fp
+/*	Output stream.
 /* .IP mode
 /*	Bit-wise OR of zero or more of the following:
 /* .RS
@@ -40,7 +39,7 @@
 /* .IP SHOW_NAME
 /*	Output the parameter as "name = value".
 /* .IP SHOW_EVAL
-/*	Expand parameter values (not implemented).
+/*	Expand $name in parameter values.
 /* .RE
 /* .IP param_class
 /*	Bit-wise OR of one or more of the following:
@@ -85,6 +84,7 @@
 #include <dict.h>
 #include <stringops.h>
 #include <htable.h>
+#include <mac_expand.h>
 
 /* Global library. */
 
@@ -114,38 +114,26 @@ void    read_parameters(void)
     myfree(path);
 }
 
-/* set_parameters - set parameter values from default or explicit setting */
+/* set_parameters - add or override name=value pairs */
 
-void set_parameters(void)
+void    set_parameters(char **name_val_array)
 {
+    char   *name, *value, *junk;
+    const char *err;
+    char  **cpp;
 
-    /*
-     * The proposal below describes some of the steps needed to expand
-     * parameter values. It has a problem: it updates the configuration
-     * parameter dictionary, and in doing so breaks the "postconf -d"
-     * implementation. This makes "-d" and "-e" mutually exclusive.
-     * 
-     * Populate the configuration parameter dictionary with default settings or
-     * with actual settings.
-     * 
-     * Iterate over each entry in str_fn_table, str_fn_table_2, time_table,
-     * bool_table, int_table, str_table, and raw_table. Look up each
-     * parameter name in the configuration parameter dictionary. If the
-     * parameter is not set, take the default value, or take the value from
-     * main.cf, without doing $name expansions. This includes converting
-     * default values from numeric/boolean internal forms to external string
-     * form.
-     * 
-     * Once the configuration parameter dictionary is populated, printing a
-     * parameter setting is a matter of querying the configuration parameter
-     * dictionary, optionally expanding of $name values, and printing the
-     * result.
-     */
+    for (cpp = name_val_array; *cpp; cpp++) {
+	junk = mystrdup(*cpp);
+	if ((err = split_nameval(junk, &name, &value)) != 0)
+	    msg_fatal("invalid parameter override: %s: %s", *cpp, err);
+	mail_conf_update(name, value);
+	myfree(junk);
+    }
 }
 
 /* print_line - show line possibly folded, and with normalized whitespace */
 
-static void print_line(int mode, const char *fmt,...)
+static void print_line(VSTREAM *fp, int mode, const char *fmt,...)
 {
     va_list ap;
     static VSTRING *buf = 0;
@@ -183,22 +171,22 @@ static void print_line(int mode, const char *fmt,...)
 	    *next++ = 0;
 	if (word_len > 0 && line_len > 0) {
 	    if ((mode & FOLD_LINE) == 0 || line_len + word_len < LINE_LIMIT) {
-		vstream_fputs(" ", VSTREAM_OUT);
+		vstream_fputs(" ", fp);
 		line_len += 1;
 	    } else {
-		vstream_fputs("\n" INDENT_TEXT, VSTREAM_OUT);
+		vstream_fputs("\n" INDENT_TEXT, fp);
 		line_len = INDENT_LEN;
 	    }
 	}
-	vstream_fputs(start, VSTREAM_OUT);
+	vstream_fputs(start, fp);
 	line_len += word_len;
     }
-    vstream_fputs("\n", VSTREAM_OUT);
+    vstream_fputs("\n", fp);
 }
 
 /* print_parameter - show specific parameter */
 
-static void print_parameter(int mode, const char *name,
+static void print_parameter(VSTREAM *fp, int mode, const char *name,
 			            PC_PARAM_NODE *node)
 {
     const char *value;
@@ -206,22 +194,23 @@ static void print_parameter(int mode, const char *name,
     /*
      * Use the default or actual value.
      */
-    if ((mode & SHOW_DEFS) != 0
-	|| ((value = dict_lookup(CONFIG_DICT, name)) == 0
-	    && (mode & SHOW_NONDEF) == 0))
-	value = convert_param_node(SHOW_DEFS, name, node);
+    value = lookup_parameter_value(mode, name, (PC_MASTER_ENT *) 0, node);
 
     /*
-     * Print with or without the name= prefix.
+     * Optionally expand $name in the parameter value. Print the result with
+     * or without the name= prefix.
      */
     if (value != 0) {
+	if ((mode & SHOW_EVAL) != 0 && PC_RAW_PARAMETER(node) == 0)
+	    value = expand_parameter_value((VSTRING *) 0, mode, value,
+					   (PC_MASTER_ENT *) 0);
 	if (mode & SHOW_NAME) {
-	    print_line(mode, "%s = %s\n", name, value);
+	    print_line(fp, mode, "%s = %s\n", name, value);
 	} else {
-	    print_line(mode, "%s\n", value);
+	    print_line(fp, mode, "%s\n", value);
 	}
 	if (msg_verbose)
-	    vstream_fflush(VSTREAM_OUT);
+	    vstream_fflush(fp);
     }
 }
 
@@ -238,7 +227,7 @@ static int comp_names(const void *a, const void *b)
 
 /* show_parameters - show parameter info */
 
-void    show_parameters(int mode, int param_class, char **names)
+void    show_parameters(VSTREAM *fp, int mode, int param_class, char **names)
 {
     PC_PARAM_INFO **list;
     PC_PARAM_INFO **ht;
@@ -253,7 +242,7 @@ void    show_parameters(int mode, int param_class, char **names)
 	qsort((char *) list, param_table->used, sizeof(*list), comp_names);
 	for (ht = list; *ht; ht++)
 	    if (param_class & PC_PARAM_INFO_NODE(*ht)->flags)
-		print_parameter(mode, PC_PARAM_INFO_NAME(*ht),
+		print_parameter(fp, mode, PC_PARAM_INFO_NAME(*ht),
 				PC_PARAM_INFO_NODE(*ht));
 	myfree((char *) list);
 	return;
@@ -266,7 +255,7 @@ void    show_parameters(int mode, int param_class, char **names)
 	if ((node = PC_PARAM_TABLE_FIND(param_table, *namep)) == 0) {
 	    msg_warn("%s: unknown parameter", *namep);
 	} else {
-	    print_parameter(mode, *namep, node);
+	    print_parameter(fp, mode, *namep, node);
 	}
     }
 }

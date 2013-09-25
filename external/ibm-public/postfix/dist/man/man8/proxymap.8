@@ -1,4 +1,4 @@
-.\"	$NetBSD: proxymap.8,v 1.1.1.2 2013/01/02 18:58:46 tron Exp $
+.\"	$NetBSD: proxymap.8,v 1.1.1.3 2013/09/25 19:06:25 tron Exp $
 .\"
 .TH PROXYMAP 8 
 .ad
@@ -119,7 +119,7 @@ However, running the proxymap server chrooted severely limits
 usability, because it can open only chrooted tables.
 
 The \fBproxymap\fR(8) server is not a trusted daemon process, and must
-not be used to look up sensitive information such as user or
+not be used to look up sensitive information such as UNIX user or
 group IDs, mailbox file/directory names or external commands.
 
 In Postfix version 2.2 and later, the proxymap client recognizes
