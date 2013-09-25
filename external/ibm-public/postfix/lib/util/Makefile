@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/01/02 19:45:49 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2013/09/25 19:25:08 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -42,9 +42,10 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c edit_file.c \
 	inet_windowsize.c unix_pass_fd_fix.c dict_cache.c dict_thash.c \
-	ip_match.c nbbio.c stream_pass_connect.c unix_pass_listen.c \
-	unix_pass_trigger.c valid_utf_8.c myrand.c base32_code.c dict_fail.c \
-	dict_surrogate.c dict_test.c msg_rate_delay.c warn_stat.c
+	ip_match.c nbbio.c valid_utf_8.c myrand.c base32_code.c dict_fail.c \
+	dict_surrogate.c dict_test.c msg_rate_delay.c warn_stat.c \
+	dict_sockmap.c line_number.c pass_accept.c pass_trigger.c \
+	recv_pass_attr.c
 
 COPTS.unix_recv_fd.c = -Wno-stack-protector
 COPTS.unix_send_fd.c = -Wno-stack-protector
