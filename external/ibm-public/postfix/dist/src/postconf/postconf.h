@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.h,v 1.1.1.1 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf.h,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -9,6 +9,11 @@
 /*	#include <postconf.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <unistd.h>
 
  /*
   * Utility library.
@@ -32,6 +37,7 @@
 #define COMMENT_OUT	(1<<9)		/* #-out selected main.cf entries */
 #define SHOW_MASTER	(1<<10)		/* show master.cf entries */
 #define FOLD_LINE	(1<<11)		/* fold long *.cf entries */
+#define EDIT_EXCL	(1<<12)		/* exclude main.cf entries */
 
 #define DEF_MODE	SHOW_NAME	/* default mode */
 
@@ -51,6 +57,9 @@ typedef struct {
 #define PC_PARAM_FLAG_BUILTIN	(1<<1)	/* built-in parameter name */
 #define PC_PARAM_FLAG_SERVICE	(1<<2)	/* service-defined parameter name */
 #define PC_PARAM_FLAG_USER	(1<<3)	/* user-defined parameter name */
+#define PC_PARAM_FLAG_LEGACY	(1<<4)	/* legacy parameter name */
+#define PC_PARAM_FLAG_READONLY	(1<<5)	/* legacy parameter name */
+#define PC_PARAM_FLAG_DBMS	(1<<6)	/* dbms-defined parameter name */
 
 #define PC_PARAM_MASK_CLASS \
 	(PC_PARAM_FLAG_BUILTIN | PC_PARAM_FLAG_SERVICE | PC_PARAM_FLAG_USER)
@@ -58,6 +67,9 @@ typedef struct {
 	((node)->flags = (((node)->flags & ~PC_PARAM_MASK_CLASS) | (class)))
 
 #define PC_RAW_PARAMETER(node) ((node)->flags & PC_PARAM_FLAG_RAW)
+#define PC_LEGACY_PARAMETER(node) ((node)->flags & PC_PARAM_FLAG_LEGACY)
+#define PC_READONLY_PARAMETER(node) ((node)->flags & PC_PARAM_FLAG_READONLY)
+#define PC_DBMS_PARAMETER(node) ((node)->flags & PC_PARAM_FLAG_DBMS)
 
  /* Values for param_data. See postconf_node module for narrative text. */
 #define PC_PARAM_NO_DATA	((char *) 0)
@@ -131,8 +143,8 @@ extern void set_config_dir(void);
   * postconf_main.c
   */
 extern void read_parameters(void);
-extern void set_parameters(void);
-extern void show_parameters(int, int, char **);
+extern void set_parameters(char **);
+extern void show_parameters(VSTREAM *, int, int, char **);
 
  /*
   * postconf_edit.c
@@ -142,8 +154,9 @@ extern void edit_parameters(int, int, char **);
  /*
   * postconf_master.c.
   */
+extern const char daemon_options_expecting_value[];
 extern void read_master(int);
-extern void show_master(int, char **);
+extern void show_master(VSTREAM *, int, char **);
 
 #define WARN_ON_OPEN_ERROR	0
 #define FAIL_ON_OPEN_ERROR	1
@@ -151,12 +164,20 @@ extern void show_master(int, char **);
  /*
   * postconf_builtin.c.
   */
-extern void register_builtin_parameters(void);
+extern void register_builtin_parameters(const char *, pid_t);
 
  /*
   * postconf_service.c.
   */
 extern void register_service_parameters(void);
+
+ /*
+  * Parameter context structure.
+  */
+typedef struct {
+    PC_MASTER_ENT *local_scope;
+    int     param_class;
+} PC_PARAM_CTX;
 
  /*
   * postconf_user.c.
@@ -167,8 +188,16 @@ extern void register_user_parameters(void);
   * postconf_dbms.c
   */
 extern void register_dbms_parameters(const char *,
-			         const char *(*) (const char *, int, char *),
+	               const char *(*) (const char *, int, PC_MASTER_ENT *),
 				             PC_MASTER_ENT *);
+
+ /*
+  * postconf_lookup.c.
+  */
+const char *lookup_parameter_value(int, const char *, PC_MASTER_ENT *,
+				           PC_PARAM_NODE *);
+
+char   *expand_parameter_value(VSTRING *, int, const char *, PC_MASTER_ENT *);
 
  /*
   * postconf_unused.c.

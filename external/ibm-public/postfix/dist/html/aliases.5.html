@@ -24,9 +24,15 @@ ALIASES(5)                                                          ALIASES(5)
        <b>newaliases</b>  in  order  to  rebuild  the indexed file after
        changing the Postfix alias database.
 
-       The input and output file formats are expected to be  com-
-       patible  with  Sendmail  version 8, and are expected to be
-       suitable for the use as NIS maps.
+       When the table is provided via other means  such  as  NIS,
+       LDAP  or  SQL,  the  same lookups are done as for ordinary
+       indexed files.
+
+       Alternatively, the table can be  provided  as  a  regular-
+       expression map where patterns are given as regular expres-
+       sions. In this case, the lookups are done  in  a  slightly
+       different way as described below under "REGULAR EXPRESSION
+       TABLES".
 
        Users can control delivery of their own mail by setting up
        <b>.forward</b> files in their home directory.  Lines in per-user
@@ -110,6 +116,25 @@ ALIASES(5)                                                          ALIASES(5)
 <b>CASE FOLDING</b>
        The <a href="local.8.html">local(8)</a> delivery agent always folds the search string
        to lowercase before database lookup.
+
+<b>REGULAR EXPRESSION TABLES</b>
+       This section describes how the table lookups  change  when
+       the table is given in the form of regular expressions. For
+       a description of regular expression lookup  table  syntax,
+       see  <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>. NOTE: these formats
+       do not use ":" at the end of a pattern.
+
+       Each regular expression is applied to  the  entire  search
+       string.  Thus,  a  search string <i>user+foo</i> is not broken up
+       into <i>user</i> and <i>foo</i>.
+
+       Regular expressions are applied in the order as  specified
+       in  the  table,  until  a regular expression is found that
+       matches the search string.
+
+       Lookup results are the same as with indexed file  lookups.
+       For  security  reasons there is no support for <b>$1</b>, <b>$2</b> etc.
+       substring interpolation.
 
 <b>SECURITY</b>
        The <a href="local.8.html"><b>local</b>(8)</a> delivery agent disallows  regular  expression

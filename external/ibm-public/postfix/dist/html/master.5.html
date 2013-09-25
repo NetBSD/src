@@ -34,20 +34,20 @@ MASTER(5)                                                            MASTER(5)
 <b>SYNTAX</b>
        The general format of the <a href="master.5.html">master.cf</a> file is as follows:
 
+       <b>o</b>      Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
+              is a `#'.
+
+       <b>o</b>      A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
+              cal line.
+
        <b>o</b>      Each logical line defines a single Postfix service.
               Each  service is identified by its name and type as
               described below.  When multiple lines  specify  the
               same  service  name  and type, only the last one is
               remembered.  Otherwise, the order of <a href="master.5.html">master.cf</a> ser-
               vice definitions does not matter.
-
-       <b>o</b>      Empty  lines and whitespace-only lines are ignored,
-              as are lines whose first  non-whitespace  character
-              is a `#'.
-
-       <b>o</b>      A  logical  line starts with non-whitespace text. A
-              line that starts with whitespace continues a  logi-
-              cal line.
 
        Each  logical  line  consists of eight fields separated by
        whitespace.  These are described below  in  the  order  as
@@ -208,21 +208,27 @@ MASTER(5)                                                            MASTER(5)
                      <a href="postconf.5.html">main.cf</a>.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for syntax.
 
                      NOTE 1: do not specify whitespace around the
-                     "=".  In  parameter  values,  either   avoid
-                     whitespace altogether, use commas instead of
-                     spaces,  or  consider  overrides  like   "-o
-                     name=$override_parameter"     with    $over-
-                     ride_parameter set in <a href="postconf.5.html">main.cf</a>.
+                     "=" or in parameter  values.  To  specify  a
+                     parameter  value  that  contains whitespace,
+                     use commas instead of spaces, or specify the
+                     value in <a href="postconf.5.html">main.cf</a>. Example:
 
-                     NOTE 2: Over-zealous use of parameter  over-
-                     rides  makes  the Postfix configuration hard
-                     to understand and maintain.   At  a  certain
-                     point,  it might be easier to configure mul-
-                     tiple instances of Postfix, instead of  con-
+                     /etc/postfix/<a href="master.5.html">master.cf</a>:
+                         submission inet .... smtpd
+                             -o smtpd_mumble=$submission_mumble
+
+                     /etc/postfix/<a href="postconf.5.html">main.cf</a>
+                         submission_mumble = text with whitespace...
+
+                     NOTE  2: Over-zealous use of parameter over-
+                     rides makes the Postfix  configuration  hard
+                     to  understand  and  maintain.  At a certain
+                     point, it might be easier to configure  mul-
+                     tiple  instances of Postfix, instead of con-
                      figuring  multiple  personalities  via  mas-
                      ter.cf.
 
-              <b>-v</b>     Increase the verbose logging level.  Specify
+              <b>-v</b>     Increase  the verbose logging level. Specify
                      multiple <b>-v</b> options to make a Postfix daemon
                      process increasingly verbose.
 
@@ -235,7 +241,7 @@ MASTER(5)                                                            MASTER(5)
        <a href="DEBUG_README.html">DEBUG_README</a>, Postfix debugging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>
