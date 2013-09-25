@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.9 2013/01/02 19:18:36 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.10 2013/09/25 19:12:35 tron Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,7 @@
 /*	RFC 3848 (ESMTP transmission types)
 /*	RFC 4409 (Message submission)
 /*	RFC 4954 (AUTH command)
+/*	RFC 5321 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
@@ -156,6 +157,16 @@
 /*	at all, or rewrite message headers and update incomplete addresses
 /*	with the domain specified in the remote_header_rewrite_domain
 /*	parameter.
+/* BEFORE-SMTPD PROXY AGENT
+/* .ad
+/* .fi
+/*	Available in Postfix version 2.10 and later:
+/* .IP "\fBsmtpd_upstream_proxy_protocol (empty)\fR"
+/*	The name of the proxy protocol used by an optional before-smtpd
+/*	proxy agent.
+/* .IP "\fBsmtpd_upstream_proxy_timeout (5s)\fR"
+/*	The time limit for the proxy protocol specified with the
+/*	smtpd_upstream_proxy_protocol parameter.
 /* AFTER QUEUE EXTERNAL CONTENT INSPECTION CONTROLS
 /* .ad
 /* .fi
@@ -516,6 +527,11 @@
 /*	Available in Postfix version 2.1 and later:
 /* .IP "\fBsmtpd_authorized_xclient_hosts (empty)\fR"
 /*	What remote SMTP clients are allowed to use the XCLIENT feature.
+/* .PP
+/*	Available in Postfix version 2.10 and later:
+/* .IP "\fBsmtpd_log_access_permit_actions (empty)\fR"
+/*	Enable logging of the named "permit" actions in SMTP server
+/*	access lists.
 /* KNOWN VERSUS UNKNOWN RECIPIENT CONTROLS
 /* .ad
 /* .fi
@@ -714,24 +730,24 @@
 /*	What Postfix features match subdomains of "domain.tld" automatically,
 /*	instead of requiring an explicit ".domain.tld" pattern.
 /* .IP "\fBsmtpd_client_restrictions (empty)\fR"
-/*	Optional Postfix SMTP server access restrictions in the context of
-/*	a remote SMTP client connection request.
+/*	Optional restrictions that the Postfix SMTP server applies in the
+/*	context of a client connection request.
 /* .IP "\fBsmtpd_helo_required (no)\fR"
 /*	Require that a remote SMTP client introduces itself with the HELO
 /*	or EHLO command before sending the MAIL command or other commands
 /*	that require EHLO negotiation.
 /* .IP "\fBsmtpd_helo_restrictions (empty)\fR"
 /*	Optional restrictions that the Postfix SMTP server applies in the
-/*	context of the SMTP HELO command.
+/*	context of a client HELO command.
 /* .IP "\fBsmtpd_sender_restrictions (empty)\fR"
 /*	Optional restrictions that the Postfix SMTP server applies in the
-/*	context of the MAIL FROM command.
-/* .IP "\fBsmtpd_recipient_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
-/*	The access restrictions that the Postfix SMTP server applies in
-/*	the context of the RCPT TO command.
+/*	context of a client MAIL FROM command.
+/* .IP "\fBsmtpd_recipient_restrictions (see 'postconf -d' output)\fR"
+/*	Optional restrictions that the Postfix SMTP server applies in the
+/*	context of a client RCPT TO command, after smtpd_relay_restrictions.
 /* .IP "\fBsmtpd_etrn_restrictions (empty)\fR"
-/*	Optional SMTP server access restrictions in the context of a client
-/*	ETRN request.
+/*	Optional restrictions that the Postfix SMTP server applies in the
+/*	context of a client ETRN command.
 /* .IP "\fBallow_untrusted_routing (no)\fR"
 /*	Forward mail with sender-specified routing (user[@%!]remote[@%!]site)
 /*	from untrusted clients to destinations matching $relay_domains.
@@ -766,6 +782,12 @@
 /* .IP "\fBsmtpd_end_of_data_restrictions (empty)\fR"
 /*	Optional access restrictions that the Postfix SMTP server
 /*	applies in the context of the SMTP END-OF-DATA command.
+/* .PP
+/*	Available in Postfix version 2.10 and later:
+/* .IP "\fBsmtpd_relay_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
+/*	Access restrictions for mail relay control that the Postfix
+/*	SMTP server applies in the context of the RCPT TO command, before
+/*	smtpd_recipient_restrictions.
 /* SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
@@ -1122,6 +1144,7 @@ char   *var_notify_classes;
 char   *var_client_checks;
 char   *var_helo_checks;
 char   *var_mail_checks;
+char   *var_relay_checks;
 char   *var_rcpt_checks;
 char   *var_etrn_checks;
 char   *var_data_checks;
@@ -1218,6 +1241,7 @@ bool    var_smtpd_tls_wrappermode;
 bool    var_smtpd_tls_auth_only;
 char   *var_smtpd_cmd_filter;
 char   *var_smtpd_rej_footer;
+char   *var_smtpd_acl_perm_log;
 
 #ifdef USE_TLS
 char   *var_smtpd_relay_ccerts;
@@ -1286,6 +1310,9 @@ int     smtpd_proxy_opts;
 char   *var_tlsproxy_service;
 
 #endif
+
+char   *var_smtpd_uproxy_proto;
+int     var_smtpd_uproxy_tmout;
 
  /*
   * Silly little macros.
@@ -2200,9 +2227,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 5.5.1 Error: send HELO/EHLO first");
 	return (-1);
     }
-#define IN_MAIL_TRANSACTION(state) ((state)->sender != 0)
-
-    if (IN_MAIL_TRANSACTION(state)) {
+    if (SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: nested MAIL command");
 	return (-1);
@@ -2328,6 +2353,21 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 5.5.4 Error: %s requires non-null sender",
 			 VERP_CMD);
 	return (-1);
+    }
+    if (SMTPD_STAND_ALONE(state) == 0) {
+	const char *verify_sender;
+
+	/*
+	 * XXX Don't reject the address when we're probed with our own
+	 * address verification sender address. Otherwise, some timeout or
+	 * some UCE block may result in mutual negative caching, making it
+	 * painful to get the mail through. Unfortunately we still have to
+	 * send the address to the Milters otherwise they may bail out with a
+	 * "missing recipient" protocol error.
+	 */
+	verify_sender = valid_verify_sender_addr(STR(state->addr_buf));
+	if (verify_sender != 0)
+	    vstring_strcpy(state->addr_buf, verify_sender);
     }
     if (SMTPD_STAND_ALONE(state) == 0
 	&& var_smtpd_delay_reject == 0
@@ -2508,7 +2548,7 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
      * command with a 501 response. So much for the principle of "be liberal
      * in what you accept, be strict in what you send".
      */
-    if (!IN_MAIL_TRANSACTION(state)) {
+    if (!SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: need MAIL command");
 	return (-1);
@@ -2871,7 +2911,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
      * error.
      */
     if (state->rcpt_count == 0) {
-	if (!IN_MAIL_TRANSACTION(state)) {
+	if (!SMTPD_IN_MAIL_TRANSACTION(state)) {
 	    state->error_mask |= MAIL_ERROR_PROTOCOL;
 	    smtpd_chat_reply(state, "503 5.5.1 Error: need RCPT command");
 	} else {
@@ -3421,7 +3461,7 @@ static int etrn_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
-    if (IN_MAIL_TRANSACTION(state)) {
+    if (SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 Error: MAIL transaction in progress");
 	return (-1);
@@ -3536,7 +3576,7 @@ static int xclient_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
      * XXX The XCLIENT command will override its own access control, so that
      * connection count/rate restrictions can be correctly simulated.
      */
-    if (IN_MAIL_TRANSACTION(state)) {
+    if (SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: MAIL transaction in progress");
 	return (-1);
@@ -3832,7 +3872,7 @@ static int xforward_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     /*
      * Sanity checks.
      */
-    if (IN_MAIL_TRANSACTION(state)) {
+    if (SMTPD_IN_MAIL_TRANSACTION(state)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: MAIL transaction in progress");
 	return (-1);
@@ -4920,7 +4960,8 @@ static void smtpd_service(VSTREAM *stream, char *service, char **argv)
     /*
      * Provide the SMTP service.
      */
-    smtpd_proto(&state);
+    if ((state.flags & SMTPD_FLAG_HANGUP) == 0)
+	smtpd_proto(&state);
 
     /*
      * After the client has gone away, clean up whatever we have set up at
@@ -5269,6 +5310,7 @@ int     main(int argc, char **argv)
 	VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, &var_milt_cmd_time, 1, 0,
 	VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, &var_milt_msg_time, 1, 0,
 	VAR_VERIFY_SENDER_TTL, DEF_VERIFY_SENDER_TTL, &var_verify_sender_ttl, 0, 0,
+	VAR_SMTPD_UPROXY_TMOUT, DEF_SMTPD_UPROXY_TMOUT, &var_smtpd_uproxy_tmout, 1, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE bool_table[] = {
@@ -5308,6 +5350,7 @@ int     main(int argc, char **argv)
 	VAR_CLIENT_CHECKS, DEF_CLIENT_CHECKS, &var_client_checks, 0, 0,
 	VAR_HELO_CHECKS, DEF_HELO_CHECKS, &var_helo_checks, 0, 0,
 	VAR_MAIL_CHECKS, DEF_MAIL_CHECKS, &var_mail_checks, 0, 0,
+	VAR_RELAY_CHECKS, DEF_RELAY_CHECKS, &var_relay_checks, 0, 0,
 	VAR_RCPT_CHECKS, DEF_RCPT_CHECKS, &var_rcpt_checks, 0, 0,
 	VAR_ETRN_CHECKS, DEF_ETRN_CHECKS, &var_etrn_checks, 0, 0,
 	VAR_DATA_CHECKS, DEF_DATA_CHECKS, &var_data_checks, 0, 0,
@@ -5396,6 +5439,8 @@ int     main(int argc, char **argv)
 #ifdef USE_TLSPROXY
 	VAR_TLSPROXY_SERVICE, DEF_TLSPROXY_SERVICE, &var_tlsproxy_service, 1, 0,
 #endif
+	VAR_SMTPD_ACL_PERM_LOG, DEF_SMTPD_ACL_PERM_LOG, &var_smtpd_acl_perm_log, 0, 0,
+	VAR_SMTPD_UPROXY_PROTO, DEF_SMTPD_UPROXY_PROTO, &var_smtpd_uproxy_proto, 0, 0,
 	0,
     };
     static const CONFIG_RAW_TABLE raw_table[] = {
