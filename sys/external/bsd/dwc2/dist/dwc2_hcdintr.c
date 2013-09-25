@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.1 2013/09/05 07:53:12 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.2 2013/09/25 05:41:15 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -120,10 +120,9 @@ static void dwc2_hc_handle_tt_clear(struct dwc2_hsotg *hsotg,
  */
 static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 {
-	enum dwc2_transaction_type tr_type;
 	struct list_head *qh_entry;
 	struct dwc2_qh *qh;
-	int next_sched_frame = -1;
+	enum dwc2_transaction_type tr_type;
 
 #ifdef DEBUG_SOF
 	dev_vdbg(hsotg->dev, "--Start of Frame Interrupt--\n");
@@ -138,23 +137,14 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	while (qh_entry != &hsotg->periodic_sched_inactive) {
 		qh = list_entry(qh_entry, struct dwc2_qh, qh_list_entry);
 		qh_entry = qh_entry->next;
-		if (dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number)) {
+		if (dwc2_frame_num_le(qh->sched_frame, hsotg->frame_number))
 			/*
 			 * Move QH to the ready list to be executed next
 			 * (micro)frame
 			 */
 			list_move(&qh->qh_list_entry,
 				  &hsotg->periodic_sched_ready);
-		} else {
-			if (next_sched_frame < 0 ||
-			    dwc2_frame_num_le(qh->sched_frame,
-					      next_sched_frame))
-				next_sched_frame = qh->sched_frame;
-		}
 	}
-
-	hsotg->next_sched_frame = next_sched_frame;
-
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
 		dwc2_hcd_queue_transactions(hsotg, tr_type);
@@ -177,19 +167,16 @@ static void dwc2_rx_fifo_level_intr(struct dwc2_hsotg *hsotg)
 		dev_vdbg(hsotg->dev, "--RxFIFO Level Interrupt--\n");
 
 	grxsts = readl(hsotg->regs + GRXSTSP);
-	chnum = grxsts >> GRXSTS_HCHNUM_SHIFT &
-		GRXSTS_HCHNUM_MASK >> GRXSTS_HCHNUM_SHIFT;
+	chnum = (grxsts & GRXSTS_HCHNUM_MASK) >> GRXSTS_HCHNUM_SHIFT;
 	chan = hsotg->hc_ptr_array[chnum];
 	if (!chan) {
 		dev_err(hsotg->dev, "Unable to get corresponding channel\n");
 		return;
 	}
 
-	bcnt = grxsts >> GRXSTS_BYTECNT_SHIFT &
-	       GRXSTS_BYTECNT_MASK >> GRXSTS_BYTECNT_SHIFT;
-	dpid = grxsts >> GRXSTS_DPID_SHIFT &
-	       GRXSTS_DPID_MASK >> GRXSTS_DPID_SHIFT;
-	pktsts = grxsts & GRXSTS_PKTSTS_MASK;
+	bcnt = (grxsts & GRXSTS_BYTECNT_MASK) >> GRXSTS_BYTECNT_SHIFT;
+	dpid = (grxsts & GRXSTS_DPID_MASK) >> GRXSTS_DPID_SHIFT;
+	pktsts = (grxsts & GRXSTS_PKTSTS_MASK) >> GRXSTS_PKTSTS_SHIFT;
 
 	/* Packet Status */
 	if (dbg_perio()) {
@@ -197,9 +184,7 @@ static void dwc2_rx_fifo_level_intr(struct dwc2_hsotg *hsotg)
 		dev_vdbg(hsotg->dev, "    Count = %d\n", bcnt);
 		dev_vdbg(hsotg->dev, "    DPID = %d, chan.dpid = %d\n", dpid,
 			 chan->data_pid_start);
-		dev_vdbg(hsotg->dev, "    PStatus = %d\n",
-			 pktsts >> GRXSTS_PKTSTS_SHIFT &
-			 GRXSTS_PKTSTS_MASK >> GRXSTS_PKTSTS_SHIFT);
+		dev_vdbg(hsotg->dev, "    PStatus = %d\n", pktsts);
 	}
 
 	switch (pktsts) {
@@ -278,7 +263,7 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 	}
 
 	usbcfg = readl(hsotg->regs + GUSBCFG);
-	prtspd = hprt0 & HPRT0_SPD_MASK;
+	prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 
 	if (prtspd == HPRT0_SPD_LOW_SPEED || prtspd == HPRT0_SPD_FULL_SPEED) {
 		/* Low power */
@@ -290,7 +275,8 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 		}
 
 		hcfg = readl(hsotg->regs + HCFG);
-		fslspclksel = hcfg & HCFG_FSLSPCLKSEL_MASK;
+		fslspclksel = (hcfg & HCFG_FSLSPCLKSEL_MASK) >>
+			      HCFG_FSLSPCLKSEL_SHIFT;
 
 		if (prtspd == HPRT0_SPD_LOW_SPEED &&
 		    params->host_ls_low_power_phy_clk ==
@@ -299,8 +285,9 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 			dev_vdbg(hsotg->dev,
 				 "FS_PHY programming HCFG to 6 MHz\n");
 			if (fslspclksel != HCFG_FSLSPCLKSEL_6_MHZ) {
+				fslspclksel = HCFG_FSLSPCLKSEL_6_MHZ;
 				hcfg &= ~HCFG_FSLSPCLKSEL_MASK;
-				hcfg |= HCFG_FSLSPCLKSEL_6_MHZ;
+				hcfg |= fslspclksel << HCFG_FSLSPCLKSEL_SHIFT;
 				writel(hcfg, hsotg->regs + HCFG);
 				do_reset = 1;
 			}
@@ -309,8 +296,9 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 			dev_vdbg(hsotg->dev,
 				 "FS_PHY programming HCFG to 48 MHz\n");
 			if (fslspclksel != HCFG_FSLSPCLKSEL_48_MHZ) {
+				fslspclksel = HCFG_FSLSPCLKSEL_48_MHZ;
 				hcfg &= ~HCFG_FSLSPCLKSEL_MASK;
-				hcfg |= HCFG_FSLSPCLKSEL_48_MHZ;
+				hcfg |= fslspclksel << HCFG_FSLSPCLKSEL_SHIFT;
 				writel(hcfg, hsotg->regs + HCFG);
 				do_reset = 1;
 			}
@@ -423,8 +411,8 @@ static u32 dwc2_get_actual_xfer_length(struct dwc2_hsotg *hsotg,
 
 	if (halt_status == DWC2_HC_XFER_COMPLETE) {
 		if (chan->ep_is_in) {
-			count = hctsiz >> TSIZ_XFERSIZE_SHIFT &
-				TSIZ_XFERSIZE_MASK >> TSIZ_XFERSIZE_SHIFT;
+			count = (hctsiz & TSIZ_XFERSIZE_MASK) >>
+				TSIZ_XFERSIZE_SHIFT;
 			length = chan->xfer_len - count;
 			if (short_read != NULL)
 				*short_read = (count != 0);
@@ -443,8 +431,7 @@ static u32 dwc2_get_actual_xfer_length(struct dwc2_hsotg *hsotg,
 		 * hctsiz.xfersize field because that reflects the number of
 		 * bytes transferred via the AHB, not the USB).
 		 */
-		count = hctsiz >> TSIZ_PKTCNT_SHIFT &
-			TSIZ_PKTCNT_MASK >> TSIZ_PKTCNT_SHIFT;
+		count = (hctsiz & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT;
 		length = (chan->start_pkt_count - count) * chan->max_packet;
 	}
 
@@ -507,8 +494,7 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 		 __func__, (chan->ep_is_in ? "IN" : "OUT"), chnum);
 	dev_vdbg(hsotg->dev, "  chan->xfer_len %d\n", chan->xfer_len);
 	dev_vdbg(hsotg->dev, "  hctsiz.xfersize %d\n",
-		 hctsiz >> TSIZ_XFERSIZE_SHIFT &
-		 TSIZ_XFERSIZE_MASK >> TSIZ_XFERSIZE_SHIFT);
+		 (hctsiz & TSIZ_XFERSIZE_MASK) >> TSIZ_XFERSIZE_SHIFT);
 	dev_vdbg(hsotg->dev, "  urb->transfer_buffer_length %d\n", urb->length);
 	dev_vdbg(hsotg->dev, "  urb->actual_length %d\n", urb->actual_length);
 	dev_vdbg(hsotg->dev, "  short_read %d, xfer_done %d\n", short_read,
@@ -527,7 +513,7 @@ void dwc2_hcd_save_data_toggle(struct dwc2_hsotg *hsotg,
 			       struct dwc2_qtd *qtd)
 {
 	u32 hctsiz = readl(hsotg->regs + HCTSIZ(chnum));
-	u32 pid = hctsiz & TSIZ_SC_MC_PID_MASK;
+	u32 pid = (hctsiz & TSIZ_SC_MC_PID_MASK) >> TSIZ_SC_MC_PID_SHIFT;
 
 	if (chan->ep_type != USB_ENDPOINT_XFER_CONTROL) {
 		if (pid == TSIZ_SC_MC_PID_DATA0)
@@ -764,23 +750,18 @@ cleanup:
 	dwc2_hc_cleanup(hsotg, chan);
 	list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
 
-	if (hsotg->core_params->uframe_sched > 0) {
-		hsotg->available_host_channels++;
-	} else {
-		switch (chan->ep_type) {
-		case USB_ENDPOINT_XFER_CONTROL:
-		case USB_ENDPOINT_XFER_BULK:
-			hsotg->non_periodic_channels--;
-			break;
-		default:
-			/*
-			 * Don't release reservations for periodic channels
-			 * here. That's done when a periodic transfer is
-			 * descheduled (i.e. when the QH is removed from the
-			 * periodic schedule).
-			 */
-			break;
-		}
+	switch (chan->ep_type) {
+	case USB_ENDPOINT_XFER_CONTROL:
+	case USB_ENDPOINT_XFER_BULK:
+		hsotg->non_periodic_channels--;
+		break;
+	default:
+		/*
+		 * Don't release reservations for periodic channels here.
+		 * That's done when a periodic transfer is descheduled (i.e.
+		 * when the QH is removed from the periodic schedule).
+		 */
+		break;
 	}
 
 	haintmsk = readl(hsotg->regs + HAINTMSK);
@@ -1198,8 +1179,7 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 	dev_vdbg(hsotg->dev, "  chan->start_pkt_count %d\n",
 		 chan->start_pkt_count);
 	dev_vdbg(hsotg->dev, "  hctsiz.pktcnt %d\n",
-		 hctsiz >> TSIZ_PKTCNT_SHIFT &
-		 TSIZ_PKTCNT_MASK >> TSIZ_PKTCNT_SHIFT);
+		 (hctsiz & TSIZ_PKTCNT_MASK) >> TSIZ_PKTCNT_SHIFT);
 	dev_vdbg(hsotg->dev, "  chan->max_packet %d\n", chan->max_packet);
 	dev_vdbg(hsotg->dev, "  bytes_transferred %d\n",
 		 xfer_length);
@@ -1220,16 +1200,6 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: NAK Received--\n",
 			 chnum);
-
-	/*
-	 * When we get bulk NAKs then remember this so we holdoff on this qh
-	 * until the beginning of the next frame
-	 */
-	switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
-	case USB_ENDPOINT_XFER_BULK:
-		chan->qh->nak_frame = dwc2_hcd_get_frame_number(hsotg);
-		break;
-	}
 
 	/*
 	 * Handle NAK for IN/OUT SSPLIT/CSPLIT transfers, bulk, control, and
@@ -1791,7 +1761,7 @@ static void dwc2_hc_chhltd_intr_dma(struct dwc2_hsotg *hsotg,
 	 * For core with OUT NAK enhancement, the flow for high-speed
 	 * CONTROL/BULK OUT is handled a little differently
 	 */
-	if (hsotg->snpsid >= DWC2_CORE_REV_2_71a) {
+	if (hsotg->hw_params.snpsid >= DWC2_CORE_REV_2_71a) {
 		if (chan->speed == USB_SPEED_HIGH && !chan->ep_is_in &&
 		    (chan->ep_type == USB_ENDPOINT_XFER_CONTROL ||
 		     chan->ep_type == USB_ENDPOINT_XFER_BULK)) {
