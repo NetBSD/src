@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.4 2013/01/02 19:18:34 tron Exp $	*/
+/*	$NetBSD: unknown.c,v 1.5 2013/09/25 19:12:35 tron Exp $	*/
 
 /*++
 /* NAME
@@ -152,9 +152,9 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
      */
 #define STREQ(x,y) (strcasecmp(x,y) == 0)
 
-    if (STREQ(state.msg_attr.local, MAIL_ADDR_MAIL_DAEMON)
-	|| STREQ(state.msg_attr.local, MAIL_ADDR_POSTMASTER)) {
-	msg_warn("required alias not found: %s", state.msg_attr.local);
+    if (STREQ(state.msg_attr.user, MAIL_ADDR_MAIL_DAEMON)
+	|| STREQ(state.msg_attr.user, MAIL_ADDR_POSTMASTER)) {
+	msg_warn("required alias not found: %s", state.msg_attr.user);
 	dsb_simple(state.msg_attr.why, "2.0.0", "discarded");
 	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr)));
     }
@@ -163,7 +163,7 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
      * Bounce the message when no luser relay is specified.
      */
     dsb_simple(state.msg_attr.why, "5.1.1",
-	       "unknown user: \"%s\"", state.msg_attr.local);
+	       "unknown user: \"%s\"", state.msg_attr.user);
     return (bounce_append(BOUNCE_FLAGS(state.request),
 			  BOUNCE_ATTR(state.msg_attr)));
 }

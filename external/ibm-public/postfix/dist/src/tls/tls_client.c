@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.7 2013/08/21 20:12:31 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.8 2013/09/25 19:12:35 tron Exp $	*/
 
 /*++
 /* NAME
@@ -336,6 +336,24 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
 	    return (0);
 	}
     }
+
+    /*
+     * Register SHA-2 digests, if implemented and not already registered.
+     * Improves interoperability with clients and servers that prematurely
+     * deploy SHA-2 certificates.
+     */
+#if defined(LN_sha256) && defined(NID_sha256) && !defined(OPENSSL_NO_SHA256)
+    if (!EVP_get_digestbyname(LN_sha224))
+	EVP_add_digest(EVP_sha224());
+    if (!EVP_get_digestbyname(LN_sha256))
+	EVP_add_digest(EVP_sha256());
+#endif
+#if defined(LN_sha512) && defined(NID_sha512) && !defined(OPENSSL_NO_SHA512)
+    if (!EVP_get_digestbyname(LN_sha384))
+	EVP_add_digest(EVP_sha384());
+    if (!EVP_get_digestbyname(LN_sha512))
+	EVP_add_digest(EVP_sha512());
+#endif
 
     /*
      * If the administrator specifies an unsupported digest algorithm, fail

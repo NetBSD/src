@@ -95,14 +95,14 @@ always discarded.  </p>
     <td rowspan="3" align="center" valign="bottom"> <tt> -&gt; </tt>
     </td>
 
-	<td rowspan="3" align="center" valign="middle"> probe<br>
-	message </td>
+        <td rowspan="3" align="center" valign="middle"> probe<br>
+        message </td>
 
     <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
     </td>
 
-	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
-	Postfix<br> mail<br> queue </td>
+        <td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+        Postfix<br> mail<br> queue </td>
 
 </tr>
 
@@ -115,15 +115,15 @@ always discarded.  </p>
     <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
     </td>
 
-	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
-	<a href="smtpd.8.html">Postfix<br> SMTP<br> server</a> </td>
+        <td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+        <a href="smtpd.8.html">Postfix<br> SMTP<br> server</a> </td>
 
     <td rowspan="3" align="center" valign="middle"> <tt> &lt;-&gt;
     </tt> </td>
 
-	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
-	<a href="verify.8.html">Postfix<br> verify<br> server</a>
-	</td>
+        <td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+        <a href="verify.8.html">Postfix<br> verify<br> server</a>
+        </td>
 
 </tr>
 
@@ -141,14 +141,14 @@ always discarded.  </p>
     <td rowspan="3" align="center" valign="top"> <tt> &lt;- </tt>
     </td>
 
-	<td rowspan="3" align="center" valign="middle"> probe<br>
-	status </td>
+        <td rowspan="3" align="center" valign="middle"> probe<br>
+        status </td>
 
     <td rowspan="3" align="center" valign="middle"> <tt> &lt;- </tt>
     </td>
 
-	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
-	Postfix<br> delivery<br> agents </td>
+        <td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+        Postfix<br> delivery<br> agents </td>
 
     <td rowspan="3" align="left" valign="middle"> <tt>-&gt;</tt>
     Local<br> <tt>-&gt;</tt> Remote</td>
@@ -160,8 +160,8 @@ always discarded.  </p>
     <td rowspan="3" colspan="4" align="center" valign="middle">
     &nbsp; </td>
 
-	<td rowspan="3" align="center" valign="middle"> <tt>
-	^</tt><br> <tt> |</tt><br> <tt> v</tt> </td>
+        <td rowspan="3" align="center" valign="middle"> <tt>
+        ^</tt><br> <tt> |</tt><br> <tt> v</tt> </td>
 
 </tr>
 
@@ -173,8 +173,8 @@ always discarded.  </p>
 
     <td colspan="4" align="center" valign="middle"> &nbsp; </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">
-	Address<br> verification<br> database </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">
+        Address<br> verification<br> database </td>
 
 </tr>
 
@@ -282,6 +282,9 @@ the same address repeatedly.  </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+        # <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if the mail
+        # relay policy is specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+        # (available with Postfix 2.10 and later).
         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
         ...
         <a href="postconf.5.html#reject_unknown_recipient_domain">reject_unknown_recipient_domain</a>
@@ -431,7 +434,7 @@ verification probe fails with some temporary error. Specify a valid
 
 <p> The <a href="postconf.5.html#unverified_sender_reject_reason">unverified_sender_reject_reason</a> parameter (default:
 empty) specifies fixed text that Postfix will send to remote SMTP
-clients, instead of sending actual addres verification details.
+clients, instead of sending actual address verification details.
 Do not specify the SMTP status code or enhanced status code.  </p>
 
 <p> The <a href="postconf.5.html#unverified_sender_tempfail_action">unverified_sender_tempfail_action</a> parameter (default:

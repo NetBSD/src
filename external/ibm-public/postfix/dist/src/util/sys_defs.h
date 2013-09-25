@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.5 2013/01/02 19:18:37 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.6 2013/09/25 19:12:35 tron Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -431,17 +431,14 @@ extern int opterr;
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
 #define INT_MAX_IN_LIMITS_H
-#define STREAM_CONNECTIONS		/* avoid UNIX-domain sockets */
+#ifdef STREAM_CONNECTIONS		/* avoid UNIX-domain sockets */
 #define LOCAL_LISTEN	stream_listen
 #define LOCAL_ACCEPT	stream_accept
 #define LOCAL_CONNECT	stream_connect
 #define LOCAL_TRIGGER	stream_trigger
 #define LOCAL_SEND_FD	stream_send_fd
 #define LOCAL_RECV_FD	stream_recv_fd
-#define PASS_CONNECT	stream_pass_connect
-#define PASS_LISTEN	stream_pass_listen
-#define PASS_ACCEPT	stream_pass_accept
-#define PASS_TRIGGER	stream_pass_trigger
+#endif
 #define HAS_VOLATILE_LOCKS
 #define BROKEN_READ_SELECT_ON_TCP_SOCKET
 #define CANT_WRITE_BEFORE_SENDING_FD
@@ -1412,13 +1409,6 @@ extern int inet_pton(int, const char *, void *);
 #define LOCAL_TRIGGER	unix_trigger
 #define LOCAL_SEND_FD	unix_send_fd
 #define LOCAL_RECV_FD	unix_recv_fd
-#endif
-
-#ifndef PASS_LISTEN
-#define PASS_CONNECT	unix_pass_connect
-#define PASS_LISTEN	unix_pass_listen
-#define PASS_ACCEPT	unix_pass_accept
-#define PASS_TRIGGER	unix_pass_trigger
 #endif
 
 #if !defined (HAVE_SYS_NDIR_H) && !defined (HAVE_SYS_DIR_H) \

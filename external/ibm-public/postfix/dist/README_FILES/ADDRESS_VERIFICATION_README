@@ -152,6 +152,9 @@ same address repeatedly.
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
             permit_mynetworks
+            # reject_unauth_destination is not needed here if the mail
+            # relay policy is specified under smtpd_relay_restrictions
+            # (available with Postfix 2.10 and later).
             reject_unauth_destination
             ...
             reject_unknown_recipient_domain
@@ -273,7 +276,7 @@ probe fails with some temporary error. Specify a valid 2xx or 4xx code.
 
 The unverified_sender_reject_reason parameter (default: empty) specifies fixed
 text that Postfix will send to remote SMTP clients, instead of sending actual
-addres verification details. Do not specify the SMTP status code or enhanced
+address verification details. Do not specify the SMTP status code or enhanced
 status code.
 
 The unverified_sender_tempfail_action parameter (default: defer_if_permit)
