@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -651,7 +651,7 @@ static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 		qh->dw_align_buf = NULL;
 		qh->dw_align_buf_dma = 0;
 		err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, buf_size, buf_size,
-				   &qh->dw_align_buf_usbdma); 
+				   &qh->dw_align_buf_usbdma);
 		if (!err) {
 			usb_dma_t *ud = &qh->dw_align_buf_usbdma;
 
@@ -869,24 +869,6 @@ enum dwc2_transaction_type dwc2_hcd_select_transactions(
 		if (list_empty(&hsotg->free_hc_list))
 			break;
 		qh = list_entry(qh_ptr, struct dwc2_qh, qh_list_entry);
-
-		/*
-		 * Check to see if this is a NAK'd retransmit, in which case
-		 * ignore for retransmission. We hold off on bulk
-		 * retransmissions to reduce NAK interrupt overhead for
-		 * cheeky devices that just hold off using NAKs.
-		 */
-		if (dwc2_full_frame_num(qh->nak_frame) ==
-		    dwc2_full_frame_num(dwc2_hcd_get_frame_number(hsotg))) {
-			/* Make interrupt run on next frame (i.e. 8 uframes) */
-			hsotg->next_sched_frame = ((qh->nak_frame + 8) & ~7) &
-						  HFNUM_MAX_FRNUM;
-			qh_ptr = qh_ptr->next;
-			continue;
-		} else {
-			qh->nak_frame = 0xffff;
-		}
-
 		if (hsotg->core_params->uframe_sched > 0) {
 			if (hsotg->available_host_channels < 1)
 				break;
@@ -1010,10 +992,10 @@ static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 		dev_vdbg(hsotg->dev, "Queue periodic transactions\n");
 
 	tx_status = DWC2_READ_4(hsotg, HPTXSTS);
-	qspcavail = tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-		    TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT;
-	fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-		    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+	qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+		    TXSTS_QSPCAVAIL_SHIFT;
+	fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+		    TXSTS_FSPCAVAIL_SHIFT;
 
 	if (dbg_perio()) {
 		dev_vdbg(hsotg->dev, "  P Tx Req Queue Space Avail (before queue): %d\n",
@@ -1025,7 +1007,9 @@ static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 	qh_ptr = hsotg->periodic_sched_assigned.next;
 	while (qh_ptr != &hsotg->periodic_sched_assigned) {
 		tx_status = DWC2_READ_4(hsotg, HPTXSTS);
-		if ((tx_status & TXSTS_QSPCAVAIL_MASK) == 0) {
+		qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+			    TXSTS_QSPCAVAIL_SHIFT;
+		if (qspcavail == 0) {
 			no_queue_space = 1;
 			break;
 		}
@@ -1051,8 +1035,8 @@ static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 				qh->channel->multi_count > 1)
 			hsotg->queuing_high_bandwidth = 1;
 
-		fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-			    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+		fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+			    TXSTS_FSPCAVAIL_SHIFT;
 		status = dwc2_queue_transaction(hsotg, qh->channel, fspcavail);
 		if (status < 0) {
 			no_fifo_space = 1;
@@ -1083,10 +1067,10 @@ static void dwc2_process_periodic_channels(struct dwc2_hsotg *hsotg)
 
 	if (hsotg->core_params->dma_enable <= 0) {
 		tx_status = DWC2_READ_4(hsotg, HPTXSTS);
-		qspcavail = tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-			    TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT;
-		fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-			    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+		qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+			    TXSTS_QSPCAVAIL_SHIFT;
+		fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+			    TXSTS_FSPCAVAIL_SHIFT;
 		if (dbg_perio()) {
 			dev_vdbg(hsotg->dev,
 				 "  P Tx Req Queue Space Avail (after queue): %d\n",
@@ -1148,10 +1132,10 @@ static void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 	dev_vdbg(hsotg->dev, "Queue non-periodic transactions\n");
 
 	tx_status = DWC2_READ_4(hsotg, GNPTXSTS);
-	qspcavail = tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-		    TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT;
-	fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-		    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+	qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+		    TXSTS_QSPCAVAIL_SHIFT;
+	fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+		    TXSTS_FSPCAVAIL_SHIFT;
 	dev_vdbg(hsotg->dev, "  NP Tx Req Queue Space Avail (before queue): %d\n",
 		 qspcavail);
 	dev_vdbg(hsotg->dev, "  NP Tx FIFO Space Avail (before queue): %d\n",
@@ -1171,8 +1155,8 @@ static void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 	 */
 	do {
 		tx_status = DWC2_READ_4(hsotg, GNPTXSTS);
-		qspcavail = tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-			    TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT;
+		qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+			    TXSTS_QSPCAVAIL_SHIFT;
 		if (hsotg->core_params->dma_enable <= 0 && qspcavail == 0) {
 			no_queue_space = 1;
 			break;
@@ -1187,8 +1171,8 @@ static void dwc2_process_non_periodic_channels(struct dwc2_hsotg *hsotg)
 		if (qh->tt_buffer_dirty)
 			goto next;
 
-		fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-			    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+		fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+			    TXSTS_FSPCAVAIL_SHIFT;
 		status = dwc2_queue_transaction(hsotg, qh->channel, fspcavail);
 
 		if (status > 0) {
@@ -1208,10 +1192,10 @@ next:
 
 	if (hsotg->core_params->dma_enable <= 0) {
 		tx_status = DWC2_READ_4(hsotg, GNPTXSTS);
-		qspcavail = tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-			    TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT;
-		fspcavail = tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-			    TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT;
+		qspcavail = (tx_status & TXSTS_QSPCAVAIL_MASK) >>
+			    TXSTS_QSPCAVAIL_SHIFT;
+		fspcavail = (tx_status & TXSTS_FSPCAVAIL_MASK) >>
+			    TXSTS_FSPCAVAIL_SHIFT;
 		dev_vdbg(hsotg->dev,
 			 "  NP Tx Req Queue Space Avail (after queue): %d\n",
 			 qspcavail);
@@ -1629,7 +1613,7 @@ dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 		if (hprt0 & HPRT0_PWR)
 			port_status |= USB_PORT_STAT_POWER;
 
-		speed = hprt0 & HPRT0_SPD_MASK;
+		speed = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 		if (speed == HPRT0_SPD_HIGH_SPEED)
 			port_status |= USB_PORT_STAT_HIGH_SPEED;
 		else if (speed == HPRT0_SPD_LOW_SPEED)
@@ -1748,11 +1732,9 @@ int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg)
 
 #ifdef DWC2_DEBUG_SOF
 	dev_vdbg(hsotg->dev, "DWC OTG HCD GET FRAME NUMBER %d\n",
-		 hfnum >> HFNUM_FRNUM_SHIFT &
-		 HFNUM_FRNUM_MASK >> HFNUM_FRNUM_SHIFT);
+		 (hfnum & HFNUM_FRNUM_MASK) >> HFNUM_FRNUM_SHIFT);
 #endif
-	return hfnum >> HFNUM_FRNUM_SHIFT &
-	       HFNUM_FRNUM_MASK >> HFNUM_FRNUM_SHIFT;
+	return (hfnum & HFNUM_FRNUM_MASK) >> HFNUM_FRNUM_SHIFT;
 }
 
 int dwc2_hcd_is_b_host(struct dwc2_hsotg *hsotg)
@@ -1913,18 +1895,14 @@ void dwc2_hcd_dump_state(struct dwc2_hsotg *hsotg)
 	dev_dbg(hsotg->dev, "  periodic_usecs: %d\n", hsotg->periodic_usecs);
 	np_tx_status = DWC2_READ_4(hsotg, GNPTXSTS);
 	dev_dbg(hsotg->dev, "  NP Tx Req Queue Space Avail: %d\n",
-		np_tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-		TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT);
+		(np_tx_status & TXSTS_QSPCAVAIL_MASK) >> TXSTS_QSPCAVAIL_SHIFT);
 	dev_dbg(hsotg->dev, "  NP Tx FIFO Space Avail: %d\n",
-		np_tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-		TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT);
+		(np_tx_status & TXSTS_FSPCAVAIL_MASK) >> TXSTS_FSPCAVAIL_SHIFT);
 	p_tx_status = DWC2_READ_4(hsotg, HPTXSTS);
 	dev_dbg(hsotg->dev, "  P Tx Req Queue Space Avail: %d\n",
-		p_tx_status >> TXSTS_QSPCAVAIL_SHIFT &
-		TXSTS_QSPCAVAIL_MASK >> TXSTS_QSPCAVAIL_SHIFT);
+		(p_tx_status & TXSTS_QSPCAVAIL_MASK) >> TXSTS_QSPCAVAIL_SHIFT);
 	dev_dbg(hsotg->dev, "  P Tx FIFO Space Avail: %d\n",
-		p_tx_status >> TXSTS_FSPCAVAIL_SHIFT &
-		TXSTS_FSPCAVAIL_MASK >> TXSTS_FSPCAVAIL_SHIFT);
+		(p_tx_status & TXSTS_FSPCAVAIL_MASK) >> TXSTS_FSPCAVAIL_SHIFT);
 	dwc2_hcd_dump_frrem(hsotg);
 
 	dwc2_dump_global_registers(hsotg);
@@ -2120,7 +2098,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 	DWC2_WRITE_4(hsotg, GAHBCFG, ahbcfg);
 	DWC2_WRITE_4(hsotg, GINTMSK, 0);
 
-	if (hsotg->snpsid >= DWC2_CORE_REV_3_00a) {
+	if (hsotg->hw_params.snpsid >= DWC2_CORE_REV_3_00a) {
 		dctl = DWC2_READ_4(hsotg, DCTL);
 		dctl |= DCTL_SFTDISCON;
 		DWC2_WRITE_4(hsotg, DCTL, dctl);
@@ -2168,80 +2146,22 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 		  const struct dwc2_core_params *params)
 {
 	struct dwc2_host_chan *channel;
-	u32 snpsid, gusbcfg, hcfg;
+	u32 hcfg;
 	int i, num_channels;
-	int retval = -ENOMEM;
-	int err;
+	int err, retval;
 
 	dev_dbg(hsotg->dev, "DWC OTG HCD INIT\n");
 
-	/*
-	 * Attempt to ensure this device is really a DWC_otg Controller.
-	 * Read and verify the GSNPSID register contents. The value should be
-	 * 0x45f42xxx or 0x45f43xxx, which corresponds to either "OT2" or "OT3",
-	 * as in "OTG version 2.xx" or "OTG version 3.xx".
-	 */
-	snpsid = DWC2_READ_4(hsotg, GSNPSID);
-	if ((snpsid & 0xfffff000) != 0x4f542000 &&
-	    (snpsid & 0xfffff000) != 0x4f543000) {
-		dev_err(hsotg->dev, "Bad value for GSNPSID: 0x%08x\n", snpsid);
-		retval = -ENODEV;
-		goto error1;
-	}
+	/* Detect config values from hardware */
+	retval = dwc2_get_hwparams(hsotg);
 
-	/*
-	 * Store the contents of the hardware configuration registers here for
-	 * easy access later
-	 */
-	hsotg->hwcfg1 = DWC2_READ_4(hsotg, GHWCFG1);
-	hsotg->hwcfg2 = DWC2_READ_4(hsotg, GHWCFG2);
-	hsotg->hwcfg3 = DWC2_READ_4(hsotg, GHWCFG3);
-	hsotg->hwcfg4 = DWC2_READ_4(hsotg, GHWCFG4);
+	if (retval)
+		return retval;
 
-	dev_dbg(hsotg->dev, "hwcfg1=%08x\n", hsotg->hwcfg1);
-	dev_dbg(hsotg->dev, "hwcfg2=%08x\n", hsotg->hwcfg2);
-	dev_dbg(hsotg->dev, "hwcfg3=%08x\n", hsotg->hwcfg3);
-	dev_dbg(hsotg->dev, "hwcfg4=%08x\n", hsotg->hwcfg4);
-
-	/* Force host mode to get HPTXFSIZ exact power on value */
-	gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
-	gusbcfg |= GUSBCFG_FORCEHOSTMODE;
-	DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
-	usleep_range(100000, 150000);
-
-	hsotg->hptxfsiz = DWC2_READ_4(hsotg, HPTXFSIZ);
-	dev_dbg(hsotg->dev, "hptxfsiz=%08x\n", hsotg->hptxfsiz);
-	gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
-	gusbcfg &= ~GUSBCFG_FORCEHOSTMODE;
-	DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
-	usleep_range(100000, 150000);
+	retval = -ENOMEM;
 
 	hcfg = DWC2_READ_4(hsotg, HCFG);
 	dev_dbg(hsotg->dev, "hcfg=%08x\n", hcfg);
-	dev_dbg(hsotg->dev, "op_mode=%0x\n",
-		hsotg->hwcfg2 >> GHWCFG2_OP_MODE_SHIFT &
-		GHWCFG2_OP_MODE_MASK >> GHWCFG2_OP_MODE_SHIFT);
-	dev_dbg(hsotg->dev, "arch=%0x\n",
-		hsotg->hwcfg2 >> GHWCFG2_ARCHITECTURE_SHIFT &
-		GHWCFG2_ARCHITECTURE_MASK >> GHWCFG2_ARCHITECTURE_SHIFT);
-	dev_dbg(hsotg->dev, "num_dev_ep=%d\n",
-		hsotg->hwcfg2 >> GHWCFG2_NUM_DEV_EP_SHIFT &
-		GHWCFG2_NUM_DEV_EP_MASK >> GHWCFG2_NUM_DEV_EP_SHIFT);
-	dev_dbg(hsotg->dev, "max_host_chan=%d\n",
-		hsotg->hwcfg2 >> GHWCFG2_NUM_HOST_CHAN_SHIFT &
-		GHWCFG2_NUM_HOST_CHAN_MASK >> GHWCFG2_NUM_HOST_CHAN_SHIFT);
-	dev_dbg(hsotg->dev, "nonperio_tx_q_depth=0x%0x\n",
-		hsotg->hwcfg2 >> GHWCFG2_NONPERIO_TX_Q_DEPTH_SHIFT &
-		GHWCFG2_NONPERIO_TX_Q_DEPTH_MASK >>
-				GHWCFG2_NONPERIO_TX_Q_DEPTH_SHIFT);
-	dev_dbg(hsotg->dev, "host_perio_tx_q_depth=0x%0x\n",
-		hsotg->hwcfg2 >> GHWCFG2_HOST_PERIO_TX_Q_DEPTH_SHIFT &
-		GHWCFG2_HOST_PERIO_TX_Q_DEPTH_MASK >>
-				GHWCFG2_HOST_PERIO_TX_Q_DEPTH_SHIFT);
-	dev_dbg(hsotg->dev, "dev_token_q_depth=0x%0x\n",
-		hsotg->hwcfg2 >> GHWCFG2_DEV_TOKEN_Q_DEPTH_SHIFT &
-		GHWCFG3_XFER_SIZE_CNTR_WIDTH_MASK >>
-				GHWCFG3_XFER_SIZE_CNTR_WIDTH_SHIFT);
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
 	hsotg->frame_num_array = kmem_zalloc(sizeof(*hsotg->frame_num_array) *
@@ -2289,11 +2209,6 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 		goto error2;
 	}
 
-	hsotg->snpsid = DWC2_READ_4(hsotg, GSNPSID);
-	dev_dbg(hsotg->dev, "Core Release: %1x.%1x%1x%1x\n",
-		hsotg->snpsid >> 12 & 0xf, hsotg->snpsid >> 8 & 0xf,
-		hsotg->snpsid >> 4 & 0xf, hsotg->snpsid & 0xf);
-
 	callout_init(&hsotg->wkp_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hsotg->wkp_timer, dwc2_wakeup_detected, hsotg);
 
@@ -2323,7 +2238,6 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 		hsotg->hc_ptr_array[i] = channel;
 	}
 
-	hsotg->next_sched_frame = 0;
 	if (hsotg->core_params->uframe_sched > 0)
 		dwc2_hcd_init_usecs(hsotg);
 
