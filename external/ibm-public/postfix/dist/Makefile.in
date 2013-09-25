@@ -1,5 +1,5 @@
 SHELL	= /bin/sh
-WARN    = -Wmissing-prototypes -Wformat
+WARN    = -Wmissing-prototypes -Wformat -Wno-comment
 OPTS	= 'CC=$(CC)'
 DIRS	= src/util src/global src/dns src/tls src/xsasl src/milter src/master \
 	src/postfix src/fsstone src/smtpstone \

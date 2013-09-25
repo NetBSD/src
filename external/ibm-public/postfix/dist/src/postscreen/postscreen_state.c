@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_state.c,v 1.1.1.2 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postscreen_state.c,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,13 @@
 /* SYNOPSIS
 /*	#include <postscreen.h>
 /*
-/*	PSC_STATE *psc_new_session_state(stream, addr, port)
+/*	PSC_STATE *psc_new_session_state(stream, client_addr, client_port,
+/*						server_addr, server_port)
 /*	VSTREAM *stream;
-/*	const char *addr;
-/*	const char *port;
+/*	const char *client_addr;
+/*	const char *client_port;
+/*	const char *server_addr;
+/*	const char *server_port;
 /*
 /*	void	psc_free_session_state(state)
 /*	PSC_STATE *state;
@@ -142,8 +145,10 @@
 /* psc_new_session_state - fill in connection state for event processing */
 
 PSC_STATE *psc_new_session_state(VSTREAM *stream,
-				         const char *addr,
-				         const char *port)
+				         const char *client_addr,
+				         const char *client_port,
+				         const char *server_addr,
+				         const char *server_port)
 {
     PSC_STATE *state;
     HTABLE_INFO *ht;
@@ -153,8 +158,10 @@ PSC_STATE *psc_new_session_state(VSTREAM *stream,
     if ((state->smtp_client_stream = stream) != 0)
 	psc_check_queue_length++;
     state->smtp_server_fd = (-1);
-    state->smtp_client_addr = mystrdup(addr);
-    state->smtp_client_port = mystrdup(port);
+    state->smtp_client_addr = mystrdup(client_addr);
+    state->smtp_client_port = mystrdup(client_port);
+    state->smtp_server_addr = mystrdup(server_addr);
+    state->smtp_server_port = mystrdup(server_port);
     state->send_buf = vstring_alloc(100);
     state->test_name = "TEST NAME HERE";
     state->dnsbl_reply = 0;
@@ -168,6 +175,7 @@ PSC_STATE *psc_new_session_state(VSTREAM *stream,
     state->read_state = 0;
     state->ehlo_discard_mask = 0;		/* XXX Should be ~0 */
     state->expand_buf = 0;
+    state->where = PSC_SMTPD_CMD_CONNECT;
 
     /*
      * Update the stress level.
@@ -182,8 +190,8 @@ PSC_STATE *psc_new_session_state(VSTREAM *stream,
     /*
      * Update the per-client session count.
      */
-    if ((ht = htable_locate(psc_client_concurrency, addr)) == 0)
-	ht = htable_enter(psc_client_concurrency, addr, (char *) 0);
+    if ((ht = htable_locate(psc_client_concurrency, client_addr)) == 0)
+	ht = htable_enter(psc_client_concurrency, client_addr, (char *) 0);
     ht->value += 1;
     state->client_concurrency = CAST_CHAR_PTR_TO_INT(ht->value);
 
@@ -220,6 +228,8 @@ void    psc_free_session_state(PSC_STATE *state)
 	state->send_buf = vstring_free(state->send_buf);
     myfree(state->smtp_client_addr);
     myfree(state->smtp_client_port);
+    myfree(state->smtp_server_addr);
+    myfree(state->smtp_server_port);
     if (state->dnsbl_reply)
 	vstring_free(state->dnsbl_reply);
     if (state->helo_name)

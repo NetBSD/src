@@ -285,6 +285,7 @@ tls_server.o: ../../include/hex_code.h
 tls_server.o: ../../include/iostuff.h
 tls_server.o: ../../include/mail_params.h
 tls_server.o: ../../include/msg.h
+tls_server.o: ../../include/myflock.h
 tls_server.o: ../../include/mymalloc.h
 tls_server.o: ../../include/name_code.h
 tls_server.o: ../../include/name_mask.h

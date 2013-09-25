@@ -1,4 +1,4 @@
-/*	$NetBSD: htable.h,v 1.1.1.2 2010/06/17 18:07:14 tron Exp $	*/
+/*	$NetBSD: htable.h,v 1.1.1.3 2013/09/25 19:06:37 tron Exp $	*/
 
 #ifndef _HTABLE_H_INCLUDED_
 #define _HTABLE_H_INCLUDED_
@@ -29,7 +29,7 @@ typedef struct HTABLE {
     int     used;			/* number of entries in table */
     HTABLE_INFO **data;			/* entries array, auto-resized */
     HTABLE_INFO **seq_bucket;		/* current sequence hash bucket */
-    HTABLE_INFO *seq_element;		/* current sequence element */
+    HTABLE_INFO **seq_element;		/* current sequence element */
 } HTABLE;
 
 extern HTABLE *htable_create(int);

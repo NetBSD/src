@@ -73,6 +73,7 @@ tlsmgr.o: ../../include/mail_server.h
 tlsmgr.o: ../../include/mail_version.h
 tlsmgr.o: ../../include/master_proto.h
 tlsmgr.o: ../../include/msg.h
+tlsmgr.o: ../../include/myflock.h
 tlsmgr.o: ../../include/mymalloc.h
 tlsmgr.o: ../../include/name_code.h
 tlsmgr.o: ../../include/name_mask.h

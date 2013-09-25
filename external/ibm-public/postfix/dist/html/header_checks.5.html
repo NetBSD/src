@@ -114,11 +114,11 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        This  document  assumes  that header and <a href="postconf.5.html#body_checks">body_checks</a> rules
        are specified in the form of  Postfix  regular  expression
        lookup  tables.  Usually  the best performance is obtained
-       with <b>pcre</b> (Perl Compatible Regular Expression) tables, but
-       the  slower  <b>regexp</b> (POSIX regular expressions) support is
-       more widely available.  Use the command "<b>postconf  -m</b>"  to
-       find  out what lookup table types your Postfix system sup-
-       ports.
+       with <b>pcre</b> (Perl Compatible Regular Expression) tables. The
+       <b>regexp</b>  (POSIX  regular  expressions)  tables  are usually
+       slower, but more widely available.  Use the command "<b>post-</b>
+       <b>conf  -m</b>" to find out what lookup table types your Postfix
+       system supports.
 
        The general format of Postfix regular expression tables is
        given  below.   For  a  discussion  of specific pattern or

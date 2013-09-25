@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.3 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.4 2013/09/25 19:06:36 tron Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -24,6 +24,7 @@
 #include <vstream.h>
 #include <argv.h>
 #include <vstring.h>
+#include <myflock.h>
 
  /*
   * Provenance information.
@@ -49,6 +50,7 @@ typedef struct DICT {
     int     (*update) (struct DICT *, const char *, const char *);
     int     (*delete) (struct DICT *, const char *);
     int     (*sequence) (struct DICT *, int, const char **, const char **);
+    int     (*lock) (struct DICT *, int);
     void    (*close) (struct DICT *);
     int     lock_fd;			/* for dict_update() lock */
     int     stat_fd;			/* change detection */
@@ -65,16 +67,19 @@ extern DICT *dict_debug(DICT *);
 
 #define DICT_DEBUG(d) ((d)->flags & DICT_FLAG_DEBUG ? dict_debug(d) : (d))
 
+ /*
+  * See dict_open.c embedded manpage for flag definitions.
+  */
 #define DICT_FLAG_NONE		(0)
-#define DICT_FLAG_DUP_WARN	(1<<0)	/* if file, warn about dups */
-#define DICT_FLAG_DUP_IGNORE	(1<<1)	/* if file, ignore dups */
+#define DICT_FLAG_DUP_WARN	(1<<0)	/* warn about dups if not supported */
+#define DICT_FLAG_DUP_IGNORE	(1<<1)	/* ignore dups if not supported */
 #define DICT_FLAG_TRY0NULL	(1<<2)	/* do not append 0 to key/value */
 #define DICT_FLAG_TRY1NULL	(1<<3)	/* append 0 to key/value */
 #define DICT_FLAG_FIXED		(1<<4)	/* fixed key map */
 #define DICT_FLAG_PATTERN	(1<<5)	/* keys are patterns */
-#define DICT_FLAG_LOCK		(1<<6)	/* lock before access */
-#define DICT_FLAG_DUP_REPLACE	(1<<7)	/* if file, replace dups */
-#define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* if file, sync updates */
+#define DICT_FLAG_LOCK		(1<<6)	/* use temp lock before access */
+#define DICT_FLAG_DUP_REPLACE	(1<<7)	/* replace dups if supported */
+#define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* sync updates if supported */
 #define DICT_FLAG_DEBUG		(1<<9)	/* log access */
 /*#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 #define DICT_FLAG_NO_REGSUB	(1<<11)	/* disallow regexp substitution */
@@ -83,7 +88,7 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_FOLD_FIX	(1<<14)	/* case-fold key with fixed-case map */
 #define DICT_FLAG_FOLD_MUL	(1<<15)	/* case-fold key with multi-case map */
 #define DICT_FLAG_FOLD_ANY	(DICT_FLAG_FOLD_FIX | DICT_FLAG_FOLD_MUL)
-#define DICT_FLAG_OPEN_LOCK	(1<<16)	/* open file with exclusive lock */
+#define DICT_FLAG_OPEN_LOCK	(1<<16)	/* perm lock if not multi-writer safe */
 
  /* IMPORTANT: Update the dict_mask[] table when the above changes */
 
@@ -125,12 +130,16 @@ extern DICT *dict_debug(DICT *);
 #define DICT_ERR_CONFIG	(-2)		/* configuration error */
 
  /*
-  * FAIL/ERROR are suggested result values, not meant for use in comparisons.
+  * Result values for exposed functions except lookup. FAIL/ERROR are
+  * suggested values, not for use in comparisons for equality.
   */
 #define DICT_STAT_FAIL		1	/* any value > 0: notfound, conflict */
 #define DICT_STAT_SUCCESS	0	/* request satisfied */
 #define DICT_STAT_ERROR		(-1)	/* any value < 0: database error */
 
+ /*
+  * Set an error code and return a result value.
+  */
 #define DICT_ERR_VAL_RETURN(dict, err, val) do { \
 	(dict)->error = (err); \
 	return (val); \

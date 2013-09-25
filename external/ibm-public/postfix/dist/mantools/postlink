@@ -483,6 +483,7 @@ while (<>) {
     s;\bsmtp_skip_5xx_greeting\b;<a href="postconf.5.html#smtp_skip_5xx_greeting">$&</a>;g;
     s;\bsmtp_skip_quit_response\b;<a href="postconf.5.html#smtp_skip_quit_response">$&</a>;g;
     s;\bsmtp_xforward_timeout\b;<a href="postconf.5.html#smtp_xforward_timeout">$&</a>;g;
+    s;\bsmtpd_log_access_permit_actions\b;<a href="postconf.5.html#smtpd_log_access_permit_actions">$&</a>;g;
     s;\bsmtpd_autho[-</bB>]*\n*[ <bB>]*rized_verp_clients\b;<a href="postconf.5.html#smtpd_authorized_verp_clients">$&</a>;g;
     s;\bsmtpd_autho[-</bB>]*\n*[ <bB>]*rized_xclient_hosts\b;<a href="postconf.5.html#smtpd_authorized_xclient_hosts">$&</a>;g;
     s;\bsmtpd_autho[-</bB>]*\n*[ <bB>]*rized_xforward_hosts\b;<a href="postconf.5.html#smtpd_authorized_xforward_hosts">$&</a>;g;
@@ -524,7 +525,8 @@ while (<>) {
     s;\bsmtpd_proxy_timeout\b;<a href="postconf.5.html#smtpd_proxy_timeout">$&</a>;g;
     s;\bsmtpd_proxy_options\b;<a href="postconf.5.html#smtpd_proxy_options">$&</a>;g;
     s;\bsmtpd_recip[-</bB>]*\n* *[<bB>]*ient_limit\b;<a href="postconf.5.html#smtpd_recipient_limit">$&</a>;g;
-    s;\bsmtpd_recip[-</bB>]*\n* *[<bB>]*ient_restrictions\b;<a href="postconf.5.html#smtpd_recipient_restrictions">$&</a>;g;
+    s;\bsmtpd_recip[-</bB>]*\n* *[<bB>]*ient_restric[-</bB>]*\n* *[<bB>]*tions\b;<a href="postconf.5.html#smtpd_recipient_restrictions">$&</a>;g;
+    s;\bsmtpd_relay_restrictions\b;<a href="postconf.5.html#smtpd_relay_restrictions">$&</a>;g;
     s;\bsmtpd_reject_unlisted_recip[-</bB>]*\n* *[<bB>]*ient\b;<a href="postconf.5.html#smtpd_reject_unlisted_recipient">$&</a>;g;
     s;\bsmtpd_reject_unlisted_sender\b;<a href="postconf.5.html#smtpd_reject_unlisted_sender">$&</a>;g;
     s;\bsmtpd_restriction_classes\b;<a href="postconf.5.html#smtpd_restriction_classes">$&</a>;g;
@@ -672,6 +674,8 @@ while (<>) {
     s;\bsmtpd_use_tls\b;<a href="postconf.5.html#smtpd_use_tls">$&</a>;g;
     s;\bsmtpd_reject_footer\b;<a href="postconf.5.html#smtpd_reject_footer">$&</a>;g;
     s;\bsmtpd_per_record_deadline\b;<a href="postconf.5.html#smtpd_per_record_deadline">$&</a>;g;
+    s;\bsmtpd_upstream_proxy_protocol\b;<a href="postconf.5.html#smtpd_upstream_proxy_protocol">$&</a>;g;
+    s;\bsmtpd_upstream_proxy_timeout\b;<a href="postconf.5.html#smtpd_upstream_proxy_timeout">$&</a>;g;
     s;\btls_daemon_random_bytes\b;<a href="postconf.5.html#tls_daemon_random_bytes">$&</a>;g;
     s;\btls_daemon_random_source\b;<a href="postconf.5.html#tls_daemon_random_source">$&</a>;g;
     s;\btls_ran[-</Bb>]*\n* *[<Bb>]*dom_bytes\b;<a href="postconf.5.html#tls_random_bytes">$&</a>;g;
@@ -837,7 +841,7 @@ while (<>) {
     s;\bcheck_reverse_client_hostname_ns_access\b;<a href="postconf.5.html#check_reverse_client_hostname_ns_access">$&</a>;g;
     s;\bpermit_inet_interfaces\b;<a href="postconf.5.html#permit_inet_interfaces">$&</a>;g;
     s;\bpermit_mynetworks\b;<a href="postconf.5.html#permit_mynetworks">$&</a>;g;
-    s;\bpermit_sasl_authenticated\b;<a href="postconf.5.html#permit_sasl_authenticated">$&</a>;g;
+    s;\bper[-</bB>]*\n* *[<bB>]*mit_sasl_authenticated\b;<a href="postconf.5.html#permit_sasl_authenticated">$&</a>;g;
     s;\bpermit_tls_clientcerts\b;<a href="postconf.5.html#permit_tls_clientcerts">$&</a>;g;
     s;\bpermit_tls_all_clientcerts\b;<a href="postconf.5.html#permit_tls_all_clientcerts">$&</a>;g;
     s;\breject_unknown_client_hostname\b;<a href="postconf.5.html#reject_unknown_client_hostname">$&</a>;g;
@@ -887,6 +891,7 @@ while (<>) {
     s;\breject_non_fqdn_recip[-</bB>]*\n* *[<bB>]*ient\b;<a href="postconf.5.html#reject_non_fqdn_recipient">$&</a>;g;
     s;\breject_rhsbl_recip[-</bB>]*\n* *[<bB>]*ient\b;<a href="postconf.5.html#reject_rhsbl_recipient">$&</a>;g;
     s;\breject_unauth_destination\b;<a href="postconf.5.html#reject_unauth_destination">$&</a>;g;
+    s;\bdefer_unauth_destination\b;<a href="postconf.5.html#defer_unauth_destination">$&</a>;g;
     s;\breject_unknown_recipi[-</bB>]*\n*[ <bB>]*ent_domain\b;<a href="postconf.5.html#reject_unknown_recipient_domain">$&</a>;g;
     s;\breject_unlisted_recip[-</bB>]*\n* *[<bB>]*ient\b;<a href="postconf.5.html#reject_unlisted_recipient">$&</a>;g;
     s;\breject_unver[-</bB>]*\n*[ <bB>]*ified_recip[-</bB>]*\n* *[<bB>]*ient\b;<a href="postconf.5.html#reject_unverified_recipient">$&</a>;g;
@@ -969,6 +974,8 @@ while (<>) {
     s;\bpostscreen_reject_footer\b;<a href="postconf.5.html#postscreen_reject_footer">$&</a>;g;
     s;\bpostscreen_command_filter\b;<a href="postconf.5.html#postscreen_command_filter">$&</a>;g;
     s;\bpostscreen_whitelist_interfaces\b;<a href="postconf.5.html#postscreen_whitelist_interfaces">$&</a>;g;
+    s;\bpostscreen_upstream_proxy_protocol\b;<a href="postconf.5.html#postscreen_upstream_proxy_protocol">$&</a>;g;
+    s;\bpostscreen_upstream_proxy_timeout\b;<a href="postconf.5.html#postscreen_upstream_proxy_timeout">$&</a>;g;
 
     s;\btlsproxy_watchdog_timeout\b;<a href="postconf.5.html#tlsproxy_watchdog_timeout">$&</a>;g;
     s;\btlsproxy_enforce_tls\b;<a href="postconf.5.html#tlsproxy_enforce_tls">$&</a>;g;

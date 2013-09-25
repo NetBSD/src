@@ -1,0 +1,29 @@
+*** ENVELOPE RECORDS bug3.file.tmp ***
+        0 message_size:             307             237               1               0             307
+       81 message_arrival_time: Thu Feb  2 09:02:07 2012
+      100 create_time: Thu Feb  2 09:02:07 2012
+      124 named_attribute: rewrite_context=local
+      147 sender_fullname: Wietse Venema
+      162 sender: me@porcupine.org
+      180 original_recipient: you@porcupine.org
+      199 recipient: you@porcupine.org
+      218 pointer_record:               0
+      235 *** MESSAGE CONTENTS bug3.file.tmp ***
+      237 regular_text: Received: by hades.porcupine.org (Postfix, from userid 1001)
+      299 regular_text: 	id 9210192461E; Thu,  2 Feb 2012 09:02:07 -0500 (EST)
+      355 regular_text: Message-Id: <20120202140207.9210192461E@hades.porcupine.org>
+      417 regular_text: Date: Thu,  2 Feb 2012 09:02:07 -0500 (EST)
+      462 regular_text: From: me@porcupine.org (Wietse Venema)
+      502 pointer_record:             565
+      565 regular_text: X-SpamTest-Status: Not detected
+      598 pointer_record:             615
+      615 pointer_record:             674
+      674 regular_text: X-SpamTest-Status-Extended: not_detected
+      716 pointer_record:             657
+      657 pointer_record:             519
+      519 regular_text: 
+      521 regular_text: test
+      527 pointer_record:               0
+      544 *** HEADER EXTRACTED bug3.file.tmp ***
+      546 pointer_record:               0
+      563 *** MESSAGE FILE END bug3.file.tmp ***

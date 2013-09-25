@@ -290,6 +290,8 @@ injection SMTP service. Typical additions include:
         # With multiple instances, rarely need "-o param=value" overrides
         # in master.cf, each instance gets its own main.cf file.
         #
+        # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+        smtpd_relay_restrictions =
         smtpd_recipient_restrictions = permit_mynetworks, reject
 
         # Tolerate occasional high latency in the  content filter.

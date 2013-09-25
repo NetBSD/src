@@ -15,23 +15,25 @@ TLSPROXY(8)                                                        TLSPROXY(8)
 <b>DESCRIPTION</b>
        The <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server implements a server-side TLS proxy.
        It is used by <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  to  talk  SMTP-over-TLS  with
-       remote  SMTP  clients  whose whitelist status has expired,
-       but it should also work for non-SMTP protocols.
+       remote  SMTP  clients  that are not whitelisted (including
+       clients whose whitelist status has expired), but it should
+       also work for non-SMTP protocols.
 
-       Although one <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> process can serve  multiple  ses-
-       sions  at  the  same  time, it is a good idea to allow the
-       number of processes to increase with  load,  so  that  the
+       Although  one  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> process can serve multiple ses-
+       sions at the same time, it is a good  idea  to  allow  the
+       number  of  processes  to  increase with load, so that the
        service remains responsive.
 
 <b>PROTOCOL EXAMPLE</b>
-       The  example  below  concerns  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>. However, the
-       <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server is agnostic of the  application  proto-
-       col,  and  the example is easily adapted to other applica-
+       The example below  concerns  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>.  However,  the
+       <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  server  is agnostic of the application proto-
+       col, and the example is easily adapted to  other  applica-
        tions.
 
-       The <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server sends the remote SMTP client end-
-       point   string,  the  requested  role  (server),  and  the
-       requested  timeout  to  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.   <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  then
+       After  receiving  a valid remote SMTP client STARTTLS com-
+       mand, the  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  server  sends  the  remote  SMTP
+       client  endpoint  string, the requested role (server), and
+       the requested timeout to <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  then
        receives  a  "TLS  available" indication from <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.
        If the TLS service is available, <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  sends  the
        remote  SMTP  client  file  descriptor to <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>, and

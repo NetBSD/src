@@ -1,4 +1,4 @@
-/*	$NetBSD: postmap.c,v 1.1.1.2 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postmap.c,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -892,6 +892,10 @@ int     main(int argc, char **argv)
     if ((query == 0 || strcmp(query, "-") != 0)
 	&& (postmap_flags & POSTMAP_FLAG_ANY_KEY))
 	msg_fatal("specify -b -h or -m only with \"-q -\"");
+    if ((postmap_flags & POSTMAP_FLAG_ANY_KEY) != 0
+	&& (postmap_flags & POSTMAP_FLAG_ANY_KEY)
+	== (postmap_flags & POSTMAP_FLAG_MIME_KEY))
+	msg_warn("ignoring -m option without -b or -h");
 
     /*
      * Use the map type specified by the user, or fall back to a default

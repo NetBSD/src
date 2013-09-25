@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.1.1.2 2013/09/25 19:06:31 tron Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -70,7 +70,7 @@
 #define REC_TYPE_VERP	'V'		/* VERP delimiters */
 
 #define REC_TYPE_DSN_RET	'<'	/* DSN full/hdrs */
-#define REC_TYPE_DSN_ENVID	'i'	/* DSN full/hdrs */
+#define REC_TYPE_DSN_ENVID	'i'	/* DSN envelope id */
 #define REC_TYPE_DSN_ORCPT	'o'	/* DSN orig rcpt address */
 #define REC_TYPE_DSN_NOTIFY	'n'	/* DSN notify flags */
 

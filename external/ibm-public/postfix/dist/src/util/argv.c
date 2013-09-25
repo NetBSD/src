@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.2 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.3 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -258,7 +258,7 @@ void    argv_insert_one(ARGV *argvp, ssize_t where, const char *arg)
     argvp->argc += 1;
 }
 
-/* argv_replace_one - insert one string into array */
+/* argv_replace_one - replace one string in array */
 
 void    argv_replace_one(ARGV *argvp, ssize_t where, const char *arg)
 {

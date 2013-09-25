@@ -260,8 +260,8 @@ section at the top of this document.</p>
  3     <a href="postconf.5.html#virtual_mailbox_base">virtual_mailbox_base</a> = /var/mail/vhosts
  4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = hash:/etc/postfix/vmailbox
  5     <a href="postconf.5.html#virtual_minimum_uid">virtual_minimum_uid</a> = 100
- 6     <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> = static:5000
- 7     <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a> = static:5000
+ 6     <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
+ 7     <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
  8     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
  9 
 10 /etc/postfix/vmailbox:
@@ -357,7 +357,11 @@ in the <a href="virtual.8.html">virtual(8)</a> manual page. </p>
 domains, non-UNIX accounts</a></h2>
 
 <p> This is a variation on the Postfix <a href="VIRTUAL_README.html#virtual_mailbox">virtual mailbox example</a>.
-Again, every hosted address can have its own mailbox.  </p>
+Again, every hosted address can have its own mailbox. However, most
+parameters that control the <a href="virtual.8.html">virtual(8)</a> delivery agent are no longer
+applicable: only <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> and <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
+stay in effect.  These parameters are needed to reject mail for
+unknown recipients.  </p>
 
 <p> While non-Postfix software is being used for final delivery,
 some Postfix concepts are still needed in order to glue everything

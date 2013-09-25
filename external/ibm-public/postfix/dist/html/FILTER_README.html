@@ -218,24 +218,24 @@ document for an introduction to the Postfix architecture. </p>
 
    <td colspan="2"> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">
-	<a href="QSHAPE_README.html#maildrop_queue"> maildrop <br>
-	queue </a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">
+        <a href="QSHAPE_README.html#maildrop_queue"> maildrop <br>
+        queue </a> </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
-	<a href="postdrop.1.html">postdrop(1)</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
+        <a href="postdrop.1.html">postdrop(1)</a> </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
-	<a href="sendmail.1.html">sendmail(1)</a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
+        <a href="sendmail.1.html">sendmail(1)</a> </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Content
-	<br> filter </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Content
+        <br> filter </td>
 
    <td colspan="2"> </td>
 
@@ -750,6 +750,8 @@ that injects mail back into Postfix. </p>
         -o <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a>=
         -o <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a>=
         -o <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a>=
+        # Postfix 2.10 and later: specify empty <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
+        -o <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>=
         -o <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>=<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>,reject
         -o <a href="postconf.5.html#mynetworks">mynetworks</a>=127.0.0.0/8
         -o <a href="postconf.5.html#smtpd_authorized_xforward_hosts">smtpd_authorized_xforward_hosts</a>=127.0.0.0/8

@@ -219,8 +219,8 @@ QMGR(8)                                                                QMGR(8)
        <b><a href="postconf.5.html#qmgr_message_recipient_limit">qmgr_message_recipient_limit</a> (20000)</b>
               The maximal number of recipients held in memory  by
               the  Postfix queue manager, and the maximal size of
-              the size of the short-term, in-memory "dead" desti-
-              nation status cache.
+              the short-term, in-memory "dead" destination status
+              cache.
 
        <b><a href="postconf.5.html#qmgr_message_recipient_minimum">qmgr_message_recipient_minimum</a> (10)</b>
               The  minimal number of in-memory recipients for any
@@ -388,9 +388,9 @@ QMGR(8)                                                                QMGR(8)
        <b><a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a> (0s)</b>
               The  default  amount  of  delay  that  is  inserted
               between  individual deliveries to the same destina-
-              tion; with per-destination recipient limit &gt;  1,  a
-              destination  is a domain, otherwise it is a recipi-
-              ent.
+              tion; the resulting behavior depends on  the  value
+              of   the  corresponding  per-destination  recipient
+              limit.
 
        <b><a href="postconf.5.html#transport_destination_rate_delay"><i>transport</i>_destination_rate_delay</a>         $<a href="postconf.5.html#default_destination_rate_delay">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_rate_delay">tion_rate_delay</a></b>

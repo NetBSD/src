@@ -1,0 +1,4 @@
+./postconf: warning: ./main.cf: read-only parameter assignment: process_id=yyy
+./postconf: warning: ./main.cf: read-only parameter assignment: process_name=xxx
+mydestination = whatever
+process_name = postconf

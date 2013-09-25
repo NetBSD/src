@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.5 2013/08/21 20:09:58 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.6 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -464,7 +464,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 #endif
 	    }
 	    vstring_strcpy(channel, MAIL_SERVICE_ERROR);
-	    vstring_sprintf(nexthop, "User unknown%s",
+	    vstring_sprintf(nexthop, "5.1.1 User unknown%s",
 			    var_show_unk_rcpt_table ?
 			    " in virtual alias table" : "");
 	    *flags |= RESOLVE_CLASS_ALIAS;

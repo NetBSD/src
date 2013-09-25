@@ -17,6 +17,34 @@
 
 <hr>
 
+<h2> Host lookup issues </h2>
+
+<p> By default Linux /etc/hosts lookups do not support multiple IP
+address per hostname. This causes warnings from the Postfix SMTP
+server that "hostname XXX does not resolve to address YYY", and is
+especially a problem with hosts that have both IPv4 and IPv6
+addresses.  To fix, turn on support for multiple IP addresses: </p>
+
+<blockquote>
+<pre>
+/etc/host.conf:
+    ...
+    # We have machines with multiple IP addresses.
+    multi on
+    ...
+</pre>
+</blockquote>
+
+<p> Alternatively, specify the RESOLV_MULTI environment variable
+in main.cf: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    import_environment = MAIL_CONFIG MAIL_DEBUG MAIL_LOGTAG TZ XAUTHORITY DISPLAY LANG=C RESOLV_MULTI=on
+</pre>
+</blockquote>
+
 <h2>Berkeley DB issues</h2>
 
 <p> If you can't compile Postfix because the file "db.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_builtin.c,v 1.1.1.1 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf_builtin.c,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,18 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	void	register_builtin_parameters()
+/*	void	register_builtin_parameters(procname, pid)
+/*	const char *procname;
+/*	pid_t	pid;
 /* DESCRIPTION
 /*	register_builtin_parameters() initializes the global parameter
 /*	name space and adds all built-in parameter information.
+/*
+/*	Arguments:
+/*.IP procname
+/*	Provides the default value for the "process_name" parameter.
+/*.IP pid
+/*	Provides the default value for the "process_id" parameter.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
 /* LICENSE
@@ -122,31 +130,51 @@ static const CONFIG_LONG_TABLE long_table[] = {
 };
 
  /*
-  * Parameters with default values obtained via function calls.
+  * Legacy parameters for backwards compatibility.
   */
-char   *var_myhostname;
-char   *var_mydomain;
-char   *var_mynetworks;
+static const CONFIG_STR_TABLE legacy_str_table[] = {
+    {"virtual_maps", ""},
+    {"fallback_relay", ""},
+    {"authorized_verp_clients", ""},
+    {"smtpd_client_connection_limit_exceptions", ""},
+    0,
+};
 
-static const char *check_myhostname(void);
-static const char *check_mydomainname(void);
-static const char *check_mynetworks(void);
+ /*
+  * Parameters whose default values are normally initialized by calling a
+  * function. We direct the calls to our own versions of those functions
+  * because the run-time conditions are slightly different.
+  * 
+  * Important: if the evaluation of a parameter default value has any side
+  * effects, then those side effects must happen only once.
+  */
+static const char *pc_check_myhostname(void);
+static const char *pc_check_mydomainname(void);
+static const char *pc_mynetworks(void);
+
+#include "str_fn_vars.h"
 
 static const CONFIG_STR_FN_TABLE str_fn_table[] = {
-    VAR_MYHOSTNAME, check_myhostname, &var_myhostname, 1, 0,
-    VAR_MYDOMAIN, check_mydomainname, &var_mydomain, 1, 0,
+#include "str_fn_table.h"
     0,
 };
-static const CONFIG_STR_FN_TABLE str_fn_table_2[] = {
-    VAR_MYNETWORKS, check_mynetworks, &var_mynetworks, 1, 0,
-    0,
-};
+
+ /*
+  * Parameters whose default values are normally initialized by ad-hoc code.
+  * The AWK script cannot identify these parameters or values, so we provide
+  * our own.
+  * 
+  * Important: if the evaluation of a parameter default value has any side
+  * effects, then those side effects must happen only once.
+  */
+static CONFIG_STR_TABLE adhoc_procname = {VAR_PROCNAME};
+static CONFIG_INT_TABLE adhoc_pid = {VAR_PID};
 
 #define STR(x) vstring_str(x)
 
-/* check_myhostname - lookup hostname and validate */
+/* pc_check_myhostname - lookup hostname and validate */
 
-static const char *check_myhostname(void)
+static const char *pc_check_myhostname(void)
 {
     static const char *name;
     const char *dot;
@@ -178,15 +206,22 @@ static void get_myhostname(void)
     const char *name;
 
     if ((name = mail_conf_lookup_eval(VAR_MYHOSTNAME)) == 0)
-	name = check_myhostname();
+	name = pc_check_myhostname();
     var_myhostname = mystrdup(name);
 }
 
-/* check_mydomainname - lookup domain name and validate */
+/* pc_check_mydomainname - lookup domain name and validate */
 
-static const char *check_mydomainname(void)
+static const char *pc_check_mydomainname(void)
 {
+    static const char *domain;
     char   *dot;
+
+    /*
+     * Use cached result.
+     */
+    if (domain)
+	return (domain);
 
     /*
      * Use the hostname when it is not a FQDN ("foo"), or when the hostname
@@ -195,16 +230,23 @@ static const char *check_mydomainname(void)
     if (var_myhostname == 0)
 	get_myhostname();
     if ((dot = strchr(var_myhostname, '.')) == 0 || strchr(dot + 1, '.') == 0)
-	return (DEF_MYDOMAIN);
-    return (dot + 1);
+	return (domain = DEF_MYDOMAIN);
+    return (domain = mystrdup(dot + 1));
 }
 
-/* check_mynetworks - lookup network address list */
+/* pc_mynetworks - lookup network address list */
 
-static const char *check_mynetworks(void)
+static const char *pc_mynetworks(void)
 {
+    static const char *networks;
     INET_PROTO_INFO *proto_info;
     const char *junk;
+
+    /*
+     * Use cached result.
+     */
+    if (networks)
+	return (networks);
 
     if (var_inet_interfaces == 0) {
 	if ((cmd_mode & SHOW_DEFS)
@@ -225,7 +267,7 @@ static const char *check_mynetworks(void)
 	var_inet_protocols = mystrdup(junk);
 	proto_info = inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
     }
-    return (mynetworks());
+    return (networks = mystrdup(mynetworks()));
 }
 
 /* convert_bool_parameter - get boolean parameter string value */
@@ -311,7 +353,7 @@ static const char *convert_long_parameter(char *ptr)
 
 /* register_builtin_parameters - add built-ins to the global name space */
 
-void    register_builtin_parameters(void)
+void    register_builtin_parameters(const char *procname, pid_t pid)
 {
     const char *myname = "register_builtin_parameters";
     const CONFIG_TIME_TABLE *ctt;
@@ -333,7 +375,7 @@ void    register_builtin_parameters(void)
     /*
      * Initialize the global parameter table.
      */
-    param_table = PC_PARAM_TABLE_CREATE(100);
+    param_table = PC_PARAM_TABLE_CREATE(1000);
 
     /*
      * Add the built-in parameters to the global name space. The class
@@ -355,9 +397,6 @@ void    register_builtin_parameters(void)
     for (cft = str_fn_table; cft->name; cft++)
 	PC_PARAM_TABLE_ENTER(param_table, cft->name, PC_PARAM_FLAG_BUILTIN,
 			     (char *) cft, convert_str_fn_parameter);
-    for (cft = str_fn_table_2; cft->name; cft++)
-	PC_PARAM_TABLE_ENTER(param_table, cft->name, PC_PARAM_FLAG_BUILTIN,
-			     (char *) cft, convert_str_fn_parameter);
     for (rst = raw_table; rst->name; rst++)
 	PC_PARAM_TABLE_ENTER(param_table, rst->name,
 			     PC_PARAM_FLAG_BUILTIN | PC_PARAM_FLAG_RAW,
@@ -371,4 +410,25 @@ void    register_builtin_parameters(void)
     for (lst = long_table; lst->name; lst++)
 	PC_PARAM_TABLE_ENTER(param_table, lst->name, PC_PARAM_FLAG_BUILTIN,
 			     (char *) lst, convert_long_parameter);
+
+    /*
+     * Register legacy parameters (used as a backwards-compatible migration
+     * aid).
+     */
+    for (cst = legacy_str_table; cst->name; cst++)
+	PC_PARAM_TABLE_ENTER(param_table, cst->name, PC_PARAM_FLAG_LEGACY,
+			     (char *) cst, convert_str_parameter);
+
+    /*
+     * Register parameters whose default value is normally initialized by
+     * ad-hoc code.
+     */
+    adhoc_procname.defval = mystrdup(procname);
+    PC_PARAM_TABLE_ENTER(param_table, adhoc_procname.name,
+			 PC_PARAM_FLAG_BUILTIN | PC_PARAM_FLAG_READONLY,
+			 (char *) &adhoc_procname, convert_str_parameter);
+    adhoc_pid.defval = pid;
+    PC_PARAM_TABLE_ENTER(param_table, adhoc_pid.name,
+			 PC_PARAM_FLAG_BUILTIN | PC_PARAM_FLAG_READONLY,
+			 (char *) &adhoc_pid, convert_int_parameter);
 }

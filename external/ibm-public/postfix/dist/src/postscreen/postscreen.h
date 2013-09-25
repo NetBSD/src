@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.1.1.2 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,7 @@
 #include <vstring.h>
 #include <events.h>
 #include <htable.h>
+#include <myaddrinfo.h>
 
  /*
   * Global library.
@@ -46,6 +47,8 @@ typedef struct {
     int     smtp_server_fd;		/* real SMTP server */
     char   *smtp_client_addr;		/* client address */
     char   *smtp_client_port;		/* client port */
+    char   *smtp_server_addr;		/* server address */
+    char   *smtp_server_port;		/* server port */
     int     client_concurrency;		/* per-client */
     const char *final_reply;		/* cause for hanging up */
     VSTRING *send_buf;			/* pending output */
@@ -72,6 +75,7 @@ typedef struct {
     /* smtpd(8) compatibility */
     int     ehlo_discard_mask;		/* EHLO filter */
     VSTRING *expand_buf;		/* macro expansion */
+    const char *where;			/* SMTP protocol state */
 } PSC_STATE;
 
 #define PSC_TIME_STAMP_NEW		(0)	/* test was never passed */
@@ -208,6 +212,13 @@ typedef struct {
 
 #define PSC_STATE_MASK_ANY_UPDATE \
 	(PSC_STATE_MASK_ANY_PASS | PSC_STATE_FLAG_PENAL_UPDATE)
+
+ /*
+  * Meta-commands for state->where that reflect the initial command processor
+  * state and commands that aren't implemented.
+  */
+#define PSC_SMTPD_CMD_CONNECT		"CONNECT"
+#define PSC_SMTPD_CMD_UNIMPL		"UNIMPLEMENTED"
 
  /*
   * See log_adhoc.c for discussion.
@@ -381,7 +392,7 @@ extern HTABLE *psc_client_concurrency;	/* per-client concurrency */
 	(state)->smtp_client_stream = 0; \
 	psc_check_queue_length--; \
     } while (0)
-extern PSC_STATE *psc_new_session_state(VSTREAM *, const char *, const char *);
+extern PSC_STATE *psc_new_session_state(VSTREAM *, const char *, const char *, const char *, const char *);
 extern void psc_free_session_state(PSC_STATE *);
 extern const char *psc_print_state_flags(int, const char *);
 
@@ -409,6 +420,7 @@ extern int psc_dnsbl_request(const char *, void (*) (int, char *), char *);
 	(dst)->pregr_stamp = PSC_TIME_STAMP_INVALID; \
 	(dst)->dnsbl_stamp = PSC_TIME_STAMP_INVALID; \
 	(dst)->pipel_stamp = PSC_TIME_STAMP_INVALID; \
+	(dst)->nsmtp_stamp = PSC_TIME_STAMP_INVALID; \
 	(dst)->barlf_stamp = PSC_TIME_STAMP_INVALID; \
 	(dst)->penal_stamp = PSC_TIME_STAMP_INVALID; \
     } while (0)
@@ -469,6 +481,14 @@ extern void psc_starttls_open(PSC_STATE *, EVENT_NOTIFY_FN);
 extern VSTRING *psc_expand_filter;
 extern void psc_expand_init(void);
 extern const char *psc_expand_lookup(const char *, int, char *);
+
+ /*
+  * postscreen_endpt.c
+  */
+typedef void (*PSC_ENDPT_LOOKUP_FN) (int, VSTREAM *,
+			             MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *,
+			            MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *);
+extern void psc_endpt_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
 
  /*
   * postscreen_access emulation.

@@ -77,6 +77,7 @@ qmqpd.o: ../../include/mail_version.h
 qmqpd.o: ../../include/match_list.h
 qmqpd.o: ../../include/match_parent_style.h
 qmqpd.o: ../../include/msg.h
+qmqpd.o: ../../include/myflock.h
 qmqpd.o: ../../include/mymalloc.h
 qmqpd.o: ../../include/namadr_list.h
 qmqpd.o: ../../include/netstring.h

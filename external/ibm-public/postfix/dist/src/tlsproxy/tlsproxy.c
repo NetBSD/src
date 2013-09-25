@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.1.1.3 2013/01/02 18:59:10 tron Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.1.1.4 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,8 @@
 /* DESCRIPTION
 /*	The \fBtlsproxy\fR(8) server implements a server-side TLS
 /*	proxy. It is used by \fBpostscreen\fR(8) to talk SMTP-over-TLS
-/*	with remote SMTP clients whose whitelist status has expired,
+/*	with remote SMTP clients that are not whitelisted (including
+/*	clients whose whitelist status has expired),
 /*	but it should also work for non-SMTP protocols.
 /*
 /*	Although one \fBtlsproxy\fR(8) process can serve multiple
@@ -25,7 +26,8 @@
 /*	protocol, and the example is easily adapted to other
 /*	applications.
 /*
-/*	The \fBpostscreen\fR(8) server sends the remote SMTP client
+/*	After receiving a valid remote SMTP client STARTTLS command,
+/*	the \fBpostscreen\fR(8) server sends the remote SMTP client
 /*	endpoint string, the requested role (server), and the
 /*	requested timeout to \fBtlsproxy\fR(8).  \fBpostscreen\fR(8)
 /*	then receives a "TLS available" indication from \fBtlsproxy\fR(8).

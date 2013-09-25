@@ -1,0 +1,3 @@
+./postconf: warning: ./master.cf: read-only parameter assignment: process_id=bbb
+./postconf: warning: ./master.cf: read-only parameter assignment: process_name=aaa
+process_name = postconf

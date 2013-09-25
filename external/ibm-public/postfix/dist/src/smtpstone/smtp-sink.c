@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.3 2013/01/02 18:59:10 tron Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.4 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -1327,6 +1327,7 @@ static void connect_event(int unused_event, char *unused_context)
 		     state->client_addr.buf);
 	non_blocking(fd, NON_BLOCKING);
 	state->stream = vstream_fdopen(fd, O_RDWR);
+	vstream_tweak_sock(state->stream);
 	state->buffer = vstring_alloc(1024);
 	state->read_fn = command_read;
 	state->data_state = ST_ANY;

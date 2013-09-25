@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.2 2013/08/21 20:09:56 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.3 2013/09/25 19:06:35 tron Exp $	*/
 
 /*++
 /* NAME
@@ -25,6 +25,10 @@
 /* DESCRIPTION
 /*	This module implements the SMTP client specific interface to
 /*	the generic session cache infrastructure.
+/*
+/*	Each cached connection identifier includes the name of the
+/*	mail delivery service. Thus, cached connections are not
+/*	shared between different services.
 /*
 /*	smtp_save_session() stores the current session under the
 /*	next-hop logical destination (if available) and under the

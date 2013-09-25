@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.6 2013/01/02 18:59:10 tron Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.7 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -583,6 +583,21 @@ static int smtpd_proxy_replay_send(SMTPD_STATE *state)
      * Replay the speed-match log. We do sanity check record content, but we
      * don't implement a protocol state engine here, since we are reading
      * from a file that we just wrote ourselves.
+     * 
+     * This is different than the MailChannels patented solution that
+     * multiplexes a large number of slowed-down inbound connections over a
+     * small number of fast connections to a local MTA.
+     * 
+     * - MailChannels receives mail directly from the Internet. It uses one
+     * connection to the local MTA to reject invalid recipients before
+     * receiving the entire email message at reduced bit rates, and then uses
+     * a different connection to quickly deliver the message to the local
+     * MTA.
+     * 
+     * - Postfix receives mail directly from the Internet. The Postfix SMTP
+     * server rejects invalid recipients before receiving the entire message
+     * over the Internet, and then delivers the message quickly to a local
+     * SMTP-based content filter.
      */
     if (replay_buf == 0)
 	replay_buf = vstring_alloc(100);

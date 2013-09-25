@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.4 2013/09/25 19:06:31 tron Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -194,6 +194,9 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ACT_PROTO_NAME "protocol_name"	/* SMTP/ESMTP/QMQP */
 #define MAIL_ATTR_ACT_REVERSE_CLIENT_NAME "reverse_client_name"
 #define MAIL_ATTR_ACT_FORWARD_CLIENT_NAME "forward_client_name"
+
+#define MAIL_ATTR_ACT_SERVER_ADDR "server_address"	/* server address */
+#define MAIL_ATTR_ACT_SERVER_PORT "server_port"	/* server TCP port */
 
 #define MAIL_ATTR_PROTO_STATE	"protocol_state"	/* MAIL/RCPT/... */
 #define MAIL_ATTR_ORG_NONE	"unknown"	/* origin unknown */
