@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.2 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -124,11 +124,11 @@ struct dwc2_host_chan {
 	unsigned ep_type:2;
 	unsigned max_packet:11;
 	unsigned data_pid_start:2;
-#define DWC2_HC_PID_DATA0	(TSIZ_SC_MC_PID_DATA0 >> TSIZ_SC_MC_PID_SHIFT)
-#define DWC2_HC_PID_DATA2	(TSIZ_SC_MC_PID_DATA2 >> TSIZ_SC_MC_PID_SHIFT)
-#define DWC2_HC_PID_DATA1	(TSIZ_SC_MC_PID_DATA1 >> TSIZ_SC_MC_PID_SHIFT)
-#define DWC2_HC_PID_MDATA	(TSIZ_SC_MC_PID_MDATA >> TSIZ_SC_MC_PID_SHIFT)
-#define DWC2_HC_PID_SETUP	(TSIZ_SC_MC_PID_SETUP >> TSIZ_SC_MC_PID_SHIFT)
+#define DWC2_HC_PID_DATA0	TSIZ_SC_MC_PID_DATA0
+#define DWC2_HC_PID_DATA2	TSIZ_SC_MC_PID_DATA2
+#define DWC2_HC_PID_DATA1	TSIZ_SC_MC_PID_DATA1
+#define DWC2_HC_PID_MDATA	TSIZ_SC_MC_PID_MDATA
+#define DWC2_HC_PID_SETUP	TSIZ_SC_MC_PID_SETUP
 
 	unsigned multi_count:2;
 
@@ -149,10 +149,10 @@ struct dwc2_host_chan {
 	u8 hub_addr;
 	u8 hub_port;
 	u8 xact_pos;
-#define DWC2_HCSPLT_XACTPOS_MID	(HCSPLT_XACTPOS_MID >> HCSPLT_XACTPOS_SHIFT)
-#define DWC2_HCSPLT_XACTPOS_END	(HCSPLT_XACTPOS_END >> HCSPLT_XACTPOS_SHIFT)
-#define DWC2_HCSPLT_XACTPOS_BEGIN (HCSPLT_XACTPOS_BEGIN >> HCSPLT_XACTPOS_SHIFT)
-#define DWC2_HCSPLT_XACTPOS_ALL	(HCSPLT_XACTPOS_ALL >> HCSPLT_XACTPOS_SHIFT)
+#define DWC2_HCSPLT_XACTPOS_MID	HCSPLT_XACTPOS_MID
+#define DWC2_HCSPLT_XACTPOS_END	HCSPLT_XACTPOS_END
+#define DWC2_HCSPLT_XACTPOS_BEGIN HCSPLT_XACTPOS_BEGIN
+#define DWC2_HCSPLT_XACTPOS_ALL	HCSPLT_XACTPOS_ALL
 
 	u8 requests;
 	u8 schinfo;
@@ -243,7 +243,6 @@ enum dwc2_transaction_type {
  * @interval:           Interval between transfers in (micro)frames
  * @sched_frame:        (Micro)frame to initialize a periodic transfer.
  *                      The transfer executes in the following (micro)frame.
- * @nak_frame:          Internal variable used by the NAK holdoff code
  * @frame_usecs:        Internal variable used by the microframe scheduler
  * @start_split_frame:  (Micro)frame at which last start split was initialized
  * @ntd:                Actual number of transfer descriptors in a list
@@ -278,7 +277,6 @@ struct dwc2_qh {
 	u16 usecs;
 	u16 interval;
 	u16 sched_frame;
-	u16 nak_frame;
 	u16 frame_usecs[8];
 	u16 start_split_frame;
 	u16 ntd;
@@ -465,6 +463,7 @@ extern void dwc2_hcd_remove(struct dwc2_hsotg *hsotg);
 extern int dwc2_set_parameters(struct dwc2_hsotg *hsotg,
 			       const struct dwc2_core_params *params);
 extern void dwc2_set_all_params(struct dwc2_core_params *params, int value);
+extern int dwc2_get_hwparams(struct dwc2_hsotg *hsotg);
 
 /* Transaction Execution Functions */
 extern enum dwc2_transaction_type dwc2_hcd_select_transactions(
