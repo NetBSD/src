@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.2 2013/09/05 20:25:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -93,7 +93,6 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
 
 	dwc2_host_hub_info(hsotg, urb->priv, &hub_addr, &hub_port);
-	qh->nak_frame = 0xffff;
 
 	if ((dev_speed == USB_SPEED_LOW || dev_speed == USB_SPEED_FULL) &&
 	    hub_addr != 0 && hub_addr != 1) {
@@ -127,7 +126,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			qh->interval = 8;
 #endif
 		hprt = DWC2_READ_4(hsotg, HPRT0);
-		prtspd = hprt & HPRT0_SPD_MASK;
+		prtspd = (hprt & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 		if (prtspd == HPRT0_SPD_HIGH_SPEED &&
 		    (dev_speed == USB_SPEED_LOW ||
 		     dev_speed == USB_SPEED_FULL)) {
@@ -195,10 +194,10 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 /**
  * dwc2_hcd_qh_create() - Allocates and initializes a QH
  *
- * @hsotg:        The HCD state structure for the DWC OTG controller
- * @urb:          Holds the information about the device/endpoint needed
- *                to initialize the QH
- * @atomic_alloc: Flag to do atomic allocation if needed
+ * @hsotg:     The HCD state structure for the DWC OTG controller
+ * @urb:       Holds the information about the device/endpoint needed
+ *             to initialize the QH
+ * @mem_flags: Flag to do atomic allocation if needed
  *
  * Return: Pointer to the newly allocated QH, or NULL on error
  */
@@ -265,12 +264,12 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
  *
  * @hsotg: The HCD state structure for the DWC OTG controller
  *
- * Return: 0 if successful, negative error code otherise
+ * Return: 0 if successful, negative error code otherwise
  */
 static int dwc2_periodic_channel_available(struct dwc2_hsotg *hsotg)
 {
 	/*
-	 * Currently assuming that there is a dedicated host channnel for
+	 * Currently assuming that there is a dedicated host channel for
 	 * each periodic transaction plus at least one host channel for
 	 * non-periodic transactions
 	 */
@@ -565,19 +564,13 @@ static int dwc2_schedule_periodic(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		return status;
 	}
 
-	if (hsotg->core_params->dma_desc_enable > 0) {
+	if (hsotg->core_params->dma_desc_enable > 0)
 		/* Don't rely on SOF and start in ready schedule */
 		list_add_tail(&qh->qh_list_entry, &hsotg->periodic_sched_ready);
-		dev_dbg(hsotg->dev, "periodic_sched_ready\n");
-	} else {
-		if (list_empty(&hsotg->periodic_sched_inactive) ||
-		    dwc2_frame_num_le(qh->sched_frame, hsotg->next_sched_frame))
-			hsotg->next_sched_frame = qh->sched_frame;
-
+	else
 		/* Always start in inactive schedule */
 		list_add_tail(&qh->qh_list_entry,
 			      &hsotg->periodic_sched_inactive);
-	}
 
 	if (hsotg->core_params->uframe_sched <= 0)
 		/* Reserve periodic channel */
@@ -774,17 +767,12 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 			if ((hsotg->core_params->uframe_sched > 0 &&
 			     dwc2_frame_num_le(qh->sched_frame, frame_number))
 			 || (hsotg->core_params->uframe_sched <= 0 &&
-			     qh->sched_frame == frame_number)) {
+			     qh->sched_frame == frame_number))
 				list_move(&qh->qh_list_entry,
 					  &hsotg->periodic_sched_ready);
-			} else {
-				if (!dwc2_frame_num_le(hsotg->next_sched_frame,
-						       qh->sched_frame))
-					hsotg->next_sched_frame =
-							qh->sched_frame;
+			else
 				list_move(&qh->qh_list_entry,
 					  &hsotg->periodic_sched_inactive);
-			}
 		}
 	}
 }
@@ -822,10 +810,10 @@ void dwc2_hcd_qtd_init(struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 /**
  * dwc2_hcd_qtd_add() - Adds a QTD to the QTD-list of a QH
  *
- * @hsotg:        The DWC HCD structure
- * @qtd:          The QTD to add
- * @qh:           Out parameter to return queue head
- * @atomic_alloc: Flag to do atomic alloc if needed
+ * @hsotg:     The DWC HCD structure
+ * @qtd:       The QTD to add
+ * @qh:        Out parameter to return queue head
+ * @mem_flags: Flag to do atomic alloc if needed
  *
  * Return: 0 if successful, negative error code otherwise
  *
