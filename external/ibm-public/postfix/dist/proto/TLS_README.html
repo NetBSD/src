@@ -245,7 +245,7 @@ $smtpd_tls_CAfile or install it in the $smtpd_tls_CApath directory. </p>
 </pre>  
 </blockquote>
 
-<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 0.9.9): </p>
+<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 1.0.0): </p>
 
 <blockquote>
 <pre>
@@ -654,12 +654,25 @@ certificate must no longer be used (e.g. an employee leaving). </p>
  
 <blockquote>
 <pre>
+# With Postfix 2.10 and later, the mail relay policy is
+# preferably specified under smtpd_relay_restrictions.
 /etc/postfix/main.cf:
-    smtpd_recipient_restrictions = 
-        ... 
+    smtpd_relay_restrictions = 
+        permit_mynetworks
         permit_tls_clientcerts 
         reject_unauth_destination
-        ...
+</pre>
+
+<pre>
+# Older configurations combine relay control and spam control under
+# smtpd_recipient_restrictions. To use this example with Postfix &ge;
+# 2.10 specify "smtpd_relay_restrictions=".
+/etc/postfix/main.cf:
+    smtpd_recipient_restrictions = 
+        permit_mynetworks
+        permit_tls_clientcerts 
+        reject_unauth_destination
+        ...other rules...
 </pre>
 </blockquote>
 
@@ -793,7 +806,7 @@ settings. </p>
 </blockquote>
 
 <p> Support for elliptic curve cryptography is available with Postfix
-2.6 and OpenSSL 0.9.9 or later.  To enable ephemeral elliptic curve
+2.6 and OpenSSL 1.0.0 or later.  To enable ephemeral elliptic curve
 Diffie-Hellman (EECDH) key-exchange, set "smtpd_tls_eecdh_grade =
 strong" or "smtpd_tls_eecdh_grade = ultra". The "ultra" setting is
 substantially more CPU intensive, and "strong" is sufficiently
@@ -820,7 +833,7 @@ chooses the cipher from a list supplied by the server. </p>
 cipher that the server supports. With SSLv3 and later, the server
 may choose its own most preferred cipher that is supported (offered)
 by the client. Setting "tls_preempt_cipherlist = yes" enables server
-cipher preferences. The default OpenSSL behaviour applies with
+cipher preferences. The default OpenSSL behavior applies with
 "tls_preempt_cipherlist = no". </p>
 
 <p> While server cipher selection may in some cases lead to a more secure
@@ -1527,7 +1540,7 @@ $smtp_tls_CAfile or install it in the $smtp_tls_CApath directory. </p>
 </pre>  
 </blockquote>
 
-<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 0.9.9): </p>
+<p> Their ECDSA counterparts (Postfix &ge; 2.6 + OpenSSL &ge; 1.0.0): </p>
 
 <blockquote>
 <pre>
@@ -2189,8 +2202,9 @@ font, and a "<tt>#</tt>" prompt indicates a super-user shell. </p>
 
 <li> <p> Become your own Certificate Authority, so that you can
 sign your own public keys. This example uses the CA.pl script that
-ships with OpenSSL.  By default, OpenSSL installs this as
-<tt>/usr/local/ssl/misc/CA.pl</tt>, but your mileage may vary. 
+ships with OpenSSL.  On some systems, OpenSSL installs this as
+<tt>/usr/local/ssl/misc/CA.pl</tt>. Some systems install this as
+part of a package named <tt>openssl-perl</tt> or something similar.
 The script creates a private key in <tt>./demoCA/private/cakey.pem</tt>
 and a public key in <tt>./demoCA/cacert.pem</tt>.</p>
 
