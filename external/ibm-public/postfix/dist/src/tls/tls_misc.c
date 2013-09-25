@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.6 2013/08/21 20:09:55 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.7 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -506,6 +506,11 @@ int     tls_protocol_mask(const char *plist)
     int     exclude = 0;
     int     include = 0;
 
+#define FREE_AND_RETURN(ptr, res) do { \
+	myfree(ptr); \
+	return (res); \
+    } while (0)
+
     save = cp = mystrdup(plist);
     while ((tok = mystrtok(&cp, "\t\n\r ,:")) != 0) {
 	if (*tok == '!')
@@ -514,12 +519,9 @@ int     tls_protocol_mask(const char *plist)
 	else
 	    include |= code =
 		name_code(protocol_table, NAME_CODE_FLAG_NONE, tok);
-	if (code == TLS_PROTOCOL_INVALID) {
-	    myfree(save);
-	    return TLS_PROTOCOL_INVALID;
-	}
+	if (code == TLS_PROTOCOL_INVALID)
+	    FREE_AND_RETURN(save, TLS_PROTOCOL_INVALID);
     }
-    myfree(save);
 
     /*
      * When the include list is empty, use only the explicit exclusions.
@@ -528,7 +530,8 @@ int     tls_protocol_mask(const char *plist)
      * we don't know about at compile time, and this is unavoidable because
      * the OpenSSL API works with compile-time *exclusion* bit-masks.
      */
-    return (include ? (exclude | (TLS_KNOWN_PROTOCOLS & ~include)) : exclude);
+    FREE_AND_RETURN(save,
+	(include ? (exclude | (TLS_KNOWN_PROTOCOLS & ~include)) : exclude));
 }
 
 /* tls_param_init - Load TLS related config parameters */
