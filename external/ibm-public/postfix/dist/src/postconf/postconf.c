@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.5 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.6 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -9,18 +9,18 @@
 /* .fi
 /*	\fBManaging main.cf:\fR
 /*
-/*	\fBpostconf\fR [\fB-dfhnv\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR [\fB-dfhnovx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fB-C \fIclass,...\fR] [\fIparameter ...\fR]
 /*
 /*	\fBpostconf\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIparameter=value ...\fR]
 /*
-/*	\fBpostconf\fR [\fB-#v\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR [\fB-#vX\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIparameter ...\fR]
 /*
 /*	\fBManaging master.cf:\fR
 /*
-/*	\fBpostconf\fR [\fB-fMv\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR [\fB-fMovx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIservice ...\fR]
 /*
 /*	\fBManaging bounce message templates:\fR
@@ -110,7 +110,7 @@
 /*	(Postfix 2.9 and later).
 /* .IP \fB-e\fR
 /*	Edit the \fBmain.cf\fR configuration file, and update
-/*	parameter settings with the "\fIname\fR=\fIvalue\fR" pairs
+/*	parameter settings with the "\fIname=value\fR" pairs
 /*	on the \fBpostconf\fR(1) command line. The file is copied
 /*	to a temporary file then renamed into place.
 /*	Specify quotes to protect special characters and whitespace
@@ -140,7 +140,8 @@
 /*	An application-level locking method. An application locks a file
 /*	named \fIfilename\fR by creating a file named \fIfilename\fB.lock\fR.
 /*	The application is expected to remove its own lock file, as well as
-/*	stale lock files that were left behind after abnormal termination.
+/*	stale lock files that were left behind after abnormal program
+/*	termination.
 /* .RE
 /* .IP \fB-m\fR
 /*	List the names of all supported lookup table types. In Postfix
@@ -203,6 +204,14 @@
 /* .IP \fBsdbm\fR
 /*	An indexed file type based on hashing.
 /*	This is available on systems with support for SDBM databases.
+/* .IP "\fBsocketmap\fR (read-only)"
+/*	Query a Sendmail-style socketmap server. The name of the
+/*	table specifies
+/*	\fBinet\fR:\fIhost\fR:\fIport\fR:\fIsocketmap-name\fR for
+/*	a TCP-based server, or
+/*	\fBunix\fR:\fIpathname\fR:\fIsocketmap-name\fR for a
+/*	UNIX-domain server. In both cases, \fIsocketmap-name\fR is
+/*	the name of the socketmap.
 /* .IP "\fBsqlite\fR (read-only)"
 /*	Perform lookups from SQLite database files. This is described
 /*	in \fBsqlite_table\fR(5).
@@ -247,10 +256,14 @@
 /*
 /*	This feature is available with Postfix 2.9 and later.
 /* .IP \fB-n\fR
-/*	Print \fBmain.cf\fR parameter settings that are explicitly
-/*	specified in \fBmain.cf\fR.
+/*	Show only configuration parameters that have explicit
+/*	\fIname=value\fR settings in \fBmain.cf\fR.
 /*	Specify \fB-nf\fR to fold long lines for human readability
 /*	(Postfix 2.9 and later).
+/* .IP "\fB-o \fIname=value\fR"
+/*	Override \fBmain.cf\fR parameter settings.
+/*
+/*	This feature is available with Postfix 2.10 and later.
 /* .IP "\fB-t\fR [\fItemplate_file\fR]"
 /*	Display the templates for text that appears at the beginning
 /*	of delivery status notification (DSN) messages, without
@@ -269,13 +282,28 @@
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
+/* .IP \fB-x\fR
+/*	Expand \fI$name\fR in \fBmain.cf\fR or \fBmaster.cf\fR
+/*	parameter values. The expansion is recursive.
+/*
+/*	This feature is available with Postfix 2.10 and later.
+/* .IP \fB-X\fR
+/*	Edit the \fBmain.cf\fR configuration file, and remove
+/*	the parameters named on the \fBpostconf\fR(1) command line.
+/*	The file is copied to a temporary file then renamed into
+/*	place.
+/*	Specify a list of parameter names, not "\fIname=value\fR"
+/*	pairs.  There is no \fBpostconf\fR(1) command to perform
+/*	the reverse operation.
+/*
+/*	This feature is available with Postfix 2.10 and later.
 /* .IP \fB-#\fR
 /*	Edit the \fBmain.cf\fR configuration file, and comment out
-/*	the parameters given on the \fBpostconf\fR(1) command line,
+/*	the parameters named on the \fBpostconf\fR(1) command line,
 /*	so that those parameters revert to their default values.
 /*	The file is copied to a temporary file then renamed into
 /*	place.
-/*	Specify a list of parameter names, not \fIname\fR=\fIvalue\fR
+/*	Specify a list of parameter names, not "\fIname=value\fR"
 /*	pairs.  There is no \fBpostconf\fR(1) command to perform
 /*	the reverse operation.
 /*
@@ -343,6 +371,7 @@
 #include <stringops.h>
 #include <name_mask.h>
 #include <warn_stat.h>
+#include <mymalloc.h>
 
 /* Global library. */
 
@@ -385,6 +414,7 @@ int     main(int argc, char **argv)
 	"all", PC_PARAM_MASK_CLASS,
 	0,
     };
+    ARGV   *override_params = 0;
 
     /*
      * Fingerprint executables and core dumps.
@@ -414,7 +444,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "aAbc:C:deEf#hlmMntv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "aAbc:C:deEf#hlmMno:tvxX")) > 0) {
 	switch (ch) {
 	case 'a':
 	    cmd_mode |= SHOW_SASL_SERV;
@@ -434,7 +464,7 @@ int     main(int argc, char **argv)
 	    break;
 	case 'C':
 	    param_class = name_mask_opt("-C option", param_class_table,
-				    optarg, NAME_MASK_ANY_CASE | NAME_MASK_FATAL);
+			      optarg, NAME_MASK_ANY_CASE | NAME_MASK_FATAL);
 	    break;
 	case 'd':
 	    cmd_mode |= SHOW_DEFS;
@@ -445,22 +475,9 @@ int     main(int argc, char **argv)
 	case 'f':
 	    cmd_mode |= FOLD_LINE;
 	    break;
-
-	    /*
-	     * People, this does not work unless you properly handle default
-	     * settings. For example, fast_flush_domains = $relay_domains
-	     * must not evaluate to the empty string when relay_domains is
-	     * left at its default setting of $mydestination.
-	     */
-#if 0
-	case 'E':
-	    cmd_mode |= SHOW_EVAL;
-	    break;
-#endif
 	case '#':
 	    cmd_mode = COMMENT_OUT;
 	    break;
-
 	case 'h':
 	    cmd_mode &= ~SHOW_NAME;
 	    break;
@@ -476,30 +493,49 @@ int     main(int argc, char **argv)
 	case 'n':
 	    cmd_mode |= SHOW_NONDEF;
 	    break;
+	case 'o':
+	    if (override_params == 0)
+		override_params = argv_alloc(2);
+	    argv_add(override_params, optarg, (char *) 0);
+	    break;
 	case 't':
 	    if (ext_argv)
 		msg_fatal("specify one of -b and -t");
 	    ext_argv = argv_alloc(2);
 	    argv_add(ext_argv, "bounce", "-SVndump_templates", (char *) 0);
 	    break;
+	case 'x':
+	    cmd_mode |= SHOW_EVAL;
+	    break;
+	case 'X':
+	    /* This is irreversible, therefore require two-finger action. */
+	    cmd_mode |= EDIT_EXCL;
+	    break;
 	case 'v':
 	    msg_verbose++;
 	    break;
 	default:
-	    msg_fatal("usage: %s [-a (server SASL types)] [-A (client SASL types)] [-b (bounce templates)] [-c config_dir] [-C param_class] [-d (defaults)] [-e (edit)] [-f (fold lines)] [-# (comment-out)] [-h (no names)] [-l (lock types)] [-m (map types)] [-M (master.cf)] [-n (non-defaults)] [-v] [name...]", argv[0]);
+	    msg_fatal("usage: %s [-a (server SASL types)] [-A (client SASL types)] [-b (bounce templates)] [-c config_dir] [-C param_class] [-d (defaults)] [-e (edit)] [-f (fold lines)] [-# (comment-out)] [-h (no names)] [-l (lock types)] [-m (map types)] [-M (master.cf)] [-n (non-defaults)] [-v] [-X (exclude)] [name...]", argv[0]);
 	}
     }
 
     /*
      * Sanity check.
      */
-    junk = (cmd_mode & (SHOW_DEFS | SHOW_NONDEF | SHOW_MAPS | SHOW_LOCKS | EDIT_MAIN | SHOW_SASL_SERV | SHOW_SASL_CLNT | COMMENT_OUT | SHOW_MASTER));
-    if (junk != 0 && ((junk != SHOW_DEFS && junk != SHOW_NONDEF
+    junk = (cmd_mode & (SHOW_DEFS | SHOW_MAPS | SHOW_LOCKS | EDIT_MAIN | SHOW_SASL_SERV | SHOW_SASL_CLNT | COMMENT_OUT | SHOW_MASTER | EDIT_EXCL));
+    if (junk != 0 && ((junk != SHOW_DEFS
 	     && junk != SHOW_MAPS && junk != SHOW_LOCKS && junk != EDIT_MAIN
 		       && junk != SHOW_SASL_SERV && junk != SHOW_SASL_CLNT
-		       && junk != COMMENT_OUT && junk != SHOW_MASTER)
+		       && junk != COMMENT_OUT && junk != SHOW_MASTER
+		       && junk != EDIT_EXCL)
 		      || ext_argv != 0))
-	msg_fatal("specify one of -a, -A, -b, -d, -e, -#, -l, -m, -M and -n");
+	msg_fatal("specify one of -a, -A, -b, -d, -e, -#, -l, -m, -M, and -X");
+    if ((cmd_mode & SHOW_EVAL) != 0 && junk != 0 && junk != SHOW_DEFS && junk != SHOW_MASTER)
+	msg_fatal("do not specify -x with -a, -A, -b, -e, -#, -l, -m, or -X");
+    if ((cmd_mode & SHOW_NONDEF) != 0 && junk != 0)
+	msg_fatal("do not specify -n with -a, -A, -b, -d, -e, -#, -l, -m, -M, or -X");
+    if (override_params != 0 && junk != 0 && junk != SHOW_MASTER)
+	msg_fatal("do not specify -o with -a, -A, -b, -d, -e, -#, -l, -m, or -X");
 
     /*
      * Display bounce template information and exit.
@@ -542,7 +578,13 @@ int     main(int argc, char **argv)
      */
     else if (cmd_mode & SHOW_MASTER) {
 	read_master(FAIL_ON_OPEN_ERROR);
-	show_master(cmd_mode, argv + optind);
+	read_parameters();
+	if (override_params)
+	    set_parameters(override_params->argv);
+	register_builtin_parameters(basename(argv[0]), getpid());
+	register_service_parameters();
+	register_user_parameters();
+	show_master(VSTREAM_OUT, cmd_mode, argv + optind);
     }
 
     /*
@@ -557,7 +599,7 @@ int     main(int argc, char **argv)
     /*
      * Edit main.cf.
      */
-    else if (cmd_mode & (EDIT_MAIN | COMMENT_OUT)) {
+    else if (cmd_mode & (EDIT_MAIN | COMMENT_OUT | EDIT_EXCL)) {
 	edit_parameters(cmd_mode, argc - optind, argv + optind);
     } else if (cmd_mode == DEF_MODE
 	       && argv[optind] && strchr(argv[optind], '=')) {
@@ -570,9 +612,10 @@ int     main(int argc, char **argv)
     else {
 	if ((cmd_mode & SHOW_DEFS) == 0) {
 	    read_parameters();
-	    set_parameters();
+	    if (override_params)
+		set_parameters(override_params->argv);
 	}
-	register_builtin_parameters();
+	register_builtin_parameters(basename(argv[0]), getpid());
 
 	/*
 	 * Add service-dependent parameters (service names from master.cf)
@@ -588,7 +631,7 @@ int     main(int argc, char **argv)
 	/*
 	 * Show the requested values.
 	 */
-	show_parameters(cmd_mode, param_class, argv + optind);
+	show_parameters(VSTREAM_OUT, cmd_mode, param_class, argv + optind);
 
 	/*
 	 * Flag unused parameters. This makes no sense with "postconf -d",

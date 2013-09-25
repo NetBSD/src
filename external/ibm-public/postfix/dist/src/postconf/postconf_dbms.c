@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_dbms.c,v 1.1.1.1 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postconf_dbms.c,v 1.1.1.2 2013/09/25 19:06:33 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	void	register_dbms_parameters(param_value, flag_parameter,
 /*					local_scope)
 /*	const char *param_value;
-/*	const char *(flag_parameter) (const char *, int, char *);
+/*	const char *(flag_parameter) (const char *, int, PC_MASTER_ENT *);
 /*	PC_MASTER_ENT *local_scope;
 /* DESCRIPTION
 /*	This module implements legacy support for database configuration
@@ -27,7 +27,7 @@
 /*	names for that database type.
 /* .IP flag_parameter
 /*	A function that takes as arguments a candidate parameter
-/*	name, an unused value, and a local namespace pointer. The
+/*	name, parameter flags, and a PC_MASTER_ENT pointer.  The
 /*	function will flag the parameter as "used" if it has a
 /*	"name=value" entry in the local or global namespace.
 /* .IP local_scope
@@ -144,30 +144,10 @@ static const PC_DBMS_INFO dbms_info[] = {
     0,
 };
 
-/* register_dbms_parameters_cb - mac_expand() call-back */
-
-static const char *register_dbms_parameters_cb(const char *mac_name,
-					               int unused_mode,
-					               char *context)
-{
-    PC_MASTER_ENT *local_scope = (PC_MASTER_ENT *) context;
-    const char *mac_val;
-
-    /*
-     * Local namespace "name=value" settings are always explicit. They have
-     * precedence over global namespace "name=value" settings which are
-     * either explicit or defined by their default value.
-     */
-    if (local_scope == 0
-	|| (mac_val = dict_get(local_scope->all_params, mac_name)) == 0)
-	mac_val = mail_conf_lookup(mac_name);
-    return (mac_val);
-}
-
 /* register_dbms_parameters - look for database_type:prefix_name */
 
 void    register_dbms_parameters(const char *param_value,
-	           const char *(flag_parameter) (const char *, int, char *),
+          const char *(flag_parameter) (const char *, int, PC_MASTER_ENT *),
 				         PC_MASTER_ENT *local_scope)
 {
     const PC_DBMS_INFO *dp;
@@ -179,29 +159,23 @@ void    register_dbms_parameters(const char *param_value,
     const char **cpp;
 
     /*
-     * Emulate Postfix parameter value expansion, prepending the appropriate
-     * local (master.cf "-o name-value") namespace to the global (main.cf
-     * "name=value") namespace.
-     * 
-     * XXX This does not examine both sides of conditional macro expansion, and
-     * may expand the "wrong" conditional macros. This is the best we can do
-     * for legacy database configuration support.
+     * XXX This does not examine both sides of conditional macro expansion,
+     * and may expand the "wrong" conditional macros. This is the best we can
+     * do for legacy database configuration support.
      */
-#define NO_SCAN_FILTER	((char *) 0)
-
-    (void) mac_expand(buffer ? buffer : (buffer = vstring_alloc(100)),
-		      param_value, MAC_EXP_FLAG_RECURSE, NO_SCAN_FILTER,
-		      register_dbms_parameters_cb, (char *) local_scope);
+    if (buffer == 0)
+	buffer = vstring_alloc(100);
+    bufp = expand_parameter_value(buffer, SHOW_EVAL, param_value, local_scope);
 
     /*
      * Naive parsing. We don't really know if the parameter specifies free
      * text or a list of databases.
      */
-    bufp = STR(buffer);
     while ((db_type = mystrtok(&bufp, " ,\t\r\n")) != 0) {
 
 	/*
-	 * Skip over "proxy:" indirections.
+	 * Skip over "proxy:" maptypes, to emulate the proxymap(8) server's
+	 * behavior when opening a local database configuration file.
 	 */
 	while ((prefix = split_at(db_type, ':')) != 0
 	       && strcmp(db_type, DICT_TYPE_PROXY) == 0)
@@ -221,7 +195,9 @@ void    register_dbms_parameters(const char *param_value,
 			vstring_sprintf(candidate ? candidate :
 					(candidate = vstring_alloc(30)),
 					"%s_%s", prefix, *cpp);
-			flag_parameter(STR(candidate), 0, (char *) local_scope);
+			flag_parameter(STR(candidate),
+				    PC_PARAM_FLAG_DBMS | PC_PARAM_FLAG_USER,
+				       local_scope);
 		    }
 		    break;
 		}
