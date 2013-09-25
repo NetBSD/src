@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.50 2013/05/05 14:24:05 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.51 2013/09/25 03:28:20 dsainty Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.50 2013/05/05 14:24:05 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.51 2013/09/25 03:28:20 dsainty Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * It might turn off ACS, so check for that.
 	 */
 	if (t_exit_attribute_mode(screen->term) != NULL &&
+	    t_exit_alt_charset_mode(screen->term) != NULL &&
 	    does_ctrl_o(t_exit_attribute_mode(screen->term),
 	    t_exit_alt_charset_mode(screen->term)))
 		screen->mask_me = 0;
