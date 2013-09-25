@@ -87,7 +87,7 @@ what envelope sender addresses the client may use. </p> </li>
 
 <p> Successful authentication in the Postfix SMTP server requires
 a functional SASL framework. Configuring SASL should therefore
-always be the first step. </p>
+always be the first step, before configuring Postfix. </p>
 
 <p> You can read more about the following topics: </p>
 
@@ -1367,20 +1367,33 @@ for. Examples of possible SMTP clients authorizations are: </p>
 
 <h4><a name="server_sasl_authz_relay">Mail relay authorization</a></h4>
 
-<p> The <code><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></code> restriction allows
+<p> With <code><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></code> the Postfix SMTP
+server can allow
 SASL-authenticated SMTP clients to send mail to remote destinations.
-Add it to the list of <code><a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a></code> as
-follows: </p>
+Examples:
+</p>
 
 <blockquote>
 <pre>
+# With Postfix 2.10 and later, the mail relay policy is
+# preferably specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> =
+	<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+	<strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
+	<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+</pre>
+
+<pre>
+# Older configurations combine relay control and spam control under
+# <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>. To use this example with Postfix &ge;
+# 2.10 specify "<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>=".
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
-    ...
-    <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-    <strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
-    <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
-    ...
+	<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+	<strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
+	<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+	...other rules...
 </pre>
 </blockquote>
 
@@ -1406,9 +1419,7 @@ use a particular envelope sender address: </p>
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
         ...
         <strong><a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a></strong>
-        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
-        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+	<a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
         ...
 </pre>
 </blockquote>
@@ -1926,7 +1937,7 @@ font.  </p>
 </blockquote>
 
 <p> Instead of port 25 (smtp), specify port 587 (submission) where
-appriopriate. </p>
+appropriate. </p>
 
 <h4>Encrypted SMTP session (TLS)</h4>
 

@@ -82,6 +82,7 @@ pipe.o: ../../include/mail_server.h
 pipe.o: ../../include/mail_version.h
 pipe.o: ../../include/msg.h
 pipe.o: ../../include/msg_stats.h
+pipe.o: ../../include/myflock.h
 pipe.o: ../../include/mymalloc.h
 pipe.o: ../../include/off_cvt.h
 pipe.o: ../../include/pipe_command.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.5 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.6 2013/09/25 19:06:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -218,6 +218,7 @@
 #include "dict.h"
 #include "dict_ht.h"
 #include "warn_stat.h"
+#include "line_number.h"
 
 static HTABLE *dict_table;
 
@@ -426,6 +427,7 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
     VSTRING *buf;
     char   *member;
     char   *val;
+    int     old_lineno;
     int     lineno;
     const char *err;
     struct stat st;
@@ -436,14 +438,17 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
      */
     DICT_FIND_FOR_UPDATE(dict, dict_name);
     buf = vstring_alloc(100);
-    lineno = 0;
+    old_lineno = lineno = 0;
 
     if (fstat(vstream_fileno(fp), &st) < 0)
 	msg_fatal("fstat %s: %m", VSTREAM_PATH(fp));
-    while (readlline(buf, fp, &lineno)) {
+    for ( /* void */ ; readlline(buf, fp, &lineno); old_lineno = lineno) {
 	if ((err = split_nameval(STR(buf), &member, &val)) != 0)
-	    msg_fatal("%s, line %d: %s: \"%s\"",
-		      VSTREAM_PATH(fp), lineno, err, STR(buf));
+	    msg_fatal("%s, line %s: %s: \"%s\"",
+		      VSTREAM_PATH(fp),
+		      format_line_number((VSTRING *) 0,
+					 old_lineno + 1, lineno),
+		      err, STR(buf));
 	if (msg_verbose > 1)
 	    msg_info("%s: %s = %s", myname, member, val);
 	if (dict->update(dict, member, val) != 0)
