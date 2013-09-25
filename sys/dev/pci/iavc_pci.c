@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.14 2012/10/27 17:18:32 chs Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.15 2013/09/25 18:54:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.14 2012/10/27 17:18:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.15 2013/09/25 18:54:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,8 +139,6 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dma = 0;
 	sc->dmat = pa->pa_dmat;
 
-	iavc_b1dma_reset(sc);
-
 	if (pci_mapreg_map(pa, IAVC_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_io_bt, &sc->sc_io_bh, &psc->io_base, &psc->io_size)) {
 		aprint_error(": unable to map i/o registers\n");
@@ -153,6 +151,8 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal(": %s\n", pp->name);
+
+	iavc_b1dma_reset(sc);
 
 	if (pp->npp_product == PCI_PRODUCT_AVM_T1) {
 		aprint_error_dev(sc->sc_dev, "sorry, PRI not yet supported\n");
