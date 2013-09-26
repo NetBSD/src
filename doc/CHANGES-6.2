@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.52 2013/09/26 02:03:32 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.53 2013/09/26 14:20:16 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -801,4 +801,11 @@ lib/libpthread/pthread.c			1.137
 
 	Return errno, not just -1, from pthread_create().
 	[riastradh, ticket #959]
+
+lib/libcurses/setterm.c				1.51
+
+	Fix a crash in curses for terminals defining exit_attribute_mode but
+	not exit_alt_charset_mode. (Examples include vt131 and xterm-5,
+	among others)
+	[dsainty, ticket #960]
 
