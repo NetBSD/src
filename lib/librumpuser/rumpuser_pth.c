@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.32 2013/09/24 23:45:16 rmind Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.33 2013/09/26 00:41:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,11 +28,12 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.32 2013/09/24 23:45:16 rmind Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.33 2013/09/26 00:41:51 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
 #if defined(__NetBSD__)
+#include <sys/param.h>
 #include <sys/atomic.h>
 #endif
 
@@ -49,6 +50,19 @@ __RCSID("$NetBSD: rumpuser_pth.c,v 1.32 2013/09/24 23:45:16 rmind Exp $");
 #include <rump/rumpuser.h>
 
 #include "rumpuser_int.h"
+
+#if defined(__NetBSD__)
+static void *
+aligned_alloc(size_t size)
+{
+	void *ptr;
+
+	size = roundup2(size, COHERENCY_UNIT);
+	return posix_memalign(&ptr, COHERENCY_UNIT, size) ? NULL : ptr;
+}
+#else
+#define	aligned_alloc(sz)	malloc(sz)
+#endif
 
 int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
@@ -134,7 +148,7 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx, int flags)
 {
 	pthread_mutexattr_t att;
 
-	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
+	NOFAIL(*mtx = aligned_alloc(sizeof(struct rumpuser_mtx)));
 
 	pthread_mutexattr_init(&att);
 	pthread_mutexattr_settype(&att, PTHREAD_MUTEX_ERRORCHECK);
@@ -244,6 +258,7 @@ rumpuser_mutex_owner(struct rumpuser_mtx *mtx, struct lwp **lp)
 
 struct rumpuser_rw {
 	pthread_rwlock_t pthrw;
+	char pad[64 - sizeof(pthread_rwlock_t)];
 	pthread_spinlock_t spin;
 	unsigned int readers;
 	struct lwp *writer;
@@ -300,7 +315,7 @@ rw_clearwriter(struct rumpuser_rw *rw)
 	rw->writer = NULL;
 }
 
-static void
+static inline void
 rw_readup(struct rumpuser_rw *rw)
 {
 
@@ -313,7 +328,7 @@ rw_readup(struct rumpuser_rw *rw)
 #endif
 }
 
-static void
+static inline void
 rw_readdown(struct rumpuser_rw *rw)
 {
 
@@ -331,7 +346,7 @@ void
 rumpuser_rw_init(struct rumpuser_rw **rw)
 {
 
-	NOFAIL(*rw = malloc(sizeof(struct rumpuser_rw)));
+	NOFAIL(*rw = aligned_alloc(sizeof(struct rumpuser_rw)));
 	NOFAIL_ERRNO(pthread_rwlock_init(&((*rw)->pthrw), NULL));
 	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin),PTHREAD_PROCESS_PRIVATE));
 	(*rw)->readers = 0;
