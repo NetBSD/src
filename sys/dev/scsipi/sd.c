@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.301 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.302 2013/09/26 16:00:54 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.301 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.302 2013/09/26 16:00:54 kiyohara Exp $");
 
 #include "opt_scsi.h"
 
@@ -1040,6 +1040,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
@@ -1202,8 +1203,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				sd->flags &= ~SDF_FLUSHING;
 			else
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-		} else
-			error = 0;
+		}
 		return (error);
 
 	case DIOCAWEDGE:
