@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.155 2013/08/22 20:00:43 aymeric Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.156 2013/09/26 07:25:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.155 2013/08/22 20:00:43 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.156 2013/09/26 07:25:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -608,7 +608,7 @@ XXX should we do this?
 }
 
 void
-usbd_clear_endpoint_stall_async_cb(void *arg)
+usbd_clear_endpoint_stall_task(void *arg)
 {
 	usbd_pipe_handle pipe = arg;
 	usbd_device_handle dev = pipe->device;
@@ -621,7 +621,7 @@ usbd_clear_endpoint_stall_async_cb(void *arg)
 	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
-	(void)usbd_do_request_async(dev, &req, 0);
+	(void)usbd_do_request(dev, &req, 0);
 }
 
 void
@@ -1083,49 +1083,6 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	}
 	usbd_free_xfer(xfer);
 	return (err);
-}
-
-void
-usbd_do_request_async_cb(usbd_xfer_handle xfer,
-    usbd_private_handle priv, usbd_status status)
-{
-#if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length) {
-		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
-			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
-			 xfer->pipe->device->address,
-			 xfer->request.bmRequestType,
-			 xfer->request.bRequest, UGETW(xfer->request.wValue),
-			 UGETW(xfer->request.wIndex),
-			 UGETW(xfer->request.wLength),
-			 xfer->length, xfer->actlen));
-	}
-#endif
-	usbd_free_xfer(xfer);
-}
-
-/*
- * Execute a request without waiting for completion.
- * Can be used from interrupt context.
- */
-usbd_status
-usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
-		      void *data)
-{
-	usbd_xfer_handle xfer;
-	usbd_status err;
-
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer == NULL)
-		return (USBD_NOMEM);
-	usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT, req,
-	    data, UGETW(req->wLength), 0, usbd_do_request_async_cb);
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		usbd_free_xfer(xfer);
-		return (err);
-	}
-	return (USBD_NORMAL_COMPLETION);
 }
 
 const struct usbd_quirks *
