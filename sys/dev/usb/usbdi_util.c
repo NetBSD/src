@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.61 2013/08/30 12:59:19 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.62 2013/09/26 07:25:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.61 2013/08/30 12:59:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.62 2013/09/26 07:25:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,26 +270,6 @@ usbd_set_report(usbd_interface_handle iface, int type, int id, void *data,
 	USETW(req.wIndex, ifd->bInterfaceNumber);
 	USETW(req.wLength, len);
 	return (usbd_do_request(dev, &req, data));
-}
-
-usbd_status
-usbd_set_report_async(usbd_interface_handle iface, int type, int id, void *data,
-		      int len)
-{
-	usb_interface_descriptor_t *ifd = usbd_get_interface_descriptor(iface);
-	usbd_device_handle dev;
-	usb_device_request_t req;
-
-	DPRINTFN(4, ("usbd_set_report_async: len=%d\n", len));
-	if (ifd == NULL)
-		return (USBD_IOERROR);
-	usbd_interface2device_handle(iface, &dev);
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = UR_SET_REPORT;
-	USETW2(req.wValue, type, id);
-	USETW(req.wIndex, ifd->bInterfaceNumber);
-	USETW(req.wLength, len);
-	return (usbd_do_request_async(dev, &req, data));
 }
 
 usbd_status

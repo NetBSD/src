@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.88 2013/09/07 16:47:23 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.89 2013/09/26 07:25:31 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /* Used to clear endpoint stalls from the softint */
-void usbd_clear_endpoint_stall_async_cb(void *);
+void usbd_clear_endpoint_stall_task(void *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event
