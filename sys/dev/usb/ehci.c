@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.183 2011/12/23 00:51:43 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.183.8.1 2013/09/26 01:57:22 riz Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.183 2011/12/23 00:51:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.183.8.1 2013/09/26 01:57:22 riz Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -763,7 +763,11 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	    lsqtd->offs + offsetof(ehci_qtd_t, qtd_status),
 	    sizeof(lsqtd->qtd.qtd_status),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	if (le32toh(lsqtd->qtd.qtd_status) & EHCI_QTD_ACTIVE) {
+	status = le32toh(lsqtd->qtd.qtd_status);
+	usb_syncmem(&lsqtd->dma,
+	    lsqtd->offs + offsetof(ehci_qtd_t, qtd_status),
+	    sizeof(lsqtd->qtd.qtd_status), BUS_DMASYNC_PREREAD);
+	if (status & EHCI_QTD_ACTIVE) {
 		DPRINTFN(12, ("ehci_check_intr: active ex=%p\n", ex));
 		for (sqtd = ex->sqtdstart; sqtd != lsqtd; sqtd=sqtd->nextqtd) {
 			usb_syncmem(&sqtd->dma,
@@ -786,9 +790,6 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 		}
 		DPRINTFN(12, ("ehci_check_intr: ex=%p std=%p still active\n",
 			      ex, ex->sqtdstart));
-		usb_syncmem(&lsqtd->dma,
-		    lsqtd->offs + offsetof(ehci_qtd_t, qtd_status),
-		    sizeof(lsqtd->qtd.qtd_status), BUS_DMASYNC_PREREAD);
 		return;
 	}
  done:
