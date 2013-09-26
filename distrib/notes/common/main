@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4.2.2 2013/05/12 16:56:05 riz Exp $
+.\"	$NetBSD: main,v 1.484.2.4.2.3 2013/09/26 15:41:52 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -458,96 +458,120 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0.1 and 6.0.2 Releases
+.Ss Changes Between The NetBSD 6.0.2 and 6.0.3 Releases
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.0.2:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.2/CHANGES-6.0.2
-file in the top level directory of the NetBSD 6.0.2 release tree. An abbreviated list is as follows:
+CHANGES-6.0.3:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.3/CHANGES-6.0.3
+file in the top level directory of the NetBSD 6.0.3 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2013-001:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-001.txt.asc ,
-Kernel panic triggered from userland
+NetBSD-SA2013-005:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc
+bind Denial of Service (CVE-2013-4854)
 .It
-NetBSD-SA2013-003:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-003.txt.asc ,
-RNG Bug May Result in Weak Cryptographic Keys
+NetBSD-SA2013-006:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc
+Arbitrary Kernel Read with netstat -P
 .It
-NetBSD-SA2013-004:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-004.txt.asc ,
-Vulnerabilities in grep
+NetBSD-SA2013-007:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc
+Protocol handling issues in X Window System client libraries
+.It
+NetBSD-SA2013-008:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-008.txt.asc
+Error in authorization check re tcpdrop sysctl
+.It
+NetBSD-SA2013-009:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
+user settable small BPF buffer can cause a panic
 .bullet)
 .
-.Ss2 Security Fixes
+.Pp
+Advisories prior to NetBSD-SA2013-005 do not affect
+NetBSD 6.0.3:
+.Lk http://www.NetBSD.org/support/security/patches-6.0.3.html .
+.Ss2 Kernel
 .(bullet
-Fixed a crash which could happen with sysctl security.curtain=1 set.
-(PR#47598):
-.Lk http://gnats.NetBSD.org/47598
+.Xr virtio 4 :
+Fixed a panic during shutdown on KVM.
+(PR#48105):
+.Lk http://gnats.netbsd.org/48105
 .It
-Address CVE-2012-5667: Multiple integer overflows in GNU grep.
-.It
-Fixes to entropy handling in the kernel.
-.It
-Prevent ktrace from being able to crash the kernel.
-.bullet)
-.
-.Ss2 General kernel
-.(bullet
-Resolve races between vget() and vrele() resulting in vget() returning dead vnodes.
+.Xr uhci 4 :
+Fixed USB device enumeration in some cases, fixed some ops on big-endian machines.
+(PR#47522, :
+.Lk http://gnats.netbsd.org/47522
+PR#48237):
+.Lk http://gnats.netbsd.org/48237
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-Fixed sendto(2) issue with IPv6 UDP datagrams.
-(PR#47408):
-.Lk http://gnats.NetBSD.org/47408
+Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
 .It
-.Xr vioif 4 :
-Fixed an issue which caused recent QEMU to crash.
+Added 4 new sysctls to help avoid IPv6 DoS attacks.
+.It
+Prevent a panic in
+.Xr mpls 4
+due to kmem abuse.
+.It
+Fixed a crash destroying
+.Xr tap 4
+interfaces after deleting the link-local address.
+(PR#47576):
+.Lk http://gnats.netbsd.org/47576
 .bullet)
 .
-.Ss2 Drivers
+.Ss2 File Systems
 .(bullet
-.Xr fss 4 :
-Don't crash when running multiple dump -X.
-(PR#47514):
-.Lk http://gnats.NetBSD.org/47514
+nilfs: Fixed a serious file-read problem.
+(PR#45605):
+.Lk http://gnats.netbsd.org/45605
 .It
-.Xr fss 4 :
-Fixed panic.
-(PR#47020):
-.Lk http://gnats.NetBSD.org/47020
+procfs: Fixed a problem in an error case in procfs_domap().
+(PR#48048):
+.Lk http://gnats.netbsd.org/48048
+.It
+udf: Fixed a problem which could result in garbage after the 4GB limit.
 .bullet)
 .
-.Ss2 Platforms
+.Ss2 Miscellaneous
 .(bullet
-alpha:
-.(bullet
-Fixed longjmp/setjmp on alpha for statically linked programs such as those in /rescue.
-.bullet)
-.
-.bullet)
-.
-.Ss2 Userland fixes
-.(bullet
-Library Updates
-.(bullet
-libc: fix memory corruption in rpc.
-(PR#13082):
-.Lk http://gnats.NetBSD.org/13082
+.Xr pthread 3 :
+Fixed error return from pthread_create() in some cases.
 .It
-libutil: Fixed a bug in
-.Xr parsedate 3
-where it would treat all input as if it were in the local time zone.
-.bullet)
-.
+Update tzdata to 2013e.
 .It
-Update to tzdata2013c.
+Update IPv6 DNS servers in sysinst.
 .It
-Address graphics corruption in recent Cairo, manifested most commonly by certain rendered text sections appearing as solid rectangular blocks of color.
+MAKEDEV: the console major number is not always 0.
 .It
-openssl: Fixed a multiple-free bug.
+Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
+.It
+i386/amd64: fix some i387/FP issues.
+(PR#46108):
+.Lk http://gnats.netbsd.org/46108
+.It
+Fixed build of NetBSD 6.0.x on netbsd-current.
+(PR#47922):
+.Lk http://gnats.netbsd.org/47922
+.It
+Fixed vax build issues.
+.It
+Fixed an environment issue which could cause crashes in Emacs 24 and certain other applications.
+.It
+pkg_install: Fixed installation of signed packages.
+(PR#48194):
+.Lk http://gnats.netbsd.org/48194
+.It
+mvme68k: Fixed boot panic.
+(PR#45915):
+.Lk http://gnats.netbsd.org/45915
+.It
+Fixed a crash in
+.Xr curses 3
+for some terminals.
 .bullet)
 .
 .
