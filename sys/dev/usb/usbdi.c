@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.156 2013/09/26 07:25:31 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.157 2013/09/26 10:31:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.156 2013/09/26 07:25:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.157 2013/09/26 10:31:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -66,8 +66,6 @@ extern int usbdebug;
 #endif
 
 Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
-Static void usbd_do_request_async_cb
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void usbd_start_next(usbd_pipe_handle pipe);
 Static usbd_status usbd_open_pipe_ival
 	(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
