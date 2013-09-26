@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.56 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.57 2013/09/26 07:25:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.56 2012/06/10 06:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.57 2013/09/26 07:25:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,22 +668,6 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 	free(buf, M_TEMP);
 
 	return retstat;
-}
-
-void
-uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
-{
-	/* XXX */
-	char buf[100];
-	if (scd->sc_report_id) {
-		buf[0] = scd->sc_report_id;
-		memcpy(buf+1, data, len);
-		len++;
-		data = buf;
-	}
-
-	usbd_set_report_async(scd->sc_parent->sc_iface, type,
-			      scd->sc_report_id, data, len);
 }
 
 usbd_status
