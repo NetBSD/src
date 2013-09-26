@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.2,v 1.1.2.18 2013/09/26 01:58:04 riz Exp $
+# $NetBSD: CHANGES-6.1.2,v 1.1.2.19 2013/09/26 02:01:46 riz Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -142,4 +142,9 @@ sys/dev/usb/uhci.c				1.255,1.256,1.258
 	USB fixes: missed byteswap ops for big-endian machines,
 	fix device enumeration in some edge cases.  PR#47522, PR#48237
 	[skrll, ticket #950]
+
+lib/libpthread/pthread.c			1.137
+
+	Return errno, not just -1, from pthread_create().
+	[riastradh, ticket #959]
 
