@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.3,v 1.1.2.30 2013/09/23 14:27:37 riz Exp $
+# $NetBSD: CHANGES-6.0.3,v 1.1.2.31 2013/09/26 01:56:27 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.2 release to the NetBSD 6.0.3
 release:
@@ -273,4 +273,11 @@ sys/arch/mvmeppc/stand/libsa/Makefile.inc	1.2
 
 	Fix the mvmeppc bootloader.
 	[tsutsui, ticket #955]
+
+sys/dev/usb/ehci.c				1.205
+sys/dev/usb/uhci.c				1.255,1.256,1.258
+
+	USB fixes: missed byteswap ops for big-endian machines,
+	fix device enumeration in some edge cases.  PR#47522, PR#48237
+	[skrll, ticket #950]
 
