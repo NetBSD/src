@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.24 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.25 2013/09/26 00:24:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.24 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.25 2013/09/26 00:24:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.24 2013/06/02 02:20:04 rmind Exp $
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
+#include <sys/cprng.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -200,6 +201,7 @@ static pool_cache_t		sess_cache	__read_mostly;
 static kmutex_t			sess_lock	__cacheline_aligned;
 static kcondvar_t		sess_cv		__cacheline_aligned;
 static struct npf_sesslist	sess_gc_list	__cacheline_aligned;
+static uint32_t			sess_hash_seed	__read_mostly;
 
 static void	npf_session_worker(void);
 static void	npf_session_destroy(npf_session_t *);
@@ -222,6 +224,7 @@ npf_session_sysinit(void)
 	LIST_INIT(&sess_gc_list);
 	sess_hashtbl = NULL;
 
+	sess_hash_seed = cprng_fast32();
 	npf_worker_register(npf_session_worker);
 }
 
@@ -305,14 +308,13 @@ sess_hash_bucket(npf_sehash_t *stbl, const npf_secomid_t *scid,
     const npf_sentry_t *sen)
 {
 	const int sz = sen->se_alen;
-	uint32_t hash, mix;
+	uint32_t hash, mix[2];
 
-	/*
-	 * Sum protocol, interface and both addresses (for both directions).
-	 */
-	mix = scid->proto + scid->if_idx;
-	mix += npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
-	hash = hash32_buf(&mix, sizeof(uint32_t), HASH32_BUF_INIT);
+	mix[0] = (scid->proto ^ scid->if_idx) << 16;
+	mix[0] |= sen->se_src_id ^ sen->se_dst_id;
+	mix[1] = npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
+	hash = murmurhash2(mix, sizeof(mix), sess_hash_seed);
+
 	return &stbl[hash & SESS_HASH_MASK];
 }
 
