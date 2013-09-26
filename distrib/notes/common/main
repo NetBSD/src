@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.6.2.1 2013/08/15 03:27:37 snj Exp $
+.\"	$NetBSD: main,v 1.484.2.6.2.2 2013/09/26 15:42:10 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -458,72 +458,82 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.1 and 6.1.1 Releases
+.Ss Changes Between The NetBSD 6.1.1 and 6.1.2 Releases
 .Pp
 .Nx
 \*V
-is the first critical/security update of the NetBSD 6.1 release branch.
+is the second critical/security update of the NetBSD 6.1 release branch.
 It represents a selected subset of fixes deemed critical for security
 or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.1.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.1.1/CHANGES-6.1.1
-file in the top level directory of the NetBSD 6.1.1 release tree.
-An abbreviated list is as follows:
+CHANGES-6.1.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.1.2/CHANGES-6.1.2
+file in the top level directory of the NetBSD 6.1.2 release tree. An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2013-005:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-005.txt.asc ,
-bind Denial of Service (CVE-2013-4854)
-.It
-NetBSD-SA2013-006:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-006.txt.asc ,
-Arbitrary Kernel Read with netstat -P
-.It
-NetBSD-SA2013-007:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-007.txt.asc ,
-Protocol handling issues in X Window System client libraries
-.It
-NetBSD-SA2013-008:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2013-008.txt.asc ,
-Error in authorization check re tcpdrop sysctl
+NetBSD-SA2013-009:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-009.txt.asc
+user settable small BPF buffer can cause a panic
 .bullet)
 .
-.Ss2 Security
+.Pp
+Advisories prior to NetBSD-SA2013-009 do not affect
+NetBSD 6.1.2:
+.Lk http://www.NetBSD.org/support/security/patches-6.1.2.html .
+.Ss2 Kernel
 .(bullet
-Add four new sysctls to avoid IPv6 DoS attacks.
+.Xr virtio 4 :
+Fixed a panic during shutdown on KVM.
+(PR#48105):
+.Lk http://gnats.netbsd.org/48105
+.It
+.Xr uhci 4 :
+Fixed USB device enumeration in some cases, fixed some ops on big-endian machines.
+(PR#47522, :
+.Lk http://gnats.netbsd.org/47522
+PR#48237):
+.Lk http://gnats.netbsd.org/48237
 .bullet)
 .
 .Ss2 Networking
 .(bullet
-.Xr mpls 4 :
-Stop abusing kmem during softint context to prevent panic.
+Include BRDADDR and NETMASK in the IPv4 ioctls we ban for IPv6.
 .It
-Avoid crash destroying tap0 after deleting its link-local address.
-PR 47576.
+.Xr npf 3 :
+Fixed panic with IPv6 when nbufs are reallocated.
+.It
+.Xr npf 3 :
+Fixed filtering with dynamic rules.
 .bullet)
 .
-.Ss2 File systems
+.Ss2 File Systems
 .(bullet
-NILFS: Fix serious file read problem due to not-so-clear VOP_BMAP description.
-PR 45605.
-.It
-procfs: Add a missing vm_map_unlock_read() and uvmspace_free() to the ENOMEM error case in procfs_domap()d.
-PR 48048.
+udf: Fixed a problem which could result in garbage after the 4GB limit.
 .bullet)
 .
-.Ss2 Platforms
+.Ss2 Miscellaneous
 .(bullet
-amiga: Fix kernel panic on Amigas with Deneb cards.
+.Xr pthread 3 :
+Fixed error return from pthread_create() in some cases.
 .It
-vax: Add a makedisk_p12high, used by VAX now after unbumping MAXPARTITIONS from 16 down to 12.
-This fixes install issues on new setups.
-.bullet)
-.
-.Ss2 Miscellaneous Userland
-.(bullet
-Updated tzdata to 2013d.
+Update tzdata to 2013e.
+.It
+Update some TNF ssh keys in /etc/ssh/ssh_known_hosts.
+.It
+Fixed an environment issue which could cause crashes in Emacs 24 and certain other applications.
+.It
+pkg_install: Fixed installation of signed packages.
+(PR#48194):
+.Lk http://gnats.netbsd.org/48194
+.It
+Fixed regression introduced in NetBSD 6.1.1 affecting certain applications running under X.
+(PR#48170):
+.Lk http://gnats.netbsd.org/48170
+.It
+mvme68k: Fixed boot panic.
+(PR#45915):
+.Lk http://gnats.netbsd.org/45915
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -570,6 +580,8 @@ Changes between the initial 6.0 branch and final release of 6.0.
 Changes between the final release of 6.0 and final release of 6.1.
 .It Li CHANGES-6.1.1
 Changes between the final release of 6.1 and final release of 6.1.1.
+.It Li CHANGES-6.1.1
+Changes between the final release of 6.1.1 and final release of 6.1.2.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
