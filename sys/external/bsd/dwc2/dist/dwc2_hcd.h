@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.4 2013/09/27 21:56:05 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.5 2013/09/27 22:03:01 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -630,6 +630,18 @@ static inline int dwc2_hcd_is_bandwidth_allocated(struct dwc2_hsotg *hsotg,
 	return 0;
 }
 
+static inline u16 dwc2_hcd_get_ep_bandwidth(struct dwc2_hsotg *hsotg,
+					    struct dwc2_pipe *dpipe)
+{
+	struct dwc2_qh *qh = dpipe->priv;
+
+	if (!qh) {
+		WARN_ON(1);
+		return 0;
+	}
+
+	return qh->usecs;
+}
 
 extern void dwc2_hcd_save_data_toggle(struct dwc2_hsotg *hsotg,
 				      struct dwc2_host_chan *chan, int chnum,
