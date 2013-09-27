@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.4 2013/09/27 21:56:05 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.4 2013/09/27 21:56:05 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -1349,18 +1349,6 @@ void dwc2_wakeup_detected(void * data)
 
 	/* Change to L0 state */
 	hsotg->lx_state = DWC2_L0;
-}
-
-static int dwc2_host_is_b_hnp_enabled(struct dwc2_hsotg *hsotg)
-{
-#if 1
-	/* XXXNH */
-	return false;
-#else
-	struct usb_hcd *hcd = dwc2_hsotg_to_hcd(hsotg);
-
-	return hcd->self.b_hnp_enable;
-#endif
 }
 
 /* Must NOT be called with interrupt disabled or spinlock held */
