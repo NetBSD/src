@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -2071,13 +2071,12 @@ irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg)
 		return retval;
 	}
 
-	spin_lock(&hsotg->lock);
+	KASSERT(mutex_owned(&hsotg->lock));
 
 	/* Check if HOST Mode */
 	if (dwc2_is_host_mode(hsotg)) {
 		gintsts = dwc2_read_core_intr(hsotg);
 		if (!gintsts) {
-			spin_unlock(&hsotg->lock);
 			return retval;
 		}
 
@@ -2119,8 +2118,6 @@ irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg)
 				 DWC2_READ_4(hsotg, GINTMSK));
 		}
 	}
-
-	spin_unlock(&hsotg->lock);
 
 	return retval;
 }
