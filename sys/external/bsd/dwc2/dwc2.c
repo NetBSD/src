@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.5 2013/09/27 21:50:45 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.6 2013/09/27 21:56:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.5 2013/09/27 21:50:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.6 2013/09/27 21:56:05 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1730,4 +1730,10 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 
 	mutex_spin_exit(&hsotg->lock);
 	return 0;
+}
+
+int dwc2_host_is_b_hnp_enabled(struct dwc2_hsotg *hsotg)
+{
+
+	return false;
 }

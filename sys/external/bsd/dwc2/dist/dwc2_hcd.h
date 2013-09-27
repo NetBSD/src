@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.4 2013/09/27 21:56:05 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -774,5 +774,7 @@ struct dwc2_hcd_urb * dwc2_hcd_urb_alloc(struct dwc2_hsotg *, int, gfp_t);
 void dwc2_hcd_urb_free(struct dwc2_hsotg *, struct dwc2_hcd_urb *, int);
 
 int _dwc2_hcd_start(struct dwc2_hsotg *);
+
+int dwc2_host_is_b_hnp_enabled(struct dwc2_hsotg *);
 
 #endif /* __DWC2_HCD_H__ */
