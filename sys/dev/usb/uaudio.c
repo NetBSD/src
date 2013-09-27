@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.138 2013/09/15 15:04:47 martin Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.139 2013/09/27 13:34:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.138 2013/09/15 15:04:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.139 2013/09/27 13:34:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2602,7 +2602,6 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	ch->intr = intr;
 	ch->arg = arg;
 
-	mutex_spin_exit(&sc->sc_intr_lock);
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
 		uaudio_chan_rtransfer(ch);
 	mutex_spin_enter(&sc->sc_intr_lock);
@@ -2649,7 +2648,6 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	ch->intr = intr;
 	ch->arg = arg;
 
-	mutex_spin_exit(&sc->sc_intr_lock);
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
 	mutex_spin_enter(&sc->sc_intr_lock);
