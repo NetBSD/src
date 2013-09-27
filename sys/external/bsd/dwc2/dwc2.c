@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.2 2013/09/21 13:17:00 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.3 2013/09/27 21:39:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.2 2013/09/21 13:17:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.3 2013/09/27 21:39:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -326,11 +326,12 @@ dwc2_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
+	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 	struct dwc2_xfer *dxfer;
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 		/*
 		 * dwc2_abort_xfer will remove this transfer from the
@@ -346,11 +347,11 @@ dwc2_softintr(void *v)
 		/* XXXNH Already done - can I assert this? */
 		callout_stop(&dxfer->xfer.timeout_handle);
 
-		mutex_spin_exit(&sc->sc_intr_lock);
+		mutex_spin_exit(&hsotg->lock);
 		usb_transfer_complete(&dxfer->xfer);
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_spin_enter(&hsotg->lock);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&hsotg->lock);
 }
 
 Static void
@@ -370,9 +371,9 @@ dwc2_waitintr(struct dwc2_softc *sc, usbd_xfer_handle xfer)
 		DPRINTFN(15, "0x%08x\n", intrs);
 
 		if (intrs) {
-			mutex_spin_enter(&sc->sc_intr_lock);
+			mutex_spin_enter(&hsotg->lock);
 			dwc2_interrupt(sc);
-			mutex_spin_exit(&sc->sc_intr_lock);
+			mutex_spin_exit(&hsotg->lock);
 			if (xfer->status != USBD_IN_PROGRESS)
 				return;
 		}
@@ -491,10 +492,11 @@ Static void
 dwc2_poll(struct usbd_bus *bus)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
+	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&hsotg->lock);
 	dwc2_interrupt(sc);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&hsotg->lock);
 }
 
 /*
@@ -522,7 +524,6 @@ dwc2_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 	struct dwc2_xfer *d, *tmp;
-	unsigned long flags;
 	bool wake;
 	int err;
 
@@ -553,13 +554,11 @@ dwc2_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 1: Make the stack ignore it and stop the callout.
 	 */
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&hsotg->lock);
 	xfer->hcflags |= UXFER_ABORTING;
 
 	xfer->status = status;	/* make software ignore it */
 	callout_stop(&xfer->timeout_handle);
-
-	spin_lock_irqsave(&hsotg->lock, flags);
 
 	/* XXXNH suboptimal */
 	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
@@ -573,8 +572,7 @@ dwc2_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		DPRINTF("dwc2_hcd_urb_dequeue failed\n");
 	}
 
-	spin_unlock(&hsotg->lock);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&hsotg->lock);
 
 	/*
 	 * Step 2: Execute callback.
@@ -1226,10 +1224,10 @@ dwc2_device_start(usbd_xfer_handle xfer)
 
 	if (xfertype == UE_ISOCHRONOUS ||
 	    xfertype == UE_INTERRUPT) {
-		spin_lock_irqsave(&hsotg->lock, flags);
+		mutex_spin_enter(&hsotg->lock);
 		if (!dwc2_hcd_is_bandwidth_allocated(hsotg, xfer))
 			alloc_bandwidth = 1;
-		spin_unlock_irqrestore(&hsotg->lock, flags);
+		mutex_spin_exit(&hsotg->lock);
 	}
 
 	/*
@@ -1400,18 +1398,19 @@ Debugger();
 int dwc2_intr(void *p)
 {
 	struct dwc2_softc *sc = p;
+	struct dwc2_hsotg *hsotg;
 	int ret = 0;
 
 	if (sc == NULL)
 		return 0;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	hsotg = sc->sc_hsotg;
+	mutex_spin_enter(&hsotg->lock);
 
 	if (sc->sc_dying || !device_has_power(sc->sc_dev))
 		goto done;
 
 	if (sc->sc_bus.use_polling) {
-		struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 		uint32_t intrs;
 
 		intrs = dwc2_read_core_intr(hsotg);
@@ -1421,7 +1420,7 @@ int dwc2_intr(void *p)
 	}
 
 done:
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&hsotg->lock);
 
 	return ret;
 }
@@ -1514,7 +1513,6 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_hcdenabled = false;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
 	TAILQ_INIT(&sc->sc_complete);
 
@@ -1719,11 +1717,9 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 int
 _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 {
-	unsigned long flags;
-
 	dev_dbg(hsotg->dev, "DWC OTG HCD START\n");
 
-	spin_lock_irqsave(&hsotg->lock, flags);
+	mutex_spin_enter(&hsotg->lock);
 
 	hsotg->op_state = OTG_STATE_A_HOST;
 
@@ -1732,6 +1728,6 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 	/*XXXNH*/
 	delay(50);
 
-	spin_unlock_irqrestore(&hsotg->lock, flags);
+	mutex_spin_exit(&hsotg->lock);
 	return 0;
 }

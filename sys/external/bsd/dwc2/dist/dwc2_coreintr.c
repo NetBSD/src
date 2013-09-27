@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -467,7 +467,7 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 		goto out;
 	}
 
-	spin_lock(&hsotg->lock);
+	KASSERT(mutex_owned(&hsotg->lock));
 
 	gintsts = dwc2_read_common_intr(hsotg);
 	if (gintsts & ~GINTSTS_PRTINT)
@@ -502,7 +502,6 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 		}
 	}
 
-	spin_unlock(&hsotg->lock);
 out:
 	return retval;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.1 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.2 2013/09/27 21:39:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@ typedef struct dwc2_softc {
 	struct dwc2_hsotg *sc_hsotg;
 
 	kmutex_t sc_lock;
-	kmutex_t sc_intr_lock;
 
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
