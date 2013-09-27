@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.4 2013/09/27 21:42:42 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.5 2013/09/27 21:50:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.4 2013/09/27 21:42:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.5 2013/09/27 21:50:45 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1706,7 +1706,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	qtd->urb = NULL;
 	callout_stop(&xfer->timeout_handle);
 
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&hsotg->lock));
 
 	TAILQ_INSERT_TAIL(&sc->sc_complete, dxfer, xnext);
 
