@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.4 2012/08/01 10:34:42 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.5 2013/09/28 05:46:51 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -182,8 +182,8 @@
 
 /*
  * Cryptographic Engine and Security Accelerator Registers
- */
-#define KIRKWOOD_CESA_BASE	(KIRKWOOD_UNITID2PHYS(CRYPT))	/* 0x30000 */
+ */								/* 0x3d000 */
+#define KIRKWOOD_CESA_BASE	(KIRKWOOD_UNITID2PHYS(CRYPT) + 0xd000)
 
 /*
  * USB 2.0 Interface Registers
