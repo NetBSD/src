@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.220 2013/09/28 07:29:17 dholland Exp $
+$NetBSD: acronyms,v 1.221 2013/09/28 17:58:53 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -6,8 +6,12 @@ $NetBSD: acronyms,v 1.220 2013/09/28 07:29:17 dholland Exp $
 31337	elite ("eleet")
 4TW	for the win
 AAMOF	as a matter of fact
+ABD	all but dissertation
 AC	audible chuckle
+ADD	attention deficit disorder
+ADHD	attention deficit (and) hyperactivity disorder
 ADN	any day now
+ADOS	attention deficit ... oh, shiny!
 AEAP	as early as possible
 AFAIAC	as far as I am concerned
 AFAIC	as far as I'm concerned
@@ -94,7 +98,9 @@ CU	see you
 CUL	see you later
 CYA	see you around
 CYE	check your email
+D/B/A	doing business as
 D/L	download
+DBA	doing business as
 DBEYR	don't believe everything you read
 DGAS	don't give a shit
 DIAFYO	did I ask for your opinion?
@@ -145,6 +151,7 @@ FOAD	{fall over,fuck off} and die
 FOC	free of charge
 FOS	full of shit
 FPS	first person shooter
+FPS	frames per second
 FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
@@ -369,6 +376,9 @@ OTTOMH	off the top of my head
 OWTTE	or words to that effect
 PC	player character
 PC	politically correct
+PCB	polychlorinated biphenyl(s)
+PD	police department
+PDA	public display of affection
 PDQ	pretty darn quick
 PDS	please don't shout
 PEBCAK	problem exists between chair and keyboard
@@ -468,6 +478,7 @@ TBH	to be honest
 TBOMK	the best of my knowledge
 TCB	taking care of business
 TCO	taken care of
+TCO	total cost of ownership
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
@@ -548,5 +559,6 @@ YKWIM	you know what I mean
 YMA	yo momma's ass
 YMMV	your mileage may vary
 YOLO	you only live once
+YTF	why the fuck
 YW	you're welcome
 YWSYLS	you win some, you lose some

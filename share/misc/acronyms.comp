@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.139 2013/08/07 05:19:40 agc Exp $
+$NetBSD: acronyms.comp,v 1.140 2013/09/28 17:58:53 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -135,6 +135,7 @@ BPS	bits per second
 BPSK	binary phase shift keying
 BQS	Berkeley quality software
 BRE	basic regular expression
+BS	backspace
 BS	binary sequence
 BSA	basic service area
 BSD	Berkeley Software Distribution
@@ -194,6 +195,7 @@ CIFS	Common Internet File System
 CIL	common intermediate language
 CIR	carrier-to-interference ratio
 CIS	contact image sensor
+CISC	complex instruction set {computer,computing}
 CJK	Chinese, Japanese, [and] Korean
 CLF	common log format
 CLI	command line interface
@@ -225,6 +227,7 @@ CPE	common phase error
 CPG	clock pulse generator
 CPL	current privilege level
 CPLD	complex programmable logic device
+CPP	C preprocessor
 CPS	characters per second
 CPT	command pass through
 CPU	central processing unit
@@ -243,6 +246,7 @@ CSMA	carrier sense multiple access
 CSMA/CA	carrier sense multiple access with collision avoidance
 CSMA/CD	carrier sense multiple access with collision detection
 CSR	control [and] status registers
+CSRG	Computer Systems Research Group
 CSS	cascading style sheets
 CSV	comma-separated values
 CTM	close to metal
@@ -262,6 +266,7 @@ DAP	Directory Access Protocol
 DAT	digital audio tape
 DAT	dynamic acceleration technology
 DB	database
+DBA	database administrator
 DBA	dynamic bandwidth allocation
 DBB	data bus buffer
 DBC	design by contract
@@ -317,6 +322,7 @@ DMI	desktop management interface
 DMS	document management system
 DMT	discrete multitone modulation
 DNARD	Digital network appliance reference design
+DND	drag and drop
 DNS	Domain Name System
 DOE	distributed object environment
 DOF	data over fibre
@@ -330,6 +336,7 @@ DPD	dead peer detection
 DPI	deep packet inspection
 DPI	dots per inch
 DPL	descriptor privilege level
+DPS	Display PostScript
 DPST	display power savings technology
 DRAM	dynamic random access memory
 DRI	direct rendering infrastructure
@@ -400,6 +407,7 @@ EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ERD	emergency recovery disk
+ERD	entity relationship diagram
 ERE	extended regular expression
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
@@ -420,6 +428,7 @@ FDE	full disk encryption
 FEA	finite element analysis
 FEC	forward error correction
 FET	field-effect transistor
+FF	form feed
 FFH	functional fixed hardware
 FFI	foreign function interface
 FFM	focus follows mouse
@@ -533,6 +542,7 @@ ICMP	Internet Control Message Protocol
 ICT	information and communications technology
 ICW	initialization command word
 IDA	Intel dynamic acceleration
+IDCMP	Intuition direct communication message port
 IDE	integrated development environment
 IDE	integrated drive electronics
 IDPS	intrusion detection [and] prevention system
@@ -546,12 +556,14 @@ IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
 IF	intermediate frequency
 IFCM	isochronous flow control mode
+IFF	Interchange File Format
 IGD	Internet gateway device
 IGMP	Internet Group Management Protocol
 IGP	interior gateway protocol
 IHV	independent hardware vendor
 IKE	Internet key exchange
 ILM	internal loopback mode
+ILOM	integrated lights-out management
 ILP	instruction level parallelism
 IM	instant messaging
 IMAP	Internet Message Access Protocol
@@ -610,6 +622,7 @@ KLOC	thousand lines of code
 KMS	kernel-mode setting
 KPI	kernel programming interface
 KVA	kernel virtual address
+KVM	kernel virtual machine
 KVM	kernel virtual memory
 KVM	keyboard, video, [and] mouse
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
@@ -652,6 +665,7 @@ LM	long mode
 LMM	link management mode
 LNO	loop nest optimization
 LOC	lines of code
+LOM	lights-out management
 LPC	low pin count
 LPS	local positioning system
 LRC	longitudinal redundancy check
@@ -663,10 +677,12 @@ LSB	least significant {bit,byte}
 LSI	large scale integration
 LSL	load segment limit
 LSN	Large Scale NAT
+LSN	log sequence number
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
 LTR	left to right
 LTR	load task register
+LTR	letter(-sized paper)
 LUN	logical unit number
 LV	logical volume
 LVM	logical volume management
@@ -675,12 +691,14 @@ LWP	light-weight process
 LZW	Lempel Ziv Welch
 MAC	mandatory access control
 MAC	medium access control
+MAC	message authentication {check,code}
 MADT	multiple APIC descriptor table
 MB	megabyte
 MBR	master boot record
 MBS	megabits per second
 MC	memory controller
 MCA	machine check architecture
+MCA	MicroChannel architecture
 MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	Multi-Color Graphics Array
@@ -693,9 +711,11 @@ MDA	Monochrome Display Adapter
 MDRAM	multibank dynamic random access memory
 MESI	modified, exclusive, shared, invalid
 MFC	merge from current
+MFC	Microsoft Foundation Classes
 MFM	modified frequency modulation
 MI	machine-independent
 MIB	management information base
+MIC	message integrity {check,code}
 MID	mobile Internet device
 MIDI	musical instrument digital interface
 MIF	management information format
@@ -766,10 +786,12 @@ NCO	numerically-controlled oscillator
 NCP	Network Control Protocol
 NCQ	native command queuing
 ND	neighbor discovery
+NDFA	nondeterministic finite automaton
 NE	numeric error
 NFA	nondeterministic finite automaton
 NFS	network file system
 NIA	next instruction address
+NIC	network information center
 NIC	network interface card
 NIDS	network intrusion detection system
 NIP	network interface protocol
@@ -778,7 +800,9 @@ NIS	network information service
 NLS	native language support
 NMI	non-maskable interrupt
 NNTP	Network News Transfer Protocol
+NOC	network operations center
 NOP	no operation
+NOS	network operating system
 NP	nondeterministic polynomial time
 NRZ	non-return to zero
 NSA	National Security Agency
@@ -798,7 +822,9 @@ ODT	on-die termination
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OFET	organic field-effect transistor
+OLAP	online analytical processing
 OLE	object linking and embedding
+OLTP	online transaction processing
 ONFI	open nand flash interface
 OO	OpenOffice
 OO	object oriented
@@ -807,10 +833,12 @@ OOE	out of order execution
 OOM	out of memory
 OOO	OpenOffice.org
 OOP	object oriented programming
+OOPS	object oriented programming systems
 OOSE	object oriented software engineering
 OPM	operations per minute
 OPS	operations per second
 OQL	Object Query Language
+ORB	object request broker
 ORM	object-relational mapping
 OS	operating system
 OSD	open source definition
@@ -862,7 +890,7 @@ PDB	power distribution board
 PDF	portable document format
 PDM	pulse-duration modulation
 PDN	pull-down network
-PDP	page descriptor page
+PDP	page {descriptor,directory} page
 PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
@@ -948,6 +976,8 @@ QBE	query by example
 QC	quality control
 QDI	quasi delay insensitive
 QOS	quality of service
+R/O	read only
+R/W	read/write
 RA	receiver address
 RA	remote assistance
 RA	resource affinity
@@ -965,6 +995,8 @@ RC	remote control
 RCS	Revision Control System
 RCS	revision control system
 RCU	read, copy, update
+RDB	Rigid Disk Block
+RDBMS	relational database management system
 RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
@@ -974,13 +1006,15 @@ RF	radio frequency
 RFI	radio frequency interference
 RFO	request for ownership
 RGB	red green blue
+RGBA	red green blue alpha
 RH	read hit
+RHEL	Red Hat Enterprise Linux
 RHL	Red Hat Linux
 RIB	routing information base
 RIFF	Resource Interchange File Format
 RIP	Routing Information Protocol
 RIR	regional Internet registry
-RISC	reduced instruction set computing
+RISC	reduced instruction set {computer,computing}
 RKM	ROM Kernel Manual
 RLE	run length encoding
 RLL	run length limited
@@ -995,6 +1029,7 @@ ROM	read only memory
 RPC	remote procedure call
 RPL	requested privilege level
 RPM	revolutions per minute
+RPN	reverse Polish notation
 RR	random replacement
 RR	round robin
 RS	relay station
@@ -1006,7 +1041,9 @@ RT	real time
 RTC	real time clock
 RTC	real time computing
 RTF	rich text format
+RTL	register transfer language
 RTL	resistor-transistor logic
+RTL	right to left
 RTOS	real time operating system
 RTS	request to send
 RTT	round time trip
@@ -1042,18 +1079,21 @@ SCI	scalable coherent interface
 SCI	system control interrupt
 SCM	software configuration management
 SCM	source code management
+SCM	storage-class memory
 SCP	secure copy
 SCSI	Small Computer System Interface
 SCTP	Stream Control Transmission Protocol
 SDI	symbol deinterleave
 SDK	software development kit
 SDL	Simple Declarative Language
+SDL	Simple Direct-media Layer 
 SDRAM	synchronous dynamic random access memory
 SDT	syntax-directed translation
 SEGV	segmentation violation
 SEO	search engine optimization
 SFC	sequential function chart
 SFI	simple firmware interface
+SFI	software fault isolation
 SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
@@ -1067,6 +1107,7 @@ SIR	slow infrared
 SISD	single instruction, single data
 SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory
+SLED	single large expensive disk
 SLI	scalable link interface
 SLI	scan-line interleave
 SLOC	source lines of code
@@ -1089,6 +1130,7 @@ SOA	service oriented architecture
 SOAP	Simple Object Access Protocol
 SOC	system on chip
 SOF	start of frame
+SOH	start of header
 SOHO	small office/home office
 SOL	serial over LAN
 SP	service pack
@@ -1175,9 +1217,11 @@ TOS	terms of service
 TOS	trusted operating system
 TOS	type of service
 TP	transaction processing
+TPI	tracks per inch
 TPM	transactions per minute
 TPM	trusted platform module
 TPR	task priority register
+TPS	transactions per second
 TPS	transmission parameters signaling
 TR	task register
 TR	token ring
@@ -1302,6 +1346,7 @@ WWAN	wireless wide area network
 WWW	world wide web
 WYSIWYG	what you see is what you get
 XBAR	crossbar
+XDMCP	X Display Manager control protocol
 XER	XML encoding rules
 XGA	Extended Graphics Array
 XIP	execute in place
