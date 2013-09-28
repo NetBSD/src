@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.302 2013/09/26 16:00:54 kiyohara Exp $	*/
+/*	$NetBSD: sd.c,v 1.303 2013/09/28 09:01:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.302 2013/09/26 16:00:54 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.303 2013/09/28 09:01:36 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -998,7 +998,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
-	int error = 0;
+	int error;
 	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
