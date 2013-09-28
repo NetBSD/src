@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.313 2013/09/12 12:26:13 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.314 2013/09/28 09:00:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.313 2013/09/12 12:26:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.314 2013/09/28 09:00:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1246,7 +1246,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct cd_formatted_toc toc;
 	int part = CDPART(dev);
-	int error = 0;
+	int error;
 	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1305,6 +1305,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(cd->sc_dk.dk_label);
