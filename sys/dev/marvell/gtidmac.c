@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.10 2013/09/28 05:39:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.10 2013/09/28 05:39:06 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -313,6 +313,16 @@ static struct {
 	{ MARVELL_KIRKWOOD_88F6192,	0, -1, 4, 5 },
 	{ MARVELL_KIRKWOOD_88F6281,	0, -1, 4, 5 },
 	{ MARVELL_KIRKWOOD_88F6282,	0, -1, 4, 5 },
+	{ MARVELL_ARMADAXP_MV78130,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78130,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78160,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78160,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78230,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78230,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78260,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78260,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78460,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78460,	0, -1, 2, 94 },
 };
 
 CFATTACH_DECL_NEW(gtidmac_gt, sizeof(struct gtidmac_softc),
@@ -326,16 +336,20 @@ static int
 gtidmac_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
-	int i;
+	int unit, i;
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
+	unit = 0;
 	for (i = 0; i < __arraycount(channels); i++)
 		if (mva->mva_model == channels[i].model) {
-			mva->mva_size = GTIDMAC_SIZE;
-			return 1;
+			if (mva->mva_unit == unit) {
+				mva->mva_size = GTIDMAC_SIZE;
+				return 1;
+			}
+			unit++;
 		}
 	return 0;
 }
@@ -348,11 +362,15 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	struct marvell_attach_args *mva = aux;
 	prop_dictionary_t dict = device_properties(self);
 	uint32_t idmac_irq, xore_irq, dmb_speed;
-	int idmac_nchan, xore_nchan, nsegs, i, j, n;
+	int unit, idmac_nchan, xore_nchan, nsegs, i, j, n;
 
+	unit = 0;
 	for (i = 0; i < __arraycount(channels); i++)
-		if (mva->mva_model == channels[i].model)
-			break;
+		if (mva->mva_model == channels[i].model) {
+			if (mva->mva_unit == unit)
+				break;
+			unit++;
+		}
 	idmac_nchan = channels[i].idmac_nchan;
 	idmac_irq = channels[i].idmac_irq;
 	if (idmac_nchan != 0) {
