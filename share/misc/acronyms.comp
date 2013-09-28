@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.140 2013/09/28 17:58:53 dholland Exp $
+$NetBSD: acronyms.comp,v 1.141 2013/09/28 18:01:49 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -92,7 +92,7 @@ BAR	base address register
 BBS	bulletin board system
 BCC	blind carbon copy
 BCD	binary coded decimal
-BCR	byte counte register
+BCR	byte count register
 BCS	base configuration space
 BD	baud
 BDD	binary decision diagram
@@ -1046,7 +1046,7 @@ RTL	resistor-transistor logic
 RTL	right to left
 RTOS	real time operating system
 RTS	request to send
-RTT	round time trip
+RTT	round trip time
 RUP	rational unified process
 RWM	read-write memory
 RX	{receive,receiver}
@@ -1204,7 +1204,7 @@ TITS	try it to see
 TK	temporal key
 TKIP	Temporal Key Integrity Protocol
 TLA	top level aggregator
-TLB	transition lookaside buffer
+TLB	translation lookaside buffer
 TLD	top level domain
 TLS	thread local storage
 TLS	transport layer security
