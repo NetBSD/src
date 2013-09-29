@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/06 05:35:57 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2013/09/29 14:20:35 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -17,7 +17,7 @@ BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
-SHLIB_MAJOR=	5
+SHLIB_MAJOR=	6
 SHLIB_MINOR=	0
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
