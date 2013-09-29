@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2008
+   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2012
    Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -20,9 +20,9 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 #include "ansidecl.h"
-#include "sysdep.h"
 #include "dis-asm.h"
 #include "opintl.h"
 #include "opcode/s390.h"

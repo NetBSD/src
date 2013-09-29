@@ -1,6 +1,6 @@
 /* Disassemble SH instructions.
    Copyright 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007  Free Software Foundation, Inc.
+   2006, 2007, 2012  Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,8 +19,9 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include <stdio.h>
 #include "sysdep.h"
+#include <stdio.h>
+
 #define STATIC_TABLE
 #define DEFINE_TABLE
 
@@ -355,10 +356,10 @@ print_insn_ppi (int field_b, struct disassemble_info *info)
 		  print_dsp_reg (field_b & 0xf, fprintf_fn, stream);
 		  break;
 		case DSP_REG_X:
-		  fprintf_fn (stream, sx_tab[(field_b >> 6) & 3]);
+		  fprintf_fn (stream, "%s", sx_tab[(field_b >> 6) & 3]);
 		  break;
 		case DSP_REG_Y:
-		  fprintf_fn (stream, sy_tab[(field_b >> 4) & 3]);
+		  fprintf_fn (stream, "%s", sy_tab[(field_b >> 4) & 3]);
 		  break;
 		case A_MACH:
 		  fprintf_fn (stream, "mach");
