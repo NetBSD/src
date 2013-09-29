@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.199 2013/09/21 22:28:12 joerg Exp $
+# $NetBSD: md.amd64,v 1.200 2013/09/29 21:34:44 htodd Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1003,6 +1003,7 @@
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic
+
 ./usr/libdata/ldscripts/elf_i386.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xc		comp-util-bin		binutils
@@ -1016,6 +1017,19 @@
 ./usr/libdata/ldscripts/elf_i386.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.xw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils
