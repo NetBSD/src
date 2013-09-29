@@ -40,10 +40,11 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/zlib.m4 \
-	$(top_srcdir)/../bfd/warning.m4 \
+	$(top_srcdir)/../bfd/warning.m4 $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
 	$(top_srcdir)/../config/largefile.m4 \
+	$(top_srcdir)/../config/lcmessage.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/nls.m4 \
 	$(top_srcdir)/../config/override.m4 \
@@ -269,14 +270,16 @@ TEXI2DVI = texi2dvi -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
 		   -I "$(top_srcdir)/../bfd/doc" -I ../../bfd/doc
 
 CPU_DOCS = \
+	c-aarch64.texi \
 	c-alpha.texi \
 	c-arc.texi \
 	c-arm.texi \
 	c-avr.texi \
 	c-bfin.texi \
 	c-cr16.texi \
-	c-d10v.texi \
 	c-cris.texi \
+	c-d10v.texi \
+	c-epiphany.texi \
 	c-h8300.texi \
 	c-hppa.texi \
 	c-i370.texi \
@@ -298,6 +301,7 @@ CPU_DOCS = \
 	c-pdp11.texi \
 	c-pj.texi \
 	c-ppc.texi \
+	c-rl78.texi \
 	c-rx.texi \
 	c-s390.texi \
 	c-score.texi \
@@ -306,8 +310,12 @@ CPU_DOCS = \
 	c-sparc.texi \
         c-tic54x.texi \
         c-tic6x.texi \
+	c-tilegx.texi \
+	c-tilepro.texi \
 	c-vax.texi \
 	c-v850.texi \
+	c-xgate.texi \
+	c-xstormy16.texi \
 	c-xtensa.texi \
 	c-z80.texi \
 	c-z8k.texi
