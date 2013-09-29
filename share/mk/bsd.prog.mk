@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.284 2013/05/31 06:48:43 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.285 2013/09/29 14:36:25 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -271,6 +271,7 @@ LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 
 # Ugly one-offs
 LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
+LIBXCB=	${DESTDIR}${X11USRLIBDIR}/libxcb.a
 
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
