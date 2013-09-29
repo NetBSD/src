@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/09/02 14:34:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2013/09/29 12:11:59 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,11 @@ SUBDIR=	clang \
 .if ${MKLLD} != "no"
 SUBDIR+=	\
 	lld
+.endif
+
+.if ${MKLLDB} != "no"
+SUBDIR+=	\
+	lldb
 .endif
 
 .if ${MKMCLINKER} != "no"

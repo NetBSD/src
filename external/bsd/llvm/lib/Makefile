@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2013/09/02 14:34:55 joerg Exp $
+# $NetBSD: Makefile,v 1.34 2013/09/29 12:11:59 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -78,17 +78,23 @@ SUBDIR+= \
 	libLLVMX86TargetInfo \
 	libLLVMX86Utils
 
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && (${LLVM_DEVELOPER:U} == "yes" || ${MKLLDB} == "yes")
+SUBDIR+= \
+	libLLVMExecutionEngine \
+	libLLVMJIT \
+	libLLVMMCJIT \
+	libLLVMRuntimeDyld
+.endif
+
+
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libLLVMDebugInfo \
 	libLLVMCppBackend \
 	libLLVMCppBackendInfo \
-	libLLVMExecutionEngine \
 	libLLVMHello \
 	libLLVMInterpreter \
-	libLLVMJIT \
-	libLLVMMCJIT \
-	libLLVMRuntimeDyld
+	libLLVMLTO
 .endif
 
 SUBDIR+= \
@@ -157,6 +163,54 @@ SUBDIR+= \
 SUBDIR+= \
 	libMCLinkerX86CodeGen libMCLinkerX86TargetInfo
 
+.endif
+
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${MKLLDB} == "yes"
+SUBDIR+= \
+	liblldbAPI \
+	liblldbBreakpoint \
+	liblldbCommands \
+	liblldbCore \
+	liblldbDataFormatters \
+	liblldbExpression \
+	liblldbHostCommon \
+	liblldbHostNetBSD \
+	liblldbInterpreter \
+	liblldbLog \
+	liblldbPluginABIMacOSX_arm \
+	liblldbPluginABIMacOSX_i386 \
+	liblldbPluginABISysV_x86_64 \
+	liblldbPluginAppleObjCRuntime \
+	liblldbPluginCXXItaniumABI \
+	liblldbPluginDisassemblerLLVM \
+	liblldbPluginDynamicLoaderMacOSXDYLD \
+	liblldbPluginDynamicLoaderPosixDYLD \
+	liblldbPluginDynamicLoaderStatic \
+	liblldbPluginInstructionARM \
+	liblldbPluginObjectContainerBSDArchive \
+	liblldbPluginObjectContainerMachOArchive \
+	liblldbPluginObjectFileELF \
+	liblldbPluginObjectFileMachO \
+	liblldbPluginObjectFilePECOFF \
+	liblldbPluginPlatformNetBSD \
+	liblldbPluginPlatformGDB \
+	liblldbPluginPlatformLinux \
+	liblldbPluginPlatformMacOSX \
+	liblldbPluginPlatformPOSIX \
+	liblldbPluginProcessElfCore \
+	liblldbPluginProcessNetBSD \
+	liblldbPluginProcessGDBRemote \
+	liblldbPluginProcessMachCore \
+	liblldbPluginProcessPOSIX \
+	liblldbPluginProcessUtility \
+	liblldbPluginSymbolFileDWARF \
+	liblldbPluginSymbolFileSymtab \
+	liblldbPluginSymbolVendorELF \
+	liblldbPluginUnwindAssemblyInstEmulation \
+	liblldbPluginUnwindAssemblyX86 \
+	liblldbSymbol \
+	liblldbTarget \
+	liblldbUtility
 .endif
 
 .include <bsd.subdir.mk>
