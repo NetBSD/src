@@ -3644,7 +3644,7 @@ trap_zero_jump (struct mips_cl_insn * ip)
       if (mips_opts.warn_about_macros)
         return;
 
-      sreg = EXTRACT_OPERAND (RS, *ip);
+      sreg = EXTRACT_OPERAND (0, RS, *ip);
       if (mips_opts.isa == ISA_MIPS32
           || mips_opts.isa == ISA_MIPS32R2
           || mips_opts.isa == ISA_MIPS64
