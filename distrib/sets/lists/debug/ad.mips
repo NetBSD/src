@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.7 2013/08/28 19:04:12 riastradh Exp $
+# $NetBSD: ad.mips,v 1.8 2013/09/29 14:03:37 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-proflib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
@@ -149,7 +149,7 @@
 ./usr/libdata/debug/usr/lib/64/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
 ./usr/libdata/debug/usr/lib/64/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat,arch64
@@ -236,7 +236,7 @@
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.7.0.debug	comp-bind-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
@@ -320,7 +320,7 @@
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
 ./usr/libdata/debug/usr/lib/o32/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat,arch64
