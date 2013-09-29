@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1849 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1850 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -283,3 +283,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		sensor. [rkujawa 20130908]
 	dhcpcd(8): Import dhcpcd-6.1.0 [roy 20130920]
 	postfix(1): Import version 2.10.2 [tron 20130925]
+	binutils: updated to FSF binutils 2.23.2.  [christos 20130929]
