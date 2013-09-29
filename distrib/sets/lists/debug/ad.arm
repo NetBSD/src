@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.12 2013/08/28 19:04:12 riastradh Exp $
+# $NetBSD: ad.arm,v 1.13 2013/09/29 14:03:37 christos Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -58,7 +58,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libbfd.so.13.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbind9.so.7.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
@@ -144,7 +144,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libpam.so.4.0.debug		comp-sys-debug	pam,debug,compat
