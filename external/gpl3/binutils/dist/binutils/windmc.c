@@ -1,5 +1,5 @@
 /* windmc.c -- a program to compile Windows message files.
-   Copyright 2007, 2008, 2009
+   Copyright 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Written by Kai Tietz, Onevision.
 
@@ -187,7 +187,7 @@ mc_create_path_text_file (const char *path, const char *ext)
   sprintf (hsz, "%s%s%s", (path != NULL ? path : ""), mcset_mc_basename,
     (ext != NULL ? ext : ""));
   if ((ret = fopen (hsz, "wb")) == NULL)
-    fatal (_("can't create %s file ,%s' for output.\n"), (ext ? ext : "text"), hsz);
+    fatal (_("can't create %s file `%s' for output.\n"), (ext ? ext : "text"), hsz);
   free (hsz);
   return ret;
 }
@@ -205,7 +205,7 @@ usage (FILE *stream, int status)
   -C --codepage_in=<val>       Set codepage when reading mc text file\n\
   -d --decimal_values          Print values to text files decimal\n\
   -e --extension=<extension>   Set header extension used on export header file\n\
-  -F --target <target>         Specify output target for endianess.\n\
+  -F --target <target>         Specify output target for endianness.\n\
   -h --headerdir=<directory>   Set the export directory for headers\n\
   -u --unicode_in              Read input file as UTF16 file\n\
   -U --unicode_out             Write binary messages as UFT16\n\
@@ -231,7 +231,7 @@ usage (FILE *stream, int status)
 }
 
 static void
-set_endianess (bfd *abfd, const char *target)
+set_endianness (bfd *abfd, const char *target)
 {
   const bfd_target *target_vec;
 
@@ -239,7 +239,7 @@ set_endianess (bfd *abfd, const char *target)
   target_vec = bfd_get_target_info (target, abfd, &target_is_bigendian, NULL,
 				   &def_target_arch);
   if (! target_vec)
-    fatal ("Can't detect target endianess and architecture.");
+    fatal ("Can't detect target endianness and architecture.");
   if (! def_target_arch)
     fatal ("Can't detect architecture.");
 }
@@ -259,7 +259,7 @@ probe_codepage (rc_uint_type *cp, int *is_uni, const char *pswitch, int defmode)
       if (*cp != 0 && *cp != CP_UTF16)
 	{
 	  fprintf (stderr, _("%s: warning: "), program_name);
-	  fprintf (stderr, _("A codepage was specified switch ,%s' and UTF16.\n"), pswitch);
+	  fprintf (stderr, _("A codepage was specified switch `%s' and UTF16.\n"), pswitch);
 	  fprintf (stderr, _("\tcodepage settings are ignored.\n"));
 	}
       *cp = CP_UTF16;
@@ -1054,7 +1054,7 @@ main (int argc, char **argv)
       ++optind;
     }
 
-  set_endianess (NULL, target);
+  set_endianness (NULL, target);
 
   if (input_filename == NULL)
     {
@@ -1113,7 +1113,7 @@ main (int argc, char **argv)
     FILE *fp = fopen (input_filename, "rb");
 
     if (!fp)
-      fatal (_("unable to open file ,%s' for input.\n"), input_filename);
+      fatal (_("unable to open file `%s' for input.\n"), input_filename);
 
     fseek (fp, 0, SEEK_END);
     flen = ftell (fp);

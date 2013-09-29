@@ -1,6 +1,6 @@
 # Basic expect script for LD Regression Tests
 #   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003, 2005, 2007, 2009
-#   Free Software Foundation, Inc.
+#   2011, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -67,6 +67,7 @@ set gcc_gas_flag "-B[pwd]/tmpdir/gas/"
 if {![file isdirectory tmpdir/ld]} then {
     catch "exec mkdir tmpdir/ld" status
     catch "exec ln -s ../../ld-new tmpdir/ld/ld" status
+    catch "exec ln -s ld tmpdir/ld/collect-ld" status
 }
 set gcc_ld_flag "-B[pwd]/tmpdir/ld/"
 
@@ -205,7 +206,15 @@ proc ld_compile { cc source object } {
 #	assemble a file
 #
 proc ld_assemble { as source object } {
-	default_ld_assemble $as $source $object 
+	default_ld_assemble $as "" $source $object 
+}
+
+#
+# ld_assemble_flags
+#	assemble a file with extra flags
+#
+proc ld_assemble_flags { as flags source object } {
+	default_ld_assemble $as $flags $source $object 
 }
 
 #

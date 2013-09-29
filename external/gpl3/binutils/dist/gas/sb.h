@@ -1,5 +1,5 @@
 /* sb.h - header file for string buffer manipulation routines
-   Copyright 1994, 1995, 2000, 2003, 2005, 2006, 2007
+   Copyright 1994, 1995, 2000, 2003, 2005, 2006, 2007, 2012
    Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
@@ -42,43 +42,28 @@
    Obstacks provide all the functionality needed, but are too
    complicated, hence the sb.
 
-   An sb is allocated by the caller, and is initialized to point to an
-   sb_element.  sb_elements are kept on a free lists, and used when
-   needed, replaced onto the free list when unused.  */
-
-#define sb_max_power_two    30	/* Don't allow strings more than
-			           2^sb_max_power_two long.  */
+   An sb is allocated by the caller.  */
 
 typedef struct sb
 {
   char *ptr;			/* Points to the current block.  */
-  int len;			/* How much is used.  */
-  int pot;			/* The maximum length is 1<<pot.  */
-  struct le *item;
+  size_t len;			/* How much is used.  */
+  size_t max;			/* The maximum length.  */
 }
 sb;
 
-/* Structure of the free list object of a string block.  */
-
-typedef struct le
-{
-  struct le *next;
-  int size;
-  char data[1];
-}
-sb_element;
-
 extern void sb_new (sb *);
+extern void sb_build (sb *, size_t);
 extern void sb_kill (sb *);
 extern void sb_add_sb (sb *, sb *);
 extern void sb_scrub_and_add_sb (sb *, sb *);
 extern void sb_reset (sb *);
-extern void sb_add_char (sb *, int);
+extern void sb_add_char (sb *, size_t);
 extern void sb_add_string (sb *, const char *);
-extern void sb_add_buffer (sb *, const char *, int);
+extern void sb_add_buffer (sb *, const char *, size_t);
 extern char *sb_terminate (sb *);
-extern int sb_skip_white (int, sb *);
-extern int sb_skip_comma (int, sb *);
+extern size_t sb_skip_white (size_t, sb *);
+extern size_t sb_skip_comma (size_t, sb *);
 
 /* Actually in input-scrub.c.  */
 extern void input_scrub_include_sb (sb *, char *, int);

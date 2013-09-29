@@ -2,20 +2,25 @@
 # Copyright © 2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 # Clytie Siddall <clytie@riverland.net.au>, 2010.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gold 2.20.1\n"
+"Project-Id-Version: gold-2.22.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
 "POT-Creation-Date: 2010-03-03 15:08+0100\n"
-"PO-Revision-Date: 2010-04-22 22:29+0930\n"
-"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
-"Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
+"PO-Revision-Date: 2012-07-28 13:41+0700\n"
+"Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
+"Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
+"Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: LocFactoryEditor 1.8\n"
+"X-Poedit-Language: Vietnamese\n"
+"X-Poedit-Country: VIET NAM\n"
+"X-Poedit-SourceCharset: utf-8\n"
 
 #: archive.cc:119
 #, c-format
@@ -89,7 +94,7 @@ msgstr "%s: sự định vị lại không được hỗ trợ %u so với ký h
 
 #: arm.cc:1404 powerpc.cc:1105 sparc.cc:1592 x86_64.cc:992
 msgid "requires unsupported dynamic reloc; recompile with -fPIC"
-msgstr "yêu cầu sự định vị lại động không được hỗ trợ — hãy biên dịch lại với các tuỳ chọn « -fPIC »"
+msgstr "yêu cầu sự định vị lại động không được hỗ trợ — hãy biên dịch lại với các tuỳ chọn \"-fPIC\""
 
 #. These are relocations which should only be seen by the
 #. dynamic linker, and should never be seen here.
@@ -113,27 +118,27 @@ msgstr "%s: phần định vị lại RELA không được hỗ trợ"
 
 #: arm.cc:2047
 msgid "relocation R_ARM_MOVW_ABS_NC cannot be used when makinga shared object; recompile with -fPIC"
-msgstr "sự định vị lại « R_ARM_MOVW_ABS_NC » không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với « -fPIC »"
+msgstr "sự định vị lại \"R_ARM_MOVW_ABS_NC\" không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với \"-fPIC\""
 
 #: arm.cc:2056
 msgid "relocation R_ARM_MOVT_ABS cannot be used when makinga shared object; recompile with -fPIC"
-msgstr "sự định vị lại « R_ARM_MOVT_ABS » không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với « -fPIC »"
+msgstr "sự định vị lại \"R_ARM_MOVT_ABS\" không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với \"-fPIC\""
 
 #: arm.cc:2067
 msgid "relocation R_ARM_THM_MOVW_ABS_NC cannot be used whenmaking a shared object; recompile with -fPIC"
-msgstr "sự định vị lại « R_ARM_THM_MOVW_ABS_NC » không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với « -fPIC »"
+msgstr "sự định vị lại \"R_ARM_THM_MOVW_ABS_NC\" không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với \"-fPIC\""
 
 #: arm.cc:2077
 msgid "relocation R_ARM_THM_MOVT_ABS cannot be used whenmaking a shared object; recompile with -fPIC"
-msgstr "sự định vị lại « R_ARM_THM_MOVT_ABS » không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với « -fPIC »"
+msgstr "sự định vị lại \"R_ARM_THM_MOVT_ABS\" không thể sử dụng được khi tạo một đối tượng dùng chung: hãy biên dịch lại với \"-fPIC\""
 
 #: arm.cc:2141
 msgid "cannot find origin of R_ARM_BASE_PREL"
-msgstr "không tìm thấy gốc của « R_ARM_BASE_PREL »"
+msgstr "không tìm thấy gốc của \"R_ARM_BASE_PREL\""
 
 #: arm.cc:2169
 msgid "cannot find origin of R_ARM_BASE_ABS"
-msgstr "không tìm thấy gốc của « R_ARM_BASE_ABS »"
+msgstr "không tìm thấy gốc của \"R_ARM_BASE_ABS\""
 
 #: arm.cc:2230 i386.cc:1820 i386.cc:2521 powerpc.cc:1798 sparc.cc:2711
 #: x86_64.cc:1935 x86_64.cc:2518
@@ -180,7 +185,7 @@ msgstr "không thể mở tập tin đếm ký hiệu %s: %s"
 #: descriptors.cc:116
 #, c-format
 msgid "file %s was removed during the link"
-msgstr "tập tin « %s » bị gỡ bỏ trong khi liên kết"
+msgstr "tập tin \"%s\" bị gỡ bỏ trong khi liên kết"
 
 #: descriptors.cc:169
 msgid "out of file descriptors and couldn't close any"
@@ -223,16 +228,16 @@ msgstr "liên kết phần ĐỘNG %u %u không phải strtab"
 #: dynobj.cc:273
 #, c-format
 msgid "DT_SONAME value out of range: %lld >= %lld"
-msgstr "giá trị « DT_SONAME » ở ngoại phạm vi: %lld ≥ %lld"
+msgstr "giá trị \"DT_SONAME\" ở ngoại phạm vi: %lld ≥ %lld"
 
 #: dynobj.cc:285
 #, c-format
 msgid "DT_NEEDED value out of range: %lld >= %lld"
-msgstr "giá trị « DT_NEEDED » ở ngoại phạm vi: %lld ≥ %lld"
+msgstr "giá trị \"DT_NEEDED\" ở ngoại phạm vi: %lld ≥ %lld"
 
 #: dynobj.cc:298
 msgid "missing DT_NULL in dynamic segment"
-msgstr "thiếu « DT_NULL » trong phân đoạn động"
+msgstr "thiếu \"DT_NULL\" trong phân đoạn động"
 
 #: dynobj.cc:344
 #, c-format
@@ -262,22 +267,22 @@ msgstr "gặp phiên bản verdef không mong đợi %u"
 #: dynobj.cc:513
 #, c-format
 msgid "verdef vd_cnt field too small: %u"
-msgstr "trường « vd_cnt » verdef quá nhỏ : %u"
+msgstr "trường \"vd_cnt\" verdef quá nhỏ : %u"
 
 #: dynobj.cc:521
 #, c-format
 msgid "verdef vd_aux field out of range: %u"
-msgstr "trường « vd_aux » verdef ở ngoại phạm vi: %u"
+msgstr "trường \"vd_aux\" verdef ở ngoại phạm vi: %u"
 
 #: dynobj.cc:532
 #, c-format
 msgid "verdaux vda_name field out of range: %u"
-msgstr "trường « vda_name » verdef ở ngoại phạm vi: %u"
+msgstr "trường \"vda_name\" verdef ở ngoại phạm vi: %u"
 
 #: dynobj.cc:542
 #, c-format
 msgid "verdef vd_next field out of range: %u"
-msgstr "trường « vd_next » verdef ở ngoại phạm vi: %u"
+msgstr "trường \"vd_next\" verdef ở ngoại phạm vi: %u"
 
 #: dynobj.cc:576
 #, c-format
@@ -287,22 +292,22 @@ msgstr "gặp phiên bản verneed không mong đợi %u"
 #: dynobj.cc:585
 #, c-format
 msgid "verneed vn_aux field out of range: %u"
-msgstr "trường « vn_aux » verneed ở ngoại phạm vi: %u"
+msgstr "trường \"vn_aux\" verneed ở ngoại phạm vi: %u"
 
 #: dynobj.cc:599
 #, c-format
 msgid "vernaux vna_name field out of range: %u"
-msgstr "trường « vna_name » vernaux ở ngoại phạm vi: %u"
+msgstr "trường \"vna_name\" vernaux ở ngoại phạm vi: %u"
 
 #: dynobj.cc:610
 #, c-format
 msgid "verneed vna_next field out of range: %u"
-msgstr "trường « vna_next » verneed ở ngoại phạm vi: %u"
+msgstr "trường \"vna_next\" verneed ở ngoại phạm vi: %u"
 
 #: dynobj.cc:621
 #, c-format
 msgid "verneed vn_next field out of range: %u"
-msgstr "trường « vn_next » verneed ở ngoại phạm vi: %u"
+msgstr "trường \"vn_next\" verneed ở ngoại phạm vi: %u"
 
 #: dynobj.cc:670
 msgid "size of dynamic symbols is not multiple of symbol size"
@@ -349,12 +354,12 @@ msgstr "%s: %s: cảnh báo : "
 #: errors.cc:167
 #, c-format
 msgid "%s: %s: error: undefined reference to '%s'\n"
-msgstr "%s: %s: lỗi: tham chiếu chưa xác định đến « %s »\n"
+msgstr "%s: %s: lỗi: tham chiếu chưa xác định đến \"%s\"\n"
 
 #: errors.cc:172
 #, c-format
 msgid "%s: %s: error: undefined reference to '%s', version '%s'\n"
-msgstr "%s: %s: lỗi: tham chiếu chưa xác định đến « %s », phiên bản « %s »\n"
+msgstr "%s: %s: lỗi: tham chiếu chưa xác định đến \"%s\", phiên bản \"%s\"\n"
 
 #: errors.cc:182
 #, c-format
@@ -364,7 +369,7 @@ msgstr "%s: "
 #: expression.cc:172
 #, c-format
 msgid "undefined symbol '%s' referenced in expression"
-msgstr "ký hiệu chưa xác định « %s » được tham chiếu trong biểu thức"
+msgstr "ký hiệu chưa xác định \"%s\" được tham chiếu trong biểu thức"
 
 #: expression.cc:209
 msgid "invalid reference to dot symbol outside of SECTIONS clause"
@@ -411,15 +416,15 @@ msgstr "không rõ hằng số %s"
 
 #: expression.cc:1126
 msgid "SEGMENT_START not implemented"
-msgstr "« SEGMENT_START » (đầu đoạn) chưa được thực hiện"
+msgstr "\"SEGMENT_START\" (đầu đoạn) chưa được thực hiện"
 
 #: expression.cc:1135
 msgid "ORIGIN not implemented"
-msgstr "« ORIGIN » (gốc) chưa được thực hiện"
+msgstr "\"ORIGIN\" (gốc) chưa được thực hiện"
 
 #: expression.cc:1141
 msgid "LENGTH not implemented"
-msgstr "« LENGTH » (chiều dài) chưa được thực hiện"
+msgstr "\"LENGTH\" (chiều dài) chưa được thực hiện"
 
 #: fileread.cc:65
 #, c-format
@@ -577,17 +582,17 @@ msgstr "không có tập tin nhập vào"
 
 #: gold.cc:226
 msgid "cannot mix -r with --gc-sections or --icf"
-msgstr "không thể kết hợp tuỳ chọn « -r » với « --gc-sections », cũng không thể kết hợp nó với « --icf »"
+msgstr "không thể kết hợp tuỳ chọn \"-r\" với \"--gc-sections\", cũng không thể kết hợp nó với \"--icf\""
 
 #: gold.cc:407
 #, c-format
 msgid "cannot mix -static with dynamic object %s"
-msgstr "không thể kết hợp tuỳ chọn « -static » (tĩnh) với đối tượng động %s"
+msgstr "không thể kết hợp tuỳ chọn \"-static\" (tĩnh) với đối tượng động %s"
 
 #: gold.cc:411
 #, c-format
 msgid "cannot mix -r with dynamic object %s"
-msgstr "không thể kết hợp tuỳ chọn « -r » với đối tượng động %s"
+msgstr "không thể kết hợp tuỳ chọn \"-r\" với đối tượng động %s"
 
 #: gold.cc:415
 #, c-format
@@ -597,7 +602,7 @@ msgstr "không thể sử dụng định dạng kết xuất khác ELF với đ�
 #: gold.cc:427
 #, c-format
 msgid "cannot mix split-stack '%s' and non-split-stack '%s' when using -r"
-msgstr "không thể kết hợp đống chia ra « %s » và đống không chia ra « %s » khi sử dụng tuỳ chọn « -r »"
+msgstr "không thể kết hợp đống chia ra \"%s\" và đống không chia ra \"%s\" khi sử dụng tuỳ chọn \"-r\""
 
 #. FIXME: This needs to specify the location somehow.
 #: i386.cc:232 i386.cc:1669 sparc.cc:234 sparc.cc:2395 x86_64.cc:237
@@ -703,12 +708,12 @@ msgstr "/dev/urandom: mong đợi %zu byte, còn nhận %zd byte"
 #: layout.cc:1918
 #, c-format
 msgid "--build-id argument '%s' not a valid hex number"
-msgstr "đối số mã số xây dựng «--build-id » « %s » không phải một số thập lục đúng"
+msgstr "đối số mã số xây dựng «--build-id\" \"%s\" không phải một số thập lục đúng"
 
 #: layout.cc:1924
 #, c-format
 msgid "unrecognized --build-id argument '%s'"
-msgstr "không nhận ra đối số mã số xây dựng «--build-id » « %s »"
+msgstr "không nhận ra đối số mã số xây dựng «--build-id\" \"%s\""
 
 #: layout.cc:2337
 #, c-format
@@ -786,7 +791,7 @@ msgstr "chiều dài phần chuỗi có thể gộp lại không phải là bộ
 #: merge.cc:494
 #, c-format
 msgid "%s: last entry in mergeable string section '%s' not null terminated"
-msgstr "%s: phần chuỗi có thể gộp lại chứa mục nhập cuối cùng « %s » không phải chấm dứt vô giá trị"
+msgstr "%s: phần chuỗi có thể gộp lại chứa mục nhập cuối cùng \"%s\" không phải chấm dứt vô giá trị"
 
 #: merge.cc:613
 #, c-format
@@ -803,12 +808,12 @@ msgstr "** chuỗi gộp lại"
 
 #: object.cc:75
 msgid "missing SHT_SYMTAB_SHNDX section"
-msgstr "thiếu phần « SHT_SYMTAB_SHNDX »"
+msgstr "thiếu phần \"SHT_SYMTAB_SHNDX\""
 
 #: object.cc:119
 #, c-format
 msgid "symbol %u out of range for SHT_SYMTAB_SHNDX section"
-msgstr "ký hiệu %u ở ngoại phạm vi cho phần « SHT_SYMTAB_SHNDX »"
+msgstr "ký hiệu %u ở ngoại phạm vi cho phần \"SHT_SYMTAB_SHNDX\""
 
 #: object.cc:126
 #, c-format
@@ -868,12 +873,12 @@ msgstr "phần định vị lại %u có thông tin sai %u"
 #: object.cc:1231
 #, c-format
 msgid "%s: removing unused section from '%s' in file '%s'"
-msgstr "%s: đang gỡ bỏ phần không dùng khỏi « %s » trong tập tin « %s »"
+msgstr "%s: đang gỡ bỏ phần không dùng khỏi \"%s\" trong tập tin \"%s\""
 
 #: object.cc:1257
 #, c-format
 msgid "%s: ICF folding section '%s' in file '%s'into '%s' in file '%s'"
-msgstr "%s: ICF đang gấp phần « %s » trong tập tin « %s » vào « %s » trong tập tin « %s »"
+msgstr "%s: ICF đang gấp phần \"%s\" trong tập tin \"%s\" vào \"%s\" trong tập tin \"%s\""
 
 #: object.cc:1454
 msgid "size of symbols is not multiple of symbol size"
@@ -993,12 +998,12 @@ msgstr "không thể phân tích cú pháp của tập tin văn lệnh danh sác
 #: options.cc:522
 #, c-format
 msgid "format '%s' not supported; treating as elf (supported formats: elf, binary)"
-msgstr "định dạng « %s » không được hỗ trợ nên xử lý như là ELF (định dạng được hỗ trợ : elf, nhị phân)"
+msgstr "định dạng \"%s\" không được hỗ trợ nên xử lý như là ELF (định dạng được hỗ trợ : elf, nhị phân)"
 
 #: options.cc:538
 #, c-format
 msgid "%s: use the --help option for usage information\n"
-msgstr "%s: hãy sử dụng tùy chọn trợ giúp « --help » để xem thông tin về cách sử dụng\n"
+msgstr "%s: hãy sử dụng tùy chọn trợ giúp \"--help\" để xem thông tin về cách sử dụng\n"
 
 #: options.cc:547
 #, c-format
@@ -1015,17 +1020,17 @@ msgstr "thiếu đối số"
 
 #: options.cc:736
 msgid "unknown -z option"
-msgstr "tùy chọn không rõ « -z »"
+msgstr "tùy chọn không rõ \"-z\""
 
 #: options.cc:935
 #, c-format
 msgid "ignoring --threads: %s was compiled without thread support"
-msgstr "đang bỏ qua tuỳ chọn « --threads »: %s đã được biên dịch mà không hỗ trợ nhánh"
+msgstr "đang bỏ qua tuỳ chọn \"--threads\": %s đã được biên dịch mà không hỗ trợ nhánh"
 
 #: options.cc:942
 #, c-format
 msgid "ignoring --thread-count: %s was compiled without thread support"
-msgstr "đang bỏ qua tuỳ chọn « --thread-count »: %s đã được biên dịch mà không hỗ trợ nhánh"
+msgstr "đang bỏ qua tuỳ chọn \"--thread-count\": %s đã được biên dịch mà không hỗ trợ nhánh"
 
 #: options.cc:981
 #, c-format
@@ -1034,32 +1039,32 @@ msgstr "không thể mở tập tin giữ lại ký hiệu (-retain-symbols-file
 
 #: options.cc:1003
 msgid "-shared and -static are incompatible"
-msgstr "hai tùy chọn « -shared » (dùng chung) và « -static » (tĩnh) không tương thích với nhau"
+msgstr "hai tùy chọn \"-shared\" (dùng chung) và \"-static\" (tĩnh) không tương thích với nhau"
 
 #: options.cc:1005
 msgid "-shared and -pie are incompatible"
-msgstr "hai tùy chọn « -shared » (dùng chung) và « -pie » không tương thích với nhau"
+msgstr "hai tùy chọn \"-shared\" (dùng chung) và \"-pie\" không tương thích với nhau"
 
 #: options.cc:1008
 msgid "-shared and -r are incompatible"
-msgstr "hai tùy chọn « -shared » (dùng chung) và « -r » không tương thích với nhau"
+msgstr "hai tùy chọn \"-shared\" (dùng chung) và \"-r\" không tương thích với nhau"
 
 #: options.cc:1010
 msgid "-pie and -r are incompatible"
-msgstr "hai tùy chọn « -pie » và « -r » không tương thích với nhau"
+msgstr "hai tùy chọn \"-pie\" và \"-r\" không tương thích với nhau"
 
 #: options.cc:1014
 msgid "-retain-symbols-file does not yet work with -r"
-msgstr "tuỳ chọn « -retain-symbols-file » chưa hoạt động cùng với « -r »"
+msgstr "tuỳ chọn \"-retain-symbols-file\" chưa hoạt động cùng với \"-r\""
 
 #: options.cc:1020
 msgid "binary output format not compatible with -shared or -pie or -r"
-msgstr "định dạng kết xuất nhị phân không tương thích với tuỳ chọn « -shared » (dùng chung) hoặc « -pie » hoặc « -r »"
+msgstr "định dạng kết xuất nhị phân không tương thích với tuỳ chọn \"-shared\" (dùng chung) hoặc \"-pie\" hoặc \"-r\""
 
 #: options.cc:1026
 #, c-format
 msgid "--hash-bucket-empty-fraction value %g out of range [0.0, 1.0)"
-msgstr "giá trị « --hash-bucket-empty-fraction » %g ở ngoại phạm vi [0.0, 1.0)"
+msgstr "giá trị \"--hash-bucket-empty-fraction\" %g ở ngoại phạm vi [0.0, 1.0)"
 
 #: options.cc:1031
 msgid "Options --incremental-changed, --incremental-unchanged, --incremental-unknown require the use of --incremental"
@@ -1068,7 +1073,7 @@ msgstr ""
 " --incremental-changed (dần thay đổi)\n"
 " --incremental-unchanged (dần không thay đổi)\n"
 " --incremental-unknown (dần không rõ)\n"
-"thì yêu cầu lập tuỳ chọn « --incremental » (dần)."
+"thì yêu cầu lập tuỳ chọn \"--incremental\" (dần)."
 
 #: options.cc:1097
 msgid "May not nest groups"
@@ -1106,7 +1111,7 @@ msgstr "Không được hỗ trợ"
 
 #: options.h:585 options.h:636
 msgid "Do not copy DT_NEEDED tags from shared libraries"
-msgstr "Đừng sao chép thẻ « DT_NEEDED » từ thư viện dùng chung"
+msgstr "Đừng sao chép thẻ \"DT_NEEDED\" từ thư viện dùng chung"
 
 #: options.h:588
 msgid "Allow unresolved references in shared libraries"
@@ -1118,11 +1123,11 @@ msgstr "Đừng cho phép tham chiếu chưa tháo gỡ trong thư viện dùng 
 
 #: options.h:592
 msgid "Only set DT_NEEDED for shared libraries if used"
-msgstr "Chỉ lập thẻ « DT_NEEDED » cho thư viện dùng chung (nếu dùng)"
+msgstr "Chỉ lập thẻ \"DT_NEEDED\" cho thư viện dùng chung (nếu dùng)"
 
 #: options.h:593
 msgid "Always DT_NEEDED for shared libraries"
-msgstr "Lúc nào cũng lập thẻ « DT_NEEDED » cho thư viện dùng chung"
+msgstr "Lúc nào cũng lập thẻ \"DT_NEEDED\" cho thư viện dùng chung"
 
 #: options.h:600
 msgid "Set input format"
@@ -1130,11 +1135,11 @@ msgstr "Lập định dạng đầu vào"
 
 #: options.h:603
 msgid "-l searches for shared libraries"
-msgstr "tuỳ chọn « -l » tìm kiếm thư viện dùng chung"
+msgstr "tuỳ chọn \"-l\" tìm kiếm thư viện dùng chung"
 
 #: options.h:605
 msgid "-l does not search for shared libraries"
-msgstr "tuỳ chọn « -l » không tìm kiếm thư viện dùng chung"
+msgstr "tuỳ chọn \"-l\" không tìm kiếm thư viện dùng chung"
 
 #: options.h:609
 msgid "Bind defined symbols locally"
@@ -1162,7 +1167,7 @@ msgstr "Đừng kiểm tra địa chỉ phần có chồng chéo"
 
 #: options.h:624 options.h:629
 msgid "Compress .debug_* sections in the output file"
-msgstr "Nén phần « .debug_* » trong tập tin kết xuất"
+msgstr "Nén phần \".debug_*\" trong tập tin kết xuất"
 
 #: options.h:630
 msgid "[none]"
@@ -1178,7 +1183,7 @@ msgstr "Đừng xác định các ký hiệu chung"
 
 #: options.h:642 options.h:644
 msgid "Alias for -d"
-msgstr "Bí danh cho « -d »"
+msgstr "Bí danh cho \"-d\""
 
 #: options.h:647
 msgid "Turn on debugging"
@@ -1392,11 +1397,11 @@ msgstr "Chỉnh canh dữ liệu theo trang, đặt văn bản là chỉ-đọc"
 
 #: options.h:755
 msgid "Enable use of DT_RUNPATH and DT_FLAGS"
-msgstr "Bật sử dụng « DT_RUNPATH » và « DT_FLAGS »"
+msgstr "Bật sử dụng \"DT_RUNPATH\" và \"DT_FLAGS\""
 
 #: options.h:756
 msgid "Disable use of DT_RUNPATH and DT_FLAGS"
-msgstr "Tắt sử dụng « DT_RUNPATH » và « DT_FLAGS »"
+msgstr "Tắt sử dụng \"DT_RUNPATH\" và \"DT_FLAGS\""
 
 #: options.h:759
 msgid "Create an output file even if errors occur"
@@ -1404,7 +1409,7 @@ msgstr "Tạo tập tin kết xuất thậm chí nếu gặp lỗi"
 
 #: options.h:762 options.h:958
 msgid "Report undefined symbols (even with --shared)"
-msgstr "Thông báo ký hiệu chưa xác định (ngay cả khi lập tuỳ chọn « --shared »)"
+msgstr "Thông báo ký hiệu chưa xác định (ngay cả khi lập tuỳ chọn \"--shared\")"
 
 #: options.h:766
 msgid "Set output file name"
@@ -1524,7 +1529,7 @@ msgstr "Tạo thư viện dùng chung"
 
 #: options.h:851
 msgid "Stack size when -fsplit-stack function calls non-split"
-msgstr "Kích cỡ đống khi hàm « -fsplit-stack » gọi « non-split »"
+msgstr "Kích cỡ đống khi hàm \"-fsplit-stack\" gọi \"non-split\""
 
 #: options.h:857
 msgid "Do not link against shared libraries"
@@ -1532,7 +1537,7 @@ msgstr "Đừng liên kết so với thư viện dùng chung"
 
 #: options.h:860
 msgid "Identical Code Folding. '--icf=safe' folds only ctors and dtors."
-msgstr "ICF = gấp lại mã trùng. « --icf-safe » chỉ gấp lại các ctor và dtor."
+msgstr "ICF = gấp lại mã trùng. \"--icf-safe\" chỉ gấp lại các ctor và dtor."
 
 #: options.h:866
 msgid "Number of iterations of ICF (default 2)"
@@ -1612,15 +1617,15 @@ msgstr "Số các nhánh cần dùng trong lần đi qua cuối cùng"
 
 #: options.h:908
 msgid "Set the address of the bss segment"
-msgstr "Đặt địa chỉ của đoạn « bss »"
+msgstr "Đặt địa chỉ của đoạn \"bss\""
 
 #: options.h:910
 msgid "Set the address of the data segment"
-msgstr "Đặt địa chỉ của đoạn « data » (dữ liệu)"
+msgstr "Đặt địa chỉ của đoạn \"data\" (dữ liệu)"
 
 #: options.h:912
 msgid "Set the address of the text segment"
-msgstr "Đặt địa chỉ của đoạn « text » (văn bản)"
+msgstr "Đặt địa chỉ của đoạn \"text\" (văn bản)"
 
 #: options.h:915
 msgid "Create undefined reference to SYMBOL"
@@ -1628,7 +1633,7 @@ msgstr "Tạo tham chiếu chưa xác định đến ký hiệu này"
 
 #: options.h:918
 msgid "Synonym for --debug=files"
-msgstr "Bằng « --debug=files »"
+msgstr "Bằng \"--debug=files\""
 
 #: options.h:921
 msgid "Read version script"
@@ -1765,7 +1770,7 @@ msgstr "nhóm phần được giữ lại còn phần tử nhóm bị hủy"
 #: output.cc:1860
 #, c-format
 msgid "invalid alignment %lu for section \"%s\""
-msgstr "sai chỉnh canh %lu cho phần « %s »"
+msgstr "sai chỉnh canh %lu cho phần \"%s\""
 
 #: output.cc:3573
 #, c-format
@@ -1775,12 +1780,12 @@ msgstr "chấm đi ngược trong văn lệnh liên kết từ 0x%llx về 0x%ll
 #: output.cc:3576
 #, c-format
 msgid "address of section '%s' moves backward from 0x%llx to 0x%llx"
-msgstr "địa chỉ của phần « %s » đi ngược từ 0x%llx về 0x%llx"
+msgstr "địa chỉ của phần \"%s\" đi ngược từ 0x%llx về 0x%llx"
 
 #: output.cc:3755
 #, c-format
 msgid "nobits section %s may not precede progbits section %s in same segment"
-msgstr "phần « nobits » %s có thể không phải đi trước phần « progbits » %s trong cùng một đoạn"
+msgstr "phần \"nobits\" %s có thể không phải đi trước phần \"progbits\" %s trong cùng một đoạn"
 
 #: output.cc:3907 output.cc:3975
 #, c-format
@@ -1903,7 +1908,7 @@ msgstr "%s: không phải một đối tượng hay kho lưu"
 
 #: reduced_debug_output.cc:236
 msgid "Debug abbreviations extend beyond .debug_abbrev section; failed to reduce debug abbreviations"
-msgstr "Viết tắt gỡ lỗi kéo dài qua phần « .debug_abbrev »: không giảm được viết tắt gỡ lỗi"
+msgstr "Viết tắt gỡ lỗi kéo dài qua phần \".debug_abbrev\": không giảm được viết tắt gỡ lỗi"
 
 #: reduced_debug_output.cc:322
 msgid "Extremely large compile unit in debug info; failed to reduce debug info"
@@ -1911,7 +1916,7 @@ msgstr "Gặp đơn vị biên dịch rất lớn trong thông tin gỡ lỗi: k
 
 #: reduced_debug_output.cc:330
 msgid "Debug info extends beyond .debug_info section;failed to reduce debug info"
-msgstr "Thông tin gỡ lỗi kéo dài qua phần « .debug_info »: không giảm được thông tin gỡ lỗi"
+msgstr "Thông tin gỡ lỗi kéo dài qua phần \".debug_info\": không giảm được thông tin gỡ lỗi"
 
 #: reduced_debug_output.cc:350 reduced_debug_output.cc:392
 msgid "Invalid DIE in debug info; failed to reduce debug info"
@@ -1919,7 +1924,7 @@ msgstr "Gặp DIE sai trong thông tin gỡ lỗi: không giảm được thông
 
 #: reduced_debug_output.cc:373
 msgid "Debug info extends beyond .debug_info section; failed to reduce debug info"
-msgstr "Thông tin gỡ lỗi kéo dài qua phần « .debug_info »: không giảm được thông tin gỡ lỗi"
+msgstr "Thông tin gỡ lỗi kéo dài qua phần \".debug_info\": không giảm được thông tin gỡ lỗi"
 
 #: reloc.cc:297 reloc.cc:858
 #, c-format
@@ -1939,7 +1944,7 @@ msgstr "phần định vị lại %u có kích cỡ %lu không đều"
 #: reloc.cc:1203
 #, c-format
 msgid "could not convert call to '%s' to '%s'"
-msgstr "không thể chuyển đổi cuộc gọi « %s » sang « %s »"
+msgstr "không thể chuyển đổi cuộc gọi \"%s\" sang \"%s\""
 
 #: reloc.cc:1343
 #, c-format
@@ -1950,7 +1955,7 @@ msgstr "kích cỡ phần định vị lại %zu không phải là bội số ch
 #. table.
 #: resolve.cc:191
 msgid "invalid STB_LOCAL symbol in external symbols"
-msgstr "gặp ký hiệu « STB_LOCAL » sai trong những ký hiệu bên ngoài"
+msgstr "gặp ký hiệu \"STB_LOCAL\" sai trong những ký hiệu bên ngoài"
 
 #. Any target which wants to handle STB_LOOS, etc., needs to
 #. define a resolve method.
@@ -1963,42 +1968,42 @@ msgstr "tổ hợp ký hiệu không được hỗ trợ"
 #: resolve.cc:266
 #, c-format
 msgid "%s symbol '%s' in %s is referenced by DSO %s"
-msgstr "ký hiệu %s « %s » trong %s được tham chiếu bởi DSO %s"
+msgstr "ký hiệu %s \"%s\" trong %s được tham chiếu bởi DSO %s"
 
 #: resolve.cc:326
 #, c-format
 msgid "common of '%s' overriding smaller common"
-msgstr "điều chung của « %s » ghi đè lên điều chung nhỏ hơn"
+msgstr "điều chung của \"%s\" ghi đè lên điều chung nhỏ hơn"
 
 #: resolve.cc:331
 #, c-format
 msgid "common of '%s' overidden by larger common"
-msgstr "điều chung của « %s » bị ghi đè bởi điều chung lớn hơn"
+msgstr "điều chung của \"%s\" bị ghi đè bởi điều chung lớn hơn"
 
 #: resolve.cc:336
 #, c-format
 msgid "multiple common of '%s'"
-msgstr "nhiều điều chung của « %s »"
+msgstr "nhiều điều chung của \"%s\""
 
 #: resolve.cc:442
 #, c-format
 msgid "multiple definition of '%s'"
-msgstr "nhiều lời xác định « %s »"
+msgstr "nhiều lời xác định \"%s\""
 
 #: resolve.cc:481
 #, c-format
 msgid "definition of '%s' overriding common"
-msgstr "lời xác định của « %s » ghi đè lên điều chung"
+msgstr "lời xác định của \"%s\" ghi đè lên điều chung"
 
 #: resolve.cc:516
 #, c-format
 msgid "definition of '%s' overriding dynamic common definition"
-msgstr "lời xác định của « %s » ghi đè lên lời xác định chung động"
+msgstr "lời xác định của \"%s\" ghi đè lên lời xác định chung động"
 
 #: resolve.cc:636
 #, c-format
 msgid "common '%s' overridden by previous definition"
-msgstr "điều chung « %s » bị ghi đè bởi lời xác định trước"
+msgstr "điều chung \"%s\" bị ghi đè bởi lời xác định trước"
 
 #: resolve.cc:766 resolve.cc:778
 msgid "command line"
@@ -2041,15 +2046,15 @@ msgstr "lời xác định không tương ứng với phần ràng buộc"
 
 #: script-sections.cc:2634
 msgid "DATA_SEGMENT_ALIGN may only appear once in a linker script"
-msgstr "« DATA_SEGMENT_ALIGN » chỉ có thể xuất hiện một lần trong một văn lệnh liên kết"
+msgstr "\"DATA_SEGMENT_ALIGN\" chỉ có thể xuất hiện một lần trong một văn lệnh liên kết"
 
 #: script-sections.cc:2649
 msgid "DATA_SEGMENT_RELRO_END may only appear once in a linker script"
-msgstr "« DATA_SEGMENT_RELRO_END » chỉ có thể xuất hiện một lần trong một văn lệnh liên kết"
+msgstr "\"DATA_SEGMENT_RELRO_END\" chỉ có thể xuất hiện một lần trong một văn lệnh liên kết"
 
 #: script-sections.cc:2654
 msgid "DATA_SEGMENT_RELRO_END must follow DATA_SEGMENT_ALIGN"
-msgstr "« DATA_SEGMENT_RELRO_END » phải theo sau « DATA_SEGMENT_ALIGN »"
+msgstr "\"DATA_SEGMENT_RELRO_END\" phải theo sau \"DATA_SEGMENT_ALIGN\""
 
 #: script-sections.cc:2826
 msgid "no matching section constraint"
@@ -2070,15 +2075,15 @@ msgstr "không có phân %s"
 
 #: script-sections.cc:3323
 msgid "section in two PT_LOAD segments"
-msgstr "phần nằm trong hai đoạn « PT_LOAD »"
+msgstr "phần nằm trong hai đoạn \"PT_LOAD\""
 
 #: script-sections.cc:3330
 msgid "allocated section not in any PT_LOAD segment"
-msgstr "phần đã cấp phát không nằm trong đoạn « PT_LOAD » nào"
+msgstr "phần đã cấp phát không nằm trong đoạn \"PT_LOAD\" nào"
 
 #: script-sections.cc:3358
 msgid "may only specify load address for PT_LOAD segment"
-msgstr "chỉ có thể ghi rõ địa chỉ nạp cho đoạn « PT_LOAD »"
+msgstr "chỉ có thể ghi rõ địa chỉ nạp cho đoạn \"PT_LOAD\""
 
 #: script-sections.cc:3382
 #, c-format
@@ -2096,11 +2101,11 @@ msgstr "không hỗ trợ phần được nạp trên trang đầu tiên mà kh�
 
 #: script-sections.cc:3414
 msgid "using FILEHDR and PHDRS on more than one PT_LOAD segment is not currently supported"
-msgstr "hiện thời không hỗ trợ sử dụng FILEHDR và PHDRS trên nhiều đoạn « PT_LOAD »"
+msgstr "hiện thời không hỗ trợ sử dụng FILEHDR và PHDRS trên nhiều đoạn \"PT_LOAD\""
 
 #: script.cc:1072
 msgid "invalid use of PROVIDE for dot symbol"
-msgstr "sai sử dụng « PROVIDE » (cung cấp) cho ký hiệu chấm"
+msgstr "sai sử dụng \"PROVIDE\" (cung cấp) cho ký hiệu chấm"
 
 #: script.cc:2132
 #, c-format
@@ -2112,17 +2117,17 @@ msgstr "%s:%d:%d: %s"
 #: script.cc:2297
 #, c-format
 msgid "%s:%d:%d: ignoring command OPTION; OPTION is only valid for scripts specified via -T/--script"
-msgstr "%s:%d:%d: đang bỏ qua TÙY_CHỌN về lệnh: TÙY_CHỌN chỉ được chấp nhận cho văn lệnh được ghi rõ thông qua « -T/--script »"
+msgstr "%s:%d:%d: đang bỏ qua TÙY_CHỌN về lệnh: TÙY_CHỌN chỉ được chấp nhận cho văn lệnh được ghi rõ thông qua \"-T/--script\""
 
 #: script.cc:2362
 #, c-format
 msgid "%s:%d:%d: ignoring SEARCH_DIR; SEARCH_DIR is only valid for scripts specified via -T/--script"
-msgstr "%s:%d:%d: đang bỏ qua « SEARCH_DIR »: SEARCH_DIR chỉ được chấp nhận cho văn lệnh được ghi rõ thông qua « -T/--script »"
+msgstr "%s:%d:%d: đang bỏ qua \"SEARCH_DIR\": SEARCH_DIR chỉ được chấp nhận cho văn lệnh được ghi rõ thông qua \"-T/--script\""
 
 #: script.cc:2606 script.cc:2620
 #, c-format
 msgid "%s:%d:%d: DATA_SEGMENT_ALIGN not in SECTIONS clause"
-msgstr "%s:%d:%d: « DATA_SEGMENT_ALIGN » không phải trong mệnh đề « SECTIONS »"
+msgstr "%s:%d:%d: \"DATA_SEGMENT_ALIGN\" không phải trong mệnh đề \"SECTIONS\""
 
 #: script.cc:2739
 msgid "unknown PHDR type (try integer)"
@@ -2160,7 +2165,7 @@ msgstr "sai đặt khoảng bù tên ký hiệu toàn cục %u tại %zu"
 
 #: symtab.cc:1278
 msgid "--just-symbols does not make sense with a shared object"
-msgstr "« --just-symbols » (chỉ ký hiệu) không có ý nghĩa với một đối tượng dùng chung"
+msgstr "\"--just-symbols\" (chỉ ký hiệu) không có ý nghĩa với một đối tượng dùng chung"
 
 #: symtab.cc:1284
 msgid "too few symbol versions"
@@ -2199,7 +2204,7 @@ msgstr "%s: mục nhập bảng ký hiệu: %zu\n"
 #: symtab.cc:3007
 #, c-format
 msgid "while linking %s: symbol '%s' defined in multiple places (possible ODR violation):"
-msgstr "trong khi liên kết %s: ký hiệu « %s » được xác định trong nhiều lần (có thể vi phạm quy tắc xác định đơn):"
+msgstr "trong khi liên kết %s: ký hiệu \"%s\" được xác định trong nhiều lần (có thể vi phạm quy tắc xác định đơn):"
 
 #: target-reloc.h:259
 msgid "relocation refers to discarded comdat section"

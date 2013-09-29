@@ -1,4 +1,4 @@
-#as: -march=i686+avx+vmx+smx+xsave+xsaveopt+aes+pclmul+fma+movbe+ept+clflush+nop+syscall+rdtscp+3dnowa+sse4a+svme+abm+padlock
+#as: -march=i686+avx+vmx+smx+xsave+xsaveopt+aes+pclmul+fma+movbe+ept+clflush+nop+syscall+rdtscp+3dnowa+sse4a+svme+abm+padlock+bmi+tbm
 #objdump: -dw
 #name: i386 arch 10
 
@@ -30,11 +30,12 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	0f 38 f0 19          	movbe  \(%ecx\),%ebx
 [ 	]*[a-f0-9]+:	66 0f 38 80 19       	invept \(%ecx\),%ebx
 [ 	]*[a-f0-9]+:	0f 01 f9             	rdtscp 
-[ 	]*[a-f0-9]+:	0f 0f dc b7          	pmulhrw %mm4,%mm3
-[ 	]*[a-f0-9]+:	0f 0f dc bb          	pswapd %mm4,%mm3
+[ 	]*[a-f0-9]+:	0f 0d 0c 75 00 10 00 00 	prefetchw 0x1000\(,%esi,2\)
 [ 	]*[a-f0-9]+:	f2 0f 79 ca          	insertq %xmm2,%xmm1
 [ 	]*[a-f0-9]+:	0f 01 da             	vmload 
 [ 	]*[a-f0-9]+:	f3 0f bd d9          	lzcnt  %ecx,%ebx
 [ 	]*[a-f0-9]+:	0f a7 c0             	xstore-rng 
 [ 	]*[a-f0-9]+:	0f 1f 00             	nopl   \(%eax\)
+[ 	]*[a-f0-9]+:	c4 e2 60 f3 c9       	blsr   %ecx,%ebx
+[ 	]*[a-f0-9]+:	8f e9 60 01 c9       	blcfill %ecx,%ebx
 #pass

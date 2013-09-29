@@ -22,33 +22,22 @@
 #ifndef __struc_symbol_h__
 #define __struc_symbol_h__
 
-/* The information we keep for a symbol.  Note that the symbol table
-   holds pointers both to this and to local_symbol structures.  See
-   below.  */
-
-struct symbol
+struct symbol_flags
 {
-  /* BFD symbol */
-  asymbol *bsym;
+  /* Wether the symbol is a local_symbol.  */
+  unsigned int sy_local_symbol : 1;
 
-  /* The value of the symbol.  */
-  expressionS sy_value;
+  /* Wether symbol has been written.  */
+  unsigned int sy_written : 1;
 
-  /* Forwards and (optionally) backwards chain pointers.  */
-  struct symbol *sy_next;
-  struct symbol *sy_previous;
-
-  /* Pointer to the frag this symbol is attached to, if any.
-     Otherwise, NULL.  */
-  struct frag *sy_frag;
-
-  unsigned int written : 1;
   /* Whether symbol value has been completely resolved (used during
      final pass over symbol table).  */
   unsigned int sy_resolved : 1;
+
   /* Whether the symbol value is currently being resolved (used to
      detect loops in symbol dependencies).  */
   unsigned int sy_resolving : 1;
+
   /* Whether the symbol value is used in a reloc.  This is used to
      ensure that symbols used in relocs are written out, even if they
      are local and would otherwise not be.  */
@@ -80,6 +69,30 @@ struct symbol
      before.  It is cleared as soon as any direct reference to the
      symbol is present.  */
   unsigned int sy_weakrefd : 1;
+};
+
+/* The information we keep for a symbol.  Note that the symbol table
+   holds pointers both to this and to local_symbol structures.  See
+   below.  */
+
+struct symbol
+{
+  /* Symbol flags.  */
+  struct symbol_flags sy_flags;
+
+  /* BFD symbol */
+  asymbol *bsym;
+
+  /* The value of the symbol.  */
+  expressionS sy_value;
+
+  /* Forwards and (optionally) backwards chain pointers.  */
+  struct symbol *sy_next;
+  struct symbol *sy_previous;
+
+  /* Pointer to the frag this symbol is attached to, if any.
+     Otherwise, NULL.  */
+  struct frag *sy_frag;
 
 #ifdef OBJ_SYMFIELD_TYPE
   OBJ_SYMFIELD_TYPE sy_obj;
@@ -107,9 +120,8 @@ struct symbol
 
 struct local_symbol
 {
-  /* This pointer is always NULL to indicate that this is a local
-     symbol.  */
-  asymbol *lsy_marker;
+  /* Symbol flags.  Only sy_local_symbol and sy_resolved are relevant.  */
+  struct symbol_flags lsy_flags;
 
   /* The symbol section.  This also serves as a flag.  If this is
      reg_section, then this symbol has been converted into a regular
@@ -120,8 +132,7 @@ struct local_symbol
   const char *lsy_name;
 
   /* The symbol frag or the real symbol, depending upon the value in
-     lsy_section.  If the symbol has been fully resolved, lsy_frag is
-     set to NULL.  */
+     lsy_section.  */
   union
   {
     fragS *lsy_frag;
@@ -138,8 +149,8 @@ struct local_symbol
 
 #define local_symbol_converted_p(l) ((l)->lsy_section == reg_section)
 #define local_symbol_mark_converted(l) ((l)->lsy_section = reg_section)
-#define local_symbol_resolved_p(l) ((l)->u.lsy_frag == NULL)
-#define local_symbol_mark_resolved(l) ((l)->u.lsy_frag = NULL)
+#define local_symbol_resolved_p(l) ((l)->lsy_flags.sy_resolved)
+#define local_symbol_mark_resolved(l) ((l)->lsy_flags.sy_resolved = 1)
 #define local_symbol_get_frag(l) ((l)->u.lsy_frag)
 #define local_symbol_set_frag(l, f) ((l)->u.lsy_frag = (f))
 #define local_symbol_get_real_symbol(l) ((l)->u.lsy_sym)

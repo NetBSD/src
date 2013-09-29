@@ -1,7 +1,7 @@
 #name: MIPS eh-frame 2, n32
 #source: eh-frame1.s
 #source: eh-frame1.s
-#as: -EB -n32 --defsym alignment=2 --defsym fill=0
+#as: -march=from-abi -EB -n32 --defsym alignment=2 --defsym fill=0
 #readelf: --relocs -wf
 #ld: -shared -melf32btsmipn32 -Teh-frame1.ld
 #warning: fde encoding in.*prevents \.eh_frame_hdr table being created.

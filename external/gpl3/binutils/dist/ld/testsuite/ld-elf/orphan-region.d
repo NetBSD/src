@@ -3,9 +3,10 @@
 #readelf: -S -l --wide
 #xfail: arc-*-* d30v-*-* dlx-*-* fr30-*-* frv-*-elf i860-*-* i960-*-*
 #xfail: iq*-*-* mn10200-*-* moxie-*-* msp*-*-* mt-*-* or32-*-* pj*-*-*
-#xfail: spu-*-* hppa*64*-*-* frv-*-*
+#xfail: spu-*-* hppa*64*-*-* frv-*-* *-*-nacl*
 # if not using elf32.em, you don't get fancy orphan handling
-# spu twiddles LOAD range, hppa64 adds PHDR, frv-linux adds GNU_STACK
+# spu twiddles LOAD range, hppa64 adds PHDR, frv-linux adds GNU_STACK,
+# nacl splits to two segments
 
 #...
   \[[ 0-9]+\] \.text[ \t]+PROGBITS[ \t]+0*40000000[ \t]+.*

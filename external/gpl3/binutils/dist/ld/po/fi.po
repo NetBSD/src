@@ -1,17 +1,18 @@
 # Finnish messages for ld
-# Copyright © 2009 Free Software Foundation, Inc.
+# Copyright © 2009, 2011, 2012 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 # Jorma Karvonen <karvjorm@users.sf.net>, 2007-2009.
-# Jorma Karvonen <karvonen.jorma@gmail.com>, 2009-2010.
+# Jorma Karvonen <karvonen.jorma@gmail.com>, 2009-2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ld 2.20.90\n"
+"Project-Id-Version: ld 2.22.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2010-11-05 11:34+0100\n"
-"PO-Revision-Date: 2010-11-10 19:55+0200\n"
+"POT-Creation-Date: 2011-10-25 11:20+0100\n"
+"PO-Revision-Date: 2012-07-28 16:38+0200\n"
 "Last-Translator: Jorma Karvonen <karvonen.jorma@gmail.com>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
+"Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -35,172 +36,172 @@ msgstr "  --thumb-entry=<sym>         Aseta tulokohta Thumb-symboliksi <sym>\n"
 msgid "Errors encountered processing file %s"
 msgstr "Löydettiin virheitä käsiteltäessä tiedostoa %s"
 
-#: emultempl/armcoff.em:190 emultempl/pe.em:1812
+#: emultempl/armcoff.em:192 emultempl/pe.em:1812
 msgid "%P: warning: '--thumb-entry %s' is overriding '-e %s'\n"
-msgstr "%P: varoitus: ”--thumb-entry %s” korvaa argumentin ”-e %s”\n"
+msgstr "%P: varoitus: ’--thumb-entry %s’ korvaa argumentin ’-e %s’\n"
 
-#: emultempl/armcoff.em:195 emultempl/pe.em:1817
+#: emultempl/armcoff.em:197 emultempl/pe.em:1817
 msgid "%P: warning: cannot find thumb start symbol %s\n"
 msgstr "%P: varoitus: thumb-aloitussymbolia ”%s” ei löydy\n"
 
-#: emultempl/pe.em:418
+#: emultempl/pe.em:419
 #, c-format
 msgid "  --base_file <basefile>             Generate a base file for relocatable DLLs\n"
-msgstr "  --base_file <kantatiedosto>        Luo uudelleensijoitettavien DLL:ien kantatiedosto\n"
+msgstr "  --base_file <kantatiedosto>        Tuota uudelleensijoitettavien DLL:ien kantatiedosto\n"
 
-#: emultempl/pe.em:419
+#: emultempl/pe.em:420
 #, c-format
 msgid "  --dll                              Set image base to the default for DLLs\n"
 msgstr "  --dll                              Aseta vedoskanta DLL:ien oletukseksi\n"
 
-#: emultempl/pe.em:420
+#: emultempl/pe.em:421
 #, c-format
 msgid "  --file-alignment <size>            Set file alignment\n"
 msgstr "  --file-alignment <koko>            Aseta tiedostotasaus\n"
 
-#: emultempl/pe.em:421
+#: emultempl/pe.em:422
 #, c-format
 msgid "  --heap <size>                      Set initial size of the heap\n"
 msgstr "  --heap <koko>                      Aseta keon aloituskoko\n"
 
-#: emultempl/pe.em:422
+#: emultempl/pe.em:423
 #, c-format
 msgid "  --image-base <address>             Set start address of the executable\n"
 msgstr "  --image-base <osoite>              Aseta suoritettavien tiedostojen aloitusosoite\n"
 
-#: emultempl/pe.em:423
+#: emultempl/pe.em:424
 #, c-format
 msgid "  --major-image-version <number>     Set version number of the executable\n"
 msgstr "  --major-image-version <numero>     Aseta suoritettavien tiedostojen versionumero\n"
 
-#: emultempl/pe.em:424
+#: emultempl/pe.em:425
 #, c-format
 msgid "  --major-os-version <number>        Set minimum required OS version\n"
 msgstr "  --major-os-version <numero>        Aseta pienin vaadittu käyttöjärjestelmäversio\n"
 
-#: emultempl/pe.em:425
+#: emultempl/pe.em:426
 #, c-format
 msgid "  --major-subsystem-version <number> Set minimum required OS subsystem version\n"
 msgstr "  --major-subsystem-version <numero> Aseta pienin vaadittu käyttöjärjestelmän alijärjestelmän versio\n"
 
-#: emultempl/pe.em:426
+#: emultempl/pe.em:427
 #, c-format
 msgid "  --minor-image-version <number>     Set revision number of the executable\n"
 msgstr "  --minor-image-version <numero>     Asettaa suoritettavan tiedoston revisionumeron\n"
 
-#: emultempl/pe.em:427
+#: emultempl/pe.em:428
 #, c-format
 msgid "  --minor-os-version <number>        Set minimum required OS revision\n"
 msgstr "  --minor-os-version <numero>        Aseta pienin vaadittu käyttöjärjestelmän revisionumero\n"
 
-#: emultempl/pe.em:428
+#: emultempl/pe.em:429
 #, c-format
 msgid "  --minor-subsystem-version <number> Set minimum required OS subsystem revision\n"
 msgstr "  --minor-subsystem-version <numero> Aseta pienin vaadittu käyttöjärjestelmän alijärjestelmän revisionumero\n"
 
-#: emultempl/pe.em:429
+#: emultempl/pe.em:430
 #, c-format
 msgid "  --section-alignment <size>         Set section alignment\n"
 msgstr "  --section-alignment <koko>         Aseta lohkotasaus\n"
 
-#: emultempl/pe.em:430
+#: emultempl/pe.em:431
 #, c-format
 msgid "  --stack <size>                     Set size of the initial stack\n"
 msgstr "  --stack <koko>                     Aseta pinon aloituskoko\n"
 
-#: emultempl/pe.em:431
+#: emultempl/pe.em:432
 #, c-format
 msgid "  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n"
 msgstr "  --subsystem <nimi>[:<versio>]      Aseta vaadittu käyttöjärjestelmän alijärjestelmä [& versio]\n"
 
-#: emultempl/pe.em:432
+#: emultempl/pe.em:433
 #, c-format
 msgid "  --support-old-code                 Support interworking with old code\n"
 msgstr "  --support-old-code                 Tue yhteistoimivuutta vanhan koodin kanssa\n"
 
-#: emultempl/pe.em:433
+#: emultempl/pe.em:434
 #, c-format
 msgid "  --[no-]leading-underscore          Set explicit symbol underscore prefix mode\n"
 msgstr "  --[no-]leading-underscore          Aseta eksplisiittinen symbolin alaviivaetuliitetila\n"
 
-#: emultempl/pe.em:434
+#: emultempl/pe.em:435
 #, c-format
 msgid "  --thumb-entry=<symbol>             Set the entry point to be Thumb <symbol>\n"
 msgstr "  --thumb-entry=<symboli>            Aseta  tulokohdaksi ”Thumb <symboli>”\n"
 
-#: emultempl/pe.em:436
+#: emultempl/pe.em:437
 #, c-format
 msgid "  --add-stdcall-alias                Export symbols with and without @nn\n"
 msgstr "  --add-stdcall-alias                Vie symbolit ilman @nn:ää ja sen kanssa\n"
 
-#: emultempl/pe.em:437
+#: emultempl/pe.em:438
 #, c-format
 msgid "  --disable-stdcall-fixup            Don't link _sym to _sym@nn\n"
 msgstr "  --disable-stdcall-fixup            Älä linkitä symbolia _sym symboliin _sym@nn\n"
 
-#: emultempl/pe.em:438
+#: emultempl/pe.em:439
 #, c-format
 msgid "  --enable-stdcall-fixup             Link _sym to _sym@nn without warnings\n"
 msgstr "  --enable-stdcall-fixup             Linkitä symboli _sym symboliin _sym@nn ilman varoituksia\n"
 
-#: emultempl/pe.em:439
+#: emultempl/pe.em:440
 #, c-format
 msgid "  --exclude-symbols sym,sym,...      Exclude symbols from automatic export\n"
 msgstr "  --exclude-symbols sym,sym,...      Jätä symbolit pois automaattisesta viennistä\n"
 
-#: emultempl/pe.em:440
+#: emultempl/pe.em:441
 #, c-format
 msgid "  --exclude-all-symbols              Exclude all symbols from automatic export\n"
 msgstr "  --exclude-all-symbols              Jätä kaikki symbolit pois automaattisesta viennistä\n"
 
-#: emultempl/pe.em:441
+#: emultempl/pe.em:442
 #, c-format
 msgid "  --exclude-libs lib,lib,...         Exclude libraries from automatic export\n"
 msgstr "  --exclude-libs lib,lib,...         Jätä kirjastot pois automaattisesta viennistä\n"
 
-#: emultempl/pe.em:442
+#: emultempl/pe.em:443
 #, c-format
 msgid "  --exclude-modules-for-implib mod,mod,...\n"
 msgstr "  --exclude-modules-for-implib moduli,moduli,...\n"
 
 #  Tämä teksti jatkuu seuraavassa merkkijonossa
-#: emultempl/pe.em:443
+#: emultempl/pe.em:444
 #, c-format
 msgid "                                     Exclude objects, archive members from auto\n"
 msgstr "                                     Jätä pois objektit, arkistojäsenet automaattisesta\n"
 
 #  Tämä teksti on jatkoa edelliselle merkkijonolle
-#: emultempl/pe.em:444
+#: emultempl/pe.em:445
 #, c-format
 msgid "                                     export, place into import library instead.\n"
 msgstr "                                     viennistä, sijoita ne sen sijaan tuontikirjastoon.\n"
 
-#: emultempl/pe.em:445
+#: emultempl/pe.em:446
 #, c-format
 msgid "  --export-all-symbols               Automatically export all globals to DLL\n"
 msgstr "  --export-all-symbols               Vie kaikki yleismuuttujat automaattisesti DLL:ään\n"
 
-#: emultempl/pe.em:446
+#: emultempl/pe.em:447
 #, c-format
 msgid "  --kill-at                          Remove @nn from exported symbols\n"
 msgstr "  --kill-at                          Poista @nn viedyistä symboleista\n"
 
-#: emultempl/pe.em:447
-#, c-format
-msgid "  --out-implib <file>                Generate import library\n"
-msgstr "  --out-implib <tiedosto>            Luo tuontikirjasto\n"
-
 #: emultempl/pe.em:448
 #, c-format
-msgid "  --output-def <file>                Generate a .DEF file for the built DLL\n"
-msgstr "  --output-def <tiedosto>            Luo .DEF-tiedosto DLL:n rakentamiseen\n"
+msgid "  --out-implib <file>                Generate import library\n"
+msgstr "  --out-implib <tiedosto>            Tuota tuontikirjasto\n"
 
 #: emultempl/pe.em:449
+#, c-format
+msgid "  --output-def <file>                Generate a .DEF file for the built DLL\n"
+msgstr "  --output-def <tiedosto>            Tuota .DEF-tiedosto DLL:n rakentamiseen\n"
+
+#: emultempl/pe.em:450
 #, c-format
 msgid "  --warn-duplicate-exports           Warn about duplicate exports.\n"
 msgstr "  --warn-duplicate-exports           Varoita kaksoiskappalevienneistä.\n"
 
-#: emultempl/pe.em:450
+#: emultempl/pe.em:451
 #, c-format
 msgid ""
 "  --compat-implib                    Create backward compatible import libs;\n"
@@ -209,7 +210,7 @@ msgstr ""
 "  --compat-implib                    Luo taaksepäin yhteensopivat tuontikirjastot;\n"
 "                                       luo myös __imp_<SYMBOLI>.\n"
 
-#: emultempl/pe.em:452
+#: emultempl/pe.em:453
 #, c-format
 msgid ""
 "  --enable-auto-image-base           Automatically choose image base for DLLs\n"
@@ -218,12 +219,12 @@ msgstr ""
 "  --enable-auto-image-base           Valitse automaattisesti vedoskanta DLL:ille\n"
 "                                       jollei käyttäjä määrittele sellaista\n"
 
-#: emultempl/pe.em:454
+#: emultempl/pe.em:455
 #, c-format
 msgid "  --disable-auto-image-base          Do not auto-choose image base. (default)\n"
 msgstr "  --disable-auto-image-base          Älä valitse automaattisesti vedoskantaa. (oletus)\n"
 
-#: emultempl/pe.em:455
+#: emultempl/pe.em:456
 #, c-format
 msgid ""
 "  --dll-search-prefix=<string>       When linking dynamically to a dll without\n"
@@ -234,21 +235,21 @@ msgstr ""
 "                                       tuontikirjastoa, käytä ”<merkkijono><kantanimi>.dll”\n"
 "                                       mieluimmin kuin ”lib<kantanimi>.dll” \n"
 
-#: emultempl/pe.em:458
+#: emultempl/pe.em:459
 #, c-format
 msgid ""
-"  --enable-auto-import               Do sophistcated linking of _sym to\n"
+"  --enable-auto-import               Do sophisticated linking of _sym to\n"
 "                                       __imp_sym for DATA references\n"
 msgstr ""
 "  --enable-auto-import               Linkitä symboli _sym edistyksellisesti\n"
-"                                       symboliin __imp_sym DATA-viitteille\n"
+"                                       DATA-viitteille symboliin __imp_sym\n"
 
-#: emultempl/pe.em:460
+#: emultempl/pe.em:461
 #, c-format
 msgid "  --disable-auto-import              Do not auto-import DATA items from DLLs\n"
 msgstr "  --disable-auto-import              Älä tuo DATA-alkioita DLL:stä automaattisesti\n"
 
-#: emultempl/pe.em:461
+#: emultempl/pe.em:462
 #, c-format
 msgid ""
 "  --enable-runtime-pseudo-reloc      Work around auto-import limitations by\n"
@@ -256,28 +257,28 @@ msgid ""
 "                                       runtime.\n"
 msgstr ""
 "  --enable-runtime-pseudo-reloc      Kierrä automaattisen tuonnin rajoitukset\n"
-"                                       lisäämällä ajoaikaisesti ratkaistavia pseudo-\n"
+"                                       lisäämällä ajoaikaisesti ratkaistavia vale-\n"
 "                                       uudelleensijoitusalkioita.\n"
 
-#: emultempl/pe.em:464
+#: emultempl/pe.em:465
 #, c-format
 msgid ""
 "  --disable-runtime-pseudo-reloc     Do not add runtime pseudo-relocations for\n"
 "                                       auto-imported DATA.\n"
 msgstr ""
-"  --disable-runtime-pseudo-reloc     Älä lisää ajoaikaisia pseudo-uudelleensijoitusalkioita\n"
+"  --disable-runtime-pseudo-reloc     Älä lisää ajoaikaisia vale-uudelleensijoitusalkioita\n"
 "                                       automaattisesti tuotuun DATA:an.\n"
 
-#: emultempl/pe.em:466
+#: emultempl/pe.em:467
 #, c-format
 msgid ""
 "  --enable-extra-pe-debug            Enable verbose debug output when building\n"
 "                                       or linking to DLLs (esp. auto-import)\n"
 msgstr ""
-"  --enable-extra-pe-debug            Salli lavea debug-tulostus kun muodostetaan\n"
+"  --enable-extra-pe-debug            Salli lavea vianjäljitystulostus kun muodostetaan\n"
 "                                       tai linkitetään DLL:ään (erityisesti automaattisessa tuonnissa)\n"
 
-#: emultempl/pe.em:469
+#: emultempl/pe.em:470
 #, c-format
 msgid ""
 "  --large-address-aware              Executable supports virtual addresses\n"
@@ -286,7 +287,7 @@ msgstr ""
 "  --large-address-aware              Suoritettava tiedosto tukee virtuaaliosoitteita,\n"
 "                                       jotka ovat suurempia kuin 2 gigatavua\n"
 
-#: emultempl/pe.em:471
+#: emultempl/pe.em:472
 #, c-format
 msgid ""
 "  --enable-long-section-names        Use long COFF section names even in\n"
@@ -295,7 +296,7 @@ msgstr ""
 "  --enable-long-section-names        Käytä pitkiä COFF-lohkonimiä myös suoritettavissa\n"
 "                                       vedostiedostoissa\n"
 
-#: emultempl/pe.em:473
+#: emultempl/pe.em:474
 #, c-format
 msgid ""
 "  --disable-long-section-names       Never use long COFF section names, even\n"
@@ -304,7 +305,7 @@ msgstr ""
 "  --disable-long-section-names       Älä koskaan käytä pitkiä COFF-lohkonimiä, ei edes\n"
 "                                       objektitiedostoissa\n"
 
-#: emultempl/pe.em:475
+#: emultempl/pe.em:476
 #, c-format
 msgid ""
 "  --dynamicbase\t\t\t Image base address may be relocated using\n"
@@ -313,23 +314,23 @@ msgstr ""
 "  --dynamicbase\t\t\t Vedoksen perusosoite voidaan sijoittaa uudelleen\n"
 "\t\t\t\t       käyttäen osoitetilan asettelun satunnaislukuhajautusta (ASLR)\n"
 
-#: emultempl/pe.em:477
+#: emultempl/pe.em:478
 #, c-format
 msgid "  --forceinteg\t\t Code integrity checks are enforced\n"
 msgstr "  --forceinteg\t\t Koodin eheystarkistukset ovat valvottuja\n"
 
-#: emultempl/pe.em:478
+#: emultempl/pe.em:479
 #, c-format
 msgid "  --nxcompat\t\t Image is compatible with data execution prevention\n"
 msgstr "  --nxcompat\t\t Vedos on yhteneväinen datasuorituseston kanssa\n"
 
-#: emultempl/pe.em:479
+#: emultempl/pe.em:480
 #, c-format
 msgid "  --no-isolation\t\t Image understands isolation but do not isolate the image\n"
 msgstr "  --no-isolation\t\t Vedos ymmärtää eristyksen, mutta ei eristä vedosta\n"
 
 #  SEH on lyhenne sanoista "SE Handler"
-#: emultempl/pe.em:480
+#: emultempl/pe.em:481
 #, c-format
 msgid ""
 "  --no-seh\t\t\t Image does not use SEH. No SE handler may\n"
@@ -338,75 +339,74 @@ msgstr ""
 "  --no-seh\t\t\t Vedos ei käytä SE-käsittelijää. SE-käsittelijää ei\n"
 "\t\t\t\t       saa kutsua tässä vedoksessa\n"
 
-#: emultempl/pe.em:482
+#: emultempl/pe.em:483
 #, c-format
 msgid "  --no-bind\t\t\t Do not bind this image\n"
 msgstr "  --no-bind\t\t\t Älä sido tätä vedosta\n"
 
-#: emultempl/pe.em:483
+#: emultempl/pe.em:484
 #, c-format
 msgid "  --wdmdriver\t\t Driver uses the WDM model\n"
 msgstr "  --wdmdriver\t\t Ajuri käyttää WDM-mallia\n"
 
-#: emultempl/pe.em:484
+#: emultempl/pe.em:485
 #, c-format
 msgid "  --tsaware                  Image is Terminal Server aware\n"
 msgstr "  --tsaware                  Vedos on tietoinen pääteikkunapalvelimesta\n"
 
-#: emultempl/pe.em:613
+#: emultempl/pe.em:614
 msgid "%P: warning: bad version number in -subsystem option\n"
 msgstr "%P: varoitus: virheellinen versionumero ”-subsystem”-valitsimessa\n"
 
-#: emultempl/pe.em:638
+#: emultempl/pe.em:639
 msgid "%P%F: invalid subsystem type %s\n"
 msgstr "%P%F: Virheellinen alijärjestelmätyyppi %s\n"
 
-#: emultempl/pe.em:659
+#: emultempl/pe.em:660
 msgid "%P%F: invalid hex number for PE parameter '%s'\n"
-msgstr "%P%F: virheellinen heksadesimaalinumero PE-parametrille ”%s”\n"
+msgstr "%P%F: virheellinen heksadesimaalinumero PE-parametrille ’%s’\n"
 
-#: emultempl/pe.em:676
+#: emultempl/pe.em:677
 msgid "%P%F: strange hex info for PE parameter '%s'\n"
-msgstr "%P%F: outo heksadesimaalinumerotieto PE-parameterílle ”%s”\n"
+msgstr "%P%F: outo heksadesimaalinumerotieto PE-parameterílle ’%s’\n"
 
-#: emultempl/pe.em:693
-#, c-format
-msgid "%s: Can't open base file %s\n"
-msgstr "%s: Ei voi avata kantatiedostoa %s\n"
+#: emultempl/pe.em:692
+msgid "%F%P: cannot open base file %s\n"
+msgstr "%F%P: Ei voi avata kantatiedostoa %s\n"
 
-#: emultempl/pe.em:969
+#: emultempl/pe.em:965
 msgid "%P: warning, file alignment > section alignment.\n"
 msgstr "%P: varoitus, tiedostotasaus > lohkotasaus.\n"
 
-#: emultempl/pe.em:982
+#: emultempl/pe.em:978
 msgid "%P: warning: --export-dynamic is not supported for PE targets, did you mean --export-all-symbols?\n"
 msgstr "%P: varoitus: --export-dynamic ei tueta PE-kohteille, tarkoititko --export-all-symbols?\n"
 
-#: emultempl/pe.em:1058 emultempl/pe.em:1085
+#: emultempl/pe.em:1054 emultempl/pe.em:1081
 #, c-format
 msgid "Warning: resolving %s by linking to %s\n"
 msgstr "Varoitus: ratkaistaan %s linkittämällä kohteeseen %s\n"
 
 #  enable -> disable ???
-#: emultempl/pe.em:1063 emultempl/pe.em:1090
+#: emultempl/pe.em:1059 emultempl/pe.em:1086
 msgid "Use --enable-stdcall-fixup to disable these warnings\n"
 msgstr "Käytä --enable-stdcall-fixup poistamaan nämä varoitukset käytöstä\n"
 
-#: emultempl/pe.em:1064 emultempl/pe.em:1091
+#: emultempl/pe.em:1060 emultempl/pe.em:1087
 msgid "Use --disable-stdcall-fixup to disable these fixups\n"
 msgstr "Käytä --disable-stdcall-fixup poistamaan nämä korjaukset käytöstä\n"
 
-#: emultempl/pe.em:1110
+#: emultempl/pe.em:1106
 #, c-format
 msgid "%C: Cannot get section contents - auto-import exception\n"
 msgstr "%C: Lohkosisältöä ei saada - automaattituonnin poikkeus\n"
 
-#: emultempl/pe.em:1150
+#: emultempl/pe.em:1146
 #, c-format
 msgid "Info: resolving %s by linking to %s (auto-import)\n"
 msgstr "Tieto: ratkaistaan %s linkittämällä kohteeseen %s (automaattituonti)\n"
 
-#: emultempl/pe.em:1157
+#: emultempl/pe.em:1153
 msgid ""
 "%P: warning: auto-importing has been activated without --enable-auto-import specified on the command line.\n"
 "This should work unless it involves constant data structures referencing symbols from auto-imported DLLs.\n"
@@ -414,15 +414,15 @@ msgstr ""
 "%P: varoitus: automaattinen tuonti on aktivoitu määrittelemättä ”--enable-auto-import”-argumenttia komentorivillä.\n"
 "Tämän pitäisi toimia ellei se sisällä vakiodatarakenteita, jotka viittaavat automaattisesti tuotujen DLL:ien symboleihin.\n"
 
-#: emultempl/pe.em:1164 emultempl/pe.em:1369 emultempl/pe.em:1575 ldcref.c:490
-#: ldcref.c:588 ldmain.c:1183 ldmisc.c:286 pe-dll.c:705 pe-dll.c:1253
-#: pe-dll.c:1348
+#: emultempl/pe.em:1160 emultempl/pe.em:1366 emultempl/pe.em:1573 ldcref.c:490
+#: ldcref.c:588 ldmain.c:1158 ldmisc.c:290 pe-dll.c:706 pe-dll.c:1254
+#: pe-dll.c:1349
 msgid "%B%F: could not read symbols: %E\n"
 msgstr "%B%F: ei voinut lukea symboleja: %E\n"
 
-#: emultempl/pe.em:1245
+#: emultempl/pe.em:1242
 msgid "%F%P: cannot perform PE operations on non PE output file '%B'.\n"
-msgstr "%F%P: ei voi suorittaa PE-toimintoja ei-PE-tulostetiedostossa ”%B”.\n"
+msgstr "%F%P: ei voi suorittaa PE-toimintoja ei-PE-tulostetiedostossa ’%B’.\n"
 
 #: emultempl/pe.em:1616
 #, c-format
@@ -434,8 +434,8 @@ msgstr "Tiedostoa %s käsitellessä syntyi virheitä\n"
 msgid "Errors encountered processing file %s for interworking\n"
 msgstr "Virheitä syntyi käsiteltäessä tiedostoa %s yhteistoimivuutta varten\n"
 
-#: emultempl/pe.em:1701 ldexp.c:542 ldlang.c:3323 ldlang.c:3358 ldlang.c:6804
-#: ldlang.c:6835 ldmain.c:1128
+#: emultempl/pe.em:1701 ldexp.c:581 ldlang.c:3458 ldlang.c:6992 ldlang.c:7023
+#: ldmain.c:1103
 msgid "%P%F: bfd_link_hash_lookup failed: %E\n"
 msgstr "%P%F: bfd_link_hash_lookup epäonnistui: %E\n"
 
@@ -480,7 +480,7 @@ msgstr "Ei symboleja\n"
 msgid "%P: symbol `%T' missing from main hash table\n"
 msgstr "%P: puuttuu symboli ”%T” pää-hash-taulusta\n"
 
-#: ldcref.c:650 ldcref.c:657 ldmain.c:1217 ldmain.c:1224
+#: ldcref.c:650 ldcref.c:657 ldmain.c:1192 ldmain.c:1199
 msgid "%B%F: could not read relocs: %E\n"
 msgstr "%B%F: ei voitu lukea reloc-alkioita: %E\n"
 
@@ -534,170 +534,166 @@ msgstr "%P: tunnistamaton emulointitila: %s\n"
 
 #: ldemul.c:292
 msgid "Supported emulations: "
-msgstr "Tuetut emuloinnit:"
+msgstr "Tuetut emuloinnit: "
 
 #: ldemul.c:334
 #, c-format
 msgid "  no emulation specific options.\n"
 msgstr "  ei emulointikohtaisia valitsimia.\n"
 
-#: ldexp.c:313
+#: ldexp.c:314
 msgid "%P: warning: address of `%s' isn't multiple of maximum page size\n"
 msgstr "%P: varoitus: ”%s”:n osoite ei ole enimmäissivukoon monikerta\n"
 
-#: ldexp.c:351
+#: ldexp.c:407
 #, c-format
 msgid "%F%S %% by zero\n"
 msgstr "%F%S %% nollalla\n"
 
-#: ldexp.c:359
+#: ldexp.c:417
 #, c-format
 msgid "%F%S / by zero\n"
 msgstr "%F%S / nollalla\n"
 
-#: ldexp.c:552
+#: ldexp.c:591
 #, c-format
 msgid "%X%S: unresolvable symbol `%s' referenced in expression\n"
 msgstr "%X%S: lausekkeessa viitattu ratkaisemattomaan symboliin ”%s”\n"
 
-#: ldexp.c:564
+#: ldexp.c:605
 #, c-format
 msgid "%F%S: undefined symbol `%s' referenced in expression\n"
 msgstr "%F%S: lausekkeessa viitattu ratkaisemattomaan symboliin ”%s”\n"
 
-#: ldexp.c:585 ldexp.c:602 ldexp.c:629
+#: ldexp.c:626 ldexp.c:643 ldexp.c:670
 #, c-format
 msgid "%F%S: undefined section `%s' referenced in expression\n"
 msgstr "%F%S: lausekkeessa viitattu määrittelemättömään lohkoon ”%s”\n"
 
-#: ldexp.c:656 ldexp.c:670
+#: ldexp.c:697 ldexp.c:711
 #, c-format
 msgid "%F%S: undefined MEMORY region `%s' referenced in expression\n"
 msgstr "%F%S: lausekkeessa viitattu määrittelemättömään MEMORY-alueeseen ”%s”\n"
 
-#: ldexp.c:681
+#: ldexp.c:722
 #, c-format
 msgid "%F%S: unknown constant `%s' referenced in expression\n"
 msgstr "%F%S: lausekkeessa viitattu tuntemattomaan vakioon ”%s”\n"
 
-#: ldexp.c:743
+#: ldexp.c:787
 #, c-format
 msgid "%F%S can not PROVIDE assignment to location counter\n"
 msgstr "%F%S ei voi ANTAA sijoitusta sijoituslaskuriin\n"
 
-#: ldexp.c:757
+#: ldexp.c:805
 #, c-format
 msgid "%F%S invalid assignment to location counter\n"
 msgstr "%F%S virheellinen sijoitus sijoituslaskuriin\n"
 
-#: ldexp.c:760
+#: ldexp.c:808
 #, c-format
 msgid "%F%S assignment to location counter invalid outside of SECTION\n"
 msgstr "%F%S sijoitus sijoituslaskuriin virheellinen SECTION-lohkon ulkopuolella\n"
 
-#: ldexp.c:773
+#: ldexp.c:821
 msgid "%F%S cannot move location counter backwards (from %V to %V)\n"
 msgstr "%F%S ei voi siirtää sijoituslaskuria taaksepäin (arvosta %V arvoon %V)\n"
 
-#: ldexp.c:812
+#: ldexp.c:882
 msgid "%P%F:%s: hash creation failed\n"
 msgstr "%P%F:%s: hash-luonti ei onnistunut\n"
 
-#: ldexp.c:1119 ldexp.c:1144 ldexp.c:1204
+#: ldexp.c:1191 ldexp.c:1216 ldexp.c:1276
 #, c-format
 msgid "%F%S: nonconstant expression for %s\n"
 msgstr "%F%S: ei-vakio lauseke kohteelle %s\n"
 
-#: ldfile.c:141
+#: ldfile.c:142
 #, c-format
 msgid "attempt to open %s failed\n"
 msgstr "yritys avata %s ei onnistunut\n"
 
-#: ldfile.c:143
+#: ldfile.c:144
 #, c-format
 msgid "attempt to open %s succeeded\n"
 msgstr "yritettiin avata %s menestyksellisesti\n"
 
 #  Binary File Descriptor
-#: ldfile.c:149
+#: ldfile.c:150
 msgid "%F%P: invalid BFD target `%s'\n"
 msgstr "%F%P: virheellinen BFD-kohde ”%s”\n"
 
-#: ldfile.c:266 ldfile.c:295
+#: ldfile.c:267 ldfile.c:296
 msgid "%P: skipping incompatible %s when searching for %s\n"
 msgstr "%P: hypättiin ei-yhteensopivan kohteen %s yli kun haettiin kohdetta %s\n"
 
-#: ldfile.c:279
+#: ldfile.c:280
 msgid "%F%P: attempted static link of dynamic object `%s'\n"
 msgstr "%F%P: yritettiin dynaamisen objektin ”%s” staattista linkkiä\n"
 
-#: ldfile.c:332 ldmain.c:832
-msgid "%P%F: %s: plugin reported error claiming file\n"
-msgstr "%P%F: %s: lisäosa ilmoitettu virhevaatimustiedostoon\n"
-
-#: ldfile.c:447
+#: ldfile.c:426
 msgid "%P: cannot find %s (%s): %E\n"
 msgstr "%P: ei voi löytää kohdetta %s (%s): %E\n"
 
-#: ldfile.c:450
+#: ldfile.c:429
 msgid "%P: cannot find %s: %E\n"
 msgstr "%P: ei voi löytää kohdetta %s: %E\n"
 
-#: ldfile.c:485
+#: ldfile.c:464
 msgid "%P: cannot find %s inside %s\n"
 msgstr "%P: kohdetta %s ei löydy kohteen %s sisältä\n"
 
-#: ldfile.c:488
+#: ldfile.c:467
 msgid "%P: cannot find %s\n"
 msgstr "%P: ei löydy kohdetta %s\n"
 
-#: ldfile.c:507 ldfile.c:525
+#: ldfile.c:486 ldfile.c:504
 #, c-format
 msgid "cannot find script file %s\n"
 msgstr "ei löydy skriptitiedostoa %s\n"
 
-#: ldfile.c:509 ldfile.c:527
+#: ldfile.c:488 ldfile.c:506
 #, c-format
 msgid "opened script file %s\n"
 msgstr "avattiin skriptitiedosto %s\n"
 
-#: ldfile.c:657
+#: ldfile.c:636
 msgid "%P%F: cannot open linker script file %s: %E\n"
 msgstr "%P%F: ei voi avata linkkerin skriptitiedostoa %s: %E\n"
 
-#: ldfile.c:722
+#: ldfile.c:701
 msgid "%P%F: cannot represent machine `%s'\n"
 msgstr "%P%F: ei voi edustaa konetta ”%s”\n"
 
-#: ldlang.c:1160 ldlang.c:1202 ldlang.c:3048
+#: ldlang.c:1221 ldlang.c:1263 ldlang.c:3143
 msgid "%P%F: can not create hash table: %E\n"
 msgstr "%P%F: ei voida luoda hash-taulua: %E\n"
 
-#: ldlang.c:1253
+#: ldlang.c:1314
 msgid "%P:%S: warning: redeclaration of memory region `%s'\n"
 msgstr "%P:%S: varoitus: uudelleenesitelty muistialue ”%s”\n"
 
-#: ldlang.c:1259
+#: ldlang.c:1320
 msgid "%P:%S: warning: memory region `%s' not declared\n"
 msgstr "%P:%S: varoitus: muistialuetta ”%s” ei ole esitelty\n"
 
-#: ldlang.c:1293
+#: ldlang.c:1354
 msgid "%F%P:%S: error: alias for default memory region\n"
 msgstr "%F%P:%S: virhe: alias oletusmuistialueelle\n"
 
-#: ldlang.c:1304
+#: ldlang.c:1365
 msgid "%F%P:%S: error: redefinition of memory region alias `%s'\n"
 msgstr "%F%P:%S: virhe: uudelleenmäärittely muistialuealiakselle ”%s”\n"
 
-#: ldlang.c:1311
+#: ldlang.c:1372
 msgid "%F%P:%S: error: memory region `%s' for alias `%s' does not exist\n"
 msgstr "%F%P:%S: virhe: muistialuetta ”%s” aliakselle ”%s” ei ole olemassa\n"
 
-#: ldlang.c:1363 ldlang.c:1402
+#: ldlang.c:1424 ldlang.c:1463
 msgid "%P%F: failed creating section `%s': %E\n"
 msgstr "%P%F: ei onnistuttu luomaan lohkoa ”%s”: %E\n"
 
-#: ldlang.c:1958
+#: ldlang.c:2025
 #, c-format
 msgid ""
 "\n"
@@ -708,7 +704,7 @@ msgstr ""
 "Hylätyt syötelohkot\n"
 "\n"
 
-#: ldlang.c:1966
+#: ldlang.c:2033
 msgid ""
 "\n"
 "Memory Configuration\n"
@@ -718,23 +714,23 @@ msgstr ""
 "Muistiasetukset\n"
 "\n"
 
-#: ldlang.c:1968
+#: ldlang.c:2035
 msgid "Name"
 msgstr "Nimi"
 
-#: ldlang.c:1968
+#: ldlang.c:2035
 msgid "Origin"
 msgstr "Alkupiste"
 
-#: ldlang.c:1968
+#: ldlang.c:2035
 msgid "Length"
 msgstr "Pituus"
 
-#: ldlang.c:1968
+#: ldlang.c:2035
 msgid "Attributes"
 msgstr "Attribuutit"
 
-#: ldlang.c:2008
+#: ldlang.c:2075
 #, c-format
 msgid ""
 "\n"
@@ -745,181 +741,181 @@ msgstr ""
 "Linkitysskripti ja muistikartta\n"
 "\n"
 
-#: ldlang.c:2074
+#: ldlang.c:2141
 msgid "%P%F: Illegal use of `%s' section\n"
 msgstr "%P%F: ”%s”-lohkon virheellinen käyttö\n"
 
-#: ldlang.c:2083
+#: ldlang.c:2150
 msgid "%P%F: output format %s cannot represent section called %s\n"
 msgstr "%P%F: tulostemuoto %s ei voi edustaa lohkoa, jonka nimi on %s\n"
 
-#: ldlang.c:2636
+#: ldlang.c:2728
 msgid "%B: file not recognized: %E\n"
 msgstr "%B: tiedostoa ei ole tunnistettu: %E\n"
 
-#: ldlang.c:2637
+#: ldlang.c:2729
 msgid "%B: matching formats:"
 msgstr "%B: täsmäävät muodot:"
 
-#: ldlang.c:2644
+#: ldlang.c:2736
 msgid "%F%B: file not recognized: %E\n"
 msgstr "%F%B: tiedostoa ei ole tunnistettu: %E\n"
 
-#: ldlang.c:2715
+#: ldlang.c:2810
 msgid "%F%B: member %B in archive is not an object\n"
 msgstr "%F%B: arkiston jäsen %B ei ole objekti\n"
 
-#: ldlang.c:2730 ldlang.c:2744
+#: ldlang.c:2825 ldlang.c:2839
 msgid "%F%B: could not read symbols: %E\n"
 msgstr "%F%B: ei voitu lukea symboleja: %E\n"
 
-#: ldlang.c:3018
+#: ldlang.c:3113
 msgid "%P: warning: could not find any targets that match endianness requirement\n"
 msgstr "%P: varoitus: ei löytynyt yhtään kohdetta, joka olisi täsmännyt tavujärjestysvaatimuksen kanssa\n"
 
 #  Binary File Descriptor -kohde
-#: ldlang.c:3032
+#: ldlang.c:3127
 msgid "%P%F: target %s not found\n"
 msgstr "%P%F: bfd-kohdetta %s ei löytynyt\n"
 
-#: ldlang.c:3034
+#: ldlang.c:3129
 msgid "%P%F: cannot open output file %s: %E\n"
 msgstr "%P%F: ei voi avata tulostetiedostoa %s: %E\n"
 
-#: ldlang.c:3040
+#: ldlang.c:3135
 msgid "%P%F:%s: can not make object file: %E\n"
 msgstr "%P%F:%s: ei voi tehdä objektitiedostoa: %E\n"
 
-#: ldlang.c:3044
+#: ldlang.c:3139
 msgid "%P%F:%s: can not set architecture: %E\n"
 msgstr "%P%F:%s: ei voi asettaa arkkitehtuuria: %E\n"
 
-#: ldlang.c:3185
+#: ldlang.c:3309
 msgid "%P: warning: %s contains output sections; did you forget -T?\n"
 msgstr "%P: varoitus: %s sisältää tulostelohkoja; unohditko valitsimen -T?\n"
 
-#: ldlang.c:3215
+#: ldlang.c:3350
 msgid "%P%F: bfd_hash_lookup failed creating symbol %s\n"
 msgstr "%P%F: bfd_hash_lookup ei onnistunut luomaan symbolia %s\n"
 
-#: ldlang.c:3233
+#: ldlang.c:3368
 msgid "%P%F: bfd_hash_allocate failed creating symbol %s\n"
 msgstr "%P%F: bfd_hash_allocate ei onnistunut luomaan symbolia %s\n"
 
-#: ldlang.c:3688
+#: ldlang.c:3764
 msgid "%F%P: %s not found for insert\n"
 msgstr "%F%P: kohdetta %s ei löydy sijoitusta varten\n"
 
-#: ldlang.c:3903
+#: ldlang.c:3979
 msgid " load address 0x%V"
 msgstr " latausosoite 0x%V"
 
 #  Kun käskykohdemuuttuja on sen lukualueen ulkopuolella, joka sallitaan kullekin käskykentälle, assembler voi muuntaa koodin käyttämään toiminnallisesti samanlaista käskyä tai käskysekvenssiä. Tämä prosessi tunnetaan nimellä relaxation. Tätä tehdään tyypillisesti haarautumiskäskyissä, koska  haarautumiskohteen etäisyyttä ei tunneta ennen linkitystä. Tavallaan tällä tavalla kumotaan lukualueen rajoitteet (constraints). Siksi olen suomentanut sen termillä avartaminen.
-#: ldlang.c:4179
+#: ldlang.c:4254
 msgid "%W (size before relaxing)\n"
 msgstr "%W (koko ennen avartamista)\n"
 
-#: ldlang.c:4270
+#: ldlang.c:4345
 #, c-format
 msgid "Address of section %s set to "
 msgstr "Lohkon %s osoitteeksi asetetaan "
 
-#: ldlang.c:4423
+#: ldlang.c:4498
 #, c-format
 msgid "Fail with %d\n"
 msgstr "Ei onnistuttu kohteella %d\n"
 
-#: ldlang.c:4710
+#: ldlang.c:4785
 msgid "%X%P: section %s loaded at [%V,%V] overlaps section %s loaded at [%V,%V]\n"
 msgstr "%X%P: lohko %s, joka on ladattu osoitteesta [%V,%V] menee päällekkäin lohkon %s, joka on ladattu osoitteesta [%V,%V]\n"
 
-#: ldlang.c:4726
+#: ldlang.c:4801
 msgid "%X%P: region `%s' overflowed by %ld bytes\n"
 msgstr "%X%P: alueen ”%s” ylitys on %ld tavua\n"
 
-#: ldlang.c:4749
+#: ldlang.c:4824
 msgid "%X%P: address 0x%v of %B section `%s' is not within region `%s'\n"
 msgstr "%X%P: osoite 0x%v kohteen %B lohkossa ”%s” ei ole alueen ”%s” sisällä\n"
 
-#: ldlang.c:4760
+#: ldlang.c:4835
 msgid "%X%P: %B section `%s' will not fit in region `%s'\n"
 msgstr "%X%P: kohteen %B lohko ”%s” ei mahdu alueen ”%s” sisälle\n"
 
-#: ldlang.c:4816
+#: ldlang.c:4892
 #, c-format
 msgid "%F%S: non constant or forward reference address expression for section %s\n"
 msgstr "%F%S: ei-vakio tai edelleenviiteosoitelauseke lohkolle %s\n"
 
-#: ldlang.c:4841
+#: ldlang.c:4917
 msgid "%P%X: Internal error on COFF shared library section %s\n"
 msgstr "%P%X: Sisäinen virhe COFF-tiedoston jaetussa kirjastolohkossa %s\n"
 
-#: ldlang.c:4900
+#: ldlang.c:4974
 msgid "%P%F: error: no memory region specified for loadable section `%s'\n"
 msgstr "%P%F: virhe: ladattavalle lohkolle ”%s” ei ole määritelty muistialuetta\n"
 
-#: ldlang.c:4905
+#: ldlang.c:4979
 msgid "%P: warning: no memory region specified for loadable section `%s'\n"
 msgstr "%P: varoitus: ladattavalle lohkolle ”%s” ei ole määritelty muistialuetta\n"
 
-#: ldlang.c:4927
+#: ldlang.c:5001
 msgid "%P: warning: changing start of section %s by %lu bytes\n"
 msgstr "%P: varoitus: vaihdetaan lohkon %s alkua %lu tavulla\n"
 
-#: ldlang.c:5004
+#: ldlang.c:5078
 msgid "%P: warning: dot moved backwards before `%s'\n"
 msgstr "%P: varoitus: pistettä siirretty taaksepäin ennen kohdetta ”%s”\n"
 
 #  Kun käskyoperandi on sen lukualueen ulkopuolella, joka sallitaan kullekin käskykentälle, assembler voi muuntaa koodin käyttämään toiminnallisesti samanlaista käskyä tai käskysekvenssiä. Tämä prosessi tunnetaan nimellä relaxation. Tätä tehdään tyypillisesti haarautumiskäskyissä, koska haarautumiskohteen etäisyyttä ei tunneta ennen linkitystä. Tavallaan tällä tavalla kumotaan lukualueen rajoitteet (constraints). Siksi olen suomentanut sen termillä avartaminen.
-#: ldlang.c:5170
+#: ldlang.c:5244
 msgid "%P%F: can't relax section: %E\n"
 msgstr "%P%F: ei voi avartaa lohkoa: %E\n"
 
-#: ldlang.c:5497
+#: ldlang.c:5573
 msgid "%F%P: invalid data statement\n"
 msgstr "%F%P: virheellinen data-lause\n"
 
-#: ldlang.c:5530
+#: ldlang.c:5606
 msgid "%F%P: invalid reloc statement\n"
 msgstr "%F%P: virheellinen reloc-lause\n"
 
-#: ldlang.c:5648
+#: ldlang.c:5725
 msgid "%P%F: gc-sections requires either an entry or an undefined symbol\n"
 msgstr "%P%F: gc-lohkot vaativat joko alkion tai määrittelemättömän symbolin\n"
 
-#: ldlang.c:5673
+#: ldlang.c:5750
 msgid "%P%F:%s: can't set start address\n"
 msgstr "%P%F:%s: ei voi asettaa aloitusosoitetta\n"
 
-#: ldlang.c:5686 ldlang.c:5705
+#: ldlang.c:5763 ldlang.c:5782
 msgid "%P%F: can't set start address\n"
 msgstr "%P%F: ei voi asettaa aloitusosoitetta\n"
 
-#: ldlang.c:5698
+#: ldlang.c:5775
 msgid "%P: warning: cannot find entry symbol %s; defaulting to %V\n"
 msgstr "%P: varoitus: tulosymbolia %s ei löydy, asetaan oletukseksi %V\n"
 
-#: ldlang.c:5710
+#: ldlang.c:5787
 msgid "%P: warning: cannot find entry symbol %s; not setting start address\n"
 msgstr "%P: varoitus: tulosymbolia %s ei löydy, ei aseta aloitusosoitetta\n"
 
-#: ldlang.c:5760
+#: ldlang.c:5842
 msgid "%P%F: Relocatable linking with relocations from format %s (%B) to format %s (%B) is not supported\n"
 msgstr "%P%F: Uudelleensijoituslinkitystä uudelleensijoituksilla muodosta %s (%B) muotoon %s (%B) ei tueta\n"
 
-#: ldlang.c:5770
+#: ldlang.c:5852
 msgid "%P%X: %s architecture of input file `%B' is incompatible with %s output\n"
 msgstr "%P%X: %s syötetiedoston ”%B” arkkitehtuuri ei täsmää tulosteen %s kanssa\n"
 
-#: ldlang.c:5792
+#: ldlang.c:5874
 msgid "%P%X: failed to merge target specific data of file %B\n"
 msgstr "%P%X: ei onnistuttu yhdistää kohdekohtaista tiedostodataa %B\n"
 
-#: ldlang.c:5863
+#: ldlang.c:5945
 msgid "%P%F: Could not define common symbol `%T': %E\n"
 msgstr "%B%F: Ei voitu määritellä yhteissymbolia ”%T”: %E\n"
 
-#: ldlang.c:5875
+#: ldlang.c:5957
 msgid ""
 "\n"
 "Allocating common symbols\n"
@@ -927,7 +923,7 @@ msgstr ""
 "\n"
 "Varataan muistia yhteissymboleille\n"
 
-#: ldlang.c:5876
+#: ldlang.c:5958
 msgid ""
 "Common symbol       size              file\n"
 "\n"
@@ -935,167 +931,159 @@ msgstr ""
 "Yhteissymboli       koko              tiedosto\n"
 "\n"
 
-#: ldlang.c:6022
+#: ldlang.c:6104
 msgid "%P%F: invalid syntax in flags\n"
 msgstr "%P%F: virheellinen syntaksi lipussa\n"
 
-#: ldlang.c:6415
+#: ldlang.c:6566
 msgid "%P%F: Failed to create hash table\n"
 msgstr "%P%F: ei onnistuttu luomaan hash-taulua\n"
 
-#: ldlang.c:6430
+#: ldlang.c:6589
 msgid "%P%F: %s: plugin reported error after all symbols read\n"
 msgstr "%P%F: %s: lisäosa ilmoitti virheestä kaikkien symbolien lukemisen jälkeen\n"
 
-#: ldlang.c:6717
+#: ldlang.c:6905
 msgid "%P%F: multiple STARTUP files\n"
 msgstr "%P%F: useita STARTUP-tiedostoja\n"
 
-#: ldlang.c:6765
+#: ldlang.c:6951
 msgid "%X%P:%S: section has both a load address and a load region\n"
 msgstr "%X%P:%S: lohkossa on sekä latausosoite että latausalue\n"
 
-#: ldlang.c:6950
+#: ldlang.c:7138
 msgid "%X%P:%S: PHDRS and FILEHDR are not supported when prior PT_LOAD headers lack them\n"
 msgstr "%X%P:%S: PHDRS ja FILEHDR eivät ole tuettuja, kun edeltävät PT_LOAD-otsakkeet puuttuvat niistä\n"
 
-#: ldlang.c:7022
+#: ldlang.c:7210
 msgid "%F%P: no sections assigned to phdrs\n"
 msgstr "%F%P: kohteeseen ”phdrs” ei ole liitetty lohkoja\n"
 
-#: ldlang.c:7060
+#: ldlang.c:7248
 msgid "%F%P: bfd_record_phdr failed: %E\n"
 msgstr "%F%P: bfd_record_phdr ei onnistunut: %E\n"
 
-#: ldlang.c:7080
+#: ldlang.c:7268
 msgid "%X%P: section `%s' assigned to non-existent phdr `%s'\n"
 msgstr "%X%P: lohko ”%s” liitetty phdr-kohteeseen ”%s”, joka ei ole olemassa\n"
 
-#: ldlang.c:7481
+#: ldlang.c:7677
 msgid "%X%P: unknown language `%s' in version information\n"
 msgstr "%X%P: tuntematon kieli ”%s” versiotiedoissa\n"
 
-#: ldlang.c:7626
+#: ldlang.c:7822
 msgid "%X%P: anonymous version tag cannot be combined with other version tags\n"
 msgstr "%X%P: nimetöntä versiotunnistetta ei voi yhdistää muihin versiotunnisteisiin\n"
 
-#: ldlang.c:7635
+#: ldlang.c:7831
 msgid "%X%P: duplicate version tag `%s'\n"
 msgstr "%X%P: kaksoiskappaleversiotunniste ”%s”\n"
 
-#: ldlang.c:7656 ldlang.c:7665 ldlang.c:7683 ldlang.c:7693
+#: ldlang.c:7852 ldlang.c:7861 ldlang.c:7879 ldlang.c:7889
 msgid "%X%P: duplicate expression `%s' in version information\n"
 msgstr "%X%P: kaksoiskappalelauseke ”%s” versiotiedoissa\n"
 
-#: ldlang.c:7733
+#: ldlang.c:7929
 msgid "%X%P: unable to find version dependency `%s'\n"
 msgstr "%X%P: ei voi löytää versioriippuvuutta ”%s”\n"
 
-#: ldlang.c:7756
+#: ldlang.c:7952
 msgid "%X%P: unable to read .exports section contents\n"
 msgstr "%X%P: ei voi lukea .exports-lohkon sisältöä\n"
+
+#: ldlang.c:8076
+msgid "%X%P: unknown feature `%s'\n"
+msgstr "%P%F: tuntematon toiminto ”%s”\n"
 
 #  Binary File Descriptor
 #: ldmain.c:239
 msgid "%X%P: can't set BFD default target to `%s': %E\n"
 msgstr "%X%P: ei voi asettaa BFD-oletuskohteeksi arvoa ”%s”: %E\n"
 
-#: ldmain.c:307
-msgid "%P%F: -r and -shared may not be used together\n"
-msgstr "%P%F: argumentteja -r ja -shared ei saa käyttää yhdessä\n"
+#: ldmain.c:303 lexsup.c:1071
+msgid "%P%F: %s: error loading plugin\n"
+msgstr "%P%F: %s: virhe ladattaessa lisäosaa\n"
 
-#: ldmain.c:350
-msgid "%P%F: -F may not be used without -shared\n"
-msgstr "%P%F: argumenttia -F ei saa käyttää ilman argumenttia -shared\n"
-
-#: ldmain.c:352
-msgid "%P%F: -f may not be used without -shared\n"
-msgstr "%P%F: argumenttia -f ei saa käyttää ilman argumenttia -shared\n"
-
-#: ldmain.c:400
+#: ldmain.c:340
 msgid "using external linker script:"
 msgstr "käytetään ulkoista linkitysskriptiä:"
 
-#: ldmain.c:402
+#: ldmain.c:342
 msgid "using internal linker script:"
 msgstr "käytetään sisäistä linkitysskriptiä:"
 
-#: ldmain.c:436
+#: ldmain.c:379
 msgid "%P%F: no input files\n"
 msgstr "%P%F: ei syötetiedostoja\n"
 
-#: ldmain.c:440
+#: ldmain.c:383
 msgid "%P: mode %s\n"
 msgstr "%P: tila %s\n"
 
-#: ldmain.c:456
+#: ldmain.c:399
 msgid "%P%F: cannot open map file %s: %E\n"
 msgstr "%P%F: ei voi avata map-tiedostoa %s: %E\n"
 
-#: ldmain.c:485
-msgid "%P: %s: error in plugin cleanup (ignored)\n"
-msgstr "%P: %s: virhe lisäosan puhdistuksessa (ohitettu)\n"
-
-#: ldmain.c:494
+#: ldmain.c:431
 msgid "%P: link errors found, deleting executable `%s'\n"
 msgstr "%P: linkitysvirheitä löytyi, poistetaan suoritettava tiedosto ”%s”\n"
 
-#: ldmain.c:503
+#: ldmain.c:440
 msgid "%F%B: final close failed: %E\n"
 msgstr "%F%B: loppusulkeminen ei onnistunut: %E\n"
 
-#: ldmain.c:529
+#: ldmain.c:466
 msgid "%X%P: unable to open for source of copy `%s'\n"
 msgstr "%X%P: ei voitu avata kopion ”%s” lähdekoodia\n"
 
-#: ldmain.c:532
+#: ldmain.c:469
 msgid "%X%P: unable to open for destination of copy `%s'\n"
 msgstr "%X%P: ei voitu avata kopion ”%s” kohdetta\n"
 
-#: ldmain.c:539
+#: ldmain.c:476
 msgid "%P: Error writing file `%s'\n"
 msgstr "%P: Virhe kirjoitettaessa tiedostoa ”%s”\n"
 
-#: ldmain.c:544 pe-dll.c:1729
+#: ldmain.c:481 pe-dll.c:1739
 #, c-format
 msgid "%P: Error closing file `%s'\n"
 msgstr "%P: Virhe suljettaessa tiedostoa ”%s”\n"
 
-#: ldmain.c:560
+#: ldmain.c:498
 #, c-format
 msgid "%s: total time in link: %ld.%06ld\n"
 msgstr "%s: kokonaisaika linkityksessä: %ld.%06ld\n"
 
-#: ldmain.c:563
+#: ldmain.c:501
 #, c-format
 msgid "%s: data size %ld\n"
 msgstr "%s: data-koko %ld\n"
 
-#: ldmain.c:646
+#: ldmain.c:585
 msgid "%P%F: missing argument to -m\n"
 msgstr "%P%F: puuttuva argumentti kohteelle -m\n"
 
-#: ldmain.c:694 ldmain.c:714 ldmain.c:746 plugin.c:772
+#: ldmain.c:633 ldmain.c:653 ldmain.c:685
 msgid "%P%F: bfd_hash_table_init failed: %E\n"
 msgstr "%P%F: bfd_hash_table_init ei onnistunut: %E\n"
 
-#: ldmain.c:698 ldmain.c:718
+#: ldmain.c:637 ldmain.c:657
 msgid "%P%F: bfd_hash_lookup failed: %E\n"
 msgstr "%P%F: bfd_hash_lookup ei onnistunut: %E\n"
 
-#: ldmain.c:732
+#: ldmain.c:671
 msgid "%X%P: error: duplicate retain-symbols-file\n"
 msgstr "%X%P: virhe: retain-symbols-file-kaksoiskappale\n"
 
-#: ldmain.c:776
+#: ldmain.c:715
 msgid "%P%F: bfd_hash_lookup for insertion failed: %E\n"
 msgstr "%P%F: bfd_hash_lookup-lisäys ei onnistunut: %E\n"
 
-#: ldmain.c:781
+#: ldmain.c:720
 msgid "%P: `-retain-symbols-file' overrides `-s' and `-S'\n"
 msgstr "%P: ”-retain-symbols-file” korvaa argumentit ”-s” ja ”-S”\n"
 
-#: ldmain.c:895
+#: ldmain.c:820
 #, c-format
 msgid ""
 "Archive member included because of file (symbol)\n"
@@ -1104,165 +1092,164 @@ msgstr ""
 "Arkistojäsen sisällytetty tiedoston vuoksi (symboli)\n"
 "\n"
 
-#: ldmain.c:975
+#: ldmain.c:926
 msgid "%X%C: multiple definition of `%T'\n"
 msgstr "%X%C: useita ”%T”-määrittelyjä\n"
 
-#: ldmain.c:978
+#: ldmain.c:929
 msgid "%D: first defined here\n"
 msgstr "%D: ensimmäinen määritelty täällä\n"
 
 #  Kun käskyoperandi on sen lukualueen ulkopuolella, joka sallitaan kullekin käskykentälle, assembler voi muuntaa koodin käyttämään toiminnallisesti samanlaista käskyä tai käskysekvenssiä. Tämä prosessi tunnetaan nimellä relaxation. Tätä tehdään tyypillisesti haarautumiskäskyissä, koska haarautumiskohteen etäisyyttä ei tunneta ennen linkitystä. Tavallaan tällä tavalla kumotaan lukualueen rajoitteet (constraints). Siksi olen suomentanut sen termillä avartaminen.
-#: ldmain.c:982
+#: ldmain.c:933
 msgid "%P: Disabling relaxation: it will not work with multiple definitions\n"
 msgstr "%P: Otetaan avartaminen pois käytöstä: se ei toimi kun määrittelyjä on useita\n"
 
-#: ldmain.c:1012
+#: ldmain.c:987
 msgid "%B: warning: definition of `%T' overriding common\n"
 msgstr "%B: varoitus: ”%T”-määrittely korvaa yhteisen\n"
 
-#: ldmain.c:1015
+#: ldmain.c:990
 msgid "%B: warning: common is here\n"
 msgstr "%B: varoitus: yhteinen on täällä\n"
 
-#: ldmain.c:1022
+#: ldmain.c:997
 msgid "%B: warning: common of `%T' overridden by definition\n"
 msgstr "%B: varoitus: ”%T”-yhteinen korvattu määrittelyllä\n"
 
-#: ldmain.c:1025
+#: ldmain.c:1000
 msgid "%B: warning: defined here\n"
 msgstr "%B: varoitus: määritelty täällä\n"
 
-#: ldmain.c:1032
+#: ldmain.c:1007
 msgid "%B: warning: common of `%T' overridden by larger common\n"
 msgstr "%B: varoitus: ”%T”-yhteinen korvattu laajemmalla yhteisellä\n"
 
-#: ldmain.c:1035
+#: ldmain.c:1010
 msgid "%B: warning: larger common is here\n"
 msgstr "%B: varoitus: laajempi yhteinen on täällä\n"
 
-#: ldmain.c:1039
+#: ldmain.c:1014
 msgid "%B: warning: common of `%T' overriding smaller common\n"
 msgstr "%B: varoitus: ”%T”-yhteinen korvaa pienemmän yhteisen\n"
 
-#: ldmain.c:1042
+#: ldmain.c:1017
 msgid "%B: warning: smaller common is here\n"
 msgstr "%B: varoitus: pienempi yhteinen on täällä\n"
 
-#: ldmain.c:1046
+#: ldmain.c:1021
 msgid "%B: warning: multiple common of `%T'\n"
 msgstr "%B: varoitus: useita ”%T”-yhteisiä\n"
 
-#: ldmain.c:1048
+#: ldmain.c:1023
 msgid "%B: warning: previous common is here\n"
 msgstr "%B: varoitus: edellinen yhteinen on täällä\n"
 
-#: ldmain.c:1068 ldmain.c:1106
+#: ldmain.c:1043 ldmain.c:1081
 msgid "%P: warning: global constructor %s used\n"
 msgstr "%P: varoitus: yleiskonstruktoria %s käytetty\n"
 
 #  Binary File Descriptor
-#: ldmain.c:1116
+#: ldmain.c:1091
 msgid "%P%F: BFD backend error: BFD_RELOC_CTOR unsupported\n"
 msgstr "%P%F: BFD-taustavirhe: kohdetta BFD_RELOC_CTOR ei ole tuettu\n"
 
 #. We found a reloc for the symbol we are looking for.
-#: ldmain.c:1170 ldmain.c:1172 ldmain.c:1174 ldmain.c:1192 ldmain.c:1237
+#: ldmain.c:1145 ldmain.c:1147 ldmain.c:1149 ldmain.c:1167 ldmain.c:1212
 msgid "warning: "
 msgstr "varoitus: "
 
-#: ldmain.c:1273
+#: ldmain.c:1248
 msgid "%F%P: bfd_hash_table_init failed: %E\n"
 msgstr "%F%P: bfd_hash_table_init ei onnistunut: %E\n"
 
-#: ldmain.c:1280
+#: ldmain.c:1255
 msgid "%F%P: bfd_hash_lookup failed: %E\n"
 msgstr "%F%P: bfd_hash_lookup ei onnistunut: %E\n"
 
-#: ldmain.c:1301
+#: ldmain.c:1276
 msgid "%X%C: undefined reference to `%T'\n"
 msgstr "%X%C: määrittelemätön viite kohteeseen ”%T”\n"
 
-#: ldmain.c:1304
+#: ldmain.c:1279
 msgid "%C: warning: undefined reference to `%T'\n"
 msgstr "%C: varoitus: määrittelemätön viite kohteeseen ”%T”\n"
 
-#: ldmain.c:1310
+#: ldmain.c:1285
 msgid "%X%D: more undefined references to `%T' follow\n"
 msgstr "%X%D: lisää määrittelemättömiä viitteitä kohteeseen ”%T” seuraa\n"
 
-#: ldmain.c:1313
+#: ldmain.c:1288
 msgid "%D: warning: more undefined references to `%T' follow\n"
 msgstr "%D: varoitus: lisää määrittelemättömiä viitteitä kohteeseen ”%T” seuraa\n"
 
-#: ldmain.c:1324
+#: ldmain.c:1299
 msgid "%X%B: undefined reference to `%T'\n"
 msgstr "%X%B: määrittelemätön viite kohteeseen ”%T”\n"
 
-#: ldmain.c:1327
+#: ldmain.c:1302
 msgid "%B: warning: undefined reference to `%T'\n"
 msgstr "%B: varoitus: määrittelemätön viite kohteeseen ”%T”\n"
 
-#: ldmain.c:1333
+#: ldmain.c:1308
 msgid "%X%B: more undefined references to `%T' follow\n"
 msgstr "%X%B: lisää määrittelemättömiä viitteitä kohteeseen ”%T” seuraa\n"
 
-#: ldmain.c:1336
+#: ldmain.c:1311
 msgid "%B: warning: more undefined references to `%T' follow\n"
 msgstr "%B: varoitus: lisää määrittelemättömiä viitteitä kohteeseen ”%T” seuraa\n"
 
-#: ldmain.c:1375
+#: ldmain.c:1350
 msgid " additional relocation overflows omitted from the output\n"
 msgstr " lisäuudelleensijoituskorvauksia ei lisätä tulosteeseen\n"
 
-#: ldmain.c:1388
+#: ldmain.c:1363
 msgid " relocation truncated to fit: %s against undefined symbol `%T'"
 msgstr " uudelleensijoituksia typistetty sopimaan: %s vastaan määrittelemätön symboli ”%T”"
 
-#: ldmain.c:1393
+#: ldmain.c:1368
 msgid " relocation truncated to fit: %s against symbol `%T' defined in %A section in %B"
 msgstr " uudelleensijoituksia typistetty sopimaan: %s vastaan symboli ”%T” määritelty %A-lohkossa %B:ssä"
 
-#: ldmain.c:1405
+#: ldmain.c:1380
 msgid " relocation truncated to fit: %s against `%T'"
 msgstr " uudelleensijoituksia typistetty sopimaan: %s vastaan ”%T”"
 
-#: ldmain.c:1422
-#, c-format
-msgid "%X%C: dangerous relocation: %s\n"
-msgstr "%X%C: vaarallinen uudelleensijoitus: %s\n"
+#: ldmain.c:1397
+msgid "%X%H: dangerous relocation: %s\n"
+msgstr "%X%H: vaarallinen uudelleensijoitus: %s\n"
 
-#: ldmain.c:1437
-msgid "%X%C: reloc refers to symbol `%T' which is not being output\n"
-msgstr "%X%C: reloc viitaa symboliin ”%T”, jota ei tulosteta\n"
+#: ldmain.c:1412
+msgid "%X%H: reloc refers to symbol `%T' which is not being output\n"
+msgstr "%X%H: reloc viitaa symboliin ”%T”, jota ei tulosteta\n"
 
-#: ldmisc.c:149
+#: ldmisc.c:151
 #, c-format
 msgid "no symbol"
 msgstr "ei symbolia"
 
-#: ldmisc.c:246
+#: ldmisc.c:248
 #, c-format
 msgid "built in linker script:%u"
 msgstr "sisäänrakennettu linkitysskripti:%u"
 
-#: ldmisc.c:324
+#: ldmisc.c:329
 msgid "%B: In function `%T':\n"
 msgstr "%B: Funktiossa ”%T”:\n"
 
-#: ldmisc.c:451
+#: ldmisc.c:464
 msgid "%F%P: internal error %s %d\n"
 msgstr "%F%P: sisäinen virhe %s %d\n"
 
-#: ldmisc.c:500
+#: ldmisc.c:513
 msgid "%P: internal error: aborting at %s line %d in %s\n"
 msgstr "%P: sisäinen virhe: hylätään %s rivillä %d kohteessa %s\n"
 
-#: ldmisc.c:503
+#: ldmisc.c:516
 msgid "%P: internal error: aborting at %s line %d\n"
 msgstr "%P: sisäinen virhe: hylätään %s rivillä %d\n"
 
-#: ldmisc.c:505
+#: ldmisc.c:518
 msgid "%P%F: please report this bug\n"
 msgstr "%P%F: ilmoita tästä virheestä\n"
 
@@ -1274,8 +1261,8 @@ msgstr "GNU ld-versio %s\n"
 
 #: ldver.c:43
 #, c-format
-msgid "Copyright 2010 Free Software Foundation, Inc.\n"
-msgstr "Copyright 2010 Free Software Foundation, Inc.\n"
+msgid "Copyright 2011 Free Software Foundation, Inc.\n"
+msgstr "Copyright 2011 Free Software Foundation, Inc.\n"
 
 #: ldver.c:44
 #, c-format
@@ -1314,289 +1301,293 @@ msgstr "%8x jotain muuta\n"
 msgid "%F%P: final link failed: %E\n"
 msgstr "%F%P: loppulinkitys ei onnistunut: %E\n"
 
-#: lexsup.c:219 lexsup.c:368
+#: lexsup.c:220 lexsup.c:374
 msgid "KEYWORD"
 msgstr "AVAINSANA"
 
-#: lexsup.c:219
+#: lexsup.c:220
 msgid "Shared library control for HP/UX compatibility"
 msgstr "Jaettu kirjasto-ohjain HP/UX-yhteensopivuutta varten"
 
-#: lexsup.c:222
+#: lexsup.c:223
 msgid "ARCH"
 msgstr "ARKISTO"
 
-#: lexsup.c:222
+#: lexsup.c:223
 msgid "Set architecture"
 msgstr "Aseta arkkitehtuuri"
 
-#: lexsup.c:224 lexsup.c:487
+#: lexsup.c:225 lexsup.c:493
 msgid "TARGET"
 msgstr "KOHDE"
 
-#: lexsup.c:224
+#: lexsup.c:225
 msgid "Specify target for following input files"
 msgstr "Määrittele kohde seuraaville syötetiedostoille"
 
-#: lexsup.c:227 lexsup.c:278 lexsup.c:296 lexsup.c:309 lexsup.c:311
-#: lexsup.c:441 lexsup.c:501 lexsup.c:563 lexsup.c:576
+#: lexsup.c:228 lexsup.c:279 lexsup.c:303 lexsup.c:316 lexsup.c:318
+#: lexsup.c:447 lexsup.c:509 lexsup.c:572 lexsup.c:585
 msgid "FILE"
 msgstr "TIEDOSTO"
 
-#: lexsup.c:227
+#: lexsup.c:228
 msgid "Read MRI format linker script"
 msgstr "Lue MRI-muotoinen linkitysskripti"
 
-#: lexsup.c:229
+#: lexsup.c:230
 msgid "Force common symbols to be defined"
 msgstr "Pakota yhteissymbolit määriteltäviksi"
 
-#: lexsup.c:233 lexsup.c:545 lexsup.c:547 lexsup.c:549 lexsup.c:551
+#: lexsup.c:234 lexsup.c:553 lexsup.c:555 lexsup.c:557 lexsup.c:559
 msgid "ADDRESS"
 msgstr "OSOITE"
 
-#: lexsup.c:233
+#: lexsup.c:234
 msgid "Set start address"
 msgstr "Aseta alkuosoite"
 
-#: lexsup.c:235
+#: lexsup.c:236
 msgid "Export all dynamic symbols"
 msgstr "Vie kaikki dynaamiset symbolit"
 
-#: lexsup.c:237
+#: lexsup.c:238
 msgid "Undo the effect of --export-dynamic"
 msgstr "Peru valitsimen --export-dynamic vaikutus"
 
-#: lexsup.c:239
+#: lexsup.c:240
 msgid "Link big-endian objects"
 msgstr "Linkitä big-endian-objektit"
 
-#: lexsup.c:241
+#: lexsup.c:242
 msgid "Link little-endian objects"
 msgstr "Linkitä little-endian-objektit"
 
-#: lexsup.c:243 lexsup.c:246
+#: lexsup.c:244 lexsup.c:247
 msgid "SHLIB"
 msgstr "SHLIB"
 
-#: lexsup.c:243
+#: lexsup.c:244
 msgid "Auxiliary filter for shared object symbol table"
 msgstr "Lisäsuodatin jaetulle objektisymbolitaululle"
 
-#: lexsup.c:246
+#: lexsup.c:247
 msgid "Filter for shared object symbol table"
 msgstr "Suodatin jaetulle objektisymbolitaululle"
 
-#: lexsup.c:249
+#: lexsup.c:250
 msgid "Ignored"
 msgstr "Ei oteta huomioon"
 
-#: lexsup.c:251
+#: lexsup.c:252
 msgid "SIZE"
 msgstr "KOKO"
 
-#: lexsup.c:251
+#: lexsup.c:252
 msgid "Small data size (if no size, same as --shared)"
 msgstr "Pieni datakoko (jos kokoa ei ole, sama kuin --shared)"
 
-#: lexsup.c:254
+#: lexsup.c:255
 msgid "FILENAME"
 msgstr "TIEDOSTONIMI"
 
-#: lexsup.c:254
+#: lexsup.c:255
 msgid "Set internal name of shared library"
 msgstr "Aseta jaetun kirjaston sisäinen nimi"
 
-#: lexsup.c:256
+#: lexsup.c:257
 msgid "PROGRAM"
 msgstr "OHJELMA"
 
-#: lexsup.c:256
+#: lexsup.c:257
 msgid "Set PROGRAM as the dynamic linker to use"
 msgstr "Aseta OHJELMA dynaamisena linkkerinä käytettäväksi"
 
-#: lexsup.c:259
+#: lexsup.c:260
 msgid "LIBNAME"
 msgstr "KIRJASTONIMI"
 
-#: lexsup.c:259
+#: lexsup.c:260
 msgid "Search for library LIBNAME"
 msgstr "Haku kirjastolle KIRJASTONIMI"
 
-#: lexsup.c:261
+#: lexsup.c:262
 msgid "DIRECTORY"
 msgstr "HAKEMISTO"
 
-#: lexsup.c:261
+#: lexsup.c:262
 msgid "Add DIRECTORY to library search path"
 msgstr "Lisää HAKEMISTO kirjaston hakupolkuun"
 
-#: lexsup.c:264
+#: lexsup.c:265
 msgid "Override the default sysroot location"
 msgstr "Korvaa oletus sysroot-sijainti"
 
-#: lexsup.c:266
+#: lexsup.c:267
 msgid "EMULATION"
 msgstr "EMULOINTI"
 
-#: lexsup.c:266
+#: lexsup.c:267
 msgid "Set emulation"
 msgstr "Aseta emulointi"
 
-#: lexsup.c:268
+#: lexsup.c:269
 msgid "Print map file on standard output"
 msgstr "Tulosta map-tiedosto vakiotulosteessa"
 
-#: lexsup.c:270
+#: lexsup.c:271
 msgid "Do not page align data"
 msgstr "Älä sivuta tasausdataa"
 
-#: lexsup.c:272
+#: lexsup.c:273
 msgid "Do not page align data, do not make text readonly"
 msgstr "Älä sivuta tasausdataa, älä tee tekstistä kirjoitussuojattua"
 
-#: lexsup.c:275
+#: lexsup.c:276
 msgid "Page align data, make text readonly"
 msgstr "Sivuta tasausdataa, tee tekstistä kirjoitussuojattua"
 
-#: lexsup.c:278
+#: lexsup.c:279
 msgid "Set output file name"
 msgstr "Aseta tulostetiedoston nimi"
 
-#: lexsup.c:280
+#: lexsup.c:281
 msgid "Optimize output file"
 msgstr "Optimoi tulostetiedosto"
 
-#: lexsup.c:283
+#: lexsup.c:284
 msgid "PLUGIN"
 msgstr "LISÄOSA"
 
-#: lexsup.c:283
+#: lexsup.c:284
 msgid "Load named plugin"
 msgstr "Lataa lisätty lisäosa"
 
-#: lexsup.c:285
+#: lexsup.c:286
 msgid "ARG"
 msgstr "ARGUMENTTI"
 
-#: lexsup.c:285
+#: lexsup.c:286
 msgid "Send arg to last-loaded plugin"
 msgstr "Lähetä argumentti viimeksiladattuun lisäosaan"
 
-#: lexsup.c:288
+#: lexsup.c:288 lexsup.c:291
+msgid "Ignored for GCC LTO option compatibility"
+msgstr "Ei oteta huomioon GCC LTO -valitsinyhteensopivuutta"
+
+#: lexsup.c:295
 msgid "Ignored for SVR4 compatibility"
 msgstr "Ei oteta huomioon SVR4-yhteensopivuutta"
 
-#: lexsup.c:292
+#: lexsup.c:299
 msgid "Generate relocatable output"
-msgstr "Luo uudelleensijoitettava tuloste"
+msgstr "Tuota uudelleensijoitettava tuloste"
 
-#: lexsup.c:296
+#: lexsup.c:303
 msgid "Just link symbols (if directory, same as --rpath)"
 msgstr "Linkitä vain symbolit (jos hakemisto, sama kuin --rpath)"
 
-#: lexsup.c:299
+#: lexsup.c:306
 msgid "Strip all symbols"
 msgstr "Riisu kaikki symbolit"
 
-#: lexsup.c:301
+#: lexsup.c:308
 msgid "Strip debugging symbols"
 msgstr "Riisu vianjäljityssymbolit"
 
-#: lexsup.c:303
+#: lexsup.c:310
 msgid "Strip symbols in discarded sections"
 msgstr "Riisu symbolit hylätyissä lohkoissa"
 
-#: lexsup.c:305
+#: lexsup.c:312
 msgid "Do not strip symbols in discarded sections"
 msgstr "Älä riisu symboleja hylätyistä lohkoista"
 
-#: lexsup.c:307
+#: lexsup.c:314
 msgid "Trace file opens"
 msgstr "Jäljitä tiedoston avaukset"
 
-#: lexsup.c:309
+#: lexsup.c:316
 msgid "Read linker script"
 msgstr "Lue linkitysskripti"
 
-#: lexsup.c:311
+#: lexsup.c:318
 msgid "Read default linker script"
 msgstr "Lue oletus linkitysskripti"
 
-#: lexsup.c:315 lexsup.c:333 lexsup.c:418 lexsup.c:439 lexsup.c:538
-#: lexsup.c:566 lexsup.c:605
+#: lexsup.c:322 lexsup.c:340 lexsup.c:424 lexsup.c:445 lexsup.c:546
+#: lexsup.c:575 lexsup.c:614
 msgid "SYMBOL"
 msgstr "SYMBOLI"
 
-#: lexsup.c:315
+#: lexsup.c:322
 msgid "Start with undefined reference to SYMBOL"
 msgstr "Aloita määrittelemättömällä viitteellä kohteeseen SYMBOLI"
 
-#: lexsup.c:318
+#: lexsup.c:325
 msgid "[=SECTION]"
 msgstr "[=LOHKO]"
 
-#: lexsup.c:319
+#: lexsup.c:326
 msgid "Don't merge input [SECTION | orphan] sections"
 msgstr "Älä yhdistä syöte[LOHKO | orpo]lohkoja"
 
-#: lexsup.c:321
+#: lexsup.c:328
 msgid "Build global constructor/destructor tables"
 msgstr "Muodosta yleiset konstruktori/destruktoritaulut"
 
-#: lexsup.c:323
+#: lexsup.c:330
 msgid "Print version information"
 msgstr "Tulosta versiotiedot"
 
-#: lexsup.c:325
+#: lexsup.c:332
 msgid "Print version and emulation information"
 msgstr "Tulosta versio- ja emulointitiedot"
 
-#: lexsup.c:327
+#: lexsup.c:334
 msgid "Discard all local symbols"
 msgstr "Hylkää kaikki paikalliset symbolit"
 
-#: lexsup.c:329
+#: lexsup.c:336
 msgid "Discard temporary local symbols (default)"
 msgstr "Hylkää tilapäiset paikalliset symbolit (oletus)"
 
-#: lexsup.c:331
+#: lexsup.c:338
 msgid "Don't discard any local symbols"
 msgstr "Älä hylkää mitään paikallisia symboleja"
 
-#: lexsup.c:333
+#: lexsup.c:340
 msgid "Trace mentions of SYMBOL"
 msgstr "Jäljitä SYMBOLIn maininnat"
 
-#: lexsup.c:335 lexsup.c:503 lexsup.c:505
+#: lexsup.c:342 lexsup.c:511 lexsup.c:513
 msgid "PATH"
 msgstr "POLKU"
 
-#: lexsup.c:335
+#: lexsup.c:342
 msgid "Default search path for Solaris compatibility"
 msgstr "Oletushakupolku Solaris-yhteensopivuutta varten"
 
-#: lexsup.c:338
+#: lexsup.c:345
 msgid "Start a group"
 msgstr "Käynnistä ryhmä"
 
-#: lexsup.c:340
+#: lexsup.c:347
 msgid "End a group"
 msgstr "Lopeta ryhmä"
 
-#: lexsup.c:344
+#: lexsup.c:351
 msgid "Accept input files whose architecture cannot be determined"
 msgstr "Hyväksy syötetiedostot, joiden arkkitehtuuria ei voida määritellä"
 
-#: lexsup.c:348
+#: lexsup.c:355
 msgid "Reject input files whose architecture is unknown"
 msgstr "Hylkää syötetiedostot, joiden arkkitehtuuri on tuntematon"
 
-#: lexsup.c:361
+#: lexsup.c:367
 msgid "Only set DT_NEEDED for following dynamic libs if used"
 msgstr "Aseta DT_NEEDED vain seuraavissa dynaamisissa kirjastoissa, jos niitä käytetään"
 
-#: lexsup.c:364
+#: lexsup.c:370
 msgid ""
 "Always set DT_NEEDED for dynamic libraries mentioned on\n"
 "                                the command line"
@@ -1604,171 +1595,171 @@ msgstr ""
 "Aseta aina DT_NEEDED dynaamisille kirjastoille, jotka on\n"
 "                                määritelty komentorivillä"
 
-#: lexsup.c:368
+#: lexsup.c:374
 msgid "Ignored for SunOS compatibility"
 msgstr "Ei oteta huomioon SunOS-yhteensopivuutta"
 
-#: lexsup.c:370
+#: lexsup.c:376
 msgid "Link against shared libraries"
 msgstr "Linkitä käyttäen jaettuja kirjastoja"
 
-#: lexsup.c:376
+#: lexsup.c:382
 msgid "Do not link against shared libraries"
 msgstr "Älä linkitä käyttäen jaettuja kirjastoja"
 
-#: lexsup.c:384
+#: lexsup.c:390
 msgid "Bind global references locally"
 msgstr "Sido yleisviitteet paikallisesti"
 
-#: lexsup.c:386
+#: lexsup.c:392
 msgid "Bind global function references locally"
 msgstr "Sido yleisfunktioviitteet paikallisesti"
 
-#: lexsup.c:388
+#: lexsup.c:394
 msgid "Check section addresses for overlaps (default)"
 msgstr "Tarkista lohko-osoitteet päällekkäisyyksien varalta (oletus)"
 
-#: lexsup.c:391
+#: lexsup.c:397
 msgid "Do not check section addresses for overlaps"
 msgstr "Älä tarkista lohko-osoitteita päällekkäisyyksien varalta"
 
-#: lexsup.c:395
+#: lexsup.c:401
 msgid "Copy DT_NEEDED links mentioned inside DSOs that follow"
 msgstr "Kopioi DT_NEEDED-linkit, jotka on mainittu seuraavien DSO-kohteiden sisällä"
 
-#: lexsup.c:399
+#: lexsup.c:405
 msgid "Do not copy DT_NEEDED links mentioned inside DSOs that follow"
 msgstr "Älä kopioi DT_NEEDED-linkkejä, jotka on mainittu seuraavien DSO-kohteiden sisällä"
 
-#: lexsup.c:403
+#: lexsup.c:409
 msgid "Output cross reference table"
 msgstr "Tulosteristiviitetaulu"
 
-#: lexsup.c:405
+#: lexsup.c:411
 msgid "SYMBOL=EXPRESSION"
 msgstr "SYMBOLI=LAUSEKE"
 
-#: lexsup.c:405
+#: lexsup.c:411
 msgid "Define a symbol"
 msgstr "Määrittele symboli"
 
-#: lexsup.c:407
+#: lexsup.c:413
 msgid "[=STYLE]"
 msgstr "[=TYYLI]"
 
-#: lexsup.c:407
+#: lexsup.c:413
 msgid "Demangle symbol names [using STYLE]"
 msgstr "Eheytä symbolinnimet [käyttäen TYYLIä]"
 
-#: lexsup.c:410
+#: lexsup.c:416
 msgid "Generate embedded relocs"
-msgstr "luo upotettuja relocs-lohkoja"
+msgstr "Tuota upotettuja relocs-lohkoja"
 
-#: lexsup.c:412
+#: lexsup.c:418
 msgid "Treat warnings as errors"
 msgstr "Kohtele varoituksia virheinä"
 
-#: lexsup.c:415
+#: lexsup.c:421
 msgid "Do not treat warnings as errors (default)"
 msgstr "Älä kohtele varoituksia virheinä (oletus)"
 
-#: lexsup.c:418
+#: lexsup.c:424
 msgid "Call SYMBOL at unload-time"
 msgstr "Kutsu SYMBOLIa vapautushetkellä"
 
-#: lexsup.c:420
+#: lexsup.c:426
 msgid "Force generation of file with .exe suffix"
 msgstr "Pakota .exe-suffiksitiedoston luominen"
 
-#: lexsup.c:422
+#: lexsup.c:428
 msgid "Remove unused sections (on some targets)"
 msgstr "Poista käyttämättömät lohkot (joissakin kohteissa)"
 
-#: lexsup.c:425
+#: lexsup.c:431
 msgid "Don't remove unused sections (default)"
 msgstr "Älä poista käyttämättömiä lohkoja (oletus)"
 
-#: lexsup.c:428
+#: lexsup.c:434
 msgid "List removed unused sections on stderr"
 msgstr "Luettele poistetut käyttämättömät lohkot vakiovirheessä"
 
-#: lexsup.c:431
+#: lexsup.c:437
 msgid "Do not list removed unused sections"
 msgstr "Älä luettele poistettuja käyttämättömiä lohkoja"
 
-#: lexsup.c:434
+#: lexsup.c:440
 msgid "Set default hash table size close to <NUMBER>"
 msgstr "Aseta oletus-hash-taulukoko lähelle <NUMERO>"
 
-#: lexsup.c:437
+#: lexsup.c:443
 msgid "Print option help"
 msgstr "Tulosta valitsinopaste"
 
-#: lexsup.c:439
+#: lexsup.c:445
 msgid "Call SYMBOL at load-time"
 msgstr "Kutsu SYMBOLIa lataushetkellä"
 
-#: lexsup.c:441
+#: lexsup.c:447
 msgid "Write a map file"
 msgstr "Kirjoita map-tiedosto"
 
-#: lexsup.c:443
+#: lexsup.c:449
 msgid "Do not define Common storage"
 msgstr "Älä määrittele Yhteinen-varastoa"
 
-#: lexsup.c:445
+#: lexsup.c:451
 msgid "Do not demangle symbol names"
 msgstr "Älä eheytä symbolinimiä"
 
-#: lexsup.c:447
+#: lexsup.c:453
 msgid "Use less memory and more disk I/O"
 msgstr "Käytä vähemmän muistia ja enemmän levyn I/O-toimintoja"
 
-#: lexsup.c:449
+#: lexsup.c:455
 msgid "Do not allow unresolved references in object files"
 msgstr "Älä salli ratkaisemattomia viitteitä objektitiedostoissa"
 
-#: lexsup.c:452
-msgid "Allow unresolved references in shared libaries"
+#: lexsup.c:458
+msgid "Allow unresolved references in shared libraries"
 msgstr "Salli ratkaisemattomia viitteitä jaetuissa kirjastoissa"
 
-#: lexsup.c:456
+#: lexsup.c:462
 msgid "Do not allow unresolved references in shared libs"
 msgstr "Älä salli ratkaisemattomia viitteitä jaetuissa kirjastoissa"
 
-#: lexsup.c:460
+#: lexsup.c:466
 msgid "Allow multiple definitions"
 msgstr "Salli useita määrittelyjä"
 
-#: lexsup.c:462
+#: lexsup.c:468
 msgid "Disallow undefined version"
 msgstr "Älä salli määrittelemätöntä versiota"
 
-#: lexsup.c:464
+#: lexsup.c:470
 msgid "Create default symbol version"
 msgstr "Luo oletussymboliversio"
 
-#: lexsup.c:467
+#: lexsup.c:473
 msgid "Create default symbol version for imported symbols"
 msgstr "Luo oletussymboliversio tuontisymboleille"
 
-#: lexsup.c:470
+#: lexsup.c:476
 msgid "Don't warn about mismatched input files"
 msgstr "Älä varoita täsmäämättömistä syötetiedostoista"
 
-#: lexsup.c:473
+#: lexsup.c:479
 msgid "Don't warn on finding an incompatible library"
 msgstr "Älä varoita yhteensopimattoman kirjaston löytymisestä"
 
-#: lexsup.c:476
+#: lexsup.c:482
 msgid "Turn off --whole-archive"
 msgstr "Käännä pois --whole-archive"
 
-#: lexsup.c:478
+#: lexsup.c:484
 msgid "Create an output file even if errors occur"
 msgstr "Luo tulostetiedosto myös silloin kun syntyy virheitä"
 
-#: lexsup.c:483
+#: lexsup.c:489
 msgid ""
 "Only use library directories specified on\n"
 "                                the command line"
@@ -1776,128 +1767,132 @@ msgstr ""
 "Käytä vain kirjastohakemistoja, jotka on määritelty\n"
 "                                komentorivillä"
 
-#: lexsup.c:487
+#: lexsup.c:493
 msgid "Specify target of output file"
 msgstr "Määrittele tulostetiedoston kohde"
 
-#: lexsup.c:490
+#: lexsup.c:496
+msgid "Print default output format"
+msgstr "Tulostuksen oletustulostusmuoto"
+
+#: lexsup.c:498
 msgid "Ignored for Linux compatibility"
 msgstr "Ei oteta huomioon Linux-yhteensopivuutta"
 
-#: lexsup.c:493
+#: lexsup.c:501
 msgid "Reduce memory overheads, possibly taking much longer"
 msgstr "Pienennä muistiyleisrasite, mahdollisesti ottamalla paljon pitemmän"
 
-#: lexsup.c:496
+#: lexsup.c:504
 msgid "Reduce code size by using target specific optimizations"
 msgstr "Pienennä koodikokoa käyttämällä kohdekohtaisia optimointeja"
 
 #  Kun käskyoperandi on sen lukualueen ulkopuolella, joka sallitaan kullekin käskykentälle, assembler voi muuntaa koodin käyttämään toiminnallisesti samanlaista käskyä tai käskysekvenssiä. Tämä prosessi tunnetaan nimellä relaxation. Tätä tehdään tyypillisesti haarautumiskäskyissä, koska haarautumiskohteen etäisyyttä ei tunneta ennen linkitystä. Tavallaan tällä tavalla kumotaan lukualueen rajoitteet (constraints). Siksi olen suomentanut sen termillä avartaminen.
-#: lexsup.c:498
+#: lexsup.c:506
 msgid "Do not use relaxation techniques to reduce code size"
 msgstr "Älä käytä avartamistekniikoita koodikoon pienentämiseksi"
 
-#: lexsup.c:501
+#: lexsup.c:509
 msgid "Keep only symbols listed in FILE"
 msgstr "Pidä vain symbolit, jotka on lueteltu TIEDOSTOssa"
 
-#: lexsup.c:503
+#: lexsup.c:511
 msgid "Set runtime shared library search path"
 msgstr "Aseta ajoaikaisen jaetun kirjaston hakupolku"
 
-#: lexsup.c:505
+#: lexsup.c:513
 msgid "Set link time shared library search path"
 msgstr "Aseta linkkausaikaisen jaetun kirjaston hakupolku"
 
-#: lexsup.c:508
+#: lexsup.c:516
 msgid "Create a shared library"
 msgstr "Luo jaettu kirjasto"
 
-#: lexsup.c:512
+#: lexsup.c:520
 msgid "Create a position independent executable"
 msgstr "Luo paikkariippumaton suoritettava tiedosto"
 
-#: lexsup.c:516
+#: lexsup.c:524
 msgid "[=ascending|descending]"
 msgstr "[=nouseva|laskeva]"
 
-#: lexsup.c:517
+#: lexsup.c:525
 msgid "Sort common symbols by alignment [in specified order]"
 msgstr "Lajittele yhteissymbolit [määritellyn järjestyksen] mukaan"
 
-#: lexsup.c:522
+#: lexsup.c:530
 msgid "name|alignment"
 msgstr "nimi|tasaus"
 
-#: lexsup.c:523
+#: lexsup.c:531
 msgid "Sort sections by name or maximum alignment"
 msgstr "Lajittele lohkot nimen tai maksimitasauksen mukaan"
 
-#: lexsup.c:525
+#: lexsup.c:533
 msgid "COUNT"
 msgstr "LUKUMÄÄRÄ"
 
-#: lexsup.c:525
+#: lexsup.c:533
 msgid "How many tags to reserve in .dynamic section"
 msgstr "Kuinka monta tunnistetta ”.dynamic”-lohkon varaamiseen"
 
-#: lexsup.c:528
+#: lexsup.c:536
 msgid "[=SIZE]"
 msgstr "[=KOKO]"
 
-#: lexsup.c:528
+#: lexsup.c:536
 msgid "Split output sections every SIZE octets"
 msgstr "Halkaise tulostelohkot kaikkiin KOKO-oktetteihin"
 
-#: lexsup.c:531
+#: lexsup.c:539
 msgid "[=COUNT]"
 msgstr "[=LUKUMÄÄRÄ]"
 
-#: lexsup.c:531
+#: lexsup.c:539
 msgid "Split output sections every COUNT relocs"
 msgstr "Halkaise tulostelohkot kaikkiin COUNT-reloc-alkioihin"
 
-#: lexsup.c:534
+#: lexsup.c:542
 msgid "Print memory usage statistics"
 msgstr "Tulosta muistikäyttötilastot"
 
-#: lexsup.c:536
+#: lexsup.c:544
 msgid "Display target specific options"
 msgstr "Näytä kohdekohtaiset valitsimet"
 
-#: lexsup.c:538
+#: lexsup.c:546
 msgid "Do task level linking"
 msgstr "Tee tehtävätason linkitystä"
 
-#: lexsup.c:540
+#: lexsup.c:548
 msgid "Use same format as native linker"
 msgstr "Käytä samaa muotoa kuin kotoperäinen linkkeri"
 
-#: lexsup.c:542
+#: lexsup.c:550
 msgid "SECTION=ADDRESS"
 msgstr "LOHKO=OSOITE"
 
-#: lexsup.c:542
+#: lexsup.c:550
 msgid "Set address of named section"
 msgstr "Aseta nimetyn lohkon osoite"
 
-#: lexsup.c:545
+#: lexsup.c:553
 msgid "Set address of .bss section"
 msgstr "Aseta ”.bss”-lohkon osoite"
 
-#: lexsup.c:547
+#: lexsup.c:555
 msgid "Set address of .data section"
 msgstr "Aseta ”.data”-lohkon osoite"
 
-#: lexsup.c:549
+#: lexsup.c:557
 msgid "Set address of .text section"
 msgstr "Aseta ”.text”-lohkon osoite"
 
-#: lexsup.c:551
+#: lexsup.c:559
 msgid "Set address of text segment"
 msgstr "Aseta text-lohkon osoite"
 
-#: lexsup.c:554
+#: lexsup.c:562
 msgid ""
 "How to handle unresolved symbols.  <method> is:\n"
 "                                ignore-all, report-all, ignore-in-object-files,\n"
@@ -1907,15 +1902,19 @@ msgstr ""
 "                                ei-oteta-huomioon-kaikissa, raportoi-kaikki, ei-oteta-huomioon-objektitiedostoista,\n"
 "                                ei-oteta-huomioon-jaetuissa-kirjastoissa"
 
-#: lexsup.c:559
+#: lexsup.c:567
+msgid "[=NUMBER]"
+msgstr "[=NUMERO]"
+
+#: lexsup.c:568
 msgid "Output lots of information during link"
 msgstr "Tulosta paljon tietoja linkityksen aikana"
 
-#: lexsup.c:563
+#: lexsup.c:572
 msgid "Read version information script"
 msgstr "Lue versiotietoskripti"
 
-#: lexsup.c:566
+#: lexsup.c:575
 msgid ""
 "Take export symbols list from .exports, using\n"
 "                                SYMBOL as the version."
@@ -1923,99 +1922,95 @@ msgstr ""
 "Ota vientisymbolit ”.exports”-luettelosta, käytä\n"
 "                                SYMBOLIa versiona."
 
-#: lexsup.c:570
+#: lexsup.c:579
 msgid "Add data symbols to dynamic list"
 msgstr "Lisää datasymboleja dynaamiseen luetteloon"
 
-#: lexsup.c:572
+#: lexsup.c:581
 msgid "Use C++ operator new/delete dynamic list"
 msgstr "Käytä C++-operaattoria ”new/delete” dynaamiseen luetteloon"
 
-#: lexsup.c:574
+#: lexsup.c:583
 msgid "Use C++ typeinfo dynamic list"
 msgstr "Käytä C++ typeinfo-luokkaa dynaamiseen luetteloon"
 
-#: lexsup.c:576
+#: lexsup.c:585
 msgid "Read dynamic list"
 msgstr "Lue dynaamista luetteloa"
 
-#: lexsup.c:578
+#: lexsup.c:587
 msgid "Warn about duplicate common symbols"
 msgstr "Varoita yhteissymbolien kaksoiskappaleista"
 
-#: lexsup.c:580
+#: lexsup.c:589
 msgid "Warn if global constructors/destructors are seen"
 msgstr "Varoita, jos nähdään yleisiä konstruktoreja/destruktoreja"
 
-#: lexsup.c:583
+#: lexsup.c:592
 msgid "Warn if the multiple GP values are used"
 msgstr "Varoita, jos käytetään useita GP-arvoja"
 
-#: lexsup.c:585
+#: lexsup.c:594
 msgid "Warn only once per undefined symbol"
 msgstr "Varoita vain kerran määrittämättömästä symbolista"
 
-#: lexsup.c:587
+#: lexsup.c:596
 msgid "Warn if start of section changes due to alignment"
 msgstr "Varoita, jos lohkon alku muuttuu tasauksen vuoksi"
 
-#: lexsup.c:590
+#: lexsup.c:599
 msgid "Warn if shared object has DT_TEXTREL"
 msgstr "Varoita, jos jaetuilla objekteilla on DT_TEXTREL"
 
-#: lexsup.c:593
+#: lexsup.c:602
 msgid "Warn if an object has alternate ELF machine code"
 msgstr "Varoita, jos objektissa on vaihtoehtoisen ELF-koneen koodia"
 
-#: lexsup.c:597
+#: lexsup.c:606
 msgid "Report unresolved symbols as warnings"
 msgstr "Raportoi ratkaisemattomat symbolit varoituksina"
 
-#: lexsup.c:600
+#: lexsup.c:609
 msgid "Report unresolved symbols as errors"
 msgstr "Raportoi ratkaisemattomat symbolit virheinä"
 
-#: lexsup.c:602
+#: lexsup.c:611
 msgid "Include all objects from following archives"
 msgstr "Sisällytä kaikki objektit seuraavista arkistoista"
 
-#: lexsup.c:605
+#: lexsup.c:614
 msgid "Use wrapper functions for SYMBOL"
 msgstr "Käytä wrapper-toimintoja SYMBOLille"
 
-#: lexsup.c:754
+#: lexsup.c:763
 msgid "%P: unrecognized option '%s'\n"
-msgstr "%P: tunnistamaton valitsin ”%s”\n"
+msgstr "%P: tunnistamaton valitsin ’%s’\n"
 
-#: lexsup.c:758
+#: lexsup.c:767
 msgid "%P%F: use the --help option for usage information\n"
 msgstr "%P%F: käytä ”--help”-valitsinta käyttötietojen saamiseksi\n"
 
-#: lexsup.c:776
+#: lexsup.c:785
 msgid "%P%F: unrecognized -a option `%s'\n"
 msgstr "%P%F: tunnistamaton ”-a”-valitsin ”%s”\n"
 
-#: lexsup.c:789
+#: lexsup.c:798
 msgid "%P%F: unrecognized -assert option `%s'\n"
 msgstr "%P%F: tunnistamaton ”-assert”-valitsin ”%s”\n"
 
-#: lexsup.c:832
+#: lexsup.c:841
 msgid "%F%P: unknown demangling style `%s'"
 msgstr "%F%P: tuntematon eheytystyyli ”%s”"
 
-#: lexsup.c:898
+#: lexsup.c:907 lexsup.c:1341
 msgid "%P%F: invalid number `%s'\n"
 msgstr "%P%F: virheellinen numero ”%s”\n"
 
-#: lexsup.c:996
+#: lexsup.c:1005
 msgid "%P%F: bad --unresolved-symbols option: %s\n"
 msgstr "%P%F: virheellinen ”--unresolved-symbols”-valitsin: %s\n"
 
-#: lexsup.c:1059
-msgid "%P%F: bad -plugin option\n"
-msgstr "%P%F: virheellinen ”-plugin”-valitsin\n"
-
-#: lexsup.c:1063
+#: lexsup.c:1076
 msgid "%P%F: bad -plugin-opt option\n"
 msgstr "%P%F: virheellinen ”-plugin-opt”-valitsin\n"
 
@@ -2027,115 +2022,123 @@ msgstr "%P%F: virheellinen ”-plugin-opt”-valitsin\n"
 #. an error message here.  We cannot just make this a warning,
 #. increment optind, and continue because getopt is too confused
 #. and will seg-fault the next time around.
-#: lexsup.c:1080
+#: lexsup.c:1093
 msgid "%P%F: bad -rpath option\n"
 msgstr "%P%F: virheellinen ”-rpath”-valitsin\n"
 
-#: lexsup.c:1194
+#: lexsup.c:1207
 msgid "%P%F: -shared not supported\n"
 msgstr "%P%F: ”-shared” ei ole tuettu\n"
 
-#: lexsup.c:1203
+#: lexsup.c:1216
 msgid "%P%F: -pie not supported\n"
 msgstr "%P%F: ”-pie” ei ole tuettu\n"
 
-#: lexsup.c:1211
+#: lexsup.c:1224
 msgid "descending"
 msgstr "laskeva"
 
-#: lexsup.c:1213
+#: lexsup.c:1226
 msgid "ascending"
 msgstr "nouseva"
 
-#: lexsup.c:1216
+#: lexsup.c:1229
 msgid "%P%F: invalid common section sorting option: %s\n"
 msgstr "%P%F: virheellinen yhteisen lohkon lajitteluvalitsin: %s\n"
 
-#: lexsup.c:1220
+#: lexsup.c:1233
 msgid "name"
 msgstr "nimi"
 
-#: lexsup.c:1222
+#: lexsup.c:1235
 msgid "alignment"
 msgstr "tasaus"
 
-#: lexsup.c:1225
+#: lexsup.c:1238
 msgid "%P%F: invalid section sorting option: %s\n"
 msgstr "%P%F: virheellinen lohkolajitteluvalitsin: %s\n"
 
-#: lexsup.c:1259
+#: lexsup.c:1272
 msgid "%P%F: invalid argument to option \"--section-start\"\n"
 msgstr "%P%F: virheellinen argumentti valitsimelle ”--section-start”\n"
 
-#: lexsup.c:1266
+#: lexsup.c:1279
 msgid "%P%F: missing argument(s) to option \"--section-start\"\n"
 msgstr "%P%F: argumentteja puuttuu valitsimelle ”--section-start”\n"
 
-#: lexsup.c:1490
+#: lexsup.c:1513
 msgid "%P%F: group ended before it began (--help for usage)\n"
 msgstr "%P%F: ryhmä loppui ennen alkamista (--help opasteeksi)\n"
 
-#: lexsup.c:1518
+#: lexsup.c:1541
 msgid "%P%X: --hash-size needs a numeric argument\n"
 msgstr "%P%X: ”--hash-size” tarvitsee numeerisen argumentin\n"
 
-#: lexsup.c:1547
-msgid "%P%F: %s: error loading plugin\n"
-msgstr "%P%F: %s: virhe ladattaessa lisäosaa\n"
+#: lexsup.c:1572
+msgid "%P%F: -r and -shared may not be used together\n"
+msgstr "%P%F: argumentteja -r ja -shared ei saa käyttää yhdessä\n"
 
-#: lexsup.c:1578 lexsup.c:1591
+#: lexsup.c:1615
+msgid "%P%F: -F may not be used without -shared\n"
+msgstr "%P%F: argumenttia -F ei saa käyttää ilman argumenttia -shared\n"
+
+#: lexsup.c:1617
+msgid "%P%F: -f may not be used without -shared\n"
+msgstr "%P%F: argumenttia -f ei saa käyttää ilman argumenttia -shared\n"
+
+#: lexsup.c:1661 lexsup.c:1674
 msgid "%P%F: invalid hex number `%s'\n"
 msgstr "%P%F: virheellinen heksadesimaalinumero ”%s”\n"
 
-#: lexsup.c:1627
+#: lexsup.c:1710
 #, c-format
 msgid "Usage: %s [options] file...\n"
 msgstr "Käyttö: %s [valitsimet] tiedosto...\n"
 
-#: lexsup.c:1629
+#: lexsup.c:1712
 #, c-format
 msgid "Options:\n"
 msgstr "Valitsimet:\n"
 
-#: lexsup.c:1707
+#: lexsup.c:1790
 #, c-format
 msgid "  @FILE"
 msgstr "  @TIEDOSTO"
 
-#: lexsup.c:1710
+#: lexsup.c:1793
 #, c-format
 msgid "Read options from FILE\n"
 msgstr "Lue valitsimet tiedostosta TIEDOSTO\n"
 
 #. Note: Various tools (such as libtool) depend upon the
 #. format of the listings below - do not change them.
-#: lexsup.c:1715
+#: lexsup.c:1798
 #, c-format
 msgid "%s: supported targets:"
 msgstr "%s: tuetut kohteet:"
 
-#: lexsup.c:1723
+#: lexsup.c:1806
 #, c-format
 msgid "%s: supported emulations: "
 msgstr "%s: tuetut emuloinnit: "
 
-#: lexsup.c:1728
+#: lexsup.c:1811
 #, c-format
 msgid "%s: emulation specific options:\n"
 msgstr "%s: emulointikohtaiset valitsimet:\n"
 
-#: lexsup.c:1733
+#: lexsup.c:1816
 #, c-format
 msgid "Report bugs to %s\n"
 msgstr ""
 "Ilmoita virheet (englanniksi) osoitteeseen %s\n"
 "Ilmoita käännösvirheet osoitteeseen <translation-team-fi@lists.sourceforge.net>\n"
 
-#: mri.c:292
+#: mri.c:294
 msgid "%P%F: unknown format type %s\n"
 msgstr "%P%F: tuntematon muototyyppi %s\n"
 
-#: pe-dll.c:430
+#: pe-dll.c:431
 #, c-format
 msgid "%XUnsupported PEI architecture: %s\n"
 msgstr "%XEi-tuettu PEI-arkkitehtuuri: %s\n"
@@ -2145,104 +2148,125 @@ msgstr "%XEi-tuettu PEI-arkkitehtuuri: %s\n"
 msgid "%XCannot export %s: invalid export name\n"
 msgstr "%XEi voi viedä %s: virheellinen vientinimi\n"
 
-#: pe-dll.c:844
+#: pe-dll.c:845
 #, c-format
 msgid "%XError, duplicate EXPORT with ordinals: %s (%d vs %d)\n"
 msgstr "%XVirhe, EXPORT-kaksoiskappale järjestysnumeroilla: %s (%d vs %d)\n"
 
-#: pe-dll.c:851
+#: pe-dll.c:852
 #, c-format
 msgid "Warning, duplicate EXPORT: %s\n"
 msgstr "Varoitus, EXPORT-kaksoiskappale: %s\n"
 
-#: pe-dll.c:938
+#: pe-dll.c:939
 #, c-format
 msgid "%XCannot export %s: symbol not defined\n"
 msgstr "%XEi voi viedä symbolia %s: symbolia ei ole määritelty\n"
 
-#: pe-dll.c:944
+#: pe-dll.c:945
 #, c-format
 msgid "%XCannot export %s: symbol wrong type (%d vs %d)\n"
 msgstr "%XEi voi viedä symbolia %s: symboli on väärän tyyppinen (%d vs %d)\n"
 
-#: pe-dll.c:951
+#: pe-dll.c:952
 #, c-format
 msgid "%XCannot export %s: symbol not found\n"
 msgstr "%XEi voi viedä symbolia %s: symbolia ei löydy\n"
 
-#: pe-dll.c:1065
+#: pe-dll.c:1066
 #, c-format
 msgid "%XError, ordinal used twice: %d (%s vs %s)\n"
 msgstr "%XVirhe, järjestyslukua käytetty kahdesti: %d (%s vs %s)\n"
 
-#: pe-dll.c:1446
+#: pe-dll.c:1456
 #, c-format
 msgid "%XError: %d-bit reloc in dll\n"
 msgstr "%XVirhe: %d-bittinen reloc dll:ssä\n"
 
-#: pe-dll.c:1574
+#: pe-dll.c:1584
 #, c-format
 msgid "%s: Can't open output def file %s\n"
 msgstr "%s: Ei voi avata def-tulostetiedostoa %s\n"
 
-#: pe-dll.c:1725
+#: pe-dll.c:1735
 #, c-format
 msgid "; no contents available\n"
 msgstr "; sisältö ei ole saatavilla\n"
 
-#: pe-dll.c:2652
+#: pe-dll.c:2662
 msgid "%C: variable '%T' can't be auto-imported. Please read the documentation for ld's --enable-auto-import for details.\n"
 msgstr "%C: muuttujaa ”%T” ei voi tuoda automaattisesti. Lue yksityiskohtaiset dokumentit ld-ohjelman --enable-auto-import-valitsimesta.\n"
 
-#: pe-dll.c:2682
+#: pe-dll.c:2692
 #, c-format
 msgid "%XCan't open .lib file: %s\n"
 msgstr "%XEi voi avata .lib-tiedostoa: %s\n"
 
-#: pe-dll.c:2687
+#: pe-dll.c:2697
 #, c-format
 msgid "Creating library file: %s\n"
 msgstr "Luodaan kirjastotiedosto: %s\n"
 
-#: pe-dll.c:2716
+#: pe-dll.c:2726
 #, c-format
 msgid "%Xbfd_openr %s: %E\n"
 msgstr "%Xbfd_openr %s: %E\n"
 
-#: pe-dll.c:2728
+#: pe-dll.c:2738
 #, c-format
 msgid "%X%s(%s): can't find member in non-archive file"
 msgstr "%X%s(%s): ei voi löytää jäsentä ei-arkistotiedostossa"
 
-#: pe-dll.c:2740
+#: pe-dll.c:2750
 #, c-format
 msgid "%X%s(%s): can't find member in archive"
 msgstr "%X%s(%s): ei voi löytää jäsentä arkistossa"
 
-#: pe-dll.c:3177
+#: pe-dll.c:3189
 #, c-format
 msgid "%XError: can't use long section names on this arch\n"
 msgstr "%XError: ei voi käyttää pitkiä lohkonimiä tähän arkistoon\n"
 
-#: plugin.c:178 plugin.c:212
+#: plugin.c:177 plugin.c:211
 msgid "<no plugin>"
 msgstr "<ei lisäosa>"
 
-#: plugin.c:308
-msgid "%P%F: %s: non-ELF symbol in ELF BFD!"
-msgstr "%P%F: %s: ei-ELF-symboli kohteessa ELF BFD!"
+#: plugin.c:250
+#, c-format
+msgid "could not create dummy IR bfd: %F%E\n"
+msgstr "ei voitu luoda valesymbolia IR bfd: %F%E\n"
 
-#: plugin.c:800
-msgid "%P%X: %s: hash table failure adding symbol %s"
-msgstr "%P%X: %s: hash-tauluhäiriö lisättäesä symbolia %s"
+#: plugin.c:343
+msgid "%P%F: %s: non-ELF symbol in ELF BFD!\n"
+msgstr "%P%F: %s: ei-ELF-symboli kohteessa ELF BFD!\n"
 
-#: plugin.c:833
-msgid "%P%X: %s: can't find IR symbol '%s'"
-msgstr "%P%X: %s: ei löydy IR-symbolia ’%s’"
+#: plugin.c:347
+msgid "%P%F: unknown ELF symbol visibility: %d!\n"
+msgstr "%P%F: tuntematon ELF-symbolinäkyvyys: %d!\n"
 
-#: plugin.c:836
-msgid "%P%x: %s: bad IR symbol type %d"
-msgstr "%P%x: %s: väärä IR-symbolityyppi %d"
+#: plugin.c:586
+msgid "%P: %B: symbol `%s' definition: %d, visibility: %d, resolution: %d\n"
+msgstr "%P: %B: symbolin ”%s” määrittely: %d, näkyvyys: %d, ratkaisu: %d\n"
+
+#: plugin.c:863
+msgid "%P%F: %s: plugin reported error claiming file\n"
+msgstr "%P%F: %s: lisäosa ilmoitettu virhevaatimustiedostoon\n"
+
+#: plugin.c:934
+msgid "%P: %s: error in plugin cleanup (ignored)\n"
+msgstr "%P: %s: virhe lisäosan puhdistuksessa (ohitettu)\n"
+
+#~ msgid "%P%F: bad -plugin option\n"
+#~ msgstr "%P%F: virheellinen ”-plugin”-valitsin\n"
+
+#~ msgid "%P%X: %s: hash table failure adding symbol %s"
+#~ msgstr "%P%X: %s: hash-tauluhäiriö lisättäesä symbolia %s"
+
+#~ msgid "%P%X: %s: can't find IR symbol '%s'"
+#~ msgstr "%P%X: %s: ei löydy IR-symbolia ’%s’"
+
+#~ msgid "%P%x: %s: bad IR symbol type %d"
+#~ msgstr "%P%x: %s: väärä IR-symbolityyppi %d"
 
 #~ msgid "%F%P: %s (%s): No such file: %E\n"
 #~ msgstr "%F%P: %s (%s): Ei löydy tiedostoa: %E\n"

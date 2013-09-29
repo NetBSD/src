@@ -2,12 +2,13 @@
 # as: -march=armv7-a -mthumb
 # source: msr-reg.s
 # objdump: -dr --prefix-addresses --show-raw-insn
+# warning: writing to APSR without specifying a bitmask is deprecated
 # skip: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd
 
 .*: +file format .*arm.*
 
 Disassembly of section .text:
-00000000 <[^>]*> f389 8900 	msr	CPSR_fc, r9
+00000000 <[^>]*> f389 8800 	msr	CPSR_f, r9
 00000004 <[^>]*> f389 8400 	msr	CPSR_s, r9
 00000008 <[^>]*> f389 8800 	msr	CPSR_f, r9
 0000000c <[^>]*> f389 8c00 	msr	CPSR_fs, r9

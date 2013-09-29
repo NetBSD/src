@@ -1,4 +1,4 @@
-@c Copyright 2000, 2003 Free Software Foundation, Inc.
+@c Copyright 2000, 2003, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -22,6 +22,7 @@ that I will add later (jle@cygnus.com).
 * Options-i860::                i860 Command-line Options
 * Directives-i860::             i860 Machine Directives
 * Opcodes for i860::            i860 Opcodes
+* Syntax of i860::              i860 Syntax
 @end menu
 
 @node Notes-i860
@@ -170,3 +171,27 @@ andnot (-1 - large_imm)@@l,%r31,%rn
 @end smallexample
 @end itemize
 
+@node Syntax of i860
+@section i860 Syntax
+@menu
+* i860-Chars::                Special Characters
+@end menu
+
+@node i860-Chars
+@subsection Special Characters
+
+@cindex line comment character, i860
+@cindex i860 line comment character
+The presence of a @samp{#} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+@cindex line separator, i860
+@cindex statement separator, i860
+@cindex i860 line separator
+The @samp{;} character can be used to separate statements on the same
+line.

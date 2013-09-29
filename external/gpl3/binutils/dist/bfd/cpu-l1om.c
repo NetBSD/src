@@ -23,6 +23,9 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+extern void * bfd_arch_i386_short_nop_fill (bfd_size_type, bfd_boolean,
+					    bfd_boolean);
+
 static const bfd_arch_info_type bfd_l1om_arch_intel_syntax =
 {
   64, /* 64 bits in a word */
@@ -36,6 +39,7 @@ static const bfd_arch_info_type bfd_l1om_arch_intel_syntax =
   TRUE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_i386_short_nop_fill,
   0
 };
 
@@ -52,5 +56,6 @@ const bfd_arch_info_type bfd_l1om_arch =
   TRUE,
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_i386_short_nop_fill,
   &bfd_l1om_arch_intel_syntax
 };

@@ -70,4 +70,5 @@ text_label:
 	dpsqx_sa.w.ph   $ac2,$18,$19
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.align	2
 	.space	8

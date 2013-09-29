@@ -11,7 +11,9 @@
 SYMBOL TABLE:
 0000000000000000 l    d  \.text	0+ (|\.text)
 0+7f0 l    d  \.MMIX\.reg_contents	0+ (|\.MMIX\.reg_contents)
+#...
 0+4 l       \.text	0+ x
+#...
 0+ g       \.text	0+ _start
 #...
 

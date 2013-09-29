@@ -61,4 +61,13 @@ check thumb2_blx_in_range.stdout \
  " 2000006:	f400 c000 	blx	1000008 <_backward_target>"
 check thumb2_blx_in_range.stdout \
  " 200000c:	f3ff c7fe 	blx	300000c <_forward_target>"
+check arm_thm_jump11.stdout \
+ "    8804:	e400      	b.n	8008 <_backward_target>"
+check arm_thm_jump11.stdout \
+ "    8806:	e3ff      	b.n	9008 <_forward_target>"
+check arm_thm_jump8.stdout \
+ "    8104:	d080      	beq.n	8008 <_backward_target>"
+check arm_thm_jump8.stdout \
+ "    8106:	d07f      	beq.n	8208 <_forward_target>"
+
 exit 0

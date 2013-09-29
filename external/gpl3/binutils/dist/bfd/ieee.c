@@ -1,6 +1,6 @@
 /* BFD back-end for ieee-695 objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    Written by Steve Chamberlain of Cygnus Support.
@@ -3772,6 +3772,7 @@ ieee_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_generic_get_relocated_section_contents
 #define ieee_bfd_relax_section bfd_generic_relax_section
 #define ieee_bfd_gc_sections bfd_generic_gc_sections
+#define ieee_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define ieee_bfd_merge_sections bfd_generic_merge_sections
 #define ieee_bfd_is_group_section bfd_generic_is_group_section
 #define ieee_bfd_discard_group bfd_generic_discard_group
@@ -3801,6 +3802,7 @@ const bfd_target ieee_vec =
   '_',				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

@@ -1,5 +1,6 @@
 /* 32-bit ELF support for S+core.
-   Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -1037,9 +1038,6 @@ score_elf_sort_hash_table_f (struct score_elf_link_hash_entry *h, void *data)
 {
   struct score_elf_hash_sort_data *hsd = data;
 
-  if (h->root.root.type == bfd_link_hash_warning)
-    h = (struct score_elf_link_hash_entry *) h->root.root.u.i.link;
-
   /* Symbols without dynamic symbol table entries aren't interesting at all.  */
   if (h->root.dynindx == -1)
     return TRUE;
@@ -1068,7 +1066,7 @@ score_elf_sort_hash_table_f (struct score_elf_link_hash_entry *h, void *data)
 static asection *
 score_elf_got_section (bfd *abfd, bfd_boolean maybe_excluded)
 {
-  asection *sgot = bfd_get_section_by_name (abfd, ".got");
+  asection *sgot = bfd_get_linker_section (abfd, ".got");
 
   if (sgot == NULL || (! maybe_excluded && (sgot->flags & SEC_EXCLUDE) != 0))
     return NULL;
@@ -1249,16 +1247,16 @@ score_elf_rel_dyn_section (bfd *dynobj, bfd_boolean create_p)
   static const char dname[] = ".rel.dyn";
   asection *sreloc;
 
-  sreloc = bfd_get_section_by_name (dynobj, dname);
+  sreloc = bfd_get_linker_section (dynobj, dname);
   if (sreloc == NULL && create_p)
     {
-      sreloc = bfd_make_section_with_flags (dynobj, dname,
-                                            (SEC_ALLOC
-                                             | SEC_LOAD
-                                             | SEC_HAS_CONTENTS
-                                             | SEC_IN_MEMORY
-                                             | SEC_LINKER_CREATED
-                                             | SEC_READONLY));
+      sreloc = bfd_make_section_anyway_with_flags (dynobj, dname,
+						   (SEC_ALLOC
+						    | SEC_LOAD
+						    | SEC_HAS_CONTENTS
+						    | SEC_IN_MEMORY
+						    | SEC_LINKER_CREATED
+						    | SEC_READONLY));
       if (sreloc == NULL
           || ! bfd_set_section_alignment (dynobj, sreloc,
                                           SCORE_ELF_LOG_FILE_ALIGN (dynobj)))
@@ -1431,7 +1429,7 @@ score_elf_create_got_section (bfd *abfd,
 
   /* We have to use an alignment of 2**4 here because this is hardcoded
      in the function stub generation and in the linker script.  */
-  s = bfd_make_section_with_flags (abfd, ".got", flags);
+  s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
    if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, 4))
     return FALSE;
@@ -2674,9 +2672,9 @@ s3_bfd_score_elf_relocate_section (bfd *output_bfd,
             }
         }
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
         {
@@ -3125,7 +3123,7 @@ s3_bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       if (!h->def_regular)
         {
           /* We need .stub section.  */
-          s = bfd_get_section_by_name (dynobj, SCORE_ELF_STUB_SECTION_NAME);
+          s = bfd_get_linker_section (dynobj, SCORE_ELF_STUB_SECTION_NAME);
           BFD_ASSERT (s != NULL);
 
           h->root.u.def.section = s;
@@ -3261,7 +3259,7 @@ s3_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
       /* Set the contents of the .interp section to the interpreter.  */
       if (!info->shared)
         {
-          s = bfd_get_section_by_name (dynobj, ".interp");
+          s = bfd_get_linker_section (dynobj, ".interp");
           BFD_ASSERT (s != NULL);
           s->size = strlen (ELF_DYNAMIC_INTERPRETER) + 1;
           s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
@@ -3419,7 +3417,7 @@ s3_bfd_score_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
            | SEC_LINKER_CREATED | SEC_READONLY);
 
   /* ABI requests the .dynamic section to be read only.  */
-  s = bfd_get_section_by_name (abfd, ".dynamic");
+  s = bfd_get_linker_section (abfd, ".dynamic");
   if (s != NULL)
     {
       if (!bfd_set_section_flags (abfd, s, flags))
@@ -3434,10 +3432,10 @@ s3_bfd_score_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
     return FALSE;
 
   /* Create .stub section.  */
-  if (bfd_get_section_by_name (abfd, SCORE_ELF_STUB_SECTION_NAME) == NULL)
+  if (bfd_get_linker_section (abfd, SCORE_ELF_STUB_SECTION_NAME) == NULL)
     {
-      s = bfd_make_section_with_flags (abfd, SCORE_ELF_STUB_SECTION_NAME,
-                                       flags | SEC_CODE);
+      s = bfd_make_section_anyway_with_flags (abfd, SCORE_ELF_STUB_SECTION_NAME,
+					      flags | SEC_CODE);
       if (s == NULL
           || !bfd_set_section_alignment (abfd, s, 2))
 
@@ -3491,7 +3489,7 @@ s3_bfd_score_elf_finish_dynamic_symbol (bfd *output_bfd,
       /* This symbol has a stub.  Set it up.  */
       BFD_ASSERT (h->dynindx != -1);
 
-      s = bfd_get_section_by_name (dynobj, SCORE_ELF_STUB_SECTION_NAME);
+      s = bfd_get_linker_section (dynobj, SCORE_ELF_STUB_SECTION_NAME);
       BFD_ASSERT (s != NULL);
 
       /* FIXME: Can h->dynindex be more than 64K?  */
@@ -3570,7 +3568,7 @@ s3_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
 
   dynobj = elf_hash_table (info)->dynobj;
 
-  sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   sgot = score_elf_got_section (dynobj, FALSE);
   if (sgot == NULL)

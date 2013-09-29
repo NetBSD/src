@@ -35,6 +35,7 @@ const bfd_arch_info_type bfd_tic80_arch =
     2,				/* section alignment power */
     TRUE,			/* default machine for architecture */
     bfd_default_compatible,
-    bfd_default_scan ,
+    bfd_default_scan,
+    bfd_arch_default_fill,
     NULL,				/* Pointer to next in chain */
   };

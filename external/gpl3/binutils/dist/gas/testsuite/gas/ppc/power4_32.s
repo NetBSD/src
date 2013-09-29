@@ -1,4 +1,4 @@
-	.section ".text"
+	.text
 start:
 	lwz	6,0(7)
 	lwz	6,16(7)

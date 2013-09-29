@@ -22,9 +22,9 @@ Dynamic section at offset .* contains .*:
 # for "bar" and "obj2".
  0x7000000a \(MIPS_LOCAL_GOTNO\) * 2
 # This must be MIPS_GOTSYM + 2.
- 0x70000011 \(MIPS_SYMTABNO\) * 10
+ 0x70000011 \(MIPS_SYMTABNO\) * 9
  0x70000012 \(MIPS_UNREFEXTNO\) * .*
- 0x70000013 \(MIPS_GOTSYM\) * 0x8
+ 0x70000013 \(MIPS_GOTSYM\) * 0x7
  0x00000014 \(PLTREL\) * REL
  0x00000017 \(JMPREL\) * 0x43030
  0x00000002 \(PLTRELSZ\) * 8 \(bytes\)
