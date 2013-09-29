@@ -1,4 +1,4 @@
-@c Copyright 1997, 2002, 2003, 2006 Free Software Foundation, Inc.
+@c Copyright 1997, 2002, 2003, 2006, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -103,7 +103,21 @@ attempt to relax them.
 
 @cindex line comment character, V850
 @cindex V850 line comment character
-@samp{#} is the line comment character.
+@samp{#} is the line comment character.  If a @samp{#} appears as the
+first character of a line, the whole line is treated as a comment, but
+in this case the line can also be a logical line number directive
+(@pxref{Comments}) or a preprocessor control command
+(@pxref{Preprocessing}).
+
+Two dashes (@samp{--}) can also be used to start a line comment.
+
+@cindex line separator, V850
+@cindex statement separator, V850
+@cindex V850 line separator
+
+The @samp{;} character can be used to separate statements on the same
+line.
+
 @node V850-Regs
 @subsection Register Names
 

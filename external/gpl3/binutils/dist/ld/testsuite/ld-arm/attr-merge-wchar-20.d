@@ -20,4 +20,3 @@ File Attributes
   Tag_ABI_align_preserved: 8-byte, except leaf SP
   Tag_ABI_enum_size: small
   Tag_ABI_optimization_goals: Aggressive Debug
-  Tag_DIV_use: Not allowed

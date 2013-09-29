@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = 1.11 foreign no-dist no-texinfo.tex
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
-TEXINFO_TEX = $(top_srcdir)/../texinfo/texinfo.tex
+TEXINFO_TEX = ../texinfo/texinfo.tex
 
 SUFFIXES = .m
 

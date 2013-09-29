@@ -1,5 +1,5 @@
 
-.*: +file format elf32-powerpc
+.*
 
 DYNAMIC RELOCATION RECORDS
 OFFSET   TYPE              VALUE 

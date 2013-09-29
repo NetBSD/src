@@ -424,3 +424,5 @@
         swapgs		              #  --  --	 -- --	 0F 01 f8
 
 	pushw $0x2222
+
+        jecxz .+2

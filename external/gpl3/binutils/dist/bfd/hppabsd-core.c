@@ -1,6 +1,6 @@
 /* BFD back-end for HPPA BSD core files.
    Copyright 1993, 1994, 1995, 1998, 1999, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007 Free Software Foundation, Inc.
+   2006, 2007, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -49,46 +49,34 @@
 #include <sys/user.h>		/* After a.out.h  */
 #include <sys/file.h>
 
-static asection *make_bfd_asection
-  PARAMS ((bfd *, const char *, flagword, bfd_size_type, file_ptr,
-	   unsigned int));
-static const bfd_target *hppabsd_core_core_file_p
-  PARAMS ((bfd *));
-static char *hppabsd_core_core_file_failing_command
-  PARAMS ((bfd *));
-static int hppabsd_core_core_file_failing_signal
-  PARAMS ((bfd *));
 #define hppabsd_core_core_file_matches_executable_p generic_core_file_matches_executable_p
 #define hppabsd_core_core_file_pid _bfd_nocore_core_file_pid
-static void swap_abort
-  PARAMS ((void));
 
 /* These are stored in the bfd's tdata.  */
 
 struct hppabsd_core_struct
-  {
-    int sig;
-    char cmd[MAXCOMLEN + 1];
-    asection *data_section;
-    asection *stack_section;
-    asection *reg_section;
-  };
+{
+  int sig;
+  char cmd[MAXCOMLEN + 1];
+  asection *data_section;
+  asection *stack_section;
+  asection *reg_section;
+};
 
 #define core_hdr(bfd) ((bfd)->tdata.hppabsd_core_data)
-#define core_signal(bfd) (core_hdr(bfd)->sig)
-#define core_command(bfd) (core_hdr(bfd)->cmd)
-#define core_datasec(bfd) (core_hdr(bfd)->data_section)
+#define core_signal(bfd)   (core_hdr(bfd)->sig)
+#define core_command(bfd)  (core_hdr(bfd)->cmd)
+#define core_datasec(bfd)  (core_hdr(bfd)->data_section)
 #define core_stacksec(bfd) (core_hdr(bfd)->stack_section)
-#define core_regsec(bfd) (core_hdr(bfd)->reg_section)
+#define core_regsec(bfd)   (core_hdr(bfd)->reg_section)
 
 static asection *
-make_bfd_asection (abfd, name, flags, size, offset, alignment_power)
-     bfd *abfd;
-     const char *name;
-     flagword flags;
-     bfd_size_type size;
-     file_ptr offset;
-     unsigned int alignment_power;
+make_bfd_asection (bfd *abfd,
+		   const char *name,
+		   flagword flags,
+		   bfd_size_type size,
+		   file_ptr offset,
+		   unsigned int alignment_power)
 {
   asection *asect;
 
@@ -104,8 +92,7 @@ make_bfd_asection (abfd, name, flags, size, offset, alignment_power)
 }
 
 static const bfd_target *
-hppabsd_core_core_file_p (abfd)
-     bfd *abfd;
+hppabsd_core_core_file_p (bfd *abfd)
 {
   int val;
   struct user u;
@@ -205,22 +192,20 @@ hppabsd_core_core_file_p (abfd)
 }
 
 static char *
-hppabsd_core_core_file_failing_command (abfd)
-     bfd *abfd;
+hppabsd_core_core_file_failing_command (bfd *abfd)
 {
   return core_command (abfd);
 }
 
 static int
-hppabsd_core_core_file_failing_signal (abfd)
-     bfd *abfd;
+hppabsd_core_core_file_failing_signal (bfd *abfd)
 {
   return core_signal (abfd);
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 static void
-swap_abort ()
+swap_abort (void)
 {
   /* This way doesn't require any declaration for ANSI to fuck up.  */
   abort ();
@@ -280,6 +265,6 @@ const bfd_target hppabsd_core_vec =
 
     NULL,
 
-    (PTR) 0			/* backend_data */
+    NULL			/* backend_data */
   };
 #endif

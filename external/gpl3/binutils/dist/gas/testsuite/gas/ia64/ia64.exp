@@ -11,6 +11,7 @@ if [istarget "ia64-*"] then {
     run_dump_test "opc-i"
     run_dump_test "opc-m"
     run_dump_test "opc-x"
+    run_dump_test "psn"
     run_dump_test "pseudo"
     run_dump_test "nop_x"
     run_dump_test "mov-ar"
@@ -94,4 +95,7 @@ if [istarget "ia64-*"] then {
 	run_dump_test "slotcount"
     }
 
+    if { [istarget "ia64-*-elf*"] || [istarget "ia64-*-linux*"] } {
+	run_dump_test "pr13167"
+    }
 }

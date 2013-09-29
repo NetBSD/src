@@ -1,6 +1,7 @@
 sinclude(../config/acx.m4)
 sinclude(../config/no-executables.m4)
 sinclude(../config/override.m4)
+sinclude(../config/picflag.m4)
 sinclude(../config/warnings.m4)
 
 dnl See whether strncmp reads past the end of its string parameters.
@@ -71,7 +72,7 @@ main ()
   exit (0);
 }
 ], ac_cv_func_strncmp_works=yes, ac_cv_func_strncmp_works=no,
-  ac_cv_func_strncmp_works=no)
+  ac_cv_func_strncmp_works=yes)
 rm -f core core.* *.core])
 if test $ac_cv_func_strncmp_works = no ; then
   AC_LIBOBJ([strncmp])

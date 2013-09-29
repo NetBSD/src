@@ -1,4 +1,4 @@
-	.section ".text"
+	.text
 start:
 	add.	4,5,6
 	add	4,5,6
@@ -297,7 +297,7 @@ start:
 	lhzx	10,11,12
 	lmw	20,16(10)
 	lswi	10,11,1
-	lswi	10,11,32
+	lswi	12,11,32
 	lswx	10,11,12
 	lwa	10,-4(11)
 	lwa	10,4(11)

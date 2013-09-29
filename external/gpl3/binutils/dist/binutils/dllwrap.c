@@ -1,6 +1,6 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2009,
+   2011, 2012 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.
@@ -20,13 +20,6 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-/* AIX requires this to be the first thing in the file.  */
-#ifndef __GNUC__
-# ifdef _AIX
- #pragma alloca
-#endif
-#endif
-
 #include "sysdep.h"
 #include "bfd.h"
 #include "libiberty.h"
@@ -35,7 +28,6 @@
 #include "bucomm.h"
 
 #include <time.h>
-#include <sys/stat.h>
 
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -414,7 +406,7 @@ run (const char *what, char *args)
   pid = pwait (pid, &wait_status, 0);
   if (pid == -1)
     {
-      warn ("wait: %s", strerror (errno));
+      warn (_("pwait returns: %s"), strerror (errno));
       retcode = 1;
     }
   else if (WIFSIGNALED (wait_status))

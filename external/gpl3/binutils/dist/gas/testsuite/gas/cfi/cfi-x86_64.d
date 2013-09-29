@@ -8,11 +8,11 @@ Contents of the .eh_frame section:
   Augmentation:          "zR"
   Code alignment factor: 1
   Data alignment factor: -8
-  Return address column: 16
+  Return address column: (16|32)
   Augmentation data:     1b
 
   DW_CFA_def_cfa: r7 \(rsp\) ofs 8
-  DW_CFA_offset: r16 \(rip\) at cfa-8
+  DW_CFA_offset: (r16 \(rip\)|r32 \(xmm15\)) at cfa-8
   DW_CFA_nop
   DW_CFA_nop
 
@@ -56,7 +56,7 @@ Contents of the .eh_frame section:
   Augmentation:          "zR"
   Code alignment factor: 1
   Data alignment factor: -8
-  Return address column: 16
+  Return address column: (16|32)
   Augmentation data:     1b
 
   DW_CFA_def_cfa: r7 \(rsp\) ofs 8
@@ -89,7 +89,7 @@ Contents of the .eh_frame section:
   Augmentation:          "zR"
   Code alignment factor: 1
   Data alignment factor: -8
-  Return address column: 16
+  Return address column: (16|32)
   Augmentation data:     1b
 
   DW_CFA_undefined: r16 \(rip\)

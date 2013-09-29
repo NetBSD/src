@@ -1,4 +1,4 @@
-#as: -n32
+#as: -march=from-abi -n32
 #objdump: -Dr --prefix-addresses
 #name: n32 consecutive unrelated relocations
 

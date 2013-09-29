@@ -1,6 +1,7 @@
 // layout.h -- lay out output file sections for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -41,6 +42,7 @@ namespace gold
 
 class General_options;
 class Incremental_inputs;
+class Incremental_binary;
 class Input_objects;
 class Mapfile;
 class Symbol_table;
@@ -57,12 +59,106 @@ class Output_symtab_xindex;
 class Output_reduced_debug_abbrev_section;
 class Output_reduced_debug_info_section;
 class Eh_frame;
+class Gdb_index;
 class Target;
 struct Timespec;
 
 // Return TRUE if SECNAME is the name of a compressed debug section.
 extern bool
 is_compressed_debug_section(const char* secname);
+
+// Maintain a list of free space within a section, segment, or file.
+// Used for incremental update links.
+
+class Free_list
+{
+ public:
+  struct Free_list_node
+  {
+    Free_list_node(off_t start, off_t end)
+      : start_(start), end_(end)
+    { }
+    off_t start_;
+    off_t end_;
+  };
+  typedef std::list<Free_list_node>::const_iterator Const_iterator;
+
+  Free_list()
+    : list_(), last_remove_(list_.begin()), extend_(false), length_(0),
+      min_hole_(0)
+  { }
+
+  // Initialize the free list for a section of length LEN.
+  // If EXTEND is true, free space may be allocated past the end.
+  void
+  init(off_t len, bool extend);
+
+  // Set the minimum hole size that is allowed when allocating
+  // from the free list.
+  void
+  set_min_hole_size(off_t min_hole)
+  { this->min_hole_ = min_hole; }
+
+  // Remove a chunk from the free list.
+  void
+  remove(off_t start, off_t end);
+
+  // Allocate a chunk of space from the free list of length LEN,
+  // with alignment ALIGN, and minimum offset MINOFF.
+  off_t
+  allocate(off_t len, uint64_t align, off_t minoff);
+
+  // Return an iterator for the beginning of the free list.
+  Const_iterator
+  begin() const
+  { return this->list_.begin(); }
+
+  // Return an iterator for the end of the free list.
+  Const_iterator
+  end() const
+  { return this->list_.end(); }
+
+  // Dump the free list (for debugging).
+  void
+  dump();
+
+  // Print usage statistics.
+  static void
+  print_stats();
+
+ private:
+  typedef std::list<Free_list_node>::iterator Iterator;
+
+  // The free list.
+  std::list<Free_list_node> list_;
+
+  // The last node visited during a remove operation.
+  Iterator last_remove_;
+
+  // Whether we can extend past the original length.
+  bool extend_;
+
+  // The total length of the section, segment, or file.
+  off_t length_;
+
+  // The minimum hole size allowed.  When allocating from the free list,
+  // we must not leave a hole smaller than this.
+  off_t min_hole_;
+
+  // Statistics:
+  // The total number of free lists used.
+  static unsigned int num_lists;
+  // The total number of free list nodes used.
+  static unsigned int num_nodes;
+  // The total number of calls to Free_list::remove.
+  static unsigned int num_removes;
+  // The total number of nodes visited during calls to Free_list::remove.
+  static unsigned int num_remove_visits;
+  // The total number of calls to Free_list::allocate.
+  static unsigned int num_allocates;
+  // The total number of nodes visited during calls to Free_list::allocate.
+  static unsigned int num_allocate_visits;
+};
 
 // This task function handles mapping the input sections to output
 // sections and laying them out in memory.
@@ -76,7 +172,7 @@ class Layout_task_runner : public Task_function_runner
   Layout_task_runner(const General_options& options,
 		     const Input_objects* input_objects,
 		     Symbol_table* symtab,
-                     Target* target,
+		     Target* target,
 		     Layout* layout,
 		     Mapfile* mapfile)
     : options_(options), input_objects_(input_objects), symtab_(symtab),
@@ -401,6 +497,20 @@ class Layout
     delete this->segment_states_;
   }
 
+  // For incremental links, record the base file to be modified.
+  void
+  set_incremental_base(Incremental_binary* base);
+
+  Incremental_binary*
+  incremental_base()
+  { return this->incremental_base_; }
+
+  // For incremental links, record the initial fixed layout of a section
+  // from the base file, and return a pointer to the Output_section.
+  template<int size, bool big_endian>
+  Output_section*
+  init_fixed_output_section(const char*, elfcpp::Shdr<size, big_endian>&);
+
   // Given an input section SHNDX, named NAME, with data in SHDR, from
   // the object file OBJECT, return the output section where this
   // input section should go.  RELOC_SHNDX is the index of a
@@ -410,13 +520,33 @@ class Layout
   // within the output section.
   template<int size, bool big_endian>
   Output_section*
-  layout(Sized_relobj<size, big_endian> *object, unsigned int shndx,
+  layout(Sized_relobj_file<size, big_endian> *object, unsigned int shndx,
 	 const char* name, const elfcpp::Shdr<size, big_endian>& shdr,
 	 unsigned int reloc_shndx, unsigned int reloc_type, off_t* offset);
+
+  std::map<Section_id, unsigned int>*
+  get_section_order_map()
+  { return &this->section_order_map_; }
+
+  bool
+  is_section_ordering_specified()
+  { return this->section_ordering_specified_; }
+
+  void
+  set_section_ordering_specified()
+  { this->section_ordering_specified_ = true; }
+
+  // For incremental updates, allocate a block of memory from the
+  // free list.  Find a block starting at or after MINOFF.
+  off_t
+  allocate(off_t len, uint64_t align, off_t minoff)
+  { return this->free_list_.allocate(len, align, minoff); }
 
   unsigned int
   find_section_order_index(const std::string&);
 
+  // Read the sequence of input sections from the file specified with
+  // linker option --section-ordering-file.
   void
   read_layout_from_file();
 
@@ -426,7 +556,7 @@ class Layout
   // relocatable information.
   template<int size, bool big_endian>
   Output_section*
-  layout_reloc(Sized_relobj<size, big_endian>* object,
+  layout_reloc(Sized_relobj_file<size, big_endian>* object,
 	       unsigned int reloc_shndx,
 	       const elfcpp::Shdr<size, big_endian>& shdr,
 	       Output_section* data_section,
@@ -436,7 +566,7 @@ class Layout
   template<int size, bool big_endian>
   void
   layout_group(Symbol_table* symtab,
-	       Sized_relobj<size, big_endian>* object,
+	       Sized_relobj_file<size, big_endian>* object,
 	       unsigned int group_shndx,
 	       const char* group_section_name,
 	       const char* signature,
@@ -455,7 +585,7 @@ class Layout
   // returns the output section, and sets *OFFSET to the offset.
   template<int size, bool big_endian>
   Output_section*
-  layout_eh_frame(Sized_relobj<size, big_endian>* object,
+  layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
 		  const unsigned char* symbols,
 		  off_t symbols_size,
 		  const unsigned char* symbol_names,
@@ -465,12 +595,33 @@ class Layout
 		  unsigned int reloc_shndx, unsigned int reloc_type,
 		  off_t* offset);
 
+  // Add .eh_frame information for a PLT.  The FDE must start with a
+  // 4-byte PC-relative reference to the start of the PLT, followed by
+  // a 4-byte size of PLT.
+  void
+  add_eh_frame_for_plt(Output_data* plt, const unsigned char* cie_data,
+		       size_t cie_length, const unsigned char* fde_data,
+		       size_t fde_length);
+
+  // Scan a .debug_info or .debug_types section, and add summary
+  // information to the .gdb_index section.
+  template<int size, bool big_endian>
+  void
+  add_to_gdb_index(bool is_type_unit,
+		   Sized_relobj<size, big_endian>* object,
+		   const unsigned char* symbols,
+		   off_t symbols_size,
+		   unsigned int shndx,
+		   unsigned int reloc_shndx,
+		   unsigned int reloc_type);
+
   // Handle a GNU stack note.  This is called once per input object
   // file.  SEEN_GNU_STACK is true if the object file has a
   // .note.GNU-stack section.  GNU_STACK_FLAGS is the section flags
   // from that section if there was one.
   void
-  layout_gnu_stack(bool seen_gnu_stack, uint64_t gnu_stack_flags);
+  layout_gnu_stack(bool seen_gnu_stack, uint64_t gnu_stack_flags,
+		   const Object*);
 
   // Add an Output_section_data to the layout.  This is used for
   // special sections like the GOT section.  ORDER is where the
@@ -524,6 +675,12 @@ class Layout
   dynpool() const
   { return &this->dynpool_; }
 
+  // Return the .dynamic output section.  This is only valid after the
+  // layout has been finalized.
+  Output_section*
+  dynamic_section() const
+  { return this->dynamic_section_; }
+
   // Return the symtab_xindex section used to hold large section
   // indexes for the normal symbol table.
   Output_symtab_xindex*
@@ -553,12 +710,24 @@ class Layout
   {
     // Debugging sections can only be recognized by name.
     return (strncmp(name, ".debug", sizeof(".debug") - 1) == 0
-            || strncmp(name, ".zdebug", sizeof(".zdebug") - 1) == 0
-            || strncmp(name, ".gnu.linkonce.wi.",
-                       sizeof(".gnu.linkonce.wi.") - 1) == 0
-            || strncmp(name, ".line", sizeof(".line") - 1) == 0
-            || strncmp(name, ".stab", sizeof(".stab") - 1) == 0);
+	    || strncmp(name, ".zdebug", sizeof(".zdebug") - 1) == 0
+	    || strncmp(name, ".gnu.linkonce.wi.",
+		       sizeof(".gnu.linkonce.wi.") - 1) == 0
+	    || strncmp(name, ".line", sizeof(".line") - 1) == 0
+	    || strncmp(name, ".stab", sizeof(".stab") - 1) == 0);
   }
+
+  // Return true if RELOBJ is an input file whose base name matches
+  // FILE_NAME.  The base name must have an extension of ".o", and
+  // must be exactly FILE_NAME.o or FILE_NAME, one character, ".o".
+  static bool
+  match_file_name(const Relobj* relobj, const char* file_name);
+
+  // Return whether section SHNDX in RELOBJ is a .ctors/.dtors section
+  // with more than one word being mapped to a .init_array/.fini_array
+  // section.
+  bool
+  is_ctors_in_init_array(Relobj* relobj, unsigned int shndx) const;
 
   // Check if a comdat group or .gnu.linkonce section with the given
   // NAME is selected for the link.  If there is already a section,
@@ -568,7 +737,7 @@ class Layout
   // *KEPT_SECTION is set to the internal copy and the function return
   // false.
   bool
-  find_or_add_kept_section(const std::string& name, Relobj* object, 
+  find_or_add_kept_section(const std::string& name, Relobj* object,
 			   unsigned int shndx, bool is_comdat,
 			   bool is_group_name, Kept_section** kept_section);
 
@@ -599,6 +768,14 @@ class Layout
     gold_assert(this->symtab_section_ != NULL);
     return this->symtab_section_;
   }
+
+  // Return the file offset of the normal symbol table.
+  off_t
+  symtab_section_offset() const;
+
+  // Return the section index of the normal symbol tabl.e
+  unsigned int
+  symtab_section_shndx() const;
 
   // Return the dynamic symbol table.
   Output_section*
@@ -727,7 +904,7 @@ class Layout
 
   // Attach sections to segments.
   void
-  attach_sections_to_segments();
+  attach_sections_to_segments(const Target*);
 
   // For relaxation clean up, we need to know output section data created
   // from a linker script.
@@ -806,7 +983,7 @@ class Layout
   // Find the first read-only PT_LOAD segment, creating one if
   // necessary.
   Output_segment*
-  find_first_load_seg();
+  find_first_load_seg(const Target*);
 
   // Count the local symbols in the regular symbol table and the dynamic
   // symbol table, and build the respective string pools.
@@ -869,14 +1046,14 @@ class Layout
   // Return whether to include this section in the link.
   template<int size, bool big_endian>
   bool
-  include_section(Sized_relobj<size, big_endian>* object, const char* name,
+  include_section(Sized_relobj_file<size, big_endian>* object, const char* name,
 		  const elfcpp::Shdr<size, big_endian>&);
 
   // Return the output section name to use given an input section
   // name.  Set *PLEN to the length of the name.  *PLEN must be
   // initialized to the length of NAME.
   static const char*
-  output_section_name(const char* name, size_t* plen);
+  output_section_name(const Relobj*, const char* name, size_t* plen);
 
   // Return the number of allocated output sections.
   size_t
@@ -903,7 +1080,7 @@ class Layout
 
   // Attach a section to a segment.
   void
-  attach_section_to_segment(Output_section*);
+  attach_section_to_segment(const Target*, Output_section*);
 
   // Get section order.
   Output_section_order
@@ -911,7 +1088,11 @@ class Layout
 
   // Attach an allocated section to a segment.
   void
-  attach_allocated_section_to_segment(Output_section*);
+  attach_allocated_section_to_segment(const Target*, Output_section*);
+
+  // Make the .eh_frame section.
+  Output_section*
+  make_eh_frame_section(const Relobj*);
 
   // Set the final file offsets of all the segments.
   off_t
@@ -951,10 +1132,10 @@ class Layout
   place_orphan_sections_in_script();
 
   // Return whether SEG1 comes before SEG2 in the output file.
-  static bool
+  bool
   segment_precedes(const Output_segment* seg1, const Output_segment* seg2);
 
-  // Use to save and restore segments during relaxation. 
+  // Use to save and restore segments during relaxation.
   typedef Unordered_map<const Output_segment*, const Output_segment*>
     Segment_states;
 
@@ -1001,11 +1182,19 @@ class Layout
 
   // A comparison class for segments.
 
-  struct Compare_segments
+  class Compare_segments
   {
+   public:
+    Compare_segments(Layout* layout)
+      : layout_(layout)
+    { }
+
     bool
     operator()(const Output_segment* seg1, const Output_segment* seg2)
-    { return Layout::segment_precedes(seg1, seg2); }
+    { return this->layout_->segment_precedes(seg1, seg2); }
+
+   private:
+    Layout* layout_;
   };
 
   typedef std::vector<Output_section_data*> Output_section_data_list;
@@ -1017,12 +1206,12 @@ class Layout
     Relaxation_debug_check()
       : section_infos_()
     { }
- 
+
     // Check that sections and special data are in reset states.
     void
     check_output_data_for_reset_values(const Layout::Section_list&,
 				       const Layout::Data_list&);
-  
+
     // Record information of a section list.
     void
     read_sections(const Layout::Section_list&);
@@ -1030,7 +1219,7 @@ class Layout
     // Verify a section list with recorded information.
     void
     verify_sections(const Layout::Section_list&);
- 
+
    private:
     // Information we care about a section.
     struct Section_info
@@ -1079,6 +1268,8 @@ class Layout
   Output_segment* tls_segment_;
   // A pointer to the PT_GNU_RELRO segment if there is one.
   Output_segment* relro_segment_;
+  // A pointer to the PT_INTERP segment if there is one.
+  Output_segment* interp_segment_;
   // A backend may increase the size of the PT_GNU_RELRO segment if
   // there is one.  This is the amount to increase it by.
   unsigned int increase_relro_;
@@ -1104,6 +1295,8 @@ class Layout
   bool added_eh_frame_data_;
   // The exception frame header output section if there is one.
   Output_section* eh_frame_hdr_section_;
+  // The data for the .gdb_index section.
+  Gdb_index* gdb_index_data_;
   // The space for the build ID checksum if there is one.
   Output_section_data* build_id_note_;
   // The output section containing dwarf abbreviations
@@ -1135,21 +1328,31 @@ class Layout
   bool resized_signatures_;
   // Whether we have created a .stab*str output section.
   bool have_stabstr_section_;
+  // True if the input sections in the output sections should be sorted
+  // as specified in a section ordering file.
+  bool section_ordering_specified_;
   // In incremental build, holds information check the inputs and build the
   // .gnu_incremental_inputs section.
   Incremental_inputs* incremental_inputs_;
   // Whether we record output section data created in script
   bool record_output_section_data_from_script_;
-  // List of output data that needs to be removed at relexation clean up.
+  // List of output data that needs to be removed at relaxation clean up.
   Output_section_data_list script_output_section_data_list_;
   // Structure to save segment states before entering the relaxation loop.
   Segment_states* segment_states_;
   // A relaxation debug checker.  We only create one when in debugging mode.
   Relaxation_debug_check* relaxation_debug_check_;
+  // Plugins specify section_ordering using this map.  This is set in
+  // update_section_order in plugin.cc
+  std::map<Section_id, unsigned int> section_order_map_;
   // Hash a pattern to its position in the section ordering file.
   Unordered_map<std::string, unsigned int> input_section_position_;
   // Vector of glob only patterns in the section_ordering file.
   std::vector<std::string> input_section_glob_;
+  // For incremental links, the base file to be modified.
+  Incremental_binary* incremental_base_;
+  // For incremental links, a list of free space within the file.
+  Free_list free_list_;
 };
 
 // This task handles writing out data in output sections which is not

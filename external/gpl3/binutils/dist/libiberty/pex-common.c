@@ -1,5 +1,5 @@
 /* Common code for executing a program in a sub-process.
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005, 2010 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@airs.com>.
 
 This file is part of the libiberty library.
@@ -623,12 +623,9 @@ pex_free (struct pex_obj *obj)
 
   if (obj->next_input_name_allocated)
     free (obj->next_input_name);
-  if (obj->children != NULL)
-    free (obj->children);
-  if (obj->status != NULL)
-    free (obj->status);
-  if (obj->time != NULL)
-    free (obj->time);
+  free (obj->children);
+  free (obj->status);
+  free (obj->time);
 
   if (obj->remove_count > 0)
     {

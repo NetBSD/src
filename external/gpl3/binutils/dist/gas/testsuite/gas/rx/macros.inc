@@ -1,4 +1,5 @@
 macro	reg	{r0;r15}
+macro	reg1	{r1;r15}
 macro	reg2	{r0;r14}
 macro	reg7	{r0;r7}
 macro	regPlo	{r1;r7}
