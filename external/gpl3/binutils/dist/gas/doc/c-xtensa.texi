@@ -1,8 +1,9 @@
-@c Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008
+@c Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c
+@c man end
 @ifset GENERIC
 @page
 @node Xtensa-Dependent
@@ -30,10 +31,9 @@ Reference Manual}.
 @node Xtensa Options
 @section Command Line Options
 
-The Xtensa version of the @sc{gnu} assembler supports these
-special options:
+@c man begin OPTIONS
+@table @gcctabopt
 
-@table @code
 @item --text-section-literals | --no-text-section-literals
 @kindex --text-section-literals
 @kindex --no-text-section-literals
@@ -94,6 +94,8 @@ Rename the @var{oldname} section to @var{newname}.  This option can be used
 multiple times to rename multiple sections.
 @end table
 
+@c man end
+
 @node Xtensa Syntax
 @section Assembler Syntax
 @cindex syntax, Xtensa assembler
@@ -103,6 +105,11 @@ multiple times to rename multiple sections.
 Block comments are delimited by @samp{/*} and @samp{*/}.  End of line
 comments may be introduced with either @samp{#} or @samp{//}.
 
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
 Instructions consist of a leading opcode or macro name followed by
 whitespace and an optional comma-separated list of operands:
 
@@ -110,7 +117,7 @@ whitespace and an optional comma-separated list of operands:
 @var{opcode} [@var{operand}, @dots{}]
 @end smallexample
 
-Instructions must be separated by a newline or semicolon.
+Instructions must be separated by a newline or semicolon (@samp{;}).
 
 FLIX instructions, which bundle multiple opcodes together in a single
 instruction, are specified by enclosing the bundled opcodes inside

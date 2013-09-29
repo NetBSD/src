@@ -1,4 +1,4 @@
-@c Copyright 2000, 2002, 2003, 2006 Free Software Foundation, Inc.
+@c Copyright 2000, 2002, 2003, 2006, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c TI TMS320C54X description by Timothy Wall, twall@cygnus.com
@@ -25,6 +25,7 @@
 * TIC54X-Directives::        Directives
 * TIC54X-Macros::            Macro Features
 * TIC54X-MMRegs::            Memory-mapped Registers
+* TIC54X-Syntax::            Syntax
 @end menu
 
 @node TIC54X-Opts
@@ -765,3 +766,32 @@ The following symbols are recognized as memory-mapped registers:
 
 @table @code
 @end table
+
+@node TIC54X-Syntax
+@section TIC54X Syntax
+@menu
+* TIC54X-Chars::                Special Characters
+@end menu
+
+@node TIC54X-Chars
+@subsection Special Characters
+
+@cindex line comment character, TIC54X
+@cindex TIC54X line comment character
+The presence of a @samp{;} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+The presence of an asterisk (@samp{*}) at the start of a line also
+indicates a comment that extends to the end of that line.
+
+@cindex line separator, TIC54X
+@cindex statement separator, TIC54X
+@cindex TIC54X line separator
+The TIC54X assembler does not currently support a line separator
+character.
+

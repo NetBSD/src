@@ -29,3 +29,49 @@ only creates single or double precision values.  I don't know if the
 The 32x32 has no machine dependent directives.
 
 @end ignore
+
+@ifset GENERIC
+@page
+@node NS32K-Dependent
+@chapter NS32K Dependent Features
+@end ifset
+
+@ifclear GENERIC
+@node Machine Dependencies
+@chapter NS32K Dependent Features
+@end ifclear
+
+@cindex N32K support
+@menu
+* NS32K Syntax::               Syntax
+@end menu
+
+
+@node NS32K Syntax
+@section Syntax
+@menu
+* NS32K-Chars::                Special Characters
+@end menu
+
+@node NS32K-Chars
+@subsection Special Characters
+
+@cindex line comment character, NS32K
+@cindex NS32K line comment character
+The presence of a @samp{#} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+If Sequent compatibility has been configured into the assembler then
+the @samp{|} character appearing as the first character on a line will
+also indicate the start of a line comment.
+
+@cindex line separator, NS32K
+@cindex statement separator, NS32K
+@cindex NS32K line separator
+The @samp{;} character can be used to separate statements on the same
+line.

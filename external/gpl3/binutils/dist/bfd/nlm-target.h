@@ -1,6 +1,6 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
    Copyright 1993, 1994, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2007, 2009 Free Software Foundation, Inc.
+   2005, 2007, 2009, 2011 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -45,6 +45,7 @@
 #define nlm_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
 #define nlm_bfd_relax_section                   bfd_generic_relax_section
 #define nlm_bfd_gc_sections                     bfd_generic_gc_sections
+#define nlm_bfd_lookup_section_flags		bfd_generic_lookup_section_flags
 #define nlm_bfd_merge_sections                  bfd_generic_merge_sections
 #define nlm_bfd_is_group_section                bfd_generic_is_group_section
 #define nlm_bfd_discard_group                   bfd_generic_discard_group
@@ -109,6 +110,7 @@ const bfd_target TARGET_BIG_SYM =
      of the archiver and should be independently tunable.  This value is
      a WAG (wild a** guess).  */
   15,
+  0,				/* match priority.  */
 
   /* Routines to byte-swap various sized integers from the data sections.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
@@ -202,6 +204,7 @@ const bfd_target TARGET_LITTLE_SYM =
      of the archiver and should be independently tunable.  This value is
      a WAG (wild a** guess).  */
   15,
+  0,				/* match priority.  */
 
   /* Routines to byte-swap various sized integers from the data sections.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,

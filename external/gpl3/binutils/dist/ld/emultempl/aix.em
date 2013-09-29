@@ -10,7 +10,7 @@ fragment <<EOF
 
 /* AIX emulation code for ${EMULATION_NAME}
    Copyright 1991, 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
    AIX support by Ian Lance Taylor <ian@cygnus.com>
@@ -145,7 +145,7 @@ gld${EMULATION_NAME}_before_parse (void)
 {
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
 
-  config.dynamic_link = TRUE;
+  input_flags.dynamic = TRUE;
   config.has_shared = TRUE;
 
   /* The link_info.[init|fini]_functions are initialized in ld/lexsup.c.
@@ -259,7 +259,7 @@ gld${EMULATION_NAME}_add_options
     {NULL, no_argument, NULL, 0}
   };
 
-  /* Options supported by the AIX linker which we do not support: -f,
+  /* Options supported by the AIX linker which we do not support:
      -S, -v, -Z, -bbindcmds, -bbinder, -bbindopts, -bcalls, -bcaps,
      -bcror15, -bdebugopt, -bdbg, -bdelcsect, -bex?, -bfilelist, -bfl,
      -bgcbypass, -bglink, -binsert, -bi, -bloadmap, -bl, -bmap, -bnl,
@@ -303,6 +303,76 @@ gld${EMULATION_NAME}_parse_args (int argc, char **argv)
   return FALSE;
 }
 
+/* Helper for option '-f', which specify a list of input files.
+   Contrary to the native linker, we don't support shell patterns
+   (simply because glob isn't always available).  */
+
+static void
+read_file_list (const char *filename)
+{
+  FILE *f;
+  /* An upper bound on the number of characters in the file.  */
+  long pos;
+  /* File in memory.  */
+  char *buffer;
+  size_t len;
+  char *b;
+  char *e;
+
+  f = fopen (filename, FOPEN_RT);
+  if (f == NULL)
+    {
+      einfo ("%F%P: cannot open %s\n", filename);
+      return;
+    }
+  if (fseek (f, 0L, SEEK_END) == -1)
+    goto error;
+  pos = ftell (f);
+  if (pos == -1)
+    goto error;
+  if (fseek (f, 0L, SEEK_SET) == -1)
+    goto error;
+
+  buffer = (char *) xmalloc (pos + 1);
+  len = fread (buffer, sizeof (char), pos, f);
+  if (len != (size_t) pos && ferror (f))
+    goto error;
+  /* Add a NUL terminator.  */
+  buffer[len] = '\0';
+  fclose (f);
+
+  /* Parse files.  */
+  b = buffer;
+  while (1)
+    {
+      /* Skip empty lines.  */
+      while (*b == '\n' || *b == '\r')
+        b++;
+
+      /* Stop if end of buffer.  */
+      if (b == buffer + len)
+        break;
+
+      /* Eat any byte until end of line.  */
+      for (e = b; *e != '\0'; e++)
+        if (*e == '\n' || *e == '\r')
+          break;
+
+      /* Replace end of line by nul.  */
+      if (*e != '\0')
+        *e++ = '\0';
+      
+      if (b != e)
+        lang_add_input_file (b, lang_input_file_is_search_file_enum, NULL);
+      b = e;
+    }
+  return;
+
+ error:
+  einfo ("%F%P: cannot read %s\n", optarg);
+  fclose (f);
+}
+
 static bfd_boolean
 gld${EMULATION_NAME}_handle_option (int optc)
 {
@@ -316,6 +386,12 @@ gld${EMULATION_NAME}_handle_option (int optc)
 
     case 0:
       /* Long option which just sets a flag.  */
+      break;
+
+    case 'f':
+      /* This overrides --auxiliary.  This option specifies a file containing
+         a list of input files.  */
+      read_file_list (optarg);
       break;
 
     case 'D':
@@ -593,7 +669,7 @@ gld${EMULATION_NAME}_unrecognized_file (lang_input_statement_type *entry)
       *flpp = n;
 
       ret = TRUE;
-      entry->loaded = TRUE;
+      entry->flags.loaded = TRUE;
     }
 
   fclose (e);
@@ -1429,7 +1505,7 @@ gld${EMULATION_NAME}_open_dynamic_archive (const char *arch,
 {
   char *path;
 
-  if (!entry->maybe_archive)
+  if (!entry->flags.maybe_archive)
     return FALSE;
 
   path = concat (search->name, "/lib", entry->filename, arch, ".a", NULL);

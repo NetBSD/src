@@ -1,6 +1,6 @@
 /* BFD back-end for Irix core files.
-   Copyright 1993, 1994, 1996, 1999, 2001, 2002, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1999, 2001, 2002, 2004, 2005, 2006, 2007,
+   2010, 2011, 2012  Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -62,7 +62,7 @@ do_sections64 (bfd *abfd, struct coreout *coreout)
 
   for (i = 0; i < coreout->c_nvmap; i++)
     {
-      val = bfd_bread ((PTR) &vmap, (bfd_size_type) sizeof vmap, abfd);
+      val = bfd_bread (&vmap, (bfd_size_type) sizeof vmap, abfd);
       if (val != sizeof vmap)
 	break;
 
@@ -110,7 +110,7 @@ do_sections (bfd *abfd, struct coreout *coreout)
 
   for (i = 0; i < coreout->c_nvmap; i++)
     {
-      val = bfd_bread ((PTR) &vmap, (bfd_size_type) sizeof vmap, abfd);
+      val = bfd_bread (&vmap, (bfd_size_type) sizeof vmap, abfd);
       if (val != sizeof vmap)
 	break;
 
@@ -175,7 +175,7 @@ irix_core_core_file_p (bfd *abfd)
   struct idesc *idg, *idf, *ids;
   bfd_size_type amt;
 
-  val = bfd_bread ((PTR) &coreout, (bfd_size_type) sizeof coreout, abfd);
+  val = bfd_bread (&coreout, (bfd_size_type) sizeof coreout, abfd);
   if (val != sizeof coreout)
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -293,6 +293,7 @@ const bfd_target irix_core_vec =
     0,			                                   /* symbol prefix */
     ' ',						   /* ar_pad_char */
     16,							   /* ar_max_namelen */
+    0,							   /* match_priority */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data */
@@ -327,7 +328,7 @@ const bfd_target irix_core_vec =
 
     NULL,
 
-    (PTR) 0			/* backend_data */
+    NULL			/* backend_data */
   };
 
 #endif /* IRIX_CORE */

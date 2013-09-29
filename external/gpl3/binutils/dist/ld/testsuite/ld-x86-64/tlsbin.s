@@ -93,5 +93,8 @@ _start:
 	movq	%fs:1+sh3@tpoff, %rdx
 	nop;nop;nop;nop
 
+	/* LE, large model  */
+	movabsq	$sh2@tpoff+1, %rdx
+
 	leave
 	ret

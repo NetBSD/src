@@ -1,6 +1,6 @@
 /* read.h - of read.c
    Copyright 1986, 1990, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
+   2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -143,6 +143,9 @@ extern symbolS *s_lcomm_internal (int, symbolS *, addressT);
 extern void s_app_file_string (char *, int);
 extern void s_app_file (int);
 extern void s_app_line (int);
+extern void s_bundle_align_mode (int);
+extern void s_bundle_lock (int);
+extern void s_bundle_unlock (int);
 extern void s_comm (int);
 extern void s_data (int);
 extern void s_desc (int);

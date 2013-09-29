@@ -42,3 +42,4 @@ Disassembly of section .text:
 0x0+76 ff 07 e6 00 [ 	]*tst1	r0, lp
 0x0+7a 83 00  [ 	]*zxb	sp
 0x0+7c c4 00  [ 	]*zxh	gp
+0x0+7e 63 ff 9d 00[ 	]*st.w	lp, 156\[sp\]

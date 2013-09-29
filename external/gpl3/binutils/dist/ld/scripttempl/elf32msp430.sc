@@ -99,17 +99,17 @@ SECTIONS
   .text :
   {
     ${RELOCATING+. = ALIGN(2);}
-    *(.init)
-    *(.init0)  /* Start here after reset.  */
-    *(.init1)
-    *(.init2)  /* Copy data loop  */
-    *(.init3)
-    *(.init4)  /* Clear bss  */
-    *(.init5)
-    *(.init6)  /* C++ constructors.  */
-    *(.init7)
-    *(.init8)
-    *(.init9)  /* Call main().  */
+    *(SORT_NONE(.init))
+    *(SORT_NONE(.init0))  /* Start here after reset.  */
+    *(SORT_NONE(.init1))
+    *(SORT_NONE(.init2))  /* Copy data loop  */
+    *(SORT_NONE(.init3))
+    *(SORT_NONE(.init4))  /* Clear bss  */
+    *(SORT_NONE(.init5))
+    *(SORT_NONE(.init6))  /* C++ constructors.  */
+    *(SORT_NONE(.init7))
+    *(SORT_NONE(.init8))
+    *(SORT_NONE(.init9))  /* Call main().  */
 
     ${CONSTRUCTING+ __ctors_start = . ; }
     ${CONSTRUCTING+ *(.ctors) }
@@ -124,17 +124,17 @@ SECTIONS
     *(.text.*)
 
     ${RELOCATING+. = ALIGN(2);}
-    *(.fini9)  /*   */
-    *(.fini8)
-    *(.fini7)
-    *(.fini6)  /* C++ destructors.  */
-    *(.fini5)
-    *(.fini4)
-    *(.fini3)
-    *(.fini2)
-    *(.fini1)
-    *(.fini0)  /* Infinite loop after program termination.  */
-    *(.fini)
+    *(SORT_NONE(.fini9))
+    *(SORT_NONE(.fini8))
+    *(SORT_NONE(.fini7))
+    *(SORT_NONE(.fini6))  /* C++ destructors.  */
+    *(SORT_NONE(.fini5))
+    *(SORT_NONE(.fini4))
+    *(SORT_NONE(.fini3))
+    *(SORT_NONE(.fini2))
+    *(SORT_NONE(.fini1))
+    *(SORT_NONE(.fini0))  /* Infinite loop after program termination.  */
+    *(SORT_NONE(.fini))
 
     _etext = .;
   } ${RELOCATING+ > text}
@@ -238,6 +238,13 @@ SECTIONS
   .debug_str      0 : { *(.debug_str) }
   .debug_loc      0 : { *(.debug_loc) }
   .debug_macinfo  0 : { *(.debug_macinfo) }
+
+  /* DWARF 3 */
+  .debug_pubtypes 0 : { *(.debug_pubtypes) }
+  .debug_ranges   0 : { *(.debug_ranges) }
+
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) } 
 
   PROVIDE (__stack = ${STACK}) ;
   PROVIDE (__data_start_rom = _etext) ;

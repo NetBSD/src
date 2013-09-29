@@ -1,6 +1,6 @@
 /* a.out object file format
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010
+   2001, 2002, 2003, 2004, 2005, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -42,7 +42,7 @@ obj_aout_frob_symbol (symbolS *sym, int *punt ATTRIBUTE_UNUSED)
   if (! (type & ~ (N_TYPE | N_EXT)))
     {
       if (type == (N_UNDF | N_EXT)
-	  && sec == &bfd_abs_section)
+	  && sec == bfd_abs_section_ptr)
 	{
 	  sec = bfd_und_section_ptr;
 	  S_SET_SEGMENT (sym, sec);
@@ -54,8 +54,8 @@ obj_aout_frob_symbol (symbolS *sym, int *punt ATTRIBUTE_UNUSED)
 	  && (type & N_TYPE) != N_SETD
 	  && (type & N_TYPE) != N_SETB
 	  && type != N_WARNING
-	  && (sec == &bfd_abs_section
-	      || sec == &bfd_und_section))
+	  && (sec == bfd_abs_section_ptr
+	      || sec == bfd_und_section_ptr))
 	return;
       if (flags & BSF_EXPORT)
 	type |= N_EXT;

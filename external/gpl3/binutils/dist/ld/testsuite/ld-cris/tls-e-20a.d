@@ -40,7 +40,9 @@ SYMBOL TABLE:
 0+820dc l    d  \.tdata	0+ \.tdata
 0+82168 l    d  \.got	0+ \.got
 0+821a4 l    d  \.data	0+ \.data
+0+ l    df \*ABS\*	0+ .*
 0+ l       \.tdata	0+80 tls128
+0+ l    df \*ABS\*	0+ .*
 0+82168 l     O \.got	0+ _GLOBAL_OFFSET_TABLE_
 0+80 g       \.tdata	0+4 \.hidden x
 0+800c4 g     F \.text	0+6 tlsdsofn2
@@ -51,13 +53,13 @@ SYMBOL TABLE:
 0+80098 g     F \.text	0+2a got7fn
 0+821b8 g     O \.data	0+4 got7var6
 0+80094 g       \.text	0+ _start
-0+821c0 g       \*ABS\*	0+ __bss_start
+0+821c0 g       \.data	0+ __bss_start
 0+821a4 g     O \.data	0+4 got7var1
 0+821b0 g     O \.data	0+4 got7var4
 0+800cc g     F \.text	0+6 tlsdsofn
 0+84 g       \.tdata	0+4 \.hidden x1
-0+821c0 g       \*ABS\*	0+ _edata
-0+821c0 g       \*ABS\*	0+ _end
+0+821c0 g       \.data	0+ _edata
+0+821c0 g       \.data	0+ _end
 0+821a8 g     O \.data	0+4 got7var2
 0+800d4 g     F \.text	0+6 tlsdsofn10
 

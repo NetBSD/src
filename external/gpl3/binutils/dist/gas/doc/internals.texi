@@ -1306,8 +1306,7 @@ This macro controls resolution of fixup expressions involving the
 difference of two symbols in the same section.  If this macro returns zero,
 the subtrahend will be resolved and @code{fx_subsy} set to @code{NULL} for
 @code{md_apply_fix}.  If undefined, the default of
-@w{@code{! SEG_NORMAL (@var{seg}) || TC_FORCE_RELOCATION (@var{fix})}} will
-be used.
+@w{@code{! SEG_NORMAL (@var{seg})}} will be used.
 
 @item TC_FORCE_RELOCATION_SUB_ABS (@var{fix}, @var{seg})
 @cindex TC_FORCE_RELOCATION_SUB_ABS

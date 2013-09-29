@@ -1,6 +1,6 @@
 # Expect script for ld-version tests
 #   Copyright 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-#   2009, 2010 Free Software Foundation, Inc.
+#   2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -36,6 +36,7 @@ if { ![istarget hppa*64*-*-hpux*]
      && ![istarget i?86-*-elf*]
      && ![istarget i?86-*-linux*]
      && ![istarget i?86-*-gnu*]
+     && ![istarget i?86-*-nacl*]
      && ![istarget ia64-*-elf*]
      && ![istarget ia64-*-linux*]
      && ![istarget m68k-*-linux*]
@@ -46,12 +47,14 @@ if { ![istarget hppa*64*-*-hpux*]
      && ![istarget sparc*-*-elf]
      && ![istarget sparc*-*-solaris2*]
      && ![istarget sparc*-*-linux*]
+     && ![istarget aarch64*-*-linux*]
      && ![istarget arm*-*-linux*]
      && ![istarget mips*-*-linux*]
      && ![istarget alpha*-*-linux*]
      && ![istarget s390*-*-linux*]
      && ![istarget sh\[34\]*-*-linux*]
-     && ![istarget x86_64-*-linux*] } {
+     && ![istarget x86_64-*-linux*]
+     && ![istarget x86_64-*-nacl*] } {
     return
 }
 
@@ -72,7 +75,9 @@ set SOBJDUMP_FLAGS --syms
 set shared "--shared --no-undefined-version"
 set script --version-script
 
-if [istarget mips*-*-*] {
+# Old version of GCC for MIPS default to enabling -fpic
+# and get confused if it is used on the command line.
+if { [istarget mips*-*-*] && ! [at_least_gcc_version 4 3] } then {
     set picflag ""
 } else {
     # Unfortunately, the gcc argument is -fpic and the cc argument is
@@ -117,7 +122,7 @@ proc test_ar { test lib object expect } {
 	unresolved "$test"
 	return
     }
-    
+
     verbose -log "$nm --print-armap $tmpdir/$lib | grep \" in \" | egrep \"VERS\\|bar\\|foo\" | sort > $tmpdir/nm.out"
 
     catch "exec $nm --print-armap $tmpdir/$lib | grep \\\ in\\\  | egrep VERS\\\|bar\\\|foo | sort > $tmpdir/nm.out" exec_output
@@ -259,7 +264,7 @@ proc objdump_symstuff { objdump object expectfile } {
 	    perror "$expectfile doesn't exist"
 	    return 0
 	}
-	
+
 	if [file exists $tmpdir/objdump.out] then {
 	    set file_b [open $tmpdir/objdump.out r]
 	} else {
@@ -289,11 +294,11 @@ proc objdump_symstuff { objdump object expectfile } {
 	    }
 	}
 	close $file_b
-	
+
 	for { set i 0 } { $i < [llength $list_a] } { incr i } {
 	    set line_a [lindex $list_a $i]
 	    set line_b [lindex $list_b $i]
-	    
+
 
 	    verbose "\t$expectfile: $i: $line_a" 3
 	    verbose "\t/tmp/objdump.out: $i: $line_b" 3
@@ -302,20 +307,20 @@ proc objdump_symstuff { objdump object expectfile } {
 	    } else {
 		verbose -log "\t$expectfile: $i: $line_a"
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 	}
-	
+
 	if { [llength $list_a] != [llength $list_b] } {
 	    verbose -log "Line count"
 	    return 0
 	}
-	
+
 	if $differences<1 then {
 	    return 1
 	}
-	
+
 	return 0
     } else {
 	verbose -log "$exec_output"
@@ -354,7 +359,7 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 	    warning "$expectfile doesn't exist"
 	    return 0
 	}
-	
+
 	if [file exists $tmpdir/objdump.out] then {
 	    set file_b [open $tmpdir/objdump.out r]
 	} else {
@@ -384,7 +389,7 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 	    }
 	}
 	close $file_b
-	
+
 	# Support empty files.
 	if { ![info exists list_a] && ![info exists list_b] } then {
 	    return 1
@@ -392,12 +397,12 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 
 	for { set i 0 } { $i < [llength $list_b] } { incr i } {
 	    set line_b [lindex $list_b $i]
-	    
+
 # The tests are rigged so that we should never export a symbol with the
 # word 'hide' in it.  Thus we just search for it, and bail if we find it.
 	    if [regexp "hide" $line_b] then {
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 
@@ -417,20 +422,20 @@ proc objdump_dynsymstuff { objdump object expectfile } {
 
 	    if { $j >= [llength $list_a] } {
 		verbose -log "\t$tmpdir/objdump.out: $i: $line_b"
-		
+
 		return 0
 	    }
 	}
-	
+
 	if { [llength $list_a] != [llength $list_b] } {
 	    verbose -log "Line count"
 	    return 0
 	}
-	
+
 	if $differences<1 then {
 	    return 1
 	}
-	
+
 	return 0
     } else {
 	verbose -log "$exec_output"
@@ -562,7 +567,7 @@ proc build_binary { shared pic test source libname other mapfile verexp versymex
     }
 
     pass $test
-    
+
 }
 
 proc build_executable { test source libname other mapfile verexp versymexp symexp } {
@@ -676,12 +681,12 @@ proc test_strip_vers_lib { test srclib libname verexp versymexp } {
 	    fail "$test"
 	    return
 	}
-	
+
 	if {![objdump_dynsymstuff $objdump $tmpdir/$libname.so $srcdir/$subdir/$versymexp ]}     {
 	    fail "$test"
 	    return
 	}
-	
+
     } else {
 	verbose -log "$exec_output"
 	fail "$test"
@@ -768,8 +773,9 @@ proc build_exec { test source execname flags solibname verexp versymexp symexp }
     pass $test
 }
 
-if [istarget x86_64-*-linux*] {
-    # x86_64 doesn't like non-pic shared libraries
+if { [istarget x86_64-*-linux*] \
+     || ( [istarget mips*-*-linux*] && [at_least_gcc_version 4 3] ) } {
+    # x86_64 and newer MIPS toolchains do not like non-pic shared libraries
     set pic "yes"
 } else {
     set pic "no"
@@ -873,15 +879,15 @@ test_ar "ar with versioned solib" vers13.a vers1.so vers13.asym
 #
 # Strip a shared library, and make sure we didn't screw something up in there.
 #
-test_strip_vers_lib "vers14" vers1.so vers14 vers1.ver vers1.dsym 
+test_strip_vers_lib "vers14" vers1.so vers14 vers1.ver vers1.dsym
 
 
 #
-# Build another test with some versioned symbols.  Here we are going to 
+# Build another test with some versioned symbols.  Here we are going to
 # try and override something from the library, and we shouldn't get
 # any errors.
 #
-build_exec "vers15" vers15.c vers15 "" vers1.so vers15.ver vers15.dsym vers15.sym
+build_exec "vers15" vers15.c vers15 "-Wl,--no-as-needed" vers1.so vers15.ver vers15.dsym vers15.sym
 
 #
 # Test that when we override a versioned symbol from the library this
@@ -893,7 +899,7 @@ build_exec "vers16" vers16.c vers16 "" vers16a.so "" vers16.dsym ""
 # Test a weak versioned symbol.
 build_vers_lib_pic "vers17" vers17.c vers17 "" vers17.map vers17.ver vers17.dsym ""
 build_vers_lib_pic "vers18" vers18.c vers18 vers17.so vers18.map vers18.ver vers18.dsym vers18.sym
-build_exec "vers19" vers19.c vers19 "-Wl,-rpath,." vers18.so vers19.ver vers19.dsym ""
+build_exec "vers19" vers19.c vers19 "-Wl,-rpath,. -Wl,-rpath-link,." vers18.so vers19.ver vers19.dsym ""
 
 build_vers_lib_no_pic "vers20a" vers20.c vers20a "" vers20.map vers20a.ver vers20.dsym ""
 exec cp $tmpdir/vers20a.so $tmpdir/vers20b.so
@@ -909,7 +915,7 @@ build_vers_lib_pic "vers22" vers22.c vers22 "vers22a.so vers22b.so" "" vers22.ve
 
 # Test versioned definitions in different files.
 if [string match "yes" $pic] then {
-    xfail "vers23a" 
+    xfail "vers23a"
     xfail "vers23b"
     xfail "vers23c"
     xfail "vers23d"

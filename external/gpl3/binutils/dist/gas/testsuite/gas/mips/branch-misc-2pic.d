@@ -40,6 +40,6 @@ Disassembly of section .text:
 [ 	]*b0: R_MIPS_PC16	x2
 0+00b4 <[^>]*> 00000000 	nop
 0+00b8 <[^>]*> 1000ffff 	b	000000b8 <g6\+0x10>
-[ 	]*b8: R_MIPS_PC16	\.data
+[ 	]*b8: R_MIPS_PC16	\.Ldata
 0+00bc <[^>]*> 00000000 	nop
 	\.\.\.

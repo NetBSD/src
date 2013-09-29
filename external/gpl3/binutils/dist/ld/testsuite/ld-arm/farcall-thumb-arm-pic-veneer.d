@@ -10,7 +10,7 @@ Disassembly of section .text:
 01f01018 <__bar_from_thumb>:
  1f01018:	4778      	bx	pc
  1f0101a:	46c0      	nop			; \(mov r8, r8\)
- 1f0101c:	e59fc000 	ldr	ip, \[pc, #0\]	; 1f01024 <__bar_from_thumb\+0xc>
+ 1f0101c:	e59fc000 	ldr	ip, \[pc\]	; 1f01024 <__bar_from_thumb\+0xc>
  1f01020:	e08cf00f 	add	pc, ip, pc
  1f01024:	000fffec 	.word	0x000fffec
 

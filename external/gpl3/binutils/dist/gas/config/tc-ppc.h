@@ -84,14 +84,11 @@ extern char *ppc_target_format (void);
     ppc_handle_align (FRAGP);
 
 extern void ppc_handle_align (struct frag *);
+extern void ppc_frag_check (struct frag *);
 
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
 
-#define md_frag_check(FRAGP) \
-  if ((FRAGP)->has_code							\
-      && (((FRAGP)->fr_address + (FRAGP)->insn_addr) & 3) != 0)		\
-    as_bad_where ((FRAGP)->fr_file, (FRAGP)->fr_line,			\
-		  _("instruction address is not a multiple of 4"));
+#define md_frag_check(FRAGP) ppc_frag_check (FRAGP)
 
 /* Arrange to store the value of ppc_cpu at the site of a fixup
    for later use in md_apply_fix.  */
@@ -129,26 +126,32 @@ struct ppc_tc_sy
 {
   /* We keep a few linked lists of symbols.  */
   symbolS *next;
+  /* The real name, if the symbol was renamed.  */
+  char *real_name;
   /* Non-zero if the symbol should be output.  The RS/6000 assembler
      only outputs symbols that are external or are mentioned in a
      .globl or .lglobl statement.  */
-  int output;
+  unsigned char output;
   /* The symbol class.  */
-  int symbol_class;
-  /* The real name, if the symbol was renamed.  */
-  char *real_name;
+  short symbol_class;
+  /* For a csect or common symbol, the alignment to use.  */
+  unsigned char align;
   /* For a csect symbol, the subsegment we are using.  This is zero
      for symbols that are not csects.  */
   subsegT subseg;
-  /* For a csect or common symbol, the alignment to use.  */
-  int align;
-  /* For a function symbol, a symbol whose value is the size.  The
-     field is NULL if there is no size.  */
-  symbolS *size;
   /* For a csect symbol, the last symbol which has been defined in
-     this csect, or NULL if none have been defined so far.  For a .bs
-     symbol, the referenced csect symbol.  */
+     this csect, or NULL if none have been defined so far.
+     For a .bs symbol, the referenced csect symbol.
+     For a label, the enclosing csect.  */
   symbolS *within;
+  union
+  {
+    /* For a function symbol, a symbol whose value is the size.  The
+       field is NULL if there is no size.  */
+    symbolS *size;
+    /* For a dwarf symbol, the corresponding dwarf subsection.  */
+    struct dw_subsection *dw;
+  } u;
 };
 
 #define TC_SYMFIELD_TYPE struct ppc_tc_sy
@@ -193,11 +196,17 @@ extern void ppc_adjust_symtab (void);
 do {								\
   if (SF_GET_GET_SEGMENT (dest))				\
     S_SET_SEGMENT (dest, S_GET_SEGMENT (src));			\
-  symbol_get_tc (dest)->size = symbol_get_tc (src)->size;	\
+  symbol_get_tc (dest)->u = symbol_get_tc (src)->u;		\
   symbol_get_tc (dest)->align = symbol_get_tc (src)->align;	\
   symbol_get_tc (dest)->symbol_class = symbol_get_tc (src)->symbol_class;	\
   symbol_get_tc (dest)->within = symbol_get_tc (src)->within;	\
 } while (0)
+
+extern void ppc_xcoff_end (void);
+#define md_end ppc_xcoff_end
+
+#define tc_new_dot_label(sym) ppc_new_dot_label (sym)
+extern void ppc_new_dot_label (symbolS *);
 
 #endif /* OBJ_XCOFF */
 
@@ -261,6 +270,8 @@ extern int tc_ppc_regname_to_dw2regnum (char *);
 
 extern int ppc_cie_data_alignment;
 
-#define DWARF2_LINE_MIN_INSN_LENGTH     4
+extern int ppc_dwarf2_line_min_insn_length;
+
+#define DWARF2_LINE_MIN_INSN_LENGTH     ppc_dwarf2_line_min_insn_length
 #define DWARF2_DEFAULT_RETURN_COLUMN    0x41
 #define DWARF2_CIE_DATA_ALIGNMENT       ppc_cie_data_alignment

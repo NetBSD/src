@@ -5,5 +5,5 @@
 #...
 0+0 T _start
 #...
-0+10 A __data_end
+0+10 [DT] __data_end
 #pass

@@ -38,16 +38,48 @@ namespace gold
 //
 
 // Read a ULEB 128 encoded integer from BUFFER.  Return the length of the
-// encoded integer at the location PLEN. 
+// encoded integer at the location PLEN.  The common case of a single-byte
+// value is handled inline, and multi-byte values are processed by the _x
+// routine, where BYTE is the first byte of the value.
 
 uint64_t
-read_unsigned_LEB_128(const unsigned char* buffer, size_t* plen);
+read_unsigned_LEB_128_x(const unsigned char* buffer, size_t* plen,
+			unsigned char byte);
+
+inline uint64_t
+read_unsigned_LEB_128(const unsigned char* buffer, size_t* plen)
+{
+  unsigned char byte = *buffer++;
+
+  if ((byte & 0x80) != 0)
+    return read_unsigned_LEB_128_x(buffer, plen, byte);
+
+  *plen = 1;
+  return static_cast<uint64_t>(byte);
+}
 
 // Read an SLEB 128 encoded integer from BUFFER.  Return the length of the
-// encoded integer at the location PLEN. 
+// encoded integer at the location PLEN.  The common case of a single-byte
+// value is handled inline, and multi-byte values are processed by the _x
+// routine, where BYTE is the first byte of the value.
 
 int64_t
-read_signed_LEB_128(const unsigned char* buffer, size_t* plen);
+read_signed_LEB_128_x(const unsigned char* buffer, size_t* plen,
+		      unsigned char byte);
+
+inline int64_t
+read_signed_LEB_128(const unsigned char* buffer, size_t* plen)
+{
+  unsigned char byte = *buffer++;
+
+  if ((byte & 0x80) != 0)
+    return read_signed_LEB_128_x(buffer, plen, byte);
+
+  *plen = 1;
+  if (byte & 0x40)
+    return -(static_cast<int64_t>(1) << 7) | static_cast<int64_t>(byte);
+  return static_cast<int64_t>(byte);
+}
 
 // Write a ULEB 128 encoded VALUE to BUFFER.
 

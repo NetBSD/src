@@ -20,7 +20,7 @@ foo:
 	bxleg	%r9,%r6,4095(%r5)
 	cdgbr	%f9,%r6
 	cdgr	%f9,%r6
-	cdsg	%r9,%r6,4095(%r5)
+	cdsg	%r8,%r6,4095(%r5)
 	cegbr	%f9,%r6
 	cegr	%f9,%r6
 	cg	%r9,4095(%r5,%r10)
@@ -32,8 +32,8 @@ foo:
 	cgfr	%r9,%r6
 	cghi	%r9,-32767
 	cgr	%r9,%r6
-	cgxbr	%r6,15,%f5
-	cgxr	%r6,15,%f5
+	cgxbr	%r6,15,%f4
+	cgxr	%r6,15,%f4
 	clg	%r9,4095(%r5,%r10)
 	clgf	%r9,4095(%r5,%r10)
 	clgfr	%r9,%r6
@@ -42,14 +42,14 @@ foo:
 	csg	%r9,%r6,4095(%r5)
 	cvbg	%r9,4095(%r5,%r10)
 	cvdg	%r9,4095(%r5,%r10)
-	cxgbr	%f9,%r6
-	cxgr	%f9,%r6
-	dlg	%r9,4095(%r5,%r10)
-	dlgr	%r9,%r6
-	dsg	%r9,4095(%r5,%r10)
-	dsgf	%r9,4095(%r5,%r10)
-	dsgfr	%r9,%r6
-	dsgr	%r9,%r6
+	cxgbr	%f8,%r6
+	cxgr	%f8,%r6
+	dlg	%r8,4095(%r5,%r10)
+	dlgr	%r8,%r6
+	dsg	%r8,4095(%r5,%r10)
+	dsgf	%r8,4095(%r5,%r10)
+	dsgfr	%r8,%r6
+	dsgr	%r8,%r6
 	eregg	%r9,%r6
 	esea	%r9
 	icmh	%r9,10,4095(%r5)
@@ -83,7 +83,7 @@ foo:
 	lngr	%r9,%r6
 	lpgfr	%r9,%r6
 	lpgr	%r9,%r6
-	lpq	%r9,4095(%r5,%r10)
+	lpq	%r8,4095(%r5,%r10)
 	lpswe	4095(%r5)
 	lrag	%r9,4095(%r5,%r10)
 	lrvg	%r9,4095(%r5,%r10)
@@ -92,8 +92,8 @@ foo:
 	ltgr	%r9,%r6
 	lurag	%r9,%r6
 	mghi	%r9,-32767
-	mlg	%r9,4095(%r5,%r10)
-	mlgr	%r9,%r6
+	mlg	%r8,4095(%r5,%r10)
+	mlgr	%r8,%r6
 	msg	%r9,4095(%r5,%r10)
 	msgf	%r9,4095(%r5,%r10)
 	msgfr	%r9,%r6

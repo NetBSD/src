@@ -32,3 +32,5 @@ if ![ld_simple_link $ld tmpdir/assert "-T $srcdir/$subdir/assert.t tmpdir/assert
 } else {
     pass $testname
 }
+
+run_dump_test "assert2"

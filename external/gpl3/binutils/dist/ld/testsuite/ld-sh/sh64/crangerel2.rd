@@ -11,8 +11,8 @@ Section Headers:
  +\[ 6\] \.cranges +PROGBITS +00000000 000094 000046 00 +W +0 +0 +1
  +\[ 7\] \.rela\.cranges +RELA +00000000 0002e0 000054 0c +9 +6 +4
  +\[ 8\] \.shstrtab +STRTAB +00000000 0000da 00004d 00 +0 +0 +1
- +\[ 9\] \.symtab +SYMTAB +00000000 000334 0000d0 10 +10 +12 +4
- +\[10\] \.strtab +STRTAB +00000000 000404 000027 00 +0 +0 +1
+ +\[ 9\] \.symtab +SYMTAB +00000000 [0-9a-f]+ [0-9a-f]+ 10 +10 +[0-9]+ +4
+ +\[10\] \.strtab +STRTAB +00000000 [0-9a-f]+ [0-9a-f]+ 00 +0 +0 +1
 Key to Flags:
 #...
 
@@ -26,21 +26,26 @@ Relocation section '\.rela\.cranges' at offset 0x[0-9a-f]+ contains 7 entries:
 0*00000032 +0+0201 R_SH_DIR32 +00000000 +\.text\.mixed +\+ 0
 0*0000003c +0+0201 R_SH_DIR32 +00000000 +\.text\.mixed +\+ 0
 
-Symbol table '\.symtab' contains 13 entries:
+Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
- +0: 00000000 +0 +NOTYPE +LOCAL +DEFAULT +UND 
- +1: 00000000 +0 +SECTION +LOCAL +DEFAULT +1 
- +2: 00000000 +0 +SECTION +LOCAL +DEFAULT +2 
- +3: 00000000 +0 +SECTION +LOCAL +DEFAULT +3 
- +4: 00000000 +0 +SECTION +LOCAL +DEFAULT +4 
- +5: 00000000 +0 +SECTION +LOCAL +DEFAULT +5 
- +6: 00000000 +0 +SECTION +LOCAL +DEFAULT +6 
- +7: 00000000 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 start2
- +8: 00000018 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 sec1
- +9: 00000028 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 sec2
- +10: 0000003c +0 +NOTYPE +LOCAL +DEFAULT +2 sec3
- +11: 00000044 +0 +NOTYPE +LOCAL +DEFAULT +2 sec4
- +12: 00000000 +0 +NOTYPE +GLOBAL +DEFAULT +2 diversion2
+.* 00000000 +0 +NOTYPE +LOCAL +DEFAULT +UND 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +1 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +2 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +3 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +4 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +5 
+.* 00000000 +0 +SECTION +LOCAL +DEFAULT +6 
+.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 00000000 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 start2
+.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 00000018 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 sec1
+.* 00000028 +0 +NOTYPE +LOCAL +DEFAULT +\[<other>: 4\] +2 sec2
+.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 0000003c +0 +NOTYPE +LOCAL +DEFAULT +2 sec3
+.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 00000044 +0 +NOTYPE +LOCAL +DEFAULT +2 sec4
+.* 00000000 +0 +FILE +LOCAL +DEFAULT +ABS .*
+.* 00000000 +0 +NOTYPE +GLOBAL +DEFAULT +2 diversion2
 
 Hex dump of section '\.text\.mixed':
   0x00000000 6ff0fff0 6ff0fff0 6ff0fff0 0000002a .*

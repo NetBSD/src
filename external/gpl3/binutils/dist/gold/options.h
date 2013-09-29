@@ -1,6 +1,6 @@
 // options.h -- handle command line options for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -57,11 +57,17 @@ class Input_file_lib;
 class Position_dependent_options;
 class Target;
 class Plugin_manager;
+class Script_info;
 
 // Incremental build action for a specific file, as selected by the user.
 
 enum Incremental_disposition
 {
+  // Startup files that appear before the first disposition option.
+  // These will default to INCREMENTAL_CHECK unless the
+  // --incremental-startup-unchanged option is given.
+  // (For files added implicitly by gcc before any user options.)
+  INCREMENTAL_STARTUP,
   // Determine the status from the timestamp (default).
   INCREMENTAL_CHECK,
   // Assume the file changed from the previous build.
@@ -95,6 +101,9 @@ parse_uint64(const char* option_name, const char* arg, uint64_t* retval);
 
 extern void
 parse_double(const char* option_name, const char* arg, double* retval);
+
+extern void
+parse_percent(const char* option_name, const char* arg, double* retval);
 
 extern void
 parse_string(const char* option_name, const char* arg, const char** retval);
@@ -371,6 +380,12 @@ struct Struct_special : public Struct_var
 	     #default_value__, helpstring__, helparg__, false,		 \
 	     double, double, options::parse_double)
 
+#define DEFINE_percent(varname__, dashes__, shortname__, default_value__, \
+		       helpstring__, helparg__)				  \
+  DEFINE_var(varname__, dashes__, shortname__, default_value__ / 100.0,	  \
+	     #default_value__, helpstring__, helparg__, false,		  \
+	     double, double, options::parse_percent)
+
 #define DEFINE_string(varname__, dashes__, shortname__, default_value__, \
                       helpstring__, helparg__)                           \
   DEFINE_var(varname__, dashes__, shortname__, default_value__,          \
@@ -528,7 +543,7 @@ class Search_directory
   { }
 
   // This is the usual constructor.
-  Search_directory(const char* name, bool put_in_sysroot)
+  Search_directory(const std::string& name, bool put_in_sysroot)
     : name_(name), put_in_sysroot_(put_in_sysroot), is_in_sysroot_(false)
   {
     if (this->name_.empty())
@@ -628,6 +643,9 @@ class General_options
   DEFINE_bool_alias(dn, Bdynamic, options::ONE_DASH, '\0',
 		    N_("alias for -Bstatic"), NULL, true);
 
+  DEFINE_bool(Bgroup, options::ONE_DASH, '\0', false,
+	      N_("Use group name lookup rules for shared library"), NULL);
+
   DEFINE_bool(Bsymbolic, options::ONE_DASH, '\0', false,
               N_("Bind defined symbols locally"), NULL);
 
@@ -662,6 +680,10 @@ class General_options
 	      N_("Output cross reference table"),
 	      N_("Do not output cross reference table"));
 
+  DEFINE_bool(ctors_in_init_array, options::TWO_DASHES, '\0', true,
+	      N_("Use DT_INIT_ARRAY for all constructors (default)"),
+	      N_("Handle constructors as directed by compiler"));
+
   DEFINE_bool(define_common, options::TWO_DASHES, 'd', false,
               N_("Define common symbols"),
               N_("Do not define common symbols"));
@@ -686,8 +708,8 @@ class General_options
 	      NULL);
 
   DEFINE_bool(detect_odr_violations, options::TWO_DASHES, '\0', false,
-              N_("Try to detect violations of the One Definition Rule"),
-              NULL);
+              N_("Look for violations of the C++ One Definition Rule"),
+	      N_("Do not look for violations of the C++ One Definition Rule"));
 
   DEFINE_bool(discard_all, options::TWO_DASHES, 'x', false,
 	      N_("Delete all local symbols"), NULL);
@@ -717,18 +739,29 @@ class General_options
               N_("Export all dynamic symbols"),
 	      N_("Do not export all dynamic symbols (default)"));
 
+  DEFINE_set(export_dynamic_symbol, options::TWO_DASHES, '\0',
+	     N_("Export SYMBOL to dynamic symbol table"), N_("SYMBOL"));
+
   DEFINE_special(EB, options::ONE_DASH, '\0',
 		 N_("Link big-endian objects."), NULL);
-
-  DEFINE_bool(eh_frame_hdr, options::TWO_DASHES, '\0', false,
-              N_("Create exception frame header"), NULL);
 
   DEFINE_special(EL, options::ONE_DASH, '\0',
 		 N_("Link little-endian objects."), NULL);
 
+  DEFINE_bool(eh_frame_hdr, options::TWO_DASHES, '\0', false,
+              N_("Create exception frame header"), NULL);
+
   DEFINE_bool(enum_size_warning, options::TWO_DASHES, '\0', true, NULL,
 	      N_("(ARM only) Do not warn about objects with incompatible "
 		 "enum sizes"));
+
+  DEFINE_set(auxiliary, options::TWO_DASHES, 'f',
+	     N_("Auxiliary filter for shared object symbol table"),
+	     N_("SHLIB"));
+
+  DEFINE_string(filter, options::TWO_DASHES, 'F', NULL,
+		N_("Filter for shared object symbol table"),
+		N_("SHLIB"));
 
   DEFINE_bool(fatal_warnings, options::TWO_DASHES, '\0', false,
 	      N_("Treat warnings as errors"),
@@ -740,6 +773,10 @@ class General_options
   DEFINE_bool(fix_cortex_a8, options::TWO_DASHES, '\0', false,
 	      N_("(ARM only) Fix binaries for Cortex-A8 erratum."),
 	      N_("(ARM only) Do not fix binaries for Cortex-A8 erratum."));
+
+  DEFINE_bool(fix_arm1176, options::TWO_DASHES, '\0', true,
+	      N_("(ARM only) Fix binaries for ARM1176 erratum."),
+	      N_("(ARM only) Do not fix binaries for ARM1176 erratum."));
 
   DEFINE_bool(merge_exidx_entries, options::TWO_DASHES, '\0', true,
 	      N_("(ARM only) Merge exidx entries in debuginfo."),
@@ -757,11 +794,16 @@ class General_options
   DEFINE_bool(g, options::EXACTLY_ONE_DASH, '\0', false,
 	      N_("Ignored"), NULL);
 
+  DEFINE_bool(gdb_index, options::TWO_DASHES, '\0', false,
+	      N_("Generate .gdb_index section"),
+	      N_("Do not generate .gdb_index section"));
+
+  DEFINE_bool(gnu_unique, options::TWO_DASHES, '\0', true,
+	      N_("Enable STB_GNU_UNIQUE symbol binding (default)"),
+	      N_("Disable STB_GNU_UNIQUE symbol binding"));
+
   DEFINE_string(soname, options::ONE_DASH, 'h', NULL,
                 N_("Set shared library name"), N_("FILENAME"));
-
-  DEFINE_bool(i, options::EXACTLY_ONE_DASH, '\0', false,
-	      N_("Ignored"), NULL);
 
   DEFINE_double(hash_bucket_empty_fraction, options::TWO_DASHES, '\0', 0.0,
 		N_("Min fraction of empty buckets in dynamic hash"),
@@ -789,6 +831,11 @@ class General_options
   DEFINE_special(incremental_update, options::TWO_DASHES, '\0',
 		 N_("Do an incremental link; exit if not possible"), NULL);
 
+  DEFINE_string(incremental_base, options::TWO_DASHES, '\0', NULL,
+                N_("Set base file for incremental linking"
+                   " (default is output file)"),
+                N_("FILE"));
+
   DEFINE_special(incremental_changed, options::TWO_DASHES, '\0',
                  N_("Assume files changed"), NULL);
 
@@ -797,6 +844,14 @@ class General_options
 
   DEFINE_special(incremental_unknown, options::TWO_DASHES, '\0',
                  N_("Use timestamps to check files (default)"), NULL);
+
+  DEFINE_special(incremental_startup_unchanged, options::TWO_DASHES, '\0',
+                 N_("Assume startup files unchanged "
+		    "(files preceding this option)"), NULL);
+
+  DEFINE_percent(incremental_patch, options::TWO_DASHES, '\0', 10,
+		 N_("Amount of extra space to allocate for patches"),
+		 N_("PERCENT"));
 
   DEFINE_string(init, options::ONE_DASH, '\0', "_init",
                 N_("Call SYMBOL at load-time"), N_("SYMBOL"));
@@ -813,6 +868,10 @@ class General_options
               N_("Keep files mapped across passes (default)"),
               N_("Release mapped files after each pass"));
 
+  DEFINE_bool(ld_generated_unwind_info, options::TWO_DASHES, '\0', true,
+	      N_("Generate unwind information for PLT (default)"),
+	      N_("Do not generate unwind information for PLT"));
+
   DEFINE_special(library, options::TWO_DASHES, 'l',
                  N_("Search for library LIBNAME"), N_("LIBNAME"));
 
@@ -828,7 +887,11 @@ class General_options
               NULL);
 
   DEFINE_string(m, options::EXACTLY_ONE_DASH, 'm', "",
-                N_("Ignored for compatibility"), N_("EMULATION"));
+                N_("Set GNU linker emulation; obsolete"), N_("EMULATION"));
+
+  DEFINE_bool(mmap_output_file, options::TWO_DASHES, '\0', true,
+              N_("Map the output file for writing (default)."),
+              N_("Do not map the output file for writing."));
 
   DEFINE_bool(print_map, options::TWO_DASHES, 'M', false,
 	      N_("Write map file on standard output"), NULL);
@@ -880,8 +943,16 @@ class General_options
                  N_("Pass an option to the plugin"), N_("OPTION"));
 #endif
 
+  DEFINE_bool(posix_fallocate, options::TWO_DASHES, '\0', true,
+              N_("Use posix_fallocate to reserve space in the output file"
+		 " (default)."),
+              N_("Use fallocate or ftruncate to reserve space."));
+
   DEFINE_bool(preread_archive_symbols, options::TWO_DASHES, '\0', false,
               N_("Preread archive symbols when multi-threaded"), NULL);
+
+  DEFINE_bool(print_output_format, options::TWO_DASHES, '\0', false,
+	      N_("Print default output format"), NULL);
 
   DEFINE_string(print_symbol_counts, options::TWO_DASHES, '\0', NULL,
 		N_("Print symbols defined and used for each input"),
@@ -895,6 +966,8 @@ class General_options
 
   DEFINE_bool(relocatable, options::EXACTLY_ONE_DASH, 'r', false,
               N_("Generate relocatable output"), NULL);
+  DEFINE_bool_alias(i, relocatable, options::EXACTLY_ONE_DASH, '\0',
+		    N_("Synonym for -r"), NULL, false);
 
   DEFINE_bool(relax, options::TWO_DASHES, '\0', false,
 	      N_("Relax branches on certain targets"), NULL);
@@ -938,7 +1011,7 @@ class General_options
               N_("Emit only debug line number information"), NULL);
   DEFINE_bool(strip_debug_gdb, options::TWO_DASHES, '\0', false,
               N_("Strip debug symbols that are unused by gdb "
-                 "(at least versions <= 6.7)"), NULL);
+                 "(at least versions <= 7.4)"), NULL);
   DEFINE_bool(strip_lto_sections, options::TWO_DASHES, '\0', true,
               N_("Strip LTO intermediate code sections"), NULL);
 
@@ -1026,6 +1099,13 @@ class General_options
   DEFINE_set(undefined, options::TWO_DASHES, 'u',
 	     N_("Create undefined reference to SYMBOL"), N_("SYMBOL"));
 
+  DEFINE_enum(unresolved_symbols, options::TWO_DASHES, '\0', NULL,
+	      N_("How to handle unresolved symbols"),
+	      ("ignore-all,report-all,ignore-in-object-files,"
+	       "ignore-in-shared-libs"),
+	      {"ignore-all", "report-all", "ignore-in-object-files",
+		  "ignore-in-shared-libs"});
+
   DEFINE_bool(verbose, options::TWO_DASHES, '\0', false,
               N_("Synonym for --debug=files"), NULL);
 
@@ -1038,6 +1118,10 @@ class General_options
 
   DEFINE_bool(warn_constructors, options::TWO_DASHES, '\0', false,
 	      N_("Ignored"), N_("Ignored"));
+
+  DEFINE_bool(warn_execstack, options::TWO_DASHES, '\0', false,
+	      N_("Warn if the stack is executable"),
+	      N_("Do not warn if the stack is executable (default)"));
 
   DEFINE_bool(warn_mismatch, options::TWO_DASHES, '\0', true,
 	      NULL, N_("Don't warn about mismatched input files"));
@@ -1153,7 +1237,7 @@ class General_options
 	      N_("Don't mark variables read-only after relocation"));
   DEFINE_bool(text, options::DASH_Z, '\0', false,
 	      N_("Do not permit relocations in read-only segments"),
-	      NULL);
+	      N_("Permit relocations in read-only segments (default)"));
   DEFINE_bool_alias(textoff, text, options::DASH_Z, '\0',
 		    N_("Permit relocations in read-only segments (default)"),
 		    NULL, true);
@@ -1304,6 +1388,12 @@ class General_options
   incremental_disposition() const
   { return this->incremental_disposition_; }
 
+  // The disposition to use for startup files (those that precede the
+  // first --incremental-changed, etc. option).
+  Incremental_disposition
+  incremental_startup_disposition() const
+  { return this->incremental_startup_disposition_; }
+
   // Return true if S is the name of a library excluded from automatic
   // symbol export.
   bool
@@ -1314,6 +1404,11 @@ class General_options
   // address.  Otherwise return false.
   bool
   section_start(const char* secname, uint64_t* paddr) const;
+
+  // Return whether any --section-start option was used.
+  bool
+  any_section_start() const
+  { return !this->section_starts_.empty(); }
 
   enum Fix_v4bx
   {
@@ -1384,7 +1479,7 @@ class General_options
 
   // These are called by finalize() to set up the search-path correctly.
   void
-  add_to_library_path_with_sysroot(const char* arg)
+  add_to_library_path_with_sysroot(const std::string& arg)
   { this->add_search_directory_to_library_path(Search_directory(arg, true)); }
 
   // Apply any sysroot to the directory lists.
@@ -1421,9 +1516,12 @@ class General_options
   // --incremental-unchanged or --incremental-unknown option.  The
   // value may change as we proceed parsing the command line flags.
   Incremental_disposition incremental_disposition_;
+  // The disposition to use for startup files (those marked
+  // INCREMENTAL_STARTUP).
+  Incremental_disposition incremental_startup_disposition_;
   // Whether we have seen one of the options that require incremental
-  // build (--incremental-changed, --incremental-unchanged or
-  // --incremental-unknown)
+  // build (--incremental-changed, --incremental-unchanged,
+  // --incremental-unknown, or --incremental-startup-unchanged).
   bool implicit_incremental_;
   // Libraries excluded from automatic export, via --exclude-libs.
   Unordered_set<std::string> excluded_libs_;
@@ -1515,7 +1613,7 @@ class Input_file_argument
   //         command line, such as --whole-archive.
   Input_file_argument()
     : name_(), type_(INPUT_FILE_TYPE_FILE), extra_search_path_(""),
-      just_symbols_(false), options_()
+      just_symbols_(false), options_(), arg_serial_(0)
   { }
 
   Input_file_argument(const char* name, Input_file_type type,
@@ -1523,7 +1621,7 @@ class Input_file_argument
                       bool just_symbols,
                       const Position_dependent_options& options)
     : name_(name), type_(type), extra_search_path_(extra_search_path),
-      just_symbols_(just_symbols), options_(options)
+      just_symbols_(just_symbols), options_(options), arg_serial_(0)
   { }
 
   // You can also pass in a General_options instance instead of a
@@ -1535,7 +1633,7 @@ class Input_file_argument
                       bool just_symbols,
                       const General_options& options)
     : name_(name), type_(type), extra_search_path_(extra_search_path),
-      just_symbols_(just_symbols), options_(options)
+      just_symbols_(just_symbols), options_(options), arg_serial_(0)
   { }
 
   const char*
@@ -1577,6 +1675,16 @@ class Input_file_argument
 	    || !this->extra_search_path_.empty());
   }
 
+  // Set the serial number for this argument.
+  void
+  set_arg_serial(unsigned int arg_serial)
+  { this->arg_serial_ = arg_serial; }
+
+  // Get the serial number.
+  unsigned int
+  arg_serial() const
+  { return this->arg_serial_; }
+
  private:
   // We use std::string, not const char*, here for convenience when
   // using script files, so that we do not have to preserve the string
@@ -1586,6 +1694,8 @@ class Input_file_argument
   std::string extra_search_path_;
   bool just_symbols_;
   Position_dependent_options options_;
+  // A unique index for this file argument in the argument list.
+  unsigned int arg_serial_;
 };
 
 // A file or library, or a group, from the command line.
@@ -1595,17 +1705,17 @@ class Input_argument
  public:
   // Create a file or library argument.
   explicit Input_argument(Input_file_argument file)
-    : is_file_(true), file_(file), group_(NULL), lib_(NULL)
+    : is_file_(true), file_(file), group_(NULL), lib_(NULL), script_info_(NULL)
   { }
 
   // Create a group argument.
   explicit Input_argument(Input_file_group* group)
-    : is_file_(false), group_(group), lib_(NULL)
+    : is_file_(false), group_(group), lib_(NULL), script_info_(NULL)
   { }
 
   // Create a lib argument.
   explicit Input_argument(Input_file_lib* lib)
-    : is_file_(false), group_(NULL), lib_(lib)
+    : is_file_(false), group_(NULL), lib_(lib), script_info_(NULL)
   { }
 
   // Return whether this is a file.
@@ -1663,11 +1773,22 @@ class Input_argument
     return this->lib_;
   }
 
+  // If a script generated this argument, store a pointer to the script info.
+  // Currently used only for recording incremental link information.
+  void
+  set_script_info(Script_info* info)
+  { this->script_info_ = info; }
+
+  Script_info*
+  script_info() const
+  { return this->script_info_; }
+
  private:
   bool is_file_;
   Input_file_argument file_;
   Input_file_group* group_;
   Input_file_lib* lib_;
+  Script_info* script_info_;
 };
 
 typedef std::vector<Input_argument> Input_argument_list;
@@ -1685,9 +1806,12 @@ class Input_file_group
   { }
 
   // Add a file to the end of the group.
-  void
+  Input_argument&
   add_file(const Input_file_argument& arg)
-  { this->files_.push_back(Input_argument(arg)); }
+  {
+    this->files_.push_back(Input_argument(arg));
+    return this->files_.back();
+  }
 
   // Iterators to iterate over the group contents.
 
@@ -1716,9 +1840,12 @@ class Input_file_lib
   { }
 
   // Add a file to the end of the lib.
-  void
+  Input_argument&
   add_file(const Input_file_argument& arg)
-  { this->files_.push_back(Input_argument(arg)); }
+  {
+    this->files_.push_back(Input_argument(arg));
+    return this->files_.back();
+  }
 
   const Position_dependent_options&
   options() const
@@ -1751,12 +1878,12 @@ class Input_arguments
   typedef Input_argument_list::const_iterator const_iterator;
 
   Input_arguments()
-    : input_argument_list_(), in_group_(false), in_lib_(false)
+    : input_argument_list_(), in_group_(false), in_lib_(false), file_count_(0)
   { }
 
   // Add a file.
-  void
-  add_file(const Input_file_argument& arg);
+  Input_argument&
+  add_file(Input_file_argument& arg);
 
   // Start a group (the --start-group option).
   void
@@ -1804,10 +1931,18 @@ class Input_arguments
   empty() const
   { return this->input_argument_list_.empty(); }
 
+  // Return the number of input files.  This may be larger than
+  // input_argument_list_.size(), because of files that are part
+  // of groups or libs.
+  int
+  number_of_input_files() const
+  { return this->file_count_; }
+
  private:
   Input_argument_list input_argument_list_;
   bool in_group_;
   bool in_lib_;
+  unsigned int file_count_;
 };
 
 
@@ -1864,7 +1999,7 @@ class Command_line
   // The number of input files.
   int
   number_of_input_files() const
-  { return this->inputs_.size(); }
+  { return this->inputs_.number_of_input_files(); }
 
   // Iterators to iterate over the list of input files.
 

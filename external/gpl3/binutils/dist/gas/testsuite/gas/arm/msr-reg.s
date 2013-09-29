@@ -5,7 +5,7 @@
 .syntax unified
 
 	@ Write to Special Register from register
-	msr	APSR,r9
+	msr	APSR,r9    @ deprecated usage.
 	msr	APSR_g,r9
 	msr	APSR_nzcvq,r9
 	msr	APSR_nzcvqg,r9

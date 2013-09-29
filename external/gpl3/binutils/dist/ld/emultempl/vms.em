@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright 2010
+#   Copyright 2010, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -23,12 +23,18 @@
 # This file is sourced from generic.em.
 
 fragment <<EOF
+#include "getopt.h"
+
 static void
 gld${EMULATION_NAME}_before_parse (void)
 {
   ldfile_set_output_arch ("${ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
-  config.dynamic_link = TRUE;
+  input_flags.dynamic = TRUE;
   config.has_shared = FALSE; /* Not yet.  */
+
+  /* For ia64, harmless for alpha.  */
+  link_info.emit_hash = FALSE;
+  link_info.spare_dynamic_tags = 0;
 }
 
 /* This is called before the input files are opened.  We add the
@@ -52,7 +58,7 @@ gld${EMULATION_NAME}_open_dynamic_archive (const char *arch ATTRIBUTE_UNUSED,
 {
   char *string;
 
-  if (! entry->maybe_archive)
+  if (! entry->flags.maybe_archive)
     return FALSE;
 
   string = (char *) xmalloc (strlen (search->name)
@@ -111,16 +117,122 @@ vms_place_orphan (asection *s,
 
   if (hold_data.os != NULL)
     {
-      lang_add_section (&hold_data.os->children, s, hold_data.os);
+      lang_add_section (&hold_data.os->children, s, NULL, hold_data.os);
       return hold_data.os;
     }
   else
     return NULL;
 }
+
+/* VMS specific options.  */
+#define OPTION_IDENTIFICATION		(300  + 1)
+
+static void
+gld${EMULATION_NAME}_add_options
+  (int ns ATTRIBUTE_UNUSED,
+   char **shortopts ATTRIBUTE_UNUSED,
+   int nl,
+   struct option **longopts,
+   int nrl ATTRIBUTE_UNUSED,
+   struct option **really_longopts ATTRIBUTE_UNUSED)
+{
+  static const struct option xtra_long[] =
+  {
+    {"identification", required_argument, NULL, OPTION_IDENTIFICATION},
+    {NULL, no_argument, NULL, 0}
+  };
+
+  *longopts
+    = xrealloc (*longopts, nl * sizeof (struct option) + sizeof (xtra_long));
+  memcpy (*longopts + nl, &xtra_long, sizeof (xtra_long));
+}
+
+static void
+gld${EMULATION_NAME}_list_options (FILE *file)
+{
+  fprintf (file, _("  --identification <string>          Set the identification of the output\n"));
+}
+
+static bfd_boolean
+gld${EMULATION_NAME}_handle_option (int optc)
+{
+  switch (optc)
+    {
+    default:
+      return FALSE;
+
+    case OPTION_IDENTIFICATION:
+      /* Currently ignored.  */
+      break;
+    }
+
+  return TRUE;
+}
+
 EOF
+
+if test "$OUTPUT_FORMAT" = "elf64-ia64-vms"; then
+
+fragment <<EOF
+#include "elf-bfd.h"
+EOF
+
+source_em ${srcdir}/emultempl/elf-generic.em
+
+fragment <<EOF
+
+/* This is called after the sections have been attached to output
+   sections, but before any sizes or addresses have been set.  */
+
+static void
+gld${EMULATION_NAME}_before_allocation (void)
+{
+  const struct elf_backend_data *bed;
+
+  if (!is_elf_hash_table (link_info.hash))
+    return;
+
+  bed = get_elf_backend_data (link_info.output_bfd);
+
+  /* The backend must work out the sizes of all the other dynamic
+     sections.  */
+  if (elf_hash_table (&link_info)->dynamic_sections_created
+      && bed->elf_backend_size_dynamic_sections
+      && ! (*bed->elf_backend_size_dynamic_sections) (link_info.output_bfd,
+                                                      &link_info))
+    einfo ("%P%F: failed to set dynamic section sizes: %E\n");
+
+  before_allocation_default ();
+}
+
+static void
+gld${EMULATION_NAME}_after_allocation (void)
+{
+  bfd_boolean need_layout = bfd_elf_discard_info (link_info.output_bfd,
+						  &link_info);
+  gld${EMULATION_NAME}_map_segments (need_layout);
+}
+
+static void
+gld${EMULATION_NAME}_after_parse (void)
+{
+  link_info.relax_pass = 2;
+  after_parse_default ();
+}
+EOF
+
+LDEMUL_BEFORE_ALLOCATION=gld"$EMULATION_NAME"_before_allocation
+LDEMUL_AFTER_ALLOCATION=gld"$EMULATION_NAME"_after_allocation
+
+LDEMUL_AFTER_PARSE=gld${EMULATION_NAME}_after_parse
+source_em ${srcdir}/emultempl/needrelax.em
+fi
 
 LDEMUL_PLACE_ORPHAN=vms_place_orphan
 LDEMUL_BEFORE_PARSE=gld"$EMULATION_NAME"_before_parse
 LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=gld"$EMULATION_NAME"_create_output_section_statements
 LDEMUL_FIND_POTENTIAL_LIBRARIES=gld"$EMULATION_NAME"_find_potential_libraries
 LDEMUL_OPEN_DYNAMIC_ARCHIVE=gld"$EMULATION_NAME"_open_dynamic_archive
+LDEMUL_ADD_OPTIONS=gld"$EMULATION_NAME"_add_options
+LDEMUL_HANDLE_OPTION=gld"$EMULATION_NAME"_handle_option
+LDEMUL_LIST_OPTIONS=gld"$EMULATION_NAME"_list_options

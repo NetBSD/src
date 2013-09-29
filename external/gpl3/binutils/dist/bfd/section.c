@@ -1,6 +1,7 @@
 /* Object file "section" support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -327,6 +328,11 @@ CODE_FRAGMENT
 .     sections.  *}
 .#define SEC_COFF_SHARED_LIBRARY 0x4000000
 .
+.  {* This input section should be copied to output in reverse order
+.     as an array of pointers.  This is for ELF linker internal use
+.     only.  *}
+.#define SEC_ELF_REVERSE_COPY 0x4000000
+.
 .  {* This section contains data which may be shared with other
 .     executables or shared objects. This is for COFF only.  *}
 .#define SEC_COFF_SHARED 0x8000000
@@ -377,11 +383,11 @@ CODE_FRAGMENT
 .
 .  {* Type of sec_info information.  *}
 .  unsigned int sec_info_type:3;
-.#define ELF_INFO_TYPE_NONE      0
-.#define ELF_INFO_TYPE_STABS     1
-.#define ELF_INFO_TYPE_MERGE     2
-.#define ELF_INFO_TYPE_EH_FRAME  3
-.#define ELF_INFO_TYPE_JUST_SYMS 4
+.#define SEC_INFO_TYPE_NONE      0
+.#define SEC_INFO_TYPE_STABS     1
+.#define SEC_INFO_TYPE_MERGE     2
+.#define SEC_INFO_TYPE_EH_FRAME  3
+.#define SEC_INFO_TYPE_JUST_SYMS 4
 .
 .  {* Nonzero if this section uses RELA relocations, rather than REL.  *}
 .  unsigned int use_rela_p:1;
@@ -538,28 +544,25 @@ CODE_FRAGMENT
 .
 .{* These sections are global, and are managed by BFD.  The application
 .   and target back end are not permitted to change the values in
-.   these sections.  New code should use the section_ptr macros rather
-.   than referring directly to the const sections.  The const sections
-.   may eventually vanish.  *}
+.   these sections.  *}
+.extern asection std_section[4];
+.
 .#define BFD_ABS_SECTION_NAME "*ABS*"
 .#define BFD_UND_SECTION_NAME "*UND*"
 .#define BFD_COM_SECTION_NAME "*COM*"
 .#define BFD_IND_SECTION_NAME "*IND*"
 .
-.{* The absolute section.  *}
-.extern asection bfd_abs_section;
-.#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-.#define bfd_is_abs_section(sec) ((sec) == bfd_abs_section_ptr)
-.{* Pointer to the undefined section.  *}
-.extern asection bfd_und_section;
-.#define bfd_und_section_ptr ((asection *) &bfd_und_section)
-.#define bfd_is_und_section(sec) ((sec) == bfd_und_section_ptr)
 .{* Pointer to the common section.  *}
-.extern asection bfd_com_section;
-.#define bfd_com_section_ptr ((asection *) &bfd_com_section)
+.#define bfd_com_section_ptr (&std_section[0])
+.{* Pointer to the undefined section.  *}
+.#define bfd_und_section_ptr (&std_section[1])
+.{* Pointer to the absolute section.  *}
+.#define bfd_abs_section_ptr (&std_section[2])
 .{* Pointer to the indirect section.  *}
-.extern asection bfd_ind_section;
-.#define bfd_ind_section_ptr ((asection *) &bfd_ind_section)
+.#define bfd_ind_section_ptr (&std_section[3])
+.
+.#define bfd_is_und_section(sec) ((sec) == bfd_und_section_ptr)
+.#define bfd_is_abs_section(sec) ((sec) == bfd_abs_section_ptr)
 .#define bfd_is_ind_section(sec) ((sec) == bfd_ind_section_ptr)
 .
 .#define bfd_is_const_section(SEC)		\
@@ -674,8 +677,8 @@ CODE_FRAGMENT
 .  {* vma, lma, size, rawsize, compressed_size, relax, relax_count, *}	\
 .     0,   0,   0,    0,       0,               0,     0,		\
 .									\
-.  {* output_offset, output_section,              alignment_power,  *}	\
-.     0,             (struct bfd_section *) &SEC, 0,			\
+.  {* output_offset, output_section, alignment_power,               *}	\
+.     0,             &SEC,           0,					\
 .									\
 .  {* relocation, orelocation, reloc_count, filepos, rel_filepos,   *}	\
 .     NULL,       NULL,        0,           0,       0,			\
@@ -704,10 +707,10 @@ CODE_FRAGMENT
  /* the_bfd, name, value, attr, section [, udata] */
 #ifdef __STDC__
 #define GLOBAL_SYM_INIT(NAME, SECTION) \
-  { 0, NAME, 0, BSF_SECTION_SYM, (asection *) SECTION, { 0 }}
+  { 0, NAME, 0, BSF_SECTION_SYM, SECTION, { 0 }}
 #else
 #define GLOBAL_SYM_INIT(NAME, SECTION) \
-  { 0, NAME, 0, BSF_SECTION_SYM, (asection *) SECTION }
+  { 0, NAME, 0, BSF_SECTION_SYM, SECTION }
 #endif
 
 /* These symbols are global, not specific to any BFD.  Therefore, anything
@@ -715,20 +718,21 @@ CODE_FRAGMENT
 
 static const asymbol global_syms[] =
 {
-  GLOBAL_SYM_INIT (BFD_COM_SECTION_NAME, &bfd_com_section),
-  GLOBAL_SYM_INIT (BFD_UND_SECTION_NAME, &bfd_und_section),
-  GLOBAL_SYM_INIT (BFD_ABS_SECTION_NAME, &bfd_abs_section),
-  GLOBAL_SYM_INIT (BFD_IND_SECTION_NAME, &bfd_ind_section)
+  GLOBAL_SYM_INIT (BFD_COM_SECTION_NAME, bfd_com_section_ptr),
+  GLOBAL_SYM_INIT (BFD_UND_SECTION_NAME, bfd_und_section_ptr),
+  GLOBAL_SYM_INIT (BFD_ABS_SECTION_NAME, bfd_abs_section_ptr),
+  GLOBAL_SYM_INIT (BFD_IND_SECTION_NAME, bfd_ind_section_ptr)
 };
 
-#define STD_SECTION(SEC, FLAGS, NAME, IDX)				\
-  asection SEC = BFD_FAKE_SECTION(SEC, FLAGS, &global_syms[IDX],	\
-				  NAME, IDX)
+#define STD_SECTION(NAME, IDX, FLAGS) \
+  BFD_FAKE_SECTION(std_section[IDX], FLAGS, &global_syms[IDX], NAME, IDX)
 
-STD_SECTION (bfd_com_section, SEC_IS_COMMON, BFD_COM_SECTION_NAME, 0);
-STD_SECTION (bfd_und_section, 0, BFD_UND_SECTION_NAME, 1);
-STD_SECTION (bfd_abs_section, 0, BFD_ABS_SECTION_NAME, 2);
-STD_SECTION (bfd_ind_section, 0, BFD_IND_SECTION_NAME, 3);
+asection std_section[] = {
+  STD_SECTION (BFD_COM_SECTION_NAME, 0, SEC_IS_COMMON),
+  STD_SECTION (BFD_UND_SECTION_NAME, 1, 0),
+  STD_SECTION (BFD_ABS_SECTION_NAME, 2, 0),
+  STD_SECTION (BFD_IND_SECTION_NAME, 3, 0)
+};
 #undef STD_SECTION
 
 /* Initialize an entry in the section hash table.  */
@@ -841,14 +845,8 @@ SYNOPSIS
 	asection *bfd_get_section_by_name (bfd *abfd, const char *name);
 
 DESCRIPTION
-	Run through @var{abfd} and return the one of the
-	<<asection>>s whose name matches @var{name}, otherwise <<NULL>>.
-	@xref{Sections}, for more information.
-
-	This should only be used in special cases; the normal way to process
-	all sections of a given name is to use <<bfd_map_over_sections>> and
-	<<strcmp>> on the name (or better yet, base it on the section flags
-	or something else) for each section.
+	Return the most recently created section attached to @var{abfd}
+	named @var{name}.  Return NULL if no such section exists.
 */
 
 asection *
@@ -861,6 +859,63 @@ bfd_get_section_by_name (bfd *abfd, const char *name)
     return &sh->section;
 
   return NULL;
+}
+
+/*
+FUNCTION
+       bfd_get_next_section_by_name
+
+SYNOPSIS
+       asection *bfd_get_next_section_by_name (asection *sec);
+
+DESCRIPTION
+       Given @var{sec} is a section returned by @code{bfd_get_section_by_name},
+       return the next most recently created section attached to the same
+       BFD with the same name.  Return NULL if no such section exists.
+*/
+
+asection *
+bfd_get_next_section_by_name (asection *sec)
+{
+  struct section_hash_entry *sh;
+  const char *name;
+  unsigned long hash;
+
+  sh = ((struct section_hash_entry *)
+	((char *) sec - offsetof (struct section_hash_entry, section)));
+
+  hash = sh->root.hash;
+  name = sec->name;
+  for (sh = (struct section_hash_entry *) sh->root.next;
+       sh != NULL;
+       sh = (struct section_hash_entry *) sh->root.next)
+    if (sh->root.hash == hash
+       && strcmp (sh->root.string, name) == 0)
+      return &sh->section;
+
+  return NULL;
+}
+
+/*
+FUNCTION
+	bfd_get_linker_section
+
+SYNOPSIS
+	asection *bfd_get_linker_section (bfd *abfd, const char *name);
+
+DESCRIPTION
+	Return the linker created section attached to @var{abfd}
+	named @var{name}.  Return NULL if no such section exists.
+*/
+
+asection *
+bfd_get_linker_section (bfd *abfd, const char *name)
+{
+  asection *sec = bfd_get_section_by_name (abfd, name);
+
+  while (sec != NULL && (sec->flags & SEC_LINKER_CREATED) == 0)
+    sec = bfd_get_next_section_by_name (sec);
+  return sec;
 }
 
 /*
@@ -1256,7 +1311,7 @@ DESCRIPTION
 	This is the preferred method for iterating over sections; an
 	alternative would be to use a loop:
 
-|	   section *p;
+|	   asection *p;
 |	   for (p = abfd->sections; p != NULL; p = p->next)
 |	      func (abfd, p, ...)
 
@@ -1456,7 +1511,10 @@ bfd_get_section_contents (bfd *abfd,
       return TRUE;
     }
 
-  sz = section->rawsize ? section->rawsize : section->size;
+  if (abfd->direction != write_direction && section->rawsize != 0)
+    sz = section->rawsize;
+  else
+    sz = section->size;
   if ((bfd_size_type) offset > sz
       || count > sz
       || offset + count > sz

@@ -126,6 +126,7 @@ extern const local_iconv_map *wind_find_codepage_info (unsigned);
 
 /* Convert an Codepage string to a unicode string.  */
 extern void unicode_from_codepage (rc_uint_type *, unichar **, const char *, rc_uint_type);
+extern void unicode_from_ascii_len (rc_uint_type *, unichar **, const char *, rc_uint_type );
 
 /* Convert an unicode string to an codepage string.  */
 extern void codepage_from_unicode (rc_uint_type *, const unichar *, char **, rc_uint_type);

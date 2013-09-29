@@ -3,7 +3,7 @@
 # as:
 # readelf: -A
 # This test is only valid on EABI based ports.
-# target: *-*-*eabi
+# target: *-*-*eabi *-*-nacl*
 
 Attribute Section: aeabi
 File Attributes
@@ -13,7 +13,6 @@ File Attributes
   Tag_CPU_arch: v4T
   Tag_ARM_ISA_use: Yes
   Tag_THUMB_ISA_use: Thumb-1
-  Tag_DIV_use: Not allowed
   Tag_unknown_63: "val"
   Tag_also_compatible_with: v6-M
   Tag_T2EE_use: Allowed

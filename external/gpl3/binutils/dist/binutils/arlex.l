@@ -3,7 +3,7 @@
 %{
 /* arlex.l - Strange script language lexer */
 
-/* Copyright 1992, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+/* Copyright 1992, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2011
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -31,8 +31,10 @@
 #include "libiberty.h"
 #include "arparse.h"
 
+#ifndef YY_NO_UNPUT
 #define YY_NO_UNPUT
-
+#endif
+ 
 extern int yylex (void);
 
 int linenumber;

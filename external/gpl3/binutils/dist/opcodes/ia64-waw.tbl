@@ -67,6 +67,7 @@ CR[PMV];	IC:mov-to-CR-PMV;	IC:mov-to-CR-PMV;	impliedF
 CR[PTA];	IC:mov-to-CR-PTA;	IC:mov-to-CR-PTA;	impliedF
 CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-to-CR-TPR;	impliedF
 CR%, % in 3-7, 10-15, 18, 28-63, 75-79, 82-127;	IC:none;	IC:none;	none
+DAHR%, % in 0-7;	IC:br.call, brl.call, br.ret, IC:mov-to-AR-BSPSTORE, IC:mov-to-DAHR, rfi;	IC:br.call, brl.call, br.ret, IC:mov-to-AR-BSPSTORE, IC:mov-to-DAHR, rfi;	implied
 DBR#;	IC:mov-to-IND-DBR+3;	IC:mov-to-IND-DBR+3;	impliedF
 DTC;	ptc.e, ptc.g, ptc.ga, ptc.l, ptr.i, ptr.d;	ptc.e, ptc.g, ptc.ga, ptc.l, ptr.i, ptr.d;	none
 DTC;	ptc.e, ptc.g, ptc.ga, ptc.l, ptr.i, ptr.d, itc.i, itc.d, itr.i, itr.d;	itc.i, itc.d, itr.i, itr.d;	impliedF

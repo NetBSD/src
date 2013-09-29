@@ -1,7 +1,7 @@
 #source: tls32.s
 #source: tlslib32.s
 #as: -a32
-#ld: -melf32ppc
+#ld: 
 #readelf: -WSsrl
 #target: powerpc*-*-*
 
@@ -64,11 +64,11 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
 .* NOTYPE +LOCAL +DEFAULT +UND 
 .* TLS +GLOBAL +DEFAULT +UND gd
 .* TLS +GLOBAL +DEFAULT +UND ld
-.* NOTYPE +GLOBAL +DEFAULT +ABS __end
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +12 __end
+.* NOTYPE +GLOBAL +DEFAULT +12 __bss_start
 .* FUNC +GLOBAL +DEFAULT +UND __tls_get_addr_opt
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +11 _edata
+.* NOTYPE +GLOBAL +DEFAULT +12 _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -85,6 +85,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +10 
 .* SECTION +LOCAL +DEFAULT +11 
 .* SECTION +LOCAL +DEFAULT +12 
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* TLS +LOCAL +DEFAULT +8 gd4
 .* TLS +LOCAL +DEFAULT +8 ld4
 .* TLS +LOCAL +DEFAULT +8 ld5
@@ -92,6 +93,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +8 ie4
 .* TLS +LOCAL +DEFAULT +8 le4
 .* TLS +LOCAL +DEFAULT +8 le5
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
 .* OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +UND gd
@@ -100,12 +102,12 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +GLOBAL +DEFAULT +9 le1
 .* TLS +GLOBAL +DEFAULT +UND ld
 .* NOTYPE +GLOBAL +DEFAULT +7 _start
-.* NOTYPE +GLOBAL +DEFAULT +ABS __end
+.* NOTYPE +GLOBAL +DEFAULT +12 __end
 .* TLS +GLOBAL +DEFAULT +9 ld2
 .* TLS +GLOBAL +DEFAULT +9 ld1
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +12 __bss_start
 .* FUNC +GLOBAL +DEFAULT +UND __tls_get_addr_opt
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +11 _edata
+.* NOTYPE +GLOBAL +DEFAULT +12 _end
 .* TLS +GLOBAL +DEFAULT +9 gd0
 .* TLS +GLOBAL +DEFAULT +9 ie0

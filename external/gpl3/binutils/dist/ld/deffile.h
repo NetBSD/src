@@ -105,10 +105,10 @@ extern def_file *def_file_parse (const char *, def_file *);
 extern void def_file_free (def_file *);
 extern def_file_export *def_file_add_export (def_file *, const char *,
 					     const char *, int,
-					     const char *);
+					     const char *, int *);
 extern def_file_import *def_file_add_import (def_file *, const char *,
 					     const char *, int, const char *,
-					     const char *);
+					     const char *, int *);
 extern void def_file_add_directive (def_file *, const char *, int);
 extern def_file_module *def_get_module (def_file *, const char *);
 #ifdef DEF_FILE_PRINT

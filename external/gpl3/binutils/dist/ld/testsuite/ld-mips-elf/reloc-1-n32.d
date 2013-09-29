@@ -1,5 +1,5 @@
-#source: reloc-1a.s -mabi=n32
-#source: reloc-1b.s -mabi=n32
+#source: reloc-1a.s -march=from-abi -mabi=n32 -EB
+#source: reloc-1b.s -march=from-abi -mabi=n32 -EB
 #ld: -r
 #readelf: --relocs
 

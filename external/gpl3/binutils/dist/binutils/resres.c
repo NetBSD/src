@@ -1,5 +1,5 @@
 /* resres.c: read_res_file and write_res_file implementation for windres.
-   Copyright 1998, 1999, 2001, 2002, 2005, 2007, 2008
+   Copyright 1998, 1999, 2001, 2002, 2005, 2007, 2008, 2011
    Free Software Foundation, Inc.
    Written by Anders Norlander <anorland@hem2.passagen.se>.
    Rewritten by Kai Tietz, Onevision.
@@ -98,7 +98,7 @@ read_res_file (const char *fn)
   off = 0;
 
   if (! probe_binary (&wrbfd, flen))
-    set_windres_bfd_endianess (&wrbfd, ! target_is_bigendian);
+    set_windres_bfd_endianness (&wrbfd, ! target_is_bigendian);
 
   skip_null_resource (&wrbfd, &off, flen);
 

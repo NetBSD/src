@@ -1,6 +1,6 @@
 #source: tls32.s
 #as: -a32
-#ld: -shared -melf32ppc
+#ld: -shared
 #readelf: -WSsrl
 #target: powerpc*-*-*
 
@@ -55,9 +55,9 @@ Relocation section '\.rela\.dyn' at offset 0x[0-9a-f]+ contains 18 entries:
 [0-9a-f ]+R_PPC_TPREL16 +0+103d0 +\.tdata \+ 103e4
 [0-9a-f ]+R_PPC_TPREL16_HA +0+103d0 +\.tdata \+ 103e8
 [0-9a-f ]+R_PPC_TPREL16_LO +0+103d0 +\.tdata \+ 103e8
-[0-9a-f ]+R_PPC_DTPMOD32 +0+
-[0-9a-f ]+R_PPC_DTPREL32 +0+
-[0-9a-f ]+R_PPC_DTPMOD32 +0+
+[0-9a-f ]+R_PPC_DTPMOD32 +0
+[0-9a-f ]+R_PPC_DTPREL32 +0
+[0-9a-f ]+R_PPC_DTPMOD32 +0
 [0-9a-f ]+R_PPC_DTPMOD32 +0+ +gd \+ 0
 [0-9a-f ]+R_PPC_DTPREL32 +0+ +gd \+ 0
 [0-9a-f ]+R_PPC_DTPMOD32 +0+1c +gd0 \+ 0
@@ -80,12 +80,12 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
 .* TLS +GLOBAL +DEFAULT +8 le1
 .* TLS +GLOBAL +DEFAULT +UND ld
 .* NOTYPE +GLOBAL +DEFAULT +6 _start
-.* NOTYPE +GLOBAL +DEFAULT +ABS __end
+.* NOTYPE +GLOBAL +DEFAULT +11 __end
 .* TLS +GLOBAL +DEFAULT +8 ld2
 .* TLS +GLOBAL +DEFAULT +8 ld1
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +11 __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +10 _edata
+.* NOTYPE +GLOBAL +DEFAULT +11 _end
 .* TLS +GLOBAL +DEFAULT +8 gd0
 .* TLS +GLOBAL +DEFAULT +8 ie0
 
@@ -103,6 +103,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +9 
 .* SECTION +LOCAL +DEFAULT +10 
 .* SECTION +LOCAL +DEFAULT +11 
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* TLS +LOCAL +DEFAULT +7 gd4
 .* TLS +LOCAL +DEFAULT +7 ld4
 .* TLS +LOCAL +DEFAULT +7 ld5
@@ -110,8 +111,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +7 ie4
 .* TLS +LOCAL +DEFAULT +7 le4
 .* TLS +LOCAL +DEFAULT +7 le5
-.* OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
-.* OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
+.* FILE +LOCAL +DEFAULT +ABS .*
+.* OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
+.* OBJECT +LOCAL +DEFAULT +10 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +UND gd
 .* TLS +GLOBAL +DEFAULT +8 le0
 .* NOTYPE +GLOBAL +DEFAULT +UND __tls_get_addr
@@ -119,11 +121,11 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +GLOBAL +DEFAULT +8 le1
 .* TLS +GLOBAL +DEFAULT +UND ld
 .* NOTYPE +GLOBAL +DEFAULT +6 _start
-.* NOTYPE +GLOBAL +DEFAULT +ABS __end
+.* NOTYPE +GLOBAL +DEFAULT +11 __end
 .* TLS +GLOBAL +DEFAULT +8 ld2
 .* TLS +GLOBAL +DEFAULT +8 ld1
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +11 __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +10 _edata
+.* NOTYPE +GLOBAL +DEFAULT +11 _end
 .* TLS +GLOBAL +DEFAULT +8 gd0
 .* TLS +GLOBAL +DEFAULT +8 ie0

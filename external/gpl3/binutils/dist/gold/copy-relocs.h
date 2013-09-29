@@ -66,7 +66,7 @@ class Copy_relocs
   // section is where the dynamic relocs are put.
   void
   copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>* sym,
-             Sized_relobj<size, big_endian>* object,
+             Sized_relobj_file<size, big_endian>* object,
 	     unsigned int shndx, Output_section* output_section,
 	     const Reloc& rel,
 	     Output_data_reloc<sh_type, true, size, big_endian>*);
@@ -81,6 +81,12 @@ class Copy_relocs
   void
   emit(Output_data_reloc<sh_type, true, size, big_endian>*);
 
+  // Emit a COPY reloc.
+  void
+  emit_copy_reloc(Symbol_table*, Sized_symbol<size>*,
+		  Output_data*, off_t,
+		  Output_data_reloc<sh_type, true, size, big_endian>*);
+
  private:
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
   typedef typename elfcpp::Elf_types<size>::Elf_Addr Addend;
@@ -92,7 +98,7 @@ class Copy_relocs
   {
    public:
     Copy_reloc_entry(Symbol* sym, unsigned int reloc_type,
-		     Sized_relobj<size, big_endian>* relobj,
+		     Sized_relobj_file<size, big_endian>* relobj,
                      unsigned int shndx,
 		     Output_section* output_section,
 		     Address address, Addend addend)
@@ -110,7 +116,7 @@ class Copy_relocs
    private:
     Symbol* sym_;
     unsigned int reloc_type_;
-    Sized_relobj<size, big_endian>* relobj_;
+    Sized_relobj_file<size, big_endian>* relobj_;
     unsigned int shndx_;
     Output_section* output_section_;
     Address address_;
@@ -123,22 +129,17 @@ class Copy_relocs
   // Return whether we need a COPY reloc.
   bool
   need_copy_reloc(Sized_symbol<size>* gsym,
-                  Sized_relobj<size, big_endian>* object,
+                  Sized_relobj_file<size, big_endian>* object,
 		  unsigned int shndx) const;
 
-  // Emit a COPY reloc.
+  // Make a new COPY reloc and emit it.
   void
-  emit_copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>*,
+  make_copy_reloc(Symbol_table*, Layout*, Sized_symbol<size>*,
 		  Output_data_reloc<sh_type, true, size, big_endian>*);
-
-  // Add a COPY reloc to the dynamic reloc section.
-  void
-  add_copy_reloc(Symbol*, section_size_type,
-		 Output_data_reloc<sh_type, true, size, big_endian>*);
 
   // Save a reloc against SYM for possible emission later.
   void
-  save(Symbol*, Sized_relobj<size, big_endian>*, unsigned int shndx,
+  save(Symbol*, Sized_relobj_file<size, big_endian>*, unsigned int shndx,
        Output_section*, const Reloc& rel);
 
   // The target specific relocation type of the COPY relocation.

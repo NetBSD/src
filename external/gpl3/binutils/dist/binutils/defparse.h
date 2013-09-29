@@ -109,10 +109,11 @@ typedef union YYSTYPE
 #line 29 "defparse.y"
 {
   char *id;
+  const char *id_const;
   int number;
 }
 /* Line 1529 of yacc.c.  */
-#line 116 "defparse.h"
+#line 117 "defparse.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

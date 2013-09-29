@@ -73,6 +73,8 @@
      and define `md_create_long_jump' to create a long jump.  */
 
 #define MD_APPLY_FIX3
+/* Values passed to md_apply_fix don't include symbol values.  */
+#define MD_APPLY_SYM_VALUE(FIX) 0
 
 #define TC_HANDLES_FX_DONE
 

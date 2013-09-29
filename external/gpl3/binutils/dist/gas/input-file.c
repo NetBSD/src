@@ -1,6 +1,6 @@
 /* input_file.c - Deal with Input Files -
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001,
-   2002, 2003, 2005, 2006, 2007, 2009
+   2002, 2003, 2005, 2006, 2007, 2009, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -28,8 +28,6 @@
 #include "as.h"
 #include "input-file.h"
 #include "safe-ctype.h"
-
-static int input_file_get (char *, int);
 
 /* This variable is non-zero if the file currently being read should be
    preprocessed by app.  It is zero if the file can be read straight in.  */
@@ -71,7 +69,7 @@ input_file_end (void)
 }
 
 /* Return BUFFER_SIZE.  */
-unsigned int
+size_t
 input_file_buffer_size (void)
 {
   return (BUFFER_SIZE);
@@ -213,20 +211,17 @@ input_file_close (void)
 
 /* This function is passed to do_scrub_chars.  */
 
-static int
-input_file_get (char *buf, int buflen)
+static size_t
+input_file_get (char *buf, size_t buflen)
 {
-  int size;
+  size_t size;
 
   if (feof (f_in))
     return 0;
   
   size = fread (buf, sizeof (char), buflen, f_in);
-  if (size < 0)
-    {
-      as_bad (_("can't read from %s: %s"), file_name, xstrerror (errno));
-      size = 0;
-    }
+  if (ferror (f_in))
+    as_bad (_("can't read from %s: %s"), file_name, xstrerror (errno));
   return size;
 }
 
@@ -236,7 +231,7 @@ char *
 input_file_give_next_buffer (char *where /* Where to place 1st character of new buffer.  */)
 {
   char *return_value;		/* -> Last char of what we read, + 1.  */
-  int size;
+  size_t size;
 
   if (f_in == (FILE *) 0)
     return 0;
@@ -247,18 +242,8 @@ input_file_give_next_buffer (char *where /* Where to place 1st character of new 
   if (preprocess)
     size = do_scrub_chars (input_file_get, where, BUFFER_SIZE);
   else
-    {
-      if (feof (f_in))
-	size = 0;
-      else
-	size = fread (where, sizeof (char), BUFFER_SIZE, f_in);
-    }
+    size = input_file_get (where, BUFFER_SIZE);
 
-  if (size < 0)
-    {
-      as_bad (_("can't read from %s: %s"), file_name, xstrerror (errno));
-      size = 0;
-    }
   if (size)
     return_value = where + size;
   else

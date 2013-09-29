@@ -1,6 +1,6 @@
 /* BFD back-end for a.out.adobe binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2011
    Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
@@ -459,6 +459,7 @@ aout_adobe_sizeof_headers (bfd *ignore_abfd ATTRIBUTE_UNUSED,
 #define aout_32_get_section_contents_in_window      _bfd_generic_get_section_contents_in_window
 #define aout_32_bfd_relax_section                   bfd_generic_relax_section
 #define aout_32_bfd_gc_sections                     bfd_generic_gc_sections
+#define aout_32_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
 #define aout_32_bfd_merge_sections	            bfd_generic_merge_sections
 #define aout_32_bfd_is_group_section	            bfd_generic_is_group_section
 #define aout_32_bfd_discard_group	            bfd_generic_discard_group
@@ -487,6 +488,7 @@ const bfd_target a_out_adobe_vec =
   '_',				/* Symbol leading char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
 
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,

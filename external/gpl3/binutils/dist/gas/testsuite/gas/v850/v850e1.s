@@ -36,3 +36,4 @@
 	tst1	r0, [r31]
 	zxb	r3
 	zxh	r4
+	st.w    lp, 156[sp]

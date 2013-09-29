@@ -138,7 +138,7 @@ SECTIONS
     SORT(CONSTRUCTORS)
   }
   .data1          : { *(.data1) }
-  _gp = ALIGN(16) + 0x7ff0;
+  HIDDEN (_gp = ALIGN(16) + 0x7ff0);
   .got            : { *(.got.plt) *(.got) }
   .sdata2         : { *(.sdata2 .sdata2.* .gnu.linkonce.s2.*) }
   .sbss2          : { *(.sbss2 .sbss2.* .gnu.linkonce.sb2.*) }

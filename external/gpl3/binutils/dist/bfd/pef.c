@@ -19,6 +19,10 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+/* PEF (Preferred Executable Format) is the binary file format for late
+   classic Mac OS versions (before Darwin).  It is supported by both m68k
+   and PowerPc.  It is also called CFM (Code Fragment Manager).  */
+
 #include "sysdep.h"
 #include "safe-ctype.h"
 #include "pef.h"
@@ -48,6 +52,7 @@
 #define bfd_pef_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
 #define bfd_pef_bfd_relax_section                   bfd_generic_relax_section
 #define bfd_pef_bfd_gc_sections                     bfd_generic_gc_sections
+#define bfd_pef_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
 #define bfd_pef_bfd_merge_sections                  bfd_generic_merge_sections
 #define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
 #define bfd_pef_bfd_discard_group                   bfd_generic_discard_group
@@ -502,10 +507,9 @@ bfd_pef_scan_start_address (bfd *abfd)
 }
 
 int
-bfd_pef_scan (abfd, header, mdata)
-     bfd *abfd;
-     bfd_pef_header *header;
-     bfd_pef_data_struct *mdata;
+bfd_pef_scan (bfd *abfd,
+	      bfd_pef_header *header,
+	      bfd_pef_data_struct *mdata)
 {
   unsigned int i;
   enum bfd_architecture cputype;
@@ -1015,6 +1019,7 @@ const bfd_target pef_vec =
   0,				/* Symbol_leading_char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */
@@ -1167,6 +1172,7 @@ const bfd_target pef_xlib_vec =
   0,				/* Symbol_leading_char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

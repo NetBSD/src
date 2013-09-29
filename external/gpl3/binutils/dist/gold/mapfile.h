@@ -33,7 +33,7 @@ class Archive;
 class Symbol;
 class Relobj;
 template<int size, bool big_endian>
-class Sized_relobj;
+class Sized_relobj_file;
 class Output_section;
 class Output_data;
 
@@ -100,7 +100,7 @@ class Mapfile
   // Print symbols for an input section.
   template<int size, bool big_endian>
   void
-  print_input_section_symbols(const Sized_relobj<size, big_endian>*,
+  print_input_section_symbols(const Sized_relobj_file<size, big_endian>*,
 			      unsigned int shndx);
 
   // Map file to write to.

@@ -1,6 +1,6 @@
 /* CGEN generic assembler support code.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
+   2011  Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -268,7 +268,23 @@ cgen_parse_signed_integer (CGEN_CPU_DESC cd,
      &result, &value);
   /* FIXME: Examine `result'.  */
   if (!errmsg)
-    *valuep = value;
+    {
+      /* Handle the case where a hex value is parsed on a 64-bit host.
+	 A value like 0xffffe000 is clearly intended to be a negative
+	 16-bit value, but on a 64-bit host it will be parsed by gas
+	 as 0x00000000ffffe000.
+
+	 The shifts below are designed not to produce compile time
+	 warnings on a 32-bit host.  */
+      if (sizeof (value) > 4
+	  && result == CGEN_PARSE_OPERAND_RESULT_NUMBER
+	  && value > 0
+	  && (value & 0x80000000)
+	  && ((value >> 31) == 1))
+	value |= -1 << 31;
+
+      *valuep = value;
+    }
   return errmsg;
 }
 

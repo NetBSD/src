@@ -153,3 +153,16 @@ extern long md_pcrel_from_section (struct fix *, segT);
 
 /* 32 bits pseudo-addresses are used on AVR.  */
 #define DWARF2_ADDR_SIZE(bfd) 4
+
+/* Enable cfi directives.  */
+#define TARGET_USE_CFIPOP 1
+
+/* The stack grows down, and is only byte aligned.  */
+#define DWARF2_CIE_DATA_ALIGNMENT -1
+
+/* Define the column that represents the PC.  */
+#define DWARF2_DEFAULT_RETURN_COLUMN  36
+
+/* Define a hook to setup initial CFI state.  */
+extern void tc_cfi_frame_initial_instructions (void);
+#define tc_cfi_frame_initial_instructions tc_cfi_frame_initial_instructions

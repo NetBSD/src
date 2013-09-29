@@ -70,6 +70,9 @@ extern const struct relax_type md_relax_table[];
 #define HANDLE_ALIGN(frag) v850_handle_align (frag)
 extern void v850_handle_align (fragS *);
 
+/* We need space in a frag's fixed size to allow for alignment when relaxing.  */
+#define TC_FX_SIZE_SLACK(FIX) 2
+
 #define MD_PCREL_FROM_SECTION(FIX, SEC) v850_pcrel_from_section (FIX, SEC)
 extern long v850_pcrel_from_section (struct fix *, asection *);
 

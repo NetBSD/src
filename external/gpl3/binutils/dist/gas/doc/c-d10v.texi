@@ -100,7 +100,14 @@ symbols described in the next section.
 @subsection Special Characters
 @cindex line comment character, D10V
 @cindex D10V line comment character
-@samp{;} and @samp{#} are the line comment characters.
+A semicolon (@samp{;}) can be used anywhere on a line to start a
+comment that extends to the end of the line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line could also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
 @cindex sub-instruction ordering, D10V
 @cindex D10V sub-instruction ordering
 Sub-instructions may be executed in order, in reverse-order, or in parallel.

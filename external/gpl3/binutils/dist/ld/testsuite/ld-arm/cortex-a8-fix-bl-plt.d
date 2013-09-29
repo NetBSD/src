@@ -10,8 +10,8 @@ Disassembly of section \.plt:
     8008:	e08fe00e 	add	lr, pc, lr
     800c:	e5bef008 	ldr	pc, \[lr, #8\]!
     8010:	00000ffc 	\.word	0x00000ffc
-    8014:	e28fc600 	add	ip, pc, #0
-    8018:	e28cca00 	add	ip, ip, #0
+    8014:	e28fc600 	add	ip, pc, #0, 12
+    8018:	e28cca00 	add	ip, ip, #0, 20
     801c:	e5bcfffc 	ldr	pc, \[ip, #4092\]!	; 0xffc
 
 Disassembly of section \.text:

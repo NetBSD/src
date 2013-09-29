@@ -1,6 +1,6 @@
 /* Definitions for opcode table for the sparc.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2002,
-   2003, 2005, 2010 Free Software Foundation, Inc.
+   2003, 2005, 2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
    the GNU Binutils.
@@ -98,18 +98,52 @@ typedef struct sparc_opcode
   unsigned long lose;	/* Bits that must not be set.  */
   const char *args;
   /* This was called "delayed" in versions before the flags.  */
-  char flags;
+  unsigned int flags;
+  unsigned int hwcaps;
   short architecture;	/* Bitmask of sparc_opcode_arch_val's.  */
 } sparc_opcode;
 
-#define	F_DELAYED	1	/* Delayed branch.  */
-#define	F_ALIAS		2	/* Alias for a "real" instruction.  */
-#define	F_UNBR		4	/* Unconditional branch.  */
-#define	F_CONDBR	8	/* Conditional branch.  */
-#define	F_JSR		16	/* Subroutine call.  */
-#define F_FLOAT		32	/* Floating point instruction (not a branch).  */
-#define F_FBR		64	/* Floating point branch.  */
 /* FIXME: Add F_ANACHRONISTIC flag for v9.  */
+#define	F_DELAYED	0x00000001 /* Delayed branch.  */
+#define	F_ALIAS		0x00000002 /* Alias for a "real" instruction.  */
+#define	F_UNBR		0x00000004 /* Unconditional branch.  */
+#define	F_CONDBR	0x00000008 /* Conditional branch.  */
+#define	F_JSR		0x00000010 /* Subroutine call.  */
+#define F_FLOAT		0x00000020 /* Floating point instruction (not a branch).  */
+#define F_FBR		0x00000040 /* Floating point branch.  */
+
+/* These must match the HWCAP_* values precisely.  */
+#define HWCAP_MUL32	0x00000001 /* umul/umulcc/smul/smulcc insns */
+#define HWCAP_DIV32	0x00000002 /* udiv/udivcc/sdiv/sdivcc insns */
+#define HWCAP_FSMULD	0x00000004 /* 'fsmuld' insn */
+#define HWCAP_V8PLUS	0x00000008 /* v9 insns available to 32bit */
+#define HWCAP_POPC	0x00000010 /* 'popc' insn */
+#define HWCAP_VIS	0x00000020 /* VIS insns */
+#define HWCAP_VIS2	0x00000040 /* VIS2 insns */
+#define HWCAP_ASI_BLK_INIT	\
+			0x00000080 /* block init ASIs */
+#define HWCAP_FMAF	0x00000100 /* fused multiply-add */
+#define HWCAP_VIS3	0x00000400 /* VIS3 insns */
+#define HWCAP_HPC	0x00000800 /* HPC insns */
+#define HWCAP_RANDOM	0x00001000 /* 'random' insn */
+#define HWCAP_TRANS	0x00002000 /* transaction insns */
+#define HWCAP_FJFMAU	0x00004000 /* unfused multiply-add */
+#define HWCAP_IMA	0x00008000 /* integer multiply-add */
+#define HWCAP_ASI_CACHE_SPARING \
+			0x00010000 /* cache sparing ASIs */
+#define HWCAP_AES	0x00020000 /* AES crypto insns */
+#define HWCAP_DES	0x00040000 /* DES crypto insns */
+#define HWCAP_KASUMI	0x00080000 /* KASUMI crypto insns */
+#define HWCAP_CAMELLIA 	0x00100000 /* CAMELLIA crypto insns */
+#define HWCAP_MD5	0x00200000 /* MD5 hashing insns */
+#define HWCAP_SHA1	0x00400000 /* SHA1 hashing insns */
+#define HWCAP_SHA256	0x00800000 /* SHA256 hashing insns */
+#define HWCAP_SHA512	0x01000000 /* SHA512 hashing insns */
+#define HWCAP_MPMUL	0x02000000 /* Multiple Precision Multiply */
+#define HWCAP_MONT	0x04000000 /* Montgomery Mult/Sqrt */
+#define HWCAP_PAUSE	0x08000000 /* Pause insn */
+#define HWCAP_CBCOND	0x10000000 /* Compare and Branch insns */
+#define HWCAP_CRC32C	0x20000000 /* CRC32C insn */
 
 /* All sparc opcodes are 32 bits, except for the `set' instruction (really a
    macro), which is 64 bits. It is handled as a special case.
@@ -131,6 +165,8 @@ typedef struct sparc_opcode
 	f	frs2 floating point register.
 	B	frs2 floating point register (double/even).
 	R	frs2 floating point register (quad/multiple of 4).
+	4	frs3 floating point register.
+	5	frs3 floating point register (doube/even).
 	g	frsd floating point register.
 	H	frsd floating point register (double/even).
 	J	frsd floating point register (quad/multiple of 4).
@@ -187,15 +223,16 @@ typedef struct sparc_opcode
 	0	32/64 bit immediate for set or setx (v9) insns
 	_	Ancillary state register in rd (v9a)
 	/	Ancillary state register in rs1 (v9a)
-
-  The following chars are unused: (note: ,[] are used as punctuation)
-  [45].  */
+	(	entire floating point state register (%efsr)
+	)	5 bit immediate placed in RS3 field
+	=	2+8 bit PC relative immediate. (v9)  */
 
 #define OP2(x)		(((x) & 0x7) << 22)  /* Op2 field of format2 insns.  */
 #define OP3(x)		(((x) & 0x3f) << 19) /* Op3 field of format3 insns.  */
 #define OP(x)		((unsigned) ((x) & 0x3) << 30) /* Op field of all insns.  */
 #define OPF(x)		(((x) & 0x1ff) << 5) /* Opf field of float insns.  */
 #define OPF_LOW5(x)	OPF ((x) & 0x1f)     /* V9.  */
+#define OPF_LOW4(x)	OPF ((x) & 0xf)      /* V9.  */
 #define F3F(x, y, z)	(OP (x) | OP3 (y) | OPF (z)) /* Format3 float insns.  */
 #define F3I(x)		(((x) & 0x1) << 13)  /* Immediate field of format 3 insns.  */
 #define F2(x, y)	(OP (x) | OP2(y))    /* Format 2 insns.  */
@@ -207,6 +244,7 @@ typedef struct sparc_opcode
 #define SIMM13(x)	((x) & 0x1fff)       /* Simm13 field.  */
 #define RD(x)		(((x) & 0x1f) << 25) /* Destination register field.  */
 #define RS1(x)		(((x) & 0x1f) << 14) /* Rs1 field.  */
+#define RS3(x)		(((x) & 0x1f) << 9)  /* Rs3 field.  */
 #define ASI_RS2(x)	(SIMM13 (x))
 #define MEMBAR(x)	((x) & 0x7f)
 #define SLCPOP(x)	(((x) & 0x7f) << 6)  /* Sparclet cpop.  */

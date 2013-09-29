@@ -1,5 +1,5 @@
 /* Motorola 68HC11/68HC12-specific support for 32-bit ELF
-   Copyright 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Copyright 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
@@ -175,6 +175,10 @@ bfd_boolean elf32_m68hc11_add_symbol_hook
    Elf_Internal_Sym *sym, const char **namep,
    flagword *flagsp, asection **secp,
    bfd_vma *valp);
+
+void elf32_m68hc11_merge_symbol_attribute
+  (struct elf_link_hash_entry *, const Elf_Internal_Sym *,
+   bfd_boolean, bfd_boolean);
 
 /* Tweak the OSABI field of the elf header.  */
 

@@ -1,9 +1,9 @@
 # Check for illegal conditional Neon instructions in ARM mode. The instructions
 # which overlap with VFP are the tricky cases, so test those.
-
 	.include "itblock.s"
-
 	.syntax unified
+	.arch armv7-a
+	.fpu neon
 	.text
 func:
 	itblock 4 eq

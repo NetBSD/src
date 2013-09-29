@@ -28,9 +28,13 @@
 extern bool t1();
 extern bool t2();
 
+extern "C" int f2();
+extern int (*get_f2_addr()) ();
+
 int
 main()
 {
   assert(t1());
   assert(t2());
+  assert(&f2 == get_f2_addr());
 }

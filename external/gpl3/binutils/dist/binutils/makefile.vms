@@ -1,24 +1,18 @@
 #
-# Makefile for binutils under openVMS (Alpha and Vax)
+# Makefile for binutils under openVMS (Alpha and Itanium)
 #
 # For use with gnu-make for vms
 #
-# Created by Klaus K"ampf, kkaempf@rmi.de
+# Created by Klaus Kaempf, kkaempf@rmi.de
 #
 #
 
-ifeq ($(CC),gcc)
-DEFS=
-CFLAGS=/include=([],[-.include],[-.bfd])$(DEFS)
-LIBS=,gnu_cc_library:libgcc/lib,sys$$library:vaxcrtl.olb/lib,gnu_cc_library:crt0.obj
-else
-DEFS=
+DEFS=/define=("OBJDUMP_PRIVATE_VECTORS=")
 OPT=/noopt/debug
 CFLAGS=$(OPT)/include=([],"../include",[-.bfd])$(DEFS)\
  /name=(as_is,shortened)\
  /prefix=(all,except=("getopt","optarg","optopt","optind","opterr"))\
  /warns=(info=(ptrmismatch,shiftcount))
-endif
 
 LIBBFD = [-.bfd]libbfd.olb/lib
 LIBBFD_DEP = [-.bfd]libbfd.olb
@@ -27,7 +21,8 @@ LIBIBERTY = [-.libiberty]libiberty.olb/lib
 OPCODES_DEP = [-.opcodes]libopcodes.olb
 OPCODES = [-.opcodes]libopcodes.olb/lib
 
-DEBUG_OBJS = rddbg.obj,debug.obj,stabs.obj,ieee.obj,rdcoff.obj,dwarf.obj
+DEBUG_OBJS = rddbg.obj,debug.obj,stabs.obj,ieee.obj,rdcoff.obj,dwarf.obj,\
+  elfcomm.obj
 
 BULIBS = bucomm.obj,version.obj,filemode.obj
 
@@ -44,6 +39,8 @@ ADDR2LINEOBJS = $(ADDL_DEPS),addr2line.obj
 
 OBJDUMPOBJS = objdump.obj,prdbg.obj,$(DEBUG_OBJS),$(ADDL_DEPS),$(OPCODES_DEP)
 
+READELFOBJS = readelf.obj,dwarf.obj,unwind-ia64.obj,$(ADDL_DEPS)
+
 all: config.h size.exe strings.exe objdump.exe nm.exe addr2line.exe
 
 size.exe: $(SIZEOBJS)
@@ -59,7 +56,10 @@ addr2line.exe: $(ADDR2LINEOBJS)
 	link/exe=$@ addr2line.obj,$(ADDL_LIBS)
 
 objdump.exe: $(OBJDUMPOBJS)
-	link/exe=$@ objdump.obj,prdbg.obj,$(DEBUG_OBJS),$(ADDL_LIBS),$(LIBBFD),$(OPCODES)
+	link/exe=$@ objdump.obj,prdbg.obj,$(DEBUG_OBJS),$(ADDL_LIBS),$(OPCODES)
+
+readelf.exe: $(READELFOBJS)
+	link/exe=$@ readelf.obj,dwarf.obj,unwind-ia64.obj,$(ADDL_LIBS)
 
 config.h:
 	$$ @configure

@@ -12,14 +12,14 @@
 #...
 Relocation section '.rela.dyn' at offset 0x.* contains 1 entries:
  Offset     Info    Type            Sym.Value  Sym. Name \+ Addend
-00002290  0000001c R_CRIS_32_TPREL[ ]+0+80
+00002290  0000001c R_CRIS_32_TPREL[ ]+80
 
-There are no unwind sections in this file.
+The decoding of unwind sections for machine type Axis Communications 32-bit embedded processor is not currently supported.
 
 Symbol table '.dynsym' contains 7 entries:
    Num:    Value  Size Type    Bind   Vis      Ndx Name
 #...
-Symbol table '.symtab' contains 17 entries:
+Symbol table '.symtab' contains [0-9]+ entries:
 #...
     ..: 00000080 +4 +TLS +LOCAL +DEFAULT +6 x
 #...

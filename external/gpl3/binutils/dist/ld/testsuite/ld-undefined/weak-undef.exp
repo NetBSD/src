@@ -1,5 +1,5 @@
 # Test handling of weak undefined symbols
-#   Copyright 2001, 2002, 2004, 2005, 2007, 2010
+#   Copyright 2001, 2002, 2004, 2005, 2007, 2010, 2011, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -31,6 +31,7 @@ if { ![istarget *-*-sysv4*] \
      && ![istarget hppa*64*-*-hpux*] \
      && ![istarget *-*-linux*] \
      && ![istarget *-*-gnu*] \
+     && ![istarget *-*-nacl*] \
      && ![istarget *-*-irix5*] \
      && ![istarget *-*-irix6*] \
      && ![is_pecoff_format] \
@@ -50,7 +51,7 @@ if {! [istarget i?86-*-*]} {
     setup_xfail *-*-pe*
 }
 
-setup_xfail hppa64-*-* pj-*-*
+setup_xfail pj-*-*
 
 if {! [ld_assemble $as $srcdir/$subdir/weak-undef.s tmpdir/weak-undef.o]} then {
     # It's OK if .weak doesn't work on this target.

@@ -1,7 +1,7 @@
 #source: group9.s
 #ld: -r --gc-sections --entry foo
 #readelf: -g --wide
-#notarget: arc-*-* d30v-*-* dlx-*-* i960-*-* or32-*-* pj*-*-*
+#notarget: aarch64*-*-* arc-*-* d30v-*-* dlx-*-* i960-*-* or32-*-* pj*-*-*
 #notarget: alpha-*-* hppa64-*-* i370-*-* i860-*-* ia64-*-* mep-*-* mn10200-*-*
 #xfail: cr16-*-* crx-*-*
 # generic linker targets don't support --gc-sections, nor do a bunch of others

@@ -1,0 +1,106 @@
+# Expect script for various AARCH64 ELF tests.
+# Copyright 2009-2012 Free Software Foundation, Inc.
+#
+# This file is part of the GNU Binutils.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+# Exclude non-aarch64-ELF targets.
+if { ![is_elf_format] || ![istarget "aarch64*-*-*"] } {
+    return
+}
+
+# List contains test-items with 3 items followed by 2 lists:
+# 0:name 1:ld options 2:assembler options
+# 3:filenames of assembler files 4: action and options. 5: name of output file
+
+# Actions:
+# objdump: Apply objdump options on result.  Compare with regex (last arg).
+# nm: Apply nm options on result.  Compare with regex (last arg).
+# readelf: Apply readelf options on result.  Compare with regex (last arg).
+
+set aarch64elftests {
+    {"EH Frame merge" "-Ttext 0x8000" "" {eh-frame-bar.s eh-frame-foo.s}
+	{{objdump --dwarf=frames eh-frame.d}} "eh-frame"}
+}
+
+run_ld_link_tests $aarch64elftests
+
+# Relocation Tests
+run_dump_test "weak-undefined"
+run_dump_test "emit-relocs-257"
+run_dump_test "emit-relocs-257-be"
+# 258 is tested in 257
+# 259 is tested in 257
+run_dump_test "emit-relocs-260"
+run_dump_test "emit-relocs-260-be"
+# 261 is tested by 260
+run_dump_test "emit-relocs-262"
+run_dump_test "emit-relocs-263"
+run_dump_test "emit-relocs-264"
+run_dump_test "emit-relocs-265"
+run_dump_test "emit-relocs-266"
+run_dump_test "emit-relocs-267"
+run_dump_test "emit-relocs-268"
+run_dump_test "emit-relocs-269"
+run_dump_test "emit-relocs-270"
+run_dump_test "emit-relocs-270-bad"
+run_dump_test "emit-relocs-271"
+run_dump_test "emit-relocs-272"
+run_dump_test "emit-relocs-273"
+run_dump_test "emit-relocs-274"
+run_dump_test "emit-relocs-275"
+run_dump_test "emit-relocs-276"
+run_dump_test "emit-relocs-277"
+run_dump_test "emit-relocs-278"
+run_dump_test "emit-relocs-279"
+run_dump_test "emit-relocs-279-bad"
+run_dump_test "emit-relocs-280"
+# 281 is unused
+run_dump_test "emit-relocs-282"
+run_dump_test "emit-relocs-283"
+run_dump_test "emit-relocs-284"
+run_dump_test "emit-relocs-285"
+run_dump_test "emit-relocs-286"
+run_dump_test "emit-relocs-286-bad"
+# 287-298 are not done yet
+run_dump_test "emit-relocs-299"
+# 300-310 are not done yet
+run_dump_test "emit-relocs-311"
+run_dump_test "emit-relocs-312"
+
+
+run_dump_test "limit-b"
+run_dump_test "limit-bl"
+run_dump_test "farcall-section"
+run_dump_test "farcall-back"
+run_dump_test "farcall-bl"
+run_dump_test "farcall-b"
+run_dump_test "farcall-b-none-function"
+run_dump_test "farcall-bl-none-function"
+
+run_dump_test "tls-relax-all"
+run_dump_test "tls-relax-gd-le"
+run_dump_test "tls-relax-gdesc-le"
+run_dump_test "tls-relax-gd-ie"
+run_dump_test "tls-relax-gdesc-ie"
+run_dump_test "tls-relax-ie-le"
+run_dump_test "tls-desc-ie"
+run_dump_test "tls-relax-gdesc-ie-2"
+run_dump_test "tls-relax-gdesc-le-2"
+run_dump_test "tls-relax-ie-le-2"
+run_dump_test "tls-relax-ie-le-3"
+run_dump_test "tlsle-symbol-offset"

@@ -1,4 +1,4 @@
-#as: -march=octeon -64 -mfix-cn63xxp1
+#as: -64 -mfix-cn63xxp1
 #objdump: -M reg-names=numeric -dr
 #name: MIPS octeon-pref mfix-cn63xxp1
 

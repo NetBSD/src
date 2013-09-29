@@ -10,7 +10,7 @@ fragment <<EOF
 
 /* Linux a.out emulation code for ${EMULATION_NAME}
    Copyright 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2007, 2008, 2012 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
    Linux support by Eric Youngdale <ericy@cais.cais.com>
 
@@ -49,7 +49,7 @@ static void
 gld${EMULATION_NAME}_before_parse (void)
 {
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
-  config.dynamic_link = TRUE;
+  input_flags.dynamic = TRUE;
   config.has_shared = TRUE;
 }
 
@@ -62,7 +62,7 @@ gld${EMULATION_NAME}_open_dynamic_archive
 {
   char *string;
 
-  if (! entry->maybe_archive)
+  if (! entry->flags.maybe_archive)
     return FALSE;
 
   string = (char *) xmalloc (strlen (search->name)

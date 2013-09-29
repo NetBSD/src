@@ -18,7 +18,7 @@ Disassembly of section .text:
 [ 0-9a-f]+:	37 c4 02 24 	R2 = BYTEOP3P \(R1:0, R3:2\) \(HI, R\);
 
 [0-9a-f]+ <dual16>:
-[ 0-9a-f]+:	0c c4 40 45 	R5 = A1.L \+ A1.H, R2 = A0.L \+ A0.H;
+[ 0-9a-f]+:	0c c4 7f 45 	R5 = A1.L \+ A1.H, R2 = A0.L \+ A0.H;
 
 [0-9a-f]+ <byteop16p>:
 [ 0-9a-f]+:	15 c4 82 06 	\(R2, R3\) = BYTEOP16P \(R1:0, R3:2\);
@@ -39,16 +39,6 @@ Disassembly of section .text:
 [ 0-9a-f]+:	36 c4 02 2a 	R5 = BYTEOP2P \(R1:0, R3:2\) \(RNDH, R\);
 [ 0-9a-f]+:	16 c4 02 6c 	R6 = BYTEOP2P \(R1:0, R3:2\) \(TL, R\);
 [ 0-9a-f]+:	36 c4 02 6e 	R7 = BYTEOP2P \(R1:0, R3:2\) \(TH, R\);
-
-[0-9a-f]+ <byteop2m>:
-[ 0-9a-f]+:	16 c4 02 80 	R0 = BYTEOP2M \(R1:0, R3:2\) \(RNDL\);
-[ 0-9a-f]+:	36 c4 02 82 	R1 = BYTEOP2M \(R1:0, R3:2\) \(RNDH\);
-[ 0-9a-f]+:	16 c4 02 c4 	R2 = BYTEOP2M \(R1:0, R3:2\) \(TL\);
-[ 0-9a-f]+:	36 c4 02 c6 	R3 = BYTEOP2M \(R1:0, R3:2\) \(TH\);
-[ 0-9a-f]+:	16 c4 02 a8 	R4 = BYTEOP2M \(R1:0, R3:2\) \(RNDL, R\);
-[ 0-9a-f]+:	36 c4 02 aa 	R5 = BYTEOP2M \(R1:0, R3:2\) \(RNDH, R\);
-[ 0-9a-f]+:	16 c4 02 ec 	R6 = BYTEOP2M \(R1:0, R3:2\) \(TL, R\);
-[ 0-9a-f]+:	36 c4 02 ee 	R7 = BYTEOP2M \(R1:0, R3:2\) \(TH, R\);
 
 [0-9a-f]+ <bytepack>:
 [ 0-9a-f]+:	18 c4 03 0a 	R5 = BYTEPACK \(R0, R3\);

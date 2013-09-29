@@ -268,7 +268,7 @@ class Workqueue
 
   // Return whether to cancel this thread.
   bool
-  should_cancel_thread();
+  should_cancel_thread(int thread_number);
 
   // Master Workqueue lock.  This controls access to the following
   // member variables.

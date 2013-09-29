@@ -492,11 +492,12 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 	      new_sym.st_info  = ELF_ST_INFO (STB_GLOBAL, STT_FUNC);
 	      new_sym.st_other = ELF_ST_VISIBILITY (STV_DEFAULT);
 	      new_sym.st_shndx = SHN_UNDEF;
+	      new_sym.st_target_internal = 0;
 
 	      if (! _bfd_elf_merge_symbol (input_bfd, info,
 					   ptr->new_name, & new_sym,
 					   & psec, & new_value, NULL,
-					   & new_hash, & skip,
+					   NULL, & new_hash, & skip,
 					   & override, & type_change_ok,
 					   & size_change_ok))
 		{

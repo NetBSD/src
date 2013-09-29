@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses --show-raw-insn
 #name: MIPS DSP ASE for MIPS32
-#as: -mdsp -mips32r2 -32
+#as: -mdsp -32
 
 # Check MIPS DSP ASE for MIPS32 Instruction Assembly
 

@@ -1,5 +1,5 @@
 /* BFD back-end for Apple M68K COFF A/UX 3.x files.
-   Copyright 1996, 1997, 2000, 2002, 2005, 2007, 2008
+   Copyright 1996, 1997, 2000, 2002, 2005, 2007, 2008, 2011, 2012
    Free Software Foundation, Inc.
    Written by Richard Henderson <rth@tamu.edu>.
 
@@ -42,12 +42,12 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-static bfd_boolean coff_m68k_aux_link_add_one_symbol
-  PARAMS ((struct bfd_link_info *, bfd *, const char *, flagword,
-           asection *, bfd_vma, const char *, bfd_boolean, bfd_boolean,
-           struct bfd_link_hash_entry **));
-
 #define coff_link_add_one_symbol coff_m68k_aux_link_add_one_symbol
+static bfd_boolean
+coff_m68k_aux_link_add_one_symbol
+  (struct bfd_link_info *, bfd *, const char *, flagword, asection *,
+   bfd_vma, const char *, bfd_boolean, bfd_boolean,
+   struct bfd_link_hash_entry **);
 
 #ifndef bfd_pe_print_pdata
 #define bfd_pe_print_pdata	NULL
@@ -63,18 +63,16 @@ static bfd_boolean coff_m68k_aux_link_add_one_symbol
    what you include in the shared object.  */
 
 static bfd_boolean
-coff_m68k_aux_link_add_one_symbol (info, abfd, name, flags, section, value,
-				   string, copy, collect, hashp)
-     struct bfd_link_info *info;
-     bfd *abfd;
-     const char *name;
-     flagword flags;
-     asection *section;
-     bfd_vma value;
-     const char *string;
-     bfd_boolean copy;
-     bfd_boolean collect;
-     struct bfd_link_hash_entry **hashp;
+coff_m68k_aux_link_add_one_symbol (struct bfd_link_info *info,
+				   bfd *abfd,
+				   const char *name,
+				   flagword flags,
+				   asection *section,
+				   bfd_vma value,
+				   const char *string,
+				   bfd_boolean copy,
+				   bfd_boolean collect,
+				   struct bfd_link_hash_entry **hashp)
 {
   struct bfd_link_hash_entry *h;
 

@@ -1,6 +1,6 @@
 /* cg_print.c -  Print routines for displaying call graphs.
 
-   Copyright 2000, 2001, 2002, 2004, 2007, 2009
+   Copyright 2000, 2001, 2002, 2004, 2007, 2009, 2011
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -22,6 +22,7 @@
 
 #include "gprof.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "search_list.h"
 #include "source.h"
 #include "symtab.h"
@@ -95,8 +96,11 @@ print_header ()
       printf ("%6.6s %5.5s %7.7s %11.11s %7.7s/%-7.7s     %-8.8s\n",
 	      "", "", "", "", _("called"), _("total"), _("parents"));
       printf ("%-6.6s %5.5s %7.7s %11.11s %7.7s+%-7.7s %-8.8s\t%5.5s\n",
-	      _("index"), _("%time"), _("self"), _("descendants"),
-	      _("called"), _("self"), _("name"), _("index"));
+	      _("index"),
+	      /* xgettext:no-c-format */
+	      _("%time"),
+	      _("self"), _("descendants"), _("called"), _("self"),
+	      _("name"), _("index"));
       printf ("%6.6s %5.5s %7.7s %11.11s %7.7s/%-7.7s     %-8.8s\n",
 	      "", "", "", "", _("called"), _("total"), _("children"));
       printf ("\n");
@@ -1221,8 +1225,8 @@ order_and_dump_functions_by_arcs (the_arcs, arc_count, all,
 static int
 cmp_symbol_map (const void * l, const void * r)
 {
-  return strcmp (((struct function_map *) l)->file_name, 
-	         ((struct function_map *) r)->file_name);
+  return filename_cmp (((struct function_map *) l)->file_name,
+		       ((struct function_map *) r)->file_name);
 }
 
 /* Print a suggested .o ordering for files on a link line based
@@ -1269,7 +1273,7 @@ cg_print_file_ordering (void)
 
       /* Don't bother searching if this symbol
 	 is the same as the previous one.  */
-      if (last && !strcmp (last, symbol_map[sym_index].file_name))
+      if (last && !filename_cmp (last, symbol_map[sym_index].file_name))
 	continue;
 
       for (index2 = 0; index2 < symtab.len; index2++)
@@ -1277,7 +1281,8 @@ cg_print_file_ordering (void)
 	  if (! symtab.base[index2].mapped)
 	    continue;
 
-	  if (!strcmp (symtab.base[index2].name, symbol_map[sym_index].file_name))
+	  if (!filename_cmp (symtab.base[index2].name,
+			     symbol_map[sym_index].file_name))
 	    break;
 	}
 

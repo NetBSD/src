@@ -1,0 +1,11 @@
+# EPIPHANY assembler testsuite. -*- Tcl -*-
+
+if [istarget epiphany*-*-*] {
+    run_dump_test "allinsn"
+    run_dump_test "regression"
+    run_dump_test "sample"
+    run_dump_test "branch_lit"
+    run_dump_test "badrelax"
+    gas_test_error "badpostmod" "" "destination register modified by displacement-post-modified address"
+    run_dump_test "addr-syntax"
+}

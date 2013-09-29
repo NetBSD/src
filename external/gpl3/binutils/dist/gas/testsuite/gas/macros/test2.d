@@ -1,5 +1,7 @@
 #objdump: -r
 #name: macro test 2
+# darwin(mach-o) reverses the order of relocs.
+#not-target: *-*-darwin*
 
 .*: +file format .*
 

@@ -11,6 +11,15 @@ AM_INIT_AUTOMAKE([no-dist parallel-tests])
 
 AM_CONFIG_HEADER(config.h:config.in)
 
+# PR 14072
+AH_VERBATIM([00_CONFIG_H_CHECK],
+[/* Check that config.h is #included before system headers
+   (this works only for glibc, but that should be enough).  */
+#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
+#  error config.h must be #included before system headers
+#endif
+#define __CONFIG_H__ 1])
+
 AC_ARG_WITH(sysroot,
 [  --with-sysroot[=DIR]    search for usr/lib et al within DIR],
 [sysroot=$withval], [sysroot=no])
@@ -45,7 +54,7 @@ dnl "installed_linker" is the installed gold linker name.
 default_ld=
 AC_ARG_ENABLE(ld,
 [[  --enable-ld[=ARG]     build ld [ARG={default,yes,no}]]],
-[case "${enableval}" in 
+[case "${enableval}" in
   default)
     default_ld=ld.bfd
     ;;
@@ -238,6 +247,22 @@ AC_DEFINE_UNQUOTED(GOLD_DEFAULT_BIG_ENDIAN, $default_big_endian,
 AC_DEFINE_UNQUOTED(GOLD_DEFAULT_OSABI, $default_osabi,
 		   [Default OSABI code])
 
+AC_ARG_WITH(lib-path,
+[  --with-lib-path=dir1:dir2...  set default LIB_PATH],
+[case "$withval" in
+ yes) LIB_PATH='"/lib:/usr/lib"' ;;
+ no) LIB_PATH='""' ;;
+ *) LIB_PATH='"'"$withval"'"' ;;
+ esac],
+[LIB_PATH='"::DEFAULT::"'])
+AC_DEFINE_UNQUOTED(LIB_PATH, $LIB_PATH,
+		   [Default library search path])
+if test "x$target_alias" = "x" -o "x$host_alias" = "x$target_alias"; then
+  AC_DEFINE(NATIVE_LINKER, 1, [Whether configured as a native linker])
+fi
+
+AC_CHECK_TOOL(NM, nm)
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_YACC
@@ -260,6 +285,18 @@ AM_CONDITIONAL(GCC, test "$GCC" = yes)
 
 AM_CONDITIONAL(NATIVE_OR_CROSS_LINKER,
   test "x$target_alias" = "x" -o "x$host_alias" = "x$target_alias" -o "x$host_alias" = "x$build_alias")
+
+dnl Test for whether static linking is supported.  Some systems do not
+dnl install static libraries.  This only affects the set of tests that
+dnl we run.
+AC_CACHE_CHECK([whether static linking works], [gold_cv_lib_static],
+[LDFLAGS_hold=$LDFLAGS
+LDFLAGS="$LDFLAGS -static"
+AC_LINK_IFELSE([
+AC_LANG_PROGRAM([[void f() { }]])],
+[gold_cv_lib_static=yes], [gold_cv_lib_static=no])
+LDFLAGS=$LDFLAGS_hold])
+AM_CONDITIONAL(HAVE_STATIC, test "$gold_cv_lib_static" = "yes")
 
 dnl Some architectures do not support taking pointers of functions
 dnl defined in shared libraries except in -fPIC mode.  We need to
@@ -284,9 +321,13 @@ error
 #endif
 ], [gold_cv_prog_gcc41=yes], [gold_cv_prog_gcc41=no])])
 
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -mcmodel=medium"
+AC_COMPILE_IFELSE([int i;], [have_mcmodel_medium=yes], [have_mcmodel_medium=no])
+CFLAGS="$save_CFLAGS"
 dnl Whether we can test -mcmodel=medium.
 AM_CONDITIONAL(MCMODEL_MEDIUM,
-[test "$target_cpu" = "x86_64" -a "$gold_cv_prog_gcc41" = "yes"])
+[test "$target_cpu" = "x86_64" -a "$have_mcmodel_medium" = "yes" -a "$gold_cv_prog_gcc41" = "yes"])
 
 dnl Test for __thread support.
 AC_CACHE_CHECK([for thread support], [gold_cv_c_thread],
@@ -327,8 +368,14 @@ AM_CONDITIONAL(OMP_SUPPORT, test "$gold_cv_c_threadprivate" = "yes")
 
 dnl Test for the -ftls-dialect=gnu2 option.
 save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -mtls-dialect=gnu2"
-AC_COMPILE_IFELSE([int i;], [have_tls_gnu2=yes], [have_tls_gnu2=no])
+CFLAGS="$CFLAGS -fpic -mtls-dialect=gnu2"
+AC_COMPILE_IFELSE([
+__thread int i;
+void foo (void)
+{
+  i = 10;
+}
+], [have_tls_gnu2=yes], [have_tls_gnu2=no])
 CFLAGS="$save_CFLAGS"
 AM_CONDITIONAL(TLS_GNU2_DIALECT, test "$have_tls_gnu2" = "yes")
 
@@ -346,14 +393,6 @@ error
 
 AM_CONDITIONAL(TLS_DESCRIPTORS, test "$gold_cv_lib_glibc29" = "yes")
 
-dnl Check whether the compiler supports constructor priorities in
-dnl attributes, which were added in gcc 4.3.
-AC_CACHE_CHECK([for constructor priorities], [gold_cv_c_conprio],
-[AC_COMPILE_IFELSE([void f() __attribute__ ((constructor (1)));],
-[gold_cv_c_conprio=yes], [gold_cv_c_conprio=no])])
-
-AM_CONDITIONAL(CONSTRUCTOR_PRIORITY, test "$gold_cv_c_conprio" = "yes")
-
 dnl Test for the -frandom-seed option.
 AC_CACHE_CHECK([for -frandom-seed support], [gold_cv_c_random_seed],
 [save_CFLAGS="$CFLAGS"
@@ -370,35 +409,84 @@ AC_SUBST(RANDOM_SEED_CFLAGS)
 
 dnl On GNU/Linux ifunc is supported by the dynamic linker in glibc
 dnl 2.11 or later, and by binutils 2.20.1 or later.
-AC_CACHE_CHECK([for glibc >= 2.11], [gold_cv_lib_glibc2_11],
-[AC_COMPILE_IFELSE([
+AC_CACHE_CHECK([for glibc ifunc support], [gold_cv_lib_glibc_ifunc],
+[save_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -static"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <features.h>
 #if !defined __GLIBC__
 error
 #elif __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 11)
 error
 #endif
-__asm__(".type foo, %gnu_indirect_function");
-], [gold_cv_lib_glibc2_11=yes], [gold_cv_lib_glibc2_11=no])])
+void func (void) { }
+void invoke (void);
+__asm__(".type invoke, %gnu_indirect_function");
+typedef void (*funcptr) (void);
+funcptr dispatch (void) __asm__ ("invoke");
+funcptr dispatch (void) { return &func; }]],
+[[invoke();]])
+], [
+if ${NM} conftest$EXEEXT | grep "__rela\?_iplt_start" >/dev/null 2>&1; then
+  gold_cv_lib_glibc_ifunc=both
+else
+  gold_cv_lib_glibc_ifunc=dyn
+fi], [gold_cv_lib_glibc_ifunc=no])
+LDFLAGS="$save_LDFLAGS"])
 
-AM_CONDITIONAL(IFUNC, test "$gold_cv_lib_glibc2_11" = "yes")
+AM_CONDITIONAL(IFUNC, test "$gold_cv_lib_glibc_ifunc" != "no")
+AM_CONDITIONAL(IFUNC_STATIC, test "$gold_cv_lib_glibc_ifunc" = "both")
 
 AM_BINUTILS_WARNINGS
 
 WARN_CXXFLAGS=`echo ${WARN_CFLAGS} | sed -e 's/-Wstrict-prototypes//' -e 's/-Wmissing-prototypes//' -e 's/-Wshadow//'`
 AC_SUBST(WARN_CXXFLAGS)
 
+AC_ARG_WITH(gold-ldflags,
+[  --with-gold-ldflags=FLAGS  additional link flags for gold],
+[if test "$withval" = "no" -o "$withval" = "yes"; then
+   GOLD_LDFLAGS=
+ else
+   GOLD_LDFLAGS=$withval
+ fi],
+[GOLD_LDFLAGS=])
+AC_SUBST(GOLD_LDFLAGS)
+
+AC_ARG_WITH(gold-ldadd,
+[  --with-gold-ldadd=LIBS     additional libraries for gold],
+[if test "$withval" = "no" -o "$withval" = "yes"; then
+   GOLD_LDADD=
+ else
+   GOLD_LDADD=$withval
+ fi],
+[GOLD_LDADD=])
+AC_SUBST(GOLD_LDADD)
+
 dnl Force support for large files by default.  This may need to be
 dnl host dependent.  If build == host, we can check getconf LFS_CFLAGS.
 LFS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 AC_SUBST(LFS_CFLAGS)
 
-AC_CHECK_FUNCS(chsize)
-AC_REPLACE_FUNCS(pread ftruncate mremap ffsll)
+AC_CHECK_HEADERS(sys/mman.h)
+AC_CHECK_FUNCS(chsize mmap)
+AC_REPLACE_FUNCS(pread ftruncate ffsll)
+
+AC_CACHE_CHECK([mremap with MREMAP_MAYMOVE], [gold_cv_lib_mremap_maymove],
+[AC_LINK_IFELSE([
+AC_LANG_PROGRAM([[
+#include <sys/mman.h>
+void f() { mremap (0, 0, 0, MREMAP_MAYMOVE); }
+]])], [gold_cv_lib_mremap_maymove=yes], [gold_cv_lib_mremap_maymove=no])])
+if test "$gold_cv_lib_mremap_maymove" = "yes"; then
+  AC_DEFINE(HAVE_MREMAP, 1,
+    [Define to 1 if you have the mremap function with MREMAP_MAYMOVE support])
+else
+  AC_LIBOBJ(mremap)
+fi
 
 # Link in zlib if we can.  This allows us to write compressed sections.
-AC_SEARCH_LIBS(zlibVersion, z, [AC_CHECK_HEADERS(zlib.h)])
-AM_CONDITIONAL(HAVE_ZLIB, test "$ac_cv_search_zlibVersion" != "no")
+AM_ZLIB
+AM_CONDITIONAL(HAVE_ZLIB, test "$ac_cv_header_zlib_h" = "yes")
 
 dnl We have to check these in C, not C++, because autoconf generates
 dnl tests which have no type information, and current glibc provides
@@ -411,7 +499,7 @@ AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS(tr1/unordered_set tr1/unordered_map)
 AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
 AC_CHECK_HEADERS(byteswap.h)
-AC_CHECK_FUNCS(mallinfo posix_fallocate readv sysconf times)
+AC_CHECK_FUNCS(mallinfo posix_fallocate fallocate readv sysconf times)
 AC_CHECK_DECLS([basename, ffs, asprintf, vasprintf, snprintf, vsnprintf, strverscmp, strndup, memmem])
 
 # Use of ::std::tr1::unordered_map::rehash causes undefined symbols
@@ -425,6 +513,25 @@ void bar() { ::std::tr1::unordered_map<int, int> x; x.rehash(10); }
 if test "$gold_cv_unordered_map_rehash" = "yes"; then
   AC_DEFINE(HAVE_TR1_UNORDERED_MAP_REHASH, 1,
 	    [Define if ::std::tr1::unordered_map::rehash is usable])
+fi
+
+# Use of tr1/unordered_map with off_t as a key is not supported on GCC
+# 4.1.xx when compiling in 32-bit mode with a 64-bit off_t type.
+AC_CACHE_CHECK([whether std::tr1::hash<off_t> is defined],
+[gold_cv_hash_off_t],
+[CXXFLAGS_hold=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $LFS_CFLAGS"
+AC_COMPILE_IFELSE([
+#include <sys/types.h>
+#include <tr1/unordered_map>
+std::tr1::hash<off_t> h;
+],
+[gold_cv_hash_off_t=yes],
+[gold_cv_hash_off_t=no])
+CXXFLAGS=$CFLAGS_hold])
+if test "$gold_cv_hash_off_t" = "yes"; then
+   AC_DEFINE(HAVE_TR1_HASH_OFF_T, 1,
+	     [Define if std::tr1::hash<off_t> is usable])
 fi
 
 # gcc 4.3.0 doesn't recognize the printf attribute on a template
@@ -455,7 +562,18 @@ if test "$gold_cv_stat_st_mtim" = "yes"; then
 	    [Define if struct stat has a field st_mtim with timespec for mtime])
 fi
 
+dnl Check if gcc supports the -gpubnames option.
+save_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -gpubnames"
+AC_COMPILE_IFELSE([int i;], [have_pubnames=yes], [have_pubnames=no])
+CXXFLAGS="$save_CXXFLAGS"
+AM_CONDITIONAL(HAVE_PUBNAMES, test "$have_pubnames" = "yes")
+
 AC_LANG_POP(C++)
+
+AC_CHECK_HEADERS(locale.h)
+AC_CHECK_FUNCS(setlocale)
+AM_LC_MESSAGES
 
 AM_MAINTAINER_MODE
 

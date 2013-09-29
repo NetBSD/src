@@ -47,6 +47,7 @@ extern elf_vma (*byte_get) (unsigned char *, int);
 extern elf_vma byte_get_signed (unsigned char *, int);
 extern elf_vma byte_get_little_endian (unsigned char *, int);
 extern elf_vma byte_get_big_endian (unsigned char *, int);
+extern void byte_get_64 (unsigned char *, elf_vma *, elf_vma *);
 
 #define BYTE_PUT(field, val)	byte_put (field, val, sizeof (field))
 #define BYTE_GET(field)		byte_get (field, sizeof (field))
@@ -63,8 +64,8 @@ struct archive_info
 {
   char * file_name;                     /* Archive file name.  */
   FILE * file;                          /* Open file descriptor.  */
-  unsigned long index_num;              /* Number of symbols in table.  */
-  unsigned long * index_array;          /* The array of member offsets.  */
+  elf_vma index_num;                    /* Number of symbols in table.  */
+  elf_vma * index_array;                /* The array of member offsets.  */
   char * sym_table;                     /* The symbol table.  */
   unsigned long sym_size;               /* Size of the symbol table.  */
   char * longnames;                     /* The long file names table.  */
@@ -72,6 +73,7 @@ struct archive_info
   unsigned long nested_member_origin;   /* Origin in the nested archive of the current member.  */
   unsigned long next_arhdr_offset;      /* Offset of the next archive header.  */
   bfd_boolean is_thin_archive;          /* TRUE if this is a thin archive.  */
+  bfd_boolean uses_64bit_indicies;      /* TRUE if the index table uses 64bit entries.  */
   struct ar_hdr arhdr;                  /* Current archive header.  */
 };
 

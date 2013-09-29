@@ -44,8 +44,8 @@
 // last  Verify that the above tests left the variables set correctly.
 
 
-#include <cstdio>
 #include "config.h"
+#include <cstdio>
 #include "tls_test.h"
 
 #define CHECK_EQ_OR_RETURN(var, expected)				\

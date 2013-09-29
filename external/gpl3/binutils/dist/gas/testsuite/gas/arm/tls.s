@@ -1,14 +1,38 @@
 	.text
-	.globl main
-	.type main, %function
-main:
+	.arm
+	.globl arm_fn
+	.type arm_fn, %function
+arm_fn:
+1:
+.tlsdescseq  af
 	nop
-.L2:
+	ldr	r0, 1f
+2:	blx	ae(tlscall)
 	nop
-	mov	pc, lr
 
+.arm_pool:
+	.word	aa(tlsgd) + (. - 1b - 8)
+	.word	ab(tlsldm) + (. - 1b- 8)
+	.word	ac(gottpoff) + (. - 1b - 8)
+	.word	ad(tpoff)
+1:	.word	ae(tlsdesc) + (. - 2b)
+	
+	.thumb
+	.globl	thumb_fn
+	.type thumb_fn, %function
+thumb_fn:
+	nop
+1:	
+.tlsdescseq tf
+	nop
+	ldr	r0, 1f
+2:	blx	te(tlscall)
+	nop
+
+	.p2align 2
 .Lpool:
-	.word	a(tlsgd) + (. - .L2 - 8)
-	.word	b(tlsldm) + (. - .L2 - 8)
-	.word	c(gottpoff) + (. - .L2 - 8)
-	.word	d(tpoff)
+	.word	ta(tlsgd) + (. - 1b - 8)
+	.word	tb(tlsldm) + (. - 1b - 8)
+	.word	tc(gottpoff) + (. - 1b - 8)
+	.word	td(tpoff)
+1:	.word	te(tlsdesc) + (. - 2b + 1)

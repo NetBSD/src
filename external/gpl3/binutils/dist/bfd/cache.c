@@ -45,6 +45,7 @@ SUBSECTION
 #include "bfd.h"
 #include "libbfd.h"
 #include "libiberty.h"
+#include "bfd_stdint.h"
 
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
@@ -197,7 +198,7 @@ bfd_cache_lookup_worker (bfd *abfd, enum cache_flag flag)
   if ((abfd->flags & BFD_IN_MEMORY) != 0)
     abort ();
 
-  if (abfd->my_archive)
+  while (abfd->my_archive)
     abfd = abfd->my_archive;
 
   if (abfd->iostream != NULL)
@@ -361,7 +362,7 @@ cache_bwrite (struct bfd *abfd, const void *where, file_ptr nbytes)
 static int
 cache_bclose (struct bfd *abfd)
 {
-  return bfd_cache_close (abfd);
+  return bfd_cache_close (abfd) - 1;
 }
 
 static int
@@ -398,7 +399,9 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	     bfd_size_type len ATTRIBUTE_UNUSED,
 	     int prot ATTRIBUTE_UNUSED,
 	     int flags ATTRIBUTE_UNUSED,
-	     file_ptr offset ATTRIBUTE_UNUSED)
+	     file_ptr offset ATTRIBUTE_UNUSED,
+             void **map_addr ATTRIBUTE_UNUSED,
+             bfd_size_type *map_len ATTRIBUTE_UNUSED)
 {
   void *ret = (void *) -1;
 
@@ -407,13 +410,35 @@ cache_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 #ifdef HAVE_MMAP
   else
     {
-      FILE *f = bfd_cache_lookup (abfd, CACHE_NO_SEEK_ERROR);
+      static uintptr_t pagesize_m1;
+      FILE *f;
+      file_ptr pg_offset;
+      bfd_size_type pg_len;
+
+      f = bfd_cache_lookup (abfd, CACHE_NO_SEEK_ERROR);
       if (f == NULL)
 	return ret;
 
-      ret = mmap (addr, len, prot, flags, fileno (f), offset);
+      if (pagesize_m1 == 0)
+        pagesize_m1 = getpagesize () - 1;
+
+      /* Handle archive members.  */
+      if (abfd->my_archive != NULL)
+        offset += abfd->origin;
+
+      /* Align.  */
+      pg_offset = offset & ~pagesize_m1;
+      pg_len = (len + (offset - pg_offset) + pagesize_m1) & ~pagesize_m1;
+
+      ret = mmap (addr, pg_len, prot, flags, fileno (f), pg_offset);
       if (ret == (void *) -1)
 	bfd_set_error (bfd_error_system_call);
+      else
+        {
+          *map_addr = ret;
+          *map_len = pg_len;
+          ret += offset & pagesize_m1;
+        }
     }
 #endif
 
@@ -538,15 +563,15 @@ bfd_open_file (bfd *abfd)
     {
     case read_direction:
     case no_direction:
-      abfd->iostream = (PTR) real_fopen (abfd->filename, FOPEN_RB);
+      abfd->iostream = real_fopen (abfd->filename, FOPEN_RB);
       break;
     case both_direction:
     case write_direction:
       if (abfd->opened_once)
 	{
-	  abfd->iostream = (PTR) real_fopen (abfd->filename, FOPEN_RUB);
+	  abfd->iostream = real_fopen (abfd->filename, FOPEN_RUB);
 	  if (abfd->iostream == NULL)
-	    abfd->iostream = (PTR) real_fopen (abfd->filename, FOPEN_WUB);
+	    abfd->iostream = real_fopen (abfd->filename, FOPEN_WUB);
 	}
       else
 	{
@@ -576,7 +601,7 @@ bfd_open_file (bfd *abfd)
 	  if (stat (abfd->filename, &s) == 0 && s.st_size != 0)
 	    unlink_if_ordinary (abfd->filename);
 #endif
-	  abfd->iostream = (PTR) real_fopen (abfd->filename, FOPEN_WUB);
+	  abfd->iostream = real_fopen (abfd->filename, FOPEN_WUB);
 	  abfd->opened_once = TRUE;
 	}
       break;

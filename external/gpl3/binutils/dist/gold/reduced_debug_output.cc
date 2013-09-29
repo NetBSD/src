@@ -1,6 +1,6 @@
 // reduced_debug_output.cc -- output reduced debugging information to save space
 
-// Copyright 2008 Free Software Foundation, Inc.
+// Copyright 2008, 2010, 2012 Free Software Foundation, Inc.
 // Written by Caleb Howe <cshowe@google.com>.
 
 // This file is part of gold.
@@ -60,9 +60,10 @@ Output_reduced_debug_info_section::get_die_end(
         return false;
       switch(form)
         {
-          case elfcpp::DW_FORM_null:
+          case elfcpp::DW_FORM_flag_present:
             break;
           case elfcpp::DW_FORM_strp:
+          case elfcpp::DW_FORM_sec_offset:
             die += is64 ? 8 : 4;
             break;
           case elfcpp::DW_FORM_addr:
@@ -88,6 +89,7 @@ Output_reduced_debug_info_section::get_die_end(
               break;
             }
           case elfcpp::DW_FORM_block:
+          case elfcpp::DW_FORM_exprloc:
             LEB_decoded = read_unsigned_LEB_128(die, &LEB_size);
             die += (LEB_decoded + LEB_size);
             break;
@@ -106,11 +108,16 @@ Output_reduced_debug_info_section::get_die_end(
             break;
           case elfcpp::DW_FORM_data8:
           case elfcpp::DW_FORM_ref8:
+          case elfcpp::DW_FORM_ref_sig8:
             die += 8;
             break;
           case elfcpp::DW_FORM_ref_udata:
           case elfcpp::DW_FORM_udata:
             read_unsigned_LEB_128(die, &LEB_size);
+            die += LEB_size;
+            break;
+          case elfcpp::DW_FORM_sdata:
+            read_signed_LEB_128(die, &LEB_size);
             die += LEB_size;
             break;
           case elfcpp::DW_FORM_string:
@@ -119,8 +126,10 @@ Output_reduced_debug_info_section::get_die_end(
               die += length + 1;
               break;
             }
-          case elfcpp::DW_FORM_sdata:
           case elfcpp::DW_FORM_indirect:
+          case elfcpp::DW_FORM_GNU_addr_index:
+          case elfcpp::DW_FORM_GNU_str_index:
+          default:
             return false;
       }
     }
@@ -154,20 +163,20 @@ Output_reduced_debug_abbrev_section::set_final_data_size()
           abbrev_data += LEB_size;
 
           // Together with the abbreviation number these fields make up
-          // the header for each abbreviation
+          // the header for each abbreviation.
           uint64_t abbrev_type = read_unsigned_LEB_128(abbrev_data, &LEB_size);
           abbrev_data += LEB_size;
 
           // This would ordinarily be the has_children field of the
-          // abbreviation.  But it's going to be false after reducting the
-          // information, so there's no point in storing it
+          // abbreviation.  But it's going to be false after reducing the
+          // information, so there's no point in storing it.
           abbrev_data++;
 
-          // Read to the end of the current abbreviation
+          // Read to the end of the current abbreviation.
           // This is indicated by two zero unsigned LEBs in a row.  We don't
           // need to parse the data yet, so we just scan through the data
           // looking for two consecutive 0 bytes indicating the end of the
-          // abbreviation
+          // abbreviation.
           unsigned char* current_abbrev;
           for (current_abbrev = abbrev_data;
                current_abbrev[0] || current_abbrev[1];

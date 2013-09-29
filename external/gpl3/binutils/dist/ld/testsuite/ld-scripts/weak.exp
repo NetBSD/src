@@ -1,6 +1,6 @@
 # Test weak symbols.
 # By Ian Lance Taylor, Cygnus Solutions.
-#   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2009
+#   Copyright 1999, 2000, 2002, 2004, 2005, 2006, 2007, 2009, 2011
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -22,17 +22,16 @@
 
 set testname "weak symbols"
 
-# This test only works for ELF targets.
+# This test only works for ELF targets and some PE targets.
 # It ought to work for some a.out targets, but it doesn't.
 if {! [is_elf_format] && ! [is_pecoff_format]} {
     unsupported $testname
     return
 }
 
-# Weak symbols are broken for non-i386 PE targets.
-if {! [istarget i?86-*-*]} {
+# Weak symbols are broken for most PE targets.
+if {! [istarget i?86-*-*] && ! [istarget sh-*-*]} {
     setup_xfail *-*-pe*
-    setup_xfail x86_64-*-pe*
 }
 
 # hppa64 and or32 are incredibly broken

@@ -1,5 +1,5 @@
 # Expect script for run_dump_test based ld-m68hc11 tests.
-#   Copyright 2002, 2005, 2007 Free Software Foundation, Inc.
+#   Copyright 2002, 2005, 2007, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -22,7 +22,8 @@
 
 # Test 68HC11 relaxing.  This tests the assembler as well as the linker.
 
-if { ![istarget m6811-*-*] && ![istarget m6812-*-*] } {
+if { ![istarget m6811-*-*] && ![istarget m6812-*-*]
+     && ![istarget m68hc11-*-*] && ![istarget m68hc12-*-*] } {
     return
 }
 

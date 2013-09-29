@@ -1,6 +1,6 @@
 # Test linking directly to S-records.
 # By Ian Lance Taylor, Cygnus Support.
-#   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009
+#   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2009, 2011, 2012
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -250,15 +250,13 @@ proc run_srec_test { test objs } {
 	setup_xfail "sh64*-*-*"
     }
 
-    if {[istarget arm*-*-*]       || \
-        [istarget strongarm*-*-*] || \
-        [istarget xscale*-*-*]    || \
-        [istarget thumb-*-*] } {
-        # ARM targets cannot convert format in the linker 
+    if {[istarget aarch64*-*-*]   || \
+        [istarget arm*-*-*]} {
+        # ARM targets cannot convert format in the linker
         # using the --oformat command line switch
-	setup_xfail "*arm*-*-*"
-	setup_xfail "xscale-*-*"
-	setup_xfail "thumb-*-*"
+	setup_xfail "aarch64-*-*"
+	setup_xfail "aarch64_be-*-*"
+	setup_xfail "arm*-*-*"
     }
 
     # V850 targets need libgcc.a
@@ -271,8 +269,25 @@ proc run_srec_test { test objs } {
 	set flags "$flags -no-relax"
     }
 
-    if [istarget powerpc64*-*-*] {
-	set flags "$flags --no-toc-optimize"
+    # Epiphany needs some help too
+    if [istarget epiphany*-*-*] {
+	set flags "$flags --defsym _start=00000060"
+	setup_xfail "epiphany*-*-*"
+    }
+
+    if [istarget m681*-*-*] {
+	set flags "$flags --defsym _start=0xc000"
+	setup_xfail "m681*-*-*"
+    }
+
+    if [istarget m68hc1*-*-*] {
+	set flags "$flags --defsym _start=0xc000"
+	setup_xfail "m68hc1*-*-*"
+    }
+
+    if [istarget m9s12x*-*-*] {
+	set flags "$flags --defsym _start=0xc000"
+	setup_xfail "m9s12x*-*-*"
     }
 
     if { ![ld_simple_link $ld tmpdir/sr1 "$flags $objs"] \
@@ -342,13 +357,8 @@ setup_xfail "*-*-aix*" "*-*-xcoff*"
 
 # The S-record linker doesn't build ARM/Thumb stubs.
 setup_xfail "arm-*-coff"
-setup_xfail "strongarm*-*-coff"
-setup_xfail "xscale*-*-coff"
 setup_xfail "arm-*-pe*"
 # setup_xfail "arm-*elf*"
-setup_xfail "thumb-*-coff*"
-setup_xfail "thumb-*-pe*"
-setup_xfail "thumb-*-elf*"
 setup_xfail "arm*-*-linux*"
 
 # The S-record linker doesn't include the .{zda} sections.
@@ -374,6 +384,13 @@ setup_xfail "score-*-*"
 # The S-record linker doesn't support Blackfin ELF FDPIC ABI.
 setup_xfail "bfin-*-linux-uclibc"
 
+# On tile, we appear to be getting some random-seeming zeroing or 24-bit
+# rightshifts (!) in the output when directly generating S-records from
+# the linker.  Not clear what could be causing this but we don't
+# anticipate creating s-records (and could always use objcopy to
+# generate the format if need be).
+setup_xfail "tile*-*-*"
+
 run_srec_test $test1 "tmpdir/sr1.o tmpdir/sr2.o"
 
 # Now try linking a C++ program with global constructors and
@@ -395,8 +412,6 @@ setup_xfail "i*86-*-aout*"
 setup_xfail "mips*-*-irix5*" "mips*-*-irix6*" "mips*-*-linux*"
 setup_xfail "*-*-aix*" "*-*-xcoff*"
 setup_xfail "arm*-*-*"
-setup_xfail "strongarm*-*-*"
-setup_xfail "thumb-*-*"
 setup_xfail "v850*-*-elf"
 setup_xfail "alpha*-*-elf*" "alpha*-*-linux-*" "alpha*-*-gnu*"
 setup_xfail "alpha*-*-netbsd*"
@@ -405,5 +420,6 @@ setup_xfail "ia64-*-*"
 setup_xfail "*-*-cygwin*" "*-*-mingw*" "*-*-pe*" "*-*-winnt*"
 setup_xfail "score-*-*"
 setup_xfail "bfin-*-linux-uclibc"
+setup_xfail "tile*-*-*"
 
 run_srec_test $test2 "tmpdir/sr3.o"

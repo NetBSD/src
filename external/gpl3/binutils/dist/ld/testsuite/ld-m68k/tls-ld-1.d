@@ -17,6 +17,6 @@ Dynamic section at offset .* contains 10 entries:
  0x00000000 \(NULL\)                       0x0
 
 Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 2 entries:
- Offset     Info    Type            Sym.Value  Sym. Name \+ Addend
-[0-9a-f]+  [0-9a-f]+ R_68K_32          00000000   __tls_get_addr \+ 0
-[0-9a-f]+  [0-9a-f]+ R_68K_TLS_DTPMOD3                            00000000
+ Offset +Info +Type +Sym.Value +Sym. Name \+ Addend
+[0-9a-f]+ +[0-9a-f]+ R_68K_32 +0+ +__tls_get_addr \+ 0
+[0-9a-f]+ +[0-9a-f]+ R_68K_TLS_DTPMOD3 +0

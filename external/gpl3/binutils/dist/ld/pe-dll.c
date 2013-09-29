@@ -1,6 +1,6 @@
 /* Routines to help build PEI-format DLLs (Win32 etc)
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "safe-ctype.h"
 
 #include <time.h>
@@ -343,7 +344,7 @@ static const autofilter_entry_type autofilter_liblist[] =
   returning zero if so or -1 if not.  */
 static int libnamencmp (const char *libname, const autofilter_entry_type *afptr)
 {
-  if (strncmp (libname, afptr->name, afptr->len))
+  if (filename_ncmp (libname, afptr->name, afptr->len))
     return -1;
 
   libname += afptr->len;
@@ -528,16 +529,20 @@ is_import (const char* n)
 static int
 auto_export (bfd *abfd, def_file *d, const char *n)
 {
-  int i;
+  def_file_export key;
   struct exclude_list_struct *ex;
   const autofilter_entry_type *afptr;
-  const char * libname = 0;
+  const char * libname = NULL;
+
   if (abfd && abfd->my_archive)
     libname = lbasename (abfd->my_archive->filename);
 
-  for (i = 0; i < d->num_exports; i++)
-    if (strcmp (d->exports[i].name, n) == 0)
-      return 0;
+  key.name = key.its_name = (char *) n;
+
+  /* Return false if n is in the d->exports table.  */
+  if (bsearch (&key, d->exports, d->num_exports,
+               sizeof (pe_def_file->exports[0]), pe_export_sort))
+    return 0;
 
   if (pe_dll_do_default_excludes)
     {
@@ -619,13 +624,13 @@ auto_export (bfd *abfd, def_file *d, const char *n)
       if (ex->type == EXCLUDELIBS)
 	{
 	  if (libname
-	      && ((strcmp (libname, ex->string) == 0)
+	      && ((filename_cmp (libname, ex->string) == 0)
 		   || (strcasecmp ("ALL", ex->string) == 0)))
 	    return 0;
 	}
       else if (ex->type == EXCLUDEFORIMPLIB)
 	{
-	  if (strcmp (abfd->filename, ex->string) == 0)
+	  if (filename_cmp (abfd->filename, ex->string) == 0)
 	    return 0;
 	}
       else if (strcmp (n, ex->string) == 0)
@@ -643,6 +648,7 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
   bfd *b;
   struct bfd_section *s;
   def_file_export *e = 0;
+  bfd_boolean resort_needed;
 
   if (!pe_def_file)
     pe_def_file = def_file_empty ();
@@ -714,17 +720,14 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	      /* We should export symbols which are either global or not
 		 anything at all.  (.bss data is the latter)
 		 We should not export undefined symbols.  */
-	      bfd_boolean would_export = symbols[j]->section != &bfd_und_section
-		      && ((symbols[j]->flags & BSF_GLOBAL)
-			  || (symbols[j]->flags == 0));
-	      if (lang_elf_version_info && would_export)
-		{
-		  bfd_boolean hide = 0;
-		  char ofs = pe_details->underscored && symbols[j]->name[0] == '_';
-		  (void) bfd_find_version_for_sym (lang_elf_version_info,
-				symbols[j]->name + ofs, &hide);
-		  would_export = !hide;
-		}
+	      bfd_boolean would_export
+		= (symbols[j]->section != bfd_und_section_ptr
+		   && ((symbols[j]->flags & BSF_GLOBAL)
+		       || (symbols[j]->flags == 0)));
+	      if (link_info.version_info && would_export)
+		  would_export
+		    = !bfd_hide_sym_by_version (link_info.version_info,
+						symbols[j]->name);
 	      if (would_export)
 		{
 		  const char *sn = symbols[j]->name;
@@ -751,10 +754,14 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 
 		  if (auto_export (b, pe_def_file, sn))
 		    {
+		      int is_dup = 0;
 		      def_file_export *p;
-		      p=def_file_add_export (pe_def_file, sn, 0, -1, NULL);
+
+		      p = def_file_add_export (pe_def_file, sn, 0, -1,
+					       NULL, &is_dup);
 		      /* Fill data flag properly, from dlltool.c.  */
-		      p->flag_data = !(symbols[j]->flags & BSF_FUNCTION);
+		      if (!is_dup)
+		        p->flag_data = !(symbols[j]->flags & BSF_FUNCTION);
 		    }
 		}
 	    }
@@ -767,6 +774,8 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
   /* Don't create an empty export table.  */
   if (NE == 0)
     return;
+
+  resort_needed = FALSE;
 
   /* Canonicalize the export list.  */
   if (pe_dll_kill_ats)
@@ -788,9 +797,16 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	        einfo (_("%XCannot export %s: invalid export name\n"),
 		       pe_def_file->exports[i].name);
 	      pe_def_file->exports[i].name = tmp;
+              resort_needed = TRUE;
 	    }
 	}
     }
+
+  /* Re-sort the exports table as we have possibly changed the order
+     by removing leading @.  */
+  if (resort_needed)
+    qsort (pe_def_file->exports, NE, sizeof (pe_def_file->exports[0]),
+           pe_export_sort);
 
   if (pe_dll_stdcall_aliases)
     {
@@ -801,6 +817,7 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 
 	  if (strchr (pe_def_file->exports[i].name, '@'))
 	    {
+	      int is_dup = 1;
 	      int lead_at = (*pe_def_file->exports[i].name == '@');
 	      char *tmp = xstrdup (pe_def_file->exports[i].name + lead_at);
 
@@ -808,9 +825,9 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	      if (auto_export (NULL, pe_def_file, tmp))
 		def_file_add_export (pe_def_file, tmp,
 				     pe_def_file->exports[i].internal_name,
-				     -1, NULL);
-	      else
-		free (tmp);
+				     -1, NULL, &is_dup);
+	      if (is_dup)
+	        free (tmp);
 	    }
 	}
     }
@@ -818,18 +835,6 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
   /* Convenience, but watch out for it changing.  */
   e = pe_def_file->exports;
 
-  exported_symbol_offsets = xmalloc (NE * sizeof (bfd_vma));
-  exported_symbol_sections = xmalloc (NE * sizeof (struct bfd_section *));
-
-  memset (exported_symbol_sections, 0, NE * sizeof (struct bfd_section *));
-  max_ordinal = 0;
-  min_ordinal = 65536;
-  count_exported = 0;
-  count_exported_byname = 0;
-  count_with_ordinals = 0;
-
-  qsort (pe_def_file->exports, NE, sizeof (pe_def_file->exports[0]),
-	 pe_export_sort);
   for (i = 0, j = 0; i < NE; i++)
     {
       if (i > 0 && strcmp (e[i].name, e[i - 1].name) == 0)
@@ -858,6 +863,12 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	  e[j - 1].flag_constant |= e[i].flag_constant;
 	  e[j - 1].flag_noname |= e[i].flag_noname;
 	  e[j - 1].flag_data |= e[i].flag_data;
+	  if (e[i].name)
+	    free (e[i].name);
+	  if (e[i].internal_name)
+	    free (e[i].internal_name);
+	  if (e[i].its_name)
+	    free (e[i].its_name);
 	}
       else
 	{
@@ -867,6 +878,16 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	}
     }
   pe_def_file->num_exports = j;	/* == NE */
+
+  exported_symbol_offsets = xmalloc (NE * sizeof (bfd_vma));
+  exported_symbol_sections = xmalloc (NE * sizeof (struct bfd_section *));
+
+  memset (exported_symbol_sections, 0, NE * sizeof (struct bfd_section *));
+  max_ordinal = 0;
+  min_ordinal = 65536;
+  count_exported = 0;
+  count_exported_byname = 0;
+  count_with_ordinals = 0;
 
   for (i = 0; i < NE; i++)
     {
@@ -1331,7 +1352,7 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 
 	  /* I don't know why there would be a reloc for these, but I've
 	     seen it happen - DJ  */
-	  if (s->output_section == &bfd_abs_section)
+	  if (s->output_section == bfd_abs_section_ptr)
 	    continue;
 
 	  if (s->output_section->vma == 0)
@@ -1388,10 +1409,19 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 			     no reason we'd want a reference to any absolute
 			     address to get relocated during rebasing).  */
 			  if (!h2 || h2->root.type == bfd_link_hash_undefined
-				|| h2->root.u.def.section == &bfd_abs_section)
+				|| h2->root.u.def.section == bfd_abs_section_ptr)
 			    continue;
 			}
 		      else if (!blhe || blhe->type != bfd_link_hash_defined)
+			continue;
+		    }
+		  /* Nor for Dwarf FDE references to discarded sections.  */
+		  else if (bfd_is_abs_section (sym->section->output_section))
+		    {
+		      /* We only ignore relocs from .eh_frame sections, as
+			 they are discarded by the final link rather than
+			 resolved against the kept section.  */
+		      if (!strcmp (s->name, ".eh_frame"))
 			continue;
 		    }
 
@@ -1738,7 +1768,7 @@ static int tmp_seq2;
 static const char *dll_filename;
 static char *dll_symname;
 
-#define UNDSEC (asection *) &bfd_und_section
+#define UNDSEC bfd_und_section_ptr
 
 static asection *
 quick_section (bfd *abfd, const char *name, int flags, int align)
@@ -2683,8 +2713,9 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
       return;
     }
 
-  /* xgettext:c-format */
-  info_msg (_("Creating library file: %s\n"), impfilename);
+  if (verbose)
+    /* xgettext:c-format */
+    info_msg (_("Creating library file: %s\n"), impfilename);
 
   bfd_set_format (outarch, bfd_archive);
   outarch->has_armap = 1;
@@ -2702,7 +2733,7 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
 	{
 	  if (ex->type != EXCLUDEFORIMPLIB)
 	    continue;
-	  found = (strcmp (ex->string, ibfd->filename) == 0);
+	  found = (filename_cmp (ex->string, ibfd->filename) == 0);
 	}
       /* If it matched, we must open a fresh BFD for it (the original
         input BFD is still needed for the DLL's final link) and add
@@ -2732,7 +2763,7 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
 	      newbfd = NULL;
 	      while ((newbfd = bfd_openr_next_archived_file (arbfd, newbfd)) != 0)
 		{
-		  if (strcmp (newbfd->filename, ibfd->filename) == 0)
+		  if (filename_cmp (newbfd->filename, ibfd->filename) == 0)
 		    break;
 		}
 	      if (!newbfd)
@@ -2788,36 +2819,160 @@ pe_dll_generate_implib (def_file *def, const char *impfilename, struct bfd_link_
     }
 }
 
-static struct bfd_link_hash_entry *found_sym;
+static int undef_count = 0;
+
+struct key_value
+{
+  char *key;
+  const char *oname;
+};
+
+static struct key_value *udef_table;
+
+static int undef_sort_cmp (const void *l1, const void *r1)
+{
+  const struct key_value *l = l1;
+  const struct key_value *r = r1;
+
+  return strcmp (l->key, r->key);
+}
+
+static struct bfd_link_hash_entry *
+pe_find_cdecl_alias_match (struct bfd_link_info *linfo, char *name)
+{
+  struct bfd_link_hash_entry *h = NULL;
+  struct key_value *kv;
+  struct key_value key;
+  char *at, *lname = (char *) alloca (strlen (name) + 3);
+  
+  strcpy (lname, name);
+
+  at = strchr (lname + (lname[0] == '@'), '@');
+  if (at)
+    at[1] = 0;
+
+  key.key = lname;
+  kv = bsearch (&key, udef_table, undef_count, sizeof (struct key_value),
+		undef_sort_cmp);
+
+  if (kv)
+    {
+      h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
+      if (h->type == bfd_link_hash_undefined)
+        return h;
+    }
+  if (lname[0] == '?')
+    return NULL;
+  if (at || lname[0] == '@')
+    {
+      if (lname[0] == '@')
+        {
+	  if (pe_details->underscored)
+	    lname[0] = '_';
+	  else
+	    strcpy (lname, lname + 1);
+	  key.key = lname;
+	  kv = bsearch (&key, udef_table, undef_count,
+			sizeof (struct key_value), undef_sort_cmp);
+	  if (kv)
+	    {
+	      h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
+	      if (h->type == bfd_link_hash_undefined)
+		return h;
+	    }
+	}
+      if (at)
+        *strchr (lname, '@') = 0;
+      key.key = lname;
+      kv = bsearch (&key, udef_table, undef_count,
+		    sizeof (struct key_value), undef_sort_cmp);
+      if (kv)
+	{
+	  h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
+	  if (h->type == bfd_link_hash_undefined)
+	    return h;
+	}
+      return NULL;
+    }
+
+  strcat (lname, "@");
+  key.key = lname;
+  kv = bsearch (&key, udef_table, undef_count,
+		sizeof (struct key_value), undef_sort_cmp);
+
+  if (kv)
+    {
+      h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
+      if (h->type == bfd_link_hash_undefined)
+	return h;
+    }
+
+  if (lname[0] == '_' && pe_details->underscored)
+    lname[0] = '@';
+  else
+    {
+      memmove (lname + 1, lname, strlen (lname) + 1);
+      lname[0] = '@';
+    }
+  key.key = lname;
+
+  kv = bsearch (&key, udef_table, undef_count,
+		sizeof (struct key_value), undef_sort_cmp);
+
+  if (kv)
+    {
+      h = bfd_link_hash_lookup (linfo->hash, kv->oname, FALSE, FALSE, FALSE);
+      if (h->type == bfd_link_hash_undefined)
+        return h;
+    }
+  
+  return NULL;
+}
 
 static bfd_boolean
-pe_undef_alias_cdecl_match (struct bfd_link_hash_entry *h, void *inf)
+pe_undef_count (struct bfd_link_hash_entry *h ATTRIBUTE_UNUSED,
+                void *inf ATTRIBUTE_UNUSED)
 {
-  int sl;
-  char *string = inf;
-  const char *hs = h->root.string;
+  if (h->type == bfd_link_hash_undefined)
+    undef_count++;
+  return TRUE;
+}
 
-  sl = strlen (string);
-  if (h->type == bfd_link_hash_undefined
-      && ((*hs == '@' && (!pe_details->underscored || *string == '_')
-	   && strncmp (hs + 1, string + (pe_details->underscored != 0),
-		       sl - (pe_details->underscored != 0)) == 0)
-	  || strncmp (hs, string, sl) == 0)
-      && h->root.string[sl] == '@')
+static bfd_boolean
+pe_undef_fill (struct bfd_link_hash_entry *h, void *inf ATTRIBUTE_UNUSED)
+{
+  if (h->type == bfd_link_hash_undefined)
     {
-      found_sym = h;
-      return FALSE;
+      char *at;
+
+      udef_table[undef_count].key = xstrdup (h->root.string);
+      at = strchr (udef_table[undef_count].key
+		   + (udef_table[undef_count].key[0] == '@'), '@');
+      if (at)
+        at[1] = 0;
+      udef_table[undef_count].oname = h->root.string;
+      undef_count++;
     }
   return TRUE;
 }
 
-static struct bfd_link_hash_entry *
-pe_find_cdecl_alias_match (char *name)
+static void
+pe_create_undef_table (void)
 {
-  found_sym = 0;
-  bfd_link_hash_traverse (link_info.hash, pe_undef_alias_cdecl_match,
-			  (char *) name);
-  return found_sym;
+  undef_count = 0;
+
+  /* count undefined symbols */
+
+  bfd_link_hash_traverse (link_info.hash, pe_undef_count, "");
+
+  /* create and fill the corresponding table */
+  udef_table = xmalloc (undef_count * sizeof (struct key_value));
+
+  undef_count = 0;
+  bfd_link_hash_traverse (link_info.hash, pe_undef_fill, "");
+
+  /* sort items */
+  qsort (udef_table, undef_count, sizeof (struct key_value), undef_sort_cmp);
 }
 
 static void
@@ -2838,99 +2993,112 @@ add_bfd_to_link (bfd *abfd, const char *name, struct bfd_link_info *linfo)
 void
 pe_process_import_defs (bfd *output_bfd, struct bfd_link_info *linfo)
 {
+  int i, j;
   def_file_module *module;
+  def_file_import *imp;
 
   pe_dll_id_target (bfd_get_target (output_bfd));
 
   if (!pe_def_file)
     return;
 
+  imp = pe_def_file->imports;
+
+  pe_create_undef_table ();
+
   for (module = pe_def_file->modules; module; module = module->next)
     {
-      int i, do_this_dll;
+      int do_this_dll = 0;
+
+      for (i = 0; i < pe_def_file->num_imports && imp[i].module != module; i++)
+	;
+      if (i >= pe_def_file->num_imports)
+        continue;
 
       dll_filename = module->name;
       dll_symname = xstrdup (module->name);
-      for (i = 0; dll_symname[i]; i++)
-	if (!ISALNUM (dll_symname[i]))
-	  dll_symname[i] = '_';
+      for (j = 0; dll_symname[j]; j++)
+	if (!ISALNUM (dll_symname[j]))
+	  dll_symname[j] = '_';
 
-      do_this_dll = 0;
+      for (; i < pe_def_file->num_imports && imp[i].module == module; i++)
+	{
+	  def_file_export exp;
+	  struct bfd_link_hash_entry *blhe;
+	  int lead_at = (*imp[i].internal_name == '@');
+	  /* See if we need this import.  */
+	  size_t len = strlen (imp[i].internal_name);
+	  char *name = xmalloc (len + 2 + 6);
+	  bfd_boolean include_jmp_stub = FALSE;
+	  bfd_boolean is_cdecl = FALSE;
+	  bfd_boolean is_undef = FALSE;
 
-      for (i = 0; i < pe_def_file->num_imports; i++)
-	if (pe_def_file->imports[i].module == module)
-	  {
-	    def_file_export exp;
-	    struct bfd_link_hash_entry *blhe;
-	    int lead_at = (*pe_def_file->imports[i].internal_name == '@');
-	    /* See if we need this import.  */
-	    size_t len = strlen (pe_def_file->imports[i].internal_name);
-	    char *name = xmalloc (len + 2 + 6);
-	    bfd_boolean include_jmp_stub = FALSE;
-	    bfd_boolean is_cdecl = FALSE;
-	    if (!lead_at && strchr (pe_def_file->imports[i].internal_name, '@') == NULL)
-	        is_cdecl = TRUE;
+	  if (!lead_at && strchr (imp[i].internal_name, '@') == NULL)
+	      is_cdecl = TRUE;
 
- 	    if (lead_at)
-	      sprintf (name, "%s",
-		       pe_def_file->imports[i].internal_name);
-	    else
-	      sprintf (name, "%s%s",U (""),
-		       pe_def_file->imports[i].internal_name);
+	  if (lead_at)
+	    sprintf (name, "%s", imp[i].internal_name);
+	  else
+	    sprintf (name, "%s%s",U (""), imp[i].internal_name);
 
-	    blhe = bfd_link_hash_lookup (linfo->hash, name,
-					 FALSE, FALSE, FALSE);
+	  blhe = bfd_link_hash_lookup (linfo->hash, name,
+				       FALSE, FALSE, FALSE);
 
-	    /* Include the jump stub for <sym> only if the <sym>
-	       is undefined.  */
-	    if (!blhe || (blhe && blhe->type != bfd_link_hash_undefined))
-	      {
-		if (lead_at)
-		  sprintf (name, "%s%s", "__imp_",
-			   pe_def_file->imports[i].internal_name);
-		else
-		  sprintf (name, "%s%s%s", "__imp_", U (""),
-			   pe_def_file->imports[i].internal_name);
+	  /* Include the jump stub for <sym> only if the <sym>
+	     is undefined.  */
+	  if (!blhe || (blhe && blhe->type != bfd_link_hash_undefined))
+	    {
+	      if (lead_at)
+		sprintf (name, "%s%s", "__imp_", imp[i].internal_name);
+	      else
+		sprintf (name, "%s%s%s", "__imp_", U (""),
+			 imp[i].internal_name);
 
-		blhe = bfd_link_hash_lookup (linfo->hash, name,
-					     FALSE, FALSE, FALSE);
-	      }
-	    else
+	      blhe = bfd_link_hash_lookup (linfo->hash, name,
+					   FALSE, FALSE, FALSE);
+	      if (blhe)
+	        is_undef = (blhe->type == bfd_link_hash_undefined);
+	    }
+	  else
+	    {
 	      include_jmp_stub = TRUE;
+	      is_undef = (blhe->type == bfd_link_hash_undefined);
+	    }
 
-	    if (is_cdecl && !blhe)
-	      {
-		sprintf (name, "%s%s",U (""),
-		         pe_def_file->imports[i].internal_name);
-		blhe = pe_find_cdecl_alias_match (name);
-		include_jmp_stub = TRUE;
-	      }
+	  if (is_cdecl && (!blhe || (blhe && blhe->type != bfd_link_hash_undefined)))
+	    {
+	      sprintf (name, "%s%s",U (""), imp[i].internal_name);
+	      blhe = pe_find_cdecl_alias_match (linfo, name);
+	      include_jmp_stub = TRUE;
+	      if (blhe)
+	        is_undef = (blhe->type == bfd_link_hash_undefined);
+	    }
 
-	    free (name);
+	  free (name);
 
-	    if (blhe && blhe->type == bfd_link_hash_undefined)
-	      {
-		bfd *one;
-		/* We do.  */
-		if (!do_this_dll)
-		  {
-		    bfd *ar_head = make_head (output_bfd);
-		    add_bfd_to_link (ar_head, ar_head->filename, linfo);
-		    do_this_dll = 1;
-		  }
-		exp.internal_name = pe_def_file->imports[i].internal_name;
-		exp.name = pe_def_file->imports[i].name;
-		exp.its_name = pe_def_file->imports[i].its_name;
-		exp.ordinal = pe_def_file->imports[i].ordinal;
-		exp.hint = exp.ordinal >= 0 ? exp.ordinal : 0;
-		exp.flag_private = 0;
-		exp.flag_constant = 0;
-		exp.flag_data = pe_def_file->imports[i].data;
-		exp.flag_noname = exp.name ? 0 : 1;
-		one = make_one (&exp, output_bfd, (! exp.flag_data) && include_jmp_stub);
-		add_bfd_to_link (one, one->filename, linfo);
-	      }
-	  }
+	  if (is_undef)
+	    {
+	      bfd *one;
+	      /* We do.  */
+	      if (!do_this_dll)
+		{
+		  bfd *ar_head = make_head (output_bfd);
+		  add_bfd_to_link (ar_head, ar_head->filename, linfo);
+		  do_this_dll = 1;
+		}
+	      exp.internal_name = imp[i].internal_name;
+	      exp.name = imp[i].name;
+	      exp.its_name = imp[i].its_name;
+	      exp.ordinal = imp[i].ordinal;
+	      exp.hint = exp.ordinal >= 0 ? exp.ordinal : 0;
+	      exp.flag_private = 0;
+	      exp.flag_constant = 0;
+	      exp.flag_data = imp[i].data;
+	      exp.flag_noname = exp.name ? 0 : 1;
+	      one = make_one (&exp, output_bfd, (! exp.flag_data) && include_jmp_stub);
+	      add_bfd_to_link (one, one->filename, linfo);
+	    }
+	}
       if (do_this_dll)
 	{
 	  bfd *ar_tail = make_tail (output_bfd);
@@ -2939,6 +3107,13 @@ pe_process_import_defs (bfd *output_bfd, struct bfd_link_info *linfo)
 
       free (dll_symname);
     }
+
+  while (undef_count)
+    {
+      --undef_count;
+      free (udef_table[undef_count].key);
+    }
+  free (udef_table);
 }
 
 /* We were handed a *.DLL file.  Parse it and turn it into a set of
@@ -3146,6 +3321,7 @@ pe_implied_import_dll (const char *filename)
 	 exported in buggy auto-import releases.  */
       if (! CONST_STRNEQ (erva + name_rva, "__nm_"))
  	{
+	  int is_dup = 0;
  	  /* is_data is true if the address is in the data, rdata or bss
 	     segment.  */
  	  is_data =
@@ -3154,9 +3330,10 @@ pe_implied_import_dll (const char *filename)
 	    || (func_rva >= bss_start && func_rva < bss_end);
 
 	  imp = def_file_add_import (pe_def_file, erva + name_rva,
-				     dllname, i, 0, NULL);
+				     dllname, i, NULL, NULL, &is_dup);
  	  /* Mark symbol type.  */
- 	  imp->data = is_data;
+ 	  if (!is_dup)
+ 	    imp->data = is_data;
 
  	  if (pe_dll_extra_pe_debug)
 	    printf ("%s dll-name: %s sym: %s addr: 0x%lx %s\n",

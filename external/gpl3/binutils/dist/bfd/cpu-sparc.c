@@ -37,6 +37,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[1],
   },
   {
@@ -51,6 +52,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[2],
   },
   {
@@ -65,6 +67,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[3],
   },
   {
@@ -79,6 +82,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[4],
   },
   {
@@ -93,6 +97,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[5],
   },
   {
@@ -107,6 +112,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[6],
   },
   {
@@ -121,6 +127,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[7],
   },
   {
@@ -135,6 +142,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[8],
   },
   {
@@ -149,6 +157,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE,
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     0,
   }
 };
@@ -166,5 +175,6 @@ const bfd_arch_info_type bfd_sparc_arch =
     TRUE, /* the default */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[0],
   };

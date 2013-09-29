@@ -39,16 +39,16 @@ foo:
 	mvcos	4095(%r5),4095(%r10),%r6
 	lptea	%r6,%r9,%r5,15
 	sske	%r6,%r9,15
-	cu24	%r6,%r9,15
-	cu21	%r6,%r9,15
-	cu42	%r6,%r9
-	cu41	%r6,%r9
-	cu12	%r6,%r9,15
-	cu14	%r6,%r9,15
+	cu24	%r6,%r8,15
+	cu21	%r6,%r8,15
+	cu42	%r6,%r8
+	cu41	%r6,%r8
+	cu12	%r6,%r8,15
+	cu14	%r6,%r8,15
 	myr	%f6,%f9,%f5
 	myhr	%f6,%f9,%f5
 	mylr	%f6,%f9,%f5
-	my	%f6,%f9,4095(%r5,%r10)
+	my	%f5,%f9,4095(%r5,%r10)
 	myh	%f6,%f9,4095(%r5,%r10)
 	myl	%f6,%f9,4095(%r5,%r10)
 	mayr	%f6,%f9,%f5

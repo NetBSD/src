@@ -1,6 +1,6 @@
 // stringpool.h -- a string pool for gold    -*- C++ -*-
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -218,6 +218,11 @@ class Stringpool_template
   // *PKEY to the key for the string.
   const Stringpool_char*
   add(const Stringpool_char* s, bool copy, Key* pkey);
+
+  // Add the string S to the pool.
+  const Stringpool_char*
+  add(const std::basic_string<Stringpool_char>& s, bool copy, Key* pkey)
+  { return this->add_with_length(s.data(), s.size(), copy, pkey); }
 
   // Add string S of length LEN characters to the pool.  If COPY is
   // true, S need not be null terminated.

@@ -1,6 +1,6 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
    Copyright 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007 Free Software Foundation, Inc.
+   2005, 2006, 2007, 2011  Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.
@@ -491,7 +491,7 @@ nlm_object_p (bfd *abfd)
 		  NLM_SIGNATURE_SIZE) != 0)
     goto got_wrong_format_error;
 
-  /* There's no supported way to discover the endianess of an NLM, so test for
+  /* There's no supported way to discover the endianness of an NLM, so test for
      a sane version number after doing byte swapping appropriate for this
      XVEC.  (Hack alert!)  */
   if (i_fxdhdrp->version > 0xFFFF)

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+# Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
 # Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -29,6 +29,7 @@ fragment <<EOF
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf64-ppc.h"
+#include "ldlex.h"
 
 /* Fake input file for stubs.  */
 static lang_input_statement_type *stub_file;
@@ -61,6 +62,15 @@ static int no_multi_toc = 0;
 /* Whether to sort input toc and got sections.  */
 static int no_toc_sort = 0;
 
+/* Set if PLT call stubs should load r11.  */
+static int plt_static_chain = ${DEFAULT_PLT_STATIC_CHAIN-0};
+
+/* Set if PLT call stubs need to be thread safe on power7+.  */
+static int plt_thread_safe = -1;
+
+/* Set if individual PLT call stubs should be aligned.  */
+static int plt_stub_align = 0;
+
 /* Whether to emit symbols for stubs.  */
 static int emit_stub_syms = -1;
 
@@ -91,7 +101,7 @@ ppc_create_output_section_statements (void)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%F%P: can not create BFD %E\n");
+      einfo ("%F%P: can not create BFD: %E\n");
       return;
     }
 
@@ -246,7 +256,7 @@ ppc_before_allocation (void)
     {
       if (!no_opd_opt
 	  && !ppc64_elf_edit_opd (&link_info, non_overlapping_opd))
-	einfo ("%X%P: can not edit %s %E\n", "opd");
+	einfo ("%X%P: can not edit %s: %E\n", "opd");
 
       if (ppc64_elf_tls_setup (&link_info, no_tls_get_addr_opt, &no_multi_toc)
 	  && !no_tls_opt)
@@ -265,7 +275,7 @@ ppc_before_allocation (void)
 	  prelim_size_sections ();
 
 	  if (!ppc64_elf_edit_toc (&link_info))
-	    einfo ("%X%P: can not edit %s %E\n", "toc");
+	    einfo ("%X%P: can not edit %s: %E\n", "toc");
 	}
 
       if (!no_toc_sort)
@@ -375,7 +385,9 @@ ppc_add_stub_section (const char *stub_sec_name, asection *input_section)
 	   | SEC_HAS_CONTENTS | SEC_IN_MEMORY | SEC_KEEP);
   stub_sec = bfd_make_section_anyway_with_flags (stub_file->the_bfd,
 						 stub_sec_name, flags);
-  if (stub_sec == NULL)
+  if (stub_sec == NULL
+      || !bfd_set_section_alignment (stub_file->the_bfd, stub_sec,
+				     plt_stub_align > 5 ? plt_stub_align : 5))
     goto err_ret;
 
   output_section = input_section->output_section;
@@ -384,7 +396,7 @@ ppc_add_stub_section (const char *stub_sec_name, asection *input_section)
 
   info.input_section = input_section;
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, os);
+  lang_add_section (&info.add, stub_sec, NULL, os);
 
   if (info.add.head == NULL)
     goto err_ret;
@@ -424,7 +436,7 @@ build_toc_list (lang_statement_union_type *statement)
     {
       asection *i = statement->input_section.section;
 
-      if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
+      if (i->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
 	  && (i->flags & SEC_EXCLUDE) == 0
 	  && i->output_section == toc_section)
 	{
@@ -442,7 +454,7 @@ build_section_lists (lang_statement_union_type *statement)
     {
       asection *i = statement->input_section.section;
 
-      if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
+      if (!((lang_input_statement_type *) i->owner->usrdata)->flags.just_syms
 	  && (i->flags & SEC_EXCLUDE) == 0
 	  && i->output_section != NULL
 	  && i->output_section->owner == link_info.output_bfd)
@@ -500,7 +512,9 @@ gld${EMULATION_NAME}_after_allocation (void)
 	    einfo ("%P: .init/.fini fragments use differing TOC pointers\n");
 
 	  /* Call into the BFD backend to do the real work.  */
-	  if (!ppc64_elf_size_stubs (&link_info, group_size))
+	  if (!ppc64_elf_size_stubs (&link_info, group_size,
+				     plt_static_chain, plt_thread_safe,
+				     plt_stub_align))
 	    einfo ("%X%P: can not size stub section: %E\n");
 	}
     }
@@ -525,14 +539,6 @@ gld${EMULATION_NAME}_finish (void)
      _start.  If _start is missing, default to the first function
      descriptor in the .opd section.  */
   entry_section = ".opd";
-
-  if (link_info.relocatable)
-    {
-      asection *toc = bfd_get_section_by_name (link_info.output_bfd, ".toc");
-      if (toc != NULL
-	  && bfd_section_size (link_info.output_bfd, toc) > 0x10000)
-	einfo ("%X%P: TOC section size exceeds 64k\n");
-    }
 
   if (stub_added)
     {
@@ -649,9 +655,15 @@ fi
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_STUBGROUP_SIZE		301
-#define OPTION_STUBSYMS			(OPTION_STUBGROUP_SIZE + 1)
+PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
+#define OPTION_STUBGROUP_SIZE		321
+#define OPTION_PLT_STATIC_CHAIN		(OPTION_STUBGROUP_SIZE + 1)
+#define OPTION_NO_PLT_STATIC_CHAIN	(OPTION_PLT_STATIC_CHAIN + 1)
+#define OPTION_PLT_THREAD_SAFE		(OPTION_NO_PLT_STATIC_CHAIN + 1)
+#define OPTION_NO_PLT_THREAD_SAFE	(OPTION_PLT_THREAD_SAFE + 1)
+#define OPTION_PLT_ALIGN		(OPTION_NO_PLT_THREAD_SAFE + 1)
+#define OPTION_NO_PLT_ALIGN		(OPTION_PLT_ALIGN + 1)
+#define OPTION_STUBSYMS			(OPTION_NO_PLT_ALIGN + 1)
 #define OPTION_NO_STUBSYMS		(OPTION_STUBSYMS + 1)
 #define OPTION_DOTSYMS			(OPTION_NO_STUBSYMS + 1)
 #define OPTION_NO_DOTSYMS		(OPTION_DOTSYMS + 1)
@@ -664,8 +676,14 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_NON_OVERLAPPING_OPD	(OPTION_NO_TOC_SORT + 1)
 '
 
-PARSE_AND_LIST_LONGOPTS='
+PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "stub-group-size", required_argument, NULL, OPTION_STUBGROUP_SIZE },
+  { "plt-static-chain", no_argument, NULL, OPTION_PLT_STATIC_CHAIN },
+  { "no-plt-static-chain", no_argument, NULL, OPTION_NO_PLT_STATIC_CHAIN },
+  { "plt-thread-safe", no_argument, NULL, OPTION_PLT_THREAD_SAFE },
+  { "no-plt-thread-safe", no_argument, NULL, OPTION_NO_PLT_THREAD_SAFE },
+  { "plt-align", optional_argument, NULL, OPTION_PLT_ALIGN },
+  { "no-plt-align", no_argument, NULL, OPTION_NO_PLT_ALIGN },
   { "emit-stub-syms", no_argument, NULL, OPTION_STUBSYMS },
   { "no-emit-stub-syms", no_argument, NULL, OPTION_NO_STUBSYMS },
   { "dotsyms", no_argument, NULL, OPTION_DOTSYMS },
@@ -679,7 +697,7 @@ PARSE_AND_LIST_LONGOPTS='
   { "non-overlapping-opd", no_argument, NULL, OPTION_NON_OVERLAPPING_OPD },
 '
 
-PARSE_AND_LIST_OPTIONS='
+PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
   fprintf (file, _("\
   --stub-group-size=N         Maximum size of a group of input sections that\n\
                                 can be handled by one stub section.  A negative\n\
@@ -689,6 +707,24 @@ PARSE_AND_LIST_OPTIONS='
                                 before, and one after each stub section.\n\
                                 Values of +/-1 indicate the linker should\n\
                                 choose suitable defaults.\n"
+		   ));
+  fprintf (file, _("\
+  --plt-static-chain          PLT call stubs should load r11.${DEFAULT_PLT_STATIC_CHAIN- (default)}\n"
+		   ));
+  fprintf (file, _("\
+  --no-plt-static-chain       PLT call stubs should not load r11.${DEFAULT_PLT_STATIC_CHAIN+ (default)}\n"
+		   ));
+  fprintf (file, _("\
+  --plt-thread-safe           PLT call stubs with load-load barrier.\n"
+		   ));
+  fprintf (file, _("\
+  --no-plt-thread-safe        PLT call stubs without barrier.\n"
+		   ));
+  fprintf (file, _("\
+  --plt-align [=<align>]      Align PLT call stubs to fit cache lines.\n"
+		   ));
+  fprintf (file, _("\
+  --no-plt-align              Dont'\''t align individual PLT call stubs.\n"
 		   ));
   fprintf (file, _("\
   --emit-stub-syms            Label linker stubs with a symbol.\n"
@@ -729,7 +765,7 @@ PARSE_AND_LIST_OPTIONS='
 		   ));
 '
 
-PARSE_AND_LIST_ARGS_CASES='
+PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
     case OPTION_STUBGROUP_SIZE:
       {
 	const char *end;
@@ -737,6 +773,39 @@ PARSE_AND_LIST_ARGS_CASES='
         if (*end)
 	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
       }
+      break;
+
+    case OPTION_PLT_STATIC_CHAIN:
+      plt_static_chain = 1;
+      break;
+
+    case OPTION_NO_PLT_STATIC_CHAIN:
+      plt_static_chain = 0;
+      break;
+
+    case OPTION_PLT_THREAD_SAFE:
+      plt_thread_safe = 1;
+      break;
+
+    case OPTION_NO_PLT_THREAD_SAFE:
+      plt_thread_safe = 0;
+      break;
+
+    case OPTION_PLT_ALIGN:
+      if (optarg != NULL)
+	{
+	  char *end;
+	  unsigned long val = strtoul (optarg, &end, 0);
+	  if (*end || val > 8)
+	    einfo (_("%P%F: invalid --plt-align `%s'\''\n"), optarg);
+	  plt_stub_align = val;
+	}
+      else
+	plt_stub_align = 5;
+      break;
+
+    case OPTION_NO_PLT_ALIGN:
+      plt_stub_align = 0;
       break;
 
     case OPTION_STUBSYMS:
@@ -782,6 +851,16 @@ PARSE_AND_LIST_ARGS_CASES='
     case OPTION_NON_OVERLAPPING_OPD:
       non_overlapping_opd = 1;
       break;
+
+    case OPTION_TRADITIONAL_FORMAT:
+      no_tls_opt = 1;
+      no_tls_get_addr_opt = 1;
+      no_opd_opt = 1;
+      no_toc_opt = 1;
+      no_multi_toc = 1;
+      no_toc_sort = 1;
+      plt_static_chain = 1;
+      return FALSE;
 '
 
 # Put these extra ppc64elf routines in ld_${EMULATION_NAME}_emulation

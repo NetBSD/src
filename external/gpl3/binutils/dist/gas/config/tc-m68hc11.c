@@ -1,7 +1,9 @@
 /* tc-m68hc11.c -- Assembler code for the Motorola 68HC11 & 68HC12.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010,
+   2011, 2012
    Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
+   XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
    This file is part of GAS, the GNU Assembler.
 
@@ -65,7 +67,8 @@ const char FLT_CHARS[] = "dD";
    How many bytes this mode will add to the size of the frag.
    Which mode to go to if the offset won't fit in this one.  */
 
-relax_typeS md_relax_table[] = {
+relax_typeS md_relax_table[] =
+{
   {1, 1, 0, 0},			/* First entries aren't used.  */
   {1, 1, 0, 0},			/* For no good reason except.  */
   {1, 1, 0, 0},			/* that the VAX doesn't either.  */
@@ -116,7 +119,8 @@ relax_typeS md_relax_table[] = {
 };
 
 /* 68HC11 and 68HC12 registers.  They are numbered according to the 68HC12.  */
-typedef enum register_id {
+typedef enum register_id
+{
   REG_NONE = -1,
   REG_A = 0,
   REG_B = 1,
@@ -125,17 +129,30 @@ typedef enum register_id {
   REG_X = 5,
   REG_Y = 6,
   REG_SP = 7,
-  REG_PC = 8
+  REG_PC = 8,
+  REG_R0 = 0,
+  REG_R1 = 1,
+  REG_R2 = 2,
+  REG_R3 = 3,
+  REG_R4 = 4,
+  REG_R5 = 5,
+  REG_R6 = 6,
+  REG_R7 = 7,
+  REG_SP_XG = 8,
+  REG_PC_XG = 9,
+  REG_CCR_XG = 10
 } register_id;
 
-typedef struct operand {
+typedef struct operand
+{
   expressionS exp;
   register_id reg1;
   register_id reg2;
   int mode;
 } operand;
 
-struct m68hc11_opcode_def {
+struct m68hc11_opcode_def
+{
   long format;
   int min_operands;
   int max_operands;
@@ -147,16 +164,28 @@ struct m68hc11_opcode_def {
 static struct m68hc11_opcode_def *m68hc11_opcode_defs = 0;
 static int m68hc11_nb_opcode_defs = 0;
 
-typedef struct alias {
+typedef struct alias
+{
   const char *name;
   const char *alias;
 } alias;
 
-static alias alias_opcodes[] = {
+static alias alias_opcodes[] =
+{
   {"cpd", "cmpd"},
   {"cpx", "cmpx"},
   {"cpy", "cmpy"},
   {0, 0}
+};
+
+struct m9s12xg_opcode_def
+{
+  long format;
+  int min_operands;
+  int max_operands;
+  int nb_modes;
+  int used;
+  struct m9s12xg_opcode *opcode;
 };
 
 /* Local functions.  */
@@ -173,6 +202,7 @@ static int get_operand (operand *, int, long);
 static void fixup8 (expressionS *, int, int);
 static void fixup16 (expressionS *, int, int);
 static void fixup24 (expressionS *, int, int);
+static void fixup8_xg (expressionS *, int, int);
 static unsigned char convert_branch (unsigned char);
 static char *m68hc11_new_insn (int);
 static void build_dbranch_insn (struct m68hc11_opcode *,
@@ -185,6 +215,7 @@ static struct m68hc11_opcode *find (struct m68hc11_opcode_def *,
 static struct m68hc11_opcode *find_opcode (struct m68hc11_opcode_def *,
                                            operand *, int *);
 static void build_jump_insn (struct m68hc11_opcode *, operand *, int, int);
+static void build_insn_xg (struct m68hc11_opcode *, operand *, int);
 static void build_insn (struct m68hc11_opcode *, operand *, int);
 static int relaxable_symbol (symbolS *);
 
@@ -193,6 +224,9 @@ static void s_m68hc11_relax (int);
 
 /* Pseudo op to control the ELF flags.  */
 static void s_m68hc11_mode (int);
+
+/* Process directives specified via pseudo ops.  */
+static void s_m68hc11_parse_pseudo_instruction (int);
 
 /* Mark the symbols with STO_M68HC12_FAR to indicate the functions
    are using 'rtc' for returning.  It is necessary to use 'call'
@@ -259,10 +293,12 @@ static int elf_flags = E_M68HC11_F64;
    pseudo-op name without dot
    function to call to execute this pseudo-op
    Integer arg to pass to the function.  */
-const pseudo_typeS md_pseudo_table[] = {
+const pseudo_typeS md_pseudo_table[] =
+{
   /* The following pseudo-ops are supported for MRI compatibility.  */
   {"fcb", cons, 1},
   {"fdb", cons, 2},
+  {"fqb", cons, 4},
   {"fcc", stringer, 8 + 1},
   {"rmb", s_space, 0},
 
@@ -281,6 +317,9 @@ const pseudo_typeS md_pseudo_table[] = {
   /* .interrupt instruction.  */
   {"interrupt", s_m68hc11_mark_symbol, STO_M68HC12_INTERRUPT},
 
+  /* .nobankwarning instruction.  */
+  {"nobankwarning", s_m68hc11_parse_pseudo_instruction, E_M68HC11_NO_BANK_WARNING},
+
   {0, 0, 0}
 };
 
@@ -288,7 +327,8 @@ const pseudo_typeS md_pseudo_table[] = {
 
 const char *md_shortopts = "Sm:";
 
-struct option md_longopts[] = {
+struct option md_longopts[] =
+{
 #define OPTION_FORCE_LONG_BRANCH (OPTION_MD_BASE)
   {"force-long-branches", no_argument, NULL, OPTION_FORCE_LONG_BRANCH},
   {"force-long-branchs", no_argument, NULL, OPTION_FORCE_LONG_BRANCH}, /* Misspelt version kept for backwards compatibility.  */
@@ -320,6 +360,9 @@ struct option md_longopts[] = {
 
 #define OPTION_MLONG_DOUBLE  (OPTION_MD_BASE + 9)
   {"mlong-double", no_argument, NULL, OPTION_MLONG_DOUBLE},
+
+#define OPTION_XGATE_RAMOFFSET  (OPTION_MD_BASE + 10)
+  {"xgate-ramoffset", no_argument, NULL, OPTION_XGATE_RAMOFFSET},
 
   {NULL, no_argument, NULL, 0}
 };
@@ -360,6 +403,10 @@ m68hc11_listing_header (void)
 {
   if (current_architecture & cpu6811)
     return "M68HC11 GAS ";
+  else if (current_architecture & cpuxgate)
+    return "XGATE GAS ";
+  else if (current_architecture & cpu9s12x)
+    return "S12X GAS ";
   else
     return "M68HC12 GAS ";
 }
@@ -371,7 +418,8 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
 Motorola 68HC11/68HC12/68HCS12 options:\n\
   -m68hc11 | -m68hc12 |\n\
-  -m68hcs12               specify the processor [default %s]\n\
+  -m68hcs12 | -mm9s12x |\n\
+  -mm9s12xg               specify the processor [default %s]\n\
   -mshort                 use 16-bit int ABI (default)\n\
   -mlong                  use 32-bit int ABI\n\
   -mshort-double          use 32-bit double ABI\n\
@@ -383,6 +431,7 @@ Motorola 68HC11/68HC12/68HCS12 options:\n\
                           when the instruction does not support direct mode\n\
   --print-insn-syntax     print the syntax of instruction in case of error\n\
   --print-opcodes         print the list of instructions with syntax\n\
+  --xgate-ramoffset       offset ram addresses by 0xc000\n\
   --generate-example      generate an example of each instruction\n\
                           (used for testing)\n"), default_cpu);
 
@@ -490,13 +539,26 @@ md_parse_option (int c, char *arg)
       elf_flags |= E_M68HC11_F64;
       break;
 
+    case OPTION_XGATE_RAMOFFSET:
+      elf_flags |= E_M68HC11_XGATE_RAMOFFSET;
+      break;
+
     case 'm':
-      if (strcasecmp (arg, "68hc11") == 0)
+      if ((strcasecmp (arg, "68hc11") == 0)
+          || (strcasecmp (arg, "m68hc11") == 0))
 	current_architecture = cpu6811;
-      else if (strcasecmp (arg, "68hc12") == 0)
+      else if ((strcasecmp (arg, "68hc12") == 0)
+          || (strcasecmp (arg, "m68hc12") == 0))
 	current_architecture = cpu6812;
-      else if (strcasecmp (arg, "68hcs12") == 0)
+      else if ((strcasecmp (arg, "68hcs12") == 0)
+          || (strcasecmp (arg, "m68hcs12") == 0))
 	current_architecture = cpu6812 | cpu6812s;
+     else if (strcasecmp (arg, "m9s12x") == 0)
+	current_architecture = cpu6812 | cpu6812s | cpu9s12x;
+     else if ((strcasecmp (arg, "m9s12xg") == 0)
+          || (strcasecmp (arg, "xgate") == 0))
+	/* xgate for backwards compatability */
+	current_architecture = cpuxgate;
       else
 	as_bad (_("Option `%s' is not recognized."), arg);
       break;
@@ -614,23 +676,39 @@ md_begin (void)
 
       /* See how many operands this opcode needs.  */
       expect = 0;
-      if (opcodes->format & M6811_OP_MASK)
-	expect++;
-      if (opcodes->format & M6811_OP_BITMASK)
-	expect++;
-      if (opcodes->format & (M6811_OP_JUMP_REL | M6812_OP_JUMP_REL16))
-	expect++;
-      if (opcodes->format & (M6812_OP_IND16_P2 | M6812_OP_IDX_P2))
-	expect++;
-      /* Special case for call instruction.  */
-      if ((opcodes->format & M6812_OP_PAGE)
-          && !(opcodes->format & M6811_OP_IND16))
-        expect++;
+      if (opcodes->arch == cpuxgate)
+	{
+	  if (opcodes->format & (M68XG_OP_IMM3 | M68XG_OP_R | M68XG_OP_REL9
+				 | M68XG_OP_REL10 ))
+	    expect = 1;
+	  else if (opcodes->format & (M68XG_OP_R_R | M68XG_OP_R_IMM4
+				      | M68XG_OP_R_IMM8 | M68XG_OP_R_IMM8))
+	    expect = 2;
+	  else if (opcodes->format & (M68XG_OP_R_R_R | M68XG_OP_R_R_OFFS5
+				      | M68XG_OP_RD_RB_RI | M68XG_OP_RD_RB_RIp
+				      | M68XG_OP_RD_RB_mRI))
+	    expect = 3;
+	}
+      else
+	{
+	  if (opcodes->format & M6811_OP_MASK)
+	    expect++;
+	  if (opcodes->format & M6811_OP_BITMASK)
+	    expect++;
+	  if (opcodes->format & (M6811_OP_JUMP_REL | M6812_OP_JUMP_REL16))
+	    expect++;
+	  if (opcodes->format & (M6812_OP_IND16_P2 | M6812_OP_IDX_P2))
+	    expect++;
+	  /* Special case for call instruction.  */
+	  if ((opcodes->format & M6812_OP_PAGE)
+	      && !(opcodes->format & M6811_OP_IND16))
+	    expect++;
+	}
 
       if (expect < opc->min_operands)
 	opc->min_operands = expect;
       if (IS_CALL_SYMBOL (opcodes->format))
-         expect++;
+	expect++;
       if (expect > opc->max_operands)
 	opc->max_operands = expect;
     }
@@ -654,6 +732,7 @@ m68hc11_init_after_args (void)
 /* Return a string that represents the operand format for the instruction.
    When example is true, this generates an example of operand.  This is used
    to give an example and also to generate a test.  */
+
 static char *
 print_opcode_format (struct m68hc11_opcode *opcode, int example)
 {
@@ -663,111 +742,222 @@ print_opcode_format (struct m68hc11_opcode *opcode, int example)
 
   p = buf;
   buf[0] = 0;
-  if (format & M6811_OP_IMM8)
+
+  if (current_architecture == cpuxgate)
     {
-      if (example)
-	sprintf (p, "#%d", rand () & 0x0FF);
-      else
-	strcpy (p, _("#<imm8>"));
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6811_OP_IMM16)
-    {
-      if (example)
-	sprintf (p, "#%d", rand () & 0x0FFFF);
-      else
-	strcpy (p, _("#<imm16>"));
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6811_OP_IX)
-    {
-      if (example)
-	sprintf (p, "%d,X", rand () & 0x0FF);
-      else
-	strcpy (p, _("<imm8>,X"));
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6811_OP_IY)
-    {
-      if (example)
-	sprintf (p, "%d,X", rand () & 0x0FF);
-      else
-	strcpy (p, _("<imm8>,X"));
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6812_OP_IDX)
-    {
-      if (example)
-	sprintf (p, "%d,X", rand () & 0x0FF);
-      else
-	strcpy (p, "n,r");
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6812_OP_PAGE)
-    {
-      if (example)
-	sprintf (p, ", %d", rand () & 0x0FF);
-      else
-	strcpy (p, ", <page>");
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6811_OP_DIRECT)
-    {
-      if (example)
-	sprintf (p, "*Z%d", rand () & 0x0FF);
-      else
-	strcpy (p, _("*<abs8>"));
-      p = &p[strlen (p)];
-    }
-
-  if (format & M6811_OP_BITMASK)
-    {
-      if (buf[0])
-	*p++ = ' ';
-
-      if (example)
-	sprintf (p, "#$%02x", rand () & 0x0FF);
-      else
-	strcpy (p, _("#<mask>"));
-
-      p = &p[strlen (p)];
-      if (format & M6811_OP_JUMP_REL)
-	*p++ = ' ';
-    }
-
-  if (format & M6811_OP_IND16)
-    {
-      if (example)
-	sprintf (p, _("symbol%d"), rand () & 0x0FF);
-      else
-	strcpy (p, _("<abs>"));
-
-      p = &p[strlen (p)];
-    }
-
-  if (format & (M6811_OP_JUMP_REL | M6812_OP_JUMP_REL16))
-    {
-      if (example)
+      if (format & M68XG_OP_IMM3)
 	{
-	  if (format & M6811_OP_BITMASK)
+	  if (example)
+	    sprintf (p, "#%d", rand () & 0x007);
+	  else
+	    strcpy (p, _("imm3"));
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R)
+	{
+	  if (example)
+	    sprintf (p, "R%d", rand () & 0x07);
+	  else
+	    strcpy (p, _("RD"));
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_R)
+	{
+	  if (example)
+	    sprintf (p, "R%d,R%d", rand () & 0x07, rand () & 0x07);
+	  else
+	    strcpy (p, _("RD,RS"));
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_IMM4)
+	{
+	  if (example)
+	    sprintf (p, "R%d,#%d", rand () & 0x07, rand () & 0x0f);
+	  else
+    	    strcpy (p, _("RI, #imm4"));
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_R_R)
+	{
+	  if (example)
+	    sprintf (p, "R%d,R%d,R%d", rand () & 0x07, rand () & 0x07, rand () & 0x07);
+	  else
+	    strcpy (p, "RD,RS1,RS2");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_REL9)
+	{
+	  if (example)
+	    sprintf (p, "%d", rand () & 0x1FF);
+	  else
+	    strcpy (p, "<rel9>");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_REL10)
+	{
+	  if (example)
+	    sprintf (p, "%d", rand () & 0x3FF);
+	  else
+    	    strcpy (p, "<rel10>");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_R_OFFS5)
+	{
+	  if (example)
+	    sprintf (p, "R%d, (R%d, #0x%x)", rand () & 0x07, rand () & 0x07, rand () & 0x1f);
+	  else
+	    strcpy (p, _("RD, (RI,#offs5)"));
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_RD_RB_RI)
+	{
+	  if (example)
+	    sprintf (p, "R%d, (R%d, R%d)", rand () & 0x07, rand () & 0x07, rand () & 0x07);
+	  else
+	    strcpy (p, "RD, (RB, RI)");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_RD_RB_RIp)
+	{
+	  if (example)
+	    sprintf (p, "R%d, (R%d, R%d+)", rand () & 0x07, rand () & 0x07, rand () & 0x07);
+	  else
+	    strcpy (p, "RD, (RB, RI+)");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_RD_RB_mRI)
+	{
+	  if (example)
+	    sprintf (p, "R%d, (R%d, -R%d)", rand () & 0x07, rand () & 0x07, rand () & 0x07);
+	  else
+	    strcpy (p, "RD, (RB, -RI)");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_IMM8)
+	{
+	  if (example)
+	    sprintf (p, "R%d, #0x%x", rand () & 0x07, rand () & 0xff);
+	  else
+	    strcpy (p, "RD, #imm8");
+	  p = &p[strlen (p)];
+	}
+      else if (format & M68XG_OP_R_IMM16)
+	{
+	  if (example)
+	    sprintf (p, "R%d, #0x%x", rand () & 0x07, rand () & 0xffff);
+	  else
+	    strcpy (p, "RD, #imm16");
+	  p = &p[strlen (p)];
+	}
+    }
+  else
+    {
+
+      if (format & M6811_OP_IMM8)
+	{
+	  if (example)
+	    sprintf (p, "#%d", rand () & 0x0FF);
+	  else
+	    strcpy (p, _("#<imm8>"));
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6811_OP_IMM16)
+	{
+	  if (example)
+	    sprintf (p, "#%d", rand () & 0x0FFFF);
+	  else
+	    strcpy (p, _("#<imm16>"));
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6811_OP_IX)
+	{
+	  if (example)
+	    sprintf (p, "%d,X", rand () & 0x0FF);
+	  else
+	    strcpy (p, _("<imm8>,X"));
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6811_OP_IY)
+	{
+	  if (example)
+	    sprintf (p, "%d,X", rand () & 0x0FF);
+	  else
+	    strcpy (p, _("<imm8>,X"));
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6812_OP_IDX)
+	{
+	  if (example)
+	    sprintf (p, "%d,X", rand () & 0x0FF);
+	  else
+	    strcpy (p, "n,r");
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6812_OP_PAGE)
+	{
+	  if (example)
+	    sprintf (p, ", %d", rand () & 0x0FF);
+	  else
+	    strcpy (p, ", <page>");
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6811_OP_DIRECT)
+	{
+	  if (example)
+	    sprintf (p, "*Z%d", rand () & 0x0FF);
+	  else
+	    strcpy (p, _("*<abs8>"));
+	  p = &p[strlen (p)];
+	}
+
+      if (format & M6811_OP_BITMASK)
+	{
+	  if (buf[0])
+	    *p++ = ' ';
+
+	  if (example)
+	    sprintf (p, "#$%02x", rand () & 0x0FF);
+	  else
+	    strcpy (p, _("#<mask>"));
+
+	  p = &p[strlen (p)];
+	  if (format & M6811_OP_JUMP_REL)
+	    *p++ = ' ';
+	}
+
+      if (format & M6811_OP_IND16)
+	{
+	  if (example)
+	    sprintf (p, _("symbol%d"), rand () & 0x0FF);
+	  else
+	    strcpy (p, _("<abs>"));
+
+	  p = &p[strlen (p)];
+	}
+
+      if (format & (M6811_OP_JUMP_REL | M6812_OP_JUMP_REL16))
+	{
+	  if (example)
 	    {
-	      sprintf (p, ".+%d", rand () & 0x7F);
+	      if (format & M6811_OP_BITMASK)
+		{
+		  sprintf (p, ".+%d", rand () & 0x7F);
+		}
+	      else
+		{
+		  sprintf (p, "L%d", rand () & 0x0FF);
+		}
 	    }
 	  else
-	    {
-	      sprintf (p, "L%d", rand () & 0x0FF);
-	    }
+	    strcpy (p, _("<label>"));
 	}
-      else
-	strcpy (p, _("<label>"));
     }
-
   return buf;
 }
 
@@ -870,7 +1060,29 @@ reg_name_search (char *name)
     return REG_PC;
   if (strcasecmp (name, "ccr") == 0)
     return REG_CCR;
-
+/* XGATE */
+  if (strcasecmp (name, "r0") == 0)
+    return REG_R0;
+  if (strcasecmp (name, "r1") == 0)
+    return REG_R1;
+  if (strcasecmp (name, "r2") == 0)
+    return REG_R2;
+  if (strcasecmp (name, "r3") == 0)
+    return REG_R3;
+  if (strcasecmp (name, "r4") == 0)
+    return REG_R4;
+  if (strcasecmp (name, "r5") == 0)
+    return REG_R5;
+  if (strcasecmp (name, "r6") == 0)
+    return REG_R6;
+  if (strcasecmp (name, "r7") == 0)
+    return REG_R7;
+  if (strcasecmp (name, "sp") == 0)
+    return REG_SP_XG;
+  if (strcasecmp (name, "pc") == 0)
+    return REG_PC_XG;
+  if (strcasecmp (name, "ccr") == 0)
+    return REG_CCR_XG;
   return REG_NONE;
 }
 
@@ -1271,51 +1483,83 @@ get_operand (operand *oper, int which, long opmode)
 static int
 check_range (long num, int mode)
 {
-  /* Auto increment and decrement are ok for [-8..8] without 0.  */
-  if (mode & M6812_AUTO_INC_DEC)
-    return (num != 0 && num <= 8 && num >= -8);
-
-  /* The 68HC12 supports 5, 9 and 16-bit offsets.  */
-  if (mode & (M6812_INDEXED_IND | M6812_INDEXED | M6812_OP_IDX))
-    mode = M6811_OP_IND16;
-
-  if (mode & M6812_OP_JUMP_REL16)
-    mode = M6811_OP_IND16;
-
-  mode &= ~M6811_OP_BRANCH;
-  switch (mode)
+  if (current_architecture == cpuxgate)
     {
-    case M6811_OP_IX:
-    case M6811_OP_IY:
-    case M6811_OP_DIRECT:
-      return (num >= 0 && num <= 255) ? 1 : 0;
+      switch (mode)
+	{
+	case M68XG_OP_IMM3:
+	  return (num >= 0 && num <= 7) ? 1 : 0;
 
-    case M6811_OP_BITMASK:
-    case M6811_OP_IMM8:
-    case M6812_OP_PAGE:
-      return (((num & 0xFFFFFF00) == 0) || ((num & 0xFFFFFF00) == 0xFFFFFF00))
-	? 1 : 0;
+	case M68XG_OP_R_IMM4:
+	  return (num >= 0 && num <= 15) ? 1 : 0;
 
-    case M6811_OP_JUMP_REL:
-      return (num >= -128 && num <= 127) ? 1 : 0;
+	case M68XG_OP_R_R_OFFS5:
+	  return (num >= 0 && num <= 31) ? 1 : 0;
 
-    case M6811_OP_IND16:
-    case M6811_OP_IND16 | M6812_OP_PAGE:
-    case M6811_OP_IMM16:
-      return (((num & 0xFFFF0000) == 0) || ((num & 0xFFFF0000) == 0xFFFF0000))
-	? 1 : 0;
+	case M68XG_OP_R_IMM8:
+	  return (num >= 0 && num <= 255) ? 1 : 0;
 
-    case M6812_OP_IBCC_MARKER:
-    case M6812_OP_TBCC_MARKER:
-    case M6812_OP_DBCC_MARKER:
-      return (num >= -256 && num <= 255) ? 1 : 0;
+	case M68XG_OP_R_IMM16:
+	  return (num >= 0 && num <= 65535) ? 1 : 0;
 
-    case M6812_OP_TRAP_ID:
-      return ((num >= 0x30 && num <= 0x39)
-	      || (num >= 0x40 && num <= 0x0ff)) ? 1 : 0;
+	case M68XG_OP_B_MARKER:
+	  return (num >= -512 && num <= 511) ? 1 : 0;
 
-    default:
-      return 0;
+	case M68XG_OP_BRA_MARKER:
+	  return (num >= -1024 && num <= 1023) ? 1 : 0;
+
+	default:
+	  return 0;
+	}
+    }
+  else
+    {
+      /* Auto increment and decrement are ok for [-8..8] without 0.  */
+      if (mode & M6812_AUTO_INC_DEC)
+	return (num != 0 && num <= 8 && num >= -8);
+
+      /* The 68HC12 supports 5, 9 and 16-bit offsets.  */
+      if (mode & (M6812_INDEXED_IND | M6812_INDEXED | M6812_OP_IDX))
+	mode = M6811_OP_IND16;
+
+      if (mode & M6812_OP_JUMP_REL16)
+	mode = M6811_OP_IND16;
+
+      mode &= ~M6811_OP_BRANCH;
+      switch (mode)
+	{
+	case M6811_OP_IX:
+	case M6811_OP_IY:
+	case M6811_OP_DIRECT:
+	  return (num >= 0 && num <= 255) ? 1 : 0;
+
+	case M6811_OP_BITMASK:
+	case M6811_OP_IMM8:
+	case M6812_OP_PAGE:
+	  return (((num & 0xFFFFFF00) == 0) || ((num & 0xFFFFFF00) == 0xFFFFFF00))
+	    ? 1 : 0;
+
+	case M6811_OP_JUMP_REL:
+	  return (num >= -128 && num <= 127) ? 1 : 0;
+
+	case M6811_OP_IND16:
+	case M6811_OP_IND16 | M6812_OP_PAGE:
+	case M6811_OP_IMM16:
+	  return (((num & 0xFFFF0000) == 0) || ((num & 0xFFFF0000) == 0xFFFF0000))
+	    ? 1 : 0;
+
+	case M6812_OP_IBCC_MARKER:
+	case M6812_OP_TBCC_MARKER:
+	case M6812_OP_DBCC_MARKER:
+	  return (num >= -256 && num <= 255) ? 1 : 0;
+
+	case M6812_OP_TRAP_ID:
+	  return ((num >= 0x30 && num <= 0x39)
+		  || (num >= 0x40 && num <= 0x0ff)) ? 1 : 0;
+
+	default:
+	  return 0;
+	}
     }
 }
 
@@ -1473,10 +1717,92 @@ fixup24 (expressionS *oper, int mode, int opmode ATTRIBUTE_UNUSED)
       as_fatal (_("Operand `%x' not recognized in fixup16."), oper->X_op);
     }
 }
+
+/* XGATE Put a 1 byte expression described by 'oper'.  If this expression
+   containts unresolved symbols, generate an 8-bit fixup.  */
+static void
+fixup8_xg (expressionS *oper, int mode, int opmode)
+{
+  char *f;
+
+  f = frag_more (1);
+
+  if (oper->X_op == O_constant)
+    {
+      fixS *fixp;
+      int reloc;
+
+      if ((opmode & M6811_OP_HIGH_ADDR) || (opmode & M6811_OP_LOW_ADDR))
+        {
+          if (opmode & M6811_OP_HIGH_ADDR)
+            reloc = BFD_RELOC_M68HC11_HI8;
+          else
+            reloc = BFD_RELOC_M68HC11_LO8;
+
+          fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 1,
+			      oper, FALSE, reloc);
+          fixp->fx_no_overflow = 1;
+          number_to_chars_bigendian (f, 0, 1);
+        }
+     else
+        {
+	  if (!(check_range (oper->X_add_number, mode)))
+	    as_bad (_("Operand out of 8-bit range: `%ld'."),
+		    oper->X_add_number);
+          number_to_chars_bigendian (f, oper->X_add_number & 0x0FF, 1);
+        }
+    }
+  else if (oper->X_op != O_register)
+    {
+      if (mode == M68XG_OP_REL9)
+        {
+          fixS *fixp;
+
+          /* Future improvement:
+	     This fixup/reloc isn't adding on constants to symbols.  */
+          fixp = fix_new_exp (frag_now, f - frag_now->fr_literal -1, 2,
+			      oper, TRUE, BFD_RELOC_M68HC12_9_PCREL);
+          fixp->fx_pcrel_adjust = 1;
+      	}
+      else if (mode == M68XG_OP_REL10)
+        {
+          fixS *fixp;
+
+          /* Future improvement:
+	     This fixup/reloc isn't adding on constants to symbols.  */
+          fixp = fix_new_exp (frag_now, f - frag_now->fr_literal -1, 2,
+    	      oper, TRUE, BFD_RELOC_M68HC12_10_PCREL);
+          fixp->fx_pcrel_adjust = 1;
+        }
+      else
+        {
+          fixS *fixp;
+          int reloc;
+
+          /* Now create an 8-bit fixup.  If there was some %hi, %lo
+             modifier, generate the reloc accordingly.  */
+          if (opmode & M6811_OP_HIGH_ADDR)
+            reloc = BFD_RELOC_M68HC11_HI8;
+          else if (opmode & M6811_OP_LOW_ADDR)
+            reloc = BFD_RELOC_M68HC11_LO8;
+          else
+            reloc = BFD_RELOC_8;
+
+          fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 1,
+            oper, FALSE, reloc);
+          if (reloc != BFD_RELOC_8)
+              fixp->fx_no_overflow = 1;
+        }
+      number_to_chars_bigendian (f, 0, 1);
+    }
+  else
+    as_fatal (_("Operand `%x' not recognized in fixup8."), oper->X_op);
+}
 
 /* 68HC11 and 68HC12 code generation.  */
 
 /* Translate the short branch/bsr instruction into a long branch.  */
+
 static unsigned char
 convert_branch (unsigned char code)
 {
@@ -1741,6 +2067,7 @@ build_dbranch_insn (struct m68hc11_opcode *opcode, operand operands[],
 #define OP_EXTENDED (M6811_OP_PAGE2 | M6811_OP_PAGE3 | M6811_OP_PAGE4)
 
 /* Assemble the post index byte for 68HC12 extended addressing modes.  */
+
 static int
 build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
 {
@@ -1760,15 +2087,15 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
       if (op->exp.X_op == O_constant)
 	{
 	  if (!check_range (val, mode))
-	    {
-	      as_bad (_("Increment/decrement value is out of range: `%ld'."),
-		      val);
-	    }
+	    as_bad (_("Increment/decrement value is out of range: `%ld'."),
+		    val);
+
 	  if (mode & (M6812_POST_INC | M6812_PRE_INC))
 	    byte |= (val - 1) & 0x07;
 	  else
 	    byte |= (8 - ((val) & 7)) | 0x8;
 	}
+
       switch (op->reg1)
 	{
 	case REG_NONE:
@@ -1820,14 +2147,15 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
 	  as_bad (_("Invalid register."));
 	  break;
 	}
+
       if (op->exp.X_op == O_constant)
 	{
 	  if (!check_range (val, M6812_OP_IDX))
-	    {
-	      as_bad (_("Offset out of 16-bit range: %ld."), val);
-	    }
+	    as_bad (_("Offset out of 16-bit range: %ld."), val);
 
-	  if (move_insn && !(val >= -16 && val <= 15))
+	  if (move_insn && !(val >= -16 && val <= 15) 
+	      && ((!(mode & M6812_OP_IDX) && !(mode & M6812_OP_D_IDX_2)) 
+		  || !(current_architecture & cpu9s12x)))
 	    {
 	      as_bad (_("Offset out of 5-bit range for movw/movb insn: %ld."),
 		      val);
@@ -1867,6 +2195,7 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
 	      return 3;
 	    }
 	}
+
       if (mode & M6812_OP_D_IDX_2)
         {
           byte = (byte << 3) | 0xe3;
@@ -1889,14 +2218,31 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
               sym = make_expr_symbol (&op->exp);
               off = 0;
             }
+
 	  /* movb/movw cannot be relaxed.  */
 	  if (move_insn)
 	    {
-	      byte <<= 6;
-	      number_to_chars_bigendian (f, byte, 1);
-	      fix_new (frag_now, f - frag_now->fr_literal, 1,
-		       sym, off, 0, BFD_RELOC_M68HC12_5B);
-	      return 1;
+	      if ((mode & M6812_OP_IDX) && (current_architecture & cpu9s12x))
+		{
+		  /* Must treat as a 16bit relocate as size of final result is unknown.  */
+
+		  byte <<= 3;
+		  byte |= 0xe2;
+		  number_to_chars_bigendian (f, byte, 1);
+		  f = frag_more (2);
+		  fix_new (frag_now, f - frag_now->fr_literal, 2,
+			   sym, off, 0, BFD_RELOC_M68HC12_16B);
+		  return 1;
+		}
+	      else
+		{
+		  /* Non-S12X will fail at relocate stage if offset out of range.  */
+		  byte <<= 6;
+		  number_to_chars_bigendian (f, byte, 1);
+		  fix_new (frag_now, f - frag_now->fr_literal, 1,
+			   sym, off, 0, BFD_RELOC_M68HC12_5B);
+		  return 1;
+		}
 	    }
 	  else
 	    {
@@ -1909,6 +2255,7 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
       else
 	{
 	  f = frag_more (1);
+
 	  /* movb/movw cannot be relaxed.  */
 	  if (move_insn)
 	    {
@@ -1936,7 +2283,7 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
 	{
 	  if (op->reg1 != REG_D)
 	    as_bad (_("Expecting register D for indexed indirect mode."));
-	  if (move_insn)
+	  if ((move_insn) && (!(current_architecture & cpu9s12x)))
 	    as_bad (_("Indexed indirect mode is not allowed for movb/movw."));
 
 	  byte = 0xE7;
@@ -1987,6 +2334,8 @@ build_indexed_byte (operand *op, int format ATTRIBUTE_UNUSED, int move_insn)
       return 1;
     }
 
+  fprintf (stderr, "mode = 0x%x\nop->reg1 = 0x%x\nop->reg2 = 0x%x\n",
+	   mode, op->reg1, op->reg2);
   as_fatal (_("Addressing mode not implemented yet."));
   return 0;
 }
@@ -1998,8 +2347,9 @@ build_reg_mode (operand *op, int format)
   unsigned char byte;
   char *f;
 
-  if (format & M6812_OP_SEX_MARKER
-      && op->reg1 != REG_A && op->reg1 != REG_B && op->reg1 != REG_CCR)
+  if ((format & M6812_OP_SEX_MARKER)
+      && (op->reg1 != REG_A) && (op->reg1 != REG_B) && (op->reg1 != REG_CCR)
+	  && (!(current_architecture & cpu9s12x)))
     as_bad (_("Invalid source register for this instruction, use 'tfr'."));
   else if (op->reg1 == REG_NONE || op->reg1 == REG_PC)
     as_bad (_("Invalid source register."));
@@ -2015,17 +2365,96 @@ build_reg_mode (operand *op, int format)
   if (format & M6812_OP_EXG_MARKER)
     byte |= 0x80;
 
+  if ((format & M6812_OP_SEX_MARKER)
+      && (op->reg1 == REG_D) && (current_architecture & cpu9s12x))
+	byte |= 0x08;
+
   f = frag_more (1);
   number_to_chars_bigendian (f, byte, 1);
   return 1;
+}
+
+/* build_insn_xg takes a pointer to the opcode entry in the opcode table,
+   the array of operand expressions and builds the corresponding instruction.  */
+
+static void
+build_insn_xg (struct m68hc11_opcode *opcode,
+	       operand operands[],
+	       int nb_operands ATTRIBUTE_UNUSED)
+{
+  char *f;
+  long format;
+
+  /* Put the page code instruction if there is one.  */
+  format = opcode->format;
+
+  if (!(operands[0].mode & (M6811_OP_LOW_ADDR | M6811_OP_HIGH_ADDR)))
+    /* Need to retain those two modes, but clear for others. */
+    operands[0].mode = 0;
+
+  if (format & M68XG_OP_R_IMM8)
+    {
+      /* These opcodes are byte followed by imm8.  */
+      f = m68hc11_new_insn (1);
+      number_to_chars_bigendian (f, opcode->opcode >> 8, 1);
+      fixup8_xg (&operands[0].exp, format, operands[0].mode);
+    }
+  else if (format & M68XG_OP_R_IMM16)
+    {
+      fixS *fixp;
+      /* These opcodes expand into two imm8 instructions.
+         Emit as low:high as per the Freescale datasheet.
+         The linker requires them to be adjacent to handle the upper byte.  */
+
+      /* Build low byte.  */
+      f = m68hc11_new_insn (1);
+      number_to_chars_bigendian (f, opcode->opcode >> 8, 1);
+      operands[0].mode = M6811_OP_LOW_ADDR;
+      f = frag_more (1);
+      fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 1,
+                          &operands[0].exp, FALSE, BFD_RELOC_M68HC12_LO8XG);
+      fixp->fx_no_overflow = 1;
+      number_to_chars_bigendian (f, 0, 1);
+
+      /* Build high byte.  */
+      f = m68hc11_new_insn (1);
+      number_to_chars_bigendian (f, (opcode->opcode >> 8) | 0x08, 1);
+      operands[0].mode = M6811_OP_HIGH_ADDR;
+      f = frag_more (1);
+      fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 1,
+                          &operands[0].exp, FALSE, BFD_RELOC_M68HC12_HI8XG);
+      fixp->fx_no_overflow = 1;
+      number_to_chars_bigendian (f, 0, 1);
+
+    }
+  else if (format & M68XG_OP_REL9)
+    {
+      f = m68hc11_new_insn (1);
+      number_to_chars_bigendian (f, opcode->opcode >> 8, 1); /* High byte.  */
+      fixup8_xg (&operands[0].exp, format, M68XG_OP_REL9);
+    } 
+  else if (format & M68XG_OP_REL10)
+    {
+      f = m68hc11_new_insn (1);
+      number_to_chars_bigendian (f, opcode->opcode >> 8, 1); /* High byte.  */
+      fixup8_xg (&operands[0].exp, format, M68XG_OP_REL10);
+    }
+  else
+    {
+      f = m68hc11_new_insn (2);
+      number_to_chars_bigendian (f, opcode->opcode, 2);
+    }
+  return;
 }
 
 /* build_insn takes a pointer to the opcode entry in the opcode table,
    the array of operand expressions and builds the corresponding instruction.
    This operation only deals with non relative jumps insn (need special
    handling).  */
+
 static void
-build_insn (struct m68hc11_opcode *opcode, operand operands[],
+build_insn (struct m68hc11_opcode *opcode,
+	    operand operands[],
             int nb_operands ATTRIBUTE_UNUSED)
 {
   int i;
@@ -2159,6 +2588,21 @@ find (struct m68hc11_opcode_def *opc, operand operands[], int nb_operands)
   opcode = opc->opcode;
 
   /* Now search the opcode table table for one with operands
+     that matches what we've got.  */
+
+  if (current_architecture & cpuxgate)
+    {
+      /* Many XGATE insns are simple enough that we get an exact match.  */
+      for (pos = match = 0; match == 0 && pos < opc->nb_modes; pos++, opcode++)
+        if (opcode->format == operands[nb_operands-1].mode)
+	  return opcode;
+
+      return 0;
+    }
+
+  /* Non XGATE */
+
+  /* Now search the opcode table table for one with operands
      that matches what we've got.  We're only done if the operands matched so
      far AND there are no more to check.  */
   for (pos = match = 0; match == 0 && pos < opc->nb_modes; pos++, opcode++)
@@ -2260,7 +2704,7 @@ find (struct m68hc11_opcode_def *opc, operand operands[], int nb_operands)
 		      || operands[i].reg1 == REG_SP
 		      || operands[i].reg1 == REG_PC))
 		continue;
-	      if (i == 1 && format & M6812_OP_IDX_P2)
+	      if (i == 1 && (format & M6812_OP_IDX_P2))
 		continue;
 	    }
           if (mode & format & (M6812_OP_D_IDX | M6812_OP_D_IDX_2))
@@ -2301,12 +2745,7 @@ find (struct m68hc11_opcode_def *opc, operand operands[], int nb_operands)
       match = 1;
     }
 
-  if (!match)
-    {
-      return (0);
-    }
-
-  return opcode;
+  return match ? opcode : 0;
 }
 
 /* Find the real opcode and its associated operands.  We use a progressive
@@ -2387,6 +2826,7 @@ md_assemble (char *str)
   struct m68hc11_opcode_def *opc;
   struct m68hc11_opcode *opcode;
 
+  struct m68hc11_opcode opcode_local;
   unsigned char *op_start, *op_end;
   char *save;
   char name[20];
@@ -2419,6 +2859,629 @@ md_assemble (char *str)
       return;
     }
 
+  if (current_architecture == cpuxgate)
+    {
+      /* Find the opcode definition given its name.  */
+      opc = (struct m68hc11_opcode_def *) hash_find (m68hc11_hash, name);
+      if (opc == NULL)
+        {
+          as_bad (_("Opcode `%s' is not recognized."), name);
+          return;
+        }
+
+      /* Grab a local copy. */
+      opcode_local.name = opc->opcode->name;
+      /* These will be incomplete where multiple variants exist. */
+      opcode_local.opcode = opc->opcode->opcode;
+      opcode_local.format = opc->opcode->format;
+
+      save = input_line_pointer;
+      input_line_pointer = (char *) op_end;
+
+      if (opc->format == M68XG_OP_NONE)
+        {
+          /* No special handling required. */
+          opcode_local.format = M68XG_OP_NONE;
+          build_insn_xg (opc->opcode, operands, 0);
+          return;
+        }
+
+      /* Special handling of TFR. */
+      if (strncmp (opc->opcode->name, "tfr",3) == 0)
+        {
+          /* There must be two operands with a comma. */
+          input_line_pointer = skip_whites (input_line_pointer);
+          operands[0].reg1 = register_name ();
+          if (operands[0].reg1 == REG_NONE)
+            {
+              as_bad ("Invalid register\n");
+              return;
+            }
+          input_line_pointer = skip_whites (input_line_pointer);
+          if (*input_line_pointer != ',')
+            {
+              as_bad ("Missing comma.\n");
+              return;
+            }
+          input_line_pointer++;
+          input_line_pointer = skip_whites (input_line_pointer);
+          operands[1].reg1 = register_name ();
+          if (operands[1].reg1 == REG_NONE)
+            {
+              as_bad ("Invalid register\n");
+              return;
+            }
+          input_line_pointer = skip_whites (input_line_pointer);
+          if (*input_line_pointer != '\n' && *input_line_pointer)
+            {
+              as_bad (_("Garbage at end of instruction: `%s'."),
+		      input_line_pointer);
+              return;
+            }
+          if (operands[1].reg1 == REG_CCR) /* ,CCR */
+	    opc->opcode->opcode = 0x00f8 | ( operands[0].reg1 << 8);
+          else if (operands[0].reg1 == REG_CCR) /* CCR, */
+	    opc->opcode->opcode = 0x00f9 | ( operands[1].reg1 << 8);
+          else if (operands[1].reg1 == REG_PC) /* ,PC */
+	    opc->opcode->opcode = 0x00fa | ( operands[0].reg1 << 8);
+          else
+            {
+              as_bad ("Invalid operand to TFR\n");
+              return;
+            }
+          /* no special handling required */
+          opcode_local.format = M68XG_OP_NONE;
+          opcode_local.opcode = opc->opcode->opcode;
+          build_insn_xg (&opcode_local, operands, 0);
+          return;
+	}
+
+      /* CSEM, SSEM */
+      if (opc->format & M68XG_OP_IMM3)
+        {
+	  /* Either IMM3 or R */
+          input_line_pointer = skip_whites (input_line_pointer);
+          if ((*input_line_pointer == 'R') || (*input_line_pointer == 'r'))
+            {
+              operands[0].reg1 = register_name ();
+              if (operands[0].reg1 == REG_NONE)
+                {
+                  as_bad ("Invalid register\n");
+                  return;
+                }
+              operands[0].mode = M68XG_OP_R;
+              /* One opcode has multiple modes, so find right one. */
+              opcode = find (opc, operands, 1);
+              if (opcode)
+              	{
+                  opcode_local.opcode = opcode->opcode
+		    | (operands[0].reg1 << 8);
+                  opcode_local.format = M68XG_OP_NONE;
+                  build_insn_xg (&opcode_local, operands, 1);
+		}
+	      else
+		as_bad ("No opcode found\n");
+              
+              return;
+            }
+          else
+            {
+              if (*input_line_pointer == '#')
+                input_line_pointer++;
+
+              expression (&operands[0].exp);
+              if (operands[0].exp.X_op == O_illegal)
+              	{
+                  as_bad (_("Illegal operand."));
+                  return;
+              	}
+              else if (operands[0].exp.X_op == O_absent)
+              	{
+                  as_bad (_("Missing operand."));
+                  return;
+              	}
+
+              if (check_range (operands[0].exp.X_add_number,M68XG_OP_IMM3))
+              	{
+		  opcode_local.opcode |= (operands[0].exp.X_add_number);
+		  operands[0].mode = M68XG_OP_IMM3;
+  
+		  opcode = find (opc, operands, 1);
+                  if (opcode)
+                    {
+		      opcode_local.opcode = opcode->opcode;
+		      opcode_local.opcode
+			|= (operands[0].exp.X_add_number) << 8;
+		      opcode_local.format = M68XG_OP_NONE;
+		      build_insn_xg (&opcode_local, operands, 1);
+                    }
+                  else
+                    as_bad ("No opcode found\n");
+
+                  return;
+                }
+              else
+                {
+                  as_bad ("Number out of range for IMM3\n");
+                  return;
+                }
+            }
+	}
+
+      /* Special handling of SIF. */
+      if (strncmp (opc->opcode->name, "sif",3) == 0)
+        {
+          /* Either OP_NONE or OP_RS. */
+          if (*input_line_pointer != '\n')
+	    input_line_pointer = skip_whites (input_line_pointer);
+
+          if ((*input_line_pointer == '\n') || (*input_line_pointer == '\r')
+              || (*input_line_pointer == '\0'))
+	    opc->opcode->opcode = 0x0300;
+          else
+            {
+              operands[0].reg1 = register_name ();
+              if (operands[0].reg1 == REG_NONE)
+		{
+                  as_bad ("Invalid register\n");
+                  return;
+		}
+              opcode_local.opcode = 0x00f7 | (operands[0].reg1 << 8);
+            }
+          opcode_local.format = M68XG_OP_NONE;
+          build_insn_xg (&opcode_local, operands, 0);
+          return;
+        }
+
+      /* SEX, PAR, JAL plus aliases NEG, TST, COM */
+      if (opc->format & M68XG_OP_R)
+        {
+          input_line_pointer = skip_whites (input_line_pointer);
+          operands[0].reg1 = register_name ();
+          if (operands[0].reg1 == REG_NONE)
+            {
+              as_bad ("Invalid register\n");
+              return;
+            }
+          if ((*input_line_pointer == '\n') || (*input_line_pointer == '\r')
+              || (*input_line_pointer == '\0'))
+            {
+              /* Likely to be OP R. */
+              if (opc->format & M68XG_OP_R)
+                {
+                  operands[0].mode = M68XG_OP_R;
+
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+		    {
+                      if ((strncmp (opc->opcode->name, "com",3) == 0)
+                          || (strncmp (opc->opcode->name, "neg",3) == 0))
+                        /* Special case for com RD as alias for sub RD,R0,RS */
+                        /* Special case for neg RD as alias for sub RD,R0,RS */
+                        opcode_local.opcode = opcode->opcode
+                          | (operands[0].reg1 << 8) | (operands[0].reg1 << 2);
+		      else if (strncmp (opc->opcode->name, "tst",3) == 0)
+                        /* Special case for tst RS alias for sub R0, RS, R0 */
+                        opcode_local.opcode = opcode->opcode
+                          | (operands[0].reg1 << 5);
+                      else
+                        opcode_local.opcode |= (operands[0].reg1 << 8);
+                    }
+                  opcode_local.format = M68XG_OP_NONE;
+                  build_insn_xg (&opcode_local, operands, 0);
+                }
+              else
+		as_bad ("No valid mode found\n");
+
+              return;
+            }
+        }
+
+      if (opc->format & (M68XG_OP_REL9 | M68XG_OP_REL10))
+        {
+          opcode_local.format = opc->format; 
+          input_line_pointer = skip_whites (input_line_pointer);
+          expression (&operands[0].exp);
+          if (operands[0].exp.X_op == O_illegal)
+            {
+              as_bad (_("Illegal operand."));
+              return;
+            }
+          else if (operands[0].exp.X_op == O_absent)
+            {
+              as_bad (_("Missing operand."));
+              return;
+            }
+          opcode_local.opcode = opc->opcode->opcode;
+          build_insn_xg (&opcode_local, operands, 1);
+          return;
+        }
+
+
+      /* For other command formats, parse input line and determine the mode
+         we are using as we go. */
+
+      input_line_pointer = skip_whites (input_line_pointer);
+      if ((*input_line_pointer == '\n') || (*input_line_pointer == '\r')
+          || (*input_line_pointer == '\0'))
+        return; /* nothing left */
+      
+      if (*input_line_pointer == '#')
+        {
+          as_bad ("No register specified before hash\n");
+          return;
+        } 
+
+      /* first operand is expected to be a register */
+      if ((*input_line_pointer == 'R') || (*input_line_pointer == 'r'))
+        {
+          operands[0].reg1 = register_name ();
+          if (operands[0].reg1 == REG_NONE)
+            {
+              as_bad ("Invalid register\n");
+              return;
+            }
+        }
+
+      input_line_pointer = skip_whites (input_line_pointer);
+      if (*input_line_pointer != ',')
+        {
+          as_bad ("Missing operand\n");
+          return;
+        }
+      input_line_pointer++;
+      input_line_pointer = skip_whites (input_line_pointer);
+
+      if (*input_line_pointer == '#')
+        {
+          /* Some kind of immediate mode, check if this is possible. */
+          if (!(opc->format
+		& (M68XG_OP_R_IMM8 | M68XG_OP_R_IMM16 | M68XG_OP_R_IMM4)))
+            as_bad ("Invalid immediate mode for `%s'", opc->opcode->name);
+          else
+            {
+              input_line_pointer++;
+              input_line_pointer = skip_whites (input_line_pointer);
+              if (strncmp (input_line_pointer, "%hi", 3) == 0)
+                {
+                  input_line_pointer += 3;
+                  operands[0].mode = M6811_OP_HIGH_ADDR;
+                }
+              else if (strncmp (input_line_pointer, "%lo", 3) == 0)
+                {
+		  input_line_pointer += 3;
+		  operands[0].mode = M6811_OP_LOW_ADDR;
+                }
+              else
+		operands[0].mode = 0;
+
+              expression (&operands[0].exp);
+              if (operands[0].exp.X_op == O_illegal)
+                {
+                  as_bad (_("Illegal operand."));
+                  return;
+                }
+              else if (operands[0].exp.X_op == O_absent)
+                {
+                  as_bad (_("Missing operand."));
+                  return;
+                }
+              /* ok so far, can only be one mode */
+              opcode_local.format = opc->format
+		& (M68XG_OP_R_IMM8 | M68XG_OP_R_IMM16 | M68XG_OP_R_IMM4);
+              if (opcode_local.format & M68XG_OP_R_IMM4)
+                {
+                  operands[0].mode = M68XG_OP_R_IMM4;
+                  /* same opcodes have multiple modes, so find right one */
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+		    opcode_local.opcode = opcode->opcode
+		      | (operands[0].reg1 << 8);
+                  
+                  if (operands[0].exp.X_op != O_constant)
+                    as_bad ("Only constants supported at for IMM4 mode\n");
+                  else
+                    {
+                      if (check_range 
+                          (operands[0].exp.X_add_number,M68XG_OP_R_IMM4))
+                        opcode_local.opcode
+			  |= (operands[0].exp.X_add_number << 4);
+                      else
+                        as_bad ("Number out of range for IMM4\n");
+                    }
+                  opcode_local.format = M68XG_OP_NONE;
+                }
+              else if (opcode_local.format & M68XG_OP_R_IMM16)
+                {
+                  operands[0].mode = M68XG_OP_R_IMM16;
+
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+                    {
+                      opcode_local.opcode = opcode->opcode
+			| (operands[0].reg1 << 8);
+                    }
+                }
+              else
+                {
+                  opcode_local.opcode = opc->opcode->opcode
+		    | (operands[0].reg1 << 8);
+                }
+              build_insn_xg (&opcode_local, operands, 1);
+            }
+        }
+      else if ((*input_line_pointer == 'R') || (*input_line_pointer == 'r'))
+        {
+          /* we've got as far as OP R, R */
+          operands[1].reg1 = register_name ();
+          if (operands[1].reg1 == REG_NONE)
+            {
+              as_bad ("Invalid register\n");
+              return;
+            }
+          if ((*input_line_pointer == '\n') || (*input_line_pointer == '\r')
+	      || (*input_line_pointer == '\0'))
+            {
+              /* looks like OP_R_R */
+              if (opc->format & M68XG_OP_R_R)
+                {
+                  operands[0].mode = M68XG_OP_R_R;
+                  /* same opcodes have multiple modes, so find right one */
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+                    {
+                      if ((strncmp (opc->opcode->name, "com",3) == 0)
+			  || (strncmp (opc->opcode->name, "mov",3) == 0)
+			  || (strncmp (opc->opcode->name, "neg",3) == 0))
+                        {
+                          /* Special cases for:
+                             com RD, RS alias for xnor RD,R0,RS
+                             mov RD, RS alias for or RD, R0, RS
+                             neg RD, RS alias for sub RD, R0, RS */
+                          opcode_local.opcode = opcode->opcode 
+                            | (operands[0].reg1 << 8) | (operands[1].reg1 << 2);
+                        }
+                      else if ((strncmp (opc->opcode->name, "cmp",3) == 0)
+			       || (strncmp (opc->opcode->name, "cpc",3) == 0))
+                        {
+                          /* special cases for:
+                             cmp RS1, RS2 alias for sub R0, RS1, RS2
+                             cpc RS1, RS2 alias for sbc R0, RS1, RS2 */
+                          opcode_local.opcode = opcode->opcode 
+			    | (operands[0].reg1 << 5) | (operands[1].reg1 << 2);
+                        }
+                      else
+                        {
+                          opcode_local.opcode = opcode->opcode
+                            | (operands[0].reg1 << 8) | (operands[1].reg1 << 5);
+                        }
+                      opcode_local.format = M68XG_OP_NONE;
+                      build_insn_xg (&opcode_local, operands, 1);
+                    }
+                }
+              else
+                {
+                  as_bad ("No valid mode found\n");
+                }
+            }
+          else
+            {
+              /* more data */
+              if (*input_line_pointer != ',')
+                {
+                  as_bad (_("Missing operand."));
+                  return;
+                }
+              input_line_pointer++;
+              input_line_pointer = skip_whites (input_line_pointer);
+              if ((*input_line_pointer == 'R') || (*input_line_pointer == 'r'))
+                {
+                  operands[2].reg1 = register_name ();
+                  if (operands[2].reg1 == REG_NONE)
+                    {
+                      as_bad ("Invalid register\n");
+                      return;
+                    }
+                  if (opc->format & M68XG_OP_R_R_R)
+                    {
+                      operands[0].mode = M68XG_OP_R_R_R;
+
+                      opcode = find (opc, operands, 1);
+                      if (opcode)
+                        {
+                          opcode_local.opcode = opcode->opcode 
+                            | (operands[0].reg1 << 8) | (operands[1].reg1 << 5)
+                            | (operands[2].reg1 << 2);
+                          opcode_local.format = M68XG_OP_NONE;
+                          build_insn_xg (&opcode_local, operands, 1);
+                        }
+                    }
+                  else
+                    {
+                      as_bad ("No valid mode found\n");
+                    }
+                }
+            }
+        }
+      else if (*input_line_pointer == '(') /* Indexed modes */
+        {
+          input_line_pointer++;
+          input_line_pointer = skip_whites (input_line_pointer);
+          if ((*input_line_pointer == 'R') || (*input_line_pointer == 'r'))
+            {
+              /* we've got as far as OP R, (R */
+              operands[1].reg1 = register_name ();
+              if (operands[1].reg1 == REG_NONE)
+                {
+                  as_bad ("Invalid register\n");
+                  return;
+                }
+
+              if ((*input_line_pointer == '\n') || (*input_line_pointer == '\r')
+		  || (*input_line_pointer == '\0'))
+                {
+                  /* Looks like OP_R_R. */
+                  as_bad (_("Missing operand."));
+                  return;
+                }
+
+              input_line_pointer = skip_whites (input_line_pointer);
+              
+              if (*input_line_pointer != ',')
+                {
+                  as_bad (_("Missing operand."));
+                  return;
+                }
+              input_line_pointer++;
+              input_line_pointer = skip_whites (input_line_pointer);
+
+              if (*input_line_pointer == '#')
+                {
+                  input_line_pointer++;
+                  input_line_pointer = skip_whites (input_line_pointer);
+                  expression (&operands[0].exp);
+                  if (operands[0].exp.X_op == O_illegal)
+                    {
+                      as_bad (_("Illegal operand."));
+                      return;
+                    }
+                  else if (operands[0].exp.X_op == O_absent)
+                    {
+                      as_bad (_("Missing operand."));
+                      return;
+                    }
+
+                  input_line_pointer = skip_whites (input_line_pointer);
+                  if (*input_line_pointer != ')')
+                    {
+		      as_bad ("Missing `)' to close register indirect operand.");
+                      return;
+                    }
+                  else
+                    {
+                      input_line_pointer++;
+                    }
+                      
+                  /* Ok so far, can only be one mode. */
+                  opcode_local.format = M68XG_OP_R_R_OFFS5;
+                  operands[0].mode = M68XG_OP_R_R_OFFS5;
+
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+                    {
+                      opcode_local.opcode = opcode->opcode
+                        | (operands[0].reg1 << 8) | (operands[1].reg1 << 5);
+                      if (operands[0].exp.X_op != O_constant)
+                        {
+                          as_bad
+                            ("Only constants supported for indexed OFFS5 mode\n");
+                        }
+                      else
+                        {
+                          if (check_range (operands[0].exp.X_add_number,
+					   M68XG_OP_R_R_OFFS5))
+                            {
+                              opcode_local.opcode
+				|= (operands[0].exp.X_add_number);
+                              opcode_local.format = M68XG_OP_NONE;
+                              build_insn_xg (&opcode_local, operands, 1);
+                            }
+                          else
+                            {
+                              as_bad ("Number out of range for OFFS5\n");
+                            }
+                        }
+                    }
+                }
+              else
+                {
+                  operands[0].mode = M68XG_OP_RD_RB_RI;
+
+                  if (*input_line_pointer == '-')
+                    {
+                      operands[0].mode = M68XG_OP_RD_RB_mRI;
+                      input_line_pointer++;
+                    }
+                  operands[2].reg1 = register_name ();
+                  if (operands[2].reg1 == REG_NONE)
+                    {
+                      as_bad ("Invalid register\n");
+                      return;
+                    }
+
+                  if (*input_line_pointer == '+')
+                    {
+                      if (opcode_local.format == M68XG_OP_RD_RB_mRI)
+                        {
+                          as_bad (_("Illegal operand."));
+                          return;
+                        }
+                      operands[0].mode = M68XG_OP_RD_RB_RIp;
+                      input_line_pointer++;
+                    }
+
+                  input_line_pointer = skip_whites (input_line_pointer);
+                  if (*input_line_pointer != ')')
+                    {
+		      as_bad
+                        ("Missing `)' to close register indirect operand.");
+                      return;
+                    }
+                  else
+                    {
+                      input_line_pointer++;
+                    }
+
+                  opcode = find (opc, operands, 1);
+                  if (opcode)
+                    {
+                      opcode_local.opcode = opcode->opcode
+                        | (operands[0].reg1 << 8) | (operands[1].reg1 << 5)
+                        | (operands[2].reg1 << 2);
+                      opcode_local.format = M68XG_OP_NONE;
+                      build_insn_xg (&opcode_local, operands, 1);
+                    }
+                  else
+                    {
+                      as_bad ("Failed to find opcode for %s %s\n",
+			      opc->opcode->name, (char *)op_end);
+                    }
+                }
+            }
+        }
+      else
+        {
+	  as_bad (_("Failed to find a valid mode for `%s'."),
+		  opc->opcode->name);
+        }
+
+      if (opc->opcode && !flag_mri)
+        {
+          char *p = input_line_pointer;
+
+          while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
+	    p++;
+
+          if (*p != '\n' && *p)
+            as_bad (_("Garbage at end of instruction: `%s'."), p);
+        }
+
+      input_line_pointer = save;
+
+      /* Opcode is known but does not have valid operands.  Print out the
+         syntax for this opcode.  */
+      if (opc->opcode == 0)
+        {
+          if (flag_print_insn_syntax)
+            print_insn_format (name);
+
+          as_bad (_("Invalid operand for `%s'"), name);
+          return;
+        }
+
+      return;
+    }
+
   /* Find the opcode definition given its name.  */
   opc = (struct m68hc11_opcode_def *) hash_find (m68hc11_hash, name);
 
@@ -2437,7 +3500,7 @@ md_assemble (char *str)
 	branch_optimize = 1;
     }
 
-  /* The following test should probably be removed.  This is not conform
+  /* The following test should probably be removed.  This does not conform
      to Motorola assembler specs.  */
   if (opc == NULL && flag_mri)
     {
@@ -2525,8 +3588,120 @@ md_assemble (char *str)
       if (flag_print_insn_syntax)
 	print_insn_format (name);
 
-      as_bad (_("Invalid operand for `%s'"), name);
-      return;
+      if (((strcmp (name, "movb") == 0) || (strcmp (name, "movw") == 0))
+	  && (current_architecture & cpu9s12x))
+	{
+	  char *f;
+	  int movb;
+	  if (strcmp (name, "movb") == 0)
+	    movb = 8;
+	  else
+	    movb = 0;
+
+	  /* The existing operand extract code fell over if these additional modes
+	     were enabled in m68hc11-opc.c. So they are commented there and
+	     decoded here instead.  */
+
+	  if (operands[1].mode & (M6812_OP_IDX | M6812_OP_IDX_1
+				  | M6812_OP_IDX_2 | M6812_OP_D_IDX | M6812_OP_D_IDX_2 | M6812_PRE_INC
+				  | M6812_PRE_DEC | M6812_POST_INC | M6812_POST_DEC ))
+	    {
+	      /* first check if valid mode then start building it up */
+	      if (operands[0].mode & (M6811_OP_IMM8 | M6811_OP_IMM16
+				      | M6811_OP_IND16 | M6812_OP_IDX | M6812_OP_IDX_1
+				      | M6812_OP_IDX_2 | M6812_OP_D_IDX | M6812_OP_D_IDX_2))
+		{
+		  int opr16a;
+		  if (operands[1].mode & (M6811_OP_IND16))
+		    opr16a = 3;
+		  else
+		    opr16a = 0;
+
+		  f = m68hc11_new_insn (2);
+
+		  if (operands[0].mode & (M6811_OP_IMM8 | M6811_OP_IMM16))
+		    {
+		      number_to_chars_bigendian (f, 0x1800 + movb + opr16a, 2);
+		      build_indexed_byte (&operands[1], operands[1].mode, 1);
+		      if (movb)
+			fixup8 (&operands[0].exp, M6811_OP_IMM8,
+				operands[0].mode);
+		      else
+			fixup16 (&operands[0].exp, M6811_OP_IMM16,
+				 operands[0].mode);
+
+		      return;
+		    }
+		  else if (operands[0].mode & M6811_OP_IND16)
+		    {
+		      number_to_chars_bigendian (f, 0x1801 + movb + opr16a, 2);
+		      build_indexed_byte (&operands[1], operands[1].mode, 1);
+		      fixup16 (&operands[0].exp, M6811_OP_IND16, operands[0].mode);
+		      return;
+		    }
+		  else
+		    {
+		      number_to_chars_bigendian (f, 0x1802 + movb + opr16a, 2);
+		      build_indexed_byte (&operands[0], operands[0].mode, 1);
+		      build_indexed_byte (&operands[1], operands[1].mode, 1);
+		      return;
+		    }
+		}
+	    }
+	  else if (operands[1].mode & M6811_OP_IND16)
+	    {
+	      /* First check if this is valid mode, then start building it up. */
+	      if (operands[0].mode & (M6811_OP_IMM8 | M6811_OP_IMM16
+				      | M6811_OP_IND16 | M6812_OP_IDX | M6812_OP_IDX_1
+				      | M6812_OP_IDX_2 | M6812_OP_D_IDX | M6812_OP_D_IDX_2))
+		{
+		  int opr16a;
+		  if (operands[1].mode & (M6811_OP_IND16))
+		    opr16a = 3;
+		  else
+		    opr16a = 0;
+
+		  f = m68hc11_new_insn (2);
+
+		  /* The first two cases here should actually be covered by the
+		     normal operand code. */
+		  if (operands[0].mode & (M6811_OP_IMM8 | M6811_OP_IMM16))
+		    {
+		      number_to_chars_bigendian (f, 0x1800 + movb + opr16a, 2);
+		      if (movb)
+			fixup8 (&operands[0].exp, M6811_OP_IMM8, operands[0].mode);
+		      else
+			fixup16 (&operands[0].exp, M6811_OP_IMM16, operands[0].mode);
+
+		      fixup16 (&operands[0].exp, M6811_OP_IND16, operands[0].mode);
+		      return;
+		    }
+		  else if (operands[0].mode & M6811_OP_IND16)
+		    {
+		      number_to_chars_bigendian (f, 0x1801 + movb + opr16a, 2);
+		      build_indexed_byte (&operands[1], operands[1].mode, 1);
+		      fixup16 (&operands[0].exp, M6811_OP_IND16, operands[0].mode);
+		      return;
+		    }
+		  else
+		    {
+		      number_to_chars_bigendian (f, 0x1802 + movb + opr16a, 2);
+		      build_indexed_byte (&operands[0], operands[0].mode, 1);
+		      fixup16 (&operands[1].exp, M6811_OP_IND16, operands[1].mode);
+		      return;
+		    }
+		}
+	    }
+
+	  as_bad (_("Invalid operand for `%s'"), name);
+	  return;
+
+	}
+      else
+	{
+	  as_bad (_("Invalid operand for `%s'"), name);
+	  return;
+	}
     }
 
   /* Treat dbeq/ibeq/tbeq instructions in a special way.  The branch is
@@ -3210,9 +4385,13 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       break;
 
     case BFD_RELOC_M68HC11_HI8:
+        /* Caution, %hi(<symbol>+%ld) will generate incorrect code if %lo
+          causes a carry. */
+    case BFD_RELOC_M68HC12_HI8XG:
       value = value >> 8;
       /* Fall through.  */
 
+    case BFD_RELOC_M68HC12_LO8XG:
     case BFD_RELOC_M68HC11_LO8:
     case BFD_RELOC_8:
     case BFD_RELOC_M68HC11_PAGE:
@@ -3226,6 +4405,26 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Value %ld too large for 8-bit PC-relative branch."),
 		      value);
+      break;
+
+    /* These next two are for XGATE. */
+    case BFD_RELOC_M68HC12_9_PCREL:
+     ((bfd_byte *) where)[0] |= (bfd_byte) ((value >>9) & 0x01);
+     ((bfd_byte *) where)[1] = (bfd_byte) ((value>>1) & 0xff);
+      if (value < -512 || value > 511)
+        as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("Value %ld too large for 9-bit PC-relative branch."),
+		      value);
+      break;
+
+    case BFD_RELOC_M68HC12_10_PCREL:
+     ((bfd_byte *) where)[0] |= (bfd_byte) ((value >>9) & 0x03);
+     ((bfd_byte *) where)[1] = (bfd_byte) ((value>>1) & 0xff);
+      if (value < -1024 || value > 1023)
+        as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("Value %ld too large for 10-bit PC-relative branch."),
+		      value);
+
       break;
 
     case BFD_RELOC_M68HC11_3B:
@@ -3252,6 +4451,30 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	where[0] |= (0x10 | (16 + value));
       break;
 
+    case BFD_RELOC_M68HC12_9B:
+      if (value < -256 || value > 255)
+        as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("Offset out of 9-bit range for movw/movb insn: %ld"),
+		      value);
+        /* sign bit already in xb postbyte */
+      if (value >= 0)
+        where[1] = value;
+      else 
+        where[1] = (256 + value);
+      break;
+
+    case BFD_RELOC_M68HC12_16B:
+      if (value < -32768 || value > 32767)
+        as_bad_where (fixP->fx_file, fixP->fx_line,
+		      _("Offset out of 16-bit range for movw/movb insn: %ld"),
+		      value);
+      if (value < 0)
+        value += 65536;
+
+      where[0] = (value >> 8);
+      where[1] = (value & 0xff);
+      break;
+
     case BFD_RELOC_M68HC11_RL_JUMP:
     case BFD_RELOC_M68HC11_RL_GROUP:
     case BFD_RELOC_VTABLE_INHERIT:
@@ -3273,4 +4496,18 @@ m68hc11_elf_final_processing (void)
     elf_flags |= EF_M68HCS12_MACH;
   elf_elfheader (stdoutput)->e_flags &= ~EF_M68HC11_ABI;
   elf_elfheader (stdoutput)->e_flags |= elf_flags;
+}
+
+/* Process directives specified via pseudo ops */
+static void
+s_m68hc11_parse_pseudo_instruction (int pseudo_insn)
+{
+  switch (pseudo_insn)
+    {
+    case E_M68HC11_NO_BANK_WARNING:
+      elf_flags |= E_M68HC11_NO_BANK_WARNING;
+      break;
+    default:
+      as_bad (_("Invalid directive"));
+    }
 }

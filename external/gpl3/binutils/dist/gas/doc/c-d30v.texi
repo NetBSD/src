@@ -1,4 +1,4 @@
-@c Copyright (C) 1997 Free Software Foundation, Inc.
+@c Copyright (C) 1997, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -98,7 +98,14 @@ symbols described in the next section.
 @subsection Special Characters
 @cindex line comment character, D30V
 @cindex D30V line comment character
-@samp{;} and @samp{#} are the line comment characters.
+A semicolon (@samp{;}) can be used anywhere on a line to start a
+comment that extends to the end of the line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line could also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
 @cindex sub-instruction ordering, D30V
 @cindex D30V sub-instruction ordering
 Sub-instructions may be executed in order, in reverse-order, or in parallel.

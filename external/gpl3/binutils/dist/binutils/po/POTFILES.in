@@ -40,6 +40,9 @@ not-ranlib.c
 not-strip.c
 objcopy.c
 objdump.c
+objdump.h
+od-macho.c
+od-xcoff.c
 prdbg.c
 rclex.c
 rdcoff.c

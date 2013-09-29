@@ -1,12 +1,12 @@
 #source: tls32.s
 #source: tlslib32.s
 #as: -a32
-#ld: -melf32ppc
+#ld: 
 #objdump: -sj.tdata
 #target: powerpc*-*-*
 
-.*: +file format elf32-powerpc
+.*
 
 Contents of section \.tdata:
- 1810108 12345678 23456789 3456789a 456789ab  .*
- 1810118 56789abc 6789abcd 789abcde 00c0ffee  .*
+ 1810108 (12345678|78563412) (23456789|89674523) (3456789a|9a785634) (456789ab|ab896745)  .*
+ 1810118 (56789abc|bc9a7856) (6789abcd|cdab8967) (789abcde|debc9a78) (00c0ffee|eeffc000)  .*

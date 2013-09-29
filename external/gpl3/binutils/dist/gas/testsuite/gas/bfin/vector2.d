@@ -411,9 +411,9 @@ Disassembly of section .text:
  64c:	06 c4 01 4e 	R7 = MIN \(R0, R1\) \(V\);
  650:	06 c4 1c 44 	R2 = MIN \(R3, R4\) \(V\);
  654:	06 c4 37 4a 	R5 = MIN \(R6, R7\) \(V\);
- 658:	04 c2 be 66 	R2.H = R7.L \* R6.H, R2 = R7.H \* R6.H;
- 65c:	04 c2 08 e1 	R4.H = R1.H \* R0.H, R4 = R1.L \* R0.L;
- 660:	14 c2 1a a0 	R0.H = R3.H \* R2.L \(M\), R0 = R3.L \* R2.L;
+ 658:	04 c2 be 66 	R2.H = R7.L \* R6.H, R2.L = R7.H \* R6.H;
+ 65c:	04 c2 08 e1 	R4.H = R1.H \* R0.H, R4.L = R1.L \* R0.L;
+ 660:	14 c2 1a a0 	R0.H = R3.H \* R2.L \(M\), R0.L = R3.L \* R2.L;
  664:	00 c0 13 46 	A1 = R2.L \* R3.H, A0 = R2.H \* R3.H;
  668:	01 c0 08 c0 	A1 \+= R1.H \* R0.H, A0 = R1.L \* R0.L;
  66c:	01 c0 1b 96 	A1 \+= R3.H \* R3.L, A0 -= R3.H \* R3.H;
@@ -469,7 +469,7 @@ Disassembly of section .text:
  734:	00 9e 32 9c 
  738:	8b c8 9a 2f 	R6 = \(A0 \+= R3.H \* R2.H\) \(FU\) \|\| I2 -= M0 \|\| NOP;
  73c:	72 9e 00 00 
- 740:	14 c2 1a a0 	R0.H = R3.H \* R2.L \(M\), R0 = R3.L \* R2.L;
+ 740:	14 c2 1a a0 	R0.H = R3.H \* R2.L \(M\), R0.L = R3.L \* R2.L;
  744:	1c c2 b8 60 	R3 = R7.L \* R0.H \(M\), R2 = R7.L \* R0.L;
  748:	1c c0 b8 60 	R3 = \(A1 = R7.L \* R0.H\) \(M\), R2 = \(A0 = R7.L \* R0.L\);
  74c:	44 c0 23 04 	R0.H = \(A1 = R4.L \* R3.L\), A0 = R4.H \* R3.L \(T\);

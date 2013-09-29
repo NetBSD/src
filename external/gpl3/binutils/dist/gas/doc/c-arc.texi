@@ -1,4 +1,4 @@
-@c Copyright 2000, 2001, 2005, 2006, 2007 Free Software Foundation, Inc.
+@c Copyright 2000, 2001, 2005, 2006, 2007, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -80,7 +80,6 @@ default.
 
 @end table
 
-
 @node ARC Syntax
 @section Syntax
 @menu
@@ -91,9 +90,18 @@ default.
 @node ARC-Chars
 @subsection Special Characters
 
-@cindex ARC special characters
-@cindex special characters, ARC
-*TODO*
+@cindex line comment character, ARC
+@cindex ARC line comment character
+The presence of a @samp{#} on a line indicates the start of a comment
+that extends to the end of the current line.  Note that if a line
+starts with a @samp{#} character then it can also be a logical line
+number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+@cindex line separator, ARC
+@cindex statement separator, ARC
+@cindex ARC line separator
+The ARC assembler does not support a line separator character.
 
 @node ARC-Regs
 @subsection Register Names
@@ -330,4 +338,3 @@ between the two - even for the implicit default core version
 
 For information on the ARC instruction set, see @cite{ARC Programmers
 Reference Manual}, ARC International (www.arc.com)
-

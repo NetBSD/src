@@ -69,10 +69,16 @@ static enum ld_plugin_status
 get_input_file(const void *handle, struct ld_plugin_input_file *file);
 
 static enum ld_plugin_status
+get_view(const void *handle, const void **viewp);
+
+static enum ld_plugin_status
 release_input_file(const void *handle);
 
 static enum ld_plugin_status
 get_symbols(const void *handle, int nsyms, struct ld_plugin_symbol *syms);
+
+static enum ld_plugin_status
+get_symbols_v2(const void *handle, int nsyms, struct ld_plugin_symbol *syms);
 
 static enum ld_plugin_status
 add_input_file(const char *pathname);
@@ -85,6 +91,29 @@ set_extra_library_path(const char *path);
 
 static enum ld_plugin_status
 message(int level, const char *format, ...);
+
+static enum ld_plugin_status
+get_input_section_count(const void* handle, unsigned int* count);
+
+static enum ld_plugin_status
+get_input_section_type(const struct ld_plugin_section section,
+                       unsigned int* type);
+
+static enum ld_plugin_status
+get_input_section_name(const struct ld_plugin_section section,
+                       char** section_name_ptr);
+
+static enum ld_plugin_status
+get_input_section_contents(const struct ld_plugin_section section,
+                           const unsigned char** section_contents,
+		           size_t* len);
+
+static enum ld_plugin_status
+update_section_order(const struct ld_plugin_section *section_list,
+		     unsigned int num_sections);
+
+static enum ld_plugin_status
+allow_section_ordering();
 
 };
 
@@ -130,7 +159,8 @@ Plugin::load()
   sscanf(ver, "%d.%d", &major, &minor);
 
   // Allocate and populate a transfer vector.
-  const int tv_fixed_size = 16;
+  const int tv_fixed_size = 24;
+
   int tv_size = this->args_.size() + tv_fixed_size;
   ld_plugin_tv* tv = new ld_plugin_tv[tv_size];
 
@@ -154,6 +184,8 @@ Plugin::load()
     tv[i].tv_u.tv_val = LDPO_REL;
   else if (parameters->options().shared())
     tv[i].tv_u.tv_val = LDPO_DYN;
+  else if (parameters->options().pie())
+    tv[i].tv_u.tv_val = LDPO_PIE;
   else
     tv[i].tv_u.tv_val = LDPO_EXEC;
 
@@ -189,12 +221,20 @@ Plugin::load()
   tv[i].tv_u.tv_get_input_file = get_input_file;
 
   ++i;
+  tv[i].tv_tag = LDPT_GET_VIEW;
+  tv[i].tv_u.tv_get_view = get_view;
+
+  ++i;
   tv[i].tv_tag = LDPT_RELEASE_INPUT_FILE;
   tv[i].tv_u.tv_release_input_file = release_input_file;
 
   ++i;
   tv[i].tv_tag = LDPT_GET_SYMBOLS;
   tv[i].tv_u.tv_get_symbols = get_symbols;
+
+  ++i;
+  tv[i].tv_tag = LDPT_GET_SYMBOLS_V2;
+  tv[i].tv_u.tv_get_symbols = get_symbols_v2;
 
   ++i;
   tv[i].tv_tag = LDPT_ADD_INPUT_FILE;
@@ -207,6 +247,30 @@ Plugin::load()
   ++i;
   tv[i].tv_tag = LDPT_SET_EXTRA_LIBRARY_PATH;
   tv[i].tv_u.tv_set_extra_library_path = set_extra_library_path;
+
+  ++i;
+  tv[i].tv_tag = LDPT_GET_INPUT_SECTION_COUNT;
+  tv[i].tv_u.tv_get_input_section_count = get_input_section_count;
+
+  ++i;
+  tv[i].tv_tag = LDPT_GET_INPUT_SECTION_TYPE;
+  tv[i].tv_u.tv_get_input_section_type = get_input_section_type;
+
+  ++i;
+  tv[i].tv_tag = LDPT_GET_INPUT_SECTION_NAME;
+  tv[i].tv_u.tv_get_input_section_name = get_input_section_name;
+
+  ++i;
+  tv[i].tv_tag = LDPT_GET_INPUT_SECTION_CONTENTS;
+  tv[i].tv_u.tv_get_input_section_contents = get_input_section_contents;
+
+  ++i;
+  tv[i].tv_tag = LDPT_UPDATE_SECTION_ORDER;
+  tv[i].tv_u.tv_update_section_order = update_section_order;
+
+  ++i;
+  tv[i].tv_tag = LDPT_ALLOW_SECTION_ORDERING;
+  tv[i].tv_u.tv_allow_section_ordering = allow_section_ordering;
 
   ++i;
   tv[i].tv_tag = LDPT_NULL;
@@ -319,8 +383,9 @@ Plugin_manager::~Plugin_manager()
 // Load all plugin libraries.
 
 void
-Plugin_manager::load_plugins()
+Plugin_manager::load_plugins(Layout* layout)
 {
+  this->layout_ = layout;
   for (this->current_ = this->plugins_.begin();
        this->current_ != this->plugins_.end();
        ++this->current_)
@@ -331,7 +396,7 @@ Plugin_manager::load_plugins()
 
 Pluginobj*
 Plugin_manager::claim_file(Input_file* input_file, off_t offset,
-                           off_t filesize)
+                           off_t filesize, Object* elf_object)
 {
   if (this->in_replacement_phase_)
     return NULL;
@@ -343,6 +408,9 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
   this->plugin_input_file_.offset = offset;
   this->plugin_input_file_.filesize = filesize;
   this->plugin_input_file_.handle = reinterpret_cast<void*>(handle);
+  if (elf_object != NULL)
+    this->objects_.push_back(elf_object);
+  this->in_claim_file_handler_ = true;
 
   for (this->current_ = this->plugins_.begin();
        this->current_ != this->plugins_.end();
@@ -351,9 +419,11 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
       if ((*this->current_)->claim_file(&this->plugin_input_file_))
         {
 	  this->any_claimed_ = true;
+	  this->in_claim_file_handler_ = false;
 
-          if (this->objects_.size() > handle)
-            return this->objects_[handle];
+          if (this->objects_.size() > handle
+              && this->objects_[handle]->pluginobj() != NULL)
+            return this->objects_[handle]->pluginobj();
 
           // If the plugin claimed the file but did not call the
           // add_symbols callback, we need to create the Pluginobj now.
@@ -362,6 +432,7 @@ Plugin_manager::claim_file(Input_file* input_file, off_t offset,
         }
     }
 
+  this->in_claim_file_handler_ = false;
   return NULL;
 }
 
@@ -395,7 +466,7 @@ Plugin_manager::save_input_group(Input_group* input_group)
 void
 Plugin_manager::all_symbols_read(Workqueue* workqueue, Task* task,
                                  Input_objects* input_objects,
-	                         Symbol_table* symtab, Layout* layout,
+	                         Symbol_table* symtab,
 	                         Dirsearch* dirpath, Mapfile* mapfile,
 	                         Task_token** last_blocker)
 {
@@ -404,7 +475,6 @@ Plugin_manager::all_symbols_read(Workqueue* workqueue, Task* task,
   this->task_ = task;
   this->input_objects_ = input_objects;
   this->symtab_ = symtab;
-  this->layout_ = layout;
   this->dirpath_ = dirpath;
   this->mapfile_ = mapfile;
   this->this_blocker_ = NULL;
@@ -592,12 +662,20 @@ Pluginobj*
 Plugin_manager::make_plugin_object(unsigned int handle)
 {
   // Make sure we aren't asked to make an object for the same handle twice.
-  if (this->objects_.size() != handle)
+  if (this->objects_.size() != handle
+      && this->objects_[handle]->pluginobj() != NULL)
     return NULL;
 
   Pluginobj* obj = make_sized_plugin_object(this->input_file_,
                                             this->plugin_input_file_.offset,
                                             this->plugin_input_file_.filesize);
+
+
+  // If the elf object for this file was pushed into the objects_ vector, delete
+  // it to make room for the Pluginobj as this file is claimed.
+  if (this->objects_.size() != handle)
+    this->objects_.pop_back();
+
   this->objects_.push_back(obj);
   return obj;
 }
@@ -609,7 +687,7 @@ ld_plugin_status
 Plugin_manager::get_input_file(unsigned int handle,
                                struct ld_plugin_input_file* file)
 {
-  Pluginobj* obj = this->object(handle);
+  Pluginobj* obj = this->object(handle)->pluginobj();
   if (obj == NULL)
     return LDPS_BAD_HANDLE;
 
@@ -627,11 +705,63 @@ Plugin_manager::get_input_file(unsigned int handle,
 ld_plugin_status
 Plugin_manager::release_input_file(unsigned int handle)
 {
-  Pluginobj* obj = this->object(handle);
+  if (this->object(handle) == NULL)
+    return LDPS_BAD_HANDLE;
+
+  Pluginobj* obj = this->object(handle)->pluginobj();
+
   if (obj == NULL)
     return LDPS_BAD_HANDLE;
 
   obj->unlock(this->task_);
+  return LDPS_OK;
+}
+
+// Get the elf object corresponding to the handle. Return NULL if we
+// found a Pluginobj instead.
+
+Object*
+Plugin_manager::get_elf_object(const void* handle)
+{
+  Object* obj = this->object(
+      static_cast<unsigned int>(reinterpret_cast<intptr_t>(handle)));
+
+  // The object should not be a Pluginobj.
+  if (obj == NULL
+      || obj->pluginobj() != NULL)
+    return NULL;
+
+  return obj;
+}
+
+ld_plugin_status
+Plugin_manager::get_view(unsigned int handle, const void **viewp)
+{
+  off_t offset;
+  size_t filesize;
+  Input_file *input_file;
+  if (this->in_claim_file_handler_)
+    {
+      // We are being called from the claim_file hook.
+      const struct ld_plugin_input_file &f = this->plugin_input_file_;
+      offset = f.offset;
+      filesize = f.filesize;
+      input_file = this->input_file_;
+    }
+  else
+    {
+      // An already claimed file.
+      if (this->object(handle) == NULL)
+        return LDPS_BAD_HANDLE;
+      Pluginobj* obj = this->object(handle)->pluginobj();
+      if (obj == NULL)
+        return LDPS_BAD_HANDLE;
+      offset = obj->offset();
+      filesize = obj->filesize();
+      input_file = obj->input_file();
+    }
+  *viewp = (void*) input_file->file().get_view(offset, 0, filesize, false,
+                                               false);
   return LDPS_OK;
 }
 
@@ -689,15 +819,30 @@ Pluginobj::Pluginobj(const std::string& name, Input_file* input_file,
 {
 }
 
-// Return TRUE if a defined symbol might be reachable from outside the
-// universe of claimed objects.
+// Return TRUE if a defined symbol is referenced from outside the
+// universe of claimed objects.  Only references from relocatable,
+// non-IR (unclaimed) objects count as a reference.  References from
+// dynamic objects count only as "visible".
 
 static inline bool
-is_visible_from_outside(Symbol* lsym)
+is_referenced_from_outside(Symbol* lsym)
 {
   if (lsym->in_real_elf())
     return true;
   if (parameters->options().relocatable())
+    return true;
+  if (parameters->options().is_undefined(lsym->name()))
+    return true;
+  return false;
+}
+
+// Return TRUE if a defined symbol might be reachable from outside the
+// load module.
+
+static inline bool
+is_visible_from_outside(Symbol* lsym)
+{
+  if (lsym->in_dyn())
     return true;
   if (parameters->options().export_dynamic() || parameters->options().shared())
     return lsym->is_externally_visible();
@@ -707,8 +852,18 @@ is_visible_from_outside(Symbol* lsym)
 // Get symbol resolution info.
 
 ld_plugin_status
-Pluginobj::get_symbol_resolution_info(int nsyms, ld_plugin_symbol* syms) const
+Pluginobj::get_symbol_resolution_info(int nsyms,
+				      ld_plugin_symbol* syms,
+				      int version) const
 {
+  // For version 1 of this interface, we cannot use
+  // LDPR_PREVAILING_DEF_IRONLY_EXP, so we return LDPR_PREVAILING_DEF
+  // instead.
+  const ld_plugin_symbol_resolution ldpr_prevailing_def_ironly_exp
+      = (version > 1
+	 ? LDPR_PREVAILING_DEF_IRONLY_EXP
+	 : LDPR_PREVAILING_DEF);
+
   if (nsyms > this->nsyms_)
     return LDPS_NO_SYMS;
 
@@ -739,9 +894,14 @@ Pluginobj::get_symbol_resolution_info(int nsyms, ld_plugin_symbol* syms) const
           if (lsym->source() != Symbol::FROM_OBJECT)
             res = LDPR_RESOLVED_EXEC;
           else if (lsym->object()->pluginobj() == this)
-            res = (is_visible_from_outside(lsym)
-                   ? LDPR_PREVAILING_DEF
-                   : LDPR_PREVAILING_DEF_IRONLY);
+	    {
+	      if (is_referenced_from_outside(lsym))
+		res = LDPR_PREVAILING_DEF;
+	      else if (is_visible_from_outside(lsym))
+		res = ldpr_prevailing_def_ironly_exp;
+	      else
+		res = LDPR_PREVAILING_DEF_IRONLY;
+	    }
           else if (lsym->object()->pluginobj() != NULL)
             res = LDPR_RESOLVED_IR;
           else if (lsym->object()->is_dynamic())
@@ -755,9 +915,14 @@ Pluginobj::get_symbol_resolution_info(int nsyms, ld_plugin_symbol* syms) const
           if (lsym->source() != Symbol::FROM_OBJECT)
             res = LDPR_PREEMPTED_REG;
           else if (lsym->object() == static_cast<const Object*>(this))
-            res = (is_visible_from_outside(lsym)
-                   ? LDPR_PREVAILING_DEF
-                   : LDPR_PREVAILING_DEF_IRONLY);
+	    {
+	      if (is_referenced_from_outside(lsym))
+		res = LDPR_PREVAILING_DEF;
+	      else if (is_visible_from_outside(lsym))
+		res = ldpr_prevailing_def_ironly_exp;
+	      else
+		res = LDPR_PREVAILING_DEF_IRONLY;
+	    }
           else
             res = (lsym->object()->pluginobj() != NULL
                    ? LDPR_PREEMPTED_IR
@@ -947,6 +1112,32 @@ Sized_pluginobj<size, big_endian>::do_should_include_member(
   return Archive::SHOULD_INCLUDE_UNKNOWN;
 }
 
+// Iterate over global symbols, calling a visitor class V for each.
+
+template<int size, bool big_endian>
+void
+Sized_pluginobj<size, big_endian>::do_for_all_global_symbols(
+    Read_symbols_data*,
+    Library_base::Symbol_visitor_base* v)
+{
+  for (int i = 0; i < this->nsyms_; ++i)
+    {
+      const struct ld_plugin_symbol& sym = this->syms_[i];
+      if (sym.def != LDPK_UNDEF)
+	v->visit(sym.name);
+    }
+}
+
+// Iterate over local symbols, calling a visitor class V for each GOT offset
+// associated with a local symbol.
+template<int size, bool big_endian>
+void
+Sized_pluginobj<size, big_endian>::do_for_all_local_got_entries(
+    Got_offset_list::Visitor*) const
+{
+  gold_unreachable();
+}
+
 // Get the size of a section.  Not used for plugin objects.
 
 template<int size, bool big_endian>
@@ -970,13 +1161,14 @@ Sized_pluginobj<size, big_endian>::do_section_name(unsigned int)
 // Return a view of the contents of a section.  Not used for plugin objects.
 
 template<int size, bool big_endian>
-Object::Location
-Sized_pluginobj<size, big_endian>::do_section_contents(unsigned int)
+const unsigned char*
+Sized_pluginobj<size, big_endian>::do_section_contents(
+    unsigned int,
+    section_size_type*,
+    bool)
 {
-  Location loc(0, 0);
-
   gold_unreachable();
-  return loc;
+  return NULL;
 }
 
 // Return section flags.  Not used for plugin objects.
@@ -1059,14 +1251,18 @@ Sized_pluginobj<size, big_endian>::do_initialize_xindex()
   return NULL;
 }
 
-// Get symbol counts.  Not used for plugin objects.
+// Get symbol counts.  Don't count plugin objects; the replacement
+// files will provide the counts.
 
 template<int size, bool big_endian>
 void
-Sized_pluginobj<size, big_endian>::do_get_global_symbol_counts(const Symbol_table*,
-                                                   size_t*, size_t*) const
+Sized_pluginobj<size, big_endian>::do_get_global_symbol_counts(
+    const Symbol_table*,
+    size_t* defined,
+    size_t* used) const
 {
-  gold_unreachable();
+  *defined = 0;
+  *used = 0;
 }
 
 // Get symbols.  Not used for plugin objects.
@@ -1154,11 +1350,7 @@ void
 Plugin_hook::run(Workqueue* workqueue)
 {
   gold_assert(this->options_.has_plugins());
-  Symbol* start_sym;
-  if (parameters->options().entry())
-    start_sym = this->symtab_->lookup(parameters->options().entry());
-  else
-    start_sym = this->symtab_->lookup("_start");
+  Symbol* start_sym = this->symtab_->lookup(parameters->entry());
   if (start_sym != NULL)
     start_sym->set_in_real_elf();
 
@@ -1166,7 +1358,6 @@ Plugin_hook::run(Workqueue* workqueue)
                                              this,
                                              this->input_objects_,
                                              this->symtab_,
-                                             this->layout_,
                                              this->dirpath_,
                                              this->mapfile_,
                                              &this->this_blocker_);
@@ -1245,17 +1436,46 @@ release_input_file(const void* handle)
   return parameters->options().plugins()->release_input_file(obj_index);
 }
 
+static enum ld_plugin_status
+get_view(const void *handle, const void **viewp)
+{
+  gold_assert(parameters->options().has_plugins());
+  unsigned int obj_index =
+      static_cast<unsigned int>(reinterpret_cast<intptr_t>(handle));
+  return parameters->options().plugins()->get_view(obj_index, viewp);
+}
+
 // Get the symbol resolution info for a plugin-claimed input file.
 
 static enum ld_plugin_status
 get_symbols(const void* handle, int nsyms, ld_plugin_symbol* syms)
 {
   gold_assert(parameters->options().has_plugins());
-  Pluginobj* obj = parameters->options().plugins()->object(
-      static_cast<unsigned int>(reinterpret_cast<intptr_t>(handle)));
+  Object* obj = parameters->options().plugins()->object(
+    static_cast<unsigned int>(reinterpret_cast<intptr_t>(handle)));
   if (obj == NULL)
     return LDPS_ERR;
-  return obj->get_symbol_resolution_info(nsyms, syms);
+  Pluginobj* plugin_obj = obj->pluginobj();
+  if (plugin_obj == NULL)
+    return LDPS_ERR;
+  return plugin_obj->get_symbol_resolution_info(nsyms, syms, 1);
+}
+
+// Version 2 of the above.  The only difference is that this version
+// is allowed to return the resolution code LDPR_PREVAILING_DEF_IRONLY_EXP.
+
+static enum ld_plugin_status
+get_symbols_v2(const void* handle, int nsyms, ld_plugin_symbol* syms)
+{
+  gold_assert(parameters->options().has_plugins());
+  Object* obj = parameters->options().plugins()->object(
+    static_cast<unsigned int>(reinterpret_cast<intptr_t>(handle)));
+  if (obj == NULL)
+    return LDPS_ERR;
+  Pluginobj* plugin_obj = obj->pluginobj();
+  if (plugin_obj == NULL)
+    return LDPS_ERR;
+  return plugin_obj->get_symbol_resolution_info(nsyms, syms, 2);
 }
 
 // Add a new (real) input file generated by a plugin.
@@ -1312,6 +1532,156 @@ message(int level, const char* format, ...)
     }
 
   va_end(args);
+  return LDPS_OK;
+}
+
+// Get the section count of the object corresponding to the handle.  This
+// plugin interface can only be called in the claim_file handler of the plugin.
+
+static enum ld_plugin_status
+get_input_section_count(const void* handle, unsigned int* count)
+{
+  gold_assert(parameters->options().has_plugins());
+
+  if (!parameters->options().plugins()->in_claim_file_handler())
+    return LDPS_ERR;
+
+  Object* obj = parameters->options().plugins()->get_elf_object(handle);
+
+  if (obj == NULL)
+    return LDPS_ERR;
+
+  *count = obj->shnum();
+  return LDPS_OK;
+}
+
+// Get the type of the specified section in the object corresponding
+// to the handle.  This plugin interface can only be called in the
+// claim_file handler of the plugin.
+
+static enum ld_plugin_status
+get_input_section_type(const struct ld_plugin_section section,
+                       unsigned int* type)
+{
+  gold_assert(parameters->options().has_plugins());
+
+  if (!parameters->options().plugins()->in_claim_file_handler())
+    return LDPS_ERR;
+
+  Object* obj
+    = parameters->options().plugins()->get_elf_object(section.handle); 
+
+  if (obj == NULL)
+    return LDPS_BAD_HANDLE;
+
+  *type = obj->section_type(section.shndx);
+  return LDPS_OK;
+}
+
+// Get the name of the specified section in the object corresponding
+// to the handle.  This plugin interface can only be called in the
+// claim_file handler of the plugin.
+
+static enum ld_plugin_status
+get_input_section_name(const struct ld_plugin_section section,
+                       char** section_name_ptr)
+{
+  gold_assert(parameters->options().has_plugins());
+
+  if (!parameters->options().plugins()->in_claim_file_handler())
+    return LDPS_ERR;
+
+  Object* obj
+    = parameters->options().plugins()->get_elf_object(section.handle); 
+
+  if (obj == NULL)
+    return LDPS_BAD_HANDLE;
+
+  // Check if the object is locked before getting the section name.
+  gold_assert(obj->is_locked());
+
+  const std::string section_name = obj->section_name(section.shndx);
+  *section_name_ptr = static_cast<char*>(malloc(section_name.length() + 1));
+  memcpy(*section_name_ptr, section_name.c_str(), section_name.length() + 1);
+  return LDPS_OK;
+}
+
+// Get the contents of the specified section in the object corresponding
+// to the handle.  This plugin interface can only be called in the
+// claim_file handler of the plugin.
+
+static enum ld_plugin_status
+get_input_section_contents(const struct ld_plugin_section section,
+			   const unsigned char** section_contents_ptr,
+			   size_t* len)
+{
+  gold_assert(parameters->options().has_plugins());
+
+  if (!parameters->options().plugins()->in_claim_file_handler())
+    return LDPS_ERR;
+
+  Object* obj
+    = parameters->options().plugins()->get_elf_object(section.handle); 
+
+  if (obj == NULL)
+    return LDPS_BAD_HANDLE;
+
+  // Check if the object is locked before getting the section contents.
+  gold_assert(obj->is_locked());
+
+  section_size_type plen;
+  *section_contents_ptr
+      = obj->section_contents(section.shndx, &plen, false);
+  *len = plen;
+  return LDPS_OK;
+}
+
+// Specify the ordering of sections in the final layout. The sections are
+// specified as (handle,shndx) pairs in the two arrays in the order in
+// which they should appear in the final layout.
+
+static enum ld_plugin_status
+update_section_order(const struct ld_plugin_section* section_list,
+		     unsigned int num_sections)
+{
+  gold_assert(parameters->options().has_plugins());
+
+  if (num_sections == 0)
+    return LDPS_OK;
+
+  if (section_list == NULL)
+    return LDPS_ERR;
+
+  Layout* layout = parameters->options().plugins()->layout();
+  gold_assert (layout != NULL);
+
+  std::map<Section_id, unsigned int>* order_map
+    = layout->get_section_order_map();
+
+  /* Store the mapping from Section_id to section position in layout's
+     order_map to consult after output sections are added.  */
+  for (unsigned int i = 0; i < num_sections; ++i)
+    {
+      Object* obj = parameters->options().plugins()->get_elf_object(
+          section_list[i].handle);
+      if (obj == NULL)
+	return LDPS_BAD_HANDLE;
+      unsigned int shndx = section_list[i].shndx;
+      Section_id secn_id(obj, shndx);
+      (*order_map)[secn_id] = i + 1;
+    }
+
+  return LDPS_OK;
+}
+
+// Let the linker know that the sections could be reordered.
+
+static enum ld_plugin_status
+allow_section_ordering()
+{
+  gold_assert(parameters->options().has_plugins());
+  Layout* layout = parameters->options().plugins()->layout();
+  layout->set_section_ordering_specified();
   return LDPS_OK;
 }
 

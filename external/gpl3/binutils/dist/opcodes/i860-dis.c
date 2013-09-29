@@ -1,5 +1,5 @@
 /* Disassembler for the i860.
-   Copyright 2000, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2000, 2003, 2005, 2007, 2012 Free Software Foundation, Inc.
 
    Contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -20,6 +20,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include "dis-asm.h"
 #include "opcode/i860.h"
 
