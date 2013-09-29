@@ -1,5 +1,5 @@
 @c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
-@c 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+@c 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -33,6 +33,7 @@ Assembly Language Programming'' in the same work.
 * MIPS ASE instruction generation overrides:: Directives to control
   			generation of MIPS ASE instructions
 * MIPS floating-point:: Directives to override floating-point options
+* MIPS Syntax::         MIPS specific syntactical considerations
 @end menu
 
 @node MIPS Opts
@@ -78,7 +79,7 @@ VxWorks-style position-independent macro expansions.
 @itemx -mips2
 @itemx -mips3
 @itemx -mips4
-@itemx -mips5xo
+@itemx -mips5
 @itemx -mips32
 @itemx -mips32r2
 @itemx -mips64
@@ -128,6 +129,13 @@ Generate code for the MIPS 16 processor.  This is equivalent to putting
 @code{.set mips16} at the start of the assembly file.  @samp{-no-mips16}
 turns off this option.
 
+@item -mmicromips
+@itemx -mno-micromips
+Generate code for the microMIPS processor.  This is equivalent to putting
+@code{.set micromips} at the start of the assembly file.  @samp{-mno-micromips}
+turns off this option.  This is equivalent to putting @code{.set nomicromips}
+at the start of the assembly file.
+
 @item -msmartmips
 @itemx -mno-smartmips
 Enables the SmartMIPS extensions to the MIPS32 instruction set, which
@@ -167,6 +175,12 @@ Generate code for the MT Application Specific Extension.
 This tells the assembler to accept MT instructions.
 @samp{-mno-mt} turns off this option.
 
+@item -mmcu
+@itemx -mno-mcu
+Generate code for the MCU Application Specific Extension.
+This tells the assembler to accept MCU instructions.
+@samp{-mno-mcu} turns off this option.
+
 @item -mfix7000
 @itemx -mno-fix7000
 Cause nops to be inserted if the read of the destination register
@@ -205,7 +219,7 @@ compiled with this option run on another processor than Loongson 2F will
 yield unpredictable results.
 
 @item -mfix-24k
-@itemx -no-mfix-24k
+@itemx -mno-fix-24k
 Insert nops to work around the 24K @samp{eret}/@samp{deret} errata.
 
 @item -mfix-cn63xxp1
@@ -282,6 +296,10 @@ rm9000,
 4ksd,
 m4k,
 m4kp,
+m14k,
+m14kc,
+m14ke,
+m14kec,
 24kc,
 24kf2_1,
 24kf,
@@ -311,8 +329,12 @@ sb1,
 sb1a,
 loongson2e,
 loongson2f,
+loongson3a,
 octeon,
-xlr
+octeon+,
+octeon2,
+xlr,
+xlp
 @end quotation
 
 For compatibility reasons, @samp{@var{n}x} and @samp{@var{b}fx} are
@@ -533,6 +555,12 @@ in which it will assemble instructions for the MIPS 16 processor.  Use
 
 Traditional @sc{mips} assemblers do not support this directive.
 
+The directive @code{.set micromips} puts the assembler into microMIPS mode,
+in which it will assemble instructions for the microMIPS processor.  Use
+@code{.set nomicromips} to return to normal 32 bit mode.
+
+Traditional @sc{mips} assemblers do not support this directive.
+
 @node MIPS autoextend
 @section Directives for extending MIPS 16 bit instructions
 
@@ -553,10 +581,10 @@ This directive is only meaningful when in MIPS 16 mode.  Traditional
 
 @kindex @code{.insn}
 The @code{.insn} directive tells @code{@value{AS}} that the following
-data is actually instructions.  This makes a difference in MIPS 16 mode:
-when loading the address of a label which precedes instructions,
-@code{@value{AS}} automatically adds 1 to the value, so that jumping to
-the loaded address will do the right thing.
+data is actually instructions.  This makes a difference in MIPS 16 and
+microMIPS modes: when loading the address of a label which precedes
+instructions, @code{@value{AS}} automatically adds 1 to the value, so
+that jumping to the loaded address will do the right thing.
 
 @kindex @code{.global}
 The @code{.global} and @code{.globl} directives supported by
@@ -655,6 +683,14 @@ from the MT Application Specific Extension from that point on
 in the assembly.  The @code{.set nomt} directive prevents MT
 instructions from being accepted.
 
+@cindex MIPS MCU instruction generation override
+@kindex @code{.set mcu}
+@kindex @code{.set nomcu}
+The directive @code{.set mcu} makes the assembler accept instructions
+from the MCU Application Specific Extension from that point on
+in the assembly.  The @code{.set nomcu} directive prevents MCU
+instructions from being accepted.
+
 Traditional @sc{mips} assemblers do not support these directives.
 
 @node MIPS floating-point
@@ -679,3 +715,28 @@ float-point operations.  These directives always override the default
 options (@samp{-msingle-float} and @samp{-mdouble-float}).
 
 Traditional @sc{mips} assemblers do not support these directives.
+
+@node MIPS Syntax
+@section Syntactical considerations for the MIPS assembler
+@menu
+* MIPS-Chars::                Special Characters
+@end menu
+
+@node MIPS-Chars
+@subsection Special Characters
+
+@cindex line comment character, MIPS
+@cindex MIPS line comment character
+The presence of a @samp{#} on a line indicates the start of a comment
+that extends to the end of the current line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a
+preprocessor control command (@pxref{Preprocessing}).
+
+@cindex line separator, MIPS
+@cindex statement separator, MIPS
+@cindex MIPS line separator
+The @samp{;} character can be used to separate statements on the same
+line.
