@@ -640,6 +640,7 @@ INSTALL_LIBBFD_TRUE
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
+NO_WMISSING_FIELD_INITIALIZERS
 NO_WERROR
 WARN_CFLAGS
 OTOOL64
@@ -9357,10 +9358,6 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_shlibpath_var=no
       ;;
 
-    freebsd1*)
-      ld_shlibs=no
-      ;;
-
     # FreeBSD 2.2.[012] allows us to include c++rt0.o to get C++ constructor
     # support.  Future versions do this automatically, but an explicit c++rt0.o
     # does not break anything, and helps significantly (at the cost of a little
@@ -10279,10 +10276,6 @@ dgux*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
-freebsd1*)
-  dynamic_linker=no
-  ;;
-
 freebsd* | dragonfly*)
   # DragonFly does not have aout.  When/if they implement a new
   # versioning mechanism, adjust this.
@@ -11142,7 +11135,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11145 "configure"
+#line 11138 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11248,7 +11241,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11251 "configure"
+#line 11244 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11569,8 +11562,56 @@ fi
 
 
 
+NO_WMISSING_FIELD_INITIALIZERS=
+save_CFLAGS="$CFLAGS"
+for real_option in -Wno-missing-field-initializers; do
+  # Do the check with the no- prefix removed since gcc silently
+  # accepts any -Wno-* option on purpose
+  case $real_option in
+    -Wno-*) option=-W`expr x$real_option : 'x-Wno-\(.*\)'` ;;
+    *) option=$real_option ;;
+  esac
+  as_acx_Woption=`$as_echo "acx_cv_prog_cc_warning_$option" | $as_tr_sh`
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $option" >&5
+$as_echo_n "checking whether $CC supports $option... " >&6; }
+if { as_var=$as_acx_Woption; eval "test \"\${$as_var+set}\" = set"; }; then :
+  $as_echo_n "(cached) " >&6
+else
+  CFLAGS="$option"
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_acx_Woption=yes"
+else
+  eval "$as_acx_Woption=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+eval ac_res=\$$as_acx_Woption
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  if test `eval 'as_val=${'$as_acx_Woption'};$as_echo "$as_val"'` = yes; then :
+  NO_WMISSING_FIELD_INITIALIZERS="$NO_WMISSING_FIELD_INITIALIZERS${NO_WMISSING_FIELD_INITIALIZERS:+ }$real_option"
+fi
+  done
+CFLAGS="$save_CFLAGS"
+
 
 ac_config_headers="$ac_config_headers config.h:config.in"
+
+
+# PR 14072
 
 
 if test -z "$target" ; then
@@ -11660,7 +11701,7 @@ fi
 
 # host-specific stuff:
 
-ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl fi vi ga zh_CN"
+ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl fi vi ga zh_CN it uk"
 # If we haven't got the data from the intl directory,
 # assume NLS is disabled.
 USE_NLS=no
@@ -12097,6 +12138,38 @@ fi
 
 done
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether string.h and strings.h may both be included" >&5
+$as_echo_n "checking whether string.h and strings.h may both be included... " >&6; }
+if test "${gcc_cv_header_string+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+#include <strings.h>
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gcc_cv_header_string=yes
+else
+  gcc_cv_header_string=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_header_string" >&5
+$as_echo "$gcc_cv_header_string" >&6; }
+if test $gcc_cv_header_string = yes; then
+
+$as_echo "#define STRING_WITH_STRINGS 1" >>confdefs.h
+
+fi
+
 
 ac_fn_c_check_decl "$LINENO" "basename" "ac_cv_have_decl_basename" "$ac_includes_default"
 if test "x$ac_cv_have_decl_basename" = x""yes; then :
@@ -12413,6 +12486,7 @@ if test x${all_targets} = xfalse ; then
 	ad=`echo $arch | sed -e s/bfd_//g -e s/_arch//g`
 	archdefs="$archdefs -DARCH_$ad"
 	case "$arch" in
+	bfd_aarch64_arch)	ta="$ta aarch64-asm.lo aarch64-dis.lo aarch64-opc.lo aarch64-asm-2.lo aarch64-dis-2.lo aarch64-opc-2.lo" ;;
 	bfd_alpha_arch)		ta="$ta alpha-dis.lo alpha-opc.lo" ;;
 	bfd_arc_arch)		ta="$ta arc-dis.lo arc-opc.lo arc-ext.lo" ;;
 	bfd_arm_arch)		ta="$ta arm-dis.lo" ;;
@@ -12431,24 +12505,27 @@ if test x${all_targets} = xfalse ; then
 	bfd_h8500_arch)		ta="$ta h8500-dis.lo" ;;
 	bfd_hppa_arch)		ta="$ta hppa-dis.lo" ;;
 	bfd_i370_arch)		ta="$ta i370-dis.lo i370-opc.lo" ;;
-	bfd_i386_arch|bfd_l1om_arch)
+	bfd_i386_arch|bfd_l1om_arch|bfd_k1om_arch)
 				ta="$ta i386-dis.lo i386-opc.lo" ;;
 	bfd_i860_arch)		ta="$ta i860-dis.lo" ;;
 	bfd_i960_arch)		ta="$ta i960-dis.lo" ;;
 	bfd_ia64_arch)		ta="$ta ia64-dis.lo ia64-opc.lo" ;;
 	bfd_ip2k_arch)		ta="$ta ip2k-asm.lo ip2k-desc.lo ip2k-dis.lo ip2k-ibld.lo ip2k-opc.lo" using_cgen=yes ;;
+	bfd_epiphany_arch)	ta="$ta epiphany-asm.lo epiphany-desc.lo epiphany-dis.lo epiphany-ibld.lo epiphany-opc.lo" using_cgen=yes ;;
         bfd_iq2000_arch)        ta="$ta iq2000-asm.lo iq2000-desc.lo iq2000-dis.lo iq2000-ibld.lo iq2000-opc.lo" using_cgen=yes ;;
 	bfd_lm32_arch)          ta="$ta lm32-asm.lo lm32-desc.lo lm32-dis.lo lm32-ibld.lo lm32-opc.lo lm32-opinst.lo" using_cgen=yes ;;
 	bfd_m32c_arch)		ta="$ta m32c-asm.lo m32c-desc.lo m32c-dis.lo m32c-ibld.lo m32c-opc.lo" using_cgen=yes ;;
 	bfd_m32r_arch)		ta="$ta m32r-asm.lo m32r-desc.lo m32r-dis.lo m32r-ibld.lo m32r-opc.lo m32r-opinst.lo" using_cgen=yes ;;
 	bfd_m68hc11_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m68hc12_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
+	bfd_m9s12x_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
+	bfd_m9s12xg_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m68k_arch)		ta="$ta m68k-dis.lo m68k-opc.lo" ;;
 	bfd_m88k_arch)		ta="$ta m88k-dis.lo" ;;
 	bfd_mcore_arch)		ta="$ta mcore-dis.lo" ;;
 	bfd_mep_arch)		ta="$ta mep-asm.lo mep-desc.lo mep-dis.lo mep-ibld.lo mep-opc.lo" using_cgen=yes ;;
 	bfd_microblaze_arch)	ta="$ta microblaze-dis.lo" ;;
-	bfd_mips_arch)		ta="$ta mips-dis.lo mips-opc.lo mips16-opc.lo" ;;
+	bfd_mips_arch)		ta="$ta mips-dis.lo mips-opc.lo mips16-opc.lo micromips-opc.lo" ;;
 	bfd_mmix_arch)		ta="$ta mmix-dis.lo mmix-opc.lo" ;;
 	bfd_mn10200_arch)	ta="$ta m10200-dis.lo m10200-opc.lo" ;;
 	bfd_mn10300_arch)	ta="$ta m10300-dis.lo m10300-opc.lo" ;;
@@ -12464,6 +12541,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_pyramid_arch)	;;
 	bfd_romp_arch)		;;
 	bfd_rs6000_arch)	ta="$ta ppc-dis.lo ppc-opc.lo" ;;
+	bfd_rl78_arch)		ta="$ta rl78-dis.lo rl78-decode.lo";;
 	bfd_rx_arch)		ta="$ta rx-dis.lo rx-decode.lo";;
 	bfd_s390_arch)		ta="$ta s390-dis.lo s390-opc.lo" ;;
 	bfd_score_arch)         ta="$ta score-dis.lo score7-dis.lo" ;;
@@ -12498,13 +12576,16 @@ if test x${all_targets} = xfalse ; then
 	bfd_tic54x_arch)	ta="$ta tic54x-dis.lo tic54x-opc.lo" ;;
 	bfd_tic6x_arch)		ta="$ta tic6x-dis.lo" ;;
 	bfd_tic80_arch)		ta="$ta tic80-dis.lo tic80-opc.lo" ;;
+	bfd_tilegx_arch)	ta="$ta tilegx-dis.lo tilegx-opc.lo" ;;
+	bfd_tilepro_arch)	ta="$ta tilepro-dis.lo tilepro-opc.lo" ;;
 	bfd_v850_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_v850e_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_v850ea_arch)	ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_vax_arch)		ta="$ta vax-dis.lo" ;;
 	bfd_w65_arch)		ta="$ta w65-dis.lo" ;;
 	bfd_we32k_arch)		;;
-	bfd_xc16x_arch)		ta="$ta xc16x-asm.lo xc16x-desc.lo xc16x-dis.lo xc16x-ibld.lo xc16x-opc.lo" using_cgen=yes ;;
+	bfd_xc16x_arch)         ta="$ta xc16x-asm.lo xc16x-desc.lo xc16x-dis.lo xc16x-ibld.lo xc16x-opc.lo" using_cgen=yes ;;
+	bfd_xgate_arch) 	ta="$ta xgate-dis.lo xgate-opc.lo" ;;
 	bfd_xstormy16_arch)	ta="$ta xstormy16-asm.lo xstormy16-desc.lo xstormy16-dis.lo xstormy16-ibld.lo xstormy16-opc.lo" using_cgen=yes ;;
 	bfd_xtensa_arch)	ta="$ta xtensa-dis.lo" ;;
 	bfd_z80_arch)		ta="$ta z80-dis.lo" ;;

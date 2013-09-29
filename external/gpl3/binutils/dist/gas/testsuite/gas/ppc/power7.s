@@ -1,4 +1,4 @@
-	.section	".text"
+	.text
 power7:
 	lxvd2x    3,4,5
 	lxvd2x    43,4,5
@@ -102,3 +102,13 @@ power7:
 	isel	  2,3,4,28
 	ori	  2,2,0
 	.p2align 4,,15
+	yield
+	or	  27,27,27
+	mdoio
+	or	  29,29,29
+	mdoom
+	or	  30,30,30
+	mfppr	  10
+	mfppr32	  11
+	mtppr	  12
+	mtppr32	  13
