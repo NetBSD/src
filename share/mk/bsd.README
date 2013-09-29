@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.319 2013/08/03 19:31:26 adam Exp $
+#	$NetBSD: bsd.README,v 1.320 2013/09/29 14:36:25 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1594,6 +1594,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
 		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
 		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
+		LIBXCB?=	${DESTDIR}/usr/X11R7/lib/libxcb.a
 		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
 		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
