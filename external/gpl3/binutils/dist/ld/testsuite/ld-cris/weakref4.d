@@ -11,22 +11,22 @@
 # sure we get a valid reloc.
 
 #...
- +\[[0-9]+\] .data +PROGBITS +0+822a4 0002a4 000004 00 +WA +0 +0 +1
+ +\[[0-9]+\] .data +PROGBITS +[0-9a-f]* [0-9a-f]* 000004 .*
 #...
- +\[[0-9]+\] .bss +NOBITS +0+822a8 .*
+ +\[[0-9]+\] .bss +NOBITS +[0-9a-f]* [0-9a-f]* 00000c .*
 #...
 Relocation section '.rela.dyn' at offset 0x... contains 1 entries:
 #...
-000822a8 +00000109 R_CRIS_COPY +000822a8 +__expobj2 \+ 0
+.* R_CRIS_COPY .* __expobj2 \+ 0
 
-There are no unwind sections in this file.
+The decoding of unwind sections for machine type Axis Communications 32-bit embedded processor is not currently supported.
 
 Symbol table '.dynsym' contains . entries:
 #...
- +.: 000822a8 +4 +OBJECT +GLOBAL +DEFAULT +12 __expobj2@TST3 \(2\)
+ +.: [0-9a-f]* +4 +OBJECT +GLOBAL +DEFAULT +12 __expobj2@TST3 \(2\)
 #...
 Symbol table '.symtab' contains .. entries:
 #...
 Hex dump of section '.data':
-  0x000822a4 a8220800                            .*
+  0x00082250 54220800                            .*
 

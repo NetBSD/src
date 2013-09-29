@@ -1,7 +1,7 @@
 #source: tlsbindesc.s
 #source: tlsbin.s
 #as: --32
-#ld: -melf_i386 tmpdir/libtlslib.so
+#ld: -melf_i386 tmpdir/libtlslib.so --no-ld-generated-unwind-info
 #readelf: -Ssrl
 #target: i?86-*-*
 
@@ -72,11 +72,11 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG7
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG2
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG4
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 __bss_start
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG6
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG1
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _end
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG8
 
 Symbol table '\.symtab' contains [0-9]+ entries:
@@ -93,6 +93,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
+.* FILE +LOCAL +DEFAULT +ABS .*
  +[0-9]+: 00000020 +0 +TLS +LOCAL +DEFAULT +7 sl1
  +[0-9]+: 00000024 +0 +TLS +LOCAL +DEFAULT +7 sl2
  +[0-9]+: 00000028 +0 +TLS +LOCAL +DEFAULT +7 sl3
@@ -101,6 +102,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000034 +0 +TLS +LOCAL +DEFAULT +7 sl6
  +[0-9]+: 00000038 +0 +TLS +LOCAL +DEFAULT +7 sl7
  +[0-9]+: 0000003c +0 +TLS +LOCAL +DEFAULT +7 sl8
+.* FILE +LOCAL +DEFAULT +ABS .*
  +[0-9]+: 00000080 +0 +TLS +LOCAL +DEFAULT +8 bl1
  +[0-9]+: 00000084 +0 +TLS +LOCAL +DEFAULT +8 bl2
  +[0-9]+: 00000088 +0 +TLS +LOCAL +DEFAULT +8 bl3
@@ -109,6 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000094 +0 +TLS +LOCAL +DEFAULT +8 bl6
  +[0-9]+: 00000098 +0 +TLS +LOCAL +DEFAULT +8 bl7
  +[0-9]+: 0000009c +0 +TLS +LOCAL +DEFAULT +8 bl8
+.* FILE +LOCAL +DEFAULT +ABS .*
  +[0-9]+: 00001000 +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
  +[0-9]+: 0+804a060 +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
  +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
@@ -133,7 +136,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0000004c +0 +TLS +GLOBAL +HIDDEN +7 sh4
  +[0-9]+: 00000078 +0 +TLS +GLOBAL +DEFAULT +8 bg7
  +[0-9]+: 00000050 +0 +TLS +GLOBAL +HIDDEN +7 sh5
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 __bss_start
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG6
  +[0-9]+: 0+8049000 +0 +FUNC +GLOBAL +DEFAULT +6 fn2
  +[0-9]+: 00000004 +0 +TLS +GLOBAL +DEFAULT +7 sg2
@@ -141,8 +144,8 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 00000040 +0 +TLS +GLOBAL +HIDDEN +7 sh1
  +[0-9]+: 00000014 +0 +TLS +GLOBAL +DEFAULT +7 sg6
  +[0-9]+: 00000018 +0 +TLS +GLOBAL +DEFAULT +7 sg7
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _end
  +[0-9]+: 00000044 +0 +TLS +GLOBAL +HIDDEN +7 sh2
  +[0-9]+: 00000054 +0 +TLS +GLOBAL +HIDDEN +7 sh6
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +UND sG8

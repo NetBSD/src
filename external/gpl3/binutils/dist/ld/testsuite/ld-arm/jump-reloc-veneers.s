@@ -9,4 +9,4 @@ _start:
 	.section destsect, "x"
 	.thumb_func
 dest:
-	b dest
+	b.n dest

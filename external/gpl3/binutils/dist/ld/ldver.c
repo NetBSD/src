@@ -1,6 +1,6 @@
 /* ldver.c -- Print linker version.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002,
-   2003, 2005, 2007, 2008, 2009, 2010
+   2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -40,7 +40,7 @@ ldversion (int noisy)
 
   if (noisy & 2)
     {
-      printf (_("Copyright 2011 Free Software Foundation, Inc.\n"));
+      printf (_("Copyright 2012 Free Software Foundation, Inc.\n"));
       printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or (at your option) a later version.\n\

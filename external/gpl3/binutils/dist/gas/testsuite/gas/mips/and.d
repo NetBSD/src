@@ -32,4 +32,4 @@ Disassembly of section .text:
 0+0058 <[^>]*> nor	a0,a1,at
 0+005c <[^>]*> ori	a0,a1,0x0
 0+0060 <[^>]*> xori	a0,a1,0x0
-	...
+	\.\.\.

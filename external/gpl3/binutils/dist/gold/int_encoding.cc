@@ -1,6 +1,6 @@
-// varint.cc -- variable length and unaligned integer encoding support.
+// int_encoding.cc -- variable length and unaligned integer encoding support.
 
-// Copyright 2009 Free Software Foundation, Inc.
+// Copyright 2009, 2010 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com> by refactoring scattered
 // contents from other files in gold.  Original code written by Ian
 // Lance Taylor <iant@google.com> and Caleb Howe <cshowe@google.com>.
@@ -32,19 +32,20 @@ namespace gold {
 
 // Read an unsigned LEB128 number.  Each byte contains 7 bits of
 // information, plus one bit saying whether the number continues or
-// not.
+// not.  BYTE contains the first byte of the number, and is guaranteed
+// to have the continuation bit set.
 
 uint64_t
-read_unsigned_LEB_128(const unsigned char* buffer, size_t* len)
+read_unsigned_LEB_128_x(const unsigned char* buffer, size_t* len,
+			unsigned char byte)
 {
-  uint64_t result = 0;
-  size_t num_read = 0;
-  unsigned int shift = 0;
-  unsigned char byte;
+  uint64_t result = static_cast<uint64_t>(byte & 0x7f);
+  size_t num_read = 1;
+  unsigned int shift = 7;
 
   do
     {
-      if (num_read >= 64 / 7) 
+      if (num_read > 64 / 7 + 1)
         {
           gold_warning(_("Unusually large LEB128 decoded, "
 			 "debug information may be corrupted"));
@@ -64,18 +65,20 @@ read_unsigned_LEB_128(const unsigned char* buffer, size_t* len)
 
 // Read a signed LEB128 number.  These are like regular LEB128
 // numbers, except the last byte may have a sign bit set.
+// BYTE contains the first byte of the number, and is guaranteed
+// to have the continuation bit set.
 
 int64_t
-read_signed_LEB_128(const unsigned char* buffer, size_t* len)
+read_signed_LEB_128_x(const unsigned char* buffer, size_t* len,
+		      unsigned char byte)
 {
-  int64_t result = 0;
-  int shift = 0;
-  size_t num_read = 0;
-  unsigned char byte;
+  int64_t result = static_cast<uint64_t>(byte & 0x7f);
+  int shift = 7;
+  size_t num_read = 1;
 
   do
     {
-      if (num_read >= 64 / 7) 
+      if (num_read > 64 / 7 + 1)
         {
           gold_warning(_("Unusually large LEB128 decoded, "
 			 "debug information may be corrupted"));

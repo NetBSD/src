@@ -9,9 +9,9 @@ Disassembly of section \.text:
    4:	372f002a 	negu \$47,0,42
 			6: R_MMIX_8	bar\+0x30
    8:	fd00b26e 	swym 0,178,110
-			9: R_MMIX_8	baz\+0xfffffffffffffffe
+			9: R_MMIX_8	baz-0x2
    c:	ff000000 	trip 0,0,0
-			d: R_MMIX_8	fee\+0xffffffffffffffff
+			d: R_MMIX_8	fee-0x1
 			e: R_MMIX_8	fie\+0x1
 			f: R_MMIX_8	foe\+0x3
   10:	f9000000 	resume 0

@@ -1,5 +1,5 @@
 /* tc-score.c -- Assembler for Score
-   Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009, 2011, 2012 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -130,8 +130,8 @@ static void s3_do16_cmpi (char *);
 static void s3_do16_rdi5 (char *);
 static void s3_do16_xi5 (char *);
 static void s3_do16_ldst_insn (char *);
-static void s3_do16_slli_srli(char *);
-static void s3_do16_ldiu(char *);
+static void s3_do16_slli_srli (char *);
+static void s3_do16_ldiu (char *);
 static void s3_do16_push_pop (char *);
 static void s3_do16_rpush (char *);
 static void s3_do16_rpop (char *);
@@ -531,9 +531,9 @@ static struct s3_datafield_range s3_score_df_range[] =
   {_IMM16_pic,        16, {0, (1 << 16) - 1}},	        /* (     0 ~ 65535) */
   {_SIMM5,            5,  {-(1 << 4), (1 << 4) - 1}},	/* (   -16 ~ 15   ) */
   {_SIMM6,            6,  {-(1 << 5), (1 << 5) - 1}},	/* (   -32 ~ 31   ) */
-  {_IMM32,            32, {0, 0xfffffff}},        
-  {_SIMM32,           32, {-0x80000000, 0x7fffffff}},  
-  {_IMM11,            11, {0, (1 << 11) - 1}},	        
+  {_IMM32,            32, {0, 0xfffffff}},
+  {_SIMM32,           32, {-0x80000000, 0x7fffffff}},
+  {_IMM11,            11, {0, (1 << 11) - 1}},
 };
 
 struct s3_asm_opcode
@@ -557,7 +557,7 @@ struct s3_asm_opcode
   void (*parms) (char *);
 };
 
-static const struct s3_asm_opcode s3_score_ldst_insns[] = 
+static const struct s3_asm_opcode s3_score_ldst_insns[] =
 {
   {"lw",        0x20000000, 0x3e000000, 0x1000,     Rd_rvalueRs_SI15,     s3_do_ldst_insn},
   {"lw",        0x06000000, 0x3e000007, 0x8000,     Rd_rvalueRs_preSI12,  s3_do_ldst_insn},
@@ -585,7 +585,7 @@ static const struct s3_asm_opcode s3_score_ldst_insns[] =
   {"sb",        0x0e000007, 0x3e000007, 0x8000,     Rd_lvalueRs_postSI12, s3_do_ldst_insn},
 };
 
-static const struct s3_asm_opcode s3_score_insns[] = 
+static const struct s3_asm_opcode s3_score_insns[] =
 {
   {"abs",       0x3800000a, 0x3e007fff, 0x8000,     Rd_Rs_x,              s3_do_dsp3},
   {"abs.s",     0x3800004b, 0x3e007fff, 0x8000,     Rd_Rs_x,              s3_do_dsp3},
@@ -691,7 +691,7 @@ static const struct s3_asm_opcode s3_score_insns[] =
   {"brccl",     0x00000409, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
   {"brgtul",    0x00000809, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
   {"brleul",    0x00000c09, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
-  {"breql",     0x00001009, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs}, 
+  {"breql",     0x00001009, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
   {"brnel",     0x00001409, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
   {"brgtl",     0x00001809, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
   {"brlel",     0x00001c09, 0x3e007fff, 0x8000,     x_Rs_x,               s3_do_rs},
@@ -749,8 +749,8 @@ static const struct s3_asm_opcode s3_score_insns[] =
   /* s3_inst.relax */
   {"ldi",       0x020c0000, 0x3e0e0000, 0x6400,     Rd_SI16,              s3_do_rdsi16},
   {"ldis",      0x0a0c0000, 0x3e0e0000, 0x8000,     Rd_I16,               s3_do_ldis},
- 
-  /* ldi <-> ldiu!.  */  
+
+  /* ldi <-> ldiu!.  */
   {"ldiu!",     0x6400,     0x7c00,     0x8000,     Rd_I5,                s3_do16_ldiu},
 
   /*ltbb! , ltbh! ltbw! */
@@ -954,9 +954,9 @@ static const struct s3_asm_opcode s3_score_insns[] =
   {"li",        0x020c0000, 0x3e0e0000, 0x8000,     Insn_Type_SYN,        s3_do_macro_li_rdi32},
 
   /* la reg, imm32        -->(1)  ldi  reg, simm16
-                             (2)  ldis reg, %HI(imm32)        
-                                  ori  reg, %LO(imm32) 
-          
+                             (2)  ldis reg, %HI(imm32)
+                                  ori  reg, %LO(imm32)
+
      la reg, symbol       -->(1)  lis  reg, %HI(imm32)
                                   ori  reg, %LO(imm32)  */
   {"la",        0x020c0000, 0x3e0e0000, 0x8000,     Insn_Type_SYN,        s3_do_macro_la_rdi32},
@@ -1143,7 +1143,7 @@ s3_do_rdrsrs (char *str)
     {
       /* Check mulr, mulur rd is even number.  */
       if (((s3_inst.instruction & 0x3e0003ff) == 0x00000340
-            || (s3_inst.instruction & 0x3e0003ff) == 0x00000342)
+	   || (s3_inst.instruction & 0x3e0003ff) == 0x00000342)
           && (reg % 2))
         {
           s3_inst.error = _("rd must be even number.");
@@ -1176,7 +1176,7 @@ s3_walk_no_bignums (symbolS * sp)
   if (symbol_get_value_expression (sp)->X_add_symbol)
     return (s3_walk_no_bignums (symbol_get_value_expression (sp)->X_add_symbol)
 	    || (symbol_get_value_expression (sp)->X_op_symbol
-		&& s3_walk_no_bignums (symbol_get_value_expression (sp)->X_op_symbol)));  
+		&& s3_walk_no_bignums (symbol_get_value_expression (sp)->X_op_symbol)));
 
   return 0;
 }
@@ -1185,12 +1185,11 @@ static int
 s3_my_get_expression (expressionS * ep, char **str)
 {
   char *save_in;
-  segT seg;
 
   save_in = input_line_pointer;
   input_line_pointer = *str;
   s3_in_my_get_expression = 1;
-  seg = expression (ep);
+  (void) expression (ep);
   s3_in_my_get_expression = 0;
 
   if (ep->X_op == O_illegal)
@@ -1305,18 +1304,12 @@ s3_validate_immediate (bfd_signed_vma val, unsigned int data_type, int hex_p)
 
     case _IMM5_MULTI_LOAD:
       if (val >= 2 && val <= 32)
-        {       
+        {
           if (val == 32)
-            {       
-              val = 0;
-            }       
+	    val = 0;
           return val;
-        }       
-      else    
-        {       
-          return (int) s3_FAIL;
-        }       
-      break;  
+        }
+      return (int) s3_FAIL;
 
     case _IMM32:
       if (val >= 0 && val <= 0xffffffff)
@@ -1393,10 +1386,10 @@ s3_data_op2 (char **str, int shift, enum score_data_type data_type)
         }
       dataptr = (char *)data_exp;
 
-      if ((dataptr != NULL) 
+      if ((dataptr != NULL)
           && (((strstr (dataptr, "0x")) != NULL)
               || ((strstr (dataptr, "0X")) != NULL)))
-        { 
+        {
           hex_p = 1;
           if ((data_type != _SIMM16_LA)
               && (data_type != _VALUE_HI16)
@@ -1431,9 +1424,9 @@ s3_data_op2 (char **str, int shift, enum score_data_type data_type)
           && (s3_inst.type != Rd_lvalueRs_SI15)
           && (s3_inst.type != Insn_internal)
           && (((*dataptr >= 'a') && (*dataptr <= 'z'))
-             || ((*dataptr == '0') && (*(dataptr + 1) == 'x') && (*(dataptr + 2) != '0'))
-             || ((*dataptr == '+') && (*(dataptr + 1) != '0'))
-             || ((*dataptr == '-') && (*(dataptr + 1) != '0'))))
+	      || ((*dataptr == '0') && (*(dataptr + 1) == 'x') && (*(dataptr + 2) != '0'))
+	      || ((*dataptr == '+') && (*(dataptr + 1) != '0'))
+	      || ((*dataptr == '-') && (*(dataptr + 1) != '0'))))
         {
           s3_inst.error = s3_BAD_ARGS;
           return (int) s3_FAIL;
@@ -1600,7 +1593,9 @@ s3_do_rdsi16 (char *str)
   else  if ((s3_inst.instruction & 0x02040001) == 0x02040001)
     {
       /*  imm <=0x3f  (5 bit<<1)*/
-      if (((s3_inst.instruction & 0x1ffe0)==0)||(((s3_inst.instruction & 0x1ffe0) == 0x1ffe0)&&(s3_inst.instruction & 0x003e) !=0))
+      if (((s3_inst.instruction & 0x1ffe0) == 0)
+	  || (((s3_inst.instruction & 0x1ffe0) == 0x1ffe0)
+	      && (s3_inst.instruction & 0x003e) != 0))
         {
           s3_inst.relax_inst |= (s3_inst.instruction >> 1) & 0x1f;
           s3_inst.relax_inst |= (((s3_inst.instruction >> 20) & 0x1f) << 5);
@@ -1613,11 +1608,13 @@ s3_do_rdsi16 (char *str)
         }
     }
   /* addi */
-  else  if (((s3_inst.instruction & 0x2000000) == 0x02000000)&& (s3_inst.relax_inst!=0x8000))
+  else  if (((s3_inst.instruction & 0x2000000) == 0x02000000) && (s3_inst.relax_inst!=0x8000))
     {
       /* rd : 0-16 ; imm <=0x7f  (6 bit<<1)*/
-      if ((((s3_inst.instruction >> 20) & 0x10) != 0x10) && 
-      (((s3_inst.instruction & 0x1ffc0)==0)||(((s3_inst.instruction & 0x1ffc0) == 0x1ffc0)&&(s3_inst.instruction & 0x007e) !=0)))
+      if ((((s3_inst.instruction >> 20) & 0x10) != 0x10)
+	  && (((s3_inst.instruction & 0x1ffc0) == 0)
+	      || (((s3_inst.instruction & 0x1ffc0) == 0x1ffc0)
+		  && (s3_inst.instruction & 0x007e) != 0)))
         {
           s3_inst.relax_inst |= (s3_inst.instruction >> 1) & 0x3f;
           s3_inst.relax_inst |= (((s3_inst.instruction >> 20) & 0xf) << 6);
@@ -1626,7 +1623,6 @@ s3_do_rdsi16 (char *str)
       else
         {
           s3_inst.relax_inst =0x8000;
-
         }
     }
 
@@ -1702,7 +1698,7 @@ s3_do_sub_rdrssi14 (char *str)     /* -(2^13)~((2^13)-1) */
 /* Handle bitclr.c/bitset.c/bittgl.c/slli.c/srai.c/srli.c/roli.c/rori.c/rolic.c.
    0~((2^14)-1) */
 static void
-s3_do_rdrsi5 (char *str) 
+s3_do_rdrsi5 (char *str)
 {
   s3_skip_whitespace (str);
 
@@ -1796,7 +1792,7 @@ s3_do_rdi16 (char *str)
       /* rd : 0-16 ;imm =0 -> can transform to addi!*/
       if ((((s3_inst.instruction >> 20) & 0x10) != 0x10) && ((s3_inst.instruction & 0x1ffff)==0))
         {
-         s3_inst.relax_inst =0x5c00; /* addi! */
+	  s3_inst.relax_inst =0x5c00; /* addi! */
           s3_inst.relax_inst |= (s3_inst.instruction >> 1) & 0x3f;
           s3_inst.relax_inst |= (((s3_inst.instruction >> 20) & 0xf) << 6);
           s3_inst.relax_size = 2;
@@ -1915,7 +1911,7 @@ s3_do_xi5x (char *str)
 
   if (s3_inst.relax_inst != 0x8000)
     {
-      s3_inst.relax_inst |= ((s3_inst.instruction >> 15) & 0x1f) ;
+      s3_inst.relax_inst |= ((s3_inst.instruction >> 15) & 0x1f);
       s3_inst.relax_size = 2;
     }
 }
@@ -1937,8 +1933,7 @@ s3_do_rdrs (char *str)
         {
           /* mv! rd : 5bit , ra : 5bit */
           s3_inst.relax_inst |= ((s3_inst.instruction >> 15) & 0x1f)  | (((s3_inst.instruction >> 20) & 0x1f) << 5);
-          s3_inst.relax_size = 2;   
-         
+          s3_inst.relax_size = 2;
         }
       else if ((((s3_inst.instruction >> 15) & 0x10) == 0x0) && (((s3_inst.instruction >> 20) & 0x10) == 0))
         {
@@ -2219,7 +2214,7 @@ s3_dependency_type_from_insn (char *insn_name)
 
 static int
 s3_check_dependency (char *pre_insn, char *pre_reg,
-                  char *cur_insn, char *cur_reg, int *warn_or_error)
+		     char *cur_insn, char *cur_reg, int *warn_or_error)
 {
   int bubbles = 0;
   unsigned int i;
@@ -2277,7 +2272,7 @@ s3_build_one_frag (struct s3_score_it one_inst)
 
   p = frag_var (rs_machine_dependent, relax_size + s3_RELAX_PAD_BYTE, 0,
                 s3_RELAX_ENCODE (one_inst.size, one_inst.relax_size,
-                              one_inst.type, 0, 0, relaxable_p),
+				 one_inst.type, 0, 0, relaxable_p),
                 NULL, 0, NULL);
 
   if (relaxable_p)
@@ -2337,7 +2332,7 @@ s3_handle_dependency (struct s3_score_it *theinst)
       strcpy (pre_insn, s3_dependency_vector[i].name);
 
       bubbles = s3_check_dependency (pre_insn, s3_dependency_vector[i].reg,
-                                  cur_insn, s3_dependency_vector[0].reg, &warn_or_error);
+				     cur_insn, s3_dependency_vector[0].reg, &warn_or_error);
       remainder_bubbles = bubbles - i + 1;
 
       if (remainder_bubbles > 0)
@@ -2385,9 +2380,9 @@ s3_handle_dependency (struct s3_score_it *theinst)
 	      if (warn_or_error)
 		{
                   as_bad (_("data dependency: %s %s -- %s %s  (%d/%d bubble)"),
-                           s3_dependency_vector[i].name, s3_dependency_vector[i].reg,
-                           s3_dependency_vector[0].name, s3_dependency_vector[0].reg,
-                           remainder_bubbles, bubbles);
+			  s3_dependency_vector[i].name, s3_dependency_vector[i].reg,
+			  s3_dependency_vector[0].name, s3_dependency_vector[0].reg,
+			  remainder_bubbles, bubbles);
 		}
 	      else
 		{
@@ -2509,8 +2504,8 @@ s3_adjust_paritybit (bfd_vma m_code, enum insn_class i_class)
       m_code_middle = m_code & 0x3fff8000;
       m_code_low = m_code & 0x00007fff;
       result = pb_high | (m_code_high << 2) |
-               pb_middle | (m_code_middle << 1) |
-               pb_low | m_code_low;
+	pb_middle | (m_code_middle << 1) |
+	pb_low | m_code_low;
     }
   else if (i_class == INSN_CLASS_32 || i_class == INSN_CLASS_SYN)
     {
@@ -2563,7 +2558,7 @@ s3_gen_insn_frag (struct s3_score_it *part_1, struct s3_score_it *part_2)
   if (pce_p)
     {
       backup_inst1.instruction = ((backup_inst1.instruction & 0x7FFF) << 15)
-                                  | (inst2->instruction & 0x7FFF);
+	| (inst2->instruction & 0x7FFF);
       backup_inst1.instruction = s3_adjust_paritybit (backup_inst1.instruction, INSN_CLASS_PCE);
       backup_inst1.relax_inst = 0x8000;
       backup_inst1.size = s3_INSN_SIZE;
@@ -2573,7 +2568,7 @@ s3_gen_insn_frag (struct s3_score_it *part_1, struct s3_score_it *part_2)
   else
     {
       backup_inst1.instruction = s3_adjust_paritybit (backup_inst1.instruction,
-						   s3_GET_INSN_CLASS (backup_inst1.type));
+						      s3_GET_INSN_CLASS (backup_inst1.type));
     }
 
   if (backup_inst1.relax_size != 0)
@@ -2617,19 +2612,19 @@ s3_gen_insn_frag (struct s3_score_it *part_1, struct s3_score_it *part_2)
     {
       if (inst1->reloc.type != BFD_RELOC_NONE)
 	s3_fix_new_score (frag_now, p - frag_now->fr_literal,
-		       inst1->size, &inst1->reloc.exp,
-		       inst1->reloc.pc_rel, inst1->reloc.type);
+			  inst1->size, &inst1->reloc.exp,
+			  inst1->reloc.pc_rel, inst1->reloc.type);
 
       if (inst2->reloc.type != BFD_RELOC_NONE)
 	s3_fix_new_score (frag_now, p - frag_now->fr_literal + 2,
-		       inst2->size, &inst2->reloc.exp, inst2->reloc.pc_rel, inst2->reloc.type);
+			  inst2->size, &inst2->reloc.exp, inst2->reloc.pc_rel, inst2->reloc.type);
     }
   else
     {
       if (backup_inst1.reloc.type != BFD_RELOC_NONE)
 	s3_fix_new_score (frag_now, p - frag_now->fr_literal,
-		       backup_inst1.size, &backup_inst1.reloc.exp,
-		       backup_inst1.reloc.pc_rel, backup_inst1.reloc.type);
+			  backup_inst1.size, &backup_inst1.reloc.exp,
+			  backup_inst1.reloc.pc_rel, backup_inst1.reloc.type);
     }
 
   /* relax_size may be 2, 4, 12 or 0, 0 indicates no relaxation.  */
@@ -2638,7 +2633,7 @@ s3_gen_insn_frag (struct s3_score_it *part_1, struct s3_score_it *part_2)
 
   p = frag_var (rs_machine_dependent, relax_size + s3_RELAX_PAD_BYTE, 0,
                 s3_RELAX_ENCODE (backup_inst1.size, backup_inst1.relax_size,
-                              backup_inst1.type, 0, 0, relaxable_p),
+				 backup_inst1.type, 0, 0, relaxable_p),
                 backup_inst1.reloc.exp.X_add_symbol, 0, NULL);
 
   if (relaxable_p)
@@ -2940,12 +2935,10 @@ s3_do_ldst_insn (char *str)
   int conflict_reg;
   int value;
   char * temp;
-  char *strbak;
   char *dataptr;
   int reg;
   int ldst_idx = 0;
 
-  strbak = str;
   s3_skip_whitespace (str);
 
   if (((conflict_reg = s3_reg_required_here (&str, 20, s3_REG_TYPE_SCORE)) == (int) s3_FAIL)
@@ -3075,9 +3068,9 @@ s3_do_ldst_insn (char *str)
 
               /* lw/lh/lbu/sw/sh/sb, offset = 0, relax to 16 bit instruction.  */
               /* if ((ldst_idx == INSN_LBU)
-                  || (ldst_idx == INSN_LH)
-                  || (ldst_idx == INSN_LW)
-                  || (ldst_idx == INSN_SB) || (ldst_idx == INSN_SH) || (ldst_idx == INSN_SW))*/
+		 || (ldst_idx == INSN_LH)
+		 || (ldst_idx == INSN_LW)
+		 || (ldst_idx == INSN_SB) || (ldst_idx == INSN_SH) || (ldst_idx == INSN_SW))*/
               if ( (ldst_idx == INSN_LW)|| (ldst_idx == INSN_SW))
                 {
                   /* ra only 3 bit , rd only 4 bit for lw! and sw! */
@@ -3410,8 +3403,7 @@ s3_do_ldst_cop (char *str)
 static void
 s3_do16_ldst_insn (char *str)
 {
-  int conflict_reg=0;
-  char * temp;
+  int conflict_reg = 0;
   s3_skip_whitespace (str);
 
   if ((s3_reglow_required_here (&str, 8) == (int) s3_FAIL) || (s3_skip_past_comma (&str) == (int) s3_FAIL))
@@ -3428,12 +3420,12 @@ s3_do16_ldst_insn (char *str)
       if (conflict_reg&0x8)
         {
           sprintf (s3_err_msg,  _("invalid register number: %d is not in [r0--r7]"),conflict_reg);
-          s3_inst.error=s3_err_msg;
-          return ;
+          s3_inst.error = s3_err_msg;
+          return;
         }
 
       s3_skip_whitespace (str);
-      temp = str + 1;    /* The latter will process decimal/hex expression.  */
+
       if (*str == ']')
         {
           str++;
@@ -3464,33 +3456,32 @@ s3_do16_ldst_insn (char *str)
               data_type = _IMM5_RSHIFT_2;
               value = s3_validate_immediate (s3_inst.reloc.exp.X_add_number, data_type, 0);
               if (value == (int) s3_FAIL)
-	       {
-	        if (data_type < 30)
-	          sprintf (s3_err_msg,
-	            _("invalid constant: %d bit expression not in range %d..%d"),
-	            s3_score_df_range[data_type].bits,
-	            s3_score_df_range[data_type].range[0], s3_score_df_range[data_type].range[1]);
+		{
+		  if (data_type < 30)
+		    sprintf (s3_err_msg,
+			     _("invalid constant: %d bit expression not in range %d..%d"),
+			     s3_score_df_range[data_type].bits,
+			     s3_score_df_range[data_type].range[0], s3_score_df_range[data_type].range[1]);
                   s3_inst.error = s3_err_msg;
 	          return;
 	        }
-              if (value &0x3)
+              if (value & 0x3)
                 {
                   sprintf (s3_err_msg,  _("invalid constant: %d is not word align integer"),value);
-                  s3_inst.error=s3_err_msg;
-                  return ;
+                  s3_inst.error = s3_err_msg;
+                  return;
                 }
 
-              value >>=2;
+              value >>= 2;
               s3_inst.instruction |= value;
             }
         }
-   
     }
   else
     {
       sprintf (s3_err_msg,  _("missing ["));
-      s3_inst.error=s3_err_msg;
-      return ;
+      s3_inst.error = s3_err_msg;
+      return;
     }
 }
 
@@ -3648,7 +3639,7 @@ s3_do_or48 (char *str)
     return;
 }
 
-static void 
+static void
 s3_do_mbitclr (char *str)
 {
   int val;
@@ -3657,7 +3648,7 @@ s3_do_mbitclr (char *str)
   if (*str != '[')
     {
       sprintf (s3_err_msg,  _("missing ["));
-      s3_inst.error=s3_err_msg;
+      s3_inst.error = s3_err_msg;
       return;
     }
   str++;
@@ -3678,7 +3669,7 @@ s3_do_mbitclr (char *str)
   if (*str != ']')
     {
       sprintf (s3_err_msg,  _("missing ]"));
-      s3_inst.error=s3_err_msg;
+      s3_inst.error = s3_err_msg;
       return;
     }
   str++;
@@ -3689,11 +3680,11 @@ s3_do_mbitclr (char *str)
 
   /* Set imm11 to opcode.  */
   s3_inst.instruction |= (val & 0x1)
-                      | (((val >> 1 ) & 0x7) << 7)
-                      | (((val >> 4 ) & 0x1f) << 20);
+    | (((val >> 1 ) & 0x7) << 7)
+    | (((val >> 4 ) & 0x1f) << 20);
 }
 
-static void 
+static void
 s3_do_mbitset (char *str)
 {
   int val;
@@ -3702,7 +3693,7 @@ s3_do_mbitset (char *str)
   if (*str != '[')
     {
       sprintf (s3_err_msg,  _("missing ["));
-      s3_inst.error=s3_err_msg;
+      s3_inst.error = s3_err_msg;
       return;
     }
   str++;
@@ -3723,7 +3714,7 @@ s3_do_mbitset (char *str)
   if (*str != ']')
     {
       sprintf (s3_err_msg,  _("missing ]"));
-      s3_inst.error=s3_err_msg;
+      s3_inst.error = s3_err_msg;
       return;
     }
   str++;
@@ -3734,8 +3725,8 @@ s3_do_mbitset (char *str)
 
   /* Set imm11 to opcode.  */
   s3_inst.instruction |= (val & 0x1)
-                      | (((val >> 1 ) & 0x7) << 7)
-                      | (((val >> 4 ) & 0x1f) << 20);
+    | (((val >> 1 ) & 0x7) << 7)
+    | (((val >> 4 ) & 0x1f) << 20);
 }
 
 static void
@@ -3746,7 +3737,7 @@ s3_do16_slli_srli (char *str)
   if ((s3_reglow_required_here (&str, 5) == (int) s3_FAIL)
       || (s3_skip_past_comma (&str) == (int) s3_FAIL)
       || s3_data_op2 (&str, 0, _IMM5) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL) 
+      || s3_end_of_line (str) == (int) s3_FAIL)
     return;
 }
 
@@ -3758,7 +3749,7 @@ s3_do16_ldiu (char *str)
   if ((s3_reg_required_here (&str, 5,s3_REG_TYPE_SCORE) == (int) s3_FAIL)
       || (s3_skip_past_comma (&str) == (int) s3_FAIL)
       || s3_data_op2 (&str, 0, _IMM5) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL) 
+      || s3_end_of_line (str) == (int) s3_FAIL)
     return;
 }
 
@@ -3767,7 +3758,7 @@ s3_do16_push_pop (char *str)
 {
   s3_skip_whitespace (str);
   if ((s3_reg_required_here (&str, 0, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL) 
+      || s3_end_of_line (str) == (int) s3_FAIL)
     return;
 }
 
@@ -3780,17 +3771,17 @@ s3_do16_rpush (char *str)
   if ((reg = (s3_reg_required_here (&str, 5, s3_REG_TYPE_SCORE))) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL
       || s3_data_op2 (&str, 0, _IMM5_MULTI_LOAD) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL) 
+      || s3_end_of_line (str) == (int) s3_FAIL)
     return;
 
   /* 0: indicate 32.
      1: invalide value.
      2: to 31: normal value.  */
-  val = s3_inst.instruction & 0x1f; 
+  val = s3_inst.instruction & 0x1f;
   if (val == 1)
     {
-      s3_inst.error = _("imm5 should >= 2"); 
-      return; 
+      s3_inst.error = _("imm5 should >= 2");
+      return;
     }
   if (reg >= 32)
     {
@@ -3808,7 +3799,7 @@ s3_do16_rpop (char *str)
   if ((reg = (s3_reg_required_here (&str, 5, s3_REG_TYPE_SCORE))) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL
       || s3_data_op2 (&str, 0, _IMM5_MULTI_LOAD) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL) 
+      || s3_end_of_line (str) == (int) s3_FAIL)
     return;
 
   /* 0: indicate 32.
@@ -3826,7 +3817,7 @@ s3_do16_rpop (char *str)
       s3_inst.error = _("reg should <= 31");
       return;
     }
-  else 
+  else
     {
       if ((reg + val) <= 32)
         reg = reg + val - 1;
@@ -3984,8 +3975,8 @@ s3_do_ldst_atomic (char *str)
 
 static void
 s3_build_relax_frag (struct s3_score_it fix_insts[s3_RELAX_INST_NUM], int fix_num ATTRIBUTE_UNUSED,
-                  struct s3_score_it var_insts[s3_RELAX_INST_NUM], int var_num,
-                  symbolS *add_symbol)
+		     struct s3_score_it var_insts[s3_RELAX_INST_NUM], int var_num,
+		     symbolS *add_symbol)
 {
   int i;
   char *p;
@@ -4004,7 +3995,7 @@ s3_build_relax_frag (struct s3_score_it fix_insts[s3_RELAX_INST_NUM], int fix_nu
     {
       inst_main.relax_size += var_insts[i].size;
       var_insts[i].instruction = s3_adjust_paritybit (var_insts[i].instruction,
-                                                   s3_GET_INSN_CLASS (var_insts[i].type));
+						      s3_GET_INSN_CLASS (var_insts[i].type));
     }
 
   /* Check data dependency.  */
@@ -4027,7 +4018,7 @@ s3_build_relax_frag (struct s3_score_it fix_insts[s3_RELAX_INST_NUM], int fix_nu
 
   if (inst_main.reloc.type != BFD_RELOC_NONE)
     fixp = s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
-			  &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
+			     &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
 
   frag_now->tc_frag_data.fixp = fixp;
   cur_fixp = frag_now->tc_frag_data.fixp;
@@ -4045,8 +4036,8 @@ s3_build_relax_frag (struct s3_score_it fix_insts[s3_RELAX_INST_NUM], int fix_nu
       if (var_insts[i].reloc.type != BFD_RELOC_NONE)
         {
           fixp = s3_fix_new_score (frag_now, where, var_insts[i].size,
-                                &var_insts[i].reloc.exp, var_insts[i].reloc.pc_rel,
-                                var_insts[i].reloc.type);
+				   &var_insts[i].reloc.exp, var_insts[i].reloc.pc_rel,
+				   var_insts[i].reloc.type);
           if (fixp)
             {
               if (cur_fixp)
@@ -4065,7 +4056,7 @@ s3_build_relax_frag (struct s3_score_it fix_insts[s3_RELAX_INST_NUM], int fix_nu
 
   p = frag_var (rs_machine_dependent, inst_main.relax_size + s3_RELAX_PAD_BYTE, 0,
                 s3_RELAX_ENCODE (inst_main.size, inst_main.relax_size, inst_main.type,
-                0, inst_main.size, 0), add_symbol, 0, NULL);
+				 0, inst_main.size, 0), add_symbol, 0, NULL);
 
   /* Write fr_var part.
      no calling s3_gen_insn_frag, no fixS will be generated.  */
@@ -4100,11 +4091,11 @@ s3_build_la_pic (int reg_rd, expressionS exp)
       fix_num = 1;
       var_num = 2;
 
-      /* For an external symbol, only one insn is generated; 
+      /* For an external symbol, only one insn is generated;
          For a local symbol, two insns are generated.  */
       /* Fix part
          For an external symbol: lw rD, <sym>($gp)
-                                 (BFD_RELOC_SCORE_GOT15 or BFD_RELOC_SCORE_CALL15)  */
+	 (BFD_RELOC_SCORE_GOT15 or BFD_RELOC_SCORE_CALL15)  */
       sprintf (tmp, "lw_pic r%d, %s", reg_rd, add_symbol->bsym->name);
       if (s3_append_insn (tmp, FALSE) == (int) s3_FAIL)
 	return;
@@ -4213,8 +4204,8 @@ s3_build_la_pic (int reg_rd, expressionS exp)
       if (s3_append_insn (tmp, TRUE) == (int) s3_FAIL)
 	return;
 
-     /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
-     s3_inst.bwarn = -1;
+      /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
+      s3_inst.bwarn = -1;
     }
 
   s3_nor1 = r1_bak;
@@ -4488,6 +4479,7 @@ s3_exp_macro_ldst_abs (char *str)
 
   s3_nor1 = r1_bak;
 }
+
 /* Handle bcmpeq / bcmpne  */
 static void
 s3_do_macro_bcmp (char *str)
@@ -4495,29 +4487,29 @@ s3_do_macro_bcmp (char *str)
   int reg_a , reg_b;
   char keep_data[s3_MAX_LITERAL_POOL_SIZE];
   char* ptemp;
-  int i=0;
+  int i = 0;
   struct s3_score_it inst_expand[2];
   struct s3_score_it inst_main;
 
-
+  memset (inst_expand, 0, sizeof inst_expand);
   s3_skip_whitespace (str);
   if (( reg_a = s3_reg_required_here (&str, 15, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL
       ||(reg_b = s3_reg_required_here (&str, 10, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
       || s3_skip_past_comma (&str) == (int) s3_FAIL)
-      return;
-  ptemp =str;
-  while(*ptemp!=0)
-  {
-  	keep_data[i]=*ptemp;
-  	i++;
-  	ptemp++;
-  }
-  keep_data[i]=0;
-  if (s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL 
-      ||reg_b ==0
+    return;
+  ptemp = str;
+  while (*ptemp != 0)
+    {
+      keep_data[i] = *ptemp;
+      i++;
+      ptemp++;
+    }
+  keep_data[i] = 0;
+  if (s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL
+      ||reg_b == 0
       || s3_end_of_line (str) == (int) s3_FAIL)
-    return ; 
+    return;
   else if (s3_inst.reloc.exp.X_add_symbol == 0)
     {
       s3_inst.error = _("lacking label  ");
@@ -4525,19 +4517,21 @@ s3_do_macro_bcmp (char *str)
     }
   else
     {
-      char append_str[s3_MAX_LITERAL_POOL_SIZE];      
+      char append_str[s3_MAX_LITERAL_POOL_SIZE];
       s3_SET_INSN_ERROR (NULL);
-      
+
       s3_inst.reloc.type = BFD_RELOC_SCORE_BCMP;
       s3_inst.reloc.pc_rel = 1;
       bfd_signed_vma val = s3_inst.reloc.exp.X_add_number;
 
       /* Branch 32  offset field : 20 bit, 16 bit branch offset field : 8 bit.  */
-      s3_inst.instruction |= ((s3_inst.reloc.exp.X_add_number>>1) & 0x1) | ((s3_inst.reloc.exp.X_add_number>>2) & 0x7)<<7 |((s3_inst.reloc.exp.X_add_number>>5) & 0x1f)<<20; 
+      s3_inst.instruction |= ((s3_inst.reloc.exp.X_add_number >> 1) & 0x1)
+	| ((s3_inst.reloc.exp.X_add_number >> 2) & 0x7) << 7
+	| ((s3_inst.reloc.exp.X_add_number >> 5) & 0x1f) << 20;
 
       /* Check and set offset.  */
       if (((val & 0xfffffe00) != 0)
-           && ((val & 0xfffffe00) != 0xfffffe00))
+	  && ((val & 0xfffffe00) != 0xfffffe00))
         {
           /* support bcmp --> cmp!+beq (bne) */
           if (s3_score_pic == s3_NO_PIC)
@@ -4551,33 +4545,33 @@ s3_do_macro_bcmp (char *str)
                 sprintf (&append_str[1], "bne %s", keep_data);
               if (s3_append_insn (&append_str[1], TRUE) == (int) s3_FAIL)
                 return;
-              }
-            else
-              {
-                gas_assert (s3_inst.reloc.exp.X_add_symbol);
-              }
-            /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
-            s3_inst.bwarn = -1;
-            return;
+	    }
+	  else
+	    {
+	      gas_assert (s3_inst.reloc.exp.X_add_symbol);
+	    }
+	  /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
+	  s3_inst.bwarn = -1;
+	  return;
         }
       else
         {
           val >>= 1;
           s3_inst.instruction |= (val & 0x1)
-                              | (((val >> 1) & 0x7) << 7)
-                              | (((val >> 4) & 0x1f) << 20);
+	    | (((val >> 1) & 0x7) << 7)
+	    | (((val >> 4) & 0x1f) << 20);
         }
 
       /* Backup s3_inst.  */
       memcpy (&inst_main, &s3_inst, sizeof (struct s3_score_it));
 
-      if (s3_score_pic == s3_NO_PIC) 
+      if (s3_score_pic == s3_NO_PIC)
         {
           sprintf (&append_str[0], "cmp! r%d, r%d", reg_a, reg_b);
           if (s3_append_insn (&append_str[0], FALSE) == (int) s3_FAIL)
             return;
           memcpy (&inst_expand[0], &s3_inst, sizeof (struct s3_score_it));
-  
+
           if ((inst_main.instruction & 0x3e00007e) == 0x0000004c)
             sprintf (&append_str[1], "beq %s", keep_data);
           else
@@ -4597,17 +4591,17 @@ s3_do_macro_bcmp (char *str)
       inst_main.instruction = s3_adjust_paritybit (inst_main.instruction, s3_GET_INSN_CLASS (inst_main.type));
 
       for (i = 0; i < 2; i++)
-        inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction, 
+        inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction,
                                                           s3_GET_INSN_CLASS (inst_expand[i].type));
       /* Check data dependency.  */
       s3_handle_dependency (&inst_main);
       /* Start a new frag if frag_now is not empty.  */
       if (frag_now_fix () != 0)
-      {
-      	if (!frag_now->tc_frag_data.is_insn)
-      	  frag_wane (frag_now);
-      	frag_new (0);
-      }
+	{
+	  if (!frag_now->tc_frag_data.is_insn)
+	    frag_wane (frag_now);
+	  frag_new (0);
+	}
       frag_grow (20);
 
       /* Write fr_fix part.  */
@@ -4616,10 +4610,10 @@ s3_do_macro_bcmp (char *str)
       s3_md_number_to_chars (p, inst_main.instruction, inst_main.size);
 
       if (inst_main.reloc.type != BFD_RELOC_NONE)
-      {
-      	s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
-                          &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
-      }
+	{
+	  s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
+			    &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
+	}
 #ifdef OBJ_ELF
       dwarf2_emit_insn (inst_main.size);
 #endif
@@ -4639,36 +4633,38 @@ s3_do_macro_bcmp (char *str)
 
       /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
       s3_inst.bwarn = -1;
-     }
+    }
 }
 
 /* Handle bcmpeqz / bcmpnez  */
 static void
 s3_do_macro_bcmpz (char *str)
 {
-  int reg_a ;
+  int reg_a;
   char keep_data[s3_MAX_LITERAL_POOL_SIZE];
   char* ptemp;
-  int i=0;
+  int i = 0;
   struct s3_score_it inst_expand[2];
   struct s3_score_it inst_main;
 
+  memset (inst_expand, 0, sizeof inst_expand);
   s3_skip_whitespace (str);
   if (( reg_a = s3_reg_required_here (&str, 15, s3_REG_TYPE_SCORE)) == (int) s3_FAIL
-      || s3_skip_past_comma (&str) == (int) s3_FAIL   )
+      || s3_skip_past_comma (&str) == (int) s3_FAIL)
     return;
-  ptemp =str;
-  while(*ptemp!=0)
-  {
-  	keep_data[i]=*ptemp;
-  	i++;
-  	ptemp++;
-  }
-  keep_data[i]=0;
-  if ( s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL 
-      || s3_end_of_line (str) == (int) s3_FAIL)
-    return ;
+  ptemp = str;
+  while (*ptemp != 0)
+    {
+      keep_data[i] = *ptemp;
+      i++;
+      ptemp++;
+    }
 
+  keep_data[i] = 0;
+
+  if (s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL
+      || s3_end_of_line (str) == (int) s3_FAIL)
+    return;
   else if (s3_inst.reloc.exp.X_add_symbol == 0)
     {
       s3_inst.error = _("lacking label  ");
@@ -4676,18 +4672,18 @@ s3_do_macro_bcmpz (char *str)
     }
   else
     {
-      char append_str[s3_MAX_LITERAL_POOL_SIZE];      
+      char append_str[s3_MAX_LITERAL_POOL_SIZE];
       s3_SET_INSN_ERROR (NULL);
       s3_inst.reloc.type = BFD_RELOC_SCORE_BCMP;
-      s3_inst.reloc.pc_rel = 1;    
+      s3_inst.reloc.pc_rel = 1;
       bfd_signed_vma val = s3_inst.reloc.exp.X_add_number;
 
       /* Branch 32  offset field : 20 bit, 16 bit branch offset field : 8 bit.  */
-      s3_inst.instruction |= ((s3_inst.reloc.exp.X_add_number>>1) & 0x1) | ((s3_inst.reloc.exp.X_add_number>>2) & 0x7)<<7 |((s3_inst.reloc.exp.X_add_number>>5) & 0x1f)<<20; 
+      s3_inst.instruction |= ((s3_inst.reloc.exp.X_add_number>>1) & 0x1) | ((s3_inst.reloc.exp.X_add_number>>2) & 0x7)<<7 |((s3_inst.reloc.exp.X_add_number>>5) & 0x1f)<<20;
 
       /* Check and set offset.  */
       if (((val & 0xfffffe00) != 0)
-           && ((val & 0xfffffe00) != 0xfffffe00))
+	  && ((val & 0xfffffe00) != 0xfffffe00))
         {
           if (s3_score_pic == s3_NO_PIC)
             {
@@ -4713,14 +4709,14 @@ s3_do_macro_bcmpz (char *str)
         {
           val >>= 1;
           s3_inst.instruction |= (val & 0x1)
-                              | (((val >> 1) & 0x7) << 7)
-                              | (((val >> 4) & 0x1f) << 20);
+	    | (((val >> 1) & 0x7) << 7)
+	    | (((val >> 4) & 0x1f) << 20);
         }
 
       /* Backup s3_inst.  */
       memcpy (&inst_main, &s3_inst, sizeof (struct s3_score_it));
-      
-      if (s3_score_pic == s3_NO_PIC) 
+
+      if (s3_score_pic == s3_NO_PIC)
         {
           sprintf (&append_str[0], "cmpi! r%d, 0", reg_a);
           if (s3_append_insn (&append_str[0], FALSE) == (int) s3_FAIL)
@@ -4745,16 +4741,17 @@ s3_do_macro_bcmpz (char *str)
       inst_main.instruction = s3_adjust_paritybit (inst_main.instruction, s3_GET_INSN_CLASS (inst_main.type));
 
       for (i = 0; i < 2; i++)
-        inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction , s3_GET_INSN_CLASS (inst_expand[i].type));
+        inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction ,
+							  s3_GET_INSN_CLASS (inst_expand[i].type));
       /* Check data dependency.  */
       s3_handle_dependency (&inst_main);
       /* Start a new frag if frag_now is not empty.  */
       if (frag_now_fix () != 0)
-      {
-      	if (!frag_now->tc_frag_data.is_insn)
-      	  frag_wane (frag_now);
-      	frag_new (0);
-      }
+	{
+	  if (!frag_now->tc_frag_data.is_insn)
+	    frag_wane (frag_now);
+	  frag_new (0);
+	}
       frag_grow (20);
 
       /* Write fr_fix part.  */
@@ -4763,10 +4760,10 @@ s3_do_macro_bcmpz (char *str)
       s3_md_number_to_chars (p, inst_main.instruction, inst_main.size);
 
       if (inst_main.reloc.type != BFD_RELOC_NONE)
-      {
-      	s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
-                          &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
-      }
+	{
+	  s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
+			    &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
+	}
 #ifdef OBJ_ELF
       dwarf2_emit_insn (inst_main.size);
 #endif
@@ -4786,7 +4783,7 @@ s3_do_macro_bcmpz (char *str)
 
       /* Set bwarn as -1, so macro instruction itself will not be generated frag.  */
       s3_inst.bwarn = -1;
-     }
+    }
 }
 
 static int
@@ -4819,12 +4816,12 @@ s3_nopic_need_relax (symbolS * sym, int before_relaxing)
           return 1;
         }
       else if ((!S_IS_DEFINED (sym) || S_IS_COMMON (sym)) && (0
-      /* We must defer this decision until after the whole file has been read,
-         since there might be a .extern after the first use of this symbol.  */
-               || (before_relaxing
-                   && S_GET_VALUE (sym) == 0)
-               || (S_GET_VALUE (sym) != 0
-                   && S_GET_VALUE (sym) <= s3_g_switch_value)))
+							      /* We must defer this decision until after the whole file has been read,
+								 since there might be a .extern after the first use of this symbol.  */
+							      || (before_relaxing
+								  && S_GET_VALUE (sym) == 0)
+							      || (S_GET_VALUE (sym) != 0
+								  && S_GET_VALUE (sym) <= s3_g_switch_value)))
         {
           return 0;
         }
@@ -4866,7 +4863,7 @@ s3_build_lwst_pic (int reg_rd, expressionS exp, const char *insn_name)
          For a local symbol, three insns are generated.  */
       /* Fix part
          For an external symbol: lw rD, <sym>($gp)
-                                 (BFD_RELOC_SCORE_GOT15)  */
+	 (BFD_RELOC_SCORE_GOT15)  */
       sprintf (tmp, "lw_pic r1, %s", add_symbol->bsym->name);
       if (s3_append_insn (tmp, FALSE) == (int) s3_FAIL)
         return;
@@ -4999,8 +4996,8 @@ s3_do_macro_ldst_label (char *str)
       else
 	{
           if ((s3_inst.reloc.exp.X_add_number <= 0x3fff)
-               && (s3_inst.reloc.exp.X_add_number >= -0x4000)
-               && (!s3_nopic_need_relax (s3_inst.reloc.exp.X_add_symbol, 1)))
+	      && (s3_inst.reloc.exp.X_add_number >= -0x4000)
+	      && (!s3_nopic_need_relax (s3_inst.reloc.exp.X_add_symbol, 1)))
 	    {
               int ldst_idx = 0;
 
@@ -5045,9 +5042,9 @@ s3_do_macro_ldst_label (char *str)
       /* Adjust instruction opcode and to be relaxed instruction opcode.  */
       inst_main.instruction = s3_adjust_paritybit (inst_main.instruction, s3_GET_INSN_CLASS (inst_main.type));
 
-      /* relax lw rd, label -> ldis rs, imm16 
-                               ori  rd, imm16
-                               lw rd, [rs, imm15] or lw! rd, [rs, imm5].  */
+      /* relax lw rd, label -> ldis rs, imm16
+	 ori  rd, imm16
+	 lw rd, [rs, imm15] or lw! rd, [rs, imm5].  */
       if (inst_expand[2].relax_size == 0)
         inst_main.relax_size = inst_expand[0].size + inst_expand[1].size + inst_expand[2].size;
       else
@@ -5056,7 +5053,7 @@ s3_do_macro_ldst_label (char *str)
       inst_main.type = Insn_GP;
 
       for (i = 0; i < 3; i++)
-	inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction, 
+	inst_expand[i].instruction = s3_adjust_paritybit (inst_expand[i].instruction,
                                                           s3_GET_INSN_CLASS (inst_expand[i].type));
 
       /* Check data dependency.  */
@@ -5079,7 +5076,7 @@ s3_do_macro_ldst_label (char *str)
       if (inst_main.reloc.type != BFD_RELOC_NONE)
         {
           s3_fix_new_score (frag_now, p - frag_now->fr_literal, inst_main.size,
-                         &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
+			    &inst_main.reloc.exp, inst_main.reloc.pc_rel, inst_main.reloc.type);
         }
 
 #ifdef OBJ_ELF
@@ -5099,9 +5096,9 @@ s3_do_macro_ldst_label (char *str)
       s3_md_number_to_chars (p, inst_expand[1].instruction, inst_expand[1].size);
       p += inst_expand[1].size;
 
-      /* relax lw rd, label -> ldis rs, imm16 
-                               ori  rd, imm16
-                               lw rd, [rs, imm15] or lw! rd, [rs, imm5].  */
+      /* relax lw rd, label -> ldis rs, imm16
+	 ori  rd, imm16
+	 lw rd, [rs, imm15] or lw! rd, [rs, imm5].  */
       if (inst_expand[2].relax_size == 0)
         s3_md_number_to_chars (p, inst_expand[2].instruction, inst_expand[2].size);
       else
@@ -5202,7 +5199,7 @@ s3_do_jump (char *str)
     }
 
   if (!(s3_inst.reloc.exp.X_add_number >= -16777216
-      && s3_inst.reloc.exp.X_add_number <= 16777215))
+	&& s3_inst.reloc.exp.X_add_number <= 16777215))
     {
       s3_inst.error = _("invalid constant: 25 bit expression not in range [-16777216, 16777215]");
       return;
@@ -5229,7 +5226,7 @@ s3_do_branch (char *str)
       return;
     }
   else if (!(s3_inst.reloc.exp.X_add_number >= -524288
-           && s3_inst.reloc.exp.X_add_number <= 524287))
+	     && s3_inst.reloc.exp.X_add_number <= 524287))
     {
       s3_inst.error = _("invalid constant: 20 bit expression not in range -2^19..2^19");
       return;
@@ -5258,7 +5255,7 @@ static void
 s3_do16_branch (char *str)
 {
   if ((s3_my_get_expression (&s3_inst.reloc.exp, &str) == (int) s3_FAIL
-      || s3_end_of_line (str) == (int) s3_FAIL))
+       || s3_end_of_line (str) == (int) s3_FAIL))
     {
       ;
     }
@@ -5267,7 +5264,7 @@ s3_do16_branch (char *str)
       s3_inst.error = _("lacking label");
     }
   else if (!(s3_inst.reloc.exp.X_add_number >= -512
-           && s3_inst.reloc.exp.X_add_number <= 511))
+	     && s3_inst.reloc.exp.X_add_number <= 511))
     {
       s3_inst.error = _("invalid constant: 10 bit expression not in range [-2^9, 2^9-1]");
     }
@@ -5311,18 +5308,18 @@ s3_pic_need_relax (symbolS *sym, asection *segtype)
 	linkonce = TRUE;
 
       /* The GNU toolchain uses an extension for ELF: a section
-	  beginning with the magic string .gnu.linkonce is a linkonce
-	  section.  */
+	 beginning with the magic string .gnu.linkonce is a linkonce
+	 section.  */
       if (strncmp (segment_name (symsec), ".gnu.linkonce",
 		   sizeof ".gnu.linkonce" - 1) == 0)
 	linkonce = TRUE;
     }
 
   /* This must duplicate the test in adjust_reloc_syms.  */
-  return (symsec != &bfd_und_section
-	    && symsec != &bfd_abs_section
-	  && ! bfd_is_com_section (symsec)
-	    && !linkonce
+  return (!bfd_is_und_section (symsec)
+	  && !bfd_is_abs_section (symsec)
+	  && !bfd_is_com_section (symsec)
+	  && !linkonce
 #ifdef OBJ_ELF
 	  /* A global or weak symbol is treated as external.  */
 	  && (OUTPUT_FLAVOR != bfd_target_elf_flavour
@@ -5362,8 +5359,8 @@ s3_parse_pce_inst (char *insnstr)
     return;
 
   if (   ((pec_part_1.size == s3_INSN_SIZE) && (s3_inst.size == s3_INSN_SIZE))
-      || ((pec_part_1.size == s3_INSN_SIZE) && (s3_inst.size == s3_INSN16_SIZE))
-      || ((pec_part_1.size == s3_INSN16_SIZE) && (s3_inst.size == s3_INSN_SIZE)))
+	 || ((pec_part_1.size == s3_INSN_SIZE) && (s3_inst.size == s3_INSN16_SIZE))
+	 || ((pec_part_1.size == s3_INSN16_SIZE) && (s3_inst.size == s3_INSN_SIZE)))
     {
       s3_inst.error = _("pce instruction error (16 bit || 16 bit)'");
       sprintf (s3_inst.str, insnstr);
@@ -5380,7 +5377,7 @@ s3_do16_dsp (char *str)
 {
   int rd = 0;
 
-  /* Check 3d.  */ 
+  /* Check 3d.  */
   if (s3_score3d == 0)
     {
       s3_inst.error = _("score3d instruction.");
@@ -5404,7 +5401,7 @@ s3_do16_dsp (char *str)
 static void
 s3_do16_dsp2 (char *str)
 {
-  /* Check 3d.  */ 
+  /* Check 3d.  */
   if (s3_score3d == 0)
     {
       s3_inst.error = _("score3d instruction.");
@@ -5431,7 +5428,7 @@ s3_do16_dsp2 (char *str)
 static void
 s3_do_dsp (char *str)
 {
-  /* Check 3d.  */ 
+  /* Check 3d.  */
   if (s3_score3d == 0)
     {
       s3_inst.error = _("score3d instruction.");
@@ -5460,7 +5457,7 @@ s3_do_dsp2 (char *str)
 {
   int reg;
 
-  /* Check 3d.  */ 
+  /* Check 3d.  */
   if (s3_score3d == 0)
     {
       s3_inst.error = _("score3d instruction.");
@@ -5482,7 +5479,7 @@ s3_do_dsp2 (char *str)
     {
       /* Check mulr, mulur rd is even number.  */
       if (((s3_inst.instruction & 0x3e0003ff) == 0x00000340
-            || (s3_inst.instruction & 0x3e0003ff) == 0x00000342)
+	   || (s3_inst.instruction & 0x3e0003ff) == 0x00000342)
           && (reg % 2))
         {
           s3_inst.error = _("rd must be even number.");
@@ -5509,7 +5506,7 @@ s3_do_dsp2 (char *str)
 static void
 s3_do_dsp3 (char *str)
 {
-  /* Check 3d.  */ 
+  /* Check 3d.  */
   if (s3_score3d == 0)
     {
       s3_inst.error = _("score3d instruction.");
@@ -5791,7 +5788,6 @@ s3_s_score_end (int x ATTRIBUTE_UNUSED)
   /* Generate a .pdr section.  */
   segT saved_seg = now_seg;
   subsegT saved_subseg = now_subseg;
-  valueT dot;
   expressionS exp;
   char *fragp;
 
@@ -5842,7 +5838,7 @@ s3_s_score_end (int x ATTRIBUTE_UNUSED)
 
   else
     {
-      dot = frag_now_fix ();
+      (void) frag_now_fix ();
       gas_assert (s3_pdr_seg);
       subseg_set (s3_pdr_seg, 0);
       /* Write the symbol.  */
@@ -6069,18 +6065,18 @@ s3_s_score_cpadd (int ignore ATTRIBUTE_UNUSED)
 }
 
 #ifndef TC_IMPLICIT_LCOMM_ALIGNMENT
-#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR)        	\
-    do								\
-    {                                                   	\
-    if ((SIZE) >= 8)                                      	\
-    (P2VAR) = 3;                                        	\
-    else if ((SIZE) >= 4)                                 	\
-    (P2VAR) = 2;                                        	\
-    else if ((SIZE) >= 2)                                 	\
-    (P2VAR) = 1;                                        	\
-    else                                                  	\
-    (P2VAR) = 0;                                        	\
-    }								\
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR)	\
+  do							\
+    {							\
+      if ((SIZE) >= 8)					\
+	(P2VAR) = 3;					\
+      else if ((SIZE) >= 4)				\
+	(P2VAR) = 2;					\
+      else if ((SIZE) >= 2)				\
+	(P2VAR) = 1;					\
+      else						\
+	(P2VAR) = 0;					\
+    }							\
   while (0)
 #endif
 
@@ -6223,16 +6219,16 @@ s3_s_score_lcomm (int bytes_p)
   *p = c;
 
   if (
-#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT) \
+#if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT)	\
      || defined (OBJ_BOUT) || defined (OBJ_MAYBE_BOUT))
 #ifdef BFD_ASSEMBLER
-       (OUTPUT_FLAVOR != bfd_target_aout_flavour
-        || (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0)) &&
+      (OUTPUT_FLAVOR != bfd_target_aout_flavour
+       || (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0)) &&
 #else
-       (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0) &&
+      (S_GET_OTHER (symbolP) == 0 && S_GET_DESC (symbolP) == 0) &&
 #endif
 #endif
-       (S_GET_SEGMENT (symbolP) == bss_seg || (!S_IS_DEFINED (symbolP) && S_GET_VALUE (symbolP) == 0)))
+      (S_GET_SEGMENT (symbolP) == bss_seg || (!S_IS_DEFINED (symbolP) && S_GET_VALUE (symbolP) == 0)))
     {
       char *pfrag;
 
@@ -6323,7 +6319,7 @@ s3_build_score_ops_hsh (void)
       struct s3_asm_opcode *new_opcode;
       char *template_name;
       new_opcode = (struct s3_asm_opcode *)
-          obstack_alloc (&insn_obstack, sizeof (struct s3_asm_opcode));
+	obstack_alloc (&insn_obstack, sizeof (struct s3_asm_opcode));
       template_name = (char *) obstack_alloc (& insn_obstack, len + 1);
 
       strcpy (template_name, insn->template_name);
@@ -6352,8 +6348,8 @@ s3_build_dependency_insn_hsh (void)
       struct s3_insn_to_dependency *new_i2n;
 
       new_i2n = (struct s3_insn_to_dependency *)
-          obstack_alloc (&dependency_obstack,
-                         sizeof (struct s3_insn_to_dependency));
+	obstack_alloc (&dependency_obstack,
+		       sizeof (struct s3_insn_to_dependency));
       new_i2n->insn_name = (char *) obstack_alloc (&dependency_obstack,
                                                    len + 1);
 
@@ -6459,7 +6455,7 @@ s_score_cprestore (int ignore ATTRIBUTE_UNUSED)
 {
   if (score3)
     return s3_s_score_cprestore (ignore);
-  else 
+  else
     return s7_s_score_cprestore (ignore);
 }
 
@@ -6468,7 +6464,7 @@ s_score_gpword (int ignore ATTRIBUTE_UNUSED)
 {
   if (score3)
     return s3_s_score_gpword (ignore);
-  else 
+  else
     return s7_s_score_gpword (ignore);
 }
 
@@ -6477,7 +6473,7 @@ s_score_cpadd (int ignore ATTRIBUTE_UNUSED)
 {
   if (score3)
     return s3_s_score_cpadd (ignore);
-  else 
+  else
     return s7_s_score_cpadd (ignore);
 }
 
@@ -6486,7 +6482,7 @@ s_score_lcomm (int bytes_p)
 {
   if (score3)
     return s3_s_score_lcomm (bytes_p);
-  else 
+  else
     return s7_s_score_lcomm (bytes_p);
 }
 
@@ -6574,21 +6570,21 @@ s3_normal_chars_to_number (char *buf, int n)
   if (target_big_endian)
     {
       while (n--)
-        {       
+        {
           result <<= 8;
-          result |= (*where++ & 255); 
-        }       
+          result |= (*where++ & 255);
+        }
     }
   else
     {
       while (n--)
-        {       
+        {
           result <<= 8;
-          result |= (where[n] & 255); 
-        }       
+          result |= (where[n] & 255);
+        }
     }
 
-  return result; 
+  return result;
 }
 
 static void
@@ -6643,7 +6639,7 @@ s3_chars_to_number_littleendian (const void *p, int n)
 static void
 s3_md_number_to_chars (char *buf, valueT val, int n)
 {
-  if (!target_big_endian && n >= 4) 
+  if (!target_big_endian && n >= 4)
     s3_number_to_chars_littleendian (buf, val, n);
   else
     md_number_to_chars (buf, val, n);
@@ -6743,7 +6739,7 @@ s3_force_relocation (struct fix *fixp)
       || fixp->fx_r_type == BFD_RELOC_SCORE_JMP
       || fixp->fx_r_type == BFD_RELOC_SCORE_BRANCH
       || fixp->fx_r_type == BFD_RELOC_SCORE16_JMP
-      || fixp->fx_r_type == BFD_RELOC_SCORE16_BRANCH  
+      || fixp->fx_r_type == BFD_RELOC_SCORE16_BRANCH
       || fixp->fx_r_type == BFD_RELOC_SCORE_BCMP)
     {
       retval = 1;
@@ -6759,7 +6755,7 @@ s3_fix_adjustable (fixS * fixP)
       return 1;
     }
   else if (OUTPUT_FLAVOR == bfd_target_elf_flavour
-      && (S_IS_EXTERNAL (fixP->fx_addsy) || S_IS_WEAK (fixP->fx_addsy)))
+	   && (S_IS_EXTERNAL (fixP->fx_addsy) || S_IS_WEAK (fixP->fx_addsy)))
     {
       return 0;
     }
@@ -6869,7 +6865,7 @@ s3_relax_branch_inst16 (fragS * fragp)
 
   value = offset + symbol_address - frag_addr;
 
-  if (relaxable_p 
+  if (relaxable_p
       && (!((value & 0xfffffe00) == 0 || (value & 0xfffffe00) == 0xfffffe00))
       && fragp->fr_fix == 2
       && (s->bsym != NULL)
@@ -6911,39 +6907,38 @@ s3_relax_cmpbranch_inst32 (fragS * fragp)
 
   inst_value = s3_md_chars_to_number (fragp->fr_literal, s3_INSN_SIZE);
   offset = (inst_value & 0x1)
-           | (((inst_value >> 7) & 0x7) << 1)
-           | (((inst_value >> 21) & 0x1f) << 4);
+    | (((inst_value >> 7) & 0x7) << 1)
+    | (((inst_value >> 21) & 0x1f) << 4);
   offset <<= 1;
   if ((offset & 0x200) == 0x200)
     offset |= 0xfffffe00;
 
   value = offset + symbol_address - frag_addr;
   /* change the order of judging rule is because
-     1.not defined symbol or common sysbol or external symbol will change 
-       bcmp to cmp!+beq/bne ,here need to record fragp->fr_opcode
-     2.if the flow is as before : it will results to recursive loop 
+     1.not defined symbol or common sysbol or external symbol will change
+     bcmp to cmp!+beq/bne ,here need to record fragp->fr_opcode
+     2.if the flow is as before : it will results to recursive loop
   */
   if (fragp->fr_fix == 6)
-    { 
+    {
       /* Have already relaxed!  Just return 0 to terminate the loop.  */
       return 0;
     }
   /* need to translate when extern or not defind or common sysbol */
-  else if ((relaxable_p 
-      && (!((value & 0xfffffe00) == 0 || (value & 0xfffffe00) == 0xfffffe00))
-      && fragp->fr_fix == 4
-      && (s->bsym != NULL))
-      || !S_IS_DEFINED (s)
-       ||S_IS_COMMON (s)
-        ||S_IS_EXTERNAL (s))
+  else if ((relaxable_p
+	    && (!((value & 0xfffffe00) == 0 || (value & 0xfffffe00) == 0xfffffe00))
+	    && fragp->fr_fix == 4
+	    && (s->bsym != NULL))
+	   || !S_IS_DEFINED (s)
+	   ||S_IS_COMMON (s)
+	   ||S_IS_EXTERNAL (s))
     {
       fragp->fr_opcode = fragp->fr_literal + s3_RELAX_RELOC1 (fragp->fr_subtype);
       fragp->fr_fix = 6;
       return 2;
     }
-  
   else
-    { 
+    {
       /* Never relax.  Modify fr_opcode to NULL to verify it's value in
          md_apply_fix.  */
       fragp->fr_opcode = NULL;
@@ -6971,7 +6966,7 @@ s3_relax_other_inst32 (fragS * fragp)
 static int
 s3_relax_gp_and_pic_inst32 (void)
 {
-  /* md_estimate_size_before_relax has already relaxed s3_GP and s3_PIC 
+  /* md_estimate_size_before_relax has already relaxed s3_GP and s3_PIC
      instructions.  We don't change relax size here.  */
   return 0;
 }
@@ -6986,11 +6981,11 @@ s3_relax_frag (asection * sec ATTRIBUTE_UNUSED, fragS * fragp, long stretch ATTR
   if ((fragp->fr_address) % 2 != 0)
     {
       if ((fragp->fr_address + fragp->insn_addr) % 2 != 0)
-      {
+	{
           fragp->insn_addr = 1;
           grows += 1;
           adjust_align_p = 1;
-      }
+	}
     }
 
   switch (s3_RELAX_TYPE (fragp->fr_subtype))
@@ -7167,9 +7162,9 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
         value = fixP->fx_offset;
         value >>= 2;
         content = (content & ~0x7f7fff7f80LL)
-                  | (((value & 0xff) >> 0) << 7)
-                  | (((value & 0x7fff00) >> 8) << 16)
-                  | (((value & 0x3f800000) >> 23) << 32); 
+	  | (((value & 0xff) >> 0) << 7)
+	  | (((value & 0x7fff00) >> 8) << 16)
+	  | (((value & 0x3f800000) >> 23) << 32);
         s3_md_number_to_chars (buf, content, s3_INSN48_SIZE);
         break;
       }
@@ -7179,9 +7174,9 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
         content = s3_md_chars_to_number (buf, s3_INSN48_SIZE);
         value = fixP->fx_offset;
         content = (content & ~0x7f7fff7fe0LL)
-                 | ((value & 0x3ff) << 5)
-                 | (((value >> 10) & 0x7fff) << 16)
-                 | (((value >> 25) & 0x7f) << 32);
+	  | ((value & 0x3ff) << 5)
+	  | (((value >> 10) & 0x7fff) << 16)
+	  | (((value >> 25) & 0x7f) << 32);
         s3_md_number_to_chars (buf, content, s3_INSN48_SIZE);
         break;
       }
@@ -7231,7 +7226,7 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
       content = (content & 0xfc01) | (value & 0xffe);
       s3_md_number_to_chars (buf, content, s3_INSN16_SIZE);
       break;
-   case BFD_RELOC_SCORE16_BRANCH:
+    case BFD_RELOC_SCORE16_BRANCH:
       content = s3_md_chars_to_number (buf, s3_INSN_SIZE);
       /* Don't check c-bit.  */
       if (fixP->fx_frag->fr_opcode != 0)
@@ -7276,7 +7271,7 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
           break;
         }
 
-    break;
+      break;
 
     case BFD_RELOC_SCORE_BCMP:
       if (fixP->fx_frag->fr_opcode != 0)
@@ -7289,7 +7284,7 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
           else
             fixP->fx_done = 1;
 
-          /* NOTE!!!  
+          /* NOTE!!!
              bcmp -> cmp! and branch, so value -= 2.  */
           value -= 2;
 
@@ -7321,16 +7316,16 @@ s3_apply_fix (fixS *fixP, valueT *valP, segT seg)
           if ((value & 0xfffffe00) != 0 && (value & 0xfffffe00) != 0xfffffe00)
             {
               as_bad_where (fixP->fx_file, fixP->fx_line,
-                _(" branch relocation truncate (0x%x)  [-2^9 ~ 2^9]"), (unsigned int)value);
+			    _(" branch relocation truncate (0x%x)  [-2^9 ~ 2^9]"), (unsigned int)value);
               return;
             }
 
           value >>= 1;
           content &= ~0x03e00381;
           content = content
-                    | (value & 0x1)
-                    | (((value & 0xe) >> 1) << 7)
-                    | (((value & 0x1f0) >> 4) << 21);
+	    | (value & 0x1)
+	    | (((value & 0xe) >> 1) << 7)
+	    | (((value & 0x1f0) >> 4) << 21);
 
           s3_md_number_to_chars (buf, content, s3_INSN_SIZE);
           break;
@@ -7405,9 +7400,6 @@ s3_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   arelent *reloc;
   bfd_reloc_code_real_type code;
   char *type;
-  fragS *f;
-  symbolS *s;
-  expressionS e;
 
   reloc = retval[0] = xmalloc (sizeof (arelent));
   retval[1] = NULL;
@@ -7445,10 +7437,6 @@ s3_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       retval[1]->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
       *retval[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       retval[1]->address = (reloc->address + s3_RELAX_RELOC2 (fixp->fx_frag->fr_subtype));
-
-      f = fixp->fx_frag;
-      s = f->fr_symbol;
-      e = s->sy_value;
 
       retval[1]->addend = 0;
       retval[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_LO16);
@@ -7631,7 +7619,7 @@ score_relax_frag (asection * sec ATTRIBUTE_UNUSED, fragS * fragp, long stretch A
 {
   if (score3)
     return s3_relax_frag (sec, fragp, stretch);
-  else 
+  else
     return s7_relax_frag (sec, fragp, stretch);
 }
 

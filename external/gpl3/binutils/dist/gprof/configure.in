@@ -27,7 +27,7 @@ LT_INIT
 
 AC_CHECK_FUNCS(setmode)
 
-ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga ms fi nl bg"
+ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga ms fi nl bg eo ja sr"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 

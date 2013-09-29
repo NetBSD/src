@@ -42,7 +42,7 @@ SECTIONS
     *(.data)
     ${CONSTRUCTING+CONSTRUCTORS}
   }
-  ${RELOCATING+ _gp = ALIGN(16) + 0x8000;}
+  ${RELOCATING+ HIDDEN (_gp = ALIGN (16) + 0x8000);}
   .lit8 : {
     *(.lit8)
   }

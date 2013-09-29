@@ -152,12 +152,7 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
-
-extern yy_size_t yyleng;
+extern int yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -183,6 +178,11 @@ extern FILE *yyin, *yyout;
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -200,7 +200,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -270,8 +270,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -299,7 +299,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -559,7 +559,7 @@ char *yytext;
 #line 4 "arlex.l"
 /* arlex.l - Strange script language lexer */
 
-/* Copyright 1992, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+/* Copyright 1992, 1997, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2011
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -587,12 +587,14 @@ char *yytext;
 #include "libiberty.h"
 #include "arparse.h"
 
+#ifndef YY_NO_UNPUT
 #define YY_NO_UNPUT
-
+#endif
+ 
 extern int yylex (void);
 
 int linenumber;
-#line 596 "arlex.c"
+#line 598 "arlex.c"
 
 #define INITIAL 0
 
@@ -631,7 +633,7 @@ FILE *yyget_out (void );
 
 void yyset_out  (FILE * out_str  );
 
-yy_size_t yyget_leng (void );
+int yyget_leng (void );
 
 char *yyget_text (void );
 
@@ -772,10 +774,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 44 "arlex.l"
+#line 46 "arlex.l"
 
 
-#line 779 "arlex.c"
+#line 781 "arlex.c"
 
 	if ( !(yy_init) )
 		{
@@ -860,178 +862,178 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 46 "arlex.l"
+#line 48 "arlex.l"
 { return ADDLIB; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 47 "arlex.l"
+#line 49 "arlex.l"
 { return ADDMOD; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 48 "arlex.l"
+#line 50 "arlex.l"
 { return CLEAR; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 49 "arlex.l"
+#line 51 "arlex.l"
 { return CREATE; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 50 "arlex.l"
+#line 52 "arlex.l"
 { return DELETE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 51 "arlex.l"
+#line 53 "arlex.l"
 { return DIRECTORY; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 52 "arlex.l"
+#line 54 "arlex.l"
 { return END; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 53 "arlex.l"
+#line 55 "arlex.l"
 { return EXTRACT; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 54 "arlex.l"
+#line 56 "arlex.l"
 { return FULLDIR; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 55 "arlex.l"
+#line 57 "arlex.l"
 { return HELP; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 56 "arlex.l"
+#line 58 "arlex.l"
 { return LIST; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 57 "arlex.l"
+#line 59 "arlex.l"
 { return OPEN; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 58 "arlex.l"
+#line 60 "arlex.l"
 { return REPLACE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 59 "arlex.l"
+#line 61 "arlex.l"
 { return VERBOSE; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 60 "arlex.l"
+#line 62 "arlex.l"
 { return SAVE; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 61 "arlex.l"
+#line 63 "arlex.l"
 { return ADDLIB; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 62 "arlex.l"
+#line 64 "arlex.l"
 { return ADDMOD; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 63 "arlex.l"
+#line 65 "arlex.l"
 { return CLEAR; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 64 "arlex.l"
+#line 66 "arlex.l"
 { return CREATE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 65 "arlex.l"
+#line 67 "arlex.l"
 { return DELETE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 66 "arlex.l"
+#line 68 "arlex.l"
 { return DIRECTORY; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 67 "arlex.l"
+#line 69 "arlex.l"
 { return END; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 68 "arlex.l"
+#line 70 "arlex.l"
 { return EXTRACT; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 69 "arlex.l"
+#line 71 "arlex.l"
 { return FULLDIR; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 70 "arlex.l"
+#line 72 "arlex.l"
 { return HELP; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 71 "arlex.l"
+#line 73 "arlex.l"
 { return LIST; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 72 "arlex.l"
+#line 74 "arlex.l"
 { return OPEN; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 73 "arlex.l"
+#line 75 "arlex.l"
 { return REPLACE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 74 "arlex.l"
+#line 76 "arlex.l"
 { return VERBOSE; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 75 "arlex.l"
+#line 77 "arlex.l"
 { return SAVE; }
 	YY_BREAK
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 76 "arlex.l"
+#line 78 "arlex.l"
 { linenumber ++; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 77 "arlex.l"
+#line 79 "arlex.l"
 { return '('; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 78 "arlex.l"
+#line 80 "arlex.l"
 { return ')'; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 79 "arlex.l"
+#line 81 "arlex.l"
 { return ','; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 80 "arlex.l"
+#line 82 "arlex.l"
 { 	
 		yylval.name =  xstrdup (yytext);
 		return FILENAME;
@@ -1039,31 +1041,31 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 84 "arlex.l"
+#line 86 "arlex.l"
 { }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 85 "arlex.l"
+#line 87 "arlex.l"
 { }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 86 "arlex.l"
+#line 88 "arlex.l"
 { }
 	YY_BREAK
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 87 "arlex.l"
+#line 89 "arlex.l"
 { linenumber ++; return NEWLINE; }	
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 89 "arlex.l"
+#line 91 "arlex.l"
 ECHO;
 	YY_BREAK
-#line 1067 "arlex.c"
+#line 1069 "arlex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1249,7 +1251,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1263,7 +1265,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1294,7 +1296,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), num_to_read );
+			(yy_n_chars), (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -1416,7 +1418,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1440,7 +1442,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -1692,7 +1694,7 @@ void yypop_buffer_state (void)
  */
 static void yyensure_buffer_stack (void)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -1789,11 +1791,12 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -1875,7 +1878,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+int yyget_leng  (void)
 {
         return yyleng;
 }
@@ -2023,7 +2026,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 89 "arlex.l"
+#line 91 "arlex.l"
 
 
 #ifndef yywrap

@@ -3,7 +3,7 @@
 #ld: -Ttext 0x0
 #objdump: -drj.text -m i8086
 
-.*: +file format elf64-x86-64
+.*: +file format elf.*-x86-64.*
 
 Disassembly of section .text:
 

@@ -57,6 +57,41 @@
 	addiu	$6,1
 	mult	$7,$7	# 0 nops
 
+	mfhi	$2
+	.set	noreorder
+	mult	$3,$3	# 4 nops
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	mult	$4,$4	# 3 nops before noreorder
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$4,1
+	mult	$5,$5	# 2 nops before noreorder
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$4,1
+	addiu	$5,1
+	mult	$6,$6	# 1 nop before noreorder
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$4,1
+	addiu	$5,1
+	addiu	$6,1
+	mult	$7,$7	# 0 nops
+	.set	reorder
+
 	# PART C
 	#
 	# Check that no nops are inserted after the result has been read.
@@ -84,6 +119,38 @@
 	addiu	$4,1
 	addiu	$5,1
 	mult	$2,$2
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$2,1
+	addiu	$3,1
+	addiu	$4,1
+	mult	$5,$5
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$2,1
+	addiu	$4,1
+	mult	$5,$5
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$4,1
+	addiu	$2,1
+	mult	$5,$5
+	.set	reorder
+
+	mfhi	$2
+	.set	noreorder
+	addiu	$3,1
+	addiu	$4,1
+	addiu	$5,1
+	mult	$2,$2
+	.set	reorder
 
 	# PART D
 	#

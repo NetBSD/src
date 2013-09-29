@@ -1,6 +1,6 @@
 // tls_test.cc -- test TLS variables for gold, main function
 
-// Copyright 2006, 2007, 2008 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -26,40 +26,36 @@
 #include <cassert>
 #include <cstdio>
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "tls_test.h"
 
 // We make these macros so the assert() will give useful line-numbers.
-#define safe_lock(muptr)			\
+#define safe_lock(semptr)			\
   do						\
     {						\
-      int err = pthread_mutex_lock(muptr);	\
+      int err = sem_wait(semptr);		\
       assert(err == 0);				\
     }						\
   while (0)
 
-#define safe_unlock(muptr)			\
+#define safe_unlock(semptr)			\
   do						\
     {						\
-      int err = pthread_mutex_unlock(muptr);	\
+      int err = sem_post(semptr);		\
       assert(err == 0);				\
     }						\
   while (0)
 
-struct Mutex_set
+struct Sem_set
 {
-  pthread_mutex_t mutex1;
-  pthread_mutex_t mutex2;
-  pthread_mutex_t mutex3;
+  sem_t sem1;
+  sem_t sem2;
+  sem_t sem3;
 };
 
-Mutex_set mutexes1 = { PTHREAD_MUTEX_INITIALIZER,
-		       PTHREAD_MUTEX_INITIALIZER,
-		       PTHREAD_MUTEX_INITIALIZER };
-
-Mutex_set mutexes2 = { PTHREAD_MUTEX_INITIALIZER,
-		       PTHREAD_MUTEX_INITIALIZER,
-		       PTHREAD_MUTEX_INITIALIZER } ;
+Sem_set sems1;
+Sem_set sems2;
 
 bool failed = false;
 
@@ -73,18 +69,19 @@ check(const char* name, bool val)
     }
 }
 
-// The body of the thread function.  This gets a lock on the first
-// mutex, runs the tests, and then unlocks the second mutex.  Then it
-// locks the third mutex, and the runs the verification test again.
+// The body of the thread function.  This acquires the first
+// semaphore, runs the tests, and then releases the second semaphore.
+// Then it acquires the third semaphore, and the runs the verification
+// test again.
 
 void*
 thread_routine(void* arg)
 {
-  Mutex_set* pms = static_cast<Mutex_set*>(arg);
+  Sem_set* pms = static_cast<Sem_set*>(arg);
 
-  // Lock the first mutex.
+  // Acquire the first semaphore.
   if (pms)
-    safe_lock(&pms->mutex1);
+    safe_lock(&pms->sem1);
 
   // Run the tests.
   check("t1", t1());
@@ -103,13 +100,13 @@ thread_routine(void* arg)
   check("t12", t12());
   check("t_last", t_last());
 
-  // Unlock the second mutex.
+  // Release the second semaphore.
   if (pms)
-    safe_unlock(&pms->mutex2);
+    safe_unlock(&pms->sem2);
 
-  // Lock the third mutex.
+  // Acquire the third semaphore.
   if (pms)
-    safe_lock(&pms->mutex3);
+    safe_lock(&pms->sem3);
 
   check("t_last", t_last());
 
@@ -124,37 +121,38 @@ main()
   // First, as a sanity check, run through the tests in the "main" thread.
   thread_routine(0);
 
-  // Set up the mutex locks.  We want the first thread to start right
+  // Set up the semaphores.  We want the first thread to start right
   // away, tell us when it is done with the first part, and wait for
   // us to release it.  We want the second thread to wait to start,
   // tell us when it is done with the first part, and wait for us to
   // release it.
-  safe_lock(&mutexes1.mutex2);
-  safe_lock(&mutexes1.mutex3);
+  sem_init(&sems1.sem1, 0, 1);
+  sem_init(&sems1.sem2, 0, 0);
+  sem_init(&sems1.sem3, 0, 0);
 
-  safe_lock(&mutexes2.mutex1);
-  safe_lock(&mutexes2.mutex2);
-  safe_lock(&mutexes2.mutex3);
+  sem_init(&sems2.sem1, 0, 0);
+  sem_init(&sems2.sem2, 0, 0);
+  sem_init(&sems2.sem3, 0, 0);
 
   pthread_t thread1;
-  int err = pthread_create(&thread1, NULL, thread_routine, &mutexes1);
+  int err = pthread_create(&thread1, NULL, thread_routine, &sems1);
   assert(err == 0);
 
   pthread_t thread2;
-  err = pthread_create(&thread2, NULL, thread_routine, &mutexes2);
+  err = pthread_create(&thread2, NULL, thread_routine, &sems2);
   assert(err == 0);
 
   // Wait for the first thread to complete the first part.
-  safe_lock(&mutexes1.mutex2);
+  safe_lock(&sems1.sem2);
 
   // Tell the second thread to start.
-  safe_unlock(&mutexes2.mutex1);
+  safe_unlock(&sems2.sem1);
 
   // Wait for the second thread to complete the first part.
-  safe_lock(&mutexes2.mutex2);
+  safe_lock(&sems2.sem2);
 
   // Tell the first thread to continue and finish.
-  safe_unlock(&mutexes1.mutex3);
+  safe_unlock(&sems1.sem3);
 
   // Wait for the first thread to finish.
   void* thread_val;
@@ -163,7 +161,7 @@ main()
   assert(thread_val == 0);
 
   // Tell the second thread to continue and finish.
-  safe_unlock(&mutexes2.mutex3);
+  safe_unlock(&sems2.sem3);
 
   // Wait for the second thread to finish.
   err = pthread_join(thread2, &thread_val);
