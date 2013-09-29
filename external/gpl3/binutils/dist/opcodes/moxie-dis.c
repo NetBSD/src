@@ -1,5 +1,5 @@
 /* Disassemble moxie instructions.
-   Copyright 2009
+   Copyright 2009, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
@@ -19,8 +19,9 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include <stdio.h>
 #include "sysdep.h"
+#include <stdio.h>
+
 #define STATIC_TABLE
 #define DEFINE_TABLE
 
