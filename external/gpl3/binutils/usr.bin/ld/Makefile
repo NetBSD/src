@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/08/13 19:29:45 drochner Exp $
+#	$NetBSD: Makefile,v 1.19 2013/09/29 14:20:37 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -90,7 +90,7 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes ${f} "${G_target_alias}"
+		${G_EMUL} ${LIBDIR} yes yes ${f} "${G_target_alias}"
 
 .if ${BINUTILS_MACHINE_ARCH} == "x86_64" \
     || ${BINUTILS_MACHINE_ARCH} == "sparc64" \
