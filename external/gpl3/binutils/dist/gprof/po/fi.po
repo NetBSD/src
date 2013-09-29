@@ -1,17 +1,18 @@
-# translation of gprof-2.19.90.po to Finnish
-# Copyright © 2007, 2009 Free Software Foundation, Inc.
+# Finnish messages for gprof.
+# Copyright © 2007, 2009, 2011 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 # Jorma Karvonen <karvjorm@users.sf.net>, 2007.
-# Jorma Karvonen <karvonen.jorma@gmail.com>, 2009
+# Jorma Karvonen <karvonen.jorma@gmail.com>, 2009, 2011.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.19.90\n"
+"Project-Id-Version: gprof 2.21.53\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2009-09-07 14:10+0200\n"
-"PO-Revision-Date: 2009-09-14 15:52+0200\n"
+"POT-Creation-Date: 2010-11-05 10:29+0100\n"
+"PO-Revision-Date: 2011-09-23 11:27+0200\n"
 "Last-Translator: Jorma Karvonen <karvonen.jorma@gmail.com>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
+"Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -38,7 +39,7 @@ msgid "[find_call] 0x%lx: bsr"
 msgstr "[etsi_kutsu] 0x%lx: bsr-käsky"
 
 #  ensimmäinen %s whoami, toinen %s filename
-#: basic_blocks.c:128 call_graph.c:89 hist.c:105
+#: basic_blocks.c:128 call_graph.c:89 hist.c:107
 #, c-format
 msgid "%s: %s: unexpected end of file\n"
 msgstr "%s: %s: tiedoston odottamaton loppu\n"
@@ -139,7 +140,7 @@ msgstr ""
 "\t\t\tKutsugraafi\n"
 "\n"
 
-#: cg_print.c:79 hist.c:466
+#: cg_print.c:79 hist.c:468
 #, c-format
 msgid ""
 "\n"
@@ -198,7 +199,7 @@ msgstr "itse"
 msgid "descendants"
 msgstr "jälkeläiset"
 
-#: cg_print.c:99 hist.c:492
+#: cg_print.c:99 hist.c:494
 msgid "name"
 msgstr "nimi"
 
@@ -243,9 +244,9 @@ msgstr "<jakso %d>"
 #: corefile.c:60
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
-msgstr "%s: mappaustiedostoa %s ei voi jäsentää.\n"
+msgstr "%s: kuvaustiedostoa %s ei voi jäsentää.\n"
 
-#: corefile.c:84 corefile.c:496
+#: corefile.c:84 corefile.c:504
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: ei voitu avata tiedostoa %s.\n"
@@ -275,12 +276,12 @@ msgstr "%s: ei voi tehdä -c\n"
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c ei ole tuettu arkkitehtuurissa %s\n"
 
-#: corefile.c:505 corefile.c:588
+#: corefile.c:513 corefile.c:598
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: tiedostossa ”%s” ei ole symboleja\n"
 
-#: corefile.c:848
+#: corefile.c:859
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: joku laski väärin: ltab.len=%d eikä %ld\n"
@@ -323,54 +324,54 @@ msgstr "%s: ei ole yhteensopiva ensimmäisen gmon-tiedoston kanssa\n"
 #: gmon_io.c:518
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
-msgstr "%s: tiedosto ”%s” ei vaikuta olevan ”gmon.out”-muotoinen\n"
+msgstr "%s: tiedosto ’%s’ ei vaikuta olevan ”gmon.out”-muotoinen\n"
 
 #: gmon_io.c:531
 #, c-format
 msgid "%s: unexpected EOF after reading %d/%d bins\n"
 msgstr "%s: odottamaton tiedoston loppumerkki ”%d/%d bins”-lukemisen jälkeen\n"
 
-#: gmon_io.c:565
+#: gmon_io.c:563
 #, c-format
 msgid "time is in ticks, not seconds\n"
 msgstr "aika on ticks-yksikköinä, ei sekunteina\n"
 
-#: gmon_io.c:571 gmon_io.c:748
+#: gmon_io.c:569 gmon_io.c:749
 #, c-format
 msgid "%s: don't know how to deal with file format %d\n"
 msgstr "%s: ei tiedetä, kuinka tiedostomuotoa %d pitää käsitellä\n"
 
-#: gmon_io.c:578
+#: gmon_io.c:579
 #, c-format
 msgid "File `%s' (version %d) contains:\n"
 msgstr "Tiedosto ”%s” (versio %d) sisältää:\n"
 
-#: gmon_io.c:581
+#: gmon_io.c:582
 #, c-format
 msgid "\t%d histogram record\n"
 msgstr "\t%d histogrammitietue\n"
 
-#: gmon_io.c:582
+#: gmon_io.c:583
 #, c-format
 msgid "\t%d histogram records\n"
 msgstr "\t%d histogrammitietueet\n"
 
-#: gmon_io.c:584
+#: gmon_io.c:585
 #, c-format
 msgid "\t%d call-graph record\n"
 msgstr "\t%d kutsugraafitietue\n"
 
-#: gmon_io.c:585
+#: gmon_io.c:586
 #, c-format
 msgid "\t%d call-graph records\n"
 msgstr "\t%d kutsugraafitietueet\n"
 
-#: gmon_io.c:587
+#: gmon_io.c:588
 #, c-format
 msgid "\t%d basic-block count record\n"
 msgstr "\t%d peruslohkolukumäärätietue\n"
 
-#: gmon_io.c:588
+#: gmon_io.c:589
 #, c-format
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d peruslohkolukumäärätietueet\n"
@@ -401,15 +402,17 @@ msgstr ""
 "\t[--directory-path=hakemistot] [--display-unused-functions]\n"
 "\t[--file-format=nimi] [--file-info] [--help] [--line] [--min-count=n]\n"
 "\t[--no-static] [--print-path] [--separate-files]\n"
-"\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
+"\t[--static-call-graph] [--sum] [--table-length=pituus] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=TYYLI]] [--no-demangle] [--external-symbol-table=name] [@TIEDOSTO]\n"
+"\t[--demangle[=TYYLI]] [--no-demangle] [--external-symbol-table=nimi] [@TIEDOSTO]\n"
 "\t[vedostiedosto] [profiilitiedosto...]\n"
 
 #: gprof.c:175
 #, c-format
 msgid "Report bugs to %s\n"
-msgstr "Lähetä raportit ohjelmistovioista (englanniksi) osoitteeseen %s\n"
+msgstr ""
+"Lähetä raportit ohjelmistovioista (englanniksi) osoitteeseen %s\n"
+"Ilmoita käännösvirheistä osoitteeseen <translation-team-fi@lists.sourceforge.net>.\n"
 
 #: gprof.c:251
 #, c-format
@@ -462,7 +465,7 @@ msgstr "%s: ”gmon.out”-tiedosto puuttuu histogrammista\n"
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: ”gmon.out”-tiedosto puuttuu kutsugraafidatasta\n"
 
-#: hist.c:133
+#: hist.c:135
 #, c-format
 msgid ""
 "%s: dimension unit changed between histogram records\n"
@@ -470,10 +473,10 @@ msgid ""
 "%s: to '%s'\n"
 msgstr ""
 "%s: mittasuhdeyksikkö muuttui histogrammitietueiden välillä\n"
-"%s: arvosta ”%s”\n"
-"%s: arvoon ”%s”\n"
+"%s: arvosta ’%s’\n"
+"%s: arvoon ’%s’\n"
 
-#: hist.c:143
+#: hist.c:145
 #, c-format
 msgid ""
 "%s: dimension abbreviation changed between histogram records\n"
@@ -481,30 +484,30 @@ msgid ""
 "%s: to '%c'\n"
 msgstr ""
 "%s: mittasuhdelyhenne muuttui histogrammitietueiden välillä\n"
-"%s: arvosta ”%c”\n"
-"%s: arvoon ”%c”\n"
+"%s: arvosta ’%c’\n"
+"%s: arvoon ’%c’\n"
 
-#: hist.c:157
+#: hist.c:159
 #, c-format
 msgid "%s: different scales in histogram records"
 msgstr "%s: histogrammitietueissa on erilaiset skaalat"
 
-#: hist.c:194
+#: hist.c:196
 #, c-format
 msgid "%s: overlapping histogram records\n"
 msgstr "%s: histogrammitietueet menevät päällekkäin\n"
 
-#: hist.c:228
+#: hist.c:230
 #, c-format
 msgid "%s: %s: unexpected EOF after reading %u of %u samples\n"
 msgstr "%s: %s: odottamaton tiedoston loppumerkki, kun oli luettu %u kaikkiaan %u näytteestä\n"
 
-#: hist.c:462
+#: hist.c:464
 #, c-format
 msgid "%c%c/call"
 msgstr "%c%c/kutsu"
 
-#: hist.c:470
+#: hist.c:472
 #, c-format
 msgid ""
 " for %.2f%% of %.2f %s\n"
@@ -513,7 +516,7 @@ msgstr ""
 " kohteelle %.2f%% / %.2f %s\n"
 "\n"
 
-#: hist.c:476
+#: hist.c:478
 #, c-format
 msgid ""
 "\n"
@@ -522,7 +525,7 @@ msgstr ""
 "\n"
 "Jokainen näyte lasketaan arvona %g %s.\n"
 
-#: hist.c:481
+#: hist.c:483
 #, c-format
 msgid ""
 " no time accumulated\n"
@@ -531,27 +534,27 @@ msgstr ""
 " ei kerääntynyttä aikaa\n"
 "\n"
 
-#: hist.c:488
+#: hist.c:490
 msgid "cumulative"
 msgstr "kumulatiivinen"
 
-#: hist.c:488
+#: hist.c:490
 msgid "self  "
 msgstr "itse  "
 
-#: hist.c:488
+#: hist.c:490
 msgid "total "
 msgstr "yhteensä "
 
-#: hist.c:491
+#: hist.c:493
 msgid "time"
 msgstr "aika"
 
-#: hist.c:491
+#: hist.c:493
 msgid "calls"
 msgstr "kutsut"
 
-#: hist.c:580
+#: hist.c:582
 #, c-format
 msgid ""
 "\n"
@@ -564,12 +567,12 @@ msgstr ""
 "\n"
 "litteä profiili:\n"
 
-#: hist.c:586
+#: hist.c:588
 #, c-format
 msgid "Flat profile:\n"
 msgstr "Litteä profiili:\n"
 
-#: hist.c:705
+#: hist.c:709
 #, c-format
 msgid "%s: found a symbol that covers several histogram records"
 msgstr "%s: löydetty symboli, joka kattaa useita histogrammitietueita"

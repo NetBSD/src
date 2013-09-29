@@ -68,7 +68,6 @@ r7 = byteop3p (r3:2, r1:0) (hi, r) ;
 
 //Dreg = A1.L + A1.H, Dreg = A0.L + A0.H ; /* (b) */
 
-R0 = A1.L + A1.H, R0= A0.L + A0.H ;
 R0 = A1.L + A1.H, R1= A0.L + A0.H ;
 R2 = A1.L + A1.H, R3= A0.L + A0.H ;
 R4 = A1.L + A1.H, R5= A0.L + A0.H ;
@@ -158,52 +157,6 @@ r4 = byteop2p (r3:2, r3:2) (rndl, r) ;
 r5 = byteop2p (r3:2, r3:2) (rndh, r) ;
 r6 = byteop2p (r3:2, r3:2) (tl, r) ;
 r7 = byteop2p (r3:2, r3:2) (th, r) ;
-
-/* forward byte order operands */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (RNDL) ;
-/* round into low bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (RNDH) ;
-/* round into high bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (TL) ;
-/* truncate into low bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (TH) ;
-/* truncate into high bytes (b) */
-/* reverse byte order operands */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (RNDL, R) ;
-/* round into low bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (RNDH, R) ;
-/* round into high bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (TL, R) ;
-/* truncate into low bytes (b) */
-//Dreg = BYTEOP2M (Dreg_pair, Dreg_pair) (TH, R) ;
-/* truncate into high bytes (b) */
-
-r3 = byteop2m (r1:0, r3:2) (rndl) ;
-r3 = byteop2m (r1:0, r3:2) (rndh) ;
-r3 = byteop2m (r1:0, r3:2) (tl) ;
-r3 = byteop2m (r1:0, r3:2) (th) ;
-r3 = byteop2m (r1:0, r3:2) (rndl, r) ;
-r3 = byteop2m (r1:0, r3:2) (rndh, r) ;
-r3 = byteop2m (r1:0, r3:2) (tl, r) ;
-r3 = byteop2m (r1:0, r3:2) (th, r) ;
-
-r0 = byteop2m (r1:0, r3:2) (rndl) ;
-r1 = byteop2m (r1:0, r3:2) (rndh) ;
-r2 = byteop2m (r1:0, r3:2) (tl) ;
-r3 = byteop2m (r1:0, r3:2) (th) ;
-r4 = byteop2m (r1:0, r3:2) (rndl, r) ;
-r5 = byteop2m (r1:0, r3:2) (rndh, r) ;
-r6 = byteop2m (r1:0, r3:2) (tl, r) ;
-r7 = byteop2m (r1:0, r3:2) (th, r) ;
-
-r0 = byteop2m (r3:2, r3:2) (rndl) ;
-r1 = byteop2m (r3:2, r3:2) (rndh) ;
-r2 = byteop2m (r3:2, r3:2) (tl) ;
-r3 = byteop2m (r3:2, r3:2) (th) ;
-r4 = byteop2m (r3:2, r3:2) (rndl, r) ;
-r5 = byteop2m (r3:2, r3:2) (rndh, r) ;
-r6 = byteop2m (r3:2, r3:2) (tl, r) ;
-r7 = byteop2m (r3:2, r3:2) (th, r) ;
 
 //Dreg = BYTEPACK ( Dreg, Dreg ) ; /* (b) */
 r0 = bytepack (r0,r0) ;

@@ -40,11 +40,11 @@ SYMBOL TABLE:
 0+80098 g     F \.text	0+6 tlsdsofn2
 0+8 g       \.tdata	0+4 \.hidden x2
 0+80094 g       \.text	0+ _start
-0+820dc g       \*ABS\*	0+ __bss_start
+0+820dc g       \.got	0+ __bss_start
 0+800a0 g     F \.text	0+6 tlsdsofn
 0+4 g       \.tdata	0+4 \.hidden x1
-0+820dc g       \*ABS\*	0+ _edata
-0+820e0 g       \*ABS\*	0+ _end
+0+820dc g       \.got	0+ _edata
+0+820e0 g       \.got	0+ _end
 0+800a8 g     F \.text	0+6 tlsdsofn10
 
 Contents of section \.text:

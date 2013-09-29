@@ -2098,7 +2098,7 @@ proc do_h8300h_mov32bug {} {
 
 	while 1 {
 	    expect {
-		-re "00000002\[^\n\]*32\[^\n\]*_a.0x0*88ca6c00\[^\n\]*\n"
+		-re "00000002\[^\n\]*32\[^\n\]*_a-0x77359400\[^\n\]*\n"
 						{ set x [expr $x+1] }
 		timeout 			{ perror "timeout\n; break }
 		eof				{ break }

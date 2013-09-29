@@ -1,6 +1,7 @@
-@c Copyright 2010 Free Software Foundation, Inc.
+@c Copyright 2010, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
+@c man end
 @ifset GENERIC
 @page
 @node TIC6X-Dependent
@@ -24,7 +25,8 @@
 @cindex TIC6X options
 @cindex options for TIC6X
 
-@table @code
+@c man begin OPTIONS
+@table @gcctabopt
 
 @cindex @code{-march=} command line option, TIC6X
 @item -march=@var{arch}
@@ -33,20 +35,6 @@ all instructions are permitted.
 
 The following values of @var{arch} are accepted: @code{c62x},
 @code{c64x}, @code{c64x+}, @code{c67x}, @code{c67x+}, @code{c674x}.
-
-@cindex @code{-matomic} command line option, TIC6X
-@cindex @code{-mno-atomic} command line option, TIC6X
-@item -matomic
-@itemx -mno-atomic
-Enable or disable the optional C64x+ atomic operation instructions.
-By default, they are enabled if no @option{-march} option is given, or
-if an architecture is specified with @option{-march} that implies
-these instructions are present (currently, there are no such
-architectures); they are disabled if an architecture is specified with
-@option{-march} on which the instructions are optional or not
-present.  This option overrides such a default from the architecture,
-independent of the order in which the @option{-march} or
-@option{-matomic} or @option{-mno-atomic} options are passed.
 
 @cindex @code{-mdsbt} command line option, TIC6X
 @cindex @code{-mno-dsbt} command line option, TIC6X
@@ -95,6 +83,7 @@ Generate code for the specified endianness.  The default is
 little-endian.
 
 @end table
+@c man end
 
 @node TIC6X Syntax
 @section TIC6X Syntax
@@ -104,7 +93,10 @@ little-endian.
 The presence of a @samp{;} on a line indicates the start of a comment
 that extends to the end of the current line.  If a @samp{#} or
 @samp{*} appears as the first character of a line, the whole line is
-treated as a comment.
+treated as a comment.  Note that if a line starts with a @samp{#}
+character then it can also be a logical line number directive
+(@pxref{Comments}) or a preprocessor control command
+(@pxref{Preprocessing}).
 
 @cindex line separator, TIC6X
 @cindex statement separator, TIC6X
@@ -139,12 +131,13 @@ subsequent directive overriding it.
 @item .arch @var{arch}
 This has the same effect as @option{-march=@var{arch}}.
 
-@cindex @code{.atomic} directive, TIC6X
-@cindex @code{.noatomic} directive, TIC6X
-@item .atomic
-@itemx .noatomic
-These have the same effects as @option{-matomic} and
-@option{-mno-atomic}.
+@cindex @code{.cantunwind} directive, TIC6X
+@item .cantunwind
+Prevents unwinding through the current function.  No personality routine
+or exception table data is required or permitted.
+
+If this is not specified then frame unwinding information will be
+constructed from CFI directives. @pxref{CFI directives}.
 
 @cindex @code{.c6xabi_attribute} directive, TIC6X
 @item .c6xabi_attribute @var{tag}, @var{value}
@@ -161,9 +154,42 @@ The @var{tag} is either an attribute number or one of
 @var{value} is either a @code{number}, @code{"string"}, or
 @code{number, "string"} depending on the tag.
 
+@cindex @code{.ehtype} directive, TIC6X
+@item .ehtype @var{symbol}
+Output an exception type table reference to @var{symbol}.
+
+@cindex @code{.endp} directive, TIC6X
+@item .endp
+Marks the end of and exception table or function.  If preceeded by a
+@code{.handlerdata} directive then this also switched back to the previous
+text section.
+
+@cindex @code{.handlerdata} directive, TIC6X
+@item .handlerdata
+Marks the end of the current function, and the start of the exception table
+entry for that function.  Anything between this directive and the
+@code{.endp} directive will be added to the exception table entry.
+
+Must be preceded by a CFI block containing a @code{.cfi_lsda} directive.
+
 @cindex @code{.nocmp} directive, TIC6X
 @item .nocmp
 Disallow use of C64x+ compact instructions in the current text
 section.
+
+@cindex @code{.personalityindex} directive, TIC6X
+@item .personalityindex @var{index}
+Sets the personality routine for the current function to the ABI specified 
+compact routine number @var{index}
+
+@cindex @code{.personality} directive, TIC6X
+@item .personality @var{name}
+Sets the personality routine for the current function to @var{name}.
+
+@cindex @code{.scomm} directive, TIC6X
+@item .scomm @var{symbol}, @var{size}, @var{align}
+Like @code{.comm}, creating a common symbol @var{symbol} with size @var{size}
+and alignment @var{align}, but unlike when using @code{.comm}, this symbol
+will be placed into the small BSS section by the linker.
 
 @end table

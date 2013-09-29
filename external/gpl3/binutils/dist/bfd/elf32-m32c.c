@@ -1,5 +1,5 @@
 /* M16C/M32C specific support for 32-bit ELF.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -362,7 +362,7 @@ m32c_elf_relocate_section
   dynobj = elf_hash_table (info)->dynobj;
   splt = NULL;
   if (dynobj != NULL)
-    splt = bfd_get_section_by_name (dynobj, ".plt");
+    splt = bfd_get_linker_section (dynobj, ".plt");
 
   for (rel = relocs; rel < relend; rel ++)
     {
@@ -434,9 +434,9 @@ m32c_elf_relocate_section
 	    }
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	{
@@ -633,13 +633,14 @@ m32c_elf_check_relocs
 	    elf_hash_table (info)->dynobj = dynobj = abfd;
 	  if (splt == NULL)
 	    {
-	      splt = bfd_get_section_by_name (dynobj, ".plt");
+	      splt = bfd_get_linker_section (dynobj, ".plt");
 	      if (splt == NULL)
 		{
 		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
 				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
 				    | SEC_READONLY | SEC_CODE);
-		  splt = bfd_make_section_with_flags (dynobj, ".plt", flags);
+		  splt = bfd_make_section_anyway_with_flags (dynobj, ".plt",
+							     flags);
 		  if (splt == NULL
 		      || ! bfd_set_section_alignment (dynobj, splt, 1))
 		    return FALSE;
@@ -692,7 +693,7 @@ m32c_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
      been filled in.  */
 
   if ((dynobj = elf_hash_table (info)->dynobj) != NULL
-      && (splt = bfd_get_section_by_name (dynobj, ".plt")) != NULL)
+      && (splt = bfd_get_linker_section (dynobj, ".plt")) != NULL)
     {
       bfd_byte *contents = splt->contents;
       unsigned int i, size = splt->size;
@@ -720,7 +721,7 @@ m32c_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (dynobj == NULL)
     return TRUE;
 
-  splt = bfd_get_section_by_name (dynobj, ".plt");
+  splt = bfd_get_linker_section (dynobj, ".plt");
   BFD_ASSERT (splt != NULL);
 
   splt->contents = (bfd_byte *) bfd_zalloc (dynobj, splt->size);
@@ -829,7 +830,7 @@ m32c_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
 
 static bfd_boolean
-m32c_elf_print_private_bfd_data (bfd *abfd, PTR ptr)
+m32c_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
   flagword flags;
@@ -984,13 +985,9 @@ struct relax_plt_data
 };
 
 static bfd_boolean
-m32c_relax_plt_check (struct elf_link_hash_entry *h,
-                      PTR xdata)
+m32c_relax_plt_check (struct elf_link_hash_entry *h, void * xdata)
 {
   struct relax_plt_data *data = (struct relax_plt_data *) xdata;
-
-  if (h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -1019,13 +1016,9 @@ m32c_relax_plt_check (struct elf_link_hash_entry *h,
    previously had a plt entry, give it a new entry offset.  */
 
 static bfd_boolean
-m32c_relax_plt_realloc (struct elf_link_hash_entry *h,
-                        PTR xdata)
+m32c_relax_plt_realloc (struct elf_link_hash_entry *h, void * xdata)
 {
   bfd_vma *entry = (bfd_vma *) xdata;
-
-  if (h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -1037,8 +1030,7 @@ m32c_relax_plt_realloc (struct elf_link_hash_entry *h,
 }
 
 static bfd_boolean
-m32c_elf_relax_plt_section (bfd *dynobj,
-                            asection *splt,
+m32c_elf_relax_plt_section (asection *splt,
                             struct bfd_link_info *info,
                             bfd_boolean *again)
 {
@@ -1049,11 +1041,6 @@ m32c_elf_relax_plt_section (bfd *dynobj,
   *again = FALSE;
 
   if (info->relocatable)
-    return TRUE;
-
-  /* We only relax the .plt section at the moment.  */
-  if (dynobj != elf_hash_table (info)->dynobj
-      || strcmp (splt->name, ".plt") != 0)
     return TRUE;
 
   /* Quick check for an empty plt.  */
@@ -1343,8 +1330,9 @@ m32c_elf_relax_section
   int machine;
 
   if (abfd == elf_hash_table (link_info)->dynobj
+      && (sec->flags & SEC_LINKER_CREATED) != 0
       && strcmp (sec->name, ".plt") == 0)
-    return m32c_elf_relax_plt_section (abfd, sec, link_info, again);
+    return m32c_elf_relax_plt_section (sec, link_info, again);
 
   /* Assume nothing changes.  */
   *again = FALSE;
@@ -1392,14 +1380,14 @@ m32c_elf_relax_section
       if (shndx_buf == NULL)
 	goto error_return;
       if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-	  || bfd_bread ((PTR) shndx_buf, amt, abfd) != amt)
+	  || bfd_bread (shndx_buf, amt, abfd) != amt)
 	goto error_return;
       shndx_hdr->contents = (bfd_byte *) shndx_buf;
     }
 
   /* Get a copy of the native relocations.  */
   internal_relocs = (_bfd_elf_link_read_relocs
-		     (abfd, sec, (PTR) NULL, (Elf_Internal_Rela *) NULL,
+		     (abfd, sec, NULL, (Elf_Internal_Rela *) NULL,
 		      link_info->keep_memory));
   if (internal_relocs == NULL)
     goto error_return;

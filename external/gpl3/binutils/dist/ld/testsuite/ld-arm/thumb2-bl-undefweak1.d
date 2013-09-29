@@ -6,4 +6,4 @@
 Disassembly of section .text:
 
 .* <foo>:
- .*:	........ 	bl	... <foo-0x.*>
+ +[0-9a-f]+:	........ 	bl	[0-9a-f]+ <foo-0x[0-9a-f]+>

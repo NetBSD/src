@@ -1,5 +1,5 @@
 
-tmpdir/group-relocs:     file format elf32-(little|big)arm
+tmpdir/group-relocs:     file format elf32-(little|big)arm.*
 
 Disassembly of section .text:
 

@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright 2009, 2010 Free Software Foundation, Inc.
+   Copyright 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,8 +22,8 @@
 
 int dbg = 0;
 
-#include "bfd.h"
 #include "sysdep.h"
+#include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
@@ -824,7 +824,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 	    }
 
 	  /* Sanity check the address.  */
-	  if (offset > bfd_get_section_limit (output_bfd, input_section))
+	  if (offset > bfd_get_section_limit (input_bfd, input_section))
 	    {
 	      r = bfd_reloc_outofrange;
 	      goto check_reloc;
@@ -839,7 +839,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 		/* Only relocate if the symbol is defined.  */
 		if (sec)
 		  {
-		    name = bfd_get_section_name (abfd, sec);
+		    name = bfd_get_section_name (sec->owner, sec);
 
 		    if (strcmp (name, ".sdata2") == 0
 			|| strcmp (name, ".sbss2") == 0)
@@ -868,7 +868,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 					       bfd_get_filename (input_bfd),
 					       sym_name,
 					       microblaze_elf_howto_table[(int) r_type]->name,
-					       bfd_get_section_name (abfd, sec));
+					       bfd_get_section_name (sec->owner, sec));
 			/*bfd_set_error (bfd_error_bad_value); ??? why? */
 			ret = FALSE;
 			continue;
@@ -884,7 +884,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 		/* Only relocate if the symbol is defined.  */
 		if (sec)
 		  {
-		    name = bfd_get_section_name (abfd, sec);
+		    name = bfd_get_section_name (sec->owner, sec);
 
 		    if (strcmp (name, ".sdata") == 0
 			|| strcmp (name, ".sbss") == 0)
@@ -913,7 +913,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 					       bfd_get_filename (input_bfd),
 					       sym_name,
 					       microblaze_elf_howto_table[(int) r_type]->name,
-					       bfd_get_section_name (abfd, sec));
+					       bfd_get_section_name (sec->owner, sec));
 			/*bfd_set_error (bfd_error_bad_value); ??? why? */
 			ret = FALSE;
 			continue;
@@ -1875,12 +1875,13 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
   if (htab == NULL)
     return FALSE;
 
-  htab->sgot = bfd_get_section_by_name (dynobj, ".got");
-  htab->sgotplt = bfd_get_section_by_name (dynobj, ".got.plt");
+  htab->sgot = bfd_get_linker_section (dynobj, ".got");
+  htab->sgotplt = bfd_get_linker_section (dynobj, ".got.plt");
   if (!htab->sgot || !htab->sgotplt)
     return FALSE;
 
-  htab->srelgot = bfd_make_section (dynobj, ".rela.got");
+  if ((htab->srelgot = bfd_get_linker_section (dynobj, ".rela.got")) == NULL)
+    htab->srelgot = bfd_make_section_anyway (dynobj, ".rela.got");
   if (htab->srelgot == NULL
       || ! bfd_set_section_flags (dynobj, htab->srelgot, SEC_ALLOC
                                   | SEC_LOAD
@@ -2079,18 +2080,19 @@ microblaze_elf_check_relocs (bfd * abfd,
 		      htab->elf.dynobj = abfd;
 		    dynobj = htab->elf.dynobj;
 
-		    sreloc = bfd_get_section_by_name (dynobj, name);
+		    sreloc = bfd_get_linker_section (dynobj, name);
 		    if (sreloc == NULL)
 		      {
 			flagword flags;
 
-			sreloc = bfd_make_section (dynobj, name);
 			flags = (SEC_HAS_CONTENTS | SEC_READONLY
 				 | SEC_IN_MEMORY | SEC_LINKER_CREATED);
 			if ((sec->flags & SEC_ALLOC) != 0)
 			  flags |= SEC_ALLOC | SEC_LOAD;
+			sreloc = bfd_make_section_anyway_with_flags (dynobj,
+								     name,
+								     flags);
 			if (sreloc == NULL
-			    || ! bfd_set_section_flags (dynobj, sreloc, flags)
 			    || ! bfd_set_section_alignment (dynobj, sreloc, 2))
 			  return FALSE;
 		      }
@@ -2166,11 +2168,11 @@ microblaze_elf_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
     return FALSE;
 
-  htab->splt = bfd_get_section_by_name (dynobj, ".plt");
-  htab->srelplt = bfd_get_section_by_name (dynobj, ".rela.plt");
-  htab->sdynbss = bfd_get_section_by_name (dynobj, ".dynbss");
+  htab->splt = bfd_get_linker_section (dynobj, ".plt");
+  htab->srelplt = bfd_get_linker_section (dynobj, ".rela.plt");
+  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
   if (!info->shared)
-    htab->srelbss = bfd_get_section_by_name (dynobj, ".rela.bss");
+    htab->srelbss = bfd_get_linker_section (dynobj, ".rela.bss");
 
   if (!htab->splt || !htab->srelplt || !htab->sdynbss
       || (!info->shared && !htab->srelbss))
@@ -2381,12 +2383,6 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
-
-  if (h->root.type == bfd_link_hash_warning)
-    /* When warning symbols are created, they **replace** the "real"
-       entry in the hash table, thus we never get to see the real
-       symbol in a hash traversal.  So look at it now.  */
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
   info = (struct bfd_link_info *) dat;
   htab = elf32_mb_hash_table (info);
@@ -2873,8 +2869,7 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
 
       BFD_ASSERT (h->dynindx != -1);
 
-      s = bfd_get_section_by_name (h->root.u.def.section->owner,
-                                   ".rela.bss");
+      s = bfd_get_linker_section (htab->elf.dynobj, ".rela.bss");
       BFD_ASSERT (s != NULL);
 
       rela.r_offset = (h->root.u.def.value
@@ -2912,14 +2907,14 @@ microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
 
   dynobj = htab->elf.dynobj;
 
-  sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (htab->elf.dynamic_sections_created)
     {
       asection *splt;
       Elf32_External_Dyn *dyncon, *dynconend;
 
-      splt = bfd_get_section_by_name (dynobj, ".plt");
+      splt = bfd_get_linker_section (dynobj, ".plt");
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       dyncon = (Elf32_External_Dyn *) sdyn->contents;
@@ -2974,7 +2969,7 @@ microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
 
   /* Set the first entry in the global offset table to the address of
      the dynamic section.  */
-  sgot = bfd_get_section_by_name (dynobj, ".got.plt");
+  sgot = bfd_get_linker_section (dynobj, ".got.plt");
   if (sgot && sgot->size > 0)
     {
       if (sdyn == NULL)
@@ -3010,7 +3005,7 @@ microblaze_elf_add_symbol_hook (bfd *abfd,
     {
       /* Common symbols less than or equal to -G nn bytes are automatically
 	 put into .sbss.  */
-      *secp = bfd_make_section_anyway (abfd, ".sbss");
+      *secp = bfd_make_section_old_way (abfd, ".sbss");
       if (*secp == NULL
           || ! bfd_set_section_flags (abfd, *secp, SEC_IS_COMMON))
         return FALSE;

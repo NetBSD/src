@@ -190,7 +190,6 @@ int yylex (void);
 [bB][yY][tT][eE][oO][pP]16[mM]          return BYTEOP16M;
 [bB][yY][tT][eE][oO][pP]16[pP]          return BYTEOP16P;
 [bB][yY][tT][eE][oO][pP]3[pP]           return BYTEOP3P;
-[bB][yY][tT][eE][oO][pP]2[mM]           return BYTEOP2M;
 [bB][yY][tT][eE][oO][pP]2[pP]           return BYTEOP2P;
 [bB][yY][tT][eE][oO][pP]1[pP]           return BYTEOP1P;
 [bB][yY]                                return BY;

@@ -866,7 +866,15 @@ _bfd_generic_get_section_contents (bfd *abfd,
       return FALSE;
     }
 
-  sz = section->rawsize ? section->rawsize : section->size;
+  /* We do allow reading of a section after bfd_final_link has
+     written the contents out to disk.  In that situation, rawsize is
+     just a stale version of size, so ignore it.  Otherwise we must be
+     reading an input section, where rawsize, if different to size,
+     is the on-disk size.  */
+  if (abfd->direction != write_direction && section->rawsize != 0)
+    sz = section->rawsize;
+  else
+    sz = section->size;
   if (offset + count < count
       || offset + count > sz)
     {
@@ -919,7 +927,10 @@ _bfd_generic_get_section_contents_in_window
       w->data = w->i->data;
       return bfd_get_section_contents (abfd, section, w->data, offset, count);
     }
-  sz = section->rawsize ? section->rawsize : section->size;
+  if (abfd->direction != write_direction && section->rawsize != 0)
+    sz = section->rawsize;
+  else
+    sz = section->size;
   if (offset + count > sz
       || ! bfd_get_file_window (abfd, section->filepos + offset, count, w,
 				TRUE))
@@ -1102,6 +1113,19 @@ _bfd_generic_find_line (bfd *abfd ATTRIBUTE_UNUSED,
 		       asymbol *symbol ATTRIBUTE_UNUSED,
 		       const char **filename_ptr ATTRIBUTE_UNUSED,
 		       unsigned int *linenumber_ptr ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
+bfd_boolean
+_bfd_generic_find_nearest_line_discriminator (bfd *abfd ATTRIBUTE_UNUSED,
+                                              asection *section ATTRIBUTE_UNUSED,
+                                              asymbol **symbols ATTRIBUTE_UNUSED,
+                                              bfd_vma offset ATTRIBUTE_UNUSED,
+                                              const char **filename_ptr ATTRIBUTE_UNUSED,
+                                              const char **functionname_ptr ATTRIBUTE_UNUSED,
+                                              unsigned int *line_ptr ATTRIBUTE_UNUSED,
+                                              unsigned int *discriminator_ptr ATTRIBUTE_UNUSED)
 {
   return FALSE;
 }

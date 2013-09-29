@@ -7,8 +7,8 @@
 
 #...
 ELF Header:
-  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
-  Class:                             ELF64
+  Magic:   7f 45 4c 46 0(1|2) 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF(32|64)
   Data:                              2's complement, little endian
   Version:                           1 \(current\)
 #...

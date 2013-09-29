@@ -6,7 +6,7 @@
 
 	mov.L		#{uimm8},{reg}
 	mov.L		#{imm},{reg}
-	mov{bwl}	{reg},{reg}
+	mov{bwl}	{reg1},{reg}
 
 	mov.B		#{uimm8},{mem}
 	mov.W		#{simm8},{mem}
@@ -16,7 +16,7 @@
 	mov{bwl}	{mem},{reg}
 	mov{bwl}	[{reg},{reg}],{reg}
 
-	mov{bwl}	{reg},{mem}
+	mov{bwl}	{reg1},{mem}
 	mov{bwl}	{reg},[{reg},{reg}]
 
 	mov{bwl}	{mem},{mem}

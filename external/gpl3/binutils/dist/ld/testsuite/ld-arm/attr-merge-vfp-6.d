@@ -12,4 +12,3 @@ File Attributes
   Tag_THUMB_ISA_use: Thumb-1
   Tag_FP_arch: VFPv3
   Tag_ABI_HardFP_use: SP and DP
-  Tag_DIV_use: Not allowed

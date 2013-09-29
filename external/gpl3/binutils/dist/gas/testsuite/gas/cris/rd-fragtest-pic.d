@@ -1,5 +1,6 @@
 #objdump: -dr
 #as: --pic
+#target: cris-*-*elf* cris-*-linux-gnu
 #source: fragtest.s
 
 .*:     file format .*-cris

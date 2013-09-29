@@ -1,5 +1,5 @@
 # Expect script for ld-i386 tests
-#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009, 2010
+#   Copyright (C) 2002, 2005, 2006, 2007, 2008, 2009, 2010, 2012
 #   Free Software Foundation
 #
 # This file is part of the GNU Binutils.
@@ -98,11 +98,13 @@ if [istarget "*-*-go32*"] {
     }
 }
 
-if { !([istarget "i?86-*-elf*"]		
+if { !([istarget "i?86-*-elf*"]
        || (([istarget "i?86-*-linux*"]
 	    || [istarget "i?86-*-gnu*"])
 	   && ![istarget "*-*-*aout*"]
 	   && ![istarget "*-*-*oldld*"])
+       || [istarget "i?86-*-nacl*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]
        || [istarget "amd64-*-linux*"]) } {
     return
@@ -118,12 +120,22 @@ if { !([istarget "i?86-*-elf*"]
 # readelf: Apply readelf options on result.  Compare with regex (last arg).
 
 set i386tests {
-    {"TLS -fpic -shared transitions" "-shared -melf_i386"
+    {"Helper shared library (basic PLT test)"
+      "-shared -melf_i386" "--32" {pltlib.s} {} "libpltlib.so"}
+    {"basic PLT generation (non-PIC)"
+     "-melf_i386 tmpdir/libpltlib.so" "--32" {plt.s}
+     {{objdump -drj.plt plt.pd}} "plt"}
+    {"basic PLT generation (PIC)"
+     "-shared -melf_i386 tmpdir/libpltlib.so" "--32" {plt-pic.s}
+     {{objdump -drj.plt plt-pic.pd}} "libplt-pic.so"}
+    {"TLS -fpic -shared transitions"
+     "-shared -melf_i386 --no-ld-generated-unwind-info"
      "--32" {tlspic1.s tlspic2.s}
      {{readelf -Ssrl tlspic.rd} {objdump -drj.text tlspic.dd}
       {objdump -sj.got tlspic.sd} {objdump -sj.tdata tlspic.td}}
       "libtlspic.so"}
-    {"TLS descriptor -fpic -shared transitions" "-shared -melf_i386"
+    {"TLS descriptor -fpic -shared transitions"
+     "-shared -melf_i386 --no-ld-generated-unwind-info"
      "--32" {tlsdesc.s tlspic2.s}
      {{readelf -Ssrl tlsdesc.rd} {objdump -drj.text tlsdesc.dd}
       {objdump "-s -j.got -j.got.plt" tlsdesc.sd} {objdump -sj.tdata tlsdesc.td}}
@@ -131,21 +143,24 @@ set i386tests {
     {"Helper shared library" "-shared -melf_i386"
      "--32" {tlslib.s} {} "libtlslib.so"}
     {"TLS -fpic and -fno-pic exec transitions"
-     "-melf_i386 tmpdir/libtlslib.so" "--32" {tlsbinpic.s tlsbin.s}
+     "-melf_i386 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "--32" {tlsbinpic.s tlsbin.s}
      {{readelf -Ssrl tlsbin.rd} {objdump -drj.text tlsbin.dd}
       {objdump -sj.got tlsbin.sd} {objdump -sj.tdata tlsbin.td}}
       "tlsbin"}
     {"TLS descriptor -fpic and -fno-pic exec transitions"
-     "-melf_i386 tmpdir/libtlslib.so" "--32" {tlsbindesc.s tlsbin.s}
+     "-melf_i386 tmpdir/libtlslib.so --no-ld-generated-unwind-info"
+     "--32" {tlsbindesc.s tlsbin.s}
      {{readelf -Ssrl tlsbindesc.rd} {objdump -drj.text tlsbindesc.dd}
       {objdump -sj.got tlsbindesc.sd} {objdump -sj.tdata tlsbindesc.td}}
       "tlsbindesc"}
-    {"TLS -fno-pic -shared" "-shared -melf_i386"
+    {"TLS -fno-pic -shared" "-shared -melf_i386 --no-ld-generated-unwind-info"
      "--32" {tlsnopic1.s tlsnopic2.s}
      {{readelf -Ssrl tlsnopic.rd} {objdump -drj.text tlsnopic.dd}
       {objdump -sj.got tlsnopic.sd}} "libtlsnopic.so"}
     {"TLS with global dynamic and descriptors"
-	"-shared -melf_i386" "--32" {tlsgdesc.s}
+     "-shared -melf_i386 --no-ld-generated-unwind-info"
+     "--32" {tlsgdesc.s}
      {{readelf -Ssrl tlsgdesc.rd} {objdump -drj.text tlsgdesc.dd}}
       "libtlsgdesc.so"}
     {"TLS in debug sections" "-melf_i386"
@@ -156,7 +171,7 @@ set i386tests {
     {"Reloc section order" "-shared -melf_i386 -z nocombreloc" "--32"
      {reloc.s} {{objdump -hw reloc.d}} "reloc.so"}
     {"Basic --emit-relocs support" "-shared -melf_i386 --emit-relocs" "--32"
-     {emit-relocs.s} {{readelf --relocs emit-relocs.d}} "emit-relocs.so"}
+     {emit-relocs.s} {{readelf --relocs emit-relocs.rd}} "emit-relocs.so"}
     {"-z combreloc relocation sections" "-shared -melf_i386 -z combreloc"
      "--32" {combreloc.s} {{readelf -r combreloc.d}} "combreloc.so"}
     {"TLS GD->LE transition" "-melf_i386"
@@ -168,6 +183,24 @@ set i386tests {
     {"TLS IE->LE transition" "-melf_i386"
      "--32" {tlsie1.s}
      {{objdump -dwr tlsie1.dd}} "tlsie1"}
+}
+
+# So as to avoid rewriting every last test case here in a nacl variant,
+# we use black magic to massage the generic cases into nacl-variant cases.
+if [istarget "*-*-nacl*"] {
+    # Change all the -melf_i386 to -melf_i386_nacl so linking can succeed.
+    regsub -all elf_i386 $i386tests elf_i386_nacl i386tests
+
+    # Same, applied to all the run_dump_test cases.
+    set options_regsub(ld) {-melf_i386 -melf_i386_nacl}
+
+    # The section/segment layout differs too much for the vanilla
+    # readelf output files to match.  So massage the cases so that
+    # they refer to a foo-nacl.rd file instead of a foo.rd file.
+    regsub -all {([a-z0-9]+)\.rd} $i386tests {\1-nacl.rd} i386tests
+
+    # Likewise for PLTs.
+    regsub -all -- {([a-z0-9]+)\.pd} $i386tests {\1-nacl.pd} i386tests
 }
 
 run_ld_link_tests $i386tests
@@ -189,15 +222,27 @@ run_dump_test "hidden3"
 run_dump_test "protected1"
 run_dump_test "protected2"
 run_dump_test "protected3"
+run_dump_test "protected4"
+run_dump_test "protected5"
 run_dump_test "tlspie1"
+run_dump_test "tlspie2"
 run_dump_test "nogot1"
 run_dump_test "nogot2"
 run_dump_test "discarded1"
+run_dump_test "pr12718"
+run_dump_test "pr12921"
+run_dump_test "pr12570a"
+run_dump_test "pr12570b"
 
 if { !([istarget "i?86-*-linux*"]
        || [istarget "i?86-*-gnu*"]
+       || [istarget "i?86-*-nacl*"]
+       || [istarget "x86_64-*-nacl*"]
        || [istarget "x86_64-*-linux*"]) } {
     return
 }
 
 run_dump_test "compressed1"
+run_dump_test "pr12627"
+run_dump_test "pr13302"
+run_dump_test "pr14215"

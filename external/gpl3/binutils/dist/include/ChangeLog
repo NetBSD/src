@@ -1,22 +1,360 @@
-2011-05-29  Alan Modra  <amodra@gmail.com>
+2012-08-28  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
 
-	Apply from mainline
-	2011-05-17  Alan Modra  <amodra@gmail.com>
+	Apply mainline patches
+	2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+	* opcode/arm.h (ARM_CPU_IS_ANY): New define.
+
+	2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+	* elf/arm.h (TAG_CPU_ARCH_V8): New define.
+	(MAX_TAG_CPU_ARCH): Update.
+	* opcode/arm.h (ARM_EXT_V8): New define.
+	(FPU_VFP_EXT_ARMV8): Likewise.
+	(FPU_NEON_EXT_ARMV8): Likewise.
+	(FPU_CRYPTO_EXT_ARMV8): Likewise.
+	(ARM_AEXT_V8A): Likewise.
+	(FPU_VFP_ARMV8): Likwise.
+	(FPU_NEON_ARMV8): Likewise.
+	(FPU_CRYPTO_ARMV8): Likewise.
+	(FPU_ARCH_VFP_ARMV8): Likewise.
+	(FPU_ARCH_NEON_VFP_ARMV8): Likewise.
+	(FPU_ARCH_CRYPTO_NEON_VFP_ARMV8): Likewise.
+	(ARM_ARCH_V8A): Likwise.
+	(ARM_ARCH_V8A_FP): Likewise.
+	(ARM_ARCH_V8A_SIMD): Likewise.
+	(ARM_ARCH_V8A_CRYPTO): Likewise.
+
+2012-08-16  Ian Bolton  <ian.bolton@arm.com>
+            Laurent Desnogues  <laurent.desnogues@arm.com>
+            Jim MacArthur  <jim.macarthur@arm.com>
+            Marcus Shawcroft  <marcus.shawcroft@arm.com>
+            Nigel Stephens  <nigel.stephens@arm.com>
+            Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+            Richard Earnshaw  <rearnsha@arm.com>
+            Sofiane Naci  <sofiane.naci@arm.com>
+            Tejas Belagod  <tejas.belagod@arm.com>
+            Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* dis-asm.h (print_insn_aarch64): New declaration.
+	(print_aarch64_disassembler_options): New declaration.
+	(aarch64_symbol_is_valid): New declaration.
+
+2012-07-24  Stephan McCamant  <smcc@cs.berkeley.edu>
+            Dr David Alan Gilbert  <dave@treblig.org>
+
+	PR binutils/13135
+	* dis-asm.h (fprintf_ftype): Add ATTRIBUTE_FPTR_PRINTF_2.
+
+2012-07-13  Doug Evans  <dje@google.com>
+
+	* filenames.h: #include "hashtab.h".
+	(filename_hash, filename_eq): Declare.
+
+2012-07-13  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* elf/s390.h (START_RELOC_NUMBERS): Define R_390_IRELATIVE reloc.
+
+2012-06-18  Doug Evans  <dje@google.com>
+
+	* dwarf2.def (DW_OP): Add DW_OP_GNU_const_index.
+
+2012-06-12  Rafael Ávila de Espíndola <respindola@mozilla.com>
+
+	* plugin-api.h (ld_plugin_output_file_type): Add LDPO_PIE.
+
+2012-06-08  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.def (DW_FORM_GNU_ref_alt, DW_FORM_GNU_strp_alt): New
+	forms.
+	* dwarf2.h (enum dwarf_macro_record_type): Add
+	DW_MACRO_GNU_define_indirect_alt, DW_MACRO_GNU_undef_indirect_alt
+	and DW_MACRO_GNU_transparent_include_alt.
+
+2012-05-23  Doug Evans  <dje@google.com>
+
+	* leb128.h: #include stdint.h, inttypes.h.
+	(read_uleb128_to_uint64): Renamed from read_uleb128_to_ull.
+	Change to take a uint64_t * argument instead of unsigned long long.
+	(read_sleb128_to_uint64): Renamed from read_sleb128_to_ll.
+	Change to take an int64_t * argument instead of long long.
+
+2012-05-22  Doug Evans  <dje@google.com>
+
+	* leb128.h: New file.
+
+2012-05-19  Gary Funck  <gary@intrepid.com>
+
+	* dwarf2.def: Update comment re: UPC extensions to reference
+	DWARF4 specification.
+
+2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
+
+	* dis-asm.h (print_insn_m9s12x): Prototype.
+	(print_insn_m9s12xg): Prototype.
+
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* dis-asm.h (print_insn_xgate): Define.
+	(print_insn_xgate): Ditto.
+	Added new files for XGATE port.
+
+2012-05-02  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf2.def: Remove DW_FORM_GNU_ref_index,
+	replace DW_AT_GNU_ref_base with DW_AT_GNU_ranges_base.
+
+2012-04-28  Doug Evans  <dje@google.com>
+
+	* dwarf2.def (DW_OP): Add DW_OP_GNU_addr_index.
+
+2012-04-27  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2.h: Wrap function declarations in extern "C".
+
+2012-04-27  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2.h (enum dwarf_tag, enum dwarf_form, enum dwarf_attribute)
+	(enum dwarf_location_atom, enum dwarf_type, enum
+	dwarf_call_frame_info): Remove.
+	(DW_TAG, DW_TAG_DUP, DW_FORM, DW_AT, DW_AT_DUP, DW_OP)
+	(DW_OP_DUP, DW_ATE, DW_ATE_DUP, DW_CFA): New macros.
+	Include dwarf2.def.
+	(get_DW_TAG_name, get_DW_AT_name, get_DW_FORM_name)
+	(get_DW_OP_name, get_DW_ATE_name): Declare.
+	* dwarf2.def: New file, from dwarf2.h.
+
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* elf/sparc.h (R_SPARC_WDISP10): New reloc.
+	* opcode/sparc.h: Define '=' as generating R_SPARC_WDISP10.
+
+2012-04-10  Tristan Gingold  <gingold@adacore.com>
+
+	* splay-tree.h: Conditionnaly includes stdint.h and inttypes.h
+	(libi_uhostptr_t, libi_shostptr_t): Remove, replaced by uintptr_t.
+
+2012-04-09  Roland McGrath  <mcgrathr@google.com>
+
+	* bfdlink.h (struct bfd_link_info): Add new member user_phdrs.
+
+2012-03-15  Alan Modra  <amodra@gmail.com>
+
+	* dis-asm.h (disassemble_init_powerpc): Declare.
+
+2009-11-06  Jonas Maebe  <jonas.maebe@elis.ugent.be>
+
+	Add DWARF attribute value for the "Borland fastcall" calling
+	convention.
+	* elf/dwarf2.h: Add DW_CC_GNU_borland_fastcall_i386 constant.
+
+2012-01-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13616
+	* bfdlink.h (bfd_link_order): Update comments on data size.
+
+2012-01-26  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf2.h (enum dwarf_form): Add Fission extensions.
+	(enum dwarf_attribute): Likewise.
+
+2012-01-06  Jason Merrill  <jason@redhat.com>
+
+	PR c++/6057
+	PR c++/48051
+	PR c++/50855
+	PR c++/51322
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_INITIALIZER_LIST, DEMANGLE_COMPONENT_NULLARY.
+
+2011-12-14  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* mach-o/loader.h (bfd_mach_o_section_type): define
+	BFD_MACH_O_S_ATTR_NONE to 0.
+
+2011-11-07  Richard Henderson  <rth@redhat.com>
+
+	Merged from transactional-memory.
+
+	* demangle.h (enum gnu_v3_ctor_kinds): Add gnu_v3_object_ctor_group.
+	(enum gnu_v3_dtor_kinds): Add gnu_v3_object_dtor_group.
+	(DEMANGLE_COMPONENT_TRANSACTION_CLONE): New.
+	(DEMANGLE_COMPONENT_NONTRANSACTION_CLONE): New.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* dis-asm.h (print_insn_rl78): Declare.
+
+2011-10-25  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* dis-asm.h (print_insn_epiphany): Declare.
+
+2011-10-21  Ulrich Drepper  <drepper@gmail.com>
+
+	* obstack.h [!GNUC] (obstack_free): Avoid cast to int.
+
+2011-10-21  Marc Glisse  <marc.glisse@inria.fr>
+
+	* ansidecl.h (ENUM_BITFIELD): Always use enum in C++
+
+2011-10-19  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13254
+	* bfdlink.h (struct bfd_link_info): Add error_textrel.
+
+2011-09-28  Doug Evans  <dje@google.com>
+
+	* timeval-utils.h: New file.
+
+	* libiberty.h (countargv): Declare.
+
+2011-09-26  Cary Coutant  <ccoutant@google.com>
+
+	gcc PR lto/47247
+	* plugin-api.h (enum ld_plugin_symbol_resolution): Add
+	LDPR_PREVAILING_DEF_IRONLY_EXP.
+	(enum ld_plugin_tag): Add LDPT_GET_SYMBOLS_V2.
+
+2011-09-23  Cary Coutant  <ccoutant@google.com>
+
+	PR 40831
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_CLONE.
+
+2011-09-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12975
+	* bfdlink.h (bfd_link_info): Add version_info.
+
+2011-07-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* xregex.h (regoff_t): Define.
+
+2011-07-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DW_AT_GNU_macros): New.
+	(enum dwarf_macro_record_type): New enum.  Add DW_MACRO_GNU_*.
+
+	PR c++/49756
+	* libiberty.h (stack_limit_increase): New prototype.
+
+2011-07-13  Sriraman Tallam  <tmsriram@google.com>
+
+	* plugin-api.h
+	(ld_plugin_section): New struct.
+	(ld_plugin_get_section_count): New typedef.
+	(ld_plugin_get_section_type): New typedef.
+	(ld_plugin_get_section_name): New typedef.
+	(ld_plugin_get_section_contents): New typedef.
+	(ld_plugin_update_section_order): New typedef.
+	(ld_plugin_allow_section_ordering): New typedef.
+	(LDPT_GET_SECTION_COUNT): New enum value.
+	(LDPT_GET_SECTION_TYPE): New enum value.
+	(LDPT_GET_SECTION_NAME): New enum value.
+	(LDPT_GET_SECTION_CONTENTS): New enum value.
+	(LDPT_UPDATE_SECTION_ORDER): New enum value.
+	(LDPT_ALLOW_SECTION_ORDERING): New enum value.
+	(tv_get_section_count): New struct members.
+	(tv_get_section_type): New struct members.
+	(tv_get_section_name): New struct members.
+	(tv_get_section_contents): New struct members.
+	(tv_update_section_order): New struct members.
+	(tv_allow_section_ordering): New struct members.
+
+2011-07-15  Alan Modra  <amodra@gmail.com>
+
+	* bfdlink.h (struct bfd_link_info): Use ENUM_BITFIELD for strip,
+	discard, common_skip_ar_symbols, unresolved_syms_in_objects, and
+	unresolved_syms_in_shared_libs fields.  Move emit_note_gnu_build_id
+	out of bitfields.  Reorder bitfields.
+
+2011-07-13  Sriraman Tallam  <tmsriram@google.com>
+
+	* plugin-api.h (ld_plugin_section): New struct.
+	(ld_plugin_get_section_count): New typedef.
+	(ld_plugin_get_section_type): New typedef.
+	(ld_plugin_get_section_name): New typedef.
+	(ld_plugin_get_section_contents): New typedef.
+	(ld_plugin_update_section_order): New typedef.
+	(ld_plugin_allow_section_ordering): New typedef.
+	(LDPT_GET_SECTION_COUNT): New enum value.
+	(LDPT_GET_SECTION_TYPE): New enum value.
+	(LDPT_GET_SECTION_NAME): New enum value.
+	(LDPT_GET_SECTION_CONTENTS): New enum value.
+	(LDPT_UPDATE_SECTION_ORDER): New enum value.
+	(LDPT_ALLOW_SECTION_ORDERING): New enum value.
+	(tv_get_section_count): New struct members.
+	(tv_get_section_type): New struct members.
+	(tv_get_section_name): New struct members.
+	(tv_get_section_contents): New struct members.
+	(tv_update_section_order): New struct members.
+	(tv_allow_section_ordering): New struct members.
+
+2011-07-11  Catherine Moore  <clm@codesourcery.com>
+
+	* bfdlink.h (flag_type): New enumeration.
+	(flag_info_list): New structure.
+	(flag_info): New structure.
+
+2011-07-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12942
+	* bfdlink.h (bfd_link_info): Add loading_lto_outputs.
+
+2011-07-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* filenames.h (HAVE_CASE_INSENSITIVE_FILE_SYSTEM): Define
+	on Darwin, as well as on the systems that use a DOS-like
+	filesystem.
+
+2011-06-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR debug/47858
+	* dwarf2.h (enum dwarf_location_atom): Add DW_OP_GNU_parameter_ref.
+
+2011-06-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (enum dwarf_location_atom): Add DW_OP_GNU_parameter_ref.
+
+2011-06-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR ld/12570
+	* bfdlink.h (struct bfd_link_info): Add no_ld_generated_unwind_info
+	option.
+
+2011-06-13  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* demangle.h (DMGL_RET_POSTFIX): Extend the comment.
+	(DMGL_RET_DROP): New.
+
+2011-06-13  Walter Lee  <walt@tilera.com>
+
+	* dis-asm.h (print_insn_tilegx): Declare.
+	(print_insn_tilepro): Likewise.
+
+2011-05-17  Alan Modra  <amodra@gmail.com>
+
 	PR ld/12760
 	* bfdlink.h (struct bfd_link_callbacks <notice>): Add "flags" and
 	"string" param.
 
-	2011-05-16  Alan Modra  <amodra@gmail.com>
+2011-05-16  Alan Modra  <amodra@gmail.com>
+
 	* bfdlink.h (struct bfd_link_hash_entry): Remove u.undef.weak field.
 
-	2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+2011-04-30  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DW_OP_GNU_const_type, DW_OP_GNU_regval_type,
+	DW_OP_GNU_deref_type, DW_OP_GNU_convert, DW_OP_GNU_reinterpret): New.
+
+2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
 	* bfdlink.h (ENUM_BITFIELD): Remove.
+
+2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
 	* ansidecl.h (ENUM_BITFIELD): New, from gcc/system.h.
 
-2011-04-27  Alan Modra  <amodra@gmail.com>
+2011-04-24  Alan Modra  <amodra@gmail.com>
 
-	Backport from mainline.
-	2011-04-24  Alan Modra  <amodra@gmail.com>
 	PR ld/12365
 	PR ld/12696
 	* bfdlink.h (ENUM_BITFIELD): Define.
@@ -24,15 +362,65 @@
 	(struct bfd_link_callbacks <notice>): Pass bfd_link_hash_entry pointer
 	rather than "name".
 
-	2011-04-20  Alan Modra  <amodra@gmail.com>
+2011-04-20  Alan Modra  <amodra@gmail.com>
+
 	PR ld/12365
 	* bfdlink.h (struct bfd_link_callbacks): Modify multiple_definition
 	and multiple_common parameters to pass in a bfd_link_hash_entry
 	pointer rather than name,bfd etc. found in the hash entry.
 
-2010-11-25  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+2011-03-31  Tristan Gingold  <gingold@adacore.com>
 
-	* opcode/s390.h (enum s390_opcode_cpu_val): Add S390_OPCODE_MAXCPU.
+	* dwarf2.h (dwarf_line_number_hp_sfc_ops): New enum.
+
+2011-03-24  Mark Wielaard  <mjw@redhat.com>
+
+	* dwarf2.h (dwarf_form): Remove deprecated DW_FORM_sig8 define.
+
+2010-03-23  Rafael Ávila de Espíndola <respindola@mozilla.com>
+
+	* plugin-api.h (ld_plugin_get_view): New.
+	(ld_plugin_tag): Add LDPT_GET_VIEW.
+	(ld_plugin_tv): Add tv_get_view.
+
+2011-03-16  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.h (DW_TAG_GNU_call_site, DW_TAG_GNU_call_site_parameter,
+	DW_AT_GNU_call_site_value, DW_AT_GNU_call_site_data_value,
+	DW_AT_GNU_call_site_target, DW_AT_GNU_call_site_target_clobbered,
+	DW_AT_GNU_tail_call, DW_AT_GNU_all_tail_call_sites,
+	DW_AT_GNU_all_call_sites,, DW_AT_GNU_all_source_call_sites,
+	DW_OP_GNU_entry_value): New.
+
+2011-02-28  Kai Tietz  <kai.tietz@onevision.com>
+
+	* filenames.h (filename_ncmp): New prototype.
+
+2011-02-23  Kai Tietz  <kai.tietz@onevision.com>
+
+	* dwarf2.h (_ELF_DWARF2_H): Renamed to
+	_DWARF2_H.
+	(DWARF2_External_LineInfo, DWARF2_Internal_LineInfo,
+	DWARF2_External_PubNames, DWARF2_Internal_PubNames,
+	DWARF2_External_CompUnit, DWARF2_Internal_CompUnit,
+	DWARF2_External_ARange, DWARF2_Internal_ARange): Removed.
+
+2011-02-08  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* dwarf2.h (enum dwarf_calling_convention): Add DW_CC_GDB_IBM_OpenCL.
+
+2011-01-12  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* dwarf2.h: Update value for DW_AT_hi_user.
+
+2010-11-16  Ian Lance Taylor  <iant@google.com>
+
+	* simple-object.h (simple_object_attributes_merge): Declare,
+	replacing simple_object_attributes_compare.
+
+2010-11-04  Ian Lance Taylor  <iant@google.com>
+
+	* dwarf2.h (enum dwarf_source_language): Add DW_LANG_Go.
 
 2010-11-02  Ian Lance Taylor  <iant@google.com>
 
@@ -246,11 +634,6 @@
 	(disassemble_init_for_target): Ditto.
 	(init_disassemble_info): Ditto.
 
-2009-12-03  David Daney  <ddaney@caviumnetworks.com>
-	    Adam Nemet  <adambnemet@gmail.com>
-
-	* elf/mips.h (E_MIPS_MACH_OCTEON2): New machine flag.
-
 2009-11-18  Alan Modra  <amodra@bigpond.net.au>
 
 	* alloca-conf.h: Clarify comment.
@@ -259,7 +642,7 @@
 
 	Add DWARF attribute value for the "Borland fastcall" calling
 	convention.
-	* elf/dwarf2.h: Add DW_CC_GNU_borland_fastcall_i386 constant.
+	* dwarf2.h: Add DW_CC_GNU_borland_fastcall_i386 constant.
 
 2009-10-23  Kai Tietz  <kai.tietz@onevision.com>
 

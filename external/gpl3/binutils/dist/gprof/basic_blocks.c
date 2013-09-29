@@ -24,6 +24,7 @@
 
 #include "gprof.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "basic_blocks.h"
 #include "corefile.h"
 #include "gmon_io.h"
@@ -61,7 +62,7 @@ cmp_bb (const PTR lp, const PTR rp)
 
   if (left->file && right->file)
     {
-      r = strcmp (left->file->name, right->file->name);
+      r = filename_cmp (left->file->name, right->file->name);
 
       if (r)
 	return r;

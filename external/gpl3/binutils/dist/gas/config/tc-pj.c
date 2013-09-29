@@ -286,7 +286,7 @@ md_assemble (char *str)
 	    op_end++;
 
 	  if (*op_end == 0)
-	    as_bad (_("expected expresssion"));
+	    as_bad (_("expected expression"));
 
 	  op_end = parse_exp_save_ilp (op_end, &arg);
 

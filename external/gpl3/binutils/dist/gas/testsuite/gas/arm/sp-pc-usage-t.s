@@ -35,12 +35,10 @@ ldr	pc, [pc]
 ldr	sp, [sp]
 ldr	pc, [sp]
 ldr	sp, [pc]
-ldr	sp, [r0, +pc]
 
 str	r0, [sp]
 str	sp, [r0]
 str	sp, [sp]
-str	sp, [r0, +pc]
 
 @ R13 as the first operand <Rn> in any add{s}, cmn, cmp, or sub{s} instruction.
 

@@ -1,4 +1,5 @@
 	.text
+	.align	4
 	.globl	_start
 _start:
 	jr	$31
@@ -14,6 +15,7 @@ C:	.4byte	0x100
 D:	.4byte	0x200
 
 	.data
+	.align	4
 E:	.4byte	E
 	.4byte	E + 0x1000
 	.4byte	A
