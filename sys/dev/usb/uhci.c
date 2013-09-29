@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.260 2013/09/14 13:17:21 joerg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.261 2013/09/29 07:28:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.260 2013/09/14 13:17:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.261 2013/09/29 07:28:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -855,7 +855,7 @@ uhci_dump_all(uhci_softc_t *sc)
 	uhci_dumpregs(sc);
 	printf("intrs=%d\n", sc->sc_bus.no_intrs);
 	/*printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);*/
-	uhci_dump_qh(sc->sc_lctl_start);
+	uhci_dump_qhs(sc->sc_lctl_start);
 }
 
 
