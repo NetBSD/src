@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/09/02 14:34:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/09/29 12:11:59 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -19,6 +19,7 @@ checkout:
 	svn co -r ${COMPILER_RT_REVISION} ${SVN_ROOT}/compiler-rt/trunk \
 	    ${COMPILER_RT_SRCDIR}
 	svn co -r ${LLD_REVISION} ${SVN_ROOT}/lld/trunk ${LLD_SRCDIR}
+	svn co -r ${LLDB_REVISION} ${SVN_ROOT}/lldb/trunk ${LLDB_SRCDIR}
 	svn co -r ${LLVM_REVISION} ${SVN_ROOT}/llvm/trunk ${LLVM_SRCDIR}
 
 checkout-mclinker:
