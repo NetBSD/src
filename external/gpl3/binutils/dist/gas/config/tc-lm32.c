@@ -1,5 +1,5 @@
 /* tc-lm32.c - Lattice Mico32 assembler.
-   Copyright 2008   Free Software Foundation, Inc.
+   Copyright 2008, 2012   Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -19,10 +19,9 @@
    Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "as.h"
 #include <string.h>
 #include <stdlib.h>
-
-#include "as.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
 #include "bfd.h"

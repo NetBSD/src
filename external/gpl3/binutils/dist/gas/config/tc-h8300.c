@@ -1,6 +1,6 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -359,7 +359,6 @@ static int parse_reg (char *, op_type *, unsigned *, int);
 static char *skip_colonthing (char *, int *);
 static char *parse_exp (char *, struct h8_op *);
 
-static int constant_fits_width_p (struct h8_op *, unsigned int);
 static int constant_fits_size_p (struct h8_op *, int, int);
 
 /*
@@ -556,19 +555,23 @@ skip_colonthing (char *src, int *mode)
    @@aa[:8]		memory indirect.  */
 
 static int
-constant_fits_width_p (struct h8_op *operand, unsigned int width)
+constant_fits_width_p (struct h8_op *operand, offsetT width)
 {
-  return ((operand->exp.X_add_number & ~width) == 0
-	  || (operand->exp.X_add_number | width) == (unsigned)(~0));
+  offsetT num;
+
+  num = ((operand->exp.X_add_number & 0xffffffff) ^ 0x80000000) - 0x80000000;
+  return (num & ~width) == 0 || (num | width) == ~0;
 }
 
 static int
 constant_fits_size_p (struct h8_op *operand, int size, int no_symbols)
 {
-  offsetT num = operand->exp.X_add_number;
+  offsetT num;
+
   if (no_symbols
       && (operand->exp.X_add_symbol != 0 || operand->exp.X_op_symbol != 0))
     return 0;
+  num = operand->exp.X_add_number & 0xffffffff;
   switch (size)
     {
     case L_2:
@@ -582,11 +585,13 @@ constant_fits_size_p (struct h8_op *operand, int size, int no_symbols)
     case L_5:
       return num >= 1 && num < 32;
     case L_8:
-      return (num & ~0xFF) == 0 || ((unsigned)num | 0x7F) == ~0u;
+      num = (num ^ 0x80000000) - 0x80000000;
+      return (num & ~0xFF) == 0 || (num | 0x7F) == ~0;
     case L_8U:
       return (num & ~0xFF) == 0;
     case L_16:
-      return (num & ~0xFFFF) == 0 || ((unsigned)num | 0x7FFF) == ~0u;
+      num = (num ^ 0x80000000) - 0x80000000;
+      return (num & ~0xFFFF) == 0 || (num | 0x7FFF) == ~0;
     case L_16U:
       return (num & ~0xFFFF) == 0;
     case L_32:
@@ -1184,7 +1189,7 @@ get_specific (const struct h8_instruction *instruction,
 		}
 	      else if (x_mode == IMM && op_mode != IMM)
 		{
-		  offsetT num = operands[i].exp.X_add_number;
+		  offsetT num = operands[i].exp.X_add_number & 0xffffffff;
 		  if (op_mode == KBIT || op_mode == DBIT)
 		    /* This is ok if the immediate value is sensible.  */;
 		  else if (op_mode == CONST_2)
@@ -1866,8 +1871,8 @@ fix_operand_size (struct h8_op *operand, int size)
 	   necessary.  */
 	if (Hmode
 	    && !Nmode 
-	    && (operand->exp.X_add_number < -32768
-		|| operand->exp.X_add_number > 32767
+	    && ((((addressT) operand->exp.X_add_number + 0x8000)
+		 & 0xffffffff) > 0xffff
 		|| operand->exp.X_add_symbol != 0
 		|| operand->exp.X_op_symbol != 0))
 	  operand->mode |= L_24;
@@ -1876,9 +1881,8 @@ fix_operand_size (struct h8_op *operand, int size)
 	break;
 
       case PCREL:
-	/* This condition is long standing, though somewhat suspect.  */
-	if (operand->exp.X_add_number > -128
-	    && operand->exp.X_add_number < 127)
+	if ((((addressT) operand->exp.X_add_number + 0x80)
+	     & 0xffffffff) <= 0xff)
 	  {
 	    if (operand->exp.X_add_symbol != NULL)
 	      operand->mode |= bsize;

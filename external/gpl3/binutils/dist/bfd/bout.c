@@ -1,6 +1,6 @@
 /* BFD back-end for Intel 960 b.out binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -1387,6 +1387,7 @@ b_out_bfd_get_relocated_section_contents (bfd *output_bfd,
 #define b_out_bfd_final_link                   _bfd_generic_final_link
 #define b_out_bfd_link_split_section           _bfd_generic_link_split_section
 #define b_out_bfd_gc_sections                  bfd_generic_gc_sections
+#define b_out_bfd_lookup_section_flags         bfd_generic_lookup_section_flags
 #define b_out_bfd_merge_sections               bfd_generic_merge_sections
 #define b_out_bfd_is_group_section             bfd_generic_is_group_section
 #define b_out_bfd_discard_group                bfd_generic_discard_group
@@ -1409,7 +1410,7 @@ const bfd_target b_out_vec_big_host =
   '_',				/* Symbol leading char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
-
+  0,				/* match priority.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
      bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Data.  */
@@ -1451,6 +1452,7 @@ const bfd_target b_out_vec_little_host =
   '_',				/* Symbol leading char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Data.  */

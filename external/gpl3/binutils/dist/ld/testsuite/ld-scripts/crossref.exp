@@ -51,6 +51,12 @@ if [istarget mep*-*-elf] {
     set CFLAGS "-mtiny=0"
 }
 
+# The .dsbt section and __c6xabi_DSBT_BASE are not defined in our test
+# linker scripts.
+if [istarget tic6x*-*-*] {
+    set CFLAGS "-mno-dsbt -msdata=none"
+}
+
 if { ![ld_compile $CC "$srcdir/$subdir/cross1.c" tmpdir/cross1.o] \
      || ![ld_compile $CC "$srcdir/$subdir/cross2.c" tmpdir/cross2.o] } {
     unresolved $test1

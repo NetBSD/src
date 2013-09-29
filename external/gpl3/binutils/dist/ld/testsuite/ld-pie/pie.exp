@@ -1,5 +1,5 @@
 # Expect script for various PIE tests.
-#   Copyright 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
+#   Copyright 2006, 2007, 2009, 2010, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -23,6 +23,7 @@
 if ![isnative] then {return}
 
 if { ![istarget *-*-linux*]
+     && ![istarget *-*-nacl*]
      && ![istarget *-*-gnu*] } {
     return
 }

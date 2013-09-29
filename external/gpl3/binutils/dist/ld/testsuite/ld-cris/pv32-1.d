@@ -10,10 +10,10 @@
 DYNAMIC SYMBOL TABLE:
 0+8021e      DF \*UND\*	0+ expfn
 0+82324 g    DO \.bss	0+4 expobj
-0+82324 g    D  \*ABS\*	0+ __bss_start
+0+82324 g    D  \.bss	0+ __bss_start
 0+80238      DF \*UND\*	0+ dsofn3
-0+82324 g    D  \*ABS\*	0+ _edata
-0+82340 g    D  \*ABS\*	0+ _end
+0+82324 g    D  \.got	0+ _edata
+0+82340 g    D  \.bss	0+ _end
 0+80264 g    DF \.text	0+8 dsofn
 
 Contents of section \.interp:

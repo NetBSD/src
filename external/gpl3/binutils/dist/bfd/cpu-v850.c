@@ -26,7 +26,7 @@
 
 #define N(number, print, default, next)  \
 {  32, 32, 8, bfd_arch_v850, number, "v850", print, 2, default, \
-     bfd_default_compatible, bfd_default_scan, next }
+   bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
 
 #define NEXT NULL
 

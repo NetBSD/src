@@ -1,7 +1,7 @@
 /* write.c - emit .o file
    Copyright 1986, 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
    1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010 Free Software Foundation, Inc.
+   2010, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -151,7 +151,7 @@ fix_new_internal (fragS *frag,		/* Which frag?  */
 		  symbolS *sub_symbol,	/* X_op_symbol.  */
 		  offsetT offset,	/* X_add_number.  */
 		  int pcrel,		/* TRUE if PC-relative relocation.  */
-		  RELOC_ENUM r_type ATTRIBUTE_UNUSED /* Relocation type.  */,
+		  RELOC_ENUM r_type	/* Relocation type.  */,
 		  int at_beginning)	/* Add to the start of the list?  */
 {
   fixS *fixP;
@@ -406,8 +406,8 @@ chain_frchains_together_1 (segT section, struct frchain *frchp)
 	  prev_fix = frchp->fix_tail;
 	}
     }
-  gas_assert (prev_frag->fr_type != 0);
-  gas_assert (prev_frag != &dummy);
+  gas_assert (prev_frag != &dummy
+	      && prev_frag->fr_type != 0);
   prev_frag->fr_next = 0;
   return prev_frag;
 }
@@ -654,15 +654,21 @@ dump_section_relocs (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, FILE *stream)
 static void
 resolve_reloc_expr_symbols (void)
 {
+  bfd_vma addr_mask = 1;
   struct reloc_list *r;
+
+  /* Avoid a shift by the width of type.  */
+  addr_mask <<= bfd_arch_bits_per_address (stdoutput) - 1;
+  addr_mask <<= 1;
+  addr_mask -= 1;
 
   for (r = reloc_list; r; r = r->next)
     {
+      reloc_howto_type *howto = r->u.a.howto;
       expressionS *symval;
       symbolS *sym;
       bfd_vma offset, addend;
       asection *sec;
-      reloc_howto_type *howto;
 
       resolve_symbol_value (r->u.a.offset_sym);
       symval = symbol_get_value_expression (r->u.a.offset_sym);
@@ -708,7 +714,29 @@ resolve_reloc_expr_symbols (void)
 	      sec = NULL;
 	    }
 	  else if (sym != NULL)
-	    symbol_mark_used_in_reloc (sym);
+	    {
+	      /* Convert relocs against local symbols to refer to the
+	         corresponding section symbol plus offset instead.  Keep
+	         PC-relative relocs of the REL variety intact though to
+		 prevent the offset from overflowing the relocated field,
+	         unless it has enough bits to cover the whole address
+	         space.  */
+	      if (S_IS_LOCAL (sym) && !symbol_section_p (sym)
+		  && !(howto->partial_inplace
+		       && howto->pc_relative
+		       && howto->src_mask != addr_mask))
+		{
+		  asection *symsec = S_GET_SEGMENT (sym);
+		  if (!(((symsec->flags & SEC_MERGE) != 0
+			 && addend != 0)
+			|| (symsec->flags & SEC_THREAD_LOCAL) != 0))
+		    {
+		      addend += S_GET_VALUE (sym);
+		      sym = section_symbol (symsec);
+		    }
+		}
+	      symbol_mark_used_in_reloc (sym);
+	    }
 	}
       if (sym == NULL)
 	{
@@ -716,8 +744,6 @@ resolve_reloc_expr_symbols (void)
 	    abs_section_sym = section_symbol (absolute_section);
 	  sym = abs_section_sym;
 	}
-
-      howto = r->u.a.howto;
 
       r->u.b.sec = sec;
       r->u.b.s = symbol_get_bfdsym (sym);
@@ -993,6 +1019,10 @@ fixup_segment (fixS *fixP, segT this_segment)
 			      S_GET_NAME (fixP->fx_subsy),
 			      segment_name (sub_symbol_segment));
 	    }
+	  else if (sub_symbol_segment != undefined_section
+		   && ! bfd_is_com_section (sub_symbol_segment)
+		   && MD_APPLY_SYM_VALUE (fixP))
+	    add_number -= S_GET_VALUE (fixP->fx_subsy);
 	}
 
       if (fixP->fx_addsy)
@@ -1146,15 +1176,37 @@ install_reloc (asection *sec, arelent *reloc, fragS *fragp,
     }
 }
 
+static fragS *
+get_frag_for_reloc (fragS *last_frag,
+		    const segment_info_type *seginfo,
+		    const struct reloc_list *r)
+{
+  fragS *f;
+  
+  for (f = last_frag; f != NULL; f = f->fr_next)
+    if (f->fr_address <= r->u.b.r.address
+	&& r->u.b.r.address < f->fr_address + f->fr_fix)
+      return f;
+
+  for (f = seginfo->frchainP->frch_root; f != NULL; f = f->fr_next)
+    if (f->fr_address <= r->u.b.r.address
+	&& r->u.b.r.address < f->fr_address + f->fr_fix)
+      return f;
+
+  as_bad_where (r->file, r->line,
+		_("reloc not within (fixed part of) section"));
+  return NULL;
+}
+
 static void
 write_relocs (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 {
   segment_info_type *seginfo = seg_info (sec);
-  unsigned int i;
   unsigned int n;
   struct reloc_list *my_reloc_list, **rp, *r;
   arelent **relocs;
   fixS *fixp;
+  fragS *last_frag;
 
   /* If seginfo is NULL, we did not create this section; don't do
      anything with it.  */
@@ -1188,12 +1240,19 @@ write_relocs (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 
   relocs = (arelent **) xcalloc (n, sizeof (arelent *));
 
-  i = 0;
+  n = 0;
+  r = my_reloc_list;
+  last_frag = NULL;
   for (fixp = seginfo->fix_root; fixp != (fixS *) NULL; fixp = fixp->fx_next)
     {
-      int j;
       int fx_size, slack;
       offsetT loc;
+      arelent **reloc;
+#ifndef RELOC_EXPANSION_POSSIBLE
+      arelent *rel;
+
+      reloc = &rel;
+#endif
 
       if (fixp->fx_done)
 	continue;
@@ -1208,63 +1267,64 @@ write_relocs (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 		      _("internal error: fixup not contained within frag"));
 
 #ifndef RELOC_EXPANSION_POSSIBLE
-      {
-	arelent *reloc = tc_gen_reloc (sec, fixp);
-
-	if (!reloc)
-	  continue;
-	relocs[i++] = reloc;
-	j = 1;
-      }
+      *reloc = tc_gen_reloc (sec, fixp);
 #else
-      {
-	arelent **reloc = tc_gen_reloc (sec, fixp);
-
-	for (j = 0; reloc[j]; j++)
-	  relocs[i++] = reloc[j];
-      }
+      reloc = tc_gen_reloc (sec, fixp);
 #endif
 
-      for ( ; j != 0; --j)
-	install_reloc (sec, relocs[i - j], fixp->fx_frag,
-		       fixp->fx_file, fixp->fx_line);
+      while (*reloc)
+	{
+	  while (r != NULL && r->u.b.r.address < (*reloc)->address)
+	    {
+	      fragS *f = get_frag_for_reloc (last_frag, seginfo, r);
+	      if (f != NULL)
+		{
+		  last_frag = f;
+		  relocs[n++] = &r->u.b.r;
+		  install_reloc (sec, &r->u.b.r, f, r->file, r->line);
+		}
+	      r = r->next;
+	    }
+	  relocs[n++] = *reloc;
+	  install_reloc (sec, *reloc, fixp->fx_frag,
+			 fixp->fx_file, fixp->fx_line);
+#ifndef RELOC_EXPANSION_POSSIBLE
+	  break;
+#else
+	  reloc++;
+#endif
+	}
     }
-  n = i;
+
+  while (r != NULL)
+    {
+      fragS *f = get_frag_for_reloc (last_frag, seginfo, r);
+      if (f != NULL)
+	{
+	  last_frag = f;
+	  relocs[n++] = &r->u.b.r;
+	  install_reloc (sec, &r->u.b.r, f, r->file, r->line);
+	}
+      r = r->next;
+    }
 
 #ifdef DEBUG4
   {
-    unsigned int i, j, nsyms;
+    unsigned int k, j, nsyms;
     asymbol **sympp;
     sympp = bfd_get_outsymbols (stdoutput);
     nsyms = bfd_get_symcount (stdoutput);
-    for (i = 0; i < n; i++)
-      if (((*relocs[i]->sym_ptr_ptr)->flags & BSF_SECTION_SYM) == 0)
+    for (k = 0; k < n; k++)
+      if (((*relocs[k]->sym_ptr_ptr)->flags & BSF_SECTION_SYM) == 0)
 	{
 	  for (j = 0; j < nsyms; j++)
-	    if (sympp[j] == *relocs[i]->sym_ptr_ptr)
+	    if (sympp[j] == *relocs[k]->sym_ptr_ptr)
 	      break;
 	  if (j == nsyms)
 	    abort ();
 	}
   }
 #endif
-
-  for (r = my_reloc_list; r != NULL; r = r->next)
-    {
-      fragS *f;
-      for (f = seginfo->frchainP->frch_root; f; f = f->fr_next)
-	if (f->fr_address <= r->u.b.r.address
-	    && r->u.b.r.address < f->fr_address + f->fr_fix)
-	  break;
-      if (f == NULL)
-	as_bad_where (r->file, r->line,
-		      _("reloc not within (fixed part of) section"));
-      else
-	{
-	  relocs[n++] = &r->u.b.r;
-	  install_reloc (sec, &r->u.b.r, f, r->file, r->line);
-	}
-    }
 
   if (n)
     {
@@ -1280,16 +1340,16 @@ write_relocs (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 
 #ifdef DEBUG3
   {
-    unsigned int i;
-    arelent *r;
-    asymbol *s;
+    unsigned int k;
+
     fprintf (stderr, "relocs for sec %s\n", sec->name);
-    for (i = 0; i < n; i++)
+    for (k = 0; k < n; k++)
       {
-	r = relocs[i];
-	s = *r->sym_ptr_ptr;
+	arelent *rel = relocs[k];
+	asymbol *s = *rel->sym_ptr_ptr;
 	fprintf (stderr, "  reloc %2d @%p off %4lx : sym %-10s addend %lx\n",
-		 i, r, (unsigned long)r->address, s->name, (unsigned long)r->addend);
+		 k, rel, (unsigned long)rel->address, s->name,
+		 (unsigned long)rel->addend);
       }
   }
 #endif
@@ -1359,6 +1419,7 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   flagword flags = bfd_get_section_flags (abfd, sec);
 
   if (seginfo == NULL
+      || sec->size < 32
       || (flags & (SEC_ALLOC | SEC_HAS_CONTENTS)) == SEC_ALLOC)
     return;
 
@@ -1564,7 +1625,9 @@ write_contents (bfd *abfd ATTRIBUTE_UNUSED,
 		    (stdoutput, sec, buf, (file_ptr) offset,
 		     (bfd_size_type) n_per_buf * fill_size);
 		  if (!x)
-		    as_fatal (_("cannot write to output file"));
+		    as_fatal (_("cannot write to output file '%s': %s"),
+			      stdoutput->filename,
+			      bfd_errmsg (bfd_get_error ()));
 		  offset += n_per_buf * fill_size;
 		}
 	    }
@@ -1708,6 +1771,10 @@ write_object_file (void)
   fragS *fragP;			/* Track along all frags.  */
 #endif
 
+#ifdef md_pre_output_hook
+  md_pre_output_hook;
+#endif
+
   /* Do we really want to write it?  */
   {
     int n_warns, n_errs;
@@ -1731,12 +1798,9 @@ write_object_file (void)
       }
   }
 
-#ifdef	OBJ_VMS
-  /* Under VMS we try to be compatible with VAX-11 "C".  Thus, we call
-     a routine to check for the definition of the procedure "_main",
-     and if so -- fix it up so that it can be program entry point.  */
-  vms_check_for_main ();
-#endif /* OBJ_VMS  */
+#ifdef md_pre_relax_hook
+  md_pre_relax_hook;
+#endif
 
   /* From now on, we don't care about sub-segments.  Build one frag chain
      for each segment. Linked thru fr_next.  */

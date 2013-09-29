@@ -138,6 +138,11 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
   lang_output_section_statement_type *os;
   struct hook_stub_info info;
 
+  /* PR 12845: If the input section has been garbage collected it will
+     not have its output section set to *ABS*.  */
+  if (bfd_is_abs_section (output_section))
+    return NULL;
+
   /* Create the stub file, if we haven't already.  */
   if (stub_file == NULL)
     {
@@ -175,7 +180,7 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
 
   /* Initialize a statement list that contains only the new statement.  */
   lang_list_init (&info.add);
-  lang_add_section (&info.add, stub_sec, os);
+  lang_add_section (&info.add, stub_sec, NULL, os);
   if (info.add.head == NULL)
     goto err_ret;
 

@@ -4,6 +4,6 @@ Symbol table '\.dynsym' contains .*:
 .*: 00000000 +0 +FUNC +GLOBAL +DEFAULT +UND +foo
 # The index on the next line should correspond to MIPS_GOTSYM.
 #...
- *7: 00044030 +0 +FUNC +GLOBAL +DEFAULT +UND +bar
+ *6: 00044030 +0 +FUNC +GLOBAL +DEFAULT +UND +bar
 
 #pass

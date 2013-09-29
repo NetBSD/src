@@ -1,5 +1,5 @@
 #objdump: -dr
-#as: -64 -msym32 -G8 -EB
+#as: -march=from-abi -64 -msym32 -G8 -EB
 #name: MIPS ld-st-la with sym32
 #source: ldstla-sym32.s
 
@@ -196,19 +196,19 @@ Disassembly .*:
 .*: R_MIPS_NONE	.*
 .*	daddu	a0,a0,v1
 .*	lui	a0,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	d?addiu	a0,a0,0
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lui	a0,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	d?addiu	a0,a0,0
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	daddu	a0,a0,v1
@@ -406,20 +406,20 @@ Disassembly .*:
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lui	a0,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lw	a0,0\(a0\)
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lui	a0,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	daddu	a0,a0,v1
 .*	lw	a0,0\(a0\)
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 #
@@ -616,20 +616,20 @@ Disassembly .*:
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lui	at,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	sw	a0,0\(at\)
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	lui	at,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	daddu	at,at,v1
 .*	sw	a0,0\(at\)
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 #
@@ -880,21 +880,21 @@ Disassembly .*:
 .*	swl	a0,0\(at\)
 .*	swr	a0,3\(at\)
 .*	lui	at,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	d?addiu	at,at,0
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	swl	a0,0\(at\)
 .*	swr	a0,3\(at\)
 .*	lui	at,0x0
-.*: R_MIPS_HI16	extern\+0xfffffffffffcc000
+.*: R_MIPS_HI16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	d?addiu	at,at,0
-.*: R_MIPS_LO16	extern\+0xfffffffffffcc000
+.*: R_MIPS_LO16	extern-0x34000
 .*: R_MIPS_NONE	.*
 .*: R_MIPS_NONE	.*
 .*	daddu	at,at,v1

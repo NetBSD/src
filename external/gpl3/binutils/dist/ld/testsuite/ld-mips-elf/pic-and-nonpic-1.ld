@@ -5,5 +5,5 @@ SECTIONS
   .pdr : { *(.pdr) }
   . = 0x41000;
   .text : { *(.text) }
-  _gp = 0x68000;
+  HIDDEN (_gp = 0x68000);
 }

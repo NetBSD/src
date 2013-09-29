@@ -1,4 +1,5 @@
-#   Copyright 2010 Free Software Foundation, Inc.
+#   Copyright 2010, 2011
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,3 +32,4 @@ if ![is_remote host] {
 run_dump_test "elfedit-1"
 run_dump_test "elfedit-2"
 run_dump_test "elfedit-3"
+run_dump_test "elfedit-4"
