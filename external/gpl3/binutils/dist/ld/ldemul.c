@@ -1,6 +1,6 @@
 /* ldemul.c -- clearing house for ld emulation states
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2007, 2008, 2009
+   2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -262,13 +262,13 @@ set_output_arch_default (void)
 void
 syslib_default (char *ignore ATTRIBUTE_UNUSED)
 {
-  info_msg (_("%S SYSLIB ignored\n"));
+  info_msg (_("%S SYSLIB ignored\n"), NULL);
 }
 
 void
 hll_default (char *ignore ATTRIBUTE_UNUSED)
 {
-  info_msg (_("%S HLL ignored\n"));
+  info_msg (_("%S HLL ignored\n"), NULL);
 }
 
 ld_emulation_xfer_type *ld_emulations[] = { EMULATION_LIST };
