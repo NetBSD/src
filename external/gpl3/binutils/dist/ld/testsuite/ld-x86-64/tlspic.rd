@@ -1,7 +1,7 @@
 #source: tlspic1.s
 #source: tlspic2.s
 #as: --64
-#ld: -shared -melf_x86_64
+#ld: -shared -melf_x86_64 --no-ld-generated-unwind-info
 #readelf: -WSsrl
 #target: x86_64-*-*
 
@@ -50,16 +50,16 @@ Program Headers:
 
 Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 14 entries:
  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
-[0-9a-f ]+R_X86_64_TPOFF64 +0+24
-[0-9a-f ]+R_X86_64_TPOFF64 +0+30
-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
-[0-9a-f ]+R_X86_64_TPOFF64 +0+64
-[0-9a-f ]+R_X86_64_TPOFF64 +0+50
-[0-9a-f ]+R_X86_64_TPOFF64 +0+70
-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
-[0-9a-f ]+R_X86_64_TPOFF64 +0+44
+[0-9a-f ]+R_X86_64_DTPMOD64 +0
+[0-9a-f ]+R_X86_64_TPOFF64 +24
+[0-9a-f ]+R_X86_64_TPOFF64 +30
+[0-9a-f ]+R_X86_64_DTPMOD64 +0
+[0-9a-f ]+R_X86_64_DTPMOD64 +0
+[0-9a-f ]+R_X86_64_TPOFF64 +64
+[0-9a-f ]+R_X86_64_TPOFF64 +50
+[0-9a-f ]+R_X86_64_TPOFF64 +70
+[0-9a-f ]+R_X86_64_DTPMOD64 +0
+[0-9a-f ]+R_X86_64_TPOFF64 +44
 [0-9a-f ]+R_X86_64_TPOFF64 +0+10 sg5 \+ 0
 [0-9a-f ]+R_X86_64_DTPMOD64 +0+ sg1 \+ 0
 [0-9a-f ]+R_X86_64_DTPOFF64 +0+ sg1 \+ 0
@@ -81,12 +81,12 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
 .* NOTYPE +GLOBAL +DEFAULT +UND __tls_get_addr
 .* TLS +GLOBAL +DEFAULT +8 sg1
 .* FUNC +GLOBAL +DEFAULT +7 fn1
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +12 __bss_start
 .* TLS +GLOBAL +DEFAULT +8 sg2
 .* TLS +GLOBAL +DEFAULT +8 sg6
 .* TLS +GLOBAL +DEFAULT +8 sg7
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +12 _edata
+.* NOTYPE +GLOBAL +DEFAULT +12 _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -103,6 +103,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +10 *
 .* SECTION +LOCAL +DEFAULT +11 *
 .* SECTION +LOCAL +DEFAULT +12 *
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* TLS +LOCAL +DEFAULT +8 sl1
 .* TLS +LOCAL +DEFAULT +8 sl2
 .* TLS +LOCAL +DEFAULT +8 sl3
@@ -112,7 +113,6 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +8 sl7
 .* TLS +LOCAL +DEFAULT +8 sl8
 .* TLS +LOCAL +DEFAULT +9 sH1
-.* OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
 .* TLS +LOCAL +DEFAULT +8 sh3
 .* TLS +LOCAL +DEFAULT +9 sH2
 .* TLS +LOCAL +DEFAULT +9 sH7
@@ -126,9 +126,11 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +9 sH6
 .* TLS +LOCAL +DEFAULT +9 sH8
 .* TLS +LOCAL +DEFAULT +8 sh1
-.* OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
 .* TLS +LOCAL +DEFAULT +8 sh2
 .* TLS +LOCAL +DEFAULT +8 sh6
+.* FILE +LOCAL +DEFAULT +ABS .*
+.* OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
+.* OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +8 sg8
 .* TLS +GLOBAL +DEFAULT +8 sg3
 .* TLS +GLOBAL +DEFAULT +8 sg4
@@ -136,9 +138,9 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* NOTYPE +GLOBAL +DEFAULT +UND __tls_get_addr
 .* TLS +GLOBAL +DEFAULT +8 sg1
 .* FUNC +GLOBAL +DEFAULT +7 fn1
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +12 __bss_start
 .* TLS +GLOBAL +DEFAULT +8 sg2
 .* TLS +GLOBAL +DEFAULT +8 sg6
 .* TLS +GLOBAL +DEFAULT +8 sg7
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +12 _edata
+.* NOTYPE +GLOBAL +DEFAULT +12 _end

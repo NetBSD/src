@@ -1,4 +1,4 @@
-	.section ".text"
+	.text
 start:
 	and.	3,4,5
 	and	3,4,5
@@ -180,3 +180,7 @@ start:
 	sthx	12,13,14
 	xor.	29,30,31
 	xor	29,30,31
+	nop
+	ori	0,0,0
+	xnop
+	xori	0,0,0

@@ -50,6 +50,7 @@ elf32_am33lin_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
       default:
 	return FALSE;
 
+      case 184:
       case 188:		/* Linux/am33 */
 	/* pr_cursig */
 	elf_tdata (abfd)->core_signal = bfd_get_16 (abfd, note->descdata + 12);

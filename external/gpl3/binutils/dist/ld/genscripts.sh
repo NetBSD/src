@@ -30,6 +30,7 @@
 #          default_emulation \
 #          native_lib_dirs \
 #          use_sysroot \
+#          enable_initfini_array \
 #          this_emulation \
 # optional:
 #          tool_dir \
@@ -89,9 +90,10 @@ EMULATION_LIBPATH=$8
 NATIVE_LIB_DIRS=$9
 shift 9
 use_sysroot=$1
-EMULATION_NAME=$2
-TOOL_LIB=$3
-CUSTOMIZER_SCRIPT=$4
+ENABLE_INITFINI_ARRAY=$2
+EMULATION_NAME=$3
+TOOL_LIB=$4
+CUSTOMIZER_SCRIPT=$5
 
 # Can't use ${TOOL_LIB:-$target_alias} here due to an Ultrix shell bug.
 if [ "x${TOOL_LIB}" = "x" ] ; then

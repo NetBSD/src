@@ -1,5 +1,5 @@
 #source: elf-rel28.s
-#as: -n32
+#as: -march=from-abi -n32
 #objdump: -dr
 #name: MIPS ELF reloc 28 (n32)
 
@@ -93,4 +93,4 @@ Disassembly of section \.text:
 			.*: R_MIPS_TLS_TPREL_LO16	bar
 .*:	fc840000 	sd	a0,0\(a0\)
 			.*: R_MIPS_TLS_GOTTPREL	bar
-	...
+	\.\.\.

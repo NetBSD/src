@@ -1,5 +1,5 @@
 /* BFD backend for SunOS style a.out with flags set to 0
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2001, 2005, 2007
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 2001, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -27,6 +27,7 @@
    the tokens.  */
 #define MY(OP) CONCAT2 (aout0_big_,OP)
 
+#include "sysdep.h"
 #include "bfd.h"
 
 #define MY_exec_hdr_flags 0

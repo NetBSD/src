@@ -1,5 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright 2008, 2009, 2010
+   Copyright 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -51,6 +51,13 @@ static int elf_flags = 0;
 bfd_boolean rx_use_conventional_section_names = FALSE;
 static bfd_boolean rx_use_small_data_limit = FALSE;
 
+static bfd_boolean rx_pid_mode = FALSE;
+static int rx_num_int_regs = 0;
+int rx_pid_register;
+int rx_gp_register;
+
+static void rx_fetchalign (int ignore ATTRIBUTE_UNUSED);
+
 enum options
 {
   OPTION_BIG = OPTION_MD_BASE,
@@ -60,7 +67,9 @@ enum options
   OPTION_CONVENTIONAL_SECTION_NAMES,
   OPTION_RENESAS_SECTION_NAMES,
   OPTION_SMALL_DATA_LIMIT,
-  OPTION_RELAX
+  OPTION_RELAX,
+  OPTION_PID,
+  OPTION_INT_REGS,
 };
 
 #define RX_SHORTOPTS ""
@@ -83,6 +92,8 @@ struct option md_longopts[] =
   {"muse-renesas-section-names", no_argument, NULL, OPTION_RENESAS_SECTION_NAMES},
   {"msmall-data-limit", no_argument, NULL, OPTION_SMALL_DATA_LIMIT},
   {"relax", no_argument, NULL, OPTION_RELAX},
+  {"mpid", no_argument, NULL, OPTION_PID},
+  {"mint-register", required_argument, NULL, OPTION_INT_REGS},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -123,6 +134,15 @@ md_parse_option (int c ATTRIBUTE_UNUSED, char * arg ATTRIBUTE_UNUSED)
     case OPTION_RELAX:
       linkrelax = 1;
       return 1;
+
+    case OPTION_PID:
+      rx_pid_mode = TRUE;
+      elf_flags |= E_FLAG_RX_PID;
+      return 1;
+
+    case OPTION_INT_REGS:
+      rx_num_int_regs = atoi (optarg);
+      return 1;
     }
   return 0;
 }
@@ -138,6 +158,9 @@ md_show_usage (FILE * stream)
   fprintf (stream, _("  --muse-conventional-section-names\n"));
   fprintf (stream, _("  --muse-renesas-section-names [default]\n"));
   fprintf (stream, _("  --msmall-data-limit\n"));
+  fprintf (stream, _("  --mrelax\n"));
+  fprintf (stream, _("  --mpid\n"));
+  fprintf (stream, _("  --mint-register=<value>\n"));
 }
 
 static void
@@ -548,7 +571,7 @@ const pseudo_typeS md_pseudo_table[] =
   /* The manual documents ".stk" but the compiler emits ".stack".  */
   { "stack",    rx_nop,         0 },
 
-  /* Theae are Renesas as100 assembler pseudo-ops that we do support.  */
+  /* These are Renesas as100 assembler pseudo-ops that we do support.  */
   { "addr",     rx_cons,        3 },
   { "align",    s_align_bytes,  2 },
   { "byte",     rx_cons,        1 },
@@ -579,29 +602,64 @@ const pseudo_typeS md_pseudo_table[] =
   { "int",	cons,		4 },
   { "word",	cons,		4 },
 
+  { "fetchalign", rx_fetchalign, 0 },
+
   /* End of list marker.  */
   { NULL, 	NULL, 		0 }
 };
 
 static asymbol * gp_symbol;
+static asymbol * rx_pid_symbol;
+
+static symbolS * rx_pidreg_symbol;
+static symbolS * rx_gpreg_symbol;
 
 void
 md_begin (void)
 {
+  /* Make the __gp and __pid_base symbols now rather
+     than after the symbol table is frozen.  We only do this
+     when supporting small data limits because otherwise we
+     pollute the symbol table.  */
+
+  /* The meta-registers %pidreg and %gpreg depend on what other
+     options are specified.  The __rx_*_defined symbols exist so we
+     can .ifdef asm code based on what options were passed to gas,
+     without needing a preprocessor  */
+
+  if (rx_pid_mode)
+    {
+      rx_pid_register = 13 - rx_num_int_regs;
+      rx_pid_symbol = symbol_get_bfdsym (symbol_find_or_make ("__pid_base"));
+      rx_pidreg_symbol = symbol_find_or_make ("__rx_pidreg_defined");
+      S_SET_VALUE (rx_pidreg_symbol, rx_pid_register);
+      S_SET_SEGMENT (rx_pidreg_symbol, absolute_section);
+    }
+
   if (rx_use_small_data_limit)
-    /* Make the __gp symbol now rather
-       than after the symbol table is frozen.  We only do this
-       when supporting small data limits because otherwise we
-       pollute the symbol table.  */
-    gp_symbol = symbol_get_bfdsym (symbol_find_or_make ("__gp"));
+    {
+      if (rx_pid_mode)
+	rx_gp_register = rx_pid_register - 1;
+      else
+	rx_gp_register = 13 - rx_num_int_regs;
+      gp_symbol = symbol_get_bfdsym (symbol_find_or_make ("__gp"));
+      rx_gpreg_symbol = symbol_find_or_make ("__rx_gpreg_defined");
+      S_SET_VALUE (rx_gpreg_symbol, rx_gp_register);
+      S_SET_SEGMENT (rx_gpreg_symbol, absolute_section);
+    }
 }
 
 char * rx_lex_start;
 char * rx_lex_end;
 
+/* These negative numbers are found in rx_bytesT.n_base for non-opcode
+   md_frags */
+#define RX_NBASE_FETCHALIGN	-1
+
 typedef struct rx_bytesT
 {
   char base[4];
+  /* If this is negative, it's a special-purpose frag as per the defines above. */
   int n_base;
   char ops[8];
   int n_ops;
@@ -629,6 +687,31 @@ typedef struct rx_bytesT
 } rx_bytesT;
 
 static rx_bytesT rx_bytes;
+/* We set n_ops to be "size of next opcode" if the next opcode doesn't relax.  */
+static rx_bytesT *fetchalign_bytes = NULL;
+
+static void
+rx_fetchalign (int ignore ATTRIBUTE_UNUSED)
+{
+  char * bytes;
+  fragS * frag_then;
+
+  memset (& rx_bytes, 0, sizeof (rx_bytes));
+  rx_bytes.n_base = RX_NBASE_FETCHALIGN;
+
+  bytes = frag_more (8);
+  frag_then = frag_now;
+  frag_variant (rs_machine_dependent,
+		0 /* max_chars */,
+		0 /* var */,
+		0 /* subtype */,
+		0 /* symbol */,
+		0 /* offset */,
+		0 /* opcode */);
+  frag_then->fr_opcode = bytes;
+  frag_then->fr_subtype = 0;
+  fetchalign_bytes = frag_then->tc_frag_data;
+}
 
 void
 rx_relax (int type, int pos)
@@ -884,7 +967,7 @@ rx_wrap (void)
 void
 rx_frag_init (fragS * fragP)
 {
-  if (rx_bytes.n_relax || rx_bytes.link_relax)
+  if (rx_bytes.n_relax || rx_bytes.link_relax || rx_bytes.n_base < 0)
     {
       fragP->tc_frag_data = malloc (sizeof (rx_bytesT));
       memcpy (fragP->tc_frag_data, & rx_bytes, sizeof (rx_bytesT));
@@ -1000,7 +1083,11 @@ md_assemble (char * str)
     {
       bytes = frag_more (rx_bytes.n_base + rx_bytes.n_ops);
       frag_then = frag_now;
+      if (fetchalign_bytes)
+	fetchalign_bytes->n_ops = rx_bytes.n_base + rx_bytes.n_ops;
     }
+
+  fetchalign_bytes = NULL;
 
   APPEND (base, n_base);
   APPEND (ops, n_ops);
@@ -1142,25 +1229,31 @@ static unsigned char *nops[] = { NULL, nop_1, nop_2, nop_3, nop_4, nop_5, nop_6,
 void
 rx_handle_align (fragS * frag)
 {
+  /* If handling an alignment frag, use an optimal NOP pattern.
+     Only do this if a fill value has not already been provided.
+     FIXME: This test fails if the provided fill value is zero.  */
   if ((frag->fr_type == rs_align
        || frag->fr_type == rs_align_code)
       && subseg_text_p (now_seg))
     {
       int count = (frag->fr_next->fr_address
-		   - frag->fr_address	
+		   - frag->fr_address
 		   - frag->fr_fix);
       unsigned char *base = (unsigned char *)frag->fr_literal + frag->fr_fix;
 
-      if (count > BIGGEST_NOP)
+      if (* base == 0)
 	{
-	  base[0] = 0x2e;
-	  base[1] = count;
-	  frag->fr_var = 2;
-	}
-      else if (count > 0)
-	{
-	  memcpy (base, nops[count], count);
-	  frag->fr_var = count;
+	  if (count > BIGGEST_NOP)
+	    {
+	      base[0] = 0x2e;
+	      base[1] = count;
+	      frag->fr_var = 2;
+	    }
+	  else if (count > 0)
+	    {
+	      memcpy (base, nops[count], count);
+	      frag->fr_var = count;
+	    }
 	}
     }
 
@@ -1358,6 +1451,18 @@ md_estimate_size_before_relax (fragS * fragP ATTRIBUTE_UNUSED, segT segment ATTR
   return delta;
 }
 
+/* Given a frag FRAGP, return the "next" frag that contains an
+   opcode.  Assumes the next opcode is relaxable, and thus rs_machine_dependent.  */
+
+static fragS *
+rx_next_opcode (fragS *fragP)
+{
+  do {
+    fragP = fragP->fr_next;
+  } while (fragP && fragP->fr_type != rs_machine_dependent);
+  return fragP;
+}
+
 /* Given the new addresses for this relax pass, figure out how big
    each opcode must be.  We store the total number of bytes needed in
    fr_subtype.  The return value is the difference between the size
@@ -1381,6 +1486,34 @@ rx_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
 			    + (fragP->fr_opcode - fragP->fr_literal)),
 	   (long) fragP->fr_fix, (long) fragP->fr_var, (long) fragP->fr_offset,
 	   fragP->fr_literal, fragP->fr_opcode, fragP->fr_type, fragP->fr_subtype, stretch);
+
+  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
+
+  if (fragP->tc_frag_data->n_base == RX_NBASE_FETCHALIGN)
+    {
+      unsigned int next_size;
+      if (fragP->fr_next == NULL)
+	return 0;
+
+      next_size = fragP->tc_frag_data->n_ops;
+      if (next_size == 0)
+	{
+	  fragS *n = rx_next_opcode (fragP);
+	  next_size = n->fr_subtype;
+	}
+
+      fragP->fr_subtype = (8-(mypc & 7)) & 7;
+      tprintf("subtype %u\n", fragP->fr_subtype);
+      if (fragP->fr_subtype >= next_size)
+	fragP->fr_subtype = 0;
+      tprintf ("\033[34m -> mypc %lu next_size %u new %d old %d delta %d (fetchalign)\033[0m\n",
+	       mypc & 7,
+	       next_size, fragP->fr_subtype, oldsize, fragP->fr_subtype-oldsize);
+
+      newsize = fragP->fr_subtype;
+
+      return newsize - oldsize;
+    }
 
   optype = rx_opcode_type (fragP->fr_opcode);
 
@@ -1430,7 +1563,6 @@ rx_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
       return newsize - oldsize;
     }
 
-  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
   if (sym_addr > mypc)
     addr0 += stretch;
 
@@ -1589,12 +1721,28 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
   {
     int i;
 
-    printf ("lit %08x opc %08x", (int) fragP->fr_literal, (int) fragP->fr_opcode);
+    printf ("lit 0x%p opc 0x%p", fragP->fr_literal, fragP->fr_opcode);
     for (i = 0; i < 10; i++)
       printf (" %02x", (unsigned char) (fragP->fr_opcode[i]));
     printf ("\n");
   }
 #endif
+
+  if (fragP->tc_frag_data->n_base == RX_NBASE_FETCHALIGN)
+    {
+      int count = fragP->fr_subtype;
+      if (count == 0)
+	;
+      else if (count > BIGGEST_NOP)
+	{
+	  op[0] = 0x2e;
+	  op[1] = count;
+	}
+      else if (count > 0)
+	{
+	  memcpy (op, nops[count], count);
+	}
+    }
 
   /* In the one case where we have both a disp and imm relaxation, we want
      the imm relaxation here.  */
@@ -1603,19 +1751,28 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
       && fragP->tc_frag_data->relax[0].type == RX_RELAX_DISP)
     ri = 1;
 
+  /* We used a new frag for this opcode, so the opcode address should
+     be the frag address.  */
+  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
+
   /* Try to get the target address.  If we fail here, we just use the
      largest format.  */
   if (rx_frag_fix_value (fragP, segment, 0, & addr0,
 			 fragP->tc_frag_data->relax[ri].type != RX_RELAX_BRANCH, 0))
-    keep_reloc = 1;
+    {
+      /* We don't know the target address.  */
+      keep_reloc = 1;
+      addr0 = 0;
+      disp = 0;
+    }
+  else
+    {
+      /* We know the target address, and it's in addr0.  */
+      disp = (int) addr0 - (int) mypc;
+    }
 
   if (linkrelax)
     keep_reloc = 1;
-
-  /* We used a new frag for this opcode, so the opcode address should
-     be the frag address.  */
-  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
-  disp = (int) addr0 - (int) mypc;
 
   reloc_type = BFD_RELOC_NONE;
   reloc_adjust = 0;
@@ -1686,7 +1843,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	  reloc_adjust = 1;
 	  break;
 	case OPCODE (OT_beq, 5): /* BEQ.A - synthetic.  */
-	  op[0] = 0x1e; /* bne.s .+4.  */
+	  op[0] = 0x1d; /* bne.s .+5.  */
 	  op[1] = 0x04; /* bra.a dsp:24.  */
 	  disp -= 1;
 #if RX_OPCODE_BIG_ENDIAN
@@ -1724,7 +1881,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 	  reloc_adjust = 1;
 	  break;
 	case OPCODE (OT_bne, 5): /* BNE.A - synthetic.  */
-	  op[0] = 0x15; /* beq.s .+4.  */
+	  op[0] = 0x15; /* beq.s .+5.  */
 	  op[1] = 0x04; /* bra.a dsp:24.  */
 	  disp -= 1;
 #if RX_OPCODE_BIG_ENDIAN
@@ -1943,10 +2100,14 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 int
 rx_validate_fix_sub (struct fix * f)
 {
-  /* We permit the subtraction of two symbols as a 32-bit relocation.  */
+  /* We permit the subtraction of two symbols in a few cases.  */
+  /* mov #sym1-sym2, R3 */
+  if (f->fx_r_type == BFD_RELOC_RX_32_OP)
+    return 1;
+  /* .long sym1-sym2 */
   if (f->fx_r_type == BFD_RELOC_RX_DIFF
       && ! f->fx_pcrel
-      && f->fx_size == 4)
+      && (f->fx_size == 4 || f->fx_size == 2 || f->fx_size == 1))
     return 1;
   return 0;
 }
@@ -2203,9 +2364,10 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
 }
 
 arelent **
-tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
+tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 {
   static arelent * reloc[5];
+  bfd_boolean is_opcode = FALSE;
 
   if (fixp->fx_r_type == BFD_RELOC_NONE)
     {
@@ -2226,6 +2388,15 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
   reloc[0]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc[0]->addend        = fixp->fx_offset;
 
+  if (fixp->fx_r_type == BFD_RELOC_RX_32_OP
+      && fixp->fx_subsy)
+    {
+      fixp->fx_r_type = BFD_RELOC_RX_DIFF;
+      is_opcode = TRUE;
+    }
+  else if (sec)
+    is_opcode = sec->flags & SEC_CODE;
+      
   /* Certain BFD relocations cannot be translated directly into
      a single (non-Red Hat) RX relocation, but instead need
      multiple RX relocations - handle them here.  */
@@ -2254,10 +2425,18 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
 	  reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS8);
 	  break;
 	case 2:
-	  reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16);
+	  if (!is_opcode && target_big_endian)
+	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16_REV);
+	  else if (is_opcode)
+	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UL);
+	  else
+	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16);
 	  break;
 	case 4:
-	  reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
+	  if (!is_opcode && target_big_endian)
+	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32_REV);
+	  else
+	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
 	  break;
 	}
       reloc[3]->addend      = 0;
@@ -2385,6 +2564,24 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
       reloc[3]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[4] = NULL;
+      break;
+
+    case BFD_RELOC_RX_NEG32:
+      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+
+      reloc[1]		    = (arelent *) xmalloc (sizeof (arelent));
+      reloc[1]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_NEG);
+      reloc[1]->addend      = 0;
+      reloc[1]->sym_ptr_ptr = reloc[0]->sym_ptr_ptr;
+      reloc[1]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+
+      reloc[2]		    = (arelent *) xmalloc (sizeof (arelent));
+      reloc[2]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
+      reloc[2]->addend      = 0;
+      reloc[2]->sym_ptr_ptr = reloc[0]->sym_ptr_ptr;
+      reloc[2]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+
+      reloc[3] = NULL;
       break;
 
     default:

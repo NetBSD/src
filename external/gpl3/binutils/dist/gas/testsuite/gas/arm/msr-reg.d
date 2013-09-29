@@ -1,11 +1,12 @@
 # name: MSR register operands
 # as: -march=armv7-a
 # objdump: -dr --prefix-addresses --show-raw-insn
+# warning: writing to APSR without specifying a bitmask is deprecated
 
 .*: +file format .*arm.*
 
 Disassembly of section .text:
-00000000 <[^>]*> e129f009 	msr	CPSR_fc, r9
+00000000 <[^>]*> e128f009 	msr	CPSR_f, r9
 00000004 <[^>]*> e124f009 	msr	CPSR_s, r9
 00000008 <[^>]*> e128f009 	msr	CPSR_f, r9
 0000000c <[^>]*> e12cf009 	msr	CPSR_fs, r9

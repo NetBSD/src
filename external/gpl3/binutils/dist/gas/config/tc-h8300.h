@@ -51,6 +51,7 @@ struct internal_reloc;
 
 /* Minimum instruction is of 16 bits.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
+#define DWARF2_USE_FIXED_ADVANCE_PC 0
 
 #ifdef OBJ_ELF
 /* Provide mappings from the original H8 COFF relocation names to

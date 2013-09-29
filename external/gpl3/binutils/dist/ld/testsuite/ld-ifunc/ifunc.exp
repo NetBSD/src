@@ -1,6 +1,6 @@
 # Expect script for linker support of IFUNC symbols and relocations.
 #
-#   Copyright 2009, 2010 Free Software Foundation, Inc.
+#   Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 #   Contributed by Red Hat.
 #
 # This file is part of the GNU Binutils.
@@ -30,6 +30,7 @@ if {!(([istarget "i?86-*-*"]
        || [istarget "powerpc*-*-*"]
        || [istarget "sparc*-*-*"])
       && ([istarget "*-*-elf*"]
+	  || [istarget "*-*-nacl*"]
 	  || (([istarget "*-*-linux*"]
 	       || [istarget "*-*-gnu*"])
 	      && ![istarget "*-*-*aout*"]
@@ -77,7 +78,7 @@ proc check_osabi { binary_file expected_osabi } {
     }
 
     verbose "Expected OSABI: $expected_osabi, Obtained osabi: $osabi"
-    
+
     return 0
 }
 
@@ -244,19 +245,19 @@ if { $fails == 0 } {
 # Check the executables and shared libraries
 #
 # The linked ifunc using executables and the shared library containing
-# ifunc should have an OSABI field of LINUX.  The linked non-ifunc using
+# ifunc should have an OSABI field of GNU.  The linked non-ifunc using
 # executable should have an OSABI field of NONE (aka System V).
 
-if {! [check_osabi tmpdir/libshared_ifunc.so {UNIX - Linux}]} {
-    fail "Shared libraries containing ifunc does not have an OS/ABI field of LINUX"
+if {! [check_osabi tmpdir/libshared_ifunc.so {UNIX - GNU}]} {
+    fail "Shared libraries containing ifunc does not have an OS/ABI field of GNU"
     set fails [expr $fails + 1]
 }
-if {! [check_osabi tmpdir/local_prog {UNIX - Linux}]} {
-    fail "Local ifunc-using executable does not have an OS/ABI field of LINUX"
+if {! [check_osabi tmpdir/local_prog {UNIX - GNU}]} {
+    fail "Local ifunc-using executable does not have an OS/ABI field of GNU"
     set fails [expr $fails + 1]
 }
-if {! [check_osabi tmpdir/static_prog {UNIX - Linux}]} {
-    fail "Static ifunc-using executable does not have an OS/ABI field of LINUX"
+if {! [check_osabi tmpdir/static_prog {UNIX - GNU}]} {
+    fail "Static ifunc-using executable does not have an OS/ABI field of GNU"
     set fails [expr $fails + 1]
 }
 if {! [check_osabi tmpdir/dynamic_prog {UNIX - System V}]} {
@@ -345,6 +346,27 @@ if { $verbose < 1 } {
     remote_file host delete "tmpdir/static_prog"
     remote_file host delete "tmpdir/static_nonifunc_prog"
 }
+
+run_ld_link_exec_tests [] [list \
+    [list \
+	"Common symbol override ifunc test 1a" \
+	"-static" \
+	"" \
+	{ ifunc-common-1a.c ifunc-common-1b.c } \
+	"ifunc-common-1a" \
+	"ifunc-common-1.out" \
+	"-g" \
+    ] \
+    [list \
+	"Common symbol override ifunc test 1b" \
+	"-static" \
+	"" \
+	{ ifunc-common-1b.c ifunc-common-1a.c } \
+	"ifunc-common-1b" \
+	"ifunc-common-1.out" \
+	"-g" \
+    ] \
+]
 
 set test_list [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
 foreach t $test_list {

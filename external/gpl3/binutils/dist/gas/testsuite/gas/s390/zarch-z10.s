@@ -368,3 +368,14 @@ foo:
 	trte	%r6,%r7
 	trtre	%r6,%r7,10
 	trtre	%r6,%r7
+	ecpga	%r6,%r7
+	ecctr	%r6,%r7
+	epctr	%r6,%r7
+	lcctl	3333(%r6)
+	lpctl	3333(%r6)
+	lsctl	3333(%r6)
+	qctri	3333(%r6)
+	qsi	3333(%r6)
+	scctr	%r6,%r7
+	spctr	%r6,%r7
+	lpp	3333(%r6)

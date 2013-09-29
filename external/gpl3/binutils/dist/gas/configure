@@ -9410,10 +9410,6 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_shlibpath_var=no
       ;;
 
-    freebsd1*)
-      ld_shlibs=no
-      ;;
-
     # FreeBSD 2.2.[012] allows us to include c++rt0.o to get C++ constructor
     # support.  Future versions do this automatically, but an explicit c++rt0.o
     # does not break anything, and helps significantly (at the cost of a little
@@ -10332,10 +10328,6 @@ dgux*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
-freebsd1*)
-  dynamic_linker=no
-  ;;
-
 freebsd* | dragonfly*)
   # DragonFly does not have aout.  When/if they implement a new
   # versioning mechanism, adjust this.
@@ -11195,7 +11187,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11198 "configure"
+#line 11190 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11301,7 +11293,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11304 "configure"
+#line 11296 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11644,6 +11636,9 @@ fi
 
 # Generate a header file
 ac_config_headers="$ac_config_headers config.h:config.in"
+
+
+# PR 14072
 
 
 # If we are on a DOS filesystem, we must use gdb.ini rather than
@@ -12084,10 +12079,10 @@ _ACEOF
 	esac
 	# Decide which ABI to target by default.
 	case ${target} in
-	  mips64*-linux* | mips-sgi-irix6*)
+	  mips64*-linux* | mips-sgi-irix6* | mips64*-freebsd* | mips64*-kfreebsd*-gnu)
 	    mips_default_abi=N32_ABI
 	    ;;
-	  mips*-linux*)
+	  mips*-linux* | mips*-freebsd* | mips*-kfreebsd*-gnu)
 	    mips_default_abi=O32_ABI
 	    ;;
 	  mips64*-openbsd*)
@@ -12145,13 +12140,13 @@ _ACEOF
           extra_objects="$extra_objects bfin-parse.o"
         fi
 
-        echo ${extra_objects} | grep -s "bfin-lex.o"
+        echo ${extra_objects} | grep -s "bfin-lex-wrapper.o"
         if test $? -ne 0 ; then
-          extra_objects="$extra_objects bfin-lex.o"
+          extra_objects="$extra_objects bfin-lex-wrapper.o"
         fi
         ;;
 
-      fr30 | ip2k | iq2000 | lm32 | m32r | openrisc)
+      epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | openrisc)
 	using_cgen=yes
 	;;
 
@@ -12178,9 +12173,9 @@ _ACEOF
 	  extra_objects="$extra_objects itbl-parse.o"
 	fi
 
-	echo ${extra_objects} | grep -s "itbl-lex.o"
+	echo ${extra_objects} | grep -s "itbl-lex-wrapper.o"
 	if test $? -ne 0 ; then
-	  extra_objects="$extra_objects itbl-lex.o"
+	  extra_objects="$extra_objects itbl-lex-wrapper.o"
 	fi
 
 	echo ${extra_objects} | grep -s "itbl-ops.o"
@@ -12201,6 +12196,13 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 	fi
+	;;
+
+      rl78)
+        echo ${extra_objects} | grep -s "rl78-parse.o"
+        if test $? -ne 0 ; then
+          extra_objects="$extra_objects rl78-parse.o"
+        fi
 	;;
 
       rx)
@@ -12251,7 +12253,8 @@ _ACEOF
 
     case ${generic_target}-${fmt} in
       mips-*-irix5*-*)	emulation="mipsbelf mipslelf mipself mipsbecoff mipslecoff mipsecoff" ;;
-      mips*-*-linux*-*) case "$endian" in
+      mips*-*-linux*-* | mips*-*-freebsd* | mips*-*-kfreebsd*-gnu)
+			case "$endian" in
 			big)	emulation="mipsbelf mipslelf mipself" ;;
 			*)	emulation="mipslelf mipsbelf mipself" ;;
 			esac ;;
@@ -12315,6 +12318,11 @@ if test ${all_targets} = "yes"; then
   ;;
   esac
 fi
+
+# PE code has way too many macros tweaking behaviour
+case ${te_file} in
+  pe*) emulations="" ;;
+esac
 
 # Assign floating point type.  Most processors with FP support
 # IEEE FP.  On those that don't support FP at all, usually IEEE
@@ -12748,7 +12756,7 @@ if test "$LEX" = :; then
   LEX=${am_missing_run}flex
 fi
 
-ALL_LINGUAS="fr tr es rw id ru"
+ALL_LINGUAS="fr tr es rw id ru fi ja"
 # If we haven't got the data from the intl directory,
 # assume NLS is disabled.
 USE_NLS=no
@@ -13161,7 +13169,7 @@ fi
 
 
 
-for ac_header in string.h stdlib.h memory.h strings.h unistd.h errno.h sys/types.h limits.h time.h sys/stat.h
+for ac_header in string.h stdlib.h memory.h strings.h unistd.h errno.h sys/types.h limits.h locale.h time.h sys/stat.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -13174,6 +13182,38 @@ _ACEOF
 fi
 
 done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether string.h and strings.h may both be included" >&5
+$as_echo_n "checking whether string.h and strings.h may both be included... " >&6; }
+if test "${gcc_cv_header_string+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <string.h>
+#include <strings.h>
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  gcc_cv_header_string=yes
+else
+  gcc_cv_header_string=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_header_string" >&5
+$as_echo "$gcc_cv_header_string" >&6; }
+if test $gcc_cv_header_string = yes; then
+
+$as_echo "#define STRING_WITH_STRINGS 1" >>confdefs.h
+
+fi
 
 
 # Put this here so that autoconf's "cross-compiling" message doesn't confuse
@@ -13438,18 +13478,52 @@ _ACEOF
 fi
 done
 
-
-# Some systems don't have sbrk().
-for ac_func in sbrk
+for ac_func in sbrk setlocale
 do :
-  ac_fn_c_check_func "$LINENO" "sbrk" "ac_cv_func_sbrk"
-if test "x$ac_cv_func_sbrk" = x""yes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+eval as_val=\$$as_ac_var
+   if test "x$as_val" = x""yes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_SBRK 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
 done
+
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LC_MESSAGES" >&5
+$as_echo_n "checking for LC_MESSAGES... " >&6; }
+if test "${am_cv_val_LC_MESSAGES+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <locale.h>
+int
+main ()
+{
+return LC_MESSAGES
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  am_cv_val_LC_MESSAGES=yes
+else
+  am_cv_val_LC_MESSAGES=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_val_LC_MESSAGES" >&5
+$as_echo "$am_cv_val_LC_MESSAGES" >&6; }
+  if test $am_cv_val_LC_MESSAGES = yes; then
+
+$as_echo "#define HAVE_LC_MESSAGES 1" >>confdefs.h
+
+  fi
 
 
 # do we need the math library?
@@ -13955,6 +14029,36 @@ $as_echo "#define NEED_DECLARATION_STRSTR 1" >>confdefs.h
 fi
 
 
+ac_fn_c_check_decl "$LINENO" "free" "ac_cv_have_decl_free" "$ac_includes_default"
+if test "x$ac_cv_have_decl_free" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FREE $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "getenv" "ac_cv_have_decl_getenv" "$ac_includes_default"
+if test "x$ac_cv_have_decl_getenv" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETENV $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "malloc" "ac_cv_have_decl_malloc" "$ac_includes_default"
+if test "x$ac_cv_have_decl_malloc" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MALLOC $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "mempcpy" "ac_cv_have_decl_mempcpy" "$ac_includes_default"
 if test "x$ac_cv_have_decl_mempcpy" = x""yes; then :
   ac_have_decl=1
@@ -13965,7 +14069,36 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_MEMPCPY $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "realloc" "ac_cv_have_decl_realloc" "$ac_includes_default"
+if test "x$ac_cv_have_decl_realloc" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
 
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_REALLOC $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "stpcpy" "ac_cv_have_decl_stpcpy" "$ac_includes_default"
+if test "x$ac_cv_have_decl_stpcpy" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STPCPY $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strstr" "ac_cv_have_decl_strstr" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strstr" = x""yes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRSTR $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "vsnprintf" "ac_cv_have_decl_vsnprintf" "$ac_includes_default"
 if test "x$ac_cv_have_decl_vsnprintf" = x""yes; then :
   ac_have_decl=1

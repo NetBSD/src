@@ -2,7 +2,7 @@
 # as: -mcpu=arm7t
 # objdump: -dr --prefix-addresses --show-raw-insn
 # source: thumb.s
-# target: *-*-*eabi *-*-symbianelf
+# target: *-*-*eabi *-*-symbianelf *-*-nacl*
 
 .*: +file format .*arm.*
 

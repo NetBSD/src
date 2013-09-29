@@ -1,3 +1,4 @@
+@c Copyright 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -90,6 +91,16 @@ The suffix @samp{b} denotes a backreference to local label.
 @cindex line comment character, Z80
 @cindex Z80 line comment character
 The semicolon @samp{;} is the line comment character; 
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+@cindex line separator, Z80
+@cindex statement separator, Z80
+@cindex Z80 line separator
+The Z80 assembler does not support a line separator character.
 
 @cindex location counter, Z80
 @cindex hexadecimal prefix, Z80
