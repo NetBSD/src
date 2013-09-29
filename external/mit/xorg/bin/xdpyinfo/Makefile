@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/05/31 06:47:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/09/29 14:34:30 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,10 +10,10 @@ CPPFLAGS+=-I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
 
 LDADD+=	-lXtst -lXi -lXrender -lXinerama -lXcomposite \
 	-lXxf86vm -lXxf86dga -lXxf86misc -lXext -lX11 \
-	-lX11-xcb
+	-lxcb -lX11-xcb
 DPADD+= ${LIBXTST} ${LIBXI} ${LIBXRENDER} ${LIBXINERAMA} ${LIBXCOMPOSITE} \
 	${LIBXXF86VM} ${LIBXXF86DGA} ${LIBXXF86MISC} ${LIBXEXT} ${LIBX11} \
-	${LIBX11XCB}
+	${LIBXCB} ${LIBX11XCB}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
