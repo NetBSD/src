@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/08/13 19:29:45 drochner Exp $
+#	$NetBSD: Makefile,v 1.11 2013/09/29 14:20:35 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -27,7 +27,7 @@ DEFS_MK=${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk
 
 DIST=		${NETBSDSRCDIR}/external/gpl3/binutils/dist
 
-SHLIB_MAJOR=	12
+SHLIB_MAJOR=	13
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz
