@@ -1,6 +1,6 @@
 /* Parse options for the GNU linker.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -61,122 +61,6 @@ static void set_default_dirlist (char *);
 static void set_section_start (char *, char *);
 static void set_segment_start (const char *, char *);
 static void help (void);
-
-/* Non-zero if we are processing a --defsym from the command line.  */
-int parsing_defsym = 0;
-
-/* Codes used for the long options with no short synonyms.  150 isn't
-   special; it's just an arbitrary non-ASCII char value.  */
-enum option_values
-{
-  OPTION_ASSERT = 150,
-  OPTION_CALL_SHARED,
-  OPTION_CREF,
-  OPTION_DEFSYM,
-  OPTION_DEMANGLE,
-  OPTION_DYNAMIC_LINKER,
-  OPTION_SYSROOT,
-  OPTION_EB,
-  OPTION_EL,
-  OPTION_EMBEDDED_RELOCS,
-  OPTION_EXPORT_DYNAMIC,
-  OPTION_NO_EXPORT_DYNAMIC,
-  OPTION_HELP,
-  OPTION_IGNORE,
-  OPTION_MAP,
-  OPTION_NO_DEMANGLE,
-  OPTION_NO_KEEP_MEMORY,
-  OPTION_NO_WARN_MISMATCH,
-  OPTION_NO_WARN_SEARCH_MISMATCH,
-  OPTION_NOINHIBIT_EXEC,
-  OPTION_NON_SHARED,
-  OPTION_NO_WHOLE_ARCHIVE,
-  OPTION_OFORMAT,
-  OPTION_RELAX,
-  OPTION_NO_RELAX,
-  OPTION_RETAIN_SYMBOLS_FILE,
-  OPTION_RPATH,
-  OPTION_RPATH_LINK,
-  OPTION_SHARED,
-  OPTION_SONAME,
-  OPTION_SORT_COMMON,
-  OPTION_SORT_SECTION,
-  OPTION_STATS,
-  OPTION_SYMBOLIC,
-  OPTION_SYMBOLIC_FUNCTIONS,
-  OPTION_TASK_LINK,
-  OPTION_TBSS,
-  OPTION_TDATA,
-  OPTION_TTEXT,
-  OPTION_TTEXT_SEGMENT,
-  OPTION_TRADITIONAL_FORMAT,
-  OPTION_UR,
-  OPTION_VERBOSE,
-  OPTION_VERSION,
-  OPTION_VERSION_SCRIPT,
-  OPTION_VERSION_EXPORTS_SECTION,
-  OPTION_DYNAMIC_LIST,
-  OPTION_DYNAMIC_LIST_CPP_NEW,
-  OPTION_DYNAMIC_LIST_CPP_TYPEINFO,
-  OPTION_DYNAMIC_LIST_DATA,
-  OPTION_WARN_COMMON,
-  OPTION_WARN_CONSTRUCTORS,
-  OPTION_WARN_FATAL,
-  OPTION_NO_WARN_FATAL,
-  OPTION_WARN_MULTIPLE_GP,
-  OPTION_WARN_ONCE,
-  OPTION_WARN_SECTION_ALIGN,
-  OPTION_SPLIT_BY_RELOC,
-  OPTION_SPLIT_BY_FILE ,
-  OPTION_WHOLE_ARCHIVE,
-  OPTION_ADD_DT_NEEDED_FOR_DYNAMIC,
-  OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC,
-  OPTION_ADD_DT_NEEDED_FOR_REGULAR,
-  OPTION_NO_ADD_DT_NEEDED_FOR_REGULAR,
-  OPTION_WRAP,
-  OPTION_FORCE_EXE_SUFFIX,
-  OPTION_GC_SECTIONS,
-  OPTION_NO_GC_SECTIONS,
-  OPTION_PRINT_GC_SECTIONS,
-  OPTION_NO_PRINT_GC_SECTIONS,
-  OPTION_HASH_SIZE,
-  OPTION_CHECK_SECTIONS,
-  OPTION_NO_CHECK_SECTIONS,
-  OPTION_NO_UNDEFINED,
-  OPTION_INIT,
-  OPTION_FINI,
-  OPTION_SECTION_START,
-  OPTION_UNIQUE,
-  OPTION_TARGET_HELP,
-  OPTION_ALLOW_SHLIB_UNDEFINED,
-  OPTION_NO_ALLOW_SHLIB_UNDEFINED,
-  OPTION_ALLOW_MULTIPLE_DEFINITION,
-  OPTION_NO_UNDEFINED_VERSION,
-  OPTION_DEFAULT_SYMVER,
-  OPTION_DEFAULT_IMPORTED_SYMVER,
-  OPTION_DISCARD_NONE,
-  OPTION_SPARE_DYNAMIC_TAGS,
-  OPTION_NO_DEFINE_COMMON,
-  OPTION_NOSTDLIB,
-  OPTION_NO_OMAGIC,
-  OPTION_STRIP_DISCARDED,
-  OPTION_NO_STRIP_DISCARDED,
-  OPTION_ACCEPT_UNKNOWN_INPUT_ARCH,
-  OPTION_NO_ACCEPT_UNKNOWN_INPUT_ARCH,
-  OPTION_PIE,
-  OPTION_UNRESOLVED_SYMBOLS,
-  OPTION_WARN_UNRESOLVED_SYMBOLS,
-  OPTION_ERROR_UNRESOLVED_SYMBOLS,
-  OPTION_WARN_SHARED_TEXTREL,
-  OPTION_WARN_ALTERNATE_EM,
-  OPTION_REDUCE_MEMORY_OVERHEADS,
-#ifdef ENABLE_PLUGINS
-  OPTION_PLUGIN,
-  OPTION_PLUGIN_OPT,
-#endif /* ENABLE_PLUGINS */
-  OPTION_DEFAULT_SCRIPT,
-  OPTION_IGNORE_UNRESOLVED_SYMBOL
-};
 
 /* The long options.  This structure is used for both the option
    parsing and the help text.  */
@@ -357,8 +241,7 @@ static const struct ld_option ld_options[] =
 
   /* The next two options are deprecated because of their similarity to
      --as-needed and --no-as-needed.  They have been replaced by
-     --resolve-implicit-dynamic-symbols and
-     --no-resolve-implicit-dynamic-symbols.  */
+     --copy-dt-needed-entries and --no-copy-dt-needed-entries.  */
   { {"add-needed", no_argument, NULL, OPTION_ADD_DT_NEEDED_FOR_DYNAMIC},
     '\0', NULL, NULL, NO_HELP },
   { {"no-add-needed", no_argument, NULL, OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC},
@@ -456,7 +339,7 @@ static const struct ld_option ld_options[] =
     '\0', NULL, N_("Do not allow unresolved references in object files"),
     TWO_DASHES },
   { {"allow-shlib-undefined", no_argument, NULL, OPTION_ALLOW_SHLIB_UNDEFINED},
-    '\0', NULL, N_("Allow unresolved references in shared libaries"),
+    '\0', NULL, N_("Allow unresolved references in shared libraries"),
     TWO_DASHES },
   { {"no-allow-shlib-undefined", no_argument, NULL,
      OPTION_NO_ALLOW_SHLIB_UNDEFINED},
@@ -493,6 +376,8 @@ static const struct ld_option ld_options[] =
   { {"oformat", required_argument, NULL, OPTION_OFORMAT},
     '\0', N_("TARGET"), N_("Specify target of output file"),
     EXACTLY_TWO_DASHES },
+  { {"print-output-format", no_argument, NULL, OPTION_PRINT_OUTPUT_FORMAT},
+    '\0', NULL, N_("Print default output format"), TWO_DASHES },
   { {"qmagic", no_argument, NULL, OPTION_IGNORE},
     '\0', NULL, N_("Ignored for Linux compatibility"), ONE_DASH },
   { {"reduce-memory-overheads", no_argument, NULL,
@@ -520,13 +405,13 @@ static const struct ld_option ld_options[] =
   { {"pic-executable", no_argument, NULL, OPTION_PIE},
     '\0', NULL, NULL, TWO_DASHES },
   { {"sort-common", optional_argument, NULL, OPTION_SORT_COMMON},
-    '\0', N_("[=ascending|descending]"), 
-    N_("Sort common symbols by alignment [in specified order]"), 
+    '\0', N_("[=ascending|descending]"),
+    N_("Sort common symbols by alignment [in specified order]"),
     TWO_DASHES },
   { {"sort_common", no_argument, NULL, OPTION_SORT_COMMON},
     '\0', NULL, NULL, NO_HELP },
   { {"sort-section", required_argument, NULL, OPTION_SORT_SECTION},
-    '\0', N_("name|alignment"), 
+    '\0', N_("name|alignment"),
     N_("Sort sections by name or maximum alignment"), TWO_DASHES },
   { {"spare-dynamic-tags", required_argument, NULL, OPTION_SPARE_DYNAMIC_TAGS},
     '\0', N_("COUNT"), N_("How many tags to reserve in .dynamic section"),
@@ -556,6 +441,8 @@ static const struct ld_option ld_options[] =
     '\0', N_("ADDRESS"), N_("Set address of .text section"), ONE_DASH },
   { {"Ttext-segment", required_argument, NULL, OPTION_TTEXT_SEGMENT},
     '\0', N_("ADDRESS"), N_("Set address of text segment"), ONE_DASH },
+  { {"Trodata-segment", required_argument, NULL, OPTION_TRODATA_SEGMENT},
+    '\0', N_("ADDRESS"), N_("Set address of rodata segment"), ONE_DASH },
   { {"unresolved-symbols=<method>", required_argument, NULL,
      OPTION_UNRESOLVED_SYMBOLS},
     '\0', NULL, N_("How to handle unresolved symbols.  <method> is:\n"
@@ -734,6 +621,7 @@ parse_args (unsigned argc, char **argv)
     {
       int longind;
       int optc;
+      static unsigned int defsym_count;
 
       /* Using last_optind lets us avoid calling ldemul_parse_args
 	 multiple times on a single option, which would lead to
@@ -782,10 +670,10 @@ parse_args (unsigned argc, char **argv)
 	     ``use only shared libraries'' but, then, we don't
 	     currently support shared libraries on HP/UX anyhow.  */
 	  if (strcmp (optarg, "archive") == 0)
-	    config.dynamic_link = FALSE;
+	    input_flags.dynamic = FALSE;
 	  else if (strcmp (optarg, "shared") == 0
 		   || strcmp (optarg, "default") == 0)
-	    config.dynamic_link = TRUE;
+	    input_flags.dynamic = TRUE;
 	  else
 	    einfo (_("%P%F: unrecognized -a option `%s'\n"), optarg);
 	  break;
@@ -814,10 +702,10 @@ parse_args (unsigned argc, char **argv)
 	  yyparse ();
 	  break;
 	case OPTION_CALL_SHARED:
-	  config.dynamic_link = TRUE;
+	  input_flags.dynamic = TRUE;
 	  break;
 	case OPTION_NON_SHARED:
-	  config.dynamic_link = FALSE;
+	  input_flags.dynamic = FALSE;
 	  break;
 	case OPTION_CREF:
 	  command_line.cref = TRUE;
@@ -828,11 +716,9 @@ parse_args (unsigned argc, char **argv)
 	  break;
 	case OPTION_DEFSYM:
 	  lex_string = optarg;
-	  lex_redirect (optarg);
+	  lex_redirect (optarg, "--defsym", ++defsym_count);
 	  parser_input = input_defsym;
-	  parsing_defsym = 1;
 	  yyparse ();
-	  parsing_defsym = 0;
 	  lex_string = NULL;
 	  break;
 	case OPTION_DEMANGLE:
@@ -843,7 +729,7 @@ parse_args (unsigned argc, char **argv)
 
 	      style = cplus_demangle_name_to_style (optarg);
 	      if (style == unknown_demangling)
-		einfo (_("%F%P: unknown demangling style `%s'"),
+		einfo (_("%F%P: unknown demangling style `%s'\n"),
 		       optarg);
 
 	      cplus_demangle_set_style (style);
@@ -943,17 +829,17 @@ parse_args (unsigned argc, char **argv)
 	case 'N':
 	  config.text_read_only = FALSE;
 	  config.magic_demand_paged = FALSE;
-	  config.dynamic_link = FALSE;
+	  input_flags.dynamic = FALSE;
 	  break;
 	case OPTION_NO_OMAGIC:
 	  config.text_read_only = TRUE;
 	  config.magic_demand_paged = TRUE;
-	  /* NB/ Does not set dynamic_link to TRUE.
+	  /* NB/ Does not set input_flags.dynamic to TRUE.
 	     Use --call-shared or -Bdynamic for this.  */
 	  break;
 	case 'n':
 	  config.magic_demand_paged = FALSE;
-	  config.dynamic_link = FALSE;
+	  input_flags.dynamic = FALSE;
 	  break;
 	case OPTION_NO_DEFINE_COMMON:
 	  command_line.inhibit_common_definition = TRUE;
@@ -1049,7 +935,7 @@ parse_args (unsigned argc, char **argv)
 	  config.only_cmd_line_lib_dirs = TRUE;
 	  break;
 	case OPTION_NO_WHOLE_ARCHIVE:
-	  whole_archive = FALSE;
+	  input_flags.whole_archive = FALSE;
 	  break;
 	case 'O':
 	  /* FIXME "-O<non-digits> <value>" used to set the address of
@@ -1067,11 +953,12 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_OFORMAT:
 	  lang_add_output_format (optarg, NULL, NULL, 0);
 	  break;
+	case OPTION_PRINT_OUTPUT_FORMAT:
+	  command_line.print_output_format = TRUE;
+	  break;
 #ifdef ENABLE_PLUGINS
 	case OPTION_PLUGIN:
-	  if (plugin_opt_plugin (optarg))
-	    einfo (_("%P%F: %s: error loading plugin\n"),
-		   plugin_error_plugin ());
+	  plugin_opt_plugin (optarg);
 	  break;
 	case OPTION_PLUGIN_OPT:
 	  if (plugin_opt_plugin_arg (optarg))
@@ -1098,7 +985,7 @@ parse_args (unsigned argc, char **argv)
 	  config.build_constructors = FALSE;
 	  config.magic_demand_paged = FALSE;
 	  config.text_read_only = FALSE;
-	  config.dynamic_link = FALSE;
+	  input_flags.dynamic = FALSE;
 	  break;
 	case 'R':
 	  /* The GNU linker traditionally uses -R to mean to include
@@ -1308,6 +1195,9 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_TTEXT_SEGMENT:
 	  set_segment_start (".text-segment", optarg);
 	  break;
+	case OPTION_TRODATA_SEGMENT:
+	  set_segment_start (".rodata-segment", optarg);
+	  break;
 	case OPTION_TRADITIONAL_FORMAT:
 	  link_info.traditional_format = TRUE;
 	  break;
@@ -1319,7 +1209,7 @@ parse_args (unsigned argc, char **argv)
 	  config.build_constructors = TRUE;
 	  config.magic_demand_paged = FALSE;
 	  config.text_read_only = FALSE;
-	  config.dynamic_link = FALSE;
+	  input_flags.dynamic = FALSE;
 	  break;
 	case 'u':
 	  ldlang_add_undef (optarg, TRUE);
@@ -1333,7 +1223,7 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_VERBOSE:
 	  ldversion (1);
 	  version_printed = TRUE;
-	  trace_file_tries = TRUE;
+	  verbose = TRUE;
 	  overflow_cutoff_limit = -2;
 	  if (optarg != NULL)
 	    {
@@ -1443,19 +1333,19 @@ parse_args (unsigned argc, char **argv)
 	  link_info.warn_alternate_em = TRUE;
 	  break;
 	case OPTION_WHOLE_ARCHIVE:
-	  whole_archive = TRUE;
+	  input_flags.whole_archive = TRUE;
 	  break;
 	case OPTION_ADD_DT_NEEDED_FOR_DYNAMIC:
-	  add_DT_NEEDED_for_dynamic = TRUE;
+	  input_flags.add_DT_NEEDED_for_dynamic = TRUE;
 	  break;
 	case OPTION_NO_ADD_DT_NEEDED_FOR_DYNAMIC:
-	  add_DT_NEEDED_for_dynamic = FALSE;
+	  input_flags.add_DT_NEEDED_for_dynamic = FALSE;
 	  break;
 	case OPTION_ADD_DT_NEEDED_FOR_REGULAR:
-	  add_DT_NEEDED_for_regular = TRUE;
+	  input_flags.add_DT_NEEDED_for_regular = TRUE;
 	  break;
 	case OPTION_NO_ADD_DT_NEEDED_FOR_REGULAR:
-	  add_DT_NEEDED_for_regular = FALSE;
+	  input_flags.add_DT_NEEDED_for_regular = FALSE;
 	  break;
 	case OPTION_WRAP:
 	  add_wrap (optarg);
@@ -1569,11 +1459,71 @@ parse_args (unsigned argc, char **argv)
     /* FIXME: Should we allow emulations a chance to set this ?  */
     link_info.unresolved_syms_in_shared_libs = how_to_report_unresolved_symbols;
 
-#ifdef ENABLE_PLUGINS
-  /* Now all the plugin arguments have been gathered, we can load them.  */
-  if (plugin_load_plugins ())
-    einfo (_("%P%F: %s: error loading plugin\n"), plugin_error_plugin ());
-#endif /* ENABLE_PLUGINS */
+  if (link_info.relocatable)
+    {
+      if (command_line.check_section_addresses < 0)
+	command_line.check_section_addresses = 0;
+      if (link_info.shared)
+	einfo (_("%P%F: -r and -shared may not be used together\n"));
+    }
+
+  /* We may have -Bsymbolic, -Bsymbolic-functions, --dynamic-list-data,
+     --dynamic-list-cpp-new, --dynamic-list-cpp-typeinfo and
+     --dynamic-list FILE.  -Bsymbolic and -Bsymbolic-functions are
+     for shared libraries.  -Bsymbolic overrides all others and vice
+     versa.  */
+  switch (command_line.symbolic)
+    {
+    case symbolic_unset:
+      break;
+    case symbolic:
+      /* -Bsymbolic is for shared library only.  */
+      if (link_info.shared)
+	{
+	  link_info.symbolic = TRUE;
+	  /* Should we free the unused memory?  */
+	  link_info.dynamic_list = NULL;
+	  command_line.dynamic_list = dynamic_list_unset;
+	}
+      break;
+    case symbolic_functions:
+      /* -Bsymbolic-functions is for shared library only.  */
+      if (link_info.shared)
+	command_line.dynamic_list = dynamic_list_data;
+      break;
+    }
+
+  switch (command_line.dynamic_list)
+    {
+    case dynamic_list_unset:
+      break;
+    case dynamic_list_data:
+      link_info.dynamic_data = TRUE;
+    case dynamic_list:
+      link_info.dynamic = TRUE;
+      break;
+    }
+
+  if (! link_info.shared)
+    {
+      if (command_line.filter_shlib)
+	einfo (_("%P%F: -F may not be used without -shared\n"));
+      if (command_line.auxiliary_filters)
+	einfo (_("%P%F: -f may not be used without -shared\n"));
+    }
+
+  if (! link_info.shared || link_info.pie)
+    link_info.executable = TRUE;
+
+  /* Treat ld -r -s as ld -r -S -x (i.e., strip all local symbols).  I
+     don't see how else this can be handled, since in this case we
+     must preserve all externally visible symbols.  */
+  if (link_info.relocatable && link_info.strip == strip_all)
+    {
+      link_info.strip = strip_debugger;
+      if (link_info.discard == discard_sec_merge)
+	link_info.discard = discard_all;
+    }
 }
 
 /* Add the (colon-separated) elements of DIRLIST_PTR to the
