@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.102 2013/09/30 18:57:59 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.101 2013/04/15 14:10:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.102 2013/09/30 18:57:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -836,7 +836,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	return (0);
 
@@ -876,7 +876,7 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
 	if (pmp->pm_devvp->v_type != VBAD)
-		pmp->pm_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(pmp->pm_devvp, NULL);
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;

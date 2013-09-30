@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.87 2011/11/14 18:35:13 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.88 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.87 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.88 2013/09/30 18:58:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = NTFS_MAXFILENAME;
 	mp->mnt_flag |= MNT_LOCAL;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 	return (0);
 
 out1:
@@ -466,7 +466,7 @@ out1:
 		dprintf(("ntfs_mountfs: vflush failed\n"));
 	}
 out:
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 	if (bp)
 		brelse(bp, 0);
 
@@ -532,7 +532,7 @@ ntfs_unmount(
 	 * field is NULL and touching it causes null pointer derefercence.
 	 */
 	if (ntmp->ntm_devvp->v_type != VBAD)
-		ntmp->ntm_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ntmp->ntm_devvp, NULL);
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
 
