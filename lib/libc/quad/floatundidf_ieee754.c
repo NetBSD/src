@@ -1,4 +1,4 @@
-/*	$NetBSD: floatundidf_ieee754.c,v 1.1 2013/08/24 00:51:48 matt Exp $	*/
+/*	$NetBSD: floatundidf_ieee754.c,v 1.2 2013/09/30 19:32:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: floatundidf_ieee754.c,v 1.1 2013/08/24 00:51:48 matt Exp $");
+__RCSID("$NetBSD: floatundidf_ieee754.c,v 1.2 2013/09/30 19:32:14 mlelstv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(SOFTFLOAT) || defined(__ARM_EABI__)
@@ -52,13 +52,9 @@ __floatundidf(u_quad_t x)
 
 	if (x == 0)
 		return 0.0;
-	if (x == 1)
-		return 1.0;
 
 	u_int l = __builtin_clzll(x);
 	x <<= (l + 1);	/* clear implicit bit */
-	if (x == 0)
-		return 0x1.0p31;
 	x >>= 64 - (DBL_FRACHBITS + DBL_FRACLBITS);
 	union uu u = { .uq = x };
 	ux.dblu_frach = u.ul[H];
