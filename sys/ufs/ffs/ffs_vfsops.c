@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.288 2013/09/16 12:36:54 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.289 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.288 2013/09/16 12:36:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.289 2013/09/30 18:58:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1255,7 +1255,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 	if (ronly == 0 && fs->fs_snapinum[0] != 0)
 		ffs_snapshot_mount(mp);
 #ifdef WAPBL
@@ -1320,7 +1320,7 @@ out:
 	fstrans_unmount(mp);
 	if (fs)
 		kmem_free(fs, fs->fs_sbsize);
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 	if (bp)
 		brelse(bp, bset);
 	if (ump) {
@@ -1499,7 +1499,7 @@ ffs_unmount(struct mount *mp, int mntflags)
 #endif /* WAPBL */
 
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD | FWRITE,
 		NOCRED);
@@ -2129,7 +2129,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 #endif
 
 	KASSERT(vp->v_type == VBLK);
-	KASSERT(vp->v_specmountpoint != NULL);
+	KASSERT(spec_node_getmountedfs(vp) != NULL);
 
 	/*
 	 * Flush all dirty data associated with the vnode.
@@ -2143,7 +2143,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 		return error;
 
 #ifdef WAPBL
-	mp = vp->v_specmountpoint;
+	mp = spec_node_getmountedfs(vp);
 	if (mp && mp->mnt_wapbl) {
 		/*
 		 * Don't bother writing out metadata if the syncer is

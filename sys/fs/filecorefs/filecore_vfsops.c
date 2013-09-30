@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.70 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.71 2013/09/30 18:57:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.70 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.71 2013/09/30 18:57:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -456,7 +456,7 @@ filecore_unmount(struct mount *mp, int mntflags)
 	fcmp = VFSTOFILECORE(mp);
 
 	if (fcmp->fc_devvp->v_type != VBAD)
-		fcmp->fc_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(fcmp->fc_devvp, NULL);
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED);
 	vput(fcmp->fc_devvp);
