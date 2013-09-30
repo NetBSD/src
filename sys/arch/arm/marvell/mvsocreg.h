@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.4 2013/05/29 20:47:14 rkujawa Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.5 2013/09/30 13:15:46 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -89,23 +89,15 @@
 #define MVSOC_MLMB_BASE		(UNITID2PHYS(MLMB))	/* 0x20000 */
 
 /* CPU Address Map Registers */
-#if defined(ARMADAXP)
 #define MVSOC_MLMB_WCR(w)		  ((w) < 8 ? ((w) << 4) + 0x0 :\
 						     (((w) - 8) << 3) + 0x90)
-#else
-#define MVSOC_MLMB_WCR(w)		  (((w) << 4) + 0x0)
-#endif
 #define MVSOC_MLMB_WCR_WINEN			(1 << 0)
 #define MVSOC_MLMB_WCR_TARGET(t)		(((t) & 0xf) << 4)
 #define MVSOC_MLMB_WCR_ATTR(a)			(((a) & 0xff) << 8)
 #define MVSOC_MLMB_WCR_SIZE_MASK		0xffff0000
 #define MVSOC_MLMB_WCR_SIZE(s)		  (((s) - 1) & MVSOC_MLMB_WCR_SIZE_MASK)
-#if defined(ARMADAXP)
 #define MVSOC_MLMB_WBR(w)		  ((w) < 8 ? ((w) << 4) + 0x4 :\
 						     (((w) - 8) << 3) + 0x94)
-#else
-#define MVSOC_MLMB_WBR(w)		  (((w) << 4) + 0x4)
-#endif
 #define MVSOC_MLMB_WBR_BASE_MASK		0xffff0000
 #define MVSOC_MLMB_WRLR(w)		  (((w) << 4) + 0x8)
 #define MVSOC_MLMB_WRLR_REMAP_MASK		0xffff0000
@@ -158,8 +150,10 @@
 #define MVSOC_MLMB_MLMBI_CPUWDTIMERINTREQ	3
 #define MVSOC_MLMB_MLMBI_ACCESSERR		4
 #define MVSOC_MLMB_MLMBI_BIT64ERR		5
+#define MVSOC_MLMB_MLMBI_CPUTIMER2INTREQ	6
+#define MVSOC_MLMB_MLMBI_CPUTIMER3INTREQ	7
 
-#define MVSOC_MLMB_MLMBI_NIRQ			6
+#define MVSOC_MLMB_MLMBI_NIRQ			8
 
 /*
  * PCI-Express Interface Registers
