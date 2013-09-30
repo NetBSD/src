@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.20 2013/09/21 19:51:33 dholland Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.21 2013/09/30 15:24:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.20 2013/09/21 19:51:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.21 2013/09/30 15:24:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -744,9 +744,7 @@ retry:
 			 * clean it here.  We donate it our last reference.
 			 */
 			KASSERT(mutex_owned(vp->v_interlock));
-			KASSERT((vp->v_iflag & VI_INACTPEND) == 0);
 			vp->v_iflag &= ~VI_INACTNOW;
-			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
@@ -894,8 +892,6 @@ vrele_thread(void *cookie)
 		 * and look for more work.
 		 */
 		mutex_enter(vp->v_interlock);
-		KASSERT((vp->v_iflag & VI_INACTPEND) != 0);
-		vp->v_iflag &= ~VI_INACTPEND;
 		vrelel(vp, 0);
 	}
 }
