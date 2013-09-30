@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.2 2013/05/29 23:50:34 rkujawa Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.3 2013/09/30 13:29:07 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2 2013/05/29 23:50:34 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.3 2013/09/30 13:29:07 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2 2013/05/29 23:50:34 rkujawa
 
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
-#include <evbarm/armadaxp/armadaxpreg.h>
+#include <arm/marvell/armadaxpreg.h>
 
 #include <evbarm/marvell/marvellreg.h>
 #include <evbarm/marvell/marvellvar.h>
@@ -150,7 +150,7 @@ extern char _end[];
 #define KERNEL_VM_SIZE		0x10000000
 
 /* Prototypes */
-extern int armadaxp_l2_init(void);
+extern int armadaxp_l2_init(bus_addr_t);
 extern void armadaxp_io_coherency_init(void);
 
 void consinit(void);
@@ -352,11 +352,11 @@ initarm(void *arg)
 	armadaxp_getclks();
 
 	/* Preconfigure interrupts */
-	armadaxp_intr_bootstrap();
+	armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
 
 #ifdef L2CACHE_ENABLE
 	/* Initialize L2 Cache */
-	(void)armadaxp_l2_init();
+	(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 #endif
 
 #ifdef AURORA_IO_CACHE_COHERENCY
