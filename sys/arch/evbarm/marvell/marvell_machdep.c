@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.21 2012/12/12 00:03:11 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.22 2013/09/30 12:57:53 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.21 2012/12/12 00:03:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.22 2013/09/30 12:57:53 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.21 2012/12/12 00:03:11 matt Ex
 #include <arm/marvell/mvsocvar.h>
 #include <arm/marvell/orionreg.h>
 #include <arm/marvell/kirkwoodreg.h>
+#include <arm/marvell/mv78xx0reg.h>
+#include <arm/marvell/armadaxpreg.h>
 #include <arm/marvell/mvsocgppvar.h>
 
 #include <evbarm/marvell/marvellreg.h>
@@ -173,10 +175,15 @@ read_ttb(void)
 #define _A(a)	((a) & ~L1_S_OFFSET)
 #define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
-static const struct pmap_devmap marvell_devmap[] = {
+static struct pmap_devmap marvell_devmap[] = {
 	{
 		MARVELL_INTERREGS_VBASE,
+#if (defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)) && \
+    defined(ARMADAXP)
+		_A(0x00000000),
+#else
 		_A(MARVELL_INTERREGS_PBASE),
+#endif
 		_S(MARVELL_INTERREGS_SIZE),
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
@@ -184,9 +191,6 @@ static const struct pmap_devmap marvell_devmap[] = {
 
 	{ 0, 0, 0, 0, 0 }
 };
-
-#undef  _A
-#undef  _S
 
 extern uint32_t *u_boot_args[];
 
@@ -214,8 +218,49 @@ initarm(void *arg)
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
+#if (defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)) && \
+    defined(ARMADAXP)
+	int i;
+
+	for (i = 0; marvell_devmap[i].pd_size != 0; i++)
+		if (marvell_devmap[i].pd_va == MARVELL_INTERREGS_VBASE) {
+			marvell_devmap[i].pd_pa = _A(MARVELL_INTERREGS_PBASE);
+			break;
+		}
+#endif
+
 	/* map some peripheral registers */
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), marvell_devmap);
+
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
+	/*
+	 * U-Boot doesn't use the virtual memory.
+	 *
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
+	 * 0x00000000 - 0x0fffffff    SDRAM Bank 0 (max 256MB)
+	 * 0x10000000 - 0x1fffffff    SDRAM Bank 1 (max 256MB)
+	 * 0x20000000 - 0x2fffffff    SDRAM Bank 2 (max 256MB)
+	 * 0x30000000 - 0x3fffffff    SDRAM Bank 3 (max 256MB)
+	 * 0xf1000000 - 0xf10fffff    SoC Internal Registers
+	 */
+
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+
+	consinit();
+
+	/* Talk to the user */
+#ifndef EVBARM_BOARDTYPE
+#define EVBARM_BOARDTYPE	Marvell
+#endif
+#define BDSTR(s)	_BDSTR(s)
+#define _BDSTR(s)	#s
+	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* Get ready for splfoo() */
 	switch (mvsoc_model()) {
@@ -262,14 +307,45 @@ initarm(void *arg)
 	case MARVELL_MV78XX0_MV78200:
 		mv78xx0_intr_bootstrap();
 
-		memtag = MV78XX0_TAG_PEX_MEM;
-		iotag = MV78XX0_TAG_PEX_IO;
+		memtag = MV78XX0_TAG_PEX0_MEM;
+		iotag = MV78XX0_TAG_PEX0_IO;
 		nwindow = MV78XX0_MLMB_NWINDOW;
 		nremap = MV78XX0_MLMB_NREMAP;
 
 		mv78xx0_getclks(MARVELL_INTERREGS_VBASE);
 		break;
 #endif	/* MV78XX0 */
+
+#ifdef ARMADAXP
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+		armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
+
+		memtag = ARMADAXP_TAG_PEX00_MEM;
+		iotag = ARMADAXP_TAG_PEX00_IO;
+		nwindow = ARMADAXP_MLMB_NWINDOW;
+		nremap = ARMADAXP_MLMB_NREMAP;
+
+		armadaxp_getclks();
+
+#ifdef L2CACHE_ENABLE
+		/* Initialize L2 Cache */
+		{
+			extern int armadaxp_l2_init(bus_addr_t);
+
+			(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
+		}
+#endif
+		     
+#ifdef AURORA_IO_CACHE_COHERENCY
+		/* Initialize cache coherency */
+		armadaxp_io_coherency_init();
+#endif
+		break;
+#endif	/* ARMADAXP */
 
 	default:
 		/* We can't output console here yet... */
@@ -309,36 +385,6 @@ initarm(void *arg)
 		write_mlmbreg(MVSOC_MLMB_WRHR(window), 0);
 	}
 #endif
-
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
-
-	/*
-	 * U-Boot doesn't use the virtual memory.
-	 *
-	 * Physical Address Range     Description
-	 * -----------------------    ----------------------------------
-	 * 0x00000000 - 0x0fffffff    SDRAM Bank 0 (max 256MB)
-	 * 0x10000000 - 0x1fffffff    SDRAM Bank 1 (max 256MB)
-	 * 0x20000000 - 0x2fffffff    SDRAM Bank 2 (max 256MB)
-	 * 0x30000000 - 0x3fffffff    SDRAM Bank 3 (max 256MB)
-	 * 0xf1000000 - 0xf10fffff    SoC Internal Registers
-	 */
-
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-
-	consinit();
-
-	/* Talk to the user */
-#ifndef EVBARM_BOARDTYPE
-#define EVBARM_BOARDTYPE	Marvell
-#endif
-#define BDSTR(s)	_BDSTR(s)
-#define _BDSTR(s)	#s
-	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* copy command line U-Boot gave us, if args is valid. */
 	if (u_boot_args[3] != 0)	/* XXXXX: need more check?? */
@@ -398,7 +444,7 @@ consinit(void)
 					   uint32_t, int);
 
 		if (mvuart_cnattach(&mvsoc_bs_tag, 
-		    MARVELL_INTERREGS_VBASE + MVSOC_COM0_BASE,
+		    MARVELL_INTERREGS_PBASE + MVSOC_COM0_BASE,
 		    comcnspeed, mvTclk, comcnmode))
 			panic("can't init serial console");
 	}
@@ -418,9 +464,11 @@ marvell_device_register(device_t dev, void *aux)
 	    device_is_a(device_parent(dev), "mvsoc"))
 		prop_dictionary_set_uint32(dict, "frequency", mvTclk);
 #endif
+
 	if (device_is_a(dev, "gtidmac"))
 		prop_dictionary_set_uint32(dict,
 		    "dmb_speed", mvTclk * sizeof(uint32_t));	/* XXXXXX */
+
 #if NGTPCI > 0 && defined(ORION)
 	if (device_is_a(dev, "gtpci")) {
 		extern struct bus_space
@@ -498,6 +546,7 @@ marvell_device_register(device_t dev, void *aux)
 		prop_dictionary_set(dict, "int2gpp", int2gpp);
 	}
 #endif	/* NGTPCI > 0 && defined(ORION) */
+
 #if NMVPEX > 0
 	if (device_is_a(dev, "mvpex")) {
 #ifdef ORION
@@ -510,12 +559,20 @@ marvell_device_register(device_t dev, void *aux)
 		    kirkwood_pex_io_bs_tag, kirkwood_pex_mem_bs_tag,
 		    kirkwood_pex1_io_bs_tag, kirkwood_pex1_mem_bs_tag;
 #endif
-		extern struct arm32_pci_chipset arm32_mvpex0_chipset;
-#if defined(ORION) || defined(KIRKWOOD)
-		extern struct arm32_pci_chipset arm32_mvpex1_chipset;
+#ifdef ARMADAXP
+		extern struct bus_space
+		    armadaxp_pex00_io_bs_tag, armadaxp_pex00_mem_bs_tag,
+		    armadaxp_pex01_io_bs_tag, armadaxp_pex01_mem_bs_tag,
+		    armadaxp_pex02_io_bs_tag, armadaxp_pex02_mem_bs_tag,
+		    armadaxp_pex03_io_bs_tag, armadaxp_pex03_mem_bs_tag,
+		    armadaxp_pex2_io_bs_tag, armadaxp_pex2_mem_bs_tag,
+		    armadaxp_pex3_io_bs_tag, armadaxp_pex3_mem_bs_tag;
+		int i;
+#endif
+		extern struct arm32_pci_chipset
+		    arm32_mvpex0_chipset, arm32_mvpex1_chipset;
 
 		struct marvell_attach_args *mva = aux;
-#endif
 		struct bus_space *mvpex_io_bs_tag, *mvpex_mem_bs_tag;
 		struct arm32_pci_chipset *arm32_mvpex_chipset;
 		prop_data_t io_bs_tag, mem_bs_tag, pc;
@@ -567,6 +624,85 @@ marvell_device_register(device_t dev, void *aux)
 			iotag = KIRKWOOD_TAG_PEX_IO;
 			memtag = KIRKWOOD_TAG_PEX_MEM;
 			break;
+#endif
+
+#ifdef ARMADAXP
+		case MARVELL_ARMADAXP_MV78130:
+		case MARVELL_ARMADAXP_MV78160:
+		case MARVELL_ARMADAXP_MV78230:
+		case MARVELL_ARMADAXP_MV78260:
+		case MARVELL_ARMADAXP_MV78460:
+		  {
+			extern struct arm32_pci_chipset
+			    arm32_mvpex2_chipset, arm32_mvpex3_chipset,
+			    arm32_mvpex4_chipset, arm32_mvpex5_chipset;
+			const struct {
+				bus_size_t offset;
+				struct bus_space *io_bs_tag;
+				struct bus_space *mem_bs_tag;
+				struct arm32_pci_chipset *chipset;
+				int iotag;
+				int memtag;
+			} mvpex_tags[] = {
+				{	MVSOC_PEX_BASE,
+					&armadaxp_pex00_io_bs_tag,
+					&armadaxp_pex00_mem_bs_tag,
+					&arm32_mvpex0_chipset,
+					ARMADAXP_TAG_PEX00_IO,
+					ARMADAXP_TAG_PEX00_MEM },
+
+				{	ARMADAXP_PEX01_BASE,
+					&armadaxp_pex01_io_bs_tag,
+					&armadaxp_pex01_mem_bs_tag,
+					&arm32_mvpex1_chipset,
+					ARMADAXP_TAG_PEX01_IO,
+					ARMADAXP_TAG_PEX01_MEM	},
+
+				{	ARMADAXP_PEX02_BASE,
+					&armadaxp_pex02_io_bs_tag,
+					&armadaxp_pex02_mem_bs_tag,
+					&arm32_mvpex2_chipset,
+					ARMADAXP_TAG_PEX02_IO,
+					ARMADAXP_TAG_PEX02_MEM	},
+
+				{	ARMADAXP_PEX03_BASE,
+					&armadaxp_pex03_io_bs_tag,
+					&armadaxp_pex03_mem_bs_tag,
+					&arm32_mvpex3_chipset,
+					ARMADAXP_TAG_PEX03_IO,
+					ARMADAXP_TAG_PEX03_MEM	},
+
+				{	ARMADAXP_PEX2_BASE,
+					&armadaxp_pex2_io_bs_tag,
+					&armadaxp_pex2_mem_bs_tag,
+					&arm32_mvpex4_chipset,
+					ARMADAXP_TAG_PEX2_IO,
+					ARMADAXP_TAG_PEX2_MEM	},
+
+				{	ARMADAXP_PEX3_BASE,
+					&armadaxp_pex3_io_bs_tag,
+					&armadaxp_pex3_mem_bs_tag,
+					&arm32_mvpex5_chipset,
+					ARMADAXP_TAG_PEX3_IO,
+					ARMADAXP_TAG_PEX3_MEM	},
+
+				{ 0, 0, 0, 0, 0 },
+			};
+
+			for (i = 0; mvpex_tags[i].offset != 0; i++) {
+				if (mva->mva_offset != mvpex_tags[i].offset)
+					continue;
+				break;
+			}
+			if (mvpex_tags[i].offset == 0)
+				return;
+			mvpex_io_bs_tag = mvpex_tags[i].io_bs_tag;
+			mvpex_mem_bs_tag = mvpex_tags[i].mem_bs_tag;
+			arm32_mvpex_chipset = mvpex_tags[i].chipset;
+			iotag = mvpex_tags[i].iotag;
+			memtag = mvpex_tags[i].memtag;
+			break;
+		  }
 #endif
 
 		default:
