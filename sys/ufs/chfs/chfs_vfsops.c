@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.7 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.8 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -353,7 +353,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	chfs_gc_trigger(chmp);
 	mutex_exit(&chmp->chm_lock_mountfields);
 
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 	return 0;
 
 fail:
@@ -411,7 +411,7 @@ chfs_unmount(struct mount *mp, int mntflags)
 
 	/* Unmount UFS. */
 	if (ump->um_devvp->v_type != VBAD) {
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	}
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(ump->um_devvp, FREAD|FWRITE, NOCRED);
