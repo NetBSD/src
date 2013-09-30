@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.313 2013/07/28 01:26:13 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.314 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.313 2013/07/28 01:26:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.314 2013/09/30 18:58:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1070,7 +1070,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_devvp = devvp;
 	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* Set up reserved memory for pageout */
 	lfs_setup_resblks(fs);
@@ -1325,7 +1325,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED);

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.63 2012/03/13 18:40:51 elad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.64 2013/09/30 18:58:00 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.63 2012/03/13 18:40:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.64 2013/09/30 18:58:00 hannken Exp $");
 #endif /* not lint */
 
 
@@ -419,7 +419,7 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* register our mountpoint being on this device */
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
@@ -541,7 +541,7 @@ udf_unmount(struct mount *mp, int mntflags)
 	DPRINTF(VOLUMES, ("device close ok\n"));
 
 	/* clear our mount reference and release device node */
-	ump->devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(ump->devvp, NULL);
 	vput(ump->devvp);
 
 	/* free our ump */
@@ -728,9 +728,6 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			"(rootdirs failing)\n");
 		return error;
 	}
-
-	/* do we have to set this? */
-	devvp->v_specmountpoint = mp;
 
 	/* success! */
 	return 0;

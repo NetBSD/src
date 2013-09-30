@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.139 2013/09/12 20:00:15 martin Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.140 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.139 2013/09/12 20:00:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.140 2013/09/30 18:58:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1570,7 +1570,7 @@ ffs_blkfree_cg(struct fs *fs, struct vnode *devvp, daddr_t bno, long size)
 
 	cg = dtog(fs, bno);
 	dev = devvp->v_rdev;
-	ump = VFSTOUFS(devvp->v_specmountpoint);
+	ump = VFSTOUFS(spec_node_getmountedfs(devvp));
 	KASSERT(fs == ump->um_fs);
 	cgblkno = FFS_FSBTODB(fs, cgtod(fs, cg));
 
@@ -1735,7 +1735,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	struct discardopdata *td;
 
 	dev = devvp->v_rdev;
-	ump = VFSTOUFS(devvp->v_specmountpoint);
+	ump = VFSTOUFS(spec_node_getmountedfs(devvp));
 	if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.78 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.79 2013/09/30 18:57:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.78 2013/06/23 07:28:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.79 2013/09/30 18:57:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -523,7 +523,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		supbp = NULL;
 	}
 
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	return 0;
 out:
@@ -568,7 +568,7 @@ cd9660_unmount(struct mount *mp, int mntflags)
 	isomp = VFSTOISOFS(mp);
 
 	if (isomp->im_devvp->v_type != VBAD)
-		isomp->im_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(isomp->im_devvp, NULL);
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED);
