@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.7 2013/09/30 13:22:22 kiyohara Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.7 2013/09/30 13:22:22 kiyohara Exp $");
+
+#include "opt_mvsoc.h"
 
 #define _INTR_PRIVATE
 
@@ -39,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.6 2013/05/29 20:47:14 rkujawa Exp $
 #include <arm/pic/picvar.h>
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
-
-#include "opt_mvsoc.h"
 
 #if defined(ARMADAXP)
 extern void armadaxp_handle_irq(void *);
