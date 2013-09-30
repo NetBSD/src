@@ -126,8 +126,8 @@ case ${generic_target} in
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
   arm-*-nacl*)				fmt=elf  em=nacl ;;
-  arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
-  arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
+  arm-*-netbsdelf*)			fmt=elf  em=armnbsd ;;
+  arm-*-*n*bsd*)			fmt=aout em=armnbsd ;;
   arm-*-nto*)				fmt=elf ;;
   arm-epoc-pe)				fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
