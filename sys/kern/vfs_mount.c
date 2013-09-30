@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.20 2013/08/30 12:58:22 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.21 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.20 2013/08/30 12:58:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.21 2013/09/30 18:58:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1286,10 +1286,10 @@ vfs_mountedon(vnode_t *vp)
 
 	if (vp->v_type != VBLK)
 		return ENOTBLK;
-	if (vp->v_specmountpoint != NULL)
+	if (spec_node_getmountedfs(vp) != NULL)
 		return EBUSY;
 	if (spec_node_lookup_by_dev(vp->v_type, vp->v_rdev, &vq) == 0) {
-		if (vq->v_specmountpoint != NULL)
+		if (spec_node_getmountedfs(vq) != NULL)
 			error = EBUSY;
 		vrele(vq);
 	}
