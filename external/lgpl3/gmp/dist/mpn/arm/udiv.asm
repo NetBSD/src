@@ -48,7 +48,7 @@ L(oop):	divstep(n1,n0,d)
 	teq	r12, #0
 	bne	L(oop)
 
-	str	n1, [ rem_ptr ]		C store remainder
+	str	n1, [rem_ptr]		C store remainder
 	adc	r0, n0, n0		C quotient: add last carry from divstep
 	mov	pc, lr
 
@@ -87,7 +87,7 @@ L(oop2):
 	addcs	n0, n0, #1		C adjust quotient
 
 L(_even_divisor):
-	str	n1, [ rem_ptr ]		C store remainder
+	str	n1, [rem_ptr]		C store remainder
 	mov	r0, n0			C quotient
 	ldmfd	sp!, { r8, pc }
 EPILOGUE(mpn_udiv_qrnnd)
