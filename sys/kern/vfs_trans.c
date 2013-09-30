@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.26 2013/01/21 09:14:01 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.27 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.26 2013/01/21 09:14:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.27 2013/09/30 18:58:00 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -657,7 +657,7 @@ fscow_run(struct buf *bp, bool data_valid)
 		return 0;
 	}
 	if (bp->b_vp->v_type == VBLK)
-		mp = bp->b_vp->v_specmountpoint;
+		mp = spec_node_getmountedfs(bp->b_vp);
 	else
 		mp = bp->b_vp->v_mount;
 	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {

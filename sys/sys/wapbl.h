@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.14 2013/09/18 14:37:24 christos Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.15 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ wapbl_vptomp(struct vnode *vp)
 	mp = NULL;
 	if (vp != NULL) {
 		if (vp->v_type == VBLK)
-			mp = vp->v_specmountpoint;
+			mp = spec_node_getmountedfs(vp);
 		else
 			mp = vp->v_mount;
 	}

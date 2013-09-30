@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.437 2013/03/18 19:35:43 plunky Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.438 2013/09/30 18:58:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.437 2013/03/18 19:35:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.438 2013/09/30 18:58:00 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -460,7 +460,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 				delayx = dirdelay;
 				break;
 			case VBLK:
-				if (vp->v_specmountpoint != NULL) {
+				if (spec_node_getmountedfs(vp) != NULL) {
 					delayx = metadelay;
 					break;
 				}

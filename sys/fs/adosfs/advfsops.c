@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.66 2012/12/20 08:03:41 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.67 2013/09/30 18:57:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.66 2012/12/20 08:03:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.67 2013/09/30 18:57:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -319,7 +319,7 @@ adosfs_unmount(struct mount *mp, int mntflags)
 		return (error);
 	amp = VFSTOADOSFS(mp);
 	if (amp->devvp->v_type != VBAD)
-		amp->devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(amp->devvp, NULL);
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED);
 	vput(amp->devvp);

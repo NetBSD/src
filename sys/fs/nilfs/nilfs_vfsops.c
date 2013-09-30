@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.10 2012/12/20 08:03:43 hannken Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.11 2013/09/30 18:57:59 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.10 2012/12/20 08:03:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.11 2013/09/30 18:57:59 hannken Exp $");
 #endif /* not lint */
 
 
@@ -506,7 +506,7 @@ nilfs_unmount_device(struct nilfs_device *nilfsdev)
 	DPRINTF(VOLUMES, ("closing device\n"));
 
 	/* remove our mount reference before closing device */
-	nilfsdev->devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(nilfsdev->devvp, NULL);
 
 	/* devvp is still locked by us */
 	vn_lock(nilfsdev->devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -895,12 +895,12 @@ nilfs_mount(struct mount *mp, const char *path,
 #endif
 
 	/* DONT register our nilfs mountpoint on our vfs mountpoint */
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 #if 0
-	if (devvp->v_specmountpoint == NULL)
-		devvp->v_specmountpoint = mp;
+	if (spec_node_getmountedfs(devvp) == NULL)
+		spec_node_setmountedfs(devvp, mp);
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
-		devvp->v_specmountpoint = mp;
+		spec_node_setmountedfs(devvp, mp);
 #endif
 
 	/* add our mountpoint */
