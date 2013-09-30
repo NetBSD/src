@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.1,v 1.1 2013/09/30 06:19:22 riastradh Exp $
+.\"	$NetBSD: getaddrinfo.1,v 1.2 2013/09/30 08:13:59 wiz Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 25, 2013
+.Dd September 30, 2013
 .Dt GETADDRINFO 1
 .Os
 .Sh NAME
@@ -35,11 +35,11 @@
 .Nd resolve names to socket addresses
 .Sh SYNOPSIS
 .Nm
-.Op Fl cnNP
+.Op Fl cNnP
 .Op Fl f Ar family
 .Op Fl p Ar protocol
-.Op Fl t Ar socktype
 .Op Fl s Ar service
+.Op Fl t Ar socktype
 .Op Ar hostname
 .Sh DESCRIPTION
 The
@@ -86,25 +86,18 @@ For example,
 .Dq inet
 corresponds with
 .Dv AF_INET .
-.It Fl n
-Treat the hostname as a numeric address and do not attempt name
-resolution, as if with the
-.Dv AI_NUMERICHOST
-flag to
-.Xr getaddrinfo 3 .
 .It Fl N
 Treat the service as numeric and do not attempt service name
 resolution, as if with the
 .Dv AI_NUMERICSERV
 flag to
 .Xr getaddrinfo 3 .
-.It Fl s Ar service
-Specify a service to look up.
-If no service is specified, a hostname must be specified.
-.It Fl p Ar protocol
-Specify a protocol.
-Protocols may be numeric, or symbolic as listed in
-.Xr protocols 5 .
+.It Fl n
+Treat the hostname as a numeric address and do not attempt name
+resolution, as if with the
+.Dv AI_NUMERICHOST
+flag to
+.Xr getaddrinfo 3 .
 .It Fl P
 Return socket addresses intended for use with
 .Xr bind 2 ,
@@ -117,6 +110,13 @@ By default, the socket addresses are intended for use with
 .Xr sendto 2 ,
 or
 .Xr sendmsg 2 .
+.It Fl p Ar protocol
+Specify a protocol.
+Protocols may be numeric, or symbolic as listed in
+.Xr protocols 5 .
+.It Fl s Ar service
+Specify a service to look up.
+If no service is specified, a hostname must be specified.
 .It Fl t Ar socktype
 Specify a socket type.
 Socket types are named like the
@@ -131,10 +131,8 @@ For example,
 corresponds with
 .Dv SOCK_DGRAM .
 .El
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std getaddrinfo
 .Sh EXAMPLES
 Look up
 .Dq www.NetBSD.org :
