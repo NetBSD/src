@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.237 2012/11/18 18:39:24 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.238 2013/09/30 15:24:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ TAILQ_HEAD(vnodelst, vnode);
  * lock.  Field markings and the corresponding locks:
  *
  *	:	stable, reference to the vnode is required
- *	f	vnode_free_list_lock, or vrele_lock if VI_INACTPEND
+ *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
  *	m	mntvnode_lock
  *	n	namecache_lock
@@ -205,7 +205,6 @@ typedef struct vnode vnode_t;
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
 #define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
-#define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
 #define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
@@ -217,7 +216,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO" \
+    "\22LAYER\24CLEAN\26INACTREDO" \
     "\30INACTNOW\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
