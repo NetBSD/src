@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.3 2013/09/30 13:03:25 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.3 2013/09/30 13:03:25 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -57,9 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $")
 
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
-#include <evbarm/armadaxp/armadaxpreg.h>
+#include <arm/marvell/armadaxpreg.h>
 
-#include <evbarm/marvell/marvellreg.h>
 #include <dev/marvell/marvellreg.h>
 
 #define EXTRACT_CPU_FREQ_FIELD(sar)	(((0x01 & (sar >> 52)) << 3) | \
@@ -95,7 +94,7 @@ static void armadaxp_pic_establish_irq(struct pic_softc *, struct intrsource *);
 
 void armadaxp_handle_irq(void *);
 void armadaxp_io_coherency_init(void);
-int armadaxp_l2_init(void);
+int armadaxp_l2_init(bus_addr_t);
 
 struct vco_freq_ratio {
 	uint8_t	vco_cpu;	/* VCO to CLK0(CPU) clock ratio */
@@ -152,16 +151,16 @@ static struct pic_softc armadaxp_pic = {
  *	ready to handle interrupts from devices.
  */
 void
-armadaxp_intr_bootstrap(void)
+armadaxp_intr_bootstrap(bus_addr_t pbase)
 {
 	int i;
 
 	/* Map MPIC base and MPIC percpu base registers */
-	if (bus_space_map(&mvsoc_bs_tag, MARVELL_INTERREGS_PBASE +
-	    ARMADAXP_MLMB_MPIC_BASE, 0x500, 0, &mpic_handle) != 0)
+	if (bus_space_map(&mvsoc_bs_tag, pbase + ARMADAXP_MLMB_MPIC_BASE,
+	    0x500, 0, &mpic_handle) != 0)
 		panic("%s: Could not map MPIC registers", __func__);
-	if (bus_space_map(&mvsoc_bs_tag, MARVELL_INTERREGS_PBASE +
-	    ARMADAXP_MLMB_MPIC_CPU_BASE, 0x800, 0, &mpic_cpu_handle) != 0)
+	if (bus_space_map(&mvsoc_bs_tag, pbase + ARMADAXP_MLMB_MPIC_CPU_BASE,
+	    0x800, 0, &mpic_cpu_handle) != 0)
 		panic("%s: Could not map MPIC percpu registers", __func__);
 
 	/* Disable all interrupts */
@@ -317,14 +316,14 @@ armadaxp_getclks(void)
  */
 
 int
-armadaxp_l2_init(void)
+armadaxp_l2_init(bus_addr_t pbase)
 {
 	u_int32_t reg;
 	int ret;
 
 	/* Map L2 space */
-	ret = bus_space_map(&mvsoc_bs_tag, MARVELL_INTERREGS_PBASE +
-	    ARMADAXP_L2_BASE, 0x1000, 0, &l2_handle);
+	ret = bus_space_map(&mvsoc_bs_tag, pbase + ARMADAXP_L2_BASE,
+	    0x1000, 0, &l2_handle);
 	if (ret) {
 		printf("%s: Cannot map L2 register space, ret:%d\n",
 		    __func__, ret);
