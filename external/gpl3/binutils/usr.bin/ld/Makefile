@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/09/29 14:20:37 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2013/10/01 16:07:35 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -84,13 +84,15 @@ EMUL_LIB_PATH.${f}=/usr/lib
 
 #GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @ta rget_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
 
+G_enable_initfini_array?=no
+
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
 	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
 		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes yes ${f} "${G_target_alias}"
+		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array}  ${f} "${G_target_alias}"
 
 .if ${BINUTILS_MACHINE_ARCH} == "x86_64" \
     || ${BINUTILS_MACHINE_ARCH} == "sparc64" \
