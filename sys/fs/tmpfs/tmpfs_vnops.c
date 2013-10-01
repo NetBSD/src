@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.101 2013/03/18 19:35:40 plunky Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.102 2013/10/01 23:10:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.101 2013/03/18 19:35:40 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.102 2013/10/01 23:10:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -707,6 +707,11 @@ tmpfs_remove(void *v)
 		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
 	else
 		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
+	if (node->tn_links > 0) {
+		/* We removed a hard link. */
+		node->tn_status |= TMPFS_NODE_CHANGED;
+		tmpfs_update(vp, NULL, NULL, NULL, 0);
+	}
 	error = 0;
 out:
 	/* Drop the references and unlock the vnodes. */
