@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/03 20:43:54 nakayama Exp $
+#	$NetBSD: Makefile,v 1.4 2013/10/01 17:37:08 mrg Exp $
 
 NOLINKLIB=	# defined
 NOPROFILE=	# defined
@@ -9,6 +9,8 @@ LIB=		sparc_v8
 # Avoid linking against libc.
 DPLIBC=		# nothing
 LDLIBC=		-nodefaultlibs
+
+AFLAGS+=	-Av8
 
 SRCS=	sparc_v8.S
 
