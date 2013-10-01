@@ -19,4 +19,4 @@
 
 #include "te-nbsd.h"
 
-#define CPU_DEFAULT ARM_ARCH_V3
+#define CPU_DEFAULT ARM_ARCH_V4
