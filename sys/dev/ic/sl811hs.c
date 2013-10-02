@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.41 2013/10/02 22:55:04 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.42 2013/10/02 23:09:39 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.41 2013/10/02 22:55:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.42 2013/10/02 23:09:39 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -893,11 +893,6 @@ slhci_transfer(struct usbd_xfer *xfer)
 
 	return error;
 }
-#define	DWC_OTG_BUS2SC(bus)	((bus)->hci_private)
-
-#define	DWC_OTG_PIPE2SC(pipe)	DWC_OTG_BUS2SC((pipe)->device->bus)
-
-#define	DWC_OTG_XFER2SC(xfer)	DWC_OTG_PIPE2SC((xfer)->pipe)
 
 /* It is not safe for start to return anything other than USBD_INPROG. */
 usbd_status
