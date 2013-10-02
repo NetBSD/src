@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.83 2012/06/17 20:48:27 wiz Exp $	*/
+/*	$NetBSD: parser.c,v 1.84 2013/10/02 19:52:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.83 2012/06/17 20:48:27 wiz Exp $");
+__RCSID("$NetBSD: parser.c,v 1.84 2013/10/02 19:52:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ union node *redirnode;
 struct heredoc *heredoc;
 int quoteflag;			/* set if (part of) last token was quoted */
 int startlinno;			/* line # where last token started */
+int funclinno;			/* line # where the current function started */
 
 
 STATIC union node *list(int, int);
@@ -583,11 +584,13 @@ simplecmd(union node **rpp, union node *redir)
 			/* We have a function */
 			if (readtoken() != TRP)
 				synexpect(TRP);
+			funclinno = plinno;
 			rmescapes(n->narg.text);
 			if (!goodname(n->narg.text))
 				synerror("Bad function name");
 			n->type = NDEFUN;
 			n->narg.next = command();
+			funclinno = 0;
 			goto checkneg;
 		} else {
 			tokpushback++;
@@ -1253,11 +1256,14 @@ parseredir: {
  */
 
 parsesub: {
+	char buf[10];
 	int subtype;
 	int typeloc;
 	int flags;
 	char *p;
 	static const char types[] = "}-+?=";
+	int i;
+	int linno;
 
 	c = pgetc();
 	if (c != '(' && c != OPENBRACE && !is_name(c) && !is_special(c)) {
@@ -1275,6 +1281,7 @@ parsesub: {
 		typeloc = out - stackblock();
 		USTPUTC(VSNORMAL, out);
 		subtype = VSNORMAL;
+		flags = 0;
 		if (c == OPENBRACE) {
 			c = pgetc();
 			if (c == '#') {
@@ -1287,10 +1294,23 @@ parsesub: {
 				subtype = 0;
 		}
 		if (is_name(c)) {
+			p = out;
 			do {
 				STPUTC(c, out);
 				c = pgetc();
 			} while (is_in_name(c));
+			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
+				/* Replace the variable name with the
+				 * current line number. */
+				linno = plinno;
+				if (funclinno != 0)
+					linno -= funclinno - 1;
+				snprintf(buf, sizeof(buf), "%d", linno);
+				STADJUST(-6, out);
+				for (i = 0; buf[i] != '\0'; i++)
+					STPUTC(buf[i], out);
+				flags |= VSLINENO;
+			}
 		} else if (is_digit(c)) {
 			do {
 				USTPUTC(c, out);
@@ -1305,11 +1325,10 @@ parsesub: {
 badsub:			synerror("Bad substitution");
 
 		STPUTC('=', out);
-		flags = 0;
 		if (subtype == 0) {
 			switch (c) {
 			case ':':
-				flags = VSNUL;
+				flags |= VSNUL;
 				c = pgetc();
 				/*FALLTHROUGH*/
 			default:
