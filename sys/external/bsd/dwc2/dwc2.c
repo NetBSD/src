@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.9 2013/10/02 22:48:51 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.10 2013/10/02 22:53:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.9 2013/10/02 22:48:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.10 2013/10/02 22:53:23 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1333,9 +1333,12 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	dwc2_urb->status = -EINPROGRESS;
 	dwc2_urb->packet_count = xfer->nframes;
 
-	if (xfertype == UE_INTERRUPT)
-		dwc2_urb->interval = dpipe->pipe.interval;
-	else if (xfertype == UE_ISOCHRONOUS)
+	if (xfertype == UE_INTERRUPT) {
+		if (dpipe->pipe.interval == USBD_DEFAULT_INTERVAL)
+			dwc2_urb->interval = ed->bInterval;
+		else
+			dwc2_urb->interval = dpipe->pipe.interval;
+	} else if (xfertype == UE_ISOCHRONOUS)
 		dwc2_urb->interval = ed->bInterval;
 
 	/* XXXNH bring down from callers?? */
