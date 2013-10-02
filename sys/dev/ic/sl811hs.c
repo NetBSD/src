@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.43 2013/10/02 23:24:58 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.44 2013/10/02 23:27:50 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.43 2013/10/02 23:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.44 2013/10/02 23:27:50 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1564,7 +1564,7 @@ slhci_main(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 waitcheck:
 	slhci_waitintr(sc, slhci_wait_time);
@@ -1748,7 +1748,7 @@ slhci_waitintr(struct slhci_softc *sc, int wait_time)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (__predict_false(sc->sc_bus.use_polling))
 		wait_time = 12000;
@@ -1772,7 +1772,7 @@ slhci_dointr(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (sc->sc_ier == 0)
 		return 0;
@@ -1948,7 +1948,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	DLOG(D_TRACE, "ABDONE flags %#x", t->flags, 0,0,0);
 
@@ -2246,7 +2246,7 @@ slhci_tstart(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (!(t->flags & (F_AREADY|F_BREADY)))
 		return;
@@ -2307,7 +2307,7 @@ slhci_dotransfer(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
  	while ((t->len[A] == -1 || t->len[B] == -1) &&
 	    (GOT_FIRST_TIMED_COND(spipe, t, spipe->frame <= t->frame) ||
@@ -2387,7 +2387,7 @@ slhci_callback(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	DLOG(D_SOFT, "CB flags %#x", t->flags, 0,0,0);
 	for (;;) {
@@ -2453,7 +2453,7 @@ slhci_enter_xfers(struct slhci_softc *sc)
 {
 	struct slhci_pipe *spipe;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	while (DEQUEUED_WAITQ(spipe, sc))
 		slhci_enter_xfer(sc, spipe);
@@ -2519,7 +2519,7 @@ slhci_callback_schedule(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (t->flags & F_ACTIVE)
 		slhci_do_callback_schedule(sc);
@@ -2532,7 +2532,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (!(t->flags & F_CALLBACK)) {
 		t->flags |= F_CALLBACK;
@@ -2545,7 +2545,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 /* XXX static */ void
 slhci_pollxfer(struct slhci_softc *sc, struct usbd_xfer *xfer)
 {
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	slhci_dotransfer(sc);
 	do {
 		slhci_dointr(sc);
@@ -2683,7 +2683,7 @@ slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 {
 	struct slhci_transfers *t;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	t = &sc->sc_transfers;
 
@@ -2752,7 +2752,7 @@ slhci_drain(struct slhci_softc *sc)
 	struct gcq *q;
 	int i;
 
- 	KASSERT(mutex_locked(&sc->sc_intr_lock));
+ 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	t = &sc->sc_transfers;
 
@@ -2915,7 +2915,7 @@ slhci_reserve_bustime(struct slhci_softc *sc, struct slhci_pipe *spipe, int
 	struct slhci_transfers *t;
 	int bustime, max_packet;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	t = &sc->sc_transfers;
 	max_packet = UGETW(spipe->pipe.endpoint->edesc->wMaxPacketSize);
@@ -2972,7 +2972,7 @@ slhci_insert(struct slhci_softc *sc)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (t->flags & F_NODEV)
 		slhci_intrchange(sc, 0);
@@ -3062,7 +3062,7 @@ slhci_clear_feature(struct slhci_softc *sc, unsigned int what)
 	t = &sc->sc_transfers;
 	error = USBD_NORMAL_COMPLETION;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (what == UHF_PORT_POWER) {
 		DLOG(D_MSG, "POWER_OFF", 0,0,0,0);
@@ -3098,7 +3098,7 @@ slhci_set_feature(struct slhci_softc *sc, unsigned int what)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (what == UHF_PORT_RESET) {
 		if (!(t->flags & F_ACTIVE)) {
@@ -3169,7 +3169,7 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 
 	t = &sc->sc_transfers;
 
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	/*
 	 * We do not have a way to detect over current or bable and
@@ -3215,7 +3215,7 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 	    USBD_CANCELLED);
 
 	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
-	KASSERT(mutex_locked(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	if (spipe->ptype == PT_ROOT_INTR) {
 		LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
