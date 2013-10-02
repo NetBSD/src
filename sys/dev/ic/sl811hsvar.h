@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.10 2013/09/22 06:54:35 skrll Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.11 2013/10/02 22:55:04 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -14,7 +14,6 @@
  */
 
 #include <sys/gcq.h>
-#include <sys/simplelock.h>
 
 #define SC_DEV(sc)	((sc)->sc_dev)
 #define SC_NAME(sc)	(device_xname(SC_DEV(sc)))
@@ -55,8 +54,8 @@ struct slhci_softc {
 	device_t		sc_dev;
 	struct usbd_bus		sc_bus;
 
-	struct simplelock	sc_lock;
-	struct simplelock	sc_wait_lock;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	struct slhci_transfers	sc_transfers;	/* Info useful in transfers. */
 
