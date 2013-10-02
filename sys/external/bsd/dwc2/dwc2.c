@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.7 2013/09/27 22:03:01 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.8 2013/10/02 22:45:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.7 2013/09/27 22:03:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.8 2013/10/02 22:45:10 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -968,13 +968,17 @@ Static usbd_status
 dwc2_device_ctrl_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
+	usbd_status err;
 
 	DPRINTF("\n");
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	dwc2_device_start(xfer);
+	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
+
+	if (err)
+		return err;
 
 	if (sc->sc_bus.use_polling)
 		dwc2_waitintr(sc, xfer);
@@ -1034,14 +1038,15 @@ Static usbd_status
 dwc2_device_bulk_start(usbd_xfer_handle xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
+	usbd_status err;
 
 	DPRINTF("xfer=%p\n", xfer);
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	dwc2_device_start(xfer);
+	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 Static void
@@ -1099,11 +1104,15 @@ dwc2_device_intr_start(usbd_xfer_handle xfer)
 	struct dwc2_pipe *dpipe = (struct dwc2_pipe *)xfer->pipe;
 	usbd_device_handle dev = dpipe->pipe.device;
 	struct dwc2_softc *sc = dev->bus->hci_private;
+	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	dwc2_device_start(xfer);
+	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
+
+	if (err)
+		return err;
 
 	if (sc->sc_bus.use_polling)
 		dwc2_waitintr(sc, xfer);
@@ -1177,16 +1186,17 @@ dwc2_device_isoc_start(usbd_xfer_handle xfer)
 	struct dwc2_pipe *dpipe = (struct dwc2_pipe *)xfer->pipe;
 	usbd_device_handle dev = dpipe->pipe.device;
 	struct dwc2_softc *sc = dev->bus->hci_private;
+	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
 	xfer->status = USBD_IN_PROGRESS;
-	dwc2_device_start(xfer);
+	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_bus.use_polling)
 		dwc2_waitintr(sc, xfer);
 
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 void
