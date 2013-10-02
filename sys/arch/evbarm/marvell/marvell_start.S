@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.3 2013/09/30 12:54:59 kiyohara Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.4 2013/10/02 12:41:06 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -65,7 +65,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.3 2013/09/30 12:54:59 kiyohara Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.4 2013/10/02 12:41:06 kiyohara Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -229,7 +229,6 @@ u_boot_args:
 cores_start:
 	.word	CPU_ID_MV88SV131,	SHEEVA
 	.word	CPU_ID_MV88FR571_VD,	SHEEVA	/* Is it Sheeva? */
-	.word	CPU_ID_MVOLD,		SHEEVA	/* Is it Sheeva? */
 	.word	CPU_ID_MV88SV581X_V6,	PJ4B
 	.word	CPU_ID_MV88SV581X_V7,	PJ4B
 	.word	CPU_ID_MV88SV584X_V7,	PJ4B
