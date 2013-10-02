@@ -1,4 +1,3 @@
-/*	$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +96,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $");
+
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
 
 #include "locators.h"
 
@@ -106,9 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <sys/bus.h>
+
 
 #include <arm/cpufunc.h>
 #include <arm/mainbus/mainbus.h>
@@ -117,16 +118,18 @@ __KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $");
  * Atleast commenting this makes it more generic.
  */
 #include <arm/omap/omap_tipb.h>
+#include <arm/omap/omap_var.h>
 
 struct tipb_softc {
-	device_t sc_dev;
+	struct device sc_dev;
 	bus_dma_tag_t sc_dmac;
 };
 
 /* prototypes */
-static int	tipb_match(device_t, cfdata_t, void *);
-static void	tipb_attach(device_t, device_t, void *);
-static int 	tipb_search(device_t, cfdata_t, const int *, void *);
+static int	tipb_match(struct device *, struct cfdata *, void *);
+static void	tipb_attach(struct device *, struct device *, void *);
+static int 	tipb_search(struct device *, struct cfdata *,
+			     const int *, void *);
 static int	tipb_print(void *, const char *);
 
 /* attach structures */
@@ -134,6 +137,8 @@ CFATTACH_DECL_NEW(tipb, sizeof(struct tipb_softc),
     tipb_match, tipb_attach, NULL, NULL);
 
 static int tipb_attached;
+
+extern struct arm32_bus_dma_tag omapl1x_bus_dma_tag;
 
 /*
  * There are some devices that need to be set up before all the others.  The
@@ -143,12 +148,13 @@ static int tipb_attached;
  */
 static const char * const earlies[] = {
 	OMAP_INTC_DEVICE,
-	"omapmputmr",
+	"omapl1xtimer",
+	"omapl1xpsc",
 	NULL
 };
 
 static int
-tipb_match(device_t parent, cfdata_t match, void *aux)
+tipb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	if (tipb_attached)
 		return 0;
@@ -156,9 +162,9 @@ tipb_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-tipb_attach(device_t parent, device_t self, void *aux)
+tipb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct tipb_softc *sc = device_private(self);
+	struct tipb_softc *sc = (struct tipb_softc *)self;
 
 	tipb_attached = 1;
 
@@ -166,10 +172,10 @@ tipb_attach(device_t parent, device_t self, void *aux)
 #error DMA not implemented
 	sc->sc_dmac = &omap_bus_dma_tag;
 #else
-	sc->sc_dmac = NULL;
+	sc->sc_dmac = omap_bus_dma_init(&omapl1x_bus_dma_tag);
 #endif
 
-	aprint_normal(": Texas Instruments Peripheral Bus\n");
+	aprint_normal(": OMAP L1X Texas Instruments Peripheral Bus\n");
 	aprint_naive("\n");
 
 	/*
@@ -195,9 +201,10 @@ tipb_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-tipb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+tipb_search(struct device *parent, struct cfdata *cf,
+	     const int *ldesc, void *aux)
 {
-	struct tipb_softc *sc = device_private(parent);
+	struct tipb_softc *sc = (struct tipb_softc *)parent;
 	struct tipb_attach_args aa;
 	const char *const name = (const char *const)aux;
 
