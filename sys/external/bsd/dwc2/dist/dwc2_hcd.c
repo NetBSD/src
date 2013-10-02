@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.4 2013/09/27 21:56:05 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.5 2013/10/02 11:36:27 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.4 2013/09/27 21:56:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.5 2013/10/02 11:36:27 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -370,11 +370,26 @@ dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg, struct dwc2_hcd_urb *urb,
 	unsigned long flags;
 	u32 intr_mask;
 	int retval;
+	int dev_speed;
 
 	if (!hsotg->flags.b.port_connect_status) {
 		/* No longer connected */
 		dev_err(hsotg->dev, "Not connected\n");
 		return -ENODEV;
+	}
+
+	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
+
+	/* Some core configurations cannot support LS traffic on a FS root port */
+	if ((dev_speed == USB_SPEED_LOW) &&
+	    (hsotg->hw_params.fs_phy_type == GHWCFG2_FS_PHY_TYPE_DEDICATED) &&
+	    (hsotg->hw_params.hs_phy_type == GHWCFG2_HS_PHY_TYPE_UTMI)) {
+		u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
+		u32 prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
+
+		if (prtspd == HPRT0_SPD_FULL_SPEED) {
+			return -ENODEV;
+		}
 	}
 
 	qtd = pool_cache_get(sc->sc_qtdpool, PR_NOWAIT);
