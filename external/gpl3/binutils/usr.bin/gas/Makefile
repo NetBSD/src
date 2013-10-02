@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/08/05 00:08:58 matt Exp $
+#	$NetBSD: Makefile,v 1.12 2013/10/02 14:35:33 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ TOP=		${NETBSDSRCDIR}/external/gpl3/binutils
 PROG=		as
 SRCS=		${G_OBJS:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
 		${G_OBJS:Mitbl-parse.o:.o=.y} \
-		${G_OBJS:Mitbl-lex.o:.o=.l} \
+		${G_OBJS:Mitbl-lex-wrapper.o:S/-wrapper.o/.l/} \
 		${G_OBJS:Mm68k-parse.o:.o=.y}
 
 COPTS.obj-elf.c = -Wno-stack-protector
