@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.84 2013/10/02 19:52:58 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.85 2013/10/02 21:48:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.84 2013/10/02 19:52:58 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.85 2013/10/02 21:48:55 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 
