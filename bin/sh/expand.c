@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.88 2012/12/22 20:15:22 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.89 2013/10/02 19:52:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.88 2012/12/22 20:15:22 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.89 2013/10/02 19:52:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -647,7 +647,12 @@ evalvar(char *p, int flag)
 	p = strchr(p, '=') + 1;
 
 again: /* jump here after setting a variable with ${var=text} */
-	if (special) {
+	if (varflags & VSLINENO) {
+		set = 1;
+		special = 0;
+		val = var;
+		p[-1] = '\0';
+	} else if (special) {
 		set = varisset(var, varflags & VSNUL);
 		val = NULL;
 	} else {
@@ -784,6 +789,7 @@ again: /* jump here after setting a variable with ${var=text} */
 	default:
 		abort();
 	}
+	p[-1] = '=';	/* recover overwritten '=' */
 
 	if (apply_ifs)
 		recordregion(startloc, expdest - stackblock(),
