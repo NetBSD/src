@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.1 2013/09/18 14:30:45 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.2 2013/10/02 16:35:38 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.1 2013/09/18 14:30:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.2 2013/10/02 16:35:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.1 2013/09/18 14:30:45 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <dev/videomode/videomode.h>
 
@@ -81,6 +82,7 @@ struct gffb_softc {
 	bus_addr_t sc_fb, sc_reg;
 	bus_size_t sc_fbsize, sc_regsize;
 	uint8_t *sc_fbaddr;
+	size_t sc_vramsize;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
 	int sc_locked;
@@ -93,6 +95,7 @@ struct gffb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+	int sc_put, sc_current, sc_free;
 	glyphcache sc_gc;
 };
 
@@ -114,6 +117,8 @@ static int 	gffb_putpalreg(struct gffb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
 static void	gffb_init(struct gffb_softc *);
+
+static void	gffb_make_room(struct gffb_softc *, int);
 
 #if notyet
 static void	gffb_flush_engine(struct gffb_softc *);
@@ -242,8 +247,16 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	    &gffb_accessops);
 	sc->vd.init_screen = gffb_init_screen;
 
+	sc->sc_vramsize = bus_space_read_4(sc->sc_memt, sc->sc_regh,
+	    GFFB_VRAM) & 0xfff00000;
+
+	printf("vram: %d MB\n", sc->sc_vramsize >> 20);
+	printf("put: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT));
+	printf("get: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET));
 	/* init engine here */
 	gffb_init(sc);
+	printf("put: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT));
+	printf("get: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET));
 
 	ri = &sc->sc_console_screen.scr_ri;
 
@@ -262,7 +275,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		gffb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 #else
-		memset(sc->sc_fbaddr,
+		memset(sc->sc_fbaddr + 0x2000,
 		    ri->ri_devcmap[(defattr >> 16) & 0xff],
 		    sc->sc_height * sc->sc_stride);
 #endif
@@ -406,8 +419,8 @@ gffb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fbsize) {
-		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset + 0x2000,
+		    0, prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 
@@ -466,7 +479,7 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_bits = sc->sc_fbaddr;
+	ri->ri_bits = sc->sc_fbaddr + 0x2000;
 	ri->ri_flg = RI_CENTER;
 	if (sc->sc_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
@@ -594,29 +607,266 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	return 0;
 }
 
+
+static void
+gffb_dma_kickoff(struct gffb_softc *sc)
+{
+	volatile uint8_t scratch;
+
+	if(sc->sc_current != sc->sc_put) {
+		sc->sc_put = sc->sc_current;
+		membar_sync();
+		scratch = *sc->sc_fbaddr;
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT,
+		    sc->sc_put);
+	}
+}
+
+static void
+gffb_dmanext(struct gffb_softc *sc, uint32_t data)
+{
+	bus_space_write_stream_4(sc->sc_memt, sc->sc_fbh, sc->sc_current, data);
+	sc->sc_current += 4;
+}
+
+static void
+gffb_dmastart(struct gffb_softc *sc, uint32_t tag, int size)
+{
+	if(sc->sc_free <= (size << 2))
+		gffb_make_room(sc, size);
+	gffb_dmanext(sc, ((size) << 18) | (tag));
+	sc->sc_free -= ((size + 1) << 2);
+}
+
+/*
+ * from xf86_video_nv/nv_xaa.c:
+ * There is a HW race condition with videoram command buffers.
+ * You can't jump to the location of your put offset.  We write put
+ * at the jump offset + SKIPS dwords with noop padding in between
+ * to solve this problem
+ */
+
+#define SKIPS  8
+
+static void 
+gffb_make_room(struct gffb_softc *sc, int size)
+{
+	uint32_t get;
+
+	size = (size + 1) << 2;	/* slots -> offset */
+
+	while (sc->sc_free < size) {
+		get = bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET);
+
+		if (sc->sc_put >= get) {
+			sc->sc_free = 0x2000 - sc->sc_current;
+			if (sc->sc_free < size) {
+				gffb_dmanext(sc, 0x20000000);
+				if(get <= SKIPS) {
+					if (sc->sc_put <= SKIPS) {
+						/* corner case - will be idle */
+						bus_space_write_4(sc->sc_memt,
+						    sc->sc_regh, GFFB_FIFO_PUT,
+						    SKIPS + 1);
+					}
+					do {
+						get = bus_space_read_4(
+						    sc->sc_memt, sc->sc_regh,
+						    GFFB_FIFO_GET);
+					} while (get <= SKIPS);
+				}
+				bus_space_write_4(sc->sc_memt, sc->sc_regh,
+				     GFFB_FIFO_PUT, SKIPS);
+				sc->sc_current = sc->sc_put = SKIPS;
+				sc->sc_free = get - (SKIPS + 1);
+			}
+		} else
+			sc->sc_free = get - sc->sc_current - 1;
+	}
+}
+
+static void
+gffb_sync(struct gffb_softc *sc)
+{
+	int bail;
+
+	bail = 100000;
+	while ((bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET) !=
+	    sc->sc_put) && (bail > 0)) {
+		bail--;
+		delay(1);
+	}
+	if (bail == 0) printf("DMA timed out\n");
+
+	bail = 100000;
+	while((bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_BUSY) != 0) &&
+	    (bail > 0)) {
+		bail--;
+		delay(1);
+	}
+	if (bail == 0) printf("engine timed out\n");
+}
+
 static void
 gffb_init(struct gffb_softc *sc)
 {
-#ifdef GFFB_DEBUG
-	int i, j;
-
-	/* dump the RAMDAC1 register space */
-	for (i = 0; i < 0x2000; i+= 32) {
-		printf("%04x:", i);
-		for (j = 0; j < 32; j += 4) {
-			printf(" %08x", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_RAMDAC1 + i + j));
-		}
-		printf("\n");
-	}
-#endif
+	int i;
 
 	/* init display start */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh,
-	    GFFB_CRTC0 + GFFB_DISPLAYSTART, 0);
+	    GFFB_CRTC0 + GFFB_DISPLAYSTART, 0x2000);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh,
-	    GFFB_CRTC1 + GFFB_DISPLAYSTART, 0);
+	    GFFB_CRTC1 + GFFB_DISPLAYSTART, 0x2000);
 	bus_space_write_1(sc->sc_memt, sc->sc_regh,
 	    GFFB_PDIO0 + GFFB_PEL_MASK, 0xff);
 	bus_space_write_1(sc->sc_memt, sc->sc_regh,
 	    GFFB_PDIO1 + GFFB_PEL_MASK, 0xff);
+	
+	/* DMA stuff. A whole lot of magic number voodoo from xf86-video-nv */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PMC + 0x140, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PMC + 0x200, 0xffff00ff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PMC + 0x200, 0xffffffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PTIMER + 0x800, 8);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PTIMER + 0x840, 3);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PTIMER + 0x500, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PTIMER + 0x400, 0xffffffff);
+	for (i = 0; i < 8; i++) {
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    GFFB_PMC + 0x240 + (i * 0x10), 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    GFFB_PMC + 0x244 + (i * 0x10), sc->sc_vramsize - 1);
+	}
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN, 0x80000010);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x04, 0x80011201);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x08, 0x80000011);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x0c, 0x80011202);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x10, 0x80000012);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x14, 0x80011203);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x18, 0x80000013);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x1c, 0x80011204);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x20, 0x80000014);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x24, 0x80011205);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x28, 0x80000015);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2c, 0x80011206);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x30, 0x80000016);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x34, 0x80011207);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x38, 0x80000017);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x3c, 0x80011208);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2000, 0x00003000);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2004, sc->sc_vramsize - 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2008, 0x00000002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x200c, 0x00000002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2010, 0x01008042);	/* different for nv40 */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2014, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2018, 0x12001200);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x201c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2020, 0x01008043);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2024, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2028, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x202c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2030, 0x01008044);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2034, 0x00000002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2038, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x203c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2040, 0x01008019);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2044, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2048, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x204c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2050, 0x0100a05c);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2054, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2058, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x205c, 0);
+	/* XXX 0x0100805f if !WaitVSynvPossible */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2060, 0x0100809f);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2064, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2068, 0x12001200);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x206c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2070, 0x0100804a);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2074, 0x00000002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2078, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x207c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2080, 0x01018077);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2084, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2088, 0x12001200);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x208c, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2090, 0x00003002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2094, 0x00007fff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2098, 0x00000002);	/* start of command buffer? */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x209c, 0x00000002);
+	/* __BIG_ENDIAN part? */
+	/* PGRAPH setup */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0500, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0504, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1200, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1250, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1204, 0x00000100);	/* different on nv40 */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1240, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1244, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x122c, 0x00001209);	/* different on nv40 */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1000, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1050, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0210, 0x03000100);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0214, 0x00000110);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0218, 0x00000112);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x050c, 0x0000ffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1258, 0x0000ffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0140, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0100, 0xffffffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1054, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1230, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1280, 0);
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1224, 0x800f0078);
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1224, 0x000f0078);
+#endif
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1220, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1200, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1250, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1254, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0500, 0x00000001);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_CMDSTART, 0x00000002);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET, 0);
+	sc->sc_put = 0;
+	sc->sc_current = 0;
+	sc->sc_free = 0x2000;
+
+	for(i = 0; i < SKIPS; i++)
+		gffb_dmanext(sc, 0);
+	
+	gffb_dmanext(sc, 0x00040000);
+	gffb_dmanext(sc, 0x80000010);
+	gffb_dmanext(sc, 0x00042000);
+	gffb_dmanext(sc, 0x80000011);
+	gffb_dmanext(sc, 0x00044000);
+	gffb_dmanext(sc, 0x80000012);
+	gffb_dmanext(sc, 0x00046000);
+	gffb_dmanext(sc, 0x80000013);
+	gffb_dmanext(sc, 0x00048000);
+	gffb_dmanext(sc, 0x80000014);
+	gffb_dmanext(sc, 0x0004A000);
+	gffb_dmanext(sc, 0x80000015);
+	gffb_dmanext(sc, 0x0004C000);
+	gffb_dmanext(sc, 0x80000016);
+	gffb_dmanext(sc, 0x0004E000);
+	gffb_dmanext(sc, 0x80000017);
+	sc->sc_free = 0x2000 - sc->sc_current;
+
+	gffb_dmastart(sc, SURFACE_FORMAT, 4);
+	gffb_dmanext(sc, SURFACE_FORMAT_DEPTH8);
+	gffb_dmanext(sc, sc->sc_stride | (sc->sc_stride << 16));
+	gffb_dmanext(sc, 0);
+	gffb_dmanext(sc, 0);
+
+	gffb_dmastart(sc, RECT_FORMAT, 1);
+	gffb_dmanext(sc, RECT_FORMAT_DEPTH8);
+
+	gffb_dmastart(sc, ROP_SET, 1);
+	gffb_dmanext(sc, 0xcc);
+
+	gffb_dma_kickoff(sc);
+	gffb_sync(sc);
+	printf("put %x current %x\n", sc->sc_put, sc->sc_current);
 }
+
