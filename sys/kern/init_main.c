@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.453 2013/08/28 12:50:18 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.454 2013/10/02 21:38:55 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.453 2013/08/28 12:50:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.454 2013/10/02 21:38:55 apb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -902,6 +902,7 @@ static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
+	"/rescue/init",
 	NULL,
 };
 
