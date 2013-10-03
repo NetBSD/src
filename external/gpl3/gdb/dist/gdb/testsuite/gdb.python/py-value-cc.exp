@@ -1,0 +1,46 @@
+# Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests the mechanism
+# exposing values to Python.
+
+if { [skip_cplus_tests] } { continue }
+
+standard_testfile py-value.cc
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+if ![runto_main] {
+   return -1
+}
+
+gdb_breakpoint [gdb_get_line_number "Break here."]
+gdb_continue_to_breakpoint "Break here" ".*Break here.*"
+
+gdb_test "python print (str(gdb.parse_and_eval(\"a\").type))" "const A &"
+gdb_test "python print (str(gdb.parse_and_eval(\"a\").referenced_value().type))" "const A"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ref\").type))" "int &"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ref\").referenced_value().type))" "int"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ref\").referenced_value()))" "10"
+
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ptr_ref\").dereference().type))" "int"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ptr_ref\").referenced_value().type))" "int_ptr"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ptr_ref\").referenced_value().dereference()))" "10"
+gdb_test "python print (str(gdb.parse_and_eval(\"int_ptr_ref\").referenced_value().referenced_value()))" "10"

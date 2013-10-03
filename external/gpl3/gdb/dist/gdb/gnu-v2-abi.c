@@ -1,7 +1,6 @@
 /* Abstraction of GNU v2 abi.
 
-   Copyright (C) 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
@@ -26,6 +25,7 @@
 #include "gdbtypes.h"
 #include "value.h"
 #include "demangle.h"
+#include "gdb-demangle.h"
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "exceptions.h"
@@ -193,6 +193,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, int *top, int *using_enc)
   CORE_ADDR vtbl;
   struct minimal_symbol *minsym;
   char *demangled_name, *p;
+  const char *linkage_name;
   struct type *btype;
   struct type *known_type_vptr_basetype;
   int known_type_vptr_fieldno;
@@ -245,12 +246,12 @@ gnuv2_value_rtti_type (struct value *v, int *full, int *top, int *using_enc)
   /* Try to find a symbol that is the vtable.  */
   minsym=lookup_minimal_symbol_by_pc(vtbl);
   if (minsym==NULL
-      || (demangled_name=SYMBOL_LINKAGE_NAME (minsym))==NULL
-      || !is_vtable_name (demangled_name))
+      || (linkage_name=SYMBOL_LINKAGE_NAME (minsym))==NULL
+      || !is_vtable_name (linkage_name))
     return NULL;
 
   /* If we just skip the prefix, we get screwed by namespaces.  */
-  demangled_name=cplus_demangle(demangled_name,DMGL_PARAMS|DMGL_ANSI);
+  demangled_name=cplus_demangle(linkage_name,DMGL_PARAMS|DMGL_ANSI);
   p = strchr (demangled_name, ' ');
   if (p)
     *p = '\0';
@@ -296,8 +297,8 @@ static int
 vb_match (struct type *type, int index, struct type *basetype)
 {
   struct type *fieldtype;
-  char *name = TYPE_FIELD_NAME (type, index);
-  char *field_class_name = NULL;
+  const char *name = TYPE_FIELD_NAME (type, index);
+  const char *field_class_name = NULL;
 
   if (*name != '_')
     return 0;
@@ -422,5 +423,4 @@ _initialize_gnu_v2_abi (void)
 {
   init_gnuv2_ops ();
   register_cp_abi (&gnu_v2_abi_ops);
-  set_cp_abi_as_auto_default (gnu_v2_abi_ops.shortname);
 }

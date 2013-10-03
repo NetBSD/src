@@ -1,7 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -57,8 +56,10 @@ enum amd64_regnum
   AMD64_FS_REGNUM,		/* %fs */
   AMD64_GS_REGNUM,		/* %gs */
   AMD64_ST0_REGNUM = 24,	/* %st0 */
+  AMD64_ST1_REGNUM,		/* %st1 */
   AMD64_FCTRL_REGNUM = AMD64_ST0_REGNUM + 8,
   AMD64_FSTAT_REGNUM = AMD64_ST0_REGNUM + 9,
+  AMD64_FTAG_REGNUM = AMD64_ST0_REGNUM + 10,
   AMD64_XMM0_REGNUM = 40,	/* %xmm0 */
   AMD64_XMM1_REGNUM,		/* %xmm1 */
   AMD64_MXCSR_REGNUM = AMD64_XMM0_REGNUM + 16,
@@ -80,6 +81,8 @@ extern void amd64_displaced_step_fixup (struct gdbarch *gdbarch,
 					struct regcache *regs);
 
 extern void amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch);
+extern void amd64_x32_init_abi (struct gdbarch_info info,
+				struct gdbarch *gdbarch);
 
 /* Fill register REGNUM in REGCACHE with the appropriate
    floating-point or SSE register value from *FXSAVE.  If REGNUM is
@@ -101,7 +104,7 @@ extern void amd64_supply_xsave (struct regcache *regcache, int regnum,
 extern void amd64_collect_fxsave (const struct regcache *regcache, int regnum,
 				  void *fxsave);
 
-/* Similar to amd64_collect_fxsave, but but use XSAVE extended state.  */
+/* Similar to amd64_collect_fxsave, but use XSAVE extended state.  */
 extern void amd64_collect_xsave (const struct regcache *regcache,
 				 int regnum, void *xsave, int gcore);
 

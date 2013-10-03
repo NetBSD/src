@@ -1,6 +1,5 @@
 /* SPU native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -24,11 +23,13 @@
 #include "gdb_string.h"
 #include "target.h"
 #include "inferior.h"
+#include "inf-child.h"
 #include "inf-ptrace.h"
 #include "regcache.h"
 #include "symfile.h"
 #include "gdb_wait.h"
 #include "gdbthread.h"
+#include "gdb_bfd.h"
 
 #include <sys/ptrace.h>
 #include <asm/ptrace.h>
@@ -205,7 +206,7 @@ store_ppc_memory (ULONGEST memaddr, const gdb_byte *myaddr, int len)
 static int 
 parse_spufs_run (int *fd, ULONGEST *addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   gdb_byte buf[4];
   ULONGEST pc = fetch_ppc_register (32);  /* nip */
 
@@ -276,7 +277,9 @@ static int
 spu_bfd_iovec_close (struct bfd *nbfd, void *stream)
 {
   xfree (stream);
-  return 1;
+
+  /* Zero means success.  */
+  return 0;
 }
 
 static file_ptr
@@ -315,16 +318,16 @@ spu_bfd_open (ULONGEST addr)
   ULONGEST *open_closure = xmalloc (sizeof (ULONGEST));
   *open_closure = addr;
 
-  nbfd = bfd_openr_iovec (xstrdup ("<in-memory>"), "elf32-spu",
-			  spu_bfd_iovec_open, open_closure,
-			  spu_bfd_iovec_pread, spu_bfd_iovec_close,
-			  spu_bfd_iovec_stat);
+  nbfd = gdb_bfd_openr_iovec ("<in-memory>", "elf32-spu",
+			      spu_bfd_iovec_open, open_closure,
+			      spu_bfd_iovec_pread, spu_bfd_iovec_close,
+			      spu_bfd_iovec_stat);
   if (!nbfd)
     return NULL;
 
   if (!bfd_check_format (nbfd, bfd_object))
     {
-      bfd_close (nbfd);
+      gdb_bfd_unref (nbfd);
       return NULL;
     }
 
@@ -374,8 +377,13 @@ spu_symbol_file_add_from_memory (int inferior_fd)
   /* Open BFD representing SPE executable and read its symbols.  */
   nbfd = spu_bfd_open (addr);
   if (nbfd)
-    symbol_file_add_from_bfd (nbfd, SYMFILE_VERBOSE | SYMFILE_MAINLINE,
-                              NULL, 0);
+    {
+      struct cleanup *cleanup = make_cleanup_bfd_unref (nbfd);
+
+      symbol_file_add_from_bfd (nbfd, SYMFILE_VERBOSE | SYMFILE_MAINLINE,
+				NULL, 0, NULL);
+      do_cleanups (cleanup);
+    }
 }
 
 
@@ -462,7 +470,7 @@ spu_child_wait (struct target_ops *ops,
 
       /* Claim it exited with unknown signal.  */
       ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-      ourstatus->value.sig = TARGET_SIGNAL_UNKNOWN;
+      ourstatus->value.sig = GDB_SIGNAL_UNKNOWN;
       return inferior_ptid;
     }
 
@@ -487,7 +495,7 @@ spu_fetch_inferior_registers (struct target_ops *ops,
     {
       struct gdbarch *gdbarch = get_regcache_arch (regcache);
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-      char buf[4];
+      gdb_byte buf[4];
       store_unsigned_integer (buf, 4, byte_order, fd);
       regcache_raw_supply (regcache, SPU_ID_REGNUM, buf);
     }

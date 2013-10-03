@@ -408,7 +408,8 @@
 	PR binutils/10802
 	* opncls.c (_maybe_make_executable): Make DYNAMIC files executable.
 
-2009-10-19  Hans-Peter Nilsson  <hp@axis.com>
+2009-10-19  Edgar E. Iglesias  <edgar@axis.com>
+	    Hans-Peter Nilsson  <hp@axis.com>
 
 	* elf32-cris.c (cris_elf_relocate_section) <case R_CRIS_32_DTPREL>:
 	Don't subtract the size of the TLS block for non-shared objects
@@ -3606,7 +3607,7 @@
 	(bfd_xcoff_set_archive_import_path): Likewise.
 	(xcoff_set_import_path): Move earlier in file.
 	(xcoff_link_add_dynamic_symbols): Set the import path of a non-archive
-	object to the the directory part of the bfd's filename.  Get the
+	object to the directory part of the bfd's filename.  Get the
 	import path and filename of an archive object from the archive's
 	xcoff_tdata, initializing it if necessary.  Update use of
 	import_file_id.
@@ -5146,6 +5147,12 @@
 
 For older changes see ChangeLog-2008
 
+Copyright (C) 2009 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

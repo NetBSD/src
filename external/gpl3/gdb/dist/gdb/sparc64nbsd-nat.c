@@ -1,7 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,15 +56,16 @@ sparc64nbsd_collect_gregset (const struct sparc_gregset *gregset,
 }
 
 static void
-sparc64nbsd_supply_fpregset (struct regcache *regcache,
+sparc64nbsd_supply_fpregset (const struct sparc_fpregset *fpregset,
+			     struct regcache *regcache,
 			     int regnum, const void *fpregs)
 {
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_supply_fpregset (regcache, regnum, fpregs);
+    sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
   else
-    sparc64_supply_fpregset (regcache, regnum, fpregs);
+    sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 static void
@@ -75,9 +75,9 @@ sparc64nbsd_collect_fpregset (const struct regcache *regcache,
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_collect_fpregset (regcache, regnum, fpregs);
+    sparc32_collect_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
   else
-    sparc64_collect_fpregset (regcache, regnum, fpregs);
+    sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 /* Determine whether `gregset_t' contains register REGNUM.  */
