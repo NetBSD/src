@@ -1,6 +1,6 @@
 /* Print instructions for the Texas TMS320C[34]X, for GDB and GNU Binutils.
 
-   Copyright 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2005, 2007, 2012 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -21,6 +21,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <math.h>
 #include "libiberty.h"
 #include "dis-asm.h"

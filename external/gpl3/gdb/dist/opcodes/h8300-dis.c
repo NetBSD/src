@@ -298,7 +298,7 @@ print_one_arg (disassemble_info *info,
     outfn (stream, "@(0x%x:%d,%s.l)", cst, cstlen, lregnames[rdisp_n]);
 
   else if (x & CTRL)
-    outfn (stream, cregnames[rn]);
+    outfn (stream, "%s", cregnames[rn]);
 
   else if ((x & MODE) == CCR)
     outfn (stream, "ccr");
