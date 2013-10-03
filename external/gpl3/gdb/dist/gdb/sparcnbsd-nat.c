@@ -51,7 +51,7 @@ supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 void
 supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
-  sparc_supply_fpregset (regcache, -1, fpregs);
+  sparc_supply_fpregset (sparc_fpregset, regcache, -1, fpregs);
 }
 
 void
@@ -63,7 +63,7 @@ fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 void
 fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
-  sparc_collect_fpregset (regcache, regnum, fpregs);
+  sparc_collect_fpregset (sparc_fpregset, regcache, regnum, fpregs);
 }
 
 static int
