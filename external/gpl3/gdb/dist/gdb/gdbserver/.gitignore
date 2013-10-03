@@ -1,4 +1,12 @@
 gdbreplay
 gdbserver
+libinproctrace.so
+
+amd64-avx-linux.c
+amd64-linux.c
+i386-avx-linux.c
+i386-linux.c
+i386-mmx-linux.c
 reg-*.c
 version.c
+xml-builtin.c
