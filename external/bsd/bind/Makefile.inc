@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2013/08/11 14:42:04 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2013/10/03 20:11:34 mrg Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -94,10 +94,22 @@ CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
 CPPFLAGS+=-DGSSAPI
 .endif
 .if ${MKKERBEROS} != "no"
+.if !defined (LIB) || empty(LIB)
 LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
 	-lcom_err  -lroken -lasn1 -lwind
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
 	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.else
+LIBDPLIBS+=	gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi \
+		krb5 ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libkrb5 \
+		hx509 ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libhx509 \
+		heimntlm ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libheimntlm \
+		heimbase ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libheimbase \
+		com_err ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libcom_err \
+		roken ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libroken \
+		asn1 ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libasn1 \
+		wind ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libwind
+.endif
 .endif
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lcrypto -lcrypt
