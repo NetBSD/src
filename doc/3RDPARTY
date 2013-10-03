@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1057 2013/09/29 14:05:05 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1058 2013/10/03 18:24:28 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -390,8 +390,8 @@ for GCC 4.5:
 		gcc/testsuite/gnat.dg
 
 Package:	gdb
-Version:	6.5/7.3.1
-Current Vers:	7.6
+Version:	7.6.1
+Current Vers:	7.6.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
