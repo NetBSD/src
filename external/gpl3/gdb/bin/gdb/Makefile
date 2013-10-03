@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/04 23:41:43 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2013/10/03 18:06:11 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -12,6 +12,7 @@ SRCS=		gdb.c
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
 		-I${DIST}/gdb \
+		-I${DIST}/gdb/common \
 		-I${DIST}/gdb/config \
 		-I${DIST}/include/opcode \
 		-I${DIST} \
@@ -80,8 +81,8 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lz -lcurses -lintl -lm -lkvm
-DPADD+=		${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 
 LDADD+=                -lpthread_dbg
 
