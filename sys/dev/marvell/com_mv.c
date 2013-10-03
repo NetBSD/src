@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.6 2013/09/01 04:51:24 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.7 2013/10/03 13:23:03 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.6 2013/09/01 04:51:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.7 2013/10/03 13:23:03 kiyohara Exp $");
 
 #include "opt_com.h"
 
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.6 2013/09/01 04:51:24 kiyohara Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/mutex.h>
 #include <sys/termios.h>
 
 #include <dev/marvell/gtvar.h>
@@ -45,15 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.6 2013/09/01 04:51:24 kiyohara Exp $");
 
 #include <prop/proplib.h>
 
-#define MVUART_SIZE		0x80
-
-#define MVUART_REG_USR		0x7c	/* XXXX: What is this??? */
+#define MVUART_SIZE		0x20
 
 
 static int mvuart_match(device_t, struct cfdata *, void *);
 static void mvuart_attach(device_t, device_t, void *);
-
-static int mvuart_intr(void *);
 
 CFATTACH_DECL_NEW(mvuart_gt, sizeof(struct com_softc),
     mvuart_match, mvuart_attach, NULL, NULL);
@@ -61,40 +56,22 @@ CFATTACH_DECL_NEW(mvuart_mbus, sizeof(struct com_softc),
     mvuart_match, mvuart_attach, NULL, NULL);
 
 #ifdef COM_REGMAP
-#define MVUART_INIT_REGS(regs, tag, hdl, addr, size)			\
-	do {								\
-		int _i;							\
-									\
-		regs.cr_iot = tag;					\
-		regs.cr_ioh = hdl;					\
-		regs.cr_iobase = addr;					\
-		regs.cr_nports = size;					\
-		for (_i = 0; _i < __arraycount(regs.cr_map); _i++)	\
-			regs.cr_map[_i] = com_std_map[_i] << 2;		\
+#define MVUART_INIT_REGS(regs, tag, hdl, addr, size)		\
+	do {							\
+		int i;						\
+								\
+		regs.cr_iot = tag;				\
+		regs.cr_ioh = hdl;				\
+		regs.cr_iobase = addr;				\
+		regs.cr_nports = size;				\
+		for (i = 0; i < __arraycount(regs.cr_map); i++)	\
+			regs.cr_map[i] = com_std_map[i] << 2;	\
 	} while (0)
-#define CSR_WRITE_1(r, o, v)    \
-	bus_space_write_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], v)
-#define CSR_READ_1(r, o)        \
-	bus_space_read_1((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o])
 #else
 #define MVUART_INIT_REGS(regs, tag, hdl, addr, size) \
 	COM_INIT_REGS(regs, tag, hdl, addr)
-#define CSR_WRITE_1(r, o, v)    \
-        bus_space_write_1((r)->cr_iot, (r)->cr_ioh, o, v)
-#define CSR_READ_1(r, o)        \
-	bus_space_read_1((r)->cr_iot, (r)->cr_ioh, o)
 #endif
 
-struct {
-	int model;
-	int type;
-} mvuart_extensions[] = {
-	{ MARVELL_ARMADAXP_MV78130,	COM_TYPE_ARMADAXP },
-	{ MARVELL_ARMADAXP_MV78160,	COM_TYPE_ARMADAXP },
-	{ MARVELL_ARMADAXP_MV78230,	COM_TYPE_ARMADAXP },
-	{ MARVELL_ARMADAXP_MV78260,	COM_TYPE_ARMADAXP },
-	{ MARVELL_ARMADAXP_MV78460,	COM_TYPE_ARMADAXP },
-};
 
 /* ARGSUSED */
 static int
@@ -134,7 +111,6 @@ mvuart_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	prop_dictionary_t dict = device_properties(self);
-	int i;
 
 	sc->sc_dev = self;
 
@@ -154,59 +130,9 @@ mvuart_attach(device_t parent, device_t self, void *aux)
 	MVUART_INIT_REGS(sc->sc_regs,
 	    iot, ioh, mva->mva_addr + mva->mva_offset, mva->mva_size);
 
-	for (i = 0; i < __arraycount(mvuart_extensions); i++)
-		if (mva->mva_model == mvuart_extensions[i].model) {
-			sc->sc_type = mvuart_extensions[i].type;
-			break;
-		}
-
 	com_attach_subr(sc);
 
-	if (sc->sc_type == COM_TYPE_ARMADAXP)
-		marvell_intr_establish(mva->mva_irq, IPL_SERIAL,
-		    mvuart_intr, sc);
-	else
-		marvell_intr_establish(mva->mva_irq, IPL_SERIAL, comintr, sc);
-}
-
-static int
-mvuart_intr(void *arg)
-{
-	struct com_softc *sc = arg;
-	struct com_regs *regsp = &sc->sc_regs;
-	int timeout;
-	uint8_t iir, v;
-
-	if (!device_is_active(sc->sc_dev))
-		return 0;
-
-	KASSERT(regsp != NULL);
-
-	mutex_spin_enter(&sc->sc_lock);
-	iir = CSR_READ_1(regsp, COM_REG_IIR);
-	if ((iir & IIR_BUSY) == IIR_BUSY) {
-		/*
-		 * XXXXX: What is this?  I don't found in Marvell datasheet.
-		 *        Maybe workaround for BUG in UART.
-		 */
-		v = bus_space_read_1(regsp->cr_iot, regsp->cr_ioh,
-		    MVUART_REG_USR);
-		for (timeout = 10000; (v & 0x1) != 0; timeout--) {
-			if (timeout <= 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "timeout while waiting for BUSY interrupt "
-				    "acknowledge\n");
-				mutex_spin_exit(&sc->sc_lock);
-				return 0;
-			}
-			v = bus_space_read_1(regsp->cr_iot, regsp->cr_ioh,
-			    MVUART_REG_USR);
-		}
-		CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
-	}
-	mutex_spin_exit(&sc->sc_lock);
-
-	return comintr(arg);
+	marvell_intr_establish(mva->mva_irq, IPL_SERIAL, comintr, sc);
 }
 
 #ifdef COM_REGMAP
