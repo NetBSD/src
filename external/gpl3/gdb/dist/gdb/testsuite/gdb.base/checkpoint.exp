@@ -1,5 +1,4 @@
-#   Copyright 2005, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2005-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-if $tracelevel then {
-	strace $tracelevel
-	}
 
 if { [is_remote target] || ![isnative] } then {
     continue
@@ -235,39 +230,39 @@ gdb_test "restart 1" "if .c == EOF.*" "restart 1 three"
 gdb_test "continue" "breakpoint 2.*" "break2 1 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 1"
 
-gdb_test "restart 2" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 2" "if .c == EOF.*" "restart 2 three"
 gdb_test "continue" "breakpoint 2.*" "break2 2 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 2"
 
-gdb_test "restart 3" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 3" "if .c == EOF.*" "restart 3 three"
 gdb_test "continue" "breakpoint 2.*" "break2 3 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 3"
 
-gdb_test "restart 4" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 4" "if .c == EOF.*" "restart 4 three"
 gdb_test "continue" "breakpoint 2.*" "break2 4 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 4"
 
-gdb_test "restart 5" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 5" "if .c == EOF.*" "restart 5 three"
 gdb_test "continue" "breakpoint 2.*" "break2 5 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 5"
 
-gdb_test "restart 6" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 6" "if .c == EOF.*" "restart 6 three"
 gdb_test "continue" "breakpoint 2.*" "break2 6 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 6"
 
-gdb_test "restart 7" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 7" "if .c == EOF.*" "restart 7 three"
 gdb_test "continue" "breakpoint 2.*" "break2 7 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 7"
 
-gdb_test "restart 8" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 8" "if .c == EOF.*" "restart 8 three"
 gdb_test "continue" "breakpoint 2.*" "break2 8 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 8"
 
-gdb_test "restart 9" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 9" "if .c == EOF.*" "restart 9 three"
 gdb_test "continue" "breakpoint 2.*" "break2 9 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 9"
 
-gdb_test "restart 10" "if .c == EOF.*" "restart 1 three"
+gdb_test "restart 10" "if .c == EOF.*" "restart 10 three"
 gdb_test "continue" "breakpoint 2.*" "break2 10 one"
 gdb_test "print ftell (out) > 100000" " = 1.*" "outfile still open 10"
 

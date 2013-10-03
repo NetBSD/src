@@ -16,6 +16,7 @@ all info install-info dvi install uninstall installcheck check:
 
 clean mostlyclean:
 	-rm -f *.o ${OBJS}  *.class *.exe *~ core jmain jmisc jnpe jprint
+	-rm -f *.dwo *.dwp
 
 distclean maintainer-clean realclean: clean
 	-rm -f Makefile config.status config.log gdb.log gdb.sum

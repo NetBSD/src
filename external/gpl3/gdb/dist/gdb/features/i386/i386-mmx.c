@@ -1,4 +1,5 @@
-/* THIS FILE IS GENERATED.  Original: i386-mmx.xml */
+/* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
+  Original: i386-mmx.xml */
 
 #include "defs.h"
 #include "osabi.h"

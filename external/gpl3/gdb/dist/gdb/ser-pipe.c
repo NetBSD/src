@@ -1,6 +1,5 @@
 /* Serial interface for a pipe to a separate program
-   Copyright (C) 1999, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
 
@@ -31,7 +30,6 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include "gdb_string.h"
-#include "gdb_wait.h"
 
 #include <signal.h>
 
@@ -163,14 +161,30 @@ pipe_close (struct serial *scb)
 
   if (state != NULL)
     {
-      int status;
-      kill (state->pid, SIGTERM);
-#ifdef HAVE_WAITPID
+      int wait_result, status;
+
+      /* Don't kill the task right away, give it a chance to shut down cleanly.
+	 But don't wait forever though.  */
+#define PIPE_CLOSE_TIMEOUT 5
+
       /* Assume the program will exit after SIGTERM.  Might be
 	 useful to print any remaining stderr output from
 	 scb->error_fd while waiting.  */
-      waitpid (state->pid, &status, 0);
+#define SIGTERM_TIMEOUT INT_MAX
+
+      wait_result = -1;
+#ifdef HAVE_WAITPID
+      wait_result = wait_to_die_with_timeout (state->pid, &status,
+					      PIPE_CLOSE_TIMEOUT);
 #endif
+      if (wait_result == -1)
+	{
+	  kill (state->pid, SIGTERM);
+#ifdef HAVE_WAITPID
+	  wait_to_die_with_timeout (state->pid, &status, SIGTERM_TIMEOUT);
+#endif
+	}
+
       if (scb->error_fd != -1)
 	close (scb->error_fd);
       scb->error_fd = -1;

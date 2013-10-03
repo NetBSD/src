@@ -1,5 +1,4 @@
-/* Copyright 1999, 2000, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+/* Copyright 1999-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

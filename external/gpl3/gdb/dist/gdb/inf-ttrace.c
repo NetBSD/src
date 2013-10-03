@@ -1,7 +1,6 @@
 /* Low-level child interface to ttrace.
 
-   Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -458,7 +457,7 @@ inf_ttrace_follow_fork (struct target_ops *ops, int follow_child)
       inf->pspace = parent_inf->pspace;
       inf->aspace = parent_inf->aspace;
       copy_terminal_info (inf, parent_inf);
-      detach_breakpoints (pid);
+      detach_breakpoints (ptid_build (pid, lwpid, 0));
 
       target_terminal_ours ();
       fprintf_unfiltered (gdb_stdlog,
@@ -468,7 +467,11 @@ inf_ttrace_follow_fork (struct target_ops *ops, int follow_child)
   else
     {
       inferior_ptid = ptid_build (pid, lwpid, 0);
-      detach_breakpoints (fpid);
+      /* Detach any remaining breakpoints in the child.  In the case
+	 of fork events, we do not need to do this, because breakpoints
+	 should have already been removed earlier.  */
+      if (tts.tts_event == TTEVT_VFORK)
+	detach_breakpoints (ptid_build (fpid, flwpid, 0));
 
       target_terminal_ours ();
       fprintf_unfiltered (gdb_stdlog,
@@ -650,7 +653,7 @@ inf_ttrace_create_inferior (struct target_ops *ops, char *exec_file,
   gdb_assert (inf_ttrace_vfork_ppid == -1);
 
   pid = fork_inferior (exec_file, allargs, env, inf_ttrace_me, NULL,
-		       inf_ttrace_prepare, NULL);
+		       inf_ttrace_prepare, NULL, NULL);
 
   inf_ttrace_him (ops, pid);
 }
@@ -905,11 +908,11 @@ inf_ttrace_resume_callback (struct thread_info *info, void *arg)
 
 static void
 inf_ttrace_resume (struct target_ops *ops,
-		   ptid_t ptid, int step, enum target_signal signal)
+		   ptid_t ptid, int step, enum gdb_signal signal)
 {
   int resume_all;
   ttreq_t request = step ? TT_LWP_SINGLE : TT_LWP_CONTINUE;
-  int sig = target_signal_to_host (signal);
+  int sig = gdb_signal_to_host (signal);
   struct thread_info *info;
 
   /* A specific PTID means `step only this process id'.  */
@@ -1011,7 +1014,7 @@ inf_ttrace_wait (struct target_ops *ops,
     case TTEVT_BPT_SSTEP:
       /* Make it look like a breakpoint.  */
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_TRAP;
+      ourstatus->value.sig = GDB_SIGNAL_TRAP;
       break;
 #endif
 
@@ -1127,7 +1130,7 @@ inf_ttrace_wait (struct target_ops *ops,
     case TTEVT_SIGNAL:
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
       ourstatus->value.sig =
-	target_signal_from_host (tts.tts_u.tts_signal.tts_signo);
+	gdb_signal_from_host (tts.tts_u.tts_signal.tts_signo);
       break;
 
     case TTEVT_SYSCALL_ENTRY:
@@ -1325,7 +1328,7 @@ inf_ttrace_target (void)
 
 
 /* Prevent warning from -Wmissing-prototypes.  */
-void _initialize_hppa_hpux_nat (void);
+void _initialize_inf_ttrace (void);
 
 void
 _initialize_inf_ttrace (void)

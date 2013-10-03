@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,7 +44,7 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST indirect;
   struct minimal_symbol *indsym;
-  char *symname;
+  const char *symname;
   CORE_ADDR next_pc;
 
   /* The format of an ARM DLL trampoline is:
@@ -84,7 +84,7 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
    the address of the instruction following that call.  Otherwise, it
    simply returns PC.  */
 
-CORE_ADDR
+static CORE_ADDR
 arm_wince_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

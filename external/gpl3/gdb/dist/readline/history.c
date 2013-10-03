@@ -1,24 +1,23 @@
 /* history.c -- standalone history library */
 
-/* Copyright (C) 1989-2005 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2009 Free Software Foundation, Inc.
 
-   This file contains the GNU History Library (the Library), a set of
+   This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
 
-   The Library is free software; you can redistribute it and/or modify
+   History is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-   The Library is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   History is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with History.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /* The goal is to make the implementation transparent, so that you
    don't have to know what data types are used, just what functions
@@ -158,7 +157,7 @@ history_set_pos (pos)
   return (1);
 }
  
-/* Return the current history array.  The caller has to be carefull, since this
+/* Return the current history array.  The caller has to be careful, since this
    is the actual array of data, and could be bashed or made corrupt easily.
    The array is terminated with a NULL pointer. */
 HIST_ENTRY **
@@ -207,6 +206,22 @@ history_get (offset)
   return (local_index >= history_length || local_index < 0 || the_history == 0)
 		? (HIST_ENTRY *)NULL
 		: the_history[local_index];
+}
+
+HIST_ENTRY *
+alloc_history_entry (string, ts)
+     char *string;
+     char *ts;
+{
+  HIST_ENTRY *temp;
+
+  temp = (HIST_ENTRY *)xmalloc (sizeof (HIST_ENTRY));
+
+  temp->line = string ? savestring (string) : string;
+  temp->data = (char *)NULL;
+  temp->timestamp = ts;
+
+  return temp;
 }
 
 time_t
@@ -290,11 +305,7 @@ add_history (string)
 	}
     }
 
-  temp = (HIST_ENTRY *)xmalloc (sizeof (HIST_ENTRY));
-  temp->line = savestring (string);
-  temp->data = (char *)NULL;
-
-  temp->timestamp = hist_inittime ();
+  temp = alloc_history_entry (string, hist_inittime ());
 
   the_history[history_length] = (HIST_ENTRY *)NULL;
   the_history[history_length - 1] = temp;
@@ -307,6 +318,8 @@ add_history_time (string)
 {
   HIST_ENTRY *hs;
 
+  if (string == 0)
+    return;
   hs = the_history[history_length - 1];
   FREE (hs->timestamp);
   hs->timestamp = savestring (string);
@@ -325,8 +338,28 @@ free_history_entry (hist)
   FREE (hist->line);
   FREE (hist->timestamp);
   x = hist->data;
-  free (hist);
+  xfree (hist);
   return (x);
+}
+
+HIST_ENTRY *
+copy_history_entry (hist)
+     HIST_ENTRY *hist;
+{
+  HIST_ENTRY *ret;
+  char *ts;
+
+  if (hist == 0)
+    return hist;
+
+  ret = alloc_history_entry (hist->line, (char *)NULL);
+
+  ts = hist->timestamp ? savestring (hist->timestamp) : hist->timestamp;
+  ret->timestamp = ts;
+
+  ret->data = hist->data;
+
+  return ret;
 }
   
 /* Make the history entry at WHICH have LINE and DATA.  This returns
@@ -354,6 +387,51 @@ replace_history_entry (which, line, data)
   return (old_value);
 }
 
+/* Replace the DATA in the specified history entries, replacing OLD with
+   NEW.  WHICH says which one(s) to replace:  WHICH == -1 means to replace
+   all of the history entries where entry->data == OLD; WHICH == -2 means
+   to replace the `newest' history entry where entry->data == OLD; and
+   WHICH >= 0 means to replace that particular history entry's data, as
+   long as it matches OLD. */
+void
+replace_history_data (which,old, new)
+     int which;
+     histdata_t *old, *new;
+{
+  HIST_ENTRY *entry;
+  register int i, last;
+
+  if (which < -2 || which >= history_length || history_length == 0 || the_history == 0)
+    return;
+
+  if (which >= 0)
+    {
+      entry = the_history[which];
+      if (entry && entry->data == old)
+	entry->data = new;
+      return;
+    }
+
+  last = -1;
+  for (i = 0; i < history_length; i++)
+    {
+      entry = the_history[i];
+      if (entry == 0)
+	continue;
+      if (entry->data == old)
+	{
+	  last = i;
+	  if (which == -1)
+	    entry->data = new;
+	}
+    }
+  if (which == -2 && last >= 0)
+    {
+      entry = the_history[last];
+      entry->data = new;	/* XXX - we don't check entry->old */
+    }
+}      
+  
 /* Remove history element WHICH from the history.  The removed
    element is returned to you so you can free the line, data,
    and containing structure. */
@@ -406,7 +484,7 @@ stifle_history (max)
 
 /* Stop stifling the history.  This returns the previous maximum
    number of history entries.  The value is positive if the history
-   was stifled,  negative if it wasn't. */
+   was stifled, negative if it wasn't. */
 int
 unstifle_history ()
 {

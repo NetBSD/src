@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2004,
-# 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,22 +15,24 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 
 set testfile "funcargs"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+
+set compile_flags {debug nowarnings quiet}
+if [support_complex_tests] {
+    lappend compile_flags "additional_flags=-DTEST_COMPLEX"
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_flags] != "" } {
      untested funcargs.exp
      return -1
 }
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1;
 }
 
@@ -239,6 +240,77 @@ proc float_and_integral_args {} {
     gdb_stop_suppressing_tests;
 }
 
+
+#
+# Locate actual args; _Complex types.
+#
+
+proc complex_args {} {
+    global gdb_prompt
+
+    delete_breakpoints
+
+    gdb_breakpoint callca
+    gdb_breakpoint callcb
+    gdb_breakpoint callcc
+    gdb_breakpoint callcd
+    gdb_breakpoint callce
+    gdb_breakpoint callcf
+
+    # Run; should stop at call1a and print actual arguments.
+    gdb_run_cmd
+    gdb_expect {
+	-re ".* callca \\(f1=1 \\+ 2 \\* I, f2=1 \\+ 2 \\* I, f3=1 \\+ 2 \\* I\\) .*$gdb_prompt $" { pass "run to call2a" }
+	timeout { fail "(timeout) run to callca" ; gdb_suppress_tests; }
+    }
+    gdb_test "cont" ".* callcb \\(d1=3 \\+ 4 \\* I, d2=3 \\+ 4 \\* I, d3=3 \\+ 4 \\* I\\) .*" "continue to callcb"
+    gdb_test "cont" ".* callcc \\(ld1=5 \\+ 6 \\* I, ld2=5 \\+ 6 \\* I, ld3=5 \\+ 6 \\* I\\) .*" "continue to callcc"
+    gdb_test "cont" ".* callcd \\(fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "continue to callcd"
+    gdb_test "cont" ".* callce \\(dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I, fc1=1 \\+ 2 \\* I\\) .*" "continue to callce"
+    gdb_test "cont" ".* callcf \\(ldc1=5 \\+ 6 \\* I, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I\\) .*" "continue to callcf"
+}
+
+
+#
+# Locate actual args; _Complex types and integral.
+#
+proc complex_integral_args {} {
+    global gdb_prompt
+
+    delete_breakpoints
+
+    gdb_breakpoint callc1a
+    gdb_breakpoint callc1b
+
+    # Run; should stop at call1a and print actual arguments.
+    gdb_run_cmd
+    gdb_expect {
+	-re ".* callc1a \\(c=97 'a', s=1, i=2, ui=7, l=3, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*$gdb_prompt $" { pass "run to callc1a" }
+	timeout { fail "(timeout) run to callc1a" ; gdb_suppress_tests; }
+    }
+    gdb_test "cont" ".* callc1b \\(ldc1=5 \\+ 6 \\* I\\, c=97 'a', s=1, i=2, fc1=1 \\+ 2 \\* I, ui=7, l=3, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc1b"
+}
+
+#
+# Locate actual args; _Complex types and integral/float.
+#
+proc complex_float_integral_args {} {
+    global gdb_prompt
+
+    delete_breakpoints
+
+    gdb_breakpoint callc2a
+    gdb_breakpoint callc2b
+
+    # Run; should stop at call1a and print actual arguments.
+    gdb_run_cmd
+    gdb_expect {
+	-re ".* callc2a \\(c=97 'a', s=1, i=2, ui=7, l=3, f=4, d=5, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*$gdb_prompt $" { pass "run to callc2a" }
+	timeout { fail "(timeout) run to callc1a" ; gdb_suppress_tests; }
+    }
+    gdb_test "cont" ".* callc2b \\(fc1=1 \\+ 2 \\* I, c=97 'a', s=1, i=2, ui=7, ldc1=5 \\+ 6 \\* I\\, l=3, f=4, d=5, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc2b"
+}
+
 #
 # Locate actual args; dereference pointers to ints and floats.
 #
@@ -259,7 +331,7 @@ proc pointer_args {} {
 
     gdb_run_cmd
     gdb_expect {
-	 -re ".* call3a \\(cp=$hex \"a.*\", sp=$hex, ip=$hex, lp=$hex\\) .*$gdb_prompt $" { pass "run to call3a" }
+	 -re ".* call3a \\(cp=$hex <c> \"a.*\", sp=$hex <s>, ip=$hex <i>, lp=$hex <l>\\) .*$gdb_prompt $" { pass "run to call3a" }
 	 -re "$gdb_prompt $" { fail "run to call3a" ; gdb_suppress_tests; }
 	 timeout { fail "(timeout) run to call3a" ; gdb_suppress_tests; }
     }
@@ -271,7 +343,7 @@ proc pointer_args {} {
 
     # Continue; should stop at call3b and print actual arguments.
     # Try dereferencing the arguments.
-    if [gdb_test "cont" ".* call3b \\(ucp=$hex \"b.*\", usp=$hex, uip=$hex, ulp=$hex\\) .*" "continue to call3b"] {
+    if [gdb_test "cont" ".* call3b \\(ucp=$hex <uc> \"b.*\", usp=$hex <us>, uip=$hex <ui>, ulp=$hex <ul>\\) .*" "continue to call3b"] {
 	gdb_suppress_tests;
     }
 
@@ -282,7 +354,7 @@ proc pointer_args {} {
 
     # Continue; should stop at call3c and print actual arguments.
     # Try dereferencing the arguments.
-    if [gdb_test "cont" ".* call3c \\(fp=$hex, dp=$hex\\) .*" "continue to call3c"] {
+    if [gdb_test "cont" ".* call3c \\(fp=$hex <f>, dp=$hex <d>\\) .*" "continue to call3c"] {
 	gdb_suppress_tests;
     }
 
@@ -315,7 +387,7 @@ proc structs_by_reference {} {
 
     gdb_run_cmd
     gdb_expect {
-	 -re ".* call4a \\(stp=$hex\\) .*$gdb_prompt $" {
+	 -re ".* call4a \\(stp=$hex <st>\\) .*$gdb_prompt $" {
 	    pass "run to call4a"
 	}
 	 -re "$gdb_prompt $" { fail "run to call4a" ; gdb_suppress_tests; }
@@ -326,7 +398,7 @@ proc structs_by_reference {} {
 
     # Continue; should stop at call4b and print actual arguments.
 
-    gdb_test "cont" ".* call4b \\(unp=$hex\\) .*" "continue to call4b"
+    gdb_test "cont" ".* call4b \\(unp=$hex <un>\\) .*" "continue to call4b"
 
     # Try dereferencing the arguments.
     if { $target_sizeof_long == $target_sizeof_int } {
@@ -892,21 +964,6 @@ proc recursive_structs_by_value {} {
     gdb_stop_suppressing_tests;
 }
 
-proc funcargs_reload { } {
-    global objdir
-    global subdir
-    global binfile
-    global srcdir
-
-    if [istarget "mips-idt-*"] {
-	# Restart because IDT/SIM runs out of file descriptors.
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
-	gdb_load ${binfile}
-    }
-}
-
 #
 # Test for accessing local stack variables in functions which call alloca
 #
@@ -1161,31 +1218,31 @@ gdb_test_multiple "show endian" "getting target endian" {
 gdb_test_no_output "set print frame-arguments all"
 
 integral_args
-funcargs_reload
 unsigned_integral_args
-funcargs_reload
 if {![target_info exists gdb,skip_float_tests]} {
   float_and_integral_args
 }
-funcargs_reload
+
+# Test _Complex type here if supported.
+if [support_complex_tests] {
+    complex_args
+
+    complex_integral_args
+
+    if {![target_info exists gdb,skip_float_tests]} {
+	complex_float_integral_args
+    }
+}
+
 pointer_args
-funcargs_reload
 structs_by_reference
-funcargs_reload
 structs_by_value
-funcargs_reload
 discard_and_shuffle
-funcargs_reload
 shuffle_round_robin
-funcargs_reload
 recursive_structs_by_value
-funcargs_reload
 localvars_after_alloca
-funcargs_reload
 call_after_alloca
-funcargs_reload
 localvars_in_indirect_call
-funcargs_reload
 test_stepping_over_trampolines
 
 set timeout $prev_timeout

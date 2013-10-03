@@ -1,8 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,6 +46,7 @@
 /* Register numbers shared with the simulator.  */
 #include "gdb/sim-sh.h"
 #include "language.h"
+#include "sh64-tdep.h"
 
 /* Information that is dependent on the processor variant.  */
 enum sh_abi
@@ -859,7 +858,6 @@ sh64_analyze_prologue (struct gdbarch *gdbarch,
 		       CORE_ADDR func_pc,
 		       CORE_ADDR current_pc)
 {
-  int reg_nr;
   int pc;
   int opc;
   int insn;
@@ -1071,7 +1069,6 @@ sh64_push_dummy_call (struct gdbarch *gdbarch,
   CORE_ADDR regval;
   char *val;
   char valbuf[8];
-  char valbuf_tmp[8];
   int len;
   int argreg_size;
   int fp_args[12];
@@ -1178,10 +1175,10 @@ sh64_push_dummy_call (struct gdbarch *gdbarch,
 		  int_argreg ++;
 		}
 	      else 
-		;
-		/* Store it as the integers, 8 bytes at the time, if
-		   necessary spilling on the stack.  */
-	      
+		{
+		  /* Store it as the integers, 8 bytes at the time, if
+		     necessary spilling on the stack.  */
+		}
 	    }
 	    else if (len == 8)
 	      {
@@ -1205,9 +1202,10 @@ sh64_push_dummy_call (struct gdbarch *gdbarch,
 		    int_argreg ++;
 		  }
 		else
-		  ;
-		  /* Store it as the integers, 8 bytes at the time, if
-                     necessary spilling on the stack.  */
+		  {
+		    /* Store it as the integers, 8 bytes at the time, if
+		       necessary spilling on the stack.  */
+		  }
 	      }
 	}
     }
@@ -1263,7 +1261,7 @@ sh64_extract_return_value (struct type *type, struct regcache *regcache,
       if (len <= 8)
 	{
 	  int offset;
-	  char buf[8];
+	  gdb_byte buf[8];
 	  /* Result is in register 2.  If smaller than 8 bytes, it is padded 
 	     at the most significant end.  */
 	  regcache_raw_read (regcache, DEFAULT_RETURN_REGNUM, buf);
@@ -1292,7 +1290,7 @@ sh64_store_return_value (struct type *type, struct regcache *regcache,
 			 const void *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  char buf[64];	/* more than enough...  */
+  gdb_byte buf[64];	/* more than enough...  */
   int len = TYPE_LENGTH (type);
 
   if (TYPE_CODE (type) == TYPE_CODE_FLT)
@@ -1329,7 +1327,7 @@ sh64_store_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-sh64_return_value (struct gdbarch *gdbarch, struct type *func_type,
+sh64_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1340,125 +1338,6 @@ sh64_return_value (struct gdbarch *gdbarch, struct type *func_type,
   else if (readbuf)
     sh64_extract_return_value (type, regcache, readbuf);
   return RETURN_VALUE_REGISTER_CONVENTION;
-}
-
-static void
-sh64_show_media_regs (struct frame_info *frame)
-{
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  int i;
-
-  printf_filtered
-    ("PC=%s SR=%s\n",
-     phex (get_frame_register_unsigned (frame,
-					gdbarch_pc_regnum (gdbarch)), 8),
-     phex (get_frame_register_unsigned (frame, SR_REGNUM), 8));
-
-  printf_filtered
-    ("SSR=%s SPC=%s\n",
-     phex (get_frame_register_unsigned (frame, SSR_REGNUM), 8),
-     phex (get_frame_register_unsigned (frame, SPC_REGNUM), 8));
-  printf_filtered
-    ("FPSCR=%s\n ",
-     phex (get_frame_register_unsigned (frame, FPSCR_REGNUM), 8));
-
-  for (i = 0; i < 64; i = i + 4)
-    printf_filtered
-      ("\nR%d-R%d  %s %s %s %s\n",
-       i, i + 3,
-      phex (get_frame_register_unsigned (frame, i + 0), 8),
-      phex (get_frame_register_unsigned (frame, i + 1), 8),
-      phex (get_frame_register_unsigned (frame, i + 2), 8),
-      phex (get_frame_register_unsigned (frame, i + 3), 8));
-
-  printf_filtered ("\n");
-  
-  for (i = 0; i < 64; i = i + 8)
-    printf_filtered
-      ("FR%d-FR%d  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-       i, i + 7,
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 0),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 1),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 2),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 3),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 4),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 5),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 6),
-       (long) get_frame_register_unsigned
-	        (frame, gdbarch_fp0_regnum (gdbarch) + i + 7));
-}
-
-static void
-sh64_show_compact_regs (struct frame_info *frame)
-{
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  int i;
-
-  printf_filtered
-    ("PC=%s\n",
-     phex (get_frame_register_unsigned (frame, PC_C_REGNUM), 8));
-
-  printf_filtered
-    ("GBR=%08lx MACH=%08lx MACL=%08lx PR=%08lx T=%08lx\n",
-     (long) get_frame_register_unsigned (frame, GBR_C_REGNUM),
-     (long) get_frame_register_unsigned (frame, MACH_C_REGNUM),
-     (long) get_frame_register_unsigned (frame, MACL_C_REGNUM),
-     (long) get_frame_register_unsigned (frame, PR_C_REGNUM),
-     (long) get_frame_register_unsigned (frame, T_C_REGNUM));
-  printf_filtered
-    ("FPSCR=%08lx FPUL=%08lx\n",
-     (long) get_frame_register_unsigned (frame, FPSCR_C_REGNUM),
-     (long) get_frame_register_unsigned (frame, FPUL_C_REGNUM));
-
-  for (i = 0; i < 16; i = i + 4)
-    printf_filtered
-      ("\nR%d-R%d  %08lx %08lx %08lx %08lx\n",
-       i, i + 3,
-       (long) get_frame_register_unsigned (frame, i + 0),
-       (long) get_frame_register_unsigned (frame, i + 1),
-       (long) get_frame_register_unsigned (frame, i + 2),
-       (long) get_frame_register_unsigned (frame, i + 3));
-
-  printf_filtered ("\n");
-  
-  for (i = 0; i < 16; i = i + 8)
-    printf_filtered
-      ("FR%d-FR%d  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
-       i, i + 7,
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 0),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 1),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 2),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 3),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 4),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 5),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 6),
-       (long) get_frame_register_unsigned
-		(frame, gdbarch_fp0_regnum (gdbarch) + i + 7));
-}
-
-/* FIXME!!! This only shows the registers for shmedia, excluding the
-   pseudo registers.  */
-void
-sh64_show_regs (struct frame_info *frame)
-{
-  if (pc_is_isa32 (get_frame_pc (frame)))
-    sh64_show_media_regs (frame);
-  else
-    sh64_show_compact_regs (frame);
 }
 
 /* *INDENT-OFF* */
@@ -2052,7 +1931,7 @@ sh64_do_fp_register (struct gdbarch *gdbarch, struct ui_file *file,
     alloca (register_size (gdbarch, gdbarch_fp0_regnum (gdbarch)));
 
   /* Get the data in raw format.  */
-  if (!frame_register_read (frame, regnum, raw_buffer))
+  if (!deprecated_frame_register_read (frame, regnum, raw_buffer))
     error (_("can't read register %d (%s)"),
 	   regnum, gdbarch_register_name (gdbarch, regnum));
 
@@ -2168,7 +2047,7 @@ sh64_do_register (struct gdbarch *gdbarch, struct ui_file *file,
 				      (gdbarch, regnum)), file);
 
   /* Get the data in raw format.  */
-  if (!frame_register_read (frame, regnum, raw_buffer))
+  if (!deprecated_frame_register_read (frame, regnum, raw_buffer))
     fprintf_filtered (file, "*value not available*\n");
 
   get_formatted_print_options (&opts, 'x');

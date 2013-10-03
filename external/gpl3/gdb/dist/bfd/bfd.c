@@ -157,14 +157,17 @@ CODE_FRAGMENT
 .  {* Decompress sections in this BFD.  *}
 .#define BFD_DECOMPRESS 0x10000
 .
+.  {* BFD is a dummy, for plugins.  *}
+.#define BFD_PLUGIN 0x20000
+.
 .  {* Flags bits to be saved in bfd_preserve_save.  *}
 .#define BFD_FLAGS_SAVED \
-.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
+.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
 .
 .  {* Flags bits which are for BFD use only.  *}
 .#define BFD_FLAGS_FOR_BFD_USE_MASK \
 .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
-.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
+.   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
 .
 .  {* Currently my_archive is tested before adding origin to
 .     anything. I believe that this can become always an add of
@@ -794,6 +797,88 @@ bfd_get_error_handler (void)
 {
   return _bfd_error_handler;
 }
+
+/*
+SUBSECTION
+	BFD assert handler
+
+	If BFD finds an internal inconsistency, the bfd assert
+	handler is called with information on the BFD version, BFD
+	source file and line.  If this happens, most programs linked
+	against BFD are expected to want to exit with an error, or mark
+	the current BFD operation as failed, so it is recommended to
+	override the default handler, which just calls
+	_bfd_error_handler and continues.
+
+CODE_FRAGMENT
+.
+.typedef void (*bfd_assert_handler_type) (const char *bfd_formatmsg,
+.                                         const char *bfd_version,
+.                                         const char *bfd_file,
+.                                         int bfd_line);
+.
+*/
+
+/* Note the use of bfd_ prefix on the parameter names above: we want to
+   show which one is the message and which is the version by naming the
+   parameters, but avoid polluting the program-using-bfd namespace as
+   the typedef is visible in the exported headers that the program
+   includes.  Below, it's just for consistency.  */
+
+static void
+_bfd_default_assert_handler (const char *bfd_formatmsg,
+			     const char *bfd_version,
+			     const char *bfd_file,
+			     int bfd_line)
+
+{
+  (*_bfd_error_handler) (bfd_formatmsg, bfd_version, bfd_file, bfd_line);
+}
+
+/* Similar to _bfd_error_handler, a program can decide to exit on an
+   internal BFD error.  We use a non-variadic type to simplify passing
+   on parameters to other functions, e.g. _bfd_error_handler.  */
+
+bfd_assert_handler_type _bfd_assert_handler = _bfd_default_assert_handler;
+
+/*
+FUNCTION
+	bfd_set_assert_handler
+
+SYNOPSIS
+	bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
+
+DESCRIPTION
+	Set the BFD assert handler function.  Returns the previous
+	function.
+*/
+
+bfd_assert_handler_type
+bfd_set_assert_handler (bfd_assert_handler_type pnew)
+{
+  bfd_assert_handler_type pold;
+
+  pold = _bfd_assert_handler;
+  _bfd_assert_handler = pnew;
+  return pold;
+}
+
+/*
+FUNCTION
+	bfd_get_assert_handler
+
+SYNOPSIS
+	bfd_assert_handler_type bfd_get_assert_handler (void);
+
+DESCRIPTION
+	Return the BFD assert handler function.
+*/
+
+bfd_assert_handler_type
+bfd_get_assert_handler (void)
+{
+  return _bfd_assert_handler;
+}
 
 /*
 SECTION
@@ -939,8 +1024,8 @@ bfd_set_file_flags (bfd *abfd, flagword flags)
 void
 bfd_assert (const char *file, int line)
 {
-  (*_bfd_error_handler) (_("BFD %s assertion fail %s:%d"),
-			 BFD_VERSION_STRING, file, line);
+  (*_bfd_assert_handler) (_("BFD %s assertion fail %s:%d"),
+			  BFD_VERSION_STRING, file, line);
 }
 
 /* A more or less friendly abort message.  In libbfd.h abort is
@@ -1028,7 +1113,8 @@ bfd_get_sign_extend_vma (bfd *abfd)
       || strcmp (name, "pe-x86-64") == 0
       || strcmp (name, "pei-x86-64") == 0
       || strcmp (name, "pe-arm-wince-little") == 0
-      || strcmp (name, "pei-arm-wince-little") == 0)
+      || strcmp (name, "pei-arm-wince-little") == 0
+      || strcmp (name, "aixcoff-rs6000") == 0)
     return 1;
 
   if (CONST_STRNEQ (name, "mach-o"))
@@ -1338,6 +1424,11 @@ DESCRIPTION
 .       BFD_SEND (abfd, _bfd_find_nearest_line, \
 .                 (abfd, sec, syms, off, file, func, line))
 .
+.#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
+.                                            line, disc) \
+.       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
+.                 (abfd, sec, syms, off, file, func, line, disc))
+.
 .#define bfd_find_line(abfd, syms, sym, file, line) \
 .       BFD_SEND (abfd, _bfd_find_line, \
 .                 (abfd, syms, sym, file, line))
@@ -1369,6 +1460,9 @@ DESCRIPTION
 .
 .#define bfd_gc_sections(abfd, link_info) \
 .	BFD_SEND (abfd, _bfd_gc_sections, (abfd, link_info))
+.
+.#define bfd_lookup_section_flags(link_info, flag_info, section) \
+.	BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
 .
 .#define bfd_merge_sections(abfd, link_info) \
 .	BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))
@@ -1486,7 +1580,7 @@ bfd_record_phdr (bfd *abfd,
   if (count > 0)
     memcpy (m->sections, secs, count * sizeof (asection *));
 
-  for (pm = &elf_tdata (abfd)->segment_map; *pm != NULL; pm = &(*pm)->next)
+  for (pm = &elf_seg_map (abfd); *pm != NULL; pm = &(*pm)->next)
     ;
   *pm = m;
 
@@ -1590,128 +1684,6 @@ bfd_alt_mach_code (bfd *abfd, int alternative)
     }
 
   return FALSE;
-}
-
-/*
-CODE_FRAGMENT
-
-.struct bfd_preserve
-.{
-.  void *marker;
-.  void *tdata;
-.  flagword flags;
-.  const struct bfd_arch_info *arch_info;
-.  struct bfd_section *sections;
-.  struct bfd_section *section_last;
-.  unsigned int section_count;
-.  struct bfd_hash_table section_htab;
-.};
-.
-*/
-
-/*
-FUNCTION
-	bfd_preserve_save
-
-SYNOPSIS
-	bfd_boolean bfd_preserve_save (bfd *, struct bfd_preserve *);
-
-DESCRIPTION
-	When testing an object for compatibility with a particular
-	target back-end, the back-end object_p function needs to set
-	up certain fields in the bfd on successfully recognizing the
-	object.  This typically happens in a piecemeal fashion, with
-	failures possible at many points.  On failure, the bfd is
-	supposed to be restored to its initial state, which is
-	virtually impossible.  However, restoring a subset of the bfd
-	state works in practice.  This function stores the subset and
-	reinitializes the bfd.
-
-*/
-
-bfd_boolean
-bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
-{
-  preserve->tdata = abfd->tdata.any;
-  preserve->arch_info = abfd->arch_info;
-  preserve->flags = abfd->flags;
-  preserve->sections = abfd->sections;
-  preserve->section_last = abfd->section_last;
-  preserve->section_count = abfd->section_count;
-  preserve->section_htab = abfd->section_htab;
-
-  if (! bfd_hash_table_init (&abfd->section_htab, bfd_section_hash_newfunc,
-			     sizeof (struct section_hash_entry)))
-    return FALSE;
-
-  abfd->tdata.any = NULL;
-  abfd->arch_info = &bfd_default_arch_struct;
-  abfd->flags &= BFD_FLAGS_SAVED;
-  abfd->sections = NULL;
-  abfd->section_last = NULL;
-  abfd->section_count = 0;
-
-  return TRUE;
-}
-
-/*
-FUNCTION
-	bfd_preserve_restore
-
-SYNOPSIS
-	void bfd_preserve_restore (bfd *, struct bfd_preserve *);
-
-DESCRIPTION
-	This function restores bfd state saved by bfd_preserve_save.
-	If MARKER is non-NULL in struct bfd_preserve then that block
-	and all subsequently bfd_alloc'd memory is freed.
-
-*/
-
-void
-bfd_preserve_restore (bfd *abfd, struct bfd_preserve *preserve)
-{
-  bfd_hash_table_free (&abfd->section_htab);
-
-  abfd->tdata.any = preserve->tdata;
-  abfd->arch_info = preserve->arch_info;
-  abfd->flags = preserve->flags;
-  abfd->section_htab = preserve->section_htab;
-  abfd->sections = preserve->sections;
-  abfd->section_last = preserve->section_last;
-  abfd->section_count = preserve->section_count;
-
-  /* bfd_release frees all memory more recently bfd_alloc'd than
-     its arg, as well as its arg.  */
-  if (preserve->marker != NULL)
-    {
-      bfd_release (abfd, preserve->marker);
-      preserve->marker = NULL;
-    }
-}
-
-/*
-FUNCTION
-	bfd_preserve_finish
-
-SYNOPSIS
-	void bfd_preserve_finish (bfd *, struct bfd_preserve *);
-
-DESCRIPTION
-	This function should be called when the bfd state saved by
-	bfd_preserve_save is no longer needed.  ie. when the back-end
-	object_p function returns with success.
-
-*/
-
-void
-bfd_preserve_finish (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_preserve *preserve)
-{
-  /* It would be nice to be able to free more memory here, eg. old
-     tdata, but that's not possible since these blocks are sitting
-     inside bfd_alloc'd memory.  The section hash is on a separate
-     objalloc.  */
-  bfd_hash_table_free (&preserve->section_htab);
 }
 
 /*

@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1997, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1992-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
-
-if $tracelevel then {
-	strace $tracelevel
-}
 
 
 set testfile "bitfields"
@@ -250,6 +245,31 @@ proc bitfield_at_offset {} {
     gdb_test "print container.two.u3" ".* = 3"
 }
 
+proc bitfield_internalvar {} {
+    global gdb_prompt
+
+    # First, we create an internal var holding an instance of
+    # the struct (zeroed out).
+    gdb_test "set \$myvar = (struct internalvartest) \{0\}" "" \
+      "set internal var"
+
+    # Now, we set the proper bits.
+    gdb_test_no_output "set \$myvar.a = 0"
+    gdb_test_no_output "set \$myvar.inner.b = 1"
+    gdb_test_no_output "set \$myvar.inner.deep.c = 0"
+    gdb_test_no_output "set \$myvar.inner.deep.d = -1"
+    gdb_test_no_output "set \$myvar.inner.e = 1"
+    gdb_test_no_output "set \$myvar.f = 1"
+
+    # Here comes the true testing.
+    gdb_test "print \$myvar.a" "\\$\[0-9\]\+ = 0"
+    gdb_test "print \$myvar.inner.b" "\\$\[0-9\]\+ = 1"
+    gdb_test "print \$myvar.inner.deep.c" "\\$\[0-9\]\+ = 0"
+    gdb_test "print \$myvar.inner.deep.d" "\\$\[0-9\]\+ = -1"
+    gdb_test "print \$myvar.inner.e" "\\$\[0-9\]\+ = -1"
+    gdb_test "print \$myvar.f" "\\$\[0-9\]\+ = -1"
+}
+
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
@@ -257,29 +277,8 @@ gdb_load ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 
 bitfield_uniqueness
-if [istarget "mips-idt-*"] then {
-    # Restart because IDT/SIM runs out of file descriptors.
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
-}
 bitfield_containment
-if [istarget "mips-idt-*"] then {
-    # Restart because IDT/SIM runs out of file descriptors.
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
-}
 bitfield_unsignedness
-if [istarget "mips-idt-*"] then {
-    # Restart because IDT/SIM runs out of file descriptors.
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
-}
 bitfield_signedness
-
 bitfield_at_offset
+bitfield_internalvar

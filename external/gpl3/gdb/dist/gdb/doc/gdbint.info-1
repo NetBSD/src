@@ -1,4 +1,4 @@
-This is gdbint.info, produced by makeinfo version 4.8 from
+This is gdbint.info, produced by makeinfo version 4.13 from
 ./gdbint.texinfo.
 
 INFO-DIR-SECTION Software development
@@ -6,10 +6,9 @@ START-INFO-DIR-ENTRY
 * Gdb-Internals: (gdbint).	The GNU debugger's internals.
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011 Free
-Software Foundation, Inc.  Contributed by Cygnus Solutions.  Written by
-John Gilmore.  Second Edition by Stan Shebs.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.  Contributed
+by Cygnus Solutions.  Written by John Gilmore.  Second Edition by Stan
+Shebs.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -20,10 +19,9 @@ Free Documentation License".
 
    This file documents the internals of the GNU debugger GDB.
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011 Free
-Software Foundation, Inc.  Contributed by Cygnus Solutions.  Written by
-John Gilmore.  Second Edition by Stan Shebs.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.  Contributed
+by Cygnus Solutions.  Written by John Gilmore.  Second Edition by Stan
+Shebs.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -70,7 +68,8 @@ the mechanisms that adapt GDB to specific hosts and targets.
 
 * GDB Observers::  GDB Currently available observers
 * GNU Free Documentation License::  The license for this documentation
-* Index::
+* Concept Index::
+* Function and Variable Index::
 
 
 File: gdbint.info,  Node: Summary,  Next: Overall Structure,  Prev: Top,  Up: Top
@@ -927,7 +926,7 @@ previously available.  This new interface needed to be strongly typed,
 easy to extend, and versatile enough to be used as the standard
 interface when adding new notifications.
 
-   See *Note GDB Observers:: for a brief description of the observers
+   See *note GDB Observers:: for a brief description of the observers
 currently implemented in GDB. The rationale for the current
 implementation is also briefly discussed.
 
@@ -2120,7 +2119,7 @@ The IBM RS/6000 running AIX uses an object file format called XCOFF.
 The COFF sections, symbols, and line numbers are used, but debugging
 symbols are `dbx'-style stabs whose strings are located in the `.debug'
 section (rather than the string table).  For more information, see
-*Note Top: (stabs)Top.
+*note Top: (stabs)Top.
 
    The shared library scheme has a clean interface for figuring out what
 shared libraries are in use, but the catch is that everything which
@@ -2445,14 +2444,6 @@ are:
      The default name of GDB's initialization file (normally
      `.gdbinit').
 
-`SIGWINCH_HANDLER'
-     If your host defines `SIGWINCH', you can define this to be the name
-     of a function to be called if `SIGWINCH' is received.
-
-`SIGWINCH_HANDLER_BODY'
-     Define this to expand into code that will define the function
-     named by the expansion of `SIGWINCH_HANDLER'.
-
 `CRLF_SOURCE_FILES'
      Define this if host files use `\r\n' rather than `\n' as a line
      terminator.  This will cause source file listings to omit `\r'
@@ -2471,10 +2462,6 @@ are:
 
 `FOPEN_RB'
      Define this if binary files are opened the same way as text files.
-
-`CC_HAS_LONG_LONG'
-     Define this if the host C compiler supports `long long'.  This is
-     set by the `configure' script.
 
 `PRINTF_HAS_LONG_LONG'
      Define this if the host can handle printing of long long integers
@@ -3226,7 +3213,7 @@ These functions return information about registers.
      function for fuller control over how the registers are displayed.
 
      The access should be for the specified architecture, GDBARCH, with
-     output to the the file specified by the User Interface Independent
+     output to the file specified by the User Interface Independent
      Output file handle, FILE (*note UI-Independent Output--the
      `ui_out' Functions: UI-Independent Output.).
 
@@ -4122,8 +4109,12 @@ architecture.
      of bytes that encode a breakpoint instruction, stores the length
      of the string to `*LENPTR', and adjusts the program counter (if
      necessary) to point to the actual memory location where the
-     breakpoint should be inserted.  May return `NULL' to indicate that
-     software breakpoints are not supported.
+     breakpoint should be inserted.  On input, the program counter
+     (`*PCPTR' is the encoded inferior's PC register.  If software
+     breakpoints are supported, the function sets this argument to the
+     PC's plain address.  If software breakpoints are not supported,
+     the function returns NULL instead of the encoded breakpoint
+     instruction.
 
      Although it is common to use a trap instruction for a breakpoint,
      it's not required; for instance, the bit pattern could be an
@@ -4260,7 +4251,7 @@ architecture.
 
 `I386_USE_GENERIC_WATCHPOINTS'
      An x86-based target can define this to use the generic x86
-     watchpoint support; see *Note I386_USE_GENERIC_WATCHPOINTS:
+     watchpoint support; see *note I386_USE_GENERIC_WATCHPOINTS:
      Algorithms.
 
 `gdbarch_in_function_epilogue_p (GDBARCH, ADDR)'
@@ -4377,7 +4368,7 @@ architecture.
      Define this to push the dummy frame's call to the inferior
      function onto the stack.  In addition to pushing NARGS, the code
      should push STRUCT_ADDR (when STRUCT_RETURN is non-zero), and the
-     return address (BP_ADDR).
+     return address (BP_ADDR, in inferior's PC register encoding).
 
      FUNCTION is a pointer to a `struct value'; on architectures that
      use function descriptors, this contains the function descriptor
@@ -4391,12 +4382,14 @@ architecture.
      should return.
 
      Set BP_ADDR to the address at which the breakpoint instruction
-     should be inserted, REAL_PC to the resume address when starting
-     the call sequence, and return the updated inner-most stack address.
+     should be inserted (in inferior's PC register encoding), REAL_PC
+     to the resume address when starting the call sequence, and return
+     the updated inner-most stack address.
 
      By default, the stack is grown sufficient to hold a frame-aligned
      (*note frame_align::) breakpoint, BP_ADDR is set to the address
-     reserved for that breakpoint, and REAL_PC set to FUNADDR.
+     reserved for that breakpoint (in inferior's PC register encoding),
+     and REAL_PC set to FUNADDR.
 
      This method replaces `gdbarch_call_dummy_location (GDBARCH)'.
 
@@ -4463,10 +4456,6 @@ architecture.
 `int gdbarch_stab_reg_to_regnum (GDBARCH, STAB_REGNR)'
      Use this function to convert stab register STAB_REGNR into GDB
      regnum.  If not defined, no conversion will be done.
-
-`SYMBOL_RELOADING_DEFAULT'
-     The default value of the "symbol-reloading" variable.  (Never
-     defined in current sources.)
 
 `TARGET_CHAR_BIT'
      Number of bits in a char; defaults to 8.
@@ -4627,7 +4616,7 @@ mechanism for the user to tell GDB more about what their target
 supports, or for the target to tell GDB directly.
 
    For details on writing, automatically supplying, and manually
-selecting target descriptions, see *Note Target Descriptions:
+selecting target descriptions, see *note Target Descriptions:
 (gdb)Target Descriptions.  This section will cover some related topics
 about the GDB internals.
 
@@ -4660,7 +4649,7 @@ architecture's gdbarch initialization routine is called to create the
 new architecture.  Then the initialization routine is called, and has a
 chance to adjust the constructed architecture based on the contents of
 the target description.  For instance, it can recognize any properties
-set by a `to_read_description' routine.  Also see *Note Adding Target
+set by a `to_read_description' routine.  Also see *note Adding Target
 Described Register Support::.
 
 
@@ -4932,7 +4921,7 @@ the same.  These macros should be defined (or left undefined) in
 
 `I386_USE_GENERIC_WATCHPOINTS'
      An x86-based machine can define this to use the generic x86
-     watchpoint support; see *Note I386_USE_GENERIC_WATCHPOINTS:
+     watchpoint support; see *note I386_USE_GENERIC_WATCHPOINTS:
      Algorithms.
 
 `SOLIB_ADD (FILENAME, FROM_TTY, TARG, READSYMS)'
@@ -5327,6 +5316,21 @@ Use...         ...instead of
 `(foo) x'      `(foo)x'       (cast)
 `*x'           `* x'          (pointer dereference)
 
+   Any two or more lines in code should be wrapped in braces, even if
+they are comments, as they look like separate statements:
+
+     if (i)
+       {
+         /* Return success.  */
+         return 0;
+       }
+
+and not:
+
+     if (i)
+       /* Return success.  */
+       return 0;
+
 16.1.3 Comments
 ---------------
 
@@ -5375,6 +5379,17 @@ that the macro arguments are protected with parentheses.)
    Declarations like `struct foo *' should be used in preference to
 declarations like `typedef struct foo { ... } *foo_ptr'.
 
+   Zero constant (`0') is not interchangeable with a null pointer
+constant (`NULL') anywhere.  GCC does not give a warning for such
+interchange.  Specifically:
+
+incorrect      `if (pointervar) {}'
+incorrect      `if (!pointervar) {}'
+incorrect      `if (pointervar != 0) {}'
+incorrect      `if (pointervar == 0) {}'
+correct        `if (pointervar != NULL) {}'
+correct        `if (pointervar == NULL) {}'
+
 16.1.5 Function Prototypes
 --------------------------
 
@@ -5384,9 +5399,10 @@ type and name, with the name matching that used in the actual function
 definition.
 
    All external functions should have a declaration in a header file
-that callers include, except for `_initialize_*' functions, which must
-be external so that `init.c' construction works, but shouldn't be
-visible to random source files.
+that callers include, that declaration should use the `extern' modifier.
+The only exception concerns `_initialize_*' functions, which must be
+external so that `init.c' construction works, but shouldn't be visible
+to random source files.
 
    Where a source file needs a forward declaration of a static function,
 that declaration must appear in a block near the top of the source file.
@@ -6189,31 +6205,9 @@ performed:
 
         *   file `gdbserver/gdbreplay.c', function `gdbreplay_version'
 
-   * Run the `copyright.sh' script to add the new year in the copyright
-     notices of most source files.  This script requires Emacs 22 or
-     later to be installed.
-
-   * The new year also needs to be added manually in all other files
-     that are not already taken care of by the `copyright.sh' script:
-        *   `*.s'
-
-        *   `*.f'
-
-        *   `*.f90'
-
-        *   `*.igen'
-
-        *   `*.ac'
-
-        *   `*.texi'
-
-        *   `*.texinfo'
-
-        *   `*.tex'
-
-        *   `*.defs'
-
-        *   `*.1'
+   * Run the `copyright.py' Python script to add the new year in the
+     copyright notices of most source files.  This script has been
+     tested with Python 2.6 and 2.7.
 
 
 
@@ -6985,7 +6979,7 @@ Several variables exist to modify the behavior of the testsuite.
      When running the testsuite normally one doesn't want whatever is in
      `~/.gdbinit' to interfere with the tests, therefore the test
      harness passes `-nx' to GDB.  One also doesn't want any windowed
-     version of GDB, e.g., `gdbtui', to run.  This is achieved via
+     version of GDB, e.g., `gdb -tui', to run.  This is achieved via
      `INTERNAL_GDBFLAGS'.
 
           set INTERNAL_GDBFLAGS "-nw -nx"
@@ -7125,6 +7119,96 @@ instance, some GDB bugs involving the display of source lines would
 never manifest themselves if the programs used GNU coding style
 uniformly.
 
+   Some testcase results need more detailed explanation:
+
+`KFAIL'
+     Known problem of GDB itself.  You must specify the GDB bug report
+     number like in these sample tests:
+          kfail "gdb/13392" "continue to marker 2"
+     or
+          setup_kfail gdb/13392 "*-*-*"
+          kfail "continue to marker 2"
+
+`XFAIL'
+     Known problem of environment.  This typically includes GCC but it
+     includes also many other system components which cannot be fixed
+     in the GDB project.  Sample test with sanity check not knowing the
+     specific cause of the problem:
+          # On x86_64 it is commonly about 4MB.
+          if {$stub_size > 25000000} {
+              xfail "stub size $stub_size is too large"
+              return
+          }
+
+     You should provide bug report number for the failing component of
+     the environment, if such bug report is available:
+          if {[test_compiler_info {gcc-[0-3]-*}]
+             || [test_compiler_info {gcc-4-[0-5]-*}]} {
+             setup_xfail "gcc/46955" *-*-*
+          }
+          gdb_test "python print ttype.template_argument(2)" "&C::c"
+
+22.6 Board settings
+===================
+
+In GDB testsuite, the tests can be configured or customized in the board
+file by means of "Board Settings".  Each setting   should be consulted
+by test cases that depend on the corresponding feature.
+
+   Here are the supported board settings:
+
+`gdb,cannot_call_functions'
+     The board does not support inferior call, that is, invoking
+     inferior functions in GDB.
+
+`gdb,can_reverse'
+     The board supports reverse execution.
+
+`gdb,no_hardware_watchpoints'
+     The board does not support hardware watchpoints.
+
+`gdb,nofileio'
+     GDB is unable to intercept target file operations in remote and
+     perform them on the host.
+
+`gdb,noinferiorio'
+     The board is unable to provide I/O capability to the inferior.
+
+`gdb,nosignals'
+     The board does not support signals.
+
+`gdb,skip_huge_test'
+     Skip time-consuming tests on the board with slow connection.
+
+`gdb,skip_float_tests'
+     Skip tests related to float points on target board.
+
+`gdb,use_precord'
+     The board supports process record.
+
+`gdb_server_prog'
+     The location of GDBserver.  If GDBserver somewhere other than its
+     default location is used in test, specify the location of
+     GDBserver in this variable.  The location is a file name of
+     GDBserver that can be either absolute or relative to testsuite
+     subdirectory in build directory.
+
+`in_proc_agent'
+     The location of in-process agent.  If in-process agent other than
+     its default location is used in test, specify the location of
+     in-process agent in this variable.  The location is a file name of
+     in-process agent that can be either  absolute or relative to
+     testsuite subdirectory in build directory.
+
+`noargs'
+     GDB does not support argument passing for inferior.
+
+`no_long_long'
+     The board does not support type `long long'.
+
+`use_gdb_stub'
+     The tests are running with gdb stub.
+
    ---------- Footnotes ----------
 
    (1) If you are using a board file, it could override the test-suite
@@ -7221,108 +7305,4 @@ information on `bug-gdb'.  But _never_ post a generic question like "I
 was wondering if anyone could give me some tips about understanding
 GDB"--if we had some magic secret we would put it in this manual.
 Suggestions for improving the manual are always welcome, of course.
-
-
-File: gdbint.info,  Node: Debugging GDB,  Prev: Getting Started,  Up: Hints
-
-23.2 Debugging GDB with itself
-==============================
-
-If GDB is limping on your machine, this is the preferred way to get it
-fully functional.  Be warned that in some ancient Unix systems, like
-Ultrix 4.2, a program can't be running in one process while it is being
-debugged in another.  Rather than typing the command `./gdb ./gdb',
-which works on Suns and such, you can copy `gdb' to `gdb2' and then
-type `./gdb ./gdb2'.
-
-   When you run GDB in the GDB source directory, it will read a
-`.gdbinit' file that sets up some simple things to make debugging gdb
-easier.  The `info' command, when executed without a subcommand in a
-GDB being debugged by gdb, will pop you back up to the top level gdb.
-See `.gdbinit' for details.
-
-   If you use emacs, you will probably want to do a `make TAGS' after
-you configure your distribution; this will put the machine dependent
-routines for your local machine where they will be accessed first by
-`M-.'
-
-   Also, make sure that you've either compiled GDB with your local cc,
-or have run `fixincludes' if you are compiling with gcc.
-
-23.3 Submitting Patches
-=======================
-
-Thanks for thinking of offering your changes back to the community of
-GDB users.  In general we like to get well designed enhancements.
-Thanks also for checking in advance about the best way to transfer the
-changes.
-
-   The GDB maintainers will only install "cleanly designed" patches.
-This manual summarizes what we believe to be clean design for GDB.
-
-   If the maintainers don't have time to put the patch in when it
-arrives, or if there is any question about a patch, it goes into a
-large queue with everyone else's patches and bug reports.
-
-   The legal issue is that to incorporate substantial changes requires a
-copyright assignment from you and/or your employer, granting ownership
-of the changes to the Free Software Foundation.  You can get the
-standard documents for doing this by sending mail to `gnu@gnu.org' and
-asking for it.  We recommend that people write in "All programs owned
-by the Free Software Foundation" as "NAME OF PROGRAM", so that changes
-in many programs (not just GDB, but GAS, Emacs, GCC, etc) can be
-contributed with only one piece of legalese pushed through the
-bureaucracy and filed with the FSF.  We can't start merging changes
-until this paperwork is received by the FSF (their rules, which we
-follow since we maintain it for them).
-
-   Technically, the easiest way to receive changes is to receive each
-feature as a small context diff or unidiff, suitable for `patch'.  Each
-message sent to me should include the changes to C code and header
-files for a single feature, plus `ChangeLog' entries for each directory
-where files were modified, and diffs for any changes needed to the
-manuals (`gdb/doc/gdb.texinfo' or `gdb/doc/gdbint.texinfo').  If there
-are a lot of changes for a single feature, they can be split down into
-multiple messages.
-
-   In this way, if we read and like the feature, we can add it to the
-sources with a single patch command, do some testing, and check it in.
-If you leave out the `ChangeLog', we have to write one.  If you leave
-out the doc, we have to puzzle out what needs documenting.  Etc., etc.
-
-   The reason to send each change in a separate message is that we will
-not install some of the changes.  They'll be returned to you with
-questions or comments.  If we're doing our job correctly, the message
-back to you will say what you have to fix in order to make the change
-acceptable.  The reason to have separate messages for separate features
-is so that the acceptable changes can be installed while one or more
-changes are being reworked.  If multiple features are sent in a single
-message, we tend to not put in the effort to sort out the acceptable
-changes from the unacceptable, so none of the features get installed
-until all are acceptable.
-
-   If this sounds painful or authoritarian, well, it is.  But we get a
-lot of bug reports and a lot of patches, and many of them don't get
-installed because we don't have the time to finish the job that the bug
-reporter or the contributor could have done.  Patches that arrive
-complete, working, and well designed, tend to get installed on the day
-they arrive.  The others go into a queue and get installed as time
-permits, which, since the maintainers have many demands to meet, may not
-be for quite some time.
-
-   Please send patches directly to the GDB maintainers
-<gdb-patches@sourceware.org>.
-
-23.4 Build Script
-=================
-
-The script `gdb_buildall.sh' builds GDB with flag
-`--enable-targets=all' set.  This builds GDB with all supported targets
-activated.  This helps testing GDB when doing changes that affect more
-than one architecture and is much faster than using `gdb_mbuild.sh'.
-
-   After building GDB the script checks which architectures are
-supported and then switches the current architecture to each of those
-to get information about the architecture.  The test results are stored
-in log files in the directory the script was called from.
 

@@ -10,21 +10,23 @@
 # Chet Ramey
 # chet@po.cwru.edu
 
-# Copyright (C) 1996-2002 Free Software Foundation, Inc.
+#   Copyright (C) 1996-2009 Free Software Foundation, Inc.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+#   This file is part of GNU Bash, the Bourne Again SHell.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 #
 # defaults
@@ -62,7 +64,7 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-case "${host_os}-${SHOBJ_CC}" in
+case "${host_os}-${SHOBJ_CC}-${host_vendor}" in
 sunos4*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD=/usr/bin/ld
@@ -80,15 +82,17 @@ sunos4*)
 	;;
 
 sunos5*-*gcc*|solaris2*-*gcc*)
-	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='${CC}'
 	ld_used=`gcc -print-prog-name=ld`
 	if ${ld_used} -V 2>&1 | grep GNU >/dev/null 2>&1; then
 		# This line works for the GNU ld
 		SHOBJ_LDFLAGS='-shared -Wl,-h,$@'
+		# http://sourceware.org/ml/binutils/2001-08/msg00361.html
+		SHOBJ_CFLAGS=-fPIC
 	else
 		# This line works for the Solaris linker in /usr/ccs/bin/ld
 		SHOBJ_LDFLAGS='-shared -Wl,-i -Wl,-h,$@'
+		SHOBJ_CFLAGS=-fpic
 	fi
 
 #	SHLIB_XLDFLAGS='-R $(libdir)'
@@ -104,8 +108,8 @@ sunos5*|solaris2*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-# All versions of Linux or the semi-mythical GNU Hurd.
-linux*-*|gnu*-*|k*bsd*-gnu-*)
+# All versions of Linux (including Gentoo/FreeBSD) or the semi-mythical GNU Hurd.
+linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*-gentoo)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
@@ -114,7 +118,7 @@ linux*-*|gnu*-*|k*bsd*-gnu-*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
 	;;
 
-freebsd2* | netbsd*)
+freebsd2*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD=ld
 	SHOBJ_LDFLAGS='-x -Bshareable'
@@ -124,8 +128,8 @@ freebsd2* | netbsd*)
 	;;
 
 # FreeBSD-3.x ELF
-freebsd[3-9]*|freebsdelf[3-9]*|freebsdaout[3-9]*|dragonfly*)
-	SHOBJ_CFLAGS=-fpic
+freebsd3*|freebsdaout*)
+	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 
 	if [ -x /usr/bin/objformat ] && [ "`/usr/bin/objformat`" = "elf" ]; then
@@ -141,7 +145,35 @@ freebsd[3-9]*|freebsdelf[3-9]*|freebsdaout[3-9]*|dragonfly*)
 	fi
 	;;
 
+# FreeBSD-4.x and later have only ELF
+freebsd[4-9]*|freebsdelf*|dragonfly*)
+	SHOBJ_CFLAGS=-fPIC
+	SHOBJ_LD='${CC}'
+
+	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
+	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir)'
+
+	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
+	;;
+
 # Darwin/MacOS X
+darwin[89]*|darwin10*)
+	SHOBJ_STATUS=supported
+	SHLIB_STATUS=supported
+	
+	SHOBJ_CFLAGS='-fno-common'
+
+	SHOBJ_LD='MACOSX_DEPLOYMENT_TARGET=10.3 ${CC}'
+
+	SHLIB_LIBVERSION='$(SHLIB_MAJOR)$(SHLIB_MINOR).$(SHLIB_LIBSUFF)'
+	SHLIB_LIBSUFF='dylib'
+
+	SHOBJ_LDFLAGS='-dynamiclib -dynamic -undefined dynamic_lookup -arch_only `/usr/bin/arch`'
+	SHLIB_XLDFLAGS='-dynamiclib -arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
+
+	SHLIB_LIBS='-lncurses'	# see if -lcurses works on MacOS X 10.1 
+	;;
+
 darwin*|macosx*)
 	SHOBJ_STATUS=unsupported
 	SHLIB_STATUS=supported
@@ -154,7 +186,7 @@ darwin*|macosx*)
 	SHLIB_LIBSUFF='dylib'
 
 	case "${host_os}" in
-	darwin[78]*)	SHOBJ_LDFLAGS=''
+	darwin[789]*|darwin10*)	SHOBJ_LDFLAGS=''
 			SHLIB_XLDFLAGS='-dynamiclib -arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
 			;;
 	*)		SHOBJ_LDFLAGS='-dynamic'
@@ -165,7 +197,7 @@ darwin*|macosx*)
 	SHLIB_LIBS='-lncurses'	# see if -lcurses works on MacOS X 10.1 
 	;;
 
-openbsd*)
+openbsd*|netbsd*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'
@@ -230,7 +262,7 @@ osf*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-aix4.[2-9]*-*gcc*)		# lightly tested by jik@cisco.com
+aix4.[2-9]*-*gcc*|aix[5-9].*-*gcc*)		# lightly tested by jik@cisco.com
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='ld'
 	SHOBJ_LDFLAGS='-bdynamic -bnoentry -bexpall'
@@ -241,7 +273,7 @@ aix4.[2-9]*-*gcc*)		# lightly tested by jik@cisco.com
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-aix4.[2-9]*)
+aix4.[2-9]*|aix[5-9].*)
 	SHOBJ_CFLAGS=-K
 	SHOBJ_LD='ld'
 	SHOBJ_LDFLAGS='-bdynamic -bnoentry -bexpall'
@@ -312,7 +344,7 @@ hpux10*-*gcc*)
 	SHOBJ_LD='${CC}'
 	# if you have problems linking here, moving the `-Wl,+h,$@' from
 	# SHLIB_XLDFLAGS to SHOBJ_LDFLAGS has been reported to work
-	SHOBJ_LDFLAGS='-shared -Wl,-b -Wl,+s'
+	SHOBJ_LDFLAGS='-shared -fpic -Wl,-b -Wl,+s'
 
 	SHLIB_XLDFLAGS='-Wl,+h,$@ -Wl,+b,$(libdir)'
 	SHLIB_LIBSUFF='sl'
@@ -472,20 +504,37 @@ msdos*)
 
 cygwin*)
 	SHOBJ_LD='$(CC)'
-        SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all -Wl,--out-implib=$(@).a'
-        SHLIB_LIBPREF='cyg'
-        SHLIB_LIBSUFF='dll'
-        SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
-        SHLIB_LIBS='$(TERMCAP_LIB)'
+	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all -Wl,--out-implib=$(@).a'
+	SHLIB_LIBPREF='cyg'
+	SHLIB_LIBSUFF='dll'
+	SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
+	SHLIB_LIBS='$(TERMCAP_LIB)'
 
 	SHLIB_DOT=
-        # For official cygwin releases, DLLVERSION will be defined in the
-        # environment of configure, and will be incremented any time the API
-        # changes in a non-backwards compatible manner.  Otherwise, it is just
-        # SHLIB_MAJOR.
-        if [ -n "$DLLVERSION" ] ; then
+	# For official cygwin releases, DLLVERSION will be defined in the
+	# environment of configure, and will be incremented any time the API
+	# changes in a non-backwards compatible manner.  Otherwise, it is just
+	# SHLIB_MAJOR.
+	if [ -n "$DLLVERSION" ] ; then
 		SHLIB_DLLVERSION="$DLLVERSION"
-        fi
+	fi
+	;;
+
+mingw*)
+	SHOBJ_LD='$(CC)'
+	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all -Wl,--out-implib=$(@).a'
+	SHLIB_LIBSUFF='dll'
+	SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
+	SHLIB_LIBS='$(TERMCAP_LIB)'
+
+	SHLIB_DOT=
+	# For official cygwin releases, DLLVERSION will be defined in the
+	# environment of configure, and will be incremented any time the API
+	# changes in a non-backwards compatible manner.  Otherwise, it is just
+	# SHLIB_MAJOR.
+	if [ -n "$DLLVERSION" ] ; then
+		SHLIB_DLLVERSION="$DLLVERSION"
+	fi
 	;;
 
 #

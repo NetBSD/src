@@ -1,6 +1,6 @@
 /* BFD back-end for Apollo 68000 COFF binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1999, 2000, 2001, 2002, 2003,
-   2005, 2007, 2008  Free Software Foundation, Inc.
+   2005, 2007, 2008, 2012  Free Software Foundation, Inc.
    By Troy Rollo (troy@cbme.unsw.edu.au)
    Based on m68k standard COFF version Written by Cygnus Support.
 
@@ -52,14 +52,12 @@ reloc_howto_type apollocoff_howto_table[] =
 
 /* Turn a howto into a reloc number.  */
 
-extern void apollo_rtype2howto PARAMS ((arelent *, int));
-extern int  apollo_howto2rtype PARAMS ((reloc_howto_type *));
+extern void apollo_rtype2howto (arelent *, int);
+extern int  apollo_howto2rtype (reloc_howto_type *);
 #ifndef ONLY_DECLARE_RELOCS
 
 void
-apollo_rtype2howto (internal, relocentry)
-     arelent *internal;
-     int relocentry;
+apollo_rtype2howto (arelent *internal, int relocentry)
 {
   switch (relocentry)
     {
@@ -74,8 +72,7 @@ apollo_rtype2howto (internal, relocentry)
 }
 
 int
-apollo_howto2rtype (internal)
-     reloc_howto_type *internal;
+apollo_howto2rtype (reloc_howto_type *internal)
 {
   if (internal->pc_relative)
     {

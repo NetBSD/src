@@ -77,7 +77,7 @@ struct xcoff_backend_data_rec
     (bfd *, union internal_auxent *, const char *);
 
   /* Line number and relocation overflow.
-     XCOFF32 overflows to another section when the line number or the 
+     XCOFF32 overflows to another section when the line number or the
      relocation count exceeds 0xffff.  XCOFF64 does not overflow.  */
   bfd_boolean (*_xcoff_is_lineno_count_overflow) (bfd *, bfd_vma);
   bfd_boolean (*_xcoff_is_reloc_count_overflow)  (bfd *, bfd_vma);
@@ -87,11 +87,11 @@ struct xcoff_backend_data_rec
      XCOFF64 is offset in .loader header.  */
   bfd_vma (*_xcoff_loader_symbol_offset) (bfd *, struct internal_ldhdr *);
   bfd_vma (*_xcoff_loader_reloc_offset)  (bfd *, struct internal_ldhdr *);
-  
-  /* Global linkage.  The first word of global linkage code must be be 
+
+  /* Global linkage.  The first word of global linkage code must be be
      modified by filling in the correct TOC offset.  */
   unsigned long *_xcoff_glink_code;
-  
+
   /* Size of the global link code in bytes of the xcoff_glink_code table.  */
   unsigned long _xcoff_glink_size;
 
@@ -185,7 +185,7 @@ struct xcoff_backend_data_rec
 #define bfd_xcoff_glink_code(a, b)   ((xcoff_backend (a)->_xcoff_glink_code[(b)]))
 #define bfd_xcoff_glink_code_size(a) ((xcoff_backend (a)->_xcoff_glink_size))
 
-/* Check for the magic number U803XTOCMAGIC or U64_TOCMAGIC for 64 bit 
+/* Check for the magic number U803XTOCMAGIC or U64_TOCMAGIC for 64 bit
    targets.  */
 #define bfd_xcoff_is_xcoff64(a) \
   (   (0x01EF == (bfd_xcoff_magic_number (a))) \
@@ -234,5 +234,27 @@ bfd_boolean xcoff_reloc_type_rel  (XCOFF_RELOC_FUNCTION_ARGS);
 bfd_boolean xcoff_reloc_type_toc  (XCOFF_RELOC_FUNCTION_ARGS);
 bfd_boolean xcoff_reloc_type_ba   (XCOFF_RELOC_FUNCTION_ARGS);
 bfd_boolean xcoff_reloc_type_crel (XCOFF_RELOC_FUNCTION_ARGS);
+
+/* Structure to describe dwarf sections.
+   Useful to convert from XCOFF section name to flag and vice-versa.
+   Also mark if section has a length field at the beginning.  */
+struct xcoff_dwsect_name {
+  /* A XCOFF dwarf section is identified by its name.  */
+  unsigned int flag;
+
+  /* Corresponding XCOFF section name.  */
+  const char *name;
+
+  /* True if size must be prepended.  */
+  bfd_boolean def_size;
+};
+
+/* Number of entries in the array.  The number is known and public so that user
+   can 'extend' this array by index.  */
+#define XCOFF_DWSECT_NBR_NAMES	8
+
+/* The dwarf sections array.  */
+extern const struct xcoff_dwsect_name
+  xcoff_dwsect_names[XCOFF_DWSECT_NBR_NAMES];
 
 #endif /* LIBXCOFF_H */

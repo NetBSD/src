@@ -2,6 +2,9 @@
 
 enum region { oriental, egyptian, greek, etruscan, roman };
 
+void keepalive(bool *var) { }
+void keepalive_int (int *var) { }
+
 // Test one.
 class gnu_obj_1
 {
@@ -15,10 +18,15 @@ protected:
 
 public:
   gnu_obj_1(antiquities a, long l) {}
+  ~gnu_obj_1() {}
 
   long method ()
   {
+    static int sintvar = 4;
     static bool svar = true;
+
+    keepalive (&svar);
+    keepalive_int (&sintvar);
     return key2;
   }
 };

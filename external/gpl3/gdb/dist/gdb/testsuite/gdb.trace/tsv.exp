@@ -1,4 +1,4 @@
-#   Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+#   Copyright 2009-2013 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,16 +15,10 @@
 
 load_lib "trace-support.exp";
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 gdb_exit
 gdb_start
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/tsv
+standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested tsv.exp
@@ -52,13 +46,29 @@ gdb_test "tvariable \$tvar3 = 1234567000000" \
   "Trace state variable \\\$tvar3 now has initial value 1234567000000." \
   "Init trace state variable to a 64-bit value"
 
+gdb_test "tvariable $" \
+  "Must supply a non-empty variable name" \
+  "tvariable syntax error, not empty variable name"
+
 gdb_test "tvariable main" \
-  "Syntax must be \\\$NAME \\\[ = EXPR \\\]" \
+  "Name of trace variable should start with '\\\$'" \
   "tvariable syntax error, bad name"
+
+gdb_test "tvariable \$\$" \
+  "Syntax must be \\\$NAME \\\[ = EXPR \\\]" \
+  "tvariable syntax error, bad name 2"
+
+gdb_test "tvariable \$123" \
+  "\\\$123 is not a valid trace state variable name" \
+  "tvariable syntax error, bad name 3"
 
 gdb_test "tvariable \$tvar1 - 93" \
   "Syntax must be \\\$NAME \\\[ = EXPR \\\]" \
   "tvariable syntax error, not an assignment"
+
+gdb_test "tvariable \$tvar0 = 1 = 1" \
+  "Left operand of assignment is not an lvalue\." \
+  "tvariable creation fails with invalid expression"
 
 gdb_test "info tvariables" \
     "Name\[\t \]+Initial\[\t \]+Current.*
@@ -96,7 +106,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 
 # The rest of the testing needs actual tracing to work.
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
+    unsupported "Current target does not support trace"
     return 1;
 }
 

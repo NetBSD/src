@@ -1,8 +1,6 @@
 /* Multi-process/thread control for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1987, 1988, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
 
@@ -35,6 +33,7 @@
 #include "regcache.h"
 #include "gdb.h"
 #include "gdb_string.h"
+#include "btrace.h"
 
 #include <ctype.h>
 #include <sys/types.h>
@@ -45,6 +44,7 @@
 #include "cli/cli-decode.h"
 #include "gdb_regex.h"
 #include "cli/cli-utils.h"
+#include "continuations.h"
 
 /* Definition of struct thread_info exported to gdbthread.h.  */
 
@@ -54,7 +54,7 @@ void _initialize_thread (void);
 
 /* Prototypes for local functions.  */
 
-static struct thread_info *thread_list = NULL;
+struct thread_info *thread_list = NULL;
 static int highest_thread_num;
 
 static void thread_command (char *tidstr, int from_tty);
@@ -64,15 +64,6 @@ static void info_threads_command (char *, int);
 static void thread_apply_command (char *, int);
 static void restore_current_thread (ptid_t);
 static void prune_threads (void);
-
-/* Frontend view of the thread state.  Possible extensions: stepping,
-   finishing, until(ling),...  */
-enum thread_state
-{
-  THREAD_STOPPED,
-  THREAD_RUNNING,
-  THREAD_EXITED,
-};
 
 struct thread_info*
 inferior_thread (void)
@@ -122,19 +113,19 @@ clear_thread_inferior_resources (struct thread_info *tp)
       tp->control.exception_resume_breakpoint = NULL;
     }
 
+  delete_longjmp_breakpoint_at_next_stop (tp->num);
+
   bpstat_clear (&tp->control.stop_bpstat);
 
-  discard_all_intermediate_continuations_thread (tp);
-  discard_all_continuations_thread (tp);
+  btrace_teardown (tp);
 
-  delete_longjmp_breakpoint (tp->num);
+  do_all_intermediate_continuations_thread (tp, 1);
+  do_all_continuations_thread (tp, 1);
 }
 
 static void
 free_thread (struct thread_info *tp)
 {
-  clear_thread_inferior_resources (tp);
-
   if (tp->private)
     {
       if (tp->private_dtor)
@@ -183,7 +174,7 @@ new_thread (ptid_t ptid)
 
   /* Nothing to follow yet.  */
   tp->pending_follow.kind = TARGET_WAITKIND_SPURIOUS;
-  tp->state_ = THREAD_STOPPED;
+  tp->state = THREAD_STOPPED;
 
   return tp;
 }
@@ -212,7 +203,7 @@ add_thread_silent (ptid_t ptid)
 	  tp = new_thread (null_ptid);
 
 	  /* Make switch_to_thread not read from the thread.  */
-	  tp->state_ = THREAD_EXITED;
+	  tp->state = THREAD_EXITED;
 	  switch_to_thread (null_ptid);
 
 	  /* Now we can delete it.  */
@@ -220,7 +211,7 @@ add_thread_silent (ptid_t ptid)
 
 	  /* Now reset its ptid, and reswitch inferior_ptid to it.  */
 	  tp->ptid = ptid;
-	  tp->state_ = THREAD_STOPPED;
+	  tp->state = THREAD_STOPPED;
 	  switch_to_thread (ptid);
 
 	  observer_notify_new_thread (tp);
@@ -281,12 +272,12 @@ delete_thread_1 (ptid_t ptid, int silent)
   if (tp->refcount > 0
       || ptid_equal (tp->ptid, inferior_ptid))
     {
-      if (tp->state_ != THREAD_EXITED)
+      if (tp->state != THREAD_EXITED)
 	{
 	  observer_notify_thread_exit (tp, silent);
 
 	  /* Tag it as exited.  */
-	  tp->state_ = THREAD_EXITED;
+	  tp->state = THREAD_EXITED;
 
 	  /* Clear breakpoints, etc. associated with this thread.  */
 	  clear_thread_inferior_resources (tp);
@@ -296,14 +287,18 @@ delete_thread_1 (ptid_t ptid, int silent)
        return;
      }
 
+  /* Notify thread exit, but only if we haven't already.  */
+  if (tp->state != THREAD_EXITED)
+    observer_notify_thread_exit (tp, silent);
+
+  /* Tag it as exited.  */
+  tp->state = THREAD_EXITED;
+  clear_thread_inferior_resources (tp);
+
   if (tpprev)
     tpprev->next = tp->next;
   else
     thread_list = tp->next;
-
-  /* Notify thread exit, but only if we haven't already.  */
-  if (tp->state_ != THREAD_EXITED)
-    observer_notify_thread_exit (tp, silent);
 
   free_thread (tp);
 }
@@ -473,9 +468,9 @@ any_live_thread_of_process (int pid)
   struct thread_info *tp_executing = NULL;
 
   for (tp = thread_list; tp; tp = tp->next)
-    if (tp->state_ != THREAD_EXITED && ptid_get_pid (tp->ptid) == pid)
+    if (tp->state != THREAD_EXITED && ptid_get_pid (tp->ptid) == pid)
       {
-	if (tp->executing_)
+	if (tp->executing)
 	  tp_executing = tp;
 	else
 	  return tp;
@@ -500,7 +495,7 @@ do_captured_list_thread_ids (struct ui_out *uiout, void *arg)
 
   for (tp = thread_list; tp; tp = tp->next)
     {
-      if (tp->state_ == THREAD_EXITED)
+      if (tp->state == THREAD_EXITED)
 	continue;
 
       if (ptid_equal (tp->ptid, inferior_ptid))
@@ -533,7 +528,7 @@ gdb_list_thread_ids (struct ui_out *uiout, char **error_message)
 static int
 thread_alive (struct thread_info *tp)
 {
-  if (tp->state_ == THREAD_EXITED)
+  if (tp->state == THREAD_EXITED)
     return 0;
   if (!target_thread_alive (tp->ptid))
     return 0;
@@ -587,11 +582,11 @@ set_running (ptid_t ptid, int running)
       for (tp = thread_list; tp; tp = tp->next)
 	if (all || ptid_get_pid (tp->ptid) == ptid_get_pid (ptid))
 	  {
-	    if (tp->state_ == THREAD_EXITED)
+	    if (tp->state == THREAD_EXITED)
 	      continue;
-	    if (running && tp->state_ == THREAD_STOPPED)
+	    if (running && tp->state == THREAD_STOPPED)
 	      any_started = 1;
-	    tp->state_ = running ? THREAD_RUNNING : THREAD_STOPPED;
+	    tp->state = running ? THREAD_RUNNING : THREAD_STOPPED;
 	  }
       if (any_started)
 	observer_notify_target_resumed (ptid);
@@ -602,10 +597,10 @@ set_running (ptid_t ptid, int running)
 
       tp = find_thread_ptid (ptid);
       gdb_assert (tp);
-      gdb_assert (tp->state_ != THREAD_EXITED);
-      if (running && tp->state_ == THREAD_STOPPED)
+      gdb_assert (tp->state != THREAD_EXITED);
+      if (running && tp->state == THREAD_STOPPED)
  	started = 1;
-      tp->state_ = running ? THREAD_RUNNING : THREAD_STOPPED;
+      tp->state = running ? THREAD_RUNNING : THREAD_STOPPED;
       if (started)
   	observer_notify_target_resumed (ptid);
     }
@@ -618,7 +613,7 @@ is_thread_state (ptid_t ptid, enum thread_state state)
 
   tp = find_thread_ptid (ptid);
   gdb_assert (tp);
-  return tp->state_ == state;
+  return tp->state == state;
 }
 
 int
@@ -645,7 +640,7 @@ any_running (void)
   struct thread_info *tp;
 
   for (tp = thread_list; tp; tp = tp->next)
-    if (tp->state_ == THREAD_RUNNING)
+    if (tp->state == THREAD_RUNNING)
       return 1;
 
   return 0;
@@ -658,7 +653,7 @@ is_executing (ptid_t ptid)
 
   tp = find_thread_ptid (ptid);
   gdb_assert (tp);
-  return tp->executing_;
+  return tp->executing;
 }
 
 void
@@ -671,13 +666,13 @@ set_executing (ptid_t ptid, int executing)
     {
       for (tp = thread_list; tp; tp = tp->next)
 	if (all || ptid_get_pid (tp->ptid) == ptid_get_pid (ptid))
-	  tp->executing_ = executing;
+	  tp->executing = executing;
     }
   else
     {
       tp = find_thread_ptid (ptid);
       gdb_assert (tp);
-      tp->executing_ = executing;
+      tp->executing = executing;
     }
 }
 
@@ -719,13 +714,13 @@ finish_thread_state (ptid_t ptid)
     {
       for (tp = thread_list; tp; tp = tp->next)
 	{
- 	  if (tp->state_ == THREAD_EXITED)
+ 	  if (tp->state == THREAD_EXITED)
   	    continue;
 	  if (all || ptid_get_pid (ptid) == ptid_get_pid (tp->ptid))
 	    {
-	      if (tp->executing_ && tp->state_ == THREAD_STOPPED)
+	      if (tp->executing && tp->state == THREAD_STOPPED)
 		any_started = 1;
-	      tp->state_ = tp->executing_ ? THREAD_RUNNING : THREAD_STOPPED;
+	      tp->state = tp->executing ? THREAD_RUNNING : THREAD_STOPPED;
 	    }
 	}
     }
@@ -733,11 +728,11 @@ finish_thread_state (ptid_t ptid)
     {
       tp = find_thread_ptid (ptid);
       gdb_assert (tp);
-      if (tp->state_ != THREAD_EXITED)
+      if (tp->state != THREAD_EXITED)
 	{
-	  if (tp->executing_ && tp->state_ == THREAD_STOPPED)
+	  if (tp->executing && tp->state == THREAD_STOPPED)
 	    any_started = 1;
-	  tp->state_ = tp->executing_ ? THREAD_RUNNING : THREAD_STOPPED;
+	  tp->state = tp->executing ? THREAD_RUNNING : THREAD_STOPPED;
 	}
     }
 
@@ -798,7 +793,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	  if (pid != -1 && PIDGET (tp->ptid) != pid)
 	    continue;
 
-	  if (tp->state_ == THREAD_EXITED)
+	  if (tp->state == THREAD_EXITED)
 	    continue;
 
 	  ++n_threads;
@@ -842,7 +837,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
       if (ptid_equal (tp->ptid, current_ptid))
 	current_thread = tp->num;
 
-      if (tp->state_ == THREAD_EXITED)
+      if (tp->state == THREAD_EXITED)
 	continue;
 
       chain2 = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
@@ -904,7 +899,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	  do_cleanups (str_cleanup);
 	}
 
-      if (tp->state_ == THREAD_RUNNING)
+      if (tp->state == THREAD_RUNNING)
 	ui_out_text (uiout, "(running)\n");
       else
 	{
@@ -921,7 +916,7 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	{
 	  char *state = "stopped";
 
-	  if (tp->state_ == THREAD_RUNNING)
+	  if (tp->state == THREAD_RUNNING)
 	    state = "running";
 	  ui_out_field_string (uiout, "state", state);
 	}
@@ -968,7 +963,7 @@ No selected thread.  See `help thread'.\n");
 static void
 info_threads_command (char *arg, int from_tty)
 {
-  print_thread_info (uiout, arg, -1);
+  print_thread_info (current_uiout, arg, -1);
 }
 
 /* Switch from one thread to another.  */
@@ -994,7 +989,6 @@ switch_to_thread (ptid_t ptid)
 
   inferior_ptid = ptid;
   reinit_frame_cache ();
-  registers_changed ();
 
   /* We don't check for is_stopped, because we're called at times
      while in the TARGET_RUNNING state, e.g., while handling an
@@ -1060,7 +1054,7 @@ restore_selected_frame (struct frame_id a_frame_id, int frame_level)
   select_frame (get_current_frame ());
 
   /* Warn the user.  */
-  if (frame_level > 0 && !ui_out_is_mi_like_p (uiout))
+  if (frame_level > 0 && !ui_out_is_mi_like_p (current_uiout))
     {
       warning (_("Couldn't restore frame #%d in "
 		 "current thread, at reparsed frame #0\n"),
@@ -1079,6 +1073,7 @@ struct current_thread_cleanup
   int selected_frame_level;
   int was_stopped;
   int inf_id;
+  int was_removable;
 };
 
 static void
@@ -1119,10 +1114,14 @@ restore_current_thread_cleanup_dtor (void *arg)
 {
   struct current_thread_cleanup *old = arg;
   struct thread_info *tp;
+  struct inferior *inf;
 
   tp = find_thread_ptid (old->inferior_ptid);
   if (tp)
     tp->refcount--;
+  inf = find_inferior_id (old->inf_id);
+  if (inf != NULL)
+    inf->removable = old->was_removable;
   xfree (old);
 }
 
@@ -1136,6 +1135,7 @@ make_cleanup_restore_current_thread (void)
   old = xmalloc (sizeof (struct current_thread_cleanup));
   old->inferior_ptid = inferior_ptid;
   old->inf_id = current_inferior ()->num;
+  old->was_removable = current_inferior ()->removable;
 
   if (!ptid_equal (inferior_ptid, null_ptid))
     {
@@ -1162,6 +1162,8 @@ make_cleanup_restore_current_thread (void)
       if (tp)
 	tp->refcount++;
     }
+
+  current_inferior ()->removable = 0;
 
   return make_cleanup_dtor (do_restore_current_thread_cleanup, old,
 			    restore_current_thread_cleanup_dtor);
@@ -1234,7 +1236,6 @@ thread_apply_command (char *tidlist, int from_tty)
     {
       struct thread_info *tp;
       int start;
-      char *p = tidlist;
 
       start = get_number_or_range (&state);
 
@@ -1289,7 +1290,7 @@ thread_command (char *tidstr, int from_tty)
       return;
     }
 
-  gdb_thread_select (uiout, tidstr, NULL);
+  gdb_thread_select (current_uiout, tidstr, NULL);
 }
 
 /* Implementation of `thread name'.  */
@@ -1302,8 +1303,7 @@ thread_name_command (char *arg, int from_tty)
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("No thread selected"));
 
-  while (arg && isspace (*arg))
-    ++arg;
+  arg = skip_spaces (arg);
 
   info = inferior_thread ();
   xfree (info->name);
@@ -1403,7 +1403,7 @@ do_captured_thread_select (struct ui_out *uiout, void *tidstr)
 
   /* Note that we can't reach this with an exited thread, due to the
      thread_alive check above.  */
-  if (tp->state_ == THREAD_RUNNING)
+  if (tp->state == THREAD_RUNNING)
     ui_out_text (uiout, "(running)\n");
   else
     {
@@ -1438,7 +1438,8 @@ update_thread_list (void)
    no thread is selected, or no threads exist.  */
 
 static struct value *
-thread_id_make_value (struct gdbarch *gdbarch, struct internalvar *var)
+thread_id_make_value (struct gdbarch *gdbarch, struct internalvar *var,
+		      void *ignore)
 {
   struct thread_info *tp = find_thread_ptid (inferior_ptid);
 
@@ -1448,6 +1449,15 @@ thread_id_make_value (struct gdbarch *gdbarch, struct internalvar *var)
 
 /* Commands with a prefix of `thread'.  */
 struct cmd_list_element *thread_cmd_list = NULL;
+
+/* Implementation of `thread' variable.  */
+
+static const struct internalvar_funcs thread_funcs =
+{
+  thread_id_make_value,
+  NULL,
+  NULL
+};
 
 void
 _initialize_thread (void)
@@ -1494,5 +1504,5 @@ Show printing of thread events (such as thread start and exit)."), NULL,
          show_print_thread_events,
          &setprintlist, &showprintlist);
 
-  create_internalvar_type_lazy ("_thread", thread_id_make_value);
+  create_internalvar_type_lazy ("_thread", &thread_funcs, NULL);
 }

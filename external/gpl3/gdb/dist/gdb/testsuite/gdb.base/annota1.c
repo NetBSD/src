@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <signal.h>
 
-#ifdef __sh__
-#define signal(a,b)	/* Signals not supported on this target - make them go away */
-#endif
-
 
 #ifdef PROTOTYPES
 void
@@ -29,7 +25,7 @@ int
 main ()
 #endif
 {
-  int my_array[3] = { 1, 2, 3 };
+  int my_array[3] = { 1, 2, 3 };  /* break main */
   
   value = 7;
   
@@ -43,9 +39,9 @@ main ()
   {
     int i;
     for (i = 0; i < 5; i++)
-      value++;
+      value++;  /* increment value */
   }
 
-  return 0;
+  return 0;  /* after loop */
 }
 

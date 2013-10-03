@@ -1,6 +1,8 @@
-/* THIS FILE IS GENERATED.  Original: powerpc-7400.xml */
+/* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
+  Original: powerpc-7400.xml */
 
 #include "defs.h"
+#include "osabi.h"
 #include "target-descriptions.h"
 
 struct target_desc *tdesc_powerpc_7400;
@@ -9,7 +11,8 @@ initialize_tdesc_powerpc_7400 (void)
 {
   struct target_desc *result = allocate_target_description ();
   struct tdesc_feature *feature;
-  struct tdesc_type *field_type, *type;
+  struct tdesc_type *field_type;
+  struct tdesc_type *type;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.power.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "uint32");

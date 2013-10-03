@@ -1,5 +1,4 @@
-##Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000, 2002, 2003,
-##2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+##Copyright (C) 1991-2013 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -45,9 +44,12 @@ gdbdir = $(srcdir)/..
 TEXIDIR=${gdbdir}/../texinfo
 
 # where to find makeinfo, preferably one designed for texinfo-2
-MAKEINFO=makeinfo
+MAKEINFO = @MAKEINFO@
+MAKEINFOFLAGS = @MAKEINFOFLAGS@
+MAKEINFO_EXTRA_FLAGS = @MAKEINFO_EXTRA_FLAGS@
+MAKEINFO_CMD = $(MAKEINFO) $(MAKEINFOFLAGS) $(MAKEINFO_EXTRA_FLAGS)
 
-MAKEHTML = $(MAKEINFO) --html 
+MAKEHTML = $(MAKEINFO_CMD) --html
 MAKEHTMLFLAGS =
 
 # where to find texi2roff, ditto
@@ -117,7 +119,7 @@ GDB_DOC_SOURCE_INCLUDES = \
 	$(srcdir)/gpl.texi \
 	$(srcdir)/agentexpr.texi \
 	$(READLINE_DIR)/rluser.texi \
-	$(READLINE_DIR)/inc-hist.texinfo
+	$(READLINE_DIR)/hsuser.texi
 GDB_DOC_BUILD_INCLUDES = \
 	gdb-cfg.texi \
 	GDBvn.texi
@@ -365,7 +367,7 @@ gdb.pdf: ${GDB_DOC_FILES}
 
 # GDB MANUAL: info file
 gdb.info: ${GDB_DOC_FILES}
-	$(MAKEINFO) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
+	$(MAKEINFO_CMD) $(READLINE_TEXI_INCFLAG) -I ${GDBMI_DIR} -I $(srcdir) \
 		-o gdb.info $(srcdir)/gdb.texinfo
 
 # GDB MANUAL: roff translations
@@ -464,7 +466,7 @@ gdbint.pdf: $(GDBINT_DOC_FILES)
 # GDB INTERNALS MANUAL: info file
 
 gdbint.info: $(GDBINT_DOC_FILES)
-	$(MAKEINFO) -I $(srcdir) -o gdbint.info $(srcdir)/gdbint.texinfo
+	$(MAKEINFO_CMD) -I $(srcdir) -o gdbint.info $(srcdir)/gdbint.texinfo
 
 # GDB INTERNALS MANUAL: HTML file
 
@@ -472,7 +474,7 @@ gdbint/index.html: $(GDBINT_DOC_FILES)
 	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/gdbint.texinfo
 
 stabs.info: $(STABS_DOC_FILES)
-	$(MAKEINFO) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
+	$(MAKEINFO_CMD) -I $(srcdir) -o stabs.info $(srcdir)/stabs.texinfo
 
 # STABS DOCUMENTATION: HTML file
 
@@ -516,7 +518,7 @@ annotate.pdf: $(ANNOTATE_DOC_FILES)
 	$(TEXI2DVI) --pdf -I $(srcdir) $(srcdir)/annotate.texinfo
 
 annotate.info: $(ANNOTATE_DOC_FILES)
-	$(MAKEINFO)  -I $(srcdir) -o annotate.info $(srcdir)/annotate.texinfo
+	$(MAKEINFO_CMD) -I $(srcdir) -o annotate.info $(srcdir)/annotate.texinfo
 
 annotate/index.html: $(ANNOTATE_DOC_FILES)
 	$(MAKEHTML) $(MAKEHTMLFLAGS) -I $(srcdir) $(srcdir)/annotate.texinfo

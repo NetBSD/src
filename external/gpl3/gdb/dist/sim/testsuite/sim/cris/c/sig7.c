@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Unimplemented rt_sigaction syscall (0x8, 0x3df*\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 #include <stdio.h>
 #include <signal.h>

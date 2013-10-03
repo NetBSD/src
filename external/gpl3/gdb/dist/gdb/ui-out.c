@@ -1,7 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -186,6 +185,7 @@ static void default_message (struct ui_out *uiout, int verbosity,
 			     va_list args) ATTRIBUTE_PRINTF (3, 0);
 static void default_wrap_hint (struct ui_out *uiout, char *identstring);
 static void default_flush (struct ui_out *uiout);
+static void default_data_destroy (struct ui_out *uiout);
 
 /* This is the default ui-out implementation functions vector.  */
 
@@ -207,6 +207,7 @@ struct ui_out_impl default_ui_out_impl =
   default_wrap_hint,
   default_flush,
   NULL,
+  default_data_destroy,
   0, /* Does not need MI hacks.  */
 };
 
@@ -222,7 +223,7 @@ struct ui_out def_uiout =
 /* FIXME: This should not be a global, but something passed down from main.c
    or top.c.  */
 
-struct ui_out *uiout = &def_uiout;
+struct ui_out *current_uiout = &def_uiout;
 
 /* These are the interfaces to implementation functions.  */
 
@@ -255,6 +256,7 @@ static void uo_message (struct ui_out *uiout, int verbosity,
 static void uo_wrap_hint (struct ui_out *uiout, char *identstring);
 static void uo_flush (struct ui_out *uiout);
 static int uo_redirect (struct ui_out *uiout, struct ui_file *outstream);
+static void uo_data_destroy (struct ui_out *uiout);
 
 /* Prototypes for local functions */
 
@@ -265,6 +267,7 @@ static void append_header_to_list (struct ui_out *uiout, int width,
 static int get_next_header (struct ui_out *uiout, int *colno, int *width,
 			    int *alignment, char **colhdr);
 static void clear_header_list (struct ui_out *uiout);
+static void clear_table (struct ui_out *uiout);
 static void verify_field (struct ui_out *uiout, int *fldno, int *width,
 			  int *align);
 
@@ -329,10 +332,7 @@ ui_out_table_end (struct ui_out *uiout)
   uiout->table.flag = 0;
 
   uo_table_end (uiout);
-
-  if (uiout->table.id)
-    xfree (uiout->table.id);
-  clear_header_list (uiout);
+  clear_table (uiout);
 }
 
 void
@@ -486,6 +486,8 @@ ui_out_field_fmt_int (struct ui_out *uiout,
   uo_field_int (uiout, fldno, input_width, input_align, fldname, value);
 }
 
+/* Documented in ui-out.h.  */
+
 void
 ui_out_field_core_addr (struct ui_out *uiout,
 			const char *fldname,
@@ -499,17 +501,17 @@ ui_out_field_core_addr (struct ui_out *uiout,
 void
 ui_out_field_stream (struct ui_out *uiout,
 		     const char *fldname,
-		     struct ui_stream *buf)
+		     struct ui_file *stream)
 {
   long length;
-  char *buffer = ui_file_xstrdup (buf->stream, &length);
+  char *buffer = ui_file_xstrdup (stream, &length);
   struct cleanup *old_cleanup = make_cleanup (xfree, buffer);
 
   if (length > 0)
     ui_out_field_string (uiout, fldname, buffer);
   else
     ui_out_field_skip (uiout, fldname);
-  ui_file_rewind (buf->stream);
+  ui_file_rewind (stream);
   do_cleanups (old_cleanup);
 }
 
@@ -587,37 +589,6 @@ ui_out_message (struct ui_out *uiout, int verbosity,
   va_end (args);
 }
 
-struct ui_stream *
-ui_out_stream_new (struct ui_out *uiout)
-{
-  struct ui_stream *tempbuf;
-
-  tempbuf = XMALLOC (struct ui_stream);
-  tempbuf->uiout = uiout;
-  tempbuf->stream = mem_fileopen ();
-  return tempbuf;
-}
-
-void
-ui_out_stream_delete (struct ui_stream *buf)
-{
-  ui_file_delete (buf->stream);
-  xfree (buf);
-}
-
-static void
-do_stream_delete (void *buf)
-{
-  ui_out_stream_delete (buf);
-}
-
-struct cleanup *
-make_cleanup_ui_out_stream_delete (struct ui_stream *buf)
-{
-  return make_cleanup (do_stream_delete, buf);
-}
-
-
 void
 ui_out_wrap_hint (struct ui_out *uiout, char *identstring)
 {
@@ -672,61 +643,6 @@ ui_out_get_verblvl (struct ui_out *uiout)
   /* FIXME: not implemented yet.  */
   return 0;
 }
-
-#if 0
-void
-ui_out_result_begin (struct ui_out *uiout, char *class)
-{
-}
-
-void
-ui_out_result_end (struct ui_out *uiout)
-{
-}
-
-void
-ui_out_info_begin (struct ui_out *uiout, char *class)
-{
-}
-
-void
-ui_out_info_end (struct ui_out *uiout)
-{
-}
-
-void
-ui_out_notify_begin (struct ui_out *uiout, char *class)
-{
-}
-
-void
-ui_out_notify_end (struct ui_out *uiout)
-{
-}
-
-void
-ui_out_error_begin (struct ui_out *uiout, char *class)
-{
-}
-
-void
-ui_out_error_end (struct ui_out *uiout)
-{
-}
-#endif
-
-#if 0
-void
-gdb_error (ui_out * uiout, int severity, char *format,...)
-{
-  va_list args;
-}
-
-void
-gdb_query (struct ui_out *uiout, int qflags, char *qprompt)
-{
-}
-#endif
 
 int
 ui_out_is_mi_like_p (struct ui_out *uiout)
@@ -834,6 +750,11 @@ default_flush (struct ui_out *uiout)
 {
 }
 
+static void
+default_data_destroy (struct ui_out *uiout)
+{
+}
+
 /* Interface to the implementation functions.  */
 
 void
@@ -870,6 +791,16 @@ uo_table_header (struct ui_out *uiout, int width, enum ui_align align,
   if (!uiout->impl->table_header)
     return;
   uiout->impl->table_header (uiout, width, align, col_name, colhdr);
+}
+
+/* Clear the table associated with UIOUT.  */
+
+static void
+clear_table (struct ui_out *uiout)
+{
+  if (uiout->table.id)
+    xfree (uiout->table.id);
+  clear_header_list (uiout);
 }
 
 void
@@ -986,6 +917,15 @@ uo_redirect (struct ui_out *uiout, struct ui_file *outstream)
   return 0;
 }
 
+void
+uo_data_destroy (struct ui_out *uiout)
+{
+  if (!uiout->impl->data_destroy)
+    return;
+
+  uiout->impl->data_destroy (uiout);
+}
+
 /* local functions */
 
 /* List of column headers manipulation routines.  */
@@ -997,8 +937,8 @@ clear_header_list (struct ui_out *uiout)
     {
       uiout->table.header_next = uiout->table.header_first;
       uiout->table.header_first = uiout->table.header_first->next;
-      if (uiout->table.header_next->colhdr != NULL)
-	xfree (uiout->table.header_next->colhdr);
+      xfree (uiout->table.header_next->colhdr);
+      xfree (uiout->table.header_next->col_name);
       xfree (uiout->table.header_next);
     }
   gdb_assert (uiout->table.header_first == NULL);
@@ -1048,7 +988,7 @@ append_header_to_list (struct ui_out *uiout,
   uiout->table.header_next = uiout->table.header_last;
 }
 
-/* Extract the format information for the NEXT header and and advance
+/* Extract the format information for the NEXT header and advance
    the header pointer.  Return 0 if there was no next header.  */
 
 static int
@@ -1113,13 +1053,6 @@ specified after table_body and inside a list."));
 }
 
 
-/* Access to ui_out format private members.  */
-
-void
-ui_out_get_field_separator (struct ui_out *uiout)
-{
-}
-
 /* Access to ui-out members data.  */
 
 void *
@@ -1169,6 +1102,16 @@ ui_out_new (struct ui_out_impl *impl, void *data,
   uiout->table.header_last = NULL;
   uiout->table.header_next = NULL;
   return uiout;
+}
+
+/* Free  UIOUT and the memory areas it references.  */
+
+void
+ui_out_destroy (struct ui_out *uiout)
+{
+  uo_data_destroy (uiout);
+  clear_table (uiout);
+  xfree (uiout);
 }
 
 /* Standard gdb initialization hook.  */

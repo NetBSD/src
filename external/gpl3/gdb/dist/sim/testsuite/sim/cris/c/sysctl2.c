@@ -1,7 +1,7 @@
 /* Check error message for invalid sysctl call.
 #xerror:
 #output: Unimplemented _sysctl syscall *\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 #notarget: cris*-*-elf
 */
 

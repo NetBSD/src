@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988-2002 Free Software Foundation, Inc.
+Copyright (C) 1988--2011 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -26,9 +26,10 @@ into another language, under the above conditions for modified versions.
 @node Using History Interactively
 @chapter Using History Interactively
 
-@ifclear BashFeatures
-@defcodeindex bt
-@end ifclear
+@c GDB bundling modification:
+@c @ifclear BashFeatures
+@c @defcodeindex bt
+@c @end ifclear
 
 @ifset BashFeatures
 This chapter describes how to use the @sc{gnu} History Library
@@ -41,7 +42,8 @@ see the @sc{gnu} Readline Library Manual.
 This chapter describes how to use the @sc{gnu} History Library interactively,
 from a user's standpoint.  It should be considered a user's guide.  For
 information on using the @sc{gnu} History Library in your own programs,
-@pxref{Programming with GNU History}.
+@c GDB bundling modification:
+@pxref{Programming with GNU History, , , history, GNU History Library}.
 @end ifclear
 
 @ifset BashFeatures
@@ -97,7 +99,11 @@ to contain no more than @env{$HISTFILESIZE}
 lines.  If @env{HISTFILESIZE} is not set, no truncation is performed.
 
 If the @env{HISTTIMEFORMAT} is set, the time stamp information
-associated with each history entry is written to the history file.
+associated with each history entry is written to the history file,
+marked with the history comment character.
+When the history file is read, lines beginning with the history
+comment character followed immediately by a digit are interpreted
+as timestamps for the previous history line.
 
 The builtin command @code{fc} may be used to list or edit and re-execute
 a portion of the history list.
@@ -133,7 +139,7 @@ history list and history file.
 @item fc
 @btindex fc
 @example
-@code{fc [-e @var{ename}] [-nlr] [@var{first}] [@var{last}]}
+@code{fc [-e @var{ename}] [-lnr] [@var{first}] [@var{last}]}
 @code{fc -s [@var{pat}=@var{rep}] [@var{command}]}
 @end example
 
@@ -277,7 +283,10 @@ them, so that they are available for subsequent recall.
 This is most useful in conjunction with Readline.
 
 The shell allows control of the various characters used by the
-history expansion mechanism with the @code{histchars} variable.
+history expansion mechanism with the @code{histchars} variable,
+as explained above (@pxref{Bash Variables}).  The shell uses
+the history comment character to mark history timestamps when
+writing the history file.
 @end ifset
 
 @menu
@@ -292,6 +301,8 @@ history expansion mechanism with the @code{histchars} variable.
 
 An event designator is a reference to a command line entry in the
 history list.
+Unless the reference is absolute, events are relative to the current
+position in the history list.
 @cindex history events
 
 @table @asis
@@ -317,10 +328,15 @@ Refer to the command @var{n} lines back.
 Refer to the previous command.  This is a synonym for @samp{!-1}.
 
 @item @code{!@var{string}}
-Refer to the most recent command starting with @var{string}.
+Refer to the most recent command
+preceding the current position in the history list
+starting with @var{string}.
 
 @item @code{!?@var{string}[?]}
-Refer to the most recent command containing @var{string}.  The trailing
+Refer to the most recent command
+preceding the current position in the history list
+containing @var{string}.
+The trailing
 @samp{?} may be omitted if the @var{string} is followed immediately by
 a newline.
 
@@ -412,7 +428,7 @@ of the following modifiers, each preceded by a @samp{:}.
 Remove a trailing pathname component, leaving only the head.
 
 @item t
-Remove all leading  pathname  components, leaving the tail.
+Remove all leading pathname components, leaving the tail.
 
 @item r
 Remove a trailing suffix of the form @samp{.@var{suffix}}, leaving

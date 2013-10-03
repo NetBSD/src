@@ -1,6 +1,5 @@
 /* GNU/Linux/CRIS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -231,6 +230,7 @@ cris_remove_point (char type, CORE_ADDR addr, int len)
   unsigned long bp_ctrl;
   unsigned long start, end;
   struct regcache *regcache;
+  unsigned long bp_d_regs[12];
 
   /* Breakpoint/watchpoint types:
      0 = memory breakpoint for instructions
@@ -258,8 +258,6 @@ cris_remove_point (char type, CORE_ADDR addr, int len)
   /* Ugly pointer arithmetic, since I cannot rely on a
      single switch (addr) as there may be several watchpoints with
      the same start address for example.  */
-
-  unsigned long bp_d_regs[12];
 
   /* Get all range registers to simplify search.  */
   collect_register_by_name (regcache, "s3", &bp_d_regs[0]);
@@ -321,8 +319,9 @@ static int
 cris_stopped_by_watchpoint (void)
 {
   unsigned long exs;
+  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
 
-  collect_register_by_name ("exs", &exs);
+  collect_register_by_name (regcache, "exs", &exs);
 
   return (((exs & 0xff00) >> 8) == 0xc);
 }
@@ -331,51 +330,52 @@ static CORE_ADDR
 cris_stopped_data_address (void)
 {
   unsigned long eda;
+  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
 
-  collect_register_by_name ("eda", &eda);
+  collect_register_by_name (regcache, "eda", &eda);
 
   /* FIXME: Possibly adjust to match watched range.  */
   return eda;
 }
 
 static void
-cris_fill_gregset (void *buf)
+cris_fill_gregset (struct regcache *regcache, void *buf)
 {
   int i;
 
   for (i = 0; i < cris_num_regs; i++)
     {
       if (cris_regmap[i] != -1)
-	collect_register (i, ((char *) buf) + cris_regmap[i]);
+	collect_register (regcache, i, ((char *) buf) + cris_regmap[i]);
     }
 }
 
 static void
-cris_store_gregset (const void *buf)
+cris_store_gregset (struct regcache *regcache, const void *buf)
 {
   int i;
 
   for (i = 0; i < cris_num_regs; i++)
     {
       if (cris_regmap[i] != -1)
-	supply_register (i, ((char *) buf) + cris_regmap[i]);
+	supply_register (regcache, i, ((char *) buf) + cris_regmap[i]);
     }
 }
 
-typedef unsigned long elf_gregset_t[cris_num_regs];
-
 struct regset_info target_regsets[] = {
-  { PTRACE_GETREGS, PTRACE_SETREGS, 0, sizeof (elf_gregset_t),
+  { PTRACE_GETREGS, PTRACE_SETREGS, 0, cris_num_regs * 4,
     GENERAL_REGS, cris_fill_gregset, cris_store_gregset },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
 struct linux_target_ops the_low_target = {
-  init_register_crisv32,
+  init_registers_crisv32,
   -1,
   NULL,
   NULL,
   NULL,
+  NULL,
+  NULL, /* fetch_register */
   cris_get_pc,
   cris_set_pc,
   (const unsigned char *) &cris_breakpoint,

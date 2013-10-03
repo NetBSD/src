@@ -1,6 +1,5 @@
 /* Prologue value handling for GDB.
-   Copyright 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -399,7 +398,7 @@ pv_area_store_would_trash (struct pv_area *area, pv_t addr)
    This may return zero, if AREA has no entries.
 
    And since the entries are a ring, this may return an entry that
-   entirely preceeds OFFSET.  This is the correct behavior: depending
+   entirely precedes OFFSET.  This is the correct behavior: depending
    on the sizes involved, we could still overlap such an area, with
    wrap-around.  */
 static struct area_entry *

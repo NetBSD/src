@@ -1,7 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,8 +68,6 @@
 #include "procfs.h"
 
 struct target_ops sol_thread_ops;
-
-extern char *procfs_pid_to_str (struct target_ops *ops, ptid_t ptid);
 
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
@@ -199,7 +196,8 @@ td_err_string (td_err_e errcode)
     if (td_err_table[i].num == errcode)
       return td_err_table[i].str;
 
-  sprintf (buf, "Unknown libthread_db error code: %d", errcode);
+  xsnprintf (buf, sizeof (buf), "Unknown libthread_db error code: %d",
+	     errcode);
 
   return buf;
 }
@@ -230,7 +228,8 @@ td_state_string (td_thr_state_e statecode)
     if (td_thr_state_table[i].num == statecode)
       return td_thr_state_table[i].str;
 
-  sprintf (buf, "Unknown libthread_db state code: %d", statecode);
+  xsnprintf (buf, sizeof (buf), "Unknown libthread_db state code: %d",
+	     statecode);
 
   return buf;
 }
@@ -348,7 +347,7 @@ sol_thread_detach (struct target_ops *ops, char *args, int from_tty)
 
 static void
 sol_thread_resume (struct target_ops *ops,
-		   ptid_t ptid, int step, enum target_signal signo)
+		   ptid_t ptid, int step, enum gdb_signal signo)
 {
   struct cleanup *old_chain;
   struct target_ops *beneath = find_target_beneath (ops);
@@ -446,11 +445,6 @@ sol_thread_fetch_registers (struct target_ops *ops,
   gdb_fpregset_t *fpregset_p = &fpregset;
   struct target_ops *beneath = find_target_beneath (ops);
 
-#if 0
-  int xregsize;
-  caddr_t xregset;
-#endif
-
   if (!is_thread (inferior_ptid))
     {
       /* It's an LWP; pass the request on to the layer beneath.  */
@@ -491,23 +485,6 @@ sol_thread_fetch_registers (struct target_ops *ops,
 
   supply_gregset (regcache, (const gdb_gregset_t *) gregset_p);
   supply_fpregset (regcache, (const gdb_fpregset_t *) fpregset_p);
-
-#if 0
-  /* FIXME: libthread_db doesn't seem to handle this right.  */
-  val = td_thr_getxregsize (&thandle, &xregsize);
-  if (val != TD_OK && val != TD_NOXREGS)
-    error (_("sol_thread_fetch_registers: td_thr_getxregsize %s"),
-	   td_err_string (val));
-
-  if (val == TD_OK)
-    {
-      xregset = alloca (xregsize);
-      val = td_thr_getxregs (&thandle, xregset);
-      if (val != TD_OK)
-	error (_("sol_thread_fetch_registers: td_thr_getxregs %s"),
-	       td_err_string (val));
-    }
-#endif
 }
 
 static void
@@ -519,10 +496,6 @@ sol_thread_store_registers (struct target_ops *ops,
   td_err_e val;
   prgregset_t gregset;
   prfpregset_t fpregset;
-#if 0
-  int xregsize;
-  caddr_t xregset;
-#endif
 
   if (!is_thread (inferior_ptid))
     {
@@ -560,23 +533,6 @@ sol_thread_store_registers (struct target_ops *ops,
 
       /* Restore new register value.  */
       regcache_raw_supply (regcache, regnum, old_value);
-
-#if 0
-      /* FIXME: libthread_db doesn't seem to handle this right.  */
-      val = td_thr_getxregsize (&thandle, &xregsize);
-      if (val != TD_OK && val != TD_NOXREGS)
-	error (_("sol_thread_store_registers: td_thr_getxregsize %s"),
-	       td_err_string (val));
-
-      if (val == TD_OK)
-	{
-	  xregset = alloca (xregsize);
-	  val = td_thr_getxregs (&thandle, xregset);
-	  if (val != TD_OK)
-	    error (_("sol_thread_store_registers: td_thr_getxregs %s"),
-		   td_err_string (val));
-	}
-#endif
     }
 
   fill_gregset (regcache, (gdb_gregset_t *) &gregset, regnum);
@@ -590,17 +546,6 @@ sol_thread_store_registers (struct target_ops *ops,
   if (val != TD_OK)
     error (_("sol_thread_store_registers: td_thr_setfpregs %s"),
 	   td_err_string (val));
-
-#if 0
-  /* FIXME: libthread_db doesn't seem to handle this right.  */
-  val = td_thr_getxregsize (&thandle, &xregsize);
-  if (val != TD_OK && val != TD_NOXREGS)
-    error (_("sol_thread_store_registers: td_thr_getxregsize %s"),
-	   td_err_string (val));
-
-  /* ??? Should probably do something about writing the xregs here,
-     but what are they?  */
-#endif
 }
 
 /* Perform partial transfers on OBJECT.  See target_read_partial and
@@ -918,7 +863,7 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
   old_chain = save_inferior_ptid ();
 
   inferior_ptid = BUILD_LWP (lwpid, PIDGET (inferior_ptid));
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch);
+  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   target_fetch_registers (regcache, -1);
   fill_gregset (regcache, (gdb_gregset_t *) gregset, -1);
@@ -940,7 +885,7 @@ ps_lsetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
   old_chain = save_inferior_ptid ();
 
   inferior_ptid = BUILD_LWP (lwpid, PIDGET (inferior_ptid));
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch);
+  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   supply_gregset (regcache, (const gdb_gregset_t *) gregset);
   target_store_registers (regcache, -1);
@@ -967,26 +912,6 @@ ps_plog (const char *fmt, ...)
 ps_err_e
 ps_lgetxregsize (gdb_ps_prochandle_t ph, lwpid_t lwpid, int *xregsize)
 {
-#if 0
-  int lwp_fd;
-  int regsize;
-  ps_err_e val;
-
-  val = get_lwp_fd (ph, lwpid, &lwp_fd);
-  if (val != PS_OK)
-    return val;
-
-  if (ioctl (lwp_fd, PIOCGXREGSIZE, &regsize))
-    {
-      if (errno == EINVAL)
-	return PS_NOFREGS;	/* XXX Wrong code, but this is the closest
-				   thing in proc_service.h  */
-
-      print_sys_errmsg ("ps_lgetxregsize (): PIOCGXREGSIZE", errno);
-      return PS_ERR;
-    }
-#endif
-
   return PS_OK;
 }
 
@@ -995,21 +920,6 @@ ps_lgetxregsize (gdb_ps_prochandle_t ph, lwpid_t lwpid, int *xregsize)
 ps_err_e
 ps_lgetxregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, caddr_t xregset)
 {
-#if 0
-  int lwp_fd;
-  ps_err_e val;
-
-  val = get_lwp_fd (ph, lwpid, &lwp_fd);
-  if (val != PS_OK)
-    return val;
-
-  if (ioctl (lwp_fd, PIOCGXREG, xregset))
-    {
-      print_sys_errmsg ("ps_lgetxregs (): PIOCGXREG", errno);
-      return PS_ERR;
-    }
-#endif
-
   return PS_OK;
 }
 
@@ -1018,21 +928,6 @@ ps_lgetxregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, caddr_t xregset)
 ps_err_e
 ps_lsetxregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, caddr_t xregset)
 {
-#if 0
-  int lwp_fd;
-  ps_err_e val;
-
-  val = get_lwp_fd (ph, lwpid, &lwp_fd);
-  if (val != PS_OK)
-    return val;
-
-  if (ioctl (lwp_fd, PIOCSXREG, xregset))
-    {
-      print_sys_errmsg ("ps_lsetxregs (): PIOCSXREG", errno);
-      return PS_ERR;
-    }
-#endif
-
   return PS_OK;
 }
 
@@ -1048,7 +943,7 @@ ps_lgetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
   old_chain = save_inferior_ptid ();
 
   inferior_ptid = BUILD_LWP (lwpid, PIDGET (inferior_ptid));
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch);
+  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   target_fetch_registers (regcache, -1);
   fill_fpregset (regcache, (gdb_fpregset_t *) fpregset, -1);
@@ -1070,7 +965,7 @@ ps_lsetfpregs (gdb_ps_prochandle_t ph, lwpid_t lwpid,
   old_chain = save_inferior_ptid ();
 
   inferior_ptid = BUILD_LWP (lwpid, PIDGET (inferior_ptid));
-  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch);
+  regcache = get_thread_arch_regcache (inferior_ptid, target_gdbarch ());
 
   supply_fpregset (regcache, (const gdb_fpregset_t *) fpregset);
   target_store_registers (regcache, -1);
@@ -1111,7 +1006,6 @@ ps_lgetLDT (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 	    struct ssd *pldt)
 {
   /* NOTE: only used on Solaris, therefore OK to refer to procfs.c.  */
-  extern struct ssd *procfs_find_LDT_entry (ptid_t);
   struct ssd *ret;
 
   /* FIXME: can't I get the process ID from the prochandle or
@@ -1135,7 +1029,7 @@ ps_lgetLDT (gdb_ps_prochandle_t ph, lwpid_t lwpid,
 
 /* Convert PTID to printable form.  */
 
-char *
+static char *
 solaris_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[100];
@@ -1147,17 +1041,18 @@ solaris_pid_to_str (struct target_ops *ops, ptid_t ptid)
       lwp = thread_to_lwp (ptid, -2);
 
       if (PIDGET (lwp) == -1)
-	sprintf (buf, "Thread %ld (defunct)", GET_THREAD (ptid));
+	xsnprintf (buf, sizeof (buf), "Thread %ld (defunct)",
+		   GET_THREAD (ptid));
       else if (PIDGET (lwp) != -2)
-	sprintf (buf, "Thread %ld (LWP %ld)",
+	xsnprintf (buf, sizeof (buf), "Thread %ld (LWP %ld)",
 		 GET_THREAD (ptid), GET_LWP (lwp));
       else
-	sprintf (buf, "Thread %ld        ", GET_THREAD (ptid));
+	xsnprintf (buf, sizeof (buf), "Thread %ld        ", GET_THREAD (ptid));
     }
   else if (GET_LWP (ptid) != 0)
-    sprintf (buf, "LWP    %ld        ", GET_LWP (ptid));
+    xsnprintf (buf, sizeof (buf), "LWP    %ld        ", GET_LWP (ptid));
   else
-    sprintf (buf, "process %d    ", PIDGET (ptid));
+    xsnprintf (buf, sizeof (buf), "process %d    ", PIDGET (ptid));
 
   return buf;
 }
@@ -1251,7 +1146,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 			     SYMBOL_PRINT_NAME (msym));
 	  else
 	    printf_filtered ("   startfunc: %s\n",
-			     paddress (target_gdbarch, ti.ti_startfunc));
+			     paddress (target_gdbarch (), ti.ti_startfunc));
 	}
 
       /* If thread is asleep, print function that went to sleep.  */
@@ -1264,7 +1159,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 			     SYMBOL_PRINT_NAME (msym));
 	  else
 	    printf_filtered (" - Sleep func: %s\n",
-			     paddress (target_gdbarch, ti.ti_startfunc));
+			     paddress (target_gdbarch (), ti.ti_startfunc));
 	}
 
       /* Wrap up line, if necessary.  */
@@ -1342,6 +1237,9 @@ init_sol_thread_ops (void)
   sol_thread_ops.to_get_ada_task_ptid = sol_get_ada_task_ptid;
   sol_thread_ops.to_magic = OPS_MAGIC;
 }
+
+/* Silence -Wmissing-prototypes.  */
+extern void _initialize_sol_thread (void);
 
 void
 _initialize_sol_thread (void)

@@ -1,0 +1,28 @@
+2013-01-03  Nick Clifton  <nickc@redhat.com>
+
+	* mem.c (MDBL): Correct value.
+	(MDBH): Correct value.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2012-02-03  Kevin Buettner  <kevinb@redhat.com>
+
+	* Makefile.in (SIM_OBJS): Add gdb-if.o.
+	* gdb-if.c: New file.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.

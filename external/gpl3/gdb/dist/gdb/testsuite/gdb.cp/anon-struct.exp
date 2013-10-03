@@ -1,5 +1,5 @@
 # Tests for anonymous union support.
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,15 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile anon-struct
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
+
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
      return -1
 }
 
 gdb_test "ptype t::t" "type = void \\(t \\* const\\)" \
     "print type of t::t"
+
+gdb_test "ptype X::t2" "type = struct X::t2 {\[\r\n \]*X::C2 m;\[\r\n \]*}" \
+    "print type of X::t2"
 
 gdb_test "ptype X::t2::t2" "type = void \\(X::t2 \\* const\\)" \
     "print type of X::t2::t2"

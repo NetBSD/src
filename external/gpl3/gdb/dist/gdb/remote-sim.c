@@ -1,8 +1,6 @@
 /* Generic remote debugging interface for simulators.
 
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
    Steve Chamberlain (sac@cygnus.com).
@@ -120,7 +118,7 @@ struct sim_inferior_data {
   ptid_t remote_sim_ptid;
 
   /* Signal with which to resume.  */
-  enum target_signal resume_siggnal;
+  enum gdb_signal resume_siggnal;
 
   /* Flag which indicates whether resume should step or not.  */
   int resume_step;
@@ -219,7 +217,7 @@ get_sim_inferior_data (struct inferior *inf, int sim_instance_needed)
       /* Initialize the other instance variables.  */
       sim_data->program_loaded = 0;
       sim_data->gdbsim_desc = sim_desc;
-      sim_data->resume_siggnal = TARGET_SIGNAL_0;
+      sim_data->resume_siggnal = GDB_SIGNAL_0;
       sim_data->resume_step = 0;
     }
   else if (sim_desc)
@@ -275,28 +273,26 @@ sim_inferior_data_cleanup (struct inferior *inf, void *data)
 static void
 dump_mem (char *buf, int len)
 {
-  if (len <= 8)
+  printf_filtered ("\t");
+
+  if (len == 8 || len == 4)
     {
-      if (len == 8 || len == 4)
-	{
-	  long l[2];
+      uint32_t l[2];
 
-	  memcpy (l, buf, len);
-	  printf_filtered ("\t0x%lx", l[0]);
-	  if (len == 8)
-	    printf_filtered (" 0x%lx", l[1]);
-	  printf_filtered ("\n");
-	}
-      else
-	{
-	  int i;
-
-	  printf_filtered ("\t");
-	  for (i = 0; i < len; i++)
-	    printf_filtered ("0x%x ", buf[i]);
-	  printf_filtered ("\n");
-	}
+      memcpy (l, buf, len);
+      printf_filtered ("0x%08x", l[0]);
+      if (len == 8)
+	printf_filtered (" 0x%08x", l[1]);
     }
+  else
+    {
+      int i;
+
+      for (i = 0; i < len; i++)
+	printf_filtered ("0x%02x ", buf[i]);
+    }
+
+  printf_filtered ("\n");
 }
 
 /* Initialize gdb_callback.  */
@@ -450,7 +446,7 @@ gdbsim_fetch_register (struct target_ops *ops,
       {
 	/* For moment treat a `does not exist' register the same way
            as an ``unavailable'' register.  */
-	char buf[MAX_REGISTER_SIZE];
+	gdb_byte buf[MAX_REGISTER_SIZE];
 	int nr_bytes;
 
 	memset (buf, 0, MAX_REGISTER_SIZE);
@@ -461,7 +457,7 @@ gdbsim_fetch_register (struct target_ops *ops,
     default:
       {
 	static int warn_user = 1;
-	char buf[MAX_REGISTER_SIZE];
+	gdb_byte buf[MAX_REGISTER_SIZE];
 	int nr_bytes;
 
 	gdb_assert (regno >= 0 && regno < gdbarch_num_regs (gdbarch));
@@ -643,7 +639,13 @@ gdbsim_create_inferior (struct target_ops *target, char *exec_file, char *args,
     }
   else
     argv = NULL;
-  sim_create_inferior (sim_data->gdbsim_desc, exec_bfd, argv, env);
+
+  if (!have_inferiors ())
+    init_thread_list ();
+
+  if (sim_create_inferior (sim_data->gdbsim_desc, exec_bfd, argv, env)
+      != SIM_RC_OK)
+    error (_("Unable to create sim inferior."));
 
   inferior_ptid = sim_data->remote_sim_ptid;
   inferior_appeared (current_inferior (), ptid_get_pid (inferior_ptid));
@@ -684,6 +686,7 @@ gdbsim_open (char *args, int from_tty)
   len = (7 + 1			/* gdbsim */
 	 + strlen (" -E little")
 	 + strlen (" --architecture=xxxxxxxxxx")
+	 + strlen (" --sysroot=") + strlen (gdb_sysroot) +
 	 + (args ? strlen (args) : 0)
 	 + 50) /* slack */ ;
   arg_buf = (char *) alloca (len);
@@ -708,6 +711,9 @@ gdbsim_open (char *args, int from_tty)
       strcat (arg_buf, " --architecture=");
       strcat (arg_buf, selected_architecture_name ());
     }
+  /* Pass along gdb's concept of the sysroot.  */
+  strcat (arg_buf, " --sysroot=");
+  strcat (arg_buf, gdb_sysroot);
   /* finally, any explicit args */
   if (args)
     {
@@ -833,7 +839,7 @@ gdbsim_detach (struct target_ops *ops, char *args, int from_tty)
 
 struct resume_data
 {
-  enum target_signal siggnal;
+  enum gdb_signal siggnal;
   int step;
 };
 
@@ -862,7 +868,7 @@ gdbsim_resume_inferior (struct inferior *inf, void *arg)
 
 static void
 gdbsim_resume (struct target_ops *ops,
-	       ptid_t ptid, int step, enum target_signal siggnal)
+	       ptid_t ptid, int step, enum gdb_signal siggnal)
 {
   struct resume_data rd;
   struct sim_inferior_data *sim_data
@@ -945,13 +951,9 @@ gdb_os_poll_quit (host_callback *p)
   if (deprecated_ui_loop_hook != NULL)
     deprecated_ui_loop_hook (0);
 
-  if (quit_flag)		/* gdb's idea of quit */
+  if (check_quit_flag ())	/* gdb's idea of quit */
     {
-      quit_flag = 0;		/* we've stolen it */
-      return 1;
-    }
-  else if (immediate_quit)
-    {
+      clear_quit_flag ();	/* we've stolen it */
       return 1;
     }
   return 0;
@@ -1023,11 +1025,11 @@ gdbsim_wait (struct target_ops *ops,
     case sim_stopped:
       switch (sigrc)
 	{
-	case TARGET_SIGNAL_ABRT:
+	case GDB_SIGNAL_ABRT:
 	  quit ();
 	  break;
-	case TARGET_SIGNAL_INT:
-	case TARGET_SIGNAL_TRAP:
+	case GDB_SIGNAL_INT:
+	case GDB_SIGNAL_TRAP:
 	default:
 	  status->kind = TARGET_WAITKIND_STOPPED;
 	  status->value.sig = sigrc;
@@ -1096,7 +1098,7 @@ gdbsim_xfer_inferior_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
       printf_filtered ("gdbsim_xfer_inferior_memory: myaddr 0x");
       gdb_print_host_address (myaddr, gdb_stdout);
       printf_filtered (", memaddr %s, len %d, write %d\n",
-		       paddress (target_gdbarch, memaddr), len, write);
+		       paddress (target_gdbarch (), memaddr), len, write);
       if (remote_debug && write)
 	dump_mem (myaddr, len);
     }
@@ -1193,6 +1195,30 @@ simulator_command (char *args, int from_tty)
   registers_changed ();
 }
 
+static VEC (char_ptr) *
+sim_command_completer (struct cmd_list_element *ignore, char *text, char *word)
+{
+  struct sim_inferior_data *sim_data;
+  char **tmp;
+  int i;
+  VEC (char_ptr) *result = NULL;
+
+  sim_data = inferior_data (current_inferior (), sim_inferior_data_key);
+  if (sim_data == NULL || sim_data->gdbsim_desc == NULL)
+    return NULL;
+
+  tmp = sim_complete_command (sim_data->gdbsim_desc, text, word);
+  if (tmp == NULL)
+    return NULL;
+
+  /* Transform the array into a VEC, and then free the array.  */
+  for (i = 0; tmp[i] != NULL; i++)
+    VEC_safe_push (char_ptr, result, tmp[i]);
+  xfree (tmp);
+
+  return result;
+}
+
 /* Check to see if a thread is still alive.  */
 
 static int
@@ -1222,7 +1248,7 @@ gdbsim_pid_to_str (struct target_ops *ops, ptid_t ptid)
 
 /* Simulator memory may be accessed after the program has been loaded.  */
 
-int
+static int
 gdbsim_has_all_memory (struct target_ops *ops)
 {
   struct sim_inferior_data *sim_data
@@ -1234,7 +1260,7 @@ gdbsim_has_all_memory (struct target_ops *ops)
   return 1;
 }
 
-int
+static int
 gdbsim_has_memory (struct target_ops *ops)
 {
   struct sim_inferior_data *sim_data
@@ -1287,12 +1313,15 @@ init_gdbsim_ops (void)
 void
 _initialize_remote_sim (void)
 {
+  struct cmd_list_element *c;
+
   init_gdbsim_ops ();
   add_target (&gdbsim_ops);
 
-  add_com ("sim", class_obscure, simulator_command,
-	   _("Send a command to the simulator."));
+  c = add_com ("sim", class_obscure, simulator_command,
+	       _("Send a command to the simulator."));
+  set_cmd_completer (c, sim_command_completer);
 
   sim_inferior_data_key
-    = register_inferior_data_with_cleanup (sim_inferior_data_cleanup);
+    = register_inferior_data_with_cleanup (NULL, sim_inferior_data_cleanup);
 }

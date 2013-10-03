@@ -1,6 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992, 1993, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -909,6 +908,8 @@ dos_info (char *arg, int from_tty)
 #endif
 }
 
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_ser_dos;
 
 void
 _initialize_ser_dos (void)

@@ -1,6 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2001, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -96,14 +95,26 @@ struct target_so_ops
     /* Target dependent code to run after child process fork.  */
     void (*solib_create_inferior_hook) (int from_tty);
 
-    /* Do additional symbol handling, lookup, etc. after symbols
-       for a shared object have been loaded.  */
+    /* Do additional symbol handling, lookup, etc. after symbols for a
+       shared object have been loaded in the usual way.  This is
+       called to do any system specific symbol handling that might be
+       needed.  */
     void (*special_symbol_handling) (void);
 
-    /* Construct a list of the currently loaded shared objects.  */
+    /* Construct a list of the currently loaded shared objects.  This
+       list does not include an entry for the main executable file.
+
+       Note that we only gather information directly available from the
+       inferior --- we don't examine any of the shared library files
+       themselves.  The declaration of `struct so_list' says which fields
+       we provide values for.  */
     struct so_list *(*current_sos) (void);
 
-    /* Find, open, and read the symbols for the main executable.  */
+    /* Find, open, and read the symbols for the main executable.  If
+       FROM_TTYP dereferences to a non-zero integer, allow messages to
+       be printed.  This parameter is a pointer rather than an int
+       because open_symbol_file_object is called via catch_errors and
+       catch_errors requires a pointer argument.  */
     int (*open_symbol_file_object) (void *from_ttyp);
 
     /* Determine if PC lies in the dynamic symbol resolution code of

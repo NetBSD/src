@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Unimplemented clone syscall *
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 
 #include <stddef.h>

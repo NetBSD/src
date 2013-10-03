@@ -30,7 +30,7 @@
 	EF_M68K_CPU32_FIDO_A.
 
 2006-12-25  Mei Ligang  <ligang@sunnorth.com.cn>
-	
+
 	* elf32-score.c (score_elf_got_lo16_reloc): Change some variables
 	type from unsigned to signed.
 	(score_elf_final_link_relocate): Fix bugs of handling relocation
@@ -3593,6 +3593,12 @@
 
 For older changes see ChangeLog-2005
 
+Copyright (C) 2006 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

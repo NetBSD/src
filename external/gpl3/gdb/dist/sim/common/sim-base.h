@@ -1,7 +1,6 @@
 /* Simulator pseudo baseclass.
 
-   Copyright 1997, 1998, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1997-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 

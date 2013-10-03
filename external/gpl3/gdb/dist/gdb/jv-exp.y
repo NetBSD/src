@@ -1,6 +1,5 @@
 /* YACC parser for Java expressions, for GDB.
-   Copyright (C) 1997, 1998, 1999, 2000, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,6 +98,12 @@
 #define yygindex java_yygindex
 #define yytable	 java_yytable
 #define yycheck	 java_yycheck
+#define yyss	java_yyss
+#define yysslim	java_yysslim
+#define yyssp	java_yyssp
+#define yystacksize java_yystacksize
+#define yyvs	java_yyvs
+#define yyvsp	java_yyvsp
 
 #ifndef YYDEBUG
 #define	YYDEBUG 1		/* Default to yydebug support */
@@ -1222,7 +1227,7 @@ static int
 push_variable (struct stoken name)
 {
   char *tmp = copy_name (name);
-  int is_a_field_of_this = 0;
+  struct field_of_this_result is_a_field_of_this;
   struct symbol *sym;
   sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN,
 		       &is_a_field_of_this);
@@ -1243,7 +1248,7 @@ push_variable (struct stoken name)
       write_exp_elt_opcode (OP_VAR_VALUE);
       return 1;
     }
-  if (is_a_field_of_this)
+  if (is_a_field_of_this.type != NULL)
     {
       /* it hangs off of `this'.  Must not inadvertently convert from a
 	 method call to data ref.  */
@@ -1394,7 +1399,7 @@ push_expression_name (struct stoken name)
       else if (!have_full_symbols () && !have_partial_symbols ())
 	error (_("No symbol table is loaded.  Use the \"file\" command"));
       else
-	error (_("No symbol \"%s\" in current context"), tmp);
+	error (_("No symbol \"%s\" in current context."), tmp);
     }
 
 }

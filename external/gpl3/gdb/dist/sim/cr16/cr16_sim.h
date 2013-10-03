@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -472,3 +472,9 @@ extern void write_longlong PARAMS ((uint8 *addr, int64 data));
    PSR is masked for zero bits. */
 
 extern creg_t move_to_cr (int cr, creg_t mask, creg_t val, int psw_hw_p);
+
+#ifndef SIGTRAP
+#define SIGTRAP 5
+#endif
+/* Special purpose trap  */
+#define TRAP_BREAKPOINT 8

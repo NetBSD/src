@@ -1,7 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
    Derived from coffread.c, dbxread.c, and a lot of hacking.
    Contributed by IBM Corporation.
 
@@ -58,6 +56,10 @@
 #include "aout/stab_gnu.h"
 
 
+/* Key for XCOFF-associated data.  */
+
+static const struct objfile_data *xcoff_objfile_data_key;
+
 /* We put a pointer to this structure in the read_symtab_private field
    of the psymtab.  */
 
@@ -152,6 +154,31 @@ struct coff_symfile_info
     CORE_ADDR toc_offset;
   };
 
+/* Convenience macro to access the per-objfile XCOFF data.  */
+
+#define XCOFF_DATA(objfile)						\
+  ((struct coff_symfile_info *) objfile_data ((objfile),		\
+					      xcoff_objfile_data_key))
+
+/* XCOFF names for dwarf sections.  There is no compressed sections.  */
+
+static const struct dwarf2_debug_sections dwarf2_xcoff_names = {
+  { ".dwinfo", NULL },
+  { ".dwabrev", NULL },
+  { ".dwline", NULL },
+  { ".dwloc", NULL },
+  { NULL, NULL }, /* debug_macinfo */
+  { NULL, NULL }, /* debug_macro */
+  { ".dwstr", NULL },
+  { ".dwrnges", NULL },
+  { NULL, NULL }, /* debug_types */
+  { NULL, NULL }, /* debug_addr */
+  { ".dwframe", NULL },
+  { NULL, NULL }, /* eh_frame */
+  { NULL, NULL }, /* gdb_index */
+  23
+};
+
 static void
 bf_notfound_complaint (void)
 {
@@ -207,7 +234,7 @@ static CORE_ADDR read_symbol_nvalue (int);
 static struct symbol *process_xcoff_symbol (struct coff_symbol *,
 					    struct objfile *);
 
-static void read_xcoff_symtab (struct partial_symtab *);
+static void read_xcoff_symtab (struct objfile *, struct partial_symtab *);
 
 #if 0
 static void add_stab_to_list (char *, struct pending_stabs **);
@@ -256,36 +283,53 @@ find_targ_sec (bfd *abfd, asection *sect, void *obj)
     }
 }
 
-/* Return the section number (SECT_OFF_*) that CS points to.  */
-static int
-secnum_to_section (int secnum, struct objfile *objfile)
-{
-  int off = SECT_OFF_TEXT (objfile);
+/* Search all BFD sections for the section whose target_index is
+   equal to N_SCNUM.  Set *BFD_SECT to that section.  The section's
+   associated index in the objfile's section_offset table is also
+   stored in *SECNUM.
 
-  asection *sect = NULL;
+   If no match is found, *BFD_SECT is set to NULL, and *SECNUM
+   is set to the text section's number.  */
+
+static void
+xcoff_secnum_to_sections (int n_scnum, struct objfile *objfile,
+			  asection **bfd_sect, int *secnum)
+{
   struct find_targ_sec_arg args;
-  args.targ_index = secnum;
-  args.resultp = &off;
-  args.bfd_sect = &sect;
+
+  args.targ_index = n_scnum;
+  args.resultp = secnum;
+  args.bfd_sect = bfd_sect;
   args.objfile = objfile;
+
+  *bfd_sect = NULL;
+  *secnum = SECT_OFF_TEXT (objfile);
+
   bfd_map_over_sections (objfile->obfd, find_targ_sec, &args);
-  return off;
 }
 
-/* Return the BFD section that CS points to.  */
-static asection *
-secnum_to_bfd_section (int secnum, struct objfile *objfile)
-{
-  int off = SECT_OFF_TEXT (objfile);
+/* Return the section number (SECT_OFF_*) that N_SCNUM points to.  */
 
-  asection *sect = NULL;
-  struct find_targ_sec_arg args;
-  args.targ_index = secnum;
-  args.resultp = &off;
-  args.bfd_sect = &sect;
-  args.objfile = objfile;
-  bfd_map_over_sections (objfile->obfd, find_targ_sec, &args);
-  return sect;
+static int
+secnum_to_section (int n_scnum, struct objfile *objfile)
+{
+  int secnum;
+  asection *ignored;
+
+  xcoff_secnum_to_sections (n_scnum, objfile, &ignored, &secnum);
+  return secnum;
+}
+
+/* Return the BFD section that N_SCNUM points to.  */
+
+static asection *
+secnum_to_bfd_section (int n_scnum, struct objfile *objfile)
+{
+  int ignored;
+  asection *bfd_sect;
+
+  xcoff_secnum_to_sections (n_scnum, objfile, &bfd_sect, &ignored);
+  return bfd_sect;
 }
 
 /* add a given stab string into given stab vector.  */
@@ -552,6 +596,9 @@ allocate_include_entry (void)
    in psymtab to symtab processing.  */
 static struct partial_symtab *this_symtab_psymtab;
 
+/* Objfile related to this_symtab_psymtab; set at the same time.  */
+static struct objfile *this_symtab_objfile;
+
 /* given the start and end addresses of a compilation unit (or a csect,
    at times) process its lines and create appropriate line vectors.  */
 
@@ -559,9 +606,8 @@ static void
 process_linenos (CORE_ADDR start, CORE_ADDR end)
 {
   int offset, ii;
-  file_ptr max_offset =
-    ((struct coff_symfile_info *) this_symtab_psymtab->objfile
-     ->deprecated_sym_private)->max_lineno_offset;
+  file_ptr max_offset
+    = XCOFF_DATA (this_symtab_objfile)->max_lineno_offset;
 
   /* subfile structure for the main compilation unit.  */
   struct subfile main_subfile;
@@ -594,7 +640,7 @@ process_linenos (CORE_ADDR start, CORE_ADDR end)
       /* There was source with line numbers in include files.  */
 
       int linesz =
-	coff_data (this_symtab_psymtab->objfile->obfd)->local_linesz;
+	coff_data (this_symtab_objfile->obfd)->local_linesz;
       main_source_baseline = 0;
 
       for (ii = 0; ii < inclIndx; ++ii)
@@ -609,7 +655,7 @@ process_linenos (CORE_ADDR start, CORE_ADDR end)
 		 start, 0, &main_source_baseline);
 	    }
 
-	  if (strcmp (inclTable[ii].name, last_source_file) == 0)
+	  if (strcmp (inclTable[ii].name, get_last_source_file ()) == 0)
 	    {
               /* The entry in the include table refers to the main source
                  file.  Add the lines to the main subfile.  */
@@ -757,6 +803,10 @@ return_after_cleanup:
 static void
 aix_process_linenos (void)
 {
+  /* There is no linenos to read if there are only dwarf info.  */
+  if (this_symtab_psymtab == NULL)
+    return;
+
   /* Process line numbers and enter them into line vector.  */
   process_linenos (last_source_start_addr, cur_src_end_addr);
 }
@@ -778,7 +828,7 @@ enter_line_range (struct subfile *subfile, unsigned beginoffset,
 		  CORE_ADDR startaddr,	/* offsets to line table */
 		  CORE_ADDR endaddr, unsigned *firstLine)
 {
-  struct objfile *objfile = this_symtab_psymtab->objfile;
+  struct objfile *objfile = this_symtab_objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   unsigned int curoffset;
   CORE_ADDR addr;
@@ -791,9 +841,7 @@ enter_line_range (struct subfile *subfile, unsigned beginoffset,
   if (endoffset == 0 && startaddr == 0 && endaddr == 0)
     return;
   curoffset = beginoffset;
-  limit_offset =
-    ((struct coff_symfile_info *) objfile->deprecated_sym_private)
-    ->max_lineno_offset;
+  limit_offset = XCOFF_DATA (objfile)->max_lineno_offset;
 
   if (endoffset != 0)
     {
@@ -846,7 +894,7 @@ enter_line_range (struct subfile *subfile, unsigned beginoffset,
    text address for the file, and SIZE is the number of bytes of text.  */
 
 #define complete_symtab(name, start_addr) {	\
-  last_source_file = xstrdup (name);		\
+  set_last_source_file (name);			\
   last_source_start_addr = start_addr;		\
 }
 
@@ -857,21 +905,33 @@ enter_line_range (struct subfile *subfile, unsigned beginoffset,
    This function can read past the end of the symbol table
    (into the string table) but this does no harm.  */
 
-/* Reading symbol table has to be fast! Keep the followings as macros, rather
-   than functions.  */
+/* Create a new minimal symbol (using prim_record_minimal_symbol_and_info).
 
-#define	RECORD_MINIMAL_SYMBOL(NAME, ADDR, TYPE, SECTION, OBJFILE) \
-{						\
-  char *namestr;				\
-						\
-  namestr = (NAME);				\
-  if (namestr[0] == '.') ++namestr;		\
-  prim_record_minimal_symbol_and_info (namestr, (ADDR), (TYPE),     \
-				       (SECTION), (asection *)NULL, \
-				       (OBJFILE));		    \
-  misc_func_recorded = 1;			\
+   Arguments are:
+
+   NAME - the symbol's name (but if NAME starts with a period, that
+   leading period is discarded).
+   ADDRESS - the symbol's address.
+   MS_TYPE - the symbol's type.
+   N_SCNUM - the symbol's XCOFF section number.
+   OBJFILE - the objfile associated with the minimal symbol.  */
+
+static void
+record_minimal_symbol (const char *name, CORE_ADDR address,
+		       enum minimal_symbol_type ms_type,
+		       int n_scnum,
+		       struct objfile *objfile)
+{
+  int secnum;
+  asection *bfd_sect;
+
+  if (name[0] == '.')
+    ++name;
+
+  xcoff_secnum_to_sections (n_scnum, objfile, &bfd_sect, &secnum);
+  prim_record_minimal_symbol_and_info (name, address, ms_type,
+				       secnum, bfd_sect, objfile);
 }
-
 
 /* xcoff has static blocks marked in `.bs', `.es' pairs.  They cannot be
    nested.  At any given time, a symbol can only be in one static block.
@@ -901,8 +961,8 @@ xcoff_next_symbol_text (struct objfile *objfile)
   char *retval;
 
   /* FIXME: is this the same as the passed arg?  */
-  if (this_symtab_psymtab)
-    objfile = this_symtab_psymtab->objfile;
+  if (this_symtab_objfile)
+    objfile = this_symtab_objfile;
 
   bfd_coff_swap_sym_in (objfile->obfd, raw_symbol, &symbol);
   if (symbol.n_zeroes)
@@ -915,9 +975,7 @@ xcoff_next_symbol_text (struct objfile *objfile)
     }
   else if (symbol.n_sclass & 0x80)
     {
-      retval = ((struct coff_symfile_info *)
-		objfile->deprecated_sym_private)->debugsec
-	+ symbol.n_offset;
+      retval = XCOFF_DATA (objfile)->debugsec + symbol.n_offset;
       raw_symbol += coff_data (objfile->obfd)->local_symesz;
       ++symnum;
     }
@@ -935,16 +993,14 @@ xcoff_next_symbol_text (struct objfile *objfile)
 /* Read symbols for a given partial symbol table.  */
 
 static void
-read_xcoff_symtab (struct partial_symtab *pst)
+read_xcoff_symtab (struct objfile *objfile, struct partial_symtab *pst)
 {
-  struct objfile *objfile = pst->objfile;
   bfd *abfd = objfile->obfd;
   char *raw_auxptr;		/* Pointer to first raw aux entry for sym.  */
-  char *strtbl = 
-    ((struct coff_symfile_info *) objfile->deprecated_sym_private)->strtbl;
-  char *debugsec =
-    ((struct coff_symfile_info *) objfile->deprecated_sym_private)->debugsec;
-  char *debugfmt = bfd_xcoff_is_xcoff64 (abfd) ? "XCOFF64" : "XCOFF";
+  struct coff_symfile_info *xcoff = XCOFF_DATA (objfile);
+  char *strtbl = xcoff->strtbl;
+  char *debugsec = xcoff->debugsec;
+  const char *debugfmt = bfd_xcoff_is_xcoff64 (abfd) ? "XCOFF64" : "XCOFF";
 
   struct internal_syment symbol[1];
   union internal_auxent main_aux;
@@ -961,24 +1017,22 @@ read_xcoff_symtab (struct partial_symtab *pst)
   struct coff_symbol fcn_stab_saved = { 0 };
 
   /* fcn_cs_saved is global because process_xcoff_symbol needs it.  */
-  union internal_auxent fcn_aux_saved;
+  union internal_auxent fcn_aux_saved = main_aux;
   struct context_stack *new;
 
   char *filestring = " _start_ ";	/* Name of the current file.  */
 
-  char *last_csect_name;	/* Last seen csect's name and value.  */
-  CORE_ADDR last_csect_val;
-  int last_csect_sec;
+  const char *last_csect_name;	/* Last seen csect's name.  */
 
   this_symtab_psymtab = pst;
+  this_symtab_objfile = objfile;
 
   /* Get the appropriate COFF "constants" related to the file we're
      handling.  */
   local_symesz = coff_data (abfd)->local_symesz;
 
-  last_source_file = NULL;
+  set_last_source_file (NULL);
   last_csect_name = 0;
-  last_csect_val = 0;
 
   start_stabs ();
   start_symtab (filestring, (char *) NULL, file_start_addr);
@@ -988,9 +1042,7 @@ read_xcoff_symtab (struct partial_symtab *pst)
     symnum + ((struct symloc *) pst->read_symtab_private)->numsyms;
   first_object_file_end = 0;
 
-  raw_symbol =
-    ((struct coff_symfile_info *) objfile->deprecated_sym_private)->symtbl
-    + symnum * local_symesz;
+  raw_symbol = xcoff->symtbl + symnum * local_symesz;
 
   while (symnum < max_symnum)
     {
@@ -1067,7 +1119,7 @@ read_xcoff_symtab (struct partial_symtab *pst)
 
       if (cs->c_symnum == next_file_symnum && cs->c_sclass != C_FILE)
 	{
-	  if (last_source_file)
+	  if (get_last_source_file ())
 	    {
 	      pst->symtab = end_symtab (cur_src_end_addr, objfile,
 					SECT_OFF_TEXT (objfile));
@@ -1151,14 +1203,8 @@ read_xcoff_symtab (struct partial_symtab *pst)
 						SECT_OFF_TEXT (objfile));
 		      file_end_addr = file_start_addr + CSECT_LEN (&main_aux);
 
-		      if (cs->c_name && (cs->c_name[0] == '.'
-					 || cs->c_name[0] == '@'))
-			{
-			  last_csect_name = cs->c_name;
-			  last_csect_val = cs->c_value;
-			  last_csect_sec = secnum_to_section (cs->c_secnum,
-							      objfile);
-			}
+		      if (cs->c_name && (cs->c_name[0] == '.' || cs->c_name[0] == '@'))
+			last_csect_name = cs->c_name;
 		    }
 		    continue;
 
@@ -1442,7 +1488,7 @@ read_xcoff_symtab (struct partial_symtab *pst)
 	}
     }
 
-  if (last_source_file)
+  if (get_last_source_file ())
     {
       struct symtab *s;
 
@@ -1466,8 +1512,8 @@ read_xcoff_symtab (struct partial_symtab *pst)
 
 
 #define	SYMNAME_ALLOC(NAME, ALLOCED)	\
-  ((ALLOCED) ? (NAME) : obsavestring ((NAME), strlen (NAME), \
-				      &objfile->objfile_obstack))
+  ((ALLOCED) ? (NAME) : obstack_copy0 (&objfile->objfile_obstack, \
+				       (NAME), strlen (NAME)))
 
 
 /* process one xcoff symbol.  */
@@ -1585,7 +1631,11 @@ process_xcoff_symbol (struct coff_symbol *cs, struct objfile *objfile)
 	     where we need to, which is not necessarily super-clean,
 	     but seems workable enough.  */
 
-	  if (*name == ':' || (pp = (char *) strchr (name, ':')) == NULL)
+	  if (*name == ':')
+	    return NULL;
+
+	  pp = strchr (name, ':');
+	  if (pp == NULL)
 	    return NULL;
 
 	  ++pp;
@@ -1616,9 +1666,8 @@ coff_getfilename (union internal_auxent *aux_entry, struct objfile *objfile)
   static char buffer[BUFSIZ];
 
   if (aux_entry->x_file.x_n.x_zeroes == 0)
-    strcpy (buffer, ((struct coff_symfile_info *)
-		     objfile->deprecated_sym_private)->strtbl
-	    + aux_entry->x_file.x_n.x_offset);
+    strcpy (buffer, (XCOFF_DATA (objfile)->strtbl
+		     + aux_entry->x_file.x_n.x_offset));
   else
     {
       strncpy (buffer, aux_entry->x_file.x_fname, FILNMLEN);
@@ -1631,11 +1680,9 @@ coff_getfilename (union internal_auxent *aux_entry, struct objfile *objfile)
 static void
 read_symbol (struct internal_syment *symbol, int symno)
 {
-  int nsyms
-    = ((struct coff_symfile_info *)
-       this_symtab_psymtab->objfile->deprecated_sym_private)->symtbl_num_syms;
-  char *stbl = ((struct coff_symfile_info *)
-		this_symtab_psymtab->objfile->deprecated_sym_private)->symtbl;
+  struct coff_symfile_info *xcoff = XCOFF_DATA (this_symtab_objfile);
+  int nsyms = xcoff->symtbl_num_syms;
+  char *stbl = xcoff->symtbl;
 
   if (symno < 0 || symno >= nsyms)
     {
@@ -1644,7 +1691,7 @@ read_symbol (struct internal_syment *symbol, int symno)
       symbol->n_scnum = -1;
       return;
     }
-  bfd_coff_swap_sym_in (this_symtab_psymtab->objfile->obfd,
+  bfd_coff_swap_sym_in (this_symtab_objfile->obfd,
 			stbl + (symno * local_symesz),
 			symbol);
 }
@@ -1667,11 +1714,10 @@ read_symbol_nvalue (int symno)
 static int
 read_symbol_lineno (int symno)
 {
-  struct objfile *objfile = this_symtab_psymtab->objfile;
+  struct objfile *objfile = this_symtab_objfile;
   int xcoff64 = bfd_xcoff_is_xcoff64 (objfile->obfd);
 
-  struct coff_symfile_info *info =
-    (struct coff_symfile_info *)objfile->deprecated_sym_private;
+  struct coff_symfile_info *info = XCOFF_DATA (objfile);
   int nsyms = info->symtbl_num_syms;
   char *stbl = info->symtbl;
   char *strtbl = info->strtbl;
@@ -1758,10 +1804,8 @@ find_linenos (struct bfd *abfd, struct bfd_section *asect, void *vpinfo)
     info->max_lineno_offset = maxoff;
 }
 
-static void xcoff_psymtab_to_symtab_1 (struct partial_symtab *);
-
 static void
-xcoff_psymtab_to_symtab_1 (struct partial_symtab *pst)
+xcoff_psymtab_to_symtab_1 (struct objfile *objfile, struct partial_symtab *pst)
 {
   struct cleanup *old_chain;
   int i;
@@ -1792,7 +1836,7 @@ xcoff_psymtab_to_symtab_1 (struct partial_symtab *pst)
 	    wrap_here ("");	/* Flush output */
 	    gdb_flush (gdb_stdout);
 	  }
-	xcoff_psymtab_to_symtab_1 (pst->dependencies[i]);
+	xcoff_psymtab_to_symtab_1 (objfile, pst->dependencies[i]);
       }
 
   if (((struct symloc *) pst->read_symtab_private)->numsyms != 0)
@@ -1802,7 +1846,7 @@ xcoff_psymtab_to_symtab_1 (struct partial_symtab *pst)
       buildsym_init ();
       old_chain = make_cleanup (really_free_pendings, 0);
 
-      read_xcoff_symtab (pst);
+      read_xcoff_symtab (objfile, pst);
 
       do_cleanups (old_chain);
     }
@@ -1810,47 +1854,38 @@ xcoff_psymtab_to_symtab_1 (struct partial_symtab *pst)
   pst->readin = 1;
 }
 
-static void xcoff_psymtab_to_symtab (struct partial_symtab *);
-
 /* Read in all of the symbols for a given psymtab for real.
-   Be verbose about it if the user wants that.  */
+   Be verbose about it if the user wants that.  SELF is not NULL.  */
 
 static void
-xcoff_psymtab_to_symtab (struct partial_symtab *pst)
+xcoff_read_symtab (struct partial_symtab *self, struct objfile *objfile)
 {
-  bfd *sym_bfd;
-
-  if (!pst)
-    return;
-
-  if (pst->readin)
+  if (self->readin)
     {
       fprintf_unfiltered
 	(gdb_stderr, "Psymtab for %s already read in.  Shouldn't happen.\n",
-	 pst->filename);
+	 self->filename);
       return;
     }
 
-  if (((struct symloc *) pst->read_symtab_private)->numsyms != 0
-      || pst->number_of_dependencies)
+  if (((struct symloc *) self->read_symtab_private)->numsyms != 0
+      || self->number_of_dependencies)
     {
       /* Print the message now, before reading the string table,
          to avoid disconcerting pauses.  */
       if (info_verbose)
 	{
-	  printf_filtered ("Reading in symbols for %s...", pst->filename);
+	  printf_filtered ("Reading in symbols for %s...", self->filename);
 	  gdb_flush (gdb_stdout);
 	}
 
-      sym_bfd = pst->objfile->obfd;
-
       next_symbol_text_func = xcoff_next_symbol_text;
 
-      xcoff_psymtab_to_symtab_1 (pst);
+      xcoff_psymtab_to_symtab_1 (objfile, self);
 
       /* Match with global symbols.  This only needs to be done once,
          after all of the symtabs and dependencies have been read in.   */
-      scan_file_globals (pst->objfile);
+      scan_file_globals (objfile);
 
       /* Finish up the debug error message.  */
       if (info_verbose)
@@ -1874,16 +1909,16 @@ xcoff_new_init (struct objfile *objfile)
 static void
 xcoff_symfile_init (struct objfile *objfile)
 {
+  struct coff_symfile_info *xcoff;
+
   /* Allocate struct to keep track of the symfile.  */
-  objfile->deprecated_sym_private
-    = xmalloc (sizeof (struct coff_symfile_info));
+  xcoff = XNEW (struct coff_symfile_info);
+  set_objfile_data (objfile, xcoff_objfile_data_key, xcoff);
 
   /* XCOFF objects may be reordered, so set OBJF_REORDERED.  If we
      find this causes a significant slowdown in gdb then we could
      set it in the debug symbol readers only when necessary.  */
   objfile->flags |= OBJF_REORDERED;
-
-  init_entry_point_info (objfile);
 }
 
 /* Perform any local cleanups required when we are done with a particular
@@ -1894,11 +1929,6 @@ xcoff_symfile_init (struct objfile *objfile)
 static void
 xcoff_symfile_finish (struct objfile *objfile)
 {
-  if (objfile->deprecated_sym_private != NULL)
-    {
-      xfree (objfile->deprecated_sym_private);
-    }
-
   /* Start with a fresh include table for the next objfile.  */
   if (inclTable)
     {
@@ -1906,6 +1936,8 @@ xcoff_symfile_finish (struct objfile *objfile)
       inclTable = NULL;
     }
   inclIndx = inclLength = inclDepth = 0;
+
+  dwarf2_free_objfile (objfile);
 }
 
 
@@ -1916,9 +1948,9 @@ init_stringtab (bfd *abfd, file_ptr offset, struct objfile *objfile)
   int val;
   unsigned char lengthbuf[4];
   char *strtbl;
+  struct coff_symfile_info *xcoff = XCOFF_DATA (objfile);
 
-  ((struct coff_symfile_info *) objfile->deprecated_sym_private)->strtbl
-    = NULL;
+  xcoff->strtbl = NULL;
 
   if (bfd_seek (abfd, offset, SEEK_SET) < 0)
     error (_("cannot seek to string table in %s: %s"),
@@ -1937,8 +1969,7 @@ init_stringtab (bfd *abfd, file_ptr offset, struct objfile *objfile)
      as long as we have its symbol table around.  */
 
   strtbl = (char *) obstack_alloc (&objfile->objfile_obstack, length);
-  ((struct coff_symfile_info *) objfile->deprecated_sym_private)->strtbl
-    = strtbl;
+  xcoff->strtbl = strtbl;
 
   /* Copy length buffer, the first byte is usually zero and is
      used for stabs with a name length of zero.  */
@@ -1963,10 +1994,6 @@ init_stringtab (bfd *abfd, file_ptr offset, struct objfile *objfile)
    for the psymtab.  */
 static unsigned int first_fun_line_offset;
 
-static struct partial_symtab *xcoff_start_psymtab
-  (struct objfile *, char *, int,
-   struct partial_symbol **, struct partial_symbol **);
-
 /* Allocate and partially fill a partial symtab.  It will be
    completely filled at the end of the symbol list.
 
@@ -1975,7 +2002,8 @@ static struct partial_symtab *xcoff_start_psymtab
    (normal).  */
 
 static struct partial_symtab *
-xcoff_start_psymtab (struct objfile *objfile, char *filename, int first_symnum,
+xcoff_start_psymtab (struct objfile *objfile,
+		     const char *filename, int first_symnum,
 		     struct partial_symbol **global_syms,
 		     struct partial_symbol **static_syms)
 {
@@ -1989,17 +2017,13 @@ xcoff_start_psymtab (struct objfile *objfile, char *filename, int first_symnum,
   result->read_symtab_private = obstack_alloc (&objfile->objfile_obstack,
 					       sizeof (struct symloc));
   ((struct symloc *) result->read_symtab_private)->first_symnum = first_symnum;
-  result->read_symtab = xcoff_psymtab_to_symtab;
+  result->read_symtab = xcoff_read_symtab;
 
   /* Deduce the source language from the filename for this psymtab.  */
   psymtab_language = deduce_language_from_filename (filename);
 
   return result;
 }
-
-static struct partial_symtab *xcoff_end_psymtab
-  (struct partial_symtab *, char **, int, int,
-   struct partial_symtab **, int, int);
 
 /* Close off the current usage of PST.
    Returns PST, or NULL if the partial symtab was empty and thrown away.
@@ -2010,13 +2034,13 @@ static struct partial_symtab *xcoff_end_psymtab
    are the information for includes and dependencies.  */
 
 static struct partial_symtab *
-xcoff_end_psymtab (struct partial_symtab *pst, char **include_list,
-		   int num_includes, int capping_symbol_number,
+xcoff_end_psymtab (struct objfile *objfile, struct partial_symtab *pst,
+		   const char **include_list, int num_includes,
+		   int capping_symbol_number,
 		   struct partial_symtab **dependency_list,
 		   int number_dependencies, int textlow_not_set)
 {
   int i;
-  struct objfile *objfile = pst->objfile;
 
   if (capping_symbol_number != -1)
     ((struct symloc *) pst->read_symtab_private)->numsyms =
@@ -2073,7 +2097,7 @@ xcoff_end_psymtab (struct partial_symtab *pst, char **include_list,
       subpst->read_symtab = pst->read_symtab;
     }
 
-  sort_pst_symbols (pst);
+  sort_pst_symbols (objfile, pst);
 
   if (num_includes == 0
       && number_dependencies == 0
@@ -2085,7 +2109,7 @@ xcoff_end_psymtab (struct partial_symtab *pst, char **include_list,
       /* Empty psymtabs happen as a result of header files which don't have
          any symbols in them.  There can be a lot of them.  */
 
-      discard_psymtab (pst);
+      discard_psymtab (objfile, pst);
 
       /* Indicate that psymtab was thrown away.  */
       pst = (struct partial_symtab *) NULL;
@@ -2093,17 +2117,13 @@ xcoff_end_psymtab (struct partial_symtab *pst, char **include_list,
   return pst;
 }
 
-static void swap_sym (struct internal_syment *,
-		      union internal_auxent *, char **, char **,
-		      unsigned int *, struct objfile *);
-
 /* Swap raw symbol at *RAW and put the name in *NAME, the symbol in
    *SYMBOL, the first auxent in *AUX.  Advance *RAW and *SYMNUMP over
    the symbol and its auxents.  */
 
 static void
 swap_sym (struct internal_syment *symbol, union internal_auxent *aux,
-	  char **name, char **raw, unsigned int *symnump,
+	  const char **name, char **raw, unsigned int *symnump,
 	  struct objfile *objfile)
 {
   bfd_coff_swap_sym_in (objfile->obfd, *raw, symbol);
@@ -2129,13 +2149,11 @@ swap_sym (struct internal_syment *symbol, union internal_auxent *aux,
     }
   else if (symbol->n_sclass & 0x80)
     {
-      *name = ((struct coff_symfile_info *)
-	       objfile->deprecated_sym_private)->debugsec + symbol->n_offset;
+      *name = XCOFF_DATA (objfile)->debugsec + symbol->n_offset;
     }
   else
     {
-      *name = ((struct coff_symfile_info *)
-	       objfile->deprecated_sym_private)->strtbl + symbol->n_offset;
+      *name = XCOFF_DATA (objfile)->strtbl + symbol->n_offset;
     }
   ++*symnump;
   *raw += coff_data (objfile->obfd)->local_symesz;
@@ -2163,9 +2181,9 @@ scan_xcoff_symtab (struct objfile *objfile)
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   CORE_ADDR toc_offset = 0;	/* toc offset value in data section.  */
-  char *filestring = NULL;
+  const char *filestring = NULL;
 
-  char *namestring;
+  const char *namestring;
   int past_first_source_file = 0;
   bfd *abfd;
   asection *bfd_sect;
@@ -2175,7 +2193,7 @@ scan_xcoff_symtab (struct objfile *objfile)
   struct partial_symtab *pst;
 
   /* List of current psymtab's include files.  */
-  char **psymtab_include_list;
+  const char **psymtab_include_list;
   int includes_allocated;
   int includes_used;
 
@@ -2188,7 +2206,7 @@ scan_xcoff_symtab (struct objfile *objfile)
   union internal_auxent main_aux[5];
   unsigned int ssymnum;
 
-  char *last_csect_name = NULL;	/* Last seen csect's name and value.  */
+  const char *last_csect_name = NULL; /* Last seen csect's name and value.  */
   CORE_ADDR last_csect_val = 0;
   int last_csect_sec = 0;
   int misc_func_recorded = 0;	/* true if any misc. function.  */
@@ -2198,8 +2216,8 @@ scan_xcoff_symtab (struct objfile *objfile)
 
   includes_allocated = 30;
   includes_used = 0;
-  psymtab_include_list = (char **) alloca (includes_allocated *
-					   sizeof (char *));
+  psymtab_include_list = (const char **) alloca (includes_allocated *
+						 sizeof (const char *));
 
   dependencies_allocated = 30;
   dependencies_used = 0;
@@ -2207,15 +2225,13 @@ scan_xcoff_symtab (struct objfile *objfile)
     (struct partial_symtab **) alloca (dependencies_allocated *
 				       sizeof (struct partial_symtab *));
 
-  last_source_file = NULL;
+  set_last_source_file (NULL);
 
   abfd = objfile->obfd;
   next_symbol_text_func = xcoff_next_symbol_text;
 
-  sraw_symbol = ((struct coff_symfile_info *)
-		 objfile->deprecated_sym_private)->symtbl;
-  nsyms = ((struct coff_symfile_info *)
-	   objfile->deprecated_sym_private)->symtbl_num_syms;
+  sraw_symbol = XCOFF_DATA (objfile)->symtbl;
+  nsyms = XCOFF_DATA (objfile)->symtbl_num_syms;
   ssymnum = 0;
   while (ssymnum < nsyms)
     {
@@ -2271,10 +2287,10 @@ scan_xcoff_symtab (struct objfile *objfile)
 
 			if (!misc_func_recorded)
 			  {
-			    RECORD_MINIMAL_SYMBOL
+			    record_minimal_symbol
 			      (last_csect_name, last_csect_val,
-			       mst_text, last_csect_sec,
-			       objfile);
+			       mst_text, last_csect_sec, objfile);
+			    misc_func_recorded = 1;
 			  }
 
 			if (pst != NULL)
@@ -2283,8 +2299,8 @@ scan_xcoff_symtab (struct objfile *objfile)
 			       each program csect, because their text
 			       sections need not be adjacent.  */
 			    xcoff_end_psymtab
-			      (pst, psymtab_include_list, includes_used,
-			       symnum_before, dependency_list,
+			      (objfile, pst, psymtab_include_list,
+			       includes_used, symnum_before, dependency_list,
 			       dependencies_used, textlow_not_set);
 			    includes_used = 0;
 			    dependencies_used = 0;
@@ -2306,8 +2322,7 @@ scan_xcoff_symtab (struct objfile *objfile)
 		      {
 			last_csect_name = namestring;
 			last_csect_val = symbol.n_value;
-			last_csect_sec =
-			  secnum_to_section (symbol.n_scnum, objfile);
+			last_csect_sec = symbol.n_scnum;
 		      }
 		    if (pst != NULL)
 		      {
@@ -2331,7 +2346,8 @@ scan_xcoff_symtab (struct objfile *objfile)
 			(namestring, symbol.n_value,
 			 sclass == C_HIDEXT ? mst_file_data : mst_data,
 			 secnum_to_section (symbol.n_scnum, objfile),
-			 NULL, objfile);
+			 secnum_to_bfd_section (symbol.n_scnum, objfile),
+			 objfile);
 		    break;
 
 		  case XMC_TC0:
@@ -2365,11 +2381,13 @@ scan_xcoff_symtab (struct objfile *objfile)
 		    if (first_fun_line_offset == 0 && symbol.n_numaux > 1)
 		      first_fun_line_offset =
 			main_aux[0].x_sym.x_fcnary.x_fcn.x_lnnoptr;
-		    RECORD_MINIMAL_SYMBOL
-		      (namestring, symbol.n_value,
-		       sclass == C_HIDEXT ? mst_file_text : mst_text,
-		       secnum_to_section (symbol.n_scnum, objfile),
-		       objfile);
+		      {
+			record_minimal_symbol
+			  (namestring, symbol.n_value,
+			   sclass == C_HIDEXT ? mst_file_text : mst_text,
+			   symbol.n_scnum, objfile);
+			misc_func_recorded = 1;
+		      }
 		    break;
 
 		  case XMC_GL:
@@ -2380,11 +2398,10 @@ scan_xcoff_symtab (struct objfile *objfile)
 		       mst_solib_trampoline symbol.  When we lookup mst
 		       symbols, we will choose mst_text over
 		       mst_solib_trampoline.  */
-		    RECORD_MINIMAL_SYMBOL
+		    record_minimal_symbol
 		      (namestring, symbol.n_value,
-		       mst_solib_trampoline,
-		       secnum_to_section (symbol.n_scnum, objfile),
-		       objfile);
+		       mst_solib_trampoline, symbol.n_scnum, objfile);
+		    misc_func_recorded = 1;
 		    break;
 
 		  case XMC_DS:
@@ -2407,7 +2424,8 @@ scan_xcoff_symtab (struct objfile *objfile)
 			(namestring, symbol.n_value,
 			 sclass == C_HIDEXT ? mst_file_data : mst_data,
 			 secnum_to_section (symbol.n_scnum, objfile),
-			 NULL, objfile);
+			 secnum_to_bfd_section (symbol.n_scnum, objfile),
+			 objfile);
 		    break;
 		  }
 		break;
@@ -2424,7 +2442,8 @@ scan_xcoff_symtab (struct objfile *objfile)
 			(namestring, symbol.n_value,
 			 sclass == C_HIDEXT ? mst_file_bss : mst_bss,
 			 secnum_to_section (symbol.n_scnum, objfile),
-			 NULL, objfile);
+			 secnum_to_bfd_section (symbol.n_scnum, objfile),
+			 objfile);
 		    break;
 		  }
 		break;
@@ -2450,16 +2469,17 @@ scan_xcoff_symtab (struct objfile *objfile)
 		   it as a function.  This will take care of functions like
 		   strcmp() compiled by xlc.  */
 
-		RECORD_MINIMAL_SYMBOL
-		  (last_csect_name, last_csect_val,
-		   mst_text, last_csect_sec, objfile);
+		record_minimal_symbol (last_csect_name, last_csect_val,
+				       mst_text, last_csect_sec, objfile);
+		misc_func_recorded = 1;
 	      }
 
 	    if (pst)
 	      {
-		xcoff_end_psymtab (pst, psymtab_include_list, includes_used,
-				   symnum_before, dependency_list,
-				   dependencies_used, textlow_not_set);
+		xcoff_end_psymtab (objfile, pst, psymtab_include_list,
+				   includes_used, symnum_before,
+				   dependency_list, dependencies_used,
+				   textlow_not_set);
 		includes_used = 0;
 		dependencies_used = 0;
 	      }
@@ -2593,13 +2613,13 @@ scan_xcoff_symtab (struct objfile *objfile)
 	    psymtab_include_list[includes_used++] = namestring;
 	    if (includes_used >= includes_allocated)
 	      {
-		char **orig = psymtab_include_list;
+		const char **orig = psymtab_include_list;
 
-		psymtab_include_list = (char **)
+		psymtab_include_list = (const char **)
 		  alloca ((includes_allocated *= 2) *
-			  sizeof (char *));
+			  sizeof (const char *));
 		memcpy (psymtab_include_list, orig,
-			includes_used * sizeof (char *));
+			includes_used * sizeof (const char *));
 	      }
 	    continue;
 	  }
@@ -2619,7 +2639,7 @@ scan_xcoff_symtab (struct objfile *objfile)
 	    swap_sym (&symbol, &main_aux[0], &namestring, &sraw_symbol,
 		      &ssymnum, objfile);
 
-	    p = (char *) strchr (namestring, ':');
+	    p = strchr (namestring, ':');
 	    if (!p)
 	      continue;			/* Not a debugging symbol.   */
 
@@ -2881,7 +2901,7 @@ scan_xcoff_symtab (struct objfile *objfile)
 
   if (pst)
     {
-      xcoff_end_psymtab (pst, psymtab_include_list, includes_used,
+      xcoff_end_psymtab (objfile, pst, psymtab_include_list, includes_used,
 			 ssymnum, dependency_list,
 			 dependencies_used, textlow_not_set);
     }
@@ -2891,8 +2911,7 @@ scan_xcoff_symtab (struct objfile *objfile)
      Another place to obtain this information would be file auxiliary
      header.  */
 
-  ((struct coff_symfile_info *) objfile->deprecated_sym_private)->toc_offset
-    = toc_offset;
+  XCOFF_DATA (objfile)->toc_offset = toc_offset;
 }
 
 /* Return the toc offset value for a given objfile.  */
@@ -2901,8 +2920,7 @@ CORE_ADDR
 xcoff_get_toc_offset (struct objfile *objfile)
 {
   if (objfile)
-    return ((struct coff_symfile_info *)
-	    objfile->deprecated_sym_private)->toc_offset;
+    return XCOFF_DATA (objfile)->toc_offset;
   return 0;
 }
 
@@ -2928,7 +2946,7 @@ xcoff_initial_scan (struct objfile *objfile, int symfile_flags)
   char *name;
   unsigned int size;
 
-  info = (struct coff_symfile_info *) objfile->deprecated_sym_private;
+  info = XCOFF_DATA (objfile);
   symfile_bfd = abfd = objfile->obfd;
   name = objfile->name;
 
@@ -2950,7 +2968,7 @@ xcoff_initial_scan (struct objfile *objfile, int symfile_flags)
       {
 	struct bfd_section *secp;
 	bfd_size_type length;
-	char *debugsec = NULL;
+	bfd_byte *debugsec = NULL;
 
 	secp = bfd_get_section_by_name (abfd, ".debug");
 	if (secp)
@@ -2958,20 +2976,16 @@ xcoff_initial_scan (struct objfile *objfile, int symfile_flags)
 	    length = bfd_section_size (abfd, secp);
 	    if (length)
 	      {
-		debugsec =
-		  (char *) obstack_alloc (&objfile->objfile_obstack, length);
+		debugsec = obstack_alloc (&objfile->objfile_obstack, length);
 
-		if (!bfd_get_section_contents (abfd, secp, debugsec,
-					       (file_ptr) 0, length))
+		if (!bfd_get_full_section_contents (abfd, secp, &debugsec))
 		  {
 		    error (_("Error reading .debug section of `%s': %s"),
 			   name, bfd_errmsg (bfd_get_error ()));
 		  }
 	      }
 	  }
-	((struct coff_symfile_info *)
-	 objfile->deprecated_sym_private)->debugsec
-	  = debugsec;
+	info->debugsec = debugsec;
       }
     }
 
@@ -2982,15 +2996,10 @@ xcoff_initial_scan (struct objfile *objfile, int symfile_flags)
     error (_("Error reading symbols from %s: %s"),
 	   name, bfd_errmsg (bfd_get_error ()));
   size = coff_data (abfd)->local_symesz * num_symbols;
-  ((struct coff_symfile_info *) objfile->deprecated_sym_private)->symtbl =
-    obstack_alloc (&objfile->objfile_obstack, size);
-  ((struct coff_symfile_info *)
-   objfile->deprecated_sym_private)->symtbl_num_syms
-    = num_symbols;
+  info->symtbl = obstack_alloc (&objfile->objfile_obstack, size);
+  info->symtbl_num_syms = num_symbols;
 
-  val = bfd_bread (((struct coff_symfile_info *)
-		    objfile->deprecated_sym_private)->symtbl,
-		   size, abfd);
+  val = bfd_bread (info->symtbl, size, abfd);
   if (val != size)
     perror_with_name (_("reading symbol table"));
 
@@ -3017,6 +3026,13 @@ xcoff_initial_scan (struct objfile *objfile, int symfile_flags)
      minimal symbols for this objfile.  */
 
   install_minimal_symbols (objfile);
+
+  /* DWARF2 sections.  */
+
+  if (dwarf2_has_info (objfile, &dwarf2_xcoff_names))
+    dwarf2_build_psymtabs (objfile);
+
+  dwarf2_build_frame_info (objfile);
 
   do_cleanups (back_to);
 }
@@ -3090,8 +3106,78 @@ static const struct sym_fns xcoff_sym_fns =
   default_symfile_segments,	/* Get segment information from a file.  */
   aix_process_linenos,
   default_symfile_relocate,	/* Relocate a debug section.  */
+  NULL,				/* sym_probe_fns */
   &psym_functions
 };
+
+/* Same as xcoff_get_n_import_files, but for core files.  */
+
+static int
+xcoff_get_core_n_import_files (bfd *abfd)
+{
+  asection *sect = bfd_get_section_by_name (abfd, ".ldinfo");
+  gdb_byte buf[4];
+  file_ptr offset = 0;
+  int n_entries = 0;
+
+  if (sect == NULL)
+    return -1;  /* Not a core file.  */
+
+  for (offset = 0; offset < bfd_get_section_size (sect);)
+    {
+      int next;
+
+      n_entries++;
+
+      if (!bfd_get_section_contents (abfd, sect, buf, offset, 4))
+	return -1;
+      next = bfd_get_32 (abfd, buf);
+      if (next == 0)
+	break;  /* This is the last entry.  */
+      offset += next;
+    }
+
+  /* Return the number of entries, excluding the first one, which is
+     the path to the executable that produced this core file.  */
+  return n_entries - 1;
+}
+
+/* Return the number of import files (shared libraries) that the given
+   BFD depends on.  Return -1 if this number could not be computed.  */
+
+int
+xcoff_get_n_import_files (bfd *abfd)
+{
+  asection *sect = bfd_get_section_by_name (abfd, ".loader");
+  gdb_byte buf[4];
+  int l_nimpid;
+
+  /* If the ".loader" section does not exist, the objfile is probably
+     not an executable.  Might be a core file...  */
+  if (sect == NULL)
+    return xcoff_get_core_n_import_files (abfd);
+
+  /* The number of entries in the Import Files Table is stored in
+     field l_nimpid.  This field is always at offset 16, and is
+     always 4 bytes long.  Read those 4 bytes.  */
+
+  if (!bfd_get_section_contents (abfd, sect, buf, 16, 4))
+    return -1;
+  l_nimpid = bfd_get_32 (abfd, buf);
+
+  /* By convention, the first entry is the default LIBPATH value
+     to be used by the system loader, so it does not count towards
+     the number of import files.  */
+  return l_nimpid - 1;
+}
+
+/* Free the per-objfile xcoff data.  */
+
+static void
+xcoff_free_info (struct objfile *objfile, void *arg)
+{
+  xfree (arg);
+}
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 extern initialize_file_ftype _initialize_xcoffread;
@@ -3100,4 +3186,7 @@ void
 _initialize_xcoffread (void)
 {
   add_symtab_fns (&xcoff_sym_fns);
+
+  xcoff_objfile_data_key = register_objfile_data_with_cleanup (NULL,
+							       xcoff_free_info);
 }

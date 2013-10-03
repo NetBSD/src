@@ -8,6 +8,7 @@ all info install-info dvi install uninstall installcheck check:
 
 clean mostlyclean:
 	-rm -f *~ *.o a.out core corefile gcore.test
+	-rm -f *.dwo *.dwp
 	-rm -f $(EXECUTABLES)
 
 distclean maintainer-clean realclean: clean

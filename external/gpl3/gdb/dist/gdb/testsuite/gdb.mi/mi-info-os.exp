@@ -1,0 +1,38 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+# This test is Linux-only.
+if ![istarget *-*-linux*] then {
+    unsupported "mi-info-os.exp"
+    return -1
+}
+
+# Support for XML-output is needed to run this test.
+if [gdb_skip_xml_test] then {
+    unsupported "mi-info-os.exp"
+    return -1
+}
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+# Try the argument-less form that lists all the types in a table.
+
+mi_gdb_test "-info-os" ".*\\^done,OSDataTable=.*" "-info-os"

@@ -1,7 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -429,7 +428,7 @@ typedef DWORD WINAPI (*thread_fn_type)(void *);
 
 /* Create a new select thread for SCB executing THREAD_FN.  The STATE
    will be filled in by this function before return.  */
-void
+static void
 create_select_thread (thread_fn_type thread_fn,
 		      struct serial *scb,
 		      struct ser_console_state *state)

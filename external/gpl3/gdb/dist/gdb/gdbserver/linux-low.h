@@ -1,6 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +19,14 @@
 #ifdef HAVE_THREAD_DB_H
 #include <thread_db.h>
 #endif
+#include <signal.h>
 
+#include "gdbthread.h"
 #include "gdb_proc_service.h"
+
+#define PTRACE_ARG3_TYPE void *
+#define PTRACE_ARG4_TYPE void *
+#define PTRACE_XFER_TYPE long
 
 #ifdef HAVE_LINUX_REGSETS
 typedef void (*regset_fill_func) (struct regcache *, void *);
@@ -46,8 +51,6 @@ struct regset_info
 extern struct regset_info target_regsets[];
 #endif
 
-struct siginfo;
-
 struct process_info_private
 {
   /* Arch-specific additions.  */
@@ -56,6 +59,9 @@ struct process_info_private
   /* libthread_db-specific additions.  Not NULL if this process has loaded
      thread_db, and it is active.  */
   struct thread_db *thread_db;
+
+  /* &_r_debug.  0 if not yet determined.  -1 if no PT_DYNAMIC in Phdrs.  */
+  CORE_ADDR r_debug;
 };
 
 struct lwp_info;
@@ -67,12 +73,26 @@ struct linux_target_ops
 
   int num_regs;
   int *regmap;
+
+  /* Regset support bitmap: 1 for registers that are transferred as a part
+     of a regset, 0 for ones that need to be handled individually.  This
+     can be NULL if all registers are transferred with regsets or regsets
+     are not supported.  */
+  unsigned char *regset_bitmap;
   int (*cannot_fetch_register) (int);
 
   /* Returns 0 if we can store the register, 1 if we can not
      store the register, and 2 if failure to store the register
      is acceptable.  */
   int (*cannot_store_register) (int);
+
+  /* Hook to fetch a register in some non-standard way.  Used for
+     example by backends that have read-only registers with hardcoded
+     values (e.g., IA64's gr0/fr0/fr1).  Returns true if register
+     REGNO was supplied, false if not, and we should fallback to the
+     standard ptrace methods.  */
+  int (*fetch_register) (struct regcache *regcache, int regno);
+
   CORE_ADDR (*get_pc) (struct regcache *regcache);
   void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc);
   const unsigned char *breakpoint;
@@ -100,7 +120,7 @@ struct linux_target_ops
      Returns true if any conversion was done; false otherwise.
      If DIRECTION is 1, then copy from INF to NATIVE.
      If DIRECTION is 0, copy from NATIVE to INF.  */
-  int (*siginfo_fixup) (struct siginfo *native, void *inf, int direction);
+  int (*siginfo_fixup) (siginfo_t *native, void *inf, int direction);
 
   /* Hook to call when a new process is created or attached to.
      If extra per-process architecture-specific data is needed,
@@ -132,14 +152,22 @@ struct linux_target_ops
 					   CORE_ADDR lockaddr,
 					   ULONGEST orig_size,
 					   CORE_ADDR *jump_entry,
+					   CORE_ADDR *trampoline,
+					   ULONGEST *trampoline_size,
 					   unsigned char *jjump_pad_insn,
 					   ULONGEST *jjump_pad_insn_size,
 					   CORE_ADDR *adjusted_insn_addr,
-					   CORE_ADDR *adjusted_insn_addr_end);
+					   CORE_ADDR *adjusted_insn_addr_end,
+					   char *err);
 
   /* Return the bytecode operations vector for the current inferior.
      Returns NULL if bytecode compilation is not supported.  */
   struct emit_ops *(*emit_ops) (void);
+
+  /* Return the minimum length of an instruction that can be safely overwritten
+     for use as a fast tracepoint.  */
+  int (*get_min_fast_tracepoint_insn_len) (void);
+
 };
 
 extern struct linux_target_ops the_low_target;
@@ -254,8 +282,7 @@ struct lwp_info
 
 extern struct inferior_list all_lwps;
 
-char *linux_child_pid_to_exec_file (int pid);
-int elf_64_file_p (const char *file);
+int linux_pid_exe_is_elf_64_file (int pid, unsigned int *machine);
 
 void linux_attach_lwp (unsigned long pid);
 struct lwp_info *find_lwp_pid (ptid_t ptid);

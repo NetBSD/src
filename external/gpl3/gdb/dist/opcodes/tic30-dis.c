@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C30 architecture
-   Copyright 1998, 1999, 2000, 2002, 2005, 2007, 2009
+   Copyright 1998, 1999, 2000, 2002, 2005, 2007, 2009, 2012
    Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
@@ -20,9 +20,9 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <errno.h>
 #include <math.h>
-#include "sysdep.h"
 #include "dis-asm.h"
 #include "opcode/tic30.h"
 

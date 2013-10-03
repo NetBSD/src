@@ -1,7 +1,6 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -152,7 +151,7 @@ static int usr_cmd_cris_version_valid = 0;
 
 static const char cris_mode_normal[] = "normal";
 static const char cris_mode_guru[] = "guru";
-static const char *cris_modes[] = {
+static const char *const cris_modes[] = {
   cris_mode_normal,
   cris_mode_guru,
   0
@@ -262,7 +261,7 @@ cris_sigcontext_addr (struct frame_info *this_frame)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR pc;
   CORE_ADDR sp;
-  char buf[4];
+  gdb_byte buf[4];
 
   get_frame_register (this_frame, gdbarch_sp_regnum (gdbarch), buf);
   sp = extract_unsigned_integer (buf, 4, byte_order);
@@ -323,10 +322,8 @@ cris_sigtramp_frame_unwind_cache (struct frame_info *this_frame,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct cris_unwind_cache *info;
-  CORE_ADDR pc;
-  CORE_ADDR sp;
   CORE_ADDR addr;
-  char buf[4];
+  gdb_byte buf[4];
   int i;
 
   if ((*this_cache))
@@ -476,48 +473,6 @@ crisv32_single_step_through_delay (struct gdbarch *gdbarch,
 	ret = 1;
     }
   return ret;
-}
-
-/* Hardware watchpoint support.  */
-
-/* We support 6 hardware data watchpoints, but cannot trigger on execute
-   (any combination of read/write is fine).  */
-
-int
-cris_can_use_hardware_watchpoint (int type, int count, int other)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (target_gdbarch);
-
-  /* No bookkeeping is done here; it is handled by the remote debug agent.  */
-
-  if (tdep->cris_version != 32)
-    return 0;
-  else
-    /* CRISv32: Six data watchpoints, one for instructions.  */
-    return (((type == bp_read_watchpoint || type == bp_access_watchpoint
-	     || type == bp_hardware_watchpoint) && count <= 6) 
-	    || (type == bp_hardware_breakpoint && count <= 1));
-}
-
-/* The CRISv32 hardware data watchpoints work by specifying ranges,
-   which have no alignment or length restrictions.  */
-
-int
-cris_region_ok_for_watchpoint (CORE_ADDR addr, int len)
-{
-  return 1;
-}
-
-/* If the inferior has some watchpoint that triggered, return the
-   address associated with that watchpoint.  Otherwise, return
-   zero.  */
-
-CORE_ADDR
-cris_stopped_data_address (void)
-{
-  CORE_ADDR eda;
-  eda = get_frame_register_unsigned (get_current_frame (), EDA_REGNUM);
-  return eda;
 }
 
 /* The instruction environment needed to find single-step breakpoints.  */
@@ -754,9 +709,7 @@ cris_frame_unwind_cache (struct frame_info *this_frame,
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  CORE_ADDR pc;
   struct cris_unwind_cache *info;
-  int i;
 
   if ((*this_prologue_cache))
     return (*this_prologue_cache);
@@ -866,12 +819,9 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      int struct_return, CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int stack_alloc;
   int stack_offset;
   int argreg;
   int argnum;
-
-  CORE_ADDR regval;
 
   /* The function's arguments and memory allocated by gdb for the arguments to
      point at reside in separate areas on the stack.
@@ -1906,7 +1856,7 @@ cris_extract_return_value (struct type *type, struct regcache *regcache,
 /* Handle the CRIS return value convention.  */
 
 static enum return_value_convention
-cris_return_value (struct gdbarch *gdbarch, struct type *func_type,
+cris_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -2232,9 +2182,6 @@ static unsigned long get_data_from_address (unsigned short *inst,
 static void
 bdap_prefix (unsigned short inst, inst_env_type *inst_env)
 {
-
-  long offset;
-
   /* It's invalid to be in a delay slot.  */
   if (inst_env->slot_needed || inst_env->prefix_found)
     {

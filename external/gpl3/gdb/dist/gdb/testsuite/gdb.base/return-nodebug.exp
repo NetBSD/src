@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,35 +16,32 @@
 proc do_test {type} {
     set typenospace [string map {{ } -} $type]
 
-    global pf_prefix
-    set old_prefix $pf_prefix
-    lappend pf_prefix "$typenospace:"
+    with_test_prefix "$typenospace" {
+	if {[runto "func"]} {
+	    # Verify that we do not crash when using "return" from a
+	    # function with no debugging info.  Such function has no
+	    # `struct symbol'.  It may still have an associated
+	    # `struct minimal_symbol'.
 
-    if {[runto "func"]} {
-	# Verify that we do not crash when using "return" from a function with
-	# no debugging info.  Such function has no `struct symbol'.  It may
-	# still have an associated `struct minimal_symbol'.
+	    gdb_test "return -1" \
+		"Return value type not available for selected stack frame\\.\r\nPlease use an explicit cast of the value to return\\." \
+		"return from function with no debug info without a cast"
 
-    	gdb_test "return -1" \
-		 "Return value type not available for selected stack frame\\.\r\nPlease use an explicit cast of the value to return\\." \
-		 "return from function with no debug info without a cast"
+	    # Cast of the result to the proper width must be done explicitely.
+	    gdb_test "return ($type) -1" "#0 .* main \\(.*" \
+		"return from function with no debug info with a cast" \
+		"Make selected stack frame return now\\? \\(y or n\\) " "y"
 
-	# Cast of the result to the proper width must be done explicitely.
-	gdb_test "return ($type) -1" "#0 .* main \\(.*"			\
-		 "return from function with no debug info with a cast"	\
-		 "Make selected stack frame return now\\? \\(y or n\\) " "y"
+	    gdb_test "advance marker" "marker \\(.*" \
+		"advance to marker"
 
-	gdb_test "advance marker" "marker \\(.*" \
-		 "advance to marker"
-
-	# And if it returned the full width of the result.
-	gdb_test "print /d t" " = -1" "full width of the returned result"
+	    # And if it returned the full width of the result.
+	    gdb_test "print /d t" " = -1" "full width of the returned result"
+	}
     }
-
-    set pf_prefix $old_prefix
 }
 
-foreach type {{signed char} {short} {int} {long} {long long}} {
+foreach type {{signed char} {short} {int} {long} {long long} {float} {double}} {
     set typeesc [string map {{ } {\ }} $type]
     set typenospace [string map {{ } -} $type]
 

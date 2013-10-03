@@ -1,7 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -85,7 +84,7 @@ tui_field_string (struct ui_out *uiout,
   if (data->base.suppress_output)
     return;
 
-  if (fldname && data->line > 0 && strcmp (fldname, "file") == 0)
+  if (fldname && data->line > 0 && strcmp (fldname, "fullname") == 0)
     {
       data->start_of_line ++;
       if (data->line > 0)

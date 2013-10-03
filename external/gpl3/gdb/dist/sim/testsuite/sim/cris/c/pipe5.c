@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Terminating simulation due to writing pipe * from one single thread\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 #include <stddef.h>
 #include <signal.h>

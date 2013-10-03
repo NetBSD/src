@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Unimplemented fcntl*
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 #include <fcntl.h>
 #include <stdio.h>

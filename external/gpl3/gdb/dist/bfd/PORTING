@@ -81,3 +81,9 @@ SEGMENT_SIZE
 TARGETNAME
 	The name of the target, for run-time lookups.
 	Usually "a.out-<target>"
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

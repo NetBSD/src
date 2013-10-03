@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2013 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
 
@@ -26,7 +26,7 @@ set binfile ${objdir}/${subdir}/${testfile}
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	  executable { debug }] != "" } {
-    untested i386-sigframe.exp
+    untested ${testfile}.exp
     return -1
 }
 

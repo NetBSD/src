@@ -1,6 +1,6 @@
 /* BFD back-end for Intel Hex objects.
    Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2009 Free Software Foundation, Inc.
+   2006, 2007, 2009, 2011 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -930,6 +930,7 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ihex_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
 #define ihex_bfd_relax_section                    bfd_generic_relax_section
 #define ihex_bfd_gc_sections                      bfd_generic_gc_sections
+#define ihex_bfd_lookup_section_flags             bfd_generic_lookup_section_flags
 #define ihex_bfd_merge_sections                   bfd_generic_merge_sections
 #define ihex_bfd_is_group_section                 bfd_generic_is_group_section
 #define ihex_bfd_discard_group                    bfd_generic_discard_group
@@ -957,6 +958,7 @@ const bfd_target ihex_vec =
   0,				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

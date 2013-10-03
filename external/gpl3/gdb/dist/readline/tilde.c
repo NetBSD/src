@@ -1,23 +1,23 @@
 /* tilde.c -- Tilde expansion code (~/foo := $HOME/foo). */
 
-/* Copyright (C) 1988,1989 Free Software Foundation, Inc.
+/* Copyright (C) 1988-2009 Free Software Foundation, Inc.
 
-   This file is part of GNU Readline, a library for reading lines
-   of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.
 
-   Readline is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 2, or (at your option) any
-   later version.
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-   Readline is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Readline; see the file COPYING.  If not, write to the Free
-   Software Foundation, 59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #if defined (HAVE_CONFIG_H)
 #  include <config.h>
@@ -236,7 +236,7 @@ tilde_expand (string)
       string += end;
 
       expansion = tilde_expand_word (tilde_word);
-      free (tilde_word);
+      xfree (tilde_word);
 
       len = strlen (expansion);
 #ifdef __CYGWIN__
@@ -251,7 +251,7 @@ tilde_expand (string)
 	  strcpy (result + result_index, expansion);
 	  result_index += len;
 	}
-      free (expansion);
+      xfree (expansion);
     }
 
   result[result_index] = '\0';
@@ -377,8 +377,8 @@ tilde_expand_word (filename)
       if (expansion)
 	{
 	  dirname = glue_prefix_and_suffix (expansion, filename, user_len);
-	  free (username);
-	  free (expansion);
+	  xfree (username);
+	  xfree (expansion);
 	  return (dirname);
 	}
     }
@@ -401,10 +401,9 @@ tilde_expand_word (filename)
 	  if (expansion)
 	    {
 	      dirname = glue_prefix_and_suffix (expansion, filename, user_len);
-	      free (expansion);
+	      xfree (expansion);
 	    }
 	}
-      free (username);
       /* If we don't have a failure hook, or if the failure hook did not
 	 expand the tilde, return a copy of what we were passed. */
       if (dirname == 0)
@@ -412,10 +411,11 @@ tilde_expand_word (filename)
     }
 #if defined (HAVE_GETPWENT)
   else
-    {
-      free (username);
-      dirname = glue_prefix_and_suffix (user_entry->pw_dir, filename, user_len);
-    }
+    dirname = glue_prefix_and_suffix (user_entry->pw_dir, filename, user_len);
+#endif
+
+  xfree (username);
+#if defined (HAVE_GETPWENT)
   endpwent ();
 #endif
   return (dirname);

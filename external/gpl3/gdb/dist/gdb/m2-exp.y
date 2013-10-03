@@ -1,6 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999,
-   2000, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -100,6 +99,12 @@
 #define yygindex m2_yygindex
 #define yytable	 m2_yytable
 #define yycheck	 m2_yycheck
+#define yyss	m2_yyss
+#define yysslim	m2_yysslim
+#define yyssp	m2_yyssp
+#define yystacksize m2_yystacksize
+#define yyvs	m2_yyvs
+#define yyvsp	m2_yyvsp
 
 #ifndef YYDEBUG
 #define	YYDEBUG 1		/* Default to yydebug support */
@@ -113,20 +118,10 @@ static int yylex (void);
 
 void yyerror (char *);
 
-#if 0
-static char *make_qualname (char *, char *);
-#endif
-
 static int parse_number (int);
 
 /* The sign of the number being parsed.  */
 static int number_sign = 1;
-
-/* The block that the module specified by the qualifer on an identifer is
-   contained in, */
-#if 0
-static struct block *modblock=0;
-#endif
 
 %}
 
@@ -588,6 +583,13 @@ variable:	block COLONCOLON NAME
 			  if (sym == 0)
 			    error (_("No symbol \"%s\" in specified context."),
 				   copy_name ($3));
+			  if (symbol_read_needs_frame (sym))
+			    {
+			      if (innermost_block == 0
+				  || contained_in (block_found,
+						   innermost_block))
+				innermost_block = block_found;
+			    }
 
 			  write_exp_elt_opcode (OP_VAR_VALUE);
 			  /* block_found is set by lookup_symbol.  */
@@ -599,7 +601,7 @@ variable:	block COLONCOLON NAME
 /* Base case for variables.  */
 variable:	NAME
 			{ struct symbol *sym;
-			  int is_a_field_of_this;
+			  struct field_of_this_result is_a_field_of_this;
 
  			  sym = lookup_symbol (copy_name ($1),
 					       expression_context_block,
@@ -658,8 +660,7 @@ type
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (olen)
-     int olen;
+parse_number (int olen)
 {
   char *p = lexptr;
   LONGEST n = 0;
@@ -1069,23 +1070,8 @@ yylex (void)
  }
 }
 
-#if 0		/* Unused */
-static char *
-make_qualname(mod,ident)
-   char *mod, *ident;
-{
-   char *new = malloc(strlen(mod)+strlen(ident)+2);
-
-   strcpy(new,mod);
-   strcat(new,".");
-   strcat(new,ident);
-   return new;
-}
-#endif  /* 0 */
-
 void
-yyerror (msg)
-     char *msg;
+yyerror (char *msg)
 {
   if (prev_lexptr)
     lexptr = prev_lexptr;

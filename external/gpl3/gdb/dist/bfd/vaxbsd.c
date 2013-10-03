@@ -25,8 +25,8 @@
 #define SEGMENT_SIZE TARGET_PAGE_SIZE
 #define DEFAULT_ARCH bfd_arch_vax
 
-/* Do not "beautify" the CONCAT* macro args.  Traditional C will not   
-   remove whitespace added here, and thus will fail to concatenate the 
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate the
    tokens.  */
 #define MY(OP) CONCAT2 (vaxbsd_,OP)
 

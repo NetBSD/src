@@ -1,6 +1,5 @@
 /* Shared library support for RS/6000 (xcoff) object files, for GDB.
-   Copyright (C) 1991, 1992, 1995, 1996, 1999, 2000, 2001, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1991-2013 Free Software Foundation, Inc.
    Contributed by IBM Corporation.
 
    This file is part of GDB.
@@ -62,7 +61,7 @@ static void sharedlibrary_command (char *pattern, int from_tty);
 static void
 solib_info (char *args, int from_tty)
 {
-  int addr_size = gdbarch_addr_bit (target_gdbarch) / 8;
+  int addr_size = gdbarch_addr_bit (target_gdbarch ()) / 8;
   struct vmap *vp = vmap;
 
   /* Check for new shared libraries loaded with load ().  */
@@ -157,6 +156,8 @@ sharedlibrary_command (char *pattern, int from_tty)
       }
   }
 }
+
+void _initialize_xcoffsolib (void);
 
 void
 _initialize_xcoffsolib (void)

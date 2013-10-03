@@ -1,5 +1,4 @@
-#   Copyright 1988, 1990, 1991, 1992, 1995, 1997, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1988-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,7 +58,7 @@ proc gdb_start { } {
     global reboot
 
     # get a connection to the board
-    for { set x 0; } { $x < 3 } { incr x } {
+    for { set x 0 } { $x < 3 } { incr x } {
 	set shell_id [remote_open target]
 	if { $shell_id > 0 } {
 	    verbose "Spawn id for remote shell is $shell_id"

@@ -1,5 +1,4 @@
-#   Copyright 1998, 2002, 2005, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1998-2013 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +17,11 @@
 
 load_lib "trace-support.exp";
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 gdb_exit
 gdb_start
 
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/tfind
+standard_testfile actions.c
 
 if { [gdb_compile "$srcdir/$subdir/$srcfile" "$binfile" \
 	  executable {debug nowarnings}] != "" } {
@@ -38,13 +31,39 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" "$binfile" \
 gdb_load $binfile
 gdb_test "tstop"       ".*" ""
 gdb_test "tfind none"  ".*" ""
+
+# 6.2 test help tstart
+gdb_test "help tstart" \
+    "Start trace data collection\.\[\r\n\]+Usage: tstart \\\[ <notes> \.\.\. \\\]\[\r\n\]+Any arguments supplied are recorded with the trace as a note and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
+    "6.2: help tstart"
+# 7.2 test help tstop
+gdb_test "help tstop" \
+    "Stop trace data collection\.\[\r\n\]+Usage: tstop \\\[ <notes> \.\.\. \\\]\[\r\n\]+Any arguments supplied are recorded with the trace as a stop reason and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
+    "7.2: help tstop"
+
+# 8.38 test help tfind
+gdb_test "help tfind"       "Select a trace frame.*"      \
+	"8.38: help tfind"
+gdb_test "help tfind pc"    "Select a trace frame by PC.*" \
+	"8.38: help tfind PC"
+gdb_test "help tfind end"   "De-select any trace frame.*" \
+	"8.38: help tfind end"
+gdb_test "help tfind none"  "De-select any trace frame.*" \
+	"8.38: help tfind none"
+gdb_test "help tfind line"  "Select a trace frame by source line.*" \
+	"8.38: help tfind line"
+gdb_test "help tfind start" "Select the first trace frame.*" \
+	"8.38: help tfind start"
+gdb_test "help tfind range" "Select a trace frame whose PC is in.*" \
+	"8.38: help tfind range"
+gdb_test "help tfind trace" "Select a trace frame by tracepoint number.*" \
+	"8.38: help tfind tracepoint"
+
 runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
-# We generously give ourselves one "pass" if we successfully 
-# detect that this test cannot be run on this target!
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
+    unsupported "Current target does not support trace"
     return 1;
 
 }
@@ -108,9 +127,6 @@ if { $return_me == 1 } then {
 # test tstatus (when trace on)
 gdb_test "tstatus" "\[Tt\]race is running.*" "test tstatus on"
 
-# 6.2 test help tstart
-gdb_test "help tstart" "Start trace data collection." "6.2: help tstart"
-
 gdb_test "break end" ".*" ""
 gdb_test "continue" \
     "Continuing.*Breakpoint $decimal, end.*" \
@@ -138,9 +154,6 @@ gdb_test_multiple "tstop" "7.1: tstop" {
 if { $return_me == 1 } then {
     return -1;
 }
-
-# 7.2 test help tstop
-gdb_test "help tstop" "Stop trace data collection." "7.2: help tstop"
 
 # test tstatus (when trace off)
 gdb_test "tstatus" "Trace stopped by a tstop command.*" \
@@ -333,10 +346,10 @@ gdb_test "disassemble gdb_c_test" \
     "8.36: trace disassembly"
 
 gdb_test "tfind line 0" \
-	"out of range.*|failed to find.*" \
+	"out of range.*|failed to find.*|No line 0 in .*" \
 	"8.18: tfind line 0";
 gdb_test "tfind line 32767" \
-	"out of range.*|failed to find.*" \
+	"out of range.*|failed to find.*|No line 32767 in .*" \
 	"8.27: tfind line 32767";
 gdb_test "tfind line NoSuChFiLe.c:$baseline" \
 	"No source file named.*" \
@@ -347,24 +360,6 @@ gdb_test "tfind line NoSuChFiLe.c:$baseline" \
 gdb_test "tfind NoSuChOpTiOn 21" \
 	"No symbol.*|\[Ww\]arning.*|\[Ee\]rror.*" \
 	"8.32: tfind with bad subcommand"
-
-# 8.38 test help tfind
-gdb_test "help tfind"       "Select a trace frame.*"      \
-	"8.38: help tfind"
-gdb_test "help tfind pc"    "Select a trace frame by PC.*" \
-	"8.38: help tfind PC"
-gdb_test "help tfind end"   "Synonym for 'none'.*"        \
-	"8.38: help tfind end"
-gdb_test "help tfind none"  "De-select any trace frame.*" \
-	"8.38: help tfind none"
-gdb_test "help tfind line"  "Select a trace frame by source line.*" \
-	"8.38: help tfind line"
-gdb_test "help tfind start" "Select the first trace frame.*" \
-	"8.38: help tfind start"
-gdb_test "help tfind range" "Select a trace frame whose PC is in.*" \
-	"8.38: help tfind range"
-gdb_test "help tfind trace" "Select a trace frame by tracepoint number.*" \
-	"8.38: help tfind tracepoint"
 
 # Finished!
 gdb_tfind_test "8.17: tfind none" "none" "-1"

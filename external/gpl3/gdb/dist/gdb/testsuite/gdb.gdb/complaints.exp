@@ -1,5 +1,4 @@
-# Copyright 2002, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,19 +17,21 @@
 # derived from xfullpath.exp (written by Joel Brobecker), derived from
 # selftest.exp (written by Rob Savoye).
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 # are we on a target board
 if { [is_remote target] || ![isnative] } then {
     return
 }
 
+if [target_info exists gdb,noinferiorio] {
+    verbose "Skipping because of no inferiorio capabilities."
+    return
+}
+
 proc setup_test { executable } {
     global gdb_prompt
     global timeout
+    global INTERNAL_GDBFLAGS
 
     # load yourself into the debugger
     # This can take a relatively long time, particularly for testing where
@@ -73,7 +74,7 @@ proc setup_test { executable } {
     set timeout 600
 
     set description "run until breakpoint at captured_command_loop"
-    gdb_test_multiple "run -nw" "$description" {
+    gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
         -re "Starting program.*Breakpoint \[0-9\]+,.*captured_command_loop .data.* at .*main.c:.*$gdb_prompt $" {
             pass "$description"
         }

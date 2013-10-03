@@ -1,0 +1,85 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set nl		"\[\r\n\]+"
+
+if { [skip_cplus_tests] } { continue }
+
+load_lib "cp-support.exp"
+
+standard_testfile .cc
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    return
+}
+
+gdb_test_no_output "set language c++" ""
+gdb_test_no_output "set width 0" ""
+
+proc do_check {name {flags ""} {show_typedefs 1} {show_methods 1} {raw 0}} {
+    set contents {
+	{ base "public Base<T>" }
+	{ field public "Simple<T> t;" }
+	{ field public "Simple<T*> tstar;" }
+    }
+
+    if {$raw} {
+	lappend contents { field public "Holder<int>::Z z;" }
+    } else {
+	lappend contents { field public "Z z;" }
+    }
+
+    if {$show_typedefs} {
+	lappend contents { typedef public "typedef Simple<Simple<T> > Z;" }
+    }
+
+    if {$show_methods} {
+	lappend contents { method public "double method();" }
+    }
+
+    if {$raw} {
+	regsub -all -- "T" $contents "int" contents
+    }
+
+    cp_test_ptype_class value $name "class" "Holder<int>" $contents \
+	"" {} $flags
+}
+
+do_check "basic test"
+do_check "no methods" "/m" 1 0
+do_check "no typedefs" "/t" 0 1
+do_check "no methods or typedefs" "/mt" 0 0
+
+do_check "raw" "/r" 1 1 1
+do_check "raw no methods" "/rm" 1 0 1
+do_check "raw no typedefs" "/rt" 0 1 1
+do_check "raw no methods or typedefs" "/rmt" 0 0 1
+
+gdb_test_no_output "set print type methods off"
+do_check "basic test, default methods off" "" 1 0
+do_check "methods, default methods off" "/M" 1 1
+do_check "no typedefs, default methods off" "/t" 0 0
+do_check "methods, no typedefs, default methods off" "/Mt" 0 1
+
+gdb_test_no_output "set print type typedefs off"
+do_check "basic test, default methods+typedefs off" "" 0 0
+do_check "methods, default methods+typedefs off" "/M" 0 1
+do_check "typedefs, default methods+typedefs off" "/T" 1 0
+do_check "methods typedefs, default methods+typedefs off" "/MT" 1 1

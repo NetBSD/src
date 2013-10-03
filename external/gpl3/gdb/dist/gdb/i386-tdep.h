@@ -1,7 +1,6 @@
 /* Target-dependent code for the i386.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -310,11 +309,14 @@ extern int i386_ymm_regnum_p (struct gdbarch *gdbarch, int regnum);
 
 extern const char *i386_pseudo_register_name (struct gdbarch *gdbarch,
 					      int regnum);
+extern struct type *i386_pseudo_register_type (struct gdbarch *gdbarch,
+					       int regnum);
 
-extern enum register_status i386_pseudo_register_read (struct gdbarch *gdbarch,
-						       struct regcache *regcache,
-						       int regnum,
-						       gdb_byte *buf);
+extern void i386_pseudo_register_read_into_value (struct gdbarch *gdbarch,
+						  struct regcache *regcache,
+						  int regnum,
+						  struct value *result);
+
 extern void i386_pseudo_register_write (struct gdbarch *gdbarch,
 					struct regcache *regcache,
 					int regnum, const gdb_byte *buf);
@@ -379,6 +381,7 @@ extern void i386_svr4_init_abi (struct gdbarch_info, struct gdbarch *);
 
 extern int i386_process_record (struct gdbarch *gdbarch,
                                 struct regcache *regcache, CORE_ADDR addr);
+
 
 
 /* Functions and variables exported from i386bsd-tdep.c.  */
@@ -393,5 +396,13 @@ extern int i386fbsd_sc_reg_offset[];
 extern int i386nbsd_sc_reg_offset[];
 extern int i386obsd_sc_reg_offset[];
 extern int i386bsd_sc_reg_offset[];
+
+/* SystemTap related functions.  */
+
+extern int i386_stap_is_single_operand (struct gdbarch *gdbarch,
+					const char *s);
+
+extern int i386_stap_parse_special_token (struct gdbarch *gdbarch,
+					  struct stap_parse_info *p);
 
 #endif /* i386-tdep.h */

@@ -1,6 +1,6 @@
 /* Python/gdb header for generic use in gdb
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,13 +24,15 @@
 
 struct breakpoint_object;
 
-extern int gdbpy_global_auto_load;
+/* The suffix of per-objfile scripts to auto-load.
+   E.g. When the program loads libfoo.so, look for libfoo-gdb.py.  */
+#define GDBPY_AUTO_FILE_NAME "-gdb.py"
 
 extern void finish_python_initialization (void);
 
 void eval_python_from_control_command (struct command_line *);
 
-void source_python_script (FILE *stream, const char *file);
+void source_python_script (FILE *file, const char *filename);
 
 int apply_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
 			      int embedded_offset, CORE_ADDR address,
@@ -41,10 +43,16 @@ int apply_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
 
 void preserve_python_values (struct objfile *objfile, htab_t copied_types);
 
-void load_auto_scripts_for_objfile (struct objfile *objfile);
+void gdbpy_load_auto_scripts_for_objfile (struct objfile *objfile);
 
 int gdbpy_should_stop (struct breakpoint_object *bp_obj);
 
 int gdbpy_breakpoint_has_py_cond (struct breakpoint_object *bp_obj);
+
+void *start_type_printers (void);
+
+char *apply_type_printers (void *, struct type *type);
+
+void free_type_printers (void *arg);
 
 #endif /* GDB_PYTHON_H */

@@ -1,7 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -458,7 +457,7 @@ gdb_xml_create_parser_and_cleanup_1 (const char *name,
   if (parser->expat_parser == NULL)
     {
       xfree (parser);
-      nomem (0);
+      malloc_failure (0);
     }
 
   parser->name = name;
@@ -990,68 +989,6 @@ show_debug_xml (struct ui_file *file, int from_tty,
   fprintf_filtered (file, _("XML debugging is %s.\n"), value);
 }
 
-/* Return a malloc allocated string with special characters from TEXT
-   replaced by entity references.  */
-
-char *
-xml_escape_text (const char *text)
-{
-  char *result;
-  int i, special;
-
-  /* Compute the length of the result.  */
-  for (i = 0, special = 0; text[i] != '\0'; i++)
-    switch (text[i])
-      {
-      case '\'':
-      case '\"':
-	special += 5;
-	break;
-      case '&':
-	special += 4;
-	break;
-      case '<':
-      case '>':
-	special += 3;
-	break;
-      default:
-	break;
-      }
-
-  /* Expand the result.  */
-  result = xmalloc (i + special + 1);
-  for (i = 0, special = 0; text[i] != '\0'; i++)
-    switch (text[i])
-      {
-      case '\'':
-	strcpy (result + i + special, "&apos;");
-	special += 5;
-	break;
-      case '\"':
-	strcpy (result + i + special, "&quot;");
-	special += 5;
-	break;
-      case '&':
-	strcpy (result + i + special, "&amp;");
-	special += 4;
-	break;
-      case '<':
-	strcpy (result + i + special, "&lt;");
-	special += 3;
-	break;
-      case '>':
-	strcpy (result + i + special, "&gt;");
-	special += 3;
-	break;
-      default:
-	result[i + special] = text[i];
-	break;
-      }
-  result[i + special] = '\0';
-
-  return result;
-}
-
 void
 obstack_xml_printf (struct obstack *obstack, const char *format, ...)
 {
@@ -1106,7 +1043,7 @@ xml_fetch_content_from_file (const char *filename, void *baton)
       char *fullname = concat (dirname, "/", filename, (char *) NULL);
 
       if (fullname == NULL)
-	nomem (0);
+	malloc_failure (0);
       file = fopen (fullname, FOPEN_RT);
       xfree (fullname);
     }

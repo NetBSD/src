@@ -7840,6 +7840,12 @@ Wed Jan 16 01:55:53 1991  John Gilmore  (gnu at rtl)
 	(_write_symbol_table):  Initialize <idx> counter.
 	(foop):  Eliminate debugging code.
 
+Copyright (C) 1991-1993 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

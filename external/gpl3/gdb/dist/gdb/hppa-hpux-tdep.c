@@ -1,7 +1,6 @@
 /* Target-dependent code for HP-UX on PA-RISC.
 
-   Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -178,7 +177,7 @@ hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
   struct minimal_symbol *minsym;
   asection *sec;
   CORE_ADDR addr;
-  int insn, i;
+  int insn;
 
   minsym = lookup_minimal_symbol_by_pc (pc);
   if (! minsym)
@@ -231,7 +230,7 @@ hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
 
 static int
 hppa_hpux_in_solib_return_trampoline (struct gdbarch *gdbarch,
-				      CORE_ADDR pc, char *name)
+				      CORE_ADDR pc, const char *name)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct unwind_table_entry *u;
@@ -773,7 +772,7 @@ hppa32_hpux_find_global_pointer (struct gdbarch *gdbarch,
   if (faddr & 2)
     {
       int status;
-      char buf[4];
+      gdb_byte buf[4];
 
       faddr &= ~3;
 
@@ -791,7 +790,7 @@ hppa64_hpux_find_global_pointer (struct gdbarch *gdbarch,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR faddr;
-  char buf[32];
+  gdb_byte buf[32];
 
   faddr = value_as_address (function);
 
@@ -858,7 +857,7 @@ hppa32_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
   struct frame_info *frame;
   struct unwind_table_entry *u;
   CORE_ADDR addr, rp;
-  char buf[4];
+  gdb_byte buf[4];
   unsigned int insn;
 
   sec = find_pc_section (pc);
@@ -957,7 +956,6 @@ hppa64_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
   struct hppa_objfile_private *priv;
   CORE_ADDR addr;
   struct minimal_symbol *msym;
-  int i;
 
   sec = find_pc_section (pc);
   obj = sec->objfile;
@@ -980,10 +978,10 @@ hppa64_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
      scheme; try to read in blocks of code, and look for a "bve,n (rp)" 
      instruction.  These are likely to occur at the end of functions, so
      we only look at the last two instructions of each function.  */
-  for (i = 0, msym = obj->msymbols; i < obj->minimal_symbol_count; i++, msym++)
+  ALL_OBJFILE_MSYMBOLS (obj, msym)
     {
       CORE_ADDR begin, end;
-      char *name;
+      const char *name;
       gdb_byte buf[2 * HPPA_INSN_SIZE];
       int offset;
 
@@ -1088,7 +1086,6 @@ hppa_hpux_find_dummy_bpaddr (CORE_ADDR addr)
   struct unwind_table_entry *u;
   struct minimal_symbol *msym;
   CORE_ADDR func;
-  int i;
 
   sec = find_pc_section (addr);
   if (sec)
@@ -1108,9 +1105,7 @@ hppa_hpux_find_dummy_bpaddr (CORE_ADDR addr)
 	 work.  */
 
       find_pc_partial_function (addr, NULL, &func, NULL);
-      for (i = 0, msym = sec->objfile->msymbols;
-      	   i < sec->objfile->minimal_symbol_count;
-	   i++, msym++)
+      ALL_OBJFILE_MSYMBOLS (sec->objfile, msym)
 	{
 	  u = find_unwind_entry (SYMBOL_VALUE_ADDRESS (msym));
 	  if (func != SYMBOL_VALUE_ADDRESS (msym) 
@@ -1360,7 +1355,7 @@ hppa_hpux_supply_save_state (const struct regset *regset,
   if (regnum == -1 || regnum == HPPA_FLAGS_REGNUM)
     {
       size_t size = register_size (gdbarch, HPPA_FLAGS_REGNUM);
-      char buf[8];
+      gdb_byte buf[8];
 
       store_unsigned_integer (buf, size, byte_order, flags);
       regcache_raw_supply (regcache, HPPA_FLAGS_REGNUM, buf);
