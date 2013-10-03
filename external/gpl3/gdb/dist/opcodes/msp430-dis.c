@@ -1,5 +1,5 @@
 /* Disassemble MSP430 instructions.
-   Copyright (C) 2002, 2004, 2005, 2007, 2009, 2010
+   Copyright (C) 2002, 2004, 2005, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
    
    Contributed by Dmitry Diky <diwil@mail.ru>
@@ -21,9 +21,9 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <sys/types.h>
 
 #include "dis-asm.h"
