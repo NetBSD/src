@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.77 2013/09/03 15:32:55 jmcneill Exp $	*/
+/*	$NetBSD: comvar.h,v 1.78 2013/10/03 13:23:03 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,16 +92,27 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_MCR		9
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
+#ifdef	COM_16750
+#define	COM_REG_USR		31
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
+#ifdef COM_16750
+	bus_size_t		cr_map[32];
+#else
 	bus_size_t		cr_map[16];
+#endif
 };
 
+#ifdef COM_16750
+extern const bus_size_t com_std_map[32];
+#else
 extern const bus_size_t com_std_map[16];
+#endif
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)				\
 	do {								\
@@ -128,6 +139,9 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_TCR		com_msr
 #define	COM_REG_TLR		com_scratch
 #define	COM_REG_MDR1		8
+#ifdef	COM_16750
+#define COM_REG_USR		com_usr
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -220,12 +234,14 @@ struct com_softc {
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 #define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
 #define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
-#define	COM_TYPE_ARMADAXP	6	/* Marvell ARMADA XP proc. built-in */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);
 	void (*disable)(struct com_softc *);
 	int enabled;
+
+	/* XXXX: vendor workaround functions */
+	int (*sc_vendor_workaround)(struct com_softc *);
 
 	struct pps_state sc_pps_state;	/* pps state */
 
