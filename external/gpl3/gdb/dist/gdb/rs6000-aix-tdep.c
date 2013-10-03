@@ -1,7 +1,6 @@
 /* Native support code for PPC AIX, for GDB the GNU debugger.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
    Free Software Foundation, Inc.
 
@@ -36,6 +35,7 @@
 #include "rs6000-tdep.h"
 #include "ppc-tdep.h"
 #include "exceptions.h"
+#include "xcoffread.h"
 
 /* Hook for determining the TOC address when calling functions in the
    inferior under AIX.  The initialization code in rs6000-nat.c sets
@@ -425,13 +425,12 @@ ran_out_of_registers_for_arguments:
 }
 
 static enum return_value_convention
-rs6000_return_value (struct gdbarch *gdbarch, struct type *func_type,
+rs6000_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *valtype, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_byte buf[8];
 
   /* The calling convention this function implements assumes the
      processor has floating-point registers.  We shouldn't be using it
@@ -584,7 +583,7 @@ rs6000_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
     {
       CORE_ADDR pc = 0;
       struct obj_section *pc_section;
-      struct gdb_exception e;
+      volatile struct gdb_exception e;
 
       TRY_CATCH (e, RETURN_MASK_ERROR)
         {
@@ -721,14 +720,34 @@ rs6000_software_single_step (struct frame_info *frame)
   return 1;
 }
 
+/* Implement the "auto_wide_charset" gdbarch method for this platform.  */
+
+static const char *
+rs6000_aix_auto_wide_charset (void)
+{
+  return "UTF-16";
+}
+
+/* Implement an osabi sniffer for RS6000/AIX.
+
+   This function assumes that ABFD's flavour is XCOFF.  In other words,
+   it should be registered as a sniffer for bfd_target_xcoff_flavour
+   objfiles only.  A failed assertion will be raised if this condition
+   is not met.  */
+
 static enum gdb_osabi
 rs6000_aix_osabi_sniffer (bfd *abfd)
 {
-  
-  if (bfd_get_flavour (abfd) == bfd_target_xcoff_flavour);
-    return GDB_OSABI_AIX;
+  gdb_assert (bfd_get_flavour (abfd) == bfd_target_xcoff_flavour);
 
-  return GDB_OSABI_UNKNOWN;
+  /* The only noticeable difference between Lynx178 XCOFF files and
+     AIX XCOFF files comes from the fact that there are no shared
+     libraries on Lynx178.  On AIX, we are betting that an executable
+     linked with no shared library will never exist.  */
+  if (xcoff_get_n_import_files (abfd) <= 0)
+    return GDB_OSABI_UNKNOWN;
+
+  return GDB_OSABI_AIX;
 }
 
 static void
@@ -772,6 +791,8 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
     set_gdbarch_frame_red_zone_size (gdbarch, 224);
   else
     set_gdbarch_frame_red_zone_size (gdbarch, 0);
+
+  set_gdbarch_auto_wide_charset (gdbarch, rs6000_aix_auto_wide_charset);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

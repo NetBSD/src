@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C30 coff binaries.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2005, 2007, 2008
+   Copyright 1998, 1999, 2000, 2001, 2002, 2005, 2007, 2008, 2011, 2012
    Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
@@ -28,12 +28,6 @@
 #include "coff/internal.h"
 #include "libcoff.h"
 
-static int  coff_tic30_select_reloc PARAMS ((reloc_howto_type *));
-static void rtype2howto PARAMS ((arelent *, struct internal_reloc *));
-static void reloc_processing PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
-
-reloc_howto_type * tic30_coff_reloc_type_lookup PARAMS ((bfd *, bfd_reloc_code_real_type));
-
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (1)
 
 reloc_howto_type tic30_coff_howto_table[] =
@@ -59,10 +53,9 @@ reloc_howto_type tic30_coff_howto_table[] =
    map to the howto table entries that match those in both the aout
    and coff implementations.  */
 
-reloc_howto_type *
-tic30_coff_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+static reloc_howto_type *
+tic30_coff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			      bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -104,8 +97,7 @@ tic30_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* Turn a howto into a reloc number.  */
 
 static int
-coff_tic30_select_reloc (howto)
-     reloc_howto_type *howto;
+coff_tic30_select_reloc (reloc_howto_type *howto)
 {
   return howto->type;
 }
@@ -125,9 +117,7 @@ dst->r_stuff[1] = 'C';
 /* Code to turn a r_type into a howto ptr, uses the above howto table.  */
 
 static void
-rtype2howto (internal, dst)
-     arelent *internal;
-     struct internal_reloc *dst;
+rtype2howto (arelent *internal, struct internal_reloc *dst)
 {
   switch (dst->r_type)
     {
@@ -163,12 +153,11 @@ rtype2howto (internal, dst)
  reloc_processing(relent, reloc, symbols, abfd, section)
 
 static void
-reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent *relent;
-     struct internal_reloc *reloc;
-     asymbol **symbols;
-     bfd *abfd;
-     asection *section;
+reloc_processing (arelent *relent,
+		  struct internal_reloc *reloc,
+		  asymbol **symbols,
+		  bfd *abfd,
+		  asection *section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);
@@ -203,6 +192,7 @@ const bfd_target tic30_coff_vec =
   '_',				/* leading symbol underscore */
   '/',				/* ar_pad_char */
   15,				/* ar_max_namelen */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

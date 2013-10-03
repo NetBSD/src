@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,10 +33,7 @@ if { [prepare_for_testing dw2-noloc.exp "dw2-noloc" {dw2-noloc-main.c dw2-noloc.
 # unresolvable: .symtab entry does not exist for this symbol name.
 # DW_AT_declaration is not present in any of these DIEs.
 
-proc file_symbols {type} {
-    global pf_prefix
-    set old_prefix $pf_prefix
-    lappend pf_prefix "$type:"
+proc file_symbols {type} { with_test_prefix "$type" {
 
     global gdb_prompt
 
@@ -78,9 +75,7 @@ proc file_symbols {type} {
     # As DW_AT_declaration is not present in this DIE
     # it should print <optimized out>.  As usefulness of such DIE is not
     # clear its resolution is not being tested.
-
-    set pf_prefix $old_prefix
-}
+}}
 
 file_symbols no-run
 

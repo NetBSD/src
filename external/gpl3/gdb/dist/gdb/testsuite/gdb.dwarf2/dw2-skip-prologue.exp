@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,9 +36,8 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile "dw2-skip-prologue"
+standard_testfile
 set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
 
 if {[build_executable ${testfile}.exp ${executable} "${testfile}.c ${testfile}.S" {additional_flags=-DINLINED}] == -1} {
     return -1

@@ -1,5 +1,4 @@
-#   Copyright 1997, 1999, 2007, 2008, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1997-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +23,20 @@ if { [is_remote target] || ![isnative] } then {
     continue
 }
 
+# Until "catch syscall" is implemented on other targets...
+if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
+    continue
+}
+
+# This shall be updated whenever 'catch syscall' is implemented
+# on some architecture.
+#if { ![istarget "i\[34567\]86-*-linux*"]
+if { ![istarget "x86_64-*-linux*"] && ![istarget "i\[34567\]86-*-linux*"]
+     && ![istarget "powerpc-*-linux*"] && ![istarget "powerpc64-*-linux*"]
+     && ![istarget "sparc-*-linux*"] && ![istarget "sparc64-*-linux*"]
+     && ![istarget "mips*-linux*"] } {
+     continue
+}
 
 global srcfile
 set testfile "catch-syscall"
@@ -42,21 +55,6 @@ set last_syscall "exit_group"
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested catch-syscall.exp
      return -1
-}
-
-# Until "catch syscall" is implemented on other targets...
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
-    continue
-}
-
-# This shall be updated whenever 'catch syscall' is implemented
-# on some architecture.
-#if { ![istarget "i\[34567\]86-*-linux*"]
-if { ![istarget "x86_64-*-linux*"] && ![istarget "i\[34567\]86-*-linux*"]
-     && ![istarget "powerpc-*-linux*"] && ![istarget "powerpc64-*-linux*"]
-     && ![istarget "sparc-*-linux*"] && ![istarget "sparc64-*-linux*"]
-     && ![istarget "mips*-linux*"] } {
-     continue
 }
 
 # Internal procedure used to check if, after issuing a 'catch syscall'
@@ -288,6 +286,11 @@ proc do_syscall_tests {} {
     # Try to set a catchpoint to a nonsense syscall
     set thistest "catch syscall to a nonsense syscall is prohibited"
     gdb_test "catch syscall nonsense_syscall" "Unknown syscall name .*" $thistest
+
+    # Regression test for syscall completer bug.
+    gdb_test "complete catch syscall close chroo" \
+	"catch syscall close chroot" \
+	"complete catch syscall with multiple words"
 
     # Testing the 'catch syscall' command without arguments.
     # This test should catch any syscalls.

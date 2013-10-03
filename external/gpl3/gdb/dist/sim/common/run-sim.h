@@ -2,7 +2,7 @@
    simaulator program - run - and simulator library - libsim.a - that
    is not used by GDB.  The GDB part is described in include/remote-sim.h.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

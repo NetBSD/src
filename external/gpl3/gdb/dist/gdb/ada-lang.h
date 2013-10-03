@@ -1,7 +1,6 @@
 /* Ada language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +21,8 @@
 #define ADA_LANG_H 1
 
 struct frame_info;
+struct inferior;
+struct type_print_options;
 
 #include "value.h"
 #include "gdbtypes.h"
@@ -44,6 +45,7 @@ struct frame_info;
 
 #if !defined (ADA_KNOWN_RUNTIME_FILE_NAME_PATTERNS)
 #define ADA_KNOWN_RUNTIME_FILE_NAME_PATTERNS \
+   "^unwind-seh.c$", \
    "^[agis]-.*\\.ad[bs]$",
 #endif
 
@@ -79,11 +81,15 @@ struct ada_opname_map
 /* Defined in ada-lang.c */
 extern const struct ada_opname_map ada_opname_table[];
 
-/* A tuple, (symbol, block), representing one instance of a 
- * symbol-lookup operation.  */
-struct ada_symbol_info {
-  struct symbol* sym;
-  struct block* block;
+/* A tuple representing one instance of a symbol-lookup operation.  */
+
+struct ada_symbol_info
+{
+  /* The symbol that was found.  */
+  struct symbol *sym;
+
+  /* The block where the symbol was found.  */
+  const struct block *block;
 };
 
 /* Denotes a type of renaming symbol (see ada_parse_renaming).  */
@@ -158,18 +164,18 @@ extern void ada_error (char *); /* Defined in ada-exp.y */
 
                         /* Defined in ada-typeprint.c */
 extern void ada_print_type (struct type *, const char *, struct ui_file *, int,
-                            int);
+                            int, const struct type_print_options *);
 
 extern void ada_print_typedef (struct type *type, struct symbol *new_symbol,
 			       struct ui_file *stream);
 
-extern int ada_val_print (struct type *, const gdb_byte *, int, CORE_ADDR,
-                          struct ui_file *, int,
-			  const struct value *,
-			  const struct value_print_options *);
+extern void ada_val_print (struct type *, const gdb_byte *, int, CORE_ADDR,
+			   struct ui_file *, int,
+			   const struct value *,
+			   const struct value_print_options *);
 
-extern int ada_value_print (struct value *, struct ui_file *,
-			    const struct value_print_options *);
+extern void ada_value_print (struct value *, struct ui_file *,
+			     const struct value_print_options *);
 
                                 /* Defined in ada-lang.c */
 
@@ -209,7 +215,11 @@ extern LONGEST ada_discrete_type_low_bound (struct type *);
 
 extern LONGEST ada_discrete_type_high_bound (struct type *);
 
-extern char *ada_decode_symbol (const struct general_symbol_info*);
+extern struct value *ada_get_decoded_value (struct value *value);
+
+extern struct type *ada_get_decoded_type (struct type *type);
+
+extern const char *ada_decode_symbol (const struct general_symbol_info *);
 
 extern const char *ada_decode (const char*);
 
@@ -225,9 +235,9 @@ extern char *ada_fold_name (const char *);
 extern struct symbol *ada_lookup_symbol (const char *, const struct block *,
                                          domain_enum, int *);
 
-extern struct symbol *
-ada_lookup_encoded_symbol (const char *, const struct block *,
-			   domain_enum namespace, struct block **);
+extern void ada_lookup_encoded_symbol
+  (const char *name, const struct block *block, domain_enum namespace,
+   struct ada_symbol_info *symbol_info);
 
 extern struct minimal_symbol *ada_lookup_simple_minsym (const char *);
 
@@ -236,15 +246,6 @@ extern void ada_fill_in_ada_prototype (struct symbol *);
 extern int user_select_syms (struct ada_symbol_info *, int, int);
 
 extern int get_selections (int *, int, int, int, char *);
-
-extern char *ada_start_decode_line_1 (char *);
-
-extern struct symtabs_and_lines ada_finish_decode_line_1 (char **,
-                                                          struct symtab *,
-                                                          int, char ***);
-
-extern struct symtabs_and_lines ada_sals_for_line (const char*, int,
-						   int, char***, int);
 
 extern int ada_scan_number (const char *, int, LONGEST *, int *);
 
@@ -274,6 +275,8 @@ extern struct type *ada_tag_type (struct value *);
 extern struct value *ada_value_tag (struct value *);
 
 extern const char *ada_tag_name (struct value *);
+
+extern struct value *ada_tag_value_at_base_address (struct value *obj);
 
 extern int ada_is_parent_field (struct type *, int);
 
@@ -329,19 +332,15 @@ extern struct type *ada_template_to_fixed_record_type_1 (struct type *type,
 
 extern int ada_name_prefix_len (const char *);
 
-extern char *ada_type_name (struct type *);
+extern const char *ada_type_name (struct type *);
 
 extern struct type *ada_find_parallel_type (struct type *,
                                             const char *suffix);
 
 extern LONGEST get_int_var_value (char *, int *);
 
-extern struct symbol *ada_find_any_symbol (const char *name);
-
-extern struct type *ada_find_any_type (const char *name);
-
-extern struct symbol *ada_find_renaming_symbol (const char *name,
-                                                struct block *block);
+extern struct symbol *ada_find_renaming_symbol (struct symbol *name_sym,
+                                                const struct block *block);
 
 extern int ada_prefer_type (struct type *, struct type *);
 
@@ -373,6 +372,8 @@ extern char *ada_breakpoint_rewrite (char *, int *);
 
 extern char *ada_main_name (void);
 
+extern char *ada_name_for_lookup (const char *name);
+
 /* Tasking-related: ada-tasks.c */
 
 extern int valid_task_id (int);
@@ -383,19 +384,10 @@ typedef void (ada_task_list_iterator_ftype) (struct ada_task_info *task);
 extern void iterate_over_live_ada_tasks
   (ada_task_list_iterator_ftype *iterator);
 
-extern int ada_build_task_list (int warn_if_null);
+extern int ada_build_task_list (void);
 
-extern int ada_exception_catchpoint_p (struct breakpoint *b);
-  
-extern struct symtab_and_line
-  ada_decode_exception_location (char *args, char **addr_string,
-                                 char **exp_string, char **cond_string,
-                                 struct expression **cond,
-                                 struct breakpoint_ops **ops);
-
-extern struct symtab_and_line
-  ada_decode_assert_location (char *args, char **addr_string,
-                              struct breakpoint_ops **ops);
-
+extern void print_ada_task_info (struct ui_out *uiout,
+				 char *taskno_str,
+				 struct inferior *inf);
 
 #endif

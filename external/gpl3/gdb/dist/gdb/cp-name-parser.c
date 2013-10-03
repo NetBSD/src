@@ -1,30 +1,39 @@
-/* A Bison parser, made by GNU Bison 1.875c.  */
 
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
-   This program is free software; you can redistribute it and/or modify
+/* Skeleton implementation for Bison's Yacc-like parsers in C
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+   
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
 
-/* Written by Richard Stallman by simplifying the original so called
-   ``semantic'' parser.  */
+/* C LALR(1) parser skeleton written by Richard Stallman, by
+   simplifying the original so-called "semantic" parser.  */
 
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
@@ -36,131 +45,30 @@
 /* Identify Bison output.  */
 #define YYBISON 1
 
+/* Bison version.  */
+#define YYBISON_VERSION "2.4.1"
+
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
 #define YYPURE 0
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 
 
-/* Tokens.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     INT = 258,
-     FLOAT = 259,
-     NAME = 260,
-     STRUCT = 261,
-     CLASS = 262,
-     UNION = 263,
-     ENUM = 264,
-     SIZEOF = 265,
-     UNSIGNED = 266,
-     COLONCOLON = 267,
-     TEMPLATE = 268,
-     ERROR = 269,
-     NEW = 270,
-     DELETE = 271,
-     OPERATOR = 272,
-     STATIC_CAST = 273,
-     REINTERPRET_CAST = 274,
-     DYNAMIC_CAST = 275,
-     SIGNED_KEYWORD = 276,
-     LONG = 277,
-     SHORT = 278,
-     INT_KEYWORD = 279,
-     CONST_KEYWORD = 280,
-     VOLATILE_KEYWORD = 281,
-     DOUBLE_KEYWORD = 282,
-     BOOL = 283,
-     ELLIPSIS = 284,
-     RESTRICT = 285,
-     VOID = 286,
-     FLOAT_KEYWORD = 287,
-     CHAR = 288,
-     WCHAR_T = 289,
-     ASSIGN_MODIFY = 290,
-     TRUEKEYWORD = 291,
-     FALSEKEYWORD = 292,
-     DEMANGLER_SPECIAL = 293,
-     CONSTRUCTION_VTABLE = 294,
-     CONSTRUCTION_IN = 295,
-     OROR = 296,
-     ANDAND = 297,
-     NOTEQUAL = 298,
-     EQUAL = 299,
-     GEQ = 300,
-     LEQ = 301,
-     RSH = 302,
-     LSH = 303,
-     DECREMENT = 304,
-     INCREMENT = 305,
-     UNARY = 306,
-     ARROW = 307
-   };
-#endif
-#define INT 258
-#define FLOAT 259
-#define NAME 260
-#define STRUCT 261
-#define CLASS 262
-#define UNION 263
-#define ENUM 264
-#define SIZEOF 265
-#define UNSIGNED 266
-#define COLONCOLON 267
-#define TEMPLATE 268
-#define ERROR 269
-#define NEW 270
-#define DELETE 271
-#define OPERATOR 272
-#define STATIC_CAST 273
-#define REINTERPRET_CAST 274
-#define DYNAMIC_CAST 275
-#define SIGNED_KEYWORD 276
-#define LONG 277
-#define SHORT 278
-#define INT_KEYWORD 279
-#define CONST_KEYWORD 280
-#define VOLATILE_KEYWORD 281
-#define DOUBLE_KEYWORD 282
-#define BOOL 283
-#define ELLIPSIS 284
-#define RESTRICT 285
-#define VOID 286
-#define FLOAT_KEYWORD 287
-#define CHAR 288
-#define WCHAR_T 289
-#define ASSIGN_MODIFY 290
-#define TRUEKEYWORD 291
-#define FALSEKEYWORD 292
-#define DEMANGLER_SPECIAL 293
-#define CONSTRUCTION_VTABLE 294
-#define CONSTRUCTION_IN 295
-#define OROR 296
-#define ANDAND 297
-#define NOTEQUAL 298
-#define EQUAL 299
-#define GEQ 300
-#define LEQ 301
-#define RSH 302
-#define LSH 303
-#define DECREMENT 304
-#define INCREMENT 305
-#define UNARY 306
-#define ARROW 307
-
-
-
-
 /* Copy the first part of user declarations.  */
-#line 31 "cp-name-parser.y"
+
+/* Line 189 of yacc.c  */
+#line 30 "cp-name-parser.y"
 
 
 #include "defs.h"
@@ -174,6 +82,7 @@
 #include "libiberty.h"
 #include "demangle.h"
 #include "cp-support.h"
+#include "gdb_assert.h"
 
 /* Bison does not make it easy to create a parser without global
    state, unfortunately.  Here are all the global variables used
@@ -193,7 +102,7 @@ static const char *lexptr, *prev_lexptr, *error_lexptr, *global_errmsg;
 
 struct demangle_info {
   int used;
-  struct demangle_info *prev, *next;
+  struct demangle_info *next;
   struct demangle_component comps[ALLOC_CHUNK];
 };
 
@@ -209,7 +118,6 @@ d_grab (void)
       if (demangle_info->next == NULL)
 	{
 	  more = xmalloc (sizeof (struct demangle_info));
-	  more->prev = demangle_info;
 	  more->next = NULL;
 	  demangle_info->next = more;
 	}
@@ -304,6 +212,12 @@ static struct demangle_component *d_binary (const char *,
 #define yygindex cpname_yygindex
 #define yytable	 cpname_yytable
 #define yycheck	 cpname_yycheck
+#define yyss	cpname_yyss
+#define yysslim	cpname_yysslim
+#define yyssp	cpname_yyssp
+#define yystacksize cpname_yystacksize
+#define yyvs	cpname_yyvs
+#define yyvsp	cpname_yyvsp
 
 int yyparse (void);
 static int yylex (void);
@@ -322,7 +236,11 @@ fill_comp (enum demangle_component_type d_type, struct demangle_component *lhs,
 	   struct demangle_component *rhs)
 {
   struct demangle_component *ret = d_grab ();
-  cplus_demangle_fill_component (ret, d_type, lhs, rhs);
+  int i;
+
+  i = cplus_demangle_fill_component (ret, d_type, lhs, rhs);
+  gdb_assert (i);
+
   return ret;
 }
 
@@ -338,7 +256,11 @@ static struct demangle_component *
 make_operator (const char *name, int args)
 {
   struct demangle_component *ret = d_grab ();
-  cplus_demangle_fill_operator (ret, name, args);
+  int i;
+
+  i = cplus_demangle_fill_operator (ret, name, args);
+  gdb_assert (i);
+
   return ret;
 }
 
@@ -346,7 +268,11 @@ static struct demangle_component *
 make_dtor (enum gnu_v3_dtor_kinds kind, struct demangle_component *name)
 {
   struct demangle_component *ret = d_grab ();
-  cplus_demangle_fill_dtor (ret, kind, name);
+  int i;
+
+  i = cplus_demangle_fill_dtor (ret, kind, name);
+  gdb_assert (i);
+
   return ret;
 }
 
@@ -354,7 +280,11 @@ static struct demangle_component *
 make_builtin_type (const char *name)
 {
   struct demangle_component *ret = d_grab ();
-  cplus_demangle_fill_builtin_type (ret, name);
+  int i;
+
+  i = cplus_demangle_fill_builtin_type (ret, name);
+  gdb_assert (i);
+
   return ret;
 }
 
@@ -362,7 +292,11 @@ static struct demangle_component *
 make_name (const char *name, int len)
 {
   struct demangle_component *ret = d_grab ();
-  cplus_demangle_fill_name (ret, name, len);
+  int i;
+
+  i = cplus_demangle_fill_name (ret, name, len);
+  gdb_assert (i);
+
   return ret;
 }
 
@@ -370,6 +304,9 @@ make_name (const char *name, int len)
 #define d_right(dc) (dc)->u.s_binary.right
 
 
+
+/* Line 189 of yacc.c  */
+#line 310 "cp-name-parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -384,9 +321,132 @@ make_name (const char *name, int len)
 # define YYERROR_VERBOSE 0
 #endif
 
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 242 "cp-name-parser.y"
-typedef union YYSTYPE {
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
+
+
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     INT = 258,
+     FLOAT = 259,
+     NAME = 260,
+     STRUCT = 261,
+     CLASS = 262,
+     UNION = 263,
+     ENUM = 264,
+     SIZEOF = 265,
+     UNSIGNED = 266,
+     COLONCOLON = 267,
+     TEMPLATE = 268,
+     ERROR = 269,
+     NEW = 270,
+     DELETE = 271,
+     OPERATOR = 272,
+     STATIC_CAST = 273,
+     REINTERPRET_CAST = 274,
+     DYNAMIC_CAST = 275,
+     SIGNED_KEYWORD = 276,
+     LONG = 277,
+     SHORT = 278,
+     INT_KEYWORD = 279,
+     CONST_KEYWORD = 280,
+     VOLATILE_KEYWORD = 281,
+     DOUBLE_KEYWORD = 282,
+     BOOL = 283,
+     ELLIPSIS = 284,
+     RESTRICT = 285,
+     VOID = 286,
+     FLOAT_KEYWORD = 287,
+     CHAR = 288,
+     WCHAR_T = 289,
+     ASSIGN_MODIFY = 290,
+     TRUEKEYWORD = 291,
+     FALSEKEYWORD = 292,
+     DEMANGLER_SPECIAL = 293,
+     CONSTRUCTION_VTABLE = 294,
+     CONSTRUCTION_IN = 295,
+     OROR = 296,
+     ANDAND = 297,
+     NOTEQUAL = 298,
+     EQUAL = 299,
+     GEQ = 300,
+     LEQ = 301,
+     RSH = 302,
+     LSH = 303,
+     DECREMENT = 304,
+     INCREMENT = 305,
+     UNARY = 306,
+     ARROW = 307
+   };
+#endif
+/* Tokens.  */
+#define INT 258
+#define FLOAT 259
+#define NAME 260
+#define STRUCT 261
+#define CLASS 262
+#define UNION 263
+#define ENUM 264
+#define SIZEOF 265
+#define UNSIGNED 266
+#define COLONCOLON 267
+#define TEMPLATE 268
+#define ERROR 269
+#define NEW 270
+#define DELETE 271
+#define OPERATOR 272
+#define STATIC_CAST 273
+#define REINTERPRET_CAST 274
+#define DYNAMIC_CAST 275
+#define SIGNED_KEYWORD 276
+#define LONG 277
+#define SHORT 278
+#define INT_KEYWORD 279
+#define CONST_KEYWORD 280
+#define VOLATILE_KEYWORD 281
+#define DOUBLE_KEYWORD 282
+#define BOOL 283
+#define ELLIPSIS 284
+#define RESTRICT 285
+#define VOID 286
+#define FLOAT_KEYWORD 287
+#define CHAR 288
+#define WCHAR_T 289
+#define ASSIGN_MODIFY 290
+#define TRUEKEYWORD 291
+#define FALSEKEYWORD 292
+#define DEMANGLER_SPECIAL 293
+#define CONSTRUCTION_VTABLE 294
+#define CONSTRUCTION_IN 295
+#define OROR 296
+#define ANDAND 297
+#define NOTEQUAL 298
+#define EQUAL 299
+#define GEQ 300
+#define LEQ 301
+#define RSH 302
+#define LSH 303
+#define DECREMENT 304
+#define INCREMENT 305
+#define UNARY 306
+#define ARROW 307
+
+
+
+
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
+{
+
+/* Line 214 of yacc.c  */
+#line 267 "cp-name-parser.y"
+
     struct demangle_component *comp;
     struct nested {
       struct demangle_component *comp;
@@ -403,71 +463,187 @@ typedef union YYSTYPE {
     } abstract;
     int lval;
     const char *opname;
-  } YYSTYPE;
-/* Line 191 of yacc.c.  */
-#line 409 "cp-name-parser.c"
+  
+
+
+/* Line 214 of yacc.c  */
+#line 471 "cp-name-parser.c"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 214 of yacc.c.  */
-#line 421 "cp-name-parser.c"
+/* Line 264 of yacc.c  */
+#line 483 "cp-name-parser.c"
 
-#if ! defined (yyoverflow) || YYERROR_VERBOSE
+#ifdef short
+# undef short
+#endif
 
-# ifndef YYFREE
-#  define YYFREE xfree
+#ifdef YYTYPE_UINT8
+typedef YYTYPE_UINT8 yytype_uint8;
+#else
+typedef unsigned char yytype_uint8;
+#endif
+
+#ifdef YYTYPE_INT8
+typedef YYTYPE_INT8 yytype_int8;
+#elif (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+typedef signed char yytype_int8;
+#else
+typedef short int yytype_int8;
+#endif
+
+#ifdef YYTYPE_UINT16
+typedef YYTYPE_UINT16 yytype_uint16;
+#else
+typedef unsigned short int yytype_uint16;
+#endif
+
+#ifdef YYTYPE_INT16
+typedef YYTYPE_INT16 yytype_int16;
+#else
+typedef short int yytype_int16;
+#endif
+
+#ifndef YYSIZE_T
+# ifdef __SIZE_TYPE__
+#  define YYSIZE_T __SIZE_TYPE__
+# elif defined size_t
+#  define YYSIZE_T size_t
+# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYSIZE_T size_t
+# else
+#  define YYSIZE_T unsigned int
 # endif
-# ifndef YYMALLOC
-#  define YYMALLOC xmalloc
+#endif
+
+#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+
+#ifndef YY_
+# if YYENABLE_NLS
+#  if ENABLE_NLS
+#   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
+#   define YY_(msgid) dgettext ("bison-runtime", msgid)
+#  endif
 # endif
+# ifndef YY_
+#  define YY_(msgid) msgid
+# endif
+#endif
+
+/* Suppress unused-variable warnings by "using" E.  */
+#if ! defined lint || defined __GNUC__
+# define YYUSE(e) ((void) (e))
+#else
+# define YYUSE(e) /* empty */
+#endif
+
+/* Identity function, used to suppress warnings about constant conditions.  */
+#ifndef lint
+# define YYID(n) (n)
+#else
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static int
+YYID (int yyi)
+#else
+static int
+YYID (yyi)
+    int yyi;
+#endif
+{
+  return yyi;
+}
+#endif
+
+#if ! defined yyoverflow || YYERROR_VERBOSE
 
 /* The parser invokes alloca or xmalloc; define the necessary symbols.  */
 
 # ifdef YYSTACK_USE_ALLOCA
 #  if YYSTACK_USE_ALLOCA
-#   define YYSTACK_ALLOC alloca
-#  endif
-# else
-#  if defined (alloca) || defined (_ALLOCA_H)
-#   define YYSTACK_ALLOC alloca
-#  else
 #   ifdef __GNUC__
 #    define YYSTACK_ALLOC __builtin_alloca
+#   elif defined __BUILTIN_VA_ARG_INCR
+#    include <alloca.h> /* INFRINGES ON USER NAME SPACE */
+#   elif defined _AIX
+#    define YYSTACK_ALLOC __alloca
+#   elif defined _MSC_VER
+#    define alloca _alloca
+#   else
+#    define YYSTACK_ALLOC alloca
+#    if ! defined _ALLOCA_H && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+#     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#     ifndef _STDLIB_H
+#      define _STDLIB_H 1
+#     endif
+#    endif
 #   endif
 #  endif
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning. */
-#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
-# else
-#  if defined (__STDC__) || defined (__cplusplus)
-#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#   define YYSIZE_T size_t
+   /* Pacify GCC's `empty if-body' warning.  */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (YYID (0))
+#  ifndef YYSTACK_ALLOC_MAXIMUM
+    /* The OS might guarantee only one guard page at the bottom of the stack,
+       and a page size can be as small as 4096 bytes.  So we cannot safely
+       invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
+       to allow for a few compiler-allocated temporary stack slots.  */
+#   define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2006 */
 #  endif
+# else
 #  define YYSTACK_ALLOC YYMALLOC
 #  define YYSTACK_FREE YYFREE
+#  ifndef YYSTACK_ALLOC_MAXIMUM
+#   define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
+#  endif
+#  if (defined __cplusplus && ! defined _STDLIB_H \
+       && ! ((defined YYMALLOC || defined xmalloc) \
+	     && (defined YYFREE || defined xfree)))
+#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#   ifndef _STDLIB_H
+#    define _STDLIB_H 1
+#   endif
+#  endif
+#  ifndef YYMALLOC
+#   define YYMALLOC xmalloc
+#   if ! defined xmalloc && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+void *xmalloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
+#   endif
+#  endif
+#  ifndef YYFREE
+#   define YYFREE xfree
+#   if ! defined xfree && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+void xfree (void *); /* INFRINGES ON USER NAME SPACE */
+#   endif
+#  endif
 # endif
-#endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
+#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
 
 
-#if (! defined (yyoverflow) \
-     && (! defined (__cplusplus) \
-	 || (defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
+#if (! defined yyoverflow \
+     && (! defined __cplusplus \
+	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  short yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -475,24 +651,24 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (short) + sizeof (YYSTYPE))				\
+     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
 # ifndef YYCOPY
-#  if defined (__GNUC__) && 1 < __GNUC__
+#  if defined __GNUC__ && 1 < __GNUC__
 #   define YYCOPY(To, From, Count) \
       __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
 #  else
 #   define YYCOPY(To, From, Count)		\
       do					\
 	{					\
-	  register YYSIZE_T yyi;		\
+	  YYSIZE_T yyi;				\
 	  for (yyi = 0; yyi < (Count); yyi++)	\
 	    (To)[yyi] = (From)[yyi];		\
 	}					\
-      while (0)
+      while (YYID (0))
 #  endif
 # endif
 
@@ -501,48 +677,42 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
-    while (0)
+    while (YYID (0))
 
 #endif
 
-#if defined (__STDC__) || defined (__cplusplus)
-   typedef signed char yysigned_char;
-#else
-   typedef short yysigned_char;
-#endif
-
-/* YYFINAL -- State number of the termination state. */
+/* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  84
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   1097
 
-/* YYNTOKENS -- Number of terminals. */
+/* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  75
-/* YYNNTS -- Number of nonterminals. */
+/* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  40
-/* YYNRULES -- Number of rules. */
+/* YYNRULES -- Number of rules.  */
 #define YYNRULES  194
-/* YYNRULES -- Number of states. */
+/* YYNRULES -- Number of states.  */
 #define YYNSTATES  324
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   307
 
-#define YYTRANSLATE(YYX) 						\
+#define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
-static const unsigned char yytranslate[] =
+static const yytype_uint8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -580,7 +750,7 @@ static const unsigned char yytranslate[] =
 #if YYDEBUG
 /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
    YYRHS.  */
-static const unsigned short yyprhs[] =
+static const yytype_uint16 yyprhs[] =
 {
        0,     0,     3,     5,     7,     9,    11,    12,    15,    18,
       22,    26,    29,    32,    35,    40,    43,    46,    51,    56,
@@ -604,8 +774,8 @@ static const unsigned short yyprhs[] =
      607,   609,   611,   616,   618
 };
 
-/* YYRHS -- A `-1'-separated list of the rules' RHS. */
-static const yysigned_char yyrhs[] =
+/* YYRHS -- A `-1'-separated list of the rules' RHS.  */
+static const yytype_int8 yyrhs[] =
 {
       76,     0,    -1,    77,    -1,   108,    -1,    80,    -1,    79,
       -1,    -1,    12,    77,    -1,   104,   111,    -1,   104,    95,
@@ -672,34 +842,34 @@ static const yysigned_char yyrhs[] =
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const unsigned short yyrline[] =
+static const yytype_uint16 yyrline[] =
 {
-       0,   356,   356,   360,   362,   364,   369,   370,   377,   386,
-     389,   393,   396,   415,   419,   423,   425,   427,   429,   431,
-     433,   435,   437,   439,   441,   443,   445,   447,   449,   451,
-     453,   455,   457,   459,   461,   463,   465,   467,   469,   471,
-     473,   475,   477,   479,   481,   483,   485,   487,   495,   500,
-     505,   509,   514,   522,   523,   525,   537,   538,   544,   546,
-     547,   549,   552,   553,   556,   557,   561,   563,   566,   572,
-     579,   585,   596,   600,   603,   614,   615,   619,   621,   623,
-     626,   630,   635,   640,   646,   656,   660,   664,   672,   673,
-     676,   678,   680,   684,   685,   692,   694,   696,   698,   700,
-     702,   706,   707,   711,   713,   715,   717,   719,   721,   723,
-     727,   733,   737,   745,   755,   759,   775,   777,   778,   780,
-     783,   785,   786,   788,   791,   793,   795,   797,   802,   805,
-     810,   817,   821,   832,   838,   856,   859,   867,   869,   880,
-     887,   888,   894,   898,   902,   904,   909,   914,   927,   931,
-     936,   944,   949,   958,   962,   967,   972,   976,   982,   988,
-     991,   998,  1000,  1005,  1009,  1013,  1020,  1036,  1043,  1050,
-    1069,  1073,  1077,  1081,  1085,  1089,  1093,  1097,  1101,  1105,
-    1109,  1113,  1117,  1121,  1125,  1129,  1133,  1138,  1142,  1146,
-    1153,  1157,  1160,  1165,  1174
+       0,   381,   381,   385,   387,   389,   394,   395,   402,   411,
+     414,   418,   421,   440,   444,   448,   454,   460,   466,   472,
+     474,   476,   478,   480,   482,   484,   486,   488,   490,   492,
+     494,   496,   498,   500,   502,   504,   506,   508,   510,   512,
+     514,   516,   518,   520,   522,   524,   526,   528,   536,   541,
+     546,   550,   555,   563,   564,   566,   578,   579,   585,   587,
+     588,   590,   593,   594,   597,   598,   602,   604,   607,   613,
+     620,   626,   637,   641,   644,   655,   656,   660,   662,   664,
+     667,   671,   676,   681,   687,   697,   701,   705,   713,   714,
+     717,   719,   721,   725,   726,   733,   735,   737,   739,   741,
+     743,   747,   748,   752,   754,   756,   758,   760,   762,   764,
+     768,   774,   778,   786,   796,   800,   816,   818,   819,   821,
+     824,   826,   827,   829,   832,   834,   836,   838,   843,   846,
+     851,   858,   862,   873,   879,   897,   900,   908,   910,   921,
+     928,   929,   935,   939,   943,   945,   950,   955,   968,   972,
+     977,   985,   990,   999,  1003,  1008,  1013,  1017,  1023,  1029,
+    1032,  1039,  1041,  1046,  1050,  1054,  1061,  1077,  1084,  1091,
+    1110,  1114,  1118,  1122,  1126,  1130,  1134,  1138,  1142,  1146,
+    1150,  1154,  1158,  1162,  1166,  1170,  1174,  1179,  1183,  1187,
+    1194,  1198,  1201,  1210,  1219
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE
-/* YYTNME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
-   First, the terminals, then, starting at YYNTOKENS, nonterminals. */
+#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+/* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+   First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "INT", "FLOAT", "NAME", "STRUCT",
@@ -729,7 +899,7 @@ static const char *const yytname[] =
 # ifdef YYPRINT
 /* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
    token YYLEX-NUM.  */
-static const unsigned short yytoknum[] =
+static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
@@ -743,7 +913,7 @@ static const unsigned short yytoknum[] =
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const unsigned char yyr1[] =
+static const yytype_uint8 yyr1[] =
 {
        0,    75,    76,    77,    77,    77,    78,    78,    79,    79,
       79,    79,    79,    80,    80,    81,    81,    81,    81,    81,
@@ -768,7 +938,7 @@ static const unsigned char yyr1[] =
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
-static const unsigned char yyr2[] =
+static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     1,     1,     1,     0,     2,     2,     3,
        3,     2,     2,     2,     4,     2,     2,     4,     4,     2,
@@ -795,7 +965,7 @@ static const unsigned char yyr2[] =
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
    STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
    means the default is an error.  */
-static const unsigned char yydefact[] =
+static const yytype_uint8 yydefact[] =
 {
        0,    59,    97,     0,     0,    96,    99,   100,    95,    92,
       91,   105,   107,    90,   109,   104,    98,   108,     0,     0,
@@ -832,8 +1002,8 @@ static const unsigned char yydefact[] =
        0,   167,   169,   168
 };
 
-/* YYDEFGOTO[NTERM-NUM]. */
-static const short yydefgoto[] =
+/* YYDEFGOTO[NTERM-NUM].  */
+static const yytype_int16 yydefgoto[] =
 {
       -1,    21,   155,    92,    23,    24,    25,    26,    27,    28,
      118,    29,   252,    30,    31,    78,    33,   142,   143,   166,
@@ -844,7 +1014,7 @@ static const short yydefgoto[] =
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
 #define YYPACT_NINF -193
-static const short yypact[] =
+static const yytype_int16 yypact[] =
 {
      771,    28,  -193,    45,   545,  -193,   -16,  -193,  -193,  -193,
     -193,  -193,  -193,  -193,  -193,  -193,  -193,  -193,   771,   771,
@@ -882,7 +1052,7 @@ static const short yypact[] =
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const short yypgoto[] =
+static const yytype_int16 yypgoto[] =
 {
     -193,  -193,    25,    57,  -193,  -193,  -193,     1,  -193,     9,
     -193,    -1,   -34,   -24,     3,     0,   150,   157,    47,  -193,
@@ -895,7 +1065,7 @@ static const short yypgoto[] =
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -1
-static const unsigned short yytable[] =
+static const yytype_uint16 yytable[] =
 {
       32,   178,    44,    46,    43,   120,    45,   102,    98,   159,
       86,    80,    96,   170,   242,   121,   123,    87,    32,    32,
@@ -1009,7 +1179,7 @@ static const unsigned short yytable[] =
      230,   231,     0,     0,     0,   232,     0,   233
 };
 
-static const short yycheck[] =
+static const yytype_int16 yycheck[] =
 {
        0,    98,     3,     3,     3,    39,     3,    30,    27,     3,
        5,    27,    27,     5,   163,    39,    39,    12,    18,    19,
@@ -1125,7 +1295,7 @@ static const short yycheck[] =
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
-static const unsigned char yystos[] =
+static const yytype_uint8 yystos[] =
 {
        0,     5,    11,    12,    17,    21,    22,    23,    24,    25,
       26,    27,    28,    30,    31,    32,    33,    34,    38,    39,
@@ -1162,22 +1332,6 @@ static const unsigned char yystos[] =
      114,    41,    41,    41
 };
 
-#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
-# define YYSIZE_T __SIZE_TYPE__
-#endif
-#if ! defined (YYSIZE_T) && defined (size_t)
-# define YYSIZE_T size_t
-#endif
-#if ! defined (YYSIZE_T)
-# if defined (__STDC__) || defined (__cplusplus)
-#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
-#  define YYSIZE_T size_t
-# endif
-#endif
-#if ! defined (YYSIZE_T)
-# define YYSIZE_T unsigned int
-#endif
-
 #define yyerrok		(yyerrstatus = 0)
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		(-2)
@@ -1203,29 +1357,62 @@ do								\
       yychar = (Token);						\
       yylval = (Value);						\
       yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK;						\
+      YYPOPSTACK (1);						\
       goto yybackup;						\
     }								\
   else								\
-    { 								\
-      yyerror ("syntax error: cannot back up");\
+    {								\
+      yyerror (YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
-while (0)
+while (YYID (0))
+
 
 #define YYTERROR	1
 #define YYERRCODE	256
 
-/* YYLLOC_DEFAULT -- Compute the default location (before the actions
-   are run).  */
 
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+#define YYRHSLOC(Rhs, K) ((Rhs)[K])
 #ifndef YYLLOC_DEFAULT
-# define YYLLOC_DEFAULT(Current, Rhs, N)		\
-   ((Current).first_line   = (Rhs)[1].first_line,	\
-    (Current).first_column = (Rhs)[1].first_column,	\
-    (Current).last_line    = (Rhs)[N].last_line,	\
-    (Current).last_column  = (Rhs)[N].last_column)
+# define YYLLOC_DEFAULT(Current, Rhs, N)				\
+    do									\
+      if (YYID (N))                                                    \
+	{								\
+	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
+	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
+	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
+	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+	}								\
+      else								\
+	{								\
+	  (Current).first_line   = (Current).last_line   =		\
+	    YYRHSLOC (Rhs, 0).last_line;				\
+	  (Current).first_column = (Current).last_column =		\
+	    YYRHSLOC (Rhs, 0).last_column;				\
+	}								\
+    while (YYID (0))
 #endif
+
+
+/* YY_LOCATION_PRINT -- Print the location on the stream.
+   This macro was not mandated originally: define only if we know
+   we won't break user code: when these are the locations we know.  */
+
+#ifndef YY_LOCATION_PRINT
+# if YYLTYPE_IS_TRIVIAL
+#  define YY_LOCATION_PRINT(File, Loc)			\
+     fprintf (File, "%d.%d-%d.%d",			\
+	      (Loc).first_line, (Loc).first_column,	\
+	      (Loc).last_line,  (Loc).last_column)
+# else
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
+#endif
+
 
 /* YYLEX -- calling `yylex' with the right arguments.  */
 
@@ -1247,43 +1434,100 @@ while (0)
 do {						\
   if (yydebug)					\
     YYFPRINTF Args;				\
-} while (0)
+} while (YYID (0))
 
-# define YYDSYMPRINT(Args)			\
-do {						\
-  if (yydebug)					\
-    yysymprint Args;				\
-} while (0)
+# define YY_SYMBOL_PRINT(Title, Type, Value, Location)			  \
+do {									  \
+  if (yydebug)								  \
+    {									  \
+      YYFPRINTF (stderr, "%s ", Title);					  \
+      yy_symbol_print (stderr,						  \
+		  Type, Value); \
+      YYFPRINTF (stderr, "\n");						  \
+    }									  \
+} while (YYID (0))
 
-# define YYDSYMPRINTF(Title, Token, Value, Location)		\
-do {								\
-  if (yydebug)							\
-    {								\
-      YYFPRINTF (stderr, "%s ", Title);				\
-      yysymprint (stderr, 					\
-                  Token, Value);	\
-      YYFPRINTF (stderr, "\n");					\
-    }								\
-} while (0)
+
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
+
+/*ARGSUSED*/
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static void
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+#else
+static void
+yy_symbol_value_print (yyoutput, yytype, yyvaluep)
+    FILE *yyoutput;
+    int yytype;
+    YYSTYPE const * const yyvaluep;
+#endif
+{
+  if (!yyvaluep)
+    return;
+# ifdef YYPRINT
+  if (yytype < YYNTOKENS)
+    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+# else
+  YYUSE (yyoutput);
+# endif
+  switch (yytype)
+    {
+      default:
+	break;
+    }
+}
+
+
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
+
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static void
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+#else
+static void
+yy_symbol_print (yyoutput, yytype, yyvaluep)
+    FILE *yyoutput;
+    int yytype;
+    YYSTYPE const * const yyvaluep;
+#endif
+{
+  if (yytype < YYNTOKENS)
+    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+  else
+    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  YYFPRINTF (yyoutput, ")");
+}
 
 /*------------------------------------------------------------------.
 | yy_stack_print -- Print the state stack from its BOTTOM up to its |
 | TOP (included).                                                   |
 `------------------------------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (short *bottom, short *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    short *bottom;
-    short *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (/* Nothing. */; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -1291,45 +1535,52 @@ yy_stack_print (bottom, top)
 do {								\
   if (yydebug)							\
     yy_stack_print ((Bottom), (Top));				\
-} while (0)
+} while (YYID (0))
 
 
 /*------------------------------------------------.
 | Report that the YYRULE is going to be reduced.  |
 `------------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (int yyrule)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
 #else
 static void
-yy_reduce_print (yyrule)
+yy_reduce_print (yyvsp, yyrule)
+    YYSTYPE *yyvsp;
     int yyrule;
 #endif
 {
+  int yynrhs = yyr2[yyrule];
   int yyi;
-  unsigned int yylno = yyrline[yyrule];
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %u), ",
-             yyrule - 1, yylno);
-  /* Print the symbols being reduced, and their result.  */
-  for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
-    YYFPRINTF (stderr, "%s ", yytname [yyrhs[yyi]]);
-  YYFPRINTF (stderr, "-> %s\n", yytname [yyr1[yyrule]]);
+  unsigned long int yylno = yyrline[yyrule];
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
+	     yyrule - 1, yylno);
+  /* The symbols being reduced.  */
+  for (yyi = 0; yyi < yynrhs; yyi++)
+    {
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
+		       &(yyvsp[(yyi + 1) - (yynrhs)])
+		       		       );
+      YYFPRINTF (stderr, "\n");
+    }
 }
 
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (Rule);		\
-} while (0)
+    yy_reduce_print (yyvsp, Rule); \
+} while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
 # define YYDPRINTF(Args)
-# define YYDSYMPRINT(Args)
-# define YYDSYMPRINTF(Title, Token, Value, Location)
+# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1344,12 +1595,8 @@ int yydebug;
    if the built-in stack extension method is used).
 
    Do not make this value too large; the results are undefined if
-   SIZE_MAX < YYSTACK_BYTES (YYMAXDEPTH)
+   YYSTACK_ALLOC_MAXIMUM < YYSTACK_BYTES (YYMAXDEPTH)
    evaluated with infinite-precision integer arithmetic.  */
-
-#if defined (YYMAXDEPTH) && YYMAXDEPTH == 0
-# undef YYMAXDEPTH
-#endif
 
 #ifndef YYMAXDEPTH
 # define YYMAXDEPTH 10000
@@ -1360,45 +1607,47 @@ int yydebug;
 #if YYERROR_VERBOSE
 
 # ifndef yystrlen
-#  if defined (__GLIBC__) && defined (_STRING_H)
+#  if defined __GLIBC__ && defined _STRING_H
 #   define yystrlen strlen
 #  else
 /* Return the length of YYSTR.  */
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static YYSIZE_T
-#   if defined (__STDC__) || defined (__cplusplus)
 yystrlen (const char *yystr)
-#   else
+#else
+static YYSIZE_T
 yystrlen (yystr)
-     const char *yystr;
-#   endif
+    const char *yystr;
+#endif
 {
-  register const char *yys = yystr;
-
-  while (*yys++ != '\0')
+  YYSIZE_T yylen;
+  for (yylen = 0; yystr[yylen]; yylen++)
     continue;
-
-  return yys - yystr - 1;
+  return yylen;
 }
 #  endif
 # endif
 
 # ifndef yystpcpy
-#  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
    YYDEST.  */
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static char *
-#   if defined (__STDC__) || defined (__cplusplus)
 yystpcpy (char *yydest, const char *yysrc)
-#   else
+#else
+static char *
 yystpcpy (yydest, yysrc)
-     char *yydest;
-     const char *yysrc;
-#   endif
+    char *yydest;
+    const char *yysrc;
+#endif
 {
-  register char *yyd = yydest;
-  register const char *yys = yysrc;
+  char *yyd = yydest;
+  const char *yys = yysrc;
 
   while ((*yyd++ = *yys++) != '\0')
     continue;
@@ -1408,90 +1657,209 @@ yystpcpy (yydest, yysrc)
 #  endif
 # endif
 
-#endif /* !YYERROR_VERBOSE */
+# ifndef yytnamerr
+/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
+   quotes and backslashes, so that it's suitable for yyerror.  The
+   heuristic is that double-quoting is unnecessary unless the string
+   contains an apostrophe, a comma, or backslash (other than
+   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
+   null, do not copy; instead, return the length of what the result
+   would have been.  */
+static YYSIZE_T
+yytnamerr (char *yyres, const char *yystr)
+{
+  if (*yystr == '"')
+    {
+      YYSIZE_T yyn = 0;
+      char const *yyp = yystr;
 
+      for (;;)
+	switch (*++yyp)
+	  {
+	  case '\'':
+	  case ',':
+	    goto do_not_strip_quotes;
+
+	  case '\\':
+	    if (*++yyp != '\\')
+	      goto do_not_strip_quotes;
+	    /* Fall through.  */
+	  default:
+	    if (yyres)
+	      yyres[yyn] = *yyp;
+	    yyn++;
+	    break;
+
+	  case '"':
+	    if (yyres)
+	      yyres[yyn] = '\0';
+	    return yyn;
+	  }
+    do_not_strip_quotes: ;
+    }
+
+  if (! yyres)
+    return yystrlen (yystr);
+
+  return yystpcpy (yyres, yystr) - yyres;
+}
+# endif
+
+/* Copy into YYRESULT an error message about the unexpected token
+   YYCHAR while in state YYSTATE.  Return the number of bytes copied,
+   including the terminating null byte.  If YYRESULT is null, do not
+   copy anything; just return the number of bytes that would be
+   copied.  As a special case, return 0 if an ordinary "syntax error"
+   message will do.  Return YYSIZE_MAXIMUM if overflow occurs during
+   size calculation.  */
+static YYSIZE_T
+yysyntax_error (char *yyresult, int yystate, int yychar)
+{
+  int yyn = yypact[yystate];
+
+  if (! (YYPACT_NINF < yyn && yyn <= YYLAST))
+    return 0;
+  else
+    {
+      int yytype = YYTRANSLATE (yychar);
+      YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
+      YYSIZE_T yysize = yysize0;
+      YYSIZE_T yysize1;
+      int yysize_overflow = 0;
+      enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
+      char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+      int yyx;
+
+# if 0
+      /* This is so xgettext sees the translatable formats that are
+	 constructed on the fly.  */
+      YY_("syntax error, unexpected %s");
+      YY_("syntax error, unexpected %s, expecting %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s or %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
+# endif
+      char *yyfmt;
+      char const *yyf;
+      static char const yyunexpected[] = "syntax error, unexpected %s";
+      static char const yyexpecting[] = ", expecting %s";
+      static char const yyor[] = " or %s";
+      char yyformat[sizeof yyunexpected
+		    + sizeof yyexpecting - 1
+		    + ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
+		       * (sizeof yyor - 1))];
+      char const *yyprefix = yyexpecting;
+
+      /* Start YYX at -YYN if negative to avoid negative indexes in
+	 YYCHECK.  */
+      int yyxbegin = yyn < 0 ? -yyn : 0;
+
+      /* Stay within bounds of both yycheck and yytname.  */
+      int yychecklim = YYLAST - yyn + 1;
+      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+      int yycount = 1;
+
+      yyarg[0] = yytname[yytype];
+      yyfmt = yystpcpy (yyformat, yyunexpected);
+
+      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+	if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
+	  {
+	    if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+	      {
+		yycount = 1;
+		yysize = yysize0;
+		yyformat[sizeof yyunexpected - 1] = '\0';
+		break;
+	      }
+	    yyarg[yycount++] = yytname[yyx];
+	    yysize1 = yysize + yytnamerr (0, yytname[yyx]);
+	    yysize_overflow |= (yysize1 < yysize);
+	    yysize = yysize1;
+	    yyfmt = yystpcpy (yyfmt, yyprefix);
+	    yyprefix = yyor;
+	  }
+
+      yyf = YY_(yyformat);
+      yysize1 = yysize + yystrlen (yyf);
+      yysize_overflow |= (yysize1 < yysize);
+      yysize = yysize1;
+
+      if (yysize_overflow)
+	return YYSIZE_MAXIMUM;
+
+      if (yyresult)
+	{
+	  /* Avoid sprintf, as that infringes on the user's name space.
+	     Don't have undefined behavior even if the translation
+	     produced a string with the wrong number of "%s"s.  */
+	  char *yyp = yyresult;
+	  int yyi = 0;
+	  while ((*yyp = *yyf) != '\0')
+	    {
+	      if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
+		{
+		  yyp += yytnamerr (yyp, yyarg[yyi++]);
+		  yyf += 2;
+		}
+	      else
+		{
+		  yyp++;
+		  yyf++;
+		}
+	    }
+	}
+      return yysize;
+    }
+}
+#endif /* YYERROR_VERBOSE */
 
 
-#if YYDEBUG
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
-
-#if defined (__STDC__) || defined (__cplusplus)
-static void
-yysymprint (FILE *yyoutput, int yytype, YYSTYPE *yyvaluep)
-#else
-static void
-yysymprint (yyoutput, yytype, yyvaluep)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE *yyvaluep;
-#endif
-{
-  /* Pacify ``unused variable'' warnings.  */
-  (void) yyvaluep;
-
-  if (yytype < YYNTOKENS)
-    {
-      YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
-# ifdef YYPRINT
-      YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# endif
-    }
-  else
-    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
-
-  switch (yytype)
-    {
-      default:
-        break;
-    }
-  YYFPRINTF (yyoutput, ")");
-}
-
-#endif /* ! YYDEBUG */
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+/*ARGSUSED*/
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
 #else
 static void
-yydestruct (yytype, yyvaluep)
+yydestruct (yymsg, yytype, yyvaluep)
+    const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
 #endif
 {
-  /* Pacify ``unused variable'' warnings.  */
-  (void) yyvaluep;
+  YYUSE (yyvaluep);
+
+  if (!yymsg)
+    yymsg = "Deleting";
+  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   switch (yytype)
     {
 
       default:
-        break;
+	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
-# if defined (__STDC__) || defined (__cplusplus)
+#if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
-# else
+#else
 int yyparse ();
-# endif
+#endif
 #else /* ! YYPARSE_PARAM */
-#if defined (__STDC__) || defined (__cplusplus)
+#if defined __STDC__ || defined __cplusplus
 int yyparse (void);
 #else
 int yyparse ();
 #endif
 #endif /* ! YYPARSE_PARAM */
-
 
 
 /* The lookahead symbol.  */
@@ -1505,19 +1873,23 @@ int yynerrs;
 
 
 
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
-# if defined (__STDC__) || defined (__cplusplus)
-int yyparse (void *YYPARSE_PARAM)
-# else
-int yyparse (YYPARSE_PARAM)
-  void *YYPARSE_PARAM;
-# endif
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+int
+yyparse (void *YYPARSE_PARAM)
+#else
+int
+yyparse (YYPARSE_PARAM)
+    void *YYPARSE_PARAM;
+#endif
 #else /* ! YYPARSE_PARAM */
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 int
 yyparse (void)
 #else
@@ -1527,60 +1899,68 @@ yyparse ()
 #endif
 #endif
 {
-  
-  register int yystate;
-  register int yyn;
+
+
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to xreallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
+  int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
   /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
-
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to xreallocate them elsewhere.  */
-
-  /* The state stack.  */
-  short	yyssa[YYINITDEPTH];
-  short *yyss = yyssa;
-  register short *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  register YYSTYPE *yyvsp;
-
-
-
-#define YYPOPSTACK   (yyvsp--, yyssp--)
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
+  int yytoken;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
+#if YYERROR_VERBOSE
+  /* Buffer for error messages, and its allocated size.  */
+  char yymsgbuf[128];
+  char *yymsg = yymsgbuf;
+  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
+#endif
 
-  /* When reducing, the number of symbols on the RHS of the reduced
-     rule.  */
-  int yylen;
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+
+  /* The number of symbols on the RHS of the reduced rule.
+     Keep to zero when no symbol should be popped.  */
+  int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -1591,8 +1971,7 @@ yyparse ()
 `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
-     have just been pushed. so pushing a state here evens the stacks.
-     */
+     have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
  yysetstate:
@@ -1605,21 +1984,19 @@ yyparse ()
 
 #ifdef yyoverflow
       {
-	/* Give user a chance to xreallocate the stack. Use copies of
+	/* Give user a chance to xreallocate the stack.  Use copies of
 	   these so that the &'s don't force the real ones into
 	   memory.  */
 	YYSTYPE *yyvs1 = yyvs;
-	short *yyss1 = yyss;
-
+	yytype_int16 *yyss1 = yyss;
 
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
 	   be undefined if yyoverflow is a macro.  */
-	yyoverflow ("parser stack overflow",
+	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -1627,24 +2004,23 @@ yyparse ()
       }
 #else /* no yyoverflow */
 # ifndef YYSTACK_RELOCATE
-      goto yyoverflowlab;
+      goto yyexhaustedlab;
 # else
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-	goto yyoverflowlab;
+	goto yyexhaustedlab;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
 	yystacksize = YYMAXDEPTH;
 
       {
-	short *yyss1 = yyss;
+	yytype_int16 *yyss1 = yyss;
 	union yyalloc *yyptr =
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
-	  goto yyoverflowlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	  goto yyexhaustedlab;
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1655,7 +2031,6 @@ yyparse ()
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -1665,6 +2040,9 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -1672,12 +2050,10 @@ yyparse ()
 `-----------*/
 yybackup:
 
-/* Do appropriate processing given the current state.  */
-/* Read a lookahead token if we need one and don't already have one.  */
-/* yyresume: */
+  /* Do appropriate processing given the current state.  Read a
+     lookahead token if we need one and don't already have one.  */
 
   /* First try to decide what to do without reference to lookahead token.  */
-
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
@@ -1699,7 +2075,7 @@ yybackup:
   else
     {
       yytoken = YYTRANSLATE (yychar);
-      YYDSYMPRINTF ("Next token is", yytoken, &yylval, &yylloc);
+      YY_SYMBOL_PRINT ("Next token is", yytoken, &yylval, &yylloc);
     }
 
   /* If the proper action on seeing token YYTOKEN is to reduce or to
@@ -1716,25 +2092,20 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
-  /* Shift the lookahead token.  */
-  YYDPRINTF ((stderr, "Shifting token %s, ", yytname[yytoken]));
-
-  /* Discard the token being shifted unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
-
-  *++yyvsp = yylval;
-
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
+  /* Shift the lookahead token.  */
+  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
+
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
+
   yystate = yyn;
+  *++yyvsp = yylval;
+
   goto yynewstate;
 
 
@@ -1770,1076 +2141,1433 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 357 "cp-name-parser.y"
-    { global_result = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 382 "cp-name-parser.y"
+    { global_result = (yyvsp[(1) - (1)].comp); }
     break;
 
   case 6:
-#line 369 "cp-name-parser.y"
-    { yyval.comp = NULL; }
+
+/* Line 1455 of yacc.c  */
+#line 394 "cp-name-parser.y"
+    { (yyval.comp) = NULL; }
     break;
 
   case 7:
-#line 371 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 396 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 8:
-#line 378 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].nested.comp;
-			  *yyvsp[0].nested.last = yyvsp[-1].comp;
+
+/* Line 1455 of yacc.c  */
+#line 403 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].nested).comp;
+			  *(yyvsp[(2) - (2)].nested).last = (yyvsp[(1) - (2)].comp);
 			}
     break;
 
   case 9:
-#line 387 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-2].comp, yyvsp[-1].nested.comp);
-			  if (yyvsp[0].comp) yyval.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 412 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (3)].comp), (yyvsp[(2) - (3)].nested).comp);
+			  if ((yyvsp[(3) - (3)].comp)) (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 10:
-#line 390 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-2].comp, yyvsp[-1].nested.comp);
-			  if (yyvsp[0].comp) yyval.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 415 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (3)].comp), (yyvsp[(2) - (3)].nested).comp);
+			  if ((yyvsp[(3) - (3)].comp)) (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 11:
-#line 394 "cp-name-parser.y"
-    { yyval.comp = yyvsp[-1].nested.comp;
-			  if (yyvsp[0].comp) yyval.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 419 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(1) - (2)].nested).comp;
+			  if ((yyvsp[(2) - (2)].comp)) (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.comp), (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 12:
-#line 397 "cp-name-parser.y"
-    { if (yyvsp[0].abstract.last)
+
+/* Line 1455 of yacc.c  */
+#line 422 "cp-name-parser.y"
+    { if ((yyvsp[(2) - (2)].abstract).last)
 			    {
 			       /* First complete the abstract_declarator's type using
 				  the typespec from the conversion_op_name.  */
-			      *yyvsp[0].abstract.last = *yyvsp[-1].nested.last;
+			      *(yyvsp[(2) - (2)].abstract).last = *(yyvsp[(1) - (2)].nested).last;
 			      /* Then complete the conversion_op_name with the type.  */
-			      *yyvsp[-1].nested.last = yyvsp[0].abstract.comp;
+			      *(yyvsp[(1) - (2)].nested).last = (yyvsp[(2) - (2)].abstract).comp;
 			    }
 			  /* If we have an arglist, build a function type.  */
-			  if (yyvsp[0].abstract.fn.comp)
-			    yyval.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-1].nested.comp, yyvsp[0].abstract.fn.comp);
+			  if ((yyvsp[(2) - (2)].abstract).fn.comp)
+			    (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (2)].nested).comp, (yyvsp[(2) - (2)].abstract).fn.comp);
 			  else
-			    yyval.comp = yyvsp[-1].nested.comp;
-			  if (yyvsp[0].abstract.start) yyval.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.comp, yyvsp[0].abstract.start);
+			    (yyval.comp) = (yyvsp[(1) - (2)].nested).comp;
+			  if ((yyvsp[(2) - (2)].abstract).start) (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.comp), (yyvsp[(2) - (2)].abstract).start);
 			}
     break;
 
   case 13:
-#line 416 "cp-name-parser.y"
-    { yyval.comp = make_empty (yyvsp[-1].lval);
-			  d_left (yyval.comp) = yyvsp[0].comp;
-			  d_right (yyval.comp) = NULL; }
+
+/* Line 1455 of yacc.c  */
+#line 441 "cp-name-parser.y"
+    { (yyval.comp) = make_empty ((yyvsp[(1) - (2)].lval));
+			  d_left ((yyval.comp)) = (yyvsp[(2) - (2)].comp);
+			  d_right ((yyval.comp)) = NULL; }
     break;
 
   case 14:
-#line 420 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_CONSTRUCTION_VTABLE, yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 445 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_CONSTRUCTION_VTABLE, (yyvsp[(2) - (4)].comp), (yyvsp[(4) - (4)].comp)); }
     break;
 
   case 15:
-#line 424 "cp-name-parser.y"
-    { yyval.comp = make_operator ("new", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 449 "cp-name-parser.y"
+    {
+			  /* Match the whitespacing of cplus_demangle_operators.
+			     It would abort on unrecognized string otherwise.  */
+			  (yyval.comp) = make_operator ("new", 3);
+			}
     break;
 
   case 16:
-#line 426 "cp-name-parser.y"
-    { yyval.comp = make_operator ("delete", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 455 "cp-name-parser.y"
+    {
+			  /* Match the whitespacing of cplus_demangle_operators.
+			     It would abort on unrecognized string otherwise.  */
+			  (yyval.comp) = make_operator ("delete ", 1);
+			}
     break;
 
   case 17:
-#line 428 "cp-name-parser.y"
-    { yyval.comp = make_operator ("new[]", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 461 "cp-name-parser.y"
+    {
+			  /* Match the whitespacing of cplus_demangle_operators.
+			     It would abort on unrecognized string otherwise.  */
+			  (yyval.comp) = make_operator ("new[]", 3);
+			}
     break;
 
   case 18:
-#line 430 "cp-name-parser.y"
-    { yyval.comp = make_operator ("delete[]", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 467 "cp-name-parser.y"
+    {
+			  /* Match the whitespacing of cplus_demangle_operators.
+			     It would abort on unrecognized string otherwise.  */
+			  (yyval.comp) = make_operator ("delete[] ", 1);
+			}
     break;
 
   case 19:
-#line 432 "cp-name-parser.y"
-    { yyval.comp = make_operator ("+", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 473 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("+", 2); }
     break;
 
   case 20:
-#line 434 "cp-name-parser.y"
-    { yyval.comp = make_operator ("-", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 475 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("-", 2); }
     break;
 
   case 21:
-#line 436 "cp-name-parser.y"
-    { yyval.comp = make_operator ("*", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 477 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("*", 2); }
     break;
 
   case 22:
-#line 438 "cp-name-parser.y"
-    { yyval.comp = make_operator ("/", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 479 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("/", 2); }
     break;
 
   case 23:
-#line 440 "cp-name-parser.y"
-    { yyval.comp = make_operator ("%", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 481 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("%", 2); }
     break;
 
   case 24:
-#line 442 "cp-name-parser.y"
-    { yyval.comp = make_operator ("^", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 483 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("^", 2); }
     break;
 
   case 25:
-#line 444 "cp-name-parser.y"
-    { yyval.comp = make_operator ("&", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 485 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("&", 2); }
     break;
 
   case 26:
-#line 446 "cp-name-parser.y"
-    { yyval.comp = make_operator ("|", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 487 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("|", 2); }
     break;
 
   case 27:
-#line 448 "cp-name-parser.y"
-    { yyval.comp = make_operator ("~", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 489 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("~", 1); }
     break;
 
   case 28:
-#line 450 "cp-name-parser.y"
-    { yyval.comp = make_operator ("!", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 491 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("!", 1); }
     break;
 
   case 29:
-#line 452 "cp-name-parser.y"
-    { yyval.comp = make_operator ("=", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 493 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("=", 2); }
     break;
 
   case 30:
-#line 454 "cp-name-parser.y"
-    { yyval.comp = make_operator ("<", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 495 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("<", 2); }
     break;
 
   case 31:
-#line 456 "cp-name-parser.y"
-    { yyval.comp = make_operator (">", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 497 "cp-name-parser.y"
+    { (yyval.comp) = make_operator (">", 2); }
     break;
 
   case 32:
-#line 458 "cp-name-parser.y"
-    { yyval.comp = make_operator (yyvsp[0].opname, 2); }
+
+/* Line 1455 of yacc.c  */
+#line 499 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ((yyvsp[(2) - (2)].opname), 2); }
     break;
 
   case 33:
-#line 460 "cp-name-parser.y"
-    { yyval.comp = make_operator ("<<", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 501 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("<<", 2); }
     break;
 
   case 34:
-#line 462 "cp-name-parser.y"
-    { yyval.comp = make_operator (">>", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 503 "cp-name-parser.y"
+    { (yyval.comp) = make_operator (">>", 2); }
     break;
 
   case 35:
-#line 464 "cp-name-parser.y"
-    { yyval.comp = make_operator ("==", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 505 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("==", 2); }
     break;
 
   case 36:
-#line 466 "cp-name-parser.y"
-    { yyval.comp = make_operator ("!=", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 507 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("!=", 2); }
     break;
 
   case 37:
-#line 468 "cp-name-parser.y"
-    { yyval.comp = make_operator ("<=", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 509 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("<=", 2); }
     break;
 
   case 38:
-#line 470 "cp-name-parser.y"
-    { yyval.comp = make_operator (">=", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 511 "cp-name-parser.y"
+    { (yyval.comp) = make_operator (">=", 2); }
     break;
 
   case 39:
-#line 472 "cp-name-parser.y"
-    { yyval.comp = make_operator ("&&", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 513 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("&&", 2); }
     break;
 
   case 40:
-#line 474 "cp-name-parser.y"
-    { yyval.comp = make_operator ("||", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 515 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("||", 2); }
     break;
 
   case 41:
-#line 476 "cp-name-parser.y"
-    { yyval.comp = make_operator ("++", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 517 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("++", 1); }
     break;
 
   case 42:
-#line 478 "cp-name-parser.y"
-    { yyval.comp = make_operator ("--", 1); }
+
+/* Line 1455 of yacc.c  */
+#line 519 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("--", 1); }
     break;
 
   case 43:
-#line 480 "cp-name-parser.y"
-    { yyval.comp = make_operator (",", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 521 "cp-name-parser.y"
+    { (yyval.comp) = make_operator (",", 2); }
     break;
 
   case 44:
-#line 482 "cp-name-parser.y"
-    { yyval.comp = make_operator ("->*", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 523 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("->*", 2); }
     break;
 
   case 45:
-#line 484 "cp-name-parser.y"
-    { yyval.comp = make_operator ("->", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 525 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("->", 2); }
     break;
 
   case 46:
-#line 486 "cp-name-parser.y"
-    { yyval.comp = make_operator ("()", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 527 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("()", 2); }
     break;
 
   case 47:
-#line 488 "cp-name-parser.y"
-    { yyval.comp = make_operator ("[]", 2); }
+
+/* Line 1455 of yacc.c  */
+#line 529 "cp-name-parser.y"
+    { (yyval.comp) = make_operator ("[]", 2); }
     break;
 
   case 48:
-#line 496 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_CAST, yyvsp[0].comp, NULL); }
+
+/* Line 1455 of yacc.c  */
+#line 537 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_CAST, (yyvsp[(2) - (2)].comp), NULL); }
     break;
 
   case 49:
-#line 501 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested1.comp;
-			  d_right (yyvsp[-1].nested1.last) = yyvsp[0].comp;
-			  yyval.nested.last = &d_left (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 542 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (2)].nested1).comp;
+			  d_right ((yyvsp[(1) - (2)].nested1).last) = (yyvsp[(2) - (2)].comp);
+			  (yyval.nested).last = &d_left ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 50:
-#line 506 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[0].comp;
-			  yyval.nested.last = &d_left (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 547 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (1)].comp);
+			  (yyval.nested).last = &d_left ((yyvsp[(1) - (1)].comp));
 			}
     break;
 
   case 51:
-#line 510 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested1.comp;
-			  d_right (yyvsp[-1].nested1.last) = yyvsp[0].comp;
-			  yyval.nested.last = &d_left (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 551 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(2) - (3)].nested1).comp;
+			  d_right ((yyvsp[(2) - (3)].nested1).last) = (yyvsp[(3) - (3)].comp);
+			  (yyval.nested).last = &d_left ((yyvsp[(3) - (3)].comp));
 			}
     break;
 
   case 52:
-#line 515 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[0].comp;
-			  yyval.nested.last = &d_left (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 556 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(2) - (2)].comp);
+			  (yyval.nested).last = &d_left ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 54:
-#line 524 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, yyvsp[-3].comp, yyvsp[-1].nested.comp); }
+
+/* Line 1455 of yacc.c  */
+#line 565 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, (yyvsp[(1) - (4)].comp), (yyvsp[(3) - (4)].nested).comp); }
     break;
 
   case 55:
-#line 526 "cp-name-parser.y"
-    { yyval.comp = make_dtor (gnu_v3_complete_object_dtor, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 567 "cp-name-parser.y"
+    { (yyval.comp) = make_dtor (gnu_v3_complete_object_dtor, (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 57:
-#line 539 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 580 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 58:
-#line 545 "cp-name-parser.y"
-    { yyval.comp = yyvsp[-1].nested1.comp; d_right (yyvsp[-1].nested1.last) = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 586 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(1) - (2)].nested1).comp; d_right ((yyvsp[(1) - (2)].nested1).last) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 60:
-#line 548 "cp-name-parser.y"
-    { yyval.comp = yyvsp[-1].nested1.comp; d_right (yyvsp[-1].nested1.last) = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 589 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(1) - (2)].nested1).comp; d_right ((yyvsp[(1) - (2)].nested1).last) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 65:
-#line 558 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 599 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 66:
-#line 562 "cp-name-parser.y"
-    { yyval.comp = yyvsp[-1].nested1.comp; d_right (yyvsp[-1].nested1.last) = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 603 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(1) - (2)].nested1).comp; d_right ((yyvsp[(1) - (2)].nested1).last) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 68:
-#line 567 "cp-name-parser.y"
-    { yyval.nested1.comp = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
-			  d_left (yyval.nested1.comp) = yyvsp[-1].comp;
-			  d_right (yyval.nested1.comp) = NULL;
-			  yyval.nested1.last = yyval.nested1.comp;
+
+/* Line 1455 of yacc.c  */
+#line 608 "cp-name-parser.y"
+    { (yyval.nested1).comp = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
+			  d_left ((yyval.nested1).comp) = (yyvsp[(1) - (2)].comp);
+			  d_right ((yyval.nested1).comp) = NULL;
+			  (yyval.nested1).last = (yyval.nested1).comp;
 			}
     break;
 
   case 69:
-#line 573 "cp-name-parser.y"
-    { yyval.nested1.comp = yyvsp[-2].nested1.comp;
-			  d_right (yyvsp[-2].nested1.last) = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
-			  yyval.nested1.last = d_right (yyvsp[-2].nested1.last);
-			  d_left (yyval.nested1.last) = yyvsp[-1].comp;
-			  d_right (yyval.nested1.last) = NULL;
+
+/* Line 1455 of yacc.c  */
+#line 614 "cp-name-parser.y"
+    { (yyval.nested1).comp = (yyvsp[(1) - (3)].nested1).comp;
+			  d_right ((yyvsp[(1) - (3)].nested1).last) = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
+			  (yyval.nested1).last = d_right ((yyvsp[(1) - (3)].nested1).last);
+			  d_left ((yyval.nested1).last) = (yyvsp[(2) - (3)].comp);
+			  d_right ((yyval.nested1).last) = NULL;
 			}
     break;
 
   case 70:
-#line 580 "cp-name-parser.y"
-    { yyval.nested1.comp = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
-			  d_left (yyval.nested1.comp) = yyvsp[-1].comp;
-			  d_right (yyval.nested1.comp) = NULL;
-			  yyval.nested1.last = yyval.nested1.comp;
+
+/* Line 1455 of yacc.c  */
+#line 621 "cp-name-parser.y"
+    { (yyval.nested1).comp = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
+			  d_left ((yyval.nested1).comp) = (yyvsp[(1) - (2)].comp);
+			  d_right ((yyval.nested1).comp) = NULL;
+			  (yyval.nested1).last = (yyval.nested1).comp;
 			}
     break;
 
   case 71:
-#line 586 "cp-name-parser.y"
-    { yyval.nested1.comp = yyvsp[-2].nested1.comp;
-			  d_right (yyvsp[-2].nested1.last) = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
-			  yyval.nested1.last = d_right (yyvsp[-2].nested1.last);
-			  d_left (yyval.nested1.last) = yyvsp[-1].comp;
-			  d_right (yyval.nested1.last) = NULL;
+
+/* Line 1455 of yacc.c  */
+#line 627 "cp-name-parser.y"
+    { (yyval.nested1).comp = (yyvsp[(1) - (3)].nested1).comp;
+			  d_right ((yyvsp[(1) - (3)].nested1).last) = make_empty (DEMANGLE_COMPONENT_QUAL_NAME);
+			  (yyval.nested1).last = d_right ((yyvsp[(1) - (3)].nested1).last);
+			  d_left ((yyval.nested1).last) = (yyvsp[(2) - (3)].comp);
+			  d_right ((yyval.nested1).last) = NULL;
 			}
     break;
 
   case 72:
-#line 597 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, yyvsp[-3].comp, yyvsp[-1].nested.comp); }
+
+/* Line 1455 of yacc.c  */
+#line 638 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TEMPLATE, (yyvsp[(1) - (4)].comp), (yyvsp[(3) - (4)].nested).comp); }
     break;
 
   case 73:
-#line 601 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, yyvsp[0].comp, NULL);
-			yyval.nested.last = &d_right (yyval.nested.comp); }
+
+/* Line 1455 of yacc.c  */
+#line 642 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, (yyvsp[(1) - (1)].comp), NULL);
+			(yyval.nested).last = &d_right ((yyval.nested).comp); }
     break;
 
   case 74:
-#line 604 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-2].nested.comp;
-			  *yyvsp[-2].nested.last = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, yyvsp[0].comp, NULL);
-			  yyval.nested.last = &d_right (*yyvsp[-2].nested.last);
+
+/* Line 1455 of yacc.c  */
+#line 645 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (3)].nested).comp;
+			  *(yyvsp[(1) - (3)].nested).last = fill_comp (DEMANGLE_COMPONENT_TEMPLATE_ARGLIST, (yyvsp[(3) - (3)].comp), NULL);
+			  (yyval.nested).last = &d_right (*(yyvsp[(1) - (3)].nested).last);
 			}
     break;
 
   case 76:
-#line 616 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].abstract.comp;
-			  *yyvsp[0].abstract.last = yyvsp[-1].comp;
+
+/* Line 1455 of yacc.c  */
+#line 657 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].abstract).comp;
+			  *(yyvsp[(2) - (2)].abstract).last = (yyvsp[(1) - (2)].comp);
 			}
     break;
 
   case 77:
-#line 620 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 661 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 78:
-#line 622 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), yyvsp[-1].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 663 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), (yyvsp[(3) - (4)].comp)); }
     break;
 
   case 80:
-#line 627 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, yyvsp[0].comp, NULL);
-			  yyval.nested.last = &d_right (yyval.nested.comp);
+
+/* Line 1455 of yacc.c  */
+#line 668 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, (yyvsp[(1) - (1)].comp), NULL);
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
 			}
     break;
 
   case 81:
-#line 631 "cp-name-parser.y"
-    { *yyvsp[0].abstract.last = yyvsp[-1].comp;
-			  yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, yyvsp[0].abstract.comp, NULL);
-			  yyval.nested.last = &d_right (yyval.nested.comp);
+
+/* Line 1455 of yacc.c  */
+#line 672 "cp-name-parser.y"
+    { *(yyvsp[(2) - (2)].abstract).last = (yyvsp[(1) - (2)].comp);
+			  (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_ARGLIST, (yyvsp[(2) - (2)].abstract).comp, NULL);
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
 			}
     break;
 
   case 82:
-#line 636 "cp-name-parser.y"
-    { *yyvsp[-2].nested.last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, yyvsp[0].comp, NULL);
-			  yyval.nested.comp = yyvsp[-2].nested.comp;
-			  yyval.nested.last = &d_right (*yyvsp[-2].nested.last);
+
+/* Line 1455 of yacc.c  */
+#line 677 "cp-name-parser.y"
+    { *(yyvsp[(1) - (3)].nested).last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, (yyvsp[(3) - (3)].comp), NULL);
+			  (yyval.nested).comp = (yyvsp[(1) - (3)].nested).comp;
+			  (yyval.nested).last = &d_right (*(yyvsp[(1) - (3)].nested).last);
 			}
     break;
 
   case 83:
-#line 641 "cp-name-parser.y"
-    { *yyvsp[0].abstract.last = yyvsp[-1].comp;
-			  *yyvsp[-3].nested.last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, yyvsp[0].abstract.comp, NULL);
-			  yyval.nested.comp = yyvsp[-3].nested.comp;
-			  yyval.nested.last = &d_right (*yyvsp[-3].nested.last);
+
+/* Line 1455 of yacc.c  */
+#line 682 "cp-name-parser.y"
+    { *(yyvsp[(4) - (4)].abstract).last = (yyvsp[(3) - (4)].comp);
+			  *(yyvsp[(1) - (4)].nested).last = fill_comp (DEMANGLE_COMPONENT_ARGLIST, (yyvsp[(4) - (4)].abstract).comp, NULL);
+			  (yyval.nested).comp = (yyvsp[(1) - (4)].nested).comp;
+			  (yyval.nested).last = &d_right (*(yyvsp[(1) - (4)].nested).last);
 			}
     break;
 
   case 84:
-#line 647 "cp-name-parser.y"
-    { *yyvsp[-2].nested.last
+
+/* Line 1455 of yacc.c  */
+#line 688 "cp-name-parser.y"
+    { *(yyvsp[(1) - (3)].nested).last
 			    = fill_comp (DEMANGLE_COMPONENT_ARGLIST,
 					   make_builtin_type ("..."),
 					   NULL);
-			  yyval.nested.comp = yyvsp[-2].nested.comp;
-			  yyval.nested.last = &d_right (*yyvsp[-2].nested.last);
+			  (yyval.nested).comp = (yyvsp[(1) - (3)].nested).comp;
+			  (yyval.nested).last = &d_right (*(yyvsp[(1) - (3)].nested).last);
 			}
     break;
 
   case 85:
-#line 657 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, yyvsp[-2].nested.comp);
-			  yyval.nested.last = &d_left (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 1); }
+
+/* Line 1455 of yacc.c  */
+#line 698 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, (yyvsp[(2) - (4)].nested).comp);
+			  (yyval.nested).last = &d_left ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(4) - (4)].lval), 1); }
     break;
 
   case 86:
-#line 661 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
-			  yyval.nested.last = &d_left (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 1); }
+
+/* Line 1455 of yacc.c  */
+#line 702 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
+			  (yyval.nested).last = &d_left ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(4) - (4)].lval), 1); }
     break;
 
   case 87:
-#line 665 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
-			  yyval.nested.last = &d_left (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 1); }
+
+/* Line 1455 of yacc.c  */
+#line 706 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_FUNCTION_TYPE, NULL, NULL);
+			  (yyval.nested).last = &d_left ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(3) - (3)].lval), 1); }
     break;
 
   case 88:
-#line 672 "cp-name-parser.y"
-    { yyval.lval = 0; }
+
+/* Line 1455 of yacc.c  */
+#line 713 "cp-name-parser.y"
+    { (yyval.lval) = 0; }
     break;
 
   case 90:
-#line 677 "cp-name-parser.y"
-    { yyval.lval = QUAL_RESTRICT; }
+
+/* Line 1455 of yacc.c  */
+#line 718 "cp-name-parser.y"
+    { (yyval.lval) = QUAL_RESTRICT; }
     break;
 
   case 91:
-#line 679 "cp-name-parser.y"
-    { yyval.lval = QUAL_VOLATILE; }
+
+/* Line 1455 of yacc.c  */
+#line 720 "cp-name-parser.y"
+    { (yyval.lval) = QUAL_VOLATILE; }
     break;
 
   case 92:
-#line 681 "cp-name-parser.y"
-    { yyval.lval = QUAL_CONST; }
+
+/* Line 1455 of yacc.c  */
+#line 722 "cp-name-parser.y"
+    { (yyval.lval) = QUAL_CONST; }
     break;
 
   case 94:
-#line 686 "cp-name-parser.y"
-    { yyval.lval = yyvsp[-1].lval | yyvsp[0].lval; }
+
+/* Line 1455 of yacc.c  */
+#line 727 "cp-name-parser.y"
+    { (yyval.lval) = (yyvsp[(1) - (2)].lval) | (yyvsp[(2) - (2)].lval); }
     break;
 
   case 95:
-#line 693 "cp-name-parser.y"
-    { yyval.lval = 0; }
+
+/* Line 1455 of yacc.c  */
+#line 734 "cp-name-parser.y"
+    { (yyval.lval) = 0; }
     break;
 
   case 96:
-#line 695 "cp-name-parser.y"
-    { yyval.lval = INT_SIGNED; }
+
+/* Line 1455 of yacc.c  */
+#line 736 "cp-name-parser.y"
+    { (yyval.lval) = INT_SIGNED; }
     break;
 
   case 97:
-#line 697 "cp-name-parser.y"
-    { yyval.lval = INT_UNSIGNED; }
+
+/* Line 1455 of yacc.c  */
+#line 738 "cp-name-parser.y"
+    { (yyval.lval) = INT_UNSIGNED; }
     break;
 
   case 98:
-#line 699 "cp-name-parser.y"
-    { yyval.lval = INT_CHAR; }
+
+/* Line 1455 of yacc.c  */
+#line 740 "cp-name-parser.y"
+    { (yyval.lval) = INT_CHAR; }
     break;
 
   case 99:
-#line 701 "cp-name-parser.y"
-    { yyval.lval = INT_LONG; }
+
+/* Line 1455 of yacc.c  */
+#line 742 "cp-name-parser.y"
+    { (yyval.lval) = INT_LONG; }
     break;
 
   case 100:
-#line 703 "cp-name-parser.y"
-    { yyval.lval = INT_SHORT; }
+
+/* Line 1455 of yacc.c  */
+#line 744 "cp-name-parser.y"
+    { (yyval.lval) = INT_SHORT; }
     break;
 
   case 102:
-#line 708 "cp-name-parser.y"
-    { yyval.lval = yyvsp[-1].lval | yyvsp[0].lval; if (yyvsp[-1].lval & yyvsp[0].lval & INT_LONG) yyval.lval = yyvsp[-1].lval | INT_LLONG; }
+
+/* Line 1455 of yacc.c  */
+#line 749 "cp-name-parser.y"
+    { (yyval.lval) = (yyvsp[(1) - (2)].lval) | (yyvsp[(2) - (2)].lval); if ((yyvsp[(1) - (2)].lval) & (yyvsp[(2) - (2)].lval) & INT_LONG) (yyval.lval) = (yyvsp[(1) - (2)].lval) | INT_LLONG; }
     break;
 
   case 103:
-#line 712 "cp-name-parser.y"
-    { yyval.comp = d_int_type (yyvsp[0].lval); }
+
+/* Line 1455 of yacc.c  */
+#line 753 "cp-name-parser.y"
+    { (yyval.comp) = d_int_type ((yyvsp[(1) - (1)].lval)); }
     break;
 
   case 104:
-#line 714 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("float"); }
+
+/* Line 1455 of yacc.c  */
+#line 755 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("float"); }
     break;
 
   case 105:
-#line 716 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("double"); }
+
+/* Line 1455 of yacc.c  */
+#line 757 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("double"); }
     break;
 
   case 106:
-#line 718 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("long double"); }
+
+/* Line 1455 of yacc.c  */
+#line 759 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("long double"); }
     break;
 
   case 107:
-#line 720 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("bool"); }
+
+/* Line 1455 of yacc.c  */
+#line 761 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("bool"); }
     break;
 
   case 108:
-#line 722 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("wchar_t"); }
+
+/* Line 1455 of yacc.c  */
+#line 763 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("wchar_t"); }
     break;
 
   case 109:
-#line 724 "cp-name-parser.y"
-    { yyval.comp = make_builtin_type ("void"); }
+
+/* Line 1455 of yacc.c  */
+#line 765 "cp-name-parser.y"
+    { (yyval.comp) = make_builtin_type ("void"); }
     break;
 
   case 110:
-#line 728 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_POINTER);
-			  yyval.nested.comp->u.s_binary.left = yyval.nested.comp->u.s_binary.right = NULL;
-			  yyval.nested.last = &d_left (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 769 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_POINTER);
+			  (yyval.nested).comp->u.s_binary.left = (yyval.nested).comp->u.s_binary.right = NULL;
+			  (yyval.nested).last = &d_left ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(2) - (2)].lval), 0); }
     break;
 
   case 111:
-#line 734 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_REFERENCE);
-			  yyval.nested.comp->u.s_binary.left = yyval.nested.comp->u.s_binary.right = NULL;
-			  yyval.nested.last = &d_left (yyval.nested.comp); }
+
+/* Line 1455 of yacc.c  */
+#line 775 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_REFERENCE);
+			  (yyval.nested).comp->u.s_binary.left = (yyval.nested).comp->u.s_binary.right = NULL;
+			  (yyval.nested).last = &d_left ((yyval.nested).comp); }
     break;
 
   case 112:
-#line 738 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_PTRMEM_TYPE);
-			  yyval.nested.comp->u.s_binary.left = yyvsp[-2].nested1.comp;
+
+/* Line 1455 of yacc.c  */
+#line 779 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_PTRMEM_TYPE);
+			  (yyval.nested).comp->u.s_binary.left = (yyvsp[(1) - (3)].nested1).comp;
 			  /* Convert the innermost DEMANGLE_COMPONENT_QUAL_NAME to a DEMANGLE_COMPONENT_NAME.  */
-			  *yyvsp[-2].nested1.last = *d_left (yyvsp[-2].nested1.last);
-			  yyval.nested.comp->u.s_binary.right = NULL;
-			  yyval.nested.last = &d_right (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 0); }
+			  *(yyvsp[(1) - (3)].nested1).last = *d_left ((yyvsp[(1) - (3)].nested1).last);
+			  (yyval.nested).comp->u.s_binary.right = NULL;
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(3) - (3)].lval), 0); }
     break;
 
   case 113:
-#line 746 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_PTRMEM_TYPE);
-			  yyval.nested.comp->u.s_binary.left = yyvsp[-2].nested1.comp;
+
+/* Line 1455 of yacc.c  */
+#line 787 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_PTRMEM_TYPE);
+			  (yyval.nested).comp->u.s_binary.left = (yyvsp[(2) - (4)].nested1).comp;
 			  /* Convert the innermost DEMANGLE_COMPONENT_QUAL_NAME to a DEMANGLE_COMPONENT_NAME.  */
-			  *yyvsp[-2].nested1.last = *d_left (yyvsp[-2].nested1.last);
-			  yyval.nested.comp->u.s_binary.right = NULL;
-			  yyval.nested.last = &d_right (yyval.nested.comp);
-			  yyval.nested.comp = d_qualify (yyval.nested.comp, yyvsp[0].lval, 0); }
+			  *(yyvsp[(2) - (4)].nested1).last = *d_left ((yyvsp[(2) - (4)].nested1).last);
+			  (yyval.nested).comp->u.s_binary.right = NULL;
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
+			  (yyval.nested).comp = d_qualify ((yyval.nested).comp, (yyvsp[(4) - (4)].lval), 0); }
     break;
 
   case 114:
-#line 756 "cp-name-parser.y"
-    { yyval.comp = make_empty (DEMANGLE_COMPONENT_ARRAY_TYPE);
-			  d_left (yyval.comp) = NULL;
+
+/* Line 1455 of yacc.c  */
+#line 797 "cp-name-parser.y"
+    { (yyval.comp) = make_empty (DEMANGLE_COMPONENT_ARRAY_TYPE);
+			  d_left ((yyval.comp)) = NULL;
 			}
     break;
 
   case 115:
-#line 760 "cp-name-parser.y"
-    { yyval.comp = make_empty (DEMANGLE_COMPONENT_ARRAY_TYPE);
-			  d_left (yyval.comp) = yyvsp[-1].comp;
+
+/* Line 1455 of yacc.c  */
+#line 801 "cp-name-parser.y"
+    { (yyval.comp) = make_empty (DEMANGLE_COMPONENT_ARRAY_TYPE);
+			  d_left ((yyval.comp)) = (yyvsp[(2) - (3)].comp);
 			}
     break;
 
   case 116:
-#line 776 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 817 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(1) - (2)].comp), (yyvsp[(2) - (2)].lval), 0); }
     break;
 
   case 118:
-#line 779 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[-2].lval | yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 820 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(2) - (3)].comp), (yyvsp[(1) - (3)].lval) | (yyvsp[(3) - (3)].lval), 0); }
     break;
 
   case 119:
-#line 781 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[0].comp, yyvsp[-1].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 822 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(2) - (2)].comp), (yyvsp[(1) - (2)].lval), 0); }
     break;
 
   case 120:
-#line 784 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 825 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(1) - (2)].comp), (yyvsp[(2) - (2)].lval), 0); }
     break;
 
   case 122:
-#line 787 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[-2].lval | yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 828 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(2) - (3)].comp), (yyvsp[(1) - (3)].lval) | (yyvsp[(3) - (3)].lval), 0); }
     break;
 
   case 123:
-#line 789 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[0].comp, yyvsp[-1].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 830 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(2) - (2)].comp), (yyvsp[(1) - (2)].lval), 0); }
     break;
 
   case 124:
-#line 792 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 833 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].lval), 0); }
     break;
 
   case 125:
-#line 794 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 835 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].comp); }
     break;
 
   case 126:
-#line 796 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[-1].comp, yyvsp[-3].lval | yyvsp[0].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 837 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(3) - (4)].comp), (yyvsp[(1) - (4)].lval) | (yyvsp[(4) - (4)].lval), 0); }
     break;
 
   case 127:
-#line 798 "cp-name-parser.y"
-    { yyval.comp = d_qualify (yyvsp[0].comp, yyvsp[-2].lval, 0); }
+
+/* Line 1455 of yacc.c  */
+#line 839 "cp-name-parser.y"
+    { (yyval.comp) = d_qualify ((yyvsp[(3) - (3)].comp), (yyvsp[(1) - (3)].lval), 0); }
     break;
 
   case 128:
-#line 803 "cp-name-parser.y"
-    { yyval.abstract.comp = yyvsp[0].nested.comp; yyval.abstract.last = yyvsp[0].nested.last;
-			  yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL; }
+
+/* Line 1455 of yacc.c  */
+#line 844 "cp-name-parser.y"
+    { (yyval.abstract).comp = (yyvsp[(1) - (1)].nested).comp; (yyval.abstract).last = (yyvsp[(1) - (1)].nested).last;
+			  (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL; }
     break;
 
   case 129:
-#line 806 "cp-name-parser.y"
-    { yyval.abstract = yyvsp[0].abstract; yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL;
-			  if (yyvsp[0].abstract.fn.comp) { yyval.abstract.last = yyvsp[0].abstract.fn.last; *yyvsp[0].abstract.last = yyvsp[0].abstract.fn.comp; }
-			  *yyval.abstract.last = yyvsp[-1].nested.comp;
-			  yyval.abstract.last = yyvsp[-1].nested.last; }
+
+/* Line 1455 of yacc.c  */
+#line 847 "cp-name-parser.y"
+    { (yyval.abstract) = (yyvsp[(2) - (2)].abstract); (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL;
+			  if ((yyvsp[(2) - (2)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(2) - (2)].abstract).fn.last; *(yyvsp[(2) - (2)].abstract).last = (yyvsp[(2) - (2)].abstract).fn.comp; }
+			  *(yyval.abstract).last = (yyvsp[(1) - (2)].nested).comp;
+			  (yyval.abstract).last = (yyvsp[(1) - (2)].nested).last; }
     break;
 
   case 130:
-#line 811 "cp-name-parser.y"
-    { yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL;
-			  if (yyvsp[0].abstract.fn.comp) { yyval.abstract.last = yyvsp[0].abstract.fn.last; *yyvsp[0].abstract.last = yyvsp[0].abstract.fn.comp; }
+
+/* Line 1455 of yacc.c  */
+#line 852 "cp-name-parser.y"
+    { (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL;
+			  if ((yyvsp[(1) - (1)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(1) - (1)].abstract).fn.last; *(yyvsp[(1) - (1)].abstract).last = (yyvsp[(1) - (1)].abstract).fn.comp; }
 			}
     break;
 
   case 131:
-#line 818 "cp-name-parser.y"
-    { yyval.abstract = yyvsp[-1].abstract; yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL; yyval.abstract.fold_flag = 1;
-			  if (yyvsp[-1].abstract.fn.comp) { yyval.abstract.last = yyvsp[-1].abstract.fn.last; *yyvsp[-1].abstract.last = yyvsp[-1].abstract.fn.comp; }
+
+/* Line 1455 of yacc.c  */
+#line 859 "cp-name-parser.y"
+    { (yyval.abstract) = (yyvsp[(2) - (3)].abstract); (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL; (yyval.abstract).fold_flag = 1;
+			  if ((yyvsp[(2) - (3)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(2) - (3)].abstract).fn.last; *(yyvsp[(2) - (3)].abstract).last = (yyvsp[(2) - (3)].abstract).fn.comp; }
 			}
     break;
 
   case 132:
-#line 822 "cp-name-parser.y"
-    { yyval.abstract.fold_flag = 0;
-			  if (yyvsp[-1].abstract.fn.comp) { yyval.abstract.last = yyvsp[-1].abstract.fn.last; *yyvsp[-1].abstract.last = yyvsp[-1].abstract.fn.comp; }
-			  if (yyvsp[-1].abstract.fold_flag)
+
+/* Line 1455 of yacc.c  */
+#line 863 "cp-name-parser.y"
+    { (yyval.abstract).fold_flag = 0;
+			  if ((yyvsp[(1) - (2)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(1) - (2)].abstract).fn.last; *(yyvsp[(1) - (2)].abstract).last = (yyvsp[(1) - (2)].abstract).fn.comp; }
+			  if ((yyvsp[(1) - (2)].abstract).fold_flag)
 			    {
-			      *yyval.abstract.last = yyvsp[0].nested.comp;
-			      yyval.abstract.last = yyvsp[0].nested.last;
+			      *(yyval.abstract).last = (yyvsp[(2) - (2)].nested).comp;
+			      (yyval.abstract).last = (yyvsp[(2) - (2)].nested).last;
 			    }
 			  else
-			    yyval.abstract.fn = yyvsp[0].nested;
+			    (yyval.abstract).fn = (yyvsp[(2) - (2)].nested);
 			}
     break;
 
   case 133:
-#line 833 "cp-name-parser.y"
-    { yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL; yyval.abstract.fold_flag = 0;
-			  if (yyvsp[-1].abstract.fn.comp) { yyval.abstract.last = yyvsp[-1].abstract.fn.last; *yyvsp[-1].abstract.last = yyvsp[-1].abstract.fn.comp; }
-			  *yyvsp[-1].abstract.last = yyvsp[0].comp;
-			  yyval.abstract.last = &d_right (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 874 "cp-name-parser.y"
+    { (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL; (yyval.abstract).fold_flag = 0;
+			  if ((yyvsp[(1) - (2)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(1) - (2)].abstract).fn.last; *(yyvsp[(1) - (2)].abstract).last = (yyvsp[(1) - (2)].abstract).fn.comp; }
+			  *(yyvsp[(1) - (2)].abstract).last = (yyvsp[(2) - (2)].comp);
+			  (yyval.abstract).last = &d_right ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 134:
-#line 839 "cp-name-parser.y"
-    { yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL; yyval.abstract.fold_flag = 0;
-			  yyval.abstract.comp = yyvsp[0].comp;
-			  yyval.abstract.last = &d_right (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 880 "cp-name-parser.y"
+    { (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL; (yyval.abstract).fold_flag = 0;
+			  (yyval.abstract).comp = (yyvsp[(1) - (1)].comp);
+			  (yyval.abstract).last = &d_right ((yyvsp[(1) - (1)].comp));
 			}
     break;
 
   case 135:
-#line 857 "cp-name-parser.y"
-    { yyval.abstract.comp = yyvsp[0].nested.comp; yyval.abstract.last = yyvsp[0].nested.last;
-			  yyval.abstract.fn.comp = NULL; yyval.abstract.fn.last = NULL; yyval.abstract.start = NULL; }
+
+/* Line 1455 of yacc.c  */
+#line 898 "cp-name-parser.y"
+    { (yyval.abstract).comp = (yyvsp[(1) - (1)].nested).comp; (yyval.abstract).last = (yyvsp[(1) - (1)].nested).last;
+			  (yyval.abstract).fn.comp = NULL; (yyval.abstract).fn.last = NULL; (yyval.abstract).start = NULL; }
     break;
 
   case 136:
-#line 860 "cp-name-parser.y"
-    { yyval.abstract = yyvsp[0].abstract;
-			  if (yyvsp[0].abstract.last)
-			    *yyval.abstract.last = yyvsp[-1].nested.comp;
+
+/* Line 1455 of yacc.c  */
+#line 901 "cp-name-parser.y"
+    { (yyval.abstract) = (yyvsp[(2) - (2)].abstract);
+			  if ((yyvsp[(2) - (2)].abstract).last)
+			    *(yyval.abstract).last = (yyvsp[(1) - (2)].nested).comp;
 			  else
-			    yyval.abstract.comp = yyvsp[-1].nested.comp;
-			  yyval.abstract.last = yyvsp[-1].nested.last;
+			    (yyval.abstract).comp = (yyvsp[(1) - (2)].nested).comp;
+			  (yyval.abstract).last = (yyvsp[(1) - (2)].nested).last;
 			}
     break;
 
   case 137:
-#line 868 "cp-name-parser.y"
-    { yyval.abstract.comp = yyvsp[0].abstract.comp; yyval.abstract.last = yyvsp[0].abstract.last; yyval.abstract.fn = yyvsp[0].abstract.fn; yyval.abstract.start = NULL; }
+
+/* Line 1455 of yacc.c  */
+#line 909 "cp-name-parser.y"
+    { (yyval.abstract).comp = (yyvsp[(1) - (1)].abstract).comp; (yyval.abstract).last = (yyvsp[(1) - (1)].abstract).last; (yyval.abstract).fn = (yyvsp[(1) - (1)].abstract).fn; (yyval.abstract).start = NULL; }
     break;
 
   case 138:
-#line 870 "cp-name-parser.y"
-    { yyval.abstract.start = yyvsp[0].comp;
-			  if (yyvsp[-3].abstract.fn.comp) { yyval.abstract.last = yyvsp[-3].abstract.fn.last; *yyvsp[-3].abstract.last = yyvsp[-3].abstract.fn.comp; }
-			  if (yyvsp[-3].abstract.fold_flag)
+
+/* Line 1455 of yacc.c  */
+#line 911 "cp-name-parser.y"
+    { (yyval.abstract).start = (yyvsp[(4) - (4)].comp);
+			  if ((yyvsp[(1) - (4)].abstract).fn.comp) { (yyval.abstract).last = (yyvsp[(1) - (4)].abstract).fn.last; *(yyvsp[(1) - (4)].abstract).last = (yyvsp[(1) - (4)].abstract).fn.comp; }
+			  if ((yyvsp[(1) - (4)].abstract).fold_flag)
 			    {
-			      *yyval.abstract.last = yyvsp[-2].nested.comp;
-			      yyval.abstract.last = yyvsp[-2].nested.last;
+			      *(yyval.abstract).last = (yyvsp[(2) - (4)].nested).comp;
+			      (yyval.abstract).last = (yyvsp[(2) - (4)].nested).last;
 			    }
 			  else
-			    yyval.abstract.fn = yyvsp[-2].nested;
+			    (yyval.abstract).fn = (yyvsp[(2) - (4)].nested);
 			}
     break;
 
   case 139:
-#line 881 "cp-name-parser.y"
-    { yyval.abstract.fn = yyvsp[-1].nested;
-			  yyval.abstract.start = yyvsp[0].comp;
-			  yyval.abstract.comp = NULL; yyval.abstract.last = NULL;
+
+/* Line 1455 of yacc.c  */
+#line 922 "cp-name-parser.y"
+    { (yyval.abstract).fn = (yyvsp[(1) - (2)].nested);
+			  (yyval.abstract).start = (yyvsp[(2) - (2)].comp);
+			  (yyval.abstract).comp = NULL; (yyval.abstract).last = NULL;
 			}
     break;
 
   case 141:
-#line 889 "cp-name-parser.y"
-    { yyval.comp = yyvsp[0].abstract.comp;
-			  *yyvsp[0].abstract.last = yyvsp[-1].comp;
+
+/* Line 1455 of yacc.c  */
+#line 930 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (2)].abstract).comp;
+			  *(yyvsp[(2) - (2)].abstract).last = (yyvsp[(1) - (2)].comp);
 			}
     break;
 
   case 142:
-#line 895 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[0].nested.comp;
-			  yyval.nested.last = yyvsp[-1].nested.last;
-			  *yyvsp[0].nested.last = yyvsp[-1].nested.comp; }
+
+/* Line 1455 of yacc.c  */
+#line 936 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(2) - (2)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(1) - (2)].nested).last;
+			  *(yyvsp[(2) - (2)].nested).last = (yyvsp[(1) - (2)].nested).comp; }
     break;
 
   case 144:
-#line 903 "cp-name-parser.y"
-    { yyval.nested = yyvsp[-1].nested; }
+
+/* Line 1455 of yacc.c  */
+#line 944 "cp-name-parser.y"
+    { (yyval.nested) = (yyvsp[(2) - (3)].nested); }
     break;
 
   case 145:
-#line 905 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested.comp;
-			  *yyvsp[-1].nested.last = yyvsp[0].nested.comp;
-			  yyval.nested.last = yyvsp[0].nested.last;
+
+/* Line 1455 of yacc.c  */
+#line 946 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (2)].nested).comp;
+			  *(yyvsp[(1) - (2)].nested).last = (yyvsp[(2) - (2)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(2) - (2)].nested).last;
 			}
     break;
 
   case 146:
-#line 910 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested.comp;
-			  *yyvsp[-1].nested.last = yyvsp[0].comp;
-			  yyval.nested.last = &d_right (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 951 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (2)].nested).comp;
+			  *(yyvsp[(1) - (2)].nested).last = (yyvsp[(2) - (2)].comp);
+			  (yyval.nested).last = &d_right ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 147:
-#line 915 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_TYPED_NAME);
-			  d_left (yyval.nested.comp) = yyvsp[0].comp;
-			  yyval.nested.last = &d_right (yyval.nested.comp);
+
+/* Line 1455 of yacc.c  */
+#line 956 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_TYPED_NAME);
+			  d_left ((yyval.nested).comp) = (yyvsp[(1) - (1)].comp);
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
 			}
     break;
 
   case 148:
-#line 928 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[0].nested.comp;
-			  yyval.nested.last = yyvsp[-1].nested.last;
-			  *yyvsp[0].nested.last = yyvsp[-1].nested.comp; }
+
+/* Line 1455 of yacc.c  */
+#line 969 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(2) - (2)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(1) - (2)].nested).last;
+			  *(yyvsp[(2) - (2)].nested).last = (yyvsp[(1) - (2)].nested).comp; }
     break;
 
   case 149:
-#line 932 "cp-name-parser.y"
-    { yyval.nested.comp = make_empty (DEMANGLE_COMPONENT_TYPED_NAME);
-			  d_left (yyval.nested.comp) = yyvsp[0].comp;
-			  yyval.nested.last = &d_right (yyval.nested.comp);
+
+/* Line 1455 of yacc.c  */
+#line 973 "cp-name-parser.y"
+    { (yyval.nested).comp = make_empty (DEMANGLE_COMPONENT_TYPED_NAME);
+			  d_left ((yyval.nested).comp) = (yyvsp[(1) - (1)].comp);
+			  (yyval.nested).last = &d_right ((yyval.nested).comp);
 			}
     break;
 
   case 151:
-#line 945 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-3].comp, yyvsp[-2].nested.comp);
-			  yyval.nested.last = yyvsp[-2].nested.last;
-			  yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.nested.comp, yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 986 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (4)].comp), (yyvsp[(2) - (4)].nested).comp);
+			  (yyval.nested).last = (yyvsp[(2) - (4)].nested).last;
+			  (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.nested).comp, (yyvsp[(4) - (4)].comp));
 			}
     break;
 
   case 152:
-#line 950 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-3].nested.comp;
-			  *yyvsp[-3].nested.last = yyvsp[-2].nested.comp;
-			  yyval.nested.last = yyvsp[-2].nested.last;
-			  yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, yyval.nested.comp, yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 991 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (4)].nested).comp;
+			  *(yyvsp[(1) - (4)].nested).last = (yyvsp[(2) - (4)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(2) - (4)].nested).last;
+			  (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_LOCAL_NAME, (yyval.nested).comp, (yyvsp[(4) - (4)].comp));
 			}
     break;
 
   case 153:
-#line 959 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested.comp;
-			  yyval.nested.last = yyvsp[-2].nested.last;
-			  *yyvsp[-1].nested.last = yyvsp[-2].nested.comp; }
+
+/* Line 1455 of yacc.c  */
+#line 1000 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(3) - (4)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(2) - (4)].nested).last;
+			  *(yyvsp[(3) - (4)].nested).last = (yyvsp[(2) - (4)].nested).comp; }
     break;
 
   case 154:
-#line 963 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested.comp;
-			  *yyvsp[-1].nested.last = yyvsp[0].nested.comp;
-			  yyval.nested.last = yyvsp[0].nested.last;
+
+/* Line 1455 of yacc.c  */
+#line 1004 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (2)].nested).comp;
+			  *(yyvsp[(1) - (2)].nested).last = (yyvsp[(2) - (2)].nested).comp;
+			  (yyval.nested).last = (yyvsp[(2) - (2)].nested).last;
 			}
     break;
 
   case 155:
-#line 968 "cp-name-parser.y"
-    { yyval.nested.comp = yyvsp[-1].nested.comp;
-			  *yyvsp[-1].nested.last = yyvsp[0].comp;
-			  yyval.nested.last = &d_right (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 1009 "cp-name-parser.y"
+    { (yyval.nested).comp = (yyvsp[(1) - (2)].nested).comp;
+			  *(yyvsp[(1) - (2)].nested).last = (yyvsp[(2) - (2)].comp);
+			  (yyval.nested).last = &d_right ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 156:
-#line 973 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-1].comp, yyvsp[0].nested.comp);
-			  yyval.nested.last = yyvsp[0].nested.last;
+
+/* Line 1455 of yacc.c  */
+#line 1014 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (2)].comp), (yyvsp[(2) - (2)].nested).comp);
+			  (yyval.nested).last = (yyvsp[(2) - (2)].nested).last;
 			}
     break;
 
   case 157:
-#line 977 "cp-name-parser.y"
-    { yyval.nested.comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, yyvsp[-1].comp, yyvsp[0].comp);
-			  yyval.nested.last = &d_right (yyvsp[0].comp);
+
+/* Line 1455 of yacc.c  */
+#line 1018 "cp-name-parser.y"
+    { (yyval.nested).comp = fill_comp (DEMANGLE_COMPONENT_TYPED_NAME, (yyvsp[(1) - (2)].comp), (yyvsp[(2) - (2)].comp));
+			  (yyval.nested).last = &d_right ((yyvsp[(2) - (2)].comp));
 			}
     break;
 
   case 158:
-#line 983 "cp-name-parser.y"
-    { yyval.comp = yyvsp[-1].comp; }
+
+/* Line 1455 of yacc.c  */
+#line 1024 "cp-name-parser.y"
+    { (yyval.comp) = (yyvsp[(2) - (3)].comp); }
     break;
 
   case 160:
-#line 992 "cp-name-parser.y"
-    { yyval.comp = d_binary (">", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1033 "cp-name-parser.y"
+    { (yyval.comp) = d_binary (">", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 161:
-#line 999 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1040 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 162:
-#line 1001 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), yyvsp[-1].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1042 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY, make_operator ("&", 1), (yyvsp[(3) - (4)].comp)); }
     break;
 
   case 163:
-#line 1006 "cp-name-parser.y"
-    { yyval.comp = d_unary ("-", yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1047 "cp-name-parser.y"
+    { (yyval.comp) = d_unary ("-", (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 164:
-#line 1010 "cp-name-parser.y"
-    { yyval.comp = d_unary ("!", yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1051 "cp-name-parser.y"
+    { (yyval.comp) = d_unary ("!", (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 165:
-#line 1014 "cp-name-parser.y"
-    { yyval.comp = d_unary ("~", yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1055 "cp-name-parser.y"
+    { (yyval.comp) = d_unary ("~", (yyvsp[(2) - (2)].comp)); }
     break;
 
   case 166:
-#line 1021 "cp-name-parser.y"
-    { if (yyvsp[0].comp->type == DEMANGLE_COMPONENT_LITERAL
-		      || yyvsp[0].comp->type == DEMANGLE_COMPONENT_LITERAL_NEG)
+
+/* Line 1455 of yacc.c  */
+#line 1062 "cp-name-parser.y"
+    { if ((yyvsp[(4) - (4)].comp)->type == DEMANGLE_COMPONENT_LITERAL
+		      || (yyvsp[(4) - (4)].comp)->type == DEMANGLE_COMPONENT_LITERAL_NEG)
 		    {
-		      yyval.comp = yyvsp[0].comp;
-		      d_left (yyvsp[0].comp) = yyvsp[-2].comp;
+		      (yyval.comp) = (yyvsp[(4) - (4)].comp);
+		      d_left ((yyvsp[(4) - (4)].comp)) = (yyvsp[(2) - (4)].comp);
 		    }
 		  else
-		    yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				      fill_comp (DEMANGLE_COMPONENT_CAST, yyvsp[-2].comp, NULL),
-				      yyvsp[0].comp);
+		    (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY,
+				      fill_comp (DEMANGLE_COMPONENT_CAST, (yyvsp[(2) - (4)].comp), NULL),
+				      (yyvsp[(4) - (4)].comp));
 		}
     break;
 
   case 167:
-#line 1037 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, yyvsp[-4].comp, NULL),
-				    yyvsp[-1].comp);
+
+/* Line 1455 of yacc.c  */
+#line 1078 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    fill_comp (DEMANGLE_COMPONENT_CAST, (yyvsp[(3) - (7)].comp), NULL),
+				    (yyvsp[(6) - (7)].comp));
 		}
     break;
 
   case 168:
-#line 1044 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, yyvsp[-4].comp, NULL),
-				    yyvsp[-1].comp);
+
+/* Line 1455 of yacc.c  */
+#line 1085 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    fill_comp (DEMANGLE_COMPONENT_CAST, (yyvsp[(3) - (7)].comp), NULL),
+				    (yyvsp[(6) - (7)].comp));
 		}
     break;
 
   case 169:
-#line 1051 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_UNARY,
-				    fill_comp (DEMANGLE_COMPONENT_CAST, yyvsp[-4].comp, NULL),
-				    yyvsp[-1].comp);
+
+/* Line 1455 of yacc.c  */
+#line 1092 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_UNARY,
+				    fill_comp (DEMANGLE_COMPONENT_CAST, (yyvsp[(3) - (7)].comp), NULL),
+				    (yyvsp[(6) - (7)].comp));
 		}
     break;
 
   case 170:
-#line 1070 "cp-name-parser.y"
-    { yyval.comp = d_binary ("*", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1111 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("*", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 171:
-#line 1074 "cp-name-parser.y"
-    { yyval.comp = d_binary ("/", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1115 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("/", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 172:
-#line 1078 "cp-name-parser.y"
-    { yyval.comp = d_binary ("%", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1119 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("%", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 173:
-#line 1082 "cp-name-parser.y"
-    { yyval.comp = d_binary ("+", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1123 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("+", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 174:
-#line 1086 "cp-name-parser.y"
-    { yyval.comp = d_binary ("-", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1127 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("-", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 175:
-#line 1090 "cp-name-parser.y"
-    { yyval.comp = d_binary ("<<", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1131 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("<<", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 176:
-#line 1094 "cp-name-parser.y"
-    { yyval.comp = d_binary (">>", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1135 "cp-name-parser.y"
+    { (yyval.comp) = d_binary (">>", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 177:
-#line 1098 "cp-name-parser.y"
-    { yyval.comp = d_binary ("==", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1139 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("==", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 178:
-#line 1102 "cp-name-parser.y"
-    { yyval.comp = d_binary ("!=", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1143 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("!=", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 179:
-#line 1106 "cp-name-parser.y"
-    { yyval.comp = d_binary ("<=", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1147 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("<=", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 180:
-#line 1110 "cp-name-parser.y"
-    { yyval.comp = d_binary (">=", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1151 "cp-name-parser.y"
+    { (yyval.comp) = d_binary (">=", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 181:
-#line 1114 "cp-name-parser.y"
-    { yyval.comp = d_binary ("<", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1155 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("<", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 182:
-#line 1118 "cp-name-parser.y"
-    { yyval.comp = d_binary ("&", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1159 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("&", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 183:
-#line 1122 "cp-name-parser.y"
-    { yyval.comp = d_binary ("^", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1163 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("^", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 184:
-#line 1126 "cp-name-parser.y"
-    { yyval.comp = d_binary ("|", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1167 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("|", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 185:
-#line 1130 "cp-name-parser.y"
-    { yyval.comp = d_binary ("&&", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1171 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("&&", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 186:
-#line 1134 "cp-name-parser.y"
-    { yyval.comp = d_binary ("||", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1175 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("||", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 187:
-#line 1139 "cp-name-parser.y"
-    { yyval.comp = d_binary ("->", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1180 "cp-name-parser.y"
+    { (yyval.comp) = d_binary ("->", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 188:
-#line 1143 "cp-name-parser.y"
-    { yyval.comp = d_binary (".", yyvsp[-2].comp, yyvsp[0].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1184 "cp-name-parser.y"
+    { (yyval.comp) = d_binary (".", (yyvsp[(1) - (3)].comp), (yyvsp[(3) - (3)].comp)); }
     break;
 
   case 189:
-#line 1147 "cp-name-parser.y"
-    { yyval.comp = fill_comp (DEMANGLE_COMPONENT_TRINARY, make_operator ("?", 3),
-				    fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG1, yyvsp[-4].comp,
-						 fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG2, yyvsp[-2].comp, yyvsp[0].comp)));
+
+/* Line 1455 of yacc.c  */
+#line 1188 "cp-name-parser.y"
+    { (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_TRINARY, make_operator ("?", 3),
+				    fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG1, (yyvsp[(1) - (5)].comp),
+						 fill_comp (DEMANGLE_COMPONENT_TRINARY_ARG2, (yyvsp[(3) - (5)].comp), (yyvsp[(5) - (5)].comp))));
 		}
     break;
 
   case 192:
-#line 1161 "cp-name-parser.y"
-    { yyval.comp = d_unary ("sizeof", yyvsp[-1].comp); }
+
+/* Line 1455 of yacc.c  */
+#line 1202 "cp-name-parser.y"
+    {
+		  /* Match the whitespacing of cplus_demangle_operators.
+		     It would abort on unrecognized string otherwise.  */
+		  (yyval.comp) = d_unary ("sizeof ", (yyvsp[(3) - (4)].comp));
+		}
     break;
 
   case 193:
-#line 1166 "cp-name-parser.y"
+
+/* Line 1455 of yacc.c  */
+#line 1211 "cp-name-parser.y"
     { struct demangle_component *i;
 		  i = make_name ("1", 1);
-		  yyval.comp = fill_comp (DEMANGLE_COMPONENT_LITERAL,
+		  (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LITERAL,
 				    make_builtin_type ("bool"),
 				    i);
 		}
     break;
 
   case 194:
-#line 1175 "cp-name-parser.y"
+
+/* Line 1455 of yacc.c  */
+#line 1220 "cp-name-parser.y"
     { struct demangle_component *i;
 		  i = make_name ("0", 1);
-		  yyval.comp = fill_comp (DEMANGLE_COMPONENT_LITERAL,
+		  (yyval.comp) = fill_comp (DEMANGLE_COMPONENT_LITERAL,
 				    make_builtin_type ("bool"),
 				    i);
 		}
     break;
 
 
+
+/* Line 1455 of yacc.c  */
+#line 3563 "cp-name-parser.c"
+      default: break;
     }
+  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
 
-/* Line 1000 of yacc.c.  */
-#line 2834 "cp-name-parser.c"
-
-  yyvsp -= yylen;
-  yyssp -= yylen;
-
-
+  YYPOPSTACK (yylen);
+  yylen = 0;
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2864,66 +3592,41 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if YYERROR_VERBOSE
-      yyn = yypact[yystate];
-
-      if (YYPACT_NINF < yyn && yyn < YYLAST)
-	{
-	  YYSIZE_T yysize = 0;
-	  int yytype = YYTRANSLATE (yychar);
-	  const char* yyprefix;
-	  char *yymsg;
-	  int yyx;
-
-	  /* Start YYX at -YYN if negative to avoid negative indexes in
-	     YYCHECK.  */
-	  int yyxbegin = yyn < 0 ? -yyn : 0;
-
-	  /* Stay within bounds of both yycheck and yytname.  */
-	  int yychecklim = YYLAST - yyn;
-	  int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-	  int yycount = 0;
-
-	  yyprefix = ", expecting ";
-	  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-	    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	      {
-		yysize += yystrlen (yyprefix) + yystrlen (yytname [yyx]);
-		yycount += 1;
-		if (yycount == 5)
-		  {
-		    yysize = 0;
-		    break;
-		  }
-	      }
-	  yysize += (sizeof ("syntax error, unexpected ")
-		     + yystrlen (yytname[yytype]));
-	  yymsg = (char *) YYSTACK_ALLOC (yysize);
-	  if (yymsg != 0)
-	    {
-	      char *yyp = yystpcpy (yymsg, "syntax error, unexpected ");
-	      yyp = yystpcpy (yyp, yytname[yytype]);
-
-	      if (yycount < 5)
-		{
-		  yyprefix = ", expecting ";
-		  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-		    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-		      {
-			yyp = yystpcpy (yyp, yyprefix);
-			yyp = yystpcpy (yyp, yytname[yyx]);
-			yyprefix = " or ";
-		      }
-		}
-	      yyerror (yymsg);
+#if ! YYERROR_VERBOSE
+      yyerror (YY_("syntax error"));
+#else
+      {
+	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
+	if (yymsg_alloc < yysize && yymsg_alloc < YYSTACK_ALLOC_MAXIMUM)
+	  {
+	    YYSIZE_T yyalloc = 2 * yysize;
+	    if (! (yysize <= yyalloc && yyalloc <= YYSTACK_ALLOC_MAXIMUM))
+	      yyalloc = YYSTACK_ALLOC_MAXIMUM;
+	    if (yymsg != yymsgbuf)
 	      YYSTACK_FREE (yymsg);
-	    }
-	  else
-	    yyerror ("syntax error; also virtual memory exhausted");
-	}
-      else
-#endif /* YYERROR_VERBOSE */
-	yyerror ("syntax error");
+	    yymsg = (char *) YYSTACK_ALLOC (yyalloc);
+	    if (yymsg)
+	      yymsg_alloc = yyalloc;
+	    else
+	      {
+		yymsg = yymsgbuf;
+		yymsg_alloc = sizeof yymsgbuf;
+	      }
+	  }
+
+	if (0 < yysize && yysize <= yymsg_alloc)
+	  {
+	    (void) yysyntax_error (yymsg, yystate, yychar);
+	    yyerror (yymsg);
+	  }
+	else
+	  {
+	    yyerror (YY_("syntax error"));
+	    if (yysize != 0)
+	      goto yyexhaustedlab;
+	  }
+      }
+#endif
     }
 
 
@@ -2934,25 +3637,16 @@ yyerrlab:
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
-        {
-          /* If at end of input, pop the error token,
-	     then the rest of the stack, then return failure.  */
+	{
+	  /* Return failure if at end of input.  */
 	  if (yychar == YYEOF)
-	     for (;;)
-	       {
-		 YYPOPSTACK;
-		 if (yyssp == yyss)
-		   YYABORT;
-		 YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
-		 yydestruct (yystos[*yyssp], yyvsp);
-	       }
-        }
+	    YYABORT;
+	}
       else
 	{
-	  YYDSYMPRINTF ("Error: discarding", yytoken, &yylval, &yylloc);
-	  yydestruct (yytoken, &yylval);
+	  yydestruct ("Error: discarding",
+		      yytoken, &yylval);
 	  yychar = YYEMPTY;
-
 	}
     }
 
@@ -2966,15 +3660,17 @@ yyerrlab:
 `---------------------------------------------------*/
 yyerrorlab:
 
-#ifdef __GNUC__
-  /* Pacify GCC when the user code never invokes YYERROR and the label
-     yyerrorlab therefore never appears in user code.  */
-  if (0)
+  /* Pacify compilers like GCC when the user code never invokes
+     YYERROR and the label yyerrorlab therefore never appears in user
+     code.  */
+  if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
-#endif
 
-  yyvsp -= yylen;
-  yyssp -= yylen;
+  /* Do not reclaim the symbols of the rule which action triggered
+     this YYERROR.  */
+  YYPOPSTACK (yylen);
+  yylen = 0;
+  YY_STACK_PRINT (yyss, yyssp);
   yystate = *yyssp;
   goto yyerrlab1;
 
@@ -3003,20 +3699,19 @@ yyerrlab1:
       if (yyssp == yyss)
 	YYABORT;
 
-      YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
-      yydestruct (yystos[yystate], yyvsp);
-      YYPOPSTACK;
+
+      yydestruct ("Error: popping",
+		  yystos[yystate], yyvsp);
+      YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
-  YYDPRINTF ((stderr, "Shifting error token, "));
-
   *++yyvsp = yylval;
 
+
+  /* Shift the error token.  */
+  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -3036,26 +3731,46 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
-/*----------------------------------------------.
-| yyoverflowlab -- parser overflow comes here.  |
-`----------------------------------------------*/
-yyoverflowlab:
-  yyerror ("parser stack overflow");
+#if !defined(yyoverflow) || YYERROR_VERBOSE
+/*-------------------------------------------------.
+| yyexhaustedlab -- memory exhaustion comes here.  |
+`-------------------------------------------------*/
+yyexhaustedlab:
+  yyerror (YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
 
 yyreturn:
+  if (yychar != YYEMPTY)
+     yydestruct ("Cleanup: discarding lookahead",
+		 yytoken, &yylval);
+  /* Do not reclaim the symbols of the rule which action triggered
+     this YYABORT or YYACCEPT.  */
+  YYPOPSTACK (yylen);
+  YY_STACK_PRINT (yyss, yyssp);
+  while (yyssp != yyss)
+    {
+      yydestruct ("Cleanup: popping",
+		  yystos[*yyssp], yyvsp);
+      YYPOPSTACK (1);
+    }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-  return yyresult;
+#if YYERROR_VERBOSE
+  if (yymsg != yymsgbuf)
+    YYSTACK_FREE (yymsg);
+#endif
+  /* Make sure YYID is used.  */
+  return YYID (yyresult);
 }
 
 
-#line 1185 "cp-name-parser.y"
+
+/* Line 1675 of yacc.c  */
+#line 1230 "cp-name-parser.y"
 
 
 /* Apply QUALIFIERS to LHS and return a qualified component.  IS_METHOD
@@ -3809,20 +4524,14 @@ yyerror (char *msg)
    generally allocate too many components, but the extra memory usage
    doesn't hurt because the trees are temporary and the storage is
    reused.  More may be allocated later, by d_grab.  */
-static void
+static struct demangle_info *
 allocate_info (void)
 {
-  if (demangle_info == NULL)
-    {
-      demangle_info = xmalloc (sizeof (struct demangle_info));
-      demangle_info->prev = NULL;
-      demangle_info->next = NULL;
-    }
-  else
-    while (demangle_info->prev)
-      demangle_info = demangle_info->prev;
+  struct demangle_info *info = xmalloc (sizeof (struct demangle_info));
 
-  demangle_info->used = 0;
+  info->next = NULL;
+  info->used = 0;
+  return info;
 }
 
 /* Convert RESULT to a string.  The return value is allocated
@@ -3840,23 +4549,99 @@ cp_comp_to_string (struct demangle_component *result, int estimated_len)
 			       &err);
 }
 
+/* A convenience function to allocate and initialize a new struct
+   demangled_parse_info.  */
+
+struct demangle_parse_info *
+cp_new_demangle_parse_info (void)
+{
+  struct demangle_parse_info *info;
+
+  info = xmalloc (sizeof (struct demangle_parse_info));
+  info->info = NULL;
+  info->tree = NULL;
+  obstack_init (&info->obstack);
+
+  return info;
+}
+
+/* Free any memory associated with the given PARSE_INFO.  */
+
+void
+cp_demangled_name_parse_free (struct demangle_parse_info *parse_info)
+{
+  struct demangle_info *info = parse_info->info;
+
+  /* Free any allocated chunks of memory for the parse.  */
+  while (info != NULL)
+    {
+      struct demangle_info *next = info->next;
+
+      xfree (info);
+      info = next;
+    }
+
+  /* Free any memory allocated during typedef replacement.  */
+  obstack_free (&parse_info->obstack, NULL);
+
+  /* Free the parser info.  */
+  xfree (parse_info);
+}
+
+/* Merge the two parse trees given by DEST and SRC.  The parse tree
+   in SRC is attached to DEST at the node represented by TARGET.
+   SRC is then freed.
+
+   NOTE 1: Since there is no API to merge obstacks, this function does
+   even attempt to try it.  Fortunately, we do not (yet?) need this ability.
+   The code will assert if SRC->obstack is not empty.
+
+   NOTE 2: The string from which SRC was parsed must not be freed, since
+   this function will place pointers to that string into DEST.  */
+
+void
+cp_merge_demangle_parse_infos (struct demangle_parse_info *dest,
+			       struct demangle_component *target,
+			       struct demangle_parse_info *src)
+
+{
+  struct demangle_info *di;
+
+  /* Copy the SRC's parse data into DEST.  */
+  *target = *src->tree;
+  di = dest->info;
+  while (di->next != NULL)
+    di = di->next;
+  di->next = src->info;
+
+  /* Clear the (pointer to) SRC's parse data so that it is not freed when
+     cp_demangled_parse_info_free is called.  */
+  src->info = NULL;
+
+  /* Free SRC.  */
+  cp_demangled_name_parse_free (src);
+}
+
 /* Convert a demangled name to a demangle_component tree.  On success,
-   the root of the new tree is returned; it is valid until the next
-   call to this function and should not be freed.  On error, NULL is
+   a structure containing the root of the new tree is returned; it must
+   be freed by calling cp_demangled_name_parse_free. On error, NULL is
    returned, and an error message will be set in *ERRMSG (which does
    not need to be freed).  */
 
-struct demangle_component *
+struct demangle_parse_info *
 cp_demangled_name_to_comp (const char *demangled_name, const char **errmsg)
 {
   static char errbuf[60];
-  struct demangle_component *result;
+  struct demangle_parse_info *result;
 
   prev_lexptr = lexptr = demangled_name;
   error_lexptr = NULL;
   global_errmsg = NULL;
 
-  allocate_info ();
+  demangle_info = allocate_info ();
+
+  result = cp_new_demangle_parse_info ();
+  result->info = demangle_info;
 
   if (yyparse ())
     {
@@ -3867,10 +4652,11 @@ cp_demangled_name_to_comp (const char *demangled_name, const char **errmsg)
 	  strcat (errbuf, "'");
 	  *errmsg = errbuf;
 	}
+      cp_demangled_name_parse_free (result);
       return NULL;
     }
 
-  result = global_result;
+  result->tree = global_result;
   global_result = NULL;
 
   return result;
@@ -3916,7 +4702,24 @@ void
 xfree (void *ptr)
 {
   if (ptr != NULL)
-    xfree (ptr);
+    {
+      /* Literal `free' would get translated back to xfree again.  */
+      CONCAT2 (fr,ee) (ptr);
+    }
+}
+
+/* GDB normally defines internal_error itself, but when this file is built
+   as a standalone program, we must also provide an implementation.  */
+
+void
+internal_error (const char *file, int line, const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start (ap, fmt);
+  fprintf (stderr, "%s:%d: internal error: ", file, line);
+  vfprintf (stderr, fmt, ap);
+  exit (1);
 }
 
 int
@@ -3926,7 +4729,7 @@ main (int argc, char **argv)
   char buf[65536];
   int arg;
   const char *errmsg;
-  struct demangle_component *result;
+  struct demangle_parse_info *result;
 
   arg = 1;
   if (argv[arg] && strcmp (argv[arg], "--debug") == 0)
@@ -3945,7 +4748,7 @@ main (int argc, char **argv)
 	str2 = cplus_demangle (buf, DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE);
 	if (str2 == NULL)
 	  {
-	    /* printf ("Demangling error\n"); */
+	    printf ("Demangling error\n");
 	    if (c)
 	      printf ("%s%c%s\n", buf, c, extra_chars);
 	    else
@@ -3960,7 +4763,8 @@ main (int argc, char **argv)
 	    continue;
 	  }
 
-	cp_print (result);
+	cp_print (result->tree);
+	cp_demangled_name_parse_free (result);
 
 	xfree (str2);
 	if (c)
@@ -3979,12 +4783,12 @@ main (int argc, char **argv)
 	  fputc ('\n', stderr);
 	  return 0;
 	}
-      cp_print (result);
+      cp_print (result->tree);
+      cp_demangled_name_parse_free (result);
       putchar ('\n');
     }
   return 0;
 }
 
 #endif
-
 

@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2010
+    Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2010, 2012
     Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -339,8 +339,8 @@ msp430_final_link_relocate (reloc_howto_type * howto, bfd * input_bfd,
       bfd_put_16 (input_bfd, x, contents - 2);
       break;
 
-    case R_MSP430_16_PCREL:
     case R_MSP430_RL_PCREL:
+    case R_MSP430_16_PCREL:
       contents += rel->r_offset;
       srel = (bfd_signed_vma) relocation;
       srel += rel->r_addend;
@@ -454,9 +454,9 @@ elf32_msp430_relocate_section (bfd * output_bfd ATTRIBUTE_UNUSED,
 				   unresolved_reloc, warned);
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -667,7 +667,7 @@ elf32_msp430_object_p (bfd * abfd)
    Relaxation required only in two cases:
     - Bad hand coding like jumps from one section to another or
       from file to file.
-    - Sibling calls. This will affect onlu 'jump label' polymorph. Without
+    - Sibling calls. This will affect only 'jump label' polymorph. Without
       relaxing this enlarges code by 2 bytes. Sibcalls implemented but
       do not work in gcc's port by the reason I do not know.
    Anyway, if a relaxation required, user should pass -relax option to the
@@ -794,7 +794,7 @@ msp430_elf_symbol_address_p (bfd * abfd,
 }
 
 /* Adjust all local symbols defined as '.section + 0xXXXX' (.section has sec_shndx)
-    referenced from current and other sections */
+    referenced from current and other sections.  */
 static bfd_boolean
 msp430_elf_relax_adjust_locals(bfd * abfd, asection * sec, bfd_vma addr,
     int count, unsigned int sec_shndx, bfd_vma toaddr)
@@ -808,18 +808,18 @@ msp430_elf_relax_adjust_locals(bfd * abfd, asection * sec, bfd_vma addr,
   irelend = irel + sec->reloc_count;
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
   isym = (Elf_Internal_Sym *) symtab_hdr->contents;
-  
+
   for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
     {
       int sidx = ELF32_R_SYM(irel->r_info);
       Elf_Internal_Sym *lsym = isym + sidx;
-      
+
       /* Adjust symbols referenced by .sec+0xXX */
-      if (irel->r_addend > addr && irel->r_addend < toaddr 
+      if (irel->r_addend > addr && irel->r_addend < toaddr
 	  && lsym->st_shndx == sec_shndx)
 	irel->r_addend -= count;
     }
-  
+
   return TRUE;
 }
 
@@ -868,7 +868,7 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
 
   for (p = abfd->sections; p != NULL; p = p->next)
     msp430_elf_relax_adjust_locals(abfd,p,addr,count,sec_shndx,toaddr);
-  
+
   /* Adjust the local symbols defined in this section.  */
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
   isym = (Elf_Internal_Sym *) symtab_hdr->contents;
@@ -896,7 +896,6 @@ msp430_elf_relax_delete_bytes (bfd * abfd, asection * sec, bfd_vma addr,
 
   return TRUE;
 }
-
 
 static bfd_boolean
 msp430_elf_relax_section (bfd * abfd, asection * sec,
@@ -1013,7 +1012,7 @@ msp430_elf_relax_section (bfd * abfd, asection * sec,
 
       /* Try to turn a 16bit pc-relative branch into a 10bit pc-relative
          branch.  */
-      /* Paranoia? paranoia...  */      
+      /* Paranoia? paranoia...  */
       if (ELF32_R_TYPE (irel->r_info) == (int) R_MSP430_RL_PCREL)
 	{
 	  bfd_vma value = symval;
