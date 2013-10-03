@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.207 2013/09/11 23:04:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.208 2013/10/03 20:02:58 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -56,11 +56,6 @@ SUBDIR+=	librumpclient
 SUBDIR+=	libskey
 .endif
 
-.if (${MKCRYPTO} != "no")
-SUBDIR+=	../crypto/external/bsd/netpgp/libmj
-SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify
-.endif
-
 .if (${MKMDNS} != "no")
 SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
@@ -73,7 +68,6 @@ SUBDIR+=	../external/bsd/libelf/lib
 SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
-SUBDIR+=	../external/mit/lua/lib
 SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
@@ -104,7 +98,13 @@ SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKCRYPTO} != "no")
+SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
+.endif
+
 SUBDIR+=	../external/bsd/libdwarf/lib # depends on libelf
+SUBDIR+=	../external/mit/lua/lib # depends on libm
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
@@ -121,7 +121,6 @@ SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
-SUBDIR+=	npf
 .endif
 
 .if (${MKCRYPTO} != "no")
@@ -160,6 +159,10 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+.if (${MKNPF} != "no")
+SUBDIR+=	npf		# depends on libnpf
+.endif
 
 .if (${MKATF} != "no")
 SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
