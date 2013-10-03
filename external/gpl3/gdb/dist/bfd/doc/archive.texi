@@ -18,11 +18,17 @@ the contents of an archive opened for input.  You don't
 have to read the entire archive if you don't want
 to!  Read it until you find what you want.
 
+A BFD returned by @code{bfd_openr_next_archived_file} can be
+closed manually with @code{bfd_close}.  If you do not close it,
+then a second iteration through the members of an archive may
+return the same BFD.  If you close the archive BFD, then all
+the member BFDs will automatically be closed as well.
+
 Archive contents of output BFDs are chained through the
-@code{next} pointer in a BFD.  The first one is findable through
-the @code{archive_head} slot of the archive.  Set it with
-@code{bfd_set_archive_head} (q.v.).  A given BFD may be in only one
-open output archive at a time.
+@code{archive_next} pointer in a BFD.  The first one is findable
+through the @code{archive_head} slot of the archive.  Set it with
+@code{bfd_set_archive_head} (q.v.).  A given BFD may be in only
+one open output archive at a time.
 
 As expected, the BFD archive code is more general than the
 archive code of any given environment.  BFD archives may

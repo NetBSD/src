@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (c) 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -223,10 +223,22 @@ skip_spaces (char *chp)
   return chp;
 }
 
+/* A const-correct version of the above.  */
+
+const char *
+skip_spaces_const (const char *chp)
+{
+  if (chp == NULL)
+    return NULL;
+  while (*chp && isspace (*chp))
+    chp++;
+  return chp;
+}
+
 /* See documentation in cli-utils.h.  */
 
-char *
-skip_to_space (char *chp)
+const char *
+skip_to_space_const (const char *chp)
 {
   if (chp == NULL)
     return NULL;
@@ -244,4 +256,47 @@ remove_trailing_whitespace (const char *start, char *s)
     --s;
 
   return s;
+}
+
+/* See documentation in cli-utils.h.  */
+
+char *
+extract_arg (char **arg)
+{
+  char *result, *copy;
+
+  if (!*arg)
+    return NULL;
+
+  /* Find the start of the argument.  */
+  *arg = skip_spaces (*arg);
+  if (!**arg)
+    return NULL;
+  result = *arg;
+
+  /* Find the end of the argument.  */
+  *arg = skip_to_space (*arg + 1);
+
+  if (result == *arg)
+    return NULL;
+
+  copy = xmalloc (*arg - result + 1);
+  memcpy (copy, result, *arg - result);
+  copy[*arg - result] = '\0';
+
+  return copy;
+}
+
+/* See documentation in cli-utils.h.  */
+
+int
+check_for_argument (char **str, char *arg, int arg_len)
+{
+  if (strncmp (*str, arg, arg_len) == 0
+      && ((*str)[arg_len] == '\0' || isspace ((*str)[arg_len])))
+    {
+      *str += arg_len;
+      return 1;
+    }
+  return 0;
 }

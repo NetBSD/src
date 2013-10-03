@@ -1,6 +1,5 @@
 /* Simulator tracing/debugging support.
-   Copyright (C) 1997, 1998, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -69,6 +68,9 @@ enum {
   /* Trace branching.  */
   TRACE_BRANCH_IDX,
 
+  /* Trace syscalls.  */
+  TRACE_SYSCALL_IDX,
+
   /* Add information useful for debugging the simulator to trace output.  */
   TRACE_DEBUG_IDX,
 
@@ -105,6 +107,7 @@ enum {
 #define TRACE_fpu      (1 << TRACE_FPU_IDX)
 #define TRACE_vpu      (1 << TRACE_VPU_IDX)
 #define TRACE_branch   (1 << TRACE_BRANCH_IDX)
+#define TRACE_syscall  (1 << TRACE_SYSCALL_IDX)
 #define TRACE_debug    (1 << TRACE_DEBUG_IDX)
 
 /* Preprocessor macros to simplify tests of WITH_TRACE.  */
@@ -120,6 +123,7 @@ enum {
 #define WITH_TRACE_FPU_P	(WITH_TRACE & TRACE_fpu)
 #define WITH_TRACE_VPU_P	(WITH_TRACE & TRACE_vpu)
 #define WITH_TRACE_BRANCH_P	(WITH_TRACE & TRACE_branch)
+#define WITH_TRACE_SYSCALL_P	(WITH_TRACE & TRACE_syscall)
 #define WITH_TRACE_DEBUG_P	(WITH_TRACE & TRACE_debug)
 
 /* Tracing install handler.  */
@@ -217,6 +221,7 @@ typedef struct _trace_data {
 #define TRACE_FPU_P(cpu)	TRACE_P (cpu, TRACE_FPU_IDX)
 #define TRACE_VPU_P(cpu)	TRACE_P (cpu, TRACE_VPU_IDX)
 #define TRACE_BRANCH_P(cpu)	TRACE_P (cpu, TRACE_BRANCH_IDX)
+#define TRACE_SYSCALL_P(cpu)	TRACE_P (cpu, TRACE_SYSCALL_IDX)
 #define TRACE_DEBUG_P(cpu)	TRACE_P (cpu, TRACE_DEBUG_IDX)
 
 /* Tracing functions.  */
@@ -243,8 +248,25 @@ extern void trace_generic PARAMS ((SIM_DESC sd,
 				   ...))
      __attribute__((format (printf, 4, 5)));
 
+typedef enum {
+  trace_fmt_invalid,
+  trace_fmt_word,
+  trace_fmt_fp,
+  trace_fmt_fpu,
+  trace_fmt_string,
+  trace_fmt_bool,
+  trace_fmt_addr,
+  trace_fmt_instruction_incomplete,
+} data_fmt;
+
 /* Trace a varying number of word sized inputs/outputs.  trace_result*
    must be called to close the trace operation. */
+
+extern void save_data PARAMS ((SIM_DESC sd,
+                               TRACE_DATA *data,
+                               data_fmt fmt,
+                               long size,
+                               const void *buf));
 
 extern void trace_input0 PARAMS ((SIM_DESC sd,
 				  sim_cpu *cpu,

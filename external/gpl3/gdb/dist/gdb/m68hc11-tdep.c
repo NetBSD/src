@@ -1,7 +1,6 @@
 /* Target-dependent code for Motorola 68HC11 & 68HC12
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Contributed by Stephane Carrez, stcarrez@nerim.fr
 
@@ -248,7 +247,7 @@ m68hc11_initialize_register_info (void)
     {
       char buf[10];
 
-      sprintf (buf, "_.d%d", i - SOFT_D1_REGNUM + 1);
+      xsnprintf (buf, sizeof (buf), "_.d%d", i - SOFT_D1_REGNUM + 1);
       m68hc11_get_register_info (&soft_regs[i], buf);
     }
 
@@ -1175,8 +1174,7 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int first_stack_argnum;
   struct type *type;
   char *val;
-  int len;
-  char buf[2];
+  gdb_byte buf[2];
   
   first_stack_argnum = 0;
   if (struct_return)
@@ -1186,19 +1184,18 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   else if (nargs > 0)
     {
       type = value_type (args[0]);
-      len = TYPE_LENGTH (type);
 
       /* First argument is passed in D and X registers.  */
-      if (len <= 4)
+      if (TYPE_LENGTH (type) <= 4)
         {
           ULONGEST v;
 
           v = extract_unsigned_integer (value_contents (args[0]),
-					len, byte_order);
+					TYPE_LENGTH (type), byte_order);
           first_stack_argnum = 1;
 
           regcache_cooked_write_unsigned (regcache, HARD_D_REGNUM, v);
-          if (len > 2)
+          if (TYPE_LENGTH (type) > 2)
             {
               v >>= 16;
               regcache_cooked_write_unsigned (regcache, HARD_X_REGNUM, v);
@@ -1209,9 +1206,8 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   for (argnum = nargs - 1; argnum >= first_stack_argnum; argnum--)
     {
       type = value_type (args[argnum]);
-      len = TYPE_LENGTH (type);
 
-      if (len & 1)
+      if (TYPE_LENGTH (type) & 1)
         {
           static char zero = 0;
 
@@ -1219,8 +1215,8 @@ m68hc11_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
           write_memory (sp, &zero, 1);
         }
       val = (char*) value_contents (args[argnum]);
-      sp -= len;
-      write_memory (sp, val, len);
+      sp -= TYPE_LENGTH (type);
+      write_memory (sp, val, TYPE_LENGTH (type));
     }
 
   /* Store return address.  */
@@ -1292,11 +1288,10 @@ static void
 m68hc11_extract_return_value (struct type *type, struct regcache *regcache,
                               void *valbuf)
 {
-  int len = TYPE_LENGTH (type);
-  char buf[M68HC11_REG_SIZE];
+  gdb_byte buf[M68HC11_REG_SIZE];
 
   regcache_raw_read (regcache, HARD_D_REGNUM, buf);
-  switch (len)
+  switch (TYPE_LENGTH (type))
     {
     case 1:
       memcpy (valbuf, buf + 1, 1);
@@ -1324,7 +1319,7 @@ m68hc11_extract_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-m68hc11_return_value (struct gdbarch *gdbarch, struct type *func_type,
+m68hc11_return_value (struct gdbarch *gdbarch, struct value *function,
 		      struct type *valtype, struct regcache *regcache,
 		      gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1499,7 +1494,16 @@ m68hc11_gdbarch_init (struct gdbarch_info info,
   set_gdbarch_short_bit (gdbarch, 16);
   set_gdbarch_int_bit (gdbarch, elf_flags & E_M68HC11_I32 ? 32 : 16);
   set_gdbarch_float_bit (gdbarch, 32);
-  set_gdbarch_double_bit (gdbarch, elf_flags & E_M68HC11_F64 ? 64 : 32);
+  if (elf_flags & E_M68HC11_F64)
+    {
+      set_gdbarch_double_bit (gdbarch, 64);
+      set_gdbarch_double_format (gdbarch, floatformats_ieee_double);
+    }
+  else
+    {
+      set_gdbarch_double_bit (gdbarch, 32);
+      set_gdbarch_double_format (gdbarch, floatformats_ieee_single);
+    }
   set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_long_bit (gdbarch, 32);
   set_gdbarch_ptr_bit (gdbarch, 16);

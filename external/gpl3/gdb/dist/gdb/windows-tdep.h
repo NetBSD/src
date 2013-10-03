@@ -1,4 +1,4 @@
-/* Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,4 +29,9 @@ extern void windows_xfer_shared_library (const char* so_name,
 					 CORE_ADDR load_addr,
 					 struct gdbarch *gdbarch,
 					 struct obstack *obstack);
+
+extern void windows_iterate_over_objfiles_in_search_order
+  (struct gdbarch *gdbarch,
+   iterate_over_objfiles_in_search_order_cb_ftype *cb,
+   void *cb_data, struct objfile *current_objfile);
 #endif

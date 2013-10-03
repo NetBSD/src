@@ -1,6 +1,5 @@
 /* GNU/Linux/m68k specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -179,8 +178,10 @@ struct linux_target_ops the_low_target = {
   init_registers_m68k,
   m68k_num_regs,
   m68k_regmap,
+  NULL,
   m68k_cannot_fetch_register,
   m68k_cannot_store_register,
+  NULL, /* fetch_register */
   m68k_get_pc,
   m68k_set_pc,
   m68k_breakpoint,

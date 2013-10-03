@@ -1,20 +1,20 @@
 ## -*- text -*- ##
 # Master Makefile for the GNU readline library.
-# Copyright (C) 1994-2004 Free Software Foundation, Inc.
+# Copyright (C) 1994-2009 Free Software Foundation, Inc.
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 RL_LIBRARY_VERSION = @LIBVERSION@
 RL_LIBRARY_NAME = readline
 
@@ -58,7 +58,7 @@ libdir = @libdir@
 mandir = @mandir@
 includedir = @includedir@
 datadir = @datadir@
-localedir = $(datadir)/locale
+localedir = @localedir@
 
 infodir = @infodir@
 
@@ -68,7 +68,7 @@ man3dir = $(mandir)/man3
 DESTDIR =
 
 # Programs to make tags files.
-ETAGS = etags -tw
+ETAGS = etags
 CTAGS = ctags -tw
 
 CFLAGS = @CFLAGS@
@@ -100,8 +100,6 @@ GCC_LINT_CFLAGS = $(XCCFLAGS) $(GCC_LINT_FLAGS) @CFLAGS@ @LOCAL_CFLAGS@
 LIBRARY_NAME = libreadline.a
 STATIC_LIBS = libreadline.a libhistory.a
 
-WCWIDTH_OBJ = @WCWIDTH_OBJ@
-
 # The C code source files for this library.
 CSOURCES = $(srcdir)/readline.c $(srcdir)/funmap.c $(srcdir)/keymaps.c \
 	   $(srcdir)/vi_mode.c $(srcdir)/parens.c $(srcdir)/rltty.c \
@@ -109,26 +107,28 @@ CSOURCES = $(srcdir)/readline.c $(srcdir)/funmap.c $(srcdir)/keymaps.c \
 	   $(srcdir)/display.c $(srcdir)/signals.c $(srcdir)/emacs_keymap.c \
 	   $(srcdir)/vi_keymap.c $(srcdir)/util.c $(srcdir)/kill.c \
 	   $(srcdir)/undo.c $(srcdir)/macro.c $(srcdir)/input.c \
-	   $(srcdir)/callback.c $(srcdir)/terminal.c $(srcdir)/xmalloc.c \
+	   $(srcdir)/callback.c $(srcdir)/terminal.c $(srcdir)/xmalloc.c $(srcdir)/xfree.c \
 	   $(srcdir)/history.c $(srcdir)/histsearch.c $(srcdir)/histexpand.c \
 	   $(srcdir)/histfile.c $(srcdir)/nls.c $(srcdir)/search.c \
 	   $(srcdir)/shell.c $(srcdir)/savestring.c $(srcdir)/tilde.c \
 	   $(srcdir)/text.c $(srcdir)/misc.c $(srcdir)/compat.c \
-	   $(srcdir)/mbutil.c $(srcdir)/support/wcwidth.c
+	   $(srcdir)/mbutil.c
 
 # The header files for this library.
-HSOURCES = readline.h rldefs.h chardefs.h keymaps.h history.h histlib.h \
-	   posixstat.h posixdir.h posixjmp.h tilde.h rlconf.h rltty.h \
-	   ansi_stdlib.h tcap.h rlstdc.h xmalloc.h rlprivate.h rlshell.h \
-	   rltypedefs.h rlmbutil.h
+HSOURCES = $(srcdir)/readline.h $(srcdir)/rldefs.h $(srcdir)/chardefs.h \
+	   $(srcdir)/keymaps.h $(srcdir)/history.h $(srcdir)/histlib.h \
+	   $(srcdir)/posixstat.h $(srcdir)/posixdir.h $(srcdir)/posixjmp.h \
+	   $(srcdir)/tilde.h $(srcdir)/rlconf.h $(srcdir)/rltty.h \
+	   $(srcdir)/ansi_stdlib.h $(srcdir)/tcap.h $(srcdir)/rlstdc.h \
+	   $(srcdir)/xmalloc.h $(srcdir)/rlprivate.h $(srcdir)/rlshell.h \
+	   $(srcdir)/rltypedefs.h $(srcdir)/rlmbutil.h
 
 HISTOBJ = history.o histexpand.o histfile.o histsearch.o shell.o mbutil.o
 TILDEOBJ = tilde.o
 OBJECTS = readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
 	  rltty.o complete.o bind.o isearch.o display.o signals.o \
 	  util.o kill.o undo.o macro.o input.o callback.o terminal.o \
-	  text.o nls.o misc.o compat.o xmalloc.o $(HISTOBJ) $(TILDEOBJ) \
-	  $(WCWIDTH_OBJ)
+	  text.o nls.o misc.o compat.o xfree.o xmalloc.o $(HISTOBJ) $(TILDEOBJ)
 
 # The texinfo files which document this library.
 DOCSOURCE = doc/rlman.texinfo doc/rltech.texinfo doc/rluser.texinfo
@@ -159,14 +159,10 @@ libreadline.a: $(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 	-test -n "$(RANLIB)" && $(RANLIB) $@
 
-libhistory.a: $(HISTOBJ) xmalloc.o
+libhistory.a: $(HISTOBJ) xmalloc.o xfree.o
 	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.o
+	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.o xfree.o
 	-test -n "$(RANLIB)" && $(RANLIB) $@
-
-wcwidth.o: $(srcdir)/support/wcwidth.c
-	$(RM) $@
-	$(CC) $(CCFLAGS) -c $(srcdir)/support/wcwidth.c
 
 # Since tilde.c is shared between readline and bash, make sure we compile
 # it with the right flags when it's built as part of readline
@@ -175,7 +171,7 @@ tilde.o:	tilde.c
 	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -c $(srcdir)/tilde.c
 
 readline: $(OBJECTS) readline.h rldefs.h chardefs.h ./libreadline.a
-	$(CC) $(CCFLAGS) -o $@ ./examples/rl.c ./libreadline.a ${TERMCAP_LIB}
+	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -o $@ $(top_srcdir)/examples/rl.c ./libreadline.a ${TERMCAP_LIB}
 
 lint:	force
 	$(MAKE) $(MFLAGS) CCFLAGS='$(GCC_LINT_CFLAGS)' static
@@ -200,6 +196,7 @@ stamp-h: config.status $(srcdir)/config.h.in
 #$(srcdir)/configure: $(srcdir)/configure.in	## Comment-me-out in distribution
 #	cd $(srcdir) && autoconf	## Comment-me-out in distribution
 
+
 shared:	force
 	-test -d shlib || mkdir shlib
 	-( cd shlib ; ${MAKE} ${MFLAGS} all )
@@ -214,17 +211,6 @@ examples: force
 
 force:
 
-install-headers: installdirs ${INSTALLED_HEADERS}
-	for f in ${INSTALLED_HEADERS}; do \
-		$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/readline ; \
-	done
-
-uninstall-headers:
-	-test -n "$(includedir)" && cd $(DESTDIR)$(includedir)/readline && \
-		${RM} ${INSTALLED_HEADERS}
-
-maybe-uninstall-headers: uninstall-headers
-
 ## GDB LOCAL
 ## Don't mess with people's installed readline's.
 ## This tries to install this version of readline over whatever
@@ -237,7 +223,18 @@ install:
 
 #install:	$(INSTALL_TARGETS)
 
-install-static: installdirs $(STATIC_LIBS) install-headers install-doc
+install-headers: installdirs ${INSTALLED_HEADERS}
+	for f in ${INSTALLED_HEADERS}; do \
+		$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/readline ; \
+	done
+
+uninstall-headers:
+	-test -n "$(includedir)" && cd $(DESTDIR)$(includedir)/readline && \
+		${RM} ${INSTALLED_HEADERS}
+
+maybe-uninstall-headers: uninstall-headers
+
+install-static: installdirs $(STATIC_LIBS) install-headers install-doc install-examples
 	-$(MV) $(DESTDIR)$(libdir)/libreadline.a $(DESTDIR)$(libdir)/libreadline.old
 	$(INSTALL_DATA) libreadline.a $(DESTDIR)$(libdir)/libreadline.a
 	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libreadline.a
@@ -250,7 +247,7 @@ installdirs: $(srcdir)/support/mkinstalldirs
 		$(DESTDIR)$(includedir)/readline $(DESTDIR)$(libdir) \
 		$(DESTDIR)$(infodir) $(DESTDIR)$(man3dir)
 
-uninstall: uninstall-headers uninstall-doc
+uninstall: uninstall-headers uninstall-doc uninstall-examples
 	-test -n "$(DESTDIR)$(libdir)" && cd $(DESTDIR)$(libdir) && \
 		${RM} libreadline.a libreadline.old libhistory.a libhistory.old $(SHARED_LIBS)
 	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
@@ -260,6 +257,12 @@ install-shared: installdirs install-headers shared install-doc
 	
 uninstall-shared: maybe-uninstall-headers
 	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
+
+install-examples: installdirs install-headers shared
+	-( cd examples ; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} install )
+	
+uninstall-examples: maybe-uninstall-headers
+	-( cd examples; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
 
 install-doc:	installdirs
 	-( if test -d doc ; then \
@@ -274,10 +277,10 @@ uninstall-doc:
 	  fi )
 
 TAGS:	force
-	$(ETAGS) $(CSOURCES) $(HSOURCES)
+	-( cd $(srcdir) && $(ETAGS) $(CSOURCES) $(HSOURCES) )
 
 tags:	force
-	$(CTAGS) $(CSOURCES) $(HSOURCES)
+	-( cd $(srcdir) && $(CTAGS) $(CSOURCES) $(HSOURCES) )
 
 clean:	force
 	$(RM) $(OBJECTS) $(STATIC_LIBS)
@@ -299,12 +302,14 @@ distclean maintainer-clean: clean
 	$(RM) $(CREATED_CONFIGURE)
 	$(RM) $(CREATED_TAGS)
 
-info dvi html pdf:
+info dvi html pdf ps:
 	-( cd doc && $(MAKE) $(MFLAGS) $@ )
 
 install-info:
+install-dvi:
 install-html:
 install-pdf:
+install-ps:
 check:
 installcheck:
 
@@ -416,8 +421,10 @@ util.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
 vi_mode.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
 vi_mode.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
 vi_mode.o: history.h ansi_stdlib.h rlstdc.h
+xfree.o: ${BUILD_DIR}/config.h
+xfree.o: ansi_stdlib.h readline.h
 xmalloc.o: ${BUILD_DIR}/config.h
-xmalloc.o: ansi_stdlib.h readline.h
+xmalloc.o: ansi_stdlib.h
 
 bind.o: rlshell.h
 histfile.o: rlshell.h
@@ -474,6 +481,7 @@ tilde.o: xmalloc.h
 undo.o: xmalloc.h
 util.o: xmalloc.h
 vi_mode.o: xmalloc.h
+xfree.o: xmalloc.h
 xmalloc.o: xmalloc.h
 
 complete.o: rlmbutil.h
@@ -515,6 +523,7 @@ tilde.o: $(srcdir)/tilde.c
 undo.o: $(srcdir)/undo.c
 util.o: $(srcdir)/util.c
 vi_mode.o: $(srcdir)/vi_mode.c
+xfree.o: $(srcdir)/xfree.c
 xmalloc.o: $(srcdir)/xmalloc.c
 
 histexpand.o: $(srcdir)/histexpand.c
@@ -549,6 +558,7 @@ tilde.o: tilde.c
 undo.o: undo.c
 util.o: util.c
 vi_mode.o: vi_mode.c
+xfree.o: xfree.c
 xmalloc.o: xmalloc.c
 
 histexpand.o: histexpand.c

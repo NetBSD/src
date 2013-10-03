@@ -80,6 +80,9 @@ AC_CACHE_VAL(bash_cv_type_$1,
 #if HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
 $2
 ], bash_cv_type_$1=yes, bash_cv_type_$1=no)])
 AC_MSG_RESULT($bash_cv_type_$1)
@@ -215,7 +218,7 @@ AC_CACHE_VAL(bash_cv_sys_siglist,
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifndef SYS_SIGLIST_DECLARED
+#if !HAVE_DECL_SYS_SIGLIST
 extern char *sys_siglist[];
 #endif
 main()
@@ -336,18 +339,18 @@ main()
 {
 DIR *dir;
 int fd, err;
-err = mkdir("/tmp/bash-aclocal", 0700);
+err = mkdir("bash-aclocal", 0700);
 if (err < 0) {
   perror("mkdir");
   exit(1);
 }
-unlink("/tmp/bash-aclocal/not_a_directory");
-fd = open("/tmp/bash-aclocal/not_a_directory", O_WRONLY|O_CREAT|O_EXCL, 0666);
+unlink("bash-aclocal/not_a_directory");
+fd = open("bash-aclocal/not_a_directory", O_WRONLY|O_CREAT|O_EXCL, 0666);
 write(fd, "\n", 1);
 close(fd);
-dir = opendir("/tmp/bash-aclocal/not_a_directory");
-unlink("/tmp/bash-aclocal/not_a_directory");
-rmdir("/tmp/bash-aclocal");
+dir = opendir("bash-aclocal/not_a_directory");
+unlink("bash-aclocal/not_a_directory");
+rmdir("bash-aclocal");
 exit (dir == 0);
 }], bash_cv_opendir_not_robust=yes,bash_cv_opendir_not_robust=no,
     [AC_MSG_WARN(cannot check opendir if cross compiling -- defaulting to no)
@@ -531,6 +534,18 @@ AC_DEFINE(RLIMTYPE, rlim_t)
 fi
 ])
 
+AC_DEFUN(BASH_TYPE_SIG_ATOMIC_T,
+[AC_CACHE_CHECK([for sig_atomic_t in signal.h], ac_cv_have_sig_atomic_t,
+[AC_TRY_LINK([
+#include <signal.h>
+],[ sig_atomic_t x; ],
+ac_cv_have_sig_atomic_t=yes, ac_cv_have_sig_atomic_t=no)])
+if test "$ac_cv_have_sig_atomic_t" = "no"
+then
+    AC_CHECK_TYPE(sig_atomic_t,int)
+fi
+])
+
 AC_DEFUN(BASH_FUNC_LSTAT,
 [dnl Cannot use AC_CHECK_FUNCS(lstat) because Linux defines lstat() as an
 dnl inline function in <sys/stat.h>.
@@ -685,7 +700,7 @@ fi
 ])
 
 AC_DEFUN(BASH_FUNC_GETCWD,
-[AC_MSG_CHECKING([if getcwd() will dynamically allocate memory])
+[AC_MSG_CHECKING([if getcwd() will dynamically allocate memory with 0 size])
 AC_CACHE_VAL(bash_cv_getcwd_malloc,
 [AC_TRY_RUN([
 #include <stdio.h>
@@ -933,7 +948,7 @@ AC_DEFINE(HAVE_STRUCT_STAT_ST_BLOCKS)
 fi
 ])
 
-AC_DEFUN(BASH_CHECK_LIB_TERMCAP,
+AC_DEFUN([BASH_CHECK_LIB_TERMCAP],
 [
 if test "X$bash_cv_termcap_lib" = "X"; then
 _bash_needmsg=yes
@@ -1423,19 +1438,19 @@ exit (1);
 #if defined (NeXT)
 exit (1);
 #endif
-err = mkdir("/tmp/bash-aclocal", 0700);
+err = mkdir("bash-aclocal", 0700);
 if (err < 0) {
   perror ("mkdir");
   exit(1);
 }
-fd = mknod ("/tmp/bash-aclocal/sh-np-autoconf", 0666 | S_IFIFO, 0);
+fd = mknod ("bash-aclocal/sh-np-autoconf", 0666 | S_IFIFO, 0);
 if (fd == -1) {
-  rmdir ("/tmp/bash-aclocal");
+  rmdir ("bash-aclocal");
   exit (1);
 }
 close(fd);
-unlink ("/tmp/bash-aclocal/sh-np-autoconf");
-rmdir ("/tmp/bash-aclocal");
+unlink ("bash-aclocal/sh-np-autoconf");
+rmdir ("bash-aclocal");
 exit(0);
 }], bash_cv_sys_named_pipes=present, bash_cv_sys_named_pipes=missing,
     [AC_MSG_WARN(cannot check for named pipes if cross-compiling -- defaulting to missing)
@@ -1540,20 +1555,22 @@ fi
 AC_DEFUN(BASH_CHECK_DEV_FD,
 [AC_MSG_CHECKING(whether /dev/fd is available)
 AC_CACHE_VAL(bash_cv_dev_fd,
-[if test -d /dev/fd  && test -r /dev/fd/0 < /dev/null; then
+[bash_cv_dev_fd=""
+if test -d /dev/fd  && (exec test -r /dev/fd/0 < /dev/null) ; then
 # check for systems like FreeBSD 5 that only provide /dev/fd/[012]
-   exec 3<&0
-   if test -r /dev/fd/3; then
+   if (exec test -r /dev/fd/3 3</dev/null) ; then
      bash_cv_dev_fd=standard
    else
      bash_cv_dev_fd=absent
    fi
-   exec 3<&-
- elif test -d /proc/self/fd && test -r /proc/self/fd/0 < /dev/null; then
-   bash_cv_dev_fd=whacky
- else
-   bash_cv_dev_fd=absent
- fi
+fi
+if test -z "$bash_cv_dev_fd" ; then 
+  if test -d /proc/self/fd && (exec test -r /proc/self/fd/0 < /dev/null) ; then
+    bash_cv_dev_fd=whacky
+  else
+    bash_cv_dev_fd=absent
+  fi
+fi
 ])
 AC_MSG_RESULT($bash_cv_dev_fd)
 if test $bash_cv_dev_fd = "standard"; then
@@ -1568,9 +1585,9 @@ fi
 AC_DEFUN(BASH_CHECK_DEV_STDIN,
 [AC_MSG_CHECKING(whether /dev/stdin stdout stderr are available)
 AC_CACHE_VAL(bash_cv_dev_stdin,
-[if test -d /dev/fd && test -r /dev/stdin < /dev/null; then
+[if test -d /dev/fd && (exec test -r /dev/stdin < /dev/null) ; then
    bash_cv_dev_stdin=present
- elif test -d /proc/self/fd && test -r /dev/stdin < /dev/null; then
+ elif test -d /proc/self/fd && (exec test -r /dev/stdin < /dev/null) ; then
    bash_cv_dev_stdin=present
  else
    bash_cv_dev_stdin=absent
@@ -1667,36 +1684,38 @@ fi
 dnl
 dnl check for availability of multibyte characters and functions
 dnl
+dnl geez, I wish I didn't have to check for all of this stuff separately
+dnl
 AC_DEFUN(BASH_CHECK_MULTIBYTE,
 [
 AC_CHECK_HEADERS(wctype.h)
 AC_CHECK_HEADERS(wchar.h)
 AC_CHECK_HEADERS(langinfo.h)
 
-AC_CHECK_FUNC(mbsrtowcs, AC_DEFINE(HAVE_MBSRTOWCS))
-AC_CHECK_FUNC(mbrtowc, AC_DEFINE(HAVE_MBRTOWC))
 AC_CHECK_FUNC(mbrlen, AC_DEFINE(HAVE_MBRLEN))
-AC_CHECK_FUNC(wctomb, AC_DEFINE(HAVE_WCTOMB))
-AC_CHECK_FUNC(wcwidth, AC_DEFINE(HAVE_WCWIDTH))
+AC_CHECK_FUNC(mbscasecmp, AC_DEFINE(HAVE_MBSCMP))
+AC_CHECK_FUNC(mbscmp, AC_DEFINE(HAVE_MBSCMP))
+AC_CHECK_FUNC(mbsnrtowcs, AC_DEFINE(HAVE_MBSNRTOWCS))
+AC_CHECK_FUNC(mbsrtowcs, AC_DEFINE(HAVE_MBSRTOWCS))
+
+
+AC_REPLACE_FUNCS(mbschr)
+
+AC_CHECK_FUNC(wcrtomb, AC_DEFINE(HAVE_WCRTOMB))
+AC_CHECK_FUNC(wcscoll, AC_DEFINE(HAVE_WCSCOLL))
 AC_CHECK_FUNC(wcsdup, AC_DEFINE(HAVE_WCSDUP))
+AC_CHECK_FUNC(wcwidth, AC_DEFINE(HAVE_WCWIDTH))
+AC_CHECK_FUNC(wctype, AC_DEFINE(HAVE_WCTYPE))
 
-if test "$ac_cv_func_wcwidth" = no && test "$ac_cv_header_wchar_h" = yes; then
-  WCWIDTH_OBJ=wcwidth.o
-else
-  WCWIDTH_OBJ=
-fi
-AC_SUBST(WCWIDTH_OBJ)
+AC_REPLACE_FUNCS(wcswidth)
 
-AC_CACHE_CHECK([for mbstate_t], bash_cv_have_mbstate_t,
-[AC_TRY_COMPILE([
-#include <wchar.h>], [
-  mbstate_t ps;
-  mbstate_t *psp;
-  psp = (mbstate_t *)0;
-], bash_cv_have_mbstate_t=yes,  bash_cv_have_mbstate_t=no)])
-if test $bash_cv_have_mbstate_t = yes; then
+dnl checks for both mbrtowc and mbstate_t
+AC_FUNC_MBRTOWC
+if test $ac_cv_func_mbrtowc = yes; then
 	AC_DEFINE(HAVE_MBSTATE_T)
 fi
+
+AC_CHECK_FUNCS(iswlower iswupper towlower towupper iswctype)
 
 AC_CACHE_CHECK([for nl_langinfo and CODESET], bash_cv_langinfo_codeset,
 [AC_TRY_LINK(
@@ -1707,6 +1726,50 @@ if test $bash_cv_langinfo_codeset = yes; then
   AC_DEFINE(HAVE_LANGINFO_CODESET)
 fi
 
+dnl check for wchar_t in <wchar.h>
+AC_CACHE_CHECK([for wchar_t in wchar.h], bash_cv_type_wchar_t,
+[AC_TRY_COMPILE(
+[#include <wchar.h>
+],
+[
+        wchar_t foo;
+        foo = 0;
+], bash_cv_type_wchar_t=yes, bash_cv_type_wchar_t=no)])
+if test $bash_cv_type_wchar_t = yes; then
+        AC_DEFINE(HAVE_WCHAR_T, 1, [systems should define this type here])
+fi
+
+dnl check for wctype_t in <wctype.h>
+AC_CACHE_CHECK([for wctype_t in wctype.h], bash_cv_type_wctype_t,
+[AC_TRY_COMPILE(
+[#include <wctype.h>],
+[
+        wctype_t foo;
+        foo = 0;
+], bash_cv_type_wctype_t=yes, bash_cv_type_wctype_t=no)])
+if test $bash_cv_type_wctype_t = yes; then
+        AC_DEFINE(HAVE_WCTYPE_T, 1, [systems should define this type here])
+fi
+
+dnl check for wint_t in <wctype.h>
+AC_CACHE_CHECK([for wint_t in wctype.h], bash_cv_type_wint_t,
+[AC_TRY_COMPILE(
+[#include <wctype.h>],
+[
+        wint_t foo;
+        foo = 0;
+], bash_cv_type_wint_t=yes, bash_cv_type_wint_t=no)])
+if test $bash_cv_type_wint_t = yes; then
+        AC_DEFINE(HAVE_WINT_T, 1, [systems should define this type here])
+fi
+
+if test "$am_cv_func_iconv" = yes; then
+	OLDLIBS="$LIBS"
+	LIBS="$LIBS $LIBICONV"
+	AC_CHECK_FUNCS(locale_charset)
+	LIBS="$OLDLIBS"
+fi
+
 ])
 
 dnl need: prefix exec_prefix libdir includedir CC TERMCAP_LIB
@@ -1714,7 +1777,7 @@ dnl require:
 dnl	AC_PROG_CC
 dnl	BASH_CHECK_LIB_TERMCAP
 
-AC_DEFUN(RL_LIB_READLINE_VERSION,
+AC_DEFUN([RL_LIB_READLINE_VERSION],
 [
 AC_REQUIRE([BASH_CHECK_LIB_TERMCAP])
 
@@ -2331,7 +2394,7 @@ AC_DEFUN([AM_INTL_SUBDIR],
   AC_CHECK_HEADERS([argz.h limits.h locale.h nl_types.h malloc.h stddef.h \
 stdlib.h string.h unistd.h sys/param.h])
   AC_CHECK_FUNCS([feof_unlocked fgets_unlocked getc_unlocked getcwd getegid \
-geteuid getgid getuid mempcpy munmap putenv setenv setlocale stpcpy \
+geteuid getgid getuid mempcpy munmap putenv setenv setlocale localeconv stpcpy \
 strcasecmp strdup strtoul tsearch __argz_count __argz_stringify __argz_next \
 __fsetlocking])
 
@@ -3963,4 +4026,144 @@ AC_DEFUN([jm_AC_TYPE_UNSIGNED_LONG_LONG],
     AC_DEFINE(HAVE_UNSIGNED_LONG_LONG, 1,
       [Define if you have the unsigned long long type.])
   fi
+])
+
+dnl From gnulib
+AC_DEFUN([BASH_FUNC_FPURGE],
+[
+  AC_CHECK_FUNCS_ONCE([fpurge])
+  AC_CHECK_FUNCS_ONCE([__fpurge])
+  AC_CHECK_DECLS([fpurge], , , [#include <stdio.h>])
+])
+
+AC_DEFUN([BASH_FUNC_SNPRINTF],
+[
+  AC_CHECK_FUNCS_ONCE([snprintf])
+  if test X$ac_cv_func_snprintf = Xyes; then
+    AC_CACHE_CHECK([for standard-conformant snprintf], [bash_cv_func_snprintf],
+      [AC_TRY_RUN([
+#include <stdio.h>
+
+main()
+{
+  int n;
+  n = snprintf (0, 0, "%s", "0123456");
+  exit(n != 7);
+}
+], bash_cv_func_snprintf=yes, bash_cv_func_snprintf=no,
+   [AC_MSG_WARN([cannot check standard snprintf if cross-compiling])
+    bash_cv_func_snprintf=yes]
+)])
+    if test $bash_cv_func_snprintf = no; then
+      ac_cv_func_snprintf=no
+    fi
+  fi
+  if test $ac_cv_func_snprintf = no; then
+    AC_DEFINE(HAVE_SNPRINTF, 0,
+      [Define if you have a standard-conformant snprintf function.])
+  fi
+])
+
+AC_DEFUN([BASH_FUNC_VSNPRINTF],
+[
+  AC_CHECK_FUNCS_ONCE([vsnprintf])
+  if test X$ac_cv_func_vsnprintf = Xyes; then
+    AC_CACHE_CHECK([for standard-conformant vsnprintf], [bash_cv_func_vsnprintf],
+      [AC_TRY_RUN([
+#if HAVE_STDARG_H
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+
+static int
+#if HAVE_STDARG_H
+foo(const char *fmt, ...)
+#else
+foo(format, va_alist)
+     const char *format;
+     va_dcl
+#endif
+{
+  va_list args;
+  int n;
+
+#if HAVE_STDARG_H
+  va_start(args, fmt);
+#else
+  va_start(args);
+#endif
+  n = vsnprintf(0, 0, fmt, args);
+  va_end (args);
+  return n;
+}
+
+main()
+{
+  int n;
+  n = foo("%s", "0123456");
+  exit(n != 7);
+}
+], bash_cv_func_vsnprintf=yes, bash_cv_func_vsnprintf=no,
+   [AC_MSG_WARN([cannot check standard vsnprintf if cross-compiling])
+    bash_cv_func_vsnprintf=yes]
+)])
+    if test $bash_cv_func_vsnprintf = no; then
+      ac_cv_func_vsnprintf=no
+    fi
+  fi
+  if test $ac_cv_func_vsnprintf = no; then
+    AC_DEFINE(HAVE_VSNPRINTF, 0,
+      [Define if you have a standard-conformant vsnprintf function.])
+  fi
+])
+
+AC_DEFUN(BASH_STRUCT_WEXITSTATUS_OFFSET,
+[AC_MSG_CHECKING(for offset of exit status in return status from wait)
+AC_CACHE_VAL(bash_cv_wexitstatus_offset,
+[AC_RUN_IFELSE([
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <sys/wait.h>
+
+main(c, v)
+     int c;
+     char **v;
+{
+  pid_t pid, p;
+  int s, i, n;
+
+  s = 0;
+  pid = fork();
+  if (pid == 0)
+    exit (42);
+
+  /* wait for the process */
+  p = wait(&s);
+  if (p != pid)
+    exit (255);
+
+  /* crack s */
+  for (i = 0; i < (sizeof(s) - 8); i++)
+    {
+      n = (s >> i) & 0xff;
+      if (n == 42)
+	exit (i);
+    }
+
+  exit (254);
+}
+], bash_cv_wexitstatus_offset=0, bash_cv_wexitstatus_offset=$?,
+   [AC_MSG_WARN(cannot check WEXITSTATUS offset if cross compiling -- defaulting to 0)
+    bash_cv_wexitstatus_offset=0]
+)])
+if test "$bash_cv_wexitstatus_offset" -gt 32 ; then
+  AC_MSG_WARN(bad exit status from test program -- defaulting to 0)
+  bash_cv_wexitstatus_offset=0
+fi
+AC_MSG_RESULT($bash_cv_wexitstatus_offset)
+AC_DEFINE_UNQUOTED([WEXITSTATUS_OFFSET], [$bash_cv_wexitstatus_offset], [Offset of exit status in wait status word])
 ])

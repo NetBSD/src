@@ -1,6 +1,5 @@
 /* Target-dependent code for GNU/Linux on Alpha.
-   Copyright (C) 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -93,7 +92,7 @@ alpha_linux_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 static int
 alpha_linux_pc_in_sigtramp (struct gdbarch *gdbarch,
-			    CORE_ADDR pc, char *func_name)
+			    CORE_ADDR pc, const char *func_name)
 {
   return alpha_linux_sigtramp_offset (gdbarch, pc) >= 0;
 }

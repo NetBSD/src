@@ -180,7 +180,7 @@ xtensa_insnbuf_to_chars (xtensa_isa isa,
 /* Inward conversion from byte stream to xtensa_insnbuf.  See
    xtensa_insnbuf_to_chars for a discussion of why this is complicated
    by endianness.  */
-    
+
 void
 xtensa_insnbuf_from_chars (xtensa_isa isa,
 			   xtensa_insnbuf insn,
@@ -296,7 +296,7 @@ xtensa_isa_init (xtensa_isa_status *errno_p, char **error_msg_p)
     }
 
   /* Set up the interface lookup table.  */
-  isa->interface_lookup_table = 
+  isa->interface_lookup_table =
     bfd_malloc (isa->num_interfaces * sizeof (xtensa_lookup_entry));
   CHECK_ALLOC_FOR_INIT (isa->interface_lookup_table, NULL, errno_p,
 			error_msg_p);
@@ -309,7 +309,7 @@ xtensa_isa_init (xtensa_isa_status *errno_p, char **error_msg_p)
 	 sizeof (xtensa_lookup_entry), xtensa_isa_name_compare);
 
   /* Set up the funcUnit lookup table.  */
-  isa->funcUnit_lookup_table = 
+  isa->funcUnit_lookup_table =
     bfd_malloc (isa->num_funcUnits * sizeof (xtensa_lookup_entry));
   CHECK_ALLOC_FOR_INIT (isa->funcUnit_lookup_table, NULL, errno_p,
 			error_msg_p);
@@ -406,7 +406,7 @@ xtensa_isa_length_from_chars (xtensa_isa isa, const unsigned char *cp)
 
 
 int
-xtensa_isa_num_pipe_stages (xtensa_isa isa) 
+xtensa_isa_num_pipe_stages (xtensa_isa isa)
 {
   xtensa_opcode opcode;
   xtensa_funcUnit_use *use;
@@ -544,7 +544,7 @@ xtensa_format_lookup (xtensa_isa isa, const char *fmtname)
       if (strcasecmp (fmtname, intisa->formats[fmt].name) == 0)
 	return fmt;
     }
-  
+
   xtisa_errno = xtensa_isa_bad_format;
   sprintf (xtisa_error_msg, "format \"%s\" not recognized", fmtname);
   return XTENSA_UNDEFINED;

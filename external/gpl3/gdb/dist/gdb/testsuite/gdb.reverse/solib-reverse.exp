@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +16,19 @@
 # This file is part of the GDB testsuite.  It tests reverse debugging
 # with shared libraries.
 
-if ![target_info exists gdb,can_reverse] {
+if ![supports_reverse] {
+    return
+}
+if {[skip_shlib_tests]} {
     return
 }
 
-set testfile "solib-reverse"
-set srcfile  ${testfile}.c
+standard_testfile
 set libfile  "shr2"
 set libsrc   ${libfile}.c
-set library  ${objdir}/${subdir}/${libfile}.sl
-set binfile  ${objdir}/${subdir}/${testfile}
+set library  [standard_output_file ${libfile}.sl]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -47,13 +48,17 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opt
 
 gdb_exit
 gdb_start
+
+# Clear it to never find any separate system debug infos.
+gdb_test_no_output "set debug-file-directory"
+
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
-
+gdb_load_shlibs $library
 
 runto main
 
-if [target_info exists gdb,use_precord] {
+if [supports_process_record] {
     # Activate process record/replay
     gdb_test_no_output "record" "Turn on process record"
 }

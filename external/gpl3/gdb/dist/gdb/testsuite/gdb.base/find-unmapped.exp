@@ -1,0 +1,46 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+if {[is_remote target]} {
+    # gdbserver prints the warning message but expect is parsing only the
+    # GDB output, not the gdbserver output.
+    return 0
+}
+
+standard_testfile
+
+if { [prepare_for_testing ${testfile}.exp ${testfile}] } {
+    return -1
+}
+
+if ![runto breakpt] {
+    return -1
+}
+
+# Basic attempt to read memory from globals.
+gdb_test "x/5w global_var_1" \
+    "$hex:\[ \t\]+0\[ \t\]+0\[ \t\]+0\[ \t\]+0\r\n$hex:\[ \t\]+Cannot access memory at address $hex"
+gdb_test "x/5w global_var_2" \
+    "$hex:\[ \t\]+Cannot access memory at address $hex"
+
+# Now try a find starting from each global.
+gdb_test "find global_var_0, global_var_2, 0xff" \
+    "warning: Unable to access $decimal bytes of target memory at $hex, halting search\.\r\nPattern not found."
+
+gdb_test "find global_var_1, global_var_2, 0xff" \
+    "warning: Unable to access $decimal bytes of target memory at $hex, halting search\.\r\nPattern not found."
+
+gdb_test "find global_var_2, (global_var_2 + 16), 0xff" \
+    "warning: Unable to access $decimal bytes of target memory at $hex, halting search\.\r\nPattern not found."

@@ -35,7 +35,8 @@ const bfd_arch_info_type bfd_ia64_elf32_arch =
     3,	/* log2 of section alignment */
     TRUE, /* the one and only */
     bfd_default_compatible,
-    bfd_default_scan ,
+    bfd_default_scan,
+    bfd_arch_default_fill,
     0,
   };
 
@@ -51,7 +52,8 @@ const bfd_arch_info_type bfd_ia64_arch =
     3,	/* log2 of section alignment */
     TRUE, /* the one and only */
     bfd_default_compatible,
-    bfd_default_scan ,
+    bfd_default_scan,
+    bfd_arch_default_fill,
     &bfd_ia64_elf32_arch,
   };
 

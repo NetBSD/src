@@ -1,6 +1,5 @@
 /* Target-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -95,8 +94,12 @@
 #define S390_R13_UPPER_REGNUM 64
 #define S390_R14_UPPER_REGNUM 65
 #define S390_R15_UPPER_REGNUM 66
+/* GNU/Linux-specific optional registers.  */
+#define S390_ORIG_R2_REGNUM 67
+#define S390_LAST_BREAK_REGNUM 68
+#define S390_SYSTEM_CALL_REGNUM 69
 /* Total.  */
-#define S390_NUM_REGS 67
+#define S390_NUM_REGS 70
 
 /* Special register usage.  */
 #define S390_SP_REGNUM S390_R15_REGNUM
@@ -110,11 +113,20 @@ extern int s390_regmap_gregset[S390_NUM_REGS];
 extern int s390x_regmap_gregset[S390_NUM_REGS];
 #define s390_sizeof_fpregset 0x88
 extern int s390_regmap_fpregset[S390_NUM_REGS];
+extern int s390_regmap_last_break[S390_NUM_REGS];
+extern int s390x_regmap_last_break[S390_NUM_REGS];
+extern int s390_regmap_system_call[S390_NUM_REGS];
 
-/* Linux target descriptions.  */
+/* GNU/Linux target descriptions.  */
 extern struct target_desc *tdesc_s390_linux32;
+extern struct target_desc *tdesc_s390_linux32v1;
+extern struct target_desc *tdesc_s390_linux32v2;
 extern struct target_desc *tdesc_s390_linux64;
+extern struct target_desc *tdesc_s390_linux64v1;
+extern struct target_desc *tdesc_s390_linux64v2;
 extern struct target_desc *tdesc_s390x_linux64;
+extern struct target_desc *tdesc_s390x_linux64v1;
+extern struct target_desc *tdesc_s390x_linux64v2;
 
 #endif
 

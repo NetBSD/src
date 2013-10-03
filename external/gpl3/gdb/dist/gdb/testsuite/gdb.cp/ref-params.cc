@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2006-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,11 +60,6 @@ int main(void)
 {
   Child Q(42);
   Child& QR = Q;
-
-  #ifdef usestubs
-     set_debug_traps();
-     breakpoint();
-  #endif
 
   /* Set breakpoint marker1 here.  */
 

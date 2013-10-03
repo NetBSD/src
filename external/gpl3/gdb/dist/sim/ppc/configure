@@ -667,6 +667,27 @@ CC
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
+WERROR_CFLAGS
+WARN_CFLAGS
+sim_xor_endian
+sim_stdcall
+sim_smp
+sim_reserved_bits
+sim_regparm
+sim_packages
+sim_inline
+sim_hw
+sim_hw_objs
+sim_hw_cflags
+sim_default_model
+sim_scache
+sim_float
+sim_hostendian
+sim_endian
+sim_bitsize
+sim_assert
+sim_alignment
+sim_environment
 target_alias
 host_alias
 build_alias
@@ -704,28 +725,7 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL
-WERROR_CFLAGS
-WARN_CFLAGS
-sim_xor_endian
-sim_stdcall
-sim_smp
-sim_reserved_bits
-sim_regparm
-sim_packages
-sim_inline
-sim_hw
-sim_hw_objs
-sim_hw_cflags
-sim_default_model
-sim_scache
-sim_float
-sim_hostendian
-sim_endian
-sim_bitsize
-sim_assert
-sim_alignment
-sim_environment'
+SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
@@ -1872,8 +1872,10 @@ $as_echo "$ac_res" >&6; }
 ac_fn_c_check_decl ()
 {
   as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $2 is declared" >&5
-$as_echo_n "checking whether $2 is declared... " >&6; }
+  as_decl_name=`echo $2|sed 's/ *(.*//'`
+  as_decl_use=`echo $2|sed -e 's/(/((/' -e 's/)/) 0&/' -e 's/,/) 0& (/g'`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $as_decl_name is declared" >&5
+$as_echo_n "checking whether $as_decl_name is declared... " >&6; }
 if { as_var=$3; eval "test \"\${$as_var+set}\" = set"; }; then :
   $as_echo_n "(cached) " >&6
 else
@@ -1883,8 +1885,12 @@ $4
 int
 main ()
 {
-#ifndef $2
-  (void) $2;
+#ifndef $as_decl_name
+#ifdef __cplusplus
+  (void) $as_decl_use;
+#else
+  (void) $as_decl_name;
+#endif
 #endif
 
   ;
@@ -2374,6 +2380,1847 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+# This file contains common code used by all simulators.
+#
+# SIM_AC_COMMON invokes AC macros used by all simulators and by the common
+# directory.  It is intended to be invoked before any target specific stuff.
+# SIM_AC_OUTPUT is a cover function to AC_OUTPUT to generate the Makefile.
+# It is intended to be invoked last.
+#
+# The simulator's configure.in should look like:
+#
+# dnl Process this file with autoconf to produce a configure script.
+# AC_PREREQ(2.64)dnl
+# AC_INIT(Makefile.in)
+# sinclude(../common/aclocal.m4)
+#
+# SIM_AC_COMMON
+#
+# ... target specific stuff ...
+#
+# SIM_AC_OUTPUT
+
+# Include global overrides and fixes for Autoconf.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# _AC_CHECK_DECL_BODY
+# -------------------
+# Shell function body for AC_CHECK_DECL.
+# _AC_CHECK_DECL_BODY
+
+# _AC_CHECK_DECLS(SYMBOL, ACTION-IF_FOUND, ACTION-IF-NOT-FOUND,
+#                 INCLUDES)
+# -------------------------------------------------------------
+# Helper to AC_CHECK_DECLS, which generates the check for a single
+# SYMBOL with INCLUDES, performs the AC_DEFINE, then expands
+# ACTION-IF-FOUND or ACTION-IF-NOT-FOUND.
+
+
+
+
+
+
+
+
+
+
+
+
+# libtool.m4 - Configure libtool for the host system. -*-Autoconf-*-
+#
+#   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
+#                 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+#   Written by Gordon Matzigkeit, 1996
+#
+# This file is free software; the Free Software Foundation gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+
+
+# serial 56 LT_INIT
+
+
+# LT_PREREQ(VERSION)
+# ------------------
+# Complain and exit if this libtool version is less that VERSION.
+
+
+
+# _LT_CHECK_BUILDDIR
+# ------------------
+# Complain if the absolute build directory name contains unusual characters
+
+
+
+# LT_INIT([OPTIONS])
+# ------------------
+# LT_INIT
+
+# Old names:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_CC_BASENAME(CC)
+# -------------------
+# Calculate cc_basename.  Skip known compiler wrappers and cross-prefix.
+
+
+
+# _LT_FILEUTILS_DEFAULTS
+# ----------------------
+# It is okay to use these file commands and assume they have been set
+# sensibly after `m4_require([_LT_FILEUTILS_DEFAULTS])'.
+# _LT_FILEUTILS_DEFAULTS
+
+
+# _LT_SETUP
+# ---------
+# _LT_SETUP
+
+
+# _LT_PREPARE_SED_QUOTE_VARS
+# --------------------------
+# Define a few sed substitution that help us do robust quoting.
+
+
+# _LT_PROG_LTMAIN
+# ---------------
+# Note that this code is called both from `configure', and `config.status'
+# now that we use AC_CONFIG_COMMANDS to generate libtool.  Notably,
+# `config.status' has no value for ac_aux_dir unless we are using Automake,
+# so we pass a copy along to make sure it has a sensible value anyway.
+# _LT_PROG_LTMAIN
+
+
+## ------------------------------------- ##
+## Accumulate code for creating libtool. ##
+## ------------------------------------- ##
+
+# So that we can recreate a full libtool script including additional
+# tags, we accumulate the chunks of code to send to AC_CONFIG_COMMANDS
+# in macros and then make a single call at the end using the `libtool'
+# label.
+
+
+# _LT_CONFIG_LIBTOOL_INIT([INIT-COMMANDS])
+# ----------------------------------------
+# Register INIT-COMMANDS to be passed to AC_CONFIG_COMMANDS later.
+
+
+# Initialize.
+
+
+
+# _LT_CONFIG_LIBTOOL([COMMANDS])
+# ------------------------------
+# Register COMMANDS to be passed to AC_CONFIG_COMMANDS later.
+
+
+# Initialize.
+
+
+
+# _LT_CONFIG_SAVE_COMMANDS([COMMANDS], [INIT_COMMANDS])
+# -----------------------------------------------------
+
+
+
+# _LT_FORMAT_COMMENT([COMMENT])
+# -----------------------------
+# Add leading comment marks to the start of each line, and a trailing
+# full-stop to the whole comment if one is not present already.
+
+
+
+
+## ------------------------ ##
+## FIXME: Eliminate VARNAME ##
+## ------------------------ ##
+
+
+# _LT_DECL([CONFIGNAME], VARNAME, VALUE, [DESCRIPTION], [IS-TAGGED?])
+# -------------------------------------------------------------------
+# CONFIGNAME is the name given to the value in the libtool script.
+# VARNAME is the (base) name used in the configure script.
+# VALUE may be 0, 1 or 2 for a computed quote escaped value based on
+# VARNAME.  Any other value will be used directly.
+
+
+
+# _LT_TAGDECL([CONFIGNAME], VARNAME, VALUE, [DESCRIPTION])
+# --------------------------------------------------------
+
+
+
+# lt_decl_tag_varnames([SEPARATOR], [VARNAME1...])
+# ------------------------------------------------
+
+
+
+# _lt_decl_filter(SUBKEY, VALUE, [SEPARATOR], [VARNAME1..])
+# ---------------------------------------------------------
+
+
+
+# lt_decl_quote_varnames([SEPARATOR], [VARNAME1...])
+# --------------------------------------------------
+
+
+
+# lt_decl_dquote_varnames([SEPARATOR], [VARNAME1...])
+# ---------------------------------------------------
+
+
+
+# lt_decl_varnames_tagged([SEPARATOR], [VARNAME1...])
+# ---------------------------------------------------
+
+
+
+
+# lt_decl_all_varnames([SEPARATOR], [VARNAME1...])
+# ------------------------------------------------
+
+
+
+
+# _LT_CONFIG_STATUS_DECLARE([VARNAME])
+# ------------------------------------
+# Quote a variable value, and forward it to `config.status' so that its
+# declaration there will have the same value as in `configure'.  VARNAME
+# must have a single quote delimited value for this to work.
+
+
+
+# _LT_CONFIG_STATUS_DECLARATIONS
+# ------------------------------
+# We delimit libtool config variables with single quotes, so when
+# we write them to config.status, we have to be sure to quote all
+# embedded single quotes properly.  In configure, this macro expands
+# each variable declared with _LT_DECL (and _LT_TAGDECL) into:
+#
+#    <var>='`$ECHO "$<var>" | $SED "$delay_single_quote_subst"`'
+
+
+
+# _LT_LIBTOOL_TAGS
+# ----------------
+# Output comment and list of tags supported by the script
+
+
+
+# _LT_LIBTOOL_DECLARE(VARNAME, [TAG])
+# -----------------------------------
+# Extract the dictionary values for VARNAME (optionally with TAG) and
+# expand to a commented shell variable setting:
+#
+#    # Some comment about what VAR is for.
+#    visible_name=$lt_internal_name
+
+
+
+# _LT_LIBTOOL_CONFIG_VARS
+# -----------------------
+# Produce commented declarations of non-tagged libtool config variables
+# suitable for insertion in the LIBTOOL CONFIG section of the `libtool'
+# script.  Tagged libtool config variables (even for the LIBTOOL CONFIG
+# section) are produced by _LT_LIBTOOL_TAG_VARS.
+
+
+
+# _LT_LIBTOOL_TAG_VARS(TAG)
+# -------------------------
+
+
+
+# _LT_TAGVAR(VARNAME, [TAGNAME])
+# ------------------------------
+
+
+
+# _LT_CONFIG_COMMANDS
+# -------------------
+# Send accumulated output to $CONFIG_STATUS.  Thanks to the lists of
+# variables for single and double quote escaping we saved from calls
+# to _LT_DECL, we can put quote escaped variables declarations
+# into `config.status', and then the shell code to quote escape them in
+# for loops in `config.status'.  Finally, any additional code accumulated
+# from calls to _LT_CONFIG_LIBTOOL_INIT is expanded.
+#_LT_CONFIG_COMMANDS
+
+
+# Initialize.
+
+
+# _LT_GENERATED_FILE_INIT(FILE, [COMMENT])
+# ------------------------------------
+# Generate a child script FILE with all initialization necessary to
+# reuse the environment learned by the parent script, and make the
+# file executable.  If COMMENT is supplied, it is inserted after the
+# `#!' sequence but before initialization text begins.  After this
+# macro, additional text can be appended to FILE to form the body of
+# the child script.  The macro ends with non-zero status if the
+# file could not be fully written (such as if the disk is full).
+# _LT_GENERATED_FILE_INIT
+
+# LT_OUTPUT
+# ---------
+# This macro allows early generation of the libtool script (before
+# AC_OUTPUT is called), incase it is used in configure for compilation
+# tests.
+# LT_OUTPUT
+
+
+# _LT_CONFIG(TAG)
+# ---------------
+# If TAG is the built-in tag, create an initial libtool script with a
+# default configuration from the untagged config vars.  Otherwise add code
+# to config.status for appending the configuration named by TAG from the
+# matching tagged config vars.
+# _LT_CONFIG
+
+
+# LT_SUPPORTED_TAG(TAG)
+# ---------------------
+# Trace this macro to discover what tags are supported by the libtool
+# --tag option, using:
+#    autoconf --trace 'LT_SUPPORTED_TAG:$1'
+
+
+
+# C support is built-in for now
+
+
+
+
+# LT_LANG(LANG)
+# -------------
+# Enable libtool support for the given language if not already enabled.
+# LT_LANG
+
+
+# _LT_LANG(LANGNAME)
+# ------------------
+# _LT_LANG
+
+
+# _LT_LANG_DEFAULT_CONFIG
+# -----------------------
+# _LT_LANG_DEFAULT_CONFIG
+
+# Obsolete macros:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_TAG_COMPILER
+# ----------------
+# _LT_TAG_COMPILER
+
+
+# _LT_COMPILER_BOILERPLATE
+# ------------------------
+# Check for compiler boilerplate output or warnings with
+# the simple compiler test code.
+# _LT_COMPILER_BOILERPLATE
+
+
+# _LT_LINKER_BOILERPLATE
+# ----------------------
+# Check for linker boilerplate output or warnings with
+# the simple link test code.
+# _LT_LINKER_BOILERPLATE
+
+# _LT_REQUIRED_DARWIN_CHECKS
+# -------------------------
+
+
+
+# _LT_DARWIN_LINKER_FEATURES
+# --------------------------
+# Checks for linker and compiler features on darwin
+
+
+# _LT_SYS_MODULE_PATH_AIX
+# -----------------------
+# Links a minimal program and checks the executable
+# for the system default hardcoded library path. In most cases,
+# this is /usr/lib:/lib, but when the MPI compilers are used
+# the location of the communication and MPI libs are included too.
+# If we don't find anything, use the default library path according
+# to the aix ld manual.
+# _LT_SYS_MODULE_PATH_AIX
+
+
+# _LT_SHELL_INIT(ARG)
+# -------------------
+# _LT_SHELL_INIT
+
+
+
+# _LT_PROG_ECHO_BACKSLASH
+# -----------------------
+# Find how we can fake an echo command that does not interpret backslash.
+# In particular, with Autoconf 2.60 or later we add some code to the start
+# of the generated configure script which will find a shell with a builtin
+# printf (which we can use as an echo command).
+# _LT_PROG_ECHO_BACKSLASH
+
+
+# _LT_ENABLE_LOCK
+# ---------------
+# _LT_ENABLE_LOCK
+
+
+# _LT_CMD_OLD_ARCHIVE
+# -------------------
+# _LT_CMD_OLD_ARCHIVE
+
+
+# _LT_COMPILER_OPTION(MESSAGE, VARIABLE-NAME, FLAGS,
+#		[OUTPUT-FILE], [ACTION-SUCCESS], [ACTION-FAILURE])
+# ----------------------------------------------------------------
+# Check whether the given compiler option works
+# _LT_COMPILER_OPTION
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_LINKER_OPTION(MESSAGE, VARIABLE-NAME, FLAGS,
+#                  [ACTION-SUCCESS], [ACTION-FAILURE])
+# ----------------------------------------------------
+# Check whether the given linker option works
+# _LT_LINKER_OPTION
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# LT_CMD_MAX_LEN
+#---------------
+# LT_CMD_MAX_LEN
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_HEADER_DLFCN
+# ----------------
+# _LT_HEADER_DLFCN
+
+
+# _LT_TRY_DLOPEN_SELF (ACTION-IF-TRUE, ACTION-IF-TRUE-W-USCORE,
+#                      ACTION-IF-FALSE, ACTION-IF-CROSS-COMPILING)
+# ----------------------------------------------------------------
+# _LT_TRY_DLOPEN_SELF
+
+
+# LT_SYS_DLOPEN_SELF
+# ------------------
+# LT_SYS_DLOPEN_SELF
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_COMPILER_C_O([TAGNAME])
+# ---------------------------
+# Check to see if options -c and -o are simultaneously supported by compiler.
+# This macro does not hard code the compiler like AC_PROG_CC_C_O.
+# _LT_COMPILER_C_O
+
+
+# _LT_COMPILER_FILE_LOCKS([TAGNAME])
+# ----------------------------------
+# Check to see if we can do hard links to lock some files if needed
+# _LT_COMPILER_FILE_LOCKS
+
+
+# _LT_CHECK_OBJDIR
+# ----------------
+# _LT_CHECK_OBJDIR
+
+
+# _LT_LINKER_HARDCODE_LIBPATH([TAGNAME])
+# --------------------------------------
+# Check hardcoding attributes.
+# _LT_LINKER_HARDCODE_LIBPATH
+
+
+# _LT_CMD_STRIPLIB
+# ----------------
+# _LT_CMD_STRIPLIB
+
+
+# _LT_SYS_DYNAMIC_LINKER([TAG])
+# -----------------------------
+# PORTME Fill in your ld.so characteristics
+# _LT_SYS_DYNAMIC_LINKER
+
+
+# _LT_PATH_TOOL_PREFIX(TOOL)
+# --------------------------
+# find a file program which can recognize shared library
+# _LT_PATH_TOOL_PREFIX
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_PATH_MAGIC
+# --------------
+# find a file program which can recognize a shared library
+# _LT_PATH_MAGIC
+
+
+# LT_PATH_LD
+# ----------
+# find the pathname to the GNU or non-GNU linker
+# LT_PATH_LD
+
+# Old names:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_PATH_LD_GNU
+#- --------------
+# _LT_PATH_LD_GNU
+
+
+# _LT_CMD_RELOAD
+# --------------
+# find reload flag for linker
+#   -- PORTME Some linkers may need a different reload flag.
+# _LT_CMD_RELOAD
+
+
+# _LT_CHECK_MAGIC_METHOD
+# ----------------------
+# how to check for library dependencies
+#  -- PORTME fill in with the dynamic library characteristics
+# _LT_CHECK_MAGIC_METHOD
+
+
+# LT_PATH_NM
+# ----------
+# find the pathname to a BSD- or MS-compatible name lister
+# LT_PATH_NM
+
+# Old names:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# LT_LIB_M
+# --------
+# check for math library
+# LT_LIB_M
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_COMPILER_NO_RTTI([TAGNAME])
+# -------------------------------
+# _LT_COMPILER_NO_RTTI
+
+
+# _LT_CMD_GLOBAL_SYMBOLS
+# ----------------------
+ # _LT_CMD_GLOBAL_SYMBOLS
+
+
+# _LT_COMPILER_PIC([TAGNAME])
+# ---------------------------
+# _LT_COMPILER_PIC
+
+
+# _LT_LINKER_SHLIBS([TAGNAME])
+# ----------------------------
+# See if the linker supports building shared libraries.
+# _LT_LINKER_SHLIBS
+
+
+# _LT_LANG_C_CONFIG([TAG])
+# ------------------------
+# Ensure that the configuration variables for a C compiler are suitably
+# defined.  These variables are subsequently used by _LT_CONFIG to write
+# the compiler configuration to `libtool'.
+# _LT_LANG_C_CONFIG
+
+
+# _LT_LANG_CXX_CONFIG([TAG])
+# --------------------------
+# Ensure that the configuration variables for a C++ compiler are suitably
+# defined.  These variables are subsequently used by _LT_CONFIG to write
+# the compiler configuration to `libtool'.
+# _LT_LANG_CXX_CONFIG
+
+
+# _LT_SYS_HIDDEN_LIBDEPS([TAGNAME])
+# ---------------------------------
+# Figure out "hidden" library dependencies from verbose
+# compiler output when linking a shared library.
+# Parse the compiler output and extract the necessary
+# objects, libraries and library flags.
+# _LT_SYS_HIDDEN_LIBDEPS
+
+
+# _LT_LANG_F77_CONFIG([TAG])
+# --------------------------
+# Ensure that the configuration variables for a Fortran 77 compiler are
+# suitably defined.  These variables are subsequently used by _LT_CONFIG
+# to write the compiler configuration to `libtool'.
+# _LT_LANG_F77_CONFIG
+
+
+# _LT_LANG_FC_CONFIG([TAG])
+# -------------------------
+# Ensure that the configuration variables for a Fortran compiler are
+# suitably defined.  These variables are subsequently used by _LT_CONFIG
+# to write the compiler configuration to `libtool'.
+# _LT_LANG_FC_CONFIG
+
+
+# _LT_LANG_GCJ_CONFIG([TAG])
+# --------------------------
+# Ensure that the configuration variables for the GNU Java Compiler compiler
+# are suitably defined.  These variables are subsequently used by _LT_CONFIG
+# to write the compiler configuration to `libtool'.
+# _LT_LANG_GCJ_CONFIG
+
+
+# _LT_LANG_RC_CONFIG([TAG])
+# -------------------------
+# Ensure that the configuration variables for the Windows resource compiler
+# are suitably defined.  These variables are subsequently used by _LT_CONFIG
+# to write the compiler configuration to `libtool'.
+# _LT_LANG_RC_CONFIG
+
+
+# LT_PROG_GCJ
+# -----------
+
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# LT_PROG_RC
+# ----------
+
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_DECL_EGREP
+# --------------
+# If we don't have a new enough Autoconf to choose the best grep
+# available, choose the one first in the user's PATH.
+
+
+
+# _LT_DECL_OBJDUMP
+# --------------
+# If we don't have a new enough Autoconf to choose the best objdump
+# available, choose the one first in the user's PATH.
+
+
+
+# _LT_DECL_SED
+# ------------
+# Check for a fully-functional sed program, that truncates
+# as few characters as possible.  Prefer GNU sed if found.
+# _LT_DECL_SED
+
+#m4_ifndef
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _LT_CHECK_SHELL_FEATURES
+# ------------------------
+# Find out whether the shell is Bourne or XSI compatible,
+# or has some other useful features.
+# _LT_CHECK_SHELL_FEATURES
+
+
+# _LT_PROG_XSI_SHELLFNS
+# ---------------------
+# Bourne and XSI compatible variants of some useful shell functions.
+
+
+# Helper functions for option handling.                    -*- Autoconf -*-
+#
+#   Copyright (C) 2004, 2005, 2007, 2008, 2009 Free Software Foundation,
+#   Inc.
+#   Written by Gary V. Vaughan, 2004
+#
+# This file is free software; the Free Software Foundation gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+# serial 6 ltoptions.m4
+
+# This is to help aclocal find these macros, as it can't see m4_define.
+
+
+
+# _LT_MANGLE_OPTION(MACRO-NAME, OPTION-NAME)
+# ------------------------------------------
+
+
+
+# _LT_SET_OPTION(MACRO-NAME, OPTION-NAME)
+# ---------------------------------------
+# Set option OPTION-NAME for macro MACRO-NAME, and if there is a
+# matching handler defined, dispatch to it.  Other OPTION-NAMEs are
+# saved as a flag.
+
+
+
+# _LT_IF_OPTION(MACRO-NAME, OPTION-NAME, IF-SET, [IF-NOT-SET])
+# ------------------------------------------------------------
+# Execute IF-SET if OPTION is set, IF-NOT-SET otherwise.
+
+
+
+# _LT_UNLESS_OPTIONS(MACRO-NAME, OPTION-LIST, IF-NOT-SET)
+# -------------------------------------------------------
+# Execute IF-NOT-SET unless all options in OPTION-LIST for MACRO-NAME
+# are set.
+
+
+
+# _LT_SET_OPTIONS(MACRO-NAME, OPTION-LIST)
+# ----------------------------------------
+# OPTION-LIST is a space-separated list of Libtool options associated
+# with MACRO-NAME.  If any OPTION has a matching handler declared with
+# LT_OPTION_DEFINE, dispatch to that macro; otherwise complain about
+# the unknown option and exit.
+# _LT_SET_OPTIONS
+
+
+## --------------------------------- ##
+## Macros to handle LT_INIT options. ##
+## --------------------------------- ##
+
+# _LT_MANGLE_DEFUN(MACRO-NAME, OPTION-NAME)
+# -----------------------------------------
+
+
+
+# LT_OPTION_DEFINE(MACRO-NAME, OPTION-NAME, CODE)
+# -----------------------------------------------
+# LT_OPTION_DEFINE
+
+
+# dlopen
+# ------
+
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+
+# win32-dll
+# ---------
+# Declare package support for building win32 dll's.
+# win32-dll
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+
+# _LT_ENABLE_SHARED([DEFAULT])
+# ----------------------------
+# implement the --enable-shared flag, and supports the `shared' and
+# `disable-shared' LT_INIT options.
+# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# _LT_ENABLE_SHARED
+
+
+
+
+# Old names:
+
+
+
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+
+
+# _LT_ENABLE_STATIC([DEFAULT])
+# ----------------------------
+# implement the --enable-static flag, and support the `static' and
+# `disable-static' LT_INIT options.
+# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# _LT_ENABLE_STATIC
+
+
+
+
+# Old names:
+
+
+
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+
+
+# _LT_ENABLE_FAST_INSTALL([DEFAULT])
+# ----------------------------------
+# implement the --enable-fast-install flag, and support the `fast-install'
+# and `disable-fast-install' LT_INIT options.
+# DEFAULT is either `yes' or `no'.  If omitted, it defaults to `yes'.
+# _LT_ENABLE_FAST_INSTALL
+
+
+
+
+# Old names:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+
+# _LT_WITH_PIC([MODE])
+# --------------------
+# implement the --with-pic flag, and support the `pic-only' and `no-pic'
+# LT_INIT options.
+# MODE is either `yes' or `no'.  If omitted, it defaults to `both'.
+# _LT_WITH_PIC
+
+
+
+
+# Old name:
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+## ----------------- ##
+## LTDL_INIT Options ##
+## ----------------- ##
+
+
+
+
+
+
+
+
+
+
+# ltsugar.m4 -- libtool m4 base layer.                         -*-Autoconf-*-
+#
+# Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+# Written by Gary V. Vaughan, 2004
+#
+# This file is free software; the Free Software Foundation gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+# serial 6 ltsugar.m4
+
+# This is to help aclocal find these macros, as it can't see m4_define.
+
+
+
+# lt_join(SEP, ARG1, [ARG2...])
+# -----------------------------
+# Produce ARG1SEPARG2...SEPARGn, omitting [] arguments and their
+# associated separator.
+# Needed until we can rely on m4_join from Autoconf 2.62, since all earlier
+# versions in m4sugar had bugs.
+
+
+
+
+# lt_car(LIST)
+# lt_cdr(LIST)
+# ------------
+# Manipulate m4 lists.
+# These macros are necessary as long as will still need to support
+# Autoconf-2.59 which quotes differently.
+
+
+
+
+
+# lt_append(MACRO-NAME, STRING, [SEPARATOR])
+# ------------------------------------------
+# Redefine MACRO-NAME to hold its former content plus `SEPARATOR'`STRING'.
+# Note that neither SEPARATOR nor STRING are expanded; they are appended
+# to MACRO-NAME as is (leaving the expansion for when MACRO-NAME is invoked).
+# No SEPARATOR is output if MACRO-NAME was previously undefined (different
+# than defined and empty).
+#
+# This macro is needed until we can rely on Autoconf 2.62, since earlier
+# versions of m4sugar mistakenly expanded SEPARATOR but not STRING.
+
+
+
+
+# lt_combine(SEP, PREFIX-LIST, INFIX, SUFFIX1, [SUFFIX2...])
+# ----------------------------------------------------------
+# Produce a SEP delimited list of all paired combinations of elements of
+# PREFIX-LIST with SUFFIX1 through SUFFIXn.  Each element of the list
+# has the form PREFIXmINFIXSUFFIXn.
+# Needed until we can rely on m4_combine added in Autoconf 2.62.
+
+
+
+# lt_if_append_uniq(MACRO-NAME, VARNAME, [SEPARATOR], [UNIQ], [NOT-UNIQ])
+# -----------------------------------------------------------------------
+# Iff MACRO-NAME does not yet contain VARNAME, then append it (delimited
+# by SEPARATOR if supplied) and expand UNIQ, else NOT-UNIQ.
+
+
+
+# lt_dict_add(DICT, KEY, VALUE)
+# -----------------------------
+
+
+
+# lt_dict_add_subkey(DICT, KEY, SUBKEY, VALUE)
+# --------------------------------------------
+
+
+
+# lt_dict_fetch(DICT, KEY, [SUBKEY])
+# ----------------------------------
+
+
+
+# lt_if_dict_fetch(DICT, KEY, [SUBKEY], VALUE, IF-TRUE, [IF-FALSE])
+# -----------------------------------------------------------------
+
+
+
+# lt_dict_filter(DICT, [SUBKEY], VALUE, [SEPARATOR], KEY, [...])
+# --------------------------------------------------------------
+
+
+# ltversion.m4 -- version numbers			-*- Autoconf -*-
+#
+#   Copyright (C) 2004 Free Software Foundation, Inc.
+#   Written by Scott James Remnant, 2004
+#
+# This file is free software; the Free Software Foundation gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+# Generated from ltversion.in.
+
+# serial 3134 ltversion.m4
+# This file is part of GNU Libtool
+
+
+
+
+
+
+# lt~obsolete.m4 -- aclocal satisfying obsolete definitions.    -*-Autoconf-*-
+#
+#   Copyright (C) 2004, 2005, 2007, 2009 Free Software Foundation, Inc.
+#   Written by Scott James Remnant, 2004.
+#
+# This file is free software; the Free Software Foundation gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+# serial 4 lt~obsolete.m4
+
+# These exist entirely to fool aclocal when bootstrapping libtool.
+#
+# In the past libtool.m4 has provided macros via AC_DEFUN (or AU_DEFUN)
+# which have later been changed to m4_define as they aren't part of the
+# exported API, or moved to Autoconf or Automake where they belong.
+#
+# The trouble is, aclocal is a bit thick.  It'll see the old AC_DEFUN
+# in /usr/share/aclocal/libtool.m4 and remember it, then when it sees us
+# using a macro with the same name in our local m4/libtool.m4 it'll
+# pull the old libtool.m4 in (it doesn't see our shiny new m4_define
+# and doesn't know about Autoconf macros at all.)
+#
+# So we provide this file, which has a silly filename so it's always
+# included after everything else.  This provides aclocal with the
+# AC_DEFUNs it wants, but when m4 processes it, it doesn't do anything
+# because those macros already exist, or will be overwritten later.
+# We use AC_DEFUN over AU_DEFUN for compatibility with aclocal-1.6.
+#
+# Anytime we withdraw an AC_DEFUN or AU_DEFUN, remember to add it here.
+# Yes, that means every name once taken will need to remain here until
+# we give up compatibility with versions before 1.7, at which point
+# we need to keep only those names which we still refer to.
+
+# This is to help aclocal find these macros, as it can't see m4_define.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##                                                          -*- Autoconf -*-
+
+# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+# Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# serial 8
+
+# Based on depend.m4 from automake 1.9, modified for standalone use in
+# an environment where GNU make is required.
+
+# ZW_PROG_COMPILER_DEPENDENCIES
+# -----------------------------
+# Variant of _AM_DEPENDENCIES which just does the dependency probe and
+# sets fooDEPMODE accordingly.  Cache-variable compatible with
+# original; not side-effect compatible.  As the users of this macro
+# may require accurate dependencies for correct builds, it does *not*
+# honor --disable-dependency-checking, and failure to detect a usable
+# method is an error.  depcomp is assumed to be located in
+# $ac_aux_dir.
+#
+# FIXME: Should use the Autoconf 2.5x language-selection mechanism.
+
+
+
+# AM_SET_DEPDIR
+# -------------
+# Choose a directory name for dependency files.
+
+
+# ZW_CREATE_DEPDIR
+# ----------------
+# As AM_SET_DEPDIR, but also create the directory at config.status time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sim_inline="-DDEFAULT_INLINE=0"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# intl sister-directory configuration rules.
+#
+
+# The idea behind this macro is that there's no need to repeat all the
+# autoconf probes done by the intl directory - it's already done them
+# for us.  In fact, there's no need even to look at the cache for the
+# answers.  All we need to do is nab a few pieces of information.
+# The intl directory is set up to make this easy, by generating a
+# small file which can be sourced as a shell script; then we produce
+# the necessary substitutions and definitions for this directory.
+
+
+
+# Autoconf M4 include file defining utility macros for complex Canadian
+# cross builds.
+
+
+
+
+
+
+
+
+
+####
+# _NCN_TOOL_PREFIXES:  Some stuff that oughtta be done in AC_CANONICAL_SYSTEM
+# or AC_INIT.
+# These demand that AC_CANONICAL_SYSTEM be called beforehand.
+
+####
+# NCN_STRICT_CHECK_TOOLS(variable, progs-to-check-for,[value-if-not-found],[path])
+# Like plain AC_CHECK_TOOLS, but require prefix if build!=host.
+
+
+####
+# NCN_STRICT_CHECK_TARGET_TOOLS(variable, progs-to-check-for,[value-if-not-found],[path])
+# Like CVS Autoconf AC_CHECK_TARGET_TOOLS, but require prefix if build!=target.
+
+
+
+# Backported from Autoconf 2.5x; can go away when and if
+# we switch.  Put the OS path separator in $PATH_SEPARATOR.
+
+
+
+
+# ACX_HAVE_GCC_FOR_TARGET
+# Check if the variable GCC_FOR_TARGET really points to a GCC binary.
+
+
+# ACX_CHECK_INSTALLED_TARGET_TOOL(VAR, PROG)
+# Searching for installed target binutils.  We need to take extra care,
+# else we may find the wrong assembler, linker, etc., and lose.
+#
+# First try --with-build-time-tools, if specified.
+#
+# For build != host, we ask the installed GCC for the name of the tool it
+# uses, and accept it if it is an absolute path.  This is because the
+# only good choice for a compiler is the same GCC version that is being
+# installed (or we couldn't make target libraries), and we assume that
+# on the host system we'll have not only the same GCC version, but also
+# the same binutils version.
+#
+# For build == host, search the same directories that the installed
+# compiler will search.  We used to do this for the assembler, linker,
+# and nm only; for simplicity of configuration, however, we extend this
+# criterion to tools (such as ar and ranlib) that are never invoked by
+# the compiler, to avoid mismatches.
+#
+# Also note we have to check MD_EXEC_PREFIX before checking the user's path
+# if build == target.  This makes the most sense only when bootstrapping,
+# but we also do so when build != host.  In this case, we hope that the
+# build and host systems will have similar contents of MD_EXEC_PREFIX.
+#
+# If we do not find a suitable binary, then try the user's path.
+
+
+###
+# AC_PROG_CPP_WERROR
+# Used for autoconf 2.5x to force AC_PREPROC_IFELSE to reject code which
+# triggers warnings from the preprocessor.  Will be in autoconf 2.58.
+# For now, using this also overrides header checks to use only the
+# preprocessor (matches 2.13 behavior; matching 2.58's behavior is a
+# bit harder from here).
+# Eventually autoconf will default to checking headers with the compiler
+# instead, and we'll have to do this differently.
+
+# AC_PROG_CPP_WERROR
+
+# Test for GNAT.
+# We require the gnatbind & gnatmake programs, as well as a compiler driver
+# that understands Ada.  We use the user's CC setting, already found, and
+# possibly add $1 to the command-line parameters.
+#
+# Sets the shell variable have_gnat to yes or no as appropriate, and
+# substitutes GNATBIND and GNATMAKE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

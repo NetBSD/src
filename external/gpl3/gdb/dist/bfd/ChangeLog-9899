@@ -5591,6 +5591,12 @@ Wed Jan 14 16:03:11 1998  Richard Henderson  <rth@cygnus.com>
 
 For older changes see ChangeLog-9697
 
+Copyright (C) 1998,1999 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

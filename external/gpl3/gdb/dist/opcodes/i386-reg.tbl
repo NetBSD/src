@@ -211,8 +211,8 @@ rip, BaseIndex, RegRex64, RegRip, Dw2Inval, 16
 eip, BaseIndex, RegRex64, RegEip, 8, Dw2Inval
 // No type will make these registers rejected for all purposes except
 // for addressing.
+riz, BaseIndex, RegRex64, RegRiz, Dw2Inval, Dw2Inval
 eiz, BaseIndex, 0, RegEiz, Dw2Inval, Dw2Inval
-riz, BaseIndex, 0, RegRiz, Dw2Inval, Dw2Inval
 // fp regs.
 st(0), FloatReg|FloatAcc, 0, 0, 11, 33
 st(1), FloatReg, 0, 1, 12, 34

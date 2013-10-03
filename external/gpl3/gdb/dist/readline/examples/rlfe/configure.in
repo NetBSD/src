@@ -437,4 +437,6 @@ main()
 
 fi
 
+AC_CHECK_HEADERS(sys/stropts.h sys/wait.h)
+
 AC_OUTPUT(Makefile)
