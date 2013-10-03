@@ -1,7 +1,6 @@
 /* Native-dependent code for AMD64 BSD's.
 
-   Copyright (C) 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +29,7 @@
 
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
+#include "amd64bsd-nat.h"
 #include "inf-ptrace.h"
 
 
@@ -123,3 +123,75 @@ amd64bsd_target (void)
   t->to_store_registers = amd64bsd_store_inferior_registers;
   return t;
 }
+
+
+/* Support for debug registers.  */
+
+#ifdef HAVE_PT_GETDBREGS
+
+static unsigned long
+amd64bsd_dr_get (ptid_t ptid, int regnum)
+{
+  struct dbreg dbregs;
+
+  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+    perror_with_name (_("Couldn't read debug registers"));
+
+  return DBREG_DRX ((&dbregs), regnum);
+}
+
+static void
+amd64bsd_dr_set (int regnum, unsigned long value)
+{
+  struct dbreg dbregs;
+
+  if (ptrace (PT_GETDBREGS, PIDGET (inferior_ptid),
+              (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+    perror_with_name (_("Couldn't get debug registers"));
+
+  /* For some mysterious reason, some of the reserved bits in the
+     debug control register get set.  Mask these off, otherwise the
+     ptrace call below will fail.  */
+  DBREG_DRX ((&dbregs), 7) &= ~(0xffffffff0000fc00);
+
+  DBREG_DRX ((&dbregs), regnum) = value;
+
+  if (ptrace (PT_SETDBREGS, PIDGET (inferior_ptid),
+              (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+    perror_with_name (_("Couldn't write debug registers"));
+}
+
+void
+amd64bsd_dr_set_control (unsigned long control)
+{
+  amd64bsd_dr_set (7, control);
+}
+
+void
+amd64bsd_dr_set_addr (int regnum, CORE_ADDR addr)
+{
+  gdb_assert (regnum >= 0 && regnum <= 4);
+
+  amd64bsd_dr_set (regnum, addr);
+}
+
+CORE_ADDR
+amd64bsd_dr_get_addr (int regnum)
+{
+  return amd64bsd_dr_get (inferior_ptid, regnum);
+}
+
+unsigned long
+amd64bsd_dr_get_status (void)
+{
+  return amd64bsd_dr_get (inferior_ptid, 6);
+}
+
+unsigned long
+amd64bsd_dr_get_control (void)
+{
+  return amd64bsd_dr_get (inferior_ptid, 7);
+}
+
+#endif /* PT_GETDBREGS */

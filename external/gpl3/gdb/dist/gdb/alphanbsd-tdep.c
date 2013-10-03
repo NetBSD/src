@@ -1,7 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -269,8 +268,36 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
     }
   trad_frame_set_reg_addr (this_cache, ALPHA_PC_REGNUM, addr);
 
+#if 0
   /* Construct the frame ID using the function start.  */
   trad_frame_set_id (this_cache, frame_id_build (sp, func));
+#endif
+  if (target_read_memory (pc, (char *) ret, sizeof (ret)) != 0)
+    return -1;
+
+  if (memcmp (ret, sigtramp_retcode, RETCODE_SIZE) == 0)
+    return off;
+
+  return -1;
+}
+
+static int
+alphanbsd_pc_in_sigtramp (struct gdbarch *gdbarch,
+		 	  CORE_ADDR pc, const char *func_name)
+{
+  return (nbsd_pc_in_sigtramp (pc, func_name)
+	  || alphanbsd_sigtramp_offset (gdbarch, pc) >= 0);
+}
+
+static CORE_ADDR
+alphanbsd_sigcontext_addr (struct frame_info *frame)
+{
+  /* FIXME: This is not correct for all versions of NetBSD/alpha.
+     We will probably need to disassemble the trampoline to figure
+     out which trampoline frame type we have.  */
+  if (!get_next_frame (frame))
+    return 0;
+  return get_frame_base (get_next_frame (frame));
 }
 
 
