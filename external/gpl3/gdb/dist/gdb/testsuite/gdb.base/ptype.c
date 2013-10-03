@@ -290,10 +290,6 @@ int main ()
      sure it is linked in to this program.  */
   v_char_pointer = (char *) malloc (1);
 
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   /* Some linkers (e.g. on AIX) remove unreferenced variables,
      so make sure to reference them. */
   primary = blue;

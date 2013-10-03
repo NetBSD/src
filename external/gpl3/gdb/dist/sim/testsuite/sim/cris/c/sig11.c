@@ -3,7 +3,7 @@
 #cc: additional_flags=-pthread
 #xerror:
 #output: Unimplemented signal: 77\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 
 #include <stdlib.h>

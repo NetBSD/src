@@ -1,10 +1,10 @@
+#include "config.h"
 #include <signal.h>
 
 #include "sim-main.h"
 #include "sim-options.h"
 #include "sim-hw.h"
 
-#include "sysdep.h"
 #include "bfd.h"
 #include "sim-assert.h"
 
@@ -328,23 +328,6 @@ sim_create_inferior (SIM_DESC sd,
   return SIM_RC_OK;
 }
 
-void
-sim_do_command (SIM_DESC sd, char *cmd)
-{
-  char *mm_cmd = "memory-map";
-  char *int_cmd = "interrupt";
-
-  if (sim_args_command (sd, cmd) != SIM_RC_OK)
-    {
-      if (strncmp (cmd, mm_cmd, strlen (mm_cmd) == 0))
-	sim_io_eprintf (sd, "`memory-map' command replaced by `sim memory'\n");
-      else if (strncmp (cmd, int_cmd, strlen (int_cmd)) == 0)
-	sim_io_eprintf (sd, "`interrupt' command replaced by `sim watch'\n");
-      else
-	sim_io_eprintf (sd, "Unknown command `%s'\n", cmd);
-    }
-}
-
 /* FIXME These would more efficient to use than load_mem/store_mem,
    but need to be changed to use the memory map.  */
 
@@ -400,7 +383,7 @@ sim_fetch_register (SIM_DESC sd,
 		    int length)
 {
   put_word (memory, State.regs[rn]);
-  return -1;
+  return length;
 }
  
 int

@@ -1,7 +1,6 @@
 /* Target-dependent code for the NEC V850 for GDB, the GNU debugger.
 
-   Copyright (C) 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +35,7 @@
 
 enum
   {
+    /* General purpose registers.  */
     E_R0_REGNUM,
     E_R1_REGNUM,
     E_R2_REGNUM,
@@ -68,6 +68,8 @@ enum
     E_R29_REGNUM, E_FP_REGNUM = E_R29_REGNUM,
     E_R30_REGNUM, E_EP_REGNUM = E_R30_REGNUM,
     E_R31_REGNUM, E_LP_REGNUM = E_R31_REGNUM,
+
+    /* System registers - main banks.  */
     E_R32_REGNUM, E_SR0_REGNUM = E_R32_REGNUM,
     E_R33_REGNUM,
     E_R34_REGNUM,
@@ -100,8 +102,101 @@ enum
     E_R61_REGNUM,
     E_R62_REGNUM,
     E_R63_REGNUM,
+
+    /* PC.  */
     E_R64_REGNUM, E_PC_REGNUM = E_R64_REGNUM,
     E_R65_REGNUM,
+    E_NUM_OF_V850_REGS,
+    E_NUM_OF_V850E_REGS = E_NUM_OF_V850_REGS,
+
+    /* System registers - MPV (PROT00) bank.  */
+    E_R66_REGNUM = E_NUM_OF_V850_REGS,
+    E_R67_REGNUM,
+    E_R68_REGNUM,
+    E_R69_REGNUM,
+    E_R70_REGNUM,
+    E_R71_REGNUM,
+    E_R72_REGNUM,
+    E_R73_REGNUM,
+    E_R74_REGNUM,
+    E_R75_REGNUM,
+    E_R76_REGNUM,
+    E_R77_REGNUM,
+    E_R78_REGNUM,
+    E_R79_REGNUM,
+    E_R80_REGNUM,
+    E_R81_REGNUM,
+    E_R82_REGNUM,
+    E_R83_REGNUM,
+    E_R84_REGNUM,
+    E_R85_REGNUM,
+    E_R86_REGNUM,
+    E_R87_REGNUM,
+    E_R88_REGNUM,
+    E_R89_REGNUM,
+    E_R90_REGNUM,
+    E_R91_REGNUM,
+    E_R92_REGNUM,
+    E_R93_REGNUM,
+
+    /* System registers - MPU (PROT01) bank.  */
+    E_R94_REGNUM,
+    E_R95_REGNUM,
+    E_R96_REGNUM,
+    E_R97_REGNUM,
+    E_R98_REGNUM,
+    E_R99_REGNUM,
+    E_R100_REGNUM,
+    E_R101_REGNUM,
+    E_R102_REGNUM,
+    E_R103_REGNUM,
+    E_R104_REGNUM,
+    E_R105_REGNUM,
+    E_R106_REGNUM,
+    E_R107_REGNUM,
+    E_R108_REGNUM,
+    E_R109_REGNUM,
+    E_R110_REGNUM,
+    E_R111_REGNUM,
+    E_R112_REGNUM,
+    E_R113_REGNUM,
+    E_R114_REGNUM,
+    E_R115_REGNUM,
+    E_R116_REGNUM,
+    E_R117_REGNUM,
+    E_R118_REGNUM,
+    E_R119_REGNUM,
+    E_R120_REGNUM,
+    E_R121_REGNUM,
+
+    /* FPU system registers.  */
+    E_R122_REGNUM,
+    E_R123_REGNUM,
+    E_R124_REGNUM,
+    E_R125_REGNUM,
+    E_R126_REGNUM,
+    E_R127_REGNUM,
+    E_R128_REGNUM, E_FPSR_REGNUM = E_R128_REGNUM,
+    E_R129_REGNUM, E_FPEPC_REGNUM = E_R129_REGNUM,
+    E_R130_REGNUM, E_FPST_REGNUM = E_R130_REGNUM,
+    E_R131_REGNUM, E_FPCC_REGNUM = E_R131_REGNUM,
+    E_R132_REGNUM, E_FPCFG_REGNUM = E_R132_REGNUM,
+    E_R133_REGNUM,
+    E_R134_REGNUM,
+    E_R135_REGNUM,
+    E_R136_REGNUM,
+    E_R137_REGNUM,
+    E_R138_REGNUM,
+    E_R139_REGNUM,
+    E_R140_REGNUM,
+    E_R141_REGNUM,
+    E_R142_REGNUM,
+    E_R143_REGNUM,
+    E_R144_REGNUM,
+    E_R145_REGNUM,
+    E_R146_REGNUM,
+    E_R147_REGNUM,
+    E_R148_REGNUM,
     E_NUM_REGS
   };
 
@@ -152,7 +247,7 @@ v850_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  if (regnum < 0 || regnum >= E_NUM_REGS)
+  if (regnum < 0 || regnum > E_NUM_OF_V850_REGS)
     return NULL;
   return v850_reg_names[regnum];
 }
@@ -172,9 +267,53 @@ v850e_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  if (regnum < 0 || regnum >= E_NUM_REGS)
+  if (regnum < 0 || regnum > E_NUM_OF_V850E_REGS)
     return NULL;
   return v850e_reg_names[regnum];
+}
+
+static const char *
+v850e2_register_name (struct gdbarch *gdbarch, int regnum)
+{
+  static const char *v850e2_reg_names[] =
+  {
+    /* General purpose registers.  */
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+    "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+
+    /* System registers - main banks.  */
+    "eipc", "eipsw", "fepc", "fepsw", "ecr", "psw", "pid", "cfg",
+    "", "", "", "sccfg", "scbp", "eiic", "feic", "dbic",
+    "ctpc", "ctpsw", "dbpc", "dbpsw", "ctbp", "dir", "", "",
+    "", "", "", "", "eiwr", "fewr", "dbwr", "bsel",
+
+
+    /* PC.  */
+    "pc", "",
+
+    /* System registers - MPV (PROT00) bank.  */
+    "vsecr", "vstid", "vsadr", "", "vmecr", "vmtid", "vmadr", "",
+    "vpecr", "vptid", "vpadr", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "mca", "mcs", "mcc", "mcr",
+
+    /* System registers - MPU (PROT01) bank.  */
+    "mpm", "mpc", "tid", "", "", "", "ipa0l", "ipa0u",
+    "ipa1l", "ipa1u", "ipa2l", "ipa2u", "ipa3l", "ipa3u", "ipa4l", "ipa4u",
+    "dpa0l", "dpa0u", "dpa1l", "dpa1u", "dpa2l", "dpa2u", "dpa3l", "dpa3u",
+    "dpa4l", "dpa4u", "dpa5l", "dpa5u",
+
+    /* FPU system registers.  */
+    "", "", "", "", "", "", "fpsr", "fpepc",
+    "fpst", "fpcc", "fpcfg", "fpec", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "fpspc"
+  };
+  if (regnum < 0 || regnum >= E_NUM_REGS)
+    return NULL;
+  return v850e2_reg_names[regnum];
 }
 
 /* Returns the default type for register N.  */
@@ -401,7 +540,7 @@ v850_handle_pushm (int insn, int insn2, struct v850_frame_cache *pi,
   else
     reg_table = pushmh_reg_table;
 
-  /* Calculate the total size of the saved registers, and add it it to the
+  /* Calculate the total size of the saved registers, and add it to the
      immediate value used to adjust SP.  */
   for (i = 0; reg_table[i].mask != 0; i++)
     if (list12 & reg_table[i].mask)
@@ -462,7 +601,6 @@ v850_analyze_prologue (struct gdbarch *gdbarch,
   CORE_ADDR prologue_end, current_pc;
   struct pifsr pifsrs[E_NUM_REGS + 1];
   struct pifsr *pifsr, *pifsr_tmp;
-  int fp_used;
   int ep_used;
   int reg;
   CORE_ADDR save_pc, save_end;
@@ -802,7 +940,7 @@ v850_store_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-v850_return_value (struct gdbarch *gdbarch, struct type *func_type,
+v850_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -827,7 +965,6 @@ static struct v850_frame_cache *
 v850_alloc_frame_cache (struct frame_info *this_frame)
 {
   struct v850_frame_cache *cache;
-  int i;
 
   cache = FRAME_OBSTACK_ZALLOC (struct v850_frame_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
@@ -894,7 +1031,7 @@ v850_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   /* Adjust all the saved registers such that they contain addresses
      instead of offsets.  */
-  for (i = 0; i < E_NUM_REGS; i++)
+  for (i = 0; i < gdbarch_num_regs (gdbarch); i++)
     if (trad_frame_addr_p (cache->saved_regs, i))
       cache->saved_regs[i].addr += cache->base;
 
@@ -994,14 +1131,20 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     {
     case bfd_mach_v850:
       set_gdbarch_register_name (gdbarch, v850_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_OF_V850_REGS);
       break;
     case bfd_mach_v850e:
     case bfd_mach_v850e1:
       set_gdbarch_register_name (gdbarch, v850e_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_OF_V850E_REGS);
+      break;
+    case bfd_mach_v850e2:
+    case bfd_mach_v850e2v3:
+      set_gdbarch_register_name (gdbarch, v850e2_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_REGS);
       break;
     }
 
-  set_gdbarch_num_regs (gdbarch, E_NUM_REGS);
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
   set_gdbarch_sp_regnum (gdbarch, E_SP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, E_PC_REGNUM);

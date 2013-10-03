@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,8 @@
 
 # Test i386 displaced stepping.
 
-if $tracelevel {
-    strace $tracelevel
-}
 
-
-if {(![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"]) || ![is_ilp32_target] } then {
+if { ![is_x86_like_target] } then {
     verbose "Skipping x86 displaced stepping tests."
     return
 }

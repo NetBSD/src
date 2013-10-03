@@ -1,24 +1,23 @@
 /* histfile.c - functions to manipulate the history file. */
 
-/* Copyright (C) 1989-2003 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2010 Free Software Foundation, Inc.
 
-   This file contains the GNU History Library (the Library), a set of
+   This file contains the GNU History Library (History), a set of
    routines for managing the text of previously typed lines.
 
-   The Library is free software; you can redistribute it and/or modify
+   History is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-   The Library is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   History is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with History.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /* The goal is to make the implementation transparent, so that you
    don't have to know what data types are used, just what functions
@@ -53,7 +52,9 @@
 #  include <unistd.h>
 #endif
 
-#if defined (__EMX__) || defined (__CYGWIN__)
+#include <ctype.h>
+
+#if defined (__EMX__)
 #  undef HAVE_MMAP
 #endif
 
@@ -103,7 +104,7 @@ int history_write_timestamps = 0;
 
 /* Does S look like the beginning of a history timestamp entry?  Placeholder
    for more extensive tests. */
-#define HIST_TIMESTAMP_START(s)		(*(s) == history_comment_char)
+#define HIST_TIMESTAMP_START(s)		(*(s) == history_comment_char && isdigit ((s)[1]) )
 
 /* Return the string that should be used in the place of this
    filename.  This only matters when you don't specify the
@@ -125,8 +126,12 @@ history_filename (filename)
 
   if (home == 0)
     {
+#if 0
       home = ".";
       home_len = 1;
+#else
+      return (NULL);
+#endif
     }
   else
     home_len = strlen (home);
@@ -178,7 +183,7 @@ read_history_range (filename, from, to)
 
   buffer = last_ts = (char *)NULL;
   input = history_filename (filename);
-  file = open (input, O_RDONLY|O_BINARY, 0666);
+  file = input ? open (input, O_RDONLY|O_BINARY, 0666) : -1;
 
   if ((file < 0) || (fstat (file, &finfo) == -1))
     goto error_and_exit;
@@ -256,8 +261,9 @@ read_history_range (filename, from, to)
   for (line_end = line_start; line_end < bufend; line_end++)
     if (*line_end == '\n')
       {
-	if (line_end - 1 >= line_start && *(line_end - 1) == '\r')
-	  *(line_end - 1) = '\0';
+	/* Change to allow Windows-like \r\n end of line delimiter. */
+	if (line_end > line_start && line_end[-1] == '\r')
+	  line_end[-1] = '\0';
 	else
 	  *line_end = '\0';
 
@@ -312,7 +318,7 @@ history_truncate_file (fname, lines)
 
   buffer = (char *)NULL;
   filename = history_filename (fname);
-  file = open (filename, O_RDONLY|O_BINARY, 0666);
+  file = filename ? open (filename, O_RDONLY|O_BINARY, 0666) : -1;
   rv = 0;
 
   /* Don't try to truncate non-regular files. */
@@ -411,7 +417,7 @@ history_truncate_file (fname, lines)
 
   FREE (buffer);
 
-  free (filename);
+  xfree (filename);
   return rv;
 }
 
@@ -434,9 +440,10 @@ history_do_write (filename, nelements, overwrite)
   mode = overwrite ? O_WRONLY|O_CREAT|O_TRUNC|O_BINARY : O_WRONLY|O_APPEND|O_BINARY;
 #endif
   output = history_filename (filename);
+  file = output ? open (output, mode, 0600) : -1;
   rv = 0;
 
-  if ((file = open (output, mode, 0600)) == -1)
+  if (file == -1)
     {
       FREE (output);
       return (errno);
@@ -513,7 +520,7 @@ mmap_error:
 #else
     if (write (file, buffer, buffer_size) < 0)
       rv = errno;
-    free (buffer);
+    xfree (buffer);
 #endif
   }
 
