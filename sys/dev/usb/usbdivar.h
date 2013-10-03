@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.106 2013/10/03 07:35:37 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.107 2013/10/03 19:04:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*
- * These macros help while not all host controllers are ported to the MP code.
+ * These macros reflect the current locking scheme.  They might change.
  */
 
 #define usbd_lock_pipe(p)	mutex_enter((p)->device->bus->lock)
