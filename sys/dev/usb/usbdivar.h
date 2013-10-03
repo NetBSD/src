@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.105 2013/09/14 00:40:31 jakllsch Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.106 2013/10/03 07:35:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -327,21 +327,6 @@ void		usb_schedsoftintr(struct usbd_bus *);
 /*
  * These macros help while not all host controllers are ported to the MP code.
  */
-#define usbd_mutex_enter(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_enter(m); \
-	} else \
-		s = splusb(); \
-} while (0)
 
-#define usbd_mutex_exit(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_exit(m); \
-	} else \
-		splx(s); \
-} while (0)
-
-#define usbd_lock_pipe(p)	usbd_mutex_enter((p)->device->bus->lock)
-#define usbd_unlock_pipe(p)	usbd_mutex_exit((p)->device->bus->lock)
+#define usbd_lock_pipe(p)	mutex_enter((p)->device->bus->lock)
+#define usbd_unlock_pipe(p)	mutex_exit((p)->device->bus->lock)
