@@ -35,6 +35,7 @@ const bfd_arch_info_type bfd_ip2k_nonext_arch =
   FALSE,		        /* The default ?  */
   bfd_default_compatible,	/* Architecture comparison fn.  */
   bfd_default_scan,		/* String to architecture convert fn.  */
+  bfd_arch_default_fill,	/* Default fill.  */
   NULL				/* Next in list.  */
 };
 
@@ -51,5 +52,6 @@ const bfd_arch_info_type bfd_ip2k_arch =
   TRUE,				/* The default ?  */
   bfd_default_compatible,	/* Architecture comparison fn.  */
   bfd_default_scan,		/* String to architecture convert fn.  */
+  bfd_arch_default_fill,	/* Default fill.  */
   & bfd_ip2k_nonext_arch	/* Next in list.  */
 };

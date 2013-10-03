@@ -1,7 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,7 +38,9 @@
 
 #ifdef USE_WIN32API
 #include <winsock2.h>
+#ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
+#endif
 #define close(fd) closesocket (fd)
 #define ioctl ioctlsocket
 #else
@@ -71,7 +72,7 @@ static int tcp_auto_retry = 1;
 
 /* Timeout period for connections, in seconds.  */
 
-static int tcp_retry_limit = 15;
+static unsigned int tcp_retry_limit = 15;
 
 /* How many times per second to poll deprecated_ui_loop_hook.  */
 

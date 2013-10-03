@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,17 +18,13 @@
 # Test GDB bug report 11530.
 # This is a problem related unnamed unions.
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 set testfile "gdb11530"
 set binfile ${testfile}${EXEEXT}
 
 # Unnamed union is a GNU extension, thus we restrict the test
 # to gcc compiler.
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1;
 }
 

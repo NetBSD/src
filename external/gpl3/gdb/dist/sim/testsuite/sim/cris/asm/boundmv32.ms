@@ -1,6 +1,6 @@
 # mach: crisv32
 # xerror:
-# output: program stopped with signal 4.\n
+# output: program stopped with signal 4 (*).\n
  .include "testutils.inc"
 
 ; Check that bound with a memory operand is invalid.

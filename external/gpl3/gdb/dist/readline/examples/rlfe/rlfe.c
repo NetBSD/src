@@ -73,6 +73,11 @@
 #include <termios.h>
 
 #include "config.h"
+#include "extern.h"
+
+#if defined (HAVE_SYS_WAIT_H)
+#  include <sys/wait.h>
+#endif
 
 #ifdef READLINE_LIBRARY
 #  include "readline.h"
@@ -588,7 +593,7 @@ main(int argc, char** argv)
 	}
       if (FD_ISSET (in_from_tty_fd, &in_set))
 	{
-	  extern int readline_echoing_p;
+	  extern int _rl_echoing_p;
 	  struct termios term_master;
 	  int do_canon = 1;
 	  int do_icrnl = 1;
@@ -605,9 +610,9 @@ main(int argc, char** argv)
 	    {
 	      do_canon = (term_master.c_lflag & ICANON) != 0;
 	      do_icrnl = (term_master.c_lflag & ICRNL) != 0;
-	      readline_echoing_p = (term_master.c_lflag & ECHO) != 0;
+	      _rl_echoing_p = (term_master.c_lflag & ECHO) != 0;
 	      DPRINT1 ("echo,canon,crnl:%03d\n",
-		       100 * readline_echoing_p
+		       100 * _rl_echoing_p
 		       + 10 * do_canon
 		       + 1 * do_icrnl);
 	    }
@@ -757,7 +762,7 @@ static void set_edit_mode ()
 	  vi = 1;
 	  break;
 	}
-      shellopts = index (shellopts + 1, ':');
+      shellopts = strchr (shellopts + 1, ':');
     }
 
   if (!vi)
