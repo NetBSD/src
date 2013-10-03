@@ -643,12 +643,6 @@ sh_analyze_prologue (struct gdbarch *gdbarch,
 	}
       else if (IS_FPUSH (inst))
 	{
-	  if (!have_fpscr)
-	    {
-	      fpscr = get_frame_register_unsigned (fpscr_frame, FPSCR_REGNUM);
-	      have_fpscr = 1;
-	    }
-
 	  if (fpscr & FPSCR_SZ)
 	    {
 	      cache->sp_offset += 8;
