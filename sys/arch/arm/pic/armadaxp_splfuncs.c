@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_splfuncs.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $	*/
+/*	$NetBSD: armadaxp_splfuncs.c,v 1.3 2013/10/03 12:53:29 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_splfuncs.c,v 1.2 2013/05/29 23:50:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_splfuncs.c,v 1.3 2013/10/03 12:53:29 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_splfuncs.c,v 1.2 2013/05/29 23:50:35 rkujaw
 
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
-#include <evbarm/armadaxp/armadaxpreg.h>
+#include <arm/marvell/armadaxpreg.h>
 
 #include <evbarm/marvell/marvellreg.h>
 #include <dev/marvell/marvellreg.h>
