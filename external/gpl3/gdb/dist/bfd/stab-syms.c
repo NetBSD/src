@@ -1,5 +1,5 @@
 /* Table of stab names for the BFD library.
-   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 2000, 2005, 2007
+   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 2000, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -20,6 +20,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include "bfd.h"
 
 #define ARCH_SIZE 32		/* Value doesn't matter.  */

@@ -1,0 +1,87 @@
+# Copyright 2012-2013 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+standard_testfile basics.c
+set opts {debug}
+
+if [build_executable $testfile.exp $testfile $srcfile $opts] {
+    untested mi-logging.exp
+    return -1;
+}
+
+if {[mi_run_to_main] < 0} {
+    return -1
+}
+
+set milogfile "milog.txt"
+
+mi_gdb_test "-gdb-set logging file $milogfile" ".*"
+
+mi_gdb_test "-gdb-set logging overwrite on" ".*"
+
+mi_gdb_test "-gdb-set logging on" ".*" "logging on"
+
+mi_step "logged step"
+
+mi_next "logged next"
+
+mi_gdb_test "-gdb-set logging off" ".*" "logging off"
+
+set chan [open $milogfile]
+set logcontent [read $chan]
+close $chan
+
+set mi_log_prompt "\[(\]gdb\[)\] \[\r\n\]+"
+
+if [regexp "\\^done\[\r\n\]+$mi_log_prompt\\^running\[\r\n\]+\\*running,thread-id=\"all\"\[\r\n\]+$mi_log_prompt\\*stopped,reason=\"end-stepping-range\",.*\[\r\n\]+$mi_log_prompt\\^running\[\r\n\]+\\*running,thread-id=\"all\"\[\r\n\]+$mi_log_prompt\\*stopped,reason=\"end-stepping-range\",.*\[\r\n\]+$mi_log_prompt" $logcontent] {
+    pass "Log file contents"
+} else {
+    fail "Log file contents"
+}
+
+# Now try the redirect, which writes into the file only.
+
+mi_gdb_test "-gdb-set logging redirect on" ".*" "redirect logging on"
+
+# Since all output will be going into the file, just keep sending commands
+# and don't expect anything to appear until logging is turned off.
+
+send_gdb "1001-gdb-set logging on\n"
+send_gdb "1002-exec-step\n"
+send_gdb "1003-exec-next\n"
+
+mi_gdb_test "1004-gdb-set logging off" ".*" "redirect logging off"
+
+set chan [open $milogfile]
+set logcontent [read $chan]
+close $chan
+
+if [regexp "1001\\^done\[\r\n\]+$mi_log_prompt.*1002\\^running\[\r\n\]+\\*running,thread-id=\"all\"\[\r\n\]+$mi_log_prompt\\*stopped,reason=\"end-stepping-range\",.*\[\r\n\]+$mi_log_prompt.*1003\\^running\[\r\n\]+\\*running,thread-id=\"all\"\[\r\n\]+$mi_log_prompt\\*stopped,reason=\"end-stepping-range\",.*\[\r\n\]+$mi_log_prompt" $logcontent] {
+    pass "Redirect log file contents"
+} else {
+    fail "Redirect log file contents"
+}
+
+mi_gdb_exit
+
+remote_file host delete $milogfile

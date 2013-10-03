@@ -17,7 +17,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.
-   
+
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
 #include "sysdep.h"
@@ -384,7 +384,7 @@ pex64_dump_xdata (FILE *file, bfd *abfd, bfd_vma addr, bfd_vma pc_addr,
 			      : pex_regs[(unsigned int) ui.FrameRegister]);
 
       pex64_xdata_print_uwd_codes (file, &ui, pc_addr);
-      
+
       /* Now we need end of this xdata block.  */
       addr += ui.SizeOfBlock;
       if (addr < end_addr)

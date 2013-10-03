@@ -23,7 +23,7 @@
 	* elf32-frv.c (_frvfdpic_osec_to_segment): Use new function.
 	* elf32-hppa.c (hppa_record_segment_addr): Use new function.
 	* elfxx-ia64.c (elfNN_ia64_relocate_section): Use new function.
-	
+
 2007-12-28  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
 
 	PR binutils/5146
@@ -65,7 +65,7 @@
 
 	* elf32-xtensa.c (relax_section): Update DIFF relocations in the
 	same way as other relocations.
-	
+
 2007-12-18  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* section.c (BFD_FAKE_SECTION): Update.
@@ -91,7 +91,7 @@
 	when clearing the removed flag.
 	(_bfd_elf_eh_frame_section_offset): Remove offsets_adjusted handling.
 	(_bfd_elf_write_section_eh_frame): Likewise.  Apply output_offsets
-	where appropriate.  
+	where appropriate.
 
 2007-12-15  Richard Sandiford  <rsandifo@nildram.co.uk>
 
@@ -229,7 +229,7 @@
 	(elf_xtensa_relocate_section): Check for R_XTENSA_32_PCREL for dynamic
 	symbols.
 	(check_section_ebb_pcrels_fit): Ignore R_XTENSA_32_PCREL relocations.
-	
+
 2007-12-05  Alan Modra  <amodra@bigpond.net.au>
 
 	* elf32-spu.c (spu_elf_size_stubs): Do consider branches to
@@ -262,7 +262,7 @@
 	and Loongson-2F flags.
 	(mips_set_isa_flags): Likewise.
 	(mips_mach_extensions): Add Loongson-2E and Loongson-2F
-	entries. 
+	entries.
 
 2007-11-29  Nick Clifton  <nickc@redhat.com>
 
@@ -491,7 +491,7 @@
 	* elf-m10300.h: Handle R_MN10300_ALIGN relocs.
 	(mn10300_elf_relax_delete_bytes): Honour R_MN10300_ALIGN relocs.
 	Re-fix off by one error in comparisons.
-  
+
 2007-10-25  Pedro Alves  <pedro_alves@portugalmail.pt>
 
 	* bfd-in.h (STRING_COMMA_LEN): Don't handle NULL STR case.
@@ -538,7 +538,7 @@
 	(mn10300_elf_check_relocs): Do not create dynamic relocs for
 	symbol differences or relocations against absolute symbols.
 	(mn10300_elf_final_link_relocate): Likewise.
-	Handle R_MN10300_SYM_DIFF relocs. 
+	Handle R_MN10300_SYM_DIFF relocs.
 	(mn10300_elf_relocate_section): Fix for creating local copys of
 	dynamic relocs.
 	(mn10300_elf_relax_delete_bytes): Adjust symbols at the end of the
@@ -575,23 +575,23 @@
 
 	* elf32-xtensa.c (relax_section): Check for a reference to a discarded
 	DWARF section and anticipate its replacement with the kept section.
-	
+
 2007-10-16  Bob Wilson  <bob.wilson@acm.org>
 
 	* elf32-xtensa.c (elf_xtensa_discard_info_for_section): Remove
 	unnecessary size variables.  Set sec->rawsize.
 	(relax_section, relax_property_section): Likewise.
-	
+
 2007-10-16  Bob Wilson  <bob.wilson@acm.org>
 
 	* section.c (struct bfd_section): Clarify comment for rawsize field.
 	* bfd-in2.h: Regenerate.
-	
+
 2007-10-16  Bob Wilson  <bob.wilson@acm.org>
 
 	* elflink.c (_bfd_elf_check_kept_section): Use the section rawsize
 	values if they are set.
-	
+
 2007-10-16  Nick Clifton  <nickc@redhat.com>
 
 	PR 5146
@@ -613,7 +613,7 @@
 	the type of emitted common symbols to STT_COMMON.
 	* elfcode.h (elf_slurp_symbol_table): Accept STT_COMMON symbol
 	types.
-	
+
 2007-10-15  Alan Modra  <amodra@bigpond.net.au>
 
 	* coff-arm.c (arm_emit_base_file_entry): Check fwrite return value.
@@ -653,7 +653,7 @@
 	segment only when needed.
 
 2007-10-05  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* elf32-xtensa.c (relax_section): Call pin_internal_relocs when
 	changing a relocation's offset.  Adjust call to translate_reloc.  Do
 	not add a fix record for a DIFF reloc.  For other relocs, only add a
@@ -665,21 +665,21 @@
 	assertion.  Compute separate offset adjustments for the base symbol
 	and the addend, and set the new relocation's addend correctly.  Return
 	the new target section.
-	
+
 2007-10-05  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* elf32-xtensa.c (elf_xtensa_relocate_section): Remove updates of
 	r_type and howto after calling do_fix_for_relocateable_link and
 	do_fix_for_final_link.
-	
+
 2007-10-05  Bob Wilson  <bob.wilson@acm.org>
-	
+
 	* elf32-xtensa.c (removed_by_actions): New.
 	(offset_with_removed_text): Reimplement using removed_by_actions.
 	(offset_with_removed_text_before_fill): Delete.
 	(relax_property_section): Use removed_by_actions.  Rearrange logic.
 	(relax_section_symbols): Likewise.
-	
+
 2007-10-04  Bob Wilson  <bob.wilson@acm.org>
 
 	* elf32-xtensa.c (reloc_bfd_fix_struct): Delete target_abfd field.
@@ -860,7 +860,7 @@
 	* Makefile.in: Regenerate.
 	* arange-set.c: New file.
 	* arange-set.h: New file.
-	* dwarf2.c: Include arange-set.h.  
+	* dwarf2.c: Include arange-set.h.
 	(struct dwarf2_debug) Add new fields comp_unit_count and
 	comp_unit_arange_set.
 	(struct comp_unit) Replace field arange with a new field arange_set.
@@ -893,8 +893,8 @@
 
 2007-09-21  Olivier Hainque  <hainque@adacore.com>
 	    Tristan Gingold  <gingold@adacore.com>
-	
-	* syms.c (_bfd_stab_section_find_nearest_line): Look at the 
+
+	* syms.c (_bfd_stab_section_find_nearest_line): Look at the
         specific SOM sections for stabs if the regular ones are not found.
 	* som.h (struct somdata): Add a line_info field, to be used by
         som_find_nearest_line.
@@ -949,7 +949,7 @@
 	PT_GNU_RELRO segment for copying executable/shared library.
 	(rewrite_elf_program_header): Remove PT_GNU_RELRO segment.
 	(copy_elf_program_header): Set p_size and p_size_valid fields for
-	PT_GNU_RELRO segment. 
+	PT_GNU_RELRO segment.
 
 2007-09-17  Nick Clifton  <nickc@redhat.com>
 
@@ -1035,7 +1035,7 @@
 
 2007-09-04  Michael Snyder  <msnyder@access-company.com>
 
-	* elf32-bfin.c (howto_table): Cut and paste error?  
+	* elf32-bfin.c (howto_table): Cut and paste error?
 	Name field of reloc is wrong.
 
 2007-09-04  Alan Modra  <amodra@bigpond.net.au>
@@ -1319,7 +1319,7 @@
 	(elf32_arm_gc_sweep_hook): Call check_use_blx.  Update plt counts
 	for R_ARM_THM_JUMP24 and R_ARM_THM_JUMP19.
 	(elf32_arm_check_relocs): Update plt counts for R_ARM_THM_JUMP24
-	and R_ARM_THM_JUMP19.  
+	and R_ARM_THM_JUMP19.
 	(allocate_dynrelocs): Use plt_maybe_thumb_refcount.
 	(elf32_arm_finish_dynamic_symbol): Ditto.
 	(elf32_arm_output_plt_map): Ditto.
@@ -1412,7 +1412,7 @@
 
 	* coff-i386.c (coff_i386_rtype_to_howto): Guard against null.
 
-	* linker.c (bfd_section_already_linked_table_insert): Change 
+	* linker.c (bfd_section_already_linked_table_insert): Change
 	return type from void to boolean.  Return FALSE on failure.
 	(_bfd_generic_section_already_linked): Test return value of
 	bfd_section_already_linked_table_insert, call fatal on error.
@@ -1435,10 +1435,10 @@
 	* linker.c (already_linked_newfunc): Check for NULL return from
 	bfd_hash_allocate.
 
-	* coffgen.c (fixup_symbol_value): Guard against null; 
+	* coffgen.c (fixup_symbol_value): Guard against null;
 	bfd_is_com_section will dereference the section pointer.
 
-	* syms.c (bfd_decode_symclass): Guard against NULL, since 
+	* syms.c (bfd_decode_symclass): Guard against NULL, since
 	bfd_is_com_section dereferences the pointer.
 
 	* srec.c (srec_scan): Check for EOF (critical because return value
@@ -1452,7 +1452,7 @@
 
 	* tekhex.c (first_phase): Check return value for null.
 
-	* elf.c (_bfd_elf_get_synthetic_symtab): Remove meaningless 
+	* elf.c (_bfd_elf_get_synthetic_symtab): Remove meaningless
 	pointer increment.
 
 2007-07-26  Alan Modra  <amodra@bigpond.net.au>
@@ -3553,6 +3553,12 @@
 
 For older changes see ChangeLog-2006
 
+Copyright (C) 2007 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

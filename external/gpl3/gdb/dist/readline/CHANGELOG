@@ -918,3 +918,178 @@ configure.in
 	- changed release status to `release'
 
 [readline-5.1 frozen]
+
+				   12/9
+				   ----
+[readline-5.1 released]
+
+				   12/14
+				   -----
+examples/rlfe/Makefile.in
+	- add @LIBS@ to LIBS assignment to pick up extra libraries from
+	  configure
+
+				 1/3/2006
+				 --------
+support/shlib-install
+	- Install shared libraries with execute bit set on Linux
+
+				    6/9
+				    ---
+[readline-5.2-alpha frozen]
+
+				   6/26
+				   ----
+configure.in
+	- set CROSS_COMPILE to the empty string by default, so we don't inherit
+	  a random value from the environment
+
+				    7/8
+				    ---
+[readline-5.2-alpha released]
+
+
+[readline-5.2-beta released]
+
+				   9/12
+				   ----
+config.h.in
+        - add defines for wcscoll, iswctype, iswupper, iswlower, towupper,
+          towlower functions
+        - replace define for wctomb with one for wcrtomb
+        - add defines for wchar_t, wint_t, wctype_t types
+
+				   10/11
+				   -----
+[readline-5.2 released]
+
+				   11/9
+				   ----
+examples/rlfe/{configure.in,Makefile.in,config.h.in,rlfe.c,pty.c}
+	- portability fixes from Mike Frysinger <vapier@gentoo.org>
+
+				   11/21
+				   -----
+Makefile.in
+	- add `install-examples' and `uninstall-examples' targets
+
+examples/Makefile.in
+	- add correct variables to build examples on Windows
+	- add appropriate rules to install and uninstall example sources in
+	  $(datadir)/readline 
+
+				   11/27
+				   -----
+config.h.in
+	- move #undef of HAVE_STRCOLL out of config.h.in, since autoconf tries
+	  to substitute it based on configure tests
+
+				 4/27/2007
+				 ---------
+examples/autoconf
+	- new directory with example autoconf macros to detect readline and
+	  return information about the installed version
+
+				   6/13
+				   ----
+support/shlib-install
+	- changes to support AIX 5.x shared library installation
+
+				 3/20/2008
+				 ---------
+support/shlib-install
+	- add support for NetBSD and Interix shared library installation
+
+				   4/22
+				   ----
+support/wcwidth.c
+	- updated implementation from 2007-05
+
+				   7/18
+				   ----
+support/shlib-install
+	- support for mingw32, contributed by Carlo Bramix <carlo.bramix@libero.it>
+
+				    8/4
+				    ---
+configure.in
+	- changed to readline-6.0
+
+				   8/18
+				   ----
+support/config.{guess,sub}
+	- updated to newer versions from autoconf-2.62 distribution
+
+				 3/5/2009
+				 --------
+support/shlib-install
+	- take a new -V host_vendor argument
+	- add ${host_vendor} to string tested in case statement for symlink
+	  creation section
+	- add support for FreeBSD/gentoo, which uses Linux library naming
+	  scheme
+	- change FreeBSD symlink rules, since FreeBSD 7+ has only ELF shared
+	  libraries.  DragonflyBSD rules are the same.  Fix from Timothy
+	  Redaelli <drizzt@gentoo.org>
+
+shlib/Makefile.in
+	- add definition of host_vendor, substituted by configure
+	- add -V host_vendor argument to all invocations of shlib-install.
+	  Fix from Timothy Redaelli <drizzt@gentoo.org>
+
+				   3/10
+				   ----
+configure.in
+	- add call to AC_SYS_LARGEFILE for readdir and largefile support on
+	  Linux
+
+config.h.in
+	- add _FILE_OFFSET_BITS define
+
+				   4/19
+				   ----
+Makefile.in
+	- add targets for making and installing documentation required by GNU
+	  coding standards.  Fix from Joseph Myers <joseph@codesourcery.com>
+
+posixselect.h
+	- pick up from bash.  Inspired by Mike Frysinger <vapier@gentoo.org>
+
+				   10/28
+				   -----
+support/shlib-install
+	- decrease the default version of FreeBSD that installs shared libraries
+	  to 4.x.  Advice from Peter Jeremy <peterjeremy@acm.org>
+
+				   12/18
+				   -----
+[readline-6.1-rc1 released]
+
+				   12/23
+				   -----
+doc/Makefile.in
+	- make sure $(topdir) is not ".." before removing all of the formatted
+	  documentation in `make distclean'.  $(topdir) is set to `..' if
+	  readline is being built in the source directory.  Fixes problem
+	  noticed by THOUMIN Damien <thoumin@ipanematech.com>
+
+				   12/29
+				   -----
+[readline-6.1 frozen]
+
+				 2/5/2010
+				 --------
+examples/Makefile.in
+        - make sure to install example C files using $(srcdir)/$$f in case
+          we're building outside the source directory.  Bug report and fix
+          from Peter Breitenlohner <peb@mppmu.mpg.de>
+
+				   7/25
+				   ----
+xfree.c
+	- new file with xfree() implementation, moved from xmalloc.c
+
+				   12/28
+				   -----
+{examples,shlib}/Makefile.in
+	- Cygwin-based changes from Eric Blake <eblake@redhat.com>

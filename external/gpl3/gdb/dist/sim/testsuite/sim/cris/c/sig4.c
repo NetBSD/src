@@ -3,7 +3,7 @@
 #cc: additional_flags=-pthread
 #xerror:
 #output: Exiting pid 42 due to signal 6\n
-#output: program stopped with signal 6.\n
+#output: program stopped with signal 6 (*).\n
 */
 
 #include <stdlib.h>

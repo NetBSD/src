@@ -4,6 +4,8 @@
    characters, even if the OS supports them. */
 #undef NO_MULTIBYTE_SUPPORT
 
+#undef _FILE_OFFSET_BITS
+
 /* Define if on MINIX.  */
 #undef _MINIX
 
@@ -13,11 +15,15 @@
 #undef VOID_SIGHANDLER
 
 /* Characteristics of the compiler. */
-#undef const
+#undef sig_atomic_t
 
 #undef size_t
 
 #undef ssize_t
+
+#undef const
+
+#undef volatile
 
 #undef PROTOTYPES
 
@@ -40,6 +46,15 @@
 
 /* Define if you have the isascii function. */
 #undef HAVE_ISASCII
+
+/* Define if you have the iswctype function.  */
+#undef HAVE_ISWCTYPE
+
+/* Define if you have the iswlower function.  */
+#undef HAVE_ISWLOWER
+
+/* Define if you have the iswupper function.  */
+#undef HAVE_ISWUPPER
 
 /* Define if you have the isxdigit function. */
 #undef HAVE_ISXDIGIT
@@ -88,11 +103,23 @@
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR
 
+/* Define if you have the towlower function.  */
+#undef HAVE_TOWLOWER
+
+/* Define if you have the towupper function.  */
+#undef HAVE_TOWUPPER
+
 /* Define if you have the vsnprintf function.  */
 #undef HAVE_VSNPRINTF
 
-/* Define if you have the wctomb function.  */
-#undef HAVE_WCTOMB 
+/* Define if you have the wcrtomb function.  */
+#undef HAVE_WCRTOMB 
+
+/* Define if you have the wcscoll function.  */
+#undef HAVE_WCSCOLL
+
+/* Define if you have the wctype function.  */
+#undef HAVE_WCTYPE
 
 /* Define if you have the wcwidth function.  */
 #undef HAVE_WCWIDTH
@@ -174,10 +201,19 @@
 /* Define if you have the <wchar.h> header file.  */
 #undef HAVE_WCHAR_H
 
-/* Define if you have the <varargs.h> header file.  */
+/* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H
 
 #undef HAVE_MBSTATE_T
+
+/* Define if you have wchar_t in <wctype.h>. */
+#undef HAVE_WCHAR_T 
+
+/* Define if you have wctype_t in <wctype.h>. */
+#undef HAVE_WCTYPE_T
+
+/* Define if you have wint_t in <wctype.h>. */  
+#undef HAVE_WINT_T  
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
@@ -221,10 +257,6 @@
    non-canonical mode, at least through version 4.3 */
 #if !defined (HAVE_TERMIOS_H) || !defined (HAVE_TCGETATTR) || defined (ultrix)
 #  define TERMIOS_MISSING
-#endif
-
-#if defined (STRCOLL_BROKEN)
-#  undef HAVE_STRCOLL
 #endif
 
 #if defined (__STDC__) && defined (HAVE_STDARG_H)

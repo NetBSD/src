@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on x86-64's, for GDB.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,24 +23,6 @@
 #include "amd64-tdep.h"
 #include "dicos-tdep.h"
 
-static CORE_ADDR
-amd64_dicos_push_dummy_code (struct gdbarch *gdbarch,
-			     CORE_ADDR sp, CORE_ADDR funaddr,
-			     struct value **args, int nargs,
-			     struct type *value_type,
-			     CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
-			     struct regcache *regcache)
-{
-  int bplen;
-  CORE_ADDR bppc = sp;
-
-  gdbarch_breakpoint_from_pc (gdbarch, &bppc, &bplen);
-  *bp_addr = sp - bplen;
-  *real_pc = funaddr;
-
-  return *bp_addr;
-}
-
 static void
 amd64_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -49,8 +31,6 @@ amd64_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   amd64_init_abi (info, gdbarch);
 
   dicos_init_abi (gdbarch);
-
-  set_gdbarch_push_dummy_code (gdbarch, amd64_dicos_push_dummy_code);
 }
 
 static enum gdb_osabi

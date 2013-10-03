@@ -1,6 +1,6 @@
 # Intel(r) Wireless MMX(tm) technology simulator testsuite.
 
-if { [istarget xscale*-*-*] } {
+if { [istarget arm*-*-*] } {
     # load support procs (none yet)
     # load_lib cgen.exp
 

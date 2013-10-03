@@ -76,14 +76,10 @@
 #define MY_exec_header_not_counted 1
 
 reloc_howto_type *ns32kaout_bfd_reloc_type_lookup
-  PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
-
-static bfd_boolean MY(write_object_contents)
-  PARAMS ((bfd *abfd));
+  (bfd *abfd, bfd_reloc_code_real_type code);
 
 static bfd_boolean
-MY(write_object_contents) (abfd)
-     bfd *abfd;
+MY(write_object_contents) (bfd *abfd)
 {
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);

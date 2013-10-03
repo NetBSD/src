@@ -1,7 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -131,19 +130,6 @@ tui_first_reg_element_no_inline (int line_no)
     return (-1);
 }
 
-
-/* Answer the index of the last element in line_no.  If line_no is
-   past the register area (-1) is returned.  */
-int
-tui_last_reg_element_no_in_line (int line_no)
-{
-  if ((line_no * TUI_DATA_WIN->detail.data_display_info.regs_column_count) <=
-      TUI_DATA_WIN->detail.data_display_info.regs_content_count)
-    return ((line_no + 1) *
-	    TUI_DATA_WIN->detail.data_display_info.regs_column_count) - 1;
-  else
-    return (-1);
-}
 
 /* Show the registers of the given group in the data window
    and refresh the window.  */
@@ -745,6 +731,13 @@ tui_get_register (struct frame_info *frame,
 	{
 	  struct gdbarch *gdbarch = get_frame_arch (frame);
 	  int size = register_size (gdbarch, regnum);
+
+	  /* We only know whether a value chunk is available if we've
+	     tried to read it.  */
+	  if (value_lazy (data->value))
+	    value_fetch_lazy (data->value);
+	  if (value_lazy (old_val))
+	    value_fetch_lazy (old_val);
 
 	  if (value_optimized_out (data->value) != value_optimized_out (old_val)
 	      || !value_available_contents_eq (data->value, 0,

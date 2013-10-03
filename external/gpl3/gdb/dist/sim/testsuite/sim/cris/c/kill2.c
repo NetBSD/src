@@ -1,6 +1,6 @@
 /* Basic kill functionality test; suicide.
 #xerror:
-#output: program stopped with signal 6.\n
+#output: program stopped with signal 6 (*).\n
 */
 
 #include <stdio.h>

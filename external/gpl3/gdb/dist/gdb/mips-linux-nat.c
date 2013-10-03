@@ -1,7 +1,6 @@
 /* Native-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +36,9 @@
 #include <sys/ptrace.h>
 
 #include "features/mips-linux.c"
+#include "features/mips-dsp-linux.c"
 #include "features/mips64-linux.c"
+#include "features/mips64-dsp-linux.c"
 
 #ifndef PTRACE_GET_THREAD_AREA
 #define PTRACE_GET_THREAD_AREA 25
@@ -95,6 +96,12 @@ mips_linux_register_addr (struct gdbarch *gdbarch, int regno, int store)
     regaddr = FPC_CSR;
   else if (regno == mips_regnum (gdbarch)->fp_implementation_revision)
     regaddr = store? (CORE_ADDR) -1 : FPC_EIR;
+  else if (mips_regnum (gdbarch)->dspacc != -1
+	   && regno >= mips_regnum (gdbarch)->dspacc
+	   && regno < mips_regnum (gdbarch)->dspacc + 6)
+    regaddr = DSP_BASE + (regno - mips_regnum (gdbarch)->dspacc);
+  else if (regno == mips_regnum (gdbarch)->dspctl)
+    regaddr = DSP_CONTROL;
   else if (mips_linux_restart_reg_p (gdbarch) && regno == MIPS_RESTART_REGNUM)
     regaddr = 0;
   else
@@ -130,6 +137,12 @@ mips64_linux_register_addr (struct gdbarch *gdbarch, int regno, int store)
     regaddr = MIPS64_FPC_CSR;
   else if (regno == mips_regnum (gdbarch)->fp_implementation_revision)
     regaddr = store? (CORE_ADDR) -1 : MIPS64_FPC_EIR;
+  else if (mips_regnum (gdbarch)->dspacc != -1
+	   && regno >= mips_regnum (gdbarch)->dspacc
+	   && regno < mips_regnum (gdbarch)->dspacc + 6)
+    regaddr = DSP_BASE + (regno - mips_regnum (gdbarch)->dspacc);
+  else if (regno == mips_regnum (gdbarch)->dspctl)
+    regaddr = DSP_CONTROL;
   else if (mips_linux_restart_reg_p (gdbarch) && regno == MIPS_RESTART_REGNUM)
     regaddr = 0;
   else
@@ -202,10 +215,13 @@ fill_fpregset (const struct regcache *regcache,
    using PTRACE_GETREGS et al.  */
 
 static void
-mips64_linux_regsets_fetch_registers (struct regcache *regcache, int regno)
+mips64_linux_regsets_fetch_registers (struct target_ops *ops,
+				      struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int is_fp;
+  int is_fp, is_dsp;
+  int have_dsp;
+  int regi;
   int tid;
 
   if (regno >= mips_regnum (gdbarch)->fp0
@@ -218,11 +234,23 @@ mips64_linux_regsets_fetch_registers (struct regcache *regcache, int regno)
   else
     is_fp = 0;
 
+  /* DSP registers are optional and not a part of any set.  */
+  have_dsp = mips_regnum (gdbarch)->dspctl != -1;
+  if (!have_dsp)
+    is_dsp = 0;
+  else if (regno >= mips_regnum (gdbarch)->dspacc
+      && regno < mips_regnum (gdbarch)->dspacc + 6)
+    is_dsp = 1;
+  else if (regno == mips_regnum (gdbarch)->dspctl)
+    is_dsp = 1;
+  else
+    is_dsp = 0;
+
   tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
     tid = ptid_get_pid (inferior_ptid);
 
-  if (regno == -1 || !is_fp)
+  if (regno == -1 || (!is_fp && !is_dsp))
     {
       mips64_elf_gregset_t regs;
 
@@ -258,17 +286,30 @@ mips64_linux_regsets_fetch_registers (struct regcache *regcache, int regno)
       mips64_supply_fpregset (regcache,
 			      (const mips64_elf_fpregset_t *) &fp_regs);
     }
+
+  if (is_dsp)
+    super_fetch_registers (ops, regcache, regno);
+  else if (regno == -1 && have_dsp)
+    {
+      for (regi = mips_regnum (gdbarch)->dspacc;
+	   regi < mips_regnum (gdbarch)->dspacc + 6;
+	   regi++)
+	super_fetch_registers (ops, regcache, regi);
+      super_fetch_registers (ops, regcache, mips_regnum (gdbarch)->dspctl);
+    }
 }
 
 /* Store REGNO (or all registers if REGNO == -1) to the target
    using PTRACE_SETREGS et al.  */
 
 static void
-mips64_linux_regsets_store_registers (const struct regcache *regcache,
-				      int regno)
+mips64_linux_regsets_store_registers (struct target_ops *ops,
+				      struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int is_fp;
+  int is_fp, is_dsp;
+  int have_dsp;
+  int regi;
   int tid;
 
   if (regno >= mips_regnum (gdbarch)->fp0
@@ -281,11 +322,23 @@ mips64_linux_regsets_store_registers (const struct regcache *regcache,
   else
     is_fp = 0;
 
+  /* DSP registers are optional and not a part of any set.  */
+  have_dsp = mips_regnum (gdbarch)->dspctl != -1;
+  if (!have_dsp)
+    is_dsp = 0;
+  else if (regno >= mips_regnum (gdbarch)->dspacc
+      && regno < mips_regnum (gdbarch)->dspacc + 6)
+    is_dsp = 1;
+  else if (regno == mips_regnum (gdbarch)->dspctl)
+    is_dsp = 1;
+  else
+    is_dsp = 0;
+
   tid = ptid_get_lwp (inferior_ptid);
   if (tid == 0)
     tid = ptid_get_pid (inferior_ptid);
 
-  if (regno == -1 || !is_fp)
+  if (regno == -1 || (!is_fp && !is_dsp))
     {
       mips64_elf_gregset_t regs;
 
@@ -312,6 +365,17 @@ mips64_linux_regsets_store_registers (const struct regcache *regcache,
 		  (PTRACE_TYPE_ARG3) &fp_regs) == -1)
 	perror_with_name (_("Couldn't set FP registers"));
     }
+
+  if (is_dsp)
+    super_store_registers (ops, regcache, regno);
+  else if (regno == -1 && have_dsp)
+    {
+      for (regi = mips_regnum (gdbarch)->dspacc;
+	   regi < mips_regnum (gdbarch)->dspacc + 6;
+	   regi++)
+	super_store_registers (ops, regcache, regi);
+      super_store_registers (ops, regcache, mips_regnum (gdbarch)->dspctl);
+    }
 }
 
 /* Fetch REGNO (or all registers if REGNO == -1) from the target
@@ -323,7 +387,7 @@ mips64_linux_fetch_registers (struct target_ops *ops,
 {
   /* Unless we already know that PTRACE_GETREGS does not work, try it.  */
   if (have_ptrace_regsets)
-    mips64_linux_regsets_fetch_registers (regcache, regnum);
+    mips64_linux_regsets_fetch_registers (ops, regcache, regnum);
 
   /* If we know, or just found out, that PTRACE_GETREGS does not work, fall
      back to PTRACE_PEEKUSER.  */
@@ -340,7 +404,7 @@ mips64_linux_store_registers (struct target_ops *ops,
 {
   /* Unless we already know that PTRACE_GETREGS does not work, try it.  */
   if (have_ptrace_regsets)
-    mips64_linux_regsets_store_registers (regcache, regnum);
+    mips64_linux_regsets_store_registers (ops, regcache, regnum);
 
   /* If we know, or just found out, that PTRACE_GETREGS does not work, fall
      back to PTRACE_PEEKUSER.  */
@@ -363,12 +427,37 @@ mips_linux_register_u_offset (struct gdbarch *gdbarch, int regno, int store_p)
 static const struct target_desc *
 mips_linux_read_description (struct target_ops *ops)
 {
+  static int have_dsp = -1;
+
+  if (have_dsp < 0)
+    {
+      int tid;
+
+      tid = ptid_get_lwp (inferior_ptid);
+      if (tid == 0)
+	tid = ptid_get_pid (inferior_ptid);
+
+      ptrace (PTRACE_PEEKUSER, tid, DSP_CONTROL, 0);
+      switch (errno)
+	{
+	case 0:
+	  have_dsp = 1;
+	  break;
+	case EIO:
+	  have_dsp = 0;
+	  break;
+	default:
+	  perror_with_name (_("Couldn't check DSP support"));
+	  break;
+	}
+    }
+
   /* Report that target registers are a size we know for sure
      that we can get from ptrace.  */
   if (_MIPS_SIM == _ABIO32)
-    return tdesc_mips_linux;
+    return have_dsp ? tdesc_mips_dsp_linux : tdesc_mips_linux;
   else
-    return tdesc_mips64_linux;
+    return have_dsp ? tdesc_mips64_dsp_linux : tdesc_mips64_linux;
 }
 
 #ifndef PTRACE_GET_WATCH_REGS
@@ -599,7 +688,7 @@ mips_show_dr (const char *func, CORE_ADDR addr,
   puts_unfiltered (func);
   if (addr || len)
     printf_unfiltered (" (addr=%s, len=%d, type=%s)",
-		       paddress (target_gdbarch, addr), len,
+		       paddress (target_gdbarch (), addr), len,
 		       type == hw_write ? "data-write"
 		       : (type == hw_read ? "data-read"
 			  : (type == hw_access ? "data-read/write"
@@ -609,9 +698,9 @@ mips_show_dr (const char *func, CORE_ADDR addr,
 
   for (i = 0; i < MAX_DEBUG_REGISTER; i++)
     printf_unfiltered ("\tDR%d: lo=%s, hi=%s\n", i,
-		       paddress (target_gdbarch,
+		       paddress (target_gdbarch (),
 				 get_watchlo (&watch_mirror, i)),
-		       paddress (target_gdbarch,
+		       paddress (target_gdbarch (),
 				 get_watchhi (&watch_mirror, i)));
 }
 
@@ -871,12 +960,11 @@ static int
 write_watchpoint_regs (void)
 {
   struct lwp_info *lp;
-  ptid_t ptid;
   int tid;
 
-  ALL_LWPS (lp, ptid)
+  ALL_LWPS (lp)
     {
-      tid = ptid_get_lwp (ptid);
+      tid = ptid_get_lwp (lp->ptid);
       if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror) == -1)
 	perror_with_name (_("Couldn't write debug register"));
     }
@@ -887,14 +975,14 @@ write_watchpoint_regs (void)
  register values for the new thread.  */
 
 static void
-mips_linux_new_thread (ptid_t ptid)
+mips_linux_new_thread (struct lwp_info *lp)
 {
   int tid;
 
   if (!mips_linux_read_watch_registers (0))
     return;
 
-  tid = ptid_get_lwp (ptid);
+  tid = ptid_get_lwp (lp->ptid);
   if (ptrace (PTRACE_SET_WATCH_REGS, tid, &watch_mirror) == -1)
     perror_with_name (_("Couldn't write debug register"));
 }
@@ -1090,5 +1178,7 @@ triggers a breakpoint or watchpoint."),
 
   /* Initialize the standard target descriptions.  */
   initialize_tdesc_mips_linux ();
+  initialize_tdesc_mips_dsp_linux ();
   initialize_tdesc_mips64_linux ();
+  initialize_tdesc_mips64_dsp_linux ();
 }

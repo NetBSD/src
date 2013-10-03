@@ -1,4 +1,4 @@
-# Copyright 1998, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1998-2013 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,18 +15,10 @@
 
 load_lib "trace-support.exp"
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
+standard_testfile
 
-set testfile "circ"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/$testfile
-
-if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	executable {debug nowarnings}] != "" } {
-    untested circ.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug nowarnings}]} {
     return -1
 }
 
@@ -92,26 +84,45 @@ proc setup_tracepoints { } {
 
 # return 0 for success, 1 for failure
 proc trace_buffer_normal { } {
-    if [gdb_test "maint packet QTBuffer:size:ffffffff" \
-	    "received: .OK." ""] then { 
-	pass "This test cannot be run on this target"
+    global gdb_prompt
+
+    set ok 0
+    set test "maint packet QTBuffer:size:ffffffff"
+    gdb_test_multiple $test $test {
+	-re "received: .OK.\r\n$gdb_prompt $" {
+	    set ok 1
+	    pass $test
+	}
+	-re "\r\n$gdb_prompt $" {
+	}
+    }
+    if { !$ok } {
+	unsupported $test
 	return 1;
     }
-    if [gdb_test "maint packet QTBuffer:circular:0" \
-	    "received: .OK." ""] then { 
-	pass "This test cannot be run on this target"
+
+    set ok 0
+    set test "maint packet QTBuffer:circular:0"
+    gdb_test_multiple $test $test {
+	-re "received: .OK.\r\n$gdb_prompt $" {
+	    set ok 1
+	    pass $test
+	}
+	-re "\r\n$gdb_prompt $" {
+	}
+    }
+    if { !$ok } {
+	unsupported $test
 	return 1;
     }
+
     return 0;
 }
 
 # return 0 for success, 1 for failure
 proc gdb_trace_circular_tests { } {
-
-    # We generously give ourselves one "pass" if we successfully 
-    # detect that this test cannot be run on this target!
     if { ![gdb_target_supports_trace] } then { 
-	pass "Current target does not support trace"
+	unsupported "Current target does not support trace"
 	return 1;
     }
 
@@ -183,17 +194,6 @@ proc gdb_trace_circular_tests { } {
 	    "quit trace debugging, pass 3"] then { return 1; }
 
     return 0;
-}
-
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
- 
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
 }
 
 gdb_test_no_output "set circular-trace-buffer on" \
