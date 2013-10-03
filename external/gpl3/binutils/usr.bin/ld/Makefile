@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/10/01 16:07:35 skrll Exp $
+#	$NetBSD: Makefile,v 1.21 2013/10/03 23:42:38 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -83,8 +83,6 @@ EMUL_LIB_PATH.${f}=/usr/lib
 . endif
 
 #GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @ta rget_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
-
-G_enable_initfini_array?=no
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
