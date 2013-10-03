@@ -1,5 +1,5 @@
 /* Instruction printing code for the OpenRISC 1000
-   Copyright (C) 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002, 2005, 2007, 2012 Free Software Foundation, Inc.
    Contributed by Damjan Lampret <lampret@opencores.org>.
    Modified from a29k port.
 
@@ -24,11 +24,10 @@
 #define DEBUG 0
 #endif
 
+#include "sysdep.h"
 #include "dis-asm.h"
 #include "opcode/or32.h"
 #include "safe-ctype.h"
-#include <string.h>
-#include <stdlib.h>
 
 #define EXTEND29(x) ((x) & (unsigned long) 0x10000000 ? ((x) | (unsigned long) 0xf0000000) : ((x)))
 

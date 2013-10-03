@@ -1,7 +1,8 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007
+   Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2012
    Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
+   XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
    This file is part of the GNU opcodes library.
 
@@ -20,23 +21,26 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 
-#include "ansidecl.h"
 #include "opcode/m68hc11.h"
 #include "dis-asm.h"
 
 #define PC_REGNUM 3
 
-static const char *const reg_name[] = {
+static const char *const reg_name[] =
+{
   "X", "Y", "SP", "PC"
 };
 
-static const char *const reg_src_table[] = {
+static const char *const reg_src_table[] =
+{
   "A", "B", "CCR", "TMP3", "D", "X", "Y", "SP"
 };
 
-static const char *const reg_dst_table[] = {
+static const char *const reg_dst_table[] =
+{
   "A", "B", "CCR", "TMP2", "D", "X", "Y", "SP"
 };
 
@@ -45,7 +49,7 @@ static const char *const reg_dst_table[] = {
 /* Prototypes for local functions.  */
 static int read_memory (bfd_vma, bfd_byte *, int, struct disassemble_info *);
 static int print_indexed_operand (bfd_vma, struct disassemble_info *,
-                                  int*, int, int, bfd_vma);
+                                  int*, int, int, bfd_vma, int);
 static int print_insn (bfd_vma, struct disassemble_info *, int);
 
 static int
@@ -71,7 +75,7 @@ read_memory (bfd_vma memaddr, bfd_byte* buffer, int size,
 static int
 print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
                        int* indirect, int mov_insn, int pc_offset,
-                       bfd_vma endaddr)
+                       bfd_vma endaddr, int arch)
 {
   bfd_byte buffer[4];
   int reg;
@@ -98,12 +102,14 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
       /* 68HC12 requires an adjustment for movb/movw pc relative modes.  */
       if (reg == PC_REGNUM && info->mach == bfd_mach_m6812 && mov_insn)
         sval += pc_offset;
-      (*info->fprintf_func) (info->stream, "%d,%s",
-			     (int) sval, reg_name[reg]);
+      (*info->fprintf_func) (info->stream, "0x%x,%s",
+			     (unsigned short) sval, reg_name[reg]);
 
       if (reg == PC_REGNUM)
         {
           (* info->fprintf_func) (info->stream, " {");
+	      if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	        (*info->fprintf_func) (info->stream, "0x");
           (* info->print_address_func) (endaddr + sval, info);
           (* info->fprintf_func) (info->stream, "}");
         }
@@ -128,7 +134,7 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
 	  mode = "+";
 	}
       (*info->fprintf_func) (info->stream, "%d,%s%s%s",
-			     (int) sval,
+			     (unsigned short) sval,
 			     (buffer[0] & 0x10 ? "" : mode),
 			     reg_name[reg], (buffer[0] & 0x10 ? mode : ""));
     }
@@ -136,12 +142,12 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
   /* [n,r] 16-bits offset indexed indirect.  */
   else if ((buffer[0] & 0x07) == 3)
     {
-      if (mov_insn)
-	{
-	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
-				 buffer[0] & 0x0ff);
-	  return 0;
-	}
+      if ((mov_insn) && (!(arch & cpu9s12x)))
+      	{
+      	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
+    				 buffer[0] & 0x0ff);
+      	  return 0;
+      	}
       reg = (buffer[0] >> 3) & 0x03;
       status = read_memory (memaddr + pos, &buffer[0], 2, info);
       if (status != 0)
@@ -151,7 +157,7 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
 
       pos += 2;
       sval = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
-      (*info->fprintf_func) (info->stream, "[%u,%s]",
+      (*info->fprintf_func) (info->stream, "[0x%x,%s]",
 			     sval & 0x0ffff, reg_name[reg]);
       if (indirect)
         *indirect = 1;
@@ -160,12 +166,13 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
   /* n,r with 9 and 16 bit signed constant.  */
   else if ((buffer[0] & 0x4) == 0)
     {
-      if (mov_insn)
-	{
-	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
-				 buffer[0] & 0x0ff);
-	  return 0;
-	}
+      if ((mov_insn) && (!(arch & cpu9s12x)))
+      	{
+      	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
+    				 buffer[0] & 0x0ff);
+      	  return 0;
+      	}
+
       reg = (buffer[0] >> 3) & 0x03;
       status = read_memory (memaddr + pos,
 			    &buffer[1], (buffer[0] & 0x2 ? 2 : 1), info);
@@ -188,11 +195,11 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
 	  pos++;
           endaddr++;
 	}
-      (*info->fprintf_func) (info->stream, "%d,%s",
-			     (int) sval, reg_name[reg]);
+      (*info->fprintf_func) (info->stream, "0x%x,%s",
+			     (unsigned short) sval, reg_name[reg]);
       if (reg == PC_REGNUM)
         {
-          (* info->fprintf_func) (info->stream, " {");
+          (* info->fprintf_func) (info->stream, " {0x");
           (* info->print_address_func) (endaddr + sval, info);
           (* info->fprintf_func) (info->stream, "}");
         }
@@ -230,18 +237,114 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 {
   int status;
   bfd_byte buffer[4];
-  unsigned char code;
+  unsigned int code;
   long format, pos, i;
   short sval;
   const struct m68hc11_opcode *opcode;
+
+  if (arch & cpuxgate)
+    {
+      int val;
+      /* Get two bytes as all XGATE instructions are 16bit.  */
+      status = read_memory (memaddr, buffer, 2, info);
+      if (status != 0)
+	return status;
+
+      format = 0;
+      code = (buffer[0] << 8) + buffer[1];
+
+      /* Scan the opcode table until we find the opcode
+	 with the corresponding page.  */
+      opcode = m68hc11_opcodes;
+      for (i = 0; i < m68hc11_num_opcodes; i++, opcode++)
+	{
+	  if ((opcode->opcode != (code & opcode->xg_mask)) || (opcode->arch != cpuxgate))
+  	    continue;
+	  /* We have found the opcode.  Extract the operand and print it.  */
+	  (*info->fprintf_func) (info->stream, "%s", opcode->name);
+	  format = opcode->format;
+	  if (format & (M68XG_OP_NONE))
+	    {
+	      /* Nothing to print.  */
+	    }
+	  else if (format & M68XG_OP_IMM3)
+	    (*info->fprintf_func) (info->stream, " #0x%x", (code >> 8) & 0x7);
+	  else if (format & M68XG_OP_R_R)
+	    (*info->fprintf_func) (info->stream, " R%x, R%x",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7);
+	  else if (format & M68XG_OP_R_R_R)
+	    (*info->fprintf_func) (info->stream, " R%x, R%x, R%x",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7, (code >> 2) & 0x7);
+	  else if (format & M68XG_OP_RD_RB_RI)
+	    (*info->fprintf_func) (info->stream, " R%x, (R%x, R%x)",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7, (code >> 2) & 0x7);
+	  else if (format & M68XG_OP_RD_RB_RIp)
+	    (*info->fprintf_func) (info->stream, " R%x, (R%x, R%x+)",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7, (code >> 2) & 0x7);
+	  else if (format & M68XG_OP_RD_RB_mRI)
+	    (*info->fprintf_func) (info->stream, " R%x, (R%x, -R%x)",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7, (code >> 2) & 0x7);
+	  else if (format & M68XG_OP_R_R_OFFS5)
+	    (*info->fprintf_func) (info->stream, " R%x, (R%x, #0x%x)",
+				   (code >> 8) & 0x7, (code >> 5) & 0x7, code & 0x1f);
+	  else if (format & M68XG_OP_R_IMM8)
+	    (*info->fprintf_func) (info->stream, " R%x, #0x%02x",
+				   (code >> 8) & 0x7, code & 0xff);
+	  else if (format & M68XG_OP_R_IMM4)
+	    (*info->fprintf_func) (info->stream, " R%x, #0x%x",
+				   (code >> 8) & 0x7, (code & 0xf0) >> 4);
+	  else if (format & M68XG_OP_REL9)
+	    {
+	      (*info->fprintf_func) (info->stream, " 0x");
+	      val = (buffer[0] & 0x1) ? buffer[1] | 0xFFFFFF00 : buffer[1];
+	      (*info->print_address_func) (memaddr + (val << 1) + 2, info);
+	    }
+	  else if (format & M68XG_OP_REL10)
+	    {
+	      (*info->fprintf_func) (info->stream, " 0x");
+	      val = (buffer[0] << 8) | (unsigned int) buffer[1];
+	      if (val & 0x200)
+		val |= 0xfffffc00;
+	      else
+		val &= 0x000001ff;
+	      (*info->print_address_func) (memaddr + (val << 1) + 2, info);
+	    }
+	  else if ((code & 0x00ff) == 0x00f8)
+  	    (*info->fprintf_func) (info->stream, " R%x, CCR", (code >> 8) & 0x7);
+	  else if ((code & 0x00ff) == 0x00f9)
+  	    (*info->fprintf_func) (info->stream, " CCR, R%x", (code >> 8) & 0x7);
+	  else if ((code & 0x00ff) == 0x0)
+  	    (*info->fprintf_func) (info->stream, " R%x, PC", (code >> 8) & 0x7);
+	  else if (format & M68XG_OP_R)
+  	    {
+	      /* Special cases for TFR.  */
+	      if ((code & 0xf8ff) == 0x00f8)
+		(*info->fprintf_func) (info->stream, " R%x, CCR", (code >> 8) & 0x7);
+	      else if ((code & 0xf8ff) == 0x00f9)
+		(*info->fprintf_func) (info->stream, " CCR, R%x", (code >> 8) & 0x7);
+	      else if ((code & 0xf8ff) == 0x00fa)
+		(*info->fprintf_func) (info->stream, " R%x, PC",  (code >> 8) & 0x7);
+	      else
+		(*info->fprintf_func) (info->stream, " R%x", (code >> 8) & 0x7);
+	    }
+	  else
+	    /* Opcode not recognized.  */
+	    (*info->fprintf_func) (info->stream, "Not yet handled TEST .byte\t0x%04x", code);
+	  return 2;
+	}
+
+      /* Opcode not recognized.  */
+      (*info->fprintf_func) (info->stream, ".byte\t0x%04x", code);
+      return 2; /* Everything is two bytes.  */
+    }
+
+  /* HC11 and HC12.  */
 
   /* Get first byte.  Only one at a time because we don't know the
      size of the insn.  */
   status = read_memory (memaddr, buffer, 1, info);
   if (status != 0)
-    {
-      return status;
-    }
+    return status;
 
   format = 0;
   code = buffer[0];
@@ -269,12 +372,10 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
     {
       status = read_memory (memaddr + pos, &buffer[1], 1, info);
       if (status != 0)
-	{
-	  return status;
-	}
+	return status;
+
       code = buffer[1];
     }
-
 
   /* Look first for a 68HC12 alias.  All of them are 2-bytes long and
      in page 1.  There is no operand to print.  We read the second byte
@@ -374,6 +475,10 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 		  && (((buffer[0] & 0x07) >= 3 && (buffer[0] & 7) <= 7))
 		  && ((buffer[0] & 0x0f0) <= 0x20))
 		break;
+	      if ((opcode[j].format & M6812_OP_SEX_MARKER)
+		  && (arch & cpu9s12x)
+		  && ((buffer[0] == 0x4d) || (buffer[0] == 0x4e)))
+		break;
 	      if (opcode[j].format & M6812_OP_TFR_MARKER
 		  && !(buffer[0] & 0x80))
 		break;
@@ -393,73 +498,107 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	}
 
       /* The movb and movw must be handled in a special way...
-         The source constant 'ii' is not always at the same place.
-         This is the same for the destination for the post-indexed byte.
-         The 'offset' is used to do the appropriate correction.
+	 The source constant 'ii' is not always at the same place.
+	 This is the same for the destination for the post-indexed byte.
+	 The 'offset' is used to do the appropriate correction.
 
-                                   offset          offset
-                              for constant     for destination
-         movb   18 OB ii hh ll       0          0
-                18 08 xb ii          1          -1
-                18 0C hh ll hh ll    0          0
-                18 09 xb hh ll       1          -1
-                18 0D xb hh ll       0          0
-                18 0A xb xb          0          0
+	 offset          offset
+	 for constant     for destination
+	 movb   18 OB ii hh ll       0          0
+	 18 08 xb ii          1          -1
+	 18 08 xb ff ii       2          1  9 bit
+	 18 08 xb ee ff ii    3          1  16 bit
+	 18 0C hh ll hh ll    0          0
+	 18 09 xb hh ll       1          -1
+	 18 0D xb hh ll       0          0
+	 18 0A xb xb          0          0
 
-         movw   18 03 jj kk hh ll    0          0
-                18 00 xb jj kk       1          -1
-                18 04 hh ll hh ll    0          0
-                18 01 xb hh ll       1          -1
-                18 05 xb hh ll       0          0
-                18 02 xb xb          0          0
+	 movw   18 03 jj kk hh ll    0          0
+	 18 00 xb jj kk       1          -1
+	 18 04 hh ll hh ll    0          0
+	 18 01 xb hh ll       1          -1
+	 18 05 xb hh ll       0          0
+	 18 02 xb xb          0          0
 
-         After the source operand is read, the position 'pos' is incremented
-         this explains the negative offset for destination.
+	 After the source operand is read, the position 'pos' is incremented
+	 this explains the negative offset for destination.
 
-         movb/movw above are the only instructions with this matching
-         format.  */
+	 movb/movw above are the only instructions with this matching
+	 format.  */
       offset = ((format & M6812_OP_IDX_P2)
-                && (format & (M6811_OP_IMM8 | M6811_OP_IMM16 |
-                              M6811_OP_IND16)));
+		&& (format & (M6811_OP_IMM8 | M6811_OP_IMM16 |
+			      M6811_OP_IND16)));
 
-      /* Operand with one more byte: - immediate, offset,
-         direct-low address.  */
-      if (format &
-	  (M6811_OP_IMM8 | M6811_OP_IX | M6811_OP_IY | M6811_OP_DIRECT))
+      if (offset)
 	{
-	  status = read_memory (memaddr + pos + offset, &buffer[0], 1, info);
+	  /* Check xb to see position of data.  */
+	  status = read_memory (memaddr + pos, &buffer[0], 1, info);
 	  if (status != 0)
 	    {
 	      return status;
 	    }
 
+	  if (((buffer[0] & 0xe0) == 0xe0) && ((buffer[0] & 0x04) == 0))
+	    {
+	      /* 9 or 16 bit.  */
+	      if ((buffer[0] & 0x02) == 0)
+		{
+		  /* 9 bit.  */
+		  offset = 2;
+		}
+	      else
+		{
+		  /* 16 bit.  */
+		  offset = 3;
+		}
+	    }
+	}
+
+      /* Operand with one more byte: - immediate, offset,
+	 direct-low address.  */
+      if (format &
+	  (M6811_OP_IMM8 | M6811_OP_IX | M6811_OP_IY | M6811_OP_DIRECT))
+	{
+	  status = read_memory (memaddr + pos + offset, &buffer[0], 1, info);
+	  if (status != 0)
+	    return status;
+
+	  /* This movb/movw is special (see above).  */
+	  if (offset < 2)
+	    {
+	      offset = -offset;
+	      pc_dst_offset = 2;
+	    }
+	  else
+	    {
+	      offset = -1;
+	      pc_dst_offset = 5;
+	    }
 	  pos++;
 
-          /* This movb/movw is special (see above).  */
-          offset = -offset;
-
-          pc_dst_offset = 2;
 	  if (format & M6811_OP_IMM8)
 	    {
-	      (*info->fprintf_func) (info->stream, "#%d", (int) buffer[0]);
+	      (*info->fprintf_func) (info->stream, "#0x%x", (int) buffer[0]);
 	      format &= ~M6811_OP_IMM8;
-              /* Set PC destination offset.  */
-              pc_dst_offset = 1;
+	      /* Set PC destination offset.  */
+	      pc_dst_offset = 1;
 	    }
 	  else if (format & M6811_OP_IX)
 	    {
 	      /* Offsets are in range 0..255, print them unsigned.  */
-	      (*info->fprintf_func) (info->stream, "%u,x", buffer[0] & 0x0FF);
+	      (*info->fprintf_func) (info->stream, "0x%x,x", buffer[0] & 0x0FF);
 	      format &= ~M6811_OP_IX;
 	    }
 	  else if (format & M6811_OP_IY)
 	    {
-	      (*info->fprintf_func) (info->stream, "%u,y", buffer[0] & 0x0FF);
+	      (*info->fprintf_func) (info->stream, "0x%x,y", buffer[0] & 0x0FF);
 	      format &= ~M6811_OP_IY;
 	    }
 	  else if (format & M6811_OP_DIRECT)
 	    {
 	      (*info->fprintf_func) (info->stream, "*");
+	      if (info->symtab_size > 0) /* Avoid duplicate 0x. */
+		(*info->fprintf_func) (info->stream, "0x");
 	      (*info->print_address_func) (buffer[0] & 0x0FF, info);
 	      format &= ~M6811_OP_DIRECT;
 	    }
@@ -470,27 +609,26 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
       /* Analyze the 68HC12 indexed byte.  */
       if (format & M6812_INDEXED_FLAGS)
 	{
-          int indirect;
-          bfd_vma endaddr;
+	  int indirect;
+	  bfd_vma endaddr;
 
-          endaddr = memaddr + pos + 1;
-          if (format & M6811_OP_IND16)
-            endaddr += 2;
-          pc_src_offset = -1;
-          pc_dst_offset = 1;
+	  endaddr = memaddr + pos + 1;
+	  if (format & M6811_OP_IND16)
+	    endaddr += 2;
+	  pc_src_offset = -1;
+	  pc_dst_offset = 1;
 	  status = print_indexed_operand (memaddr + pos, info, &indirect,
-                                          (format & M6812_DST_MOVE),
-                                          pc_src_offset, endaddr);
+					  (format & M6812_DST_MOVE),
+					  pc_src_offset, endaddr, arch);
 	  if (status < 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  pos += status;
 
-          /* The indirect addressing mode of the call instruction does
-             not need the page code.  */
-          if ((format & M6812_OP_PAGE) && indirect)
-            format &= ~M6812_OP_PAGE;
+	  /* The indirect addressing mode of the call instruction does
+	     not need the page code.  */
+	  if ((format & M6812_OP_PAGE) && indirect)
+	    format &= ~M6812_OP_PAGE;
 	}
 
       /* 68HC12 dbcc/ibcc/tbcc operands.  */
@@ -498,9 +636,8 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	{
 	  status = read_memory (memaddr + pos, &buffer[0], 2, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  (*info->fprintf_func) (info->stream, "%s,",
 				 reg_src_table[buffer[0] & 0x07]);
 	  sval = buffer[1] & 0x0ff;
@@ -508,6 +645,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	    sval |= 0xff00;
 
 	  pos += 2;
+	  (*info->fprintf_func) (info->stream, "0x");
 	  (*info->print_address_func) (memaddr + pos + sval, info);
 	  format &= ~(M6812_OP_REG | M6811_OP_JUMP_REL);
 	}
@@ -515,9 +653,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	{
 	  status = read_memory (memaddr + pos, &buffer[0], 1, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
 
 	  pos++;
 	  (*info->fprintf_func) (info->stream, "%s,%s",
@@ -528,14 +664,13 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
       if (format & (M6811_OP_IMM16 | M6811_OP_IND16))
 	{
 	  int val;
-          bfd_vma addr;
-          unsigned page = 0;
+	  bfd_vma addr;
+	  unsigned page = 0;
 
 	  status = read_memory (memaddr + pos + offset, &buffer[0], 2, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  if (format & M6812_OP_IDX_P2)
 	    offset = -2;
 	  else
@@ -544,64 +679,71 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
 	  val &= 0x0FFFF;
-          addr = val;
-          pc_dst_offset = 2;
-          if (format & M6812_OP_PAGE)
-            {
-              status = read_memory (memaddr + pos + offset, buffer, 1, info);
-              if (status != 0)
-                return status;
+	  addr = val;
+	  pc_dst_offset = 2;
+	  if (format & M6812_OP_PAGE)
+	    {
+	      status = read_memory (memaddr + pos + offset, buffer, 1, info);
+	      if (status != 0)
+		return status;
 
-              page = (unsigned) buffer[0];
-              if (addr >= M68HC12_BANK_BASE && addr < 0x0c000)
-                addr = ((val - M68HC12_BANK_BASE)
-                        | (page << M68HC12_BANK_SHIFT))
-                   + M68HC12_BANK_VIRT;
-            }
-          else if ((arch & cpu6812)
-                   && addr >= M68HC12_BANK_BASE && addr < 0x0c000)
-             {
-                int cur_page;
-                bfd_vma vaddr;
+	      page = (unsigned) buffer[0];
+	      if (addr >= M68HC12_BANK_BASE && addr < 0x0c000)
+		addr = ((val - M68HC12_BANK_BASE)
+			| (page << M68HC12_BANK_SHIFT))
+		  + M68HC12_BANK_VIRT;
+	    }
+	  else if ((arch & cpu6812)
+		   && addr >= M68HC12_BANK_BASE && addr < 0x0c000)
+	    {
+	      int cur_page;
+	      bfd_vma vaddr;
                 
-                if (memaddr >= M68HC12_BANK_VIRT)
-                   cur_page = ((memaddr - M68HC12_BANK_VIRT)
-                               >> M68HC12_BANK_SHIFT);
-                else
-                   cur_page = 0;
+	      if (memaddr >= M68HC12_BANK_VIRT)
+		cur_page = ((memaddr - M68HC12_BANK_VIRT)
+			    >> M68HC12_BANK_SHIFT);
+	      else
+		cur_page = 0;
 
-                vaddr = ((addr - M68HC12_BANK_BASE)
-                         + (cur_page << M68HC12_BANK_SHIFT))
-                   + M68HC12_BANK_VIRT;
-                if (!info->symbol_at_address_func (addr, info)
-                    && info->symbol_at_address_func (vaddr, info))
-                   addr = vaddr;
-             }
+	      vaddr = ((addr - M68HC12_BANK_BASE)
+		       + (cur_page << M68HC12_BANK_SHIFT))
+		+ M68HC12_BANK_VIRT;
+	      if (!info->symbol_at_address_func (addr, info)
+		  && info->symbol_at_address_func (vaddr, info))
+		addr = vaddr;
+	    }
 	  if (format & M6811_OP_IMM16)
 	    {
 	      format &= ~M6811_OP_IMM16;
 	      (*info->fprintf_func) (info->stream, "#");
 	    }
 	  else
-	    format &= ~M6811_OP_IND16;
+	    {
+	      format &= ~M6811_OP_IND16;
+	    }
+
+	  if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	    (*info->fprintf_func) (info->stream, "0x");
 
 	  (*info->print_address_func) (addr, info);
-          if (format & M6812_OP_PAGE)
-            {
-              (* info->fprintf_func) (info->stream, " {");
-              (* info->print_address_func) (val, info);
-              (* info->fprintf_func) (info->stream, ", %d}", page);
-              format &= ~M6812_OP_PAGE;
-              pos += 1;
-            }
+	  if (format & M6812_OP_PAGE)
+	    {
+	      (* info->fprintf_func) (info->stream, " {");
+	      if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+		(*info->fprintf_func) (info->stream, "0x");
+	      (* info->print_address_func) (val, info);
+	      (* info->fprintf_func) (info->stream, ", 0x%x}", page);
+	      format &= ~M6812_OP_PAGE;
+	      pos += 1;
+	    }
 	}
 
       if (format & M6812_OP_IDX_P2)
 	{
 	  (*info->fprintf_func) (info->stream, ", ");
 	  status = print_indexed_operand (memaddr + pos + offset, info,
-                                          0, 1, pc_dst_offset,
-                                          memaddr + pos + offset + 1);
+					  0, 1, pc_dst_offset,
+					  memaddr + pos + offset + 1, arch);
 	  if (status < 0)
 	    return status;
 	  pos += status;
@@ -615,30 +757,30 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  status = read_memory (memaddr + pos + offset, &buffer[0], 2, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  pos += 2;
 
 	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
 	  val &= 0x0FFFF;
+	  if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	    (*info->fprintf_func) (info->stream, "0x");
 	  (*info->print_address_func) (val, info);
 	}
 
       /* M6811_OP_BITMASK and M6811_OP_JUMP_REL must be treated separately
-         and in that order.  The brset/brclr insn have a bitmask and then
-         a relative branch offset.  */
+	 and in that order.  The brset/brclr insn have a bitmask and then
+	 a relative branch offset.  */
       if (format & M6811_OP_BITMASK)
 	{
 	  status = read_memory (memaddr + pos, &buffer[0], 1, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  pos++;
-	  (*info->fprintf_func) (info->stream, " #$%02x%s",
+	  (*info->fprintf_func) (info->stream, ", #0x%02x%s",
 				 buffer[0] & 0x0FF,
-				 (format & M6811_OP_JUMP_REL ? " " : ""));
+				 (format & M6811_OP_JUMP_REL ? ", " : ""));
 	  format &= ~M6811_OP_BITMASK;
 	}
       if (format & M6811_OP_JUMP_REL)
@@ -647,10 +789,9 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  status = read_memory (memaddr + pos, &buffer[0], 1, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
 
+	  (*info->fprintf_func) (info->stream, "0x");
 	  pos++;
 	  val = (buffer[0] & 0x80) ? buffer[0] | 0xFFFFFF00 : buffer[0];
 	  (*info->print_address_func) (memaddr + pos + val, info);
@@ -662,15 +803,14 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  status = read_memory (memaddr + pos, &buffer[0], 2, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
 
 	  pos += 2;
 	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
 	  if (val & 0x8000)
 	    val |= 0xffff0000;
 
+	  (*info->fprintf_func) (info->stream, "0x");
 	  (*info->print_address_func) (memaddr + pos + val, info);
 	  format &= ~M6812_OP_JUMP_REL16;
 	}
@@ -681,28 +821,24 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  status = read_memory (memaddr + pos + offset, &buffer[0], 1, info);
 	  if (status != 0)
-	    {
-	      return status;
-	    }
+	    return status;
+
 	  pos += 1;
 
 	  val = buffer[0] & 0x0ff;
-	  (*info->fprintf_func) (info->stream, ", %d", val);
+	  (*info->fprintf_func) (info->stream, ", 0x%x", val);
 	}
       
 #ifdef DEBUG
       /* Consistency check.  'format' must be 0, so that we have handled
-         all formats; and the computed size of the insn must match the
-         opcode table content.  */
+	 all formats; and the computed size of the insn must match the
+	 opcode table content.  */
       if (format & ~(M6811_OP_PAGE4 | M6811_OP_PAGE3 | M6811_OP_PAGE2))
-	{
-	  (*info->fprintf_func) (info->stream, "; Error, format: %lx", format);
-	}
+	(*info->fprintf_func) (info->stream, "; Error, format: %lx", format);
+
       if (pos != opcode->size)
-	{
-	  (*info->fprintf_func) (info->stream, "; Error, size: %ld expect %d",
-				 pos, opcode->size);
-	}
+	(*info->fprintf_func) (info->stream, "; Error, size: %ld expect %d",
+			       pos, opcode->size);
 #endif
       return pos;
     }
@@ -710,7 +846,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
   /* Opcode not recognized.  */
   if (format == M6811_OP_PAGE2 && arch & cpu6812
       && ((code >= 0x30 && code <= 0x39) || (code >= 0x40)))
-    (*info->fprintf_func) (info->stream, "trap\t#%d", code & 0x0ff);
+    (*info->fprintf_func) (info->stream, "trap\t#0x%02x", code & 0x0ff);
 
   else if (format == M6811_OP_PAGE2)
     (*info->fprintf_func) (info->stream, ".byte\t0x%02x, 0x%02x",
@@ -739,4 +875,16 @@ int
 print_insn_m68hc12 (bfd_vma memaddr, struct disassemble_info* info)
 {
   return print_insn (memaddr, info, cpu6812);
+}
+
+int
+print_insn_m9s12x (bfd_vma memaddr, struct disassemble_info* info)
+{
+  return print_insn (memaddr, info, cpu6812|cpu9s12x);
+}
+
+int
+print_insn_m9s12xg (bfd_vma memaddr, struct disassemble_info* info)
+{
+  return print_insn (memaddr, info, cpuxgate);
 }
