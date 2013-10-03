@@ -39,6 +39,7 @@ esac
 
 case "${host_cpu}" in
 
+aarch64*)		gdb_host_cpu=aarch64 ;;
 alpha*)			gdb_host_cpu=alpha ;;
 arm*)			gdb_host_cpu=arm ;;
 hppa*)			gdb_host_cpu=pa ;;
@@ -50,8 +51,8 @@ powerpc* | rs6000)	gdb_host_cpu=powerpc ;;
 sparcv9 | sparc64)	gdb_host_cpu=sparc ;;
 s390*)			gdb_host_cpu=s390 ;;
 sh*)			gdb_host_cpu=sh ;;
+tilegx*)		gdb_host_cpu=tilegx ;;
 x86_64*)		gdb_host_cpu=i386 ;;
-xscale*)		gdb_host_cpu=arm ;;
 m32r*)			gdb_host_cpu=m32r ;;
 xtensa*)		gdb_host_cpu=xtensa ;;
 *)			gdb_host_cpu=$host_cpu ;;
@@ -63,6 +64,8 @@ esac
 case "${host}" in
 
 *-*-darwin*)		gdb_host=darwin ;;
+
+aarch64*-*-linux*)	gdb_host=linux ;;
 
 alpha*-*-osf[3456789]*)	gdb_host=alpha-osf3 ;;
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
@@ -125,6 +128,7 @@ mips64*-*-openbsd*)	gdb_host=obsd64 ;;
 
 powerpc-*-aix* | rs6000-*-*)
 			gdb_host=aix ;;
+powerpc*-*-freebsd*)	gdb_host=fbsd ;;
 powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
@@ -162,6 +166,8 @@ sparc-*-solaris2* | sparcv9-*-solaris2* | sparc64-*-solaris2*)
 			gdb_host=sol2
 			;;
 
+tilegx-*-linux*)	gdb_host=linux ;;
+
 vax-*-bsd*)		gdb_host=vax ;;
 vax-*-netbsdelf* | vax-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
@@ -178,6 +184,7 @@ x86_64-*-openbsd*)	gdb_host=obsd64 ;;
 x86_64-*-mingw*)        gdb_host=mingw64
 			gdb_host_obs=mingw-hdep.o
 			;;
+x86_64-*-cygwin*)	gdb_host=cygwin64 ;;
 m32r*-*-linux*)          gdb_host=linux ;;
 
 xtensa*-*-linux*)	gdb_host=linux ;;
