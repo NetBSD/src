@@ -215,6 +215,7 @@ static int nsusp;
 static int nsuspalloc;
 static td_thread_t **susp;
 
+#ifdef notdef
 static int
 thread_resume_suspend_cb (td_thread_t *th, void *arg)
 {
@@ -227,10 +228,11 @@ thread_resume_suspend_cb (td_thread_t *th, void *arg)
 
   return 0;
 }
+#endif
 
 static void
 nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
-    enum target_signal signo)
+    enum gdb_signal signo)
 {
   struct target_ops *beneath = find_target_beneath (ops);
 
@@ -409,7 +411,7 @@ nbsd_core_files_info (struct target_ops *ignore)
 
 /* Convert a ptid to printable form. */
 
-char *
+static char *
 nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[100];
@@ -426,6 +428,7 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 }
 
 
+#ifdef notdef
 static void
 nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 {
@@ -439,6 +442,7 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 
   add_thread (BUILD_LWP(regval, main_ptid));
 }
+#endif
 
 /* This routine is called whenever a new symbol table is read in, or when all
    symbol tables are removed.  libthread_db can only be initialized when it
@@ -450,7 +454,7 @@ nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
  * It is the callee's responsability to call the next client on the chain.
  */
 
-void
+static void
 nbsd_thread_new_objfile (struct objfile *objfile)
 {
   int val;
@@ -520,12 +524,14 @@ nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
   return val;
 }
 
+#ifdef notdef
 static int
 nbsd_core_thread_alive (struct target_ops *ops, ptid_t ptid)
 {
   struct target_ops *beneath = find_target_beneath (ops);
   return beneath->to_thread_alive (beneath, ptid);
 }
+#endif
 
 
 static void
@@ -773,6 +779,7 @@ init_nbsd_thread_ops (void)
   nbsd_thread_ops.to_magic = OPS_MAGIC;
 }
 
+void _initialize_nbsd_thread (void);
 void
 _initialize_nbsd_thread (void)
 {
