@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.154 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.155 2013/10/03 20:27:55 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.154 2013/06/29 21:06:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.155 2013/10/03 20:27:55 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1594,7 +1594,11 @@ else 					\
 				break;
 			}
 
-			sockopt_get(sopt, optbuf, optbuflen);
+			error = sockopt_get(sopt, optbuf, optbuflen);
+			if (error) {
+				free(optbuf, M_IP6OPT);
+				break;
+			}
 			optp = &in6p->in6p_outputopts;
 			error = ip6_pcbopt(optname, optbuf, optbuflen,
 			    optp, kauth_cred_get(), uproto);
