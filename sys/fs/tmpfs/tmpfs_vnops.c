@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.102 2013/10/01 23:10:25 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.103 2013/10/04 15:14:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.102 2013/10/01 23:10:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.103 2013/10/04 15:14:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -668,7 +668,7 @@ tmpfs_remove(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	vnode_t *dvp = ap->a_dvp, *vp = ap->a_vp;
-	tmpfs_node_t *node;
+	tmpfs_node_t *dnode, *node;
 	tmpfs_dirent_t *de;
 	int error;
 
@@ -679,10 +679,19 @@ tmpfs_remove(void *v)
 		error = EPERM;
 		goto out;
 	}
+	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	/* Files marked as immutable or append-only cannot be deleted. */
+	/*
+	 * Files marked as immutable or append-only cannot be deleted.
+	 * Likewise, files residing on directories marked as append-only
+	 * cannot be deleted.
+	 */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
+		error = EPERM;
+		goto out;
+	}
+	if (dnode->tn_flags & APPEND) {
 		error = EPERM;
 		goto out;
 	}
@@ -690,7 +699,6 @@ tmpfs_remove(void *v)
 	/* Lookup the directory entry (check the cached hint first). */
 	de = tmpfs_dir_cached(node);
 	if (de == NULL) {
-		tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 		struct componentname *cnp = ap->a_cnp;
 		de = tmpfs_dir_lookup(dnode, cnp);
 	}
@@ -707,6 +715,7 @@ tmpfs_remove(void *v)
 		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
 	else
 		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
+
 	if (node->tn_links > 0) {
 		/* We removed a hard link. */
 		node->tn_status |= TMPFS_NODE_CHANGED;
@@ -738,7 +747,7 @@ tmpfs_link(void *v)
 	vnode_t *dvp = ap->a_dvp;
 	vnode_t *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	tmpfs_node_t *dnode, *node;
+	tmpfs_node_t *node;
 	tmpfs_dirent_t *de;
 	int error;
 
@@ -747,7 +756,6 @@ tmpfs_link(void *v)
 	KASSERT(vp->v_type != VDIR);
 	KASSERT(dvp->v_mount == vp->v_mount);
 
-	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

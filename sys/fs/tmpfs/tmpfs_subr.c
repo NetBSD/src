@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.80 2013/10/04 15:14:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.80 2013/10/04 15:14:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -514,10 +514,7 @@ tmpfs_dir_detach(vnode_t *dvp, tmpfs_dirent_t *de)
 
 		KASSERT(node->tn_links > 0);
 		node->tn_links--;
-		if (vp) {
-			VN_KNOTE(vp, node->tn_links ?
-			    NOTE_LINK : NOTE_DELETE);
-		}
+		VN_KNOTE(vp, node->tn_links ? NOTE_LINK : NOTE_DELETE);
 
 		/* If directory - decrease the link count of parent. */
 		if (node->tn_type == VDIR) {
