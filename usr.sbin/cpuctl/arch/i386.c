@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.42 2013/09/14 17:23:18 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.43 2013/10/04 17:12:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.42 2013/09/14 17:23:18 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.43 2013/10/04 17:12:48 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1038,7 +1038,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	if (ci->ci_cpuid_level < 0xd)
 		return;
 
-	/* Get support XRC0 bits */
+	/* Get support XCR0 bits */
 	x86_cpuid2(0xd, 0, descs);
 	ci->ci_feat_val[5] = descs[0];	/* Actually 64 bits */
 	ci->ci_cur_xsave = descs[1];
