@@ -301,9 +301,10 @@ i386nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr, tmp;
   ULONGEST cs;
-  char *name;
+  const char *name;
   int i;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (*this_cache)
     return *this_cache;
@@ -383,7 +384,7 @@ i386nbsd_trapframe_sniffer (const struct frame_unwind *self,
 			    void **this_prologue_cache)
 {
   ULONGEST cs;
-  char *name;
+  const char *name;
 
   /* Check Current Privilege Level and bail out if we're not executing
      in kernel space.  */
