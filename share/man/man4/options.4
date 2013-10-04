@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.427 2013/08/22 07:17:11 wiz Exp $
+.\"	$NetBSD: options.4,v 1.428 2013/10/04 15:15:39 rkujawa Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2345,36 +2345,6 @@ If there, limit the part of the first memory bank used by
 .Nx
 to value megabytes.
 Default is unlimited.
-.It Cd options NKPTADD=addvalue
-.It Cd options NKPTADDSHIFT=shiftvalue
-The
-.Tn CPU
-specific
-.Tn MMU
-table for the kernel is pre-allocated at kernel startup time.
-Part of it is scaled with
-.Va maxproc ,
-to have enough room to hold the user program
-.Tn MMU
-tables; the second part is a fixed amount for the kernel itself.
-.Pp
-The third part accounts for the size of the file buffer cache.
-Its size is either
-.Dv NKPTADD
-pages (if defined) or memory size in bytes divided by two to
-the power of
-.Dv NKPTADDSHIFT .
-The default is undefined
-.Dv NKPTADD
-and
-.Dv NKPTADDSHIFT=24 ,
-allowing for 16 buffers per megabyte of main memory (while
-a GENERIC kernel allocates about half of that).
-When you get "can't get KPT page" panics, you should increase
-.Dv NKPTADD
-(if defined), or decrease
-.Dv NKPTADDSHIFT
-by one.
 .It Cd options P5PPC68KBOARD
 Add special support for Phase5 mixed 68k+PPC boards.
 Currently, this only affects rebooting from
