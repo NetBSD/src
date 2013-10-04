@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.45 2013/10/03 13:19:24 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.46 2013/10/04 21:10:18 joerg Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.45 2013/10/03 13:19:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.46 2013/10/04 21:10:18 joerg Exp $");
 
 #include "opt_slhci.h"
 
@@ -1340,14 +1340,14 @@ slhci_abort(struct usbd_xfer *xfer)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-
 	spipe = (struct slhci_pipe *)xfer->pipe;
 
 	if (spipe == NULL)
 		goto callback;
 
 	sc = spipe->pipe.device->bus->hci_private;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DLOG(D_TRACE, "%s abort xfer %p spipe %p spipe->xfer %p",
 	    pnames(spipe->ptype), xfer, spipe, spipe->xfer);
