@@ -37,4 +37,8 @@ extern unsigned long i386bsd_dr_get_status (void);
 
 extern unsigned long i386bsd_dr_get_control (void);
 
+extern void i386bsd_supply_gregset (struct regcache *, const void *);
+
+extern void i386bsd_collect_gregset (const struct regcache *, void *, int);
+
 #endif /* i386bsd-nat.h */
