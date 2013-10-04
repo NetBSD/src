@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.68 2013/09/14 17:18:18 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.69 2013/10/04 17:21:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -395,6 +395,8 @@
 #endif /* XEN */
 
 /*
+ * CPUID Processor extended state Enumeration Fn0000000d %eax
+ *
  * Extended Control Register XCR0
  */
 #define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
