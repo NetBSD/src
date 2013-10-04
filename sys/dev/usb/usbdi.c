@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.158 2013/10/03 07:35:37 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.159 2013/10/04 12:47:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.158 2013/10/03 07:35:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.159 2013/10/04 12:47:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -65,8 +65,8 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
-Static void usbd_start_next(usbd_pipe_handle pipe);
+Static usbd_status usbd_ar_pipe(usbd_pipe_handle);
+Static void usbd_start_next(usbd_pipe_handle);
 Static usbd_status usbd_open_pipe_ival
 	(usbd_interface_handle, u_int8_t, u_int8_t, usbd_pipe_handle *, int);
 
