@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/08/04 23:41:43 matt Exp $
+#	$NetBSD: Makefile,v 1.5 2013/10/04 13:04:00 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -47,8 +47,7 @@ CWARNFLAGS.clang+=	-Wno-switch
 #
 COPTS+=	-Wno-stack-protector
 
-# Don't run yacc/bison or lex
-.y.c .y.h .l.c:
+ada-exp.c: ada-lex.c
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1
