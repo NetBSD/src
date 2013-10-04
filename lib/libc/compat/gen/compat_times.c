@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_times.c,v 1.3 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat_times.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Ben Harris, 2002.
@@ -25,7 +25,7 @@ __warn_references(times,
 #define __times_rusage struct rusage50
 #define __times_timeval struct timeval50
 
-#define getrusage compat_getrusage
-#define gettimeofday compat_gettimeofday
+#define getrusage __compat_getrusage
+#define gettimeofday __compat_gettimeofday
 
 #include "gen/times.c"

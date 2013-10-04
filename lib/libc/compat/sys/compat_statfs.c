@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_statfs.c,v 1.6 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_statfs.c,v 1.6 2013/10/04 20:49:16 christos Exp $");
+__RCSID("$NetBSD: compat_statfs.c,v 1.7 2013/10/04 21:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -57,10 +57,10 @@ __warn_references(fhstatfs,
 __warn_references(getfsstat,
     "warning: reference to obsolete getfsstat(); use getvfsstat()")
 
-__strong_alias(statfs, compat_statfs)
-__strong_alias(fstatfs, compat_fstatfs)
-__strong_alias(fhstatfs, compat_fhstatfs)
-__strong_alias(getfsstat, compat_getfsstat)
+__strong_alias(statfs, __compat_statfs)
+__strong_alias(fstatfs, __compat_fstatfs)
+__strong_alias(fhstatfs, __compat_fhstatfs)
+__strong_alias(getfsstat, __compat_getfsstat)
 
 /*
  * Convert from a new statvfs to an old statfs structure.
@@ -130,7 +130,7 @@ vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 }
 
 int
-compat_statfs(const char *file, struct statfs12 *ost)
+__compat_statfs(const char *file, struct statfs12 *ost)
 {
 	struct statvfs nst;
 	int ret;
@@ -142,7 +142,7 @@ compat_statfs(const char *file, struct statfs12 *ost)
 }
 
 int
-compat_fstatfs(int f, struct statfs12 *ost)
+__compat_fstatfs(int f, struct statfs12 *ost)
 {
 	struct statvfs nst;
 	int ret;
@@ -157,7 +157,7 @@ int __fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
     int flags);
 
 int
-compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
+__compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 {
 	struct statvfs nst;
 	int ret;
@@ -169,7 +169,7 @@ compat_fhstatfs(const struct compat_30_fhandle *fh, struct statfs12 *ost)
 }
 
 int
-compat_getfsstat(struct statfs12 *ost, long size, int flags)
+__compat_getfsstat(struct statfs12 *ost, long size, int flags)
 {
 	struct statvfs *nst;
 	int ret, i;

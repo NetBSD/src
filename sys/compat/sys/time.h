@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.4 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,7 +44,7 @@ __BEGIN_DECLS
 #if (_POSIX_C_SOURCE - 0) >= 200112L || \
     defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	getitimer(int, struct itimerval50 *);
-int	compat_gettimeofday(struct timeval50 * __restrict, void *__restrict)
+int	__compat_gettimeofday(struct timeval50 * __restrict, void *__restrict)
     __dso_hidden;
 int	setitimer(int, const struct itimerval50 * __restrict,
 	    struct itimerval50 * __restrict);

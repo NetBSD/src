@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts30.c,v 1.7 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat___fts30.c,v 1.8 2013/10/04 21:07:37 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -32,9 +32,9 @@ __warn_references(__fts_set30,
 #define	__fts_dev_t	uint32_t
 #define	__fts_level_t	short
 
-#define	stat		compat___stat30
-#define	lstat		compat___lstat30
-#define	fstat		compat___fstat30
+#define	stat		__compat___stat30
+#define	lstat		__compat___lstat30
+#define	fstat		__compat___fstat30
 
 #ifndef ftsent_namelen_truncate
 #define ftsent_namelen_truncate(a)	\

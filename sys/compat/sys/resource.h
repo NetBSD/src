@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.4 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: resource.h,v 1.5 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,7 @@ void rusage_to_rusage50(const struct rusage *, struct rusage50 *);
 
 #ifndef _KERNEL
 __BEGIN_DECLS
-int	compat_getrusage(int, struct rusage50 *) __dso_hidden;
+int	__compat_getrusage(int, struct rusage50 *) __dso_hidden;
 int	__getrusage50(int, struct rusage *);
 __END_DECLS
 #endif	/* _KERNEL */

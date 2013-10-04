@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getmntinfo.c,v 1.3 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat_getmntinfo.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_getmntinfo.c,v 1.3 2013/10/04 20:49:16 christos Exp $");
+__RCSID("$NetBSD: compat_getmntinfo.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,13 +50,13 @@ __RCSID("$NetBSD: compat_getmntinfo.c,v 1.3 2013/10/04 20:49:16 christos Exp $")
 #include <errno.h>
 #include <stdlib.h>
 
-__strong_alias(getmntinfo, compat_getmntinfo)
+__strong_alias(getmntinfo, __compat_getmntinfo)
 
 /*
  * Return information about mounted filesystems.
  */
 int
-compat_getmntinfo(struct statfs12 **mntbufp, int flags)
+__compat_getmntinfo(struct statfs12 **mntbufp, int flags)
 {
 	static struct statfs12 *mntbuf;
 	static int mntsize;
@@ -65,10 +65,10 @@ compat_getmntinfo(struct statfs12 **mntbufp, int flags)
 	_DIAGASSERT(mntbufp != NULL);
 
 	if (mntsize <= 0 &&
-	    (mntsize = compat_getfsstat(NULL, 0L, MNT_NOWAIT)) == -1)
+	    (mntsize = __compat_getfsstat(NULL, 0L, MNT_NOWAIT)) == -1)
 		return (0);
 	if (bufsize > 0 &&
-	    (mntsize = compat_getfsstat(mntbuf, (long)bufsize, flags)) == -1)
+	    (mntsize = __compat_getfsstat(mntbuf, (long)bufsize, flags)) == -1)
 		return (0);
 	while (bufsize <= mntsize * sizeof(struct statfs12)) {
 		if (mntbuf)
@@ -76,7 +76,7 @@ compat_getmntinfo(struct statfs12 **mntbufp, int flags)
 		bufsize = (mntsize + 1) * sizeof(struct statfs12);
 		if ((mntbuf = malloc(bufsize)) == NULL)
 			return (0);
-		if ((mntsize = compat_getfsstat(mntbuf, (long)bufsize,
+		if ((mntsize = __compat_getfsstat(mntbuf, (long)bufsize,
 		    flags)) == -1)
 			return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_glob.c,v 1.3 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat_glob.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -28,8 +28,8 @@ __warn_references(glob,
 __warn_references(globfree,
     "warning: reference to compatibility globfree(); include <glob.h> for correct reference")
 
-#define stat compat_stat
-#define lstat compat_lstat
-#define fstat compat_fstat
+#define stat __compat_stat
+#define lstat __compat_lstat
+#define fstat __compat_fstat
 
 #include "gen/glob.c"
