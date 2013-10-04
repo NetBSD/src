@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts32.c,v 1.3 2009/10/19 17:52:05 christos Exp $	*/
+/*	$NetBSD: compat___fts32.c,v 1.4 2013/10/04 20:49:16 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -46,8 +46,8 @@ __warn_references(__fts_set32,
 
 #define	__FTS_COMPAT_LEVEL
 
-#define	stat		__stat30
-#define	lstat		__lstat30
-#define	fstat		__fstat30
+#define	stat		compat___stat30
+#define	lstat		compat___lstat30
+#define	fstat		compat___fstat30
 
 #include "gen/fts.c"

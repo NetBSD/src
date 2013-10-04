@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.8 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.9 2013/10/04 20:49:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -94,18 +94,21 @@ struct compat_30_fhandle {
 #else
 
 __BEGIN_DECLS
-int	fstatfs(int, struct statfs12 *);
-int	getfsstat(struct statfs12 *, long, int);
-int	statfs(const char *, struct statfs12 *);
-int	getmntinfo(struct statfs12 **, int);
+int	compat_fstatfs(int, struct statfs12 *) __dso_hidden;
+int	compat_getfsstat(struct statfs12 *, long, int) __dso_hidden;
+int	compat_statfs(const char *, struct statfs12 *) __dso_hidden;
+int	compat_getmntinfo(struct statfs12 **, int) __dso_hidden;
 #if defined(_NETBSD_SOURCE)
 struct compat_30_fhandle;
-int	fhstatfs(const struct compat_30_fhandle *, struct statfs12 *);
+int	compat_fhstatfs(const struct compat_30_fhandle *, struct statfs12 *)
+    __dso_hidden;
 struct stat13;
-int	fhstat(const struct compat_30_fhandle *, struct stat13 *);
+int	compat_fhstat(const struct compat_30_fhandle *, struct stat13 *)
+    __dso_hidden;
 struct stat30;
-int	__fhstat30(const struct compat_30_fhandle *, struct stat30 *);
-int	__fhstat40(const void *, size_t, struct stat30 *);
+int	compat___fhstat30(const struct compat_30_fhandle *, struct stat30 *)
+    __dso_hidden;
+int	compat___fhstat40(const void *, size_t, struct stat30 *) __dso_hidden;
 struct stat;
 int	__fhstat50(const void *, size_t, struct stat *);
 #endif /* _NETBSD_SOURCE */

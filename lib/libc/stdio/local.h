@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.36 2013/04/19 23:32:17 joerg Exp $	*/
+/*	$NetBSD: local.h,v 1.37 2013/10/04 20:49:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -116,6 +116,8 @@ extern int	 __vfwscanf_unlocked_l(FILE * __restrict, locale_t,
 
 extern void __flockfile_internal(FILE *, int);
 extern void __funlockfile_internal(FILE *, int);
+
+extern char *__gets(char *);
 
 /*
  * Detect if the current file position fits in a long int.
