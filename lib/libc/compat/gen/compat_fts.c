@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fts.c,v 1.6 2012/03/15 16:47:38 christos Exp $	*/
+/*	$NetBSD: compat_fts.c,v 1.7 2013/10/04 20:49:16 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -61,5 +61,9 @@ __warn_references(fts_set,
 #define	__FTS_COMPAT_TAILINGSLASH
 #define	__FTS_COMPAT_LENGTH
 #define	__FTS_COMPAT_LEVEL
+
+#define stat compat_stat
+#define lstat compat_lstat
+#define fstat compat_fstat
 
 #include "gen/fts.c"
