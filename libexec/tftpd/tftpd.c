@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.42 2013/07/04 02:58:20 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.43 2013/10/04 07:51:48 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.42 2013/07/04 02:58:20 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.43 2013/10/04 07:51:48 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ usage(void)
 {
 
 	syslog(LOG_ERR,
-    "Usage: %s [-dln] [-g group] [-p pathsep] [-s directory] [-u user] [directory ...]",
+    "Usage: %s [-cdln] [-g group] [-p pathsep] [-s directory] [-u user] [directory ...]",
 		    getprogname());
 	exit(1);
 }
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "cdg:lnp:s:u:")) != -1)
 		switch (ch) {
-		case 'w':
+		case 'c':
 			unrestricted_writes = 1;
 			break;
 
