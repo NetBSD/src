@@ -30,7 +30,6 @@ extern initialize_file_ftype _initialize_notif;
 extern initialize_file_ftype _initialize_remote_sim;
 extern initialize_file_ftype _initialize_elfread;
 extern initialize_file_ftype _initialize_stap_probe;
-extern initialize_file_ftype _initialize_ada_exp;
 extern initialize_file_ftype _initialize_annotate;
 extern initialize_file_ftype _initialize_addrmap;
 extern initialize_file_ftype _initialize_auto_load;
@@ -175,7 +174,6 @@ initialize_all_files (void)
   _initialize_remote_sim ();
   _initialize_elfread ();
   _initialize_stap_probe ();
-  _initialize_ada_exp ();
   _initialize_annotate ();
   _initialize_addrmap ();
   _initialize_auto_load ();
