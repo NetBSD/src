@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts31.c,v 1.5 2013/10/04 20:49:16 christos Exp $	*/
+/*	$NetBSD: compat___fts31.c,v 1.6 2013/10/04 21:07:37 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -40,9 +40,9 @@ __warn_references(__fts_set31,
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
 #endif
 
-#define	stat		compat___stat30
-#define	lstat		compat___lstat30
-#define	fstat		compat___fstat30
+#define	stat		__compat___stat30
+#define	lstat		__compat___lstat30
+#define	fstat		__compat___fstat30
 
 #undef	fts_children
 #define	fts_children __fts_children31
