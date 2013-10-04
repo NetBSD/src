@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.172 2013/09/02 07:24:17 skrll Exp $
+# $NetBSD: DRACO,v 1.173 2013/10/04 15:13:51 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.173 $"
 
 
 maxusers	8
@@ -186,12 +186,6 @@ options 	DDB		# Kernel debugger
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.

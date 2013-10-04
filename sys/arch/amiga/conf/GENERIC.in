@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.119 2013/08/11 16:15:52 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.120 2013/10/04 15:13:51 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -249,12 +249,6 @@ options 	DDB		# Kernel debugger
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
