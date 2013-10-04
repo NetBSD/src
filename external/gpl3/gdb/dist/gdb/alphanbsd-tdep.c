@@ -268,10 +268,36 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
     }
   trad_frame_set_reg_addr (this_cache, ALPHA_PC_REGNUM, addr);
 
-#if 0
   /* Construct the frame ID using the function start.  */
   trad_frame_set_id (this_cache, frame_id_build (sp, func));
-#endif
+}
+
+#ifdef notyet
+#define RETCODE_NWORDS          4
+#define RETCODE_SIZE            (RETCODE_NWORDS * 4)
+
+static LONGEST
+alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  unsigned char ret[RETCODE_SIZE], w[4];
+  LONGEST off;
+  int i;
+
+  if (target_read_memory (pc, (char *) w, 4) != 0)
+    return -1;
+
+  for (i = 0; i < RETCODE_NWORDS; i++)
+    {
+/*###287 [cc] error: 'sigtramp_retcode' undeclared (first use in this function)%%%*/
+      if (memcmp (w, sigtramp_retcode + (i * 4), 4) == 0)
+	break;
+    }
+  if (i == RETCODE_NWORDS)
+    return (-1);
+
+  off = i * 4;
+  pc -= off;
+
   if (target_read_memory (pc, (char *) ret, sizeof (ret)) != 0)
     return -1;
 
@@ -299,6 +325,7 @@ alphanbsd_sigcontext_addr (struct frame_info *frame)
     return 0;
   return get_frame_base (get_next_frame (frame));
 }
+#endif
 
 
 static void
