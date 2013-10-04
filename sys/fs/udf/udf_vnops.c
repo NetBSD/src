@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.85 2013/07/10 15:10:56 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.86 2013/10/04 08:35:08 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.85 2013/07/10 15:10:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.86 2013/10/04 08:35:08 hannken Exp $");
 #endif /* not lint */
 
 
@@ -118,7 +118,6 @@ udf_inactive(void *v)
 		*ap->a_recycle = true;
 		udf_delete_node(udf_node);
 		VOP_UNLOCK(vp);
-		vrecycle(vp, NULL, curlwp);
 		return 0;
 	}
 
