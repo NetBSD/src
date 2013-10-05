@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.60 2013/08/31 12:26:56 jmcneill Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.61 2013/10/05 16:50:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.60 2013/08/31 12:26:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.61 2013/10/05 16:50:31 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -295,14 +295,11 @@ cpu_intr_p(void)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
-	struct cpu_info *ci;
 	struct pcb *pcb;
 	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
-
 	l = curlwp;
-	ci = curcpu();
 
 	/*
 	 * If SPL raised, can't go.  Note this implies that spin
