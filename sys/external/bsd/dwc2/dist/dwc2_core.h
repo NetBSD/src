@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.h,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.h,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
 
 /*
  * core.h - DesignWare HS OTG Controller common declarations
@@ -293,7 +293,7 @@ struct dwc2_hw_params {
 	unsigned dev_token_q_depth:5;
 	unsigned max_transfer_size:26;
 	unsigned max_packet_count:11;
-	unsigned host_channels:4;
+	unsigned host_channels:5;
 	unsigned hs_phy_type:2;
 	unsigned fs_phy_type:2;
 	unsigned i2c_enable:1;
