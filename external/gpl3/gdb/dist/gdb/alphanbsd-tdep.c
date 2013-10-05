@@ -288,7 +288,6 @@ alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
 
   for (i = 0; i < RETCODE_NWORDS; i++)
     {
-/*###287 [cc] error: 'sigtramp_retcode' undeclared (first use in this function)%%%*/
       if (memcmp (w, sigtramp_retcode + (i * 4), 4) == 0)
 	break;
     }
