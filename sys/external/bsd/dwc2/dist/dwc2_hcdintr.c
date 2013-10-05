@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.2 2013/09/25 05:41:15 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.3 2013/10/05 06:47:08 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -750,18 +750,23 @@ cleanup:
 	dwc2_hc_cleanup(hsotg, chan);
 	list_add_tail(&chan->hc_list_entry, &hsotg->free_hc_list);
 
-	switch (chan->ep_type) {
-	case USB_ENDPOINT_XFER_CONTROL:
-	case USB_ENDPOINT_XFER_BULK:
-		hsotg->non_periodic_channels--;
-		break;
-	default:
-		/*
-		 * Don't release reservations for periodic channels here.
-		 * That's done when a periodic transfer is descheduled (i.e.
-		 * when the QH is removed from the periodic schedule).
-		 */
-		break;
+	if (hsotg->core_params->uframe_sched > 0) {
+		hsotg->available_host_channels++;
+	} else {
+		switch (chan->ep_type) {
+		case USB_ENDPOINT_XFER_CONTROL:
+		case USB_ENDPOINT_XFER_BULK:
+			hsotg->non_periodic_channels--;
+			break;
+		default:
+			/*
+			 * Don't release reservations for periodic channels
+			 * here. That's done when a periodic transfer is
+			 * descheduled (i.e. when the QH is removed from the
+			 * periodic schedule).
+			 */
+			break;
+		}
 	}
 
 	haintmsk = readl(hsotg->regs + HAINTMSK);
