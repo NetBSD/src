@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.156 2013/06/29 21:06:58 rmind Exp $	*/
+/*	$NetBSD: if.h,v 1.157 2013/10/05 23:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -598,6 +598,7 @@ struct	ifreq {
 						 */
 #define	ifr_buf		ifr_ifru.ifru_b.b_buf	/* new interface ioctls */
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
+#define	ifr_index	ifr_ifru.ifru_index	/* interface index */
 };
 
 #ifdef _KERNEL
