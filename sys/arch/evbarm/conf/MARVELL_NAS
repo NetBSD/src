@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.17 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: MARVELL_NAS,v 1.18 2013/10/05 03:59:49 kiyohara Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -12,14 +12,14 @@ maxusers	32
 
 # CPU options
 options 	CPU_ARM9E
-#makeoptions	CPUFLAGS="-mcpu=xscale"	# Xscale instruction set support
+#makeoptions	CPUFLAGS="-mcpu=xscale"	# Orion supports XScale instruction set
 options 	CPU_SHEEVA
-#makeoptions	CPUFLAGS="-mcpu=arm9e"
+#makeoptions	CPUFLAGS="-march=armv5te"
 
 # Marvell SoC options
 options 	ORION
 options 	KIRKWOOD
-#options 	MV78XX0
+#options 	MV78XX0		# Discovery Innovation
 
 # Standard system options
 
