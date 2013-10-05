@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dwctwo2netbsd,v 1.1 2013/09/05 20:25:27 skrll Exp $
+#	$NetBSD: dwctwo2netbsd,v 1.2 2013/10/05 07:00:41 skrll Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,9 @@
 #	$ cd /some/where/temporary
 #	$ git clone -b staging.next git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging.git
 #	$ DWC2SRCS=$(pwd)/drivers/staging/dwc2
-#	$ cd /an/other/temporary
-#	$ sh /usr/src/sys/external/bsd/dwc2/dwctwo2netbsd $DWC2SRCS $(pwd)
+#	$ WRKDIR=/an/other/temporary
+#	$ sh /usr/src/sys/external/bsd/dwc2/dwctwo2netbsd $DWC2SRCS $WRKDIR
+#	$ cd $WRKDIR
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import dwc2 $DATE" src/sys/external/bsd/dwc2/dist SYNOPSYS dwc2-$DATE
 #
 
