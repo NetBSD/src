@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.654 2013/09/14 20:28:15 soren Exp $
+$NetBSD: usbdevs,v 1.655 2013/10/05 22:00:28 jnemeth Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1884,6 +1884,7 @@ product KEYSPAN USA18XA_NF	0x0116	USA-18XA serial adapter (no firmware)
 product KEYSPAN USA18XA		0x0117	USA-18XA serial adapter
 product KEYSPAN USA19QW_NF	0x0118	USA-19QW serial adapter (no firmware)
 product KEYSPAN USA19QW		0x0119	USA-19QW serial adapter
+product KEYSPAN USA19H		0x0121	USA-19H serial adapter
 product KEYSPAN UIA10		0x0201	UIA-10 remote control
 product KEYSPAN UIA11		0x0202	UIA-11 remote control
 
