@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2012/11/13 14:07:42 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.180 2013/10/05 16:50:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2012/11/13 14:07:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2013/10/05 16:50:31 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3549,12 +3549,10 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_entry *killlist = NULL;
 	struct vm_page *ptp;
 	pt_entry_t expect;
-	lwp_t *l;
 	int count;
 
 	KASSERT(uvm_page_locked_p(pg));
 
-	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
