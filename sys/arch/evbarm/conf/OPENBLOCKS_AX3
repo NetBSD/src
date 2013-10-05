@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.1 2013/09/30 13:36:54 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.2 2013/10/05 02:47:44 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -199,6 +199,7 @@ sdmmc*	at mvsdio?
 
 # On-chip UART Interface
 com*	at mvsoc?
+options 	COM_16750		# XXXX: required
 #options 	COM_DEBUG
 
 # On-chip Two-Wire Serial Interface (TWSI)
