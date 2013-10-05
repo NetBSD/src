@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>

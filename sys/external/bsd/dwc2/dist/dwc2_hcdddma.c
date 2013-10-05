@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.5 2013/09/27 22:03:01 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.6 2013/10/05 06:51:43 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations

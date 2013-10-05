@@ -1,3 +1,5 @@
+/*	$NetBSD: dwc2_coreintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $	*/
+
 /*
  * core_intr.c - DesignWare HS OTG Controller common interrupt handling
  *
@@ -39,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.4 2013/09/27 21:39:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_coreintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

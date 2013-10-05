@@ -1,3 +1,5 @@
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
+
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
  *
@@ -40,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>

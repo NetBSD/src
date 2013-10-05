@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.3 2013/09/25 06:19:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.3 2013/09/25 06:19:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -2205,7 +2205,7 @@ int dwc2_set_param_phy_type(struct dwc2_hsotg *hsotg, int val)
 {
 #ifndef NO_FS_PHY_HW_CHECKS
 	int valid = 0;
-        u32 hs_phy_type, fs_phy_type;
+	u32 hs_phy_type, fs_phy_type;
 #endif
 	int retval = 0;
 
@@ -2553,7 +2553,7 @@ int dwc2_set_param_ahbcfg(struct dwc2_hsotg *hsotg, int val)
 		hsotg->core_params->ahbcfg = val;
 	else
 		hsotg->core_params->ahbcfg = GAHBCFG_HBSTLEN_INCR4 <<
-                                             GAHBCFG_HBSTLEN_SHIFT;
+						GAHBCFG_HBSTLEN_SHIFT;
 	return 0;
 }
 
