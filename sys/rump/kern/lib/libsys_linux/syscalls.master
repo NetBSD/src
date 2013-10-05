@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2013/04/08 20:54:47 pooka Exp $
+	$NetBSD: syscalls.master,v 1.5 2013/10/05 09:22:01 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -595,7 +595,8 @@
 464	UNIMPL		fchownat
 465	UNIMPL		fexecve
 466	UNIMPL		fstatat
-467	UNIMPL		utimensat
+467	NODEF		{ int|linux_sys||utimensat(int fd, const char *path, \
+			    struct linux_timespec *times, int flag); }
 468	UNIMPL		openat
 469	UNIMPL		readlinkat
 470	UNIMPL		symlinkat
