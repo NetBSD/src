@@ -1,6 +1,6 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.15 2013/06/30 21:38:56 rmind Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.16 2013/10/05 06:10:35 kiyohara Exp $
 #
-#  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
+#	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
 
 include 	"arch/evbarm/conf/std.marvell"
@@ -36,21 +36,20 @@ file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 #file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	NFS		# Network file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
+#file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
+file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system 	PTYFS		# /dev/ptm support
+#file-system 	PUFFS		# Pass-to-Userspace Framework File System
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
+file-system 	UNION		# union file system
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 #file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
@@ -75,8 +74,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
-#options 	PIM		# Protocol Independent Multicast
+options 	MROUTING	# IP multicast routing
+options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -131,11 +130,11 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
-options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	MIIVERBOSE	# Verbose MII auto configuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	USBVERBOSE	# Verbose USB device auto configuration messages
 #options 	DDB_KEYCODE=0x40
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -367,7 +366,7 @@ pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-options	BRIDGE_IPF			# bridge uses IP/IPv6 pfil hooks too
+options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if
