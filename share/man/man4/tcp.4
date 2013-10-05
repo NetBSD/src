@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.26 2013/10/03 07:09:54 mbalmer Exp $
+.\"	$NetBSD: tcp.4,v 1.27 2013/10/05 23:34:33 christos Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -315,6 +315,8 @@ ECN (Explicit Congestion Notification)
 .It
 Congestion window increase methods; the traditional packet counting or
 RFC 3465 Appropriate Byte Counting
+.It
+RFC 3390: Increased initial window size
 .El
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
