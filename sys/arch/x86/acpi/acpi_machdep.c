@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.6 2013/03/31 19:34:24 chs Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.7 2013/10/06 16:34:48 jakllsch Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6 2013/03/31 19:34:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7 2013/10/06 16:34:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ acpi_md_OsReadable(void *Pointer, uint32_t Length)
 BOOLEAN
 acpi_md_OsWritable(void *Pointer, uint32_t Length)
 {
-	BOOLEAN rv = FALSE;
+	BOOLEAN rv = TRUE;
 	vaddr_t sva, eva;
 	pt_entry_t *pte;
 
