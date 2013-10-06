@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.89 2013/10/02 19:52:58 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.90 2013/10/06 21:05:50 ast Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.89 2013/10/02 19:52:58 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.90 2013/10/06 21:05:50 ast Exp $");
 #endif
 #endif /* not lint */
 
@@ -667,7 +667,7 @@ again: /* jump here after setting a variable with ${var=text} */
 	varlen = 0;
 	startloc = expdest - stackblock();
 
-	if (!set && uflag) {
+	if (!set && uflag && *var != '@' && *var != '*') {
 		switch (subtype) {
 		case VSNORMAL:
 		case VSTRIMLEFT:
