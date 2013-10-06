@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.266 2013/10/05 23:16:54 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.267 2013/10/06 01:21:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.266 2013/10/05 23:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.267 2013/10/06 01:21:24 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -990,7 +990,7 @@ again:
 
 	if (ifc == NULL) {
 		if (*ifname == '\0' ||
-		    module_autoload(ifname, MODULE_CLASS_DRIVER, "if"))
+		    module_autoload(ifname, MODULE_CLASS_DRIVER))
 			return NULL;
 		*ifname = '\0';
 		goto again;
