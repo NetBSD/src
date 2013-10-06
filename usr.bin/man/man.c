@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.56 2013/07/30 15:10:04 joerg Exp $	*/
+/*	$NetBSD: man.c,v 1.57 2013/10/06 16:29:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.56 2013/07/30 15:10:04 joerg Exp $");
+__RCSID("$NetBSD: man.c,v 1.57 2013/10/06 16:29:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,10 +536,10 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 	*eptr = '\0';
 
 	/*
-	 * If 'page' is given with a full or relative path
-	 * then interpret it as a file specification.
+	 * If 'page' contains a slash then it's
+	 * interpreted as a file specification.
 	 */
-	if ((page[0] == '/') || (page[0] == '.')) {
+	if (strchr(page, '/') != NULL) {
 		/* check if file actually exists */
 		(void)strlcpy(buf, escpage, sizeof(buf));
 		error = glob(buf, GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT, NULL, pg);
