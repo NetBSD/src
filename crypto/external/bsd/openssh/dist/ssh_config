@@ -1,4 +1,4 @@
-#	$NetBSD: ssh_config,v 1.4 2010/11/21 18:29:49 adam Exp $
+#	$NetBSD: ssh_config,v 1.5 2013/10/06 17:25:34 jym Exp $
 #	$OpenBSD: ssh_config,v 1.26 2010/01/11 01:39:46 dtucker Exp $
 
 # This is the ssh client system-wide configuration file.  See
@@ -48,3 +48,7 @@
 #   ProxyCommand ssh -q -W %h:%p gateway.example.com
 # If you use xorg from pkgsrc then uncomment the following line.
 #   XAuthLocation /usr/pkg/bin/xauth
+
+# NetBSD.org DNS provides SSHFP records - use them when possible
+Host *.netbsd.org *.NetBSD.org
+    VerifyHostKeyDNS ask
