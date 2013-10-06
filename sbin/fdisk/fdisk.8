@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.80 2012/10/06 09:11:34 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.81 2013/10/06 12:27:15 apb Exp $
 .\"
-.Dd April 6, 2012
+.Dd October 6, 2013
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -190,6 +190,12 @@ amd64) or by solving the simultaenous equations from the existing partition
 information.
 If that fails then either the geometry from the disklabel or 63 sectors and
 16 heads is used.
+For modern disks larger than about 8GB, and where the BIOS is configured
+to use LBA-Assisted translation, a setting of
+.Fl b Ar 1023/255/63
+is likely to work.
+.\" see http://web.inter.nl.net/hcc/J.Steunebrink/bioslim.htm#LBA
+.\" for a table of C/H/S values used in LBA-Assisted translation mode
 .It Fl c Ar bootcode
 Specify the filename that
 .Nm
