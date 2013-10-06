@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.57 2013/10/06 16:29:26 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.58 2013/10/06 16:43:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.57 2013/10/06 16:29:26 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.58 2013/10/06 16:43:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -555,9 +555,14 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 			goto notfound;
 
 		/* clip suffix for the suffix check below */
-		p = strrchr(escpage, '.');
-		if (p && p[0] == '.' && isdigit((unsigned char)p[1]))
-			p[0] = '\0';
+		if ((p = strrchr(escpage, '.')) != NULL) {
+			if (strcmp(p, ".gz") == 0 || strcmp(p, ".bz2") == 0) {
+				*p = '\0';
+				p = strrchr(escpage, '.');
+			}
+			if (p && isdigit((unsigned char)p[1]))
+				*p = '\0';
+		}
 
 		found = 0;
 		for (cnt = pg->gl_pathc - pg->gl_matchc;
