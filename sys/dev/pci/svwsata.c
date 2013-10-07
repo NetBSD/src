@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.18 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.17 2013/04/28 00:47:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.18 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ static void svwsata_mapreg_dma(struct pciide_softc *,
 static void svwsata_mapchan(struct pciide_channel *);
 
 CFATTACH_DECL_NEW(svwsata, sizeof(struct pciide_softc),
-    svwsata_match, svwsata_attach, NULL, NULL);
+    svwsata_match, svwsata_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_svwsata_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_K2_SATA,
