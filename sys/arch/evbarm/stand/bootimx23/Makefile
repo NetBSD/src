@@ -1,9 +1,8 @@
-# $Id: Makefile,v 1.7 2013/08/15 21:41:09 matt Exp $
+# $Id: Makefile,v 1.8 2013/10/07 17:36:40 matt Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
-SRCS=		args_prep.c boot_prep.c clock_prep.c common.c emi_prep.c \
-		pinctrl_prep.c power_prep.c
+SRCS=		bootimx23.c power_prep.c clock_prep.c emi_prep.c pinctrl_prep.c common.c args_prep.c
 
 .include <bsd.own.mk>
 
@@ -16,7 +15,8 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
 CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 #CPPFLAGS+=	-DDEBUG
-#DBG=		-g
+#CPPFLAGS+=	-DDIAGNOSTIC
+DBG=		-g
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
