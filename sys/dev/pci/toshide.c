@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.10 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: toshide.c,v 1.11 2013/10/07 19:53:05 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.10 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.11 2013/10/07 19:53:05 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ CFATTACH_DECL_NEW(toshide, sizeof(struct pciide_softc),
     piccolo_match, piccolo_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_toshiba2_products[] = {
-	{ 
+	{
 		PCI_PRODUCT_TOSHIBA2_PICCOLO,
 		0,
 		"Toshiba Piccolo IDE controller",
@@ -142,7 +142,7 @@ piccolo_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
-	/* 
+	/*
 	 * XXX one for now. We'll figure out how to talk to the second channel
 	 * later, hopefully! Second interface config is via the
 	 * "alternate PCI Configuration Space" whatever that is!
@@ -196,7 +196,7 @@ piccolo_setup_channel(struct ata_channel *chp)
 			/*
 			 * Use UDMA - we can go up to mode 2 so no need to
 			 * check anything since nearly all drives with UDMA
-			 * are mode 2 or faster 
+			 * are mode 2 or faster
 			 */
 			pxdx = pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    PICCOLO_DMA_TIMING);
