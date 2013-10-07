@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.35 2012/07/31 15:50:35 bouyer Exp $	*/
+/*	$NetBSD: aceride.c,v 1.36 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.35 2012/07/31 15:50:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.36 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct aceride_softc {
 };
 
 CFATTACH_DECL_NEW(aceride, sizeof(struct aceride_softc),
-    aceride_match, aceride_attach, NULL, NULL);
+    aceride_match, aceride_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_acer_products[] =  {
 	{ PCI_PRODUCT_ALI_M5229,
