@@ -1,0 +1,10 @@
+#	$Id: IMX23_OLINUXINO_INSTALL,v 1.1 2013/10/07 17:36:40 matt Exp $
+#
+#	IMX23_OLINUXINO -- IMX23_OLINUXINO kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/IMX23_OLINUXINO"
+include "arch/evbarm/conf/INSTALL"
+
+makeoptions	RAMDISKNAME=ramdisk
