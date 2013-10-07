@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: toshide.c,v 1.10 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.10 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ static int  piccolo_match(device_t, cfdata_t, void *);
 static void piccolo_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(toshide, sizeof(struct pciide_softc),
-    piccolo_match, piccolo_attach, NULL, NULL);
+    piccolo_match, piccolo_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_toshiba2_products[] = {
 	{ 
