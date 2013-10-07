@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.48 2013/07/24 06:28:10 kefren Exp $
+.\"	$NetBSD: route.8,v 1.49 2013/10/07 05:06:45 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -244,19 +244,19 @@ symbolic names.
 .Pp
 The optional modifier
 .Fl tag
-specifies an address associated to the route.
+specifies an address associated with the route.
 How the address is used is specific to the address family of
 the destination and the interface used to forward the packet.
 Currently route tags are consumed only by the
 .Xr mpls 4
-stack, therefore
+stack; therefore
 .Nm
 assumes that the subsequent addresses are in the
 .Tn MPLS
 address family.
 See
 .Xr mpls 4
-for examples about setting routes involving MPLS.
+for examples of setting routes involving MPLS.
 .Pp
 The optional
 .Fl netmask
