@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.148 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.149 2013/10/07 05:19:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.148 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.149 2013/10/07 05:19:23 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -524,7 +524,6 @@ err2:
 	 */
 
 err3:
-	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * XXX should do segwrite here anyway?
 	 */
