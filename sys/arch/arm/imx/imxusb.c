@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.4 2012/11/23 02:17:15 matt Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.5 2013/10/07 17:36:40 matt Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.4 2012/11/23 02:17:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.5 2013/10/07 17:36:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.4 2012/11/23 02:17:15 matt Exp $");
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
+
+#include <arm/pic/picvar.h>	/* XXX: for intr_establish! */
 
 #include <arm/imx/imxusbreg.h>
 #include <arm/imx/imxusbvar.h>
@@ -394,7 +396,9 @@ imxehci_host_mode(struct imxehci_softc *sc)
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC);
 	reg |= OTGSC_IDPU;
-	reg |= OTGSC_DPIE | OTGSC_IDIE;
+	/* disable IDIE not to conflict with SSP1_DETECT. */
+	//reg |= OTGSC_DPIE | OTGSC_IDIE;
+	reg |= OTGSC_DPIE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC, reg);
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE);
