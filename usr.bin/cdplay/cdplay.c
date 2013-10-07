@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.46 2012/01/04 17:26:21 drochner Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.47 2013/10/07 00:16:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.46 2012/01/04 17:26:21 drochner Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.47 2013/10/07 00:16:19 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ static EditLine *elptr;
 
 static int	get_status(int *, int *, int *, int *, int *);
 static void	help(void);
-static int	info(const char *);
+static int	info(void);
 static void	lba2msf(u_long, u_int *, u_int *, u_int *);
 static u_int	msf2lba(u_int, u_int, u_int);
 static int	opencd(void);
@@ -175,11 +175,11 @@ static int	play_blocks(int, int);
 static int	play_digital(int, int);
 static int	play_msf(int, int, int, int, int, int);
 static int	play_track(int, int, int, int);
-static int	print_status(const char *);
+static int	print_status(void);
 static void	print_track(struct cd_toc_entry *);
 static const char	*prompt(void);
 static int	readaudio(int, int, int, u_char *);
-static int	read_toc_entrys(int);
+static int	read_toc_entries(int);
 static int	run(int, const char *);
 static int	start_analog(void);
 static int	start_digital(const char *);
@@ -199,10 +199,11 @@ main(int argc, char **argv)
 	const char *arg;
 	char buf[80], *p;
 	static char defdev[16];
-	int cmd, len, c;
+	int cmd, c;
+	size_t len;
 	char *line;
 	const char *elline;
-	int scratch, rv;
+	int scratch;
 	struct sigaction sa_timer;
 	const char *use_digital = NULL; /* historical default */
 
@@ -255,7 +256,7 @@ main(int argc, char **argv)
 	sigemptyset(&sa_timer.sa_mask);
 	sa_timer.sa_handler = sig_timer;
 	sa_timer.sa_flags = SA_RESTART;
-	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
+	if (sigaction(SIGALRM, &sa_timer, NULL) < 0)
 		err(EXIT_FAILURE, "sigaction()");
 
 	if (use_digital)
@@ -441,11 +442,11 @@ run(int cmd, const char *arg)
 
 	switch (cmd) {
 	case CMD_INFO:
-		rv = info(arg);
+		rv = info();
 		break;
 
 	case CMD_STATUS:
-		rv = print_status(arg);
+		rv = print_status();
 		break;
 
 	case CMD_PAUSE:
@@ -486,14 +487,15 @@ run(int cmd, const char *arg)
 		if (digital)
 			da.playing = 0;
 		if (shuffle)
-			run(CMD_SHUFFLE, NULL);
+			rv = run(CMD_SHUFFLE, NULL);
 		if (ioctl(fd, CDIOCALLOW) < 0)
 			warn("ioctl(CDIOCALLOW)");
 		IOCTL_SIMPLE(fd, CDIOCEJECT);
 		break;
 
 	case CMD_CLOSE:
-		ioctl(fd, CDIOCALLOW);
+		if (ioctl(fd, CDIOCALLOW) < 0)
+			warn("ioctl(CDIOCALLOW)");
 		IOCTL_SIMPLE(fd, CDIOCCLOSE);
 		if (interactive && fd == -1)
 			opencd();
@@ -585,7 +587,7 @@ run(int cmd, const char *arg)
 		if (!shuffle)
 			warnx("`skip' valid only in shuffle mode");
 		else
-			skip(0, 1);
+			rv = skip(0, 1);
 		break;
 
 	case CMD_SET:
@@ -656,7 +658,7 @@ play(const char *arg, int fromuser)
 	end = 0;
 	istart = iend = 1;
 	n = h.ending_track - h.starting_track + 1;
-	rv = read_toc_entrys((n + 1) * sizeof(struct cd_toc_entry));
+	rv = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 	if (rv < 0)
 		return (rv);
 
@@ -968,7 +970,7 @@ strstatus(int sts)
 }
 
 static int
-print_status(const char *arg)
+print_status(void)
 {
 	struct cd_sub_channel_info data;
 	struct ioc_read_subchannel ss;
@@ -1004,7 +1006,7 @@ print_status(const char *arg)
 	ss.address_format = msf ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 	ss.data_format = CD_MEDIA_CATALOG;
 
-	if (!digital && ioctl(fd, CDIOCREADSUBCHANNEL, (char *) &ss) >= 0) {
+	if (!digital && ioctl(fd, CDIOCREADSUBCHANNEL, &ss) >= 0) {
 		printf("media catalog:\t%sactive",
 		    ss.data->what.media_catalog.mc_valid ? "" : "in");
 		if (ss.data->what.media_catalog.mc_valid &&
@@ -1029,7 +1031,7 @@ print_status(const char *arg)
 }
 
 static int
-info(const char *arg)
+info(void)
 {
 	struct ioc_toc_header h;
 	int rc, i, n;
@@ -1040,7 +1042,7 @@ info(const char *arg)
 	}
 
 	n = h.ending_track - h.starting_track + 1;
-	rc = read_toc_entrys((n + 1) * sizeof(struct cd_toc_entry));
+	rc = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 	if (rc < 0)
 		return (rc);
 
@@ -1190,7 +1192,7 @@ setvol(int left, int right)
 }
 
 static int
-read_toc_entrys(int len)
+read_toc_entries(int len)
 {
 	struct ioc_read_toc_entry t;
 	int rv;
@@ -1246,7 +1248,7 @@ get_status(int *trk, int *idx, int *min, int *sec, int *frame)
 		}
 
 		n = h.ending_track - h.starting_track + 1;
-		rc = read_toc_entrys((n + 1) * sizeof(struct cd_toc_entry));
+		rc = read_toc_entries((n + 1) * sizeof(struct cd_toc_entry));
 		if (rc < 0)
 			return (rc);
 	}
