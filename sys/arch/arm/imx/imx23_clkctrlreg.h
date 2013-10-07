@@ -1,4 +1,4 @@
-/* $Id: imx23_clkctrlreg.h,v 1.1 2012/11/20 19:06:13 jkunz Exp $ */
+/* $Id: imx23_clkctrlreg.h,v 1.2 2013/10/07 17:36:40 matt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define HW_CLKCTRL_BASE 0x80040000
+#define HW_CLKCTRL_SIZE	0x2000
 
 /*
  * PLL Control Register 0.
