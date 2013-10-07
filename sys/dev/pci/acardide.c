@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.30 2012/07/31 15:50:35 bouyer Exp $	*/
+/*	$NetBSD: acardide.c,v 1.31 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.30 2012/07/31 15:50:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.31 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ static int  acardide_match(device_t, cfdata_t, void *);
 static void acardide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(acardide, sizeof(struct pciide_softc),
-    acardide_match, acardide_attach, NULL, NULL);
+    acardide_match, acardide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP850U,

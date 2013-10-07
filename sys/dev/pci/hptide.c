@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: hptide.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ static int  hptide_match(device_t, cfdata_t, void *);
 static void hptide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(hptide, sizeof(struct pciide_softc),
-    hptide_match, hptide_attach, NULL, NULL);
+    hptide_match, hptide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT302,

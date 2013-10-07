@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: siside.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int  siside_match(device_t, cfdata_t, void *);
 static void siside_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(siside, sizeof(struct pciide_softc),
-    siside_match, siside_attach, NULL, NULL);
+    siside_match, siside_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_sis_products[] =  {
 	{ PCI_PRODUCT_SIS_5597_IDE,

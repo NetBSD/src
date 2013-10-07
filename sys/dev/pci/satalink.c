@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.50 2013/09/15 13:49:25 martin Exp $	*/
+/*	$NetBSD: satalink.c,v 1.51 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.50 2013/09/15 13:49:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.51 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ static int  satalink_match(device_t, cfdata_t, void *);
 static void satalink_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(satalink, sizeof(struct pciide_softc),
-    satalink_match, satalink_attach, NULL, NULL);
+    satalink_match, satalink_attach, pciide_detach, NULL);
 
 static void sii3112_chip_map(struct pciide_softc*,
     const struct pci_attach_args*);

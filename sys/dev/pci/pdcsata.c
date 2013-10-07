@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.25 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.26 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.25 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.26 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -71,7 +71,7 @@ static int  pdcsata_match(device_t, cfdata_t, void *);
 static void pdcsata_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pdcsata, sizeof(struct pciide_softc),
-    pdcsata_match, pdcsata_attach, NULL, NULL);
+    pdcsata_match, pdcsata_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20318,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.14 2012/07/31 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.15 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.14 2012/07/31 15:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.15 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ static const uint32_t gcscide_udma_timings[] = {
 };
 
 CFATTACH_DECL_NEW(gcscide, sizeof(struct pciide_softc),
-    gcscide_match, gcscide_attach, NULL, NULL);
+    gcscide_match, gcscide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_gcscide_products[] = {
 	{

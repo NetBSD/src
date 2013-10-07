@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.25 2013/10/07 19:51:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.25 2013/10/07 19:51:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ static int  geodeide_match(device_t, cfdata_t, void *);
 static void geodeide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(geodeide, sizeof(struct pciide_softc),
-    geodeide_match, geodeide_attach, NULL, NULL);
+    geodeide_match, geodeide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_geode_products[] = {
 	{ PCI_PRODUCT_CYRIX_CX5530_IDE,
