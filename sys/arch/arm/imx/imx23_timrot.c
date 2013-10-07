@@ -1,4 +1,4 @@
-/* $Id: imx23_timrot.c,v 1.2 2012/12/16 19:40:00 jkunz Exp $ */
+/* $Id: imx23_timrot.c,v 1.3 2013/10/07 17:36:40 matt Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ setstatclockrate(int newhz)
 	sc->freq = newhz;
 
 	TIMER_WRITE_2(sc, TIMER_COUNT,
-	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq,
+	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq - 1,
 	    HW_TIMROT_TIMCOUNT0_FIXED_COUNT));
 
 	return;
@@ -254,7 +254,7 @@ timer_init(struct timrot_softc *sc)
 	uint32_t ctrl;
 
 	TIMER_WRITE_2(sc, TIMER_COUNT,
-	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq,
+	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq - 1,
 	    HW_TIMROT_TIMCOUNT0_FIXED_COUNT));
 	ctrl = IRQ_EN | UPDATE | RELOAD | SELECT_32KHZ;
 	TIMER_WRITE(sc, TIMER_CTRL, ctrl);
