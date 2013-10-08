@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.144 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.145 2013/10/08 15:09:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.144 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.145 2013/10/08 15:09:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.144 2013/08/29 17:49:21 rmind Exp 
  *   that had referenced it have also been destroyed.
  */
 const struct sockaddr_un sun_noname = {
-	.sun_len = sizeof(sun_noname),
+	.sun_len = offsetof(struct sockaddr_un, sun_path),
 	.sun_family = AF_LOCAL,
 };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
@@ -438,8 +438,14 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * after it's been accepted.  This prevents a client from
 		 * overrunning a server and receiving ECONNREFUSED.
 		 */
-		if (unp->unp_conn == NULL)
+		if (unp->unp_conn == NULL) {
+			/*
+			 * This will use the empty socket and will not
+			 * allocate.
+			 */
+			unp_setaddr(so, nam, true);
 			break;
+		}
 		so2 = unp->unp_conn->unp_socket;
 		if (so2->so_state & SS_ISCONNECTING) {
 			KASSERT(solocked2(so, so->so_head));
