@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.145 2013/10/08 15:09:51 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.146 2013/10/08 17:21:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.145 2013/10/08 15:09:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.146 2013/10/08 17:21:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,6 +882,29 @@ unp_detach(struct unpcb *unp)
 		unp_free(unp);
 }
 
+/*
+ * Allocate the new sockaddr.  We have to allocate one
+ * extra byte so that we can ensure that the pathname
+ * is nul-terminated. Note that unlike linux, we don't
+ * include in the address length the NUL in the path
+ * component, because doing so, would exceed sizeof(sockaddr_un)
+ * for fully occupied pathnames. Linux is also inconsistent,
+ * because it does not include the NUL in the length of
+ * what it calls "abstract" unix sockets.
+ */
+static struct sockaddr_un *
+makeun(struct mbuf *nam, size_t *addrlen) {
+	struct sockaddr_un *sun;
+
+	*addrlen = nam->m_len + 1;
+	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
+	m_copydata(nam, 0, nam->m_len, (void *)sun);
+	*(((char *)sun) + nam->m_len) = '\0';
+	sun->sun_len = strlen(sun->sun_path) +
+	    offsetof(struct sockaddr_un, sun_path);
+	return sun;
+}
+
 int
 unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
@@ -908,16 +931,8 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate the new sockaddr.  We have to allocate one
-	 * extra byte so that we can ensure that the pathname
-	 * is nul-terminated.
-	 */
 	p = l->l_proc;
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
+	sun = makeun(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
@@ -996,17 +1011,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	/*
-	 * Allocate a temporary sockaddr.  We have to allocate one extra
-	 * byte so that we can ensure that the pathname is nul-terminated.
-	 * When we establish the connection, we copy the other PCB's
-	 * sockaddr to our own.
-	 */
-	addrlen = nam->m_len + 1;
-	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
-
+	sun = makeun(nam, &addrlen);
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
 		error = ENOMEM;
