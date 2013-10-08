@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.7 2013/10/08 18:05:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,8 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.7 2013/10/08 18:05:31 christos Exp $");
 
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
@@ -46,8 +49,7 @@ __RCSID("$Id: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $");
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#include <stdbool.h>
 
 #ifdef TEST
 #define FAIL(msg, ...)	err(EXIT_FAILURE, msg, ## __VA_ARGS__)
@@ -58,7 +60,30 @@ __RCSID("$Id: t_unix.c,v 1.6 2011/10/04 16:28:26 christos Exp $");
 
 #endif
 
-static __dead int
+#define OF offsetof(struct sockaddr_un, sun_path)
+
+static void
+print(const char *msg, struct sockaddr_un *addr, socklen_t len)
+{
+	size_t i;
+
+	printf("%s: client socket length: %zu\n", msg, (size_t)len);
+	printf("%s: client family %d\n", msg, addr->sun_family);
+#ifdef BSD4_4
+	printf("%s: client len %d\n", msg, addr->sun_len);
+#endif
+	printf("%s: socket name: ", msg);
+	for (i = 0; i < len - OF; i++) {
+		int ch = addr->sun_path[i];
+		if (ch < ' ' || '~' < ch)
+			printf("\\x%02x", ch);
+		else
+			printf("%c", ch);
+	}
+	printf("\n");
+}
+
+static int
 acc(int s)
 {
 	char guard1;
@@ -68,32 +93,50 @@ acc(int s)
 
 	guard1 = guard2 = 's';
 
+	memset(&sun, 0, sizeof(sun));
 	len = sizeof(sun);
-	if (accept(s, (struct sockaddr *)&sun, &len) == -1)
+	if ((s = accept(s, (struct sockaddr *)&sun, &len)) == -1)
 		FAIL("accept");
 	if (guard1 != 's')
-		errx(EXIT_FAILURE, "guard1 = '%c'", guard1);
+		FAIL("guard1 = '%c'", guard1);
 	if (guard2 != 's')
-		errx(EXIT_FAILURE, "guard2 = '%c'", guard2);
-	close(s);
-	exit(0);
+		FAIL("guard2 = '%c'", guard2);
+	print("accept", &sun, len);
+	if (len != 2)
+		FAIL("len %d != 2", len);
+	if (sun.sun_family != AF_UNIX)
+		FAIL("sun->sun_family %d != AF_UNIX", sun.sun_family);
+#ifdef BSD4_4
+	if (sun.sun_len != 2)
+		FAIL("sun->sun_len %d != 2", sun.sun_len);
+#endif
+	for (size_t i = 0; i < sizeof(sun.sun_path); i++)
+		if (sun.sun_path[i])
+			FAIL("sun.sun_path[%zu] %d != NULL", i,
+			    sun.sun_path[i]);
+	return s;
 }
 
 static int
-test(size_t len)
+test(bool closeit, size_t len)
 {
-	struct sockaddr_un *sun;
-	int s, s2;
 	size_t slen;
 	socklen_t sl;
+	int srvr, clnt, acpt;
+	struct sockaddr_un *sock_addr, *sun;
+	socklen_t sock_addrlen;
 
-	slen = len + offsetof(struct sockaddr_un, sun_path) + 1;
+	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (srvr == -1)
+		FAIL("socket(srvrer)");
+
+	slen = len + OF + 1;
 	
 	if ((sun = calloc(1, slen)) == NULL)
 		FAIL("calloc");
 
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (s == -1)
+	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (srvr == -1)
 		FAIL("socket");
 
 	memset(sun->sun_path, 'a', len);
@@ -104,31 +147,76 @@ test(size_t len)
 	sun->sun_len = sl;
 	sun->sun_family = AF_UNIX;
 
-	if (bind(s, (struct sockaddr *)sun, sl) == -1) {
+	if (bind(srvr, (struct sockaddr *)sun, sl) == -1) {
 		if (errno == EINVAL && sl >= 256)
 			return -1;
 		FAIL("bind");
 	}
 
-	if (listen(s, 5) == -1)
+	if (listen(srvr, SOMAXCONN) == -1)
 		FAIL("listen");
 
-	switch (fork()) {
-	case -1:
-		FAIL("fork");
-	case 0:
-		acc(s);
-		/*NOTREACHED*/
-	default:
-		sleep(1);
-		s2 = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (s2 == -1)
-			FAIL("socket");
-		if (connect(s2, (struct sockaddr *)sun, sl) == -1)
-			FAIL("connect");
-		close(s2);
-		break;
+	clnt = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (clnt == -1)
+		FAIL("socket(client)");
+
+	if (connect(clnt, (const struct sockaddr *)sun, sl) == -1)
+		FAIL("connect");
+
+	if (closeit) {
+		if (close(clnt) == -1)
+			FAIL("close");
 	}
+
+	acpt = acc(srvr);
+#if 0
+	/*
+	 * Both linux and NetBSD return ENOTCONN, why?
+	 */
+	if (!closeit) {
+		socklen_t peer_addrlen;
+		sockaddr_un peer_addr;
+
+		peer_addrlen = sizeof(peer_addr);
+		memset(&peer_addr, 0, sizeof(peer_addr));
+		if (getpeername(srvr, (struct sockaddr *)&peer_addr,
+		    &peer_addrlen) == -1)
+			FAIL("getpeername");
+		print("peer", &peer_addr, peer_addrlen);
+	}
+#endif
+
+	if ((sock_addr = calloc(1, slen)) == NULL)
+		FAIL("calloc");
+	sock_addrlen = slen;
+	if (getsockname(srvr, (struct sockaddr *)sock_addr, &sock_addrlen)
+	    == -1)
+		FAIL("getsockname");
+	print("sock", sock_addr, sock_addrlen);
+
+	if (sock_addr->sun_family != AF_UNIX)
+		FAIL("sock_addr->sun_family %d != AF_UNIX",
+		    sock_addr->sun_family);
+
+	len += OF;
+	if (sock_addrlen != len)
+		FAIL("sock_addr_len %zu != %zu", (size_t)sock_addrlen, len);
+#ifdef BSD4_4
+	if (sock_addr->sun_len != sl)
+		FAIL("sock_addr.sun_len %d != %zu", sock_addr->sun_len,
+		    (size_t)sl);
+#endif
+	for (size_t i = 0; i < slen - OF; i++)
+		if (sock_addr->sun_path[i] != sun->sun_path[i])
+			FAIL("sock_addr.sun_path[%zu] %d != "
+			    "sun->sun_path[%zu] %d\n", i, 
+			    sock_addr->sun_path[i], i, sun->sun_path[i]);
+
+	(void)close(acpt);
+	(void)close(srvr);
+	if (!closeit)
+		(void)close(clnt);
+
 	return 0;
 }
 
@@ -145,7 +233,8 @@ ATF_TC_HEAD(sockaddr_un_len_exceed, tc)
 
 ATF_TC_BODY(sockaddr_un_len_exceed, tc)
 {
-	ATF_REQUIRE_MSG(test(254) == -1, "test(254): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(false, 254) == -1, "test(false, 254): %s",
+	    strerror(errno));
 }
 
 ATF_TC(sockaddr_un_len_max);
@@ -159,7 +248,22 @@ ATF_TC_HEAD(sockaddr_un_len_max, tc)
 
 ATF_TC_BODY(sockaddr_un_len_max, tc)
 {
-	ATF_REQUIRE_MSG(test(253) == 0, "test(253): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(false, 253) == 0, "test(false, 253): %s",
+	    strerror(errno));
+}
+
+ATF_TC(sockaddr_un_closed);
+ATF_TC_HEAD(sockaddr_un_closed, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that we can use the accepted "
+	    "address of unix domain socket when closed");
+}
+
+ATF_TC_BODY(sockaddr_un_closed, tc)
+{
+	ATF_REQUIRE_MSG(test(true, 100) == 0, "test(true, 100): %s",
+	    strerror(errno));
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -167,6 +271,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, sockaddr_un_len_exceed);
 	ATF_TP_ADD_TC(tp, sockaddr_un_len_max);
+	ATF_TP_ADD_TC(tp, sockaddr_un_closed);
 	return atf_no_error();
 }
 #else
