@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.133 2013/09/10 17:40:54 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.134 2013/10/08 11:47:57 njoly Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -41,7 +41,7 @@ case $# in
 esac
 
 # the config file sets the following variables:
-#	sysalign	check for alignment of off_t
+#	sysalign	check for alignment of off_t/dev_t/time_t
 #	sysnames	the syscall names file
 #	sysnumhdr	the syscall numbers file
 #	syssw		the syscall switch file
