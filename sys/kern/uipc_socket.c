@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.217 2013/08/29 17:49:21 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.218 2013/10/08 14:54:29 seanb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.217 2013/08/29 17:49:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.218 2013/10/08 14:54:29 seanb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1906,6 +1906,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
+	case SO_ACCEPTCONN:
 		error = sockopt_setint(sopt, (so->so_options & opt) ? 1 : 0);
 		break;
 
