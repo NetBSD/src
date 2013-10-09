@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.51 2013/10/09 17:20:54 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.50 2013/01/10 22:06:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.51 2013/10/09 17:20:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,6 +394,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		
 		case WSDISPLAYIO_SSPLASH:
 #if defined(SPLASHSCREEN)
 			if(*(int *)data == 1) {
@@ -452,10 +453,17 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    sc->sc_backlight->gpc_cookie, val);
 			}
 			return EPASSTHROUGH;
+		
 		case WSDISPLAYIO_GET_EDID: {
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
+	
+		case WSDISPLAYIO_GET_FBINFO: {
+			struct wsdisplayio_fbinfo *fbi = data;
+			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+		}
+		
 		default:
 			if (sc->sc_ops.genfb_ioctl)
 				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,

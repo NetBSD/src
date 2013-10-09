@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.88 2013/07/30 19:21:50 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.89 2013/10/09 17:18:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.88 2013/07/30 19:21:50 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.89 2013/10/09 17:18:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1912,6 +1912,11 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
 	return EPASSTHROUGH;
