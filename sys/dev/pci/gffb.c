@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.4 2013/10/09 12:03:29 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.5 2013/10/09 17:18:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.4 2013/10/09 12:03:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.5 2013/10/09 17:18:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,6 +433,11 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
 	return EPASSTHROUGH;

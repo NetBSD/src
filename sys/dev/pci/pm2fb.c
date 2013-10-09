@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.24 2013/09/15 09:34:07 martin Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.25 2013/10/09 17:18:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.24 2013/09/15 09:34:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.25 2013/10/09 17:18:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,6 +525,11 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (d->buffer_size < 128)
 			return EAGAIN;
 		return copyout(sc->sc_edid_data, d->edid_data, 128);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
 	return EPASSTHROUGH;

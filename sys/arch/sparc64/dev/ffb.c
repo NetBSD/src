@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.54 2013/09/12 19:57:43 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.55 2013/10/09 17:21:39 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.54 2013/09/12 19:57:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.55 2013/10/09 17:21:39 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -494,6 +494,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_GVIDEO:
 		return(ffb_blank(sc, cmd, (u_int *)data));
 		break;
+	
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -501,10 +502,17 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_SCURSOR:
 		return EIO; /* not supported yet */
 		break;
+	
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
 	}
+	
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
+	
 	default:
 		return EPASSTHROUGH;
 	}
