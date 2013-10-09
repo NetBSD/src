@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.2 2013/10/02 16:35:38 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.3 2013/10/09 01:28:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.2 2013/10/02 16:35:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.3 2013/10/09 01:28:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,9 @@ struct gffb_softc {
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
 	int sc_put, sc_current, sc_free;
+	uint32_t sc_rop;
+	void (*sc_putchar)(void *, int, int, u_int, long);
+	kmutex_t sc_lock;
 	glyphcache sc_gc;
 };
 
@@ -119,22 +122,20 @@ static int 	gffb_putpalreg(struct gffb_softc *, uint8_t, uint8_t,
 static void	gffb_init(struct gffb_softc *);
 
 static void	gffb_make_room(struct gffb_softc *, int);
+static void	gffb_sync(struct gffb_softc *);
 
-#if notyet
-static void	gffb_flush_engine(struct gffb_softc *);
 static void	gffb_rectfill(struct gffb_softc *, int, int, int, int,
 			    uint32_t);
 static void	gffb_bitblt(void *, int, int, int, int, int,
 			    int, int);
+static void	gffb_rop(struct gffb_softc *, int);
 
 static void	gffb_cursor(void *, int, int, int);
 static void	gffb_putchar(void *, int, int, u_int, long);
-static void	gffb_putchar_aa(void *, int, int, u_int, long);
 static void	gffb_copycols(void *, int, int, int, int);
 static void	gffb_erasecols(void *, int, int, int, long);
 static void	gffb_copyrows(void *, int, int, int);
 static void	gffb_eraserows(void *, int, int, long);
-#endif /* notyet */
 
 struct wsdisplay_accessops gffb_accessops = {
 	gffb_ioctl,
@@ -198,7 +199,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef GLYPHCACHE_DEBUG
 	/* leave some visible VRAM unused so we can see the glyph cache */
-	sc->sc_height -= 200;
+	sc->sc_height -= 300;
 #endif
 
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
@@ -243,54 +244,59 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_locked = 0;
 
-	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
-	    &gffb_accessops);
-	sc->vd.init_screen = gffb_init_screen;
-
 	sc->sc_vramsize = bus_space_read_4(sc->sc_memt, sc->sc_regh,
 	    GFFB_VRAM) & 0xfff00000;
 
 	printf("vram: %d MB\n", sc->sc_vramsize >> 20);
+#ifdef GFFB_DEBUG
 	printf("put: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT));
 	printf("get: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET));
-	/* init engine here */
+#endif
+
+	/*
+	 * we don't have hardware synchronization so we need a lock to serialize
+	 * access to the DMA buffer between normal and kernel output
+	 * actually it might be enough to use atomic ops on sc_current, sc_free
+	 * etc. but for now we'll play it safe
+	 * XXX we will probably deadlock if we take an interrupt while sc_lock
+	 * is held and then try to printf()
+	 */
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* init engine here */	
 	gffb_init(sc);
-	printf("put: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT));
-	printf("get: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET));
+
+	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
+	    &gffb_accessops);
+	sc->vd.init_screen = gffb_init_screen;
+
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-#if notyet
 	sc->sc_gc.gc_bitblt = gffb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
-	sc->sc_gc.gc_rop = R128_ROP3_S;
-#endif
+	sc->sc_gc.gc_rop = 0xcc;
 
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-#if notyet
 		gffb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-#else
-		memset(sc->sc_fbaddr + 0x2000,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff],
-		    sc->sc_height * sc->sc_stride);
-#endif
+		    ri->ri_devcmap[(defattr >> 16) & 0xf]);
+		
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-#if notyet
+		
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-#endif
+		
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
@@ -305,14 +311,13 @@ gffb_attach(device_t parent, device_t self, void *aux)
 			    &defattr);
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-#if notyet
+		
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-#endif
 	}
 
 	j = 0;
@@ -334,6 +339,30 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+
+#ifdef GFFB_DEBUG
+	for (i = 0; i < 40; i++) {
+		for (j = 0; j < 40; j++) {
+			gffb_rectfill(sc, i * 20, j * 20, 20, 20,
+			    (i + j ) & 1 ? 0xe0e0e0e0 : 0x03030303);
+		}
+	}
+	
+	//gffb_bitblt(sc, 0, 800, 10, 10, 400, 300, 0xcc);
+	gffb_rectfill(sc, 0, 800, 1280, 224, 0x92929292);
+	gffb_bitblt(sc, 0, 10, 10, 810, 200, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 10, 840, 300, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 10, 870, 400, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 10, 900, 500, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 10, 930, 600, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 610, 810, 200, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 610, 840, 300, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 610, 870, 400, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 610, 900, 500, 20, 0xcc);
+	gffb_bitblt(sc, 0, 10, 610, 930, 600, 20, 0xcc);
+	gffb_sync(sc);
+	printf("put %x current %x\n", sc->sc_put, sc->sc_current);
+#endif
 }
 
 static int
@@ -389,12 +418,10 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				gffb_init(sc);
 				gffb_restore_palette(sc);
-#if notyet
 				glyphcache_wipe(&sc->sc_gc);
 				gffb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
-				    (ms->scr_defattr >> 16) & 0xff]);
-#endif
+				    (ms->scr_defattr >> 16) & 0xf]);
 				vcons_redraw_screen(ms);
 			}
 		}
@@ -486,23 +513,22 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
+#if 0
 	scr->scr_flags |= VCONS_DONT_READ;
+#endif
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
-#if notyet
+
+	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = gffb_copyrows;
 	ri->ri_ops.copycols = gffb_copycols;
 	ri->ri_ops.eraserows = gffb_eraserows;
 	ri->ri_ops.erasecols = gffb_erasecols;
 	ri->ri_ops.cursor = gffb_cursor;
-	if (FONT_IS_ALPHA(ri->ri_font)) {
-		ri->ri_ops.putchar = gffb_putchar_aa;
-	} else
-		ri->ri_ops.putchar = gffb_putchar;
-#endif
+	ri->ri_ops.putchar = gffb_putchar;
 }
 
 static int
@@ -514,7 +540,7 @@ gffb_putcmap(struct gffb_softc *sc, struct wsdisplay_cmap *cm)
 	int i, error;
 	u_char rbuf[256], gbuf[256], bbuf[256];
 
-#ifdef R128FB_DEBUG
+#ifdef GFFB_DEBUG
 	aprint_debug("putcmap: %d %d\n",index, count);
 #endif
 	if (cm->index >= 256 || cm->count > 256 ||
@@ -619,6 +645,7 @@ gffb_dma_kickoff(struct gffb_softc *sc)
 		scratch = *sc->sc_fbaddr;
 		bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT,
 		    sc->sc_put);
+		membar_sync();
 	}
 }
 
@@ -662,26 +689,26 @@ gffb_make_room(struct gffb_softc *sc, int size)
 			sc->sc_free = 0x2000 - sc->sc_current;
 			if (sc->sc_free < size) {
 				gffb_dmanext(sc, 0x20000000);
-				if(get <= SKIPS) {
-					if (sc->sc_put <= SKIPS) {
+				if(get <= (SKIPS << 2)) {
+					if (sc->sc_put <= (SKIPS << 2)) {
 						/* corner case - will be idle */
 						bus_space_write_4(sc->sc_memt,
 						    sc->sc_regh, GFFB_FIFO_PUT,
-						    SKIPS + 1);
+						    (SKIPS + 1) << 2);
 					}
 					do {
 						get = bus_space_read_4(
 						    sc->sc_memt, sc->sc_regh,
 						    GFFB_FIFO_GET);
-					} while (get <= SKIPS);
+					} while (get <= (SKIPS << 2));
 				}
 				bus_space_write_4(sc->sc_memt, sc->sc_regh,
-				     GFFB_FIFO_PUT, SKIPS);
-				sc->sc_current = sc->sc_put = SKIPS;
-				sc->sc_free = get - (SKIPS + 1);
+				     GFFB_FIFO_PUT, SKIPS << 2);
+				sc->sc_current = sc->sc_put = (SKIPS << 2);
+				sc->sc_free = get - ((SKIPS + 1) << 2);
 			}
 		} else
-			sc->sc_free = get - sc->sc_current - 1;
+			sc->sc_free = get - sc->sc_current - 4;
 	}
 }
 
@@ -689,28 +716,41 @@ static void
 gffb_sync(struct gffb_softc *sc)
 {
 	int bail;
+	int i;
 
-	bail = 100000;
+	gffb_dma_kickoff(sc);	/* just in case */
+
+	bail = 100000000;
 	while ((bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET) !=
 	    sc->sc_put) && (bail > 0)) {
+#if 0
 		bail--;
-		delay(1);
+#endif
 	}
-	if (bail == 0) printf("DMA timed out\n");
+	if (bail == 0) goto crap;
 
-	bail = 100000;
+	bail = 100000000;
 	while((bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_BUSY) != 0) &&
 	    (bail > 0)) {
+#if 0
 		bail--;
-		delay(1);
+#endif
 	}
-	if (bail == 0) printf("engine timed out\n");
+	if (bail == 0) goto crap;
+	return;
+crap:
+	sc->sc_put = 0;
+	sc->sc_current = 0;
+	for (i = 0; i < 0x2000; i += 4)
+		bus_space_write_stream_4(sc->sc_memt, sc->sc_fbh, i, 0);
+//	printf("DMA lockup\n");	
 }
 
 static void
 gffb_init(struct gffb_softc *sc)
 {
 	int i;
+	uint32_t foo;
 
 	/* init display start */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh,
@@ -736,6 +776,14 @@ gffb_init(struct gffb_softc *sc)
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 		    GFFB_PMC + 0x244 + (i * 0x10), sc->sc_vramsize - 1);
 	}
+
+	for (i = 0; i < 8; i++) {
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    GFFB_PFB + 0x0240 + (i * 0x10), 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    GFFB_PFB + 0x0244 + (i * 0x10), sc->sc_vramsize - 1);
+	}
+
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN, 0x80000010);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x04, 0x80011201);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x08, 0x80000011);
@@ -793,7 +841,19 @@ gffb_init(struct gffb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2094, 0x00007fff);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2098, 0x00000002);	/* start of command buffer? */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x209c, 0x00000002);
-	/* __BIG_ENDIAN part? */
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2010, 0x01088042);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2020, 0x01088043);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2030, 0x01088044);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2040, 0x01088019);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2050, 0x0108a05c);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2060, 0x0108809f);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2070, 0x0108804a);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2080, 0x01098077);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2034, 0x00000001);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PRAMIN + 0x2074, 0x00000001);
+#endif
+
 	/* PGRAPH setup */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0500, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0504, 0x00000001);
@@ -826,6 +886,46 @@ gffb_init(struct gffb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x1254, 0x00000001);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PFIFO + 0x0500, 0x00000001);
 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0080, 0xFFFFFFFF);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0080, 0x00000000);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0140, 0x00000000);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0100, 0xFFFFFFFF);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0144, 0x10010100);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0714, 0xFFFFFFFF);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0720, 0x00000001);
+	foo = bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0710);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0710,
+	    foo & 0x0007ff00);
+	foo = bus_space_read_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0710);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0710,
+	    foo | 0x00020100);
+
+	/* NV_ARCH_10 */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0084, 0x00118700);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0088, 0x24E00810);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x008C, 0x55DE0030);
+
+	for(i = 0; i < 128; i += 4) {
+		bus_space_write_4(sc->sc_memt, sc->sc_regh,
+		    GFFB_PGRAPH + 0x0B00 + i,
+		    bus_space_read_4(sc->sc_memt, sc->sc_regh,
+		      GFFB_PFB + 0x0240 + i));
+	}
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x640, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x644, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x684, sc->sc_vramsize - 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x688, sc->sc_vramsize - 1);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0810, 0x00000000);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0608, 0xFFFFFFFF);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x053C, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0540, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0544, 0x00007FFF);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_PGRAPH + 0x0548, 0x00007FFF);
+
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_CMDSTART, 0x00000002);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, GFFB_FIFO_GET, 0);
 	sc->sc_put = 0;
@@ -856,17 +956,222 @@ gffb_init(struct gffb_softc *sc)
 	gffb_dmastart(sc, SURFACE_FORMAT, 4);
 	gffb_dmanext(sc, SURFACE_FORMAT_DEPTH8);
 	gffb_dmanext(sc, sc->sc_stride | (sc->sc_stride << 16));
-	gffb_dmanext(sc, 0);
-	gffb_dmanext(sc, 0);
+	gffb_dmanext(sc, 0x2000);	/* src offset */
+	gffb_dmanext(sc, 0x2000);	/* dst offset */
 
 	gffb_dmastart(sc, RECT_FORMAT, 1);
 	gffb_dmanext(sc, RECT_FORMAT_DEPTH8);
 
+	gffb_dmastart(sc, PATTERN_FORMAT, 1);
+	gffb_dmanext(sc, PATTERN_FORMAT_DEPTH8);
+
+	gffb_dmastart(sc, PATTERN_COLOR_0, 4);
+	gffb_dmanext(sc, 0xffffffff);
+	gffb_dmanext(sc, 0xffffffff);
+	gffb_dmanext(sc, 0xffffffff);
+	gffb_dmanext(sc, 0xffffffff);
+	
 	gffb_dmastart(sc, ROP_SET, 1);
 	gffb_dmanext(sc, 0xcc);
+	sc->sc_rop = 0xcc;
 
 	gffb_dma_kickoff(sc);
 	gffb_sync(sc);
 	printf("put %x current %x\n", sc->sc_put, sc->sc_current);
+	
 }
 
+static void
+gffb_rop(struct gffb_softc *sc, int rop)
+{
+	if (rop == sc->sc_rop)
+		return;
+	sc->sc_rop = rop;
+	gffb_dmastart(sc, ROP_SET, 1);
+	gffb_dmanext(sc, rop);
+}	
+
+static void
+gffb_rectfill(struct gffb_softc *sc, int x, int y, int wi, int he,
+     uint32_t colour)
+{
+	mutex_enter(&sc->sc_lock);
+	gffb_rop(sc, 0xcc);
+
+	gffb_dmastart(sc, RECT_SOLID_COLOR, 1);
+	gffb_dmanext(sc, colour);
+
+	gffb_dmastart(sc, RECT_SOLID_RECTS(0), 2);
+	gffb_dmanext(sc, (x << 16) | y);
+	gffb_dmanext(sc, (wi << 16) | he);
+	gffb_dma_kickoff(sc);
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+gffb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
+    int wi, int he, int rop)
+{
+	struct gffb_softc *sc = cookie;
+
+	mutex_enter(&sc->sc_lock);
+
+	gffb_rop(sc, rop);
+
+	gffb_dmastart(sc, BLIT_POINT_SRC, 3);
+	gffb_dmanext(sc, (ys << 16) | xs);
+	gffb_dmanext(sc, (yd << 16) | xd);
+	gffb_dmanext(sc, (he << 16) | wi);
+	gffb_dma_kickoff(sc);
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+gffb_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		if (ri->ri_flg & RI_CURSOR) {
+			gffb_bitblt(sc, x, y, x, y, wi, he, 0x33);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			gffb_bitblt(sc, x, y, x, y, wi, he, 0x33);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		scr->scr_ri.ri_crow = row;
+		scr->scr_ri.ri_ccol = col;
+		scr->scr_ri.ri_flg &= ~RI_CURSOR;
+	}
+
+}
+
+static void
+gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he, rv = GC_NOPE;
+	uint32_t bg;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+	
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	
+	if (c == 0x20) {
+		gffb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	mutex_enter(&sc->sc_lock);
+	gffb_sync(sc);
+	sc->sc_putchar(cookie, row, col, c, attr);
+	membar_sync();
+	mutex_exit(&sc->sc_lock);
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
+}
+
+static void
+gffb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		gffb_bitblt(sc, xs, y, xd, y, width, height, 0xcc);
+	}
+}
+
+static void
+gffb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		gffb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+}
+
+static void
+gffb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		gffb_bitblt(sc, x, ys, x, yd, width, height, 0xcc);
+	}
+}
+
+static void
+gffb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		gffb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+}
