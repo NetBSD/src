@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.45 2013/07/30 19:21:50 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.46 2013/10/09 17:18:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.45 2013/07/30 19:21:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.46 2013/10/09 17:18:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1196,6 +1196,12 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
+		/* XXX WSDISPLAYIO_GET_EDID */
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+	}
 	}
 	return EPASSTHROUGH;
 }
