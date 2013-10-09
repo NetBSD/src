@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.152 2013/09/20 19:13:39 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.153 2013/10/09 20:15:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.152 2013/09/20 19:13:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.153 2013/10/09 20:15:20 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -586,6 +586,7 @@ m_get(int nowait, int type)
 	mowner_init(m, type);
 	m->m_ext_ref = m;
 	m->m_type = type;
+	m->m_len = 0;
 	m->m_next = NULL;
 	m->m_nextpkt = NULL;
 	m->m_data = m->m_dat;
@@ -606,6 +607,7 @@ m_gethdr(int nowait, int type)
 	m->m_data = m->m_pktdat;
 	m->m_flags = M_PKTHDR;
 	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.len = 0;
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 	SLIST_INIT(&m->m_pkthdr.tags);
@@ -618,7 +620,7 @@ m_getclr(int nowait, int type)
 {
 	struct mbuf *m;
 
-	MGET(m, nowait, type);
+	m = m_get(nowait, type);
 	if (m == 0)
 		return (NULL);
 	memset(mtod(m, void *), 0, MLEN);
@@ -681,7 +683,7 @@ m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
 
-	MGET(mn, how, m->m_type);
+	mn = m_get(how, m->m_type);
 	if (mn == NULL) {
 		m_freem(m);
 		return (NULL);
@@ -749,7 +751,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				    len);
 			break;
 		}
-		MGET(n, wait, m->m_type);
+		n = m_get(wait, m->m_type);
 		*np = n;
 		if (n == 0)
 			goto nospace;
@@ -773,7 +775,6 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				 * copy into multiple MCLBYTES cluster mbufs.
 				 */
 				MCLGET(n, wait);
-				n->m_len = 0;
 				n->m_len = M_TRAILINGSPACE(n);
 				n->m_len = min(n->m_len, len);
 				n->m_len = min(n->m_len, m->m_len - off);
@@ -814,7 +815,7 @@ m_copypacket(struct mbuf *m, int how)
 {
 	struct mbuf *top, *n, *o;
 
-	MGET(n, how, m->m_type);
+	n = m_get(how, m->m_type);
 	top = n;
 	if (!n)
 		goto nospace;
@@ -831,7 +832,7 @@ m_copypacket(struct mbuf *m, int how)
 
 	m = m->m_next;
 	while (m) {
-		MGET(o, how, m->m_type);
+		o = m_get(how, m->m_type);
 		if (!o)
 			goto nospace;
 
@@ -1026,12 +1027,11 @@ m_ensure_contig(struct mbuf **m0, int len)
 		if (len > MHLEN) {
 			return false;
 		}
-		MGET(m, M_DONTWAIT, n->m_type);
+		m = m_get(M_DONTWAIT, n->m_type);
 		if (m == NULL) {
 			return false;
 		}
 		MCLAIM(m, n->m_owner);
-		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
 			M_MOVE_PKTHDR(m, n);
 		}
@@ -1091,11 +1091,10 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 
 	if (len > (MHLEN - dstoff))
 		goto bad;
-	MGET(m, M_DONTWAIT, n->m_type);
+	m = m_get(M_DONTWAIT, n->m_type);
 	if (m == NULL)
 		goto bad;
 	MCLAIM(m, n->m_owner);
-	m->m_len = 0;
 	if (n->m_flags & M_PKTHDR) {
 		M_MOVE_PKTHDR(m, n);
 	}
@@ -1150,9 +1149,9 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		return (NULL);
 	remain = m->m_len - len;
 	if (copyhdr && (m0->m_flags & M_PKTHDR)) {
-		MGETHDR(n, wait, m0->m_type);
-		if (n == 0)
-			return (NULL);
+		n = m_gethdr(wait, m0->m_type);
+		if (n == NULL)
+			return NULL;
 		MCLAIM(n, m0->m_owner);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
@@ -1178,7 +1177,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		m->m_next = 0;
 		return (n);
 	} else {
-		MGET(n, wait, m->m_type);
+		n = m_get(wait, m->m_type);
 		if (n == 0)
 			return (NULL);
 		MCLAIM(n, m->m_owner);
@@ -1220,16 +1219,16 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 		cp += off + 2 * sizeof(uint16_t);
 		totlen -= 2 * sizeof(uint16_t);
 	}
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return (NULL);
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 
 	while (totlen > 0) {
 		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
+			m = m_get(M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
 				return (NULL);
@@ -1370,7 +1369,7 @@ m_defrag(struct mbuf *mold, int flags)
 		panic("m_defrag: not a mbuf chain header");
 #endif
 
-	MGETHDR(m0, flags, MT_DATA);
+	m0 = m_gethdr(flags, MT_DATA);
 	if (m0 == NULL)
 		return NULL;
 	M_COPY_PKTHDR(m0, mold);
@@ -1394,7 +1393,7 @@ m_defrag(struct mbuf *mold, int flags)
 
 		if (sz > 0) {
 			/* need more mbufs */
-			MGET(n, M_NOWAIT, MT_DATA);
+			n = m_get(M_NOWAIT, MT_DATA);
 			if (n == NULL) {
 				m_freem(m0);
 				return NULL;
@@ -1476,7 +1475,6 @@ extend:
 			if (n == NULL) {
 				goto out;
 			}
-			n->m_len = 0;
 			n->m_len = min(M_TRAILINGSPACE(n), off + len);
 			memset(mtod(n, char *), 0, min(n->m_len, off));
 			m->m_next = n;
@@ -1523,7 +1521,7 @@ extend:
 			/*
 			 * allocate a new mbuf.  copy packet header if needed.
 			 */
-			MGET(n, how, m->m_type);
+			n = m_get(how, m->m_type);
 			if (n == NULL)
 				goto enobufs;
 			MCLAIM(n, m->m_owner);
