@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.164 2013/10/09 18:55:56 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.165 2013/10/09 20:15:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.164 2013/10/09 18:55:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.165 2013/10/09 20:15:39 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -184,7 +184,6 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 		return (error);
 	}
 	nam = m_get(M_WAIT, MT_SONAME);
-	nam->m_len = 0;
 	*new_sock = fd;
 	so = fp->f_data;
 	solock(so);
