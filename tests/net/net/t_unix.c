@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.7 2013/10/08 18:05:31 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.8 2013/10/10 16:01:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,8 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$Id: t_unix.c,v 1.7 2013/10/08 18:05:31 christos Exp $");
+#ifdef __RCSID
+__RCSID("$Id: t_unix.c,v 1.8 2013/10/10 16:01:55 christos Exp $");
+#else
+#define getprogname() argv[0]
+#endif
 
+#ifdef __linux__
+#define LX -1
+#else
+#define LX
+#endif
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -144,7 +153,9 @@ test(bool closeit, size_t len)
 	(void)unlink(sun->sun_path);
 
 	sl = SUN_LEN(sun);
+#ifdef BSD4_4
 	sun->sun_len = sl;
+#endif
 	sun->sun_family = AF_UNIX;
 
 	if (bind(srvr, (struct sockaddr *)sun, sl) == -1) {
@@ -199,7 +210,7 @@ test(bool closeit, size_t len)
 		    sock_addr->sun_family);
 
 	len += OF;
-	if (sock_addrlen != len)
+	if (sock_addrlen LX != len)
 		FAIL("sock_addr_len %zu != %zu", (size_t)sock_addrlen, len);
 #ifdef BSD4_4
 	if (sock_addr->sun_len != sl)
@@ -284,6 +295,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s <len>\n", getprogname());
 		return EXIT_FAILURE;
 	}
-	test(atoi(argv[1]));
+	test(false, atoi(argv[1]));
+	test(true, atoi(argv[1]));
 }
 #endif
