@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1839 2013/09/29 12:11:59 joerg Exp $
+#	$NetBSD: mi,v 1.1840 2013/10/10 15:22:11 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3347,11 +3347,13 @@
 ./usr/libdata/lint/llib-lcrypto_idea.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_mdc2.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
+./usr/libdata/lint/llib-lctf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
+./usr/libdata/lint/llib-ldtrace.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-ldwarf.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lelf.ln			comp-c-lintlib		lint
