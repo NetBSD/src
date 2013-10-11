@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.15 2013/04/20 07:33:05 isaki Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.16 2013/10/11 03:37:08 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.15 2013/04/20 07:33:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.16 2013/10/11 03:37:08 isaki Exp $");
 
 #include <machine/ieee.h>
 
@@ -89,14 +89,9 @@ fpu_atanh(struct fpemu *fe)
 	if (ISINF(&fe->fe_f2))
 		return fpu_newnan(fe);
 
-	/*
-	 * if x is +0/-0, 68000PRM.pdf says it returns +0/-0 but
-	 * my real 68882 returns +0 for both.
-	 */
-	if (ISZERO(&fe->fe_f2)) {
-		fe->fe_f2.fp_sign = 0;
+	/* if x is +0/-0, return +0/-0 */
+	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
-	}
 
 	/*
 	 * -INF if x == -1
