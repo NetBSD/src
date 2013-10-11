@@ -2,15 +2,12 @@
 # Generated from: 	NetBSD: mknative-gcc,v 1.71 2013/06/28 08:30:10 mrg Exp 
 # Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp 
 #
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_BUILD_EARLY_SUPPORT=
 G_BUILD_ERRORS=build-errors.o
 G_BUILD_PRINT=
 G_BUILD_RTL=build-rtl.o read-rtl.o build-ggc-none.o vec.o min-insn-modes.o gensupport.o build-print-rtl.o
 G_BUILD_SUPPORT=
 G_BUILD_VARRAY=
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_ALL_CFLAGS=  -DIN_GCC   -W -Wall -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings -Wold-style-definition -Wc++-compat   -DHAVE_CONFIG_H
 G_ALL_CPPFLAGS=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I./../intl -I${GNUHOSTDIST}/gcc/../libcpp/include     -I${GNUHOSTDIST}/gcc/../libdecnumber -I${GNUHOSTDIST}/gcc/../libdecnumber/dpd -I../libdecnumber    
 G_C_AND_OBJC_OBJS=attribs.o c-errors.o c-lex.o c-pragma.o c-decl.o c-typeck.o c-convert.o c-aux-info.o c-common.o c-opts.o c-format.o c-semantics.o c-ppoutput.o c-cppbuiltin.o c-objc-common.o c-dump.o c-pch.o c-parser.o arm-c.o c-gimplify.o tree-mudflap.o c-pretty-print.o c-omp.o
@@ -45,22 +42,11 @@ G_tm_file_list=options.h ${GNUHOSTDIST}/gcc/config/dbxelf.h ${GNUHOSTDIST}/gcc/c
 G_build_xm_include_list=auto-build.h ansidecl.h
 G_lang_specs_files=${GNUHOSTDIST}/gcc/cp/lang-specs.h ${GNUHOSTDIST}/gcc/lto/lang-specs.h ${GNUHOSTDIST}/gcc/objc/lang-specs.h
 G_tm_p_include_list=config/arm/arm-protos.h tm-preds.h
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_LIB2ADDEHDEP=${GNUHOSTDIST}/gcc/config/arm/unwind-arm.h ${GNUHOSTDIST}/gcc/config/arm/lib1funcs.asm
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_CXX_OBJS=cp-lang.o stub-objc.o call.o decl.o expr.o pt.o typeck2.o class.o decl2.o error.o lex.o parser.o ptree.o rtti.o typeck.o cvt.o except.o friend.o init.o method.o search.o semantics.o tree.o repo.o dump.o optimize.o mangle.o cp-objcp-common.o name-lookup.o cxx-pretty-print.o cp-gimplify.o tree-mudflap.o attribs.o c-common.o c-format.o c-pragma.o c-semantics.o c-lex.o c-dump.o arm-c.o c-pretty-print.o c-opts.o c-pch.o incpath.o c-ppoutput.o c-cppbuiltin.o prefix.o c-gimplify.o c-omp.o
 G_CXX_C_OBJS=attribs.o c-common.o c-format.o c-pragma.o c-semantics.o c-lex.o c-dump.o arm-c.o c-pretty-print.o c-opts.o c-pch.o incpath.o c-ppoutput.o c-cppbuiltin.o prefix.o c-gimplify.o c-omp.o
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_F77_OBJS=
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_libcpp_a_OBJS=charset.o directives.o directives-only.o errors.o expr.o files.o identifiers.o init.o lex.o line-map.o macro.o mkdeps.o pch.o symtab.o traditional.o
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
-nbgmake[1]: Entering directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_ENABLE_SHARED=yes
-nbgmake[1]: Leaving directory `/u2/netbsd-HEAD/evbearmv4-eb/obj/tools/gcc'
 G_SHLIB_LINK= -shared
 G_SHLIB_MULTILIB=.
