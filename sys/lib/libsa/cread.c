@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.24 2013/04/14 22:23:28 martin Exp $	*/
+/*	$NetBSD: cread.c,v 1.25 2013/10/11 16:30:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -259,6 +259,7 @@ open(const char *fname, int mode)
 	int fd;
 	struct sd *s = 0;
 
+	ss[fd] = NULL;
 	if (((fd = oopen(fname, mode)) == -1) || (mode != 0))
 		/* compression only for read */
 		return fd;
@@ -284,6 +285,7 @@ open(const char *fname, int mode)
 errout:
 	if (s != 0)
 		dealloc(s, sizeof(struct sd));
+	ss[fd] = NULL;
 	oclose(fd);
 	return -1;
 }
@@ -291,7 +293,6 @@ errout:
 int
 close(int fd)
 {
-	struct open_file *f;
 	struct sd *s;
 
 #if !defined(LIBSA_NO_FD_CHECKING)
@@ -300,17 +301,15 @@ close(int fd)
 		return -1;
 	}
 #endif
-	f = &files[fd];
-
-	if ((f->f_flags & (F_READ|F_WRITE)) == F_READ)
-		return oclose(fd);
 
 	s = ss[fd];
 
-	inflateEnd(&(s->stream));
+	if (s != NULL) {
+		inflateEnd(&(s->stream));
 
-	dealloc(s->inbuf, Z_BUFSIZE);
-	dealloc(s, sizeof(struct sd));
+		dealloc(s->inbuf, Z_BUFSIZE);
+		dealloc(s, sizeof(struct sd));
+	}
 
 	return oclose(fd);
 }
