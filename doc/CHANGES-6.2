@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.53 2013/09/26 14:20:16 riz Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.54 2013/10/12 18:59:58 jdc Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -808,4 +808,15 @@ lib/libcurses/setterm.c				1.51
 	not exit_alt_charset_mode. (Examples include vt131 and xterm-5,
 	among others)
 	[dsainty, ticket #960]
+
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c	1.2
+xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4
+
+	Fix CVE-2013-4396 using a patch from Alan Coopersmith:
+	Save a pointer to the passed in closure structure before copying it
+	and overwriting the *c pointer to point to our copy instead of the
+	original.  If we hit an error, once we free(c), reset c to point to
+	the original structure before jumping to the cleanup code that
+	references *c.
+	[spz, ticket #966]
 
