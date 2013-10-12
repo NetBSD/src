@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.22 2013/07/11 07:46:37 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.23 2013/10/12 18:46:12 mbalmer Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -490,12 +490,9 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	exit(0);
 
  out:
-	if (query)
-		free(query);
-	if (file)
-		free(file);
-	if (url)
-		free(url);
+	free(query);
+	free(file);
+	free(url);
 	return 0;
 }
 
