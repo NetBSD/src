@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.38 2013/07/11 08:19:56 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.39 2013/10/12 17:24:06 mbalmer Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 11, 2013
+.Dd October 12, 2013
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nm
 .Op Fl CIMPSZciptvx
 .Op Fl C Ar suffix cgihandler
+.Op Fl L Ar prefix script
 .Op Fl I Ar port
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
@@ -95,6 +96,27 @@ outside of the cgibin directory to be executed.
 Multiple
 .Fl C
 options may be passed.
+.It Fl L Ar prefix script
+Adds a new Lua script for a particular prefix.
+The
+.Ar prefix
+should be an arbitrary text, and the
+.Ar script
+should be a full path to a Lua script.
+Multiple
+.Fl L
+options may be passed.
+A separate Lua state is created for each prefix.
+The Lua script can register callbacks using the
+httpd.register_handler('<name>', function) Lua function,
+which will trigger the execution of the Lua function
+.Em function
+when a URL in the form
+.Em http://<hostname>/<prefix>/<name>
+is being accessed.
+The function is passed three tables as arguments, the server
+environment, the request headers, and the decoded query string
+plus any data that was send as application/x-www-form-urlencoded.
 .It Fl c Ar cgibin
 Enables the CGI/1.1 interface.
 The
@@ -493,6 +515,10 @@ was written by Matthew R. Green
 .Pp
 The large list of contributors includes:
 .Bl -dash
+.It
+Marc Balmer
+.Aq mbalmer@NetBSD.org
+added Lua support for dynamic content creation
 .It
 Arnaud Lacombe
 .Aq alc@NetBSD.org
