@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.28 2013/09/04 22:59:50 pooka Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.29 2013/10/12 07:49:40 mbalmer Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -121,7 +121,7 @@ typedef struct bozo_httpreq_t {
 					   to hr_httpd->virthostname) */
 	char	*hr_file;
 	char	*hr_oldfile;	/* if we added an index_html */
-	char	*hr_query;  
+	char	*hr_query;
 	const char *hr_proto;
 	const char *hr_content_type;
 	const char *hr_content_length;
@@ -184,7 +184,7 @@ typedef struct bozoprefs_t {
 void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define debug(x)	debug__ x
 #else
-#define	debug(x)	
+#define	debug(x)
 #endif /* NO_DEBUG */
 
 void	bozo_warn(bozohttpd_t *, const char *, ...)
