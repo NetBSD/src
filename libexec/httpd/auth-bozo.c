@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.10 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.11 2013/10/12 18:46:12 mbalmer Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -119,12 +119,9 @@ bozo_auth_cleanup(bozo_httpreq_t *request)
 
 	if (request == NULL)
 		return;
-	if (request->hr_authuser)
-		free(request->hr_authuser);
-	if (request->hr_authpass)
-		free(request->hr_authpass);
-	if (request->hr_authrealm)
-		free(request->hr_authrealm);
+	free(request->hr_authuser);
+	free(request->hr_authpass);
+	free(request->hr_authrealm);
 }
 
 int
