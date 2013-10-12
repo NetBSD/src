@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.33 2013/10/10 15:22:12 christos Exp $
+# $NetBSD: mi,v 1.34 2013/10/12 15:30:37 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
@@ -2060,6 +2060,7 @@
 ./usr/libdata/debug/usr/tests/net/if_loop/t_pr.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/net/t_tcp.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/net/t_unix.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-obsolete		obsolete
