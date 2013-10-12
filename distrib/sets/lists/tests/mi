@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.545 2013/08/16 15:34:05 christos Exp $
+# $NetBSD: mi,v 1.546 2013/10/12 15:30:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2612,6 +2612,7 @@
 ./usr/tests/net/net/Kyuafile			tests-net-tests		atf,kyua
 ./usr/tests/net/net/t_pktinfo		tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
+./usr/tests/net/net/t_tcp		tests-net-tests		atf
 ./usr/tests/net/net/t_udp		tests-net-tests		atf
 ./usr/tests/net/net/t_unix		tests-net-tests		atf
 ./usr/tests/net/npf			tests-net-tests
