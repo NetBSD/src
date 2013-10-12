@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.47 2012/10/27 17:18:26 chs Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.48 2013/10/12 21:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.47 2012/10/27 17:18:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.48 2013/10/12 21:11:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Run the worker thread.
 	 */
-	config_pending_incr();
+	config_pending_incr(self);
 	if ((error = kthread_create(PRI_NONE, 0, NULL, edcworker, sc, NULL,
 	    "%s", device_xname(sc->sc_dev)))) {
 		aprint_error_dev(sc->sc_dev, "cannot spawn worker thread: errno=%d\n", error);
@@ -802,7 +802,7 @@ edcworker(void *arg)
 	struct buf *bp;
 	int i, error;
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	for(;;) {
 		/* Wait until awakened */
