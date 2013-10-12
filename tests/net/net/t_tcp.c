@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.1 2013/10/12 15:29:16 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.2 2013/10/12 17:26:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,16 +35,18 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.1 2013/10/12 15:29:16 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.2 2013/10/12 17:26:32 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
 /* Original by: Justin Cormack <justin@specialbusrvrervice.com> */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -65,7 +67,7 @@ ding(int al)
 }
 
 static void 
-paccept_reset_nonblock(void)
+paccept_block(bool pacceptblock, bool fcntlblock)
 {
 	int srvr, clnt, as;
 	int ok, fl, n;
@@ -103,11 +105,12 @@ paccept_reset_nonblock(void)
 
 	/* may not connect first time */
 	ok = connect(clnt, (struct sockaddr *) &ba, addrlen);
-	as = paccept(srvr, NULL, NULL, NULL, 0);
+	as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
 	ok = connect(clnt, (struct sockaddr *) &ba, addrlen);
 	if (ok == -1 && errno != EISCONN)
 		FAIL("both connects failed");
 
+#if 0
 	fl = fcntl(srvr, F_GETFL, 0);
 	if (fl == -1)
 		FAIL("fnctl getfl");
@@ -115,38 +118,41 @@ paccept_reset_nonblock(void)
 	ok = fcntl(srvr, F_SETFL, fl & ~O_NONBLOCK);
 	if (ok == -1)
 		FAIL("fnctl setfl");
+#endif
 
 	if (as == -1) {		/* not true under NetBSD */
-		as = paccept(srvr, NULL, NULL, NULL, 0);
+		as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
 		if (as == -1)
 			FAIL("paccept");
 	}
-#ifdef notyet
-	/*
-	 * this has no effect, not possible to force blocking, same issue if
-	 * removed. This is because fcntl does not work on sockets, fixme and
-	 * add test.
-	 */
-	fl = fcntl(as, F_GETFL, 0);
-	if (fl == -1)
-		FAIL("fnctl");
-	ok = fcntl(as, F_SETFL, fl & ~O_NONBLOCK);
-	if (ok == -1)
-		FAIL("fnctl setfl");
+	if (fcntlblock) {
+		fl = fcntl(as, F_GETFL, 0);
+		if (fl == -1)
+			FAIL("fnctl");
+		if (fl != (O_RDWR|O_NONBLOCK))
+			FAIL("fl 0x%x != 0x%x\n", fl, O_RDWR|O_NONBLOCK);
+		ok = fcntl(as, F_SETFL, fl & ~O_NONBLOCK);
+		if (ok == -1)
+			FAIL("fnctl setfl");
 
-	fl = fcntl(as, F_GETFL, 0);
-	if (fl & O_NONBLOCK) {
-		printf("accepted sock nonblocking, something wrong\n");
+		fl = fcntl(as, F_GETFL, 0);
+		if (fl & O_NONBLOCK)
+			FAIL("fl non blocking after reset");
 	}
-#endif
 	sa.sa_handler = ding;
 	sa.sa_flags = 0;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGALRM, &sa, NULL);
 	alarm(1);
 	n = read(as, buf, 10);
-	if (n == -1 && errno != EINTR)
-		FAIL("read");
+
+	if (pacceptblock || fcntlblock) {
+		if (n == -1 && errno != EINTR)
+			FAIL("read");
+	} else {
+		if (n != -1 || errno != EWOULDBLOCK)
+			FAIL("read");
+	}
 }
 
 #ifndef TEST
@@ -161,20 +167,49 @@ ATF_TC_HEAD(paccept_reset_nonblock, tc)
 
 ATF_TC_BODY(paccept_reset_nonblock, tc)
 {
-	paccept_reset_nonblock();
+	paccept_block(true, false);
+}
+
+ATF_TC(fcntl_reset_nonblock);
+ATF_TC_HEAD(fcntl_reset_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
+	    "the non-blocking flag on non-blocking sockets");
+}
+
+ATF_TC_BODY(fcntl_reset_nonblock, tc)
+{
+	paccept_block(false, true);
+}
+
+ATF_TC(paccept_nonblock);
+ATF_TC_HEAD(paccept_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
+	    "the non-blocking flag on non-blocking sockets");
+}
+
+ATF_TC_BODY(paccept_nonblock, tc)
+{
+	paccept_block(false, false);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, paccept_reset_nonblock);
+	ATF_TP_ADD_TC(tp, fcntl_reset_nonblock);
+	ATF_TP_ADD_TC(tp, paccept_nonblock);
 	return atf_no_error();
 }
 #else
 int
 main(int argc, char *argv[])
 {
-	paccept_reset_nonblock();
+	paccept_block(false);
+	paccept_block(true);
 	return 0;
 }
 #endif
