@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.40 2013/10/12 17:25:18 mbalmer Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.41 2013/10/12 22:37:43 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -36,8 +36,8 @@
 .Nm
 .Op Fl CIMPSZciptvx
 .Op Fl C Ar suffix cgihandler
-.Op Fl L Ar prefix script
 .Op Fl I Ar port
+.Op Fl L Ar prefix script
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
 .Op Fl S Ar server_software
@@ -96,27 +96,6 @@ outside of the cgibin directory to be executed.
 Multiple
 .Fl C
 options may be passed.
-.It Fl L Ar prefix script
-Adds a new Lua script for a particular prefix.
-The
-.Ar prefix
-should be an arbitrary text, and the
-.Ar script
-should be a full path to a Lua script.
-Multiple
-.Fl L
-options may be passed.
-A separate Lua state is created for each prefix.
-The Lua script can register callbacks using the
-httpd.register_handler('<name>', function) Lua function,
-which will trigger the execution of the Lua function
-.Em function
-when a URL in the form
-.Em http://<hostname>/<prefix>/<name>
-is being accessed.
-The function is passed three tables as arguments, the server
-environment, the request headers, and the decoded query string
-plus any data that was send as application/x-www-form-urlencoded.
 .It Fl c Ar cgibin
 Enables the CGI/1.1 interface.
 The
@@ -183,6 +162,27 @@ option is used.
 This option is only valid with the
 .Fl b
 option.
+.It Fl L Ar prefix script
+Adds a new Lua script for a particular prefix.
+The
+.Ar prefix
+should be an arbitrary text, and the
+.Ar script
+should be a full path to a Lua script.
+Multiple
+.Fl L
+options may be passed.
+A separate Lua state is created for each prefix.
+The Lua script can register callbacks using the
+httpd.register_handler('<name>', function) Lua function,
+which will trigger the execution of the Lua function
+.Em function
+when a URL in the form
+.Em http://<hostname>/<prefix>/<name>
+is being accessed.
+The function is passed three tables as arguments, the server
+environment, the request headers, and the decoded query string
+plus any data that was send as application/x-www-form-urlencoded.
 .It Fl M Ar suffix type encoding encoding11
 Adds a new entry to the table that converts file suffixes to
 content type and encoding.
@@ -509,149 +509,152 @@ This manual documents
 .Nm
 version 20130711.
 .Sh AUTHORS
+.An -nosplit
 .Nm
-was written by Matthew R. Green
-.Aq mrg@eterna.com.au .
+was written by
+.An Matthew R. Green
+.Aq Mt mrg@eterna.com.au .
 .Pp
 The large list of contributors includes:
 .Bl -dash
 .It
-Marc Balmer
-.Aq mbalmer@NetBSD.org
+.An Marc Balmer
+.Aq Mt mbalmer@NetBSD.org
 added Lua support for dynamic content creation
 .It
-Arnaud Lacombe
-.Aq alc@NetBSD.org
+.An Arnaud Lacombe
+.Aq Mt alc@NetBSD.org
 provided some clean up for memory leaks
 .It
-Christoph Badura
-.Aq bad@bsd.de
+.An Christoph Badura
+.Aq Mt bad@bsd.de
 provided Range: header support
 .It
-Sean Boudreau
-.Aq seanb@NetBSD.org
+.An Sean Boudreau
+.Aq Mt seanb@NetBSD.org
 provided a security fix for virtual hosting
 .It
-Julian Coleman
-.Aq jdc@coris.org.uk
+.An Julian Coleman
+.Aq Mt jdc@coris.org.uk
 provided an IPv6 bugfix
 .It
-Chuck Cranor
-.Aq chuck@research.att.com
+.An Chuck Cranor
+.Aq Mt chuck@research.att.com
 provided cgi-bin support fixes, and more
 .It
-DEGROOTE Arnaud
-.Aq degroote@NetBSD.org
+.An DEGROOTE Arnaud
+.Aq Mt degroote@NetBSD.org
 provided a fix for daemon mode
 .It
-Andrew Doran
-.Aq ad@NetBSD.org
+.An Andrew Doran
+.Aq Mt ad@NetBSD.org
 provided directory indexing support
 .It
-Per Ekman
-.Aq pek@pdc.kth.se
+.An Per Ekman
+.Aq Mt pek@pdc.kth.se
 provided a fix for a minor (non-security) buffer overflow condition
 .It
-Alistair G. Crooks
-.Aq agc@NetBSD.org
+.An Alistair G. Crooks
+.Aq Mt agc@NetBSD.org
 cleaned up many internal interfaces, made bozohttpd linkable as a
 library and provided the Lua binding.
 .It
-Roland Dowdeswell
-.Aq elric@NetBSD.org
+.An Roland Dowdeswell
+.Aq Mt elric@NetBSD.org
 added support for serving gzipped files and better SSL handling
 .It
-Jun-ichiro itojun Hagino, KAME
-.Aq itojun@iijlab.net
+.An Jun-ichiro itojun Hagino, KAME
+.Aq Mt itojun@iijlab.net
 provided initial IPv6 support
 .It
-Martin Husemann
-.Aq martin@NetBSD.org
+.An Martin Husemann
+.Aq Mt martin@NetBSD.org
 provided .bzabsredirect support, and fixed various redirection issues
 .It
-Arto Huusko
-.Aq arto.huusko@pp2.inet.fi
+.An Arto Huusko
+.Aq Mt arto.huusko@pp2.inet.fi
 provided fixes cgi-bin
 .It
-Roland Illig
-.Aq roland.illig@gmx.de
+.An Roland Illig
+.Aq Mt roland.illig@gmx.de
 provided some off-by-one fixes
 .It
-Zak Johnson
-.Aq zakj@nox.cx
+.An Zak Johnson
+.Aq Mt zakj@nox.cx
 provided cgi-bin enhancements
 .It
-Nicolas Jombart
-.Aq ecu@ipv42.net
+.An Nicolas Jombart
+.Aq Mt ecu@ipv42.net
 provided fixes for HTTP basic authorisation support
 .It
-Antti Kantee
-.Aq pooka@NetBSD.org
+.An Antti Kantee
+.Aq Mt pooka@NetBSD.org
 provided fixes for HTTP basic authorisation support
 .It
-Thomas Klausner
-.Aq wiz@NetBSD.org
+.An Thomas Klausner
+.Aq Mt wiz@NetBSD.org
 provided many fixes and enhancements for the man page
 .It
-Johnny Lam
-.Aq jlam@NetBSD.org
+.An Johnny Lam
+.Aq Mt jlam@NetBSD.org
 provided man page fixes
 .It
-Julio Merino
-.Aq jmmv@NetBSD.org
+.An Julio Merino
+.Aq Mt jmmv@NetBSD.org
 Added the
 .Fl P
 option.
 .It
-Luke Mewburn
-.Aq lukem@NetBSD.org
+.An Luke Mewburn
+.Aq Mt lukem@NetBSD.org
 provided many various fixes, including cgi-bin fixes and enhancements,
 HTTP basic authorisation support and much code clean up
 .It
-Jeremy C. Reed
-.Aq reed@NetBSD.org
+.An Jeremy C. Reed
+.Aq Mt reed@NetBSD.org
 provided several clean up fixes, and man page updates
 .It
-Scott Reynolds
-.Aq scottr@NetBSD.org
+.An Scott Reynolds
+.Aq Mt scottr@NetBSD.org
 provided various fixes
 .It
-Tyler Retzlaff
-.Aq rtr@eterna.com.au
+.An Tyler Retzlaff
+.Aq Mt rtr@eterna.com.au
 provided SSL support, cgi-bin fixes and much other random other stuff
 .It
-rudolf
-.Aq netbsd@eq.cz
+.An rudolf
+.Aq Mt netbsd@eq.cz
 provided minor compile fixes and a CGI content map fix
 .It
-Steve Rumble
-.Aq rumble@ephemeral.org
+.An Steve Rumble
+.Aq Mt rumble@ephemeral.org
 provided the
 .Fl V
 option.
 .It
-Thor Lancelot Simon
-.Aq tls@NetBSD.org
+.An Thor Lancelot Simon
+.Aq Mt tls@NetBSD.org
 enhanced cgi-bin support.
 .It
-Joerg Sonnenberger
-.Aq joerg@NetBSD.org
+.An Joerg Sonnenberger
+.Aq Mt joerg@NetBSD.org
 implemented If-Modified-Since support
 .It
-ISIHARA Takanori
-.Aq ishit@oak.dti.ne.jp
+.An ISIHARA Takanori
+.Aq Mt ishit@oak.dti.ne.jp
 provided a man page fix
 .It
-Holger Weiss
-.Aq holger@CIS.FU-Berlin.DE
+.An Holger Weiss
+.Aq Mt holger@CIS.FU-Berlin.DE
 provided http authorisation fixes
 .It
-.Aq xs@kittenz.org
+.Aq Mt xs@kittenz.org
 provided chroot and change-to-user support, and other various fixes
 .It
-Coyote Point provided various CGI fixes
+Coyote Point provided various CGI fixes.
 .It
-Julio Merino added pidfile support and provided some man page fixes
+.An Julio Merino
+added pidfile support and provided some man page fixes.
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
@@ -659,7 +662,7 @@ There are probably others I have forgotten (let me know if you care)
 Please send all updates to
 .Nm
 to
-.Aq mrg@eterna.com.au
+.Aq Mt mrg@eterna.com.au
 for inclusion in future releases.
 .Sh BUGS
 .Nm
