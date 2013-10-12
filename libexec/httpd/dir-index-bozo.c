@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.17 2013/07/11 07:46:37 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.18 2013/10/12 18:46:12 mbalmer Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -205,8 +205,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 	bozo_flush(httpd, stdout);
 
 done:
-	if (file)
-		free(file);
+	free(file);
 	return 1;
 }
 #endif /* NO_DIRINDEX_SUPPORT */
