@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.143 2012/10/27 17:18:40 chs Exp $ */
+/* $NetBSD: device.h,v 1.144 2013/10/12 16:49:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -469,8 +469,8 @@ void	config_defer(device_t, void (*)(device_t));
 void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
 void	config_mountroot(device_t, void (*)(device_t));
-void	config_pending_incr(void);
-void	config_pending_decr(void);
+void	config_pending_incr(device_t);
+void	config_pending_decr(device_t);
 void	config_create_interruptthreads(void);
 void	config_create_mountrootthreads(void);
 

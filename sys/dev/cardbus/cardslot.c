@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.54 2012/10/27 17:18:15 chs Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.55 2013/10/12 16:49:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.54 2012/10/27 17:18:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.55 2013/10/12 16:49:00 christos Exp $");
 
 #include "opt_cardslot.h"
 
@@ -147,7 +147,7 @@ cardslotattach(device_t parent, device_t self, void *aux)
 	}
 
 	if (csc != NULL || psc != NULL) {
-		config_pending_incr();
+		config_pending_incr(self);
 		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
 		    sc, &sc->sc_event_thread, "%s", device_xname(self))) {
 			aprint_error_dev(sc->sc_dev,
@@ -298,7 +298,7 @@ cardslot_event_thread(void *arg)
 			splx(s);
 			if (first) {
 				first = 0;
-				config_pending_decr();
+				config_pending_decr(sc->sc_dev);
 			}
 			(void) tsleep(&sc->sc_events, PWAIT, "cardslotev", 0);
 			continue;

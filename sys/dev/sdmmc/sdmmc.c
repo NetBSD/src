@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.20 2012/12/22 21:24:49 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.21 2013/10/12 16:49:01 christos Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.20 2012/12/22 21:24:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.21 2013/10/12 16:49:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -170,7 +170,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	 * Create the event thread that will attach and detach cards
 	 * and perform other lengthy operations.
 	 */
-	config_pending_incr();
+	config_pending_incr(self);
 	config_interrupts(self, sdmmc_doattach);
 }
 
@@ -252,7 +252,7 @@ sdmmc_task_thread(void *arg)
 	struct sdmmc_task *task;
 
 	sdmmc_discover_task(sc);
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	mutex_enter(&sc->sc_tskq_mtx);
 	for (;;) {

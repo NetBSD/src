@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.270 2013/09/15 13:53:51 martin Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.271 2013/10/12 16:49:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.270 2013/09/15 13:53:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.271 2013/10/12 16:49:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ scsibusattach(device_t parent, device_t self, void *aux)
 	scsi_initq = malloc(sizeof(struct scsi_initq), M_DEVBUF, M_WAITOK);
 	scsi_initq->sc_channel = chan;
 	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
-        config_pending_incr();
+        config_pending_incr(sc->sc_dev);
 	if (scsipi_channel_init(chan)) {
 		aprint_error_dev(sc->sc_dev, "failed to init channel\n");
 		return;
@@ -288,7 +288,7 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 
 	scsipi_adapter_delref(chan->chan_adapter);
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 }
 
 static int
