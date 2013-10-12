@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.227 2013/06/28 15:33:40 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.228 2013/10/12 16:49:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.227 2013/06/28 15:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.228 2013/10/12 16:49:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -436,8 +436,8 @@ config_interrupts_thread(void *cookie)
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
 		(*dc->dc_func)(dc->dc_dev);
+		config_pending_decr(dc->dc_dev);
 		kmem_free(dc, sizeof(*dc));
-		config_pending_decr();
 	}
 	kthread_exit(0);
 }
@@ -1906,7 +1906,7 @@ config_defer(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
-	config_pending_incr();
+	config_pending_incr(dev);
 }
 
 /*
@@ -1940,7 +1940,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	config_pending_incr();
+	config_pending_incr(dev);
 }
 
 /*
@@ -1990,8 +1990,8 @@ config_process_deferred(struct deferred_config_head *queue,
 		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
+			config_pending_decr(dc->dc_dev);
 			kmem_free(dc, sizeof(*dc));
-			config_pending_decr();
 		}
 	}
 }
@@ -2000,16 +2000,19 @@ config_process_deferred(struct deferred_config_head *queue,
  * Manipulate the config_pending semaphore.
  */
 void
-config_pending_incr(void)
+config_pending_incr(device_t dev)
 {
 
 	mutex_enter(&config_misc_lock);
 	config_pending++;
+#ifdef DEBUG_AUTOCONF
+	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+#endif
 	mutex_exit(&config_misc_lock);
 }
 
 void
-config_pending_decr(void)
+config_pending_decr(device_t dev)
 {
 
 #ifdef DIAGNOSTIC
@@ -2018,6 +2021,9 @@ config_pending_decr(void)
 #endif
 	mutex_enter(&config_misc_lock);
 	config_pending--;
+#ifdef DEBUG_AUTOCONF
+	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+#endif
 	if (config_pending == 0)
 		cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
