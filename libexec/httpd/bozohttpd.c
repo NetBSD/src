@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.42 2013/10/12 07:49:40 mbalmer Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.43 2013/10/12 17:24:06 mbalmer Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1425,6 +1425,9 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 	if (bozo_process_cgi(request))
 		return 0;
 
+	if (bozo_process_lua(request))
+		return 0;
+
 	debug((httpd, DEBUG_FAT, "transform_request set: %s", newfile));
 	return 1;
 bad_done:
@@ -2086,6 +2089,9 @@ bozo_init_httpd(bozohttpd_t *httpd)
 			"bozohttpd: memory_allocation failure\n");
 		return 0;
 	}
+#ifndef NO_LUA_SUPPORT
+	SIMPLEQ_INIT(&httpd->lua_states);
+#endif
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2013/10/12 07:49:40 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.16 2013/10/12 17:24:06 mbalmer Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -13,6 +13,7 @@
 #	NO_DYNAMIC_CONTENT	/* don't support dynamic content updates */
 #	NO_SSL_SUPPORT		/* don't support ssl (https) */
 #	DO_HTPASSWD		/* support .htpasswd files */
+#	NO_LUA_SUPPORT		/* don't support Lua for dynamic content */
 #
 # these are usually set via the "COPTS" variable, or some other method
 # for setting CFLAGS relevant to your make, eg
@@ -23,10 +24,10 @@ PROG=	httpd
 MAN=	httpd.8
 BUILDSYMLINKS+=bozohttpd.8 httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
-	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
+	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c lua-bozo.c
 SRCS+=	main.c
 
-LDADD=	-lcrypt
+LDADD=	-lcrypt -llua
 DPADD=	${LIBCRYPT}
 
 WARNS?=	4
