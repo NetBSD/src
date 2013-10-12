@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.43 2013/10/12 17:24:06 mbalmer Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.44 2013/10/12 18:46:12 mbalmer Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -347,12 +347,10 @@ bozo_clean_request(bozo_httpreq_t *request)
 	    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
 		free(hdr->h_value);
 		free(hdr->h_header);
-		if (ohdr)
-			free(ohdr);
+		free(ohdr);
 		ohdr = hdr;
 	}
-	if (ohdr)
-		free(ohdr);
+	free(ohdr);
 
 	free(request);
 }
@@ -1016,8 +1014,7 @@ handle_redirect(bozo_httpreq_t *request,
 	bozo_printf(httpd, "</body></html>\n");
 head:
 	bozo_flush(httpd, stdout);
-	if (urlbuf)
-		free(urlbuf);
+	free(urlbuf);
 }
 
 /*
@@ -1432,8 +1429,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 	return 1;
 bad_done:
 	debug((httpd, DEBUG_FAT, "transform_request returning: 0"));
-	if (newfile)
-		free(newfile);
+	free(newfile);
 	return 0;
 }
 
