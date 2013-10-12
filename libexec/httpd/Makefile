@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/07/11 08:51:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/10/12 07:49:40 mbalmer Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -48,7 +48,7 @@ COPTS+=	-DNO_SSL_SUPPORT
 # Build release things.
 #
 NROFF?=		nroff
-  
+
 PREHTMLFROB=	sed \
 		    -e 's/&/\&amp;/' \
 		    -e 's/</\&lt;/' \
@@ -64,7 +64,7 @@ TXTFROB=	col -b
 
 bozohttpd.8.html: bozohttpd.8
 	$(PREHTMLFROB) $> | $(NROFF) -mdoc2html | $(HTMLFROB) > $@
-  
+
 bozohttpd.8.txt: bozohttpd.8
 	$(NROFF) -mdoc -Tascii $> | $(TXTFROB) > $@
 
