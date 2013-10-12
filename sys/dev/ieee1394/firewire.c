@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.43 2013/10/12 16:49:00 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.43 2013/10/12 16:49:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -256,13 +256,13 @@ firewireattach(device_t parent, device_t self, void *aux)
 	callout_schedule(&fc->timeout_callout, hz);
 
 	/* Tell config we will have started a thread to scan the bus.  */
-	config_pending_incr();
+	config_pending_incr(self);
 
 	/* create thread */
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
 	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev))) {
 		aprint_error_dev(self, "kthread_create failed\n");
-		config_pending_decr();
+		config_pending_decr(self);
 	}
 
 	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
@@ -1962,7 +1962,7 @@ fw_bus_probe_thread(void *arg)
 	 * 		once = true;
 	 * 	}
 	 */
-	config_pending_decr();
+	config_pending_decr(fc->bdev);
 
 	mutex_enter(&fc->wait_lock);
 	while (fc->status != FWBUSDETACH) {
