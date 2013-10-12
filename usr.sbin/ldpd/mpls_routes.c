@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.22 2013/07/31 06:58:23 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.23 2013/10/12 18:55:40 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -648,6 +648,8 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	so_pref->sa.sa_family = AF_INET;
 	so_pref->sa.sa_len = sizeof(struct sockaddr_in);
+	so_pref->sin.sin_port = 0;
+	memset(&so_pref->sin.sin_zero, 0, sizeof(so_pref->sin.sin_zero));
 
 	if (rg->m_rtm.rtm_flags & RTF_CLONING)
 		so_gate = NULL;
