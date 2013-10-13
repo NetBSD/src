@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.13 2013/10/13 06:55:34 riz Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.14 2013/10/13 12:29:42 tsutsui Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.13 2013/10/13 06:55:34 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.14 2013/10/13 12:29:42 tsutsui Exp $");
 
 #include "opt_xen.h"
 
@@ -284,7 +284,7 @@ xpci_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_backend_status = XPCI_STATE_CONNECTED;
 
 		/* the devices should be working now */
-		config_pending_decr(sc->sc_dksc.sc_dev);
+		config_pending_decr(sc->sc_dev);
 		break;
 	default:
 		panic("bad backend state %d", new_state);
