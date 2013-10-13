@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.50 2013/10/13 06:55:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.50 2013/10/13 06:55:34 riz Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -273,7 +273,7 @@ hd64461pcmcia_attach(device_t parent, device_t self, void *aux)
 			       "%s", device_xname(self));
 	KASSERT(error == 0);
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	/* XXX: TODO */
 	if (!pmf_device_register(self, NULL, NULL))
@@ -294,7 +294,7 @@ hd64461pcmcia_event_thread(void *arg)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
 #endif
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	while (!sc->sc_shutdown) {
 		tsleep(sc, PWAIT, "CSC wait", 0);
