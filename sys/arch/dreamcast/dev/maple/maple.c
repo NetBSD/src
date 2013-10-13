@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.45 2012/10/27 17:17:44 chs Exp $	*/
+/*	$NetBSD: maple.c,v 1.46 2013/10/13 06:55:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.45 2012/10/27 17:17:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.46 2013/10/13 06:55:34 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -242,7 +242,7 @@ mapleattach(device_t parent, device_t self, void *aux)
 	sc->sc_intrhand = sysasic_intr_establish(SYSASIC_EVENT_MAPLE_DMADONE,
 	    IPL_MAPLE, IRL_MAPLE, maple_intr, sc);
 
-	config_pending_incr();	/* create thread before mounting root */
+	config_pending_incr(self); /* create thread before mounting root */
 
 	if (kthread_create(PRI_NONE, 0, NULL, maple_event_thread, sc,
 	    &sc->event_thread, "%s", device_xname(self)) == 0)
@@ -1428,7 +1428,7 @@ maple_event_thread(void *arg)
 
 	/* OK, continue booting system */
 	maple_polling = 0;
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	for (;;) {
 		/*
