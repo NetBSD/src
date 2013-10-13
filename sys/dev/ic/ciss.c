@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.30 2013/10/12 16:52:21 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.31 2013/10/13 04:24:21 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.30 2013/10/12 16:52:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.31 2013/10/13 04:24:21 christos Exp $");
 
 #include "bio.h"
 
@@ -599,7 +599,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 
 			error = ciss_done(ccb1);
 			if (ccb1 == ccb)
-				return error;
+				break;
 		}
 
 		/* if never got a chance to be done above... */
@@ -986,8 +986,8 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	void *arg)				/* TODO */
 {
 	struct scsipi_xfer *xs = (struct scsipi_xfer *) arg;
-	struct ciss_rawsoftc *rsc =
-		(struct ciss_rawsoftc *) chan->chan_adapter->adapt_dev;
+	struct ciss_rawsoftc *rsc = device_private(
+	    chan->chan_adapter->adapt_dev);
 	struct ciss_softc *sc = rsc->sc_softc;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
@@ -1063,8 +1063,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_xfer_mode *xm;
-	struct ciss_softc *sc =
-		(struct ciss_softc *) chan->chan_adapter->adapt_dev;
+	struct ciss_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	u_int8_t target;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
@@ -1137,6 +1136,8 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xm->xm_mode |= PERIPH_CAP_TQING;
 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		break;
+	default:
+		printf("%s: %d %d unsupported\n", __func__, __LINE__, req);
 	}
 }
 
@@ -1150,6 +1151,9 @@ ciss_intr(void *v)
 	int hit = 0;
 
 	CISS_DPRINTF(CISS_D_INTR, ("intr "));
+
+	if (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_ISR) & sc->iem))
+		return 0;
 
 	if (sc->cfg.methods & CISS_METH_FIFO64)
 		reg = CISS_OUTQ64_HI;
@@ -1234,7 +1238,7 @@ const int ciss_stat[] = { BIOC_SVONLINE, BIOC_SVOFFLINE, BIOC_SVOFFLINE,
 int
 ciss_ioctl(device_t dev, u_long cmd, void *addr)
 {
-	struct ciss_softc	*sc = (struct ciss_softc *)dev;
+	struct ciss_softc	*sc = device_private(dev);
 	struct bioc_inq *bi;
 	struct bioc_disk *bd;
 	struct bioc_blink *bb;
