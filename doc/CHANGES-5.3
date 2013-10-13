@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.32 2013/09/21 02:58:59 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.33 2013/10/13 07:26:13 jdc Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -581,4 +581,15 @@ share/zoneinfo/australasia			1.33
 	Merge the Fiji-related change from tzdata2013e.
 	This year Fiji will start DST on October 27, not October 20.
 	[apb, ticket #1880]
+
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c	1.2 via patch
+xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4 via patch
+
+	Fix CVE-2013-4396 using a patch from Alan Coopersmith:
+	Save a pointer to the passed in closure structure before copying it
+	and overwriting the *c pointer to point to our copy instead of the
+	original.  If we hit an error, once we free(c), reset c to point to
+	the original structure before jumping to the cleanup code that
+	references *c.
+	[spz, ticket #966]
 
