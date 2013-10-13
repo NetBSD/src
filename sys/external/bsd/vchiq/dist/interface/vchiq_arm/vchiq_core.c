@@ -3664,7 +3664,7 @@ vchiq_dump_service_state(void *dump_context, VCHIQ_SERVICE_T *service)
 			if (service->public_fourcc != VCHIQ_FOURCC_INVALID)
 				snprintf(remoteport + len2,
 					sizeof(remoteport) - len2,
-					" (client %x)", service->client_id);
+					" (client %8x)", service->client_id);
 		} else
 			strcpy(remoteport, "n/a");
 

@@ -577,7 +577,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			if (status != VCHIQ_SUCCESS) {
 				vchiq_log_error(vchiq_susp_log_level,
 					"%s: cmd %s returned error %d for "
-					"service %c%c%c%c:%03d",
+					"service %c%c%c%c:%8x",
 					__func__,
 					(cmd == VCHIQ_IOC_USE_SERVICE) ?
 						"VCHIQ_IOC_USE_SERVICE" :
@@ -1942,7 +1942,7 @@ output_timeout_error(VCHIQ_STATE_T *state)
 		VCHIQ_SERVICE_T *service_ptr = state->services[i];
 		if (service_ptr && service_ptr->service_use_count &&
 			(service_ptr->srvstate != VCHIQ_SRVSTATE_FREE)) {
-			snprintf(service_err, 50, " %c%c%c%c(%d) service has "
+			snprintf(service_err, 50, " %c%c%c%c(%8x) service has "
 				"use count %d%s", VCHIQ_FOURCC_AS_4CHARS(
 					service_ptr->base.fourcc),
 				 service_ptr->client_id,
@@ -2237,7 +2237,7 @@ vchiq_use_internal(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service,
 		sprintf(entity, "VCHIQ:   ");
 		entity_uc = &arm_state->peer_use_count;
 	} else if (service) {
-		sprintf(entity, "%c%c%c%c:%03d",
+		snprintf(entity, sizeof(entity), "%c%c%c%c:%8x",
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id);
 		entity_uc = &service->service_use_count;
@@ -2366,7 +2366,7 @@ vchiq_release_internal(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service)
 	vchiq_log_trace(vchiq_susp_log_level, "%s", __func__);
 
 	if (service) {
-		sprintf(entity, "%c%c%c%c:%03d",
+		snprintf(entity, sizeof(entity), "%c%c%c%c:%8x",
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id);
 		entity_uc = &service->service_use_count;
@@ -2596,7 +2596,7 @@ vchiq_check_service(VCHIQ_SERVICE_T *service)
 
 	if (ret == VCHIQ_ERROR) {
 		vchiq_log_error(vchiq_susp_log_level,
-			"%s ERROR - %c%c%c%c:%d service count %d, "
+			"%s ERROR - %c%c%c%c:%8x service count %d, "
 			"state count %d, videocore suspend state %s", __func__,
 			VCHIQ_FOURCC_AS_4CHARS(service->base.fourcc),
 			service->client_id, service->service_use_count,
