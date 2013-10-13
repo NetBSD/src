@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -295,7 +295,7 @@ eflash_ebus_attach(device_t parent, device_t self, void *aux)
                sc->sc_type.ft_manuf_code, sc->sc_type.ft_device_code);
     }
 
-    config_pending_incr();
+    config_pending_incr(self);
 
 	error = kthread_create(PRI_NONE, 0, NULL,
 	    eflash_thread, sc, NULL, "%s", device_xname(sc->sc_dev));
@@ -1302,7 +1302,7 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.6 2013/05/29 00:47:48 christos Exp $ */
+/*	$NetBSD: flash_ebus.c,v 1.7 2013/10/13 06:55:34 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1537,7 +1537,7 @@ eflash_wedges(void *arg)
     dkwedge_autodiscover = 1;
 	dkwedge_discover(&sc->sc_dk);
 
-    config_pending_decr();
+    config_pending_decr(sc->sc_dev);
 
     DBGME(DEBUG_STATUS,printf("%s: wedges thread done for %p\n", device_xname(sc->sc_dev), sc));
 	kthread_exit(0);
