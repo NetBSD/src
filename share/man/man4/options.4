@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.431 2013/10/13 21:17:35 dholland Exp $
+.\"	$NetBSD: options.4,v 1.432 2013/10/13 22:34:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -647,7 +647,9 @@ various kernel activities.
 These logs can be displayed by using
 .Cm show kernhist
 from DDB.
-See the kernel source file sys/kern/kern_history.c for details.
+See the kernel source file
+.Pa sys/kern/kern_history.c
+for details.
 .It Cd options KERNHIST_PRINT
 Prints the kernel history logs on the system console as entries are added.
 Note that the output is
@@ -661,7 +663,9 @@ it enables the UVM history logs.
 These logs can be displayed by using
 .Cm show kernhist
 from DDB.
-See the kernel source file sys/uvm/uvm_stat.c for details.
+See the kernel source file
+.Pa sys/uvm/uvm_stat.c
+for details.
 .It Cd options UVMHIST_PRINT
 Like
 .Em UVMHIST ,
@@ -958,8 +962,9 @@ operation.
 This option will cause longer hash chains in the reverse cache, and thus
 slow down getcwd somewhat.
 However, it does make vnode -\*[Gt] path translations possible in some cases.
-For now, only useful if strict /proc/#/maps emulation for Linux binaries is
-required.
+For now, only useful if strict
+.Pa /proc/#/maps
+emulation for Linux binaries is required.
 .El
 .Ss Options for FFS/UFS File Systems
 .Bl -ohang
@@ -1000,7 +1005,9 @@ and
 .Dq mfs
 file systems at this time.
 .It Cd options FFS_EI
-Enable ``Endian-Independent'' FFS support.
+Enable
+.Dq Endian-Independent
+FFS support.
 This allows a system to mount an FFS file system created for another
 architecture, at a small performance cost for all FFS file systems.
 See also
@@ -1030,7 +1037,9 @@ for large directories.
 .\" Enable modernized 64-bit quota support for LFS.
 .\" (This does not work yet.)
 .It Cd options LFS_EI
-Enable ``Endian-Independent'' LFS support.
+Enable
+.Dq Endian-Independent
+LFS support.
 This allows (at a small performance cost) mounting an LFS file system
 created for another architecture.
 .\" .It Cd options LFS_EXTATTR
@@ -1079,7 +1088,7 @@ Same as
 but use the DHCP extensions to the
 BOOTP protocol (RFC 1541).
 .It Cd options NFS_BOOT_BOOTP_REQFILE
-Specifies the string sent in the bp_file field of the BOOTP / DHCP
+Specifies the string sent in the bp_file field of the BOOTP/DHCP
 request packet.
 .It Cd options NFS_BOOT_BOOTPARAM
 Enable use of the BOOTPARAM protocol, consisting of RARP and
@@ -1281,7 +1290,7 @@ and
 system calls, which are intended for use by
 .Xr ntpd 8
 and are enabled by the option.
-On systems with sub-microsecond resolution timers, or where (HZ / 100000)
+On systems with sub-microsecond resolution timers, or where (HZ/100000)
 is not an integer, the
 .Em NTP
 option also enables extended-precision arithmetic to keep track of
