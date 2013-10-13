@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.71 2011/06/30 20:09:31 wiz Exp $ */
+/* $NetBSD: pnpbios.c,v 1.72 2013/10/13 06:55:34 riz Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.71 2011/06/30 20:09:31 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.72 2013/10/13 06:55:34 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ pnpbios_attach(device_t parent, device_t self, void *aux)
 	if (evtype != PNP_IC_CONTROL_EVENT_NONE) {
 		if (evtype != PNP_IC_CONTROL_EVENT_POLL || sc->sc_evaddr) {
 			sc->sc_threadrun = 1;
-			config_pending_incr();
+			config_pending_incr(sc->sc_dev);
 			if (kthread_create(PRI_NONE, 0, NULL,
 			    pnpbios_event_thread, sc, &sc->sc_evthread,
 			    "%s", device_xname(self)))
@@ -1412,7 +1412,7 @@ pnpbios_event_thread(void *arg)
 		EDPRINTF(("pnpbios: os active returns 0x%02x\n", rv));
 	}
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	goto start;
 	while (sc->sc_threadrun) {
