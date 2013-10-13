@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.25 2013/10/11 16:30:31 pgoyette Exp $	*/
+/*	$NetBSD: cread.c,v 1.26 2013/10/13 20:09:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -259,7 +259,6 @@ open(const char *fname, int mode)
 	int fd;
 	struct sd *s = 0;
 
-	ss[fd] = NULL;
 	if (((fd = oopen(fname, mode)) == -1) || (mode != 0))
 		/* compression only for read */
 		return fd;
