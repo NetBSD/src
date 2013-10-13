@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.115 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: i82365.c,v 1.116 2013/10/13 06:55:34 riz Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.115 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.116 2013/10/13 06:55:34 riz Exp $");
 
 #define	PCICDEBUG
 
@@ -506,7 +506,7 @@ pcic_attach_socket_finish(struct pcic_handle *h)
 	if (h->event_thread != NULL)
 		panic("pcic_attach_socket: event thread");
 #endif
-	config_pending_incr();
+	config_pending_incr(sc->dev);
 	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
 
 	if (kthread_create(PRI_NONE, 0, NULL, pcic_event_thread, h,
@@ -537,7 +537,7 @@ pcic_event_thread(void *arg)
 			splx(s);
 			if (first) {
 				first = 0;
-				config_pending_decr();
+				config_pending_decr(sc->dev);
 			}
 			/*
 			 * No events to process; release the PCIC lock.

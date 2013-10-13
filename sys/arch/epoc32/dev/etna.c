@@ -1,4 +1,4 @@
-/*	$NetBSD: etna.c,v 1.2 2013/06/22 13:36:16 kiyohara Exp $	*/
+/*	$NetBSD: etna.c,v 1.3 2013/10/13 06:55:34 riz Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.2 2013/06/22 13:36:16 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.3 2013/10/13 06:55:34 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,7 +226,7 @@ etna_doattach(device_t self)
 	struct etna_softc *sc = device_private(self);
 	int status;
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ETNA_SKT_STATUS);
 	if ((status & SKT_CARD_OUT) != SKT_CARD_OUT)
@@ -242,7 +242,7 @@ etna_event_thread(void *arg)
 {
 	struct etna_softc *sc = arg;
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 //	while (1) {
 //	}

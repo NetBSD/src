@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ ace_ebus_attach(device_t parent, device_t self, void *aux)
 	ebus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO,
 	    ace_ebus_intr, ace);
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	error = kthread_create(PRI_NONE, 0, NULL, sysace_thread,
 	    ace, NULL, "%s", device_xname(ace->sc_dev));
@@ -348,7 +348,7 @@ sysace_wedges(void *arg)
 	dkwedge_autodiscover = 1;
 	dkwedge_discover(&sc->sc_dk);
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	DBGME(DEBUG_STATUS, printf("Sysace::thread done for %p\n", sc));
 	kthread_exit(0);
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.7 2013/06/03 20:26:31 christos Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.

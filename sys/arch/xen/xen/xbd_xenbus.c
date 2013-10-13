@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.60 2013/10/13 06:55:34 riz Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.59 2013/05/29 23:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.60 2013/10/13 06:55:34 riz Exp $");
 
 #include "opt_xen.h"
 
@@ -246,7 +246,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	int err;
 #endif
 
-	config_pending_incr();
+	config_pending_incr(self);
 	aprint_normal(": Xen Virtual Block Device Interface\n");
 
 	dk_sc_init(&sc->sc_dksc, device_xname(self));
@@ -581,7 +581,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		disk_set_info(sc->sc_dksc.sc_dev, &sc->sc_dksc.sc_dkdev, NULL);
 
 		/* the disk should be working now */
-		config_pending_decr();
+		config_pending_decr(sc->sc_dksc.sc_dev);
 		break;
 	default:
 		panic("bad backend state %d", new_state);
