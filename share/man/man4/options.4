@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.430 2013/10/13 21:09:35 dholland Exp $
+.\"	$NetBSD: options.4,v 1.431 2013/10/13 21:17:35 dholland Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1016,6 +1016,27 @@ embedded systems which don't require the snapshot support.
 .It Cd options UFS_EXTATTR
 Enable extended attribute support for UFS1 filesystems.
 .It Cd options UFS_DIRHASH
+Increase lookup performance by maintaining in-core hash tables
+for large directories.
+.El
+.Ss Options for the LFS File System
+.Bl -ohang
+.\" .It Cd options LFS_KERNEL_RFW
+.\" There is no documentation for this. (XXX)
+.\" .It Cd options LFS_QUOTA
+.\" Enable traditional quota support for LFS.
+.\" (It is not clear if this works.)
+.\" .It Cd options LFS_QUOTA2
+.\" Enable modernized 64-bit quota support for LFS.
+.\" (This does not work yet.)
+.It Cd options LFS_EI
+Enable ``Endian-Independent'' LFS support.
+This allows (at a small performance cost) mounting an LFS file system
+created for another architecture.
+.\" .It Cd options LFS_EXTATTR
+.\" Enable extended attribute support for LFS.
+.\" (It is not clear if this works.)
+.It Cd options LFS_DIRHASH
 Increase lookup performance by maintaining in-core hash tables
 for large directories.
 .El
