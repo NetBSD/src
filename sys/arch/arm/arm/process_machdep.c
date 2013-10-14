@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.27 2013/08/23 05:22:01 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.28 2013/10/14 18:14:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27 2013/08/23 05:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2013/10/14 18:14:08 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -176,7 +176,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 #ifdef FPU_VFP
 	if (curcpu()->ci_vfp_id == 0) {
-		memset(regs, 0, sizeof(regs));
+		memset(regs, 0, sizeof(*regs));
 		return 0;
 	}
 	const struct pcb * const pcb = lwp_getpcb(l);
