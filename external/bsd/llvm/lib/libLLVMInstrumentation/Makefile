@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/10/14 01:37:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2013/10/14 21:19:16 joerg Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -13,7 +13,6 @@ SRCS+=	AddressSanitizer.cpp \
 	GCOVProfiling.cpp \
 	Instrumentation.cpp \
 	MemorySanitizer.cpp \
-	ProfilingUtils.cpp \
 	ThreadSanitizer.cpp
 
 .if defined(HOSTLIB)
