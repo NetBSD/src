@@ -22,6 +22,9 @@
 /* Define if you want backtraces on crash */
 #define ENABLE_BACKTRACES 1
 
+/* Define to enable crash handling overrides */
+#define ENABLE_CRASH_OVERRIDES 1
+
 /* Define if position independent code is enabled */
 #define ENABLE_PIC 1
 
@@ -71,7 +74,7 @@
 #define HAVE_CRASHREPORTER_INFO 0
 
 /* Define to 1 if you have the <cxxabi.h> header file. */
-/* #undef HAVE_CXXABI_H */
+#define HAVE_CXXABI_H 1
 
 /* Define to 1 if you have the declaration of `FE_ALL_EXCEPT', and to 0 if you
    don't. */
@@ -216,6 +219,9 @@
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
+
+/* Define to 1 if you have the `shell32' library (-lshell32). */
+/* #undef HAVE_LIBSHELL32 */
 
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 /* #undef HAVE_LIBUDIS86 */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2013/10/14 01:37:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.23 2013/10/14 01:47:50 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -177,7 +177,7 @@ run-configure:
 	mkdir -p tmp
 	cd tmp && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:N-Werror:Q} CXX=${CXX:Q} CXXFLAGS=${CXXFLAGS:N-Werror:Q} \
-	    CPPFLAGS=${CPPFLAGS:Q} LDFLAGS=${LDFLAGS:Q} LD=${LD:Q} LIBS=-lm \
+	    CPPFLAGS=${CPPFLAGS:N-std=c++11:Q} LDFLAGS=${LDFLAGS:Q} LD=${LD:Q} LIBS=-lm \
 	    ac_cv_func_mmap_fixed_mapped=yes ac_cv_func_mmap_file=yes llvm_cv_c_printf_a=yes
 	cp -r tmp/include/llvm/* ${LLVM_INCLUDE_CONFIG}/llvm/
 	mv ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h \
