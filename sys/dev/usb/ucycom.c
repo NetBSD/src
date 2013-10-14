@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.36 2013/09/15 15:06:04 martin Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.37 2013/10/14 18:15:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.36 2013/09/15 15:06:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.37 2013/10/14 18:15:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1096,6 +1096,10 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 
 	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, sc->sc_flen);
+	if (err) {
+		DPRINTF(("%s: failed\n", __func__));
+		return;
+	}
 	cfg = report[4];
 	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) +
 	    report[0];
