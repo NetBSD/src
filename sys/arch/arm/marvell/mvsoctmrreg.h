@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmrreg.h,v 1.2 2013/05/01 12:45:31 rkujawa Exp $	*/
+/*	$NetBSD: mvsoctmrreg.h,v 1.3 2013/10/14 04:20:44 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -37,6 +37,8 @@
 #define MVSOCTMR_TIMER0		0
 #define MVSOCTMR_TIMER1		1
 #define MVSOCTMR_WATCHDOG	2
+#define MVSOCTMR_TIMER2		4	/* Discovery Innovation only */
+#define MVSOCTMR_TIMER3		5	/* Discovery Innovation only */
 
 /* CPU Timers Control Register (MVSOCTMR_CTCR) */
 #define MVSOCTMR_CTCR_CPUTIMEREN(n)	(1 << ((n) * 2))
