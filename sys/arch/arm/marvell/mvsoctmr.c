@@ -1,6 +1,6 @@
-/*	$NetBSD: mvsoctmr.c,v 1.9 2013/05/01 12:45:31 rkujawa Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.10 2013/10/14 04:17:59 kiyohara Exp $	*/
 /*
- * Copyright (c) 2007, 2008 KIYOHARA Takashi
+ * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.9 2013/05/01 12:45:31 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.10 2013/10/14 04:17:59 kiyohara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mvsoc.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.9 2013/05/01 12:45:31 rkujawa Exp $")
 #include <arm/marvell/mvsocvar.h>
 #include <arm/marvell/mvsoctmrreg.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/marvell/marvellvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -68,9 +69,10 @@ struct mvsoctmr_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-#if defined(ARMADAXP)
 	int sc_irq;
-#endif
+
+#define TMR_FLAGS_ARMADAXP	(1 << 0)
+	int sc_flags;
 };
 
 
@@ -116,7 +118,8 @@ mvsoctmr_match(device_t parent, struct cfdata *match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;
 
 	mva->mva_size = MVSOCTMR_SIZE;
@@ -137,15 +140,22 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	if (mvsoctmr_sc == NULL)
 		mvsoctmr_sc = sc;
 
-#if defined(ARMADAXP)
-	sc->sc_irq = mva->mva_irq;
-#endif
-
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
 	    mva->mva_offset, mva->mva_size, &sc->sc_ioh))
 		panic("%s: Cannot map registers", device_xname(self));
+	sc->sc_irq = mva->mva_irq;
+
+	switch (mva->mva_model) {
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+		sc->sc_flags = TMR_FLAGS_ARMADAXP;
+		break;
+	}
 
 	mvsoctmr_timecounter.tc_name = device_xname(self);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, 1, 1);
@@ -186,9 +196,12 @@ clockhandler(void *arg)
 	struct clockframe *frame = arg;
 
 #if defined(ARMADAXP)
-	/* Acknowledge all timers-related interrupts */
-	bus_space_write_4(mvsoctmr_sc->sc_iot, mvsoctmr_sc->sc_ioh,
-	    MVSOCTMR_TESR, 0x0);
+	KASSERT(mvsoctmr_sc != NULL);
+
+	if (mvsoctmr_sc->sc_flags & TMR_FLAGS_ARMADAXP)
+		/* Acknowledge all timers-related interrupts */
+		bus_space_write_4(mvsoctmr_sc->sc_iot, mvsoctmr_sc->sc_ioh,
+		    MVSOCTMR_TESR, 0x0);
 #endif
 
 	hardclock(frame);
@@ -226,12 +239,11 @@ cpu_initclocks(void)
 
 	mvsoctmr_timecounter.tc_priv = sc;
 
-#if defined(ARMADAXP)
-	/* We set global timer and counter to 25 MHz mode */
-	mvsoctmr_timecounter.tc_frequency = 25000000;
-#else
-	mvsoctmr_timecounter.tc_frequency = mvTclk;
-#endif
+	if (sc->sc_flags & TMR_FLAGS_ARMADAXP)
+		/* We set global timer and counter to 25 MHz mode */
+		mvsoctmr_timecounter.tc_frequency = 25000000;
+	else
+		mvsoctmr_timecounter.tc_frequency = mvTclk;
 
 	timer0_tval = (mvsoctmr_timecounter.tc_frequency * 2) / (u_long) hz;
 	timer0_tval = (timer0_tval / 2) + (timer0_tval & 1);
@@ -239,19 +251,19 @@ cpu_initclocks(void)
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER0, timer0_tval, en, autoen);
 	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, en, autoen);
 
-#if defined(ARMADAXP)
-	/*
-	 * Establishing timer interrupts is slightly different for Armada XP
-	 * than for other supported SoCs from Marvell.
-	 * Timer interrupt is no different from any other interrupt in Armada
-	 * XP, so we use generic marvell_intr_establish().
-	 */
-	clock_ih = marvell_intr_establish(sc->sc_irq, IPL_CLOCK,
-	    clockhandler, NULL);
-#else
-	clock_ih = mvsoc_bridge_intr_establish(MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ,
-	    IPL_CLOCK, clockhandler, NULL);
-#endif
+	if (sc->sc_flags & TMR_FLAGS_ARMADAXP) {
+		/*
+		 * Establishing timer interrupts is slightly different for
+		 * Armada XP than for other supported SoCs from Marvell.
+		 * Timer interrupt is no different from any other interrupt
+		 * in Armada XP, so we use generic marvell_intr_establish().
+		 */
+		clock_ih = marvell_intr_establish(sc->sc_irq, IPL_CLOCK,
+		    clockhandler, NULL);
+	} else
+		clock_ih = mvsoc_bridge_intr_establish(
+		    MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ, IPL_CLOCK, clockhandler,
+		    NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
 
@@ -320,8 +332,7 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 {
 	uint32_t ctrl;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_RELOAD(num),
-	    ticks);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_RELOAD(num), ticks);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_TIMER(num), ticks);
 
@@ -334,10 +345,9 @@ mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,
 		ctrl |= MVSOCTMR_CTCR_CPUTIMERAUTO(num);
 	else
 		ctrl &= ~MVSOCTMR_CTCR_CPUTIMERAUTO(num);
-#if defined(ARMADAXP)
-	/* Set timer and counter to 25MHz mode */
-	ctrl |= MVSOCTMR_CTCR_25MHZEN(num);
-#endif
+	if (sc->sc_flags & TMR_FLAGS_ARMADAXP)
+		/* Set timer and counter to 25MHz mode */
+		ctrl |= MVSOCTMR_CTCR_25MHZEN(num);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSOCTMR_CTCR, ctrl);
 }
 
