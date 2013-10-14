@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2013/04/25 13:59:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2013/10/14 01:37:39 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -25,7 +25,6 @@ SRCS+=	AllocationDiagnostics.cpp \
 	CheckSizeofPointer.cpp \
 	CheckerDocumentation.cpp \
 	ChrootChecker.cpp \
-	CommonBugCategories.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
 	DereferenceChecker.cpp \
