@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
 
 LIB=	lldbPluginProcessElfCore
 
@@ -6,9 +6,12 @@ LIB=	lldbPluginProcessElfCore
 
 .PATH: ${LLDB_SRCDIR}/source/Plugins/Process/elf-core
 
+CPPFLAGS.RegisterContextPOSIXCore_mips64.cpp+= -I${LLDB_SRCDIR}/source/Plugins/Process/POSIX
+
 SRCS+=	ProcessElfCore.cpp \
-	ThreadElfCore.cpp \
-	RegisterContextPOSIXCore_x86_64.cpp
+	RegisterContextPOSIXCore_mips64.cpp \
+	RegisterContextPOSIXCore_x86_64.cpp \
+	ThreadElfCore.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

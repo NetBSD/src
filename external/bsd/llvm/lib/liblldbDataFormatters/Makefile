@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
 
 LIB=	lldbDataFormatters
 
@@ -25,7 +25,8 @@ SRCS+=	CF.cpp \
 	TypeCategoryMap.cpp \
 	TypeFormat.cpp \
 	TypeSummary.cpp \
-	TypeSynthetic.cpp
+	TypeSynthetic.cpp \
+	ValueObjectPrinter.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
