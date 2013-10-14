@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.339 2013/09/12 17:14:20 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.340 2013/10/14 01:30:21 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -589,7 +589,7 @@ DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif
 .else
 LDLIBC ?= -nodefaultlibs
-.if ${LIB} == "c"
+.if ${USE_LIBGCC} == "yes" && ${LIB} == "c"
 LDADD+= -lgcc
 .endif
 .endif
