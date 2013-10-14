@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.31 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.32 2013/10/14 12:20:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -109,10 +109,9 @@ ENTRY(cpu_switchto)
 	jbsr	_ASM_LABEL(m68k_fpuctx_save)
 #else
 #ifdef FPCOPROC
-#ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
-#endif
+
 	lea	PCB_FPCTX(%a1),%a2	| pointer to FP save area
 	fsave	(%a2)			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -222,10 +221,9 @@ ENTRY(cpu_switchto)
 	moveml	(%sp)+,%d0/%d1
 #else
 #ifdef FPCOPROC
-#ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
-#endif
+
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
@@ -279,10 +277,9 @@ ENTRY(savectx)
 	jbsr	_ASM_LABEL(m68k_fpuctx_save)
 #else
 #ifdef FPCOPROC
-#ifdef FPU_EMULATE
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
 	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
-#endif
+
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
 	fsave	(%a0)			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
