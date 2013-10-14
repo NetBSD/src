@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1842 2013/10/14 01:30:21 joerg Exp $
+#	$NetBSD: mi,v 1.1843 2013/10/14 11:11:13 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2779,7 +2779,7 @@
 ./usr/include/ulimit.h				comp-c-include
 ./usr/include/unctrl.h				comp-c-include
 ./usr/include/unistd.h				comp-c-include
-./usr/include/unwind.h				comp-c-include		!libgcc
+./usr/include/unwind.h				comp-c-include		nolibgcc
 ./usr/include/usb.h				comp-obsolete		obsolete
 ./usr/include/usbhid.h				comp-c-include
 ./usr/include/util.h				comp-c-include
