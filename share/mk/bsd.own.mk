@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.752 2013/10/14 01:30:21 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.753 2013/10/14 16:00:16 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -66,9 +66,9 @@ USE_COMPILERCRTSTUFF?=	no
 .endif
 
 .if ${MKLLVM:Uno} == "yes" && (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
-USE_LIBGCC?=	no
+HAVE_LIBGCC?=	no
 .else
-USE_LIBGCC?=	yes
+HAVE_LIBGCC?=	yes
 .endif
 
 HAVE_GDB?=	7
