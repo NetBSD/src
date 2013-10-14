@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/02 14:34:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:39 joerg Exp $
 
 PROG_CXX=	lld
 NOMAN=		yes
@@ -17,12 +17,12 @@ LLD_LIBS+= \
 	lldReaderWriterELFX86 \
 	lldReaderWriterELFX86_64 \
 	lldReaderWriterMachO \
-	lldReaderWriterNative \
 	lldReaderWriterPECOFF \
 	lldReaderWriter \
 	lldReaderWriterYAML \
 	lldPasses \
-	lldCore
+	lldCore \
+	lldReaderWriterNative \
 
 LLVM_LIBS+= \
 	Object \

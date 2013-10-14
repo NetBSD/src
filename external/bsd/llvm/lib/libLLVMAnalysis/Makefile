@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/09/02 14:34:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/10/14 01:37:39 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -41,18 +41,8 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryDependenceAnalysis.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	NoAliasAnalysis.cpp \
-	PathNumbering.cpp \
-	PathProfileInfo.cpp \
-	PathProfileVerifier.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
-	ProfileDataLoaderPass.cpp \
-	ProfileDataLoader.cpp \
-	ProfileEstimatorPass.cpp \
-	ProfileInfo.cpp \
-	ProfileInfoLoader.cpp \
-	ProfileInfoLoaderPass.cpp \
-	ProfileVerifierPass.cpp \
 	PtrUseVisitor.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \

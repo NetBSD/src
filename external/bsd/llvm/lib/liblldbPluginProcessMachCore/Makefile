@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
 
 LIB=	lldbPluginProcessMachCore
 
 .include <bsd.init.mk>
 
 .PATH: ${LLDB_SRCDIR}/source/Plugins/Process/mach-core
+
+CPPFLAGS.ProcessMachCore.cpp+=	-I${LLDB_SRCDIR}/source/Plugins/Process/Utility
 
 SRCS+=	ProcessMachCore.cpp \
 	ThreadMachCore.cpp
