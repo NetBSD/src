@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.2 2013/10/15 10:18:49 rkujawa Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.3 2013/10/15 10:27:55 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.2 2013/10/15 10:18:49 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.3 2013/10/15 10:27:55 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,25 +308,24 @@ sysctl_mcp980x_res(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct mcp980x_softc *sc = node.sysctl_data;
-	int newres;
+	int newres, err;
+
+	node.sysctl_data = &sc->sc_res;
+	if ((err = (sysctl_lookup(SYSCTLFN_CALL(&node)))) != 0) 
+		return err;
 
 	if (newp) {
-		node.sysctl_data = &sc->sc_res;
-		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
-			newres = *(int *)node.sysctl_data;
-			if (newres > MCP980X_CONFIG_ADC_RES_12BIT)
-				return EINVAL;
-			sc->sc_res = (uint8_t) newres;
-			mcp980x_resolution_set(sc, sc->sc_res);
-			return 0;
-		} 
+		newres = *(int *)node.sysctl_data;
+		if (newres > MCP980X_CONFIG_ADC_RES_12BIT)
+			return EINVAL;
+		sc->sc_res = (uint8_t) newres;
+		mcp980x_resolution_set(sc, sc->sc_res);
+		return 0;
 	} else {
 		sc->sc_res = mcp980x_resolution_get(sc);
-		node.sysctl_data = &sc->sc_res;
 		node.sysctl_size = 4;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 	}
 
-	return EINVAL;
+	return err;
 }
 
