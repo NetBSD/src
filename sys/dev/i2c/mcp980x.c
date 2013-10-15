@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.1 2013/05/06 22:04:12 rkujawa Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.2 2013/10/15 10:18:49 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,13 +31,12 @@
 
 /*
  * Microchip MCP9800/1/2/3 2-Wire High-Accuracy Temperature Sensor driver.
- * TODO: everything besides simple temperature read with default configuration.
  *
  * Note: MCP9805 is different and is supported by the sdtemp(4) driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.1 2013/05/06 22:04:12 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.2 2013/10/15 10:18:49 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.1 2013/05/06 22:04:12 rkujawa Exp $");
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/endian.h>
+#include <sys/sysctl.h>
 
 #include <sys/bus.h>
 #include <dev/i2c/i2cvar.h>
@@ -59,6 +59,8 @@ struct mcp980x_softc {
 	i2c_tag_t		sc_tag;
 	i2c_addr_t		sc_addr;
 
+	int			sc_res;
+
 	/* envsys(4) stuff */
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		sc_sensor;
@@ -69,13 +71,20 @@ struct mcp980x_softc {
 static int mcp980x_match(device_t, cfdata_t, void *);
 static void mcp980x_attach(device_t, device_t, void *);
 
-/*static uint8_t mcp980x_reg_read_1(struct mcp980x_softc *sc, uint8_t);*/
-static uint16_t mcp980x_reg_read_2(struct mcp980x_softc *sc, uint8_t reg);
+static uint8_t mcp980x_reg_read_1(struct mcp980x_softc *, uint8_t);
+static uint16_t mcp980x_reg_read_2(struct mcp980x_softc *, uint8_t);
+static void mcp980x_reg_write_1(struct mcp980x_softc *, uint8_t, uint8_t);
 
-static uint32_t mcp980x_temperature(struct mcp980x_softc *sc);
+static uint8_t mcp980x_resolution_get(struct mcp980x_softc *);
+static void mcp980x_resolution_set(struct mcp980x_softc *, uint8_t);
+
+static uint32_t mcp980x_temperature(struct mcp980x_softc *);
 
 static void mcp980x_envsys_register(struct mcp980x_softc *);
 static void mcp980x_envsys_refresh(struct sysmon_envsys *, envsys_data_t *);
+
+static void mcp980x_setup_sysctl(struct mcp980x_softc *);
+static int sysctl_mcp980x_res(SYSCTLFN_ARGS);
 
 CFATTACH_DECL_NEW(mcp980x, sizeof (struct mcp980x_softc),
     mcp980x_match, mcp980x_attach, NULL, NULL);
@@ -103,15 +112,18 @@ mcp980x_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Microchip MCP980x Temperature Sensor\n");
 
+	sc->sc_res = MCP980X_CONFIG_ADC_RES_12BIT;
+	mcp980x_resolution_set(sc, sc->sc_res);
+
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	mcp980x_setup_sysctl(sc);
 	mcp980x_envsys_register(sc);
 }
 
 static uint16_t
 mcp980x_reg_read_2(struct mcp980x_softc *sc, uint8_t reg)
 {
-	uint8_t wbuf[2];
 	uint16_t rv;
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
@@ -119,9 +131,7 @@ mcp980x_reg_read_2(struct mcp980x_softc *sc, uint8_t reg)
 		return 0;
 	}
 
-	wbuf[0] = reg;
-
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, wbuf,
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg,
 	    1, &rv, 2, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev, "cannot execute operation\n");
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
@@ -132,21 +142,17 @@ mcp980x_reg_read_2(struct mcp980x_softc *sc, uint8_t reg)
 	return be16toh(rv);
 }
 
-/* Will need that later for reading config register. */ 
-/*
 static uint8_t
 mcp980x_reg_read_1(struct mcp980x_softc *sc, uint8_t reg)
 {
-	uint8_t rv, wbuf[2];
+	uint8_t rv;
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
 		aprint_error_dev(sc->sc_dev, "cannot acquire bus for read\n");
 		return 0;
 	}
 
-	wbuf[0] = reg;
-
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, wbuf,
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg,
 	    1, &rv, 1, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev, "cannot execute operation\n");
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
@@ -155,7 +161,49 @@ mcp980x_reg_read_1(struct mcp980x_softc *sc, uint8_t reg)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return rv;
-}*/
+}
+
+static void
+mcp980x_reg_write_1(struct mcp980x_softc *sc, uint8_t reg, uint8_t val)
+{
+        if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
+		return;
+	}
+
+        if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg,
+	    1, &val, 1, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev, "cannot execute operation\n");
+        }
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+}
+
+static uint8_t 
+mcp980x_resolution_get(struct mcp980x_softc *sc)
+{
+	uint8_t cfg, res;
+
+	cfg = mcp980x_reg_read_1(sc, MCP980X_CONFIG);
+	res = (cfg & MCP980X_CONFIG_ADC_RES) >> 
+	    MCP980X_CONFIG_ADC_RES_SHIFT;
+
+	return res;
+}
+
+static void
+mcp980x_resolution_set(struct mcp980x_softc *sc, uint8_t res)
+{
+	uint8_t cfg;
+
+	/* read config register but discard resolution bits */
+	cfg = mcp980x_reg_read_1(sc, MCP980X_CONFIG) & ~MCP980X_CONFIG_ADC_RES;
+	/* set resolution bits to new value */
+	cfg |= res << MCP980X_CONFIG_ADC_RES_SHIFT;
+
+	mcp980x_reg_write_1(sc, MCP980X_CONFIG, cfg);
+}
 
 /* Get temperature in microKelvins. */
 static uint32_t
@@ -226,3 +274,59 @@ mcp980x_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	mutex_exit(&sc->sc_lock);
 }
+
+static void
+mcp980x_setup_sysctl(struct mcp980x_softc *sc)
+{
+	const struct sysctlnode *me = NULL, *node = NULL;
+ 
+	sysctl_createv(NULL, 0, NULL, &me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "res", "Resolution",
+	    sysctl_mcp980x_res, 1, (void *)sc, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	
+}
+
+
+SYSCTL_SETUP(sysctl_lmtemp_setup, "sysctl mcp980x subtree setup")
+{
+	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+}
+
+
+static int
+sysctl_mcp980x_res(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct mcp980x_softc *sc = node.sysctl_data;
+	int newres;
+
+	if (newp) {
+		node.sysctl_data = &sc->sc_res;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			newres = *(int *)node.sysctl_data;
+			if (newres > MCP980X_CONFIG_ADC_RES_12BIT)
+				return EINVAL;
+			sc->sc_res = (uint8_t) newres;
+			mcp980x_resolution_set(sc, sc->sc_res);
+			return 0;
+		} 
+	} else {
+		sc->sc_res = mcp980x_resolution_get(sc);
+		node.sysctl_data = &sc->sc_res;
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return EINVAL;
+}
+
