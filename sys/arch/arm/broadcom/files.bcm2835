@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.17 2013/09/21 13:22:48 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.18 2013/10/15 07:23:20 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -12,7 +12,6 @@ file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
 
 # OBIO just an attach point
-#, [mult=1], [intrbase=-1], [nobyteacc=0]
 device	obio { [addr=-1], [size=0], [intr=-1]
 	     } : bus_space_generic, pic, pic_splfuncs
 attach	obio at mainbus
