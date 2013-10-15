@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.10 2013/10/02 22:53:23 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.11 2013/10/15 07:37:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.10 2013/10/02 22:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.11 2013/10/15 07:37:54 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1385,7 +1385,7 @@ fail2:
 	case 0:
 		break;
 	case -ENODEV:
-		err = USBD_NOMEM;
+		err = USBD_INVAL;
 		break;
 	case -ENOMEM:
 		err = USBD_NOMEM;
