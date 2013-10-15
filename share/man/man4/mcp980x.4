@@ -1,4 +1,4 @@
-.\" $NetBSD: mcp980x.4,v 1.3 2013/10/15 11:22:58 rkujawa Exp $
+.\" $NetBSD: mcp980x.4,v 1.4 2013/10/15 13:45:09 rkujawa Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,11 +46,17 @@ API.
 The following
 .Xr sysctl 3
 variable are provided:
-.Bl -tag -width machdep.mcp980x0.res
+.Bl -tag -width machdep.mcp980x0.hysteresis
 .It Va machdep.mcp980x0.res
 ADC resolution (integer).
 Valid values are 0-3, where 0 is 9-bit (0.5 Celsius degree) and 3 is 12-bit
 (0.0625 Celsius degree) resolution.
+.It Va machdep.mcp980x0.templimit
+If the ambient temperature exceeds this limit, the chip asserts an alert line
+(integer).
+.It Va machdep.mcp980x0.hysteresis
+Hysteresis for temperature limit (integer).
+.El
 .Sh SEE ALSO
 .Xr envsys 4
 .Sh HISTORY
@@ -68,3 +74,8 @@ driver was written by
 MCP9805 chip is different and is supported by the
 .Xr sdtemp 4
 driver.
+.Pp
+The MCP980x chip supports hysteresis and temperature limit values with
+resolution of 0.5 Celsius degree, however the
+.Nm
+driver supports setting only integer values.
