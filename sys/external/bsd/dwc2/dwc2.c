@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.11 2013/10/15 07:37:54 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.12 2013/10/15 07:38:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.11 2013/10/15 07:37:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.12 2013/10/15 07:38:37 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -130,7 +130,6 @@ Static void		dwc2_device_isoc_close(usbd_pipe_handle);
 Static void		dwc2_device_isoc_done(usbd_xfer_handle);
 
 Static usbd_status	dwc2_device_start(usbd_xfer_handle);
-Static void		dwc2_device_close(usbd_pipe_handle);
 
 Static void		dwc2_close_pipe(usbd_pipe_handle);
 Static void		dwc2_abort_xfer(usbd_xfer_handle, usbd_status);
@@ -520,10 +519,9 @@ dwc2_poll(struct usbd_bus *bus)
 Static void
 dwc2_close_pipe(usbd_pipe_handle pipe)
 {
-	struct dwc2_pipe *dpipe = (struct dwc2_pipe *)pipe;
+#ifdef DIAGNOSTIC
 	struct dwc2_softc *sc = pipe->device->bus->hci_private;
-
-	dpipe = dpipe;
+#endif
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 }
@@ -1546,7 +1544,7 @@ dwc2_suspend(device_t dv, const pmf_qual_t *qual)
 }
 
 /***********************************************************************/
-Static int
+int
 dwc2_init(struct dwc2_softc *sc)
 {
 	int err = 0;
