@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1437 2013/10/15 15:10:57 skrll Exp $
+# $NetBSD: mi,v 1.1438 2013/10/15 19:20:19 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1297,6 +1297,7 @@
 ./usr/share/man/cat4/lkm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmc.0			man-sys-catman		.cat
+./usr/share/man/cat4/lmenv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lsu.0			man-obsolete		obsolete
@@ -4242,6 +4243,7 @@
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
 ./usr/share/man/html4/lmc.html			man-sys-htmlman		html
+./usr/share/man/html4/lmenv.html		man-sys-htmlman		html
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lo.html			man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
@@ -7025,6 +7027,7 @@
 ./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
+./usr/share/man/man4/lmenv.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
 ./usr/share/man/man4/lo.4			man-sys-man		.man
 ./usr/share/man/man4/lsu.4			man-obsolete		obsolete
