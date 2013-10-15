@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.37 2013/05/11 14:19:44 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.38 2013/10/15 09:07:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.37 2013/05/11 14:19:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.38 2013/10/15 09:07:48 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "sdhc.h"
-#include "dotg.h"
+#include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
 #include "plcom.h"
@@ -385,7 +385,7 @@ rpi_bootparams(void)
 #if (NPLCOM > 0)
 	    (1 << VCPM_POWER_UART0) |
 #endif
-#if (NDOTG > 0)
+#if (NBCMDWCTWO > 0)
 	    (1 << VCPM_POWER_USB) | 
 #endif
 #if (NBSCIIC > 0)
