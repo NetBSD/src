@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.18 2013/03/24 19:52:11 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.19 2013/10/15 09:07:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.18 2013/03/24 19:52:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.19 2013/10/15 09:07:48 skrll Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -134,7 +134,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 	},
 	{
 		/* DesignWare_OTG USB controller */
-		.ad_name = "dotg",
+		.ad_name = "dwctwo",
 		.ad_addr = BCM2835_USB_BASE,
 		.ad_size = BCM2835_USB_SIZE,
 		.ad_intr = BCM2835_INT_USB,
