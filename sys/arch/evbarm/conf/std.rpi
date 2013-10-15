@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.10 2013/09/17 07:13:13 skrll Exp $
+#	$NetBSD: std.rpi,v 1.11 2013/10/15 09:07:48 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -15,7 +15,6 @@ options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU
 options 	ARM_HAS_VBAR
 options 	KERNEL_BASE_EXT=0xc0000000
-options 	URTWN_DOTG_WORKAROUND
 
 options 	EVBARM_BOARDTYPE="rpi"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
