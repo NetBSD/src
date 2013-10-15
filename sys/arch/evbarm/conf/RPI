@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.40 2013/08/12 23:41:54 matt Exp $
+#	$NetBSD: RPI,v 1.41 2013/10/15 09:07:48 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -209,8 +209,8 @@ sdmmc*  at sdhc?
 ld*     at sdmmc?
 
 # On-board USB
-dotg*          at obio?
-usb*           at dotg?
+dwctwo* 	at obio?
+usb* 		at dwctwo?
 
 # USB device drivers
 include "dev/usb/usbdevices.config"
