@@ -428,6 +428,7 @@ as_cr_alnum=$as_cr_Letters$as_cr_digits
   as_lineno_2=$LINENO as_lineno_2a=$LINENO
   eval 'test "x$as_lineno_1'$as_run'" != "x$as_lineno_2'$as_run'" &&
   test "x`expr $as_lineno_1'$as_run' + 1`" = "x$as_lineno_2'$as_run'"' || {
+  as_me=bfd_$as_me # XXX don't overwrite our caller's configure.lineno
   # Blame Lee E. McMahon (1931-1989) for sed's syntax.  :-)
   sed -n '
     p
