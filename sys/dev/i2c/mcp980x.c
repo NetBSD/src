@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.3 2013/10/15 10:27:55 rkujawa Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.4 2013/10/15 13:42:52 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
 /*
  * Microchip MCP9800/1/2/3 2-Wire High-Accuracy Temperature Sensor driver.
  *
+ * TODO: better error checking, particurarly in user settable limits.
+ *
  * Note: MCP9805 is different and is supported by the sdtemp(4) driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.3 2013/10/15 10:27:55 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.4 2013/10/15 13:42:52 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +62,8 @@ struct mcp980x_softc {
 	i2c_addr_t		sc_addr;
 
 	int			sc_res;
+	int			sc_hyst;
+	int			sc_limit;
 
 	/* envsys(4) stuff */
 	struct sysmon_envsys	*sc_sme;
@@ -78,6 +82,14 @@ static void mcp980x_reg_write_1(struct mcp980x_softc *, uint8_t, uint8_t);
 static uint8_t mcp980x_resolution_get(struct mcp980x_softc *);
 static void mcp980x_resolution_set(struct mcp980x_softc *, uint8_t);
 
+static int8_t mcp980x_hysteresis_get(struct mcp980x_softc *);
+static void mcp980x_hysteresis_set(struct mcp980x_softc *, int8_t);
+static int8_t mcp980x_templimit_get(struct mcp980x_softc *);
+static void mcp980x_templimit_set(struct mcp980x_softc *, int8_t);
+
+static int8_t mcp980x_s8b_get(struct mcp980x_softc *, uint8_t);
+static void mcp980x_s8b_set(struct mcp980x_softc *, uint8_t, int8_t);
+
 static uint32_t mcp980x_temperature(struct mcp980x_softc *);
 
 static void mcp980x_envsys_register(struct mcp980x_softc *);
@@ -85,6 +97,8 @@ static void mcp980x_envsys_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void mcp980x_setup_sysctl(struct mcp980x_softc *);
 static int sysctl_mcp980x_res(SYSCTLFN_ARGS);
+static int sysctl_mcp980x_hysteresis(SYSCTLFN_ARGS);
+static int sysctl_mcp980x_templimit(SYSCTLFN_ARGS);
 
 CFATTACH_DECL_NEW(mcp980x, sizeof (struct mcp980x_softc),
     mcp980x_match, mcp980x_attach, NULL, NULL);
@@ -114,6 +128,9 @@ mcp980x_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_res = MCP980X_CONFIG_ADC_RES_12BIT;
 	mcp980x_resolution_set(sc, sc->sc_res);
+
+	sc->sc_hyst = mcp980x_hysteresis_get(sc);
+	sc->sc_limit = mcp980x_templimit_get(sc);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -164,6 +181,27 @@ mcp980x_reg_read_1(struct mcp980x_softc *sc, uint8_t reg)
 }
 
 static void
+mcp980x_reg_write_2(struct mcp980x_softc *sc, uint8_t reg, uint16_t val)
+{
+	uint16_t beval;
+
+	beval = htobe16(val);
+
+        if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
+		return;
+	}
+
+        if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg,
+	    1, &beval, 2, I2C_F_POLL)) {
+		aprint_error_dev(sc->sc_dev, "cannot execute operation\n");
+        }
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+}
+
+static void
 mcp980x_reg_write_1(struct mcp980x_softc *sc, uint8_t reg, uint8_t val)
 {
         if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
@@ -178,6 +216,42 @@ mcp980x_reg_write_1(struct mcp980x_softc *sc, uint8_t reg, uint8_t val)
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
+}
+
+static int8_t
+mcp980x_templimit_get(struct mcp980x_softc *sc)
+{
+	return mcp980x_s8b_get(sc, MCP980X_TEMP_LIMIT);
+}
+
+static void
+mcp980x_templimit_set(struct mcp980x_softc *sc, int8_t val)
+{
+	mcp980x_s8b_set(sc, MCP980X_TEMP_LIMIT, val);
+}
+
+static int8_t
+mcp980x_hysteresis_get(struct mcp980x_softc *sc)
+{
+	return mcp980x_s8b_get(sc, MCP980X_TEMP_HYSTERESIS);
+}
+
+static void
+mcp980x_hysteresis_set(struct mcp980x_softc *sc, int8_t val)
+{
+	mcp980x_s8b_set(sc, MCP980X_TEMP_HYSTERESIS, val);
+}
+
+static int8_t
+mcp980x_s8b_get(struct mcp980x_softc *sc, uint8_t reg) 
+{
+	return mcp980x_reg_read_2(sc, reg) >> MCP980X_TEMP_HYSTLIMIT_INT_SHIFT;
+}
+
+static void
+mcp980x_s8b_set(struct mcp980x_softc *sc, uint8_t reg, int8_t val)
+{
+	mcp980x_reg_write_2(sc, reg, val << MCP980X_TEMP_HYSTLIMIT_INT_SHIFT);
 }
 
 static uint8_t 
@@ -292,6 +366,17 @@ mcp980x_setup_sysctl(struct mcp980x_softc *sc)
 	    sysctl_mcp980x_res, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 	
+	sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "hysteresis", "Temperature hysteresis",
+	    sysctl_mcp980x_hysteresis, 1, (void *)sc, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "templimit", "Temperature limit",
+	    sysctl_mcp980x_templimit, 1, (void *)sc, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 }
 
 
@@ -323,6 +408,54 @@ sysctl_mcp980x_res(SYSCTLFN_ARGS)
 		return 0;
 	} else {
 		sc->sc_res = mcp980x_resolution_get(sc);
+		node.sysctl_size = 4;
+	}
+
+	return err;
+}
+
+static int
+sysctl_mcp980x_hysteresis(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct mcp980x_softc *sc = node.sysctl_data;
+	int newhyst, err;
+
+	node.sysctl_data = &sc->sc_hyst;
+	if ((err = (sysctl_lookup(SYSCTLFN_CALL(&node)))) != 0) 
+		return err;
+
+	if (newp) {
+		newhyst = *(int *)node.sysctl_data;
+		sc->sc_hyst = newhyst;
+		mcp980x_hysteresis_set(sc, sc->sc_hyst);
+		return 0;
+	} else {
+		sc->sc_hyst = mcp980x_hysteresis_get(sc);
+		node.sysctl_size = 4;
+	}
+
+	return err;
+}
+
+static int
+sysctl_mcp980x_templimit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct mcp980x_softc *sc = node.sysctl_data;
+	int newlimit, err;
+
+	node.sysctl_data = &sc->sc_limit;
+	if ((err = (sysctl_lookup(SYSCTLFN_CALL(&node)))) != 0) 
+		return err;
+
+	if (newp) {
+		newlimit = *(int *)node.sysctl_data;
+		sc->sc_limit = newlimit;
+		mcp980x_templimit_set(sc, sc->sc_limit);
+		return 0;
+	} else {
+		sc->sc_limit = mcp980x_templimit_get(sc);
 		node.sysctl_size = 4;
 	}
 
