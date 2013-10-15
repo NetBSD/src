@@ -3216,7 +3216,7 @@ fi
 # We currently only use the version number for the name of any shared
 # library.  For user convenience, we always use the same version
 # number that BFD is using.
-BFD_VERSION=`${srcdir}/../bfd/configure --version | sed -n -e '1s,.* ,,p'`
+BFD_VERSION=`${CONFIG_SHELL} ${srcdir}/../bfd/configure --version | sed -n -e '1s,.* ,,p'`
 
 am__api_version='1.11'
 
