@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1436 2013/09/08 16:01:47 rkujawa Exp $
+# $NetBSD: mi,v 1.1437 2013/10/15 15:10:57 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -980,6 +980,7 @@
 ./usr/share/man/cat4/dtv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dtviic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dty.0			man-sys-catman		.cat
+./usr/share/man/cat4/dwctwo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eap.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eb.0			man-sys-catman		.cat
@@ -3958,6 +3959,7 @@
 ./usr/share/man/html4/dtv.html			man-sys-htmlman		html
 ./usr/share/man/html4/dtviic.html		man-sys-htmlman		html
 ./usr/share/man/html4/dty.html			man-sys-htmlman		html
+./usr/share/man/html4/dwctwo.html		man-sys-htmlman		html
 ./usr/share/man/html4/ea.html			man-sys-htmlman		html
 ./usr/share/man/html4/eap.html			man-sys-htmlman		html
 ./usr/share/man/html4/eb.html			man-sys-htmlman		html
@@ -6706,6 +6708,7 @@
 ./usr/share/man/man4/dtv.4			man-sys-man		.man
 ./usr/share/man/man4/dtviic.4			man-sys-man		.man
 ./usr/share/man/man4/dty.4			man-sys-man		.man
+./usr/share/man/man4/dwctwo.4			man-sys-man		.man
 ./usr/share/man/man4/ea.4			man-sys-man		.man
 ./usr/share/man/man4/eap.4			man-sys-man		.man
 ./usr/share/man/man4/eb.4			man-sys-man		.man
