@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.11 2012/10/29 12:59:43 chs Exp $ */
+/* $NetBSD: coram.c,v 1.12 2013/10/16 18:20:16 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.11 2012/10/29 12:59:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.12 2013/10/16 18:20:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,9 +450,6 @@ done:
 static bool
 coram_resume(device_t dv, const pmf_qual_t *qual)
 {
-	struct coram_softc *sc;
-	sc = device_private(dv);
-
 	return true;
 }
 
@@ -774,10 +771,6 @@ coram_dtv_stop_transfer(void *cookie)
 static int
 coram_mpeg_reset(struct coram_softc *sc)
 {
-	uint32_t v;
-
-	v = (uint32_t)-1;
-
 	/* hold RISC in reset */
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, DEV_CNTRL2, 0);
 
