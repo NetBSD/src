@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.18 2011/11/24 03:35:59 mrg Exp $ */
+/* $NetBSD: hdaudio.c,v 1.19 2013/10/16 18:13:00 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.18 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.19 2013/10/16 18:13:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -694,9 +694,6 @@ hdaudio_attach_fg(struct hdaudio_function_group *fg, prop_array_t config)
 static void
 hdaudio_codec_attach(struct hdaudio_codec *co)
 {
-#ifdef HDAUDIO_DEBUG
-	struct hdaudio_softc *sc = co->co_host;
-#endif
 	struct hdaudio_function_group *fg;
 	uint32_t vid, rid, snc, fgrp;
 	int starting_node, num_nodes, nid;
@@ -705,7 +702,6 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 		return;
 
 	vid = hdaudio_command(co, 0, CORB_GET_PARAMETER, COP_VENDOR_ID);
-	rid = hdaudio_command(co, 0, CORB_GET_PARAMETER, COP_REVISION_ID);
 	snc = hdaudio_command(co, 0, CORB_GET_PARAMETER,
 	    COP_SUBORDINATE_NODE_COUNT);
 
@@ -714,6 +710,9 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 		return;
 
 #ifdef HDAUDIO_DEBUG
+	struct hdaudio_softc *sc = co->co_host;
+	uint32_t rid = hdaudio_command(co, 0, CORB_GET_PARAMETER,
+	    COP_REVISION_ID);
 	hda_print(sc, "Codec%02X: %04X:%04X HDA %d.%d rev %d stepping %d\n",
 	    co->co_addr, vid >> 16, vid & 0xffff,
 	    (rid >> 20) & 0xf, (rid >> 16) & 0xf,

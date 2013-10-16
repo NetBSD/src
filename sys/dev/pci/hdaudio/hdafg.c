@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.17 2013/10/16 17:43:33 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.18 2013/10/16 18:13:00 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.17 2013/10/16 17:43:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18 2013/10/16 18:13:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -532,7 +532,7 @@ static void
 hdafg_widget_pin_dump(struct hdafg_softc *sc)
 {
 	struct hdaudio_widget *w;
-	int i, conn, color, defdev;
+	int i, conn;
 
 	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
 		w = hdafg_widget_lookup(sc, i);
@@ -541,14 +541,16 @@ hdafg_widget_pin_dump(struct hdafg_softc *sc)
 		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
 			continue;
 		conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-		color = COP_CFG_COLOR(w->w_pin.config);
-		defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 		if (conn != 1) {
+#ifdef HDAUDIO_DEBUG
+			int color = COP_CFG_COLOR(w->w_pin.config);
+			int defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 			hda_trace(sc, "io %02X: %s (%s, %s)\n",
 			    w->w_nid,
 			    hdafg_default_device[defdev],
 			    hdafg_color[color],
 			    hdafg_port_connectivity[conn]);
+#endif
 		}
 	}
 }
@@ -975,7 +977,7 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
-	uint32_t conn, color, defdev, curdev, curport;
+	uint32_t conn, defdev, curdev, curport;
 	int maxassocs = sc->sc_nassocs;
 	int i, j;
 
@@ -1053,7 +1055,6 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 					if (w == NULL)
 						continue;
 					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-					color = COP_CFG_COLOR(w->w_pin.config);
 					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 					if (conn != curport || defdev != curdev)
 						continue;
@@ -1063,8 +1064,12 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 					else
 						hda_trace1(sc, " ");
 					firstport = false;
+#ifdef HDAUDIO_DEBUG
+					int color =
+					    COP_CFG_COLOR(w->w_pin.config);
 					hda_trace1(sc, "%s",
 					    hdafg_color[color]);
+#endif
 					hda_trace1(sc, "(%02X)", w->w_nid);
 				}
 				hda_print1(sc, "]");
@@ -3199,10 +3204,8 @@ hdafg_stream_intr(struct hdaudio_stream *st)
 {
 	struct hdaudio_audiodev *ad = st->st_cookie;
 	int handled = 0;
-/*###3202 [cc] error: variable 'sts' set but not used [-Werror=unused-but-set-variable]%%%*/
-	uint8_t sts;
 
-	sts = hda_read1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift));
+	(void)hda_read1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift));
 	hda_write1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift),
 	    HDAUDIO_STS_DESE | HDAUDIO_STS_FIFOE | HDAUDIO_STS_BCIS);
 
