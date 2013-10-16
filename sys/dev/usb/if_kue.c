@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.79 2013/01/05 01:30:15 christos Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.80 2013/10/16 07:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.79 2013/01/05 01:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.80 2013/10/16 07:34:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1038,8 +1038,12 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		kue_setmulti(sc);
-		error = 0;
+		error = ether_ioctl(ifp, command, data);
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				kue_setmulti(sc);
+			error = 0;
+		}
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);
