@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.105 2013/10/16 12:43:35 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.106 2013/10/16 19:59:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -410,6 +410,7 @@ extern int	 COLORS;		/* Max colors on the screen. */
 extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
+extern int	 TABSIZE;		/* Size of a tab. */
 
 #ifndef OK
 #define	ERR	(-1)			/* Error return. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.47 2011/10/04 11:01:13 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.48 2013/10/16 19:59:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -193,6 +193,7 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 TABSIZE;	/* Size of a tab. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
 	int	 My_term;	/* Use Def_term regardless. */

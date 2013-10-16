@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.51 2013/09/25 03:28:20 dsainty Exp $	*/
+/*	$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.51 2013/09/25 03:28:20 dsainty Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ _cursesi_setterm(char *type, SCREEN *screen)
 			screen->LINES = t_lines(screen->term);
 			screen->COLS = t_columns(screen->term);
 		}
-		
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
@@ -105,7 +104,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		screen->COLS = (int) strtol(p, NULL, 0);
 	if ((p = getenv("ESCDELAY")) != NULL)
 		ESCDELAY = (int) strtol(p, NULL, 0);
-
+	if ((p = getenv("TABSIZE")) != NULL)
+		screen->TABSIZE = (int) strtol(p, NULL, 0);
+	else if (t_init_tabs(screen->term) >= 0)
+		screen->TABSIZE = (int) t_init_tabs(screen->term);
+	else
+		screen->TABSIZE = 8;
 	/*
 	 * Want cols > 4, otherwise things will fail.
 	 */
@@ -114,10 +118,12 @@ _cursesi_setterm(char *type, SCREEN *screen)
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	TABSIZE = screen->TABSIZE;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n",
-	    LINES, COLS);
+	__CTRACE(__CTRACE_INIT,
+	    "setterm: LINES = %d, COLS = %d\n, TABSIZE = %d\n",
+	    LINES, COLS, TABSIZE);
 #endif
 
 	/*
@@ -243,6 +249,7 @@ _cursesi_resetterm(SCREEN *screen)
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
+	TABSIZE = screen->TABSIZE;
 	__GT = screen->GT;
 
 	__noqch = screen->noqch;
