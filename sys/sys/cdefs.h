@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.112 2013/09/15 13:01:37 martin Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.113 2013/10/16 19:31:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -549,6 +549,8 @@
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
+
+#define __USE(a) ((void)(a))
 
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
