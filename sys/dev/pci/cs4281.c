@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.49 2013/10/16 18:18:54 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.50 2013/10/16 19:32:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.49 2013/10/16 18:18:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.50 2013/10/16 19:32:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,8 +339,8 @@ cs4281_intr(void *p)
 	DPRINTF(("intr = 0x%08x, hdsr0 = 0x%08x hdsr1 = 0x%08x\n",
 		 intr, hdsr0, hdsr1));
 #else
-	(void)&hdsr0;
-	(void)&hdsr1;
+	__USE(hdsr0);
+	__USE(hdsr1);
 #endif
 
 	/* Playback Interrupt */
