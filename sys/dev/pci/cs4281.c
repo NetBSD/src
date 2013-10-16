@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.48 2012/10/27 17:18:31 chs Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.49 2013/10/16 18:18:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.48 2012/10/27 17:18:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.49 2013/10/16 18:18:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,13 @@ cs4281_intr(void *p)
 	/* clear the interrupt register */
 	BA0WRITE4(sc, CS4281_HICR, HICR_CHGM | HICR_IEV);
 
+#ifdef CS4280_DEBUG
 	DPRINTF(("intr = 0x%08x, hdsr0 = 0x%08x hdsr1 = 0x%08x\n",
 		 intr, hdsr0, hdsr1));
+#else
+	(void)&hdsr0;
+	(void)&hdsr1;
+#endif
 
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {
