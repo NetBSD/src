@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.16 2012/03/11 19:39:36 para Exp $ */
+/* $NetBSD: hdafg.c,v 1.17 2013/10/16 17:43:33 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16 2012/03/11 19:39:36 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.17 2013/10/16 17:43:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2978,7 +2978,7 @@ hdafg_commit(struct hdafg_softc *sc)
 {
 	struct hdaudio_widget *w;
 	uint32_t gdata, gmask, gdir;
-	int commitgpio, numgpio;
+	int commitgpio;
 	int i;
 
 	/* Commit controls */
@@ -3000,10 +3000,10 @@ hdafg_commit(struct hdafg_softc *sc)
 	}
 
 	gdata = gmask = gdir = commitgpio = 0;
-	numgpio = COP_GPIO_COUNT_NUM_GPIO(sc->sc_p.gpio_cnt);
+#ifdef notyet
+	int numgpio = COP_GPIO_COUNT_NUM_GPIO(sc->sc_p.gpio_cnt);
 
 	hda_trace(sc, "found %d GPIOs\n", numgpio);
-#if notyet
 	for (i = 0; i < numgpio && i < 8; i++) {
 		if (commitgpio == 0)
 			commitgpio = 1;
@@ -3199,6 +3199,7 @@ hdafg_stream_intr(struct hdaudio_stream *st)
 {
 	struct hdaudio_audiodev *ad = st->st_cookie;
 	int handled = 0;
+/*###3202 [cc] error: variable 'sts' set but not used [-Werror=unused-but-set-variable]%%%*/
 	uint8_t sts;
 
 	sts = hda_read1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift));
