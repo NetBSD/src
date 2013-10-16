@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2013/04/27 07:59:09 matt Exp $
+#	$NetBSD: Makefile,v 1.24 2013/10/16 14:50:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,7 @@ TOOL_MTREE.unpriv=	-W
 # the Makefile.
 #
 emit_dist_file:
-	cat ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
+	@cat ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
 
 distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .if !defined(DISTRIBUTION_DONE)						# {
