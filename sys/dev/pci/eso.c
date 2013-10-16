@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.63 2013/07/17 21:26:29 soren Exp $	*/
+/*	$NetBSD: eso.c,v 1.64 2013/10/16 18:20:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.63 2013/07/17 21:26:29 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.64 2013/10/16 18:20:16 christos Exp $");
 
 #include "mpu.h"
 
@@ -1181,10 +1181,8 @@ static int
 eso_get_port(void *hdl, mixer_ctrl_t *cp)
 {
 	struct eso_softc *sc;
-	int error;
 
 	sc = hdl;
-	error = 0;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 
@@ -1224,7 +1222,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 			    sc->sc_gain[cp->dev][ESO_RIGHT];
 			break;
 		default:
-			error = EINVAL;
 			break;
 		}
 		break;
@@ -1234,7 +1231,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 	case ESO_MONO_REC_VOL:
 	case ESO_SPATIALIZER:
 		if (cp->un.value.num_channels != 1) {
-			error = EINVAL;
 			break;
 		}
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
@@ -1273,7 +1269,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 		break;
 
 	default:
-		error = EINVAL;
 		break;
 	}
 
