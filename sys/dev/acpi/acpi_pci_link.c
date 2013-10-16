@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.19 2012/09/23 00:26:25 chs Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.20 2013/10/16 17:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.19 2012/09/23 00:26:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.20 2013/10/16 17:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -902,6 +902,10 @@ acpi_pci_link_srs(struct acpi_pci_link_softc *sc, ACPI_BUFFER *srsbuf)
 		status = acpi_pci_link_srs_from_links(sc, srsbuf);
 	else
 		status = acpi_pci_link_srs_from_crs(sc, srsbuf);
+
+	if (ACPI_FAILURE(status))
+		printf("%s: Unable to find link srs : %s\n",
+		    sc->pl_name, AcpiFormatException(status));
 
 	/* Write out new resources via _SRS. */
 	return AcpiSetCurrentResources(sc->pl_handle, srsbuf);
