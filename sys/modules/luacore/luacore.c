@@ -112,7 +112,7 @@ core_aprint_get_error_count(lua_State *L)
 static int
 core_panic(lua_State *L)
 {
-	panic(lua_tostring(L, -1));
+	panic("%s", lua_tostring(L, -1));
 	return 0;
 }
 
