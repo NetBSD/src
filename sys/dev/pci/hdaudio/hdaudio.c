@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.19 2013/10/16 18:13:00 christos Exp $ */
+/* $NetBSD: hdaudio.c,v 1.20 2013/10/16 18:20:17 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.19 2013/10/16 18:13:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.20 2013/10/16 18:20:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -695,7 +695,7 @@ static void
 hdaudio_codec_attach(struct hdaudio_codec *co)
 {
 	struct hdaudio_function_group *fg;
-	uint32_t vid, rid, snc, fgrp;
+	uint32_t vid, snc, fgrp;
 	int starting_node, num_nodes, nid;
 
 	if (co->co_valid == false)
