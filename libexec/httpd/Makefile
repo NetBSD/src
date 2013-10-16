@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2013/10/12 17:24:06 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.17 2013/10/16 10:04:26 he Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -27,8 +27,8 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c lua-bozo.c
 SRCS+=	main.c
 
-LDADD=	-lcrypt -llua
-DPADD=	${LIBCRYPT}
+LDADD=	-lcrypt -llua -lm
+DPADD=	${LIBCRYPT} ${LIBLUA} ${LIBM}
 
 WARNS?=	4
 
