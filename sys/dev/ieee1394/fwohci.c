@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.135 2013/09/12 20:16:51 martin Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.136 2013/10/16 17:40:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.135 2013/09/12 20:16:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.136 2013/10/16 17:40:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2645,9 +2645,9 @@ fwohci_arcv_swap(struct fw_pkt *fp, int len)
 {
 	struct fw_pkt *fp0;
 	uint32_t ld0;
-	int slen, hlen;
+	int hlen;
 #if BYTE_ORDER == BIG_ENDIAN
-	int i;
+	int slen, i;
 #endif
 
 	ld0 = FWOHCI_DMA_READ(fp->mode.ld[0]);
@@ -2662,7 +2662,9 @@ fwohci_arcv_swap(struct fw_pkt *fp, int len)
 	case FWTCODE_WREQQ:
 	case FWTCODE_RRESQ:
 	case FWOHCITCODE_PHY:
+#if BYTE_ORDER == BIG_ENDIAN
 		slen = 12;
+#endif
 		break;
 
 	case FWTCODE_RREQB:
@@ -2670,7 +2672,9 @@ fwohci_arcv_swap(struct fw_pkt *fp, int len)
 	case FWTCODE_LREQ:
 	case FWTCODE_RRESB:
 	case FWTCODE_LRES:
+#if BYTE_ORDER == BIG_ENDIAN
 		slen = 16;
+#endif
 		break;
 
 	default:
