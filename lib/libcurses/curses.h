@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.104 2012/04/21 12:27:27 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.105 2013/10/16 12:43:35 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -259,6 +259,7 @@ typedef struct __screen SCREEN;
 
 #ifdef HAVE_WCHAR
 #define WA_ATTRIBUTES	0x03ffffff	/* Wide character attributes mask */
+#define WA_NORMAL	__NORMAL
 #define WA_STANDOUT	__STANDOUT	/* Best highlighting mode */
 #define WA_UNDERLINE	__UNDERSCORE	/* Underlining */
 #define WA_REVERSE	__REVERSE	/* Reverse video */
