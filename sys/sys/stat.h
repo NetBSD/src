@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.67 2013/10/09 09:38:21 njoly Exp $	*/
+/*	$NetBSD: stat.h,v 1.68 2013/10/17 18:01:11 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -278,7 +278,7 @@ int     fchmodat(int, const char *, mode_t, int);
 int     fstatat(int, const char *, struct stat *, int);
 int     mkdirat(int, const char *, mode_t);
 int     mkfifoat(int, const char *, mode_t);
-int     mknodat(int, const char *, mode_t, uint32_t);
+int     mknodat(int, const char *, mode_t, dev_t);
 int     utimensat(int, const char *, const struct timespec *, int);
 #endif
 

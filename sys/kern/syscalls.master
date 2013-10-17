@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.263 2013/08/30 10:33:10 pooka Exp $
+	$NetBSD: syscalls.master,v 1.264 2013/10/17 18:01:11 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -902,7 +902,7 @@
 459	STD  RUMP	{ int|sys||mkfifoat(int fd, const char *path, \
 			    mode_t mode); }
 460	STD  RUMP	{ int|sys||mknodat(int fd, const char *path, \
-			    mode_t mode, uint32_t dev); }
+			    mode_t mode, int PAD, dev_t dev); }
 461	STD  RUMP	{ int|sys||mkdirat(int fd, const char *path, \
 			    mode_t mode); }
 462	STD  RUMP	{ int|sys||faccessat(int fd, const char *path, \
