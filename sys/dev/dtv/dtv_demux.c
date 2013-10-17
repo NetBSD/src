@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.5 2013/10/17 21:23:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.5 2013/10/17 21:23:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -368,7 +368,6 @@ static int
 dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
 {
 	struct dtv_demux *demux = fp->f_data;
-	struct dtv_softc *sc;
 	struct dmx_pes_filter_params *pesfilt;
 	struct dmx_sct_filter_params *sctfilt;
 	uint16_t pid;
@@ -376,7 +375,6 @@ dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
 
 	if (demux == NULL)
 		return ENXIO;
-	sc = demux->dd_sc;
 
 	switch (cmd) {
 	case DMX_START:
