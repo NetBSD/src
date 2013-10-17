@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.4 2013/10/17 07:54:19 mbalmer Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.5 2013/10/17 08:07:54 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -403,8 +403,8 @@ bozo_process_lua(bozo_httpreq_t *request)
 				    headp->h_value);
 
 			/* Pass the query variables */
-			if ((query && *query) || (type && *type
-			    && !strcmp(type, FORM))) {
+			if ((query && *query) ||
+			    (type && *type && !strcmp(type, FORM))) {
 				lua_newtable(map->L);
 				if (query && *query)
 					lua_decode_query(map->L, query);
@@ -420,6 +420,9 @@ bozo_process_lua(bozo_httpreq_t *request)
 							content[n] = '\0';
 							lua_decode_query(map->L,
 							    content);
+						} else {
+							lua_pop(map->L, 1);
+							lua_pushnil(map->L);
 						}
 						free(content);
 					}
