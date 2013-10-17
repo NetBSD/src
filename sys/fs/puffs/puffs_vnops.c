@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.176 2012/11/05 17:27:38 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.177 2013/10/17 21:03:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.176 2012/11/05 17:27:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.177 2013/10/17 21:03:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1252,15 +1252,13 @@ doinact(struct puffs_mount *pmp, int iaflag)
 static void
 callinactive(struct puffs_mount *pmp, puffs_cookie_t ck, int iaflag)
 {
-	int error;
 	PUFFS_MSG_VARS(vn, inactive);
 
 	if (doinact(pmp, iaflag)) {
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, ck);
-
-		PUFFS_MSG_ENQUEUEWAIT(pmp, park_inactive, error);
+		PUFFS_MSG_ENQUEUEWAIT_NOERROR(pmp, park_inactive);
 		PUFFS_MSG_RELEASE(inactive);
 	}
 }
@@ -1278,7 +1276,6 @@ puffs_vnop_inactive(void *v)
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pnode;
 	bool recycle = false;
-	int error;
 
 	pnode = vp->v_data;
 	mutex_enter(&pnode->pn_sizemtx);
@@ -1288,9 +1285,8 @@ puffs_vnop_inactive(void *v)
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, VPTOPNC(vp));
-
-		PUFFS_MSG_ENQUEUEWAIT2(pmp, park_inactive, vp->v_data,
-		    NULL, error);
+		PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_inactive, vp->v_data,
+		    NULL);
 		PUFFS_MSG_RELEASE(inactive);
 	}
 	pnode->pn_stat &= ~PNODE_DOINACT;
@@ -1584,7 +1580,7 @@ puffs_vnop_poll(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
-	int events, error;
+	int events;
 
 	if (EXISTSOP(pmp, POLL)) {
 		mutex_enter(&pn->pn_mtx);
@@ -1605,8 +1601,8 @@ puffs_vnop_poll(void *v)
 			puffs_msg_setcall(park_poll, puffs_parkdone_poll, pn);
 			selrecord(curlwp, &pn->pn_sel);
 
-			PUFFS_MSG_ENQUEUEWAIT2(pmp, park_poll, vp->v_data,
-			    NULL, error);
+			PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_poll,
+			    vp->v_data, NULL);
 			PUFFS_MSG_RELEASE(poll);
 
 			return 0;
@@ -2440,7 +2436,6 @@ puffs_vnop_print(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
-	int error;
 
 	/* kernel portion */
 	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
@@ -2454,8 +2449,8 @@ puffs_vnop_print(void *v)
 		PUFFS_MSG_ALLOC(vn, print);
 		puffs_msg_setinfo(park_print, PUFFSOP_VN,
 		    PUFFS_VN_PRINT, VPTOPNC(vp));
-		PUFFS_MSG_ENQUEUEWAIT2(pmp, park_print, vp->v_data,
-		    NULL, error);
+		PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_print, vp->v_data,
+		    NULL);
 		PUFFS_MSG_RELEASE(print);
 	}
 	
