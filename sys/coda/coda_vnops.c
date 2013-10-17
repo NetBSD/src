@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.91 2013/10/17 20:55:30 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.91 2013/10/17 20:55:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,7 +897,6 @@ coda_lookup(void *v)
     const char *nm = cnp->cn_nameptr;
     int len = cnp->cn_namelen;
     int flags = cnp->cn_flags;
-    int isdot;
     CodaFid VFid;
     int	vtype;
     int error = 0;
@@ -935,13 +934,6 @@ coda_lookup(void *v)
 	error = EINVAL;
 	goto exit;
     }
-
-    /*
-     * XXX Check for DOT lookups, and short circuit all the caches,
-     * just doing an extra vref.  (venus guarantees that lookup of
-     * . returns self.)
-     */
-    isdot = (len == 1 && nm[0] == '.');
 
     /*
      * Try to resolve the lookup in the minicache.  If that fails, ask
