@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.8 2013/10/10 16:01:55 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.9 2013/10/17 12:52:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.8 2013/10/10 16:01:55 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.9 2013/10/17 12:52:09 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -65,7 +65,7 @@ __RCSID("$Id: t_unix.c,v 1.8 2013/10/10 16:01:55 christos Exp $");
 #else
 
 #include <atf-c.h>
-#define FAIL(msg, ...)	ATF_CHECK_MSG(0, msg, ## __VA_ARGS__)
+#define FAIL(msg, ...)	ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); goto fail
 
 #endif
 
@@ -110,7 +110,9 @@ acc(int s)
 		FAIL("guard1 = '%c'", guard1);
 	if (guard2 != 's')
 		FAIL("guard2 = '%c'", guard2);
+#ifdef DEBUG
 	print("accept", &sun, len);
+#endif
 	if (len != 2)
 		FAIL("len %d != 2", len);
 	if (sun.sun_family != AF_UNIX)
@@ -124,6 +126,10 @@ acc(int s)
 			FAIL("sun.sun_path[%zu] %d != NULL", i,
 			    sun.sun_path[i]);
 	return s;
+fail:
+	if (s != -1)
+		close(s);
+	return -1;
 }
 
 static int
@@ -131,8 +137,8 @@ test(bool closeit, size_t len)
 {
 	size_t slen;
 	socklen_t sl;
-	int srvr, clnt, acpt;
-	struct sockaddr_un *sock_addr, *sun;
+	int srvr = -1, clnt = -1, acpt = -1;
+	struct sockaddr_un *sock_addr = NULL, *sun = NULL;
 	socklen_t sock_addrlen;
 
 	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -228,7 +234,16 @@ test(bool closeit, size_t len)
 	if (!closeit)
 		(void)close(clnt);
 
+	free(sock_addr);
+	free(sun);
 	return 0;
+fail:
+	(void)close(acpt);
+	(void)close(srvr);
+	(void)close(clnt);
+	free(sock_addr);
+	free(sun);
+	return -1;
 }
 
 #ifndef TEST
