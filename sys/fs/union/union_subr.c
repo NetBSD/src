@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.56 2012/11/05 17:24:11 dholland Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.57 2013/10/17 21:03:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.56 2012/11/05 17:24:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.57 2013/10/17 21:03:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,10 +598,7 @@ found:
 int
 union_freevp(struct vnode *vp)
 {
-	int hash;
 	struct union_node *un = VTOUNION(vp);
-
-	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 
 	mutex_enter(&uhash_lock);
 	if (un->un_cflags & UN_CACHED) {
@@ -961,7 +958,6 @@ void
 union_removed_upper(struct union_node *un)
 {
 	struct vnode *vp = UNIONTOV(un);
-	int hash;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 #if 1
@@ -979,7 +975,6 @@ union_removed_upper(struct union_node *un)
 	union_newupper(un, NULLVP);
 #endif
 
-	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 	VOP_UNLOCK(vp);
 
 	mutex_enter(&uhash_lock);
