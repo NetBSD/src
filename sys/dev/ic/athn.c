@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.6 2013/06/24 19:43:58 martin Exp $	*/
+/*	$NetBSD: athn.c,v 1.7 2013/10/17 21:24:24 christos Exp $	*/
 /*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.6 2013/06/24 19:43:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.7 2013/10/17 21:24:24 christos Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -1941,7 +1941,7 @@ athn_set_sta_timers(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tsfhi, tsflo, tsftu, reg;
 	uint32_t intval, next_tbtt, next_dtim;
-	int dtim_period, dtim_count, rem_dtim_count;
+	int dtim_period, rem_dtim_count;
 
 	tsfhi = AR_READ(sc, AR_TSF_U32);
 	tsflo = AR_READ(sc, AR_TSF_L32);
@@ -1958,10 +1958,10 @@ athn_set_sta_timers(struct athn_softc *sc)
 		dtim_period = 1;	/* Assume all TIMs are DTIMs. */
 
 #ifdef notyet
-	dtim_count = ic->ic_dtim_count;
+	int dtim_count = ic->ic_dtim_count;
 	if (dtim_count >= dtim_period)	/* Should not happen. */
-#endif
 		dtim_count = 0;	/* Assume last TIM was a DTIM. */
+#endif
 
 	/* Compute number of remaining TIMs until next DTIM. */
 	rem_dtim_count = 0;	/* XXX */
