@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.223.2.2 2013/08/28 23:59:36 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.223.2.3 2013/10/17 23:52:18 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.223.2.2 2013/08/28 23:59:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.223.2.3 2013/10/17 23:52:18 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -191,6 +191,7 @@ ip_output(struct mbuf *m0, ...)
 
 	MCLAIM(m, &ip_tx_mowner);
 
+	KASSERT(solocked(so));
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) == 0);
 	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) !=
@@ -202,6 +203,7 @@ ip_output(struct mbuf *m0, ...)
 			hlen = len;
 	}
 	ip = mtod(m, struct ip *);
+
 	/*
 	 * Fill in IP header.
 	 */
@@ -214,6 +216,7 @@ ip_output(struct mbuf *m0, ...)
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
+
 	/*
 	 * Route packet.
 	 */
@@ -222,17 +225,15 @@ ip_output(struct mbuf *m0, ...)
 		ro = &iproute;
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 	dst = satocsin(rtcache_getdst(ro));
+
 	/*
-	 * If there is a cached route,
-	 * check that it is to the same destination
-	 * and is still up.  If not, free it and try again.
-	 * The address family should also be checked in case of sharing the
-	 * cache with IPv6.
+	 * If there is a cached route, check that it is to the same
+	 * destination and is still up.  If not, free it and try again.
+	 * The address family should also be checked in case of sharing
+	 * the cache with IPv6.
 	 */
-	if (dst == NULL)
-		;
-	else if (dst->sin_family != AF_INET ||
-		 !in_hosteq(dst->sin_addr, ip->ip_dst))
+	if (dst && (dst->sin_family != AF_INET ||
+	    !in_hosteq(dst->sin_addr, ip->ip_dst)))
 		rtcache_free(ro);
 
 	if ((rt = rtcache_validate(ro)) == NULL &&
@@ -240,9 +241,9 @@ ip_output(struct mbuf *m0, ...)
 		dst = &u.dst4;
 		rtcache_setdst(ro, &u.dst);
 	}
+
 	/*
-	 * If routing to interface only,
-	 * short circuit routing lookup.
+	 * If routing to interface only, short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
 		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
@@ -275,6 +276,7 @@ ip_output(struct mbuf *m0, ...)
 		if (rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(rt->rt_gateway);
 	}
+
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
 		struct in_multi *inm;
