@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.56 2013/09/09 23:27:43 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.57 2013/10/17 17:22:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.56 2013/09/09 23:27:43 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.57 2013/10/17 17:22:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: compare.c,v 1.56 2013/09/09 23:27:43 christos Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
