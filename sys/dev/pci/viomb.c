@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: viomb.c,v 1.2 2013/10/17 21:06:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.2 2013/10/17 21:06:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,7 @@ deflate_done(struct viomb_softc *sc)
 	struct virtqueue *vq = &sc->sc_vq[1];
 	struct balloon_req *b;
 	int r, slot;
-	uint64_t nvpages, nhpages;
+	uint64_t nvpages;
 
 	r = virtio_dequeue(vsc, vq, &slot, NULL);
 	if (r != 0) {
@@ -450,7 +450,6 @@ deflate_done(struct viomb_softc *sc)
 
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
-	nhpages = nvpages * VIRTIO_PAGE_SIZE / PAGE_SIZE;
 	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap,
 			offsetof(struct balloon_req, bl_pages),
 			sizeof(uint32_t)*nvpages,
