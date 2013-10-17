@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.61 2013/10/05 11:20:34 gson Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.62 2013/10/17 21:12:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.61 2013/10/05 11:20:34 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.62 2013/10/17 21:12:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -309,9 +309,7 @@ pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
 static void
 pci_conf_unlock(struct pci_conf_lock *ocl)
 {
-	uint32_t sel;
-
-	sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
+	atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
 	pci_conf_select(ocl->cl_sel);
 	if (ocl->cl_cpuno != cl->cl_cpuno)
 		atomic_cas_32(&cl->cl_cpuno, cl->cl_cpuno, ocl->cl_cpuno);
