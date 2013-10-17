@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.88 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.89 2013/10/17 21:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.88 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.89 2013/10/17 21:04:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	struct buf *bp;
 	struct ntfsmount *ntmp;
 	dev_t dev = devvp->v_rdev;
-	int error, ronly, i;
+	int error, i;
 	struct vnode *vp;
 
 	ntmp = NULL;
@@ -320,8 +320,6 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
-
-	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	bp = NULL;
 
