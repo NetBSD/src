@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.119 2011/07/04 16:06:17 joerg Exp $ */
+/* $NetBSD: rtw.c,v 1.120 2013/10/17 21:24:24 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.119 2011/07/04 16:06:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.120 2013/10/17 21:24:24 christos Exp $");
 
 
 #include <sys/param.h>
@@ -830,7 +830,6 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 	const char *rfname, *paname;
 	char scratch[sizeof("unknown 0xXX")];
 	uint16_t srom_version;
-	uint8_t mac[IEEE80211_ADDR_LEN];
 
 	*flags &= ~(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV);
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
@@ -849,8 +848,10 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 		    srom_version >> 8, srom_version & 0xff);
 	}
 
+	uint8_t mac[IEEE80211_ADDR_LEN];
 	for (i = 0; i < IEEE80211_ADDR_LEN; i++)
 		mac[i] = RTW_SR_GET(sr, RTW_SR_MAC + i);
+	__USE(mac);
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
 	    ("%s: EEPROM MAC %s\n", device_xname(dev), ether_sprintf(mac)));
@@ -1054,9 +1055,13 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 
 	RTW_WBR(regs, RTW_CONFIG4, RTW_CONFIG4);
 
+#ifdef RTW_DEBUG
 	RTW_DPRINTF(RTW_DEBUG_INIT,
 	    ("%s: %s RF programming method, %#02x\n", device_xname(dev), method,
 	    RTW_READ8(regs, RTW_CONFIG4)));
+#else
+	__USE(method);
+#endif
 }
 
 static inline void
@@ -1375,12 +1380,17 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	octl = rd->rd_ctl;
 	rd->rd_ctl = htole32(ctl);
 
+#ifdef RTW_DEBUG
 	RTW_DPRINTF(
 	    kick ? (RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK)
 	         : RTW_DEBUG_RECV_DESC,
 	    ("%s: rd %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, rd,
 	     le32toh(obuf), le32toh(rd->rd_buf), le32toh(octl),
 	     le32toh(rd->rd_ctl)));
+#else
+	__USE(octl);
+	__USE(obuf);
+#endif
 
 	/* sync the descriptor */
 	bus_dmamap_sync(rdb->rdb_dmat, rdb->rdb_dmamap,
@@ -1392,11 +1402,9 @@ static void
 rtw_rxdesc_init_all(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *ctl, int kick)
 {
 	int i;
-	struct rtw_rxdesc *rd;
 	struct rtw_rxsoft *rs;
 
 	for (i = 0; i < rdb->rdb_ndesc; i++) {
-		rd = &rdb->rdb_desc[i];
 		rs = &ctl[i];
 		rtw_rxdesc_init(rdb, rs, i, kick);
 	}
@@ -1730,10 +1738,14 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 		condstring = "error";
 	}
 
+#ifdef RTW_DEBUG
 	DPRINTF(sc, RTW_DEBUG_XMIT_DESC,
 	    ("%s: ts %p txdesc[%d, %d] %s tries rts %u data %u\n",
 	    device_xname(sc->sc_dev), ts, ts->ts_first, ts->ts_last,
 	    condstring, rts_retry, data_retry));
+#else
+	__USE(condstring);
+#endif
 }
 
 static void
@@ -1864,11 +1876,17 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 
 	if ((isr & (RTW_INTR_TBDOK|RTW_INTR_TBDER)) != 0) {
 		next = rtw_txring_next(&sc->sc_regs, tdb);
+#ifdef RTW_DEBUG
 		RTW_DPRINTF(RTW_DEBUG_BEACON,
 		    ("%s: beacon ring %sprocessed, isr = %#04" PRIx16
 		     ", next %u expected %u, %" PRIu64 "\n", __func__,
 		     (next == tdb->tdb_next) ? "" : "un", isr, next,
 		     tdb->tdb_next, (uint64_t)tsfth << 32 | tsftl));
+#else
+		__USE(next);
+		__USE(tsfth);
+		__USE(tsftl);
+#endif
 		if ((RTW_READ8(&sc->sc_regs, RTW_TPPOLL) & RTW_TPPOLL_BQ) == 0)
 			rtw_collect_txring(sc, tsb, tdb, 1);
 	}
@@ -2104,9 +2122,13 @@ rtw_resume_ticks(struct rtw_softc *sc)
 
 	sc->sc_do_tick = 1;
 
+#ifdef RTW_DEBUG
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
 	    ("%s: resume ticks delta %#08x now %#08x next %#08x\n",
 	    device_xname(sc->sc_dev), tsftrl1 - tsftrl0, tsftrl1, next_tint));
+#else
+	__USE(tsftrl0);
+#endif
 }
 
 static void
