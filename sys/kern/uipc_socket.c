@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.218 2013/10/08 14:54:29 seanb Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.219 2013/10/17 20:57:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.218 2013/10/08 14:54:29 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.219 2013/10/17 20:57:06 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1664,7 +1664,8 @@ sorflush(struct socket *so)
 static int
 sosetopt1(struct socket *so, const struct sockopt *sopt)
 {
-	int error = EINVAL, optval, opt;
+	int error = EINVAL, opt;
+	int optval = 0; /* XXX: gcc */
 	struct linger l;
 	struct timeval tv;
 
