@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.112.2.2 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.112.2.3 2013/10/17 23:52:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.2 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.112.2.3 2013/10/17 23:52:18 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -299,7 +299,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_snd.sb_flags |= head->so_snd.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
 
 	/*
-	 * Share the lock the listening-socket, it may get unshared
+	 * Share the lock with the listening-socket, it may get unshared
 	 * once the connection is complete.
 	 */
 	mutex_obj_hold(head->so_lock);

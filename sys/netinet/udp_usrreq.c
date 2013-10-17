@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.190.2.3 2013/09/23 00:57:53 rmind Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.190.2.4 2013/10/17 23:52:18 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.3 2013/09/23 00:57:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190.2.4 2013/10/17 23:52:18 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -305,10 +305,8 @@ udp_input(struct mbuf *m, ...)
 	struct sockaddr_in src, dst;
 	struct ip *ip;
 	struct udphdr *uh;
-	int iphlen;
-	int len;
-	int n;
-	u_int16_t ip_len;
+	int iphlen, len, n;
+	uint16_t ip_len;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -329,7 +327,7 @@ udp_input(struct mbuf *m, ...)
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
-	/* destination port of 0 is illegal, based on RFC768. */
+	/* Destination port of 0 is illegal, based on RFC 768. */
 	if (uh->uh_dport == 0)
 		goto bad;
 
@@ -338,7 +336,7 @@ udp_input(struct mbuf *m, ...)
 	 * If not enough data to reflect UDP length, drop.
 	 */
 	ip_len = ntohs(ip->ip_len);
-	len = ntohs((u_int16_t)uh->uh_ulen);
+	len = ntohs((uint16_t)uh->uh_ulen);
 	if (ip_len != iphlen + len) {
 		if (ip_len < iphlen + len || len < sizeof(struct udphdr)) {
 			UDP_STATINC(UDP_STAT_BADLEN);
@@ -351,7 +349,7 @@ udp_input(struct mbuf *m, ...)
 	 * Checksum extended UDP header and data.
 	 */
 	if (udp4_input_checksum(m, uh, iphlen, len))
-		goto badcsum;
+		goto bad;
 
 	/* construct source and dst sockaddrs. */
 	sockaddr_in_init(&src, &ip->ip_src, uh->uh_sport);
@@ -412,14 +410,11 @@ udp_input(struct mbuf *m, ...)
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 		m = NULL;
 	}
-
 bad:
-	if (m)
+	if (m) {
 		m_freem(m);
+	}
 	return;
-
-badcsum:
-	m_freem(m);
 }
 
 static void
@@ -676,32 +671,30 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 int
 udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
-	int s, family, optval, inpflags, error = 0;
+	int family, optval, inpflags, error = 0;
 	inpcb_t *inp;
+
+	KASSERT(solocked(so));
 
 	family = so->so_proto->pr_domain->dom_family;
 
-	s = splsoftnet();
 	switch (family) {
 #ifdef INET
 	case PF_INET:
 		if (sopt->sopt_level != IPPROTO_UDP) {
-			error = ip_ctloutput(op, so, sopt);
-			goto end;
+			return ip_ctloutput(op, so, sopt);
 		}
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
 		if (sopt->sopt_level != IPPROTO_UDP) {
-			error = ip6_ctloutput(op, so, sopt);
-			goto end;
+			return ip6_ctloutput(op, so, sopt);
 		}
 		break;
 #endif
 	default:
-		error = EAFNOSUPPORT;
-		goto end;
+		return EAFNOSUPPORT;
 	}
 
 	switch (op) {
@@ -747,8 +740,6 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		break;
 	}
 
-end:
-	splx(s);
 	return error;
 }
 
@@ -792,8 +783,6 @@ udp_output(struct mbuf *m, inpcb_t *inp)
 	inpcb_get_ports(inp, &ui->ui_sport, &ui->ui_dport);
 	ui->ui_ulen = htons((uint16_t)len + sizeof(struct udphdr));
 
-	ro = inpcb_get_route(inp);
-
 	/*
 	 * Set up checksum and output datagram.
 	 */
@@ -818,9 +807,10 @@ udp_output(struct mbuf *m, inpcb_t *inp)
 	ui_ip->ip_tos = inp_ip->ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
 
-	return (ip_output(m, inpcb_get_options(inp), ro,
+	ro = inpcb_get_route(inp);
+	return ip_output(m, inpcb_get_options(inp), ro,
 	    so->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inpcb_get_moptions(inp), so));
+	    inpcb_get_moptions(inp), so);
 
 release:
 	m_freem(m);
@@ -832,11 +822,11 @@ udp_attach(struct socket *so, int proto)
 {
 	inpcb_t *inp;
 	struct ip *ip;
-	int s, error;
+	int error;
 
 	KASSERT(sotoinpcb(so) == NULL);
 
-	s = splsoftnet();
+	/* Assign the lock (must happen if we will error out). */
 	sosetlock(so);
 
 #ifdef MBUFTRACE
@@ -847,19 +837,17 @@ udp_attach(struct socket *so, int proto)
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		error = soreserve(so, udp_sendspace, udp_recvspace);
 		if (error) {
-			goto out;
+			return error;
 		}
 	}
 
 	error = inpcb_create(so, udbtable);
 	if (error) {
-		goto out;
+		return error;
 	}
 	inp = sotoinpcb(so);
 	ip = in_getiphdr(inp);
 	ip->ip_ttl = ip_defttl;
-out:
-	splx(s);
 	return error;
 }
 
@@ -867,15 +855,11 @@ static void
 udp_detach(struct socket *so)
 {
 	inpcb_t *inp;
-	int s;
 
 	KASSERT(solocked(so));
-
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 	KASSERT(inp != NULL);
 	inpcb_destroy(inp);
-	splx(s);
 }
 
 static int
@@ -926,23 +910,26 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct lwp *l)
 {
 	inpcb_t *inp;
-	int s, error = 0;
+	int error = 0;
 
 	KASSERT(req != PRU_ATTACH);
 	KASSERT(req != PRU_DETACH);
 
 	if (req == PRU_CONTROL) {
-		return in_control(so, (long)m, nam, (ifnet_t *)control, l);
+		KERNEL_LOCK(1, NULL);
+		error = in_control(so, (long)m, nam, (ifnet_t *)control, l);
+		KERNEL_UNLOCK_ONE(NULL);
+		return error;
 	}
-	s = splsoftnet();
 	if (req == PRU_PURGEIF) {
+		KERNEL_LOCK(1, NULL);
 		mutex_enter(softnet_lock);
 		inpcb_purgeif0(udbtable, (ifnet_t *)control);
 		in_purgeif((ifnet_t *)control);
 		inpcb_purgeif(udbtable, (ifnet_t *)control);
 		mutex_exit(softnet_lock);
-		splx(s);
-		return (0);
+		KERNEL_UNLOCK_ONE(NULL);
+		return 0;
 	}
 
 	KASSERT(solocked(so));
@@ -950,8 +937,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	KASSERT(!control || (req == PRU_SEND || req == PRU_SENDOOB));
 	if (inp == NULL) {
-		error = EINVAL;
-		goto release;
+		return EINVAL;
 	}
 
 	switch (req) {
@@ -996,8 +982,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		splx(s);
-		return (0);
+		return 0;
 
 	case PRU_RCVOOB:
 		error =  EOPNOTSUPP;
@@ -1021,9 +1006,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		panic("udp_usrreq");
 	}
 
-release:
-	splx(s);
-	return (error);
+	return error;
 }
 
 static int
@@ -1246,10 +1229,6 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	return 1;
 }
 #endif
-
-PR_WRAP_USRREQ(udp_usrreq)
-
-#define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
 	.pr_attach	= udp_attach,
