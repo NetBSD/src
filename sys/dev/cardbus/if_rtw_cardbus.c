@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.42 2011/08/01 11:20:27 drochner Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.43 2013/10/17 21:22:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.42 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.43 2013/10/17 21:22:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -203,7 +203,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct rtw_cardbus_product *rcp;
 	bus_addr_t adr;
-	int rev;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
@@ -216,8 +215,10 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		panic("rtw_cardbus_attach: impossible");
 	}
 
+#ifdef notyet
 	/* Get revision info. */
-	rev = PCI_REVISION(ca->ca_class);
+	int rev = PCI_REVISION(ca->ca_class);
+#endif
 
 	printf(": %s\n", rcp->rcp_product_name);
 
