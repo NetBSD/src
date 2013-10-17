@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.95 2011/10/07 09:35:05 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.96 2013/10/17 21:04:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.95 2011/10/07 09:35:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.96 2013/10/17 21:04:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,14 +160,12 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct smb_vc *vcp;
 	struct smb_share *ssp = NULL;
 	struct smb_cred scred;
-	struct proc *p;
 	char *fromname;
 	int error;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		smp = VFSTOSMBFS(mp);
 		if (smp == NULL)
