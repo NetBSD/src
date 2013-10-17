@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.231 2013/07/28 01:05:52 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.232 2013/10/17 21:01:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.231 2013/07/28 01:05:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.232 2013/10/17 21:01:08 christos Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -195,7 +195,6 @@ lfs_vflush(struct vnode *vp)
 	int error;
 	int flushed;
 	int relock;
-	int loopcount;
 
 	ip = VTOI(vp);
 	fs = VFSTOULFS(vp->v_mount)->um_lfs;
@@ -382,7 +381,9 @@ lfs_vflush(struct vnode *vp)
 #endif
 
 	do {
-		loopcount = 0;
+#ifdef DEBUG
+		int loopcount = 0;
+#endif
 		do {
 			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
 				relock = lfs_writefile(fs, sp, vp);
@@ -623,7 +624,6 @@ lfs_segwrite(struct mount *mp, int flags)
 	int dirty;
 	int redo;
 	int um_error;
-	int loopcount;
 
 	fs = VFSTOULFS(mp)->um_lfs;
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -734,7 +734,9 @@ lfs_segwrite(struct mount *mp, int flags)
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
 		vp = fs->lfs_ivnode;
-		loopcount = 0;
+#ifdef DEBUG
+		int loopcount = 0;
+#endif
 		do {
 #ifdef DEBUG
 			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
@@ -844,7 +846,6 @@ lfs_segwrite(struct mount *mp, int flags)
 int
 lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
-	struct finfo *fip;
 	struct inode *ip;
 	int i, frag;
 	int error;
@@ -853,7 +854,6 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	error = 0;
 	ip = VTOI(vp);
 
-	fip = sp->fip;
 	lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
 	if (vp->v_uflag & VU_DIROP)
@@ -923,7 +923,6 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		lfs_gather(fs, sp, vp, lfs_match_dindir);
 		lfs_gather(fs, sp, vp, lfs_match_tindir);
 	}
-	fip = sp->fip;
 	lfs_release_finfo(fs);
 
 	return error;
@@ -940,7 +939,7 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 	IFILE *ifp;
 	SEGUSE *sup;
 	ino_t ino;
-	int redo_ifile, error;
+	int redo_ifile;
 	u_int32_t sn;
 
 	redo_ifile = 0;
@@ -957,7 +956,7 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 		LFS_IENTRY(ifp, fs, ino, bp);
 		daddr = ifp->if_daddr;
 		ifp->if_daddr = LFS_DBTOFSB(fs, ndaddr);
-		error = LFS_BWRITE_LOG(bp); /* Ifile */
+		(void)LFS_BWRITE_LOG(bp); /* Ifile */
 	}
 
 	/*

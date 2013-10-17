@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.314 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.315 2013/10/17 21:01:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.314 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.315 2013/10/17 21:01:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -394,7 +394,6 @@ lfs_writerd(void *arg)
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
- 	int loopcount;
 	int skipc;
 	int lfsc;
 	int wrote_something = 0;
@@ -415,7 +414,6 @@ lfs_writerd(void *arg)
 				&lfs_lock);
 
 		KASSERT(mutex_owned(&lfs_lock));
-		loopcount = 0;
 		wrote_something = 0;
 
 		/*

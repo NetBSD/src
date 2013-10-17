@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.135 2013/07/28 01:25:06 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.136 2013/10/17 21:01:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.135 2013/07/28 01:25:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.136 2013/10/17 21:01:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -627,13 +627,11 @@ static int
 lfs_update_seguse(struct lfs *fs, struct inode *ip, long lastseg, size_t num)
 {
 	struct segdelta *sd;
-	struct vnode *vp;
 
 	ASSERT_SEGLOCK(fs);
 	if (lastseg < 0 || num == 0)
 		return 0;
 
-	vp = ITOV(ip);
 	LIST_FOREACH(sd, &ip->i_lfs_segdhd, list)
 		if (sd->segnum == lastseg)
 			break;
