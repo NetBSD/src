@@ -1,6 +1,6 @@
-.\" $NetBSD: luactl.8,v 1.2 2013/10/17 08:21:03 wiz Exp $
+.\" $NetBSD: luactl.8,v 1.3 2013/10/17 09:33:40 mbalmer Exp $
 .\"
-.\" Copyright (c) 2011 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2011, 2013 Marc Balmer <marc@msys.ch>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -50,9 +50,6 @@ command (see below),
 Lua bindings are provided as modules.
 To make a Lua binding available to a state, it must be
 .Dq required .
-If a kernel subsystem is to use a Lua state, a state has to be
-.Dq assigned
-to it.
 Once a module has been
 .Dq required
 by a state, it can not be unloaded from memory using the
@@ -72,7 +69,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
 Create a Lua state before executing the command.
-This flag is used for the require, assign, and, load commands only, it
+This flag is used for the require, and, load commands only, it
 is ignored for all other commands.
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
