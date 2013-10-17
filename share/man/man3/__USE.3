@@ -1,4 +1,4 @@
-.\"	$NetBSD: __USE.3,v 1.1 2013/10/17 16:50:36 christos Exp $
+.\"	$NetBSD: __USE.3,v 1.2 2013/10/17 19:37:56 jnemeth Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm __USE
-.Nd compile time macro that marks a variable as being used.
+.Nd compile time macro that marks a variable as being used
 .Sh SYNOPSIS
 .In sys/cdefs.h
 .Ft void
@@ -54,7 +54,7 @@ foo(void) {
 
 	var = getval();
 
-	DPRINTF(("val is %d\n", val));
+	DPRINTF(("val is %d\n", var));
 }
 .Ed
 .Pp
@@ -67,7 +67,7 @@ foo(void) {
 
 	var = getval();
 
-	DPRINTF(("val is %d\n", val));
+	DPRINTF(("val is %d\n", var));
 #else
 	(void)getval();
 #endif
@@ -86,7 +86,7 @@ foo(void) {
 	var = getval();
 
 #ifdef DEBUG_FOO
-	DPRINTF(("val is %d\n", val));
+	DPRINTF(("val is %d\n", var));
 #else
 	__USE(var);
 #endif
@@ -117,6 +117,6 @@ is implemented as:
 should be used sparingly as it can cause valid warnings to be hidden.
 .Pp
 Use of this macro is non-portable; this is part of the implementation
-namespace and should only be used in 
+namespace and should only be used in
 .Nx
 code.
