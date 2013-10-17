@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.1 2013/10/12 17:24:07 mbalmer Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.2 2013/10/17 07:31:31 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -91,6 +91,7 @@ lua_read(lua_State *L)
 
 	len = luaL_checkinteger(L, -1);
 	data = bozomalloc(httpd, len + 1);
+	memset(data, 0, len + 1);
 	bozo_read(httpd, STDIN_FILENO, data, len);
 	lua_pushstring(L, data);
 	free(data);
@@ -406,7 +407,8 @@ bozo_process_lua(bozo_httpreq_t *request)
 					if (clen && *clen && atol(clen) > 0) {
 						length = atol(clen);
 						content = bozomalloc(httpd,
-						    length);
+						    length + 1);
+						memset(content, 0, length + 1);
 						bozo_read(httpd, STDIN_FILENO,
 						    content, length);
 						lua_decode_query(map->L,
