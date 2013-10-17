@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.31 2013/07/18 17:31:02 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.32 2013/10/17 21:08:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.31 2013/07/18 17:31:02 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.32 2013/10/17 21:08:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -741,10 +741,8 @@ static int
 fetch_robust_entry(struct lwp *l, struct linux_robust_list **entry,
     struct linux_robust_list **head, int *pi)
 {
-	struct linux_emuldata *led;
 	unsigned long uentry;
 
-	led = l->l_emuldata;
 #ifdef __arch64__
 	if (l->l_proc->p_flag & PK_32) {
 		uint32_t u32;
