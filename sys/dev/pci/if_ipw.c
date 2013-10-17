@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.54 2012/10/27 17:18:32 chs Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.55 2013/10/17 21:06:15 christos Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.54 2012/10/27 17:18:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.55 2013/10/17 21:06:15 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -886,16 +886,17 @@ ipw_read_prom_word(struct ipw_softc *sc, uint8_t addr)
 static void
 ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
-	struct ipw_cmd *cmd;
 
 	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sizeof (struct ipw_cmd),
 	    BUS_DMASYNC_POSTREAD);
 
-	cmd = mtod(sbuf->m, struct ipw_cmd *);
+#ifdef IPW_DEBUG
+	struct ipw_cmd *cmd = mtod(sbuf->m, struct ipw_cmd *);
 
 	DPRINTFN(2, ("cmd ack'ed (%u, %u, %u, %u, %u)\n", le32toh(cmd->type),
 	    le32toh(cmd->subtype), le32toh(cmd->seq), le32toh(cmd->len),
 	    le32toh(cmd->status)));
+#endif
 
 	wakeup(&sc->cmd);
 }
@@ -1152,7 +1153,6 @@ ipw_rx_intr(struct ipw_softc *sc)
 static void
 ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 {
-	struct ieee80211com *ic;
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
 
@@ -1171,7 +1171,6 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		break;
 
 	case IPW_SBD_TYPE_DATA:
-		ic = &sc->sc_ic;
 		sbuf = sbd->priv;
 
 		bus_dmamap_sync(sc->sc_dmat, sbuf->map,
