@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.21 2012/06/02 21:36:43 dsl Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.22 2013/10/17 21:22:01 christos Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.21 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.22 2013/10/17 21:22:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -722,8 +722,12 @@ bcsp_slip_receive(int c, struct tty *tp)
 	}
 	if (discard) {
 discarded:
+#ifdef BCSP_DEBUG
 		DPRINTFN(4, ("%s: receives unexpected byte 0x%02x: %s\n",
 		    device_xname(sc->sc_dev), c, errstr));
+#else
+		__USE(errstr);
+#endif
 	}
 	sc->sc_stats.byte_rx++;
 
@@ -782,7 +786,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	u_int pldlen;
 	int discard = 0;
 	uint16_t crc = 0xffff;
-	const char *errstr;
+	const char *errstr 
 
 	DPRINTFN(3, ("%s: pi receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG
@@ -836,8 +840,12 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 
 	if (discard) {
 discarded:
+#ifdef BCSP_DEBUG
 		DPRINTFN(3, ("%s: receives unexpected packet: %s\n",
 		    device_xname(sc->sc_dev), errstr));
+#else
+		__USE(errstr);
+#endif
 		m_freem(m);
 	} else
 		bcsp_mux_receive(sc, m);
