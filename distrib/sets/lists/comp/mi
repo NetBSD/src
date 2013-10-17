@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1844 2013/10/14 16:00:16 joerg Exp $
+#	$NetBSD: mi,v 1.1845 2013/10/17 16:52:02 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4541,6 +4541,7 @@
 ./usr/share/man/cat3/__STRING.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__UNCONST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__UNVOLATILE.0		comp-c-catman		.cat
+./usr/share/man/cat3/__USE.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__aligned.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__alignof__.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
@@ -11143,6 +11144,7 @@
 ./usr/share/man/html3/__STRING.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNCONST.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNVOLATILE.html		comp-c-htmlman		html
+./usr/share/man/html3/__USE.html		comp-c-htmlman		html
 ./usr/share/man/html3/__aligned.html		comp-c-htmlman		html
 ./usr/share/man/html3/__alignof__.html		comp-c-htmlman		html
 ./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
@@ -17547,6 +17549,7 @@
 ./usr/share/man/man3/__STRING.3			comp-c-man		.man
 ./usr/share/man/man3/__UNCONST.3		comp-c-man		.man
 ./usr/share/man/man3/__UNVOLATILE.3		comp-c-man		.man
+./usr/share/man/man3/__USE.3			comp-c-man		.man
 ./usr/share/man/man3/__aligned.3		comp-c-man		.man
 ./usr/share/man/man3/__alignof__.3		comp-c-man		.man
 ./usr/share/man/man3/__arraycount.3		comp-c-man		.man
