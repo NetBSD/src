@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.38 2013/01/05 01:30:18 christos Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.39 2013/10/17 21:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.38 2013/01/05 01:30:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.39 2013/10/17 21:07:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvideo.h"
@@ -880,10 +880,8 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 {
 	struct uvideo_camera_terminal *ct;
 	struct uvideo_processing_unit *pu;
-	struct uvideo_extension_unit *xu;
 
 	const uvideo_input_terminal_descriptor_t *input;
-	const uvideo_output_terminal_descriptor_t *output;
 	const uvideo_camera_terminal_descriptor_t *camera;
 	const uvideo_selector_unit_descriptor_t *selector;
 	const uvideo_processing_unit_descriptor_t *processing;
@@ -918,7 +916,6 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 		}
 		break;
 	case UDESC_OUTPUT_TERMINAL:
-		output = (const uvideo_output_terminal_descriptor_t *)desc;
 		break;
 	case UDESC_SELECTOR_UNIT:
 		selector = (const uvideo_selector_unit_descriptor_t *)desc;
@@ -939,7 +936,6 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 		break;
 	case UDESC_EXTENSION_UNIT:
 		extension = (const uvideo_extension_unit_descriptor_t *)desc;
-		xu = &vu->u.vu_extension;
 		/* TODO: copy guid */
 
 		uvideo_unit_alloc_sources(vu, extension->bNrInPins,
@@ -1803,7 +1799,6 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 	struct uvideo_isoc *isoc;
 	int i;
 	uint32_t count;
-	const uvideo_payload_header_t *hdr;
 	uint8_t *buf;
 
 	isoc = priv;
@@ -1826,7 +1821,6 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 			goto next;
 		}
 
-		hdr = (const uvideo_payload_header_t *)isoc->i_buf;
 
 		for (i = 0, buf = isoc->i_buf;
 		     i < ix->ix_nframes;
@@ -1980,7 +1974,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 	struct uvideo_stream *vs;
 	struct uvideo_format *uvfmt;
 	uvideo_probe_and_commit_data_t probe, maxprobe;
-	uint8_t ifaceno;
 	usbd_status err;
 
 	sc = addr;
@@ -1990,7 +1983,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 		return EIO;
 
 	vs = sc->sc_stream_in;
-	ifaceno = vs->vs_ifaceno;
 
 	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
 					   format->width, format->height);
