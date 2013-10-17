@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.5 2013/03/30 03:15:53 christos Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.5 2013/03/30 03:15:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.6 2013/10/17 21:07:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -968,11 +968,9 @@ static int
 urndis_ioctl(struct ifnet *ifp, unsigned long command, void *data)
 {
 	struct urndis_softc	*sc;
-	struct ifaddr		*ifa;
 	int			 s, error;
 
 	sc = ifp->if_softc;
-	ifa = (struct ifaddr *)data;
 	error = 0;
 
 	if (sc->sc_dying)
