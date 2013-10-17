@@ -29,7 +29,7 @@
 /* $FreeBSD: src/sys/dev/drm/via_dmablit.c,v 1.6 2010/12/25 21:26:56 alc Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.1 2011/02/18 14:26:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.2 2013/10/17 21:15:18 christos Exp $");
 
 /*
  * Unmaps the DMA mappings.
@@ -67,7 +67,6 @@ via_unmap_blit_from_device(drm_via_sg_info_t *vsg)
 	unsigned descriptor_this_page = num_desc % vsg->descriptors_per_page;
 	drm_via_descriptor_t *desc_ptr = vsg->desc_pages[cur_descriptor_page] +
 		descriptor_this_page;
-	dma_addr_t next = vsg->chain_start;
 
 	while(num_desc--) {
 		if (descriptor_this_page-- == 0) {
@@ -76,7 +75,6 @@ via_unmap_blit_from_device(drm_via_sg_info_t *vsg)
 			desc_ptr = vsg->desc_pages[cur_descriptor_page] +
 				descriptor_this_page;
 		}
-		next = (dma_addr_t) desc_ptr->next;
 		desc_ptr--;
 	}
 }
