@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.2 2013/10/17 07:31:31 mbalmer Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.3 2013/10/17 07:49:06 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -254,8 +254,10 @@ lua_url_decode(lua_State *L, char *s)
 	for (p = v, q = val; *p; p++) {
 		switch (*p) {
 		case '%':
-			if (*(p + 1) == '\0' || *(p + 2) == '\0')
+			if (*(p + 1) == '\0' || *(p + 2) == '\0') {
+				free(val);
 				return;
+			}
 			buf[0] = *++p;
 			buf[1] = *++p;
 			buf[2] = '\0';
