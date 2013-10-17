@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.3 2013/04/06 14:57:38 martin Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.4 2013/10/17 21:24:24 christos Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.4 2013/10/17 21:24:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1339,7 +1339,7 @@ ar9003_swba_intr(struct athn_softc *sc)
 Static int
 ar9003_intr(struct athn_softc *sc)
 {
-	uint32_t intr, intr2, intr5, sync;
+	uint32_t intr, sync;
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
@@ -1360,7 +1360,7 @@ ar9003_intr(struct athn_softc *sc)
 
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
-			intr2 = AR_READ(sc, AR_ISR_S2);
+			uint32_t intr2 = AR_READ(sc, AR_ISR_S2);
 #ifdef notyet
 			if (intr2 & AR_ISR_S2_TIM)
 				/* TBD */;
@@ -1368,6 +1368,8 @@ ar9003_intr(struct athn_softc *sc)
 				/* TBD */;
 			if (intr2 & AR_ISR_S2_BB_WATCHDOG)
 				/* TBD */;
+#else
+			__USE(intr2);
 #endif
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);
@@ -1391,11 +1393,15 @@ ar9003_intr(struct athn_softc *sc)
 			ar9003_tx_intr(sc);
 
 		if (intr & AR_ISR_GENTMR) {
-			intr5 = AR_READ(sc, AR_ISR_S5_S);
+			uint32_t intr5 = AR_READ(sc, AR_ISR_S5_S);
+#ifdef ATHN_DEBUG
 			DPRINTFN(DBG_INTR, sc,
 			    "GENTMR trigger=%d thresh=%d\n",
 			    MS(intr5, AR_ISR_S5_GENTIMER_TRIG),
 			    MS(intr5, AR_ISR_S5_GENTIMER_THRESH));
+#else
+			__USE(intr5);
+#endif
 		}
 	}
 	if (sync != 0) {

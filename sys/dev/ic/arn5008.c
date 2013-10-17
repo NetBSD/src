@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.3 2013/04/06 14:57:38 martin Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.4 2013/10/17 21:24:24 christos Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3 2013/04/06 14:57:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.4 2013/10/17 21:24:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1181,7 +1181,7 @@ ar5008_swba_intr(struct athn_softc *sc)
 Static int
 ar5008_intr(struct athn_softc *sc)
 {
-	uint32_t intr, intr2, intr5, sync;
+	uint32_t intr, intr5, sync;
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
@@ -1202,12 +1202,14 @@ ar5008_intr(struct athn_softc *sc)
 
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
-			intr2 = AR_READ(sc, AR_ISR_S2);
+			uint32_t intr2 = AR_READ(sc, AR_ISR_S2);
 #if notyet
 			if (intr2 & AR_ISR_S2_TIM)
 				/* TBD */;
 			if (intr2 & AR_ISR_S2_TSFOOR)
 				/* TBD */;
+#else
+			__USE(intr2);
 #endif
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);

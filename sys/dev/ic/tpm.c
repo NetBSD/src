@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.8 2013/09/14 13:09:55 joerg Exp $	*/
+/*	$NetBSD: tpm.c,v 1.9 2013/10/17 21:24:24 christos Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.8 2013/09/14 13:09:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.9 2013/10/17 21:24:24 christos Exp $");
 
 #if 0
 #define	TPM_DEBUG 
@@ -855,7 +855,6 @@ int
 tpm_legacy_init(struct tpm_softc *sc, int irq, const char *name)
 {
 	char id[8];
-	uint8_t ioh, iol;
 	int i;
 
 	if ((i = bus_space_map(sc->sc_batm, tpm_enabled, 2, 0, &sc->sc_bahm))) {
@@ -870,8 +869,6 @@ tpm_legacy_init(struct tpm_softc *sc, int irq, const char *name)
 
 	aprint_debug_dev(sc->sc_dev, "%.4s %d.%d @0x%x\n", &id[4], id[0],
 	    id[1], tpm_enabled);
-	iol = tpm_enabled & 0xff;
-	ioh = tpm_enabled >> 16;
 	tpm_enabled = 0;
 
 	return 0;

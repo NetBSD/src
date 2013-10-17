@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.31 2013/10/13 04:24:21 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.31 2013/10/13 04:24:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32 2013/10/17 21:24:24 christos Exp $");
 
 #include "bio.h"
 
@@ -1067,7 +1067,6 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	u_int8_t target;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
-	int error;
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_cmd "));
 
@@ -1087,7 +1086,6 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			break;
 		}
 
-		error = 0;
 		xs->error = XS_NOERROR;
 
 		/* XXX emulate SYNCHRONIZE_CACHE ??? */

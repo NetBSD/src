@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.154 2013/09/14 13:10:25 joerg Exp $  */
+/*	$NetBSD: atw.c,v 1.155 2013/10/17 21:24:24 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.154 2013/09/14 13:10:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.155 2013/10/17 21:24:24 christos Exp $");
 
 
 #include <sys/param.h>
@@ -902,7 +902,6 @@ void
 atw_reset(struct atw_softc *sc)
 {
 	int i;
-	uint32_t lpc;
 
 	ATW_WRITE(sc, ATW_NAR, 0x0);
 	DELAY(atw_nar_delay);
@@ -949,7 +948,7 @@ atw_reset(struct atw_softc *sc)
 
 	DELAY(atw_magic_delay4);
 
-	lpc = ATW_READ(sc, ATW_LPC);
+	(void)ATW_READ(sc, ATW_LPC);
 
 	DPRINTF(sc, ("%s: ATW_LPC %#08x\n", __func__, lpc));
 
@@ -2474,10 +2473,8 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct atw_softc *sc = ifp->if_softc;
-	enum ieee80211_state ostate;
 	int error = 0;
 
-	ostate = ic->ic_state;
 	callout_stop(&sc->sc_scan_ch);
 
 	switch (nstate) {
@@ -3452,7 +3449,7 @@ atw_start(struct ifnet *ifp)
 	struct atw_frame *hh;
 	uint16_t hdrctl;
 	struct mbuf *m0, *m;
-	struct atw_txsoft *txs, *last_txs;
+	struct atw_txsoft *txs;
 	struct atw_txdesc *txd;
 	int npkt, rate;
 	bus_dmamap_t dmamap;
@@ -3805,8 +3802,6 @@ atw_start(struct ifnet *ifp)
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
-
-		last_txs = txs;
 	}
 
 	if (sc->sc_txfree != ofree) {
