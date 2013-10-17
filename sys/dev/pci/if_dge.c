@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.35 2012/10/27 17:18:32 chs Exp $ */
+/*	$NetBSD: if_dge.c,v 1.36 2013/10/17 21:06:15 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.35 2012/10/27 17:18:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.36 2013/10/17 21:06:15 christos Exp $");
 
 
 
@@ -473,7 +473,7 @@ struct rxbugentry {
 static int
 dge_alloc_rcvmem(struct dge_softc *sc)
 {
-	char *ptr, *kva;
+	char *kva;
 	bus_dma_segment_t seg;
 	int i, rseg, state, error;
 	struct rxbugentry *entry;
@@ -519,7 +519,6 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	 * Now divide it up into DGE_BUFFER_SIZE pieces and save the addresses
 	 * in an array.
 	 */
-	ptr = sc->sc_bugbuf;
 	if ((entry = malloc(sizeof(*entry) * DGE_NBUFFERS,
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
 		error = ENOBUFS;
