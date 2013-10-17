@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/17 22:59:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/10/17 22:07:59 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -118,4 +118,5 @@ DPSRCS+=	cxxabi.h
 CLEANFILES+=	cxxabi.h
 
 .include <bsd.inc.mk>
+.include <bsd.clean.mk>
 .include <bsd.obj.mk>
