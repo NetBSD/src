@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.3 2013/08/09 19:51:29 kardel Exp $ */
+/* $NetBSD: mpii.c,v 1.4 2013/10/17 21:06:15 christos Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.3 2013/08/09 19:51:29 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.4 2013/10/17 21:06:15 christos Exp $");
 
 #include "bio.h"
 
@@ -3258,7 +3258,6 @@ static int
 mpii_portenable(struct mpii_softc *sc)
 {
 	struct mpii_msg_portenable_request	*peq;
-	struct mpii_msg_portenable_repy		*pep;
 	struct mpii_ccb				*ccb;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portenable\n", DEVNAME(sc));
@@ -3287,7 +3286,6 @@ mpii_portenable(struct mpii_softc *sc)
 		    DEVNAME(sc));
 		return (1);
 	}
-	pep = ccb->ccb_rcb->rcb_reply;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	mpii_put_ccb(sc, ccb);
