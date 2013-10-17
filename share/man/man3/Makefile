@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.81 2012/12/07 01:54:41 christos Exp $
+#	$NetBSD: Makefile,v 1.82 2013/10/17 16:50:36 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
+MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
 	__alignof__.3 __arraycount.3 \
 	__builtin_constant_p.3 __builtin_prefetch.3 \
 	__builtin_return_address.3 \
