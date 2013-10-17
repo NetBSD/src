@@ -96,9 +96,8 @@ static void *
 drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 {
 	bus_space_handle_t h;
-	int i, reg, reason;
+	int i, reason;
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
-		reg = PCI_MAPREG_START + i*4;
 
 		/* Does the requested mapping lie within this resource? */
 		if ((dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM ||
