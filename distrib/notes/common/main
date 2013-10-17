@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.497 2013/08/28 15:39:30 slp Exp $
+.\"	$NetBSD: main,v 1.498 2013/10/17 02:58:56 elad Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1166,6 +1166,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Emmanuel Dreyfus Ta Mt manu@NetBSD.org
 .It Ta Matthias Drochner Ta Mt drochner@NetBSD.org
 .It Ta Jun Ebihara Ta Mt jun@NetBSD.org
+.It Ta Elad Efrat Ta Mt elad@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
 .It Ta Jaime A Fournier Ta Mt ober@NetBSD.org
 .It Ta Stoned Elipot Ta Mt seb@NetBSD.org
