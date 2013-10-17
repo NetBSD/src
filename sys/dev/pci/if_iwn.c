@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.69 2013/09/14 13:11:31 joerg Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.70 2013/10/17 21:06:15 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.69 2013/09/14 13:11:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.70 2013/10/17 21:06:15 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -3115,7 +3115,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifaddr *ifa;
 	const struct sockaddr *sa;
 	int s, error = 0;
 
@@ -3123,9 +3122,9 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
+		struct ifaddr *ifa = (struct ifaddr *)data;
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
 #endif
