@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.2 2013/10/12 17:26:32 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.3 2013/10/17 12:53:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.2 2013/10/12 17:26:32 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.3 2013/10/17 12:53:28 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
@@ -58,7 +58,7 @@ __RCSID("$Id: t_tcp.c,v 1.2 2013/10/12 17:26:32 christos Exp $");
 #define FAIL(msg, ...)  err(EXIT_FAILURE, msg, ## __VA_ARGS__)
 #else 
 #include <atf-c.h> 
-#define FAIL(msg, ...)  ATF_CHECK_MSG(0, msg, ## __VA_ARGS__)
+#define FAIL(msg, ...)  ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); goto fail
 #endif
 
 static void
@@ -69,7 +69,7 @@ ding(int al)
 static void 
 paccept_block(bool pacceptblock, bool fcntlblock)
 {
-	int srvr, clnt, as;
+	int srvr = -1, clnt = -1, as = -1;
 	int ok, fl, n;
 	char buf[10];
 	struct sockaddr_in sin, ba;
@@ -153,6 +153,11 @@ paccept_block(bool pacceptblock, bool fcntlblock)
 		if (n != -1 || errno != EWOULDBLOCK)
 			FAIL("read");
 	}
+	return;
+fail:
+	close(srvr);
+	close(clnt);
+	close(as);
 }
 
 #ifndef TEST
