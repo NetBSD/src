@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.6 2013/07/11 10:46:19 kefren Exp $ */
+/* $NetBSD: conffile.c,v 1.7 2013/10/17 18:10:23 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,11 +63,19 @@ static int Fneighbour(char*);
 static int Gneighbour(struct conf_neighbour *, char *);
 static int Fnodefault(char*);
 static int Floopdetection(char*);
-static int Fpassiveif(char*);
+static int Finterface(char*);
+static int Ginterface(struct conf_interface *, char *);
+static int Ipassive(struct conf_interface *, char *);
+static int Itaddr(struct conf_interface *, char *);
 
 struct conf_func {
 	char com[64];
 	int (* func)(char *);
+};
+
+struct intf_func {
+	char com[64];
+	int (* func)(struct conf_interface *, char *);
 };
 
 struct conf_func main_commands[] = {
@@ -77,14 +85,22 @@ struct conf_func main_commands[] = {
 	{ "command-port", Fport },
 	{ "min-label", Fminlabel },
 	{ "max-label", Fmaxlabel },
-	{ "LDP-ID", Fldpid },
+	{ "ldp-id", Fldpid },
 	{ "neighbor", Fneighbour },
 	{ "neighbour", Fneighbour },
 	{ "no-default-route", Fnodefault },
 	{ "loop-detection", Floopdetection },
-	{ "passive-if", Fpassiveif },
+	{ "interface", Finterface },
 	{ "", NULL },
 };
+
+struct intf_func intf_commands[] = {
+	{ "passive", Ipassive },
+	{ "transport-address", Itaddr },
+	{ "", NULL },
+};
+
+static int parseline;
 
 /*
  * Parses config file
@@ -92,11 +108,10 @@ struct conf_func main_commands[] = {
 int
 conf_parsefile(const char *fname)
 {
-	int i;
 	char buf[LINEMAXSIZE + 1];
 
 	SLIST_INIT(&conei_head);
-	SLIST_INIT(&passifs_head);
+	SLIST_INIT(&coifs_head);
 	conf_ldp_id.s_addr = 0;
 
 	confh = open(fname, O_RDONLY, 0);
@@ -104,10 +119,10 @@ conf_parsefile(const char *fname)
 	if (confh == -1)
 		return E_CONF_IO;
 
-	for (i = 1; conf_readline(buf, sizeof(buf)) >= 0; i++)
+	for (parseline = 1; conf_readline(buf, sizeof(buf)) >= 0; parseline++)
 		if (conf_dispatch(buf) != 0) {
 			close(confh);
-			return i;
+			return parseline;
 		}
 
 	close(confh);
@@ -155,7 +170,7 @@ conf_dispatch(char *line)
 	command = NextCommand(nline);
 	for (i = 0; main_commands[i].func != NULL; i++)
 		if (strncasecmp(main_commands[i].com, command,
-		    strlen(command)) == 0) {
+		    strlen(main_commands[i].com)) == 0) {
 			matched++;
 			last_match = i;
 		}
@@ -287,6 +302,7 @@ Fneighbour(char *line)
 	SLIST_INSERT_HEAD(&conei_head, nei, neilist);
 
 	while (conf_readline(buf, sizeof(buf)) >= 0) {
+		parseline++;
 		if (buf[0] == '}')
 			return 0;
 		if (Gneighbour(nei, buf) == -1)
@@ -328,15 +344,59 @@ Floopdetection(char *line)
 	return 0;
 }
 
+/*
+ * Interface sub-commands
+ */
 int
-Fpassiveif(char *line)
+Finterface(char *line)
 {
-	struct passive_if *pif;
+	char *ifname;
+	struct conf_interface *conf_if = calloc(1, sizeof(*conf_if));
+	char buf[1024];
 
-	if (strlen(line) > IF_NAMESIZE - 1)
-		return E_CONF_PARAM;
-	pif = calloc(1, sizeof(*pif));
-	strlcpy(pif->if_name, line, IF_NAMESIZE);
-	SLIST_INSERT_HEAD(&passifs_head, pif, listentry);
+	ifname = NextCommand(line);
+	if (conf_if == NULL || ifname == NULL)
+		return -1;
+	strlcpy(conf_if->if_name, ifname, IF_NAMESIZE);
+	SLIST_INSERT_HEAD(&coifs_head, conf_if, iflist);
+
+	while (conf_readline(buf, sizeof(buf)) >= 0) {
+		parseline++;
+		if (buf[0] == '}')
+			return 0;
+		if (Ginterface(conf_if, buf) == -1)
+			return -1;
+	}
+	return -1;
+}
+
+int
+Ginterface(struct conf_interface *conf_if, char *buf)
+{
+	int i;
+
+	for (i = 0; intf_commands[i].func != NULL; i++)
+		if (strncasecmp(buf, intf_commands[i].com,
+		    strlen(intf_commands[i].com)) == 0)
+			return intf_commands[i].func(conf_if, buf +
+			    strlen(intf_commands[i].com) + 1);
+	/* command not found */
+	return -1;
+}
+
+/* sets transport address */
+int
+Itaddr(struct conf_interface *conf_if, char *buf)
+{
+	if (inet_pton(AF_INET, buf, &conf_if->tr_addr) != 1)
+		return -1;
+	return 0;
+}
+
+/* sets passive-interface on */
+int
+Ipassive(struct conf_interface *conf_if, char *buf)
+{
+	conf_if->passive = 1;
 	return 0;
 }

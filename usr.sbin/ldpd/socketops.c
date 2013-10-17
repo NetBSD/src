@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.31 2013/07/27 14:35:41 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.32 2013/10/17 18:10:23 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -287,10 +287,11 @@ is_hello_socket(int s)
 static int
 is_passive_if(const char *if_name)
 {
-	struct passive_if *pif;
+	struct conf_interface *coif;
 
-	SLIST_FOREACH(pif, &passifs_head, listentry)
-		if (strncasecmp(if_name, pif->if_name, IF_NAMESIZE) == 0)
+	SLIST_FOREACH(coif, &coifs_head, iflist)
+		if (strncasecmp(if_name, coif->if_name, IF_NAMESIZE) == 0 &&
+		    coif->passive != 0)
 			return 1;
 	return 0;
 }
@@ -408,6 +409,8 @@ send_hello(void)
 	int ip4socket = -1;
 	uint lastifindex;
 	struct hello_socket *hs;
+	struct conf_interface *coif;
+	bool bad_tr_addr;
 #ifdef INET6
 	struct sockaddr_in6 sadest6;
 	int ip6socket = -1;
@@ -501,6 +504,16 @@ send_hello(void)
 
 		/* Send only once per interface, using primary address */
 		if (lastifindex == if_nametoindex(ifb->ifa_name))
+			continue;
+		/* Check if there is transport address set for this interface */
+		bad_tr_addr = false;
+		SLIST_FOREACH(coif, &coifs_head, iflist)
+			if (strncasecmp(coif->if_name, ifb->ifa_name,
+			    IF_NAMESIZE) == 0 &&
+			    coif->tr_addr.s_addr != 0 &&
+			    coif->tr_addr.s_addr != if_sa->sin_addr.s_addr)
+				bad_tr_addr = true;
+		if (bad_tr_addr == true)
 			continue;
 		lastifindex = if_nametoindex(ifb->ifa_name);
 
