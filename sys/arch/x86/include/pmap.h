@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2013/06/23 23:49:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55 2013/10/17 20:59:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -219,7 +219,7 @@ extern long nkptp[PTP_LEVELS];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
+#define pmap_copy(DP,SP,D,L,S)		__USE(L)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
