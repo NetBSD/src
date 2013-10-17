@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.53 2012/01/30 19:41:23 drochner Exp $	*/
+/*	$NetBSD: yds.c,v 1.54 2013/10/17 21:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.53 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.54 2013/10/17 21:05:41 christos Exp $");
 
 #include "mpu.h"
 
@@ -421,6 +421,9 @@ yds_allocate_slots(struct yds_softc *sc)
 	DPRINTF(("play control size : %d\n", (unsigned int)pcs));
 	DPRINTF(("rec control size : %d\n", (unsigned int)rcs));
 	DPRINTF(("eff control size : %d\n", (unsigned int)ecs));
+#ifndef AUDIO_DEBUG
+	__USE(ecs);
+#endif
 	DPRINTF(("work size : %d\n", (unsigned int)ws));
 #ifdef DIAGNOSTIC
 	if (pcs != sizeof(struct play_slot_ctrl_bank)) {
