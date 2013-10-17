@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.467 2013/07/20 15:55:57 njoly Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.468 2013/10/17 18:01:11 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.467 2013/07/20 15:55:57 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.468 2013/10/17 18:01:11 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2162,7 +2162,8 @@ sys_mknodat(struct lwp *l, const struct sys_mknodat_args *uap,
 		syscallarg(int) fd;
 		syscallarg(const char *) path;
 		syscallarg(mode_t) mode;
-		syscallarg(uint32_t) dev;
+		syscallarg(int) pad;
+		syscallarg(dev_t) dev;
 	} */
 
 	return do_sys_mknodat(l, SCARG(uap, fd), SCARG(uap, path), 
