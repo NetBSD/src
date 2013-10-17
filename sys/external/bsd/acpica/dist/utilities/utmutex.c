@@ -344,6 +344,7 @@ AcpiUtReleaseMutex (
     ThisThreadId = AcpiOsGetThreadId ();
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %u releasing Mutex [%s]\n",
         (UINT32) ThisThreadId, AcpiUtGetMutexName (MutexId)));
+    __USE(ThisThreadId);
 
     if (MutexId > ACPI_MAX_MUTEX)
     {
