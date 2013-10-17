@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.219 2013/03/29 02:10:53 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.220 2013/10/17 18:01:11 njoly Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -31,7 +31,7 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c
+	pwritev.c truncate.c ntp_adjtime.c mknodat.c
 
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
@@ -108,7 +108,7 @@ ASM=	access.S acct.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
-		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		__mknod50.S mlock.S mlockall.S modctl.S __mount50.S \
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \

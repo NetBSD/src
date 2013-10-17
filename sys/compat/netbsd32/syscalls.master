@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.97 2013/03/29 01:04:30 christos Exp $
+	$NetBSD: syscalls.master,v 1.98 2013/10/17 18:01:11 njoly Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -976,8 +976,8 @@
 			    mode_t mode); }
 460	STD  		{ int|netbsd32||mknodat(int fd, \
 			    const netbsd32_charp path, \
-			    mode_t mode, \
-			    uint32_t dev); }
+			    mode_t mode, int PAD, \
+			    netbsd32_dev_t dev); }
 461	STD  		{ int|netbsd32||mkdirat(int fd, \
 			    const netbsd32_charp path, \
 			    mode_t mode); }
