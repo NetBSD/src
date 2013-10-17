@@ -1,4 +1,4 @@
-.\" $NetBSD: luactl.8,v 1.3 2013/10/17 09:33:40 mbalmer Exp $
+.\" $NetBSD: luactl.8,v 1.4 2013/10/17 09:44:22 wiz Exp $
 .\"
 .\" Copyright (c) 2011, 2013 Marc Balmer <marc@msys.ch>
 .\"
@@ -34,12 +34,12 @@
 .Ar name
 .Nm
 .Op Fl cq
-.Cm require
-.Ar name module
-.Nm
-.Op Fl cq
 .Cm load
 .Ar name path
+.Nm
+.Op Fl cq
+.Cm require
+.Ar name module
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,9 +49,9 @@ Lua states are created using the
 command (see below),
 Lua bindings are provided as modules.
 To make a Lua binding available to a state, it must be
-.Dq required .
+.Dq Em required .
 Once a module has been
-.Dq required
+.Dq Em required
 by a state, it can not be unloaded from memory using the
 .Xr modunload 8
 command until the state using it has been destroyed.
@@ -69,7 +69,11 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
 Create a Lua state before executing the command.
-This flag is used for the require, and, load commands only, it
+This flag is used for the
+.Cm require
+and
+.Cm load
+commands only, it
 is ignored for all other commands.
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
@@ -84,6 +88,13 @@ and optional description
 .It Cm destroy Ar name
 Destroy the Lua state
 .Ar name .
+.It Cm load Ar name Pa path
+Load Lua code in file
+.Pa path
+into the Lua state
+.Ar name .
+Note that the path name must contain at least one path separation character
+.Pq Sq / .
 .It Cm require Ar name module
 Let the Lua state
 .Ar name
@@ -92,13 +103,6 @@ use the bindings provided in module
 This is the equivalent of userland Lua code calling the
 .Sq require
 function.
-.It Cm load Ar name Pa path
-Load Lua code in file
-.Pa path
-into the Lua state
-.Ar name .
-Note that the path name must contain at least one path separation character
-.Pq Sq / .
 .El
 .Sh FILES
 .Bl -tag -width "/dev/lua" -compact
