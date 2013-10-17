@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.3 2013/10/17 07:49:06 mbalmer Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.4 2013/10/17 07:54:19 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -81,7 +81,7 @@ static int
 lua_read(lua_State *L)
 {
 	bozohttpd_t *httpd;
-	int len;
+	int n, len;
 	char *data;
 
 	lua_pushstring(L, "bozohttpd");
@@ -91,9 +91,12 @@ lua_read(lua_State *L)
 
 	len = luaL_checkinteger(L, -1);
 	data = bozomalloc(httpd, len + 1);
-	memset(data, 0, len + 1);
-	bozo_read(httpd, STDIN_FILENO, data, len);
-	lua_pushstring(L, data);
+	n = bozo_read(httpd, STDIN_FILENO, data, len);
+	if (n >= 0) {
+		data[n] = '\0';
+		lua_pushstring(L, data);
+	} else
+		lua_pushnil(L);
 	free(data);
 	return 1;
 }
@@ -294,7 +297,7 @@ bozo_process_lua(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	lua_state_map_t *map;
 	lua_handler_t *hndlr;
-	int ret, length;
+	int n, ret, length;
 	char date[40];
 	bozoheaders_t *headp;
 	char *s, *query, *uri, *file, *command, *info, *content;
@@ -410,11 +413,14 @@ bozo_process_lua(bozo_httpreq_t *request)
 						length = atol(clen);
 						content = bozomalloc(httpd,
 						    length + 1);
-						memset(content, 0, length + 1);
-						bozo_read(httpd, STDIN_FILENO,
-						    content, length);
-						lua_decode_query(map->L,
-						    content);
+						n = bozo_read(httpd,
+						    STDIN_FILENO, content,
+						    length);
+						if (n >= 0) {
+							content[n] = '\0';
+							lua_decode_query(map->L,
+							    content);
+						}
 						free(content);
 					}
 				}
