@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.46 2013/10/04 21:10:18 joerg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47 2013/10/17 21:24:24 christos Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.46 2013/10/04 21:10:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47 2013/10/17 21:24:24 christos Exp $");
 
 #include "opt_slhci.h"
 
@@ -1365,11 +1365,9 @@ slhci_close(struct usbd_pipe *pipe)
 {
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
-	struct slhci_transfers *t;
 
 	sc = pipe->device->bus->hci_private;
 	spipe = (struct slhci_pipe *)pipe;
-	t = &sc->sc_transfers;
 
 	DLOG(D_TRACE, "%s close spipe %p spipe->xfer %p",
 	    pnames(spipe->ptype), spipe, spipe->xfer, 0);
@@ -1597,7 +1595,7 @@ waitcheck:
 #define BSB(a, b, c, d, e) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_ # e)
 #define BSB_SYNC(a, b, c, d) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_SYNC)
 #else /* now !SLHCI_BUS_SPACE_BARRIERS */
-#define BSB(a, b, c, d, e)
+#define BSB(a, b, c, d, e) __USE(d)
 #define BSB_SYNC(a, b, c, d)
 #endif /* SLHCI_BUS_SPACE_BARRIERS */
 
@@ -2621,10 +2619,8 @@ static usbd_status
 slhci_close_pipe(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
     usbd_xfer *xfer)
 {
-	struct slhci_transfers *t;
 	struct usbd_pipe *pipe;
 
-	t = &sc->sc_transfers;
 	pipe = &spipe->pipe;
 
 	if (pipe->interval && spipe->ptype != PT_ROOT_INTR)

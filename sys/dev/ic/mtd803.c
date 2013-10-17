@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.27 2012/10/27 17:18:22 chs Exp $ */
+/* $NetBSD: mtd803.c,v 1.28 2013/10/17 21:24:24 christos Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.27 2012/10/27 17:18:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.28 2013/10/17 21:24:24 christos Exp $");
 
 
 #include <sys/param.h>
@@ -460,7 +460,6 @@ mtd_start(struct ifnet *ifp)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int len;
 	int first_tx = sc->cur_tx;
 
 	/* Don't transmit when the interface is busy or inactive */
@@ -476,7 +475,7 @@ mtd_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m);
 
 		/* Copy mbuf chain into tx buffer */
-		len = mtd_put(sc, sc->cur_tx, m);
+		(void)mtd_put(sc, sc->cur_tx, m);
 
 		if (sc->cur_tx != first_tx)
 			sc->desc[MTD_NUM_RXD + sc->cur_tx].stat = MTD_TXD_OWNER;
