@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.51 2013/10/18 19:48:36 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.51 2013/10/18 19:48:36 christos Exp $");
 
 /*
  * TODO:
@@ -457,11 +457,10 @@ carp_proto_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct carp_softc *sc = NULL;
 	struct carp_header *ch;
-	int iplen, len, hlen;
+	int iplen, len;
 	va_list ap;
 
 	va_start(ap, m);
-	hlen = va_arg(ap, int);
 	va_end(ap);
 
 	CARP_STATINC(CARP_STAT_IPACKETS);
