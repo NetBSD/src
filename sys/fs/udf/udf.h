@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.45 2012/07/27 22:55:30 drochner Exp $ */
+/* $NetBSD: udf.h,v 1.46 2013/10/18 19:56:55 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -78,7 +78,7 @@ extern int udf_verbose;
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
 
-#ifdef DEBUG
+#ifdef UDF_DEBUG
 #define DPRINTF(name, arg) { \
 		if (udf_verbose & UDF_DEBUG_##name) {\
 			printf arg;\

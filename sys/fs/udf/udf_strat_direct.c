@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.10 2009/05/20 15:30:26 reinoud Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.11 2013/10/18 19:56:55 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.10 2009/05/20 15:30:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.11 2013/10/18 19:56:55 christos Exp $");
 #endif /* not lint */
 
 
@@ -246,15 +246,15 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	struct buf *nestbuf;
 	struct desc_tag *tag;
 	struct long_ad *node_ad_cpy;
-	uint64_t *lmapping, *pmapping, *lmappos, blknr, run_start;
-	uint32_t our_sectornr, sectornr;
-	uint32_t lb_size, buf_offset, rbuflen, bpos;
+	uint64_t *lmapping, *pmapping, *lmappos, run_start;
+	uint32_t sectornr;
+	uint32_t buf_offset, rbuflen, bpos;
 	uint16_t vpart_num;
 	uint8_t *fidblk;
 	off_t rblk;
 	int sector_size = ump->discinfo.sector_size;
-	int blks = sector_size / DEV_BSIZE;
 	int len, buf_len, sector, sectors, run_length;
+	int blks = sector_size / DEV_BSIZE;
 	int what, class, queue;
 
 	KASSERT(ump);
@@ -280,6 +280,9 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 		(ump->discinfo.mmc_cur & MMC_CAP_HW_DEFECTFREE) ||
 		(ump->vfs_mountp->mnt_flag & MNT_RDONLY));
 
+#ifndef UDF_DEBUG
+	__USE(blks);
+#endif
 	if (queue == UDF_SHED_READING) {
 		DPRINTF(SHEDULE, ("\nudf_issue_buf READ %p : sector %d type %d,"
 			"b_resid %d, b_bcount %d, b_bufsize %d\n",
@@ -289,10 +292,6 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 		return;
 	}
 
-	/* (sectorsize == lb_size) for UDF */
-	lb_size      = udf_rw32(ump->logical_vol->lb_size);
-	blknr        = buf->b_blkno;
-	our_sectornr = blknr / blks;
 
 	if (queue == UDF_SHED_WRITING) {
 		DPRINTF(SHEDULE, ("\nudf_issue_buf WRITE %p : sector %d "
