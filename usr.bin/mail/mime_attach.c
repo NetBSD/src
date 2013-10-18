@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.16 2013/01/04 01:54:55 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.17 2013/10/18 20:47:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.16 2013/01/04 01:54:55 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.17 2013/10/18 20:47:06 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -230,14 +230,11 @@ content_encoding_core(void *fh, const char *ctype)
 #define MAILMSG_8BIT	0x4
 #define MAILMSG_LONGL	0x8
 	int c, lastc, state;
-	int ctrlchar, endwhite;
 	size_t curlen, maxlen;
 
 	state = MAILMSG_CLEAN;
 	curlen = 0;
 	maxlen = line_limit();
-	ctrlchar = 0;
-	endwhite = 0;
 	lastc = EOF;
 	while ((c = fgetc(fh)) != EOF) {
 		curlen++;

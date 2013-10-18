@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.11 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.12 2013/10/18 20:47:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.11 2013/08/30 20:57:26 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.12 2013/10/18 20:47:06 christos Exp $");
 #endif
 
 
@@ -261,7 +261,7 @@ wav_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp)
 	    *fact = "fact",
 	    *data = "data";
 	u_int32_t filelen, fmtsz, sps, abps, factsz = 4, nsample, datalen;
-	u_int16_t fmttag, nchan, align, bps, extln = 0;
+	u_int16_t fmttag, nchan, align, extln = 0;
 
 	if (wi->header_info)
 		warnx("header information not supported for WAV");
@@ -269,13 +269,10 @@ wav_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp)
 
 	switch (wi->precision) {
 	case 8:
-		bps = 8;
 		break;
 	case 16:
-		bps = 16;
 		break;
 	case 32:
-		bps = 32;
 		break;
 	default:
 		{
