@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.15 2011/11/11 15:09:33 gdt Exp $	*/
+/*	$NetBSD: show.c,v 1.16 2013/10/18 20:26:45 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -339,9 +339,12 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
 			/* XXX: override is ok? */
-			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
-			    &in6->s6_addr[2]);
-			*(u_short *)&in6->s6_addr[2] = 0;
+			uint16_t scope;
+			memcpy(&scope, &sa6->sin6_addr.s6_addr[2],
+			    sizeof(scope));
+			sa6->sin6_scope_id = ntohs(scope);
+			in6->s6_addr[2] = 0;
+			in6->s6_addr[3] = 0;
 		}
 		if (flags & RTF_HOST)
 			cp = routename((struct sockaddr *)sa6);
@@ -436,8 +439,10 @@ routename(struct sockaddr *sa)
 		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
 		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
 		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
+			uint16_t scope;
+			memcpy(&scope, &sin6.sin6_addr.s6_addr[2],
+			    sizeof(scope));
+			sin6.sin6_scope_id = ntohs(scope);
 			sin6.sin6_addr.s6_addr[2] = 0;
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.76 2013/03/01 18:26:11 joerg Exp $	*/
+/*	$NetBSD: if.c,v 1.77 2013/10/18 20:26:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.76 2013/03/01 18:26:11 joerg Exp $");
+__RCSID("$NetBSD: if.c,v 1.77 2013/10/18 20:26:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,9 +401,10 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 		sin6 = (struct sockaddr_in6 *)sa;
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-			sin6->sin6_scope_id =
-				ntohs(*(u_int16_t *)
-				  &sin6->sin6_addr.s6_addr[2]);
+			uint16_t scope;
+			memcpy(&scope, &sin6->sin6_addr.s6_addr[2],
+			    sizeof(scope));
+			sin6->sin6_scope_id = ntohs(scope);
 			/* too little width */
 			if (!vflag)
 				sin6->sin6_scope_id = 0;
@@ -455,9 +456,11 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 				as6.sin6_addr = inm.in6m_addr;
 #ifdef __KAME__
 				if (IN6_IS_ADDR_MC_LINKLOCAL(&as6.sin6_addr)) {
-					as6.sin6_scope_id =
-					    ntohs(*(u_int16_t *)
-						&as6.sin6_addr.s6_addr[2]);
+					uint16_t scope;
+					memcpy(&scope,
+					    &sin6->sin6_addr.s6_addr[2],
+					    sizeof(scope));
+					as6.sin6_scope_id = ntohs(scope);
 					as6.sin6_addr.s6_addr[2] = 0;
 					as6.sin6_addr.s6_addr[3] = 0;
 				}
