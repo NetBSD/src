@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1059 2013/10/06 00:48:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1060 2013/10/18 23:43:35 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -578,8 +578,8 @@ Use external/bsd/kyua-atf-compat/prepare-import.sh to regenerate the dist/
 directory.
 
 Package:	kyua-cli
-Version:	0.6
-Current Vers:	0.6
+Version:	0.7
+Current Vers:	0.7
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
 Home page:	http://code.google.com/p/kyua/
@@ -720,8 +720,8 @@ The default module paths have been changed to not include the current
 working directory '.' to avoid potential security problems.
 
 Package:	Lutok
-Version:	0.2
-Current Vers:	0.2
+Version:	0.3
+Current Vers:	0.3
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	http://code.google.com/p/lutok/downloads/list?can=1
 Home page:	http://code.google.com/p/lutok/
