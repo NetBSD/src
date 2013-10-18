@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.50 2013/10/17 20:54:24 christos Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.51 2013/10/18 00:03:35 riz Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.50 2013/10/17 20:54:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.51 2013/10/18 00:03:35 riz Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -735,12 +735,14 @@ vcoda_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+	{
 		int cmajor, dmajor;
 		vcodaattach(NVCODA);
 
 		dmajor = cmajor = -1;
 		return devsw_attach("vcoda", NULL, &dmajor,
 		    &vcoda_cdevsw, &cmajor);
+	}
 #endif
 		break;
 
