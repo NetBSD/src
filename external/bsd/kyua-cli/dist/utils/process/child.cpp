@@ -164,7 +164,7 @@ log_exec(const fs::path& program, const process::args_vector& args)
     for (process::args_vector::const_iterator iter = args.begin();
          iter != args.end(); ++iter)
         plain_command += F(" %s") % *iter;
-    LD(F("Executing%s") % plain_command);
+    LD(F("Executing %s") % plain_command);
 }
 
 
