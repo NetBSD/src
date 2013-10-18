@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.120 2013/07/07 19:49:44 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.121 2013/10/18 19:56:55 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.120 2013/07/07 19:49:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.121 2013/10/18 19:56:55 christos Exp $");
 #endif /* not lint */
 
 
@@ -438,7 +438,7 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 	uint32_t phys_part_start, phys_part_end, part_start, part_end;
 	uint32_t sector_size, len, alloclen, plb_num;
 	uint8_t *pos;
-	int addr_type, icblen, icbflags, flags;
+	int addr_type, icblen, icbflags;
 
 	/* get our track extents */
 	track_start = trackinfo->track_start;
@@ -492,7 +492,6 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 			/* pvpart_num = udf_rw16(l_ad->loc.part_num); */
 		}
 		/* process extent */
-		flags   = UDF_EXT_FLAGS(len);
 		len     = UDF_EXT_LEN(len);
 
 		part_start = phys_part_start + plb_num;
@@ -1280,16 +1279,13 @@ udf_loose_lvint_history(struct udf_mount *ump)
 	struct logvol_int_desc *lvint;
 	uint32_t in_ext, in_pos, in_len;
 	uint32_t out_ext, out_wpos, out_len;
-	uint32_t lb_size, packet_size, lb_num;
+	uint32_t lb_num;
 	uint32_t len, start;
 	int ext, minext, extlen, cnt, cpy_len, dscr_type;
 	int losing;
 	int error;
 
 	DPRINTF(VOLUMES, ("need to lose some lvint history\n"));
-
-	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	packet_size = ump->data_track.packet_size;	/* XXX data track */
 
 	/* search smallest extent */
 	trace = &ump->lvint_trace[0];
@@ -1795,7 +1791,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 {
 	struct udf_node	     *bitmap_node;
 	union dscrptr        *dscr;
-	uint64_t inflen, new_inflen;
+	uint64_t new_inflen;
 	int dummy, error;
 
 	bitmap_node = ump->metadatabitmap_node;
@@ -1804,11 +1800,8 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 	if (bitmap_node == NULL)
 		return 0;
 
-	if (bitmap_node->fe) {
-		inflen = udf_rw64(bitmap_node->fe->inf_len);
-	} else {
+	if (!bitmap_node->fe) {
 		KASSERT(bitmap_node->efe);
-		inflen = udf_rw64(bitmap_node->efe->inf_len);
 	}
 
 	/* reduce length to zero */
@@ -1855,7 +1848,7 @@ udf_process_vds(struct udf_mount *ump) {
 	/* struct udf_args *args = &ump->mount_args; */
 	struct logvol_int_desc *lvint;
 	struct udf_logvol_info *lvinfo;
-	uint32_t n_pm, mt_l;
+	uint32_t n_pm;
 	uint8_t *pmap_pos;
 	char *domain_name, *map_name;
 	const char *check_name;
@@ -1863,7 +1856,7 @@ udf_process_vds(struct udf_mount *ump) {
 	int pmap_stype, pmap_size;
 	int pmap_type, log_part, phys_part, raw_phys_part, maps_on;
 	int n_phys, n_virt, n_spar, n_meta;
-	int len, error;
+	int len;
 
 	if (ump == NULL)
 		return ENOENT;
@@ -1894,7 +1887,7 @@ udf_process_vds(struct udf_mount *ump) {
 	}
 
 	/* retrieve logical volume integrity sequence */
-	error = udf_retrieve_lvint(ump);
+	(void)udf_retrieve_lvint(ump);
 
 	/*
 	 * We need at least one logvol integrity descriptor recorded.  Note
@@ -1919,7 +1912,6 @@ udf_process_vds(struct udf_mount *ump) {
 	 */
 	DPRINTF(VOLUMES, ("checking logvol mappings\n"));
 	n_pm = udf_rw32(ump->logical_vol->n_pm);   /* num partmaps         */
-	mt_l = udf_rw32(ump->logical_vol->mt_l);   /* partmaps data length */
 	pmap_pos =  ump->logical_vol->maps;
 
 	if (n_pm > UDF_PMAPS) {
@@ -2812,7 +2804,6 @@ int
 udf_writeout_vat(struct udf_mount *ump)
 {
 	struct udf_node *vat_node = ump->vat_node;
-	uint32_t vat_length;
 	int error;
 
 	KASSERT(vat_node);
@@ -2823,7 +2814,6 @@ udf_writeout_vat(struct udf_mount *ump)
 	udf_update_vat_descriptor(ump);
 
 	/* write out the VAT contents ; TODO intelligent writing */
-	vat_length = ump->vat_table_len;
 	error = vn_rdwr(UIO_WRITE, vat_node->vnode,
 		ump->vat_table, ump->vat_table_len, 0,
 		UIO_SYSSPACE, 0, FSCRED, NULL, NULL);
@@ -3028,7 +3018,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 {
 	struct udf_node *vat_node;
 	struct long_ad	 icb_loc;
-	uint32_t early_vat_loc, late_vat_loc, vat_loc;
+	uint32_t early_vat_loc, vat_loc;
 	int error;
 
 	/* mapping info not needed */
@@ -3040,7 +3030,6 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	DPRINTF(VOLUMES, ("1) last possible %d, early_vat_loc %d \n",
 		vat_loc, early_vat_loc));
 	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
-	late_vat_loc  = vat_loc + 1024;
 
 	DPRINTF(VOLUMES, ("2) last possible %d, early_vat_loc %d \n",
 		vat_loc, early_vat_loc));
@@ -3207,7 +3196,7 @@ udf_read_vds_tables(struct udf_mount *ump)
 {
 	union udf_pmap *mapping;
 	/* struct udf_args *args = &ump->mount_args; */
-	uint32_t n_pm, mt_l;
+	uint32_t n_pm;
 	uint32_t log_part;
 	uint8_t *pmap_pos;
 	int pmap_size;
@@ -3215,7 +3204,6 @@ udf_read_vds_tables(struct udf_mount *ump)
 
 	/* Iterate (again) over the part mappings for locations   */
 	n_pm = udf_rw32(ump->logical_vol->n_pm);   /* num partmaps         */
-	mt_l = udf_rw32(ump->logical_vol->mt_l);   /* partmaps data length */
 	pmap_pos =  ump->logical_vol->maps;
 
 	for (log_part = 0; log_part < n_pm; log_part++) {
@@ -4207,7 +4195,6 @@ unix_to_udf_name(char *result, uint8_t *result_len, char const *name, int name_l
 	outchp = raw_name;
 	bits = 8;
 	for (cnt = name_len, udf_chars = 0; cnt;) {
-/*###3490 [cc] warning: passing argument 2 of 'wget_utf8' from incompatible pointer type%%%*/
 		*outchp = wget_utf8(&inchp, &cnt);
 		if (*outchp > 0xff)
 			bits=16;
@@ -4780,7 +4767,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct extfile_entry *efe = dir_node->efe;
 	struct fileid_desc *fid;
 	struct dirent *dirent;
-	uint64_t file_size, diroffset;
+	uint64_t diroffset;
 	uint32_t lb_size, fidsize;
 	int found, error;
 	char const *name  = cnp->cn_nameptr;
@@ -4797,11 +4784,8 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	dirh = dir_node->dir_hash;
 
 	/* get directory filesize */
-	if (fe) {
-		file_size = udf_rw64(fe->inf_len);
-	} else {
+	if (!fe) {
 		assert(efe);
-		file_size = udf_rw64(efe->inf_len);
 	}
 
 	/* allocate temporary space for fid */
@@ -4928,7 +4912,7 @@ udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
 	struct extfile_entry *efe;
 	struct fileid_desc *fid;
 	struct dirent *dirent;
-	uint64_t file_size, diroffset;
+	uint64_t diroffset;
 	uint64_t new_parent_unique_id;
 	uint32_t lb_size, fidsize;
 	int found, error;
@@ -4958,11 +4942,8 @@ udf_dir_update_rootentry(struct udf_mount *ump, struct udf_node *dir_node,
 	/* get directory filesize */
 	fe  = dir_node->fe;
 	efe = dir_node->efe;
-	if (fe) {
-		file_size = udf_rw64(fe->inf_len);
-	} else {
+	if (!fe) {
 		assert(efe);
-		file_size = udf_rw64(efe->inf_len);
 	}
 
 	/* allocate temporary space for fid */
@@ -5307,7 +5288,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	struct long_ad   icb_loc, last_fe_icb_loc;
 	uint64_t file_size;
 	uint32_t lb_size, sector, dummy;
-	uint8_t  *file_data;
 	int udf_file_type, dscr_type, strat, strat4096, needs_indirect;
 	int slot, eof, error;
 
@@ -5390,7 +5370,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	strat4096 = 0;
 	udf_file_type = UDF_ICB_FILETYPE_UNKNOWN;
 	file_size = 0;
-	file_data = NULL;
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 
 	DPRINTF(NODE, ("\tstart reading descriptors\n"));
@@ -5432,7 +5411,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		last_fe_icb_loc = icb_loc;
 		
 		/* record and process/update (ext)fentry */
-		file_data = NULL;
 		if (dscr_type == TAGID_FENTRY) {
 			if (udf_node->fe)
 				udf_free_logvol_dscr(ump, &last_fe_icb_loc,
@@ -5441,7 +5419,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			strat = udf_rw16(udf_node->fe->icbtag.strat_type);
 			udf_file_type = udf_node->fe->icbtag.file_type;
 			file_size = udf_rw64(udf_node->fe->inf_len);
-			file_data = udf_node->fe->data;
 		} else {
 			if (udf_node->efe)
 				udf_free_logvol_dscr(ump, &last_fe_icb_loc,
@@ -5450,7 +5427,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 			strat = udf_rw16(udf_node->efe->icbtag.strat_type);
 			udf_file_type = udf_node->efe->icbtag.file_type;
 			file_size = udf_rw64(udf_node->efe->inf_len);
-			file_data = udf_node->efe->data;
 		}
 
 		/* check recording strategy (structure) */
@@ -6013,11 +5989,8 @@ void
 udf_delete_node(struct udf_node *udf_node)
 {
 	void *dscr;
-	struct udf_mount *ump;
 	struct long_ad *loc;
 	int extnr, lvint, dummy;
-
-	ump = udf_node->ump;
 
 	/* paranoia check on integrity; should be open!; we could panic */
 	lvint = udf_rw32(udf_node->ump->logvol_integrity->integrity_type);
