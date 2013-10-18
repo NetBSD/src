@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.1 2013/10/15 19:12:41 jdc Exp $	*/
+/*	$NetBSD: lm87.c,v 1.2 2013/10/18 15:16:08 jdc Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.1 2013/10/15 19:12:41 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.2 2013/10/18 15:16:08 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,6 @@ lmenv_attach(device_t parent, device_t self, void *aux)
 			printf(", cannot write Configuration Register 1\n");
 			return;
 		}
-		printf(", starting scan");
 	}
 	iic_release_bus(sc->sc_tag, 0);
 
