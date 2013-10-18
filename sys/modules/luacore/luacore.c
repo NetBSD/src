@@ -1,7 +1,7 @@
-/*	$NetBSD */
+/*	$NetBSD: luacore.c,v 1.3 2013/10/18 07:46:55 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2011, Marc Balmer <mbalmer@NetBSD.org>.
+ * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,56 +47,88 @@ MODULE(MODULE_CLASS_LUA_BINDING, luacore, "lua");
 static int
 print(lua_State *L)
 {
-	printf("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		printf("%s", s);
 	return 0;
 }
 
 static int
 print_nolog(lua_State *L)
 {
-	printf_nolog("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		printf_nolog("%s", s);
 	return 0;
 }
 
 static int
 uprint(lua_State *L)
 {
-	uprintf("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		uprintf("%s", s);
 	return 0;
 }
 
 static int
 core_aprint_normal(lua_State *L)
 {
-	aprint_normal("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		aprint_normal("%s", s);
 	return 0;
 }
 
 static int
 core_aprint_naive(lua_State *L)
 {
-	aprint_naive("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		aprint_naive("%s", s);
 	return 0;
 }
 
 static int
 core_aprint_verbose(lua_State *L)
 {
-	aprint_verbose("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		aprint_verbose("%s", s);
 	return 0;
 }
 
 static int
 core_aprint_debug(lua_State *L)
 {
-	aprint_debug("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		aprint_debug("%s", s);
 	return 0;
 }
 
 static int
 core_aprint_error(lua_State *L)
 {
-	aprint_error("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		aprint_error("%s", s);
 	return 0;
 }
 
@@ -112,7 +144,11 @@ core_aprint_get_error_count(lua_State *L)
 static int
 core_panic(lua_State *L)
 {
-	panic("%s", lua_tostring(L, -1));
+	const char *s;
+
+	s = lua_tostring(L, -1);
+	if (s)
+		panic("%s", s);
 	return 0;
 }
 
