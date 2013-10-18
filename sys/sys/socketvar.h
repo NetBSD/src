@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.130.2.1 2013/08/28 15:21:49 rmind Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.130.2.2 2013/10/18 02:32:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct socket {
 	short		so_options;	/* from socket call, see socket.h */
 	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
-	int		so_unused;	/* used to be so_nbio */
+	unsigned	so_refcnt;	/* reference count */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
 /*
@@ -152,7 +152,7 @@ struct socket {
 	short		so_qlimit;	/* max number queued connections */
 	short		so_timeo;	/* connection timeout */
 	u_short		so_error;	/* error affecting connection */
-	u_short		so_aborting;	/* references from soabort() */
+	u_short		so_unused1;
 	pid_t		so_pgid;	/* pgid for signals */
 	u_long		so_oobmark;	/* chars to oob mark */
 	struct sockbuf	so_snd;		/* send buffer */
@@ -298,6 +298,8 @@ int	socreate(int, struct socket **, int, int, struct lwp *,
 		 struct socket *);
 int	fsocreate(int, struct socket **, int, int, int *);
 int	sodisconnect(struct socket *);
+void	soref(struct socket *);
+void	sounref(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, struct sockopt *);
 void	sohasoutofband(struct socket *);

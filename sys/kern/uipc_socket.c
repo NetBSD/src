@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.215.4.2 2013/08/28 23:59:35 rmind Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.215.4.3 2013/10/18 02:32:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.215.4.2 2013/08/28 23:59:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.215.4.3 2013/10/18 02:32:12 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -528,6 +528,8 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	so = soget(true);
 	so->so_type = type;
 	so->so_proto = prp;
+	so->so_refcnt = 1;
+
 	so->so_send = sosend;
 	so->so_receive = soreceive;
 #ifdef MBUFTRACE
@@ -607,6 +609,21 @@ fsocreate(int domain, struct socket **sop, int type, int protocol, int *fdout)
 	return error;
 }
 
+void
+soref(struct socket *so)
+{
+	atomic_inc_uint(&so->so_refcnt);
+}
+
+void
+sounref(struct socket *so)
+{
+	if (atomic_dec_uint_nv(&so->so_refcnt) > 0) {
+		return;
+	}
+	soput(so);
+}
+
 int
 sofamily(const struct socket *so)
 {
@@ -661,7 +678,6 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 void
 sofree(struct socket *so)
 {
-	u_int refs;
 
 	KASSERT(solocked(so));
 
@@ -691,13 +707,13 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_rcv.sb_cv));
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
-	refs = so->so_aborting;	/* XXX */
 	/* Remove acccept filter if one is present. */
 	if (so->so_accf != NULL)
 		(void)accept_filt_clear(so);
 	sounlock(so);
-	if (refs == 0)		/* XXX */
-		soput(so);
+
+	/* Will soput() if the last reference. */
+	sounref(so);
 }
 
 /*
@@ -772,19 +788,23 @@ soabort(struct socket *so)
 {
 	u_int refs;
 	int error;
-	
+
 	KASSERT(solocked(so));
 	KASSERT(so->so_head == NULL);
 
-	so->so_aborting++;		/* XXX */
+	soref(so);
 	error = (*so->so_proto->pr_usrreqs->pr_generic)(so,
 	    PRU_ABORT, NULL, NULL, NULL, NULL);
-	refs = --so->so_aborting;	/* XXX */
-	if (error || (refs == 0)) {
+	refs = so->so_refcnt;
+	sounref(so);
+
+	/* XXX: Fix PRU_ABORT to behave consistently. */
+	if (error || refs == 1) {
 		sofree(so);
 	} else {
 		sounlock(so);
 	}
+	sounref(so);
 	return error;
 }
 
