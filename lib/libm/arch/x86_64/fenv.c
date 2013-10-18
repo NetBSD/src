@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.4 2013/05/29 02:27:39 riastradh Exp $ */
+/* $NetBSD: fenv.c,v 1.5 2013/10/18 17:03:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.4 2013/05/29 02:27:39 riastradh Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.5 2013/10/18 17:03:02 christos Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -181,7 +181,7 @@ feraiseexcept(int excepts)
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
 	ex = excepts & FE_ALL_EXCEPT;
-	fesetexceptflag((unsigned int *)&excepts, excepts);
+	fesetexceptflag((unsigned int *)&ex, ex);
 	__fwait();
 
 	/* Success */
