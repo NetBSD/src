@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.11 2013/09/30 18:57:59 hannken Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.12 2013/10/18 19:57:28 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.11 2013/09/30 18:57:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.12 2013/10/18 19:57:28 christos Exp $");
 #endif /* not lint */
 
 
@@ -693,6 +693,10 @@ nilfs_mount_checkpoint(struct nilfs_mount *ump)
 	DPRINTF(VOLUMES, ("mount_nilfs: checkpoint header read in\n"));
 	DPRINTF(VOLUMES, ("\tNumber of checkpoints %"PRIu64"\n", ncp));
 	DPRINTF(VOLUMES, ("\tNumber of snapshots   %"PRIu64"\n", nsn));
+#ifndef NILFS_DEBUG
+	__USE(ncp);
+	__USE(nsn);
+#endif
 
 	/* read in our specified checkpoint */
 	dlen = nilfs_rw16(ump->nilfsdev->super.s_checkpoint_size);

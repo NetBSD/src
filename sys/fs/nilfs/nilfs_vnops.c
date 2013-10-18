@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.23 2013/05/08 10:39:17 reinoud Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.24 2013/10/18 19:57:28 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.23 2013/05/08 10:39:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.24 2013/10/18 19:57:28 christos Exp $");
 #endif /* not lint */
 
 
@@ -212,7 +212,7 @@ nilfs_write(void *v)
 	int           advice = IO_ADV_DECODE(ap->a_ioflag);
 	struct uvm_object    *uobj;
 	struct nilfs_node      *nilfs_node = VTOI(vp);
-	uint64_t file_size, old_size;
+	uint64_t file_size;
 	vsize_t len;
 	int error, resid, extended;
 
@@ -235,12 +235,10 @@ nilfs_write(void *v)
 
 	assert(nilfs_node);
 	panic("nilfs_write() called\n");
-return EIO;
 
 	/* remember old file size */
 	assert(nilfs_node);
 	file_size = nilfs_rw64(nilfs_node->inode.i_size);
-	old_size = file_size;
 
 	/* if explicitly asked to append, uio_offset can be wrong? */
 	if (ioflag & IO_APPEND)
