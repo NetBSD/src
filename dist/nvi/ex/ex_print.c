@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_print.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_print.c,v 1.3 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -97,7 +97,6 @@ ex_pr(SCR *sp, EXCMD *cmdp)
 int
 ex_print(SCR *sp, EXCMD *cmdp, MARK *fp, MARK *tp, u_int32_t flags)
 {
-	GS *gp;
 	db_recno_t from, to;
 	size_t col, len;
 	const CHAR_T *p;
@@ -106,7 +105,6 @@ ex_print(SCR *sp, EXCMD *cmdp, MARK *fp, MARK *tp, u_int32_t flags)
 
 	NEEDFILE(sp, cmdp);
 
-	gp = sp->gp;
 	for (from = fp->lno, to = tp->lno; from <= to; ++from) {
 		col = 0;
 
@@ -215,12 +213,10 @@ ex_prchars(SCR *sp, const CHAR_T *p, size_t *colp, size_t len,
 {
 	CHAR_T ch;
 	const char *kp;
-	GS *gp;
 	size_t col, tlen, ts;
 
 	if (O_ISSET(sp, O_LIST))
 		LF_SET(E_C_LIST);
-	gp = sp->gp;
 	ts = O_VAL(sp, O_TABSTOP);
 	for (col = *colp; len--;)
 		if ((ch = *p++) == L('\t') && !LF_ISSET(E_C_LIST))

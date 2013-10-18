@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: cl_screen.c,v 1.3 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -185,11 +185,9 @@ static int
 cl_vi_init(SCR *sp)
 {
 	CL_PRIVATE *clp;
-	GS *gp;
 	char *o_cols, *o_lines, *o_term;
 	const char *ttype;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 
 	/* If already initialized, just set the terminal modes. */
