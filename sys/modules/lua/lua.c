@@ -1,7 +1,7 @@
-/*	$NetBSD */
+/*	$NetBSD: lua.c,v 1.2 2013/10/18 07:49:06 mbalmer Exp $ */
 
 /*
- * Copyright (c) 2011 by Marc Balmer <mbalmer@NetBSD.org>.
+ * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
