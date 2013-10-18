@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2013/06/19 21:12:03 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2013/10/18 22:18:14 bad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.86 2013/06/19 21:12:03 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.87 2013/10/18 22:18:14 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,6 +395,7 @@ main(int argc, char *argv[])
 	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;
 	char *cp;
+	char *afname, *afnames;
 	u_long pcbaddr;
 
 	if (prog_init) {
@@ -407,6 +408,7 @@ main(int argc, char *argv[])
 	(void)setegid(getgid());
 	tp = NULL;
 	af = AF_UNSPEC;
+	afnames = NULL;
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
@@ -428,24 +430,7 @@ main(int argc, char *argv[])
 			dflag = 1;
 			break;
 		case 'f':
-			if (strcmp(optarg, "inet") == 0)
-				af = AF_INET;
-			else if (strcmp(optarg, "inet6") == 0)
-				af = AF_INET6;
-			else if (strcmp(optarg, "arp") == 0)
-				af = AF_ARP;
-			else if (strcmp(optarg, "pfkey") == 0)
-				af = PF_KEY;
-			else if (strcmp(optarg, "unix") == 0
-			    || strcmp(optarg, "local") == 0)
-				af = AF_LOCAL;
-			else if (strcmp(optarg, "atalk") == 0)
-				af = AF_APPLETALK;
-			else if (strcmp(optarg, "mpls") == 0)
-				af = AF_MPLS;
-			else
-				errx(1, "%s: unknown address family",
-				    optarg);
+			afnames = optarg;
 			break;
 #ifndef SMALL
 		case 'g':
@@ -603,91 +588,124 @@ main(int argc, char *argv[])
 	 */
 	sethostent(1);
 	setnetent(1);
-	if (iflag) {
-		if (af != AF_UNSPEC)
-			goto protostat;
-
-		intpr(interval, nl[N_IFNET].n_value, NULL);
-		exit(0);
-	}
-	if (rflag) {
-		if (sflag)
-			rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
-		else {
-			if (!use_sysctl)
-				err(1, "-r is not supported "
-				    "for post-mortem analysis.");
-			p_rttables(af);
-		}
-		exit(0);
-	}
-#ifndef SMALL
-	if (gflag) {
-		if (sflag) {
-			if (af == AF_INET || af == AF_UNSPEC)
-				mrt_stats(nl[N_MRTPROTO].n_value,
-					  nl[N_MRTSTAT].n_value);
-#ifdef INET6
-			if (af == AF_INET6 || af == AF_UNSPEC)
-				mrt6_stats(nl[N_MRT6PROTO].n_value,
-					   nl[N_MRT6STAT].n_value);
-#endif
-		}
-		else {
-			if (af == AF_INET || af == AF_UNSPEC)
-				mroutepr(nl[N_MRTPROTO].n_value,
-					 nl[N_MFCHASHTBL].n_value,
-					 nl[N_MFCHASH].n_value,
-					 nl[N_VIFTABLE].n_value);
-#ifdef INET6
-			if (af == AF_INET6 || af == AF_UNSPEC)
-				mroute6pr(nl[N_MRT6PROTO].n_value,
-					  nl[N_MF6CTABLE].n_value,
-					  nl[N_MIF6TABLE].n_value);
-#endif
-		}
-		exit(0);
-	}
-#endif
-  protostat:
-	if (af == AF_INET || af == AF_UNSPEC) {
-		setprotoent(1);
-		setservent(1);
-		/* ugh, this is O(MN) ... why do we do this? */
-		while ((p = getprotoent()) != NULL) {
-			for (tp = protox; tp->pr_name; tp++)
-				if (strcmp(tp->pr_name, p->p_name) == 0)
-					break;
-			if (tp->pr_name == 0 || tp->pr_wanted == 0)
+	/*
+	 * If -f was used afnames != NULL, loop over the address families.
+	 * Otherwise do this at least once (with af == AF_UNSPEC).
+	 */
+	afname = NULL;
+	do {
+		if (afnames != NULL) {
+			afname = strsep(&afnames, ",");
+			if (afname == NULL)
+				break;		/* Exit early */
+			if (strcmp(afname, "inet") == 0)
+				af = AF_INET;
+			else if (strcmp(afname, "inet6") == 0)
+				af = AF_INET6;
+			else if (strcmp(afname, "arp") == 0)
+				af = AF_ARP;
+			else if (strcmp(afname, "pfkey") == 0)
+				af = PF_KEY;
+			else if (strcmp(afname, "unix") == 0
+			    || strcmp(afname, "local") == 0)
+				af = AF_LOCAL;
+			else if (strcmp(afname, "atalk") == 0)
+				af = AF_APPLETALK;
+			else if (strcmp(afname, "mpls") == 0)
+				af = AF_MPLS;
+			else {
+				warnx("%s: unknown address family",
+				    afname);
 				continue;
-			printproto(tp, p->p_name);
-			tp->pr_wanted = 0;
+			}
 		}
-		endprotoent();
-		for (tp = protox; tp->pr_name; tp++)
-			if (tp->pr_wanted)
-				printproto(tp, tp->pr_name);
-	}
+
+		if (iflag) {
+			if (af != AF_UNSPEC)
+				goto protostat;
+
+			intpr(interval, nl[N_IFNET].n_value, NULL);
+			break;
+		}
+		if (rflag) {
+			if (sflag)
+				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
+			else {
+				if (!use_sysctl)
+					err(1, "-r is not supported "
+					    "for post-mortem analysis.");
+				p_rttables(af);
+			}
+			break;
+		}
+#ifndef SMALL
+		if (gflag) {
+			if (sflag) {
+				if (af == AF_INET || af == AF_UNSPEC)
+					mrt_stats(nl[N_MRTPROTO].n_value,
+						  nl[N_MRTSTAT].n_value);
 #ifdef INET6
-	if (af == AF_INET6 || af == AF_UNSPEC)
-		for (tp = ip6protox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
+				if (af == AF_INET6 || af == AF_UNSPEC)
+					mrt6_stats(nl[N_MRT6PROTO].n_value,
+						   nl[N_MRT6STAT].n_value);
 #endif
-	if (af == AF_ARP || af == AF_UNSPEC)
-		for (tp = arpprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
+			}
+			else {
+				if (af == AF_INET || af == AF_UNSPEC)
+					mroutepr(nl[N_MRTPROTO].n_value,
+						 nl[N_MFCHASHTBL].n_value,
+						 nl[N_MFCHASH].n_value,
+						 nl[N_VIFTABLE].n_value);
+#ifdef INET6
+				if (af == AF_INET6 || af == AF_UNSPEC)
+					mroute6pr(nl[N_MRT6PROTO].n_value,
+						  nl[N_MF6CTABLE].n_value,
+						  nl[N_MIF6TABLE].n_value);
+#endif
+			}
+			break;
+		}
+#endif
+	  protostat:
+		if (af == AF_INET || af == AF_UNSPEC) {
+			setprotoent(1);
+			setservent(1);
+			/* ugh, this is O(MN) ... why do we do this? */
+			while ((p = getprotoent()) != NULL) {
+				for (tp = protox; tp->pr_name; tp++)
+					if (strcmp(tp->pr_name, p->p_name) == 0)
+						break;
+				if (tp->pr_name == 0 || tp->pr_wanted == 0)
+					continue;
+				printproto(tp, p->p_name);
+				tp->pr_wanted = 0;
+			}
+			endprotoent();
+			for (tp = protox; tp->pr_name; tp++)
+				if (tp->pr_wanted)
+					printproto(tp, tp->pr_name);
+		}
+#ifdef INET6
+		if (af == AF_INET6 || af == AF_UNSPEC)
+			for (tp = ip6protox; tp->pr_name; tp++)
+				printproto(tp, tp->pr_name);
+#endif
+		if (af == AF_ARP || af == AF_UNSPEC)
+			for (tp = arpprotox; tp->pr_name; tp++)
+				printproto(tp, tp->pr_name);
 #ifdef IPSEC
-	if (af == PF_KEY || af == AF_UNSPEC)
-		for (tp = pfkeyprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
+		if (af == PF_KEY || af == AF_UNSPEC)
+			for (tp = pfkeyprotox; tp->pr_name; tp++)
+				printproto(tp, tp->pr_name);
 #endif
 #ifndef SMALL
-	if (af == AF_APPLETALK || af == AF_UNSPEC)
-		for (tp = atalkprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
-	if ((af == AF_LOCAL || af == AF_UNSPEC) && !sflag)
-		unixpr(nl[N_UNIXSW].n_value);
+		if (af == AF_APPLETALK || af == AF_UNSPEC)
+			for (tp = atalkprotox; tp->pr_name; tp++)
+				printproto(tp, tp->pr_name);
+		if ((af == AF_LOCAL || af == AF_UNSPEC) && !sflag)
+			unixpr(nl[N_UNIXSW].n_value);
 #endif
+	} while (afnames != NULL && afname != NULL);
 	exit(0);
 }
 
@@ -834,9 +852,9 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
+"usage: %s [-Aan] [-f address_family[,family ...]] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-bdgiLmnqrsSv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnqrsSv] [-f address_family[,family ...]] [-M core] [-N system]\n", 
 	progname);
 	(void)fprintf(stderr,
 "       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);
@@ -847,7 +865,7 @@ usage(void)
 	(void)fprintf(stderr,
 "       %s [-p protocol] [-i] [-I Interface] \n", progname);
 	(void)fprintf(stderr,
-"       %s [-s] [-f address_family] [-i] [-I Interface]\n", progname);
+"       %s [-s] [-f address_family[,family ...]] [-i] [-I Interface]\n", progname);
 	(void)fprintf(stderr,
 "       %s [-s] [-B] [-I interface]\n", progname);
 	exit(1);
