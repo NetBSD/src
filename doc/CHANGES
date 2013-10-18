@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1853 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1854 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -288,4 +288,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	binutils: updated to FSF binutils 2.23.2.  [christos 20130929]
 	gdb(1): Updated to 7.6.1.  [christos 20131003]
 	httpd(8): Added Lua scripting for content creation. [mbalmer 20131012]
-
+	netstat(1): Accept -faddress_family[,family ...]. [bad 20131019]
+	systat(1): Accept shell patterns to select drives. [bad 20131019]
