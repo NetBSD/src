@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.10 2013/09/13 20:51:20 joerg Exp $	*/
+/*	$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deroff.c,v 1.10 2013/09/13 20:51:20 joerg Exp $");
+__RCSID("$NetBSD: deroff.c,v 1.11 2013/10/18 20:47:06 christos Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -166,7 +166,7 @@ typedef	int pacmac;		/* compressed macro name */
 static int	argconcat = 0;	/* concat arguments together (-me only) */
 
 #define	tomac(c1, c2)		((((c1) & 0xFF) << 8) | ((c2) & 0xFF))
-#define	frommac(src, c1, c2)	(((c1)=((src)>>8)&0xFF),((c2) =(src)&0xFF))
+#define	frommac(src, c1, c2)	(((c1)=((src)>>8)&0xFF),((c2) =(src)&0xFF), __USE(c1), __USE(c2))
 
 struct mactab {
 	int	condition;
