@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.100 2012/11/25 00:36:23 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.101 2013/10/18 20:18:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.100 2012/11/25 00:36:23 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.101 2013/10/18 20:18:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -895,6 +895,7 @@ inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
 {
 	char addr[256], serv[256];
 	struct sockaddr_in6 sin6;
+	uint16_t ad2;
 	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
 
 	(void)memset(&sin6, 0, sizeof(sin6));
@@ -903,10 +904,9 @@ inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
 	sin6.sin6_addr = *a;
 	sin6.sin6_port = htons(p);
 
-	if (IN6_IS_ADDR_LINKLOCAL(a) &&
-	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-		sin6.sin6_scope_id =
-			ntohs(*(uint16_t *)&sin6.sin6_addr.s6_addr[2]);
+	memcpy(&ad2, &sin6.sin6_addr.s6_addr[2], sizeof(ad2));
+	if (IN6_IS_ADDR_LINKLOCAL(a) && ad2 != 0) {
+		sin6.sin6_scope_id = ntohs(ad2);
 		sin6.sin6_addr.s6_addr[2] = 0;
 		sin6.sin6_addr.s6_addr[3] = 0;
 	}
