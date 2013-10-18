@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.13 2013/07/29 16:40:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.14 2013/10/18 15:15:22 christos Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.13 2013/07/29 16:40:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.14 2013/10/18 15:15:22 christos Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -142,10 +142,8 @@ static int
 getq2h(struct ulfsmount *ump, int type,
     struct buf **bpp, struct quota2_header **q2hp, int flags)
 {
-#ifdef LFS_EI
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-#endif
 	int error;
 	struct buf *bp;
 	struct quota2_header *q2h;
@@ -199,10 +197,8 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
     uint64_t *offp, int flags, void *a,
     int (*func)(struct ulfsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
 {
-#ifdef LFS_EI
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-#endif
 	daddr_t off = ulfs_rw64(*offp, needswap);
 	struct buf *bp, *obp = hbp;
 	int ret = 0, ret2 = 0;
@@ -307,8 +303,6 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 	u_long hash_mask;
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-
-	(void)fs; /* temporary: needed when LFS_EI is off */
 
 	KASSERT(mutex_owned(&dq->dq_interlock));
 	KASSERT(mutex_owned(&lfs_dqlock));
@@ -459,8 +453,6 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int i;
 
-	(void)fs; /* temporary: needed when LFS_EI is off */
-
 	if ((error = getinoquota2(ip, change > 0, change != 0, bp, q2e)) != 0)
 		return error;
 	if (change == 0) {
@@ -596,8 +588,6 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 	struct buf *bp;
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-
-	(void)fs; /* temporary: needed when LFS_EI is off */
 
 	/* make sure we can index by the fs-independent idtype */
 	CTASSERT(QUOTA_IDTYPE_USER == ULFS_USRQUOTA);
@@ -804,8 +794,6 @@ quota2_fetch_q2e(struct ulfsmount *ump, const struct quotakey *qk,
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
 
-	(void)fs; /* temporary: needed when LFS_EI is off */
-
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
 		return error;
@@ -842,8 +830,6 @@ quota2_fetch_quotaval(struct ulfsmount *ump, const struct quotakey *qk,
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
-
-	(void)fs; /* temporary: needed when LFS_EI is off */
 
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
@@ -883,8 +869,6 @@ lfsquota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
-
-	(void)fs; /* temporary: needed when LFS_EI is off */
 
 	/*
 	 * Make sure the FS-independent codes match the internal ones,
@@ -1145,8 +1129,6 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
 	struct q2cursor_getids gi;
 	uint64_t offset;
 	int error;
-
-	(void)fs; /* temporary: needed when LFS_EI is off */
 
 	/*
 	 * Read the header block.
