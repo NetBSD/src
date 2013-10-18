@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/06/06 21:42:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2013/10/18 01:12:00 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -80,7 +80,7 @@ PKGDIST=	${LIB}
 COPTS.XExtInt.c+=	-Wno-error	# XXX
 COPTS.XSndExEv.c+=	-Wno-error	# XXX
 
-.if ${HAVE_GCC} < 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} < 45
 COPTS.XGetFCtl.c+=	-Wno-error	# XXX
 .endif
 
