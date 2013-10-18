@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.145 2013/10/12 16:49:01 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.146 2013/10/18 19:54:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.145 2013/10/12 16:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.146 2013/10/18 19:54:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -507,13 +507,13 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	struct usb_event *ue;
 #ifdef COMPAT_30
 	struct usb_event_old *ueo = NULL;	/* XXXGCC */
+	int useold = 0;
 #endif
-	int error, n, useold;
+	int error, n;
 
 	if (minor(dev) != USB_DEV_MINOR)
 		return (ENXIO);
 
-	useold = 0;
 	switch (uio->uio_resid) {
 #ifdef COMPAT_30
 	case sizeof(struct usb_event_old):
