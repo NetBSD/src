@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.30 2013/05/29 00:47:48 christos Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.31 2013/10/18 19:56:30 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -487,7 +487,6 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	{
 		dm_table_entry_t *table_en;
 		dm_table_t *tbl;
-		int err;
 		
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -501,7 +500,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 */
 		SLIST_FOREACH(table_en, tbl, next)
 		{
-			err = table_en->target->sync(table_en);
+			(void)table_en->target->sync(table_en);
 		}
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 		dm_dev_unbusy(dmv);
@@ -529,8 +528,6 @@ dmstrategy(struct buf *bp)
 	dm_table_entry_t *table_en;
 	struct buf *nestbuf;
 
-	uint32_t dev_type;
-
 	uint64_t buf_start, buf_len, issued_len;
 	uint64_t table_start, table_end;
 	uint64_t start, end;
@@ -541,7 +538,6 @@ dmstrategy(struct buf *bp)
 	tbl = NULL; 
 
 	table_end = 0;
-	dev_type = 0;
 	issued_len = 0;
 
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(bp->b_dev))) == NULL) {
