@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.33 2013/09/29 14:03:37 christos Exp $
+# $NetBSD: shl.mi,v 1.34 2013/10/18 23:37:37 jmmv Exp $
 ./usr/libdata/debug/lib/libc.so.12.186.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -113,7 +113,8 @@
 ./usr/libdata/debug/usr/lib/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.2.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug	comp-kyua-debug	kyua,debug
+./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug	comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/liblutok.so.2.0.debug	comp-kyua-debug	kyua,debug
 ./usr/libdata/debug/usr/lib/liblwres.so.6.0.debug	comp-bind-debug	debug,obsolete
 ./usr/libdata/debug/usr/lib/liblwres.so.7.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
