@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.258 2013/10/17 21:01:08 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.259 2013/10/18 15:15:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.258 2013/10/17 21:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.259 2013/10/18 15:15:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -621,7 +621,6 @@ lfs_mknod(void *v)
 	if (vap->va_rdev != VNOVAL) {
 		struct ulfsmount *ump = ip->i_ump;
 		struct lfs *fs = ip->i_lfs;
-		(void)fs; /* temporary: needed when LFS_EI is off */
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
