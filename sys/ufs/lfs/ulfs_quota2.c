@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.14 2013/10/18 15:15:22 christos Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.15 2013/10/18 19:45:40 christos Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.14 2013/10/18 15:15:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.15 2013/10/18 19:45:40 christos Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -653,10 +653,8 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
     uint64_t off, void *v)
 {
 	struct dq2clear_callback *c = v;
-#ifdef LFS_EI
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-#endif
 	uint64_t myoff;
 
 	if (ulfs_rw32(q2e->q2e_uid, needswap) == c->id) {
@@ -1093,10 +1091,8 @@ q2cursor_getids_callback(struct ulfsmount *ump, uint64_t *offp,
 {
 	struct q2cursor_getids *gi = v;
 	id_t id;
-#ifdef LFS_EI
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-#endif
 
 	if (gi->skipped < gi->skip) {
 		gi->skipped++;
@@ -1506,10 +1502,8 @@ dq2get_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	struct dq2get_callback *c = v;
 	daddr_t lblkno;
 	int blkoff;
-#ifdef LFS_EI
 	struct lfs *fs = ump->um_lfs;
 	const int needswap = ULFS_MPNEEDSWAP(fs);
-#endif
 
 	if (ulfs_rw32(q2e->q2e_uid, needswap) == c->id) {
 		KASSERT(mutex_owned(&c->dq->dq_interlock));
