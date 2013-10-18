@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_display.c,v 1.3 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex_display.c,v 1.4 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -121,12 +121,10 @@ static void
 db(SCR *sp, CB *cbp, const char *np)
 {
 	CHAR_T *p;
-	GS *gp;
 	TEXT *tp;
 	size_t len;
 	const unsigned char *name = (const void *)np;
 
-	gp = sp->gp;
 	(void)ex_printf(sp, "********** %s%s\n",
 	    name == NULL ? KEY_NAME(sp, cbp->name) : name,
 	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : " (character mode)");

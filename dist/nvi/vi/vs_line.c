@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.6 2011/11/16 14:24:43 tnozaki Exp $ */
+/*	$NetBSD: vs_line.c,v 1.7 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -496,13 +496,11 @@ vs_number(SCR *sp)
 {
 	GS *gp;
 	SMAP *smp;
-	VI_PRIVATE *vip;
 	size_t len, oldy, oldx;
 	int exist;
 	char nbuf[10];
 
 	gp = sp->gp;
-	vip = VIP(sp);
 
 	/* No reason to do anything if we're in input mode on the info line. */
 	if (F_ISSET(sp, SC_TINPUT_INFO))
