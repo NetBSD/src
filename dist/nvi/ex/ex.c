@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.9 2011/11/23 19:25:28 tnozaki Exp $ */
+/*	$NetBSD: ex.c,v 1.10 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -52,7 +52,6 @@ static void	ex_unknown __P((SCR *, CHAR_T *, size_t));
 int
 ex(SCR **spp)
 {
-	EX_PRIVATE *exp;
 	GS *gp;
 	WIN *wp;
 	MSGS *mp;
@@ -63,7 +62,6 @@ ex(SCR **spp)
 	sp = *spp;
 	wp = sp->wp;
 	gp = sp->gp;
-	exp = EXP(sp);
 
 	/* Start the ex screen. */
 	if (ex_init(sp))
@@ -1628,8 +1626,6 @@ int
 ex_range(SCR *sp, EXCMD *ecp, int *errp)
 {
 	enum { ADDR_FOUND, ADDR_NEED, ADDR_NONE } addr;
-	GS *gp;
-	EX_PRIVATE *exp;
 	MARK m;
 	int isaddr;
 
@@ -1656,8 +1652,6 @@ ex_range(SCR *sp, EXCMD *ecp, int *errp)
 	 * addresses.  For consistency, we make it true for leading semicolon
 	 * addresses as well.
 	 */
-	gp = sp->gp;
-	exp = EXP(sp);
 	for (addr = ADDR_NONE, ecp->addrcnt = 0; ecp->clen > 0;)
 		switch (*ecp->cp) {
 		case '%':		/* Entire file. */
@@ -1827,16 +1821,11 @@ static int
 ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 {
 	enum nresult nret;
-	EX_PRIVATE *exp;
-	GS *gp;
 	long total, val;
 	unsigned long uval;
 	int isneg;
 	int (*sf) __P((SCR *, MARK *, MARK *, CHAR_T *, size_t, CHAR_T **, u_int));
 	CHAR_T *endp;
-
-	gp = sp->gp;
-	exp = EXP(sp);
 
 	*isaddrp = *errp = 0;
 	F_CLR(ecp, E_DELTA);

@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.7 2011/11/19 17:45:11 tnozaki Exp $ */
+/*	$NetBSD: engine.c,v 1.8 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -380,6 +380,7 @@ sopno stopst;
 			/* did innards match? */
 			if (slow(m, sp, rest, ssub, esub) != NULL) {
 				dp = dissect(m, sp, rest, ssub, esub);
+				__USE(dp);
 				assert(dp == rest);
 			} else		/* no */
 				assert(sp == rest);

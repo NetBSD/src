@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_bang.c,v 1.3 2009/11/14 23:40:11 christos Exp $ */
+/*	$NetBSD: ex_bang.c,v 1.4 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -56,7 +56,6 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 	EX_PRIVATE *exp;
 	MARK rm;
 	db_recno_t lno;
-	int rval;
 	const char *msg;
 	const char *np;
 	size_t nlen;
@@ -156,7 +155,7 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 				ftype = FILTER_RBANG;
 			}
 		}
-		rval = ex_filter(sp, cmdp,
+		(void)ex_filter(sp, cmdp,
 		    &cmdp->addr1, &cmdp->addr2, &rm, ap->bp, ftype);
 
 		/*

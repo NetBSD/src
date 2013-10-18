@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.5 2011/11/23 19:18:53 tnozaki Exp $ */
+/*	$NetBSD: ex_script.c,v 1.6 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -415,13 +415,11 @@ loop:	memcpy(&rdfd, fdset, sizeof(fd_set));
 int
 sscr_input(SCR *sp)
 {
-	GS *gp;
 	WIN *wp;
 	struct timeval poll;
 	fd_set rdfd;
 	int maxfd;
 
-	gp = sp->gp;
 	wp = sp->wp;
 
 loop:	maxfd = 0;
