@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldpd.conf.5,v 1.1 2013/10/18 10:49:19 kefren Exp $
+.\"	$NetBSD: ldpd.conf.5,v 1.2 2013/10/18 12:29:52 wiz Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ will try to tag also the default route (default: 1)
 Interface block supports the following parameters
 .Bl -tag -width "transport-address"
 .It Li passive
-Doesn't send hellos on interface
+Don't send hellos on interface
 .It Li transport-address
 Transport INET4 address advertised in hellos sent on the mentioned interface
 .El
@@ -87,7 +87,7 @@ Transport INET4 address advertised in hellos sent on the mentioned interface
 Neighbour block supports the following parameters
 .Bl -tag -width "authenticate"
 .It Li authenticate
-Authenticates peer using TCP MD5 signature - needs options TCP_SIGNATURE.
+Authenticate peer using TCP MD5 signature - needs options TCP_SIGNATURE.
 Default: off
 .El
 .Sh EXAMPLES
@@ -118,8 +118,8 @@ neighbour 192.168.2.1 {
 }
 .Ed
 .Sh SEE ALSO
-.Xr ldpd 8 ,
 .Xr mpls 4 ,
+.Xr ldpd 8
 .Sh HISTORY
 Support for
 .Nm
