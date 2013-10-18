@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2013/09/12 17:14:20 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2013/10/18 23:36:10 jmmv Exp $
 
 #NOLINT=		# defined
 
@@ -48,7 +48,7 @@ lutok.pc: Makefile lutok.pc.in
 	    -e 's,__LIBDIR__,/usr/lib,g' \
 	    -e 's,__LUA_CFLAGS__,-I/usr/include,g' \
 	    -e 's,__LUA_LIBS,-llua,g' \
-	    -e 's,__VERSION__,0.2,g' \
+	    -e 's,__VERSION__,0.3,g' \
 	    <${SRCDIR}/lutok.pc.in >lutok.pc
 CLEANFILES+=	lutok.pc
 .endif
