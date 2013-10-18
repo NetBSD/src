@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.1 2013/09/14 00:40:31 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.2 2013/10/18 08:25:49 apb Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.1 2013/09/14 00:40:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.2 2013/10/18 08:25:49 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2207,7 +2207,7 @@ xhci_root_ctrl_start(usbd_xfer_handle xfer)
 		hubd.bNbrPorts = sc->sc_hs_port_count;
 		USETW(hubd.wHubCharacteristics, UHD_PWR_NO_SWITCH);
 		hubd.bPwrOn2PwrGood = 200;
-		for (i = 0, l = sc->sc_maxports; l > 0; i++, l -= 8, v >>= 8)
+		for (i = 0, l = sc->sc_maxports; l > 0; i++, l -= 8)
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
 		l = min(len, hubd.bDescLength);
 		totlen = l;
