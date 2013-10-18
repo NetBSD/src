@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1438 2013/10/15 19:20:19 jdc Exp $
+# $NetBSD: mi,v 1.1439 2013/10/18 10:49:19 kefren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2037,6 +2037,7 @@
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/ldap_table.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/ldpd.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/link.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lkm.conf.0			man-obsolete		obsolete
 ./usr/share/man/cat5/locale.alias.0		man-sys-catman		.cat
@@ -4929,6 +4930,7 @@
 ./usr/share/man/html5/lastlogx.html		man-sys-htmlman		html
 ./usr/share/man/html5/ld.so.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/ldap_table.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html5/ldpd.conf.html		man-router-htmlman	html
 ./usr/share/man/html5/link.html			man-sys-htmlman		html
 ./usr/share/man/html5/lkm.conf.html		man-obsolete		obsolete
 ./usr/share/man/html5/locale.alias.html		man-sys-htmlman		html
@@ -7767,6 +7769,7 @@
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
 ./usr/share/man/man5/ldap_table.5		man-postfix-man		postfix,.man
+./usr/share/man/man5/ldpd.conf.5		man-router-man		.man
 ./usr/share/man/man5/link.5			man-sys-man		.man
 ./usr/share/man/man5/lkm.conf.5			man-obsolete		obsolete
 ./usr/share/man/man5/locale.alias.5		man-sys-man		.man

@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.4 2012/11/12 18:39:00 kefren Exp $
+# $NetBSD: Makefile,v 1.5 2013/10/18 10:49:19 kefren Exp $
 
 .include <bsd.own.mk>
 
 PROG=   ldpd
-MAN=    ldpd.8
+MAN=    ldpd.8 ldpd.conf.5
 
 SRCS=   conffile.c \
 	fsm.c \
