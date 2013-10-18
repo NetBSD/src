@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.2 2013/10/18 08:25:49 apb Exp $	*/
+/*	$NetBSD: xhci.c,v 1.3 2013/10/18 08:35:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.2 2013/10/18 08:25:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.3 2013/10/18 08:35:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1488,7 +1488,8 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		if (err)
 			return err;
 		USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
-		device_printf(sc->sc_dev, "%s bMaxPacketSize %u\n", __func__, dd->bMaxPacketSize);
+		device_printf(sc->sc_dev, "%s bMaxPacketSize %u\n", __func__,
+		    dd->bMaxPacketSize);
 		xhci_update_ep0_mps(sc, xs, dd->bMaxPacketSize);
 		err = usbd_reload_device_desc(dev);
 		if (err)
@@ -2208,7 +2209,8 @@ xhci_root_ctrl_start(usbd_xfer_handle xfer)
 		USETW(hubd.wHubCharacteristics, UHD_PWR_NO_SWITCH);
 		hubd.bPwrOn2PwrGood = 200;
 		for (i = 0, l = sc->sc_maxports; l > 0; i++, l -= 8)
-			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
+			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
+		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
 		l = min(len, hubd.bDescLength);
 		totlen = l;
 		memcpy(buf, &hubd, l);
