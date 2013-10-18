@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.52 2013/04/19 18:51:14 christos Exp $ */
+/* $NetBSD: scan.l,v 1.53 2013/10/18 20:46:09 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.52 2013/04/19 18:51:14 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.53 2013/10/18 20:46:09 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -318,7 +318,8 @@ initscan(void)
 		h = hash(sym->s_name);
 		if ((sym->s_link = symtab[h]) != NULL)
 			symtab[h]->s_rlink = &sym->s_link;
-		(symtab[h] = sym)->s_rlink = &symtab[h];
+		sym->s_rlink = &symtab[h];
+		symtab[h] = sym;
 	}
 
 	/* initialize bit-masks for quads */
@@ -1391,7 +1392,8 @@ getsym(sbuf_t *sb)
 
 	if ((sym->s_link = symtab[sb->sb_hash]) != NULL)
 		symtab[sb->sb_hash]->s_rlink = &sym->s_link;
-	(symtab[sb->sb_hash] = sym)->s_rlink = &symtab[sb->sb_hash];
+	sym->s_rlink = &symtab[sb->sb_hash];
+	symtab[sb->sb_hash] = sym;
 
 	*di->d_ldlsym = sym;
 	di->d_ldlsym = &sym->s_dlnxt;
@@ -1425,7 +1427,8 @@ mktempsym(type_t *t)
 
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
-	(symtab[h] = sym)->s_rlink = &symtab[h];
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
 
 	*dcs->d_ldlsym = sym;
 	dcs->d_ldlsym = &sym->s_dlnxt;
@@ -1478,7 +1481,8 @@ inssym(int bl, sym_t *sym)
 	h = hash(sym->s_name);
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
-	(symtab[h] = sym)->s_rlink = &symtab[h];
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
 	sym->s_blklev = bl;
 	if (sym->s_link != NULL && sym->s_blklev < sym->s_link->s_blklev)
 		LERROR("inssym()");
@@ -1530,7 +1534,8 @@ pushdown(sym_t *sym)
 
 	if ((nsym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &nsym->s_link;
-	(symtab[h] = nsym)->s_rlink = &symtab[h];
+	nsym->s_rlink = &symtab[h];
+	symtab[h] = nsym;
 
 	*dcs->d_ldlsym = nsym;
 	dcs->d_ldlsym = &nsym->s_dlnxt;
