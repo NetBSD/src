@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.28 2009/04/13 04:35:36 lukem Exp $	*/
+/*	$NetBSD: docmd.c,v 1.29 2013/10/18 20:41:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.28 2009/04/13 04:35:36 lukem Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.29 2013/10/18 20:41:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ docmds(char **dhosts, int argc, char **argv)
  * Process commands for sending files to other machines.
  */
 static void
-doarrow(char **filev, struct namelist *files, char *rhost, struct subcmd *cmds)
+doarrow(char **filev, struct namelist *xfiles, char *rhost, struct subcmd *cmds)
 {
 	struct namelist *f;
 	struct subcmd *sc;
@@ -131,6 +131,7 @@ doarrow(char **filev, struct namelist *files, char *rhost, struct subcmd *cmds)
 	int n;
 	int volatile ddir;
 	int volatile opts;
+	struct namelist * volatile files = xfiles;
 
 	opts = options;
 	if (debug)
