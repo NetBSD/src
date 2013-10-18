@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.198 2013/09/29 14:03:37 christos Exp $
+# $NetBSD: md.sparc64,v 1.199 2013/10/18 23:37:37 jmmv Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -183,8 +183,10 @@
 ./usr/lib/sparc/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblutok.so			base-compat-shlib	compat,pic,kyua
-./usr/lib/sparc/liblutok.so.1			base-compat-shlib	compat,pic,kyua
-./usr/lib/sparc/liblutok.so.1.0			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.2			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
+./usr/lib/sparc/liblutok.so.1			base-obsolete		obsolete
+./usr/lib/sparc/liblutok.so.1.0			base-obsolete		obsolete
 ./usr/lib/sparc/liblwres.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblwres.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.1			base-compat-shlib	compat,pic
