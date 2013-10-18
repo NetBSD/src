@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.113 2013/10/18 19:55:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.113 2013/10/18 19:55:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -641,13 +641,9 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int idtype;
-	const char *qfile;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_QUOTAON);
-	idtype = args->u.quotaon.qc_idtype;
-	qfile = args->u.quotaon.qc_quotafile;
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EBUSY;
@@ -658,6 +654,8 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef QUOTA
+	int idtype = args->u.quotaon.qc_idtype;
+	const char *qfile = args->u.quotaon.qc_quotafile;
 	error = quota1_handle_cmd_quotaon(l, ump, idtype, qfile);
 #else
 	error = EOPNOTSUPP;
@@ -671,11 +669,9 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int idtype;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_QUOTAOFF);
-	idtype = args->u.quotaoff.qc_idtype;
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
@@ -686,6 +682,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 		return error;
 	}
 #ifdef QUOTA
+	int idtype = args->u.quotaoff.qc_idtype;
 	error = quota1_handle_cmd_quotaoff(l, ump, idtype);
 #else
 	error = EOPNOTSUPP;
