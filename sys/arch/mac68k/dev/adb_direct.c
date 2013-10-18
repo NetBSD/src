@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.63 2008/04/04 09:16:59 yamt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.64 2013/10/18 18:38:49 martin Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.63 2008/04/04 09:16:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.64 2013/10/18 18:38:49 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -1238,7 +1238,7 @@ void
 adb_intr_IIsi(void *arg)
 {
 	struct adbCommand packet;
-	int i, ending;
+	int ending;
 	unsigned int s;
 
 	s = splhigh();		/* can't be too careful - might be called */
@@ -1351,7 +1351,7 @@ switch_start:
 		break;
 
 	case ADB_ACTION_OUT:
-		i = ADB_SR();	/* reset SR-intr in IFR */
+		(void)ADB_SR();	/* reset SR-intr in IFR */
 		ADB_SET_SR_OUTPUT();	/* set shift register for OUT */
 
 		ADB_SET_STATE_ACKOFF();	/* finish ACK */
@@ -2040,7 +2040,6 @@ void
 adb_hw_setup_IIsi(u_char *buffer)
 {
 	int i;
-	int dummy;
 	int s;
 	long my_time;
 	int endofframe;
@@ -2066,7 +2065,7 @@ adb_hw_setup_IIsi(u_char *buffer)
 			 */
 			my_time = ADB_DELAY * 5;
 			while ((ADB_SR_INTR_IS_OFF) && (my_time-- > 0))
-				dummy = via_reg(VIA1, vBufB);
+				(void)via_reg(VIA1, vBufB);
 
 			buffer[i++] = ADB_SR();	/* reset interrupt flag by
 						 * reading vSR */
