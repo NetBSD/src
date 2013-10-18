@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.7 2013/10/17 18:10:23 kefren Exp $ */
+/* $NetBSD: conffile.c,v 1.8 2013/10/18 14:14:14 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
+#include <sys/mman.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -44,13 +44,15 @@
 #define NextCommand(x) strsep(&x, " ")
 #define LINEMAXSIZE 1024
 
+char *mapped, *nextline;
+size_t mapsize;
+
 extern int ldp_hello_time, ldp_keepalive_time, ldp_holddown_time, command_port,
 	min_label, max_label, no_default_route, loop_detection;
-int confh;
 struct in_addr conf_ldp_id;
 
 static int conf_dispatch(char*);
-static int conf_readline(char*, size_t);
+static char * conf_getlinelimit(void);
 static int checkeol(char*);
 static int Fhellotime(char*);
 static int Fport(char*);
@@ -108,52 +110,59 @@ static int parseline;
 int
 conf_parsefile(const char *fname)
 {
-	char buf[LINEMAXSIZE + 1];
+	char line[LINEMAXSIZE+1];
+	struct stat fs;
 
 	SLIST_INIT(&conei_head);
 	SLIST_INIT(&coifs_head);
 	conf_ldp_id.s_addr = 0;
 
-	confh = open(fname, O_RDONLY, 0);
+	int confh = open(fname, O_RDONLY, 0);
 
-	if (confh == -1)
+	if (confh == -1 || fstat(confh, &fs) == -1 ||
+	    (mapped = mmap(NULL, fs.st_size, PROT_READ, MAP_SHARED, confh, 0))
+	    == MAP_FAILED)
 		return E_CONF_IO;
 
-	for (parseline = 1; conf_readline(buf, sizeof(buf)) >= 0; parseline++)
-		if (conf_dispatch(buf) != 0) {
-			close(confh);
-			return parseline;
-		}
-
+	mapsize = fs.st_size;
+	nextline = mapped;
+	for (parseline = 1; ; parseline++) {
+		char *prev = nextline;
+		if ((nextline = conf_getlinelimit()) == NULL)
+			break;
+		while (isspace((int)*prev) != 0 && prev < nextline)
+			prev++;
+		if (nextline - prev < 2)
+			continue;
+		else if (nextline - prev > LINEMAXSIZE)
+			goto parerr;
+		memcpy(line, prev, nextline - prev);
+		if (line[0] == '#')
+			continue;
+		else
+			line[nextline - prev] = '\0';
+		if (conf_dispatch(line) != 0)
+			goto parerr;
+	}
+	munmap(mapped, mapsize);
 	close(confh);
 	return 0;
+parerr:
+	munmap(mapped, mapsize);
+	close(confh);
+	return parseline;
 }
 
-/*
- * Reads a line from config file
- */
-int
-conf_readline(char *buf, size_t bufsize)
+char *
+conf_getlinelimit(void)
 {
-	size_t i;
+	char *p = nextline;
 
-	for (i = 0; i < bufsize; i++) {
-		if (read(confh, &buf[i], 1) != 1) {
-			if (i == 0)
-				return E_CONF_IO;
-			break;
-		}
-		if (buf[i] == '\n')
-			break;
-		if (i == 0 && isspace((unsigned char)buf[i]) != 0) {
-			i--;
-			continue;
-		}
-	}
-	if (i == bufsize)
-		return E_CONF_MEM;
-	buf[i] = '\0';
-	return i;
+	if (nextline < mapped || (size_t)(nextline - mapped) >= mapsize)
+		return NULL;
+
+	for (p = nextline; *p != '\n' && (size_t)(p - mapped) < mapsize; p++);
+	return p + 1;
 }
 
 /*
@@ -179,7 +188,7 @@ conf_dispatch(char *line)
 	else if (matched > 1)
 		return E_CONF_AMBIGUOUS;
 
-	if (checkeol(nline) != 0)
+	if (nline == NULL || checkeol(nline) != 0)
 		return E_CONF_PARAM;
 	return main_commands[last_match].func(nline);
 }
@@ -193,6 +202,10 @@ int
 checkeol(char *line)
 {
 	size_t len = strlen(line);
+	if (len > 0 && line[len - 1] == '\n') {
+		line[len - 1] = '\0';
+		len--;
+	}
 	if (len > 0 && line[len - 1] == ';') {
 		line[len - 1] = '\0';
 		return 0;
@@ -289,7 +302,7 @@ Fneighbour(char *line)
 	char *peer;
 	struct conf_neighbour *nei;
 	struct in_addr ad;
-	char buf[1024];
+	char buf[LINEMAXSIZE];
 
 	peer = NextCommand(line);
 	if (inet_pton(AF_INET, peer, &ad) != 1)
@@ -301,10 +314,21 @@ Fneighbour(char *line)
 	nei->address.s_addr = ad.s_addr;
 	SLIST_INSERT_HEAD(&conei_head, nei, neilist);
 
-	while (conf_readline(buf, sizeof(buf)) >= 0) {
+	for ( ; ; ) {
+		char *prev = nextline;
 		parseline++;
-		if (buf[0] == '}')
-			return 0;
+		nextline = conf_getlinelimit();
+		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
+			return -1;
+		while (isspace((int)*prev) != 0 && prev < nextline)
+			prev++;
+		memcpy(buf, prev, nextline - prev);
+		if (nextline - prev < 2 || buf[0] == '#')
+			continue;
+		else if (buf[0] == '}')
+			break;
+		else
+			buf[nextline - prev] = '\0';
 		if (Gneighbour(nei, buf) == -1)
 			return -1;
 	}
@@ -352,7 +376,7 @@ Finterface(char *line)
 {
 	char *ifname;
 	struct conf_interface *conf_if = calloc(1, sizeof(*conf_if));
-	char buf[1024];
+	char buf[LINEMAXSIZE];
 
 	ifname = NextCommand(line);
 	if (conf_if == NULL || ifname == NULL)
@@ -360,14 +384,25 @@ Finterface(char *line)
 	strlcpy(conf_if->if_name, ifname, IF_NAMESIZE);
 	SLIST_INSERT_HEAD(&coifs_head, conf_if, iflist);
 
-	while (conf_readline(buf, sizeof(buf)) >= 0) {
+	for ( ; ; ) {
+		char *prev = nextline;
 		parseline++;
-		if (buf[0] == '}')
-			return 0;
+		nextline = conf_getlinelimit();
+		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
+			return -1;
+		while (isspace((int)*prev) != 0 && prev < nextline)
+			prev++;
+		memcpy(buf, prev, nextline - prev);
+		if (nextline - prev < 2 || buf[0] == '#')
+			continue;
+		else if (buf[0] == '}')
+			break;
+		else
+			buf[nextline - prev] = '\0';
 		if (Ginterface(conf_if, buf) == -1)
 			return -1;
 	}
-	return -1;
+	return 0;
 }
 
 int
