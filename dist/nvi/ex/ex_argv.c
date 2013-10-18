@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_argv.c,v 1.4 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex_argv.c,v 1.5 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -89,14 +89,12 @@ argv_exp0(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen)
 int
 argv_exp1(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen, int is_bang)
 {
-	EX_PRIVATE *exp;
 	size_t blen, len;
 	CHAR_T *p, *t, *bp;
 
 	GET_SPACE_RETW(sp, bp, blen, 512);
 
 	len = 0;
-	exp = EXP(sp);
 	if (argv_fexp(sp, excp, cmd, cmdlen, bp, &len, &bp, &blen, is_bang)) {
 		FREE_SPACEW(sp, bp, blen);
 		return (1);

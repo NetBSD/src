@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.5 2012/07/15 09:13:59 spz Exp $ */
+/*	$NetBSD: exf.c,v 1.6 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -131,10 +131,10 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	EXF *ep;
 	struct stat sb;
 	size_t psize;
-	int fd, exists, open_err, readonly, stolen;
+	int fd, exists, open_err, readonly;
 	char *oname = NULL, tname[MAXPATHLEN];
 
-	stolen = open_err = readonly = 0;
+	open_err = readonly = 0;
 
 	/*
 	 * If the file is a recovery file, let the recovery code handle it.

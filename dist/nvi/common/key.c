@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.6 2011/03/21 14:53:02 tnozaki Exp $ */
+/*	$NetBSD: key.c,v 1.7 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -345,12 +345,10 @@ v_event_push(SCR *sp, EVENT *p_evp, const CHAR_T *p_s, size_t nitems, u_int flag
 	            			/* CH_* flags. */
 {
 	EVENT *evp;
-	GS *gp;
 	WIN *wp;
 	size_t total;
 
 	/* If we have room, stuff the items into the buffer. */
-	gp = sp->gp;
 	wp = sp->wp;
 	if (nitems <= wp->i_next ||
 	    (wp->i_event != NULL && wp->i_cnt == 0 && nitems <= wp->i_nelem)) {

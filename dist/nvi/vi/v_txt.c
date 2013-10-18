@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.8 2011/11/23 19:25:28 tnozaki Exp $ */
+/*	$NetBSD: v_txt.c,v 1.9 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1473,7 +1473,6 @@ alloc_err:
 static int
 txt_abbrev(SCR *sp, TEXT *tp, ARG_CHAR_T *pushcp, int isinfoline, int *didsubp, int *turnoffp)
 {
-	VI_PRIVATE *vip;
 	CHAR_T ch, *p;
 	SEQ *qp;
 	size_t len, off;
@@ -1482,8 +1481,6 @@ txt_abbrev(SCR *sp, TEXT *tp, ARG_CHAR_T *pushcp, int isinfoline, int *didsubp, 
 	*didsubp = 0;
 	if (tp->cno == tp->offset)
 		return (0);
-
-	vip = VIP(sp);
 
 	/*
 	 * Find the start of the "word".
@@ -1823,7 +1820,6 @@ v_txt_auto(SCR *sp, db_recno_t lno, TEXT *aitp, size_t len, TEXT *tp)
 static TEXT *
 txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 {
-	VI_PRIVATE *vip;
 	TEXT *ntp;
 
 	/* Get a handle on the previous TEXT structure. */
@@ -1838,7 +1834,6 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 	ntp->len = ntp->sv_len;
 
 	/* Handle appending to the line. */
-	vip = VIP(sp);
 	if (ntp->owrite == 0 && ntp->insert == 0) {
 		ntp->lb[ntp->len] = CH_CURSOR;
 		++ntp->insert;
@@ -2661,7 +2656,6 @@ txt_isrch(SCR *sp, VICMD *vp, TEXT *tp, u_int8_t *is_flagsp)
 static int
 txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 {
-	VI_PRIVATE *vip;
 	TEXT *tp;
 	db_recno_t lno;
 	int changed;
@@ -2673,7 +2667,6 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 	 * change, we have to redisplay it, otherwise the information cached
 	 * about the line will be wrong.
 	 */
-	vip = VIP(sp);
 	tp = tiqh->cqh_first;
 
 	if (LF_ISSET(TXT_AUTOINDENT))
@@ -2715,12 +2708,9 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 static int
 txt_showmatch(SCR *sp, TEXT *tp)
 {
-	GS *gp;
 	VCS cs;
 	MARK m;
 	int cnt, endc, startc;
-
-	gp = sp->gp;
 
 	/*
 	 * Do a refresh first, in case we haven't done one in awhile,
@@ -2782,14 +2772,12 @@ txt_showmatch(SCR *sp, TEXT *tp)
 static int
 txt_margin(SCR *sp, TEXT *tp, TEXT *wmtp, int *didbreak, u_int32_t flags)
 {
-	VI_PRIVATE *vip;
 	size_t len, off;
-	CHAR_T *p, *wp;
+	CHAR_T *p;
 
 	/* Find the nearest previous blank. */
 	for (off = tp->cno - 1, p = tp->lb + off, len = 0;; --off, --p, ++len) {
 		if (ISBLANK((UCHAR_T)*p)) {
-			wp = p + 1;
 			break;
 		}
 
@@ -2818,7 +2806,6 @@ txt_margin(SCR *sp, TEXT *tp, TEXT *wmtp, int *didbreak, u_int32_t flags)
 	 * line -- it's going to be used to set the cursor value when we
 	 * move to the new line.
 	 */
-	vip = VIP(sp);
 	wmtp->lb = p + 1;
 	wmtp->offset = len;
 	wmtp->insert = LF_ISSET(TXT_APPENDEOL) ?  tp->insert - 1 : tp->insert;

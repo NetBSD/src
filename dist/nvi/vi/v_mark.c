@@ -1,4 +1,4 @@
-/*	$NetBSD: v_mark.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: v_mark.c,v 1.3 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -106,7 +106,6 @@ v_emark(SCR *sp, VICMD *vp)
 static int
 mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 {
-	dir_t dir;
 	MARK m;
 	size_t len;
 
@@ -171,9 +170,7 @@ mark(SCR *sp, VICMD *vp, int getmark, enum which cmd)
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-		dir = BACKWARD;
 	} else
-		dir = FORWARD;
 
 	/*
 	 * Yank cursor motion, when associated with marks as motion commands,

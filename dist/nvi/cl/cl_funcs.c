@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.4 2009/11/15 18:43:28 dsl Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.5 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,12 +37,10 @@ static void cl_rdiv __P((SCR *));
 static int 
 addstr4(SCR *sp, const void *str, size_t len, int wide)
 {
-	CL_PRIVATE *clp;
 	WINDOW *win;
 	size_t y, x;
 	int iv;
 
-	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
 	/*
@@ -51,6 +49,7 @@ addstr4(SCR *sp, const void *str, size_t len, int wide)
 	 */
 	iv = 0;
 	getyx(win, y, x);
+	__USE(x);
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) &&
 	    y == RLNO(sp, LASTLINE(sp)) && IS_SPLIT(sp)) {
 		iv = 1;
@@ -312,11 +311,9 @@ int
 cl_deleteln(SCR *sp)
 {
 	CHAR_T ch;
-	CL_PRIVATE *clp;
 	WINDOW *win;
 	size_t col, lno, spcnt, y, x;
 
-	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
 	/*
@@ -548,13 +545,11 @@ cl_move(SCR *sp, size_t lno, size_t cno)
 int
 cl_refresh(SCR *sp, int repaint)
 {
-	GS *gp;
 	CL_PRIVATE *clp;
 	WINDOW *win;
 	SCR *psp, *tsp;
 	size_t y, x;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
@@ -741,11 +736,9 @@ cl_suspend(SCR *sp, int *allowedp)
 	struct termios t;
 	CL_PRIVATE *clp;
 	WINDOW *win;
-	GS *gp;
 	size_t y, x;
 	int changed;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 	*allowedp = 1;

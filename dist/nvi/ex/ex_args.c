@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_args.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: ex_args.c,v 1.4 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -265,7 +265,6 @@ ex_rew(SCR *sp, EXCMD *cmdp)
 int
 ex_args(SCR *sp, EXCMD *cmdp)
 {
-	GS *gp;
 	int cnt, sep;
 	size_t col, len;
 	char **ap;
@@ -275,7 +274,6 @@ ex_args(SCR *sp, EXCMD *cmdp)
 		return (0);
 	}
 
-	gp = sp->gp;
 	col = len = sep = 0;
 	for (cnt = 1, ap = sp->argv; *ap != NULL; ++ap) {
 		col += len = strlen(*ap) + sep + (ap == sp->cargv ? 2 : 0);

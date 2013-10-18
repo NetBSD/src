@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.11 2012/02/25 00:13:00 joerg Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.12 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1069,7 +1069,6 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 {
 	TAGQ *tqp;
 	size_t len, nlen, slen, wlen;
-	int echk;
 	TAG *tp;
 	const char *np;
 	char *name, *file, *search;
@@ -1100,7 +1099,6 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 				while (fgetc(fp) != '\n')
 					;
 			if (getentry(buf, &name, &file, &search) == 0) {
-				echk = 1;
 				break;
 			}
 			slen = strlen(search);
@@ -1345,7 +1343,6 @@ static void
 ctag_file(SCR *sp, TAGF *tfp, char *name, char **dirp, size_t *dlenp)
 {
 	struct stat sb;
-	size_t len;
 	char *p, buf[MAXPATHLEN];
 
 	/*
@@ -1360,7 +1357,7 @@ ctag_file(SCR *sp, TAGF *tfp, char *name, char **dirp, size_t *dlenp)
 	if (name[0] != '/' &&
 	    stat(name, &sb) && (p = strrchr(tfp->name, '/')) != NULL) {
 		*p = '\0';
-		len = snprintf(buf, sizeof(buf), "%s/%s", tfp->name, name);
+		(void)snprintf(buf, sizeof(buf), "%s/%s", tfp->name, name);
 		if (stat(buf, &sb) == 0) {
 			*dirp = tfp->name;
 			*dlenp = strlen(*dirp);

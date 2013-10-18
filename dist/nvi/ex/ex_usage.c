@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.6 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex_usage.c,v 1.7 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -146,11 +146,9 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 int
 ex_viusage(SCR *sp, EXCMD *cmdp)
 {
-	GS *gp;
 	VIKEYS const *kp;
 	int key;
 
-	gp = sp->gp;
 	switch (cmdp->argc) {
 	case 1:
 		if (cmdp->argv[0]->len != 1) {

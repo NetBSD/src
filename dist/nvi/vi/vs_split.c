@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.3 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: vs_split.c,v 1.4 2013/10/18 20:40:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -298,10 +298,7 @@ vs_vsplit(SCR *sp, SCR *new)
 static void
 vs_insert(SCR *sp, WIN *wp)
 {
-	GS *gp;
 	SCR *tsp;
-
-	gp = sp->gp;
 
 	sp->wp = wp;
 
@@ -458,13 +455,11 @@ vs_discard(SCR *sp, SCR **spp)
 static int
 vs_join(SCR *sp, SCR **listp, jdir_t *jdirp)
 {
-	GS *gp;
 	WIN *wp;
 	SCR **lp, *tsp;
 	int first;
 	size_t tlen;
 
-	gp = sp->gp;
 	wp = sp->wp;
 
 	/* Check preceding vertical. */
