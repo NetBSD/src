@@ -1,4 +1,4 @@
-// Copyright 2011 Google Inc.
+// Copyright 2013 Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/// \file utils/sqlite/transaction.hpp
-/// A RAII model for SQLite transactions.
+/// \file utils/shard_ptr.hpp
+/// Compatibility header to import std::shared_ptr.
 
-#if !defined(UTILS_SQLITE_TRANSACTION_HPP)
-#define UTILS_SQLITE_TRANSACTION_HPP
+#if !defined(UTILS_SHARED_PTR_HPP)
+#define UTILS_SHARED_PTR_HPP
 
-#include "utils/shared_ptr.hpp"
+#include <ciso646>
 
-namespace utils {
-namespace sqlite {
+#if defined(_LIBCPP_VERSION) || __cplusplus >= 201103L
+#   include <memory>
+#else
+#   include <tr1/memory>
+namespace std {
+    using tr1::shared_ptr;
+}
+#endif
 
-
-class database;
-
-
-/// A RAII model for an SQLite 3 statement.
-///
-/// A transaction is automatically rolled back when it goes out of scope unless
-/// it has been explicitly committed.
-class transaction {
-    struct impl;
-
-    /// Pointer to the shared internal implementation.
-    std::shared_ptr< impl > _pimpl;
-
-    explicit transaction(database&);
-    friend class database;
-
-public:
-    ~transaction(void);
-
-    void commit(void);
-    void rollback(void);
-};
-
-
-}  // namespace sqlite
-}  // namespace utils
-
-#endif  // !defined(UTILS_SQLITE_TRANSACTION_HPP)
+#endif  // !defined(UTILS_SHARED_PTR_HPP)
