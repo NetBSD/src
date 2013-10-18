@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.85 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.86 2013/10/18 08:09:37 apb Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.85 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.86 2013/10/18 08:09:37 apb Exp $");
 
 #include "opt_inet.h"
 
@@ -131,7 +131,6 @@ struct mbuf *egget(struct eg_softc *, void *, int);
 void egstop(struct eg_softc *);
 
 static inline void egprintpcb(u_int8_t *);
-static inline void egprintstat(u_char);
 static int egoutPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 static int egreadPCBstat(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 static int egreadPCBready(bus_space_tag_t, bus_space_handle_t);
@@ -149,20 +148,6 @@ egprintpcb(u_int8_t *pcb)
 
 	for (i = 0; i < pcb[1] + 2; i++)
 		DPRINTF(("pcb[%2d] = %x\n", i, pcb[i]));
-}
-
-
-static inline void
-egprintstat(u_char b)
-{
-	DPRINTF(("%s %s %s %s %s %s %s\n",
-		 (b & EG_STAT_HCRE)?"HCRE":"",
-		 (b & EG_STAT_ACRF)?"ACRF":"",
-		 (b & EG_STAT_DIR )?"DIR ":"",
-		 (b & EG_STAT_DONE)?"DONE":"",
-		 (b & EG_STAT_ASF3)?"ASF3":"",
-		 (b & EG_STAT_ASF2)?"ASF2":"",
-		 (b & EG_STAT_ASF1)?"ASF1":""));
 }
 
 static int
