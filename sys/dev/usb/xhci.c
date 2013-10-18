@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.3 2013/10/18 08:35:24 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.4 2013/10/18 08:39:22 apb Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.3 2013/10/18 08:35:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.4 2013/10/18 08:39:22 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,12 +215,14 @@ xhci_read_4(const struct xhci_softc * const sc, bus_size_t offset)
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset);
 }
 
+#if 0 /* unused */
 static inline void
 xhci_write_4(const struct xhci_softc * const sc, bus_size_t offset,
     uint32_t value)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, offset, value);
 }
+#endif /* unused */
 
 static inline uint32_t
 xhci_cap_read_4(const struct xhci_softc * const sc, bus_size_t offset)
@@ -241,6 +243,7 @@ xhci_op_write_4(const struct xhci_softc * const sc, bus_size_t offset,
 	bus_space_write_4(sc->sc_iot, sc->sc_obh, offset, value);
 }
 
+#if 0 /* unused */
 static inline uint64_t
 xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
@@ -260,6 +263,7 @@ xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 
 	return value;
 }
+#endif /* unused */
 
 static inline void
 xhci_op_write_8(const struct xhci_softc * const sc, bus_size_t offset,
@@ -292,6 +296,7 @@ xhci_rt_write_4(const struct xhci_softc * const sc, bus_size_t offset,
 	bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset, value);
 }
 
+#if 0 /* unused */
 static inline uint64_t
 xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
@@ -311,6 +316,7 @@ xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 
 	return value;
 }
+#endif /* unused */
 
 static inline void
 xhci_rt_write_8(const struct xhci_softc * const sc, bus_size_t offset,
@@ -330,11 +336,13 @@ xhci_rt_write_8(const struct xhci_softc * const sc, bus_size_t offset,
 	}
 }
 
+#if 0 /* unused */
 static inline uint32_t
 xhci_db_read_4(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_dbh, offset);
 }
+#endif /* unused */
 
 static inline void
 xhci_db_write_4(const struct xhci_softc * const sc, bus_size_t offset,
@@ -399,12 +407,14 @@ xhci_slot_get_dcv(struct xhci_softc * const sc, struct xhci_slot * const xs,
 	return KERNADDR(&xs->xs_dc_dma, sc->sc_ctxsz * dci);
 }
 
+#if 0 /* unused */
 static inline bus_addr_t
 xhci_slot_get_dcp(struct xhci_softc * const sc, struct xhci_slot * const xs,
     const u_int dci)
 {
 	return DMAADDR(&xs->xs_dc_dma, sc->sc_ctxsz * dci);
 }
+#endif /* unused */
 
 static inline void *
 xhci_slot_get_icv(struct xhci_softc * const sc, struct xhci_slot * const xs,
