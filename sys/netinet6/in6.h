@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.74 2013/10/19 00:09:03 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.75 2013/10/19 15:44:29 christos Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -771,6 +771,9 @@ void	in6_sin_2_v4mapsin6(struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);
 void	in6_sin_2_v4mapsin6_in_sock(struct sockaddr **);
 
+#define INET6_IS_ADDR_LINKLOCAL		1
+#define INET6_IS_ADDR_MC_LINKLOCAL	2
+#define INET6_IS_ADDR_SITELOCAL		4
 void	inet6_getscopeid(struct sockaddr_in6 *, int);
 void	inet6_putscopeid(struct sockaddr_in6 *, int);
 
