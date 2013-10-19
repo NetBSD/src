@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: driver.c,v 1.22 2013/10/19 17:23:08 christos Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: driver.c,v 1.22 2013/10/19 17:23:08 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -88,7 +88,7 @@ main(int ac, char **av, char **ep)
 	PLAYER *pp;
 #ifdef INTERNET
 	u_short msg;
-	short port_num, reply;
+	short reply;
 	socklen_t namelen;
 	SOCKET test;
 #endif
@@ -143,7 +143,6 @@ again:
 #ifdef INTERNET
 		if (fdset[2].revents & POLLIN) {
 			namelen = DAEMON_SIZE;
-			port_num = htons(sock_port);
 			(void) recvfrom(Test_socket, &msg, sizeof msg,
 				0, (struct sockaddr *) &test, &namelen);
 			switch (ntohs(msg)) {
@@ -599,7 +598,6 @@ zap(PLAYER *pp, FLAG was_player, int i)
 	BULLET *bp;
 	PLAYER *np;
 	int x, y;
-	int savefd;
 
 	if (was_player) {
 		if (pp->p_undershot)
@@ -621,8 +619,6 @@ zap(PLAYER *pp, FLAG was_player, int i)
 	cgoto(pp, HEIGHT / 2 + 1, x);
 	outstr(pp, pp->p_death, len);
 	cgoto(pp, HEIGHT, 0);
-
-	savefd = pp->p_fd;
 
 #ifdef MONITOR
 	if (was_player) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.169 2013/05/09 15:47:34 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.170 2013/10/19 17:19:30 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.169 2013/05/09 15:47:34 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.170 2013/10/19 17:19:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1290,6 +1290,7 @@ dladdr(const void *addr, Dl_info *info)
 		info->dli_saddr = symbol_addr;
 		best_def = def;
 
+
 		/* Exact match? */
 		if (info->dli_saddr == addr)
 			break;
@@ -1299,6 +1300,8 @@ dladdr(const void *addr, Dl_info *info)
 	if (best_def != NULL && ELF_ST_TYPE(best_def->st_info) == STT_FUNC)
 		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj,
 		    best_def, 0);
+#else
+	__USE(best_def);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 	lookup_mutex_exit();
