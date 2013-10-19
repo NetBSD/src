@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.41 2013/09/04 10:16:16 skrll Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.42 2013/10/19 21:01:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.41 2013/09/04 10:16:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.42 2013/10/19 21:01:39 mrg Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -580,6 +580,10 @@ rw_downgrade(krwlock_t *rw)
 	RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
+#if !defined(DIAGNOSTIC)
+	__USE(curthread);
+#endif
+
 
 	membar_producer();
 	owner = rw->rw_owner;
