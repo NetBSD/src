@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.142 2013/10/19 00:39:39 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.143 2013/10/19 15:50:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.142 2013/10/19 00:39:39 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.143 2013/10/19 15:50:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -538,7 +538,8 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-		inet6_getscopeid(&sin6, 3);
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -695,7 +696,8 @@ netname(const struct sockaddr *sa, struct sockaddr *nm)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-		inet6_putscopeid(&sin6, 3);
+		inet6_putscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -1235,7 +1237,8 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
-		inet6_getscopeid(&su->sin6, 3);
+		inet6_getscopeid(&su->sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (slash)
 				return prefixlen(slash + 1, soup);
