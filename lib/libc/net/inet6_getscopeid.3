@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6_getscopeid.3,v 1.1 2013/10/19 19:56:56 christos Exp $
+.\"	$NetBSD: inet6_getscopeid.3,v 1.2 2013/10/19 23:34:48 wiz Exp $
 .\"-
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .Sh NAME
 .Nm inet6_getscopeid ,
-.Nm inet6_putscopeid 
+.Nm inet6_putscopeid
 .Nd IPv6 scope id encoding and decoding functions
 .\"
 .Sh SYNOPSIS
@@ -67,11 +67,12 @@ function stores the scope id found in
 .Ft sin6_scope_id
 into the 3rd and 4th byte of the address.
 It then clears the
-.Ft sin6_scope_id
+.Ft sin6_scope_id .
 .Pp
 The
 .Fa flags
-argument controls for which addresses this action is performed. It
+argument controls for which addresses this action is performed.
+It
 can be a combination of:
 .Bl -tag -width "INET6_IS_ADDR_MC_LINKLOCAL"
 .It Dv INET6_IS_ADDR_LINKLOCAL
@@ -80,4 +81,4 @@ can be a combination of:
 .El
 .Sh HISTORY
 These functions first appeared in
-.Nx 7 .
+.Nx 7.0 .
