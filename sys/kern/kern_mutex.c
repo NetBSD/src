@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.57 2013/09/22 14:59:07 joerg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.58 2013/10/19 21:01:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.57 2013/09/22 14:59:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.58 2013/10/19 21:01:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -711,6 +711,9 @@ mutex_vector_exit(kmutex_t *mtx)
 	MUTEX_DASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
 	MUTEX_UNLOCKED(mtx);
+#if !defined(LOCKDEBUG)
+	__USE(curthread);
+#endif
 
 #ifdef LOCKDEBUG
 	/*
