@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1040 2013/08/21 20:51:57 tron Exp $
+# $NetBSD: mi,v 1.1041 2013/10/19 22:35:02 mlelstv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5439,6 +5439,10 @@
 ./var/chroot/pflogd				base-sys-root
 ./var/chroot/pfspamd				base-obsolete		obsolete
 ./var/chroot/spamd				base-obsolete		obsolete
+./var/chroot/rtadvd				base-sys-root
+./var/chroot/rtadvd/etc				base-sys-root
+./var/chroot/rtadvd/var				base-sys-root
+./var/chroot/rtadvd/var/run			base-sys-root
 ./var/chroot/sshd				base-sys-root
 ./var/chroot/tcpdump				base-sys-root
 ./var/chroot/tcpdump/etc			base-obsolete		obsolete
