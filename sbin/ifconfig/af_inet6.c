@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.28 2013/10/19 00:35:30 christos Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.29 2013/10/19 15:50:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.28 2013/10/19 00:35:30 christos Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.29 2013/10/19 15:50:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -278,7 +278,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 
 	sin6 = &creq->ifr_addr;
 
-	inet6_getscopeid(sin6, 1);
+	inet6_getscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
 	scopeid = sin6->sin6_scope_id;
 	if (getnameinfo((const struct sockaddr *)sin6, sin6->sin6_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
@@ -298,7 +298,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			ifr6.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		}
 		sin6 = &ifr6.ifr_addr;
-		inet6_getscopeid(sin6, 1);
+		inet6_getscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
 		hbuf[0] = '\0';
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag))
@@ -406,8 +406,8 @@ in6_pre_aifaddr(prop_dictionary_t env, const struct afparam *param)
 	setia6vltime_impl(env, ifra);
 	setia6pltime_impl(env, ifra);
 	setia6flags_impl(env, ifra);
-	inet6_putscopeid(&ifra->ifra_addr, 1);
-	inet6_putscopeid(&ifra->ifra_dstaddr, 1);
+	inet6_putscopeid(&ifra->ifra_addr, INET6_IS_ADDR_LINKLOCAL);
+	inet6_putscopeid(&ifra->ifra_dstaddr, INET6_IS_ADDR_LINKLOCAL);
 
 	return 0;
 }
