@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.83 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.84 2013/10/19 13:15:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.83 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.84 2013/10/19 13:15:53 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1243,7 +1243,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
-		bool ok;
+		bool ok __unused;
 		/*
 		 * Get the physical address for this segment.
 		 */
