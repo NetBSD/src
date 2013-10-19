@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.64 2013/10/18 18:38:49 martin Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.65 2013/10/19 16:19:13 martin Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.64 2013/10/18 18:38:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.65 2013/10/19 16:19:13 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -1693,6 +1693,8 @@ adb_pass_up(struct adbCommand *in)
  	 * the caller sent us.
  	 */
 	if (in->unsol) {
+		if (in->ack_only) panic("invalid ack-only pkg");
+
 		adbInbound[adbInTail].compRout = (void *)block.dbServiceRtPtr;
 		adbInbound[adbInTail].compData = (void *)block.dbDataAreaAddr;
 		adbInbound[adbInTail].saveBuf = (void *)adbInbound[adbInTail].data;
