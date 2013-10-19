@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.19 2013/10/19 15:50:26 christos Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.20 2013/10/19 15:59:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.19 2013/10/19 15:50:26 christos Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.20 2013/10/19 15:59:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -126,7 +126,7 @@ settunnel(prop_dictionary_t env, prop_dictionary_t oenv)
 			errx(EXIT_FAILURE, "tunnel src/dst is multicast");
 		/* embed scopeid */
 		inet6_putscopeid(s6, INET6_IS_ADDR_LINKLOCAL);
-		inet6_getscopeid(d, INET6_IS_ADDR_LINKLOCAL);
+		inet6_putscopeid(d, INET6_IS_ADDR_LINKLOCAL);
 	}
 #endif /* INET6 */
 
