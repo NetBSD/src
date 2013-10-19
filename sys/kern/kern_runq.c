@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.39 2013/10/19 18:42:05 martin Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.40 2013/10/19 19:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.39 2013/10/19 18:42:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.40 2013/10/19 19:22:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,7 +211,7 @@ sched_enqueue(struct lwp *l, bool swtch)
 	TAILQ_HEAD(, lwp) *q_head;
 	const pri_t eprio = lwp_eprio(l);
 	struct cpu_info *ci;
-	int type __unused;
+	int type;
 
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
