@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.9 2013/10/19 08:13:21 jnemeth Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.10 2013/10/19 09:31:24 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,6 +57,10 @@ __RCSID("$NetBSD: migrate.c,v 1.9 2013/10/19 08:13:21 jnemeth Exp $");
 #ifndef LABELSECTOR
 #define	LABELSECTOR	1
 #endif
+
+/* FreeBSD filesystem types that don't match corresponding NetBSD types */
+#define	FREEBSD_FS_VINUM	14
+#define	FREEBSD_FS_ZFS		27
 
 static int force;
 static int slice;
@@ -120,14 +124,14 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 			    ent->ent_name, 36);
 			break;
 		}
-		case 14: {	/* Vinum */
+		case FREEBSD_FS_VINUM: {
 			static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
 			le_uuid_enc(ent->ent_type, &vinum);
 			utf8_to_utf16((const uint8_t *)"FreeBSD vinum partition",
 			    ent->ent_name, 36);
 			break;
 		}
-		case 27: {	/* ZFS */
+		case FREEBSD_FS_ZFS: {
 			static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
 			le_uuid_enc(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"FreeBSD ZFS partition",
