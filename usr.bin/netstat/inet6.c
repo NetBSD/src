@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.63 2013/10/18 20:26:45 christos Exp $	*/
+/*	$NetBSD: inet6.c,v 1.64 2013/10/19 00:28:38 christos Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.63 2013/10/18 20:26:45 christos Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.64 2013/10/19 00:28:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1420,17 +1420,7 @@ inet6name(const struct in6_addr *in6p)
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_addr = *in6p;
-#ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(in6p) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6p)) {
-			uint16_t scope;
-			memcpy(&scope, &sin6.sin6_addr.s6_addr[2],
-			    sizeof(scope));
-			sin6.sin6_scope_id = ntohs(scope);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_putscopeid(&sin6, 3);
 		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
 			strlcpy(hbuf, "?", sizeof(hbuf));
