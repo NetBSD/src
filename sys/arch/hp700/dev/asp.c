@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.22 2012/10/10 15:46:33 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.23 2013/10/19 13:49:11 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.22 2012/10/10 15:46:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.23 2013/10/19 13:49:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,6 @@ aspattach(device_t parent, device_t self, void *aux)
 	struct gsc_attach_args ga;
 	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
-	uint32_t irr;
 	int s;
 
 	sc->sc_dev = self;
@@ -245,7 +244,7 @@ aspattach(device_t parent, device_t self, void *aux)
 	viper_setintrwnd(1 << ca->ca_irq);
 
 	sc->sc_trs->asp_imr = ~0;
-	irr = sc->sc_trs->asp_irr;
+	(void)sc->sc_trs->asp_irr;
 	sc->sc_trs->asp_imr = 0;
 
 	/* Establish the interrupt register. */

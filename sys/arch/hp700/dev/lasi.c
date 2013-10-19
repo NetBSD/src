@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.23 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.24 2013/10/19 13:49:11 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.23 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.24 2013/10/19 13:49:11 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -149,7 +149,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 	struct gsc_attach_args ga;
 	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
-	int s, in;
+	int s;
 
 	sc->sc_dev = self;
 	/*
@@ -188,7 +188,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 	sc->sc_trs->lasi_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_trs->lasi_icr = 0;
 	sc->sc_trs->lasi_imr = ~0U;
-	in = sc->sc_trs->lasi_irr;
+	(void)sc->sc_trs->lasi_irr;
 	sc->sc_trs->lasi_imr = 0;
 
 	/* Establish the interrupt register. */
