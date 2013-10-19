@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.268 2013/10/19 18:39:30 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.269 2013/10/19 21:39:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.268 2013/10/19 18:39:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.269 2013/10/19 21:39:12 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -1324,7 +1324,7 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s;
-#ifdef DEBUG
+#if defined(DEBUG) || defined(INET6)
 	int old_link_state;
 #endif
 
@@ -1334,7 +1334,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(INET6)
 	old_link_state = ifp->if_link_state;
 #endif
 	ifp->if_link_state = link_state;
