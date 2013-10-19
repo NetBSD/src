@@ -1,4 +1,4 @@
-/*	$NetBSD: cnwctl.c,v 1.7 2008/05/02 19:59:19 xtraeme Exp $	*/
+/*	$NetBSD: cnwctl.c,v 1.8 2013/10/19 17:05:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
@@ -210,8 +210,10 @@ main(int argc, char **argv)
 		    cnws.data[0x58]);
 		printf("      0x%02x mhs\n",
 		    cnws.data[0x6b]);
-		printf(" %04x %04x revision\n",
-		    *(u_short *)&cnws.data[0x66], *(u_short *)&cnws.data[0x68]);
+		u_short x, y;
+		memcpy(&x, &cnws.data[0x66], sizeof(x));
+		memcpy(&y, &cnws.data[0x68], sizeof(y));
+		printf(" %04x %04x revision\n", x, y);
 		printf("        %c%c id\n",
 		    cnws.data[0x6e], cnws.data[0x6f]);
 	}
