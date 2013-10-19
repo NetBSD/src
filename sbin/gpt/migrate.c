@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.7 2013/04/13 18:32:01 jakllsch Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.8 2013/10/19 01:58:33 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,6 +123,13 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 			static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
 			le_uuid_enc(ent->ent_type, &vinum);
 			utf8_to_utf16((const uint8_t *)"FreeBSD vinum partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_ZFS: {
+			static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"FreeBSD ZFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
