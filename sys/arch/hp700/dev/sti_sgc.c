@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.22 2013/10/19 13:28:36 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.22 2013/10/19 13:28:36 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -143,7 +143,7 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
 	paddr_t rom;
-	uint32_t id, romend;
+	uint32_t id;
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
 
@@ -197,7 +197,6 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 	default:
 		DPRINTF(("%s: unknown type (%x)\n", __func__, devtype));
 		rv = 0;
-		romend = 0;
 	}
 
 	if (rv &&
