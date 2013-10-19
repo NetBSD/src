@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.102 2013/10/19 00:28:38 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.103 2013/10/19 15:56:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.102 2013/10/19 00:28:38 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.103 2013/10/19 15:56:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -904,7 +904,7 @@ inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
 	sin6.sin6_addr = *a;
 	sin6.sin6_port = htons(p);
 
-	inet6_putscopeid(&sin6, 1);
+	inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL);
 	serv[0] = '\0';
 
 	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
