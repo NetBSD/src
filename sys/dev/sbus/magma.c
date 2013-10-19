@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.56 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: magma.c,v 1.57 2013/10/19 21:00:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.56 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.57 2013/10/19 21:00:32 mrg Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -618,11 +618,9 @@ magma_hard(void *arg)
 			}
 		} else {		/* serial port */
 			struct mtty_port *mtty;
-			struct tty *tp;
 
 			mtty = &sc->ms_mtty->ms_port[port];
 			cd = mtty->mp_cd1400;
-			tp = mtty->mp_tty;
 
 			if( !ISSET(mtty->mp_flags, MTTYF_STOP) ) {
 				int count = 0;

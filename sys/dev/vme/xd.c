@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.89 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: xd.c,v 1.90 2013/10/19 21:00:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.89 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.90 2013/10/19 21:00:32 mrg Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -2437,6 +2437,7 @@ xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 	xio->errnum = xdcsc->reqs[rqno].errnum;
 	xio->tries = xdcsc->reqs[rqno].tries;
 	XDC_DONE(xdcsc, rqno, dummy);
+	__USE(dummy);
 
 	if (xio->cmd == XDCMD_RD || xio->cmd == XDCMD_XRD)
 		error = copyout(buf, xio->dptr, xio->dlen);

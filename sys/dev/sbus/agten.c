@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.31 2013/07/30 19:24:26 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.32 2013/10/19 21:00:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.31 2013/07/30 19:24:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.32 2013/10/19 21:00:32 mrg Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -618,7 +618,6 @@ agten_init(struct agten_softc *sc)
 {
 	int i;
 	uint32_t src, srcw;
-	volatile uint32_t junk;
 
 	/* then we set up a linear LUT for 24bit colour */
 	agten_write_idx(sc, IBM561_CMAP_TABLE + 256);
@@ -683,7 +682,7 @@ agten_init(struct agten_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, COORD_INDEX, 0);
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, src);
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, srcw);
-	junk = bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
+	(void)bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
 
 	/* initialize the cursor registers */
 	
