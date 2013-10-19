@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.5 2011/08/17 09:19:38 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.6 2013/10/19 22:58:40 mrg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -138,6 +138,7 @@ static void
 unmappedaddr(struct sockaddr_in6 *sin6, socklen_t *len)
 {
 	struct sockaddr_in *sin4;
+	void *addrp;
 	uint32_t addr;
 	int port;
 
@@ -145,7 +146,8 @@ unmappedaddr(struct sockaddr_in6 *sin6, socklen_t *len)
 	    !IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 		return;
 	sin4 = (struct sockaddr_in *)(void *)sin6;
-	addr = *(uint32_t *)(void *)&sin6->sin6_addr.s6_addr[12];
+	addrp = &sin6->sin6_addr.s6_addr[12];
+	addr = *(uint32_t *)addrp;
 	port = sin6->sin6_port;
 	memset(sin4, 0, sizeof(struct sockaddr_in));
 	sin4->sin_addr.s_addr = addr;
