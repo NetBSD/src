@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.10 2013/04/13 18:32:01 jakllsch Exp $");
+__RCSID("$NetBSD: show.c,v 1.11 2013/10/19 02:07:08 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ friendly(uuid_t *t)
 	static const uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 	static const uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
 	static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+	static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
 	static const uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
 	static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
 	static const uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
@@ -106,7 +107,8 @@ friendly(uuid_t *t)
 		return ("FreeBSD UFS/UFS2");
 	if (uuid_equal(t, &vinum, NULL))
 		return ("FreeBSD vinum");
-
+	if (uuid_equal(t, &zfs, NULL))
+		return ("FreeBSD ZFS");
 	if (uuid_equal(t, &freebsd, NULL))
 		return ("FreeBSD legacy");
 	if (uuid_equal(t, &msdata, NULL))
