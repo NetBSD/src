@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_loc.c,v 1.3 2013/01/17 22:06:58 christos Exp $	*/
+/*	$NetBSD: dwarf_loc.c,v 1.4 2013/10/19 22:55:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -93,8 +93,6 @@ int
 dwarf_op_num(uint8_t pointer_size, uint8_t *p, int len)
 {
 	int count = 0;
-	int64_t sval;
-	uint64_t uval;
 	uint8_t *last = p + len;
 
 	/*
@@ -242,7 +240,6 @@ dwarf_op_num(uint8_t pointer_size, uint8_t *p, int len)
 		case DW_OP_plus_uconst:
 		case DW_OP_regx:
 		case DW_OP_piece:
-			uval = dwarf_decode_uleb128(&p);
 			break;
 
 		/* Operations with a signed LEB128 operand. */
@@ -280,7 +277,6 @@ dwarf_op_num(uint8_t pointer_size, uint8_t *p, int len)
 		case DW_OP_breg30:
 		case DW_OP_breg31:
 		case DW_OP_fbreg:
-			sval = dwarf_decode_sleb128(&p);
 			break;
 
 		/*
@@ -288,8 +284,6 @@ dwarf_op_num(uint8_t pointer_size, uint8_t *p, int len)
 		 * followed by a signed LEB128 operand.
 		 */
 		case DW_OP_bregx:
-			uval = dwarf_decode_uleb128(&p);
-			sval = dwarf_decode_sleb128(&p);
 			break;
 
 		/* Target address size operand. */
