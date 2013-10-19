@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.27 2012/02/23 21:41:23 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.28 2013/10/19 13:18:03 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -919,7 +919,7 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 		err = 0;
 		break;
 	}
-	return 0;
+	return err;
 }
 
 int
