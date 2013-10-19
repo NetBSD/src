@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.90 2011/08/15 02:19:44 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.91 2013/10/19 19:40:23 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,9 +171,9 @@ struct cpu_info {
 	 * the pending register to avoid a hardware bug.
 	 */
 #define raise_ipi(cpi,lvl)	do {			\
-	volatile int x;					\
+	int x;						\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
-	x = (cpi)->intreg_4m->pi_pend;			\
+	x = (cpi)->intreg_4m->pi_pend; __USE(x);	\
 } while (0)
 
 	int		sun4_mmu3l;	/* [4]: 3-level MMU present */

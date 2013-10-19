@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $ */
+/*	$NetBSD: timer.c,v 1.31 2013/10/19 19:40:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.31 2013/10/19 19:40:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,11 +163,12 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	 * Note: sun4m clocks tick with 500ns periods.
 	 */
 	for (timerblurb = 1; ; timerblurb++) {
-		volatile int discard;
+		int discard;
 		u_int t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *limreg;
+		__USE(discard);
 		*limreg = tmr_ustolim(TMR_MASK-1);
 
 		t0 = *cntreg;
