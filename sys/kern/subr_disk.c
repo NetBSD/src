@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.102 2013/05/29 00:47:49 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.103 2013/10/19 22:36:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.102 2013/05/29 00:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.103 2013/10/19 22:36:57 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -529,7 +529,7 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 #endif
 			return;
 		}
-		dg->dg_secperunit = dg->dg_nsectors *
+		dg->dg_secperunit = (int64_t) dg->dg_nsectors *
 		    dg->dg_ntracks * dg->dg_ncylinders;
 	}
 
