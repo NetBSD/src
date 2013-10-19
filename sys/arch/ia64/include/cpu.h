@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2013/10/19 19:20:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -163,8 +163,10 @@ struct clockframe {
 #define	cpu_signotify(l)	aston(l)
 
 // void cpu_need_resched(struct cpu_info *ci, int flags)
-#define cpu_need_resched(ci, f) do { \
-} while(0)
+#define cpu_need_resched(ci, f) do {	\
+	__USE(ci);			\
+	__USE(f);			\
+} while(/*CONSTCOND*/0)
 
 #define setsoftclock()              /*XXX: FIXME */
 
