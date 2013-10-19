@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.56 2013/10/19 16:33:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.56 2013/10/19 16:33:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1727,7 +1727,7 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
     off_t off, enum uio_rw rw)
 {
 	struct vm_map *map;
-	struct pmap *upm, *kpm;
+	struct pmap *upm, *kpm __unused;
 	size_t klen = round_page(uva + len) - trunc_page(uva);
 	off_t spoff, epoff;
 	vaddr_t kva, puva;
