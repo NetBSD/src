@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.20 2013/06/23 02:06:05 dholland Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.21 2013/10/19 13:42:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.20 2013/06/23 02:06:05 dholland Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.21 2013/10/19 13:42:10 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -729,8 +729,8 @@ initcg(uint cylno)
 	i = i * NBBY;
 	for (; i < cgoverhead(cylno); i++)
 		setbit(buf, i);
-	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_b_bitmap), sblock.e2fs_bsize,
-	    buf);
+	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, buf);
 
 	/*
 	 * Initialize inode bitmap.
@@ -747,8 +747,8 @@ initcg(uint cylno)
 		for (i = 1; i < EXT2_FIRSTINO; i++)
 			setbit(buf, EXT2_INO_INDEX(i));
 	}
-	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_bitmap), sblock.e2fs_bsize,
-	    buf);
+	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_bitmap),
+	    sblock.e2fs_bsize, buf);
 
 	/*
 	 * Initialize inode tables.
@@ -960,13 +960,14 @@ fsinit(const struct timeval *tv)
 		}
 		node.e2di_blocks[i] = blk;
 	}
-	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]), sblock.e2fs_bsize, buf);
+	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]),
+	    sblock.e2fs_bsize, buf);
 	pad_dir.e2d_reclen = sblock.e2fs_bsize;
 	for (i = 1; i < nblks_lostfound; i++) {
 		memset(buf, 0, sblock.e2fs_bsize);
 		copy_dir(&pad_dir, (struct ext2fs_direct *)buf);
-		wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[i]), sblock.e2fs_bsize,
-		    buf);
+		wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[i]),
+		    sblock.e2fs_bsize, buf);
 	}
 	iput(&node, EXT2_LOSTFOUNDINO);
 #endif
@@ -997,7 +998,8 @@ fsinit(const struct timeval *tv)
 		printf("%s: can't allocate block for root dir\n", __func__);
 		return 0;
 	}
-	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]), sblock.e2fs_bsize, buf);
+	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]),
+	    sblock.e2fs_bsize, buf);
 	iput(&node, EXT2_ROOTINO);
 	return 1;
 }
@@ -1121,7 +1123,8 @@ init_resizeino(const struct timeval *tv)
 	/* set e2di_size which occupies whole blocks through DINDIR blocks */
 	isize = (uint64_t)sblock.e2fs_bsize * EXT2FS_NDADDR +
 	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) +
-	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) * EXT2_NINDIR(&sblock);
+	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) *
+	    EXT2_NINDIR(&sblock);
 	if (isize > UINT32_MAX &&
 	    (sblock.e2fs.e2fs_features_rocompat &
 	     EXT2F_ROCOMPAT_LARGEFILE) == 0) {
@@ -1261,7 +1264,8 @@ alloc(uint32_t size, uint16_t mode)
 	bbp = malloc(sblock.e2fs_bsize);
 	if (bbp == NULL)
 		return 0;
-	rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap), sblock.e2fs_bsize, bbp);
+	rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, bbp);
 
 	/* XXX: kernel uses e2fs_fpg here */
 	len = sblock.e2fs.e2fs_bpg / NBBY;
@@ -1295,7 +1299,8 @@ alloc(uint32_t size, uint16_t mode)
 		errx(EXIT_FAILURE, "%s: inconsistent bitmap\n", __func__);
 
 	setbit(bbp, bno);
-	wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap), sblock.e2fs_bsize, bbp);
+	wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, bbp);
 	free(bbp);
 	/* XXX: modified group descriptors won't be written into backups */
 	gd[0].ext2bgd_nbfree--;
