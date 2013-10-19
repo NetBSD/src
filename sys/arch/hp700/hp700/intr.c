@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.41 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.42 2013/10/19 13:13:09 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.41 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2013/10/19 13:13:09 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -408,7 +408,7 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 	int ipending_run;
 	int bit_pos;
 	void *arg;
-	int handled;
+	int handled __unused;
 	bool locked = false;
 
 	/*
