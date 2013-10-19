@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.30 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: aed.c,v 1.31 2013/10/19 16:21:57 martin Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.30 2012/10/27 17:17:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.31 2013/10/19 16:21:57 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -539,11 +539,8 @@ aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* Do nothing for now */
 		break;
 
-	case ADBIOC_LISTENCMD:{
-		adb_listencmd_t *lc;
-
-		lc = (void *)data;
-	}
+	case ADBIOC_LISTENCMD:
+		/* adb_listencmd_t *lc = data; */
 
 	default:
 		return (EINVAL);
