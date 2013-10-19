@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.21 2012/10/10 15:46:34 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.22 2013/10/19 13:49:11 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.21 2012/10/10 15:46:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.22 2013/10/19 13:49:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	struct gsc_attach_args ga;
 	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
-	int s, in;
+	int s;
 
 	ca->ca_irq = hp700_intr_allocate_bit(&ci->ci_ir, ca->ca_irq);
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
@@ -140,7 +140,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	sc->sc_regs->wax_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_regs->wax_icr = 0;
 	sc->sc_regs->wax_imr = ~0U;
-	in = sc->sc_regs->wax_irr;
+	(void)sc->sc_regs->wax_irr;
 	sc->sc_regs->wax_imr = 0;
 	splx(s);
 
