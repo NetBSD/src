@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.17 2013/10/19 00:28:38 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.18 2013/10/19 15:56:06 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -331,11 +331,8 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	    {
 		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 
-		/*
-		 * XXX: This is a special workaround for KAME kernels.
-		 * sin6_scope_id field of SA should be set in the future.
-		 */
-		inet6_putscopeid(sa6, 3);
+		inet6_getscopeid(sa6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (flags & RTF_HOST)
 			cp = routename((struct sockaddr *)sa6);
 		else
@@ -426,7 +423,8 @@ routename(struct sockaddr *sa)
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
 		if (sa->sa_len == sizeof(struct sockaddr_in6))
-			inet6_putscopeid(&sin6, 3);
+			inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+			    INET6_IS_ADDR_MC_LINKLOCAL);
 		return (routename6(&sin6));
 	    }
 
