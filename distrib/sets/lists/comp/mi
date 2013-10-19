@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1845 2013/10/17 16:52:02 christos Exp $
+#	$NetBSD: mi,v 1.1846 2013/10/19 19:59:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6055,6 +6055,7 @@
 ./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/index.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inet.0			comp-c-catman		.cat
+./usr/share/man/cat3/inet6_getscopeid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_opt_append.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_opt_find.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_opt_finish.0		comp-c-catman		.cat
@@ -6068,6 +6069,7 @@
 ./usr/share/man/cat3/inet6_option_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_next.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_option_space.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_putscopeid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rth_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rth_getaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rth_init.0		comp-c-catman		.cat
@@ -12599,6 +12601,7 @@
 ./usr/share/man/html3/inchstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/index.html		comp-c-htmlman		html
 ./usr/share/man/html3/inet.html			comp-c-htmlman		html
+./usr/share/man/html3/inet6_getscopeid.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_opt_append.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_opt_find.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_opt_finish.html	comp-c-htmlman		html
@@ -12612,6 +12615,7 @@
 ./usr/share/man/html3/inet6_option_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_option_next.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_option_space.html	comp-c-htmlman		html
+./usr/share/man/html3/inet6_putscopeid.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_rth_add.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_rth_getaddr.html	comp-c-htmlman		html
 ./usr/share/man/html3/inet6_rth_init.html	comp-c-htmlman		html
@@ -19063,6 +19067,7 @@
 ./usr/share/man/man3/inchstr.3			comp-c-man		.man
 ./usr/share/man/man3/index.3			comp-c-man		.man
 ./usr/share/man/man3/inet.3			comp-c-man		.man
+./usr/share/man/man3/inet6_getscopeid.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_opt_append.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_opt_find.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_opt_finish.3		comp-c-man		.man
@@ -19076,6 +19081,7 @@
 ./usr/share/man/man3/inet6_option_init.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_next.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_option_space.3	comp-c-man		.man
+./usr/share/man/man3/inet6_putscopeid.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_rth_add.3		comp-c-man		.man
 ./usr/share/man/man3/inet6_rth_getaddr.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rth_init.3		comp-c-man		.man
