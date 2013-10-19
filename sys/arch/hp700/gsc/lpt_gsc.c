@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.14 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.15 2013/10/19 14:01:42 skrll Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.14 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.15 2013/10/19 14:01:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ lpt_gsc_probe(device_t parent, cfdata_t match, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	uint8_t mask, data;
-	int i, rv;
+	int i;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    ga->ga_type.iodc_sv_model != HPPA_FIO_CENT)
@@ -165,7 +165,6 @@ lpt_gsc_probe(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(ga->ga_iot, base, LPT_NPORTS, 0, &ioh))
 		return 0;
 
-	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
