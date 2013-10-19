@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.267 2013/10/06 01:21:24 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.268 2013/10/19 18:39:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.267 2013/10/06 01:21:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.268 2013/10/19 18:39:30 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -1323,7 +1323,10 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int old_link_state, s;
+	int s;
+#ifdef DEBUG
+	int old_link_state;
+#endif
 
 	s = splnet();
 	if (ifp->if_link_state == link_state) {
@@ -1331,7 +1334,9 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
+#ifdef DEBUG
 	old_link_state = ifp->if_link_state;
+#endif
 	ifp->if_link_state = link_state;
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
