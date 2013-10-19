@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.16 2013/10/18 20:26:45 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.17 2013/10/19 00:28:38 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -330,22 +330,12 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	case AF_INET6:
 	    {
 		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
-		struct in6_addr *in6 = &sa6->sin6_addr;
 
 		/*
 		 * XXX: This is a special workaround for KAME kernels.
 		 * sin6_scope_id field of SA should be set in the future.
 		 */
-		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
-			/* XXX: override is ok? */
-			uint16_t scope;
-			memcpy(&scope, &sa6->sin6_addr.s6_addr[2],
-			    sizeof(scope));
-			sa6->sin6_scope_id = ntohs(scope);
-			in6->s6_addr[2] = 0;
-			in6->s6_addr[3] = 0;
-		}
+		inet6_putscopeid(sa6, 3);
 		if (flags & RTF_HOST)
 			cp = routename((struct sockaddr *)sa6);
 		else
@@ -435,17 +425,8 @@ routename(struct sockaddr *sa)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			uint16_t scope;
-			memcpy(&scope, &sin6.sin6_addr.s6_addr[2],
-			    sizeof(scope));
-			sin6.sin6_scope_id = ntohs(scope);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
+		if (sa->sa_len == sizeof(struct sockaddr_in6))
+			inet6_putscopeid(&sin6, 3);
 		return (routename6(&sin6));
 	    }
 
