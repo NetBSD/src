@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.55 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: pass1.c,v 1.56 2013/10/19 01:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.55 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.56 2013/10/19 01:09:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,15 +235,11 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	int64_t blocks;
 	char symbuf[MAXBSIZE];
 	struct inostat *info;
-	uid_t uid;
-	gid_t gid;
 
 	dp = getnextinode(inumber);
 	info = inoinfo(inumber);
 	mode = iswap16(DIP(dp, mode)) & IFMT;
 	size = iswap64(DIP(dp, size));
-	uid = iswap32(DIP(dp, uid));
-	gid = iswap32(DIP(dp, gid));
 	if (mode == 0) {
 		if ((is_ufs2 && 
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
