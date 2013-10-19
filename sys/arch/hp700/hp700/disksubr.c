@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2012/02/23 21:38:53 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 2013/10/19 14:00:59 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2012/02/23 21:38:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2013/10/19 14:00:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	struct buf *bp = NULL;
 	const char *msg = "no disk label";
 	int i;
-	struct disklabel minilabel, fallbacklabel;
+	struct disklabel fallbacklabel;
 
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
@@ -177,7 +177,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[i].p_offset = 0;
-	minilabel = fallbacklabel = *lp;
+	fallbacklabel = *lp;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
