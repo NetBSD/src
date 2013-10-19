@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.26 2013/06/18 18:18:58 christos Exp $ */
+/* $NetBSD: segwrite.c,v 1.27 2013/10/19 01:09:58 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -243,7 +243,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	SEGUSE *sup;
 	daddr_t daddr;
 	ino_t ino;
-	int error, i, ndx, fsb = 0;
+	int i, ndx, fsb = 0;
 	int redo_ifile = 0;
 	struct timespec ts;
 	int gotblk = 0;
@@ -333,7 +333,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = ifp->if_daddr;
 		ifp->if_daddr = LFS_DBTOFSB(fs, bp->b_blkno) + fsb;
-		error = LFS_BWRITE_LOG(ibp);	/* Ifile */
+		(void)LFS_BWRITE_LOG(ibp);	/* Ifile */
 	}
 
 	/*
