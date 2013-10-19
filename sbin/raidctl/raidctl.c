@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $   */
+/*      $NetBSD: raidctl.c,v 1.56 2013/10/19 01:09:59 christos Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.56 2013/10/19 01:09:59 christos Exp $");
 #endif
 
 
@@ -104,7 +104,6 @@ main(int argc,char *argv[])
 	int do_output;
 	int do_recon;
 	int do_rewrite;
-	int is_clean;
 	int raidID;
 	int serial_number;
 	struct stat st;
@@ -117,7 +116,6 @@ main(int argc,char *argv[])
 	do_output = 0;
 	do_recon = 0;
 	do_rewrite = 0;
-	is_clean = 0;
 	serial_number = 0;
 	force = 0;
 	openmode = O_RDWR;	/* default to read/write */

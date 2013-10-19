@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.63 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: utilities.c,v 1.64 2013/10/19 01:09:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.63 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.64 2013/10/19 01:09:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ void
 ckfini(int noint)
 {
 	struct bufarea *bp, *nbp;
-	int ofsmodified, cnt = 0;
+	int cnt = 0;
 
 	if (!noint) {
 		if (doinglevel2)
@@ -314,11 +314,7 @@ ckfini(int noint)
 			sblock->fs_pendingblocks = 0;
 			sblock->fs_pendinginodes = 0;
 			sbdirty();
-			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
-#if LITE2BORKEN
-			fsmodified = ofsmodified;
-#endif
 			if (!preen)
 				printf(
 				    "\n***** FILE SYSTEM MARKED CLEAN *****\n");

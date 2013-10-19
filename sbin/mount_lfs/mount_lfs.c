@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.34 2011/08/29 14:35:01 joerg Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.35 2013/10/19 01:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.34 2011/08/29 14:35:01 joerg Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.35 2013/10/19 01:09:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,11 +98,9 @@ mount_lfs_parseargs(int argc, char *argv[],
 	char *canon_dev, char *canon_dir)
 {
 	int ch;
-	char *options;
 	mntoptparse_t mp;
 
 	memset(args, 0, sizeof(*args));
-	options = NULL;
 	nsegs = "4";
 	*mntflags = noclean = 0;
 	cleaner_bytes = 1;

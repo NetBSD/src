@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.23 2013/08/10 23:25:35 tron Exp $ */
+/* $NetBSD: udf_create.c,v 1.24 2013/10/19 01:09:59 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.23 2013/08/10 23:25:35 tron Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.24 2013/10/19 01:09:59 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,7 +183,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t pos, mpos;
 
 	/* clear */
-	bzero(&layout, sizeof(struct udf_disclayout));
+	memset(&layout, 0, sizeof(layout));
 
 	/* fill with parameters */
 	layout.wrtrack_skew    = wrtrack_skew;
@@ -498,7 +498,7 @@ udf_create_anchor(int num)
 void
 udf_create_terminator(union dscrptr *dscr, uint32_t loc)
 {
-	bzero(dscr, context.sector_size);
+	memset(dscr, 0, context.sector_size);
 	udf_inittag(&dscr->tag, TAGID_TERM, loc);
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
@@ -509,7 +509,7 @@ udf_create_terminator(union dscrptr *dscr, uint32_t loc)
 void
 udf_osta_charset(struct charspec *charspec)
 {
-	bzero(charspec, sizeof(struct charspec));
+	memset(charspec, 0, sizeof(*charspec));
 	charspec->type = 0;
 	strcpy((char *) charspec->inf, "OSTA Compressed Unicode");
 }
@@ -522,10 +522,10 @@ udf_encode_osta_id(char *osta_id, uint16_t len, char *text)
 	uint8_t  *pos;
 	uint16_t *pos16;
 
-	bzero(osta_id, len);
+	memset(osta_id, 0, len);
 	if (!text || (strlen(text) == 0)) return;
 
-	bzero(u16_name, sizeof(uint16_t) * 1023);
+	memset(u16_name, 0, sizeof(uint16_t) * 1023);
 
 	/* convert ascii to 16 bits unicode */
 	pos   = (uint8_t *) text;
@@ -547,7 +547,7 @@ udf_encode_osta_id(char *osta_id, uint16_t len, char *text)
 void
 udf_set_regid(struct regid *regid, char const *name)
 {
-	bzero(regid, sizeof(struct regid));
+	memset(regid, 0, sizeof(*regid));
 	regid->flags    = 0;		/* not dirty and not protected */
 	strcpy((char *) regid->id, name);
 }
@@ -604,7 +604,7 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 	struct tm tm;
 	uint64_t husec, usec, csec;
 
-	bzero(timestamp, sizeof(struct timestamp));
+	memset(timestamp, 0, sizeof(*timestamp));
 	gmtime_r(&timespec->tv_sec, &tm);
 
 	/*
@@ -701,7 +701,7 @@ udf_create_primaryd(void)
 	if (pri == NULL)
 		return ENOMEM;
 
-	bzero(pri, context.sector_size);
+	memset(pri, 0, context.sector_size);
 	udf_inittag(&pri->tag, TAGID_PRI_VOL, /* loc */ 0);
 	pri->seq_num = udf_rw32(context.vds_seq); context.vds_seq++;
 
@@ -1928,7 +1928,6 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type, struct stat *st)
 {
 	struct extfile_entry *efe;
 	struct icb_tag       *icb;
-	uint32_t fidsize;
 	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
 	uint16_t icbflags;
 
@@ -1990,7 +1989,6 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type, struct stat *st)
 	udf_set_regid(&efe->imp_id, context.impl_name);
 	udf_add_impl_regid(&efe->imp_id);
 
-	fidsize = 0;
 	efe->unique_id = udf_rw64(context.unique_id);
 	udf_advance_uniqueid();
 
@@ -2092,7 +2090,7 @@ udf_create_meta_files(void)
 
 	sector_size = context.sector_size;
 
-	bzero(&meta_icb, sizeof(struct long_ad));
+	memset(&meta_icb, 0, sizeof(meta_icb));
 	meta_icb.len          = udf_rw32(sector_size);
 	meta_icb.loc.part_num = udf_rw16(context.data_part);
 
@@ -2159,7 +2157,7 @@ udf_create_new_rootdir(union dscrptr **dscr)
 	struct long_ad root_icb;
 	int filetype, error;
 
-	bzero(&root_icb, sizeof(struct long_ad));
+	memset(&root_icb, 0, sizeof(root_icb));
 	root_icb.len          = udf_rw32(context.sector_size);
 	root_icb.loc.lb_num   = udf_rw32(layout.rootdir);
 	root_icb.loc.part_num = udf_rw16(context.metadata_part);
