@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.140 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.141 2013/10/19 19:20:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.140 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.141 2013/10/19 19:20:50 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1202,7 +1202,6 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 static daddr_t
 ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 {
-	struct ufsmount *ump;
 	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	int cg;
@@ -1213,9 +1212,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-	ump = ip->i_ump;
-
-	KASSERT(mutex_owned(&ump->um_lock));
+	KASSERT(mutex_owned(&ip->i_ump->um_lock));
 
 	cgp = (struct cg *)bp->b_data;
 	blksfree = cg_blksfree(cgp, needswap);
