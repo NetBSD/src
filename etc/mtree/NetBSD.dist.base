@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.124 2013/08/22 07:14:38 tron Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.125 2013/10/19 22:35:02 mlelstv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1248,6 +1248,10 @@
 ./var/chroot/ntpd/var/db	mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/chroot/pflogd		mode=0755
+./var/chroot/rtadvd		type=dir  mode=0755
+./var/chroot/rtadvd/etc		type=dir  mode=0755
+./var/chroot/rtadvd/var		type=dir  mode=0755
+./var/chroot/rtadvd/var/run	type=dir  mode=0775 gname=_rtadvd
 ./var/chroot/sshd		mode=0755
 ./var/chroot/tcpdump		mode=0755
 ./var/chroot/tftp-proxy		mode=0755
