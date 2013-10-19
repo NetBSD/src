@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.36 2012/05/23 16:11:37 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.37 2013/10/19 13:49:11 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.36 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.37 2013/10/19 13:49:11 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -356,7 +356,6 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
-	pcireg_t data1;
 	uint32_t pamr;
 
 	/* fix arbitration errata by disabling all pci devs on config read */
@@ -368,7 +367,7 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 	/* fix coalescing config and io writes by interleaving w/ a read */
 	r->pci_addr = tag | PCI_ID_REG;
-	data1 = r->pci_conf_data;
+	(void)r->pci_conf_data;
 
 	/* restore arbitration */
 	r->pamr = pamr;
@@ -1605,7 +1604,6 @@ dinoattach(device_t parent, device_t self, void *aux)
 	volatile struct dino_regs *r;
 	struct cpu_info *ci = &cpus[0];
 	const char *p = NULL;
-	u_int data;
 	int s, ver;
 
 	sc->sc_dv = self;
@@ -1650,7 +1648,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	s = splhigh();
 	r->icr = 0;
 	r->imr = ~0;
-	data = r->irr0;
+	(void)r->irr0;
 	r->imr = 0;
 	r->iar0 = ci->ci_hpa | (31 - ca->ca_irq);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.13 2012/10/10 15:46:34 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.14 2013/10/19 13:49:11 skrll Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -254,7 +254,7 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
 	uint32_t arb_mask, err_cfg, control;
-	pcireg_t data, data1;
+	pcireg_t data;
 
 /* printf("elroy_conf_read(%p, 0x%08x, 0x%x)", v, tag, reg); */
 	arb_mask = elroy_read32(&r->arb_mask);
@@ -268,7 +268,7 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 	    ~htole32(ELROY_CONTROL_HF));
 
 	elroy_write32(&r->pci_conf_addr, htole32(tag | reg));
-	data1 = elroy_read32(&r->pci_conf_addr);
+	(void)elroy_read32(&r->pci_conf_addr);
 	data = elroy_read32(&r->pci_conf_data);
 
 	elroy_write32(&r->control, control |
@@ -289,7 +289,6 @@ elroy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
 	uint32_t arb_mask, err_cfg, control;
-	pcireg_t data1;
 
 /* printf("elroy_conf_write(%p, 0x%08x, 0x%x, 0x%x)\n", v, tag, reg, data); */
 	arb_mask = elroy_read32(&r->arb_mask);
@@ -304,13 +303,13 @@ elroy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 	/* fix coalescing config writes errata by interleaving w/ a read */
 	elroy_write32(&r->pci_conf_addr, htole32(tag | PCI_ID_REG));
-	data1 = elroy_read32(&r->pci_conf_addr);
-	data1 = elroy_read32(&r->pci_conf_data);
+	(void)elroy_read32(&r->pci_conf_addr);
+	(void)elroy_read32(&r->pci_conf_data);
 
 	elroy_write32(&r->pci_conf_addr, htole32(tag | reg));
-	data1 = elroy_read32(&r->pci_conf_addr);
+	(void)elroy_read32(&r->pci_conf_addr);
 	elroy_write32(&r->pci_conf_data, htole32(data));
-	data1 = elroy_read32(&r->pci_conf_addr);
+	(void)elroy_read32(&r->pci_conf_addr);
 
 	elroy_write32(&r->control, control |
 	    htole32(ELROY_CONTROL_CE|ELROY_CONTROL_CL));
@@ -415,11 +414,10 @@ elroy_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 {
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
-	uint32_t data;
 
 	sync_caches();
 	if (op & BUS_SPACE_BARRIER_WRITE) {
-		data = r->pci_id;	/* flush write fifo */
+		(void)r->pci_id;	/* flush write fifo */
 		sync_caches();
 	}
 }
