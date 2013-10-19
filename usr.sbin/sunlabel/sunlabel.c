@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.23 2009/04/18 14:06:58 lukem Exp $ */
+/* $NetBSD: sunlabel.c,v 1.24 2013/10/19 17:16:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.23 2009/04/18 14:06:58 lukem Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.24 2013/10/19 17:16:38 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -926,7 +926,6 @@ static int
 print_ascii(struct field *f, int sofar)
 {
 	printf("%s: %.128s\n", f->tag, (char *)f->loc);
-	sofar = 0;
 	return 0;
 }
 
