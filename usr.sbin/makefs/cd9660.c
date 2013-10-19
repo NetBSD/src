@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.45 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.46 2013/10/19 20:49:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.45 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.46 2013/10/19 20:49:22 mrg Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1133,7 +1133,7 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 				}
 			}
 		}
-#else
+#elif !HAVE_NBTOOL_CONFIG_H
 		__USE(dot);
 		__USE(semi);
 		__USE(multiplier);
