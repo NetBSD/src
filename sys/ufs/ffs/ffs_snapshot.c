@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.130 2013/10/19 16:30:57 martin Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.131 2013/10/19 19:28:13 martin Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.130 2013/10/19 16:30:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.131 2013/10/19 19:28:13 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -958,7 +958,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 	struct fs *fs;
 	struct lwp *l = curlwp;
 	daddr_t base, numblks;
-	int error, len, loc, ns, indiroff;
+	int error, len, loc, ns __unused, indiroff;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -1035,7 +1035,7 @@ static int
 expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
     acctfunc_t acctfunc, int expungetype)
 {
-	int i, error, ns;
+	int i, error, ns __unused;
 	daddr_t lbn, rlbn;
 	daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip1;
