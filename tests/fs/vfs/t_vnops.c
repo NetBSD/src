@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.37 2013/07/28 09:03:43 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.38 2013/10/19 17:45:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 {
 	bool haslinks;
 	struct stat sb;
-	ino_t f1ino, f2ino;
+	ino_t f1ino;
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
@@ -366,7 +366,6 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_stat("file2", &sb) == -1)
 		atf_tc_fail_errno("stat");
-	f2ino = sb.st_ino;
 
 	if (rump_sys_rename("file1", "file3") == -1)
 		atf_tc_fail_errno("rename 1");

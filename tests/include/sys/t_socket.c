@@ -1,4 +1,4 @@
-/*	$NetBSD: t_socket.c,v 1.2 2013/09/05 12:22:10 pooka Exp $	*/
+/*	$NetBSD: t_socket.c,v 1.3 2013/10/19 17:45:00 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -83,7 +83,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	struct cmsghdr *cmp;
 	struct msghdr msg;
 	struct sockaddr_un sun;
-	struct lwp *l1, *l2;
+	struct lwp *l1;
 	struct iovec iov;
 	socklen_t sl;
 	int s1, s2, sgot;
@@ -109,7 +109,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 
 	/* create second process for test */
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
-	l2 = rump_pub_lwproc_curlwp();
+	(void)rump_pub_lwproc_curlwp();
 
 	/* connect to unix domain socket */
 	memset(&sun, 0, sizeof(sun));
