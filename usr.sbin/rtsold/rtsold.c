@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.36 2011/08/29 20:38:55 joerg Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.37 2013/10/19 17:16:38 christos Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -711,7 +711,7 @@ autoifprobe(void)
 	static int n = 0;
 	char **a;
 	int i, found;
-	struct ifaddrs *ifap, *ifa, *target;
+	struct ifaddrs *ifap, *ifa;
 
 	/* initialize */
 	while (n--)
@@ -725,7 +725,6 @@ autoifprobe(void)
 	if (getifaddrs(&ifap) != 0)
 		return NULL;
 
-	target = NULL;
 	/* find an ethernet */
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_UP) == 0)
