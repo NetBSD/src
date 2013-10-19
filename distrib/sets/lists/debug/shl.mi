@@ -1,5 +1,5 @@
-# $NetBSD: shl.mi,v 1.34 2013/10/18 23:37:37 jmmv Exp $
-./usr/libdata/debug/lib/libc.so.12.186.debug		comp-sys-debug	debug
+# $NetBSD: shl.mi,v 1.35 2013/10/19 01:12:46 christos Exp $
+./usr/libdata/debug/lib/libc.so.12.187.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
@@ -58,7 +58,7 @@
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libc.so.12.186.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libc.so.12.187.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.8.1.debug	comp-crypto-debug	crypto,debug

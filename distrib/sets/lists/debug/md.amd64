@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.30 2013/10/18 23:37:37 jmmv Exp $
+# $NetBSD: md.amd64,v 1.31 2013/10/19 01:12:46 christos Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-proflib		compat,debuglib
@@ -195,7 +195,7 @@
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libc.so.12.186.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libc.so.12.187.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
