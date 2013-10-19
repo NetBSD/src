@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_deny.c,v 1.3 2013/08/20 22:07:44 perseant Exp $	*/
+/*	$NetBSD: pam_deny.c,v 1.4 2013/10/19 22:57:46 mrg Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_deny/pam_deny.c,v 1.9 2002/04/12 22:27:19 des Exp $");
 #else
-__RCSID("$NetBSD: pam_deny.c,v 1.3 2013/08/20 22:07:44 perseant Exp $");
+__RCSID("$NetBSD: pam_deny.c,v 1.4 2013/10/19 22:57:46 mrg Exp $");
 #endif
 
 #include <stddef.h>
@@ -78,14 +78,14 @@ PAM_EXTERN int
 pam_sm_chauthtok(pam_handle_t *pamh __unused, int flags,
     int argc, const char *argv[])
 {
-	int prelim_ignore = 0, debug = 0;
+	int prelim_ignore = 0;
 	int i;
 
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "prelim_ignore") == 0)
 			prelim_ignore = 1;
 		else if (strcmp(argv[i], "debug") == 0)
-			debug = 1;
+			/* nothing */;
 		else
 			syslog(LOG_ERR, "illegal option %s", argv[i]);
 	}
