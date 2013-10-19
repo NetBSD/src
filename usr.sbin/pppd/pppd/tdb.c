@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.6 2007/01/16 17:32:05 hubertf Exp $	*/
+/*	$NetBSD: tdb.c,v 1.7 2013/10/19 17:16:38 christos Exp $	*/
 
 /* 
  * Database functions
@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tdb.c,v 1.6 2007/01/16 17:32:05 hubertf Exp $");
+__RCSID("$NetBSD: tdb.c,v 1.7 2013/10/19 17:16:38 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -498,7 +498,6 @@ static tdb_off tdb_allocate(TDB_CONTEXT *tdb, tdb_len length)
 static int tdb_new_database(TDB_CONTEXT *tdb, int hash_size)
 {
 	struct tdb_header header;
-	tdb_off offset;
 	int i, size = 0;
 	tdb_off buf[16];
 
@@ -517,7 +516,6 @@ static int tdb_new_database(TDB_CONTEXT *tdb, int hash_size)
         } else size += sizeof(header);
 	
         /* the freelist and hash pointers */
-        offset = 0;
         memset(buf, 0, sizeof(buf));
 
         for (i=0;(hash_size+1)-i >= 16; i += 16) {

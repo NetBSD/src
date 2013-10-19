@@ -449,9 +449,6 @@ qop_jobs_delete_class_hook(struct classinfo *clinfo)
 	 * i'm not sure how/when it's used, so I just
 	 * leave it here
 	 */
-	struct jobs_classinfo *jobs_clinfo;
-
-	jobs_clinfo = clinfo->private;
 	return (0);
 }
 
@@ -610,9 +607,7 @@ jobs_add_class(struct classinfo *clinfo)
 {
 	struct jobs_add_class class_add;
 	struct jobs_classinfo *jobs_clinfo;
-	struct jobs_ifinfo *jobs_ifinfo;
 
-	jobs_ifinfo = clinfo->ifinfo->private;
 	jobs_clinfo = clinfo->private;
 
 	memset(&class_add, 0, sizeof(class_add));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.12 2013/01/28 21:03:28 christos Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.13 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.12 2013/01/28 21:03:28 christos Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.13 2013/10/19 17:16:37 christos Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -237,6 +237,7 @@ debug_dump_to_xml(FILE *fd)
 	struct iso_primary_descriptor primaryVD;
 	struct _boot_volume_descriptor bootVD;
 
+	memset(&primaryVD, 0, sizeof(primaryVD));
 	printf("<cd9660dump>\n");
 
 	/* Display Volume Descriptors */

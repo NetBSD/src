@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.13 2013/08/14 10:16:04 jmcneill Exp $ */
+/* $NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.13 2013/08/14 10:16:04 jmcneill Exp $");
+__RCSID("$NetBSD: udf.c,v 1.14 2013/10/19 17:16:37 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -368,7 +368,6 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	option_t *udf_options = fsopts->fs_options;
 	uint64_t stdsize;
 	uint32_t set_sectorsize;
-	const char *name, *desc;
 	char buffer[1024], *buf, *colon;
 	int i;
 
@@ -388,8 +387,6 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 	stdsize = 0;
 
 	buf = buffer;
-	name = udf_options[i].name;
-	desc = udf_options[i].desc;
 	switch (udf_options[i].letter) {
 	case 'T':
 		if (strcmp(buf, "cdrom") == 0) {

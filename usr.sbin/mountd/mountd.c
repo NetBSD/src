@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.124 2012/01/04 16:09:44 drochner Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.125 2013/10/19 17:16:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.124 2012/01/04 16:09:44 drochner Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.125 2013/10/19 17:16:37 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -479,7 +479,6 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 	struct fhreturn fhr;
 	struct stat     stb;
 	struct statvfs   fsb;
-	struct addrinfo *ai;
 	char host[NI_MAXHOST], numerichost[NI_MAXHOST];
 	int lookup_failed = 1;
 	struct sockaddr *saddr;
@@ -513,7 +512,6 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 	if (getnameinfo(saddr, saddr->sa_len, numerichost,
 	    sizeof numerichost, NULL, 0, ninumeric) != 0)
 		strlcpy(numerichost, "?", sizeof(numerichost));
-	ai = NULL;
 	ret = 0;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
