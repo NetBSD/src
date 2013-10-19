@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.10 2009/04/15 00:23:29 lukem Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.11 2013/10/19 17:16:37 christos Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -375,7 +375,6 @@ static void
 cmu_print(u_char *bp, int length)
 {
 	struct cmu_vend *v;
-	u_char *ep;
 
 	printf("-cmu");
 
@@ -384,8 +383,6 @@ cmu_print(u_char *bp, int length)
 		printf(" |L=%d", length);
 		return;
 	}
-	/* Setup end pointer */
-	ep = bp + length;
 
 	/* Subnet mask */
 	if (v->v_flags & VF_SMASK) {

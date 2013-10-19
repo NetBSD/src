@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.120 2012/11/10 11:01:52 apb Exp $	*/
+/*	$NetBSD: pstat.c,v 1.121 2013/10/19 17:16:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.120 2012/11/10 11:01:52 apb Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.121 2013/10/19 17:16:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -683,7 +683,10 @@ loadvnodes(int *avnodes)
 {
 	int mib[2];
 	int status;
-	size_t copysize, oldsize;
+	size_t copysize;
+#if 0
+	size_t oldsize;
+#endif
 	char *vnodebase;
 
 	if (totalflag) {
@@ -709,7 +712,9 @@ loadvnodes(int *avnodes)
 	 */
 	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
+#if 0
 	oldsize = copysize;
+#endif
 	copysize += 100 * sizeof(struct vnode) + copysize / 20;
 	if ((vnodebase = malloc(copysize)) == NULL)
 		err(1, "malloc");

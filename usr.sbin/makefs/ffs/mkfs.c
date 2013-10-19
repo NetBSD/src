@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.31 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.32 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.31 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.32 2013/10/19 17:16:37 christos Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -128,7 +128,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	int32_t cylno, i, csfrags;
 	long long sizepb;
 	void *space;
-	int size, blks;
+	int size;
 	int nprintcols, printcolwidth;
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
@@ -413,7 +413,6 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 * Cribbed from ffs_mountfs().
 	 */
 	size = sblock.fs_cssize;
-	blks = howmany(size, sblock.fs_fsize);
 	if (sblock.fs_contigsumsize > 0)
 		size += sblock.fs_ncg * sizeof(int32_t);
 	space = ecalloc(1, size);

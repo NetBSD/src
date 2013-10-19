@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.44 2013/07/30 16:02:23 reinoud Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.45 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.44 2013/07/30 16:02:23 reinoud Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.45 2013/10/19 17:16:37 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -660,10 +660,6 @@ static void
 cd9660_finalize_PVD(iso9660_disk *diskStructure)
 {
 	time_t tim;
-	unsigned char *temp;
-
-	/* Copy the root directory record */
-	temp = (unsigned char *) &diskStructure->primaryDescriptor;
 
 	/* root should be a fixed size of 34 bytes since it has no name */
 	memcpy(diskStructure->primaryDescriptor.root_directory_record,
@@ -824,15 +820,14 @@ static int
 cd9660_translate_node_common(iso9660_disk *diskStructure, cd9660node *newnode)
 {
 	time_t tim;
-	int test;
 	u_char flag;
 	char temp[ISO_FILENAME_MAXLENGTH_WITH_PADDING];
 
 	/* Now populate the isoDirRecord structure */
 	memset(temp, 0, ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 
-	test = cd9660_convert_filename(diskStructure, newnode->node->name,
-		temp, !(S_ISDIR(newnode->node->type)));
+	(void)cd9660_convert_filename(diskStructure, newnode->node->name,
+	    temp, !(S_ISDIR(newnode->node->type)));
 
 	flag = ISO_FLAG_CLEAR;
 	if (S_ISDIR(newnode->node->type))
@@ -1127,7 +1122,7 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 		 * See if you can spot them all :)
 		 */
 
-		/*
+#if 0
 		if (diskStructure->isoLevel == 1) {
 			numbts = 8 - digits - delete_chars;
 			if (dot < 0) {
@@ -1138,7 +1133,11 @@ cd9660_rename_filename(iso9660_disk *diskStructure, cd9660node *iter, int num,
 				}
 			}
 		}
-		*/
+#else
+		__USE(dot);
+		__USE(semi);
+		__USE(multiplier);
+#endif
 
 		/* (copying just the filename before the '.' */
 		memcpy(tmp, (iter->o_name), numbts);
@@ -1545,7 +1544,6 @@ cd9660_generate_path_table(iso9660_disk *diskStructure)
 	cd9660node *last = dirNode;
 	int pathTableSize = 0;	/* computed as we go */
 	int counter = 1;	/* root gets a count of 0 */
-	int parentRecNum = 0;	/* root's parent is '0' */
 
 	TAILQ_HEAD(cd9660_pt_head, ptq_entry) pt_head;
 	TAILQ_INIT(&pt_head);
@@ -1574,10 +1572,6 @@ cd9660_generate_path_table(iso9660_disk *diskStructure)
 			dirNode->ptprev = last;
 		}
 		last = dirNode;
-
-		parentRecNum = 1;
-		if (dirNode->parent != 0)
-			parentRecNum = dirNode->parent->ptnumber;
 
 		/* Push children onto queue */
 		TAILQ_FOREACH(cn, &dirNode->cn_children, cn_next_child) {
