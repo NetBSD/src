@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 2013/10/19 13:16:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2013/10/19 13:16:30 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1071,7 +1071,7 @@ static int
 _hp700_btlb_insert(struct btlb_slot *btlb_slot)
 {
 	int error;
-#ifdef DEBUG
+#ifdef MACHDEPDEBUG
 	const char *prot;
 
 	/* Display the protection like a file protection. */
@@ -1741,7 +1741,7 @@ cpu_dump(void)
 {
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
-	cpu_kcore_hdr_t	*cpuhdrp;
+	cpu_kcore_hdr_t	*cpuhdrp __unused;
 	const struct bdevsw *bdev;
 
 	segp = (kcore_seg_t *)buf;
