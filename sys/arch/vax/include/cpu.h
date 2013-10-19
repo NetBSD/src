@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.95 2012/10/27 17:18:13 chs Exp $      */
+/*      $NetBSD: cpu.h,v 1.96 2013/10/19 19:21:00 christos Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -158,6 +158,7 @@ extern int cpu_printfataltraps;
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, flags)		\
 	do {					\
+		__USE(flags);			\
 		(ci)->ci_want_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
