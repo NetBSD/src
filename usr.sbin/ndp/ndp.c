@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.40 2011/08/31 13:32:38 joerg Exp $	*/
+/*	$NetBSD: ndp.c,v 1.41 2013/10/19 17:16:25 christos Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -357,12 +357,7 @@ set(int argc, char **argv)
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -429,12 +424,7 @@ get(char *host)
 		return;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	dump(&mysin->sin6_addr, 0);
 	if (found_entry == 0) {
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
@@ -468,12 +458,7 @@ delete(char *host)
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	if (rtmsg(RTM_GET) < 0)
 		errx(1, "RTM_GET(%s) failed", host);
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
@@ -500,12 +485,8 @@ delete:
 	if (rtmsg(RTM_DELETE) == 0) {
 		struct sockaddr_in6 s6 = *mysin; /* XXX: for safety */
 
-#ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(&s6.sin6_addr)) {
-			s6.sin6_scope_id = ntohs(*(u_int16_t *)(void *)&s6.sin6_addr.s6_addr[2]);
-			*(u_int16_t *)(void *)&s6.sin6_addr.s6_addr[2] = 0;
-		}
-#endif
+		mysin->sin6_scope_id = 0;
+		inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 		(void)getnameinfo((struct sockaddr *)(void *)&s6,
 		    (socklen_t)s6.sin6_len, host_buf,
 		    sizeof(host_buf), NULL, 0,
@@ -598,13 +579,11 @@ again:;
 			continue;
 		if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(&mysin->sin6_addr)) {
-			/* XXX: should scope id be filled in the kernel? */
-			if (mysin->sin6_scope_id == 0)
+			uint16_t scopeid = mysin->sin6_scope_id;
+			inet6_getscopeid(mysin, INET6_IS_ADDR_LINKLOCAL|
+			    INET6_IS_ADDR_MC_LINKLOCAL);
+			if (scopeid == 0)
 				mysin->sin6_scope_id = sdl->sdl_index;
-#ifdef __KAME__
-			/* KAME specific hack; removed the embedded id */
-			*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] = 0;
-#endif
 		}
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
 		    (socklen_t)mysin->sin6_len,
