@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: util.c,v 1.17 2013/10/19 00:35:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 2013/10/19 00:35:30 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -344,17 +344,3 @@ ifa_any_preferences(const char *ifname, struct ifaddrs *ifap, int family)
 	}
 	return false;
 }
-
-
-#ifdef INET6
-/* KAME idiosyncrasy */
-void
-in6_fillscopeid(struct sockaddr_in6 *sin6)
-{
-	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-		sin6->sin6_scope_id =
-			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
-	}
-}
-#endif /* INET6	*/
