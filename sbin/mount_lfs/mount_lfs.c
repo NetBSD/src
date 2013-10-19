@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.36 2013/10/19 17:04:41 christos Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.37 2013/10/19 23:14:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.36 2013/10/19 17:04:41 christos Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.37 2013/10/19 23:14:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ mount_lfs(int argc, char *argv[])
 {
 	struct ufs_args args;
 	int mntflags;
-	int mntsize, i;
+	int mntsize, oldflags, i;
 	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
 	struct statvfs *mntbuf;
 	const char *errcause;
@@ -163,11 +163,13 @@ mount_lfs(int argc, char *argv[])
 	 * performing the mount, so we can know whether to start or
 	 * kill the cleaner process below.
 	 */
+	oldflags = MNT_RDONLY; /* If not mounted, pretend r/o */
 	if (mntflags & MNT_UPDATE) {
 		if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
 			err(1, "getmntinfo");
 		for (i = 0; i < mntsize; i++) {
 			if (strcmp(mntbuf[i].f_mntfromname, args.fspec) == 0) {
+				oldflags = mntbuf[i].f_flag;
 				break;
 			}
 		}
@@ -204,6 +206,8 @@ mount_lfs(int argc, char *argv[])
 	/* Downgrade to r/o; kill the cleaner */
 	if ((mntflags & MNT_RDONLY) && !(oldflags & MNT_RDONLY))
 		kill_cleaner(fs_name);
+#else
+	__USE(oldflags);
 #endif /* WANT_CLEANER */
 
 	exit(0);
