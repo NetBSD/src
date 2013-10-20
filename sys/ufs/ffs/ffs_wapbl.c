@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.23 2013/10/19 19:29:59 martin Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.24 2013/10/20 00:29:10 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.23 2013/10/19 19:29:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.24 2013/10/20 00:29:10 htodd Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -731,9 +731,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 	daddr_t desired_blks, min_desired_blks;
 	daddr_t freeblks, best_blks;
 	int bpcg, cg, error, fixedsize, indir_blks, n, s;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	if (logsize == 0) {
 		fixedsize = 0;	/* We can adjust the size if tight */

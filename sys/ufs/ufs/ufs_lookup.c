@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.125 2013/09/15 15:08:09 martin Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.126 2013/10/20 00:29:10 htodd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.125 2013/09/15 15:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.126 2013/10/20 00:29:10 htodd Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1068,9 +1068,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	struct direct *ep;
 	struct buf *bp;
 	int error;
-#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(dp->i_ump);
-#endif
 
 	UFS_WAPBL_JLOCK_ASSERT(dvp->v_mount);
 
