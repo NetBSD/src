@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.63 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.64 2013/10/20 17:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -267,7 +267,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	char *buf;
 	size_t rsize;
 	int rc;
-	daddr_t inode_sector;
+	daddr_t inode_sector = 0; /* XXX: gcc */
 #ifdef LIBSA_LFS
 	struct ufs_dinode *dip;
 	int cnt;
@@ -428,7 +428,6 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
 	size_t block_size;
 	int rc;
 
@@ -441,6 +440,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 #endif
 
 	if (file_block != fp->f_buf_blkno) {
+		indp_t disk_block = 0; /* XXX: gcc */
 		rc = block_map(f, file_block, &disk_block);
 		if (rc)
 			return rc;
