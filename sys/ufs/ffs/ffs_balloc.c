@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.59 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.60 2013/10/20 00:29:10 htodd Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.59 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.60 2013/10/20 00:29:10 htodd Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -111,9 +111,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	int32_t *blkp, *allocblk, allociblk[UFS_NIADDR + 1];
 	int32_t *allocib;
 	int unwindidx = -1;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
 	lbn = ffs_lblkno(fs, off);
@@ -528,9 +526,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	daddr_t *blkp, *allocblk, allociblk[UFS_NIADDR + 1];
 	int64_t *allocib;
 	int unwindidx = -1;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 	UVMHIST_FUNC("ffs_balloc"); UVMHIST_CALLED(ubchist);
 
 	lbn = ffs_lblkno(fs, off);
