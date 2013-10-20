@@ -16915,3 +16915,26 @@ Apologies for any names omitted.
 	between different hostnames that resolve to the same IP
 	address.  Found during Postfix 2.11 code maintenance.  File:
 	smtp/smtp_connect.c.
+
+20130518
+
+	Bugfix (introduced: 1997): memory leak after error while
+	forwarding mail through the cleanup server. Viktor found
+	one, Wietse eliminated the rest.  File: local/forward.c.
+
+20130615
+
+	TLS Interoperability: turn on SHA-2 digests by force.  This
+	improves interoperability with clients and servers that
+	deploy SHA-2 digests without the required support for
+	TLSv1.2-style digest negotiation.  Based on patch by Viktor
+	Dukhovni.  Files: tls/tls_client.c, tls/tls_server.c.
+
+20130616
+
+	Workaround: The Postfix SMTP server TLS session cache was
+	broken because OpenSSL now enables session tickets by
+	default, resulting in a different ticket encryption key for
+	each smtpd(8) process.  The workaround turns off session
+	tickets. In 2.11 we'll enable session tickets properly.
+	Viktor Dukhovni. File: tls/tls_server.c.
