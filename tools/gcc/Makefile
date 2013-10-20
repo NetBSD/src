@@ -1,24 +1,9 @@
-#	$NetBSD: Makefile,v 1.58 2013/10/20 17:10:15 skrll Exp $
+#	$NetBSD: Makefile,v 1.59 2013/10/20 17:12:23 skrll Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
-
-MKNATIVE_CONFIG_TARGET_LIBS= \
-	configure-target-libstdc++-v3 \
-	configure-target-libobjc
-
-.if ${HAVE_GCC} == 45
-MKNATIVE_TARGET=	gcc45
-GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
-MKNATIVE_CONFIG_TARGET_LIBS+= \
-	configure-target-libgomp
-.else
-MKNATIVE_TARGET=	gcc4
-.endif
-
-BINENV=		/usr/bin/env -i
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
@@ -69,6 +54,30 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 CONFIGURE_ENV+= gcc_cv_libc_provides_ssp=yes \
 		gcc_cv_as_sparc_gotdata_op=no
 
+ALL_TARGET=	all-gcc
+INSTALL_TARGET=	install-gcc
+
+.include "${.CURDIR}/../Makefile.gmakehost"
+BUILD_MAKE=${TOOL_GMAKE}
+
+#
+# mknative-gcc specific stuff
+#
+MKNATIVE_CONFIG_TARGET_LIBS= \
+	configure-target-libstdc++-v3 \
+	configure-target-libobjc
+
+.if ${HAVE_GCC} == 45
+MKNATIVE_TARGET=	gcc45
+GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libgomp
+.else
+MKNATIVE_TARGET=	gcc4
+.endif
+
+BINENV=		/usr/bin/env -i
+
 MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
@@ -89,16 +98,6 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes \
 			gcc_cv_as_sparc_gotdata_op=no
-
-ALL_TARGET=	all-gcc
-INSTALL_TARGET=	install-gcc
-
-.include "${.CURDIR}/../Makefile.gmakehost"
-BUILD_MAKE=${TOOL_GMAKE}
-
-#
-# mknative-gcc specific stuff
-#
 
 .if ${HAVE_GCC} < 45
 GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
