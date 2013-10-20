@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.9 2013/10/17 12:52:09 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.10 2013/10/20 17:36:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.9 2013/10/17 12:52:09 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.10 2013/10/20 17:36:36 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -65,7 +65,11 @@ __RCSID("$Id: t_unix.c,v 1.9 2013/10/17 12:52:09 christos Exp $");
 #else
 
 #include <atf-c.h>
-#define FAIL(msg, ...)	ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); goto fail
+#define FAIL(msg, ...)	\
+	do { \
+		ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); \
+		goto fail; \
+	} while (/*CONSTCOND*/0)
 
 #endif
 
