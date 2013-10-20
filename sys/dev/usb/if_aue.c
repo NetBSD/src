@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.124 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.124.2.1 2013/10/20 12:49:33 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.124 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.124.2.1 2013/10/20 12:49:33 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -1070,7 +1070,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		}
 		sc->aue_intr_errs++;
 		if (usbd_ratecheck(&sc->aue_rx_notice)) {
-			aprint_error_dev(sc->aue_dev,
+			aprint_debug_dev(sc->aue_dev,
 			    "%u usb errors on intr: %s\n", sc->aue_intr_errs,
 			    usbd_errstr(status));
 			sc->aue_intr_errs = 0;
