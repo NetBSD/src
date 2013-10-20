@@ -11,6 +11,36 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Debian Exim before 4.80-3 interoperability workaround
+-----------------------------------------------------
+
+Debian Exim versions before 4.80-3 may fail to communicate with
+Postfix and possibly other MTAs, with the following Exim SMTP client
+error message:
+
+    TLS error on connection to server-name [server-address]
+    (gnutls_handshake): The Diffie-Hellman prime sent by the server
+    is not acceptable (not long enough)
+
+This problem may affect Debian Exim versions before 4.80-3 that use
+TLS with EDH (Ephemeral Diffie-Hellman) key exchanges. For details
+see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=676563
+
+To restore Postfix SMTP server interoperability with affected Exim
+SMTP clients, configure the Postfix SMTP server to use a 2048-bit
+prime number instead of 1024:
+
+    # cd /etc/postfix
+    # openssl dhparam -out dh2048.pem 2048
+    # postconf -e 'smtpd_tls_dh1024_param_file = ${config_directory}/dh2048.pem'
+
+This change increases the CPU cost of EDH key exchanges (rarely a
+problem for SMTP servers) and is unlikely to cause problems with
+other SMTP client implementations.
+
+This problem should not affect EECDH (Ephemeral Elliptic Curve
+Diffie-Hellman) key exchanges.
+
 Major changes with Postfix 2.8.10
 ---------------------------------
 
