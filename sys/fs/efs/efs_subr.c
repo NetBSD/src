@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.8 2012/12/20 08:03:42 hannken Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.9 2013/10/20 21:12:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.8 2012/12/20 08:03:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.9 2013/10/20 21:12:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -350,7 +350,9 @@ efs_inode_lookup(struct efs_mount *emp, struct efs_inode *ei,
 	int ret;
 	
 	KASSERT(VOP_ISLOCKED(ei->ei_vp));
+#ifdef DIAGNOSTIC
 	KASSERT(efs_is_inode_synced(ei) == 0);
+#endif
 	KASSERT((ei->ei_mode & S_IFMT) == S_IFDIR);
 
 	efs_extent_iterator_init(&exi, ei, 0);
