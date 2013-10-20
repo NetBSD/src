@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.3 2013/10/20 03:09:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -65,10 +65,8 @@ static	int	hex_readip(mb, ifn, dir)
 	char	line[513];
 	ip_t	*ip;
 	char	*buf;
-	int	cnt;
 
 	buf = (char *)mb->mb_buf;
-	cnt = sizeof(mb->mb_buf);
 	/*
 	 * interpret start of line as possibly "[ifname]" or
 	 * "[in/out,ifname]".
