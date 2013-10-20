@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.141 2013/10/19 19:20:50 martin Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.142 2013/10/20 00:00:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.141 2013/10/19 19:20:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.142 2013/10/20 00:00:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1092,9 +1092,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size, int flags)
 	daddr_t blkno;
 	int error, frags, allocsiz, i;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	ump = ip->i_ump;
 
