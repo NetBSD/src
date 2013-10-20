@@ -1,4 +1,4 @@
-/*	$NetBSD: w83795g.c,v 1.1.2.2 2013/08/10 22:50:56 riz Exp $	*/
+/*	$NetBSD: w83795g.c,v 1.1.2.3 2013/10/20 13:36:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83795g.c,v 1.1.2.2 2013/08/10 22:50:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83795g.c,v 1.1.2.3 2013/10/20 13:36:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,6 @@ w83795g_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sensors[i].units = sensors[i].type;
 		sc->sc_sensors[i].state = ENVSYS_SINVALID;
 		sc->sc_sensors[i].flags = ENVSYS_FMONLIMITS;
-		sc->sc_sensors[i].flags |= ENVSYS_FHAS_ENTROPY;
 		sc->sc_sensors[i].private = i;
 		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[i]);
 	}
