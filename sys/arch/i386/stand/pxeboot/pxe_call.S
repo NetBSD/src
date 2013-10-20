@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe_call.S,v 1.3 2003/02/01 14:48:19 dsl Exp $	*/
+/*	$NetBSD: pxe_call.S,v 1.4 2013/10/20 00:16:16 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -88,10 +88,10 @@ ENTRY(pxecall_pxenv)
 	movl	8(%ebp), %ebx
 
 	call	_C_LABEL(prot_to_real)		# enter real mode
+	/* prot_to_real() has already set %es to BOOTSEG */
+	lea	_C_LABEL(pxe_command_buf), %edi
 	.code16
 
-	/* prot_to_real() has already set %es to BOOTSEG */
-	lea	_C_LABEL(pxe_command_buf), %di
 
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
 	lcall	$0, $0xffff
