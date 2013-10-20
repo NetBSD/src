@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.125 2013/08/18 07:57:27 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.126 2013/10/20 09:30:41 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.125 2013/08/18 07:57:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.126 2013/10/20 09:30:41 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2871,7 +2871,7 @@ arm10_setup(char *args)
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
+	cpu_control(cpuctrlmask, cpuctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
@@ -2930,7 +2930,7 @@ arm11_setup(char *args)
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
+	cpu_control(cpuctrlmask, cpuctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
