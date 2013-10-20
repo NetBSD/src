@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.4 2013/10/20 17:14:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -129,7 +129,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.4 2013/10/20 17:14:05 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp";
 #endif
@@ -1147,7 +1147,9 @@ ipf_auth_reply(ipf_main_softc_t *softc, ipf_auth_softc_t *softa, char *data)
 	frauth_t auth, *au = &auth, *fra;
 	fr_info_t fin;
 	int error, i;
+#ifdef _KERNEL
 	mb_t *m;
+#endif
 	SPL_INT(s);
 
 	error = ipf_inobj(softc, data, NULL, &auth, IPFOBJ_FRAUTH);
@@ -1179,9 +1181,11 @@ ipf_auth_reply(ipf_main_softc_t *softc, ipf_auth_softc_t *softa, char *data)
 		return ESRCH;
 	}
 
-	m = softa->ipf_auth_pkts[i];
 	fra->fra_index = -2;
 	fra->fra_pass = au->fra_pass;
+#ifdef	_KERNEL
+	m = softa->ipf_auth_pkts[i];
+#endif
 	softa->ipf_auth_pkts[i] = NULL;
 	softa->ipf_auth_replies++;
 	bcopy(&fra->fra_info, &fin, sizeof(fin));
