@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.115 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.116 2013/10/20 00:29:10 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.115 2013/06/23 07:28:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.116 2013/10/20 00:29:10 htodd Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -555,9 +555,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	int64_t blkcount, factor, blocksreleased = 0;
 	int nblocks;
 	int error = 0, allerror = 0;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 #define RBAP(ip, i) (((ip)->i_ump->um_fstype == UFS1) ? \
 	    ufs_rw32(bap1[i], needswap) : ufs_rw64(bap2[i], needswap))
 #define BAP_ASSIGN(ip, i, value)					\
