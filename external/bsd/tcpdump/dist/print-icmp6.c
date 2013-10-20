@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.86 2008-02-05 19:36:13 guy Exp ";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.4 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.5 2013/10/20 02:58:34 christos Exp $");
 #endif
 #endif
 
@@ -679,9 +679,7 @@ static void
 icmp6_opt_print(const u_char *bp, int resid)
 {
 	const struct nd_opt_hdr *op;
-	const struct nd_opt_hdr *opl;	/* why there's no struct? */
 	const struct nd_opt_prefix_info *opp;
-	const struct icmp6_opts_redirect *opr;
 	const struct nd_opt_mtu *opm;
 	const struct nd_opt_rdnss *oprd;
 	const struct nd_opt_advinterval *opa;
@@ -717,12 +715,10 @@ icmp6_opt_print(const u_char *bp, int resid)
 
 		switch (op->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
-			opl = (struct nd_opt_hdr *)op;
 			l = (op->nd_opt_len << 3) - 2;
 			print_lladdr(cp + 2, l);
 			break;
 		case ND_OPT_TARGET_LINKADDR:
-			opl = (struct nd_opt_hdr *)op;
 			l = (op->nd_opt_len << 3) - 2;
 			print_lladdr(cp + 2, l);
 			break;
@@ -738,7 +734,6 @@ icmp6_opt_print(const u_char *bp, int resid)
                         printf(", pref. time %ss", get_lifetime(EXTRACT_32BITS(&opp->nd_opt_pi_preferred_time)));
 			break;
 		case ND_OPT_REDIRECTED_HEADER:
-			opr = (struct icmp6_opts_redirect *)op;
                         print_unknown_data(bp,"\n\t    ",op->nd_opt_len<<3);
 			/* xxx */
 			break;

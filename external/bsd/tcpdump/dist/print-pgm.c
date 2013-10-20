@@ -19,7 +19,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.5 2005-06-07 22:05:58 guy Exp ";
 #else
-__RCSID("$NetBSD: print-pgm.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-pgm.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 #endif
 #endif
 
@@ -176,7 +176,7 @@ pgm_print(register const u_char *bp, register u_int length,
 #else
 	char nla_buf[INET_ADDRSTRLEN];
 #endif
-	u_int8_t opt_type, opt_len, flags1, flags2;
+	u_int8_t opt_type, opt_len;
 	u_int32_t seq, opts_len, len, offset;
 
 	pgm = (struct pgm_header *)bp;
@@ -550,8 +550,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_FRAGMENT option, length %u != 16]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    offset = EXTRACT_32BITS(bp);
@@ -563,8 +562,7 @@ pgm_print(register const u_char *bp, register u_int length,
 		    break;
 
 		case PGM_OPT_NAK_LIST:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    opt_len -= sizeof(u_int32_t);	/* option header */
 		    (void)printf(" NAK LIST");
 		    while (opt_len) {
@@ -585,8 +583,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_JOIN option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" JOIN %u", seq);
@@ -598,8 +595,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NAK_BO_IVL option, length %u != 12]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    seq = EXTRACT_32BITS(bp);
@@ -613,8 +609,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NAK_BO_RNG option, length %u != 12]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    seq = EXTRACT_32BITS(bp);
@@ -624,8 +619,7 @@ pgm_print(register const u_char *bp, register u_int length,
 		    break;
 
 		case PGM_OPT_REDIRECT:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    switch (EXTRACT_16BITS(bp)) {
 		    case AFI_IP:
 			addr_size = sizeof(struct in_addr);
@@ -660,8 +654,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_PARITY_PRM option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    len = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY MAXTGS %u", len);
@@ -673,8 +666,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_PARITY_GRP option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    seq = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY GROUP %u", seq);
@@ -686,8 +678,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_CURR_TGSIZE option, length %u != 8]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    len = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    (void)printf(" PARITY ATGS %u", len);
@@ -699,8 +690,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_NBR_UNREACH option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" NBR_UNREACH");
 		    opts_len -= 4;
 		    break;
@@ -716,8 +706,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_SYN option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" SYN");
 		    opts_len -= 4;
 		    break;
@@ -727,8 +716,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_FIN option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" FIN");
 		    opts_len -= 4;
 		    break;
@@ -738,8 +726,7 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_RST option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" RST");
 		    opts_len -= 4;
 		    break;
@@ -755,15 +742,13 @@ pgm_print(register const u_char *bp, register u_int length,
 			(void)printf("[Bad OPT_CRQST option, length %u != 4]", opt_len);
 			return;
 		    }
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    (void)printf(" CRQST");
 		    opts_len -= 4;
 		    break;
 
 		case PGM_OPT_PGMCC_DATA:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    switch (EXTRACT_16BITS(bp)) {
@@ -796,8 +781,7 @@ pgm_print(register const u_char *bp, register u_int length,
 		    break;
 
 		case PGM_OPT_PGMCC_FEEDBACK:
-		    flags1 = *bp++;
-		    flags2 = *bp++;
+		    bp += 2;	/* skip flags */
 		    offset = EXTRACT_32BITS(bp);
 		    bp += sizeof(u_int32_t);
 		    switch (EXTRACT_16BITS(bp)) {
