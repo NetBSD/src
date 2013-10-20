@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.72 2013/10/20 14:14:18 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.73 2013/10/20 14:55:28 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -622,6 +622,7 @@ get_gcc () {
 			getvars libcpp/Makefile \
 				libcpp_a_OBJS
 			;;
+		esac
 		getvars gcc/Makefile \
 			ENABLE_SHARED
 		case ${_subdir} in
