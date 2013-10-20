@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.8 2011/10/07 10:42:54 joerg Exp $	*/
+/*	$NetBSD: auth.c,v 1.9 2013/10/20 21:16:05 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.112 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.8 2011/10/07 10:42:54 joerg Exp $");
+__RCSID("$NetBSD: auth.c,v 1.9 2013/10/20 21:16:05 christos Exp $");
 #endif
 #endif
 
@@ -565,12 +565,9 @@ link_required(unit)
 void start_link(unit)
     int unit;
 {
-    char *msg;
-
     new_phase(PHASE_SERIALCONN);
 
     devfd = the_channel->connect();
-    msg = "Connect script failed";
     if (devfd < 0)
 	goto fail;
 
@@ -583,7 +580,6 @@ void start_link(unit)
      * gives us.  Thus we don't need the tdb_writelock/tdb_writeunlock.
      */
     fd_ppp = the_channel->establish_ppp(devfd);
-    msg = "ppp establishment failed";
     if (fd_ppp < 0) {
 	status = EXIT_FATAL_ERROR;
 	goto disconnect;
