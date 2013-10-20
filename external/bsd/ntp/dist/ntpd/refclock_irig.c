@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_irig.c,v 1.1.1.2 2012/01/31 21:24:51 kardel Exp $	*/
+/*	$NetBSD: refclock_irig.c,v 1.2 2013/10/20 02:47:38 christos Exp $	*/
 
 /*
  * refclock_irig - audio IRIG-B/E demodulator/decoder
@@ -983,10 +983,8 @@ irig_poll(
 	)
 {
 	struct refclockproc *pp;
-	struct irigunit *up;
 
 	pp = peer->procptr;
-	up = (struct irigunit *)pp->unitptr;
 
 	if (pp->coderecv == pp->codeproc) {
 		refclock_report(peer, CEVNT_TIMEOUT);
