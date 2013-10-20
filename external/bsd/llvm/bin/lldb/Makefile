@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:11:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/20 14:53:22 joerg Exp $
 
 PROG_CXX=	lldb
 NOMAN=		yes
@@ -8,7 +8,10 @@ NOMAN=		yes
 .PATH: ${LLDB_SRCDIR}/tools/driver
 
 SRCS=	Driver.cpp \
-	IOChannel.cpp
+	ELWrapper.cpp \
+	GetOptWrapper.cpp \
+	IOChannel.cpp \
+	Platform.cpp
 
 CPPFLAGS.Driver.cpp+=	-Dgetopt_long_only=getopt_long
 
@@ -55,6 +58,7 @@ LLDB_LIBS+= \
 	PluginPlatformLinux \
 	PluginPlatformMacOSX \
 	PluginPlatformPOSIX \
+	PluginPlatformWindows \
 	PluginProcessElfCore \
 	PluginProcessNetBSD \
 	PluginProcessPOSIX \

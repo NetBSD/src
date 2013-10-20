@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2013/09/29 12:11:59 joerg Exp $
+# $NetBSD: Makefile,v 1.35 2013/10/20 14:53:22 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -197,6 +197,7 @@ SUBDIR+= \
 	liblldbPluginPlatformLinux \
 	liblldbPluginPlatformMacOSX \
 	liblldbPluginPlatformPOSIX \
+	liblldbPluginPlatformWindows \
 	liblldbPluginProcessElfCore \
 	liblldbPluginProcessNetBSD \
 	liblldbPluginProcessGDBRemote \
