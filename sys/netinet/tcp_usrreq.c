@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.162.2.1 2012/03/17 19:51:45 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.162.2.1.6.1 2013/10/20 13:29:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162.2.1 2012/03/17 19:51:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162.2.1.6.1 2013/10/20 13:29:44 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1168,18 +1168,20 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 static inline int
 copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
 {
-	size_t sz;
-	int error;
-	uid_t uid;
-
-	uid = kauth_cred_geteuid(sockp->so_cred);
 	if (oldp) {
+		size_t sz;
+		uid_t uid;
+		int error;
+
+		if (sockp->so_cred == NULL)
+			return EPERM;
+
+		uid = kauth_cred_geteuid(sockp->so_cred);
 		sz = MIN(sizeof(uid), *oldlenp);
-		error = copyout(&uid, oldp, sz);
-		if (error)
+		if ((error = copyout(&uid, oldp, sz)) != 0)
 			return error;
 	}
-	*oldlenp = sizeof(uid);
+	*oldlenp = sizeof(uid_t);
 	return 0;
 }
 
