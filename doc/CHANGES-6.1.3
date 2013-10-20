@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.3,v 1.1.2.2 2013/10/12 19:00:10 jdc Exp $
+# $NetBSD: CHANGES-6.1.3,v 1.1.2.3 2013/10/20 13:49:59 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -20,4 +20,31 @@ xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4
 	the original structure before jumping to the cleanup code that
 	references *c.
 	[spz, ticket #966]
+
+sys/arch/x86/pci/pci_machdep.c			1.61 via patch
+
+	Force PCI mode 1 when running under QEMU, to work around
+	QEMU bug 897771.
+	This should also make it possible to boot NetBSD under versions of KVM
+	that have inherited said QEMU bug.  Fixes PR kern/45671.
+	[gson, ticket #963]
+
+sys/netinet/tcp_usrreq.c			1.168
+
+	PR/48098: Brian Marcotte: Avoid kernel assertion for embryonic sockets
+	that don't have credentials yet.
+	[spz, ticket #967]
+
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile 1.11
+
+	Add missing i810_dri.c file to SRCS.
+	PR xsrc/48315.
+	[martin, ticket #971]
+
+distrib/utils/sysinst/mbr.c			1.92
+
+	Add missing braces, which caused the offset of MBR partition 0 to be
+	unintentionally set to 2048 even on small (<=128GB) disks.
+	PR/48304.
+	[tsutsui, ticket #972]
 
