@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.71 2013/06/28 08:30:10 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.72 2013/10/20 14:14:18 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -556,7 +556,7 @@ get_libstdcxx_v3 () {
 	} | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
 
-##### gnu/usr.bin/gcc3 #####
+##### gnu/usr.bin/gcc* #####
 
 get_gcc_bootstrap () {
 	_subdir="$1"
@@ -622,11 +622,6 @@ get_gcc () {
 			getvars libcpp/Makefile \
 				libcpp_a_OBJS
 			;;
-		gcc3)
-			getvars gcc/Makefile \
-				LIBCPP_OBJS LIBCPP_H
-			;;
-		esac
 		getvars gcc/Makefile \
 			ENABLE_SHARED
 		case ${_subdir} in
@@ -697,11 +692,6 @@ __EOF__
 
 case "$1" in
 # .mk and .h files for libgcc bootstrap (from host build)
-libgcc)
-	get_libgcc gcc3
-	get_crtstuff crtstuff3
-	exit 0
-	;;
 
 libgcc4)
 	get_libgcc gcc4
