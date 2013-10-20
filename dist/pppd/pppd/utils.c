@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 2010/04/03 02:08:30 pgoyette Exp $	*/
+/*	$NetBSD: utils.c,v 1.6 2013/10/20 21:16:05 christos Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.24 2004/11/04 10:02:26 paulus Exp"
 #else
-__RCSID("$NetBSD: utils.c,v 1.5 2010/04/03 02:08:30 pgoyette Exp $");
+__RCSID("$NetBSD: utils.c,v 1.6 2013/10/20 21:16:05 christos Exp $");
 #endif
 #endif
 
@@ -625,10 +625,9 @@ logit(level, fmt, args)
     char *fmt;
     va_list args;
 {
-    int n;
     char buf[1024];
 
-    n = vslprintf(buf, sizeof(buf), fmt, args);
+    (void)vslprintf(buf, sizeof(buf), fmt, args);
     log_write(level, buf);
 }
 
