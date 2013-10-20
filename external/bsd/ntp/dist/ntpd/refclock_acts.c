@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.4 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.5 2013/10/20 02:47:38 christos Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -638,7 +638,6 @@ acts_poll (
 	struct peer *peer
 	)
 {
-	struct actsunit *up;
 	struct refclockproc *pp;
 
 	/*
@@ -647,7 +646,6 @@ acts_poll (
 	 * the timeout routine and state machine.
 	 */
 	pp = peer->procptr;
-	up = (struct actsunit *)pp->unitptr;
 	switch (peer->ttl) {
 
 	/*

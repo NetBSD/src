@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.6 2012/02/01 07:46:22 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.7 2013/10/20 02:47:38 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -2507,7 +2507,7 @@ oncore_msg_Bl(
 	size_t	len
 	)
 {
-	int	chan, id, subframe, valid, page, i, j, tow;
+	int	subframe, valid, page, i, j, tow;
 	int	day_now, day_lsf;
 	const char *cp = NULL /* XXX gcc */;
 	char Msg[120];
@@ -2521,8 +2521,6 @@ oncore_msg_Bl(
 	day_now = day_lsf = 0;
 	cp = NULL;      /* keep gcc happy */
 
-	chan = buf[4] & 0377;
-	id   = buf[5] & 0377;
 	subframe = buf[6] & 017;
 	valid = (buf[6] >> 4) & 017;
 	page = buf[7];
