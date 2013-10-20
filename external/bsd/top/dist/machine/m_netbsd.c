@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $
+ * $Id: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.17 2013/01/03 10:12:36 para Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.18 2013/10/20 03:02:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -587,7 +587,6 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 	int show_idle;
 	int show_system;
 	int show_uid;
-	int show_command;
 
 	static struct handle handle;
 
@@ -627,7 +626,6 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
-	show_command = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -687,7 +685,6 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	int show_idle;
 	int show_system;
 	int show_uid;
-	int show_command;
 
 	static struct handle handle;
 
@@ -739,7 +736,6 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	show_idle = sel->idle;
 	show_system = sel->system;
 	show_uid = sel->uid != -1;
-	show_command = sel->command != NULL;
 
 	/* count up thread states and get pointers to interesting threads */
 	total_lwps = 0;
