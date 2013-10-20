@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.3 2006/06/29 21:50:17 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.4 2013/10/20 21:16:05 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -40,7 +40,7 @@
 #if 0
 #define RCSID	"Id: cbcp.c,v 1.17 2006/05/22 00:04:07 paulus Exp"
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.3 2006/06/29 21:50:17 christos Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.4 2013/10/20 21:16:05 christos Exp $");
 #endif
 #endif
 
@@ -291,6 +291,7 @@ cbcp_printpkt(p, plen, printer, arg)
 		char str[256];
 
 		GETCHAR(addrt, p);
+		__USE(addrt);
 		memcpy(str, p, olen - 4);
 		str[olen - 4] = 0;
 		printer(arg, " number = %s", str);
@@ -335,8 +336,10 @@ cbcp_recvreq(us, pckt, pcktlen)
 	    break;
 	}
 
-	if (opt_len > 2)
+	if (opt_len > 2) {
 	    GETCHAR(delay, pckt);
+	    __USE(delay);
+	}
 
 	us->us_allowed |= (1 << type);
 
@@ -349,6 +352,7 @@ cbcp_recvreq(us, pckt, pcktlen)
 	    dbglog("user callback allowed");
 	    if (opt_len > 4) {
 	        GETCHAR(addr_type, pckt);
+		__USE(addr_type);
 		memcpy(address, pckt, opt_len - 4);
 		address[opt_len - 4] = 0;
 		if (address[0])
@@ -471,11 +475,14 @@ cbcp_recvack(us, pckt, len)
 	GETCHAR(opt_len, pckt);
 	if (opt_len >= 2 && opt_len <= len) {
      
-	    if (opt_len > 2)
+	    if (opt_len > 2) {
 		GETCHAR(delay, pckt);
+		__USE(delay);
+	    }
 
 	    if (opt_len > 4) {
 		GETCHAR(addr_type, pckt);
+		__USE(addr_type);
 		memcpy(address, pckt, opt_len - 4);
 		address[opt_len - 4] = 0;
 		if (address[0])
