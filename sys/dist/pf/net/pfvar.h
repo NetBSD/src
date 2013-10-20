@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.20 2012/01/11 14:37:45 drochner Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.21 2013/10/20 21:05:47 christos Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -1216,6 +1216,12 @@ struct pf_pdesc {
 	do { \
 		if ((a) != NULL) \
 			*(a) = (x); \
+		if (x < PFRES_MAX) \
+			pf_status.counters[x]++; \
+	} while (0)
+#define REASON_SET_NOPTR(a, x) \
+	do { \
+		*(a) = (x); \
 		if (x < PFRES_MAX) \
 			pf_status.counters[x]++; \
 	} while (0)
