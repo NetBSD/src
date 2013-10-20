@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.54 2012/02/15 16:30:29 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.54.2.1 2013/10/20 13:16:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54 2012/02/15 16:30:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54.2.1 2013/10/20 13:16:57 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -522,6 +522,7 @@ pci_mode_detect(void)
 	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
+	extern char cpu_brand_string[];
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -550,6 +551,13 @@ pci_mode_detect(void)
 #endif
 			return (pci_mode);
 		}
+	}
+        if (memcmp(cpu_brand_string, "QEMU", 4) == 0) {
+		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
+#ifdef DEBUG
+		printf("forcing PCI mode 1 for QEMU\n");
+#endif
+		return (pci_mode);
 	}
 
 	/*
