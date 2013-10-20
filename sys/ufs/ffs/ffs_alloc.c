@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.142 2013/10/20 00:00:51 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.143 2013/10/20 00:20:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.142 2013/10/20 00:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.143 2013/10/20 00:20:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1206,9 +1206,7 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref, int flags)
 	daddr_t blkno;
 	int32_t bno;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(mutex_owned(&ip->i_ump->um_lock));
 
@@ -1285,9 +1283,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	int32_t initediblk;
 	daddr_t nalloc;
 	struct ufs2_dinode *dp2;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(mutex_owned(&ump->um_lock));
 	UFS_WAPBL_JLOCK_ASSERT(ip->i_ump->um_mountp);
@@ -1557,9 +1553,7 @@ ffs_blkfree_cg(struct fs *fs, struct vnode *devvp, daddr_t bno, long size)
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(!devvp_is_snapshot);
 
@@ -1829,9 +1823,7 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(devvp_is_snapshot);
 
@@ -1992,9 +1984,7 @@ ffs_freefile(struct mount *mp, ino_t ino, int mode)
 	int error, cg;
 	daddr_t cgbno;
 	dev_t dev;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	cg = ino_to_cg(fs, ino);
 	devvp = ump->um_devvp;
@@ -2031,9 +2021,7 @@ ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	int error, cg;
 	daddr_t cgbno;
 	dev_t dev;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	KASSERT(devvp->v_type != VBLK);
 
@@ -2069,9 +2057,7 @@ ffs_freefile_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
 	int cg;
 	struct cg *cgp;
 	u_int8_t *inosused;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	cg = ino_to_cg(fs, ino);
 	cgp = (struct cg *)bp->b_data;
@@ -2159,9 +2145,7 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 	int blk, field, subfield, pos;
 	int ostart, olen;
 	u_int8_t *blksfree;
-#ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	/* KASSERT(mutex_owned(&ump->um_lock)); */
 
