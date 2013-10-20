@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.54 2013/10/12 18:59:58 jdc Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.55 2013/10/20 13:48:56 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -819,4 +819,119 @@ xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4
 	the original structure before jumping to the cleanup code that
 	references *c.
 	[spz, ticket #966]
+
+sys/dev/usb/if_aue.c				1.131
+
+	Change one aprint_error_dev(9) to aprint_debug_dev(9) to avoid console
+	spam.
+	[tsutsui, ticket #956]
+
+sys/arch/i386/stand/lib/vbe.c                   1.8
+ 
+	The 'vesa' command can take 'list' flag so mention it
+	in an error message.
+	[tsutsui, ticket #957]  
+
+sys/arch/hp300/hp300/pmap_bootstrap.c		1.58
+
+	Fix a build error on a kernel config without 68040 machines.
+	[tsutsui, ticket #958]
+
+external/ibm-public/postfix/dist/HISTORY			patch
+external/ibm-public/postfix/dist/RELEASE_NOTES			patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/local/forward.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_client.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_server.c		patch
+
+	Update postfix to version 2.8.16:
+	- TLS Interoperability workaround: turn on SHA-2 digests by
+	  force. This improves interoperability with clients and servers that
+	  deploy SHA-2 digests without the required support for TLSv1.2-style
+	  digest negotiation.
+	- TLS Performance workaround: the Postfix SMTP server TLS session
+	  cache had become ineffective because recent OpenSSL versions enable
+	  session tickets by default, resulting in a different ticket
+	  encryption key for each smtpd(8) process. The workaround turns off
+	  session tickets. Postfix 2.11 will enable session tickets properly.
+	- TLS Interoperability workaround: Debian Exim versions before 4.80-3
+	  may fail to communicate with Postfix and possibly other MTAs, with
+	  the following Exim SMTP client error message:
+	  TLS error on connection to server-name [server-address]
+	  (gnutls_handshake):
+	 
+		The Diffie-Hellman prime sent by the server is not acceptable
+		(not long  enough)
+
+	  See the RELEASE_NOTES file for a Postfix SMTP server configuration
+	  workaround.
+	- Bugfix (defect introduced: 1997): memory leak while forwarding mail
+	  with the local(8) delivery agent, in code that handles a cleanup(8)
+	  server error.  
+	[tron, ticket #961]
+
+gnu/dist/texinfo/util/texi2dvi			1.10
+
+	Remove trailing whitespace in texi2dvi which confuses sed.
+	[riastradh, ticket #962]
+
+sys/arch/x86/pci/pci_machdep.c			1.61 via patch
+
+	Force PCI mode 1 when running under QEMU, to work around
+	QEMU bug 897771.
+	This should also make it possible to boot NetBSD under versions of KVM
+	that have inherited said QEMU bug.  Fixes PR kern/45671.
+	[gson, ticket #963]
+
+usr.sbin/eeprom/eehandlers.c			1.16
+
+	PR/47528: Izumi Tsutsui: eeprom(8) dumps core after 64 bit time_t
+	changes
+	[dholland, ticket #964]
+
+share/man/man4/man4.x86/vmt.4			1.4
+sys/arch/x86/x86/vmt.c				1.8
+
+	Add periodic clock synchronization to vmt(4) so that the guest clock
+	remains synchronized even when the host is suspended (which is a very
+	typical situation in a laptop).
+
+	Do this by default once per minute, but provide a sysctl to tune this
+	value (machdep.vmt0.clock_sync.period).
+
+	[pettai, ticket #965]
+
+sys/netinet/tcp_usrreq.c			1.168
+
+	PR/48098: Brian Marcotte: Avoid kernel assertion for embryonic sockets
+	that don't have credentials yet.
+	[spz, ticket #967]
+
+usr.bin/systat/keyboard.c                       1.25
+ 
+	Fix typo that made '?' an erase char instead of DEL as intended.
+	[dholland, ticket #968] 
+
+sys/dev/i2c/w83795g.c				patch
+
+	Make this driver compile on the netbsd-6 branch (fix ticket #929).
+	[simonb, ticket #970]
+
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile 1.11
+
+	Add missing i810_dri.c file to SRCS.
+	PR xsrc/48315.
+	[martin, ticket #971]
+
+distrib/utils/sysinst/mbr.c			1.92
+
+	Add missing braces, which caused the offset of MBR partition 0 to be
+	unintentionally set to 2048 even on small (<=128GB) disks.
+	PR/48304.
+	[tsutsui, ticket #972]
+
+sys/arch/hp700/hp700/autoconf.c			1.51
+
+	Remember to unmap pagezero once we've finished with it.
+	[skrll, ticket #973]
 
