@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.8 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.9 2013/10/20 17:18:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -204,7 +204,6 @@ int
 chfs_mountfs(struct vnode *devvp, struct mount *mp)
 {
 	struct lwp *l = curlwp;
-	struct proc *p;
 	kauth_cred_t cred;
 	devmajor_t flash_major;
 	dev_t dev;
@@ -216,7 +215,6 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	dbg("mountfs()\n");
 
 	dev = devvp->v_rdev;
-	p = l ? l->l_proc : NULL;
 	cred = l ? l->l_cred : NOCRED;
 
 	/* Flush out any old buffers remaining from a previous use. */
