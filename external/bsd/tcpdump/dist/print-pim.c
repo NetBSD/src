@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 #endif
 #endif
 
@@ -126,7 +126,7 @@ static void pimv2_print(register const u_char *bp, register u_int len, u_int cks
 static void
 pimv1_join_prune_print(register const u_char *bp, register u_int len)
 {
-	int maddrlen, addrlen, ngroups, njoin, nprune;
+	int addrlen, maddrlen, ngroups, njoin, nprune;
 	int njp;
 
 	/* If it's a single group and a single source, use 1-line output. */
@@ -177,6 +177,8 @@ pimv1_join_prune_print(register const u_char *bp, register u_int len)
 		 * XXX - does the address have length "addrlen" and the
 		 * mask length "maddrlen"?
 		 */
+		__USE(addrlen);
+		__USE(maddrlen);
 		TCHECK2(bp[0], sizeof(struct in_addr));
 		(void)printf("\n\tGroup: %s", ipaddr_string(bp));
 		TCHECK2(bp[4], sizeof(struct in_addr));

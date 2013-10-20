@@ -39,7 +39,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.21 2007-09-13 18:03:49 guy Exp  (NETLAB/PEL)";
 #else
-__RCSID("$NetBSD: print-sctp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.4 2013/10/20 02:58:34 christos Exp $");
 #endif
 #endif
 
@@ -349,10 +349,6 @@ void sctp_print(const u_char *bp,        /* beginning of sctp packet */
 	  }
 	case SCTP_HEARTBEAT_REQUEST :
 	  {
-	    const struct sctpHBsender *hb;
-
-	    hb=(const struct sctpHBsender*)chunkDescPtr;
-
 	    printf("[HB REQ] ");
 
 	    break;
