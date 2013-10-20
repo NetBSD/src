@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.18 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.19 2013/10/20 17:17:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -341,7 +341,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct m_ext2fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
+	indp_t disk_block = 0;	/* XXX: gcc */
 	size_t block_size;
 	int rc;
 
