@@ -1394,11 +1394,10 @@ roff_expand_nr(struct roff *r, const char *src, int *sp, size_t slen,
 {
 	uint32_t	 hv;
 	struct roff_nr	*h;
-	int		 l, s, d;
+	int		 l, s;
 	char		 e, *key;
 
 	s = *sp + 2;	/* skip \\\n */
-	d = *dp;
 
 	if ('[' == src[s]) {		/* XXX: Support builtins */
 		s++;
