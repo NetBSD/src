@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.22 2012/11/03 12:45:28 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.23 2013/10/20 17:13:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.22 2012/11/03 12:45:28 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.23 2013/10/20 17:13:18 christos Exp $");
 
 #include "locators.h"
 
@@ -863,7 +863,7 @@ nand_markbad(device_t self, size_t offset)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_off_t blockoffset, marker;
+	flash_off_t blockoffset;
 #ifdef NAND_BBT
 	flash_off_t block;
 
@@ -872,7 +872,6 @@ nand_markbad(device_t self, size_t offset)
 	nand_bbt_block_markbad(self, block);
 #endif
 	blockoffset = offset & chip->nc_block_mask;
-	marker = chip->nc_badmarker_offs & ~0x01;
 
 	/* check if it is already marked bad */
 	if (nand_isbad(self, blockoffset))
