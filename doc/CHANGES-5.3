@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.33 2013/10/13 07:26:13 jdc Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.34 2013/10/20 14:06:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -592,4 +592,30 @@ xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4 via patch
 	the original structure before jumping to the cleanup code that
 	references *c.
 	[spz, ticket #966]
+
+lib/libpthread/pthread.c			1.137 via patch
+
+	return errno if pthread_create hits the system limit, not just -1
+	[riastradh, ticket #1881]
+
+gnu/dist/texinfo/util/texi2dvi			1.10
+
+	Remove trailing whitespace in texi2dvi which confuses sed.
+	[riastradh, ticket #1882]
+
+common/lib/libc/sys/cpuset.c			1.16
+
+	_cpuset_create: initialize size argument for sysctl call.
+	From PR/43837 by Sandy Snaman.
+	[dholland, ticket #1883]
+
+usr.bin/systat/keyboard.c			1.25
+
+	Fix typo that made '?' an erase char instead of DEL as intended.
+	[dholland, ticket #1885]
+
+sys/arch/hp700/hp700/autoconf.c			1.51
+
+	Remember to unmap pagezero once we've finished with it.
+	[skrll, ticket #1886]
 
