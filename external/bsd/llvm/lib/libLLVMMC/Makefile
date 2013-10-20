@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2013/10/20 14:53:23 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -11,6 +11,7 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCAsmInfo.cpp \
 	MCAsmInfoCOFF.cpp \
 	MCAsmInfoDarwin.cpp \
+	MCAsmInfoELF.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCAtom.cpp \
