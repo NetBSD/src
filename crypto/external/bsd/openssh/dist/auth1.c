@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.6 2013/03/29 16:19:44 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.7 2013/10/20 03:34:58 christos Exp $	*/
 /* $OpenBSD: auth1.c,v 1.77 2012/12/02 20:34:09 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.6 2013/03/29 16:19:44 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.7 2013/10/20 03:34:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -162,7 +162,7 @@ auth1_process_kerberos(Authctxt *authctxt, char *info, size_t infolen)
 
 		if (PRIVSEP(auth_krb4(authctxt, &tkt, &client_user, &reply))) {
 			authenticated = 1;
-			snprintf(info, sizeof(info), " tktuser %.100s",
+			snprintf(info, infolen, " tktuser %.100s",
 			    client_user);
 
 			packet_start(SSH_SMSG_AUTH_KERBEROS_RESPONSE);
@@ -182,7 +182,7 @@ auth1_process_kerberos(Authctxt *authctxt, char *info, size_t infolen)
 
 		if (PRIVSEP(auth_krb5(authctxt, &tkt, &client_user, &reply))) {
 			authenticated = 1;
-			snprintf(info, sizeof(info), " tktuser %.100s",
+			snprintf(info, infolen, " tktuser %.100s",
 			    client_user);
 
 			/* Send response to client */
