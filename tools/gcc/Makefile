@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2013/07/18 22:00:48 matt Exp $
+#	$NetBSD: Makefile,v 1.58 2013/10/20 17:10:15 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -20,8 +20,6 @@ MKNATIVE_TARGET=	gcc4
 
 BINENV=		/usr/bin/env -i
 
-VAX_CONFIGURE_ARGS=
-
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
 .else
@@ -38,7 +36,6 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD nb1 20120916" \
 			--with-system-zlib \
-			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
