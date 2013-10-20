@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.119 2007-08-08 14:06:34 hannes Exp  (LBL)";
 #endif
-__RCSID("$NetBSD: addrtoname.c,v 1.3 2013/04/06 19:33:07 christos Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.4 2013/10/20 02:58:24 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -281,9 +281,11 @@ getname6(const u_char *ap)
 	static struct h6namemem *p;		/* static for longjmp() */
 	register const char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
+	uint16_t h;
 
 	memcpy(&addr, ap, sizeof(addr));
-	p = &h6nametable[*(u_int16_t *)&addr.s6_addr[14] & (HASHNAMESIZE-1)];
+	memcpy(&h, &addr.s6_addr[14], sizeof(h));
+	p = &h6nametable[h & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
 			return (p->name);
