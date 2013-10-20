@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-gss.c,v 1.4 2013/03/29 16:19:44 christos Exp $	*/
+/*	$NetBSD: auth2-gss.c,v 1.5 2013/10/20 03:35:59 christos Exp $	*/
 /* $OpenBSD: auth2-gss.c,v 1.18 2012/12/02 20:34:09 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.4 2013/03/29 16:19:44 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.5 2013/10/20 03:35:59 christos Exp $");
 
 #ifdef GSSAPI
 
@@ -229,13 +229,10 @@ static void
 input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
-	Gssctxt *gssctxt;
 	int authenticated;
 
 	if (authctxt == NULL || (authctxt->methoddata == NULL && !use_privsep))
 		fatal("No authentication or GSSAPI context");
-
-	gssctxt = authctxt->methoddata;
 
 	/*
 	 * We don't need to check the status, because we're only enabled in
