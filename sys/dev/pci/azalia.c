@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: azalia.c,v 1.80 2013/10/20 21:06:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.80 2013/10/20 21:06:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1314,10 +1314,11 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 #ifdef AZALIA_DEBUG
 	char flagbuf[FLAGBUFLEN];
+	int prev_dac = this->dacs.cur;
+	int prev_adc = this->adcs.cur;
 #endif
 	const convgroup_t *group;
 	uint32_t bits_rates;
-	int prev_dac, prev_adc;
 	int variation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
@@ -1325,7 +1326,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	variation = 0;
 	chan = 0;
 
-	prev_dac = this->dacs.cur;
 	if (newdac >= 0 && newdac < this->dacs.ngroups) {
 		this->dacs.cur = newdac;
 		group = &this->dacs.groups[this->dacs.cur];
@@ -1349,7 +1349,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		variation = group->nconv * nbits;
 	}
 
-	prev_adc = this->adcs.cur;
 	if (newadc >= 0 && newadc < this->adcs.ngroups) {
 		this->adcs.cur = newadc;
 		group = &this->adcs.groups[this->adcs.cur];
