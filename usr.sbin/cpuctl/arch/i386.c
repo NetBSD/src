@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.43 2013/10/04 17:12:48 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.44 2013/10/21 06:28:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.43 2013/10/04 17:12:48 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.44 2013/10/21 06:28:15 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -198,26 +198,38 @@ static char cpu_brand_string[49];
 static char amd_brand_name[48];
 static int use_pae, largepagesize;
 
-static void via_cpu_probe(struct cpu_info *);
-static void amd_family6_probe(struct cpu_info *);
-static void intel_family_new_probe(struct cpu_info *);
+/* Setup functions */
+static void	disable_tsc(struct cpu_info *);
+static void	amd_family5_setup(struct cpu_info *); /* alike cpu_probe_k5 */
+static void	cyrix6x86_cpu_setup(struct cpu_info *);
+static void	winchip_cpu_setup(struct cpu_info *);
+/* Brand/Model name functions */
 static const char *intel_family6_name(struct cpu_info *);
 static const char *amd_amd64_name(struct cpu_info *);
-static void amd_family5_setup(struct cpu_info *);
-static void transmeta_cpu_info(struct cpu_info *);
+/* Probe functions */
+static void	amd_family6_probe(struct cpu_info *);
+static void	powernow_probe(struct cpu_info *);
+static void	intel_family_new_probe(struct cpu_info *);
+static void	via_cpu_probe(struct cpu_info *);
+/* (Cache) Info functions */
+static void 	amd_cpu_cacheinfo(struct cpu_info *); /* alike */
+static void	via_cpu_cacheinfo(struct cpu_info *);
+static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
+static void	transmeta_cpu_info(struct cpu_info *);
+/* Common functions */
+static void	cpu_probe_base_features(struct cpu_info *, const char *);
+	/* alike cpu_probe() */
+static void	cpu_probe_features(struct cpu_info *);
+static void	print_bits(const char *, const char *, const char *, uint32_t);
+/* XXX identifycpu alike cpu_identify */
+static void	identifycpu_cpuids(struct cpu_info *);
 static const char *print_cache_config(struct cpu_info *, int, const char *,
     const char *);
 static const char *print_tlb_config(struct cpu_info *, int, const char *,
     const char *);
-static void 	amd_cpu_cacheinfo(struct cpu_info *);
-static void	via_cpu_cacheinfo(struct cpu_info *);
-static void	x86_print_cacheinfo(struct cpu_info *);
-static const struct x86_cache_info *cache_info_lookup(
+static const struct x86_cache_info *cache_info_lookup( /* XXX same */
     const struct x86_cache_info *, uint8_t);
-static void cyrix6x86_cpu_setup(struct cpu_info *);
-static void winchip_cpu_setup(struct cpu_info *);
-static void amd_family5_setup(struct cpu_info *);
-static void powernow_probe(struct cpu_info *);
+static void	x86_print_cacheinfo(struct cpu_info *);
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -660,6 +672,29 @@ disable_tsc(struct cpu_info *ci)
 }
 
 static void
+amd_family5_setup(struct cpu_info *ci)
+{
+
+	switch (ci->ci_model) {
+	case 0:		/* AMD-K5 Model 0 */
+		/*
+		 * According to the AMD Processor Recognition App Note,
+		 * the AMD-K5 Model 0 uses the wrong bit to indicate
+		 * support for global PTEs, instead using bit 9 (APIC)
+		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 */
+		if (ci->ci_feat_val[0] & CPUID_APIC)
+			ci->ci_feat_val[0] =
+			    (ci->ci_feat_val[0] & ~CPUID_APIC) | CPUID_PGE;
+		/*
+		 * XXX But pmap_pg_g is already initialized -- need to kick
+		 * XXX the pmap somehow.  How does the MP branch do this?
+		 */
+		break;
+	}
+}
+
+static void
 cyrix6x86_cpu_setup(struct cpu_info *ci)
 {
 
@@ -671,7 +706,7 @@ cyrix6x86_cpu_setup(struct cpu_info *ci)
 		disable_tsc(ci);
 }
 
-void
+static void
 winchip_cpu_setup(struct cpu_info *ci)
 {
 	switch (ci->ci_model) {
@@ -680,98 +715,6 @@ winchip_cpu_setup(struct cpu_info *ci)
 	}
 }
 
-
-static void
-identifycpu_cpuids(struct cpu_info *ci)
-{
-	const char *cpuname = ci->ci_dev;
-	u_int lp_max = 1;	/* logical processors per package */
-	u_int smt_max;		/* smt per core */
-	u_int core_max = 1;	/* core per package */
-	u_int smt_bits, core_bits;
-	uint32_t descs[4];
-	uint32_t highest_basic_info;
-
-	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
-	ci->ci_packageid = ci->ci_initapicid;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
-	if (cpu_vendor != CPUVENDOR_INTEL) {
-		return;
-	}
-
-	/*
-	 * 253668.pdf 7.10.2
-	 */
-
-	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
-		x86_cpuid(1, descs);
-		lp_max = (descs[1] >> 16) & 0xff;
-	}
-	x86_cpuid(0, descs);
-	highest_basic_info = descs[0];
-	if (highest_basic_info >= 4) {
-		x86_cpuid2(4, 0, descs);
-		core_max = (descs[0] >> 26) + 1;
-	}
-	assert(lp_max >= core_max);
-	smt_max = lp_max / core_max;
-	smt_bits = ilog2(smt_max - 1) + 1;
-	core_bits = ilog2(core_max - 1) + 1;
-	if (smt_bits + core_bits) {
-		ci->ci_packageid = ci->ci_initapicid >> (smt_bits + core_bits);
-	}
-	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
-	    ci->ci_packageid);
-	if (core_bits) {
-		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
-
-		ci->ci_coreid =
-		    __SHIFTOUT(ci->ci_initapicid, core_mask);
-		aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
-	}
-	if (smt_bits) {
-		u_int smt_mask = __BITS((int)0, (int)(smt_bits - 1));
-
-		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
-		aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
-	}
-}
-
-static void
-via_cpu_probe(struct cpu_info *ci)
-{
-	u_int stepping = CPUID2STEPPING(ci->ci_signature);
-	u_int descs[4];
-	u_int lfunc;
-
-	/*
-	 * Determine the largest extended function value.
-	 */
-	x86_cpuid(0x80000000, descs);
-	lfunc = descs[0];
-
-	/*
-	 * Determine the extended feature flags.
-	 */
-	if (lfunc >= 0x80000001) {
-		x86_cpuid(0x80000001, descs);
-		ci->ci_feat_val[2] |= descs[3];
-	}
-
-	if (ci->ci_model < 0x9 || (ci->ci_model == 0x9 && stepping < 3))
-		return;
-
-	/* Nehemiah or Esther */
-	x86_cpuid(0xc0000000, descs);
-	lfunc = descs[0];
-	if (lfunc < 0xc0000001)	/* no ACE, no RNG */
-		return;
-
-	x86_cpuid(0xc0000001, descs);
-	lfunc = descs[3];
-	ci->ci_feat_val[4] = lfunc;
-}
 
 static const char *
 intel_family6_name(struct cpu_info *ci)
@@ -934,6 +877,430 @@ amd_amd64_name(struct cpu_info *ci)
 }
 
 static void
+intel_family_new_probe(struct cpu_info *ci)
+{
+	uint32_t descs[4];
+
+	x86_cpuid(0x80000000, descs);
+
+	/*
+	 * Determine extended feature flags.
+	 */
+	if (descs[0] >= 0x80000001) {
+		x86_cpuid(0x80000001, descs);
+		ci->ci_feat_val[2] |= descs[3];
+		ci->ci_feat_val[3] |= descs[2];
+	}
+}
+
+static void
+via_cpu_probe(struct cpu_info *ci)
+{
+	u_int stepping = CPUID2STEPPING(ci->ci_signature);
+	u_int descs[4];
+	u_int lfunc;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	x86_cpuid(0x80000000, descs);
+	lfunc = descs[0];
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		x86_cpuid(0x80000001, descs);
+		ci->ci_feat_val[2] |= descs[3];
+	}
+
+	if (ci->ci_model < 0x9 || (ci->ci_model == 0x9 && stepping < 3))
+		return;
+
+	/* Nehemiah or Esther */
+	x86_cpuid(0xc0000000, descs);
+	lfunc = descs[0];
+	if (lfunc < 0xc0000001)	/* no ACE, no RNG */
+		return;
+
+	x86_cpuid(0xc0000001, descs);
+	lfunc = descs[3];
+	ci->ci_feat_val[4] = lfunc;
+}
+
+static void
+amd_family6_probe(struct cpu_info *ci)
+{
+	uint32_t descs[4];
+	char *p;
+	size_t i;
+
+	x86_cpuid(0x80000000, descs);
+
+	/*
+	 * Determine the extended feature flags.
+	 */
+	if (descs[0] >= 0x80000001) {
+		x86_cpuid(0x80000001, descs);
+		ci->ci_feat_val[2] |= descs[3]; /* %edx */
+		ci->ci_feat_val[3] = descs[2]; /* %ecx */
+	}
+
+	if (*cpu_brand_string == '\0')
+		return;
+	
+	for (i = 1; i < __arraycount(amd_brand); i++)
+		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
+			ci->ci_brand_id = i;
+			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
+			break;
+		}
+}
+
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+    AMD_L2CACHE_INFO;
+
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+    AMD_L3CACHE_INFO;
+
+static void
+amd_cpu_cacheinfo(struct cpu_info *ci)
+{
+	const struct x86_cache_info *cp;
+	struct x86_cache_info *cai;
+	u_int descs[4];
+	u_int lfunc;
+
+	/*
+	 * K5 model 0 has none of this info.
+	 */
+	if (ci->ci_family == 5 && ci->ci_model == 0)
+		return;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	x86_cpuid(0x80000000, descs);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000005, descs);
+
+	/*
+	 * K6-III and higher have large page TLBs.
+	 */
+	if ((ci->ci_family == 5 && ci->ci_model >= 9) || ci->ci_family >= 6) {
+		cai = &ci->ci_cinfo[CAI_ITLB2];
+		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
+		cai->cai_linesize = largepagesize;
+
+		cai = &ci->ci_cinfo[CAI_DTLB2];
+		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
+		cai->cai_linesize = largepagesize;
+	}
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L1_ECX_DC_LS(descs[2]);
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000006, descs);
+
+	cai = &ci->ci_cinfo[CAI_L2_ITLB];
+	cai->cai_totalsize = AMD_L2_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_EBX_IUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_ITLB2];
+	cai->cai_totalsize = AMD_L2_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L2_EAX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = largepagesize;
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_DTLB];
+	cai->cai_totalsize = AMD_L2_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_DTLB2];
+	cai->cai_totalsize = AMD_L2_EAX_DTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L2_EAX_DTLB_ASSOC(descs[0]);
+	cai->cai_linesize = largepagesize;
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
+
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	/*
+	 * Determine L3 cache info on AMD Family 10h and newer processors
+	 */
+	if (ci->ci_family >= 0x10) {
+		cai = &ci->ci_cinfo[CAI_L3CACHE];
+		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
+		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
+		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
+
+		cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
+		    cai->cai_associativity);
+		if (cp != NULL)
+			cai->cai_associativity = cp->cai_associativity;
+		else
+			cai->cai_associativity = 0;	/* XXX Unkn/Rsvd */
+	}
+
+	/*
+	 * Determine 1GB TLB info.
+	 */
+	if (lfunc < 0x80000019) {
+		/* No 1GB TLB info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000019, descs);
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBITLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBDTLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_DTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_DTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+}
+
+static void
+via_cpu_cacheinfo(struct cpu_info *ci)
+{
+	struct x86_cache_info *cai;
+	int stepping;
+	u_int descs[4];
+	u_int lfunc;
+
+	stepping = CPUID2STEPPING(ci->ci_signature);
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	x86_cpuid(0x80000000, descs);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000005, descs);
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = VIA_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = VIA_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = VIA_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = VIA_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
+	if (ci->ci_model == 9 && stepping == 8) {
+		/* Erratum: stepping 8 reports 4 when it should be 2 */
+		cai->cai_associativity = 2;
+	}
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
+	if (ci->ci_model == 9 && stepping == 8) {
+		/* Erratum: stepping 8 reports 4 when it should be 2 */
+		cai->cai_associativity = 2;
+	}
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000006, descs);
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	if (ci->ci_model >= 9) {
+		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
+		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
+		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
+	} else {
+		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
+		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
+		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+	}
+}
+
+static void
+tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
+{
+	u_int descs[4];
+
+	x86_cpuid(0x80860007, descs);
+	*frequency = descs[0];
+	*voltage = descs[1];
+	*percentage = descs[2];
+}
+
+static void
+transmeta_cpu_info(struct cpu_info *ci)
+{
+	u_int descs[4], nreg;
+	u_int frequency, voltage, percentage;
+
+	x86_cpuid(0x80860000, descs);
+	nreg = descs[0];
+	if (nreg >= 0x80860001) {
+		x86_cpuid(0x80860001, descs);
+		aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u.%u.%u\n",
+		    (descs[1] >> 24) & 0xff,
+		    (descs[1] >> 16) & 0xff,
+		    (descs[1] >> 8) & 0xff,
+		    descs[1] & 0xff);
+	}
+	if (nreg >= 0x80860002) {
+		x86_cpuid(0x80860002, descs);
+		aprint_verbose_dev(ci->ci_dev, "Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		    (descs[1] >> 24) & 0xff,
+		    (descs[1] >> 16) & 0xff,
+		    (descs[1] >> 8) & 0xff,
+		    descs[1] & 0xff,
+		    descs[2]);
+	}
+	if (nreg >= 0x80860006) {
+		union {
+			char text[65];
+			u_int descs[4][4];
+		} info;
+		int i;
+
+		for (i=0; i<4; i++) {
+			x86_cpuid(0x80860003 + i, info.descs[i]);
+		}
+		info.text[64] = '\0';
+		aprint_verbose_dev(ci->ci_dev, "%s\n", info.text);
+	}
+
+	if (nreg >= 0x80860007) {
+		tmx86_get_longrun_status(&frequency,
+		    &voltage, &percentage);
+		aprint_verbose_dev(ci->ci_dev, "LongRun <%dMHz %dmV %d%%>\n",
+		    frequency, voltage, percentage);
+	}
+}
+
+static void
 cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 {
 	const struct x86_cache_info *cai;
@@ -1081,133 +1448,6 @@ cpu_probe_features(struct cpu_info *ci)
 }
 
 static void
-intel_family_new_probe(struct cpu_info *ci)
-{
-	uint32_t descs[4];
-
-	x86_cpuid(0x80000000, descs);
-
-	/*
-	 * Determine extended feature flags.
-	 */
-	if (descs[0] >= 0x80000001) {
-		x86_cpuid(0x80000001, descs);
-		ci->ci_feat_val[2] |= descs[3];
-		ci->ci_feat_val[3] |= descs[2];
-	}
-}
-
-static void
-amd_family6_probe(struct cpu_info *ci)
-{
-	uint32_t descs[4];
-	char *p;
-	size_t i;
-
-	x86_cpuid(0x80000000, descs);
-
-	/*
-	 * Determine the extended feature flags.
-	 */
-	if (descs[0] >= 0x80000001) {
-		x86_cpuid(0x80000001, descs);
-		ci->ci_feat_val[2] |= descs[3]; /* %edx */
-		ci->ci_feat_val[3] = descs[2]; /* %ecx */
-	}
-
-	if (*cpu_brand_string == '\0')
-		return;
-	
-	for (i = 1; i < __arraycount(amd_brand); i++)
-		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
-			ci->ci_brand_id = i;
-			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
-			break;
-		}
-}
-
-static void
-amd_family5_setup(struct cpu_info *ci)
-{
-
-	switch (ci->ci_model) {
-	case 0:		/* AMD-K5 Model 0 */
-		/*
-		 * According to the AMD Processor Recognition App Note,
-		 * the AMD-K5 Model 0 uses the wrong bit to indicate
-		 * support for global PTEs, instead using bit 9 (APIC)
-		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
-		 */
-		if (ci->ci_feat_val[0] & CPUID_APIC)
-			ci->ci_feat_val[0] =
-			    (ci->ci_feat_val[0] & ~CPUID_APIC) | CPUID_PGE;
-		/*
-		 * XXX But pmap_pg_g is already initialized -- need to kick
-		 * XXX the pmap somehow.  How does the MP branch do this?
-		 */
-		break;
-	}
-}
-
-static void
-tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
-{
-	u_int descs[4];
-
-	x86_cpuid(0x80860007, descs);
-	*frequency = descs[0];
-	*voltage = descs[1];
-	*percentage = descs[2];
-}
-
-static void
-transmeta_cpu_info(struct cpu_info *ci)
-{
-	u_int descs[4], nreg;
-	u_int frequency, voltage, percentage;
-
-	x86_cpuid(0x80860000, descs);
-	nreg = descs[0];
-	if (nreg >= 0x80860001) {
-		x86_cpuid(0x80860001, descs);
-		aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u.%u.%u\n",
-		    (descs[1] >> 24) & 0xff,
-		    (descs[1] >> 16) & 0xff,
-		    (descs[1] >> 8) & 0xff,
-		    descs[1] & 0xff);
-	}
-	if (nreg >= 0x80860002) {
-		x86_cpuid(0x80860002, descs);
-		aprint_verbose_dev(ci->ci_dev, "Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
-		    (descs[1] >> 24) & 0xff,
-		    (descs[1] >> 16) & 0xff,
-		    (descs[1] >> 8) & 0xff,
-		    descs[1] & 0xff,
-		    descs[2]);
-	}
-	if (nreg >= 0x80860006) {
-		union {
-			char text[65];
-			u_int descs[4][4];
-		} info;
-		int i;
-
-		for (i=0; i<4; i++) {
-			x86_cpuid(0x80860003 + i, info.descs[i]);
-		}
-		info.text[64] = '\0';
-		aprint_verbose_dev(ci->ci_dev, "%s\n", info.text);
-	}
-
-	if (nreg >= 0x80860007) {
-		tmx86_get_longrun_status(&frequency,
-		    &voltage, &percentage);
-		aprint_verbose_dev(ci->ci_dev, "LongRun <%dMHz %dmV %d%%>\n",
-		    frequency, voltage, percentage);
-	}
-}
-
-static void
 print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 {
 	char buf[32 * 16];
@@ -1224,6 +1464,63 @@ print_bits(const char *cpuname, const char *hdr, const char *fmt, uint32_t val)
 	while (*bp != '\0') {
 		aprint_verbose("%s: %s %s\n", cpuname, hdr, bp);
 		bp += strlen(bp) + 1;
+	}
+}
+
+static void
+identifycpu_cpuids(struct cpu_info *ci)
+{
+	const char *cpuname = ci->ci_dev;
+	u_int lp_max = 1;	/* logical processors per package */
+	u_int smt_max;		/* smt per core */
+	u_int core_max = 1;	/* core per package */
+	u_int smt_bits, core_bits;
+	uint32_t descs[4];
+	uint32_t highest_basic_info;
+
+	aprint_verbose("%s: Initial APIC ID %u\n", cpuname, ci->ci_initapicid);
+	ci->ci_packageid = ci->ci_initapicid;
+	ci->ci_coreid = 0;
+	ci->ci_smtid = 0;
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		return;
+	}
+
+	/*
+	 * 253668.pdf 7.10.2
+	 */
+
+	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
+		x86_cpuid(1, descs);
+		lp_max = (descs[1] >> 16) & 0xff;
+	}
+	x86_cpuid(0, descs);
+	highest_basic_info = descs[0];
+	if (highest_basic_info >= 4) {
+		x86_cpuid2(4, 0, descs);
+		core_max = (descs[0] >> 26) + 1;
+	}
+	assert(lp_max >= core_max);
+	smt_max = lp_max / core_max;
+	smt_bits = ilog2(smt_max - 1) + 1;
+	core_bits = ilog2(core_max - 1) + 1;
+	if (smt_bits + core_bits) {
+		ci->ci_packageid = ci->ci_initapicid >> (smt_bits + core_bits);
+	}
+	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
+	    ci->ci_packageid);
+	if (core_bits) {
+		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
+
+		ci->ci_coreid =
+		    __SHIFTOUT(ci->ci_initapicid, core_mask);
+		aprint_verbose("%s: Core ID %u\n", cpuname, ci->ci_coreid);
+	}
+	if (smt_bits) {
+		u_int smt_mask = __BITS((int)0, (int)(smt_bits - 1));
+
+		ci->ci_smtid = __SHIFTOUT(ci->ci_initapicid, smt_mask);
+		aprint_verbose("%s: SMT ID %u\n", cpuname, ci->ci_smtid);
 	}
 }
 
@@ -1628,291 +1925,6 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	}
 
 	return (NULL);
-}
-
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
-    AMD_L2CACHE_INFO;
-
-static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
-    AMD_L3CACHE_INFO;
-
-static void
-amd_cpu_cacheinfo(struct cpu_info *ci)
-{
-	const struct x86_cache_info *cp;
-	struct x86_cache_info *cai;
-	u_int descs[4];
-	u_int lfunc;
-
-	/*
-	 * K5 model 0 has none of this info.
-	 */
-	if (ci->ci_family == 5 && ci->ci_model == 0)
-		return;
-
-	/*
-	 * Determine the largest extended function value.
-	 */
-	x86_cpuid(0x80000000, descs);
-	lfunc = descs[0];
-
-	/*
-	 * Determine L1 cache/TLB info.
-	 */
-	if (lfunc < 0x80000005) {
-		/* No L1 cache info available. */
-		return;
-	}
-
-	x86_cpuid(0x80000005, descs);
-
-	/*
-	 * K6-III and higher have large page TLBs.
-	 */
-	if ((ci->ci_family == 5 && ci->ci_model >= 9) || ci->ci_family >= 6) {
-		cai = &ci->ci_cinfo[CAI_ITLB2];
-		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
-		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
-		cai->cai_linesize = largepagesize;
-
-		cai = &ci->ci_cinfo[CAI_DTLB2];
-		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
-		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
-		cai->cai_linesize = largepagesize;
-	}
-
-	cai = &ci->ci_cinfo[CAI_ITLB];
-	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DTLB];
-	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DCACHE];
-	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
-	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L1_ECX_DC_LS(descs[2]);
-
-	cai = &ci->ci_cinfo[CAI_ICACHE];
-	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
-	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
-
-	/*
-	 * Determine L2 cache/TLB info.
-	 */
-	if (lfunc < 0x80000006) {
-		/* No L2 cache info available. */
-		return;
-	}
-
-	x86_cpuid(0x80000006, descs);
-
-	cai = &ci->ci_cinfo[CAI_L2_ITLB];
-	cai->cai_totalsize = AMD_L2_EBX_IUTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L2_EBX_IUTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2_ITLB2];
-	cai->cai_totalsize = AMD_L2_EAX_IUTLB_ENTRIES(descs[0]);
-	cai->cai_associativity = AMD_L2_EAX_IUTLB_ASSOC(descs[0]);
-	cai->cai_linesize = largepagesize;
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2_DTLB];
-	cai->cai_totalsize = AMD_L2_EBX_DTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L2_EBX_DTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2_DTLB2];
-	cai->cai_totalsize = AMD_L2_EAX_DTLB_ENTRIES(descs[0]);
-	cai->cai_associativity = AMD_L2_EAX_DTLB_ASSOC(descs[0]);
-	cai->cai_linesize = largepagesize;
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
-	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
-
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	/*
-	 * Determine L3 cache info on AMD Family 10h and newer processors
-	 */
-	if (ci->ci_family >= 0x10) {
-		cai = &ci->ci_cinfo[CAI_L3CACHE];
-		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
-		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
-		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
-
-		cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
-		    cai->cai_associativity);
-		if (cp != NULL)
-			cai->cai_associativity = cp->cai_associativity;
-		else
-			cai->cai_associativity = 0;	/* XXX Unkn/Rsvd */
-	}
-
-	/*
-	 * Determine 1GB TLB info.
-	 */
-	if (lfunc < 0x80000019) {
-		/* No 1GB TLB info available. */
-		return;
-	}
-
-	x86_cpuid(0x80000019, descs);
-
-	cai = &ci->ci_cinfo[CAI_L1_1GBITLB];
-	cai->cai_totalsize = AMD_L1_1GB_EAX_IUTLB_ENTRIES(descs[0]);
-	cai->cai_associativity = AMD_L1_1GB_EAX_IUTLB_ASSOC(descs[0]);
-	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L1_1GBDTLB];
-	cai->cai_totalsize = AMD_L1_1GB_EAX_DTLB_ENTRIES(descs[0]);
-	cai->cai_associativity = AMD_L1_1GB_EAX_DTLB_ASSOC(descs[0]);
-	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
-	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
-	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-}
-
-static void
-via_cpu_cacheinfo(struct cpu_info *ci)
-{
-	struct x86_cache_info *cai;
-	int stepping;
-	u_int descs[4];
-	u_int lfunc;
-
-	stepping = CPUID2STEPPING(ci->ci_signature);
-
-	/*
-	 * Determine the largest extended function value.
-	 */
-	x86_cpuid(0x80000000, descs);
-	lfunc = descs[0];
-
-	/*
-	 * Determine L1 cache/TLB info.
-	 */
-	if (lfunc < 0x80000005) {
-		/* No L1 cache info available. */
-		return;
-	}
-
-	x86_cpuid(0x80000005, descs);
-
-	cai = &ci->ci_cinfo[CAI_ITLB];
-	cai->cai_totalsize = VIA_L1_EBX_ITLB_ENTRIES(descs[1]);
-	cai->cai_associativity = VIA_L1_EBX_ITLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DTLB];
-	cai->cai_totalsize = VIA_L1_EBX_DTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = VIA_L1_EBX_DTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DCACHE];
-	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
-	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
-	if (ci->ci_model == 9 && stepping == 8) {
-		/* Erratum: stepping 8 reports 4 when it should be 2 */
-		cai->cai_associativity = 2;
-	}
-
-	cai = &ci->ci_cinfo[CAI_ICACHE];
-	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
-	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
-	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
-	if (ci->ci_model == 9 && stepping == 8) {
-		/* Erratum: stepping 8 reports 4 when it should be 2 */
-		cai->cai_associativity = 2;
-	}
-
-	/*
-	 * Determine L2 cache/TLB info.
-	 */
-	if (lfunc < 0x80000006) {
-		/* No L2 cache info available. */
-		return;
-	}
-
-	x86_cpuid(0x80000006, descs);
-
-	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (ci->ci_model >= 9) {
-		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
-		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
-		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
-	} else {
-		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
-		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
-		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
-	}
 }
 
 static void
