@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tls_dynamic.c,v 1.4 2013/10/20 13:30:50 joerg Exp $	*/
+/*	$NetBSD: h_tls_dynamic.c,v 1.5 2013/10/21 19:11:17 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_tls_dynamic.c,v 1.4 2013/10/20 13:30:50 joerg Exp $");
+__RCSID("$NetBSD: h_tls_dynamic.c,v 1.5 2013/10/21 19:11:17 joerg Exp $");
 
 #include <unistd.h>
 #include <sys/tls.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: h_tls_dynamic.c,v 1.4 2013/10/20 13:30:50 joerg Exp $");
 
 __thread int var1 = 1;
 __thread int var2;
-__attribute__((__tls_model__("initial-exec"))) __thread int var3;
 
 __thread pid_t (*dso_var1)(void) = getpid;
 
@@ -54,5 +53,4 @@ testf_dso_helper(int x, int y)
 {
 	var1 = x;
 	var2 = y;
-	var3 = x;
 }
