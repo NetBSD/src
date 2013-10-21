@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.70 2013/10/04 17:53:19 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.71 2013/10/21 06:11:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -97,7 +97,7 @@
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
-#define	CPUID_PSE	0x00000008	/* has page 4MB page size extension */
+#define	CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define	CPUID_TSC	0x00000010	/* has time stamp counter */
 #define	CPUID_MSR	0x00000020	/* has mode specific registers */
 #define	CPUID_PAE	0x00000040	/* has phys address extension */
@@ -205,6 +205,35 @@
  */
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+
+/*
+ * Intel Deterministic Cache Parameter Leaf
+ * Fn0000_0004
+ */
+
+/* %eax */
+#define CPUID_DCP_CACHETYPE	__BITS(4, 0)	/* Cache type */
+#define CPUID_DCP_CACHETYPE_N	0		/*   NULL */
+#define CPUID_DCP_CACHETYPE_D	1		/*   Data cache */
+#define CPUID_DCP_CACHETYPE_I	2		/*   Instruction cache */
+#define CPUID_DCP_CACHETYPE_U	3		/*   Unified cache */
+#define CPUID_DCP_CACHELEVEL	__BITS(7, 5)	/* Cache level (start at 1) */
+#define CPUID_DCP_SELFINITCL	__BIT(8)	/* Self initializing cachelvl*/
+#define CPUID_DCP_FULLASSOC	__BIT(9)	/* Full associative */
+#define CPUID_DCP_SHAREING	__BITS(25, 14)	/* shareing */
+#define CPUID_DCP_CORE_P_PKG	__BITS(31, 26)	/* Cores/package */
+
+/* %ebx */
+#define CPUID_DCP_LINESIZE	__BITS(11, 0)	/* System coherency linesize */
+#define CPUID_DCP_PARTITIONS	__BITS(21, 12)	/* Physical line partitions */
+#define CPUID_DCP_WAYS		__BITS(31, 22)	/* Ways of associativity */
+
+/* Number of sets: %ecx */
+
+/* %edx */
+#define CPUID_DCP_INVALIDATE	__BIT(0)	/* WB invalidate/invalidate */
+#define CPUID_DCP_INCLUSIVE	__BIT(1)	/* Cache inclusiveness */
+#define CPUID_DCP_COMPLEX	__BIT(2)	/* Complex cache indexing */
 
 /*
  * Intel Digital Thermal Sensor and
