@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.12 2013/06/26 17:55:38 riz Exp $
+.\" $NetBSD: modstat.8,v 1.13 2013/10/21 17:14:06 mbalmer Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd June 26, 2013
+.Dd October 21, 2013
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ includes:
 .Bl -tag -width Loadaddr
 .It Li CLASS
 Module class, such as
-"vfs", "driver", "exec", "misc" or "secmodel".
+"vfs", "driver", "exec", "lua", "misc" or "secmodel".
 .It Li SOURCE
 Where the module was loaded from.
 .Qq Dv builtin
