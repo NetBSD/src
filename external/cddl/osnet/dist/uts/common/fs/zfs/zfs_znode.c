@@ -497,7 +497,9 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	zfs_mknode(sharezp, &vattr, tx, kcred, IS_ROOT_NODE,
 	    &zp, 0, &acl_ids);
 	ASSERT3P(zp, ==, sharezp);
+#ifndef __NetBSD__
 	ASSERT(!vn_in_dnlc(ZTOV(sharezp))); /* not valid to move */
+#endif
 	POINTER_INVALIDATE(&sharezp->z_zfsvfs);
 	error = zap_add(zfsvfs->z_os, MASTER_NODE_OBJ,
 	    ZFS_SHARES_DIR, 8, 1, &sharezp->z_id, tx);
