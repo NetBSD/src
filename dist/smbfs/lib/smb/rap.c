@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rap.c,v 1.8 2013/10/21 14:57:56 christos Exp $");
+__RCSID("$NetBSD: rap.c,v 1.9 2013/10/21 15:32:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -280,7 +280,7 @@ smb_rap_getNparam(struct smb_rap *rap, long *value)
 {
 	char *p = rap->r_nparam;
 	char ptype = *p;
-	int error, plen;
+	int error, plen = 0;	/* XXX: gcc */
 
 	error = smb_rap_parserpparam(p, &p, &plen);
 	if (error)
