@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.10 2013/10/21 14:25:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.10 2013/10/21 14:25:14 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -147,7 +147,7 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 	}
 #endif /* GETIFA_DEBUG */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_STRING, "default",
+	    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "default",
 	    SYSCTL_DESCR("default source selection policy"),
 	    in_sysctl_selectsrc, 0, &default_iss, IN_SELECTSRC_LEN,
 	    CTL_CREATE, CTL_EOL)) != 0) {
