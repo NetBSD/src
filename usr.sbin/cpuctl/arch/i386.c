@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.44 2013/10/21 06:28:15 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.45 2013/10/21 06:33:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.44 2013/10/21 06:28:15 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.45 2013/10/21 06:33:11 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1306,6 +1306,10 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	const struct x86_cache_info *cai;
 	u_int descs[4];
 	int iterations, i, j;
+	int type, level;
+	int ways, partitions, linesize, sets;
+	int caitype = -1;
+	int totalsize;
 	uint8_t desc;
 	uint32_t brand[12];
 
@@ -1362,7 +1366,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 		return;
 
 	/*
-	 * Parse the cache info from `cpuid', if we have it.
+	 * Parse the cache info from `cpuid leaf 2', if we have it.
 	 * XXX This is kinda ugly, but hey, so is the architecture...
 	 */
 
@@ -1400,6 +1404,58 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 		x86_cpuid(3, descs);
 		ci->ci_cpu_serial[2] = descs[2];
 		ci->ci_cpu_serial[1] = descs[3];
+	}
+
+	if (ci->ci_cpuid_level < 4)
+		return;
+
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	for (i = 0; ; i++) {
+		x86_cpuid2(4, i, descs);
+		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
+		if (type == CPUID_DCP_CACHETYPE_N)
+			break;
+		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
+		switch (level) {
+		case 1:
+			if (type == CPUID_DCP_CACHETYPE_I)
+				caitype = CAI_ICACHE;
+			else if (type == CPUID_DCP_CACHETYPE_D)
+				caitype = CAI_DCACHE;
+			else
+				caitype = -1;
+			break;
+		case 2:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L2CACHE;
+			else
+				caitype = -1;
+			break;
+		case 3:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L3CACHE;
+			else
+				caitype = -1;
+			break;
+		default:
+			caitype = -1;
+			break;
+		}
+		if (caitype == -1) {
+			printf("unknown cache level&type (%d & %d)\n",
+			    level, type);
+			continue;
+		}
+		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
+		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
+		    + 1;
+		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
+		    + 1;
+		sets = descs[2] + 1;
+		totalsize = ways * partitions * linesize * sets;
+		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
+		ci->ci_cinfo[caitype].cai_associativity = ways;
+		ci->ci_cinfo[caitype].cai_linesize = linesize;
 	}
 
 	if (ci->ci_cpuid_level < 0xd)
