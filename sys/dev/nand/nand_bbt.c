@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.5 2013/10/21 15:13:09 christos Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.6 2013/10/21 17:47:28 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.5 2013/10/21 15:13:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.6 2013/10/21 17:47:28 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -201,7 +201,6 @@ void
 nand_bbt_block_mark(device_t self, flash_off_t block, uint8_t marker)
 {
 	struct nand_softc *sc = device_private(self);
-	struct nand_chip *chip = &sc->sc_chip;
 	struct nand_bbt *bbt = &sc->sc_bbt;
 	uint8_t clean;
 
@@ -219,7 +218,6 @@ bool
 nand_bbt_block_isbad(device_t self, flash_off_t block)
 {
 	struct nand_softc *sc = device_private(self);
-	struct nand_chip *chip = &sc->sc_chip;
 	struct nand_bbt *bbt = &sc->sc_bbt;
 	uint8_t byte, marker;
 	bool result;
