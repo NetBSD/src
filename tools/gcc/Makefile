@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.59 2013/10/20 17:12:23 skrll Exp $
+#	$NetBSD: Makefile,v 1.60 2013/10/21 08:59:29 skrll Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
+
+.if ${HAVE_GCC} == 45
+GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
+.endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
@@ -69,7 +73,6 @@ MKNATIVE_CONFIG_TARGET_LIBS= \
 
 .if ${HAVE_GCC} == 45
 MKNATIVE_TARGET=	gcc45
-GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libgomp
 .else
