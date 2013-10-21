@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.8 2013/10/19 10:14:06 skrll Exp $	*/
+/*	$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.8 2013/10/19 10:14:06 skrll Exp $");
+__RCSID("$NetBSD: tls.c,v 1.9 2013/10/21 19:14:15 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -141,7 +141,7 @@ _rtld_tls_allocate_locked(void)
 	SET_DTV_GENERATION(tcb->tcb_dtv, _rtld_tls_dtv_generation);
 
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
-		if (obj->tlssize) {
+		if (obj->tlsinitsize && obj->tls_done) {
 #ifdef __HAVE_TLS_VARIANT_I
 			q = p + obj->tlsoffset;
 #else
