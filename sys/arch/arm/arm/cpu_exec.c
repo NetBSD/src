@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.5 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.6 2013/10/21 20:05:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.5 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.6 2013/10/21 20:05:50 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -82,7 +82,7 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #endif /* __ARMEB__ */
 
 	/*
-	 * This is subtle.  If are netbsd32, then we don't want to match the
+	 * This is subtle.  If we are netbsd32, then we don't want to match the
 	 * same ABI as the kernel.  If we aren't (netbsd32 == false), then we
 	 * don't want to be different from the kernel's ABI.
 	 *    true   true   true  ENOEXEC
