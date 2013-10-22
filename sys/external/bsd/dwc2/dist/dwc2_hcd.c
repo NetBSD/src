@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.6 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.7 2013/10/22 16:37:08 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.6 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.7 2013/10/22 16:37:08 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -548,12 +548,30 @@ static void dwc2_hc_init_split(struct dwc2_hsotg *hsotg,
 	chan->hub_port = (u8)hub_port;
 }
 
+static void *dwc2_hc_init_xfer_data(struct dwc2_hsotg *hsotg,
+			       struct dwc2_host_chan *chan,
+			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
+{
+	if (hsotg->core_params->dma_enable > 0) {
+		chan->xfer_dma = DMAADDR(urb->usbdma, urb->actual_length);
+
+		/* For non-dword aligned case */
+		if (hsotg->core_params->dma_desc_enable <= 0 &&
+		    (chan->xfer_dma & 0x3))
+			return (u8 *)urb->buf + urb->actual_length;
+	} else {
+		chan->xfer_buf = (u8 *)urb->buf + urb->actual_length;
+	}
+
+	return NULL;
+}
+
 static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 			       struct dwc2_host_chan *chan,
-			       struct dwc2_qtd *qtd, void *bufptr)
+			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 {
-	struct dwc2_hcd_urb *urb = qtd->urb;
 	struct dwc2_hcd_iso_packet_desc *frame_desc;
+	void *bufptr;
 
 	switch (dwc2_hcd_get_pipe_type(&urb->pipe_info)) {
 	case USB_ENDPOINT_XFER_CONTROL:
@@ -576,6 +594,7 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 		case DWC2_CONTROL_DATA:
 			dev_vdbg(hsotg->dev, "  Control data transaction\n");
 			chan->data_pid_start = qtd->data_toggle;
+			bufptr = dwc2_hc_init_xfer_data(hsotg, chan, qtd, urb);
 			break;
 
 		case DWC2_CONTROL_STATUS:
@@ -604,10 +623,12 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 
 	case USB_ENDPOINT_XFER_BULK:
 		chan->ep_type = USB_ENDPOINT_XFER_BULK;
+		bufptr = dwc2_hc_init_xfer_data(hsotg, chan, qtd, urb);
 		break;
 
 	case USB_ENDPOINT_XFER_INT:
 		chan->ep_type = USB_ENDPOINT_XFER_INT;
+		bufptr = dwc2_hc_init_xfer_data(hsotg, chan, qtd, urb);
 		break;
 
 	case USB_ENDPOINT_XFER_ISOC:
@@ -765,17 +786,6 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	    !dwc2_hcd_is_pipe_in(&urb->pipe_info))
 		urb->actual_length = urb->length;
 
-	if (hsotg->core_params->dma_enable > 0) {
-		chan->xfer_dma = DMAADDR(urb->usbdma, urb->actual_length);
-
-		/* For non-dword aligned case */
-		if (hsotg->core_params->dma_desc_enable <= 0 &&
-		    (chan->xfer_dma & 0x3))
-			bufptr = (u8 *)urb->buf + urb->actual_length;
-	} else {
-		chan->xfer_buf = (u8 *)urb->buf + urb->actual_length;
-	}
-
 	chan->xfer_len = urb->length - urb->actual_length;
 	chan->xfer_count = 0;
 
@@ -786,7 +796,7 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		chan->do_split = 0;
 
 	/* Set the transfer attributes */
-	bufptr = dwc2_hc_init_xfer(hsotg, chan, qtd, bufptr);
+	bufptr = dwc2_hc_init_xfer(hsotg, chan, qtd, urb);
 
 	/* Non DWORD-aligned buffer case */
 	if (bufptr) {
