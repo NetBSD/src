@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.4 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.5 2013/10/22 13:04:25 skrll Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.4 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.5 2013/10/22 13:04:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1840,14 +1840,14 @@ ar9003_set_rf_mode(struct athn_softc *sc, struct ieee80211_channel *c)
 static __inline uint32_t
 ar9003_synth_delay(struct athn_softc *sc)
 {
-	uint32_t delay;
+	uint32_t synth_delay;
 
-	delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
+	synth_delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
 	if (sc->sc_ic.ic_curmode == IEEE80211_MODE_11B)
-		delay = (delay * 4) / 22;
+		synth_delay = (synth_delay * 4) / 22;
 	else
-		delay = delay / 10;	/* in 100ns steps */
-	return delay;
+		synth_delay = synth_delay / 10;	/* in 100ns steps */
+	return synth_delay;
 }
 
 Static int
