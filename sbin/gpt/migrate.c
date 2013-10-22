@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.10 2013/10/19 09:31:24 jnemeth Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.11 2013/10/22 07:30:20 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -241,8 +241,8 @@ migrate_netbsd_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		ofs = (le32toh(dl->d_partitions[i].p_offset) *
 		    le32toh(dl->d_secsize)) / secsz;
 		ofs = (ofs > 0) ? ofs - rawofs : 0;
-		ent->ent_lba_start = htole64(start + ofs);
-		ent->ent_lba_end = htole64(start + ofs +
+		ent->ent_lba_start = htole64(ofs);
+		ent->ent_lba_end = htole64(ofs +
 		    le32toh(dl->d_partitions[i].p_size) - 1LL);
 		ent++;
 	}
