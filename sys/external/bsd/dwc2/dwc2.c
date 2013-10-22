@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.14 2013/10/22 09:30:04 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.15 2013/10/22 09:42:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.14 2013/10/22 09:30:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.15 2013/10/22 09:42:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -496,7 +496,6 @@ dwc2_open(usbd_pipe_handle pipe)
 	}
 
 	dpipe->priv = NULL;	/* QH */
-	dpipe->xfer = NULL;	/* dwc2_urb */
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1388,10 +1387,6 @@ fail:
 		break;
 	default:
 		err = USBD_IOERROR;
-	}
-
-	if (err) {
-		dpipe->xfer = NULL;
 	}
 
 	return err;
