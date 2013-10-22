@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.6 2013/10/21 17:47:28 mbalmer Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.7 2013/10/22 01:01:27 htodd Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.6 2013/10/21 17:47:28 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.7 2013/10/22 01:01:27 htodd Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -201,9 +201,11 @@ void
 nand_bbt_block_mark(device_t self, flash_off_t block, uint8_t marker)
 {
 	struct nand_softc *sc = device_private(self);
+	struct nand_chip *chip = &sc->sc_chip;
 	struct nand_bbt *bbt = &sc->sc_bbt;
 	uint8_t clean;
 
+	__USE(chip);
 	KASSERT(block < chip->nc_size / chip->nc_block_size);
 
 	clean = (~0x03 << ((block % 4) * 2));
@@ -218,10 +220,12 @@ bool
 nand_bbt_block_isbad(device_t self, flash_off_t block)
 {
 	struct nand_softc *sc = device_private(self);
+	struct nand_chip *chip = &sc->sc_chip;
 	struct nand_bbt *bbt = &sc->sc_bbt;
 	uint8_t byte, marker;
 	bool result;
 
+	__USE(chip);
 	KASSERT(block < chip->nc_size / chip->nc_block_size);
 
 	/* get byte containing the 2 bit marker for this block */
