@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2013/10/17 20:59:16 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2013/10/23 20:18:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,9 +100,7 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
-	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
@@ -424,10 +422,6 @@ void	i8254_initclocks(void);
 /* cpu.c */
 
 void	cpu_probe_features(struct cpu_info *);
-
-/* npx.c */
-void	npxsave_lwp(struct lwp *, bool);
-void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
 paddr_t	kvtop(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.31 2012/07/15 15:17:56 dsl Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.32 2013/10/23 20:18:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,11 +31,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.31 2012/07/15 15:17:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.32 2013/10/23 20:18:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/pcu.h>
 
 #include <machine/vmparam.h>
 #include <machine/cpufunc.h>
@@ -80,6 +81,8 @@ static void linux32_rt_sendsig(const ksiginfo_t *, const sigset_t *);
 static void linux32_old_sendsig(const ksiginfo_t *, const sigset_t *);
 static int linux32_restore_sigcontext(struct lwp *, 
     struct linux32_sigcontext *, register_t *);
+
+extern const pcu_ops_t fpu_ops;
 
 void
 linux32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
@@ -273,9 +276,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+	pcu_discard(&fpu_ops, false);
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
@@ -283,7 +284,6 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	netbsd32_adjust_limits(p);
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
 	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __Linux_NPXCW__;
