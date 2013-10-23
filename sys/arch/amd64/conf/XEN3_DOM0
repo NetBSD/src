@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.98 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: XEN3_DOM0,v 1.99 2013/10/23 17:22:49 matt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -544,11 +544,13 @@ wsmouse*	at pms? mux 0
 # USB Controller and Devices
 
 # PCI USB controllers
+xhci*	at pci? dev ? function ?	# eXtensible Host Controller
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
+usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
