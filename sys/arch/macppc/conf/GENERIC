@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.311 2013/06/30 21:38:57 rmind Exp $
+# $NetBSD: GENERIC,v 1.312 2013/10/23 09:28:57 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.311 $"
+#ident 		"GENERIC-$Revision: 1.312 $"
 
 maxusers	32
 
@@ -286,14 +286,17 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # instead.
 
 chipsfb*	at pci?	function ?	# C&T 65550
+gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
-
-radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
-options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
-
-voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 tdvfb*		at pci? function ?	# 3Dfx Voodoo2
 r128fb*		at pci? function ?	# ATI Rage 128
+voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+
+# ATI Radeon. Still has problems on some hardware
+radeonfb*	at pci? function ?
+options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+
+# generic PCI framebuffer, should work with everything supported by OF
 genfb*		at pci? function ?
 
 # make sure the console display is always wsdisplay0
