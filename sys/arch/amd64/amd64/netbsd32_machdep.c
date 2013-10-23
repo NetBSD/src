@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.81 2013/06/25 21:08:07 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.82 2013/10/23 20:18:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81 2013/06/25 21:08:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.82 2013/10/23 20:18:50 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81 2013/06/25 21:08:07 dsl Ex
 #include <sys/ras.h>
 #include <sys/ptrace.h>
 #include <sys/kauth.h>
+#include <sys/pcu.h>
 
 #include <machine/fpu.h>
 #include <machine/frame.h>
@@ -92,6 +93,8 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 #endif
 
 static int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
+
+extern const pcu_ops_t fpu_ops;
 
 #ifdef EXEC_AOUT
 /*
@@ -128,18 +131,14 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	pcb = lwp_getpcb(l);
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
-
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
 #endif
 
+	pcu_discard(&fpu_ops, false);
+
 	netbsd32_adjust_limits(p);
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
 	l->l_md.md_flags |= MDL_COMPAT32;	/* Force iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
         pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
@@ -261,7 +260,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	pcu_discard_all(l); /* XXX no FP context saved, we'll lose */
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -364,7 +363,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	pcu_discard_all(l);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -888,14 +887,11 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/*
 		 * If we were using the FPU, forget that we were.
 		 */
-		if (pcb->pcb_fpcpu != NULL) {
-			fpusave_lwp(l, false);
-		}
+		pcu_discard(&fpu_ops, true);
 		memcpy(&pcb->pcb_savefpu.fp_fxsave, &mcp->__fpregs,
 		    sizeof (pcb->pcb_savefpu.fp_fxsave));
-		/* If not set already. */
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
+	} else
+		pcu_discard(&fpu_ops, false);
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
@@ -945,12 +941,10 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	*flags |= _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
-	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
+	if (pcu_used_p(&fpu_ops)) {
 		struct pcb *pcb = lwp_getpcb(l);
 
-		if (pcb->pcb_fpcpu) {
-			fpusave_lwp(l, true);
-		}
+		pcu_save(&fpu_ops);
 		memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
 		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		*flags |= _UC_FPU;
