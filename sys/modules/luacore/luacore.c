@@ -1,4 +1,4 @@
-/*	$NetBSD: luacore.c,v 1.3 2013/10/18 07:46:55 mbalmer Exp $ */
+/*	$NetBSD: luacore.c,v 1.4 2013/10/23 18:57:40 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -41,7 +41,7 @@
 #include <lua.h>
 
 #ifdef _MODULE
-MODULE(MODULE_CLASS_LUA_BINDING, luacore, "lua");
+MODULE(MODULE_CLASS_MISC, luacore, "lua");
 
 /* Various printing functions */
 static int
