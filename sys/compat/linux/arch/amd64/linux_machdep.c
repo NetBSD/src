@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.41 2013/10/23 20:18:51 drochner Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2013/10/23 20:18:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $
 #include <sys/ptrace.h> /* for process_read_fpregs() */
 #include <sys/ucontext.h>
 #include <sys/conf.h>
+#include <sys/pcu.h>
 
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
 
+extern const pcu_ops_t fpu_ops;
 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
@@ -84,11 +86,8 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+	pcu_discard(&fpu_ops, false);
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
@@ -156,7 +155,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* 
 	 * Save FPU state, if any 
 	 */
-	if (l->l_md.md_flags & MDL_USEDFPU) {
+	if (pcu_used_p(&fpu_ops)) {
 		sp = (char *)
 		    (((long)sp - sizeof(struct linux__fpstate)) & ~0xfUL);
 		fpsp = (struct linux__fpstate *)sp;
