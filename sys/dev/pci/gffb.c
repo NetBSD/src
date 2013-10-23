@@ -1,7 +1,7 @@
-/*	$NetBSD: gffb.c,v 1.6 2013/10/23 09:28:06 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.7 2013/10/23 13:15:47 macallan Exp $	*/
 
 /*
- * Copyright (c) 2007, 2012 Michael Lorenz
+ * Copyright (c) 2013 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.6 2013/10/23 09:28:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.7 2013/10/23 13:15:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
