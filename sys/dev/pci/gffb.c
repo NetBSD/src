@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.5 2013/10/09 17:18:23 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.6 2013/10/23 09:28:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -27,11 +27,15 @@
 
 /*
  * A console driver for nvidia geforce graphics controllers
- * tested on macppc only so far
+ * tested on macppc only so far, should work on other hardware as long as
+ * something sets up a usable graphics mode and sets the right device properties
+ * This driver should work with all NV1x hardware but so far it's been tested
+ * only on NV11 / GeForce2 MX. Needs testing with more hardware and if
+ * successful, PCI IDs need to be added to gffb_match()
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.5 2013/10/09 17:18:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.6 2013/10/23 09:28:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +182,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	bool			is_console;
-	int			i, j;
+	int			i, j, f;
 	uint8_t			cmap[768];
 
 	sc->sc_pc = pa->pa_pc;
@@ -217,22 +221,32 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
-	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
-	    &tag, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error("%s: failed to map the framebuffer.\n",
-		    device_xname(sc->sc_dev));
-	}
-	sc->sc_fbaddr = bus_space_vaddr(tag, sc->sc_fbh);
-
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &tag, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
 		aprint_error("%s: failed to map registers.\n",
 		    device_xname(sc->sc_dev));
 	}
+	sc->sc_vramsize = GFFB_READ_4(GFFB_VRAM) & 0xfff00000;
+
+	/* don't map more VRAM than we actually have */
+	if (pci_mapreg_info(sc->sc_pc, sc->sc_pcitag,
+	    0x14, PCI_MAPREG_TYPE_MEM, &sc->sc_fb, &sc->sc_fbsize, &f)) {
+		aprint_error("%s: can't find the framebuffer?!\n",
+		    device_xname(sc->sc_dev));
+	}
+
+	if (bus_space_map(sc->sc_memt, sc->sc_fb, sc->sc_vramsize,
+	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
+	    &sc->sc_fbh)) {
+		aprint_error("%s: failed to map the framebuffer.\n",
+		    device_xname(sc->sc_dev));
+	}
+	sc->sc_fbaddr = bus_space_vaddr(tag, sc->sc_fbh);
 
 	aprint_normal("%s: %d MB aperture at 0x%08x\n", device_xname(self),
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
+	aprint_normal_dev(sc->sc_dev, "%d MB video memory\n",
+	    sc->sc_vramsize >> 20);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -247,10 +261,6 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_locked = 0;
 
-	sc->sc_vramsize = GFFB_READ_4(GFFB_VRAM) & 0xfff00000;
-
-	aprint_normal_dev(sc->sc_dev, "%d MB video memory\n",
-	    sc->sc_vramsize >> 20);
 #ifdef GFFB_DEBUG
 	printf("put: %08x\n", GFFB_READ_4(GFFB_FIFO_PUT));
 	printf("get: %08x\n", GFFB_READ_4(GFFB_FIFO_GET));
