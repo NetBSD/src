@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.734 2013/04/12 16:59:38 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.735 2013/10/23 20:18:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.734 2013/04/12 16:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.735 2013/10/23 20:18:50 drochner Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -266,6 +266,7 @@ void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
+extern const pcu_ops_t fpu_ops;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -498,7 +499,7 @@ i386_proc0_tss_ldt_init(void)
 	struct pcb *pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
+	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
@@ -548,21 +549,16 @@ i386_tls_switch(lwp_t *l)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = lwp_getpcb(l);
-	/*
-         * Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
-	 */
-	(void)splhigh();
 
         /*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 
-	if (l != ci->ci_fpcurlwp) {
+	if (pcb->pcb_cr0 & CR0_TS) {
 		HYPERVISOR_fpu_taskswitch(1);
-	}
+	} else
+		HYPERVISOR_fpu_taskswitch(0);
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -672,7 +668,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	pcu_discard_all(l);
 }
 
 void
@@ -867,18 +863,11 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-#if NNPX > 0
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		npxsave_lwp(l, false);
-	}
-#endif
-
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	pcu_discard(&fpu_ops, false);
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
@@ -1633,7 +1622,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
-	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
+	if (pcu_used_p(&fpu_ops)) {
 		struct pcb *pcb = lwp_getpcb(l);
 #if NNPX > 0
 
@@ -1641,9 +1630,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		if (pcb->pcb_fpcpu) {
-			npxsave_lwp(l, true);
-		}
+		pcu_save(&fpu_ops);
 #endif
 		if (i386_use_fxsave) {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
@@ -1736,17 +1723,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
-#if NNPX > 0
-	/*
-	 * If we were using the FPU, forget that we were.
-	 */
-	if (pcb->pcb_fpcpu != NULL) {
-		npxsave_lwp(l, false);
-	}
-#endif
-
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
+		pcu_discard(&fpu_ops, true);
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
@@ -1770,8 +1749,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				    sizeof (pcb->pcb_savefpu.sv_87));
 			}
 		}
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
+	} else
+		pcu_discard(&fpu_ops, false);
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;

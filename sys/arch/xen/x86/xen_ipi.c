@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.13 2013/10/23 20:18:50 drochner Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.13 2013/10/23 20:18:50 drochner Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.13 2013/10/23 20:18:50 drochner Exp $");
 
 #include <sys/types.h>
 
@@ -48,11 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.12 2013/09/14 13:07:55 joerg Exp $");
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#ifdef __x86_64__
-#include <machine/fpu.h>
-#else
-#include <machine/npx.h>
-#endif /* __x86_64__ */
 #include <machine/frame.h>
 #include <machine/segments.h>
 
@@ -69,7 +64,6 @@ extern void ddb_ipi(int, struct trapframe);
 #endif /* __x86_64__ */
 
 static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
-static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
@@ -77,7 +71,7 @@ static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
-	xen_ipi_synch_fpu,
+	NULL,
 	xen_ipi_ddb,
 	xen_ipi_xcall,
 	xen_ipi_hvcb
@@ -214,19 +208,6 @@ xen_ipi_halt(struct cpu_info *ci, struct intrframe *intrf)
 		panic("vcpu%" PRIuCPUID "shutdown failed.\n", ci->ci_cpuid);
 	}
 
-}
-
-static void
-xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
-{
-	KASSERT(ci != NULL);
-	KASSERT(intrf != NULL);
-
-#ifdef __x86_64__
-	fpusave_cpu(true);
-#else
-	npxsave_cpu(true);
-#endif /* __x86_64__ */
 }
 
 static void

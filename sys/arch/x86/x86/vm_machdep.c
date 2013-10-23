@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2013/10/23 20:18:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.17 2013/10/23 20:18:50 drochner Exp $");
 
 #include "opt_mtrr.h"
 
@@ -101,17 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $");
 #include <machine/specialreg.h>
 #ifdef MTRR
 #include <machine/mtrr.h>
-#endif
-
-#ifdef __x86_64__
-#include <machine/fpu.h>
-#else
-#include "npx.h"
-#if NNPX > 0
-#define fpusave_lwp(x, y)	npxsave_lwp(x, y)
-#else
-#define fpusave_lwp(x, y)
-#endif
 #endif
 
 void
@@ -145,14 +134,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2 = lwp_getpcb(l2);
 
 	/*
-	 * If parent LWP was using FPU, then we have to save the FPU h/w
-	 * state to PCB so that we can copy it.
-	 */
-	if (pcb1->pcb_fpcpu != NULL) {
-		fpusave_lwp(l1, true);
-	}
-
-	/*
 	 * Sync the PCB before we copy it.
 	 */
 	if (l1 == curlwp) {
@@ -168,6 +149,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #if defined(XEN)
 	pcb2->pcb_iopl = SEL_KPL;
 #endif
+	pcb2->pcb_cr0 |= CR0_TS;
 
 	/*
 	 * Set the kernel stack address (from the address to uarea) and
@@ -244,12 +226,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
 
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.102 2012/12/12 22:43:35 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.103 2013/10/23 20:18:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.102 2012/12/12 22:43:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2013/10/23 20:18:50 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -893,15 +893,14 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curlwp 		fpcurlwp\n");
+	db_printf("addr		dev	id	flags	ipis	curlwp\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
-		    ci->ci_curlwp,
-		    ci->ci_fpcurlwp);
+		    ci->ci_curlwp);
 	}
 }
 #endif
@@ -1115,22 +1114,6 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 
 	if (cpu_feature[2] & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
-}
-
-void
-cpu_offline_md(void)
-{
-	int s;
-
-	s = splhigh();
-#ifdef i386
-#if NNPX > 0
-	npxsave_cpu(true);
-#endif
-#else
-	fpusave_cpu(true);
-#endif
-	splx(s);
 }
 
 /* XXX joerg restructure and restart CPUs individually */
