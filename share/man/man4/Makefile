@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.604 2013/10/15 19:20:18 jdc Exp $
+#	$NetBSD: Makefile,v 1.605 2013/10/24 21:55:00 mbalmer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -36,7 +36,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	irmce.4 isp.4 isv.4 itesio.4 iteide.4 iwi.4 iwn.4 ixg.4 ixpide.4 \
 	jme.4 jmide.4 joy.4 \
 	kloader.4 kse.4 ksyms.4 kttcp.4 \
-	lc.4 ld.4 lii.4 lo.4 lxtphy.4 \
+	lc.4 ld.4 lii.4 lo.4 lua.4 lxtphy.4 \
 	mainbus.4 makphy.4 malo.4 mbe.4 mca.4 mcclock.4 md.4 mfb.4 mfi.4 mhzc.4 \
 	midi.4 mii.4 mk48txx.4 mlx.4 mly.4 mpls.4 mpii.4 mpt.4 mpu.4 mtd.4 \
 	mtio.4 msm6242b.4 multicast.4 mvsata.4 \
