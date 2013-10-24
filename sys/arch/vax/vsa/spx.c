@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.6 2012/05/14 08:44:13 abs Exp $ */
+/*	$NetBSD: spx.c,v 1.7 2013/10/24 13:16:33 martin Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.6 2012/05/14 08:44:13 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.7 2013/10/24 13:16:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,7 +677,7 @@ static void
 spx_cursor(void *id, int on, int row, int col)
 {
 	struct spx_screen *ss = id;
-	int attr, data;
+	int attr, data __unused;
 
 	attr = ss->ss_image[row * spx_cols + col].attr;
 	data = ss->ss_image[row * spx_cols + col].data;
