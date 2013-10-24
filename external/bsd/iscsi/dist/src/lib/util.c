@@ -1273,7 +1273,7 @@ HexTextToData(const char *text, uint32_t textLength,
 	uint32_t    n2;
 	uint32_t    len = 0;
 
-	if ((text[0] == '0') && (text[1] != 'x' || text[1] != 'X')) {
+	if ((text[0] == '0') && (text[1] == 'x' || text[1] == 'X')) {
 		/* skip prefix */
 		text += 2;
 		textLength -= 2;
