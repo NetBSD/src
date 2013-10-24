@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1439 2013/10/18 10:49:19 kefren Exp $
+# $NetBSD: mi,v 1.1440 2013/10/24 21:55:00 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1301,6 +1301,7 @@
 ./usr/share/man/cat4/lmtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lsu.0			man-obsolete		obsolete
+./usr/share/man/cat4/lua.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lxtphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/m25p.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/adb.0		man-obsolete		obsolete
@@ -4247,6 +4248,7 @@
 ./usr/share/man/html4/lmenv.html		man-sys-htmlman		html
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lo.html			man-sys-htmlman		html
+./usr/share/man/html4/lua.html			man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/m25p.html			man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
@@ -7033,6 +7035,7 @@
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
 ./usr/share/man/man4/lo.4			man-sys-man		.man
 ./usr/share/man/man4/lsu.4			man-obsolete		obsolete
+./usr/share/man/man4/lua.4			man-sys-man		.man
 ./usr/share/man/man4/lxtphy.4			man-sys-man		.man
 ./usr/share/man/man4/m25p.4			man-sys-man		.man
 ./usr/share/man/man4/mac68k/adb.4		man-obsolete		obsolete
