@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.13 2013/10/20 21:13:23 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.14 2013/10/24 06:59:03 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 9, 2012
+.Dd October 23, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -42,7 +42,9 @@
 The
 .Nm
 utility provides the necessary functionality to manipulate GUID partition
-tables (GPTs), but see
+tables
+.Pq GPTs ,
+but see
 .Sx BUGS
 below for how and where functionality is missing.
 The basic usage model of the
@@ -209,7 +211,7 @@ option selects the partition with the given partition number.
 The
 .Fl s Ar count
 option selects all partitions that have the given size.
-This can cause multiple partitions to be removed.
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl t Ar type
@@ -217,7 +219,7 @@ option selects all partitions that have the given type.
 The type is given as an UUID or by the aliases that the
 .Ic add
 command accepts.
-This can cause multiple partitions to be removed.
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl f Ar file
@@ -259,6 +261,27 @@ option prevents migrating
 .Bx
 disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
+Note that the
+.Fl s
+option isn't applicable to
+.Nx
+partitions.
+.Pp
+The
+.Ic migrate
+command requires space at the beginning and the end of the device outside
+any partitions to store the GPTs.
+Space is required for the GPT header
+.Pq which takes one sector
+and the GPT partition table.
+See the
+.Fl p
+option
+for the size of the GPT partition table.
+By default, just about all devices have a minimum of 62 sectors free at the
+beginning of the device, but don't have any free space at the end.
+For the default GPT partition table size on a 512 byte sector size device,
+33 sectors at the end of the device would need to be freed.
 .\" ==== recover ====
 .It Nm Ic recover Ar device ...
 The
@@ -328,6 +351,15 @@ nas# gpt show wd3
            1           1         Pri GPT header
            2          32         Pri GPT table
           34    10486224      1  GPT part - NetBSD swap
+    10486258  3896542877
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas# gpt show -l wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34    10486224      1  GPT part - "swap_1"
     10486258  3896542877
   3907029135          32         Sec GPT table
   3907029167           1         Sec GPT header
