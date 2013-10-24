@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1041 2013/10/19 22:35:02 mlelstv Exp $
+# $NetBSD: mi,v 1.1042 2013/10/24 19:12:16 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -878,11 +878,39 @@
 ./usr/include/g++/debug				base-cxx-usr
 ./usr/include/g++/decimal			base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
+./usr/include/g++/ext/pb_ds
+./usr/include/g++/ext/pb_ds/detail			base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/binary_heap_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/branch_policy	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/eq_fn		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/hash_fn		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/list_update_map_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/list_update_policy	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/pat_trie_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/resize_policy	base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/splay_tree_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/thin_heap_		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/tree_policy		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/trie_policy		base-cxx-usr	gcc=48
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator	base-cxx-usr	gcc=48
 ./usr/include/g++/gen				base-obsolete		obsolete
 ./usr/include/g++/parallel			base-cxx-usr
+./usr/include/g++/profile			base-cxx-usr		gcc=48
+./usr/include/g++/profile/impl			base-cxx-usr		gcc=48
 ./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
+./usr/include/g++/tr2				base-cxx-usr		gcc=48
 ./usr/include/gcc-4.1				base-c-usr		gcc=4
 ./usr/include/gcc-4.1				base-obsolete		!gcc,obsolete
 ./usr/include/gcc-4.1				base-obsolete		gcc=45,obsolete
