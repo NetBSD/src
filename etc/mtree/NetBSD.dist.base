@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.125 2013/10/19 22:35:02 mlelstv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.126 2013/10/24 19:06:01 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -137,9 +137,37 @@
 ./usr/include/g++/debug
 ./usr/include/g++/decimal
 ./usr/include/g++/ext
+./usr/include/g++/ext/pb_ds
+./usr/include/g++/ext/pb_ds/detail
+./usr/include/g++/ext/pb_ds/detail/bin_search_tree_
+./usr/include/g++/ext/pb_ds/detail/binary_heap_
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_
+./usr/include/g++/ext/pb_ds/detail/binomial_heap_base_
+./usr/include/g++/ext/pb_ds/detail/branch_policy
+./usr/include/g++/ext/pb_ds/detail/cc_hash_table_map_
+./usr/include/g++/ext/pb_ds/detail/eq_fn
+./usr/include/g++/ext/pb_ds/detail/gp_hash_table_map_
+./usr/include/g++/ext/pb_ds/detail/hash_fn
+./usr/include/g++/ext/pb_ds/detail/left_child_next_sibling_heap_
+./usr/include/g++/ext/pb_ds/detail/list_update_map_
+./usr/include/g++/ext/pb_ds/detail/list_update_policy
+./usr/include/g++/ext/pb_ds/detail/ov_tree_map_
+./usr/include/g++/ext/pb_ds/detail/pairing_heap_
+./usr/include/g++/ext/pb_ds/detail/pat_trie_
+./usr/include/g++/ext/pb_ds/detail/rb_tree_map_
+./usr/include/g++/ext/pb_ds/detail/rc_binomial_heap_
+./usr/include/g++/ext/pb_ds/detail/resize_policy
+./usr/include/g++/ext/pb_ds/detail/splay_tree_
+./usr/include/g++/ext/pb_ds/detail/thin_heap_
+./usr/include/g++/ext/pb_ds/detail/tree_policy
+./usr/include/g++/ext/pb_ds/detail/trie_policy
+./usr/include/g++/ext/pb_ds/detail/unordered_iterator
 ./usr/include/g++/parallel
+./usr/include/g++/profile
+./usr/include/g++/profile/impl
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
+./usr/include/g++/tr2
 ./usr/include/gcc-4.1
 ./usr/include/gcc-4.5
 ./usr/include/gssapi
