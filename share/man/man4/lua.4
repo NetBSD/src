@@ -1,4 +1,4 @@
-.\" $NetBSD: lua.4,v 1.1 2013/10/24 09:34:47 mbalmer Exp $
+.\" $NetBSD: lua.4,v 1.2 2013/10/24 09:49:51 wiz Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <marc@msys.ch>
 .\"
@@ -28,7 +28,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-device allows to create, control, and, delete Lua states in the kernel
+device allows to create, control, and delete Lua states in the kernel
 through an
 .Xr ioctl 2
 interface.
@@ -44,10 +44,17 @@ Lua modules are used to provide functionality to Lua scripts not available
 in the language itself, e.g. to access core kernel functionality like
 printing text on the console.
 Unlike in user space Lua, where Lua modules are files in the filesystem,
-modules must be provided to lua(4) in the form of loadable kernel modules
-that register their functionality with lua(4).
-Modules are loaded using the "require" Lua command, whether this command
-is available or not is controlled by a sysctl variable.
+modules must be provided to
+.Nm
+in the form of loadable kernel modules that register their
+functionality with
+.Nm .
+Modules are loaded using the
+.Ic require
+Lua command; whether this command
+is available or not is controlled by a
+.Xr sysctl 8
+variable.
 .Nm
 by default tries to load a kernel module named
 .Em luafoo.kmod
@@ -132,7 +139,7 @@ struct lua_create {
 };
 .Ed
 .Pp
-.It Dv LUADESTROY(struct lua_create(
+.It Dv LUADESTROY(struct lua_create)
 Destroy a named Lua state.
 .Pp
 .It Dv LUAREQUIRE(struct lua_require)
@@ -165,7 +172,9 @@ struct lua_load {
 .Pp
 The path element of the
 .Fa lua_load
-structure must contain at least one '/' character.
+structure must contain at least one
+.Sq /
+character.
 .Pp
 .El
 .Sh FILES
@@ -175,12 +184,12 @@ Lua device file.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr luactl 8 ,
+.Xr luactl 8
 .Sh HISTORY
 The
 .Nm
 device first appeared in
-.Nx 7.0
+.Nx 7.0 .
 .Sh AUTHORS
 .An -nosplit
 The
