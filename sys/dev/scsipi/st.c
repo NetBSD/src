@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.221 2012/04/19 17:45:20 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.222 2013/10/25 16:06:44 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.221 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.222 2013/10/25 16:06:44 martin Exp $");
 
 #include "opt_scsi.h"
 
@@ -1104,7 +1104,7 @@ ststart(struct scsipi_periph *periph)
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
 	struct scsipi_xfer *xs;
-	int flags, error;
+	int flags, error __diagused;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 	/* See if there is a buf to do and we are not already  doing one */
