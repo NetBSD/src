@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.14 2013/08/07 19:38:45 soren Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.15 2013/10/25 14:23:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.14 2013/08/07 19:38:45 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.15 2013/10/25 14:23:15 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s", ia->ia_name);
 	} else {
 		aprint_naive(": EEPROM");
-		aprint_normal(": AT24Cxx EEPROM");
+		aprint_normal(": AT24Cxx or compatible EEPROM");
 	}
 
 	/*
@@ -153,7 +153,10 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	 * switching to select the proper super-page.  This isn't
 	 * supported by this driver.
 	 */
-	sc->sc_size = ia->ia_size;
+	if (device_cfdata(self)->cf_flags)
+		sc->sc_size = (device_cfdata(self)->cf_flags << 7);
+	else
+		sc->sc_size = ia->ia_size;
 	switch (sc->sc_size) {
 	case 128:		/* 1Kbit */
 	case 256:		/* 2Kbit */
