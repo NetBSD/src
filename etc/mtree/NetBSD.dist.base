@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.126 2013/10/24 19:06:01 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.127 2013/10/25 08:15:14 mbalmer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -866,6 +866,7 @@
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
+./usr/share/man/cat3lua
 ./usr/share/man/cat4
 ./usr/share/man/cat4/acorn26
 ./usr/share/man/cat4/acorn32
@@ -954,6 +955,7 @@
 ./usr/share/man/cat8/x68k
 ./usr/share/man/cat8/x86
 ./usr/share/man/cat9
+./usr/share/man/cat9lua
 ./usr/share/man/cat9/acorn26
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
@@ -975,6 +977,7 @@
 ./usr/share/man/html2
 ./usr/share/man/html3
 ./usr/share/man/html3f
+./usr/share/man/html3lua
 ./usr/share/man/html4
 ./usr/share/man/html4/acorn26
 ./usr/share/man/html4/acorn32
@@ -1063,6 +1066,7 @@
 ./usr/share/man/html8/x68k
 ./usr/share/man/html8/x86
 ./usr/share/man/html9
+./usr/share/man/html9lua
 ./usr/share/man/html9/acorn26
 ./usr/share/man/html9/alpha
 ./usr/share/man/html9/amiga
@@ -1084,6 +1088,7 @@
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man3f
+./usr/share/man/man3lua
 ./usr/share/man/man4
 ./usr/share/man/man4/acorn26
 ./usr/share/man/man4/acorn32
@@ -1172,6 +1177,7 @@
 ./usr/share/man/man8/x68k
 ./usr/share/man/man8/x86
 ./usr/share/man/man9
+./usr/share/man/man9lua
 ./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
 ./usr/share/man/man9/amiga
