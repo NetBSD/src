@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.9 2013/07/17 22:36:26 matt Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.10 2013/10/25 11:35:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.9 2013/07/17 22:36:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.10 2013/10/25 11:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -282,7 +282,7 @@ kcpuset_unuse(kcpuset_t *kcp, kcpuset_t **lst)
 int
 kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 {
-	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __diagused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);
@@ -297,7 +297,7 @@ kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 int
 kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 {
-	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __diagused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);

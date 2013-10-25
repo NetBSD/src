@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.85 2013/07/22 19:43:54 alnsn Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.86 2013/10/25 11:35:55 martin Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.85 2013/07/22 19:43:54 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.86 2013/10/25 11:35:55 martin Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -994,7 +994,7 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
 int
 vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 {
-	const vm_flag_t strat __unused = flags & VM_FITMASK;
+	const vm_flag_t strat __diagused = flags & VM_FITMASK;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);

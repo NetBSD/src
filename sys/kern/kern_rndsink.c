@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.6 2013/09/14 20:47:48 martin Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.7 2013/10/25 11:35:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.6 2013/09/14 20:47:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.7 2013/10/25 11:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,7 +135,7 @@ rndpool_maybe_extract(void *buffer, size_t bytes)
 
 	mutex_spin_enter(&rndpool_mtx);
 	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
-		const uint32_t extracted __unused =
+		const uint32_t extracted __diagused =
 		    rndpool_extract_data(&rnd_pool, buffer, bytes,
 			RND_EXTRACT_GOOD);
 
