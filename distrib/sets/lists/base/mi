@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1043 2013/10/25 00:23:42 htodd Exp $
+# $NetBSD: mi,v 1.1044 2013/10/25 10:27:08 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3893,6 +3893,7 @@
 ./usr/share/man/cat3				base-man-share
 ./usr/share/man/cat3/atari			base-obsolete		obsolete
 ./usr/share/man/cat3f				base-obsolete		obsolete
+./usr/share/man/cat3lua				base-man-share
 ./usr/share/man/cat4				base-man-share
 ./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/acorn32			base-man-share
@@ -4012,6 +4013,7 @@
 ./usr/share/man/cat9/vax			base-man-share
 ./usr/share/man/cat9/x68k			base-man-share
 ./usr/share/man/cat9/x86			base-man-share
+./usr/share/man/cat9lua				base-man-share
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
@@ -4019,6 +4021,7 @@
 ./usr/share/man/html2				base-man-share
 ./usr/share/man/html3				base-man-share
 ./usr/share/man/html3f				base-man-share
+./usr/share/man/html3lua			base-man-share
 ./usr/share/man/html4				base-man-share
 ./usr/share/man/html4/acorn26			base-man-share
 ./usr/share/man/html4/acorn32			base-man-share
@@ -4137,6 +4140,7 @@
 ./usr/share/man/html9/vax			base-man-share
 ./usr/share/man/html9/x68k			base-man-share
 ./usr/share/man/html9/x86			base-man-share
+./usr/share/man/html9lua			base-man-share
 ./usr/share/man/makewhatis.sed			base-man-share		!makemandb,share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
@@ -4146,6 +4150,7 @@
 ./usr/share/man/man3				base-man-share
 ./usr/share/man/man3/atari			base-obsolete		obsolete
 ./usr/share/man/man3f				base-man-share
+./usr/share/man/man3lua				base-man-share
 ./usr/share/man/man4				base-man-share
 ./usr/share/man/man4/acorn26			base-man-share
 ./usr/share/man/man4/acorn32			base-man-share
@@ -4265,6 +4270,7 @@
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
 ./usr/share/man/man9/x86			base-man-share
+./usr/share/man/man9lua				base-man-share
 ./usr/share/man/whatis.db			base-man-share		man,!makemandb
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
