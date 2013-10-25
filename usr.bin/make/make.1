@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.223 2013/10/25 20:57:02 apb Exp $
+.\"	$NetBSD: make.1,v 1.224 2013/10/25 22:05:00 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1066,6 +1066,13 @@ may
 be used.
 The wildcard characters may be escaped with a backslash
 .Pq Ql \e .
+As a consequence of the way values are split into words, matched,
+and then joined, a construct like
+.Dl ${VAR:M*}
+will normalise the inter-word spacing, removing all leading and
+trailing space, and converting multiple consecutive spaces
+to single spaces.
+.
 .It Cm \&:N Ns Ar pattern
 This is identical to
 .Ql Cm \&:M ,
