@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.5 2013/09/14 21:17:00 martin Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.6 2013/10/25 16:01:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.5 2013/09/14 21:17:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.6 2013/10/25 16:01:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ nfs_iodinit(void)
 void
 nfs_iodfini(void)
 {
-	int error;
+	int error __diagused;
 
 	error = nfs_set_niothreads(0);
 	KASSERT(error == 0);
