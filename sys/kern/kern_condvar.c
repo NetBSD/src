@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.33 2013/09/14 13:18:31 joerg Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.34 2013/10/25 15:51:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.33 2013/09/14 13:18:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.34 2013/10/25 15:51:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -190,7 +190,7 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 static void
 cv_unsleep(lwp_t *l, bool cleanup)
 {
-	kcondvar_t *cv;
+	kcondvar_t *cv __diagused;
 
 	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
 
