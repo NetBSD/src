@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.62 2011/08/18 14:13:59 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.63 2013/10/25 20:08:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.62 2011/08/18 14:13:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.63 2013/10/25 20:08:11 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -431,7 +431,7 @@ void
 uvm_anon_release(struct vm_anon *anon)
 {
 	struct vm_page *pg = anon->an_page;
-	bool success;
+	bool success __diagused;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(pg != NULL);
