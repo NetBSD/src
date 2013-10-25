@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.15 2013/10/25 14:23:15 jdc Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.16 2013/10/25 14:32:10 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.15 2013/10/25 14:23:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.16 2013/10/25 14:32:10 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ static int seeprom_wait_idle(struct seeprom_softc *);
 
 static const char * seeprom_compats[] = {
 	"i2c-at24c64",
+	"i2c-at34c02",
 	NULL
 };
 
