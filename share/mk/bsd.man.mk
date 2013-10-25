@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.112 2013/03/21 02:04:17 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.113 2013/10/25 10:45:01 apb Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -32,6 +32,7 @@ MANTARGET?=	cat
 MAN?=
 MLINKS?=
 _MNUMBERS=	1 2 3 4 5 6 7 8 9
+_MNUMBERS+=	3lua 9lua
 .SUFFIXES:	${_MNUMBERS:@N@.$N@}
 
 .if ${MKMANZ} == "no"
@@ -123,7 +124,7 @@ manlinks::	${_t}
 .if (${MKCATPAGES} != "no") && (${MKMAN} != "no")
 catinstall:	catpages catlinks
 catpages::	# ensure target exists
-CATPAGES=	${MAN:C/\.([1-9])$/.cat\1${MANSUFFIX}/}
+CATPAGES=	${MAN:C/\.([1-9][a-z]*)$/.cat\1${MANSUFFIX}/}
 
 realall:	${CATPAGES}
 .NOPATH:	${CATPAGES}
@@ -191,7 +192,7 @@ catlinks::	${_t}
 .if (${MKHTML} != "no") && (${MKMAN} != "no")		# {
 htmlinstall:	htmlpages htmllinks
 htmlpages::	# ensure target exists
-HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
+HTMLPAGES=	${MAN:C/\.([1-9][a-z]*)$/.html\1/}
 
 HTMLLINKS=	${MANSUBDIR:?../:}../html%S/%N.html
 HTMLSTYLE=	${MANSUBDIR:?../:}../style.css
