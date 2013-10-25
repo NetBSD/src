@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.114 2013/10/25 08:47:30 apb Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.115 2013/10/25 08:51:55 apb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -269,6 +269,44 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+/*
+ * __diagused: Note that variable is used in diagnostic code, but may be
+ * unused in non-diagnostic code.
+ *
+ * In the kernel, variables that are used when DIAGNOSTIC is defined,
+ * but unused when DIAGNOSTIC is not defined, may be declared with
+ * __diagused.  In userland, variables that are used when NDEBUG is not
+ * defined, but unused when NDEBUG is defined, may be declared with
+ * __diagused.
+ *
+ * Variables used only in assert(3) or KASSERT(9) macros are likely
+ * candidates for being declared with __diagused.
+ */
+#if (defined(_KERNEL) && defined(DIAGNOSTIC)) \
+ || (!defined(_KERNEL) && !defined(NDEBUG))
+#define	__diagused	/* empty */
+#else
+#define	__diagused	__unused
+#endif
+
+/*
+ * __debugused: Note that variable is used in debug code, but may be
+ * unused in non-debug code.
+ *
+ * In either the kernel or userland, variables that are used when DEBUG
+ * is defined, but unused when DEBUG is not defined, may be declared with
+ * __debugused.
+ *
+ * In the kernel, variables used only in KDASSERT(9) macros are likely
+ * candidates for being declared with __debugused.  There is no
+ * established convention for the use of DEBUG in userland code.
+ */
+#if defined(DEBUG)
+#define	__debugused	/* empty */
+#else
+#define	__debugused	__unused
 #endif
 
 #if __GNUC_PREREQ__(3, 1)
