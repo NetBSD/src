@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.21 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.22 2013/10/25 20:37:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.21 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.22 2013/10/25 20:37:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,7 @@ struct mount *
 vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
-	int error;
+	int error __diagused;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	if (mp == NULL)
@@ -1233,7 +1233,7 @@ mount_specific_key_delete(specificdata_key_t key)
 void
 mount_initspecific(struct mount *mp)
 {
-	int error;
+	int error __diagused;
 
 	error = specificdata_init(mount_specificdata_domain,
 				  &mp->mnt_specdataref);
