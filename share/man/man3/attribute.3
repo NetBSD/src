@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.14 2013/10/25 15:11:21 apb Exp $
+.\" $NetBSD: attribute.3,v 1.15 2013/10/25 22:19:41 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ code should usually avoid direct use of the
 .Em __attribute__
 or similar syntax provided by specific compilers.
 Instead,
-.Nx Ns 's
+.Nx Ap s
 .In sys/cdefs.h
 header file
 provides several attribute macros in a namespace
@@ -208,7 +208,7 @@ In either the kernel or userland, variables that are used when
 is defined, but unused when
 .Dv DEBUG
 is not defined, may be declared with
-.Ic __debugused. 
+.Ic __debugused .
 .Pp
 In the kernel, variables used only in
 .Xr KDASSERT 9
