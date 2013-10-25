@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.183 2013/10/25 20:26:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.183 2013/10/25 20:26:22 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -239,7 +239,7 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 static inline void
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct vm_page *ret;
+	struct vm_page *ret __diagused;
 
 	KASSERT(uobj == pg->uobject);
 	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
