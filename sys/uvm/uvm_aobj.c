@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.119 2012/09/15 06:25:47 matt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.120 2013/10/25 20:22:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.119 2012/09/15 06:25:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.120 2013/10/25 20:22:55 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -407,7 +407,7 @@ uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
 	static kmutex_t kernel_object_lock;
-	static int kobj_alloced = 0;
+	static int kobj_alloced __diagused = 0;
 	pgoff_t pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 	int refs;
