@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.315 2013/10/19 19:10:12 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.316 2013/10/25 11:35:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.315 2013/10/19 19:10:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.316 2013/10/25 11:35:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -748,7 +748,7 @@ cdstart(struct scsipi_periph *periph)
 	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
-	int flags, nblks, cmdlen, error __unused;
+	int flags, nblks, cmdlen, error __diagused;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdstart "));
 	/*

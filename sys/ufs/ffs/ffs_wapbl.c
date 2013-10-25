@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.24 2013/10/20 00:29:10 htodd Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.24 2013/10/20 00:29:10 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.25 2013/10/25 11:35:55 martin Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -165,7 +165,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int i, error __unused;
+	int i, error __diagused;
 
 #ifdef WAPBL_DEBUG_INODES
 	ufs_wapbl_verify_inodes(mp, "ffs_wapbl_sync_metadata");
