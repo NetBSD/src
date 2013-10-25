@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.188 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.189 2013/10/25 15:52:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.188 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.189 2013/10/25 15:52:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1452,7 +1452,7 @@ proc_specific_key_delete(specificdata_key_t key)
 void
 proc_initspecific(struct proc *p)
 {
-	int error;
+	int error __diagused;
 
 	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
 	KASSERT(error == 0);
