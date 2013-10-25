@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.21 2013/09/30 15:24:14 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.22 2013/10/25 20:39:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.21 2013/09/30 15:24:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.22 2013/10/25 20:39:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -183,7 +183,7 @@ extern int		(**dead_vnodeop_p)(void *);
 void
 vfs_vnode_sysinit(void)
 {
-	int error;
+	int error __diagused;
 
 	vnode_cache = pool_cache_init(sizeof(vnode_t), 0, 0, 0, "vnodepl",
 	    NULL, IPL_NONE, NULL, NULL, NULL);
@@ -359,7 +359,7 @@ int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
     kmutex_t *slock, vnode_t **vpp)
 {
-	struct uvm_object *uobj;
+	struct uvm_object *uobj __diagused;
 	vnode_t *vp;
 	int error = 0;
 
