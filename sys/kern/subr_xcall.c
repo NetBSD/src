@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.15 2013/04/07 00:31:40 rmind Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.16 2013/10/25 16:18:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.15 2013/04/07 00:31:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.16 2013/10/25 16:18:36 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ void
 xc_init_cpu(struct cpu_info *ci)
 {
 	static bool again = false;
-	int error;
+	int error __diagused;
 
 	if (!again) {
 		/* Autoconfiguration will prevent re-entry. */

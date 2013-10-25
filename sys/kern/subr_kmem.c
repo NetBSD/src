@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.50 2013/04/22 13:22:25 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.51 2013/10/25 16:09:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.50 2013/04/22 13:22:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.51 2013/10/25 16:09:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -549,7 +549,7 @@ kmem_size_check(void *p, size_t sz)
 char *
 kmem_asprintf(const char *fmt, ...)
 {
-	int size, len;
+	int size __diagused, len;
 	va_list va;
 	char *str;
 
