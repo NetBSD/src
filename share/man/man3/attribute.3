@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.13 2013/10/25 14:46:59 apb Exp $
+.\" $NetBSD: attribute.3,v 1.14 2013/10/25 15:11:21 apb Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -177,14 +177,25 @@ macro expands to an attribute that informs the compiler
 that a variable or function is used only in diagnostic code,
 and may be unused in non-diagnostic code.
 .Pp
-In the kernel, variables that are used when DIAGNOSTIC is defined,
-but unused when DIAGNOSTIC is not defined, may be declared with
-__diagused.  In userland, variables that are used when NDEBUG is not
-defined, but unused when NDEBUG is defined, may be declared with
-__diagused.
+In the kernel, variables that are used when
+.Dv DIAGNOSTIC
+is defined, but unused when
+.Dv DIAGNOSTIC
+is not defined, may be declared with
+.Ic __diagused .
+In userland, variables that are used when
+.Dv NDEBUG
+is not defined, but unused when
+.Dv NDEBUG
+is defined, may be declared with
+.Ic __diagused .
 .Pp
-Variables used only in assert(3) or KASSERT(9) macros are likely
-candidates for being declared with __diagused.
+Variables used only in
+.Xr assert 3
+or
+.Xr KASSERT 9
+macros are likely candidates for being declared with
+.Ic __diagused .
 .It Ic __debugused
 The
 .Ic __debugused
@@ -192,13 +203,20 @@ macro expands to an attribute that informs the compiler
 that a variable or function is used only in debug code,
 and may be unused in non-debug code.
 .Pp
-In either the kernel or userland, variables that are used when DEBUG
-is defined, but unused when DEBUG is not defined, may be declared with
-__debugused.
+In either the kernel or userland, variables that are used when
+.Dv DEBUG
+is defined, but unused when
+.Dv DEBUG
+is not defined, may be declared with
+.Ic __debugused. 
 .Pp
-In the kernel, variables used only in KDASSERT(9) macros are likely
-candidates for being declared with __debugused.  There is no
-established convention for the use of DEBUG in userland code.
+In the kernel, variables used only in
+.Xr KDASSERT 9
+macros are likely candidates for being declared with
+.Ic __debugused .
+There is no established convention for the use of
+.Dv DEBUG
+in userland code.
 .It Ic __packed
 The
 .Ic __packed
