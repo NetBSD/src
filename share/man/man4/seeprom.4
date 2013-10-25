@@ -1,4 +1,4 @@
-.\"	$NetBSD: seeprom.4,v 1.5 2013/10/25 14:23:15 jdc Exp $
+.\"	$NetBSD: seeprom.4,v 1.6 2013/10/25 22:15:02 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,8 +37,9 @@
 The
 .Nm
 driver provides support for the ATMEL 24-series of I2C EEPROMs, and
-compatables, available from a variety of vendors.  The Philips PCF8582
-is also supported, as compatable with the AT24C02.
+compatibles, available from a variety of vendors.
+The Philips PCF8582 is also supported, as compatible with the
+AT24C02.
 .Pp
 Access to the contents of the memory is through a character device.
 .Pp
@@ -73,7 +74,7 @@ device appeared in
 .Sh BUGS
 AT24C1024 EEPROM's are not supported.
 .Pp
-Software write protection on the AT34Cxx EEPROM's is not supported.
+Software write protection on the AT34Cxx EEPROMs is not supported.
 .Pp
 The
 .Nm
