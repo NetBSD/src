@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.16 2011/04/08 11:15:11 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.17 2013/10/25 16:29:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.16 2011/04/08 11:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.17 2013/10/25 16:29:20 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -232,7 +232,7 @@ static kmutex_t tcp_congctl_mtx;
 void
 tcp_congctl_init(void)
 {
-	int r;
+	int r __diagused;
 	
 	mutex_init(&tcp_congctl_mtx, MUTEX_DEFAULT, IPL_NONE);
 
