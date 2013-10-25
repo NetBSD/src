@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.113 2013/10/16 19:31:43 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.114 2013/10/25 08:47:30 apb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -250,12 +250,21 @@
 #define	__noclone	/* nothing */
 #endif
 
+/*
+ * __unused: Note that variable might be unused.
+ * Do not warn if variable is unused.
+ */
 #if __GNUC_PREREQ__(2, 7)
 #define	__unused	__attribute__((__unused__))
 #else
 #define	__unused	/* delete */
 #endif
 
+/*
+ * __used: Note that variable is needed, even if it appears to be unused.
+ * Valid only for static variables.  Do not optimise variable away.
+ * Do not warn if variable is unused.
+ */
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
