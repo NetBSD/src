@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.48 2012/12/06 13:28:17 hauke Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.49 2013/10/25 21:48:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.48 2012/12/06 13:28:17 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.49 2013/10/25 21:48:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,8 @@ static int	transfer_pdma(u_char *, u_char *, u_long *);
 static void
 scsi_clr_ipend(void)
 {
-	int tmp;
 
-	tmp = GET_5380_REG(NCR5380_IRCV);
+	GET_5380_REG(NCR5380_IRCV);
 	scsi_clear_irq();
 }
 
@@ -357,7 +356,7 @@ extern	int			*nofault, m68k_fault_addr;
 	register int		count;
 	volatile u_int32_t	*long_drq;
 	u_int32_t		*long_data;
-	volatile u_int8_t	*drq, tmp_data;
+	volatile u_int8_t	*drq;
 	u_int8_t		*data;
 
 #if DBG_PID
@@ -499,8 +498,7 @@ extern	int			*nofault, m68k_fault_addr;
 
 		PID("write complete");
 
-		drq = (volatile u_int8_t *) ncr_5380_with_drq;
-		tmp_data = *drq;
+		(void)*((volatile u_int8_t *) ncr_5380_with_drq);
 
 		PID("read a byte to force a phase change");
 	}
