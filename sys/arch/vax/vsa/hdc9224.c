@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.52 2013/10/25 14:44:25 martin Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.52 2013/10/25 14:44:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,6 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct rdsoftc *rd;
 	struct buf *bp;
 	int cn, sn, tn, bn, blks;
-	volatile char ch;
 
 	if (sc->sc_active)
 		return; /* Already doing something */
@@ -559,7 +558,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	/* Count up vars */
 	sc->sc_xfer = blks * DEV_BSIZE;
 
-	ch = HDC_RSTAT; /* Avoid pending interrupts */
+	(void)HDC_RSTAT; /* Avoid pending interrupts */
 	WAIT;
 	vsbus_clrintr(sc->sc_intbit); /* Clear pending int's */
 
