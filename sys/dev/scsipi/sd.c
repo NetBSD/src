@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.303 2013/09/28 09:01:36 skrll Exp $	*/
+/*	$NetBSD: sd.c,v 1.304 2013/10/25 16:03:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.303 2013/09/28 09:01:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.304 2013/10/25 16:03:51 martin Exp $");
 
 #include "opt_scsi.h"
 
@@ -773,7 +773,7 @@ sdstart(struct scsipi_periph *periph)
 	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
-	int nblks, cmdlen, error, flags;
+	int nblks, cmdlen, error __diagused, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
 	/*
