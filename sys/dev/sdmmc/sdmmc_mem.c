@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.29 2013/05/03 16:38:35 matt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.30 2013/10/25 11:35:55 martin Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.29 2013/05/03 16:38:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.30 2013/10/25 11:35:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1204,7 +1204,7 @@ static int
 sdmmc_mem_single_read_block(struct sdmmc_function *sf, uint32_t blkno,
     u_char *data, size_t datalen)
 {
-	struct sdmmc_softc *sc __unused = sf->sc;
+	struct sdmmc_softc *sc __diagused = sf->sc;
 	int error = 0;
 	int i;
 
@@ -1391,7 +1391,7 @@ static int
 sdmmc_mem_single_write_block(struct sdmmc_function *sf, uint32_t blkno,
     u_char *data, size_t datalen)
 {
-	struct sdmmc_softc *sc __unused = sf->sc;
+	struct sdmmc_softc *sc __diagused = sf->sc;
 	int error = 0;
 	int i;
 
