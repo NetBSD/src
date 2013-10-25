@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.55 2013/10/25 21:24:14 martin Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.55 2013/10/25 21:24:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -250,11 +250,13 @@ ascwrite(dev_t dev, struct uio *uio, int ioflag)
 int
 ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct asc_softc *sc;
 	int error;
+#ifdef not_yet
+	struct asc_softc *sc;
 	int unit = ASCUNIT(dev);
 
 	sc = device_lookup_private(&asc_cd, unit);
+#endif
 	error = 0;
 
 	switch (cmd) {
