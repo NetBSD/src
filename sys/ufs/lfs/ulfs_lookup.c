@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.16 2013/10/17 21:01:08 christos Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.16 2013/10/17 21:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.17 2013/10/25 20:05:39 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -1472,7 +1472,7 @@ int
 ulfs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
     bool modify)
 {
-	struct inode *ip;
+	struct inode *ip __diagused;
 	struct buf *bp;
 	daddr_t lbn;
 	const int dirrablks = ulfs_dirrablks;
