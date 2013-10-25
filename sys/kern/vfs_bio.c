@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.247 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.248 2013/10/25 20:36:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.247 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.248 2013/10/25 20:36:08 martin Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1211,7 +1211,7 @@ buf_t *
 geteblk(int size)
 {
 	buf_t *bp;
-	int error;
+	int error __diagused;
 
 	mutex_enter(&bufcache_lock);
 	while ((bp = getnewbuf(0, 0, 0)) == NULL)
