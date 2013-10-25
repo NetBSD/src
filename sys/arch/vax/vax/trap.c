@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2012/08/02 14:03:22 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.132 2013/10/25 16:30:52 martin Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2012/08/02 14:03:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2013/10/25 16:30:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -385,7 +385,7 @@ startlwp(void *arg)
 {
 	ucontext_t * const uc = arg;
 	lwp_t * const l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
