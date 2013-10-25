@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.65 2013/10/19 16:19:13 martin Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.66 2013/10/25 21:19:56 martin Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.65 2013/10/19 16:19:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.66 2013/10/25 21:19:56 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -391,7 +391,7 @@ adb_cuda_tickle(void)
 void
 adb_intr_cuda(void *arg)
 {
-	volatile int i, ending;
+	volatile int i __unused, ending;
 	volatile unsigned int s;
 	struct adbCommand packet;
 
