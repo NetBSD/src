@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.109 2013/10/25 20:27:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.109 2013/10/25 20:27:29 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -396,7 +396,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #if defined(VMSWAP)
 			if (swap) {
 				if (pg->uobject != NULL) {
-					int oldslot;
+					int oldslot __diagused;
 					oldslot = uao_set_swslot(pg->uobject,
 						pg->offset >> PAGE_SHIFT, slot);
 					KASSERT(oldslot == swslot + i);
@@ -527,7 +527,7 @@ uvm_pageratop(vaddr_t kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	bool rv;
+	bool rv __diagused;
 
 	rv = pmap_extract(pmap_kernel(), kva, &pa);
 	KASSERT(rv);
