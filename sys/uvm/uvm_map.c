@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.324 2012/11/02 16:43:16 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.325 2013/10/25 14:20:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.324 2012/11/02 16:43:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.325 2013/10/25 14:20:11 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2551,7 +2551,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry,
 	    *deadentry, *oldentry;
 	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
-	vsize_t elen;
+	vsize_t elen __unused;
 	int nchain, error, copy_ok;
 	vsize_t nsize;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
