@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.27 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.28 2013/10/25 20:38:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.27 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.28 2013/10/25 20:38:10 martin Exp $");
 
 /*
  * File system transaction operations.
@@ -99,7 +99,7 @@ static void cow_change_done(const struct mount *);
 void
 fstrans_init(void)
 {
-	int error;
+	int error __diagused;
 
 	error = lwp_specific_key_create(&lwp_data_key, fstrans_lwp_dtor);
 	KASSERT(error == 0);
@@ -510,7 +510,7 @@ static bool
 cow_state_change_done(const struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
-	struct fstrans_mount_info *fmi;
+	struct fstrans_mount_info *fmi __diagused;
 
 	fmi = mp->mnt_transinfo;
 
