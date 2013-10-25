@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.146 2013/10/08 17:21:24 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.147 2013/10/25 19:55:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.146 2013/10/08 17:21:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.147 2013/10/25 19:55:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
-	struct proc *p;
 	u_int newhiwat;
 	int error = 0;
 
@@ -380,7 +379,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("uipc_usrreq: unexpected control mbuf");
 #endif
-	p = l ? l->l_proc : NULL;
 	if (req != PRU_ATTACH) {
 		if (unp == NULL) {
 			error = EINVAL;
@@ -567,7 +565,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				m_freem(m);
 				break;
 			}
-			KASSERT(p != NULL);
+			KASSERT(l != NULL);
 			error = unp_output(m, control, unp, l);
 			if (nam)
 				unp_disconnect(unp);
