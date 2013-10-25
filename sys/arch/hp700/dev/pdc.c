@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.42 2013/10/19 13:29:10 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.43 2013/10/25 09:46:10 martin Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.42 2013/10/19 13:29:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.43 2013/10/25 09:46:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,7 @@ pdccninit(struct consdev *cn)
 int
 pdccnlookc(dev_t dev, int *cp)
 {
-	int s, err __unused, l, pagezero_cookie;
+	int s, err __debugused, l, pagezero_cookie;
 
 	s = splhigh();
 	pagezero_cookie = hp700_pagezero_map();
