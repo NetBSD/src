@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.10 2013/07/23 11:11:55 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.11 2013/10/25 09:25:32 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.10 2013/07/23 11:11:55 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.11 2013/10/25 09:25:32 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -65,6 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.10 2013/07/23 11:11:55 kefren Exp $");
 #include <netmpls/mpls_var.h>
 
 #include "if_mpls.h"
+
+#define TRIM_LABEL do { \
+	m_adj(m, sizeof(union mpls_shim)); \
+	if (m->m_len < sizeof(union mpls_shim) && \
+	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL) \
+		goto done; \
+	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr); \
+	} while (/* CONSTCOND */ 0)
+
 
 void ifmplsattach(int);
 
@@ -308,6 +317,7 @@ mpls_lse(struct mbuf *m)
 	struct rtentry *rt = NULL;
 	int error = ENOBUFS;
 	uint psize = sizeof(struct sockaddr_mpls);
+	bool push_back_alert = false;
 
 	if (m->m_len < sizeof(union mpls_shim) &&
 	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
@@ -330,14 +340,15 @@ mpls_lse(struct mbuf *m)
 	if (mpls_rfc4182 != 0)
 		while((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
 		    dst.smpls_addr.shim.label == MPLS_LABEL_IPV6NULL) &&
-		    __predict_false(dst.smpls_addr.shim.bos == 0)) {
-			m_adj(m, sizeof(union mpls_shim));
-			if (m->m_len < sizeof(union mpls_shim) &&
-			    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
-				goto done;
-			dst.smpls_addr.s_addr =
-			    ntohl(mtod(m, union mpls_shim *)->s_addr);
-		}
+		    __predict_false(dst.smpls_addr.shim.bos == 0))
+			TRIM_LABEL;
+
+	/* RFC 3032 Section 2.1 Page 4 */
+	if (__predict_false(dst.smpls_addr.shim.label == MPLS_LABEL_RTALERT) &&
+	    dst.smpls_addr.shim.bos == 0) {
+		TRIM_LABEL;
+		push_back_alert = true;
+	}
 
 	if (dst.smpls_addr.shim.label <= MPLS_LABEL_RESMAX) {
 		/* Don't swap reserved labels */
@@ -410,6 +421,16 @@ mpls_lse(struct mbuf *m)
 		    ((m = mpls_prepend_shim(m, &tshim)) == NULL))
 			return ENOBUFS;
 		psize += sizeof(tshim);
+	}
+
+	if (__predict_false(push_back_alert == true)) {
+		/* re-add the router alert label */
+		memset(&tshim, 0, sizeof(tshim));
+		tshim.s_addr = MPLS_LABEL_RTALERT;
+		tshim.shim.bos = tshim.shim.exp = 0;
+		tshim.shim.ttl = mpls_defttl;
+		if ((m = mpls_prepend_shim(m, &tshim)) == NULL)
+			return ENOBUFS;
 	}
 
 	error = mpls_send_frame(m, rt->rt_ifp, rt);
