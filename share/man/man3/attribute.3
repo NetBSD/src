@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.12 2013/10/25 14:41:08 apb Exp $
+.\" $NetBSD: attribute.3,v 1.13 2013/10/25 14:46:59 apb Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,10 @@
 .Ic __unused
 .Pp
 .Ic __used
+.Pp
+.Ic __diagused
+.Pp
+.Ic __debugused
 .Pp
 .Ic __packed
 .Pp
@@ -166,6 +170,35 @@ The
 macro expands to an attribute that informs the compiler
 that a static variable or function is to be always retained
 in the object file even if it is unreferenced.
+.It Ic __diagused
+The
+.Ic __diagused
+macro expands to an attribute that informs the compiler
+that a variable or function is used only in diagnostic code,
+and may be unused in non-diagnostic code.
+.Pp
+In the kernel, variables that are used when DIAGNOSTIC is defined,
+but unused when DIAGNOSTIC is not defined, may be declared with
+__diagused.  In userland, variables that are used when NDEBUG is not
+defined, but unused when NDEBUG is defined, may be declared with
+__diagused.
+.Pp
+Variables used only in assert(3) or KASSERT(9) macros are likely
+candidates for being declared with __diagused.
+.It Ic __debugused
+The
+.Ic __debugused
+macro expands to an attribute that informs the compiler
+that a variable or function is used only in debug code,
+and may be unused in non-debug code.
+.Pp
+In either the kernel or userland, variables that are used when DEBUG
+is defined, but unused when DEBUG is not defined, may be declared with
+__debugused.
+.Pp
+In the kernel, variables used only in KDASSERT(9) macros are likely
+candidates for being declared with __debugused.  There is no
+established convention for the use of DEBUG in userland code.
 .It Ic __packed
 The
 .Ic __packed
