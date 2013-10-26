@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3lua,v 1.1 2013/10/25 15:27:03 mbalmer Exp $
+.\"	$NetBSD: intro.3lua,v 1.2 2013/10/26 17:46:48 mbalmer Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -36,7 +36,6 @@
 .Sh DESCRIPTION
 This section provides an overview of the Lua libraries, their
 functions, error returns and other common definitions and concepts.
-.El
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
