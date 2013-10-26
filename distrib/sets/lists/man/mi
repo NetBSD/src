@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1441 2013/10/26 08:23:38 mbalmer Exp $
+# $NetBSD: mi,v 1.1442 2013/10/26 09:16:19 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -876,6 +876,7 @@
 ./usr/share/man/cat4/auvitek.0			man-sys-catman		.cat
 ./usr/share/man/cat4/awi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/axe.0			man-sys-catman		.cat
+./usr/share/man/cat4/axen.0			man-sys-catman		.cat
 ./usr/share/man/cat4/az.0			man-sys-catman		.cat
 ./usr/share/man/cat4/azalia.0			man-sys-catman		.cat
 ./usr/share/man/cat4/battery_pmu.0		man-sys-catman		.cat
@@ -3863,6 +3864,7 @@
 ./usr/share/man/html4/auvitek.html		man-sys-htmlman		html
 ./usr/share/man/html4/awi.html			man-sys-htmlman		html
 ./usr/share/man/html4/axe.html			man-sys-htmlman		html
+./usr/share/man/html4/axen.html			man-sys-htmlman		html
 ./usr/share/man/html4/az.html			man-sys-htmlman		html
 ./usr/share/man/html4/azalia.html		man-sys-htmlman		html
 ./usr/share/man/html4/battery_pmu.html		man-sys-htmlman		html
@@ -6614,6 +6616,7 @@
 ./usr/share/man/man4/auvitek.4			man-sys-man		.man
 ./usr/share/man/man4/awi.4			man-sys-man		.man
 ./usr/share/man/man4/axe.4			man-sys-man		.man
+./usr/share/man/man4/axen.4			man-sys-man		.man
 ./usr/share/man/man4/az.4			man-sys-man		.man
 ./usr/share/man/man4/azalia.4			man-sys-man		.man
 ./usr/share/man/man4/battery_pmu.4		man-sys-man		.man
