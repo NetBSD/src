@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.363 2013/09/14 00:42:21 jakllsch Exp $
+# $NetBSD: ALL,v 1.364 2013/10/26 09:16:20 nonaka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.363 $"
+#ident 		"ALL-$Revision: 1.364 $"
 
 maxusers	64		# estimated number of users
 
@@ -1293,6 +1293,7 @@ cir*	at irmce?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters

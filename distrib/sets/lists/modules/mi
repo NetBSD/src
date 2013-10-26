@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: mi,v 1.53 2013/10/26 09:16:19 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -78,6 +78,8 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_axen				base-kernel-modules	kmod
+./@MODULEDIR@/if_axen/if_axen.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog				base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog/if_npflog.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
