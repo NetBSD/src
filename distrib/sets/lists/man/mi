@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1440 2013/10/24 21:55:00 mbalmer Exp $
+# $NetBSD: mi,v 1.1441 2013/10/26 08:23:38 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -637,6 +637,7 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
+./usr/share/man/cat3lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aac.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ac97.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acardide.0			man-sys-catman		.cat
@@ -3103,6 +3104,7 @@
 ./usr/share/man/cat8/zpool.0			man-zfs-catman		zfs,.cat
 ./usr/share/man/cat8/zzz.0			man-sysutil-catman	.cat
 ./usr/share/man/cat9/boot.0			man-obsolete		obsolete
+./usr/share/man/cat9lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/html1/Mail.html			man-mail-htmlman	html
 ./usr/share/man/html1/[.html			man-util-htmlman	html
 ./usr/share/man/html1/agrep.html		man-util-htmlman	html
@@ -3667,6 +3669,7 @@
 ./usr/share/man/html1/zgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html3lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/aac.html			man-sys-htmlman		html
 ./usr/share/man/html4/ac97.html			man-sys-htmlman		html
 ./usr/share/man/html4/acardide.html		man-sys-htmlman		html
@@ -5773,6 +5776,7 @@
 ./usr/share/man/html8/zic.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/zpool.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
+./usr/share/man/html9lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/man1/Mail.1			man-mail-man		.man
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/agrep.1			man-util-man		.man
@@ -6371,6 +6375,7 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
+./usr/share/man/man3lua/intro.3lua		man-sys-man		.man
 ./usr/share/man/man4/aac.4			man-sys-man		.man
 ./usr/share/man/man4/ac97.4			man-sys-man		.man
 ./usr/share/man/man4/acardide.4			man-sys-man		.man
@@ -8832,4 +8837,5 @@
 ./usr/share/man/man8/zpool.8			man-zfs-man		zfs,.man
 ./usr/share/man/man8/zzz.8			man-sysutil-man		.man
 ./usr/share/man/man9/boot.9			man-obsolete		obsolete
+./usr/share/man/man9lua/intro.9lua		man-sys-man		.man
 ./usr/share/man/style.css			man-mdocml-htmlman	html
