@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.227 2013/09/12 15:36:16 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.228 2013/10/26 03:26:57 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -150,8 +150,9 @@ HOST_CC?=	cc
 HOST_CFLAGS?=	-O
 HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
 HOST_COMPILE.cc?=      ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} -c
-.if defined(HOSTPROG_CXX) 
-HOST_LINK.c?=	${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+HOST_LINK.cc?=  ${HOST_CXX} ${HOST_CXXFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+.if defined(HOSTPROG_CXX)
+HOST_LINK.c?=   ${HOST_LINK.cc}
 .else
 HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
 .endif
