@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.5 2013/06/30 12:20:32 rmind Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -14,18 +14,19 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.5 2013/06/30 12:20:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $");
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: murmurhash.c,v 1.5 2013/06/30 12:20:32 rmind Exp $");
+__RCSID("$NetBSD: murmurhash.c,v 1.6 2013/10/26 21:06:38 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/hash.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -48,23 +49,39 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 	const uint8_t *data = key;
 	uint32_t h = seed ^ (uint32_t)len;
 
-	while (len >= sizeof(uint32_t)) {
-		uint32_t k;
+	if (__predict_true(ALIGNED_POINTER(key, uint32_t))) {
+		while (len >= sizeof(uint32_t)) {
+			uint32_t k = *(const uint32_t *)data;
 
-		k  = data[0];
-		k |= data[1] << 8;
-		k |= data[2] << 16;
-		k |= data[3] << 24;
+			k *= m;
+			k ^= k >> r;
+			k *= m;
 
-		k *= m;
-		k ^= k >> r;
-		k *= m;
+			h *= m;
+			h ^= k;
 
-		h *= m;
-		h ^= k;
+			data += sizeof(uint32_t);
+			len -= sizeof(uint32_t);
+		}
+	} else {
+		while (len >= sizeof(uint32_t)) {
+			uint32_t k;
 
-		data += sizeof(uint32_t);
-		len -= sizeof(uint32_t);
+			k  = data[0];
+			k |= data[1] << 8;
+			k |= data[2] << 16;
+			k |= data[3] << 24;
+
+			k *= m;
+			k ^= k >> r;
+			k *= m;
+
+			h *= m;
+			h ^= k;
+
+			data += sizeof(uint32_t);
+			len -= sizeof(uint32_t);
+		}
 	}
 
 	/* Handle the last few bytes of the input array. */
