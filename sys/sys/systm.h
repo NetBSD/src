@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.258 2013/03/18 13:36:23 para Exp $	*/
+/*	$NetBSD: systm.h,v 1.259 2013/10/26 18:31:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -185,7 +185,7 @@ void	aprint_naive(const char *, ...) __printflike(1, 2);
 void	aprint_verbose(const char *, ...) __printflike(1, 2);
 void	aprint_debug(const char *, ...) __printflike(1, 2);
 
-void device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
+void	device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
 
 void	aprint_normal_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_error_dev(device_t, const char *, ...) __printflike(2, 3);
