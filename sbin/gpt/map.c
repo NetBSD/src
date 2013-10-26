@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.3 2013/10/26 20:31:23 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,8 +72,8 @@ map_add(off_t start, off_t size, int type, void *data)
 		return (NULL);
 
 	if (n->map_start + n->map_size < start + size) {
-		warnx("error: bogus map");
-		return (0);
+		warnx("error: map entry doesn't fit media");
+		return (NULL);
 	}
 
 	if (n->map_start == start && n->map_size == size) {
