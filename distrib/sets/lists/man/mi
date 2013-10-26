@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1442 2013/10/26 09:16:19 nonaka Exp $
+# $NetBSD: mi,v 1.1443 2013/10/26 10:48:19 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -637,6 +637,16 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
+./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.open.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.info.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.close.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.set.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.unset.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.read.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.write.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.toggle.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aac.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ac97.0			man-sys-catman		.cat
@@ -3670,6 +3680,16 @@
 ./usr/share/man/html1/zgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html3lua/gpio.html		man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.open.html		man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.info.html		man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.set.html		man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.unset.html	man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.read.html		man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.write.html	man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.toggle.html	man-sys-htmlman		html
+./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/aac.html			man-sys-htmlman		html
 ./usr/share/man/html4/ac97.html			man-sys-htmlman		html
@@ -6377,6 +6397,16 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
+./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.open.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.info.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.close.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.set.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.unset.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.read.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.write.3lua		man-sys-man		.man
+./usr/share/man/man3lua/gpio.toggle.3lua	man-sys-man		.man
+./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
 ./usr/share/man/man3lua/intro.3lua		man-sys-man		.man
 ./usr/share/man/man4/aac.4			man-sys-man		.man
 ./usr/share/man/man4/ac97.4			man-sys-man		.man
