@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1044 2013/10/25 10:27:08 mbalmer Exp $
+# $NetBSD: mi,v 1.1045 2013/10/27 09:27:23 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5472,11 +5472,11 @@
 ./var/chroot/ntpd/var/run			base-ntp-root
 ./var/chroot/pflogd				base-sys-root
 ./var/chroot/pfspamd				base-obsolete		obsolete
-./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/rtadvd				base-sys-root
 ./var/chroot/rtadvd/etc				base-sys-root
 ./var/chroot/rtadvd/var				base-sys-root
 ./var/chroot/rtadvd/var/run			base-sys-root
+./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
 ./var/chroot/tcpdump				base-sys-root
 ./var/chroot/tcpdump/etc			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.546 2013/10/12 15:30:37 christos Exp $
+# $NetBSD: mi,v 1.547 2013/10/27 09:27:23 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1978,14 +1978,14 @@
 ./usr/tests/lib/libc/net/getaddrinfo/data/unsup_fam.exp		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/getaddrinfo/h_gai	tests-lib-tests		atf
 ./usr/tests/lib/libc/net/getaddrinfo/t_getaddrinfo tests-lib-tests	atf
-./usr/tests/lib/libc/net/hosts		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_hostent		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_nsd_recurse		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/h_servent		tests-lib-tests		atf
-./usr/tests/lib/libc/net/t_hostent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/hosts		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/t_ether_aton		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_getprotoent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/t_hostent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_nsdispatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		atf
