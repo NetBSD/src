@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.655 2013/10/05 22:00:28 jnemeth Exp $
+$NetBSD: usbdevs,v 1.656 2013/10/27 16:59:46 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -451,6 +451,7 @@ vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA4	0x100d	Motorola
 vendor HP3		0x103c	Hewlett Packard
 vendor GIGABYTE		0x1044	GIGABYTE
+vendor WESTERN		0x1058	Western Digital
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor HYUNDAI		0x106c	Hyundai CuriTel
@@ -3227,6 +3228,9 @@ product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
+
+/* Western Digital products */
+product WESTERN EXTHDD		0x0400	External HDD
 
 /* WinChipHead products */
 product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
