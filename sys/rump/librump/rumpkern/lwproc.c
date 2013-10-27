@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.23 2013/05/15 14:07:26 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.24 2013/10/27 20:25:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.23 2013/05/15 14:07:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.24 2013/10/27 20:25:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -185,7 +185,6 @@ lwproc_freelwp(struct lwp *l)
 	p = l->l_proc;
 	mutex_enter(p->p_lock);
 
-	/* XXX: l_refcnt */
 	KASSERT(l->l_flag & LW_WEXIT);
 	KASSERT(l->l_refcnt == 0);
 
@@ -352,6 +351,7 @@ rump_lwproc_switch(struct lwp *newlwp)
 		fd_free();
 	}
 
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 	rumpuser_curlwpop(RUMPUSER_LWP_CLEAR, l);
 
 	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
@@ -359,6 +359,8 @@ rump_lwproc_switch(struct lwp *newlwp)
 	newlwp->l_pflag |= LP_RUNNING;
 
 	rumpuser_curlwpop(RUMPUSER_LWP_SET, newlwp);
+	curcpu()->ci_curlwp = newlwp;
+	KERNEL_LOCK(newlwp->l_biglocks, NULL);
 
 	/*
 	 * Check if the thread should get a signal.  This is
@@ -380,21 +382,46 @@ rump_lwproc_switch(struct lwp *newlwp)
 	}
 }
 
+/*
+ * Mark the current thread to be released upon return from
+ * kernel.
+ */
 void
 rump_lwproc_releaselwp(void)
 {
-	struct proc *p;
 	struct lwp *l = curlwp;
 
-	if (l->l_refcnt == 0 && l->l_flag & LW_WEXIT)
+	if (l->l_refcnt == 0 || l->l_flag & LW_WEXIT)
 		panic("releasing non-pertinent lwp");
 
-	p = l->l_proc;
-	mutex_enter(p->p_lock);
-	KASSERT(l->l_refcnt != 0);
+	rump__lwproc_lwprele();
+	KASSERT(l->l_refcnt == 0 && (l->l_flag & LW_WEXIT));
+}
+
+/*
+ * In-kernel routines used to add and remove references for the
+ * current thread.  The main purpose is to make it possible for
+ * implicit threads to persist over scheduling operations in
+ * rump kernel drivers.  Note that we don't need p_lock in a
+ * rump kernel, since we do refcounting only for curlwp.
+ */
+void
+rump__lwproc_lwphold(void)
+{
+	struct lwp *l = curlwp;
+
+	l->l_refcnt++;
+	l->l_flag &= ~LW_WEXIT;
+}
+
+void
+rump__lwproc_lwprele(void)
+{
+	struct lwp *l = curlwp;
+
 	l->l_refcnt--;
-	mutex_exit(p->p_lock);
-	l->l_flag |= LW_WEXIT; /* will be released when unscheduled */
+	if (l->l_refcnt == 0)
+		l->l_flag |= LW_WEXIT;
 }
 
 struct lwp *
