@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.33 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.34 2013/10/27 16:22:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -100,7 +100,9 @@ typedef bool (*npf_alg_func_t)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
 typedef void (*npf_workfunc_t)(void);
 
+/* Some artificial limits. */
 #define	NPF_TABLE_SLOTS		32
+#define	NPF_MAX_RULES		(1024 * 1024)
 
 /*
  * SESSION STATE STRUCTURES
