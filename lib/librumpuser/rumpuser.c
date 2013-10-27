@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.54 2013/08/14 08:29:25 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.55 2013/10/27 16:39:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.54 2013/08/14 08:29:25 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.55 2013/10/27 16:39:46 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -43,7 +43,12 @@ __RCSID("$NetBSD: rumpuser.c,v 1.54 2013/08/14 08:29:25 pooka Exp $");
 #include <sys/dkio.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || \
+    defined(__DragonFly__) || defined(__APPLE__)
+#define	__BSD__
+#endif
+
+#if defined(__BSD__)
 #include <sys/sysctl.h>
 #endif
 
@@ -533,7 +538,7 @@ gethostncpu(void)
 {
 	int ncpu = 1;
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__BSD__)
 	size_t sz = sizeof(ncpu);
 
 	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
@@ -607,7 +612,7 @@ rumpuser_putchar(int c)
 	putchar(c);
 }
 
-void
+__dead void
 rumpuser_exit(int rv)
 {
 
