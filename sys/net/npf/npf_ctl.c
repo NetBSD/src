@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.29 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.30 2013/10/27 16:22:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.29 2013/09/19 01:49:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.30 2013/10/27 16:22:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -467,7 +467,9 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* NAT policies. */
 	natlist = prop_dictionary_get(npf_dict, "translation");
-	nitems = prop_array_count(natlist);
+	if ((nitems = prop_array_count(natlist)) > NPF_MAX_RULES) {
+		goto fail;
+	}
 
 	nset = npf_ruleset_create(nitems);
 	error = npf_mk_natlist(nset, natlist, errdict);
@@ -493,7 +495,9 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* Rules. */
 	rules = prop_dictionary_get(npf_dict, "rules");
-	nitems = prop_array_count(rules);
+	if ((nitems = prop_array_count(rules)) > NPF_MAX_RULES) {
+		goto fail;
+	}
 
 	rlset = npf_ruleset_create(nitems);
 	error = npf_mk_rules(rlset, rules, rpset, errdict);
