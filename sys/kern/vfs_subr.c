@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.438 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.439 2013/10/27 16:19:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.438 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.439 2013/10/27 16:19:33 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -903,16 +903,16 @@ setrootfstime(time_t t)
 	rootfstime = t;
 }
 
-static const uint8_t vttodt_tab[9] = {
-	DT_UNKNOWN,	/* VNON  */
-	DT_REG,		/* VREG  */
-	DT_DIR,		/* VDIR  */
-	DT_BLK,		/* VBLK  */
-	DT_CHR,		/* VCHR  */
-	DT_LNK,		/* VLNK  */
-	DT_SOCK,	/* VSUCK */
-	DT_FIFO,	/* VFIFO */
-	DT_UNKNOWN	/* VBAD  */
+static const uint8_t vttodt_tab[ ] = {
+	[VNON]	=	DT_UNKNOWN,
+	[VREG]	=	DT_REG,
+	[VDIR]	=	DT_DIR,
+	[VBLK]	=	DT_BLK,
+	[VCHR]	=	DT_CHR,
+	[VLNK]	=	DT_LNK,
+	[VSOCK]	=	DT_SOCK,
+	[VFIFO]	=	DT_FIFO,
+	[VBAD]	=	DT_UNKNOWN
 };
 
 uint8_t
