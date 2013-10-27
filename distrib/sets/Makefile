@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2013/02/21 14:08:50 christos Exp $
+#	$NetBSD: Makefile,v 1.89 2013/10/27 09:29:42 apb Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -306,6 +306,17 @@ makesyspkgsums: .PHONY check_RELEASEDIR
 # just being created as necessary?
 makedeps: .PHONY
 	${SETSCMD} ./syspkgdeps all >${.CURDIR}/deps
+
+# Sort the lists files
+sortlists: .PHONY
+	find ${.CURDIR}/lists \! \( -name CVS -prune \) -type f -print \
+	| while read f ; do \
+	    ${_MKSHMSG} "sorting $${f#${.CURDIR}/}" ; \
+	    { grep '^#' "$$f" ; \
+	      grep -v '^#' "$$f" | sort ; \
+	    } >"$$f".tmp \
+	    && mv "$$f".tmp "$$f" ; \
+	  done
 
 #
 # MAIN ENTRY POINTS
