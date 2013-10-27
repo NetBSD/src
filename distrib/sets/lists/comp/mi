@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1850 2013/10/27 09:27:23 apb Exp $
+#	$NetBSD: mi,v 1.1851 2013/10/27 11:56:18 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4555,6 +4555,8 @@
 ./usr/share/man/cat3/__cacheline_aligned.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__constfunc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__dead.0			comp-c-catman		.cat
+./usr/share/man/cat3/__debugused.0		comp-c-catman		.cat
+./usr/share/man/cat3/__diagused.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__insn_barrier.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__noinline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__packed.0			comp-c-catman		.cat
@@ -11160,6 +11162,8 @@
 ./usr/share/man/html3/__cacheline_aligned.html	comp-c-htmlman		html
 ./usr/share/man/html3/__constfunc.html		comp-c-htmlman		html
 ./usr/share/man/html3/__dead.html		comp-c-htmlman		html
+./usr/share/man/html3/__debugused.html		comp-c-htmlman		html
+./usr/share/man/html3/__diagused.html		comp-c-htmlman		html
 ./usr/share/man/html3/__insn_barrier.html	comp-c-htmlman		html
 ./usr/share/man/html3/__noinline.html		comp-c-htmlman		html
 ./usr/share/man/html3/__packed.html		comp-c-htmlman		html
@@ -17567,6 +17571,8 @@
 ./usr/share/man/man3/__cacheline_aligned.3	comp-c-man		.man
 ./usr/share/man/man3/__constfunc.3		comp-c-man		.man
 ./usr/share/man/man3/__dead.3			comp-c-man		.man
+./usr/share/man/man3/__debugused.3		comp-c-man		.man
+./usr/share/man/man3/__diagused.3		comp-c-man		.man
 ./usr/share/man/man3/__insn_barrier.3		comp-c-man		.man
 ./usr/share/man/man3/__noinline.3		comp-c-man		.man
 ./usr/share/man/man3/__packed.3			comp-c-man		.man
