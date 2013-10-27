@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.76 2013/04/10 00:24:28 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.77 2013/10/27 10:09:28 apb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 9, 2013
+.Dd October 27, 2013
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -164,8 +164,8 @@ capabilities with the following third level identifiers:
 .Bl -tag -width "123456"
 .It Li vfs.wapbl.flush_disk_cache
 Controls whether to attempt to flush the disk cache on each commit.
-It defaults to 1 and it should always be on to ensure data integrity in
-case of a crash.
+It defaults to 1 and it should always be on to ensure integrity
+of file system metadata in the event of a power loss.
 For slow disks, turning it off can improve performance.
 .It Li vfs.wapbl.verbose_commit
 For each transaction log commit, print the number of bytes written
