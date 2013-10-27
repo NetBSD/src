@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.33 2013/09/26 00:41:51 rmind Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.34 2013/10/27 16:39:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.33 2013/09/26 00:41:51 rmind Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.34 2013/10/27 16:39:46 rmind Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -258,8 +258,10 @@ rumpuser_mutex_owner(struct rumpuser_mtx *mtx, struct lwp **lp)
 
 struct rumpuser_rw {
 	pthread_rwlock_t pthrw;
+#if !defined(__APPLE__)
 	char pad[64 - sizeof(pthread_rwlock_t)];
 	pthread_spinlock_t spin;
+#endif
 	unsigned int readers;
 	struct lwp *writer;
 	int downgrade; /* someone is downgrading (hopefully lock holder ;) */
@@ -319,7 +321,7 @@ static inline void
 rw_readup(struct rumpuser_rw *rw)
 {
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__APPLE__)
 	atomic_inc_uint(&rw->readers);
 #else
 	pthread_spin_lock(&rw->spin);
@@ -332,7 +334,7 @@ static inline void
 rw_readdown(struct rumpuser_rw *rw)
 {
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__APPLE__)
 	atomic_dec_uint(&rw->readers);
 #else
 	pthread_spin_lock(&rw->spin);
@@ -348,7 +350,9 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 
 	NOFAIL(*rw = aligned_alloc(sizeof(struct rumpuser_rw)));
 	NOFAIL_ERRNO(pthread_rwlock_init(&((*rw)->pthrw), NULL));
+#if !defined(__APPLE__)
 	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin),PTHREAD_PROCESS_PRIVATE));
+#endif
 	(*rw)->readers = 0;
 	(*rw)->writer = NULL;
 	(*rw)->downgrade = 0;
@@ -452,7 +456,9 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 {
 
 	NOFAIL_ERRNO(pthread_rwlock_destroy(&rw->pthrw));
+#if !defined(__APPLE__)
 	NOFAIL_ERRNO(pthread_spin_destroy(&rw->spin));
+#endif
 	free(rw);
 }
 
