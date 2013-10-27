@@ -1,4 +1,4 @@
-.\"	$NetBSD: gpio.3lua,v 1.1 2013/10/26 10:48:19 mbalmer Exp $
+.\"	$NetBSD: gpio.3lua,v 1.2 2013/10/27 11:43:07 mbalmer Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 26, 2013
+.Dd October 27, 2013
 .Dt GPIO 3lua
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ pins from Lua
 .Sh DESCRIPTION
 The
 .Nm
-Lua provides access to a
+Lua binding provides access to a
 .Xr gpio 4
 device using the
 .Xr ioctl 2
