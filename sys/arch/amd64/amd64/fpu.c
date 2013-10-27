@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.41 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: fpu.c,v 1.42 2013/10/27 16:25:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -95,24 +95,13 @@
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 
-/*
- * XXXfvdl update copyright notice. this started out as a stripped isa/npx.c
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.41 2013/10/23 20:18:50 drochner Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.42 2013/10/27 16:25:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/cpu.h>
-#include <sys/file.h>
 #include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
-#include <sys/vmmeter.h>
 #include <sys/kernel.h>
 
 #include <sys/bus.h>
@@ -134,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.41 2013/10/23 20:18:50 drochner Exp $");
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
-
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
  * MDL_USEDFPU bit in mdlwp.
@@ -153,8 +141,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.41 2013/10/23 20:18:50 drochner Exp $");
  * state is saved.
  */
 
-void fpudna(struct cpu_info *);
-static int x86fpflags_to_ksiginfo(uint32_t);
+void		fpudna(struct cpu_info *);
+static int	x86fpflags_to_ksiginfo(uint32_t);
 
 /*
  * Init the FPU.
@@ -178,11 +166,10 @@ fpuinit(struct cpu_info *ci)
 void
 fputrap(struct trapframe *frame)
 {
-	register struct lwp *l = curlwp;
+	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
 	struct savefpu *sfp = &pcb->pcb_savefpu;
 	uint32_t mxcsr, statbits;
-	uint16_t cw;
 	ksiginfo_t ksi;
 
 	KPREEMPT_DISABLE(l);
@@ -198,6 +185,8 @@ fputrap(struct trapframe *frame)
 		mxcsr &= ~0x3f;
 		x86_ldmxcsr(&mxcsr);
 	} else {
+		uint16_t cw;
+
 		fninit();
 		fwait();
 		cw = sfp->fp_fxsave.fx_fcw;
@@ -218,7 +207,6 @@ fputrap(struct trapframe *frame)
 static int
 x86fpflags_to_ksiginfo(uint32_t flags)
 {
-	int i;
 	static int x86fp_ksiginfo_table[] = {
 		FPE_FLTINV, /* bit 0 - invalid operation */
 		FPE_FLTRES, /* bit 1 - denormal operand */
@@ -229,12 +217,13 @@ x86fpflags_to_ksiginfo(uint32_t flags)
 		FPE_FLTINV, /* bit 6 - stack fault	*/
 	};
 
-	for (i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
-		if (flags & (1 << i))
-			return (x86fp_ksiginfo_table[i]);
+	for (u_int i = 0; i < __arraycount(x86fp_ksiginfo_table); i++) {
+		if (flags & (1U << i))
+			return x86fp_ksiginfo_table[i];
 	}
-	/* punt if flags not set */
-	return (FPE_FLTINV);
+
+	/* Punt if flags not set. */
+	return FPE_FLTINV;
 }
 
 /*
@@ -250,24 +239,23 @@ extern const pcu_ops_t fpu_ops;
 void
 fpudna(struct cpu_info *ci)
 {
-
 	pcu_load(&fpu_ops);
 }
-
 
 static void
 fpu_state_load(struct lwp *l, u_int flags)
 {
-	uint16_t cw;
-	uint32_t mxcsr;
-	struct pcb * const pcb = lwp_getpcb(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	clts();
 	pcb->pcb_cr0 &= ~CR0_TS;
-	if (!(flags & PCU_RELOAD))
+	if ((flags & PCU_RELOAD) == 0)
 		return;
 
-	if (!(flags & PCU_LOADED)) {
+	if ((flags & PCU_LOADED) == 0) {
+		uint32_t mxcsr;
+		uint16_t cw;
+
 		fninit();
 		cw = pcb->pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
@@ -281,6 +269,7 @@ fpu_state_load(struct lwp *l, u_int flags)
 		 */
 		static const double zero = 0.0;
 		int status;
+
 		/*
 		 * Clear the ES bit in the x87 status word if it is currently
 		 * set, in order to avoid causing a fault in the upcoming load.
@@ -288,6 +277,7 @@ fpu_state_load(struct lwp *l, u_int flags)
 		fnstsw(&status);
 		if (status & 0x80)
 			fnclex();
+
 		/*
 		 * Load the dummy variable into the x87 stack.  This mangles
 		 * the x87 stack, but we don't care since we're about to call
@@ -301,26 +291,16 @@ fpu_state_load(struct lwp *l, u_int flags)
 static void
 fpu_state_save(struct lwp *l, u_int flags)
 {
-	struct cpu_info *ci;
-	struct pcb * const pcb = lwp_getpcb(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
-	ci = curcpu();
-	/*
-	 * Set ci->ci_fpsaving, so that any pending exception will
-	 * be thrown away.  It will be caught again if/when the
-	 * FPU state is restored.
-	 */
-	KASSERT(ci->ci_fpsaving == 0);
 	clts();
-	ci->ci_fpsaving = 1;
 	fxsave(&pcb->pcb_savefpu);
-	ci->ci_fpsaving = 0;
 }
 
 static void
 fpu_state_release(struct lwp *l, u_int flags)
 {
-	struct pcb * const pcb = lwp_getpcb(l);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	stts();
 	pcb->pcb_cr0 |= CR0_TS;
