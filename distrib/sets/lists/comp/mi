@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1847 2013/10/26 20:06:38 mbalmer Exp $
+#	$NetBSD: mi,v 1.1848 2013/10/27 02:39:21 htodd Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2590,7 +2590,6 @@
 ./usr/include/sys/localedef.h			comp-c-include
 ./usr/include/sys/lock.h			comp-c-include
 ./usr/include/sys/lockf.h			comp-c-include
-./usr/include/sys/lua.h				comp-c-include
 ./usr/include/sys/lwp.h				comp-c-include
 ./usr/include/sys/lwpctl.h			comp-c-include
 ./usr/include/sys/malloc.h			comp-c-include
