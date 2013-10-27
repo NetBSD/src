@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.23 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: ad.arm,v 1.24 2013/10/27 09:27:23 apb Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -191,10 +191,10 @@
 ./usr/lib/oabi/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/oabi/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblua.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/liblutok.so.2			base-compat-shlib	compat,pic,kyua
-./usr/lib/oabi/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/oabi/liblutok.so.1			base-obsolete		obsolete
 ./usr/lib/oabi/liblutok.so.1.0			base-obsolete		obsolete
+./usr/lib/oabi/liblutok.so.2			base-compat-shlib	compat,pic,kyua
+./usr/lib/oabi/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/oabi/liblwres.so.7			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblwres.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzf.so.1			base-compat-shlib	compat,pic
