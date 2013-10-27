@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.18 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: ad.mips,v 1.19 2013/10/27 09:27:23 apb Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -191,10 +191,10 @@
 ./usr/lib/64/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap,arch64
 ./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/liblutok.so.2			base-compat-shlib	compat,pic,kyua,arch64
-./usr/lib/64/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua,arch64
 ./usr/lib/64/liblutok.so.1			base-obsolete		obsolete
 ./usr/lib/64/liblutok.so.1.0			base-obsolete		obsolete
+./usr/lib/64/liblutok.so.2			base-compat-shlib	compat,pic,kyua,arch64
+./usr/lib/64/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua,arch64
 ./usr/lib/64/liblwres.so.7			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblwres.so.7.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblzf.so.1			base-compat-shlib	compat,pic,arch64

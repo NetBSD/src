@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.213 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: md.amd64,v 1.214 2013/10/27 09:27:23 apb Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -188,10 +188,10 @@
 ./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblutok.so			base-compat-shlib	compat,pic,kyua
-./usr/lib/i386/liblutok.so.2			base-compat-shlib	compat,pic,kyua
-./usr/lib/i386/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/i386/liblutok.so.1			base-obsolete		obsolete
 ./usr/lib/i386/liblutok.so.1.0			base-obsolete		obsolete
+./usr/lib/i386/liblutok.so.2			base-compat-shlib	compat,pic,kyua
+./usr/lib/i386/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua
 ./usr/lib/i386/liblwres.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1			base-compat-shlib	compat,pic

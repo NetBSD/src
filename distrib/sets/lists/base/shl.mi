@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.675 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: shl.mi,v 1.676 2013/10/27 09:27:23 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -353,10 +353,10 @@
 ./usr/lib/liblua.so.1				base-sys-shlib
 ./usr/lib/liblua.so.1.0				base-sys-shlib
 ./usr/lib/liblutok.so				base-sys-shlib		kyua
-./usr/lib/liblutok.so.2				base-sys-shlib		kyua
-./usr/lib/liblutok.so.2.0			base-sys-shlib		kyua
 ./usr/lib/liblutok.so.1				base-obsolete		obsolete
 ./usr/lib/liblutok.so.1.0			base-obsolete		obsolete
+./usr/lib/liblutok.so.2				base-sys-shlib		kyua
+./usr/lib/liblutok.so.2.0			base-sys-shlib		kyua
 ./usr/lib/liblwres.so				base-bind-shlib
 ./usr/lib/liblwres.so.7				base-bind-shlib
 ./usr/lib/liblwres.so.7.0			base-bind-shlib

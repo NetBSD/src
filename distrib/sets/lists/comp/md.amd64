@@ -1,4 +1,5 @@
-# $NetBSD: md.amd64,v 1.201 2013/10/14 01:37:39 joerg Exp $
+# $NetBSD: md.amd64,v 1.202 2013/10/27 09:27:23 apb Exp $
+
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1004,7 +1005,6 @@
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic
-
 ./usr/libdata/ldscripts/elf_i386.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xc		comp-util-bin		binutils
