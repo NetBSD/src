@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcomp_user.h,v 1.4 2013/07/04 11:46:51 pooka Exp $	*/
+/*	$NetBSD: rumpcomp_user.h,v 1.5 2013/10/27 16:03:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,8 @@
  */
 
 struct virtif_user;
+
+#define VIFHYPER_REVISION 20130704
 
 int 	VIFHYPER_CREATE(int, struct virtif_user **);
 void	VIFHYPER_DYING(struct virtif_user *);
