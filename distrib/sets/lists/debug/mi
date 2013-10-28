@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: mi,v 1.36 2013/10/28 21:39:45 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
@@ -309,6 +309,7 @@
 ./usr/libdata/debug/sbin/ipf.debug		comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/sbin/iscsictl.debug		comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/sbin/iscsid.debug		comp-iscsi-debug	iscsi,debug
+./usr/libdata/debug/sbin/luactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/lvm.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/mbrlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mknod.debug		comp-sysutil-debug	debug
