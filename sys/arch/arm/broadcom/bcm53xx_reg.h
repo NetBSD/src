@@ -94,8 +94,6 @@
 #define	TIMER0_BASE		0x005000
 #define	TIMER1_BASE		0x006000
 #define	SRAB_BASE		0x007000
-#define	UART2_BASE		0x008000
-#define	SMBUS_BASE		0x009000
 
 #define	CRU_BASE		0x00b000
 #define	DMU_BASE		0x00c000
@@ -104,16 +102,38 @@
 
 #define	PCIE0_BASE		0x012000
 #define	PCIE1_BASE		0x013000
-#define	PCIE2_BASE		0x014000
 
+#ifdef BCM5301X
+#define	UART2_BASE		0x008000
+#define	SMBUS1_BASE		0x009000
+#define	PCIE2_BASE		0x014000
 #define SDIO_BASE		0x020000
 #define	EHCI_BASE		0x021000
 #define	OHCI_BASE		0x022000
-
 #define	GMAC0_BASE		0x024000
 #define	GMAC1_BASE		0x025000
 #define	GMAC2_BASE		0x026000
 #define	GMAC3_BASE		0x027000
+#define	NAND_BASE		0x028000
+#define QSPI_BASE		0x029000
+#define I2S_BASE		0x02A000
+#define DMAC_BASE		0x02C000
+#endif
+
+#ifdef BCM563XX
+#define	UART2_BASE		0x007000
+#define	SMBUS1_BASE		0x008000
+#define	WDT_BASE		0x009000
+#define	PKA_BASE		0x00a000
+#define	SMBUS2_BASE		0x00b000
+#define DMAC_BASE		0x020000
+#define	GMAC0_BASE		0x022000
+#define	GMAC1_BASE		0x023000
+#define	NAND_BASE		0x026000
+#define	QSPI_BASE		0x027000
+#define	EHCI_BASE		0x02A000
+#define	OHCI_BASE		0x02B000
+#endif
 
 #define	IDM_BASE		0x100000
 #define	IDM_SIZE		0x100000
@@ -129,6 +149,7 @@
 #define	ID_BCM53011			0xcf13	// 53011
 #define	ID_BCM53012			0xcf14	// 53012
 #define	ID_BCM53013			0xcf15	// 53013
+#define	ID_BCM56340			0xdc14	// 56340
 
 #define	MISC_CAPABILITY			0x004
 #define	CAPABILITY_JTAG_PRESENT		__BIT(22)
@@ -903,5 +924,98 @@ struct gmac_rxdb {
 #define UNIMAC_MAC_PFC_REFRESH_CTRL	0xb44 // PPP refresh control register
 
 #endif /* GMAC_PRIVATE */
+
+#ifdef NAND_PRIVATE
+
+#define NAND_REVISION		0x0000	// NAND Revision
+#define NAND_CMD_START		0x0004	// Nand Flash Command Start
+#define NAND_CMD_EXT_ADDR	0x0008	// Nand Flash Command Extended Address
+#define NAND_CMD_ADDR	0x000c	// Nand Flash Command Address
+#define NAND_CMD_END_ADDR	0x0010	// Nand Flash Command End Address
+#define NAND_INTFC_STATUS	0x0014	// Nand Flash Interface Status
+#define NAND_CS_NAND_XOR	0x001c	// Nand Flash EBI
+#define NAND_LL_OP		0x0020	// Nand Flash Low Level Operation
+#define NAND_MPLANE_BASE_EXT_ADDR	0x0024	// Nand Flash Multiplane base address
+#define NAND_MPLANE_BASE_ADDR	0x0028	// Nand Flash Multiplane base address
+#define NAND_ACC_CONTROL_CS0	0x0050	// Nand Flash Access Control
+#define NAND_CONFIG_CS0		0x0054	// Nand Flash Config
+#define NAND_TIMING_1_CS0	0x0058	// Nand Flash Timing Parameters 1
+#define NAND_TIMING_2_CS0	0x005c	// Nand Flash Timing Parameters 2
+#define NAND_ACC_CONTROL_CS1	0x0060	// Nand Flash Access Control
+#define NAND_CONFIG_CS1		0x0064	// Nand Flash
+#define NAND_TIMING_1_CS1	0x0068	// Nand Flash Timing Parameters 1
+#define NAND_TIMING_2_CS1	0x006c	// Nand Flash Timing Parameters 2
+#define NAND_CORR_STAT_THRESHOLD	0x00c0	// Correctable Error Reporting Threshold
+#define NAND_BLK_WR_PROTECT	0x00c8	// Block Write Protect Enable and Size for EBI_CS0b
+#define NAND_MULTIPLANE_OPCODES_1	0x00cc	// Nand Flash Multiplane Customized Opcodes
+#define NAND_MULTIPLANE_OPCODES_2	0x00d0	// Nand Flash Multiplane Customized Opcodes
+#define NAND_MULTIPLANE_CTRL	0x00d4	// Nand Flash Multiplane Control
+#define NAND_UNCORR_ERROR_COUNT	0x00fc	// Read Uncorrectable Event Count
+#define NAND_CORR_ERROR_COUNT	0x0100	// Read Error Count
+#define NAND_READ_ERROR_COUNT	0x0104	// Read Error Count
+#define NAND_BLOCK_LOCK_STATUS	0x0108	// Nand Flash Block Lock Status
+#define NAND_ECC_CORR_EXT_ADDR	0x010c	// ECC Correctable Error Extended Address
+#define NAND_ECC_CORR_ADDR	0x0110	// ECC Correctable Error Address
+#define NAND_ECC_UNC_EXT_ADDR	0x0114	// ECC Uncorrectable Error Extended Address
+#define NAND_ECC_UNC_ADDR	0x0118	// ECC Uncorrectable Error Address
+#define NAND_FLASH_READ_EXT_ADDR	0x011c	// Flash Read Data Extended Address
+#define NAND_FLASH_READ_ADDR	0x0120	// Flash Read Data Address
+#define NAND_PROGRAM_PAGE_EXT_ADDR	0x0124	// Page Program Extended Address
+#define NAND_PROGRAM_PAGE_ADDR	0x0128	// Page Program Address
+#define NAND_COPY_BACK_EXT_ADDR	0x012c	// Copy Back Extended Address
+#define NAND_COPY_BACK_ADDR	0x0130	// Copy Back Address
+#define NAND_BLOCK_ERASE_EXT_ADDR	0x0134	// Block Erase Extended Address
+#define NAND_BLOCK_ERASE_ADDR	0x0138	// Block Erase Address
+#define NAND_INV_READ_EXT_ADDR	0x013c	// Flash Invalid Data Extended Address
+#define NAND_INV_READ_ADDR	0x0140	// Flash Invalid Data Address
+#define NAND_INIT_STATUS	0x0144	// Initialization status
+#define NAND_ONFI_STATUS	0x0148	// ONFI Status
+#define NAND_ONFI_DEBUG_DATA	0x014c	// ONFI Debug Data
+#define NAND_SEMAPHORE		0x0150	// Semaphore
+#define NAND_FLASH_DEVICE_ID	0x0194	// Nand Flash Device ID
+#define NAND_FLASH_DEVICE_ID_EXT	0x0198	// Nand Flash Extended Device ID
+#define NAND_LL_RDDATA		0x019c	// Nand Flash Low Level Read Data
+
+#define NAND_SPARE_AREA_READ_OFSn(n)	(0x0200+4*(n)) // Nand Flash Spare Area Read Bytes
+#define NAND_SPARE_AREA_WRITE_OFSn(n)	(0x0280+4*(n)) // Nand Flash Spare Area Write Bytes 8-11
+#define NAND_FLASH_CACHEn(n)	(0x0400+4*(n))	// Flash Cache Buffer Read Access
+
+#define NAND_DIRECT_READ_RD_MISS	0x0f00	// Interrupt from Nand indicating a read miss on internal memory
+#define NAND_BLOCK_ERASE_COMPLETE	0x0f04	// Interrupt from Nand indicating block erase
+#define NAND_COPY_BACK_COMPLETE	0x0f08	// Interrupt from Nand indicating Copy-Back complete.
+#define NAND_PROGRAM_PAGE_COMPLETE	0x0f0c	// Interrupt from nand indicating page program is complete.
+#define NAND_RO_CTLR_READY	0x0f10	// Interrupt from nand indicating controller ready
+#define NAND_NAND_RB_B		0x0f14	// Interrupt from nand indicating status of Nand Flash ready_bus pin
+#define NAND_ECC_MIPS_UNCORR	0x0f18	// Interrupt from Nand indicating Uncorrectable error
+#define NAND_ECC_MIPS_CORR	0x0f1c	// Interrupt from Nand indicating correctable error
+
+#define	NAND_CMD_START_OPCODE	__BITS(28,24)
+#define  NAND_CMD_START_OPCODE_DEFAULT			0
+#define  NAND_CMD_START_OPCODE_NULL			0
+#define  NAND_CMD_START_OPCODE_PAGE_READ		1
+#define  NAND_CMD_START_OPCODE_SPARE_AREA_READ		2
+#define  NAND_CMD_START_OPCODE_STATUS_READ		3
+#define  NAND_CMD_START_OPCODE_PROGRAM_PAGE		4
+#define  NAND_CMD_START_OPCODE_PROGRAM_SPARE_AREA	5
+#define  NAND_CMD_START_OPCODE_COPY_BACK		6
+#define  NAND_CMD_START_OPCODE_DEVICE_ID_READ		7
+#define  NAND_CMD_START_OPCODE_BLOCK_ERASE		8
+#define  NAND_CMD_START_OPCODE_FLASH_RESET		9
+#define  NAND_CMD_START_OPCODE_BLOCKS_LOCK		10
+#define  NAND_CMD_START_OPCODE_BLOCKS_LOCK_DOWN		11
+#define  NAND_CMD_START_OPCODE_BLOCKS_UNLOCK		12
+#define  NAND_CMD_START_OPCODE_READ_BLOCKS_LOCK_STATUS	13
+#define  NAND_CMD_START_OPCODE_PARAMETER_READ		14
+#define  NAND_CMD_START_OPCODE_PARAMETER_CHANGE_COL	15
+#define  NAND_CMD_START_OPCODE_LOW_LEVEL_OP		16
+#define  NAND_CMD_START_OPCODE_PAGE_READ_MULTI		17
+#define  NAND_CMD_START_OPCODE_STATUS_READ_MULTI	18
+#define  NAND_CMD_START_OPCODE_PROGRAM_PAGE_MULTI	19
+#define  NAND_CMD_START_OPCODE_PROGRAM_PAGE_MULTI_CACHE	20
+#define  NAND_CMD_START_OPCODE_BLOCK_ERASE_MULTI	21
+#define	NAND_CMD_START_CSEL	__BITS(18,16)
+#define	NAND_CMD_EXT_ADDRESS	__BITS(15,0)
+
+#endif /* NAND_PRIVATE */
 
 #endif /* _ARM_BROADCOM_BCM53XX_REG_H_ */

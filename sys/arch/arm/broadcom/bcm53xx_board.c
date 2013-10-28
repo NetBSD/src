@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.16 2013/08/29 15:46:17 riz Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.17 2013/10/28 22:51:16 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.16 2013/08/29 15:46:17 riz Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.17 2013/10/28 22:51:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.16 2013/08/29 15:46:17 riz Exp $
 #include <net/if.h>
 #include <net/if_ether.h>
 
+#define CCA_PRIVATE
 #define CRU_PRIVATE
 #define DDR_PRIVATE
 #define DMU_PRIVATE
@@ -67,6 +68,7 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 static struct cpu_softc cpu_softc;
 
 struct arm32_dma_range bcm53xx_dma_ranges[] = {
+#ifdef BCM5301X
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -75,6 +77,16 @@ struct arm32_dma_range bcm53xx_dma_ranges[] = {
 		.dr_sysbase = 0x90000000,
 		.dr_busbase = 0x90000000,
 	},
+#elif defined(BCM56340)
+	[0] = {
+		.dr_sysbase = 0x60000000,
+		.dr_busbase = 0x60000000,
+		.dr_len = 0x20000000,
+	}, [1] = {
+		.dr_sysbase = 0xa0000000,
+		.dr_busbase = 0xa0000000,
+	}.
+#endif
 };
 
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
@@ -86,6 +98,7 @@ struct arm32_bus_dma_tag bcm53xx_dma_tag = {
 };
 
 struct arm32_dma_range bcm53xx_coherent_dma_ranges[] = {
+#ifdef BCM5301X
 	[0] = {
 		.dr_sysbase = 0x80000000,
 		.dr_busbase = 0x80000000,
@@ -95,6 +108,17 @@ struct arm32_dma_range bcm53xx_coherent_dma_ranges[] = {
 		.dr_sysbase = 0x90000000,
 		.dr_busbase = 0x90000000,
 	},
+#elif defined(BCM563XX)
+	[0] = {
+		.dr_sysbase = 0x60000000,
+		.dr_busbase = 0x60000000,
+		.dr_len = 0x20000000,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	}, [1] = {
+		.dr_sysbase = 0xa0000000,
+		.dr_busbase = 0xa0000000,
+	},
+#endif
 };
 
 struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
@@ -453,6 +477,11 @@ bcm53xx_cpu_softc_init(struct cpu_info *ci)
 
 	cpu->cpu_armcore_bst = bcm53xx_armcore_bst;
 	cpu->cpu_armcore_bsh = bcm53xx_armcore_bsh;
+
+	const uint32_t chipid = bus_space_read_4(cpu->cpu_ioreg_bst,
+	    cpu->cpu_ioreg_bsh, CCA_MISC_BASE + MISC_CHIPID);
+
+	cpu->cpu_chipid = __SHIFTOUT(chipid, CHIPID_ID);
 }
 
 void
@@ -525,7 +554,8 @@ bcm53xx_bootstrap(vaddr_t iobase)
 
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
 
-	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh, ARMCORE_L2C_BASE);
+	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	    ARMCORE_L2C_BASE);
 }
 
 void
