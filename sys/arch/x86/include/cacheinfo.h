@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.16 2013/09/14 17:21:19 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.17 2013/10/28 05:41:49 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -8,7 +8,10 @@ struct x86_cache_info {
 	uint8_t		cai_desc;
 	uint8_t		cai_associativity;
 	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
-	u_int		cai_linesize;	/* or page size for TLB */
+	u_int		cai_linesize;	/*
+					 * or page size for TLB,
+					 * or prefetch size
+					 */
 #ifndef _KERNEL
 	const char	*cai_string;
 #endif
@@ -32,8 +35,9 @@ struct x86_cache_info {
 #define CAI_L2_DTLB2	15		/* L2 Data TLB (2/4M pages) */
 #define CAI_L2_STLB	16		/* Shared L2 TLB (4K pages) */
 #define CAI_L2_STLB2	17		/* Shared L2 TLB (4K/2M pages) */
+#define CAI_PREFETCH	18		/* Prefetch */
 
-#define	CAI_COUNT	18
+#define	CAI_COUNT	19
 
 /*
  * AMD Cache Info:
@@ -319,6 +323,9 @@ __CI_TBL(CAI_L3CACHE,  0xe4,   16, 8 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xea,   24,12 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xeb,   24,18 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xec,   24,24 * 1024 * 1024, 64, NULL), \
+__CI_TBL(CAI_PREFETCH, 0xf0,    0,               0, 64, NULL), \
+__CI_TBL(CAI_PREFETCH, 0xf1,    0,               0,128, NULL), \
+/* 0xff means no cache information in CPUID leaf 2 (and use leaf 4) */ \
 __CI_TBL(0,               0,    0,               0,  0, NULL)  \
 }
 

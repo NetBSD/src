@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.45 2013/10/21 06:33:11 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.46 2013/10/28 05:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.45 2013/10/21 06:33:11 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.46 2013/10/28 05:41:49 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2002,6 +2002,12 @@ x86_print_cacheinfo(struct cpu_info *ci)
 	}
 	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
 		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_PREFETCH].cai_linesize != 0) {
+		aprint_verbose_dev(ci->ci_dev, "%dB prefetching",
+			ci->ci_cinfo[CAI_PREFETCH].cai_linesize);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
