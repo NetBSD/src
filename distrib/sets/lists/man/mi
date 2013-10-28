@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1445 2013/10/27 12:47:54 mbalmer Exp $
+# $NetBSD: mi,v 1.1446 2013/10/28 19:05:21 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2538,6 +2538,7 @@
 ./usr/share/man/cat8/lockstat.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/lpc.0			man-lpr-catman		.cat
 ./usr/share/man/cat8/lpd.0			man-lpr-catman		.cat
+./usr/share/man/cat8/luactl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/luna68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/luna68k/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/lvchange.0			man-lvm-catman		lvm,.cat
@@ -5343,6 +5344,7 @@
 ./usr/share/man/html8/lockstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/lpc.html			man-lpr-htmlman		html
 ./usr/share/man/html8/lpd.html			man-lpr-htmlman		html
+./usr/share/man/html8/luactl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/lvchange.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvconvert.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvcreate.html		man-lvm-htmlman		lvm,html
@@ -8300,6 +8302,7 @@
 ./usr/share/man/man8/lockstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/lpc.8			man-lpr-man		.man
 ./usr/share/man/man8/lpd.8			man-lpr-man		.man
+./usr/share/man/man8/luactl.8			man-sysutil-man		.man
 ./usr/share/man/man8/luna68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/luna68k/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/lvchange.8			man-lvm-man		lvm,.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1045 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: mi,v 1.1046 2013/10/28 19:05:21 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -283,6 +283,7 @@
 ./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
+./sbin/luactl					base-sysutil-root
 ./sbin/lvm					base-lvm-root		lvm
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
