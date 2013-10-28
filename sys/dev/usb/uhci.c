@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.261 2013/09/29 07:28:20 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.262 2013/10/28 17:40:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.261 2013/09/29 07:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.262 2013/10/28 17:40:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,7 @@ const struct usbd_bus_methods uhci_bus_methods = {
 	.allocx =	uhci_allocx,
 	.freex =	uhci_freex,
 	.get_lock =	uhci_get_lock,
+	.new_device =	NULL,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
