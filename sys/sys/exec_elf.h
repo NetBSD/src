@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.129 2013/09/10 16:24:02 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.130 2013/10/28 21:36:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -692,6 +692,13 @@ typedef struct {
 #define DT_HIOS		0x6fffffff
 #define DT_LOPROC	0x70000000	/* Processor-specific range */
 #define DT_HIPROC	0x7fffffff
+
+/* Flag values for DT_FLAGS */
+#define DF_ORIGIN	0x00000001	/* uses $ORIGIN */
+#define DF_SYMBOLIC	0x00000002	/* */
+#define DF_TEXTREL	0x00000004	/* */
+#define DF_BIND_NOW	0x00000008	/* */
+#define DF_STATICT_LS	0x00000010	/* */
 
 /* Flag values for DT_FLAGS_1 (incomplete) */
 #define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
