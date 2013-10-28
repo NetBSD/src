@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.7 2013/08/04 01:02:01 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.8 2013/10/28 22:35:07 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.7 2013/08/04 01:02:01 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.8 2013/10/28 22:35:07 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -74,8 +74,11 @@ _C_LABEL(bcm53xx_start):
 	/*
 	 * Save any arguments u-boot passed us.
 	 */
-	ldr	r4, .Luboot_args
+	movw	r4, #:lower16:(uboot_args-.LPIC0)
+	movt	r4, #:upper16:(uboot_args-.LPIC0)
+	add	r4, r4, pc
 	stmia	r4, {r0-r3}
+.LPIC0:
 
 	/*
 	 * Let's turn on the CCA watchdog in case something goes horribly wrong.
@@ -98,6 +101,7 @@ _C_LABEL(bcm53xx_start):
 	bl	arm_boot_l1pt_init
 
 	XPUTC(#68)
+
 	/*
 	 * Before we turn on the MMU, let's the other process out of the
 	 * SKU ROM but setting the magic LUT address to our own mp_start
@@ -116,9 +120,20 @@ _C_LABEL(bcm53xx_start):
 	ldr	r0, .Ltemp_l1_table	/* The page table address */
 	bl	arm_cpuinit
 
-	XPUTC(#33)
-	XPUTC(#10)
-	XPUTC(#13)
+	XPUTC(#89)
+
+	movw	r0, #:lower16:uboot_args
+	movt	r0, #:upper16:uboot_args
+	ldr	r2, [r0]
+	movw	r1, #:lower16:(uboot_args-.LPIC1)
+	movt	r1, #:upper16:(uboot_args-.LPIC1)
+	add	r1, r1, pc
+	ldr	r1, [r1]
+.LPIC1:
+	cmp	r1, r2
+1:	bne	1b
+
+	XPUTC(#90)
 
 	/*
 	 * Let's turn off the CCA watchdog since nothing went horribly wrong.
@@ -127,19 +142,21 @@ _C_LABEL(bcm53xx_start):
 	mov	r1, #0
 	str	r1, [r0]
 
+	XPUTC(#33)
+	XPUTC(#10)
+	XPUTC(#13)
 	/*
 	 * Jump to start in locore.S, which in turn will call initarm and main.
 	 */
-	b	start
+	movw	ip, #:lower16:start
+	movt	ip, #:upper16:start
+	bx	ip
 	nop
 	nop
 	nop
 	nop
 
 	/* NOTREACHED */
-
-.Luboot_args:
-	.word	uboot_args
 
 .Lsku_rom_lut:
 	.word	0xffff0400
@@ -150,19 +167,23 @@ _C_LABEL(bcm53xx_start):
 
 .Ltemp_l1_table:
 	/* Put the temporary L1 translation table far enough away. */
-	.word	KERNEL_BASE_phys + 31 * 0x100000 - L1_TABLE_SIZE
+	.word	31 * 0x100000 - L1_TABLE_SIZE
 
 #include <arm/cortex/a9_mpsubr.S>
 
 mmu_init_table:
-	/* Add 32MB of VA==PA at 0x80000000 so we can keep the kernel going */
-	MMU_INIT(KERNEL_BASE, 0x80000000,
-	    (128 * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-	    L1_S_PROTO | L1_S_APv7_KRW  | L1_S_B | L1_S_C)
+	/* Add 128MB of VA==PA at 0x80000000 so we can keep the kernel going */
+#ifdef BCM5301X
+	MMU_INIT(KERNEL_BASE, 0x80000000, 128,
+	    L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
+#elif defined(BCM56340)
+	MMU_INIT(KERNEL_BASE, 0x60000000, 128,
+	    L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
+#endif
 
 	MMU_INIT(0, 0x00000000,
-	    (16 * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-	    L1_S_PROTO | L1_S_APv7_KRW  | L1_S_B | L1_S_C)
+	    (32 * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
 
 	/* Map the 2MB of primary peripherals */
 	MMU_INIT(KERNEL_IO_IOREG_VBASE, BCM53XX_IOREG_PBASE,
