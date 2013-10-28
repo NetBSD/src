@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980x.c,v 1.4 2013/10/15 13:42:52 rkujawa Exp $ */
+/*	$NetBSD: mcp980x.c,v 1.5 2013/10/28 11:24:08 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.4 2013/10/15 13:42:52 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp980x.c,v 1.5 2013/10/28 11:24:08 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ mcp980x_setup_sysctl(struct mcp980x_softc *sc)
 }
 
 
-SYSCTL_SETUP(sysctl_lmtemp_setup, "sysctl mcp980x subtree setup")
+SYSCTL_SETUP(sysctl_mcp980x_setup, "sysctl mcp980x subtree setup")
 {
 	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0,
