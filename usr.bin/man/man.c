@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.59 2013/10/06 17:14:49 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.60 2013/10/28 23:46:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.59 2013/10/06 17:14:49 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.60 2013/10/28 23:46:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,8 +465,46 @@ main(int argc, char **argv)
 }
 
 static int
+manual_find_literalfile(struct manstate *mp, char **pv)
+{
+	ENTRY *suffix;
+	int found;
+	char buf[MAXPATHLEN];
+	const char *p;
+	int suflen;
+
+	found = 0;
+
+	/*
+	 * Expand both '*' and suffix to force an actual
+	 * match via fnmatch(3). Since the only match in pg
+	 * is the literal file, the match is genuine.
+	 */
+
+	TAILQ_FOREACH(suffix, &mp->buildlist->entrylist, q) {
+		for (p = suffix->s, suflen = 0;
+		    *p != '\0' && !isspace((unsigned char)*p);
+		    ++p)
+			++suflen;
+		if (*p == '\0')
+			continue;
+
+		(void)snprintf(buf, sizeof(buf), "*%.*s", suflen, suffix->s);
+
+		if (!fnmatch(buf, *pv, 0)) {
+			if (!mp->where)
+				build_page(p + 1, pv, mp);
+			found = 1;
+			break;
+		}
+	}
+
+	return found;
+}
+
+static int
 manual_find_buildkeyword(const char *prefix, const char *escpage,
-	struct manstate *mp, glob_t *pg, size_t cnt)
+    struct manstate *mp, char **pv)
 {
 	ENTRY *suffix;
 	int found;
@@ -485,10 +523,10 @@ manual_find_buildkeyword(const char *prefix, const char *escpage,
 			continue;
 
 		(void)snprintf(buf, sizeof(buf), "%s%s%.*s",
-			       prefix, escpage, suflen, suffix->s);
-		if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
+		    prefix, escpage, suflen, suffix->s);
+		if (!fnmatch(buf, *pv, 0)) {
 			if (!mp->where)
-				build_page(p + 1, &pg->gl_pathv[cnt], mp);
+				build_page(p + 1, pv, mp);
 			found = 1;
 			break;
 		}
@@ -554,35 +592,12 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 		if (pg->gl_matchc == 0)
 			goto notfound;
 
-		/* clip suffix for the suffix check below */
-		if ((p = strrchr(escpage, '.')) != NULL) {
-			/* Should get suffixes from the configuration file */
-			if (strcmp(p, ".gz") == 0 || strcmp(p, ".bz2") == 0 ||
-			    strcmp(p, ".Z") == 0 || strcmp(p, ".xz") == 0) {
-				*p = '\0';
-				p = strrchr(escpage, '.');
-			}
-			if (p && strchr("0123456789ln", p[1]) != NULL)
-				*p = '\0';
-		}
-
-		found = 0;
-		for (cnt = pg->gl_pathc - pg->gl_matchc;
-		    cnt < pg->gl_pathc; ++cnt)
-		{
-			found = manual_find_buildkeyword("", escpage,
-				mp, pg, cnt);
-			if (found) {
-				anyfound = 1;
-				if (!mp->all) {
-					/* Delete any other matches. */
-					while (++cnt< pg->gl_pathc)
-						*pg->gl_pathv[cnt] = '\0';
-					break;
-				}
-				continue;
-			}
-
+		/* literal file only yields one match */
+		cnt = pg->gl_pathc - pg->gl_matchc;
+ 
+		if (manual_find_literalfile(mp, &pg->gl_pathv[cnt])) {
+			anyfound = 1;
+		} else {
 			/* It's not a man page, forget about it. */
 			*pg->gl_pathv[cnt] = '\0';
 		}
@@ -666,7 +681,7 @@ manual(char *page, struct manstate *mp, glob_t *pg)
 
 			/* Try the _build keywords next. */
 			found = manual_find_buildkeyword("*/", escpage,
-				mp, pg, cnt);
+				mp, &pg->gl_pathv[cnt]);
 			if (found) {
 next:				anyfound = 1;
 				if (!mp->all) {
