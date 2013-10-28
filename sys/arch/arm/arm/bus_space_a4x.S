@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_a4x.S,v 1.3 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: bus_space_a4x.S,v 1.4 2013/10/28 22:50:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <arm/locore.h>
 #include <arm/byte_swap.h>
 
-RCSID("$NetBSD: bus_space_a4x.S,v 1.3 2013/08/18 06:28:18 matt Exp $")
+RCSID("$NetBSD: bus_space_a4x.S,v 1.4 2013/10/28 22:50:25 matt Exp $")
 
 /*
  * bus_space_read_[124](void *cookie, bus_space_handle_t handle,
@@ -47,13 +47,13 @@ END(a4x_bs_r_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(a4x_bs_r_2)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	ldrh	r0, [r1, r2]
 	RET
 END(a4x_bs_r_2)
 
 ENTRY_NP(a4x_bs_r_2_swap)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	ldrh	r0, [r1, r2]
 	BSWAP16(r0, r0, r1)
 	RET
@@ -77,29 +77,29 @@ END(a4x_bs_r_4_swap)
  */
 
 ENTRY_NP(a4x_bs_rm_1)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_rm_1
 END(a4x_bs_rm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(a4x_bs_rm_2)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_armv4_bs_rm_2
 END(a4x_bs_rm_2)
 
 ENTRY_NP(a4x_bs_rm_2_swap)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_armv4_bs_rm_2_swap
 END(a4x_bs_rm_2_swap)
 #endif
 
 ENTRY_NP(a4x_bs_rm_4)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_rm_4
 END(a4x_bs_rm_4)
 
 ENTRY_NP(a4x_bs_rm_4_swap)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_rm_4_swap
 END(a4x_bs_rm_4_swap)
 
@@ -116,7 +116,7 @@ END(a4x_bs_w_1)
 ENTRY_NP(a4x_bs_w_2_swap)
 	BSWAP16(r3, r3, r0)
 ENTRY_NP(a4x_bs_w_2)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	strh	r3, [r1, r2]
 	RET
 END(a4x_bs_w_2)
@@ -137,28 +137,28 @@ END(a4x_bs_w_4_swap)
  */
 
 ENTRY_NP(a4x_bs_wm_1)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_wm_1
 END(a4x_bs_wm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(a4x_bs_wm_2)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_armv4_bs_wm_2
 END(a4x_bs_wm_2)
 
 ENTRY_NP(a4x_bs_wm_2_swap)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_armv4_bs_wm_2_swap
 END(a4x_bs_wm_2_swap)
 #endif
 
 ENTRY_NP(a4x_bs_wm_4)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_wm_4
 END(a4x_bs_wm_4)
 
 ENTRY_NP(a4x_bs_wm_4_swap)
-	lsl	r2, r2, #2
+	lsls	r2, r2, #2
 	b	generic_bs_wm_4_swap
 END(a4x_bs_wm_4_swap)
