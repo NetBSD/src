@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.4 2013/10/18 08:39:22 apb Exp $	*/
+/*	$NetBSD: xhci.c,v 1.5 2013/10/28 17:49:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.4 2013/10/18 08:39:22 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.5 2013/10/28 17:49:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,14 +703,6 @@ xhci_init(struct xhci_softc *sc)
 	if (i >= 100)
 		return USBD_IOERROR;
 
-	device_printf(sc->sc_dev, "maxspbuf %d\n", XHCI_HCS2_MAXSPBUF(hcs2));
-	if (XHCI_HCS2_MAXSPBUF(hcs2) != 0) {
-		/* XXX */
-		aprint_error_dev(sc->sc_dev,
-		    "TODO implement scratchpad allocation\n");
-		return USBD_INVAL;
-	}
-
 	pagesize = xhci_op_read_4(sc, XHCI_PAGESIZE);
 	device_printf(sc->sc_dev, "PAGESIZE 0x%08x\n", pagesize);
 	pagesize = ffs(pagesize);
@@ -721,12 +713,39 @@ xhci_init(struct xhci_softc *sc)
 	device_printf(sc->sc_dev, "sc_maxslots 0x%08x\n",
 	    (uint32_t)sc->sc_maxslots);
 
+	usbd_status err;
+
+	sc->sc_maxspbuf = XHCI_HCS2_MAXSPBUF(hcs2);
+	device_printf(sc->sc_dev, "sc_maxspbuf %d\n", sc->sc_maxspbuf);
+	if (sc->sc_maxspbuf != 0) {
+		err = usb_allocmem(&sc->sc_bus,
+		    sizeof(uint64_t) * sc->sc_maxspbuf, sizeof(uint64_t),
+		    &sc->sc_spbufarray_dma);
+		if (err)
+			return err;
+		
+		sc->sc_spbuf_dma = kmem_zalloc(sizeof(*sc->sc_spbuf_dma) * sc->sc_maxspbuf, KM_SLEEP);
+		uint64_t *spbufarray = KERNADDR(&sc->sc_spbufarray_dma, 0);
+		for (i = 0; i < sc->sc_maxspbuf; i++) {
+			usb_dma_t * const dma = &sc->sc_spbuf_dma[i];
+			/* allocate contexts */
+			err = usb_allocmem(&sc->sc_bus, sc->sc_pgsz,
+			    sc->sc_pgsz, dma);
+			if (err)
+				return err;
+			spbufarray[i] = htole64(DMAADDR(dma, 0));
+			usb_syncmem(dma, 0, sc->sc_pgsz,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
+
+		usb_syncmem(&sc->sc_spbufarray_dma, 0, 
+		    sizeof(uint64_t) * sc->sc_maxspbuf, BUS_DMASYNC_PREWRITE);
+	}
+
 	config = xhci_op_read_4(sc, XHCI_CONFIG);
 	config &= ~0xFF;
 	config |= sc->sc_maxslots & 0xFF;
 	xhci_op_write_4(sc, XHCI_CONFIG, config);
-
-	usbd_status err;
 
 	err = xhci_ring_init(sc, &sc->sc_cr, XHCI_COMMAND_RING_TRBS,
 	    XHCI_COMMAND_RING_SEGMENTS_ALIGN);
@@ -767,6 +786,13 @@ xhci_init(struct xhci_softc *sc)
 		align = XHCI_DEVICE_CONTEXT_BASE_ADDRESS_ARRAY_ALIGN;
 		err = usb_allocmem(&sc->sc_bus, size, align, dma);
 		memset(KERNADDR(dma, 0), 0, size);
+		if (sc->sc_maxspbuf != 0) {
+			/*
+			 * DCBA entry 0 hold the scratchbuf array pointer.
+			 */
+			*(uint64_t *)KERNADDR(dma, 0) =
+			    htole64(DMAADDR(&sc->sc_spbufarray_dma, 0));
+		}
 		usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
 		device_printf(sc->sc_dev, "dcbaa: %s %016jx %p %zx\n",
 		    usbd_errstr(err),
@@ -1792,7 +1818,7 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
 	device_printf(sc->sc_dev, "dcbaa %p dc %016"PRIx64" slot %d\n",
 	    &dcbaa[si], dcba, si);
 
-	dcbaa[si] = dcba;
+	dcbaa[si] = htole64(dcba);
 	usb_syncmem(&sc->sc_dcbaa_dma, si * sizeof(uint64_t), sizeof(uint64_t),
 	    BUS_DMASYNC_PREWRITE);
 }

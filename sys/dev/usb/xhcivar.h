@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.1 2013/09/14 00:40:31 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.2 2013/10/28 17:49:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -85,6 +85,7 @@ struct xhci_softc {
 	int sc_maxslots;
 	int sc_maxintrs;
 	int sc_maxports;
+	int sc_maxspbuf;
 
 	/* XXX suboptimal */
 	int sc_hs_port_start;
@@ -99,6 +100,8 @@ struct xhci_softc {
 
 	usb_dma_t sc_eventst_dma;
 	usb_dma_t sc_dcbaa_dma;
+	usb_dma_t sc_spbufarray_dma;
+	usb_dma_t *sc_spbuf_dma;
 
 	//struct usb_dma_reserve sc_dma_reserve;
 
