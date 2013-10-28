@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 2013/10/28 19:18:54 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.123 2013/10/28 20:32:14 mbalmer Exp $
 
 .include <bsd.own.mk>
 
@@ -40,6 +40,7 @@ SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	lua
 SUBDIR+=	luacore
+SUBDIR+=	luapmf
 SUBDIR+=	mfs
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
