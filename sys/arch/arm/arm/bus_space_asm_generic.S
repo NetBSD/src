@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.10 2013/08/18 06:29:29 matt Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.11 2013/10/28 22:50:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -46,6 +46,13 @@
 #define	DSB
 #endif
 
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+#define CHECK_LENGTH(r, l)	cbz r, l
+#elif defined(__thumb__)
+#define CHECK_LENGTH(r, l)	cmp r, #0; beq l
+#else
+#define CHECK_LENGTH(r, l)	cmp r, #0; RETc(eq)
+#endif
 /*
  * Generic bus_space functions.
  */
@@ -123,11 +130,10 @@ END(generic_bs_w_4_swap)
  */
 
 ENTRY_NP(generic_bs_rm_1)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrb	r3, [r0]
@@ -135,16 +141,15 @@ ENTRY_NP(generic_bs_rm_1)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_rm_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrh	r3, [r0]
@@ -152,16 +157,15 @@ ENTRY_NP(generic_armv4_bs_rm_2)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_armv4_bs_rm_2)
 
 ENTRY_NP(generic_armv4_bs_rm_2_swap)
 	DSB
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrh	r3, [r0]
@@ -170,16 +174,15 @@ ENTRY_NP(generic_armv4_bs_rm_2_swap)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_armv4_bs_rm_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_rm_4)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldr	r3, [r0]
@@ -187,15 +190,14 @@ ENTRY_NP(generic_bs_rm_4)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rm_4)
 
 ENTRY_NP(generic_bs_rm_4_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldr	r3, [r0]
@@ -204,7 +206,7 @@ ENTRY_NP(generic_bs_rm_4_swap)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rm_4_swap)
 
 /*
@@ -212,11 +214,10 @@ END(generic_bs_rm_4_swap)
  */
 
 ENTRY_NP(generic_bs_wm_1)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldrb	r3, [r1], #1
 	strb	r3, [r0]
@@ -224,16 +225,15 @@ ENTRY_NP(generic_bs_wm_1)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_wm_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldrh	r3, [r1], #2
 	strh	r3, [r0]
@@ -241,15 +241,13 @@ ENTRY_NP(generic_armv4_bs_wm_2)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_wm_2)
 
 ENTRY_NP(generic_armv4_bs_wm_2_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
 
 1:	ldrh	r3, [r1], #2
 	BSWAP16(r3, r3, ip)
@@ -258,16 +256,15 @@ ENTRY_NP(generic_armv4_bs_wm_2_swap)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_wm_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_wm_4)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldr	r3, [r1], #4
 	str	r3, [r0]
@@ -275,15 +272,14 @@ ENTRY_NP(generic_bs_wm_4)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wm_4)
 
 ENTRY_NP(generic_bs_wm_4_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldr	r3, [r1], #4
 	BSWAP32(r3, r3, ip)
@@ -292,7 +288,7 @@ ENTRY_NP(generic_bs_wm_4_swap)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wm_4_swap)
 
 /*
@@ -300,11 +296,10 @@ END(generic_bs_wm_4_swap)
  */
 
 ENTRY_NP(generic_bs_rr_1)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrb	r3, [r0], #1
@@ -312,16 +307,15 @@ ENTRY_NP(generic_bs_rr_1)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_rr_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrh	r3, [r0], #2
@@ -329,15 +323,14 @@ ENTRY_NP(generic_armv4_bs_rr_2)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_armv4_bs_rr_2)
 
 ENTRY_NP(generic_armv4_bs_rr_2_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldrh	r3, [r0], #2
@@ -346,31 +339,29 @@ ENTRY_NP(generic_armv4_bs_rr_2_swap)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_armv4_bs_rr_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_rr_4)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldr	r3, [r0], #4
 	str	r3, [r1], #4
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rr_4)
 
 ENTRY_NP(generic_bs_rr_4_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 	DSB
 
 1:	ldr	r3, [r0], #4
@@ -379,7 +370,7 @@ ENTRY_NP(generic_bs_rr_4_swap)
 	subs	r2, r2, #1
 	bne	1b
 
-	RET
+99:	RET
 END(generic_bs_rr_4_swap)
 
 /*
@@ -387,11 +378,10 @@ END(generic_bs_rr_4_swap)
  */
 
 ENTRY_NP(generic_bs_wr_1)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
@@ -399,16 +389,15 @@ ENTRY_NP(generic_bs_wr_1)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_wr_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldrh	r3, [r1], #2
 	strh	r3, [r0], #2
@@ -416,15 +405,14 @@ ENTRY_NP(generic_armv4_bs_wr_2)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_wr_2)
 
 ENTRY_NP(generic_armv4_bs_wr_2_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldrh	r3, [r1], #2
 	BSWAP16(r3, r3, ip)
@@ -433,16 +421,15 @@ ENTRY_NP(generic_armv4_bs_wr_2_swap)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_wr_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_wr_4)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldr	r3, [r1], #4
 	str	r3, [r0], #4
@@ -450,15 +437,14 @@ ENTRY_NP(generic_bs_wr_4)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wr_4)
 
 ENTRY_NP(generic_bs_wr_4_swap)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	ldr	r3, [r1], #4
 	BSWAP32(r3, r3, ip)
@@ -467,7 +453,7 @@ ENTRY_NP(generic_bs_wr_4_swap)
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_wr_4_swap)
 
 /*
@@ -475,36 +461,34 @@ END(generic_bs_wr_4_swap)
  */
 
 ENTRY_NP(generic_bs_sr_1)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	strb	r1, [r0], #1
 	subs	r2, r2, #1
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_sr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_sr_2_swap)
 	BSWAP16(r3, r3, r0)	/* swap and fallthrough */
 ENTRY_NP(generic_armv4_bs_sr_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	strh	r1, [r0], #2
 	subs	r2, r2, #1
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_sr_2)
 END(generic_armv4_bs_sr_2_swap)
 #endif
@@ -512,18 +496,17 @@ END(generic_armv4_bs_sr_2_swap)
 ENTRY_NP(generic_bs_sr_4_swap)
 	BSWAP32(r3, r3, r0)	/* swap and fallthrough */
 ENTRY_NP(generic_bs_sr_4)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
 
 1:	str	r1, [r0], #4
 	subs	r2, r2, #1
 	bne	1b
 
 	DSB
-	RET
+99:	RET
 END(generic_bs_sr_4)
 END(generic_bs_sr_4_swap)
 
@@ -533,35 +516,35 @@ END(generic_bs_sr_4_swap)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_c_2)
-	add	r0, r1, r2
+	adds	r0, r1, r2
 	ldr	r2, [sp, #0]
-	add	r1, r2, r3
+	adds	r1, r2, r3
 	ldr	r2, [sp, #4]
-	teq	r2, #0
-	RETc(eq)
+	CHECK_LENGTH(r2, 99f)
+
+	lsls	r2, r2, #1
 
 	cmp	r0, r1
 	blt	2f
 
-1:	ldrh	r3, [r0], #2
-	strh	r3, [r1], #2
-	subs	r2, r2, #1
+	adds	r0, r0, r2
+	adds	r1, r1, r2
+	negs	r2, r2	
+
+1:	ldrh	r3, [r0, r2]
+	strh	r3, [r1, r2]
+	adds	r2, r2, #2
 	bne	1b
 
 	DSB
 	RET
 
-2:	add	r0, r0, r2, lsl #1
-	add	r1, r1, r2, lsl #1
-	sub	r0, r0, #2
-	sub	r1, r1, #2
-
-3:	ldrh	r3, [r0], #-2
-	strh	r3, [r1], #-2
-	subs	r2, r2, #1
-	bne	3b
+2:	subs	r2, r2, #2
+	ldrh	r3, [r0, r2]
+	strh	r3, [r1, r2]
+	bne	2b
 
 	DSB
-	RET
+99:	RET
 END(generic_armv4_bs_c_2)
 #endif
