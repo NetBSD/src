@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.320 2013/09/29 14:36:25 christos Exp $
+#	$NetBSD: bsd.README,v 1.321 2013/10/28 01:47:13 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1808,6 +1808,8 @@ LORDER		List dependencies for object files.  [lorder]
 MAKE		make(1).  [make]
 
 MKDEP		Construct Makefile dependency list.  [mkdep]
+
+MKDEPCXX	Construct Makefile dependency list for C++ files.  [mkdep]
 
 NM		List symbols from object files.  [nm]
 
