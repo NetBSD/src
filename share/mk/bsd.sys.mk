@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.228 2013/10/26 03:26:57 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.229 2013/10/28 01:47:13 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -176,6 +176,7 @@ HOST_SH?=	/bin/sh
 
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
+MKDEPCXX?=	mkdep
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
