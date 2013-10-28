@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2013/10/26 09:16:20 nonaka Exp $
+#	$NetBSD: Makefile,v 1.121 2013/10/28 18:51:13 mbalmer Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,7 @@ SUBDIR+=	iic
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
+SUBDIR+=	lua
 SUBDIR+=	mfs
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
