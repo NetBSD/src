@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.25 2013/09/26 00:24:36 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.26 2013/10/29 16:39:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.25 2013/09/26 00:24:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.26 2013/10/29 16:39:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -153,7 +153,7 @@ struct npf_session {
 		uint16_t	if_idx;
 	} s_common_id;
 	/* Flags and the protocol state. */
-	int			s_flags;
+	u_int			s_flags;
 	npf_state_t		s_state;
 	/* Association of rule procedure data. */
 	npf_rproc_t *		s_rproc;
@@ -176,18 +176,20 @@ struct npf_sehash {
 };
 
 /*
- * Session flags:
- * - PFIL_IN and PFIL_OUT values are reserved for direction.
- * - SE_ACTIVE: session is active i.e. visible on inspection.
- * - SE_PASS: a "pass" session.
- * - SE_EXPIRE: explicitly expire the session.
- * - SE_REMOVING: session is being removed (indicate need to enter G/C list).
+ * Session flags: PFIL_IN and PFIL_OUT values are reserved for direction.
  */
 CTASSERT(PFIL_ALL == (0x001 | 0x002));
-#define	SE_ACTIVE		0x004
-#define	SE_PASS			0x008
-#define	SE_EXPIRE		0x010
-#define	SE_REMOVING		0x020
+#define	SE_ACTIVE		0x004	/* visible on inspection */
+#define	SE_PASS			0x008	/* perform implicit passing */
+#define	SE_EXPIRE		0x010	/* explicitly expire */
+
+/*
+ * Flags to indicate removal of forwards/backwards session entries or
+ * completion of session removal itself (i.e. both entries).
+ */
+#define	SE_REMFORW		0x020
+#define	SE_REMBACK		0x040
+#define	SE_REMOVED		(SE_REMFORW | SE_REMBACK)
 
 /*
  * Session tracking state: disabled (off), enabled (on) or flush request.
@@ -488,7 +490,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
 	npf_sehash_t *sh;
-	int flags;
+	u_int flags;
 
 	if (!npf_session_fillent(npc, &senkey)) {
 		return NULL;
@@ -699,7 +701,6 @@ out:
 static void
 npf_session_destroy(npf_session_t *se)
 {
-
 	if (se->s_nat) {
 		/* Release any NAT related structures. */
 		npf_nat_expire(se->s_nat);
@@ -723,7 +724,7 @@ npf_session_destroy(npf_session_t *se)
  * and re-insert session entry accordingly.
  */
 int
-npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
+npf_session_setnat(npf_session_t *se, npf_nat_t *nt, u_int ntype)
 {
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
@@ -735,56 +736,60 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 
 	/* First, atomically check and associate NAT entry. */
 	if (atomic_cas_ptr(&se->s_nat, NULL, nt) != NULL) {
-		/* Race: see below for description. */
+		/* Race with a duplicate packet. */
 		npf_stats_inc(NPF_STAT_RACE_NAT);
 		return EISCONN;
 	}
 
-	/*
-	 * Update, re-hash and re-insert "backwards" entry, according to
-	 * the translation.  First, remove the entry from tree.  Note that
-	 * a duplicate packet may establish a duplicate session while lock
-	 * will be released.  In such case, caller will drop this packet
-	 * and structures associated with it.  Such race condition should
-	 * never happen in practice, though.
-	 */
 	sen = &se->s_back_entry;
 	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
+	/*
+	 * Note: once the lock is release, the session might be a G/C
+	 * target, therefore keep SE_REMBACK bit set until re-insert.
+	 */
 	rw_enter(&sh->sh_lock, RW_WRITER);
 	rb_tree_remove_node(&sh->sh_tree, sen);
 	sh->sh_count--;
 	rw_exit(&sh->sh_lock);
 
 	/*
-	 * New source/destination and hash.  Note that source/destination
-	 * are inverted, since we are handling "backwards" entry.
+	 * Update the source/destination IDs and rehash.  Note that we are
+	 * handling the "backwards" entry, therefore the opposite mapping.
 	 */
 	npf_nat_gettrans(nt, &taddr, &tport);
-	if (di == PFIL_OUT) {
-		/* NPF_NATOUT: source in "forwards" = destination. */
+	switch (ntype) {
+	case NPF_NATOUT:
+		/* Source in "forwards" => destination. */
 		memcpy(&sen->se_dst_addr, taddr, sen->se_alen);
-		if (tport) {
+		if (tport)
 			sen->se_dst_id = tport;
-		}
-	} else {
-		/* NPF_NATIN: destination in "forwards" = source. */
+		break;
+	case NPF_NATIN:
+		/* Destination in "forwards" => source. */
 		memcpy(&sen->se_src_addr, taddr, sen->se_alen);
-		if (tport) {
+		if (tport)
 			sen->se_src_id = tport;
-		}
+		break;
 	}
 	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
-	/* Insert into the new bucket. */
+	/*
+	 * Insert the entry back into a potentially new bucket.
+	 *
+	 * Note: synchronise with the G/C thread here for a case when the
+	 * old session is still being expired while a duplicate is being
+	 * created here.  This race condition is rare.
+	 */
 	rw_enter(&sh->sh_lock, RW_WRITER);
-	ok = (rb_tree_insert_node(&sh->sh_tree, sen) == sen);
+	ok = rb_tree_insert_node(&sh->sh_tree, sen) == sen;
 	if (__predict_true(ok)) {
 		sh->sh_count++;
 		NPF_PRINTF(("NPF: se %p assoc with nat %p\n", se, se->s_nat));
 	} else {
-		/* FIXMEgc */
-		printf("npf_session_setnat: Houston, we've had a problem.\n");
+		/* Race: mark a removed entry and explicitly expire. */
+		atomic_or_uint(&se->s_flags, SE_REMBACK | SE_EXPIRE);
+		npf_stats_inc(NPF_STAT_RACE_NAT);
 	}
 	rw_exit(&sh->sh_lock);
 	return ok ? 0 : EISCONN;
@@ -796,7 +801,6 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 void
 npf_session_expire(npf_session_t *se)
 {
-
 	/* KASSERT(se->s_refcnt > 0); XXX: npf_nat_freepolicy() */
 	atomic_or_uint(&se->s_flags, SE_EXPIRE);
 }
@@ -807,7 +811,6 @@ npf_session_expire(npf_session_t *se)
 bool
 npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 {
-
 	KASSERT(se->s_refcnt > 0);
 	if ((se->s_flags & SE_PASS) != 0) {
 		*rp = se->s_rproc;
@@ -843,7 +846,6 @@ npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
 void
 npf_session_release(npf_session_t *se)
 {
-
 	KASSERT(se->s_refcnt > 0);
 	if ((se->s_flags & SE_ACTIVE) == 0) {
 		/* Activate: after this point, session is globally visible. */
@@ -859,7 +861,6 @@ npf_session_release(npf_session_t *se)
 npf_nat_t *
 npf_session_retnat(npf_session_t *se, const int di, bool *forw)
 {
-
 	KASSERT(se->s_refcnt > 0);
 	*forw = (se->s_flags & PFIL_ALL) == di;
 	return se->s_nat;
@@ -904,6 +905,7 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 		if (sh->sh_count == 0) {
 			continue;
 		}
+
 		rw_enter(&sh->sh_lock, RW_WRITER);
 		/* For each (left -> right) ... */
 		sen = rb_tree_iterate(&sh->sh_tree, NULL, RB_DIR_LEFT);
@@ -914,25 +916,27 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 			se = sen->se_backptr;
 			nsen = rb_tree_iterate(&sh->sh_tree, sen, RB_DIR_RIGHT);
 			if (!npf_session_expired(se, &tsnow) && !flushall) {
-				KASSERT((se->s_flags & SE_REMOVING) == 0);
+				KASSERT((se->s_flags & SE_REMOVED) == 0);
 				sen = nsen;
 				continue;
 			}
 
-			/* Expired - remove from the tree. */
+			/* Expired: remove from the tree. */
+			atomic_or_uint(&se->s_flags, SE_EXPIRE);
 			rb_tree_remove_node(&sh->sh_tree, sen);
 			sh->sh_count--;
 
 			/*
-			 * Set removal bit when the first entry is removed.
-			 * If already set, then second entry has been removed,
-			 * therefore move the session into the G/C list.
+			 * Remove the session and move it to the G/C list,
+			 * if we are removing the forwards entry.  The list
+			 * is protected by its bucket lock.
 			 */
-			if (se->s_flags & SE_REMOVING) {
+			if (&se->s_forw_entry == sen) {
+				atomic_or_uint(&se->s_flags, SE_REMFORW);
 				LIST_REMOVE(se, s_list);
 				LIST_INSERT_HEAD(gc_list, se, s_list);
 			} else {
-				atomic_or_uint(&se->s_flags, SE_REMOVING);
+				atomic_or_uint(&se->s_flags, SE_REMBACK);
 			}
 
 			/* Next.. */
@@ -972,9 +976,11 @@ again:
 	 */
 	se = LIST_FIRST(&sess_gc_list);
 	while (se != NULL) {
+		bool removed = (se->s_flags & SE_REMOVED) == SE_REMOVED;
+
 		nse = LIST_NEXT(se, s_list);
-		if (se->s_refcnt == 0) {
-			/* Destroy only if no references. */
+		if (removed && se->s_refcnt == 0) {
+			/* Destroy only if removed and no references. */
 			LIST_REMOVE(se, s_list);
 			npf_session_destroy(se);
 		}
