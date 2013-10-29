@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.2 2013/10/26 20:07:14 mbalmer Exp $ */
+/*	$NetBSD: lua.h,v 1.3 2013/10/29 17:35:40 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -32,6 +32,10 @@
 #define _SYS_LUA_H_
 
 #include <lua.h>		/* for lua_State */
+
+#ifdef _KERNEL
+#include <sys/condvar.h>
+#endif
 
 #define MAX_LUA_NAME		16
 #define MAX_LUA_DESC		64
