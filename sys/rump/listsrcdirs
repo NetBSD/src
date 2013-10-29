@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.10 2013/10/29 16:18:42 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.11 2013/10/29 16:19:28 pooka Exp $
 #
 
 #
@@ -19,7 +19,7 @@ precho ()
 	for arg in $* ; do echo ${pfx}${arg} ; done
 }
 
-ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc"
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips"
 ARCHS_EXTRA="arm/arm32 Makefile"
 
 precho src/			build.sh Makefile Makefile.inc
