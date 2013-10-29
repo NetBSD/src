@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.754 2013/10/28 01:47:13 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.755 2013/10/29 16:11:46 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -262,6 +262,7 @@ LDFLAGS+=	--sysroot=/
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+HOST_MKDEPCXX=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
