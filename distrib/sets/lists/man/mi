@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1447 2013/10/29 08:34:07 mbalmer Exp $
+# $NetBSD: mi,v 1.1448 2013/10/29 09:40:43 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3119,6 +3119,7 @@
 ./usr/share/man/cat9/boot.0			man-obsolete		obsolete
 ./usr/share/man/cat9lua/core.0			man-sys-catman		.cat
 ./usr/share/man/cat9lua/intro.0			man-sys-catman		.cat
+./usr/share/man/cat9lua/pmf.0			man-sys-catman		.cat
 ./usr/share/man/html1/Mail.html			man-mail-htmlman	html
 ./usr/share/man/html1/[.html			man-util-htmlman	html
 ./usr/share/man/html1/agrep.html		man-util-htmlman	html
@@ -5805,6 +5806,7 @@
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
 ./usr/share/man/html9lua/core.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/intro.html		man-sys-htmlman		html
+./usr/share/man/html9lua/pmf.html		man-sys-htmlman		html
 ./usr/share/man/man1/Mail.1			man-mail-man		.man
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/agrep.1			man-util-man		.man
@@ -8880,4 +8882,5 @@
 ./usr/share/man/man9/boot.9			man-obsolete		obsolete
 ./usr/share/man/man9lua/core.9lua		man-sys-man		.man
 ./usr/share/man/man9lua/intro.9lua		man-sys-man		.man
+./usr/share/man/man9lua/pmf.9lua		man-sys-man		.man
 ./usr/share/man/style.css			man-mdocml-htmlman	html
