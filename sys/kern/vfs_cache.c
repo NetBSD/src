@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.91 2012/11/05 17:27:39 dholland Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.92 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.91 2012/11/05 17:27:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.92 2013/10/29 09:53:51 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -442,24 +442,19 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	vp = ncp->nc_vp;
-	if (vtryget(vp)) {
-		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
-	} else {
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT);
-		if (error) {
-			KASSERT(error == EBUSY);
-			/*
-			 * This vnode is being cleaned out.
-			 * XXX badhits?
-			 */
-			COUNT(cpup->cpu_stats, ncs_falsehits);
-			/* found nothing */
-			return 0;
-		}
+	mutex_enter(vp->v_interlock);
+	mutex_exit(&ncp->nc_lock);
+	mutex_exit(&cpup->cpu_lock);
+	error = vget(vp, LK_NOWAIT);
+	if (error) {
+		KASSERT(error == EBUSY);
+		/*
+		 * This vnode is being cleaned out.
+		 * XXX badhits?
+		 */
+		COUNT(cpup->cpu_stats, ncs_falsehits);
+		/* found nothing */
+		return 0;
 	}
 
 #ifdef DEBUG
@@ -552,24 +547,19 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		/* found negative entry; vn is already null from above */
 		return 1;
 	}
-	if (vtryget(vp)) {
-		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
-	} else {
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT);
-		if (error) {
-			KASSERT(error == EBUSY);
-			/*
-			 * This vnode is being cleaned out.
-			 * XXX badhits?
-			 */
-			COUNT(cpup->cpu_stats, ncs_falsehits);
-			/* found nothing */
-			return 0;
-		}
+	mutex_enter(vp->v_interlock);
+	mutex_exit(&ncp->nc_lock);
+	mutex_exit(&cpup->cpu_lock);
+	error = vget(vp, LK_NOWAIT);
+	if (error) {
+		KASSERT(error == EBUSY);
+		/*
+		 * This vnode is being cleaned out.
+		 * XXX badhits?
+		 */
+		COUNT(cpup->cpu_stats, ncs_falsehits);
+		/* found nothing */
+		return 0;
 	}
 
 	/* Unlocked, but only for stats. */
@@ -639,21 +629,16 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 				*bpp = bp;
 			}
 
-			if (vtryget(dvp)) {
-				mutex_exit(&ncp->nc_lock); 
-				mutex_exit(namecache_lock);
-			} else {
-				mutex_enter(dvp->v_interlock);
-				mutex_exit(&ncp->nc_lock); 
-				mutex_exit(namecache_lock);
-				error = vget(dvp, LK_NOWAIT);
-				if (error) {
-					KASSERT(error == EBUSY);
-					if (bufp)
-						(*bpp) += nlen;
-					*dvpp = NULL;
-					return -1;
-				}
+			mutex_enter(dvp->v_interlock);
+			mutex_exit(&ncp->nc_lock); 
+			mutex_exit(namecache_lock);
+			error = vget(dvp, LK_NOWAIT);
+			if (error) {
+				KASSERT(error == EBUSY);
+				if (bufp)
+					(*bpp) += nlen;
+				*dvpp = NULL;
+				return -1;
 			}
 			*dvpp = dvp;
 			return (0);
