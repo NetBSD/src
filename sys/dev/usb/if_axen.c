@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.1 2013/10/26 09:16:20 nonaka Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.2 2013/10/29 16:10:49 joerg Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.1 2013/10/26 09:16:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.2 2013/10/29 16:10:49 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1014,7 +1014,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 		
 	/* sanity check */
-	if ((int)hdr_offset > total_len) {
+	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
 		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
