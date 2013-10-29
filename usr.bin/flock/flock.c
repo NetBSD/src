@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.7 2013/02/07 13:57:40 tron Exp $	*/
+/*	$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.7 2013/02/07 13:57:40 tron Exp $");
+__RCSID("$NetBSD: flock.c,v 1.8 2013/10/29 16:02:15 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -149,7 +149,7 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int lock = LOCK_EX;
+	int lock = 0;
 	double timeout = 0;
 	int cls = 0;
 	int fd = -1;
@@ -170,7 +170,8 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'x':
-			if (lock & ~LOCK_NB)
+#define T(l)	(lock & ~LOCK_NB) != (l) && (lock & ~LOCK_NB) != 0
+			if (T(LOCK_EX))
 				goto badlock;
 			lock |= LOCK_EX;
 			break;
@@ -178,12 +179,12 @@ main(int argc, char *argv[])
 			lock |= LOCK_NB;
 			break;
 		case 's':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_SH))
 				goto badlock;
 			lock |= LOCK_SH;
 			break;
 		case 'u':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_UN))
 				goto badlock;
 			lock |= LOCK_UN;
 			break;
@@ -204,6 +205,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if ((lock & ~LOCK_NB) == 0)
+		usage("Missing lock type flag");
 
 	switch (argc) {
 	case 0:
