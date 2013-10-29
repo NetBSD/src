@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.34 2013/10/27 16:22:08 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.35 2013/10/29 16:39:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ void		npf_session_release(npf_session_t *);
 void		npf_session_expire(npf_session_t *);
 bool		npf_session_pass(const npf_session_t *, npf_rproc_t **);
 void		npf_session_setpass(npf_session_t *, npf_rproc_t *);
-int		npf_session_setnat(npf_session_t *, npf_nat_t *, const int);
+int		npf_session_setnat(npf_session_t *, npf_nat_t *, u_int);
 npf_nat_t *	npf_session_retnat(npf_session_t *, const int, bool *);
 
 void		npf_session_load(npf_sehash_t *);
