@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.9 2013/09/19 16:16:03 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.10 2013/10/29 16:18:42 pooka Exp $
 #
 
 #
@@ -18,6 +18,9 @@ precho ()
 	shift
 	for arg in $* ; do echo ${pfx}${arg} ; done
 }
+
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc"
+ARCHS_EXTRA="arm/arm32 Makefile"
 
 precho src/			build.sh Makefile Makefile.inc
 precho src/			tools common include share/mk
@@ -38,11 +41,12 @@ if [ "${1}" = '-c' ]; then
 	echo \!src/sys/arch src/sys
 
 	# pick a few useful archs, namely those mentioned in buildrump.sh
-	for x in amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc; do
-		precho src/sys/arch/${x}/ include ${x} Makefile
+	for arch in ${ARCHS}; do
+		precho src/sys/arch/${arch}/ include ${arch} Makefile
 	done
-	echo src/sys/arch/arm/arm32
-	echo src/sys/arch/Makefile
+	for extra in ${ARCHS_EXTRA}; do
+		echo src/sys/arch/${extra}
+	done
 else
 	echo src/sys
 fi
