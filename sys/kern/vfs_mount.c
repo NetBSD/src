@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.22 2013/10/25 20:37:17 martin Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.23 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.22 2013/10/25 20:37:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.23 2013/10/29 09:53:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -465,6 +465,13 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (vp == skipvp)
 			continue;
+		/*
+		 * First try to recycle the vnode.
+		 */
+		if (vrecycle(vp, &mntvnode_lock)) {
+			mutex_enter(&mntvnode_lock);
+			continue;
+		}
 		mutex_enter(vp->v_interlock);
 		/*
 		 * Ignore clean but still referenced vnodes.
@@ -490,19 +497,6 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			continue;
 		}
 		/*
-		 * With v_usecount == 0, all we need to do is clear
-		 * out the vnode data structures and we are done.
-		 */
-		if (vp->v_usecount == 0) {
-			mutex_exit(&mntvnode_lock);
-			vremfree(vp);
-			vp->v_usecount = 1;
-			vclean(vp, DOCLOSE);
-			vrelel(vp, 0);
-			mutex_enter(&mntvnode_lock);
-			continue;
-		}
-		/*
 		 * If FORCECLOSE is set, forcibly close the vnode.
 		 * For block or character devices, revert to an
 		 * anonymous device.  For all other files, just
@@ -510,22 +504,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (flags & FORCECLOSE) {
 			mutex_exit(&mntvnode_lock);
-			atomic_inc_uint(&vp->v_usecount);
-			if (vp->v_type != VBLK && vp->v_type != VCHR) {
-				vclean(vp, DOCLOSE);
-				vrelel(vp, 0);
-			} else {
-				vclean(vp, 0);
-				vp->v_op = spec_vnodeop_p; /* XXXSMP */
-				mutex_exit(vp->v_interlock);
-				/*
-				 * The vnode isn't clean, but still resides
-				 * on the mount list.  Remove it. XXX This
-				 * is a bit dodgy.
-				 */
-				vfs_insmntque(vp, NULL);
-				vrele(vp);
-			}
+			if (vget(vp, 0) == 0)
+				vgone(vp);
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
