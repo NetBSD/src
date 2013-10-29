@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.289 2013/09/30 18:58:00 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.290 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.289 2013/09/30 18:58:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.290 2013/10/29 09:53:51 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -827,7 +827,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock, l)) {
+		if (vrecycle(vp, &mntvnode_lock)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto loop;

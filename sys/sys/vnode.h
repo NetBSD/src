@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.238 2013/09/30 15:24:14 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.239 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -205,8 +205,10 @@ typedef struct vnode vnode_t;
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
 #define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
+#ifdef _VFS_VNODE_PRIVATE
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
 #define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
+#endif	/* _VFS_VNODE_PRIVATE */
 
 /*
  * The third set are locked by the underlying file system.
@@ -220,12 +222,6 @@ typedef struct vnode vnode_t;
     "\30INACTNOW\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
-
-/*
- * v_usecount; see the comment near the top of vfs_vnode.c
- */
-#define	VC_XLOCK	0x80000000
-#define	VC_MASK		0x7fffffff
 
 /*
  * vnode lock flags
@@ -318,7 +314,6 @@ extern const int	vttoif_tab[];
 #define	SKIPSYSTEM	0x0001		/* vflush: skip vnodes marked VSYSTEM */
 #define	FORCECLOSE	0x0002		/* vflush: force file closeure */
 #define	WRITECLOSE	0x0004		/* vflush: only close writable files */
-#define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 
 /*
@@ -548,12 +543,11 @@ int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 int	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
-bool	vtryget(struct vnode *);
 void 	vgone(struct vnode *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
-int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
+int	vrecycle(struct vnode *, kmutex_t *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
 void	vrele_flush(void);
@@ -562,8 +556,6 @@ void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrevoke(struct vnode *);
-void	vrelel(struct vnode *, int);
-#define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
