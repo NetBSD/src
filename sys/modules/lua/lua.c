@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.3 2013/10/23 18:57:40 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.4 2013/10/29 17:35:04 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -226,7 +226,7 @@ int
 luaopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct lua_softc *sc;
-	int error;
+	int error = 0;
 
 	if (minor(dev) > 0)
 		return ENXIO;
@@ -595,7 +595,7 @@ klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc)
 	klua_State *K;
 	struct lua_state *s;
 	struct lua_softc *sc;
-	int error;
+	int error = 0;
 
 	s = malloc(sizeof(struct lua_state), NULL, M_ZERO);
 	if (s == NULL)
@@ -653,7 +653,7 @@ klua_close(klua_State *K)
 	struct lua_state *s;
 	struct lua_softc *sc;
 	struct lua_module *m;
-	int error;
+	int error = 0;
 
 	/* Notify the Lua state that it is about to be closed */
 	if (klua_lock(K))
@@ -707,7 +707,7 @@ klua_find(const char *name)
 	struct lua_state *s;
 	struct lua_softc *sc;
 	klua_State *K;
-	int error;
+	int error = 0;
 
 	K = NULL;
 	sc = device_private(sc_self);
