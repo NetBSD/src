@@ -1,4 +1,4 @@
-/*	$NetBSD: luapmf.c,v 1.1 2013/10/28 20:06:05 mbalmer Exp $ */
+/*	$NetBSD: luapmf.c,v 1.2 2013/10/29 09:18:45 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -46,11 +46,7 @@ MODULE(MODULE_CLASS_MISC, luapmf, "lua");
 static int
 system_shutdown(lua_State *L)
 {
-	int howto;
-
-	howto = lua_tointeger(L, 1);
-	printf("calling pmf_shutdown_system with howto %02x\n", howto);
-	pmf_system_shutdown(howto);
+	pmf_system_shutdown(lua_tointeger(L, 1));
 	return 0;
 }
 
@@ -61,10 +57,8 @@ set_platform(lua_State *L)
 
 	key = lua_tostring(L, -2);
 	value = lua_tostring(L, -1);
-	if (key != NULL && value != NULL) {
-		printf("pmf_set_platform(%s, %s)\n", key, value);
+	if (key != NULL && value != NULL)
 		pmf_set_platform(key, value);
-	}
 	return 0;
 }
 
@@ -74,10 +68,16 @@ get_platform(lua_State *L)
 	const char *key, *value;
 
 	key = lua_tostring(L, -1);
-	value = pmf_get_platform(key);
-	printf("pmf_get_platform(%s) = %s\n", key, value);
-	lua_pushstring(L, value);
+	if (key != NULL) {
+		value = pmf_get_platform(key);
+		if (value != NULL)
+			lua_pushstring(L, value);
+		else
+			lua_pushnil(L);
+	} else
+		lua_pushnil(L);
 	return 1;
+
 }
 
 struct pmf_reg {
