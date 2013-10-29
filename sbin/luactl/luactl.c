@@ -1,4 +1,4 @@
-/*	$NetBSD: luactl.c,v 1.1 2013/10/16 19:48:21 mbalmer Exp $ */
+/*	$NetBSD: luactl.c,v 1.2 2013/10/29 16:11:15 joerg Exp $ */
 
 /*
  * Copyright (c) 2011, Marc Balmer <mbalmer@NetBSD.org>.
@@ -58,7 +58,7 @@ static void destroy(char *);
 static void require(char *, char *);
 static void load(char *, char *);
 
-static void usage(void);
+static void usage(void) __dead;
 
 #define _PATH_DEV_LUA	"/dev/lua"
 
