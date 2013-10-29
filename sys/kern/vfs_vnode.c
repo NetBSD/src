@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.22 2013/10/25 20:39:40 martin Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.23 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -126,7 +126,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.22 2013/10/25 20:39:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.23 2013/10/29 09:53:51 hannken Exp $");
+
+#define _VFS_VNODE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,6 +152,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.22 2013/10/25 20:39:40 martin Exp $"
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
 
+/* v_usecount; see the comment near the top of vfs_vnode.c */
+#define	VC_XLOCK	0x80000000
+#define	VC_MASK		0x7fffffff
+
+#define	DOCLOSE		0x0008		/* vclean: close active files */
+
+/* Flags to vrelel. */
+#define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
+
 u_int			numvnodes		__cacheline_aligned;
 
 static pool_cache_t	vnode_cache		__read_mostly;
@@ -172,6 +183,7 @@ static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
 
 static int		cleanvnode(void);
+static void		vrelel(vnode_t *, int);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
@@ -490,36 +502,6 @@ vremfree(vnode_t *vp)
 }
 
 /*
- * Try to gain a reference to a vnode, without acquiring its interlock.
- * The caller must hold a lock that will prevent the vnode from being
- * recycled or freed.
- */
-bool
-vtryget(vnode_t *vp)
-{
-	u_int use, next;
-
-	/*
-	 * If the vnode is being freed, don't make life any harder
-	 * for vclean() by adding another reference without waiting.
-	 * This is not strictly necessary, but we'll do it anyway.
-	 */
-	if (__predict_false((vp->v_iflag & VI_XLOCK) != 0)) {
-		return false;
-	}
-	for (use = vp->v_usecount;; use = next) {
-		if (use == 0 || __predict_false((use & VC_XLOCK) != 0)) {
-			/* Need interlock held if first reference. */
-			return false;
-		}
-		next = atomic_cas_uint(&vp->v_usecount, use, use + 1);
-		if (__predict_true(next == use)) {
-			return true;
-		}
-	}
-}
-
-/*
  * vget: get a particular vnode from the free list, increment its reference
  * count and lock it.
  *
@@ -634,7 +616,7 @@ vtryrele(vnode_t *vp)
  * Vnode release.  If reference count drops to zero, call inactive
  * routine and either return to freelist or free to the pool.
  */
-void
+static void
 vrelel(vnode_t *vp, int flags)
 {
 	bool recycle, defer;
@@ -980,7 +962,7 @@ void
 vclean(vnode_t *vp, int flags)
 {
 	lwp_t *l = curlwp;
-	bool recycle, active;
+	bool recycle, active, make_anon;
 	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -1013,6 +995,11 @@ vclean(vnode_t *vp, int flags)
 	/* XXXAD should not lock vnode under layer */
 	mutex_exit(vp->v_interlock);
 	VOP_LOCK(vp, LK_EXCLUSIVE);
+
+	make_anon = (active && vp->v_type == VBLK &&
+	    spec_node_getmountedfs(vp) != NULL);
+	if (make_anon)
+		flags &= ~DOCLOSE;
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1061,9 +1048,20 @@ vclean(vnode_t *vp, int flags)
 	/* Purge name cache. */
 	cache_purge(vp);
 
+	/*
+	 * The vnode isn't clean, but still resides on the mount list.  Remove
+	 * it. XXX This is a bit dodgy.
+	 */
+	if (make_anon)
+		vfs_insmntque(vp, NULL);
+
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
-	vp->v_op = dead_vnodeop_p;
+	if (make_anon) {
+		vp->v_op = spec_vnodeop_p;
+	} else {
+		vp->v_op = dead_vnodeop_p;
+	}
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~VI_XLOCK;
@@ -1081,7 +1079,7 @@ vclean(vnode_t *vp, int flags)
  * Release the passed interlock if the vnode will be recycled.
  */
 int
-vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
+vrecycle(vnode_t *vp, kmutex_t *inter_lkp)
 {
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);

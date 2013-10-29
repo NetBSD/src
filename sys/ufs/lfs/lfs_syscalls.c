@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.149 2013/10/07 05:19:23 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.150 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.149 2013/10/07 05:19:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.150 2013/10/29 09:53:51 hannken Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -713,7 +713,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			if (v_daddr != LFS_UNUSED_DADDR) {
 				lfs_vunref(vp);
 				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP)
-					vrecycle(vp, NULL, NULL);
+					vrecycle(vp, NULL);
 				numrefed--;
 			}
 
@@ -823,7 +823,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		lfs_vunref(vp);
 		/* Recycle as above. */
 		if (ip->i_lfs_iflags & LFSI_BMAP)
-			vrecycle(vp, NULL, NULL);
+			vrecycle(vp, NULL);
 		numrefed--;
 	}
 
