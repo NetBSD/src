@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.34 2013/10/20 14:06:27 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.35 2013/10/29 10:04:41 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -618,4 +618,14 @@ sys/arch/hp700/hp700/autoconf.c			1.51
 
 	Remember to unmap pagezero once we've finished with it.
 	[skrll, ticket #1886]
+
+sys/ufs/ffs/ffs_alloc.c				1.144 via patch
+
+	Pull in fix from FreeBSD ffs_alloc.c r121785:
+	Consider only cylinder groups with at least 75% of the average
+	free space per cylinder group and 75% of the average free
+	inodes per cylinder group as candidates for the creation of a
+	new directory.  Avoids excessive I/O scanning for a suitable
+	cylinder group on relatively full file systems.
+	[bad, ticket #1888]
 
