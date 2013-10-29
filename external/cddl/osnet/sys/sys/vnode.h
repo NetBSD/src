@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.11 2013/09/23 20:44:24 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.12 2013/10/29 09:53:51 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -686,7 +686,6 @@ vn_remove(char *fnamep, enum uio_seg seg, enum rm dirflag)
 
 #define VN_RELE_ASYNC(vp, taskq) 	vrele_async((vp))
 #define vn_exists(a) 	do { } while(0)
-#define vn_reinit(a) 	vclean((a), 0)
 
 /*
  * Flags for VOP_LOOKUP
