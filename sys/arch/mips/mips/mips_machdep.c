@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.256 2013/02/28 12:44:38 macallan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.257 2013/10/30 06:47:18 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.256 2013/02/28 12:44:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.257 2013/10/30 06:47:18 uebayasi Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -259,8 +259,6 @@ struct mips_options mips_options = {
 	.mips_cpu_id = 0xffffffff,
 	.mips_fpu_id = 0xffffffff,
 };
-
-struct	user *proc0paddr;
 
 void *	msgbufaddr;
 
