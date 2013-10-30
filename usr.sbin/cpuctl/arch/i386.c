@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.46 2013/10/28 05:41:49 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.47 2013/10/30 08:42:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.46 2013/10/28 05:41:49 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.47 2013/10/30 08:42:16 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1986,7 +1986,7 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 static void
 x86_print_cacheinfo(struct cpu_info *ci)
 {
-	const char *sep;
+	const char *sep = NULL;
 
 	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
 	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
