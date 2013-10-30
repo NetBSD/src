@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.47 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.48 2013/10/30 23:32:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.47 2013/09/10 21:30:21 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.48 2013/10/30 23:32:30 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -902,6 +902,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
 			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
 			    ELF_NOTE_NETBSD_NAMESZ) == 0) {
+				memcpy(&epp->ep_osversion,
+				    ndata + ELF_NOTE_NETBSD_NAMESZ + 1,
+				    ELF_NOTE_NETBSD_DESCSZ);
 				isnetbsd = 1;
 				break;
 			}
