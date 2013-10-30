@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.22 2013/10/27 16:39:46 rmind Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.23 2013/10/30 12:30:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.22 2013/10/27 16:39:46 rmind Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.23 2013/10/30 12:30:32 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -150,8 +150,7 @@ do {									\
  * On Solaris and DragonFly / FreeBSD, the main object works differently
  * ... uuuuh.
  */
-#if defined(__GLIBC__)
-/* XXX: not true for e.g. MIPS, but we'll cross that hurdle later */
+#if defined(__GLIBC__) && !defined(__mips__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
 #elif defined(__sun__) || defined(__DragonFly__) || defined(__FreeBSD__)
 #define adjptr(_map_, _ptr_) \
