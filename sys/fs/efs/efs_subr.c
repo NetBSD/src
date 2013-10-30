@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.9 2013/10/20 21:12:08 christos Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.10 2013/10/30 08:27:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.9 2013/10/20 21:12:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.10 2013/10/30 08:27:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -269,7 +269,7 @@ efs_dirblk_lookup(struct efs_dirblk *dir, struct componentname *cn,
     ino_t *inode)
 {
 	struct efs_dirent *de;
-	int i, slot, offset;
+	int i, slot __diagused, offset;
 
 	KASSERT(cn->cn_namelen <= EFS_DIRENT_NAMELEN_MAX);
 
