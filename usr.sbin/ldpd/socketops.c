@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.32 2013/10/17 18:10:23 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.33 2013/10/30 08:41:57 mrg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -336,6 +336,7 @@ bind_socket(int s, int stype)
 
 	assert (stype == AF_INET || stype == AF_INET6);
 
+	memset(&su, 0, sizeof su);
 	if (stype == AF_INET) {
 		su.sin.sin_len = sizeof(su.sin);
 		su.sin.sin_family = AF_INET;
