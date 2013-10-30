@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.128 2013/10/30 08:39:01 mrg Exp $ */
+/*	$NetBSD: disks.c,v 1.129 2013/10/30 15:37:49 drochner Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -259,7 +259,8 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	 * Mitsumi ATAPI devices
 	 */
 
-	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
+	if (!(inqbuf->atap_config != WDC_CFG_CFA_MAGIC &&
+	      (inqbuf->atap_config & WDC_CFG_ATAPI) &&
 	      ((inqbuf->atap_model[0] == 'N' &&
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&

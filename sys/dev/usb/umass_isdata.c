@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.28 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.29 2013/10/30 15:37:49 drochner Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.28 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.29 2013/10/30 15:37:49 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -546,8 +546,8 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		 * Shuffle string byte order.
 		 * ATAPI Mitsumi and NEC drives don't need this.
 		 */
-		if ((prms->atap_config & WDC_CFG_ATAPI_MASK) ==
-		    WDC_CFG_ATAPI &&
+		if (prms->atap_config != WDC_CFG_CFA_MAGIC &&
+		    (prms->atap_config & WDC_CFG_ATAPI) &&
 		    ((prms->atap_model[0] == 'N' &&
 			prms->atap_model[1] == 'E') ||
 		     (prms->atap_model[0] == 'F' &&

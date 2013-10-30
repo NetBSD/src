@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.71 2013/08/06 19:13:13 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.72 2013/10/30 15:37:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.71 2013/08/06 19:13:13 soren Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.72 2013/10/30 15:37:49 drochner Exp $");
 #endif
 
 
@@ -947,7 +947,8 @@ device_identify(int argc, char *argv[])
 	 * Mitsumi ATAPI devices
 	 */
 
-	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
+	if (!(inqbuf->atap_config != WDC_CFG_CFA_MAGIC &&
+	      (inqbuf->atap_config & WDC_CFG_ATAPI) &&
 	      ((inqbuf->atap_model[0] == 'N' &&
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
@@ -980,9 +981,13 @@ device_identify(int argc, char *argv[])
 		    ((uint64_t)inqbuf->atap_wwn[2] << 16) |
 		    ((uint64_t)inqbuf->atap_wwn[3] <<  0));
 
-	printf("Device type: %s, %s\n", inqbuf->atap_config & WDC_CFG_ATAPI ?
-	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
-	       "removable");
+	printf("Device type: %s",
+		inqbuf->atap_config == WDC_CFG_CFA_MAGIC ? "CF-ATA" :
+		 (inqbuf->atap_config & WDC_CFG_ATAPI ? "ATAPI" : "ATA"));
+	if (inqbuf->atap_config != WDC_CFG_CFA_MAGIC)
+		printf(", %s",
+		 inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" : "removable");
+	printf("\n");
 
 	compute_capacity(inqbuf, &capacity, &sectors, &secsize);
 
