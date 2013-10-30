@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/02 14:34:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/30 20:27:40 joerg Exp $
 
 LIB=	lldReaderWriterELF
 
@@ -8,7 +8,8 @@ LIB=	lldReaderWriterELF
 
 CPPFLAGS+=	-I${LLD_SRCDIR}/lib/ReaderWriter/ELF
 
-SRCS+=	ELFLinkingContext.cpp \
+SRCS+=	ArrayOrderPass.cpp \
+	ELFLinkingContext.cpp \
 	Reader.cpp \
 	Writer.cpp
 
