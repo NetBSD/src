@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.127 2012/11/17 20:34:24 tsutsui Exp $ */
+/*	$NetBSD: disks.c,v 1.128 2013/10/30 08:39:01 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -494,13 +494,11 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 {
 	unsigned int poffset, psize, pend;
 	const char *desc;
-	static const char *Yes, *No;
+	static const char *Yes;
 	partinfo *p = bsdlabel + ptn;
 
-	if (Yes == NULL) {
+	if (Yes == NULL)
 		Yes = msg_string(MSG_Yes);
-		No = msg_string(MSG_No);
-	}
 
 	poffset = p->pi_offset / sizemult;
 	psize = p->pi_size / sizemult;
