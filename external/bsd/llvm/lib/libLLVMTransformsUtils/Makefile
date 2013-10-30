@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2013/10/30 20:27:39 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -16,6 +16,7 @@ SRCS+=	BasicBlockUtils.cpp \
 	CodeExtractor.cpp \
 	DemoteRegToStack.cpp \
 	FlattenCFG.cpp \
+	GlobalStatus.cpp \
 	InlineFunction.cpp \
 	InstructionNamer.cpp \
 	IntegerDivision.cpp \
