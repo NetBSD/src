@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.11 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.12 2013/10/30 08:41:38 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.11 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.12 2013/10/30 08:41:38 mrg Exp $");
 #endif /* not lint */
 
 
@@ -193,7 +193,7 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 	struct long_ad   *icb      = args->icb;
 	int               waitfor  = args->waitfor;
 	uint32_t logsector, sector, dummy;
-	int error, vpart;
+	int error, vpart __diagused;
 
 	/*
 	 * we have to decide if we write it out sequential or at its fixed 
@@ -255,7 +255,7 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	int sector_size = ump->discinfo.sector_size;
 	int len, buf_len, sector, sectors, run_length;
 	int blks = sector_size / DEV_BSIZE;
-	int what, class, queue;
+	int what, class __diagused, queue;
 
 	KASSERT(ump);
 	KASSERT(buf);

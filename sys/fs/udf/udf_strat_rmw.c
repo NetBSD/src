@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.23 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.24 2013/10/30 08:41:38 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.23 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.24 2013/10/30 08:41:38 mrg Exp $");
 #endif /* not lint */
 
 
@@ -345,7 +345,7 @@ udf_pop_eccline(struct strat_private *priv, int queued_on)
 static void
 udf_unqueue_eccline(struct strat_private *priv, struct udf_eccline *eccline)
 {
-	struct buf *ret;
+	struct buf *ret __diagused;
 
 	UDF_LOCK_ECCLINE(eccline);
 	if (eccline->queued_on == 0) {
