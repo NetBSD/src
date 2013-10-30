@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.405 2013/08/19 14:58:57 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.406 2013/10/30 15:41:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.405 2013/08/19 14:58:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.406 2013/10/30 15:41:14 drochner Exp $");
 
 #include "opt_ata.h"
 
@@ -405,8 +405,14 @@ wd_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wd_softc *sc = device_private(dv);
 
+	/* the adapter needs to be enabled */
+	if (sc->atabus->ata_addref(sc->drvp))
+		return true; /* no need to complain */
+
 	wd_flushcache(sc, AT_WAIT);
 	wd_standby(sc, AT_WAIT);
+
+	sc->atabus->ata_delref(sc->drvp);
 	return true;
 }
 
