@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.98 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: siop.c,v 1.99 2013/10/30 08:40:32 gson Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.98 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.99 2013/10/30 08:40:32 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,7 +884,7 @@ scintr:
 					return(1);
 				default:
 					panic("invalid retval from "
-					    "siop_wdtr_neg()");
+					    "siop_sdtr_neg()");
 				}
 				return(1);
 			}
