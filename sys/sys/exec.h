@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.140 2013/09/10 21:30:21 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.141 2013/10/30 23:32:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -216,6 +216,7 @@ struct exec_package {
 	char	*ep_path;		/* absolute path of executable */
 	void	(*ep_emul_arg_free)(void *);
 					/* free ep_emul_arg */
+	uint32_t ep_osversion;		/* OS version */
 	char	ep_machine_arch[12];	/* from MARCH note */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
