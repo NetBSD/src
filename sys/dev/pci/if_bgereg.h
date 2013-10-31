@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.85 2013/10/31 04:26:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.86 2013/10/31 06:01:39 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2627,6 +2627,7 @@ struct vpd_key {
 #define	BGEF_5717_PLUS		0x00020000
 #define	BGEF_57765_FAMILY	0x00040000
 #define	BGEF_57765_PLUS		0x00080000
+#define BGEF_40BIT_BUG		0x00100000
 #define BGEF_RX_ALIGNBUG	0x00800000
 #define BGEF_TXRING_VALID	0x20000000
 #define BGEF_RXRING_VALID	0x40000000
