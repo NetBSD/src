@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.260 2013/10/28 05:37:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.261 2013/10/31 04:26:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.260 2013/10/28 05:37:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.261 2013/10/31 04:26:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -671,15 +671,15 @@ static const struct bge_product {
 	  NULL },
 };
 
-#define BGE_IS_JUMBO_CAPABLE(sc)	((sc)->bge_flags & BGE_JUMBO_CAPABLE)
-#define BGE_IS_5700_FAMILY(sc)		((sc)->bge_flags & BGE_5700_FAMILY)
-#define BGE_IS_5705_PLUS(sc)		((sc)->bge_flags & BGE_5705_PLUS)
-#define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGE_5714_FAMILY)
-#define BGE_IS_575X_PLUS(sc)		((sc)->bge_flags & BGE_575X_PLUS)
-#define BGE_IS_5755_PLUS(sc)		((sc)->bge_flags & BGE_5755_PLUS)
-#define BGE_IS_57765_FAMILY(sc)		((sc)->bge_flags & BGE_57765_FAMILY)
-#define BGE_IS_57765_PLUS(sc)		((sc)->bge_flags & BGE_57765_PLUS)
-#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGE_5717_PLUS)
+#define BGE_IS_JUMBO_CAPABLE(sc)	((sc)->bge_flags & BGEF_JUMBO_CAPABLE)
+#define BGE_IS_5700_FAMILY(sc)		((sc)->bge_flags & BGEF_5700_FAMILY)
+#define BGE_IS_5705_PLUS(sc)		((sc)->bge_flags & BGEF_5705_PLUS)
+#define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGEF_5714_FAMILY)
+#define BGE_IS_575X_PLUS(sc)		((sc)->bge_flags & BGEF_575X_PLUS)
+#define BGE_IS_5755_PLUS(sc)		((sc)->bge_flags & BGEF_5755_PLUS)
+#define BGE_IS_57765_FAMILY(sc)		((sc)->bge_flags & BGEF_57765_FAMILY)
+#define BGE_IS_57765_PLUS(sc)		((sc)->bge_flags & BGEF_57765_PLUS)
+#define BGE_IS_5717_PLUS(sc)		((sc)->bge_flags & BGEF_5717_PLUS)
 
 static const struct bge_revision {
 	uint32_t		br_chipid;
@@ -1741,7 +1741,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
-	if (!(sc->bge_flags & BGE_RX_ALIGNBUG))
+	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
 	    m_adj(m_new, ETHER_ALIGN);
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT))
@@ -1802,7 +1802,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		buf = m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
 	}
-	if (!(sc->bge_flags & BGE_RX_ALIGNBUG))
+	if (!(sc->bge_flags & BGEF_RX_ALIGNBUG))
 	    m_adj(m_new, ETHER_ALIGN);
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
 	    mtod(m_new, char *) - (char *)sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
@@ -1835,7 +1835,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 
-	if (sc->bge_flags & BGE_RXRING_VALID)
+	if (sc->bge_flags & BGEF_RXRING_VALID)
 		return 0;
 
 	for (i = 0; i < BGE_SSLOTS; i++) {
@@ -1846,7 +1846,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 	sc->bge_std = i - 1;
 	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
 
-	sc->bge_flags |= BGE_RXRING_VALID;
+	sc->bge_flags |= BGEF_RXRING_VALID;
 
 	return 0;
 }
@@ -1856,7 +1856,7 @@ bge_free_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 
-	if (!(sc->bge_flags & BGE_RXRING_VALID))
+	if (!(sc->bge_flags & BGEF_RXRING_VALID))
 		return;
 
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
@@ -1870,7 +1870,7 @@ bge_free_rx_ring_std(struct bge_softc *sc)
 		    sizeof(struct bge_rx_bd));
 	}
 
-	sc->bge_flags &= ~BGE_RXRING_VALID;
+	sc->bge_flags &= ~BGEF_RXRING_VALID;
 }
 
 static int
@@ -1879,7 +1879,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 	int i;
 	volatile struct bge_rcb *rcb;
 
-	if (sc->bge_flags & BGE_JUMBO_RXRING_VALID)
+	if (sc->bge_flags & BGEF_JUMBO_RXRING_VALID)
 		return 0;
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
@@ -1888,7 +1888,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 	}
 
 	sc->bge_jumbo = i - 1;
-	sc->bge_flags |= BGE_JUMBO_RXRING_VALID;
+	sc->bge_flags |= BGEF_JUMBO_RXRING_VALID;
 
 	rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 	rcb->bge_maxlen_flags = 0;
@@ -1904,7 +1904,7 @@ bge_free_rx_ring_jumbo(struct bge_softc *sc)
 {
 	int i;
 
-	if (!(sc->bge_flags & BGE_JUMBO_RXRING_VALID))
+	if (!(sc->bge_flags & BGEF_JUMBO_RXRING_VALID))
 		return;
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
@@ -1916,7 +1916,7 @@ bge_free_rx_ring_jumbo(struct bge_softc *sc)
 		    sizeof(struct bge_rx_bd));
 	}
 
-	sc->bge_flags &= ~BGE_JUMBO_RXRING_VALID;
+	sc->bge_flags &= ~BGEF_JUMBO_RXRING_VALID;
 }
 
 static void
@@ -1925,7 +1925,7 @@ bge_free_tx_ring(struct bge_softc *sc)
 	int i;
 	struct txdmamap_pool_entry *dma;
 
-	if (!(sc->bge_flags & BGE_TXRING_VALID))
+	if (!(sc->bge_flags & BGEF_TXRING_VALID))
 		return;
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
@@ -1946,7 +1946,7 @@ bge_free_tx_ring(struct bge_softc *sc)
 		free(dma, M_DEVBUF);
 	}
 
-	sc->bge_flags &= ~BGE_TXRING_VALID;
+	sc->bge_flags &= ~BGEF_TXRING_VALID;
 }
 
 static int
@@ -1958,7 +1958,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 	bus_size_t maxsegsz;
 	struct txdmamap_pool_entry *dma;
 
-	if (sc->bge_flags & BGE_TXRING_VALID)
+	if (sc->bge_flags & BGEF_TXRING_VALID)
 		return 0;
 
 	sc->bge_txcnt = 0;
@@ -2004,7 +2004,7 @@ bge_init_tx_ring(struct bge_softc *sc)
 		SLIST_INSERT_HEAD(&sc->txdma_list, dma, link);
 	}
 
-	sc->bge_flags |= BGE_TXRING_VALID;
+	sc->bge_flags |= BGEF_TXRING_VALID;
 
 	return 0;
 }
@@ -2176,7 +2176,7 @@ bge_poll_fw(struct bge_softc *sc)
 			aprint_error_dev(sc->bge_dev, "reset timed out\n");
 			return -1;
 		}
-	} else if ((sc->bge_flags & BGE_NO_EEPROM) == 0) {
+	} else if ((sc->bge_flags & BGEF_NO_EEPROM) == 0) {
 		/*
 		 * Poll the value location we just wrote until
 		 * we see the 1's complement of the magic number.
@@ -2347,7 +2347,7 @@ bge_chipinit(struct bge_softc *sc)
 
 	/* Set up the PCI DMA control register. */
 	dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD;
-	if (sc->bge_flags & BGE_PCIE) {
+	if (sc->bge_flags & BGEF_PCIE) {
 		/* Read watermark not used, 128 bytes for write. */
 		DPRINTFN(4, ("(%s: PCI-Express DMA setting)\n",
 		    device_xname(sc->bge_dev)));
@@ -2355,7 +2355,7 @@ bge_chipinit(struct bge_softc *sc)
 			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(7);
 		else
 			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
-	} else if (sc->bge_flags & BGE_PCIX) {
+	} else if (sc->bge_flags & BGEF_PCIX) {
 	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n",
 		    device_xname(sc->bge_dev)));
 		/* PCI-X bus */
@@ -2977,9 +2977,9 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_MACMODE_RX_STATS_ENB | BGE_MACMODE_TX_STATS_ENB |
 	    BGE_MACMODE_FRMHDR_DMA_ENB;
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI)
+	if (sc->bge_flags & BGEF_FIBER_TBI)
 		val |= BGE_PORTMODE_TBI;
-	else if (sc->bge_flags & BGE_PHY_FIBER_MII)
+	else if (sc->bge_flags & BGEF_FIBER_MII)
 		val |= BGE_PORTMODE_GMII;
 	else
 		val |= BGE_PORTMODE_MII;
@@ -3036,13 +3036,13 @@ bge_blockinit(struct bge_softc *sc)
 		    BGE_RDMAMODE_MBUF_RBD_CRPT_ATTN |
 		    BGE_RDMAMODE_MBUF_SBD_CRPT_ATTN;
 
-	if (sc->bge_flags & BGE_PCIE)
+	if (sc->bge_flags & BGEF_PCIE)
 		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57766) {
 		if (ifp->if_mtu <= ETHERMTU)
 			val |= BGE_RDMAMODE_JMB_2K_MMRR;
 	}
-	if (sc->bge_flags & BGE_TSO)
+	if (sc->bge_flags & BGEF_TSO)
 		val |= BGE_RDMAMODE_TSO4_ENABLE;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
@@ -3132,7 +3132,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* 5718 step 60, 57XX step 90 */
 	/* Turn on send data initiator state machine */
-	if (sc->bge_flags & BGE_TSO) {
+	if (sc->bge_flags & BGEF_TSO) {
 		/* XXX: magic value from Linux driver */
 		CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE |
 		    BGE_SDIMODE_HW_LSO_PRE_DMA);
@@ -3163,7 +3163,7 @@ bge_blockinit(struct bge_softc *sc)
 	 * Enable attention when the link has changed state for
 	 * devices that use auto polling.
 	 */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
 	} else {
 		/* 5718 step 68 */
@@ -3376,7 +3376,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	        &sc->bge_pciecap, NULL) != 0)
 	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
 		/* PCIe */
-		sc->bge_flags |= BGE_PCIE;
+		sc->bge_flags |= BGEF_PCIE;
 		/* Extract supported maximum payload size. */
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    sc->bge_pciecap + PCIE_DCAP);
@@ -3390,7 +3390,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	} else if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
 		BGE_PCISTATE_PCI_BUSMODE) == 0) {
 		/* PCI-X */
-		sc->bge_flags |= BGE_PCIX;
+		sc->bge_flags |= BGEF_PCIX;
 		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
 			&sc->bge_pcixcap, NULL) == 0)
 			aprint_error_dev(sc->bge_dev,
@@ -3417,18 +3417,18 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5717:
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
-		sc->bge_flags |= BGE_5717_PLUS;
+		sc->bge_flags |= BGEF_5717_PLUS;
 		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM57765:
 	case BGE_ASICREV_BCM57766:
 		if (!BGE_IS_5717_PLUS(sc))
-			sc->bge_flags |= BGE_57765_FAMILY;
-		sc->bge_flags |= BGE_57765_PLUS | BGE_5755_PLUS |
-		    BGE_575X_PLUS | BGE_5705_PLUS | BGE_JUMBO_CAPABLE;
+			sc->bge_flags |= BGEF_57765_FAMILY;
+		sc->bge_flags |= BGEF_57765_PLUS | BGEF_5755_PLUS |
+		    BGEF_575X_PLUS | BGEF_5705_PLUS | BGEF_JUMBO_CAPABLE;
 		/* Jumbo frame on BCM5719 A0 does not work. */
 		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719) &&
 		    (sc->bge_chipid == BGE_CHIPID_BCM5719_A0))
-			sc->bge_flags &= ~BGE_JUMBO_CAPABLE;
+			sc->bge_flags &= ~BGEF_JUMBO_CAPABLE;
 		break;
 	case BGE_ASICREV_BCM5755:
 	case BGE_ASICREV_BCM5761:
@@ -3436,26 +3436,26 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5785:
 	case BGE_ASICREV_BCM5787:
 	case BGE_ASICREV_BCM57780:
-		sc->bge_flags |= BGE_5755_PLUS | BGE_575X_PLUS | BGE_5705_PLUS;
+		sc->bge_flags |= BGEF_5755_PLUS | BGEF_575X_PLUS | BGEF_5705_PLUS;
 		break;
 	case BGE_ASICREV_BCM5700:
 	case BGE_ASICREV_BCM5701:
 	case BGE_ASICREV_BCM5703:
 	case BGE_ASICREV_BCM5704:
-		sc->bge_flags |= BGE_5700_FAMILY | BGE_JUMBO_CAPABLE;
+		sc->bge_flags |= BGEF_5700_FAMILY | BGEF_JUMBO_CAPABLE;
 		break;
 	case BGE_ASICREV_BCM5714_A0:
 	case BGE_ASICREV_BCM5780:
 	case BGE_ASICREV_BCM5714:
-		sc->bge_flags |= BGE_5714_FAMILY | BGE_JUMBO_CAPABLE;
+		sc->bge_flags |= BGEF_5714_FAMILY | BGEF_JUMBO_CAPABLE;
 		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5750:
 	case BGE_ASICREV_BCM5752:
 	case BGE_ASICREV_BCM5906:
-		sc->bge_flags |= BGE_575X_PLUS;
+		sc->bge_flags |= BGEF_575X_PLUS;
 		/* FALLTHROUGH */
 	case BGE_ASICREV_BCM5705:
-		sc->bge_flags |= BGE_5705_PLUS;
+		sc->bge_flags |= BGEF_5705_PLUS;
 		break;
 	}
 
@@ -3465,12 +3465,12 @@ bge_attach(device_t parent, device_t self, void *aux)
 	case BGE_ASICREV_BCM5719:
 	case BGE_ASICREV_BCM5720:
 	case BGE_ASICREV_BCM5761:
-		sc->bge_flags |= BGE_APE;
+		sc->bge_flags |= BGEF_APE;
 		break;
 	}
 
 	/* Chips with APE need BAR2 access for APE registers/memory. */
-	if ((sc->bge_flags & BGE_APE) != 0) {
+	if ((sc->bge_flags & BGEF_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
 		if (pci_mapreg_map(pa, BGE_PCI_BAR2, memtype, 0,
 			&sc->bge_apetag, &sc->bge_apehandle, NULL,
@@ -3497,11 +3497,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
-		sc->bge_flags |= BGE_CPMU_PRESENT;
+		sc->bge_flags |= BGEF_CPMU_PRESENT;
 
 	/* Set MI_MODE */
 	mimode = BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
-	if ((sc->bge_flags & BGE_CPMU_PRESENT) != 0)
+	if ((sc->bge_flags & BGEF_CPMU_PRESENT) != 0)
 		mimode |= BGE_MIMODE_500KHZ_CONST;
 	else
 		mimode |= BGE_MIMODE_BASE;
@@ -3516,11 +3516,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * payloads by copying the received packets.
 	 */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 &&
-	    sc->bge_flags & BGE_PCIX)
-		sc->bge_flags |= BGE_RX_ALIGNBUG;
+	    sc->bge_flags & BGEF_PCIX)
+		sc->bge_flags |= BGEF_RX_ALIGNBUG;
 
 	if (BGE_IS_5700_FAMILY(sc))
-		sc->bge_flags |= BGE_JUMBO_CAPABLE;
+		sc->bge_flags |= BGEF_JUMBO_CAPABLE;
 
 	misccfg = CSR_READ_4(sc, BGE_MISC_CFG);
 	misccfg &= BGE_MISCCFG_BOARD_ID_MASK;
@@ -3528,7 +3528,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
 	    (misccfg == BGE_MISCCFG_BOARD_ID_5788 ||
 	     misccfg == BGE_MISCCFG_BOARD_ID_5788M))
-		sc->bge_flags |= BGE_IS_5788;
+		sc->bge_flags |= BGEF_IS_5788;
 
 	/*
 	 * Some controllers seem to require a special firmware to use
@@ -3549,7 +3549,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		 */
 		if ((PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5754) &&
 		    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5754M))
-			sc->bge_flags |= BGE_TSO;
+			sc->bge_flags |= BGEF_TSO;
 	}
 
 	capmask = 0xffffffff; /* XXX BMSR_DEFCAPMASK */
@@ -3569,28 +3569,28 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
 		capmask &= ~BMSR_EXTSTAT;
-		sc->bge_flags |= BGE_PHY_NO_WIRESPEED;
+		sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
 	     (sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
 		 sc->bge_chipid != BGE_CHIPID_BCM5705_A1)))
-		sc->bge_flags |= BGE_PHY_NO_WIRESPEED;
+		sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
 
 	/* Set various PHY bug flags. */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
 	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
-		sc->bge_flags |= BGE_PHY_CRC_BUG;
+		sc->bge_phy_flags |= BGEPHYF_CRC_BUG;
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5703_AX ||
 	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_AX)
-		sc->bge_flags |= BGE_PHY_ADC_BUG;
+		sc->bge_phy_flags |= BGEPHYF_ADC_BUG;
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
-		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
+		sc->bge_phy_flags |= BGEPHYF_5704_A0_BUG;
 	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
 	    PCI_VENDOR(subid) == PCI_VENDOR_DELL)
-		sc->bge_flags |= BGE_PHY_NO_3LED;
+		sc->bge_phy_flags |= BGEPHYF_NO_3LED;
 	if (BGE_IS_5705_PLUS(sc) &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
@@ -3602,11 +3602,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787) {
 			if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5722 &&
 			    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5756)
-				sc->bge_flags |= BGE_PHY_JITTER_BUG;
+				sc->bge_phy_flags |= BGEPHYF_JITTER_BUG;
 			if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5755M)
-				sc->bge_flags |= BGE_PHY_ADJUST_TRIM;
+				sc->bge_phy_flags |= BGEPHYF_ADJUST_TRIM;
 		} else
-			sc->bge_flags |= BGE_PHY_BER_BUG;
+			sc->bge_phy_flags |= BGEPHYF_BER_BUG;
 	}
 
 	/*
@@ -3615,18 +3615,18 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (prop_dictionary_get_bool(device_properties(self),
 	     "without-seeprom", &no_seeprom) && no_seeprom)
-	 	sc->bge_flags |= BGE_NO_EEPROM;
+	 	sc->bge_flags |= BGEF_NO_EEPROM;
 
 	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-		sc->bge_flags |= BGE_NO_EEPROM;
+		sc->bge_flags |= BGEF_NO_EEPROM;
 
 	/* Now check the 'ROM failed' bit on the RX CPU */
 	else if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL)
-		sc->bge_flags |= BGE_NO_EEPROM;
+		sc->bge_flags |= BGEF_NO_EEPROM;
 
 	sc->bge_asf_mode = 0;
 	/* No ASF if APE present. */
-	if ((sc->bge_flags & BGE_APE) == 0) {
+	if ((sc->bge_flags & BGEF_APE) == 0) {
 		if (bge_allow_asf && (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 			BGE_SRAM_DATA_SIG_MAGIC)) {
 			if (bge_readmem_ind(sc, BGE_SRAM_DATA_CFG) &
@@ -3668,11 +3668,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    BGE_SRAM_DATA_VER_SHIFT;
 		if ((0 < tmp) && (tmp < 0x100))
 			hwcfg2 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_2);
-		if (sc->bge_flags & BGE_PCIE)
+		if (sc->bge_flags & BGEF_PCIE)
 			hwcfg3 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_3);
 		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
 			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
-	} else if (!(sc->bge_flags & BGE_NO_EEPROM)) {
+	} else if (!(sc->bge_flags & BGEF_NO_EEPROM)) {
 		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
 		hwcfg = be32toh(hwcfg);
@@ -3815,7 +3815,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 
-	if (sc->bge_flags & BGE_TSO)
+	if (sc->bge_flags & BGEF_TSO)
 		sc->ethercom.ec_if.if_capabilities |= IFCAP_TSOv4;
 
 	/*
@@ -3837,17 +3837,21 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
 		if (BGE_IS_5714_FAMILY(sc))
-		    sc->bge_flags |= BGE_PHY_FIBER_MII;
+		    sc->bge_flags |= BGEF_FIBER_MII;
 		else
-		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
+		    sc->bge_flags |= BGEF_FIBER_TBI;
 	}
+
+	/* Set bge_phy_flags before prop_dictionary_set_uint32() */
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		sc->bge_phy_flags |= BGEPHYF_JUMBO_CAPABLE;
 
 	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
-	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
+	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_phy_flags);
 	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
 		ifmedia_add(&sc->bge_ifmedia, IFM_ETHER |IFM_1000_SX, 0, NULL);
@@ -4014,7 +4018,7 @@ bge_reset(struct bge_softc *sc)
 	
 	if (BGE_IS_575X_PLUS(sc) && !BGE_IS_5714_FAMILY(sc) &&
 	    (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
-	    	if (sc->bge_flags & BGE_PCIE)
+	    	if (sc->bge_flags & BGEF_PCIE)
 			write_op = bge_writemem_direct;
 		else
 			write_op = bge_writemem_ind;
@@ -4023,7 +4027,7 @@ bge_reset(struct bge_softc *sc)
 
 	/* 57XX step 4 */
 	/* Acquire the NVM lock */
-	if ((sc->bge_flags & BGE_NO_EEPROM) == 0 &&
+	if ((sc->bge_flags & BGEF_NO_EEPROM) == 0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5700 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701) {
 		CSR_WRITE_4(sc, BGE_NVRAM_SWARB, BGE_NVRAMSWARB_SET1);
@@ -4071,7 +4075,7 @@ bge_reset(struct bge_softc *sc)
 	/*
 	 * XXX: from FreeBSD/Linux; no documentation
 	 */
-	if (sc->bge_flags & BGE_PCIE) {
+	if (sc->bge_flags & BGEF_PCIE) {
 		if (BGE_ASICREV(sc->bge_chipid != BGE_ASICREV_BCM5785) &&
 		    !BGE_IS_57765_PLUS(sc) &&
 		    (CSR_READ_4(sc, BGE_PHY_TEST_CTRL_REG) ==
@@ -4104,19 +4108,19 @@ bge_reset(struct bge_softc *sc)
 	 * powered up in D0 uninitialized.
 	 */
 	if (BGE_IS_5705_PLUS(sc) &&
-	    (sc->bge_flags & BGE_CPMU_PRESENT) == 0)
+	    (sc->bge_flags & BGEF_CPMU_PRESENT) == 0)
 		reset |= BGE_MISCCFG_GPHY_PD_OVERRIDE;
 
 	/* Issue global reset */
 	write_op(sc, BGE_MISC_CFG, reset);
 
 	/* 5718 reset step 7, 57XX step 8 */
-	if (sc->bge_flags & BGE_PCIE)
+	if (sc->bge_flags & BGEF_PCIE)
 		delay(100*1000); /* too big */
 	else
 		delay(1000);
 
-	if (sc->bge_flags & BGE_PCIE) {
+	if (sc->bge_flags & BGEF_PCIE) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
 			DELAY(500000);
 			/* XXX: Magic Numbers */
@@ -4133,7 +4137,7 @@ bge_reset(struct bge_softc *sc)
 		    PCIE_DCSR_ENA_NO_SNOOP);
 
 		/* Set PCIE max payload size to 128 for older PCIe devices */
-		if ((sc->bge_flags & BGE_CPMU_PRESENT) == 0)
+		if ((sc->bge_flags & BGEF_CPMU_PRESENT) == 0)
 			devctl &= ~(0x00e0);
 		/* Clear device status register. Write 1b to clear */
 		devctl |= PCIE_DCSR_URD | PCIE_DCSR_FED
@@ -4156,7 +4160,7 @@ bge_reset(struct bge_softc *sc)
 	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
 	val = BGE_PCISTATE_ROM_ENABLE | BGE_PCISTATE_ROM_RETRY_ENABLE;
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0 &&
-	    (sc->bge_flags & BGE_PCIX) != 0)
+	    (sc->bge_flags & BGEF_PCIX) != 0)
 		val |= BGE_PCISTATE_RETRY_SAME_DMA;
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) != 0)
 		val |= BGE_PCISTATE_ALLOW_APE_CTLSPC_WR |
@@ -4167,7 +4171,7 @@ bge_reset(struct bge_softc *sc)
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD, command);
 
 	/* 57xx step 11: disable PCI-X Relaxed Ordering. */
-	if (sc->bge_flags & BGE_PCIX) {
+	if (sc->bge_flags & BGEF_PCIX) {
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
 		    + PCIX_CMD);
 		/* Set max memory read byte count to 2K */
@@ -4237,7 +4241,7 @@ bge_reset(struct bge_softc *sc)
 	 * adjustment to insure the SERDES drive level is set
 	 * to 1.2V.
 	 */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI &&
+	if (sc->bge_flags & BGEF_FIBER_TBI &&
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 		uint32_t serdescfg;
 
@@ -4246,7 +4250,7 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_SERDES_CFG, serdescfg);
 	}
 
-	if (sc->bge_flags & BGE_PCIE &&
+	if (sc->bge_flags & BGEF_PCIE &&
 	    !BGE_IS_57765_PLUS(sc) &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785) {
@@ -4385,7 +4389,7 @@ bge_rxeof(struct bge_softc *sc)
 		 * the Rx buffer has the layer-2 header unaligned.
 		 * If our CPU requires alignment, re-align by copying.
 		 */
-		if (sc->bge_flags & BGE_RX_ALIGNBUG) {
+		if (sc->bge_flags & BGEF_RX_ALIGNBUG) {
 			memmove(mtod(m, char *) + ETHER_ALIGN, m->m_data,
 				cur_rx->bge_len);
 			m->m_data += ETHER_ALIGN;
@@ -4650,7 +4654,7 @@ bge_tick(void *xsc)
 	else
 		bge_stats_update(sc);
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		/*
 		 * Since in TBI mode auto-polling can't be used we should poll
 		 * link status manually. Here we register pending link event
@@ -5427,7 +5431,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	int rc;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 			return EINVAL;
 		switch (IFM_SUBTYPE(ifm->ifm_media)) {
@@ -5484,7 +5488,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	 * things working was to receive a packet and get a RX intr.
 	 */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-	    sc->bge_flags & BGE_IS_5788)
+	    sc->bge_flags & BGEF_IS_5788)
 		BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_SET);
 	else
 		BGE_SETBIT(sc, BGE_HCC_MODE, BGE_HCCMODE_COAL_NOW);
@@ -5501,7 +5505,7 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		ifmr->ifm_status = IFM_AVALID;
 		ifmr->ifm_active = IFM_ETHER;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
@@ -5557,7 +5561,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	switch (command) {
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
-		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			ifr->ifr_media &= ~IFM_ETH_FMASK;
 			sc->bge_flowflags = 0;
 		}
@@ -5577,7 +5581,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
-		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+		if (sc->bge_flags & BGEF_FIBER_TBI) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
 			    command);
 		} else {
@@ -5736,7 +5740,7 @@ bge_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Isolate/power down the PHY.
 	 */
-	if (!(sc->bge_flags & BGE_PHY_FIBER_TBI))
+	if (!(sc->bge_flags & BGEF_FIBER_TBI))
 		mii_down(&sc->bge_mii);
 
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
@@ -5795,7 +5799,7 @@ bge_link_upd(struct bge_softc *sc)
 		return;
 	}
 
-	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
+	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			if (!BGE_STS_BIT(sc, BGE_STS_LINK)) {
@@ -5942,40 +5946,40 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - 5714 Family\n");
 	if (BGE_IS_5700_FAMILY(sc))
 		printf(" - 5700 Family\n");
-	if (sc->bge_flags & BGE_IS_5788)
+	if (sc->bge_flags & BGEF_IS_5788)
 		printf(" - 5788\n");
-	if (sc->bge_flags & BGE_JUMBO_CAPABLE)
+	if (sc->bge_flags & BGEF_JUMBO_CAPABLE)
 		printf(" - Supports Jumbo Frames\n");
-	if (sc->bge_flags & BGE_NO_EEPROM)
+	if (sc->bge_flags & BGEF_NO_EEPROM)
 		printf(" - No EEPROM\n");
-	if (sc->bge_flags & BGE_PCIX)
+	if (sc->bge_flags & BGEF_PCIX)
 		printf(" - PCI-X Bus\n");
-	if (sc->bge_flags & BGE_PCIE)
+	if (sc->bge_flags & BGEF_PCIE)
 		printf(" - PCI Express Bus\n");
-	if (sc->bge_flags & BGE_RX_ALIGNBUG)
+	if (sc->bge_flags & BGEF_RX_ALIGNBUG)
 		printf(" - RX Alignment Bug\n");
-	if (sc->bge_flags & BGE_APE)
+	if (sc->bge_flags & BGEF_APE)
 		printf(" - APE\n");
-	if (sc->bge_flags & BGE_CPMU_PRESENT)
+	if (sc->bge_flags & BGEF_CPMU_PRESENT)
 		printf(" - CPMU\n");
-	if (sc->bge_flags & BGE_TSO)
+	if (sc->bge_flags & BGEF_TSO)
 		printf(" - TSO\n");
 
-	if (sc->bge_flags & BGE_PHY_NO_3LED)
+	if (sc->bge_phy_flags & BGEPHYF_NO_3LED)
 		printf(" - No 3 LEDs\n");
-	if (sc->bge_flags & BGE_PHY_CRC_BUG)
+	if (sc->bge_phy_flags & BGEPHYF_CRC_BUG)
 		printf(" - CRC bug\n");
-	if (sc->bge_flags & BGE_PHY_ADC_BUG)
+	if (sc->bge_phy_flags & BGEPHYF_ADC_BUG)
 		printf(" - ADC bug\n");
-	if (sc->bge_flags & BGE_PHY_5704_A0_BUG)
+	if (sc->bge_phy_flags & BGEPHYF_5704_A0_BUG)
 		printf(" - 5704 A0 bug\n");
-	if (sc->bge_flags & BGE_PHY_JITTER_BUG)
+	if (sc->bge_phy_flags & BGEPHYF_JITTER_BUG)
 		printf(" - jitter bug\n");
-	if (sc->bge_flags & BGE_PHY_BER_BUG)
+	if (sc->bge_phy_flags & BGEPHYF_BER_BUG)
 		printf(" - BER bug\n");
-	if (sc->bge_flags & BGE_PHY_ADJUST_TRIM)
+	if (sc->bge_phy_flags & BGEPHYF_ADJUST_TRIM)
 		printf(" - adjust trim\n");
-	if (sc->bge_flags & BGE_PHY_NO_WIRESPEED)
+	if (sc->bge_phy_flags & BGEPHYF_NO_WIRESPEED)
 		printf(" - no wirespeed\n");
 }
 #endif /* BGE_DEBUG */
@@ -5986,7 +5990,7 @@ bge_get_eaddr_fw(struct bge_softc *sc, uint8_t ether_addr[])
 	prop_dictionary_t dict;
 	prop_data_t ea;
 
-	if ((sc->bge_flags & BGE_NO_EEPROM) == 0)
+	if ((sc->bge_flags & BGEF_NO_EEPROM) == 0)
 		return 1;
 
 	dict = device_properties(sc->bge_dev);
