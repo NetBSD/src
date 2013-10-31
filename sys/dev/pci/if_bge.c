@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.261 2013/10/31 04:26:40 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.262 2013/10/31 06:01:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.261 2013/10/31 04:26:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.262 2013/10/31 06:01:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3469,6 +3469,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
+	/*
+	 * The 40bit DMA bug applies to the 5714/5715 controllers and is
+	 * not actually a MAC controller bug but an issue with the embedded
+	 * PCIe to PCI-X bridge in the device. Use 40bit DMA workaround.
+	 */
+	if (BGE_IS_5714_FAMILY(sc) && ((sc->bge_flags & BGEF_PCIX) != 0))
+		sc->bge_flags |= BGEF_40BIT_BUG;
+
 	/* Chips with APE need BAR2 access for APE registers/memory. */
 	if ((sc->bge_flags & BGEF_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
@@ -3715,6 +3723,22 @@ bge_attach(device_t parent, device_t self, void *aux)
 		sc->bge_dmatag = pa->pa_dmat64;
 	else
 		sc->bge_dmatag = pa->pa_dmat;
+
+	/* 40bit DMA workaround */
+	if (sizeof(bus_addr_t) > 4) {
+		if ((sc->bge_flags & BGEF_40BIT_BUG) != 0) {
+			bus_dma_tag_t olddmatag = sc->bge_dmatag; /* save */
+
+			if (bus_dmatag_subregion(olddmatag, 0,
+				(bus_addr_t)(1ULL << 40), &(sc->bge_dmatag),
+				BUS_DMA_NOWAIT) != 0) {
+				aprint_error_dev(self,
+				    "WARNING: failed to restrict dma range,"
+				    " falling back to parent bus dma range\n");
+				sc->bge_dmatag = olddmatag;
+			}
+		}
+	}
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &sc->bge_ring_seg, 1,
