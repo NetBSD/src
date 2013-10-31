@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/10/16 19:44:57 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.2 2013/10/31 16:50:14 mbalmer Exp $
 
 .include "../Makefile.inc"
 
@@ -42,7 +42,8 @@ SRCS+=		strcspn.c \
 		strpbrk.c \
 		strspn.c
 
-CPPFLAGS+=	-include ${.CURDIR}/luaconf.h \
-		-I${S}/../external/mit/lua/dist/src
+CFLAGS+=	-include ${.CURDIR}/luaconf.h
+
+CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src
 
 .include <bsd.kmodule.mk>
