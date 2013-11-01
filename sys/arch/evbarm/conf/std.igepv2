@@ -1,4 +1,4 @@
-#	$NetBSD: std.igepv2,v 1.5 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.igepv2,v 1.6 2013/11/01 18:41:06 skrll Exp $
 #
 # standard NetBSD/evbarm for IGEPV2 options
 
@@ -18,7 +18,6 @@ options 	KERNEL_BASE_EXT=0x80000000
 makeoptions	LOADADDRESS="0x80300000"
 makeoptions	BOARDTYPE="igepv2"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR
