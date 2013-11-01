@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2013/10/28 21:39:45 htodd Exp $
+# $NetBSD: mi,v 1.37 2013/11/01 07:48:31 mrg Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			-unknown-		debuglib
@@ -68,6 +68,7 @@
 ./usr/lib/libgcov_g.a				-unknown-		debuglib,gcccmds
 ./usr/lib/libgnumalloc_g.a			-unknown-		debuglib
 ./usr/lib/libgomp_g.a				-unknown-		debuglib,gcc=45
+./usr/lib/libgomp_g.a				-unknown-		debuglib,gcc=48
 ./usr/lib/libgssapi_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libhdb_g.a				-unknown-		debuglib,kerberos
 ./usr/lib/libheimbase_g.a			-unknown-		debuglib,kerberos
@@ -100,7 +101,9 @@
 ./usr/lib/libmenu_g.a				-unknown-		debuglib
 ./usr/lib/libmj_g.a				-unknown-		debuglib
 ./usr/lib/libmudflap_g.a			-unknown-		gcc=45,debuglib
+./usr/lib/libmudflap_g.a			-unknown-		gcc=48,debuglib
 ./usr/lib/libmudflapth_g.a			-unknown-		gcc=45,debuglib
+./usr/lib/libmudflapth_g.a			-unknown-		gcc=48,debuglib
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgpverify_g.a			-unknown-		debuglib
 ./usr/lib/libnpf_g.a				-unknown-		debuglib
@@ -666,7 +669,7 @@
 ./usr/libdata/debug/usr/bin/printf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/progress.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/protoize.debug	comp-c-debug		gcc=4,gcccmds,debug
-./usr/libdata/debug/usr/bin/protoize.debug      comp-obsolete		gcc=45,obsolete
+./usr/libdata/debug/usr/bin/protoize.debug      comp-obsolete		!gcc=4,obsolete
 ./usr/libdata/debug/usr/bin/pwhash.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/qsafe.debug		comp-util-debug		crypto,debug
 ./usr/libdata/debug/usr/bin/qsieve.debug	comp-util-debug		crypto,debug
@@ -767,7 +770,7 @@
 ./usr/libdata/debug/usr/bin/uniq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/units.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unprotoize.debug	comp-c-debug		gcc=4,gcccmds,debug
-./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		gcc=45,obsolete
+./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		!gcc=4,obsolete
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.64 2013/01/16 16:01:05 christos Exp $
+# $NetBSD: md.alpha,v 1.65 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -70,6 +70,7 @@
 ./usr/include/alpha/wsconsio.h			comp-obsolete		obsolete
 ./usr/include/alpha/z8530var.h			comp-c-include
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/crtfm.o				comp-c-lib
 ./usr/lib/libalpha.a				comp-c-lib
