@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.117 2013/07/18 22:06:09 matt Exp $
+#	$NetBSD: sys.mk,v 1.118 2013/11/01 17:07:37 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -51,7 +51,7 @@ CTFMFLAGS	?=	-g -t -L VERSION
 #CTFMERGE	?=	ctfmerge
 
 CXX?=		c++
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99:N-Wold-style-definition:N-Wno-format-zero-length}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length}
 
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
