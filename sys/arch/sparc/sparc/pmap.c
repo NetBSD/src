@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.350 2013/01/07 16:59:18 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.351 2013/11/01 06:22:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.350 2013/01/07 16:59:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.351 2013/11/01 06:22:46 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -910,7 +910,7 @@ pgt_page_free(struct pool *pp, void *v)
 {
 	vaddr_t va;
 	paddr_t pa;
-	bool rv;
+	bool rv __diagused;
 
 	va = (vaddr_t)v;
 	rv = pmap_extract(pmap_kernel(), va, &pa);
@@ -2635,7 +2635,7 @@ pv_changepte4m(struct vm_page *pg, int bis, int bic)
 		return;
 
 	for (; pv != NULL; pv = pv->pv_next) {
-		int tpte;
+		int tpte __diagused;
 		pm = pv->pv_pmap;
 		/* XXXSMP: should lock pm */
 		va = pv->pv_va;
