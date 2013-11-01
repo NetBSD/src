@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.81 2013/10/31 00:59:17 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.82 2013/11/01 15:38:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.81 2013/10/31 00:59:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.82 2013/11/01 15:38:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -167,11 +167,16 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 	case VLNK:
 		/* Symbolic link.  Target specifies the file name. */
 		KASSERT(target != NULL);
-
 		nnode->tn_size = strlen(target);
-		KASSERT(nnode->tn_size > 0);
+
+		if (nnode->tn_size == 0) {
+			/* Zero-length targets are supported. */
+			nnode->tn_spec.tn_lnk.tn_link = NULL;
+			break;
+		}
+
 		KASSERT(nnode->tn_size < MAXPATHLEN);
-		nnode->tn_size++; /* include the NIL */
+		nnode->tn_size++; /* include the NUL terminator */
 
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_strname_alloc(tmp, nnode->tn_size);
