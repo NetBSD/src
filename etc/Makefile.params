@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.params,v 1.5 2013/11/01 06:22:24 apb Exp $
+#	$NetBSD: Makefile.params,v 1.6 2013/11/01 10:00:51 martin Exp $
 #
 # Makefile fragment for printing build parameters.
 #
@@ -68,7 +68,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 # Duplicate the DISTRIBVER setting from src/etc/Makefile.
 #
 .ifndef DISTRIBVER
-DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+DISTRIBVER!=	${HOST_SH:Ush} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 .endif
 
 #
