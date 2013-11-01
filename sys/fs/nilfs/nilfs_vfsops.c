@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.12 2013/10/18 19:57:28 christos Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.13 2013/11/01 06:41:56 mrg Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.12 2013/10/18 19:57:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.13 2013/11/01 06:41:56 mrg Exp $");
 #endif /* not lint */
 
 
@@ -399,7 +399,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 static void
 nilfs_unmount_base(struct nilfs_device *nilfsdev)
 {
-	int error;
+	int error __diagused;
 
 	if (!nilfsdev)
 		return;
