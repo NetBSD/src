@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.1 2013/09/05 20:25:27 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.2 2013/11/01 15:03:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ typedef int irqreturn_t;
 #define DWC2_WRITE_4(hsotg, reg, data)  \
     bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg), (data));
 
-#define DWC2_DEBUG
 #ifdef DWC2_DEBUG
 extern int dwc2debug;
 #define WARN_ON(x)	KASSERT(!(x))
