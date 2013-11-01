@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.15 2013/10/22 09:42:20 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.16 2013/11/01 15:03:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.15 2013/10/22 09:42:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.16 2013/11/01 15:03:39 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.15 2013/10/22 09:42:20 skrll Exp $");
 #endif
 #define	DWC2_EVCNT_INCR(a)	DWC2_EVCNT_ADD((a), 1)
 
-#define DWC2_DEBUG
 #ifdef DWC2_DEBUG
 #define	DPRINTFN(n,fmt,...) do {			\
 	if (dwc2debug >= (n)) {			\
