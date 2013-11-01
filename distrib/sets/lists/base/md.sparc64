@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.201 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: md.sparc64,v 1.202 2013/11/01 07:48:31 mrg Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -137,6 +137,8 @@
 ./usr/lib/sparc/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/sparc/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/sparc/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/sparc/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/sparc/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libhdb.so.14			base-compat-shlib	compat,pic,kerberos
@@ -287,6 +289,7 @@
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.1		base-compat-shlib	gcc=45,compat,pic,libstdcxx
+./usr/lib/sparc/libstdc++.so.7.2		base-compat-shlib	gcc=48,compat,pic,libstdcxx
 ./usr/lib/sparc/libsupc++.so.1			base-obsolete		obsolete
 ./usr/lib/sparc/libsupc++.so.1.0		base-obsolete		obsolete
 ./usr/lib/sparc/libtermcap.so.0			base-compat-shlib	compat,pic
