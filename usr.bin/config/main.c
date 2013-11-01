@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2013/11/01 17:09:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2013/11/01 21:39:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1172,7 +1172,7 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 				goto loop;
 		}
 		(void)fprintf(stderr,
-		    "%s,%d: %s says %s on %s, but there's no %s\n",
+		    "%s:%d: %s says %s on %s, but there's no %s\n",
 		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
