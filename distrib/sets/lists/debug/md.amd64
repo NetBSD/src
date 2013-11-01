@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.31 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: md.amd64,v 1.32 2013/11/01 07:48:31 mrg Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-proflib		compat,debuglib
@@ -64,6 +64,7 @@
 ./usr/lib/i386/libgmp_g.a			-unknown-		obsolete
 ./usr/lib/i386/libgnumalloc_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libgomp_g.a			comp-c-proflib		compat,debuglib,gcc=45
+./usr/lib/i386/libgomp_g.a			comp-c-proflib		compat,debuglib,gcc=48
 ./usr/lib/i386/libgssapi_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libhdb_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -221,6 +222,7 @@
 ./usr/libdata/debug/usr/lib/i386/libgmp.so.10.2.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libgnumalloc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgomp.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc=45
+./usr/libdata/debug/usr/lib/i386/libgomp.so.1.0.debug	comp-compat-shlib	compat,pic,debug,gcc=48
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libgssapi.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libhdb.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
@@ -309,6 +311,7 @@
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.2.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.1.0.debug	comp-compat-shlib	compat,pic,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug

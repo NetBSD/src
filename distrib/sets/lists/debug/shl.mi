@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.35 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: shl.mi,v 1.36 2013/11/01 07:48:31 mrg Exp $
 ./usr/libdata/debug/lib/libc.so.12.187.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -88,6 +88,7 @@
 ./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug	comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libgomp.so.1.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug	comp-sys-debug	gcc=48,debug
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug	comp-krb5-debug	kerberos,debug
@@ -126,14 +127,16 @@
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug		comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug	comp-c-shlib	obsolete
 ./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug	comp-sys-debug	gcc=48,debug
 ./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug	comp-sys-debug	gcc=48,debug
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.4.0.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libnpf.so.0.0.debug		comp-npf-debug	npf,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
-./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
+./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug
 ./usr/libdata/debug/usr/lib/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug,rump
@@ -239,6 +242,7 @@
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug

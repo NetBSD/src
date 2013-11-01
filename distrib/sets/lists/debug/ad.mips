@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.10 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: ad.mips,v 1.11 2013/11/01 07:48:31 mrg Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-proflib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -99,6 +99,7 @@
 ./usr/libdata/debug/usr/lib/64/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,notyet,arch64
+./usr/libdata/debug/usr/lib/64/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=48,notyet,arch64
 ./usr/libdata/debug/usr/lib/64/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libhdb.so.13.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
@@ -150,6 +151,7 @@
 ./usr/libdata/debug/usr/lib/64/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
@@ -189,6 +191,7 @@
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
+./usr/libdata/debug/usr/lib/64/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libtre.so.0.8.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump,arch64
@@ -271,6 +274,7 @@
 ./usr/libdata/debug/usr/lib/o32/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,arch64
+./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=48,arch64
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete,arch64
@@ -322,6 +326,7 @@
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libobjc.so.4.0.debug	comp-sys-debug	gcc=48,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libopcodes.so.6.0.debug	comp-c-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libossaudio.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libp2k.so.2.0.debug		comp-puffs-debug	debug,compat,rump,arch64
@@ -361,6 +366,7 @@
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
+./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libtre.so.0.8.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump,arch64

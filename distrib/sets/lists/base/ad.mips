@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.19 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: ad.mips,v 1.20 2013/11/01 07:48:31 mrg Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -147,6 +147,8 @@
 ./usr/lib/64/libgnumalloc.so.1.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,notyet,arch64
 ./usr/lib/64/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet,arch64
+./usr/lib/64/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,notyet,arch64
+./usr/lib/64/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48,notyet,arch64
 ./usr/lib/64/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libhdb.so.14			base-compat-shlib	compat,pic,kerberos,arch64
@@ -296,6 +298,7 @@
 ./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
 ./usr/lib/64/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/64/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx,arch64
+./usr/lib/64/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/64/libsupc++.so.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/64/libsupc++.so.0.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/64/libtermcap.so.0			base-compat-shlib	compat,pic,arch64
@@ -473,6 +476,8 @@
 ./usr/lib/o32/libgnumalloc.so.1.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,arch64
 ./usr/lib/o32/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,arch64
+./usr/lib/o32/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,arch64
+./usr/lib/o32/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48,arch64
 ./usr/lib/o32/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libhdb.so.14			base-compat-shlib	compat,pic,kerberos,arch64
@@ -620,6 +625,7 @@
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/o32/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx,arch64
+./usr/lib/o32/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/o32/libsupc++.so.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/o32/libsupc++.so.0.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/o32/libtermcap.so.0			base-compat-shlib	compat,pic,arch64

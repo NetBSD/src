@@ -1,5 +1,6 @@
-# $NetBSD: md.sparc64,v 1.171 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.sparc64,v 1.172 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -400,6 +401,10 @@
 ./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=45
 ./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/sparc/libgomp.a			comp-c-lib		compat,gcc=48
+./usr/lib/sparc/libgomp.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/sparc/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/sparc/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48
 ./usr/lib/sparc/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos

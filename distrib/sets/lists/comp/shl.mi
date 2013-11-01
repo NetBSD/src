@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.255 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: shl.mi,v 1.256 2013/11/01 07:48:31 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -49,12 +49,14 @@
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libgcc_pic.a				comp-c-lib		gcc=4
 ./usr/lib/libgcc_pic.a				comp-c-lib		obsolete,gcc=45
+./usr/lib/libgcc_pic.a				comp-c-lib		obsolete,gcc=48
 ./usr/lib/libgmp.so				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10				comp-c-shlib		obsolete
 ./usr/lib/libgmp.so.10.2			comp-c-shlib		obsolete
 ./usr/lib/libgmp_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
 ./usr/lib/libgomp_pic.a				comp-c-piclib		gcc=45
+./usr/lib/libgomp_pic.a				comp-c-piclib		gcc=48
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libheimbase_pic.a			comp-c-piclib		kerberos
@@ -98,13 +100,21 @@
 ./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
 ./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libmudflap.so				comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so				comp-c-shlib		gcc=48
 ./usr/lib/libmudflap.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0			comp-c-shlib		gcc=48
 ./usr/lib/libmudflap.so.0.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0.0			comp-c-shlib		gcc=48
 ./usr/lib/libmudflap_pic.a			comp-c-piclib		gcc=45
+./usr/lib/libmudflap_pic.a			comp-c-piclib		gcc=48
 ./usr/lib/libmudflapth.so			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so			comp-c-shlib		gcc=48
 ./usr/lib/libmudflapth.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0			comp-c-shlib		gcc=48
 ./usr/lib/libmudflapth.so.0.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0.0			comp-c-shlib		gcc=48
 ./usr/lib/libmudflapth_pic.a			comp-c-piclib		gcc=45
+./usr/lib/libmudflapth_pic.a			comp-c-piclib		gcc=48
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnetpgpverify_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
@@ -242,3 +252,6 @@
 ./usr/lib/libwrap_pic.a				comp-c-piclib
 ./usr/lib/libz_pic.a				comp-c-piclib
 ./usr/lib/libzfs_pic.a				comp-zfs-piclib		zfs
+./usr/libexec/liblto_plugin.so			comp-c-bin              gcc=48
+./usr/libexec/liblto_plugin.so.0		comp-c-bin              gcc=48
+./usr/libexec/liblto_plugin.so.0.0		comp-c-bin              gcc=48

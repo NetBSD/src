@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.24 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: ad.arm,v 1.25 2013/11/01 07:48:31 mrg Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -147,6 +147,8 @@
 ./usr/lib/oabi/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/oabi/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libhdb.so.14			base-compat-shlib	compat,pic,kerberos
@@ -300,6 +302,7 @@
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
+./usr/lib/oabi/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libsupc++.so.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libsupc++.so.0.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libtermcap.so.0			base-compat-shlib	compat,pic

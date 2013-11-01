@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.214 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: md.amd64,v 1.215 2013/11/01 07:48:31 mrg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -140,6 +140,8 @@
 ./usr/lib/i386/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/i386/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
+./usr/lib/i386/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/i386/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/i386/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libhdb.so.14			base-compat-shlib	compat,pic,kerberos
@@ -290,6 +292,7 @@
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,libstdcxx
+./usr/lib/i386/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,libstdcxx
 ./usr/lib/i386/libsupc++.so.1			base-obsolete		obsolete
 ./usr/lib/i386/libsupc++.so.1.0			base-obsolete		obsolete
 ./usr/lib/i386/libtermcap.so.0			base-compat-shlib	compat,pic
