@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.params,v 1.6 2013/11/01 10:00:51 martin Exp $
+#	$NetBSD: Makefile.params,v 1.7 2013/11/01 11:09:05 apb Exp $
 #
 # Makefile fragment for printing build parameters.
 #
@@ -35,7 +35,8 @@
 #		@${PRINT_PARAMS}
 #
 
-.include <bsd.own.mk>
+.include <bsd.own.mk>	# for some variables
+.include <bsd.sys.mk>	# for more variables
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR DISTRIBVER EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
@@ -68,7 +69,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 # Duplicate the DISTRIBVER setting from src/etc/Makefile.
 #
 .ifndef DISTRIBVER
-DISTRIBVER!=	${HOST_SH:Ush} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 .endif
 
 #
