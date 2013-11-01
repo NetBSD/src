@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.3 2013/01/05 08:01:13 martin Exp $	*/
+/*	$NetBSD: uatp.c,v 1.4 2013/11/01 17:09:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Taylor R. Campbell
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.3 2013/01/05 08:01:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.4 2013/11/01 17:09:00 christos Exp $");
 
 #include <sys/atomic.h>
 #include <sys/device.h>
@@ -945,7 +945,7 @@ uatp_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize model-specific parameters.  */
 	sc->sc_parameters = uatp_descriptor->parameters;
-	KASSERT(sc->sc_parameters->input_size == input_size);
+	KASSERT((int)sc->sc_parameters->input_size == input_size);
 	KASSERT(sc->sc_parameters->x_sensors <= UATP_MAX_X_SENSORS);
 	KASSERT(sc->sc_parameters->x_ratio <= UATP_MAX_X_RATIO);
 	KASSERT(sc->sc_parameters->y_sensors <= UATP_MAX_Y_SENSORS);
