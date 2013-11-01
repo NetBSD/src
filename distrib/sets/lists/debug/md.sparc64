@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.32 2013/10/19 01:12:46 christos Exp $
+# $NetBSD: md.sparc64,v 1.33 2013/11/01 07:48:31 mrg Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -64,6 +64,7 @@
 ./usr/lib/sparc/libgmp_g.a			-unknown-		obsolete
 ./usr/lib/sparc/libgnumalloc_g.a		-unknown-		compat,debuglib
 ./usr/lib/sparc/libgomp_g.a			-unknown-		compat,debuglib,gcc=45
+./usr/lib/sparc/libgomp_g.a			-unknown-		compat,debuglib,gcc=48
 ./usr/lib/sparc/libgssapi_g.a			-unknown-		compat,debuglib,kerberos
 ./usr/lib/sparc/libhdb_g.a			-unknown-		compat,debuglib,kerberos
 ./usr/lib/sparc/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -218,6 +219,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgnumalloc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=45
+./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=48
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -302,6 +304,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.10.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.2.debug		comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/sparc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libtre.so.0.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libukfs.so.1.0.debug			comp-compat-shlib	compat,pic,debug,rump
