@@ -1,5 +1,6 @@
-# $NetBSD: md.vax,v 1.39 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.vax,v 1.40 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
