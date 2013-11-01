@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.6 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.netwalker,v 1.7 2013/11/01 18:41:06 skrll Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -20,7 +20,6 @@ options 	CORTEX_PMC_CCNT_HZ=800000000
 makeoptions	LOADADDRESS="0x90100000"
 makeoptions	BOARDTYPE="netwalker"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.netwalker"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx51_intr.h>"
 options		ARM_GENERIC_TODR
