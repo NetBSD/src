@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.213 2013/10/28 17:40:43 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.214 2013/11/01 15:33:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.213 2013/10/28 17:40:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.214 2013/11/01 15:33:48 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3404,8 +3404,8 @@ ehci_device_request(usbd_xfer_handle xfer)
 			goto bad3;
 		end->qtd.qtd_status &= htole32(~EHCI_QTD_IOC);
 		end->nextqtd = stat;
-		end->qtd.qtd_next =
-		end->qtd.qtd_altnext = htole32(stat->physaddr);
+		end->qtd.qtd_next = end->qtd.qtd_altnext =
+		    htole32(stat->physaddr);
 		usb_syncmem(&end->dma, end->offs, sizeof(end->qtd),
 		   BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	} else {
