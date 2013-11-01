@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.51 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: ad.arm,v 1.52 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -388,6 +388,9 @@
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/aout_machdep.h		comp-obsolete		obsolete
@@ -1163,14 +1166,14 @@
 ./usr/lib/oabi/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libgnumalloc_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/oabi/libgnumalloc_pic.a		comp-c-piclib		compat,pic
-./usr/lib/oabi/libgomp.a				comp-c-lib		compat,gcc=45
-./usr/lib/oabi/libgomp.a			comp-c-lib		compat,gcc=45,notyet
+./usr/lib/oabi/libgomp.a			comp-c-lib		compat,gcc=45
+./usr/lib/oabi/libgomp.a			comp-c-lib		compat,gcc=48
 ./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45
-./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
+./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=48
 ./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
-./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
+./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
 ./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
-./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet
+./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48
 ./usr/lib/oabi/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libgssapi.so			base-sys-shlib		compat,pic,kerberos

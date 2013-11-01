@@ -1,8 +1,10 @@
-# $NetBSD: ad.mips,v 1.42 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: ad.mips,v 1.43 2013/11/01 07:48:31 mrg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/loongson.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete
@@ -325,6 +327,10 @@
 ./usr/lib/64/libgomp.so				base-sys-shlib		compat,pic,gcc=45,notyet
 ./usr/lib/64/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
 ./usr/lib/64/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet
+./usr/lib/64/libgomp.a				comp-c-lib		compat,gcc=48,notyet
+./usr/lib/64/libgomp.so				base-sys-shlib		compat,pic,gcc=48,notyet
+./usr/lib/64/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48,notyet
+./usr/lib/64/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,notyet
 ./usr/lib/64/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos
@@ -930,6 +936,10 @@
 ./usr/lib/o32/libgomp.so			base-sys-shlib		compat,pic,gcc=45
 ./usr/lib/o32/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45
 ./usr/lib/o32/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45
+./usr/lib/o32/libgomp.a				comp-c-lib		compat,gcc=48
+./usr/lib/o32/libgomp.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/o32/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/o32/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48
 ./usr/lib/o32/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libgssapi.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libgssapi_p.a			comp-c-proflib		compat,profile,kerberos

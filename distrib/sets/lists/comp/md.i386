@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.138 2013/10/14 01:37:39 joerg Exp $
+# $NetBSD: md.i386,v 1.139 2013/11/01 07:48:31 mrg Exp $
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -105,14 +105,19 @@
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/emmintrin.h		comp-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/mm_malloc.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mm_malloc.h		comp-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/mmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/mmintrin.h		comp-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/pmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/pmmintrin.h		comp-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/xmmintrin.h		comp-obsolete		gcc=45,obsolete
+./usr/include/gcc-4.1/xmmintrin.h		comp-obsolete		gcc=48,obsolete
 ./usr/include/gcc-4.5/abmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/ammintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/avxintrin.h		comp-c-include		gcccmds,gcc=45
@@ -137,6 +142,30 @@
 ./usr/include/gcc-4.5/x86intrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/xmmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/xopintrin.h		comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/abmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/ammintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/avxintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/bmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/cpuid.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/cross-stdarg.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/emmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/fma4intrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/ia32intrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/immintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/lwpintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/mm3dnow.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/mm_malloc.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/nmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/pmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/popcntintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/smmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/tmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/wmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/x86intrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/xmmintrin.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/xopintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
 ./usr/include/i386/ansi.h			comp-c-include

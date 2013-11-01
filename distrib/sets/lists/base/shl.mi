@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.676 2013/10/27 09:27:23 apb Exp $
+# $NetBSD: shl.mi,v 1.677 2013/11/01 07:48:31 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -282,6 +282,9 @@
 ./usr/lib/libgomp.so				base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
+./usr/lib/libgomp.so				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1				base-sys-shlib		gcc=48
+./usr/lib/libgomp.so.1.1			base-sys-shlib		gcc=48
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
 ./usr/lib/libgssapi.so.10			base-krb5-shlib		kerberos
 ./usr/lib/libgssapi.so.10.0			base-krb5-shlib		kerberos
@@ -393,8 +396,10 @@
 ./usr/lib/libobjc.so				base-sys-shlib		gcc
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3				base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.4				base-sys-shlib		gcc=48
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=45
+./usr/lib/libobjc.so.4.0			base-sys-shlib		gcc=48
 ./usr/lib/libopenpgpsdk.so			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0			base-obsolete		obsolete
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
@@ -720,8 +725,10 @@
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=4,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx,libstdcxx
+./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.2			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
