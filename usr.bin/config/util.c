@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2013/11/01 17:09:59 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.16 2013/11/01 21:39:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -504,7 +504,7 @@ cfgvxmsg(const char *file, int line, const char *msgclass, const char *fmt,
       va_list ap)
 {
 
-	(void)fprintf(stderr, "%s,%d: %s", file, line, msgclass);
+	(void)fprintf(stderr, "%s:%d: %s", file, line, msgclass);
 	(void)vfprintf(stderr, fmt, ap);
 	(void)putc('\n', stderr);
 }
