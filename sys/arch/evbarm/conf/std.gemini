@@ -1,4 +1,4 @@
-#	$NetBSD: std.gemini,v 1.7 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.gemini,v 1.8 2013/11/01 18:41:06 skrll Exp $
 #
 # standard NetBSD/evbarm for GEMINI options
 
@@ -18,7 +18,6 @@ makeoptions	KERNEL_BASE_VIRT="0x80200000"
 makeoptions	LOADADDRESS="0x00200000"
 makeoptions	BOARDTYPE="gemini"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gemini"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options		EVBARM_BOARDTYPE=gemini
 options 	ARM_INTR_IMPL="<arch/arm/gemini/gemini_intr.h>"

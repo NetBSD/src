@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.7 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.imx31,v 1.8 2013/11/01 18:41:06 skrll Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31
 
@@ -17,7 +17,6 @@ options 	ARM11_CACHE_WRITE_THROUGH
 makeoptions	LOADADDRESS="0x80100000"
 makeoptions	BOARDTYPE="imx31"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx31"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx31_intr.h>"
 options		ARM_GENERIC_TODR
