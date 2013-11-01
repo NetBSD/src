@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/08/22 16:03:30 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2013/11/01 18:11:49 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -33,6 +33,7 @@ SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 CXXFLAGS+=	-fno-implicit-templates -fdiagnostics-show-location=once
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/../libgomp/arch/${GCC_MACHINE_ARCH}
 
 CONF=		${DIST}/libstdc++-v3/config
 
