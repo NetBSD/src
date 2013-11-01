@@ -1,4 +1,4 @@
-#	$NetBSD: std.cubie,v 1.1 2013/09/03 06:12:00 matt Exp $
+#	$NetBSD: std.cubie,v 1.2 2013/11/01 18:41:06 skrll Exp $
 #
 # standard NetBSD/evbarm for CUBIEBOARD options
 
@@ -23,7 +23,6 @@ makeoptions	KERNEL_BASE_PHYS="0x40007800"
 makeoptions	KERNEL_BASE_VIRT="0x80007800"
 makeoptions	BOARDTYPE="cubie"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.cubie"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/allwinner/awin_intr.h>"
 options		ARM_GENERIC_TODR
