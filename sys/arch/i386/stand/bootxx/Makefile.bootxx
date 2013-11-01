@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.45 2013/08/22 00:13:00 matt Exp $
+# $NetBSD: Makefile.bootxx,v 1.46 2013/11/01 00:18:24 christos Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -109,6 +109,7 @@ KERN_AS=        library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
 
+LDSCRIPT ?= $S/arch/i386/conf/stand.ldscript
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -122,7 +123,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
+		-T ${LDSCRIPT} -Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
