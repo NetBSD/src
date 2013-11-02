@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.33 2013/11/02 01:15:44 christos Exp $
+# $NetBSD: md.amd64,v 1.34 2013/11/02 01:55:16 christos Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-proflib		compat,debuglib
@@ -271,9 +271,9 @@
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnetpgpverify.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
-./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	gcc=4,comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	gcc=45,comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	gcc=48,comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libobjc.so.4.0.debug	comp-compat-shlib	gcc=48,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.6.0.debug	comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/i386/libossaudio.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libp2k.so.2.0.debug	comp-compat-shlib	compat,pic,debug,rump
