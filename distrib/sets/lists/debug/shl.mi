@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.36 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: shl.mi,v 1.37 2013/11/02 01:37:33 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.187.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -24,6 +24,7 @@
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug	comp-sys-debug	debug,npf
 ./usr/libdata/debug/libexec/ld.elf_so.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug debug
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libDECHanyu.so.5.0.debug	comp-i18n-debug	debug
 ./usr/libdata/debug/usr/lib/i18n/libEUC.so.5.0.debug	comp-i18n-debug	debug
