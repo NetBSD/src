@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.38 2013/11/02 20:01:02 jmmv Exp $
+# $NetBSD: shl.mi,v 1.39 2013/11/02 23:23:51 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.187.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.1.debug		comp-sys-debug	debug
@@ -277,9 +277,3 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,atf
-./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	-unknown-		atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a	-unknown-	atf,debuglib
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a	-unknown-	atf,debuglib
