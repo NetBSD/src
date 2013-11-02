@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.172 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: md.sparc64,v 1.173 2013/11/02 23:23:41 christos Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/ieeefp.h				comp-c-include
@@ -499,7 +499,6 @@
 ./usr/lib/sparc/liblua_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/liblua_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/liblutok.a			comp-c-lib		compat,kyua
-./usr/lib/sparc/liblutok_g.a			-unknown-		compat,debuglib,kyua
 ./usr/lib/sparc/liblutok_p.a			comp-c-proflib		compat,profile,kyua
 ./usr/lib/sparc/liblutok_pic.a			comp-c-piclib		compat,pic,kyua
 ./usr/lib/sparc/liblwres.a			comp-c-lib		compat
