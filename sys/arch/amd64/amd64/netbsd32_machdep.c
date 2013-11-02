@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.82 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.83 2013/11/02 00:41:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.82 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.83 2013/11/02 00:41:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -956,7 +956,7 @@ startlwp32(void *arg)
 {
 	ucontext32_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
