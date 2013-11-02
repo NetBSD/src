@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.16 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: ad.arm,v 1.17 2013/11/02 01:15:44 christos Exp $
 ./usr/lib/libarm_g.a				-unknown-		debuglib
 ./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
 ./usr/lib/libpmc_g.a				-unknown-		debuglib
@@ -94,7 +94,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/oabi/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45
-./usr/libdata/debug/usr/lib/oabi/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=48
+./usr/libdata/debug/usr/lib/oabi/libgomp.so.1.1.debug	comp-sys-debug	debug,compat,gcc=48
 ./usr/libdata/debug/usr/lib/oabi/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
