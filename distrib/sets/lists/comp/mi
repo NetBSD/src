@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1852 2013/11/01 07:48:31 mrg Exp $
+#	$NetBSD: mi,v 1.1853 2013/11/02 01:37:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1204,8 +1204,8 @@
 ./usr/include/g++/cmath				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/compare.h			comp-obsolete		obsolete
 ./usr/include/g++/complex			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/complex.h			comp-obsolete		gcc=45,cxx,libstdcxx
-./usr/include/g++/complex.h			comp-obsolete		gcc=48,cxx,libstdcxx
+./usr/include/g++/complex.h			comp-obsolete		gcc=45,obsolete
+./usr/include/g++/complex.h			comp-obsolete		gcc=48,obsolete
 ./usr/include/g++/condition_variable		comp-cxx-include	gcc=45,cxx,libstdcxx
 ./usr/include/g++/condition_variable		comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/csetjmp			comp-cxx-include	gcc,cxx,libstdcxx
@@ -2329,7 +2329,6 @@
 ./usr/include/gcc-4.5/omp.h			comp-gcc-include	gcc=45
 ./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc=48
 ./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc=48
-./usr/include/gcc-4.8/visintrin.h							comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
