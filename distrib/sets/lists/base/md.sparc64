@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.202 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: md.sparc64,v 1.203 2013/11/02 01:15:44 christos Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -138,7 +138,7 @@
 ./usr/lib/sparc/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/sparc/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/sparc/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
-./usr/lib/sparc/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/sparc/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/sparc/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libhdb.so.14			base-compat-shlib	compat,pic,kerberos
@@ -213,8 +213,12 @@
 ./usr/lib/sparc/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/sparc/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
-./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
-./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
+./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/sparc/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
+./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
+./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/sparc/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/sparc/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libossaudio.so.1		base-compat-shlib	compat,pic

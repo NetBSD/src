@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.33 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: md.sparc64,v 1.34 2013/11/02 01:15:44 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -219,7 +219,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgnumalloc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=45
-./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.0.debug		comp-compat-shlib	compat,pic,debug,gcc=48
+./usr/libdata/debug/usr/lib/sparc/libgomp.so.1.1.debug		comp-compat-shlib	compat,pic,debug,gcc=48
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
@@ -265,7 +265,9 @@
 ./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnetpgpverify.so.4.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnpf.so.0.0.debug			comp-compat-shlib	compat,pic,debug,npf
-./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	gcc=4,compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	gcc=45,compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libobjc.so.4.0.debug			comp-compat-shlib	gcc=48,compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.6.0.debug		comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug,rump

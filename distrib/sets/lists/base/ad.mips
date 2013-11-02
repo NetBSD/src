@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.20 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: ad.mips,v 1.21 2013/11/02 01:15:44 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -148,7 +148,7 @@
 ./usr/lib/64/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,notyet,arch64
 ./usr/lib/64/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet,arch64
 ./usr/lib/64/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,notyet,arch64
-./usr/lib/64/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48,notyet,arch64
+./usr/lib/64/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48,notyet,arch64
 ./usr/lib/64/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libhdb.so.14			base-compat-shlib	compat,pic,kerberos,arch64
@@ -221,8 +221,12 @@
 ./usr/lib/64/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/64/libnpf.so.0			base-compat-shlib	compat,pic,npf,arch64
 ./usr/lib/64/libnpf.so.0.0			base-compat-shlib	compat,pic,npf,arch64
-./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64
-./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64
+./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=4
+./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=45
+./usr/lib/64/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=48
+./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=4
+./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=45
+./usr/lib/64/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=48
 ./usr/lib/64/libopcodes.so.6			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/64/libossaudio.so.1			base-compat-shlib	compat,pic,arch64
@@ -548,8 +552,12 @@
 ./usr/lib/o32/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/o32/libnpf.so.0			base-compat-shlib	compat,pic,npf,arch64
 ./usr/lib/o32/libnpf.so.0.0			base-compat-shlib	compat,pic,npf,arch64
-./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64
-./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64
+./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=4
+./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=45
+./usr/lib/o32/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=48
+./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=4
+./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=45
+./usr/lib/o32/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,arch64,gcc=48
 ./usr/lib/o32/libopcodes.so.6			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/o32/libossaudio.so.1			base-compat-shlib	compat,pic,arch64
