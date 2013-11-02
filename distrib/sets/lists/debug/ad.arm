@@ -1,18 +1,18 @@
-# $NetBSD: ad.arm,v 1.17 2013/11/02 01:15:44 christos Exp $
-./usr/lib/libarm_g.a				-unknown-		debuglib
-./usr/lib/libc_vfp_g.a				-unknown-		debuglib,softfloat
-./usr/lib/libpmc_g.a				-unknown-		debuglib
-./usr/lib/oabi/libdevmapper_g.a			-unknown-		compat,debuglib,lvm
-./usr/lib/oabi/libdm_g.a			-unknown-		compat,debuglib
-./usr/lib/oabi/libgmp_g.a			-unknown-		obsolete
-./usr/lib/oabi/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
-./usr/lib/oabi/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
-./usr/lib/oabi/liblzf_g.a			-unknown-		compat,debuglib
-./usr/lib/oabi/libmpc_g.a			-unknown-		obsolete
-./usr/lib/oabi/libmpfr_g.a			-unknown-		obsolete
-./usr/lib/oabi/libperfuse_g.a			comp-c-proflib		compat,debuglib
-./usr/lib/oabi/libppath_g.a			comp-c-proflib		compat,debuglib
-./usr/lib/oabi/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+# $NetBSD: ad.arm,v 1.18 2013/11/02 23:23:51 christos Exp $
+./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
+./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
+./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
+./usr/lib/oabi/libdevmapper_g.a			comp-c-debuglib		compat,debuglib,lvm
+./usr/lib/oabi/libdm_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libgmp_g.a			comp-c-debuglib		obsolete
+./usr/lib/oabi/libheimbase_g.a			comp-c-debuglib		compat,debuglib,kerberos
+./usr/lib/oabi/libkdc_g.a			comp-c-debuglib		compat,debuglib,kerberos
+./usr/lib/oabi/liblzf_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libmpc_g.a			comp-c-debuglib		obsolete
+./usr/lib/oabi/libmpfr_g.a			comp-c-debuglib		obsolete
+./usr/lib/oabi/libperfuse_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libppath_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/oabi/libwind_g.a			comp-c-debuglib		compat,debuglib,kerberos
 ./usr/libdata/debug/lib/libc_vfp.so.0.0.debug	comp-sys-debug		debug,pic,softfloat
 ./usr/libdata/debug/lib/oabi			-unknown-		debug,compat
 ./usr/libdata/debug/lib/oabi/npf		-unknown-		debug,compat
