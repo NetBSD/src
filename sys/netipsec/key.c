@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.83 2013/09/19 19:29:35 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.84 2013/11/03 18:37:10 mrg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.83 2013/09/19 19:29:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.84 2013/11/03 18:37:10 mrg Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7261,7 +7261,6 @@ key_parse(struct mbuf *m, struct socket *so)
 {
 	struct sadb_msg *msg;
 	struct sadb_msghdr mh;
-	u_int orglen;
 	int error;
 	int target;
 
@@ -7281,7 +7280,6 @@ key_parse(struct mbuf *m, struct socket *so)
 			return ENOBUFS;
 	}
 	msg = mtod(m, struct sadb_msg *);
-	orglen = PFKEY_UNUNIT64(msg->sadb_msg_len);
 	target = KEY_SENDUP_ONE;
 
 	if ((m->m_flags & M_PKTHDR) == 0 ||
