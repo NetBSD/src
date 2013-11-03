@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.23 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.24 2013/11/03 08:33:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -106,18 +106,8 @@
  *	from zero, the interlock must be held.  To change from a non-zero
  *	value to zero, again the interlock must be held.
  *
- *	There is a flag bit, VC_XLOCK, embedded in v_usecount.  To raise
- *	v_usecount, if the VC_XLOCK bit is set in it, the interlock must
- *	be held.  To modify the VC_XLOCK bit, the interlock must be held.
- *	We always keep the usecount (v_usecount & VC_MASK) non-zero while
- *	the VC_XLOCK bit is set.
- *
- *	Unless the VC_XLOCK bit is set, changing the usecount from a non-zero
- *	value to a non-zero value can safely be done using atomic operations,
- *	without the interlock held.
- *
- *	Even if the VC_XLOCK bit is set, decreasing the usecount to a non-zero
- *	value can be done using atomic operations, without the interlock held.
+ *	Changing the usecount from a non-zero value to a non-zero value can
+ *	safely be done using atomic operations, without the interlock held.
  *
  *	Note: if VI_CLEAN is set, vnode_t::v_interlock will be released while
  *	mntvnode_lock is still held.
@@ -126,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.23 2013/10/29 09:53:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.24 2013/11/03 08:33:00 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -148,13 +138,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.23 2013/10/29 09:53:51 hannken Exp $
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
+#include <sys/fstrans.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
-
-/* v_usecount; see the comment near the top of vfs_vnode.c */
-#define	VC_XLOCK	0x80000000
-#define	VC_MASK		0x7fffffff
 
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 
@@ -284,9 +271,10 @@ cleanvnode(void)
 {
 	vnode_t *vp;
 	vnodelst_t *listhd;
+	struct mount *mp;
 
 	KASSERT(mutex_owned(&vnode_free_list_lock));
-retry:
+
 	listhd = &vnode_free_list;
 try_nextlist:
 	TAILQ_FOREACH(vp, listhd, v_freelist) {
@@ -302,9 +290,16 @@ try_nextlist:
 
 		if (!mutex_tryenter(vp->v_interlock))
 			continue;
-		if ((vp->v_iflag & VI_XLOCK) == 0)
-			break;
-		mutex_exit(vp->v_interlock);
+		if ((vp->v_iflag & VI_XLOCK) != 0) {
+			mutex_exit(vp->v_interlock);
+			continue;
+		}
+		mp = vp->v_mount;
+		if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0) {
+			mutex_exit(vp->v_interlock);
+			continue;
+		}
+		break;
 	}
 
 	if (vp == NULL) {
@@ -326,37 +321,12 @@ try_nextlist:
 	/*
 	 * The vnode is still associated with a file system, so we must
 	 * clean it out before freeing it.  We need to add a reference
-	 * before doing this.  If the vnode gains another reference while
-	 * being cleaned out then we lose - retry.
+	 * before doing this.
 	 */
-	atomic_add_int(&vp->v_usecount, 1 + VC_XLOCK);
+	vp->v_usecount = 1;
 	vclean(vp, DOCLOSE);
-	KASSERT(vp->v_usecount >= 1 + VC_XLOCK);
-	atomic_add_int(&vp->v_usecount, -VC_XLOCK);
-	if (vp->v_usecount > 1) {
-		/*
-		 * Don't return to freelist - the holder of the last
-		 * reference will destroy it.
-		 */
-		vrelel(vp, 0); /* releases vp->v_interlock */
-		mutex_enter(&vnode_free_list_lock);
-		goto retry;
-	}
-
-	KASSERT((vp->v_iflag & VI_CLEAN) == VI_CLEAN);
-	mutex_exit(vp->v_interlock);
-	if (vp->v_type == VBLK || vp->v_type == VCHR) {
-		spec_node_destroy(vp);
-	}
-	vp->v_type = VNON;
-
-	KASSERT(vp->v_data == NULL);
-	KASSERT(vp->v_uobj.uo_npages == 0);
-	KASSERT(TAILQ_EMPTY(&vp->v_uobj.memq));
-	KASSERT(vp->v_numoutput == 0);
-	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-
-	vrele(vp);
+	vrelel(vp, 0);
+	fstrans_done(mp);
 
 	return 0;
 }
@@ -604,7 +574,7 @@ vtryrele(vnode_t *vp)
 		if (use == 1) {
 			return false;
 		}
-		KASSERT((use & VC_MASK) > 1);
+		KASSERT(use > 1);
 		next = atomic_cas_uint(&vp->v_usecount, use, use - 1);
 		if (__predict_true(next == use)) {
 			return true;
@@ -990,7 +960,7 @@ vclean(vnode_t *vp, int flags)
 		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
-	active = (vp->v_usecount & VC_MASK) > 1;
+	active = (vp->v_usecount > 1);
 
 	/* XXXAD should not lock vnode under layer */
 	mutex_exit(vp->v_interlock);
@@ -1085,7 +1055,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	mutex_enter(vp->v_interlock);
-	if (vp->v_usecount != 0) {
+	if (vp->v_usecount != 0 || (vp->v_iflag & (VI_CLEAN|VI_XLOCK)) != 0) {
 		mutex_exit(vp->v_interlock);
 		return 0;
 	}
