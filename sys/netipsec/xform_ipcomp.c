@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.30 2013/06/04 22:47:37 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.31 2013/11/03 18:37:10 mrg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.30 2013/06/04 22:47:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.31 2013/11/03 18:37:10 mrg Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -233,26 +233,21 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 static int
 ipcomp_input_cb(struct cryptop *crp)
 {
-	struct cryptodesc *crd;
 	struct tdb_crypto *tc;
 	int skip, protoff;
-	struct mtag *mtag;
 	struct mbuf *m;
 	struct secasvar *sav;
-	struct secasindex *saidx;
+	struct secasindex *saidx __diagused;
 	int s, hlen = IPCOMP_HLENGTH, error, clen;
 	u_int8_t nproto;
 	void *addr;
 	u_int16_t dport;
 	u_int16_t sport;
 
-	crd = crp->crp_desc;
-
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	IPSEC_ASSERT(tc != NULL, ("ipcomp_input_cb: null opaque crypto data area!"));
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
-	mtag = (struct mtag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
 	/* find the source port for NAT-T */
