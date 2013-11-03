@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.5 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.6 2013/11/03 00:44:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -354,7 +354,7 @@ buf_read_file(struct open_file *f, void *v, size_t *size_p)
 	struct mfs_sblock *fs = fp->f_fs;
 	long off;
 	block_t file_block;
-	block_t disk_block;
+	block_t disk_block = 0;	/* XXX: gcc */
 	size_t block_size;
 	int rc;
 
