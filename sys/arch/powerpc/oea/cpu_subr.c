@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.79 2013/09/22 18:56:11 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.80 2013/11/03 22:27:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.79 2013/09/22 18:56:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.80 2013/11/03 22:27:27 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -747,7 +747,6 @@ cpu_identify(char *str, size_t len)
 	u_int pvr, major, minor;
 	uint16_t vers, rev, revfmt;
 	const struct cputab *cp;
-	const char *name;
 	size_t n;
 
 	pvr = mfpvr();
@@ -780,9 +779,7 @@ cpu_identify(char *str, size_t len)
 	}
 
 	revfmt = cp->revfmt;
-	name = cp->name;
 	if (rev == MPC750 && pvr == 15) {
-		name = "755";
 		revfmt = REVFMT_HEX;
 	}
 
