@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.7 2009/03/14 21:04:03 dsl Exp $ */
+/* $NetBSD: devopen.c,v 1.8 2013/11/03 00:53:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,9 +45,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 	/* file:	 out */
 {
 	register char *cp;
-	register char *ncp;
 	register struct devsw *dp;
 #if 0
+	register char *ncp;
 	register int c, i;
 #endif
 	int ctlr = 0, unit = 0, part = 0;
@@ -55,9 +55,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 	int rc;
 
 	cp = (char *)fname;
-	ncp = namebuf;
 
 #if 0
+	ncp = namebuf;
 	/* look for a string like '5/rz0/vmunix' or '5/rz3f/vmunix */
 	if ((c = *cp) >= '0' && c <= '9') {
 		ctlr = c - '0';
