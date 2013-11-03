@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.203 2013/11/02 19:55:47 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.204 2013/11/03 14:45:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.203 2013/11/02 19:55:47 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.204 2013/11/03 14:45:50 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1203,6 +1203,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 	bytes = 0;
 	hashbytes = mark;
+	if (oldalrm) {
+		(void)xsignal(SIGALRM, oldalrm);
+		oldalrm = NULL;
+	}
 	progressmeter(-1);
 
 			/* Finally, suck down the file. */
@@ -1214,12 +1218,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		lastchunk = 0;
 					/* read chunk-size */
 		if (ischunked) {
-			alarmtimer(quit_time ? quit_time : 60);
 			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
 				warnx("Unexpected EOF reading chunk-size");
 				goto cleanup_fetch_url;
 			}
-			alarmtimer(0);
 			errno = 0;
 			chunksize = strtol(xferbuf, &ep, 16);
 			if (ep == xferbuf) {
@@ -1269,10 +1271,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (ischunked)
 				bufrem = MIN(chunksize, bufrem);
 			while (bufrem > 0) {
-				alarmtimer(quit_time ? quit_time : 60);
 				flen = fetch_read(xferbuf, sizeof(char),
 				    MIN((off_t)bufsize, bufrem), fin);
-				alarmtimer(0);
 				if (flen <= 0)
 					goto chunkdone;
 				bytes += flen;
@@ -1310,13 +1310,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					/* read CRLF after chunk*/
  chunkdone:
 		if (ischunked) {
-			alarmtimer(quit_time ? quit_time : 60);
 			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
 				alarmtimer(0);
 				warnx("Unexpected EOF reading chunk CRLF");
 				goto cleanup_fetch_url;
 			}
-			alarmtimer(0);
 			if (strcmp(xferbuf, "\r\n") != 0) {
 				warnx("Unexpected data following chunk");
 				goto cleanup_fetch_url;
