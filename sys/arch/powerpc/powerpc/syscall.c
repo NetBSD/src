@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.52 2013/06/26 06:31:53 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.53 2013/11/03 22:22:03 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2013/06/26 06:31:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.53 2013/11/03 22:22:03 mrg Exp $");
 
 void
 child_return(void *arg)
@@ -91,7 +91,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
-	register_t realcode;
 	register_t *params, rval[2];
 	register_t args[10];
 	int error;
@@ -105,7 +104,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 	params = tf->tf_fixreg + FIRSTARG;
 	n = NARGREG;
 
-	realcode = code;
 	{
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
@@ -129,7 +127,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 
 		code &= EMULNAMEU(SYS_NSYSENT) - 1;
 		callp = p->p_emul->e_sysent + code;
-		realcode = code;
 	}
 
 	argsize = callp->sy_argsize;
