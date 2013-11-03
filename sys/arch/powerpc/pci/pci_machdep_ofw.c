@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.19 2013/11/03 22:22:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.19 2013/11/03 22:22:03 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -375,13 +375,12 @@ genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev, origdev, func, i;
+	int busno, pin, line, dev, origdev, func, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
 	line = pa->pa_intrline;
-	bus = busno = pa->pa_bus;
-	swiz = pa->pa_intrswiz;
+	busno = pa->pa_bus;
 	origdev = dev = pa->pa_device;
 	func = pa->pa_function;
 	i = 0;
