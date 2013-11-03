@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2013/04/11 17:13:15 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2013/11/03 22:15:57 mrg Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2013/04/11 17:13:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2013/11/03 22:15:57 mrg Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1896,7 +1896,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pool *pl;
 	register_t pte_lo;
 	int error;
-	u_int pvo_flags;
 	u_int was_exec = 0;
 
 	PMAP_LOCK();
@@ -1904,13 +1903,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (__predict_false(!pmap_initialized)) {
 		pvo_head = &pmap_pvo_kunmanaged;
 		pl = &pmap_upvo_pool;
-		pvo_flags = 0;
 		pg = NULL;
 		was_exec = PTE_EXEC;
 	} else {
 		pvo_head = pa_to_pvoh(pa, &pg);
 		pl = &pmap_mpvo_pool;
-		pvo_flags = PVO_MANAGED;
 	}
 
 	DPRINTFN(ENTER,
@@ -2647,7 +2644,9 @@ void
 pmap_print_mmuregs(void)
 {
 	int i;
+#if defined (PMAP_OEA) || defined (PMAP_OEA_BRIDGE)
 	u_int cpuvers;
+#endif
 #ifndef PMAP_OEA64
 	vaddr_t addr;
 	register_t soft_sr[16];
@@ -2658,7 +2657,9 @@ pmap_print_mmuregs(void)
 #endif
 	paddr_t sdr1;
 	
+#if defined (PMAP_OEA) || defined (PMAP_OEA_BRIDGE)
 	cpuvers = MFPVR() >> 16;
+#endif
 	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PMAP_OEA64
 	addr = 0;
@@ -3093,7 +3094,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
     vaddr_t va, va_end;
 
     register_t pte_lo = 0x0;
-    int ptegidx = 0, i = 0;
+    int ptegidx = 0;
     struct pte pte;
     va_list ap;
 
@@ -3107,7 +3108,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
     for (va = 0x0; va < SEGMENT_LENGTH; va += 0x1000) {
         ptegidx = va_to_pteg(pmap_kernel(), va);
         pmap_pte_create(&pte, pmap_kernel(), va, va | pte_lo);
-        i = pmap_pte_insert(ptegidx, &pte);
+        (void)pmap_pte_insert(ptegidx, &pte);
     }
 
     va_start(ap, use_large_pages);
@@ -3129,7 +3130,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
 #endif
             ptegidx = va_to_pteg(pmap_kernel(), va);
             pmap_pte_create(&pte, pmap_kernel(), va, pa | pte_lo);
-            i = pmap_pte_insert(ptegidx, &pte);
+            (void)pmap_pte_insert(ptegidx, &pte);
         }
     }
 
