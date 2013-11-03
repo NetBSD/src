@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.67 2013/08/31 15:01:08 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.68 2013/11/03 22:27:27 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.67 2013/08/31 15:01:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.68 2013/11/03 22:27:27 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -656,11 +656,13 @@ void
 oea_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
-	unsigned int cpuvers;
 	register_t msr = mfmsr();
 	va_list ap;
+#ifdef PPC_OEA601
+	unsigned int cpuvers;
 
 	cpuvers = mfpvr() >> 16;
+#endif /* PPC_OEA601 */
 
 	/*
 	 * we need to call this before zapping BATs so OF calls work

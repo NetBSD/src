@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.34 2013/08/31 07:33:15 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.35 2013/11/03 22:27:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.34 2013/08/31 07:33:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.35 2013/11/03 22:27:27 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -623,7 +623,6 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 {
 	int i, cur, range, nrofholes, error;
 	static int exmap=0;
-	u_int32_t addr;
 	rangemap_t region, holes[32], list[32];
 
 	memset(list, 0, sizeof(list));
@@ -697,7 +696,6 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		DPRINTF("addr=0x%x size=0x%x type=%d\n", list[i].addr,
 		    list[i].size, list[i].type);
 
-	addr=0;
 	range = find_lowest_range(list, cur, iomem);
 	i = 0;
 	nrofholes = 0;
