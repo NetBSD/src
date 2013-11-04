@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.27 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.28 2013/11/04 16:58:14 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.27 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.28 2013/11/04 16:58:14 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,6 +215,7 @@ dec_kn8ae_intr_disestablish(void *ccv, void *cookie)
 	vec = IH_VEC(ih);
 
 	scb = &scb_iovectab[SCB_VECTOIDX(vec - SCB_IOVECBASE)];
+	__USE(scb);
 
 	kn8ae_enadis_intr(ccp, ih, 0);
 
