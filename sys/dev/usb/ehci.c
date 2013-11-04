@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.214 2013/11/01 15:33:48 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.215 2013/11/04 16:54:36 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.214 2013/11/01 15:33:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.215 2013/11/04 16:54:36 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1902,7 +1902,7 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 Static void
 ehci_sync_hc(ehci_softc_t *sc)
 {
-	int error;
+	int error __diagused;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
