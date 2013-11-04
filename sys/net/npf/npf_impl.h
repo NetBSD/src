@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.35 2013/10/29 16:39:10 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.36 2013/11/04 22:17:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ typedef struct {
 
 typedef struct {
 	kmutex_t	nst_lock;
-	int		nst_state;
+	u_int		nst_state;
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
 
