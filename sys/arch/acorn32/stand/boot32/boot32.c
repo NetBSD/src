@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.39 2012/05/10 10:27:10 skrll Exp $	*/
+/*	$NetBSD: boot32.c,v 1.40 2013/11/04 21:08:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -282,7 +282,7 @@ void
 get_memory_configuration(void)
 {
 	int loop, current_page_type, page_count, phys_page;
-	int page, count, bank, top_bank, video_bank;
+	int page, count, top_bank, video_bank;
 	int mapped_screen_memory;
 	int one_mb_pages;
 	u_long top;
@@ -292,8 +292,7 @@ get_memory_configuration(void)
 	osmemory_read_arrangement_table(memory_page_types);
 
 	/* init counters */
-	bank = vram_blocks = dram_blocks = rom_blocks = io_blocks =
-	    podram_blocks = 0;
+	vram_blocks = dram_blocks = rom_blocks = io_blocks = podram_blocks = 0;
 
 	current_page_type = -1;
 	phys_page = 0;			/* physical address in pages	*/
