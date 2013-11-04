@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.5 2013/10/28 17:49:33 matt Exp $	*/
+/*	$NetBSD: xhci.c,v 1.6 2013/11/04 08:08:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.5 2013/10/28 17:49:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.6 2013/11/04 08:08:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1366,8 +1366,8 @@ xhci_allocx(struct usbd_bus *bus)
 
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
-#ifdef DIAGNOSTIC
 		memset(xfer, 0, sizeof(struct xhci_xfer));
+#ifdef DIAGNOSTIC
 		xfer->busy_free = XFER_BUSY;
 #endif
 	}
