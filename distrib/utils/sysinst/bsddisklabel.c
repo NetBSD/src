@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.58 2013/03/19 22:16:53 garbled Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.59 2013/11/04 20:07:49 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -743,8 +743,9 @@ check_partitions(void)
 	if (bootxx != NULL) {
 		rv = access(bootxx, R_OK);
 		free(bootxx);
-	}
-	if (bootxx == NULL || rv != 0) {
+	} else
+		rv = -1;
+	if (rv != 0) {
 		process_menu(MENU_ok, deconst(MSG_No_Bootcode));
 		return 0;
 	}
