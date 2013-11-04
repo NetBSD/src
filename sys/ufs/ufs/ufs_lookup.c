@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.127 2013/10/25 16:34:20 martin Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.128 2013/11/04 19:58:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.127 2013/10/25 16:34:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.128 2013/11/04 19:58:02 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1403,7 +1403,7 @@ ufs_parentcheck(struct vnode *upper, struct vnode *lower, kauth_cred_t cred,
 		int *found_ret, struct vnode **upperchild_ret)
 {
 	const int needswap = UFS_MPNEEDSWAP(VTOI(lower)->i_ump);
-	ino_t upper_ino, found_ino;
+	ino_t upper_ino, found_ino = 0;	/* XXX: gcc */
 	struct vnode *current, *next;
 	int error;
 
