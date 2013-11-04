@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.5 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.6 2013/11/04 16:56:50 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,7 +73,8 @@ typedef int32_t		tc_offset_t;
 	volatile uint32_t no_optimize;					\
 	no_optimize =	 						\
 	    *(volatile uint32_t *)ALPHA_PHYS_TO_K0SEG(0x00000001f0080220); \
-    } while (0)
+	__USE(no_optimize);						\
+    } while (/*CONSTCOND*/0)
 
 #define	tc_badaddr(tcaddr)						\
     badaddr((void *)(tcaddr), sizeof (uint32_t))
