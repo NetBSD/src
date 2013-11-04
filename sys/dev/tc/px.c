@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.39 2012/10/27 17:18:38 chs Exp $	*/
+/* 	$NetBSD: px.c,v 1.40 2013/11/04 16:53:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.39 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.40 2013/11/04 16:53:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,7 @@ px_pbuf_post(struct stic_info *si, uint32_t *buf)
 			sr->sr_ipdvint = STIC_INT_P_WE;
 			tc_wmb();
 			junk = *poll;
+			__USE(junk);
 			return (0);
 		}
 		DELAY(STAMP_DELAY);
