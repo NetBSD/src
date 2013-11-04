@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.26 2013/11/04 21:18:06 christos Exp $
+#	$NetBSD: Makefile.gzboot,v 1.27 2013/11/04 21:25:05 christos Exp $
 
 NOMAN=  # defined
 
@@ -39,7 +39,9 @@ CPPFLAGS+= -I${S}/../common/dist/zlib
 CPPFLAGS+= -mabi=apcs-gnu -mfloat-abi=soft
 .if ${HAVE_GCC} < 48
 CPPFLAGS+= -mno-thumb -mno-thumb-interwork
-.ebdif
+.else
+CPPFLAGS+= -marm
+.endif
 
 CPPFLAGS+= -D_STANDALONE
 
