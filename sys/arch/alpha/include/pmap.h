@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.77 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: pmap.h,v 1.78 2013/11/04 19:57:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
-	struct pmap_asn_info	pm_asni[1];	/* ASN information */
+	struct pmap_asn_info	pm_asni[];	/* ASN information */
 			/*	variable length		*/
 };
 
