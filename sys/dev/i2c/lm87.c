@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.3 2013/10/26 18:28:15 jdc Exp $	*/
+/*	$NetBSD: lm87.c,v 1.4 2013/11/04 15:06:26 jdc Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.3 2013/10/26 18:28:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.4 2013/11/04 15:06:26 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,9 +354,10 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	case LMENV_INT_TEMP:
 		if (data == 0x80)
 			edata->state = ENVSYS_SINVALID;
-		else
+		else {
 			edata->value_cur = (int8_t)data * 1000000 + 273150000;
 			edata->state = ENVSYS_SVALID;
+		}
 		break;
 	case LMENV_FAN1:
 		if (edata->units == ENVSYS_SVOLTS_DC) {
@@ -364,12 +365,17 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->state = ENVSYS_SVALID;
 			break;
 		}
-		tmp = data * sc->sc_fan1_div;
-		if (tmp == 0 || tmp == 0xff)
+		if (data == 0xff) {
 			edata->state = ENVSYS_SINVALID;
-		else
+			break;
+		}
+		tmp = data * sc->sc_fan1_div;
+		if (tmp == 0)
+			edata->state = ENVSYS_SINVALID;
+		else {
 			edata->value_cur = 1350000 / tmp;
 			edata->state = ENVSYS_SVALID;
+		}
 		break;
 	case LMENV_FAN2:
 		if (edata->units == ENVSYS_SVOLTS_DC) {
@@ -377,12 +383,17 @@ lmenv_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->state = ENVSYS_SVALID;
 			break;
 		}
-		tmp = data * sc->sc_fan2_div;
-		if (tmp == 0 || tmp == 0xff)
+		if (data == 0xff) {
 			edata->state = ENVSYS_SINVALID;
-		else
+			break;
+		}
+		tmp = data * sc->sc_fan2_div;
+		if (tmp == 0)
+			edata->state = ENVSYS_SINVALID;
+		else {
 			edata->value_cur = 1350000 / tmp;
 			edata->state = ENVSYS_SVALID;
+		}
 		break;
 	default:
 		edata->state = ENVSYS_SINVALID;
