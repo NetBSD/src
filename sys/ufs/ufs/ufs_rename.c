@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.8 2013/06/19 17:51:26 dholland Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.9 2013/11/04 19:58:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.8 2013/06/19 17:51:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.9 2013/11/04 19:58:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -930,7 +930,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = 0;	/* XXX: gcc */
 	int error;
 
 	KASSERT(mp != NULL);
