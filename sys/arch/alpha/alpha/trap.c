@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.128 2012/02/19 21:05:59 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.129 2013/11/04 16:57:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2012/02/19 21:05:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2013/11/04 16:57:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1127,7 +1127,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
