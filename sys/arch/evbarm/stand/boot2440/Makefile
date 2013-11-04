@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2013/11/04 21:18:05 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2013/11/04 21:25:05 christos Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -18,6 +18,8 @@ CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-march=armv4 -mabi=apcs-gnu -mfloat-abi=soft
 .if ${HAVE_GCC} < 48
 CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.else
+CPPFLAGS+=	-marm
 .endif
 CPUFLAGS=
 DBG=		-Os
