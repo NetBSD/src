@@ -104,6 +104,8 @@ int iointr_debug = IOINTR_DEBUG;
 # define DPRINTF(x)
 #endif
 
+static void rmixl_intr_disestablish_private(void *);
+
 static int
 rmixl_stray_intr(void *v)
 {
@@ -453,7 +455,7 @@ static const char * const rmixl_irtnames_xlp8xx[RMIXLP_NIRTS] = {
 	[150] = "pic int 150 (norflash)",
 	[151] = "pic int 151 (nandflash)",
 	[152] = "pic int 152 (spi)",
-	[153] = "pic int 153 (mmc/sd)",
+	[153] = "pic int 153 (sdmmc)",
 	[154] = "pic int 154 (mem-io-bridge)",
 	[155] = "pic int 155 (l3)",
 	[156] = "pic int 156 (gcu)",
@@ -499,16 +501,16 @@ static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
 	[ 29] = "pic int 29 (fmn1)",
 	[ 30] = "pic int 30 (fmn2)",
 	[ 31] = "pic int 31 (fmn3)",
-	[ 32] = "pic int 22 (fmn4)",
-	[ 33] = "pic int 23 (fmn5)",
-	[ 34] = "pic int 24 (fmn6)",
-	[ 35] = "pic int 25 (fmn7)",
-	[ 36] = "pic int 26 (fmn8)",
-	[ 37] = "pic int 27 (fmn9)",
-	[ 38] = "pic int 28 (fmn10)",
-	[ 39] = "pic int 29 (fmn11)",
-	[ 40] = "pic int 30 (fmn12)",
-	[ 41] = "pic int 31 (fmn13)",
+	[ 32] = "pic int 32 (fmn4)",
+	[ 33] = "pic int 33 (fmn5)",
+	[ 34] = "pic int 34 (fmn6)",
+	[ 35] = "pic int 35 (fmn7)",
+	[ 36] = "pic int 36 (fmn8)",
+	[ 37] = "pic int 37 (fmn9)",
+	[ 38] = "pic int 38 (fmn10)",
+	[ 39] = "pic int 39 (fmn11)",
+	[ 40] = "pic int 40 (fmn12)",
+	[ 41] = "pic int 41 (fmn13)",
 	[ 42] = "pic int 42 (fmn14)",
 	[ 43] = "pic int 43 (fmn15)",
 	[ 44] = "pic int 44 (fmnerr0)",
@@ -577,7 +579,7 @@ static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
 	[107] = "pic int 107 (?)",
 	[108] = "pic int 108 (?)",
 	[109] = "pic int 109 (?)",
-	[110] = "pic int 100 (naecom0)",
+	[110] = "pic int 110 (naecom0)",
 	[111] = "pic int 111 (naecom1)",
 	[112] = "pic int 112 (?)",
 	[113] = "pic int 113 (?)",
@@ -620,7 +622,174 @@ static const char * const rmixl_irtnames_xlp3xx[RMIXLP_NIRTS] = {
 	[150] = "pic int 150 (norflash)",
 	[151] = "pic int 151 (nandflash)",
 	[152] = "pic int 152 (spi)",
-	[153] = "pic int 153 (mmc/sd)",
+	[153] = "pic int 153 (sdmmc)",
+	[154] = "pic int 154 (mem-io-bridge)",
+	[155] = "pic int 155 (l3)",
+	[156] = "pic int 156 (?)",
+	[157] = "pic int 157 (dram3_0)",
+	[158] = "pic int 158 (dram3_1)",
+	[159] = "pic int 159 (tracebuf)",
+};
+
+/*
+ * rmixl_irtnames_xlp:
+ * - use for XLP
+ */
+static const char * const rmixl_irtnames_xlp2xx[RMIXLP_NIRTS] = {
+	[  0] =	"pic int 0 (watchdog0)",
+	[  1] = "pic int 1 (watchdog1)",
+	[  2] = "pic int 2 (watchdogNMI0)",
+	[  3] = "pic int 3 (watchdogNMI1)",
+	[  4] = "pic int 4 (timer0)",
+	[  5] = "pic int 5 (timer1)",
+	[  6] = "pic int 6 (timer2)",
+	[  7] = "pic int 7 (timer3)",
+	[  8] = "pic int 8 (timer4)",
+	[  9] = "pic int 9 (timer5)",
+	[ 10] = "pic int 10 (timer6)",
+	[ 11] = "pic int 11 (timer7)",
+	[ 12] = "pic int 12 (gpio0)",
+	[ 13] = "pic int 13 (gpio1)",
+	[ 14] = "pic int 14 (gpio2)",
+	[ 15] = "pic int 15 (gpio3)",
+	[ 16] = "pic int 16 (gpio4)",
+	[ 17] = "pic int 17 (gpio5)",
+	[ 18] = "pic int 18 (gpio6)",
+	[ 19] = "pic int 19 (gpio7)",
+	[ 20] = "pic int 20 (gpio8)",
+	[ 21] = "pic int 21 (gpio0)",
+	[ 22] = "pic int 22 (gpio10)",
+	[ 23] = "pic int 23 (gpio11)",
+	[ 24] = "pic int 24 (?)",
+	[ 25] = "pic int 25 (?)",
+	[ 26] = "pic int 26 (?)",
+	[ 27] = "pic int 27 (?)",
+	[ 28] = "pic int 28 (?)",
+	[ 29] = "pic int 29 (?)",
+	[ 30] = "pic int 30 (?)",
+	[ 31] = "pic int 31 (?)",
+	[ 32] = "pic int 22 (?)",
+	[ 33] = "pic int 23 (?)",
+	[ 34] = "pic int 24 (?)",
+	[ 35] = "pic int 25 (?)",
+	[ 36] = "pic int 36 (fmn0)",
+	[ 37] = "pic int 37 (fmn1)",
+	[ 38] = "pic int 38 (fmn2)",
+	[ 39] = "pic int 39 (fmn3)",
+	[ 40] = "pic int 40 (fmn4)",
+	[ 41] = "pic int 41 (fmn5)",
+	[ 42] = "pic int 42 (fmn6)",
+	[ 43] = "pic int 43 (fmn7)",
+	[ 44] = "pic int 44 (fmnerr0)",
+	[ 45] = "pic int 45 (fmnerr1)",
+	[ 46] = "pic int 46 (pcie_msix0)",
+	[ 47] = "pic int 47 (pcie_msix1)",
+	[ 48] = "pic int 48 (pcie_msix2)",
+	[ 49] = "pic int 49 (pcie_msix3)",
+	[ 50] = "pic int 50 (pcie_msix4)",
+	[ 51] = "pic int 51 (pcie_msix5)",
+	[ 52] = "pic int 52 (pcie_msix6)",
+	[ 53] = "pic int 53 (pcie_msix7)",
+	[ 54] = "pic int 54 (pcie_msix8)",
+	[ 55] = "pic int 55 (pcie_msix9)",
+	[ 56] = "pic int 56 (pcie_msix10)",
+	[ 57] = "pic int 57 (pcie_msix11)",
+	[ 58] = "pic int 58 (pcie_msix12)",
+	[ 59] = "pic int 59 (pcie_msix13)",
+	[ 60] = "pic int 60 (pcie_msix14)",
+	[ 61] = "pic int 61 (pcie_msix15)",
+	[ 62] = "pic int 62 (pcie_msix16)",
+	[ 63] = "pic int 63 (pcie_msix17)",
+	[ 64] = "pic int 64 (pcie_msix18)",
+	[ 65] = "pic int 65 (pcie_msix19)",
+	[ 66] = "pic int 66 (pcie_msix20)",
+	[ 67] = "pic int 67 (pcie_msix21)",
+	[ 68] = "pic int 68 (pcie_msix22)",
+	[ 69] = "pic int 69 (pcie_msix23)",
+	[ 70] = "pic int 70 (pcie_msix24)",
+	[ 71] = "pic int 71 (pcie_msix25)",
+	[ 72] = "pic int 72 (pcie_msix26)",
+	[ 73] = "pic int 73 (pcie_msix27)",
+	[ 74] = "pic int 74 (pcie_msix28)",
+	[ 75] = "pic int 75 (pcie_msix29)",
+	[ 76] = "pic int 76 (pcie_msix30)",
+	[ 77] = "pic int 77 (pcie_msix31)",
+	[ 78] = "pic int 78 (pcie_link0)",
+	[ 79] = "pic int 79 (pcie_link1)",
+	[ 80] = "pic int 80 (pcie_link2)",
+	[ 81] = "pic int 81 (pcie_link3)",
+	[ 82] = "pic int 82 (?)",
+	[ 83] = "pic int 83 (?)",
+	[ 84] = "pic int 84 (?)",
+	[ 85] = "pic int 85 (?)",
+	[ 86] = "pic int 86 (?)",
+	[ 87] = "pic int 87 (?)",
+	[ 88] = "pic int 88 (?)",
+	[ 89] = "pic int 89 (?)",
+	[ 90] = "pic int 90 (?)",
+	[ 91] = "pic int 91 (?)",
+	[ 92] = "pic int 92 (?)",
+	[ 93] = "pic int 93 (?)",
+	[ 94] = "pic int 94 (?)",
+	[ 95] = "pic int 95 (?)",
+	[ 96] = "pic int 96 (?)",
+	[ 97] = "pic int 97 (?)",
+	[ 98] = "pic int 98 (nae0)",
+	[ 99] = "pic int 99 (nae1)",
+	[100] = "pic int 100 (nae2)",
+	[101] = "pic int 101 (nae3)",
+	[102] = "pic int 102 (nae4)",
+	[103] = "pic int 103 (nae5)",
+	[104] = "pic int 104 (nae6)",
+	[105] = "pic int 105 (nae7)",
+	[106] = "pic int 106 (nae8)",
+	[107] = "pic int 107 (?)",
+	[108] = "pic int 108 (?)",
+	[109] = "pic int 109 (?)",
+	[110] = "pic int 110 (naecom0)",
+	[111] = "pic int 111 (naecom1)",
+	[112] = "pic int 112 (?)",
+	[113] = "pic int 113 (?)",
+	[114] = "pic int 114 (poe)",
+	[115] = "pic int 115 (xhci0)",
+	[116] = "pic int 116 (xhci1)",
+	[117] = "pic int 117 (xhci2)",
+	[118] = "pic int 118 (?)",
+	[119] = "pic int 119 (?)",
+	[120] = "pic int 120 (?)",
+	[121] = "pic int 121 (dma)",
+	[122] = "pic int 122 (sae)",
+	[123] = "pic int 123 (pke)",
+	[124] = "pic int 124 (cde0)",
+	[125] = "pic int 125 (i2c0)",
+	[126] = "pic int 126 (i2c1)",
+	[127] = "pic int 127 (i2c2)",
+	[128] = "pic int 128 (i2c3)",
+	[129] = "pic int 129 (?)",
+	[130] = "pic int 130 (?)",
+	[131] = "pic int 131 (?)",
+	[132] = "pic int 132 (?)",
+	[133] = "pic int 133 (uart0)",
+	[134] = "pic int 134 (uart1)",
+	[135] = "pic int 135 (?)",
+	[136] = "pic int 136 (systemp0)",
+	[137] = "pic int 137 (systemp1)",
+	[138] = "pic int 138 (sysmgt)",
+	[139] = "pic int 139 (jtag)",
+	[140] = "pic int 140 (pic)",
+	[141] = "pic int 141 (rxe0)",
+	[142] = "pic int 142 (rxe1)",
+	[143] = "pic int 143 (?)",
+	[144] = "pic int 144 (?)",
+	[145] = "pic int 145 (?)",
+	[146] = "pic int 146 (?)",
+	[147] = "pic int 147 (?)",
+	[148] = "pic int 148 (?)",
+	[149] = "pic int 149 (?)",
+	[150] = "pic int 150 (norflash)",
+	[151] = "pic int 151 (nandflash)",
+	[152] = "pic int 152 (spi)",
+	[153] = "pic int 153 (sdmmc)",
 	[154] = "pic int 154 (mem-io-bridge)",
 	[155] = "pic int 155 (l3)",
 	[156] = "pic int 156 (?)",
@@ -723,16 +892,20 @@ rmixl_intrvecq_t rmixl_intrvec_lruq[_IPL_N] = {
 rmixl_intrvec_t rmixl_intrvec[NINTRVECS] = {
 	[0 ... NINTRVECS-1] = {
 		.iv_intrhand = {
-			.ih_func = rmixl_stray_intr,
-			.ih_arg = rmixl_stray_intr,
+			.ih_common = {
+				.ihc_func = rmixl_stray_intr,
+				.ihc_arg = rmixl_stray_intr,
+			}
 		},
 	},
 };
 #define	RMIXL_NIRTS	MAX(MAX(RMIXLR_NIRTS,RMIXLS_NIRTS), RMIXLP_NIRTS)
 rmixl_intrhand_t rmixl_irt_intrhands[RMIXL_NIRTS] = {
 	[0 ... RMIXL_NIRTS-1] = {
-		.ih_func = rmixl_stray_intr,
-		.ih_arg = rmixl_stray_intr,
+		.ih_common = {
+			.ihc_func = rmixl_stray_intr,
+			.ihc_arg = rmixl_stray_intr,
+		}
 	},
 };
 static u_int rmixl_nirts;
@@ -775,7 +948,10 @@ evbmips_intr_init(void)
 	 */
 	if (is_xlp_p) {
 #ifdef MIPS64_XLP
-		if (RMIXLP_3XX_P || RMIXLP_2XX_P) {
+		if (RMIXLP_2XX_P) {
+			rmixl_irtnames = rmixl_irtnames_xlp2xx;
+			rmixl_nirts = __arraycount(rmixl_irtnames_xlp2xx);
+		} else if (RMIXLP_3XX_P) {
 			rmixl_irtnames = rmixl_irtnames_xlp3xx;
 			rmixl_nirts = __arraycount(rmixl_irtnames_xlp3xx);
 		} else {
@@ -1210,7 +1386,7 @@ rmixl_vec_establish(size_t vec, rmixl_intrhand_t *ih, int ipl,
 		    iv, iv_lruq_link);
 	}
 
-	if (ih->ih_func != rmixl_stray_intr) {
+	if (ih->ih_common.ihc_func != rmixl_stray_intr) {
 #ifdef DIAGNOSTIC
 		printf("%s: intrhand[%zu] busy\n", __func__, vec);
 #endif
@@ -1218,8 +1394,10 @@ rmixl_vec_establish(size_t vec, rmixl_intrhand_t *ih, int ipl,
 		return NULL;
 	}
 
-	ih->ih_arg = arg;
-	ih->ih_mpsafe = mpsafe;
+	ih->ih_common.ihc_arg = arg;
+#ifdef MULTIPROCESSOR
+	ih->ih_common.ihc_mpsafe = mpsafe;
+#endif
 	ih->ih_vec = vec;
 
 	LIST_INSERT_HEAD(&iv->iv_hands, ih, ih_link);
@@ -1230,7 +1408,7 @@ rmixl_vec_establish(size_t vec, rmixl_intrhand_t *ih, int ipl,
 		ipl_eimr_map[i] |= eimr_bit;
 	}
 
-	ih->ih_func = func;	/* do this last */
+	ih->ih_common.ihc_func = func;	/* do this last */
 
 	splx(s);
 
@@ -1264,7 +1442,7 @@ rmixl_intr_establish(size_t irt, int ipl, int ist,
 
 	rmixl_intrhand_t *ih = &rmixl_irt_intrhands[irt];
 
-	KASSERT(ih->ih_func == rmixl_stray_intr);
+	KASSERT(ih->ih_common.ihc_func == rmixl_stray_intr);
 
 	const size_t vec = rmixl_intr_get_vec(ipl);
 
@@ -1283,6 +1461,8 @@ rmixl_intr_establish(size_t irt, int ipl, int ist,
 
 	mutex_exit(rmixl_intr_lock);
 
+	ih->ih_common.ihc_disestablish = rmixl_intr_disestablish_private;
+
 	return ih;
 }
 
@@ -1295,13 +1475,13 @@ rmixl_vec_disestablish(void *cookie)
 
 	KASSERT(mutex_owned(rmixl_intr_lock));
 	KASSERT(vec < NINTRVECS);
-	KASSERT(ih->ih_func != rmixl_stray_intr);
-	KASSERT(ih->ih_arg != rmixl_stray_intr);
+	KASSERT(ih->ih_common.ihc_func != rmixl_stray_intr);
+	KASSERT(ih->ih_common.ihc_arg != rmixl_stray_intr);
 	KASSERT(IPL_VM <= iv->iv_ipl && iv->iv_ipl <= IPL_HIGH);
 
 	LIST_REMOVE(ih, ih_link);
 
-	ih->ih_func = rmixl_stray_intr;	/* do this first */
+	ih->ih_common.ihc_func = rmixl_stray_intr;	/* do this first */
 
 	const uint64_t eimr_bit = __BIT(ih->ih_vec);
 	for (int i = iv->iv_ipl; --i >= 0; ) {
@@ -1310,8 +1490,10 @@ rmixl_vec_disestablish(void *cookie)
 	}
 
 	ih->ih_vec = 0;
-	ih->ih_mpsafe = false;
-	ih->ih_arg = rmixl_stray_intr;
+#ifdef MULTIPROCESSOR
+	ih->ih_common.ihc_mpsafe = false;
+#endif
+	ih->ih_common.ihc_arg = rmixl_stray_intr;
 
 	/*
 	 * If this vector isn't servicing any interrupts, then check to
@@ -1333,7 +1515,7 @@ rmixl_vec_disestablish(void *cookie)
 }
 
 void
-rmixl_intr_disestablish(void *cookie)
+rmixl_intr_disestablish_private(void *cookie)
 {
 	rmixl_intrhand_t * const ih = cookie;
 	const size_t vec = ih->ih_vec;
@@ -1428,8 +1610,8 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 				sc->sc_irt_evcnts[irt].ev_count++;
 			}
 
-			rmixl_intr_deliver(ih->ih_func, ih->ih_arg,
-			    ih->ih_mpsafe, &sc->sc_vec_evcnts[vec], ipl);
+			rmixl_intr_deliver(&ih->ih_common,
+			    &sc->sc_vec_evcnts[vec], ipl);
 
 			KASSERT(ipl == iv->iv_ipl);
 			KASSERTMSG(curcpu()->ci_cpl >= ipl,
@@ -1518,12 +1700,12 @@ rmixl_intrvec_print_subr(size_t vec)
 		if (ih == &iv->iv_intrhand) {
 			printf("   [%s]: func %p, arg %p\n",
 			    rmixl_vecnames_common[vec],
-			    ih->ih_func, ih->ih_arg);
+			    ih->ih_common.ihc_func, ih->ih_common.ihc_arg);
 		} else {
 			const size_t irt = ih - rmixl_irt_intrhands;
 			printf("   irt %zu [%s]: func %p, arg %p\n",
 			    irt, rmixl_irtnames[irt],
-			    ih->ih_func, ih->ih_arg);
+			    ih->ih_common.ihc_func, ih->ih_common.ihc_arg);
 		}
 	}
 	return 0;

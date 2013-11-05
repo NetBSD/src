@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.12 2012/01/04 16:17:53 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.13 2013/11/05 18:43:31 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,16 +50,24 @@
  */
 #define RMIXL_INTRVEC_IPI	8
 
-#define	RMIXLP_IRT_PCIE_MSIX	46
+#define	RMIXLP_IRT_PCIE_MSIX	46		/* 32 MSI(X) */
+#define	RMIXLP_IRT_PCIE_LINK	78		/* INTA/INTB/INTC/INTD */
 
 /*
  * iv_list and ref count manage sharing of each vector
  */
+typedef struct rmixl_intrhand_common {
+        int (*ihc_func)(void *);
+        void *ihc_arg; 
+#ifdef MULTIPROCESSOR
+        bool ihc_mpsafe; 		/* true if does not need kernel lock */
+#endif
+	void (*ihc_disestablish)(void *);
+} rmixl_intrhand_common_t;
+
 typedef struct rmixl_intrhand {
+	rmixl_intrhand_common_t ih_common;
 	LIST_ENTRY(rmixl_intrhand) ih_link;
-        int (*ih_func)(void *);
-        void *ih_arg; 
-        bool ih_mpsafe; 		/* true if does not need kernel lock */
         uint8_t ih_vec;			/* vector is bit number in EIRR/EIMR */
 } rmixl_intrhand_t;
 
@@ -73,27 +81,36 @@ typedef struct rmixl_intrvec {
 typedef TAILQ_HEAD(rmixl_intrvecq, rmixl_intrvec) rmixl_intrvecq_t;
 
 static inline int
-rmixl_intr_deliver(int (*func)(void *), void *arg, bool mpsafe_p,
-	struct evcnt *ev, int ipl)
+rmixl_intr_deliver(const rmixl_intrhand_common_t *ihc, struct evcnt *ev,
+	int ipl)
 {
 	int rv;
-#ifndef MULTIPROCESSOR
-	mpsafe_p = true;
+#ifdef MULTIPROCESSOR
+	if (ihc->ihc_mpsafe) {
 #endif
-	if (mpsafe_p) {
-		rv = (*func)(arg);
+		rv = (*ihc->ihc_func)(ihc->ihc_arg);
+#ifdef MULTIPROCESSOR
 	} else {
 		KASSERTMSG(ipl == IPL_VM,
 		    ("%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
 		    __func__, ev->ev_name, ipl));
 		KERNEL_LOCK(1, NULL);
-		rv = (*func)(arg);
+		rv = (*ihc->ihc_func)(ihc->ihc_arg);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
-	ev->ev_count++;
+#endif
+	if (ev != NULL)
+		ev->ev_count++;
 	return rv;
 }
 
+static inline void
+rmixl_intr_disestablish(void *ih)
+{
+	rmixl_intrhand_common_t * const ihc = ih;
+	KASSERT(ihc->ihc_disestablish != NULL);
+	(*ihc->ihc_disestablish)(ih);
+}
 /*
  * stuff exported from rmixl_spl.S
  */
@@ -103,7 +120,6 @@ extern kmutex_t *rmixl_intr_lock;
 
 void *	rmixl_intr_establish(size_t /* irt */, int /* ipl */, int /* ist */,
 	    int (*)(void *), void *, bool);
-void	rmixl_intr_disestablish(void *);
 void *	rmixl_vec_establish(size_t /* vec */, rmixl_intrhand_t *, int /* ipl */,
 	    int (*)(void *), void *, bool);
 void	rmixl_vec_disestablish(void *);
