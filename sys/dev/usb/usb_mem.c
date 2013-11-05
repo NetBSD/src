@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.37.14.1 2012/01/04 00:11:13 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.37.14.2 2013/11/05 18:36:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37.14.1 2012/01/04 00:11:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.37.14.2 2013/11/05 18:36:31 matt Exp $");
 
 #include "opt_usb.h"
 
@@ -90,7 +90,7 @@ struct usb_frag_dma {
 };
 
 Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
-					   usb_dma_block_t **);
+					   usb_dma_block_t **, bool);
 Static void		usb_block_freemem(usb_dma_block_t *);
 
 Static LIST_HEAD(, usb_dma_block) usb_blk_freelist =
@@ -102,7 +102,7 @@ Static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 
 Static usbd_status
 usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
-		   usb_dma_block_t **dmap)
+		   usb_dma_block_t **dmap, bool multiseg)
 {
 	int error;
         usb_dma_block_t *p;
@@ -121,6 +121,9 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	s = splusb();
 	/* First check the free list. */
 	LIST_FOREACH(p, &usb_blk_freelist, next) {
+		/* Don't allocate multiple segments to unwilling callers */
+		if (p->nsegs != 1 && !multiseg)
+			continue;
 		if (p->tag == tag && p->size >= size && p->align >= align) {
 			LIST_REMOVE(p, next);
 			usb_blk_nfree--;
@@ -139,17 +142,19 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		return (USBD_NOMEM);
 	}
 #endif
+	size_t maxsegs = (multiseg ? round_page(size) / PAGE_SIZE : 1);
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
-	p = malloc(sizeof *p, M_USB, M_NOWAIT);
+	p = malloc(offsetof(usb_dma_block_t, segs[maxsegs]), M_USB, M_NOWAIT);
 	if (p == NULL)
 		return (USBD_NOMEM);
 
 	p->tag = tag;
 	p->size = size;
 	p->align = align;
-	error = bus_dmamem_alloc(tag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+	p->maxsegs = maxsegs;
+
+	error = bus_dmamem_alloc(tag, p->size, align, 0, p->segs, p->maxsegs,
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		goto free0;
@@ -221,6 +226,13 @@ usb_block_freemem(usb_dma_block_t *p)
 usbd_status
 usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 {
+	return usb_allocmem_flags(bus, size, align, p, 0);
+}
+
+usbd_status
+usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
+    int flags)
+{
 	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status err;
 	struct usb_frag_dma *f;
@@ -228,11 +240,14 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 	int i;
 	int s;
 
+	bool frag = (flags & USBMALLOC_MULTISEG);
+
+
 	/* If the request is large then just use a full block. */
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
 		DPRINTFN(1, ("usb_allocmem: large alloc %d\n", (int)size));
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
-		err = usb_block_allocmem(tag, size, align, &p->block);
+		err = usb_block_allocmem(tag, size, align, &p->block, frag);
 		if (!err) {
 			p->block->flags = USB_DMA_FULLBLOCK;
 			p->offs = 0;
@@ -248,7 +263,8 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 	}
 	if (f == NULL) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
-		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL,&b);
+		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b,
+		    false);
 		if (err) {
 			splx(s);
 			return (err);
@@ -301,6 +317,34 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
+}
+
+bus_addr_t
+usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
+{
+	bus_dma_segment_t *ds = dma->block->map->dm_segs;
+
+	offset += dma->offs;
+
+	KASSERT(offset < dma->block->size);
+
+	if (dma->block->nsegs == 1 || offset < ds->ds_len) {
+		KASSERT(offset < ds->ds_len);
+		return ds->ds_addr + offset;
+	}
+
+	/*
+	* Search for a bus_segment_t corresponding to this offset. With no
+	 * record of the offset in the map to a particular dma_segment_t, we
+	 * have to iterate from the start of the list each time. Could be
+	 * improved
+	 */
+	for (size_t i = 0; offset >= ds->ds_len; i++, ds++) {
+		KASSERT(i != dma->block->nsegs);
+		offset -= ds->ds_len;
+	}
+
+	return ds->ds_addr + offset;
 }
 
 void

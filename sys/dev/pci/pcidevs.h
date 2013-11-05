@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.7 2012/01/03 18:28:15 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.8 2013/11/05 18:36:18 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2940,6 +2940,9 @@
 #define	PCI_PRODUCT_NETLOGIC_XLP_RXE	0x1019		/* XLP Regular Expression accelerator */
 #define	PCI_PRODUCT_NETLOGIC_XLP_AHCISATA	0x101a		/* XLP AHCI SATA controller */
 #define	PCI_PRODUCT_NETLOGIC_XLP_SRIO	0x101b		/* XLP SRIO (Serial Rapid IO) controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB1	0x101d		/* XLP XHCI USB 3.0 controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB2	0x101e		/* XLP XHCI USB 3.0 controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB3	0x101d		/* XLP XHCI USB 3.0 controller */
 
 /* NetVin products - XXX better descriptions */
 #define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */

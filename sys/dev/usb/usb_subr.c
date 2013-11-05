@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.162 2008/08/18 18:03:21 kent Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.162.12.1 2013/11/05 18:36:31 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.162 2008/08/18 18:03:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.162.12.1 2013/11/05 18:36:31 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -75,13 +75,10 @@ Static void usbd_devinfo_vp(usbd_device_handle dev,
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
-Static void usbd_free_iface_data(usbd_device_handle dev, int ifcno);
-Static void usbd_kill_pipe(usbd_pipe_handle);
+Static void usbd_free_iface_data(usbd_device_handle, int);
 usbd_status usbd_attach_roothub(device_t, usbd_device_handle);
-Static usbd_status usbd_probe_and_attach(device_ptr_t parent,
-				 usbd_device_handle dev, int port, int addr);
 
-Static u_int32_t usb_cookie_no = 0;
+uint32_t usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
 typedef u_int16_t usb_vendor_id_t;
@@ -1018,6 +1015,34 @@ usbd_reattach_device(device_ptr_t parent, usbd_device_handle dev,
 }
 
 /*
+ * Get the first 8 bytes of the device descriptor.
+ * Do as Windows does: try to read 64 bytes -- there are devices which
+ * recognize the initial descriptor fetch (before the control endpoint's
+ * MaxPacketSize is known by the host) by exactly this length.
+ */
+usbd_status
+usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
+{
+	usb_device_request_t req;
+	char buf[64];
+	int res, actlen;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_DEVICE, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 64);
+	res = usbd_do_request_flags(dev, &req, buf, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (res)
+		return res;
+	if (actlen < 8)
+		return USBD_SHORT_XFER;
+	memcpy(desc, buf, 8);
+	return USBD_NORMAL_COMPLETION;
+}
+
+/*
  * Called when a new device has been put in the powered state,
  * but not yet in the addressed state.
  * Get initial descriptor, set the address, get full descriptor,
@@ -1038,6 +1063,11 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
+
+	if (bus->methods->new_device != NULL)
+		return (bus->methods->new_device)(parent, bus, depth, speed,
+		    port, up);
+
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
