@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.76.10.1 2008/12/13 21:44:42 bouyer Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.76.10.1.4.1 2013/11/05 18:36:31 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -199,6 +199,7 @@ struct usb_task {
 	void (*fun)(void *);
 	void *arg;
 	int queue;
+	int flags;
 };
 #define	USB_TASKQ_HC		0
 #define	USB_TASKQ_DRIVER	1
