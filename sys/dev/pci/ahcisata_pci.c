@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.12.4.2 2009/03/30 16:49:25 snj Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.1 2013/11/05 18:32:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.4.2 2009/03/30 16:49:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.4.2.4.1 2013/11/05 18:32:45 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.12.4.2 2009/03/30 16:49:25 snj Ex
 #include <dev/ic/ahcisatavar.h>
 
 #define AHCI_PCI_QUIRK_FORCE	1	/* force attach */
+#define	AHCI_PCI_QUIRK_BAR0	2
 
 static const struct pci_quirkdata ahci_pci_quirks[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
@@ -64,6 +65,8 @@ static const struct pci_quirkdata ahci_pci_quirks[] = {
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_1,
 	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_AHCISATA,
+	    AHCI_PCI_QUIRK_BAR0 },
 };
 
 struct ahci_pci_softc {
@@ -92,6 +95,7 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	bus_size_t size;
 	int ret = 0;
 	const struct pci_quirkdata *quirks;
+	int bar = AHCI_PCI_ABAR;
 
 	quirks = ahci_pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
 					   PCI_PRODUCT(pa->pa_id));
@@ -104,10 +108,26 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	    (quirks == NULL || (quirks->quirks & AHCI_PCI_QUIRK_FORCE) == 0))
 		return 0;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &regt, &regh, NULL, &size) != 0)
+	/*
+	 * Sometimes people just can't read specs.
+	 */
+	if (quirks != NULL && (quirks->quirks & AHCI_PCI_QUIRK_BAR0)) {
+		bar = PCI_BAR0;
+	}
+
+	pcireg_t mem_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (PCI_MAPREG_TYPE(mem_type) != PCI_MAPREG_TYPE_MEM) {
+		printf("%s: tag %#lx: unexpected type %#x\n",
+		    __func__, pa->pa_tag, mem_type);
 		return 0;
+	}
+
+	if (pci_mapreg_map(pa, bar, mem_type, 0,
+	    &regt, &regh, NULL, &size) != 0) {
+		printf("%s: tag %#lx: pci_mapreg_map failed\n",
+		    __func__, pa->pa_tag);
+		return 0;
+	}
 
 	if ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
 	     PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) ||
@@ -130,13 +150,23 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	void *ih;
+	const struct pci_quirkdata *quirks;
+	int bar = AHCI_PCI_ABAR;
 
 	sc->sc_atac.atac_dev = self;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	/*
+	 * Sometimes people just can't read specs.
+	 */
+	quirks = ahci_pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+					   PCI_PRODUCT(pa->pa_id));
+	if (quirks != NULL && (quirks->quirks & AHCI_PCI_QUIRK_BAR0)) {
+		bar = PCI_BAR0;
+	}
+
+	if (pci_mapreg_map(pa, bar, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &size) != 0) {
-		aprint_error_dev(self, "can't map ahci registers\n");
+		aprint_error_dev(self, ": can't map ahci registers\n");
 		return;
 	}
 	psc->sc_pc = pa->pa_pc;
