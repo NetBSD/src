@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.48 2013/10/30 23:32:30 joerg Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.49 2013/11/05 14:26:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.48 2013/10/30 23:32:30 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.49 2013/11/05 14:26:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -961,6 +961,21 @@ bad:
 				    sizeof(epp->ep_machine_arch));
 				break;
 			}
+		case ELF_NOTE_TYPE_MCMODEL_TAG:
+			/*
+			 * arch specific check for code model
+			 */
+#ifdef ELF_MD_MCMODEL_CHECK
+			if (np->n_namesz == ELF_NOTE_MCMODEL_NAMESZ
+			    && memcmp(ndata, ELF_NOTE_MCMODEL_NAME,
+				    ELF_NOTE_MCMODEL_NAMESZ) == 0) {
+				ELF_MD_MCMODEL_CHECK(epp, 
+				    ndata + roundup(ELF_NOTE_MCMODEL_NAMESZ, 4),
+				    np->n_descsz);
+				break;
+			}
+#endif
+			break;
 
 			/*
 			 * Dunno, warn for diagnostic
