@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_comp.c,v 1.1 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_comp.c,v 1.2 2013/11/05 01:50:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.1 2013/09/19 01:04:45 rmind Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.2 2013/11/05 01:50:30 rmind Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -307,12 +307,21 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 		 * A <- IP version; A == expected-version?
 		 * If no particular version specified, check for non-zero.
 		 */
-		struct bpf_insn insns_l3[] = {
-			BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
-			BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
-		};
-		add_insns(ctx, insns_l3, __arraycount(insns_l3));
-		ctx->flags |= FETCHED_L3;
+		if ((ctx->flags & FETCHED_L3) == 0) {
+			struct bpf_insn insns_l3[] = {
+				BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
+				BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
+			};
+			add_insns(ctx, insns_l3, __arraycount(insns_l3));
+			ctx->flags |= FETCHED_L3;
+		} else {
+			/* IP version is already fetched in BPF_MW_IPVER. */
+			struct bpf_insn insns_af[] = {
+				BPF_STMT(BPF_LD+BPF_W+BPF_MEM, BPF_MW_IPVER),
+				BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ver, jt, jf),
+			};
+			add_insns(ctx, insns_af, __arraycount(insns_af));
+		}
 		ctx->af = af;
 
 		if (af) {
@@ -471,7 +480,7 @@ npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
 	off = (opts & MATCH_SRC) ? sport_off : dport_off;
 
 	/* X <- IP header length */
-	fetch_l3(ctx, 0, X_EQ_L4OFF);
+	fetch_l3(ctx, AF_UNSPEC, X_EQ_L4OFF);
 
 	struct bpf_insn insns_fetch[] = {
 		/* A <- port */
@@ -513,7 +522,7 @@ npfctl_bpf_tcpfl(npf_bpf_t *ctx, uint8_t tf, uint8_t tf_mask)
 	const u_int tcpfl_off = offsetof(struct tcphdr, th_flags);
 
 	/* X <- IP header length */
-	fetch_l3(ctx, 0, X_EQ_L4OFF);
+	fetch_l3(ctx, AF_UNSPEC, X_EQ_L4OFF);
 
 	struct bpf_insn insns_tf[] = {
 		/* A <- TCP flags */
@@ -554,7 +563,7 @@ npfctl_bpf_icmp(npf_bpf_t *ctx, int type, int code)
 	assert(type != -1 || code != -1);
 
 	/* X <- IP header length */
-	fetch_l3(ctx, 0, X_EQ_L4OFF);
+	fetch_l3(ctx, AF_UNSPEC, X_EQ_L4OFF);
 
 	if (type != -1) {
 		struct bpf_insn insns_type[] = {
