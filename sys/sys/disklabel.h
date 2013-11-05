@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.115 2013/05/03 21:33:06 matt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.116 2013/11/05 00:36:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -46,7 +46,7 @@
  * disk geometry, filesystem partitions, and drive specific information.
  * The location of the label, as well as the number of partitions the
  * label can describe and the number of the "whole disk" (raw)
- * paritition are machine dependent.
+ * partition are machine dependent.
  */
 #if HAVE_NBTOOL_CONFIG_H
 #undef MAXPARTITIONS
