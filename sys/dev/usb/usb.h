@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.82 2008/08/02 23:14:34 jmcneill Exp $	*/
+/*	$NetBSD: usb.h,v 1.82.12.1 2013/11/05 18:36:31 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -95,11 +95,16 @@ typedef struct {
 	uWord		wLength;
 } UPACKED usb_device_request_t;
 
+#define UT_GET_DIR(a)		((a) & 0x80)
 #define UT_WRITE		0x00
 #define UT_READ			0x80
+
+#define UT_GET_TYPE(a)		((a) & 0x60)
 #define UT_STANDARD		0x00
 #define UT_CLASS		0x20
 #define UT_VENDOR		0x40
+
+#define UT_GET_RECIPIENT(a)	((a) & 0x1f)
 #define UT_DEVICE		0x00
 #define UT_INTERFACE		0x01
 #define UT_ENDPOINT		0x02
@@ -149,6 +154,7 @@ typedef struct {
 #define  UDESC_CS_INTERFACE	0x24
 #define  UDESC_CS_ENDPOINT	0x25
 #define  UDESC_HUB		0x29
+#define  UDESC_SSHUB		0x2a
 #define UR_SET_DESCRIPTOR	0x07
 #define UR_GET_CONFIG		0x08
 #define UR_SET_CONFIG		0x09
@@ -165,6 +171,8 @@ typedef struct {
 
 #define USB_2_MAX_CTRL_PACKET	64
 #define USB_2_MAX_BULK_PACKET	512
+
+#define USB_3_MAX_CTRL_PACKET	512
 
 typedef struct {
 	uByte		bLength;
@@ -364,6 +372,7 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_POWER			0x0100
+#define UPS_FULL_SPEED			0x0000	/* for completeness */
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_PORT_TEST			0x0800
@@ -384,6 +393,7 @@ typedef struct {
 #define  UDPROTO_FSHUB		0x00
 #define  UDPROTO_HSHUBSTT	0x01
 #define  UDPROTO_HSHUBMTT	0x02
+#define  UDPROTO_SSHUB		0x03
 #define UDCLASS_DIAGNOSTIC	0xdc
 #define UDCLASS_WIRELESS	0xe0
 #define  UDSUBCLASS_RF		0x01
@@ -603,6 +613,7 @@ struct usb_device_info {
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
+#define USB_SPEED_SUPER 4
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];

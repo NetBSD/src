@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.7 2012/01/03 18:28:16 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.8 2013/11/05 18:36:18 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -10308,6 +10308,18 @@ static const struct pci_product pci_products[] = {
 	    "XLP SRIO (Serial Rapid IO) controller",
 	},
 	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB1,
+	    "XLP XHCI USB 3.0 controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB2,
+	    "XLP XHCI USB 3.0 controller",
+	},
+	{
+	    PCI_VENDOR_NETLOGIC, PCI_PRODUCT_NETLOGIC_XLP_XHCIUSB3,
+	    "XLP XHCI USB 3.0 controller",
+	},
+	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
 	    "5000 Ethernet",
 	},
@@ -14956,4 +14968,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3136;
+const int pci_nproducts = 3139;
