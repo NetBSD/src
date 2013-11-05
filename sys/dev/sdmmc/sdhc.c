@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.7.2.4 2011/12/27 17:12:47 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.7.2.5 2013/11/05 18:35:35 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.4 2011/12/27 17:12:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.5 2013/11/05 18:35:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.7.2.4 2011/12/27 17:12:47 matt Exp $");
 #include <dev/sdmmc/sdmmcvar.h>
 
 #ifdef SDHC_DEBUG
-int sdhcdebug = 2;
+int sdhcdebug = 0;
 #define DPRINTF(n,s)	do { if ((n) <= sdhcdebug) printf s; } while (0)
 void	sdhc_dump_regs(struct sdhc_host *);
 #else
