@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.41 2013/03/18 19:35:38 plunky Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.42 2013/11/05 00:40:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.41 2013/03/18 19:35:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.42 2013/11/05 00:40:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ int	ptyfs_reclaim	(void *);
 int	ptyfs_print	(void *);
 int	ptyfs_pathconf	(void *);
 #define	ptyfs_islocked	genfs_islocked
-#define	ptyfs_advlock	genfs_einval
+int	ptyfs_advlock	(void *);
 #define	ptyfs_bwrite	genfs_eopnotsupp
 #define ptyfs_putpages	genfs_null_putpages
 
@@ -283,6 +283,26 @@ ptyfs_print(void *v)
 }
 
 /*
+ * support advisory locking on pty nodes
+ */
+int
+ptyfs_advlock(void *v)
+{
+	struct vop_print_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
+
+	switch (ptyfs->ptyfs_type) {
+	case PTYFSpts:
+	case PTYFSptc:
+		return spec_advlock(v);
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+/*
  * Invent attributes for ptyfsnode (vp) and store
  * them in (vap).
  * Directories lengths are returned as zero since
@@ -313,7 +333,6 @@ ptyfs_getattr(void *v)
 	vap->va_fileid = ptyfs->ptyfs_fileno;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
-	vap->va_nlink = 1;
 	vap->va_blocksize = PAGE_SIZE;
 
 	vap->va_atime = ptyfs->ptyfs_atime;
@@ -332,12 +351,13 @@ ptyfs_getattr(void *v)
 			return ENOENT;
 		vap->va_bytes = vap->va_size = 0;
 		vap->va_rdev = ap->a_vp->v_rdev;
+		vap->va_nlink = 1;
 		break;
 	case PTYFSroot:
 		vap->va_rdev = 0;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
+		vap->va_nlink = 2;
 		break;
-
 	default:
 		return EOPNOTSUPP;
 	}
