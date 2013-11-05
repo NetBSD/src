@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.19 2012/01/19 17:37:15 matt Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.20 2013/11/05 18:43:31 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -53,6 +53,7 @@ attach  xlpcie at obio with rmixl_pcie		# XLS
 attach  xlpcie at mainbus with rmixlp_pcie	# XLP
 file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie	needs-flag
 file    arch/mips/rmi/rmixlp_pcie.c		rmixlp_pcie	needs-flag
+file    arch/mips/rmi/rmixl_pcie_subr.c		rmixl_pcie | rmixlp_pcie
 
 # PCI-X
 device  xlpcix: pcibus
