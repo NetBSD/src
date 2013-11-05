@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/08/04 23:41:43 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2013/11/05 02:32:12 gdt Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -202,11 +202,11 @@ DPSRCS+= ${DEFINES_H}
 
 # misc. dependancies.
 filter_host.c: ${DIST}/sim/ppc/filter_filename.c
-	cp ${.ALLSRC} ${.TARGET}
+	cp -f ${.ALLSRC} ${.TARGET}
 filter_host.lo: ppc-config.h
 
 ppc-config.h: ${DIST}/sim/ppc/std-config.h
-	cp ${.ALLSRC} ${.TARGET}
+	cp -f ${.ALLSRC} ${.TARGET}
 DPSRCS+= ppc-config.h
 
 CLEANFILES+=	igen dgen gentmap *.lo \
