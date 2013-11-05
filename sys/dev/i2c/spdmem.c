@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.11 2008/09/28 12:59:54 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.11.8.1 2013/11/05 18:40:22 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11 2008/09/28 12:59:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.11.8.1 2013/11/05 18:40:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -227,7 +227,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	const char *rambus_rev = "Reserved";
 	int num_banks = 0;
 	int per_chip = 0;
-	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	unsigned int dimm_size, cycle_time, d_clk, p_clk, bits;
 	int i;
 	unsigned int spd_len, spd_size;
 	unsigned int tAA, tRCD, tRP, tRAS;
@@ -420,9 +420,12 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	}
 	if (IS_RAMBUS_TYPE ||
 	    (num_banks <= 8 && per_chip <= 8 && dimm_size > 0 &&
-	     dimm_size <= 12)) {
+	     dimm_size <= 18)) {
 		dimm_size = (1 << dimm_size) * num_banks * per_chip;
-		aprint_normal(", %dMB", dimm_size);
+		if (dimm_size >= 1024)
+			aprint_normal(", %uGB", dimm_size / 1024);
+		else
+			aprint_normal(", %uMB", dimm_size);
 		if (node != NULL)
 			sysctl_createv(NULL, 0, NULL, NULL,
 			    CTLFLAG_IMMEDIATE,
@@ -545,7 +548,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 				p_clk += 50;
 			p_clk -= p_clk % 100;
 		}
-		aprint_normal(", %dMHz (%s-%d)\n",
+		aprint_normal(", %uMHz (%s-%u)\n",
 			      d_clk, ddr_type_string, p_clk);
 		if (node != NULL)
 			sysctl_createv(NULL, 0, NULL, NULL,
