@@ -1,8 +1,8 @@
-#	$NetBSD: XLPEVB,v 1.1.2.7 2012/02/10 08:54:18 matt Exp $
+#	$NetBSD: XLPEVB,v 1.1.2.8 2013/11/05 18:41:57 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixlp"
 
-#ident 		"XLSATX-$Revision: 1.1.2.7 $"
+#ident 		"XLSATX-$Revision: 1.1.2.8 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -153,6 +153,7 @@ ukphy*		at mii? phy ?			# unknown PHY
 com*		at pci? dev ? function ?
 ehci*		at pci? dev ? function ?
 ohci*		at pci? dev ? function ?
+xhci*		at pci? dev ? function ?
 xlsdio*		at pci? dev ? function ?
 sdhc*		at xlsdio? slot 0
 sdmmc*		at sdhc?
@@ -195,6 +196,7 @@ wd*		at atabus? drive ? flags 0x0000
 # USB
 usb*		at ohci?
 usb*		at ehci?
+usb*		at xhci?
 uhub*		at usb?
 uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
