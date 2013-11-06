@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.198 2013/11/06 06:23:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2013/11/06 06:23:15 mrg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -649,6 +649,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
 	int s = IPL_NONE;
+	__USE(s);	/* ugly otherwise */
 
 	if (cold) {
 		howto |= RB_HALT;

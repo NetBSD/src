@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.49 2012/09/16 22:09:34 rmind Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.50 2013/11/06 06:23:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.49 2012/09/16 22:09:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.50 2013/11/06 06:23:15 mrg Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -701,7 +701,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	int old_count, int new_count, int final)
 {
 	pd_entry_t *pdtpe, *pde, *pte;
-	pd_entry_t *cur_pgd, *bt_pgd;
+	pd_entry_t *bt_pgd;
 	paddr_t addr;
 	vaddr_t page, avail, text_end, map_end;
 	int i;
@@ -761,7 +761,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 * - some PTEs (level 1)
 	 */
 	
-	cur_pgd = (pd_entry_t *) old_pgd;
 	bt_pgd = (pd_entry_t *) new_pgd;
 	memset (bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
