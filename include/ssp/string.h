@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.5 2012/07/22 21:05:26 joerg Exp $	*/
+/*	$NetBSD: string.h,v 1.6 2013/11/06 16:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@ __BEGIN_DECLS
 void *__memcpy_chk(void *, const void *, size_t, size_t);
 void *__memmove_chk(void *, void *, size_t, size_t);
 void *__memset_chk(void *, int, size_t, size_t);
+char *__stpcpy_chk(char *, const char *, size_t);
+char *__stpncpy_chk(char *, const char *, size_t, size_t);
 char *__strcat_chk(char *, const char *, size_t);
 char *__strcpy_chk(char *, const char *, size_t);
 char *__strncat_chk(char *, const char *, size_t, size_t);
@@ -89,6 +91,8 @@ __END_DECLS
 #define memcpy(dst, src, len) __ssp_bos_check3(memcpy, dst, src, len)
 #define memmove(dst, src, len) __ssp_bos_check3(memmove, dst, src, len)
 #define memset(dst, val, len) __ssp_bos_check3(memset, dst, val, len)
+#define stpcpy(dst, src) __ssp_bos_check2(stpcpy, dst, src)
+#define stpncpy(dst, src, len) __ssp_bos_check3(stpncpy, dst, src, len)
 #define strcpy(dst, src) __ssp_bos_check2(strcpy, dst, src)
 #define strcat(dst, src) __ssp_bos_check2(strcat, dst, src)
 #define strncpy(dst, src, len) __ssp_bos_check3(strncpy, dst, src, len)
