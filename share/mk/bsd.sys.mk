@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.229 2013/10/28 01:47:13 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.230 2013/11/06 19:57:17 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -74,7 +74,7 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 45 \
+.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 45 \
      && (${MACHINE_ARCH} == "coldfire" || \
 	 ${MACHINE_ARCH} == "sh3eb" || \
 	 ${MACHINE_ARCH} == "sh3el" || \
@@ -83,6 +83,9 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 # XXX GCC 4.5 for sh3 and m68k (which we compile with -Os) is extra noisy for
 # cases it should be better with
 CFLAGS+=	-Wno-uninitialized
+.if ${HAVE_GCC} >= 48
+CFLAGS+=	-Wno-maybe-uninitialized
+.endif
 .endif
 .endif
 
