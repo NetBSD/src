@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+#ifdef _FORTIFY_SOURCE
+#undef stpcpy
+#endif
+
 /* Copy SRC to DST, returning the address of the terminating '\0' in DST.  */
 extern char *stpcpy (char *dst, const char *src);
 
