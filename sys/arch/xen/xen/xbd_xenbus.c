@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.60 2013/10/13 06:55:34 riz Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.61 2013/11/06 06:23:15 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.60 2013/10/13 06:55:34 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.61 2013/11/06 06:23:15 mrg Exp $");
 
 #include "opt_xen.h"
 
@@ -821,7 +821,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	struct	dk_softc *dksc;
 	int	error;
-	struct	disk *dk;
 	int s;
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
@@ -830,7 +829,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
-	dk = &dksc->sc_dkdev;
 
 	error = disk_ioctl(&sc->sc_dksc.sc_dkdev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)

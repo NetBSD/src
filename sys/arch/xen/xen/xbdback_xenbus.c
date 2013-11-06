@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.58 2013/10/20 11:37:11 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.59 2013/11/06 06:23:15 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.58 2013/10/20 11:37:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.59 2013/11/06 06:23:15 mrg Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1305,8 +1305,8 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 	KASSERT(xbdi->xbdi_req->rq_operation == BLKIF_OP_READ ||
 	    xbdi->xbdi_req->rq_operation == BLKIF_OP_WRITE);
 	if (xbdi->xbdi_segno < xbdi->xbdi_xen_req.nr_segments) {
-		uint8_t this_fs, this_ls, last_fs, last_ls;
-		grant_ref_t thisgrt, lastgrt;
+		uint8_t this_fs, this_ls, last_ls;
+		grant_ref_t thisgrt;
 		/* 
 		 * Segment-level reason to coalesce: handling full
 		 * pages, or adjacent sector ranges from the same page
@@ -1320,9 +1320,7 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 			   "first,last_sect[%d]=0%o,0%o\n",
 			   xbdi->xbdi_domid, xbdi->xbdi_segno,
 			   this_fs, this_ls));
-		last_fs = xbdi->xbdi_last_fs = xbdi->xbdi_this_fs;
 		last_ls = xbdi->xbdi_last_ls = xbdi->xbdi_this_ls;
-		lastgrt = xbdi->xbdi_lastgrt = xbdi->xbdi_thisgrt;
 		xbdi->xbdi_this_fs = this_fs;
 		xbdi->xbdi_this_ls = this_ls;
 		xbdi->xbdi_thisgrt = thisgrt;
