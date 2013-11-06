@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.12 2012/10/13 17:58:53 jdc Exp $	*/
+/*	$NetBSD: consinit.c,v 1.13 2013/11/06 02:35:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12 2012/10/13 17:58:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.13 2013/11/06 02:35:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,11 @@ int comconsole = 0;
 void
 consinit(void)
 {
-	struct consdev *cp;
 	static int initted;
 
 	if (initted)
 		return;
 	initted = 1;
-	cp = NULL;
 
 #if (NVGA > 0)
 	/* The font built into the VGA ROM is broken: all the characters
@@ -150,7 +148,7 @@ consinit(void)
 
 #else /* NVGA */
 #if (NOFCONS > 0)
-		cp = &ofcons;
+		struct consdev *cp = &ofcons;
 		ofcons_cnprobe(cp);
 		if (cp->cn_pri == CN_INTERNAL) {
 			ofcons_cninit(cp);
