@@ -217,7 +217,7 @@ void cpu_boot_secondary_processors(void);
 
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci)			\
-	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
 #endif
 
 #define	LWP0_CPU_INFO	(&cpu_info_store)
