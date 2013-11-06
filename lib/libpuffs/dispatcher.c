@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.44 2012/08/16 09:25:43 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.45 2013/11/06 19:50:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.44 2012/08/16 09:25:43 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.45 2013/11/06 19:50:10 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -626,7 +626,8 @@ dispatch(struct puffs_cc *pcc)
 				    auxt->pvnr_cookie_targdir);
 				if (error)
 					break;
-			}
+			} else
+				pn_src = NULL;	/* XXX: gcc */
 
 			error = pops->puffs_node_rename(pu,
 			    opcookie, auxt->pvnr_cookie_src,
