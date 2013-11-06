@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.38 2013/08/23 05:22:01 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.39 2013/11/06 02:34:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.38 2013/08/23 05:22:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.39 2013/11/06 02:34:10 christos Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -201,7 +201,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg; 
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
