@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/10/19 00:28:19 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2013/11/06 23:32:04 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -45,8 +45,6 @@ quotearg.c \
 safe-read.c \
 safe-write.c \
 sh-quote.c \
-stpcpy.c \
-stpncpy.c \
 tmpdir.c \
 wait-process.c \
 xallocsa.c \
