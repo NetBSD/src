@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.6 2013/11/06 16:31:24 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.7 2013/11/06 21:33:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ __BEGIN_DECLS
 __ssp_bos_icheck3_restrict(memcpy, void *, const void *)
 __ssp_bos_icheck3(memmove, void *, const void *)
 __ssp_bos_icheck3(memset, void *, int)
+__ssp_bos_icheck2_restrict(stpcpy, char *, const char *)
+__ssp_bos_icheck3_restrict(stpncpy, char *, const char *)
 __ssp_bos_icheck2_restrict(strcpy, char *, const char *)
 __ssp_bos_icheck2_restrict(strcat, char *, const char *)
 __ssp_bos_icheck3_restrict(strncpy, char *, const char *)
