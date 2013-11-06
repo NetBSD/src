@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.90 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.91 2013/11/06 02:37:58 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.90 2013/08/18 06:28:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.91 2013/11/06 02:37:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,7 +758,7 @@ void
 prefetch_abort_handler(trapframe_t *tf)
 {
 	struct lwp *l;
-	struct pcb *pcb;
+	struct pcb *pcb __diagused;
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
 	ksiginfo_t ksi;
