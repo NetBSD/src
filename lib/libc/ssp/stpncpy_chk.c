@@ -1,4 +1,4 @@
-/*	$NetBSD: stpncpy_chk.c,v 1.1 2013/11/06 16:31:08 christos Exp $	*/
+/*	$NetBSD: stpncpy_chk.c,v 1.2 2013/11/06 16:58:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stpncpy_chk.c,v 1.1 2013/11/06 16:31:08 christos Exp $");
+__RCSID("$NetBSD: stpncpy_chk.c,v 1.2 2013/11/06 16:58:58 christos Exp $");
 
 /*LINTLIBRARY*/
 
@@ -37,6 +37,10 @@ __RCSID("$NetBSD: stpncpy_chk.c,v 1.1 2013/11/06 16:31:08 christos Exp $");
 #include <string.h>
 
 #undef stpncpy
+
+#if !__GNUC_PREREQ__(4, 8)
+char *__stpncpy_chk(char * __restrict, const char * __restrict, size_t, size_t);
+#endif
 
 char *
 __stpncpy_chk(char * __restrict dst, const char * __restrict src, size_t len,
