@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.89 2013/10/09 17:18:23 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.90 2013/11/06 14:52:25 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.89 2013/10/09 17:18:23 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.90 2013/11/06 14:52:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -823,6 +823,13 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+#if 0
+	/* XXX
+	 * turns out some firmware doesn't turn these back on when needed
+	 * so we need to turn them off only when mapping vram in
+	 * WSDISPLAYIO_MODE_DUMB would overlap ( unlikely but far from
+	 * impossible )
+	 */ 
 	if (use_mmio) {
 		/*
 		 * Now that we took over, turn off the aperture registers if we 
@@ -835,6 +842,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		reg |= BUS_APER_REG_DIS;
 		regw(sc, BUS_CNTL, reg);
 	}
+#endif
 	config_found_ia(self, "drm", aux, machfb_drm_print);
 }
 
@@ -1928,80 +1936,55 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct mach64_softc *sc = vd->cookie;
 	paddr_t pa;
-#if 0
-	pcireg_t reg;
-#endif	
-#ifndef __sparc64__
-	/* 
-	 *'regular' framebuffer mmap()ing 
-	 * disabled on sparc64 because some ATI firmware likes to map some PCI
-	 * resources to addresses that would collide with this ( like some Rage 
-	 * IIc which uses 0x2000 for the 2nd register block )
-	 * Other 64bit architectures might run into similar problems.
-	 */
-	if (offset < (sc->memsize * 1024)) {
-		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase, offset, 
-		    prot, BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
-#endif
-	/*
-	 * restrict all other mappings to processes with superuser privileges
-	 * or the kernel itself
-	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
-	    NULL, NULL, NULL, NULL) != 0) {
-		return -1;
-	}
-#if 0
-	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);
-	if (reg != sc->sc_regbase) {
-#ifdef DIAGNOSTIC
-		printf("%s: BAR 0x18 changed! (%x %x)\n", 
-		    device_xname(sc->sc_dev), (uint32_t)sc->sc_regbase, 
-		    (uint32_t)reg);
-#endif
-		sc->sc_regbase = reg;
-	}
 
-	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x10) & 0xffffff00);
-	if (reg != sc->sc_aperbase) {
-#ifdef DIAGNOSTIC
-		printf("%s: BAR 0x10 changed! (%x %x)\n", 
-		    device_xname(sc->sc_dev), (uint32_t)sc->sc_aperbase, 
-		    (uint32_t)reg);
-#endif
-		sc->sc_aperbase = reg;
-	}
-#endif
-	if ((offset >= sc->sc_aperbase) && 
-	    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
+	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
+		/* 
+		 *'regular' framebuffer mmap()ing 
+		 */
+		if (offset < (sc->memsize * 1024)) {
+			pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase,
+			    offset, prot, BUS_SPACE_MAP_LINEAR);
+			return pa;
+		}
+	} else if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) {
+		/*
+		 * restrict all other mappings to processes with superuser
+		 * privileges
+		 */
+		if (kauth_authorize_machdep(kauth_cred_get(),
+		    KAUTH_MACHDEP_UNMANAGEDMEM,
+		    NULL, NULL, NULL, NULL) != 0) {
+			return -1;
+		}
+		if ((offset >= sc->sc_aperbase) && 
+		    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR);
+			return pa;
+		}
 
-	if ((offset >= sc->sc_regbase) && 
-	    (offset < (sc->sc_regbase + sc->sc_regsize))) {
-		pa = bus_space_mmap(sc->sc_regt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
+		if ((offset >= sc->sc_regbase) && 
+		    (offset < (sc->sc_regbase + sc->sc_regsize))) {
+			pa = bus_space_mmap(sc->sc_regt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR);
+			return pa;
+		}
 
-	if ((offset >= sc->sc_rom.vb_base) && 
-	    (offset < (sc->sc_rom.vb_base + sc->sc_rom.vb_size))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
+		if ((offset >= sc->sc_rom.vb_base) && 
+		    (offset < (sc->sc_rom.vb_base + sc->sc_rom.vb_size))) {
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			    BUS_SPACE_MAP_LINEAR);
+			return pa;
+		}
 
 #ifdef PCI_MAGIC_IO_RANGE
-	if ((offset >= PCI_MAGIC_IO_RANGE) &&
-	    (offset <= PCI_MAGIC_IO_RANGE + 0x10000)) {
-	    	return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
-	    	   0, prot, 0);
-	}
+		if ((offset >= PCI_MAGIC_IO_RANGE) &&
+		    (offset <= PCI_MAGIC_IO_RANGE + 0x10000)) {
+		    	return bus_space_mmap(sc->sc_iot,
+		    	   offset - PCI_MAGIC_IO_RANGE, 0, prot, 0);
+		}
 #endif
+	}
 	return -1;
 }
 
