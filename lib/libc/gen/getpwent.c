@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.77 2010/03/23 20:28:59 drochner Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.77.8.1 2013/11/07 20:38:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.77 2010/03/23 20:28:59 drochner Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.77.8.1 2013/11/07 20:38:43 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1224,7 +1224,7 @@ _nis_parse(const char *entry, struct passwd *pw, char *buf, size_t buflen,
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(state != NULL);
 
-	elen = strlen(entry);
+	elen = strlen(entry) + 1;
 	if (elen >= buflen)
 		return 0;
 	if (! _pw_parse(entry, pw, buf, buflen,
@@ -1242,10 +1242,14 @@ _nis_parse(const char *entry, struct passwd *pw, char *buf, size_t buflen,
 			char	*bp, *ep;
 						/* skip name to get password */
 			ep = data;
-			if ((bp = strsep(&ep, ":")) != NULL &&
+			if (strsep(&ep, ":") != NULL &&
 			    (bp = strsep(&ep, ":")) != NULL) {
 					/* store new pw_passwd after entry */
-				strlcpy(buf + elen, bp, buflen - elen);
+				if (strlcpy(buf + elen, bp, buflen - elen) >=
+				    buflen - elen) {
+					free(data);
+					return 0;
+				}
 				pw->pw_passwd = &buf[elen];
 			}
 			free(data);
