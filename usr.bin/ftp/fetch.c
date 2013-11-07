@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.204 2013/11/03 14:45:50 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.205 2013/11/07 02:06:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.204 2013/11/03 14:45:50 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.205 2013/11/07 02:06:51 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1263,7 +1263,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					/* transfer file or chunk */
 		while (1) {
 			struct timeval then, now, td;
-			off_t bufrem;
+			volatile off_t bufrem;
 
 			if (rate_get)
 				(void)gettimeofday(&then, NULL);
