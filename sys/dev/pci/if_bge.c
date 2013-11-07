@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.263 2013/11/07 18:44:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.264 2013/11/07 18:45:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.263 2013/11/07 18:44:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.264 2013/11/07 18:45:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3724,7 +3724,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->bge_dmatag = pa->pa_dmat;
 
-#if 0
 	/* 40bit DMA workaround */
 	if (sizeof(bus_addr_t) > 4) {
 		if ((sc->bge_flags & BGEF_40BIT_BUG) != 0) {
@@ -3740,7 +3739,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 			}
 		}
 	}
-#endif
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &sc->bge_ring_seg, 1,
