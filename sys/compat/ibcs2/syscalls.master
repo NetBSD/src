@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2013/06/26 16:29:41 christos Exp $
+	$NetBSD: syscalls.master,v 1.41 2013/11/07 19:37:18 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -102,7 +102,7 @@
 39	STD		{ int|ibcs2_sys||pgrpsys(int type, void *dummy, \
 			    int pid, int pgid); }
 40	UNIMPL		ibcs2_xenix
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	STD		{ int|ibcs2_sys||times(struct tms *tp); }
 44	UNIMPL		profil

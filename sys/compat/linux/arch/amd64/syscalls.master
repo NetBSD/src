@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2013/09/24 13:27:49 njoly Exp $
+	$NetBSD: syscalls.master,v 1.44 2013/11/07 19:37:18 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -127,8 +127,8 @@
 30	UNIMPL		shmat
 31	UNIMPL		shmctl
 #endif
-32	NOARGS		{ int|sys||dup(u_int fd); }
-33	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+32	NOARGS		{ int|sys||dup(int fd); }
+33	NOARGS		{ int|sys||dup2(int from, int to); }
 34	STD		{ int|linux_sys||pause(void); }
 35	STD		{ int|linux_sys||nanosleep( \
 			    const struct linux_timespec *rqtp, \

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2013/09/24 13:27:50 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.56 2013/11/07 19:37:19 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -129,7 +129,7 @@
 			    const char *to); }
 39	NOARGS		{ int|sys||mkdir(const char *path, int mode); }
 40	NOARGS		{ int|sys||rmdir(const char *path); }
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	STD		{ int|linux_sys||pipe(int *pfds); }
 43	STD		{ int|linux_sys||times(struct times *tms); }
 44	OBSOL		prof
@@ -154,7 +154,7 @@
 60	NOARGS		{ int|sys||umask(int newmask); }
 61	NOARGS		{ int|sys||chroot(char *path); }
 62	UNIMPL		ustat
-63	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+63	NOARGS		{ int|sys||dup2(int from, int to); }
 64	NOARGS		{ pid_t|sys||getppid(void); }
 65	NOARGS		{ int|sys||getpgrp(void); }
 66	NOARGS		{ int|sys||setsid(void); }
