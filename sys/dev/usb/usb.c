@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.146 2013/10/18 19:54:56 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.147 2013/11/07 06:54:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.146 2013/10/18 19:54:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.147 2013/11/07 06:54:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -181,11 +181,9 @@ usb_attach(device_t parent, device_t self, void *aux)
 {
 	static ONCE_DECL(init_control);
 	struct usb_softc *sc = device_private(self);
-	bool mpsafe;
 	int usbrev;
 
 	sc->sc_bus = aux;
-	mpsafe = sc->sc_bus->methods->get_lock ? true : false;
 	usbrev = sc->sc_bus->usbrev;
 
 	aprint_naive("\n");
@@ -203,8 +201,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* XXX we should have our own level */
-	sc->sc_bus->soft = softint_establish(
-	    SOFTINT_NET | (mpsafe ? SOFTINT_MPSAFE : 0),
+	sc->sc_bus->soft = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    usb_soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		aprint_error("%s: can't register softintr\n",
@@ -213,10 +210,8 @@ usb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (mpsafe)
-		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
-	else
-		sc->sc_bus->lock = NULL;
+	sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
+	KASSERT(sc->sc_bus->lock != NULL);
 
 	RUN_ONCE(&init_control, usb_once_init);
 	config_interrupts(self, usb_doattach);
@@ -332,8 +327,7 @@ usb_create_event_thread(device_t self)
 {
 	struct usb_softc *sc = device_private(self);
 
-	if (kthread_create(PRI_NONE,
-	    sc->sc_bus->lock ? KTHREAD_MPSAFE : 0, NULL,
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE , NULL,
 	    usb_event_thread, sc, &sc->sc_event_thread,
 	    "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
@@ -396,36 +390,27 @@ usb_event_thread(void *arg)
 	usb_delay_ms(sc->sc_bus, 500);
 
 	/* Make sure first discover does something. */
-	if (sc->sc_bus->lock)
-		mutex_enter(sc->sc_bus->lock);
+	mutex_enter(sc->sc_bus->lock);
 	sc->sc_bus->needs_explore = 1;
 	usb_discover(sc);
-	if (sc->sc_bus->lock)
-		mutex_exit(sc->sc_bus->lock);
+	mutex_exit(sc->sc_bus->lock);
 	config_pending_decr(sc->sc_bus->usbctl);
 
-	if (sc->sc_bus->lock)
-		mutex_enter(sc->sc_bus->lock);
+	mutex_enter(sc->sc_bus->lock);
 	while (!sc->sc_dying) {
 		if (usb_noexplore < 2)
 			usb_discover(sc);
 
-		if (sc->sc_bus->lock)
-			cv_timedwait(&sc->sc_bus->needs_explore_cv,
-			    sc->sc_bus->lock, usb_noexplore ? 0 : hz * 60);
-		else
-			(void)tsleep(&sc->sc_bus->needs_explore, /* XXXSMP ok */
-			    PWAIT, "usbevt", usb_noexplore ? 0 : hz * 60);
+		cv_timedwait(&sc->sc_bus->needs_explore_cv,
+		    sc->sc_bus->lock, usb_noexplore ? 0 : hz * 60);
+
 		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
 	sc->sc_event_thread = NULL;
 
 	/* In case parent is waiting for us to exit. */
-	if (sc->sc_bus->lock) {
-		cv_signal(&sc->sc_bus->needs_explore_cv);
-		mutex_exit(sc->sc_bus->lock);
-	} else
-		wakeup(sc);	/* XXXSMP ok */
+	cv_signal(&sc->sc_bus->needs_explore_cv);
+	mutex_exit(sc->sc_bus->lock);
 
 	DPRINTF(("usb_event_thread: exit\n"));
 	kthread_exit(0);
@@ -817,7 +802,7 @@ Static void
 usb_discover(struct usb_softc *sc)
 {
 
-	KASSERT(sc->sc_bus->lock == NULL || mutex_owned(sc->sc_bus->lock));
+	KASSERT(mutex_owned(sc->sc_bus->lock));
 
 	DPRINTFN(2,("usb_discover\n"));
 	if (usb_noexplore > 1)
@@ -827,15 +812,13 @@ usb_discover(struct usb_softc *sc)
 	 * but this is guaranteed since this function is only called
 	 * from the event thread for the controller.
 	 *
-	 * Also, we now have sc_bus->lock held for MPSAFE controllers.
+	 * Also, we now have sc_bus->lock held.
 	 */
 	while (sc->sc_bus->needs_explore && !sc->sc_dying) {
 		sc->sc_bus->needs_explore = 0;
-		if (sc->sc_bus->lock)
-			mutex_exit(sc->sc_bus->lock);
+		mutex_exit(sc->sc_bus->lock);
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
-		if (sc->sc_bus->lock)
-			mutex_enter(sc->sc_bus->lock);
+		mutex_enter(sc->sc_bus->lock);
 	}
 }
 
@@ -843,29 +826,21 @@ void
 usb_needs_explore(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_explore\n"));
-	if (dev->bus->lock)
-		mutex_enter(dev->bus->lock);
+	mutex_enter(dev->bus->lock);
 	dev->bus->needs_explore = 1;
-	if (dev->bus->lock) {
-		cv_signal(&dev->bus->needs_explore_cv);
-		mutex_exit(dev->bus->lock);
-	} else
-		wakeup(&dev->bus->needs_explore);	/* XXXSMP ok */
+	cv_signal(&dev->bus->needs_explore_cv);
+	mutex_exit(dev->bus->lock);
 }
 
 void
 usb_needs_reattach(usbd_device_handle dev)
 {
 	DPRINTFN(2,("usb_needs_reattach\n"));
-	if (dev->bus->lock)
-		mutex_enter(dev->bus->lock);
+	mutex_enter(dev->bus->lock);
 	dev->powersrc->reattach = 1;
 	dev->bus->needs_explore = 1;
-	if (dev->bus->lock) {
-		cv_signal(&dev->bus->needs_explore_cv);
-		mutex_exit(dev->bus->lock);
-	} else
-		wakeup(&dev->bus->needs_explore);	/* XXXSMP ok */
+	cv_signal(&dev->bus->needs_explore_cv);
+	mutex_exit(dev->bus->lock);
 }
 
 /* Called at with usb_event_lock held. */
@@ -973,11 +948,9 @@ usb_soft_intr(void *arg)
 {
 	usbd_bus_handle bus = arg;
 
-	if (bus->lock)
-		mutex_enter(bus->lock);
+	mutex_enter(bus->lock);
 	(*bus->methods->soft_intr)(bus);
-	if (bus->lock)
-		mutex_exit(bus->lock);
+	mutex_exit(bus->lock);
 }
 
 void
@@ -1042,16 +1015,11 @@ usb_detach(device_t self, int flags)
 	/* Kill off event thread. */
 	sc->sc_dying = 1;
 	while (sc->sc_event_thread != NULL) {
-		if (sc->sc_bus->lock) {
-			mutex_enter(sc->sc_bus->lock);
-			cv_signal(&sc->sc_bus->needs_explore_cv);
-			cv_timedwait(&sc->sc_bus->needs_explore_cv,
-			    sc->sc_bus->lock, hz * 60);
-			mutex_exit(sc->sc_bus->lock);
-		} else {
-			wakeup(&sc->sc_bus->needs_explore);	/* XXXSMP ok */
-			tsleep(sc, PWAIT, "usbdet", hz * 60);	/* XXXSMP ok */
-		}
+		mutex_enter(sc->sc_bus->lock);
+		cv_signal(&sc->sc_bus->needs_explore_cv);
+		cv_timedwait(&sc->sc_bus->needs_explore_cv,
+		    sc->sc_bus->lock, hz * 60);
+		mutex_exit(sc->sc_bus->lock);
 	}
 	DPRINTF(("usb_detach: event thread dead\n"));
 
