@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.152 2013/09/13 21:05:02 martin Exp $ */
+/*	$NetBSD: if_gre.c,v 1.153 2013/11/07 21:44:48 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.152 2013/09/13 21:05:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.153 2013/11/07 21:44:48 christos Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -412,7 +412,6 @@ gre_upcall_remove(struct socket *so)
 static int
 gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 {
-	const struct protosw *pr;
 	int fd, rc;
 	struct mbuf *m;
 	struct sockaddr *sa;
@@ -459,8 +458,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	m = NULL;
 
 	/* XXX convert to a (new) SOL_SOCKET call */
-  	pr = so->so_proto;
-  	KASSERT(pr != NULL);
+  	KASSERT(so->so_proto != NULL);
  	rc = so_setsockopt(curlwp, so, IPPROTO_IP, IP_TTL,
 	    &ip_gre_ttl, sizeof(ip_gre_ttl));
   	if (rc != 0) {
