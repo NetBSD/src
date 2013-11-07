@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.13 2011/09/24 10:49:13 jym Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.14 2013/11/07 18:17:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.13 2011/09/24 10:49:13 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.14 2013/11/07 18:17:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,66 @@ p3_get_bus_clock(struct cpu_info *ci)
 		default:
 			aprint_debug("%s: unknown i686 EBL_CR_POWERON "
 			    "value %d ", device_xname(ci->ci_dev), bus);
+			goto print_msr;
+		}
+		break;
+	case 0x1c: /* Atom */
+	case 0x26:
+	case 0x27:
+	case 0x35:
+	case 0x36:
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 7:
+			bus_clock =  8333;
+			break;
+		case 5:
+			bus_clock = 10000;
+			break;
+		case 1:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 16667;
+			break;
+		default:
+			aprint_debug("%s: unknown Atom FSB_FREQ value %d",
+			    device_xname(ci->ci_dev), bus);
+			goto print_msr;
+		}
+		break;
+	case 0x37: /* Silvermont */
+	case 0x4d:
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 4:
+			bus_clock =  8000;
+			break;
+		case 0:
+			bus_clock =  8333;
+			break;
+		case 1:
+			bus_clock = 10000;
+			break;
+		case 2:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 16667;
+			break;
+		default:
+			aprint_debug("%s: unknown Silvermont FSB_FREQ value %d",
+			    device_xname(ci->ci_dev), bus);
 			goto print_msr;
 		}
 		break;
