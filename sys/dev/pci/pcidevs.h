@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1155 2013/11/07 14:33:33 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1156 2013/11/07 18:44:09 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2563,6 +2563,15 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_1	0x0887		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6235	0x088e		/* Centrino Advanced-N 6235 */
+#define	PCI_PRODUCT_INTEL_X1000_SDIO_EMMC	0x08a7		/* Quark X1000 SDIO/eMMC */
+#define	PCI_PRODUCT_INTEL_X1000_I2C_GPIO	0x0934		/* Quark X1000 I2C and GPIO */
+#define	PCI_PRODUCT_INTEL_X1000_SPI	0x0935		/* Quark X1000 SPI */
+#define	PCI_PRODUCT_INTEL_X1000_HS_UART	0x0936		/* Quark X1000 HS-UART */
+#define	PCI_PRODUCT_INTEL_X1000_MAC	0x0937		/* Quark X1000 10/100 Ethernet MAC */
+#define	PCI_PRODUCT_INTEL_X1000_EHCI	0x0939		/* Quark X1000 EHCI */
+#define	PCI_PRODUCT_INTEL_X1000_OHCI	0x093a		/* Quark X1000 OHCI */
+#define	PCI_PRODUCT_INTEL_X1000_HB	0x0958		/* Quark X1000 Host Bridge */
+#define	PCI_PRODUCT_INTEL_X1000_LB	0x095e		/* Quark X1000 Legacy Bridge */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1	0x0a02		/* HD Graphics */
@@ -2732,6 +2741,8 @@
 #define	PCI_PRODUCT_INTEL_82815_FULL_GRAPH	0x1132		/* 82815 Graphics */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1161		/* 82806AA PCI64 Hub Advanced Programmable Interrupt Controller */
 #define	PCI_PRODUCT_INTEL_ADI_BECC	0x1162		/* ADI i80200 Big Endian Companion Chip */
+#define	PCI_PRODUCT_INTEL_X1000_PCIE_0	0x11c3		/* Quark X1000 PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_X1000_PCIE_1	0x11c4		/* Quark X1000 PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_IXP1200	0x1200		/* IXP1200 Network Processor */
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE Controller */
