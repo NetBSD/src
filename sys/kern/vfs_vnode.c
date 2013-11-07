@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.24 2013/11/03 08:33:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.25 2013/11/07 09:48:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.24 2013/11/03 08:33:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.25 2013/11/07 09:48:34 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -143,8 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.24 2013/11/03 08:33:00 hannken Exp $
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
 
-#define	DOCLOSE		0x0008		/* vclean: close active files */
-
 /* Flags to vrelel. */
 #define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
 
@@ -170,6 +168,7 @@ static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
 
 static int		cleanvnode(void);
+static void		vclean(vnode_t *);
 static void		vrelel(vnode_t *, int);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
@@ -324,7 +323,7 @@ try_nextlist:
 	 * before doing this.
 	 */
 	vp->v_usecount = 1;
-	vclean(vp, DOCLOSE);
+	vclean(vp);
 	vrelel(vp, 0);
 	fstrans_done(mp);
 
@@ -751,7 +750,7 @@ retry:
 		 * otherwise just free it.
 		 */
 		if (recycle) {
-			vclean(vp, DOCLOSE);
+			vclean(vp);
 		}
 		KASSERT(vp->v_usecount > 0);
 	}
@@ -928,11 +927,11 @@ holdrelel(vnode_t *vp)
  *
  * Must be called with the interlock held, and will return with it held.
  */
-void
-vclean(vnode_t *vp, int flags)
+static void
+vclean(vnode_t *vp)
 {
 	lwp_t *l = curlwp;
-	bool recycle, active, make_anon;
+	bool recycle, active, doclose;
 	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -966,10 +965,8 @@ vclean(vnode_t *vp, int flags)
 	mutex_exit(vp->v_interlock);
 	VOP_LOCK(vp, LK_EXCLUSIVE);
 
-	make_anon = (active && vp->v_type == VBLK &&
+	doclose = ! (active && vp->v_type == VBLK &&
 	    spec_node_getmountedfs(vp) != NULL);
-	if (make_anon)
-		flags &= ~DOCLOSE;
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -977,11 +974,9 @@ vclean(vnode_t *vp, int flags)
 	 * deactivated before being reclaimed. Note that the
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
-	if (flags & DOCLOSE) {
+	if (doclose) {
 		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 		if (error != 0) {
-			/* XXX, fix vn_start_write's grab of mp and use that. */
-
 			if (wapbl_vphaswapbl(vp))
 				WAPBL_DISCARD(wapbl_vptomp(vp));
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
@@ -1022,23 +1017,22 @@ vclean(vnode_t *vp, int flags)
 	 * The vnode isn't clean, but still resides on the mount list.  Remove
 	 * it. XXX This is a bit dodgy.
 	 */
-	if (make_anon)
+	if (! doclose)
 		vfs_insmntque(vp, NULL);
 
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
-	if (make_anon) {
-		vp->v_op = spec_vnodeop_p;
-	} else {
+	if (doclose) {
 		vp->v_op = dead_vnodeop_p;
+		vp->v_vflag |= VV_LOCKSWORK;
+		vp->v_iflag |= VI_CLEAN;
+	} else {
+		vp->v_op = spec_vnodeop_p;
+		vp->v_vflag &= ~VV_LOCKSWORK;
 	}
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~VI_XLOCK;
-	vp->v_vflag &= ~VV_LOCKSWORK;
-	if ((flags & DOCLOSE) != 0) {
-		vp->v_iflag |= VI_CLEAN;
-	}
 	cv_broadcast(&vp->v_cv);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
@@ -1064,7 +1058,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp)
 	}
 	vremfree(vp);
 	vp->v_usecount = 1;
-	vclean(vp, DOCLOSE);
+	vclean(vp);
 	vrelel(vp, 0);
 	return 1;
 }
@@ -1088,7 +1082,7 @@ vrevoke(vnode_t *vp)
 		return;
 	} else if (vp->v_type != VBLK && vp->v_type != VCHR) {
 		atomic_inc_uint(&vp->v_usecount);
-		vclean(vp, DOCLOSE);
+		vclean(vp);
 		vrelel(vp, 0);
 		return;
 	} else {
@@ -1099,7 +1093,7 @@ vrevoke(vnode_t *vp)
 
 	while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
 		mutex_enter(vq->v_interlock);
-		vclean(vq, DOCLOSE);
+		vclean(vq);
 		vrelel(vq, 0);
 	}
 }
@@ -1113,7 +1107,7 @@ vgone(vnode_t *vp)
 {
 
 	mutex_enter(vp->v_interlock);
-	vclean(vp, DOCLOSE);
+	vclean(vp);
 	vrelel(vp, 0);
 }
 
