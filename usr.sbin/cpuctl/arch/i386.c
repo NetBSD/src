@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.47 2013/10/30 08:42:16 mrg Exp $	*/
+/*	$NetBSD: i386.c,v 1.48 2013/11/07 18:18:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.47 2013/10/30 08:42:16 mrg Exp $");
+__RCSID("$NetBSD: i386.c,v 1.48 2013/11/07 18:18:59 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -342,18 +342,19 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x2a] = "Xeon E3-12xx, 2nd gen i7, i5, "
 					 "i3 2xxx",
 				[0x2c] = "Xeon 36xx & 56xx, i7, i5 and i3",
-				[0x2d] = "Xeon E5 Sandy bridy family",
+				[0x2d] = "Xeon E5 Sandy Bridy family, "
+					 "Core i7-39xx Extreme",
 				[0x2e] = "Xeon 75xx & 65xx",
 				[0x2f] = "Xeon E7 family",
 				[0x35] = "Atom Family",
 				[0x36] = "Atom S1000",
 				[0x37] = "Atom C2000, E3000",
 				[0x3a] = "Xeon E3-1200v2 and 3rd gen core, "
-					 "Ivy bridge",
+					 "Ivy Bridge",
 				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
 				[0x3d] = "Next gen Core",
-				[0x3e] = "Next gen Xeon E5/E7, Ivy bridge",
+				[0x3e] = "Xeon E5/E7, Ivy Bridge-EP",
 				[0x3f] = "Future gen Xeon",
 				[0x45] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
