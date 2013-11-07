@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1154 2013/09/14 20:29:54 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1155 2013/11/07 14:33:33 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1162 2013/09/14 20:26:51 soren Exp
+ *	NetBSD: pcidevs,v 1.1163 2013/11/07 14:33:09 msaitoh Exp
  */
 
 /*
@@ -2565,6 +2565,23 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6235	0x088e		/* Centrino Advanced-N 6235 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1	0x0a02		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_HOST_DRAM	0x0a04		/* Core 4G (mobile) Host Bridge, DRAM */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1	0x0a06		/* HD Graphics (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1	0x0a0a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_1	0x0a0b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MINI_HDA	0x0a0c		/* Core 4G (mobile) Mini HD audio */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_2	0x0a0e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT2	0x0a12		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT2	0x0a16		/* HD Graphics (GT2) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT2	0x0a1a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_1	0x0a1b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_2	0x0a1e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT3	0x0a22		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT3	0x0a26		/* HD Graphics 5000 (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
 #define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
@@ -3531,6 +3548,37 @@
 #define	PCI_PRODUCT_INTEL_C224_LPC	0x8c54		/* C224 LPC */
 #define	PCI_PRODUCT_INTEL_C226_LPC	0x8c56		/* C226 LPC */
 #define	PCI_PRODUCT_INTEL_H81_LPC	0x8c5c		/* H81 LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_AHCI	0x9c03		/* Core 4G (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_1	0x9c05		/* Core 4G (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_2	0x9c07		/* Core 4G (mobile) SATA Controller (RAID) Premium */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_RAID_3	0x9c0f		/* Core 4G (mobile) SATA Controller (RAID) Premium */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_1	0x9c10		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_2	0x9c12		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_3	0x9c14		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_4	0x9c16		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_5	0x9c18		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_PCIE_6	0x9c1a		/* Core 4G (mobile) PCIE */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_HDA	0x9c20		/* Core 4G (mobile) HD Audio */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SMB	0x9c22		/* Core 4G (mobile) SMBus */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_THERM	0x9c24		/* Core 4G (mobile) Thermal */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_EHCI	0x9c26		/* Core 4G (mobile) USB EHCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_XHCI	0x9c31		/* Core 4G (mobile) USB xHCI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SDIO	0x9c35		/* Core 4G (mobile) SDIO */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_SSOUND	0x9c36		/* Core 4G (mobile) Smart Sound */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MEI_1	0x9c3a		/* Core 4G (mobile) MEI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_MEI_2	0x9c3b		/* Core 4G (mobile) MEI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_IDE_R	0x9c3c		/* Core 4G (mobile) IDE-R */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_KT	0x9c3d		/* Core 4G (mobile) KT */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_1	0x9c41		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_2	0x9c43		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_LPC_3	0x9c45		/* Core 4G (mobile) LPC */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_DMA	0x9c60		/* Core 4G (mobile) Serial I/O DMA */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_I2C_0	0x9c61		/* Core 4G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_I2C_1	0x9c62		/* Core 4G (mobile) Serial I/O I2C */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_UART_0	0x9c63		/* Core 4G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_UART_1	0x9c64		/* Core 4G (mobile) Serial I/O UART */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_0	0x9c65		/* Core 4G (mobile) Serial I/O GSPI */
+#define	PCI_PRODUCT_INTEL_CORE4G_M_S_GSPI_1	0x9c66		/* Core 4G (mobile) Serial I/O GSPI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
