@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.57 2013/10/29 10:06:07 sborrill Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.58 2013/11/07 20:43:44 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -944,4 +944,30 @@ sys/ufs/ffs/ffs_alloc.c				1.144 via patch
 	new directory.  Avoids excessive I/O scanning for a suitable
 	cylinder group on relatively full file systems.
 	[bad, ticket #978]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.58
+
+	Fix a dom0 panic, or crash with a hypervisor panic, when creating
+	some domUs (domUs where the frontend driver doesn't provide a
+	"protocol" entry in the xenstore).
+	[bouyer, ticket #974]
+
+libexec/ld.elf_so/tls.c				1.9
+tests/lib/libc/tls/dso/h_tls_dlopen.c		1.5
+
+	Only initialise TLS space from the PT_TLS segment, if the size is
+	positive and the offset has been computed. Fixes PR lib/48324.
+	[joerg, ticket #976]
+
+sys/arch/x86/x86/x86_autoconf.c			1.67
+
+	If we have both wedge and partition info, use the partition info
+	in the wedge case too.
+	[msaitoh, ticket #977]
+
+lib/libc/gen/getpwent.c				1.79
+
+	PR/46279: Fix an off-by-one in buffer length check and make sure
+	that the password fits in the supplied buffer.
+	[christos, ticket #979]
 
