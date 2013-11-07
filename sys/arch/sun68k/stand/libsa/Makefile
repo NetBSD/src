@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.30 2013/11/07 00:43:15 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2013/11/07 19:52:56 christos Exp $
 
 # Logically src/sys
+.include <bsd.own.mk>
 S!= cd ${.CURDIR}/../../../..; pwd
 DIR_SA=${S}/lib/libsa
 DIR_KERN=${S}/lib/libkern ${S}/lib/libkern/arch/m68k
@@ -12,8 +13,15 @@ DIR_LIBC=${S}/../common/lib/libc
 CPUFLAGS=	# ignore settings in /etc/mk.conf
 DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${S}/arch
-AFLAGS= -Wa,-m68020 -Wa,-m68851
-CFLAGS= -m68020 ${AFLAGS} -msoft-float
+AFLAGS= -Wa,-mc68020 -Wa,-mc68851
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+# gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
+# which works for -march=68010 but breaks for -mcpu=68010
+CFLAGS= -march=68010
+.else
+CFLAGS= -mc68000 -Wa,-mc68010
+.endif
+CFLAGS+= -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
