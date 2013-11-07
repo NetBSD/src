@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2013/08/12 16:34:05 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2013/11/07 00:43:15 christos Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -18,7 +18,7 @@ RELOC?= 240000
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
-CPUFLAGS= -mc68000 -Wa,-mc68010
+CPUFLAGS= -m68020 -Wa,-mc68020
 COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CFLAGS= -msoft-float
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
