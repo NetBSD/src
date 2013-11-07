@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.136 2013/11/07 01:47:59 joerg Exp $
+# $NetBSD: HACKS,v 1.137 2013/11/07 21:33:59 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -586,6 +586,19 @@ port	sh3
 		-fno-loop-optimize.
 	kcah
 
+	hack	gcc4.8.1
+	cdate	Thu Nov  7 16:31:23 EST 2013
+	who	christos
+	file	src/sys/rump/net/lib/libnetbt/Makefile	: 1.2
+	desrc
+		compile l2cap_signal.c with -O0 to avoid:
+		./netbt/l2cap_signal.c:36:
+		/p/netbsd/cvsroot/src/sys/rump/net/lib/libnetbt/../../../../\
+		netbt/l2cap_signal.c: In function 'l2cap_recv_signal':
+		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
+		impossible reload
+		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
+	kcah
 
 port	m68000
 
