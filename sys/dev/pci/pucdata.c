@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.86 2013/09/04 17:38:37 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.87 2013/11/07 15:55:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.86 2013/09/04 17:38:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.87 2013/11/07 15:55:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1800,6 +1800,15 @@ const struct puc_device_description puc_devices[] = {
 	/* Intel C600/X79 Series KT */
 	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Core 4G (mobile) KT */
+	{   "Intel Core 4G (mobile) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
