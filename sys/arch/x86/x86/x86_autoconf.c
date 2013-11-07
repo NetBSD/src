@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.62.8.3 2012/08/08 15:51:08 martin Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.62.8.4 2013/11/07 20:35:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62.8.3 2012/08/08 15:51:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62.8.4 2013/11/07 20:35:16 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,10 @@ findroot(void)
 			return;
 	}
 
-	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
+	bid = lookup_bootinfo(BTINFO_BOOTDISK);
+	biw = lookup_bootinfo(BTINFO_BOOTWEDGE);
+
+	if (biw != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple
@@ -382,7 +385,7 @@ findroot(void)
 				continue;
 			}
 			booted_device = dv;
-			booted_partition = 0;
+			booted_partition = bid != NULL ? bid->partition : 0;
 			booted_nblks = biw->nblks;
 			booted_startblk = biw->startblk;
 		}
@@ -392,7 +395,7 @@ findroot(void)
 			return;
 	}
 
-	if ((bid = lookup_bootinfo(BTINFO_BOOTDISK)) != NULL) {
+	if (bid != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple
