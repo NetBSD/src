@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1163 2013/11/07 14:33:09 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1164 2013/11/07 18:44:09 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2556,6 +2556,15 @@ product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL WIFI_LINK_2230_1	0x0887	Centrino Wireless-N 2230
 product INTEL WIFI_LINK_2230_2	0x0888	Centrino Wireless-N 2230
 product INTEL WIFI_LINK_6235	0x088e	Centrino Advanced-N 6235
+product INTEL X1000_SDIO_EMMC	0x08a7	Quark X1000 SDIO/eMMC
+product INTEL X1000_I2C_GPIO	0x0934	Quark X1000 I2C and GPIO
+product INTEL X1000_SPI		0x0935	Quark X1000 SPI
+product INTEL X1000_HS_UART	0x0936	Quark X1000 HS-UART
+product INTEL X1000_MAC		0x0937	Quark X1000 10/100 Ethernet MAC
+product INTEL X1000_EHCI	0x0939	Quark X1000 EHCI
+product INTEL X1000_OHCI	0x093a	Quark X1000 OHCI
+product INTEL X1000_HB		0x0958	Quark X1000 Host Bridge
+product INTEL X1000_LB		0x095e	Quark X1000 Legacy Bridge
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL CORE4G_D_ULT_GT1	0x0a02	HD Graphics
@@ -2725,6 +2734,8 @@ product INTEL 82815_FULL_AGP	0x1131	82815 AGP
 product INTEL 82815_FULL_GRAPH	0x1132	82815 Graphics
 product INTEL 82806AA		0x1161	82806AA PCI64 Hub Advanced Programmable Interrupt Controller
 product INTEL ADI_BECC		0x1162	ADI i80200 Big Endian Companion Chip
+product INTEL X1000_PCIE_0	0x11c3  Quark X1000 PCIe Root Port
+product INTEL X1000_PCIE_1	0x11c4  Quark X1000 PCIe Root Port
 product INTEL IXP1200		0x1200	IXP1200 Network Processor
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE Controller
