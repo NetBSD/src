@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.48 2013/11/07 18:18:59 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.49 2013/11/07 18:59:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.48 2013/11/07 18:18:59 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.49 2013/11/07 18:59:01 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -342,7 +342,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x2a] = "Xeon E3-12xx, 2nd gen i7, i5, "
 					 "i3 2xxx",
 				[0x2c] = "Xeon 36xx & 56xx, i7, i5 and i3",
-				[0x2d] = "Xeon E5 Sandy Bridy family, "
+				[0x2d] = "Xeon E5 Sandy Bridge family, "
 					 "Core i7-39xx Extreme",
 				[0x2e] = "Xeon 75xx & 65xx",
 				[0x2f] = "Xeon E7 family",
