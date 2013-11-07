@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.5 2011/07/01 23:47:09 matt Exp $	*/
+/*	$NetBSD: fixup.c,v 1.6 2013/11/07 15:26:36 nisimura Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.5 2011/07/01 23:47:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.6 2013/11/07 15:26:36 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -104,7 +104,9 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 		register_t fixreg[32];
 		register_t ctr = 0;
 		uint32_t valid_mask = (1 << 1);
+#ifdef DIAGNOSTIC
 		int r_lr = -1;
+#endif
 		for (; stub < stub_end && fixup.jfi_real == 0; stub++) {
 			const union instr i = { .i_int = *stub };
 
@@ -120,9 +122,9 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
 #ifdef DIAGNOSTIC
 					const u_int spr = (rb << 5) | ra;
 					KASSERT(spr == SPR_LR);
+					r_lr = rs;
 #endif
 					valid_mask |= (1 << rs);
-					r_lr = rs;
 					break;
 				}
 				case OPC31_MTSPR: {
