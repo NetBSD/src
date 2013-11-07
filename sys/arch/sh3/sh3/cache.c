@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.16 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: cache.c,v 1.17 2013/11/07 21:45:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.16 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.17 2013/11/07 21:45:04 christos Exp $");
 
 #include "opt_cache.h"
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
@@ -167,6 +167,7 @@ __cache_flush(void)
 		d = *p;
 		p += 4;	/* next line index (16B) */
 	}
+	__USE(d);
 
 	/* Flush I-Cache */
 	/*
