@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.39 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.40 2013/11/07 17:50:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.39 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.40 2013/11/07 17:50:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ dvma_mapout(void *dma, int len)
 	vaddr_t seg_dma;
 	vsize_t seg_len, seg_off;
 	vaddr_t v, x;
-	int sme;
+	int sme __diagused;
 	int s;
 
 	/* Get seg-aligned address and length. */
@@ -292,7 +292,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	vsize_t off, sgsize;
 	paddr_t pa;
 	pmap_t pmap;
-	int error, rv, s;
+	int error, rv __diagused, s;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -356,7 +356,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_dma_segment_t *segs;
 	vaddr_t dva;
 	vsize_t sgsize;
-	int error, s;
+	int error __diagused, s;
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)
