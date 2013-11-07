@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.72 2011/02/01 20:19:32 chuck Exp $	*/
+/*	$NetBSD: xy.c,v 1.73 2013/11/07 17:50:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72 2011/02/01 20:19:32 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.73 2013/11/07 17:50:18 christos Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1241,7 +1241,6 @@ xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
 int 
 xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
-	int partno;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
 	u_long  block;
@@ -1255,8 +1254,8 @@ xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 	if (bp == NULL)
 		panic("%s null buf", __func__);
 
-	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
+	int partno = DISKPART(bp->b_dev);
 	printf("%s: %s%c: %s block %d\n", __func__, device_xname(xysc->sc_dev),
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write",
 	    (int)bp->b_blkno);
