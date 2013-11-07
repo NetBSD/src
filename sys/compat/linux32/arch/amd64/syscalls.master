@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 2012/07/13 18:21:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.63 2013/11/07 19:37:19 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -113,7 +113,7 @@
 		    netbsd32_charp to); }
 39	NOARGS	{ int|netbsd32||mkdir(netbsd32_charp path, int mode); }
 40	NOARGS	{ int|netbsd32||rmdir(netbsd32_charp path); }
-41	NOARGS	{ int|netbsd32||dup(u_int fd); }
+41	NOARGS	{ int|netbsd32||dup(int fd); }
 42	STD	{ int|linux32_sys||pipe(netbsd32_intp fd); }
 43	STD	{ int|linux32_sys||times(linux32_tmsp_t tms); }
 44	OBSOL	prof
