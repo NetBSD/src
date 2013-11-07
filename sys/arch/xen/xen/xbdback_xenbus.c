@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.55.2.1 2012/06/05 15:36:00 jdc Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.55.2.2 2013/11/07 20:16:48 snj Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.55.2.1 2012/06/05 15:36:00 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.55.2.2 2013/11/07 20:16:48 snj Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -531,6 +531,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	const char *proto;
 	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
 
+	XENPRINTF(("xbdback %s: connect\n", xbusd->xbusd_path));
 	/* read comunication informations */
 	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 	    "ring-ref", &ring_ref, 10);
@@ -539,6 +540,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		    xbusd->xbusd_otherend);
 		return -1;
 	}
+	XENPRINTF(("xbdback %s: connect ring-ref %lu\n", xbusd->xbusd_path, ring_ref));
 	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 	    "event-channel", &revtchn, 10);
 	if (err) {
@@ -546,12 +548,15 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		    xbusd->xbusd_otherend);
 		return -1;
 	}
+	XENPRINTF(("xbdback %s: connect revtchn %lu\n", xbusd->xbusd_path, revtchn));
 	err = xenbus_read(NULL, xbusd->xbusd_otherend, "protocol",
 	    &len, &xsproto);
 	if (err) {
 		xbdi->xbdi_proto = XBDIP_NATIVE;
 		proto = "unspecified";
+		XENPRINTF(("xbdback %s: connect no xsproto\n", xbusd->xbusd_path));
 	} else {
+		XENPRINTF(("xbdback %s: connect xsproto %s\n", xbusd->xbusd_path, xsproto));
 		if (strcmp(xsproto, XEN_IO_PROTO_ABI_NATIVE) == 0) {
 			xbdi->xbdi_proto = XBDIP_NATIVE;
 			proto = XEN_IO_PROTO_ABI_NATIVE;
@@ -567,8 +572,8 @@ xbdback_connect(struct xbdback_instance *xbdi)
 			free(xsproto, M_DEVBUF);
 			return -1;
 		}
+		free(xsproto, M_DEVBUF);
 	}
-	free(xsproto, M_DEVBUF);
 
 	/* allocate VA space and map rings */
 	xbdi->xbdi_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -578,6 +583,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		    "can't get VA for ring", xbusd->xbusd_otherend);
 		return -1;
 	}
+	XENPRINTF(("xbdback %s: connect va 0x%" PRIxVADDR "\n", xbusd->xbusd_path, xbdi->xbdi_ring_va));
 
 	grop.host_addr = xbdi->xbdi_ring_va;
 	grop.flags = GNTMAP_host_map;
@@ -593,6 +599,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		goto err;
 	}
 	xbdi->xbdi_ring_handle = grop.handle;
+	XENPRINTF(("xbdback %s: connect grhandle %d\n", xbusd->xbusd_path, grop.handle));
 
 	switch(xbdi->xbdi_proto) {
 	case XBDIP_NATIVE:
@@ -627,6 +634,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 		    "can't bind event channel", xbusd->xbusd_otherend);
 		goto err2;
 	}
+	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
 	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
@@ -766,6 +774,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		xbdi->xbdi_ro = false;
 	else
 		xbdi->xbdi_ro = true;
+	free(mode, M_DEVBUF);
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {
