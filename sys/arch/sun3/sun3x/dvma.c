@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.42 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.43 2013/11/07 02:37:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.42 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.43 2013/11/07 02:37:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	int npf, s, error;
 	paddr_t pa;
 	long off;
-	bool rv;
+	bool rv __debugused;
 
 	kva = (vaddr_t)kmem_va;
 #ifdef	DIAGNOSTIC
@@ -304,7 +304,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	vsize_t off, sgsize;
 	paddr_t pa;
 	pmap_t pmap;
-	int error, rv, s;
+	int error, rv __diagused, s;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -369,7 +369,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_dma_segment_t *segs;
 	vaddr_t dva;
 	vsize_t sgsize;
-	int error, s;
+	int error __diagused, s;
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)
