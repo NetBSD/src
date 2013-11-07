@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.134 2013/07/24 11:45:48 skrll Exp $
+# $NetBSD: HACKS,v 1.135 2013/11/07 01:43:08 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -607,6 +607,17 @@ port	m68000
 		This might be related with GCC Bugzilla Bug 32424.
 	kcah
 
+port	m68k,sh3
+
+	hack	gcc-4.8.1
+	cdate	Wed Nov  6 20:41:35 EST 2013
+	who	christos
+	file	src/external/gpl3/gcc/libstdc++/Makefile
+	descr
+		compile hashtable_c++0x.cc with -O2 instead of -Os to
+		produce missing instantiation of std::lower_bound expansion
+		for unsigned long.
+	kcah
 
 port	sparc
 
