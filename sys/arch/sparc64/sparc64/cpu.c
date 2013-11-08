@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104 2013/08/20 19:19:23 macallan Exp $ */
+/*	$NetBSD: cpu.c,v 1.105 2013/11/08 15:44:26 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2013/08/20 19:19:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2013/11/08 15:44:26 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -92,7 +92,6 @@ static struct cpu_info *alloc_cpuinfo(u_int);
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
-extern char machine_model[];
 
 /* These are used in locore.s, and are maximums */
 int	dcache_line_size;
