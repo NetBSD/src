@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.18 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.19 2013/11/08 00:38:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ nl_ext_t *	npf_ext_construct(const char *name);
 void		npf_ext_param_u32(nl_ext_t *, const char *, uint32_t);
 void		npf_ext_param_bool(nl_ext_t *, const char *, bool);
 
-nl_rule_t *	npf_rule_create(const char *, uint32_t, u_int);
+nl_rule_t *	npf_rule_create(const char *, uint32_t, const char *);
 int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
 int		npf_rule_setprio(nl_rule_t *, pri_t);
 int		npf_rule_setproc(nl_rule_t *, const char *);
@@ -104,7 +104,8 @@ int		npf_rproc_extcall(nl_rproc_t *, nl_ext_t *);
 bool		npf_rproc_exists_p(nl_config_t *, const char *);
 int		npf_rproc_insert(nl_config_t *, nl_rproc_t *);
 
-nl_nat_t *	npf_nat_create(int, u_int, u_int, npf_addr_t *, int, in_port_t);
+nl_nat_t *	npf_nat_create(int, u_int, const char *,
+		    npf_addr_t *, int, in_port_t);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 
 nl_table_t *	npf_table_create(u_int, int);
@@ -124,7 +125,7 @@ int		npf_sessions_recv(int, const char *);
 nl_rule_t *	npf_rule_iterate(nl_config_t *, unsigned *);
 const char *	npf_rule_getname(nl_rule_t *);
 uint32_t	npf_rule_getattr(nl_rule_t *);
-unsigned	npf_rule_getinterface(nl_rule_t *);
+const char *	npf_rule_getinterface(nl_rule_t *);
 const void *	npf_rule_getinfo(nl_rule_t *, size_t *);
 const char *	npf_rule_getproc(nl_rule_t *);
 
@@ -142,7 +143,7 @@ const char *	npf_rproc_getname(nl_rproc_t *);
 void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);
 int		_npf_ruleset_list(int, const char *, nl_config_t *);
-void		_npf_debug_addif(nl_config_t *, struct ifaddrs *, u_int);
+void		_npf_debug_addif(nl_config_t *, const char *);
 
 /* The ALG interface is experimental */
 int 		_npf_alg_load(nl_config_t *, const char *);
