@@ -10,13 +10,15 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <net/if.h>
+
 void		rumpns_npf_test_init(void);
 int		rumpns_npf_test_load(const void *);
-unsigned	rumpns_npf_test_addif(const char *, unsigned, bool);
-unsigned	rumpns_npf_test_getif(const char *);
+ifnet_t *	rumpns_npf_test_addif(const char *, bool, bool);
+ifnet_t *	rumpns_npf_test_getif(const char *);
 
 int		rumpns_npf_test_statetrack(const void *, size_t,
-		    unsigned, bool, int64_t *);
+		    ifnet_t *, bool, int64_t *);
 void		rumpns_npf_test_conc(bool, unsigned);
 
 bool		rumpns_npf_nbuf_test(bool);
@@ -27,6 +29,6 @@ bool		rumpns_npf_state_test(bool);
 bool		rumpns_npf_rule_test(bool);
 bool		rumpns_npf_nat_test(bool);
 
-int		process_stream(const char *, const char *, unsigned);
+int		process_stream(const char *, const char *, ifnet_t *);
 
 #endif

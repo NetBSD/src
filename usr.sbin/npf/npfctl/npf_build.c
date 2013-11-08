@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.27 2013/09/20 03:03:52 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.28 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.27 2013/09/20 03:03:52 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.28 2013/11/08 00:38:26 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -109,22 +109,17 @@ npfctl_rule_ref(void)
 	return the_rule;
 }
 
-unsigned long
+bool
 npfctl_debug_addif(const char *ifname)
 {
-	char tname[] = "npftest";
+	const char tname[] = "npftest";
 	const size_t tnamelen = sizeof(tname) - 1;
 
-	if (!npf_debug || strncmp(ifname, tname, tnamelen) != 0) {
-		return 0;
+	if (npf_debug) {
+		_npf_debug_addif(npf_conf, ifname);
+		return strncmp(ifname, tname, tnamelen) == 0;
 	}
-	struct ifaddrs ifa = {
-		.ifa_name = __UNCONST(ifname),
-		.ifa_flags = 0
-	};
-	unsigned long if_idx = atol(ifname + tnamelen) + 1;
-	_npf_debug_addif(npf_conf, &ifa, if_idx);
-	return if_idx;
+	return 0;
 }
 
 bool
@@ -417,7 +412,7 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 }
 
 void
-npfctl_build_maprset(const char *name, int attr, u_int if_idx)
+npfctl_build_maprset(const char *name, int attr, const char *ifname)
 {
 	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
 	nl_rule_t *rl;
@@ -428,7 +423,7 @@ npfctl_build_maprset(const char *name, int attr, u_int if_idx)
 	}
 	/* Allow only "in/out" attributes. */
 	attr = NPF_RULE_GROUP | NPF_RULE_GROUP | (attr & attr_di);
-	rl = npf_rule_create(name, attr, if_idx);
+	rl = npf_rule_create(name, attr, ifname);
 	npf_nat_insert(npf_conf, rl, NPF_PRI_LAST);
 }
 
@@ -437,7 +432,7 @@ npfctl_build_maprset(const char *name, int attr, u_int if_idx)
  * update the current group pointer and increase the nesting level.
  */
 void
-npfctl_build_group(const char *name, int attr, u_int if_idx, bool def)
+npfctl_build_group(const char *name, int attr, const char *ifname, bool def)
 {
 	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
 	nl_rule_t *rl;
@@ -446,7 +441,7 @@ npfctl_build_group(const char *name, int attr, u_int if_idx, bool def)
 		attr |= attr_di;
 	}
 
-	rl = npf_rule_create(name, attr | NPF_RULE_GROUP, if_idx);
+	rl = npf_rule_create(name, attr | NPF_RULE_GROUP, ifname);
 	npf_rule_setprio(rl, NPF_PRI_LAST);
 	if (def) {
 		if (defgroup) {
@@ -480,7 +475,7 @@ npfctl_build_group_end(void)
  * if any, and insert into the ruleset of current group, or set the rule.
  */
 void
-npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
+npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
     const opt_proto_t *op, const filt_opts_t *fopts,
     const char *pcap_filter, const char *rproc)
 {
@@ -488,7 +483,7 @@ npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 
-	rl = npf_rule_create(NULL, attr, if_idx);
+	rl = npf_rule_create(NULL, attr, ifname);
 	if (pcap_filter) {
 		npfctl_build_pcap(rl, pcap_filter);
 	} else {
@@ -519,7 +514,7 @@ npfctl_build_rule(uint32_t attr, u_int if_idx, sa_family_t family,
  * type with a given filter options.
  */
 static void
-npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
+npfctl_build_nat(int type, const char *ifname, sa_family_t family,
     const addr_port_t *ap, const filt_opts_t *fopts, bool binat)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
@@ -545,7 +540,7 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
 		 */
 		nat = npf_nat_create(NPF_NATOUT, !binat ?
 		    (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0,
-		    if_idx, &am->fam_addr, am->fam_family, 0);
+		    ifname, &am->fam_addr, am->fam_family, 0);
 		break;
 	case NPF_NATIN:
 		/*
@@ -560,7 +555,7 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
 			port = npfctl_get_singleport(ap->ap_portrange);
 		}
 		nat = npf_nat_create(NPF_NATIN, !binat ? NPF_NAT_PORTS : 0,
-		    if_idx, &am->fam_addr, am->fam_family, port);
+		    ifname, &am->fam_addr, am->fam_family, port);
 		break;
 	default:
 		assert(false);
@@ -574,8 +569,9 @@ npfctl_build_nat(int type, u_int if_idx, sa_family_t family,
  * npfctl_build_natseg: validate and create NAT policies.
  */
 void
-npfctl_build_natseg(int sd, int type, u_int if_idx, const addr_port_t *ap1,
-    const addr_port_t *ap2, const filt_opts_t *fopts)
+npfctl_build_natseg(int sd, int type, const char *ifname,
+    const addr_port_t *ap1, const addr_port_t *ap2,
+    const filt_opts_t *fopts)
 {
 	sa_family_t af = AF_INET;
 	filt_opts_t imfopts;
@@ -585,7 +581,7 @@ npfctl_build_natseg(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 		yyerror("static NAT is not yet supported");
 	}
 	assert(sd == NPFCTL_NAT_DYNAMIC);
-	assert(if_idx != 0);
+	assert(ifname != NULL);
 
 	/*
 	 * Bi-directional NAT is a combination of inbound NAT and outbound
@@ -607,12 +603,12 @@ npfctl_build_natseg(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATIN, if_idx, af, ap1, fopts, binat);
+		npfctl_build_nat(NPF_NATIN, ifname, af, ap1, fopts, binat);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
-		npfctl_build_nat(NPF_NATOUT, if_idx, af, ap2, fopts, binat);
+		npfctl_build_nat(NPF_NATOUT, ifname, af, ap2, fopts, binat);
 	}
 }
 

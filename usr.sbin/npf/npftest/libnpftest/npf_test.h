@@ -27,6 +27,7 @@
 /* Test interfaces and IP addresses. */
 #define	IFNAME_EXT	"npftest0"
 #define	IFNAME_INT	"npftest1"
+#define	IFNAME_TEST	"npftest2"
 
 #define	LOCAL_IP1	"10.1.1.1"
 #define	LOCAL_IP2	"10.1.1.2"
@@ -40,10 +41,10 @@
 
 void		npf_test_init(void);
 int		npf_test_load(const void *);
-unsigned	npf_test_addif(const char *, unsigned, bool);
-unsigned	npf_test_getif(const char *);
+ifnet_t *	npf_test_addif(const char *, bool, bool);
+ifnet_t *	npf_test_getif(const char *);
 
-int		npf_test_statetrack(const void *, size_t, unsigned,
+int		npf_test_statetrack(const void *, size_t, ifnet_t *,
 		    bool, int64_t *);
 void		npf_test_conc(bool, unsigned);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_test.c,v 1.1 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_test.c,v 1.2 2013/11/08 00:38:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ fill_packet(int proto)
 static int
 test_bpf_code(const void *code)
 {
+	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
 	npf_cache_t npc = { .npc_info = 0 };
-	const void *dummy_ifp = (void *)0xdeadbeef;
 	struct mbuf *m;
 	nbuf_t nbuf;
 	int ret;
