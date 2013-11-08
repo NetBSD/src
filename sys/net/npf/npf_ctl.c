@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.30 2013/10/27 16:22:08 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.31 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.30 2013/10/27 16:22:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.31 2013/11/08 00:38:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -67,10 +67,10 @@ npfctl_switch(void *data)
 
 	if (onoff) {
 		/* Enable: add pfil hooks. */
-		error = npf_pfil_register();
+		error = npf_pfil_register(false);
 	} else {
 		/* Disable: remove pfil hooks. */
-		npf_pfil_unregister();
+		npf_pfil_unregister(false);
 		error = 0;
 	}
 	return error;

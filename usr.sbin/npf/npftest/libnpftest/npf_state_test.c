@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_test.c,v 1.4 2012/12/24 19:05:49 rmind Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.5 2013/11/08 00:38:27 rmind Exp $	*/
 
 /*
  * NPF state tracking test.
@@ -133,6 +133,7 @@ construct_packet(const tcp_meta_t *p)
 static bool
 process_packet(const int i, npf_state_t *nst, bool *snew)
 {
+	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
 	const tcp_meta_t *p = &packet_sequence[i];
 	npf_cache_t npc = { .npc_info = 0 };
 	nbuf_t nbuf;
@@ -144,7 +145,6 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 		return true;
 	}
 
-	const void *dummy_ifp = (void *)0xdeadbeef;
 	nbuf_init(&nbuf, construct_packet(p), dummy_ifp);
 	ret = npf_cache_all(&npc, &nbuf);
 	KASSERT((ret & NPC_IPFRAG) == 0);

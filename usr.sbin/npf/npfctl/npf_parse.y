@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.26 2013/09/20 03:03:52 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.27 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -156,9 +156,8 @@ yyerror(const char *fmt, ...)
 %token	<str>		VAR_ID
 
 %type	<str>		addr, some_name, list_elem, table_store, string
-%type	<str>		proc_param_val, opt_apply
-%type	<num>		ifindex, port, opt_final, on_ifindex, number
-%type	<num>		afamily, opt_family
+%type	<str>		proc_param_val, opt_apply, ifname, on_ifname
+%type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
 %type	<var>		ifnet, addr_or_ifnet, port_range, icmp_type_and_code
@@ -306,17 +305,17 @@ mapseg
 	;
 
 map
-	: MAP ifindex map_sd mapseg map_type mapseg PASS filt_opts
+	: MAP ifname map_sd mapseg map_type mapseg PASS filt_opts
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, &$8);
 	}
-	| MAP ifindex map_sd mapseg map_type mapseg
+	| MAP ifname map_sd mapseg map_type mapseg
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
 	| MAP RULESET group_opts
 	{
-		npfctl_build_maprset($3.rg_name, $3.rg_attr, $3.rg_ifnum);
+		npfctl_build_maprset($3.rg_name, $3.rg_attr, $3.rg_ifname);
 	}
 	;
 
@@ -389,7 +388,7 @@ group
 	{
 		/* Build a group.  Increases the nesting level. */
 		npfctl_build_group($2.rg_name, $2.rg_attr,
-		    $2.rg_ifnum, $2.rg_default);
+		    $2.rg_ifname, $2.rg_default);
 	}
 	  ruleset_block
 	{
@@ -403,7 +402,7 @@ ruleset
 	{
 		/* Ruleset is a dynamic group. */
 		npfctl_build_group($2.rg_name, $2.rg_attr | NPF_RULE_DYNAMIC,
-		    $2.rg_ifnum, $2.rg_default);
+		    $2.rg_ifname, $2.rg_default);
 		npfctl_build_group_end();
 	}
 	;
@@ -419,12 +418,12 @@ group_opts
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_default = true;
 	}
-	| STRING group_dir on_ifindex
+	| STRING group_dir on_ifname
 	{
 		memset(&$$, 0, sizeof(rule_group_t));
 		$$.rg_name = $1;
 		$$.rg_attr = $2;
-		$$.rg_ifnum = $3;
+		$$.rg_ifname = $3;
 	}
 	;
 
@@ -445,13 +444,13 @@ rule_group
 	;
 
 rule
-	: block_or_pass opt_stateful rule_dir opt_final on_ifindex
+	: block_or_pass opt_stateful rule_dir opt_final on_ifname
 	  opt_family opt_proto all_or_filt_opts opt_apply
 	{
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
 		    $6, &$7, &$8, NULL, $9);
 	}
-	| block_or_pass opt_stateful rule_dir opt_final on_ifindex
+	| block_or_pass opt_stateful rule_dir opt_final on_ifname
 	  PCAP_FILTER STRING opt_apply
 	{
 		npfctl_build_rule($1 | $2 | $3 | $4, $5,
@@ -475,9 +474,9 @@ opt_final
 	|			{ $$ = 0; }
 	;
 
-on_ifindex
-	: ON ifindex		{ $$ = $2; }
-	|			{ $$ = 0; }
+on_ifname
+	: ON ifname		{ $$ = $2; }
+	|			{ $$ = NULL; }
 	;
 
 afamily
@@ -758,15 +757,17 @@ ifnet
 	}
 	;
 
-ifindex
+ifname
 	: some_name
 	{
-		$$ = npfctl_find_ifindex($1);
+		npfctl_note_interface($1);
+		$$ = $1;
 	}
 	| ifnet
 	{
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
-		$$ = ifna->ifna_index;
+		npfctl_note_interface(ifna->ifna_name);
+		$$ = ifna->ifna_name;
 	}
 	| VAR_ID
 	{
@@ -777,11 +778,11 @@ ifindex
 		switch (type) {
 		case NPFVAR_STRING:
 		case NPFVAR_IDENTIFIER:
-			$$ = npfctl_find_ifindex(npfvar_expand_string(vp));
+			$$ = npfvar_expand_string(vp);
 			break;
 		case NPFVAR_INTERFACE:
 			ifna = npfvar_get_data(vp, type, 0);
-			$$ = ifna->ifna_index;
+			$$ = ifna->ifna_name;
 			break;
 		case -1:
 			yyerror("undefined variable '%s' for interface", $1);
@@ -791,6 +792,7 @@ ifindex
 			    $1, npfvar_type(type));
 			break;
 		}
+		npfctl_note_interface($$);
 	}
 	;
 

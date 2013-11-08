@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.17 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.18 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.17 2013/09/19 01:04:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.18 2013/11/08 00:38:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -97,6 +97,7 @@ npf_init(void)
 	npf_ext_sysinit();
 
 	/* Load empty configuration. */
+	npf_pfil_register(true);
 	npf_config_init();
 
 #ifdef _MODULE
@@ -117,7 +118,7 @@ npf_fini(void)
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npf_pfil_unregister();
+	npf_pfil_unregister(true);
 
 	/* Flush all sessions, destroy configuration (ruleset, etc). */
 	npf_session_tracking(false);
