@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.105 2013/11/01 15:38:45 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.106 2013/11/08 15:44:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.105 2013/11/01 15:38:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.106 2013/11/08 15:44:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -710,9 +710,9 @@ tmpfs_remove(void *v)
 	 * Note: the inode referred by it will not be destroyed
 	 * until the vnode is reclaimed/recycled.
 	 */
-	tmpfs_dir_detach(dvp, de);
+	tmpfs_dir_detach(dnode, de);
 	if (ap->a_cnp->cn_flags & DOWHITEOUT)
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
+		tmpfs_dir_attach(dnode, de, TMPFS_NODE_WHITEOUT);
 	else
 		tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
 
@@ -747,7 +747,7 @@ tmpfs_link(void *v)
 	vnode_t *dvp = ap->a_dvp;
 	vnode_t *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	tmpfs_node_t *node;
+	tmpfs_node_t *dnode, *node;
 	tmpfs_dirent_t *de;
 	int error;
 
@@ -756,6 +756,7 @@ tmpfs_link(void *v)
 	KASSERT(vp->v_type != VDIR);
 	KASSERT(dvp->v_mount == vp->v_mount);
 
+	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -780,11 +781,11 @@ tmpfs_link(void *v)
 		goto out;
 	}
 
-	/* 
+	/*
 	 * Insert the entry into the directory.
 	 * It will increase the inode link count.
 	 */
-	tmpfs_dir_attach(dvp, de, node);
+	tmpfs_dir_attach(dnode, de, node);
 
 	/* Update the timestamps and trigger the event. */
 	if (node->tn_vnode) {
@@ -872,7 +873,7 @@ tmpfs_rmdir(void *v)
 	node->tn_status |= TMPFS_NODE_STATUSALL;
 
 	/* Detach the directory entry from the directory. */
-	tmpfs_dir_detach(dvp, de);
+	tmpfs_dir_detach(dnode, de);
 
 	/* Purge the cache for parent. */
 	cache_purge(dvp);
@@ -883,14 +884,14 @@ tmpfs_rmdir(void *v)
 	 * until the vnode is reclaimed.
 	 */
 	if (ap->a_cnp->cn_flags & DOWHITEOUT)
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
+		tmpfs_dir_attach(dnode, de, TMPFS_NODE_WHITEOUT);
 	else
 		tmpfs_free_dirent(tmp, de);
 
 	/* Destroy the whiteout entries from the node. */
 	while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
 		KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
-		tmpfs_dir_detach(vp, de);
+		tmpfs_dir_detach(node, de);
 		tmpfs_free_dirent(tmp, de);
 	}
 
@@ -951,68 +952,49 @@ tmpfs_readdir(void *v)
 	node = VP_TO_TMPFS_DIR(vp);
 	startoff = uio->uio_offset;
 	cnt = 0;
-	if (node->tn_links == 0) {
+
+	/*
+	 * Retrieve the directory entries, unless it is being destroyed.
+	 */
+	if (node->tn_links) {
+		error = tmpfs_dir_getdents(node, uio, &cnt);
+	} else {
 		error = 0;
-		goto out;
 	}
 
-	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOT) {
-		error = tmpfs_dir_getdotdent(node, uio);
-		if (error != 0) {
-			if (error == -1)
-				error = 0;
-			goto out;
-		}
-		cnt++;
-	}
-	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT) {
-		error = tmpfs_dir_getdotdotdent(node, uio);
-		if (error != 0) {
-			if (error == -1)
-				error = 0;
-			goto out;
-		}
-		cnt++;
-	}
-	error = tmpfs_dir_getdents(node, uio, &cnt);
-	if (error == -1) {
-		error = 0;
-	}
-	KASSERT(error >= 0);
-out:
 	if (eofflag != NULL) {
-		*eofflag = (!error && uio->uio_offset == TMPFS_DIRCOOKIE_EOF);
+		*eofflag = !error && uio->uio_offset == TMPFS_DIRSEQ_EOF;
 	}
 	if (error || cookies == NULL || ncookies == NULL) {
 		return error;
 	}
 
 	/* Update NFS-related variables, if any. */
-	off_t i, off = startoff;
 	tmpfs_dirent_t *de = NULL;
+	off_t i, off = startoff;
 
 	*cookies = malloc(cnt * sizeof(off_t), M_TEMP, M_WAITOK);
 	*ncookies = cnt;
 
 	for (i = 0; i < cnt; i++) {
-		KASSERT(off != TMPFS_DIRCOOKIE_EOF);
-		if (off != TMPFS_DIRCOOKIE_DOT) {
-			if (off == TMPFS_DIRCOOKIE_DOTDOT) {
+		KASSERT(off != TMPFS_DIRSEQ_EOF);
+		if (off != TMPFS_DIRSEQ_DOT) {
+			if (off == TMPFS_DIRSEQ_DOTDOT) {
 				de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			} else if (de != NULL) {
 				de = TAILQ_NEXT(de, td_entries);
 			} else {
-				de = tmpfs_dir_lookupbycookie(node, off);
+				de = tmpfs_dir_lookupbyseq(node, off);
 				KASSERT(de != NULL);
 				de = TAILQ_NEXT(de, td_entries);
 			}
 			if (de == NULL) {
-				off = TMPFS_DIRCOOKIE_EOF;
+				off = TMPFS_DIRSEQ_EOF;
 			} else {
-				off = tmpfs_dircookie(de);
+				off = tmpfs_dir_getseq(node, de);
 			}
 		} else {
-			off = TMPFS_DIRCOOKIE_DOTDOT;
+			off = TMPFS_DIRSEQ_DOTDOT;
 		}
 		(*cookies)[i] = off;
 	}
@@ -1284,6 +1266,7 @@ tmpfs_whiteout(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	const int flags = ap->a_flags;
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
+	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 	tmpfs_dirent_t *de;
 	int error;
 
@@ -1295,14 +1278,14 @@ tmpfs_whiteout(void *v)
 		    cnp->cn_namelen, &de);
 		if (error)
 			return error;
-		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
+		tmpfs_dir_attach(dnode, de, TMPFS_NODE_WHITEOUT);
 		break;
 	case DELETE:
 		cnp->cn_flags &= ~DOWHITEOUT; /* when in doubt, cargo cult */
-		de = tmpfs_dir_lookup(VP_TO_TMPFS_DIR(dvp), cnp);
+		de = tmpfs_dir_lookup(dnode, cnp);
 		if (de == NULL)
 			return ENOENT;
-		tmpfs_dir_detach(dvp, de);
+		tmpfs_dir_detach(dnode, de);
 		tmpfs_free_dirent(tmp, de);
 		break;
 	}

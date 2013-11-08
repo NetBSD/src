@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.53 2013/11/08 15:44:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.53 2013/11/08 15:44:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,8 +205,8 @@ tmpfs_start(struct mount *mp, int flags)
 static int
 tmpfs_unmount(struct mount *mp, int mntflags)
 {
-	tmpfs_mount_t *tmp;
-	tmpfs_node_t *node;
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
+	tmpfs_node_t *node, *cnode;
 	int error, flags = 0;
 
 	/* Handle forced unmounts. */
@@ -218,25 +218,28 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	if (error != 0)
 		return error;
 
-	tmp = VFS_TO_TMPFS(mp);
+	/*
+	 * First round, detach and destroy all directory entries.
+	 * Also, clear the pointers to the vnodes - they are gone.
+	 */
+	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
+		tmpfs_dirent_t *de;
 
-	/* Destroy any existing inodes. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
-		if (node->tn_type == VDIR) {
-			tmpfs_dirent_t *de;
-
-			/* Destroy any directory entries. */
-			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-			while (de != NULL) {
-				tmpfs_dirent_t *nde;
-
-				nde = TAILQ_NEXT(de, td_entries);
-				tmpfs_free_dirent(tmp, de);
-				node->tn_size -= sizeof(tmpfs_dirent_t);
-				de = nde;
-			}
+		node->tn_vnode = NULL;
+		if (node->tn_type != VDIR) {
+			continue;
 		}
-		/* Removes inode from the list. */
+		while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
+			if ((cnode = de->td_node) != NULL) {
+				cnode->tn_vnode = NULL;
+			}
+			tmpfs_dir_detach(node, de);
+			tmpfs_free_dirent(tmp, de);
+		}
+	}
+
+	/* Second round, destroy all inodes. */
+	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
 		tmpfs_free_node(tmp, node);
 	}
 
