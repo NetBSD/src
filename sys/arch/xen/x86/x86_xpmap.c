@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.50 2013/11/06 06:23:15 mrg Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.51 2013/11/08 02:23:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.50 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.51 2013/11/08 02:23:52 christos Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -1044,6 +1044,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t) bt_cpu_pgd - KERNBASE);
 	}
 #endif
+	__USE(pdtpe);
 
 	/* Now we can safely reclaim space taken by old tables */
 	
