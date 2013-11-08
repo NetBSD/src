@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_add_32.S,v 1.6 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_add_16.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,14 +33,14 @@
 
 #ifdef _ARM_ARCH_6
 
-ENTRY_NP(_atomic_sub_32)
+ENTRY_NP(_atomic_sub_16)
 	negs	r1, r1
 	/* FALLTHROUGH */
-ENTRY_NP(_atomic_add_32)
+ENTRY_NP(_atomic_add_16)
 	mov	ip, r0
-1:	ldrex	r0, [ip]		/* load old value */
+1:	ldrexh	r0, [ip]		/* load old value */
 	adds	r3, r0, r1		/* calculate new value */
-	strex	r2, r3, [ip]		/* try to store */
+	strexh	r2, r3, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
@@ -49,35 +49,31 @@ ENTRY_NP(_atomic_add_32)
 	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return old value */
-END(_atomic_add_32)
-END(_atomic_sub_32)
+END(_atomic_add_16)
+END(_atomic_sub_16)
 
-ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_32)
-STRONG_ALIAS(__sync_fetch_and_add_4,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
+ATOMIC_OP_ALIAS(atomic_add_16,_atomic_add_16)
+ATOMIC_OP_ALIAS(atomic_add_short,_atomic_add_16)
+ATOMIC_OP_ALIAS(atomic_add_ushort,_atomic_add_16)
+STRONG_ALIAS(__sync_fetch_and_add_2,_atomic_add_16)
+STRONG_ALIAS(_atomic_add_short,_atomic_add_16)
+STRONG_ALIAS(_atomic_add_ushort,_atomic_add_16)
 
-ATOMIC_OP_ALIAS(atomic_sub_32,_atomic_sub_32)
-ATOMIC_OP_ALIAS(atomic_sub_int,_atomic_sub_32)
-ATOMIC_OP_ALIAS(atomic_sub_long,_atomic_sub_32)
-ATOMIC_OP_ALIAS(atomic_sub_ptr,_atomic_sub_32)
-STRONG_ALIAS(__sync_fetch_and_sub_4,_atomic_sub_32)
-STRONG_ALIAS(_atomic_sub_int,_atomic_sub_32)
-STRONG_ALIAS(_atomic_sub_long,_atomic_sub_32)
-STRONG_ALIAS(_atomic_sub_ptr,_atomic_sub_32)
+ATOMIC_OP_ALIAS(atomic_sub_16,_atomic_sub_16)
+ATOMIC_OP_ALIAS(atomic_sub_short,_atomic_sub_16)
+ATOMIC_OP_ALIAS(atomic_sub_ushort,_atomic_sub_16)
+STRONG_ALIAS(__sync_fetch_and_sub_2,_atomic_sub_16)
+STRONG_ALIAS(_atomic_sub_short,_atomic_sub_16)
+STRONG_ALIAS(_atomic_sub_ushort,_atomic_sub_16)
 
-ENTRY_NP(_atomic_sub_32_nv)
+ENTRY_NP(_atomic_sub_16_nv)
 	negs	r1, r1
 	/* FALLTHROUGH */
-ENTRY_NP(_atomic_add_32_nv)
+ENTRY_NP(_atomic_add_16_nv)
 	mov	ip, r0			/* need r0 for return value */
-1:	ldrex	r0, [ip]		/* load old value */
+1:	ldrexh	r0, [ip]		/* load old value */
 	adds	r0, r0, r1		/* calculate new value (return value) */
-	strex	r2, r0, [ip]		/* try to store */
+	strexh	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
@@ -86,23 +82,19 @@ ENTRY_NP(_atomic_add_32_nv)
 	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
 #endif
 	RET				/* return new value */
-END(_atomic_add_32_nv)
-END(_atomic_sub_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_32_nv)
-STRONG_ALIAS(__sync_add_and_fetch_4,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_32_nv)
+END(_atomic_add_16_nv)
+END(_atomic_sub_16_nv)
+ATOMIC_OP_ALIAS(atomic_add_16_nv,_atomic_add_16_nv)
+ATOMIC_OP_ALIAS(atomic_add_short_nv,_atomic_add_16_nv)
+ATOMIC_OP_ALIAS(atomic_add_ushort_nv,_atomic_add_16_nv)
+STRONG_ALIAS(__sync_add_and_fetch_2,_atomic_add_16_nv)
+STRONG_ALIAS(_atomic_add_short_nv,_atomic_add_16_nv)
+STRONG_ALIAS(_atomic_add_ushort_nv,_atomic_add_16_nv)
 
-ATOMIC_OP_ALIAS(atomic_sub_32_nv,_atomic_sub_32_nv)
-ATOMIC_OP_ALIAS(atomic_sub_int_nv,_atomic_sub_32_nv)
-ATOMIC_OP_ALIAS(atomic_sub_long_nv,_atomic_sub_32_nv)
-ATOMIC_OP_ALIAS(atomic_sub_ptr_nv,_atomic_sub_32_nv)
-STRONG_ALIAS(__sync_sub_and_fetch_4,_atomic_sub_32_nv)
-STRONG_ALIAS(_atomic_sub_int_nv,_atomic_sub_32_nv)
-STRONG_ALIAS(_atomic_sub_long_nv,_atomic_sub_32_nv)
-STRONG_ALIAS(_atomic_sub_ptr_nv,_atomic_sub_32_nv)
+ATOMIC_OP_ALIAS(atomic_sub_16_nv,_atomic_sub_16_nv)
+ATOMIC_OP_ALIAS(atomic_sub_short_nv,_atomic_sub_16_nv)
+ATOMIC_OP_ALIAS(atomic_sub_ushort_nv,_atomic_sub_16_nv)
+STRONG_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
+STRONG_ALIAS(_atomic_sub_short_nv,_atomic_sub_16_nv)
+STRONG_ALIAS(_atomic_sub_ushort_nv,_atomic_sub_16_nv)
 #endif /* _ARM_ARCH_6 */
