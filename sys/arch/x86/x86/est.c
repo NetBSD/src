@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.25 2012/06/02 21:36:42 dsl Exp $	*/
+/*	$NetBSD: est.c,v 1.26 2013/11/08 01:41:45 christos Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.25 2012/06/02 21:36:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26 2013/11/08 01:41:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1121,7 +1121,6 @@ est_tables(device_t self)
 #endif
 	uint64_t msr;
 	uint16_t cur, idhi, idlo;
-	uint8_t crhi, crlo, crcur;
 	size_t len;
 	int i, mv;
 
@@ -1130,9 +1129,6 @@ est_tables(device_t self)
 	idhi = (msr >> 32) & 0xffff;
 	idlo = (msr >> 48) & 0xffff;
 	cur = msr & 0xffff;
-	crhi = (idhi  >> 8) & 0xff;
-	crlo = (idlo  >> 8) & 0xff;
-	crcur = (cur >> 8) & 0xff;
 
 #ifdef __i386__
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
@@ -1144,6 +1140,9 @@ est_tables(device_t self)
 #endif
 
 #ifdef __amd64__
+	uint8_t crhi = (idhi >> 8) & 0xff;
+	uint8_t crlo = (idlo >> 8) & 0xff;
+	uint8_t crcur = (cur >> 8) & 0xff;
 	if (crlo == 0 || crhi == 0 || crcur == 0 || crhi == crlo ||
 	    crlo > crhi || crcur < crlo || crcur > crhi) {
 		/*
