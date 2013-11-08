@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.8 2012/12/12 17:42:40 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.86 2012/04/11 13:34:17 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.9 2013/11/08 19:18:25 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.87 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.8 2012/12/12 17:42:40 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.9 2013/11/08 19:18:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -253,7 +253,7 @@ keygrab_ssh2(con *c)
 		exit(1);
 	}
 	nonfatal_fatal = 0;
-	xfree(c->c_kex);
+	free(c->c_kex);
 	c->c_kex = NULL;
 	packet_close();
 
@@ -319,7 +319,7 @@ conalloc(char *iname, char *oname, int keytype)
 	do {
 		name = xstrsep(&namelist, ",");
 		if (!name) {
-			xfree(namebase);
+			free(namebase);
 			return (-1);
 		}
 	} while ((s = tcpconnect(name)) < 0);
@@ -353,10 +353,10 @@ confree(int s)
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
 		fatal("confree: attempt to free bad fdno %d", s);
 	close(s);
-	xfree(fdcon[s].c_namebase);
-	xfree(fdcon[s].c_output_name);
+	free(fdcon[s].c_namebase);
+	free(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
-		xfree(fdcon[s].c_data);
+		free(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
 	fdcon[s].c_keytype = 0;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
@@ -543,8 +543,8 @@ conloop(void)
 		} else if (FD_ISSET(i, r))
 			conread(i);
 	}
-	xfree(r);
-	xfree(e);
+	free(r);
+	free(e);
 
 	c = TAILQ_FIRST(&tq);
 	while (c && (c->c_tv.tv_sec < now.tv_sec ||

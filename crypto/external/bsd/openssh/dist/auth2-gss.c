@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.5 2013/10/20 03:35:59 christos Exp $	*/
-/* $OpenBSD: auth2-gss.c,v 1.18 2012/12/02 20:34:09 djm Exp $ */
+/*	$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.20 2013/05/17 00:13:13 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.5 2013/10/20 03:35:59 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.6 2013/11/08 19:18:24 christos Exp $");
 
 #ifdef GSSAPI
 
@@ -81,8 +81,7 @@ userauth_gssapi(Authctxt *authctxt)
 	do {
 		mechs--;
 
-		if (doid)
-			xfree(doid);
+		free(doid);
 
 		present = 0;
 		doid = packet_get_string(&len);
@@ -101,7 +100,7 @@ userauth_gssapi(Authctxt *authctxt)
 	gss_release_oid_set(&ms, &supported);
 
 	if (!present) {
-		xfree(doid);
+		free(doid);
 		authctxt->server_caused_failure = 1;
 		return (0);
 	}
@@ -109,7 +108,7 @@ userauth_gssapi(Authctxt *authctxt)
 	if (GSS_ERROR(PRIVSEP(ssh_gssapi_server_ctx(&ctxt, &goid)))) {
 		if (ctxt != NULL)
 			ssh_gssapi_delete_ctx(&ctxt);
-		xfree(doid);
+		free(doid);
 		authctxt->server_caused_failure = 1;
 		return (0);
 	}
@@ -122,7 +121,7 @@ userauth_gssapi(Authctxt *authctxt)
 	packet_put_string(doid, len);
 
 	packet_send();
-	xfree(doid);
+	free(doid);
 
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, &input_gssapi_token);
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_ERRTOK, &input_gssapi_errtok);
@@ -153,7 +152,7 @@ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
 	maj_status = PRIVSEP(ssh_gssapi_accept_ctx(gssctxt, &recv_tok,
 	    &send_tok, &flags));
 
-	xfree(recv_tok.value);
+	free(recv_tok.value);
 
 	if (GSS_ERROR(maj_status)) {
 		if (send_tok.length != 0) {
@@ -208,7 +207,7 @@ input_gssapi_errtok(int type, u_int32_t plen, void *ctxt)
 	maj_status = PRIVSEP(ssh_gssapi_accept_ctx(gssctxt, &recv_tok,
 	    &send_tok, NULL));
 
-	xfree(recv_tok.value);
+	free(recv_tok.value);
 
 	/* We can't return anything to the client, even if we wanted to */
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
@@ -281,7 +280,7 @@ input_gssapi_mic(int type, u_int32_t plen, void *ctxt)
 		logit("GSSAPI MIC check failed");
 
 	buffer_free(&b);
-	xfree(mic.value);
+	free(mic.value);
 
 	authctxt->postponed = 0;
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);

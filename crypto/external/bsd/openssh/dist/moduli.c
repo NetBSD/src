@@ -1,5 +1,5 @@
-/*	$NetBSD: moduli.c,v 1.5 2012/12/12 17:42:39 christos Exp $	*/
-/* $OpenBSD: moduli.c,v 1.26 2012/07/06 00:41:59 dtucker Exp $ */
+/*	$NetBSD: moduli.c,v 1.6 2013/11/08 19:18:25 christos Exp $	*/
+/* $OpenBSD: moduli.c,v 1.27 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
  * Copyright 1996-1998, 2003 William Allen Simpson <wsimpson@greendragon.com>
@@ -38,7 +38,7 @@
  * Second step: test primes' safety (processor intensive)
  */
 #include "includes.h"
-__RCSID("$NetBSD: moduli.c,v 1.5 2012/12/12 17:42:39 christos Exp $");
+__RCSID("$NetBSD: moduli.c,v 1.6 2013/11/08 19:18:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -432,9 +432,9 @@ gen_candidates(FILE *out, u_int32_t memory, u_int32_t power, BIGNUM *start)
 
 	time(&time_stop);
 
-	xfree(LargeSieve);
-	xfree(SmallSieve);
-	xfree(TinySieve);
+	free(LargeSieve);
+	free(SmallSieve);
+	free(TinySieve);
 
 	logit("%.24s Found %u candidates", ctime(&time_stop), r);
 
@@ -708,7 +708,7 @@ prime_test(FILE *in, FILE *out, u_int32_t trials, u_int32_t generator_wanted,
 	}
 
 	time(&time_stop);
-	xfree(lp);
+	free(lp);
 	BN_free(p);
 	BN_free(q);
 	BN_CTX_free(ctx);
