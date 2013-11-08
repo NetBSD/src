@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.116 2013/09/24 18:23:07 jdc Exp $	*/
+/*	$NetBSD: psycho.c,v 1.117 2013/11/08 15:44:26 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.116 2013/09/24 18:23:07 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.117 2013/11/08 15:44:26 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -303,7 +303,6 @@ psycho_attach(device_t parent, device_t self, void *aux)
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
-	extern char machine_model[];
 
 	aprint_normal("\n");
 
