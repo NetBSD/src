@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.97 2013/07/17 23:27:02 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.98 2013/11/08 03:59:35 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -199,7 +199,7 @@ extern struct cpuset_info cpuset_info;
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)				\
-	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+	(void)cii, ci = curcpu(); ci != NULL; ci = NULL
 
 #endif /* MULTIPROCESSOR || _MODULE */
 
