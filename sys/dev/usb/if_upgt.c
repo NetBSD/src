@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.9 2013/03/30 03:15:53 christos Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.10 2013/11/08 03:12:17 christos Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.9 2013/03/30 03:15:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.10 2013/11/08 03:12:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1137,6 +1137,7 @@ upgt_eeprom_parse_freq3(struct upgt_softc *sc, uint8_t *data, int len)
 
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq3[i].freq), 0);
@@ -1171,6 +1172,7 @@ upgt_eeprom_parse_freq4(struct upgt_softc *sc, uint8_t *data, int len)
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
 	DPRINTF(2, "%s: settings=%d\n", device_xname(sc->sc_dev), settings);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq4_1[i].freq), 0);
