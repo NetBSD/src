@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.26 2013/11/08 01:41:45 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.27 2013/11/08 19:05:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26 2013/11/08 01:41:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.27 2013/11/08 19:05:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -534,11 +534,11 @@ static const uint16_t pm90_n725d[] = {
 
 /* Intel Pentium M processor 730 1.6 GHz, 533 MHz FSB */
 static const uint16_t pm90_n730[] = {
-       ID16(1600, 1308, BUS133),
-       ID16(1333, 1260, BUS133),
-       ID16(1200, 1212, BUS133),
-       ID16(1067, 1180, BUS133),
-       ID16( 800,  988, BUS133),
+	ID16(1600, 1308, BUS133),
+	ID16(1333, 1260, BUS133),
+	ID16(1200, 1212, BUS133),
+	ID16(1067, 1180, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #A */
@@ -583,10 +583,10 @@ static const uint16_t pm90_n735d[] = {
 
 /* Intel Pentium M processor 740 1.73 GHz, 533 MHz FSB */
 static const uint16_t pm90_n740[] = {
-       ID16(1733, 1356, BUS133),
-       ID16(1333, 1212, BUS133),
-       ID16(1067, 1100, BUS133),
-       ID16( 800,  988, BUS133),
+	ID16(1733, 1356, BUS133),
+	ID16(1333, 1212, BUS133),
+	ID16(1067, 1100, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #A */
