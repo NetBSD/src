@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.4 2012/09/27 17:40:51 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.5 2013/11/08 15:44:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.4 2012/09/27 17:40:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.5 2013/11/08 15:44:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -313,8 +313,11 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * source entry and reattach it to the target directory.
 	 */
 	if (fdvp != tdvp) {
-		tmpfs_dir_detach(fdvp, *fdep);
-		tmpfs_dir_attach(tdvp, *fdep, VP_TO_TMPFS_NODE(fvp));
+		tmpfs_node_t *fdnode = VP_TO_TMPFS_DIR(fdvp);
+		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
+
+		tmpfs_dir_detach(fdnode, *fdep);
+		tmpfs_dir_attach(tdnode, *fdep, VP_TO_TMPFS_NODE(fvp));
 	} else if (tvp == NULL) {
 		/*
 		 * We are changing the directory.  tmpfs_dir_attach and
@@ -331,6 +334,8 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * XXX What if the target is a directory with whiteout entries?
 	 */
 	if (tvp != NULL) {
+		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
+
 		KASSERT((*tdep) != NULL);
 		KASSERT((*tdep)->td_node == VP_TO_TMPFS_NODE(tvp));
 		KASSERT((fvp->v_type == VDIR) == (tvp->v_type == VDIR));
@@ -349,7 +354,7 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			 */
 			VP_TO_TMPFS_NODE(tvp)->tn_links--;
 		}
-		tmpfs_dir_detach(tdvp, *tdep);
+		tmpfs_dir_detach(tdnode, *tdep);
 		tmpfs_free_dirent(VFS_TO_TMPFS(mp), *tdep);
 	}
 
@@ -388,6 +393,7 @@ static int
 tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
 {
+	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 	struct tmpfs_dirent **dep = de;
 
 	(void)vp;
@@ -404,7 +410,7 @@ tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
-	tmpfs_dir_detach(dvp, *dep);
+	tmpfs_dir_detach(dnode, *dep);
 	tmpfs_free_dirent(VFS_TO_TMPFS(mp), *dep);
 
 	return 0;
