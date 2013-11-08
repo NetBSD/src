@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64.S,v 1.8 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: sync_bool_compare_and_swap_8.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,33 +30,44 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
-
-ENTRY_NP(_atomic_or_64_nv)
-	push	{r3,r4}			/* save temporary */
-#ifndef __ARM_EABI__
-	mov	r3, r2
-	mov	r2, r1
-#endif
-	mov	ip, r0			/* need r0 for return value */
-1:	ldrexd	r0, [ip]		/* load old value */
-	orrs	r0, r0, r2		/* calculate new value (return value) */
-	orrs	r1, r1, r3		/* calculate new value (return value) */
-	strexd	r4, r0, [ip]		/* try to store */
-	cmp	r4, #0			/*   succeed? */
-	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
+#if defined(_ARM_ARCH_6)
+/*
+ * ARMv6 has load-exclusive/store-exclusive which works for both user
+ * and kernel.
+ */
+ENTRY_NP(__sync_bool_compare_and_swap_8)
+	push	{r4-r7}			/* save temporaries */
+	mov	ip, r0			/* we need r0 for return value */
+	movs	r0, #0			/* assume failure */
+#ifdef __ARM_EABI__
+	ldrd	r4, [sp]		/* fetch new value from stack */
 #else
-	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
+	ldr	r4, [sp, #0]		/* fetch new value from stack */
+	ldr	r5, [sp, #4]		/* fetch new value from stack */
+	mov	r3, r2			/* r2 will be overwritten by r1 which ... */
+	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
-	pop	{r3,r4}			/* restore temporary */
-	RET				/* return new value */
-END(_atomic_or_64_nv)
-
-STRONG_ALIAS(_atomic_or_64,_atomic_or_64_nv)
-ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64_nv)
-ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
-STRONG_ALIAS(__sync_or_and_fetch_8,_atomic_or_64)
+1:
+	ldrexd	r6, [ip]		/* load current value */
+	cmp	r6, r2			/*   compare to old? 1st half */
+#ifdef __thumb__
+	bne	2f			/*     jump to return if different */
+	cmp	r7, r3			/*   compare to old? 2nd half */
+#else
+	cmpeq	r7, r3			/*   compare to old? 2nd half */
+#endif
+	bne	2f			/*     jump to return if different */
+	strexd	r0, r4, [ip]		/* store new value */
+	cmp	r0, #0			/*   succeed? */
+	bne	1b			/*     nope, try again. */
+	movs	r0, #1			/* indicate success */
+#ifdef _ARM_ARCH_7
+	dsb
+#else
+	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
+#endif
+2:	pop	{r4-r7}			/* restore temporaries */
+	RET				/* return. */
+END(__sync_bool_compare_and_swap_8)
 
 #endif /* _ARM_ARCH_6 */

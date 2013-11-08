@@ -1,6 +1,7 @@
-/*	$NetBSD: atomic_or_64.S,v 1.8 2013/11/08 22:42:52 matt Exp $	*/
+/* $NetBSD: sync_bool_compare_and_swap_1.S,v 1.1 2013/11/08 22:42:52 matt Exp $ */
+
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,33 +31,32 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
-
-ENTRY_NP(_atomic_or_64_nv)
-	push	{r3,r4}			/* save temporary */
-#ifndef __ARM_EABI__
-	mov	r3, r2
-	mov	r2, r1
-#endif
-	mov	ip, r0			/* need r0 for return value */
-1:	ldrexd	r0, [ip]		/* load old value */
-	orrs	r0, r0, r2		/* calculate new value (return value) */
-	orrs	r1, r1, r3		/* calculate new value (return value) */
-	strexd	r4, r0, [ip]		/* try to store */
-	cmp	r4, #0			/*   succeed? */
-	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
+#if defined(_ARM_ARCH_6)
+/*
+ * ARMv6 has load-exclusive/store-exclusive which works for both user
+ * and kernel.
+ */
+ENTRY_NP(__sync_bool_compare_and_swap_1)
+	mov	ip, r0			/* we need r0 for return value */
+	mov	r0, #0			/* assume no match */
+1:
+	ldrexb	r3, [ip]		/* load old value */
+	cmp	r3, r1			/*   compare? */
+#ifdef __thumb__
+	bne	2f
 #else
-	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
+	RETc(ne)			/*     return if different */
 #endif
-	pop	{r3,r4}			/* restore temporary */
-	RET				/* return new value */
-END(_atomic_or_64_nv)
-
-STRONG_ALIAS(_atomic_or_64,_atomic_or_64_nv)
-ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64_nv)
-ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
-STRONG_ALIAS(__sync_or_and_fetch_8,_atomic_or_64)
+	strexb	r0, r2, [ip]		/* store new value */
+	cmp	r0, #0			/*   succeed? */
+	bne	1b			/*     nope, try again. */
+	mov	r0, #1			/* it was a success */
+#ifdef _ARM_ARCH_7
+	dsb				/* data synchronization barrier */
+#else
+	mcr	p15, 0, r3, c7, c10, 4	/* data synchronization barrier */
+#endif
+2:	RET				/* return. */
+END(__sync_bool_compare_and_swap_1)
 
 #endif /* _ARM_ARCH_6 */

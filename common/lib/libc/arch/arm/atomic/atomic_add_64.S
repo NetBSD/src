@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.8 2013/08/20 07:52:31 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.9 2013/11/08 22:42:52 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,5 +57,6 @@ END(_atomic_add_64_nv)
 STRONG_ALIAS(_atomic_add_64,_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
+STRONG_ALIAS(__sync_add_and_fetch_8,_atomic_add_64_nv)
 
 #endif /* _ARM_ARCH_6 */
