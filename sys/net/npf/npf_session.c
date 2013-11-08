@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.26 2013/10/29 16:39:10 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.27 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.26 2013/10/29 16:39:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.27 2013/11/08 00:38:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ struct npf_session {
 	/* Protocol and interface (common IDs). */
 	struct npf_secomid {
 		uint16_t	proto;
-		uint16_t	if_idx;
+		uint16_t	ifid;
 	} s_common_id;
 	/* Flags and the protocol state. */
 	u_int			s_flags;
@@ -312,7 +312,7 @@ sess_hash_bucket(npf_sehash_t *stbl, const npf_secomid_t *scid,
 	const int sz = sen->se_alen;
 	uint32_t hash, mix[2];
 
-	mix[0] = (scid->proto ^ scid->if_idx) << 16;
+	mix[0] = (scid->proto ^ scid->ifid) << 16;
 	mix[0] |= sen->se_src_id ^ sen->se_dst_id;
 	mix[1] = npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
 	hash = murmurhash2(mix, sizeof(mix), sess_hash_seed);
@@ -486,7 +486,6 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
     const int di, bool *forw)
 {
 	const u_int proto = npc->npc_proto;
-	const ifnet_t *ifp = nbuf->nb_ifp;
 	npf_sentry_t senkey, *sen;
 	npf_session_t *se;
 	npf_sehash_t *sh;
@@ -506,7 +505,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	 */
 	npf_secomid_t scid;
 	memset(&scid, 0, sizeof(npf_secomid_t));
-	scid = (npf_secomid_t){ .proto = proto, .if_idx = ifp->if_index };
+	scid = (npf_secomid_t){ .proto = proto, .ifid = nbuf->nb_ifid };
 	senkey.se_common_id = &scid;
 
 	/*
@@ -527,7 +526,7 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	}
 	se = sen->se_backptr;
 	KASSERT(se->s_common_id.proto == proto);
-	KASSERT(se->s_common_id.if_idx == ifp->if_index);
+	KASSERT(se->s_common_id.ifid == nbuf->nb_ifid);
 	flags = se->s_flags;
 
 	/* Check if session is active and not expired. */
@@ -604,7 +603,6 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 npf_session_t *
 npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
-	const ifnet_t *ifp = nbuf->nb_ifp;
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
 	npf_session_t *se;
@@ -646,7 +644,7 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	/* Protocol and interface. */
 	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
 	se->s_common_id.proto = npc->npc_proto;
-	se->s_common_id.if_idx = ifp->if_index;
+	se->s_common_id.ifid = nbuf->nb_ifid;
 
 	/* Setup "forwards" entry. */
 	if (!npf_session_fillent(npc, fw)) {

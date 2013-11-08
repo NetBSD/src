@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.12 2013/09/24 02:44:20 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.13 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -75,19 +75,15 @@ result(const char *testcase, bool ok)
 static void
 load_npf_config_ifs(prop_dictionary_t dbg_dict)
 {
+	prop_array_t iflist = prop_dictionary_get(dbg_dict, "interfaces");
+	prop_object_iterator_t it = prop_array_iterator(iflist);
 	prop_dictionary_t ifdict;
-	prop_object_iterator_t it;
-	prop_array_t iflist;
 
-	iflist = prop_dictionary_get(dbg_dict, "interfaces");
-	it = prop_array_iterator(iflist);
 	while ((ifdict = prop_object_iterator_next(it)) != NULL) {
-		const char *ifname;
-		unsigned if_idx;
+		const char *ifname = NULL;
 
 		prop_dictionary_get_cstring_nocopy(ifdict, "name", &ifname);
-		prop_dictionary_get_uint32(ifdict, "idx", &if_idx);
-		(void)rumpns_npf_test_addif(ifname, if_idx, verbose);
+		(void)rumpns_npf_test_addif(ifname, true, verbose);
 	}
 	prop_object_iterator_release(it);
 }
@@ -140,7 +136,8 @@ main(int argc, char **argv)
 	bool test, ok, fail, tname_matched;
 	char *benchmark, *config, *interface, *stream, *testname;
 	unsigned nthreads = 0;
-	int idx = -1, ch;
+	ifnet_t *ifp = NULL;
+	int ch;
 
 	benchmark = NULL;
 	test = false;
@@ -224,7 +221,7 @@ main(int argc, char **argv)
 	if (config) {
 		load_npf_config(config);
 	}
-	if (interface && (idx = rumpns_npf_test_getif(interface)) == 0) {
+	if (interface && (ifp = rumpns_npf_test_getif(interface)) == 0) {
 		errx(EXIT_FAILURE, "failed to find the interface");
 	}
 
@@ -272,7 +269,7 @@ main(int argc, char **argv)
 	}
 
 	if (stream) {
-		process_stream(stream, NULL, idx);
+		process_stream(stream, NULL, ifp);
 	}
 
 	if (benchmark) {

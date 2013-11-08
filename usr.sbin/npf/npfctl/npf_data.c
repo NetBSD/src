@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.21 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.21 2013/11/08 00:38:26 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -47,7 +47,9 @@ __RCSID("$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $");
 #include <net/if.h>
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <ifaddrs.h>
@@ -57,14 +59,48 @@ __RCSID("$NetBSD: npf_data.c,v 1.20 2013/09/19 01:04:45 rmind Exp $");
 
 static struct ifaddrs *		ifs_list = NULL;
 
-unsigned long
+void
+npfctl_note_interface(const char *ifname)
+{
+	unsigned long if_idx = if_nametoindex(ifname);
+	bool testif = npfctl_debug_addif(ifname);
+	const char *p = ifname;
+
+	/* If such interface exists or if it is a test interface - done. */
+	if (if_idx || testif) {
+		return;
+	}
+
+	/*
+	 * Minimum sanity check.  The interface name shall be non-empty
+	 * string shorter than IFNAMSIZ and alphanumeric only.
+	 */
+	if (*p == '\0') {
+		goto invalid;
+	}
+	while (*p) {
+		const size_t len = (ptrdiff_t)p - (ptrdiff_t)ifname;
+
+		if (!isalnum((unsigned char)*p) || len > IFNAMSIZ) {
+invalid:		yyerror("illegitimate interface name '%s'", ifname);
+		}
+		p++;
+	}
+
+	/* Throw a warning, so that the user could double check. */
+	warnx("warning - unknown interface '%s'", ifname);
+}
+
+static unsigned long
 npfctl_find_ifindex(const char *ifname)
 {
 	unsigned long if_idx = if_nametoindex(ifname);
+	bool testif = npfctl_debug_addif(ifname);
 
 	if (!if_idx) {
-		if ((if_idx = npfctl_debug_addif(ifname)) != 0) {
-			return if_idx;
+		if (testif) {
+			static u_int dummy_if_idx = (1 << 15);
+			return ++dummy_if_idx;
 		}
 		yyerror("unknown interface '%s'", ifname);
 	}
@@ -284,6 +320,7 @@ npfctl_parse_ifnet(const char *ifname, const int family)
 	}
 
 	vpa = npfvar_create(".ifaddrs");
+	ifna.ifna_name = estrdup(ifname);
 	ifna.ifna_addrs = vpa;
 	ifna.ifna_index = npfctl_find_ifindex(ifname);
 	assert(ifna.ifna_index != 0);

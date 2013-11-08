@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.5 2013/09/24 02:04:21 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.6 2013/11/08 00:38:27 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -33,30 +33,37 @@ npf_test_load(const void *xml)
 	return npfctl_reload(0, npf_dict);
 }
 
-unsigned
-npf_test_addif(const char *ifname, unsigned if_idx, bool verbose)
+ifnet_t *
+npf_test_addif(const char *ifname, bool reg, bool verbose)
 {
 	ifnet_t *ifp = if_alloc(IFT_OTHER);
 
 	/*
 	 * This is a "fake" interface with explicitly set index.
+	 * Note: test modules may not setup pfil(9) hooks and if_attach()
+	 * may not trigger npf_ifmap_attach(), so we call it manually.
 	 */
 	strlcpy(ifp->if_xname, ifname, sizeof(ifp->if_xname));
-	if (verbose) {
-		printf("+ Interface %s\n", ifp->if_xname);
-	}
 	ifp->if_dlt = DLT_NULL;
+	ifp->if_index = 0;
 	if_attach(ifp);
-	ifp->if_index = if_idx;
 	if_alloc_sadl(ifp);
-	return if_idx;
+
+	npf_ifmap_attach(ifp);
+	if (reg) {
+		npf_ifmap_register(ifname);
+	}
+
+	if (verbose) {
+		printf("+ Interface %s\n", ifname);
+	}
+	return ifp;
 }
 
-unsigned
+ifnet_t *
 npf_test_getif(const char *ifname)
 {
-	ifnet_t *ifp = ifunit(ifname);
-	return ifp ? ifp->if_index : 0;
+	return ifunit(ifname);
 }
 
 /*
@@ -72,15 +79,14 @@ npf_state_sample(npf_state_t *nst, bool retval)
 }
 
 int
-npf_test_statetrack(const void *data, size_t len, unsigned idx,
+npf_test_statetrack(const void *data, size_t len, ifnet_t *ifp,
     bool forw, int64_t *result)
 {
-	ifnet_t ifp = { .if_index = idx };
 	struct mbuf *m;
 	int i = 0, error;
 
 	m = mbuf_getwithdata(data, len);
-	error = npf_packet_handler(NULL, &m, &ifp, forw ? PFIL_OUT : PFIL_IN);
+	error = npf_packet_handler(NULL, &m, ifp, forw ? PFIL_OUT : PFIL_IN);
 	if (error) {
 		assert(m == NULL);
 		return error;

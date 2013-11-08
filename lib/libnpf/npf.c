@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.21 2013/09/19 01:49:07 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.22 2013/11/08 00:38:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.21 2013/09/19 01:49:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22 2013/11/08 00:38:27 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -437,7 +437,7 @@ npf_ext_param_bool(nl_ext_t *ext, const char *key, bool val)
  */
 
 nl_rule_t *
-npf_rule_create(const char *name, uint32_t attr, u_int if_idx)
+npf_rule_create(const char *name, uint32_t attr, const char *ifname)
 {
 	prop_dictionary_t rldict;
 	nl_rule_t *rl;
@@ -456,8 +456,8 @@ npf_rule_create(const char *name, uint32_t attr, u_int if_idx)
 	}
 	prop_dictionary_set_uint32(rldict, "attributes", attr);
 
-	if (if_idx) {
-		prop_dictionary_set_uint32(rldict, "interface", if_idx);
+	if (ifname) {
+		prop_dictionary_set_cstring(rldict, "interface", ifname);
 	}
 	rl->nrl_dict = rldict;
 	return rl;
@@ -631,14 +631,14 @@ npf_rule_getattr(nl_rule_t *rl)
 	return attr;
 }
 
-unsigned
+const char *
 npf_rule_getinterface(nl_rule_t *rl)
 {
 	prop_dictionary_t rldict = rl->nrl_dict;
-	unsigned if_idx = 0;
+	const char *ifname = NULL;
 
-	prop_dictionary_get_uint32(rldict, "interface", &if_idx);
-	return if_idx;
+	prop_dictionary_get_cstring_nocopy(rldict, "interface", &ifname);
+	return ifname;
 }
 
 const void *
@@ -801,7 +801,7 @@ npf_rproc_getname(nl_rproc_t *rp)
  */
 
 nl_nat_t *
-npf_nat_create(int type, u_int flags, u_int if_idx,
+npf_nat_create(int type, u_int flags, const char *ifname,
     npf_addr_t *addr, int af, in_port_t port)
 {
 	nl_rule_t *rl;
@@ -822,7 +822,7 @@ npf_nat_create(int type, u_int flags, u_int if_idx,
 	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
 
 	/* Create a rule for NAT policy.  Next, will add translation data. */
-	rl = npf_rule_create(NULL, attr, if_idx);
+	rl = npf_rule_create(NULL, attr, ifname);
 	if (rl == NULL) {
 		return NULL;
 	}
@@ -1123,49 +1123,18 @@ _npf_debug_initonce(nl_config_t *ncf)
 }
 
 void
-_npf_debug_addif(nl_config_t *ncf, struct ifaddrs *ifa, u_int if_idx)
+_npf_debug_addif(nl_config_t *ncf, const char *ifname)
 {
 	prop_dictionary_t ifdict, dbg = _npf_debug_initonce(ncf);
 	prop_array_t iflist = prop_dictionary_get(dbg, "interfaces");
+	u_int if_idx = if_nametoindex(ifname);
 
-	if (_npf_prop_array_lookup(iflist, "name", ifa->ifa_name)) {
+	if (_npf_prop_array_lookup(iflist, "name", ifname)) {
 		return;
 	}
-
 	ifdict = prop_dictionary_create();
-	prop_dictionary_set_cstring(ifdict, "name", ifa->ifa_name);
-	prop_dictionary_set_uint32(ifdict, "flags", ifa->ifa_flags);
-	if (!if_idx) {
-		if_idx = if_nametoindex(ifa->ifa_name);
-	}
-	prop_dictionary_set_uint32(ifdict, "idx", if_idx);
-
-	const struct sockaddr *sa = ifa->ifa_addr;
-	npf_addr_t addr;
-	size_t alen = 0;
-
-	switch (sa ? sa->sa_family : -1) {
-	case AF_INET: {
-		const struct sockaddr_in *sin = (const void *)sa;
-		alen = sizeof(sin->sin_addr);
-		memcpy(&addr, &sin->sin_addr, alen);
-		break;
-	}
-	case AF_INET6: {
-		const struct sockaddr_in6 *sin6 = (const void *)sa;
-		alen = sizeof(sin6->sin6_addr);
-		memcpy(&addr, &sin6->sin6_addr, alen);
-		break;
-	}
-	default:
-		break;
-	}
-
-	if (alen) {
-		prop_data_t addrdata = prop_data_create_data(&addr, alen);
-		prop_dictionary_set(ifdict, "addr", addrdata);
-		prop_object_release(addrdata);
-	}
+	prop_dictionary_set_cstring(ifdict, "name", ifname);
+	prop_dictionary_set_uint32(ifdict, "index", if_idx);
 	prop_array_add(iflist, ifdict);
 	prop_object_release(ifdict);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.31 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.32 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		10
+#define	NPF_VERSION		11
 
 /*
  * Public declarations and definitions.
@@ -143,6 +143,7 @@ typedef struct {
 	struct mbuf *	nb_mbuf;
 	void *		nb_nptr;
 	const ifnet_t *	nb_ifp;
+	unsigned	nb_ifid;
 	int		nb_flags;
 } nbuf_t;
 

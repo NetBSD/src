@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.33 2013/09/20 03:03:52 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.34 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ typedef struct fam_addr_mask {
 } fam_addr_mask_t;
 
 typedef struct ifnet_addr {
+	char *		ifna_name;
 	unsigned long	ifna_index;
 	sa_family_t	ifna_family;
 	npfvar_t *	ifna_filter;
@@ -87,7 +88,7 @@ typedef struct opt_proto {
 typedef struct rule_group {
 	const char *	rg_name;
 	uint32_t	rg_attr;
-	u_int		rg_ifnum;
+	const char *	rg_ifname;
 	bool		rg_default;
 } rule_group_t;
 
@@ -110,12 +111,12 @@ void		npfctl_parse_string(const char *);
 
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, const npf_addr_t *, npf_netmask_t);
+void		npfctl_note_interface(const char *);
 bool		npfctl_table_exists_p(const char *);
 int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
 uint8_t		npfctl_icmptype(int, const char *);
-unsigned long   npfctl_find_ifindex(const char *);
 npfvar_t *	npfctl_parse_ifnet(const char *, const int);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
@@ -181,18 +182,19 @@ int		npfctl_config_show(int);
 int		npfctl_ruleset_show(int, const char *);
 
 nl_rule_t *	npfctl_rule_ref(void);
-unsigned long	npfctl_debug_addif(const char *);
+bool		npfctl_debug_addif(const char *);
 
 void		npfctl_build_alg(const char *);
 void		npfctl_build_rproc(const char *, npfvar_t *);
-void		npfctl_build_group(const char *, int, u_int, bool);
+void		npfctl_build_group(const char *, int, const char *, bool);
 void		npfctl_build_group_end(void);
-void		npfctl_build_rule(uint32_t, u_int, sa_family_t,
+void		npfctl_build_rule(uint32_t, const char *, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *,
 		    const char *, const char *);
-void		npfctl_build_natseg(int, int, u_int, const addr_port_t *,
-		    const addr_port_t *, const filt_opts_t *);
-void		npfctl_build_maprset(const char *, int, u_int);
+void		npfctl_build_natseg(int, int, const char *,
+		    const addr_port_t *, const addr_port_t *,
+		    const filt_opts_t *);
+void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
 
 #endif
