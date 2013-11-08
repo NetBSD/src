@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.735 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.736 2013/11/08 02:24:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.735 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.736 2013/11/08 02:24:11 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -530,12 +530,10 @@ void i386_tls_switch(lwp_t *);
 void
 i386_switch_context(lwp_t *l)
 {
-	struct cpu_info *ci;
 	struct pcb *pcb;
 	struct physdev_op physop;
 
 	pcb = lwp_getpcb(l);
-	ci = curcpu();
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
@@ -806,6 +804,8 @@ haltsys:
 			splx(s);
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
+#else
+		__USE(s);
 #endif
 	}
 
