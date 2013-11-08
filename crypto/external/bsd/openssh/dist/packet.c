@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.181 2013/02/10 23:35:24 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.188.2.1 2013/11/08 01:33:56 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -54,6 +54,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -161,8 +162,13 @@ struct session_state {
 	Newkeys *newkeys[MODE_MAX];
 	struct packet_state p_read, p_send;
 
+	/* Volume-based rekeying */
 	u_int64_t max_blocks_in, max_blocks_out;
 	u_int32_t rekey_limit;
+
+	/* Time-based rekeying */
+	time_t rekey_interval;	/* how often in seconds */
+	time_t rekey_time;	/* time of last rekeying */
 
 	/* Session key for protocol v1 */
 	u_char ssh1_key[SSH_SESSION_KEY_LENGTH];
@@ -211,7 +217,7 @@ alloc_session_state(void)
 void
 packet_set_connection(int fd_in, int fd_out)
 {
-	Cipher *none = cipher_by_name("none");
+	const Cipher *none = cipher_by_name("none");
 
 	if (none == NULL)
 		fatal("packet_set_connection: cannot load cipher 'none'");
@@ -536,7 +542,7 @@ packet_start_compression(int level)
 void
 packet_set_encryption_key(const u_char *key, u_int keylen, int number)
 {
-	Cipher *cipher = cipher_by_number(number);
+	const Cipher *cipher = cipher_by_number(number);
 
 	if (cipher == NULL)
 		fatal("packet_set_encryption_key: unknown cipher number %d", number);
@@ -749,13 +755,13 @@ set_newkeys(int mode)
 		memset(enc->iv,  0, enc->iv_len);
 		memset(enc->key, 0, enc->key_len);
 		memset(mac->key, 0, mac->key_len);
-		xfree(enc->name);
-		xfree(enc->iv);
-		xfree(enc->key);
-		xfree(mac->name);
-		xfree(mac->key);
-		xfree(comp->name);
-		xfree(active_state->newkeys[mode]);
+		free(enc->name);
+		free(enc->iv);
+		free(enc->key);
+		free(mac->name);
+		free(mac->key);
+		free(comp->name);
+		free(active_state->newkeys[mode]);
 	}
 	active_state->newkeys[mode] = kex_get_newkeys(mode);
 	if (active_state->newkeys[mode] == NULL)
@@ -979,7 +985,7 @@ packet_send2(void)
 		    (type == SSH2_MSG_SERVICE_REQUEST) ||
 		    (type == SSH2_MSG_SERVICE_ACCEPT)) {
 			debug("enqueue packet: %u", type);
-			p = xmalloc(sizeof(*p));
+			p = xcalloc(1, sizeof(*p));
 			p->type = type;
 			memcpy(&p->payload, &active_state->outgoing_packet,
 			    sizeof(Buffer));
@@ -998,6 +1004,7 @@ packet_send2(void)
 	/* after a NEWKEYS message we can send the complete queue */
 	if (type == SSH2_MSG_NEWKEYS) {
 		active_state->rekeying = 0;
+		active_state->rekey_time = monotime();
 		while ((p = TAILQ_FIRST(&active_state->outgoing))) {
 			type = p->type;
 			debug("dequeue packet: %u", type);
@@ -1005,7 +1012,7 @@ packet_send2(void)
 			memcpy(&active_state->outgoing_packet, &p->payload,
 			    sizeof(Buffer));
 			TAILQ_REMOVE(&active_state->outgoing, p, next);
-			xfree(p);
+			free(p);
 			packet_send2_wrapped();
 		}
 	}
@@ -1030,7 +1037,7 @@ packet_send(void)
 int
 packet_read_seqnr(u_int32_t *seqnr_p)
 {
-	int type, len, ret, ms_remain, cont;
+	int type, len, ret, cont, ms_remain = 0;
 	fd_set *setp;
 	char buf[8192];
 	struct timeval timeout, start, *timeoutp = NULL;
@@ -1055,7 +1062,7 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 			packet_check_eom();
 		/* If we got a packet, return it. */
 		if (type != SSH_MSG_NONE) {
-			xfree(setp);
+			free(setp);
 			return type;
 		}
 		/*
@@ -1441,16 +1448,20 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				packet_get_char();
 				msg = packet_get_string(NULL);
 				debug("Remote: %.900s", msg);
-				xfree(msg);
+				free(msg);
 				msg = packet_get_string(NULL);
-				xfree(msg);
+				free(msg);
 				break;
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				error("Received disconnect from %s: %u: %.400s",
+				/* Ignore normal client exit notifications */
+				do_log2(active_state->server_side &&
+				    reason == SSH2_DISCONNECT_BY_APPLICATION ?
+				    SYSLOG_LEVEL_INFO : SYSLOG_LEVEL_ERROR,
+				    "Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
-				xfree(msg);
+				free(msg);
 				cleanup_exit(255);
 				break;
 			case SSH2_MSG_UNIMPLEMENTED:
@@ -1464,12 +1475,14 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 		} else {
 			type = packet_read_poll1();
 			switch (type) {
+			case SSH_MSG_NONE:
+				return SSH_MSG_NONE;
 			case SSH_MSG_IGNORE:
 				break;
 			case SSH_MSG_DEBUG:
 				msg = packet_get_string(NULL);
 				debug("Remote: %.900s", msg);
-				xfree(msg);
+				free(msg);
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
@@ -1478,8 +1491,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				cleanup_exit(255);
 				break;
 			default:
-				if (type)
-					DBG(debug("received packet type %d", type));
+				DBG(debug("received packet type %d", type));
 				return type;
 			}
 		}
@@ -1713,7 +1725,7 @@ void
 packet_write_wait(void)
 {
 	fd_set *setp;
-	int ret, ms_remain;
+	int ret, ms_remain = 0;
 	struct timeval start, timeout, *timeoutp = NULL;
 
 	setp = (fd_set *)xcalloc(howmany(active_state->connection_out + 1,
@@ -1753,7 +1765,7 @@ packet_write_wait(void)
 		}
 		packet_write_poll();
 	}
-	xfree(setp);
+	free(setp);
 }
 
 /* Returns true if there is buffered data to write to the connection. */
@@ -1907,13 +1919,33 @@ packet_need_rekeying(void)
 	    (active_state->max_blocks_out &&
 	        (active_state->p_send.blocks > active_state->max_blocks_out)) ||
 	    (active_state->max_blocks_in &&
-	        (active_state->p_read.blocks > active_state->max_blocks_in));
+	        (active_state->p_read.blocks > active_state->max_blocks_in)) ||
+	    (active_state->rekey_interval != 0 && active_state->rekey_time +
+		 active_state->rekey_interval <= monotime());
 }
 
 void
-packet_set_rekey_limit(u_int32_t bytes)
+packet_set_rekey_limits(u_int32_t bytes, time_t seconds)
 {
+	debug3("rekey after %lld bytes, %d seconds", (long long)bytes,
+	    (int)seconds);
 	active_state->rekey_limit = bytes;
+	active_state->rekey_interval = seconds;
+	/*
+	 * We set the time here so that in post-auth privsep slave we count
+	 * from the completion of the authentication.
+	 */
+	active_state->rekey_time = monotime();
+}
+
+time_t
+packet_get_rekey_timeout(void)
+{
+	time_t seconds;
+
+	seconds = active_state->rekey_time + active_state->rekey_interval -
+	    monotime();
+	return (seconds <= 0 ? 1 : seconds);
 }
 
 void
