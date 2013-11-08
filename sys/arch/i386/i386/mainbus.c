@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.97 2013/07/31 14:05:33 soren Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.98 2013/11/08 03:12:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.97 2013/07/31 14:05:33 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98 2013/11/08 03:12:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,6 +242,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		pci_addr_fixup(NULL, pci_maxbus);
 #endif
 	}
+#else
+	__USE(mode);
 #endif
 #endif
 

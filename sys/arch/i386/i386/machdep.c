@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.736 2013/11/08 02:24:11 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.737 2013/11/08 03:12:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.736 2013/11/08 02:24:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.737 2013/11/08 03:12:48 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1162,7 +1162,6 @@ void
 init386(paddr_t first_avail)
 {
 	extern void consinit(void);
-	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
@@ -1184,7 +1183,6 @@ init386(paddr_t first_avail)
 	cpu_probe(&cpu_info_primary);
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
-	pcb = lwp_getpcb(&lwp0);
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
@@ -1195,6 +1193,7 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef XEN
+	struct pcb *pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr3 = PDPpaddr;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr, xpmap_ptom(PDPpaddr)));
