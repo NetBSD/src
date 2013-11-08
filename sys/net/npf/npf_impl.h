@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.36 2013/11/04 22:17:21 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.37 2013/11/08 00:38:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ typedef void (*npf_workfunc_t)(void);
 /* Some artificial limits. */
 #define	NPF_TABLE_SLOTS		32
 #define	NPF_MAX_RULES		(1024 * 1024)
+#define	NPF_MAX_IFMAP		64
 
 /*
  * SESSION STATE STRUCTURES
@@ -166,9 +167,15 @@ int		npfctl_table(void *);
 void		npf_stats_inc(npf_stats_t);
 void		npf_stats_dec(npf_stats_t);
 
+u_int		npf_ifmap_register(const char *);
+void		npf_ifmap_flush(void);
+void		npf_ifmap_attach(ifnet_t *);
+void		npf_ifmap_detach(ifnet_t *);
+u_int		npf_ifmap_id(const ifnet_t *);
+
 /* Packet filter hooks. */
-int		npf_pfil_register(void);
-void		npf_pfil_unregister(void);
+int		npf_pfil_register(bool);
+void		npf_pfil_unregister(bool);
 bool		npf_pfil_registered_p(void);
 int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 
