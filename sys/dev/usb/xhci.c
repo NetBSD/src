@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.6 2013/11/04 08:08:58 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.7 2013/11/08 03:12:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.6 2013/11/04 08:08:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.7 2013/11/08 03:12:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ usbd_status
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
-	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff;
+	uint32_t cap, hcs1, hcs2, hcc, dboff, rtsoff;
 	uint32_t ecp, ecr;
 	uint32_t usbcmd, usbsts, pagesize, config;
 	int i;
@@ -605,7 +605,7 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_maxintrs = XHCI_HCS1_MAXINTRS(hcs1);
 	sc->sc_maxports = XHCI_HCS1_MAXPORTS(hcs1);
 	hcs2 = xhci_cap_read_4(sc, XHCI_HCSPARAMS2);
-	hcs3 = xhci_cap_read_4(sc, XHCI_HCSPARAMS3);
+	(void)xhci_cap_read_4(sc, XHCI_HCSPARAMS3);
 	hcc = xhci_cap_read_4(sc, XHCI_HCCPARAMS);
 
 	sc->sc_ac64 = XHCI_HCC_AC64(hcc);
