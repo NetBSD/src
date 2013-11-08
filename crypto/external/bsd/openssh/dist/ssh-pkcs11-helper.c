@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.4 2012/12/12 17:42:40 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.4 2012/07/02 12:13:26 dtucker Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.5 2013/11/08 19:18:25 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.6 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.4 2012/12/12 17:42:40 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.5 2013/11/08 19:18:25 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -76,7 +76,7 @@ del_keys_by_name(char *name)
 		nxt = TAILQ_NEXT(ki, next);
 		if (!strcmp(ki->providername, name)) {
 			TAILQ_REMOVE(&pkcs11_keylist, ki, next);
-			xfree(ki->providername);
+			free(ki->providername);
 			key_free(ki->key);
 			free(ki);
 		}
@@ -127,15 +127,15 @@ process_add(void)
 			key_to_blob(keys[i], &blob, &blen);
 			buffer_put_string(&msg, blob, blen);
 			buffer_put_cstring(&msg, name);
-			xfree(blob);
+			free(blob);
 			add_key(keys[i], name);
 		}
-		xfree(keys);
+		free(keys);
 	} else {
 		buffer_put_char(&msg, SSH_AGENT_FAILURE);
 	}
-	xfree(pin);
-	xfree(name);
+	free(pin);
+	free(name);
 	send_msg(&msg);
 	buffer_free(&msg);
 }
@@ -154,8 +154,8 @@ process_del(void)
 		 buffer_put_char(&msg, SSH_AGENT_SUCCESS);
 	else
 		 buffer_put_char(&msg, SSH_AGENT_FAILURE);
-	xfree(pin);
-	xfree(name);
+	free(pin);
+	free(name);
 	send_msg(&msg);
 	buffer_free(&msg);
 }
@@ -192,10 +192,9 @@ process_sign(void)
 	} else {
 		buffer_put_char(&msg, SSH_AGENT_FAILURE);
 	}
-	xfree(data);
-	xfree(blob);
-	if (signature != NULL)
-		xfree(signature);
+	free(data);
+	free(blob);
+	free(signature);
 	send_msg(&msg);
 	buffer_free(&msg);
 }
