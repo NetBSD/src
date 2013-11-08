@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.144 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: npx.c,v 1.145 2013/11/08 02:24:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.144 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.145 2013/11/08 02:24:11 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -376,11 +376,9 @@ npxintr(void *arg, struct intrframe *frame)
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
 	union savefpu *addr;
-	struct npx_softc *sc;
 	struct pcb *pcb;
 	ksiginfo_t ksi;
 
-	sc = npx_softc;
 
 	kpreempt_disable();
 #ifndef XEN
@@ -392,6 +390,7 @@ npxintr(void *arg, struct intrframe *frame)
 	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
 #ifndef XEN
+	struct npx_softc *sc = npx_softc;
 	/*
 	 * Clear the interrupt latch.
 	 */
