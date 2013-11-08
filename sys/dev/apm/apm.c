@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.28 2012/09/30 21:36:19 dsl Exp $ */
+/*	$NetBSD: apm.c,v 1.29 2013/11/08 02:47:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.28 2012/09/30 21:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.29 2013/11/08 02:47:41 christos Exp $");
 
 #include "opt_apm.h"
 
@@ -449,6 +449,8 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 		if (error == 0 &&
 		    (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
 			apm_power_print(sc, &pi);
+#else
+		__USE(error);
 #endif
 		apm_record_event(sc, event_code);
 		break;
