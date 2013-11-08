@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.7 2013/08/11 04:41:17 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.8 2013/11/08 22:42:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -78,9 +78,16 @@ ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
+STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
+
+ENTRY_NP(__sync_lock_release_4)
+	mov	r1, #0
+	strb	r1, [r0]
+	RET
+END(__sync_lock_release_4)
 
 ENTRY_NP(_atomic_swap_8)
 	mov	ip, r0
@@ -105,5 +112,12 @@ END(_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
+STRONG_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_char,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
+
+ENTRY_NP(__sync_lock_release_1)
+	mov	r1, #0
+	strb	r1, [r0]
+	RET
+END(__sync_lock_release_1)
