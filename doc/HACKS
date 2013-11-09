@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.139 2013/11/09 00:35:00 christos Exp $
+# $NetBSD: HACKS,v 1.140 2013/11/09 16:05:39 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -515,6 +515,22 @@ port	vax
 	file	various
 	descr
 		Many filesystem on-disk formats have 32 bit times.
+	kcah
+
+	hack	gcc >= 4.5 fsdb miscompile
+	date	Sat Nov  9 11:03:02 EST 2013
+	who	christos
+	file	src/sbin/fsdb/Makefile : 1.35 (and earlier)
+	descr
+		src/sbin/fsdb/fsdb.c: In function 'findblk':
+		src/sbin/fsdb/fsdb.c:610:1: error: unrecognizable insn:
+		(insn 941 940 942 134 src/sbin/fsdb/fsdb.c:589 (set (reg:SI 604)
+		    (subreg:SI (mem/s/j:DI (plus:SI (mult:SI (reg:SI 602)
+                        (const_int 8 [0x8]))
+                    (reg/f:SI 601)) [0 curinode.99_378->dp2.di_ib S8 A32]) 4)) \
+			-1 (nil))
+		src/sbin/fsdb/fsdb.c:610:1: internal compiler error: in \
+		extract_insn, at recog.c:2103
 	kcah
 
 port	arm
