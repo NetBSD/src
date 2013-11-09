@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.assym,v 1.2 2012/03/25 06:55:20 joerg Exp $
+#	$NetBSD: Makefile.assym,v 1.3 2013/11/09 17:30:46 jmcneill Exp $
 
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
@@ -9,6 +9,10 @@ CLEANFILES+=	assym.h
 GENASSYM_DIR= $S/arch/${MACHINE_ARCH}/oea
 CPPFLAGS+=	-DPPC_OEA
 .endif
+.endif
+
+.if (!empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*))
+GENASSYM_DIR= $S/arch/arm/arm32
 .endif
 
 .if exists($S/arch/${MACHINE}/${MACHINE}/genassym.cf)
