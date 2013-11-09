@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.147 2013/11/07 06:54:48 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.148 2013/11/09 07:52:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.147 2013/11/07 06:54:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.148 2013/11/09 07:52:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -327,7 +327,7 @@ usb_create_event_thread(device_t self)
 {
 	struct usb_softc *sc = device_private(self);
 
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE , NULL,
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    usb_event_thread, sc, &sc->sc_event_thread,
 	    "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
