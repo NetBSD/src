@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/11 06:05:30 dholland Exp $
+#	$NetBSD: Makefile,v 1.6 2013/11/09 21:39:27 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 CWARNFLAGS+=	-Wno-sign-compare
@@ -19,5 +19,9 @@ LDADD+=-lprop
 DPADD+=${LIBPROP}
 
 .PATH:	${NETBSDSRCDIR}/sys/ufs/ext2fs ${FSCK}
+
+.if ${MACHINE_ARCH} == "vax"
+COPTS.mke2fs.c=-O0
+.endif
 
 .include <bsd.prog.mk>

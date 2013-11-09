@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2007/05/28 12:06:38 tls Exp $
+#	$NetBSD: Makefile,v 1.11 2013/11/09 21:39:28 christos Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
 .include <bsd.own.mk>
@@ -11,6 +11,10 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/usr.sbin/mrouted
 PROG=	mtrace
 SRCS=	igmp.c inet.c kern.c mtrace.c
 MAN=	mtrace.8
+
+.if ${MACHINE_ARCH} == "vax"
+COPTS.mtrace.c=-O0
+.endif
 
 BINMODE=4555
 BINOWN= root
