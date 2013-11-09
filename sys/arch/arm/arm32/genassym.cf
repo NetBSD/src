@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.65 2013/08/18 07:55:28 matt Exp $
+#	$NetBSD: genassym.cf,v 1.66 2013/11/09 17:28:58 jmcneill Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,9 +54,11 @@ include <machine/pmap.h>
 include <machine/pcb.h>
 include <machine/vmparam.h>
 
+if defined(_KERNEL_OPT)
 include "opt_multiprocessor.h"
 include "opt_compat_netbsd.h"
 include "opt_execfmt.h"
+endif
 
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
