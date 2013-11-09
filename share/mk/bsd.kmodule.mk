@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.40 2013/09/18 09:25:20 martin Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.41 2013/11/09 22:40:15 jmcneill Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -27,7 +27,7 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 # relocations inside the loader and removing this workaround, as the
 # resulting code would be much faster.
 .if ${MACHINE_CPU} == "arm"
-CFLAGS+=	-fno-common
+CFLAGS+=	-fno-common -fno-unwind-tables
 .elif ${MACHINE_CPU} == "hppa"
 CFLAGS+=	-mlong-calls
 .elif ${MACHINE_CPU} == "powerpc"
