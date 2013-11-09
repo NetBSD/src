@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2013/08/06 21:41:01 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.25 2013/11/09 02:23:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2013/08/06 21:41:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2013/11/09 02:23:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct trapframe *tf;
 	db_addr_t callpc, frame, lastframe;
 	uint32_t vbr;
-	bool kernel_only = true;
 	bool lwpid = false;
 	bool lwpaddr = false;
 	const char *cp;
@@ -96,8 +95,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			lwpaddr = true;
 		else if (c == 't')
 			lwpid = true;
-		else if (c == 'u')
-			kernel_only = false;
 	}
 
 	if (lwpaddr && lwpid) {
