@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.140 2013/11/09 16:05:39 christos Exp $
+# $NetBSD: HACKS,v 1.141 2013/11/09 21:38:57 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -517,10 +517,10 @@ port	vax
 		Many filesystem on-disk formats have 32 bit times.
 	kcah
 
-	hack	gcc >= 4.5 fsdb miscompile
+	hack	gcc 4.5 fsdb miscompile
 	date	Sat Nov  9 11:03:02 EST 2013
 	who	christos
-	file	src/sbin/fsdb/Makefile : 1.35 (and earlier)
+	file	src/sbin/fsdb/Makefile : 1.36 (and earlier)
 	descr
 		src/sbin/fsdb/fsdb.c: In function 'findblk':
 		src/sbin/fsdb/fsdb.c:610:1: error: unrecognizable insn:
@@ -531,6 +531,39 @@ port	vax
 			-1 (nil))
 		src/sbin/fsdb/fsdb.c:610:1: internal compiler error: in \
 		extract_insn, at recog.c:2103
+	kcah
+
+	hack	gcc 4.8 gcc miscompiles
+	date	Sat Nov  9 16:35:18 EST 2013
+	who	christos
+	file	distrib/utils/x_ping/Makefile
+	file	distrib/vax/miniroot/Makefile.inc
+	file	distrib/vax/ramdisk/Makefile
+	file	external/gpl3/gdb/lib/libdecnumber/Makefile
+	file	sbin/fsdb/Makefile
+	file	sbin/newfs_ext2fs/Makefile
+	file	sbin/ping/Makefile
+	file	usr.sbin/lmcconfig/Makefile
+	file	usr.sbin/mtrace/Makefile
+	descr
+		external/gpl3/gcc/dist/gcc/expmed.c:2781:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		external/gpl3/gcc/dist/gcc/recog.c:770:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		external/gpl3/gcc/dist/libdecnumber/decNumber.c:7214:3:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		sbin/ping/ping.c:679:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		sbin/newfs_ext2fs/mke2fs.c:681:1:
+		internal compiler error: in reload_combine_note_use,
+		at postreload.c:1561
+		external/gpl3/gdb/dist/libdecnumber/decNumber.c:7214:3:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
+		usr.sbin/lmcconfig/lmcconfig.c:939:3:
+		internal compiler error: in reload_combine_note_use,
+		at postreload.c:1561
+		usr.sbin/mtrace/mtrace.c:1655:1:
+		internal compiler error: in change_address_1, at emit-rtl.c:2019
 	kcah
 
 port	arm
@@ -663,12 +696,12 @@ port	m68000
 		This might be related with GCC Bugzilla Bug 32424.
 	kcah
 
-port	m68k,sh3
+port	m68k,sh3,vax
 
 	hack	gcc-4.8.1
 	cdate	Wed Nov  6 20:41:35 EST 2013
 	who	christos
-	file	src/external/gpl3/gcc/libstdc++/Makefile
+	file	src/external/gpl3/gcc/libstdc++-v3/Makefile : 1.6
 	descr
 		compile hashtable_c++0x.cc with -O2 instead of -Os to
 		produce missing instantiation of std::lower_bound expansion
