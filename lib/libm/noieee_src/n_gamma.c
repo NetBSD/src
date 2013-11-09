@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.8 2012/06/08 11:13:33 abs Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.9 2013/11/09 21:41:03 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -158,6 +158,7 @@ gamma(double x)
 			else return (one/x);
 		}
 		b =one+1e-20;		/* Raise inexact flag. ??? -ragge */
+		__USE(b);
 		return (one/x);
 	} else if (!finite(x)) {
 		if (_IEEE)		/* x = NaN, -Inf */
