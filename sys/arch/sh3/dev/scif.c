@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.61 2012/02/02 19:43:00 tls Exp $ */
+/*	$NetBSD: scif.c,v 1.62 2013/11/09 21:31:45 christos Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.61 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.62 2013/11/09 21:31:45 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -695,12 +695,11 @@ static void
 scif_iflush(struct scif_softc *sc)
 {
 	int i;
-	unsigned char c;
 
 	i = scif_fdr_read() & SCFDR2_RECVCNT;
 
 	while (i > 0) {
-		c = scif_frdr_read();
+		(void)scif_frdr_read();
 		scif_ssr_write(scif_ssr_read() & ~(SCSSR2_RDF | SCSSR2_DR));
 		i--;
 	}
