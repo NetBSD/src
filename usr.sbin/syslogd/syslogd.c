@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.115 2013/05/27 23:15:51 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.116 2013/11/09 18:58:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.115 2013/05/27 23:15:51 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.116 2013/11/09 18:58:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -3143,13 +3143,13 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 		if (!TypeInfo[i].queue_length_string
 		    || dehumanize_number(TypeInfo[i].queue_length_string,
 		    &TypeInfo[i].queue_length) == -1)
-			TypeInfo[i].queue_length = strtol(
-			    TypeInfo[i].default_length_string, NULL, 10);
+			dehumanize_number(TypeInfo[i].default_length_string,
+					  &TypeInfo[i].queue_length);
 		if (!TypeInfo[i].queue_size_string
 		    || dehumanize_number(TypeInfo[i].queue_size_string,
 		    &TypeInfo[i].queue_size) == -1)
-			TypeInfo[i].queue_size = strtol(
-			    TypeInfo[i].default_size_string, NULL, 10);
+			dehumanize_number(TypeInfo[i].default_size_string,
+					  &TypeInfo[i].queue_size);
 	}
 
 #ifndef DISABLE_SIGN
@@ -4366,9 +4366,9 @@ message_queue_purge(struct filed *f, size_t del_entries, int strategy)
 
 	while (removed < del_entries
 	    || (TypeInfo[f->f_type].queue_length != -1
-	    && (size_t)TypeInfo[f->f_type].queue_length > f->f_qelements)
+	    && (size_t)TypeInfo[f->f_type].queue_length <= f->f_qelements)
 	    || (TypeInfo[f->f_type].queue_size != -1
-	    && (size_t)TypeInfo[f->f_type].queue_size > f->f_qsize)) {
+	    && (size_t)TypeInfo[f->f_type].queue_size <= f->f_qsize)) {
 		qentry = find_qentry_to_delete(&f->f_qhead, strategy, 0);
 		if (message_queue_remove(f, qentry))
 			removed++;
