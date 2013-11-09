@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.220 2013/10/17 18:01:11 njoly Exp $
+#	$NetBSD: Makefile.inc,v 1.221 2013/11/09 13:05:59 njoly Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -334,7 +334,8 @@ MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
-MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
+MLINKS+=utimes.2 utimens.2 utimes.2 futimens.2 utimes.2 lutimens.2
+MLINKS+=utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
