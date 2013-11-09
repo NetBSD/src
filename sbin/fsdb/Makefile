@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2012/08/10 12:20:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.35 2013/11/09 16:01:58 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -42,6 +42,6 @@ COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
 .include <bsd.prog.mk>
 
 # XXX
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 45 && ${MACHINE_ARCH} == "vax"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
 COPTS.fsdb.c+=	-O0
 .endif
