@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.23 2012/10/26 18:15:56 tsutsui Exp $
+# $NetBSD: Makefile.inc,v 1.24 2013/11/09 21:32:55 christos Exp $
 
-IMAGESIZE=	7m
+IMAGESIZE=	8m
 MAKEFS_FLAGS=	-o density=3k
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all ipty
