@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1853 2013/11/02 01:37:33 christos Exp $
+#	$NetBSD: mi,v 1.1854 2013/11/09 13:05:59 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4423,6 +4423,7 @@
 ./usr/share/man/cat2/listen.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lseek.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lstat.0			comp-c-catman		.cat
+./usr/share/man/cat2/lutimens.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lutimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/m68k_sync_icache.0		comp-c-catman		.cat
 ./usr/share/man/cat2/madvise.0			comp-c-catman		.cat
@@ -4562,6 +4563,7 @@
 ./usr/share/man/cat2/unlink.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unlinkat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unmount.0			comp-c-catman		.cat
+./usr/share/man/cat2/utimens.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utimensat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/utimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utrace.0			comp-c-catman		.cat
@@ -11041,6 +11043,7 @@
 ./usr/share/man/html2/listen.html		comp-c-htmlman		html
 ./usr/share/man/html2/lseek.html		comp-c-htmlman		html
 ./usr/share/man/html2/lstat.html		comp-c-htmlman		html
+./usr/share/man/html2/lutimens.html		comp-c-htmlman		html
 ./usr/share/man/html2/lutimes.html		comp-c-htmlman		html
 ./usr/share/man/html2/m68k_sync_icache.html	comp-c-htmlman		html
 ./usr/share/man/html2/madvise.html		comp-c-htmlman		html
@@ -11172,6 +11175,7 @@
 ./usr/share/man/html2/unlink.html		comp-c-htmlman		html
 ./usr/share/man/html2/unlinkat.html		comp-c-htmlman		html
 ./usr/share/man/html2/unmount.html		comp-c-htmlman		html
+./usr/share/man/html2/utimens.html		comp-c-htmlman		html
 ./usr/share/man/html2/utimensat.html		comp-c-htmlman		html
 ./usr/share/man/html2/utimes.html		comp-c-htmlman		html
 ./usr/share/man/html2/utrace.html		comp-c-htmlman		html
@@ -17440,6 +17444,7 @@
 ./usr/share/man/man2/listen.2			comp-c-man		.man
 ./usr/share/man/man2/lseek.2			comp-c-man		.man
 ./usr/share/man/man2/lstat.2			comp-c-man		.man
+./usr/share/man/man2/lutimens.2			comp-c-man		.man
 ./usr/share/man/man2/lutimes.2			comp-c-man		.man
 ./usr/share/man/man2/m68k_sync_icache.2		comp-c-man		.man
 ./usr/share/man/man2/madvise.2			comp-c-man		.man
@@ -17578,6 +17583,7 @@
 ./usr/share/man/man2/unlink.2			comp-c-man		.man
 ./usr/share/man/man2/unlinkat.2			comp-c-man		.man
 ./usr/share/man/man2/unmount.2			comp-c-man		.man
+./usr/share/man/man2/utimens.2			comp-c-man		.man
 ./usr/share/man/man2/utimensat.2		comp-c-man		.man
 ./usr/share/man/man2/utimes.2			comp-c-man		.man
 ./usr/share/man/man2/utrace.2			comp-c-man		.man
