@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.8 2013/10/13 06:55:34 riz Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.9 2013/11/10 18:27:15 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -2431,6 +2431,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
 	err = 0;
+	__USE(err);
 #endif
 
 	acedoingadump = 0;

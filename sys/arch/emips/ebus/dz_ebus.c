@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.6 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.6 2013/11/10 18:27:15 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -514,7 +514,7 @@ void
 dzrint(struct dz_softc *sc, uint32_t csr)
 {
 	struct tty *tp;
-	int cc, mcc;
+	int cc;
 	struct _Usart *dzr;
 
 	sc->sc_rxint++;
@@ -522,11 +522,6 @@ dzrint(struct dz_softc *sc, uint32_t csr)
 
 	cc = dzr->RxData;
 	tp = sc->sc_dz.dz_tty;
-
-	if (csr & USI_RXBRK)
-		mcc = CNC_BREAK;
-	else
-		mcc = cc;
 
 	/* clear errors before we print or bail out */
 	if (csr & (USI_OVRE|USI_FRAME|USI_PARE))
