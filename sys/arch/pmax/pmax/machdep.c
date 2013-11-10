@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2013/11/10 20:09:52 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.247 2013/11/10 20:18:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2013/11/10 20:09:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2013/11/10 20:18:51 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -134,14 +134,12 @@ void
 mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip)
 {
 	char *cp;
-/*###137 [cc] error: variable 'bootinfo_msg' set but not used [-Werror=unused-but-set-variable]%%%*/
 	const char *bootinfo_msg;
 	int i;
 	char *kernend;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
-	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
 	extern char edata[], end[];	/* XXX */
 
@@ -163,7 +161,9 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	/* clear the BSS segment */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
-	aout = (struct exec *)edata;
+#ifdef EXEC_AOUT
+	struct exec *aout = (struct exec *)edata;
+#endif
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
