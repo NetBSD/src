@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.257 2013/10/30 06:47:18 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.258 2013/11/10 18:27:15 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.257 2013/10/30 06:47:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.258 2013/11/10 18:27:15 christos Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2174,7 +2174,7 @@ startlwp(void *arg)
 {
 	ucontext_t * const uc = arg;
 	lwp_t * const l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

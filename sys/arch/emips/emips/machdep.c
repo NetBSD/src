@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2012/10/27 17:17:46 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2013/11/10 18:27:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2012/10/27 17:17:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2013/11/10 18:27:15 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -491,7 +491,6 @@ void
 cpu_reboot(volatile int howto,	/* XXX volatile to keep gcc happy */
            char *bootstr)
 {
-	int s = 0;
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
@@ -527,7 +526,7 @@ cpu_reboot(volatile int howto,	/* XXX volatile to keep gcc happy */
 	}
 
 	/* Disable interrupts. */
-	s = splhigh();
+	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)

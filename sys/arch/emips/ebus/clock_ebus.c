@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.7 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.7 2013/11/10 18:27:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -260,7 +260,7 @@ eclock_ebus_intr(void *cookie, void *f)
 	struct eclock_softc *sc = cookie;
 	struct _Tc *tc = sc->sc_dp;
 	struct clockframe *cf = f;
-	volatile uint32_t x;
+	volatile uint32_t x __unused;
 
 	x = tc->Control;
 	tc->DownCounterHigh = 0;
