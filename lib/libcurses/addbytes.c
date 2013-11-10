@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.41 2013/11/09 11:16:59 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.42 2013/11/10 03:14:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.41 2013/11/09 11:16:59 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.42 2013/11/10 03:14:16 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,7 +115,7 @@ int
 _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 	    int char_interp)
 {
-	int		 ox, x, y, err;
+	int		x, y, err;
 	__LINE		*lp;
 #ifdef HAVE_WCHAR
 	int		n;
@@ -138,7 +138,6 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 	err = OK;
 	SYNCH_IN;
 	lp = win->alines[y];
-	ox = win->curx;
 
 #ifdef HAVE_WCHAR
 	(void)memset(&st, 0, sizeof(st));
