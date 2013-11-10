@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.97 2013/11/09 20:32:59 christos Exp $      */
+/*      $NetBSD: cpu.h,v 1.98 2013/11/10 00:50:13 christos Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -185,9 +185,8 @@ cpu_intr_p(void)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
-#define	CPU_INFO_ITERATOR	int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, __USE(cii), \
-					ci = SIMPLEQ_FIRST(&cpus); \
+#define	CPU_INFO_ITERATOR	int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = SIMPLEQ_FIRST(&cpus); \
 					ci != NULL; \
 					ci = SIMPLEQ_NEXT(ci, ci_next)
 
