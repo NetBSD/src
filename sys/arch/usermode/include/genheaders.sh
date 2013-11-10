@@ -39,6 +39,8 @@ for hdr in ${HDRS}; do
 #include "../../i386/include/${hdr}"
 #elif defined(__x86_64__)
 #include "../../amd64/include/${hdr}"
+#elif defined(__arm__)
+#include "../../arm/include/${hdr}"
 #else
 #error port me
 #endif
@@ -56,6 +58,15 @@ EOF
 		echo "#undef __HAVE_PTRACE_MACHDEP" >> ${hdr}
 		echo "#undef __HAVE_PROCFS_MACHDEP" >> ${hdr}
 	elif [ "$hdr" = "param.h" ]; then
+		cat >> ${hdr} << EOF
+#ifdef __arm__
+#define MACHINE "evbarm"
+#define PGSHIFT 12
+#define NBPG (1 << PGSHIFT)
+#define PGOFSET (NBPG - 1)
+#define NKMEMPAGES_MIN_DEFAULT  ((8 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
+EOF
 		echo "#undef UPAGES" >> ${hdr}
 		echo "#define UPAGES 12" >> ${hdr}
 		echo "#undef USPACE" >> ${hdr}
@@ -63,6 +74,11 @@ EOF
 		echo "" >> ${hdr}
 		echo "#undef NKMEMPAGES_MAX_UNLIMITED" >> ${hdr}
 		echo "#include \"opt_kmempages.h\"" >> ${hdr}
+		echo "" >> ${hdr}
+	elif [ "$hdr" = "elf_machdep.h" ]; then
+		echo "#ifdef ELF_MD_PROBE_FUNC" >> ${hdr}
+		echo "#undef ELF_MD_PROBE_FUNC" >> ${hdr}
+		echo "#endif" >> ${hdr}
 	fi
 
 	echo >>${hdr}
