@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2013/10/19 19:20:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2013/11/10 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@ struct cpu_info {
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
 
-#define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+#define	CPU_INFO_ITERATOR		int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 #ifdef MULTIPROCESSOR
 /*
