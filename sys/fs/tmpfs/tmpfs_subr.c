@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.84 2013/11/10 03:20:20 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.85 2013/11/10 12:46:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.84 2013/11/10 03:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.85 2013/11/10 12:46:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -520,7 +520,6 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 
 	if (__predict_true(node != TMPFS_NODE_WHITEOUT)) {
 		/* Deassociate the inode and entry. */
-		de->td_node = NULL;
 		node->tn_dirent_hint = NULL;
 
 		KASSERT(node->tn_links > 0);
@@ -541,6 +540,7 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 			events |= NOTE_LINK;
 		}
 	}
+	de->td_node = NULL;
 
 	/* Remove the entry from the directory. */
 	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
