@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.83 2013/11/08 15:44:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.84 2013/11/10 03:20:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.83 2013/11/08 15:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.84 2013/11/10 03:20:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -623,7 +623,7 @@ tmpfs_dir_getseq(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 	uint32_t seq = de->td_seq;
 	vmem_t *seq_arena;
 	vmem_addr_t off;
-	int error;
+	int error __diagused;
 
 	TMPFS_VALIDATE_DIR(dnode);
 
