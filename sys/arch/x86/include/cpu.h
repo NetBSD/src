@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2013/11/05 16:04:13 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2013/11/10 00:50:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -284,9 +284,8 @@ struct cpu_info {
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
 
-#define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, __USE(cii), \
-					ci = cpu_info_list; \
+#define	CPU_INFO_ITERATOR		int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
 #define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
