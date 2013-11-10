@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.51 2013/11/08 02:23:52 christos Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.52 2013/11/10 01:19:13 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.51 2013/11/08 02:23:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.52 2013/11/10 01:19:13 jnemeth Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -348,16 +348,12 @@ xpq_queue_tlb_flush(void)
 void
 xpq_flush_cache(void)
 {
-	struct mmuext_op op;
-	int s = splvm(), err;
+	int s = splvm();
 
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
-	op.cmd = MMUEXT_FLUSH_CACHE;
-	if ((err = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF)) < 0) {
-		panic("xpq_flush_cache, err %d", err);
-	}
+	asm("wbinvd":::"memory");
 	splx(s); /* XXX: removeme */
 }
 
