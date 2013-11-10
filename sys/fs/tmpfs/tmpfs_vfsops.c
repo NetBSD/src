@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.53 2013/11/08 15:44:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.54 2013/11/10 12:46:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.53 2013/11/08 15:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.54 2013/11/10 12:46:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,7 +230,8 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 			continue;
 		}
 		while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
-			if ((cnode = de->td_node) != NULL) {
+			cnode = de->td_node;
+			if (cnode && cnode != TMPFS_NODE_WHITEOUT) {
 				cnode->tn_vnode = NULL;
 			}
 			tmpfs_dir_detach(node, de);
