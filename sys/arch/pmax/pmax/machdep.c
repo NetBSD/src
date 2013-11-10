@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 2013/11/10 20:09:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2013/11/10 20:09:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -134,6 +134,7 @@ void
 mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip)
 {
 	char *cp;
+/*###137 [cc] error: variable 'bootinfo_msg' set but not used [-Werror=unused-but-set-variable]%%%*/
 	const char *bootinfo_msg;
 	int i;
 	char *kernend;
@@ -215,6 +216,8 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #if 0
 	if (bootinfo_msg != NULL)
 		printf(bootinfo_msg);
+#else
+	__USE(bootinfo_msg);
 #endif
 	/*
 	 * Set the VM page size.
