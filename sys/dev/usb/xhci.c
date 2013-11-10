@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.7 2013/11/08 03:12:17 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.8 2013/11/10 03:38:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.7 2013/11/08 03:12:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.8 2013/11/10 03:38:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1851,6 +1851,10 @@ xhci_init_slot(struct xhci_softc * const sc, uint32_t slot, int depth,
 		xspeed = 4;
 		mps = USB_3_MAX_CTRL_PACKET;
 		break;
+	default:
+		device_printf(sc->sc_dev, "%s: impossible speed: %x",
+		    __func__, speed);
+		return USBD_INVAL;
 	}
 
 	xs = &sc->sc_slots[slot];
