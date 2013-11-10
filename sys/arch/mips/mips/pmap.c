@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.208 2012/07/05 17:21:02 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.209 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2012/07/05 17:21:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2013/11/10 18:27:15 christos Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2111,6 +2111,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, npv, apv;
+/*###2114 [cc] error: variable 'gen' set but not used [-Werror=unused-but-set-variable]%%%*/
 	int16_t gen;
 
 	KASSERT(kpreempt_disabled());
@@ -2274,6 +2275,7 @@ again:
 				goto again;
 #endif
 #endif
+			__USE(gen);
 		}
 		npv = apv;
 		apv = NULL;

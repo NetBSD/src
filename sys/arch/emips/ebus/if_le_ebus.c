@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.4 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.5 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.4 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.5 2013/11/10 18:27:15 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -683,6 +683,7 @@ enic_intr(void *cookie, void *f)
 		saf = sc->sc_regs->SizeAndFlags;
 		hi  = sc->sc_regs->BufferAddressHi32; /* BUGBUG 64bit */
 		lo  = sc->sc_regs->BufferAddressLo32; /* this pops the fifo */
+		__USE(hi);
 
 		fl = saf & (ES_F_MASK &~ ES_F_DONE);
 		if (fl == ES_F_RECV)

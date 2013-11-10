@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.3 2012/10/27 17:17:45 chs Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.4 2013/11/10 18:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.3 2012/10/27 17:17:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.4 2013/11/10 18:27:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,6 +387,8 @@ icap_ebus_intr(void *cookie, void *f)
         saf = sc->sc_dp->SizeAndFlags;
         hi  = sc->sc_dp->BufferAddressHi32; /* BUGBUG 64bit */
         lo  = sc->sc_dp->BufferAddressLo32; /* this pops the fifo */
+	__USE(hi);
+	__USE(lo);
 
         /* Say its done that much (and sanity)
          */
