@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.285 2013/09/29 14:36:25 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.286 2013/11/11 10:24:53 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -83,6 +83,11 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 .MADE: ${LIBCRT0}
 .endif
 
+.ifndef LIBCRTI
+LIBCRTI=	${DESTDIR}/usr/lib/crti.o
+.MADE: ${LIBCRTI}
+.endif
+
 ##### Installed system library definitions
 #
 #	E.g.
@@ -104,7 +109,6 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	c_pic \
 	com_err \
 	compat \
-	crt0 \
 	crypt \
 	crypto \
 	crypto_idea \
@@ -476,7 +480,8 @@ NODPSRCS+=	${f}
 .endif
 .endfor
 
-${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${XOBJS.${_P}} ${SRCS.${_P}} \
+    ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
 	${_CCLINK.${_P}} -Wl,-nostdlib \
@@ -509,7 +514,8 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
+    ${LIBCRTEND} ${_DPADD.${_P}}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
