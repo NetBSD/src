@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.9 2013/11/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.10 2013/11/11 16:46:20 christos Exp $	*/
 /* $OpenBSD: sftp-client.c,v 1.101.2.1 2013/11/08 01:33:56 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.9 2013/11/11 16:43:26 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.10 2013/11/11 16:46:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -1212,7 +1212,9 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			    "server reordered requests", local_path);
 		}
 		debug("truncating at %llu", (unsigned long long)highwater);
-		ftruncate(local_fd, highwater);
+		if (ftruncate(local_fd, highwater) == -1) {
+			error("Unable to truncate \"%s\"", local_path);
+		}
 	}
 	if (read_error) {
 		error("Couldn't read from remote file \"%s\" : %s",
