@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_if.c,v 1.1 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_if.c,v 1.2 2013/11/11 15:28:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.1 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.2 2013/11/11 15:28:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -98,7 +98,7 @@ npf_ifmap_lookup(const char *ifname)
 	for (u_int i = 0; i < npf_ifmap_cnt; i++) {
 		npf_ifmap_t *nim = &npf_ifmap[i];
 
-		if (nim->n_ifname && strcmp(nim->n_ifname, ifname) == 0)
+		if (nim->n_ifname[0] && strcmp(nim->n_ifname, ifname) == 0)
 			return i + 1;
 	}
 	return INACTIVE_ID;
