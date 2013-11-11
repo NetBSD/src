@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2013/11/11 23:51:36 joerg Exp $
 
 LIB=	lldbPluginProcessUtility
 
@@ -7,11 +7,14 @@ LIB=	lldbPluginProcessUtility
 .PATH: ${LLDB_SRCDIR}/source/Plugins/Process/Utility
 
 SRCS+=	DynamicRegisterInfo.cpp \
+	HistoryThread.cpp \
+	HistoryUnwind.cpp \
 	InferiorCallPOSIX.cpp \
 	RegisterContextDarwin_arm.cpp \
 	RegisterContextDarwin_i386.cpp \
 	RegisterContextDarwin_x86_64.cpp \
 	RegisterContextDummy.cpp \
+	RegisterContextHistory.cpp \
 	RegisterContextLLDB.cpp \
 	RegisterContextMach_arm.cpp \
 	RegisterContextMach_i386.cpp \
