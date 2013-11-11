@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.198 2013/11/06 06:23:15 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 2013/11/11 11:10:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2013/11/11 11:10:45 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1324,7 +1324,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	pcu_discard(&fpu_ops, false);
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	if (pack->ep_osversion >= 699002600)
+		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	else
+		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_COMPAT_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 

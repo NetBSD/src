@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.737 2013/11/08 03:12:48 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.738 2013/11/11 11:10:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.737 2013/11/08 03:12:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.738 2013/11/11 11:10:45 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -862,17 +862,23 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
+	uint16_t control;
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
 	pcu_discard(&fpu_ops, false);
+	if (pack->ep_osversion >= 699002600)
+		control = __INITIAL_NPXCW__;
+	else
+		control = __NetBSD_COMPAT_NPXCW__;
+
 	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = control;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = control;
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 

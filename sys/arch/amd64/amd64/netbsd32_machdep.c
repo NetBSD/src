@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.83 2013/11/02 00:41:58 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.84 2013/11/11 11:10:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.83 2013/11/02 00:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.84 2013/11/11 11:10:45 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -141,7 +141,10 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	l->l_md.md_flags |= MDL_COMPAT32;	/* Force iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
-        pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	if (pack->ep_osversion >= 699002600)
+		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	else
+		pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_COMPAT_NPXCW__;
         pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
