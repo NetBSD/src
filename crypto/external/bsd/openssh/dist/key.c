@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.13 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.14 2013/11/11 16:32:10 christos Exp $	*/
 /* $OpenBSD: key.c,v 1.104 2013/05/19 02:42:42 djm Exp $ */
 /*
  * read_bignum():
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.13 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.14 2013/11/11 16:32:10 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -1512,6 +1512,8 @@ to_blob(const Key *key, u_char **blobp, u_int *lenp, int force_plain)
 	Buffer b;
 	int len, type;
 
+	if (blobp)
+		*blobp = NULL;
 	if (key == NULL) {
 		error("key_to_blob: key == NULL");
 		return 0;
