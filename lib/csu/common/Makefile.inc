@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2013/09/18 22:53:39 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2013/11/11 10:24:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -98,7 +98,7 @@ crtfm.o: crtfm.c
 .endif
 
 GENASSYM_CONF=	${COMMON_DIR}/sysident_assym.cf 
-sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
+sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} ${NETBSDSRCDIR}/sys/sys/param.h
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
 	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
