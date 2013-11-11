@@ -25,40 +25,39 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_round.c,v 1.3 2013/11/11 23:57:34 joerg Exp $");
+__RCSID("$NetBSD: s_roundl.c,v 1.1 2013/11/11 23:57:34 joerg Exp $");
 #if 0
-__FBSDID("$FreeBSD: src/lib/msun/src/s_round.c,v 1.1 2004/06/07 08:05:36 das Exp $");
-#endif
+__FBSDID("$FreeBSD: head/lib/msun/src/s_roundl.c 153017 2005-12-02 13:45:06Z bde $");
 #endif
 
+#include "namespace.h"
 #include <math.h>
 
-#ifndef __HAVE_LONG_DOUBLE
-__strong_alias(_roundl, round)
-__weak_alias(roundl, round)
+#ifdef __HAVE_LONG_DOUBLE
+
+#ifdef __weak_alias
+__weak_alias(roundl, _roundl)
 #endif
 
-double
-round(double x)
+long double
+roundl(long double x)
 {
-	double t;
-	int i;
+	long double t;
 
-	i = fpclassify(x);
-	if (i == FP_INFINITE || i == FP_NAN)
+	if (!isfinite(x))
 		return (x);
 
 	if (x >= 0.0) {
-		t = floor(x);
-		if (x - t >= 0.5)
+		t = floorl(x);
+		if (t - x <= -0.5)
 			t += 1.0;
 		return (t);
 	} else {
-		x = -x;
-		t = floor(x);
-		if (x - t >= 0.5)
+		t = floorl(-x);
+		if (t + x <= -0.5)
 			t += 1.0;
 		return (-t);
 	}
 }
+
+#endif /* __HAVE_LONG_DOUBLE */
