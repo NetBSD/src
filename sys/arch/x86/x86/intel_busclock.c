@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.14 2013/11/07 18:17:13 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.15 2013/11/11 17:02:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.14 2013/11/07 18:17:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.15 2013/11/11 17:02:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
+#if 0
 	case 0x1c: /* Atom */
 	case 0x26:
 	case 0x27:
@@ -273,6 +274,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
+#endif
 	default:
 		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
 		    device_xname(ci->ci_dev),
