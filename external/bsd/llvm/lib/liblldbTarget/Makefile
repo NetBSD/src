@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/10/14 01:37:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2013/11/11 23:51:36 joerg Exp $
 
 LIB=	lldbTarget
 
@@ -24,6 +24,7 @@ SRCS+=	ABI.cpp \
 	StackFrameList.cpp \
 	StackID.cpp \
 	StopInfo.cpp \
+	SystemRuntime.cpp \
 	Target.cpp \
 	TargetList.cpp \
 	Thread.cpp \
