@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <cctype>
 #include <locale.h>
-#ifdef _LIBCPP_MSVCRT
+#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 # include <support/win32/locale_win32.h>
 #elif _AIX
 # include <support/ibm/xlocale.h>
@@ -256,8 +256,8 @@ collate<_CharT>::do_hash(const char_type* __lo, const char_type* __hi) const
     return static_cast<long>(__h);
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS collate<char>)
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS collate<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS collate<char>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS collate<wchar_t>)
 
 // template <class CharT> class collate_byname;
 
@@ -363,7 +363,7 @@ public:
 # else
     static const mask blank  = _CTYPE_B;
 # endif
-#elif defined(__sun__)
+#elif defined(__sun__) || defined(_AIX)
     typedef unsigned int mask;
     static const mask space  = _ISSPACE;
     static const mask print  = _ISPRINT;
@@ -512,7 +512,7 @@ public:
     _LIBCPP_ALWAYS_INLINE
     bool is(mask __m, char_type __c) const
     {
-        return isascii(__c) ? __tab_[static_cast<int>(__c)] & __m : false;
+        return isascii(__c) ? (__tab_[static_cast<int>(__c)] & __m) !=0 : false;
     }
 
     _LIBCPP_ALWAYS_INLINE
@@ -1147,10 +1147,10 @@ codecvt_byname<_InternT, _ExternT, _StateT>::~codecvt_byname()
 {
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS codecvt_byname<char, char, mbstate_t>)
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS codecvt_byname<wchar_t, char, mbstate_t>)
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS codecvt_byname<char16_t, char, mbstate_t>)
-_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS codecvt_byname<char32_t, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS codecvt_byname<char, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS codecvt_byname<wchar_t, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS codecvt_byname<char16_t, char, mbstate_t>)
+_LIBCPP_EXTERN_TEMPLATE2(class _LIBCPP_TYPE_VIS codecvt_byname<char32_t, char, mbstate_t>)
 
 _LIBCPP_FUNC_VIS void __throw_runtime_error(const char*);
 

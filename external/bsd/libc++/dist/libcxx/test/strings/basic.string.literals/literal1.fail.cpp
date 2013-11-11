@@ -13,9 +13,9 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11 
-    using namespace std;
+    using std::string;
 
-    std::string foo  =   ""s;  // should fail w/conversion operator not found
+    string foo  =   ""s;  // should fail w/conversion operator not found
 #else
 #error
 #endif

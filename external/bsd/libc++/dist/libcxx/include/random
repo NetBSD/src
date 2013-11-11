@@ -3475,7 +3475,9 @@ typedef shuffle_order_engine<minstd_rand0, 256>                         knuth_b;
 
 class _LIBCPP_TYPE_VIS random_device
 {
+#if !defined(_WIN32)
     int __f_;
+#endif // defined(_WIN32)
 public:
     // types
     typedef unsigned result_type;
@@ -3521,7 +3523,7 @@ private:
 public:
     // constructors
     _LIBCPP_INLINE_VISIBILITY
-    seed_seq() {}
+    seed_seq() _NOEXCEPT {}
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _Tp>
         _LIBCPP_INLINE_VISIBILITY
@@ -3539,7 +3541,7 @@ public:
 
     // property functions
     _LIBCPP_INLINE_VISIBILITY
-    size_t size() const {return __v_.size();}
+    size_t size() const _NOEXCEPT {return __v_.size();}
     template<class _OutputIterator>
         _LIBCPP_INLINE_VISIBILITY
         void param(_OutputIterator __dest) const
