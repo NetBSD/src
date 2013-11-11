@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.5 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.6 2013/11/11 16:32:10 christos Exp $	*/
 /* $OpenBSD: ssh-pkcs11-helper.c,v 1.6 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.5 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.6 2013/11/11 16:32:10 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -124,7 +124,8 @@ process_add(void)
 		buffer_put_char(&msg, SSH2_AGENT_IDENTITIES_ANSWER);
 		buffer_put_int(&msg, nkeys);
 		for (i = 0; i < nkeys; i++) {
-			key_to_blob(keys[i], &blob, &blen);
+			if (key_to_blob(keys[i], &blob, &blen) == 0)
+				continue;
 			buffer_put_string(&msg, blob, blen);
 			buffer_put_cstring(&msg, name);
 			free(blob);
