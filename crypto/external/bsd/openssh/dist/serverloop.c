@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.7 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.8 2013/11/11 16:44:43 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.168 2013/07/12 00:19:59 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.7 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.8 2013/11/11 16:44:43 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -313,7 +313,7 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	if (compat20 &&
 	    max_time_milliseconds == 0 && options.client_alive_interval) {
 		client_alive_scheduled = 1;
-		max_time_milliseconds = options.client_alive_interval * 1000;
+		max_time_milliseconds = options.client_alive_interval * 1000ULL;
 	}
 
 	if (compat20) {
