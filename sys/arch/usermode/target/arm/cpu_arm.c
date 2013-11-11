@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_arm.c,v 1.1 2013/11/10 20:03:46 jmcneill Exp $ */
+/* $NetBSD: cpu_arm.c,v 1.2 2013/11/11 13:52:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_arm.c,v 1.1 2013/11/10 20:03:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_arm.c,v 1.2 2013/11/11 13:52:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -99,15 +99,15 @@ md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
 register_t
 md_get_pc(ucontext_t *ucp)
 {
-	panic("md_get_pc not implemented");
-	return 0;
+	unsigned int *reg = (unsigned int *)&ucp->uc_mcontext;
+	return reg[15];
 }
 
 register_t
 md_get_sp(ucontext_t *ucp)
 {
-	panic("md_get_sp not implemented");
-	return 0;
+	unsigned int *reg = (unsigned int *)&ucp->uc_mcontext;
+	return reg[13];
 }
 
 int
