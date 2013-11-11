@@ -28,6 +28,7 @@ namespace std
 
     // Primary classification traits:
     template <class T> struct is_void;
+    template <class T> struct is_null_pointer;  // C++14
     template <class T> struct is_integral;
     template <class T> struct is_floating_point;
     template <class T> struct is_array;
@@ -298,6 +299,11 @@ template <>          struct ____is_nullptr_t<nullptr_t> : public true_type {};
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __is_nullptr_t
     : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_null_pointer
+    : public ____is_nullptr_t<typename remove_cv<_Tp>::type> {};
+#endif
+
 // is_integral
 
 template <class _Tp> struct __is_integral                     : public false_type {};
@@ -422,7 +428,7 @@ template <class _Tp, bool = is_class<_Tp>::value ||
                             is_union<_Tp>::value ||
                             is_void<_Tp>::value  ||
                             is_reference<_Tp>::value ||
-                            is_same<_Tp, nullptr_t>::value >
+                            __is_nullptr_t<_Tp>::value >
 struct __is_function
     : public integral_constant<bool, sizeof(__is_function_imp::__test<_Tp>(__is_function_imp::__source<_Tp>())) == 1>
     {};
@@ -711,6 +717,31 @@ template <class _Tp, size_t _Np> struct _LIBCPP_TYPE_VIS_ONLY remove_all_extents
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp> using remove_all_extents_t = typename remove_all_extents<_Tp>::type;
+#endif
+
+// decay
+
+template <class _Tp>
+struct _LIBCPP_TYPE_VIS_ONLY decay
+{
+private:
+    typedef typename remove_reference<_Tp>::type _Up;
+public:
+    typedef typename conditional
+                     <
+                         is_array<_Up>::value,
+                         typename remove_extent<_Up>::type*,
+                         typename conditional
+                         <
+                              is_function<_Up>::value,
+                              typename add_pointer<_Up>::type,
+                              typename remove_cv<_Up>::type
+                         >::type
+                     >::type type;
+};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using decay_t = typename decay<_Tp>::type;
 #endif
 
 // is_abstract
@@ -1350,7 +1381,7 @@ template <class ..._Tp> struct common_type;
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY common_type<_Tp>
 {
-    typedef _Tp type;
+    typedef typename decay<_Tp>::type type;
 };
 
 template <class _Tp, class _Up>
@@ -1361,7 +1392,7 @@ private:
     static _Up&& __u();
     static bool __f();
 public:
-    typedef typename remove_reference<decltype(__f() ? __t() : __u())>::type type;
+    typedef typename decay<decltype(__f() ? __t() : __u())>::type type;
 };
 
 template <class _Tp, class _Up, class ..._Vp>
@@ -1378,8 +1409,10 @@ template <class ..._Tp> using common_type_t = typename common_type<_Tp...>::type
 
 // is_assignable
 
+template<typename, typename T> struct __select_2nd { typedef T type; };
+
 template <class _Tp, class _Arg>
-decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>(), true_type()))
+typename __select_2nd<decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>())), true_type>::type
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __is_assignable_test(_Tp&&, _Arg&&);
 #else
@@ -1446,7 +1479,8 @@ __is_destructible_test(_Tp&);
 false_type
 __is_destructible_test(__any);
 
-template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value>
+template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value
+                                                || is_function<_Tp>::value>
 struct __destructible_imp
     : public common_type
         <
@@ -1536,29 +1570,6 @@ public:
 };
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-template <class _Tp>
-struct _LIBCPP_TYPE_VIS_ONLY decay
-{
-private:
-    typedef typename remove_reference<_Tp>::type _Up;
-public:
-    typedef typename conditional
-                     <
-                         is_array<_Up>::value,
-                         typename remove_extent<_Up>::type*,
-                         typename conditional
-                         <
-                              is_function<_Up>::value,
-                              typename add_pointer<_Up>::type,
-                              typename remove_cv<_Up>::type
-                         >::type
-                     >::type type;
-};
-
-#if _LIBCPP_STD_VER > 11
-template <class _Tp> using decay_t = typename decay<_Tp>::type;
-#endif
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -1967,8 +1978,6 @@ class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1, _A2)>
 // template <class T, class... Args> struct is_constructible;
 
 //      main is_constructible test
-
-template<typename, typename T> struct __select_2nd { typedef T type; };
 
 template <class _Tp, class ..._Args>
 typename __select_2nd<decltype(_VSTD::move(_Tp(_VSTD::declval<_Args>()...))), true_type>::type
@@ -3256,6 +3265,27 @@ struct underlying_type
 };
 
 #endif // _LIBCXX_UNDERLYING_TYPE
+
+#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+template <class _Tp>
+struct __has_operator_addressof_imp
+{
+    template <class>
+        static auto __test(__any) -> false_type;
+    template <class _Up>
+        static auto __test(_Up* __u)
+            -> typename __select_2nd<decltype(__u->operator&()), true_type>::type;
+
+    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+};
+
+template <class _Tp>
+struct __has_operator_addressof
+    : public integral_constant<bool, __has_operator_addressof_imp<_Tp>::value>
+{};
+
+#endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 _LIBCPP_END_NAMESPACE_STD
 
