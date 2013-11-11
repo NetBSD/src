@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.49 2013/11/05 14:26:19 martin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.50 2013/11/11 15:22:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.49 2013/11/05 14:26:19 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.50 2013/11/11 15:22:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -976,11 +976,6 @@ bad:
 			}
 #endif
 			break;
-
-			/*
-			 * Dunno, warn for diagnostic
-			 */
-			goto bad;
 
 		case ELF_NOTE_TYPE_SUSE_VERSION_TAG:
 			break;
