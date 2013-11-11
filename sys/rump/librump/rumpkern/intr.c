@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.41 2013/11/11 23:06:40 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.42 2013/11/11 23:11:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.41 2013/11/11 23:06:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2013/11/11 23:11:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -103,6 +103,7 @@ doclock(void *noarg)
 	int64_t sec;
 	long nsec;
 	int error;
+	int cpuindx = curcpu()->ci_index;
 	extern int hz;
 
 	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
@@ -122,14 +123,8 @@ doclock(void *noarg)
 		KASSERT(!error);
 		timespecadd(&curclock, &thetick, &curclock);
 
-#if 0
-		/* CPU_IS_PRIMARY is MD and hence unreliably correct here */
-		if (!CPU_IS_PRIMARY(curcpu()))
+		if (cpuindx != 0)
 			continue;
-#else
-		if (curcpu()->ci_index != 0)
-			continue;
-#endif
 
 		if ((++ticks % hz) == 0) {
 			cv_broadcast(&lbolt);
@@ -313,8 +308,9 @@ void
 softint_schedule(void *arg)
 {
 	struct softint *si = arg;
-	struct softint_percpu *sip = &si->si_entry[curcpu()->ci_index];
-	struct cpu_data *cd = &curcpu()->ci_data;
+	struct cpu_info *ci = curcpu();
+	struct softint_percpu *sip = &si->si_entry[ci->ci_index];
+	struct cpu_data *cd = &ci->ci_data;
 	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
 	if (!rump_threads) {
