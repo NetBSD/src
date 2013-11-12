@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.36 2013/11/12 16:11:39 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.37 2013/11/12 16:13:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.36 2013/11/12 16:11:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.37 2013/11/12 16:13:56 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -122,7 +122,7 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	if (family == 0xf)
 		family += CPUID2EXTFAMILY(ci->ci_signature);
 
-	if ((family == 0xf) || (model == 0x6))
+	if ((family == 0xf) || (family == 0x6))
 		model |= CPUID2EXTMODEL(ci->ci_signature) << 4;
 
 	/*
