@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2013/07/25 14:28:29 kefren Exp $
+# $NetBSD: Makefile,v 1.4 2013/11/12 12:22:33 kefren Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/mpls
 
-TESTS_SH=	t_mpls_fw t_rfc4182 t_ldp_regen t_ldp_static
+TESTS_SH=	t_mpls_fw t_rfc4182 t_ldp_regen
 
 .include <bsd.test.mk>
