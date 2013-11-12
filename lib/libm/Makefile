@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.145 2013/11/12 00:10:29 joerg Exp $
+#  $NetBSD: Makefile,v 1.146 2013/11/12 16:48:39 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -151,7 +151,8 @@ LIB=	m
 COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
-	e_expf.c e_fmod.c e_fmodf.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c \
+	e_expf.c e_fmod.c e_fmodf.c e_fmodl.c e_hypot.c e_hypotf.c \
+	e_j0.c e_j0f.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
 	e_log2.c e_log10.c e_log10f.c e_log2f.c e_logf.c e_pow.c e_powf.c \
 	e_rem_pio2.c e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c \
@@ -174,8 +175,9 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c s_trunc.c s_truncf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
 	w_atan2f.c w_atanh.c w_atanhf.c w_cosh.c w_coshf.c \
-	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_gamma.c \
-	w_gamma_r.c w_gammaf.c w_gammaf_r.c w_hypot.c w_hypotf.c w_j0.c \
+	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_fmodl.c \
+	w_gamma.c w_gamma_r.c w_gammaf.c w_gammaf_r.c w_hypot.c w_hypotf.c \
+	w_j0.c \
 	w_j0f.c w_j1.c w_j1f.c w_jn.c w_jnf.c w_lgamma.c w_lgamma_r.c \
 	w_lgammaf.c w_lgammaf_r.c w_log.c w_log10.c w_log10f.c w_log2.c \
 	w_log2f.c w_logf.c \
@@ -284,7 +286,8 @@ MLINKS+=log.3 logf.3 \
 MLINKS+=pow.3 powf.3
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=finite.3 finitef.3
-MLINKS+=fmod.3 fmodf.3
+MLINKS+=fmod.3 fmodf.3 \
+	fmod.3 fmodl.3
 MLINKS+=hypot.3 hypotf.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3 ieee_test.3 logbl.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3

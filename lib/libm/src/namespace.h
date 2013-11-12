@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.6 2013/11/11 23:57:34 joerg Exp $ */
+/* $NetBSD: namespace.h,v 1.7 2013/11/12 16:48:39 joerg Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -49,3 +49,4 @@
 #define ceill _ceill
 #define floorl _floorl
 #define roundl _roundl
+#define fmodl _fmodl

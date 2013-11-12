@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.18 2013/02/11 01:29:58 christos Exp $
+ * $NetBSD: math_private.h,v 1.19 2013/11/12 16:48:39 joerg Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -298,6 +298,9 @@ extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
 extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int*));
+
+/* ieee style elementary long double functions */
+extern long double __ieee754_fmodl(long double, long double);
 
 /*
  * TRUNC() is a macro that sets the trailing 27 bits in the mantissa of an

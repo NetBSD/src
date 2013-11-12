@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.549 2013/11/12 12:22:33 kefren Exp $
+# $NetBSD: mi,v 1.550 2013/11/12 16:48:39 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2353,6 +2353,7 @@
 ./usr/tests/lib/libm/t_erf			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_exp			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_floor			tests-obsolete		obsolete
+./usr/tests/lib/libm/t_fmod			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_infinity			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_ldexp			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_libm			tests-obsolete		obsolete
