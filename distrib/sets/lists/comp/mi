@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1856 2013/11/12 16:39:39 joerg Exp $
+#	$NetBSD: mi,v 1.1857 2013/11/12 16:48:39 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6282,6 +6282,7 @@
 ./usr/share/man/cat3/fminl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmod.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmodf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmodl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmtcheck.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmtmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fnmatch.0			comp-c-catman		.cat
@@ -12838,6 +12839,7 @@
 ./usr/share/man/html3/fminl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmod.html			comp-c-htmlman		html
 ./usr/share/man/html3/fmodf.html		comp-c-htmlman		html
+./usr/share/man/html3/fmodl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmtcheck.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmtmsg.html		comp-c-htmlman		html
 ./usr/share/man/html3/fnmatch.html		comp-c-htmlman		html
@@ -19308,6 +19310,7 @@
 ./usr/share/man/man3/fminl.3			comp-c-man		.man
 ./usr/share/man/man3/fmod.3			comp-c-man		.man
 ./usr/share/man/man3/fmodf.3			comp-c-man		.man
+./usr/share/man/man3/fmodl.3			comp-c-man		.man
 ./usr/share/man/man3/fmtcheck.3			comp-c-man		.man
 ./usr/share/man/man3/fmtmsg.3			comp-c-man		.man
 ./usr/share/man/man3/fnmatch.3			comp-c-man		.man
