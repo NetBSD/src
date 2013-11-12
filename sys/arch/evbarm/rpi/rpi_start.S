@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.7 2012/09/23 15:56:32 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.8 2013/11/12 17:14:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -87,7 +87,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.7 2012/09/23 15:56:32 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.8 2013/11/12 17:14:39 skrll Exp $")
 
 /*
  * Workaround Erratum 411920 
@@ -277,6 +277,7 @@ Lcontrol_set:
 	      CPU_CONTROL_SYST_ENABLE | \
 		(1 << 16) | 	/* SBO - Global enable for data tcm */ \
 		(1 << 18) |	/* SBO - Global enable for insn tcm */ \
+	      CPU_CONTROL_UNAL_ENABLE | \
 	      CPU_CONTROL_IC_ENABLE
 
 
