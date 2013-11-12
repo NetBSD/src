@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.15 2013/11/11 17:02:53 christos Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.16 2013/11/12 16:57:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.15 2013/11/11 17:02:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.16 2013/11/12 16:57:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,16 @@ p3_get_bus_clock(struct cpu_info *ci)
 {
 	uint64_t msr;
 	int bus, bus_clock = 0;
+	uint32_t family, model;
 
-	switch (CPUID2MODEL(ci->ci_signature)) {
+	family = CPUID2FAMILY(ci->ci_signature);
+	model = CPUID2MODEL(ci->ci_signature);
+
+	/* Note that this function is called only when family != 0xf */
+	if (family == 6)
+		model |= CPUID2EXTMODEL(ci->ci_signature) << 4;
+		
+	switch (model) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;
 		break;
@@ -213,7 +221,6 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
-#if 0
 	case 0x1c: /* Atom */
 	case 0x26:
 	case 0x27:
@@ -274,7 +281,6 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
-#endif
 	default:
 		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
 		    device_xname(ci->ci_dev),
