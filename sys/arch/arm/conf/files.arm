@@ -1,10 +1,15 @@
-#	$NetBSD: files.arm,v 1.122 2013/08/17 22:21:02 matt Exp $
+#	$NetBSD: files.arm,v 1.123 2013/11/12 17:05:09 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
 
+# predefine for CPU_ARMV6 and CPU_ARMV7
+defflag	opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
+
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
-defflag	opt_cputypes.h		CPU_PRE_ARMV6 CPU_ARMV6 CPU_ARMV7
+defflag	opt_cputypes.h		CPU_PRE_ARMV6
+defflag	opt_cputypes.h		CPU_ARMV6: ARM32_DISABLE_ALIGNMENT_FAULTS
+defflag	opt_cputypes.h		CPU_ARMV7: ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag	opt_cputypes.h		CPU_ARM2: CPU_PRE_ARMV6
 defflag	opt_cputypes.h		CPU_ARM250: CPU_PRE_ARMV6
 defflag	opt_cputypes.h		CPU_ARM3: CPU_PRE_ARMV6
@@ -44,7 +49,6 @@ defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
 defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_BACK
 defflag  opt_cpuoptions.h	XSCALE_NO_COALESCE_WRITES
 defflag  opt_cpuoptions.h	XSCALE_CACHE_READ_WRITE_ALLOCATE
-defflag  opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag  opt_cpuoptions.h	ARM9_CACHE_WRITE_THROUGH
 defflag  opt_cpuoptions.h	TPIDRPRW_IS_CURLWP
 defflag  opt_cpuoptions.h	TPIDRPRW_IS_CURCPU
