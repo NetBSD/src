@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.1 2013/09/19 01:04:46 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.2 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.1 2013/09/19 01:04:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.2 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,11 +145,15 @@ npf_cop_table(const struct mbuf *pkt, void *arg, uint32_t A, uint32_t *M)
 	npf_tableset_t *tblset = npf_config_tableset();
 	const uint32_t tid = A & (SRC_FLAG_BIT - 1);
 	const npf_addr_t *addr;
+	npf_table_t *t;
 
 	KASSERT(npc != NULL);
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	memset(M, 0, sizeof(uint32_t) * BPF_MEMWORDS);
 
+	if ((t = npf_tableset_getbyid(tblset, tid)) == NULL) {
+		return 0;
+	}
 	addr = (A & SRC_FLAG_BIT) ? npc->npc_srcip : npc->npc_dstip;
-	return npf_table_lookup(tblset, tid, npc->npc_alen, addr) == 0;
+	return npf_table_lookup(t, npc->npc_alen, addr) == 0;
 }
