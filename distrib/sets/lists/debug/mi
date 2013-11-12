@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2013/11/12 16:48:39 joerg Exp $
+# $NetBSD: mi,v 1.41 2013/11/12 23:39:58 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -835,6 +835,7 @@
 ./usr/libdata/debug/usr/games/fortune.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/gomoku.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/hack.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/games/hals_end.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/hangman.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/hunt.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/huntd.debug	comp-games-debug	debug
