@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/10/17 22:07:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2013/11/12 16:39:39 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -55,6 +55,7 @@ INCS=	__bit_reference \
 	cwchar \
 	cwctype \
 	deque \
+	dynarray \
 	exception \
 	forward_list \
 	fstream \
@@ -75,6 +76,7 @@ INCS=	__bit_reference \
 	mutex \
 	new \
 	numeric \
+	optional \
 	ostream \
 	queue \
 	random \
@@ -82,6 +84,7 @@ INCS=	__bit_reference \
 	regex \
 	scoped_allocator \
 	set \
+	shared_mutex \
 	sstream \
 	stack \
 	stdexcept \
