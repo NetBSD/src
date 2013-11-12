@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.33 2013/11/12 00:46:34 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.34 2013/11/12 06:07:30 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -249,7 +249,7 @@ group-opts	= name-string [ "in" | "out" ] [ "on" interface ]
 rule-list	= [ rule new-line ] rule-list
 
 npf-filter	= [ "family" family-opt ] [ "proto" protocol [ proto-opts ] ]
-		  ( "all" | filt-opts ) 
+		  ( "all" | filt-opts )
 static-rule	= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
 		  [ "in" | out" ] [ "final" ] [ "on" interface ]
 		  ( npf-filter | "pcap-filter" pcap-filter-expr )
