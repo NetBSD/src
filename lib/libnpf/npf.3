@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.3,v 1.12 2013/11/12 00:46:34 rmind Exp $
+.\"	$NetBSD: npf.3,v 1.13 2013/11/12 06:06:21 wiz Exp $
 .\"
 .\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 .Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
 .\" ---
 .Ft nl_table_t *
-.Fn npf_table_create "const char *name", "u_int id" "int type"
+.Fn npf_table_create "const char *name" "u_int id" "int type"
 .Ft int
 .Fn npf_table_add_entry "nl_table_t *tl" "int af" \
 "in_addr_t addr" "in_addr_t mask"
