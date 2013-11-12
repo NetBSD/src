@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.28 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.29 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.28 2013/11/08 00:38:26 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.29 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: npf_build.c,v 1.28 2013/11/08 00:38:26 rmind Exp $");
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <err.h>
 
@@ -658,17 +659,16 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
  * if required, fill with contents from a file.
  */
 void
-npfctl_build_table(const char *tid, u_int type, const char *fname)
+npfctl_build_table(const char *tname, u_int type, const char *fname)
 {
+	static unsigned tid = 0;
 	nl_table_t *tl;
-	u_int id;
 
-	id = atoi(tid);
-	tl = npf_table_create(id, type);
+	tl = npf_table_create(tname, tid++, type);
 	assert(tl != NULL);
 
 	if (npf_table_insert(npf_conf, tl)) {
-		errx(EXIT_FAILURE, "table '%d' is already defined\n", id);
+		yyerror("table '%s' is already defined", tname);
 	}
 
 	if (fname) {

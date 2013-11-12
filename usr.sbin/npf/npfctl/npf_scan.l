@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.13 2013/09/20 03:03:52 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.14 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ npfctl_parse_string(const char *str)
 %option noyywrap nounput noinput
 
 ID	[a-zA-Z_][a-zA-Z_0-9]*
-NID	[a-zA-Z_0-9]+
+DID	[a-zA-Z_][a-zA-Z_0-9-]*
 NUMBER	[0-9]+
 
 %%
@@ -181,12 +181,12 @@ any			return ANY;
 			return NUM;
 		}
 
-"<"{NID}">"	{
+"<"{DID}">"	{
 			yylval.str = estrndup(yytext + 1, yyleng - 2);
 			return TABLE_ID;
 		}
 
-"$"{NID}	{
+"$"{ID}	{
 			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
 		}
