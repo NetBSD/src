@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1855 2013/11/12 00:10:29 joerg Exp $
+#	$NetBSD: mi,v 1.1856 2013/11/12 16:39:39 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -259,6 +259,7 @@
 ./usr/include/c++/cwctype			comp-cxx-include	libcxx
 ./usr/include/c++/cxxabi.h			comp-cxx-include	libcxx
 ./usr/include/c++/deque				comp-cxx-include	libcxx
+./usr/include/c++/dynarray			comp-cxx-include	libcxx
 ./usr/include/c++/exception			comp-cxx-include	libcxx
 ./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_map			comp-cxx-include	libcxx
@@ -282,6 +283,7 @@
 ./usr/include/c++/mutex				comp-cxx-include	libcxx
 ./usr/include/c++/new				comp-cxx-include	libcxx
 ./usr/include/c++/numeric			comp-cxx-include	libcxx
+./usr/include/c++/optional			comp-cxx-include	libcxx
 ./usr/include/c++/ostream			comp-cxx-include	libcxx
 ./usr/include/c++/queue				comp-cxx-include	libcxx
 ./usr/include/c++/random			comp-cxx-include	libcxx
@@ -289,6 +291,7 @@
 ./usr/include/c++/regex				comp-cxx-include	libcxx
 ./usr/include/c++/scoped_allocator		comp-cxx-include	libcxx
 ./usr/include/c++/set				comp-cxx-include	libcxx
+./usr/include/c++/shared_mutex			comp-cxx-include	libcxx
 ./usr/include/c++/sstream			comp-cxx-include	libcxx
 ./usr/include/c++/stack				comp-cxx-include	libcxx
 ./usr/include/c++/stdexcept			comp-cxx-include	libcxx
