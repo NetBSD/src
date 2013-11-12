@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.19 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.20 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ nl_nat_t *	npf_nat_create(int, u_int, const char *,
 		    npf_addr_t *, int, in_port_t);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 
-nl_table_t *	npf_table_create(u_int, int);
+nl_table_t *	npf_table_create(const char *, u_int, int);
 int		npf_table_add_entry(nl_table_t *, int,
 		    const npf_addr_t *, const npf_netmask_t);
 bool		npf_table_exists_p(nl_config_t *, u_int);
@@ -130,6 +130,7 @@ const void *	npf_rule_getinfo(nl_rule_t *, size_t *);
 const char *	npf_rule_getproc(nl_rule_t *);
 
 nl_table_t *	npf_table_iterate(nl_config_t *);
+const char *	npf_table_getname(nl_table_t *);
 unsigned	npf_table_getid(nl_table_t *);
 int		npf_table_gettype(nl_table_t *);
 
