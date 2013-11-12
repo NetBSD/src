@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1860 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1861 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -267,7 +267,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		CPUs (which implement a subset of m68k instructions and
 		addressing modes). [matt 20130719]
 	bind: update to 9.9.3-P2 to fix CVE-2013-4854 remote query can cause
-		named to terminate
+		named to terminate [christos 2013-07-27]
 	iwn(4): Add support for Centrino Wireless-N 1030 and Centrino
 		Advanced-N 6230 [prlw1 20130728]
 	dhcpcd(8): Import dhcpcd-6.0.5 [roy 20130803]
@@ -302,3 +302,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	x68k: Support upto 1008 MB extended memory that is found on the XM6i
 		emulator. [tsutsui 20131027]
 	OpenSSH: Imported 6.4 [christos 20131108]
+	zless(1): Added via lastest version of zmore(1) from OpenBSD
+		[pettai 20131112]
