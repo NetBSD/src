@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.16 2012/07/16 01:52:37 pgoyette Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.17 2013/11/12 15:08:01 msaitoh Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.16 2012/07/16 01:52:37 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.17 2013/11/12 15:08:01 msaitoh Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -239,7 +239,8 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	KASSERT(cpu_signature != 0x0);
 
 	sc->sc_family = CPUID2FAMILY(cpu_signature);
-	sc->sc_family += CPUID2EXTFAMILY(cpu_signature);
+	if (sc->sc_family == 0xf)
+		sc->sc_family += CPUID2EXTFAMILY(cpu_signature);
 
 	KASSERT(sc->sc_family >= 0xf);
 
