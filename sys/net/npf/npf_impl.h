@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.37 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.38 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -86,11 +86,11 @@ typedef struct npf_session	npf_session_t;
 
 struct npf_sehash;
 struct npf_table;
+struct npf_tableset;
 
 typedef struct npf_sehash	npf_sehash_t;
 typedef struct npf_table	npf_table_t;
-
-typedef npf_table_t *		npf_tableset_t;
+typedef struct npf_tableset	npf_tableset_t;
 
 /*
  * DEFINITIONS.
@@ -101,8 +101,9 @@ typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
 typedef void (*npf_workfunc_t)(void);
 
 /* Some artificial limits. */
-#define	NPF_TABLE_SLOTS		32
 #define	NPF_MAX_RULES		(1024 * 1024)
+#define	NPF_MAX_TABLES		128
+#define	NPF_MAX_RPROCS		128
 #define	NPF_MAX_IFMAP		64
 
 /*
@@ -216,23 +217,24 @@ void		npf_tableset_sysfini(void);
 
 extern const pt_tree_ops_t npf_table_ptree_ops;
 
-npf_tableset_t *npf_tableset_create(void);
+npf_tableset_t *npf_tableset_create(u_int);
 void		npf_tableset_destroy(npf_tableset_t *);
 int		npf_tableset_insert(npf_tableset_t *, npf_table_t *);
+npf_table_t *	npf_tableset_getbyname(npf_tableset_t *, const char *);
+npf_table_t *	npf_tableset_getbyid(npf_tableset_t *, u_int);
 void		npf_tableset_reload(npf_tableset_t *, npf_tableset_t *);
 
-npf_table_t *	npf_table_create(u_int, int, size_t);
+npf_table_t *	npf_table_create(const char *, u_int, int, size_t);
 void		npf_table_destroy(npf_table_t *);
 
-int		npf_table_check(const npf_tableset_t *, u_int, int);
-int		npf_table_insert(npf_tableset_t *, u_int,
-		    const int, const npf_addr_t *, const npf_netmask_t);
-int		npf_table_remove(npf_tableset_t *, u_int,
-		    const int, const npf_addr_t *, const npf_netmask_t);
-int		npf_table_lookup(npf_tableset_t *, u_int,
-		    const int, const npf_addr_t *);
-int		npf_table_list(npf_tableset_t *, u_int, void *, size_t);
-int		npf_table_flush(npf_tableset_t *, u_int);
+int		npf_table_check(npf_tableset_t *, const char *, u_int, int);
+int		npf_table_insert(npf_table_t *, const int,
+		    const npf_addr_t *, const npf_netmask_t);
+int		npf_table_remove(npf_table_t *, const int,
+		    const npf_addr_t *, const npf_netmask_t);
+int		npf_table_lookup(npf_table_t *, const int, const npf_addr_t *);
+int		npf_table_list(npf_table_t *, void *, size_t);
+int		npf_table_flush(npf_table_t *);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(size_t);

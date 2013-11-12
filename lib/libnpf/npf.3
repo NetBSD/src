@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.3,v 1.11 2013/11/08 13:17:45 wiz Exp $
+.\"	$NetBSD: npf.3,v 1.12 2013/11/12 00:46:34 rmind Exp $
 .\"
 .\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 7, 2013
+.Dd November 12, 2013
 .Dt NPF 3
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@
 .Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
 .\" ---
 .Ft nl_table_t *
-.Fn npf_table_create "u_int id" "int type"
+.Fn npf_table_create "const char *name", "u_int id" "int type"
 .Ft int
 .Fn npf_table_add_entry "nl_table_t *tl" "int af" \
 "in_addr_t addr" "in_addr_t mask"
@@ -261,7 +261,7 @@ Insert NAT policy, its rule, into the specified configuration.
 .\" -----
 .Ss Table interface
 .Bl -tag -width 4n
-.It Fn npf_table_create "index" "type"
+.It Fn npf_table_create "name" "index" "type"
 Create NPF table of specified type.
 The following types are supported:
 .Bl -tag -width "NPF_TABLE_TREE "
@@ -269,7 +269,9 @@ The following types are supported:
 Indicates to use hash table for storage.
 .It Dv NPF_TABLE_TREE
 Indicates to use red-black tree for storage.
-Table is identified by
+Table is identified by the
+.Fa name
+and
 .Fa index ,
 which should be in the range between 1 and
 .Dv NPF_MAX_TABLE_ID .

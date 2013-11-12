@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.3 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.4 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.3 2013/11/08 00:38:26 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.4 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: npf_show.c,v 1.3 2013/11/08 00:38:26 rmind Exp $");
 #include "npfctl.h"
 
 typedef struct {
+	nl_config_t *	conf;
 	FILE *		fp;
 	long		fpos;
 } npf_conf_info_t;
@@ -104,7 +105,7 @@ tcpflags2string(char *buf, u_int tfl)
 }
 
 static char *
-print_family(const uint32_t *words)
+print_family(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	const int af = words[0];
 
@@ -120,7 +121,7 @@ print_family(const uint32_t *words)
 }
 
 static char *
-print_address(const uint32_t *words)
+print_address(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	const int af = *words++;
 	const u_int mask = *words++;
@@ -142,7 +143,7 @@ print_address(const uint32_t *words)
 }
 
 static char *
-print_number(const uint32_t *words)
+print_number(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	char *p;
 	easprintf(&p, "%u", words[0]);
@@ -150,7 +151,22 @@ print_number(const uint32_t *words)
 }
 
 static char *
-print_proto(const uint32_t *words)
+print_table(npf_conf_info_t *ctx, const uint32_t *words)
+{
+	unsigned tid = words[0];
+	nl_table_t *tl;
+	char *p;
+
+	while ((tl = npf_table_iterate(ctx->conf)) != NULL) {
+		if (npf_table_getid(tl) == tid)
+			break;
+	}
+	easprintf(&p, "%s", npf_table_getname(tl));
+	return p;
+}
+
+static char *
+print_proto(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	switch (words[0]) {
 	case IPPROTO_TCP:
@@ -162,11 +178,11 @@ print_proto(const uint32_t *words)
 	case IPPROTO_ICMPV6:
 		return estrdup("ipv6-icmp");
 	}
-	return print_number(words);
+	return print_number(ctx, words);
 }
 
 static char *
-print_tcpflags(const uint32_t *words)
+print_tcpflags(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	const u_int tf = words[0], tf_mask = words[1];
 	char buf[16];
@@ -180,7 +196,7 @@ print_tcpflags(const uint32_t *words)
 }
 
 static char *
-print_portrange(const uint32_t *words)
+print_portrange(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	u_int fport = words[0], tport = words[1];
 	char *p;
@@ -224,7 +240,7 @@ static const struct mark_keyword_mapent {
 	u_int		mark;
 	const char *	token;
 	const char *	sep;
-	char *		(*printfn)(const uint32_t *);
+	char *		(*printfn)(npf_conf_info_t *, const uint32_t *);
 	u_int		fwords;
 } mark_keyword_map[] = {
 	{ BM_IPVER,	"family %s",	NULL,		print_family,	1 },
@@ -234,11 +250,11 @@ static const struct mark_keyword_mapent {
 	{ BM_ICMP_CODE,	"code %s",	NULL,		print_number,	1 },
 
 	{ BM_SRC_CIDR,	"from %s",	", ",		print_address,	6 },
-	{ BM_SRC_TABLE,	"from <%s>",	NULL,		print_number,	1 },
+	{ BM_SRC_TABLE,	"from <%s>",	NULL,		print_table,	1 },
 	{ BM_SRC_PORTS,	"port %s",	", ",		print_portrange,2 },
 
 	{ BM_DST_CIDR,	"to %s",	", ",		print_address,	6 },
-	{ BM_DST_TABLE,	"to <%s>",	NULL,		print_number,	1 },
+	{ BM_DST_TABLE,	"to <%s>",	NULL,		print_table,	1 },
 	{ BM_DST_PORTS,	"port %s",	", ",		print_portrange,2 },
 };
 
@@ -267,7 +283,7 @@ scan_marks(npf_conf_info_t *ctx, const struct mark_keyword_mapent *mk,
 		if (m == mk->mark) {
 			/* Value is processed by the print function. */
 			assert(mk->fwords == nwords);
-			vals[nvals++] = mk->printfn(marks);
+			vals[nvals++] = mk->printfn(ctx, marks);
 		}
 		marks += nwords;
 		mlen -= nwords;
@@ -401,10 +417,10 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 static void
 npfctl_print_table(npf_conf_info_t *ctx, nl_table_t *tl)
 {
-	const u_int id = npf_table_getid(tl);
+	const char *name = npf_table_getname(tl);
 	const int type = npf_table_gettype(tl);
 
-	fprintf(ctx->fp, "table <%u> type %s\n", id,
+	fprintf(ctx->fp, "table <%s> type %s\n", name,
 	    (type == NPF_TABLE_HASH) ? "hash" :
 	    (type == NPF_TABLE_TREE) ? "tree" :
 	    "unknown");
@@ -431,6 +447,7 @@ npfctl_config_show(int fd)
 		ncf = npfctl_config_ref();
 		loaded = true;
 	}
+	ctx->conf = ncf;
 
 	if (loaded) {
 		nl_rule_t *rl;
@@ -475,6 +492,8 @@ npfctl_ruleset_show(int fd, const char *ruleset_name)
 	int error;
 
 	ncf = npf_config_create();
+	ctx->conf = ncf;
+
 	if ((error = _npf_ruleset_list(fd, ruleset_name, ncf)) != 0) {
 		return error;
 	}

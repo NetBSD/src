@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.39 2013/09/19 12:05:11 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.40 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.39 2013/09/19 12:05:11 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.40 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -274,12 +274,12 @@ npfctl_table(int fd, int argc, char **argv)
 	npf_ioctl_table_t nct;
 	fam_addr_mask_t fam;
 	size_t buflen = 512;
-	char *cmd, *arg = NULL; /* XXX gcc */
+	char *cmd, *arg;
 	int n, alen;
 
 	/* Default action is list. */
 	memset(&nct, 0, sizeof(npf_ioctl_table_t));
-	nct.nct_tid = atoi(argv[0]);
+	nct.nct_name = argv[0];
 	cmd = argv[1];
 
 	for (n = 0; tblops[n].cmd != NULL; n++) {
@@ -296,6 +296,7 @@ npfctl_table(int fd, int argc, char **argv)
 	switch (nct.nct_cmd) {
 	case NPF_CMD_TABLE_LIST:
 	case NPF_CMD_TABLE_FLUSH:
+		arg = NULL;
 		break;
 	default:
 		if (argc < 3) {

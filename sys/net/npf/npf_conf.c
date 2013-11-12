@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.3 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.4 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.3 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.4 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ npf_config_init(void)
 
 	/* Load the empty configuration. */
 	dict = prop_dictionary_create();
-	tset = npf_tableset_create();
+	tset = npf_tableset_create(0);
 	rpset = npf_rprocset_create();
 	rlset = npf_ruleset_create(0);
 	nset = npf_ruleset_create(0);
