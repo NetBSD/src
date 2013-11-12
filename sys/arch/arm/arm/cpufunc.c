@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.129 2013/11/12 17:14:39 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.130 2013/11/12 17:31:55 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.129 2013/11/12 17:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.130 2013/11/12 17:31:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2996,7 +2996,9 @@ pj4bv7_setup(char *args)
 	pj4b_config();
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE;
-#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
+#ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
+	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
+#else
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 #endif
 	cpuctrl |= CPU_CONTROL_DC_ENABLE;
@@ -3047,15 +3049,13 @@ armv7_setup(char *args)
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
 
-#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
+#ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
+	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
+#else
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 #endif
 
 	cpuctrl = parse_cpu_options(args, armv7_options, cpuctrl);
-
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
 
 #ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
