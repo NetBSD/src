@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.144 2013/10/28 21:32:52 bad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.145 2013/11/12 03:29:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.144 2013/10/28 21:32:52 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.145 2013/11/12 03:29:22 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -635,8 +635,8 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 		panic("ffs_valloc: dup alloc");
 	}
 	if (DIP(ip, blocks)) {				/* XXX */
-		printf("free inode %s/%llu had %" PRId64 " blocks\n",
-		    fs->fs_fsmnt, (unsigned long long)ino, DIP(ip, blocks));
+		printf("free inode %llu on %s had %" PRId64 " blocks\n",
+		    (unsigned long long)ino, fs->fs_fsmnt, DIP(ip, blocks));
 		DIP_ASSIGN(ip, blocks, 0);
 	}
 	ip->i_flag &= ~IN_SPACECOUNTED;
