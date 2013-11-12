@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1854 2013/11/09 13:05:59 njoly Exp $
+#	$NetBSD: mi,v 1.1855 2013/11/12 00:10:29 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5706,6 +5706,7 @@
 ./usr/share/man/cat3/cdk_viewer.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/ceil.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ceilf.0			comp-c-catman		.cat
+./usr/share/man/cat3/ceill.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cexp.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cexpf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cfgetispeed.0		comp-c-catman		.cat
@@ -6264,6 +6265,7 @@
 ./usr/share/man/cat3/flockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/floor.0			comp-c-catman		.cat
 ./usr/share/man/cat3/floorf.0			comp-c-catman		.cat
+./usr/share/man/cat3/floorl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fls32.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fls64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushinp.0			comp-c-catman		.cat
@@ -8483,6 +8485,7 @@
 ./usr/share/man/cat3/rmtops.0			comp-c-catman		.cat
 ./usr/share/man/cat3/round.0			comp-c-catman		.cat
 ./usr/share/man/cat3/roundf.0			comp-c-catman		.cat
+./usr/share/man/cat3/roundl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rpc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rpc_broadcast.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rpc_broadcast_exp.0	comp-c-catman		.cat
@@ -12276,6 +12279,7 @@
 ./usr/share/man/html3/cdefs.html		comp-c-htmlman		html
 ./usr/share/man/html3/ceil.html			comp-c-htmlman		html
 ./usr/share/man/html3/ceilf.html		comp-c-htmlman		html
+./usr/share/man/html3/ceill.html		comp-c-htmlman		html
 ./usr/share/man/html3/cexp.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cexpf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cfgetispeed.html		comp-c-htmlman		html
@@ -12817,6 +12821,7 @@
 ./usr/share/man/html3/flockfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/floor.html		comp-c-htmlman		html
 ./usr/share/man/html3/floorf.html		comp-c-htmlman		html
+./usr/share/man/html3/floorl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fls32.html		comp-c-htmlman		html
 ./usr/share/man/html3/fls64.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushinp.html		comp-c-htmlman		html
@@ -14991,6 +14996,7 @@
 ./usr/share/man/html3/rmtops.html		comp-c-htmlman		html
 ./usr/share/man/html3/round.html		comp-c-htmlman		html
 ./usr/share/man/html3/roundf.html		comp-c-htmlman		html
+./usr/share/man/html3/roundl.html		comp-c-htmlman		html
 ./usr/share/man/html3/rpc.html			comp-c-htmlman		html
 ./usr/share/man/html3/rpc_broadcast.html	comp-c-htmlman		html
 ./usr/share/man/html3/rpc_broadcast_exp.html	comp-c-htmlman		html
@@ -18726,6 +18732,7 @@
 ./usr/share/man/man3/cdk_viewer.3		comp-obsolete		obsolete
 ./usr/share/man/man3/ceil.3			comp-c-man		.man
 ./usr/share/man/man3/ceilf.3			comp-c-man		.man
+./usr/share/man/man3/ceill.3			comp-c-man		.man
 ./usr/share/man/man3/cexp.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cexpf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cfgetispeed.3		comp-c-man		.man
@@ -19284,6 +19291,7 @@
 ./usr/share/man/man3/flockfile.3		comp-c-man		.man
 ./usr/share/man/man3/floor.3			comp-c-man		.man
 ./usr/share/man/man3/floorf.3			comp-c-man		.man
+./usr/share/man/man3/floorl.3			comp-c-man		.man
 ./usr/share/man/man3/fls32.3			comp-c-man		.man
 ./usr/share/man/man3/fls64.3			comp-c-man		.man
 ./usr/share/man/man3/flushinp.3			comp-c-man		.man
@@ -21503,6 +21511,7 @@
 ./usr/share/man/man3/rmtops.3			comp-c-man		.man
 ./usr/share/man/man3/round.3			comp-c-man		.man
 ./usr/share/man/man3/roundf.3			comp-c-man		.man
+./usr/share/man/man3/roundl.3			comp-c-man		.man
 ./usr/share/man/man3/rpc.3			comp-c-man		.man
 ./usr/share/man/man3/rpc_broadcast.3		comp-c-man		.man
 ./usr/share/man/man3/rpc_broadcast_exp.3	comp-c-man		.man

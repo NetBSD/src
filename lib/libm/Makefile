@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.144 2013/11/11 23:57:34 joerg Exp $
+#  $NetBSD: Makefile,v 1.145 2013/11/12 00:10:29 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -263,8 +263,10 @@ MLINKS+=atan.3 atanf.3
 MLINKS+=atan2.3 atan2f.3
 MLINKS+=atanh.3 atanhf.3
 MLINKS+=ceil.3 ceilf.3 \
+	ceil.3 ceill.3 \
 	ceil.3 floor.3 \
-	ceil.3 floorf.3
+	ceil.3 floorf.3 \
+	ceil.3 floorl.3
 MLINKS+=copysign.3 copysignf.3 \
 	copysign.3 copysignl.3
 MLINKS+=cos.3 cosf.3
@@ -309,7 +311,8 @@ MLINKS+=sin.3 sinhf.3
 MLINKS+=sqrt.3 sqrtf.3 sqrt.3 cbrt.3 sqrt.3 cbrtf.3
 MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
-MLINKS+=round.3 roundf.3
+MLINKS+=round.3 roundf.3 \
+	round.3 roundl.3
 MLINKS+=trunc.3 truncf.3
 MLINKS+=fmax.3 fmaxl.3
 MLINKS+=fmax.3 fmaxf.3
