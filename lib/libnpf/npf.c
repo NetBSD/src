@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.22 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.23 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22 2013/11/08 00:38:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.23 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -892,7 +892,7 @@ npf_nat_getmap(nl_nat_t *nt, npf_addr_t *addr, size_t *alen, in_port_t *port)
  */
 
 nl_table_t *
-npf_table_create(u_int id, int type)
+npf_table_create(const char *name, u_int id, int type)
 {
 	prop_dictionary_t tldict;
 	prop_array_t tblents;
@@ -907,6 +907,7 @@ npf_table_create(u_int id, int type)
 		free(tl);
 		return NULL;
 	}
+	prop_dictionary_set_cstring(tldict, "name", name);
 	prop_dictionary_set_uint32(tldict, "id", id);
 	prop_dictionary_set_int32(tldict, "type", type);
 
@@ -1014,10 +1015,20 @@ unsigned
 npf_table_getid(nl_table_t *tl)
 {
 	prop_dictionary_t tldict = tl->ntl_dict;
-	u_int id = 0;
+	unsigned id = (unsigned)-1;
 
 	prop_dictionary_get_uint32(tldict, "id", &id);
 	return id;
+}
+
+const char *
+npf_table_getname(nl_table_t *tl)
+{
+	prop_dictionary_t tldict = tl->ntl_dict;
+	const char *tname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(tldict, "name", &tname);
+	return tname;
 }
 
 int

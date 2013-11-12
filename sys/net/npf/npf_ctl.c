@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.31 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.32 2013/11/12 00:46:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.31 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.32 2013/11/12 00:46:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -95,6 +95,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		prop_dictionary_t ent;
 		prop_object_iterator_t eit;
 		prop_array_t entries;
+		const char *name;
 		npf_table_t *t;
 		u_int tid;
 		int type;
@@ -106,17 +107,22 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			break;
 		}
 
-		/* Table ID and type. */
+		/* Table name, ID and type.  Validate them. */
+		if (!prop_dictionary_get_cstring_nocopy(tbldict, "name", &name)) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			break;
+		}
 		prop_dictionary_get_uint32(tbldict, "id", &tid);
 		prop_dictionary_get_int32(tbldict, "type", &type);
-
-		/* Validate them, check for duplicate IDs. */
-		error = npf_table_check(tblset, tid, type);
-		if (error)
+		error = npf_table_check(tblset, name, tid, type);
+		if (error) {
+			NPF_ERR_DEBUG(errdict);
 			break;
+		}
 
 		/* Create and insert the table. */
-		t = npf_table_create(tid, type, 1024);	/* XXX */
+		t = npf_table_create(name, tid, type, 1024);	/* XXX */
 		if (t == NULL) {
 			NPF_ERR_DEBUG(errdict);
 			error = ENOMEM;
@@ -144,7 +150,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 			prop_dictionary_get_uint8(ent, "mask", &mask);
 			alen = prop_data_size(obj);
 
-			error = npf_table_insert(tblset, tid, alen, addr, mask);
+			error = npf_table_insert(t, alen, addr, mask);
 			if (error)
 				break;
 		}
@@ -478,16 +484,22 @@ npfctl_reload(u_long cmd, void *data)
 	}
 
 	/* Tables. */
-	tblset = npf_tableset_create();
 	tables = prop_dictionary_get(npf_dict, "tables");
+	if ((nitems = prop_array_count(tables)) > NPF_MAX_TABLES) {
+		goto fail;
+	}
+	tblset = npf_tableset_create(nitems);
 	error = npf_mk_tables(tblset, tables, errdict);
 	if (error) {
 		goto fail;
 	}
 
 	/* Rule procedures. */
-	rpset = npf_rprocset_create();
 	rprocs = prop_dictionary_get(npf_dict, "rprocs");
+	if ((nitems = prop_array_count(rprocs)) > NPF_MAX_RPROCS) {
+		goto fail;
+	}
+	rpset = npf_rprocset_create();
 	error = npf_mk_rprocs(rpset, rprocs, errdict);
 	if (error) {
 		goto fail;
@@ -778,39 +790,48 @@ int
 npfctl_table(void *data)
 {
 	const npf_ioctl_table_t *nct = data;
-	npf_tableset_t *tblset;
-	int error;
+	char tname[NPF_TABLE_MAXNAMELEN];
+	npf_tableset_t *ts;
+	npf_table_t *t;
+	int s, error;
 
-	//npf_config_ref();
-	tblset = npf_config_tableset();
+	error = copyinstr(nct->nct_name, tname, sizeof(tname), NULL);
+	if (error) {
+		return error;
+	}
+
+	s = npf_config_read_enter(); /* XXX */
+	ts = npf_config_tableset();
+	if ((t = npf_tableset_getbyname(ts, tname)) == NULL) {
+		npf_config_read_exit(s);
+		return EINVAL;
+	}
 
 	switch (nct->nct_cmd) {
 	case NPF_CMD_TABLE_LOOKUP:
-		error = npf_table_lookup(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr);
+		error = npf_table_lookup(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr);
 		break;
 	case NPF_CMD_TABLE_ADD:
-		error = npf_table_insert(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
-		    nct->nct_data.ent.mask);
+		error = npf_table_insert(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr, nct->nct_data.ent.mask);
 		break;
 	case NPF_CMD_TABLE_REMOVE:
-		error = npf_table_remove(tblset, nct->nct_tid,
-		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
-		    nct->nct_data.ent.mask);
+		error = npf_table_remove(t, nct->nct_data.ent.alen,
+		    &nct->nct_data.ent.addr, nct->nct_data.ent.mask);
 		break;
 	case NPF_CMD_TABLE_LIST:
-		error = npf_table_list(tblset, nct->nct_tid,
-		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
+		error = npf_table_list(t, nct->nct_data.buf.buf,
+		    nct->nct_data.buf.len);
 		break;
 	case NPF_CMD_TABLE_FLUSH:
-		error = npf_table_flush(tblset, nct->nct_tid);
+		error = npf_table_flush(t);
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	//npf_config_unref();
+	npf_config_read_exit(s);
 
 	return error;
 }
