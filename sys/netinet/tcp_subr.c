@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.251 2013/11/12 09:02:05 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.250 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.251 2013/11/12 09:02:05 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -963,6 +963,9 @@ static struct tcpcb tcpcb_template = {
 	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
 	.snd_numholes = 0,
+	.snd_cubic_wmax = 0,
+	.snd_cubic_wmax_last = 0,
+	.snd_cubic_ctime = 0,
 
 	.t_partialacks = -1,
 	.t_bytes_acked = 0,

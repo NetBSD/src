@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.329 2013/09/15 14:42:38 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.330 2013/11/12 09:02:05 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.329 2013/09/15 14:42:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.330 2013/11/12 09:02:05 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2655,12 +2655,8 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		/* XXX: make SACK have his own congestion control
-		 * struct -- rpaulo */
-		if (TCP_SACK_ENABLED(tp))
-			tcp_sack_newack(tp, th);
-		else
-			tp->t_congctl->fast_retransmit_newack(tp, th);
+		tp->t_congctl->fast_retransmit_newack(tp, th);
+
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			TCP_STATINC(TCP_STAT_RCVACKTOOMUCH);
 			goto dropafterack;
