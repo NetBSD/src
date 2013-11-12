@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.29 2012/08/14 14:36:43 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.30 2013/11/12 15:58:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.29 2012/08/14 14:36:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.30 2013/11/12 15:58:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -256,11 +256,13 @@ coretemp_tjmax(device_t self)
 {
 	struct coretemp_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_ci;
-	uint32_t extmodel, model, stepping;
+	uint32_t family, model, stepping;
 	uint64_t msr;
 
+	family = CPUID2FAMILY(ci->ci_signature);
 	model = CPUID2MODEL(ci->ci_signature);
-	extmodel = CPUID2EXTMODEL(ci->ci_signature);
+	if ((family == 0xf) || (family == 0x6))
+		model |= CPUID2EXTMODEL(ci->ci_signature) << 4;
 	stepping = CPUID2STEPPING(ci->ci_signature);
 
 	sc->sc_tjmax = 100;
@@ -279,7 +281,7 @@ coretemp_tjmax(device_t self)
 	 * that MSR_IA32_EXT_CONFIG is not safe on all CPUs.
 	 */
 	if ((model == 0x0F && stepping >= 2) ||
-	    (model == 0x0E && extmodel != 1)) {
+	    (model == 0x0E)) {
 
 		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
 			return;
@@ -295,7 +297,7 @@ coretemp_tjmax(device_t self)
 	 * but only consider the interval [70, 100] C as valid.
 	 * It is not fully known which CPU models have the MSR.
 	 */
-	if (model == 0x0E && extmodel != 0) {
+	if (model == 0x0E) {
 
 		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT)
 			return;
