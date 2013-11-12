@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.6 2010/05/29 05:53:57 rmind Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.7 2013/11/12 16:35:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.6 2010/05/29 05:53:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.7 2013/11/12 16:35:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -58,6 +58,8 @@ x86_cpu_topology(struct cpu_info *ci)
 
 	apic_id = ci->ci_initapicid;
 	cpu_family = CPUID2FAMILY(ci->ci_signature);
+	if (cpu_family == 0xf)
+		cpu_family += CPUID2EXTFAMILY(ci->ci_signature);
 
 	/* Initial values. */
 	ci->ci_package_id = apic_id;
