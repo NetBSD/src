@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.103 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.104 2013/11/12 16:13:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2013/11/12 16:13:56 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -245,6 +245,7 @@ cpu_vm_init(struct cpu_info *ci)
 		struct x86_cache_info *cai;
 		int tcolors;
 
+		printf("CAI = %d\n", i);
 		cai = &ci->ci_cinfo[i];
 
 		tcolors = atop(cai->cai_totalsize);
@@ -258,6 +259,8 @@ cpu_vm_init(struct cpu_info *ci)
 		default:
 			tcolors /= cai->cai_associativity;
 		}
+		printf("associativity = %d, totalsize = %d\n",
+		    cai->cai_associativity, cai->cai_totalsize);
 		ncolors = max(ncolors, tcolors);
 		/*
 		 * If the desired number of colors is not a power of
