@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.6 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.7 2013/11/12 15:13:14 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -508,7 +508,6 @@ extern void dwc2_hcd_qh_free_ddma(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
 #ifdef CONFIG_USB_DWC2_DEBUG_PERIODIC
 static inline bool dbg_hc(struct dwc2_host_chan *hc) { return true; }
 static inline bool dbg_qh(struct dwc2_qh *qh) { return true; }
-static inline bool dbg_urb(struct urb *urb) { return true; }
 static inline bool dbg_perio(void) { return true; }
 #else /* !CONFIG_USB_DWC2_DEBUG_PERIODIC */
 static inline bool dbg_hc(struct dwc2_host_chan *hc)
