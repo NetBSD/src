@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.19 2013/05/15 00:35:02 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.20 2013/11/13 18:46:33 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.19 2013/05/15 00:35:02 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.20 2013/11/13 18:46:33 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -469,12 +469,6 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 		return;
 	}
 
-	/* If it is a regular file or a symlink, pass it to build_cache() */
-	if (S_ISREG(sb.st_mode) || S_ISLNK(sb.st_mode)) {
-		build_file_cache(db, parent, file, &sb);
-		return;
-	}
-
 	/* If it is a directory, traverse it recursively */
 	if (S_ISDIR(sb.st_mode)) {
 		if ((dp = opendir(file)) == NULL) {
@@ -493,6 +487,16 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 		}
 		closedir(dp);
 	}
+
+	if (!S_ISREG(sb.st_mode) && !S_ISLNK(sb.st_mode))
+		return;
+
+	if (sb.st_size == 0) {
+		if (mflags.verbosity)
+			warnx("Empty file: %s", file);
+		return;
+	}
+	build_file_cache(db, parent, file, &sb);
 }
 
 /* build_file_cache --
