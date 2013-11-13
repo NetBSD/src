@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.8 2013/11/10 03:38:58 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.9 2013/11/13 21:36:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.8 2013/11/10 03:38:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.9 2013/11/13 21:36:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2098,13 +2098,13 @@ xhci_root_ctrl_start(usbd_xfer_handle xfer)
 				goto ret;
 			}
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			memcpy(buf, &xhci_devd, l);
+			memcpy(buf, &xhci_devd, min(l, sizeof(xhci_devd)));
 			break;
 		case UDESC_DEVICE_QUALIFIER:
 			if ((value & 0xff) != 0) {
 			}
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			memcpy(buf, &xhci_odevd, l);
+			memcpy(buf, &xhci_odevd, min(l, sizeof(xhci_odevd)));
 			break;
 		case UDESC_OTHER_SPEED_CONFIGURATION:
 		case UDESC_CONFIG:
@@ -2113,19 +2113,19 @@ xhci_root_ctrl_start(usbd_xfer_handle xfer)
 				goto ret;
 			}
 			totlen = l = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
-			memcpy(buf, &xhci_confd, l);
+			memcpy(buf, &xhci_confd, min(l, sizeof(xhci_confd)));
 			((usb_config_descriptor_t *)buf)->bDescriptorType =
 			    value >> 8;
 			buf = (char *)buf + l;
 			len -= l;
 			l = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
 			totlen += l;
-			memcpy(buf, &xhci_ifcd, l);
+			memcpy(buf, &xhci_ifcd, min(l, sizeof(xhci_ifcd)));
 			buf = (char *)buf + l;
 			len -= l;
 			l = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
 			totlen += l;
-			memcpy(buf, &xhci_endpd, l);
+			memcpy(buf, &xhci_endpd, min(l, sizeof(xhci_endpd)));
 			break;
 		case UDESC_STRING:
 #define sd ((usb_string_descriptor_t *)buf)
