@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1157 2013/11/07 18:47:07 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1158 2013/11/13 16:24:59 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1164 2013/11/07 18:44:09 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1165 2013/11/13 16:24:33 msaitoh Exp
  */
 
 /*
@@ -2553,6 +2553,7 @@
 #define	PCI_PRODUCT_INTEL_SRCU42E	0x0408		/* SCSI RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_I347AT4	0x0438		/* I347-AT4 Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O */
