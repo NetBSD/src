@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.26 2013/08/15 22:10:22 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.27 2013/11/13 16:42:30 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.45 2013/01/13 08:15:03 dholland Exp 	*/
+/*	NetBSD: fcntl.h,v 1.46 2013/09/15 10:41:20 njoly Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -33,7 +33,7 @@
 #define	RUMP_O_SEARCH	0x00800000	/* skip search permission checks */
 #define	RUMP_O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 
-/*	NetBSD: vnode.h,v 1.237 2012/11/18 18:39:24 pooka Exp 	*/
+/*	NetBSD: vnode.h,v 1.240 2013/11/07 09:48:34 hannken Exp 	*/
 enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VLNK, RUMP_VSOCK, RUMP_VFIFO, RUMP_VBAD };
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
@@ -470,7 +470,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	_RUMP_IOW(g,n,t)	_RUMP_IOC(RUMP_IOC_IN,	(g), (n), sizeof(t))
 #define	_RUMP_IOWR(g,n,t)	_RUMP_IOC(RUMP_IOC_INOUT,	(g), (n), sizeof(t))
 
-/*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
+/*	NetBSD: module.h,v 1.34 2013/10/23 18:57:40 mbalmer Exp 	*/
 struct rump_modctl_load {
 	const char *ml_filename;
 
@@ -478,6 +478,12 @@ struct rump_modctl_load {
 
 	const char *ml_props;
 	size_t ml_propslen;
+};
+enum rump_modctl {
+	RUMP_MODCTL_LOAD,		/* modctl_load_t *ml */
+	RUMP_MODCTL_UNLOAD,		/* char *name */
+	RUMP_MODCTL_STAT,		/* struct iovec *buffer */
+	RUMP_MODCTL_EXISTS		/* enum: 0: load, 1: autoload */
 };
 
 /*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
