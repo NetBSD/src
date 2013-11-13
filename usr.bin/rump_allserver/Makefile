@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/09/10 18:28:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2013/11/13 17:47:27 pooka Exp $
 #
 
 PROG=	rump_allserver
@@ -13,12 +13,5 @@ RUMPTOP=${.CURDIR}/../../sys/rump
 
 LDADD+=	${RUMPDEVLDADD} ${RUMPFSLDADD} ${RUMPKERNLDADD} ${RUMPNETLDADD}
 LDADD+= -lrumpdev -lrumpvfs -lrumpnet -lrump -lrumpuser -lpthread
-
-.include <bsd.own.mk>
-
-.if ${RUMP_SERVER_LIBUTIL:Uyes} == "yes"
-DPADD+=	${LIBUTIL}
-LDADD+=	-lutil
-.endif
 
 .include <bsd.prog.mk>
