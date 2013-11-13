@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.8 2013/10/18 14:14:14 kefren Exp $ */
+/* $NetBSD: conffile.c,v 1.9 2013/11/13 21:20:21 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -121,8 +121,10 @@ conf_parsefile(const char *fname)
 
 	if (confh == -1 || fstat(confh, &fs) == -1 ||
 	    (mapped = mmap(NULL, fs.st_size, PROT_READ, MAP_SHARED, confh, 0))
-	    == MAP_FAILED)
+	    == MAP_FAILED) {
+		close(confh);
 		return E_CONF_IO;
+	}
 
 	mapsize = fs.st_size;
 	nextline = mapped;
