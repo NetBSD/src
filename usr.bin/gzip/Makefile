@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/11/12 21:58:37 pettai Exp $
+#	$NetBSD: Makefile,v 1.18 2013/11/13 11:12:24 pettai Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -23,6 +23,7 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 		${BINDIR}/gzip ${BINDIR}/zcat \
 		${BINDIR}/zdiff ${BINDIR}/zcmp \
 		${BINDIR}/zgrep ${BINDIR}/zegrep \
+		${BINDIR}/zgrep ${BINDIR}/zfgrep \
 		${BINDIR}/zmore ${BINDIR}/zless
 
 .include <bsd.prog.mk>
