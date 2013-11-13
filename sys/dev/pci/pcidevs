@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1164 2013/11/07 18:44:09 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1165 2013/11/13 16:24:33 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2546,6 +2546,7 @@ product INTEL SRCZCRX		0x0407	RAID Controller
 product INTEL SRCU42E		0x0408	SCSI RAID Controller
 product INTEL SRCS28X		0x0409	SATA RAID Controller
 product INTEL HASWELL_IGD	0x0402	Haswell Integrated Graphics Device
+product INTEL I347AT4		0x0438	I347-AT4 Gigabit Network Connection
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
 product INTEL CDC		0x0483	82424ZX Cache and DRAM Controller
 product INTEL SIO		0x0484	82378ZB System I/O
