@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.147 2013/11/12 17:36:14 joerg Exp $
+#  $NetBSD: Makefile,v 1.148 2013/11/13 12:58:11 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -173,7 +173,8 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c \
 	s_round.c s_roundf.c s_roundl.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
-	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c s_trunc.c s_truncf.c \
+	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c \
+	s_trunc.c s_truncf.c s_truncl.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
 	w_atan2f.c w_atanh.c w_atanhf.c w_cosh.c w_coshf.c \
 	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_fmodl.c \
