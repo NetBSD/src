@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.148 2013/11/13 12:58:11 joerg Exp $
+#  $NetBSD: Makefile,v 1.149 2013/11/13 22:09:55 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -318,7 +318,8 @@ MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 MLINKS+=round.3 roundf.3 \
 	round.3 roundl.3
-MLINKS+=trunc.3 truncf.3
+MLINKS+=trunc.3 truncf.3 \
+	trunc.3 truncl.3
 MLINKS+=fmax.3 fmaxl.3
 MLINKS+=fmax.3 fmaxf.3
 MLINKS+=fmax.3 fmin.3
