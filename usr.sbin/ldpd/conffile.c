@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.9 2013/11/13 21:20:21 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.10 2013/11/13 21:22:46 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -377,12 +377,14 @@ int
 Finterface(char *line)
 {
 	char *ifname;
-	struct conf_interface *conf_if = calloc(1, sizeof(*conf_if));
+	struct conf_interface *conf_if;
 	char buf[LINEMAXSIZE];
 
-	ifname = NextCommand(line);
-	if (conf_if == NULL || ifname == NULL)
+	if ((ifname = NextCommand(line)) == NULL)
 		return -1;
+	if ((conf_if = calloc(1, sizeof(*conf_if))) == NULL)
+		return -1;
+
 	strlcpy(conf_if->if_name, ifname, IF_NAMESIZE);
 	SLIST_INSERT_HEAD(&coifs_head, conf_if, iflist);
 
