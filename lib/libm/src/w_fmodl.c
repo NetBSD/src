@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: w_fmodl.c,v 1.1 2013/11/12 16:48:39 joerg Exp $");
+__RCSID("$NetBSD: w_fmodl.c,v 1.2 2013/11/13 01:03:08 joerg Exp $");
 
 /*
  * wrapper fmodl(x,y)
@@ -20,6 +20,8 @@ __RCSID("$NetBSD: w_fmodl.c,v 1.1 2013/11/12 16:48:39 joerg Exp $");
 
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #ifdef __weak_alias
 __weak_alias(fmodl, _fmodl)
@@ -40,3 +42,5 @@ fmodl(long double x, long double y)	/* wrapper fmod */
 	    return z;
 #endif
 }
+
+#endif
