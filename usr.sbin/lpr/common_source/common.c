@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.41 2013/10/19 17:16:25 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.42 2013/11/13 21:19:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.41 2013/10/19 17:16:25 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.42 2013/11/13 21:19:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,16 +399,15 @@ checkremote(void)
 			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
 			if (ifa->ifa_addr->sa_family == AF_INET6 &&
 			    ifa->ifa_addr->sa_len == sizeof(sin6)) {
-			    inet6_getscopeid(sin6p, 3);
+				inet6_getscopeid(sin6p, 3);
 				if (getnameinfo((struct sockaddr *)&sin6,
 				    sin6.sin6_len, lname, sizeof(lname),
 				    NULL, 0, niflags) != 0)
 					continue;
-			}
-
-			if (strcmp(rname, lname) == 0) {
-				remote = 0;
-				goto done;
+				if (strcmp(rname, lname) == 0) {
+					remote = 0;
+					goto done;
+				}
 			}
 		}
 	}
