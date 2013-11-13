@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.26 2013/09/10 20:36:08 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.27 2013/11/13 16:43:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,16 +28,13 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.26 2013/09/10 20:36:08 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.27 2013/11/13 16:43:38 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
 
-#ifdef PLATFORM_HAS_NBMODULES
-#include <sys/module.h>
-#endif
 #ifdef PLATFORM_HAS_DISKLABEL
 #include <sys/disklabel.h>
 #include <util.h>
@@ -55,6 +52,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.26 2013/09/10 20:36:08 pooka Exp $");
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+#include <rump/rumpdefs.h>
 
 __dead static void
 usage(void)
@@ -130,11 +128,8 @@ main(int argc, char *argv[])
 	int error;
 	int ch, sflag;
 	unsigned i;
-
-#ifdef PLATFORM_HAS_NBMODULES
 	char **modarray = NULL;
 	unsigned nmods = 0, curmod = 0;
-#endif
 
 #ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
@@ -307,7 +302,6 @@ main(int argc, char *argv[])
 				}
 			}
 			break;
-#ifdef PLATFORM_HAS_NBMODULES
 		case 'm': {
 
 			if (nmods - curmod == 0) {
@@ -319,7 +313,6 @@ main(int argc, char *argv[])
 			}
 			modarray[curmod++] = optarg;
 			break; }
-#endif
 		case 'r':
 			setenv("RUMP_MEMLIMIT", optarg, 1);
 			break;
@@ -353,10 +346,9 @@ main(int argc, char *argv[])
 	if (error)
 		die(sflag, error, "rump init failed");
 
-#ifdef PLATFORM_HAS_NBMODULES
 	/* load modules */
 	for (i = 0; i < curmod; i++) {
-		struct modctl_load ml;
+		struct rump_modctl_load ml;
 
 #define ETFSKEY "/module.mod"
 		if ((error = rump_pub_etfs_register(ETFSKEY,
@@ -364,12 +356,11 @@ main(int argc, char *argv[])
 			die(sflag, error, "module etfs register failed");
 		memset(&ml, 0, sizeof(ml));
 		ml.ml_filename = ETFSKEY;
-		if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1)
+		if (rump_sys_modctl(RUMP_MODCTL_LOAD, &ml) == -1)
 			die(sflag, errno, "module load failed");
 		rump_pub_etfs_remove(ETFSKEY);
 #undef ETFSKEY
 	}
-#endif /* PLATFORM_HAS_NBMODULES */
 
 	/* register host drives */
 	for (i = 0; i < curetfs; i++) {
