@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.21 2013/08/15 22:10:04 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.22 2013/11/13 16:42:00 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -33,6 +33,22 @@ struct rump_'"$2"' {
 		b loop
 	}' < $1
 }
+
+# likewise not perfect, but as long as it's KNF, we're peachy (though
+# I personally like nectarines more)
+getenum () {
+	sed -n '/enum[ 	]*'"$2"'[ 	]*{/{
+		a\
+enum rump_'"$2"' {
+		:loop
+		n
+		s/^}.*;$/};/p
+		t
+		s/'$3'/RUMP_&/gp
+		b loop
+	}' < $1
+}
+
 
 fromvers ../../../sys/fcntl.h
 sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
@@ -89,6 +105,7 @@ sed -n '/#define[ 	]*_IO.*[^\]$/{s/_IO/_RUMP_IO/g;s/IOC_/RUMP_IOC_/gp}' <../../.
 
 fromvers ../../../sys/module.h
 getstruct ../../../sys/module.h modctl_load
+getenum ../../../sys/module.h modctl MODCTL
 
 fromvers ../../../ufs/ufs/ufsmount.h
 getstruct ../../../ufs/ufs/ufsmount.h ufs_args
