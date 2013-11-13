@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.11 2013/10/22 07:30:20 jnemeth Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.12 2013/11/13 21:25:40 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -91,6 +91,7 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 	    le32toh(dl->d_magic2) != DISKMAGIC) {
 		warnx("%s: warning: FreeBSD slice without disklabel",
 		    device_name);
+		free(buf);
 		return (ent);
 	}
 
@@ -153,6 +154,7 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		ent++;
 	}
 
+	free(buf);
 	return (ent);
 }
 
@@ -171,6 +173,7 @@ migrate_netbsd_disklabel(int fd, off_t start, struct gpt_ent *ent)
 	    le32toh(dl->d_magic2) != DISKMAGIC) {
 		warnx("%s: warning: NetBSD slice without disklabel",
 		    device_name);
+		free(buf);
 		return (ent);
 	}
 
@@ -247,6 +250,7 @@ migrate_netbsd_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		ent++;
 	}
 
+	free(buf);
 	return (ent);
 }
 
