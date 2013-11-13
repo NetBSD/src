@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.6 2013/11/13 21:44:29 christos Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.7 2013/11/13 21:46:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -303,6 +303,7 @@ bozo_process_lua(bozo_httpreq_t *request)
 	char *s, *query, *uri, *file, *command, *info, *content;
 	const char *type, *clen;
 	char *prefix, *handler, *p;
+	int rv = 0;
 
 	if (!httpd->process_lua)
 		return 0;
@@ -435,18 +436,18 @@ bozo_process_lua(bozo_httpreq_t *request)
 				printf("<br>Lua error: %s\n",
 				    lua_tostring(map->L, -1));
 			bozo_flush(httpd, stdout);
-			free(prefix);
-			free(uri);
-			free(info);
-			free(query);
-			return 1;
+			rv = 1;
+			goto out;
 		}
 	}
+out:
 	free(prefix);
 	free(uri);
 	free(info);
 	free(query);
-	return 0;
+	free(command);
+	free(file);
+	return rv;
 }
 
 #endif /* NO_LUA_SUPPORT */
