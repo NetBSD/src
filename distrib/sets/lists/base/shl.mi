@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.678 2013/11/08 19:21:01 christos Exp $
+# $NetBSD: shl.mi,v 1.679 2013/11/13 09:49:08 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -781,6 +781,7 @@
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
 ./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
+./usr/lib/lua/5.1/syslog.so                    	base-sys-shlib
 ./usr/lib/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0.0			base-obsolete		obsolete

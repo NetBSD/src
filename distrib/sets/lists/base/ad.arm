@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.27 2013/11/08 19:21:01 christos Exp $
+# $NetBSD: ad.arm,v 1.28 2013/11/13 09:49:08 mbalmer Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -333,6 +333,7 @@
 ./usr/lib/oabi/lua/5.1				base-compat-shlib	compat
 ./usr/lib/oabi/lua/5.1/gpio.so			base-compat-shlib	compat,pic
 ./usr/lib/oabi/lua/5.1/sqlite.so		base-compat-shlib	compat,pic
+./usr/lib/oabi/lua/5.1/syslog.so		base-compat-shlib	compat,pic
 ./usr/lib/oabi/npf				base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/oabi/npf/ext_log.so.0			base-obsolete		obsolete
