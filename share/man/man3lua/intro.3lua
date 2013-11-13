@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3lua,v 1.3 2013/11/04 08:04:18 mbalmer Exp $
+.\"	$NetBSD: intro.3lua,v 1.4 2013/11/13 20:55:08 mbalmer Exp $
 .\"
 .\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd November 4, 2013
+.Dd November 13, 2013
 .Dt INTRO 3lua
 .Os
 .Sh NAME
@@ -49,6 +49,10 @@ pins.
 Access
 .Xr sqlite3 1
 files.
+.It Em syslog
+Acces
+.Xr syslog 3
+functionality.
 .El
 .Sh SEE ALSO
 .Xr lua 1 ,

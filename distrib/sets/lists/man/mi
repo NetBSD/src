@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1449 2013/11/12 21:58:37 pettai Exp $
+# $NetBSD: mi,v 1.1450 2013/11/13 20:55:08 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -650,6 +650,7 @@
 ./usr/share/man/cat3lua/gpio.write.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/sqlite.0		man-sys-catman		.cat
+./usr/share/man/cat3lua/syslog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/aac.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ac97.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acardide.0			man-sys-catman		.cat
@@ -3698,6 +3699,7 @@
 ./usr/share/man/html3lua/gpio.write.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/sqlite.html		man-sys-htmlman		html
+./usr/share/man/html3lua/syslog.html		man-sys-htmlman		html
 ./usr/share/man/html4/aac.html			man-sys-htmlman		html
 ./usr/share/man/html4/ac97.html			man-sys-htmlman		html
 ./usr/share/man/html4/acardide.html		man-sys-htmlman		html
@@ -6420,6 +6422,7 @@
 ./usr/share/man/man3lua/gpio.write.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/intro.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/sqlite.3lua		man-sys-man		.man
+./usr/share/man/man3lua/syslog.3lua		man-sys-man		.man
 ./usr/share/man/man4/aac.4			man-sys-man		.man
 ./usr/share/man/man4/ac97.4			man-sys-man		.man
 ./usr/share/man/man4/acardide.4			man-sys-man		.man

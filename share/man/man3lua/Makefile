@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2013/10/27 12:47:54 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.4 2013/11/13 20:55:08 mbalmer Exp $
 
-MAN=	gpio.3lua intro.3lua sqlite.3lua
+MAN=	gpio.3lua intro.3lua sqlite.3lua syslog.3lua
 
 MLINKS+=gpio.3lua gpio.open.3lua \
 	gpio.3lua gpio.info.3lua \
