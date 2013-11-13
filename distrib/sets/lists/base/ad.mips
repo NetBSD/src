@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.22 2013/11/08 19:21:01 christos Exp $
+# $NetBSD: ad.mips,v 1.23 2013/11/13 09:49:08 mbalmer Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -329,6 +329,7 @@
 ./usr/lib/64/lua/5.1				base-compat-shlib	compat,arch64
 ./usr/lib/64/lua/5.1/gpio.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/lua/5.1/sqlite.so			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/lua/5.1/syslog.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/npf				base-obsolete		obsolete
 ./usr/lib/64/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/64/npf/ext_log.so.0			base-obsolete		obsolete
@@ -660,6 +661,7 @@
 ./usr/lib/o32/lua/5.1				base-compat-shlib	compat,arch64
 ./usr/lib/o32/lua/5.1/gpio.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/lua/5.1/sqlite.so			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/lua/5.1/syslog.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/npf				base-obsolete		obsolete
 ./usr/lib/o32/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/o32/npf/ext_log.so.0			base-obsolete		obsolete
