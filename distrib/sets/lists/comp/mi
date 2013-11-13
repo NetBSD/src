@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1857 2013/11/12 16:48:39 joerg Exp $
+#	$NetBSD: mi,v 1.1858 2013/11/13 22:09:55 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9058,6 +9058,7 @@
 ./usr/share/man/cat3/tree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/trunc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/truncf.0			comp-c-catman		.cat
+./usr/share/man/cat3/truncl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyaction.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ttylock.0			comp-c-catman		.cat
@@ -15536,6 +15537,7 @@
 ./usr/share/man/html3/tree.html			comp-c-htmlman		html
 ./usr/share/man/html3/trunc.html		comp-c-htmlman		html
 ./usr/share/man/html3/truncf.html		comp-c-htmlman		html
+./usr/share/man/html3/truncl.html		comp-c-htmlman		html
 ./usr/share/man/html3/tsearch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttyaction.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttylock.html		comp-c-htmlman		html
@@ -22082,6 +22084,7 @@
 ./usr/share/man/man3/tree.3			comp-c-man		.man
 ./usr/share/man/man3/trunc.3			comp-c-man		.man
 ./usr/share/man/man3/truncf.3			comp-c-man		.man
+./usr/share/man/man3/truncl.3			comp-c-man		.man
 ./usr/share/man/man3/tsearch.3			comp-c-man		.man
 ./usr/share/man/man3/ttyaction.3		comp-c-man		.man
 ./usr/share/man/man3/ttylock.3			comp-c-man		.man
