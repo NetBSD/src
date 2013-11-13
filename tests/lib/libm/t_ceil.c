@@ -1,4 +1,4 @@
-/* $NetBSD: t_ceil.c,v 1.8 2013/11/11 23:57:34 joerg Exp $ */
+/* $NetBSD: t_ceil.c,v 1.9 2013/11/13 12:58:11 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ceil.c,v 1.8 2013/11/11 23:57:34 joerg Exp $");
+__RCSID("$NetBSD: t_ceil.c,v 1.9 2013/11/13 12:58:11 joerg Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -648,6 +648,309 @@ ATF_TC_BODY(floorl_zero_pos, tc)
 #endif
 }
 
+/*
+ * trunc(3)
+ */
+ATF_TC(trunc_basic);
+ATF_TC_HEAD(trunc_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of trunc(3)");
+}
+
+ATF_TC_BODY(trunc_basic, tc)
+{
+	const double x = 0.999999999999999;
+	const double y = 0.000000000000001;
+
+	ATF_CHECK(trunc(x) < SMALL_NUM);
+	ATF_CHECK(trunc(y) < SMALL_NUM);
+}
+
+ATF_TC(trunc_nan);
+ATF_TC_HEAD(trunc_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test trunc(NaN) == NaN");
+}
+
+ATF_TC_BODY(trunc_nan, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(trunc(x)) != 0);
+#endif
+}
+
+ATF_TC(trunc_inf_neg);
+ATF_TC_HEAD(trunc_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test trunc(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(trunc_inf_neg, tc)
+{
+#ifndef __vax__
+	const double x = -1.0L / 0.0L;
+	double y = trunc(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("trunc(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(trunc_inf_pos);
+ATF_TC_HEAD(trunc_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test trunc(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(trunc_inf_pos, tc)
+{
+#ifndef __vax__
+	const double x = 1.0L / 0.0L;
+	double y = trunc(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("trunc(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(trunc_zero_neg);
+ATF_TC_HEAD(trunc_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test trunc(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(trunc_zero_neg, tc)
+{
+#ifndef __vax__
+	const double x = -0.0L;
+	double y = trunc(x);
+
+	if (fabs(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("trunc(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(trunc_zero_pos);
+ATF_TC_HEAD(trunc_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test trunc(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(trunc_zero_pos, tc)
+{
+#ifndef __vax__
+	const double x = 0.0L;
+	double y = trunc(x);
+
+	if (fabs(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("trunc(+0.0) != +0.0");
+#endif
+}
+
+/*
+ * truncf(3)
+ */
+ATF_TC(truncf_basic);
+ATF_TC_HEAD(truncf_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of truncf(3)");
+}
+
+ATF_TC_BODY(truncf_basic, tc)
+{
+	const float x = 0.9999999;
+	const float y = 0.0000001;
+
+	ATF_CHECK(truncf(x) < SMALL_NUM);
+	ATF_CHECK(truncf(y) < SMALL_NUM);
+}
+
+ATF_TC(truncf_nan);
+ATF_TC_HEAD(truncf_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncf(NaN) == NaN");
+}
+
+ATF_TC_BODY(truncf_nan, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(truncf(x)) != 0);
+#endif
+}
+
+ATF_TC(truncf_inf_neg);
+ATF_TC_HEAD(truncf_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncf(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(truncf_inf_neg, tc)
+{
+#ifndef __vax__
+	const float x = -1.0L / 0.0L;
+	float y = truncf(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("truncf(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(truncf_inf_pos);
+ATF_TC_HEAD(truncf_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncf(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(truncf_inf_pos, tc)
+{
+#ifndef __vax__
+	const float x = 1.0L / 0.0L;
+	float y = truncf(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("truncf(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(truncf_zero_neg);
+ATF_TC_HEAD(truncf_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncf(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(truncf_zero_neg, tc)
+{
+#ifndef __vax__
+	const float x = -0.0L;
+	float y = truncf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("truncf(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(truncf_zero_pos);
+ATF_TC_HEAD(truncf_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncf(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(truncf_zero_pos, tc)
+{
+#ifndef __vax__
+	const float x = 0.0L;
+	float y = truncf(x);
+
+	if (fabsf(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("truncf(+0.0) != +0.0");
+#endif
+}
+
+/*
+ * truncl(3)
+ */
+ATF_TC(truncl_basic);
+ATF_TC_HEAD(truncl_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of truncl(3)");
+}
+
+ATF_TC_BODY(truncl_basic, tc)
+{
+	const long double x = 0.9999999;
+	const long double y = 0.0000001;
+
+	ATF_CHECK(truncl(x) < SMALL_NUM);
+	ATF_CHECK(truncl(y) < SMALL_NUM);
+}
+
+ATF_TC(truncl_nan);
+ATF_TC_HEAD(truncl_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncl(NaN) == NaN");
+}
+
+ATF_TC_BODY(truncl_nan, tc)
+{
+#ifndef __vax__
+	const long double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(truncl(x)) != 0);
+#endif
+}
+
+ATF_TC(truncl_inf_neg);
+ATF_TC_HEAD(truncl_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncl(-Inf) == -Inf");
+}
+
+ATF_TC_BODY(truncl_inf_neg, tc)
+{
+#ifndef __vax__
+	const long double x = -1.0L / 0.0L;
+	long double y = truncl(x);
+
+	if (isinf(y) == 0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("truncl(-Inf) != -Inf");
+#endif
+}
+
+ATF_TC(truncl_inf_pos);
+ATF_TC_HEAD(truncl_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncl(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(truncl_inf_pos, tc)
+{
+#ifndef __vax__
+	const long double x = 1.0L / 0.0L;
+	long double y = truncl(x);
+
+	if (isinf(y) == 0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("truncl(+Inf) != +Inf");
+#endif
+}
+
+ATF_TC(truncl_zero_neg);
+ATF_TC_HEAD(truncl_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncl(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(truncl_zero_neg, tc)
+{
+#ifndef __vax__
+	const long double x = -0.0L;
+	long double y = truncl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("truncl(-0.0) != -0.0");
+#endif
+}
+
+ATF_TC(truncl_zero_pos);
+ATF_TC_HEAD(truncl_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test truncl(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(truncl_zero_pos, tc)
+{
+#ifndef __vax__
+	const long double x = 0.0L;
+	long double y = truncl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("truncl(+0.0) != +0.0");
+#endif
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -692,6 +995,27 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, floorl_inf_pos);
 	ATF_TP_ADD_TC(tp, floorl_zero_neg);
 	ATF_TP_ADD_TC(tp, floorl_zero_pos);
+
+	ATF_TP_ADD_TC(tp, trunc_basic);
+	ATF_TP_ADD_TC(tp, trunc_nan);
+	ATF_TP_ADD_TC(tp, trunc_inf_neg);
+	ATF_TP_ADD_TC(tp, trunc_inf_pos);
+	ATF_TP_ADD_TC(tp, trunc_zero_neg);
+	ATF_TP_ADD_TC(tp, trunc_zero_pos);
+
+	ATF_TP_ADD_TC(tp, truncf_basic);
+	ATF_TP_ADD_TC(tp, truncf_nan);
+	ATF_TP_ADD_TC(tp, truncf_inf_neg);
+	ATF_TP_ADD_TC(tp, truncf_inf_pos);
+	ATF_TP_ADD_TC(tp, truncf_zero_neg);
+	ATF_TP_ADD_TC(tp, truncf_zero_pos);
+
+	ATF_TP_ADD_TC(tp, truncl_basic);
+	ATF_TP_ADD_TC(tp, truncl_nan);
+	ATF_TP_ADD_TC(tp, truncl_inf_neg);
+	ATF_TP_ADD_TC(tp, truncl_inf_pos);
+	ATF_TP_ADD_TC(tp, truncl_zero_neg);
+	ATF_TP_ADD_TC(tp, truncl_zero_pos);
 
 	return atf_no_error();
 }
