@@ -1531,7 +1531,8 @@ gld${EMULATION_NAME}_before_allocation (void)
 	   a dep audit entry.  */
 	if (audit_libs && *audit_libs != '\0')
 	  {
-	    char *cp = xstrdup (audit_libs);
+	    char *cp, *fcp;
+	    fcp = cp = xstrdup (audit_libs);
 	    do
 	      {
 		int more = 0;
@@ -1549,6 +1550,7 @@ gld${EMULATION_NAME}_before_allocation (void)
 		cp = more ? ++cp2 : NULL;
 	      }
 	    while (cp != NULL);
+	    free (fcp);
 	  }
       }
 
