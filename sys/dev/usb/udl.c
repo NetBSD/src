@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.9 2013/09/14 13:15:53 joerg Exp $	*/
+/*	$NetBSD: udl.c,v 1.10 2013/11/14 13:11:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.9 2013/09/14 13:15:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.10 2013/11/14 13:11:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -619,7 +619,7 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	struct udl_softc *sc = v;
 	vaddr_t vaddr;
 	paddr_t paddr;
-	bool rv;
+	bool rv __diagused;
 
 	if (off < 0 || off > roundup2(UDL_FBMEM_SIZE(sc), PAGE_SIZE))
 		return -1;
