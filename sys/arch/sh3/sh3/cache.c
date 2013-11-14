@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.17 2013/11/07 21:45:04 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.18 2013/11/14 13:54:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.17 2013/11/07 21:45:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.18 2013/11/14 13:54:08 skrll Exp $");
 
 #include "opt_cache.h"
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
@@ -154,7 +154,6 @@ __cache_flush(void)
 {
 	volatile int *p = (int *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 	int i;
-	int d;
 
 	/* Flush D-Cache */
 	/*
@@ -164,7 +163,7 @@ __cache_flush(void)
 	 * 16KB line-size 32B 1-way ... [13:5]
 	 */
 	for (i = 0; i < 256/*entry*/ * 4/*way*/; i++) {
-		d = *p;
+		(void)*p;
 		p += 4;	/* next line index (16B) */
 	}
 	__USE(d);
