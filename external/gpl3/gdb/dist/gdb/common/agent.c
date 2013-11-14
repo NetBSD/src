@@ -175,6 +175,7 @@ gdb_connect_sync_socket (int pid)
       return -1;
     }
 
+  memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
 
   res = xsnprintf (addr.sun_path, UNIX_PATH_MAX, "%s", path);
