@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.175 2013/11/10 02:43:23 mrg Exp $
+# $NetBSD: md.sparc64,v 1.176 2013/11/14 12:19:35 martin Exp $
 ./usr/include/g++/bits/sparc			comp-c-include
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcccmds,gcc=48,compat
 ./usr/include/g++/bits/sparc64			comp-c-include
@@ -143,6 +143,9 @@
 ./usr/include/sparc64/vuid_event.h		comp-c-include
 ./usr/include/sparc64/wchar_limits.h		comp-c-include
 ./usr/include/sparc64/z8530var.h		comp-c-include
+./usr/lib/sparc_mcmedany.o			comp-c-lib
+./usr/lib/sparc_mcmedlow.o			comp-c-lib
+./usr/lib/sparc_mcmedmid.o			comp-c-lib
 ./usr/lib/sparc/crt0.o				comp-c-lib		compat
 ./usr/lib/sparc/crtbegin.o			comp-c-lib		compat
 ./usr/lib/sparc/crtbeginS.o			comp-c-lib		compat,pic
