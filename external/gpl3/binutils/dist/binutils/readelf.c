@@ -3801,7 +3801,7 @@ process_program_headers (FILE * file)
       if (elf_header.e_phnum > 1)
 	printf (_("\nProgram Headers:\n"));
       else
-	printf (_("\nProgram Headers:\n"));
+	printf (_("\nProgram Header:\n"));
 
       if (is_32bit_elf)
 	printf
