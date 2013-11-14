@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.7 2013/10/22 16:37:08 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.8 2013/11/14 12:41:46 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.7 2013/10/22 16:37:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.8 2013/11/14 12:41:46 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -571,7 +571,7 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 			       struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 {
 	struct dwc2_hcd_iso_packet_desc *frame_desc;
-	void *bufptr;
+	void *bufptr = NULL;
 
 	switch (dwc2_hcd_get_pipe_type(&urb->pipe_info)) {
 	case USB_ENDPOINT_XFER_CONTROL:
@@ -588,7 +588,6 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 			else
 				chan->xfer_buf = urb->setup_packet;
 			chan->xfer_len = 8;
-			bufptr = NULL;
 			break;
 
 		case DWC2_CONTROL_DATA:
@@ -616,7 +615,6 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 				chan->xfer_dma = hsotg->status_buf_dma;
 			else
 				chan->xfer_buf = hsotg->status_buf;
-			bufptr = NULL;
 			break;
 		}
 		break;
@@ -656,8 +654,6 @@ static void *dwc2_hc_init_xfer(struct dwc2_hsotg *hsotg,
 		    (chan->xfer_dma & 0x3))
 			bufptr = (u8 *)urb->buf + frame_desc->offset +
 					qtd->isoc_split_offset;
-		else
-			bufptr = NULL;
 
 		if (chan->xact_pos == DWC2_HCSPLT_XACTPOS_ALL) {
 			if (chan->xfer_len <= 188)
