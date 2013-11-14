@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.1.1.3 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.2 2013/11/14 01:39:26 christos Exp $	*/
 
 /*++
 /* NAME
@@ -140,8 +140,10 @@ static const char *parse_master_line(PC_MASTER_ENT *masterp, const char *buf)
 #define MASTER_BLANKS	" \t\r\n"		/* XXX */
 
     argv = argv_split(buf, MASTER_BLANKS);
-    if (argv->argc < PC_MASTER_MIN_FIELDS)
+    if (argv->argc < PC_MASTER_MIN_FIELDS) {
+	argv_free(argv);
 	return ("bad field count");
+    }
     normalize_options(argv);
     masterp->name_space =
 	concatenate(argv->argv[0], ".", argv->argv[1], (char *) 0);
