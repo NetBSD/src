@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.112.6.1 2009/03/15 19:43:48 snj Exp $ */
+/* $NetBSD: device.h,v 1.112.6.1.4.1 2013/11/14 17:34:02 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -167,6 +167,7 @@ struct device {
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 #define	DVF_SELF_SUSPENDED	0x0040	/* device suspended itself */
+#define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -301,12 +302,12 @@ struct cfattach __CONCAT(name,_ca) = {					\
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 	CFATTACH_DECL2(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
 
-#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
-	rescanfn, chdetfn) \
+#define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn, __flags) \
 struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_name		= ___STRING(name),			\
 	.ca_devsize		= ddsize,				\
-	.ca_flags		= DVF_PRIV_ALLOC,			\
+	.ca_flags		= (__flags) | DVF_PRIV_ALLOC,		\
 	.ca_match 		= matfn,				\
 	.ca_attach		= attfn,				\
 	.ca_detach		= detfn,				\
@@ -314,9 +315,14 @@ struct cfattach __CONCAT(name,_ca) = {					\
 	.ca_rescan		= rescanfn,				\
 	.ca_childdetached	= chdetfn,				\
 }
+#define	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn) \
+	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	rescanfn, chdetfn, 0)
 
-#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn)		\
-	CFATTACH_DECL2_NEW(name, ddsize, matfn, attfn, detfn, actfn, NULL, NULL)
+#define	CFATTACH_DECL_NEW(name, ddsize, matfn, attfn, detfn, actfn) \
+	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
+	NULL, NULL, 0)
 
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
