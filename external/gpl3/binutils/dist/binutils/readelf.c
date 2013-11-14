@@ -6974,6 +6974,11 @@ decode_arm_unwind (struct arm_unw_aux_info *  aux,
 
       remaining = 4;
     }
+  else
+    {
+      addr.section = SHN_UNDEF;
+      addr.offset = 0;
+    }
 
   if ((word & 0x80000000) == 0)
     {
