@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.144 2013/04/30 16:03:44 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.145 2013/11/14 12:07:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.144 2013/04/30 16:03:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.145 2013/11/14 12:07:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -363,7 +363,8 @@ uvm_init(void)
 }
 
 void
-uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax,
+    bool topdown)
 {
 
 	vm->vm_map.pmap = pmap_kernel();
