@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.2 2013/11/14 01:36:00 christos Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.3 2013/11/14 02:27:29 christos Exp $	*/
 
 /*++
 /* NAME
@@ -335,12 +335,11 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
      */
     saved_name = mystrdup(mapname);
     if ((sockmap = split_at_right(saved_name, ':')) == 0) {
-	DICT *dp = dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-			          open_flags, dict_flags,
-			          "%s requires server:socketmap argument",
-			          DICT_TYPE_SOCKMAP);
 	myfree(saved_name);
-	return dp;
+	return (dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
+			       open_flags, dict_flags,
+			       "%s requires server:socketmap argument",
+			       DICT_TYPE_SOCKMAP));
     }
 
     /*
