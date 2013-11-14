@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.16 2013/11/01 15:03:39 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.17 2013/11/14 12:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.16 2013/11/01 15:03:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.17 2013/11/14 12:41:14 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -306,7 +306,6 @@ dwc2_rhc(void *addr)
 {
 	struct dwc2_softc *sc = addr;
 	usbd_xfer_handle xfer;
-	usbd_pipe_handle pipe;
 	u_char *p;
 
 	DPRINTF("\n");
@@ -320,8 +319,6 @@ dwc2_rhc(void *addr)
 
 	}
 	/* set port bit */
-	pipe = xfer->pipe;
-
 	p = KERNADDR(&xfer->dmabuf, 0);
 
 	p[0] = 0x02;	/* we only have one port (1 << 1) */
