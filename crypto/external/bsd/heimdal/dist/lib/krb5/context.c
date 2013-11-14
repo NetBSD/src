@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.2 2011/04/14 18:02:07 elric Exp $	*/
+/*	$NetBSD: context.c,v 1.3 2013/11/14 05:04:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -433,13 +433,13 @@ copy_etypes (krb5_context context,
 	;
     i++;
 
-    *ret_enctypes = malloc(sizeof(ret_enctypes[0]) * i);
+    *ret_enctypes = malloc(sizeof(**ret_enctypes) * i);
     if (*ret_enctypes == NULL) {
 	krb5_set_error_message(context, ENOMEM, 
 			       N_("malloc: out of memory", ""));
 	return ENOMEM;
     }
-    memcpy(*ret_enctypes, enctypes, sizeof(ret_enctypes[0]) * i);
+    memcpy(*ret_enctypes, enctypes, sizeof(**ret_enctypes) * i);
     return 0;
 }
 
