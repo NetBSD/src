@@ -1658,11 +1658,13 @@ update_type_if_necessary (struct varobj *var, struct value *new_value)
 	{
 	  struct type *new_type;
 	  char *curr_type_str, *new_type_str;
+	  int rv;
 
 	  new_type = value_actual_type (new_value, 0, 0);
 	  new_type_str = type_to_string (new_type);
 	  curr_type_str = varobj_get_type (var);
-	  if (strcmp (curr_type_str, new_type_str) != 0)
+	  rv = strcmp (curr_type_str, new_type_str) != 0;
+	  if (rv)
 	    {
 	      var->type = new_type;
 
@@ -1670,8 +1672,10 @@ update_type_if_necessary (struct varobj *var, struct value *new_value)
 	      varobj_delete (var, NULL, 1);
 	      VEC_free (varobj_p, var->children);
 	      var->num_children = -1;
-	      return 1;
 	    }
+	  xfree (new_type_str);
+	  xfree (curr_type_str);
+	  return rv;
 	}
     }
 
