@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.50 2013/11/11 15:22:11 martin Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.51 2013/11/14 12:07:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.50 2013/11/11 15:22:11 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.51 2013/11/14 12:07:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -422,14 +422,15 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	p = l->l_proc;
 
 	KASSERT(p->p_vmspace);
-	if (__predict_true(p->p_vmspace != proc0.p_vmspace))
+	if (__predict_true(p->p_vmspace != proc0.p_vmspace)) {
 		use_topdown = p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN;
-	else
+	} else {
 #ifdef __USING_TOPDOWN_VM
-		use_topdown = true;
+		use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
 #else
 		use_topdown = false;
 #endif
+	}
 
 	/*
 	 * 1. open file
