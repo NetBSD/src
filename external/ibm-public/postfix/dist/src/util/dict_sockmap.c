@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.1.1.1 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.2 2013/11/14 01:36:00 christos Exp $	*/
 
 /*++
 /* NAME
@@ -334,11 +334,14 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
      * Separate the socketmap name from the socketmap server name.
      */
     saved_name = mystrdup(mapname);
-    if ((sockmap = split_at_right(saved_name, ':')) == 0)
-	return (dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-			       open_flags, dict_flags,
-			       "%s requires server:socketmap argument",
-			       DICT_TYPE_SOCKMAP));
+    if ((sockmap = split_at_right(saved_name, ':')) == 0) {
+	DICT *dp = dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
+			          open_flags, dict_flags,
+			          "%s requires server:socketmap argument",
+			          DICT_TYPE_SOCKMAP);
+	myfree(saved_name);
+	return dp;
+    }
 
     /*
      * Use one reference-counted client handle for all socketmaps with the
