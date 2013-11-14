@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.2 2013/11/14 04:24:33 christos Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.3 2013/11/14 09:11:39 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1169,7 +1169,7 @@ finish_config6(struct if_options *ifo, const char *ifname)
 				ifo->ia_type = D6_OPTION_IA_NA;
 			ifo->iaid_len = strlen(ifname);
 			if (ifo->iaid_len < sizeof(ifo->iaid->iaid)) {
-				memcpy(ifo->iaid->iaid, ifname, len);
+				memcpy(ifo->iaid->iaid, ifname, ifo->iaid_len);
 				memset(ifo->iaid->iaid + ifo->iaid_len, 0,
 					sizeof(ifo->iaid->iaid) -ifo->iaid_len);
 			} else {
