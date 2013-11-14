@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.27 2013/11/13 23:58:51 christos Exp $
+.\"	$NetBSD: resolver.3,v 1.28 2013/11/14 00:13:41 wiz Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -371,7 +371,7 @@ the initialization code also sets up a
 and creates a
 .Xr kevent 2
 watching a file descriptor that points to the resolver file.
-Every resolver function, calls the internal function
+Every resolver function calls the internal function
 .Fn __res_check
 which checks for a new
 .Xr kevent 2
@@ -733,11 +733,11 @@ The configuration file, see
 .El
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
-.Xr getnameinfo 3 ,
 .Xr gethostbyaddr 3 ,
 .Xr gethostbyname 3 ,
-.Xr hostname 7 ,
+.Xr getnameinfo 3 ,
 .Xr resolv.conf 5 ,
+.Xr hostname 7 ,
 .Xr named 8
 .Pp
 .%T RFC 974 ,
