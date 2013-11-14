@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: e_fmodl.c,v 1.1 2013/11/12 16:48:39 joerg Exp $");
+__RCSID("$NetBSD: e_fmodl.c,v 1.2 2013/11/14 15:25:22 martin Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/e_fmodl.c 181063 2008-07-31 20:09:47Z das $");
 #endif
@@ -49,6 +49,7 @@ typedef	uint32_t manh_t;
 #ifdef LDBL_IMPLICIT_NBIT
 #define	SET_NBIT(hx)	((hx) | (1ULL << EXT_FRACHBITS))
 #define	HFRAC_BITS	EXT_FRACHBITS
+#define	LDBL_NBIT	0
 #else
 #define	SET_NBIT(hx)	(hx)
 #define	HFRAC_BITS	(EXT_FRACHBITS - 1)
