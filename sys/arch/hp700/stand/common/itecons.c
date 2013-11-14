@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.9 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: itecons.c,v 1.10 2013/11/14 13:01:26 skrll Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -161,7 +161,7 @@ int
 ite_getc(dev_t dev)
 {
 	static int stash = 0;
-	int err, c, l, i;
+	int err __debugused, c, l, i;
 
 	if (kyiodc == NULL)
 		return(0x100);
