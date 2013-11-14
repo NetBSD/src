@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2013/02/04 22:19:43 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.273 2013/11/14 12:11:13 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2013/02/04 22:19:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2013/11/14 12:11:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2749,3 +2749,24 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 
 	return ENXIO;
 }
+
+#ifdef __arch64__
+void
+sparc64_elf_mcmodel_check(struct exec_package *epp, const char *model,
+    size_t len)
+{
+	/* no model specific execution for 32bit processes */
+	if (epp->ep_flags & EXEC_32)
+		return;
+
+#ifdef __USING_TOPDOWN_VM
+	/*
+	 * we allow TOPDOWN_VM for all processes where the binary is compiled
+	 * with the medany or medmid code model.
+	 */
+	if (strncmp(model, "medany", len) == 0 ||
+	    strncmp(model, "medmid", len) == 0)
+		epp->ep_flags |= EXEC_TOPDOWN_VM;
+#endif
+}
+#endif
