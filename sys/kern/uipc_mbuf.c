@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.154 2013/11/14 00:50:36 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.155 2013/11/14 09:21:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.154 2013/11/14 00:50:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.155 2013/11/14 09:21:30 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -749,7 +749,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 	}
 	np = &top;
 	top = 0;
-	while (len > 0) {
+	while (len == M_COPYALL || len > 0) {
 		if (m == 0) {
 			if (len != M_COPYALL)
 				panic("m_copym: m == 0, len %d [!COPYALL]",
