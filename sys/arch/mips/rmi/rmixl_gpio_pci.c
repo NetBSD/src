@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.7 2012/12/15 03:05:56 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_gpio_pci.c,v 1.1.2.8 2013/11/14 01:36:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,11 +93,9 @@ static int (* const xlgpio_intrs[])(void *) = {
 };
 
 struct xlgpio_intrpin {
-	int (*gip_func)(void *);
-	void *gip_arg;
+	struct rmixl_intrhand_common gip_ihc;
 	uint8_t gip_ipl;
 	uint8_t gip_ist;
-	bool gip_mpsafe;
 	char gip_pin_name[sizeof("pin XX")];
 };
 
@@ -142,7 +140,10 @@ static struct xlgpio_softc xlgpio_sc = {	/* there can only be one */
 		[0 ... 2*PINGROUP-1] = {
 			.gip_ipl = IPL_NONE,
 			.gip_ist = IST_NONE,
-			.gip_func = xlgpio_stray_intr,
+			.gip_ihc = {
+				.ihc_func = xlgpio_stray_intr,
+				.ihc_disestablish = gpio_intr_disestablish,
+			},
 		},
 	},
 	.sc_groups = {
@@ -260,7 +261,7 @@ xlgpio_pci_attach(device_t parent, device_t self, void *aux)
 		snprintf(gip->gip_pin_name, sizeof(gip->gip_pin_name),
 		    "pin %zu", pin);
 
-		KASSERT(gip->gip_func == xlgpio_stray_intr);
+		KASSERT(gip->gip_ihc.ihc_func == xlgpio_stray_intr);
 	}
 
 	/*
@@ -367,8 +368,8 @@ xlgpio_group_intr(struct xlgpio_softc *sc, int ipl, size_t group)
 		struct xlgpio_intrpin * const gip = &gg->gg_pins[pin];
 
 		KASSERT(gip->gip_ipl == ipl);
-		const int nrv = rmixl_intr_deliver(gip->gip_func, gip->gip_arg,
-		     gip->gip_mpsafe, &evs[pin], ipl);
+		const int nrv = rmixl_intr_deliver(&gip->gip_ihc, 
+		     &evs[pin], ipl);
 		if (nrv)
 			rv = nrv;
 		sts &= PIN_MASK(pin);
@@ -469,16 +470,18 @@ gpio_intr_establish(size_t pin, int ipl, int ist,
 		return NULL;
 
 	KASSERT((*inten_p & mask) == 0);
-	KASSERT(gip->gip_func != xlgpio_stray_intr);
+	KASSERT(gip->gip_ihc.ihc_func != xlgpio_stray_intr);
 	KASSERT(gip->gip_ipl == IPL_NONE);
 	KASSERT(gip->gip_ist == IST_NONE);
 
 	mutex_enter(sc->sc_intr_lock);
 
 	gip->gip_ipl = ipl;
-	gip->gip_func = func;
-	gip->gip_arg = arg;
-	gip->gip_mpsafe = mpsafe;
+	gip->gip_ihc.ihc_func = func;
+	gip->gip_ihc.ihc_arg = arg;
+#ifdef MULTIPROCESSOR
+	gip->gip_ihc.ihc_mpsafe = mpsafe;
+#endif
 
 	if (ist == IST_EDGE) {
 		atomic_or_32(&gg->gg_inttype, mask);
@@ -519,7 +522,7 @@ gpio_intr_disestablish(void *v)
 
 	KASSERT(&sc->sc_pins[pin] == gip);
 	KASSERT(pin < __arraycount(sc->sc_pins));
-	KASSERT(gip->gip_func != xlgpio_stray_intr);
+	KASSERT(gip->gip_ihc.ihc_func != xlgpio_stray_intr);
 
 	*inten_p &= ~mask;
 	xlgpio_write_4(sc, gg->gg_r_inten[gip->gip_ipl - IPL_VM], *inten_p);
