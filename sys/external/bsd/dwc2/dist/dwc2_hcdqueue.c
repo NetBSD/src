@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.5 2013/11/14 12:40:51 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.5 2013/11/14 12:40:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -244,15 +244,10 @@ static struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
-	u32 buf_size;
 
 	if (hsotg->core_params->dma_desc_enable > 0) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
-		if (qh->ep_type == USB_ENDPOINT_XFER_ISOC)
-			buf_size = 4096;
-		else
-			buf_size = hsotg->core_params->max_transfer_size;
 		/* XXXNH */
 		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->dw_align_buf_usbdma);
 	}
