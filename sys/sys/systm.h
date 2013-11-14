@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.2.4.2 2009/08/22 17:05:21 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2.4.3 2013/11/14 17:34:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -185,6 +185,8 @@ void	aprint_debug(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 
 struct device;
+void    device_printf(struct device *, const char *fmt, ...)
+    __attribute__((__format__(__printf__,2,3)));
 
 void	aprint_normal_dev(struct device *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
