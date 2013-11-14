@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.152 2013/06/27 17:47:18 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.153 2013/11/14 00:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -686,7 +686,7 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
-#define	M_COPYALL	1000000000
+#define	M_COPYALL	-1
 
 /* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)

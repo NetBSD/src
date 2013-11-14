@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.153 2013/10/09 20:15:20 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.154 2013/11/14 00:50:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.153 2013/10/09 20:15:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.154 2013/11/14 00:50:36 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -722,6 +722,11 @@ m_dup(struct mbuf *m, int off0, int len, int wait)
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
 
+static inline int
+m_copylen(int len, int copylen) {
+    return len == M_COPYALL ? copylen : min(len, copylen);
+}
+
 static struct mbuf *
 m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 {
@@ -730,7 +735,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 	struct mbuf *top;
 	int copyhdr = 0;
 
-	if (off < 0 || len < 0)
+	if (off < 0 || (len != M_COPYALL && len < 0))
 		panic("m_copym: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
@@ -764,7 +769,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				n->m_pkthdr.len = len;
 			copyhdr = 0;
 		}
-		n->m_len = min(len, m->m_len - off);
+		n->m_len = m_copylen(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
 			if (!deep) {
 				n->m_data = m->m_data + off;
@@ -776,7 +781,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				 */
 				MCLGET(n, wait);
 				n->m_len = M_TRAILINGSPACE(n);
-				n->m_len = min(n->m_len, len);
+				n->m_len = m_copylen(len, n->m_len);
 				n->m_len = min(n->m_len, m->m_len - off);
 				memcpy(mtod(n, void *), mtod(m, char *) + off,
 				    (unsigned)n->m_len);
