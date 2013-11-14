@@ -1,4 +1,4 @@
-/*	$NetBSD: iplsum.c,v 1.6 2012/02/24 18:45:20 skrll Exp $	*/
+/*	$NetBSD: iplsum.c,v 1.7 2013/11/14 13:02:57 skrll Exp $	*/
 
 /*
  * Calculate 32bit checksum of IPL and store in a certain location
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: too short\n", argv[1]);
 		return 1;
 	} else if (len > BOOTSIZE) {
-		fprintf(stderr, "%s: too long\n", argv[1]);
+		fprintf(stderr, "%s: too long (%d vs %d)\n", argv[1], len, BOOTSIZE);
 		return 1;
 	}
 	(void) fclose(fp);
