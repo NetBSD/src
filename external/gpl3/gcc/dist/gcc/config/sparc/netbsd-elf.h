@@ -112,7 +112,7 @@ along with GCC; see the file COPYING3.  If not see
    + MASK_STACK_BIAS + MASK_APP_REGS + MASK_FPU + MASK_LONG_DOUBLE_128)
 
 #undef SPARC_DEFAULT_CMODEL
-#define SPARC_DEFAULT_CMODEL CM_MEDLOW
+#define SPARC_DEFAULT_CMODEL CM_MEDMID
 
 #endif
 
@@ -158,6 +158,25 @@ along with GCC; see the file COPYING3.  If not see
       %{pg:-mcmodel=medlow}} " \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
+#if defined(SPARC_BI_ARCH) || defined(__arch64__)
+/* add code model specific object to the link line for 64bit */
+#define	LINK_SPEC_CODE_MODEL64	\
+	"%{!shared:"	\
+	    "%{!mcmodel=*:%:if-exists(%R/usr/lib/sparc_mcmedmid.o)}"	\
+	    "%{mcmodel=medlow:%:if-exists(%R/usr/lib/sparc_mcmedlow.o)}" \
+	    "%{mcmodel=medmid:%:if-exists(%R/usr/lib/sparc_mcmedmid.o)}" \
+	    "%{mcmodel=medany:%:if-exists(%R/usr/lib/sparc_mcmedany.o)}" \
+	"}"
+
+#ifdef SPARC_BI_ARCH
+#define LINK_SPEC_CODE_MODEL	"%{!m32:" LINK_SPEC_CODE_MODEL64 "}"
+#else
+#define	LINK_SPEC_CODE_MODEL	LINK_SPEC_CODE_MODEL64
+#endif
+#else
+#define	LINK_SPEC_CODE_MODEL	""
+#endif
+
 /* Make sure we use the right output format.  Pick a default and then
    make sure -m32/-m64 switch to the right one.  */
 
@@ -174,7 +193,8 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_SPEC \
  "%(link_arch) \
   %{!mno-relax:%{!r:-relax}} \
-  %(netbsd_link_spec)"
+  %(netbsd_link_spec) " \
+  LINK_SPEC_CODE_MODEL
 
 #define NETBSD_ENTRY_POINT "__start"
 
