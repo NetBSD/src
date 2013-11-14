@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.189 2013/10/25 15:52:57 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.190 2013/11/14 12:07:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.189 2013/10/25 15:52:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.190 2013/11/14 12:07:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -483,7 +483,13 @@ proc0_init(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS));
+	    trunc_page(VM_MAX_ADDRESS),
+#ifdef __USING_TOPDOWN_VM
+	    true
+#else
+	    false
+#endif
+	    );
 
 	/* Initialize signal state for proc0. XXX IPL_SCHED */
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
