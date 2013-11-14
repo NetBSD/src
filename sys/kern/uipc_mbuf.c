@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.155 2013/11/14 09:21:30 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.156 2013/11/14 18:54:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.155 2013/11/14 09:21:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.156 2013/11/14 18:54:40 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -482,15 +482,17 @@ m_add(struct mbuf *c, struct mbuf *m) {
 void
 m_align(struct mbuf *m, int len)
 {
-       int adjust;
+	int adjust;
 
-       if (m->m_flags & M_EXT)
-	       adjust = m->m_ext.ext_size - len;
-       else if (m->m_flags & M_PKTHDR)
-	       adjust = MHLEN - len;
-       else
-	       adjust = MLEN - len;
-       m->m_data += adjust &~ (sizeof(long)-1);
+	KASSERT(len != M_COPYALL);
+
+	if (m->m_flags & M_EXT)
+		adjust = m->m_ext.ext_size - len;
+	else if (m->m_flags & M_PKTHDR)
+		adjust = MHLEN - len;
+	else
+		adjust = MLEN - len;
+	m->m_data += adjust &~ (sizeof(long)-1);
 }
 
 /*
@@ -507,6 +509,7 @@ m_append(struct mbuf *m0, int len, const void *cpv)
 	int remainder, space;
 	const char *cp = cpv;
 
+	KASSERT(len != M_COPYALL);
 	for (m = m0; m->m_next != NULL; m = m->m_next)
 		continue;
 	remainder = len;
@@ -683,6 +686,7 @@ m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
 
+	KASSERT(len != M_COPYALL);
 	mn = m_get(how, m->m_type);
 	if (mn == NULL) {
 		m_freem(m);
@@ -876,6 +880,7 @@ m_copydata(struct mbuf *m, int off, int len, void *vp)
 	int		off0 = off;
 	void		*vp0 = vp;
 
+	KASSERT(len != M_COPYALL);
 	if (off < 0 || len < 0)
 		panic("m_copydata: off %d, len %d", off, len);
 	while (off > 0) {
@@ -935,6 +940,7 @@ m_adj(struct mbuf *mp, int req_len)
 	struct mbuf *m;
 	int count;
 
+	KASSERT(len != M_COPYALL);
 	if ((m = mp) == NULL)
 		return;
 	if (len >= 0) {
@@ -1015,6 +1021,7 @@ m_ensure_contig(struct mbuf **m0, int len)
 	struct mbuf *n = *m0, *m;
 	size_t count, space;
 
+	KASSERT(len != M_COPYALL);
 	/*
 	 * If first mbuf has no cluster, and has room for len bytes
 	 * without shifting current data, pullup into it,
@@ -1072,6 +1079,7 @@ m_pullup(struct mbuf *n, int len)
 {
 	struct mbuf *m = n;
 
+	KASSERT(len != M_COPYALL);
 	if (!m_ensure_contig(&m, len)) {
 		KASSERT(m != NULL);
 		m_freem(m);
@@ -1094,6 +1102,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	struct mbuf *m;
 	int count, space;
 
+	KASSERT(len != M_COPYALL);
 	if (len > (MHLEN - dstoff))
 		goto bad;
 	m = m_get(M_DONTWAIT, n->m_type);
@@ -1148,6 +1157,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 	struct mbuf *m, *n;
 	unsigned len = len0, remain, len_save;
 
+	KASSERT(len0 != M_COPYALL);
 	for (m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
 	if (m == 0)
@@ -1308,6 +1318,7 @@ m_copyback_cow(struct mbuf *m0, int off, int len, const void *cp, int how)
 	int error;
 
 	/* don't support chain expansion */
+	KASSERT(len != M_COPYALL);
 	KDASSERT(off + len <= m_length(m0));
 
 	error = m_copyback0(&m0, off, len, cp,
@@ -1331,23 +1342,15 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 {
 	int error;
 #if defined(DEBUG)
-	struct mbuf *n;
-	int origlen, reslen;
-
-	origlen = m_length(*mp);
+	int origlen = m_length(*mp);
 #endif /* defined(DEBUG) */
-
-#if 0 /* M_COPYALL is large enough */
-	if (len == M_COPYALL)
-		len = m_length(*mp) - off; /* XXX */
-#endif
 
 	error = m_copyback0(mp, off, len, NULL,
 	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
 
 #if defined(DEBUG)
-	reslen = 0;
-	for (n = *mp; n; n = n->m_next)
+	int reslen = 0;
+	for (struct mbuf *n = *mp; n; n = n->m_next)
 		reslen += n->m_len;
 	if (origlen != reslen)
 		panic("m_makewritable: length changed");
@@ -1428,6 +1431,9 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 	KASSERT(*mp0 != NULL);
 	KASSERT((flags & M_COPYBACK0_PRESERVE) == 0 || cp == NULL);
 	KASSERT((flags & M_COPYBACK0_COPYBACK) == 0 || cp != NULL);
+
+	if (len == M_COPYALL)
+		len = m_length(*mp0) - off;
 
 	/*
 	 * we don't bother to update "totlen" in the case of M_COPYBACK0_COW,
@@ -1624,6 +1630,7 @@ m_apply(struct mbuf *m, int off, int len,
 	unsigned int count;
 	int rval;
 
+	KASSERT(len != M_COPYALL);
 	KASSERT(len >= 0);
 	KASSERT(off >= 0);
 
