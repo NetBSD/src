@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.37 2013/11/12 16:13:56 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.38 2013/11/15 08:47:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.37 2013/11/12 16:13:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.38 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -107,23 +107,14 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	u_int descs[4];
 	u_int lfunc;
 
-	family = CPUID2FAMILY(ci->ci_signature);
-	model = CPUID2MODEL(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
 
 	/*
 	 * K5 model 0 has none of this info.
 	 */
 	if (family == 5 && model == 0)
 		return;
-
-	/*
-	 * Get extended values for K8 and up.
-	 */
-	if (family == 0xf)
-		family += CPUID2EXTFAMILY(ci->ci_signature);
-
-	if ((family == 0xf) || (family == 0x6))
-		model |= CPUID2EXTMODEL(ci->ci_signature) << 4;
 
 	/*
 	 * Determine the largest extended function value.
@@ -249,10 +240,10 @@ cpu_probe_k5(struct cpu_info *ci)
 	int flag;
 
 	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID2FAMILY(ci->ci_signature) != 5)
+	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
 		return;
 
-	if (CPUID2MODEL(ci->ci_signature) == 0) {
+	if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
 		/*
 		 * According to the AMD Processor Recognition App Note,
 		 * the AMD-K5 Model 0 uses the wrong bit to indicate
@@ -274,7 +265,7 @@ cpu_probe_k678(struct cpu_info *ci)
 	uint32_t descs[4];
 
 	if (cpu_vendor != CPUVENDOR_AMD ||
-	    CPUID2FAMILY(ci->ci_signature) < 6)
+	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
 		return;
 
 	/* Determine the extended feature flags. */
@@ -370,8 +361,8 @@ cpu_probe_cyrix(struct cpu_info *ci)
 {
 
 	if (cpu_vendor != CPUVENDOR_CYRIX ||
-	    CPUID2FAMILY(ci->ci_signature) < 4 ||
-	    CPUID2FAMILY(ci->ci_signature) > 6)
+	    CPUID_TO_FAMILY(ci->ci_signature) < 4 ||
+	    CPUID_TO_FAMILY(ci->ci_signature) > 6)
 		return;
 
 	cpu_probe_cyrix_cmn(ci);
@@ -384,10 +375,10 @@ cpu_probe_winchip(struct cpu_info *ci)
 	if (cpu_vendor != CPUVENDOR_IDT)
 	    	return;
 
-	switch (CPUID2FAMILY(ci->ci_signature)) {
+	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 5:
 		/* WinChip C6 */
-		if (CPUID2MODEL(ci->ci_signature) == 4)
+		if (CPUID_TO_MODEL(ci->ci_signature) == 4)
 			ci->ci_feat_val[0] &= ~CPUID_TSC;
 		break;
 	case 6:
@@ -416,12 +407,12 @@ cpu_probe_c3(struct cpu_info *ci)
 	struct x86_cache_info *cai;
 
 	if (cpu_vendor != CPUVENDOR_IDT ||
-	    CPUID2FAMILY(ci->ci_signature) < 6)
+	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
 	    	return;
 
-	family = CPUID2FAMILY(ci->ci_signature);
-	model = CPUID2MODEL(ci->ci_signature);
-	stepping = CPUID2STEPPING(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
 	/* Determine the largest extended function value. */
 	x86_cpuid(0x80000000, descs);
@@ -556,7 +547,7 @@ cpu_probe_geode(struct cpu_info *ci)
 {
 
 	if (memcmp("Geode by NSC", ci->ci_vendor, 12) != 0 ||
-	    CPUID2FAMILY(ci->ci_signature) != 5)
+	    CPUID_TO_FAMILY(ci->ci_signature) != 5)
 	    	return;
 
 	cpu_probe_cyrix_cmn(ci);
@@ -668,7 +659,8 @@ cpu_probe(struct cpu_info *ci)
 		ci->ci_feat_val[0] = descs[3];
 
 		/* Determine family + class. */
-		cpu_class = CPUID2FAMILY(ci->ci_signature) + (CPUCLASS_386 - 3);
+		cpu_class = CPUID_TO_FAMILY(ci->ci_signature)
+		    + (CPUCLASS_386 - 3);
 		if (cpu_class > CPUCLASS_686)
 			cpu_class = CPUCLASS_686;
 

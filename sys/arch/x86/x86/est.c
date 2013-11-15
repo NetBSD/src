@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.27 2013/11/08 19:05:52 msaitoh Exp $	*/
+/*	$NetBSD: est.c,v 1.28 2013/11/15 08:47:55 msaitoh Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.27 2013/11/08 19:05:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.28 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1080,8 +1080,8 @@ est_bus_clock(struct cpu_info *ci)
 	uint32_t family, model;
 	int bus_clock = 0;
 
-	model  = CPUID2MODEL(ci->ci_signature);
-	family = CPUID2FAMILY(ci->ci_signature);
+	family = CPUID_TO_BASEFAMILY(ci->ci_signature);
+	model  = CPUID_TO_MODEL(ci->ci_signature);
 
 	switch (family) {
 

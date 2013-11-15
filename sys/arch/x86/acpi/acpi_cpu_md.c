@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.72 2012/12/06 04:43:29 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.73 2013/11/15 08:47:55 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.72 2012/12/06 04:43:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.73 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -243,10 +243,7 @@ acpicpu_md_flags(void)
 
 		x86_cpuid(0x80000007, regs);
 
-		family = CPUID2FAMILY(ci->ci_signature);
-
-		if (family == 0xf)
-			family += CPUID2EXTFAMILY(ci->ci_signature);
+		family = CPUID_TO_FAMILY(ci->ci_signature);
 
     		switch (family) {
 
@@ -547,10 +544,7 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 		if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 			msr.ps_flags |= ACPICPU_FLAG_P_FIDVID;
 
-		family = CPUID2FAMILY(ci->ci_signature);
-
-		if (family == 0xf)
-			family += CPUID2EXTFAMILY(ci->ci_signature);
+		family = CPUID_TO_FAMILY(ci->ci_signature);
 
 		switch (family) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.105 2013/11/12 16:15:54 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.106 2013/11/15 08:47:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2013/11/12 16:15:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -592,10 +592,10 @@ cpu_init(struct cpu_info *ci)
 		/*
 		 * Must be a K6-2 Step >= 7 or a K6-III.
 		 */
-		if (CPUID2FAMILY(ci->ci_signature) == 5) {
-			if (CPUID2MODEL(ci->ci_signature) > 8 ||
-			    (CPUID2MODEL(ci->ci_signature) == 8 &&
-			     CPUID2STEPPING(ci->ci_signature) >= 7)) {
+		if (CPUID_TO_FAMILY(ci->ci_signature) == 5) {
+			if (CPUID_TO_MODEL(ci->ci_signature) > 8 ||
+			    (CPUID_TO_MODEL(ci->ci_signature) == 8 &&
+			     CPUID_TO_STEPPING(ci->ci_signature) >= 7)) {
 				mtrr_funcs = &k6_mtrr_funcs;
 				k6_mtrr_init_first();
 				mtrr_init_cpu(ci);

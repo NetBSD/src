@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.21 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.21 2010/04/18 23:47:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -227,9 +227,9 @@ x86_patch(bool early)
 	 * sections.  Apply workaround.
 	 */
 	if (cpu_vendor == CPUVENDOR_AMD &&
-	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xe ||
-	    (CPUID2FAMILY(cpu_info_primary.ci_signature) == 0xf &&
-	    CPUID2EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
+	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xe ||
+	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xf &&
+	    CPUID_TO_EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
 		for (i = 0; x86_retpatch[i] != 0; i++) {
 			/* ret,nop,nop,ret -> lfence,ret */
 			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
