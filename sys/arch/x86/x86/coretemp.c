@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.30 2013/11/12 15:58:38 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.31 2013/11/15 08:47:55 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.30 2013/11/12 15:58:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.31 2013/11/15 08:47:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -217,8 +217,8 @@ coretemp_quirks(struct cpu_info *ci)
 	uint32_t model, stepping;
 	uint64_t msr;
 
-	model = CPUID2MODEL(ci->ci_signature);
-	stepping = CPUID2STEPPING(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
 	/*
 	 * Check if the MSR contains thermal
@@ -259,11 +259,9 @@ coretemp_tjmax(device_t self)
 	uint32_t family, model, stepping;
 	uint64_t msr;
 
-	family = CPUID2FAMILY(ci->ci_signature);
-	model = CPUID2MODEL(ci->ci_signature);
-	if ((family == 0xf) || (family == 0x6))
-		model |= CPUID2EXTMODEL(ci->ci_signature) << 4;
-	stepping = CPUID2STEPPING(ci->ci_signature);
+	family = CPUID_TO_FAMILY(ci->ci_signature);
+	model = CPUID_TO_MODEL(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
 	sc->sc_tjmax = 100;
 
