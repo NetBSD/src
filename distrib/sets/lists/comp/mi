@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1858 2013/11/13 22:09:55 joerg Exp $
+#	$NetBSD: mi,v 1.1859 2013/11/15 08:42:18 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1379,7 +1379,7 @@
 ./usr/include/g++/ext/numeric			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/numeric_traits.h		comp-cxx-include	gcc=45,cxx,libstdcxx
 ./usr/include/g++/ext/numeric_traits.h		comp-cxx-include	gcc=48,cxx,libstdcxx
-./usr/include/g++/ext/opt_random.h							comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/ext/opt_random.h							comp-cxx-include	gcc=48,obsolete
 ./usr/include/g++/ext/pb_ds/assoc_container.hpp						comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/bin_search_tree_.hpp		comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/constructors_destructor_fn_imps.hpp	comp-cxx-include	gcc=48,cxx,libstdcxx
@@ -1995,6 +1995,7 @@
 ./usr/include/g++/profile/multiset.h							comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/profile/set								comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/profile/set.h								comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/profile/unordered_base.h						comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/profile/unordered_map							comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/profile/unordered_set							comp-cxx-include	gcc=48,cxx,libstdcxx
 ./usr/include/g++/profile/vector							comp-cxx-include	gcc=48,cxx,libstdcxx
