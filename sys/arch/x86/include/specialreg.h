@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.71 2013/10/21 06:11:49 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.72 2013/11/15 08:47:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -192,19 +192,30 @@
 	"\31" "DEADLINE" "\32" "AES"	"\33" "XSAVE"	"\34" "OSXSAVE" \
 	"\35" "AVX"	"\36" "F16C"	"\37" "RDRAND"	"\40" "RAZ"
 
-#define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
-#define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
-#define CPUID2STEPPING(cpuid)	((cpuid) & 0xf)
+/* CPUID Fn00000001 %eax */
+
+#define CPUID_TO_BASEFAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
+#define CPUID_TO_BASEMODEL(cpuid)	(((cpuid) >> 4) & 0xf)
+#define CPUID_TO_STEPPING(cpuid)	((cpuid) & 0xf)
 
 /*
- * The Extended family bits should only be inspected when CPUID2FAMILY()
+ * The Extended family bits should only be inspected when CPUID_TO_BASEFAMILY()
  * returns 15. They are use to encode family value 16 to 270 (add 15).
- * The Extended model hits are the high 4 bits of the model.
+ * The Extended model bits are the high 4 bits of the model.
  * They are only valid for family >= 15 or family 6 (intel, but all amd
  * family 6 are documented to return zero bits for them).
  */
-#define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
-#define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+#define CPUID_TO_EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
+#define CPUID_TO_EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+
+/* The macros for the Display Family and the Display Model */
+#define CPUID_TO_FAMILY(cpuid)	(CPUID_TO_BASEFAMILY(cpuid)	\
+	    + ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
+		? 0 : CPUID_TO_EXTFAMILY(cpuid)))
+#define CPUID_TO_MODEL(cpuid)	(CPUID_TO_BASEMODEL(cpuid)	\
+	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
+		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
+		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
 
 /*
  * Intel Deterministic Cache Parameter Leaf
