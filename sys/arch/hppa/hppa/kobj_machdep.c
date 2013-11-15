@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.11 2013/08/06 07:10:52 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.12 2013/11/15 06:32:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.11 2013/08/06 07:10:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.12 2013/11/15 06:32:17 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -137,12 +137,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_TYPE(DIR17R):
-		/* RR(symbol, addend) */
-		addr = kobj_sym_lookup(ko, symidx);
-		value = RR(addr, value);
-		value >>= 2;		/* bottom two bits not needed */
-		break;
-
 	case R_TYPE(DIR14R):
 		/* RR(symbol, addend) */
 		addr = kobj_sym_lookup(ko, symidx);
@@ -153,7 +147,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		/* symbol - PC - 8 + addend */
 		addr = kobj_sym_lookup(ko, symidx);
 		value += addr - (Elf_Word)where - 8;
-		value >>= 2;		/* bottom two bits not needed */
 		break;
 
 	case R_TYPE(DPREL21L):
@@ -202,6 +195,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_TYPE(DIR17R):
 	case R_TYPE(PCREL17F):
+		value >>= 2;		/* bottom two bits not needed */
 		*where |=
 		    (((value & 0x10000) >> 16) << 0) |		/* w */
 		    (((value & 0x0f800) >> 11) << 16) |		/* w1 */
