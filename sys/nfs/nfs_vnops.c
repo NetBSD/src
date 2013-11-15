@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.300 2013/09/14 22:29:08 martin Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.301 2013/11/15 14:39:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.300 2013/09/14 22:29:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.301 2013/11/15 14:39:53 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1164,7 +1164,7 @@ nfs_readrpc(struct vnode *vp, struct uio *uiop)
 	char *bpos, *dpos, *cp2;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp;
-	int error = 0, len, retlen, tsiz, eof, byte_count;
+	int error = 0, len, retlen, tsiz, eof __unused, byte_count;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 #ifndef NFS_V2_ONLY
