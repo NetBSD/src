@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.49 2013/11/07 18:59:01 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.50 2013/11/15 08:47:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.49 2013/11/07 18:59:01 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.50 2013/11/15 08:47:55 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -897,7 +897,7 @@ intel_family_new_probe(struct cpu_info *ci)
 static void
 via_cpu_probe(struct cpu_info *ci)
 {
-	u_int stepping = CPUID2STEPPING(ci->ci_signature);
+	u_int stepping = CPUID_TO_STEPPING(ci->ci_signature);
 	u_int descs[4];
 	u_int lfunc;
 
@@ -1175,7 +1175,7 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	u_int descs[4];
 	u_int lfunc;
 
-	stepping = CPUID2STEPPING(ci->ci_signature);
+	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
 	/*
 	 * Determine the largest extended function value.
@@ -1349,12 +1349,8 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_signature = descs[0];
 
 	/* Extract full family/model values */
-	ci->ci_family = CPUID2FAMILY(ci->ci_signature);
-	ci->ci_model = CPUID2MODEL(ci->ci_signature);
-	if (ci->ci_family == 15)
-		ci->ci_family += CPUID2EXTFAMILY(ci->ci_signature);
-	if (ci->ci_family == 6 || ci->ci_family == 15)
-		ci->ci_model += CPUID2EXTMODEL(ci->ci_signature) << 4;
+	ci->ci_family = CPUID_TO_FAMILY(ci->ci_signature);
+	ci->ci_model = CPUID_TO_MODEL(ci->ci_signature);
 
 	/* Brand is low order 8 bits of ebx */
 	ci->ci_brand_id = descs[1] & 0xff;
@@ -1676,7 +1672,8 @@ identifycpu(int fd, const char *cpuname)
 					else
 						brand = amd_brand_name;
 				}
-				if (CPUID2FAMILY(ci->ci_signature) == 0xf) {
+				if (CPUID_TO_BASEFAMILY(ci->ci_signature)
+				    == 0xf) {
 					/* Identify AMD64 CPU names.  */
 					const char *tmp;
 					tmp = amd_amd64_name(ci);
@@ -1720,7 +1717,7 @@ identifycpu(int fd, const char *cpuname)
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
 
 	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
-	    ci->ci_family, ci->ci_model, CPUID2STEPPING(ci->ci_signature));
+	    ci->ci_family, ci->ci_model, CPUID_TO_STEPPING(ci->ci_signature));
 	if (ci->ci_signature != 0)
 		aprint_normal(" (id %#x)", ci->ci_signature);
 	aprint_normal("\n");
