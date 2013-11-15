@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.177 2013/09/18 23:34:55 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.178 2013/11/15 00:12:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.177 2013/09/18 23:34:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.178 2013/11/15 00:12:44 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -184,6 +184,23 @@ const struct cdevsw bpf_cdevsw = {
 	bpfopen, noclose, noread, nowrite, noioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
+
+bpfjit_func_t
+bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
+{
+	membar_consumer();
+	if (bpfjit_module_ops.bj_generate_code != NULL) {
+		return bpfjit_module_ops.bj_generate_code(bc, code, size);
+	}
+	return NULL;
+}
+
+void
+bpf_jit_freecode(bpfjit_func_t jcode)
+{
+	KASSERT(bpfjit_module_ops.bj_free_code != NULL);
+	bpfjit_module_ops.bj_free_code(jcode);
+}
 
 static int
 bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
@@ -1062,7 +1079,7 @@ int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
-	bpfjit_function_t jcode, oldj;
+	bpfjit_func_t jcode, oldj;
 	size_t flen, size;
 	int s;
 
@@ -1086,8 +1103,9 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			return EINVAL;
 		}
 		membar_consumer();
-		if (bpf_jit && bpfjit_module_ops.bj_generate_code != NULL) {
-			jcode = bpfjit_module_ops.bj_generate_code(fcode, flen);
+		if (bpf_jit) {
+			bpf_ctx_t *bc = bpf_default_ctx();
+			jcode = bpf_jit_generate(bc, fcode, flen);
 		}
 	} else {
 		fcode = NULL;
@@ -1104,10 +1122,8 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 	if (old) {
 		free(old, M_DEVBUF);
 	}
-
-	if (oldj != NULL) {
-		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
-		bpfjit_module_ops.bj_free_code(oldj);
+	if (oldj) {
+		bpf_jit_freecode(oldj);
 	}
 
 	return 0;
@@ -1719,8 +1735,7 @@ bpf_freed(struct bpf_d *d)
 		free(d->bd_filter, M_DEVBUF);
 
 	if (d->bd_jitcode != NULL) {
-		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
-		bpfjit_module_ops.bj_free_code(d->bd_jitcode);
+		bpf_jit_freecode(d->bd_jitcode);
 	}
 }
 

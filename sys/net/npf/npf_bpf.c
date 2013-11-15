@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.2 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.3 2013/11/15 00:12:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.2 2013/11/12 00:46:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.3 2013/11/15 00:12:44 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.2 2013/11/12 00:46:34 rmind Exp $");
 
 static bpf_ctx_t *npf_bpfctx __read_mostly;
 
-static uint32_t npf_cop_l3(const struct mbuf *, void *, uint32_t, uint32_t *);
-static uint32_t npf_cop_table(const struct mbuf *, void *, uint32_t, uint32_t *);
+static uint32_t	npf_cop_l3(bpf_ctx_t *, bpf_args_t *, uint32_t);
+static uint32_t	npf_cop_table(bpf_ctx_t *, bpf_args_t *, uint32_t);
 
 static const bpf_copfunc_t npf_bpfcop[] = {
 	[NPF_COP_L3]	= npf_cop_l3,
@@ -74,19 +74,26 @@ npf_bpf_sysfini(void)
 
 int
 npf_bpf_filter(npf_cache_t *npc, nbuf_t *nbuf,
-    const void *code, bpfjit_function_t jcode)
+    const void *code, bpfjit_func_t jcode)
 {
 	const struct mbuf *m = nbuf_head_mbuf(nbuf);
-	const unsigned char *p = (const unsigned char *)m;
 	const size_t pktlen = m_length(m);
+	bpf_args_t args = {
+		.pkt = m,
+		.wirelen = pktlen,
+		.buflen = 0,
+		.arg = npc
+	};
+
+	memset(args.mem, 0, sizeof(uint32_t) * BPF_MEMWORDS);
 
 	/* Execute JIT code. */
 	if (__predict_true(jcode)) {
-		return jcode(p, pktlen, 0);
+		return jcode((const unsigned char *)m, pktlen, 0);
 	}
 
 	/* Execute BPF byte-code. */
-	return bpf_filter_ext(npf_bpfctx, (void *)npc, code, p, pktlen, 0);
+	return bpf_filter_ext(npf_bpfctx, code, &args);
 }
 
 bool
@@ -105,12 +112,10 @@ npf_bpf_validate(const void *code, size_t len)
  *	BPF_MW_L4PROTO	L4 protocol.
  */
 static uint32_t
-npf_cop_l3(const struct mbuf *pkt, void *arg, uint32_t A, uint32_t *M)
+npf_cop_l3(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
-	const npf_cache_t *npc = (const npf_cache_t *)arg;
-
-	KASSERT(npc != NULL);
-	memset(M, 0, sizeof(uint32_t) * BPF_MEMWORDS);
+	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
+	uint32_t * const M = args->mem;
 
 	/*
 	 * Convert address length to IP version.  Just mask out
@@ -139,17 +144,15 @@ npf_cop_l3(const struct mbuf *pkt, void *arg, uint32_t A, uint32_t *M)
  *	A <- non-zero (true) if found and zero (false) otherwise
  */
 static uint32_t
-npf_cop_table(const struct mbuf *pkt, void *arg, uint32_t A, uint32_t *M)
+npf_cop_table(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 {
-	const npf_cache_t *npc = (const npf_cache_t *)arg;
+	const npf_cache_t * const npc = (const npf_cache_t *)args->arg;
 	npf_tableset_t *tblset = npf_config_tableset();
 	const uint32_t tid = A & (SRC_FLAG_BIT - 1);
 	const npf_addr_t *addr;
 	npf_table_t *t;
 
-	KASSERT(npc != NULL);
 	KASSERT(npf_iscached(npc, NPC_IP46));
-	memset(M, 0, sizeof(uint32_t) * BPF_MEMWORDS);
 
 	if ((t = npf_tableset_getbyid(tblset, tid)) == NULL) {
 		return 0;

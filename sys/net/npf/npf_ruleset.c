@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.26 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.27 2013/11/15 00:12:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.26 2013/11/08 00:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.27 2013/11/15 00:12:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,7 +81,7 @@ struct npf_rule {
 
 	/* Code to process, if any. */
 	int			r_type;
-	bpfjit_function_t	r_jcode;
+	bpfjit_func_t		r_jcode;
 	void *			r_code;
 	size_t			r_clen;
 
