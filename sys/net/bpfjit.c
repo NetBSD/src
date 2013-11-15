@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.5 2013/11/15 13:56:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.5 2013/11/15 13:56:21 rmind Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.5 2013/11/15 13:56:21 rmind Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $");
 #include <sys/module.h>
 #endif
 
+#define	__BPF_PRIVATE
+#include <net/bpf.h>
 #include <net/bpfjit.h>
 #include <sljitLir.h>
 
