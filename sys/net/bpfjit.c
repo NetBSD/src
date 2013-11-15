@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.3 2013/09/20 23:19:52 rmind Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.4 2013/11/15 00:12:44 rmind Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1186,8 +1186,8 @@ kx_to_reg_arg(struct bpf_insn *pc)
 	}
 }
 
-bpfjit_function_t
-bpfjit_generate_code(struct bpf_insn *insns, size_t insn_count)
+bpfjit_func_t
+bpfjit_generate_code(bpf_ctx_t *bc, struct bpf_insn *insns, size_t insn_count)
 {
 	void *rv;
 	size_t i;
@@ -1727,12 +1727,11 @@ fail:
 	if (ret0 != NULL)
 		BPFJIT_FREE(ret0, ret0_maxsize * sizeof(ret0[0]));
 
-	return (bpfjit_function_t)rv;
+	return (bpfjit_func_t)rv;
 }
 
 void
-bpfjit_free_code(bpfjit_function_t code)
+bpfjit_free_code(bpfjit_func_t code)
 {
-
 	sljit_free_code((void *)code);
 }
