@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_test.c,v 1.2 2013/11/08 00:38:27 rmind Exp $	*/
+/*	$NetBSD: npf_bpf_test.c,v 1.3 2013/11/16 01:41:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include "npf_impl.h"
 #include "npf_test.h"
 
+static bool	lverbose = false;
+
 static struct mbuf *
 fill_packet(int proto)
 {
@@ -57,13 +59,14 @@ fill_packet(int proto)
 }
 
 static int
-test_bpf_code(const void *code)
+test_bpf_code(void *code, size_t size)
 {
 	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
 	npf_cache_t npc = { .npc_info = 0 };
 	struct mbuf *m;
 	nbuf_t nbuf;
-	int ret;
+	int ret, jret;
+	void *jcode;
 
 	/* Layer 3 (IP + TCP). */
 	m = fill_packet(IPPROTO_TCP);
@@ -71,6 +74,16 @@ test_bpf_code(const void *code)
 	npf_cache_all(&npc, &nbuf);
 
 	ret = npf_bpf_filter(&npc, &nbuf, code, NULL);
+
+	/* JIT-compiled code. */
+	jcode = npf_bpf_compile(code, size);
+	if (jcode) {
+		jret = npf_bpf_filter(&npc, &nbuf, NULL, jcode);
+		assert(ret == jret);
+		bpf_jit_freecode(jcode);
+	} else if (lverbose) {
+		printf("JIT-compilation failed\n");
+	}
 	m_freem(m);
 
 	return ret;
@@ -84,7 +97,7 @@ npf_bpfcop_run(u_int reg)
 		BPF_STMT(BPF_LD+BPF_W+BPF_MEM, reg),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
-	return test_bpf_code(&insns_npf_bpfcop);
+	return test_bpf_code(&insns_npf_bpfcop, sizeof(insns_npf_bpfcop));
 }
 
 static bool
@@ -97,7 +110,7 @@ npf_bpfcop_test(void)
 		BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
-	fail |= (test_bpf_code(&insns_ipver) != IPVERSION);
+	fail |= (test_bpf_code(&insns_ipver, sizeof(insns_ipver)) != IPVERSION);
 
 	/* BPF_MW_IPVERI <- IP version */
 	fail |= (npf_bpfcop_run(BPF_MW_IPVER) != IPVERSION);
@@ -115,6 +128,8 @@ bool
 npf_bpf_test(bool verbose)
 {
 	bool fail = false;
+
+	lverbose = verbose;
 
 	fail |= npf_bpfcop_test();
 
