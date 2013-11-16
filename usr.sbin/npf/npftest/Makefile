@@ -12,12 +12,13 @@ LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_npf
-LDADD+=		-lrumpdev_bpf
+LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net
+LDADD+=		-lrumpdev_bpf -lrumpkern_sljit -lrumpnet_bpfjit
+LDADD+=		-lrumpnet_npf
 
 LDADD+=		-lpcap -lprop -lpthread
 
-WARNS=		4
+WARNS=		5
 NOMAN=		# no man page
 NOLINT=		# disabled (note: deliberately)
 
