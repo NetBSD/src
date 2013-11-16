@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.239 2012/10/27 17:18:12 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.240 2013/11/16 23:54:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.239 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.240 2013/11/16 23:54:01 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1823,7 +1823,8 @@ int
 viking_module_error(void)
 {
 	uint64_t v;
-	int n = 0, fatal = 0;
+	int fatal = 0;
+	CPU_INFO_ITERATOR n;
 	struct cpu_info *cpi;
 
 	/* Report on MXCC error registers in each module */

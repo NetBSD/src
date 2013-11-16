@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.29 2013/11/16 23:54:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.29 2013/11/16 23:54:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,7 +87,7 @@ void
 timer_init_4m(void)
 {
 	struct cpu_info *cpi;
-	int n;
+	CPU_INFO_ITERATOR n;
 
 	timerreg4m->t_limit = tmr_ustolim4m(tick);
 	for (CPU_INFO_FOREACH(n, cpi)) {
@@ -212,7 +212,8 @@ timerattach_obio_4m(device_t parent, device_t self, void *aux)
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 	struct cpu_info *cpi;
 	bus_space_handle_t bh;
-	int i, n;
+	int i;
+	CPU_INFO_ITERATOR n;
 
 	if (sa->sa_nreg < 2) {
 		printf(": only %d register sets\n", sa->sa_nreg);
