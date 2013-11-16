@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.178 2013/11/15 00:12:44 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.179 2013/11/16 01:13:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.178 2013/11/15 00:12:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.179 2013/11/16 01:13:52 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1377,6 +1377,13 @@ static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const bool rcv)
 {
+	bpf_ctx_t *bc = bpf_default_ctx();
+	bpf_args_t args = {
+		.pkt = pkt,
+		.wirelen = pktlen,
+		.buflen = buflen,
+		.arg = NULL
+	};
 	struct bpf_d *d;
 	struct timespec ts;
 	bool gottime = false;
@@ -1395,10 +1402,10 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		d->bd_rcount++;
 		bpf_gstats.bs_recv++;
 
-		if (d->bd_jitcode != NULL)
+		if (d->bd_jitcode)
 			slen = d->bd_jitcode(pkt, pktlen, buflen);
 		else
-			slen = bpf_filter(d->bd_filter, pkt, pktlen, buflen);
+			slen = bpf_filter_ext(bc, d->bd_filter, &args);
 
 		if (!slen) {
 			continue;
