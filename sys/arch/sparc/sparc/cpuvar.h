@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.91 2013/10/19 19:40:23 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.92 2013/11/16 23:54:01 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -421,7 +421,6 @@ struct cpu_info {
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
 
 
-#define CPU_INFO_ITERATOR		int
 /*
  * Provide two forms of CPU_INFO_FOREACH.  One fast one for non-modular
  * non-SMP kernels, and the other for everyone else.  Both work in the
@@ -430,8 +429,10 @@ struct cpu_info {
  */
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
 #define	CPU_INFO_FOREACH(cii, cp)	cii = 0; (cp = cpus[cii]) && cp->eintstack && cii < sparc_ncpus; cii++
+#define CPU_INFO_ITERATOR		int
 #else
-#define CPU_INFO_FOREACH(cii, cp)	cii = 0, cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_FOREACH(cii, cp)	cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_ITERATOR		int __unused
 #endif
 
 
