@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.142 2013/11/13 11:06:53 skrll Exp $
+# $NetBSD: HACKS,v 1.143 2013/11/16 17:14:06 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -889,16 +889,6 @@ port	x68k
 	descr
 		workaround for:
 		internal compiler error: in cselib_record_set, at cselib.c:1999
-	kcah
-
-port	x86_64
-	hack	gcc 4.8 gcc miscompiles
-	cdate	Wed Nov 13 10:16:00 GMT 2013
-	who	skrll
-	file	libexec/ld.elf_so/Makefile:1.124
-	descr
-		Incorrect code for rtld.o is produced with -fipa-cp-clone - stack
-		becomes unaligned in _rtld_unload_object.
 	kcah
 
 hack	fallback to /usr/bin/clang-cpp in rpcgen
