@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.4 2011/02/12 18:23:09 matt Exp $ */
+/* $NetBSD: kern.ldscript,v 1.5 2013/11/16 12:00:21 mrg Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs */
 OUTPUT_ARCH(powerpc)
@@ -15,6 +15,8 @@ SECTIONS
   {
     _ftext = . ;
     *(.text)
+    *(.text.startup)
+    *(.text.unlikely)
     __stub_start = .;
     *(.stub)
     __stub_end = .;
