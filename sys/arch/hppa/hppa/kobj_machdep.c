@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.12 2013/11/15 06:32:17 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.13 2013/11/16 17:18:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.12 2013/11/15 06:32:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.13 2013/11/16 17:18:42 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -143,6 +143,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		value = RR(addr, value);
 		break;
 
+	case R_TYPE(PCREL32):
 	case R_TYPE(PCREL17F):
 		/* symbol - PC - 8 + addend */
 		addr = kobj_sym_lookup(ko, symidx);
@@ -181,6 +182,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	switch (rtype) {
 	case R_TYPE(DIR32):
+	case R_TYPE(PCREL32):
 	case R_TYPE(PLABEL32):
 	case R_TYPE(SEGREL32):
 		*where = value;
