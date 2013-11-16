@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.86 2013/11/11 17:04:06 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.87 2013/11/16 17:58:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.86 2013/11/11 17:04:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.87 2013/11/16 17:58:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -788,7 +788,7 @@ tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 	 * Allocate struct dirent and first check for the "." and "..".
 	 * Note: tmpfs_dir_getdotents() will "seek" for us.
 	 */
-	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
+	dentp = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 
 	if (uio->uio_offset == TMPFS_DIRSEQ_DOT) {
 		if ((error = tmpfs_dir_getdotents(node, dentp, uio)) != 0) {
