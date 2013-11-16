@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1860 2013/11/16 01:39:17 rmind Exp $
+#	$NetBSD: mi,v 1.1861 2013/11/16 13:01:38 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3834,8 +3834,8 @@
 ./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile,rump
 ./usr/lib/librumpkern_ksem.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
-./usr/lib/librumpkern_sljit.a			comp-c-lib		rump
-./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpkern_sljit.a			comp-c-lib		sljit,rump
+./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		profile,sljit,rump
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs,rump
 ./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs,rump
 ./usr/lib/librumpkern_tty.a			comp-c-lib		rump
@@ -3845,8 +3845,8 @@
 ./usr/lib/librumpnet.a				comp-c-lib		rump
 ./usr/lib/librumpnet_agr.a			comp-c-lib		rump
 ./usr/lib/librumpnet_agr_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpnet_bpfjit.a			comp-c-lib		rump
-./usr/lib/librumpnet_bpfjit_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_bpfjit.a			comp-c-lib		sljit,rump
+./usr/lib/librumpnet_bpfjit_p.a			comp-c-proflib		profile,sljit,rump
 ./usr/lib/librumpnet_bridge.a			comp-c-lib		rump
 ./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpnet_local.a			comp-c-lib		rump

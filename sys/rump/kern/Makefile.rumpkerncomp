@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.7 2013/11/16 10:34:47 martin Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.8 2013/11/16 13:01:38 alnsn Exp $
 #
 
 .include <bsd.own.mk>
 
 RUMPKERNCOMPS=	crypto tty z
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc"
+.if ${MKSLJIT} != "no"
 RUMPKERNCOMPS+=	sljit
 .endif
 
