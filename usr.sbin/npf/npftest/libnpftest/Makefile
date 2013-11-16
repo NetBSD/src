@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2013/09/24 02:04:21 rmind Exp $
+# $NetBSD: Makefile,v 1.8 2013/11/16 01:41:43 rmind Exp $
 #
 # Public Domain
 #
@@ -24,7 +24,7 @@ CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../../sys/net/npf
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
-WARNS=		4
+WARNS=		5
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>
