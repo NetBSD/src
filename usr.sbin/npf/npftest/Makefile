@@ -13,7 +13,12 @@ DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
 LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net
-LDADD+=		-lrumpdev_bpf -lrumpkern_sljit -lrumpnet_bpfjit
+LDADD+=		-lrumpdev_bpf
+
+.if ${MKSLJIT} != "no"
+LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
+.endif
+
 LDADD+=		-lrumpnet_npf
 
 LDADD+=		-lpcap -lprop -lpthread
