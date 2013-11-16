@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.680 2013/11/16 01:39:17 rmind Exp $
+# $NetBSD: shl.mi,v 1.681 2013/11/16 13:01:38 alnsn Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -637,9 +637,9 @@
 ./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
-./usr/lib/librumpkern_sljit.so			base-rump-shlib		rump
-./usr/lib/librumpkern_sljit.so.0		base-rump-shlib		rump
-./usr/lib/librumpkern_sljit.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpkern_sljit.so			base-rump-shlib		sljit,rump
+./usr/lib/librumpkern_sljit.so.0		base-rump-shlib		sljit,rump
+./usr/lib/librumpkern_sljit.so.0.0		base-rump-shlib		sljit,rump
 ./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs,rump
 ./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs,rump
 ./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs,rump
@@ -655,9 +655,9 @@
 ./usr/lib/librumpnet_agr.so			base-rump-shlib	rump
 ./usr/lib/librumpnet_agr.so.0			base-rump-shlib	rump
 ./usr/lib/librumpnet_agr.so.0.0			base-rump-shlib	rump
-./usr/lib/librumpnet_bpfjit.so			base-rump-shlib	rump
-./usr/lib/librumpnet_bpfjit.so.0		base-rump-shlib	rump
-./usr/lib/librumpnet_bpfjit.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpnet_bpfjit.so			base-rump-shlib	sljit,rump
+./usr/lib/librumpnet_bpfjit.so.0		base-rump-shlib	sljit,rump
+./usr/lib/librumpnet_bpfjit.so.0.0		base-rump-shlib	sljit,rump
 ./usr/lib/librumpnet_bridge.so			base-rump-shlib	rump
 ./usr/lib/librumpnet_bridge.so.0		base-rump-shlib	rump
 ./usr/lib/librumpnet_bridge.so.0.0		base-rump-shlib	rump
