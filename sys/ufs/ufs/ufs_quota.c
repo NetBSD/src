@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.113 2013/10/18 19:55:37 christos Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.114 2013/11/16 12:49:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.113 2013/10/18 19:55:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.114 2013/11/16 12:49:29 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -474,19 +474,9 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct quotakcursor *cursor;
-	struct quotakey *keys;
-	struct quotaval *vals;
-	unsigned maxnum;
-	unsigned *ret;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSORGET);
-	cursor = args->u.cursorget.qc_cursor;
-	keys = args->u.cursorget.qc_keys;
-	vals = args->u.cursorget.qc_vals;
-	maxnum = args->u.cursorget.qc_maxnum;
-	ret = args->u.cursorget.qc_ret;
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
@@ -498,6 +488,12 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 		
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursorget.qc_cursor;
+		struct quotakey *keys = args->u.cursorget.qc_keys;
+		struct quotaval *vals = args->u.cursorget.qc_vals;
+		unsigned maxnum = args->u.cursorget.qc_maxnum;
+		unsigned *ret = args->u.cursorget.qc_ret;
+
 		error = quota2_handle_cmd_cursorget(ump, cursor, keys, vals,
 						    maxnum, ret);
 	} else
@@ -514,11 +510,9 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
 #endif
-	struct quotakcursor *cursor;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSOROPEN);
-	cursor = args->u.cursoropen.qc_cursor;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
@@ -527,6 +521,8 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursoropen.qc_cursor;
+
 		error = quota2_handle_cmd_cursoropen(ump, cursor);
 	} else
 #endif
@@ -542,11 +538,9 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
 #endif
-	struct quotakcursor *cursor;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSORCLOSE);
-	cursor = args->u.cursorclose.qc_cursor;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
@@ -555,6 +549,8 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursorclose.qc_cursor;
+
 		error = quota2_handle_cmd_cursorclose(ump, cursor);
 	} else
 #endif
@@ -570,16 +566,16 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
 #endif
-	struct quotakcursor *cursor;
-	int idtype;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSORSKIPIDTYPE);
-	cursor = args->u.cursorskipidtype.qc_cursor;
-	idtype = args->u.cursorskipidtype.qc_idtype;
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor =
+			     args->u.cursorskipidtype.qc_cursor;
+		int idtype = args->u.cursorskipidtype.qc_idtype;
+
 		error = quota2_handle_cmd_cursorskipidtype(ump, cursor, idtype);
 	} else
 #endif
@@ -595,16 +591,15 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
 #endif
-	struct quotakcursor *cursor;
-	int *ret;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSORATEND);
-	cursor = args->u.cursoratend.qc_cursor;
-	ret = args->u.cursoratend.qc_ret;
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursoratend.qc_cursor;
+		unsigned *ret = args->u.cursoratend.qc_ret;
+
 		error = quota2_handle_cmd_cursoratend(ump, cursor, ret);
 	} else
 #endif
@@ -620,14 +615,14 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 	struct ufsmount *ump = VFSTOUFS(mp);
 #endif
-	struct quotakcursor *cursor;
 	int error;
 
 	KASSERT(args->qc_op == QUOTACTL_CURSORREWIND);
-	cursor = args->u.cursorrewind.qc_cursor;
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
+		struct quotakcursor *cursor = args->u.cursorrewind.qc_cursor;
+
 		error = quota2_handle_cmd_cursorrewind(ump, cursor);
 	} else
 #endif
