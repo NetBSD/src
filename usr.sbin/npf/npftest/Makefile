@@ -1,9 +1,13 @@
-# $NetBSD: Makefile,v 1.6 2013/11/16 15:58:30 alnsn Exp $
+# $NetBSD: Makefile,v 1.7 2013/11/16 17:12:35 rmind Exp $
 #
 # Public Domain
 #
 
 PROG=		npftest
+NOMAN=		# no man page
+
+WARNS=		5
+NOLINT=		# disabled (note: deliberately)
 
 SRCS=		npftest.c npfstream.c
 CPPFLAGS+=	-I${.CURDIR}
@@ -15,6 +19,8 @@ LDADD+=		-L${LIBNPFTEST} -lnpftest
 LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net
 LDADD+=		-lrumpdev_bpf
 
+.include <bsd.own.mk>
+
 .if ${MKSLJIT} != "no"
 LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
 .endif
@@ -22,10 +28,6 @@ LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
 LDADD+=		-lrumpnet_npf
 
 LDADD+=		-lpcap -lprop -lpthread
-
-WARNS=		5
-NOMAN=		# no man page
-NOLINT=		# disabled (note: deliberately)
 
 SUBDIR+=	libnpftest
 
