@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 2013/11/13 11:06:53 skrll Exp $
+#	$NetBSD: Makefile,v 1.125 2013/11/16 17:14:06 skrll Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -116,13 +116,6 @@ CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 # rtld.c and symbol.c use alloca, so disable SSP warnings.
 COPTS.rtld.c+=	-Wno-stack-protector
 COPTS.symbol.c+=-Wno-stack-protector
-
-.if ${HAVE_GCC} >= 48
-.if ${LDELFSO_MACHINE_ARCH} == "x86_64"
-# gcc 4.8.1 miscompiles rtld.c when ipa-cp-clone is included.
-COPTS.rtld.c+=	-fno-ipa-cp-clone
-.endif
-.endif
 
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}
 .if ${MKPICLIB} != "no"
