@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.31 2013/11/15 08:47:55 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.32 2013/11/17 18:08:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.31 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.32 2013/11/17 18:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -256,10 +256,9 @@ coretemp_tjmax(device_t self)
 {
 	struct coretemp_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_ci;
-	uint32_t family, model, stepping;
+	uint32_t model, stepping;
 	uint64_t msr;
 
-	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
