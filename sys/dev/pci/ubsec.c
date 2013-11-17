@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.32 2013/11/17 17:16:25 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.32 2013/11/17 17:16:25 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $");
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/queue.h>
 
 #include <opencrypto/cryptodev.h>
@@ -82,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $");
  */
 static	int ubsec_probe(device_t, cfdata_t, void *);
 static	void ubsec_attach(device_t, device_t, void *);
+static	int  ubsec_detach(device_t, int);
 static	void ubsec_reset_board(struct ubsec_softc *);
 static	void ubsec_init_board(struct ubsec_softc *);
 static	void ubsec_init_pciregs(struct pci_attach_args *pa);
@@ -99,7 +101,7 @@ struct cfdriver ubsec_cd = {
 };
 #else
 CFATTACH_DECL_NEW(ubsec, sizeof(struct ubsec_softc), ubsec_probe, ubsec_attach,
-	      NULL, NULL);
+	      ubsec_detach, NULL);
 extern struct cfdriver ubsec_cd;
 #endif
 
@@ -310,6 +312,8 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	u_int32_t cmd, i;
 
 	sc->sc_dev = self;
+	sc->sc_pct = pc;
+
 	up = ubsec_lookup(pa);
 	if (up == NULL) {
 		printf("\n");
@@ -332,7 +336,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 
 	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
+	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_memsize)) {
 		aprint_error_dev(self, "can't find mem space");
 		return;
 	}
@@ -469,6 +473,82 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0,
 				 ubsec_kprocess, sc);
 #endif
+	}
+}
+
+static int
+ubsec_detach(device_t self, int flags)
+{
+	struct ubsec_softc *sc = device_private(self);
+	struct ubsec_q *q, *qtmp;
+
+	/* disable interrupts */
+	/* XXX wait/abort current ops? where is DMAERR enabled? */
+	WRITE_REG(sc, BS_CTRL, READ_REG(sc, BS_CTRL) &~
+	    (BS_CTRL_MCR2INT | BS_CTRL_MCR1INT | BS_CTRL_DMAERR));
+
+#ifndef UBSEC_NO_RNG
+	if (sc->sc_flags & UBS_FLAGS_RNG) {
+		callout_halt(&sc->sc_rngto, NULL);
+		ubsec_dma_free(sc, &sc->sc_rng.rng_buf);
+		ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_ctx);
+		ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
+		rnd_detach_source(&sc->sc_rnd_source);
+	}
+#endif /* UBSEC_NO_RNG */
+
+	crypto_unregister_all(sc->sc_cid);
+
+	mutex_spin_enter(&sc->sc_mtx);
+
+	ubsec_totalreset(sc);  /* XXX leaves the chip running */
+
+	SIMPLEQ_FOREACH_SAFE(q, &sc->sc_freequeue, q_next, qtmp) {
+		ubsec_dma_free(sc, &q->q_dma->d_alloc);
+		free(q, M_DEVBUF);
+	}
+
+	mutex_spin_exit(&sc->sc_mtx);
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	if (sc->sc_memsize != 0) {
+		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_memsize);
+		sc->sc_memsize = 0;
+	}
+
+	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, ubsec, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+ubsec_modcmd(modcmd_t cmd, void *data)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_ubsec,
+		    cfattach_ioconf_ubsec, cfdata_ioconf_ubsec);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_ubsec,
+		    cfattach_ioconf_ubsec, cfdata_ioconf_ubsec);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
 }
 

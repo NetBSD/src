@@ -1,0 +1,10 @@
+#	$NetBSD: ubsec.ioconf,v 1.1 2013/11/17 17:16:24 bad Exp $
+
+ioconf ubsec
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+ubsec* at pci? dev ? function ?

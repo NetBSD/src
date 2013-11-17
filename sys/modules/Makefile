@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 2013/11/16 16:59:04 skrll Exp $
+#	$NetBSD: Makefile,v 1.125 2013/11/17 17:16:24 bad Exp $
 
 .include <bsd.own.mk>
 
@@ -82,6 +82,7 @@ SUBDIR+=	suser
 SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
+SUBDIR+=	ubsec
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
