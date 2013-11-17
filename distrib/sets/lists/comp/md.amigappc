@@ -1,4 +1,4 @@
-# $NetBSD: md.amigappc,v 1.10 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.amigappc,v 1.11 2013/11/17 14:34:11 alnsn Exp $
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/amigappc/ansi.h			comp-c-include
@@ -50,6 +50,7 @@
 ./usr/include/amigappc/rwlock.h			comp-c-include
 ./usr/include/amigappc/setjmp.h			comp-c-include
 ./usr/include/amigappc/signal.h			comp-c-include
+./usr/include/amigappc/sljitarch.h		comp-c-include
 ./usr/include/amigappc/spr.h			comp-obsolete		obsolete
 ./usr/include/amigappc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amigappc/trap.h			comp-c-include
