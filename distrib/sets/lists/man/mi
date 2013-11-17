@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.23 2013/06/23 11:09:54 bouyer Exp $
+# $NetBSD: mi,v 1.1109.2.24 2013/11/17 17:59:54 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -552,6 +552,7 @@
 ./usr/share/man/cat1/zfgrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/zforce.0			man-util-catman		.cat
 ./usr/share/man/cat1/zgrep.0			man-util-catman		.cat
+./usr/share/man/cat1/zless.0			man-util-catman		.cat
 ./usr/share/man/cat1/zmore.0			man-util-catman		.cat
 ./usr/share/man/cat1/znew.0			man-util-catman		.cat
 ./usr/share/man/cat3/atari/ahdi_buildlabel.0	man-obsolete		obsolete
@@ -3168,6 +3169,7 @@
 ./usr/share/man/html1/zfgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/zforce.html		man-util-htmlman	html
 ./usr/share/man/html1/zgrep.html		man-util-htmlman	html
+./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
 ./usr/share/man/html4/aac.html			man-sys-htmlman		html
@@ -5452,6 +5454,7 @@
 ./usr/share/man/man1/zfgrep.1			man-util-man		.man
 ./usr/share/man/man1/zforce.1			man-util-man		.man
 ./usr/share/man/man1/zgrep.1			man-util-man		.man
+./usr/share/man/man1/zless.1			man-util-man		.man
 ./usr/share/man/man1/zmore.1			man-util-man		.man
 ./usr/share/man/man1/znew.1			man-util-man		.man
 ./usr/share/man/man3/atari/ahdi_buildlabel.3	man-obsolete		obsolete
