@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecreg.h,v 1.2 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: ubsecreg.h,v 1.3 2013/11/17 23:20:18 bad Exp $	*/
 /*	$OpenBSD: ubsecreg.h,v 1.28 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -60,6 +60,10 @@
 #define	BS_STAT		0x08	/* DMA Status */
 #define	BS_ERR		0x0c	/* DMA Error Address */
 #define	BS_MCR2		0x10	/* DMA Master Command Record 2 */
+#define	BS_MCR3		0x0014	/* 5827+, DMA Master Command Record 3 */
+#define	BS_MCR4		0x001c	/* 5827+, DMA Master Command Record 4 */
+#define	BS_CFG		0x0700	/* 5827+, Configuration Register */
+#define	BS_INT		0x0f00	/* 5827+, Interrupt Register */
 
 /* BS_CTRL - DMA Control */
 #define	BS_CTRL_RESET		0x80000000	/* hardware reset, 5805/5820 */
@@ -75,6 +79,9 @@
 #define	BS_CTRL_RNG_8		0x01000000	/* 1bit rn/eight slow clocks */
 #define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
 #define	BS_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
+#define	BS_CTRL_MCR3INT		0x00400000	/* 5827+, intr for MCR3 */
+#define	BS_CTRL_MCR4INT		0x00200000	/* 5827+, intr for MCR4 */
+#define	BS_CTRL_BSIZE240	0x000f0000	/* 5827+, burst size 240 */
 #define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
 #define	BS_CTRL_LITTLE_ENDIAN	(BS_CTRL_BE32 | BS_CTRL_BE64)
 
@@ -87,10 +94,22 @@
 #define	BS_STAT_MCR2_DONE	0x04000000	/* MCR2 is done */
 #define	BS_STAT_MCR1_ALLEMPTY	0x02000000	/* 5821, MCR1 is empty */
 #define	BS_STAT_MCR2_ALLEMPTY	0x01000000	/* 5821, MCR2 is empty */
+#define	BS_STAT_MCR3_ALLEMPTY	0x00800000	/* 5827+, MCR3 is empty */
+#define	BS_STAT_MCR4_ALLEMPTY	0x00400000	/* 5827+, MCR4 is empty */
+#define	BS_STAT_MCR3_FULL	0x00080000	/* 5827+, MCR3 is full */
+#define	BS_STAT_MCR3_DONE	0x00040000	/* 5827+, MCR3 is done */
+#define	BS_STAT_MCR4_FULL	0x00020000	/* 5827+, MCR4 is full */
+#define	BS_STAT_MCR4_DONE	0x00010000	/* 5827+, MCR4 is done */
 
 /* BS_ERR - DMA Error Address */
 #define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
 #define	BS_ERR_READ		0x00000002	/* fault was on read */
+
+/* BS_CFG */
+#define	BS_CFG_RNG		0x00000001	/* 5827+, enable RNG */
+
+/* BS_INT */
+#define	BS_INT_DMAINT		0x80000000	/* 5827+, enable DMA intr */
 
 struct ubsec_pktctx {
 	u_int32_t	pc_deskey[6];		/* 3DES key */
