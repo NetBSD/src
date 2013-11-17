@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.59 2013/11/17 18:25:45 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.60 2013/11/17 19:23:06 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1004,4 +1004,18 @@ sys/dev/pci/if_bgevar.h				1.17 via patch
 	uses bus_dmatag_subregion(), so this workaround won't work on some
 	archs which doesn't support bus_dmatag_subregion().
 	[msaitoh, ticket #983]
+
+sys/net/npf/npf_impl.h				1.35
+sys/net/npf/npf_nat.c				1.21
+sys/net/npf/npf_session.c			1.26
+
+	npf_session_setnat: fix the race condition when the old connection
+	is still being expired while a new/duplicate is being created.
+	[rmind, ticket #985]
+
+usr.sbin/npf/npfctl/npf_ncgen.c			patch
+sys/net/npf/npf_instr.c				patch
+
+	fix the byteorder for port range comparison
+	[rmind, ticket #986]
 
