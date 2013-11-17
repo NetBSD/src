@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.9.2.7 2013/02/11 21:49:48 riz Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.9.2.8 2013/11/17 19:21:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.7 2013/02/11 21:49:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.8 2013/11/17 19:21:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -154,7 +154,7 @@ npf_match_tcp_ports(const npf_cache_t *npc, int sd, uint32_t prange)
 	KASSERT(npf_iscached(npc, NPC_TCP));
 
 	/* Match against the port range. */
-	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
+	return NPF_PORTRANGE_MATCH(prange, ntohs(p)) ? 0 : -1;
 }
 
 /*
@@ -169,7 +169,7 @@ npf_match_udp_ports(const npf_cache_t *npc, int sd, uint32_t prange)
 	KASSERT(npf_iscached(npc, NPC_UDP));
 
 	/* Match against the port range. */
-	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
+	return NPF_PORTRANGE_MATCH(prange, ntohs(p)) ? 0 : -1;
 }
 
 /*
