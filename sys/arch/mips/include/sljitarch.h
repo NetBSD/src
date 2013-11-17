@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.2 2012/11/25 23:04:51 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.3 2013/11/17 12:01:58 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MIPS_SLJITARCH_H
-#define MIPS_SLJITARCH_H
+#ifndef _MIPS_SLJITARCH_H
+#define _MIPS_SLJITARCH_H
 
 #ifndef _LP64
 #define SLJIT_CONFIG_MIPS_32 1
