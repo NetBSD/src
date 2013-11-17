@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2013/11/16 10:50:43 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2013/11/17 11:16:09 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ CFLAGS.crtbegin.c+= -fPIE
 OBJS+=		crtfm.o
 .endif
 
-.if ${MACHINE_ARCH} == "sparc64" && "${COPTS:M-m32}" == ""
+.if ${CSU_MACHINE_ARCH} == "sparc64"
 # create helper objects for the compiler to mark compiler memory models
 .for m in medlow medmid medany
 sparc_mc${m}.o:	compident.S sysident_assym.h
