@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.6 2013/11/17 17:16:25 bad Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.7 2013/11/17 23:20:18 bad Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -40,7 +40,11 @@
 #define	UBS_MAX_SCATTER		64	/* Maximum scatter/gather depth */
 
 #ifndef UBS_MAX_AGGR
-#define	UBS_MAX_AGGR		5	/* Maximum aggregation count */
+#define	UBS_MAX_AGGR		17	/* Maximum aggregation count */
+#endif
+
+#ifndef UBS_MIN_AGGR
+#define	UBS_MIN_AGGR		5	/* < 5827, Maximum aggregation count */
 #endif
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
@@ -128,6 +132,9 @@ struct ubsec_dma {
 #define	UBS_FLAGS_BIGKEY	0x04		/* 2048bit keys */
 #define	UBS_FLAGS_HWNORM	0x08		/* hardware normalization */
 #define	UBS_FLAGS_RNG		0x10		/* hardware rng */
+#define UBS_FLAGS_AES		0x20		/* supports AES */
+#define UBS_FLAGS_MULTIMCR	0x40		/* 5827+ with 4 MCRs */
+#define UBS_FLAGS_RNG4		0x80		/* 5827+ RNG on MCR4 */
 
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
@@ -159,6 +166,7 @@ struct ubsec_softc {
 	int			sc_needwakeup;	/* notify crypto layer */
 	u_int32_t		sc_statmask;	/* interrupt status mask */
 	int32_t			sc_cid;		/* crypto tag */
+	int			sc_maxaggr;	/* max pkt aggregation */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue, mcr1 */
 	int			sc_nqueue;	/* count enqueued, mcr1 */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip, mcr1 */
@@ -167,6 +175,9 @@ struct ubsec_softc {
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue2;	/* packet queue, mcr2 */
 	int			sc_nqueue2;	/* count enqueued, mcr2 */
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip2;	/* on chip, mcr2 */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue4;	/* packet queue, mcr4 */
+	int			sc_nqueue4;	/* count enqueued, mcr4 */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip4;	/* on chip, mcr4 */
 	int			sc_nsessions;	/* # of sessions */
 	struct ubsec_session	*sc_sessions;	/* sessions */
 	struct callout		sc_rngto;	/* rng timeout */

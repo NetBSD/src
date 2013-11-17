@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.33 2013/11/17 22:52:14 bad Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.34 2013/11/17 23:20:18 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.33 2013/11/17 22:52:14 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.34 2013/11/17 23:20:18 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -122,6 +122,7 @@ static	void	ubsec_feed(struct ubsec_softc *);
 static	void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
 static	void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
 static	void	ubsec_feed2(struct ubsec_softc *);
+static	void	ubsec_feed4(struct ubsec_softc *);
 #ifndef UBSEC_NO_RNG
 static  void	ubsec_rng(void *);
 static  void	ubsec_rng_locked(void *);
@@ -188,34 +189,40 @@ static const struct ubsec_product {
 	pci_product_id_t	ubsec_product;
 	int			ubsec_flags;
 	int			ubsec_statmask;
+	int			ubsec_maxaggr;
 	const char		*ubsec_name;
 } ubsec_products[] = {
 	{ PCI_VENDOR_BLUESTEEL,	PCI_PRODUCT_BLUESTEEL_5501,
 	  0,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Bluesteel 5501"
 	},
 	{ PCI_VENDOR_BLUESTEEL,	PCI_PRODUCT_BLUESTEEL_5601,
 	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Bluesteel 5601"
 	},
 
 	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5801,
 	  0,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5801"
 	},
 
 	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5802,
 	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5802"
 	},
 
 	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5805,
 	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5805"
 	},
 
@@ -223,6 +230,7 @@ static const struct ubsec_product {
 	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5820"
 	},
 
@@ -231,6 +239,7 @@ static const struct ubsec_product {
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
 	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5821"
 	},
 	{ PCI_VENDOR_SUN,	PCI_PRODUCT_SUN_SCA1K,
@@ -238,6 +247,7 @@ static const struct ubsec_product {
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
 	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
 	  "Sun Crypto Accelerator 1000"
 	},
 	{ PCI_VENDOR_SUN,	PCI_PRODUCT_SUN_5821,
@@ -245,6 +255,7 @@ static const struct ubsec_product {
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
 	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5821 (Sun)"
 	},
 
@@ -253,6 +264,7 @@ static const struct ubsec_product {
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
 	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5822"
 	},
 
@@ -261,10 +273,57 @@ static const struct ubsec_product {
 	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
 	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
 	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
 	  "Broadcom BCM5823"
 	},
 
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5825,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  UBS_MIN_AGGR,
+	  "Broadcom BCM5825"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5860,
+	  UBS_FLAGS_MULTIMCR | UBS_FLAGS_HWNORM |
+	      UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_RNG | UBS_FLAGS_RNG4 |
+	      UBS_FLAGS_KEY | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY |
+	      BS_STAT_MCR3_ALLEMPTY | BS_STAT_MCR4_ALLEMPTY,
+	  UBS_MAX_AGGR,
+	  "Broadcom BCM5860"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5861,
+	  UBS_FLAGS_MULTIMCR | UBS_FLAGS_HWNORM |
+	      UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_RNG | UBS_FLAGS_RNG4 |
+	      UBS_FLAGS_KEY | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY |
+	      BS_STAT_MCR3_ALLEMPTY | BS_STAT_MCR4_ALLEMPTY,
+	  UBS_MAX_AGGR,
+	  "Broadcom BCM5861"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5862,
+	  UBS_FLAGS_MULTIMCR | UBS_FLAGS_HWNORM |
+	      UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_RNG | UBS_FLAGS_RNG4 |
+	      UBS_FLAGS_KEY | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY |
+	      BS_STAT_MCR3_ALLEMPTY | BS_STAT_MCR4_ALLEMPTY,
+	  UBS_MAX_AGGR,
+	  "Broadcom BCM5862"
+	},
+
 	{ 0,			0,
+	  0,
 	  0,
 	  0,
 	  NULL
@@ -304,6 +363,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	pcireg_t memtype;
 	struct ubsec_dma *dmap;
 	u_int32_t cmd, i;
 
@@ -322,16 +382,20 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_qchip);
 	SIMPLEQ_INIT(&sc->sc_queue2);
 	SIMPLEQ_INIT(&sc->sc_qchip2);
+	SIMPLEQ_INIT(&sc->sc_queue4);
+	SIMPLEQ_INIT(&sc->sc_qchip4);
 	SIMPLEQ_INIT(&sc->sc_q2free);
 
 	sc->sc_flags = up->ubsec_flags;
 	sc->sc_statmask = up->ubsec_statmask;
+	sc->sc_maxaggr = up->ubsec_maxaggr;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BS_BAR);
+	if (pci_mapreg_map(pa, BS_BAR, memtype, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_memsize)) {
 		aprint_error_dev(self, "can't find mem space");
 		return;
@@ -416,7 +480,10 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_RNG) {
-		sc->sc_statmask |= BS_STAT_MCR2_DONE;
+		if (sc->sc_flags & UBS_FLAGS_RNG4)
+			sc->sc_statmask |= BS_STAT_MCR4_DONE;
+		else
+			sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
 		    &sc->sc_rng.rng_q.q_mcr, 0))
@@ -596,6 +663,7 @@ ubsec_intr(void *arg)
 	volatile u_int32_t stat;
 	struct ubsec_q *q;
 	struct ubsec_dma *dmap;
+	int flags;
 	int npkts = 0, i;
 
 	mutex_spin_enter(&sc->sc_mtx);
@@ -662,7 +730,13 @@ ubsec_intr(void *arg)
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			mcr = (struct ubsec_mcr *)q2->q_mcr.dma_vaddr;
-			if ((mcr->mcr_flags & htole16(UBS_MCR_DONE)) == 0) {
+
+			/* A bug in new devices requires to swap this field */
+			if (sc->sc_flags & UBS_FLAGS_MULTIMCR)
+				flags = htole16(mcr->mcr_flags);
+			else
+				flags = mcr->mcr_flags;
+			if ((flags & htole16(UBS_MCR_DONE)) == 0) {
 				bus_dmamap_sync(sc->sc_dmat,
 				    q2->q_mcr.dma_map, 0,
 				    q2->q_mcr.dma_map->dm_mapsize,
@@ -678,6 +752,39 @@ ubsec_intr(void *arg)
 			 */
 			if (!(stat & BS_STAT_DMAERR))
 				ubsec_feed2(sc);
+		}
+	}
+	if ((sc->sc_flags & UBS_FLAGS_RNG4) && (stat & BS_STAT_MCR4_DONE)) {
+		struct ubsec_q2 *q2;
+		struct ubsec_mcr *mcr;
+
+		while (!SIMPLEQ_EMPTY(&sc->sc_qchip4)) {
+			q2 = SIMPLEQ_FIRST(&sc->sc_qchip4);
+
+			bus_dmamap_sync(sc->sc_dmat, q2->q_mcr.dma_map,
+			    0, q2->q_mcr.dma_map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+			mcr = (struct ubsec_mcr *)q2->q_mcr.dma_vaddr;
+
+			/* A bug in new devices requires to swap this field */
+			flags = htole16(mcr->mcr_flags);
+
+			if ((flags & htole16(UBS_MCR_DONE)) == 0) {
+				bus_dmamap_sync(sc->sc_dmat,
+				    q2->q_mcr.dma_map, 0,
+				    q2->q_mcr.dma_map->dm_mapsize,
+				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+				break;
+			}
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip4, q_next);
+			ubsec_callback2(sc, q2);
+			/*
+			 * Don't send any more packet to chip if there has been
+			 * a DMAERR.
+			 */
+			if (!(stat & BS_STAT_DMAERR))
+				ubsec_feed4(sc);
 		}
 	}
 
@@ -747,8 +854,8 @@ ubsec_feed(struct ubsec_softc *sc)
 	 * completed ops as we only get an interrupt when all aggregated
 	 * ops have completed.
 	 */
-	if (npkts > UBS_MAX_AGGR)
-		npkts = UBS_MAX_AGGR;
+	if (npkts > sc->sc_maxaggr)
+		npkts = sc->sc_maxaggr;
 	if (npkts > ubsec_maxaggr)
 		npkts = ubsec_maxaggr;
 	if (npkts > ubsecstats.hst_maxbatch)
@@ -1737,6 +1844,33 @@ ubsec_feed2(struct ubsec_softc *sc)
 }
 
 /*
+ * feed the RNG (used instead of ubsec_feed2() on 5827+ devices)
+ */
+void
+ubsec_feed4(struct ubsec_softc *sc)
+{
+	struct ubsec_q2 *q;
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_queue4)) {
+		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR4_FULL)
+			break;
+		q = SIMPLEQ_FIRST(&sc->sc_queue4);
+
+		bus_dmamap_sync(sc->sc_dmat, q->q_mcr.dma_map, 0,
+		    q->q_mcr.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, q->q_ctx.dma_map, 0,
+		    q->q_ctx.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		WRITE_REG(sc, BS_MCR4, q->q_mcr.dma_paddr);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue4, q_next);
+		--sc->sc_nqueue4;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip4, q, q_next);
+	}
+}
+
+/*
  * Callback for handling random numbers
  */
 static void
@@ -1763,13 +1897,12 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 #ifndef __NetBSD__
 		for (i = 0; i < UBSEC_RNG_BUFSIZ; p++, i++)
 			add_true_randomness(letoh32(*p));
-		rng->rng_used = 0;
 #else
 		i = UBSEC_RNG_BUFSIZ * sizeof(u_int32_t);
 		rnd_add_data(&sc->sc_rnd_source, (char *)p, i, i * NBBY);
 		sc->sc_rng_need -= i;
-		rng->rng_used = 0;
 #endif
+		rng->rng_used = 0;
 #ifdef __OpenBSD__
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
@@ -1887,6 +2020,7 @@ ubsec_rng_locked(void *vsc)
 	struct ubsec_q2_rng *rng = &sc->sc_rng;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rngbypass *ctx;
+	int *nqueue;
 
 	/* Caller is responsible to lock and release sc_mtx. */
 	KASSERT(mutex_owned(&sc->sc_mtx));
@@ -1900,9 +2034,14 @@ ubsec_rng_locked(void *vsc)
 		return;
 	}
 
-	sc->sc_nqueue2++;
-	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
-		goto out;
+	if (sc->sc_flags & UBS_FLAGS_RNG4)
+		nqueue = &sc->sc_nqueue4;
+	else
+		nqueue = &sc->sc_nqueue2;
+
+	(*nqueue)++;
+	if (*nqueue >= UBS_MAX_NQUEUE)
+ 		goto out;
 
 	mcr = (struct ubsec_mcr *)rng->rng_q.q_mcr.dma_vaddr;
 	ctx = (struct ubsec_ctx_rngbypass *)rng->rng_q.q_ctx.dma_vaddr;
@@ -1925,9 +2064,14 @@ ubsec_rng_locked(void *vsc)
 	bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map, 0,
 	    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rng->rng_q, q_next);
+	if (sc->sc_flags & UBS_FLAGS_RNG4) {
+		SIMPLEQ_INSERT_TAIL(&sc->sc_queue4, &rng->rng_q, q_next);
+		ubsec_feed4(sc);
+	} else {
+		SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rng->rng_q, q_next);
+		ubsec_feed2(sc);
+	}
 	rng->rng_used = 1;
-	ubsec_feed2(sc);
 	ubsecstats.hst_rng++;
 
 	return;
@@ -1936,7 +2080,7 @@ out:
 	/*
 	 * Something weird happened, generate our own call back.
 	 */
-	sc->sc_nqueue2--;
+	(*nqueue)--;
 #ifdef __OpenBSD__
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
@@ -1998,16 +2142,24 @@ ubsec_dma_free(struct ubsec_softc *sc, struct ubsec_dma_alloc *dma)
 static void
 ubsec_reset_board(struct ubsec_softc *sc)
 {
-    volatile u_int32_t ctrl;
+	volatile u_int32_t ctrl;
 
-    ctrl = READ_REG(sc, BS_CTRL);
-    ctrl |= BS_CTRL_RESET;
-    WRITE_REG(sc, BS_CTRL, ctrl);
+	ctrl = READ_REG(sc, BS_CTRL);
+	ctrl |= BS_CTRL_RESET;
+	WRITE_REG(sc, BS_CTRL, ctrl);
 
-    /*
-     * Wait aprox. 30 PCI clocks = 900 ns = 0.9 us
-     */
-    DELAY(10);
+	/*
+	* Wait aprox. 30 PCI clocks = 900 ns = 0.9 us
+	*/
+	DELAY(10);
+
+	/* Enable RNG and interrupts on newer devices */
+	if (sc->sc_flags & UBS_FLAGS_MULTIMCR) {
+#ifndef UBSEC_NO_RNG
+		WRITE_REG(sc, BS_CFG, BS_CFG_RNG);
+#endif
+		WRITE_REG(sc, BS_INT, BS_INT_DMAINT);
+	}
 }
 
 /*
@@ -2033,6 +2185,16 @@ ubsec_init_board(struct ubsec_softc *sc)
 
 	if (sc->sc_flags & UBS_FLAGS_HWNORM)
 		ctrl &= ~BS_CTRL_SWNORM;
+
+	if (sc->sc_flags & UBS_FLAGS_MULTIMCR) {
+		ctrl |= BS_CTRL_BSIZE240;
+		ctrl &= ~BS_CTRL_MCR3INT; /* MCR3 is reserved for SSL */
+
+		if (sc->sc_flags & UBS_FLAGS_RNG4)
+			ctrl |= BS_CTRL_MCR4INT;
+		else
+			ctrl &= ~BS_CTRL_MCR4INT;
+	}
 
 	WRITE_REG(sc, BS_CTRL, ctrl);
 }
