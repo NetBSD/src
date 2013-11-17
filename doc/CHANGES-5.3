@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.35 2013/10/29 10:04:41 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.36 2013/11/17 18:13:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -628,4 +628,13 @@ sys/ufs/ffs/ffs_alloc.c				1.144 via patch
 	new directory.  Avoids excessive I/O scanning for a suitable
 	cylinder group on relatively full file systems.
 	[bad, ticket #1888]
+
+distrib/sets/lists/base/mi			1.1049
+distrib/sets/lists/man/mi			1.1449
+usr.bin/gzip/Makefile				1.17, 1.18
+usr.bin/gzip/zmore				1.4
+usr.bin/gzip/zmore.1				1.4
+ 
+	 Added zless(1) - comes in the lastest version of zmore(1) from OpenBSD
+	 [pettai, ticket #1889]
 
