@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.58 2013/11/07 20:43:44 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.59 2013/11/17 18:25:45 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -970,4 +970,38 @@ lib/libc/gen/getpwent.c				1.79
 	PR/46279: Fix an off-by-one in buffer length check and make sure
 	that the password fits in the supplied buffer.
 	[christos, ticket #979]
+
+sys/dev/ic/esiop.c				1.57 via patch
+
+	Turn the "siop_intr: I shouldn't be there !" panic message in the  
+	esiop driver into a printf followed by a return from the interrupt
+	handler.  The condition is triggered on some KVM virtual hosts,
+	apparently harmlessly, and not panicing makes it possible to boot a
+	NetBSD GENERIC kernel on those hosts. Fixes PR kern/48277.
+	[gson, ticket #981]
+
+distrib/sets/lists/base/mi			1.1049
+distrib/sets/lists/man/mi			1.1449
+usr.bin/gzip/Makefile				1.17, 1.18
+usr.bin/gzip/zmore				1.4
+usr.bin/gzip/zmore.1				1.4
+
+	Added zless(1) - comes in the lastest version of zmore(1) from OpenBSD
+	[pettai, ticket #982]
+
+sys/dev/mii/brgphy.c				1.68 via patch
+sys/dev/pci/if_bge.c				1.260-1.262 via patch
+sys/dev/pci/if_bgereg.h				1.85-1.86 via patch
+sys/dev/pci/if_bgevar.h				1.17 via patch
+
+	Set maximum read byte count to 2048 for PCI-X BCM5703/5704 devices.
+	For PCI-X BCM5704, set maximum outstanding split transactions to 0.
+	Same as Linux tg3 and FreeBSD (part of FreeBSD r204978).
+	Add 40bit DMA bug workaround(BGEF_40BIT_BUG) from FreeBSD
+	(part of r199670). This workaround is for 5714/5715 controllers and
+	is not actually a MAC controller bug but an issue with the embedded
+	PCIe to PCI-X bridge in the device.  This change
+	uses bus_dmatag_subregion(), so this workaround won't work on some
+	archs which doesn't support bus_dmatag_subregion().
+	[msaitoh, ticket #983]
 
