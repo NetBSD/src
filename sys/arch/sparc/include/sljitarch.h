@@ -1,7 +1,7 @@
-/*	$NetBSD: sljitarch.h,v 1.1 2012/11/05 23:08:59 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.2 2013/11/17 12:01:58 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SPARC_SLJITARCH_H
-#define SPARC_SLJITARCH_H
+#ifndef _SPARC_SLJITARCH_H
+#define _SPARC_SLJITARCH_H
 
+#ifndef _LP64
 #define SLJIT_CONFIG_SPARC_32 1
+#endif
 
 #define SLJIT_CACHE_FLUSH(from, to) \
 	sparc_cache_flush((from), (to))
