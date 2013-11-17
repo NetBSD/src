@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2013/06/17 17:44:16 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2013/11/17 08:21:01 skrll Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -14,7 +14,7 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 # ANSI C feature prevents from being relocatable
 #CPPFLAGS+=	-traditional	# would be best
 CPPFLAGS+=	-Dconst=
-COPTS+=		-funsigned-char	-mdisable-fpregs -mpa-risc-1-0
+COPTS+=		-Os -funsigned-char -mdisable-fpregs -mpa-risc-1-0
 
 .include <bsd.own.mk>
 
