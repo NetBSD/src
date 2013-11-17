@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.4,v 1.1.2.4 2013/11/07 20:44:11 snj Exp $
+# $NetBSD: CHANGES-6.0.4,v 1.1.2.5 2013/11/17 19:23:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.3 release to the NetBSD 6.0.4
 release:
@@ -61,4 +61,10 @@ tests/lib/libc/tls/dso/h_tls_dlopen.c		1.5
 	Only initialise TLS space from the PT_TLS segment, if the size is
 	positive and the offset has been computed. Fixes PR lib/48324.
 	[joerg, ticket #976]
+
+usr.sbin/npf/npfctl/npf_ncgen.c			patch
+sys/net/npf/npf_instr.c				patch
+
+	fix the byteorder for port range comparison
+	[rmind, ticket #986]
 
