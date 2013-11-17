@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.29 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.30 2013/11/17 16:54:02 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.29 2013/06/13 00:55:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.30 2013/11/17 16:54:02 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -448,7 +448,8 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
 		callout_init(&sc->sc_rngto, 0);
-		callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
+		callout_setfunc(&sc->sc_rngto, ubsec_rng, sc);
+		callout_schedule(&sc->sc_rngto, sc->sc_rnghz);
 #endif
  skip_rng:
 		if (sc->sc_rnghz)
@@ -1659,8 +1660,7 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
 		if (sc->sc_rng_need > 0) {
-			callout_reset(&sc->sc_rngto, sc->sc_rnghz,
-				      ubsec_rng, sc);
+			callout_schedule(&sc->sc_rngto, sc->sc_rnghz);
 		}
 #endif
 		break;
@@ -1828,7 +1828,7 @@ out:
 #ifdef __OpenBSD__
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
-	callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
+	callout_schedule(&sc->sc_rngto, sc->sc_rnghz);
 #endif
 }
 #endif /* UBSEC_NO_RNG */
