@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.10.2.8 2013/02/11 21:49:49 riz Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.10.2.9 2013/11/17 19:16:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.8 2013/02/11 21:49:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.9 2013/11/17 19:16:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -676,7 +676,7 @@ translate:
 		 * Note: packet now has a translated address in the cache.
 		 */
 		nt->nt_session = se;
-		error = npf_session_setnat(se, nt, di);
+		error = npf_session_setnat(se, nt, np->n_type);
 out:
 		if (error) {
 			/* If session was for NAT only - expire it. */
