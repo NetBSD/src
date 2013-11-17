@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.63 2013/11/01 07:48:31 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.64 2013/11/17 14:34:11 alnsn Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -96,6 +96,7 @@
 ./usr/include/powerpc/rwlock.h			comp-c-include
 ./usr/include/powerpc/setjmp.h			comp-c-include
 ./usr/include/powerpc/signal.h			comp-c-include
+./usr/include/powerpc/sljitarch.h		comp-c-include
 ./usr/include/powerpc/spr.h			comp-c-include
 ./usr/include/powerpc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/powerpc/trap.h			comp-c-include
