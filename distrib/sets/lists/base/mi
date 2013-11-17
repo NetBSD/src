@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.15 2013/03/14 19:16:40 riz Exp $
+# $NetBSD: mi,v 1.984.2.16 2013/11/17 18:19:45 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -767,6 +767,7 @@
 ./usr/bin/zfgrep				base-util-bin
 ./usr/bin/zforce				base-util-bin
 ./usr/bin/zgrep					base-util-bin
+./usr/bin/zless					base-util-bin
 ./usr/bin/zmore					base-util-bin
 ./usr/bin/znew					base-util-bin
 ./usr/bin/ztest					base-zfs-bin		zfs
