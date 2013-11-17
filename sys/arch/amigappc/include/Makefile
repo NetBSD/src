@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2010/01/24 10:36:34 phx Exp $
+#	$NetBSD: Makefile,v 1.24 2013/11/17 14:34:11 alnsn Exp $
 
 INCSDIR= /usr/include/amigappc
 
 INCS=	disklabel.h \
 	intr.h \
+	sljitarch.h \
 	vmparam.h
 
 .include "../../powerpc/include/Makefile"
