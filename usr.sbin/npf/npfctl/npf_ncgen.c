@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.7.2.5 2012/07/25 20:45:23 jdc Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.7.2.5.4.1 2013/11/17 19:21:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.7.2.5 2012/07/25 20:45:23 jdc Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.7.2.5.4.1 2013/11/17 19:21:21 bouyer Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -313,7 +313,7 @@ npfctl_gennc_ports(nc_ctx_t *ctx, int opts, in_port_t from, in_port_t to)
 	*nc++ = (opts & NC_MATCH_TCP) ?
 	    NPF_OPCODE_TCP_PORTS : NPF_OPCODE_UDP_PORTS;
 	*nc++ = (opts & (NC_MATCH_DST | NC_MATCH_SRC)) >> 1;
-	*nc++ = ((uint32_t)from << 16) | to;
+	*nc++ = ((uint32_t)ntohs(from) << 16) | ntohs(to);
 
 	/* Comparison block (2 words). */
 	npfctl_ncgen_addjmp(ctx, &nc);

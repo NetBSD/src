@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.9.2.5 2012/07/25 20:45:23 jdc Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.9.2.5.4.1 2013/11/17 19:21:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.5 2012/07/25 20:45:23 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.5.4.1 2013/11/17 19:21:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -180,7 +180,7 @@ npf_match_tcp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 	p = sd ? th->th_sport : th->th_dport;
 
 	/* Match against the port range. */
-	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
+	return NPF_PORTRANGE_MATCH(prange, ntohs(p)) ? 0 : -1;
 }
 
 /*
@@ -202,7 +202,7 @@ npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 	p = sd ? uh->uh_sport : uh->uh_dport;
 
 	/* Match against the port range. */
-	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
+	return NPF_PORTRANGE_MATCH(prange, ntohs(p)) ? 0 : -1;
 }
 
 /*
