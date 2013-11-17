@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.5 2013/06/13 00:55:01 tls Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.6 2013/11/17 17:16:25 bad Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ struct ubsec_softc {
 	device_t		sc_dev;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
 	kmutex_t		sc_mtx;
+	pci_chipset_tag_t	sc_pct;		/* pci chipset tag */
 	bus_space_handle_t	sc_sh;		/* memory handle */
 	bus_space_tag_t		sc_st;		/* memory tag */
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
@@ -176,6 +177,7 @@ struct ubsec_softc {
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
+	bus_size_t		sc_memsize;	/* size mapped by sc_sh */
 };
 
 #define	UBSEC_QFLAGS_COPYOUTIV		0x1
