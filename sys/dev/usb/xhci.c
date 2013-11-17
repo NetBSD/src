@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.9 2013/11/13 21:36:57 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.10 2013/11/17 16:11:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.9 2013/11/13 21:36:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.10 2013/11/17 16:11:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2827,15 +2827,15 @@ xhci_device_intr_abort(usbd_xfer_handle xfer)
 {
 	struct xhci_softc * const sc = xfer->pipe->device->bus->hci_private;
 	DPRINTF(("%s\n", __func__));
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 	device_printf(sc->sc_dev, "%s %p\n", __func__, xfer);
 	/* XXX */
 	if (xfer->pipe->intrxfer == xfer) {
 		xfer->pipe->intrxfer = NULL;
 	}
 	xfer->status = USBD_CANCELLED;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 }
 
 static void
