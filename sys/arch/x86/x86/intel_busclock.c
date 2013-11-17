@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.17 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.18 2013/11/17 19:22:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.17 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.18 2013/11/17 19:22:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,8 @@ p3_get_bus_clock(struct cpu_info *ci)
 {
 	uint64_t msr;
 	int bus, bus_clock = 0;
-	uint32_t family, model;
+	uint32_t model;
 
-	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
 		
 	switch (model) {
