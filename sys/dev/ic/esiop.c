@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.55 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: esiop.c,v 1.55.14.1 2013/11/17 18:14:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.55 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.55.14.1 2013/11/17 18:14:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1100,8 +1100,12 @@ scintr:
 		}
 		return 1;
 	}
-	/* We just should't get there */
-	panic("siop_intr: I shouldn't be there !");
+	/*
+	 * We just should't get there, but on some KVM virtual hosts,
+	 * we do - see PR 48277.
+	 */
+	printf("esiop_intr: I shouldn't be there !\n");
+	return 1;
 
 end:
 	/*
