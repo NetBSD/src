@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 2013/11/17 17:16:24 bad Exp $
+#	$NetBSD: Makefile,v 1.126 2013/11/17 18:58:28 alnsn Exp $
 
 .include <bsd.own.mk>
 
@@ -129,11 +129,14 @@ SUBDIR+=	tprof_amdpmi
 SUBDIR+=	vmt
 .endif
 
+.if ${MKSLJIT} != "no"
+# No modules for arm, mips and powerpc yet.
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "sparc"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
+.endif
 .endif
 
 #
