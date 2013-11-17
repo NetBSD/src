@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.35 2012/10/10 21:53:09 skrll Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.36 2013/11/17 08:32:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.35 2012/10/10 21:53:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.36 2013/11/17 08:32:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -742,12 +742,12 @@ fcomcngetc(dev_t dev)
 	int s = splserial();
 	bus_space_tag_t iot = fcomconstag;
 	bus_space_handle_t ioh = fcomconsioh;
-	u_char stat, c;
+	u_char c;
 
 	while ((bus_space_read_4(iot, ioh, UART_FLAGS) & UART_RX_FULL) != 0)
 		;
 	c = bus_space_read_4(iot, ioh, UART_DATA);
-	stat = bus_space_read_4(iot, ioh, UART_RX_STAT);
+	(void)bus_space_read_4(iot, ioh, UART_RX_STAT);
 	(void)splx(s);
 #if defined(DDB) && DDB_KEYCODE > 0
 		/*
