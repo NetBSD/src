@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.30 2013/11/17 16:54:02 bad Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.30 2013/11/17 16:54:02 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.31 2013/11/17 17:01:44 bad Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1774,15 +1774,15 @@ ubsec_rng_locked(void *vsc)
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rngbypass *ctx;
 
-	mutex_spin_enter(&sc->sc_mtx);
+	/* Caller is responsible to lock and release sc_mtx. */
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
 	if (rng->rng_used) {
-		mutex_spin_exit(&sc->sc_mtx);
 		return;
 	}
 
 	if (sc->sc_rng_need < 1) {
 		callout_stop(&sc->sc_rngto);
-		mutex_spin_exit(&sc->sc_mtx);
 		return;
 	}
 
@@ -1815,7 +1815,6 @@ ubsec_rng_locked(void *vsc)
 	rng->rng_used = 1;
 	ubsec_feed2(sc);
 	ubsecstats.hst_rng++;
-	mutex_spin_exit(&sc->sc_mtx);
 
 	return;
 
@@ -1824,7 +1823,6 @@ out:
 	 * Something weird happened, generate our own call back.
 	 */
 	sc->sc_nqueue2--;
-	mutex_spin_exit(&sc->sc_mtx);
 #ifdef __OpenBSD__
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
