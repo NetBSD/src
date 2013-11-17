@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2005/12/11 12:18:51 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2013/11/17 14:34:12 alnsn Exp $
 
 INCSDIR= /usr/include/sandpoint
 
 INCS=	bootinfo.h \
 	disklabel.h \
 	intr.h \
+	sljitarch.h \
 	vmparam.h
 
 .include "../../powerpc/include/Makefile"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.86 2013/09/19 23:29:25 christos Exp $
+#	$NetBSD: files.powerpc,v 1.87 2013/11/17 14:34:12 alnsn Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -90,3 +90,6 @@ include "compat/linux/arch/powerpc/files.linux_powerpc"
 file arch/powerpc/powerpc/linux_sigcode.S		compat_linux
 file arch/powerpc/powerpc/linux_trap.c			compat_linux
 file arch/powerpc/powerpc/linux_syscall.c		compat_linux
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2007/02/26 23:53:12 garbled Exp $
+#	$NetBSD: Makefile,v 1.20 2013/11/17 14:34:12 alnsn Exp $
 
 INCSDIR= /usr/include/prep
 
@@ -6,6 +6,7 @@ INCS=   bootinfo.h \
 	disklabel.h \
 	intr.h \
 	nvram.h \
+	sljitarch.h \
 	spkr.h \
 	vmparam.h
 
