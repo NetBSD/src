@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.59.8.2 2013/09/07 16:39:32 bouyer Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.59.8.3 2013/11/17 18:24:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.2 2013/09/07 16:39:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.3 2013/11/17 18:24:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,11 +734,11 @@ brgphy_reset(struct mii_softc *sc)
 
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 			}
-			if (bsc->sc_phyflags & BGE_PHY_CRC_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_CRC_BUG)
 				brgphy_crc_bug(sc);
 
 			/* Set Jumbo frame settings in the PHY. */
-			if (bsc->sc_phyflags & BGE_JUMBO_CAPABLE)
+			if (bsc->sc_phyflags & BGEPHYF_JUMBO_CAPABLE)
 				brgphy_jumbo_settings(sc);
 
 			/* Adjust output voltage */
