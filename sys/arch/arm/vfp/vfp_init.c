@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.26 2013/08/23 18:11:47 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.27 2013/11/18 18:02:01 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -374,9 +374,21 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	if (fault_code != FAULT_USER)
 		panic("VFP fault at %#x in non-user mode", frame->tf_pc);
 
-	if (ci->ci_vfp_id == 0)
+	if (ci->ci_vfp_id == 0) {
 		/* No VFP detected, just fault.  */
 		return 1;
+	}
+
+	/*
+	 * If we are just changing/fetching FPSCR, don't bother loading it.
+	 */
+	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
+		return 0;
+
+	/*
+	 * Make sure we own the FP.
+	 */
+	pcu_load(&arm_vfp_ops);
 
 	uint32_t fpexc = armreg_fpexc_read();
 	if (fpexc & VFP_FPEXC_EX) {
@@ -410,14 +422,6 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		trapsignal(curlwp, &ksi);
 		return 0;
 	}
-
-	/*
-	 * If we are just changing/fetching FPSCR, don't bother loading it.
-	 */
-	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
-		return 0;
-
-	pcu_load(&arm_vfp_ops);
 
 	/* Need to restart the faulted instruction.  */
 //	frame->tf_pc -= INSN_SIZE;
