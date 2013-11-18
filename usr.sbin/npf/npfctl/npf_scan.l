@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.14 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.15 2013/11/18 21:39:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ any			return ANY;
 			return TABLE_ID;
 		}
 
-"$"{ID}	{
+"$"{ID}		{
 			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
 		}
