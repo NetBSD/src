@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.18 2013/11/12 09:02:05 kefren Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.19 2013/11/18 11:48:34 kefren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.18 2013/11/12 09:02:05 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.19 2013/11/18 11:48:34 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -469,12 +469,6 @@ static int
 tcp_reno_do_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/*
-	 * We know we're losing at the current
-	 * window size so do congestion avoidance
-	 * (set ssthresh to half the current window
-	 * and pull our congestion window back to
-	 * the new ssthresh).
-	 *
 	 * Dup acks mean that packets have left the
 	 * network (they're now cached at the receiver)
 	 * so bump cwnd by the amount in the receiver
@@ -506,13 +500,21 @@ tcp_reno_do_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 	tp->snd_cwnd = tp->snd_ssthresh + tp->t_segsz * tp->t_dupacks;
 	if (SEQ_GT(onxt, tp->snd_nxt))
 		tp->snd_nxt = onxt;
-	
+
 	return 0;
 }
 
 static int
 tcp_reno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 {
+
+	/*
+	 * We know we're losing at the current
+	 * window size so do congestion avoidance
+	 * (set ssthresh to half the current window
+	 * and pull our congestion window back to
+	 * the new ssthresh).
+	 */
 
 	tcp_reno_congestion_exp(tp);
 	return tcp_reno_do_fast_retransmit(tp, th);
@@ -800,7 +802,7 @@ const struct tcp_congctl tcp_newreno_ctl = {
 static void	tcp_cubic_update_ctime(struct tcpcb *tp);
 static uint32_t	tcp_cubic_diff_ctime(struct tcpcb *);
 static uint32_t	tcp_cubic_cbrt(uint32_t);
-static uint32_t	tcp_cubic_getW(struct tcpcb *);
+static ulong	tcp_cubic_getW(struct tcpcb *, uint32_t, uint32_t);
 
 /* Cubic TIME functions - XXX I don't like using timevals and microuptime */
 /*
@@ -862,25 +864,30 @@ tcp_cubic_cbrt(uint32_t v)
 	return (uint32_t)x;
 }
 
-/* Draft Rhee Section 3.1 - get W(t) */
-static uint32_t
-tcp_cubic_getW(struct tcpcb *tp)
+/* Draft Rhee Section 3.1 - get W(t+rtt) - Eq. 1 */
+static ulong
+tcp_cubic_getW(struct tcpcb *tp, uint32_t ms_elapsed, uint32_t rtt)
 {
-	uint32_t ms_elapsed = tcp_cubic_diff_ctime(tp);
-	uint32_t K, CtK;
+	uint32_t K;
+	long tK3;
 
-	K = tcp_cubic_cbrt(tp->snd_cubic_wmax * CUBIC_BETAA / CUBIC_BETAB *
+	/* Section 3.1 Eq. 2 */
+	K = tcp_cubic_cbrt(tp->snd_cubic_wmax / CUBIC_BETAB *
 	    CUBIC_CB / CUBIC_CA);
-	/*  C*(t-K)  */
-	CtK = CUBIC_CA * (ms_elapsed - K) / CUBIC_CB;
+	/*  (t-K)^3 - not clear why is the measure unit mattering */
+	tK3 = (long)(ms_elapsed + rtt) - (long)K;
+	tK3 = tK3 * tK3 * tK3;
 
-	return CtK * CtK * CtK + tp->snd_cubic_wmax;
+	return CUBIC_CA * tK3 / CUBIC_CB + tp->snd_cubic_wmax;
 }
 
 static void
 tcp_cubic_congestion_exp(struct tcpcb *tp)
 {
 
+	/*
+	 * Congestion - Set WMax and shrink cwnd
+	 */
 	tcp_cubic_update_ctime(tp);
 
 	/* Section 3.6 - Fast Convergence */
@@ -892,6 +899,10 @@ tcp_cubic_congestion_exp(struct tcpcb *tp)
 		tp->snd_cubic_wmax_last = tp->snd_cubic_wmax;
 		tp->snd_cubic_wmax = tp->snd_cwnd;
 	}
+
+	tp->snd_cubic_wmax = max(tp->t_segsz, tp->snd_cubic_wmax);
+
+	/* Shrink CWND */
 	tcp_common_congestion_exp(tp, CUBIC_BETAA, CUBIC_BETAB);
 }
 
@@ -906,15 +917,12 @@ tcp_cubic_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 	}
 
 	/*
-	 * do CUBIC if not in fast recovery
+	 * mark WMax
 	 */
-	if (tp->t_partialacks < 0) {
-		/* Adjust W_max, W_max_last, cwnd and ssthresh */
-	        tcp_cubic_congestion_exp(tp);
-		/* Reno and NewReno FR */
-		return tcp_reno_do_fast_retransmit(tp, th);
-	} else
-		return tcp_reno_fast_retransmit(tp, th);
+	tcp_cubic_congestion_exp(tp);
+
+	/* Do fast retransmit */
+	return tcp_reno_do_fast_retransmit(tp, th);
 }
 
 static void
@@ -923,20 +931,24 @@ tcp_cubic_newack(struct tcpcb *tp, const struct tcphdr *th)
 	uint32_t ms_elapsed, rtt;
 	u_long w_tcp;
 
-	/* Congestion avoidance and not in fast recovery */
-	if (tp->snd_cwnd > tp->snd_ssthresh && tp->t_partialacks < 0) {
+	/* Congestion avoidance and not in fast recovery and usable rtt */
+	if (tp->snd_cwnd > tp->snd_ssthresh && tp->t_partialacks < 0 &&
+	    /*
+	     * t_srtt is 1/32 units of slow ticks
+	     * converting it in ms would be equal to
+	     * (t_srtt >> 5) * 1000 / PR_SLOWHZ ~= (t_srtt << 5) / PR_SLOWHZ
+	     */
+	    (rtt = (tp->t_srtt << 5) / PR_SLOWHZ) > 0) {
 		ms_elapsed = tcp_cubic_diff_ctime(tp);
 
-		rtt = max(hztoms(1), hztoms((tp->t_srtt >> TCP_RTT_SHIFT)));
-
-		/* Compute W_tcp(t) - XXX should use BETA defines */
-		w_tcp = tp->snd_cubic_wmax * 4 / 5 +
+		/* Compute W_tcp(t) */
+		w_tcp = tp->snd_cubic_wmax * CUBIC_BETAA / CUBIC_BETAB +
 		    ms_elapsed / rtt / 3;
 
 		if (tp->snd_cwnd > w_tcp) {
-			/* Not in TCP mode */
-			tp->snd_cwnd += (tcp_cubic_getW(tp) - tp->snd_cwnd) / 
-			    tp->snd_cwnd;
+			/* Not in TCP friendly mode */
+			tp->snd_cwnd += (tcp_cubic_getW(tp, ms_elapsed, rtt) -
+			    tp->snd_cwnd) / tp->snd_cwnd;
 		} else {
 			/* friendly TCP mode */
 			tp->snd_cwnd = w_tcp;
@@ -955,10 +967,17 @@ static void
 tcp_cubic_slow_retransmit(struct tcpcb *tp)
 {
 
-	/* Reset */
-	tp->snd_cubic_wmax = tp->snd_cubic_wmax_last = tp->snd_cubic_ctime = 0;
+	/* Timeout - Mark new congestion */
+	tcp_cubic_congestion_exp(tp);
 
-	tcp_reno_slow_retransmit(tp);
+	/* Loss Window MUST be one segment. */
+	tp->snd_cwnd = tp->t_segsz;
+	tp->t_partialacks = -1;
+	tp->t_dupacks = 0;
+	tp->t_bytes_acked = 0;
+
+	if (TCP_ECN_ALLOWED(tp))
+		tp->t_flags |= TF_ECN_SND_CWR;
 }
 
 const struct tcp_congctl tcp_cubic_ctl = {
