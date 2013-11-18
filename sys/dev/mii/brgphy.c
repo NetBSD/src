@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.59.8.3 2013/11/17 18:24:05 bouyer Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.59.8.4 2013/11/18 02:38:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.3 2013/11/17 18:24:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.4 2013/11/18 02:38:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -710,19 +710,19 @@ brgphy_reset(struct mii_softc *sc)
 	if (bsc->sc_isbge) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 
-			if (bsc->sc_phyflags & BGE_PHY_ADC_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_ADC_BUG)
 				brgphy_adc_bug(sc);
-			if (bsc->sc_phyflags & BGE_PHY_5704_A0_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_5704_A0_BUG)
 				brgphy_5704_a0_bug(sc);
-			if (bsc->sc_phyflags & BGE_PHY_BER_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_BER_BUG)
 				brgphy_ber_bug(sc);
-			else if (bsc->sc_phyflags & BGE_PHY_JITTER_BUG) {
+			else if (bsc->sc_phyflags & BGEPHYF_JITTER_BUG) {
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
 				    0x000a);
 
 				if (bsc->sc_phyflags 
-				    & BGE_PHY_ADJUST_TRIM) {
+				    & BGEPHYF_ADJUST_TRIM) {
 					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
 					    0x110b);
 					PHY_WRITE(sc, BRGPHY_TEST1,
@@ -747,12 +747,12 @@ brgphy_reset(struct mii_softc *sc)
 				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
 			/* Enable Ethernet@Wirespeed */
-			if (!(bsc->sc_phyflags & BGE_PHY_NO_WIRESPEED))
+			if (!(bsc->sc_phyflags & BGEPHYF_NO_WIRESPEED))
 				brgphy_eth_wirespeed(sc);
 
 #if 0
 			/* Enable Link LED on Dell boxes */
-			if (bsc->sc_phyflags & BGE_PHY_NO_3LED) {
+			if (bsc->sc_phyflags & BGEPHYF_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
