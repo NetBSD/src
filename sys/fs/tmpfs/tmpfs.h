@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.46 2013/11/08 15:44:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.47 2013/11/18 01:39:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -99,10 +99,10 @@ typedef struct tmpfs_node {
 
 	/* Inode identifier and generation number. */
 	ino_t			tn_id;
-	unsigned long		tn_gen;
+	uint32_t		tn_gen;
 
 	/* Inode status flags (for operations in delayed manner). */
-	int			tn_status;
+	unsigned		tn_status;
 
 	/* The inode size. */
 	off_t			tn_size;
@@ -195,8 +195,8 @@ CTASSERT(TMPFS_MAXNAMLEN < UINT16_MAX);
  * Bit indicating vnode reclamation.
  * We abuse tmpfs_node_t::tn_gen for that.
  */
-#define	TMPFS_NODE_GEN_MASK	(~0UL >> 1)
-#define	TMPFS_RECLAIMING_BIT	(~TMPFS_NODE_GEN_MASK)
+#define	TMPFS_RECLAIMING_BIT	(1U << 31)
+#define	TMPFS_NODE_GEN_MASK	(TMPFS_RECLAIMING_BIT - 1)
 
 #define	TMPFS_NODE_RECLAIMING(node) \
     (((node)->tn_gen & TMPFS_RECLAIMING_BIT) != 0)
