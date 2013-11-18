@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.58 2013/11/17 17:16:24 bad Exp $
+# $NetBSD: mi,v 1.59 2013/11/18 16:23:47 bad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -194,8 +194,6 @@
 ./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/uatp				base-kernel-modules	kmod
 ./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/ubsec				base-kernel-modules	kmod
-./@MODULEDIR@/ubsec/ubsec.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/umap				base-kernel-modules	kmod
