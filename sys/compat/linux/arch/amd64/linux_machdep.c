@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.41 2013/10/23 20:18:51 drochner Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.42 2013/11/18 01:32:32 chs Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2013/10/23 20:18:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42 2013/11/18 01:32:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -116,7 +116,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = 0;
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = 0;
 	cpu_fsgs_zero(l);
 
