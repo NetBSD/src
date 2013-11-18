@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 2013/11/17 18:58:28 alnsn Exp $
+#	$NetBSD: Makefile,v 1.127 2013/11/18 16:23:47 bad Exp $
 
 .include <bsd.own.mk>
 
@@ -82,7 +82,6 @@ SUBDIR+=	suser
 SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	uatp
-SUBDIR+=	ubsec
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
