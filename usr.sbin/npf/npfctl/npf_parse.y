@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.27 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.28 2013/11/18 21:39:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, list_elem, table_store, string
+%type	<str>		addr, some_name, element, table_store, string
 %type	<str>		proc_param_val, opt_apply, ifname, on_ifname
 %type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
@@ -192,7 +192,7 @@ lines
 	;
 
 line
-	: def
+	: vardef
 	| table
 	| map
 	| group
@@ -201,33 +201,45 @@ line
 	|
 	;
 
-def
+alg
+	: ALG STRING
+	{
+		npfctl_build_alg($2);
+	}
+	;
+
+/*
+ * A value - an element or a list of elements.
+ * Can be assigned to a variable or used inline.
+ */
+
+vardef
 	: VAR_ID
 	{
 		cvar = npfvar_create($1);
 		npfvar_add(cvar);
 	}
-	  EQ definition
+	  EQ value
 	{
 		cvar = NULL;
 	}
 	;
 
-definition
-	: list_elem
-	| listdef
+value
+	: element
+	| list
 	;
 
-listdef
+list
 	: CURLY_OPEN list_elems CURLY_CLOSE
 	;
 
 list_elems
-	: list_elem COMMA list_elems
-	| list_elem
+	: element COMMA list_elems
+	| element
 	;
 
-list_elem
+element
 	: IDENTIFIER
 	{
 		npfvar_t *vp = npfvar_create(".identifier");
@@ -267,6 +279,10 @@ list_elem
 	}
 	;
 
+/*
+ * Table definition.
+ */
+
 table
 	: TABLE TABLE_ID TYPE table_type table_store
 	{
@@ -283,6 +299,10 @@ table_store
 	: TDYNAMIC	{ $$ = NULL; }
 	| TFILE STRING	{ $$ = $2; }
 	;
+
+/*
+ * Map definition.
+ */
 
 map_sd
 	: TSTATIC	{ $$ = NPFCTL_NAT_STATIC; }
@@ -319,17 +339,14 @@ map
 	}
 	;
 
+/*
+ * Rule procedure definition and its parameters.
+ */
+
 rproc
 	: PROCEDURE STRING CURLY_OPEN procs CURLY_CLOSE
 	{
 		npfctl_build_rproc($2, $4);
-	}
-	;
-
-alg
-	: ALG STRING
-	{
-		npfctl_build_alg($2);
 	}
 	;
 
@@ -382,6 +399,10 @@ proc_param_val
 	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
 	|		{ $$ = NULL; }
 	;
+
+/*
+ * Group and dynamic ruleset definition.
+ */
 
 group
 	: GROUP group_opts
@@ -442,6 +463,10 @@ rule_group
 	| ruleset
 	|
 	;
+
+/*
+ * Rule and misc.
+ */
 
 rule
 	: block_or_pass opt_stateful rule_dir opt_final on_ifname
