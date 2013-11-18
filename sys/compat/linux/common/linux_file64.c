@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.53 2011/10/14 09:23:28 hannken Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.54 2013/11/18 01:32:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53 2011/10/14 09:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.54 2013/11/18 01:32:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,33 @@ linux_sys_lstat64(struct lwp *l, const struct linux_sys_lstat64_args *uap, regis
 	} */
 
 	return linux_do_stat64(l, (const void *)uap, retval, NOFOLLOW);
+}
+
+int
+linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(struct linux_stat64 *) sp;
+		syscallarg(int) flag;
+	} */
+	struct linux_stat64 tmplst;
+	struct stat tmpst;
+	int error, nd_flag;
+
+	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
+		nd_flag = NOFOLLOW;
+	else
+		nd_flag = FOLLOW;
+
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, &tmpst);
+	if (error != 0)
+		return error;
+
+	bsd_to_linux_stat(&tmpst, &tmplst);
+
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
 int
