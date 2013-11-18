@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.468 2013/10/17 18:01:11 njoly Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.469 2013/11/18 01:31:42 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.468 2013/10/17 18:01:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.469 2013/11/18 01:31:42 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -121,18 +121,11 @@ static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
 static int do_open(lwp_t *, struct vnode *, struct pathbuf *, int, int, int *);
 static int do_sys_openat(lwp_t *, int, const char *, int, int, int *);
-static int do_sys_mknodat(struct lwp *, int, const char *, mode_t,
-    dev_t, register_t *, enum uio_seg);
 static int do_sys_mkdirat(struct lwp *l, int, const char *, mode_t,
     enum uio_seg);
 static int do_sys_mkfifoat(struct lwp *, int, const char *, mode_t);
-static int do_sys_chmodat(struct lwp *, int, const char *, int, int);
-static int do_sys_chownat(struct lwp *, int, const char *, uid_t, gid_t, int);
-static int do_sys_accessat(struct lwp *, int, const char *, int ,int);
 static int do_sys_symlinkat(struct lwp *, const char *, int, const char *,
     enum uio_seg);
-static int do_sys_linkat(struct lwp *, int, const char *, int, const char *,
-    int, register_t *);
 static int do_sys_renameat(struct lwp *l, int, const char *, int, const char *,
     enum uio_seg, int);
 static int do_sys_readlinkat(struct lwp *, int, const char *, char *,
@@ -2359,7 +2352,7 @@ do_sys_mkfifoat(struct lwp *l, int fdat, const char *path, mode_t mode)
  * Make a hard file link.
  */
 /* ARGSUSED */
-static int
+int
 do_sys_linkat(struct lwp *l, int fdpath, const char *path, int fdlink,
     const char *link, int follow, register_t *retval) 
 {
@@ -2933,7 +2926,7 @@ sys_access(struct lwp *l, const struct sys_access_args *uap, register_t *retval)
 	     SCARG(uap, flags), 0);
 }
 
-static int
+int
 do_sys_accessat(struct lwp *l, int fdat, const char *path,
     int mode, int flags)
 {
@@ -3321,7 +3314,7 @@ sys_chmod(struct lwp *l, const struct sys_chmod_args *uap, register_t *retval)
 			      SCARG(uap, mode), 0);
 }
 
-static int
+int
 do_sys_chmodat(struct lwp *l, int fdat, const char *path, int mode, int flags)
 {
 	int error;
@@ -3439,7 +3432,7 @@ sys_chown(struct lwp *l, const struct sys_chown_args *uap, register_t *retval)
 			      SCARG(uap, gid), 0);
 }
 
-static int
+int
 do_sys_chownat(struct lwp *l, int fdat, const char *path, uid_t uid,
    gid_t gid, int flags)
 {
