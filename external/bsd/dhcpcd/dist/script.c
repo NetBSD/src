@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.1.1.2 2013/09/20 10:51:29 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.2 2013/11/18 19:55:29 joerg Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -424,7 +424,7 @@ dumplease:
 		}
 		elen += e;
 	}
-	env[elen] = '\0';
+	env[elen] = NULL;
 
 	*argv = env;
 	return elen;
@@ -556,7 +556,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 			goto out;
 		}
 	}
-	env[++elen] = '\0';
+	env[++elen] = NULL;
 
 	pid = exec_script(argv, env);
 	if (pid == -1)
