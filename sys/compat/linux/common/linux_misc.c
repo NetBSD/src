@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.227 2013/11/10 12:07:52 slp Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.228 2013/11/18 01:32:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.227 2013/11/10 12:07:52 slp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.228 2013/11/18 01:32:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.227 2013/11/10 12:07:52 slp Exp $")
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
-#ifndef COMPAT_LINUX32
 #include <compat/linux/common/linux_statfs.h>
 #include <compat/linux/common/linux_limit.h>
-#endif
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 #include <compat/linux/common/linux_emuldata.h>
@@ -124,7 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.227 2013/11/10 12:07:52 slp Exp $")
 
 #include <compat/linux/linux_syscallargs.h>
 
-#ifndef COMPAT_LINUX32
 const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
 	LINUX_PTRACE_PEEKTEXT,	PT_READ_I,
@@ -1411,6 +1408,28 @@ linux_sys_utimes(struct lwp *l, const struct linux_sys_utimes_args *uap, registe
 }
 
 int
+linux_do_sys_utimensat(struct lwp *l, int fd, const char *path, struct timespec *tsp, int flags, register_t *retval)
+{
+	int follow, error;
+
+	follow = (flags & LINUX_AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+
+	if (path == NULL && fd != AT_FDCWD) {
+		file_t *fp;
+
+		/* fd_getvnode() will use the descriptor for us */
+		if ((error = fd_getvnode(fd, &fp)) != 0)
+			return error;
+		error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
+		    tsp, UIO_SYSSPACE);
+		fd_putfile(fd);
+		return error;
+	}
+
+	return do_sys_utimensat(l, fd, NULL, path, follow, tsp, UIO_SYSSPACE);
+}
+
+int
 linux_sys_utimensat(struct lwp *l, const struct linux_sys_utimensat_args *uap,
 	register_t *retval)
 {
@@ -1420,12 +1439,9 @@ linux_sys_utimensat(struct lwp *l, const struct linux_sys_utimensat_args *uap,
 		syscallarg(const struct linux_timespec *) times;
 		syscallarg(int) flag;
 	} */
-	int follow, error;
+	int error;
 	struct linux_timespec lts[2];
 	struct timespec *tsp = NULL, ts[2];
-
-	follow = (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW) ?
-	    NOFOLLOW : FOLLOW;
 
 	if (SCARG(uap, times)) {
 		error = copyin(SCARG(uap, times), &lts, sizeof(lts));
@@ -1436,49 +1452,6 @@ linux_sys_utimensat(struct lwp *l, const struct linux_sys_utimensat_args *uap,
 		tsp = ts;
 	}
 
-	if (SCARG(uap, path) == NULL && SCARG(uap, fd) != AT_FDCWD) {
-		file_t *fp;
-
-		/* fd_getvnode() will use the descriptor for us */
-		if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-			return error;
-		error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
-		    tsp, UIO_SYSSPACE);
-		fd_putfile(SCARG(uap, fd));
-		return error;
-	}
-
-	return do_sys_utimensat(l, SCARG(uap, fd), NULL,
-	    SCARG(uap, path), follow, tsp, UIO_SYSSPACE);
-
+	return linux_do_sys_utimensat(l, SCARG(uap, fd), SCARG(uap, path),
+	    tsp, SCARG(uap, flag), retval);
 }
-
-int linux_sys_lutimes(struct lwp *, const struct linux_sys_utimes_args *, register_t *);
-int
-linux_sys_lutimes(struct lwp *l, const struct linux_sys_utimes_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const struct linux_timeval) *times;
-	} */
-	struct linux_timeval ltv[2];
-	struct timeval tv[2];
-	struct timeval *tptr = NULL;
-	int error;
-
-	if (SCARG(uap, times)) {
-		if ((error = copyin(SCARG(uap, times), &ltv, sizeof(ltv))))
-			return error;
-
-		tv[0].tv_sec = ltv[0].tv_sec;
-		tv[0].tv_usec = ltv[0].tv_usec;
-		tv[1].tv_sec = ltv[1].tv_sec;
-		tv[1].tv_usec = ltv[1].tv_usec;
-
-		tptr = tv;
-	}
-
-	return do_sys_utimes(l, NULL, SCARG(uap, path), NOFOLLOW,
-	    tptr, UIO_SYSSPACE);
-}
-#endif /* !COMPAT_LINUX32 */

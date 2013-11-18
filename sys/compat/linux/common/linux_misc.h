@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.23 2012/09/22 22:34:02 joerg Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.24 2013/11/18 01:32:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,6 +144,8 @@ __BEGIN_DECLS
 int bsd_to_linux_wstat(int);
 int linux_select1(struct lwp *, register_t *, int, fd_set *, fd_set *,
 		       fd_set *, struct linux_timeval *);
+int linux_do_sys_utimensat(struct lwp *, int, const char *,
+    struct timespec *, int, register_t *);
 __END_DECLS
 #endif /* !_KERNEL */
 
