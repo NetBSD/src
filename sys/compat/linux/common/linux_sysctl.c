@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.41 2013/11/18 01:36:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.41 2013/11/18 01:36:49 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $"
 #include <compat/linux/common/linux_machdep.h>
 
 char linux_sysname[128] = "Linux";
-char linux_release[128] = "2.6.18";
-char linux_version[128] = "#0 Wed Mar 3 03:03:03 PST 2010";
+char linux_release[128] = "3.11.6";
+char linux_version[128] = "#1 SMP PREEMPT Thu Oct 24 16:23:02 UTC 2013";
 
 struct sysctlnode linux_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|
