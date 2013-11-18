@@ -63,7 +63,7 @@
 #endif
 
 #if defined(_KERNEL) && !defined(SLJIT_CACHE_FLUSH)
-#define SLJIT_CACHE_FLUSH(from, to)
+#error "SLJIT_CACHE_FLUSH must be defined."
 #endif
 
 #if defined(_KERNEL)
