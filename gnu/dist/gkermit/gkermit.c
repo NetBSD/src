@@ -131,8 +131,8 @@ char spadc = 0,				/* Padding character to send */
     rcvpkt[MAXRP+16], 			/* Packet most recently received */
     *rdatap,				/* Pointer to data field of rcvpkt */
     xxdata[MAXRP+16],			/* Packet data buffer */
-    *isp = NUL,				/* Input string pointer */
-    *osp = NUL,				/* Output string pointer */
+    *isp = NULL,			/* Input string pointer */
+    *osp = NULL,			/* Output string pointer */
     smark = '\1',			/* Outbound packet-start character */
     rmark = '\1';			/* Incoming packet-start character */
 
