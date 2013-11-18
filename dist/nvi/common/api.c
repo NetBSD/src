@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: api.c,v 1.3 2013/11/18 20:03:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -438,7 +438,7 @@ api_opts_get(SCR *sp, const CHAR_T *name, char **value, int *boolvalue)
 	case OPT_STR:
 		if (O_STR(sp, offset) == NULL) {
 			MALLOC_RET(sp, *value, char *, 2);
-			value[0] = '\0';
+			value[0][0] = '\0';
 		} else {
 			MALLOC_RET(sp,
 			    *value, char *, strlen(O_STR(sp, offset)) + 1);
