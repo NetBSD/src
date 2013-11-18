@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.86 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.87 2013/11/18 01:32:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.86 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.87 2013/11/18 01:32:22 chs Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -402,6 +402,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	struct elf_args *ap;
 	int error;
 	struct vattr *vap;
+	uint32_t randbytes[4];
 
 	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
@@ -474,9 +475,23 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 		a->a_v = kauth_cred_getegid(l->l_cred);
 	a++;
 
+	a->a_type = LINUX_AT_RANDOM;
+	a->a_v = (Elf_Addr)*stackp;
+	a++;
+
 	a->a_type = AT_NULL;
 	a->a_v = 0;
 	a++;
+
+	randbytes[0] = random();
+	randbytes[1] = random();
+	randbytes[2] = random();
+	randbytes[3] = random();
+
+	len = sizeof(randbytes);
+	if ((error = copyout(randbytes, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
 	len = (a - ai) * sizeof(AuxInfo);
 	if ((error = copyout(ai, *stackp, len)) != 0)
