@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.3 2013/10/26 20:31:23 jnemeth Exp $");
+__RCSID("$NetBSD: map.c,v 1.4 2013/11/19 05:03:41 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -141,28 +141,49 @@ map_add(off_t start, off_t size, int type, void *data)
 }
 
 map_t *
-map_alloc(off_t start, off_t size)
+map_alloc(off_t start, off_t size, off_t alignment)
 {
 	off_t delta;
 	map_t *m;
+
+	if (alignment > 0) {
+		if ((start % alignment) != 0)
+			start = (start + alignment) / alignment * alignment;
+		if ((size % alignment) != 0)
+			size = (size + alignment) / alignment * alignment;
+	}
 
 	for (m = mediamap; m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_UNUSED || m->map_start < 2)
 			continue;
 		if (start != 0 && m->map_start > start)
 			return (NULL);
-		delta = (start != 0) ? start - m->map_start : 0;
-		if (size == 0 || m->map_size - delta >= size) {
-			if (m->map_size - delta <= 0)
+
+		if (start != 0)
+			delta = start - m->map_start;
+		else if (alignment > 0 && m->map_start % alignment != 0)
+			delta = (m->map_start + alignment) /
+			        alignment * alignment - m->map_start;
+		else
+			delta = 0;
+
+                if (size == 0 || m->map_size - delta >= size) {
+			if (m->map_size - delta < alignment)
 				continue;
-			if (size == 0)
-				size = m->map_size - delta;
-			return (map_add(m->map_start + delta, size,
-				    MAP_TYPE_GPT_PART, NULL));
+			if (size == 0) {
+				if (alignment > 0 &&
+				    (m->map_size - delta) % alignment != 0)
+					size = (m->map_size - delta) /
+					    alignment * alignment;
+				else
+					size = m->map_size - delta;
+			}
+			return map_add(m->map_start + delta, size,
+				    MAP_TYPE_GPT_PART, NULL);
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 map_t *
