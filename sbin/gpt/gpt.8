@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.15 2013/11/19 05:03:41 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.16 2013/11/19 05:07:40 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -94,7 +94,8 @@ There is no formalized definition of the different levels yet.
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
-.It Nm Ic add Oo Fl b Ar number Oc Oo Fl i Ar index Oc Oo Fl s Ar count Oc \
+.It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar number Oc \
+Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar count Oc \
 Oo Fl t Ar type Oc Ar device ...
 The
 .Ic add
