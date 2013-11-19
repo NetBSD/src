@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.15 2013/11/18 21:39:03 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.16 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -119,10 +119,9 @@ apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
-ifnet			return IFNET;
 inet6			return INET6;
-inet4			return INET;
-inet			return INET;
+inet4			return INET4;
+inet			return INET4;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;

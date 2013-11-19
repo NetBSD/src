@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.4 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.5 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.4 2013/11/12 00:46:34 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.5 2013/11/19 00:28:41 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -419,6 +419,11 @@ npfctl_print_table(npf_conf_info_t *ctx, nl_table_t *tl)
 {
 	const char *name = npf_table_getname(tl);
 	const int type = npf_table_gettype(tl);
+
+	if (name[0] == '.') {
+		/* Internal tables use dot and are hidden. */
+		return;
+	}
 
 	fprintf(ctx->fp, "table <%s> type %s\n", name,
 	    (type == NPF_TABLE_HASH) ? "hash" :

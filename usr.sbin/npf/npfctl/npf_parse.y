@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.28 2013/11/18 21:39:03 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.29 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -45,9 +45,6 @@ const char *		yyfilename;
 
 extern int		yylineno, yycolumn;
 extern int		yylex(void);
-
-/* Variable under construction (bottom up). */
-static npfvar_t *	cvar;
 
 void
 yyerror(const char *fmt, ...)
@@ -112,7 +109,7 @@ yyerror(const char *fmt, ...)
 %token			ID
 %token			IFNET
 %token			IN
-%token			INET
+%token			INET4
 %token			INET6
 %token			INTERFACE
 %token			MAP
@@ -155,14 +152,15 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, some_name, element, table_store, string
-%type	<str>		proc_param_val, opt_apply, ifname, on_ifname
+%type	<str>		addr, some_name, table_store
+%type	<str>		proc_param_val, opt_apply, ifname, on_ifname, ifref
 %type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
-%type	<var>		ifnet, addr_or_ifnet, port_range, icmp_type_and_code
+%type	<var>		ifaddrs, addr_or_ifaddr, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		procs, proc_call, proc_param_list, proc_param
+%type	<var>		element, list_elems, list, value
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
@@ -214,14 +212,9 @@ alg
  */
 
 vardef
-	: VAR_ID
+	: VAR_ID EQ value
 	{
-		cvar = npfvar_create($1);
-		npfvar_add(cvar);
-	}
-	  EQ value
-	{
-		cvar = NULL;
+		npfvar_add($3, $1);
 	}
 	;
 
@@ -232,51 +225,43 @@ value
 
 list
 	: CURLY_OPEN list_elems CURLY_CLOSE
+	{
+		$$ = $2;
+	}
 	;
 
 list_elems
 	: element COMMA list_elems
+	{
+		npfvar_add_elements($1, $3);
+	}
 	| element
 	;
 
 element
 	: IDENTIFIER
 	{
-		npfvar_t *vp = npfvar_create(".identifier");
-		npfvar_add_element(vp, NPFVAR_IDENTIFIER, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_IDENTIFIER, $1);
 	}
 	| STRING
 	{
-		npfvar_t *vp = npfvar_create(".string");
-		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_STRING, $1);
 	}
 	| number MINUS number
 	{
-		npfvar_t *vp = npfctl_parse_port_range($1, $3);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfctl_parse_port_range($1, $3);
 	}
 	| number
 	{
-		npfvar_t *vp = npfvar_create(".num");
-		npfvar_add_element(vp, NPFVAR_NUM, &$1, sizeof($1));
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_element(NPFVAR_NUM, &$1, sizeof($1));
 	}
 	| VAR_ID
 	{
-		npfvar_t *vp = npfvar_create(".var_id");
-		npfvar_add_element(vp, NPFVAR_VAR_ID, $1, strlen($1) + 1);
-		npfvar_add_elements(cvar, vp);
+		$$ = npfvar_create_from_string(NPFVAR_VAR_ID, $1);
 	}
-	| ifnet
-	{
-		npfvar_add_elements(cvar, $1);
-	}
-	| addr_and_mask
-	{
-		npfvar_add_elements(cvar, $1);
-	}
+	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
+	| ifaddrs		{ $$ = $1; }
+	| addr_and_mask		{ $$ = $1; }
 	;
 
 /*
@@ -317,7 +302,7 @@ map_type
 	;
 
 mapseg
-	: addr_or_ifnet port_range
+	: addr_or_ifaddr port_range
 	{
 		$$.ap_netaddr = $1;
 		$$.ap_portrange = $2;
@@ -325,11 +310,11 @@ mapseg
 	;
 
 map
-	: MAP ifname map_sd mapseg map_type mapseg PASS filt_opts
+	: MAP ifref map_sd mapseg map_type mapseg PASS filt_opts
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, &$8);
 	}
-	| MAP ifname map_sd mapseg map_type mapseg
+	| MAP ifref map_sd mapseg map_type mapseg
 	{
 		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
@@ -365,10 +350,10 @@ proc_call
 
 		pc.pc_name = estrdup($1);
 		pc.pc_opts = $3;
-		$$ = npfvar_create(".proc_call");
-		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
+
+		$$ = npfvar_create_element(NPFVAR_PROC, &pc, sizeof(pc));
 	}
-	|	{ $$ = NULL; }
+	|		{ $$ = NULL; }
 	;
 
 proc_param_list
@@ -381,15 +366,14 @@ proc_param_list
 	;
 
 proc_param
-	/* Key and value pair. */
 	: some_name proc_param_val
 	{
 		proc_param_t pp;
 
 		pp.pp_param = estrdup($1);
 		pp.pp_value = $2 ? estrdup($2) : NULL;
-		$$ = npfvar_create(".proc_param");
-		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
+
+		$$ = npfvar_create_element(NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
 	;
 
@@ -407,7 +391,7 @@ proc_param_val
 group
 	: GROUP group_opts
 	{
-		/* Build a group.  Increases the nesting level. */
+		/* Build a group.  Increase the nesting level. */
 		npfctl_build_group($2.rg_name, $2.rg_attr,
 		    $2.rg_ifname, $2.rg_default);
 	}
@@ -500,12 +484,12 @@ opt_final
 	;
 
 on_ifname
-	: ON ifname		{ $$ = $2; }
+	: ON ifref		{ $$ = $2; }
 	|			{ $$ = NULL; }
 	;
 
 afamily
-	: INET			{ $$ = AF_INET; }
+	: INET4			{ $$ = AF_INET; }
 	| INET6			{ $$ = AF_INET6; }
 	;
 
@@ -600,7 +584,7 @@ filt_opts
 	;
 
 filt_addr
-	: addr_or_ifnet		{ $$ = $1; }
+	: addr_or_ifaddr	{ $$ = $1; }
 	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
 	| ANY			{ $$ = NULL; }
 	;
@@ -620,13 +604,13 @@ addr_and_mask
 	}
 	;
 
-addr_or_ifnet
+addr_or_ifaddr
 	: addr_and_mask
 	{
 		assert($1 != NULL);
 		$$ = $1;
 	}
-	| ifnet
+	| ifaddrs
 	{
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
@@ -745,54 +729,11 @@ icmp_type
 	}
 	;
 
-string
-	: IDENTIFIER
-	{
-		$$ = $1;
-	}
-	| VAR_ID
-	{
-		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp, 0);
-
-		switch (type) {
-		case NPFVAR_STRING:
-		case NPFVAR_IDENTIFIER:
-			$$ = npfvar_expand_string(vp);
-			break;
-		case -1:
-			yyerror("undefined variable '%s' for interface", $1);
-			break;
-		default:
-			yyerror("wrong variable '%s' type '%s' for string",
-			    $1, npfvar_type(type));
-			break;
-		}
-	}
-	;
-
-ifnet
-	: IFNET PAR_OPEN string PAR_CLOSE
-	{
-		$$ = npfctl_parse_ifnet($3, AF_UNSPEC);
-	}
-	| afamily PAR_OPEN string PAR_CLOSE
-	{
-		$$ = npfctl_parse_ifnet($3, $1);
-	}
-	;
-
 ifname
 	: some_name
 	{
 		npfctl_note_interface($1);
 		$$ = $1;
-	}
-	| ifnet
-	{
-		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
-		npfctl_note_interface(ifna->ifna_name);
-		$$ = ifna->ifna_name;
 	}
 	| VAR_ID
 	{
@@ -818,6 +759,23 @@ ifname
 			break;
 		}
 		npfctl_note_interface($$);
+	}
+	;
+
+ifaddrs
+	: afamily PAR_OPEN ifname PAR_CLOSE
+	{
+		$$ = npfctl_parse_ifnet($3, $1);
+	}
+	;
+
+ifref
+	: ifname
+	| ifaddrs
+	{
+		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
+		npfctl_note_interface(ifna->ifna_name);
+		$$ = ifna->ifna_name;
 	}
 	;
 

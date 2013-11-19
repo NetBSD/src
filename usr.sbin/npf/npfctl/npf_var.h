@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.7 2013/09/19 01:04:45 rmind Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.8 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -63,17 +63,19 @@ static const char *npfvar_types[ ] = {
 	[NPFVAR_PROC_PARAM]	= "procedure-parameter",
 	[NPFVAR_TCPFLAG]	= "tcp-flag",
 	[NPFVAR_ICMP]		= "icmp",
-	[NPFVAR_INTERFACE]	= "interface"
+	[NPFVAR_INTERFACE]	= "interface-address"
 };
 #endif
 
 struct npfvar;
 typedef struct npfvar npfvar_t;
 
-npfvar_t *	npfvar_create(const char *);
+npfvar_t *	npfvar_create(void);
+npfvar_t *	npfvar_create_element(int, const void *, size_t);
+npfvar_t *	npfvar_create_from_string(int, const char *);
 npfvar_t *	npfvar_lookup(const char *);
 const char *	npfvar_type(size_t);
-void		npfvar_add(npfvar_t *);
+void		npfvar_add(npfvar_t *, const char *);
 npfvar_t *	npfvar_add_element(npfvar_t *, int, const void *, size_t);
 npfvar_t *	npfvar_add_elements(npfvar_t *, npfvar_t *);
 void		npfvar_destroy(npfvar_t *);
