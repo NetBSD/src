@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.5 2013/11/19 00:28:41 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.6 2013/11/19 17:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.5 2013/11/19 00:28:41 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.6 2013/11/19 17:01:45 christos Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -161,6 +161,8 @@ print_table(npf_conf_info_t *ctx, const uint32_t *words)
 		if (npf_table_getid(tl) == tid)
 			break;
 	}
+	if (tl == NULL)
+		errx(EXIT_FAILURE, "table id %u not found", tid);
 	easprintf(&p, "%s", npf_table_getname(tl));
 	return p;
 }
