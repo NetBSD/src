@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.7 2013/11/13 21:46:22 christos Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.8 2013/11/19 07:51:56 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -445,7 +445,6 @@ out:
 	free(uri);
 	free(info);
 	free(query);
-	free(command);
 	free(file);
 	return rv;
 }
