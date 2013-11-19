@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.15 2013/11/19 05:03:41 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.16 2013/11/19 19:10:29 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -171,6 +171,8 @@ add(int fd)
 	le_uuid_enc(ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	if (name != NULL)
+		utf8_to_utf16(name, ent->ent_name, 36);
 
 	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
