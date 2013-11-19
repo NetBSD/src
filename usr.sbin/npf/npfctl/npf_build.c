@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.29 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.30 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.29 2013/11/12 00:46:34 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.30 2013/11/19 00:28:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -171,25 +171,25 @@ npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
 		}
 		return false;
 	}
+
 	family = fam->fam_family;
+	if (family != AF_INET && family != AF_INET6) {
+		yyerror("family %d is not supported", family);
+	}
 
 	/*
 	 * Optimise 0.0.0.0/0 case to be NOP.  Otherwise, address with
 	 * zero mask would never match and therefore is not valid.
 	 */
 	if (fam->fam_mask == 0) {
-		npf_addr_t zero;
+		static const npf_addr_t zero; /* must be static */
 
-		memset(&zero, 0, sizeof(npf_addr_t));
 		if (memcmp(&fam->fam_addr, &zero, sizeof(npf_addr_t))) {
 			yyerror("filter criterion would never match");
 		}
 		return false;
 	}
 
-	if (family != AF_INET && family != AF_INET6) {
-		yyerror("family %d is not supported", family);
-	}
 	npfctl_bpf_cidr(ctx, opts, family, &fam->fam_addr, fam->fam_mask);
 	return true;
 }
