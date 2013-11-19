@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.34 2013/11/12 06:07:30 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.35 2013/11/19 00:28:41 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2013
+.Dd November 18, 2013
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ Tables of type "hash" can only contain IP addresses.
 Interfaces can be specified as the values of the variables:
 .Pp
 .Bd -literal
-$pub_if_list = { ifnet(wm0), ifnet(wm1) }
+$pub_if_list = { inet4(wm0), inet4(wm1) }
 .Ed
 .Pp
 In the context of filtering, an interface provides a list of its
@@ -107,7 +107,7 @@ all IP addresses, including IPv4 and IPv6.
 Specific interface addresses can be selected by the family, e.g.:
 .Bd -literal
 $pub_if4 = inet4(wm0)
-$pub_if6 = { inet6(wm0) }
+$pub_if46 = { inet4(wm0), inet6(wm0) }
 .Ed
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
@@ -281,8 +281,8 @@ directory containing further examples
 .\" -----
 .Sh EXAMPLES
 .Bd -literal
-$ext_if = ifnet(wm0)
-$int_if = ifnet(wm1)
+$ext_if = { inet4(wm0), inet6(wm0) }
+$int_if = { inet4(wm1), inet6(wm1) }
 
 table <black> type hash file "/etc/npf_blacklist"
 table <limited> type tree dynamic
