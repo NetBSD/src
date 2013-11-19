@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.18 2013/11/19 07:45:42 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.19 2013/11/19 07:50:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.18 2013/11/19 07:45:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.19 2013/11/19 07:50:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1324,13 +1324,38 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	dwc2_urb->status = -EINPROGRESS;
 	dwc2_urb->packet_count = xfer->nframes;
 
-	if (xfertype == UE_INTERRUPT) {
-		if (dpipe->pipe.interval == USBD_DEFAULT_INTERVAL)
-			dwc2_urb->interval = ed->bInterval;
-		else
-			dwc2_urb->interval = dpipe->pipe.interval;
-	} else if (xfertype == UE_ISOCHRONOUS)
-		dwc2_urb->interval = ed->bInterval;
+	if (xfertype == UE_INTERRUPT ||
+	    xfertype == UE_ISOCHRONOUS) {
+		uint16_t ival;
+
+		if (xfertype == UE_INTERRUPT &&
+		    dpipe->pipe.interval != USBD_DEFAULT_INTERVAL) {
+			ival = dpipe->pipe.interval;
+		} else {
+			ival = ed->bInterval;
+		}
+
+		if (ival < 1) {
+			retval = -ENODEV;
+			goto fail;
+		}
+		if (dev->speed == USB_SPEED_HIGH ||
+		   (dev->speed == USB_SPEED_FULL && xfertype == UE_ISOCHRONOUS)) {
+			if (ival > 16) {
+				/*
+				 * illegal with HS/FS, but there were
+				 * documentation bugs in the spec
+				 */
+				ival = 256;
+			} else {
+				ival = (1 << (ival - 1));
+			}
+		} else {
+			if (xfertype == UE_INTERRUPT && ival < 10)
+				ival = 10;
+		}
+		dwc2_urb->interval = ival;
+	}
 
 	/* XXXNH bring down from callers?? */
 // 	mutex_enter(&sc->sc_lock);
