@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.14 2013/10/24 06:59:03 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.15 2013/11/19 05:03:41 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd October 23, 2013
+.Dd November 18, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -104,6 +104,14 @@ of an unused disk space.
 The command-specific options can be used to control this behaviour.
 .Pp
 The
+.Fl a Ar alignment
+option allows the user to specify an alignment for the start and size.
+The alignment may have a suffix to indicate its magnitude.
+.Nm
+will attempt to align the partition.
+If it can not, then it will attempt to create an unaligned partition.
+.Pp
+The
 .Fl b Ar number
 option allows the user to specify the starting (beginning) sector number of
 the partition.
@@ -115,6 +123,10 @@ The
 option allows the user to specify which (free) entry in the GPT table is to
 be used for the new partition.
 By default, the first free entry is selected.
+.Pp
+The
+.Fl l Ar label
+option allows the user to specify a label for the partition.
 .Pp
 The
 .Fl s Ar count
