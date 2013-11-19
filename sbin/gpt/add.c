@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.16 2013/11/19 19:10:29 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.17 2013/11/19 22:41:43 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -200,7 +200,6 @@ cmd_add(int argc, char *argv[])
 	int ch, fd;
 	int64_t human_num;
 
-	/* Get the migrate options */
 	while ((ch = getopt(argc, argv, "a:b:i:l:s:t:")) != -1) {
 		switch(ch) {
 		case 'a':
