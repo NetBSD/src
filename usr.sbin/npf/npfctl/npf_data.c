@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.21 2013/11/08 00:38:26 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.22 2013/11/19 00:28:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.21 2013/11/08 00:38:26 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.22 2013/11/19 00:28:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -201,13 +201,12 @@ npfvar_t *
 npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
     unsigned long *nummask)
 {
-	npfvar_t *vp = npfvar_create(".addr");
 	fam_addr_mask_t fam;
 
 	memset(&fam, 0, sizeof(fam));
 
 	if (!npfctl_parse_fam_addr(addr, &fam.fam_family, &fam.fam_addr))
-		goto out;
+		return NULL;
 
 	/*
 	 * Note: both mask and nummask may be NULL.  In such case,
@@ -216,36 +215,19 @@ npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
 	if (nummask) {
 		fam.fam_mask = *nummask;
 	} else if (!npfctl_parse_mask(mask, fam.fam_family, &fam.fam_mask)) {
-		goto out;
+		return NULL;
 	}
-
-	if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_element(NPFVAR_FAM, &fam, sizeof(fam));
 }
 
 npfvar_t *
 npfctl_parse_table_id(const char *id)
 {
-	npfvar_t *vp;
-
 	if (!npfctl_table_exists_p(id)) {
 		yyerror("table '%s' is not defined", id);
 		return NULL;
 	}
-	vp = npfvar_create(".table");
-
-	if (!npfvar_add_element(vp, NPFVAR_TABLE, id, strlen(id) + 1))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_from_string(NPFVAR_TABLE, id);
 }
 
 /*
@@ -255,19 +237,12 @@ out:
 npfvar_t *
 npfctl_parse_port_range(in_port_t s, in_port_t e)
 {
-	npfvar_t *vp = npfvar_create(".port_range");
 	port_range_t pr;
 
 	pr.pr_start = htons(s);
 	pr.pr_end = htons(e);
 
-	if (!npfvar_add_element(vp, NPFVAR_PORT_RANGE, &pr, sizeof(pr)))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_element(NPFVAR_PORT_RANGE, &pr, sizeof(pr));
 }
 
 npfvar_t *
@@ -275,7 +250,7 @@ npfctl_parse_port_range_variable(const char *v)
 {
 	npfvar_t *vp = npfvar_lookup(v);
 	size_t count = npfvar_get_count(vp);
-	npfvar_t *pvp = npfvar_create(".port_range");
+	npfvar_t *pvp = npfvar_create();
 	port_range_t *pr;
 	in_port_t p;
 
@@ -311,15 +286,15 @@ npfctl_parse_port_range_variable(const char *v)
 npfvar_t *
 npfctl_parse_ifnet(const char *ifname, const int family)
 {
-	npfvar_t *vpa, *vp;
 	struct ifaddrs *ifa;
 	ifnet_addr_t ifna;
+	npfvar_t *vpa;
 
 	if (ifs_list == NULL && getifaddrs(&ifs_list) == -1) {
 		err(EXIT_FAILURE, "getifaddrs");
 	}
 
-	vpa = npfvar_create(".ifaddrs");
+	vpa = npfvar_create();
 	ifna.ifna_name = estrdup(ifname);
 	ifna.ifna_addrs = vpa;
 	ifna.ifna_index = npfctl_find_ifindex(ifname);
@@ -359,9 +334,7 @@ npfctl_parse_ifnet(const char *ifname, const int family)
 		goto out;
 	}
 
-	vp = npfvar_create(".interface");
-	npfvar_add_element(vp, NPFVAR_INTERFACE, &ifna, sizeof(ifna));
-	return vp;
+	return npfvar_create_element(NPFVAR_INTERFACE, &ifna, sizeof(ifna));
 out:
 	npfvar_destroy(ifna.ifna_addrs);
 	return NULL;
@@ -474,14 +447,7 @@ npfctl_parse_tcpflag(const char *s)
 		}
 		s++;
 	}
-
-	npfvar_t *vp = npfvar_create(".tcp_flag");
-	if (!npfvar_add_element(vp, NPFVAR_TCPFLAG, &tfl, sizeof(tfl))) {
-		npfvar_destroy(vp);
-		return NULL;
-	}
-
-	return vp;
+	return npfvar_create_element(NPFVAR_TCPFLAG, &tfl, sizeof(tfl));
 }
 
 uint8_t
@@ -501,7 +467,7 @@ npfctl_icmptype(int proto, const char *type)
 				return ul;
 		for (ul = 0; icmp6_type_info[ul]; ul++)
 			if (strcmp(icmp6_type_info[ul], type) == 0)
-				return (ul+128);
+				return ul + 128;
 		break;
 	default:
 		assert(false);
@@ -603,7 +569,7 @@ npfctl_icmpcode(int proto, uint8_t type, const char *code)
 npfvar_t *
 npfctl_parse_icmp(int proto, int type, int code)
 {
-	npfvar_t *vp = npfvar_create(".icmp");
+	npfvar_t *vp = npfvar_create();
 
 	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
 		goto out;
