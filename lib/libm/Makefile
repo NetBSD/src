@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.149 2013/11/13 22:09:55 joerg Exp $
+#  $NetBSD: Makefile,v 1.150 2013/11/19 19:24:33 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -156,11 +156,11 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
 	e_log2.c e_log10.c e_log10f.c e_log2f.c e_logf.c e_pow.c e_powf.c \
 	e_rem_pio2.c e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c \
-	e_scalbf.c e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
+	e_scalbf.c e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c e_sqrtl.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
 	ldbl_dummy.c \
-	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c \
+	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_cbrtl.c \
 	s_ceil.c s_ceilf.c s_ceill.c s_copysign.c s_copysignf.c s_copysignl.c \
 	s_cos.c s_cosf.c s_erf.c \
 	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_fabsl.c \
@@ -184,7 +184,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	w_lgammaf.c w_lgammaf_r.c w_log.c w_log10.c w_log10f.c w_log2.c \
 	w_log2f.c w_logf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
-	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
+	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c w_sqrtl.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
 	llroundf.c s_frexp.c s_frexpl.c s_modf.c \
 	s_fmax.c s_fmaxf.c s_fmaxl.c \
@@ -313,7 +313,8 @@ MLINKS+=scalbn.3 scalbnf.3 \
 	scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinf.3
 MLINKS+=sin.3 sinhf.3
-MLINKS+=sqrt.3 sqrtf.3 sqrt.3 cbrt.3 sqrt.3 cbrtf.3
+MLINKS+=sqrt.3 sqrtf.3 sqrt.3 sqrtl.3 \
+	sqrt.3 cbrt.3 sqrt.3 cbrtf.3 sqrt.3 cbrtl.3
 MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 MLINKS+=round.3 roundf.3 \
