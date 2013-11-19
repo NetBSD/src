@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1861 2013/11/16 13:01:38 alnsn Exp $
+#	$NetBSD: mi,v 1.1862 2013/11/19 19:24:34 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5666,6 +5666,7 @@
 ./usr/share/man/cat3/cbreak.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cbrt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cbrtf.0			comp-c-catman		.cat
+./usr/share/man/cat3/cbrtl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ccos.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ccosf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/ccosh.0			comp-c-catman		complex,.cat
@@ -8804,6 +8805,7 @@
 ./usr/share/man/cat3/sprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sqrt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sqrtf.0			comp-c-catman		.cat
+./usr/share/man/cat3/sqrtl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sradixsort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/srand.0			comp-c-catman		.cat
 ./usr/share/man/cat3/srand48.0			comp-c-catman		.cat
@@ -12269,6 +12271,7 @@
 ./usr/share/man/html3/cbreak.html		comp-c-htmlman		html
 ./usr/share/man/html3/cbrt.html			comp-c-htmlman		html
 ./usr/share/man/html3/cbrtf.html		comp-c-htmlman		html
+./usr/share/man/html3/cbrtl.html		comp-c-htmlman		html
 ./usr/share/man/html3/ccos.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccosf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccosh.html		comp-c-htmlman		complex,html
@@ -15299,6 +15302,7 @@
 ./usr/share/man/html3/sprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sqrt.html			comp-c-htmlman		html
 ./usr/share/man/html3/sqrtf.html		comp-c-htmlman		html
+./usr/share/man/html3/sqrtl.html		comp-c-htmlman		html
 ./usr/share/man/html3/sradixsort.html		comp-c-htmlman		html
 ./usr/share/man/html3/srand.html		comp-c-htmlman		html
 ./usr/share/man/html3/srand48.html		comp-c-htmlman		html
@@ -18696,6 +18700,7 @@
 ./usr/share/man/man3/cbreak.3			comp-c-man		.man
 ./usr/share/man/man3/cbrt.3			comp-c-man		.man
 ./usr/share/man/man3/cbrtf.3			comp-c-man		.man
+./usr/share/man/man3/cbrtl.3			comp-c-man		.man
 ./usr/share/man/man3/ccos.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccosf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccosh.3			comp-c-man		complex,.man
@@ -21830,6 +21835,7 @@
 ./usr/share/man/man3/sprintf.3			comp-c-man		.man
 ./usr/share/man/man3/sqrt.3			comp-c-man		.man
 ./usr/share/man/man3/sqrtf.3			comp-c-man		.man
+./usr/share/man/man3/sqrtl.3			comp-c-man		.man
 ./usr/share/man/man3/sradixsort.3		comp-c-man		.man
 ./usr/share/man/man3/srand.3			comp-c-man		.man
 ./usr/share/man/man3/srand48.3			comp-c-man		.man

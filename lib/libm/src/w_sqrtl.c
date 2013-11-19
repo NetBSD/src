@@ -11,34 +11,29 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_sqrt.c,v 1.10 2013/11/19 19:24:34 joerg Exp $");
-#endif
+__RCSID("$NetBSD: w_sqrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
 
 /*
- * wrapper sqrt(x)
+ * wrapper sqrtl(x)
  */
 
 #include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
-#ifndef __HAVE_LONG_DOUBLE
-__strong_alias(_sqrtl, sqrt)
 __weak_alias(sqrtl, _sqrtl)
-#endif
 
-double
-sqrt(double x)		/* wrapper sqrt */
+long double
+sqrtl(long double x)		/* wrapper sqrtl */
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_sqrt(x);
+	return __ieee754_sqrtl(x);
 #else
-	double z;
-	z = __ieee754_sqrt(x);
+	long double z;
+	z = __ieee754_sqrtl(x);
 	if(_LIB_VERSION == _IEEE_ || isnan(x)) return z;
 	if(x<0.0) {
-	    return __kernel_standard(x,x,26); /* sqrt(negative) */
+	    return __kernel_standard(x,x,226); /* sqrtl(negative) */
 	} else
 	    return z;
 #endif
