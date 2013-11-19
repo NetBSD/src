@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.10 2013/11/11 16:46:20 christos Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.11 2013/11/19 16:58:16 christos Exp $	*/
 /* $OpenBSD: sftp-client.c,v 1.101.2.1 2013/11/08 01:33:56 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.10 2013/11/11 16:46:20 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.11 2013/11/19 16:58:16 christos Exp $");
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -1069,7 +1069,8 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			do_close(conn, handle, handle_len);
 			buffer_free(&msg);
 			free(handle);
-			close(local_fd);
+			if (local_fd != -1)
+				close(local_fd);
 			return -1;
 		}
 		offset = highwater = st.st_size;
