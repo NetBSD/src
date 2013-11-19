@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.17 2013/11/14 12:41:14 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.18 2013/11/19 07:45:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.17 2013/11/14 12:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.18 2013/11/19 07:45:42 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1279,7 +1279,7 @@ dwc2_device_start(usbd_xfer_handle xfer)
 			dir = UE_DIR_OUT;
 		}
 
-		DPRINTFN(3, "req = %p dma = %lx len %d dir %s\n",
+		DPRINTFN(3, "req = %p dma = %" PRIxBUSADDR " len %d dir %s\n",
 		    KERNADDR(&dpipe->req_dma, 0), DMAADDR(&dpipe->req_dma, 0),
 		    len, dir == UE_DIR_IN ? "in" : "out");
 	} else {
