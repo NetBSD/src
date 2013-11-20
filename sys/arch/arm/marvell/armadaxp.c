@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.3 2013/09/30 13:03:25 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.4 2013/11/20 12:16:47 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.3 2013/09/30 13:03:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.4 2013/11/20 12:16:47 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -91,8 +91,10 @@ static void armadaxp_intr_init(void);
 static void armadaxp_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void armadaxp_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void armadaxp_pic_establish_irq(struct pic_softc *, struct intrsource *);
+static void armadaxp_pic_set_priority(struct pic_softc *, int);
 
-void armadaxp_handle_irq(void *);
+static int armadaxp_find_pending_irqs(void);
+static void armadaxp_pic_block_irq(struct pic_softc *, size_t);
 void armadaxp_io_coherency_init(void);
 int armadaxp_l2_init(bus_addr_t);
 
@@ -137,6 +139,7 @@ static struct pic_ops armadaxp_picops = {
 	.pic_unblock_irqs = armadaxp_pic_unblock_irqs,
 	.pic_block_irqs = armadaxp_pic_block_irqs,
 	.pic_establish_irq = armadaxp_pic_establish_irq,
+	.pic_set_priority = armadaxp_pic_set_priority,
 };
 
 static struct pic_softc armadaxp_pic = {
@@ -188,7 +191,8 @@ armadaxp_intr_init(void)
 	/* Enable IRQ prioritization */
 	ctrl |= (1 << 0);
 	MPIC_WRITE(ARMADAXP_MLMB_MPIC_CTRL, ctrl);
-	MPIC_CPU_WRITE(ARMADAXP_MLMB_MPIC_CTP, curcpl() << MPIC_CTP_SHIFT);
+
+	find_pending_irqs = armadaxp_find_pending_irqs;
 }
 
 static void
@@ -236,30 +240,47 @@ armadaxp_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	    tmp | (is->is_ipl << MPIC_ISCR_SHIFT));
 }
 
-void
-armadaxp_handle_irq(void *frame)
+static void
+armadaxp_pic_set_priority(struct pic_softc *pic, int ipl)
+{
+	int ctp;
+
+	ctp = MPIC_CPU_READ(ARMADAXP_MLMB_MPIC_CTP);
+	ctp &= ~(0xf << MPIC_CTP_SHIFT);
+	ctp |= (ipl << MPIC_CTP_SHIFT);
+	MPIC_CPU_WRITE(ARMADAXP_MLMB_MPIC_CTP, ctp);
+}
+
+static int
+armadaxp_find_pending_irqs(void)
 {
 	struct intrsource *is;
 	int irq;
-	u_int irqstate;
 
 	irq = MPIC_CPU_READ(ARMADAXP_MLMB_MPIC_IIACK) & 0x3ff;
 
 	/* Is it a spurious interrupt ?*/
 	if (irq == 0x3ff)
-		return;
-
+		return 0;
 	is = armadaxp_pic.pic_sources[irq];
-	if (is != NULL)  {
-		KASSERT(is->is_ipl > curcpu()->ci_cpl);
-		/* Dispatch irq */
-		irqstate = disable_interrupts(I32_bit);
-		pic_dispatch(is, frame);
-		restore_interrupts(irqstate);
+	if (is == NULL) {
+		printf("stray interrupt: %d\n", irq);
+		return 0;
 	}
-#ifdef __HAVE_FAST_SOFTINTS
-	cpu_dosoftints();
-#endif
+
+	armadaxp_pic_block_irq(&armadaxp_pic, irq);
+	pic_mark_pending(&armadaxp_pic, irq);
+
+	return is->is_ipl;
+}
+
+static void
+armadaxp_pic_block_irq(struct pic_softc *pic, size_t irq)
+{
+
+	KASSERT(pic->pic_maxsources >= irq);
+	MPIC_WRITE(ARMADAXP_MLMB_MPIC_ICE, irq);
+	MPIC_CPU_WRITE(ARMADAXP_MLMB_MPIC_ISM, irq);
 }
 
 /*
