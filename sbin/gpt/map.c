@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.4 2013/11/19 05:03:41 jnemeth Exp $");
+__RCSID("$NetBSD: map.c,v 1.5 2013/11/20 08:08:47 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -184,6 +184,96 @@ map_alloc(off_t start, off_t size, off_t alignment)
 	}
 
 	return NULL;
+}
+
+off_t
+map_resize(map_t *m, off_t size, off_t alignment)
+{
+	map_t *n, *o;
+	off_t alignsize, prevsize;
+
+	n = m->map_next;
+
+	if (size == 0 && alignment == 0) {
+		if (n == NULL || n->map_type != MAP_TYPE_UNUSED)
+			return 0;
+		else {
+			size = m->map_size + n->map_size;
+			m->map_size = size;
+			m->map_next = n->map_next;
+			if (n->map_next != NULL)
+				n->map_next->map_prev = m;
+			if (n->map_data != NULL)
+				free(n->map_data);
+			free(n);
+			return size;
+		}
+	}
+
+	if (size == 0 && alignment > 0) {
+		if (n == NULL || n->map_type != MAP_TYPE_UNUSED)
+			return 0;
+		else {
+			prevsize = m->map_size;
+			size = (m->map_size + n->map_size) /
+			       alignment * alignment;
+			if (size <= prevsize)
+				return 0;
+			m->map_size = size;
+			n->map_start += size - prevsize;
+			n->map_size -= size - prevsize;
+			if (n->map_size == 0) {
+				m->map_next = n->map_next;
+				if (n->map_next != NULL)
+					n->map_next->map_prev = m;
+				if (n->map_data != NULL)
+					free(n->map_data);
+				free(n);
+			}
+			return size;
+		}
+	}
+			
+	alignsize = size;
+	if (alignment % size != 0)
+		alignsize = (size + alignment) / alignment * alignment;
+
+	if (alignsize < m->map_size) {		/* shrinking */
+		prevsize = m->map_size;
+		m->map_size = alignsize;
+		if (n == NULL || n->map_type != MAP_TYPE_UNUSED) {
+			o = mkmap(m->map_start + alignsize,
+				  prevsize - alignsize, MAP_TYPE_UNUSED);
+			m->map_next = o;
+			o->map_prev = m;
+			o->map_next = n;
+			if (n != NULL)
+				n->map_prev = o;
+			return alignsize;
+		} else {
+			n->map_start -= alignsize;
+			n->map_size += alignsize;
+			return alignsize;
+		}
+	} else if (alignsize > m->map_size) {		/* expanding */
+		if (n == NULL || n->map_type != MAP_TYPE_UNUSED ||
+		    n->map_size < alignsize - m->map_size) {
+			return 0;
+		}
+		n->map_size -= alignsize - m->map_size;
+		n->map_start += alignsize - m->map_size;
+		if (n->map_size == 0) {
+			m->map_next = n->map_next;
+			if (n->map_next != NULL)
+				n->map_next->map_prev = m;
+			if (n->map_data != NULL)
+				free(n->map_data);
+			free(n);
+		}
+		m->map_size = alignsize;
+		return alignsize;
+	} else						/* correct size */
+		return alignsize;
 }
 
 map_t *
