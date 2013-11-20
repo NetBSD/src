@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/e_sqrtl.c 176720 2008-03-02 01:47:58Z das $");
 #endif
-__RCSID("$NetBSD: e_sqrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
+__RCSID("$NetBSD: e_sqrtl.c,v 1.2 2013/11/20 21:12:30 martin Exp $");
 
 #include <machine/ieee.h>
 #include <fenv.h>
@@ -38,6 +38,10 @@ __RCSID("$NetBSD: e_sqrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
 #include "math_private.h"
 
 #ifdef __HAVE_LONG_DOUBLE
+
+#ifdef LDBL_IMPLICIT_NBIT
+#define	LDBL_NBIT	0
+#endif
 
 /* Return (x + ulp) for normal positive x. Assumes no overflow. */
 static inline long double
