@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.170 2013/10/19 17:19:30 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.170 2013/10/19 17:19:30 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.171 2013/11/20 07:18:23 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -636,8 +636,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 * one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0)
+	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
+		_rtld_objself.pathlen = strlen(_rtld_objself.path);
+	}
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 
 	_rtld_digest_dynamic(execname, _rtld_objmain);
