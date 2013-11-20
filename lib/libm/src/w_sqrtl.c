@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: w_sqrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
+__RCSID("$NetBSD: w_sqrtl.c,v 1.2 2013/11/20 11:39:00 joerg Exp $");
 
 /*
  * wrapper sqrtl(x)
@@ -20,6 +20,8 @@ __RCSID("$NetBSD: w_sqrtl.c,v 1.1 2013/11/19 19:24:34 joerg Exp $");
 #include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __HAVE_LONG_DOUBLE
 
 __weak_alias(sqrtl, _sqrtl)
 
@@ -38,3 +40,5 @@ sqrtl(long double x)		/* wrapper sqrtl */
 	    return z;
 #endif
 }
+
+#endif /* __HAVE_LONG_DOUBLE */
