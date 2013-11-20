@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.72 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.73 2013/11/20 17:50:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -375,7 +375,7 @@
 
 #define CPUID_EXT_FLAGS	"\20" \
 	"\14" "SYSCALL/SYSRET"		"\24" "MPC"	"\25" "NOX" \
-	"\27" "MXX"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP" \
+	"\27" "MMXX"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP" \
 	"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
 /* AMD Fn80000001 extended features - %ecx */
@@ -398,6 +398,11 @@
 #define CPUID_NODEID	0x00080000	/* NodeID MSR available*/
 #define CPUID_TBM	0x00200000	/* TBM instructions */
 #define CPUID_TOPOEXT	0x00400000	/* cpuid Topology Extension */
+#define CPUID_PCEC	0x00800000	/* Perf Ctr Ext Core */
+#define CPUID_PCENB	0x01000000	/* Perf Ctr Ext NB */
+#define CPUID_SPM	0x02000000	/* Stream Perf Mon */
+#define CPUID_DBE	0x04000000	/* Data Breakpoint Extension */
+#define CPUID_PTSC	0x08000000	/* PerfTsc */
 
 #define CPUID_AMD_FLAGS4	"\20" \
 	"\1" "LAHF"	"\2" "CMPLEGACY" "\3" "SVM"	"\4" "EAPIC" \
@@ -406,8 +411,8 @@
 			"\12" "OSVW"	"\13" "IBS"	"\14" "XOP" \
 	"\15" "SKINIT"	"\16" "WDT"	"\17" "B14"	"\20" "LWP" \
 	"\21" "FMA4"	"\22" "B17"	"\23" "B18"	"\24" "NodeID" \
-	"\25" "B20"	"\26" "TBM"	"\27" "TopoExt"	"\30" "B23" \
-	"\31" "B24"	"\32" "B25"	"\33" "B26"	"\34" "B27" \
+	"\25" "B20"	"\26" "TBM"	"\27" "TopoExt"	"\30" "PCExtC" \
+	"\31" "PCExtNB"	"\32" "StrmPM"	"\33" "DBExt"	"\34" "PerfTsc" \
 	"\35" "B28"	"\36" "B29"	"\37" "B30"	"\40" "B31"
 
 /*
