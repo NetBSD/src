@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.22 2013/09/30 12:57:53 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.23 2013/11/20 12:52:24 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.22 2013/09/30 12:57:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.23 2013/11/20 12:52:24 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -218,6 +218,12 @@ initarm(void *arg)
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
 #if (defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)) && \
     defined(ARMADAXP)
 	int i;
@@ -233,12 +239,6 @@ initarm(void *arg)
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), marvell_devmap);
 
 	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
-
-	/*
 	 * U-Boot doesn't use the virtual memory.
 	 *
 	 * Physical Address Range     Description
@@ -251,16 +251,6 @@ initarm(void *arg)
 	 */
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-
-	consinit();
-
-	/* Talk to the user */
-#ifndef EVBARM_BOARDTYPE
-#define EVBARM_BOARDTYPE	Marvell
-#endif
-#define BDSTR(s)	_BDSTR(s)
-#define _BDSTR(s)	#s
-	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* Get ready for splfoo() */
 	switch (mvsoc_model()) {
@@ -353,6 +343,16 @@ initarm(void *arg)
 
 		/* NOTREACHED */
 	}
+
+	consinit();
+
+	/* Talk to the user */
+#ifndef EVBARM_BOARDTYPE
+#define EVBARM_BOARDTYPE	Marvell
+#endif
+#define BDSTR(s)	_BDSTR(s)
+#define _BDSTR(s)	#s
+	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* Reset PCI-Express space to window register. */
 	window = mvsoc_target(memtag, &target, &attr, NULL, NULL);
