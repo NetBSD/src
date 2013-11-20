@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.5 2013/09/30 13:15:46 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.6 2013/11/20 12:36:16 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -56,12 +56,6 @@
 #define MVSOC_DSC_CSSR_SIZE_MASK	0xff000000
 
 /*
- * SoC MISC Register
- */
-
-#define MVSOC_MISC_BASE		(MVSOC_DEVBUS_BASE + 0x8200) /* For Armada XP */
-
-/*
  * Device Bus
  */
 #define MVSOC_DEVBUS_BASE	(UNITID2PHYS(DEVBUS))	/* 0x10000 */
@@ -69,19 +63,29 @@
 /*
  * General Purpose Port Registers
  */
-#define MVSOC_GPP_BASE			(MVSOC_DEVBUS_BASE + 0x0100)
+#define MVSOC_GPP_BASE		(MVSOC_DEVBUS_BASE + 0x0100)
 
 /*
  * Two-Wire Serial Interface Registers
  */
-#define MVSOC_TWSI_BASE			(MVSOC_DEVBUS_BASE + 0x1000)
+#define MVSOC_TWSI_BASE		(MVSOC_DEVBUS_BASE + 0x1000)
 
 /*
  * UART Interface Registers
  */
-					/* NS16550 compatible */
-#define MVSOC_COM0_BASE			(MVSOC_DEVBUS_BASE + 0x2000)
-#define MVSOC_COM1_BASE			(MVSOC_DEVBUS_BASE + 0x2100)
+				/* NS16550 compatible */
+#define MVSOC_COM0_BASE		(MVSOC_DEVBUS_BASE + 0x2000)
+#define MVSOC_COM1_BASE		(MVSOC_DEVBUS_BASE + 0x2100)
+
+/*
+ * Miscellanseous Register
+ */
+#define MVSOC_MISC_BASE		(MVSOC_DEVBUS_BASE + 0x8200) /* For Armada XP */
+
+#define MVSOC_MISC_RSTOUTNMASKR		  0x60 /* RSTOUTn Mask Register */
+#define MVSOC_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN (1 << 0)
+#define MVSOC_MISC_SSRR			  0x64	/* System Soft Reset Register */
+#define MVSOC_MISC_SSRR_GLOBALSOFTRST           (1 << 0)
 
 /*
  * Mbus-L to Mbus Bridge Registers
@@ -108,17 +112,11 @@
 /* CPU Control and Status Registers */
 #define MVSOC_MLMB_CPUCR		  0x100	/* CPU Configuration Register */
 #define MVSOC_MLMB_CPUCSR		  0x104	/* CPU Control/Status Register*/
-#if defined(ARMADAXP)
-#define MVSOC_MLMB_RSTOUTNMASKR		  0x60 /* RSTOUTn Mask Register */
-#define MVSOC_MLMB_SSRR			  0x64	/* System Soft Reset Register */
-#define MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN    (1 << 0)
-#else
 #define MVSOC_MLMB_RSTOUTNMASKR		  0x108 /* RSTOUTn Mask Register */
-#define MVSOC_MLMB_SSRR			  0x10c	/* System Soft Reset Register */
 #define MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN    (1 << 2)
-#endif
-#define MVSOC_MLMB_RSTOUTNMASKR_PEXRSTOUTEN     (1 << 0)
 #define MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN      (1 << 1)
+#define MVSOC_MLMB_RSTOUTNMASKR_PEXRSTOUTEN     (1 << 0)
+#define MVSOC_MLMB_SSRR			  0x10c	/* System Soft Reset Register */
 #define MVSOC_MLMB_SSRR_SYSTEMSOFTRST           (1 << 0)
 #define MVSOC_MLMB_MLMBICR		  0x110	/*Mb-L to Mb Bridge Intr Cause*/
 #define MVSOC_MLMB_MLMBIMR		  0x114	/*Mb-L to Mb Bridge Intr Mask */
@@ -135,7 +133,7 @@
 /* CIB registers offsets */
 #define MVSOC_MLMB_CIB_CTRL_CFG		  0x280
 
-#define MVSOC_TMR_BASE			(MVSOC_MLMB_BASE + 0x0300)
+#define MVSOC_TMR_BASE		(MVSOC_MLMB_BASE + 0x0300)
 
 /* CPU Doorbell Registers */
 #define MVSOC_MLMB_H2CDR		  0x400	/* Host-to-CPU Doorbell */

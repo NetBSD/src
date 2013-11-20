@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.3 2013/09/30 13:29:07 kiyohara Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.4 2013/11/20 12:36:16 kiyohara Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.3 2013/09/30 13:29:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.4 2013/11/20 12:36:16 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -166,10 +166,10 @@ axp_system_reset(void)
 	cpu_reset_address = 0;
 
 	/* Unmask soft reset */
-	write_miscreg(MVSOC_MLMB_RSTOUTNMASKR,
-	    MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN);
+	write_miscreg(MVSOC_MISC_RSTOUTNMASKR,
+	    MVSOC_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN);
 	/* Assert soft reset */
-	write_miscreg(MVSOC_MLMB_SSRR, MVSOC_MLMB_SSRR_SYSTEMSOFTRST);
+	write_miscreg(MVSOC_MISC_SSRR, MVSOC_MISC_SSRR_GLOBALSOFTRST);
 
 	while (1);
 }
