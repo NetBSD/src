@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.7 2012/06/13 22:56:51 joerg Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.8 2013/11/20 23:44:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.7 2012/06/13 22:56:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.8 2013/11/20 23:44:23 rmind Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.7 2012/06/13 22:56:51 joerg Exp $"
 #include <sys/disk.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
 
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.7 2012/06/13 22:56:51 joerg Exp $"
 #else
 #define	DPRINTF(arg...)		((void)0)
 #endif
-
-MALLOC_JUSTDEFINE(M_V7FS_VFS, "v7fs vfs", "v7fs vfs structures");
 
 struct pool v7fs_node_pool;
 
@@ -254,7 +252,7 @@ v7fs_mountfs(struct vnode *devvp, struct mount *mp, int endian)
 
 	DPRINTF("%d\n",endian);
 
-	v7fsmount = malloc(sizeof(*v7fsmount), M_V7FS_VFS, M_WAITOK);
+	v7fsmount = kmem_zalloc(sizeof(*v7fsmount), KM_SLEEP);
 	if (v7fsmount == NULL) {
 		return ENOMEM;
 	}
@@ -288,7 +286,7 @@ v7fs_mountfs(struct vnode *devvp, struct mount *mp, int endian)
 	return 0;
 
 err_exit:
-	free(v7fsmount, M_V7FS_VFS);
+	kmem_free(v7fsmount, sizeof(*v7fsmount));
 	return error;
 }
 
@@ -319,7 +317,7 @@ v7fs_unmount(struct mount *mp, int mntflags)
 
 	v7fs_io_fini(v7fsmount->core);
 
-	free(v7fsmount, M_V7FS_VFS);
+	kmem_free(v7fsmount, sizeof(*v7fsmount));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 
@@ -522,17 +520,11 @@ v7fs_vptofh(struct vnode *vpp, struct fid *fid, size_t *fh_size)
 	return EOPNOTSUPP;
 }
 
-MALLOC_DECLARE(M_V7FS);
-MALLOC_DECLARE(M_V7FS_VNODE);
-
 void
 v7fs_init(void)
 {
 
 	DPRINTF("\n");
-	malloc_type_attach(M_V7FS_VFS);
-	malloc_type_attach(M_V7FS);
-	malloc_type_attach(M_V7FS_VNODE);
 	pool_init(&v7fs_node_pool, sizeof(struct v7fs_node), 0, 0, 0,
 	    "v7fs_node_pool", &pool_allocator_nointr, IPL_NONE);
 }
@@ -551,9 +543,6 @@ v7fs_done(void)
 
 	DPRINTF("\n");
 	pool_destroy(&v7fs_node_pool);
-	malloc_type_detach(M_V7FS);
-	malloc_type_detach(M_V7FS_VFS);
-	malloc_type_detach(M_V7FS_VNODE);
 }
 
 int
