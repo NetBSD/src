@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cbrt.c,v 1.12 2013/11/19 19:24:34 joerg Exp $");
+__RCSID("$NetBSD: s_cbrt.c,v 1.13 2013/11/20 12:29:13 joerg Exp $");
 #endif
 
 #include "namespace.h"
@@ -20,7 +20,7 @@ __RCSID("$NetBSD: s_cbrt.c,v 1.12 2013/11/19 19:24:34 joerg Exp $");
 #include "math_private.h"
 
 #ifndef __HAVE_LONG_DOUBLE
-__strong_alias(cbrt, _cbrtl)
+__strong_alias(_cbrtl, cbrt)
 __weak_alias(cbrtl, _cbrtl)
 #endif
 
