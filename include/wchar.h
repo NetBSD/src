@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.39 2013/08/19 08:03:33 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.40 2013/11/21 09:09:52 degroote Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -145,7 +145,8 @@ long int wcstol(const wchar_t * __restrict,
 double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 float wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
 
@@ -181,7 +182,8 @@ int vwprintf(const wchar_t * __restrict, __va_list);
 int wprintf(const wchar_t * __restrict, ...);
 int wscanf(const wchar_t * __restrict, ...);
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
     __va_list);
