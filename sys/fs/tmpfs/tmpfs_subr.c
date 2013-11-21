@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.88 2013/11/18 01:39:34 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.89 2013/11/21 14:39:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.88 2013/11/18 01:39:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.89 2013/11/21 14:39:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -738,15 +738,14 @@ tmpfs_dir_getdotents(tmpfs_node_t *node, struct dirent *dp, struct uio *uio)
 	off_t next = 0;
 	int error;
 
-	dp->d_fileno = node->tn_id;
-	dp->d_type = DT_DIR;
-
 	switch (uio->uio_offset) {
 	case TMPFS_DIRSEQ_DOT:
+		dp->d_fileno = node->tn_id;
 		strlcpy(dp->d_name, ".", sizeof(dp->d_name));
 		next = TMPFS_DIRSEQ_DOTDOT;
 		break;
 	case TMPFS_DIRSEQ_DOTDOT:
+		dp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 		strlcpy(dp->d_name, "..", sizeof(dp->d_name));
 		de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 		next = de ? tmpfs_dir_getseq(node, de) : TMPFS_DIRSEQ_EOF;
@@ -754,6 +753,7 @@ tmpfs_dir_getdotents(tmpfs_node_t *node, struct dirent *dp, struct uio *uio)
 	default:
 		KASSERT(false);
 	}
+	dp->d_type = DT_DIR;
 	dp->d_namlen = strlen(dp->d_name);
 	dp->d_reclen = _DIRENT_SIZE(dp);
 
