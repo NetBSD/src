@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.93 2013/10/17 21:06:15 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.94 2013/11/21 21:14:05 riz Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.93 2013/10/17 21:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.94 2013/11/21 21:14:05 riz Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1240,21 +1240,25 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 	switch (notif->type) {
 	case IWI_NOTIF_TYPE_SCAN_CHANNEL:
 #ifdef IWI_DEBUG
-		struct iwi_notif_scan_channel *chan =
-		    (struct iwi_notif_scan_channel *)(notif + 1);
+		{
+			struct iwi_notif_scan_channel *chan =
+			    (struct iwi_notif_scan_channel *)(notif + 1);
 
-		DPRINTFN(2, ("Scan of channel %u complete (%u)\n",
-		    ic->ic_channels[chan->nchan].ic_freq, chan->nchan));
+			DPRINTFN(2, ("Scan of channel %u complete (%u)\n",
+			    ic->ic_channels[chan->nchan].ic_freq, chan->nchan));
+		}
 #endif
 		break;
 
 	case IWI_NOTIF_TYPE_SCAN_COMPLETE:
 #ifdef IWI_DEBUG
-		struct iwi_notif_scan_complete *scan =
-		    (struct iwi_notif_scan_complete *)(notif + 1);
+		{
+			struct iwi_notif_scan_complete *scan =
+			    (struct iwi_notif_scan_complete *)(notif + 1);
 
-		DPRINTFN(2, ("Scan completed (%u, %u)\n", scan->nchan,
-		    scan->status));
+			DPRINTFN(2, ("Scan completed (%u, %u)\n", scan->nchan,
+			    scan->status));
+		}
 #endif
 
 		/* monitor mode uses scan to set the channel ... */
