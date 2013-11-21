@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.20 2012/01/30 21:35:22 rmind Exp $	*/
+/*	$NetBSD: pmc.c,v 1.21 2013/11/21 22:04:40 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.20 2012/01/30 21:35:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.21 2013/11/21 22:04:40 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ pmc_init(void)
 			 * we're missing Pentium 4 support.
 			 */
 			if (cpuid_level == -1 ||
-			    CPUID2FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
+			    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
 				break;
 
 			pmc_type = PMC_TYPE_I686;
