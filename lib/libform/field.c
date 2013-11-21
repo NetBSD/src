@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $	*/
+/*	$NetBSD: field.c,v 1.26 2013/11/21 09:40:19 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $");
+__RCSID("$NetBSD: field.c,v 1.26 2013/11/21 09:40:19 blymn Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -472,6 +472,7 @@ field_buffer(FIELD *field, int buffer)
 
 	char *reformat, *p;
 	_FORMI_FIELD_LINES *linep;
+	size_t bufsize;
 	
 	if (field == NULL)
 		return NULL;
@@ -495,12 +496,18 @@ field_buffer(FIELD *field, int buffer)
 		return field->buffers[buffer].string;
 	} else {
 		if (field->row_count > 1) {
-			  /* reformat */
-			reformat = (char *)
-				malloc(strlen(field->buffers[buffer].string)
-				       + ((field->row_count - 1)
-					  * sizeof(char)) + 1);
 
+			  /*
+			   * compute reformat buffer size
+			   * each line length plus one line feed
+			   * except for last line without line feed
+			   * but plus one NUL character
+			   */
+			bufsize = 0;
+			for (linep=field->alines; linep; linep=linep->next)
+				bufsize += strlen(linep->string)+1;
+
+			reformat = (char *)malloc(bufsize);
 			if (reformat == NULL)
 				return NULL;
 
@@ -509,24 +516,14 @@ field_buffer(FIELD *field, int buffer)
 			   * newline on last row.
 			   */
 			p = reformat;
-			linep = field->alines;
-			
-			do
-			{
-				if (linep->length != 0) {
-					strncpy(p, linep->string,
-						(size_t) linep->length);
-					p += linep->length;
-				}
-				
-				linep = linep->next;
-				if (linep != NULL)
-					*p = '\n';
-				p++;
+			for (linep=field->alines; linep; linep=linep->next) {
+				strcpy(p, linep->string);
+				p += strlen(linep->string);
+				if (linep->next)
+					*p++ = '\n';
 			}
-			while (linep != NULL);
+			*p = '\0';
 
-			p = '\0';
 			return reformat;
 		} else {
 			asprintf(&reformat, "%s",
