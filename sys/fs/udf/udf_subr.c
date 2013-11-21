@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.121 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.122 2013/11/21 23:42:09 riz Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.121 2013/10/18 19:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.122 2013/11/21 23:42:09 riz Exp $");
 #endif /* not lint */
 
 
@@ -4764,7 +4764,6 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct dirhash       *dirh;
 	struct dirhash_entry *dirh_ep;
 	struct file_entry    *fe  = dir_node->fe;
-	struct extfile_entry *efe = dir_node->efe;
 	struct fileid_desc *fid;
 	struct dirent *dirent;
 	uint64_t diroffset;
@@ -4785,7 +4784,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	/* get directory filesize */
 	if (!fe) {
-		assert(efe);
+		assert(dir_node->efe);
 	}
 
 	/* allocate temporary space for fid */
