@@ -1,4 +1,4 @@
-/* $NetBSD: dwctwo_plb.c,v 1.1 2013/11/21 13:33:15 kiyohara Exp $ */
+/* $NetBSD: dwctwo_plb.c,v 1.2 2013/11/21 13:52:27 kiyohara Exp $ */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.1 2013/11/21 13:33:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.2 2013/11/21 13:52:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,34 +67,6 @@ static struct powerpc_bus_space dwctwo_tag = {
 static char ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
-static struct dwc2_core_params dwctwo_405ex_params = {
-	.otg_cap			= 0,	/* HNP/SRP capable */
-	.otg_ver			= 0,	/* 1.3 */
-	.dma_enable			= 1,
-	.dma_desc_enable		= 0,
-	.speed				= 0,	/* High Speed */
-	.enable_dynamic_fifo		= 1,
-	.en_multiple_tx_fifo		= 0,
-	.host_rx_fifo_size		= 531,	/* 531 DWORDs */
-	.host_nperio_tx_fifo_size	= 256,	/* 256 DWORDs */
-	.host_perio_tx_fifo_size	= 256,	/* 256 DWORDs */
-	.max_transfer_size		= 524287,
-	.max_packet_count		= 1023,
-	.host_channels			= 4,
-	.phy_type			= 2,	/* ULPI */
-	.phy_utmi_width			= 8,	/* 8 bits */
-	.phy_ulpi_ddr			= 0,	/* Single */
-	.phy_ulpi_ext_vbus		= 0,
-	.i2c_enable			= 0,
-	.ulpi_fs_ls			= 0,
-	.host_support_fs_ls_low_power	= 0,
-	.host_ls_low_power_phy_clk	= 0,	/* 48 MHz */
-	.ts_dline			= 0,
-	.reload_ctl			= 0,
-	.ahbcfg				= 0x10,
-	.uframe_sched			= 1,
-};
-
 
 static int
 dwctwo_plb_match(device_t parent, cfdata_t match, void *aux)
@@ -119,10 +91,17 @@ dwctwo_plb_attach(device_t parent, device_t self, void *aux)
 {
 	struct dwc2_softc *sc = device_private(self);
 	struct plb_attach_args *paa = aux;
+	prop_dictionary_t dict = device_properties(self);
 	uint32_t srst0;
 
 	sc->sc_dev = self;
-	sc->sc_params = &dwctwo_405ex_params;
+
+	/* get core parameters */
+	if (!prop_dictionary_get_uint32(dict, "params",
+	    (uint32_t *)&sc->sc_params)) {
+		aprint_error("struct dwc2_core_params not found\n");
+		return;
+	}
 
 	dwctwo_tag.pbs_base = paa->plb_addr;
 	dwctwo_tag.pbs_limit += paa->plb_addr;
