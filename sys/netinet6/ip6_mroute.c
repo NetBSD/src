@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.104 2013/09/14 11:33:59 martin Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.105 2013/11/21 21:55:13 riz Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.104 2013/09/14 11:33:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.105 2013/11/21 21:55:13 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -188,6 +188,9 @@ u_int		mrt6debug = 0;	  /* debug level 	*/
 #define DEBUG_XMIT	0x10
 #define DEBUG_REG	0x20
 #define DEBUG_PIM	0x40
+#define __mrt6debugused     /* empty */
+#else
+#define __mrt6debugused     __unused
 #endif
 
 static void	expire_upcalls(void *);
@@ -1531,9 +1534,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
-#ifdef MRT6DEBUG
-	int error = 0;
-#endif
+	int error __mrt6debugused = 0;
 	int s;
 	static struct route ro;
 	struct in6_multi *in6m;
@@ -1571,10 +1572,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		/* XXX: ip6_output will override ip6->ip6_hlim */
 		im6o.im6o_multicast_hlim = ip6->ip6_hlim;
 		im6o.im6o_multicast_loop = 1;
-#ifdef MRT6DEBUG
-		error =
-#endif
-			ip6_output(mb_copy, NULL, &ro, IPV6_FORWARDING,
+		error = ip6_output(mb_copy, NULL, &ro, IPV6_FORWARDING,
 				   &im6o, NULL, NULL);
 
 #ifdef MRT6DEBUG
@@ -1613,10 +1611,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		 * nd6_output on purpose to see if IPv6 operation is allowed
 		 * on the interface.
 		 */
-#ifdef MRT6DEBUG
-		error =
-#endif
-			nd6_output(ifp, ifp, mb_copy, &dst6, NULL);
+		error = nd6_output(ifp, ifp, mb_copy, &dst6, NULL);
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on mif %td err %d\n",
@@ -1720,6 +1715,7 @@ int
 pim6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct pim *pim; /* pointer to a pim struct */
+	struct ip6_hdr *ip6 __mrt6debugused;
 	int pimlen;
 	struct mbuf *m = *mp;
 	int minlen;
@@ -1727,6 +1723,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 
 	PIM6_STATINC(PIM6_STAT_RCV_TOTAL);
 
+	ip6 = mtod(m, struct ip6_hdr *);
 	pimlen = m->m_pkthdr.len - *offp;
 
 	/*
