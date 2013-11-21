@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: w_fmodl.c,v 1.3 2013/11/19 14:04:24 joerg Exp $");
+__RCSID("$NetBSD: w_fmodl.c,v 1.4 2013/11/21 13:41:10 martin Exp $");
 
 /*
  * wrapper fmodl(x,y)
@@ -33,7 +33,7 @@ fmodl(long double x, long double y)	/* wrapper fmod */
 #ifdef _IEEE_LIBM
 	return __ieee754_fmodl(x,y);
 #else
-	double z;
+	long double z;
 	z = __ieee754_fmodl(x,y);
 	if(_LIB_VERSION == _IEEE_ ||isnan(y)||isnan(x)) return z;
 	if(y==0.0) {
