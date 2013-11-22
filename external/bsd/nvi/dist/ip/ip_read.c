@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_read.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip_read.c,v 1.3 2013/11/22 19:59:36 martin Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -140,7 +140,7 @@ ip_wevent(WIN *wp, SCR *sp, EVENT *evp, u_int32_t flags, int ms)
 	IP_PRIVATE *ipp;
 	struct timeval t, *tp;
 	int termread;
-	int nr;
+	int nr = 0;
 
 	if (LF_ISSET(EC_INTERRUPT)) {		/* XXX */
 		evp->e_event = E_TIMEOUT;
