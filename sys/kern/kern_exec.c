@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.365 2013/11/14 16:53:51 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.366 2013/11/22 21:04:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.365 2013/11/14 16:53:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.366 2013/11/22 21:04:11 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2226,7 +2226,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
 	p2->p_vmspace = proc0.p_vmspace;
 
-	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
+	TAILQ_INIT(&p2->p_sigpend.sp_info);
 
 	LIST_INIT(&p2->p_lwps);
 	LIST_INIT(&p2->p_sigwaiters);
