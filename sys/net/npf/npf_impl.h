@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.41 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.42 2013/11/22 01:24:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
 uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);
 uint16_t	npf_addr_cksum(uint16_t, int, const npf_addr_t *,
 		    const npf_addr_t *);
-uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
+uint32_t	npf_addr_mix(const int, const npf_addr_t *, const npf_addr_t *);
 int		npf_addr_cmp(const npf_addr_t *, const npf_netmask_t,
 		    const npf_addr_t *, const npf_netmask_t, const int);
 void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,

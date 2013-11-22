@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.25 2013/10/30 08:41:38 mrg Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.26 2013/11/22 01:24:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.25 2013/10/30 08:41:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.26 2013/11/22 01:24:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -109,20 +109,19 @@ npf_addr_cksum(uint16_t cksum, int sz, const npf_addr_t *oaddr,
 }
 
 /*
- * npf_addr_sum: provide IP address as a summed (if needed) 32-bit integer.
+ * npf_addr_sum: provide IP addresses as a XORed 32-bit integer.
  * Note: used for hash function.
  */
 uint32_t
-npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
+npf_addr_mix(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 {
 	uint32_t mix = 0;
-	int i;
 
 	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
 
-	for (i = 0; i < (sz >> 2); i++) {
-		mix += a1->s6_addr32[i];
-		mix += a2->s6_addr32[i];
+	for (int i = 0; i < (sz >> 2); i++) {
+		mix ^= a1->s6_addr32[i];
+		mix ^= a2->s6_addr32[i];
 	}
 	return mix;
 }
