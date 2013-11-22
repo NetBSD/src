@@ -1,3 +1,4 @@
+/*	$NetBSD: vi.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -65,7 +66,7 @@ vi(SCR **spp)
 {
 	GS *gp;
 	WIN *wp;
-	MARK abs;
+	MARK abst;
 	SCR *next, *sp;
 	VICMD cmd, *vp;
 	VI_PRIVATE *vip;
@@ -168,7 +169,8 @@ vi(SCR **spp)
 
 		/* Check for security setting. */
 		if (F_ISSET(vp->kp, V_SECURE) && O_ISSET(sp, O_SECURE)) {
-			ex_emsg(sp, KEY_NAME(sp, vp->key), EXM_SECURE);
+			ex_emsg(sp, (const char *)KEY_NAME(sp, vp->key),
+			    EXM_SECURE);
 			goto err;
 		}
 
@@ -185,8 +187,8 @@ vi(SCR **spp)
 
 		/* Prepare to set the previous context. */
 		if (F_ISSET(vp, V_ABS | V_ABS_C | V_ABS_L)) {
-			abs.lno = sp->lno;
-			abs.cno = sp->cno;
+			abst.lno = sp->lno;
+			abst.cno = sp->cno;
 		}
 
 		/*
@@ -343,10 +345,10 @@ ex_continue:	if (vp->kp->func(sp, vp))
 		 * command, since the tag may be moving to the same file.
 		 */
 		if ((F_ISSET(vp, V_ABS) ||
-		    F_ISSET(vp, V_ABS_L) && sp->lno != abs.lno ||
-		    F_ISSET(vp, V_ABS_C) &&
-		    (sp->lno != abs.lno || sp->cno != abs.cno)) &&
-		    mark_set(sp, ABSMARK1, &abs, 1))
+		    (F_ISSET(vp, V_ABS_L) && sp->lno != abst.lno) ||
+		    (F_ISSET(vp, V_ABS_C) &&
+		    (sp->lno != abst.lno || sp->cno != abst.cno))) &&
+		    mark_set(sp, ABSMARK1, &abst, 1))
 			goto err;
 
 		if (0) {
@@ -447,11 +449,11 @@ v_cmd(SCR *sp, VICMD *dp, VICMD *vp, VICMD *ismotion, int *comcountp, int *mappe
 	                         
 {
 	enum { COMMANDMODE, ISPARTIAL, NOTPARTIAL } cpart;
-	CHAR_T key;
+	ARG_CHAR_T key;
 	VIKEYS const *kp;
 	gcret_t gcret;
 	u_int flags;
-	char *s;
+	const char *s;
 
 	/*
 	 * Get an event command or a key.  Event commands are simple, and
@@ -552,7 +554,7 @@ v_cmd(SCR *sp, VICMD *dp, VICMD *vp, VICMD *ismotion, int *comcountp, int *mappe
 	/* Check for an OOB command key. */
 	cpart = ISPARTIAL;
 	if (key > MAXVIKEY) {
-		v_emsg(sp, KEY_NAME(sp, key), VIM_NOCOM);
+		v_emsg(sp, (const char *)KEY_NAME(sp, key), VIM_NOCOM);
 		return (GC_ERR);
 	}
 	kp = &vikeys[vp->key = key];
@@ -590,7 +592,7 @@ v_cmd(SCR *sp, VICMD *dp, VICMD *vp, VICMD *ismotion, int *comcountp, int *mappe
 	 */
 	if (kp->func == NULL) {
 		if (key != '.') {
-			v_emsg(sp, KEY_NAME(sp, key),
+			v_emsg(sp, (const char *)KEY_NAME(sp, key),
 			    vp->ev.e_value == K_ESCAPE ?
 			    VIM_NOCOM_B : VIM_NOCOM);
 			return (GC_ERR);
@@ -801,7 +803,7 @@ v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 		vp->m_stop.lno = sp->lno + motion.count - 1;
 		if (db_get(sp, vp->m_stop.lno, 0, NULL, &len)) {
 			if (vp->m_stop.lno != 1 ||
-			   vp->key != 'c' && vp->key != '!') {
+			   (vp->key != 'c' && vp->key != '!')) {
 				v_emsg(sp, NULL, VIM_EMPTY);
 				return (1);
 			}
@@ -873,7 +875,7 @@ v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 		 */
 		if (!db_exist(sp, vp->m_stop.lno)) {
 			if (vp->m_stop.lno != 1 ||
-			   vp->key != 'c' && vp->key != '!') {
+			   (vp->key != 'c' && vp->key != '!')) {
 				v_emsg(sp, NULL, VIM_EMPTY);
 				return (1);
 			}
@@ -917,8 +919,8 @@ v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 		 * Motions are from the from MARK to the to MARK (inclusive).
 		 */
 		if (motion.m_start.lno > motion.m_stop.lno ||
-		    motion.m_start.lno == motion.m_stop.lno &&
-		    motion.m_start.cno > motion.m_stop.cno) {
+		    (motion.m_start.lno == motion.m_stop.lno &&
+		    motion.m_start.cno > motion.m_stop.cno)) {
 			vp->m_start = motion.m_stop;
 			vp->m_stop = motion.m_start;
 		} else {
@@ -978,7 +980,7 @@ v_init(SCR *sp)
 		if (sp->t_rows > sp->rows - 1) {
 			sp->t_minrows = sp->t_rows = sp->rows - 1;
 			msgq(sp, M_INFO,
-			    "214|Windows option value is too large, max is %u",
+			    "214|Windows option value is too large, max is %zu",
 			    sp->t_rows);
 		}
 		sp->t_maxrows = sp->rows - 1;
@@ -1081,7 +1083,7 @@ v_curword(SCR *sp)
 	 * follow the same rule.
 	 */
 	for (moved = 0,
-	    beg = sp->cno; beg < len && ISSPACE(p[beg]); moved = 1, ++beg);
+	    beg = sp->cno; beg < len && ISSPACE((UCHAR_T)p[beg]); moved = 1, ++beg);
 	if (beg >= len) {
 		msgq(sp, M_BERR, "212|Cursor not in a word");
 		return (1);
@@ -1256,9 +1258,9 @@ v_comlog(sp, vp)
 	SCR *sp;
 	VICMD *vp;
 {
-	vtrace(sp, "vcmd: %c", vp->key);
+	vtrace(sp, "vcmd: "WC, vp->key);
 	if (F_ISSET(vp, VC_BUFFER))
-		vtrace(sp, " buffer: %c", vp->buffer);
+		vtrace(sp, " buffer: "WC, vp->buffer);
 	if (F_ISSET(vp, VC_C1SET))
 		vtrace(sp, " c1: %lu", vp->count);
 	if (F_ISSET(vp, VC_C2SET))

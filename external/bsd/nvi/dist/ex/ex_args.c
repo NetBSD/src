@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_args.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -48,9 +49,9 @@ ex_next(SCR *sp, EXCMD *cmdp)
 	FREF *frp;
 	int noargs;
 	char **ap;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	/* Check for file to move to. */
@@ -133,7 +134,7 @@ ex_N_next(SCR *sp, EXCMD *cmdp)
 {
 	SCR *new;
 	FREF *frp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	/* Get a new screen. */
@@ -178,7 +179,7 @@ ex_prev(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	if (sp->cargv == sp->argv) {
 		msgq(sp, M_ERR, "112|No previous files to edit");
@@ -263,8 +264,8 @@ ex_rew(SCR *sp, EXCMD *cmdp)
 int
 ex_args(SCR *sp, EXCMD *cmdp)
 {
-	GS *gp;
-	int cnt, col, len, sep;
+	int cnt, sep;
+	size_t col, len;
 	char **ap;
 
 	if (sp->argv == NULL) {
@@ -272,7 +273,6 @@ ex_args(SCR *sp, EXCMD *cmdp)
 		return (0);
 	}
 
-	gp = sp->gp;
 	col = len = sep = 0;
 	for (cnt = 1, ap = sp->argv; *ap != NULL; ++ap) {
 		col += len = strlen(*ap) + sep + (ap == sp->cargv ? 2 : 0);
@@ -307,7 +307,7 @@ ex_buildargv(SCR *sp, EXCMD *cmdp, char *name)
 	ARGS **argv;
 	int argc;
 	char **ap, **s_argv;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	argc = cmdp == NULL ? 1 : cmdp->argc;

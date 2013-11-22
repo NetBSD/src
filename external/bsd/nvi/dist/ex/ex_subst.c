@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_subst.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +54,7 @@ ex_s(SCR *sp, EXCMD *cmdp)
 	regex_t *re;
 	size_t blen, len;
 	u_int flags;
-	int delim;
+	ARG_CHAR_T delim;
 	CHAR_T *bp, *p, *ptrn, *rep, *t;
 
 	/*
@@ -71,14 +72,14 @@ ex_s(SCR *sp, EXCMD *cmdp)
 		goto subagain;
 	for (p = cmdp->argv[0]->bp,
 	    len = cmdp->argv[0]->len; len > 0; --len, ++p) {
-		if (!ISBLANK(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			break;
 	}
 	if (len == 0)
 subagain:	return (ex_subagain(sp, cmdp));
 
-	delim = *p++;
-	if (isalnum(delim) || delim == '\\')
+	delim = (UCHAR_T)*p++;
+	if (ISALNUM(delim) || delim == '\\')
 		return (s(sp, cmdp, p, &sp->subre_c, SUB_MUSTSETR));
 
 	/*
@@ -119,11 +120,12 @@ subagain:	return (ex_subagain(sp, cmdp));
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\')
+		if (p[0] == '\\') {
 			if (p[1] == delim)
 				++p;
 			else if (p[1] == '\\')
 				*t++ = *p++;
+		}
 		*t++ = *p++;
 	}
 
@@ -340,7 +342,7 @@ ex_subtilde(SCR *sp, EXCMD *cmdp)
 }
 
 static int
-s(SCR *sp, EXCMD *cmdp, CHAR_T *s, regex_t *re, u_int flags)
+s(SCR *sp, EXCMD *cmdp, CHAR_T *st, regex_t *re, u_int flags)
 {
 	EVENT ev;
 	MARK from, to;
@@ -350,10 +352,10 @@ s(SCR *sp, EXCMD *cmdp, CHAR_T *s, regex_t *re, u_int flags)
 	regmatch_t match[10];
 	size_t blen, cnt, last, lbclen, lblen, len, llen;
 	size_t offset, saved_offset, scno;
-	int cflag, lflag, nflag, pflag, rflag;
+	int lflag, nflag, pflag, rflag;
 	int didsub, do_eol_match, eflags, empty_ok, eval;
 	int linechanged, matched, quit, rval;
-	CHAR_T *p, *lb, *bp;
+	CHAR_T *lb, *bp;
 	enum nresult nret;
 
 	NEEDFILE(sp, cmdp);
@@ -388,11 +390,11 @@ s(SCR *sp, EXCMD *cmdp, CHAR_T *s, regex_t *re, u_int flags)
 	 * just take it them in whatever order the user gives them.  (The ex
 	 * usage statement doesn't reflect this.)
 	 */
-	cflag = lflag = nflag = pflag = rflag = 0;
-	if (s == NULL)
+	lflag = nflag = pflag = rflag = 0;
+	if (st == NULL)
 		goto noargs;
-	for (lno = OOBLNO; *s != '\0'; ++s)
-		switch (*s) {
+	for (lno = OOBLNO; *st != '\0'; ++st)
+		switch (*st) {
 		case ' ':
 		case '\t':
 			continue;
@@ -407,10 +409,10 @@ s(SCR *sp, EXCMD *cmdp, CHAR_T *s, regex_t *re, u_int flags)
 			if (lno != OOBLNO)
 				goto usage;
 			errno = 0;
-			nret = nget_uslong(sp, &ul, s, &s, 10);
+			nret = nget_uslong(sp, &ul, st, &st, 10);
 			lno = ul;
-			if (*s == '\0')		/* Loop increment correction. */
-				--s;
+			if (*st == '\0')		/* Loop increment correction. */
+				--st;
 			if (nret != NUM_OK) {
 				if (nret == NUM_OVER)
 					msgq(sp, M_ERR, "153|Count overflow");
@@ -468,7 +470,7 @@ s(SCR *sp, EXCMD *cmdp, CHAR_T *s, regex_t *re, u_int flags)
 			goto usage;
 		}
 
-	if (*s != '\0' || !rflag && LF_ISSET(SUB_MUSTSETR)) {
+	if (*st != '\0' || (!rflag && LF_ISSET(SUB_MUSTSETR))) {
 usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
@@ -499,7 +501,7 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 			break;
 
 		/* Get the line. */
-		if (db_get(sp, lno, DBG_FATAL, &s, &llen))
+		if (db_get(sp, lno, DBG_FATAL, &st, &llen))
 			goto err;
 
 		/*
@@ -511,8 +513,8 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 				GET_SPACE_RETW(sp, bp, blen, llen);
 			} else
 				ADD_SPACE_RETW(sp, bp, blen, llen);
-			MEMCPYW(bp, s, llen);
-			s = bp;
+			MEMCPYW(bp, st, llen);
+			st = bp;
 		}
 
 		/* Start searching from the beginning. */
@@ -540,7 +542,7 @@ noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		eflags = REG_STARTEND;
 
 		/*
-		 * The search area is from s + offset to the EOL.
+		 * The search area is from st + offset to the EOL.
 		 *
 		 * Generally, match[0].rm_so is the offset of the start
 		 * of the match from the start of the search, and offset
@@ -550,7 +552,7 @@ nextmatch:	match[0].rm_so = 0;
 		match[0].rm_eo = len;
 
 		/* Get the next match. */
-		eval = regexec(re, s + offset, 10, match, eflags);
+		eval = regexec(re, st + offset, 10, match, eflags);
 
 		/*
 		 * There wasn't a match or if there was an error, deal with
@@ -592,7 +594,7 @@ nextmatch:	match[0].rm_so = 0;
 			empty_ok = 1;
 			if (len == 0)
 				goto endmatch;
-			BUILD(sp, s + offset, 1)
+			BUILD(sp, st + offset, 1)
 			++offset;
 			--len;
 			goto nextmatch;
@@ -664,7 +666,7 @@ nextmatch:	match[0].rm_so = 0;
 			default:
 			case CH_NO:
 				didsub = 0;
-				BUILD(sp, s +offset, match[0].rm_eo);
+				BUILD(sp, st + offset, match[0].rm_eo);
 				goto skip;
 			case CH_QUIT:
 				/* Set the quit/interrupted flags. */
@@ -687,11 +689,11 @@ lquit:				quit = 1;
 		sp->cno = match[0].rm_so;
 
 		/* Copy the bytes before the match into the build buffer. */
-		BUILD(sp, s + offset, match[0].rm_so);
+		BUILD(sp, st + offset, match[0].rm_so);
 
 		/* Substitute the matching bytes. */
 		didsub = 1;
-		if (re_sub(sp, s + offset, &lb, &lbclen, &lblen, match))
+		if (re_sub(sp, st + offset, &lb, &lbclen, &lblen, match))
 			goto err;
 
 		/* Set the change flag so we know this line was modified. */
@@ -718,7 +720,7 @@ skip:		offset += match[0].rm_eo;
 
 			/* Copy the rest of the line. */
 			if (len)
-				BUILD(sp, s + offset, len)
+				BUILD(sp, st + offset, len)
 
 			/* Set the new offset. */
 			offset = saved_offset;
@@ -742,16 +744,16 @@ skip:		offset += match[0].rm_eo;
 			/* Store and retrieve the line. */
 			if (db_set(sp, lno, lb + last, lbclen))
 				goto err;
-			if (db_get(sp, lno, DBG_FATAL, &s, &llen))
+			if (db_get(sp, lno, DBG_FATAL, &st, &llen))
 				goto err;
 			ADD_SPACE_RETW(sp, bp, blen, llen)
-			MEMCPYW(bp, s, llen);
-			s = bp;
+			MEMCPYW(bp, st, llen);
+			st = bp;
 			len = llen - offset;
 
 			/* Restart the build. */
 			lbclen = 0;
-			BUILD(sp, s, offset);
+			BUILD(sp, st, offset);
 
 			/*
 			 * If we haven't already done the after-the-string
@@ -787,7 +789,7 @@ endmatch:	if (!linechanged)
 
 		/* Copy any remaining bytes into the build buffer. */
 		if (len)
-			BUILD(sp, s + offset, len)
+			BUILD(sp, st + offset, len)
 
 		/* Store inserted lines, adjusting the build buffer. */
 		last = 0;
@@ -909,7 +911,7 @@ re_compile(SCR *sp, CHAR_T *ptrn, size_t plen, CHAR_T **ptrnp, size_t *lenp, reg
 	}
 	if (LF_ISSET(SEARCH_ICL)) {
 iclower:	for (p = ptrn, len = plen; len > 0; ++p, --len)
-			if (isupper(*p))
+			if (ISUPPER((UCHAR_T)*p))
 				break;
 		if (len == 0)
 			reflags |= REG_ICASE;
@@ -1236,7 +1238,7 @@ re_cscope_conv(SCR *sp, CHAR_T **ptrnp, size_t *plenp, int *replacedp)
 	size_t blen, len, nspaces;
 	CHAR_T *bp, *t;
 	CHAR_T *p;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/*
@@ -1295,14 +1297,14 @@ re_cscope_conv(SCR *sp, CHAR_T **ptrnp, size_t *plenp, int *replacedp)
 void
 re_error(SCR *sp, int errcode, regex_t *preg)
 {
-	size_t s;
+	size_t sz;
 	char *oe;
 
-	s = regerror(errcode, preg, "", 0);
-	if ((oe = malloc(s)) == NULL)
+	sz = regerror(errcode, preg, NULL, 0);
+	if ((oe = malloc(sz)) == NULL)
 		msgq(sp, M_SYSERR, NULL);
 	else {
-		(void)regerror(errcode, preg, oe, s);
+		(void)regerror(errcode, preg, oe, sz);
 		msgq(sp, M_ERR, "RE error: %s", oe);
 		free(oe);
 	}
@@ -1320,7 +1322,7 @@ re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regma
 	                         
 	                     
 {
-	enum { C_NOTSET, C_LOWER, C_ONELOWER, C_ONEUPPER, C_UPPER } conv;
+	enum { C_NOT_SET, C_LOWER, C_ONE_LOWER, C_ONE_UPPER, C_UPPER } conv;
 	size_t lbclen, lblen;		/* Local copies. */
 	size_t mlen;			/* Match length. */
 	size_t rpl;			/* Remaining replacement length. */
@@ -1352,26 +1354,26 @@ re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regma
 	 * all escaping characters.  This (hopefully) matches historic practice.
 	 */
 #define	OUTCH(ch, nltrans) {						\
-	CHAR_T __ch = (ch);						\
-	u_int __value = KEY_VAL(sp, __ch);				\
+	ARG_CHAR_T __ch = (ch);						\
+	e_key_t __value = KEY_VAL(sp, __ch);				\
 	if (nltrans && (__value == K_CR || __value == K_NL)) {		\
 		NEEDNEWLINE(sp);					\
 		sp->newl[sp->newl_cnt++] = lbclen;			\
-	} else if (conv != C_NOTSET) {					\
+	} else if (conv != C_NOT_SET) {					\
 		switch (conv) {						\
-		case C_ONELOWER:					\
-			conv = C_NOTSET;				\
+		case C_ONE_LOWER:					\
+			conv = C_NOT_SET;				\
 			/* FALLTHROUGH */				\
 		case C_LOWER:						\
-			if (isupper(__ch))				\
-				__ch = tolower(__ch);			\
+			if (ISUPPER(__ch))				\
+				__ch = TOLOWER(__ch);			\
 			break;						\
-		case C_ONEUPPER:					\
-			conv = C_NOTSET;				\
+		case C_ONE_UPPER:					\
+			conv = C_NOT_SET;				\
 			/* FALLTHROUGH */				\
 		case C_UPPER:						\
-			if (islower(__ch))				\
-				__ch = toupper(__ch);			\
+			if (ISLOWER(__ch))				\
+				__ch = TOUPPER(__ch);			\
 			break;						\
 		default:						\
 			abort();					\
@@ -1381,7 +1383,7 @@ re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regma
 	*p++ = __ch;							\
 	++lbclen;							\
 }
-	conv = C_NOTSET;
+	conv = C_NOT_SET;
 	for (rp = sp->repl, rpl = sp->repl_len, p = lb + lbclen; rpl--;) {
 		switch (ch = *rp++) {
 		case '&':
@@ -1410,16 +1412,16 @@ subzero:			if (match[no].rm_so == -1 ||
 					break;
 				mlen = match[no].rm_eo - match[no].rm_so;
 				for (t = ip + match[no].rm_so; mlen--; ++t)
-					OUTCH(*t, 0);
+					OUTCH((UCHAR_T)*t, 0);
 				continue;
 			case 'e':
 			case 'E':
 				++rp;
-				conv = C_NOTSET;
+				conv = C_NOT_SET;
 				continue;
 			case 'l':
 				++rp;
-				conv = C_ONELOWER;
+				conv = C_ONE_LOWER;
 				continue;
 			case 'L':
 				++rp;
@@ -1427,7 +1429,7 @@ subzero:			if (match[no].rm_so == -1 ||
 				continue;
 			case 'u':
 				++rp;
-				conv = C_ONEUPPER;
+				conv = C_ONE_UPPER;
 				continue;
 			case 'U':
 				++rp;

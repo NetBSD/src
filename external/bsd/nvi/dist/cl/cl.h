@@ -1,3 +1,4 @@
+/*	$NetBSD: cl.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -22,6 +23,8 @@
 #include <ncurses.h>
 #else /* } { */
 #include <curses.h>
+#include <term.h>
+#include <termcap.h>
 #endif /* } */
 #endif
 #endif
@@ -104,10 +107,10 @@ typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_INTR, INP_TIMEOUT } input_t;
 #define	FALSE	0
 #endif
 
-#include "extern.h"
+#include "cl_extern.h"
 
 #ifdef USE_PERL_SETENV
-#include "../perl_api/extern.h"
+#include "perl_api_extern.h"
 #define cl_setenv(sp,name,val)	perl_setenv(sp,name,val)
 #define cl_unsetenv(sp,name)	perl_setenv(sp,name,NULL)
 #else

@@ -1,3 +1,4 @@
+/*	$NetBSD: options.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -48,6 +49,8 @@ static int	 	 opts_print __P((SCR *, OPTLIST const *));
  *
  * HPUX noted options and abbreviations are from "The Ultimate Guide to the
  * VI and EX Text Editors", 1990.
+ *
+ * This list must be sorted...
  */
 OPTLIST const optlist[] = {
 /* O_ALTWERASE	  4.4BSD */
@@ -76,10 +79,12 @@ OPTLIST const optlist[] = {
 	{L("directory"),	NULL,		OPT_STR,	0},
 /* O_EDCOMPATIBLE   4BSD */
 	{L("edcompatible"),NULL,		OPT_0BOOL,	0},
-/* O_ESCAPETIME	  4.4BSD */
-	{L("escapetime"),	NULL,		OPT_NUM,	0},
 /* O_ERRORBELLS	    4BSD */
 	{L("errorbells"),	NULL,		OPT_0BOOL,	0},
+/* O_ESCAPETIME	  4.4BSD */
+	{L("escapetime"),	NULL,		OPT_NUM,	0},
+/* O_EXPANDTAB	  NetBSD 5.0 */
+	{L("expandtab"),	NULL,		OPT_0BOOL,	0},
 /* O_EXRC	System V (undocumented) */
 	{L("exrc"),	NULL,		OPT_0BOOL,	0},
 /* O_EXTENDED	  4.4BSD */
@@ -90,6 +95,10 @@ OPTLIST const optlist[] = {
 	{L("fileencoding"),f_encoding,	OPT_STR,	OPT_WC},
 /* O_FLASH	    HPUX */
 	{L("flash"),	NULL,		OPT_1BOOL,	0},
+#ifdef GTAGS
+/* O_GTAGSMODE	    FreeBSD/NetBSD */
+	{L("gtagsmode"),NULL,		OPT_0BOOL,	0},
+#endif
 /* O_HARDTABS	    4BSD */
 	{L("hardtabs"),	NULL,		OPT_NUM,	0},
 /* O_ICLOWER	  4.4BSD */
@@ -120,6 +129,8 @@ OPTLIST const optlist[] = {
 	{L("lock"),	NULL,		OPT_1BOOL,	0},
 /* O_MAGIC	    4BSD */
 	{L("magic"),	NULL,		OPT_1BOOL,	0},
+/* O_MATCHCHARS	  netbsd 2.0 */
+	{L("matchchars"),	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_MATCHTIME	  4.4BSD */
 	{L("matchtime"),	NULL,		OPT_NUM,	0},
 /* O_MESG	    4BSD */
@@ -146,7 +157,7 @@ OPTLIST const optlist[] = {
 /* O_OPTIMIZE	    4BSD */
 	{L("optimize"),	NULL,		OPT_1BOOL,	0},
 /* O_PARAGRAPHS	    4BSD */
-	{L("paragraphs"),	f_paragraph,	OPT_STR,	0},
+	{L("paragraphs"), NULL,		OPT_STR,	OPT_PAIRS},
 /* O_PATH	  4.4BSD */
 	{L("path"),	NULL,		OPT_STR,	0},
 /* O_PRINT	  4.4BSD */
@@ -170,7 +181,7 @@ OPTLIST const optlist[] = {
 /* O_SEARCHINCR	  4.4BSD */
 	{L("searchincr"),	NULL,		OPT_0BOOL,	0},
 /* O_SECTIONS	    4BSD */
-	{L("sections"),	f_section,	OPT_STR,	0},
+	{L("sections"),	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_SECURE	  4.4BSD */
 	{L("secure"),	NULL,		OPT_0BOOL,	OPT_NOUNSET},
 /* O_SHELL	    4BSD */
@@ -238,11 +249,11 @@ OPTLIST const optlist[] = {
 	{L("wrapscan"),	NULL,		OPT_1BOOL,	0},
 /* O_WRITEANY	    4BSD */
 	{L("writeany"),	NULL,		OPT_0BOOL,	0},
-	{NULL},
+	{NULL,		NULL,		OPT_NUM,	0},
 };
 
 typedef struct abbrev {
-        CHAR_T *name;
+        const CHAR_T *name;
         int offset;
 } OABBREV;
 
@@ -255,7 +266,11 @@ static OABBREV const abbrev[] = {
 	{L("dir"),	O_TMP_DIRECTORY},	/*     4BSD */
 	{L("eb"),	O_ERRORBELLS},		/*     4BSD */
 	{L("ed"),	O_EDCOMPATIBLE},	/*     4BSD */
+	{L("et"),	O_EXPANDTAB},		/* NetBSD 5.0 */
 	{L("ex"),	O_EXRC},		/* System V (undocumented) */
+#ifdef GTAGS
+	{L("gt"),	O_GTAGSMODE},		/* FreeBSD, NetBSD */
+#endif
 	{L("fe"),	O_FILEENCODING},
 	{L("ht"),	O_HARDTABS},		/*     4BSD */
 	{L("ic"),	O_IGNORECASE},		/*     4BSD */
@@ -286,7 +301,7 @@ static OABBREV const abbrev[] = {
 	{L("wl"),	O_WRAPLEN},		/*   4.4BSD */
 	{L("wm"),	O_WRAPMARGIN},		/*     4BSD */
 	{L("ws"),	O_WRAPSCAN},		/*     4BSD */
-	{NULL},
+	{NULL,		0},
 };
 
 /*
@@ -301,11 +316,16 @@ opts_init(SCR *sp, int *oargs)
 	ARGS *argv[2], a, b;
 	OPTLIST const *op;
 	u_long isset, v;
-	int cnt, optindx;
+	int cnt, optindx = 0;
 	char *s;
 	CHAR_T b2[1024];
-	CHAR_T *wp;
-	size_t wlen;
+
+	if (sizeof optlist / sizeof optlist[0] - 1 != O_OPTIONCOUNT) {
+		fprintf(stderr, "vi: option table size error (%d != %d)\n",
+		    (int)(sizeof optlist / sizeof optlist[0] - 1),
+		    O_OPTIONCOUNT);
+		exit(1);
+	}
 
 	a.bp = b2;
 	b.bp = NULL;
@@ -316,7 +336,7 @@ opts_init(SCR *sp, int *oargs)
 	/* Set numeric and string default values. */
 #define	OI(indx, str) {							\
 	a.len = STRLEN(str);						\
-	if ((CHAR_T*)str != b2)	  /* GCC puts strings in text-space. */	\
+	if ((const CHAR_T*)str != b2)/* GCC puts strings in text-space. */\
 		(void)MEMCPY(b2, str, a.len+1);				\
 	if (opts_set(sp, argv, NULL)) {					\
 		 optindx = indx;					\
@@ -358,6 +378,7 @@ opts_init(SCR *sp, int *oargs)
 	OI(O_TMP_DIRECTORY, b2);
 	OI(O_ESCAPETIME, L("escapetime=1"));
 	OI(O_KEYTIME, L("keytime=6"));
+	OI(O_MATCHCHARS, L("matchchars=()[]{}<>"));
 	OI(O_MATCHTIME, L("matchtime=7"));
 	(void)SPRINTF(b2, SIZE(b2), L("msgcat=%s"), _PATH_MSGCAT);
 	OI(O_MSGCAT, b2);
@@ -453,8 +474,8 @@ opts_init(SCR *sp, int *oargs)
 	}
 	return (0);
 
-err:	msgq(sp, M_ERR,
-	    "031|Unable to set default %s option", optlist[optindx].name);
+err:	msgq_wstr(sp, M_ERR, optlist[optindx].name,
+	    "031|Unable to set default %s option");
 	return (1);
 }
 
@@ -462,10 +483,10 @@ err:	msgq(sp, M_ERR,
  * opts_set --
  *	Change the values of one or more options.
  *
- * PUBLIC: int opts_set __P((SCR *, ARGS *[], char *));
+ * PUBLIC: int opts_set __P((SCR *, ARGS *[], const char *));
  */
 int
-opts_set(SCR *sp, ARGS **argv, char *usage)
+opts_set(SCR *sp, ARGS **argv, const char *usage)
 {
 	enum optdisp disp;
 	enum nresult nret;
@@ -473,9 +494,9 @@ opts_set(SCR *sp, ARGS **argv, char *usage)
 	OPTION *spo;
 	u_long isset, turnoff, value;
 	int ch, equals, nf, nf2, offset, qmark, rval;
-	CHAR_T *endp, *name, *p, *sep, *t;
+	CHAR_T *endp, *name, *p, *sep;
 	char *p2, *t2;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	disp = NO_DISPLAY;
@@ -578,17 +599,18 @@ opts_set(SCR *sp, ARGS **argv, char *usage)
 			 * functions can be expensive.
 			 */
 			isset = !turnoff;
-			if (!F_ISSET(op, OPT_ALWAYS))
+			if (!F_ISSET(op, OPT_ALWAYS)) {
 				if (isset) {
 					if (O_ISSET(sp, offset))
 						break;
 				} else
 					if (!O_ISSET(sp, offset))
 						break;
+			}
 
 			/* Report to subsystems. */
-			if (op->func != NULL &&
-			    op->func(sp, spo, NULL, &isset) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, NULL, &isset)) ||
 			    ex_optchange(sp, offset, NULL, &isset) ||
 			    v_optchange(sp, offset, NULL, &isset) ||
 			    sp->gp->scr_optchange(sp, offset, NULL, &isset)) {
@@ -616,7 +638,7 @@ opts_set(SCR *sp, ARGS **argv, char *usage)
 				break;
 			}
 
-			if (!ISDIGIT(sep[0]))
+			if (!ISDIGIT((UCHAR_T)sep[0]))
 				goto badnum;
 			if ((nret =
 			    nget_uslong(sp, &value, sep, &endp, 10)) != NUM_OK) {
@@ -681,8 +703,8 @@ badnum:				INT2CHAR(sp, name, STRLEN(name) + 1,
 
 			/* Report to subsystems. */
 			INT2CHAR(sp, sep, STRLEN(sep) + 1, np, nlen);
-			if (op->func != NULL &&
-			    op->func(sp, spo, np, &value) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, np, &value)) ||
 			    ex_optchange(sp, offset, np, &value) ||
 			    v_optchange(sp, offset, np, &value) ||
 			    sp->gp->scr_optchange(sp, offset, np, &value)) {
@@ -708,6 +730,14 @@ badnum:				INT2CHAR(sp, name, STRLEN(name) + 1,
 				break;
 			}
 
+			/* Check for strings that must have even length */
+			if (F_ISSET(op, OPT_PAIRS) && STRLEN(sep) & 1) {
+				msgq_wstr(sp, M_ERR, name,
+				    "047|set: the %s option must be in two character groups");
+				rval = 1;
+				break;
+			}
+
 			/*
 			 * Do nothing if the value is unchanged, the underlying
 			 * functions can be expensive.
@@ -719,8 +749,8 @@ badnum:				INT2CHAR(sp, name, STRLEN(name) + 1,
 				break;
 
 			/* Report to subsystems. */
-			if (op->func != NULL &&
-			    op->func(sp, spo, np, NULL) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, np, NULL)) ||
 			    ex_optchange(sp, offset, np, NULL) ||
 			    v_optchange(sp, offset, np, NULL) ||
 			    sp->gp->scr_optchange(sp, offset, np, NULL)) {
@@ -745,10 +775,10 @@ badnum:				INT2CHAR(sp, name, STRLEN(name) + 1,
  * o_set --
  *	Set an option's value.
  *
- * PUBLIC: int o_set __P((SCR *, int, u_int, char *, u_long));
+ * PUBLIC: int o_set __P((SCR *, int, u_int, const char *, u_long));
  */
 int
-o_set(SCR *sp, int opt, u_int flags, char *str, u_long val)
+o_set(SCR *sp, int opt, u_int flags, const char *str, u_long val)
 {
 	OPTION *op;
 
@@ -766,14 +796,14 @@ o_set(SCR *sp, int opt, u_int flags, char *str, u_long val)
 	if LF_ISSET(OS_DEF)
 		if (LF_ISSET(OS_STR | OS_STRDUP)) {
 			if (!LF_ISSET(OS_NOFREE) && op->o_def.str != NULL)
-				free(op->o_def.str);
+				free(__UNCONST(op->o_def.str));
 			op->o_def.str = str;
 		} else
 			op->o_def.val = val;
 	else
 		if (LF_ISSET(OS_STR | OS_STRDUP)) {
 			if (!LF_ISSET(OS_NOFREE) && op->o_cur.str != NULL)
-				free(op->o_cur.str);
+				free(__UNCONST(op->o_cur.str));
 			op->o_cur.str = str;
 		} else
 			op->o_cur.val = val;
@@ -789,7 +819,7 @@ o_set(SCR *sp, int opt, u_int flags, char *str, u_long val)
 int
 opts_empty(SCR *sp, int off, int silent)
 {
-	char *p;
+	const char *p;
 
 	if ((p = O_STR(sp, off)) == NULL || p[0] == '\0') {
 		if (!silent)
@@ -814,7 +844,6 @@ opts_dump(SCR *sp, enum optdisp type)
 	int numcols, numrows, row;
 	int b_op[O_OPTIONCOUNT], s_op[O_OPTIONCOUNT];
 	char nbuf[20];
-	CHAR_T *kp;
 
 	/*
 	 * Options are output in two groups -- those that fit in a column and
@@ -863,8 +892,8 @@ opts_dump(SCR *sp, enum optdisp type)
 				break;
 			case OPT_STR:
 				if (O_STR(sp, cnt) == O_D_STR(sp, cnt) ||
-				    O_D_STR(sp, cnt) != NULL &&
-				    !strcmp(O_STR(sp, cnt), O_D_STR(sp, cnt)))
+				    (O_D_STR(sp, cnt) != NULL &&
+				    !strcmp(O_STR(sp, cnt), O_D_STR(sp, cnt))))
 					continue;
 				break;
 			}
@@ -973,8 +1002,10 @@ int
 opts_save(SCR *sp, FILE *fp)
 {
 	OPTLIST const *op;
-	CHAR_T ch, *p;
-	char nch, *np;
+	CHAR_T ch;
+	const CHAR_T *p;
+	char nch;
+	const char *np;
 	int cnt;
 
 	for (op = optlist; op->name != NULL; ++op) {
@@ -1004,7 +1035,7 @@ opts_save(SCR *sp, FILE *fp)
 			}
 			(void)putc('=', fp);
 			for (np = O_STR(sp, cnt); (nch = *np) != '\0'; ++np) {
-				if (isblank(nch) || nch == '\\')
+				if (isblank((unsigned char)nch) || nch == '\\')
 					(void)putc('\\', fp);
 				(void)putc(nch, fp);
 			}
@@ -1023,10 +1054,10 @@ opts_save(SCR *sp, FILE *fp)
  * opts_search --
  *	Search for an option.
  *
- * PUBLIC: OPTLIST const *opts_search __P((CHAR_T *));
+ * PUBLIC: OPTLIST const *opts_search __P((const CHAR_T *));
  */
 OPTLIST const *
-opts_search(CHAR_T *name)
+opts_search(const CHAR_T *name)
 {
 	OPTLIST const *op, *found;
 	OABBREV atmp, *ap;
@@ -1068,10 +1099,10 @@ opts_search(CHAR_T *name)
  * opts_nomatch --
  *	Standard nomatch error message for options.
  *
- * PUBLIC: void opts_nomatch __P((SCR *, CHAR_T *));
+ * PUBLIC: void opts_nomatch __P((SCR *, const CHAR_T *));
  */
 void
-opts_nomatch(SCR *sp, CHAR_T *name)
+opts_nomatch(SCR *sp, const CHAR_T *name)
 {
 	msgq_wstr(sp, M_ERR, name,
 	    "033|set: no %s option: 'set all' gives all option values");
@@ -1080,13 +1111,13 @@ opts_nomatch(SCR *sp, CHAR_T *name)
 static int
 opts_abbcmp(const void *a, const void *b)
 {
-        return(STRCMP(((OABBREV *)a)->name, ((OABBREV *)b)->name));
+        return(STRCMP(((const OABBREV *)a)->name, ((const OABBREV *)b)->name));
 }
 
 static int
 opts_cmp(const void *a, const void *b)
 {
-        return(STRCMP(((OPTLIST *)a)->name, ((OPTLIST *)b)->name));
+        return(STRCMP(((const OPTLIST *)a)->name, ((const OPTLIST *)b)->name));
 }
 
 /*
@@ -1151,8 +1182,8 @@ opts_free(SCR *sp)
 		    F_ISSET(&sp->opts[cnt], OPT_GLOBAL))
 			continue;
 		if (O_STR(sp, cnt) != NULL)
-			free(O_STR(sp, cnt));
+			free(__UNCONST(O_STR(sp, cnt)));
 		if (O_D_STR(sp, cnt) != NULL)
-			free(O_D_STR(sp, cnt));
+			free(__UNCONST(O_D_STR(sp, cnt)));
 	}
 }

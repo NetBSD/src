@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_filter.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -29,6 +30,57 @@ static const char sccsid[] = "Id: ex_filter.c,v 10.44 2003/11/05 17:11:54 skimo 
 
 static int filter_ldisplay __P((SCR *, FILE *));
 
+static pid_t
+runcmd(SCR *sp, const char *np, int* input, int *output)
+{
+	pid_t pid;
+	const char *name;
+	switch (pid = vfork()) {
+	case -1:			/* Error. */
+		msgq(sp, M_SYSERR, "vfork");
+		return -1;
+	case 0:				/* Utility. */
+		/*
+		 * Redirect stdin from the read end of the input pipe, and
+		 * redirect stdout/stderr to the write end of the output pipe.
+		 *
+		 * !!!
+		 * Historically, ex only directed stdout into the input pipe,
+		 * letting stderr come out on the terminal as usual.  Vi did
+		 * not, directing both stdout and stderr into the input pipe.
+		 * We match that practice in both ex and vi for consistency.
+		 */
+		if (input[0] != -1)
+			(void)dup2(input[0], STDIN_FILENO);
+		(void)dup2(output[1], STDOUT_FILENO);
+		(void)dup2(output[1], STDERR_FILENO);
+
+		/* Close the utility's file descriptors. */
+		if (input[0] != -1)
+			(void)close(input[0]);
+		if (input[1] != -1)
+			(void)close(input[1]);
+		(void)close(output[0]);
+		(void)close(output[1]);
+
+		if ((name = strrchr(O_STR(sp, O_SHELL), '/')) == NULL)
+			name = O_STR(sp, O_SHELL);
+		else
+			++name;
+
+		execl(O_STR(sp, O_SHELL), name, "-c", np, (char *)NULL);
+		msgq_str(sp, M_SYSERR, O_STR(sp, O_SHELL), "execl: %s");
+		_exit (127);
+		/* NOTREACHED */
+	default:			/* Parent-reader, parent-writer. */
+		/* Close the pipe ends neither parent will use. */
+		if (input[0] != -1)
+			(void)close(input[0]);
+		(void)close(output[1]);
+		return pid;
+	}
+}
+
 /*
  * ex_filter --
  *	Run a range of lines through a filter utility and optionally
@@ -45,8 +97,7 @@ ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, CHAR_T *cmd, enum 
 	pid_t parent_writer_pid, utility_pid;
 	db_recno_t nread;
 	int input[2], output[2], rval;
-	char *name;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	rval = 0;
@@ -95,61 +146,8 @@ ex_filter(SCR *sp, EXCMD *cmdp, MARK *fm, MARK *tm, MARK *rp, CHAR_T *cmd, enum 
 	}
 
 	/* Fork off the utility process. */
-	switch (utility_pid = vfork()) {
-	case -1:			/* Error. */
-		msgq(sp, M_SYSERR, "vfork");
-err:		if (input[0] != -1)
-			(void)close(input[0]);
-		if (input[1] != -1)
-			(void)close(input[1]);
-		if (ofp != NULL)
-			(void)fclose(ofp);
-		else if (output[0] != -1)
-			(void)close(output[0]);
-		if (output[1] != -1)
-			(void)close(output[1]);
-		return (1);
-	case 0:				/* Utility. */
-		/*
-		 * Redirect stdin from the read end of the input pipe, and
-		 * redirect stdout/stderr to the write end of the output pipe.
-		 *
-		 * !!!
-		 * Historically, ex only directed stdout into the input pipe,
-		 * letting stderr come out on the terminal as usual.  Vi did
-		 * not, directing both stdout and stderr into the input pipe.
-		 * We match that practice in both ex and vi for consistency.
-		 */
-		if (input[0] != -1)
-			(void)dup2(input[0], STDIN_FILENO);
-		(void)dup2(output[1], STDOUT_FILENO);
-		(void)dup2(output[1], STDERR_FILENO);
-
-		/* Close the utility's file descriptors. */
-		if (input[0] != -1)
-			(void)close(input[0]);
-		if (input[1] != -1)
-			(void)close(input[1]);
-		(void)close(output[0]);
-		(void)close(output[1]);
-
-		if ((name = strrchr(O_STR(sp, O_SHELL), '/')) == NULL)
-			name = O_STR(sp, O_SHELL);
-		else
-			++name;
-
-		INT2SYS(sp, cmd, STRLEN(cmd)+1, np, nlen);
-		execl(O_STR(sp, O_SHELL), name, "-c", np, (char *)NULL);
-		msgq_str(sp, M_SYSERR, O_STR(sp, O_SHELL), "execl: %s");
-		_exit (127);
-		/* NOTREACHED */
-	default:			/* Parent-reader, parent-writer. */
-		/* Close the pipe ends neither parent will use. */
-		if (input[0] != -1)
-			(void)close(input[0]);
-		(void)close(output[1]);
-		break;
-	}
+	INT2SYS(sp, cmd, STRLEN(cmd)+1, np, nlen);
+	utility_pid = runcmd(sp, np, input, output);
 
 	/*
 	 * FILTER_RBANG, FILTER_READ:
@@ -177,11 +175,12 @@ err:		if (input[0] != -1)
 		if (ex_readfp(sp, "filter", ofp, fm, &nread, 1))
 			rval = 1;
 		sp->rptlines[L_ADDED] += nread;
-		if (ftype == FILTER_READ)
+		if (ftype == FILTER_READ) {
 			if (fm->lno == 0)
 				rp->lno = nread;
 			else
 				rp->lno += nread;
+		}
 		goto uwait;
 	}
 
@@ -286,6 +285,17 @@ err:		if (input[0] != -1)
 uwait:	INT2CHAR(sp, cmd, STRLEN(cmd) + 1, np, nlen);
 	return (proc_wait(sp, (long)utility_pid, np,
 	    ftype == FILTER_READ && F_ISSET(sp, SC_VI) ? 1 : 0, 0) || rval);
+err:	if (input[0] != -1)
+		(void)close(input[0]);
+	if (input[1] != -1)
+		(void)close(input[1]);
+	if (ofp != NULL)
+		(void)fclose(ofp);
+	else if (output[0] != -1)
+		(void)close(output[0]);
+	if (output[1] != -1)
+		(void)close(output[1]);
+	return 1;
 }
 
 /*
@@ -301,7 +311,7 @@ filter_ldisplay(SCR *sp, FILE *fp)
 {
 	size_t len;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	EX_PRIVATE *exp;
 

@@ -17,6 +17,17 @@
 @comment      Id: vi.texi,v 8.1 2001/08/18 20:43:50 skimo Exp  (Berkeley) Date: 2001/08/18 20:43:50 
 @comment 
 @comment 
+
+@dircategory Editors
+@direntry
+* vi: (vi.info).                The vi editor.
+@end direntry
+
+@node Top,(dir),(dir),(dir)
+@menu
+* Vi Commands::
+* Ex Commands::
+@end menu
 @include ref.texi
 @titlepage
 @center @titlefont{Vi/Ex Reference Manual}
@@ -1630,6 +1641,7 @@ into a command.
 @end itemize
 @comment .oh 'Vi/Ex Reference (Vi Commands)''USD:13-%'
 @comment .eh 'USD:13-%''Vi/Ex Reference (Vi Commands)'
+@node Vi Commands,(dir),(dir),(dir)
 @include vi.cmd.texi
 @comment .oh 'Vi/Ex Reference''USD:13-%'
 @comment .eh 'USD:13-%''Vi/Ex Reference'
@@ -1802,6 +1814,7 @@ file, and the last address must be less than or equal to the last line
 of the file.
 @comment .oh 'Vi/Ex Reference (Ex Commands)''USD:13-%'
 @comment .eh 'USD:13-%''Vi/Ex Reference (Ex Commands)'
+@node Ex Commands,(dir),(dir),(dir)
 @include ex.cmd.texi
 @comment .oh 'Vi/Ex Reference (Options)''USD:13-%'
 @comment .eh 'USD:13-%''Vi/Ex Reference (Options)'
