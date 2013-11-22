@@ -1,3 +1,4 @@
+/*	$NetBSD: key.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,20 +11,6 @@
  */
 
 #include "multibyte.h"
-
-/*
- * Fundamental character types.
- *
- * CHAR_T	An integral type that can hold any character.
- * ARG_CHAR_T	The type of a CHAR_T when passed as an argument using
- *		traditional promotion rules.  It should also be able
- *		to be compared against any CHAR_T for equality without
- *		problems.
- * MAX_CHAR_T	The maximum value of any character.
- *
- * If no integral type can hold a character, don't even try the port.
- */
-typedef	u_int		ARG_CHAR_T;
 
 #ifdef USE_WIDECHAR
 #define FILE2INT5(sp,buf,n,nlen,w,wlen)					    \
@@ -39,25 +26,8 @@ typedef	u_int		ARG_CHAR_T;
 #define INPUT2INT5(sp,cw,n,nlen,w,wlen)					    \
     sp->conv.input2int(sp, n, nlen, &(cw), &wlen, &w)
 #define CONST
-#define ISCNTRL(ch) \
-    iswcntrl((ch))
-#define ISDIGIT(ch) \
-    iswdigit((ch))
-#define ISPRINT(ch) \
-    iswprint((ch))
-#define ISBLANK(ch) \
-    iswblank((ch))
-#define ISALPHA(ch) \
-    iswalpha((ch))
-#define ISALNUM(ch) \
-    iswalnum((ch))
-#define ISSPACE(ch) \
-    iswspace((ch))
+#define INTISWIDE(c)	(wctob(c) == EOF)	    /* XXX wrong name */
 #define CHAR_WIDTH(sp, ch)  wcwidth(ch)
-#define INTISWIDE(c)	(!!(c >> 8))	    /* XXX wrong name */
-#define WS		"%ls"
-#define WVS		"%*ls"
-#define WC		"%lc"
 #else
 #define FILE2INT5(sp,buf,n,nlen,w,wlen) \
     (w = n, wlen = nlen, 0)
@@ -72,25 +42,8 @@ typedef	u_int		ARG_CHAR_T;
 #define INPUT2INT5(sp,buf,n,nlen,w,wlen) \
     (w = n, wlen = nlen, 0)
 #define CONST const
-#define ISCNTRL(ch) \
-    iscntrl((ch))
-#define ISDIGIT(ch) \
-    isdigit((ch))
-#define ISPRINT(ch) \
-    isprint((ch))
-#define ISBLANK(ch) \
-    isblank((ch))
-#define ISALPHA(ch) \
-    isalpha((ch))
-#define ISALNUM(ch) \
-    isalnum((ch))
-#define ISSPACE(ch) \
-    isspace((ch))
 #define INTISWIDE(c)	    0
 #define CHAR_WIDTH(sp, ch)  1
-#define WS		"%s"
-#define WVS		"%*s"
-#define WC		"%c"
 #endif
 #define FILE2INT(sp,n,nlen,w,wlen)					    \
     FILE2INT5(sp,sp->wp->cw,n,nlen,w,wlen)
@@ -165,7 +118,7 @@ struct _event {
 #define	CH_MAPPED	0x02		/* Character is from a map. */
 #define	CH_NOMAP	0x04		/* Do not map the character. */
 #define	CH_QUOTED	0x08		/* Character is already quoted. */
-	CHAR_T	  e_c;			/* Character. */
+	ARG_CHAR_T e_c;			/* Character. */
 	e_key_t	  e_value;		/* Key type. */
 
 #define	e_flags	e_val1			/* Flags. */
@@ -190,7 +143,7 @@ struct _event {
 
 typedef struct _keylist {
 	e_key_t value;			/* Special value. */
-	CHAR_T	ch;			/* Key. */
+	int	ch;			/* Key. */
 } KEYLIST;
 extern KEYLIST keylist[];
 
@@ -199,19 +152,6 @@ extern KEYLIST keylist[];
 #define	MAPPED_KEYS_WAITING(sp)						\
 	(KEYS_WAITING(sp) &&						\
 	    FL_ISSET((sp)->wp->i_event[(sp)->wp->i_next].e_flags, CH_MAPPED))
-
-/*
- * Ex/vi commands are generally separated by whitespace characters.  We
- * can't use the standard isspace(3) macro because it returns true for
- * characters like ^K in the ASCII character set.  The 4.4BSD isblank(3)
- * macro does exactly what we want, but it's not portable yet.
- *
- * XXX
- * Note side effect, ch is evaluated multiple times.
- */
-#ifndef isblank
-#define	isblank(ch)	((ch) == ' ' || (ch) == '\t')
-#endif
 
 /* The "standard" tab width, for displaying things to users. */
 #define	STANDARD_TAB	6

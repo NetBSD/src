@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_script.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -23,7 +24,7 @@ static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo 
 #include <sys/select.h>
 #endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS5_PTY
+#if defined(HAVE_SYS5_PTY) && !defined(__NetBSD__)
 #include <sys/stropts.h>
 #endif
 #include <sys/time.h>
@@ -88,7 +89,7 @@ static int
 sscr_init(SCR *sp)
 {
 	SCRIPT *sc;
-	char *sh, *sh_path;
+	const char *sh, *sh_path;
 
 	/* We're going to need a shell. */
 	if (opts_empty(sp, O_SHELL, 0))
@@ -208,7 +209,7 @@ sscr_getprompt(SCR *sp)
 	fd_set fdset;
 	db_recno_t lline;
 	size_t llen, len;
-	u_int value;
+	e_key_t value;
 	int nr;
 
 	FD_ZERO(&fdset);
@@ -300,8 +301,9 @@ sscr_exec(SCR *sp, db_recno_t lno)
 	SCRIPT *sc;
 	db_recno_t last_lno;
 	size_t blen, len, last_len, tlen;
-	int isempty, matchprompt, nw, rval;
-	CHAR_T *bp;
+	int isempty, matchprompt, rval;
+	ssize_t nw;
+	CHAR_T *bp = NULL;
 	CHAR_T *p;
 
 	/* If there's a prompt on the last line, append the command. */
@@ -339,7 +341,7 @@ empty:			msgq(sp, M_BERR, "151|No command to execute");
 
 	/* Push the line to the shell. */
 	sc = sp->script;
-	if ((nw = write(sc->sh_master, p, len)) != len)
+	if ((size_t)(nw = write(sc->sh_master, p, len)) != len)
 		goto err2;
 	rval = 0;
 	if (write(sc->sh_master, "\n", 1) != 1) {
@@ -412,13 +414,11 @@ loop:	memcpy(&rdfd, fdset, sizeof(fd_set));
 int
 sscr_input(SCR *sp)
 {
-	GS *gp;
 	WIN *wp;
 	struct timeval poll;
 	fd_set rdfd;
 	int maxfd;
 
-	gp = sp->gp;
 	wp = sp->wp;
 
 loop:	maxfd = 0;
@@ -468,8 +468,8 @@ sscr_insert(SCR *sp)
 	SCRIPT *sc;
 	fd_set rdfd;
 	db_recno_t lno;
-	size_t blen, len, tlen;
-	u_int value;
+	size_t blen, len = 0, tlen;
+	e_key_t value;
 	int nr, rval;
 	CHAR_T *bp;
 
@@ -553,7 +553,7 @@ static int
 sscr_setprompt(SCR *sp, CHAR_T *buf, size_t len)
 {
 	SCRIPT *sc;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	sc = sp->script;
@@ -671,7 +671,7 @@ static int ptym_open __P((char *));
 static int
 sscr_pty(int *amaster, int *aslave, char *name, struct termios *termp, void *winp)
 {
-	int master, slave, ttygid;
+	int master, slave;
 
 	/* open master terminal */
 	if ((master = ptym_open(name)) < 0)  {
@@ -706,7 +706,7 @@ static int
 ptym_open(char *pts_name)
 {
 	int fdm;
-	char *ptr, *ptsname();
+	char *ptr;
 
 	strcpy(pts_name, _PATH_SYSV_PTY);
 	if ((fdm = open(pts_name, O_RDWR)) < 0 )
@@ -750,6 +750,7 @@ ptys_open(int fdm, char *pts_name)
 		return (-5);
 	}
 
+#ifdef I_PUSH
 	if (ioctl(fds, I_PUSH, "ptem") < 0) {
 		close(fds);
 		close(fdm);
@@ -767,6 +768,7 @@ ptys_open(int fdm, char *pts_name)
 		close(fdm);
 		return (-8);
 	}
+#endif /* I_PUSH */
 
 	return (fds);
 }
@@ -781,8 +783,8 @@ sscr_pty(amaster, aslave, name, termp, winp)
 	void *winp;
 {
 	static char line[] = "/dev/ptyXX";
-	register char *cp1, *cp2;
-	register int master, slave, ttygid;
+	const char *cp1, *cp2;
+	int master, slave, ttygid;
 	struct group *gr;
 
 	if ((gr = getgrnam("tty")) != NULL)

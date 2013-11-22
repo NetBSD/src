@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_run.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -38,7 +39,7 @@ static void attach __P((void));
 #endif
 static int channel(int rpipe[2], int wpipe[2]);
 
-char	*vi_progname = "vi";			/* Global: program name. */
+const char	*vi_progname = "vi";		/* Global: program name. */
 
 /*
  * vi_run --
@@ -57,7 +58,7 @@ vi_run(ipvi, argc, argv)
 	char *execp, **p_av, **t_av;
 
 	pflag = 0;
-	execp = VI;
+	execp = __UNCONST(vi_progname);
 
 	/* Strip out any arguments that vi isn't going to understand. */
 	for (p_av = t_av = argv;;) {
@@ -143,8 +144,8 @@ vi_run(ipvi, argc, argv)
 		 * if specified, else run the compiled in path.
 		 */
 		if (!pflag && stat("vi-ipc", &sb) == 0)
-			execv("vi-ipc", argv);
-		execv(execp, argv);
+			execvp("vi-ipc", argv);
+		execvp(execp, argv);
 		(void)fprintf(stderr,
 		    "%s: %s %s\n", vi_progname, execp, strerror(errno));
 		(void)fprintf(stderr,
@@ -174,28 +175,34 @@ fatal()
 	exit (1);
 }
 
-static 
-int channel(int rpipe[2], int wpipe[2])
+static int
+channel(int rpipe[2], int wpipe[2])
 {
-	if (0) {
+	int x;
+	if ((x = pipe(rpipe) == -1) || pipe(wpipe) == -1) {
+		int sockets[2];
 
-	if (pipe(rpipe) == -1 || pipe(wpipe) == -1)
-		return -1;
+		if (x != -1) {
+			close(rpipe[0]);
+			close(rpipe[1]);
+		}
 
-	} else {
+		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockets) == -1)
+			return -1;
 
-	int sockets[2];
-
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockets) == -1)
-		return -1;
-
-	rpipe[0] = sockets[0];
-	wpipe[0] = sockets[1];
-	if (((rpipe[1] = dup(sockets[1])) == -1) ||
-	    ((wpipe[1] = dup(sockets[0])) == -1))
-		return -1;
+		rpipe[0] = sockets[0];
+		wpipe[0] = sockets[1];
+		if (((rpipe[1] = dup(sockets[1])) == -1) ||
+		    ((wpipe[1] = dup(sockets[0])) == -1)) {
+			close(sockets[0]);
+			close(sockets[1]);
+			if (rpipe[1] != -1)
+				close(rpipe[1]);
+			return -1;
+		}
 
 	}
+	return 0;
 }
 
 /*
@@ -203,9 +210,7 @@ int channel(int rpipe[2], int wpipe[2])
  *	Reformat our arguments to add the -I argument for vi.
  */
 static void
-arg_format(execp, argcp, argvp, i_fd, o_fd)
-	char *execp, **argvp[];
-	int *argcp, i_fd, o_fd;
+arg_format(char *execp, int *argcp, char **argvp[], int i_fd, int o_fd)
 {
 	char *iarg, **largv, *p, **p_av, **t_av;
 

@@ -31,7 +31,7 @@
 #include "gtkvi.h"
 #include "gtkviscreen.h"
 #include "gtkviwindow.h"
-#include "extern.h"
+#include "gtk_extern.h"
 
 static int vi_key_press_event __P((GtkWidget*, GdkEventKey*, GtkVi*));
 

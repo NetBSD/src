@@ -1044,13 +1044,23 @@ None.
 @deftypefn Command {} {%}
 
 Move to the matching character.
-The cursor moves to the parenthesis or curly brace which
+The cursor moves to the bracket character which
 @emph{matches}
-the parenthesis or curly brace found at the current cursor position
+the bracket found at the current cursor position
 or which is the closest one to the right of the cursor on the line.
-It is an error to execute the
+The bracket characters are defined by the
+@OP{matchchars}
+option.
+An error will be reported if none of the
+@OP{matchchars}
+characters is found, or if no matching character is found.
+If the open and close brackes are identical (e.g.: if they are
+@QT{'}
+or
+@QT{"},
+then repeating a
 @CO{%}
-command on a line without a parenthesis or curly brace.
+command will perform a backwards search from the original opening bracket.
 Historically, any
 @LI{count}specified to the
 @CO{%}

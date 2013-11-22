@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_trans.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -122,7 +123,8 @@ vi_translate(IPVIWIN *ipviwin, char *bp, size_t *lenp, IP_BUF *ipbp)
 	IP_BUF ipb;
 	size_t len, needlen;
 	u_int32_t *vp;
-	char *fmt, *p, *s_bp;
+	const char *fmt;
+	char *p, *s_bp;
 	const char **vsp;
 	IPFunc fun;
 

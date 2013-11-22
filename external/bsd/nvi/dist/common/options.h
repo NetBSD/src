@@ -1,3 +1,4 @@
+/*	$NetBSD: options.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +52,7 @@
 struct _option {
 	union {
 		u_long	 val;		/* Value or boolean. */
-		char	*str;		/* String. */
+		const char *str;	/* String. */
 	} o_cur;
 #define	O_CLR(sp, o)		o_set(sp, o, 0, NULL, 0)
 #define	O_SET(sp, o)		o_set(sp, o, 0, NULL, 1)
@@ -61,7 +62,7 @@ struct _option {
 
 	union {
 		u_long	 val;		/* Value or boolean. */
-		char	*str;		/* String. */
+		const char *str;	/* String. */
 	} o_def;
 #define	O_D_CLR(sp, o)		o_set(sp, o, OS_DEF, NULL, 0)
 #define	O_D_SET(sp, o)		o_set(sp, o, OS_DEF, NULL, 1)
@@ -76,9 +77,9 @@ struct _option {
 
 /* List of option names, associated update functions and information. */
 struct _optlist {
-	CHAR_T	*name;			/* Name. */
+	const CHAR_T *name;		/* Name. */
 					/* Change function. */
-	int	(*func) __P((SCR *, OPTION *, char *, u_long *));
+	int	(*func) __P((SCR *, OPTION *, const char *, u_long *));
 					/* Type of object. */
 	enum { OPT_0BOOL, OPT_1BOOL, OPT_NUM, OPT_STR } type;
 
@@ -89,6 +90,7 @@ struct _optlist {
 #define	OPT_NOSET	0x010		/* Option may not be set. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
+#define	OPT_PAIRS	0x080		/* String with even length */
 	u_int8_t flags;
 };
 

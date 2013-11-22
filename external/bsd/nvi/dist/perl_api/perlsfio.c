@@ -41,7 +41,7 @@ static const char sccsid[] = "Id: perlsfio.c,v 8.3 2000/04/30 17:00:15 skimo Exp
 #include "config.h"
 
 #include "../common/common.h"
-#include "extern.h"
+#include "perl_api_extern.h"
 
 /*
  * PUBLIC: #ifdef USE_SFIO

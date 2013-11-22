@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_append.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -252,7 +253,7 @@ ex_aci(SCR *sp, EXCMD *cmdp, enum which cmd)
 		return (1);
 
 	for (cnt = 0, tp = tiq.cqh_first;
-	    tp != (TEXT *)&tiq; ++cnt, tp = tp->q.cqe_next)
+	    tp != (TEXT *)(void *)&tiq; ++cnt, tp = tp->q.cqe_next)
 		if (db_append(sp, 1, lno++, tp->lb, tp->len))
 			return (1);
 

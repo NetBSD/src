@@ -1,3 +1,4 @@
+/*	$NetBSD: regex2.h,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -75,36 +76,30 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
-typedef int sopno;
-#define	OPRMASK	0xf8000000
-#define	OPDMASK	0x07ffffff
-#define	OPSHIFT	((unsigned)27)
-#define	OP(n)	((n)&OPRMASK)
-#define	OPND(n)	((n)&OPDMASK)
-#define	SOP(op, opnd)	((op)|(opnd))
+typedef char sop;	/* strip operator */
+typedef size_t sopno;
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
-#define	OEND	(1UL<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	(2UL<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	(3UL<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	(4UL<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	(5UL<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	(6UL<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	(7UL<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	(8UL<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	(9UL<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	(10UL<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	(11UL<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	(12UL<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	(13UL<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	(14UL<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	(15UL<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	(16UL<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	(17UL<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	(18UL<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	(19UL<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	(20UL<<OPSHIFT)	/* end word	-			*/
+#define	OEND	(1)		/* endmarker	-			*/
+#define	OCHAR	(2)		/* character	unsigned char		*/
+#define	OBOL	(3)		/* left anchor	-			*/
+#define	OEOL	(4)		/* right anchor	-			*/
+#define	OANY	(5)		/* .		-			*/
+#define	OANYOF	(6)		/* [...]	set number		*/
+#define	OBACK_	(7)		/* begin \d	paren number		*/
+#define	O_BACK	(8)		/* end \d	paren number		*/
+#define	OPLUS_	(9)		/* + prefix	fwd to suffix		*/
+#define	O_PLUS	(10)		/* + suffix	back to prefix		*/
+#define	OQUEST_	(11)		/* ? prefix	fwd to suffix		*/
+#define	O_QUEST	(12)		/* ? suffix	back to prefix		*/
+#define	OLPAREN	(13)		/* (		fwd to )		*/
+#define	ORPAREN	(14)		/* )		back to (		*/
+#define	OCH_	(15)		/* begin choice	fwd to OOR2		*/
+#define	OOR1	(16)		/* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	(17)		/* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	(18)		/* end choice	back to OOR1		*/
+#define	OBOW	(19)		/* begin word	-			*/
+#define	OEOW	(20)		/* end word	-			*/
 
 /*
  * Structure for [] character-set representation.  Character sets are
@@ -143,8 +138,9 @@ struct re_guts {
 	int magic;
 #		define	MAGIC2	((('R'^0200)<<8)|'E')
 	sop *strip;		/* malloced area for strip */
-	int csetsize;		/* number of bits in a cset vector */
-	int ncsets;		/* number of csets in use */
+	RCHAR_T *stripdata;	/* malloced area for stripdata */
+	size_t csetsize;	/* number of bits in a cset vector */
+	size_t ncsets;		/* number of csets in use */
 	cset *sets;		/* -> cset [ncsets] */
 	uch *setbits;		/* -> uch[csetsize][ncsets/CHAR_BIT] */
 	int cflags;		/* copy of regcomp() cflags argument */
@@ -155,14 +151,14 @@ struct re_guts {
 #		define	USEBOL	01	/* used ^ */
 #		define	USEEOL	02	/* used $ */
 #		define	BAD	04	/* something wrong */
-	int nbol;		/* number of ^ used */
-	int neol;		/* number of $ used */
+	size_t nbol;		/* number of ^ used */
+	size_t neol;		/* number of $ used */
 #if 0
-	int ncategories;	/* how many character categories */
+	size_t ncategories;	/* how many character categories */
 	cat_t *categories;	/* ->catspace[-CHAR_MIN] */
 #endif
 	RCHAR_T *must;		/* match must contain this string */
-	int mlen;		/* length of must */
+	size_t mlen;		/* length of must */
 	size_t nsub;		/* copy of re_nsub */
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */
@@ -173,5 +169,5 @@ struct re_guts {
 };
 
 /* misc utilities */
-#define	OUT	(RCHAR_T_MAX+1)	/* a non-character value */
-#define	ISWORD(c)	((c <= 0xFF && isalnum(c)) || (c) == '_')
+#define OUT	REOF	/* a non-character value */
+#define	ISWORD(c) ((c) == '_' || (ISGRAPH((UCHAR_T)c) && !ISPUNCT((UCHAR_T)c)))

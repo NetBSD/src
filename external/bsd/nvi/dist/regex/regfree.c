@@ -1,3 +1,4 @@
+/*	$NetBSD: regfree.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -69,6 +70,8 @@ regfree(regex_t *preg)
 
 	if (g->strip != NULL)
 		free((char *)g->strip);
+	if (g->stripdata != NULL)
+		free((char *)g->stripdata);
 	if (g->sets != NULL)
 		free((char *)g->sets);
 	if (g->setbits != NULL)

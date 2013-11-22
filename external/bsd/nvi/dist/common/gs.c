@@ -1,3 +1,4 @@
+/*	$NetBSD: gs.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.
@@ -19,9 +20,11 @@
 #include <unistd.h>
 
 #include "../common/common.h"
-#include "../perl_api/extern.h"
+#ifdef USE_PERL_SETENV
+#include "perl_api_extern.h"
+#endif
 
-static void	   perr __P((char *, char *));
+__dead static void	   perr __P((char *, char *));
 
 /*
  * gs_init --
