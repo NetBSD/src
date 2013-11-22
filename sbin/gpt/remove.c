@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.9 2013/11/22 03:50:05 jnemeth Exp $");
+__RCSID("$NetBSD: remove.c,v 1.10 2013/11/22 04:21:02 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -158,6 +158,7 @@ cmd_remove(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
+	int64_t human_num;
 
 	/* Get the remove options */
 	while ((ch = getopt(argc, argv, "ab:i:s:t:")) != -1) {
@@ -170,9 +171,9 @@ cmd_remove(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_remove();
-			block = strtoll(optarg, &p, 10);
-			if (*p != 0 || block < 1)
+			if (dehumanize_number(optarg, &human_num) < 0)
 				usage_remove();
+			block = human_num;
 			break;
 		case 'i':
 			if (entry > 0)
