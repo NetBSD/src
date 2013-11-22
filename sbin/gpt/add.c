@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.17 2013/11/19 22:41:43 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.18 2013/11/22 03:50:05 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@ static off_t alignment, block, size;
 static unsigned int entry;
 static uint8_t *name;
 
-const char addmsg1[] = "add [-a alignment] [-b lba] [-i index] [-l label]";
-const char addmsg2[] = "    [-s lba] [-t type] device ...";
+const char addmsg1[] = "add [-a alignment] [-b blocknr] [-i index] [-l label]";
+const char addmsg2[] = "    [-s sectors] [-t type] device ...";
 
 __dead static void
 usage_add(void)
