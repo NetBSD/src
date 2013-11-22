@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.20 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.21 2013/11/22 18:55:42 riz Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.20 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.21 2013/11/22 18:55:42 riz Exp $");
 
 #include "rf_archs.h"
 
@@ -114,10 +114,10 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	RF_PhysDiskAddr_t *EPDA =
 	    (RF_PhysDiskAddr_t *) node->params[EpdaIndex].p;
 	int     ESUOffset = rf_StripeUnitOffset(layoutPtr, EPDA->startSector);
-#endif /* RAID_DIAGNOSTIC */
 
 	RF_ASSERT(EPDA->type == RF_PDA_TYPE_Q);
 	RF_ASSERT(ESUOffset == 0);
+#endif /* RAID_DIAGNOSTIC */
 
 	RF_ETIMER_START(timer);
 
