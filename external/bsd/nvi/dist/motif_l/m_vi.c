@@ -1,4 +1,4 @@
-/*-
+/*	$NetBSD: m_vi.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
  * Copyright (c) 1996
@@ -1105,10 +1105,10 @@ int		*start;
 
     switch ( select_type ) {
 	case select_word:
-	    if ( *start == 0 || isspace( cur_screen->characters[*start] ) )
+	    if ( *start == 0 || isspace( (unsigned char)cur_screen->characters[*start] ) )
 		return;
 	    for (;;) {
-		if ( isspace( cur_screen->characters[*start-1] ) )
+		if ( isspace( (unsigned char)cur_screen->characters[*start-1] ) )
 		    return;
 		if ( --(*start) == 0 )
 		   return;
@@ -1134,10 +1134,10 @@ int		*end;
 
     switch ( select_type ) {
 	case select_word:
-	    if ( *end == last || isspace( cur_screen->characters[*end] ) )
+	    if ( *end == last || isspace( (unsigned char)cur_screen->characters[*end] ) )
 		return;
 	    for (;;) {
-		if ( isspace( cur_screen->characters[*end+1] ) )
+		if ( isspace( (unsigned char)cur_screen->characters[*end+1] ) )
 		    return;
 		if ( ++(*end) == last )
 		   return;
@@ -1379,7 +1379,7 @@ __vi_set_word_at_caret(xvi_screen *this_screen)
 
     /* Note that this really ought to be done by core due to wrapping issues */
     for ( end = start = CharAt( this_screen, newy, newx );
-	  (isalnum( *end ) || *end == '_') && (newx < this_screen->cols);
+	  (isalnum( (unsigned char)*end ) || *end == '_') && (newx < this_screen->cols);
 	  end++, newx++
 	  );
     save = *end;

@@ -1,3 +1,4 @@
+/*	$NetBSD: delete.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -63,7 +64,7 @@ del(SCR *sp, MARK *fm, MARK *tm, int lmode)
 		if (tm->lno == lno) {
 			if (db_get(sp, lno, DBG_FATAL, &p, &len))
 				return (1);
-			eof = tm->cno >= len ? 1 : 0;
+			eof = tm->cno != ENTIRE_LINE && tm->cno >= len ? 1 : 0;
 		} else
 			eof = 1;
 		if (eof) {

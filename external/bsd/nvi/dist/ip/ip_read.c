@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_read.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -27,84 +28,83 @@ static const char sccsid[] = "Id: ip_read.c,v 8.23 2001/06/25 15:19:24 skimo Exp
 #include "../common/common.h"
 #include "../ex/script.h"
 #include "../ipc/ip.h"
-#include "extern.h"
 
 extern GS *__global_list;
 
 VIPFUNLIST const vipfuns[] = {
-/* VI_C_BOL	    Cursor to start of line. */
+/* VI_C_BOL	 1      Cursor to start of line. */
     {"",    E_IPCOMMAND},
-/* VI_C_BOTTOM	 2	/* Cursor to bottom. */
+/* VI_C_BOTTOM	 2	Cursor to bottom. */
     {"",    E_IPCOMMAND},
-/* VI_C_DEL	 3	/* Cursor delete. */
+/* VI_C_DEL	 3	Cursor delete. */
     {"",    E_IPCOMMAND},
-/* VI_C_DOWN	    Cursor down N lines: IPO_INT. */
+/* VI_C_DOWN	 4      Cursor down N lines: IPO_INT. */
     {"1",   E_IPCOMMAND},
-/* VI_C_EOL	 5	/* Cursor to end of line. */
+/* VI_C_EOL	 5	Cursor to end of line. */
     {"",    E_IPCOMMAND},
-/* VI_C_INSERT	 6	/* Cursor: enter insert mode. */
+/* VI_C_INSERT	 6	Cursor: enter insert mode. */
     {"",    E_IPCOMMAND},
-/* VI_C_LEFT	 7	/* Cursor left. */
+/* VI_C_LEFT	 7	Cursor left. */
     {"",    E_IPCOMMAND},
-/* VI_C_PGDOWN	 8	/* Cursor down N pages: IPO_INT. */
+/* VI_C_PGDOWN	 8	Cursor down N pages: IPO_INT. */
     {"1",   E_IPCOMMAND},
-/* VI_C_PGUP	 9	/* Cursor up N lines: IPO_INT. */
+/* VI_C_PGUP	 9	Cursor up N lines: IPO_INT. */
     {"1",   E_IPCOMMAND},
-/* VI_C_RIGHT	10	/* Cursor right. */
+/* VI_C_RIGHT	10	Cursor right. */
     {"",    E_IPCOMMAND},
-/* VI_C_SEARCH	11	/* Cursor: search: IPO_INT, IPO_STR. */
+/* VI_C_SEARCH	11	Cursor: search: IPO_INT, IPO_STR. */
     {"a1",  E_IPCOMMAND},
-/* VI_C_SETTOP	12	/* Cursor: set screen top line: IPO_INT. */
+/* VI_C_SETTOP	12	Cursor: set screen top line: IPO_INT. */
     {"1",   E_IPCOMMAND},
-/* VI_C_TOP	13	/* Cursor to top. */
+/* VI_C_TOP	13	Cursor to top. */
     {"",    E_IPCOMMAND},
-/* VI_C_UP		14	/* Cursor up N lines: IPO_INT. */
+/* VI_C_UP	14	Cursor up N lines: IPO_INT. */
     {"1",   E_IPCOMMAND},
-/* VI_EDIT		15	/* Edit a file: IPO_STR. */
+/* VI_EDIT	15	Edit a file: IPO_STR. */
     {"a",   E_IPCOMMAND},
-/* VI_EDITOPT	16	/* Edit option: 2 * IPO_STR, IPO_INT. */
+/* VI_EDITOPT	16	Edit option: 2 * IPO_STR, IPO_INT. */
     {"ab1", E_IPCOMMAND},
-/* VI_EDITSPLIT	17	/* Split to a file: IPO_STR. */
+/* VI_EDITSPLIT	17	Split to a file: IPO_STR. */
     {"a",   E_IPCOMMAND},
-/* VI_EOF		18	/* End of input (NOT ^D). */
+/* VI_EOF	18	End of input (NOT ^D). */
     {"",    E_EOF},
-/* VI_ERR		19	/* Input error. */
+/* VI_ERR	19	Input error. */
     {"",    E_ERR},
-/* VI_FLAGS	    Flags */
+/* VI_FLAGS	20	Flags */
     {"1",   E_FLAGS},
-/* VI_INTERRUPT	20	/* Interrupt. */
+/* VI_INTERRUPT	21	Interrupt. */
     {"",    E_INTERRUPT},
-/* VI_MOUSE_MOVE	21	/* Mouse click move: IPO_INT, IPO_INT. */
+/* VI_MOUSE_MOVE 22	Mouse click move: IPO_INT, IPO_INT. */
     {"12",  E_IPCOMMAND},
-/* VI_QUIT		22	/* Quit. */
+/* VI_QUIT	23	Quit. */
     {"",    E_IPCOMMAND},
-/* VI_RESIZE	    Screen resize: IPO_INT, IPO_INT. */
+/* VI_RESIZE	24      Screen resize: IPO_INT, IPO_INT. */
     {"12",  E_WRESIZE},
-/* VI_SEL_END	24	/* Select end: IPO_INT, IPO_INT. */
+/* VI_SEL_END	25	Select end: IPO_INT, IPO_INT. */
     {"12",  E_IPCOMMAND},
-/* VI_SEL_START	25	/* Select start: IPO_INT, IPO_INT. */
+/* VI_SEL_START	26	Select start: IPO_INT, IPO_INT. */
     {"12",  E_IPCOMMAND},
-/* VI_SIGHUP	26	/* SIGHUP. */
+/* VI_SIGHUP	27	SIGHUP. */
     {"",    E_SIGHUP},
-/* VI_SIGTERM	27	/* SIGTERM. */
+/* VI_SIGTERM	28	SIGTERM. */
     {"",    E_SIGTERM},
-/* VI_STRING	    Input string: IPO_STR. */
+/* VI_STRING	29      Input string: IPO_STR. */
     {"a",   E_STRING},
-/* VI_TAG		29	/* Tag. */
+/* VI_TAG	30	Tag. */
     {"",    E_IPCOMMAND},
-/* VI_TAGAS	30	/* Tag to a string: IPO_STR. */
+/* VI_TAGAS	31	Tag to a string: IPO_STR. */
     {"a",   E_IPCOMMAND},
-/* VI_TAGSPLIT	31	/* Split to a tag. */
+/* VI_TAGSPLIT	32	Split to a tag. */
     {"",    E_IPCOMMAND},
-/* VI_UNDO		32	/* Undo. */
+/* VI_UNDO	33	Undo. */
     {"",    E_IPCOMMAND},
-/* VI_WQ		33	/* Write and quit. */
+/* VI_WQ	34	Write and quit. */
     {"",    E_IPCOMMAND},
-/* VI_WRITE	34	/* Write. */
+/* VI_WRITE	35	Write. */
     {"",    E_IPCOMMAND},
-/* VI_WRITEAS	35	/* Write as another file: IPO_STR. */
+/* VI_WRITEAS	36	Write as another file: IPO_STR. */
     {"a",   E_IPCOMMAND},
-/* VI_EVENT_SUP */
+/* VI_EVENT_SUP 37	*/
 };
 
 typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_TIMEOUT } input_t;
@@ -215,7 +215,7 @@ ip_read(SCR *sp, IP_PRIVATE *ipp, struct timeval *tp, int termread, int *nr)
 	int maxfd;
 	char *bp;
 	int fd;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	gp = sp == NULL ? __global_list : sp->gp;
@@ -291,8 +291,8 @@ static int
 ip_trans(SCR *sp, IP_PRIVATE *ipp, EVENT *evp)
 {
 	u_int32_t skip, val;
-	char *fmt;
-	CHAR_T *wp;
+	const char *fmt;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	if (ipp->ibuf[0] == CODE_OOB ||

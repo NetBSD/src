@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_usage.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -60,24 +61,30 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 	ARGS *ap;
 	EXCMDLIST const *cp;
 	int newscreen;
-	CHAR_T *name, *p, nb[MAXCMDNAMELEN + 5];
+	CHAR_T *p, nb[MAXCMDNAMELEN + 5];
+	const CHAR_T *name;
 
 	switch (cmdp->argc) {
 	case 1:
 		ap = cmdp->argv[0];
-		if (isupper(ap->bp[0])) {
+		if (ISUPPER((UCHAR_T)ap->bp[0])) {
 			newscreen = 1;
-			ap->bp[0] = tolower(ap->bp[0]);
+			ap->bp[0] = TOLOWER((UCHAR_T)ap->bp[0]);
 		} else
 			newscreen = 0;
 		for (cp = cmds; cp->name != NULL &&
 		    memcmp(ap->bp, cp->name, ap->len); ++cp);
 		if (cp->name == NULL ||
-		    newscreen && !F_ISSET(cp, E_NEWSCREEN)) {
+		    (newscreen && !F_ISSET(cp, E_NEWSCREEN))) {
+			const char *nstr;
+			size_t nlen;
+
 			if (newscreen)
-				ap->bp[0] = toupper(ap->bp[0]);
+				ap->bp[0] = TOUPPER((UCHAR_T)ap->bp[0]);
+
+			INT2CHAR(sp, ap->bp, ap->len + 1, nstr, nlen);
 			(void)ex_printf(sp, "The %.*s command is unknown\n",
-			    (int)ap->len, ap->bp);
+			    (int)ap->len, nstr);
 		} else {
 			(void)ex_printf(sp,
 			    "Command: %s\n  Usage: %s\n", cp->help, cp->usage);
@@ -111,7 +118,7 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 				name = L("^D");
 			else if (F_ISSET(cp, E_NEWSCREEN)) {
 				nb[0] = L('[');
-				nb[1] = TOUPPER(cp->name[0]);
+				nb[1] = TOUPPER((UCHAR_T)cp->name[0]);
 				nb[2] = cp->name[0];
 				nb[3] = L(']');
 				for (name = cp->name + 1,
@@ -138,11 +145,9 @@ ex_usage(SCR *sp, EXCMD *cmdp)
 int
 ex_viusage(SCR *sp, EXCMD *cmdp)
 {
-	GS *gp;
 	VIKEYS const *kp;
 	int key;
 
-	gp = sp->gp;
 	switch (cmdp->argc) {
 	case 1:
 		if (cmdp->argv[0]->len != 1) {
@@ -170,7 +175,7 @@ nokey:			(void)ex_printf(sp,
 		else
 			(void)ex_printf(sp,
 			    "  Key:%s%s\nUsage: %s\n",
-			    isblank(*kp->help) ? "" : " ", kp->help, kp->usage);
+			    isblank((unsigned char)*kp->help) ? "" : " ", kp->help, kp->usage);
 		break;
 	case 0:
 		for (key = 0; key <= MAXVIKEY && !INTERRUPTED(sp); ++key) {

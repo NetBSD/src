@@ -1,3 +1,4 @@
+/*	$NetBSD: util.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -92,7 +93,7 @@ nonblank(SCR *sp, db_recno_t lno, size_t *cnop)
 		return (0);
 
 	for (cnt = off, p = &p[off],
-	    len -= off; len && ISBLANK(*p); ++cnt, ++p, --len);
+	    len -= off; len && ISBLANK((UCHAR_T)*p); ++cnt, ++p, --len);
 
 	/* Set the return. */
 	*cnop = len ? cnt : cnt - 1;
@@ -103,12 +104,12 @@ nonblank(SCR *sp, db_recno_t lno, size_t *cnop)
  * tail --
  *	Return tail of a path.
  *
- * PUBLIC: char *tail __P((char *));
+ * PUBLIC: const char *tail __P((const char *));
  */
-char *
-tail(char *path)
+const char *
+tail(const char *path)
 {
-	char *p;
+	const char *p;
 
 	if ((p = strrchr(path, '/')) == NULL)
 		return (path);
@@ -163,7 +164,7 @@ enum nresult
 nget_uslong(SCR *sp, u_long *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOUL(p, endp, base);
+	*valp = STRTOUL(p, (RCHAR_T **)endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE && *valp == ULONG_MAX)
@@ -181,7 +182,7 @@ enum nresult
 nget_slong(SCR *sp, long int *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOL(p, endp, base);
+	*valp = STRTOL(p, (RCHAR_T **)endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE) {

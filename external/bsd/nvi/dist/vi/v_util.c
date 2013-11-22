@@ -1,3 +1,4 @@
+/*	$NetBSD: v_util.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -123,7 +124,7 @@ int
 v_isempty(CHAR_T *p, size_t len)
 {
 	for (; len--; ++p)
-		if (!ISBLANK(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			return (0);
 	return (1);
 }
@@ -132,10 +133,10 @@ v_isempty(CHAR_T *p, size_t len)
  * v_emsg --
  *	Display a few common vi messages.
  *
- * PUBLIC: void v_emsg __P((SCR *, char *, vim_t));
+ * PUBLIC: void v_emsg __P((SCR *, const char *, vim_t));
  */
 void
-v_emsg(SCR *sp, char *p, vim_t which)
+v_emsg(SCR *sp, const char *p, vim_t which)
 {
 	switch (which) {
 	case VIM_COMBUF:

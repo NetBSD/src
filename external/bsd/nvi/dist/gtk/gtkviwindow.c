@@ -16,7 +16,7 @@
 #include "gtkvi.h"
 #include "gtkviscreen.h"
 #include "gtkviwindow.h"
-#include "extern.h"
+#include "gtk_extern.h"
 
 enum {
     RENAME,

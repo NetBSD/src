@@ -22,7 +22,7 @@
 #include "gtkvi.h"
 #include "gtkviwindow.h"
 #include "gtkviscreen.h"
-#include "../gtk/extern.h"
+#include "gtk_extern.h"
 
 static void vi_destroyed __P((GtkWidget*,GtkWidget*));
 static void vi_rename __P((GtkWidget*,gchar*,GtkWidget*));

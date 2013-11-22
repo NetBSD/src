@@ -1,3 +1,4 @@
+/*	$NetBSD: utils.h,v 1.2 2013/11/22 15:52:06 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994

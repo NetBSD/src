@@ -1,3 +1,4 @@
+/*	$NetBSD: v_ex.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -176,7 +177,7 @@ v_switch(SCR *sp, VICMD *vp)
 {
 	EXCMD cmd;
 	char *name;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/*
@@ -209,6 +210,11 @@ v_tagpush(SCR *sp, VICMD *vp)
 {
 	EXCMD cmd;
 
+#ifdef GTAGS
+	if (O_ISSET(sp, O_GTAGSMODE) && vp->m_start.cno == 0)
+		ex_cinit(sp, &cmd, C_RTAG, 0, OOBLNO, 0, 0);
+	else
+#endif
 	ex_cinit(sp, &cmd, C_TAG, 0, OOBLNO, 0, 0);
 	argv_exp0(sp, &cmd, VIP(sp)->keyw, STRLEN(VIP(sp)->keyw) + 1);
 	return (v_exec_ex(sp, vp, &cmd));
@@ -521,6 +527,7 @@ v_ecl(SCR *sp)
 
 	new->frp = wp->ccl_sp->frp;
 	new->frp->flags = sp->frp->flags;
+	new->conv = wp->ccl_sp->conv;
 
 	/* Move the cursor to the end. */
 	(void)db_last(new, &new->lno);

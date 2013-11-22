@@ -1,3 +1,4 @@
+/*	$NetBSD: cl_main.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -27,7 +28,7 @@ static const char sccsid[] = "Id: cl_main.c,v 10.54 2001/07/29 19:07:27 skimo Ex
 #include <unistd.h>
 
 #include "../common/common.h"
-#include "../ip/extern.h"
+#include "ip_extern.h"
 #include "cl.h"
 #include "pathnames.h"
 
@@ -35,12 +36,14 @@ GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
 static void	   cl_func_std __P((WIN *));
+#ifdef notused
 static void	   cl_end __P((CL_PRIVATE *));
+#endif
 static CL_PRIVATE *cl_init __P((WIN *));
-static void	   perr __P((char *, char *));
+__dead static void	   perr __P((const char *, const char *));
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
 static void	   sig_end __P((GS *));
-static void	   term_init __P((char *, char *));
+static void	   term_init __P((const char *, const char *));
 
 /*
  * main --
@@ -55,7 +58,8 @@ main(int argc, char **argv)
 	WIN *wp;
 	size_t rows, cols;
 	int rval;
-	char **p_av, **t_av, *ttype;
+	char **p_av, **t_av;
+	const char *ttype;
 
 	/* If loaded at 0 and jumping through a NULL pointer, stop. */
 	if (reenter++)
@@ -93,8 +97,12 @@ main(int argc, char **argv)
 	 * We have to know what terminal it is from the start, since we may
 	 * have to use termcap/terminfo to find out how big the screen is.
 	 */
-	if ((ttype = getenv("TERM")) == NULL)
+	if ((ttype = getenv("TERM")) == NULL) {
+		if (isatty(STDIN_FILENO))
+			fprintf(stderr, "%s: warning: TERM is not set\n",
+			    gp->progname);
 		ttype = "unknown";
+	}
 	term_init(gp->progname, ttype);
 
 	/* Add the terminal type to the global structure. */
@@ -210,6 +218,7 @@ tcfail:			perr(gp->progname, "tcgetattr");
 	return (clp);
 }
 
+#ifdef notused
 /*
  * cl_end --
  *	Discard the CL structure.
@@ -221,18 +230,19 @@ cl_end(CL_PRIVATE *clp)
 		free(clp->oname);
 	free(clp);
 }
+#endif
 
 /*
  * term_init --
  *	Initialize terminal information.
  */
 static void
-term_init(char *name, char *ttype)
+term_init(const char *name, const char *ttype)
 {
 	int err;
 
 	/* Set up the terminal database information. */
-	setupterm(ttype, STDOUT_FILENO, &err);
+	setupterm(__UNCONST(ttype), STDOUT_FILENO, &err);
 	switch (err) {
 	case -1:
 		(void)fprintf(stderr,
@@ -419,7 +429,7 @@ cl_func_std(WIN *wp)
  *	Print system error.
  */
 static void
-perr(char *name, char *msg)
+perr(const char *name, const char *msg)
 {
 	(void)fprintf(stderr, "%s:", name);
 	if (msg != NULL)

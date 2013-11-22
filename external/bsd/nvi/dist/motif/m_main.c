@@ -31,7 +31,6 @@ static const char sccsid[] = "Id: m_main.c,v 8.40 2003/11/05 17:09:58 skimo Exp 
 #include "../ipc/ip.h"
 #include "../motif_l/m_motif.h"
 #include "../motif_l/vi_mextern.h"
-#include "extern.h"
 
 int     vi_ifd = -1;
 int     vi_ofd = -1;

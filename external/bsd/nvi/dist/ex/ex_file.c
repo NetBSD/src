@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_file.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +37,7 @@ ex_file(SCR *sp, EXCMD *cmdp)
 {
 	char *p;
 	FREF *frp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	NEEDFILE(sp, cmdp);
