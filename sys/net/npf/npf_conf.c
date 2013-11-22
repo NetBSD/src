@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conf.c,v 1.4 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.4 2013/11/12 00:46:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.5 2013/11/22 00:25:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -166,6 +166,9 @@ npf_config_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	if (flush) {
 		npf_ifmap_flush();
 	}
+
+	/* Sync the config proplib data. */
+	npf_tableset_syncdict(tset, dict);
 	mutex_exit(&npf_config_lock);
 
 	/* Finally, it is safe to destroy the old config. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.23 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.24 2013/11/22 00:25:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.23 2013/11/12 00:46:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.24 2013/11/22 00:25:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -962,15 +962,17 @@ npf_table_add_entry(nl_table_t *tl, int af, const npf_addr_t *addr,
 }
 
 bool
-npf_table_exists_p(nl_config_t *ncf, u_int tid)
+npf_table_exists_p(nl_config_t *ncf, const char *name)
 {
 	prop_dictionary_t tldict;
 	prop_object_iterator_t it;
-	u_int i;
 
 	it = prop_array_iterator(ncf->ncf_table_list);
 	while ((tldict = prop_object_iterator_next(it)) != NULL) {
-		if (prop_dictionary_get_uint32(tldict, "id", &i) && tid == i)
+		const char *tname = NULL;
+
+		if (prop_dictionary_get_cstring_nocopy(tldict, "name", &tname)
+		    && strcmp(tname, name) == 0)
 			break;
 	}
 	prop_object_iterator_release(it);
@@ -981,12 +983,12 @@ int
 npf_table_insert(nl_config_t *ncf, nl_table_t *tl)
 {
 	prop_dictionary_t tldict = tl->ntl_dict;
-	u_int tid;
+	const char *name = NULL;
 
-	if (!prop_dictionary_get_uint32(tldict, "id", &tid)) {
+	if (!prop_dictionary_get_cstring_nocopy(tldict, "name", &name)) {
 		return EINVAL;
 	}
-	if (npf_table_exists_p(ncf, tid)) {
+	if (npf_table_exists_p(ncf, name)) {
 		return EEXIST;
 	}
 	prop_array_add(ncf->ncf_table_list, tldict);
