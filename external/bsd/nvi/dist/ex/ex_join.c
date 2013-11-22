@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_join.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,9 +38,8 @@ ex_join(SCR *sp, EXCMD *cmdp)
 	db_recno_t from, to;
 	size_t blen, clen, len, tlen;
 	int extra, first;
-	CHAR_T *bp, *tbp;
-	CHAR_T *p;
-	CHAR_T echar;
+	ARG_CHAR_T echar = 0;
+	CHAR_T *p, *bp, *tbp = NULL;
 
 	NEEDFILE(sp, cmdp);
 
@@ -105,16 +105,16 @@ ex_join(SCR *sp, EXCMD *cmdp)
 		extra = 0;
 		if (!first && !FL_ISSET(cmdp->iflags, E_C_FORCE)) {
 			if (ISBLANK(echar))
-				for (; len && ISBLANK(*p); --len, ++p);
+				for (; len && ISBLANK((UCHAR_T)*p); --len, ++p);
 			else if (p[0] != ')') {
-				if (strchr(".?!", echar)) {
+				if (STRCHR(L(".?!"), echar)) {
 					*tbp++ = ' ';
 					++clen;
 					extra = 1;
 				}
 				*tbp++ = ' ';
 				++clen;
-				for (; len && ISBLANK(*p); --len, ++p);
+				for (; len && ISBLANK((UCHAR_T)*p); --len, ++p);
 			}
 		}
 

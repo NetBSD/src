@@ -1,3 +1,4 @@
+/*	$NetBSD: util.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +51,8 @@ enum nresult { NUM_ERR, NUM_OK, NUM_OVER, NUM_UNDER };
 	    NNFITS(LONG_MIN, (v1), (v2))) ? NUM_UNDER : NUM_OK :	\
 	 (v1) > 0 ?							\
 	    (v2) > 0 &&							\
-	    NPFITS(LONG_MAX, (v1), (v2)) ? NUM_OK : NUM_OVER :		\
+	    NPFITS(LONG_MAX, (unsigned long)(v1), (unsigned long)(v2)) ? \
+	      NUM_OK : NUM_OVER :					\
 	 NUM_OK)
 #define	NADD_USLONG(sp, v1, v2)						\
 	(NPFITS(ULONG_MAX, (v1), (v2)) ? NUM_OK : NUM_OVER)

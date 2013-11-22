@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_mkexrc.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -42,14 +43,12 @@ ex_mkexrc(SCR *sp, EXCMD *cmdp)
 	struct stat sb;
 	FILE *fp;
 	int fd, sverrno;
-	char *fname;
+	const char *fname;
 	size_t flen;
 
 	switch (cmdp->argc) {
 	case 0:
 		fname = _PATH_EXRC;
-		break;
-	case 1:
 		INT2CHAR(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len + 1, 
 			    fname, flen);
 		set_alt_name(sp, fname);

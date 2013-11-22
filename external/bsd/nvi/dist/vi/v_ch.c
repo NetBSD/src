@@ -1,3 +1,4 @@
+/*	$NetBSD: v_ch.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -138,7 +139,8 @@ v_chf(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_long cnt;
-	int isempty, key;
+	int isempty;
+	ARG_CHAR_T key;
 	CHAR_T *endp, *p, *startp;
 
 	/*
@@ -219,7 +221,8 @@ v_chF(SCR *sp, VICMD *vp)
 {
 	size_t len;
 	u_long cnt;
-	int isempty, key;
+	int isempty;
+	ARG_CHAR_T key;
 	CHAR_T *endp, *p;
 
 	/*

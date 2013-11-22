@@ -1,3 +1,4 @@
+/*	$NetBSD: v_increment.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +29,7 @@ static const char sccsid[] = "Id: v_increment.c,v 10.16 2001/06/25 15:19:31 skim
 #include "../common/common.h"
 #include "vi.h"
 
-static CHAR_T * const fmt[] = {
+static const CHAR_T *fmt[] = {
 #define	DEC	0
 	L("%ld"),
 #define	SDEC	1
@@ -53,11 +54,12 @@ int
 v_increment(SCR *sp, VICMD *vp)
 {
 	enum nresult nret;
-	u_long ulval;
-	long change, ltmp, lval;
+	u_long ulval, change;
+	long ltmp, lval;
 	size_t beg, blen, end, len, nlen, wlen;
 	int base, isempty, rval;
-	CHAR_T *bp, *p, *t, *ntype, nbuf[100];
+	CHAR_T *bp, *p, *t, nbuf[100]; 
+	const CHAR_T *ntype;
 
 	/* Validate the operator. */
 	if (vp->character == L('#'))
@@ -89,7 +91,7 @@ v_increment(SCR *sp, VICMD *vp)
 	 * implies moving the cursor to its beginning, if we moved, refresh
 	 * now.
 	 */
-	for (beg = vp->m_start.cno; beg < len && ISSPACE(p[beg]); ++beg);
+	for (beg = vp->m_start.cno; beg < len && ISSPACE((UCHAR_T)p[beg]); ++beg);
 	if (beg >= len)
 		goto nonum;
 	if (beg != vp->m_start.cno) {
@@ -97,8 +99,6 @@ v_increment(SCR *sp, VICMD *vp)
 		(void)vs_refresh(sp, 0);
 	}
 
-#undef	ishex
-#define	ishex(c)	(ISDIGIT(c) || STRCHR(L("abcdefABCDEF"), c))
 #undef	isoctal
 #define	isoctal(c)	(ISDIGIT(c) && (c) != L('8') && (c) != L('9'))
 
@@ -113,20 +113,20 @@ v_increment(SCR *sp, VICMD *vp)
 	    (p[beg + 1] == L('X') || p[beg + 1] == L('x'))) {
 		base = 16;
 		end = beg + 2;
-		if (!ishex(p[end]))
+		if (!ISXDIGIT((UCHAR_T)p[end]))
 			goto decimal;
 		ntype = p[beg + 1] == L('X') ? fmt[HEXC] : fmt[HEXL];
 	} else if (p[beg] == L('0') && wlen > 1) {
 		base = 8;
 		end = beg + 1;
-		if (!isoctal(p[end]))
+		if (!isoctal((UCHAR_T)p[end]))
 			goto decimal;
 		ntype = fmt[OCTAL];
 	} else if (wlen >= 1 && (p[beg] == L('+') || p[beg] == L('-'))) {
 		base = 10;
 		end = beg + 1;
 		ntype = fmt[SDEC];
-		if (!ISDIGIT(p[end]))
+		if (!ISDIGIT((UCHAR_T)p[end]))
 			goto nonum;
 	} else {
 decimal:	base = 10;
@@ -142,7 +142,7 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 	while (++end < len) {
 		switch (base) {
 		case 8:
-			if (isoctal(p[end]))
+			if (isoctal((UCHAR_T)p[end]))
 				continue;
 			if (p[end] == L('8') || p[end] == L('9')) {
 				base = 10;
@@ -151,11 +151,11 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			}
 			break;
 		case 10:
-			if (ISDIGIT(p[end]))
+			if (ISDIGIT((UCHAR_T)p[end]))
 				continue;
 			break;
 		case 16:
-			if (ishex(p[end]))
+			if (ISXDIGIT((UCHAR_T)p[end]))
 				continue;
 			break;
 		default:
@@ -189,7 +189,8 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 		if ((nret = nget_slong(sp, &lval, t, NULL, 10)) != NUM_OK)
 			goto err;
 		ltmp = vp->character == L('-') ? -change : change;
-		if (lval > 0 && ltmp > 0 && !NPFITS(LONG_MAX, lval, ltmp)) {
+		if (lval > 0 && ltmp > 0 &&
+		    !NPFITS(LONG_MAX, (unsigned long)lval, (unsigned long)ltmp)) {
 			nret = NUM_OVER;
 			goto err;
 		}

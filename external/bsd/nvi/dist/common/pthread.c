@@ -1,3 +1,4 @@
+/*	$NetBSD: pthread.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.

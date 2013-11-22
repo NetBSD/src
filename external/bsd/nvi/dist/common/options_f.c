@@ -1,3 +1,4 @@
+/*	$NetBSD: options_f.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +30,10 @@ static const char sccsid[] = "Id: options_f.c,v 10.33 2001/06/25 15:19:11 skimo 
 #include "common.h"
 
 /*
- * PUBLIC: int f_altwerase __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_altwerase __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_altwerase(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_altwerase(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	if (*valp)
 		O_CLR(sp, O_TTYWERASE);
@@ -40,10 +41,10 @@ f_altwerase(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_columns __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_columns __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_columns(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	/* Validate the number. */
 	if (*valp < MINIMUM_SCREEN_COLS) {
@@ -60,7 +61,7 @@ f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_COLS	500
+#define	MAXIMUM_SCREEN_COLS	4000
 	if (*valp > MAXIMUM_SCREEN_COLS) {
 		msgq(sp, M_ERR, "041|Screen columns too large, greater than %d",
 		    MAXIMUM_SCREEN_COLS);
@@ -70,10 +71,10 @@ f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_lines __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_lines __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_lines(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	/* Validate the number. */
 	if (*valp < MINIMUM_SCREEN_ROWS) {
@@ -90,7 +91,7 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_ROWS	500
+#define	MAXIMUM_SCREEN_ROWS	4000
 	if (*valp > MAXIMUM_SCREEN_ROWS) {
 		msgq(sp, M_ERR, "043|Screen lines too large, greater than %d",
 		    MAXIMUM_SCREEN_ROWS);
@@ -123,44 +124,30 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_lisp __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_lisp __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_lisp(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_lisp(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	msgq(sp, M_ERR, "044|The lisp option is not implemented");
 	return (0);
 }
 
 /*
- * PUBLIC: int f_msgcat __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_msgcat __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_msgcat(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_msgcat(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	(void)msg_open(sp, str);
 	return (0);
 }
 
 /*
- * PUBLIC: int f_paragraph __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_print __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_paragraph(SCR *sp, OPTION *op, char *str, u_long *valp)
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "048|The paragraph option must be in two character groups");
-		return (1);
-	}
-	return (0);
-}
-
-/*
- * PUBLIC: int f_print __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_print(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_print(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	int offset = op - sp->opts;
 
@@ -182,10 +169,10 @@ f_print(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_readonly __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_readonly __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_readonly(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_readonly(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	/*
 	 * !!!
@@ -199,10 +186,10 @@ f_readonly(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_recompile __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_recompile __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_recompile(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_recompile(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	if (F_ISSET(sp, SC_RE_SEARCH)) {
 		regfree(&sp->re_c);
@@ -216,34 +203,20 @@ f_recompile(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_reformat __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_reformat __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_reformat(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_reformat(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	F_SET(sp, SC_SCR_REFORMAT);
 	return (0);
 }
 
 /*
- * PUBLIC: int f_section __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_ttywerase __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_section(SCR *sp, OPTION *op, char *str, u_long *valp)
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "049|The section option must be in two character groups");
-		return (1);
-	}
-	return (0);
-}
-
-/*
- * PUBLIC: int f_ttywerase __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_ttywerase(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_ttywerase(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	if (*valp)
 		O_CLR(sp, O_ALTWERASE);
@@ -251,10 +224,10 @@ f_ttywerase(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_w300 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w300 __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_w300(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_w300(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	u_long v;
 
@@ -268,10 +241,10 @@ f_w300(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_w1200 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w1200 __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_w1200(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_w1200(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	u_long v;
 
@@ -285,10 +258,10 @@ f_w1200(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_w9600 __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_w9600 __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_w9600(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_w9600(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	u_long v;
 
@@ -302,10 +275,10 @@ f_w9600(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_window __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_window __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_window(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_window(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	if (*valp >= O_VAL(sp, O_LINES) - 1 &&
 	    (*valp = O_VAL(sp, O_LINES) - 1) == 0)
@@ -314,10 +287,10 @@ f_window(SCR *sp, OPTION *op, char *str, u_long *valp)
 }
 
 /*
- * PUBLIC: int f_encoding __P((SCR *, OPTION *, char *, u_long *));
+ * PUBLIC: int f_encoding __P((SCR *, OPTION *, const char *, u_long *));
  */
 int
-f_encoding(SCR *sp, OPTION *op, char *str, u_long *valp)
+f_encoding(SCR *sp, OPTION *op, const char *str, u_long *valp)
 {
 	int offset = op - sp->opts;
 

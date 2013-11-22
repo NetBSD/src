@@ -1,3 +1,4 @@
+/*	$NetBSD: v_txt.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +31,7 @@ static const char sccsid[] = "Id: v_txt.c,v 10.108 2003/07/18 21:27:42 skimo Exp
 #include "../common/common.h"
 #include "vi.h"
 
-static int	 txt_abbrev __P((SCR *, TEXT *, CHAR_T *, int, int *, int *));
+static int	 txt_abbrev __P((SCR *, TEXT *, ARG_CHAR_T *, int, int *, int *));
 static void	 txt_ai_resolve __P((SCR *, TEXT *, int *));
 static TEXT	*txt_backup __P((SCR *, TEXTH *, TEXT *, u_int32_t *));
 static int	 txt_dent __P((SCR *, TEXT *, int));
@@ -39,7 +40,7 @@ static void	 txt_err __P((SCR *, TEXTH *));
 static int	 txt_fc __P((SCR *, TEXT *, int *));
 static int	 txt_fc_col __P((SCR *, int, ARGS **));
 static int	 txt_hex __P((SCR *, TEXT *));
-static int	 txt_insch __P((SCR *, TEXT *, CHAR_T *, u_int));
+static int	 txt_insch __P((SCR *, TEXT *, ARG_CHAR_T *, u_int));
 static int	 txt_isrch __P((SCR *, VICMD *, TEXT *, u_int8_t *));
 static int	 txt_map_end __P((SCR *));
 static int	 txt_map_init __P((SCR *));
@@ -250,7 +251,7 @@ v_txt(SCR *sp, VICMD *vp, MARK *tm, const CHAR_T *lp, size_t len, ARG_CHAR_T pro
 	              		/* Replay count. */
 	                	/* TXT_* flags. */
 {
-	EVENT ev, *evp;		/* Current event. */
+	EVENT ev, *evp = NULL;	/* Current event. */
 	EVENT fc;		/* File name completion event. */
 	GS *gp;
 	TEXT *ntp, *tp;		/* Input text structures. */
@@ -274,12 +275,14 @@ v_txt(SCR *sp, VICMD *vp, MARK *tm, const CHAR_T *lp, size_t len, ARG_CHAR_T pro
 	int hexcnt;		/* Hex character count. */
 	int showmatch;		/* Showmatch set on this character. */
 	int wm_set, wm_skip;	/* Wrapmargin happened, blank skip flags. */
-	int max, tmp;
+	size_t max;
+	int tmp;
 	int nochange;
 	CHAR_T *p;
 
 	gp = sp->gp;
 	vip = VIP(sp);
+	memset(&wmt, 0, sizeof(wmt));
 
 	/*
 	 * Set the input flag, so tabs get displayed correctly
@@ -651,7 +654,7 @@ replay:	if (LF_ISSET(TXT_REPLAY)) {
 	 * this test delimits the value by any non-hex character.  Offset by
 	 * one, we use 0 to mean that we've found <CH_HEX>.
 	 */
-	if (hexcnt > 1 && !isxdigit(evp->e_c)) {
+	if (hexcnt > 1 && !ISXDIGIT(evp->e_c)) {
 		hexcnt = 0;
 		if (txt_hex(sp, tp))
 			goto err;
@@ -750,16 +753,16 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 		owrite = tp->owrite;
 		insert = tp->insert;
 		if (LF_ISSET(TXT_REPLACE) && owrite != 0) {
-			for (p = tp->lb + tp->cno; owrite > 0 && ISBLANK(*p);
+			for (p = tp->lb + tp->cno; owrite > 0 && ISBLANK((UCHAR_T)*p);
 			    ++p, --owrite, ++tp->R_erase);
 			if (owrite == 0)
-				for (; insert > 0 && ISBLANK(*p);
+				for (; insert > 0 && ISBLANK((UCHAR_T)*p);
 				    ++p, ++tp->R_erase, --insert);
 		} else {
 			p = tp->lb + tp->cno + owrite;
 			if (O_ISSET(sp, O_AUTOINDENT))
 				for (; insert > 0 &&
-				    ISBLANK(*p); ++p, --insert);
+				    ISBLANK((UCHAR_T)*p); ++p, --insert);
 			owrite = 0;
 		}
 
@@ -951,7 +954,7 @@ k_escape:	LINE_RESOLVE;
 
 		switch (carat) {
 		case C_CARATSET:	/* ^^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset + 1)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset + 1)
 				goto ins_ch;
 
 			/* Save the ai string for later. */
@@ -965,17 +968,16 @@ k_escape:	LINE_RESOLVE;
 			nochange = 1;
 			goto leftmargin;
 		case C_ZEROSET:		/* 0^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset + 1)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset + 1)
 				goto ins_ch;
 
 			carat = C_NOTSET;
 leftmargin:		tp->lb[tp->cno - 1] = ' ';
 			tp->owrite += tp->cno - tp->offset;
-			tp->ai = 0;
 			tp->cno = tp->offset;
 			break;
 		case C_NOTSET:		/* ^D */
-			if (tp->ai == 0 || tp->cno > tp->ai + tp->offset)
+			if (tp->ai == 0 || tp->cno != tp->ai + tp->offset)
 				goto ins_ch;
 
 			(void)txt_dent(sp, tp, 0);
@@ -1079,7 +1081,7 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		}
 
 		/* Skip over trailing space characters. */
-		while (tp->cno > max && ISBLANK(tp->lb[tp->cno - 1])) {
+		while (tp->cno > max && ISBLANK((UCHAR_T)tp->lb[tp->cno - 1])) {
 			--tp->cno;
 			++tp->owrite;
 		}
@@ -1112,7 +1114,7 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (ISBLANK(tp->lb[tp->cno - 1]))
+				if (ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
 					break;
 			}
 		else {
@@ -1121,18 +1123,18 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (ISBLANK(tp->lb[tp->cno - 1]))
+				if (ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
 					break;
 			}
 			if (tp->cno > max)
-				tmp = inword(tp->lb[tp->cno - 1]);
+				tmp = inword((UCHAR_T)tp->lb[tp->cno - 1]);
 			while (tp->cno > max) {
 				--tp->cno;
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (tmp != inword(tp->lb[tp->cno - 1])
-				    || ISBLANK(tp->lb[tp->cno - 1]))
+				if (tmp != inword((UCHAR_T)tp->lb[tp->cno - 1])
+				    || ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
 					break;
 			}
 		}
@@ -1279,7 +1281,7 @@ insq_ch:	/*
 		 * If entering a blank character, check for unmap commands,
 		 * as well.
 		 */
-		if (!inword(evp->e_c)) {
+		if (!inword((UCHAR_T)evp->e_c)) {
 			if (abb == AB_INWORD &&
 			    !LF_ISSET(TXT_REPLAY) && F_ISSET(gp, G_ABBREV)) {
 				if (txt_abbrev(sp, tp, &evp->e_c,
@@ -1291,11 +1293,11 @@ insq_ch:	/*
 					goto resolve;
 				}
 			}
-			if (ISBLANK(evp->e_c) && UNMAP_TST)
+			if (ISBLANK((UCHAR_T)evp->e_c) && UNMAP_TST)
 				txt_unmap(sp, tp, &ec_flags);
 		}
 		if (abb != AB_NOTSET)
-			abb = inword(evp->e_c) ? AB_INWORD : AB_NOTWORD;
+			abb = inword((UCHAR_T)evp->e_c) ? AB_INWORD : AB_NOTWORD;
 
 insl_ch:	if (txt_insch(sp, tp, &evp->e_c, flags))
 			goto err;
@@ -1341,7 +1343,7 @@ insl_ch:	if (txt_insch(sp, tp, &evp->e_c, flags))
 				if (txt_margin(sp, tp, &wmt, &tmp, flags))
 					goto err;
 				if (tmp) {
-					if (ISBLANK(evp->e_c))
+					if (ISBLANK((UCHAR_T)evp->e_c))
 						wm_skip = 1;
 					wm_set = 1;
 					goto k_cr;
@@ -1470,9 +1472,8 @@ alloc_err:
  *	Handle abbreviations.
  */
 static int
-txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int *turnoffp)
+txt_abbrev(SCR *sp, TEXT *tp, ARG_CHAR_T *pushcp, int isinfoline, int *didsubp, int *turnoffp)
 {
-	VI_PRIVATE *vip;
 	CHAR_T ch, *p;
 	SEQ *qp;
 	size_t len, off;
@@ -1481,8 +1482,6 @@ txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int 
 	*didsubp = 0;
 	if (tp->cno == tp->offset)
 		return (0);
-
-	vip = VIP(sp);
 
 	/*
 	 * Find the start of the "word".
@@ -1507,19 +1506,19 @@ txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int 
 	off = tp->cno - 1;			/* Previous character. */
 	p = tp->lb + off;
 	len = 1;				/* One character test. */
-	if (off == tp->offset || ISBLANK(p[-1]))
+	if (off == tp->offset || ISBLANK((UCHAR_T)p[-1]))
 		goto search;
-	if (inword(p[-1]))			/* Move backward to change. */
+	if (inword((UCHAR_T)p[-1]))			/* Move backward to change. */
 		for (;;) {
 			--off; --p; ++len;
-			if (off == tp->offset || !inword(p[-1]))
+			if (off == tp->offset || !inword((UCHAR_T)p[-1]))
 				break;
 		}
 	else
 		for (;;) {
 			--off; --p; ++len;
 			if (off == tp->offset ||
-			    inword(p[-1]) || ISBLANK(p[-1]))
+			    inword((UCHAR_T)p[-1]) || ISBLANK((UCHAR_T)p[-1]))
 				break;
 		}
 
@@ -1561,7 +1560,7 @@ txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int 
 	 *
 	 * This makes the layering look like a Nachos Supreme.
 	 */
-search:	if (isinfoline)
+search:	if (isinfoline) {
 		if (off == tp->ai || off == tp->offset)
 			if (ex_is_abbrev(sp, p, len)) {
 				*turnoffp = 1;
@@ -1571,6 +1570,7 @@ search:	if (isinfoline)
 		else
 			if (*turnoffp)
 				return (0);
+	}
 
 	/* Check for any abbreviations. */
 	if ((qp = seq_find(sp, NULL, NULL, p, len, SEQ_ABBREV, NULL)) == NULL)
@@ -1594,7 +1594,7 @@ search:	if (isinfoline)
 	 * queue would have to be adjusted, and the line state when an initial
 	 * abbreviated character was received would have to be saved.
 	 */
-	ch = *pushcp;
+	ch = (UCHAR_T)*pushcp;
 	if (v_event_push(sp, NULL, &ch, 1, CH_ABBREVIATED))
 		return (1);
 	if (v_event_push(sp, NULL, qp->output, qp->olen, CH_ABBREVIATED))
@@ -1643,7 +1643,7 @@ txt_unmap(SCR *sp, TEXT *tp, u_int32_t *ec_flagsp)
 
 	/* Find the beginning of this "word". */
 	for (off = tp->cno - 1, p = tp->lb + off, len = 0;; --p, --off) {
-		if (ISBLANK(*p)) {
+		if (ISBLANK((UCHAR_T)*p)) {
 			++p;
 			break;
 		}
@@ -1679,7 +1679,7 @@ static void
 txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 {
 	u_long ts;
-	int del;
+	int delc;
 	size_t cno, len, new, old, scno, spaces, tab_after_sp, tabs;
 	CHAR_T *p;
 
@@ -1710,7 +1710,7 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 
 	/* Figure out the last <blank> screen column. */
 	for (p = tp->lb, scno = 0, len = tp->len,
-	    spaces = tab_after_sp = 0; len-- && ISBLANK(*p); ++p)
+	    spaces = tab_after_sp = 0; len-- && ISBLANK((UCHAR_T)*p); ++p)
 		if (*p == '\t') {
 			if (spaces)
 				tab_after_sp = 1;
@@ -1723,13 +1723,19 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 	/*
 	 * If there are no spaces, or no tabs after spaces and less than
 	 * ts spaces, it's already minimal.
+	 * Keep analysing if expandtab is set.
 	 */
-	if (!spaces || !tab_after_sp && spaces < ts)
+	if ((!spaces || (!tab_after_sp && spaces < ts)) &&
+	    !O_ISSET(sp, O_EXPANDTAB))
 		return;
 
 	/* Count up spaces/tabs needed to get to the target. */
-	for (cno = 0, tabs = 0; cno + COL_OFF(cno, ts) <= scno; ++tabs)
-		cno += COL_OFF(cno, ts);
+	cno = 0;
+	tabs = 0;
+	if (!O_ISSET(sp, O_EXPANDTAB)) {
+		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
+			cno += COL_OFF(cno, ts);
+	}
 	spaces = scno - cno;
 
 	/*
@@ -1742,10 +1748,10 @@ txt_ai_resolve(SCR *sp, TEXT *tp, int *changedp)
 		return;
 
 	/* Shift the rest of the characters down, adjust the counts. */
-	del = old - new;
-	MEMMOVEW(p - del, p, tp->len - old);
-	tp->len -= del;
-	tp->cno -= del;
+	delc = old - new;
+	MEMMOVEW(p - delc, p, tp->len - old);
+	tp->len -= delc;
+	tp->cno -= delc;
 
 	/* Fill in space/tab characters. */
 	for (p = tp->lb; tabs--;)
@@ -1785,7 +1791,7 @@ v_txt_auto(SCR *sp, db_recno_t lno, TEXT *aitp, size_t len, TEXT *tp)
 
 	/* Count whitespace characters. */
 	for (p = t; len > 0; ++p, --len)
-		if (!ISBLANK(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			break;
 
 	/* Set count, check for no indentation. */
@@ -1815,7 +1821,6 @@ v_txt_auto(SCR *sp, db_recno_t lno, TEXT *aitp, size_t len, TEXT *tp)
 static TEXT *
 txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 {
-	VI_PRIVATE *vip;
 	TEXT *ntp;
 
 	/* Get a handle on the previous TEXT structure. */
@@ -1830,7 +1835,6 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 	ntp->len = ntp->sv_len;
 
 	/* Handle appending to the line. */
-	vip = VIP(sp);
 	if (ntp->owrite == 0 && ntp->insert == 0) {
 		ntp->lb[ntp->len] = CH_CURSOR;
 		++ntp->insert;
@@ -1890,10 +1894,9 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 static int
 txt_dent(SCR *sp, TEXT *tp, int isindent)
 {
-	CHAR_T ch;
+	ARG_CHAR_T ch;
 	u_long sw, ts;
-	size_t cno, current, spaces, target, tabs, off;
-	int ai_reset;
+	size_t cno, current, spaces, target, tabs;
 
 	ts = O_VAL(sp, O_TABSTOP);
 	sw = O_VAL(sp, O_SHIFTWIDTH);
@@ -1921,18 +1924,10 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	target = current;
 	if (isindent)
 		target += COL_OFF(target, sw);
-	else
-		target -= --target % sw;
-
-	/*
-	 * The AI characters will be turned into overwrite characters if the
-	 * cursor immediately follows them.  We test both the cursor position
-	 * and the indent flag because there's no single test.  (^T can only
-	 * be detected by the cursor position, and while we know that the test
-	 * is always true for ^D, the cursor can be in more than one place, as
-	 * "0^D" and "^D" are different.)
-	 */
-	ai_reset = !isindent || tp->cno == tp->ai + tp->offset;
+	else {
+		--target;
+		target -= target % sw;
+	}
 
 	/*
 	 * Back up over any previous <blank> characters, changing them into
@@ -1961,15 +1956,16 @@ txt_dent(SCR *sp, TEXT *tp, int isindent)
 	if (current >= target)
 		spaces = tabs = 0;
 	else {
-		for (cno = current,
-		    tabs = 0; cno + COL_OFF(cno, ts) <= target; ++tabs)
-			cno += COL_OFF(cno, ts);
+		cno = current;
+		tabs = 0;
+		if (!O_ISSET(sp, O_EXPANDTAB)) {
+			for (; cno + COL_OFF(cno, ts) <= target; ++tabs)
+				cno += COL_OFF(cno, ts);
+		}
 		spaces = target - cno;
 	}
 
-	/* If we overwrote ai characters, reset the ai count. */
-	if (ai_reset)
-		tp->ai = tabs + spaces;
+	tp->ai = tabs + spaces;
 
 	/*
 	 * Call txt_insch() to insert each character, so that we get the
@@ -1996,7 +1992,7 @@ txt_fc(SCR *sp, TEXT *tp, int *redrawp)
 	size_t indx, len, nlen, off;
 	int argc, trydir;
 	CHAR_T *p, *t;
-	char *np;
+	const char *np;
 	size_t nplen;
 
 	trydir = 0;
@@ -2012,7 +2008,7 @@ txt_fc(SCR *sp, TEXT *tp, int *redrawp)
 	} else
 retry:		for (len = 0,
 		    off = tp->cno - 1, p = tp->lb + off;; --off, --p) {
-			if (ISBLANK(*p)) {
+			if (ISBLANK((UCHAR_T)*p)) {
 				++p;
 				break;
 			}
@@ -2150,7 +2146,8 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 	GS *gp;
 	size_t base, cnt, col, colwidth, numrows, numcols, prefix, row;
 	int ac, nf, reset;
-	char *np, *pp;
+	const char *np;
+	char *pp;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -2215,7 +2212,7 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 	} else {
 		/* Figure out the number of columns. */
 		numcols = (sp->cols - 1) / colwidth;
-		if (argc > numcols) {
+		if ((size_t)argc > numcols) {
 			numrows = argc / numcols;
 			if (argc % numcols)
 				++numrows;
@@ -2232,7 +2229,7 @@ txt_fc_col(SCR *sp, int argc, ARGS **argv)
 				if (nf)
 					FREE_SPACE(sp, pp, 0);
 				CHK_INTR;
-				if ((base += numrows) >= argc)
+				if ((base += numrows) >= (size_t)argc)
 					break;
 				(void)ex_printf(sp,
 				    "%*s", (int)(colwidth - cnt), "");
@@ -2263,7 +2260,7 @@ static int
 txt_emark(SCR *sp, TEXT *tp, size_t cno)
 {
 	CHAR_T ch;
-	char *kp;
+	unsigned char *kp;
 	size_t chlen, nlen, olen;
 	CHAR_T *p;
 
@@ -2348,7 +2345,7 @@ txt_hex(SCR *sp, TEXT *tp)
 {
 	CHAR_T savec;
 	size_t len, off;
-	u_long value;
+	long value;
 	CHAR_T *p, *wp;
 
 	/*
@@ -2377,7 +2374,7 @@ txt_hex(SCR *sp, TEXT *tp)
 	/* Get the value. */
 	errno = 0;
 	value = STRTOL(wp, NULL, 16);
-	if (errno || value > MAX_CHAR_T) {
+	if (errno || value < 0 || value > 0xff) {
 nothex:		tp->lb[tp->cno] = savec;
 		return (0);
 	}
@@ -2424,9 +2421,9 @@ nothex:		tp->lb[tp->cno] = savec;
  * of the screen space they require, but that it not overwrite other characters.
  */
 static int
-txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
+txt_insch(SCR *sp, TEXT *tp, ARG_CHAR_T *chp, u_int flags)
 {
-	char *kp;
+	unsigned char *kp;
 	CHAR_T savech;
 	size_t chlen, cno, copydown, olen, nlen;
 	CHAR_T *p;
@@ -2438,7 +2435,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 	if (LF_ISSET(TXT_REPLACE)) {
 		if (tp->owrite) {
 			--tp->owrite;
-			tp->lb[tp->cno++] = *chp;
+			tp->lb[tp->cno++] = (UCHAR_T)*chp;
 			return (0);
 		}
 	} else if (tp->owrite) {		/* Overwrite a character. */
@@ -2513,7 +2510,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 
 		/* If we had enough overwrite characters, we're done. */
 		if (nlen == 0) {
-			tp->lb[tp->cno++] = *chp;
+			tp->lb[tp->cno++] = (UCHAR_T)*chp;
 			return (0);
 		}
 	}
@@ -2529,7 +2526,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 			MEMMOVEW(tp->lb + tp->cno + 1,
 			    tp->lb + tp->cno, tp->owrite + tp->insert);
 	}
-	tp->lb[tp->cno++] = *chp;
+	tp->lb[tp->cno++] = (UCHAR_T)*chp;
 	return (0);
 }
 
@@ -2660,7 +2657,6 @@ txt_isrch(SCR *sp, VICMD *vp, TEXT *tp, u_int8_t *is_flagsp)
 static int
 txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 {
-	VI_PRIVATE *vip;
 	TEXT *tp;
 	db_recno_t lno;
 	int changed;
@@ -2672,7 +2668,6 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 	 * change, we have to redisplay it, otherwise the information cached
 	 * about the line will be wrong.
 	 */
-	vip = VIP(sp);
 	tp = tiqh->cqh_first;
 
 	if (LF_ISSET(TXT_AUTOINDENT))
@@ -2680,7 +2675,7 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 	else
 		changed = 0;
 	if (db_set(sp, tp->lno, tp->lb, tp->len) ||
-	    changed && vs_change(sp, tp->lno, LINE_RESET))
+	    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 		return (1);
 
 	for (lno = tp->lno; (tp = tp->q.cqe_next) != (void *)&sp->tiq; ++lno) {
@@ -2689,7 +2684,7 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 		else
 			changed = 0;
 		if (db_append(sp, 0, lno, tp->lb, tp->len) ||
-		    changed && vs_change(sp, tp->lno, LINE_RESET))
+		    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 			return (1);
 	}
 
@@ -2714,12 +2709,9 @@ txt_resolve(SCR *sp, TEXTH *tiqh, u_int32_t flags)
 static int
 txt_showmatch(SCR *sp, TEXT *tp)
 {
-	GS *gp;
 	VCS cs;
 	MARK m;
 	int cnt, endc, startc;
-
-	gp = sp->gp;
 
 	/*
 	 * Do a refresh first, in case we haven't done one in awhile,
@@ -2762,7 +2754,7 @@ txt_showmatch(SCR *sp, TEXT *tp)
 	}
 
 	/* If the match is on the screen, move to it. */
-	if (cs.cs_lno < m.lno || cs.cs_lno == m.lno && cs.cs_cno < m.cno)
+	if (cs.cs_lno < m.lno || (cs.cs_lno == m.lno && cs.cs_cno < m.cno))
 		return (0);
 	sp->lno = cs.cs_lno;
 	sp->cno = cs.cs_cno;
@@ -2781,14 +2773,12 @@ txt_showmatch(SCR *sp, TEXT *tp)
 static int
 txt_margin(SCR *sp, TEXT *tp, TEXT *wmtp, int *didbreak, u_int32_t flags)
 {
-	VI_PRIVATE *vip;
 	size_t len, off;
-	CHAR_T *p, *wp;
+	CHAR_T *p;
 
 	/* Find the nearest previous blank. */
 	for (off = tp->cno - 1, p = tp->lb + off, len = 0;; --off, --p, ++len) {
-		if (ISBLANK(*p)) {
-			wp = p + 1;
+		if (ISBLANK((UCHAR_T)*p)) {
 			break;
 		}
 
@@ -2817,7 +2807,6 @@ txt_margin(SCR *sp, TEXT *tp, TEXT *wmtp, int *didbreak, u_int32_t flags)
 	 * line -- it's going to be used to set the cursor value when we
 	 * move to the new line.
 	 */
-	vip = VIP(sp);
 	wmtp->lb = p + 1;
 	wmtp->offset = len;
 	wmtp->insert = LF_ISSET(TXT_APPENDEOL) ?  tp->insert - 1 : tp->insert;
@@ -2839,7 +2828,7 @@ txt_margin(SCR *sp, TEXT *tp, TEXT *wmtp, int *didbreak, u_int32_t flags)
 	 * Delete any trailing whitespace from the current line.
 	 */
 	for (;; --p, --off) {
-		if (!ISBLANK(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			break;
 		--tp->cno;
 		--tp->len;

@@ -283,7 +283,7 @@ vi_motif_LDADD = @MOTIFLIBS@ @LIBOBJS@
 vi_motif_CFLAGS = @XINCS@
 
 VI=-DVI=\"$(bindir)/`echo vi-ipc | sed '$(transform)'`\"
-CFLAGS=	$(OPTFLAG)
+AM_CFLAGS=	$(OPTFLAG)
 if BUNDLED_DB
 AM_CPPFLAGS=	 -D__DBINTERFACE_PRIVATE -I$(visrcdir)/db.1.85/include \
 		 -D__REGEX_PRIVATE -I. -I$(visrcdir)/include $(VI)

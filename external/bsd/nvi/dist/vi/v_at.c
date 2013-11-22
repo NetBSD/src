@@ -1,3 +1,4 @@
+/*	$NetBSD: v_at.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,12 +37,12 @@ int
 v_at(SCR *sp, VICMD *vp)
 {
 	CB *cbp;
-	CHAR_T name;
+	ARG_CHAR_T name;
 	TEXT *tp;
 	size_t len;
 	char nbuf[20];
 	CHAR_T wbuf[20];
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/*
@@ -66,7 +67,7 @@ v_at(SCR *sp, VICMD *vp)
 
 	CBNAME(sp, cbp, name);
 	if (cbp == NULL) {
-		ex_emsg(sp, KEY_NAME(sp, name), EXM_EMPTYBUF);
+		ex_emsg(sp, (char *)KEY_NAME(sp, name), EXM_EMPTYBUF);
 		return (1);
 	}
 
@@ -92,9 +93,9 @@ v_at(SCR *sp, VICMD *vp)
 	for (tp = cbp->textq.cqh_last;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
 		static CHAR_T nl[] = { '\n', 0 };
-		if ((F_ISSET(cbp, CB_LMODE) ||
+		if (((F_ISSET(cbp, CB_LMODE) ||
 		    tp->q.cqe_next != (void *)&cbp->textq) &&
-		    v_event_push(sp, NULL, nl, 1, 0) ||
+		    v_event_push(sp, NULL, nl, 1, 0)) ||
 		    v_event_push(sp, NULL, tp->lb, tp->len, 0))
 			return (1);
 	}

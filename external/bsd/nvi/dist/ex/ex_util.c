@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_util.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -109,7 +110,7 @@ ex_ncheck(SCR *sp, int force)
 
 		for (ap = sp->cargv + 1; *ap != NULL; ++ap);
 		msgq(sp, M_ERR,
-		    "167|%d more files to edit", (ap - sp->cargv) - 1);
+		    "167|%zd more files to edit", (ap - sp->cargv) - 1);
 
 		return (1);
 	}
@@ -145,12 +146,12 @@ ex_init(SCR *sp)
  * ex_emsg --
  *	Display a few common ex and vi error messages.
  *
- * PUBLIC: void ex_wemsg __P((SCR *, CHAR_T *, exm_t));
+ * PUBLIC: void ex_wemsg __P((SCR *, const CHAR_T *, exm_t));
  */
 void
-ex_wemsg(SCR* sp, CHAR_T *p, exm_t which)
+ex_wemsg(SCR* sp, const CHAR_T *p, exm_t which)
 {
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	if (p) INT2CHAR(sp, p, STRLEN(p), np, nlen);
@@ -162,10 +163,10 @@ ex_wemsg(SCR* sp, CHAR_T *p, exm_t which)
  * ex_emsg --
  *	Display a few common ex and vi error messages.
  *
- * PUBLIC: void ex_emsg __P((SCR *, char *, exm_t));
+ * PUBLIC: void ex_emsg __P((SCR *, const char *, exm_t));
  */
 void
-ex_emsg(SCR *sp, char *p, exm_t which)
+ex_emsg(SCR *sp, const char *p, exm_t which)
 {
 	switch (which) {
 	case EXM_EMPTYBUF:

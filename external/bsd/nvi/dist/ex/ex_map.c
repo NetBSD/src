@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_map.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -69,8 +70,8 @@ ex_map(SCR *sp, EXCMD *cmdp)
 	 * call it as well.  Note, the SEQ_FUNCMAP type is persistent across
 	 * screen types, maybe the next screen type will get it right.
 	 */
-	if (input[0] == '#' && isdigit(input[1])) {
-		for (p = input + 2; isdigit(*p); ++p);
+	if (input[0] == '#' && ISDIGIT((UCHAR_T)input[1])) {
+		for (p = input + 2; ISDIGIT((UCHAR_T)*p); ++p);
 		if (p[0] != '\0')
 			goto nofunc;
 

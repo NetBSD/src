@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_screen.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -19,7 +20,6 @@ static const char sccsid[] = "Id: ip_screen.c,v 8.8 2001/06/25 15:19:24 skimo Ex
 
 #include "../common/common.h"
 #include "../ipc/ip.h"
-#include "extern.h"
 
 /*
  * ip_screen --
@@ -44,8 +44,8 @@ ip_screen(SCR *sp, u_int32_t flags)
 	}
 	
 	/* See if we're already in the right mode. */
-	if (LF_ISSET(SC_EX) && F_ISSET(sp, SC_SCR_EX) ||
-	    LF_ISSET(SC_VI) && F_ISSET(sp, SC_SCR_VI))
+	if ((LF_ISSET(SC_EX) && F_ISSET(sp, SC_SCR_EX)) ||
+	    (LF_ISSET(SC_VI) && F_ISSET(sp, SC_SCR_VI)))
 		return (0);
 
 	/* Ex isn't possible if there is no terminal. */

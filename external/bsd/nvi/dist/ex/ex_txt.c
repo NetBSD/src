@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_txt.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -246,7 +247,7 @@ notlast:			CIRCLEQ_REMOVE(tiqh, tp, q);
 			 */
 			if (LF_ISSET(TXT_CNTRLD)) {
 				for (cnt = 0; cnt < tp->len; ++cnt)
-					if (!ISBLANK(tp->lb[cnt]))
+					if (!ISBLANK((UCHAR_T)tp->lb[cnt]))
 						break;
 				if (cnt == tp->len) {
 					tp->len = 1;
@@ -364,8 +365,12 @@ txt_prompt(SCR *sp, TEXT *tp, ARG_CHAR_T prompt, u_int32_t flags)
 		(void)ex_printf(sp, "%6lu  ", (u_long)tp->lno);
 
 	/* Print out autoindent string. */
-	if (LF_ISSET(TXT_AUTOINDENT))
-		(void)ex_printf(sp, "%.*s", (int)tp->ai, tp->lb);
+	if (LF_ISSET(TXT_AUTOINDENT)) {
+		const char *nstr;
+		size_t nlen;
+		INT2CHAR(sp, tp->lb, tp->ai + 1, nstr, nlen);
+		(void)ex_printf(sp, "%.*s", (int)tp->ai, nstr);
+	}
 	(void)ex_fflush(sp);
 }
 
@@ -393,8 +398,8 @@ txt_dent(SCR *sp, TEXT *tp)
 			++scno;
 
 	/* Get the previous shiftwidth column. */
-	cno = scno;
-	scno -= --scno % sw;
+	cno = scno--;
+	scno -= scno % sw;
 
 	/*
 	 * Since we don't know what comes before the character(s) being
@@ -406,8 +411,12 @@ txt_dent(SCR *sp, TEXT *tp)
 	 *
 	 * Count up spaces/tabs needed to get to the target.
 	 */
-	for (cno = 0, tabs = 0; cno + COL_OFF(cno, ts) <= scno; ++tabs)
-		cno += COL_OFF(cno, ts);
+	cno = 0;
+	tabs = 0;
+	if (!O_ISSET(sp, O_EXPANDTAB)) {
+		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
+			cno += COL_OFF(cno, ts);
+	}
 	spaces = scno - cno;
 
 	/* Make sure there's enough room. */

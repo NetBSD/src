@@ -1,3 +1,4 @@
+/*	$NetBSD: regexec.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -59,11 +60,13 @@ static char sccsid[] = "@(#)regexec.c	8.2 (Berkeley) 3/16/94";
 #include "utils.h"
 #include "regex2.h"
 
+#ifdef notdef
 static int nope = 0;		/* for use in asserts; shuts lint up */
+#endif
 
 /* macros for manipulating states, small version */
 #define	states	int
-#define	states1	states		/* for later use in regexec() decision */
+#define	states1	int		/* for later use in regexec() decision */
 #define	CLEAR(v)	((v) = 0)
 #define	SET0(v, n)	((v) &= ~(1 << (n)))
 #define	SET1(v, n)	((v) |= 1 << (n))
@@ -169,8 +172,8 @@ regexec(const regex_t *preg, const RCHAR_T *string, size_t nmatch, regmatch_t *p
 		return(REG_BADPAT);
 	eflags = GOODFLAGS(eflags);
 
-	if (g->nstates <= CHAR_BIT*sizeof(states1) && !(eflags&REG_LARGE))
-		return(smatcher(g, (RCHAR_T *)string, nmatch, pmatch, eflags));
+	if (g->nstates <= (int)(CHAR_BIT*sizeof(states1)) && !(eflags&REG_LARGE))
+		return(smatcher(g, (RCHAR_T *)__UNCONST(string), nmatch, pmatch, eflags));
 	else
-		return(lmatcher(g, (RCHAR_T *)string, nmatch, pmatch, eflags));
+		return(lmatcher(g, (RCHAR_T *)__UNCONST(string), nmatch, pmatch, eflags));
 }

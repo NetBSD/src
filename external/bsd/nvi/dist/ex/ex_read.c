@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_read.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -44,8 +45,8 @@ ex_read(SCR *sp, EXCMD *cmdp)
 {
 	enum { R_ARG, R_EXPANDARG, R_FILTER } which;
 	struct stat sb;
-	CHAR_T *arg;
-	char *name;
+	CHAR_T *arg = NULL;
+	const char *name;
 	size_t nlen;
 	EX_PRIVATE *exp;
 	FILE *fp;
@@ -53,10 +54,9 @@ ex_read(SCR *sp, EXCMD *cmdp)
 	GS *gp;
 	MARK rm;
 	db_recno_t nlines;
-	size_t arglen;
+	size_t arglen = 0;
 	int argc, rval;
 	char *p;
-	char *np;
 
 	gp = sp->gp;
 
@@ -132,10 +132,12 @@ ex_read(SCR *sp, EXCMD *cmdp)
 			if (F_ISSET(cmdp, E_MODIFY))
 				(void)vs_update(sp, "!", cmdp->argv[argc]->bp);
 		} else {
-			if (F_ISSET(cmdp, E_MODIFY))
+			if (F_ISSET(cmdp, E_MODIFY)) {
+				INT2CHAR(sp, cmdp->argv[argc]->bp,
+				    cmdp->argv[argc]->len + 1, name, nlen);
 				(void)ex_printf(sp,
-				    "!%s\n", cmdp->argv[argc]->bp);
-			else
+				    "!%s\n", name);
+			} else
 				(void)ex_puts(sp, "!\n");
 			(void)ex_fflush(sp);
 		}
@@ -293,10 +295,10 @@ ex_read(SCR *sp, EXCMD *cmdp)
  * ex_readfp --
  *	Read lines into the file.
  *
- * PUBLIC: int ex_readfp __P((SCR *, char *, FILE *, MARK *, db_recno_t *, int));
+ * PUBLIC: int ex_readfp __P((SCR *, const char *, FILE *, MARK *, db_recno_t *, int));
  */
 int
-ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int silent)
+ex_readfp(SCR *sp, const char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int silent)
 {
 	EX_PRIVATE *exp;
 	GS *gp;
@@ -304,9 +306,9 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int sile
 	size_t len;
 	u_long ccnt;			/* XXX: can't print off_t portably. */
 	int nf, rval;
-	char *p;
+	const char *p;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	gp = sp->gp;
 	exp = EXP(sp);
@@ -342,11 +344,12 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int sile
 		*nlinesp = lcnt;
 
 	if (!silent) {
-		p = msg_print(sp, name, &nf);
+		char *q = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
-		    "148|%s: %lu lines, %lu characters", p, lcnt, ccnt);
+		    "148|%s: %lu lines, %lu characters", q, (unsigned long)lcnt,
+		    (unsigned long)ccnt);
 		if (nf)
-			FREE_SPACE(sp, p, 0);
+			FREE_SPACE(sp, q, 0);
 	}
 
 	rval = 0;

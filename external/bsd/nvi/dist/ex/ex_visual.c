@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_visual.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +42,7 @@ ex_visual(SCR *sp, EXCMD *cmdp)
 	int pos;
 	char buf[256];
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	/* If open option off, disallow visual command. */
 	if (!O_ISSET(sp, O_OPEN)) {
@@ -81,9 +82,10 @@ ex_visual(SCR *sp, EXCMD *cmdp)
 
 	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
 		len = snprintf(buf, sizeof(buf),
-		     "%luz%c%lu", sp->lno, pos, cmdp->count);
+		    "%luz%c%lu", (unsigned long)sp->lno, pos, cmdp->count);
 	else
-		len = snprintf(buf, sizeof(buf), "%luz%c", sp->lno, pos);
+		len = snprintf(buf, sizeof(buf),
+		    "%luz%c", (unsigned long)sp->lno, pos);
 	CHAR2INT(sp, buf, len, wp, wlen);
 	(void)v_event_push(sp, NULL, wp, wlen, CH_NOMAP | CH_QUOTED);
 

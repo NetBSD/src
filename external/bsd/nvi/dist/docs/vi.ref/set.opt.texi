@@ -97,7 +97,10 @@ the first nonblank character of the line from which you created it.
 Lines are indented using tab characters to the extent possible (based on
 the value of the
 @OP{tabstop}
-option) and then using space characters as necessary.
+option,
+and if
+@OP{expandtab}
+is not set) and then using space characters as necessary.
 For commands inserting text into the middle of a line, any blank characters
 to the right of the cursor are discarded, and the first nonblank character
 to the right of the cursor is aligned as described above.
@@ -407,6 +410,16 @@ only.
 error messages are normally presented in inverse video.
 If that is not possible for the terminal, setting this option causes
 error messages to be announced by ringing the terminal bell.
+@cindex expandtab
+@IP{expandtab, et [off]}
+
+Prevent the use of
+@LI{<tab>}
+characters in leading whitespace when shifting text, autoindenting,
+indenting with
+@CO{<control-T>},
+or outdenting with
+@CO{<control-D>}.
 @cindex exrc
 @IP{exrc, ex [off]}
 
@@ -593,6 +606,15 @@ character.
 See the section entitled
 @QB{Regular Expressions and Replacement Strings}
 for more information.
+@cindex matchchars
+@IP{matchchars [[]@{@}()<>]}
+
+@CO{Vi}
+only.
+This option defines the character pairs used by the
+@CO{%}
+command.
+
 @cindex matchtime
 @IP{matchtime [7]}
 

@@ -1,3 +1,4 @@
+/*	$NetBSD: v_sentence.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +73,7 @@ v_sentencef(SCR *sp, VICMD *vp)
 	 * This may not handle "  .  " correctly, but it's real unclear
 	 * what correctly means in that case.
 	 */
-	if (cs.cs_flags == CS_EMP || cs.cs_flags == 0 && ISBLANK(cs.cs_ch)) {
+	if (cs.cs_flags == CS_EMP || (cs.cs_flags == 0 && ISBLANK2(cs.cs_ch))) {
 		if (cs_fblank(sp, &cs))
 			return (1);
 		if (--cnt == 0) {
@@ -93,7 +94,7 @@ v_sentencef(SCR *sp, VICMD *vp)
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == 0 &&
-				    ISBLANK(cs.cs_ch) && cs_fblank(sp, &cs))
+				    ISBLANK2(cs.cs_ch) && cs_fblank(sp, &cs))
 					return (1);
 				goto okret;
 			}
@@ -233,11 +234,11 @@ v_sentenceb(SCR *sp, VICMD *vp)
 			if (cs.cs_flags != CS_EOL)
 				break;
 		}
-	} else if (cs.cs_flags == 0 && !ISBLANK(cs.cs_ch))
+	} else if (cs.cs_flags == 0 && !ISBLANK2(cs.cs_ch))
 		for (;;) {
 			if (cs_prev(sp, &cs))
 				return (1);
-			if (cs.cs_flags != 0 || ISBLANK(cs.cs_ch))
+			if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
 				break;
 		}
 
@@ -280,7 +281,7 @@ ret:			slno = cs.cs_lno;
 			} while (!cs.cs_flags &&
 			    (cs.cs_ch == ')' || cs.cs_ch == ']' ||
 			    cs.cs_ch == '"' || cs.cs_ch == '\''));
-			if ((cs.cs_flags || ISBLANK(cs.cs_ch)) &&
+			if ((cs.cs_flags || ISBLANK2(cs.cs_ch)) &&
 			    cs_fblank(sp, &cs))
 				return (1);
 
@@ -303,7 +304,7 @@ ret:			slno = cs.cs_lno;
 					return (1);
 				if (cs.cs_flags == CS_EOL)
 					continue;
-				if (cs.cs_flags == 0 && ISBLANK(cs.cs_ch))
+				if (cs.cs_flags == 0 && ISBLANK2(cs.cs_ch))
 					continue;
 				break;
 			}
@@ -321,7 +322,7 @@ ret:			slno = cs.cs_lno;
 			break;
 		default:
 			last =
-			    cs.cs_flags == CS_EOL || ISBLANK(cs.cs_ch) ||
+			    cs.cs_flags == CS_EOL || ISBLANK2(cs.cs_ch) ||
 			    cs.cs_ch == ')' || cs.cs_ch == ']' ||
 			    cs.cs_ch == '"' || cs.cs_ch == '\'' ? 1 : 0;
 		}
@@ -340,7 +341,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 	 * All commands move to the end of the range.  Adjust the start of
 	 * the range for motion commands.
 	 */
-	if (ISMOTION(vp))
+	if (ISMOTION(vp)) {
 		if (vp->m_start.cno == 0 &&
 		    (cs.cs_flags != 0 || vp->m_stop.cno == 0)) {
 			if (db_get(sp,
@@ -350,6 +351,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 			F_SET(vp, VM_LMODE);
 		} else
 			--vp->m_start.cno;
+	}
 	vp->m_final = vp->m_stop;
 	return (0);
 }

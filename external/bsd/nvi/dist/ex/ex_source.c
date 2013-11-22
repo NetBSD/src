@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_source.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +41,10 @@ ex_source(SCR *sp, EXCMD *cmdp)
 	struct stat sb;
 	int fd, len;
 	char *bp;
-	char *name;
+	const char *name;
 	size_t nlen;
-	CHAR_T *wp, *dp;
+	const CHAR_T *wp;
+	CHAR_T *dp;
 	size_t wlen;
 
 	INT2CHAR(sp, cmdp->argv[0]->bp, cmdp->argv[0]->len + 1, name, nlen);

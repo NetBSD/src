@@ -1,3 +1,4 @@
+/*	$NetBSD: cl_bsd.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1995, 1996
  *	Keith Bostic.  All rights reserved.
@@ -28,9 +29,11 @@ static const char sccsid[] = "Id: cl_bsd.c,v 8.32 2000/12/01 13:56:17 skimo Exp 
 #include "../vi/vi.h"
 #include "cl.h"
 
+#ifndef HAVE_CURSES_SETUPTERM
 static char	*ke;				/* Keypad on. */
 static char	*ks;				/* Keypad off. */
 static char	*vb;				/* Visible bell string. */
+#endif
 
 /*
  * HP's support the entire System V curses package except for the tigetstr
@@ -193,39 +196,39 @@ setupterm(ttype, fno, errp)
 #ifndef	HAVE_CURSES_TIGETSTR
 /* Terminfo-to-termcap translation table. */
 typedef struct _tl {
-	char *terminfo;			/* Terminfo name. */
-	char *termcap;			/* Termcap name. */
+	const char *terminfo;		/* Terminfo name. */
+	const char *termcap;		/* Termcap name. */
 } TL;
 static const TL list[] = {
-	"cols",		"co",		/* Terminal columns. */
-	"cup",		"cm",		/* Cursor up. */
-	"cuu1",		"up",		/* Cursor up. */
-	"el",		"ce",		/* Clear to end-of-line. */
-	"flash",	"vb",		/* Visible bell. */
-	"kcub1",  	"kl",		/* Cursor left. */
-	"kcud1",	"kd",		/* Cursor down. */
-	"kcuf1",	"kr",		/* Cursor right. */
-	"kcuu1",  	"ku",		/* Cursor up. */
-	"kdch1",	"kD",		/* Delete character. */
-	"kdl1",		"kL",		/* Delete line. */
-	"ked",		"kS",		/* Delete to end of screen. */
-	"kel",		"kE",		/* Delete to eol. */
-	"kend",		"@7",		/* Go to eol. */
-	"khome",	"kh",		/* Go to sol. */
-	"kich1",	"kI",		/* Insert at cursor. */
-	"kil1",		"kA",		/* Insert line. */
-	"kind",		"kF",		/* Scroll down. */
-	"kll",		"kH",		/* Go to eol. */
-	"knp",		"kN",		/* Page down. */
-	"kpp",		"kP",		/* Page up. */
-	"kri",		"kR",		/* Scroll up. */
-	"lines",	"li",		/* Terminal lines. */
-	"rmcup",	"te",		/* Terminal end string. */
-	"rmkx",		"ke",		/* Exit "keypad-transmit" mode. */
-	"rmso",		"se",		/* Standout end. */
-	"smcup",	"ti",		/* Terminal initialization string. */
-	"smkx",		"ks",		/* Enter "keypad-transmit" mode. */
-	"smso",		"so",		/* Standout begin. */
+	{ "cols",	"co", },	/* Terminal columns. */
+	{ "cup",	"cm", },	/* Cursor up. */
+	{ "cuu1",	"up", },	/* Cursor up. */
+	{ "el",		"ce", },	/* Clear to end-of-line. */
+	{ "flash",	"vb", },	/* Visible bell. */
+	{ "kcub1",  	"kl", },	/* Cursor left. */
+	{ "kcud1",	"kd", },	/* Cursor down. */
+	{ "kcuf1",	"kr", },	/* Cursor right. */
+	{ "kcuu1",  	"ku", },	/* Cursor up. */
+	{ "kdch1",	"kD", },	/* Delete character. */
+	{ "kdl1",	"kL", },	/* Delete line. */
+	{ "ked",	"kS", },	/* Delete to end of screen. */
+	{ "kel",	"kE", },	/* Delete to eol. */
+	{ "kend",	"@7", },	/* Go to eol. */
+	{ "khome",	"kh", },	/* Go to sol. */
+	{ "kich1",	"kI", },	/* Insert at cursor. */
+	{ "kil1",	"kA", },	/* Insert line. */
+	{ "kind",	"kF", },	/* Scroll down. */
+	{ "kll",	"kH", },	/* Go to eol. */
+	{ "knp",	"kN", },	/* Page down. */
+	{ "kpp",	"kP", },	/* Page up. */
+	{ "kri",	"kR", },	/* Scroll up. */
+	{ "lines",	"li", },	/* Terminal lines. */
+	{ "rmcup",	"te", },	/* Terminal end string. */
+	{ "rmkx",	"ke", },	/* Exit "keypad-transmit" mode. */
+	{ "rmso",	"se", },	/* Standout end. */
+	{ "smcup",	"ti", },	/* Terminal initialization string. */
+	{ "smkx",	"ks", },	/* Enter "keypad-transmit" mode. */
+	{ "smso",	"so", },	/* Standout begin. */
 };
 
 #ifdef _AIX
@@ -266,10 +269,9 @@ static const char codes[] = {
  *	list comparison routine for bsearch.
  */
 static int
-lcmp(a, b)
-	const void *a, *b;
+lcmp(const void *a, const void *b)
 {
-	return (strcmp(a, ((TL *)b)->terminfo));
+	return (strcmp(a, ((const TL *)b)->terminfo));
 }
 
 /*
@@ -280,36 +282,36 @@ lcmp(a, b)
  * Try and work around the problem, since we only care about the return value.
  *
  * PUBLIC: #ifdef HAVE_CURSES_TIGETSTR
- * PUBLIC: char *tigetstr();
+ * PUBLIC: char *tigetstr __P((const char *));
  * PUBLIC: #else
  * PUBLIC: char *tigetstr __P((char *));
  * PUBLIC: #endif
  */
 char *
 tigetstr(name)
-	char *name;
+	const char *name;
 {
 	static char sbuf[256];
 	TL *tlp;
 	int n;
-	char *p, keyname[3];
+	char *p, mykeyname[3];
 
 	if ((tlp = bsearch(name,
 	    list, sizeof(list) / sizeof(TL), sizeof(TL), lcmp)) == NULL) {
 #ifdef _AIX
 		if (name[0] == 'k' &&
 		    name[1] == 'f' && (n = atoi(name + 2)) <= 36) {
-			keyname[0] = 'k';
-			keyname[1] = codes[n];
-			keyname[2] = '\0';
+			mykeyname[0] = 'k';
+			mykeyname[1] = codes[n];
+			mykeyname[2] = '\0';
 #else
 		if (name[0] == 'k' &&
 		    name[1] == 'f' && (n = atoi(name + 2)) <= 63) {
-			keyname[0] = n <= 10 ? 'k' : 'F';
-			keyname[1] = codes[n];
-			keyname[2] = '\0';
+			mykeyname[0] = n <= 10 ? 'k' : 'F';
+			mykeyname[1] = codes[n];
+			mykeyname[2] = '\0';
 #endif
-			name = keyname;
+			name = mykeyname;
 		}
 	} else
 		name = tlp->termcap;
@@ -331,7 +333,7 @@ tigetstr(name)
  */
 int
 tigetnum(name)
-	char *name;
+	const char *name;
 {
 	TL *tlp;
 	int val;
@@ -344,3 +346,4 @@ tigetnum(name)
 	return ((val = tgetnum(name)) == -1 ? -2 : val);
 }
 #endif /* !HAVE_CURSES_TIGETSTR */
+

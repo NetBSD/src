@@ -1,3 +1,4 @@
+/*	$NetBSD: v_z.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +35,7 @@ int
 v_z(SCR *sp, VICMD *vp)
 {
 	db_recno_t lno;
-	u_int value;
+	e_key_t value;
 
 	/*
 	 * The first count is the line to use.  If the value doesn't

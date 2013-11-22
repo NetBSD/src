@@ -1,3 +1,4 @@
+/*	$NetBSD: log1.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -64,7 +65,7 @@ static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp  (
  */
 
 static int	log_cursor1 __P((SCR *, int));
-static void	log_err __P((SCR *, char *, int));
+static void	log_err __P((SCR *, const char *, int));
 #if defined(DEBUG) && 0
 static void	log_trace __P((SCR *, char *, db_recno_t, u_char *));
 #endif
@@ -709,7 +710,7 @@ err:	F_CLR(ep, F_NOLOG);
  *	Try and restart the log on failure, i.e. if we run out of memory.
  */
 static void
-log_err(SCR *sp, char *file, int line)
+log_err(SCR *sp, const char *file, int line)
 {
 	EXF *ep;
 

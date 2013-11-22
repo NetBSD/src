@@ -1,4 +1,4 @@
-.\" Copyright (c) 1994
+.\"	$NetBSD: vi.1,v 1.2 2013/11/22 15:52:05 christos Exp $
 .\"     The Regents of the University of California.  All rights reserved.
 .\" Copyright (c) 1994, 1995, 1996
 .\"	Keith Bostic.  All rights reserved.
@@ -17,7 +17,7 @@ ex, vi, view \- text editors
 .SH SYNOPSIS
 .B ex
 [\c
-.B -eFRrSsv\c
+.B -eFGRrSsv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -39,7 +39,7 @@ ex, vi, view \- text editors
 .br
 .B view
 [\c
-.B -eFRrSv\c
+.B -eFGRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -117,6 +117,9 @@ Start editing in ex mode, as if the command name were
 Don't copy the entire file when first starting to edit.
 (The default is to make a copy in case someone else modifies
 the file during your edit session.)
+.TP
+.B \-G
+Start editing in gtags mode, as if the gtagsmode option was set.
 .TP
 .B \-l
 Start editing with the lisp and showmatch options set.
@@ -429,6 +432,8 @@ commands or cancel partial commands.
 .TP
 .B "<control-]>"
 Push a tag reference onto the tag stack.
+In gtagsmode, if at the first column of line,
+locate function references otherwise function definitions.
 .TP
 .B "<control-^>"
 Switch to the most recently edited file.
@@ -774,6 +779,11 @@ and
 characters to move forward to the next
 .B shiftwidth
 column boundary.
+If
+.B expandtab
+is set, only insert
+.I <space>
+characters.
 .TP
 .B "<erase>
 .TP
@@ -940,6 +950,9 @@ Grow or shrink the current screen.
 .B "rew[ind][!]"
 Rewind the argument list.
 .TP
+.B "rta[g][!] tagstring"
+Edit the file referring the specified tag. (Only in gtagsmode)
+.TP
 .B "se[t] [option[=[value]] ...] [nooption ...] [option? ...] [all]"
 Display or set editor options.
 .TP
@@ -1095,6 +1108,15 @@ command.
 only.
 Announce error messages with a bell.
 .TP
+.B "expandtab, et [off]"
+Prevent the use of
+.I <tab>
+characters in leading whitespace when shifting text, autoindenting,
+indenting with
+.BR "<control-T>" ,
+or outdenting with
+.BR "<control-D>" .
+.TP
 .B "exrc, ex [off]"
 Read the startup files in the local directory.
 .TP
@@ -1109,6 +1131,9 @@ command line.
 .TP
 .B "flash [on]"
 Flash the screen instead of beeping the keyboard on error.
+.TP
+.B "gtagsmode, gt [off]"
+Use GTAGS and GRTAGS instead of tags.
 .TP
 .B "hardtabs, ht [8]"
 Set the spacing between hardware tab settings.
@@ -1150,6 +1175,9 @@ read or written.
 .TP
 .B "magic [on]"
 Treat certain characters specially in regular expressions.
+.TP
+.B "matchchars [[]{}()<>]"
+Character pairs looked for by the % command.
 .TP
 .B "matchtime [7]"
 .I \&Vi

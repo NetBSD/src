@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_main.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -26,7 +27,6 @@ static const char sccsid[] = "Id: ip_main.c,v 8.24 2001/07/29 19:07:30 skimo Exp
 
 #include "../common/common.h"
 #include "../ipc/ip.h"
-#include "extern.h"
 
 GS *__global_list;				/* GLOBAL: List of screens. */
 
@@ -46,7 +46,6 @@ int
 main(int argc, char **argv)
 {
 	IP_PRIVATE *ipp;
-	int rval;
 	char *ip_arg;
 	char **p_av, **t_av;
 	GS *gp;
@@ -111,7 +110,7 @@ main(int argc, char **argv)
 #if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
 	free(gp);
 #endif
-	exit (rval);
+	exit (0);
 }
 
 static void *
@@ -139,14 +138,14 @@ run_editor(void * vp)
 	 */
 	for (;;) {
 		if (ip_wevent(wp, NULL, &ev, 0, 0))
-			return;
+			return NULL;
 		if (ev.e_event == E_WRESIZE)
 			break;
 		if (ev.e_event == E_EOF || ev.e_event == E_ERR ||
 		    ev.e_event == E_SIGHUP || ev.e_event == E_SIGTERM)
-			return;
+			return NULL;
 		if (ev.e_event == E_IPCOMMAND && ev.e_ipcom == VI_QUIT)
-			return;
+			return NULL;
 	}
 
 	/* Run ex/vi. */
@@ -209,10 +208,10 @@ get_fds(char *ip_arg, int *i_fd, int *o_fd)
 	 * file descriptor from the screen, the second is the file descriptor
 	 * to the screen.
 	 */
-	if (!ip_arg || !isdigit(ip_arg[0]))
+	if (!ip_arg || !isdigit((unsigned char)ip_arg[0]))
 		goto usage;
 	*i_fd = strtol(ip_arg, &ep, 10);
-	if (ep[0] != '.' || !isdigit(ep[1]))
+	if (ep[0] != '.' || !isdigit((unsigned char)ep[1]))
 		goto usage;
 	*o_fd = strtol(++ep, &ep, 10);
 	if (ep[0] != '\0') {

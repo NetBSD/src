@@ -1,3 +1,4 @@
+/*	$NetBSD: cl_funcs.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +34,12 @@ static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo E
 static void cl_rdiv __P((SCR *));
 
 static int 
-addstr4(SCR *sp, void *str, size_t len, int wide)
+addstr4(SCR *sp, const void *str, size_t len, int wide)
 {
-	CL_PRIVATE *clp;
 	WINDOW *win;
 	size_t y, x;
 	int iv;
 
-	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
 	/*
@@ -49,6 +48,7 @@ addstr4(SCR *sp, void *str, size_t len, int wide)
 	 */
 	iv = 0;
 	getyx(win, y, x);
+	__USE(x);
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) &&
 	    y == RLNO(sp, LASTLINE(sp)) && IS_SPLIT(sp)) {
 		iv = 1;
@@ -78,7 +78,7 @@ addstr4(SCR *sp, void *str, size_t len, int wide)
 int
 cl_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 {
-    return addstr4(sp, (void *)str, len, 1);
+    return addstr4(sp, (const void *)str, len, 1);
 }
 
 /*
@@ -90,7 +90,7 @@ cl_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 int
 cl_addstr(SCR *sp, const char *str, size_t len)
 {
-    return addstr4(sp, (void *)str, len, 0);
+    return addstr4(sp, (const void *)str, len, 0);
 }
 
 /*
@@ -255,7 +255,9 @@ int
 cl_clrtoeol(SCR *sp)
 {
 	WINDOW *win;
+#if 0
 	size_t spcnt, y, x;
+#endif
 
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
@@ -308,11 +310,9 @@ int
 cl_deleteln(SCR *sp)
 {
 	CHAR_T ch;
-	CL_PRIVATE *clp;
 	WINDOW *win;
 	size_t col, lno, spcnt, y, x;
 
-	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
 	/*
@@ -528,7 +528,7 @@ cl_move(SCR *sp, size_t lno, size_t cno)
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 	/* See the comment in cl_cursor. */
 	if (wmove(win, RLNO(sp, lno), RCNO(sp, cno)) == ERR) {
-		msgq(sp, M_ERR, "Error: move: l(%u + %u) c(%u + %u)",
+		msgq(sp, M_ERR, "Error: move: l(%zu + %zu) c(%zu + %zu)",
 		    lno, sp->roff, cno, sp->coff);
 		return (1);
 	}
@@ -544,13 +544,11 @@ cl_move(SCR *sp, size_t lno, size_t cno)
 int
 cl_refresh(SCR *sp, int repaint)
 {
-	GS *gp;
 	CL_PRIVATE *clp;
 	WINDOW *win;
 	SCR *psp, *tsp;
 	size_t y, x;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 
@@ -737,11 +735,9 @@ cl_suspend(SCR *sp, int *allowedp)
 	struct termios t;
 	CL_PRIVATE *clp;
 	WINDOW *win;
-	GS *gp;
 	size_t y, x;
 	int changed;
 
-	gp = sp->gp;
 	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 	*allowedp = 1;

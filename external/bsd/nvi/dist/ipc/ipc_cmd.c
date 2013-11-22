@@ -1,3 +1,4 @@
+/*	$NetBSD: ipc_cmd.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 #include "config.h"
 
 #include <sys/types.h>
@@ -15,7 +16,9 @@ static int ipc_unmarshall_a __P((IPVIWIN *, IP_BUF*, IPFunc));
 static int ipc_unmarshall_12 __P((IPVIWIN *, IP_BUF*, IPFunc));
 static int ipc_unmarshall __P((IPVIWIN *, IP_BUF*, IPFunc));
 static int ipc_unmarshall_ab1 __P((IPVIWIN *, IP_BUF*, IPFunc));
+#if 0
 static int ipc_unmarshall_1a __P((IPVIWIN *, IP_BUF*, IPFunc));
+#endif
 static int ipc_unmarshall_1 __P((IPVIWIN *, IP_BUF*, IPFunc));
 static int ipc_unmarshall_123 __P((IPVIWIN *, IP_BUF*, IPFunc));
 
@@ -91,11 +94,13 @@ ipc_unmarshall_ab1(IPVIWIN *ipvi, IP_BUF *ipb, IPFunc func)
     return ((IPFunc_ab1)func)(ipvi, ipb->str1, ipb->len1, ipb->str2, ipb->len2, ipb->val1);
 }
 
+#if 0
 static int
 ipc_unmarshall_1a(IPVIWIN *ipvi, IP_BUF *ipb, IPFunc func)
 {
     return ((IPFunc_1a)func)(ipvi, ipb->val1, ipb->str1, ipb->len1);
 }
+#endif
 
 static int
 ipc_unmarshall_1(IPVIWIN *ipvi, IP_BUF *ipb, IPFunc func)

@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_send.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -27,16 +28,17 @@ static const char sccsid[] = "Id: ip_send.c,v 8.10 2001/06/25 15:19:25 skimo Exp
  * vi_send --
  *	Construct and send an IP buffer.
  *
- * PUBLIC: int vi_send __P((int, char *, IP_BUF *));
+ * PUBLIC: int vi_send __P((int, const char *, IP_BUF *));
  */
 int
-vi_send(int ofd, char *fmt, IP_BUF *ipbp)
+vi_send(int ofd, const char *fmt, IP_BUF *ipbp)
 {
 	static char *bp;
 	static size_t blen;
 	size_t off;
 	u_int32_t ilen;
-	int nlen, n, nw;
+	size_t nlen;
+	int n, nw;
 	char *p;
 
 	/*

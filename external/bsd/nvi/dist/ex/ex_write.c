@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_write.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -128,10 +129,11 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 	MARK rm;
 	int flags;
 	char *name;
-	CHAR_T *p;
+	CHAR_T *p = NULL;
 	size_t nlen;
-	char *n;
+	const char *n;
 	int rc;
+	EX_PRIVATE *exp;
 
 	NEEDFILE(sp, cmdp);
 
@@ -142,7 +144,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 
 	/* Skip any leading whitespace. */
 	if (cmdp->argc != 0)
-		for (p = cmdp->argv[0]->bp; *p != '\0' && ISBLANK(*p); ++p);
+		for (p = cmdp->argv[0]->bp; *p != '\0' && ISBLANK((UCHAR_T)*p); ++p);
 
 	/* If "write !" it's a pipe to a utility. */
 	if (cmdp->argc != 0 && cmd == WRITE && *p == '!') {
@@ -153,13 +155,19 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		}
 
 		/* Expand the argument. */
-		for (++p; *p && ISBLANK(*p); ++p);
+		for (++p; *p && ISBLANK((UCHAR_T)*p); ++p);
 		if (*p == '\0') {
 			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
 		}
 		if (argv_exp1(sp, cmdp, p, STRLEN(p), 1))
 			return (1);
+
+		/* Set the last bang command */
+		exp = EXP(sp);
+		free(exp->lastbcomm);
+		exp->lastbcomm = v_wstrdup(sp, cmdp->argv[1]->bp,
+		    cmdp->argv[1]->len);
 
 		/*
 		 * Historically, vi waited after a write filter even if there
@@ -194,7 +202,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		LF_SET(FS_APPEND);
 
 		/* Skip ">>" and whitespace. */
-		for (p += 2; *p && ISBLANK(*p); ++p);
+		for (p += 2; *p && ISBLANK((UCHAR_T)*p); ++p);
 	}
 
 	/* If no other arguments, just write the file back. */
@@ -233,9 +241,10 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		 */
 		if (F_ISSET(sp->frp, FR_TMPFILE) &&
 		    !F_ISSET(sp->frp, FR_EXNAMED)) {
-			if ((n = v_strdup(sp, name, nlen - 1)) != NULL) {
+			char *q;
+			if ((q = v_strdup(sp, name, nlen - 1)) != NULL) {
 				free(sp->frp->name);
-				sp->frp->name = n;
+				sp->frp->name = q;
 			}
 			/*
 			 * The file has a real name, it's no longer a
@@ -272,10 +281,10 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
  *	Write a range of lines to a FILE *.
  *
  * PUBLIC: int ex_writefp __P((SCR *,
- * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
+ * PUBLIC:    const char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
  */
 int
-ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_long *nch, int silent)
+ex_writefp(SCR *sp, const char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_long *nch, int silent)
 {
 	struct stat sb;
 	GS *gp;
@@ -283,9 +292,9 @@ ex_writefp(SCR *sp, char *name, FILE *fp, MARK *fm, MARK *tm, u_long *nlno, u_lo
 	db_recno_t fline, tline, lcnt;
 	size_t len;
 	int rval;
-	char *msg;
+	const char *msg;
 	CHAR_T *p;
-	char *f;
+	const char *f;
 	size_t flen;
 
 	gp = sp->gp;

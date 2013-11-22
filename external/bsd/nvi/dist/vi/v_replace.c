@@ -1,3 +1,4 @@
+/*	$NetBSD: v_replace.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -153,7 +154,7 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 	 * is different from the historic vi, which replaced N characters with
 	 * a single new line.  Users complained, so we match historic practice.
 	 */
-	if (!quote && vip->rvalue == K_CR || vip->rvalue == K_NL) {
+	if ((!quote && vip->rvalue == K_CR) || vip->rvalue == K_NL) {
 		/* Set return line. */
 		vp->m_stop.lno = vp->m_start.lno + 1;
 		vp->m_stop.cno = 0;
@@ -172,7 +173,7 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 		p += vp->m_start.cno + cnt;
 		len -= vp->m_start.cno + cnt;
 		if (len != 0 && O_ISSET(sp, O_AUTOINDENT))
-			for (; len && ISBLANK(*p); --len, ++p);
+			for (; len && ISBLANK((UCHAR_T)*p); --len, ++p);
 
 		if ((tp = text_init(sp, p, len, len)) == NULL)
 			goto err_ret;

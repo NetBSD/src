@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_tcl.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +56,7 @@ ex_tcl(SCR *sp, EXCMD *cmdp)
 	if (cmdp->argc != 0)
 		for (p = cmdp->argv[0]->bp,
 		    len = cmdp->argv[0]->len; len > 0; --len, ++p)
-			if (!isblank(*p))
+			if (!ISBLANK((UCHAR_T)*p))
 				break;
 	if (cmdp->argc == 0 || len == 0) {
 		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);

@@ -379,10 +379,10 @@ err2:
  * db_append --
  *	Append a line into the file.
  *
- * PUBLIC: int db_append __P((SCR *, int, db_recno_t, CHAR_T *, size_t));
+ * PUBLIC: int db_append __P((SCR *, int, db_recno_t, const CHAR_T *, size_t));
  */
 int
-db_append(SCR *sp, int update, db_recno_t lno, CHAR_T *p, size_t len)
+db_append(SCR *sp, int update, db_recno_t lno, const CHAR_T *p, size_t len)
 {
 #if defined(DEBUG) && 0
 	vtrace(sp, "append to %lu: len %u {%.*s}\n", lno, len, MIN(len, 20), p);
@@ -754,9 +754,9 @@ static size_t round_up(size_t v)
 }
 
 /*
- * PUBLIC: int db_msg_open __P((SCR *, char *, DB **));
+ * PUBLIC: int db_msg_open __P((SCR *, const char *, DB **));
  */
-int db_msg_open(SCR *sp, char *file, DB **dbp)
+int db_msg_open(SCR *sp, const char *file, DB **dbp)
 {
 	return  (sp->db_error = db_create(dbp, 0, 0)) != 0 ||
 		(sp->db_error = (*dbp)->set_re_source(*dbp, file)) != 0 ||

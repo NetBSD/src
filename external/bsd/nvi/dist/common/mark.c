@@ -1,3 +1,4 @@
+/*	$NetBSD: mark.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -114,7 +115,7 @@ mark_get(SCR *sp, ARG_CHAR_T key, MARK *mp, mtype_t mtype)
 		key = ABSMARK1;
 
 	lmp = mark_find(sp, key);
-	if (lmp == NULL || lmp->name != key) {
+	if (lmp == NULL || (ARG_CHAR_T)lmp->name != key) {
 		msgq(sp, mtype, "017|Mark %s: not set", KEY_NAME(sp, key));
                 return (1);
 	}
@@ -161,7 +162,7 @@ mark_set(SCR *sp, ARG_CHAR_T key, MARK *value, int userset)
 	 * by a previous undo.
 	 */
 	lmp = mark_find(sp, key);
-	if (lmp == NULL || lmp->name != key) {
+	if (lmp == NULL || (ARG_CHAR_T)lmp->name != key) {
 		MALLOC_RET(sp, lmt, LMARK *, sizeof(LMARK));
 		if (lmp == NULL) {
 			LIST_INSERT_HEAD(&sp->ep->marks, lmt, q);
@@ -195,8 +196,8 @@ mark_find(SCR *sp, ARG_CHAR_T key)
 	 */
 	for (lastlmp = NULL, lmp = sp->ep->marks.lh_first;
 	    lmp != NULL; lastlmp = lmp, lmp = lmp->q.le_next)
-		if (lmp->name >= key)
-			return (lmp->name == key ? lmp : lastlmp);
+		if ((ARG_CHAR_T)lmp->name >= key)
+			return ((ARG_CHAR_T)lmp->name == key ? lmp : lastlmp);
 	return (lastlmp);
 }
 
@@ -219,12 +220,13 @@ mark_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 	case LINE_DELETE:
 		for (lmp = sp->ep->marks.lh_first;
 		    lmp != NULL; lmp = lmp->q.le_next)
-			if (lmp->lno >= lno)
+			if (lmp->lno >= lno) {
 				if (lmp->lno == lno) {
 					F_SET(lmp, MARK_DELETED);
 					(void)log_mark(sp, lmp);
 				} else
 					--lmp->lno;
+			}
 		break;
 	case LINE_INSERT:
 		/*

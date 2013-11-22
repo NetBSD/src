@@ -1,3 +1,4 @@
+/*	$NetBSD: v_search.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -63,7 +64,7 @@ v_searchf(SCR *sp, VICMD *vp)
 static int
 v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 {
-	static EXCMDLIST fake = { L("search") };
+	static EXCMDLIST fake = { .name = L("search") };
 	EXCMD *cmdp;
 	WIN *wp;
 	TEXT *tp;
@@ -72,7 +73,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	int err, nb, type;
 	char buf[20];
 	CHAR_T *cmd, *t;
-	CHAR_T *w;
+	const CHAR_T *w;
 	size_t wlen;
 
 	/*
@@ -225,7 +226,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 
 		/* No blanks, just like the z command. */
 		for (t = cmd + 1, tlen = len - 1; tlen > 0; ++t, --tlen)
-			if (!isdigit(*t))
+			if (!ISDIGIT((UCHAR_T)*t))
 				break;
 		if (tlen &&
 		    (*t == '-' || *t == '.' || *t == '+' || *t == '^')) {
@@ -347,12 +348,12 @@ is_especial(CHAR_T c)
 int
 v_searchw(SCR *sp, VICMD *vp)
 {
-	size_t blen;
-	/* An upper bound for the SIZE of the RE under construction. */
-	size_t len = VIP(sp)->klen + MAX(RE_WSTART_LEN, 1)
-	    + MAX(RE_WSTOP_LEN, RE_NWSTOP_LEN);
+	size_t blen, len;
 	int rval;
 	CHAR_T *bp, *p;
+
+	len = VIP(sp)->klen + MAX(RE_WSTART_LEN, 1)
+	    + MAX(RE_WSTOP_LEN, RE_NWSTOP_LEN);
 
 	GET_SPACE_RETW(sp, bp, blen, len);
 	p = bp;
@@ -391,11 +392,7 @@ v_searchw(SCR *sp, VICMD *vp)
 int
 v_esearch(SCR *sp, VICMD *vp)
 {
-	MARK m;
 	int flags;
-
-	m.lno = sp->lno;
-	m.cno = sp->cno;
 
 	LF_INIT(SEARCH_NOOPT);
 	if (FL_ISSET(vp->ev.e_flags, VI_SEARCH_EXT))
@@ -484,7 +481,6 @@ v_search(SCR *sp, VICMD *vp, CHAR_T *ptrn, size_t plen, u_int flags, dir_t dir)
 int
 v_correct(SCR *sp, VICMD *vp, int isdelta)
 {
-	dir_t dir;
 	MARK m;
 	size_t len;
 
@@ -524,14 +520,12 @@ v_correct(SCR *sp, VICMD *vp, int isdelta)
 	 * because of the wrapscan option.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno > vp->m_stop.cno) {
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno > vp->m_stop.cno)) {
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
-		dir = BACKWARD;
 	} else
-		dir = FORWARD;
 
 	/*
 	 * BACKWARD:

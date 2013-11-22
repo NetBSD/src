@@ -1,3 +1,4 @@
+/*	$NetBSD: vi.h,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,15 +11,15 @@
  */
 
 /* Definition of a vi "word". */
-#define	inword(ch)	((UCHAR_T)ch <= 255 && (isalnum(ch) || (ch) == '_'))
+#define	inword(ch)	((ch) == '_' || (ISGRAPH((UCHAR_T)ch) && !ISPUNCT((UCHAR_T)ch)))
 
 typedef struct _vikeys VIKEYS;
 
 /* Structure passed around to functions implementing vi commands. */
 typedef struct _vicmd {
-	CHAR_T	key;			/* Command key. */
-	CHAR_T	buffer;			/* Buffer. */
-	CHAR_T	character;		/* Character. */
+	ARG_CHAR_T key;			/* Command key. */
+	ARG_CHAR_T buffer;		/* Buffer. */
+	ARG_CHAR_T character;		/* Character. */
 	u_long	count;			/* Count. */
 	u_long	count2;			/* Second count (only used by z). */
 	EVENT	ev;			/* Associated event. */
@@ -140,8 +141,8 @@ struct _vikeys {			/* Underlying function. */
 #define	V_RBUF		0x01000000	/* Buffer (required, trailing). */
 #define	V_SECURE	0x02000000	/* Permission denied if O_SECURE set. */
 	u_int32_t flags;
-	char	*usage;			/* Usage line. */
-	char	*help;			/* Help line. */
+	const char *usage;		/* Usage line. */
+	const char *help;		/* Help line. */
 };
 #define	MAXVIKEY	126		/* List of vi commands. */
 extern VIKEYS const vikeys[MAXVIKEY + 1];
@@ -153,7 +154,7 @@ typedef struct _vcs {
 	size_t	 cs_cno;		/* Column. */
 	CHAR_T	*cs_bp;			/* Buffer. */
 	size_t	 cs_len;		/* Length. */
-	CHAR_T	 cs_ch;			/* Character. */
+	ARG_CHAR_T cs_ch;		/* Character. */
 #define	CS_EMP	1			/* Empty line. */
 #define	CS_EOF	2			/* End-of-file. */
 #define	CS_EOL	3			/* End-of-line. */
@@ -382,4 +383,4 @@ typedef enum {
 	VIM_NOCOM, VIM_NOCOM_B, VIM_USAGE, VIM_WRESIZE
 } vim_t;
 
-#include "extern.h"
+#include "vi_extern.h"

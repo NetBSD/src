@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_shift.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -131,10 +132,13 @@ shift(SCR *sp, EXCMD *cmdp, enum which rl)
 		 * Build a new indent string and count the number of
 		 * characters it uses.
 		 */
-		for (tbp = bp, newidx = 0;
-		    newcol >= O_VAL(sp, O_TABSTOP); ++newidx) {
-			*tbp++ = '\t';
-			newcol -= O_VAL(sp, O_TABSTOP);
+		tbp = bp;
+		newidx = 0;
+		if (!O_ISSET(sp, O_EXPANDTAB)) {
+			for (; newcol >= O_VAL(sp, O_TABSTOP); ++newidx) {
+				*tbp++ = '\t';
+				newcol -= O_VAL(sp, O_TABSTOP);
+			}
 		}
 		for (; newcol > 0; --newcol, ++newidx)
 			*tbp++ = ' ';

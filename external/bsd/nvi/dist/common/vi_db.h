@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_db.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+
 #include <db.h>
 
 #ifndef DB_BUFFER_SMALL
@@ -13,7 +15,7 @@ typedef recno_t db_recno_t;
 
 #define db_env_close(env,flags)
 #define db_env_create(env,flags)					\
-	1
+	(((void)env), 1)
 #define db_env_remove(env,path,flags)					\
 	1
 #define db_open(db,file,type,flags,mode)				\

@@ -47,7 +47,7 @@ static const char sccsid[] = "Id: perl.xs,v 8.46 2001/08/28 11:33:42 skimo Exp  
 #include "config.h"
 
 #include "../common/common.h"
-#include "../perl_api/extern.h"
+#include "perl_api_extern.h"
 
 #ifndef DEFSV
 #define DEFSV GvSV(defgv)

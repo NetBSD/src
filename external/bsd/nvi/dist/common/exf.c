@@ -1,3 +1,4 @@
+/*	$NetBSD: exf.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,8 +38,9 @@ static const char sccsid[] = "Id: exf.c,v 10.72 2003/08/10 09:44:01 skimo Exp  (
 #include <time.h>
 
 #include "common.h"
+#include "dbinternal.h"
 
-static int	file_backup __P((SCR *, char *, char *));
+static int	file_backup __P((SCR *, const char *, const char *));
 static void	file_cinit __P((SCR *));
 static void	file_comment __P((SCR *));
 static int	file_spath __P((SCR *, FREF *, struct stat *, int *));
@@ -56,10 +58,10 @@ static int	file_spath __P((SCR *, FREF *, struct stat *, int *));
  * vi now remembers the last location in any file that it has ever edited,
  * not just the previously edited file.
  *
- * PUBLIC: FREF *file_add __P((SCR *, char *));
+ * PUBLIC: FREF *file_add __P((SCR *, const char *));
  */
 FREF *
-file_add(SCR *sp, char *name)
+file_add(SCR *sp, const char *name)
 {
 	GS *gp;
 	FREF *frp, *tfrp;
@@ -76,7 +78,7 @@ file_add(SCR *sp, char *name)
 	gp = sp->gp;
 	if (name != NULL)
 		for (frp = gp->frefq.cqh_first;
-		    frp != (FREF *)&gp->frefq; frp = frp->q.cqe_next) {
+		    frp != (FREF *)(void *)&gp->frefq; frp = frp->q.cqe_next) {
 			if (frp->name == NULL) {
 				tfrp = frp->q.cqe_next;
 				CIRCLEQ_REMOVE(&gp->frefq, frp, q);
@@ -127,10 +129,10 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	EXF *ep;
 	struct stat sb;
 	size_t psize;
-	int fd, exists, open_err, readonly, stolen;
-	char *oname, tname[MAXPATHLEN];
+	int fd, exists, open_err, readonly;
+	char *oname = NULL, tname[MAXPATHLEN];
 
-	stolen = open_err = readonly = 0;
+	open_err = readonly = 0;
 
 	/*
 	 * If the file is a recovery file, let the recovery code handle it.
@@ -169,6 +171,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 			    exfp->minode == sb.st_ino && 
 			    (exfp != sp->ep || exfp->refcnt > 1)) {
 				ep = exfp;
+				oname = ep->rcv_path;
 				goto postinit;
 			}
 		}
@@ -183,7 +186,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	CALLOC_RET(sp, ep, EXF *, 1, sizeof(EXF));
 	CIRCLEQ_INIT(&ep->scrq);
 	sp->c_lno = ep->c_nlines = OOBLNO;
-	ep->rcv_fd = ep->fcntl_fd = -1;
+	ep->fd = ep->rcv_fd = ep->fcntl_fd = -1;
 	F_SET(ep, F_FIRSTMODIFY);
 
 	/*
@@ -459,10 +462,10 @@ oerr:	if (F_ISSET(ep, F_RCV_ON))
 static int
 file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 {
-	CHAR_T savech;
 	size_t len;
 	int found;
-	char *name, *p, *t, path[MAXPATHLEN];
+	char *name, path[MAXPATHLEN];
+	const char *p, *t;
 
 	/*
 	 * If the name is NULL or an explicit reference (i.e., the first
@@ -489,11 +492,8 @@ file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 	for (found = 0, p = t = O_STR(sp, O_PATH);; ++p)
 		if (*p == ':' || *p == '\0') {
 			if (t < p - 1) {
-				savech = *p;
-				*p = '\0';
-				len = snprintf(path,
-				    sizeof(path), "%s/%s", t, name);
-				*p = savech;
+				len = snprintf(path, sizeof(path), "%.*s/%s",
+				    (int)(p - t), t, name);
 				if (!stat(path, sbp)) {
 					found = 1;
 					break;
@@ -506,10 +506,11 @@ file_spath(SCR *sp, FREF *frp, struct stat *sbp, int *existsp)
 
 	/* If we found it, build a new pathname and discard the old one. */
 	if (found) {
-		MALLOC_RET(sp, p, char *, len + 1);
-		memcpy(p, path, len + 1);
+		char *q;
+		MALLOC_RET(sp, q, char *, len + 1);
+		memcpy(q, path, len + 1);
 		free(frp->name);
-		frp->name = p;
+		frp->name = q;
 	}
 	*existsp = found;
 	return (0);
@@ -526,7 +527,7 @@ file_cinit(SCR *sp)
 	MARK m;
 	size_t len;
 	int nb;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/* Set some basic defaults. */
@@ -746,8 +747,10 @@ file_end(SCR *sp, EXF *ep, int force)
 		(void)close(ep->rcv_fd);
 	if (ep->env_path != NULL)
 		free(ep->env_path);
-	if (ep->rcv_path != NULL)
+	if (ep->rcv_path != NULL) {
 		free(ep->rcv_path);
+		ep->rcv_path = NULL;
+	}
 	if (ep->rcv_mpath != NULL)
 		free(ep->rcv_mpath);
 
@@ -884,7 +887,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	 * Note that this code is harmless if you're using libc 4.6.x.
 	 */
 	if (LF_ISSET(FS_APPEND) && lseek(fd, (off_t)0, SEEK_END) < 0) {
-		msgq(sp, M_SYSERR, name);
+		msgq(sp, M_SYSERR, "%s", name);
 		return (1);
 	}
 #endif
@@ -1003,7 +1006,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 			*--s = '.';
 		}
 	}
-	msgq(sp, M_INFO, s);
+	msgq(sp, M_INFO, "%s", s);
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
@@ -1022,7 +1025,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
  * recreate the file.  So, let's not risk it.
  */
 static int
-file_backup(SCR *sp, char *name, char *bname)
+file_backup(SCR *sp, const char *name, const char *bname)
 {
 	struct dirent *dp;
 	struct stat sb;
@@ -1031,14 +1034,16 @@ file_backup(SCR *sp, char *name, char *bname)
 	off_t off;
 	size_t blen;
 	int flags, maxnum, nr, num, nw, rfd, wfd, version;
-	char *bp, *estr, *p, *pct, *slash, *t, *wfname, buf[8192];
-	CHAR_T *wp;
+	char *bp, *pct, *slash, *t, buf[8192];
+	const char *p, *estr, *wfname;
+	const CHAR_T *wp;
 	size_t wlen;
 	size_t nlen;
 	char *d = NULL;
 
 	rfd = wfd = -1;
-	bp = estr = wfname = NULL;
+	estr = wfname = NULL;
+	bp = NULL;
 
 	/*
 	 * Open the current file for reading.  Do this first, so that
@@ -1188,6 +1193,8 @@ file_backup(SCR *sp, char *name, char *bname)
 	}
 	if (bp != NULL)
 		FREE_SPACE(sp, bp, blen);
+	if (d != NULL)
+		free(d);
 	return (0);
 
 alloc_err:
@@ -1413,10 +1420,10 @@ file_aw(SCR *sp, int flags)
  * If the user edits a temporary file, there may be times when there is no
  * alternative file name.  A name argument of NULL turns it off.
  *
- * PUBLIC: void set_alt_name __P((SCR *, char *));
+ * PUBLIC: void set_alt_name __P((SCR *, const char *));
  */
 void
-set_alt_name(SCR *sp, char *name)
+set_alt_name(SCR *sp, const char *name)
 {
 	if (sp->alt_name != NULL)
 		free(sp->alt_name);

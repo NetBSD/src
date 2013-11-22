@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_shell.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -18,6 +19,7 @@ static const char sccsid[] = "Id: ex_shell.c,v 10.42 2003/11/05 17:11:54 skimo E
 #include <sys/wait.h>
 
 #include <bitstring.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -76,10 +78,10 @@ ex_shell(SCR *sp, EXCMD *cmdp)
  * ex_exec_proc --
  *	Run a separate process.
  *
- * PUBLIC: int ex_exec_proc __P((SCR *, EXCMD *, char *, const char *, int));
+ * PUBLIC: int ex_exec_proc __P((SCR *, EXCMD *, const char *, const char *, int));
  */
 int
-ex_exec_proc(SCR *sp, EXCMD *cmdp, char *cmd, const char *msg, int need_newline)
+ex_exec_proc(SCR *sp, EXCMD *cmdp, const char *cmd, const char *msg, int need_newline)
 {
 	GS *gp;
 	const char *name;
@@ -167,11 +169,11 @@ proc_wait(SCR *sp, long int pid, const char *cmd, int silent, int okpipe)
 	 * exit before reading all of its input.
 	 */
 	if (WIFSIGNALED(pstat) && (!okpipe || WTERMSIG(pstat) != SIGPIPE)) {
-		for (; isblank(*cmd); ++cmd);
+		for (; isblank((unsigned char)*cmd); ++cmd);
 		p = msg_print(sp, cmd, &nf);
 		len = strlen(p);
 		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s",
-		    MIN(len, 20), p, len > 20 ? " ..." : "",
+		    (int)MIN(len, 20), p, len > 20 ? " ..." : "",
 		    sigmsg(WTERMSIG(pstat)),
 		    WCOREDUMP(pstat) ? "; core dumped" : "");
 		if (nf)
@@ -189,11 +191,11 @@ proc_wait(SCR *sp, long int pid, const char *cmd, int silent, int okpipe)
 		 * practice.
 		 */
 		if (!silent) {
-			for (; isblank(*cmd); ++cmd);
+			for (; isblank((unsigned char)*cmd); ++cmd);
 			p = msg_print(sp, cmd, &nf);
 			len = strlen(p);
 			msgq(sp, M_ERR, "%.*s%s: exited with status %d",
-			    MIN(len, 20), p, len > 20 ? " ..." : "",
+			    (int)MIN(len, 20), p, len > 20 ? " ..." : "",
 			    WEXITSTATUS(pstat));
 			if (nf)
 				FREE_SPACE(sp, p, 0);
@@ -210,141 +212,141 @@ proc_wait(SCR *sp, long int pid, const char *cmd, int silent, int okpipe)
  */
 typedef struct _sigs {
 	int	 number;		/* signal number */
-	char	*message;		/* related message */
+	const char *message;		/* related message */
 } SIGS;
 
 SIGS const sigs[] = {
 #ifdef SIGABRT
-	SIGABRT,	"Abort trap",
+	{ SIGABRT,	"Abort trap" },
 #endif
 #ifdef SIGALRM
-	SIGALRM,	"Alarm clock",
+	{ SIGALRM,	"Alarm clock" },
 #endif
 #ifdef SIGBUS
-	SIGBUS,		"Bus error",
+	{ SIGBUS,		"Bus error" },
 #endif
 #ifdef SIGCLD
-	SIGCLD,		"Child exited or stopped",
+	{ SIGCLD,		"Child exited or stopped" },
 #endif
 #ifdef SIGCHLD
-	SIGCHLD,	"Child exited",
+	{ SIGCHLD,	"Child exited" },
 #endif
 #ifdef SIGCONT
-	SIGCONT,	"Continued",
+	{ SIGCONT,	"Continued" },
 #endif
 #ifdef SIGDANGER
-	SIGDANGER,	"System crash imminent",
+	{ SIGDANGER,	"System crash imminent" },
 #endif
 #ifdef SIGEMT
-	SIGEMT,		"EMT trap",
+	{ SIGEMT,		"EMT trap" },
 #endif
 #ifdef SIGFPE
-	SIGFPE,		"Floating point exception",
+	{ SIGFPE,		"Floating point exception" },
 #endif
 #ifdef SIGGRANT
-	SIGGRANT,	"HFT monitor mode granted",
+	{ SIGGRANT,	"HFT monitor mode granted" },
 #endif
 #ifdef SIGHUP
-	SIGHUP,		"Hangup",
+	{ SIGHUP,		"Hangup" },
 #endif
 #ifdef SIGILL
-	SIGILL,		"Illegal instruction",
+	{ SIGILL,		"Illegal instruction" },
 #endif
 #ifdef SIGINFO
-	SIGINFO,	"Information request",
+	{ SIGINFO,	"Information request" },
 #endif
 #ifdef SIGINT
-	SIGINT,		"Interrupt",
+	{ SIGINT,		"Interrupt" },
 #endif
 #ifdef SIGIO
-	SIGIO,		"I/O possible",
+	{ SIGIO,		"I/O possible" },
 #endif
 #ifdef SIGIOT
-	SIGIOT,		"IOT trap",
+	{ SIGIOT,		"IOT trap" },
 #endif
 #ifdef SIGKILL
-	SIGKILL,	"Killed",
+	{ SIGKILL,	"Killed" },
 #endif
 #ifdef SIGLOST
-	SIGLOST,	"Record lock",
+	{ SIGLOST,	"Record lock" },
 #endif
 #ifdef SIGMIGRATE
-	SIGMIGRATE,	"Migrate process to another CPU",
+	{ SIGMIGRATE,	"Migrate process to another CPU" },
 #endif
 #ifdef SIGMSG
-	SIGMSG,		"HFT input data pending",
+	{ SIGMSG,		"HFT input data pending" },
 #endif
 #ifdef SIGPIPE
-	SIGPIPE,	"Broken pipe",
+	{ SIGPIPE,	"Broken pipe" },
 #endif
 #ifdef SIGPOLL
-	SIGPOLL,	"I/O possible",
+	{ SIGPOLL,	"I/O possible" },
 #endif
 #ifdef SIGPRE
-	SIGPRE,		"Programming error",
+	{ SIGPRE,		"Programming error" },
 #endif
 #ifdef SIGPROF
-	SIGPROF,	"Profiling timer expired",
+	{ SIGPROF,	"Profiling timer expired" },
 #endif
 #ifdef SIGPWR
-	SIGPWR,		"Power failure imminent",
+	{ SIGPWR,		"Power failure imminent" },
 #endif
 #ifdef SIGRETRACT
-	SIGRETRACT,	"HFT monitor mode retracted",
+	{ SIGRETRACT,	"HFT monitor mode retracted" },
 #endif
 #ifdef SIGQUIT
-	SIGQUIT,	"Quit",
+	{ SIGQUIT,	"Quit" },
 #endif
 #ifdef SIGSAK
-	SIGSAK,		"Secure Attention Key",
+	{ SIGSAK,		"Secure Attention Key" },
 #endif
 #ifdef SIGSEGV
-	SIGSEGV,	"Segmentation fault",
+	{ SIGSEGV,	"Segmentation fault" },
 #endif
 #ifdef SIGSOUND
-	SIGSOUND,	"HFT sound sequence completed",
+	{ SIGSOUND,	"HFT sound sequence completed" },
 #endif
 #ifdef SIGSTOP
-	SIGSTOP,	"Suspended (signal)",
+	{ SIGSTOP,	"Suspended (signal)" },
 #endif
 #ifdef SIGSYS
-	SIGSYS,		"Bad system call",
+	{ SIGSYS,		"Bad system call" },
 #endif
 #ifdef SIGTERM
-	SIGTERM,	"Terminated",
+	{ SIGTERM,	"Terminated" },
 #endif
 #ifdef SIGTRAP
-	SIGTRAP,	"Trace/BPT trap",
+	{ SIGTRAP,	"Trace/BPT trap" },
 #endif
 #ifdef SIGTSTP
-	SIGTSTP,	"Suspended",
+	{ SIGTSTP,	"Suspended" },
 #endif
 #ifdef SIGTTIN
-	SIGTTIN,	"Stopped (tty input)",
+	{ SIGTTIN,	"Stopped (tty input)" },
 #endif
 #ifdef SIGTTOU
-	SIGTTOU,	"Stopped (tty output)",
+	{ SIGTTOU,	"Stopped (tty output)" },
 #endif
 #ifdef SIGURG
-	SIGURG,		"Urgent I/O condition",
+	{ SIGURG,		"Urgent I/O condition" },
 #endif
 #ifdef SIGUSR1
-	SIGUSR1,	"User defined signal 1",
+	{ SIGUSR1,	"User defined signal 1" },
 #endif
 #ifdef SIGUSR2
-	SIGUSR2,	"User defined signal 2",
+	{ SIGUSR2,	"User defined signal 2" },
 #endif
 #ifdef SIGVTALRM
-	SIGVTALRM,	"Virtual timer expired",
+	{ SIGVTALRM,	"Virtual timer expired" },
 #endif
 #ifdef SIGWINCH
-	SIGWINCH,	"Window size changes",
+	{ SIGWINCH,	"Window size changes" },
 #endif
 #ifdef SIGXCPU
-	SIGXCPU,	"Cputime limit exceeded",
+	{ SIGXCPU,	"Cputime limit exceeded" },
 #endif
 #ifdef SIGXFSZ
-	SIGXFSZ,	"Filesize limit exceeded",
+	{ SIGXFSZ,	"Filesize limit exceeded" },
 #endif
 };
 
@@ -357,7 +359,7 @@ sigmsg(int signo)
 {
 	static char buf[40];
 	const SIGS *sigp;
-	int n;
+	size_t n;
 
 	for (n = 0,
 	    sigp = &sigs[0]; n < sizeof(sigs) / sizeof(sigs[0]); ++n, ++sigp)

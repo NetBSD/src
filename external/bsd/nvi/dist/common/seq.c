@@ -1,3 +1,4 @@
+/*	$NetBSD: seq.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -116,7 +117,7 @@ mem1:		errno = sv_errno;
 	}
 
 	/* Set the fast lookup bit. */
-	if ((UCHAR_T)qp->input[0] < MAX_BIT_SEQ)
+	if ((qp->input[0] & ~MAX_BIT_SEQ) == 0)
 		bit_set(sp->gp->seqb, qp->input[0]);
 
 	return (0);
@@ -282,14 +283,14 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 		++cnt;
 		for (p = qp->input,
 		    olen = qp->ilen, len = 0; olen > 0; --olen, ++p)
-			len += ex_puts(sp, KEY_NAME(sp, *p));
+			len += ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		for (len = STANDARD_TAB - len % STANDARD_TAB; len > 0;)
 			len -= ex_puts(sp, " ");
 
 		if (qp->output != NULL)
 			for (p = qp->output,
 			    olen = qp->olen, len = 0; olen > 0; --olen, ++p)
-				len += ex_puts(sp, KEY_NAME(sp, *p));
+				len += ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		else
 			len = 0;
 
@@ -298,7 +299,7 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 				len -= ex_puts(sp, " ");
 			for (p = qp->name,
 			    olen = qp->nlen; olen > 0; --olen, ++p)
-				(void)ex_puts(sp, KEY_NAME(sp, *p));
+				(void)ex_puts(sp, (char *)KEY_NAME(sp, *p));
 		}
 		(void)ex_puts(sp, "\n");
 	}
@@ -309,15 +310,15 @@ seq_dump(SCR *sp, seq_t stype, int isname)
  * seq_save --
  *	Save the sequence entries to a file.
  *
- * PUBLIC: int seq_save __P((SCR *, FILE *, char *, seq_t));
+ * PUBLIC: int seq_save __P((SCR *, FILE *, const char *, seq_t));
  */
 int
-seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
+seq_save(SCR *sp, FILE *fp, const char *prefix, seq_t stype)
 {
 	CHAR_T *p;
 	SEQ *qp;
 	size_t olen;
-	int ch;
+	ARG_CHAR_T ch;
 
 	/* Write a sequence command for all keys the user defined. */
 	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
@@ -326,21 +327,21 @@ seq_save(SCR *sp, FILE *fp, char *prefix, seq_t stype)
 		if (prefix)
 			(void)fprintf(fp, "%s", prefix);
 		for (p = qp->input, olen = qp->ilen; olen > 0; --olen) {
-			ch = *p++;
+			ch = (UCHAR_T)*p++;
 			if (ch == CH_LITERAL || ch == '|' ||
-			    isblank(ch) || KEY_VAL(sp, ch) == K_NL)
+			    ISBLANK(ch) || KEY_VAL(sp, ch) == K_NL)
 				(void)putc(CH_LITERAL, fp);
-			(void)putc(ch, fp);
+			(void)fprintf(fp, WC, ch);
 		}
 		(void)putc(' ', fp);
 		if (qp->output != NULL)
 			for (p = qp->output,
 			    olen = qp->olen; olen > 0; --olen) {
-				ch = *p++;
+				ch = (UCHAR_T)*p++;
 				if (ch == CH_LITERAL || ch == '|' ||
 				    KEY_VAL(sp, ch) == K_NL)
 					(void)putc(CH_LITERAL, fp);
-				(void)putc(ch, fp);
+				(void)fprintf(fp, WC, ch);
 			}
 		(void)putc('\n', fp);
 	}

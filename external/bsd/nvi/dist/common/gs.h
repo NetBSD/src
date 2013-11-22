@@ -1,3 +1,4 @@
+/*	$NetBSD: gs.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -79,7 +80,7 @@ struct _gs {
 	DB	*msg;			/* Message catalog DB. */
 	MSGH	 msgq;			/* User message list. */
 #define	DEFAULT_NOPRINT	'\1'		/* Emergency non-printable character. */
-	CHAR_T	 noprint;		/* Cached, unprintable character. */
+	int	 noprint;		/* Cached, unprintable character. */
 
 	char	*c_option;		/* Ex initial, command-line command. */
 
@@ -87,16 +88,16 @@ struct _gs {
 	FILE	*tracefp;		/* Trace file pointer. */
 #endif
 
-#define	MAX_BIT_SEQ	128		/* Max + 1 fast check character. */
+#define	MAX_BIT_SEQ	0x7f		/* Max + 1 fast check character. */
 	LIST_HEAD(_seqh, _seq) seqq;	/* Linked list of maps, abbrevs. */
-	bitstr_t bit_decl(seqb, MAX_BIT_SEQ);
+	bitstr_t bit_decl(seqb, MAX_BIT_SEQ + 1);
 
-#define	MAX_FAST_KEY	255		/* Max fast check character.*/
+#define	MAX_FAST_KEY	0xff		/* Max fast check character.*/
 #define	KEY_LEN(sp, ch)							\
-	((UCHAR_T)(ch) <= MAX_FAST_KEY ?			\
+	(((ch) & ~MAX_FAST_KEY) == 0 ?					\
 	    sp->gp->cname[(unsigned char)ch].len : v_key_len(sp, ch))
 #define	KEY_NAME(sp, ch)						\
-	((UCHAR_T)(ch) <= MAX_FAST_KEY ?				\
+	(((ch) & ~MAX_FAST_KEY) == 0 ?					\
 	    sp->gp->cname[(unsigned char)ch].name : v_key_name(sp, ch))
 	struct {
 		u_char	 name[MAX_CHARACTER_COLUMNS + 1];
@@ -104,11 +105,9 @@ struct _gs {
 	} cname[MAX_FAST_KEY + 1];	/* Fast lookup table. */
 
 #define	KEY_VAL(sp, ch)							\
-	((UCHAR_T)(ch) <= MAX_FAST_KEY ? 				\
-	    sp->gp->special_key[(UCHAR_T)ch] :				\
-	    (UCHAR_T)(ch) > sp->gp->max_special ? K_NOTUSED : v_key_val(sp,ch))
-	CHAR_T	 max_special;		/* Max special character. */
-	u_char				/* Fast lookup table. */
+	(((ch) & ~MAX_FAST_KEY) == 0 ? 					\
+	    sp->gp->special_key[(unsigned char)ch] : v_key_val(sp,ch))
+	e_key_t				/* Fast lookup table. */
 	    special_key[MAX_FAST_KEY + 1];
 
 /* Flags. */
@@ -156,7 +155,7 @@ struct _gs {
 					/* Insert a line. */
 	int	(*scr_insertln) __P((SCR *));
 					/* Handle an option change. */
-	int	(*scr_optchange) __P((SCR *, int, char *, u_long *));
+	int	(*scr_optchange) __P((SCR *, int, const char *, u_long *));
 					/* Move the cursor. */
 	int	(*scr_move) __P((SCR *, size_t, size_t));
 					/* Refresh the screen. */

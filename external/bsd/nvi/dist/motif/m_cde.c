@@ -25,7 +25,7 @@ static const char sccsid[] = "Id: m_cde.c,v 8.11 2003/11/05 17:09:58 skimo Exp  
 
 #undef LOCK_SUCCESS
 #include "../common/common.h"
-#include "extern.h"
+#include "motif_extern.h"
 
 #if SelfTest
 #define	_TRACE( x )	printf x

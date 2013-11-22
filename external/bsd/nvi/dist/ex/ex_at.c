@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_at.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +38,7 @@ int
 ex_at(SCR *sp, EXCMD *cmdp)
 {
 	CB *cbp;
-	CHAR_T name;
+	ARG_CHAR_T name;
 	EXCMD *ecp;
 	RANGE *rp;
 	TEXT *tp;
@@ -62,7 +63,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 
 	CBNAME(sp, cbp, name);
 	if (cbp == NULL) {
-		ex_emsg(sp, KEY_NAME(sp, name), EXM_EMPTYBUF);
+		ex_emsg(sp, (char *)KEY_NAME(sp, name), EXM_EMPTYBUF);
 		return (1);
 	}
 

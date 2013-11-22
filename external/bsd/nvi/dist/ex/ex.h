@@ -1,3 +1,4 @@
+/*	$NetBSD: ex.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -12,7 +13,7 @@
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */
 
 typedef struct _excmdlist {		/* Ex command table structure. */
-	CHAR_T *name;			/* Command name, underlying function. */
+	const CHAR_T *name;		/* Command name, underlying function. */
 	int (*fn) __P((SCR *, EXCMD *));
 
 #define	E_ADDR1		0x00000001	/* One address. */
@@ -29,9 +30,9 @@ typedef struct _excmdlist {		/* Ex command table structure. */
 #define	__INUSE1	0xfffff800	/* Same name space as EX_PRIVATE. */
 	u_int16_t flags;
 
-	char *syntax;			/* Syntax script. */
-	char *usage;			/* Usage line. */
-	char *help;			/* Help line. */
+	const char *syntax;		/* Syntax script. */
+	const char *usage;		/* Usage line. */
+	const char *help;		/* Help line. */
 } EXCMDLIST;
 
 #define	MAXCMDNAMELEN	12		/* Longest command name. */
@@ -108,7 +109,7 @@ struct _excmd {
 	F_SET(cmdp, L__f);						\
 }
 
-	CHAR_T	  buffer;		/* Command: named buffer. */
+	ARG_CHAR_T	  buffer;		/* Command: named buffer. */
 	db_recno_t	  lineno;		/* Command: line number. */
 	long	  count;		/* Command: signed count. */
 	long	  flagoff;		/* Command: signed flag offset. */
@@ -152,6 +153,9 @@ struct _excmd {
 #define	E_SEARCH_WMSG	0x01000000	/* Display search-wrapped message. */
 #define	E_USELASTCMD	0x02000000	/* Use the last command. */
 #define	E_VISEARCH	0x04000000	/* It's really a vi search command. */
+#ifdef GTAGS
+#define	E_REFERENCE	0x08000000	/* locate function references */
+#endif
 	u_int32_t flags;		/* Current flags. */
 };
 
@@ -227,4 +231,4 @@ typedef enum {
 } tagmsg_t;
 
 #include "ex_def.h"
-#include "extern.h"
+#include "ex_extern.h"

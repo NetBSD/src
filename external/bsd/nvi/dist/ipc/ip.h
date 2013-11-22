@@ -1,3 +1,4 @@
+/*	$NetBSD: ip.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -78,13 +79,13 @@ typedef int (*IPFunc_123) (struct _ip_vi_win *, u_int32_t, u_int32_t, u_int32_t)
 typedef int (*IPUnmarshall) (struct _ip_vi_win *, IP_BUF *, IPFunc);
 
 typedef struct _ipfunlist {
-    char       	   *format;
+    const char     *format;
     IPUnmarshall    unmarshall;
     size_t	    offset;
 } IPFUNLIST;
 
 typedef struct _vipfunlist {
-    char       	   *format;
+    const char     *format;
     e_event_t	    e_event;
 } VIPFUNLIST;
 
@@ -245,4 +246,5 @@ struct _ip_vi_win {
 #define	SI_EVENT_MAX	20
 #endif
 
-#include "extern.h"
+#include "ipc_extern.h"
+#include "ip_extern.h"

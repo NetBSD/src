@@ -1,3 +1,4 @@
+/*	$NetBSD: put.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,9 +33,9 @@ static const char sccsid[] = "Id: put.c,v 10.18 2001/06/25 15:19:11 skimo Exp  (
  * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
  */
 int
-put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
+put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 {
-	CHAR_T name;
+	ARG_CHAR_T name;
 	TEXT *ltp, *tp;
 	db_recno_t lno;
 	size_t blen, clen, len;
@@ -42,7 +43,7 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	CHAR_T *bp, *t;
 	CHAR_T *p;
 
-	if (cbp == NULL)
+	if (cbp == NULL) {
 		if (namep == NULL) {
 			cbp = sp->wp->dcbp;
 			if (cbp == NULL) {
@@ -59,6 +60,7 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 				return (1);
 			}
 		}
+	}
 	tp = cbp->textq.cqh_first;
 
 	/*

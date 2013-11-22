@@ -308,7 +308,6 @@ main( int argc, char *argv[] )
 {
     XtAppContext	ctx;
     Widget		top_level, rc, button;
-    extern		exit();
 
     /* create a top-level shell for the window manager */
     top_level = XtVaAppInitialize( &ctx,

@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_term.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -20,7 +21,6 @@ static const char sccsid[] = "Id: ip_term.c,v 8.9 2001/06/25 15:19:24 skimo Exp 
  
 #include "../common/common.h"
 #include "../ipc/ip.h"
-#include "extern.h"
 
 /*
  * ip_term_init --
@@ -81,16 +81,14 @@ ip_fmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to, size_t tlen
  * ip_optchange --
  *	IP screen specific "option changed" routine.
  *
- * PUBLIC: int ip_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int ip_optchange __P((SCR *, int, const char *, u_long *));
  */
 int
-ip_optchange(SCR *sp, int offset, char *str, u_long *valp)
+ip_optchange(SCR *sp, int offset, const char *str, u_long *valp)
 {
 	IP_BUF ipb;
 	OPTLIST const *opt;
 	IP_PRIVATE *ipp = IPP(sp);
-	char *np;
-	size_t nlen;
 
 	switch (offset) {
 	case O_COLUMNS:
@@ -126,7 +124,7 @@ ip_optchange(SCR *sp, int offset, char *str, u_long *valp)
 	}
 
 	ipb.code = SI_EDITOPT;
-	ipb.str1 = (char*)opt->name;
+	ipb.str1 = __UNCONST(opt->name);
 	ipb.len1 = STRLEN(opt->name) * sizeof(CHAR_T);
 
 	(void)vi_send(ipp->o_fd, "ab1", &ipb);

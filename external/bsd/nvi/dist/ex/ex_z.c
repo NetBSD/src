@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_z.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +34,7 @@ static const char sccsid[] = "Id: ex_z.c,v 10.12 2001/06/25 15:19:22 skimo Exp  
 int
 ex_z(SCR *sp, EXCMD *cmdp)
 {
-	MARK abs;
+	MARK abm;
 	db_recno_t cnt, equals, lno;
 	int eofcheck;
 
@@ -94,9 +95,9 @@ ex_z(SCR *sp, EXCMD *cmdp)
 		 * !!!
 		 * Historically, z. set the absolute cursor mark.
 		 */
-		abs.lno = sp->lno;
-		abs.cno = sp->cno;
-		(void)mark_set(sp, ABSMARK1, &abs, 1);
+		abm.lno = sp->lno;
+		abm.cno = sp->cno;
+		(void)mark_set(sp, ABSMARK1, &abm, 1);
 		break;
 	case E_C_EQUAL:		/* Center with hyphens. */
 		/*

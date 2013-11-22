@@ -1,3 +1,4 @@
+/*	$NetBSD: vs_msg.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -160,7 +161,7 @@ vs_update(SCR *sp, const char *m1, const CHAR_T *m2)
 {
 	GS *gp;
 	size_t len, mlen, oldx, oldy;
-	CONST char *np;
+	const char *np;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -177,7 +178,7 @@ vs_update(SCR *sp, const char *m1, const CHAR_T *m2)
 		if (m2 != NULL)
 			INT2CHAR(sp, m2, STRLEN(m2) + 1, np, nlen);
 		(void)ex_printf(sp,
-		    "%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : np);
+		    "%s%s\n", m1 == NULL? "" : m1, m2 == NULL ? "" : np);
 		(void)ex_fflush(sp);
 	}
 
@@ -242,12 +243,13 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	 * XXX
 	 * Shouldn't we save this, too?
 	 */
-	if (F_ISSET(sp, SC_TINPUT_INFO) || F_ISSET(gp, G_BELLSCHED))
+	if (F_ISSET(sp, SC_TINPUT_INFO) || F_ISSET(gp, G_BELLSCHED)) {
 		if (F_ISSET(sp, SC_SCR_VI)) {
 			F_CLR(gp, G_BELLSCHED);
 			(void)gp->scr_bell(sp);
 		} else
 			F_SET(gp, G_BELLSCHED);
+	}
 
 	/*
 	 * If vi is using the error line for text input, there's no screen
@@ -273,13 +275,14 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	 * the screen, so previous opinions are ignored.
 	 */
 	if (F_ISSET(sp, SC_EX | SC_SCR_EXWROTE)) {
-		if (!F_ISSET(sp, SC_SCR_EX))
+		if (!F_ISSET(sp, SC_SCR_EX)) {
 			if (F_ISSET(sp, SC_SCR_EXWROTE)) {
 				if (sp->gp->scr_screen(sp, SC_EX))
 					return;
 			} else
 				if (ex_init(sp))
 					return;
+		}
 
 		if (mtype == M_ERR)
 			(void)gp->scr_attr(sp, SA_INVERSE, 1);
@@ -341,25 +344,26 @@ vs_msg(SCR *sp, mtype_t mtype, char *line, size_t len)
 	padding += 2;
 
 	maxcols = sp->cols - 1;
-	if (vip->lcontinue != 0)
+	if (vip->lcontinue != 0) {
 		if (len + vip->lcontinue + padding > maxcols)
 			vs_output(sp, vip->mtype, ".\n", 2);
 		else  {
 			vs_output(sp, vip->mtype, ";", 1);
 			vs_output(sp, M_NONE, " ", 1);
 		}
+	}
 	vip->mtype = mtype;
 	for (s = line;; s = t) {
-		for (; len > 0 && isblank(*s); --len, ++s);
+		for (; len > 0 && isblank((unsigned char)*s); --len, ++s);
 		if (len == 0)
 			break;
 		if (len + vip->lcontinue > maxcols) {
 			for (e = s + (maxcols - vip->lcontinue);
-			    e > s && !isblank(*e); --e);
+			    e > s && !isblank((unsigned char)*e); --e);
 			if (e == s)
 				 e = t = s + (maxcols - vip->lcontinue);
 			else
-				for (t = e; isblank(e[-1]); --e);
+				for (t = e; isblank((unsigned char)e[-1]); --e);
 		} else
 			e = t = s + len;
 
@@ -390,17 +394,17 @@ ret:	(void)gp->scr_move(sp, oldy, oldx);
 static void
 vs_output(SCR *sp, mtype_t mtype, const char *line, int llen)
 {
-	char *kp;
+	unsigned char *kp;
 	GS *gp;
 	VI_PRIVATE *vip;
 	size_t chlen, notused;
-	int ch, len, rlen, tlen;
+	int ch, len, tlen;
 	const char *p, *t;
 	char *cbp, *ecbp, cbuf[128];
 
 	gp = sp->gp;
 	vip = VIP(sp);
-	for (p = line, rlen = llen; llen > 0;) {
+	for (p = line; llen > 0;) {
 		/* Get the next physical line. */
 		if ((p = memchr(line, '\n', llen)) == NULL)
 			len = llen;
@@ -892,7 +896,8 @@ vs_msgsave(SCR *sp, mtype_t mt, char *p, size_t len)
 	if ((mp_c = gp->msgq.lh_first) == NULL) {
 		LIST_INSERT_HEAD(&gp->msgq, mp_n, q);
 	} else {
-		for (; mp_c->q.le_next != NULL; mp_c = mp_c->q.le_next);
+		while (mp_c->q.le_next != NULL)
+			mp_c = mp_c->q.le_next;
 		LIST_INSERT_AFTER(mp_c, mp_n, q);
 	}
 	return;
