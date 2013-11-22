@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.6 2013/11/21 10:48:11 martin Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.7 2013/11/22 10:59:31 martin Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -103,9 +103,9 @@ fmod(double x, double y)
 }
 
 float
-fmodf(float x)
+fmodf(float x, float y)
 {
-	return fmod(x);
+	return fmod(x, y);
 }
 
 #ifdef TEST_FMOD
