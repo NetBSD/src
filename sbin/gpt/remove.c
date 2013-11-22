@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.8 2013/04/13 18:04:33 jakllsch Exp $");
+__RCSID("$NetBSD: remove.c,v 1.9 2013/11/22 03:50:05 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ static off_t block, size;
 static unsigned int entry;
 
 const char removemsg1[] = "remove -a device ...";
-const char removemsg2[] = "remove [-b lba] [-i index] [-s lba] "
+const char removemsg2[] = "remove [-b blocknr] [-i index] [-s sectors] "
 	"[-t type] device ...";
 
 __dead static void

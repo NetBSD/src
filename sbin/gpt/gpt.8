@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.18 2013/11/20 08:11:36 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.19 2013/11/22 03:50:05 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -68,7 +68,7 @@ Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Pp
 The
-.Fl p Ar count
+.Fl p Ar partitions
 option allows the user to change the number of partitions the GPT can
 accommodate.
 This is used whenever a new GPT is created.
@@ -94,8 +94,8 @@ There is no formalized definition of the different levels yet.
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
-.It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar number Oc \
-Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar count Oc \
+.It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar blocknr Oc \
+Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar sectors Oc \
 Oo Fl t Ar type Oc Ar device ...
 The
 .Ic add
@@ -113,7 +113,7 @@ will attempt to align the partition.
 If it can not, then it will attempt to create an unaligned partition.
 .Pp
 The
-.Fl b Ar number
+.Fl b Ar blocknr
 option allows the user to specify the starting (beginning) sector number of
 the partition.
 The minimum sector number is 1, but has to fall inside an unused region of
@@ -130,7 +130,7 @@ The
 option allows the user to specify a label for the partition.
 .Pp
 The
-.Fl s Ar count
+.Fl s Ar sectors
 option allows the user to specify the size of the partition in sectors.
 The minimum size is 1.
 .Pp
@@ -200,8 +200,8 @@ option instructs
 to destroy the table in a way that it can be recovered.
 .\" ==== label ====
 .It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
-.It Nm Ic label Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar count Oc Oo Fl t Ar type Oc \
+.It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 The
 .Ic label
@@ -214,7 +214,7 @@ option specifies that all partitions should be labeled.
 It is mutually exclusive with all other selection options.
 .Pp
 The
-.Fl b Ar number
+.Fl b Ar blocknr
 option selects the partition that starts at the given block number.
 .Pp
 The
@@ -222,7 +222,7 @@ The
 option selects the partition with the given partition number.
 .Pp
 The
-.Fl s Ar count
+.Fl s Ar sectors
 option selects all partitions that have the given size.
 This can cause multiple partitions to be labeled.
 .Pp
@@ -304,8 +304,8 @@ near the end of the disk.
 It is very useful in case the primary label was deleted.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
-.It Nm Ic remove Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar count Oc Oo Fl t Ar type Oc Ar device ...
+.It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the
@@ -318,7 +318,7 @@ Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
 .It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
-Oo Fl s Ar count Oc Ar device ...
+Oo Fl s Ar sectors Oc Ar device ...
 The
 .Ic resize
 command allows the user to resize a partition.
@@ -423,7 +423,7 @@ It is expected that the basic usage model does not change, but it is
 possible that future versions will not be compatible in the strictest sense
 of the word.
 For example, the
-.Fl p Ar count
+.Fl p Ar partitions
 option may be changed to a command option rather than a generic option.
 There are only two commands that use it so there is a chance that the natural
 tendency for people is to use it as a command option.

@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.1 2013/11/20 08:08:47 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.2 2013/11/22 03:50:05 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,7 +48,8 @@ __RCSID("$NetBSD: resize.c,v 1.1 2013/11/20 08:08:47 jnemeth Exp $");
 static off_t alignment, size;
 static unsigned int entry;
 
-const char resizemsg[] = "resize -i index [-a alignment] [-s lba] device ...";
+const char resizemsg[] = "resize -i index [-a alignment] [-s sectors] "
+	"device ...";
 
 __dead static void
 usage_resize(void)
