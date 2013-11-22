@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.11 2013/11/22 03:50:05 jnemeth Exp $");
+__RCSID("$NetBSD: label.c,v 1.12 2013/11/22 04:21:02 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -186,6 +186,7 @@ cmd_label(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
+	int64_t human_num;
 
 	/* Get the label options */
 	while ((ch = getopt(argc, argv, "ab:f:i:l:s:t:")) != -1) {
@@ -198,9 +199,9 @@ cmd_label(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_label();
-			block = strtoll(optarg, &p, 10);
-			if (*p != 0 || block < 1)
+			if (dehumanize_number(optarg, &human_num) < 0)
 				usage_label();
+			block = human_num;
 			break;
 		case 'f':
 			if (name != NULL)
