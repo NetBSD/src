@@ -31,7 +31,7 @@ static const char sccsid[] = "Id: tcl.c,v 8.19 2001/08/24 12:17:27 skimo Exp  (B
 #include <unistd.h>
 
 #include "../common/common.h"
-#include "extern.h"
+#include "tcl_api_extern.h"
 
 static int  getint __P((Tcl_Interp *, char *, char *, int *));
 static int  getscreenid __P((Tcl_Interp *, SCR **, char *, char *));

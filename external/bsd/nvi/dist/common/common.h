@@ -1,3 +1,4 @@
+/*	$NetBSD: common.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -83,6 +84,7 @@ typedef enum { LOCK_FAILED, LOCK_SUCCESS, LOCK_UNAVAIL } lockr_t;
 /* Sequence types. */
 typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 
+#define	ENTIRE_LINE	((size_t)-1)
 /*
  * Local includes.
  */
@@ -106,4 +108,4 @@ typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 #include "vi_auto.h"
 #endif
 
-#include "extern.h"
+#include "common_extern.h"

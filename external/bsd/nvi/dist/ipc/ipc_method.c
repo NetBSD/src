@@ -1,3 +1,4 @@
+/*	$NetBSD: ipc_method.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -29,11 +30,13 @@
 static int vi_send_ __P((IPVIWIN   *, int));
 static int vi_send_1 __P((IPVIWIN   *, int, u_int32_t  ));
 static int vi_send_12 __P((IPVIWIN *ipvi, int code, u_int32_t val1, u_int32_t val2));
+#if 0
 static int vi_send_ab1 __P((IPVIWIN *ipvi, int code, 
 	    const char *str1, u_int32_t len1, 
 	    const char *str2, u_int32_t len2, u_int32_t val));
 static int vi_send_a1 __P((IPVIWIN *ipvi, int code, const char *str, u_int32_t len, 
 	   u_int32_t val));
+#endif
 static int vi_send_a __P((IPVIWIN *ipvi, int code, const char *str, u_int32_t len));
 
 #include "ipc_gen.c"
@@ -214,6 +217,7 @@ vi_send_a(IPVIWIN *ipvi, int code, const char *str, u_int32_t len)
 	return vi_send(ipvi->ofd, "a", &ipb);
 }
 
+#if 0
 static int
 vi_send_a1(IPVIWIN *ipvi, int code, const char *str, u_int32_t len, 
 	   u_int32_t val)
@@ -241,4 +245,4 @@ vi_send_ab1(IPVIWIN *ipvi, int code, const char *str1, u_int32_t len1,
 	ipb.code = code;
 	return vi_send(ipvi->ofd, "ab1", &ipb);
 }
-
+#endif

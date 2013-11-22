@@ -1,3 +1,4 @@
+/*	$NetBSD: vs_split.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +30,7 @@ static const char sccsid[] = "Id: vs_split.c,v 10.42 2001/06/25 15:19:38 skimo E
 
 typedef enum { HORIZ_FOLLOW, HORIZ_PRECEDE, VERT_FOLLOW, VERT_PRECEDE } jdir_t;
 
-static SCR	*vs_getbg __P((SCR *, char *));
+static SCR	*vs_getbg __P((SCR *, const char *));
 static void      vs_insert __P((SCR *sp, WIN *wp));
 static int	 vs_join __P((SCR *, SCR **, jdir_t *));
 
@@ -96,7 +97,7 @@ vs_split(SCR *sp, SCR *new, int ccl)
 	 * in half and update the shared information.
 	 */
 	splitup =
-	    !ccl && (vs_sm_cursor(sp, &smp) ? 0 : (smp - HMAP) + 1) >= half;
+	    !ccl && (vs_sm_cursor(sp, &smp) ? 0 : (size_t)(smp - HMAP) + 1) >= half;
 	if (splitup) {				/* Old is bottom half. */
 		new->rows = sp->rows - half;	/* New. */
 		new->roff = sp->roff;
@@ -296,10 +297,7 @@ vs_vsplit(SCR *sp, SCR *new)
 static void
 vs_insert(SCR *sp, WIN *wp)
 {
-	GS *gp;
 	SCR *tsp;
-
-	gp = sp->gp;
 
 	sp->wp = wp;
 
@@ -456,13 +454,11 @@ vs_discard(SCR *sp, SCR **spp)
 static int
 vs_join(SCR *sp, SCR **listp, jdir_t *jdirp)
 {
-	GS *gp;
 	WIN *wp;
 	SCR **lp, *tsp;
 	int first;
 	size_t tlen;
 
-	gp = sp->gp;
 	wp = sp->wp;
 
 	/* Check preceding vertical. */
@@ -621,7 +617,7 @@ vs_fg(SCR *sp, SCR **nspp, CHAR_T *name, int newscreen)
 	GS *gp;
 	WIN *wp;
 	SCR *nsp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -708,10 +704,10 @@ vs_bg(SCR *sp)
  * vs_swap --
  *	Swap the current screen with a backgrounded one.
  *
- * PUBLIC: int vs_swap __P((SCR *, SCR **, char *));
+ * PUBLIC: int vs_swap __P((SCR *, SCR **, const char *));
  */
 int
-vs_swap(SCR *sp, SCR **nspp, char *name)
+vs_swap(SCR *sp, SCR **nspp, const char *name)
 {
 	GS *gp;
 	WIN *wp;
@@ -825,9 +821,9 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 	if (count == 0)
 		return (0);
 	if (adj == A_SET) {
-		if (sp->t_maxrows == count)
+		if (sp->t_maxrows == (size_t)count)
 			return (0);
-		if (sp->t_maxrows > count) {
+		if (sp->t_maxrows > (size_t)count) {
 			adj = A_DECREASE;
 			count = sp->t_maxrows - count;
 		} else {
@@ -860,7 +856,7 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 		if (count < 0)
 			count = -count;
 		s = sp;
-		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
+		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + (size_t)count)
 			goto toosmall;
 		if ((g = prev) == (void *)&wp->scrq) {
 			if ((g = next) == (void *)&wp->scrq)
@@ -871,7 +867,7 @@ vs_resize(SCR *sp, long int count, adj_t adj)
 	} else {
 		g = sp;
 		if ((s = next) != (void *)&wp->scrq &&
-		    s->t_maxrows >= MINIMUM_SCREEN_ROWS + count)
+		    s->t_maxrows >= MINIMUM_SCREEN_ROWS + (size_t)count)
 				s_off = count;
 		else
 			s = NULL;
@@ -882,7 +878,7 @@ toobig:				msgq(sp, M_BERR, adj == A_DECREASE ?
 				    "228|The screen cannot grow");
 				return (1);
 			}
-			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count) {
+			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + (size_t)count) {
 toosmall:			msgq(sp, M_BERR,
 				    "226|The screen can only shrink to %d rows",
 				    MINIMUM_SCREEN_ROWS);
@@ -929,7 +925,7 @@ toosmall:			msgq(sp, M_BERR,
  *	background screen.
  */
 static SCR *
-vs_getbg(SCR *sp, char *name)
+vs_getbg(SCR *sp, const char *name)
 {
 	GS *gp;
 	SCR *nsp;

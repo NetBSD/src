@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_argv.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +32,8 @@ static const char sccsid[] = "Id: ex_argv.c,v 10.39 2003/11/05 17:11:54 skimo Ex
 static int argv_alloc __P((SCR *, size_t));
 static int argv_comp __P((const void *, const void *));
 static int argv_fexp __P((SCR *, EXCMD *,
-	CHAR_T *, size_t, CHAR_T *, size_t *, CHAR_T **, size_t *, int));
-static int argv_lexp __P((SCR *, EXCMD *, char *));
+	const CHAR_T *, size_t, CHAR_T *, size_t *, CHAR_T **, size_t *, int));
+static int argv_lexp __P((SCR *, EXCMD *, const char *));
 static int argv_sexp __P((SCR *, CHAR_T **, size_t *, size_t *));
 
 /*
@@ -59,10 +60,10 @@ argv_init(SCR *sp, EXCMD *excp)
  * argv_exp0 --
  *	Append a string to the argument list.
  *
- * PUBLIC: int argv_exp0 __P((SCR *, EXCMD *, CHAR_T *, size_t));
+ * PUBLIC: int argv_exp0 __P((SCR *, EXCMD *, const CHAR_T *, size_t));
  */
 int
-argv_exp0(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
+argv_exp0(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen)
 {
 	EX_PRIVATE *exp;
 
@@ -82,21 +83,17 @@ argv_exp0(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
  *	Do file name expansion on a string, and append it to the
  *	argument list.
  *
- * PUBLIC: int argv_exp1 __P((SCR *, EXCMD *, CHAR_T *, size_t, int));
+ * PUBLIC: int argv_exp1 __P((SCR *, EXCMD *, const CHAR_T *, size_t, int));
  */
 int
-argv_exp1(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen, int is_bang)
+argv_exp1(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen, int is_bang)
 {
-	EX_PRIVATE *exp;
 	size_t blen, len;
 	CHAR_T *p, *t, *bp;
-	size_t wlen;
-	CHAR_T *wp;
 
 	GET_SPACE_RETW(sp, bp, blen, 512);
 
 	len = 0;
-	exp = EXP(sp);
 	if (argv_fexp(sp, excp, cmd, cmdlen, bp, &len, &bp, &blen, is_bang)) {
 		FREE_SPACEW(sp, bp, blen);
 		return (1);
@@ -123,15 +120,15 @@ ret:	FREE_SPACEW(sp, bp, blen);
  *	Do file name and shell expansion on a string, and append it to
  *	the argument list.
  *
- * PUBLIC: int argv_exp2 __P((SCR *, EXCMD *, CHAR_T *, size_t));
+ * PUBLIC: int argv_exp2 __P((SCR *, EXCMD *, const CHAR_T *, size_t));
  */
 int
-argv_exp2(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
+argv_exp2(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen)
 {
 	size_t blen, len, n;
 	int rval;
 	CHAR_T *bp, *p;
-	char *mp, *np;
+	const char *mp, *np;
 
 	GET_SPACE_RETW(sp, bp, blen, 512);
 
@@ -176,7 +173,8 @@ argv_exp2(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
 		n = 0;
 	else {
 		for (np = mp = O_STR(sp, O_SHELLMETA); *np != '\0'; ++np)
-			if (isblank(*np) || isalnum(*np))
+			if (ISBLANK((UCHAR_T)*np) ||
+			    ISALNUM((UCHAR_T)*np))
 				break;
 		p = bp + SHELLOFFSET;
 		n = len - SHELLOFFSET;
@@ -186,8 +184,9 @@ argv_exp2(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
 					break;
 		} else
 			for (; n > 0; --n, ++p)
-				if (!ISBLANK(*p) &&
-				    !isalnum(*p) && strchr(mp, *p) != NULL)
+				if (!ISBLANK((UCHAR_T)*p) &&
+				    !ISALNUM((UCHAR_T)*p) &&
+				    strchr(mp, *p) != NULL)
 					break;
 	}
 
@@ -212,13 +211,14 @@ argv_exp2(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
 		break;
 	case 1:
 		if (*p == '*') {
-			char *np, *d;
+			const char *np1;
+			char *d;
 			size_t nlen;
 
 			*p = '\0';
 			INT2CHAR(sp, bp + SHELLOFFSET, 
-				 STRLEN(bp + SHELLOFFSET) + 1, np, nlen);
-			d = strdup(np);
+				 STRLEN(bp + SHELLOFFSET) + 1, np1, nlen);
+			d = strdup(np1);
 			rval = argv_lexp(sp, excp, d);
 			free (d);
 			break;
@@ -243,21 +243,23 @@ err:	FREE_SPACEW(sp, bp, blen);
  *	Take a string and break it up into an argv, which is appended
  *	to the argument list.
  *
- * PUBLIC: int argv_exp3 __P((SCR *, EXCMD *, CHAR_T *, size_t));
+ * PUBLIC: int argv_exp3 __P((SCR *, EXCMD *, const CHAR_T *, size_t));
  */
 int
-argv_exp3(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
+argv_exp3(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen)
 {
 	EX_PRIVATE *exp;
 	size_t len;
-	int ch, off;
-	CHAR_T *ap, *p;
+	ARG_CHAR_T ch;
+	int off;
+	const CHAR_T *ap;
+	CHAR_T *p;
 
 	for (exp = EXP(sp); cmdlen > 0; ++exp->argsoff) {
 		/* Skip any leading whitespace. */
 		for (; cmdlen > 0; --cmdlen, ++cmd) {
-			ch = *cmd;
-			if (!isblank(ch))
+			ch = (UCHAR_T)*cmd;
+			if (!ISBLANK(ch))
 				break;
 		}
 		if (cmdlen == 0)
@@ -273,11 +275,11 @@ argv_exp3(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
 		 * character.
 		 */
 		for (ap = cmd, len = 0; cmdlen > 0; ++cmd, --cmdlen, ++len) {
-			ch = *cmd;
+			ch = (UCHAR_T)*cmd;
 			if (IS_ESCAPE(sp, excp, ch) && cmdlen > 1) {
 				++cmd;
 				--cmdlen;
-			} else if (isblank(ch))
+			} else if (ISBLANK(ch))
 				break;
 		}
 
@@ -311,13 +313,13 @@ argv_exp3(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen)
  *	Do file name and bang command expansion.
  */
 static int
-argv_fexp(SCR *sp, EXCMD *excp, CHAR_T *cmd, size_t cmdlen, CHAR_T *p, size_t *lenp, CHAR_T **bpp, size_t *blenp, int is_bang)
+argv_fexp(SCR *sp, EXCMD *excp, const CHAR_T *cmd, size_t cmdlen, CHAR_T *p, size_t *lenp, CHAR_T **bpp, size_t *blenp, int is_bang)
 {
 	EX_PRIVATE *exp;
 	char *t;
 	size_t blen, len, off, tlen;
 	CHAR_T *bp;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/* Replace file name characters. */
@@ -504,17 +506,17 @@ argv_free(SCR *sp)
  *	buffer.
  */
 static int
-argv_lexp(SCR *sp, EXCMD *excp, char *path)
+argv_lexp(SCR *sp, EXCMD *excp, const char *path)
 {
 	struct dirent *dp;
 	DIR *dirp;
 	EX_PRIVATE *exp;
 	int off;
 	size_t dlen, len, nlen;
-	char *dname, *name;
+	const char *dname, *name;
 	char *p;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	CHAR_T *n;
 
 	exp = EXP(sp);
@@ -596,7 +598,43 @@ argv_lexp(SCR *sp, EXCMD *excp, char *path)
 static int
 argv_comp(const void *a, const void *b)
 {
-	return (STRCMP((*(ARGS **)a)->bp, (*(ARGS **)b)->bp));
+	return (STRCMP((*(const ARGS * const*)a)->bp, (*(const ARGS * const*)b)->bp));
+}
+
+static pid_t
+runcmd(SCR *sp, const char *sh_path, const char *sh, const char *np,
+    int *std_output)
+{
+	pid_t pid;
+	/*
+	 * Do the minimal amount of work possible, the shell is going to run
+	 * briefly and then exit.  We sincerely hope.
+	 */
+	switch (pid = vfork()) {
+	case -1:			/* Error. */
+		msgq(sp, M_SYSERR, "vfork");
+		return (pid_t)-1;
+	case 0:				/* Utility. */
+		/* Redirect stdout to the write end of the pipe. */
+		(void)dup2(std_output[1], STDOUT_FILENO);
+
+		/* Close the utility's file descriptors. */
+		(void)close(std_output[0]);
+		(void)close(std_output[1]);
+		(void)close(STDERR_FILENO);
+
+		/*
+		 * XXX
+		 * Assume that all shells have -c.
+		 */
+		execl(sh_path, sh, "-c", np, (char *)NULL);
+		msgq_str(sp, M_SYSERR, sh_path, "118|Error: execl: %s");
+		_exit(127);
+	default:			/* Parent. */
+		/* Close the pipe ends the parent won't use. */
+		(void)close(std_output[1]);
+		return pid;
+	}
 }
 
 /*
@@ -613,8 +651,8 @@ argv_sexp(SCR *sp, CHAR_T **bpp, size_t *blenp, size_t *lenp)
 	size_t blen, len;
 	int ch, std_output[2];
 	CHAR_T *bp, *p;
-	char *sh, *sh_path;
-	char *np;
+	const char *sh, *sh_path;
+	const char *np;
 	size_t nlen;
 
 	/* Secure means no shell access. */
@@ -655,43 +693,10 @@ argv_sexp(SCR *sp, CHAR_T **bpp, size_t *blenp, size_t *lenp)
 		msgq(sp, M_SYSERR, "fdopen");
 		goto err;
 	}
-
-	/*
-	 * Do the minimal amount of work possible, the shell is going to run
-	 * briefly and then exit.  We sincerely hope.
-	 */
-	switch (pid = vfork()) {
-	case -1:			/* Error. */
-		msgq(sp, M_SYSERR, "vfork");
-err:		if (ifp != NULL)
-			(void)fclose(ifp);
-		else if (std_output[0] != -1)
-			close(std_output[0]);
-		if (std_output[1] != -1)
-			close(std_output[0]);
-		return (1);
-	case 0:				/* Utility. */
-		/* Redirect stdout to the write end of the pipe. */
-		(void)dup2(std_output[1], STDOUT_FILENO);
-
-		/* Close the utility's file descriptors. */
-		(void)close(std_output[0]);
-		(void)close(std_output[1]);
-		(void)close(STDERR_FILENO);
-
-		/*
-		 * XXX
-		 * Assume that all shells have -c.
-		 */
-		INT2CHAR(sp, bp, STRLEN(bp)+1, np, nlen);
-		execl(sh_path, sh, "-c", np, (char *)NULL);
-		msgq_str(sp, M_SYSERR, sh_path, "118|Error: execl: %s");
-		_exit(127);
-	default:			/* Parent. */
-		/* Close the pipe ends the parent won't use. */
-		(void)close(std_output[1]);
-		break;
-	}
+	INT2CHAR(sp, bp, STRLEN(bp)+1, np, nlen);
+	pid = runcmd(sp, sh_path, sh, np, std_output);
+	if (pid == -1)
+		goto err;
 
 	/*
 	 * Copy process standard output into a buffer.
@@ -748,4 +753,11 @@ alloc_err:	rval = SEXP_ERR;
 		msgq(sp, M_ERR, "304|Shell expansion failed");
 
 	return (rval == SEXP_OK ? 0 : 1);
+err:	if (ifp != NULL)
+		(void)fclose(ifp);
+	else if (std_output[0] != -1)
+		close(std_output[0]);
+	if (std_output[1] != -1)
+		close(std_output[0]);
+	return 1;
 }

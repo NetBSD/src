@@ -1,3 +1,4 @@
+/*	$NetBSD: ex.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -29,6 +30,7 @@ static const char sccsid[] = "Id: ex.c,v 10.75 2004/03/16 14:13:35 skimo Exp  (B
 #include <unistd.h>
 
 #include "../common/common.h"
+#include "../common/multibyte.h"
 #include "../vi/vi.h"
 
 #if defined(DEBUG) && defined(COMLOG)
@@ -50,7 +52,6 @@ static void	ex_unknown __P((SCR *, CHAR_T *, size_t));
 int
 ex(SCR **spp)
 {
-	EX_PRIVATE *exp;
 	GS *gp;
 	WIN *wp;
 	MSGS *mp;
@@ -61,7 +62,6 @@ ex(SCR **spp)
 	sp = *spp;
 	wp = sp->wp;
 	gp = sp->gp;
-	exp = EXP(sp);
 
 	/* Start the ex screen. */
 	if (ex_init(sp))
@@ -78,7 +78,7 @@ ex(SCR **spp)
 	/* If reading from a file, errors should have name and line info. */
 	if (F_ISSET(gp, G_SCRIPTED)) {
 		wp->excmd.if_lno = 1;
-		wp->excmd.if_name = "script";
+		wp->excmd.if_name = strdup("script");
 	}
 
 	/*
@@ -210,13 +210,14 @@ ex_cmd(SCR *sp)
 	int cnt, delim, isaddr, namelen;
 	int newscreen, notempty, tmp, vi_address;
 	CHAR_T *arg1, *s, *p, *t;
-	CHAR_T ch;
-	CHAR_T *n;
-	char *np;
+	ARG_CHAR_T ch;
+	const CHAR_T *n;
+	const char *np;
 
 	gp = sp->gp;
 	wp = sp->wp;
 	exp = EXP(sp);
+	ch = '\0';	/* XXX: gcc -O1 -Wuninitialized */
 
 	/*
 	 * We always start running the command on the top of the stack.
@@ -262,7 +263,7 @@ loop:	ecp = wp->ecq.lh_first;
 
 	/* Skip <blank>s, empty lines.  */
 	for (notempty = 0; ecp->clen > 0; ++ecp->cp, --ecp->clen)
-		if ((ch = *ecp->cp) == '\n') {
+		if ((ch = (UCHAR_T)*ecp->cp) == '\n') {
 			++wp->if_lno;
 			++ecp->if_lno;
 		} else if (ISBLANK(ch))
@@ -279,7 +280,7 @@ loop:	ecp = wp->ecq.lh_first;
 	 */
 	if (ecp->clen != 0 && ch == ':') {
 		notempty = 1;
-		while (--ecp->clen > 0 && (ch = *++ecp->cp) == ':');
+		while (--ecp->clen > 0 && (ch = (UCHAR_T)*++ecp->cp) == ':');
 	}
 
 	/*
@@ -303,7 +304,7 @@ loop:	ecp = wp->ecq.lh_first;
 
 	/* Skip whitespace. */
 	for (; ecp->clen > 0; ++ecp->cp, --ecp->clen) {
-		ch = *ecp->cp;
+		ch = (UCHAR_T)*ecp->cp;
 		if (!ISBLANK(ch))
 			break;
 	}
@@ -358,7 +359,7 @@ loop:	ecp = wp->ecq.lh_first;
 	 * worked, historically).
 	 */
 	for (; ecp->clen > 0; ++ecp->cp, --ecp->clen) {
-		ch = *ecp->cp;
+		ch = (UCHAR_T)*ecp->cp;
 		if (!ISBLANK(ch) && ch != ':')
 			break;
 	}
@@ -394,7 +395,7 @@ loop:	ecp = wp->ecq.lh_first;
 		} else {
 			for (p = ecp->cp;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp)
-				if (!ISALPHA(*ecp->cp))
+				if (!ISALPHA((UCHAR_T)*ecp->cp))
 					break;
 			if ((namelen = ecp->cp - p) == 0) {
 				msgq(sp, M_ERR, "080|Unknown command name");
@@ -435,7 +436,7 @@ loop:	ecp = wp->ecq.lh_first;
 			break;
 		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
-			p[0] = tolower(p[0]);
+			p[0] = TOLOWER(p[0]);
 			break;
 		}
 
@@ -483,7 +484,7 @@ loop:	ecp = wp->ecq.lh_first;
 				/* FALLTHROUGH */
 			default:
 unknown:			if (newscreen)
-					p[0] = toupper(p[0]);
+					p[0] = TOUPPER((UCHAR_T)p[0]);
 				ex_unknown(sp, p, namelen);
 				goto err;
 			}
@@ -527,7 +528,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 		 */
 		if ((ecp->cmd == &cmds[C_SHIFTL] && *p == '<') ||
 		    (ecp->cmd == &cmds[C_SHIFTR] && *p == '>')) {
-			for (ch = *p;
+			for (ch = (UCHAR_T)*p;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp)
 				if (*ecp->cp != ch)
 					break;
@@ -580,8 +581,8 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 
 	/* Check for ex mode legality. */
 	if (F_ISSET(sp, SC_EX) && (F_ISSET(ecp->cmd, E_VIONLY) || newscreen)) {
-		msgq(sp, M_ERR,
-		    "082|%s: command not available in ex mode", ecp->cmd->name);
+		msgq_wstr(sp, M_ERR, ecp->cmd->name,
+		    "082|%s: command not available in ex mode");
 		goto err;
 	}
 
@@ -667,12 +668,12 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 			--ecp->clen;
 			for (arg1 = p = ecp->cp;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp) {
-				ch = *ecp->cp;
+				ch = (UCHAR_T)*ecp->cp;
 				if (IS_ESCAPE(sp, ecp, ch) &&
 				    ecp->clen > 1) {
 					++discard;
 					--ecp->clen;
-					ch = *++ecp->cp;
+					ch = (UCHAR_T)*++ecp->cp;
 				} else if (ISBLANK(ch))
 					break;
 				*p++ = ch;
@@ -694,11 +695,11 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 		 * are stripped as no longer useful.
 		 */
 		for (p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
-			ch = *ecp->cp;
+			ch = (UCHAR_T)*ecp->cp;
 			if (ch == '\\' && ecp->clen > 1 && ecp->cp[1] == '\n') {
 				++discard;
 				--ecp->clen;
-				ch = *++ecp->cp;
+				ch = (UCHAR_T)*++ecp->cp;
 
 				++wp->if_lno;
 				++ecp->if_lno;
@@ -716,7 +717,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 		 * <newline>.  Otherwise, we're done.
 		 */
 		for (tmp = 0; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
-			ch = *ecp->cp;
+			ch = (UCHAR_T)*ecp->cp;
 			if (ISBLANK(ch))
 				tmp = 1;
 			else
@@ -738,7 +739,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 			if (!ISBLANK(ecp->cp[0]))
 				break;
 
-		if (ISALNUM(ecp->cp[0]) || ecp->cp[0] == '|') {
+		if (ISALNUM((UCHAR_T)ecp->cp[0]) || ecp->cp[0] == '|') {
 			ecp->rcmd = cmds[C_SUBSTITUTE];
 			ecp->rcmd.fn = ex_subagain;
 			ecp->cmd = &ecp->rcmd;
@@ -780,18 +781,18 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 	 */
 	vi_address = ecp->clen != 0 && ecp->cp[0] != '\n';
 	for (p = ecp->cp; ecp->clen > 0; --ecp->clen, ++ecp->cp) {
-		ch = ecp->cp[0];
+		ch = (UCHAR_T)ecp->cp[0];
 		if (IS_ESCAPE(sp, ecp, ch) && ecp->clen > 1) {
-			CHAR_T tmp = ecp->cp[1];
-			if (tmp == '\n' || tmp == '|') {
-				if (tmp == '\n') {
+			ARG_CHAR_T tmp1 = (UCHAR_T)ecp->cp[1];
+			if (tmp1 == '\n' || tmp1 == '|') {
+				if (tmp1 == '\n') {
 					++wp->if_lno;
 					++ecp->if_lno;
 				}
 				++discard;
 				--ecp->clen;
 				++ecp->cp;
-				ch = tmp;
+				ch = tmp1;
 			}
 		} else if (ch == '\n' || ch == '|') {
 			if (ch == '\n')
@@ -1047,8 +1048,8 @@ end_case23:		break;
 			 * command "d2" would be a delete into buffer '2', and
 			 * not a two-line deletion.
 			 */
-			if (!ISDIGIT(ecp->cp[0])) {
-				ecp->buffer = *ecp->cp;
+			if (!ISDIGIT((UCHAR_T)ecp->cp[0])) {
+				ecp->buffer = (UCHAR_T)*ecp->cp;
 				++ecp->cp;
 				--ecp->clen;
 				FL_SET(ecp->iflags, E_C_BUFFER);
@@ -1057,7 +1058,7 @@ end_case23:		break;
 		case 'c':				/* count [01+a] */
 			++np;
 			/* Validate any signed value. */
-			if (!ISDIGIT(*ecp->cp) && (*np != '+' ||
+			if (!ISDIGIT((UCHAR_T)*ecp->cp) && (*np != '+' ||
 			    (*ecp->cp != '+' && *ecp->cp != '-')))
 				break;
 			/* If a signed value, set appropriate flags. */
@@ -1151,7 +1152,7 @@ end_case23:		break;
 			 */
 			for (p = t = ecp->cp;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp) {
-				ch = *ecp->cp;
+				ch = (UCHAR_T)*ecp->cp;
 				if (IS_ESCAPE(sp,
 				    ecp, ch) && ecp->clen > 1) {
 					--ecp->clen;
@@ -1169,7 +1170,7 @@ end_case23:		break;
 			/* Delete intervening whitespace. */
 			for (; ecp->clen > 0;
 			    --ecp->clen, ++ecp->cp) {
-				ch = *ecp->cp;
+				ch = (UCHAR_T)*ecp->cp;
 				if (!ISBLANK(ch))
 					break;
 			}
@@ -1179,7 +1180,7 @@ end_case23:		break;
 			/* Followed by the string. */
 			for (p = t = ecp->cp; ecp->clen > 0;
 			    --ecp->clen, ++ecp->cp, ++p) {
-				ch = *ecp->cp;
+				ch = (UCHAR_T)*ecp->cp;
 				if (IS_ESCAPE(sp,
 				    ecp, ch) && ecp->clen > 1) {
 					--ecp->clen;
@@ -1205,16 +1206,21 @@ arg_cnt_chk:		if (*++np != 'N') {		/* N */
 					goto usage;
 			}
 			goto addr_verify;
-		default:
+		default: {
+			const char *nstr;
+			size_t nlen;
+			INT2CHAR(sp, ecp->cmd->name, STRLEN(ecp->cmd->name) + 1,
+			    nstr, nlen);
 			msgq(sp, M_ERR,
 			    "085|Internal syntax table error (%s: %s)",
-			    ecp->cmd->name, KEY_NAME(sp, *np));
+			    nstr, KEY_NAME(sp, *np));
+		}
 		}
 	}
 
 	/* Skip trailing whitespace. */
 	for (; ecp->clen > 0; --ecp->clen) {
-		ch = *ecp->cp++;
+		ch = (UCHAR_T)*ecp->cp++;
 		if (!ISBLANK(ch))
 			break;
 	}
@@ -1418,13 +1424,13 @@ addr_verify:
 	 */
 	if (sp->ep != NULL && ecp->flagoff) {
 		if (ecp->flagoff < 0) {
-			if (sp->lno <= -ecp->flagoff) {
+			if (sp->lno <= (db_recno_t)(-ecp->flagoff)) {
 				msgq(sp, M_ERR,
 				    "088|Flag offset to before line 1");
 				goto err;
 			}
 		} else {
-			if (!NPFITS(DB_MAX_RECORDS, sp->lno, ecp->flagoff)) {
+			if (!NPFITS(DB_MAX_RECORDS, sp->lno, (db_recno_t)ecp->flagoff)) {
 				ex_badaddr(sp, NULL, A_NOTSET, NUM_OVER);
 				goto err;
 			}
@@ -1578,7 +1584,7 @@ err:	/*
 	 */
 	if (ecp->save_cmdlen == 0)
 		for (; ecp->clen; --ecp->clen) {
-			ch = *ecp->cp++;
+			ch = (UCHAR_T)*ecp->cp++;
 			if (IS_ESCAPE(sp, ecp, ch) && ecp->clen > 1) {
 				--ecp->clen;
 				++ecp->cp;
@@ -1620,8 +1626,6 @@ int
 ex_range(SCR *sp, EXCMD *ecp, int *errp)
 {
 	enum { ADDR_FOUND, ADDR_NEED, ADDR_NONE } addr;
-	GS *gp;
-	EX_PRIVATE *exp;
 	MARK m;
 	int isaddr;
 
@@ -1648,8 +1652,6 @@ ex_range(SCR *sp, EXCMD *ecp, int *errp)
 	 * addresses.  For consistency, we make it true for leading semicolon
 	 * addresses as well.
 	 */
-	gp = sp->gp;
-	exp = EXP(sp);
 	for (addr = ADDR_NONE, ecp->addrcnt = 0; ecp->clen > 0;)
 		switch (*ecp->cp) {
 		case '%':		/* Entire file. */
@@ -1819,21 +1821,17 @@ static int
 ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 {
 	enum nresult nret;
-	EX_PRIVATE *exp;
-	GS *gp;
 	long total, val;
+	unsigned long uval;
 	int isneg;
 	int (*sf) __P((SCR *, MARK *, MARK *, CHAR_T *, size_t, CHAR_T **, u_int));
 	CHAR_T *endp;
-
-	gp = sp->gp;
-	exp = EXP(sp);
 
 	*isaddrp = *errp = 0;
 	F_CLR(ecp, E_DELTA);
 
 	/* No addresses permitted until a file has been read in. */
-	if (sp->ep == NULL && strchr("$0123456789'\\/?.+-^", *ecp->cp)) {
+	if (sp->ep == NULL && STRCHR(L("$0123456789'\\/?.+-^"), *ecp->cp)) {
 		ex_badaddr(sp, NULL, A_EMPTY, NUM_OK);
 		*errp = 1;
 		return (0);
@@ -1855,17 +1853,17 @@ ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 		*isaddrp = 1;
 		F_SET(ecp, E_ABSMARK);
 
-		if ((nret = nget_slong(sp, &val, ecp->cp, &endp, 10)) != NUM_OK) {
+		if ((nret = nget_uslong(sp, &uval, ecp->cp, &endp, 10)) != NUM_OK) {
 			ex_badaddr(sp, NULL, A_NOTSET, nret);
 			*errp = 1;
 			return (0);
 		}
-		if (!NPFITS(DB_MAX_RECORDS, 0, val)) {
+		if (!NPFITS(DB_MAX_RECORDS, 0, uval)) {
 			ex_badaddr(sp, NULL, A_NOTSET, NUM_OVER);
 			*errp = 1;
 			return (0);
 		}
-		mp->lno = val;
+		mp->lno = uval;
 		mp->cno = 0;
 		ecp->clen -= (endp - ecp->cp);
 		ecp->cp = endp;
@@ -1894,7 +1892,7 @@ ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 		 * difference.  C'est la vie.
 		 */
 		if (ecp->clen < 2 ||
-		    ecp->cp[1] != '/' && ecp->cp[1] != '?') {
+		    (ecp->cp[1] != '/' && ecp->cp[1] != '?')) {
 			msgq(sp, M_ERR, "096|\\ not followed by / or ?");
 			*errp = 1;
 			return (0);
@@ -1944,7 +1942,7 @@ search:		mp->lno = sp->lno;
 		 * the '+' could be omitted.  (This feature is found in ed
 		 * as well.)
 		 */
-		if (ecp->clen > 1 && ISDIGIT(ecp->cp[1]))
+		if (ecp->clen > 1 && ISDIGIT((UCHAR_T)ecp->cp[1]))
 			*ecp->cp = '+';
 		else {
 			++ecp->cp;
@@ -1955,14 +1953,14 @@ search:		mp->lno = sp->lno;
 
 	/* Skip trailing <blank>s. */
 	for (; ecp->clen > 0 &&
-	    ISBLANK(ecp->cp[0]); ++ecp->cp, --ecp->clen);
+	    ISBLANK((UCHAR_T)ecp->cp[0]); ++ecp->cp, --ecp->clen);
 
 	/*
 	 * Evaluate any offset.  If no address yet found, the offset
 	 * is relative to ".".
 	 */
 	total = 0;
-	if (ecp->clen != 0 && (ISDIGIT(ecp->cp[0]) ||
+	if (ecp->clen != 0 && (ISDIGIT((UCHAR_T)ecp->cp[0]) ||
 	    ecp->cp[0] == '+' || ecp->cp[0] == '-' ||
 	    ecp->cp[0] == '^')) {
 		if (!*isaddrp) {
@@ -1998,14 +1996,14 @@ search:		mp->lno = sp->lno;
 		 */
 		F_SET(ecp, E_DELTA);
 		for (;;) {
-			for (; ecp->clen > 0 && ISBLANK(ecp->cp[0]);
+			for (; ecp->clen > 0 && ISBLANK((UCHAR_T)ecp->cp[0]);
 			    ++ecp->cp, --ecp->clen);
-			if (ecp->clen == 0 || !ISDIGIT(ecp->cp[0]) &&
+			if (ecp->clen == 0 || (!ISDIGIT((UCHAR_T)ecp->cp[0]) &&
 			    ecp->cp[0] != '+' && ecp->cp[0] != '-' &&
-			    ecp->cp[0] != '^')
+			    ecp->cp[0] != '^'))
 				break;
-			if (!ISDIGIT(ecp->cp[0]) &&
-			    !ISDIGIT(ecp->cp[1])) {
+			if (!ISDIGIT((UCHAR_T)ecp->cp[0]) &&
+			    !ISDIGIT((UCHAR_T)ecp->cp[1])) {
 				total += ecp->cp[0] == '+' ? 1 : -1;
 				--ecp->clen;
 				++ecp->cp;
@@ -2040,14 +2038,14 @@ search:		mp->lno = sp->lno;
 	 */
 	if (*isaddrp && total != 0) {
 		if (total < 0) {
-			if (-total > mp->lno) {
+			if ((db_recno_t)-total > mp->lno) {
 				msgq(sp, M_ERR,
 			    "097|Reference to a line number less than 0");
 				*errp = 1;
 				return (0);
 			}
 		} else
-			if (!NPFITS(DB_MAX_RECORDS, mp->lno, total)) {
+			if (!NPFITS(DB_MAX_RECORDS, mp->lno, (unsigned long)total)) {
 				ex_badaddr(sp, NULL, A_NOTSET, NUM_OVER);
 				*errp = 1;
 				return (0);
@@ -2118,7 +2116,7 @@ ex_load(SCR *sp)
 
 			/* If it's a global/v command, fix up the last line. */
 			if (FL_ISSET(ecp->agv_flags,
-			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO)
+			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO) {
 				if (db_exist(sp, ecp->range_lno))
 					sp->lno = ecp->range_lno;
 				else {
@@ -2127,6 +2125,7 @@ ex_load(SCR *sp)
 					if (sp->lno == 0)
 						sp->lno = 1;
 				}
+			}
 			free(ecp->o_cp);
 		}
 
@@ -2307,7 +2306,7 @@ ex_badaddr(SCR *sp, const EXCMDLIST *cp, enum badaddr ba, enum nresult nret)
 		if (lno != 0) {
 			msgq(sp, M_ERR,
 			    "102|Illegal address: only %lu lines in the file",
-			    lno);
+			    (unsigned long)lno);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -2318,9 +2317,8 @@ ex_badaddr(SCR *sp, const EXCMDLIST *cp, enum badaddr ba, enum nresult nret)
 		abort();
 		/* NOTREACHED */
 	case A_ZERO:
-		msgq(sp, M_ERR,
-		    "104|The %s command doesn't permit an address of 0",
-		    cp->name);
+		msgq_wstr(sp, M_ERR, cp->name,
+		    "104|The %s command doesn't permit an address of 0");
 		break;
 	}
 	return;
@@ -2347,7 +2345,7 @@ ex_comlog(sp, ecp)
 	if (ecp->flags)
 		vtrace(sp, " flags 0x%x", ecp->flags);
 	if (F_ISSET(&exc, E_BUFFER))
-		vtrace(sp, " buffer %c", ecp->buffer);
+		vtrace(sp, " buffer "WC, ecp->buffer);
 	if (ecp->argc)
 		for (cnt = 0; cnt < ecp->argc; ++cnt)
 			vtrace(sp, " arg %d: {%s}", cnt, ecp->argv[cnt]->bp);

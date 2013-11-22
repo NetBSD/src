@@ -1,3 +1,4 @@
+/*	$NetBSD: screen.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -165,7 +166,7 @@ struct _scr {
 /* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
 	char	*alt_name;		/* Ex/vi: alternate file name. */
 
-	CHAR_T	 at_lbuf;		/* Ex/vi: Last executed at buffer. */
+	ARG_CHAR_T	 at_lbuf;	/* Ex/vi: Last executed at buffer. */
 
 					/* Ex/vi: re_compile flags. */
 #define	RE_WSTART	L("[[:<:]]")	/* Ex/vi: not-in-word search pattern. */

@@ -1,3 +1,4 @@
+/*	$NetBSD: ip_funcs.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -18,12 +19,12 @@ static const char sccsid[] = "Id: ip_funcs.c,v 8.23 2001/06/25 15:19:23 skimo Ex
 #include <bitstring.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "../common/common.h"
 #include "../vi/vi.h"
 #include "../ipc/ip.h"
-#include "extern.h"
 
 /*
  * ip_addstr --
@@ -36,13 +37,13 @@ ip_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 {
 	IP_BUF ipb;
 	IP_PRIVATE *ipp;
-	int iv, rval;
+	int rval;
 
 	ipp = IPP(sp);
 
 	ipb.code = SI_WADDSTR;
 	ipb.len1 = len * sizeof(CHAR_T);
-	ipb.str1 = (char *)str;
+	ipb.str1 = __UNCONST(str);
 	rval = vi_send(ipp->o_fd, "a", &ipb);
 	/* XXXX */
 	ipp->col += len;
@@ -207,10 +208,8 @@ ip_clrtoeol(SCR *sp)
  	 */
  	if (IS_VSPLIT(sp)) {
  		size_t x, y, spcnt;
- 		IP_PRIVATE *ipp;
  		int error;
  
- 		ipp = IPP(sp);
  		y = ipp->row;
  		x = ipp->col;
  		error = 0;
