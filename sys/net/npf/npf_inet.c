@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.26 2013/11/22 01:24:21 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.27 2013/11/22 01:48:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.26 2013/11/22 01:24:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.27 2013/11/22 01:48:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.26 2013/11/22 01:24:21 rmind Exp $");
 #include "npf_impl.h"
 
 /*
- * npf_fixup{16,32}_cksum: update IPv4 checksum.
+ * npf_fixup{16,32}_cksum: incremental update of the Internet checksum.
  */
 
 uint16_t
@@ -71,22 +71,33 @@ npf_fixup16_cksum(uint16_t cksum, uint16_t odatum, uint16_t ndatum)
 	/*
 	 * RFC 1624:
 	 *	HC' = ~(~HC + ~m + m')
+	 *
+	 * Note: 1's complement sum is endian-independent (RFC 1071, page 2).
 	 */
-	sum = ~ntohs(cksum) & 0xffff;
-	sum += (~ntohs(odatum) & 0xffff) + ntohs(ndatum);
+	sum = ~cksum & 0xffff;
+	sum += (~odatum & 0xffff) + ndatum;
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
 
-	return htons(~sum & 0xffff);
+	return ~sum & 0xffff;
 }
 
 uint16_t
 npf_fixup32_cksum(uint16_t cksum, uint32_t odatum, uint32_t ndatum)
 {
+	uint32_t sum;
 
-	cksum = npf_fixup16_cksum(cksum, odatum & 0xffff, ndatum & 0xffff);
-	cksum = npf_fixup16_cksum(cksum, odatum >> 16, ndatum >> 16);
-	return cksum;
+	/*
+	 * Checksum 32-bit datum as as two 16-bit.  Note, the first
+	 * 32->16 bit reduction is not necessary.
+	 */
+	sum = ~cksum & 0xffff;
+	sum += (~odatum & 0xffff) + (ndatum & 0xffff);
+
+	sum += (~odatum >> 16) + (ndatum >> 16);
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	return ~sum & 0xffff;
 }
 
 /*
