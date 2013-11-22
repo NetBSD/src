@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.10 2013/04/13 18:04:33 jakllsch Exp $");
+__RCSID("$NetBSD: label.c,v 1.11 2013/11/22 03:50:05 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static unsigned int entry;
 static uint8_t *name;
 
 const char labelmsg1[] = "label -a <-l label | -f file> device ...";
-const char labelmsg2[] = "label [-b lba] [-i index] [-s lba]";
+const char labelmsg2[] = "label [-b blocknr] [-i index] [-s sectors]";
 const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
 
 __dead static void
