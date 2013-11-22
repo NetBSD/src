@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.86 2013/10/25 11:35:55 martin Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.87 2013/11/22 21:04:11 christos Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.86 2013/10/25 11:35:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.87 2013/11/22 21:04:11 christos Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -426,21 +426,21 @@ static void
 bt_remseg(vmem_t *vm, bt_t *bt)
 {
 
-	CIRCLEQ_REMOVE(&vm->vm_seglist, bt, bt_seglist);
+	TAILQ_REMOVE(&vm->vm_seglist, bt, bt_seglist);
 }
 
 static void
 bt_insseg(vmem_t *vm, bt_t *bt, bt_t *prev)
 {
 
-	CIRCLEQ_INSERT_AFTER(&vm->vm_seglist, prev, bt, bt_seglist);
+	TAILQ_INSERT_AFTER(&vm->vm_seglist, prev, bt, bt_seglist);
 }
 
 static void
 bt_insseg_tail(vmem_t *vm, bt_t *bt)
 {
 
-	CIRCLEQ_INSERT_TAIL(&vm->vm_seglist, bt, bt_seglist);
+	TAILQ_INSERT_TAIL(&vm->vm_seglist, bt, bt_seglist);
 }
 
 static void
@@ -900,7 +900,7 @@ vmem_init(vmem_t *vm, const char *name,
 	qc_init(vm, qcache_max, ipl);
 #endif /* defined(QCACHE) */
 
-	CIRCLEQ_INIT(&vm->vm_seglist);
+	TAILQ_INIT(&vm->vm_seglist);
 	for (i = 0; i < VMEM_MAXORDER; i++) {
 		LIST_INIT(&vm->vm_freelist[i]);
 	}
@@ -1181,7 +1181,7 @@ gotit:
 		bt->bt_start = start;
 		bt->bt_size -= btnew2->bt_size;
 		bt_insfree(vm, btnew2);
-		bt_insseg(vm, btnew2, CIRCLEQ_PREV(bt, bt_seglist));
+		bt_insseg(vm, btnew2, TAILQ_PREV(bt, vmem_seglist, bt_seglist));
 		btnew2 = NULL;
 		vmem_check(vm);
 	}
@@ -1194,7 +1194,7 @@ gotit:
 		bt->bt_start = bt->bt_start + size;
 		bt->bt_size -= size;
 		bt_insfree(vm, bt);
-		bt_insseg(vm, btnew, CIRCLEQ_PREV(bt, bt_seglist));
+		bt_insseg(vm, btnew, TAILQ_PREV(bt, vmem_seglist, bt_seglist));
 		bt_insbusy(vm, btnew);
 		vmem_check(vm);
 		VMEM_UNLOCK(vm);
@@ -1263,7 +1263,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	bt->bt_type = BT_TYPE_FREE;
 
 	/* coalesce */
-	t = CIRCLEQ_NEXT(bt, bt_seglist);
+	t = TAILQ_NEXT(bt, bt_seglist);
 	if (t != NULL && t->bt_type == BT_TYPE_FREE) {
 		KASSERT(BT_END(bt) < t->bt_start);	/* YYY */
 		bt_remfree(vm, t);
@@ -1271,7 +1271,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		bt->bt_size += t->bt_size;
 		LIST_INSERT_HEAD(&tofree, t, bt_freelist);
 	}
-	t = CIRCLEQ_PREV(bt, bt_seglist);
+	t = TAILQ_PREV(bt, vmem_seglist, bt_seglist);
 	if (t != NULL && t->bt_type == BT_TYPE_FREE) {
 		KASSERT(BT_END(t) < bt->bt_start);	/* YYY */
 		bt_remfree(vm, t);
@@ -1281,7 +1281,7 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		LIST_INSERT_HEAD(&tofree, t, bt_freelist);
 	}
 
-	t = CIRCLEQ_PREV(bt, bt_seglist);
+	t = TAILQ_PREV(bt, vmem_seglist, bt_seglist);
 	KASSERT(t != NULL);
 	KASSERT(BT_ISSPAN_P(t) || t->bt_type == BT_TYPE_BUSY);
 	if (vm->vm_releasefn != NULL && t->bt_type == BT_TYPE_SPAN &&
@@ -1452,7 +1452,7 @@ vmem_dump(const vmem_t *vm , void (*pr)(const char *, ...) __printflike(1, 2))
 	int i;
 
 	(*pr)("vmem %p '%s'\n", vm, vm->vm_name);
-	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+	TAILQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
 		bt_dump(bt, pr);
 	}
 
@@ -1478,7 +1478,7 @@ vmem_whatis_lookup(vmem_t *vm, uintptr_t addr)
 {
 	bt_t *bt;
 
-	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+	TAILQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
 		if (BT_ISSPAN_P(bt)) {
 			continue;
 		}
@@ -1553,15 +1553,15 @@ vmem_check_sanity(vmem_t *vm)
 
 	KASSERT(vm != NULL);
 
-	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+	TAILQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
 		if (bt->bt_start > BT_END(bt)) {
 			printf("corrupted tag\n");
 			bt_dump(bt, vmem_printf);
 			return false;
 		}
 	}
-	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
-		CIRCLEQ_FOREACH(bt2, &vm->vm_seglist, bt_seglist) {
+	TAILQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+		TAILQ_FOREACH(bt2, &vm->vm_seglist, bt_seglist) {
 			if (bt == bt2) {
 				continue;
 			}
