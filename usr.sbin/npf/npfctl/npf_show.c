@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.7 2013/11/22 00:25:51 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.8 2013/11/22 18:42:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.7 2013/11/22 00:25:51 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.8 2013/11/22 18:42:02 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -155,15 +155,16 @@ print_table(npf_conf_info_t *ctx, const uint32_t *words)
 {
 	unsigned tid = words[0];
 	nl_table_t *tl;
-	char *p;
+	char *p = NULL;
 
+	/* XXX: Iterating all as we need to rewind for the next call. */
 	while ((tl = npf_table_iterate(ctx->conf)) != NULL) {
-		if (npf_table_getid(tl) == tid) {
+		if (!p && npf_table_getid(tl) == tid) {
 			easprintf(&p, "%s", npf_table_getname(tl));
-			return p;
 		}
 	}
-	abort();
+	assert(p != NULL);
+	return p;
 }
 
 static char *
