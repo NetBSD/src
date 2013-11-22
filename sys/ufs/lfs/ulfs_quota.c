@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.c,v 1.9 2013/11/16 17:15:30 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $	*/
 /*  from NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.9 2013/11/16 17:15:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.10 2013/11/22 02:02:35 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -496,7 +496,7 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 		
 #ifdef LFS_QUOTA2
 	if (fs->um_flags & ULFS_QUOTA2) {
-		struct quotacursor *cursor = args->u.cursorget.qc_cursor;
+		struct quotakcursor *cursor = args->u.cursorget.qc_cursor;
 		struct quotakey *keys = args->u.cursorget.qc_keys;
 		struct quotaval *vals = args->u.cursorget.qc_vals;
 		unsigned maxnum = args->u.cursorget.qc_maxnum;
