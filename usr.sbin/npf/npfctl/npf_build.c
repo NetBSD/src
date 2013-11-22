@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.30 2013/11/19 00:28:41 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.31 2013/11/22 00:25:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.30 2013/11/19 00:28:41 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.31 2013/11/22 00:25:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -124,9 +124,9 @@ npfctl_debug_addif(const char *ifname)
 }
 
 bool
-npfctl_table_exists_p(const char *id)
+npfctl_table_exists_p(const char *name)
 {
-	return npf_table_exists_p(npf_conf, atoi(id));
+	return npf_conf ? npf_table_exists_p(npf_conf, name) : false;
 }
 
 static in_port_t
