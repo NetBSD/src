@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.11 2013/04/30 00:03:53 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.12 2013/11/22 21:56:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.11 2013/04/30 00:03:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.12 2013/11/22 21:56:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -234,7 +234,7 @@ void
 ksiginfo_queue_drain0(ksiginfoq_t *kq)
 {
 
-	if (!(CIRCLEQ_EMPTY(kq)))
+	if (!(TAILQ_EMPTY(kq)))
 		panic("how did that get there?");
 }
 
