@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_tableset.c,v 1.19 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.20 2013/11/22 00:25:51 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.19 2013/11/12 00:46:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.20 2013/11/22 00:25:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -243,6 +243,31 @@ npf_tableset_reload(npf_tableset_t *nts, npf_tableset_t *ots)
 	}
 }
 
+void
+npf_tableset_syncdict(const npf_tableset_t *ts, prop_dictionary_t ndict)
+{
+	prop_array_t tables = prop_array_create();
+	const npf_table_t *t;
+
+	KASSERT(npf_config_locked_p());
+
+	for (u_int tid = 0; tid < ts->ts_nitems; tid++) {
+		if ((t = ts->ts_map[tid]) == NULL) {
+			continue;
+		}
+		prop_dictionary_t tdict = prop_dictionary_create();
+		prop_dictionary_set_cstring(tdict, "name", t->t_name);
+		prop_dictionary_set_uint32(tdict, "type", t->t_type);
+		prop_dictionary_set_uint32(tdict, "id", tid);
+
+		prop_array_add(tables, tdict);
+		prop_object_release(tdict);
+	}
+	prop_dictionary_remove(ndict, "tables");
+	prop_dictionary_set(ndict, "tables", tables);
+	prop_object_release(tables);
+}
+
 /*
  * Few helper routines.
  */
@@ -377,7 +402,7 @@ npf_table_check(npf_tableset_t *ts, const char *name, u_int tid, int type)
 		return ENAMETOOLONG;
 	}
 	if (npf_tableset_getbyname(ts, name)) {
-		return EINVAL;
+		return EEXIST;
 	}
 	return 0;
 }
