@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.151 2013/11/21 11:21:54 martin Exp $
+#  $NetBSD: Makefile,v 1.152 2013/11/22 13:37:24 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -53,6 +53,7 @@ ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .elif (${MACHINE_CPU} == "arm")
 .PATH: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
 .if (${MKSOFTFLOAT} == "no")
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .else
@@ -63,11 +64,13 @@ ${i} ${i:.o=.po} ${i:.o=.pico} ${i:.o=.go} ${i:.o=.ln}: ${i:.o=.c}
 .elif (${MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c e_sqrtl.c
+	s_nearbyint.c s_rintl.c
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
 .ifndef _COMPAT_M32_MK_
 COMMON_SRCS+= s_nexttoward.c
 .endif
@@ -80,8 +83,9 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .PATH:	${.CURDIR}/arch/i387
 
 COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c e_sqrtl.c
+	s_nearbyint.c s_rintl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
@@ -156,7 +160,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
 	e_log2.c e_log10.c e_log10f.c e_log2f.c e_logf.c e_pow.c e_powf.c \
 	e_rem_pio2.c e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c \
-	e_scalbf.c e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
+	e_scalbf.c e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c e_sqrtl.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
 	ldbl_dummy.c \
