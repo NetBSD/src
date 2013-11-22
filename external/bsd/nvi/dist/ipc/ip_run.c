@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_run.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip_run.c,v 1.3 2013/11/22 19:59:36 martin Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -212,7 +212,7 @@ channel(int rpipe[2], int wpipe[2])
 static void
 arg_format(char *execp, int *argcp, char **argvp[], int i_fd, int o_fd)
 {
-	char *iarg, **largv, *p, **p_av, **t_av;
+	char *iarg, **largv = NULL /* XXX gcc */, *p, **p_av, **t_av;
 
 	/* Get space for the argument array and the -I argument. */
 	if ((iarg = malloc(64)) == NULL ||
