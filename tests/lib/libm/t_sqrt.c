@@ -1,4 +1,4 @@
-/* $NetBSD: t_sqrt.c,v 1.4 2013/11/19 19:24:33 joerg Exp $ */
+/* $NetBSD: t_sqrt.c,v 1.5 2013/11/22 17:19:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sqrt.c,v 1.4 2013/11/19 19:24:33 joerg Exp $");
+__RCSID("$NetBSD: t_sqrt.c,v 1.5 2013/11/22 17:19:14 martin Exp $");
 
 #include <atf-c.h>
 #include <math.h>
+#include <float.h>
 #include <stdio.h>
 
 /*
@@ -288,7 +289,7 @@ ATF_TC_BODY(sqrtl_powl, tc)
 {
 #ifndef __vax__
 	const long double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
-	const long double eps = 1.0e-30;
+	const long double eps = 5.0*DBL_EPSILON; /* XXX powl == pow for now */
 	volatile long double y, z;
 	size_t i;
 
