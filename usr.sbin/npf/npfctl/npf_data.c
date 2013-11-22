@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.22 2013/11/19 00:28:41 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.23 2013/11/22 00:25:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.22 2013/11/19 00:28:41 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.23 2013/11/22 00:25:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -221,13 +221,13 @@ npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
 }
 
 npfvar_t *
-npfctl_parse_table_id(const char *id)
+npfctl_parse_table_id(const char *name)
 {
-	if (!npfctl_table_exists_p(id)) {
-		yyerror("table '%s' is not defined", id);
+	if (!npfctl_table_exists_p(name)) {
+		yyerror("table '%s' is not defined", name);
 		return NULL;
 	}
-	return npfvar_create_from_string(NPFVAR_TABLE, id);
+	return npfvar_create_from_string(NPFVAR_TABLE, name);
 }
 
 /*
