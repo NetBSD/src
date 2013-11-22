@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.24 2013/04/27 21:35:24 joerg Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.25 2013/11/22 21:04:11 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ struct _ksiginfo {
 #ifdef _KERNEL
 typedef struct ksiginfo {
 	u_long			ksi_flags;	/* 4 or 8 bytes (LP64) */
-	CIRCLEQ_ENTRY(ksiginfo) ksi_list;
+	TAILQ_ENTRY(ksiginfo)	ksi_list;
 	struct _ksiginfo	ksi_info;
 	lwpid_t			ksi_lid;	/* 0, or directed to LWP */
 } ksiginfo_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.175 2013/06/09 01:13:47 riz Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.176 2013/11/22 21:04:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.175 2013/06/09 01:13:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.176 2013/11/22 21:04:11 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -911,7 +911,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	l2->l_sigstk = l1->l_sigstk;
 	l2->l_sigmask = l1->l_sigmask;
-	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
+	TAILQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
 	if (__predict_true(lid == 0)) {
