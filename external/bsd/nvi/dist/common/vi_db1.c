@@ -27,6 +27,7 @@ static const char sccsid[] = "Id: db1.c,v 10.1 2002/03/09 12:53:57 skimo Exp  (B
 
 #include "common.h"
 #include "../vi/vi.h"
+#include "dbinternal.h"
 
 /*
  * db_eget --
@@ -90,7 +91,7 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 	EXF *ep;
 	TEXT *tp;
 	db_recno_t l1, l2;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 	size_t nlen;
 
@@ -273,14 +274,14 @@ db_delete(SCR *sp, db_recno_t lno)
  * db_append --
  *	Append a line into the file.
  *
- * PUBLIC: int db_append __P((SCR *, int, db_recno_t, CHAR_T *, size_t));
+ * PUBLIC: int db_append __P((SCR *, int, db_recno_t, const CHAR_T *, size_t));
  */
 int
-db_append(SCR *sp, int update, db_recno_t lno, CHAR_T *p, size_t len)
+db_append(SCR *sp, int update, db_recno_t lno, const CHAR_T *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
-	char *fp;
+	const char *fp;
 	size_t flen;
 	int rval;
 
@@ -305,7 +306,7 @@ db_append(SCR *sp, int update, db_recno_t lno, CHAR_T *p, size_t len)
 	/* Update file. */
 	key.data = &lno;
 	key.size = sizeof(lno);
-	data.data = fp;
+	data.data = __UNCONST(fp);
 	data.size = flen;
 	if (ep->db->put(ep->db, &key, &data, R_IAFTER)) {
 		msgq(sp, M_DBERR, "004|unable to append to line %lu", 
@@ -355,7 +356,7 @@ db_insert(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
-	char *fp;
+	const char *fp;
 	size_t flen;
 	int rval;
 
@@ -381,7 +382,7 @@ db_insert(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 	/* Update file. */
 	key.data = &lno;
 	key.size = sizeof(lno);
-	data.data = fp;
+	data.data = __UNCONST(fp);
 	data.size = flen;
 	if (ep->db->put(ep->db, &key, &data, R_IBEFORE)) {
 		msgq(sp, M_SYSERR,
@@ -422,7 +423,7 @@ db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
-	char *fp;
+	const char *fp;
 	size_t flen;
 
 #if defined(DEBUG) && 0
@@ -447,7 +448,7 @@ db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 	/* Update file. */
 	key.data = &lno;
 	key.size = sizeof(lno);
-	data.data = fp;
+	data.data = __UNCONST(fp);
 	data.size = flen;
 	sp->db_error =
 		ep->db->put(ep->db, &key, &data, 0);
@@ -519,7 +520,7 @@ db_last(SCR *sp, db_recno_t *lnop)
 	DBT data, key;
 	EXF *ep;
 	db_recno_t lno;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/* Check for no underlying file. */
@@ -595,6 +596,8 @@ db_err(SCR *sp, db_recno_t lno)
  * scr_update --
  *	Update all of the screens that are backed by the file that
  *	just changed.
+ * PUBLIC: int scr_update __P((SCR *sp, db_recno_t lno,
+ * PUBLIC:                      lnop_t op, int current));
  */
 int
 scr_update(SCR *sp, db_recno_t lno, lnop_t op, int current)
@@ -647,6 +650,8 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 			if (lno == scrp->c_lno)
 				scrp->c_lno = OOBLNO;
 			break;
+		case LINE_APPEND:
+			break;
 		}
 
 	if (ep->c_nlines != OOBLNO)
@@ -657,13 +662,16 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 		case LINE_DELETE:
 			--ep->c_nlines;
 			break;
+		case LINE_APPEND:
+		case LINE_RESET:
+			break;
 		}
 }
 
 /*
- * PUBLIC: int db_msg_open __P((SCR *, char *, DB **));
+ * PUBLIC: int db_msg_open __P((SCR *, const char *, DB **));
  */
-int db_msg_open(SCR *sp, char *file, DB **dbp)
+int db_msg_open(SCR *sp, const char *file, DB **dbp)
 {
 	*dbp = dbopen(file, O_NONBLOCK | O_RDONLY, 0, DB_RECNO, NULL);
 
@@ -709,7 +717,7 @@ db_init(SCR *sp, EXF *ep, char *rcv_name, char *oname, size_t psize, int *open_e
 	return 0;
 }
 
-char *
+const char *
 db_strerror(int error)
 {
 	return error > 0 ? strerror(error) : "record not found";

@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_display.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -25,9 +26,9 @@ static const char sccsid[] = "Id: ex_display.c,v 10.15 2001/06/25 15:19:15 skimo
 #include "../common/common.h"
 #include "tag.h"
 
-static int	is_prefix __P((ARGS *, CHAR_T *));
+static int	is_prefix __P((ARGS *, const CHAR_T *));
 static int	bdisplay __P((SCR *));
-static void	db __P((SCR *, CB *, u_char *));
+static void	db __P((SCR *, CB *, const char *));
 
 /*
  * ex_display -- :display b[uffers] | c[onnections] | s[creens] | t[ags]
@@ -71,7 +72,7 @@ ex_display(SCR *sp, EXCMD *cmdp)
  *	Check that a command argument matches a prefix of a given string.
  */
 static int
-is_prefix(ARGS *arg, CHAR_T *str)
+is_prefix(ARGS *arg, const CHAR_T *str)
 {
 	return arg->len <= STRLEN(str) && !MEMCMP(arg->bp, str, arg->len);
 }
@@ -93,7 +94,7 @@ bdisplay(SCR *sp)
 
 	/* Display regular cut buffers. */
 	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
-		if (isdigit(cbp->name))
+		if (ISDIGIT(cbp->name))
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);
@@ -102,7 +103,7 @@ bdisplay(SCR *sp)
 	}
 	/* Display numbered buffers. */
 	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
-		if (!isdigit(cbp->name))
+		if (!ISDIGIT(cbp->name))
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);
@@ -120,21 +121,20 @@ bdisplay(SCR *sp)
  *	Display a buffer.
  */
 static void
-db(SCR *sp, CB *cbp, u_char *name)
+db(SCR *sp, CB *cbp, const char *np)
 {
 	CHAR_T *p;
-	GS *gp;
 	TEXT *tp;
 	size_t len;
+	const unsigned char *name = (const void *)np;
 
-	gp = sp->gp;
 	(void)ex_printf(sp, "********** %s%s\n",
 	    name == NULL ? KEY_NAME(sp, cbp->name) : name,
 	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : " (character mode)");
 	for (tp = cbp->textq.cqh_first;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_next) {
 		for (len = tp->len, p = tp->lb; len--; ++p) {
-			(void)ex_puts(sp, KEY_NAME(sp, *p));
+			(void)ex_puts(sp, (char *)KEY_NAME(sp, *p));
 			if (INTERRUPTED(sp))
 				return;
 		}

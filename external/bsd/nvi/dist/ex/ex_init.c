@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_init.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +32,9 @@ static const char sccsid[] = "Id: ex_init.c,v 10.31 2001/06/25 15:19:16 skimo Ex
 #include "pathnames.h"
 
 enum rc { NOEXIST, NOPERM, RCOK };
-static enum rc	exrc_isok __P((SCR *, struct stat *, char *, int, int));
+static enum rc	exrc_isok __P((SCR *, struct stat *, const char *, int, int));
 
-static int ex_run_file __P((SCR *, char *));
+static int ex_run_file __P((SCR *, const char *));
 
 /*
  * ex_screen_copy --
@@ -115,10 +116,10 @@ ex_screen_end(SCR *sp)
  * ex_optchange --
  *	Handle change of options for ex.
  *
- * PUBLIC: int ex_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int ex_optchange __P((SCR *, int, const char *, u_long *));
  */
 int
-ex_optchange(SCR *sp, int offset, char *str, u_long *valp)
+ex_optchange(SCR *sp, int offset, const char *str, u_long *valp)
 {
 	switch (offset) {
 	case O_TAGS:
@@ -139,7 +140,7 @@ ex_exrc(SCR *sp)
 {
 	struct stat hsb, lsb;
 	char *p, path[MAXPATHLEN];
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/*
@@ -249,10 +250,10 @@ ex_exrc(SCR *sp)
  *	Set up a file of ex commands to run.
  */
 static int
-ex_run_file(SCR *sp, char *name)
+ex_run_file(SCR *sp, const char *name)
 {
 	EXCMD cmd;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	ex_cinit(sp, &cmd, C_SOURCE, 0, OOBLNO, OOBLNO, 0);
@@ -265,10 +266,10 @@ ex_run_file(SCR *sp, char *name)
  * ex_run_str --
  *	Set up a string of ex commands to run.
  *
- * PUBLIC: int ex_run_str __P((SCR *, char *, CHAR_T *, size_t, int, int));
+ * PUBLIC: int ex_run_str __P((SCR *, const char *, const CHAR_T *, size_t, int, int));
  */
 int
-ex_run_str(SCR *sp, char *name, CHAR_T *str, size_t len, int ex_flags, int nocopy)
+ex_run_str(SCR *sp, const char *name, const CHAR_T *str, size_t len, int ex_flags, int nocopy)
 {
 	WIN *wp;
 	EXCMD *ecp;
@@ -284,7 +285,7 @@ ex_run_str(SCR *sp, char *name, CHAR_T *str, size_t len, int ex_flags, int nocop
 	    ex_flags ? E_BLIGNORE | E_NOAUTO | E_NOPRDEF | E_VLITONLY : 0);
 
 	if (nocopy)
-		ecp->cp = str;
+		ecp->cp = __UNCONST(str);
 	else
 		if ((ecp->cp = v_wstrdup(sp, str, len)) == NULL)
 			return (1);
@@ -339,7 +340,7 @@ ex_run_str(SCR *sp, char *name, CHAR_T *str, size_t len, int ex_flags, int nocop
  * files.
  */
 static enum rc
-exrc_isok(SCR *sp, struct stat *sbp, char *path, int rootown, int rootid)
+exrc_isok(SCR *sp, struct stat *sbp, const char *path, int rootown, int rootid)
 {
 	enum { ROOTOWN, OWN, WRITER } etype;
 	uid_t euid;

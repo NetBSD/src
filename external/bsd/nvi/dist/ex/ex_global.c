@@ -1,3 +1,4 @@
+/*	$NetBSD: ex_global.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -65,11 +66,10 @@ ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 {
 	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
-	MARK abs;
+	MARK myabs;
 	RANGE *rp;
 	busy_t btype;
 	db_recno_t start, end;
-	regex_t *re;
 	regmatch_t match[1];
 	size_t len;
 	int cnt, delim, eval;
@@ -78,9 +78,8 @@ ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 	NEEDFILE(sp, cmdp);
 
 	if (F_ISSET(sp, SC_EX_GLOBAL)) {
-		msgq(sp, M_ERR,
-	"124|The %s command can't be used as part of a global or v command",
-		    cmdp->cmd->name);
+		msgq_wstr(sp, M_ERR, cmdp->cmd->name,
+	"124|The %s command can't be used as part of a global or v command");
 		return (1);
 	}
 
@@ -91,7 +90,7 @@ ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 	if (cmdp->argc == 0)
 		goto usage;
 	for (p = cmdp->argv[0]->bp; ISBLANK(*p); ++p);
-	if (*p == '\0' || ISALNUM(*p) ||
+	if (*p == '\0' || ISALNUM((UCHAR_T)*p) ||
 	    *p == '\\' || *p == '|' || *p == '\n') {
 usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
@@ -116,11 +115,12 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			*t = L('\0');
 			break;
 		}
-		if (p[0] == L('\\'))
+		if (p[0] == L('\\')) {
 			if (p[1] == delim)
 				++p;
 			else if (p[1] == L('\\'))
 				*t++ = *p++;
+		}
 		*t++ = *p++;
 	}
 
@@ -148,12 +148,11 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		 */
 		sp->searchdir = FORWARD;
 	}
-	re = &sp->re_c;
 
 	/* The global commands always set the previous context mark. */
-	abs.lno = sp->lno;
-	abs.cno = sp->cno;
-	if (mark_set(sp, ABSMARK1, &abs, 1))
+	myabs.lno = sp->lno;
+	myabs.cno = sp->cno;
+	if (mark_set(sp, ABSMARK1, &myabs, 1))
 		return (1);
 
 	/* Get an EXCMD structure. */
@@ -168,7 +167,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 	 * parsing it.
 	 */
 	if ((len = cmdp->argv[0]->len - (p - cmdp->argv[0]->bp)) == 0) {
-		p = L("p");
+		p = __UNCONST(L("p"));
 		len = 1;
 	}
 

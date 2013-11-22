@@ -1,3 +1,4 @@
+/*	$NetBSD: script.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

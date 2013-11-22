@@ -1,3 +1,4 @@
+/*	$NetBSD: cut.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -61,13 +62,13 @@ static void	cb_rotate __P((SCR *));
  * replacing the contents.  Hopefully it's not worth getting right, and here
  * we just treat the numeric buffers like any other named buffer.
  *
- * PUBLIC: int cut __P((SCR *, CHAR_T *, MARK *, MARK *, int));
+ * PUBLIC: int cut __P((SCR *, ARG_CHAR_T *, MARK *, MARK *, int));
  */
 int
-cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
+cut(SCR *sp, ARG_CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 {
 	CB *cbp;
-	CHAR_T name;
+	ARG_CHAR_T name = '\0';
 	db_recno_t lno;
 	int append, copy_one, copy_def;
 
@@ -96,19 +97,19 @@ cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 	append = copy_one = copy_def = 0;
 	if (namep != NULL) {
 		name = *namep;
-		if (LF_ISSET(CUT_NUMREQ) || LF_ISSET(CUT_NUMOPT) &&
-		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
+		if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
+		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
 			copy_one = 1;
 			cb_rotate(sp);
 		}
-		if ((append = isupper(name))) {
+		if ((append = ISUPPER(name))) {
 			if (!copy_one)
 				copy_def = 1;
 			name = TOLOWER(name);
 		}
 namecb:		CBNAME(sp, cbp, name);
-	} else if (LF_ISSET(CUT_NUMREQ) || LF_ISSET(CUT_NUMOPT) &&
-	    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
+	} else if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
+	    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
 		name = L('1');
 		cb_rotate(sp);
 		goto namecb;
@@ -132,16 +133,15 @@ copyloop:
 	}
 
 
-#define	ENTIRE_LINE	0
 	/* In line mode, it's pretty easy, just cut the lines. */
 	if (LF_ISSET(CUT_LINEMODE)) {
 		cbp->flags |= CB_LMODE;
 		for (lno = fm->lno; lno <= tm->lno; ++lno)
-			if (cut_line(sp, lno, 0, 0, cbp))
+			if (cut_line(sp, lno, 0, ENTIRE_LINE, cbp))
 				goto cut_line_err;
 	} else {
 		/*
-		 * Get the first line.  A length of 0 causes cut_line
+		 * Get the first line.  A length of ENTIRE_LINE causes cut_line
 		 * to cut from the MARK to the end of the line.
 		 */
 		if (cut_line(sp, fm->lno, fm->cno, fm->lno != tm->lno ?
@@ -255,7 +255,7 @@ cut_line(SCR *sp, db_recno_t lno, size_t fcno, size_t clen, CB *cbp)
 	 * copy the portion we want, and reset the TEXT length.
 	 */
 	if (len != 0) {
-		if (clen == 0)
+		if (clen == ENTIRE_LINE)
 			clen = len - fcno;
 		MEMCPYW(tp->lb, p + fcno, clen);
 		tp->len = clen;

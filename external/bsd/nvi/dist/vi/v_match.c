@@ -1,3 +1,4 @@
+/*	$NetBSD: v_match.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +40,20 @@ v_match(SCR *sp, VICMD *vp)
 	size_t cno, len, off;
 	int cnt, isempty, matchc, startc, (*gc)__P((SCR *, VCS *));
 	CHAR_T *p;
+	char *cp;
+	const char *match_chars;
+
+	static MARK match = { 0, 0 };
+	static int match_dir;
+
+	/*
+	 * Historically vi would match (), {} and [] however
+	 * an update included <>.  This is ok for editing HTML
+	 * but a pain in the butt for C source.
+	 * Making it an option lets the user decide what is 'right'.
+	 * Also fixed to do something sensible with "".
+	 */
+	match_chars = O_STR(sp, O_MATCHCHARS);
 
 	/*
 	 * !!!
@@ -58,44 +73,27 @@ v_match(SCR *sp, VICMD *vp)
 nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 			return (1);
 		}
-		switch (startc = p[off]) {
-		case '(':
-			matchc = ')';
-			gc = cs_next;
+		startc = p[off];
+		cp = strchr(match_chars, startc);
+		if (cp != NULL)
 			break;
-		case ')':
-			matchc = '(';
-			gc = cs_prev;
-			break;
-		case '[':
-			matchc = ']';
-			gc = cs_next;
-			break;
-		case ']':
-			matchc = '[';
-			gc = cs_prev;
-			break;
-		case '{':
-			matchc = '}';
-			gc = cs_next;
-			break;
-		case '}':
-			matchc = '{';
-			gc = cs_prev;
-			break;
-		case '<':
-			matchc = '>';
-			gc = cs_next;
-			break;
-		case '>':
-			matchc = '<';
-			gc = cs_prev;
-			break;
-		default:
-			continue;
-		}
-		break;
 	}
+	cnt = cp - match_chars;
+	matchc = match_chars[cnt ^ 1];
+
+	/* Alternate back-forward search if startc and matchc the same */
+	if (startc == matchc) {
+		/* are we continuing from where last match finished? */
+		if (match.lno == vp->m_start.lno && match.cno ==vp->m_start.cno)
+			/* yes - continue in sequence */
+			match_dir++;
+		else
+			/* no - go forward, back, back, forward */
+			match_dir = 1;
+		if (match_dir & 2)
+			cnt++;
+	}
+	gc = cnt & 1 ? cs_prev : cs_next;
 
 	cs.cs_lno = vp->m_start.lno;
 	cs.cs_cno = off;
@@ -109,10 +107,10 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 				break;
 			continue;
 		}
+		if (cs.cs_ch == matchc && --cnt == 0)
+			break;
 		if (cs.cs_ch == startc)
 			++cnt;
-		else if (cs.cs_ch == matchc && --cnt == 0)
-			break;
 	}
 	if (cnt) {
 		msgq(sp, M_BERR, "185|Matching character not found");
@@ -133,11 +131,14 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	 * starting cursor position when deleting to a match.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno < vp->m_stop.cno)
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno < vp->m_stop.cno))
 		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	else
 		vp->m_final = vp->m_stop;
+
+	match.lno = vp->m_final.lno;
+	match.cno = vp->m_final.cno;
 
 	/*
 	 * !!!
@@ -161,7 +162,7 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	if (db_get(sp, mp->lno, DBG_FATAL, &p, &len))
 		return (1);
 	for (p += mp->cno + 1, len -= mp->cno; --len; ++p)
-		if (!ISBLANK(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			return (0);
 	F_SET(vp, VM_LMODE);
 	return (0);

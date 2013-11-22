@@ -1,3 +1,4 @@
+/*	$NetBSD: v_cmd.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -24,13 +25,14 @@ static const char sccsid[] = "Id: v_cmd.c,v 10.9 1996/03/28 15:18:39 bostic Exp 
 #include "../common/common.h"
 #include "vi.h"
 
+#define VINULLKEY { NULL, 0, NULL, NULL }
 /*
  * This array maps keystrokes to vi command functions.  It is known
  * in ex/ex_usage.c that it takes four columns to name a vi character.
  */
 VIKEYS const vikeys [MAXVIKEY + 1] = {
 /* 000 NUL -- The code in vi.c expects key 0 to be undefined. */
-	{NULL},
+	VINULLKEY,
 /* 001  ^A */
 	{v_searchw,	V_ABS|V_CNT|V_MOVE|V_KEYW|VM_CUTREQ|VM_RCM_SET,
 	    "[count]^A",
@@ -64,13 +66,13 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]^H",
 	    "^H move left by characters"},
 /* 011  ^I */
-	{NULL},
+	VINULLKEY,
 /* 012  ^J */
 	{v_down,	V_CNT|V_MOVE|VM_LMODE|VM_RCM,
 	    "[count]^J",
 	    "^J move down by lines"},
 /* 013  ^K */
-	{NULL},
+	VINULLKEY,
 /* 014  ^L */
 	{v_redraw,	0,
 	    "^L",
@@ -84,19 +86,19 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]^N",
 	    "^N move down by lines"},
 /* 017  ^O */
-	{NULL},
+	VINULLKEY,
 /* 020  ^P */
 	{v_up,		V_CNT|V_MOVE|VM_LMODE|VM_RCM,
 	    "[count]^P",
 	    "^P move up by lines"},
 /* 021  ^Q -- same as ^V if not used for hardware flow control. */
-	{NULL},
+	VINULLKEY,
 /* 022  ^R */
 	{v_redraw,	0,
 	    "^R",
 	    "^R redraw screen"},
 /* 023  ^S -- not available, used for hardware flow control. */
-	{NULL},
+	VINULLKEY,
 /* 024  ^T */
 	{v_tagpop,	V_ABS|VM_RCM_SET,
 	    "^T",
@@ -114,7 +116,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "^W",
 	    "^W move to next screen"},
 /* 030  ^X */
-	{NULL},
+	VINULLKEY,
 /* 031  ^Y */
 	{v_lineup,	V_CNT,
 	    "[count]^Y",
@@ -140,7 +142,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "^^",
 	    "^^ switch to previous file"},
 /* 037  ^_ */
-	{NULL},
+	VINULLKEY,
 /* 040 ' ' */
 	{v_right,	V_CNT|V_MOVE|VM_RCM_SET,
 	    "[count]' '",
@@ -150,7 +152,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]![count]motion command(s)",
 	    " ! filter through command(s) to motion"},
 /* 042   " */
-	{NULL},
+	VINULLKEY,
 /* 043   # */
 	{v_increment,	V_CHAR|V_CNT|V_DOT|VM_RCM_SET,
 	    "[count]# +|-|#",
@@ -180,7 +182,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count])",
 	    " ) move forward sentence"},
 /* 052   * */
-	{NULL},
+	VINULLKEY,
 /* 053   + */
 	{v_down,	V_CNT|V_MOVE|VM_LMODE|VM_RCM_SETFNB,
 	    "[count]+",
@@ -206,23 +208,23 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "0",
 	    " 0 move to first character"},
 /* 061   1 */
-	{NULL},
+	VINULLKEY,
 /* 062   2 */
-	{NULL},
+	VINULLKEY,
 /* 063   3 */
-	{NULL},
+	VINULLKEY,
 /* 064   4 */
-	{NULL},
+	VINULLKEY,
 /* 065   5 */
-	{NULL},
+	VINULLKEY,
 /* 066   6 */
-	{NULL},
+	VINULLKEY,
 /* 067   7 */
-	{NULL},
+	VINULLKEY,
 /* 070   8 */
-	{NULL},
+	VINULLKEY,
 /* 071   9 */
-	{NULL},
+	VINULLKEY,
 /* 072   : */
 	{v_ex,		0,
 	    ":command [| command] ...",
@@ -236,7 +238,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]<[count]motion",
 	    " < shift lines left to motion"},
 /* 075   = */
-	{NULL},
+	VINULLKEY,
 /* 076   > */
 	{v_shiftr,	V_CNT|V_DOT|V_MOTION|VM_RCM_SET,
 	    "[count]>[count]motion",
@@ -290,7 +292,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]J",
 	    " J join lines"},
 /* 113   K */
-	{NULL},
+	VINULLKEY,
 /* 114   L */
 	{v_bottom,	V_ABS_L|V_CNT|V_MOVE|VM_LMODE|VM_RCM_SETNNB,
 	    "[count]L",
@@ -332,7 +334,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "U",
 	    " U Restore the current line"},
 /* 126   V */
-	{NULL},
+	VINULLKEY,
 /* 127   W */
 	{v_wordW,	V_CNT|V_MOVE|VM_RCM_SET,
 	    "[count]W",
@@ -354,7 +356,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[[",
 	    "[[ move back section"},
 /* 134   \ */
-	{NULL},
+	VINULLKEY,
 /* 135   ] */
 	{v_sectionf,	V_ABS|V_CNT|V_MOVE|VM_RCM_SET,
 	    "]]",
@@ -405,7 +407,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[count]f character",
 	    " f character in line forward search"},
 /* 147   g */
-	{NULL},
+	VINULLKEY,
 /* 150   h */
 	{v_left,	V_CNT|V_MOVE|VM_RCM_SET,
 	    "[count]h",
@@ -443,7 +445,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "[buffer]p",
 	    " p insert after cursor from buffer"},
 /* 161   q */
-	{NULL},
+	VINULLKEY,
 /* 162   r */
 	{v_replace,	V_CNT|V_DOT|VM_RCM_SET,
 	    "[count]r character",
@@ -465,7 +467,7 @@ VIKEYS const vikeys [MAXVIKEY + 1] = {
 	    "u",
 	    " u undo last change"},
 /* 166   v */
-	{NULL},
+	VINULLKEY,
 /* 167   w */
 	{v_wordw,	V_CNT|V_MOVE|VM_RCM_SET,
 	    "[count]w",
