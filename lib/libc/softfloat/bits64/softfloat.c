@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.12 2013/01/10 08:16:11 matt Exp $ */
+/* $NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.12 2013/01/10 08:16:11 matt Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.13 2013/11/22 17:04:24 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -5261,7 +5261,7 @@ float128 float128_sqrt( float128 a )
         if ( ( aSig0 | aSig1 ) == 0 ) return packFloat128( 0, 0, 0, 0 );
         normalizeFloat128Subnormal( aSig0, aSig1, &aExp, &aSig0, &aSig1 );
     }
-    zExp = ( (unsigned int)(aExp - 0x3FFF) >> 1) + 0x3FFE;
+    zExp = (int32) ( (aExp - 0x3FFF) >> 1) + 0x3FFE;
     aSig0 |= LIT64( 0x0001000000000000 );
     zSig0 = estimateSqrt32((int16)aExp, (bits32)(aSig0>>17));
     shortShift128Left( aSig0, aSig1, 13 - ( aExp & 1 ), &aSig0, &aSig1 );
