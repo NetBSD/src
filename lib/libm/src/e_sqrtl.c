@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/e_sqrtl.c 176720 2008-03-02 01:47:58Z das $");
 #endif
-__RCSID("$NetBSD: e_sqrtl.c,v 1.3 2013/11/22 13:37:24 martin Exp $");
+__RCSID("$NetBSD: e_sqrtl.c,v 1.4 2013/11/22 20:15:06 martin Exp $");
 
 #include <machine/ieee.h>
 #include <float.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: e_sqrtl.c,v 1.3 2013/11/22 13:37:24 martin Exp $");
 #ifdef LDBL_IMPLICIT_NBIT
 #define	LDBL_NBIT	0
 #endif
+
+#ifdef HAVE_FENV_H
 
 /* Return (x + ulp) for normal positive x. Assumes no overflow. */
 static inline long double
@@ -87,9 +89,7 @@ __ieee754_sqrtl(long double x)
 	union ieee_ext_u ux = { .extu_ld = x, };
 	int k, r;
 	long double lo, xn;
-#ifdef HAVE_FENV_H
 	fenv_t env;
-#endif
 
 	/* If x = NaN, then sqrt(x) = NaN. */
 	/* If x = Inf, then sqrt(x) = Inf. */
@@ -105,9 +105,7 @@ __ieee754_sqrtl(long double x)
 	if (ux.extu_sign)
 		return ((x - x) / (x - x));
 
-#ifdef HAVE_FENV_H
 	feholdexcept(&env);
-#endif
 
 	if (ux.extu_exp == 0) {
 		/* Adjust subnormal numbers. */
@@ -150,9 +148,7 @@ __ieee754_sqrtl(long double x)
 
 	if (!fetestexcept(FE_INEXACT)) { /* Quotient is exact. */
 		if (xn == ux.extu_ld) {
-#ifdef HAVE_FENV_H
 			fesetenv(&env);
-#endif
 			return (ux.extu_ld);
 		}
 		/* Round correctly for inputs like x = y**2 - ulp. */
@@ -166,11 +162,23 @@ __ieee754_sqrtl(long double x)
 		xn = inc(xn);		/* xn  = xn + ulp. */
 	}
 	ux.extu_ld = ux.extu_ld + xn;		/* Chopped sum. */
-#ifdef HAVE_FENV_H
 	feupdateenv(&env);	/* Restore env and raise inexact */
-#endif
 	ux.extu_exp--;
 	return (ux.extu_ld);
 }
+
+#else
+
+/*
+ * No fenv support:
+ * poor man's version: just use double
+ */
+long double
+__ieee754_sqrtl(long double x)
+{
+	return __ieee754_sqrt((double)x);
+}
+
+#endif
 
 #endif
