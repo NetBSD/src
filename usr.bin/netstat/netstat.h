@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.47 2013/06/19 21:12:03 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.48 2013/11/23 22:01:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@ struct sockaddr_in6;
 struct in6_addr;
 void	ip6protopr __P((u_long, const char *));
 void	tcp6_stats __P((u_long, const char *));
-void	tcp6_dump __P((u_long));
+void	tcp6_dump __P((u_long, const char *, u_long));
 void	udp6_stats __P((u_long, const char *));
 void	ip6_stats __P((u_long, const char *));
 void	ip6_ifstats __P((const char *));
