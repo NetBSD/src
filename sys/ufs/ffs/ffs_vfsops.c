@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.290 2013/10/29 09:53:51 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.291 2013/11/23 13:35:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.290 2013/10/29 09:53:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.291 2013/11/23 13:35:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -325,9 +325,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 	mp->mnt_flag &= ~MNT_FORCE;
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
