@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.162 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.163 2013/11/23 14:20:22 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.162 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.163 2013/11/23 14:20:22 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1878,7 +1878,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		return (IPPROTO_DONE);
 	}
 
-	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
 		in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
