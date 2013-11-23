@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.76 2013/11/23 17:57:23 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.77 2013/11/23 23:14:55 christos Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.76 2013/11/23 17:57:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.77 2013/11/23 23:14:55 christos Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -623,6 +623,7 @@ struct mount *devtomp(dev_t dev)
 	    break;
 	}
     }
+    mp = mp == TAILQ_END(&mountlist) ? NULL : mp;
     mutex_exit(&mountlist_lock);
-    return mp == TAILQ_END(&mountlist) ? NULL : mp;
+    return mp;
 }
