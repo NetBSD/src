@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.57 2013/11/21 19:04:19 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.58 2013/11/23 14:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -600,8 +600,29 @@ struct {								\
 
 
 /*
- * Circular queue definitions.
+ * Circular queue definitions. Do not use. We still keep the macros
+ * for compatibility but because of pointer aliasing issues their use
+ * is discouraged!
  */
+
+/*
+ * We use this ugly hack to work around the fact that the CIRCLEQ
+ * macros violate the C aliasing rules by comparing 'struct name *'
+ * and 'struct type *' (see CIRCLEQ_HEAD() below).  Modern compilers
+ * (such as GCC 4.8) declare this to be always false and this makes
+ * most of the macros below not function correctly.
+ *
+ * This hack is only to be used for comparisons and thus can be
+ * fully const.  Do not use for assignment.
+ */
+static inline const void * __launder_type(const void *x);
+static inline const void *
+__launder_type(const void *x)
+{
+	__asm volatile("" : "+r" (x));
+	return x;
+}
+ 
 #if defined(_KERNEL) && defined(QUEUEDEBUG)
 #define QUEUEDEBUG_CIRCLEQ_HEAD(head, field)				\
 	if ((head)->cqh_first != CIRCLEQ_ENDC(head) &&			\
@@ -609,11 +630,11 @@ struct {								\
 		panic("CIRCLEQ head forw %p %s:%d", (head),		\
 		      __FILE__, __LINE__);				\
 	if ((head)->cqh_last != CIRCLEQ_ENDC(head) &&			\
-	    (head)->cqh_last->field.cqe_next != CIRCLEQ_ENDC(head))		\
+	    (head)->cqh_last->field.cqe_next != CIRCLEQ_ENDC(head))	\
 		panic("CIRCLEQ head back %p %s:%d", (head),		\
 		      __FILE__, __LINE__);
 #define QUEUEDEBUG_CIRCLEQ_ELM(head, elm, field)			\
-	if ((elm)->field.cqe_next == CIRCLEQ_ENDC(head)) {			\
+	if ((elm)->field.cqe_next == CIRCLEQ_ENDC(head)) {		\
 		if ((head)->cqh_last != (elm))				\
 			panic("CIRCLEQ elm last %p %s:%d", (elm),	\
 			      __FILE__, __LINE__);			\
@@ -622,7 +643,7 @@ struct {								\
 			panic("CIRCLEQ elm forw %p %s:%d", (elm),	\
 			      __FILE__, __LINE__);			\
 	}								\
-	if ((elm)->field.cqe_prev == CIRCLEQ_ENDC(head)) {			\
+	if ((elm)->field.cqe_prev == CIRCLEQ_ENDC(head)) {		\
 		if ((head)->cqh_first != (elm))				\
 			panic("CIRCLEQ elm first %p %s:%d", (elm),	\
 			      __FILE__, __LINE__);			\
@@ -741,7 +762,7 @@ struct {								\
 #define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
 /* For comparisons */
-#define	CIRCLEQ_ENDC(head)		((const void *)(head))
+#define	CIRCLEQ_ENDC(head)		(__launder_type(head))
 /* For assignments */
 #define	CIRCLEQ_END(head)		((void *)(head))
 #define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
