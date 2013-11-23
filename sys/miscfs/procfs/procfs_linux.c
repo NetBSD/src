@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.64 2011/12/19 03:02:31 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.65 2013/11/23 13:35:36 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.64 2011/12/19 03:02:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.65 2013/11/23 13:35:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -599,7 +599,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
 	    mp = nmp) {
 		struct statvfs sfs;
 
