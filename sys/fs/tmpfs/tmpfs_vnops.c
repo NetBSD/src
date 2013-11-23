@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.106 2013/11/08 15:44:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.107 2013/11/23 16:35:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.106 2013/11/08 15:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.107 2013/11/23 16:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -313,7 +313,7 @@ tmpfs_create(void *v)
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(vap->va_type == VREG || vap->va_type == VSOCK);
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return tmpfs_construct_node(dvp, vpp, vap, cnp, NULL);
 }
 
 int
@@ -334,7 +334,7 @@ tmpfs_mknod(void *v)
 		vput(dvp);
 		return EINVAL;
 	}
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return tmpfs_construct_node(dvp, vpp, vap, cnp, NULL);
 }
 
 int
@@ -380,8 +380,6 @@ tmpfs_close(void *v)
 	vnode_t *vp = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 	return 0;
 }
 
@@ -441,8 +439,6 @@ tmpfs_getattr(void *v)
 
 	vattr_null(vap);
 
-	tmpfs_update(vp, NULL, NULL, NULL, 0);
-
 	vap->va_type = vp->v_type;
 	vap->va_mode = node->tn_mode;
 	vap->va_nlink = node->tn_links;
@@ -468,9 +464,6 @@ tmpfs_getattr(void *v)
 	return 0;
 }
 
-#define GOODTIME(tv)	((tv)->tv_sec != VNOVAL || (tv)->tv_nsec != VNOVAL)
-/* XXX Should this operation be atomic?  I think it should, but code in
- * XXX other places (e.g., ufs) doesn't seem to be... */
 int
 tmpfs_setattr(void *v)
 {
@@ -490,31 +483,32 @@ tmpfs_setattr(void *v)
 	/* Abort if any unsettable attribute is given. */
 	if (vap->va_type != VNON || vap->va_nlink != VNOVAL ||
 	    vap->va_fsid != VNOVAL || vap->va_fileid != VNOVAL ||
-	    vap->va_blocksize != VNOVAL || GOODTIME(&vap->va_ctime) ||
+	    vap->va_blocksize != VNOVAL || vap->va_ctime.tv_sec != VNOVAL ||
 	    vap->va_gen != VNOVAL || vap->va_rdev != VNOVAL ||
 	    vap->va_bytes != VNOVAL) {
 		return EINVAL;
 	}
-	if (error == 0 && (vap->va_flags != VNOVAL))
+
+	if (error == 0 && vap->va_flags != VNOVAL)
 		error = tmpfs_chflags(vp, vap->va_flags, cred, l);
 
-	if (error == 0 && (vap->va_size != VNOVAL))
+	if (error == 0 && vap->va_size != VNOVAL)
 		error = tmpfs_chsize(vp, vap->va_size, cred, l);
 
 	if (error == 0 && (vap->va_uid != VNOVAL || vap->va_gid != VNOVAL))
 		error = tmpfs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 
-	if (error == 0 && (vap->va_mode != VNOVAL))
+	if (error == 0 && vap->va_mode != VNOVAL)
 		error = tmpfs_chmod(vp, vap->va_mode, cred, l);
 
-	if (error == 0 && (GOODTIME(&vap->va_atime) || GOODTIME(&vap->va_mtime)
-	    || GOODTIME(&vap->va_birthtime))) {
+	const bool chsometime =
+	    vap->va_atime.tv_sec != VNOVAL ||
+	    vap->va_mtime.tv_sec != VNOVAL ||
+	    vap->va_birthtime.tv_sec != VNOVAL;
+	if (error == 0 && chsometime) {
 		error = tmpfs_chtimes(vp, &vap->va_atime, &vap->va_mtime,
 		    &vap->va_birthtime, vap->va_vaflags, cred, l);
-		if (error == 0)
-			return 0;
 	}
-	tmpfs_update(vp, NULL, NULL, NULL, 0);
 	return error;
 }
 
@@ -543,8 +537,12 @@ tmpfs_read(void *v)
 		return EINVAL;
 	}
 
+	/* Note: reading zero bytes should not update atime. */
+	if (uio->uio_resid == 0) {
+		return 0;
+	}
+
 	node = VP_TO_TMPFS_NODE(vp);
-	node->tn_status |= TMPFS_NODE_ACCESSED;
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 	error = 0;
 
@@ -561,6 +559,8 @@ tmpfs_read(void *v)
 		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
 		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
+
+	tmpfs_update(vp, TMPFS_UPDATE_ATIME);
 	return error;
 }
 
@@ -579,7 +579,6 @@ tmpfs_write(void *v)
 	tmpfs_node_t *node;
 	struct uvm_object *uobj;
 	off_t oldsize;
-	bool extended;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -599,8 +598,7 @@ tmpfs_write(void *v)
 		uio->uio_offset = node->tn_size;
 	}
 
-	extended = uio->uio_offset + uio->uio_resid > node->tn_size;
-	if (extended) {
+	if (uio->uio_offset + uio->uio_resid > node->tn_size) {
 		error = tmpfs_reg_resize(vp, uio->uio_offset + uio->uio_resid);
 		if (error)
 			goto out;
@@ -622,8 +620,7 @@ tmpfs_write(void *v)
 		(void)tmpfs_reg_resize(vp, oldsize);
 	}
 
-	node->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
-	    (extended ? TMPFS_NODE_CHANGED : 0);
+	tmpfs_update(vp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 	VN_KNOTE(vp, NOTE_WRITE);
 out:
 	if (error) {
@@ -647,9 +644,8 @@ tmpfs_fsync(void *v)
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 
-	/* Nothing to do.  Just update. */
+	/* Nothing to do.  Should be up to date. */
 	KASSERT(VOP_ISLOCKED(vp));
-	tmpfs_update(vp, NULL, NULL, NULL, 0);
 	return 0;
 }
 
@@ -706,11 +702,14 @@ tmpfs_remove(void *v)
 
 	/*
 	 * Remove the entry from the directory (drops the link count) and
-	 * destroy it or replace it with a whiteout.
-	 * Note: the inode referred by it will not be destroyed
-	 * until the vnode is reclaimed/recycled.
+	 * destroy it or replace with a whiteout.
+	 *
+	 * Note: the inode referred by it will not be destroyed until the
+	 * vnode is reclaimed/recycled.
 	 */
+
 	tmpfs_dir_detach(dnode, de);
+
 	if (ap->a_cnp->cn_flags & DOWHITEOUT)
 		tmpfs_dir_attach(dnode, de, TMPFS_NODE_WHITEOUT);
 	else
@@ -718,9 +717,9 @@ tmpfs_remove(void *v)
 
 	if (node->tn_links > 0) {
 		/* We removed a hard link. */
-		node->tn_status |= TMPFS_NODE_CHANGED;
-		tmpfs_update(vp, NULL, NULL, NULL, 0);
+		tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	}
+	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 	error = 0;
 out:
 	/* Drop the references and unlock the vnodes. */
@@ -786,13 +785,13 @@ tmpfs_link(void *v)
 	 * It will increase the inode link count.
 	 */
 	tmpfs_dir_attach(dnode, de, node);
+	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 
 	/* Update the timestamps and trigger the event. */
 	if (node->tn_vnode) {
 		VN_KNOTE(node->tn_vnode, NOTE_LINK);
 	}
-	node->tn_status |= TMPFS_NODE_CHANGED;
-	tmpfs_update(vp, NULL, NULL, NULL, 0);
+	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	error = 0;
 out:
 	VOP_UNLOCK(vp);
@@ -815,7 +814,7 @@ tmpfs_mkdir(void *v)
 	struct vattr *vap = ap->a_vap;
 
 	KASSERT(vap->va_type == VDIR);
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return tmpfs_construct_node(dvp, vpp, vap, cnp, NULL);
 }
 
 int
@@ -839,19 +838,25 @@ tmpfs_rmdir(void *v)
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/*
-	 * Directories with more than two non-whiteout
-	 * entries ('.' and '..') cannot be removed.
+	 * Directories with more than two entries ('.' and '..') cannot be
+	 * removed.  There may be whiteout entries, which we will destroy.
 	 */
 	if (node->tn_size > 0) {
-		KASSERT(error == 0);
+		/*
+		 * If never had whiteout entries, the directory is certainly
+		 * not empty.  Otherwise, scan for any non-whiteout entry.
+		 */
+		if ((node->tn_gen & TMPFS_WHITEOUT_BIT) == 0) {
+			error = ENOTEMPTY;
+			goto out;
+		}
 		TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 			if (de->td_node != TMPFS_NODE_WHITEOUT) {
 				error = ENOTEMPTY;
-				break;
+				goto out;
 			}
 		}
-		if (error)
-			goto out;
+		KASSERT(error == 0);
 	}
 
 	/* Lookup the directory entry (check the cached hint first). */
@@ -870,7 +875,6 @@ tmpfs_rmdir(void *v)
 
 	/* Decrement the link count for the virtual '.' entry. */
 	node->tn_links--;
-	node->tn_status |= TMPFS_NODE_STATUSALL;
 
 	/* Detach the directory entry from the directory. */
 	tmpfs_dir_detach(dnode, de);
@@ -880,8 +884,9 @@ tmpfs_rmdir(void *v)
 
 	/*
 	 * Destroy the directory entry or replace it with a whiteout.
-	 * Note: the inode referred by it will not be destroyed
-	 * until the vnode is reclaimed.
+	 *
+	 * Note: the inode referred by it will not be destroyed until the
+	 * vnode is reclaimed.
 	 */
 	if (ap->a_cnp->cn_flags & DOWHITEOUT)
 		tmpfs_dir_attach(dnode, de, TMPFS_NODE_WHITEOUT);
@@ -894,7 +899,9 @@ tmpfs_rmdir(void *v)
 		tmpfs_dir_detach(node, de);
 		tmpfs_free_dirent(tmp, de);
 	}
+	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 
+	KASSERT(node->tn_size == 0);
 	KASSERT(node->tn_links == 0);
 out:
 	/* Release the nodes. */
@@ -920,7 +927,7 @@ tmpfs_symlink(void *v)
 	char *target = ap->a_target;
 
 	KASSERT(vap->va_type == VLNK);
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, target);
+	return tmpfs_construct_node(dvp, vpp, vap, cnp, target);
 }
 
 int
@@ -1026,7 +1033,7 @@ tmpfs_readlink(void *v)
 	} else {
 		error = 0;
 	}
-	node->tn_status |= TMPFS_NODE_ACCESSED;
+	tmpfs_update(vp, TMPFS_UPDATE_ATIME);
 
 	return error;
 }
@@ -1185,14 +1192,17 @@ tmpfs_getpages(void *v)
 		return EBUSY;
 
 	if ((flags & PGO_NOTIMESTAMP) == 0) {
+		u_int tflags = 0;
+
 		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
-			node->tn_status |= TMPFS_NODE_ACCESSED;
+			tflags |= TMPFS_UPDATE_ATIME;
 
 		if ((access_type & VM_PROT_WRITE) != 0) {
-			node->tn_status |= TMPFS_NODE_MODIFIED;
+			tflags |= TMPFS_UPDATE_MTIME;
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
-				node->tn_status |= TMPFS_NODE_ACCESSED;
+				tflags |= TMPFS_UPDATE_ATIME;
 		}
+		tmpfs_update(vp, tflags);
 	}
 
 	/*
@@ -1289,6 +1299,7 @@ tmpfs_whiteout(void *v)
 		tmpfs_free_dirent(tmp, de);
 		break;
 	}
+	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 	return 0;
 }
 
@@ -1302,9 +1313,9 @@ tmpfs_print(void *v)
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 
 	printf("tag VT_TMPFS, tmpfs_node %p, flags 0x%x, links %d\n"
-	    "\tmode 0%o, owner %d, group %d, size %" PRIdMAX ", status 0x%x",
+	    "\tmode 0%o, owner %d, group %d, size %" PRIdMAX,
 	    node, node->tn_flags, node->tn_links, node->tn_mode, node->tn_uid,
-	    node->tn_gid, (uintmax_t)node->tn_size, node->tn_status);
+	    node->tn_gid, (uintmax_t)node->tn_size);
 	if (vp->v_type == VFIFO) {
 		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	}
