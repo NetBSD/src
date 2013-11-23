@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.28 2013/11/16 01:18:58 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.29 2013/11/23 19:32:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.28 2013/11/16 01:18:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.29 2013/11/23 19:32:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -659,14 +659,14 @@ npf_rule_setnat(npf_rule_t *rl, npf_natpolicy_t *np)
 
 /*
  * npf_rule_inspect: match the interface, direction and run the filter code.
- * Returns true if rule matches, false otherise.
+ * Returns true if rule matches and false otherwise.
  */
 static inline bool
-npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
-    const int di_mask, const int layer)
+npf_rule_inspect(const npf_rule_t *rl, bpf_args_t *bc_args,
+    const int di_mask, const u_int ifid)
 {
 	/* Match the interface. */
-	if (rl->r_ifid && rl->r_ifid != nbuf->nb_ifid) {
+	if (rl->r_ifid && rl->r_ifid != ifid) {
 		return false;
 	}
 
@@ -683,7 +683,7 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
 		return true;
 	}
 	KASSERT(rl->r_type == NPF_CODE_BPF);
-	return npf_bpf_filter(npc, nbuf, rl->r_code, rl->r_jcode) != 0;
+	return npf_bpf_filter(bc_args, rl->r_code, rl->r_jcode) != 0;
 }
 
 /*
@@ -691,15 +691,15 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
  * This is only for the dynamic rules.  Subrules cannot have nested rules.
  */
 static npf_rule_t *
-npf_rule_reinspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *drl,
-    const int di_mask, const int layer)
+npf_rule_reinspect(const npf_rule_t *drl, bpf_args_t *bc_args,
+    const int di_mask, const u_int ifid)
 {
 	npf_rule_t *final_rl = NULL, *rl;
 
 	KASSERT(NPF_DYNAMIC_GROUP_P(drl->r_attr));
 
 	TAILQ_FOREACH(rl, &drl->r_subset, r_entry) {
-		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+		if (!npf_rule_inspect(rl, bc_args, di_mask, ifid)) {
 			continue;
 		}
 		if (rl->r_attr & NPF_RULE_FINAL) {
@@ -724,8 +724,15 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 {
 	const int di_mask = (di & PFIL_IN) ? NPF_RULE_IN : NPF_RULE_OUT;
 	const u_int nitems = rlset->rs_nitems;
+	const u_int ifid = nbuf->nb_ifid;
 	npf_rule_t *final_rl = NULL;
+	bpf_args_t bc_args;
 	u_int n = 0;
+
+	memset(&bc_args, 0, sizeof(bpf_args_t));
+	bc_args.pkt = nbuf_head_mbuf(nbuf);
+	bc_args.wirelen = m_length(bc_args.pkt);
+	bc_args.arg = npc;
 
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
 
@@ -744,7 +751,7 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 		}
 
 		/* Main inspection of the rule. */
-		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+		if (!npf_rule_inspect(rl, &bc_args, di_mask, ifid)) {
 			n = skip_to;
 			continue;
 		}
@@ -754,7 +761,7 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 			 * If this is a dynamic rule, re-inspect the subrules.
 			 * If it has any matching rule, then it is final.
 			 */
-			rl = npf_rule_reinspect(npc, nbuf, rl, di_mask, layer);
+			rl = npf_rule_reinspect(rl, &bc_args, di_mask, ifid);
 			if (rl != NULL) {
 				final_rl = rl;
 				break;
