@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.145 2013/11/14 12:07:11 martin Exp $	*/
+/*	$NetBSD: vm.c,v 1.146 2013/11/23 22:24:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.145 2013/11/14 12:07:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.146 2013/11/23 22:24:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1187,4 +1187,9 @@ rump_hyperfree(void *what, size_t size)
 		atomic_add_long(&curphysmem, -size);
 	}
 	rumpuser_free(what, size);
+}
+
+void
+uvm_swap_shutdown(struct lwp *lwp)
+{
 }
