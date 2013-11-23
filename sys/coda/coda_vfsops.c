@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.74 2012/08/02 16:06:58 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.75 2013/11/23 16:15:24 riz Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.74 2012/08/02 16:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.75 2013/11/23 16:15:24 riz Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -615,8 +615,8 @@ struct mount *devtomp(dev_t dev)
 {
     struct mount *mp, *nmp;
 
-    for (mp = mountlist.cqh_first; mp != (void*)&mountlist; mp = nmp) {
-	nmp = mp->mnt_list.cqe_next;
+    for (mp = mountlist.tqh_first; mp != (void*)&mountlist; mp = nmp) {
+	nmp = mp->mnt_list.tqe_next;
 	if ((!strcmp(mp->mnt_op->vfs_name, MOUNT_UFS)) &&
 	    ((VFSTOUFS(mp))->um_dev == (dev_t) dev)) {
 	    /* mount corresponds to UFS and the device matches one we want */

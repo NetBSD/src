@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.51 2009/12/14 00:47:11 matt Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.52 2013/11/23 16:15:25 riz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.51 2009/12/14 00:47:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.52 2013/11/23 16:15:25 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,14 +248,14 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
 		mutex_enter(&mountlist_lock);
-		for (skip = start, mp = mountlist.cqh_first;
+		for (skip = start, mp = mountlist.tqh_first;
 		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
-			nmp = mp->mnt_list.cqe_next;
+			nmp = mp->mnt_list.tqe_next;
 		mutex_exit(&mountlist_lock);
 	}
 
 	mutex_enter(&mountlist_lock);
-	for (count = 0, mp = mountlist.cqh_first;
+	for (count = 0, mp = mountlist.tqh_first;
 	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
