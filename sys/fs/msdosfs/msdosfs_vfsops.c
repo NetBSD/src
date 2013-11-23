@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.102 2013/09/30 18:57:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.103 2013/11/23 13:35:36 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.102 2013/09/30 18:57:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.103 2013/11/23 13:35:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -269,9 +269,7 @@ msdosfs_mountroot(void)
 		return (error);
 	}
 
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
