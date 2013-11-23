@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.215 2013/11/04 16:54:36 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.216 2013/11/23 12:35:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.215 2013/11/04 16:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.216 2013/11/23 12:35:19 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -918,18 +918,16 @@ ehci_idone(struct ehci_xfer *ex)
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 
 #ifdef DIAGNOSTIC
-	{
-		if (ex->isdone) {
+	if (ex->isdone) {
 #ifdef EHCI_DEBUG
-			printf("ehci_idone: ex is done!\n   ");
-			ehci_dump_exfer(ex);
+		printf("ehci_idone: ex is done!\n");
+		ehci_dump_exfer(ex);
 #else
-			printf("ehci_idone: ex=%p is done!\n", ex);
+		printf("ehci_idone: ex=%p is done!\n", ex);
 #endif
-			return;
-		}
-		ex->isdone = 1;
+		return;
 	}
+	ex->isdone = 1;
 #endif
 	if (xfer->status == USBD_CANCELLED ||
 	    xfer->status == USBD_TIMEOUT) {
