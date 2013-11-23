@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.120 2013/08/05 11:48:22 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.121 2013/11/23 13:35:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.120 2013/08/05 11:48:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.121 2013/11/23 13:35:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1870,9 +1870,7 @@ rumpfs_mountroot()
 	if ((error = rumpfs_mountfs(mp)) != 0)
 		panic("mounting rootfs failed: %d", error);
 
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 
 	error = set_statvfs_info("/", UIO_SYSSPACE, "rumpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);

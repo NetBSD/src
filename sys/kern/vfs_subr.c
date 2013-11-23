@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.439 2013/10/27 16:19:33 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.440 2013/11/23 13:35:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.439 2013/10/27 16:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.440 2013/11/23 13:35:36 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -631,7 +631,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
 	    mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
@@ -1264,7 +1264,7 @@ printlockedvnodes(void)
 
 	printf("Locked vnodes\n");
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
 	     mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
