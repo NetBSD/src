@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.164 2013/11/23 14:32:13 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.165 2013/11/23 14:50:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.164 2013/11/23 14:32:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.165 2013/11/23 14:50:40 christos Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -136,7 +136,7 @@ struct swapdev {
 	int			swd_drumsize;	/* #pages in drum */
 	blist_t			swd_blist;	/* blist for this swapdev */
 	struct vnode		*swd_vp;	/* backing vnode */
-	TAILQ_ENTRY(swapdev)	swd_next;	/* priority circleq */
+	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
@@ -150,7 +150,7 @@ struct swapdev {
 struct swappri {
 	int			spi_priority;     /* priority */
 	TAILQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
-	/* circleq of swapdevs at this priority */
+	/* tailq of swapdevs at this priority */
 	LIST_ENTRY(swappri)	spi_swappri;      /* global list of pri's */
 };
 
@@ -348,7 +348,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 
 	/*
 	 * priority found (or created).   now insert on the priority's
-	 * circleq list and bump the total number of swapdevs.
+	 * tailq list and bump the total number of swapdevs.
 	 */
 	sdp->swd_priority = priority;
 	TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
@@ -1618,7 +1618,7 @@ ReTry:	/* XXXMRG */
 			KASSERT(result < sdp->swd_drumsize);
 
 			/*
-			 * successful allocation!  now rotate the circleq.
+			 * successful allocation!  now rotate the tailq.
 			 */
 			TAILQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
