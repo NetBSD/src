@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.5 2013/11/08 15:44:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.6 2013/11/23 16:35:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.5 2013/11/08 15:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.6 2013/11/23 16:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -266,6 +266,8 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *tdvp, struct componentname *tcnp,
     void *tde, struct vnode *tvp)
 {
+	tmpfs_node_t *fdnode = VP_TO_TMPFS_DIR(fdvp);
+	tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
 	struct tmpfs_dirent **fdep = fde;
 	struct tmpfs_dirent **tdep = tde;
 	char *newname;
@@ -313,9 +315,6 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * source entry and reattach it to the target directory.
 	 */
 	if (fdvp != tdvp) {
-		tmpfs_node_t *fdnode = VP_TO_TMPFS_DIR(fdvp);
-		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
-
 		tmpfs_dir_detach(fdnode, *fdep);
 		tmpfs_dir_attach(tdnode, *fdep, VP_TO_TMPFS_NODE(fvp));
 	} else if (tvp == NULL) {
@@ -334,7 +333,7 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * XXX What if the target is a directory with whiteout entries?
 	 */
 	if (tvp != NULL) {
-		tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
+		tdnode = VP_TO_TMPFS_DIR(tdvp);
 
 		KASSERT((*tdep) != NULL);
 		KASSERT((*tdep)->td_node == VP_TO_TMPFS_NODE(tvp));
@@ -346,11 +345,6 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			/*
 			 * Decrement the extra link count for `.' so
 			 * the vnode will be recycled when released.
-			 *
-			 * XXX Why not just release directory vnodes
-			 * when their link count is 1 instead of 0 in
-			 * tmpfs_inactive, since `.' is being treated
-			 * specially anyway?
 			 */
 			VP_TO_TMPFS_NODE(tvp)->tn_links--;
 		}
@@ -373,10 +367,15 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		(*fdep)->td_namelen = (uint16_t)tcnp->cn_namelen;
 		(void)memcpy(newname, tcnp->cn_nameptr, tcnp->cn_namelen);
 		(*fdep)->td_name = newname;
-
-		VP_TO_TMPFS_NODE(fvp)->tn_status |= TMPFS_NODE_CHANGED;
-		VP_TO_TMPFS_NODE(tdvp)->tn_status |= TMPFS_NODE_MODIFIED;
 	}
+
+	/*
+	 * Update the timestamps of both parent directories and
+	 * the renamed file itself.
+	 */
+	tmpfs_update(fdvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
+	tmpfs_update(tdvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
+	tmpfs_update(fvp, TMPFS_UPDATE_CTIME);
 
 	VN_KNOTE(fvp, NOTE_RENAME);
 
@@ -412,6 +411,7 @@ tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 
 	tmpfs_dir_detach(dnode, *dep);
 	tmpfs_free_dirent(VFS_TO_TMPFS(mp), *dep);
+	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.47 2013/11/18 01:39:34 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.48 2013/11/23 16:35:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -101,9 +101,6 @@ typedef struct tmpfs_node {
 	ino_t			tn_id;
 	uint32_t		tn_gen;
 
-	/* Inode status flags (for operations in delayed manner). */
-	unsigned		tn_status;
-
 	/* The inode size. */
 	off_t			tn_size;
 
@@ -183,20 +180,18 @@ CTASSERT(TMPFS_MAXNAMLEN < UINT16_MAX);
 /* Mark to indicate that the number is not set. */
 #define	TMPFS_DIRSEQ_NONE	(1U << 31)
 
-/* Status flags. */
-#define	TMPFS_NODE_ACCESSED	0x01
-#define	TMPFS_NODE_MODIFIED	0x02
-#define	TMPFS_NODE_CHANGED	0x04
-
-#define	TMPFS_NODE_STATUSALL	\
-    (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED)
+/* Flags: time update requests. */
+#define	TMPFS_UPDATE_ATIME	0x01
+#define	TMPFS_UPDATE_MTIME	0x02
+#define	TMPFS_UPDATE_CTIME	0x04
 
 /*
- * Bit indicating vnode reclamation.
+ * Bits indicating vnode reclamation and whiteout use for the directory.
  * We abuse tmpfs_node_t::tn_gen for that.
  */
 #define	TMPFS_RECLAIMING_BIT	(1U << 31)
-#define	TMPFS_NODE_GEN_MASK	(TMPFS_RECLAIMING_BIT - 1)
+#define	TMPFS_WHITEOUT_BIT	(1U << 30)
+#define	TMPFS_NODE_GEN_MASK	(TMPFS_WHITEOUT_BIT - 1)
 
 #define	TMPFS_NODE_RECLAIMING(node) \
     (((node)->tn_gen & TMPFS_RECLAIMING_BIT) != 0)
@@ -249,7 +244,7 @@ int		tmpfs_alloc_node(tmpfs_mount_t *, enum vtype, uid_t, gid_t,
 		    mode_t, char *, dev_t, tmpfs_node_t **);
 void		tmpfs_free_node(tmpfs_mount_t *, tmpfs_node_t *);
 
-int		tmpfs_alloc_file(vnode_t *, vnode_t **, struct vattr *,
+int		tmpfs_construct_node(vnode_t *, vnode_t **, struct vattr *,
 		    struct componentname *, char *);
 
 int		tmpfs_vnode_get(struct mount *, tmpfs_node_t *, vnode_t **);
@@ -268,7 +263,6 @@ tmpfs_dirent_t *tmpfs_dir_lookupbyseq(tmpfs_node_t *, off_t);
 int		tmpfs_dir_getdents(tmpfs_node_t *, struct uio *, off_t *);
 
 int		tmpfs_reg_resize(vnode_t *, off_t);
-int		tmpfs_truncate(vnode_t *, off_t);
 
 int		tmpfs_chflags(vnode_t *, int, kauth_cred_t, lwp_t *);
 int		tmpfs_chmod(vnode_t *, mode_t, kauth_cred_t, lwp_t *);
@@ -277,8 +271,7 @@ int		tmpfs_chsize(vnode_t *, u_quad_t, kauth_cred_t, lwp_t *);
 int		tmpfs_chtimes(vnode_t *, const struct timespec *,
 		    const struct timespec *, const struct timespec *, int,
 		    kauth_cred_t, lwp_t *);
-void		tmpfs_update(vnode_t *, const struct timespec *,
-		    const struct timespec *, const struct timespec *, int);
+void		tmpfs_update(vnode_t *, unsigned);
 
 /*
  * Prototypes for tmpfs_mem.c.
