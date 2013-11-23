@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.25 2013/11/07 09:48:34 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.26 2013/11/23 13:46:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.25 2013/11/07 09:48:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.26 2013/11/23 13:46:22 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.25 2013/11/07 09:48:34 hannken Exp $
 
 /* Flags to vrelel. */
 #define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
+#define	VRELEL_CHANGING_SET	0x0002	/* VI_CHANGING set by caller. */
 
 u_int			numvnodes		__cacheline_aligned;
 
@@ -323,8 +324,10 @@ try_nextlist:
 	 * before doing this.
 	 */
 	vp->v_usecount = 1;
+	KASSERT((vp->v_iflag & VI_CHANGING) == 0);
+	vp->v_iflag |= VI_CHANGING;
 	vclean(vp);
-	vrelel(vp, 0);
+	vrelel(vp, VRELEL_CHANGING_SET);
 	fstrans_done(mp);
 
 	return 0;
@@ -476,10 +479,10 @@ vremfree(vnode_t *vp)
  *
  * => Should be called with v_interlock held.
  *
- * If VI_XLOCK is set, the vnode is being eliminated in vgone()/vclean().
+ * If VI_CHANGING is set, the vnode may be eliminated in vgone()/vclean().
  * In that case, we cannot grab the vnode, so the process is awakened when
  * the transition is completed, and an error returned to indicate that the
- * vnode is no longer usable (e.g. changed to a new file system type).
+ * vnode is no longer usable.
  */
 int
 vget(vnode_t *vp, int flags)
@@ -502,31 +505,16 @@ vget(vnode_t *vp, int flags)
 	}
 
 	/*
-	 * If the vnode is in the process of being cleaned out for
-	 * another use, we wait for the cleaning to finish and then
-	 * return failure.  Cleaning is determined by checking if
-	 * the VI_XLOCK flag is set.
+	 * If the vnode is in the process of changing state we wait
+	 * for the change to complete and take care not to return
+	 * a clean vnode.
 	 */
-	if ((vp->v_iflag & VI_XLOCK) != 0) {
+	if ((vp->v_iflag & VI_CHANGING) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
 			vrelel(vp, 0);
 			return EBUSY;
 		}
-		vwait(vp, VI_XLOCK);
-		vrelel(vp, 0);
-		return ENOENT;
-	}
-
-	if ((vp->v_iflag & VI_INACTNOW) != 0) {
-		/*
-		 * if it's being desactived, wait for it to complete.
-		 * Make sure to not return a clean vnode.
-		 */
-		 if ((flags & LK_NOWAIT) != 0) {
-			vrelel(vp, 0);
-			return EBUSY;
-		}
-		vwait(vp, VI_INACTNOW);
+		vwait(vp, VI_CHANGING);
 		if ((vp->v_iflag & VI_CLEAN) != 0) {
 			vrelel(vp, 0);
 			return ENOENT;
@@ -605,7 +593,11 @@ vrelel(vnode_t *vp, int flags)
 	 * and unlock.
 	 */
 	if (vtryrele(vp)) {
-		vp->v_iflag |= VI_INACTREDO;
+		if ((flags & VRELEL_CHANGING_SET) != 0) {
+			KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+			vp->v_iflag &= ~VI_CHANGING;
+			cv_broadcast(&vp->v_cv);
+		}
 		mutex_exit(vp->v_interlock);
 		return;
 	}
@@ -614,6 +606,10 @@ vrelel(vnode_t *vp, int flags)
 	}
 
 	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
+	if ((flags & VRELEL_CHANGING_SET) == 0) {
+		KASSERT((vp->v_iflag & VI_CHANGING) == 0);
+		vp->v_iflag |= VI_CHANGING;
+	}
 
 #ifdef DIAGNOSTIC
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
@@ -626,10 +622,8 @@ vrelel(vnode_t *vp, int flags)
 	 * If not clean, deactivate the vnode, but preserve
 	 * our reference across the call to VOP_INACTIVE().
 	 */
-retry:
 	if ((vp->v_iflag & VI_CLEAN) == 0) {
 		recycle = false;
-		vp->v_iflag |= VI_INACTNOW;
 
 		/*
 		 * XXX This ugly block can be largely eliminated if
@@ -644,11 +638,8 @@ retry:
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
 			/*
-			 * We have to try harder. But we can't sleep
-			 * with VI_INACTNOW as vget() may be waiting on it.
+			 * We have to try harder.
 			 */
-			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
-			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
@@ -663,10 +654,12 @@ retry:
 			 */
 			if (__predict_false(vtryrele(vp))) {
 				VOP_UNLOCK(vp);
+				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+				vp->v_iflag &= ~VI_CHANGING;
+				cv_broadcast(&vp->v_cv);
 				mutex_exit(vp->v_interlock);
 				return;
 			}
-			vp->v_iflag |= VI_INACTNOW;
 			mutex_exit(vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
@@ -678,7 +671,6 @@ retry:
 			defer = true;
 		} else {
 			/* If we can't acquire the lock, then defer. */
-			vp->v_iflag &= ~VI_INACTREDO;
 			mutex_exit(vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 			if (error != 0) {
@@ -695,7 +687,8 @@ retry:
 			 * clean it here.  We donate it our last reference.
 			 */
 			KASSERT(mutex_owned(vp->v_interlock));
-			vp->v_iflag &= ~VI_INACTNOW;
+			KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+			vp->v_iflag &= ~VI_CHANGING;
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
@@ -718,20 +711,13 @@ retry:
 		 */
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(vp->v_interlock);
-		vp->v_iflag &= ~VI_INACTNOW;
-		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
+				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+				vp->v_iflag &= ~VI_CHANGING;
+				cv_broadcast(&vp->v_cv);
 				mutex_exit(vp->v_interlock);
 				return;
-			}
-
-			/*
-			 * If we grew another reference while
-			 * VOP_INACTIVE() was underway, retry.
-			 */
-			if ((vp->v_iflag & VI_INACTREDO) != 0) {
-				goto retry;
 			}
 		}
 
@@ -757,6 +743,9 @@ retry:
 
 	if (atomic_dec_uint_nv(&vp->v_usecount) != 0) {
 		/* Gained another reference while being reclaimed. */
+		KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+		vp->v_iflag &= ~VI_CHANGING;
+		cv_broadcast(&vp->v_cv);
 		mutex_exit(vp->v_interlock);
 		return;
 	}
@@ -788,6 +777,9 @@ retry:
 		}
 		TAILQ_INSERT_TAIL(vp->v_freelisthd, vp, v_freelist);
 		mutex_exit(&vnode_free_list_lock);
+		KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+		vp->v_iflag &= ~VI_CHANGING;
+		cv_broadcast(&vp->v_cv);
 		mutex_exit(vp->v_interlock);
 	}
 }
@@ -798,7 +790,7 @@ vrele(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
-	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+	if (vtryrele(vp)) {
 		return;
 	}
 	mutex_enter(vp->v_interlock);
@@ -814,7 +806,7 @@ vrele_async(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
-	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+	if (vtryrele(vp)) {
 		return;
 	}
 	mutex_enter(vp->v_interlock);
@@ -1058,8 +1050,10 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp)
 	}
 	vremfree(vp);
 	vp->v_usecount = 1;
+	KASSERT((vp->v_iflag & VI_CHANGING) == 0);
+	vp->v_iflag |= VI_CHANGING;
 	vclean(vp);
-	vrelel(vp, 0);
+	vrelel(vp, VRELEL_CHANGING_SET);
 	return 1;
 }
 
@@ -1082,8 +1076,8 @@ vrevoke(vnode_t *vp)
 		return;
 	} else if (vp->v_type != VBLK && vp->v_type != VCHR) {
 		atomic_inc_uint(&vp->v_usecount);
-		vclean(vp);
-		vrelel(vp, 0);
+		mutex_exit(vp->v_interlock);
+		vgone(vp);
 		return;
 	} else {
 		dev = vp->v_rdev;
@@ -1092,9 +1086,7 @@ vrevoke(vnode_t *vp)
 	}
 
 	while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
-		mutex_enter(vq->v_interlock);
-		vclean(vq);
-		vrelel(vq, 0);
+		vgone(vq);
 	}
 }
 
@@ -1107,8 +1099,11 @@ vgone(vnode_t *vp)
 {
 
 	mutex_enter(vp->v_interlock);
+	if ((vp->v_iflag & VI_CHANGING) != 0)
+		vwait(vp, VI_CHANGING);
+	vp->v_iflag |= VI_CHANGING;
 	vclean(vp);
-	vrelel(vp, 0);
+	vrelel(vp, VRELEL_CHANGING_SET);
 }
 
 /*
