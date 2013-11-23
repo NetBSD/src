@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.8 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.9 2013/11/23 14:20:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -73,7 +73,7 @@ struct inpcbpolicy;
 struct inpcb_hdr {
 	LIST_ENTRY(inpcb_hdr) inph_hash;
 	LIST_ENTRY(inpcb_hdr) inph_lhash;
-	CIRCLEQ_ENTRY(inpcb_hdr) inph_queue;
+	TAILQ_ENTRY(inpcb_hdr) inph_queue;
 	int	  inph_af;		/* address family - AF_INET */
 	void *	  inph_ppcb;		/* pointer to per-protocol pcb */
 	int	  inph_state;		/* bind/connect state */
@@ -111,7 +111,7 @@ typedef struct vestigial_hooks {
 } vestigial_hooks_t;
 
 struct inpcbtable {
-	CIRCLEQ_HEAD(, inpcb_hdr) inpt_queue;
+	TAILQ_HEAD(, inpcb_hdr) inpt_queue;
 	struct	  inpcbhead *inpt_porthashtbl;
 	struct	  inpcbhead *inpt_bindhashtbl;
 	struct	  inpcbhead *inpt_connecthashtbl;
