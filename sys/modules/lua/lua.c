@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.4 2013/10/29 17:35:04 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.5 2013/11/23 15:53:37 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -36,9 +36,9 @@
 #include <sys/condvar.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kmem.h>
 #include <sys/lock.h>
 #include <sys/lua.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/namei.h>
@@ -212,7 +212,7 @@ lua_detach(device_t self, int flags)
 		if (lua_verbose)
 			device_printf(self, "state %s destroyed\n",
 			    s->lua_name);
-		free(s, NULL);
+		kmem_free(s, sizeof(struct lua_state));
 	}
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_inuse_cv);
@@ -506,12 +506,20 @@ lua_require(lua_State *L)
 void *
 lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize)
 {
+	void *nptr;
+
 	if (nsize == 0) {
+		nptr = NULL;
 		if (ptr != NULL)
-			free(ptr, NULL);
-		return NULL;
-	} else
-		return realloc(ptr, nsize, ud, 0);
+			kmem_free(ptr, osize);
+	} else {
+		nptr = kmem_alloc(nsize, KM_SLEEP);
+		if (ptr != NULL) {
+			memcpy(nptr, ptr, osize);
+			kmem_free(ptr, osize);
+		}
+	}
+	return nptr;
 }
 
 static const char *
@@ -556,9 +564,7 @@ lua_mod_register(const char *name, int (*open)(void *))
 	LIST_FOREACH(m, &lua_modules, mod_next)
 		if (!strcmp(m->mod_name, name))
 			return EBUSY;
-	m = malloc(sizeof(struct lua_module), NULL, M_ZERO);
-	if (m == NULL)
-		return ENOMEM;
+	m = kmem_zalloc(sizeof(struct lua_module), KM_SLEEP);
 	strlcpy(m->mod_name, name, LUA_MAX_MODNAME);
 	m->open = open;
 	m->refcount = 0;
@@ -577,7 +583,7 @@ lua_mod_unregister(const char *name)
 		if (!strcmp(m->mod_name, name)) {
 			if (m->refcount == 0) {
 				LIST_REMOVE(m, mod_next);
-				free(m, NULL);
+				kmem_free(m, sizeof(struct lua_module));
 				if (lua_verbose)
 					device_printf(sc_self,
 					    "unregistered lua module %s\n",
@@ -597,10 +603,7 @@ klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc)
 	struct lua_softc *sc;
 	int error = 0;
 
-	s = malloc(sizeof(struct lua_state), NULL, M_ZERO);
-	if (s == NULL)
-		return NULL;
-
+	s = kmem_zalloc(sizeof(struct lua_state), KM_SLEEP);
 	sc = device_private(sc_self);
 	mutex_enter(&sc->sc_state_lock);
 	while (sc->sc_state == true) {
@@ -615,13 +618,11 @@ klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc)
 	if (error)
 		return NULL;
 
-	K = malloc(sizeof(klua_State), NULL, M_ZERO);
-	if (K == NULL)
-		goto finish;
+	K = kmem_zalloc(sizeof(klua_State), KM_SLEEP);
 	K->L = lua_newstate(f, ud);
 	K->ks_user = false;
 	if (K->L == NULL) {
-		free(K, NULL);
+		kmem_free(K, sizeof(klua_State));
 		K = NULL;
 		goto finish;
 	}
@@ -687,13 +688,13 @@ klua_close(klua_State *K)
 			LIST_REMOVE(s, lua_next);
 			LIST_FOREACH(m, &s->lua_modules, mod_next)
 				m->refcount--;
-			free(s, NULL);
+			kmem_free(s, sizeof(struct lua_state));
 		}
 
 	lua_close(K->L);
 	cv_destroy(&K->ks_inuse_cv);
 	mutex_destroy(&K->ks_lock);
-	free(K, NULL);
+	kmem_free(K, sizeof(klua_State));
 
 	mutex_enter(&sc->sc_state_lock);
 	sc->sc_state = false;
