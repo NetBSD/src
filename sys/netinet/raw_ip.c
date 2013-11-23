@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.116 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.117 2013/11/23 14:20:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.116 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.117 2013/11/23 14:20:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -189,7 +189,7 @@ rip_input(struct mbuf *m, ...)
 	ip->ip_len = ntohs(ip->ip_len) - hlen;
 	NTOHS(ip->ip_off);
 
-	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
 		inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
@@ -247,14 +247,12 @@ rip_pcbnotify(struct inpcbtable *table,
     struct in_addr faddr, struct in_addr laddr, int proto, int errno,
     void (*notify)(struct inpcb *, int))
 {
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph, *ninph;
 	int nmatch;
 
 	nmatch = 0;
-	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != (struct inpcb *)&table->inpt_queue;
-	    inp = ninp) {
-		ninp = (struct inpcb *)inp->inp_queue.cqe_next;
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)

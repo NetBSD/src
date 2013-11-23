@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.190 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.191 2013/11/23 14:20:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.190 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.191 2013/11/23 14:20:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -766,7 +766,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+		TAILQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
 			inp = (struct inpcb *)inph;
 			if (inp->inp_af != AF_INET)
 				continue;
@@ -911,7 +911,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		CIRCLEQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
+		TAILQ_FOREACH(inph, &udbtable.inpt_queue, inph_queue) {
 			in6p = (struct in6pcb *)inph;
 			if (in6p->in6p_af != AF_INET6)
 				continue;

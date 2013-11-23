@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.168 2013/10/04 16:20:35 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.169 2013/11/23 14:20:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.168 2013/10/04 16:20:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.169 2013/11/23 14:20:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1396,10 +1396,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	struct sockaddr_in6 *in6;
 	const struct in6pcb *in6p;
 #endif
-	/*
-	 * sysctl_data is const, but CIRCLEQ_FOREACH can't use a const
-	 * struct inpcbtable pointer, so we have to discard const.  :-/
-	 */
 	struct inpcbtable *pcbtbl = __UNCONST(rnode->sysctl_data);
 	const struct inpcb_hdr *inph;
 	struct tcpcb *tp;
@@ -1439,7 +1435,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	mutex_enter(softnet_lock);
 
-	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
+	TAILQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
 		inp = (const struct inpcb *)inph;
 #endif

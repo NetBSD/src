@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.145 2013/06/05 19:01:26 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.146 2013/11/23 14:20:21 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.145 2013/06/05 19:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.146 2013/11/23 14:20:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -172,7 +172,7 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
 	static ONCE_DECL(control);
 
-	CIRCLEQ_INIT(&table->inpt_queue);
+	TAILQ_INIT(&table->inpt_queue);
 	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
 	    &table->inpt_porthash);
 	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, true,
@@ -218,8 +218,7 @@ in_pcballoc(struct socket *so, void *v)
 #endif
 	so->so_pcb = inp;
 	s = splnet();
-	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, &inp->inp_head,
-	    inph_queue);
+	TAILQ_INSERT_HEAD(&table->inpt_queue, &inp->inp_head, inph_queue);
 	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
 	    inph_lhash);
 	in_pcbstate(inp, INP_ATTACHED);
@@ -602,8 +601,7 @@ in_pcbdetach(void *v)
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
-	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head,
-	    inph_queue);
+	TAILQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head, inph_queue);
 	pool_put(&inpcb_pool, inp);
 	splx(s);
 	sofree(so);			/* drops the socket's lock */
@@ -681,15 +679,13 @@ void
 in_pcbnotifyall(struct inpcbtable *table, struct in_addr faddr, int errno,
     void (*notify)(struct inpcb *, int))
 {
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph, *ninph;
 
 	if (in_nullhost(faddr) || notify == 0)
 		return;
 
-	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != (void *)&table->inpt_queue;
-	    inp = ninp) {
-		ninp = (struct inpcb *)CIRCLEQ_NEXT(inp, inp_queue);
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
 		if (in_hosteq(inp->inp_faddr, faddr))
@@ -700,14 +696,12 @@ in_pcbnotifyall(struct inpcbtable *table, struct in_addr faddr, int errno,
 void
 in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 {
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph, *ninph;
 	struct ip_moptions *imo;
 	int i, gap;
 
-	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != (void *)&table->inpt_queue;
-	    inp = ninp) {
-		ninp = (struct inpcb *)CIRCLEQ_NEXT(inp, inp_queue);
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
 		imo = inp->inp_moptions;
@@ -741,12 +735,10 @@ void
 in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
 	struct rtentry *rt;
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph, *ninph;
 
-	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
-	    inp != (void *)&table->inpt_queue;
-	    inp = ninp) {
-		ninp = (struct inpcb *)CIRCLEQ_NEXT(inp, inp_queue);
+	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
 		if ((rt = rtcache_validate(&inp->inp_route)) != NULL &&
