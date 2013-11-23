@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.54 2013/11/10 12:46:19 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.55 2013/11/23 16:35:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.54 2013/11/10 12:46:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.55 2013/11/23 16:35:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -237,7 +237,13 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 			tmpfs_dir_detach(node, de);
 			tmpfs_free_dirent(tmp, de);
 		}
+		/* Extra virtual entry (itself for the root). */
+		node->tn_links--;
 	}
+
+	/* Release the reference on root (diagnostic). */
+	node = tmp->tm_root;
+	node->tn_links--;
 
 	/* Second round, destroy all inodes. */
 	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
