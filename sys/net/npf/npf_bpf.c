@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.4 2013/11/16 01:18:58 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.5 2013/11/23 19:32:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.4 2013/11/16 01:18:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.5 2013/11/23 19:32:20 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,33 +74,26 @@ npf_bpf_sysfini(void)
 }
 
 int
-npf_bpf_filter(npf_cache_t *npc, nbuf_t *nbuf,
-    const void *code, bpfjit_func_t jcode)
+npf_bpf_filter(bpf_args_t *args, const void *code, bpfjit_func_t jcode)
 {
-	const struct mbuf *m = nbuf_head_mbuf(nbuf);
-	const size_t pktlen = m_length(m);
-	bpf_args_t args = {
-		.pkt = m,
-		.wirelen = pktlen,
-		.buflen = 0,
-		.arg = npc
-	};
-
-	memset(args.mem, 0, sizeof(uint32_t) * BPF_MEMWORDS);
-
-	/* Execute JIT code. */
+#if 0
+	/* Execute JIT-compiled code. */
 	if (__predict_true(jcode)) {
-		return jcode((const unsigned char *)m, pktlen, 0);
+		return jcode(npf_bpfctx, args);
 	}
-
+#endif
 	/* Execute BPF byte-code. */
-	return bpf_filter_ext(npf_bpfctx, code, &args);
+	return bpf_filter_ext(npf_bpfctx, code, args);
 }
 
 void *
 npf_bpf_compile(void *code, size_t size)
 {
+#if 0
 	return bpf_jit_generate(npf_bpfctx, code, size);
+#else
+	return NULL;
+#endif
 }
 
 bool
