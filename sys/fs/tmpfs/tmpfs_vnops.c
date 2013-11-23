@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.107 2013/11/23 16:35:32 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.108 2013/11/23 17:01:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.107 2013/11/23 16:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.108 2013/11/23 17:01:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -377,7 +377,7 @@ tmpfs_close(void *v)
 		int		a_fflag;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
-	vnode_t *vp = ap->a_vp;
+	vnode_t *vp __diagused = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
 	return 0;
@@ -642,7 +642,7 @@ tmpfs_fsync(void *v)
 		off_t a_offhi;
 		struct lwp *a_l;
 	} */ *ap = v;
-	vnode_t *vp = ap->a_vp;
+	vnode_t *vp __diagused = ap->a_vp;
 
 	/* Nothing to do.  Should be up to date. */
 	KASSERT(VOP_ISLOCKED(vp));
