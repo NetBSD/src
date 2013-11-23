@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassifyl_ieee754.c,v 1.2 2013/11/21 14:14:13 martin Exp $	*/
+/*	$NetBSD: fpclassifyl_ieee754.c,v 1.3 2013/11/23 11:40:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassifyl_ieee754.c,v 1.2 2013/11/21 14:14:13 martin Exp $");
+__RCSID("$NetBSD: fpclassifyl_ieee754.c,v 1.3 2013/11/23 11:40:56 martin Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -63,7 +63,7 @@ __fpclassifyl(long double x)
 			return FP_SUBNORMAL;
 	} else if (u.extu_ext.ext_exp == EXT_EXP_INFNAN) {
 		if (u.extu_ext.ext_frach == 0
-#f EXT_FRACHMBITS
+#if EXT_FRACHMBITS
 		    && u.extu_ext.ext_frachm == 0
 #endif
 #if EXT_FRACLMBITS
