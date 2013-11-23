@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.44 2013/11/23 14:54:02 christos Exp $
+.\"	$NetBSD: queue.3,v 1.45 2013/11/23 17:40:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -278,7 +278,7 @@ Each head entry requires two pointers rather than one.
 Simple queues are ideal for applications with large datasets and few or
 no removals, or for implementing a FIFO queue.
 .Pp
-All doubly linked types of data structures (lists, and tail queues)
+All doubly linked types of data structures (lists and tail queues)
 additionally allow:
 .Bl -enum -compact -offset indent
 .It
