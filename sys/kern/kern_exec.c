@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.366 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.367 2013/11/23 22:15:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.366 2013/11/22 21:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.367 2013/11/23 22:15:16 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1083,10 +1083,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #ifdef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
-	 * entered in the cache] we don't use it because it theoretically
-	 * can fail and it is not the cleanest interface, because there
-	 * could be races. When the namei cache is re-written, this can
-	 * be changed to use the appropriate function.
+	 * entered in the cache] we don't use it because it will fail for
+	 * entries that are not placed in the cache because their name is
+	 * longer than NCHNAMLEN and it is not the cleanest interface,
+	 * because there could be races. When the namei cache is re-written,
+	 * this can be changed to use the appropriate function.
 	 */
 	else if (!(error = vnode_to_path(dp, MAXPATHLEN, p->p_textvp, l, p)))
 		data->ed_pack.ep_path = dp;
