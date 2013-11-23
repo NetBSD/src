@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.209 2013/04/26 22:27:16 mlelstv Exp $	*/
+/*	$NetBSD: mount.h,v 1.210 2013/11/23 13:35:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -107,7 +107,7 @@ struct vnode;
  * put on a doubly linked list.
  */
 struct mount {
-	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
+	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
@@ -434,7 +434,7 @@ int	vfs_quotactl_cursorrewind(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_quotaon(struct mount *, int, const char *);
 int	vfs_quotactl_quotaoff(struct mount *, int);
 
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
+extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
 extern  kmutex_t mountlist_lock;
@@ -462,6 +462,7 @@ void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 int	usermount_common_policy(struct mount *, u_long);
+void	mountlist_append(struct mount *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

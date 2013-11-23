@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.8 2013/11/20 23:44:23 rmind Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.8 2013/11/20 23:44:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.9 2013/11/23 13:35:36 christos Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -578,9 +578,7 @@ v7fs_mountroot(void)
 		return error;
 	}
 
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 
 	vfs_unbusy(mp, false, NULL);
 

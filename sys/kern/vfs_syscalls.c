@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.469 2013/11/18 01:31:42 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.470 2013/11/23 13:35:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.469 2013/11/18 01:31:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.470 2013/11/23 13:35:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -622,7 +622,7 @@ do_sys_sync(struct lwp *l)
 	int asyncflag;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
 	     mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
@@ -1237,7 +1237,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	maxcount = bufsize / entry_sz;
 	mutex_enter(&mountlist_lock);
 	count = 0;
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
 	     mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;

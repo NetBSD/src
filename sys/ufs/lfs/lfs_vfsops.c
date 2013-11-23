@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.315 2013/10/17 21:01:08 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.316 2013/11/23 13:35:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.315 2013/10/17 21:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.316 2013/11/23 13:35:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -454,7 +454,7 @@ lfs_writerd(void *arg)
  		mutex_enter(&mountlist_lock);
 		lfsc = 0;
 		skipc = 0;
- 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+ 		for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
  		     mp = nmp) {
  			if (vfs_busy(mp, &nmp)) {
 				++skipc;
@@ -609,9 +609,7 @@ lfs_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));

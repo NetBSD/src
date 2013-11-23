@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.222 2013/09/14 22:27:01 martin Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.223 2013/11/23 13:35:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.222 2013/09/14 22:27:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.223 2013/11/23 13:35:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -379,9 +379,7 @@ nfs_mountroot(void)
 	/*
 	 * Link it into the mount list.
 	 */
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unbusy(mp, false, NULL);
