@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.43 2012/10/08 18:20:34 njoly Exp $
+.\"	$NetBSD: queue.3,v 1.44 2013/11/23 14:54:02 christos Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd March 11, 2009
+.Dd November 23, 2013
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -133,25 +133,7 @@
 .Nm TAILQ_LAST ,
 .Nm TAILQ_PREV ,
 .Nm TAILQ_CONCAT ,
-.Nm CIRCLEQ_HEAD ,
-.Nm CIRCLEQ_HEAD_INITIALIZER ,
-.Nm CIRCLEQ_ENTRY ,
-.Nm CIRCLEQ_INIT ,
-.Nm CIRCLEQ_INSERT_AFTER ,
-.Nm CIRCLEQ_INSERT_BEFORE ,
-.Nm CIRCLEQ_INSERT_HEAD ,
-.Nm CIRCLEQ_INSERT_TAIL ,
-.Nm CIRCLEQ_REMOVE ,
-.Nm CIRCLEQ_FOREACH ,
-.Nm CIRCLEQ_FOREACH_REVERSE ,
-.Nm CIRCLEQ_EMPTY ,
-.Nm CIRCLEQ_FIRST ,
-.Nm CIRCLEQ_LAST ,
-.Nm CIRCLEQ_NEXT ,
-.Nm CIRCLEQ_PREV ,
-.Nm CIRCLEQ_LOOP_NEXT ,
-.Nm CIRCLEQ_LOOP_PREV
-.Nd "implementations of singly-linked lists, simple queues, lists, tail queues, and circular queues"
+.Nd "implementations of singly-linked lists, simple queues, lists, and tail queues
 .Sh SYNOPSIS
 .In sys/queue.h
 .Pp
@@ -254,36 +236,11 @@
 .Ft TYPE *
 .Fn TAILQ_PREV "TYPE *elm" "HEADNAME" "TAILQ_ENTRY NAME"
 .Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2" "TAILQ_ENTRY NAME"
-.Pp
-.Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
-.Fn CIRCLEQ_HEAD_INITIALIZER "head"
-.Fn CIRCLEQ_ENTRY "TYPE"
-.Fn CIRCLEQ_INIT "CIRCLEQ_HEAD *head"
-.Fn CIRCLEQ_INSERT_AFTER "CIRCLEQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_INSERT_BEFORE "CIRCLEQ_HEAD *head" "TYPE *listelm" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_INSERT_HEAD "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_INSERT_TAIL "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_REMOVE "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_FOREACH "TYPE *var" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
-.Fn CIRCLEQ_FOREACH_REVERSE "TYPE *var" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
-.Ft int
-.Fn CIRCLEQ_EMPTY "CIRCLEQ_HEAD *head"
-.Ft TYPE *
-.Fn CIRCLEQ_FIRST "CIRCLEQ_HEAD *head"
-.Ft TYPE *
-.Fn CIRCLEQ_LAST "CIRCLEQ_HEAD *head"
-.Ft TYPE *
-.Fn CIRCLEQ_NEXT "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Ft TYPE *
-.Fn CIRCLEQ_PREV "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Ft TYPE *
-.Fn CIRCLEQ_LOOP_NEXT "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
-.Ft TYPE *
-.Fn CIRCLEQ_LOOP_PREV "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
-These macros define and operate on five types of data structures:
-singly-linked lists, simple queues, lists, tail queues, and circular queues.
-All five structures support the following functionality:
+These macros define and operate on four types of data structures:
+singly-linked lists, simple queues, lists, and tail queues
+.\" and circular queues.
+All four structures support the following functionality:
 .Bl -enum -compact -offset indent
 .It
 Insertion of a new entry at the head of the list.
@@ -295,7 +252,7 @@ Removal of any entry in the list.
 Forward traversal through the list.
 .El
 .Pp
-Singly-linked lists are the simplest of the five data structures and
+Singly-linked lists are the simplest of the four data structures and
 support only the above functionality.
 Singly-linked lists are ideal for applications with large datasets and
 few or no removals,
@@ -321,8 +278,8 @@ Each head entry requires two pointers rather than one.
 Simple queues are ideal for applications with large datasets and few or
 no removals, or for implementing a FIFO queue.
 .Pp
-All doubly linked types of data structures (lists, tail queues, and circle
-queues) additionally allow:
+All doubly linked types of data structures (lists, and tail queues)
+additionally allow:
 .Bl -enum -compact -offset indent
 .It
 Insertion of a new entry before any element in the list.
@@ -387,9 +344,8 @@ that must contain a field of type
 .Li LIST_ENTRY ,
 .Li SIMPLEQ_ENTRY ,
 .Li SLIST_ENTRY ,
-.Li TAILQ_ENTRY ,
 or
-.Li CIRCLEQ_ENTRY ,
+.Li TAILQ_ENTRY ,
 named
 .Fa NAME .
 The argument
@@ -399,9 +355,8 @@ using the macros
 .Li LIST_HEAD ,
 .Li SIMPLEQ_HEAD ,
 .Li SLIST_HEAD ,
-.Li TAILQ_HEAD ,
 or
-.Li CIRCLEQ_HEAD .
+.Li TAILQ_HEAD ,
 See the examples below for further explanation of how these
 macros are used.
 .Ss Summary of Operations
@@ -410,30 +365,30 @@ of data structure.
 .Pp
 .TS
 box tab(:);
-l | c | c | c | c | c | c
-l | c | c | c | c | c | c
-l | c | c | c | c | c | c
-l | c | c | c | c | c | c
-l | c | c | c | c | c | c
-l | c | c | c | c | c | c.
-:SLIST:LIST:SIMPLEQ:STAILQ:TAILQ:CIRCLEQ
+l | c | c | c | c | c 
+l | c | c | c | c | c 
+l | c | c | c | c | c
+l | c | c | c | c | c
+l | c | c | c | c | c
+l | c | c | c | c | c.
+:SLIST:LIST:SIMPLEQ:STAILQ:TAILQ
 _
-_EMPTY:+:+:+:+:+:+
-_FIRST:+:+:+:+:+:+
-_FOREACH:+:+:+:+:+:+
-_FOREACH_REVERSE:-:-:-:-:+:+
-_INSERT_AFTER:+:+:+:+:+:+
-_INSERT_BEFORE:-:+:-:-:+:+
-_INSERT_HEAD:+:+:+:+:+:+
-_INSERT_TAIL:-:-:+:+:+:+
-_LAST:-:-:-:+:+:+
-_LOOP_NEXT:-:-:-:-:-:+
-_LOOP_PREV:-:-:-:-:-:+
-_NEXT:+:+:+:+:+:+
-_PREV:-:-:-:-:+:+
-_REMOVE:+:+:+:+:+:+
-_REMOVE_HEAD:+:-:+:+:-:-
-_CONCAT:-:-:+:+:+:-
+_EMPTY:+:+:+:+:+
+_FIRST:+:+:+:+:+
+_FOREACH:+:+:+:+:+
+_FOREACH_REVERSE:-:-:-:-:+
+_INSERT_AFTER:+:+:+:+:+
+_INSERT_BEFORE:-:+:-:-:+
+_INSERT_HEAD:+:+:+:+:+
+_INSERT_TAIL:-:-:+:+:+
+_LAST:-:-:-:+:+
+_LOOP_NEXT:-:-:-:-:-
+_LOOP_PREV:-:-:-:-:-
+_NEXT:+:+:+:+:+
+_PREV:-:-:-:-:+
+_REMOVE:+:+:+:+:+
+_REMOVE_HEAD:+:-:+:+:-
+_CONCAT:-:-:+:+:+
 .TE
 .Sh SINGLY-LINKED LISTS
 A singly-linked list is headed by a structure defined by the
@@ -1045,184 +1000,6 @@ while (TAILQ_FIRST(\*[Am]head) != NULL)
 if (TAILQ_EMPTY(\*[Am]head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
-.Sh CIRCULAR QUEUES
-A circular queue is headed by a structure defined by the
-.Nm CIRCLEQ_HEAD
-macro.
-This structure contains a pair of pointers,
-one to the first element in the circular queue and the other to the
-last element in the circular queue.
-The elements are doubly linked so that an arbitrary element can be
-removed without traversing the queue.
-New elements can be added to the queue after an existing element,
-before an existing element, at the head of the queue, or at the end
-of the queue.
-A
-.Fa CIRCLEQ_HEAD
-structure is declared as follows:
-.Bd -literal -offset indent
-CIRCLEQ_HEAD(HEADNAME, TYPE) head;
-.Ed
-.Pp
-where
-.Li HEADNAME
-is the name of the structure to be defined, and
-.Li TYPE
-is the type of the elements to be linked into the circular queue.
-A pointer to the head of the circular queue can later be declared as:
-.Bd -literal -offset indent
-struct HEADNAME *headp;
-.Ed
-.Pp
-(The names
-.Li head
-and
-.Li headp
-are user selectable.)
-.Pp
-The macro
-.Nm CIRCLEQ_ENTRY
-declares a structure that connects the elements in
-the circular queue.
-.Pp
-The macro
-.Nm CIRCLEQ_HEAD_INITIALIZER
-provides a value which can be used to initialize a circular queue head at
-compile time, and is used at the point that the circular queue head
-variable is declared, like:
-.Bd -literal -offset indent
-struct HEADNAME head = CIRCLEQ_HEAD_INITIALIZER(head);
-.Ed
-.Pp
-The macro
-.Nm CIRCLEQ_INIT
-initializes the circular queue referenced by
-.Fa head .
-.Pp
-The macro
-.Nm CIRCLEQ_INSERT_HEAD
-inserts the new element
-.Fa elm
-at the head of the circular queue.
-.Pp
-The macro
-.Nm CIRCLEQ_INSERT_TAIL
-inserts the new element
-.Fa elm
-at the end of the circular queue.
-.Pp
-The macro
-.Nm CIRCLEQ_INSERT_AFTER
-inserts the new element
-.Fa elm
-after the element
-.Fa listelm .
-.Pp
-The macro
-.Nm CIRCLEQ_INSERT_BEFORE
-inserts the new element
-.Fa elm
-before the element
-.Fa listelm .
-.Pp
-The macro
-.Nm CIRCLEQ_REMOVE
-removes the element
-.Fa elm
-from the circular queue.
-.Pp
-The macro
-.Nm CIRCLEQ_EMPTY
-return true if the circular queue
-.Fa head
-has no elements.
-.Pp
-The macro
-.Nm CIRCLEQ_FIRST
-returns the first element of the circular queue
-.Fa head .
-.Pp
-The macro
-.Nm CIRCLEQ_FOREACH
-traverses the circle queue referenced by
-.Fa head
-in the forward direction, assigning each element in turn to
-.Fa var .
-Each element is assigned exactly once.
-.Pp
-The macro
-.Nm CIRCLEQ_FOREACH_REVERSE
-traverses the circle queue referenced by
-.Fa head
-in the reverse direction, assigning each element in turn to
-.Fa var .
-Each element is assigned exactly once.
-.Pp
-The macro
-.Nm CIRCLEQ_LAST
-returns the last element of the circular queue
-.Fa head .
-.Pp
-The macro
-.Nm CIRCLEQ_NEXT
-returns the element after the element
-.Fa elm .
-.Pp
-The macro
-.Nm CIRCLEQ_PREV
-returns the element before the element
-.Fa elm .
-.Pp
-The macro
-.Nm CIRCLEQ_LOOP_NEXT
-returns the element after the element
-.Fa elm .
-If
-.Fa elm
-was the last element in the queue, the first element is returned.
-.Pp
-The macro
-.Nm CIRCLEQ_LOOP_PREV
-returns the element before the element
-.Fa elm .
-If
-.Fa elm
-was the first element in the queue, the last element is returned.
-.Sh CIRCULAR QUEUE EXAMPLE
-.Bd -literal
-CIRCLEQ_HEAD(circleq, entry) head;
-struct circleq *headp;			/* Circular queue head. */
-struct entry {
-	...
-	CIRCLEQ_ENTRY(entry) entries;	/* Circular queue. */
-	...
-} *n1, *n2, *np;
-
-CIRCLEQ_INIT(\*[Am]head);			/* Initialize the circular queue. */
-
-n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-CIRCLEQ_INSERT_HEAD(\*[Am]head, n1, entries);
-
-n1 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-CIRCLEQ_INSERT_TAIL(\*[Am]head, n1, entries);
-
-n2 = malloc(sizeof(struct entry));	/* Insert after. */
-CIRCLEQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
-
-n2 = malloc(sizeof(struct entry));	/* Insert before. */
-CIRCLEQ_INSERT_BEFORE(\*[Am]head, n1, n2, entries);
-					/* Forward traversal. */
-CIRCLEQ_FOREACH(np, \*[Am]head, entries)
-	np-\*[Gt] ...
-					/* Reverse traversal. */
-CIRCLEQ_FOREACH_REVERSE(np, \*[Am]head, entries)
-	np-\*[Gt] ...
-					/* Delete. */
-while (CIRCLEQ_FIRST(\*[Am]head) != (void *)\*[Am]head)
-	CIRCLEQ_REMOVE(\*[Am]head, CIRCLEQ_FIRST(\*[Am]head), entries);
-if (CIRCLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
-	printf("nothing to do\\n");
-.Ed
 .Sh NOTES
 Some of these macros or functions perform no error checking,
 and invalid usage leads to undefined behaviour.
@@ -1244,7 +1021,3 @@ and
 .Nm STAILQ
 functions first appeared in
 .Fx 2.1.5 .
-The
-.Nm CIRCLEQ_LOOP
-functions first appeared in
-.Nx 4.0 .
