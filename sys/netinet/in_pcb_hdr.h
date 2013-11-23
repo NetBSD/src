@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.9 2013/11/23 14:20:21 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.10 2013/11/23 22:23:26 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -110,8 +110,10 @@ typedef struct vestigial_hooks {
 			   struct vestigial_inpcb *);
 } vestigial_hooks_t;
 
+TAILQ_HEAD(inpcbqueue, inpcb_hdr);
+
 struct inpcbtable {
-	TAILQ_HEAD(, inpcb_hdr) inpt_queue;
+	struct	  inpcbqueue inpt_queue;
 	struct	  inpcbhead *inpt_porthashtbl;
 	struct	  inpcbhead *inpt_bindhashtbl;
 	struct	  inpcbhead *inpt_connecthashtbl;
