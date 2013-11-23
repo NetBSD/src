@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.13 2010/04/13 11:22:22 tsutsui Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.14 2013/11/23 22:52:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.13 2010/04/13 11:22:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.14 2013/11/23 22:52:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,8 +53,8 @@ extern u_long st_pool_size, st_pool_virt, st_pool_phys;
 
 #define	PHYS_ADDR(virt)	((u_long)(virt) - st_pool_virt + st_pool_phys)
 
-static CIRCLEQ_HEAD(stlist, mem_node) st_list;
-static CIRCLEQ_HEAD(freelist, mem_node) free_list;
+static TAILQ_HEAD(stlist, mem_node) st_list;
+static TAILQ_HEAD(freelist, mem_node) free_list;
 u_long   stmem_total;		/* total free.		*/
 
 void
@@ -68,11 +68,11 @@ init_stmem(void)
 	mem = (struct mem_node *)st_pool_virt;
 	mem->size = st_pool_size - sizeof(*mem);
 
-	CIRCLEQ_INIT(&st_list);
-	CIRCLEQ_INIT(&free_list);
+	TAILQ_INIT(&st_list);
+	TAILQ_INIT(&free_list);
     
-	CIRCLEQ_INSERT_HEAD(&st_list, mem, link);
-	CIRCLEQ_INSERT_HEAD(&free_list, mem, free_link);
+	TAILQ_INSERT_HEAD(&st_list, mem, link);
+	TAILQ_INSERT_HEAD(&free_list, mem, free_link);
 	splx(s);
 }
 
@@ -93,22 +93,22 @@ alloc_stmem(u_long size, void **phys_addr)
 	/*
 	 * walk list of available nodes, finding the best-fit.
 	 */
-	bfit = NULL;
-	mn   = free_list.cqh_first;
-	for (; mn != (void *)&free_list; mn = mn->free_link.cqe_next) {
+	bfit = TAILQ_END(&free_list);
+	TAILQ_FOREACH(mn, &free_list, free_link) {
 		if (size <= mn->size) {
-			if ((bfit != NULL) && (bfit->size < mn->size))
+			if ((bfit != TAILQ_END(&free_list)) &&
+			    (bfit->size < mn->size))
 				continue;
 			bfit = mn;
 		}
 	}
-	if (bfit != NULL)
+	if (bfit != TAILQ_END(&free_list))
 		mn = bfit;
-	if (mn == (void *)&free_list) {
+	if (mn == TAILQ_END(&free_list)) {
 		printf("St-mem pool exhausted, binpatch 'st_pool_size'"
 			"to get more\n");
 		splx(s);
-		return(NULL);
+		return NULL;
 	}
 
 	if ((mn->size - size) <= sizeof (*mn)) {
@@ -116,8 +116,8 @@ alloc_stmem(u_long size, void **phys_addr)
 		 * our allocation would not leave room 
 		 * for a new node in between.
 		 */
-		CIRCLEQ_REMOVE(&free_list, mn, free_link);
-		mn->free_link.cqe_next = NULL;
+		TAILQ_REMOVE(&free_list, mn, free_link);
+		TAILQ_NEXT(mn, free_link) = TAILQ_END(&free_list);
 		size = mn->size;	 /* increase size. (or same) */
 		stmem_total -= mn->size;
 		splx(s);
@@ -137,8 +137,8 @@ alloc_stmem(u_long size, void **phys_addr)
 	 * add split node to node list
 	 * and mark as not on free list
 	 */
-	CIRCLEQ_INSERT_AFTER(&st_list, new, mn, link);
-	mn->free_link.cqe_next = NULL;
+	TAILQ_INSERT_AFTER(&st_list, new, mn, link);
+	TAILQ_NEXT(mn, free_link) = TAILQ_END(&free_list);
 
 	stmem_total -= size + sizeof(struct mem_node);
 	splx(s);
@@ -157,63 +157,67 @@ free_stmem(void *mem)
 
 	s = splhigh();
 	mn = (struct mem_node *)mem - 1;
-	next = mn->link.cqe_next;
-	prev = mn->link.cqe_prev;
+	next = TAILQ_NEXT(mn, link);
+	prev = TAILQ_PREV(mn, stlist, link);
 
 	/*
 	 * check ahead of us.
 	 */
-	if (next != (void *)&st_list && next->free_link.cqe_next) {
+	if (next != LIST_END(&st_list) &&
+	    TAILQ_NEXT(next, free_link) != TAILQ_END(&free_list)) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
 		 */
-		CIRCLEQ_INSERT_BEFORE(&free_list, next, mn, free_link);
-		CIRCLEQ_REMOVE(&st_list, next, link);
-		CIRCLEQ_REMOVE(&st_list, next, free_link);
+		TAILQ_INSERT_BEFORE(next, mn, free_link);
+		TAILQ_REMOVE(&st_list, next, link);
+		TAILQ_REMOVE(&st_list, next, free_link);
 		stmem_total += mn->size + sizeof(struct mem_node);
 		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (prev != (void *)&st_list && prev->free_link.cqe_prev) {
+	if (prev != LIST_END(&st_list) &&
+	    TAILQ_PREV(prev, freelist, free_link) != TAILQ_END(&free_list)) {
 		/*
 		 * if prev is: a valid node and a free node. ==> merge
 		 */
-		if (mn->free_link.cqe_next == NULL)
+		if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list))
 			stmem_total += mn->size + sizeof(struct mem_node);
 		else {
 			/* already on free list */
-			CIRCLEQ_REMOVE(&free_list, mn, free_link);
+			TAILQ_REMOVE(&free_list, mn, free_link);
 			stmem_total += sizeof(struct mem_node);
 		}
-		CIRCLEQ_REMOVE(&st_list, mn, link);
+		TAILQ_REMOVE(&st_list, mn, link);
 		prev->size += mn->size + sizeof(struct mem_node);
-	} else if (mn->free_link.cqe_next == NULL) {
+	} else if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list)) {
 		/*
 		 * we still are not on free list and we need to be.
 		 * <-- | -->
 		 */
-		while (next != (void *)&st_list && prev != (void *)&st_list) {
-			if (next->free_link.cqe_next) {
-				CIRCLEQ_INSERT_BEFORE(&free_list, next, mn,
+		while (next != LIST_END(&st_list) &&
+		    prev != LIST_END(&st_list)) {
+			if (TAILQ_NEXT(next, free_link) !=
+			    TAILQ_END(&free_list)) {
+				TAILQ_INSERT_BEFORE(next, mn, free_link);
+				break;
+			}
+			if (TAILQ_NEXT(prev, free_link) !=
+			    TAILQ_END(&free_list)) {
+				TAILQ_INSERT_AFTER(&free_list, prev, mn,
 				    free_link);
 				break;
 			}
-			if (prev->free_link.cqe_next) {
-				CIRCLEQ_INSERT_AFTER(&free_list, prev, mn,
-				    free_link);
-				break;
-			}
-			prev = prev->link.cqe_prev;
-			next = next->link.cqe_next;
+			prev = TAILQ_PREV(prev, stlist, link);
+			next = TAILQ_NEXT(next, link);
 		}
-		if (mn->free_link.cqe_next == NULL) {
-			if (next == (void *)&st_list) {
+		if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list)) {
+			if (next == LIST_END(&st_list)) {
 				/*
 				 * we are not on list so we can add
 				 * ourselves to the tail. (we walked to it.)
 				 */
-				CIRCLEQ_INSERT_TAIL(&free_list,mn,free_link);
+				TAILQ_INSERT_TAIL(&free_list,mn,free_link);
 			} else {
-				CIRCLEQ_INSERT_HEAD(&free_list,mn,free_link);
+				TAILQ_INSERT_HEAD(&free_list,mn,free_link);
 			}
 		}
 		stmem_total += mn->size;/* add our helpings to the pool. */
