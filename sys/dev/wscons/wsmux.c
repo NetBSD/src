@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.55 2013/03/18 11:40:39 jmcneill Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.56 2013/11/23 20:56:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.55 2013/03/18 11:40:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.56 2013/11/23 20:56:41 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -259,7 +259,7 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 	sc->sc_base.me_evp = evar; /* remember event variable, mark as open */
 
 	/* Open all children. */
-	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmuxopen: %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
@@ -330,7 +330,7 @@ wsmux_do_close(struct wsmux_softc *sc)
 		 device_xname(sc->sc_base.me_dv), sc));
 
 	/* Close all the children. */
-	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmuxclose %s: m=%p dev=%s\n",
 			 device_xname(sc->sc_base.me_dv), me,
 			 device_xname(me->me_dv)));
@@ -451,7 +451,7 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 		DPRINTF(("%s: rem type=%d, no=%d\n",
 			 device_xname(sc->sc_base.me_dv), d->type, d->idx));
 		/* Locate the device */
-		CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+		TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (me->me_ops->type == d->type &&
 			    device_unit(me->me_dv) == d->idx) {
 				DPRINTF(("wsmux_do_ioctl: detach\n"));
@@ -466,7 +466,7 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 		DPRINTF(("%s: list\n", device_xname(sc->sc_base.me_dv)));
 		l = (struct wsmux_device_list *)data;
 		n = 0;
-		CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+		TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (n >= WSMUX_MAXDEV)
 				break;
 			l->devices[n].type = me->me_ops->type;
@@ -534,7 +534,7 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 	/* Return 0 if any of the ioctl() succeeds, otherwise the last error */
 	error = 0;
 	ok = 0;
-	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 #ifdef DIAGNOSTIC
 		/* XXX check evp? */
 		if (me->me_parent != sc) {
@@ -652,7 +652,7 @@ wsmux_create(const char *name, int unit)
 		free(sc, M_DEVBUF);
 		return NULL;
 	}
-	CIRCLEQ_INIT(&sc->sc_cld);
+	TAILQ_INIT(&sc->sc_cld);
 	snprintf(sc->sc_base.me_dv->dv_xname, sizeof sc->sc_base.me_dv->dv_xname,
 		 "%s%d", name, unit);
 	sc->sc_base.me_dv->dv_private = sc;
@@ -681,7 +681,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	}
 #endif
 	me->me_parent = sc;
-	CIRCLEQ_INSERT_TAIL(&sc->sc_cld, me, me_next);
+	TAILQ_INSERT_TAIL(&sc->sc_cld, me, me_next);
 
 	error = 0;
 #if NWSDISPLAY > 0
@@ -724,7 +724,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 
 	if (error) {
 		me->me_parent = NULL;
-		CIRCLEQ_REMOVE(&sc->sc_cld, me, me_next);
+		TAILQ_REMOVE(&sc->sc_cld, me, me_next);
 	}
 
 	DPRINTF(("wsmux_attach_sc: %s(%p) done, error=%d\n",
@@ -762,7 +762,7 @@ wsmux_detach_sc(struct wsevsrc *me)
 		(void)wsevsrc_close(me);
 	}
 
-	CIRCLEQ_REMOVE(&sc->sc_cld, me, me_next);
+	TAILQ_REMOVE(&sc->sc_cld, me, me_next);
 	me->me_parent = NULL;
 
 	DPRINTF(("wsmux_detach_sc: done sc=%p\n", sc));
@@ -795,7 +795,7 @@ wsmux_do_displayioctl(device_t dv, u_long cmd, void *data, int flag,
 	 */
 	error = EPASSTHROUGH;
 	ok = 0;
-	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmux_displayioctl: me=%p\n", me));
 #ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
@@ -858,7 +858,7 @@ wsmux_set_display(struct wsmux_softc *sc, device_t displaydv)
 		       device_xname(displaydv));
 	ok = 0;
 	error = 0;
-	CIRCLEQ_FOREACH(me, &sc->sc_cld,me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld,me_next) {
 #ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
 			printf("wsmux_set_display: bad child parent %p\n", me);
