@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.91 2013/11/23 21:53:27 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.92 2013/11/24 17:16:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.91 2013/11/23 21:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.92 2013/11/24 17:16:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -357,6 +357,15 @@ tmpfs_construct_node(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	*vpp = NULL;
+
+	/*
+	 * If directory was removed, prevent from node creation.  The vnode
+	 * might still be referenced, but it is about to be reclaimed.
+	 */
+	if (dnode->tn_links == 0) {
+		error = ENOENT;
+		goto out;
+	}
 
 	/* Check for the maximum number of links limit. */
 	if (vap->va_type == VDIR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.108 2013/11/23 17:01:07 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.109 2013/11/24 17:16:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.108 2013/11/23 17:01:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.109 2013/11/24 17:16:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -195,7 +195,7 @@ tmpfs_lookup(void *v)
 
 		/*
 		 * Lock the parent tn_vlock before releasing the vnode lock,
-		 * and thus prevents parent from disappearing.
+		 * and thus prevent parent from disappearing.
 		 */
 		mutex_enter(&pnode->tn_vlock);
 		VOP_UNLOCK(dvp);
@@ -1066,21 +1066,22 @@ tmpfs_reclaim(void *v)
 	vnode_t *vp = ap->a_vp;
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
-	bool racing;
+	bool recycle;
+
+	mutex_enter(&node->tn_vlock);
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/* Disassociate inode from vnode. */
-	mutex_enter(&node->tn_vlock);
 	node->tn_vnode = NULL;
 	vp->v_data = NULL;
-	/* Check if tmpfs_vnode_get() is racing with us. */
-	racing = TMPFS_NODE_RECLAIMING(node);
+
+	/* If inode is not referenced, i.e. no links, then destroy it. */
+	recycle = node->tn_links == 0 && TMPFS_NODE_RECLAIMING(node) == 0;
+
+	VOP_UNLOCK(vp);
 	mutex_exit(&node->tn_vlock);
 
-	/*
-	 * If inode is not referenced, i.e. no links, then destroy it.
-	 * Note: if racing - inode is about to get a new vnode, leave it.
-	 */
-	if (node->tn_links == 0 && !racing) {
+	if (recycle) {
 		tmpfs_free_node(tmp, node);
 	}
 	return 0;
