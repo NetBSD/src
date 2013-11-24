@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.8 2013/11/14 12:41:46 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.9 2013/11/24 12:25:19 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.8 2013/11/14 12:41:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.9 2013/11/24 12:25:19 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -778,8 +778,8 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	chan->data_pid_start = qh->data_toggle;
 	chan->multi_count = 1;
 
-	if ((urb->actual_length < 0 || urb->actual_length > urb->length) &&
-	    !dwc2_hcd_is_pipe_in(&urb->pipe_info))
+	if (urb->actual_length > urb->length &&
+		!dwc2_hcd_is_pipe_in(&urb->pipe_info))
 		urb->actual_length = urb->length;
 
 	chan->xfer_len = urb->length - urb->actual_length;
