@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.52 2013/11/24 17:16:29 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.53 2013/11/24 17:17:48 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #include <sys/reboot.h>
 #include <sys/reboot.h>
 
-#include <machine/multiboot.h>
+#include <i386/multiboot.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
