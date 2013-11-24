@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.1.1.3 2013/10/05 06:47:07 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.1.1.4 2013/11/24 12:21:08 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -357,26 +357,11 @@ static int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 	unsigned long flags;
 	u32 intr_mask;
 	int retval;
-	int dev_speed;
 
 	if (!hsotg->flags.b.port_connect_status) {
 		/* No longer connected */
 		dev_err(hsotg->dev, "Not connected\n");
 		return -ENODEV;
-	}
-
-	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
-
-	/* Some core configurations cannot support LS traffic on a FS root port */
-	if ((dev_speed == USB_SPEED_LOW) &&
-	    (hsotg->hw_params.fs_phy_type == GHWCFG2_FS_PHY_TYPE_DEDICATED) &&
-	    (hsotg->hw_params.hs_phy_type == GHWCFG2_HS_PHY_TYPE_UTMI)) {
-		u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
-		u32 prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
-
-		if (prtspd == HPRT0_SPD_FULL_SPEED) {
-			return -ENODEV;
-		}
 	}
 
 	qtd = kzalloc(sizeof(*qtd), mem_flags);
@@ -801,8 +786,8 @@ static int dwc2_assign_and_init_hc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	chan->data_pid_start = qh->data_toggle;
 	chan->multi_count = 1;
 
-	if ((urb->actual_length < 0 || urb->actual_length > urb->length) &&
-	    !dwc2_hcd_is_pipe_in(&urb->pipe_info))
+	if (urb->actual_length > urb->length &&
+		!dwc2_hcd_is_pipe_in(&urb->pipe_info))
 		urb->actual_length = urb->length;
 
 	if (hsotg->core_params->dma_enable > 0) {
