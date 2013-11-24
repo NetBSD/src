@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.121 2013/10/19 17:16:38 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.122 2013/11/24 13:13:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.121 2013/10/19 17:16:38 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.122 2013/11/24 13:13:12 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -756,8 +756,7 @@ kinfo_vnodes(int *avnodes)
 	beg = bp;
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mlist);
-	for (mp = mlist.cqh_first;;
-	    mp = mount.mnt_list.cqe_next) {
+	TAILQ_FOREACH(mp, &mlist, mnt_list) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		TAILQ_FOREACH(vp, &mount.mnt_vnodelist, v_mntvnodes) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
@@ -769,8 +768,6 @@ kinfo_vnodes(int *avnodes)
 			memmove(bp, &vnode, VNODESZ);
 			bp += VNODESZ;
 		}
-		if (mp == mlist.cqh_last)
-			break;
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
 	return (beg);
