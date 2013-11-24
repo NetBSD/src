@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.53 2013/11/24 17:17:48 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.54 2013/11/24 17:20:00 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ int
 exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	    void (*callback)(void))
 {
-	u_long          boot_argv[BOOT_NARGS];
+	uint32_t	boot_argv[BOOT_NARGS];
 	u_long		marks[MARK_MAX];
 	struct btinfo_symtab btinfo_symtab;
 	u_long		extmem;
