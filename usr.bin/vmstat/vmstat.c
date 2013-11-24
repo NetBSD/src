@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.189 2013/11/10 05:16:10 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.190 2013/11/24 21:58:38 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.189 2013/11/10 05:16:10 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.190 2013/11/24 21:58:38 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,15 +139,12 @@ __RCSID("$NetBSD: vmstat.c,v 1.189 2013/11/10 05:16:10 mrg Exp $");
 struct cpu_info {
 	struct cpu_data ci_data;
 };
-CIRCLEQ_HEAD(cpuqueue, cpu_info);
-struct  cpuqueue cpu_queue;
-
 #else
-
 # include <sys/cpu.h>
-struct  cpuqueue cpu_queue;
-
 #endif
+
+struct cpu_info **cpu_infos;
+
 /*
  * General namelist
  */
@@ -171,8 +168,8 @@ struct nlist namelist[] =
 	{ .n_name = "_time_second" },
 #define X_TIME		8
 	{ .n_name = "_time" },
-#define X_CPU_QUEUE	9
-	{ .n_name = "_cpu_queue" },
+#define X_CPU_INFOS	9
+	{ .n_name = "_cpu_infos" },
 #define	X_NL_SIZE	10
 	{ .n_name = NULL },
 };
@@ -733,7 +730,7 @@ dovmstat(struct timespec *interval, int reps)
 	if (!hz)
 		kread(namelist, X_HZ, &hz, sizeof(hz));
 
-	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
@@ -906,8 +903,9 @@ dosum(void)
 	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
 	(void)printf("%9u swap allocations\n", uvmexp.nswget);
 
-	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+	kread(namelist, X_CPU_INFOS, &cpu_infos, sizeof(cpu_infos));
 	cpucounters(&cc);
+
 	(void)printf("%9" PRIu64 " total faults taken\n", cc.nfault);
 	(void)printf("%9" PRIu64 " traps\n", cc.ntrap);
 	(void)printf("%9" PRIu64 " device interrupts\n", cc.nintr);
@@ -1028,28 +1026,31 @@ drvstats(int *ovflwp)
 void
 cpucounters(struct cpu_counter *cc)
 {
-	struct cpu_info *ci, *first = NULL;
-	(void)memset(cc, 0, sizeof(*cc));
-	CIRCLEQ_FOREACH(ci, &cpu_queue, ci_data.cpu_qchain) {
-		struct cpu_info tci;
+	struct cpu_info **slot = cpu_infos;
+
+	memset(cc, 0, sizeof(*cc));
+
+	for (;;) {
+		struct cpu_info tci, *ci = NULL;
+
+		deref_kptr(slot++, &ci, sizeof(ci), "CPU array trashed");
+		if (!ci) {
+			break;
+		}
+
 		if ((size_t)kvm_read(kd, (u_long)ci, &tci, sizeof(tci))
 		    != sizeof(tci)) {
-		    warnx("Can't read cpu info from %p (%s)",
-			ci, kvm_geterr(kd));
-		    (void)memset(cc, 0, sizeof(*cc));
-		    return;
+			warnx("Can't read cpu info from %p (%s)",
+			    ci, kvm_geterr(kd));
+			memset(cc, 0, sizeof(*cc));
+			return;
 		}
-		if (first == NULL)
-			first = tci.ci_data.cpu_qchain.cqe_prev;
 		cc->nintr += tci.ci_data.cpu_nintr;
 		cc->nsyscall += tci.ci_data.cpu_nsyscall;
 		cc->nswtch = tci.ci_data.cpu_nswtch;
 		cc->nfault = tci.ci_data.cpu_nfault;
 		cc->ntrap = tci.ci_data.cpu_ntrap;
 		cc->nsoft = tci.ci_data.cpu_nsoft;
-		ci = &tci;
-		if (tci.ci_data.cpu_qchain.cqe_next == first)
-			break;
 	}
 }
 

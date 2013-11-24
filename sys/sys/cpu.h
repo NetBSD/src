@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2012/10/17 20:19:55 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2013/11/24 21:58:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -96,7 +96,7 @@ CIRCLEQ_HEAD(cpuqueue, cpu_info);
 #ifdef _KERNEL
 extern kmutex_t cpu_lock;
 extern u_int maxcpus;
-extern struct cpuqueue cpu_queue;
+extern struct cpu_info **cpu_infos;
 extern kcpuset_t *kcpuset_attached;
 extern kcpuset_t *kcpuset_running;
 

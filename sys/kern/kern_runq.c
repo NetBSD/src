@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.40 2013/10/19 19:22:16 christos Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.41 2013/11/24 21:58:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.40 2013/10/19 19:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.41 2013/11/24 21:58:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -365,7 +365,7 @@ sched_migratable(const struct lwp *l, struct cpu_info *ci)
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
-	struct cpu_info *ci, *tci, *first, *next;
+	struct cpu_info *ci, *tci, *pivot, *next;
 	struct schedstate_percpu *spc;
 	runqueue_t *ci_rq, *ici_rq;
 	pri_t eprio, lpri, pri;
@@ -411,15 +411,18 @@ sched_takecpu(struct lwp *l)
 	 * Look for the CPU with the lowest priority thread.  In case of
 	 * equal priority, choose the CPU with the fewest of threads.
 	 */
-	first = l->l_cpu;
-	ci = first;
-	tci = first;
+	pivot = l->l_cpu;
+	ci = pivot;
+	tci = pivot;
 	lpri = PRI_COUNT;
 	do {
-		next = CIRCLEQ_LOOP_NEXT(&cpu_queue, ci, ci_data.cpu_qchain);
+		if ((next = cpu_lookup(cpu_index(ci) + 1)) == NULL) {
+			/* Reached the end, start from the beginning. */
+			next = cpu_lookup(0);
+		}
 		spc = &ci->ci_schedstate;
 		ici_rq = spc->spc_sched_info;
-		pri = max(spc->spc_curpriority, spc->spc_maxpriority);
+		pri = MAX(spc->spc_curpriority, spc->spc_maxpriority);
 		if (pri > lpri)
 			continue;
 
@@ -432,7 +435,7 @@ sched_takecpu(struct lwp *l)
 		lpri = pri;
 		tci = ci;
 		ci_rq = ici_rq;
-	} while (ci = next, ci != first);
+	} while (ci = next, ci != pivot);
 
 	ci_rq = tci->ci_schedstate.spc_sched_info;
 	ci_rq->r_ev_push.ev_count++;
