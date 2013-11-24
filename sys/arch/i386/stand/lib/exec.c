@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.51 2013/08/30 16:42:17 jmcneill Exp $	 */
+/*	$NetBSD: exec.c,v 1.52 2013/11/24 17:16:29 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -578,7 +578,7 @@ module_init(const char *kernel_path)
 		if (fd == -1)
 			continue;
 		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-		len = pread(fd, (void *)image_end, SSIZE_MAX);
+		len = pread(fd, (void *)(uintptr_t)image_end, SSIZE_MAX);
 		if (len < bm->bm_len) {
 			if ((howto & AB_SILENT) != 0)
 				printf("Loading %s ", bm->bm_path);
