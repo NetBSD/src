@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.6 2013/11/24 12:25:19 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.5 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.6 2013/11/24 12:25:19 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -1938,21 +1938,20 @@ static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 
 	chan = hsotg->hc_ptr_array[chnum];
 
-	if (dbg_hc(chan))
-		dev_vdbg(hsotg->dev, "--Host Channel Interrupt--, Channel %d\n",
-			 chnum);
-
 	hcint = DWC2_READ_4(hsotg, HCINT(chnum));
 	hcintmsk = DWC2_READ_4(hsotg, HCINTMSK(chnum));
-	if (dbg_hc(chan))
-		dev_vdbg(hsotg->dev,
-			 "  hcint 0x%08x, hcintmsk 0x%08x, hcint&hcintmsk 0x%08x\n",
-			 hcint, hcintmsk, hcint & hcintmsk);
-
 	if (!chan) {
 		dev_err(hsotg->dev, "## hc_ptr_array for channel is NULL ##\n");
 		DWC2_WRITE_4(hsotg, HCINT(chnum), hcint);
 		return;
+	}
+
+	if (dbg_hc(chan)) {
+		dev_vdbg(hsotg->dev, "--Host Channel Interrupt--, Channel %d\n",
+			 chnum);
+		dev_vdbg(hsotg->dev,
+			 "  hcint 0x%08x, hcintmsk 0x%08x, hcint&hcintmsk 0x%08x\n",
+			 hcint, hcintmsk, hcint & hcintmsk);
 	}
 
 	DWC2_WRITE_4(hsotg, HCINT(chnum), hcint);
