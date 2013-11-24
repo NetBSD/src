@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.34 2013/09/15 14:53:03 martin Exp $	*/
+/*	$NetBSD: trm.c,v 1.35 2013/11/24 18:02:08 bouyer Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.34 2013/09/15 14:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.35 2013/11/24 18:02:08 bouyer Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -703,7 +703,7 @@ trm_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		    xs->xs_periph->periph_lun));
 		if (xs->xs_control & XS_CTL_RESET) {
 			trm_reset(sc);
-			xs->error = XS_NOERROR | XS_RESET;
+			xs->error = XS_RESET;
 			return;
 		}
 		if (xs->xs_status & XS_STS_DONE) {
