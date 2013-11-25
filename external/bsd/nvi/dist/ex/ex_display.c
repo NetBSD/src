@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_display.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_display.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -87,25 +87,25 @@ bdisplay(SCR *sp)
 {
 	CB *cbp;
 
-	if (sp->wp->cutq.lh_first == NULL && sp->wp->dcbp == NULL) {
+	if (LIST_EMPTY(&sp->wp->cutq) && sp->wp->dcbp == NULL) {
 		msgq(sp, M_INFO, "123|No cut buffers to display");
 		return (0);
 	}
 
 	/* Display regular cut buffers. */
-	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
+	LIST_FOREACH(cbp, &sp->wp->cutq, q) {
 		if (ISDIGIT(cbp->name))
 			continue;
-		if (cbp->textq.cqh_first != (void *)&cbp->textq)
+		if (!TAILQ_EMPTY(&cbp->textq))
 			db(sp, cbp, NULL);
 		if (INTERRUPTED(sp))
 			return (0);
 	}
 	/* Display numbered buffers. */
-	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
+	LIST_FOREACH(cbp, &sp->wp->cutq, q) {
 		if (!ISDIGIT(cbp->name))
 			continue;
-		if (cbp->textq.cqh_first != (void *)&cbp->textq)
+		if (!TAILQ_EMPTY(&cbp->textq))
 			db(sp, cbp, NULL);
 		if (INTERRUPTED(sp))
 			return (0);
@@ -131,8 +131,7 @@ db(SCR *sp, CB *cbp, const char *np)
 	(void)ex_printf(sp, "********** %s%s\n",
 	    name == NULL ? KEY_NAME(sp, cbp->name) : name,
 	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : " (character mode)");
-	for (tp = cbp->textq.cqh_first;
-	    tp != (void *)&cbp->textq; tp = tp->q.cqe_next) {
+	TAILQ_FOREACH(tp, &cbp->textq, q) {
 		for (len = tp->len, p = tp->lb; len--; ++p) {
 			(void)ex_puts(sp, (char *)KEY_NAME(sp, *p));
 			if (INTERRUPTED(sp))

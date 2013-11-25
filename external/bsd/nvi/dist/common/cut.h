@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: cut.h,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -11,7 +11,7 @@
  */
 
 typedef struct _texth TEXTH;		/* TEXT list head structure. */
-CIRCLEQ_HEAD(_texth, _text);
+TAILQ_HEAD(_texth, _text);
 
 /* Cut buffers. */
 struct _cb {
@@ -27,7 +27,7 @@ struct _cb {
 
 /* Lines/blocks of text. */
 struct _text {				/* Text: a linked list of lines. */
-	CIRCLEQ_ENTRY(_text) q;		/* Linked list of text structures. */
+	TAILQ_ENTRY(_text) q;		/* Linked list of text structures. */
 	CHAR_T	*lb;			/* Line buffer. */
 	size_t	 lb_len;		/* Line buffer length. */
 	size_t	 len;			/* Line length. */

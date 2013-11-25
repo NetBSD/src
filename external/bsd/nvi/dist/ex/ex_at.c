@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_at.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_at.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 	 * means @ buffers are still useful in a multi-screen environment.
 	 */
 	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
-	CIRCLEQ_INIT(&ecp->rq);
+	TAILQ_INIT(&ecp->rq);
 	CALLOC_RET(sp, rp, RANGE *, 1, sizeof(RANGE));
 	rp->start = cmdp->addr1.lno;
 	if (F_ISSET(cmdp, E_ADDR_DEF)) {
@@ -93,7 +93,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 		rp->stop = cmdp->addr2.lno;
 		FL_SET(ecp->agv_flags, AGV_AT);
 	}
-	CIRCLEQ_INSERT_HEAD(&ecp->rq, rp, q);
+	TAILQ_INSERT_HEAD(&ecp->rq, rp, q);
 
 	/*
 	 * Buffers executed in ex mode or from the colon command line in vi
@@ -103,8 +103,8 @@ ex_at(SCR *sp, EXCMD *cmdp)
 	 * Build two copies of the command.  We need two copies because the
 	 * ex parser may step on the command string when it's parsing it.
 	 */
-	for (len = 0, tp = cbp->textq.cqh_last;
-	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev)
+	for (len = 0, tp = TAILQ_LAST(&cbp->textq, _texth);
+	    tp != NULL; tp = TAILQ_PREV(tp, _texth, q))
 		len += tp->len + 1;
 
 	MALLOC_RET(sp, ecp->cp, CHAR_T *, len * 2 * sizeof(CHAR_T));
@@ -113,8 +113,8 @@ ex_at(SCR *sp, EXCMD *cmdp)
 	ecp->cp[len] = '\0';
 
 	/* Copy the buffer into the command space. */
-	for (p = ecp->cp + len, tp = cbp->textq.cqh_last;
-	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
+	for (p = ecp->cp + len, tp = TAILQ_LAST(&cbp->textq, _texth);
+	    tp != NULL; tp = TAILQ_PREV(tp, _texth, q)) {
 		MEMCPYW(p, tp->lb, tp->len);
 		p += tp->len;
 		*p++ = '\n';

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ screen_init(GS *gp, SCR *orig, SCR **spp)
 	 * we don't have the option information yet.
 	 */
 
-	CIRCLEQ_INIT(&sp->tiq);
+	TAILQ_INIT(&sp->tiq);
 
 /* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
 	if (orig == NULL) {
@@ -146,8 +146,8 @@ screen_end(SCR *sp)
 	 * If a created screen failed during initialization, it may not
 	 * be linked into the chain.
 	 */
-	if (sp->q.cqe_next != NULL)
-		CIRCLEQ_REMOVE(&sp->wp->scrq, sp, q);
+	if (TAILQ_NEXT(sp, q) != NULL)
+		TAILQ_REMOVE(&sp->wp->scrq, sp, q);
 
 	/* The screen is no longer real. */
 	F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
@@ -172,7 +172,7 @@ screen_end(SCR *sp)
 	}
 
 	/* Free any text input. */
-	if (sp->tiq.cqh_first != NULL)
+	if (!TAILQ_EMPTY(&sp->tiq))
 		text_lfree(&sp->tiq);
 
 	/* Free alternate file name. */
@@ -218,18 +218,16 @@ screen_next(SCR *sp)
 	/* Try the display queue, without returning the current screen. */
 	gp = sp->gp;
 	wp = sp->wp;
-	for (next = wp->scrq.cqh_first;
-	    next != (void *)&wp->scrq; next = next->q.cqe_next)
+	TAILQ_FOREACH(next, &wp->scrq, q)
 		if (next != sp)
 			break;
-	if (next != (void *)&wp->scrq)
+	if (next != NULL)
 		return (next);
 
 	/* Try the hidden queue; if found, move screen to the display queue. */
-	if (gp->hq.cqh_first != (void *)&gp->hq) {
-		next = gp->hq.cqh_first;
-		CIRCLEQ_REMOVE(&gp->hq, next, q);
-		CIRCLEQ_INSERT_HEAD(&wp->scrq, next, q);
+	if ((next = TAILQ_FIRST(&gp->hq)) != NULL) {
+		TAILQ_REMOVE(&gp->hq, next, q);
+		TAILQ_INSERT_HEAD(&wp->scrq, next, q);
 		next->wp = sp->wp;
 		return (next);
 	}

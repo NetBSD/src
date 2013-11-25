@@ -1,4 +1,4 @@
-/*	$NetBSD: v_at.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: v_at.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -90,11 +90,10 @@ v_at(SCR *sp, VICMD *vp)
 	 * together.  We don't get this right; I'm waiting for the new DB
 	 * logging code to be available.
 	 */
-	for (tp = cbp->textq.cqh_last;
-	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
+	TAILQ_FOREACH_REVERSE(tp, &cbp->textq, _texth, q) {
 		static CHAR_T nl[] = { '\n', 0 };
 		if (((F_ISSET(cbp, CB_LMODE) ||
-		    tp->q.cqe_next != (void *)&cbp->textq) &&
+		    TAILQ_NEXT(tp, q) != NULL) &&
 		    v_event_push(sp, NULL, nl, 1, 0)) ||
 		    v_event_push(sp, NULL, tp->lb, tp->len, 0))
 			return (1);

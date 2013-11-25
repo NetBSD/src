@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: vi.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -1027,21 +1027,21 @@ v_dtoh(SCR *sp)
 
 	/* Move all screens to the hidden queue, tossing screen maps. */
 	for (hidden = 0, gp = sp->gp, wp = sp->wp;
-	    (tsp = wp->scrq.cqh_first) != (void *)&wp->scrq; ++hidden) {
+	    (tsp = TAILQ_FIRST(&wp->scrq)) != NULL; ++hidden) {
 		if (_HMAP(tsp) != NULL) {
 			free(_HMAP(tsp));
 			_HMAP(tsp) = NULL;
 		}
-		CIRCLEQ_REMOVE(&wp->scrq, tsp, q);
-		CIRCLEQ_INSERT_TAIL(&gp->hq, tsp, q);
+		TAILQ_REMOVE(&wp->scrq, tsp, q);
+		TAILQ_INSERT_TAIL(&gp->hq, tsp, q);
 		/* XXXX Change if hidden screens per window */
 		tsp->wp = 0;
 		gp->scr_discard(tsp, NULL);
 	}
 
 	/* Move current screen back to the display queue. */
-	CIRCLEQ_REMOVE(&gp->hq, sp, q);
-	CIRCLEQ_INSERT_TAIL(&wp->scrq, sp, q);
+	TAILQ_REMOVE(&gp->hq, sp, q);
+	TAILQ_INSERT_TAIL(&wp->scrq, sp, q);
 	sp->wp = wp;
 
 	if (hidden > 1)

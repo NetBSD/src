@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_term.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip_term.c,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -37,7 +37,7 @@ ip_term_init(SCR *sp)
 	 * Rework any function key mappings that were set before the
 	 * screen was initialized.
 	 */
-	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next)
+	LIST_FOREACH(qp, &sp->gp->seqq, q)
 		if (F_ISSET(qp, SEQ_FUNCMAP))
 			(void)ip_fmap(sp, qp->stype,
 			    qp->input, qp->ilen, qp->output, qp->olen);
@@ -56,8 +56,7 @@ ip_term_end(GS *gp)
 	SEQ *qp, *nqp;
 
 	/* Delete screen specific mappings. */
-	for (qp = gp->seqq.lh_first; qp != NULL; qp = nqp) {
-		nqp = qp->q.le_next;
+	LIST_FOREACH_SAFE(qp, &gp->seqq, q, nqp) {
 		if (F_ISSET(qp, SEQ_SCREEN))
 			(void)seq_mdel(qp);
 	}

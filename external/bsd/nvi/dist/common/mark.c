@@ -1,4 +1,4 @@
-/*	$NetBSD: mark.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: mark.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -93,7 +93,7 @@ mark_end(SCR *sp, EXF *ep)
 	 * !!!
 	 * ep MAY NOT BE THE SAME AS sp->ep, DON'T USE THE LATTER.
 	 */
-	while ((lmp = ep->marks.lh_first) != NULL) {
+	while ((lmp = LIST_FIRST(&ep->marks)) != NULL) {
 		LIST_REMOVE(lmp, q);
 		free(lmp);
 	}
@@ -194,8 +194,8 @@ mark_find(SCR *sp, ARG_CHAR_T key)
 	 * Return the requested mark or the slot immediately before
 	 * where it should go.
 	 */
-	for (lastlmp = NULL, lmp = sp->ep->marks.lh_first;
-	    lmp != NULL; lastlmp = lmp, lmp = lmp->q.le_next)
+	for (lastlmp = NULL, lmp = LIST_FIRST(&sp->ep->marks);
+	    lmp != NULL; lastlmp = lmp, lmp = LIST_NEXT(lmp, q))
 		if ((ARG_CHAR_T)lmp->name >= key)
 			return ((ARG_CHAR_T)lmp->name == key ? lmp : lastlmp);
 	return (lastlmp);
@@ -218,8 +218,7 @@ mark_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 		/* All insert/append operations are done as inserts. */
 		abort();
 	case LINE_DELETE:
-		for (lmp = sp->ep->marks.lh_first;
-		    lmp != NULL; lmp = lmp->q.le_next)
+		LIST_FOREACH(lmp, &sp->ep->marks, q)
 			if (lmp->lno >= lno) {
 				if (lmp->lno == lno) {
 					F_SET(lmp, MARK_DELETED);
@@ -250,8 +249,7 @@ mark_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 				return (0);
 		}
 
-		for (lmp = sp->ep->marks.lh_first;
-		    lmp != NULL; lmp = lmp->q.le_next)
+		LIST_FOREACH(lmp, &sp->ep->marks, q)
 			if (lmp->lno >= lno)
 				++lmp->lno;
 		break;

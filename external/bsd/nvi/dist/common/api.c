@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: api.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -50,19 +50,16 @@ api_fscreen(int id, char *name)
 	gp = __global_list;
 
 	/* Search the displayed lists. */
-	for (wp = gp->dq.cqh_first;
-	    wp != (void *)&gp->dq; wp = wp->q.cqe_next)
-		for (tsp = wp->scrq.cqh_first;
-		    tsp != (void *)&wp->scrq; tsp = tsp->q.cqe_next)
-		if (name == NULL) {
-			if (id == tsp->id)
+	TAILQ_FOREACH(wp, &gp->dq, q)
+		TAILQ_FOREACH(tsp, &wp->scrq, q)
+			if (name == NULL) {
+				if (id == tsp->id)
+					return (tsp);
+			} else if (!strcmp(name, tsp->frp->name))
 				return (tsp);
-		} else if (!strcmp(name, tsp->frp->name))
-			return (tsp);
 
 	/* Search the hidden list. */
-	for (tsp = gp->hq.cqh_first;
-	    tsp != (void *)&gp->hq; tsp = tsp->q.cqe_next)
+	TAILQ_FOREACH (tsp,  &gp->hq, q)
 		if (name == NULL) {
 			if (id == tsp->id)
 				return (tsp);
@@ -216,11 +213,11 @@ api_nextmark(SCR *sp, int next, char *namep)
 {
 	LMARK *mp;
 
-	mp = sp->ep->marks.lh_first;
+	mp = LIST_FIRST(&sp->ep->marks);
 	if (next)
-		for (; mp != NULL; mp = mp->q.le_next)
+		for (; mp != NULL; mp = LIST_NEXT(mp, q))
 			if (mp->name == *namep) {
-				mp = mp->q.le_next;
+				mp = LIST_NEXT(mp, q);
 				break;
 			}
 	if (mp == NULL)
@@ -528,7 +525,7 @@ api_tagq_new(SCR *sp, char *tag)
 	/* Allocate and initialize the tag queue structure. */
 	len = strlen(tag);
 	CALLOC_GOTO(sp, tqp, TAGQ *, 1, sizeof(TAGQ) + len + 1);
-	CIRCLEQ_INIT(&tqp->tagq);
+	TAILQ_INIT(&tqp->tagq);
 	tqp->tag = tqp->buf;
 	memcpy(tqp->tag, tag, (tqp->tlen = len) + 1);
 
@@ -565,7 +562,7 @@ api_tagq_add(SCR *sp, TAGQ *tqp, char *filename, char *search, char *msg)
 	CHAR2INT(sp, msg, mlen + 1, wp, wlen);
 	MEMCPYW(tp->msg, wp, wlen);
 	tp->mlen = mlen;
-	CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+	TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 
 alloc_err:
 	return;
@@ -584,12 +581,12 @@ api_tagq_push(SCR *sp, TAGQ **tqpp)
 	*tqpp = 0;
 
 	/* Check to see if we found anything. */
-	if (tqp->tagq.cqh_first == (void *)&tqp->tagq) {
+	if (TAILQ_EMPTY(&tqp->tagq)) {
 		free(tqp);
 		return 0;
 	}
 
-	tqp->current = tqp->tagq.cqh_first;
+	tqp->current = TAILQ_FIRST(&tqp->tagq);
 
 	if (tagq_push(sp, tqp, 0, 0))
 		return 1;

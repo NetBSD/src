@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: v_ex.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -292,7 +292,7 @@ v_filter(SCR *sp, VICMD *vp)
 	 * Entering <escape> on an empty line was historically an error,
 	 * this implementation doesn't bother.
 	 */
-	tp = sp->tiq.cqh_first;
+	tp = TAILQ_FIRST(&sp->tiq);
 	if (tp->term != TERM_OK) {
 		vp->m_final.lno = sp->lno;
 		vp->m_final.cno = sp->cno;
@@ -362,7 +362,7 @@ v_ex(SCR *sp, VICMD *vp)
 			if (v_tcmd(sp, vp, ':',
 			    TXT_BS | TXT_CEDIT | TXT_FILEC | TXT_PROMPT))
 				return (1);
-			tp = sp->tiq.cqh_first;
+			tp = TAILQ_FIRST(&sp->tiq);
 
 			/*
 			 * If the user entered a single <esc>, they want to
@@ -523,7 +523,7 @@ v_ecl(SCR *sp)
 	/* Attach to the screen. */
 	new->ep = wp->ccl_sp->ep;
 	++new->ep->refcnt;
-	CIRCLEQ_INSERT_HEAD(&new->ep->scrq, new, eq);
+	TAILQ_INSERT_HEAD(&new->ep->scrq, new, eq);
 
 	new->frp = wp->ccl_sp->frp;
 	new->frp->flags = sp->frp->flags;

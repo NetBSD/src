@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: put.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 			}
 		}
 	}
-	tp = cbp->textq.cqh_first;
+	tp = TAILQ_FIRST(&cbp->textq);
 
 	/*
 	 * It's possible to do a put into an empty file, meaning that the cut
@@ -82,8 +82,8 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 		if (db_last(sp, &lno))
 			return (1);
 		if (lno == 0) {
-			for (; tp != (void *)&cbp->textq;
-			    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
+			for (; tp != NULL;
+			    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
 				if (db_append(sp, 1, lno, tp->lb, tp->len))
 					return (1);
 			rp->lno = 1;
@@ -96,8 +96,8 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	if (F_ISSET(cbp, CB_LMODE)) {
 		lno = append ? cp->lno : cp->lno - 1;
 		rp->lno = lno + 1;
-		for (; tp != (void *)&cbp->textq;
-		    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
+		for (; tp != NULL;
+		    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
 			if (db_append(sp, 1, lno, tp->lb, tp->len))
 				return (1);
 		rp->cno = 0;
@@ -159,7 +159,7 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	 * the intermediate lines, because the line changes will lose
 	 * the cached line.
 	 */
-	if (tp->q.cqe_next == (void *)&cbp->textq) {
+	if (TAILQ_NEXT(tp, q) == NULL) {
 		if (clen > 0) {
 			MEMCPYW(t, p, clen);
 			t += clen;
@@ -181,7 +181,7 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 		 * Last part of original line; check for space, reset
 		 * the pointer into the buffer.
 		 */
-		ltp = cbp->textq.cqh_last;
+		ltp = TAILQ_LAST(&cbp->textq, _texth);
 		len = t - bp;
 		ADD_SPACE_RETW(sp, bp, blen, ltp->len + clen);
 		t = bp + len;
@@ -209,9 +209,9 @@ put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 		}
 
 		/* Output any intermediate lines in the CB. */
-		for (tp = tp->q.cqe_next;
-		    tp->q.cqe_next != (void *)&cbp->textq;
-		    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
+		for (tp = TAILQ_NEXT(tp, q);
+		    TAILQ_NEXT(tp, q) != NULL;
+		    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
 			if (db_append(sp, 1, lno, tp->lb, tp->len))
 				goto err;
 

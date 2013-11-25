@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: v_search.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -91,7 +91,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	    (O_ISSET(sp, O_SEARCHINCR) ? TXT_SEARCHINCR : 0)))
 		return (1);
 
-	tp = sp->tiq.cqh_first;
+	tp = TAILQ_FIRST(&sp->tiq);
 
 	/* If the user backspaced over the prompt, do nothing. */
 	if (tp->term == TERM_BS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_screen.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -107,14 +107,14 @@ ex_sdisplay(SCR *sp)
 	size_t col, len;
 
 	gp = sp->gp;
-	if ((tsp = gp->hq.cqh_first) == (void *)&gp->hq) {
+	if ((tsp = TAILQ_FIRST(&gp->hq)) == NULL) {
 		msgq(sp, M_INFO, "149|No background screens to display");
 		return (0);
 	}
 
 	col = len = sep = 0;
-	for (cnt = 1; tsp != (void *)&gp->hq && !INTERRUPTED(sp);
-	    tsp = tsp->q.cqe_next) {
+	for (cnt = 1; tsp != NULL && !INTERRUPTED(sp);
+	    tsp = TAILQ_NEXT(tsp, q)) {
 		col += len = strlen(tsp->frp->name) + sep;
 		if (col >= sp->cols - 1) {
 			col = len;

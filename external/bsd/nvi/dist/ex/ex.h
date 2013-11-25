@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex.h,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,7 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
 /* Range structures for global and @ commands. */
 typedef struct _range RANGE;
 struct _range {				/* Global command range. */
-	CIRCLEQ_ENTRY(_range) q;	/* Linked list of ranges. */
+	TAILQ_ENTRY(_range) q;	/* Linked list of ranges. */
 	db_recno_t start, stop;		/* Start/stop of the range. */
 };
 
@@ -90,7 +90,7 @@ struct _excmd {
 	EXCMDLIST const *cmd;		/* Command: entry in command table. */
 	EXCMDLIST rcmd;			/* Command: table entry/replacement. */
 
-	CIRCLEQ_HEAD(_rh, _range) rq;	/* @/global range: linked list. */
+	TAILQ_HEAD(_rh, _range) rq;	/* @/global range: linked list. */
 	db_recno_t   range_lno;		/* @/global range: set line number. */
 	CHAR_T	 *o_cp;			/* Original @/global command. */
 	size_t	  o_clen;		/* Original @/global command length. */
@@ -161,7 +161,7 @@ struct _excmd {
 
 /* Ex private, per-screen memory. */
 typedef struct _ex_private {
-	CIRCLEQ_HEAD(_tqh, _tagq) tq;	/* Tag queue. */
+	TAILQ_HEAD(_tqh, _tagq) tq;	/* Tag queue. */
 	TAILQ_HEAD(_tagfh, _tagf) tagfq;/* Tag file list. */
 	LIST_HEAD(_csch, _csc) cscq;    /* Cscope connection list. */
 	CHAR_T	*tag_last;		/* Saved last tag string. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.2 2013/11/22 15:52:06 christos Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -57,8 +57,7 @@ vs_refresh(SCR *sp, int forcepaint)
 	 * that we can find, including status lines.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW))
-		for (tsp = sp->wp->scrq.cqh_first;
-		    tsp != (void *)&sp->wp->scrq; tsp = tsp->q.cqe_next)
+		TAILQ_FOREACH(tsp, &sp->wp->scrq, q)
 			if (tsp != sp)
 				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
@@ -75,8 +74,7 @@ vs_refresh(SCR *sp, int forcepaint)
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
 	if (O_ISSET(sp, O_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
-	for (tsp = sp->wp->scrq.cqh_first;
-	    tsp != (void *)&sp->wp->scrq; tsp = tsp->q.cqe_next)
+	TAILQ_FOREACH(tsp, &sp->wp->scrq, q)
 		if (tsp != sp && !F_ISSET(tsp, SC_EXIT | SC_EXIT_FORCE) &&
 		    (F_ISSET(tsp, pub_paint) ||
 		    F_ISSET(VIP(tsp), priv_paint))) {
@@ -111,8 +109,8 @@ vs_refresh(SCR *sp, int forcepaint)
 	 * And, finally, if we updated any status lines, make sure the cursor
 	 * gets back to where it belongs.
 	 */
-	for (need_refresh = 0, tsp = sp->wp->scrq.cqh_first;
-	    tsp != (void *)&sp->wp->scrq; tsp = tsp->q.cqe_next)
+	need_refresh = 0;
+	TAILQ_FOREACH(tsp, &sp->wp->scrq, q)
 		if (F_ISSET(tsp, SC_STATUS)) {
 			need_refresh = 1;
 			vs_resolve(tsp, sp, 0);
