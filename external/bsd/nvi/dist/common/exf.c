@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: exf.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -77,15 +77,12 @@ file_add(SCR *sp, const char *name)
 	 */
 	gp = sp->gp;
 	if (name != NULL)
-		for (frp = gp->frefq.cqh_first;
-		    frp != (FREF *)(void *)&gp->frefq; frp = frp->q.cqe_next) {
+		TAILQ_FOREACH_SAFE(frp, &gp->frefq, q, tfrp) {
 			if (frp->name == NULL) {
-				tfrp = frp->q.cqe_next;
-				CIRCLEQ_REMOVE(&gp->frefq, frp, q);
+				TAILQ_REMOVE(&gp->frefq, frp, q);
 				if (frp->name != NULL)
 					free(frp->name);
 				free(frp);
-				frp = tfrp;
 				continue;
 			}
 			if (!strcmp(frp->name, name))
@@ -110,7 +107,7 @@ file_add(SCR *sp, const char *name)
 	}
 
 	/* Append into the chain of file names. */
-	CIRCLEQ_INSERT_TAIL(&gp->frefq, frp, q);
+	TAILQ_INSERT_TAIL(&gp->frefq, frp, q);
 
 	return (frp);
 }
@@ -165,8 +162,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	 */
 	if (exists) {
 		EXF *exfp;
-		for (exfp = sp->gp->exfq.cqh_first;
-		    exfp != (EXF *)&sp->gp->exfq; exfp = exfp->q.cqe_next) {
+		TAILQ_FOREACH(exfp, &sp->gp->exfq, q) {
 			if (exfp->mdev == sb.st_dev &&
 			    exfp->minode == sb.st_ino && 
 			    (exfp != sp->ep || exfp->refcnt > 1)) {
@@ -184,7 +180,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	 *	Set initial EXF flag bits.
 	 */
 	CALLOC_RET(sp, ep, EXF *, 1, sizeof(EXF));
-	CIRCLEQ_INIT(&ep->scrq);
+	TAILQ_INIT(&ep->scrq);
 	sp->c_lno = ep->c_nlines = OOBLNO;
 	ep->fd = ep->rcv_fd = ep->fcntl_fd = -1;
 	F_SET(ep, F_FIRSTMODIFY);
@@ -406,7 +402,7 @@ no_lock:
 
 	/* Switch... */
 	++ep->refcnt;
-	CIRCLEQ_INSERT_HEAD(&ep->scrq, sp, eq);
+	TAILQ_INSERT_HEAD(&ep->scrq, sp, eq);
 	sp->ep = ep;
 	sp->frp = frp;
 
@@ -424,7 +420,7 @@ no_lock:
 
 	/* Append into the chain of file structures. */
 	if (ep->refcnt == 1)
-		CIRCLEQ_INSERT_TAIL(&sp->gp->exfq, ep, q);
+		TAILQ_INSERT_TAIL(&sp->gp->exfq, ep, q);
 
 	return (0);
 
@@ -645,7 +641,7 @@ file_end(SCR *sp, EXF *ep, int force)
 	 */
 	if (ep == NULL)
 		ep = sp->ep;
-	CIRCLEQ_REMOVE(&ep->scrq, sp, eq);
+	TAILQ_REMOVE(&ep->scrq, sp, eq);
 	if (--ep->refcnt != 0)
 		return (0);
 
@@ -678,7 +674,7 @@ file_end(SCR *sp, EXF *ep, int force)
 		free(frp->tname);
 		frp->tname = NULL;
 		if (F_ISSET(frp, FR_TMPFILE)) {
-			CIRCLEQ_REMOVE(&sp->gp->frefq, frp, q);
+			TAILQ_REMOVE(&sp->gp->frefq, frp, q);
 			if (frp->name != NULL)
 				free(frp->name);
 			free(frp);
@@ -695,7 +691,7 @@ file_end(SCR *sp, EXF *ep, int force)
 		if ((sp->db_error = db_close(ep->db)) != 0 && 
 		    !force) {
 			msgq_str(sp, M_DBERR, frp->name, "241|%s: close");
-			CIRCLEQ_INSERT_HEAD(&ep->scrq, sp, eq);
+			TAILQ_INSERT_HEAD(&ep->scrq, sp, eq);
 			++ep->refcnt;
 			return (1);
 		}
@@ -738,7 +734,7 @@ file_end(SCR *sp, EXF *ep, int force)
 		if (ep->rcv_mpath != NULL && unlink(ep->rcv_mpath))
 			msgq_str(sp, M_SYSERR, ep->rcv_mpath, "243|%s: remove");
 	}
-	CIRCLEQ_REMOVE(&sp->gp->exfq, ep, q);
+	TAILQ_REMOVE(&sp->gp->exfq, ep, q);
 	if (ep->fd != -1)
 		(void)close(ep->fd);
 	if (ep->fcntl_fd != -1)

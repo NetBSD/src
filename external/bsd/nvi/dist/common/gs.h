@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: gs.h,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +20,7 @@
  * The read-only bit follows the file name, not the file itself.
  */
 struct _fref {
-	CIRCLEQ_ENTRY(_fref) q;		/* Linked list of file references. */
+	TAILQ_ENTRY(_fref) q;		/* Linked list of file references. */
 	char	*name;			/* File name. */
 	char	*tname;			/* Backing temporary file name. */
 
@@ -57,8 +57,8 @@ struct _gs {
 	char	*progname;		/* Programe name. */
 
 	int	 id;			/* Last allocated screen id. */
-	CIRCLEQ_HEAD(_dqh, _win) dq;	/* Displayed windows. */
-	CIRCLEQ_HEAD(_hqh, _scr) hq;	/* Hidden screens. */
+	TAILQ_HEAD(_dqh, _win) dq;	/* Displayed windows. */
+	TAILQ_HEAD(_hqh, _scr) hq;	/* Hidden screens. */
 
 	void	*perl_interp;		/* Perl interpreter. */
 	void	*tcl_interp;		/* Tcl_Interp *: Tcl interpreter. */
@@ -67,9 +67,9 @@ struct _gs {
 	void	*tk_private;		/* Tk/Tcl support private area. */
 
 					/* File references. */
-	CIRCLEQ_HEAD(_frefh, _fref) frefq;
+	TAILQ_HEAD(_frefh, _fref) frefq;
  					/* File structures. */
- 	CIRCLEQ_HEAD(_exfh, _exf) exfq;
+ 	TAILQ_HEAD(_exfh, _exf) exfq;
 
 #define	GO_COLUMNS	0		/* Global options: columns. */
 #define	GO_LINES	1		/* Global options: lines. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -451,7 +451,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 	exp = EXP(sp);
 
 	/* Check for connections. */
-	if (exp->cscq.lh_first == NULL) {
+	if (LIST_EMPTY(&exp->cscq)) {
 		msgq(sp, M_ERR, "310|No cscope connections running");
 		return (1);
 	}
@@ -463,14 +463,14 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 	 */
 	rtp = NULL;
 	rtqp = NULL;
-	if (exp->tq.cqh_first == (void *)&exp->tq) {
+	if (TAILQ_EMPTY(&exp->tq)) {
 		/* Initialize the `local context' tag queue structure. */
 		CALLOC_GOTO(sp, rtqp, TAGQ *, 1, sizeof(TAGQ));
-		CIRCLEQ_INIT(&rtqp->tagq);
+		TAILQ_INIT(&rtqp->tagq);
 
 		/* Initialize and link in its tag structure. */
 		CALLOC_GOTO(sp, rtp, TAG *, 1, sizeof(TAG));
-		CIRCLEQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
+		TAILQ_INSERT_HEAD(&rtqp->tagq, rtp, q);
 		rtqp->current = rtp; 
 	}
 
@@ -491,10 +491,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 
 	/* Search all open connections for a match. */
 	matches = 0;
-	for (csc = exp->cscq.lh_first; csc != NULL; csc = csc_next) {
-		/* Copy csc->q.lh_next here in case csc is killed. */
-		csc_next = csc->q.le_next;
-
+	LIST_FOREACH_SAFE(csc, &exp->cscq, q, csc_next) {
 		/*
 		 * Send the command to the cscope program.  (We skip the
 		 * first two bytes of the command, because we stored the
@@ -518,7 +515,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 		return (0);
 	}
 
-	tqp->current = tqp->tagq.cqh_first;
+	tqp->current = TAILQ_FIRST(&tqp->tagq);
 
 	/* Try to switch to the first tag. */
 	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
@@ -538,13 +535,13 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 	 * in place, so we can pop all the way back to the current mark.
 	 * Note, it doesn't point to much of anything, it's a placeholder.
 	 */
-	if (exp->tq.cqh_first == (void *)&exp->tq) {
-		CIRCLEQ_INSERT_HEAD(&exp->tq, rtqp, q);
+	if (TAILQ_EMPTY(&exp->tq)) {
+		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
 	} else
-		rtqp = exp->tq.cqh_first;
+		rtqp = TAILQ_FIRST(&exp->tq);
 
 	/* Link the current TAGQ structure into place. */
-	CIRCLEQ_INSERT_HEAD(&exp->tq, tqp, q);
+	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
 
 	(void)cscope_search(sp, tqp, tqp->current);
 
@@ -629,8 +626,8 @@ usage:		(void)csc_help(sp, "find");
 	if (p[0] == '"' && p[1] != '\0' && p[2] == '\0')
 		CBNAME(sp, cbp, p[1]);
 	if (cbp != NULL) {
-		INT2CHAR(sp, cbp->textq.cqh_first->lb,
-			cbp->textq.cqh_first->len, p, tlen);
+		TEXT *t = TAILQ_FIRST(&cbp->textq);
+		INT2CHAR(sp, t->lb, t->len, p, tlen);
 	} else
 		tlen = strlen(p);
 
@@ -638,7 +635,7 @@ usage:		(void)csc_help(sp, "find");
 	CALLOC(sp, tqp, TAGQ *, 1, sizeof(TAGQ) + tlen + 3);
 	if (tqp == NULL)
 		return (NULL);
-	CIRCLEQ_INIT(&tqp->tagq);
+	TAILQ_INIT(&tqp->tagq);
 	tqp->tag = tqp->buf;
 	tqp->tag[0] = pattern[0];
 	tqp->tag[1] = ' ';
@@ -752,7 +749,7 @@ parse(SCR *sp, CSC *csc, TAGQ *tqp, int *matchesp)
 			tp->search = (CHAR_T*)(tp->fname + tp->fnlen + 1);
 			MEMCPYW(tp->search, search, (tp->slen = slen) + 1);
 		}
-		CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+		TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 
 		++*matchesp;
 	}
@@ -870,9 +867,9 @@ terminate(SCR *sp, CSC *csc, int n)
 	if (csc == NULL) {
 		if (n < 1)
 			goto badno;
-		for (i = 1, csc = exp->cscq.lh_first;
-		    csc != NULL; csc = csc->q.le_next, i++)
-			if (i == n)
+		i = 1;
+		LIST_FOREACH(csc, &exp->cscq, q)
+			if (i++ == n)
 				break;
 		if (csc == NULL) {
 badno:			msgq(sp, M_ERR, "312|%d: no such cscope session", n);
@@ -913,7 +910,7 @@ cscope_reset(SCR *sp, EXCMD *cmdp, const CHAR_T *notusedp)
 {
 	EX_PRIVATE *exp;
 
-	for (exp = EXP(sp); exp->cscq.lh_first != NULL;) {
+	for (exp = EXP(sp); !LIST_EMPTY(&exp->cscq);) {
 		static CHAR_T one[] = {'1', 0};
 		if (cscope_kill(sp, cmdp, one))
 			return (1);
@@ -935,14 +932,14 @@ cscope_display(SCR *sp)
 	int i;
 
 	exp = EXP(sp);
-	if (exp->cscq.lh_first == NULL) {
+	if (LIST_EMPTY(&exp->cscq)) {
 		ex_printf(sp, "No cscope connections.\n");
 		return (0);
 	}
-	for (i = 1,
-	    csc = exp->cscq.lh_first; csc != NULL; ++i, csc = csc->q.le_next)
+	i = 1;
+	LIST_FOREACH(csc, &exp->cscq, q)
 		ex_printf(sp,
-		    "%2d %s (process %lu)\n", i, csc->dname, (u_long)csc->pid);
+		    "%2d %s (process %lu)\n", i++, csc->dname, (u_long)csc->pid);
 	return (0);
 }
 

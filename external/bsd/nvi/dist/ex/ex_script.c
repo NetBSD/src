@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_script.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -379,8 +379,7 @@ sscr_check_input(SCR *sp, fd_set *fdset, int maxfd)
 
 loop:	memcpy(&rdfd, fdset, sizeof(fd_set));
 
-	for (tsp = wp->scrq.cqh_first; 
-	    tsp != (void *)&wp->scrq; tsp = tsp->q.cqe_next)
+	TAILQ_FOREACH(tsp, &wp->scrq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			FD_SET(sp->script->sh_master, &rdfd);
 			if (sp->script->sh_master > maxfd)
@@ -394,8 +393,7 @@ loop:	memcpy(&rdfd, fdset, sizeof(fd_set));
 	default:
 		break;
 	}
-	for (tsp = wp->scrq.cqh_first; 
-	    tsp != (void *)&wp->scrq; tsp = tsp->q.cqe_next)
+	TAILQ_FOREACH(tsp, &wp->scrq, q)
 		if (F_ISSET(sp, SC_SCRIPT) &&
 		    FD_ISSET(sp->script->sh_master, &rdfd)) {
 			if (sscr_input(sp))
@@ -427,8 +425,7 @@ loop:	maxfd = 0;
 	poll.tv_usec = 0;
 
 	/* Set up the input mask. */
-	for (sp = wp->scrq.cqh_first; sp != (void *)&wp->scrq; 
-	    sp = sp->q.cqe_next)
+	TAILQ_FOREACH(sp, &wp->scrq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			FD_SET(sp->script->sh_master, &rdfd);
 			if (sp->script->sh_master > maxfd)
@@ -447,8 +444,7 @@ loop:	maxfd = 0;
 	}
 
 	/* Read the input. */
-	for (sp = wp->scrq.cqh_first; sp != (void *)&wp->scrq; 
-	    sp = sp->q.cqe_next)
+	TAILQ_FOREACH(sp, &wp->scrq, q)
 		if (F_ISSET(sp, SC_SCRIPT) &&
 		    FD_ISSET(sp->script->sh_master, &rdfd) && 
 		    sscr_insert(sp))
@@ -655,8 +651,7 @@ sscr_check(SCR *sp)
 
 	gp = sp->gp;
 	wp = sp->wp;
-	for (sp = wp->scrq.cqh_first; sp != (void *)&wp->scrq; 
-	    sp = sp->q.cqe_next)
+	TAILQ_FOREACH(sp, &wp->scrq, q)
 		if (F_ISSET(sp, SC_SCRIPT)) {
 			F_SET(gp, G_SCRWIN);
 			return;

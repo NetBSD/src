@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: cut.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ copyloop:
 	if (cbp == NULL) {
 		CALLOC_RET(sp, cbp, CB *, 1, sizeof(CB));
 		cbp->name = name;
-		CIRCLEQ_INIT(&cbp->textq);
+		TAILQ_INIT(&cbp->textq);
 		LIST_INSERT_HEAD(&sp->wp->cutq, cbp, q);
 	} else if (!append) {
 		text_lfree(&cbp->textq);
@@ -192,7 +192,7 @@ cb_rotate(SCR *sp)
 	CB *cbp, *del_cbp;
 
 	del_cbp = NULL;
-	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next)
+	LIST_FOREACH(cbp, &sp->wp->cutq, q)
 		switch(cbp->name) {
 		case L('1'):
 			cbp->name = L('2');
@@ -262,7 +262,7 @@ cut_line(SCR *sp, db_recno_t lno, size_t fcno, size_t clen, CB *cbp)
 	}
 
 	/* Append to the end of the cut buffer. */
-	CIRCLEQ_INSERT_TAIL(&cbp->textq, tp, q);
+	TAILQ_INSERT_TAIL(&cbp->textq, tp, q);
 	cbp->len += tp->len;
 
 	return (0);
@@ -280,8 +280,8 @@ cut_close(WIN *wp)
 	CB *cbp;
 
 	/* Free cut buffer list. */
-	while ((cbp = wp->cutq.lh_first) != NULL) {
-		if (cbp->textq.cqh_first != (void *)&cbp->textq)
+	while ((cbp = LIST_FIRST(&wp->cutq)) != NULL) {
+		if (!TAILQ_EMPTY(&cbp->textq))
 			text_lfree(&cbp->textq);
 		LIST_REMOVE(cbp, q);
 		free(cbp);
@@ -289,7 +289,7 @@ cut_close(WIN *wp)
 
 	/* Free default cut storage. */
 	cbp = &wp->dcb_store;
-	if (cbp->textq.cqh_first != (void *)&cbp->textq)
+	if (!TAILQ_EMPTY(&cbp->textq))
 		text_lfree(&cbp->textq);
 }
 
@@ -332,8 +332,8 @@ text_lfree(TEXTH *headp)
 {
 	TEXT *tp;
 
-	while ((tp = headp->cqh_first) != (void *)headp) {
-		CIRCLEQ_REMOVE(headp, tp, q);
+	while ((tp = TAILQ_FIRST(headp)) != NULL) {
+		TAILQ_REMOVE(headp, tp, q);
 		text_free(tp);
 	}
 }
