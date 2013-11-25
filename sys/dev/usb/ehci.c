@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.217 2013/11/23 12:41:13 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.218 2013/11/25 07:59:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.217 2013/11/23 12:41:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.218 2013/11/25 07:59:03 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1030,14 +1030,16 @@ ehci_idone(struct ehci_xfer *ex)
 		char sbuf[128];
 
 		snprintb(sbuf, sizeof(sbuf),
-		    "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR\3MISSED\1PINGSTATE",
+		    "\20\10ACTIVE\7HALTED\6BUFERR\5BABBLE"
+		    "\4XACTERR\3MISSED\2SPLIT\1PING",
 		    (u_int32_t)status);
 
-		DPRINTFN(2, ("ehci_idone: error, addr=%d, endpt=0x%02x, "
-			  "status 0x%s\n",
-			  xfer->pipe->device->address,
-			  xfer->pipe->endpoint->edesc->bEndpointAddress,
-			  sbuf));
+		DPRINTFN(2, ("%s: error, addr=%d, endpt=0x%02x, "
+		    "cerr=%d pid=%d stat=%s\n", __func__,
+		   xfer->pipe->device->address,
+		   xfer->pipe->endpoint->edesc->bEndpointAddress,
+		   EHCI_QTD_GET_CERR(status), EHCI_QTD_GET_PID(status), sbuf));
+
 		if (ehcidebug > 2) {
 			ehci_dump_sqh(epipe->sqh);
 			ehci_dump_sqtds(ex->sqtdstart);
