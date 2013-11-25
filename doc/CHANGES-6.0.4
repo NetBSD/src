@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.4,v 1.1.2.5 2013/11/17 19:23:19 bouyer Exp $
+# $NetBSD: CHANGES-6.0.4,v 1.1.2.6 2013/11/25 08:31:28 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.3 release to the NetBSD 6.0.4
 release:
@@ -67,4 +67,18 @@ sys/net/npf/npf_instr.c				patch
 
 	fix the byteorder for port range comparison
 	[rmind, ticket #986]
+
+sys/kern/uipc_socket.c				1.220
+
+	PR/48098: Brian Marcotte:
+	panic: kernel diagnostic assertion "cred != NULL":
+	Fix from Michael van Elst, tcpdrop crashes kernel on
+	ebryonic connections.
+	[spz, ticket #988]
+
+sys/uvm/uvm_km.c				1.125
+
+	uvm_km_kmem_alloc: don't hardcode kmem_va_arena. This could lead to
+	freeing to the wrong vmem arena in case of failed page allocations.
+	[para, ticket #989]
 
