@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.58 2013/11/23 14:41:38 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.59 2013/11/25 03:02:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -599,6 +599,7 @@ struct {								\
 	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 
 
+#ifndef _KERNEL
 /*
  * Circular queue definitions. Do not use. We still keep the macros
  * for compatibility but because of pointer aliasing issues their use
@@ -778,5 +779,6 @@ struct {								\
 	(((elm)->field.cqe_prev == CIRCLEQ_ENDC(head))			\
 	    ? ((head)->cqh_last)					\
 	    : (elm->field.cqe_prev))
+#endif /* !_KERNEL */
 
 #endif	/* !_SYS_QUEUE_H_ */
