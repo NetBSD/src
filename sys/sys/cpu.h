@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2013/11/24 21:58:38 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2013/11/25 03:06:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -90,8 +90,6 @@ int	cpu_lwp_setprivate(struct lwp *, void *);
 void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
 #endif
-
-CIRCLEQ_HEAD(cpuqueue, cpu_info);
 
 #ifdef _KERNEL
 extern kmutex_t cpu_lock;
