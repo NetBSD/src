@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitarch.h,v 1.1 2013/11/17 14:34:12 alnsn Exp $	*/
+/*	$NetBSD: sljitarch.h,v 1.2 2013/11/25 23:53:44 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
 #ifndef _POWERPC_SLJITARCH_H
 #define _POWERPC_SLJITARCH_H
 
+#include <sys/types.h>
+#include <machine/cpu.h>
+
 #if defined(_LP64)
 #define SLJIT_CONFIG_PPC_64 1
 #else
@@ -36,6 +39,6 @@
 #endif
 
 #define SLJIT_CACHE_FLUSH(from, to) \
-	ppc_cache_flush((from), (to))
+	__syncicache((from), (to)-(from))
 
 #endif
