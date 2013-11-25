@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.71.2.1 2012/12/13 23:41:57 riz Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.71.2.2 2013/11/25 08:23:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.2.1 2012/12/13 23:41:57 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.2.2 2013/11/25 08:23:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -992,7 +992,7 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	uint8_t i;
 
 	val = ts->ts_control;
-	val = val & __BITS(1, 4);
+	val = val & __BITS(0, 4);
 
 	wrmsr(MSR_THERM_CONTROL, val);
 
