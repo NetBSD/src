@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.352 2013/11/16 23:54:01 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.353 2013/11/25 02:59:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.352 2013/11/16 23:54:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.353 2013/11/25 02:59:14 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -279,10 +279,12 @@ pvhead4m(u_int pte)
  * by flushing (and invalidating) a TLB entry when appropriate before
  * altering an in-memory page table entry.
  */
+struct mmuq;
 struct mmuentry {
-	CIRCLEQ_ENTRY(mmuentry)	me_list;	/* usage list link */
+	TAILQ_ENTRY(mmuentry)	me_list;	/* usage list link */
 	TAILQ_ENTRY(mmuentry)	me_pmchain;	/* pmap owner link */
 	struct	pmap *me_pmap;		/* pmap, if in use */
+	struct	mmuq *me_queue;		/* where do we live */
 	u_short	me_vreg;		/* associated virtual region/segment */
 	u_short	me_vseg;		/* associated virtual region/segment */
 	u_short	me_cookie;		/* hardware SMEG/PMEG number */
@@ -293,24 +295,24 @@ struct mmuentry {
 struct mmuentry *mmusegments;	/* allocated in pmap_bootstrap */
 struct mmuentry *mmuregions;	/* allocated in pmap_bootstrap */
 
-CIRCLEQ_HEAD(mmuq, mmuentry);
+TAILQ_HEAD(mmuq, mmuentry);
 struct mmuq segm_freelist, segm_lru, segm_locked;
 struct mmuq region_freelist, region_lru, region_locked;
-/*
- * We use a circular queue, since that allows us to remove an element
- * from a list without knowing the list header.
- */
-#define CIRCLEQ_REMOVE_NOH(elm, field) do {				\
-	(elm)->field.cqe_next->field.cqe_prev = (elm)->field.cqe_prev;	\
-	(elm)->field.cqe_prev->field.cqe_next = (elm)->field.cqe_next;	\
+
+#define MMUQ_INIT(head)			TAILQ_INIT(head)
+
+#define MMUQ_REMOVE(elm, field)		do { 	\
+	TAILQ_REMOVE(elm->me_queue, elm,field); \
+	elm->me_queue = NULL;			\
 } while (/*CONSTCOND*/0)
 
-#define MMUQ_INIT(head)			CIRCLEQ_INIT(head)
-#define MMUQ_REMOVE(elm,field)		CIRCLEQ_REMOVE_NOH(elm,field)
-#define MMUQ_INSERT_TAIL(head,elm,field)CIRCLEQ_INSERT_TAIL(head,elm,field)
-#define MMUQ_EMPTY(head)		CIRCLEQ_EMPTY(head)
-#define MMUQ_FIRST(head)		CIRCLEQ_FIRST(head)
+#define MMUQ_INSERT_TAIL(head, elm, field) do {	\
+	TAILQ_INSERT_TAIL(head, elm, field);	\
+	elm->me_queue = head;			\
+} while (/*CONSTCOND*/0)
 
+#define MMUQ_EMPTY(head)		TAILQ_EMPTY(head)
+#define MMUQ_FIRST(head)		TAILQ_FIRST(head)
 
 int	seginval;		/* [4/4c] the invalid segment number */
 int	reginval;		/* [4/3mmu] the invalid region number */
