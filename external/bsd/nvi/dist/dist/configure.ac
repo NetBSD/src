@@ -1,10 +1,12 @@
-dnl	$Id: configure.ac,v 1.1 2013/11/25 23:02:44 christos Exp $
+dnl	$Id: configure.ac,v 1.2 2013/11/25 23:03:18 christos Exp $
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(../common/main.c)
+AC_INIT([vi], [1.81.6])
+AC_CONFIG_SRCDIR([../common/main.c])
 AC_CONFIG_AUX_DIR(.)
-AM_INIT_AUTOMAKE(vi, 1.81.6)
+AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIR([m4])
 
 dnl Configure setup.
 AC_PROG_INSTALL()
@@ -78,6 +80,7 @@ AC_SUBST(CC)
 CC=${CC-cc}
 CFLAGS=${CFLAGS-""}
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 if test "$GCC" = yes; then
 	AC_DEFINE(HAVE_GCC, 1, [Define if you have gcc.])
@@ -596,15 +599,14 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_STRUCT_TM
 
-AC_CHECK_HEADER(sys/cdefs.h, [],
-	[AC_CONFIG_FILES([sys/cdefs.h:../db.1.85/PORT/include/cdefs.h])])
+dnl AC_CHECK_HEADER(sys/cdefs.h, [], [AC_CONFIG_FILES([sys/cdefs.h:../db.1.85/PORT/include/cdefs.h])])
 
 dnl Checks for library functions.
 VI_CV_REPLACE_FUNCS(bsearch gethostname memchr memset)
 VI_CV_REPLACE_FUNCS(mkstemp mmap strdup strpbrk)
 VI_CV_REPLACE_FUNCS(snprintf vsnprintf)
 
-AC_CHECK_FUNCS(select)
+AC_CHECK_FUNCS(select memcpy)
 AC_CHECK_FUNCS(setenv, [need_env=no], [need_env=yes])
 AC_CHECK_FUNCS(strsep, [need_strsep=no], [need_strsep=yes])
 AC_CHECK_FUNCS(unsetenv,, [need_env=yes])
