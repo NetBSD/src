@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: exf.h,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -15,10 +15,10 @@
  *	The file structure.
  */
 struct _exf {
-	CIRCLEQ_ENTRY(_exf) q;		/* Linked list of file structures. */
+	TAILQ_ENTRY(_exf) q;		/* Linked list of file structures. */
 	int	 refcnt;		/* Reference count. */
 
-	CIRCLEQ_HEAD(_escrh, _scr)   scrq;   /* Attached screens */
+	TAILQ_HEAD(_escrh, _scr)   scrq;   /* Attached screens */
 					/* Underlying database state. */
 	DB_ENV	*env;			/* The DB environment. */
 	char	*env_path;		/* DB environment directory. */

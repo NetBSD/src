@@ -117,15 +117,15 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 	 * is there.
 	 */
 	if (F_ISSET(sp, SC_TINPUT)) {
-		l1 = ((TEXT *)sp->tiq.cqh_first)->lno;
-		l2 = ((TEXT *)sp->tiq.cqh_last)->lno;
+		l1 = TAILQ_FIRST(&sp->tiq)->lno;
+		l2 = TAILQ_LAST(&sp->tiq, _texth)->lno;
 		if (l1 <= lno && l2 >= lno) {
 #if defined(DEBUG) && 0
 			vtrace(sp,
 			    "retrieve TEXT buffer line %lu\n", (u_long)lno);
 #endif
-			for (tp = sp->tiq.cqh_first;
-			    tp->lno != lno; tp = tp->q.cqe_next);
+			for (tp = TAILQ_FIRST(&sp->tiq);
+			    tp->lno != lno; tp = TAILQ_NEXT(tp, q));
 			if (lenp != NULL)
 				*lenp = tp->len;
 			if (pp != NULL)
@@ -501,8 +501,8 @@ db_exist(SCR *sp, db_recno_t lno)
 	 */
 	if (ep->c_nlines != OOBLNO)
 		return (lno <= (F_ISSET(sp, SC_TINPUT) ?
-		    ep->c_nlines + (((TEXT *)sp->tiq.cqh_last)->lno -
-		    ((TEXT *)sp->tiq.cqh_first)->lno) : ep->c_nlines));
+		    ep->c_nlines + (TAILQ_LAST(&sp->tiq, _texth)->lno -
+		    TAILQ_FIRST(&sp->tiq)->lno) : ep->c_nlines));
 
 	/* Go get the line. */
 	return (!db_get(sp, lno, 0, NULL, NULL));
@@ -536,8 +536,8 @@ db_last(SCR *sp, db_recno_t *lnop)
 	if (ep->c_nlines != OOBLNO) {
 		*lnop = ep->c_nlines;
 		if (F_ISSET(sp, SC_TINPUT))
-			*lnop += ((TEXT *)sp->tiq.cqh_last)->lno -
-			    ((TEXT *)sp->tiq.cqh_first)->lno;
+			*lnop += TAILQ_LAST(&sp->tiq, _texth)->lno -
+			    TAILQ_FIRST(&sp->tiq)->lno;
 		return (0);
 	}
 
@@ -574,8 +574,8 @@ alloc_err:
 
 	/* Return the value. */
 	*lnop = (F_ISSET(sp, SC_TINPUT) &&
-	    ((TEXT *)sp->tiq.cqh_last)->lno > lno ?
-	    ((TEXT *)sp->tiq.cqh_last)->lno : lno);
+	    TAILQ_LAST(&sp->tiq, _texth)->lno > lno ?
+	    TAILQ_LAST(&sp->tiq, _texth)->lno : lno);
 	return (0);
 }
 
@@ -612,13 +612,11 @@ scr_update(SCR *sp, db_recno_t lno, lnop_t op, int current)
 	/* XXXX goes outside of window */
 	ep = sp->ep;
 	if (ep->refcnt != 1)
-		for (wp = sp->gp->dq.cqh_first; wp != (void *)&sp->gp->dq; 
-		    wp = wp->q.cqe_next)
-			for (tsp = wp->scrq.cqh_first;
-			    tsp != (void *)&wp->scrq; tsp = tsp->q.cqe_next)
-			if (sp != tsp && tsp->ep == ep)
-				if (vs_change(tsp, lno, op))
-					return (1);
+		TAILQ_FOREACH(wp, &sp->gp->dq, q)
+			TAILQ_FOREACH(tsp, &wp->scrq, q)
+				if (sp != tsp && tsp->ep == ep)
+					if (vs_change(tsp, lno, op))
+						return (1);
 	return (current ? vs_change(sp, lno, op) : 0);
 }
 
@@ -638,8 +636,7 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 	 * for db_insert.  It might be better to adjust it, like
 	 * marks, @ and global
 	 */
-	for (scrp = ep->scrq.cqh_first; scrp != (void *)&ep->scrq; 
-	    scrp = scrp->eq.cqe_next)
+	TAILQ_FOREACH(scrp, &ep->scrq, eq)
 		switch (op) {
 		case LINE_INSERT:
 		case LINE_DELETE:

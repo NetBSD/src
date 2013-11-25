@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: gs.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.
@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "../common/common.h"
-#ifdef USE_PERL_SETENV
+#ifdef USE_PERL_INTERP
 #include "perl_api_extern.h"
 #endif
 
@@ -50,14 +50,14 @@ gs_init(char *name)
 
 	/* Common global structure initialization. */
 	/* others will need to be copied from main.c */
-	CIRCLEQ_INIT(&gp->dq);
+	TAILQ_INIT(&gp->dq);
 
-	CIRCLEQ_INIT(&gp->hq);
+	TAILQ_INIT(&gp->hq);
 	gp->noprint = DEFAULT_NOPRINT;
 
 	/* Structures shared by screens so stored in the GS structure. */
-	CIRCLEQ_INIT(&gp->frefq);
-	CIRCLEQ_INIT(&gp->exfq);
+	TAILQ_INIT(&gp->frefq);
+	TAILQ_INIT(&gp->exfq);
 	LIST_INIT(&gp->seqq);
 
 	thread_init(gp);
@@ -84,10 +84,10 @@ gs_new_win(GS *gp)
 	LIST_INIT(&wp->ecq);
 	LIST_INSERT_HEAD(&wp->ecq, &wp->excmd, q);
 
-	CIRCLEQ_INSERT_TAIL(&gp->dq, wp, q);
-	CIRCLEQ_INIT(&wp->scrq);
+	TAILQ_INSERT_TAIL(&gp->dq, wp, q);
+	TAILQ_INIT(&wp->scrq);
 
-	CIRCLEQ_INIT(&wp->dcb_store.textq);
+	TAILQ_INIT(&wp->dcb_store.textq);
 	LIST_INIT(&wp->cutq);
 
 	wp->gp = gp;
@@ -106,14 +106,16 @@ win_end(WIN *wp)
 {
 	SCR *sp;
 
-	CIRCLEQ_REMOVE(&wp->gp->dq, wp, q);
+	TAILQ_REMOVE(&wp->gp->dq, wp, q);
 
 	if (wp->ccl_sp != NULL) {
 		(void)file_end(wp->ccl_sp, NULL, 1);
 		(void)screen_end(wp->ccl_sp);
 	}
-	while ((sp = wp->scrq.cqh_first) != (void *)&wp->scrq)
+	while ((sp = TAILQ_FIRST(&wp->scrq)) != NULL) {
+		TAILQ_REMOVE(&wp->scrq, sp, q);
 		(void)screen_end(sp);
+	}
 
 	/* Free key input queue. */
 	if (wp->i_event != NULL)
@@ -148,10 +150,14 @@ gs_end(GS *gp)
 	WIN *wp;
 
 	/* If there are any remaining screens, kill them off. */
-	while ((wp = gp->dq.cqh_first) != (void *)&gp->dq)
+	while ((wp = TAILQ_FIRST(&gp->dq)) != NULL) {
+		TAILQ_REMOVE(&gp->dq, wp, q);
 		(void)win_end(wp);
-	while ((sp = gp->hq.cqh_first) != (void *)&gp->hq)
+	}
+	while ((sp = TAILQ_FIRST(&gp->hq)) != NULL) {
+		TAILQ_REMOVE(&gp->hq, sp, q);
 		(void)screen_end(sp);
+	}
 
 #ifdef HAVE_PERL_INTERP
 	perl_end(gp);
@@ -160,8 +166,8 @@ gs_end(GS *gp)
 #if defined(DEBUG) || defined(PURIFY) || defined(LIBRARY)
 	{ FREF *frp;
 		/* Free FREF's. */
-		while ((frp = gp->frefq.cqh_first) != (FREF *)&gp->frefq) {
-			CIRCLEQ_REMOVE(&gp->frefq, frp, q);
+		while ((frp = TAILQ_FIRST(&gp->frefq)) != NULL) {
+			TAILQ_REMOVE(&gp->frefq, frp, q);
 			if (frp->name != NULL)
 				free(frp->name);
 			if (frp->tname != NULL)
@@ -187,7 +193,7 @@ gs_end(GS *gp)
 	 * it's possible that the user is sourcing a file that exits from the
 	 * editor).
 	 */
-	while ((mp = gp->msgq.lh_first) != NULL) {
+	while ((mp = LIST_FIRST(&gp->msgq)) != NULL) {
 		(void)fprintf(stderr, "%s%.*s",
 		    mp->mtype == M_ERR ? "ex/vi: " : "", (int)mp->len, mp->buf);
 		LIST_REMOVE(mp, q);

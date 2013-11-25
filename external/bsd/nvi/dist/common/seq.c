@@ -1,4 +1,4 @@
-/*	$NetBSD: seq.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: seq.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -184,8 +184,10 @@ seq_find(SCR *sp, SEQ **lastqp, EVENT *e_input, CHAR_T *c_input, size_t ilen, se
 	 */
 	if (ispartialp != NULL)
 		*ispartialp = 0;
-	for (lqp = NULL, qp = sp->gp->seqq.lh_first;
-	    qp != NULL; lqp = qp, qp = qp->q.le_next) {
+
+	for (lqp = NULL, qp = LIST_FIRST(&sp->gp->seqq);
+	    qp != NULL;
+	    lqp = qp, qp = LIST_NEXT(qp, q)) {
 		/*
 		 * Fast checks on the first character and type, and then
 		 * a real comparison.
@@ -249,7 +251,7 @@ seq_close(GS *gp)
 {
 	SEQ *qp;
 
-	while ((qp = gp->seqq.lh_first) != NULL) {
+	while ((qp = LIST_FIRST(&gp->seqq)) != NULL) {
 		if (qp->name != NULL)
 			free(qp->name);
 		if (qp->input != NULL)
@@ -277,7 +279,7 @@ seq_dump(SCR *sp, seq_t stype, int isname)
 
 	cnt = 0;
 	gp = sp->gp;
-	for (qp = gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
+	LIST_FOREACH(qp, &gp->seqq, q) {
 		if (stype != qp->stype || F_ISSET(qp, SEQ_FUNCMAP))
 			continue;
 		++cnt;
@@ -321,7 +323,7 @@ seq_save(SCR *sp, FILE *fp, const char *prefix, seq_t stype)
 	ARG_CHAR_T ch;
 
 	/* Write a sequence command for all keys the user defined. */
-	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
+	LIST_FOREACH(qp, &sp->gp->seqq, q) {
 		if (stype != qp->stype || !F_ISSET(qp, SEQ_USERDEF))
 			continue;
 		if (prefix)

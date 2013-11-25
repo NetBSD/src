@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: screen.h,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +30,9 @@
  *	A list of screens that are displayed as a whole.
  */
 struct _win {
-	CIRCLEQ_ENTRY(_win)	    q;	    /* Windows. */
+	TAILQ_ENTRY(_win)	    q;	    /* Windows. */
 
-	CIRCLEQ_HEAD(_scrh, _scr)   scrq;   /* Screens */
+	TAILQ_HEAD(_scrh, _scr)   scrq;   /* Screens */
 
 	GS	*gp;			/* Pointer to global area. */
 
@@ -88,8 +88,8 @@ struct _win {
  */
 struct _scr {
 /* INITIALIZED AT SCREEN CREATE. */
-	CIRCLEQ_ENTRY(_scr) q;		/* Screens. */
-	CIRCLEQ_ENTRY(_scr) eq;         /* Screens. */
+	TAILQ_ENTRY(_scr) q;		/* Screens. */
+	TAILQ_ENTRY(_scr) eq;         /* Screens. */
 
 	int	 id;			/* Screen id #. */
 	int	 refcnt;		/* Reference count. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: key.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -738,12 +738,10 @@ v_sync(SCR *sp, int flags)
 	WIN *wp;
 
 	gp = sp->gp;
-	for (wp = gp->dq.cqh_first; wp != (void *)&gp->dq; 
-	    wp = wp->q.cqe_next)
-		for (sp = wp->scrq.cqh_first; sp != (void *)&wp->scrq; 
-		    sp = sp->q.cqe_next)
-		rcv_sync(sp, flags);
-	for (sp = gp->hq.cqh_first; sp != (void *)&gp->hq; sp = sp->q.cqe_next)
+	TAILQ_FOREACH(wp, &gp->dq, q)
+		TAILQ_FOREACH(sp, &wp->scrq, q)
+			rcv_sync(sp, flags);
+	TAILQ_FOREACH(sp, &gp->hq, q)
 		rcv_sync(sp, flags);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_move.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_move.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ ex_copy(SCR *sp, EXCMD *cmdp)
 	fm1 = cmdp->addr1;
 	fm2 = cmdp->addr2;
 	memset(&cb, 0, sizeof(cb));
-	CIRCLEQ_INIT(&cb.textq);
+	TAILQ_INIT(&cb.textq);
 	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
 		if (cut_line(sp, cnt, 0, ENTIRE_LINE, &cb)) {
 			rval = 1;
@@ -124,7 +124,7 @@ ex_move(SCR *sp, EXCMD *cmdp)
 
 	/* Log the old positions of the marks. */
 	mark_reset = 0;
-	for (lmp = sp->ep->marks.lh_first; lmp != NULL; lmp = lmp->q.le_next)
+	LIST_FOREACH(lmp, &sp->ep->marks, q)
 		if (lmp->name != ABSMARK1 &&
 		    lmp->lno >= fl && lmp->lno <= tl) {
 			mark_reset = 1;
@@ -148,8 +148,7 @@ ex_move(SCR *sp, EXCMD *cmdp)
 			if (db_append(sp, 1, tl, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = sp->ep->marks.lh_first;
-				    lmp != NULL; lmp = lmp->q.le_next)
+				LIST_FOREACH(lmp, &sp->ep->marks, q)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl + 1;
@@ -167,8 +166,7 @@ ex_move(SCR *sp, EXCMD *cmdp)
 			if (db_append(sp, 1, tl++, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = sp->ep->marks.lh_first;
-				    lmp != NULL; lmp = lmp->q.le_next)
+				LIST_FOREACH(lmp, &sp->ep->marks, q)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl;
@@ -184,8 +182,7 @@ ex_move(SCR *sp, EXCMD *cmdp)
 
 	/* Log the new positions of the marks. */
 	if (mark_reset)
-		for (lmp = sp->ep->marks.lh_first;
-		    lmp != NULL; lmp = lmp->q.le_next)
+		LIST_FOREACH(lmp, &sp->ep->marks, q)
 			if (lmp->name != ABSMARK1 &&
 			    lmp->lno >= mfl && lmp->lno <= mtl)
 				(void)log_mark(sp, lmp);
