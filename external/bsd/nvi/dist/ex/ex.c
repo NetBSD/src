@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ ex(SCR **spp)
 		return (1);
 
 	/* Flush any saved messages. */
-	while ((mp = gp->msgq.lh_first) != NULL) {
+	while ((mp = LIST_FIRST(&gp->msgq)) != NULL) {
 		wp->scr_msg(sp, mp->mtype, mp->buf, mp->len);
 		LIST_REMOVE(mp, q);
 		free(mp->buf);
@@ -121,7 +121,7 @@ ex(SCR **spp)
 		 * If the user entered a single carriage return, send
 		 * ex_cmd() a separator -- it discards single newlines.
 		 */
-		tp = sp->tiq.cqh_first;
+		tp = TAILQ_FIRST(&sp->tiq);
 		if (tp->len == 0) {
 			static CHAR_T space = ' ';
 			wp->excmd.cp = &space;	/* __TK__ why not |? */
@@ -224,7 +224,7 @@ ex_cmd(SCR *sp)
 	 * This means that *everything* must be resolved when we leave
 	 * this function for any reason.
 	 */
-loop:	ecp = wp->ecq.lh_first;
+loop:	ecp = LIST_FIRST(&wp->ecq);
 
 	/* If we're reading a command from a file, set up error information. */
 	if (ecp->if_name != NULL) {
@@ -328,7 +328,7 @@ loop:	ecp = wp->ecq.lh_first;
 	    (!notempty || F_ISSET(sp, SC_VI) || F_ISSET(ecp, E_BLIGNORE))) {
 		if (ex_load(sp))
 			goto rfail;
-		ecp = wp->ecq.lh_first;
+		ecp = LIST_FIRST(&wp->ecq);
 		if (ecp->clen == 0)
 			goto rsuccess;
 		goto loop;
@@ -1541,8 +1541,7 @@ addr_verify:
 	 */
 	if (F_ISSET(sp, SC_EXIT | SC_EXIT_FORCE | SC_FSWITCH | SC_SSWITCH)) {
 		at_found = gv_found = 0;
-		for (ecp = wp->ecq.lh_first;
-		    ecp != NULL; ecp = ecp->q.le_next)
+		LIST_FOREACH(ecp, &wp->ecq, q)
 			switch (ecp->agv_flags) {
 			case 0:
 			case AGV_AT_NORANGE:
@@ -1594,7 +1593,7 @@ err:	/*
 				break;
 			}
 		}
-	if (ecp->save_cmdlen != 0 || wp->ecq.lh_first != &wp->excmd) {
+	if (ecp->save_cmdlen != 0 || LIST_FIRST(&wp->ecq) != &wp->excmd) {
 discard:	msgq(sp, M_BERR,
 		    "092|Ex command failed: pending commands discarded");
 		ex_discard(sp);
@@ -2079,7 +2078,7 @@ ex_load(SCR *sp)
 		 * but discard any allocated source name, we've returned to
 		 * the beginning of the command stack.
 		 */
-		if ((ecp = wp->ecq.lh_first) == &wp->excmd) {
+		if ((ecp = LIST_FIRST(&wp->ecq)) == &wp->excmd) {
 			if (F_ISSET(ecp, E_NAMEDISCARD)) {
 				free(ecp->if_name);
 				ecp->if_name = NULL;
@@ -2103,15 +2102,15 @@ ex_load(SCR *sp)
 		 */
 		if (FL_ISSET(ecp->agv_flags, AGV_ALL)) {
 			/* Discard any exhausted ranges. */
-			while ((rp = ecp->rq.cqh_first) != (void *)&ecp->rq)
+			while ((rp = TAILQ_FIRST(&ecp->rq)) != NULL)
 				if (rp->start > rp->stop) {
-					CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+					TAILQ_REMOVE(&ecp->rq, rp, q);
 					free(rp);
 				} else
 					break;
 
 			/* If there's another range, continue with it. */
-			if (rp != (void *)&ecp->rq)
+			if (rp != NULL)
 				break;
 
 			/* If it's a global/v command, fix up the last line. */
@@ -2165,10 +2164,10 @@ ex_discard(SCR *sp)
 	 * We know the first command can't be an AGV command, so we don't
 	 * process it specially.  We do, however, nail the command itself.
 	 */
-	for (wp = sp->wp; (ecp = wp->ecq.lh_first) != &wp->excmd;) {
+	for (wp = sp->wp; (ecp = LIST_FIRST(&wp->ecq)) != &wp->excmd;) {
 		if (FL_ISSET(ecp->agv_flags, AGV_ALL)) {
-			while ((rp = ecp->rq.cqh_first) != (void *)&ecp->rq) {
-				CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+			while ((rp = TAILQ_FIRST(&ecp->rq)) != NULL) {
+				TAILQ_REMOVE(&ecp->rq, rp, q);
 				free(rp);
 			}
 			free(ecp->o_cp);
@@ -2176,7 +2175,7 @@ ex_discard(SCR *sp)
 		LIST_REMOVE(ecp, q);
 		free(ecp);
 	}
-	wp->ecq.lh_first->clen = 0;
+	LIST_FIRST(&wp->ecq)->clen = 0;
 	return (0);
 }
 
