@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.60 2013/11/17 19:23:06 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.61 2013/11/25 08:31:57 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1018,4 +1018,25 @@ sys/net/npf/npf_instr.c				patch
 
 	fix the byteorder for port range comparison
 	[rmind, ticket #986]
+
+sys/arch/x86/acpi/acpi_cpu_md.c			1.74
+sys/dev/acpi/acpi_cpu_tstate.c			1.32
+
+	Fix a too eager T-state validation check to accomodate new Intel CPUs.
+	Allow 4-bit range for MSR_THERM_CONTROL.
+	[jruoho, ticket #987]
+
+sys/kern/uipc_socket.c				1.220
+
+	PR/48098: Brian Marcotte:
+	panic: kernel diagnostic assertion "cred != NULL":
+	Fix from Michael van Elst, tcpdrop crashes kernel on
+	ebryonic connections.
+	[spz, ticket #988]
+
+sys/uvm/uvm_km.c				1.125
+
+	uvm_km_kmem_alloc: don't hardcode kmem_va_arena. This could lead to
+	freeing to the wrong vmem arena in case of failed page allocations.
+	[para, ticket #989]
 
