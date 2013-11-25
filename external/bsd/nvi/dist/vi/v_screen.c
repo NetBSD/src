@@ -1,4 +1,4 @@
-/*	$NetBSD: v_screen.c,v 1.2 2013/11/22 15:52:06 christos Exp $	*/
+/*	$NetBSD: v_screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -50,13 +50,13 @@ v_screen(SCR *sp, VICMD *vp)
 	 * Try for the next lower screen, or, go back to the first
 	 * screen on the stack.
 	 */
-	if (sp->q.cqe_next != (void *)&sp->wp->scrq)
-		sp->nextdisp = sp->q.cqe_next;
-	else if (sp->wp->scrq.cqh_first == sp) {
+	if (TAILQ_NEXT(sp, q) != NULL)
+		sp->nextdisp = TAILQ_NEXT(sp, q);
+	else if (TAILQ_EMPTY(&sp->wp->scrq)) {
 		msgq(sp, M_ERR, "187|No other screen to switch to");
 		return (1);
 	} else
-		sp->nextdisp = sp->wp->scrq.cqh_first;
+		sp->nextdisp = TAILQ_FIRST(&sp->wp->scrq);
 
 	F_SET(sp->nextdisp, SC_STATUS);
 	F_SET(sp, SC_SSWITCH | SC_STATUS);

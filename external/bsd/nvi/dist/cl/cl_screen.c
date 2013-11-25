@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: cl_screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,7 @@ cl_screen(SCR *sp, u_int32_t flags)
 	if (F_ISSET(sp, SC_SCR_VI)) {
 		F_CLR(sp, SC_SCR_VI);
 
-		if (sp->q.cqe_next != (void *)&sp->wp->scrq) {
+		if (TAILQ_NEXT(sp, q) != NULL) {
 			(void)wmove(win, RLNO(sp, sp->rows), 0);
 			wclrtobot(win);
 		}
