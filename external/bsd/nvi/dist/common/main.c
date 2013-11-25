@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: main.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -233,13 +233,13 @@ editor(WIN *wp, int argc, char **argv)
 	 */
 	if (screen_init(gp, NULL, &sp)) {
 		if (sp != NULL) {
-			CIRCLEQ_INSERT_HEAD(&wp->scrq, sp, q);
+			TAILQ_INSERT_HEAD(&wp->scrq, sp, q);
 			sp->wp = wp;
 		}
 		goto err;
 	}
 	F_SET(sp, SC_EX);
-	CIRCLEQ_INSERT_HEAD(&wp->scrq, sp, q);
+	TAILQ_INSERT_HEAD(&wp->scrq, sp, q);
 	sp->wp = wp;
 
 	if (v_key_init(sp))		/* Special key initialization. */

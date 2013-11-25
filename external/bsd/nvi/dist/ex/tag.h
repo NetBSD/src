@@ -1,4 +1,4 @@
-/*	$NetBSD: tag.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: tag.h,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ struct _tagf {			/* Tag files. */
  * tagtop:	discard all Q
  */
 struct _tag {			/* Tag list. */
-	CIRCLEQ_ENTRY(_tag) q;	/* Linked list of tags. */
+	TAILQ_ENTRY(_tag) q;	/* Linked list of tags. */
 
 				/* Tag pop/return information. */
 	FREF	*frp;		/* Saved file. */
@@ -94,9 +94,9 @@ struct _tag {			/* Tag list. */
 };
 
 struct _tagq {			/* Tag queue. */
-	CIRCLEQ_ENTRY(_tagq) q;	/* Linked list of tag queues. */
+	TAILQ_ENTRY(_tagq) q;	/* Linked list of tag queues. */
 				/* This queue's tag list. */
-	CIRCLEQ_HEAD(_tagqh, _tag) tagq;
+	TAILQ_HEAD(_tagqh, _tag) tagq;
 
 	TAG	*current;	/* Current TAG within the queue. */
 

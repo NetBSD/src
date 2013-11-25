@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_init.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_init.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ ex_screen_copy(SCR *orig, SCR *sp)
 	sp->ex_private = nexp;
 
 	/* Initialize queues. */
-	CIRCLEQ_INIT(&nexp->tq);
+	TAILQ_INIT(&nexp->tq);
 	TAILQ_INIT(&nexp->tagfq);
 	LIST_INIT(&nexp->cscq);
 

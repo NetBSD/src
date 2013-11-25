@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_global.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_global.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -157,7 +157,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 
 	/* Get an EXCMD structure. */
 	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
-	CIRCLEQ_INIT(&ecp->rq);
+	TAILQ_INIT(&ecp->rq);
 
 	/*
 	 * Get a copy of the command string; the default command is print.
@@ -226,7 +226,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		}
 
 		/* If follows the last entry, extend the last entry's range. */
-		if ((rp = ecp->rq.cqh_last) != (void *)&ecp->rq &&
+		if ((rp = TAILQ_LAST(&ecp->rq, _rh)) != NULL &&
 		    rp->stop == start - 1) {
 			++rp->stop;
 			continue;
@@ -237,7 +237,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		if (rp == NULL)
 			return (1);
 		rp->start = rp->stop = start;
-		CIRCLEQ_INSERT_TAIL(&ecp->rq, rp, q);
+		TAILQ_INSERT_TAIL(&ecp->rq, rp, q);
 	}
 	search_busy(sp, BUSY_OFF);
 	return (0);
@@ -262,12 +262,10 @@ ex_g_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 	if (op == LINE_RESET)
 		return (0);
 
-	for (ecp = sp->wp->ecq.lh_first; ecp != NULL; ecp = ecp->q.le_next) {
+	LIST_FOREACH(ecp, &sp->wp->ecq, q) {
 		if (!FL_ISSET(ecp->agv_flags, AGV_AT | AGV_GLOBAL | AGV_V))
 			continue;
-		for (rp = ecp->rq.cqh_first; rp != (void *)&ecp->rq; rp = nrp) {
-			nrp = rp->q.cqe_next;
-
+		TAILQ_FOREACH_SAFE(rp, &ecp->rq, q, nrp) {
 			/* If range less than the line, ignore it. */
 			if (rp->stop < lno)
 				continue;
@@ -295,7 +293,7 @@ ex_g_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 			 */
 			if (op == LINE_DELETE) {
 				if (rp->start > --rp->stop) {
-					CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+					TAILQ_REMOVE(&ecp->rq, rp, q);
 					free(rp);
 				}
 			} else {
@@ -303,8 +301,7 @@ ex_g_insdel(SCR *sp, lnop_t op, db_recno_t lno)
 				nrp->start = lno + 1;
 				nrp->stop = rp->stop + 1;
 				rp->stop = lno - 1;
-				CIRCLEQ_INSERT_AFTER(&ecp->rq, rp, nrp, q);
-				rp = nrp;
+				TAILQ_INSERT_AFTER(&ecp->rq, rp, nrp, q);
 			}
 		}
 
