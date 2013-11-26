@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.218 2013/11/25 07:59:03 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.219 2013/11/26 05:54:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.218 2013/11/25 07:59:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.219 2013/11/26 05:54:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1525,7 +1525,7 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	printf("  status=0x%08x: toggle=%d bytes=0x%x ioc=%d c_page=0x%x\n",
 	       s, EHCI_QTD_GET_TOGGLE(s), EHCI_QTD_GET_BYTES(s),
 	       EHCI_QTD_GET_IOC(s), EHCI_QTD_GET_C_PAGE(s));
-	printf("    cerr=%d pid=%d stat=0x%s\n", EHCI_QTD_GET_CERR(s),
+	printf("    cerr=%d pid=%d stat=%s\n", EHCI_QTD_GET_CERR(s),
 	       EHCI_QTD_GET_PID(s), sbuf);
 	for (s = 0; s < 5; s++)
 		printf("  buffer[%d]=0x%08x\n", s, le32toh(qtd->qtd_buffer[s]));
