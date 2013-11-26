@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.15 2013/08/22 19:50:55 drochner Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.16 2013/11/26 20:29:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.15 2013/08/22 19:50:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.16 2013/11/26 20:29:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -121,7 +121,7 @@ pcu_switchpoint(lwp_t *l)
 		return;
 	}
 	/* commented out as we know we are already at IPL_SCHED */
-	/* s = splsoftclock(); */
+	/* s = splsoftserial(); */
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_user_inuse & (1 << id)) == 0) {
 			continue;
@@ -154,7 +154,7 @@ pcu_discard_all(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
-	const int s = splsoftclock();
+	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_inuse & (1 << id)) == 0) {
 			continue;
@@ -203,7 +203,7 @@ pcu_save_all(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
-	const int s = splsoftclock();
+	const int s = splsoftserial();
 	for (u_int id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_inuse & (1 << id)) == 0) {
 			continue;
@@ -220,7 +220,7 @@ pcu_save_all(lwp_t *l)
 /*
  * pcu_do_op: save/release PCU state on the current CPU.
  *
- * => Must be called at IPL_SOFTCLOCK or from the soft-interrupt.
+ * => Must be called at IPL_SOFTSERIAL or from the soft-interrupt.
  */
 static inline void
 pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
@@ -294,7 +294,7 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, const int flags)
 	 * Block the interrupts and inspect again, since cross-call sent
 	 * by remote CPU could have changed the state.
 	 */
-	s = splsoftclock();
+	s = splsoftserial();
 	ci = l->l_pcu_cpu[id];
 	if (ci == curcpu()) {
 		/*
@@ -345,7 +345,7 @@ pcu_load(const pcu_ops_t *pcu)
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
-	s = splsoftclock();
+	s = splsoftserial();
 	curci = curcpu();
 	ci = l->l_pcu_cpu[id];
 
@@ -365,8 +365,8 @@ pcu_load(const pcu_ops_t *pcu)
 		    __UNCONST(pcu), (void *)(PCU_SAVE | PCU_RELEASE), ci);
 		xc_wait(where);
 
-		/* Enter IPL_SOFTCLOCK and re-fetch the current CPU. */
-		s = splsoftclock();
+		/* Enter IPL_SOFTSERIAL and re-fetch the current CPU. */
+		s = splsoftserial();
 		curci = curcpu();
 	}
 	KASSERT(l->l_pcu_cpu[id] == NULL);
