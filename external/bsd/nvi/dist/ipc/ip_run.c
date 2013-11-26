@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_run.c,v 1.3 2013/11/22 19:59:36 martin Exp $	*/
+/*	$NetBSD: ip_run.c,v 1.4 2013/11/26 19:12:46 joerg Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -33,7 +33,7 @@ static const char sccsid[] = "Id: ip_run.c,v 8.17 2000/07/04 21:48:54 skimo Exp 
 #include "pathnames.h"
 
 static void arg_format __P((char *, int *, char **[], int, int));
-static void fatal __P((void));
+static void fatal __P((void)) __dead;
 #ifdef DEBUG
 static void attach __P((void));
 #endif
