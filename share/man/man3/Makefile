@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2013/10/27 11:56:18 apb Exp $
+#	$NetBSD: Makefile,v 1.84 2013/11/26 01:33:02 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -202,24 +202,6 @@ MLINKS+=queue.3 TAILQ_HEAD.3 \
 	queue.3 TAILQ_NEXT.3 \
 	queue.3 TAILQ_LAST.3 \
 	queue.3 TAILQ_PREV.3
-MLINKS+=queue.3 CIRCLEQ_HEAD.3 \
-	queue.3 CIRCLEQ_HEAD_INITIALIZER.3 \
-	queue.3 CIRCLEQ_ENTRY.3 \
-	queue.3 CIRCLEQ_INIT.3 \
-	queue.3 CIRCLEQ_INSERT_AFTER.3 \
-	queue.3 CIRCLEQ_INSERT_BEFORE.3 \
-	queue.3 CIRCLEQ_INSERT_HEAD.3 \
-	queue.3 CIRCLEQ_INSERT_TAIL.3 \
-	queue.3 CIRCLEQ_REMOVE.3 \
-	queue.3 CIRCLEQ_FOREACH.3 \
-	queue.3 CIRCLEQ_FOREACH_REVERSE.3 \
-	queue.3 CIRCLEQ_EMPTY.3 \
-	queue.3 CIRCLEQ_FIRST.3 \
-	queue.3 CIRCLEQ_LAST.3 \
-	queue.3 CIRCLEQ_NEXT.3 \
-	queue.3 CIRCLEQ_PREV.3 \
-	queue.3 CIRCLEQ_LOOP_NEXT.3 \
-	queue.3 CIRCLEQ_LOOP_PREV.3
 MLINKS+=rbtree.3 rb_tree_init.3 \
 	rbtree.3 rb_tree_insert_node.3 \
 	rbtree.3 rb_tree_find_node.3 \
