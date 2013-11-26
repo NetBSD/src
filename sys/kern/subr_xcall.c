@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.17 2013/11/26 20:29:40 rmind Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.18 2013/11/26 21:13:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.17 2013/11/26 20:29:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.18 2013/11/26 21:13:05 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,7 @@ xc_init(void)
 	memset(xchi, 0, sizeof(xc_state_t));
 	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&xchi->xc_busy, "xchicv");
-	xc_sih = softint_establish(IPL_SOFTSERIAL | SOFTINT_MPSAFE,
+	xc_sih = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
 	    xc__highpri_intr, NULL);
 	KASSERT(xc_sih != NULL);
 
