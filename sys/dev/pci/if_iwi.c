@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.94 2013/11/21 21:14:05 riz Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.95 2013/11/26 09:46:24 roy Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.94 2013/11/21 21:14:05 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.95 2013/11/26 09:46:24 roy Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -930,25 +930,25 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode == IEEE80211_M_IBSS)
-			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
+		    ic->ic_state == IEEE80211_S_SCAN)
+			iwi_auth_and_assoc(sc);
 		else if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			iwi_set_chan(sc, ic->ic_ibss_chan);
-
-		return (*sc->sc_newstate)(ic, nstate,
-		    IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
-
+		break;
 	case IEEE80211_S_ASSOC:
 		iwi_led_set(sc, IWI_LED_ASSOCIATED, 0);
+		if (ic->ic_state == IEEE80211_S_AUTH)
+			break;
+		iwi_auth_and_assoc(sc);
 		break;
 
 	case IEEE80211_S_INIT:
 		sc->flags &= ~IWI_FLAG_SCANNING;
-		return (*sc->sc_newstate)(ic, nstate, arg);
+		break;
 	}
 
-	ic->ic_state = nstate;
-	return 0;
+	return sc->sc_newstate(ic, nstate, arg);
 }
 
 /*
