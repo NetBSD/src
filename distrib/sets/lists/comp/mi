@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1862 2013/11/19 19:24:34 joerg Exp $
+#	$NetBSD: mi,v 1.1863 2013/11/26 01:36:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4631,25 +4631,25 @@
 ./usr/share/man/cat3/BN_set_bit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BN_swap.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/BN_zero.0			comp-c-catman		crypto,.cat
-./usr/share/man/cat3/CIRCLEQ_EMPTY.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_ENTRY.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_FIRST.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_FOREACH.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_FOREACH_REVERSE.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_HEAD.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_HEAD_INITIALIZER.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_INIT.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_INSERT_AFTER.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_INSERT_BEFORE.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_INSERT_HEAD.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_INSERT_TAIL.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_LAST.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_LOOP_NEXT.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_LOOP_PREV.0	comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_NEXT.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_PREV.0		comp-c-catman		.cat
-./usr/share/man/cat3/CIRCLEQ_REMOVE.0		comp-c-catman		.cat
-./usr/share/man/cat3/CMSG_DATA.0		comp-c-catman		.cat
+./usr/share/man/cat3/CIRCLEQ_EMPTY.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_ENTRY.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_FIRST.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_FOREACH.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_FOREACH_REVERSE.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_HEAD.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_HEAD_INITIALIZER.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_INIT.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_INSERT_AFTER.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_INSERT_BEFORE.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_INSERT_HEAD.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_INSERT_TAIL.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_LAST.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_LOOP_NEXT.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_LOOP_PREV.0	comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_NEXT.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_PREV.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CIRCLEQ_REMOVE.0		comp-obsolete		obsolete
+./usr/share/man/cat3/CMSG_DATA.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/CMSG_FIRSTHDR.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_LEN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/CMSG_NXTHDR.0		comp-c-catman		.cat
