@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc_method.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ipc_method.c,v 1.3 2013/11/27 17:48:21 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -182,6 +182,8 @@ static int
 vi_send_(IPVIWIN *ipvi, int code)
 {
 	IP_BUF	ipb;
+
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = code;
 	return vi_send(ipvi->ofd, NULL, &ipb);
 }
@@ -190,6 +192,8 @@ static int
 vi_send_1(IPVIWIN *ipvi, int code, u_int32_t val)
 {
 	IP_BUF	ipb;
+
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = code;
 	ipb.val1 = val;
 	return vi_send(ipvi->ofd, "1", &ipb);
@@ -200,6 +204,7 @@ vi_send_12(IPVIWIN *ipvi, int code, u_int32_t val1, u_int32_t val2)
 {
 	IP_BUF	ipb;
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.val1 = val1;
 	ipb.val2 = val2;
 	ipb.code = code;
@@ -211,6 +216,7 @@ vi_send_a(IPVIWIN *ipvi, int code, const char *str, u_int32_t len)
 {
 	IP_BUF	ipb;
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.str1 = str;
 	ipb.len1 = len;
 	ipb.code = code;
@@ -224,6 +230,7 @@ vi_send_a1(IPVIWIN *ipvi, int code, const char *str, u_int32_t len,
 {
 	IP_BUF	ipb;
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.str1 = str;
 	ipb.len1 = len;
 	ipb.val1 = val;
@@ -237,6 +244,7 @@ vi_send_ab1(IPVIWIN *ipvi, int code, const char *str1, u_int32_t len1,
 {
 	IP_BUF	ipb;
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.str1 = str1;
 	ipb.len1 = len1;
 	ipb.str2 = str2;
