@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: vs_split.c,v 1.4 2013/11/27 14:21:31 mrg Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -808,12 +808,10 @@ int
 vs_resize(SCR *sp, long int count, adj_t adj)
 {
 	GS *gp;
-	WIN *wp;
 	SCR *g, *s, *prev, *next, *list[3] = {NULL, NULL, NULL};
 	size_t g_off, s_off;
 
 	gp = sp->gp;
-	wp = sp->wp;
 
 	/*
 	 * Figure out which screens will grow, which will shrink, and
