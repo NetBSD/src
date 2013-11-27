@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2013/11/27 16:23:00 christos Exp $
+#	$NetBSD: Makefile,v 1.86 2013/11/27 16:24:31 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -138,6 +138,7 @@ MLINKS+=gcq.3 GCQ_INIT.3 \
 	gcq.3 GCQ_FIND_REV_TYPED.3
 
 MLINKS+=queue.3 LIST.3 \
+	queue.3 LIST_EMPTY.3 \
 	queue.3 LIST_ENTRY.3 \
 	queue.3 LIST_FIRST.3 \
 	queue.3 LIST_FOREACH.3 \
