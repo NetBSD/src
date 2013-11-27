@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip.h,v 1.3 2013/11/27 18:25:13 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -13,7 +13,7 @@
 
 typedef struct ipcmsghdr {
 	struct	cmsghdr	header;
-	int	__room_for_fd;
+	int	__room_for_fd_with_pad[4];
 } IPCMSGHDR;
 
 struct _ip_vi_win;
