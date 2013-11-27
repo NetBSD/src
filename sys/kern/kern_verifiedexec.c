@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.130 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.131 2013/11/27 17:24:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.130 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.131 2013/11/27 17:24:44 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1552,8 +1552,7 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 	struct mount *mp, *nmp;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		/* If it fails, the file-system is [being] unmounted. */
 		if (vfs_busy(mp, &nmp) != 0)
 			continue;
@@ -1575,8 +1574,7 @@ veriexec_flush(struct lwp *l)
 	int error = 0;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != TAILQ_END(&mountlist);
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		int lerror;
 
 		/* If it fails, the file-system is [being] unmounted. */
