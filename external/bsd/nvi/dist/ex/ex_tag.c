@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.5 2013/11/27 18:09:06 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.6 2013/11/27 20:45:33 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -409,8 +409,6 @@ filearg:	arglen = strlen(arg);
 	"160|No file %s on the tags stack to return to; use :display t[ags]");
 			return (1);
 		}
-		if (tqp == NULL)
-			return (0);
 		break;
 	default:
 		abort();
