@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.24 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.25 2013/11/27 17:25:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.24 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.25 2013/11/27 17:25:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -456,7 +456,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	 */
 	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist);
-	    vp != TAILQ_END(&mp->mnt_nodelist);
+	    vp != NULL;
 	    vp = vflushnext(mvp, &when)) {
 		vmark(mvp, vp);
 		if (vp->v_mount != mp || vismarker(vp))
@@ -866,7 +866,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mutex_enter(&mountlist_lock);
 	TAILQ_REMOVE(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-	if (TAILQ_FIRST(&mp->mnt_vnodelist) != TAILQ_END(&mp->mnt_vnodelist))
+	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
