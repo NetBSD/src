@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.5 2013/11/20 08:08:47 jnemeth Exp $");
+__RCSID("$NetBSD: map.c,v 1.6 2013/11/27 20:40:48 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -194,6 +194,10 @@ map_resize(map_t *m, off_t size, off_t alignment)
 
 	n = m->map_next;
 
+	if (size < 0 || alignment < 0) {
+		warnx("negative size or alignment");
+		return 0;
+	}
 	if (size == 0 && alignment == 0) {
 		if (n == NULL || n->map_type != MAP_TYPE_UNUSED)
 			return 0;
