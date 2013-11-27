@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.4 2013/11/27 18:11:50 christos Exp $ */
+/*	$NetBSD: exf.c,v 1.5 2013/11/27 20:31:01 tron Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -711,9 +711,9 @@ file_end(SCR *sp, EXF *ep, int force)
 
 		db_env_close(ep->env, 0);
 		ep->env = 0;
-		if ((sp->db_error = db_env_create(&env, 0)) != NULL)
+		if ((sp->db_error = db_env_create(&env, 0)) != 0)
 			msgq(sp, M_DBERR, "env_create");
-		if ((sp->db_error = db_env_remove(env, ep->env_path, 0)))
+		if ((sp->db_error = db_env_remove(env, ep->env_path, 0)) != 0)
 			msgq(sp, M_DBERR, "env->remove");
 		if (ep->env_path != NULL && rmdir(ep->env_path))
 			msgq_str(sp, M_SYSERR, ep->env_path, "242|%s: remove");
