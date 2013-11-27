@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.3 2013/11/27 01:47:53 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.4 2013/11/27 20:34:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ resize(int fd)
 		if (entry == map->map_index)
 			break;
 	}
-	if (entry != map->map_index) {
+	if (map == NULL) {
 		warnx("%s: error: could not find map entry corresponding "
 		      "to index", device_name);
 		return;
