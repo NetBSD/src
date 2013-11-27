@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.3 2013/11/27 21:17:36 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -760,6 +760,7 @@ next:			(void)close(fd);
 
 	/* We believe the file is recoverable. */
 	F_SET(ep, F_RCV_ON);
+	free(pathp);
 	return (0);
 }
 
