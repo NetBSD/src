@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdstate.c,v 1.1.1.1 2013/09/30 07:19:52 dholland Exp $	*/
+/*	$NetBSD: nfs_nfsdstate.c,v 1.2 2013/11/27 17:24:44 christos Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdstate.c 245909 2013-01-25 15:25:24Z jhb "); */
-__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.1.1.1 2013/09/30 07:19:52 dholland Exp $");
+__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.2 2013/11/27 17:24:44 christos Exp $");
 
 #ifndef APPLEKEXT
 #include <fs/nfs/nfsport.h>
@@ -446,7 +446,7 @@ nfsrv_getclient(nfsquad_t clientid, int opflags, struct nfsclient **clpp,
 		if (clp->lc_clientid.lval[1] == clientid.lval[1])
 			break;
 	}
-	if (clp == LIST_END(hp)) {
+	if (clp == NULL) {
 		if (opflags & CLOPS_CONFIRM)
 			error = NFSERR_STALECLIENTID;
 		else
@@ -638,7 +638,7 @@ nfsrv_dumpclients(struct nfsd_dumpclients *dumpp, int maxcnt)
 	 */
 	while (i < NFSCLIENTHASHSIZE && cnt < maxcnt) {
 	    clp = LIST_FIRST(&nfsclienthash[i]);
-	    while (clp != LIST_END(&nfsclienthash[i]) && cnt < maxcnt) {
+	    while (clp != NULL && cnt < maxcnt) {
 		nfsrv_dumpaclient(clp, &dumpp[cnt]);
 		cnt++;
 		clp = LIST_NEXT(clp, lc_hash);
@@ -749,7 +749,7 @@ nfsrv_dumplocks(vnode_t vp, struct nfsd_dumplocks *ldumpp, int maxcnt,
 	 * For each open share on file, dump it out.
 	 */
 	stp = LIST_FIRST(&lfp->lf_open);
-	while (stp != LIST_END(&lfp->lf_open) && cnt < maxcnt) {
+	while (stp != NULL && cnt < maxcnt) {
 		ldumpp[cnt].ndlck_flags = stp->ls_flags;
 		ldumpp[cnt].ndlck_stateid.seqid = stp->ls_stateid.seqid;
 		ldumpp[cnt].ndlck_stateid.other[0] = stp->ls_stateid.other[0];
@@ -780,7 +780,7 @@ nfsrv_dumplocks(vnode_t vp, struct nfsd_dumplocks *ldumpp, int maxcnt,
 	 * and all locks.
 	 */
 	lop = LIST_FIRST(&lfp->lf_lock);
-	while (lop != LIST_END(&lfp->lf_lock) && cnt < maxcnt) {
+	while (lop != NULL && cnt < maxcnt) {
 		stp = lop->lo_stp;
 		ldumpp[cnt].ndlck_flags = lop->lo_flags;
 		ldumpp[cnt].ndlck_first = lop->lo_first;
@@ -812,7 +812,7 @@ nfsrv_dumplocks(vnode_t vp, struct nfsd_dumplocks *ldumpp, int maxcnt,
 	 * and the delegations.
 	 */
 	stp = LIST_FIRST(&lfp->lf_deleg);
-	while (stp != LIST_END(&lfp->lf_deleg) && cnt < maxcnt) {
+	while (stp != NULL && cnt < maxcnt) {
 		ldumpp[cnt].ndlck_flags = stp->ls_flags;
 		ldumpp[cnt].ndlck_stateid.seqid = stp->ls_stateid.seqid;
 		ldumpp[cnt].ndlck_stateid.other[0] = stp->ls_stateid.other[0];
@@ -906,7 +906,7 @@ nfsrv_servertimer(void)
 	 */
 	for (i = 0; i < NFSCLIENTHASHSIZE; i++) {
 	    clp = LIST_FIRST(&nfsclienthash[i]);
-	    while (clp != LIST_END(&nfsclienthash[i])) {
+	    while (clp != NULL) {
 		nclp = LIST_NEXT(clp, lc_hash);
 		if (!(clp->lc_flags & LCL_EXPIREIT)) {
 		    if (((clp->lc_expiry + NFSRV_STALELEASE) < NFSD_MONOSEC
@@ -948,7 +948,7 @@ nfsrv_servertimer(void)
 			 * of open owners and subsequent open confirms.
 			 */
 			stp = LIST_FIRST(&clp->lc_open);
-			while (stp != LIST_END(&clp->lc_open)) {
+			while (stp != NULL) {
 				nstp = LIST_NEXT(stp, ls_list);
 				if (LIST_EMPTY(&stp->ls_open)) {
 					stp->ls_noopens++;
@@ -1075,7 +1075,7 @@ nfsrv_freeopenowner(struct nfsstate *stp, int cansleep, NFSPROC_T *p)
 	 * Now, free all associated opens.
 	 */
 	nstp = LIST_FIRST(&stp->ls_open);
-	while (nstp != LIST_END(&stp->ls_open)) {
+	while (nstp != NULL) {
 		tstp = nstp;
 		nstp = LIST_NEXT(nstp, ls_list);
 		(void) nfsrv_freeopen(tstp, NULL, cansleep, p);
@@ -1171,7 +1171,7 @@ nfsrv_freeallnfslocks(struct nfsstate *stp, vnode_t vp, int cansleep,
 	uint64_t first, end;
 
 	lop = LIST_FIRST(&stp->ls_lock);
-	while (lop != LIST_END(&stp->ls_lock)) {
+	while (lop != NULL) {
 		nlop = LIST_NEXT(lop, lo_lckowner);
 		/*
 		 * Since all locks should be for the same file, lfp should
@@ -1264,7 +1264,7 @@ nfsrv_getstate(struct nfsclient *clp, nfsv4stateid_t *stateidp, __unused u_int32
 	/*
 	 * If no state id in list, return NFSERR_BADSTATEID.
 	 */
-	if (stp == LIST_END(hp)) {
+	if (stp == NULL) {
 		error = NFSERR_BADSTATEID;
 		goto out;
 	}
@@ -1737,7 +1737,7 @@ tryagain:
 	 *    the current concensus?)
 	 */
 	tstp = LIST_FIRST(&lfp->lf_deleg);
-	while (tstp != LIST_END(&lfp->lf_deleg)) {
+	while (tstp != NULL) {
 	    nstp = LIST_NEXT(tstp, ls_file);
 	    if ((((new_stp->ls_flags&(NFSLCK_LOCK|NFSLCK_UNLOCK|NFSLCK_TEST))||
 		 ((new_stp->ls_flags & NFSLCK_CHECK) &&
@@ -2091,7 +2091,7 @@ tryagain:
 			  NFSX_STATEIDOTHER))
 			break;
 	    }
-	    if (stp == LIST_END(&lfp->lf_deleg) ||
+	    if (stp == NULL ||
 		((new_stp->ls_flags & NFSLCK_WRITEACCESS) &&
 		 (stp->ls_flags & NFSLCK_DELEGREAD))) {
 		NFSUNLOCKSTATE();
@@ -2163,7 +2163,7 @@ tryagain:
 	if (!(new_stp->ls_flags &
 		(NFSLCK_DELEGPREV | NFSLCK_DELEGCUR | NFSLCK_RECLAIM))) {
 	    stp = LIST_FIRST(&lfp->lf_deleg);
-	    while (stp != LIST_END(&lfp->lf_deleg)) {
+	    while (stp != NULL) {
 		nstp = LIST_NEXT(stp, ls_file);
 		if ((readonly && stp->ls_clp != clp &&
 		       (stp->ls_flags & NFSLCK_DELEGWRITE)) ||
@@ -2348,7 +2348,7 @@ tryagain:
 			NFSX_STATEIDOTHER))
 			break;
 	    }
-	    if (stp == LIST_END(&lfp->lf_deleg) ||
+	    if (stp == NULL ||
 		((new_stp->ls_flags & NFSLCK_WRITEACCESS) &&
 		 (stp->ls_flags & NFSLCK_DELEGREAD))) {
 		NFSUNLOCKSTATE();
@@ -2451,7 +2451,7 @@ tryagain:
 	 */
 	if (!(new_stp->ls_flags & (NFSLCK_DELEGPREV | NFSLCK_DELEGCUR))) {
 	    stp = LIST_FIRST(&lfp->lf_deleg);
-	    while (stp != LIST_END(&lfp->lf_deleg)) {
+	    while (stp != NULL) {
 		nstp = LIST_NEXT(stp, ls_file);
 		if (stp->ls_clp != clp && (stp->ls_flags & NFSLCK_DELEGREAD))
 			writedeleg = 0;
@@ -2572,7 +2572,7 @@ tryagain:
 		    break;
 		}
 	    }
-	    if (stp == LIST_END(&clp->lc_olddeleg))
+	    if (stp == NULL)
 		error = NFSERR_EXPIRED;
 	} else if (new_stp->ls_flags & (NFSLCK_DELEGREAD | NFSLCK_DELEGWRITE)) {
 	    /*
@@ -2585,7 +2585,7 @@ tryagain:
 		if (stp->ls_clp == clp)
 		    break;
 	    }
-	    if (stp == LIST_END(&lfp->lf_deleg) && openstp == NULL) {
+	    if (stp == NULL && openstp == NULL) {
 		/*
 		 * This is the Claim_Previous case with a delegation
 		 * type != Delegate_None.
@@ -3112,7 +3112,7 @@ nfsrv_releaselckown(struct nfsstate *new_stp, nfsquad_t clientid,
 	LIST_FOREACH(ownstp, &clp->lc_open, ls_list) {
 	    LIST_FOREACH(openstp, &ownstp->ls_open, ls_list) {
 		stp = LIST_FIRST(&openstp->ls_open);
-		while (stp != LIST_END(&openstp->ls_open)) {
+		while (stp != NULL) {
 		    nstp = LIST_NEXT(stp, ls_list);
 		    /*
 		     * If the owner matches, check for locks and
@@ -3242,12 +3242,12 @@ nfsrv_insertlock(struct nfslock *new_lop, struct nfslock *insert_lop,
 	if (stp != NULL) {
 		/* Insert in increasing lo_first order */
 		lop = LIST_FIRST(&lfp->lf_lock);
-		if (lop == LIST_END(&lfp->lf_lock) ||
+		if (lop == NULL ||
 		    new_lop->lo_first <= lop->lo_first) {
 			LIST_INSERT_HEAD(&lfp->lf_lock, new_lop, lo_lckfile);
 		} else {
 			nlop = LIST_NEXT(lop, lo_lckfile);
-			while (nlop != LIST_END(&lfp->lf_lock) &&
+			while (nlop != NULL &&
 			       nlop->lo_first < new_lop->lo_first) {
 				lop = nlop;
 				nlop = LIST_NEXT(lop, lo_lckfile);
@@ -4066,7 +4066,7 @@ nfsrv_setupstable(NFSPROC_T *p)
 			    !NFSBCMP(tsp->client, sp->nst_client, tsp->len))
 				break;
 		}
-		if (sp == LIST_END(&sf->nsf_head)) {
+		if (sp == NULL) {
 			sp = (struct nfsrv_stable *)malloc(tsp->len +
 				sizeof (struct nfsrv_stable) - 1, M_TEMP,
 				M_WAITOK);
@@ -4219,7 +4219,7 @@ nfsrv_markstable(struct nfsclient *clp)
 		    !NFSBCMP(sp->nst_client, clp->lc_id, sp->nst_len))
 			break;
 	}
-	if (sp == LIST_END(&nfsrv_stablefirst.nsf_head))
+	if (sp == NULL)
 		return;
 
 	/*
@@ -4251,7 +4251,7 @@ nfsrv_checkstable(struct nfsclient *clp)
 	 * If not in the list, state was revoked or no state was issued
 	 * since the previous reboot, a reclaim is denied.
 	 */
-	if (sp == LIST_END(&nfsrv_stablefirst.nsf_head) ||
+	if (sp == NULL ||
 	    (sp->nst_flag & NFSNST_REVOKE) ||
 	    !(nfsrv_stablefirst.nsf_flags & NFSNSF_OK))
 		return (1);
@@ -4602,7 +4602,7 @@ nfsrv_cleandeleg(vnode_t vp, struct nfslockfile *lfp,
 	int ret = 0;
 
 	stp = LIST_FIRST(&lfp->lf_deleg);
-	while (stp != LIST_END(&lfp->lf_deleg)) {
+	while (stp != NULL) {
 		nstp = LIST_NEXT(stp, ls_file);
 		if (stp->ls_clp != clp) {
 			ret = nfsrv_delegconflict(stp, haslockp, p, vp);
@@ -4810,7 +4810,7 @@ nfsrv_checkgetattr(struct nfsrv_descript *nd, vnode_t vp,
 		if (stp->ls_flags & NFSLCK_DELEGWRITE)
 			break;
 	}
-	if (stp == LIST_END(&lfp->lf_deleg)) {
+	if (stp == NULL) {
 		NFSUNLOCKSTATE();
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.9 2013/11/23 22:31:53 christos Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.10 2013/11/27 17:24:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.9 2013/11/23 22:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.10 2013/11/27 17:24:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,8 +103,7 @@ config_hook(int type, long id, enum config_hook_mode mode,
 			    type, id);
 			s = splhigh();
 			TAILQ_REMOVE(&hook_lists[type], prev_hr, hr_link);
-			TAILQ_NEXT(prev_hr, hr_link) =
-			    TAILQ_END(&hook_lists[type]);
+			TAILQ_NEXT(prev_hr, hr_link) = NULL;
 			splx(s);
 		}
 		break;
@@ -157,10 +156,10 @@ config_unhook(config_hook_tag hrx)
 	int s;
 	struct hook_rec *hr = (struct hook_rec*)hrx, *cr;
 
-	if (TAILQ_NEXT(hr, hr_link) != TAILQ_END(&hook_lists[hr->hr_type])) {
+	if (TAILQ_NEXT(hr, hr_link) != NULL) {
 		s = splhigh();
 		TAILQ_REMOVE(&hook_lists[hr->hr_type], hr, hr_link);
-		TAILQ_NEXT(hr, hr_link) = TAILQ_END(&hook_lists[hr->hr_type]);
+		TAILQ_NEXT(hr, hr_link) = NULL;
 		/* update call list */
 		TAILQ_FOREACH(cr, &call_list, hr_link) {
 			if (cr->hr_type == hr->hr_type &&
@@ -185,7 +184,8 @@ __config_hook_call(int type, long id, void *msg, int reverse)
 
 	res = -1;
 	if (reverse) {
-		TAILQ_FOREACH_REVERSE(hr, &hook_lists[type], hook_list, hr_link) {
+		TAILQ_FOREACH_REVERSE(hr, &hook_lists[type], hook_list,
+		    hr_link) {
 			if (hr->hr_id == id)
 				res = (*hr->hr_func)(hr->hr_ctx, type, id,msg);
 		}
