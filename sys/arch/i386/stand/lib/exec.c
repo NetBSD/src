@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.54 2013/11/24 17:20:00 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.55 2013/11/27 18:29:45 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -636,7 +636,7 @@ userconf_init(void)
 	count = 0;
 	for (uc = userconf_commands; uc != NULL; uc = uc->uc_next)
 		count++;
-	len = sizeof(btinfo_userconfcommands) +
+	len = sizeof(*btinfo_userconfcommands) +
 	      count * sizeof(struct bi_userconfcommand);
 
 	/* Allocate the userconf commands list */
