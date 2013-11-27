@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.46 2013/11/20 07:18:23 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.47 2013/11/27 18:01:33 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.46 2013/11/20 07:18:23 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.47 2013/11/27 18:01:33 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -149,6 +149,7 @@ _rtld_load_object(const char *filepath, int flags)
 #ifdef RTLD_LOADER
 	if (pathlen == _rtld_objself.pathlen &&
 	    strcmp(_rtld_objself.path, filepath) == 0) {
+		close(fd);
 		return &_rtld_objself;
 	}
 #endif
