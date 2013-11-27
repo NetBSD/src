@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.23 2013/11/23 22:48:00 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.24 2013/11/27 17:24:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.23 2013/11/23 22:48:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.24 2013/11/27 17:24:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,22 +90,22 @@ add_vbl_function(struct vbl_node *add, short priority, void *data)
 	struct vbl_node *n, *prev;
 
 	s = spl3();
-	prev = LIST_END(&vbl_list);
+	prev = NULL;
 	LIST_FOREACH(n, &vbl_list, link) {
 		if (add->priority > n->priority) {
 			/* insert add_node before. */
-			if (prev == LIST_END(&vbl_list)) {
+			if (prev == NULL) {
 				LIST_INSERT_HEAD(&vbl_list, add, link);
 			} else {
 				LIST_INSERT_AFTER(prev, add, link);
 			}
-			add = LIST_END(&vbl_list);
+			add = NULL;
 			break;
 		}
 		prev = n;
 	}
-	if (add != LIST_END(&vbl_list)) {
-		if (prev == LIST_END(&vbl_list)) {
+	if (add != NULL) {
+		if (prev == NULL) {
 			LIST_INSERT_HEAD(&vbl_list, add, link);
 		} else {
 			LIST_INSERT_AFTER(prev, add, link);
@@ -136,7 +136,7 @@ vbl_handler(void)
 			n->flags |= VBLNF_OFF;
 			n->flags &= ~(VBLNF_TURNOFF);
 		} else {
-			if (n != LIST_END(&vbl_list))
+			if (n != NULL)
 				n->function(n->data);
 		}
 	}
@@ -504,7 +504,7 @@ alloc_chipmem(u_long size)
 		if (size <= mn->size)
 			break;
 
-	if (mn == TAILQ_END(&free_list))
+	if (mn == NULL)
 		return NULL;
 
 	if ((mn->size - size) <= sizeof (*mn)) {
@@ -513,7 +513,7 @@ alloc_chipmem(u_long size)
 		 * for a new node in between.
 		 */
 		TAILQ_REMOVE(&free_list, mn, free_link);
-		TAILQ_NEXT(mn, free_link) = TAILQ_END(&free_list);
+		TAILQ_NEXT(mn, free_link) = NULL;
 		size = mn->size;	 /* increase size. (or same) */
 		chip_total -= mn->size;
 		splx(s);
@@ -533,7 +533,7 @@ alloc_chipmem(u_long size)
 	 * and mark as not on free list
 	 */
 	TAILQ_INSERT_AFTER(&chip_list, new, mn, link);
-	TAILQ_NEXT(mn, free_link) = TAILQ_END(&free_list);
+	TAILQ_NEXT(mn, free_link) = NULL;
 
 	chip_total -= size + sizeof(struct mem_node);
 	splx(s);
@@ -557,8 +557,8 @@ free_chipmem(void *mem)
 	/*
 	 * check ahead of us.
 	 */
-	if (TAILQ_NEXT(next, link) != TAILQ_END(&chip_list) &&
-	    TAILQ_NEXT(next, free_link) != TAILQ_END(&free_list)) {
+	if (TAILQ_NEXT(next, link) != NULL &&
+	    TAILQ_NEXT(next, free_link) != NULL) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
 		 */
@@ -568,12 +568,12 @@ free_chipmem(void *mem)
 		chip_total += mn->size + sizeof(struct mem_node);
 		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (TAILQ_PREV(prev, chiplist, link) != TAILQ_END(&chip_list) &&
-	    TAILQ_PREV(prev, freelist, free_link) != TAILQ_END(&free_list)) {
+	if (TAILQ_PREV(prev, chiplist, link) != NULL &&
+	    TAILQ_PREV(prev, freelist, free_link) != NULL) {
 		/*
 		 * if prev is: a valid node and a free node. ==> merge
 		 */
-		if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list))
+		if (TAILQ_NEXT(mn, free_link) == NULL)
 			chip_total += mn->size + sizeof(struct mem_node);
 		else {
 			/* already on free list */
@@ -582,20 +582,18 @@ free_chipmem(void *mem)
 		}
 		TAILQ_REMOVE(&chip_list, mn, link);
 		prev->size += mn->size + sizeof(struct mem_node);
-	} else if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list)) {
+	} else if (TAILQ_NEXT(mn, free_link) == NULL) {
 		/*
 		 * we still are not on free list and we need to be.
 		 * <-- | -->
 		 */
-		while (TAILQ_NEXT(next, link) != TAILQ_END(&chip_list) &&
-		    TAILQ_PREV(prev, chiplist, link) != TAILQ_END(&chip_list)) {
-			if (TAILQ_NEXT(next, free_link) !=
-			    TAILQ_END(&free_list)) {
+		while (TAILQ_NEXT(next, link) != NULL &&
+		    TAILQ_PREV(prev, chiplist, link) != NULL) {
+			if (TAILQ_NEXT(next, free_link) != NULL) {
 				TAILQ_INSERT_BEFORE(next, mn, free_link);
 				break;
 			}
-			if (TAILQ_NEXT(prev, free_link) !=
-			    TAILQ_END(&free_list)) {
+			if (TAILQ_NEXT(prev, free_link) != NULL) {
 				TAILQ_INSERT_AFTER(&free_list, prev, mn,
 				    free_link);
 				break;
@@ -603,8 +601,8 @@ free_chipmem(void *mem)
 			prev = TAILQ_PREV(prev, chiplist, link);
 			next = TAILQ_NEXT(next, link);
 		}
-		if (TAILQ_NEXT(mn, free_link) == TAILQ_END(&free_list)) {
-			if (TAILQ_NEXT(next, link) == TAILQ_END(&chip_list)) {
+		if (TAILQ_NEXT(mn, free_link) == NULL) {
+			if (TAILQ_NEXT(next, link) == NULL) {
 				/*
 				 * we are not on list so we can add
 				 * ourselves to the tail. (we walked to it.)

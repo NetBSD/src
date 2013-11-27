@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdcache.c,v 1.1.1.1 2013/09/30 07:19:57 dholland Exp $	*/
+/*	$NetBSD: nfs_nfsdcache.c,v 1.2 2013/11/27 17:24:44 christos Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdcache.c 254337 2013-08-14 21:11:26Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.1.1.1 2013/09/30 07:19:57 dholland Exp $");
+__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.2 2013/11/27 17:24:44 christos Exp $");
 
 /*
  * Here is the basic algorithm:
@@ -630,7 +630,7 @@ tryagain:
 	 * Get all the matches and put them on the temp list.
 	 */
 	rp = LIST_FIRST(hp);
-	while (rp != LIST_END(hp)) {
+	while (rp != NULL) {
 		nextrp = LIST_NEXT(rp, rc_hash);
 		if (newrp->rc_xid == rp->rc_xid &&
 		    (!(rp->rc_flag & RC_INPROG) ||
@@ -668,13 +668,13 @@ tryagain:
 	if (i != 1)
 		hit = 0;
 	hitrp = rp = LIST_FIRST(&nfsrc_templist);
-	while (rp != LIST_END(&nfsrc_templist)) {
+	while (rp != NULL) {
 		nextrp = LIST_NEXT(rp, rc_hash);
 		LIST_REMOVE(rp, rc_hash);
 		LIST_INSERT_HEAD(hp, rp, rc_hash);
 		rp = nextrp;
 	}
-	if (LIST_FIRST(&nfsrc_templist) != LIST_END(&nfsrc_templist))
+	if (LIST_FIRST(&nfsrc_templist) != NULL)
 		panic("nfs gettcp cache templist");
 
 	if (hit) {
