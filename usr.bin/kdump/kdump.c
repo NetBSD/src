@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.116 2013/01/02 19:39:04 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.117 2013/11/27 20:27:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.116 2013/01/02 19:39:04 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.117 2013/11/27 20:27:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1055,7 +1055,7 @@ ktruser_misc(const char *name, const void *buf, size_t len)
 
 	printf("%.*s: %zu, ", KTR_USER_MAXIDLEN, name, len);
 	for (i = 0; i < len; i++)
-		printf("%02x", (unsigned int) dta[i]);
+		printf("%02x", (unsigned char)dta[i]);
 	printf("\n");
 }
 
