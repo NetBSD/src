@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_read.c,v 1.3 2013/11/22 19:59:36 martin Exp $	*/
+/*	$NetBSD: ip_read.c,v 1.4 2013/11/27 20:37:29 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -272,6 +272,12 @@ err:	        rval = INP_ERR;
 		msgq(sp, M_SYSERR, "input");
 		break;
 	default:				/* Input characters. */
+		if (sp == NULL) {
+			rval = INP_ERR;
+			msgq(sp, M_SYSERR,
+			    "Can't convert input with NULL screen");
+			break;
+		}
 		if (!termread) ipp->iblen += *nr;
 		else {
 			CHAR2INT(sp, (char *)ipp->tbuf, *nr, wp, wlen);
