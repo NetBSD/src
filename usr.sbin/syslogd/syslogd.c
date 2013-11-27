@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.118 2013/11/11 16:39:21 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.119 2013/11/27 20:48:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.118 2013/11/11 16:39:21 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.119 2013/11/27 20:48:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -3207,13 +3207,15 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 		if (!TypeInfo[i].queue_length_string
 		    || dehumanize_number(TypeInfo[i].queue_length_string,
 		    &TypeInfo[i].queue_length) == -1)
-			dehumanize_number(TypeInfo[i].default_length_string,
-					  &TypeInfo[i].queue_length);
+			if (dehumanize_number(TypeInfo[i].default_length_string,
+			    &TypeInfo[i].queue_length) == -1)
+				abort();
 		if (!TypeInfo[i].queue_size_string
 		    || dehumanize_number(TypeInfo[i].queue_size_string,
 		    &TypeInfo[i].queue_size) == -1)
-			dehumanize_number(TypeInfo[i].default_size_string,
-					  &TypeInfo[i].queue_size);
+			if (dehumanize_number(TypeInfo[i].default_size_string,
+			    &TypeInfo[i].queue_size) == -1)
+				abort();
 	}
 
 #ifndef DISABLE_SIGN
