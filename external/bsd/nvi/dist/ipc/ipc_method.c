@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc_method.c,v 1.3 2013/11/27 17:48:21 christos Exp $	*/
+/*	$NetBSD: ipc_method.c,v 1.4 2013/11/27 17:51:04 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -94,6 +94,7 @@ vi_new_window (IPVI *ipvi, IPVIWIN **ipviwinp, int fd)
 
 	socketpair(AF_LOCAL, SOCK_STREAM, 0, sockets);
 
+	memset(&mh, 0, sizeof(mh));
 	mh.msg_namelen = 0;
 	mh.msg_iovlen = 1;
 	mh.msg_iov = &iov;
