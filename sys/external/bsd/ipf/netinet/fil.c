@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.12 2013/09/18 23:34:55 rmind Exp $	*/
+/*	$NetBSD: fil.c,v 1.13 2013/11/27 22:18:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.12 2013/09/18 23:34:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.13 2013/11/27 22:18:06 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -3120,7 +3120,7 @@ filterdone:
 		 */
 		fdp = fin->fin_dif;
 		if ((fdp != NULL) && (fdp->fd_ptr != NULL) &&
-		    (fdp->fd_ptr != (void *)-1)) {
+		    (fdp->fd_ptr != (void *)-1) && (fin->fin_m != NULL)) {
 			mc = M_COPY(fin->fin_m);
 			if (mc != NULL)
 				ipf_fastroute(mc, &mc, fin, fdp);
