@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc_method.c,v 1.5 2013/11/27 20:50:45 christos Exp $	*/
+/*	$NetBSD: ipc_method.c,v 1.6 2013/11/27 20:52:24 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -110,7 +110,8 @@ vi_new_window (IPVI *ipvi, IPVIWIN **ipviwinp, int fd)
 	ch.header.cmsg_len = sizeof(ch);
 
 	*(int *)CMSG_DATA(&ch.header) = sockets[1];
-	sendmsg(ipvi->ofd, &mh, 0);
+	if (sendmsg(ipvi->ofd, &mh, 0) == -1)
+		goto alloc_err;
 	dummy = (fd == -1) ? ' ' : 'F';
 	*(int *)CMSG_DATA(&ch.header) = sockets[1];
 	sendmsg(sockets[0], &mh, 0);
@@ -118,7 +119,8 @@ vi_new_window (IPVI *ipvi, IPVIWIN **ipviwinp, int fd)
 
 	if (fd != -1) {
 		*(int *)CMSG_DATA(&ch.header) = fd;
-		sendmsg(sockets[0], &mh, 0);
+		if (sendmsg(sockets[0], &mh, 0) == -1)
+			goto alloc_err;
 		close(fd);
 	}
 
@@ -155,6 +157,8 @@ vi_new_window (IPVI *ipvi, IPVIWIN **ipviwinp, int fd)
 	return 0;
 
 alloc_err:
+	if (fd != -1)
+		close(fd);
 	return 1;
 }
 
