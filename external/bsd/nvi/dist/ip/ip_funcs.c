@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_funcs.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip_funcs.c,v 1.3 2013/11/27 17:55:46 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -41,6 +41,7 @@ ip_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 
 	ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_WADDSTR;
 	ipb.len1 = len * sizeof(CHAR_T);
 	ipb.str1 = __UNCONST(str);
@@ -70,6 +71,7 @@ ip_addstr(SCR *sp, const char *str, size_t len)
 	 * If ex isn't in control, it's the last line of the screen and
 	 * it's a split screen, use inverse video.
 	 */
+	memset(&ipb, 0, sizeof(ipb));
 	iv = 0;
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) &&
 	    ipp->row == LASTLINE(sp) && IS_SPLIT(sp)) {
@@ -100,6 +102,7 @@ ip_attr(SCR *sp, scr_attr_t attribute, int on)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	if (attribute == SA_ALTERNATE) {
 		if (on) F_SET(ipp, IP_ON_ALTERNATE);
 		else F_CLR(ipp, IP_ON_ALTERNATE);
@@ -137,6 +140,7 @@ ip_bell(SCR *sp)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_BELL;
 
 	return (vi_send(ipp->o_fd, NULL, &ipb));
@@ -154,6 +158,7 @@ ip_busy(SCR *sp, const char *str, busy_t bval)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	switch (bval) {
 	case BUSY_ON:
 		ipb.code = SI_BUSY_ON;
@@ -206,6 +211,7 @@ ip_clrtoeol(SCR *sp)
  	/* Temporary hack until we can pass screen pointers
  	 * or name screens
  	 */
+	memset(&ipb, 0, sizeof(ipb));
  	if (IS_VSPLIT(sp)) {
  		size_t x, y, spcnt;
  		int error;
@@ -264,6 +270,7 @@ ip_deleteln(SCR *sp)
 	 * If the bottom line was in reverse video, rewrite it in normal
 	 * video before it's scrolled.
 	 */
+	memset(&ipb, 0, sizeof(ipb));
 	if (!F_ISSET(sp, SC_SCR_EXWROTE) && IS_SPLIT(sp)) {
 		ipb.code = SI_REWRITE;
 		ipb.val1 = RLNO(sp, LASTLINE(sp));
@@ -316,6 +323,7 @@ ip_insertln(SCR *sp)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_INSERTLN;
 
 	return (vi_send(ipp->o_fd, NULL, &ipb));
@@ -372,6 +380,7 @@ ip_move(SCR *sp, size_t lno, size_t cno)
 	ipp->row = lno;
 	ipp->col = cno;
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_MOVE;
 	ipb.val1 = RLNO(sp, lno);
 	ipb.val2 = RCNO(sp, cno);
@@ -422,6 +431,7 @@ ip_refresh(SCR *sp, int repaint)
 	 * structures at which we have absolutely no business whatsoever
 	 * looking...
 	 */
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.val1 = HMAP->lno;
 	ipb.val2 = TMAP->lno - HMAP->lno;
 	if (sp->ep != NULL && sp->ep->db != NULL)
@@ -453,6 +463,7 @@ ip_rename(SCR *sp, char *name, int on)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_RENAME;
 	ipb.str1 = name;
 	ipb.len1 = name ? strlen(name) : 0;
@@ -471,6 +482,7 @@ ip_reply(SCR *sp, int status, char *msg)
 	IP_BUF ipb;
 	IP_PRIVATE *ipp = IPP(sp);
 
+	memset(&ipb, 0, sizeof(ipb));
 	ipb.code = SI_REPLY;
 	ipb.val1 = status;
 	ipb.str1 = msg == NULL ? "" : msg;
