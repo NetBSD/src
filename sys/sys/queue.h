@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.62 2013/11/26 16:57:04 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.63 2013/11/27 04:24:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -640,21 +640,26 @@ struct {								\
  */
 
 /*
- * We use this ugly hack to work around the fact that the CIRCLEQ
- * macros violate the C aliasing rules by comparing 'struct name *'
- * and 'struct type *' (see CIRCLEQ_HEAD() below).  Modern compilers
- * (such as GCC 4.8) declare this to be always false and this makes
- * most of the macros below not function correctly.
+ * __launder_type():  We use this ugly hack to work around the the compiler
+ * noticing that two types may not alias each other and elide tests in code.
+ * We hit this in the CIRCLEQ macros when comparing 'struct name *' and
+ * 'struct type *' (see CIRCLEQ_HEAD()).  Modern compilers (such as GCC
+ * 4.8) declare these comparisons as always false, causing the code to
+ * not run as designed.
  *
- * This hack is only to be used for comparisons and thus can be
- * fully const.  Do not use for assignment.
+ * This hack is only to be used for comparisons and thus can be fully const.
+ * Do not use for assignment.
+ *
+ * If we ever choose to change the ABI of the CIRCLEQ macros, we could fix
+ * this by changing the head/tail sentinal values, but see the note above
+ * this one.
  */
-static inline const void * __launder_type(const void *x);
+static inline const void * __launder_type(const void *);
 static inline const void *
-__launder_type(const void *x)
+__launder_type(const void *__x)
 {
-	__asm volatile("" : "+r" (x));
-	return x;
+	__asm __volatile("" : "+r" (__x));
+	return __x;
 }
 
 #if defined(_KERNEL) && defined(QUEUEDEBUG)
