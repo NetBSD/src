@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_run.c,v 1.5 2013/11/27 17:58:59 christos Exp $	*/
+/*	$NetBSD: ip_run.c,v 1.6 2013/11/27 18:06:28 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -162,6 +162,8 @@ vi_run(ipvi, argc, argv)
 		(void)close(wpipe[0]);
 		break;
 	}
+	free(argv[1]);
+	free(argv);
 	return (0);
 }
 
