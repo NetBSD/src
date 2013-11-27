@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.4 2013/11/27 18:11:00 christos Exp $ */
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -503,14 +503,14 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 
 		/* Read the output. */
 		if (parse(sp, csc, tqp, &matches)) {
-			if (rtqp != NULL)
-				free(rtqp);
+			free(rtqp);
 			tagq_free(sp, tqp);
 			return (1);
 		}
 	}
 
 	if (matches == 0) {
+		free(rtqp);
 		msgq(sp, M_INFO, "278|No matches for query");
 		return (0);
 	}
@@ -537,8 +537,10 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 	 */
 	if (TAILQ_EMPTY(&exp->tq)) {
 		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
-	} else
+	} else {
+		free(rtqp);
 		rtqp = TAILQ_FIRST(&exp->tq);
+	}
 
 	/* Link the current TAGQ structure into place. */
 	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
@@ -568,12 +570,9 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 
 err:
 alloc_err:
-	if (rtqp != NULL)
-		free(rtqp);
-	if (rtp != NULL)
-		free(rtp);
-	if (np != NULL)
-		free(__UNCONST(np));
+	free(rtqp);
+	free(rtp);
+	free(__UNCONST(np));
 	return (1);
 }
 
