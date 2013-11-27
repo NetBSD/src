@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_run.c,v 1.4 2013/11/26 19:12:46 joerg Exp $	*/
+/*	$NetBSD: ip_run.c,v 1.5 2013/11/27 17:58:59 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -143,6 +143,7 @@ vi_run(ipvi, argc, argv)
 		 * (debugging) nvi, run it, otherwise run the user's path,
 		 * if specified, else run the compiled in path.
 		 */
+		/* coverity[+toctou] */
 		if (!pflag && stat("vi-ipc", &sb) == 0)
 			execvp("vi-ipc", argv);
 		execvp(execp, argv);
