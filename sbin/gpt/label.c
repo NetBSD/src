@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.12 2013/11/22 04:21:02 jnemeth Exp $");
+__RCSID("$NetBSD: label.c,v 1.13 2013/11/27 01:47:53 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -144,13 +144,8 @@ label(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 
-#ifdef __FreeBSD__
-		printf("%sp%u labeled\n", device_name, m->map_index);
-#endif
-#ifdef __NetBSD__
 		printf("partition %d on %s labeled %s\n", m->map_index,
 		    device_name, name);
-#endif
 	}
 }
 
