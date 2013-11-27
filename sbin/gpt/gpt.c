@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.23 2013/11/23 08:59:04 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.24 2013/11/27 01:47:53 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -49,12 +49,10 @@ __RCSID("$NetBSD: gpt.c,v 1.23 2013/11/23 08:59:04 jnemeth Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef __NetBSD__
 #include <util.h>
 #include <ctype.h>
 #include <prop/proplib.h>
 #include <sys/drvctlio.h>
-#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -241,40 +239,6 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 	} while (c != 0);
 }
 
-#ifndef __NetBSD__
-void
-le_uuid_dec(void const *buf, uuid_t *uuid)
-{
-	u_char const *p;
-	int i;
-
-	p = buf;
-	uuid->time_low = le32dec(p);
-	uuid->time_mid = le16dec(p + 4);
-	uuid->time_hi_and_version = le16dec(p + 6);
-	uuid->clock_seq_hi_and_reserved = p[8];
-	uuid->clock_seq_low = p[9];
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		uuid->node[i] = p[10 + i];
-}
-
-void
-le_uuid_enc(void *buf, uuid_t const *uuid)
-{
-	u_char *p;
-	int i;
-
-	p = buf;
-	le32enc(p, uuid->time_low);
-	le16enc(p + 4, uuid->time_mid);
-	le16enc(p + 6, uuid->time_hi_and_version);
-	p[8] = uuid->clock_seq_hi_and_reserved;
-	p[9] = uuid->clock_seq_low;
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		p[10 + i] = uuid->node[i];
-}
-
-#endif
 int
 parse_uuid(const char *s, uuid_t *uuid)
 {
@@ -486,7 +450,6 @@ gpt_mbr(int fd, off_t lba)
 	return (0);
 }
 
-#ifdef __NetBSD__
 static int
 drvctl(const char *name, u_int *sector_size, off_t *media_size)
 {
@@ -569,7 +532,6 @@ out:
 	errno = EINVAL;
 	return -1;
 }
-#endif
 
 static int
 gpt_gpt(int fd, off_t lba, int found)
@@ -682,19 +644,6 @@ gpt_open(const char *dev)
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
 	device_arg = dev;
-#ifdef __FreeBSD__
-	strlcpy(device_path, dev, sizeof(device_path));
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
-
-	snprintf(device_path, sizeof(device_path), "%s%s", _PATH_DEV, dev);
-	device_name = device_path + strlen(_PATH_DEV);
-	if ((fd = open(device_path, mode)) != -1)
-		goto found;
-	return (-1);
- found:
-#endif
-#ifdef __NetBSD__
 	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
 	if (fd == -1)
 		return -1;
@@ -702,7 +651,6 @@ gpt_open(const char *dev)
 		device_name = device_path + strlen(_PATH_DEV);
 	else
 		device_name = device_path;
-#endif
 
 	if (fstat(fd, &sb) == -1)
 		goto close;
@@ -713,10 +661,8 @@ gpt_open(const char *dev)
 		    ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)
 			goto close;
 #endif
-#ifdef __NetBSD__
 		if (drvctl(device_name, &secsz, &mediasz) == -1)
 			goto close;
-#endif
 	} else {
 		secsz = 512;	/* Fixed size for files. */
 		if (sb.st_size % secsz) {
