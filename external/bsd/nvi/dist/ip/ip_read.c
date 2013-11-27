@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_read.c,v 1.4 2013/11/27 20:37:29 christos Exp $	*/
+/*	$NetBSD: ip_read.c,v 1.5 2013/11/27 20:44:56 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -232,8 +232,7 @@ ip_read(SCR *sp, IP_PRIVATE *ipp, struct timeval *tp, int termread, int *nr)
 	poll.tv_usec = 0;
 	if (tp != NULL) {
 		FD_SET(fd, &rdfd);
-		switch (select(fd + 1,
-		    &rdfd, NULL, NULL, tp == NULL ? &poll : tp)) {
+		switch (select(fd + 1, &rdfd, NULL, NULL, tp)) {
 		case 0:
 			return (INP_TIMEOUT);
 		case -1:
