@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_global.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: ex_global.c,v 1.4 2013/11/27 21:16:10 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		len = 1;
 	}
 
-	MALLOC_RET(sp, ecp->cp, CHAR_T *, (len * 2) * sizeof(CHAR_T));
+	MALLOC_GOTO(sp, ecp->cp, CHAR_T *, (len * 2) * sizeof(CHAR_T));
 	ecp->o_cp = ecp->cp;
 	ecp->o_clen = len;
 	MEMCPYW(ecp->cp + len, p, len);
@@ -241,6 +241,9 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 	}
 	search_busy(sp, BUSY_OFF);
 	return (0);
+alloc_err:
+	free(ecp);
+	return 1;
 }
 
 /*
