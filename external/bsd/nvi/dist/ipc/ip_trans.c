@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_trans.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: ip_trans.c,v 1.3 2013/11/27 17:53:00 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -128,6 +128,7 @@ vi_translate(IPVIWIN *ipviwin, char *bp, size_t *lenp, IP_BUF *ipbp)
 	const char **vsp;
 	IPFunc fun;
 
+	memset(&ipb, 0, sizeof(ipb));
 	for (s_bp = bp, len = *lenp; len > 0;) {
 		fmt = ipfuns[(ipb.code = bp[0])-1].format;
 
