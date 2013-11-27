@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.4 2013/11/27 18:08:06 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.5 2013/11/27 18:09:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -1130,6 +1130,7 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 	return (tqp);
 
 alloc_err:
+	free(tqp);
 	return (NULL);
 }
 #endif
