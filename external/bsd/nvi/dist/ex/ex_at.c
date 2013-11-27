@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_at.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: ex_at.c,v 1.4 2013/11/27 21:13:16 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 	    tp != NULL; tp = TAILQ_PREV(tp, _texth, q))
 		len += tp->len + 1;
 
-	MALLOC_RET(sp, ecp->cp, CHAR_T *, len * 2 * sizeof(CHAR_T));
+	MALLOC_GOTO(sp, ecp->cp, CHAR_T *, len * 2 * sizeof(CHAR_T));
 	ecp->o_cp = ecp->cp;
 	ecp->o_clen = len;
 	ecp->cp[len] = '\0';
@@ -122,4 +122,7 @@ ex_at(SCR *sp, EXCMD *cmdp)
 
 	LIST_INSERT_HEAD(&sp->wp->ecq, ecp, q);
 	return (0);
+alloc_err:
+	free(ecp);
+	return 1;
 }
