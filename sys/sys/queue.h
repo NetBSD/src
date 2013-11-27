@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.63 2013/11/27 04:24:15 mrg Exp $	*/
+/*	$NetBSD: queue.h,v 1.64 2013/11/27 12:24:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -654,8 +654,8 @@ struct {								\
  * this by changing the head/tail sentinal values, but see the note above
  * this one.
  */
-static inline const void * __launder_type(const void *);
-static inline const void *
+static __inline const void * __launder_type(const void *);
+static __inline const void *
 __launder_type(const void *__x)
 {
 	__asm __volatile("" : "+r" (__x));
