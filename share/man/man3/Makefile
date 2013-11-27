@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2013/11/27 16:24:31 christos Exp $
+#	$NetBSD: Makefile,v 1.87 2013/11/27 16:27:48 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -142,6 +142,7 @@ MLINKS+=queue.3 LIST.3 \
 	queue.3 LIST_ENTRY.3 \
 	queue.3 LIST_FIRST.3 \
 	queue.3 LIST_FOREACH.3 \
+	queue.3 LIST_FOREACH_SAFE.3 \
 	queue.3 LIST_HEAD.3 \
 	queue.3 LIST_HEAD_INITIALIZER.3 \
 	queue.3 LIST_INIT.3 \
@@ -158,6 +159,7 @@ MLINKS+=queue.3 SIMPLEQ.3 \
 	queue.3 SIMPLEQ_ENTRY.3 \
 	queue.3 SIMPLEQ_FIRST.3 \
 	queue.3 SIMPLEQ_FOREACH.3 \
+	queue.3 SIMPLEQ_FOREACH_SAFE.3 \
 	queue.3 SIMPLEQ_HEAD.3 \
 	queue.3 SIMPLEQ_HEAD_INITIALIZER.3 \
 	queue.3 SIMPLEQ_INIT.3 \
@@ -176,6 +178,7 @@ MLINKS+=queue.3 SLIST.3 \
 	queue.3 SLIST_ENTRY.3 \
 	queue.3 SLIST_FIRST.3 \
 	queue.3 SLIST_FOREACH.3 \
+	queue.3 SLIST_FOREACH_SAFE.3 \
 	queue.3 SLIST_HEAD.3 \
 	queue.3 SLIST_HEAD_INITIALIZER.3 \
 	queue.3 SLIST_INIT.3 \
@@ -209,6 +212,9 @@ MLINKS+=queue.3 TAILQ.3 \
 	queue.3 TAILQ_EMPTY.3 \
 	queue.3 TAILQ_ENTRY.3 \
 	queue.3 TAILQ_FIRST.3 \
+	queue.3 TAILQ_FOREACH.3 \
+	queue.3 TAILQ_FOREACH_SAFE.3 \
+	queue.3 TAILQ_FOREACH_REVERSE.3 \
 	queue.3 TAILQ_FOREACH_REVERSE_SAFE.3 \
 	queue.3 TAILQ_HEAD.3 \
 	queue.3 TAILQ_HEAD_INITIALIZER.3 \
