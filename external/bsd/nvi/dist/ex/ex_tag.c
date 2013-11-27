@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.4 2013/11/27 18:08:06 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -810,8 +810,10 @@ tagq_push(SCR *sp, TAGQ *tqp, int new_screen, int force)
 	 */
 	if (TAILQ_EMPTY(&exp->tq)) {
 		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
-	} else
+	} else {
+		free(rtqp);
 		rtqp = TAILQ_FIRST(&exp->tq);
+	}
 
 	/* Link the new TAGQ structure into place. */
 	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
