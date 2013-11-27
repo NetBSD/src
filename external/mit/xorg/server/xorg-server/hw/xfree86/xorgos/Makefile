@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2013/02/28 13:28:36 macallan Exp $
+#	$NetBSD: Makefile,v 1.36 2013/11/27 02:04:48 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -75,6 +75,10 @@ SRCS.bsd+=      ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DPCVT_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
+.endif
+
+.if ${MACHINE} == "shark"
+CPPFLAGS.ppc_video.c += -DPCI_MAGIC_IO_RANGE=0xf0000000
 .endif
 
 .if ${MACHINE} == "dreamcast" || \
