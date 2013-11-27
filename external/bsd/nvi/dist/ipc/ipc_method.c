@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc_method.c,v 1.4 2013/11/27 17:51:04 christos Exp $	*/
+/*	$NetBSD: ipc_method.c,v 1.5 2013/11/27 20:50:45 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -92,7 +92,8 @@ vi_new_window (IPVI *ipvi, IPVIWIN **ipviwinp, int fd)
 	char	    dummy;
 	struct iovec    iov;
 
-	socketpair(AF_LOCAL, SOCK_STREAM, 0, sockets);
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockets) == -1)
+		goto alloc_err;
 
 	memset(&mh, 0, sizeof(mh));
 	mh.msg_namelen = 0;
