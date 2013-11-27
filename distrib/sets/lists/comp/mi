@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1865 2013/11/27 16:36:54 christos Exp $
+#	$NetBSD: mi,v 1.1866 2013/11/27 17:28:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4755,6 +4755,7 @@
 ./usr/share/man/cat3/LIST_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_FIRST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_FOREACH.0		comp-c-catman		.cat
+./usr/share/man/cat3/LIST_FOREACH_SAFE.0	comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_HEAD_INITIALIZER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_INIT.0		comp-c-catman		.cat
@@ -11391,6 +11392,7 @@
 ./usr/share/man/html3/LIST_ENTRY.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_FIRST.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_FOREACH.html		comp-c-htmlman		html
+./usr/share/man/html3/LIST_FOREACH_SAFE.html	comp-c-htmlman		html
 ./usr/share/man/html3/LIST_HEAD.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_HEAD_INITIALIZER.html	comp-c-htmlman		html
 ./usr/share/man/html3/LIST_INIT.html		comp-c-htmlman		html
@@ -17826,6 +17828,7 @@
 ./usr/share/man/man3/LIST_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_FIRST.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_FOREACH.3		comp-c-man		.man
+./usr/share/man/man3/LIST_FOREACH_SAFE.3	comp-c-man		.man
 ./usr/share/man/man3/LIST_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_HEAD_INITIALIZER.3	comp-c-man		.man
 ./usr/share/man/man3/LIST_INIT.3		comp-c-man		.man
