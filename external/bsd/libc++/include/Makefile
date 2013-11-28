@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2013/11/12 16:39:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/11/28 13:47:29 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH: ${LIBCXX_SRCDIR}/include
+.PATH: ${LIBCXX_SRCDIR}/include/experimental
 .PATH: ${LIBCXX_SRCDIR}/include/ext
 
 INCS=	__bit_reference \
@@ -112,6 +113,10 @@ INCS+=		cxxabi.h
 INCSDIR=	/usr/include/c++
 .for f in __hash hash_map hash_set
 INCSDIR_${f}=	/usr/include/c++/ext
+.endfor
+
+.for f in dynarray optional
+INCSDIR_${f}=	/usr/include/c++/experimental
 .endfor
 
 cxxabi.h: ${LIBCXXRT_SRCDIR}/src/cxxabi.h
