@@ -1,7 +1,7 @@
 /* Miscellaneous support for test programs.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -32,6 +32,10 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
+#endif
+
+#ifdef MPFR_TEST_DIVBYZERO
+# include <fenv.h>
 #endif
 
 #ifdef TIME_WITH_SYS_TIME
@@ -168,6 +172,11 @@ tests_start_mpfr (void)
   set_fpu_prec ();
 #endif
 
+#ifdef MPFR_TEST_DIVBYZERO
+  /* Define to test the use of MPFR_ERRDIVZERO */
+  feclearexcept (FE_ALL_EXCEPT);
+#endif
+
   tests_memory_start ();
   tests_rand_start ();
   tests_limit_start ();
@@ -196,6 +205,20 @@ tests_end_mpfr (void)
   mpfr_free_cache ();
   tests_rand_end ();
   tests_memory_end ();
+
+#ifdef MPFR_TEST_DIVBYZERO
+  /* Define to test the use of MPFR_ERRDIVZERO */
+  if (fetestexcept (FE_DIVBYZERO|FE_INVALID))
+    {
+      printf ("A floating-point division by 0 or an invalid operation"
+              " occurred!\n");
+#ifdef MPFR_ERRDIVZERO
+      /* This should never occur because the purpose of defining
+         MPFR_ERRDIVZERO is to avoid all the FP divisions by 0. */
+      err = 1;
+#endif
+    }
+#endif
 
   if (err)
     exit (err);
@@ -255,7 +278,7 @@ tests_rand_start (void)
   perform_seed = getenv ("GMP_CHECK_RANDOMIZE");
   if (perform_seed != NULL)
     {
-      seed = atoi (perform_seed);
+      seed = strtoul (perform_seed, NULL, 10);
       if (! (seed == 0 || seed == 1))
         {
           printf ("Re-seeding with GMP_CHECK_RANDOMIZE=%lu\n", seed);
@@ -445,14 +468,16 @@ ld_trace (const char *name, long double ld)
 FILE *
 src_fopen (const char *filename, const char *mode)
 {
-  const char *srcdir = getenv ("srcdir");
+#ifndef SRCDIR
+  return fopen (filename, mode);
+#else
+  const char *srcdir = SRCDIR;
   char *buffer;
+  size_t buffsize;
   FILE *f;
 
-  if (srcdir == NULL)
-    return fopen (filename, mode);
-  buffer =
-    (char*) (*__gmp_allocate_func) (strlen (filename) + strlen (srcdir) + 2);
+  buffsize = strlen (filename) + strlen (srcdir) + 2;
+  buffer = (char *) (*__gmp_allocate_func) (buffsize);
   if (buffer == NULL)
     {
       printf ("src_fopen: failed to alloc memory)\n");
@@ -460,8 +485,9 @@ src_fopen (const char *filename, const char *mode)
     }
   sprintf (buffer, "%s/%s", srcdir, filename);
   f = fopen (buffer, mode);
-  (*__gmp_free_func) (buffer, strlen (filename) + strlen (srcdir) + 2);
+  (*__gmp_free_func) (buffer, buffsize);
   return f;
+#endif
 }
 
 void
@@ -537,7 +563,7 @@ tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax)
    bad_cases functions. */
 static void
 test5rm (int (*fct) (FLIST), mpfr_srcptr x, mpfr_ptr y, mpfr_ptr z,
-         mpfr_rnd_t rnd, int test_one, char *name)
+         mpfr_rnd_t rnd, int test_one, const char *name)
 {
   mpfr_prec_t yprec = MPFR_PREC (y);
   mpfr_rnd_t rndnext = MPFR_RND_MAX;  /* means uninitialized */
@@ -634,7 +660,7 @@ test5rm (int (*fct) (FLIST), mpfr_srcptr x, mpfr_ptr y, mpfr_ptr z,
    and the ternary value is checked (it must be 0).
  */
 void
-data_check (char *f, int (*foo) (FLIST), char *name)
+data_check (const char *f, int (*foo) (FLIST), const char *name)
 {
   FILE *fp;
   int xprec, yprec;  /* not mpfr_prec_t because of the fscanf */
@@ -792,7 +818,7 @@ data_check (char *f, int (*foo) (FLIST), char *name)
  * pos, emin, emax: arguments for tests_default_random.
  */
 void
-bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), char *name,
+bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
            int pos, mpfr_exp_t emin, mpfr_exp_t emax,
            mpfr_prec_t pymin, mpfr_prec_t pymax, mpfr_prec_t psup,
            int n)
@@ -909,4 +935,24 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), char *name,
       mpfr_set_emax (old_emax);
     }
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
+}
+
+void
+flags_out (unsigned int flags)
+{
+  int none = 1;
+
+  if (flags & MPFR_FLAGS_UNDERFLOW)
+    none = 0, printf (" underflow");
+  if (flags & MPFR_FLAGS_OVERFLOW)
+    none = 0, printf (" overflow");
+  if (flags & MPFR_FLAGS_NAN)
+    none = 0, printf (" nan");
+  if (flags & MPFR_FLAGS_INEXACT)
+    none = 0, printf (" inexact");
+  if (flags & MPFR_FLAGS_ERANGE)
+    none = 0, printf (" erange");
+  if (none)
+    printf (" none");
+  printf (" (%u)\n", flags);
 }

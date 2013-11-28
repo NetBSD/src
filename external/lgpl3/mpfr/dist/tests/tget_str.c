@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_str.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-test.h"
 
 static void
-check3 (char *d, mpfr_rnd_t rnd, char *res)
+check3 (const char *d, mpfr_rnd_t rnd, const char *res)
 {
   mpfr_t x;
   char *str;
@@ -816,7 +816,7 @@ check_small (void)
   if (e != 2 || strcmp (s, "20"))
     {
       printf ("Error in mpfr_get_str for x=13.5, base 7\n");
-      printf ("Expected s=20, e=2, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=20, e=2, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);
@@ -828,7 +828,7 @@ check_small (void)
   if (e != 2 || strcmp (s, "20"))
     {
       printf ("Error in mpfr_get_str for x=13.5+tiny, base 7\n");
-      printf ("Expected s=20, e=2, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=20, e=2, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);
@@ -838,7 +838,7 @@ check_small (void)
   if (e != 2 || strcmp (s, "16"))
     {
       printf ("Error in mpfr_get_str for x=13.5-tiny, base 7\n");
-      printf ("Expected s=16, e=2, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=16, e=2, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);
@@ -852,7 +852,7 @@ check_small (void)
   if (e != 2 || strcmp (s, "66"))
     {
       printf ("Error in mpfr_get_str for x=48.5, base 7\n");
-      printf ("Expected s=66, e=2, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=66, e=2, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);
@@ -864,7 +864,7 @@ check_small (void)
   if (e != 3 || strcmp (s, "10"))
     {
       printf ("Error in mpfr_get_str for x=48.5+tiny, base 7\n");
-      printf ("Expected s=10, e=3, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=10, e=3, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);
@@ -874,7 +874,7 @@ check_small (void)
   if (e != 2 || strcmp (s, "66"))
     {
       printf ("Error in mpfr_get_str for x=48.5-tiny, base 7\n");
-      printf ("Expected s=66, e=2, got s=%s, e=%ld\n", s, e);
+      printf ("Expected s=66, e=2, got s=%s, e=%ld\n", s, (long) e);
       exit (1);
     }
   mpfr_free_str (s);

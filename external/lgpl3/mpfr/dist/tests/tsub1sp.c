@@ -1,7 +1,7 @@
 /* Test file for mpfr_sub1sp.
 
-Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -43,29 +43,33 @@ main (void)
   return 0;
 }
 
-#define STD_ERROR \
-            {\
-              printf("ERROR: for %s and p=%lu and i=%d:\nY=",\
-                     mpfr_print_rnd_mode ((mpfr_rnd_t) r), p, i);\
-               mpfr_print_binary(y);\
-               printf("\nZ="); mpfr_print_binary(z);\
-               printf("\nReal: "); mpfr_print_binary(x2);\
-               printf("\nGot : "); mpfr_print_binary(x);\
-               putchar('\n');\
-               exit(1);\
-            }
+#define STD_ERROR                                                       \
+  do                                                                    \
+    {                                                                   \
+      printf("ERROR: for %s and p=%lu and i=%d:\nY=",                   \
+             mpfr_print_rnd_mode ((mpfr_rnd_t) r), (unsigned long) p, i); \
+      mpfr_print_binary(y);                                             \
+      printf("\nZ="); mpfr_print_binary(z);                             \
+      printf("\nReal: "); mpfr_print_binary(x2);                        \
+      printf("\nGot : "); mpfr_print_binary(x);                         \
+      putchar('\n');                                                    \
+      exit(1);                                                          \
+    }                                                                   \
+ while (0)
 
-#define STD_ERROR2 \
-            {\
-              printf("ERROR: for %s and p=%lu and i=%d:\nY=",\
-                      mpfr_print_rnd_mode ((mpfr_rnd_t) r), p, i);\
-               mpfr_print_binary(y);\
-               printf("\nZ="); mpfr_print_binary(z);\
-               printf("\nR="); mpfr_print_binary(x);\
-               printf("\nWrong inexact flag. Real: %d. Got: %d\n", \
-                      inexact1, inexact2); \
-               exit(1);\
-            }
+#define STD_ERROR2                                                      \
+  do                                                                    \
+    {                                                                   \
+      printf("ERROR: for %s and p=%lu and i=%d:\nY=",                   \
+             mpfr_print_rnd_mode ((mpfr_rnd_t) r), (unsigned long) p, i); \
+      mpfr_print_binary(y);                                             \
+      printf("\nZ="); mpfr_print_binary(z);                             \
+      printf("\nR="); mpfr_print_binary(x);                             \
+      printf("\nWrong inexact flag. Real: %d. Got: %d\n",               \
+             inexact1, inexact2);                                       \
+      exit(1);                                                          \
+    }                                                                   \
+ while (0)
 
 static void
 check_random (mpfr_prec_t p)
@@ -120,7 +124,8 @@ check_special (void)
       mpfr_sub1sp (x, y, y, (mpfr_rnd_t) r);
       if (mpfr_cmp_ui(x, 0))
         {
-          printf("Error for x-x with p=%lu. Expected 0. Got:", p);
+          printf("Error for x-x with p=%lu. Expected 0. Got:",
+                 (unsigned long) p);
           mpfr_print_binary(x);
           exit(1);
         }
@@ -129,7 +134,8 @@ check_special (void)
       mpfr_sub1sp(x, y, z, (mpfr_rnd_t) r);
       if (mpfr_cmp_ui(x, 0))
         {
-          printf("Error for x-y with y=x and p=%lu. Expected 0. Got:", p);
+          printf("Error for x-y with y=x and p=%lu. Expected 0. Got:",
+                 (unsigned long) p);
           mpfr_print_binary(x);
           exit(1);
         }

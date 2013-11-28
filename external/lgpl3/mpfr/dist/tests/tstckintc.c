@@ -1,7 +1,7 @@
 /* Test file for mpfr_custom_*
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -165,6 +165,53 @@ test2 (void)
   stack = org;
 }
 
+static void
+test_nan_inf_zero (void)
+{
+  mpfr_ptr val;
+  int sign;
+  int kind;
+  char *org = stack;
+
+  val = new_mpfr (MPFR_PREC_MIN);
+
+  mpfr_set_nan (val);
+  kind = (mpfr_custom_get_kind) (val);
+  if (kind != MPFR_NAN_KIND)
+    {
+      printf ("mpfr_custom_get_kind error : ");
+      mpfr_dump (val);
+      printf (" is kind %d instead of %d\n", kind, MPFR_NAN_KIND);
+      exit (1);
+    }
+
+  sign = 1;
+  mpfr_set_inf (val, sign);
+  kind = (mpfr_custom_get_kind) (val);
+  if ((ABS (kind) != MPFR_INF_KIND) || (SIGN (kind) != SIGN (sign)))
+    {
+      printf ("mpfr_custom_get_kind error : ");
+      mpfr_dump (val);
+      printf (" is kind %d instead of %d\n", kind, MPFR_INF_KIND);
+      printf (" have sign %d instead of %d\n", SIGN (kind), SIGN (sign));
+      exit (1);
+    }
+
+  sign = -1;
+  mpfr_set_zero (val, sign);
+  kind = (mpfr_custom_get_kind) (val);
+  if ((ABS (kind) != MPFR_ZERO_KIND) || (SIGN (kind) != SIGN (sign)))
+    {
+      printf ("mpfr_custom_get_kind error : ");
+      mpfr_dump (val);
+      printf (" is kind %d instead of %d\n", kind, MPFR_ZERO_KIND);
+      printf (" have sign %d instead of %d\n", SIGN (kind), SIGN (sign));
+      exit (1);
+    }
+
+  stack = org;
+}
+
 int
 main (void)
 {
@@ -174,6 +221,7 @@ main (void)
     {
       test1 ();
       test2 ();
+      test_nan_inf_zero ();
     }
   tests_end_mpfr ();
   return 0;

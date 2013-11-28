@@ -13,8 +13,8 @@
  */
 
 /*
-Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -73,19 +73,19 @@ int main (int argc, char *argv[])
   mpfr_inits2 (n, PRECN, (mpfr_ptr) 0);
   mpfr_init2 (t, p);
 
-  for (mpfr_set_ui_2exp (x, 1, -1, GMP_RNDN);
+  for (mpfr_set_ui_2exp (x, 1, -1, MPFR_RNDN);
        mpfr_get_exp (x) <= dmax;
        mpfr_nextabove (x))
-    for (mpfr_set_ui_2exp (y, 1, -1, GMP_RNDN);
+    for (mpfr_set_ui_2exp (y, 1, -1, MPFR_RNDN);
          mpfr_get_exp (y) == 0;
          mpfr_nextabove (y))
       {
         unsigned long rz, rn;
 
-        if (mpfr_sub (z, x, y, GMP_RNDZ) != 0)
+        if (mpfr_sub (z, x, y, MPFR_RNDZ) != 0)
           continue;  /* x - y is not representable in precision n */
-        rz = eval (x, y, z, t, GMP_RNDZ);
-        rn = eval (x, y, z, t, GMP_RNDN);
+        rz = eval (x, y, z, t, MPFR_RNDZ);
+        rn = eval (x, y, z, t, MPFR_RNDN);
         if (rz == rn)
           continue;
         mpfr_printf ("x = %.*Rb ; y = %.*Rb ; Z: %lu ; N: %lu\n",

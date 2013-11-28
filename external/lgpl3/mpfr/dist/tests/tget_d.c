@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_d
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -25,6 +25,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <float.h>
 
 #include "mpfr-test.h"
+#include "ieee_floats.h"
 
 static int
 check_denorms (void)
@@ -90,7 +91,7 @@ static void
 check_inf_nan (void)
 {
   /* only if nans and infs are available */
-#if _GMP_IEEE_FLOATS
+#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
   mpfr_t  x;
   double  d;
 
@@ -140,20 +141,24 @@ check_max (void)
   MPFR_ASSERTN(d == -DBL_MAX);
   d = mpfr_get_d (u, MPFR_RNDU);
   MPFR_ASSERTN(d == -DBL_MAX);
+#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
   d = mpfr_get_d (u, MPFR_RNDN);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d < 0.0);
   d = mpfr_get_d (u, MPFR_RNDD);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d < 0.0);
+#endif
 
   mpfr_set_str_binary (u, "1E1024");
   d = mpfr_get_d (u, MPFR_RNDZ);
   MPFR_ASSERTN(d == DBL_MAX);
   d = mpfr_get_d (u, MPFR_RNDD);
   MPFR_ASSERTN(d == DBL_MAX);
+#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
   d = mpfr_get_d (u, MPFR_RNDN);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d > 0.0);
   d = mpfr_get_d (u, MPFR_RNDU);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d > 0.0);
+#endif
 
   mpfr_clear (u);
 }
@@ -177,6 +182,69 @@ check_min(void)
         }
     }
   mpfr_clear(u);
+}
+
+static void
+check_get_d_2exp_inf_nan (void)
+{
+  double var_d;
+  long exp;
+  mpfr_t var;
+
+#if !defined(MPFR_ERRDIVZERO)
+
+  mpfr_init2 (var, MPFR_PREC_MIN);
+
+  mpfr_set_nan (var);
+  var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
+  if (!DOUBLE_ISNAN (var_d))
+    {
+      printf ("mpfr_get_d_2exp with a NAN mpfr value returned a wrong value :\n"
+              " waiting for %g got %g\n", MPFR_DBL_NAN, var_d);
+      exit (1);
+    }
+
+  mpfr_set_zero (var, 1);
+  var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
+  if ((exp != 0) || (var_d != 0.0))
+    {
+      printf ("mpfr_get_d_2exp with a +0.0 mpfr value returned a wrong value :\n"
+              " double waiting for 0.0 got %g\n exp waiting for 0 got %ld\n",
+              var_d, exp);
+      exit (1);
+    }
+
+  mpfr_set_zero (var, -1);
+  var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
+  if ((exp != 0) || (var_d != DBL_NEG_ZERO))
+    {
+      printf ("mpfr_get_d_2exp with a +0.0 mpfr value returned a wrong value :\n"
+              " double waiting for %g got %g\n exp waiting for 0 got %ld\n",
+              DBL_NEG_ZERO, var_d, exp);
+      exit (1);
+    }
+
+  mpfr_set_inf (var, 1);
+  var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
+  if (var_d != MPFR_DBL_INFP)
+    {
+      printf ("mpfr_get_d_2exp with a +Inf mpfr value returned a wrong value :\n"
+              " waiting for %g got %g\n", MPFR_DBL_INFP, var_d);
+      exit (1);
+    }
+
+  mpfr_set_inf (var, -1);
+  var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
+  if (var_d != MPFR_DBL_INFM)
+    {
+      printf ("mpfr_get_d_2exp with a -Inf mpfr value returned a wrong value :\n"
+              " waiting for %g got %g\n", MPFR_DBL_INFM, var_d);
+      exit (1);
+    }
+
+  mpfr_clear (var);
+
+#endif
 }
 
 int
@@ -218,6 +286,9 @@ main (void)
   check_min();
   check_max();
 
+  check_get_d_2exp_inf_nan ();
+
   tests_end_mpfr ();
   return 0;
 }
+

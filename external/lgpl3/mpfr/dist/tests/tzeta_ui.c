@@ -1,7 +1,7 @@
 /* Test file for mpfr_zeta_ui.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -34,8 +34,8 @@ main (int argc, char *argv[])
   unsigned int prec, yprec;
   int rnd;
   mpfr_t x, y, z, t;
-  int inexact;
   unsigned long n;
+  int inex;
 
   tests_start_mpfr ();
 
@@ -66,6 +66,16 @@ main (int argc, char *argv[])
       exit (1);
     }
 
+  mpfr_clear_divby0 ();
+  inex = mpfr_zeta_ui (x, 0, MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0 && mpfr_cmp_si_2exp (x, -1, -1) == 0
+                && !mpfr_divby0_p ());
+
+  mpfr_clear_divby0 ();
+  inex = mpfr_zeta_ui (x, 1, MPFR_RNDN);
+  MPFR_ASSERTN (inex == 0 && MPFR_IS_INF (x) && MPFR_IS_POS (x)
+                && mpfr_divby0_p ());
+
   for (prec = MPFR_PREC_MIN; prec <= 100; prec++)
     {
       mpfr_set_prec (x, prec);
@@ -77,12 +87,12 @@ main (int argc, char *argv[])
       for (n = 0; n < 50; n++)
         for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
           {
-            inexact = mpfr_zeta_ui (y, n, MPFR_RNDN);
+            mpfr_zeta_ui (y, n, MPFR_RNDN);
             if (mpfr_can_round (y, yprec, MPFR_RNDN, MPFR_RNDZ, prec
                                 + (rnd == MPFR_RNDN)))
               {
                 mpfr_set (t, y, (mpfr_rnd_t) rnd);
-                inexact = mpfr_zeta_ui (z, n, (mpfr_rnd_t) rnd);
+                mpfr_zeta_ui (z, n, (mpfr_rnd_t) rnd);
                 if (mpfr_cmp (t, z))
                   {
                     printf ("results differ for n=%lu", n);
