@@ -1,4 +1,4 @@
-/*	$NetBSD: v_screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
+/*	$NetBSD: v_screen.c,v 1.4 2013/11/28 03:15:20 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ v_screen(SCR *sp, VICMD *vp)
 	 */
 	if (TAILQ_NEXT(sp, q) != NULL)
 		sp->nextdisp = TAILQ_NEXT(sp, q);
-	else if (TAILQ_EMPTY(&sp->wp->scrq)) {
+	else if (TAILQ_FIRST(&sp->wp->scrq) == sp) {
 		msgq(sp, M_ERR, "187|No other screen to switch to");
 		return (1);
 	} else
