@@ -3700,10 +3700,14 @@ fix_loongson2f_jump (struct mips_cl_insn * ip)
       macro_build (NULL, "and", "d,v,t", sreg, sreg, ATREG);
       /* Hide these three instructions to avoid getting a ``macro expanded into
          multiple instructions'' warning. */
-      if (mips_relax.sequence != 2)
+      if (mips_relax.sequence != 2) {
         mips_macro_warning.sizes[0] -= 3 * 4;
-      if (mips_relax.sequence != 1)
+        mips_macro_warning.insns[0] -= 3;
+      }
+      if (mips_relax.sequence != 1) {
         mips_macro_warning.sizes[1] -= 3 * 4;
+        mips_macro_warning.insns[1] -= 3;
+      }
     }
 }
 
@@ -4839,10 +4843,14 @@ macro_build_jrpatch (expressionS *ep, unsigned int sreg)
 
   /* Hide these two instructions to avoid getting a ``macro expanded into
      multiple instructions'' warning. */
-  if (mips_relax.sequence != 2)
+  if (mips_relax.sequence != 2) {
     mips_macro_warning.sizes[0] -= 2 * 4;
-  if (mips_relax.sequence != 1)
+    mips_macro_warning.insns[0] -= 2;
+  }
+  if (mips_relax.sequence != 1) {
     mips_macro_warning.sizes[1] -= 2 * 4;
+    mips_macro_warning.insns[0] -= 2;
+  }
 }
 
 /* Build an instruction created by a macro expansion.  This is passed
