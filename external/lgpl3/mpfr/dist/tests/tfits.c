@@ -2,8 +2,8 @@
  mpfr_fits_sint_p, mpfr_fits_slong_p, mpfr_fits_sshort_p,
  mpfr_fits_uint_p, mpfr_fits_ulong_p, mpfr_fits_ushort_p
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -30,21 +30,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <stdlib.h>
 #include <limits.h>
 
-/* The ISO C99 standard specifies that in C++ implementations the
-   INTMAX_MAX, ... macros should only be defined if explicitly requested.  */
-#if defined __cplusplus
-# define __STDC_LIMIT_MACROS
-# define __STDC_CONSTANT_MACROS
-#endif
-
-#if HAVE_INTTYPES_H
-# include <inttypes.h> /* for intmax_t */
-#else
-# if HAVE_STDINT_H
-#  include <stdint.h>
-# endif
-#endif
-
+#include "mpfr-intmax.h"
 #include "mpfr-test.h"
 
 #define ERROR1 { printf("Initial error for x="); mpfr_dump(x); exit(1); }

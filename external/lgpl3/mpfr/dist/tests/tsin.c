@@ -1,7 +1,7 @@
 /* Test file for mpfr_sin.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -345,6 +345,17 @@ main (int argc, char *argv[])
     {
       printf ("Error for x= 1.1001001000011111101101010100010001000010110100010011\nGot ");
       mpfr_dump (x);
+      exit (1);
+    }
+
+  mpfr_set_prec (s, 9);
+  mpfr_set_prec (x, 190);
+  mpfr_const_pi (x, MPFR_RNDN);
+  mpfr_sin (s, x, MPFR_RNDZ);
+  if (mpfr_cmp_str (s, "0.100000101e-196", 2, MPFR_RNDN))
+    {
+      printf ("Error for x ~= pi\n");
+      mpfr_dump (s);
       exit (1);
     }
 

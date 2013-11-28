@@ -1,8 +1,8 @@
 /* Generic test file for functions with one or two arguments (the second being
    either mpfr_t or double).
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -43,6 +43,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define TEST_RANDOM_EMAX 255
 #endif
 
+/* If the MPFR_SUSPICIOUS_OVERFLOW test fails but this is not a bug,
+   then define TGENERIC_SO_TEST with an adequate test (possibly 0) to
+   omit this particular case. */
+#ifndef TGENERIC_SO_TEST
+#define TGENERIC_SO_TEST 1
+#endif
+
+#define STR(F) #F
+#define MAKE_STR(S) STR(S)
+
 /* The (void *) below is needed to avoid a warning with gcc 4.2+ and functions
  * with 2 arguments. See <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=36299>.
  */
@@ -50,12 +60,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
   do                                                                    \
     {                                                                   \
       printf ("%s\nx = ", (S));                                         \
-      mpfr_out_str (stdout, 2, 0, (X), MPFR_RNDN);                       \
+      mpfr_out_str (stdout, 2, 0, (X), MPFR_RNDN);                      \
       printf ("\n");                                                    \
       if ((void *) U != 0)                                              \
         {                                                               \
           printf ("u = ");                                              \
-          mpfr_out_str (stdout, 2, 0, (U), MPFR_RNDN);                   \
+          mpfr_out_str (stdout, 2, 0, (U), MPFR_RNDN);                  \
           printf ("\n");                                                \
         }                                                               \
       printf ("yprec = %u, rnd_mode = %s, inexact = %d, flags = %u\n",  \
@@ -65,29 +75,32 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
     }                                                                   \
   while (0)
 
+#define TGENERIC_CHECK_AUX(S, EXPR, U)                        \
+  do                                                          \
+    if (!(EXPR))                                              \
+      TGENERIC_FAIL (S " in " MAKE_STR(TEST_FUNCTION), x, U); \
+  while (0)
+
 #undef TGENERIC_CHECK
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
-#define TGENERIC_CHECK(S, EXPR) \
-  do if (!(EXPR)) TGENERIC_FAIL (S, x, u); while (0)
+#define TGENERIC_CHECK(S, EXPR) TGENERIC_CHECK_AUX(S, EXPR, u)
 #else
-#define TGENERIC_CHECK(S, EXPR) \
-  do if (!(EXPR)) TGENERIC_FAIL (S, x, 0); while (0)
+#define TGENERIC_CHECK(S, EXPR) TGENERIC_CHECK_AUX(S, EXPR, 0)
 #endif
 
 #ifdef DEBUG_TGENERIC
-#define STR(F) #F
 #define TGENERIC_IAUX(F,P,X,U)                                          \
   do                                                                    \
     {                                                                   \
       printf ("tgeneric: testing function " STR(F)                      \
               ", %s, target prec = %lu\nx = ",                          \
               mpfr_print_rnd_mode (rnd), (unsigned long) (P));          \
-      mpfr_out_str (stdout, 2, 0, (X), MPFR_RNDN);                       \
+      mpfr_out_str (stdout, 2, 0, (X), MPFR_RNDN);                      \
       printf ("\n");                                                    \
       if (U)                                                            \
         {                                                               \
           printf ("u = ");                                              \
-          mpfr_out_str (stdout, 2, 0, (U), MPFR_RNDN);                   \
+          mpfr_out_str (stdout, 2, 0, (U), MPFR_RNDN);                  \
           printf ("\n");                                                \
         }                                                               \
     }                                                                   \
@@ -108,7 +121,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #endif
 
 static void
-test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
+test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 {
   mpfr_prec_t prec, xprec, yprec;
   mpfr_t x, y, z, t, w;
@@ -142,8 +155,10 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
       mpfr_set_prec (w, yprec);
 
       /* Note: in precision p1, we test 4 special cases. */
-      for (n = 0; n < (prec == p1 ? N + 4 : N); n++)
+      for (n = 0; n < (prec == p1 ? nmax + 4 : nmax); n++)
         {
+          int infinite_input = 0;
+
           xprec = prec;
           if (randlimb () & 1)
             {
@@ -178,6 +193,9 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
             {
               /* Special cases tested in precision p1 if n <= 3. They are
                  useful really in the extended exponent range. */
+#if (defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)) && defined(MPFR_ERRDIVZERO)
+              goto next_n;
+#endif
               set_emin (MPFR_EMIN_MIN);
               set_emax (MPFR_EMAX_MAX);
               if (n <= 1)
@@ -212,9 +230,13 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
 #elif defined(DOUBLE_ARG1)
           d = mpfr_get_d (u, rnd);
           compare = TEST_FUNCTION (y, d, x, rnd);
+          /* d can be infinite due to overflow in mpfr_get_d */
+          infinite_input |= DOUBLE_ISINF (d);
 #elif defined(DOUBLE_ARG2)
           d = mpfr_get_d (u, rnd);
           compare = TEST_FUNCTION (y, x, d, rnd);
+          /* d can be infinite due to overflow in mpfr_get_d */
+          infinite_input |= DOUBLE_ISINF (d);
 #else
           compare = TEST_FUNCTION (y, x, rnd);
 #endif
@@ -266,6 +288,12 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
               oemax = mpfr_get_emax ();
               mpfr_set_emin (emin);
               mpfr_set_emax (emax);
+#ifdef DEBUG_TGENERIC
+              /* Useful information in case of assertion failure. */
+              printf ("tgeneric: reduced exponent range [%"
+                      MPFR_EXP_FSPEC "d,%" MPFR_EXP_FSPEC "d]\n",
+                      (mpfr_eexp_t) emin, (mpfr_eexp_t) emax);
+#endif
               mpfr_clear_flags ();
 #if defined(TWO_ARGS)
               inexact = TEST_FUNCTION (w, x, u, rnd);
@@ -283,7 +311,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
                      SAME_SIGN (inexact, compare) &&
                      flags == oldflags))
                 {
-                  printf ("Error in reduced exponent range [%"
+                  printf ("Error in " MAKE_STR(TEST_FUNCTION)
+                          ", reduced exponent range [%"
                           MPFR_EXP_FSPEC "d,%" MPFR_EXP_FSPEC "d] on:\n",
                           (mpfr_eexp_t) emin, (mpfr_eexp_t) emax);
                   printf ("x = ");
@@ -311,14 +340,30 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
                 TGENERIC_CHECK ("Bad NaN flag",
                                 MPFR_IS_NAN (y) && mpfr_nanflag_p ());
               else if (MPFR_IS_INF (y))
-                TGENERIC_CHECK ("Bad overflow flag",
-                                (compare != 0) ^ (mpfr_overflow_p () == 0));
+                {
+                  TGENERIC_CHECK ("Bad overflow flag",
+                                  (compare != 0) ^ (mpfr_overflow_p () == 0));
+                  TGENERIC_CHECK ("Bad divide-by-zero flag",
+                                  (compare == 0 && !infinite_input) ^
+                                  (mpfr_divby0_p () == 0));
+                }
               else if (MPFR_IS_ZERO (y))
                 TGENERIC_CHECK ("Bad underflow flag",
                                 (compare != 0) ^ (mpfr_underflow_p () == 0));
             }
+          else if (mpfr_divby0_p ())
+            {
+              TGENERIC_CHECK ("Both overflow and divide-by-zero",
+                              ! mpfr_overflow_p ());
+              TGENERIC_CHECK ("Both underflow and divide-by-zero",
+                              ! mpfr_underflow_p ());
+              TGENERIC_CHECK ("Bad compare value (divide-by-zero)",
+                              compare == 0);
+            }
           else if (mpfr_overflow_p ())
             {
+              TGENERIC_CHECK ("Both underflow and overflow",
+                              ! mpfr_underflow_p ());
               TGENERIC_CHECK ("Bad compare value (overflow)", compare != 0);
               mpfr_nexttoinf (y);
               TGENERIC_CHECK ("Should have been max MPFR number",
@@ -415,7 +460,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
               MPFR_ASSERTN (MPFR_IS_PURE_FP (y));
               mpfr_nexttoinf (y);
               if (MPFR_IS_INF (y) && MPFR_IS_LIKE_RNDZ (rnd, MPFR_IS_NEG (y))
-                  && !mpfr_overflow_p ())
+                  && !mpfr_overflow_p () && TGENERIC_SO_TEST)
                 {
                   printf ("Possible bug! |y| is the maximum finite number "
                           "and has been obtained when\nrounding toward zero"
