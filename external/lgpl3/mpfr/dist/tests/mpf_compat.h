@@ -1,7 +1,7 @@
 /* Test compatibility mpf-mpfr.
 
-Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -135,6 +135,10 @@ main (void)
   /* MPF doen't have mpf_free_str */
   mpfr_free_str (s);
 
+  /* Use d, l and u to avoid a warning with -Wunused-but-set-variable
+     from GCC 4.6. The variables above were mainly used for prototype
+     checking. */
+  (void) d;  (void) l;  (void)  u;
 
   /* Arithmetic Functions */
 

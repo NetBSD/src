@@ -1,7 +1,7 @@
 /* Test file for mpfr_can_round.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -50,7 +50,7 @@ check_round_p (void)
         {
           printf ("mpfr_round_p(%d) != mpfr_can_round(%d)!\n"
                   "bn = %ld, err0 = %ld, prec = %lu\nbp = ",
-                  r1, r2, n, err, (unsigned long) p);
+                  r1, r2, n, (long) err, (unsigned long) p);
           gmp_printf ("%NX\n", buf, n);
           exit (1);
         }

@@ -1,5 +1,5 @@
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -33,20 +33,31 @@ MPFR).
 
 1. Extract the files from the archive.
 
-2. It is strongly advised to apply the latest patches (if this has
-   not been done yet), e.g.
-     wget http://www.mpfr.org/mpfr-3.0.1/allpatches
+2. It is strongly advised to apply the latest patches if this has
+   not been done yet and if patches are available. You can check
+   on the release page:
+
+     http://www.mpfr.org/mpfr-3.1.2/
+
+   which may have additional information. The patches can be applied
+   with commands like:
+
+     wget http://www.mpfr.org/mpfr-3.1.2/allpatches
      patch -N -Z -p1 < allpatches
+
    or
-     curl http://www.mpfr.org/mpfr-3.0.1/allpatches | patch -N -Z -p1
+
+     curl http://www.mpfr.org/mpfr-3.1.2/allpatches | patch -N -Z -p1
 
    (Those instructions are for the GNU patch command, for example
-    /usr/bin/gpatch on Solaris.)
+   /usr/bin/gpatch on Solaris.)
 
 3. In the MPFR directory, to detect your system, type:
      ./configure
    possibly with options (see below, in particular if this step or
-   one of the following fails).
+   one of the following fails). You should also check whether WARNING
+   lines have been output (such a problem may cause a failure in one
+   of the following steps).
    Note: paths provided in configure options must always be absolute
    (relative paths are not supported).
 
@@ -108,7 +119,8 @@ install recent versions of some utilities such as texinfo.
 
 * Type "make html" to produce the documentation in the HTML format
   (in several pages); if you want only one output HTML file, then
-  type "makeinfo --html --no-split mpfr.texi" instead.
+  type "makeinfo --html --no-split mpfr.texi" from the doc directory
+  instead.
 
 
 Building MPFR with internal GMP header files
@@ -120,12 +132,10 @@ to build it with them. Just do this in step 1:
   ./configure --with-gmp-build=GMPBUILD
 
 where GMPBUILD is the GMP build directory. The needed header files are:
-gmp-impl.h, longlong.h and all the necessary headers to use them.
-
-As gmp-impl.h and longlong.h are only in the GMP source directory,
-you first need to copy these files to the build directory if it is
-different (there may be other workarounds, such as setting $CPPFLAGS
-to search the GMP source directory).
+gmp-impl.h, longlong.h and all the necessary headers to use them, which
+may be located either in the GMP source directory or in the GMP build
+directory, in case they are different (MPFR takes care of that, as of
+MPFR 3.1.0).
 
 Warning: the library obtained in this way may use some internal GMP
 symbols, and thus dynamically linking your software with a different
@@ -141,8 +151,9 @@ In the GMP build directory, you also need to go into the "tune" subdirectory
 and type "make speed". This will build the GMP speed library, which is used
 by the MPFR tuning mechanism.
 
-Then go back to the MPFR build directory, and type "make tune". This will
-build an optimized file "mparam.h" for your specific architecture.
+Then go back to the MPFR build directory, go into the "tune" subdirectory and
+type "make tune". This will build an optimized file "mparam.h" for your
+specific architecture.
 
 
 ./configure options
@@ -165,7 +176,8 @@ build an optimized file "mparam.h" for your specific architecture.
                         add -I and -L options to CPPFLAGS and LDFLAGS
                         *after* the ones that are currently declared,
                         so that DIR will have a lower precedence. Also,
-                        this may not work if DIR is a system directory.
+                        this may not work if DIR is a system directory
+                        (typically /usr or /usr/local); see below.
 
 --with-gmp-build=DIR    assumes that DIR contains the GMP build directory,
                         and enables the use of GMP internals (see above).
@@ -184,6 +196,20 @@ build an optimized file "mparam.h" for your specific architecture.
                         GCC, it may not currently support GCC's __thread
                         storage class.
 
+--disable-thread-safe   build MPFR without TLS. By default, TLS support
+                        is detected automatically, and MPFR is built as
+                        thread safe if supported. However this detection
+                        is only a heuristic: TLS can be detected as
+                        supported while its support is incomplete or
+                        buggy (MPFR tests may fail). In such a case,
+                        this option is useful.
+
+--enable-gmp-internals  allows the MPFR build to use GMP's undocumented
+                        functions (not from the public API). Note that
+                        library versioning is not guaranteed to work if
+                        this option is used. Thus it must not be used in
+                        binary distributions.
+
 Note: By default, the configure script tries to set CC/CFLAGS to GMP's
 ones (this feature needs GMP 4.3.0 or later, or the --with-gmp-build
 option). However this is not guaranteed to work as the configure script
@@ -193,6 +219,105 @@ on a different machine. In such a case, the user may need to specify
 CC/CFLAGS as explained below.
 
 Run "./configure --help" to see the other options (autoconf default options).
+
+
+If 'gmp.h' and 'libgmp' do not match
+====================================
+
+Under some circumstances, the configure script may output a message
+saying:
+
+  'gmp.h' and 'libgmp' seem to have different versions or
+  we cannot run a program linked with GMP (if you cannot
+  see the version numbers above). [...]
+
+Even though the configure script does not fail in such a case, this
+message most often indicates a real error, which needs to be avoided.
+Possible causes are:
+
+* The wanted GMP library does not have the same ABI as the one chosen
+  to build MPFR. The consequences may be:
+
+    - A different GMP library (with the correct ABI) has been found,
+      but does not have the same version as 'gmp.h'.
+
+    - No other GMP libraries have been found (in this case, no version
+      numbers should be printed above the warning message).
+
+  This is incorrect and one of the following steps (make, make check)
+  will probably fail. GMP (actually gmp.h) now provides CC and CFLAGS
+  information to select the correct ABI, so that this problem should
+  no longer occur; but if GMP was provided by a binary package, such
+  information may not be valid. See the
+
+    checking for CC and CFLAGS in gmp.h...
+
+  line in the configure output (about the 11th line) and the following
+  few ones for more information. You may need to reinstall GMP or to
+  provide your own CC and/or CFLAGS. See also the remaining of this
+  INSTALL file.
+
+* A configure option like --with-gmp or --with-gmp-include was used
+  with a system include directory, e.g. one of the following:
+
+    --with-gmp=/usr
+    --with-gmp=/usr/local
+    --with-gmp-include=/usr/include
+    --with-gmp-include=/usr/local/include
+
+  GCC (and possibly other compilers) will ignore such a directive for
+  include directories (but this rule is not applied for the library
+  itself!). This means that the library search paths will be reordered
+  as declared, but the specified include directory will still be near
+  the end of the include search paths (thus with a low precedence).
+  This is not a problem if only one GMP version is installed, but
+  otherwise, a wrong gmp.h may be chosen, so that the versions of
+  gmp.h and libgmp may not match. The suggestions are the following:
+
+    - If you want to use the GMP version under /usr, then you should
+      uninstall all the other GMP versions (header and library files)
+      that may be seen in the search paths, in particular those under
+      /usr/local.
+
+    - If you want to use the GMP version under /usr/local, then you
+      should uninstall all the other GMP versions (header and library
+      files) that may be seen in the search paths, but *NOT* the one
+      under /usr (the version under /usr is provided by the OS vendor,
+      and changing/removing anything related to it may break your
+      system, and /usr should have a lower precedence than /usr/local
+      anyway).
+
+  To find where GMP versions have been installed:
+
+    $ locate libgmp  (if you have a locate database)
+
+  and if the compiler is GCC:
+
+    $ gcc -print-file-name=libgmp.so     (under most systems)
+    $ gcc -print-file-name=libgmp.dylib  (under Mac OS X)
+
+  and if this does not work, you may try:
+
+    $ gcc -print-search-dirs
+
+* An official GCC version was used under Debian GNU/Linux. Problems
+  may come from the fact that Debian chose a different convention
+  for library search paths concerning 32-bit and 64-bit libraries.
+  A possible problem can be, for instance:
+
+  [Debian's GCC, correct library path]
+  $ gcc -print-file-name=libgmp.so
+  /home/vlefevre/gmp/athlon64/lib/../lib/libgmp.so
+
+  [Official GCC, incorrect library path]
+  $ gcc-4.3.1 -print-file-name=libgmp.so
+  /usr/lib/../lib64/libgmp.so
+
+  The solution: use a GCC provided by Debian or add symbolic links
+  such as lib64 -> lib (on 64-bit machines) for your library paths.
+
+* The problem may also be temporary and only due to the fact that
+  libtool could not be used at this time. This is unlikely, though.
 
 
 In case of problem
@@ -205,7 +330,7 @@ Several documents may help you to solve the problem:
   * the FAQ (either the FAQ.html file distributed with MPFR, or the
     on-line version <http://www.mpfr.org/faq.html>, which may be more
     up-to-date);
-  * the MPFR web page for this version <http://www.mpfr.org/mpfr-3.0.1/>,
+  * the MPFR web page for this version <http://www.mpfr.org/mpfr-3.1.2/>,
     which lists bugs found in this version and provides some patches.
 
 If the "configure" fails, please check that the C compiler and its
@@ -229,6 +354,24 @@ of math operations, such as GCC's -ffast-math or Sun CC's -fast.
 Otherwise conversions from/to double's may be incorrect on infinities,
 NaN's and signed zeros. Since native FP arithmetic is used in a few
 places only, such options would not make MPFR faster anyway.
+
+If some "make check" tests fail, you can try the --disable-thread-safe
+configure option (see the configure options above): it has been reported
+that some platforms have buggy TLS support. Before trying this option,
+you may want to check in the configure output whether MPFR was built
+with TLS support; if yes, you will have a line:
+  checking for TLS support... yes
+Alternatively "grep MPFR_USE_THREAD_SAFE config.log" will show that
+MPFR_USE_THREAD_SAFE is defined to 1. If it is "no" (or the variable
+is not defined), the --disable-thread-safe option would be useless.
+
+Some tests failure may be due to other compiler bugs, in particular
+in optimization code. You can try to build MPFR without compiler
+optimizations by giving -O0 (letter O, digit 0) in CFLAGS. If the
+MPFR tests no longer fail, this was probably due to a compiler bug,
+though we cannot exclude a bug in MPFR. You may want to contact us
+(see below), possibly after looking at:
+  http://www.loria.fr/~zimmerma/software/compilerbugs.html
 
 On some platforms, try with "gmake" (GNU make) instead of "make".
 Problems have been reported with the Tru64 make.
@@ -290,16 +433,35 @@ For instance, under Unix, where paths are separated by a colon:
     setenv LIBRARY_PATH "/usr/local/lib:/other/path/lib"
     setenv LD_LIBRARY_PATH "$LIBRARY_PATH"
 
-If you can't solve your problem, you should contact us at <mpfr@loria.fr>,
-indicating the machine and operating system used (uname -a), the compiler
-and version used (gcc -v if you use gcc), the configure options used if
-any (including variables such as CC and CFLAGS), the version of GMP and
-MPFR used, and a description of the problem encountered. Please send us
-also the log of the "configure" (config.log).
+If you can't solve your problem, you should contact us via the MPFR
+mailing-list <mpfr@inria.fr>, indicating the machine and operating system
+used (uname -a), the compiler and version used (gcc -v if you use gcc),
+the configure options used if any (including variables such as CC and
+CFLAGS), the version of GMP and MPFR used, and a description of the
+problem encountered. Please send us also the log of the "configure"
+(config.log).
 
 Note that even if you can build MPFR with a C++ compiler, you can't run
 the test suite: C and C++ are not the same language! You should use a C
 compiler instead.
+
+
+Notes about ABI
+===============
+
+On 64-bit computers, it may happen that the default ABI (Application Binary
+Interface) chosen by MPFR does not correspond to the default one chosen by
+the compiler.
+
+In particular, this kind of message may indicate the problem:
+/usr/bin/ld: skipping incompatible mpfr/src/.libs/libmpfr.a when searching for -lmpfr
+
+In fact, since MPFR relies on GMP, it uses the same ABI as GMP.
+To be sure that your program compiles and links correctly, use the same
+compiler flags as MPFR does (look for CFLAGS in config.log).
+
+You might also recompile GMP with a different ABI, with for example
+./configure ABI=32.
 
 
 Notes on Mac OS X
@@ -340,14 +502,18 @@ due to the early compiler tests, as gcc will not compile any program if
 OBJECT_MODE is 64 and the -maix64 option is not provided.
 
 
-Notes on 32-bit Windows Applications (win32)
-============================================
+MPFR for use with 32-bit Windows Applications (win32)
+=====================================================
+
+There are several ways of building MPFR on Windows, the most appropriate
+approach depending on how you intend to use the resulting libraries.
+
+a. Using MinGW
+==============
 
 1 - We advise to use MinGW (http://www.mingw.org/), which is simpler and
     less demanding than Cygwin. Contrary to Cygwin, it also provides native
-    Windows code. The binaries compiled with Cygwin require a dynamic
-    library (cygwin.dll) to work; there is a Cygwin option -mno-cygwin to
-    build native code, but it may require some non-portable tricks.
+    Windows code.
 
 2 - If you just want to make a binary with gcc, there is nothing to do:
     GMP, MPFR and the program compile exactly as under Linux.
@@ -355,13 +521,9 @@ Notes on 32-bit Windows Applications (win32)
     environment, you may need the -mno-cygwin gcc option (otherwise
     a typical error is _P_WAIT being undeclared).
 
-3 - If you want to make libraries to work under another Windows compiler
-    like Visual C / C++, you have two options.  Since the unix-like *.a
-    library files are compatible with Windows *.lib files, you can simply
-    rename all *.a libraries to *.lib.  The second option is to build
-    MPFR with the Microsoft Visual Studio compiler to produce Windows
-    libraries directly (Visual Studio build projects for MPFR are
-    available at http://fp.gladman.plus.com/computing/gmp4win.htm).
+3 - If you want to make libraries work under another Windows compiler
+    like Visual C / C++, since the unix-like *.a library files are compatible
+    with Windows *.lib files, you can simply rename all *.a libraries to *.lib.
 
     With gmp-4.1.3, the only remaining problem seems to be the "alloca" calls
     in GMP. Configuring GMP and MPFR with --enable-alloca=malloc-reentrant
@@ -408,15 +570,82 @@ Notes on 32-bit Windows Applications (win32)
     Note: The L modifier has been standard for a long time (it was added
     in ISO C89).
 
+    Note 2: this now works correctly with Visual C++ 2008 and 2010
+    (tested on Microsoft (R) 32-bit C/C++ Optimizing Compiler Version
+     15.00.21022.08 for 80x86, Microsoft (R) C/C++ Optimizing Compiler
+     Version 15.00.21022.08 for x64, Microsoft (R) 32-bit C/C++ Optimizing
+     Compiler Version 16.00.30319.01 for 80x86, Microsoft (R) C/C++ Optimizing
+     Compiler Version 16.00.30319.01 for x64).
 
-Notes on 64-bit Windows Applications (x64)
-==========================================
+b. Using Cygwin
+===============
 
-[See the Notes on 32-bit Windows Applications, which might be relevant here,
- in particular when running a 64-bit operating system]
+This build should be similar to that for MinGW except that the resulting
+library depends on the Cygwin DLL and cannot therefore be used with
+Visual Studio as with MinGW. Indeed, the binaries compiled with Cygwin
+require a dynamic library (cygwin.dll) to work; there is a Cygwin option
+-mno-cygwin to build native code, but it may require some non-portable tricks.
 
-Cygwin and MinGW do not yet offer support for native Windows 64 builds but
-the 32-bit version of MPFR can be used to build 32-bit applications that
-will run on 64-bit Windows systems (see above). MPFR can be built as a native
-64-bit static or DLL library for Windows 64 using the Visual Studio build
-projects at http://fp.gladman.plus.com/computing/gmp4win.htm.
+In case of failure, you may need to pass LDFLAGS='-shared-libgcc' at the
+end of the configure line due to a bug in GCC. Otherwise, if threading
+support is not needed, you can configure MPFR with --disable-thread-safe.
+
+c. Using Visual C++ 2008/2010
+=============================
+
+Win32 versions of the MPFR library can be built using Microsoft Visual
+C++ 2008 or 2010 using the build projects available here:
+
+http://gladman.plushost.co.uk/oldsite/computing/gmp4win.php
+
+These build projects contain both win32 and x64 builds but the latter
+will give errors if your version of Visual C++ lacks the 64-bit
+compiler and tools.   The 32-bit build projects should however work
+on Visual C++ 2008, Visual C++ Express 2008 (SP1), Visual C++ 2010
+and Visual C++ Express 2010.
+
+MPFR for use with 64-bit Windows Applications (x64)
+===================================================
+
+There are two ways of building MPFR for use with 64-bit Windows
+applications.
+
+a. Using MinGW64
+================
+
+The MinGW64 version of the GCC compiler is now available here:
+
+http://sourceforge.net/projects/mingw-w64/
+
+It can build both GMP and MPFR for 64-bit Windows applications.
+
+b. Using Visual C++ 2008/2010
+=============================
+
+x64 versions of the MPFR library can be built using Microsoft Visual
+C++ 2008 or 2010 using the build projects available here:
+
+http://gladman.plushost.co.uk/oldsite/computing/gmp4win.php
+
+These build projects contain both win32 and x64 builds but the latter
+can only be built if your version of Visual C++ contains the 64-bit
+compiler and tools.  On Visual C++ 2008, the 64-bit tools are an
+option during installation so if you don't have them you will need
+to start the Visual Studio installer and add them to your IDE
+configuration.  On Visual C++ 2010 they are installed by default.
+
+As delivered, Visual C++ Express 2008 SP1 cannot build x64 projects
+but the Windows SDK can be added to it to allow this. The IDE then
+needs to be configured as described here:
+
+http://msdn.microsoft.com/en-us/library/9yb4317s(VS.80).aspx
+
+to allow x64 builds.
+
+Visual C++ Express 2010 requires the Windows 7 SDK to be installed
+in order to build x64 projects. This SDK is available here:
+
+http://tinyurl.com/25zz8r6
+
+In this case, once this SDK has been installed, Visual C++ Express 2010
+will build x64 projects without further changes.
