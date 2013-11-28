@@ -27,6 +27,16 @@ bool is_skipws ( const std::wistream *is ) {
     return ( is->flags() & std::ios_base::skipws ) != 0;
     }
 
+void both_ways ( const char *p ) {
+	std::string str(p);
+	auto q = std::quoted(str);
+
+    std::stringstream ss;
+    bool skippingws = is_skipws ( &ss );
+	ss << q;
+	ss >> q;
+    }
+
 void round_trip ( const char *p ) {
     std::stringstream ss;
     bool skippingws = is_skipws ( &ss );
@@ -140,6 +150,8 @@ std::wstring unquote ( const wchar_t *p, wchar_t delim='"', wchar_t escape='\\' 
 
 int main()
 {
+    both_ways ( "" );   // This is a compilation check
+
     round_trip    (  "" );
     round_trip_ws (  "" );
     round_trip_d  (  "", 'q' );

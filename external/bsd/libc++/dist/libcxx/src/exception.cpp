@@ -24,7 +24,7 @@
   #ifndef _LIBCPPABI_VERSION
     using namespace __cxxabiapple;
     // On Darwin, there are two STL shared libraries and a lower level ABI
-    // shared libray.  The globals holding the current terminate handler and
+    // shared library.  The globals holding the current terminate handler and
     // current unexpected handler are in the ABI library.
     #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
     #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler
@@ -79,7 +79,7 @@ get_terminate() _NOEXCEPT
     return __sync_fetch_and_add(&__terminate_handler, (terminate_handler)0);
 }
 
-#ifndef EMSCRIPTEN // We provide this in JS
+#ifndef __EMSCRIPTEN__ // We provide this in JS
 _LIBCPP_NORETURN
 void
 terminate() _NOEXCEPT
@@ -102,10 +102,10 @@ terminate() _NOEXCEPT
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
-#endif // !EMSCRIPTEN
+#endif // !__EMSCRIPTEN__
 #endif // !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
-#if !defined(LIBCXXRT) && !defined(__GLIBCXX__) && !defined(EMSCRIPTEN)
+#if !defined(LIBCXXRT) && !defined(__GLIBCXX__) && !defined(__EMSCRIPTEN__)
 bool uncaught_exception() _NOEXCEPT
 {
 #if defined(__APPLE__) || defined(_LIBCPPABI_VERSION)
