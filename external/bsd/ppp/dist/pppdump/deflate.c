@@ -1,3 +1,5 @@
+/*	$NetBSD: deflate.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * ppp_deflate.c - interface the zlib procedures for Deflate compression
  * and decompression (as used by gzip) to the PPP code.
@@ -33,17 +35,20 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: deflate.c,v 1.5 2004/01/17 05:47:55 carlsonj Exp 
+ * Id: deflate.c,v 1.5 2004/01/17 05:47:55 carlsonj Exp
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: deflate.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ppp_defs.h"
-#include "ppp-comp.h"
-#include "zlib.h"
+#include "pppdump.h"
+#include <net/ppp_defs.h>
+#include <net/ppp-comp.h>
+#include <zlib.h>
 
 #if DO_DEFLATE
 
@@ -71,9 +76,8 @@ static void	*z_decomp_alloc __P((u_char *options, int opt_len));
 static void	z_decomp_free __P((void *state));
 static int	z_decomp_init __P((void *state, u_char *options, int opt_len,
 				     int unit, int hdrlen, int mru, int debug));
-static void	z_incomp __P((void *state, u_char *dmsg, int len));
-static int	z_decompress __P((void *state, u_char *cmp, int inlen,
-				    u_char *dmp, int *outlenp));
+static void	z_incomp __P((void *state, PACKETPTR mi));
+static int	z_decompress __P((void *state, PACKETPTR mi, PACKETPTR *mo));
 static void	z_decomp_reset __P((void *state));
 static void	z_comp_stats __P((void *state, struct compstat *stats));
 
@@ -82,6 +86,12 @@ static void	z_comp_stats __P((void *state, struct compstat *stats));
  */
 struct compressor ppp_deflate = {
     CI_DEFLATE,			/* compress_proto */
+    NULL,			/* comp_alloc */
+    NULL,			/* comp_free */
+    NULL,			/* comp_init */
+    NULL,			/* comp_reset */
+    NULL,			/* comp_compress */
+    NULL,			/* comp_stat */
     z_decomp_alloc,		/* decomp_alloc */
     z_decomp_free,		/* decomp_free */
     z_decomp_init,		/* decomp_init */
@@ -230,17 +240,17 @@ z_decomp_reset(arg)
  * compression, even though they are detected by inspecting the input.
  */
 static int
-z_decompress(arg, mi, inlen, mo, outlenp)
+z_decompress(arg, mi, mo)
     void *arg;
-    u_char *mi, *mo;
-    int inlen, *outlenp;
+    PACKETPTR mi;
+    PACKETPTR *mo;
 {
     struct deflate_state *state = (struct deflate_state *) arg;
     u_char *rptr, *wptr;
     int rlen, olen;
     int seq, r;
 
-    rptr = mi;
+    rptr = mi->buf;
     if (*rptr == 0)
 	++rptr;
     ++rptr;
@@ -261,9 +271,9 @@ z_decompress(arg, mi, inlen, mo, outlenp)
     /*
      * Set up to call inflate.
      */
-    wptr = mo;
+    wptr = (*mo)->buf;
     state->strm.next_in = rptr;
-    state->strm.avail_in = mi + inlen - rptr;
+    state->strm.avail_in = mi->buf + mi->len - rptr;
     rlen = state->strm.avail_in + PPP_HDRLEN + DEFLATE_OVHD;
     state->strm.next_out = wptr;
     state->strm.avail_out = state->mru + 2;
@@ -278,7 +288,7 @@ z_decompress(arg, mi, inlen, mo, outlenp)
 	return DECOMP_FATALERROR;
     }
     olen = state->mru + 2 - state->strm.avail_out;
-    *outlenp = olen;
+    (*mo)->len = olen;
 
     if ((wptr[0] & 1) != 0)
 	++olen;			/* for suppressed protocol high byte */
@@ -302,10 +312,9 @@ z_decompress(arg, mi, inlen, mo, outlenp)
  * Incompressible data has arrived - add it to the history.
  */
 static void
-z_incomp(arg, mi, mlen)
+z_incomp(arg, mi)
     void *arg;
-    u_char *mi;
-    int mlen;
+    PACKETPTR mi;
 {
     struct deflate_state *state = (struct deflate_state *) arg;
     u_char *rptr;
@@ -314,7 +323,7 @@ z_incomp(arg, mi, mlen)
     /*
      * Check that the protocol is one we handle.
      */
-    rptr = mi;
+    rptr = mi->buf;
     proto = rptr[0];
     if ((proto & 1) == 0)
 	proto = (proto << 8) + rptr[1];
@@ -325,7 +334,7 @@ z_incomp(arg, mi, mlen)
 
     if (rptr[0] == 0)
 	++rptr;
-    rlen = mi + mlen - rptr;
+    rlen = mi->buf + mi->len - rptr;
     state->strm.next_in = rptr;
     state->strm.avail_in = rlen;
     r = inflateIncomp(&state->strm);
