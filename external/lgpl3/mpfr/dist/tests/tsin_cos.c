@@ -1,7 +1,7 @@
 /* Test file for mpfr_sin_cos.
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -514,7 +514,7 @@ bug20091013 (void)
 
 /* Bug reported by Laurent Fousse for the 2.4 branch.
    No problem in the trunk.
-   http://websympa.loria.fr/wwsympa/arc/mpfr/2009-11/msg00044.html */
+   https://sympa.inria.fr/sympa/arc/mpfr/2009-11/msg00044.html */
 static void
 bug20091122 (void)
 {
@@ -635,6 +635,35 @@ consistency (void)
     }
 }
 
+static void
+coverage_01032011 (void)
+{
+  mpfr_t val, cval, sval, svalf;
+  int status_f, status;
+
+  mpfr_init2 (val, MPFR_PREC_MIN);
+  mpfr_init2 (cval, MPFR_PREC_MIN);
+  mpfr_init2 (sval, MPFR_PREC_MIN);
+  mpfr_init2 (svalf, MPFR_PREC_MIN);
+
+  mpfr_set_str1 (val, "-0.7");
+
+  status_f = mpfr_sincos_fast (svalf, NULL, val, MPFR_RNDN);
+  status = mpfr_sin_cos (sval, cval, val, MPFR_RNDN);
+  if (! mpfr_equal_p (svalf, sval) || SIGN (status_f) != SIGN (status))
+    {
+      printf ("mpfr_sincos_fast differ from mpfr_sin_cos result:\n"
+              " sin fast is ");
+      mpfr_dump (svalf);
+      printf (" sin is ");
+      mpfr_dump (sval);
+      printf ("status_f = %d, status = %d\n", status_f, status);
+      exit (1);
+    }
+
+  mpfr_clears(val, cval, sval, svalf, (mpfr_ptr) 0);
+}
+
 /* tsin_cos prec [N] performs N tests with prec bits */
 int
 main (int argc, char *argv[])
@@ -687,6 +716,8 @@ main (int argc, char *argv[])
   overflowed_sin_cos0 ();
   tiny ();
   test20071214 ();
+
+  coverage_01032011 ();
 
  end:
   tests_end_mpfr ();

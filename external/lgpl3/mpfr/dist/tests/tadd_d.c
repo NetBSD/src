@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_d
 
-Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -92,6 +92,7 @@ check_regulars (void)
 static void
 check_nans (void)
 {
+#if !defined(MPFR_ERRDIVZERO)
   mpfr_t  x, y;
   int inexact;
 
@@ -126,6 +127,7 @@ check_nans (void)
 
   mpfr_clear (x);
   mpfr_clear (y);
+#endif
 }
 
 #define TEST_FUNCTION mpfr_add_d
