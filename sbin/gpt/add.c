@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.20 2013/11/27 01:47:53 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.21 2013/11/28 01:37:14 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -203,6 +203,8 @@ cmd_add(int argc, char *argv[])
 			if (dehumanize_number(optarg, &human_num) < 0)
 				usage_add();
 			alignment = human_num;
+			if (alignment < 1)
+				usage_add();
 			break;
 		case 'b':
 			if (block > 0)
@@ -210,6 +212,8 @@ cmd_add(int argc, char *argv[])
 			if (dehumanize_number(optarg, &human_num) < 0)
 				usage_add();
 			block = human_num;
+			if (block < 1)
+				usage_add();
 			break;
 		case 'i':
 			if (entry > 0)
