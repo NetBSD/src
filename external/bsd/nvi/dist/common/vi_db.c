@@ -495,7 +495,7 @@ db_exist(SCR *sp, db_recno_t lno)
 	if (ep->c_nlines != OOBLNO)
 		return (lno <= (F_ISSET(sp, SC_TINPUT) ?
 		    ep->c_nlines + TAILQ_LAST(&sp->tiq, _texth)->lno -
-		    TAILQ_FIRST(&sp->tiq->lno) : ep->c_nlines));
+		    TAILQ_FIRST(&sp->tiq)->lno : ep->c_nlines));
 
 	/* Go get the line. */
 	return (!db_get(sp, lno, 0, NULL, NULL));
