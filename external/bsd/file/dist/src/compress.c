@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.6 2013/01/03 23:05:38 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.7 2013/11/28 14:40:00 joerg Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)$File: compress.c,v 1.70 2012/11/07 17:54:48 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.6 2013/01/03 23:05:38 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.7 2013/11/28 14:40:00 joerg Exp $");
 #endif
 #endif
 
@@ -487,7 +487,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 #endif
 			free(*newch);
 			n = 0;
-			newch[0] = '\0';
+			*newch = NULL;
 			goto err;
 		} else {
 			n = r;
