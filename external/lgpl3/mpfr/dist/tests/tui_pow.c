@@ -1,7 +1,7 @@
 /* Test file for mpfr_ui_pow and mpfr_ui_pow_ui.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -218,7 +218,7 @@ main (int argc, char *argv[])
     }
 
   /* problem found by Kevin on spe175.testdrive.compaq.com
-     (03 Sep 2003) */
+     (03 Sep 2003), ia64 under HP-UX */
   mpfr_set_prec (x, 2);
   mpfr_set_prec (y, 2);
   mpfr_set_str (x, "0.5", 10, MPFR_RNDN);
