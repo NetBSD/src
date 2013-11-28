@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1067 2013/11/28 16:31:25 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1068 2013/11/28 22:36:52 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1061,16 +1061,16 @@ directory layout (the easiest way to check is by running ``postfix
 set-permissions'').
 
 Package:	ppp
-Version:	2.4.4
-Current Vers:	2.4.4
+Version:	2.4.5
+Current Vers:	2.4.5
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
 Home Page:
-CVS root:	:pserver:cvs@pserver.samba.org:/cvsroot (password: cvs)
+GIT root:	git://ozlabs.org/~paulus/ppp.git
 Mailing List:
 Responsible:	christos, cube
 License:	BSD (3-clause)
-Location:	dist/pppd
+Location:	external/bsd/ppp/dist
 Notes:
 BSD support was removed from 2.4.0; I added it back and removed
 some GPL pieces. Multilink support is missing. Repeated pings to
