@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.4 2013/11/27 20:34:34 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.5 2013/11/28 01:37:14 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -188,6 +188,8 @@ cmd_resize(int argc, char *argv[])
 			if (dehumanize_number(optarg, &human_num) < 0)
 				usage_resize();
 			alignment = human_num;
+			if (alignment < 1)
+				usage_resize();
 			break;
 		case 'i':
 			if (entry > 0)
