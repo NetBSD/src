@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1866 2013/11/27 17:28:39 christos Exp $
+#	$NetBSD: mi,v 1.1867 2013/11/28 13:47:29 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -259,8 +259,10 @@
 ./usr/include/c++/cwctype			comp-cxx-include	libcxx
 ./usr/include/c++/cxxabi.h			comp-cxx-include	libcxx
 ./usr/include/c++/deque				comp-cxx-include	libcxx
-./usr/include/c++/dynarray			comp-cxx-include	libcxx
+./usr/include/c++/dynarray			comp-obsolete		obsolete
 ./usr/include/c++/exception			comp-cxx-include	libcxx
+./usr/include/c++/experimental/dynarray		comp-cxx-include	libcxx
+./usr/include/c++/experimental/optional		comp-cxx-include	libcxx
 ./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_map			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_set			comp-cxx-include	libcxx
@@ -283,7 +285,7 @@
 ./usr/include/c++/mutex				comp-cxx-include	libcxx
 ./usr/include/c++/new				comp-cxx-include	libcxx
 ./usr/include/c++/numeric			comp-cxx-include	libcxx
-./usr/include/c++/optional			comp-cxx-include	libcxx
+./usr/include/c++/optional			comp-obsolete		obsolete
 ./usr/include/c++/ostream			comp-cxx-include	libcxx
 ./usr/include/c++/queue				comp-cxx-include	libcxx
 ./usr/include/c++/random			comp-cxx-include	libcxx
