@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * main.c - Point-to-Point Protocol main module
  *
@@ -66,7 +68,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: main.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -121,7 +129,6 @@
 #include "atcp.h"
 #endif
 
-static const char rcsid[] = RCSID;
 
 /* interface vars */
 char ifname[32];		/* Interface name */
@@ -1616,9 +1623,7 @@ safe_fork(int infd, int outfd, int errfd)
 }
 
 static bool
-add_script_env(pos, newstring)
-    int pos;
-    char *newstring;
+add_script_env(int pos, char *newstring)
 {
     if (pos + 1 >= s_env_nalloc) {
 	int new_n = pos + 17;
@@ -1636,8 +1641,7 @@ add_script_env(pos, newstring)
 }
 
 static void
-remove_script_env(pos)
-    int pos;
+remove_script_env(int pos)
 {
     free(script_env[pos] - 1);
     while ((script_env[pos] = script_env[pos + 1]) != NULL)
@@ -1649,7 +1653,7 @@ remove_script_env(pos)
  * and update the system environment.
  */
 static void
-update_system_environment()
+update_system_environment(void)
 {
     struct userenv *uep;
 
@@ -1732,7 +1736,7 @@ device_script(program, in, out, dont_wait)
  * script_unsetenv() safely after this routine is run.
  */
 static void
-update_script_environment()
+update_script_environment(void)
 {
     struct userenv *uep;
 

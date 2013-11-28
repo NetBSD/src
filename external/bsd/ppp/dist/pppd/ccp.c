@@ -1,3 +1,5 @@
+/*	$NetBSD: ccp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * ccp.c - PPP Compression Control Protocol.
  *
@@ -28,7 +30,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: ccp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -42,8 +50,6 @@
 #include "chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
 #include "lcp.h"	/* lcp_close(), lcp_fsm */
 #endif
-
-static const char rcsid[] = RCSID;
 
 /*
  * Unfortunately there is a bug in zlib which means that using a

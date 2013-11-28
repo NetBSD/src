@@ -1,3 +1,5 @@
+/*	$NetBSD: fsm.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
  *
@@ -40,7 +42,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp "
+#include <sys/cdefs.h>
+#if 0
+#define RCSID   "Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: fsm.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 /*
  * TODO:
@@ -55,7 +63,6 @@
 #include "pppd.h"
 #include "fsm.h"
 
-static const char rcsid[] = RCSID;
 
 static void fsm_timeout __P((void *));
 static void fsm_rconfreq __P((fsm *, int, u_char *, int));
@@ -65,6 +72,7 @@ static void fsm_rtermreq __P((fsm *, int, u_char *, int));
 static void fsm_rtermack __P((fsm *));
 static void fsm_rcoderej __P((fsm *, u_char *, int));
 static void fsm_sconfreq __P((fsm *, int));
+static void terminate_layer __P((fsm *, int));
 
 #define PROTO_NAME(f)	((f)->callbacks->proto_name)
 
@@ -306,7 +314,7 @@ fsm_timeout(arg)
     case ACKRCVD:
     case ACKSENT:
 	if (f->retransmits <= 0) {
-	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
+	    warn("%s: timeout sending Config-Requests", PROTO_NAME(f));
 	    f->state = STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);

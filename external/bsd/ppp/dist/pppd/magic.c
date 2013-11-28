@@ -1,3 +1,5 @@
+/*	$NetBSD: magic.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * magic.c - PPP Magic Number routines.
  *
@@ -40,7 +42,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: magic.c,v 1.11 2003/06/11 23:56:26 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: magic.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +59,6 @@
 #include "pppd.h"
 #include "magic.h"
 
-static const char rcsid[] = RCSID;
 
 extern long mrand48 __P((void));
 extern void srand48 __P((long));

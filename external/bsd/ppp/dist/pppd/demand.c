@@ -1,3 +1,5 @@
+/*	$NetBSD: demand.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * demand.c - Support routines for demand-dialling.
  *
@@ -28,7 +30,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: demand.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +52,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #ifdef PPP_FILTER
-#include <pcap-bpf.h>
+#include <pcap.h>
 #endif
 
 #include "pppd.h"
@@ -52,7 +60,6 @@
 #include "ipcp.h"
 #include "lcp.h"
 
-static const char rcsid[] = RCSID;
 
 char *frame;
 int framelen;
@@ -100,7 +107,8 @@ demand_conf()
 	    fatal("Couldn't set up demand-dialled PPP interface: %m");
 
 #ifdef PPP_FILTER
-    set_filters(&pass_filter, &active_filter);
+    set_filters(&pass_filter_in, &pass_filter_out,
+		&active_filter_in, &active_filter_out);
 #endif
 
     /*
@@ -330,6 +338,9 @@ demand_rexmit(proto)
  * that is, whether it is worth bringing up the link for.
  */
 static int
+/*###340 [cc] error: static declaration of 'active_packet' follows non-static declaration%%%*/
+/*###340 [cc] error: function declaration isn't a prototype%%%*/
+/*###340 [cc] error: 'active_packet' defined but not used%%%*/
 active_packet(p, len)
     unsigned char *p;
     int len;
@@ -342,10 +353,10 @@ active_packet(p, len)
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
     p[0] = 1;		/* outbound packet indicator */
-    if ((pass_filter.bf_len != 0
-	 && bpf_filter(pass_filter.bf_insns, p, len, len) == 0)
-	|| (active_filter.bf_len != 0
-	    && bpf_filter(active_filter.bf_insns, p, len, len) == 0)) {
+    if ((pass_filter_out.bf_len != 0
+	 && bpf_filter(pass_filter_out.bf_insns, p, len, len) == 0)
+	|| (active_filter_out.bf_len != 0
+	    && bpf_filter(active_filter_out.bf_insns, p, len, len) == 0)) {
 	p[0] = 0xff;
 	return 0;
     }
