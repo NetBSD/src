@@ -85,9 +85,13 @@
 #ifndef __STDC__
 #define const
 #endif
-
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp ";
+#endif
+#else
+__RCSID("$NetBSD: chat.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -147,20 +151,9 @@ extern char *sys_errlist[];
 				 "unknown error")
 #endif
 
-/*************** Micro getopt() *********************************************/
-#define	OPTION(c,v)	(_O&2&&**v?*(*v)++:!c||_O&4?0:(!(_O&1)&& \
-				(--c,++v),_O=4,c&&**v=='-'&&v[0][1]?*++*v=='-'\
-				&&!v[0][1]?(--c,++v,0):(_O=2,*(*v)++):0))
-#define	OPTARG(c,v)	(_O&2?**v||(++v,--c)?(_O=1,--c,*v++): \
-				(_O=4,(char*)0):(char*)0)
-#define	OPTONLYARG(c,v)	(_O&2&&**v?(_O=1,--c,*v++):(char*)0)
-#define	ARG(c,v)	(c?(--c,*v++):(char*)0)
-
-static int _O = 0;		/* Internal state */
-/*************** Micro getopt() *********************************************/
-
 char *program_name;
 
+#define	BUFFER_SIZE		256
 #define	MAX_ABORTS		50
 #define	MAX_REPORTS		50
 #define	DEFAULT_CHAT_TIMEOUT	45
@@ -198,12 +191,12 @@ struct termios saved_tty_parameters;
 #endif
 
 char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
-	fail_buffer[50];
+	fail_buffer[BUFFER_SIZE];
 int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
 int clear_abort_next = 0;
 
 char *report_string[MAX_REPORTS] ;
-char  report_buffer[256] ;
+char  report_buffer[BUFFER_SIZE] ;
 int n_reports = 0, report_next = 0, report_gathering = 0 ; 
 int clear_report_next = 0;
 
@@ -226,15 +219,15 @@ void echo_stderr __P((int));
 void break_sequence __P((void));
 void terminate __P((int status));
 void do_file __P((char *chat_file));
-int  get_string __P((register char *string));
-int  put_string __P((register char *s));
+int  get_string __P((char *string));
+int  put_string __P((char *s));
 int  write_char __P((int c));
 int  put_char __P((int c));
 int  get_char __P((void));
-void chat_send __P((register char *s));
+void chat_send __P((char *s));
 char *character __P((int c));
-void chat_expect __P((register char *s));
-char *clean __P((register char *s, int sending));
+void chat_expect __P((char *s));
+char *clean __P((char *s, int sending));
 void break_sequence __P((void));
 void terminate __P((int status));
 void pack_array __P((char **array, int end));
@@ -289,12 +282,12 @@ main(argc, argv)
      char **argv;
 {
     int option;
-    char *arg;
+    int i;
 
     program_name = *argv;
     tzset();
 
-    while ((option = OPTION(argc, argv)) != 0) {
+    while ((option = getopt(argc, argv, ":eEvVf:t:r:sST:U:")) != -1) {
 	switch (option) {
 	case 'e':
 	    ++echo;
@@ -321,25 +314,24 @@ main(argc, argv)
 	    break;
 
 	case 'f':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		    chat_file = copy_of(arg);
+	    if (optarg != NULL)
+		    chat_file = copy_of(optarg);
 	    else
 		usage();
 	    break;
 
 	case 't':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		timeout = atoi(arg);
+	    if (optarg != NULL)
+		timeout = atoi(optarg);
 	    else
 		usage();
 	    break;
 
 	case 'r':
-	    arg = OPTARG (argc, argv);
-	    if (arg) {
+	    if (optarg) {
 		if (report_fp != NULL)
 		    fclose (report_fp);
-		report_file = copy_of (arg);
+		report_file = copy_of (optarg);
 		report_fp   = fopen (report_file, "a");
 		if (report_fp != NULL) {
 		    if (verbose)
@@ -351,15 +343,15 @@ main(argc, argv)
 	    break;
 
 	case 'T':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		phone_num = copy_of(arg);
+	    if (optarg != NULL)
+		phone_num = copy_of(optarg);
 	    else
 		usage();
 	    break;
 
 	case 'U':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		phone_num2 = copy_of(arg);
+	    if (optarg != NULL)
+		phone_num2 = copy_of(optarg);
 	    else
 		usage();
 	    break;
@@ -369,6 +361,8 @@ main(argc, argv)
 	    break;
 	}
     }
+    argc -= optind;
+    argv += optind;
 /*
  * Default the report file to the stderr location
  */
@@ -391,17 +385,15 @@ main(argc, argv)
     init();
     
     if (chat_file != NULL) {
-	arg = ARG(argc, argv);
-	if (arg != NULL)
+	if (argc)
 	    usage();
 	else
 	    do_file (chat_file);
     } else {
-	while ((arg = ARG(argc, argv)) != NULL) {
-	    chat_expect(arg);
-
-	    if ((arg = ARG(argc, argv)) != NULL)
-		chat_send(arg);
+	for (i = 0; i < argc; i++) {
+	    chat_expect(argv[i]);
+	    if (++i < argc)
+		chat_send(argv[i]);
 	}
     }
 
@@ -508,6 +500,7 @@ void msgf __V((const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_INFO, "%s", line);
     if (to_stderr)
@@ -533,6 +526,7 @@ void fatal __V((int code, const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_ERR, "%s", line);
     if (to_stderr)
@@ -614,7 +608,7 @@ void set_tty_parameters()
     have_tty_parameters  = 1;
 
     t.c_iflag     |= IGNBRK | ISTRIP | IGNPAR;
-    t.c_oflag      = 0;
+    t.c_oflag     |= OPOST | ONLCR;
     t.c_lflag      = 0;
     t.c_cc[VERASE] =
     t.c_cc[VKILL]  = 0;
@@ -649,7 +643,7 @@ int status;
 	int c, rep_len;
 
 	rep_len = strlen(report_buffer);
-	while (rep_len + 1 <= sizeof(report_buffer)) {
+	while (rep_len < sizeof(report_buffer) - 1) {
 	    alarm(1);
 	    c = get_char();
 	    alarm(0);
@@ -682,7 +676,7 @@ int status;
  *	'Clean up' this string.
  */
 char *clean(s, sending)
-register char *s;
+char *s;
 int sending;  /* set to 1 when sending (putting) this string. */
 {
     char cur_chr;
@@ -1022,11 +1016,11 @@ int c;
     c &= 0x7F;
 
     if (c < 32)
-	sprintf(string, "%s^%c", meta, (int)c + '@');
+	snprintf(string, sizeof(string), "%s^%c", meta, (int)c + '@');
     else if (c == 127)
-	sprintf(string, "%s^?", meta);
+	snprintf(string, sizeof(string), "%s^?", meta);
     else
-	sprintf(string, "%s%c", meta, c);
+	snprintf(string, sizeof(string), "%s%c", meta, c);
 
     return (string);
 }
@@ -1035,7 +1029,7 @@ int c;
  *  process the reply string
  */
 void chat_send (s)
-register char *s;
+char *s;
 {
     char file_data[STR_LEN];
 
@@ -1297,10 +1291,11 @@ int c;
 }
 
 int put_string (s)
-register char *s;
+char *s;
 {
+	char *ss;
     quiet = 0;
-    s = clean(s, 1);
+    s = ss = clean(s, 1);
 
     if (verbose) {
 	if (quiet)
@@ -1312,11 +1307,13 @@ register char *s;
     alarm(timeout); alarmed = 0;
 
     while (*s) {
-	register char c = *s++;
+	char c = *s++;
 
 	if (c != '\\') {
-	    if (!write_char (c))
+	    if (!write_char (c)) {
+		free(ss);
 		return 0;
+	    }
 	    continue;
 	}
 
@@ -1335,14 +1332,17 @@ register char *s;
 	    break;
 
 	default:
-	    if (!write_char (c))
+	    if (!write_char (c)) {
+		free(ss);
 		return 0;
+	    }
 	    break;
 	}
     }
 
     alarm(0);
     alarmed = 0;
+    free(ss);
     return (1);
 }
 
@@ -1380,11 +1380,11 @@ int n;
  *	'Wait for' this string to appear on this file descriptor.
  */
 int get_string(string)
-register char *string;
+char *string;
 {
     char temp[STR_LEN];
-    int c, printed = 0, len, minlen;
-    register char *s = temp, *end = s + STR_LEN;
+    int c, len, minlen;
+    char *s = temp, *end = s + STR_LEN;
     char *logged = temp;
 
     fail_reason = (char *)0;
@@ -1398,12 +1398,14 @@ register char *string;
     if (len > STR_LEN) {
 	msgf("expect string is too long");
 	exit_code = 1;
+	free(string);
 	return 0;
     }
 
     if (len == 0) {
 	if (verbose)
 	    msgf("got it");
+	free(string);
 	return (1);
     }
 
@@ -1447,6 +1449,8 @@ register char *string;
 
 		    strftime (report_buffer, 20, "%b %d %H:%M:%S ", tm_now);
 		    strcat (report_buffer, report_string[n]);
+		    strlcat(report_buffer, report_string[n],
+		      sizeof(report_buffer));
 
 		    report_string[n] = (char *) NULL;
 		    report_gathering = 1;
@@ -1477,6 +1481,7 @@ register char *string;
 
 	    alarm(0);
 	    alarmed = 0;
+	    free(string);
 	    return (1);
 	}
 
@@ -1492,7 +1497,9 @@ register char *string;
 		alarm(0);
 		alarmed = 0;
 		exit_code = n + 4;
-		strcpy(fail_reason = fail_buffer, abort_string[n]);
+		strlcpy(fail_buffer, abort_string[n], sizeof(fail_buffer));
+		fail_reason = fail_buffer;
+		free(string);
 		return (0);
 	    }
 	}
@@ -1514,16 +1521,10 @@ register char *string;
     }
 
     alarm(0);
-    
-    if (verbose && printed) {
-	if (alarmed)
-	    msgf(" -- read timed out");
-	else
-	    msgf(" -- read failed: %m");
-    }
 
     exit_code = 3;
     alarmed   = 0;
+    free(string);
     return (0);
 }
 

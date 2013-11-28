@@ -1,3 +1,5 @@
+/*	$NetBSD: chap-new.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * chap-new.c - New CHAP implementation.
  *
@@ -28,7 +30,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: chap-new.c,v 1.9 2007/06/19 02:08:35 carlsonj Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: chap-new.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdlib.h>
 #include <string.h>

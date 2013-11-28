@@ -1,3 +1,5 @@
+/*	$NetBSD: options.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * options.c - handles option processing for PPP.
  *
@@ -40,7 +42,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: options.c,v 1.102 2008/06/15 06:53:06 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: options.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <ctype.h>
 #include <stdio.h>
@@ -79,7 +87,6 @@
 char *strdup __P((char *));
 #endif
 
-static const char rcsid[] = RCSID;
 
 struct option_value {
     struct option_value *next;
@@ -133,8 +140,13 @@ extern option_t auth_options[];
 extern struct stat devstat;
 
 #ifdef PPP_FILTER
-struct	bpf_program pass_filter;/* Filter program for packets to pass */
-struct	bpf_program active_filter; /* Filter program for link-active pkts */
+/* Filter program for packets to pass */
+struct	bpf_program pass_filter_in;
+struct	bpf_program pass_filter_out;
+
+/* Filter program for link-active packets */
+struct	bpf_program active_filter_in;
+struct	bpf_program active_filter_out;
 #endif
 
 static option_t *curopt;	/* pointer to option being processed */
@@ -162,8 +174,10 @@ static int loadplugin __P((char **));
 #endif
 
 #ifdef PPP_FILTER
-static int setpassfilter __P((char **));
-static int setactivefilter __P((char **));
+static int setpassfilter_in __P((char **));
+static int setpassfilter_out __P((char **));
+static int setactivefilter_in __P((char **));
+static int setactivefilter_out __P((char **));
 #endif
 
 #ifdef MAXOCTETS
@@ -319,11 +333,15 @@ option_t general_options[] = {
 #endif
 
 #ifdef PPP_FILTER
-    { "pass-filter", o_special, setpassfilter,
-      "set filter for packets to pass", OPT_PRIO },
+    { "pass-filter-in", o_special, setpassfilter_in,
+      "set filter for packets to pass inwards", OPT_PRIO },
+    { "pass-filter-out", o_special, setpassfilter_out,
+      "set filter for packets to pass outwards", OPT_PRIO },
 
-    { "active-filter", o_special, setactivefilter,
-      "set filter for active pkts", OPT_PRIO },
+    { "active-filter-in", o_special, setactivefilter_in,
+      "set filter for active pkts inwards", OPT_PRIO },
+    { "active-filter-out", o_special, setactivefilter_out,
+      "set filter for active pkts outwards", OPT_PRIO },
 #endif
 
 #ifdef MAXOCTETS
@@ -346,7 +364,7 @@ option_t general_options[] = {
 #define IMPLEMENTATION ""
 #endif
 
-static char *usage_string = "\
+static const char *usage_string = "\
 pppd version %s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\
@@ -357,6 +375,7 @@ Usage: %s [ options ], where options are:\n\
 	auth		Require authentication from peer\n\
         connect <p>     Invoke shell command <p> to set up the serial line\n\
 	crtscts		Use hardware RTS/CTS flow control\n\
+	cdtrcts		Use hardware DTR/CTS flow control (if supported)\n\
 	defaultroute	Add default route through interface\n\
 	file <f>	Take options from file <f>\n\
 	modem		Use modem control lines\n\
@@ -590,18 +609,15 @@ err:
  * match_option - see if this option matches an option_t structure.
  */
 static int
-match_option(name, opt, dowild)
-    char *name;
-    option_t *opt;
-    int dowild;
+match_option(const char *name, option_t *opt, int dowild)
 {
-	int (*match) __P((char *, char **, int));
+	int (*match) __P((const char *, char **, int));
 
 	if (dowild != (opt->type == o_wild))
 		return 0;
 	if (!dowild)
 		return strcmp(name, opt->name) == 0;
-	match = (int (*) __P((char *, char **, int))) opt->addr;
+	match = (int (*) __P((const char *, char **, int))) opt->addr;
 	return (*match)(name, NULL, 0);
 }
 
@@ -898,10 +914,7 @@ check_options()
  * print_option - print out an option and its value
  */
 static void
-print_option(opt, mainopt, printer, arg)
-    option_t *opt, *mainopt;
-    printer_func printer;
-    void *arg;
+print_option(option_t *opt, option_t *mainopt, printer_func printer, void *arg)
 {
 	int i, v;
 	char *p;
@@ -1000,10 +1013,7 @@ print_option(opt, mainopt, printer, arg)
  * array of options.
  */
 static void
-print_option_list(opt, printer, arg)
-    option_t *opt;
-    printer_func printer;
-    void *arg;
+print_option_list(option_t *opt, printer_func printer, void *arg)
 {
 	while (opt->name != NULL) {
 		if (opt->priority != OPRIO_DEFAULT
@@ -1249,12 +1259,12 @@ getword(f, word, newlinep, filename)
 		break;
 
 	    default:
-		if (isoctal(c)) {
+		if (isoctal((unsigned char)c)) {
 		    /*
 		     * \ddd octal sequence
 		     */
 		    value = 0;
-		    for (n = 0; n < 3 && isoctal(c); ++n) {
+		    for (n = 0; n < 3 && isoctal((unsigned char)c); ++n) {
 			value = (value << 3) + (c & 07);
 			c = getc(f);
 		    }
@@ -1268,8 +1278,8 @@ getword(f, word, newlinep, filename)
 		     */
 		    value = 0;
 		    c = getc(f);
-		    for (n = 0; n < 2 && isxdigit(c); ++n) {
-			digit = toupper(c) - '0';
+		    for (n = 0; n < 2 && isxdigit((unsigned char)c); ++n) {
+			digit = toupper((unsigned char)c) - '0';
 			if (digit > 10)
 			    digit += '0' + 10 - 'A';
 			value = (value << 4) + digit;
@@ -1472,18 +1482,18 @@ callfile(argv)
 
 #ifdef PPP_FILTER
 /*
- * setpassfilter - Set the pass filter for packets
+ * setpassfilter_in - Set the pass filter for incoming packets
  */
 static int
-setpassfilter(argv)
+setpassfilter_in(argv)
     char **argv;
 {
     pcap_t *pc;
     int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
-    if (pcap_compile(pc, &pass_filter, *argv, 1, netmask) == -1) {
-	option_error("error in pass-filter expression: %s\n",
+    if (pcap_compile(pc, &pass_filter_in, *argv, 1, netmask) == -1) {
+	option_error("error in pass-filter-in expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 0;
     }
@@ -1493,17 +1503,59 @@ setpassfilter(argv)
 }
 
 /*
- * setactivefilter - Set the active filter for packets
+ * setpassfilter_out - Set the pass filter for outgoing packets
  */
 static int
-setactivefilter(argv)
+setpassfilter_out(argv)
     char **argv;
 {
     pcap_t *pc;
     int ret = 1;
 
     pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
-    if (pcap_compile(pc, &active_filter, *argv, 1, netmask) == -1) {
+    if (pcap_compile(pc, &pass_filter_out, *argv, 1, netmask) == -1) {
+	option_error("error in pass-filter-out expression: %s\n",
+		     pcap_geterr(pc));
+	ret = 0;
+    }
+    pcap_close(pc);
+
+    return ret;
+}
+
+/*
+ * setactivefilter_in - Set the active filter for incoming packets
+ */
+static int
+setactivefilter_in(argv)
+    char **argv;
+{
+    pcap_t *pc;
+    int ret = 1;
+
+    pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
+    if (pcap_compile(pc, &active_filter_in, *argv, 1, netmask) == -1) {
+	option_error("error in active-filter expression: %s\n",
+		     pcap_geterr(pc));
+	ret = 0;
+    }
+    pcap_close(pc);
+
+    return ret;
+}
+
+/*
+ * setactivefilter_out - Set the active filter for outgoing packets
+ */
+static int
+setactivefilter_out(argv)
+    char **argv;
+{
+    pcap_t *pc;
+    int ret = 1;
+
+    pc = pcap_open_dead(DLT_PPP_PPPD, 65535);
+    if (pcap_compile(pc, &active_filter_out, *argv, 1, netmask) == -1) {
 	option_error("error in active-filter expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 0;
