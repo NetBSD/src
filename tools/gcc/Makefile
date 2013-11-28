@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2013/10/21 08:59:29 skrll Exp $
+#	$NetBSD: Makefile,v 1.61 2013/11/28 12:08:57 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -130,7 +130,7 @@ native-gcc: .native/.configure_done
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 .if ${HAVE_GCC} >= 45
-MPC=		${NETBSDSRCDIR}/external/lgpl2/mpc
+MPC=		${NETBSDSRCDIR}/external/lgpl3/mpc
 MPFR=		${NETBSDSRCDIR}/external/lgpl3/mpfr
 GMP=		${NETBSDSRCDIR}/external/lgpl3/gmp
 MPCOBJ!=	cd ${MPC}/lib/libmpc && ${PRINTOBJDIR}

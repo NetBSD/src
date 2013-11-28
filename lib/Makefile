@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2013/10/03 20:02:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.209 2013/11/28 12:08:56 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -87,7 +87,7 @@ SUBDIR+=	../external/gpl3/gcc/lib/libgomp
 # specific build area, but we get better parallelism this way.
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 . endif
 .endif
 
