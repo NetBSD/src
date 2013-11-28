@@ -921,6 +921,8 @@ uninstall-am: uninstall-includeHEADERS uninstall-libLTLIBRARIES
 # should not be a problem in practice, in particular because "make dist"
 # automatically rebuilds get_patches.c before generating the archives.
 $(srcdir)/get_patches.c: $(top_srcdir)/PATCHES $(top_srcdir)/tools/get_patches.sh
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_get_patches.c:
 	(cd $(top_srcdir) && ./tools/get_patches.sh) > $@ || rm -f $@
 
 # Do not add get_patches.c to CLEANFILES so that this file doesn't
