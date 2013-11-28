@@ -1,3 +1,5 @@
+/*	$NetBSD: pppcrypt.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
  *
@@ -30,14 +32,17 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pppcrypt.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+
 #include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "pppd.h"
 #include "pppcrypt.h"
 
 static u_char
-Get7Bits(input, startBit)
-u_char *input;
-int startBit;
+Get7Bits(u_char *input, int startBit)
 {
 	unsigned int word;
 
@@ -50,9 +55,10 @@ int startBit;
 }
 
 static void
-MakeKey(key, des_key)
-u_char *key;		/* IN  56 bit DES key missing parity bits */
-u_char *des_key;	/* OUT 64 bit DES key with parity bits added */
+MakeKey(
+u_char *key,		/* IN  56 bit DES key missing parity bits */
+u_char *des_key		/* OUT 64 bit DES key with parity bits added */
+)
 {
 	des_key[0] = Get7Bits(key,  0);
 	des_key[1] = Get7Bits(key,  7);
@@ -75,9 +81,7 @@ u_char *des_key;	/* OUT 64 bit DES key with parity bits added */
  * Note that the low-order "bit" is always ignored by by setkey()
  */
 static void
-Expand(in, out)
-u_char *in;
-u_char *out;
+Expand(u_char *in, u_char *out)
 {
         int j, c;
         int i;
@@ -93,9 +97,7 @@ u_char *out;
 /* The inverse of Expand
  */
 static void
-Collapse(in, out)
-u_char *in;
-u_char *out;
+Collapse(u_char *in, u_char *out)
 {
         int j;
         int i;

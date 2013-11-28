@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * define path names
  *
@@ -46,20 +48,15 @@
 #endif /* IPX_CHANGE */
 
 #ifdef __STDC__
-#define _PATH_PPPDB	_ROOT_PATH _PATH_VARRUN "pppd2.tdb"
+#define _PATH_PPPDB	_ROOT_PATH _PATH_VARRUN "pppd.tdb"
 #else /* __STDC__ */
 #ifdef HAVE_PATHS_H
-#define _PATH_PPPDB	"/var/run/pppd2.tdb"
+#define _PATH_PPPDB	"/var/run/pppd.tdb"
 #else
-#define _PATH_PPPDB	"/etc/ppp/pppd2.tdb"
+#define _PATH_PPPDB	"/etc/ppp/pppd.tdb"
 #endif
 #endif /* __STDC__ */
 
 #ifdef PLUGIN
-#ifdef __STDC__
-#define _PATH_PLUGIN	DESTDIR "/lib/pppd/" VERSION
-#else /* __STDC__ */
-#define _PATH_PLUGIN	"/usr/lib/pppd"
-#endif /* __STDC__ */
-
+#define _PATH_PLUGIN	"/usr/libexec/pppd/"
 #endif /* PLUGIN */
