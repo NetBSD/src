@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.16 2013/10/21 09:02:08 skrll Exp $
+$NetBSD: README.mknative,v 1.17 2013/11/28 12:08:57 mrg Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -53,7 +53,7 @@ work.
    "nbmake-MACHINE obj includes dependall install".
 
 8. In each of src/external/lgpl3/gmp/lib/libgmp,
-   src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl2/mpc/lib/libmpc
+   src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl3/mpc/lib/libmpc
    do "nbmake-MACHINE obj dependall".
 
 9. In src/lib, do
