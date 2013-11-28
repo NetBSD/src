@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * ipcp.c - PPP IP Control Protocol.
  *
@@ -40,7 +42,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: ipcp.c,v 1.73 2008/05/26 08:33:22 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: ipcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 /*
  * TODO:
@@ -61,7 +69,6 @@
 #include "ipcp.h"
 #include "pathnames.h"
 
-static const char rcsid[] = RCSID;
 
 /* global vars */
 ipcp_options ipcp_wantoptions[NUM_PPP];	/* Options that we want to request */

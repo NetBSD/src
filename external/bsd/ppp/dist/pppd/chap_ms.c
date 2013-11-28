@@ -1,3 +1,5 @@
+/*	$NetBSD: chap_ms.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
  *
@@ -74,7 +76,13 @@
  *
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: chap_ms.c,v 1.38 2007/12/01 20:10:51 carlsonj Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: chap_ms.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #ifdef CHAPMS
 
@@ -85,16 +93,17 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <md4.h>
+#include <sha1.h>
+
+#define SHA1_SIGNATURE_SIZE SHA1_DIGEST_LENGTH
 
 #include "pppd.h"
 #include "chap-new.h"
 #include "chap_ms.h"
-#include "md4.h"
-#include "sha1.h"
 #include "pppcrypt.h"
 #include "magic.h"
 
-static const char rcsid[] = RCSID;
 
 
 static void	ascii2unicode __P((char[], int, u_char[]));
@@ -545,11 +554,11 @@ ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
     else
 	user = username;
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PeerChallenge, 16);
-    SHA1_Update(&sha1Context, rchallenge, 16);
-    SHA1_Update(&sha1Context, (unsigned char *)user, strlen(user));
-    SHA1_Final(sha1Hash, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, PeerChallenge, 16);
+    SHA1Update(&sha1Context, rchallenge, 16);
+    SHA1Update(&sha1Context, (unsigned char *)user, strlen(user));
+    SHA1Final(sha1Hash, &sha1Context);
 
     BCOPY(sha1Hash, Challenge, 8);
 }
@@ -639,7 +648,7 @@ ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
     /* LANMan password is case insensitive */
     BZERO(UcasePassword, sizeof(UcasePassword));
     for (i = 0; i < secret_len; i++)
-       UcasePassword[i] = (u_char)toupper(secret[i]);
+       UcasePassword[i] = (u_char)toupper((unsigned char)secret[i]);
     (void) DesSetkey(UcasePassword + 0);
     DesEncrypt( StdText, PasswordHash + 0 );
     (void) DesSetkey(UcasePassword + 7);
@@ -675,19 +684,19 @@ GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
     u_char	Digest[SHA1_SIGNATURE_SIZE];
     u_char	Challenge[8];
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, NTResponse, 24);
-    SHA1_Update(&sha1Context, Magic1, sizeof(Magic1));
-    SHA1_Final(Digest, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    SHA1Update(&sha1Context, NTResponse, 24);
+    SHA1Update(&sha1Context, Magic1, sizeof(Magic1));
+    SHA1Final(Digest, &sha1Context);
 
     ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, Digest, sizeof(Digest));
-    SHA1_Update(&sha1Context, Challenge, sizeof(Challenge));
-    SHA1_Update(&sha1Context, Magic2, sizeof(Magic2));
-    SHA1_Final(Digest, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, Digest, sizeof(Digest));
+    SHA1Update(&sha1Context, Challenge, sizeof(Challenge));
+    SHA1Update(&sha1Context, Magic2, sizeof(Magic2));
+    SHA1Final(Digest, &sha1Context);
 
     /* Convert to ASCII hex string. */
     for (i = 0; i < MAX((MS_AUTH_RESPONSE_LENGTH / 2), sizeof(Digest)); i++)
@@ -728,11 +737,11 @@ mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE])
     SHA1_CTX	sha1Context;
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, rchallenge, 8);
-    SHA1_Final(Digest, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    SHA1Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    SHA1Update(&sha1Context, rchallenge, 8);
+    SHA1Final(Digest, &sha1Context);
 
     /* Same key in both directions. */
     BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
@@ -815,11 +824,11 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	  0x6b, 0x65, 0x79, 0x2e };
     u_char *s;
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, NTResponse, 24);
-    SHA1_Update(&sha1Context, Magic1, sizeof(Magic1));
-    SHA1_Final(MasterKey, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    SHA1Update(&sha1Context, NTResponse, 24);
+    SHA1Update(&sha1Context, Magic1, sizeof(Magic1));
+    SHA1Final(MasterKey, &sha1Context);
 
     /*
      * generate send key
@@ -828,12 +837,12 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	s = Magic3;
     else
 	s = Magic2;
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, MasterKey, 16);
-    SHA1_Update(&sha1Context, SHApad1, sizeof(SHApad1));
-    SHA1_Update(&sha1Context, s, 84);
-    SHA1_Update(&sha1Context, SHApad2, sizeof(SHApad2));
-    SHA1_Final(Digest, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, MasterKey, 16);
+    SHA1Update(&sha1Context, SHApad1, sizeof(SHApad1));
+    SHA1Update(&sha1Context, s, 84);
+    SHA1Update(&sha1Context, SHApad2, sizeof(SHApad2));
+    SHA1Final(Digest, &sha1Context);
 
     BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
 
@@ -844,12 +853,12 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	s = Magic2;
     else
 	s = Magic3;
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, MasterKey, 16);
-    SHA1_Update(&sha1Context, SHApad1, sizeof(SHApad1));
-    SHA1_Update(&sha1Context, s, 84);
-    SHA1_Update(&sha1Context, SHApad2, sizeof(SHApad2));
-    SHA1_Final(Digest, &sha1Context);
+    SHA1Init(&sha1Context);
+    SHA1Update(&sha1Context, MasterKey, 16);
+    SHA1Update(&sha1Context, SHApad1, sizeof(SHApad1));
+    SHA1Update(&sha1Context, s, 84);
+    SHA1Update(&sha1Context, SHApad2, sizeof(SHApad2));
+    SHA1Final(Digest, &sha1Context);
 
     BCOPY(Digest, mppe_recv_key, sizeof(mppe_recv_key));
 

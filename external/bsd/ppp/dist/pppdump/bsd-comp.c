@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd-comp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /* Because this code is derived from the 4.3BSD compress source:
  *
  *
@@ -37,8 +39,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bsd-comp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+
 /*
- * Id: bsd-comp.c,v 1.4 2004/01/17 05:47:55 carlsonj Exp 
+ * Id: bsd-comp.c,v 1.4 2004/01/17 05:47:55 carlsonj Exp
  */
 
 #include <sys/types.h>
@@ -46,6 +51,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pppdump.h"
 #include "ppp_defs.h"
 #include "ppp-comp.h"
 
@@ -128,9 +134,8 @@ static void	*bsd_decomp_alloc __P((u_char *options, int opt_len));
 static void	bsd_free __P((void *state));
 static int	bsd_decomp_init __P((void *state, u_char *options, int opt_len,
 				     int unit, int hdrlen, int mru, int debug));
-static void	bsd_incomp __P((void *state, u_char *dmsg, int len));
-static int	bsd_decompress __P((void *state, u_char *cmp, int inlen,
-				    u_char *dmp, int *outlen));
+static void	bsd_incomp __P((void *state, PACKETPTR in));
+static int	bsd_decompress __P((void *state, PACKETPTR in, PACKETPTR *out));
 static void	bsd_reset __P((void *state));
 static void	bsd_comp_stats __P((void *state, struct compstat *stats));
 
@@ -139,6 +144,12 @@ static void	bsd_comp_stats __P((void *state, struct compstat *stats));
  */
 struct compressor ppp_bsd_compress = {
     CI_BSD_COMPRESS,		/* compress_proto */
+    NULL,			/* comp_alloc */
+    NULL,			/* comp_free */
+    NULL,			/* comp_init */
+    NULL,			/* comp_reset */
+    NULL,			/* comp_compress */
+    NULL,			/* comp_stat */
     bsd_decomp_alloc,		/* decomp_alloc */
     bsd_free,			/* decomp_free */
     bsd_decomp_init,		/* decomp_init */
@@ -169,6 +180,12 @@ struct compressor ppp_bsd_compress = {
 #define RATIO_SCALE_LOG	8
 #define RATIO_SCALE	(1<<RATIO_SCALE_LOG)
 #define RATIO_MAX	(0x7fffffff>>RATIO_SCALE_LOG)
+
+static void bsd_clear __P((struct bsd_db *));
+static int bsd_check __P((struct bsd_db *));
+static void *bsd_alloc __P((u_char *, int, int));
+static int bsd_init __P((struct bsd_db *, u_char *, int, int, int, int,
+    int, int));
 
 /*
  * clear the dictionary
@@ -424,10 +441,9 @@ bsd_decomp_init(state, options, opt_len, unit, hdrlen, mru, debug)
  * incompressible data by pretending to compress the incoming data.
  */
 static void
-bsd_incomp(state, dmsg, mlen)
+bsd_incomp(state, in)
     void *state;
-    u_char *dmsg;
-    int mlen;
+    PACKETPTR in;
 {
     struct bsd_db *db = (struct bsd_db *) state;
     u_int hshift = db->hshift;
@@ -442,11 +458,11 @@ bsd_incomp(state, dmsg, mlen)
     u_char *rptr;
     u_int ent;
 
-    rptr = dmsg;
+    rptr = in->buf;
     ent = rptr[0];		/* get the protocol */
     if (ent == 0) {
 	++rptr;
-	--mlen;
+	in->len--;
 	ent = rptr[0];
     }
     if ((ent & 1) == 0 || ent < 0x21 || ent > 0xf9)
@@ -455,7 +471,7 @@ bsd_incomp(state, dmsg, mlen)
     db->seqno++;
     ilen = 1;		/* count the protocol as 1 byte */
     ++rptr;
-    slen = dmsg + mlen - rptr;
+    slen = in->buf + in->len - rptr;
     ilen += slen;
     for (; slen > 0; --slen) {
 	c = *rptr++;
@@ -544,10 +560,10 @@ bsd_incomp(state, dmsg, mlen)
  * compression, even though they are detected by inspecting the input.
  */
 static int
-bsd_decompress(state, cmsg, inlen, dmp, outlenp)
+bsd_decompress(state, in, out)
     void *state;
-    u_char *cmsg, *dmp;
-    int inlen, *outlenp;
+    PACKETPTR in;
+    PACKETPTR *out;
 {
     struct bsd_db *db = (struct bsd_db *) state;
     u_int max_ent = db->max_ent;
@@ -562,13 +578,13 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
     int ilen;
     int codelen, extra;
 
-    rptr = cmsg;
+    rptr = in->buf;
     if (*rptr == 0)
 	++rptr;
     ++rptr;			/* skip protocol (assumed 0xfd) */
     seq = (rptr[0] << 8) + rptr[1];
     rptr += BSD_OVHD;
-    ilen = len = cmsg + inlen - rptr;
+    ilen = len = in->buf + in->len - rptr;
 
     /*
      * Check the sequence number and give up if it is not what we expect.
@@ -580,7 +596,7 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
 	return DECOMP_ERROR;
     }
 
-    wptr = dmp + db->hdrlen;
+    wptr = (*out)->buf + db->hdrlen;
 
     oldcode = CLEAR;
     explen = 0;
@@ -729,7 +745,7 @@ bsd_decompress(state, cmsg, inlen, dmp, outlenp)
 	}
 	oldcode = incode;
     }
-    *outlenp = wptr - (dmp + db->hdrlen);
+    (*out)->len = wptr - ((*out)->buf + db->hdrlen);
 
     /*
      * Keep the checkpoint right so that incompressible packets

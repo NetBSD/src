@@ -1,3 +1,5 @@
+/*	$NetBSD: upap.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * upap.c - User/Password Authentication Protocol.
  *
@@ -40,7 +42,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: upap.c,v 1.30 2005/07/13 10:41:58 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: upap.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 /*
  * TODO:
@@ -52,7 +60,6 @@
 #include "pppd.h"
 #include "upap.h"
 
-static const char rcsid[] = RCSID;
 
 static bool hide_password = 1;
 

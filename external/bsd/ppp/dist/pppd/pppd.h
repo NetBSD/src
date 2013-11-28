@@ -1,3 +1,5 @@
+/*	$NetBSD: pppd.h,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * pppd.h - PPP daemon global declarations.
  *
@@ -84,8 +86,7 @@
 /*
  * Option descriptor structure.
  */
-
-typedef unsigned char	bool;
+#include <stdbool.h>
 
 enum opt_type {
 	o_special_noarg = 0,
@@ -341,8 +342,13 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 #endif
 
 #ifdef PPP_FILTER
-extern struct	bpf_program pass_filter;   /* Filter for pkts to pass */
-extern struct	bpf_program active_filter; /* Filter for link-active pkts */
+/* Filter for packets to pass */
+extern struct   bpf_program pass_filter_in;
+extern struct   bpf_program pass_filter_out;
+
+/* Filter for link-active packets */
+extern struct   bpf_program active_filter_in;
+extern struct   bpf_program active_filter_out;
 #endif
 
 #ifdef MSLANMAN
@@ -679,7 +685,8 @@ void logwtmp __P((const char *, const char *, const char *));
 int  get_host_seed __P((void));	/* Get host-dependent random number seed */
 int  have_route_to __P((u_int32_t)); /* Check if route to addr exists */
 #ifdef PPP_FILTER
-int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
+int  set_filters __P((struct bpf_program *, struct bpf_program *,
+	struct bpf_program *, struct bpf_program *));
 				/* Set filter programs in kernel */
 #endif
 #ifdef IPX_CHANGE

@@ -1,3 +1,5 @@
+/*	$NetBSD: tty.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * tty.c - code for handling serial ports in pppd.
  *
@@ -68,7 +70,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: tty.c,v 1.27 2008/07/01 12:27:56 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: tty.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <ctype.h>

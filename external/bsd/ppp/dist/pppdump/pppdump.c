@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
+#include "pppdump.h"
 #include "ppp_defs.h"
 #include "ppp-comp.h"
 
@@ -51,18 +52,14 @@ time_t start_time;
 int start_time_tenths;
 int tot_sent, tot_rcvd;
 
-extern int optind;
-extern char *optarg;
-
-void dumplog();
-void dumpppp();
-void show_time();
-void handle_ccp();
+void dumplog(FILE *);
+void dumpppp(FILE *);
+void show_time(FILE *, int);
+struct pkt;
+void handle_ccp(struct pkt *, u_char *, int);
 
 int
-main(ac, av)
-    int ac;
-    char **av;
+main(int ac, char **av)
 {
     int i;
     char *p;
@@ -113,8 +110,7 @@ main(ac, av)
 }
 
 void
-dumplog(f)
-    FILE *f;
+dumplog(FILE *f)
 {
     int c, n, k, col;
     int nb, c2;
@@ -253,8 +249,7 @@ struct pkt {
 unsigned char dbuf[8192];
 
 void
-dumpppp(f)
-    FILE *f;
+dumpppp(FILE *f)
 {
     int c, n, k;
     int nb, nl, dn, proto, rv;
@@ -320,7 +315,7 @@ dumpppp(f)
 			    ++r;
 			++r;
 			if (endp - r > mru)
-			    printf("     ERROR: length (%d) > MRU (%d)\n",
+			    printf("     ERROR: length (%td) > MRU (%d)\n",
 				   endp - r, mru);
 			if (decompress && fcs == PPP_GOODFCS) {
 			    /* See if this is a CCP or compressed packet */
@@ -340,8 +335,15 @@ dumpppp(f)
 				    && (pkt->flags & CCP_DECOMP_RUN)
 				    && pkt->state
 				    && (pkt->flags & CCP_ERR) == 0) {
-				    rv = pkt->comp->decompress(pkt->state, r,
-							endp - r, d, &dn);
+				    struct packet in, out, *outp;
+				    in.buf = r;
+				    in.len = endp - r;
+				    out.buf = d;
+				    outp = &out;
+				    rv = pkt->comp->decompress(pkt->state, &in,
+					&outp);
+				    dn = outp->len;
+				    d = outp->buf;
 				    switch (rv) {
 				    case DECOMP_OK:
 					p = dbuf;
@@ -364,7 +366,10 @@ dumpppp(f)
 				}
 			    } else if (pkt->state
 				       && (pkt->flags & CCP_DECOMP_RUN)) {
-				pkt->comp->incomp(pkt->state, r, endp - r);
+				struct packet in;
+				in.buf = r;
+				in.len = endp - r;
+				pkt->comp->incomp(pkt->state, &in);
 			    }
 			}
 			do {
@@ -439,10 +444,7 @@ struct compressor *compressors[] = {
 };
 
 void
-handle_ccp(cp, dp, len)
-    struct pkt *cp;
-    u_char *dp;
-    int len;
+handle_ccp(struct pkt *cp, u_char *dp, int len)
 {
     int clen;
     struct compressor **comp;
@@ -496,9 +498,7 @@ handle_ccp(cp, dp, len)
 }
 
 void
-show_time(f, c)
-    FILE *f;
-    int c;
+show_time(FILE *f, int c)
 {
     time_t t;
     int n;

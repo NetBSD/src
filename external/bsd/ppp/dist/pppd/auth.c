@@ -1,3 +1,5 @@
+/*	$NetBSD: auth.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * auth.c - PPP authentication and phase control.
  *
@@ -68,7 +70,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: auth.c,v 1.117 2008/07/01 12:27:56 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: auth.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <stddef.h>
@@ -81,7 +89,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <utmp.h>
 #include <fcntl.h>
 #if defined(_PATH_LASTLOG) && defined(__linux__)
 #include <lastlog.h>
@@ -115,7 +122,6 @@
 #include "pathnames.h"
 #include "session.h"
 
-static const char rcsid[] = RCSID;
 
 /* Bits in scan_authfile return value */
 #define NONWILD_SERVER	1
@@ -415,34 +421,37 @@ setupapfile(argv)
     int l;
     uid_t euid;
     char u[MAXNAMELEN], p[MAXSECRETLEN];
-    char *fname;
 
     lcp_allowoptions[0].neg_upap = 1;
 
+    if (*argv == NULL)
+	novm("+ua file name");
+
+    if (uafname != NULL)
+	free(uafname);
     /* open user info file */
-    fname = strdup(*argv);
-    if (fname == NULL)
+    uafname = strdup(*argv);
+    if (uafname == NULL)
 	novm("+ua file name");
     euid = geteuid();
     if (seteuid(getuid()) == -1) {
-	option_error("unable to reset uid before opening %s: %m", fname);
+	option_error("unable to reset uid before opening %s: %m", uafname);
 	return 0;
     }
-    ufile = fopen(fname, "r");
+    ufile = fopen(uafname, "r");
     if (seteuid(euid) == -1)
 	fatal("unable to regain privileges: %m");
     if (ufile == NULL) {
-	option_error("unable to open user login data file %s", fname);
+	option_error("unable to open user login data file %s", uafname);
 	return 0;
     }
-    check_access(ufile, fname);
-    uafname = fname;
+    check_access(ufile, uafname);
 
     /* get username */
     if (fgets(u, MAXNAMELEN - 1, ufile) == NULL
 	|| fgets(p, MAXSECRETLEN - 1, ufile) == NULL) {
 	fclose(ufile);
-	option_error("unable to read user login data file %s", fname);
+	option_error("unable to read user login data file %s", uafname);
 	return 0;
     }
     fclose(ufile);
@@ -455,11 +464,11 @@ setupapfile(argv)
     if (l > 0 && p[l-1] == '\n')
 	p[l-1] = 0;
 
-    if (override_value("user", option_priority, fname)) {
+    if (override_value("user", option_priority, uafname)) {
 	strlcpy(user, u, sizeof(user));
 	explicit_user = 1;
     }
-    if (override_value("passwd", option_priority, fname)) {
+    if (override_value("passwd", option_priority, uafname)) {
 	strlcpy(passwd, p, sizeof(passwd));
 	explicit_passwd = 1;
     }
@@ -871,7 +880,8 @@ start_networks(unit)
 
 #ifdef PPP_FILTER
     if (!demand)
-	set_filters(&pass_filter, &active_filter);
+	set_filters(&pass_filter_in, &pass_filter_out,
+		    &active_filter_in, &active_filter_out);
 #endif
     /* Start CCP and ECP */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
@@ -2223,14 +2233,15 @@ scan_authfile(f, client, server, secret, addrs, opts, filename, flags)
 	 */
 	app = &alist;
 	for (;;) {
+	    size_t len;
 	    if (!getword(f, word, &newline, filename) || newline)
 		break;
-	    ap = (struct wordlist *)
-		    malloc(sizeof(struct wordlist) + strlen(word) + 1);
+	    len = strlen(word) + 1;
+	    ap = (struct wordlist *)malloc(sizeof(struct wordlist) + len);
 	    if (ap == NULL)
 		novm("authorized addresses");
 	    ap->word = (char *) (ap + 1);
-	    strcpy(ap->word, word);
+	    memcpy(ap->word, word, len);
 	    *app = ap;
 	    app = &ap->next;
 	}

@@ -1,3 +1,5 @@
+/*	$NetBSD: multilink.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * multilink.c - support routines for multilink.
  *
@@ -27,6 +29,10 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: multilink.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -573,7 +579,7 @@ str_to_epdisc(ep, str)
 		if (*str == 0)
 			break;
 		if (p <= str)
-			for (p = str; isxdigit(*p); ++p)
+			for (p = str; isxdigit((unsigned char)*p); ++p)
 				;
 		i = p - str;
 		if (i == 0)

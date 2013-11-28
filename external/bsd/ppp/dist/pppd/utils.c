@@ -1,3 +1,5 @@
+/*	$NetBSD: utils.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * utils.c - various utility functions used in pppd.
  *
@@ -28,7 +30,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: utils.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -59,7 +67,6 @@
 #include "fsm.h"
 #include "lcp.h"
 
-static const char rcsid[] = RCSID;
 
 #if defined(SUNOS4)
 extern char *strerror();
@@ -74,45 +81,6 @@ struct buffer_info {
     char *ptr;
     int len;
 };
-
-/*
- * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcpy(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t ret = strlen(src);
-
-    if (len != 0) {
-	if (ret < len)
-	    strcpy(dest, src);
-	else {
-	    strncpy(dest, src, len - 1);
-	    dest[len-1] = 0;
-	}
-    }
-    return ret;
-}
-
-/*
- * strlcat - like strcat/strncat, doesn't overflow destination buffer,
- * always leaves destination null-terminated (for len > 0).
- */
-size_t
-strlcat(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
-    size_t dlen = strlen(dest);
-
-    return dlen + strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
-}
-
 
 /*
  * slprintf - format a message into a buffer.  Like sprintf except we
@@ -289,8 +257,12 @@ vslprintf(buf, buflen, fmt, args)
 	case 't':
 	    time(&t);
 	    str = ctime(&t);
-	    str += 4;		/* chop off the day name */
-	    str[15] = 0;	/* chop off year and newline */
+	    if ((str = ctime(&t)) == NULL)
+		    strlcpy(str = num, "?", sizeof(num));
+	    else {
+		    str += 4;		/* chop off the day name */
+		    str[15] = 0;	/* chop off year and newline */
+	    }
 	    break;
 	case 'v':		/* "visible" string */
 	case 'q':		/* quoted string */

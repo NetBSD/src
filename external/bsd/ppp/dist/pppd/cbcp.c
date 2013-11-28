@@ -1,3 +1,5 @@
+/*	$NetBSD: cbcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * cbcp - Call Back Configuration Protocol.
  *
@@ -33,7 +35,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: cbcp.c,v 1.17 2006/05/22 00:04:07 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: cbcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -44,8 +52,6 @@
 #include "cbcp.h"
 #include "fsm.h"
 #include "lcp.h"
-
-static const char rcsid[] = RCSID;
 
 /*
  * Options.
@@ -166,7 +172,7 @@ cbcp_input(unit, inpacket, pktlen)
 
     if (pktlen < CBCP_MINLEN) {
 	if (debug)
-	    dbglog("CBCP packet is too small");
+	    dbglog("CBCP: Packet too short (%d)", pktlen);
 	return;
     }
 
@@ -176,7 +182,7 @@ cbcp_input(unit, inpacket, pktlen)
 
     if (len > pktlen || len < CBCP_MINLEN) {
 	if (debug)
-	    dbglog("CBCP packet: invalid length %d", len);
+	    dbglog("CBCP: Invalid packet length (%d/%d)", len, pktlen);
         return;
     }
 
@@ -280,6 +286,7 @@ cbcp_printpkt(p, plen, printer, arg)
 		char str[256];
 
 		GETCHAR(addrt, p);
+		__USE(addrt);
 		memcpy(str, p, olen - 4);
 		str[olen - 4] = 0;
 		printer(arg, " number = %s", str);
@@ -318,11 +325,16 @@ cbcp_recvreq(us, pckt, pcktlen)
 
 	GETCHAR(type, pckt);
 	GETCHAR(opt_len, pckt);
-	if (opt_len < 2 || opt_len > len)
+	if (opt_len < 2 || opt_len > len) {
+	    if (debug)
+		dbglog("CBCP: Malformed option length (%d/%d)", opt_len, len);
 	    break;
+	}
 
-	if (opt_len > 2)
+	if (opt_len > 2) {
 	    GETCHAR(delay, pckt);
+	    __USE(delay);
+	}
 
 	us->us_allowed |= (1 << type);
 
@@ -335,6 +347,7 @@ cbcp_recvreq(us, pckt, pcktlen)
 	    dbglog("user callback allowed");
 	    if (opt_len > 4) {
 	        GETCHAR(addr_type, pckt);
+		__USE(addr_type);
 		memcpy(address, pckt, opt_len - 4);
 		address[opt_len - 4] = 0;
 		if (address[0])
@@ -457,11 +470,14 @@ cbcp_recvack(us, pckt, len)
 	GETCHAR(opt_len, pckt);
 	if (opt_len >= 2 && opt_len <= len) {
      
-	    if (opt_len > 2)
+	    if (opt_len > 2) {
 		GETCHAR(delay, pckt);
+		__USE(delay);
+	    }
 
 	    if (opt_len > 4) {
 		GETCHAR(addr_type, pckt);
+		__USE(addr_type);
 		memcpy(address, pckt, opt_len - 4);
 		address[opt_len - 4] = 0;
 		if (address[0])

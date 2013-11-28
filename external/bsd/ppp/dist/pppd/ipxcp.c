@@ -1,3 +1,5 @@
+/*	$NetBSD: ipxcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $ 	*/
+
 /*
  * ipxcp.c - PPP IPX Control Protocol.
  *
@@ -40,9 +42,15 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+#if 0
+#define RCSID	"Id: ipxcp.c,v 1.24 2005/08/25 23:59:34 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: ipxcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 #ifdef IPX_CHANGE
 
-#define RCSID	"Id: ipxcp.c,v 1.24 2005/08/25 23:59:34 paulus Exp "
 
 /*
  * TODO:
@@ -62,7 +70,6 @@
 #include "pathnames.h"
 #include "magic.h"
 
-static const char rcsid[] = RCSID;
 
 /* global vars */
 ipxcp_options ipxcp_wantoptions[NUM_PPP];	/* Options that we want to request */

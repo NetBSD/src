@@ -1,3 +1,5 @@
+/*	$NetBSD: pppstats.c,v 1.2 2013/11/28 22:33:43 christos Exp $	*/
+
 /*
  * print PPP statistics:
  * 	pppstats [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]
@@ -35,8 +37,13 @@
 #define const
 #endif
 
+#include <sys/cdefs.h>
+#if 0
 #ifndef lint
 static const char rcsid[] = "Id: pppstats.c,v 1.29 2002/10/27 12:56:26 fcusack Exp ";
+#endif
+#else
+__RCSID("$NetBSD: pppstats.c,v 1.2 2013/11/28 22:33:43 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -93,6 +100,7 @@ int	s;			/* socket or /dev/ppp file descriptor */
 int	signalled;		/* set if alarm goes off "early" */
 char	*progname;
 char	*interface;
+char	*fmt;
 
 #if defined(SUNOS4) || defined(ULTRIX) || defined(NeXT)
 extern int optind;
@@ -106,6 +114,9 @@ extern char *optarg;
 #if !defined(PPP_DRV_NAME)
 #define PPP_DRV_NAME    "ppp"
 #endif /* !defined(PPP_DRV_NAME) */
+#if !defined(SL_DRV_NAME)
+#define SL_DRV_NAME    "sl"
+#endif /* !defined(SL_DRV_NAME) */
 
 static void usage __P((void));
 static void catchalarm __P((int));
@@ -295,9 +306,11 @@ intpr()
     struct ppp_stats cur, old;
     struct ppp_comp_stats ccs, ocs;
 
+    memset(&ccs, 0, sizeof(ccs));
     memset(&old, 0, sizeof(old));
     memset(&ocs, 0, sizeof(ocs));
 
+    interface = PPP_DRV_NAME "0";
     while (1) {
 	get_ppp_stats(&cur);
 	if (zflag || rflag)
@@ -458,6 +471,13 @@ main(argc, argv)
     else
 	++progname;
 
+    if (strncmp(progname, SL_DRV_NAME, sizeof(SL_DRV_NAME) - 1) == 0) {
+	interface = SL_DRV_NAME "0";
+	fmt =  SL_DRV_NAME "%d";
+    } else {
+	interface = PPP_DRV_NAME "0";
+	fmt =  PPP_DRV_NAME "%d";
+    }
     while ((c = getopt(argc, argv, "advrzc:w:")) != -1) {
 	switch (c) {
 	case 'a':
@@ -506,7 +526,7 @@ main(argc, argv)
     if (argc > 0)
 	interface = argv[0];
 
-    if (sscanf(interface, PPP_DRV_NAME "%d", &unit) != 1) {
+    if (sscanf(interface, fmt, &unit) != 1) {
 	fprintf(stderr, "%s: invalid interface '%s' specified\n",
 		progname, interface);
     }

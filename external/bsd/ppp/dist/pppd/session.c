@@ -1,3 +1,5 @@
+/*	$NetBSD: session.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * session.c - PPP session control.
  *
@@ -68,16 +70,25 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: session.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
-#include <crypt.h>
 #ifdef HAS_SHADOW
 #include <shadow.h>
 #endif
 #include <time.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
+#include <util.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "pppd.h"
@@ -365,7 +376,13 @@ session_start(flags, user, passwd, ttyName, msg)
     if (SESS_ACCT & flags) {
 	if (strncmp(ttyName, "/dev/", 5) == 0)
 	    ttyName += 5;
-	logwtmp(ttyName, user, ifname); /* Add wtmp login entry */
+#ifdef SUPPORT_UTMP
+	logwtmp(ttyName, user, ifname);		/* Add wtmp login entry */
+#endif
+#ifdef SUPPORT_UTMPX 
+	logwtmpx(ttyName, user, ifname, 0, USER_PROCESS);	/* Add wtmpx login entry */
+#endif 
+
 	logged_in = 1;
 
 #if defined(_PATH_LASTLOG) && !defined(USE_PAM)
@@ -418,7 +435,12 @@ session_end(const char* ttyName)
     if (logged_in) {
 	if (strncmp(ttyName, "/dev/", 5) == 0)
 	    ttyName += 5;
+#ifdef SUPPORT_UTMP
 	logwtmp(ttyName, "", ""); /* Wipe out utmp logout entry */
+#endif
+#ifdef SUPPORT_UTMPX
+	logwtmpx(ttyName, "", "", 0, DEAD_PROCESS); /* Wipe out utmpx logout entry */
+#endif
 	logged_in = 0;
     }
 }
