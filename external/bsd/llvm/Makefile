@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/09/29 12:11:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2013/11/28 14:19:59 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -15,12 +15,12 @@ SUBDIR+=	librt
 .include "Makefile.inc"
 
 checkout:
-	svn co -r ${CLANG_REVISION} ${SVN_ROOT}/cfe/trunk ${CLANG_SRCDIR}
-	svn co -r ${COMPILER_RT_REVISION} ${SVN_ROOT}/compiler-rt/trunk \
+	svn co -r ${CLANG_REVISION} ${SVN_ROOT}/cfe/${SVN_BRANCH} ${CLANG_SRCDIR}
+	svn co -r ${COMPILER_RT_REVISION} ${SVN_ROOT}/compiler-rt/${SVN_BRANCH} \
 	    ${COMPILER_RT_SRCDIR}
-	svn co -r ${LLD_REVISION} ${SVN_ROOT}/lld/trunk ${LLD_SRCDIR}
-	svn co -r ${LLDB_REVISION} ${SVN_ROOT}/lldb/trunk ${LLDB_SRCDIR}
-	svn co -r ${LLVM_REVISION} ${SVN_ROOT}/llvm/trunk ${LLVM_SRCDIR}
+	svn co -r ${LLD_REVISION} ${SVN_ROOT}/lld/${SVN_BRANCH} ${LLD_SRCDIR}
+	svn co -r ${LLDB_REVISION} ${SVN_ROOT}/lldb/${SVN_BRANCH} ${LLDB_SRCDIR}
+	svn co -r ${LLVM_REVISION} ${SVN_ROOT}/llvm/${SVN_BRANCH} ${LLVM_SRCDIR}
 
 checkout-mclinker:
 	if [ -d ${MCLINKER_SRCDIR}/.git ]; then \

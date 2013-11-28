@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/09/02 14:34:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2013/11/28 14:19:59 joerg Exp $
 
 LIB=	clangIndex
 
@@ -6,7 +6,8 @@ LIB=	clangIndex
 
 .PATH: ${CLANG_SRCDIR}/lib/Index
 
-SRCS+=	USRGeneration.cpp
+SRCS+=	CommentToXML.cpp \
+	USRGeneration.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

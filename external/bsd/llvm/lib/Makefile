@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2013/10/20 14:53:22 joerg Exp $
+# $NetBSD: Makefile,v 1.36 2013/11/28 14:19:59 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -207,6 +207,7 @@ SUBDIR+= \
 	liblldbPluginSymbolFileDWARF \
 	liblldbPluginSymbolFileSymtab \
 	liblldbPluginSymbolVendorELF \
+	liblldbPluginSystemRuntimeMacOSX \
 	liblldbPluginUnwindAssemblyInstEmulation \
 	liblldbPluginUnwindAssemblyX86 \
 	liblldbSymbol \
