@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1065 2013/11/28 12:08:56 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1066 2013/11/28 12:37:45 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1369,7 +1369,7 @@ Location:	external/lgpl3/mpc/dist
 Notes:
 
 Package:	mpfr
-Version:	3.0.1
+Version:	3.1.2
 Current Vers:	3.1.2
 Maintainer:	
 Archive Site:	http://www.mpfr.org/mpfr-current/
