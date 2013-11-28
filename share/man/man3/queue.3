@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.46 2013/11/27 16:23:00 christos Exp $
+.\"	$NetBSD: queue.3,v 1.47 2013/11/28 16:45:36 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,8 +66,8 @@
 .Nm SLIST_FOREACH ,
 .Nm SLIST_FOREACH_SAFE ,
 .Nm SLIST_INIT ,
-.Nm SLIST_INSERT_HEAD ,
 .Nm SLIST_INSERT_AFTER ,
+.Nm SLIST_INSERT_HEAD ,
 .Nm SLIST_REMOVE_AFTER ,
 .Nm SLIST_REMOVE_HEAD ,
 .Nm SLIST_REMOVE ,
@@ -95,11 +95,11 @@
 .Nm SIMPLEQ_FOREACH ,
 .Nm SIMPLEQ_FOREACH_SAFE ,
 .Nm SIMPLEQ_INIT ,
+.Nm SIMPLEQ_INSERT_AFTER ,
 .Nm SIMPLEQ_INSERT_HEAD ,
 .Nm SIMPLEQ_INSERT_TAIL ,
-.Nm SIMPLEQ_INSERT_AFTER ,
-.Nm SIMPLEQ_REMOVE_HEAD ,
 .Nm SIMPLEQ_REMOVE_AFTER ,
+.Nm SIMPLEQ_REMOVE_HEAD ,
 .Nm SIMPLEQ_REMOVE ,
 .Nm SIMPLEQ_CONCAT ,
 .Nm TAILQ_HEAD ,
@@ -115,10 +115,10 @@
 .Nm TAILQ_FOREACH_REVERSE ,
 .Nm TAILQ_FOREACH_REVERSE_SAFE ,
 .Nm TAILQ_INIT ,
-.Nm TAILQ_INSERT_HEAD ,
-.Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_INSERT_AFTER ,
 .Nm TAILQ_INSERT_BEFORE ,
+.Nm TAILQ_INSERT_HEAD ,
+.Nm TAILQ_INSERT_TAIL ,
 .Nm TAILQ_REMOVE ,
 .Nm TAILQ_REPLACE ,
 .Nm TAILQ_CONCAT ,
@@ -132,13 +132,13 @@
 .Nm STAILQ_FOREACH ,
 .Nm STAILQ_FOREACH_SAFE ,
 .Nm STAILQ_INIT ,
+.Nm STAILQ_INSERT_AFTER ,
 .Nm STAILQ_INSERT_HEAD ,
 .Nm STAILQ_INSERT_TAIL ,
-.Nm STAILQ_INSERT_AFTER ,
 .Nm STAILQ_REMOVE_HEAD ,
 .Nm STAILQ_REMOVE ,
 .Nm STAILQ_CONCAT ,
-.Nd "implementations of singly-linked lists, lists, simple queues, tail queues, and singly-linked tail queues.
+.Nd implementations of singly-linked lists, lists, simple queues, tail queues, and singly-linked tail queues.
 .Sh SYNOPSIS
 .In sys/queue.h
 .Pp
@@ -247,7 +247,7 @@
 .Fn STAILQ_CONCAT "STAILQ_HEAD *head1" "STAILQ_HEAD *head2"
 .Sh DESCRIPTION
 These macros define and operate on five types of data structures:
-singly-linked lists, simple queues, lists, tail queues, and signly-linked
+singly-linked lists, simple queues, lists, tail queues, and singly-linked
 tail queues.
 All five structures support the following functionality:
 .Bl -enum -compact -offset indent
@@ -829,7 +829,6 @@ concatenates the tail queue headed by
 onto the end of the one headed by
 .Fa head1
 removing all entries from the former.
-.Pp
 .Sh SIMPLE QUEUE EXAMPLE
 .Bd -literal
 SIMPLEQ_HEAD(simplehead, entry) head;
