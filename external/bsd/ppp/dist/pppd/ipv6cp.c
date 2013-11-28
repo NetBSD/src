@@ -1,3 +1,5 @@
+/*	$NetBSD: ipv6cp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
  *
@@ -138,7 +140,13 @@
  * Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp  
  */
 
+#include <sys/cdefs.h>
+#if 0
 #define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp "
+static const char rcsid[] = RCSID;
+#else
+__RCSID("$NetBSD: ipv6cp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+#endif
 
 /*
  * TODO: 
@@ -168,7 +176,7 @@
 #include "magic.h"
 #include "pathnames.h"
 
-static const char rcsid[] = RCSID;
+#define s6_addr32 __u6_addr.__u6_addr32	/* Non-standard */
 
 /* global vars */
 ipv6cp_options ipv6cp_wantoptions[NUM_PPP];     /* Options that we want to request */
@@ -412,7 +420,7 @@ llv6_ntoa(ifaceid)
 {
     static char b[64];
 
-    sprintf(b, "fe80::%s", eui64_ntoa(ifaceid));
+    snprintf(b, sizeof(b), "fe80::%s", eui64_ntoa(ifaceid));
     return b;
 }
 
@@ -1424,9 +1432,10 @@ ipv6cp_script(script)
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
 
-    sprintf(strspeed, "%d", baud_rate);
-    strcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid));
-    strcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid));
+    snprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
+    strlcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid), sizeof(strlocal));
+    strlcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid),
+      sizeof(strremote));
 
     argv[0] = script;
     argv[1] = ifname;
