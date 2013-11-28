@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.3 2013/11/25 22:43:46 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.4 2013/11/28 23:19:43 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -227,6 +227,7 @@ screen_next(SCR *sp)
 	/* Try the hidden queue; if found, move screen to the display queue. */
 	if ((next = TAILQ_FIRST(&gp->hq)) != NULL) {
 		TAILQ_REMOVE(&gp->hq, next, q);
+		TAILQ_NEXT(next, q) = NULL;
 		TAILQ_INSERT_HEAD(&wp->scrq, next, q);
 		next->wp = sp->wp;
 		return (next);
