@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.5 2013/11/27 20:31:01 tron Exp $ */
+/*	$NetBSD: exf.c,v 1.6 2013/11/28 23:19:43 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -402,6 +402,7 @@ no_lock:
 
 	/* Switch... */
 	++ep->refcnt;
+	TAILQ_NEXT(sp, q) = NULL;
 	TAILQ_INSERT_HEAD(&ep->scrq, sp, eq);
 	sp->ep = ep;
 	sp->frp = frp;
@@ -691,6 +692,7 @@ file_end(SCR *sp, EXF *ep, int force)
 		if ((sp->db_error = db_close(ep->db)) != 0 && 
 		    !force) {
 			msgq_str(sp, M_DBERR, frp->name, "241|%s: close");
+			TAILQ_NEXT(sp, q) = NULL;
 			TAILQ_INSERT_HEAD(&ep->scrq, sp, eq);
 			++ep->refcnt;
 			return (1);
