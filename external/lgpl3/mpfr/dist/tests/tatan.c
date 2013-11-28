@@ -1,7 +1,7 @@
 /* Test file for mpfr_atan.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -535,7 +535,43 @@ atan2_different_prec (void)
   mpfr_clears (a, x, y, (mpfr_ptr) 0);
 }
 
-/* http://websympa.loria.fr/wwsympa/arc/mpfr/2011-05/msg00008.html
+static void
+atan2_pow_of_2 (void)
+{
+  mpfr_t x, y, r, g;
+  int i;
+  int d[] = { 0, -1, 1 };
+  int ntests = sizeof (d) / sizeof (int);
+
+  mpfr_init2 (x, 53);
+  mpfr_init2 (y, 53);
+  mpfr_init2 (r, 53);
+  mpfr_init2 (g, 53);
+
+  /* atan(42) */
+  mpfr_set_str_binary (g, "1100011000000011110011111001100110101000011010010011E-51");
+
+  for (i = 0; i < ntests; ++i)
+    {
+      mpfr_set_ui (y, 42, MPFR_RNDN);
+      mpfr_mul_2si (y, y, d[i], MPFR_RNDN);
+      mpfr_set_ui_2exp (x, 1, d[i], MPFR_RNDN);
+      mpfr_atan2 (r, y, x, MPFR_RNDN);
+      if (mpfr_equal_p (r, g) == 0)
+        {
+          printf ("Error in mpfr_atan2 (5)\n");
+          printf ("Expected "); mpfr_print_binary (g); printf ("\n");
+          printf ("Got      "); mpfr_print_binary (r); printf ("\n");
+          exit (1);
+        }
+    }
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (r);
+  mpfr_clear (g);
+}
+
+/* https://sympa.inria.fr/sympa/arc/mpfr/2011-05/msg00008.html
  * Incorrect flags (in debug mode on a 32-bit machine, assertion failure).
  */
 static void
@@ -600,6 +636,7 @@ main (int argc, char *argv[])
 
   data_check ("data/atan", mpfr_atan, "mpfr_atan");
   bad_cases (mpfr_atan, mpfr_tan, "mpfr_atan", 256, -40, 1, 4, 128, 800, 40);
+  atan2_pow_of_2 ();
 
   tests_end_mpfr ();
   return 0;
