@@ -1,7 +1,7 @@
 /* Test file for mpfr_sqrt.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -120,7 +120,7 @@ check_diverse (const char *as, mpfr_prec_t p, const char *qs)
   if (mpfr_cmp_str1 (q, qs))
     {
       printf ("mpfr_sqrt failed for a=%s, prec=%lu, rnd_mode=%s\n",
-              as, p, mpfr_print_rnd_mode (MPFR_RNDN));
+              as, (unsigned long) p, mpfr_print_rnd_mode (MPFR_RNDN));
       printf ("expected sqrt is %s, got ", qs);
       mpfr_out_str (stdout, 10, 0, q, MPFR_RNDN);
       printf ("\n");
@@ -456,7 +456,7 @@ check_inexact (mpfr_prec_t p)
 }
 
 static void
-check_nan (void)
+check_singular (void)
 {
   mpfr_t  x, got;
 
@@ -485,12 +485,20 @@ check_nan (void)
   MPFR_ASSERTN (test_sqrt (got, x, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_nan_p (got));
 
-  /* sqrt(-0) == 0 */
+  /* sqrt(+0) == +0 */
+  mpfr_set_si (x, 0L, MPFR_RNDZ);
+  MPFR_ASSERTN (test_sqrt (got, x, MPFR_RNDZ) == 0); /* exact */
+  MPFR_ASSERTN (mpfr_number_p (got));
+  MPFR_ASSERTN (mpfr_cmp_ui (got, 0L) == 0);
+  MPFR_ASSERTN (MPFR_IS_POS (got));
+
+  /* sqrt(-0) == -0 */
   mpfr_set_si (x, 0L, MPFR_RNDZ);
   MPFR_SET_NEG (x);
   MPFR_ASSERTN (test_sqrt (got, x, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_number_p (got));
   MPFR_ASSERTN (mpfr_cmp_ui (got, 0L) == 0);
+  MPFR_ASSERTN (MPFR_IS_NEG (got));
 
   mpfr_clear (x);
   mpfr_clear (got);
@@ -586,7 +594,7 @@ main (void)
 
   check_diverse ("635030154261163106768013773815762607450069292760790610550915652722277604820131530404842415587328", 160, "796887792767063979679855997149887366668464780637");
   special ();
-  check_nan ();
+  check_singular ();
 
   for (p=2; p<200; p++)
     for (k=0; k<200; k++)

@@ -1,7 +1,7 @@
 /* Test file for mpfr_exp.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -170,7 +170,9 @@ compare_exp2_exp3 (mpfr_prec_t p0, mpfr_prec_t p1)
       mpfr_set_prec (x, prec);
       mpfr_set_prec (y, prec);
       mpfr_set_prec (z, prec);
-      mpfr_urandomb (x, RANDS);
+      do
+        mpfr_urandomb (x, RANDS);
+      while (MPFR_IS_ZERO (x));  /* 0 is handled by mpfr_exp only */
       rnd = RND_RAND ();
       mpfr_exp_2 (y, x, rnd);
       mpfr_exp_3 (z, x, rnd);
