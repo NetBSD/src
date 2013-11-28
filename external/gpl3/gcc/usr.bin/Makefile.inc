@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2013/08/22 00:17:48 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2013/11/28 12:08:56 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -20,8 +20,8 @@ HOST_CPPFLAGS+=	-I${.CURDIR}/..
 BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}/gmp.h gmp.h
 BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/mpfr.h mpfr.h
 BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpfr/dist/mpf2mpfr.h mpf2mpfr.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl2/mpc/dist/src/mpc.h mpc.h
-BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl2/mpc/dist/src/mpc-log.h mpc-log.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpc/dist/src/mpc.h mpc.h
+BUILDSYMLINKS+=	${NETBSDSRCDIR}/external/lgpl3/mpc/dist/src/mpc-log.h mpc-log.h
 CPPFLAGS+=	-I.
 # XXX
 DPSRCS+= gmp.h mpfr.h mpf2mpfr.h mpc.h mpc-log.h

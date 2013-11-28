@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1064 2013/11/22 16:26:52 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1065 2013/11/28 12:08:56 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1357,20 +1357,20 @@ Notes:
 3. Carefully check for GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	0.9
-Current Vers:	0.9
+Version:	1.0.1
+Current Vers:	1.0.1
 Maintainer:	
 Archive Site:	http://www.multiprecision.org/mpc/download/
 Home Page:	http://www.multiprecision.org/mpc/
 Mailing List:	http://www.multiprecision.org/index.php?prog=mpc&page=development
 Responsible:	mrg
-License:	LGPL2
-Location:	external/lgpl2/mpc/dist
+License:	LGPL3
+Location:	external/lgpl3/mpc/dist
 Notes:
 
 Package:	mpfr
 Version:	3.0.1
-Current Vers:	3.0.1
+Current Vers:	3.1.2
 Maintainer:	
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
@@ -1381,8 +1381,8 @@ Location:	external/lgpl3/mpfr/dist
 Notes:
 
 Package:	GNU MP
-Version:	5.0.2
-Current Vers:	5.0.2
+Version:	5.1.3
+Current Vers:	5.1.2
 Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	http://gmplib.org/
 Home Page:	http://gmplib.org/
