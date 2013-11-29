@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.26 2013/11/23 13:46:22 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.27 2013/11/29 14:58:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.26 2013/11/23 13:46:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.27 2013/11/29 14:58:55 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -606,10 +606,6 @@ vrelel(vnode_t *vp, int flags)
 	}
 
 	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
-	if ((flags & VRELEL_CHANGING_SET) == 0) {
-		KASSERT((vp->v_iflag & VI_CHANGING) == 0);
-		vp->v_iflag |= VI_CHANGING;
-	}
 
 #ifdef DIAGNOSTIC
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
@@ -654,13 +650,14 @@ vrelel(vnode_t *vp, int flags)
 			 */
 			if (__predict_false(vtryrele(vp))) {
 				VOP_UNLOCK(vp);
-				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
-				vp->v_iflag &= ~VI_CHANGING;
-				cv_broadcast(&vp->v_cv);
+				if ((flags & VRELEL_CHANGING_SET) != 0) {
+					KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+					vp->v_iflag &= ~VI_CHANGING;
+					cv_broadcast(&vp->v_cv);
+				}
 				mutex_exit(vp->v_interlock);
 				return;
 			}
-			mutex_exit(vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
@@ -675,10 +672,10 @@ vrelel(vnode_t *vp, int flags)
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 			if (error != 0) {
 				defer = true;
-				mutex_enter(vp->v_interlock);
 			} else {
 				defer = false;
 			}
+			mutex_enter(vp->v_interlock);
 		}
 
 		if (defer) {
@@ -687,17 +684,25 @@ vrelel(vnode_t *vp, int flags)
 			 * clean it here.  We donate it our last reference.
 			 */
 			KASSERT(mutex_owned(vp->v_interlock));
-			KASSERT((vp->v_iflag & VI_CHANGING) != 0);
-			vp->v_iflag &= ~VI_CHANGING;
+			if ((flags & VRELEL_CHANGING_SET) != 0) {
+				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
+				vp->v_iflag &= ~VI_CHANGING;
+				cv_broadcast(&vp->v_cv);
+			}
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
-			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			return;
 		}
+
+		if ((flags & VRELEL_CHANGING_SET) == 0) {
+			KASSERT((vp->v_iflag & VI_CHANGING) == 0);
+			vp->v_iflag |= VI_CHANGING;
+		}
+		mutex_exit(vp->v_interlock);
 
 		/*
 		 * The vnode can gain another reference while being
@@ -739,6 +744,11 @@ vrelel(vnode_t *vp, int flags)
 			vclean(vp);
 		}
 		KASSERT(vp->v_usecount > 0);
+	} else { /* vnode was already clean */
+		if ((flags & VRELEL_CHANGING_SET) == 0) {
+			KASSERT((vp->v_iflag & VI_CHANGING) == 0);
+			vp->v_iflag |= VI_CHANGING;
+		}
 	}
 
 	if (atomic_dec_uint_nv(&vp->v_usecount) != 0) {
