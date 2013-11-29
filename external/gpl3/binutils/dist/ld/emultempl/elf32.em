@@ -72,6 +72,9 @@ EOF
 
 if [ "x${USE_LIBPATH}" = xyes ] ; then
   case ${target} in
+    *-*-netbsd*)
+    ;;
+
     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
   fragment <<EOF
 #ifdef HAVE_GLOB
@@ -376,6 +379,9 @@ gld${EMULATION_NAME}_try_needed (struct dt_needed *needed,
 
 EOF
 case ${target} in
+    *-*-netbsd*)
+    ;;
+
   *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
     fragment <<EOF
 	  {
@@ -637,6 +643,9 @@ gld${EMULATION_NAME}_check_ld_elf_hints (const struct bfd_link_needed_list *l,
 }
 EOF
     # FreeBSD
+    ;;
+
+    *-*-netbsd*)
     ;;
 
     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
@@ -1329,6 +1338,9 @@ if [ "x${USE_LIBPATH}" = xyes ] ; then
 	    break;
 EOF
     # FreeBSD
+    ;;
+
+    *-*-netbsd*)
     ;;
 
     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
