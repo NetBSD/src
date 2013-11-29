@@ -68,5 +68,8 @@ L(end):	sbcs	cy, r5, cy
 	addcc	r0, r0, #1
 
 	ldmfd	sp!, {r4, r5}
-	bx	r14
+ifdef(`ARM_THUMB_MODE',
+`	bx	r14
+',`	mov	pc, r14
+')
 EPILOGUE()
