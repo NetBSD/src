@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/22 16:00:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2013/11/29 16:37:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS -DUSE_BUNDLED_DB
 #DBG=-g
+#CPPFLAGS+=-DLOGDEBUG -DTRACE
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
 #.if defined(HAVE_GCC)
@@ -30,7 +31,7 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	ex_write.c ex_yank.c ex_z.c exf.c getc.c gs.c \
 	ip_funcs.c ip_read.c ip_screen.c ip_term.c \
 	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c \
-	key.c log1.c \
+	key.c log1.c trace.c \
 	main.c mark.c msg.c nothread.c options.c options_f.c put.c recover.c \
 	screen.c search.c seq.c util.c v_at.c v_ch.c v_cmd.c v_delete.c \
 	v_event.c v_ex.c v_increment.c v_init.c v_itxt.c v_left.c v_mark.c \
