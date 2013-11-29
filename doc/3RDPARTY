@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1069 2013/11/29 01:52:58 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1070 2013/11/29 08:53:14 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1381,7 +1381,7 @@ Location:	external/lgpl3/mpfr/dist
 Notes:
 
 Package:	GNU MP
-Version:	5.0.2
+Version:	5.1.3
 Current Vers:	5.1.3
 Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	http://gmplib.org/
