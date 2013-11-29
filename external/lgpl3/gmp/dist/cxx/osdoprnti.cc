@@ -22,8 +22,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <iostream>
-#include <cstdarg>    /* for va_list and hence doprnt_funs_t */
-#include <cstring>    /* for strlen */
+#include <stdarg.h>   /* for va_list and hence doprnt_funs_t */
+#include <string.h>   /* for strlen */
 
 #include "gmp.h"
 #include "gmp-impl.h"

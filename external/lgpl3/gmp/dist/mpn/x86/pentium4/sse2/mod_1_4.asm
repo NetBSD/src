@@ -1,8 +1,8 @@
-dnl  mpn_mod_1_4 for Pentium 4 and P6 models with SSE2 (i.e., 9,D,E,F).
+dnl  x86-32 mpn_mod_1s_4p for Pentium 4 and P6 models with SSE2 (i.e. 9,D,E,F).
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
 
-dnl  Copyright 2009 Free Software Foundation, Inc.
+dnl  Copyright 2009, 2010 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -24,14 +24,15 @@ include(`../config.m4')
 C TODO:
 C  * Optimize.  The present code was written quite straightforwardly.
 C  * Optimize post-loop reduction code.
+C  * Write a cps function that uses sse2 insns.
 
-C                           cycles/limb
-C P6 model 0-8,10-12)           -
-C P6 model 9   (Banias)         ?
-C P6 model 13  (Dothan)         3.4
-C P4 model 0-1 (Willamette):    ?
-C P4 model 2   (Northwood):     4
-C P4 model 3-4 (Prescott):      ?
+C			    cycles/limb
+C P6 model 0-8,10-12		-
+C P6 model 9   (Banias)		?
+C P6 model 13  (Dothan)		3.4
+C P4 model 0-1 (Willamette)	?
+C P4 model 2   (Northwood)	4
+C P4 model 3-4 (Prescott)	4.5
 
 C INPUT PARAMETERS
 C ap		sp + 4
@@ -44,9 +45,10 @@ define(`B2modb', `%mm2')
 define(`B3modb', `%mm3')
 define(`B4modb', `%mm4')
 define(`B5modb', `%mm5')
-define(`ap', `%edx')
-define(`n', `%eax')
+define(`ap',     `%edx')
+define(`n',      `%eax')
 
+ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(mpn_mod_1s_4p)
@@ -102,10 +104,8 @@ L(b1):	movd	(ap), %mm7
 	jz	L(x)
 	jmp	L(top)
 
-L(b2):	movd	(ap), %mm7
-	pmuludq	B1modb, %mm7
-	movd	-4(ap), %mm6
-	paddq	%mm6, %mm7
+L(b2):	movd	-4(ap), %mm7		C rl
+	punpckldq (ap), %mm7		C rh
 	lea	-20(ap), ap
 	add	$-2, n
 	jz	L(end)
@@ -135,15 +135,13 @@ L(top):	movd	4(ap), %mm0
 	add	$-16, ap
 	add	$-4, n
 	jnz	L(top)
-L(end):
 
-	pcmpeqd	%mm4, %mm4
+L(end):	pcmpeqd	%mm4, %mm4
 	psrlq	$32, %mm4		C 0x00000000FFFFFFFF
 	pand	%mm7, %mm4		C rl
 	psrlq	$32, %mm7		C rh
 	pmuludq	B1modb, %mm7		C rh,cl
 	paddq	%mm4, %mm7		C rh,rl
-
 L(x):	movd	4(%ecx), %mm4		C cnt
 	psllq	%mm4, %mm7		C rh,rl normalized
 	movq	%mm7, %mm2		C rl in low half
@@ -177,80 +175,81 @@ L(fix):	sub	%ebx, %eax
 	ret
 EPILOGUE()
 
+	ALIGN(16)
 PROLOGUE(mpn_mod_1s_4p_cps)
+C CAUTION: This is the same code as in k7/mod_1_4.asm
 	push	%ebp
 	push	%edi
 	push	%esi
 	push	%ebx
-	sub	$12, %esp
-	mov	36(%esp), %ebx
+	mov	20(%esp), %ebp		C FIXME: avoid bp for 0-idx
+	mov	24(%esp), %ebx
 	bsr	%ebx, %ecx
 	xor	$31, %ecx
-	mov	%ecx, 4(%esp)
-	sal	%cl, %ebx
+	sal	%cl, %ebx		C b << cnt
 	mov	%ebx, %edx
 	not	%edx
 	mov	$-1, %eax
 	div	%ebx
-	mov	%eax, %esi
-	mov	$1, %ebp
-	sal	%cl, %ebp
-	neg	%ecx
-	shr	%cl, %eax
-	or	%eax, %ebp
-	mov	%ebx, %eax
-	neg	%eax
-	imul	%ebp, %eax
-	mov	%esi, %ecx
-	mov	%eax, 8(%esp)
-	mul	%ecx
-	mov	%edx, %esi
-	not	%esi
-	sub	8(%esp), %esi
-	imul	%ebx, %esi
-	lea	(%esi,%ebx), %edx
-	cmp	%esi, %eax
-	cmovb(	%edx, %esi)
-	mov	%esi, %eax
-	mul	%ecx
-	lea	(%esi,%edx), %edi
-	not	%edi
-	imul	%ebx, %edi
-	lea	(%edi,%ebx), %edx
-	cmp	%edi, %eax
-	cmovb(	%edx, %edi)
+	xor	%edi, %edi
+	sub	%ebx, %edi
+	mov	$1, %esi
+	mov	%eax, (%ebp)		C store bi
+	mov	%ecx, 4(%ebp)		C store cnt
+	shld	%cl, %eax, %esi
+	imul	%edi, %esi
+	mov	%eax, %edi
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 8(%ebp)		C store B1modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
 	mov	%edi, %eax
-	mul	%ecx
-	lea	(%edi,%edx), %ebp
-	not	%ebp
-	imul	%ebx, %ebp
-	lea	(%ebp,%ebx), %edx
-	cmp	%ebp, %eax
-	cmovb(	%edx, %ebp)
-	mov	%ebp, %eax
-	mul	%ecx
-	add	%ebp, %edx
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 12(%ebp)		C store B2modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
+	mov	%edi, %eax
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 16(%ebp)		C store B3modb
+
+	not	%edx
+	imul	%ebx, %edx
+	lea	(%edx,%ebx), %esi
+	cmp	%edx, %eax
+	cmovnc(	%edx, %esi)
+	mov	%edi, %eax
+	mul	%esi
+
+	add	%esi, %edx
+	shr	%cl, %esi
+	mov	%esi, 20(%ebp)		C store B4modb
+
 	not	%edx
 	imul	%ebx, %edx
 	add	%edx, %ebx
 	cmp	%edx, %eax
-	cmovb(	%ebx, %edx)
-	mov	32(%esp), %eax
-	mov	%ecx, (%eax)
-	mov	4(%esp), %ecx
-	mov	%ecx, 4(%eax)
-	mov	8(%esp), %ebx
+	cmovnc(	%edx, %ebx)
+
 	shr	%cl, %ebx
-	mov	%ebx, 8(%eax)
-	shr	%cl, %esi
-	mov	%esi, 12(%eax)
-	shr	%cl, %edi
-	mov	%edi, 16(%eax)
-	shr	%cl, %ebp
-	mov	%ebp, 20(%eax)
-	shr	%cl, %edx
-	mov	%edx, 24(%eax)
-	add	$12, %esp
+	mov	%ebx, 24(%ebp)		C store B5modb
+
 	pop	%ebx
 	pop	%esi
 	pop	%edi

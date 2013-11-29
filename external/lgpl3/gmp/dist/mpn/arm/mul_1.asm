@@ -2,7 +2,7 @@ dnl  ARM mpn_mul_1 -- Multiply a limb vector with a limb and store the result
 dnl  in a second limb vector.
 dnl  Contributed by Robert Harley.
 
-dnl  Copyright 1998, 2000, 2001, 2003 Free Software Foundation, Inc.
+dnl  Copyright 1998, 2000, 2001, 2003, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -21,9 +21,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C            cycles/limb
-C StrongARM:     6-8  (dependent on vl value)
-C XScale:        ?-?
+C	     cycles/limb
+C StrongARM	6-8
+C XScale	 ?
+C Cortex-A8	 ?
+C Cortex-A9	 4.75
+C Cortex-A15	 ?
 
 C We should rewrite this along the lines of addmul_1.asm.  That should save a
 C cycle on StrongARM, and several cycles on XScale.
@@ -54,10 +57,10 @@ L(skip1):
 	stmia	rp!, { r8, r9 }
 L(skip2):
 	bics	n, n, #3
-	beq	L(return)
+	beq	L(rtn)
 	stmfd	sp!, { r6, r7 }
-L(loop):
-	mov	r6, r12
+
+L(top):	mov	r6, r12
 	ldmia	up!, { r8, r9, r12, lr }
 	ldr	r7, [rp, #12]			C cache allocate
 	mov	r7, #0
@@ -70,9 +73,10 @@ L(loop):
 	umlal	r9, r12, lr, vl
 	subs	n, n, #4
 	stmia	rp!, { r6, r7, r8, r9 }
-	bne	L(loop)
+	bne	L(top)
+
 	ldmfd	sp!, { r6, r7 }
-L(return):
-	mov	r0, r12
+
+L(rtn):	mov	r0, r12
 	ldmfd	sp!, { r8, r9, pc }
-EPILOGUE(mpn_mul_1)
+EPILOGUE()

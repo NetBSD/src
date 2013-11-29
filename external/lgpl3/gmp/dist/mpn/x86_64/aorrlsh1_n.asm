@@ -1,7 +1,8 @@
 dnl  AMD64 mpn_addlsh1_n -- rp[] = up[] + (vp[] << 1)
 dnl  AMD64 mpn_rsblsh1_n -- rp[] = (vp[] << 1) - up[]
 
-dnl  Copyright 2003, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2006, 2007, 2008, 2009, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -22,12 +23,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2
-C K10:		 2
-C P4:		 13
-C P6 core2: 	 3.45
-C P6 corei7:	 3.45
-C P6 atom:	 ?
+C AMD K8,K9	 2
+C AMD K10	 2
+C Intel P4	 13
+C Intel core2	 3.45
+C Intel corei	 3.45
+C Intel atom	 ?
+C VIA nano	 ?
 
 
 C Sometimes speed degenerates, supposedly related to that some operand
@@ -43,20 +45,24 @@ define(`vp',`%rdx')
 define(`n', `%rcx')
 
 ifdef(`OPERATION_addlsh1_n', `
-	define(ADDSUB,	      add)
-	define(ADCSBB,	      adc)
-	define(func,	      mpn_addlsh1_n)')
+  define(ADDSUB,	add)
+  define(ADCSBB,	adc)
+  define(func,		mpn_addlsh1_n)')
 ifdef(`OPERATION_rsblsh1_n', `
-	define(ADDSUB,	      sub)
-	define(ADCSBB,	      sbb)
-	define(func,	      mpn_rsblsh1_n)')
+  define(ADDSUB,	sub)
+  define(ADCSBB,	sbb)
+  define(func,		mpn_rsblsh1_n)')
 
 MULFUNC_PROLOGUE(mpn_addlsh1_n mpn_rsblsh1_n)
+
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
 
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(func)
+	FUNC_ENTRY(4)
 	push	%rbp
 
 	mov	(vp), %r8
@@ -146,5 +152,6 @@ ifdef(`OPERATION_rsblsh1_n',`
 	movslq	R32(%rbp), %rax')
 
 	pop	%rbp
+	FUNC_EXIT()
 	ret
 EPILOGUE()

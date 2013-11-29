@@ -8,7 +8,7 @@
    ONLY SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT'S ALMOST
    GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2002, 2005, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2002, 2005, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -79,14 +79,15 @@ mp_size_t
 mpn_rootrem (mp_ptr rootp, mp_ptr remp,
 	     mp_srcptr up, mp_size_t un, mp_limb_t k)
 {
+  mp_size_t m;
   ASSERT (un > 0);
   ASSERT (up[un - 1] != 0);
   ASSERT (k > 1);
 
-  if ((remp == NULL) && (un / k > 2))
-    /* call mpn_rootrem recursively, padding {up,un} with k zero limbs,
-       which will produce an approximate root with one more limb,
-       so that in most cases we can conclude. */
+  m = (un - 1) / k;		/* ceil(un/k) - 1 */
+  if (remp == NULL && m > 2)
+    /* Pad {up,un} with k zero limbs.  This will produce an approximate root
+       with one more limb, allowing us to compute the exact integral result. */
     {
       mp_ptr sp, wp;
       mp_size_t rn, sn, wn;
@@ -94,21 +95,21 @@ mpn_rootrem (mp_ptr rootp, mp_ptr remp,
       TMP_MARK;
       wn = un + k;
       wp = TMP_ALLOC_LIMBS (wn); /* will contain the padded input */
-      sn = (un - 1) / k + 2; /* ceil(un/k) + 1 */
+      sn = m + 2; /* ceil(un/k) + 1 */
       sp = TMP_ALLOC_LIMBS (sn); /* approximate root of padded input */
       MPN_COPY (wp + k, up, un);
       MPN_ZERO (wp, k);
       rn = mpn_rootrem_internal (sp, NULL, wp, wn, k, 1);
-      /* the approximate root S = {sp,sn} is either the correct root of
-	 {sp,sn}, or one too large. Thus unless the least significant limb
-	 of S is 0 or 1, we can deduce the root of {up,un} is S truncated by
-	 one limb. (In case sp[0]=1, we can deduce the root, but not decide
+      /* The approximate root S = {sp,sn} is either the correct root of
+	 {sp,sn}, or 1 too large.  Thus unless the least significant limb of
+	 S is 0 or 1, we can deduce the root of {up,un} is S truncated by one
+	 limb.  (In case sp[0]=1, we can deduce the root, but not decide
 	 whether it is exact or not.) */
       MPN_COPY (rootp, sp + 1, sn - 1);
       TMP_FREE;
       return rn;
     }
-  else /* remp <> NULL */
+  else
     {
       return mpn_rootrem_internal (rootp, remp, up, un, k, 0);
     }
@@ -124,7 +125,6 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
   mp_limb_t save, save2, cy;
   unsigned long int unb; /* number of significant bits of {up,un} */
   unsigned long int xnb; /* number of significant bits of the result */
-  unsigned int cnt;
   unsigned long b, kk;
   unsigned long sizes[GMP_NUMB_BITS + 1];
   int ni, i;
@@ -134,16 +134,6 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
 
   TMP_MARK;
 
-  /* qp and wp need enough space to store S'^k where S' is an approximate
-     root. Since S' can be as large as S+2, the worst case is when S=2 and
-     S'=4. But then since we know the number of bits of S in advance, S'
-     can only be 3 at most. Similarly for S=4, then S' can be 6 at most.
-     So the worst case is S'/S=3/2, thus S'^k <= (3/2)^k * S^k. Since S^k
-     fits in un limbs, the number of extra limbs needed is bounded by
-     ceil(k*log2(3/2)/GMP_NUMB_BITS). */
-#define EXTRA 2 + (mp_size_t) (0.585 * (double) k / (double) GMP_NUMB_BITS)
-  qp = TMP_ALLOC_LIMBS (un + EXTRA); /* will contain quotient and remainder
-					of R/(k*S^(k-1)), and S^k */
   if (remp == NULL)
     {
       rp = TMP_ALLOC_LIMBS (un + 1);     /* will contain the remainder */
@@ -155,10 +145,8 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
       rp = remp;
     }
   sp = rootp;
-  wp = TMP_ALLOC_LIMBS (un + EXTRA); /* will contain S^(k-1), k*S^(k-1),
-					and temporary for mpn_pow_1 */
-  count_leading_zeros (cnt, up[un - 1]);
-  unb = un * GMP_NUMB_BITS - cnt + GMP_NAIL_BITS;
+
+  MPN_SIZEINBASE_2EXP(unb, up, un, 1);
   /* unb is the number of bits of the input U */
 
   xnb = (unb - 1) / k + 1;	/* ceil (unb / k) */
@@ -216,6 +204,19 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
      sizes[i] <= 2 * sizes[i+1].
      Newton iteration will first compute sizes[ni-1] extra bits,
      then sizes[ni-2], ..., then sizes[0] = b. */
+
+  /* qp and wp need enough space to store S'^k where S' is an approximate
+     root. Since S' can be as large as S+2, the worst case is when S=2 and
+     S'=4. But then since we know the number of bits of S in advance, S'
+     can only be 3 at most. Similarly for S=4, then S' can be 6 at most.
+     So the worst case is S'/S=3/2, thus S'^k <= (3/2)^k * S^k. Since S^k
+     fits in un limbs, the number of extra limbs needed is bounded by
+     ceil(k*log2(3/2)/GMP_NUMB_BITS). */
+#define EXTRA 2 + (mp_size_t) (0.585 * (double) k / (double) GMP_NUMB_BITS)
+  qp = TMP_ALLOC_LIMBS (un + EXTRA); /* will contain quotient and remainder
+					of R/(k*S^(k-1)), and S^k */
+  wp = TMP_ALLOC_LIMBS (un + EXTRA); /* will contain S^(k-1), k*S^(k-1),
+					and temporary for mpn_pow_1 */
 
   wp[0] = 1; /* {sp,sn}^(k-1) = 1 */
   wn = 1;
@@ -292,12 +293,7 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
 	}
       else
 	{
-	  mp_ptr tp;
 	  qn = rn - wn; /* expected quotient size */
-	  /* tp must have space for wn limbs.
-	     The quotient needs rn-wn+1 limbs, thus quotient+remainder
-	     need altogether rn+1 limbs. */
-	  tp = qp + qn + 1;	/* put remainder in Q buffer */
 	  mpn_div_q (qp, rp, rn, wp, wn, scratch);
 	  qn += qp[qn] != 0;
 	}
@@ -393,7 +389,7 @@ mpn_rootrem_internal (mp_ptr rootp, mp_ptr remp, mp_srcptr up, mp_size_t un,
       ASSERT_ALWAYS (rn >= qn);
 
       /* R = R - Q = floor(U/2^kk) - S^k */
-      if ((i > 1) || (approx == 0))
+      if (i > 1 || approx == 0)
 	{
 	  mpn_sub (rp, rp, rn, qp, qn);
 	  MPN_NORMALIZE (rp, rn);

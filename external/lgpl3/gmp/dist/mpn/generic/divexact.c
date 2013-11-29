@@ -38,7 +38,7 @@ mpn_divexact (mp_ptr qp,
 {
   unsigned shift;
   mp_size_t qn;
-  mp_ptr tp, wp;
+  mp_ptr tp;
   TMP_DECL;
 
   ASSERT (dn > 0);
@@ -67,7 +67,9 @@ mpn_divexact (mp_ptr qp,
 
   if (shift > 0)
     {
-      mp_size_t ss = (dn > qn) ? qn + 1 : dn;
+      mp_ptr wp;
+      mp_size_t ss;
+      ss = (dn > qn) ? qn + 1 : dn;
 
       tp = TMP_ALLOC_LIMBS (ss);
       mpn_rshift (tp, dp, ss, shift);
@@ -77,18 +79,14 @@ mpn_divexact (mp_ptr qp,
 	 to shift one limb beyond qn. */
       wp = TMP_ALLOC_LIMBS (qn + 1);
       mpn_rshift (wp, np, qn + 1, shift);
-    }
-  else
-    {
-      wp = TMP_ALLOC_LIMBS (qn);
-      MPN_COPY (wp, np, qn);
+      np = wp;
     }
 
   if (dn > qn)
     dn = qn;
 
   tp = TMP_ALLOC_LIMBS (mpn_bdiv_q_itch (qn, dn));
-  mpn_bdiv_q (qp, wp, qn, dp, dn, tp);
+  mpn_bdiv_q (qp, np, qn, dp, dn, tp);
   TMP_FREE;
 }
 

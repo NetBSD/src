@@ -2,20 +2,20 @@
 
 Copyright 2000, 2001 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +29,69 @@ struct pair_t {
   const char     *den;
 };
 
+void
+check_random ()
+{
+  gmp_randstate_ptr rands;
+  mpz_t bs;
+  unsigned long arg_size, size_range;
+  mpq_t q, r;
+  int i;
+  mp_bitcnt_t shift;
+  int reps = 10000;
+
+  rands = RANDS;
+
+  mpz_init (bs);
+  mpq_init (q);
+  mpq_init (r);
+
+  for (i = 0; i < reps; i++)
+    {
+      mpz_urandomb (bs, rands, 32);
+      size_range = mpz_get_ui (bs) % 11 + 2; /* 0..4096 bit operands */
+
+      mpz_urandomb (bs, rands, size_range);
+      arg_size = mpz_get_ui (bs);
+      mpz_rrandomb (mpq_numref (q), rands, arg_size);
+      do
+	{
+	  mpz_urandomb (bs, rands, size_range);
+	  arg_size = mpz_get_ui (bs);
+	  mpz_rrandomb (mpq_denref (q), rands, arg_size);
+	}
+      while (mpz_sgn (mpq_denref (q)) == 0);
+
+      /* We now have a random rational in q, albeit an unnormalised one.  The
+	 lack of normalisation should not matter here, so let's save the time a
+	 gcd would require.  */
+
+      mpz_urandomb (bs, rands, 32);
+      shift = mpz_get_ui (bs) % 4096;
+
+      mpq_mul_2exp (r, q, shift);
+
+      if (mpq_cmp (r, q) < 0)
+	{
+	  printf ("mpq_mul_2exp wrong on random\n");
+	  abort ();
+	}
+
+      mpq_div_2exp (r, r, shift);
+
+      if (mpq_cmp (r, q) != 0)
+	{
+	  printf ("mpq_mul_2exp or mpq_div_2exp wrong on random\n");
+	  abort ();
+	}
+    }
+  mpq_clear (q);
+  mpq_clear (r);
+  mpz_clear (bs);
+}
+
 int
-main (void)
+main (int argc, char **argv)
 {
   static const struct {
     struct pair_t  left;
@@ -96,7 +157,7 @@ main (void)
     { {"1","0x10000000000000000"}, 3, {"1","0x2000000000000000"} },
   };
 
-  void (*fun) __GMP_PROTO ((mpq_ptr, mpq_srcptr, unsigned long));
+  void (*fun) (mpq_ptr, mpq_srcptr, unsigned long);
   const struct pair_t  *p_start, *p_want;
   const char  *name;
   mpq_t    sep, got, want;
@@ -172,6 +233,8 @@ main (void)
             }
         }
     }
+
+  check_random ();
 
   mpq_clear (sep);
   mpq_clear (got);

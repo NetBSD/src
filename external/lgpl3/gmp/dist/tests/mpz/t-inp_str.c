@@ -2,20 +2,20 @@
 
 Copyright 2001, 2002 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -48,20 +48,30 @@ check_data (void)
     { "0",   10, "0", 1 },
 
     { "abc", 10, "0", 0 },
+    { "0xf", 10, "0", 1 },
     { "ghi", 16, "0", 0 },
+    { "100", 90, "0", 0 },
 
     {  "ff", 16,  "255", 2 },
     { "-ff", 16, "-255", 3 },
     {  "FF", 16,  "255", 2 },
     { "-FF", 16, "-255", 3 },
 
-    { "z", 36, "35", 1 },
-    { "Z", 36, "35", 1 },
+    {  "z", 36, "35", 1 },
+    {  "Z", 36, "35", 1 },
+    { "1B", 59, "70", 2 },
+    {  "a", 60, "36", 1 },
+    {  "A", 61, "10", 1 },
 
     {  "0x0",    0,   "0", 3 },
-    {  "0x10",   0,  "16", 4 },
-    { "-0x0",    0,   "0", 4 },
+    {  "0X10",   0,  "16", 4 },
+    { "-0X0",    0,   "0", 4 },
     { "-0x10",   0, "-16", 5 },
+
+    {  "0b0",    0,  "0", 3 },
+    {  "0B10",   0,  "2", 4 },
+    { "-0B0",    0,  "0", 4 },
+    { "-0b10",   0, "-2", 5 },
 
     {  "00",   0,  "0", 2 },
     {  "010",  0,  "8", 3 },
@@ -70,6 +80,7 @@ check_data (void)
 
     {  "0x",     0,   "0", 2 },
     {  "0",      0,   "0", 1 },
+    { " 030",   10,  "30", 4 },
   };
 
   mpz_t  got, want;

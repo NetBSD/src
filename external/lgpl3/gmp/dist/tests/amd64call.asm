@@ -1,22 +1,26 @@
 dnl  AMD64 calling conventions checking.
 
-dnl  Copyright 2000, 2003, 2004, 2006, 2007 Free Software Foundation, Inc.
-dnl
-dnl  This file is part of the GNU MP Library.
-dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
+dnl  Copyright 2000, 2003, 2004, 2006, 2007, 2010 Free Software Foundation, Inc.
+
+dnl  This file is part of the GNU MP Library test suite.
+
+dnl  The GNU MP Library test suite is free software; you can redistribute it
+dnl  and/or modify it under the terms of the GNU General Public License as
 dnl  published by the Free Software Foundation; either version 3 of the
 dnl  License, or (at your option) any later version.
-dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
-dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
+dnl  The GNU MP Library test suite is distributed in the hope that it will be
+dnl  useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+dnl  Public License for more details.
+
+dnl  You should have received a copy of the GNU General Public License along
+dnl  with the GNU MP Library test suite.  If not, see
+dnl  http://www.gnu.org/licenses/.
+
+
+dnl  The current version of the code attempts to keep the call/return
+dnl  prediction stack valid, but matching calls and returns.
 
 include(`../config.m4')
 
@@ -37,17 +41,17 @@ C
 C Execute an fstcw, returning the current x87 control word.
 
 PROLOGUE(x86_fstcw)
-        movq	$0, -8(%rsp)
-        fstcw	-8(%rsp)
-        movq	-8(%rsp), %rax
+	movq	$0, -8(%rsp)
+	fstcw	-8(%rsp)
+	movq	-8(%rsp), %rax
 	ret
 EPILOGUE()
 
 
-dnl  Instrumented profiling won't come out quite right below, since we don't
-dnl  do an actual "ret".  There's only a few instructions here, so there's
-dnl  no great need to get them separately accounted, just let them get
-dnl  attributed to the caller.
+dnl  Instrumented profiling won't come out quite right below, since we don't do
+dnl  an actual "ret".  There's only a few instructions here, so there's no
+dnl  great need to get them separately accounted, just let them get attributed
+dnl  to the caller.  FIXME this comment might no longer be true.
 
 ifelse(WANT_PROFILING,instrument,
 `define(`WANT_PROFILING',no)')
@@ -97,69 +101,67 @@ m4_assert_numargs(1)
 	TEXT
 	ALIGN(32)
 PROLOGUE(calling_conventions)
-	push	%rdi
-	movq	G(calling_conventions_values)@GOTPCREL(%rip), %rdi
+	movq	G(calling_conventions_values)@GOTPCREL(%rip), %rax
+	popq	RETADDR(%rax)
 
-	movq	8(%rsp), %rax
-	movq	%rax, RETADDR(%rdi)
+	movq	%rbx, SAVE_RBX(%rax)
+	movq	%rbp, SAVE_RBP(%rax)
+	movq	%r12, SAVE_R12(%rax)
+	movq	%r13, SAVE_R13(%rax)
+	movq	%r14, SAVE_R14(%rax)
+	movq	%r15, SAVE_R15(%rax)
 
-	leaq	L(return)(%rip), %rax
-	movq	%rax, 8(%rsp)
+	C Values we expect to see unchanged, as per amd64check.c
+	movq	WANT_RBX(%rax), %rbx
+	movq	WANT_RBP(%rax), %rbp
+	movq	WANT_R12(%rax), %r12
+	movq	WANT_R13(%rax), %r13
+	movq	WANT_R14(%rax), %r14
+	movq	WANT_R15(%rax), %r15
 
-	movq	%rbx, SAVE_RBX(%rdi)
-	movq	%rbp, SAVE_RBP(%rdi)
-	movq	%r12, SAVE_R12(%rdi)
-	movq	%r13, SAVE_R13(%rdi)
-	movq	%r14, SAVE_R14(%rdi)
-	movq	%r15, SAVE_R15(%rdi)
-
-	C values we expect to see unchanged, as per amd64check.c
-	movq	WANT_RBX(%rdi), %rbx
-	movq	WANT_RBP(%rdi), %rbp
-	movq	WANT_R12(%rdi), %r12
-	movq	WANT_R13(%rdi), %r13
-	movq	WANT_R14(%rdi), %r14
-	movq	WANT_R15(%rdi), %r15
-
-	C Try to provoke a problem by starting with junk in the registers,
-	C especially %rax which will be the return value.
-	C
-	C ENHANCE-ME: If we knew how many of the parameter registers were
-	C actually being used we could put junk in the rest.  Maybe we could
-	C get try.c to communicate this to us.
-C	movq	JUNK_RAX(%rdi), %rax		C overwritten below anyway
-	movq	JUNK_R10(%rdi), %r10
-	movq	JUNK_R11(%rdi), %r11
+	C Try to provoke a problem by starting with junk in the caller-saves
+	C registers, especially %rax which will be the return value.
+C	movq	JUNK_RAX(%rax), %rax		C overwritten below anyway
+	movq	JUNK_R10(%rax), %r10
+	movq	JUNK_R11(%rax), %r11
 
 	movq	G(calling_conventions_function)@GOTPCREL(%rip), %rax
-	pop	%rdi
-	jmp	*(%rax)
+	call	*(%rax)
 
-L(return):
-	movq	G(calling_conventions_values)@GOTPCREL(%rip), %rdi
+	movq	G(calling_conventions_values)@GOTPCREL(%rip), %rcx
 
-	movq	%rbx, RBX(%rdi)
-	movq	%rbp, RBP(%rdi)
-	movq	%r12, R12(%rdi)
-	movq	%r13, R13(%rdi)
-	movq	%r14, R14(%rdi)
-	movq	%r15, R15(%rdi)
+	movq	%rbx, RBX(%rcx)
+	movq	%rbp, RBP(%rcx)
+	movq	%r12, R12(%rcx)
+	movq	%r13, R13(%rcx)
+	movq	%r14, R14(%rcx)
+	movq	%r15, R15(%rcx)
 
 	pushfq
 	popq	%rbx
-	movq	%rbx, RFLAGS(%rdi)
+	movq	%rbx, RFLAGS(%rcx)
 
-	movq	G(calling_conventions_fenv)@GOTPCREL(%rip), %rbx
-	fstenv	(%rbx)
+	movq	SAVE_RBX(%rcx), %rbx
+	movq	SAVE_RBP(%rcx), %rbp
+	movq	SAVE_R12(%rcx), %r12
+	movq	SAVE_R13(%rcx), %r13
+	movq	SAVE_R14(%rcx), %r14
+	movq	SAVE_R15(%rcx), %r15
+
+	C Overwrite parameter registers
+C	mov	JUNK_R9(%rcx), %r9
+C	mov	JUNK_R8(%rcx), %r8
+C	mov	JUNK_RCX(%rcx), %rcx
+C	mov	JUNK_RDX(%rcx), %rdx
+C	mov	JUNK_RSI(%rcx), %rsi
+C	mov	JUNK_RDI(%rcx), %rdi
+
+	pushq	RETADDR(%rcx)
+
+	movq	G(calling_conventions_fenv)@GOTPCREL(%rip), %rcx
+	fstenv	(%rcx)
 	finit
 
-	movq	SAVE_RBX(%rdi), %rbx
-	movq	SAVE_RBP(%rdi), %rbp
-	movq	SAVE_R12(%rdi), %r12
-	movq	SAVE_R13(%rdi), %r13
-	movq	SAVE_R14(%rdi), %r14
-	movq	SAVE_R15(%rdi), %r15
-
-	jmp	*RETADDR(%rdi)
+	ret
 
 EPILOGUE()

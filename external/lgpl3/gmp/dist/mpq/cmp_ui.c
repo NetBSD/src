@@ -26,8 +26,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 int
 _mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
 {
-  mp_size_t num1_size = op1->_mp_num._mp_size;
-  mp_size_t den1_size = op1->_mp_den._mp_size;
+  mp_size_t num1_size = SIZ(NUM(op1));
+  mp_size_t den1_size = SIZ(DEN(op1));
   mp_size_t tmp1_size, tmp2_size;
   mp_ptr tmp1_ptr, tmp2_ptr;
   mp_limb_t cy_limb;
@@ -50,7 +50,7 @@ _mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
   /* need canonical sign to get right result */
   ASSERT (den1_size > 0);
 
-  if (den2 == 0)
+  if (UNLIKELY (den2 == 0))
     DIVIDE_BY_ZERO;
 
   if (num1_size == 0)
@@ -73,12 +73,12 @@ _mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
   tmp1_ptr = TMP_ALLOC_LIMBS (num1_size + 1);
   tmp2_ptr = TMP_ALLOC_LIMBS (den1_size + 1);
 
-  cy_limb = mpn_mul_1 (tmp1_ptr, op1->_mp_num._mp_d, num1_size,
+  cy_limb = mpn_mul_1 (tmp1_ptr, PTR(NUM(op1)), num1_size,
                        (mp_limb_t) den2);
   tmp1_ptr[num1_size] = cy_limb;
   tmp1_size = num1_size + (cy_limb != 0);
 
-  cy_limb = mpn_mul_1 (tmp2_ptr, op1->_mp_den._mp_d, den1_size,
+  cy_limb = mpn_mul_1 (tmp2_ptr, PTR(DEN(op1)), den1_size,
                        (mp_limb_t) num2);
   tmp2_ptr[den1_size] = cy_limb;
   tmp2_size = den1_size + (cy_limb != 0);

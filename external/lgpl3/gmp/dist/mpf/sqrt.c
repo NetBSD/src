@@ -1,7 +1,7 @@
 /* mpf_sqrt -- Compute the square root of a float.
 
-Copyright 1993, 1994, 1996, 2000, 2001, 2004, 2005 Free Software Foundation,
-Inc.
+Copyright 1993, 1994, 1996, 2000, 2001, 2004, 2005, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -59,7 +59,7 @@ mpf_sqrt (mpf_ptr r, mpf_srcptr u)
   TMP_DECL;
 
   usize = u->_mp_size;
-  if (usize <= 0)
+  if (UNLIKELY (usize <= 0))
     {
       if (usize < 0)
         SQRT_OF_NEGATIVE;

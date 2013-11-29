@@ -22,7 +22,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 int
-mpq_equal (mpq_srcptr op1, mpq_srcptr op2)
+mpq_equal (mpq_srcptr op1, mpq_srcptr op2) __GMP_NOTHROW
 {
   mp_size_t  num1_size, num2_size, den1_size, den2_size, i;
   mp_srcptr  num1_ptr,  num2_ptr,  den1_ptr,  den2_ptr;
@@ -31,25 +31,25 @@ mpq_equal (mpq_srcptr op1, mpq_srcptr op2)
   ASSERT_MPQ_CANONICAL (op1);
   ASSERT_MPQ_CANONICAL (op2);
 
-  num1_size = op1->_mp_num._mp_size;
-  num2_size = op2->_mp_num._mp_size;
+  num1_size = SIZ(NUM(op1));
+  num2_size = SIZ(NUM(op2));
   if (num1_size != num2_size)
     return 0;
 
-  num1_ptr = op1->_mp_num._mp_d;
-  num2_ptr = op2->_mp_num._mp_d;
+  num1_ptr = PTR(NUM(op1));
+  num2_ptr = PTR(NUM(op2));
   num1_size = ABS (num1_size);
   for (i = 0; i < num1_size; i++)
     if (num1_ptr[i] != num2_ptr[i])
       return 0;
 
-  den1_size = op1->_mp_den._mp_size;
-  den2_size = op2->_mp_den._mp_size;
+  den1_size = SIZ(DEN(op1));
+  den2_size = SIZ(DEN(op2));
   if (den1_size != den2_size)
     return 0;
 
-  den1_ptr = op1->_mp_den._mp_d;
-  den2_ptr = op2->_mp_den._mp_d;
+  den1_ptr = PTR(DEN(op1));
+  den2_ptr = PTR(DEN(op2));
   for (i = 0; i < den1_size; i++)
     if (den1_ptr[i] != den2_ptr[i])
       return 0;

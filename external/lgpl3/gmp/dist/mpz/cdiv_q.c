@@ -1,7 +1,8 @@
 /* mpz_cdiv_q -- Division rounding the quotient towards +infinity.  The
    remainder gets the opposite sign as the denominator.
 
-Copyright 1994, 1995, 1996, 2000, 2001, 2005 Free Software Foundation, Inc.
+Copyright 1994, 1995, 1996, 2000, 2001, 2005, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -24,8 +25,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpz_cdiv_q (mpz_ptr quot, mpz_srcptr dividend, mpz_srcptr divisor)
 {
-  mp_size_t dividend_size = dividend->_mp_size;
-  mp_size_t divisor_size = divisor->_mp_size;
+  mp_size_t dividend_size = SIZ (dividend);
+  mp_size_t divisor_size = SIZ (divisor);
   mpz_t rem;
   TMP_DECL;
 
@@ -35,7 +36,7 @@ mpz_cdiv_q (mpz_ptr quot, mpz_srcptr dividend, mpz_srcptr divisor)
 
   mpz_tdiv_qr (quot, rem, dividend, divisor);
 
-  if ((divisor_size ^ dividend_size) >= 0 && rem->_mp_size != 0)
+  if ((divisor_size ^ dividend_size) >= 0 && SIZ (rem) != 0)
     mpz_add_ui (quot, quot, 1L);
 
   TMP_FREE;

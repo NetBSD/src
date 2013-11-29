@@ -29,9 +29,9 @@ int
 _mpq_cmp_si (mpq_srcptr q, long n, unsigned long d)
 {
   /* need canonical sign to get right result */
-  ASSERT (q->_mp_den._mp_size > 0);
+  ASSERT (SIZ(DEN(q)) > 0);
 
-  if (q->_mp_num._mp_size >= 0)
+  if (SIZ(NUM(q)) >= 0)
     {
       if (n >= 0)
         return _mpq_cmp_ui (q, n, d);            /* >=0 cmp >=0 */
@@ -45,10 +45,10 @@ _mpq_cmp_si (mpq_srcptr q, long n, unsigned long d)
       else
         {
           mpq_t  qabs;
-          qabs->_mp_num._mp_size = ABS (q->_mp_num._mp_size);
-          qabs->_mp_num._mp_d    = q->_mp_num._mp_d;
-          qabs->_mp_den._mp_size = q->_mp_den._mp_size;
-          qabs->_mp_den._mp_d    = q->_mp_den._mp_d;
+          SIZ(NUM(qabs)) = ABSIZ(NUM(q));
+          PTR(NUM(qabs))    = PTR(NUM(q));
+          SIZ(DEN(qabs)) = SIZ(DEN(q));
+          PTR(DEN(qabs))    = PTR(DEN(q));
 
           return - _mpq_cmp_ui (qabs, -n, d);    /* <0 cmp <0 */
         }

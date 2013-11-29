@@ -7,7 +7,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -47,6 +47,25 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    * If we allow ourselves to clobber U, we could save the other of qp and qp2.
 */
 
+/* FIXME: We need to wrap mpn_bdiv_qr due to the itch interface.  This need
+   indicates a flaw in the current itch mechanism: Which operands not greater
+   than un,un will incur the worst itch?  We need a parallel foo_maxitch set
+   of functions.  */
+static void
+mpn_bdiv_qr_wrap (mp_ptr qp, mp_ptr rp,
+		  mp_srcptr np, mp_size_t nn,
+		  mp_srcptr dp, mp_size_t dn)
+{
+  mp_ptr scratch_out;
+  TMP_DECL;
+
+  TMP_MARK;
+  scratch_out = TMP_ALLOC_LIMBS (mpn_bdiv_qr_itch (nn, dn));
+  mpn_bdiv_qr (qp, rp, np, nn, dp, dn, scratch_out);
+
+  TMP_FREE;
+}
+
 mp_bitcnt_t
 mpn_remove (mp_ptr wp, mp_size_t *wn,
 	    mp_ptr up, mp_size_t un, mp_ptr vp, mp_size_t vn,
@@ -55,7 +74,7 @@ mpn_remove (mp_ptr wp, mp_size_t *wn,
   mp_ptr    pwpsp[LOG];
   mp_size_t pwpsn[LOG];
   mp_size_t npowers;
-  mp_ptr tp, qp, np, pp, qp2, scratch_out;
+  mp_ptr tp, qp, np, pp, qp2;
   mp_size_t pn, nn, qn, i;
   mp_bitcnt_t pwr;
   TMP_DECL;
@@ -67,17 +86,12 @@ mpn_remove (mp_ptr wp, mp_size_t *wn,
 
   TMP_MARK;
 
-  tp = TMP_ALLOC_LIMBS ((un + vn) / 2); /* remainder */
-  qp = TMP_ALLOC_LIMBS (un);		/* quotient, alternating */
-  qp2 = TMP_ALLOC_LIMBS (un);		/* quotient, alternating */
+  tp = TMP_ALLOC_LIMBS ((un + 1 + vn) / 2); /* remainder */
+  qp = TMP_ALLOC_LIMBS (un + 1);	/* quotient, alternating */
+  qp2 = TMP_ALLOC_LIMBS (un + 1);	/* quotient, alternating */
   np = TMP_ALLOC_LIMBS (un + LOG);	/* powers of V */
   pp = vp;
   pn = vn;
-
-  /* FIXME: This allocation need indicate a flaw in the current itch mechanism:
-     Which operands not greater than un,un will incur the worst itch?  We need
-     a parallel foo_maxitch set of functions.  */
-  scratch_out = TMP_ALLOC_LIMBS (mpn_bdiv_qr_itch (un, un >> 1));
 
   MPN_COPY (qp, up, un);
   qn = un;
@@ -85,7 +99,8 @@ mpn_remove (mp_ptr wp, mp_size_t *wn,
   npowers = 0;
   while (qn >= pn)
     {
-      mpn_bdiv_qr (qp2, tp, qp, qn, pp, pn, scratch_out);
+      qp[qn] = 0;
+      mpn_bdiv_qr_wrap (qp2, tp, qp, qn + 1, pp, pn);
       if (!mpn_zero_p (tp, pn))
 	break;			/* could not divide by V^npowers */
 
@@ -100,7 +115,7 @@ mpn_remove (mp_ptr wp, mp_size_t *wn,
       if (((mp_bitcnt_t) 2 << npowers) - 1 > cap)
 	break;
 
-      nn = 2 * pn - 1;		/* next power will be at least this many limbs */
+      nn = 2 * pn - 1;		/* next power will be at least this large */
       if (nn > qn)
 	break;			/* next power would be overlarge */
 
@@ -123,7 +138,8 @@ mpn_remove (mp_ptr wp, mp_size_t *wn,
       if (pwr + ((mp_bitcnt_t) 1 << i) > cap)
 	continue;		/* V^i would bring us past cap */
 
-      mpn_bdiv_qr (qp2, tp, qp, qn, pp, pn, scratch_out);
+      qp[qn] = 0;
+      mpn_bdiv_qr_wrap (qp2, tp, qp, qn + 1, pp, pn);
       if (!mpn_zero_p (tp, pn))
 	continue;		/* could not divide by V^i */
 

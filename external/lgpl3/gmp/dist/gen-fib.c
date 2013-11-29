@@ -1,6 +1,6 @@
 /* Generate Fibonacci table data.
 
-Copyright 2001, 2002, 2004 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2004, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
-#include "dumbmp.c"
+#include "bootstrap.c"
 
 mpz_t  *f;
 int    fnum, fib_limit, luc_limit;
@@ -34,7 +34,7 @@ generate (int numb_bits)
 
   /* fib(2n) > 2^n, so use 2n as a limit for the table size */
   falloc = 2 * numb_bits;
-  f = (mpz_t *) xmalloc (falloc * sizeof (*f));
+  f = xmalloc (falloc * sizeof (*f));
 
   mpz_init_set_ui (f[0], 1L);  /* F[-1] */
   mpz_init_set_ui (f[1], 0L);  /* F[0] */
@@ -43,7 +43,7 @@ generate (int numb_bits)
 
   for (i = 2; ; i++)
     {
-      ASSERT (i < falloc);
+      assert (i < falloc);
 
       /* F[i] = F[i-1] + F[i-2] */
       mpz_init (f[i]);

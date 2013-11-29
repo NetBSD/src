@@ -1,6 +1,8 @@
 dnl  IA-64 mpn_divexact_1 -- mpn by limb exact division.
 
-dnl  Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+dnl  Contributed to the GNU project by Torbjorn Granlund and Kevin Ryde.
+
+dnl  Copyright 2003, 2004, 2005, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -177,22 +179,28 @@ ifdef(`HAVE_ABI_32',
 	ld8		r21 = [up], 8
 	br		.Lent
 
-.Loop:	ld8		r21 = [up], 8
+.Ltop:	ld8		r21 = [up], 8
 	xma.l		f12 = f9, f8, f10	C q = c * -inverse + si
+	nop.b		0
 	;;
 .Lent:	add		r16 = 160, up
 	shl		r22 = r21, lshift
+	nop.b		0
 	;;
 	stf8		[rp] = f12, 8
 	xma.hu		f9 = f12, f6, f9	C c = high(q * divisor + c)
+	nop.b		0
+	nop.m		0
 	xmpy.l		f10 = f11, f7		C si = ulimb * inverse
+	nop.b		0
 	;;
 	or		r31 = r22, r23
 	shr.u		r23 = r21, rshift
+	nop.b		0
 	;;
 	lfetch		[r16]
 	setf.sig	f11 = r31
-	br.cloop.sptk.few.clr .Loop
+	br.cloop.sptk.few.clr .Ltop
 
 
 	xma.l		f12 = f9, f8, f10	C q = c * -inverse + si

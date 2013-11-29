@@ -156,7 +156,7 @@ mpn_divrem_1 (mp_ptr qp, mp_size_t qxn,
   else
     {
       /* Most significant bit of divisor == 0.  */
-      int norm;
+      int cnt;
 
       /* Skip a division if high < divisor (high quotient 0).  Testing here
 	 before normalizing will still skip as often as possible.  */
@@ -178,28 +178,28 @@ mpn_divrem_1 (mp_ptr qp, mp_size_t qxn,
 	  && BELOW_THRESHOLD (n, DIVREM_1_UNNORM_THRESHOLD))
 	goto plain;
 
-      count_leading_zeros (norm, d);
-      d <<= norm;
-      r <<= norm;
+      count_leading_zeros (cnt, d);
+      d <<= cnt;
+      r <<= cnt;
 
       if (UDIV_NEEDS_NORMALIZATION
 	  && BELOW_THRESHOLD (n, DIVREM_1_UNNORM_THRESHOLD))
 	{
+	  mp_limb_t nshift;
 	  if (un != 0)
 	    {
 	      n1 = up[un - 1] << GMP_NAIL_BITS;
-	      r |= (n1 >> (GMP_LIMB_BITS - norm));
+	      r |= (n1 >> (GMP_LIMB_BITS - cnt));
 	      for (i = un - 2; i >= 0; i--)
 		{
 		  n0 = up[i] << GMP_NAIL_BITS;
-		  udiv_qrnnd (*qp, r, r,
-			      (n1 << norm) | (n0 >> (GMP_NUMB_BITS - norm)),
-			      d);
+		  nshift = (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt));
+		  udiv_qrnnd (*qp, r, r, nshift, d);
 		  r >>= GMP_NAIL_BITS;
 		  qp--;
 		  n1 = n0;
 		}
-	      udiv_qrnnd (*qp, r, r, n1 << norm, d);
+	      udiv_qrnnd (*qp, r, r, n1 << cnt, d);
 	      r >>= GMP_NAIL_BITS;
 	      qp--;
 	    }
@@ -209,27 +209,26 @@ mpn_divrem_1 (mp_ptr qp, mp_size_t qxn,
 	      r >>= GMP_NAIL_BITS;
 	      qp--;
 	    }
-	  return r >> norm;
+	  return r >> cnt;
 	}
       else
 	{
-	  mp_limb_t  dinv;
+	  mp_limb_t  dinv, nshift;
 	  invert_limb (dinv, d);
 	  if (un != 0)
 	    {
 	      n1 = up[un - 1] << GMP_NAIL_BITS;
-	      r |= (n1 >> (GMP_LIMB_BITS - norm));
+	      r |= (n1 >> (GMP_LIMB_BITS - cnt));
 	      for (i = un - 2; i >= 0; i--)
 		{
 		  n0 = up[i] << GMP_NAIL_BITS;
-		  udiv_qrnnd_preinv (*qp, r, r,
-				     ((n1 << norm) | (n0 >> (GMP_NUMB_BITS - norm))),
-				     d, dinv);
+		  nshift = (n1 << cnt) | (n0 >> (GMP_NUMB_BITS - cnt));
+		  udiv_qrnnd_preinv (*qp, r, r, nshift, d, dinv);
 		  r >>= GMP_NAIL_BITS;
 		  qp--;
 		  n1 = n0;
 		}
-	      udiv_qrnnd_preinv (*qp, r, r, n1 << norm, d, dinv);
+	      udiv_qrnnd_preinv (*qp, r, r, n1 << cnt, d, dinv);
 	      r >>= GMP_NAIL_BITS;
 	      qp--;
 	    }
@@ -239,7 +238,7 @@ mpn_divrem_1 (mp_ptr qp, mp_size_t qxn,
 	      r >>= GMP_NAIL_BITS;
 	      qp--;
 	    }
-	  return r >> norm;
+	  return r >> cnt;
 	}
     }
 }

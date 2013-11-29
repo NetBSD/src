@@ -1,8 +1,6 @@
 dnl  AMD64 mpn_addlsh_n and mpn_rsblsh_n.  R = V2^k +- U.
-dnl  ("rsb" means reversed subtract, name mandated by mpn_sublsh1_n which
-dnl  subtacts the shifted operand from the unshifted operand.)
 
-dnl  Copyright 2006 Free Software Foundation, Inc.
+dnl  Copyright 2006, 2010, 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -23,10 +21,14 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 3.25	(mpn_lshift + mpn_add_n costs about 4.1 c/l)
-C K10:		 3.25	(mpn_lshift + mpn_add_n costs about 4.1 c/l)
-C P4:		14
-C P6-15:	 4
+C AMD K8,K9	 3.1	< 3.85 for lshift + add_n
+C AMD K10	 3.1	< 3.85 for lshift + add_n
+C Intel P4	14.6	> 7.33 for lshift + add_n
+C Intel core2	 3.87	> 3.27 for lshift + add_n
+C Intel NHM	 4	> 3.75 for lshift + add_n
+C Intel SBR	(5.8)	> 3.46 for lshift + add_n
+C Intel atom	(7.75)	< 8.75 for lshift + add_n
+C VIA nano	 4.7	< 6.25 for lshift + add_n
 
 C This was written quickly and not optimized at all.  Surely one could get
 C closer to 3 c/l or perhaps even under 3 c/l.  Ideas:
@@ -44,62 +46,64 @@ define(`n',	`%rcx')
 define(`cnt',	`%r8')
 
 ifdef(`OPERATION_addlsh_n',`
-  define(ADDSUBC,       `adc')
+  define(ADCSBB,       `adc')
   define(func, mpn_addlsh_n)
 ')
 ifdef(`OPERATION_rsblsh_n',`
-  define(ADDSUBC,       `sbb')
+  define(ADCSBB,       `sbb')
   define(func, mpn_rsblsh_n)
 ')
 
 MULFUNC_PROLOGUE(mpn_addlsh_n mpn_rsblsh_n)
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(func)
-
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8d	')
 	push	%r12
 	push	%r13
 	push	%r14
-	push	%r15
+	push	%rbp
 	push	%rbx
 
 	mov	n, %rax
-	xor	%ebx, %ebx		C clear carry save register
-	mov	%r8d, %ecx		C shift count
-	xor	%r15d, %r15d		C limb carry
+	xor	R32(%rbx), R32(%rbx)	C clear carry save register
+	mov	R32(%r8), R32(%rcx)	C shift count
+	xor	R32(%rbp), R32(%rbp)	C limb carry
 
-	mov	%eax, %r11d
-	and	$3, %r11d
+	mov	R32(%rax), R32(%r11)
+	and	$3, R32(%r11)
 	je	L(4)
-	sub	$1, %r11d
+	sub	$1, R32(%r11)
 
-L(oopette):
-	mov	0(vp), %r8
+L(012):	mov	(vp), %r8
 	mov	%r8, %r12
-	shl	%cl, %r8
-	or	%r15, %r8
-	neg	%cl
-	mov	%r12, %r15
-	shr	%cl, %r15
-	neg	%cl
-	add	%ebx, %ebx
-	ADDSUBC	0(up), %r8
-	mov	%r8, 0(rp)
-	sbb	%ebx, %ebx
+	shl	R8(%rcx), %r8
+	or	%rbp, %r8
+	neg	R8(%rcx)
+	mov	%r12, %rbp
+	shr	R8(%rcx), %rbp
+	neg	R8(%rcx)
+	add	R32(%rbx), R32(%rbx)
+	ADCSBB	(up), %r8
+	mov	%r8, (rp)
+	sbb	R32(%rbx), R32(%rbx)
 	lea	8(up), up
 	lea	8(vp), vp
 	lea	8(rp), rp
-	sub	$1, %r11d
-	jnc	L(oopette)
+	sub	$1, R32(%r11)
+	jnc	L(012)
 
-L(4):
-	sub	$4, %rax
+L(4):	sub	$4, %rax
 	jc	L(end)
 
-L(oop):
-	mov	0(vp), %r8
+	ALIGN(16)
+L(top):	mov	(vp), %r8
 	mov	%r8, %r12
 	mov	8(vp), %r9
 	mov	%r9, %r13
@@ -107,55 +111,55 @@ L(oop):
 	mov	%r10, %r14
 	mov	24(vp), %r11
 
-	shl	%cl, %r8
-	shl	%cl, %r9
-	shl	%cl, %r10
-	or	%r15, %r8
-	mov	%r11, %r15
-	shl	%cl, %r11
+	shl	R8(%rcx), %r8
+	shl	R8(%rcx), %r9
+	shl	R8(%rcx), %r10
+	or	%rbp, %r8
+	mov	%r11, %rbp
+	shl	R8(%rcx), %r11
 
-	neg	%cl
+	neg	R8(%rcx)
 
-	shr	%cl, %r12
-	shr	%cl, %r13
-	shr	%cl, %r14
-	shr	%cl, %r15		C used next loop
+	shr	R8(%rcx), %r12
+	shr	R8(%rcx), %r13
+	shr	R8(%rcx), %r14
+	shr	R8(%rcx), %rbp		C used next iteration
 
 	or	%r12, %r9
 	or	%r13, %r10
 	or	%r14, %r11
 
-	neg	%cl
+	neg	R8(%rcx)
 
-	add	%ebx, %ebx		C restore carry flag
+	add	R32(%rbx), R32(%rbx)	C restore carry flag
 
-	ADDSUBC	0(up), %r8
-	ADDSUBC	8(up), %r9
-	ADDSUBC	16(up), %r10
-	ADDSUBC	24(up), %r11
+	ADCSBB	(up), %r8
+	ADCSBB	8(up), %r9
+	ADCSBB	16(up), %r10
+	ADCSBB	24(up), %r11
 
-	mov	%r8, 0(rp)
+	mov	%r8, (rp)
 	mov	%r9, 8(rp)
 	mov	%r10, 16(rp)
 	mov	%r11, 24(rp)
 
-	sbb	%ebx, %ebx		C save carry flag
+	sbb	R32(%rbx), R32(%rbx)	C save carry flag
 
 	lea	32(up), up
 	lea	32(vp), vp
 	lea	32(rp), rp
 
 	sub	$4, %rax
-	jnc	L(oop)
-L(end):
-	add	%ebx, %ebx
-	ADDSUBC	$0, %r15
-	mov	%r15, %rax
+	jnc	L(top)
+
+L(end):	add	R32(%rbx), R32(%rbx)
+	ADCSBB	$0, %rbp
+	mov	%rbp, %rax
 	pop	%rbx
-	pop	%r15
+	pop	%rbp
 	pop	%r14
 	pop	%r13
 	pop	%r12
-
+	FUNC_EXIT()
 	ret
 EPILOGUE()

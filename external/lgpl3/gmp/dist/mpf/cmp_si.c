@@ -1,6 +1,6 @@
 /* mpf_cmp_si -- Compare a float with a signed integer.
 
-Copyright 1993, 1994, 1995, 1999, 2000, 2001, 2002, 2004 Free Software
+Copyright 1993, 1994, 1995, 1999, 2000, 2001, 2002, 2004, 2012 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -22,13 +22,14 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 int
-mpf_cmp_si (mpf_srcptr u, long int vval)
+mpf_cmp_si (mpf_srcptr u, long int vval) __GMP_NOTHROW
 {
   mp_srcptr up;
   mp_size_t usize;
   mp_exp_t uexp;
   mp_limb_t ulimb;
   int usign;
+  unsigned long abs_vval;
 
   uexp = u->_mp_exp;
   usize = u->_mp_size;
@@ -55,13 +56,13 @@ mpf_cmp_si (mpf_srcptr u, long int vval)
 
   usign = usize >= 0 ? 1 : -1;
   usize = ABS (usize);
-  vval = ABS (vval);
+  abs_vval = ABS_CAST (unsigned long, vval);
 
   /* 2. Are the exponents different (V's exponent == 1)?  */
 #if GMP_NAIL_BITS != 0
-  if (uexp > 1 + ((unsigned long) vval > GMP_NUMB_MAX))
+  if (uexp > 1 + (abs_vval > GMP_NUMB_MAX))
     return usign;
-  if (uexp < 1 + ((unsigned long) vval > GMP_NUMB_MAX))
+  if (uexp < 1 + (abs_vval > GMP_NUMB_MAX))
     return -usign;
 #else
   if (uexp > 1)
@@ -85,9 +86,9 @@ mpf_cmp_si (mpf_srcptr u, long int vval)
   usize--;
 
   /* 3. Compare the most significant mantissa limb with V.  */
-  if (ulimb > (unsigned long) vval)
+  if (ulimb > abs_vval)
     return usign;
-  else if (ulimb < (unsigned long) vval)
+  else if (ulimb < abs_vval)
     return -usign;
 
   /* Ignore zeroes at the low end of U.  */

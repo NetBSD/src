@@ -2,7 +2,7 @@
    Written by tege while on holiday in Rodupp, August 2001.
    Between 10 and 500 times faster than previous program.
 
-Copyright 2001, 2002, 2006 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2006, 2012 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -61,9 +61,9 @@ struct primes
 struct primes *primes;
 unsigned long n_primes;
 
-void find_primes __GMP_PROTO ((unsigned char *, mpz_t, unsigned long, mpz_t));
-void sieve_region __GMP_PROTO ((unsigned char *, mpz_t, unsigned long));
-void make_primelist __GMP_PROTO ((unsigned long));
+void find_primes (unsigned char *, mpz_t, unsigned long, mpz_t);
+void sieve_region (unsigned char *, mpz_t, unsigned long);
+void make_primelist (unsigned long);
 
 int flag_print = 1;
 int flag_count = 0;

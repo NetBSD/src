@@ -4,7 +4,7 @@
    CERTAIN TO BE SUBJECT TO INCOMPATIBLE CHANGES OR DISAPPEAR COMPLETELY IN
    FUTURE GNU MP RELEASES.
 
-Copyright 2001, 2002, 2005 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2005, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -163,11 +163,11 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
   TMP_DECL;
 
   TRACE (printf ("mpz_n_pow_ui rp=0x%lX bp=0x%lX bsize=%ld e=%lu (0x%lX)\n",
-                 PTR(r), bp, bsize, e, e);
-         mpn_trace ("b", bp, bsize));
+		 PTR(r), bp, bsize, e, e);
+	 mpn_trace ("b", bp, bsize));
 
   ASSERT (bsize == 0 || bp[ABS(bsize)-1] != 0);
-  ASSERT (MPN_SAME_OR_SEPARATE2_P (PTR(r), ABSIZ(r), bp, bsize));
+  ASSERT (MPN_SAME_OR_SEPARATE2_P (PTR(r), ALLOC(r), bp, ABS(bsize)));
 
   /* b^0 == 1, including 0^0 == 1 */
   if (e == 0)
@@ -207,7 +207,7 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
   rtwos_limbs += rtwos_bits / GMP_NUMB_BITS;
   rtwos_bits %= GMP_NUMB_BITS;
   TRACE (printf ("trailing zero btwos=%d rtwos_limbs=%ld rtwos_bits=%lu\n",
-                 btwos, rtwos_limbs, rtwos_bits));
+		 btwos, rtwos_limbs, rtwos_bits));
 
   TMP_MARK;
 
@@ -220,25 +220,25 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
     {
     bsize_1:
       /* Power up as far as possible within blimb.  We start here with e!=0,
-         but if e is small then we might reach e==0 and the whole b^e in rl.
-         Notice this code works when blimb==1 too, reaching e==0.  */
+	 but if e is small then we might reach e==0 and the whole b^e in rl.
+	 Notice this code works when blimb==1 too, reaching e==0.  */
 
       while (blimb <= GMP_NUMB_HALFMAX)
-        {
-          TRACE (printf ("small e=0x%lX blimb=0x%lX rl=0x%lX\n",
-                         e, blimb, rl));
-          ASSERT (e != 0);
-          if ((e & 1) != 0)
-            rl *= blimb;
-          e >>= 1;
-          if (e == 0)
-            goto got_rl;
-          blimb *= blimb;
-        }
+	{
+	  TRACE (printf ("small e=0x%lX blimb=0x%lX rl=0x%lX\n",
+			 e, blimb, rl));
+	  ASSERT (e != 0);
+	  if ((e & 1) != 0)
+	    rl *= blimb;
+	  e >>= 1;
+	  if (e == 0)
+	    goto got_rl;
+	  blimb *= blimb;
+	}
 
 #if HAVE_NATIVE_mpn_mul_2
       TRACE (printf ("single power, e=0x%lX b=0x%lX rl=0x%lX\n",
-                     e, blimb, rl));
+		     e, blimb, rl));
 
       /* Can power b once more into blimb:blimb_low */
       bsize = 2;
@@ -254,62 +254,62 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
 
     got_rl:
       TRACE (printf ("double power e=0x%lX blimb=0x%lX:0x%lX rl=0x%lX:%lX\n",
-                     e, blimb, blimb_low, rl_high, rl));
+		     e, blimb, blimb_low, rl_high, rl));
 
       /* Combine left-over rtwos_bits into rl_high:rl to be handled by the
-         final mul_1 or mul_2 rather than a separate lshift.
-         - rl_high:rl mustn't be 1 (since then there's no final mul)
-         - rl_high mustn't overflow
-         - rl_high mustn't change to non-zero, since mul_1+lshift is
-         probably faster than mul_2 (FIXME: is this true?)  */
+	 final mul_1 or mul_2 rather than a separate lshift.
+	 - rl_high:rl mustn't be 1 (since then there's no final mul)
+	 - rl_high mustn't overflow
+	 - rl_high mustn't change to non-zero, since mul_1+lshift is
+	 probably faster than mul_2 (FIXME: is this true?)  */
 
       if (rtwos_bits != 0
-          && ! (rl_high == 0 && rl == 1)
-          && (rl_high >> (GMP_NUMB_BITS-rtwos_bits)) == 0)
-        {
-          mp_limb_t  new_rl_high = (rl_high << rtwos_bits)
-            | (rl >> (GMP_NUMB_BITS-rtwos_bits));
-          if (! (rl_high == 0 && new_rl_high != 0))
-            {
-              rl_high = new_rl_high;
-              rl <<= rtwos_bits;
-              rtwos_bits = 0;
-              TRACE (printf ("merged rtwos_bits, rl=0x%lX:%lX\n",
-                             rl_high, rl));
-            }
-        }
+	  && ! (rl_high == 0 && rl == 1)
+	  && (rl_high >> (GMP_NUMB_BITS-rtwos_bits)) == 0)
+	{
+	  mp_limb_t  new_rl_high = (rl_high << rtwos_bits)
+	    | (rl >> (GMP_NUMB_BITS-rtwos_bits));
+	  if (! (rl_high == 0 && new_rl_high != 0))
+	    {
+	      rl_high = new_rl_high;
+	      rl <<= rtwos_bits;
+	      rtwos_bits = 0;
+	      TRACE (printf ("merged rtwos_bits, rl=0x%lX:%lX\n",
+			     rl_high, rl));
+	    }
+	}
 #else
     got_rl:
       TRACE (printf ("small power e=0x%lX blimb=0x%lX rl=0x%lX\n",
-                     e, blimb, rl));
+		     e, blimb, rl));
 
       /* Combine left-over rtwos_bits into rl to be handled by the final
-         mul_1 rather than a separate lshift.
-         - rl mustn't be 1 (since then there's no final mul)
-         - rl mustn't overflow  */
+	 mul_1 rather than a separate lshift.
+	 - rl mustn't be 1 (since then there's no final mul)
+	 - rl mustn't overflow	*/
 
       if (rtwos_bits != 0
-          && rl != 1
-          && (rl >> (GMP_NUMB_BITS-rtwos_bits)) == 0)
-        {
-          rl <<= rtwos_bits;
-          rtwos_bits = 0;
-          TRACE (printf ("merged rtwos_bits, rl=0x%lX\n", rl));
-        }
+	  && rl != 1
+	  && (rl >> (GMP_NUMB_BITS-rtwos_bits)) == 0)
+	{
+	  rl <<= rtwos_bits;
+	  rtwos_bits = 0;
+	  TRACE (printf ("merged rtwos_bits, rl=0x%lX\n", rl));
+	}
 #endif
     }
   else if (bsize == 2)
     {
       mp_limb_t  bsecond = bp[1];
       if (btwos != 0)
-        blimb |= (bsecond << (GMP_NUMB_BITS - btwos)) & GMP_NUMB_MASK;
+	blimb |= (bsecond << (GMP_NUMB_BITS - btwos)) & GMP_NUMB_MASK;
       bsecond >>= btwos;
       if (bsecond == 0)
-        {
-          /* Two limbs became one after rshift. */
-          bsize = 1;
-          goto bsize_1;
-        }
+	{
+	  /* Two limbs became one after rshift. */
+	  bsize = 1;
+	  goto bsize_1;
+	}
 
       TRACE (printf ("bsize==2 using b=0x%lX:%lX", bsecond, blimb));
 #if HAVE_NATIVE_mpn_mul_2
@@ -324,12 +324,12 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
   else
     {
       if (r_bp_overlap || btwos != 0)
-        {
-          mp_ptr tp = TMP_ALLOC_LIMBS (bsize);
-          MPN_RSHIFT_OR_COPY (tp, bp, bsize, btwos);
-          bp = tp;
-          TRACE (printf ("rshift or copy bp,bsize, new bsize=%ld\n", bsize));
-        }
+	{
+	  mp_ptr tp = TMP_ALLOC_LIMBS (bsize);
+	  MPN_RSHIFT_OR_COPY (tp, bp, bsize, btwos);
+	  bp = tp;
+	  TRACE (printf ("rshift or copy bp,bsize, new bsize=%ld\n", bsize));
+	}
 #if HAVE_NATIVE_mpn_mul_2
       /* in case 3 limbs rshift to 2 and hence use the mul_2 loop below */
       blimb_low = bp[0];
@@ -337,7 +337,7 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
       blimb = bp[bsize-1];
 
       TRACE (printf ("big bsize=%ld  ", bsize);
-             mpn_trace ("b", bp, bsize));
+	     mpn_trace ("b", bp, bsize));
     }
 
   /* At this point blimb is the most significant limb of the base to use.
@@ -360,9 +360,8 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
   count_leading_zeros (cnt, blimb);
   ralloc = (bsize*GMP_NUMB_BITS - cnt + GMP_NAIL_BITS) * e / GMP_NUMB_BITS + 5;
   TRACE (printf ("ralloc %ld, from bsize=%ld blimb=0x%lX cnt=%d\n",
-                 ralloc, bsize, blimb, cnt));
-  MPZ_REALLOC (r, ralloc + rtwos_limbs);
-  rp = PTR(r);
+		 ralloc, bsize, blimb, cnt));
+  rp = MPZ_REALLOC (r, ralloc + rtwos_limbs);
 
   /* Low zero limbs resulting from powers of 2. */
   MPN_ZERO (rp, rtwos_limbs);
@@ -371,7 +370,7 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
   if (e == 0)
     {
       /* Any e==0 other than via bsize==1 or bsize==2 is covered at the
-         start. */
+	 start. */
       rp[0] = rl;
       rsize = 1;
 #if HAVE_NATIVE_mpn_mul_2
@@ -386,125 +385,125 @@ mpz_n_pow_ui (mpz_ptr r, mp_srcptr bp, mp_size_t bsize, unsigned long int e)
       mp_size_t  talloc;
 
       /* In the mpn_mul_1 or mpn_mul_2 loops or in the mpn_mul loop when the
-         low bit of e is zero, tp only has to hold the second last power
-         step, which is half the size of the final result.  There's no need
-         to round up the divide by 2, since ralloc includes a +2 for rl
-         which not needed by tp.  In the mpn_mul loop when the low bit of e
-         is 1, tp must hold nearly the full result, so just size it the same
-         as rp.  */
+	 low bit of e is zero, tp only has to hold the second last power
+	 step, which is half the size of the final result.  There's no need
+	 to round up the divide by 2, since ralloc includes a +2 for rl
+	 which not needed by tp.  In the mpn_mul loop when the low bit of e
+	 is 1, tp must hold nearly the full result, so just size it the same
+	 as rp.  */
 
       talloc = ralloc;
 #if HAVE_NATIVE_mpn_mul_2
       if (bsize <= 2 || (e & 1) == 0)
-        talloc /= 2;
+	talloc /= 2;
 #else
       if (bsize <= 1 || (e & 1) == 0)
-        talloc /= 2;
+	talloc /= 2;
 #endif
       TRACE (printf ("talloc %ld\n", talloc));
       tp = TMP_ALLOC_LIMBS (talloc);
 
       /* Go from high to low over the bits of e, starting with i pointing at
-         the bit below the highest 1 (which will mean i==-1 if e==1).  */
-      count_leading_zeros (cnt, e);
+	 the bit below the highest 1 (which will mean i==-1 if e==1).  */
+      count_leading_zeros (cnt, (mp_limb_t) e);
       i = GMP_LIMB_BITS - cnt - 2;
 
 #if HAVE_NATIVE_mpn_mul_2
       if (bsize <= 2)
-        {
-          mp_limb_t  mult[2];
+	{
+	  mp_limb_t  mult[2];
 
-          /* Any bsize==1 will have been powered above to be two limbs. */
-          ASSERT (bsize == 2);
-          ASSERT (blimb != 0);
+	  /* Any bsize==1 will have been powered above to be two limbs. */
+	  ASSERT (bsize == 2);
+	  ASSERT (blimb != 0);
 
-          /* Arrange the final result ends up in r, not in the temp space */
-          if ((i & 1) == 0)
-            SWAP_RP_TP;
+	  /* Arrange the final result ends up in r, not in the temp space */
+	  if ((i & 1) == 0)
+	    SWAP_RP_TP;
 
-          rp[0] = blimb_low;
-          rp[1] = blimb;
-          rsize = 2;
+	  rp[0] = blimb_low;
+	  rp[1] = blimb;
+	  rsize = 2;
 
-          mult[0] = blimb_low;
-          mult[1] = blimb;
+	  mult[0] = blimb_low;
+	  mult[1] = blimb;
 
-          for ( ; i >= 0; i--)
-            {
-              TRACE (printf ("mul_2 loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
-                             i, e, rsize, ralloc, talloc);
-                     mpn_trace ("r", rp, rsize));
+	  for ( ; i >= 0; i--)
+	    {
+	      TRACE (printf ("mul_2 loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
+			     i, e, rsize, ralloc, talloc);
+		     mpn_trace ("r", rp, rsize));
 
-              MPN_SQR (tp, talloc, rp, rsize);
-              SWAP_RP_TP;
-              if ((e & (1L << i)) != 0)
-                MPN_MUL_2 (rp, rsize, ralloc, mult);
-            }
+	      MPN_SQR (tp, talloc, rp, rsize);
+	      SWAP_RP_TP;
+	      if ((e & (1L << i)) != 0)
+		MPN_MUL_2 (rp, rsize, ralloc, mult);
+	    }
 
-          TRACE (mpn_trace ("mul_2 before rl, r", rp, rsize));
-          if (rl_high != 0)
-            {
-              mult[0] = rl;
-              mult[1] = rl_high;
-              MPN_MUL_2 (rp, rsize, ralloc, mult);
-            }
-          else if (rl != 1)
-            MPN_MUL_1 (rp, rsize, ralloc, rl);
-        }
+	  TRACE (mpn_trace ("mul_2 before rl, r", rp, rsize));
+	  if (rl_high != 0)
+	    {
+	      mult[0] = rl;
+	      mult[1] = rl_high;
+	      MPN_MUL_2 (rp, rsize, ralloc, mult);
+	    }
+	  else if (rl != 1)
+	    MPN_MUL_1 (rp, rsize, ralloc, rl);
+	}
 #else
       if (bsize == 1)
-        {
-          /* Arrange the final result ends up in r, not in the temp space */
-          if ((i & 1) == 0)
-            SWAP_RP_TP;
+	{
+	  /* Arrange the final result ends up in r, not in the temp space */
+	  if ((i & 1) == 0)
+	    SWAP_RP_TP;
 
-          rp[0] = blimb;
-          rsize = 1;
+	  rp[0] = blimb;
+	  rsize = 1;
 
-          for ( ; i >= 0; i--)
-            {
-              TRACE (printf ("mul_1 loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
-                             i, e, rsize, ralloc, talloc);
-                     mpn_trace ("r", rp, rsize));
+	  for ( ; i >= 0; i--)
+	    {
+	      TRACE (printf ("mul_1 loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
+			     i, e, rsize, ralloc, talloc);
+		     mpn_trace ("r", rp, rsize));
 
-              MPN_SQR (tp, talloc, rp, rsize);
-              SWAP_RP_TP;
-              if ((e & (1L << i)) != 0)
-                MPN_MUL_1 (rp, rsize, ralloc, blimb);
-            }
+	      MPN_SQR (tp, talloc, rp, rsize);
+	      SWAP_RP_TP;
+	      if ((e & (1L << i)) != 0)
+		MPN_MUL_1 (rp, rsize, ralloc, blimb);
+	    }
 
-          TRACE (mpn_trace ("mul_1 before rl, r", rp, rsize));
-          if (rl != 1)
-            MPN_MUL_1 (rp, rsize, ralloc, rl);
-        }
+	  TRACE (mpn_trace ("mul_1 before rl, r", rp, rsize));
+	  if (rl != 1)
+	    MPN_MUL_1 (rp, rsize, ralloc, rl);
+	}
 #endif
       else
-        {
-          int  parity;
+	{
+	  int  parity;
 
-          /* Arrange the final result ends up in r, not in the temp space */
-          ULONG_PARITY (parity, e);
-          if (((parity ^ i) & 1) != 0)
-            SWAP_RP_TP;
+	  /* Arrange the final result ends up in r, not in the temp space */
+	  ULONG_PARITY (parity, e);
+	  if (((parity ^ i) & 1) != 0)
+	    SWAP_RP_TP;
 
-          MPN_COPY (rp, bp, bsize);
-          rsize = bsize;
+	  MPN_COPY (rp, bp, bsize);
+	  rsize = bsize;
 
-          for ( ; i >= 0; i--)
-            {
-              TRACE (printf ("mul loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
-                             i, e, rsize, ralloc, talloc);
-                     mpn_trace ("r", rp, rsize));
+	  for ( ; i >= 0; i--)
+	    {
+	      TRACE (printf ("mul loop i=%d e=0x%lX, rsize=%ld ralloc=%ld talloc=%ld\n",
+			     i, e, rsize, ralloc, talloc);
+		     mpn_trace ("r", rp, rsize));
 
-              MPN_SQR (tp, talloc, rp, rsize);
-              SWAP_RP_TP;
-              if ((e & (1L << i)) != 0)
-                {
-                  MPN_MUL (tp, talloc, rp, rsize, bp, bsize);
-                  SWAP_RP_TP;
-                }
-            }
-        }
+	      MPN_SQR (tp, talloc, rp, rsize);
+	      SWAP_RP_TP;
+	      if ((e & (1L << i)) != 0)
+		{
+		  MPN_MUL (tp, talloc, rp, rsize, bp, bsize);
+		  SWAP_RP_TP;
+		}
+	    }
+	}
     }
 
   ASSERT (rp == PTR(r) + rtwos_limbs);

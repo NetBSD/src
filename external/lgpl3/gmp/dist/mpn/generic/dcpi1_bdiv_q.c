@@ -7,7 +7,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2006, 2007, 2009, 2010, 2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -26,7 +26,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
-
 
 
 mp_size_t
@@ -130,7 +129,7 @@ mpn_dcpi1_bdiv_q (mp_ptr qp,
       qn = nn - qn;
       while (qn > dn)
 	{
-	  mpn_sub_1 (np + dn, np + dn, qn, cy);
+	  mpn_sub_1 (np + dn, np + dn, qn - dn, cy);
 	  cy = mpn_dcpi1_bdiv_qr_n (qp, np, dp, dn, dinv, tp);
 	  qp += dn;
 	  np += dn;

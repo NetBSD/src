@@ -1,6 +1,6 @@
 dnl  ARM mpn_copyd.
 
-dnl  Copyright 2003 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,12 +19,16 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C This runs at 3 cycles/limb in the StrongARM.
+C	     cycles/limb
+C StrongARM	 ?
+C XScale	 ?
+C Cortex-A8	 ?
+C Cortex-A9	 1.5
+C Cortex-A15	 ?
 
-define(`rp',`r0')
-define(`up',`r1')
-define(`n',`r2')
-
+define(`rp', `r0')
+define(`up', `r1')
+define(`n',  `r2')
 
 ASM_START()
 PROLOGUE(mpn_copyd)
@@ -44,15 +48,14 @@ L(skip1):
 	stmda	rp!, { r3, r12 }		C store 2 limbs
 L(skip2):
 	bics	n, n, #3
-	beq	L(return)
+	beq	L(rtn)
 	stmfd	sp!, { r7, r8, r9 }		C save regs on stack
-L(loop):
-	ldmda	up!, { r3, r8, r9, r12 }	C load 4 limbs
-	ldr	r7, [rp, #-12]			C cache allocate
+
+L(top):	ldmda	up!, { r3, r8, r9, r12 }	C load 4 limbs
 	subs	n, n, #4
 	stmda	rp!, { r3, r8, r9, r12 }	C store 4 limbs
-	bne	L(loop)
+	bne	L(top)
+
 	ldmfd	sp!, { r7, r8, r9 }		C restore regs from stack
-L(return):
-	mov	pc, lr
-EPILOGUE(mpn_copyd)
+L(rtn):	bx	lr
+EPILOGUE()

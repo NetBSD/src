@@ -1,16 +1,19 @@
 /* Copyright 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 3 of the License, or (at your option) any later
-version.
+This file is part of the GNU MP Library test suite.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
+
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 
 #include <stdlib.h>		/* for strtol */
@@ -55,7 +58,7 @@ static unsigned long test;
 
 void
 check_one (mp_ptr qp, mp_srcptr rp, mp_limb_t rh,
-	   mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, char *fname)
+	   mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, const char *fname)
 {
   mp_size_t qn;
   int cmp;
@@ -294,6 +297,27 @@ main (int argc, char **argv)
 	  ASSERT_ALWAYS (qp[-1] == qran0);  ASSERT_ALWAYS (qp[nn - dn + 1] == qran1);
 	  ASSERT_ALWAYS (rp[-1] == rran0);
 	  check_one (qp, NULL, 0, np, nn, dp, dn, "mpn_dcpi1_bdiv_q");
+	}
+
+      if (nn > dn)
+	{
+	  /* Test mpn_bdiv_qr */
+	  itch = mpn_bdiv_qr_itch (nn, dn);
+	  if (itch + 1 > alloc)
+	    {
+	      scratch = __GMP_REALLOCATE_FUNC_LIMBS (scratch, alloc, itch + 1);
+	      alloc = itch + 1;
+	    }
+	  scratch[itch] = ran;
+	  MPN_ZERO (qp, nn - dn);
+	  MPN_ZERO (rp, dn);
+	  rp[dn] = rran1;
+	  rh = mpn_bdiv_qr (qp, rp, np, nn, dp, dn, scratch);
+	  ASSERT_ALWAYS (ran == scratch[itch]);
+	  ASSERT_ALWAYS (qp[-1] == qran0);  ASSERT_ALWAYS (qp[nn - dn + 1] == qran1);
+	  ASSERT_ALWAYS (rp[-1] == rran0);  ASSERT_ALWAYS (rp[dn] == rran1);
+
+	  check_one (qp, rp, rh, np, nn, dp, dn, "mpn_bdiv_qr");
 	}
 
       if (nn - dn < 2 || dn < 2)

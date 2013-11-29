@@ -120,5 +120,17 @@ define(`ASSERT_label_counter',eval(ASSERT_label_counter+1))
 ')')
 define(`ASSERT_label_counter',1)
 
+define(`getfsig', `getf.sig')
+define(`setfsig', `setf.sig')
+define(`cmpeq',   `cmp.eq')
+define(`cmpne',   `cmp.ne')
+define(`cmpltu',  `cmp.ltu')
+define(`cmpleu',  `cmp.leu')
+define(`cmpgtu',  `cmp.gtu')
+define(`cmpgeu',  `cmp.geu')
+define(`cmple',   `cmp.le')
+define(`cmpgt',   `cmp.gt')
+define(`cmpeqor', `cmp.eq.or')
+define(`cmpequc', `cmp.eq.unc')
 
 divert

@@ -38,8 +38,8 @@ mpq_set_str (mpq_ptr q, const char *str, int base)
   slash = strchr (str, '/');
   if (slash == NULL)
     {
-      q->_mp_den._mp_size = 1;
-      q->_mp_den._mp_d[0] = 1;
+      SIZ(DEN(q)) = 1;
+      PTR(DEN(q))[0] = 1;
 
       return mpz_set_str (mpq_numref(q), str, base);
     }

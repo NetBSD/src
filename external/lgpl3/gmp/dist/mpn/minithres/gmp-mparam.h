@@ -1,7 +1,7 @@
 /* Minimal values gmp-mparam.h -- Compiler/machine parameter header file.
 
-Copyright 1991, 1993, 1994, 2000, 2006, 2008, 2009, 2010 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 2000, 2006, 2008, 2009, 2010, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -23,19 +23,19 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #define MOD_1_NORM_THRESHOLD                 0  /* always */
 #define MOD_1_UNNORM_THRESHOLD               0  /* always */
-#define MOD_1_1_THRESHOLD                    2
-#define MOD_1_2_THRESHOLD                    3
-#define MOD_1_4_THRESHOLD                    4
+#define MOD_1N_TO_MOD_1_1_THRESHOLD          2
+#define MOD_1U_TO_MOD_1_1_THRESHOLD          2
+#define MOD_1_1_TO_MOD_1_2_THRESHOLD         3
+#define MOD_1_2_TO_MOD_1_4_THRESHOLD         4
+#define PREINV_MOD_1_TO_MOD_1_THRESHOLD      1
 #define USE_PREINV_DIVREM_1                  1  /* native */
-#define USE_PREINV_MOD_1                     1
-#define DIVREM_2_THRESHOLD                   0  /* always */
 #define DIVEXACT_1_THRESHOLD                 0  /* always (native) */
-#define MODEXACT_1_ODD_THRESHOLD             0  /* always (native) */
+#define BMOD_1_TO_MOD_1_THRESHOLD            3
 
 #define MUL_TOOM22_THRESHOLD                 8
 #define MUL_TOOM33_THRESHOLD                20
 #define MUL_TOOM44_THRESHOLD                24
-#define MUL_TOOM6H_THRESHOLD               200 /* FIXME */
+#define MUL_TOOM6H_THRESHOLD                70 /* FIXME */
 #define MUL_TOOM8H_THRESHOLD                86
 
 #define MUL_TOOM32_TO_TOOM43_THRESHOLD      50 /* FIXME */
@@ -47,7 +47,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define SQR_TOOM2_THRESHOLD                  8
 #define SQR_TOOM3_THRESHOLD                 20
 #define SQR_TOOM4_THRESHOLD                 24
-#define SQR_TOOM6H_THRESHOLD               200 /* FIXME */
+#define SQR_TOOM6H_THRESHOLD                70 /* FIXME */
 #define SQR_TOOM8H_THRESHOLD                86
 
 #define MULMOD_BNM1_THRESHOLD            10
@@ -75,7 +75,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define INV_APPR_THRESHOLD                   4
 
 #define BINV_NEWTON_THRESHOLD                6
-#define REDC_1_TO_REDC_N_THRESHOLD           4
+#define REDC_1_TO_REDC_N_THRESHOLD           9
 
 #define MU_DIV_QR_THRESHOLD                  8
 #define MU_DIVAPPR_Q_THRESHOLD               8
@@ -93,3 +93,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define GET_STR_PRECOMPUTE_THRESHOLD        10
 #define SET_STR_THRESHOLD                   64
 #define SET_STR_PRECOMPUTE_THRESHOLD       100
+
+#define FAC_ODD_THRESHOLD                    0  /* always */
+#define FAC_DSC_THRESHOLD                   70

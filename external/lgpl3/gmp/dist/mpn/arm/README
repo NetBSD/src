@@ -1,4 +1,4 @@
-Copyright 2002 Free Software Foundation, Inc.
+Copyright 2002, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -19,16 +19,6 @@ with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 
 
-This directory contains mpn functions for ARM processors.
-It has been optimized for StrongARM.
-
-TODO
-
-Write mpn_addmul_2.  The speed of mpn_addmul_1 is 9.75 c/l;
-mpn_addmul_2 could run at 8 c/l.  mpn_addmul_N could
-approach 6 c/l, but register shortage will make this hard.
-
-Perhaps nails is the way to go even for an embedded processor like
-this, since the umlal accumulation could be used very effectively in
-that case.  with just 2 nail bits, we should get close to 5 c/l for a
-mpn_addmul_N or mpn_mul_basecase.
+This directory contains mpn functions for ARM processors.  It has been
+optimised for Cortex-A9, but the code in the top-level directory should run
+on all ARM processors at architecture level v4 or later.

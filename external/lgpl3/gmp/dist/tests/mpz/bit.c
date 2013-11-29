@@ -1,21 +1,22 @@
 /* Test mpz_setbit, mpz_clrbit, mpz_tstbit.
 
-Copyright 1997, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1997, 2000, 2001, 2002, 2003, 2012, 2013 Free Software
+Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@ debug_mp (mpz_srcptr x, int base)
 
 /* exercise the case where mpz_clrbit or mpz_combit ends up extending a
    value like -2^(k*GMP_NUMB_BITS-1) when clearing bit k*GMP_NUMB_BITS-1.  */
+/* And vice-versa. */
 void
 check_clr_extend (void)
 {
@@ -53,7 +55,7 @@ check_clr_extend (void)
       for (f = 0; f <= 1; f++)
 	{
 	  /* lots of 1 bits in _mp_d */
-	  mpz_set_ui (got, 1L);
+	  mpz_set_si (got, 1L);
 	  mpz_mul_2exp (got, got, 10*GMP_NUMB_BITS);
 	  mpz_sub_ui (got, got, 1L);
 
@@ -78,6 +80,28 @@ check_clr_extend (void)
 	      else
 		printf ("mpz_combit: ");
 	      printf ("wrong after extension\n");
+	      mpz_trace ("got ", got);
+	      mpz_trace ("want", want);
+	      abort ();
+	    }
+
+	  /* complement bit n, going back to ..11100..00 which is -2^(n-1) */
+	  if (f == 0)
+	    mpz_setbit (got, i*GMP_NUMB_BITS-1);
+	  else
+	    mpz_combit (got, i*GMP_NUMB_BITS-1);
+	  MPZ_CHECK_FORMAT (got);
+
+	  mpz_set_si (want, -1L);
+	  mpz_mul_2exp (want, want, i*GMP_NUMB_BITS - 1);
+
+	  if (mpz_cmp (got, want) != 0)
+	    {
+	      if (f == 0)
+		printf ("mpz_setbit: ");
+	      else
+		printf ("mpz_combit: ");
+	      printf ("wrong after shrinking\n");
 	      mpz_trace ("got ", got);
 	      mpz_trace ("want", want);
 	      abort ();
@@ -203,7 +227,7 @@ check_single (void)
     {
       for (offset = (limb==0 ? 0 : -2); offset <= 2; offset++)
 	{
-	  for (initial = 0; initial >= -1; initial--)
+	  for (initial = 1; initial >= -1; initial--)
 	    {
 	      mpz_set_si (x, (long) initial);
 
@@ -295,7 +319,7 @@ check_random (int argc, char *argv[])
 
       mpz_set (s2, x);
       bit2 = mpz_tstbit (x, bitindex);
-      mpz_setbit (x, bitindex);
+      mpz_combit (x, bitindex);
       MPZ_CHECK_FORMAT (x);
 
       mpz_set (s3, x);
@@ -323,16 +347,26 @@ check_random (int argc, char *argv[])
       if (mpz_cmp (s2, s3) == 0)
 	abort ();
 
+      mpz_combit (x, bitindex);
+      MPZ_CHECK_FORMAT (x);
+      if (mpz_cmp (s2, x) != 0)
+	abort ();
+
+      mpz_clrbit (x, bitindex);
+      MPZ_CHECK_FORMAT (x);
+      if (mpz_cmp (s2, x) != 0)
+	abort ();
+
       mpz_ui_pow_ui (m, 2L, bitindex);
       MPZ_CHECK_FORMAT (m);
-      mpz_ior (x, s2, m);
+      mpz_ior (x, s0, m);
       MPZ_CHECK_FORMAT (x);
       if (mpz_cmp (x, s3) != 0)
 	abort ();
 
       mpz_com (m, m);
       MPZ_CHECK_FORMAT (m);
-      mpz_and (x, s1, m);
+      mpz_and (x, s0, m);
       MPZ_CHECK_FORMAT (x);
       if (mpz_cmp (x, s2) != 0)
 	abort ();

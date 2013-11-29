@@ -49,7 +49,7 @@ __gmpz_operator_in_nowhite (istream &i, mpz_ptr z, char c)
   if (i.good()) // last character read was non-numeric
     i.putback(c);
   else if (i.eof() && (ok || zero)) // stopped just before eof
-    i.clear();
+    i.clear(ios::eofbit);
 
   if (ok)
     ASSERT_NOCARRY (mpz_set_str (z, s.c_str(), base)); // extract the number

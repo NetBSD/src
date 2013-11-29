@@ -1,7 +1,7 @@
 /* mpz_root(root, u, nth) --  Set ROOT to floor(U^(1/nth)).
    Return an indication if the result is exact.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
+Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -32,12 +32,12 @@ mpz_root (mpz_ptr root, mpz_srcptr u, unsigned long int nth)
   us = SIZ(u);
 
   /* even roots of negatives provoke an exception */
-  if (us < 0 && (nth & 1) == 0)
+  if (UNLIKELY (us < 0 && (nth & 1) == 0))
     SQRT_OF_NEGATIVE;
 
   /* root extraction interpreted as c^(1/nth) means a zeroth root should
      provoke a divide by zero, do this even if c==0 */
-  if (nth == 0)
+  if (UNLIKELY (nth == 0))
     DIVIDE_BY_ZERO;
 
   if (us == 0)

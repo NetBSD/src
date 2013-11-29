@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 1996, 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+# Copyright 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2012 Free Software
 # Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
@@ -23,6 +23,7 @@ INCLUDES = -D__GMP_WITHIN_GMP -I$(top_srcdir)
 
 noinst_LTLIBRARIES = libmpz.la
 libmpz_la_SOURCES = aors.h aors_ui.h fits_s.h mul_i.h \
+  2fac_ui.c \
   add.c add_ui.c abs.c aorsmul.c aorsmul_i.c and.c array_init.c \
   bin_ui.c bin_uiui.c cdiv_q.c \
   cdiv_q_ui.c cdiv_qr.c cdiv_qr_ui.c cdiv_r.c cdiv_r_ui.c cdiv_ui.c \
@@ -42,19 +43,14 @@ libmpz_la_SOURCES = aors.h aors_ui.h fits_s.h mul_i.h \
   import.c init.c init2.c inits.c inp_raw.c inp_str.c \
   invert.c ior.c iset.c iset_d.c iset_si.c iset_str.c iset_ui.c \
   jacobi.c kronsz.c kronuz.c kronzs.c kronzu.c \
-  lcm.c lcm_ui.c lucnum_ui.c lucnum2_ui.c millerrabin.c \
+  lcm.c lcm_ui.c lucnum_ui.c lucnum2_ui.c mfac_uiui.c millerrabin.c \
   mod.c mul.c mul_2exp.c mul_si.c mul_ui.c n_pow_ui.c neg.c nextprime.c \
+  oddfac_1.c \
   out_raw.c out_str.c perfpow.c perfsqr.c popcount.c pow_ui.c powm.c \
-  powm_sec.c powm_ui.c pprime_p.c random.c random2.c \
+  powm_sec.c powm_ui.c pprime_p.c prodlimbs.c primorial_ui.c random.c random2.c \
   realloc.c realloc2.c remove.c root.c rootrem.c rrandomb.c \
   scan0.c scan1.c set.c set_d.c set_f.c set_q.c set_si.c set_str.c \
   set_ui.c setbit.c size.c sizeinbase.c sqrt.c sqrtrem.c sub.c sub_ui.c \
   swap.c tdiv_ui.c tdiv_q.c tdiv_q_2exp.c tdiv_q_ui.c tdiv_qr.c \
   tdiv_qr_ui.c tdiv_r.c tdiv_r_2exp.c tdiv_r_ui.c tstbit.c ui_pow_ui.c \
   ui_sub.c urandomb.c urandomm.c xor.c
-
-# These are BUILT_SOURCES at the top-level, so normally they're built before
-# recursing into this directory.
-#
-fac_ui.h:
-	cd ..; $(MAKE) $(AM_MAKEFLAGS) mpz/fac_ui.h

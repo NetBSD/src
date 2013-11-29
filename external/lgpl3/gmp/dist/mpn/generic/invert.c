@@ -6,7 +6,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright (C) 2007, 2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 2007, 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -22,10 +22,6 @@ License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
-
-/* FIXME: Remove NULL and TMP_*, as soon as all the callers properly
-   allocate and pass the scratch to the function. */
-#include <stdlib.h>		/* for NULL */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -46,9 +42,6 @@ mpn_invert (mp_ptr ip, mp_srcptr dp, mp_size_t n, mp_ptr scratch)
     TMP_DECL;
 
     TMP_MARK;
-    if (scratch == NULL)
-      scratch = TMP_ALLOC_LIMBS (mpn_invert_itch (n));
-
     if (BELOW_THRESHOLD (n, INV_APPR_THRESHOLD))
       {
 	/* Maximum scratch needed by this branch: 2*n */
@@ -74,7 +67,7 @@ mpn_invert (mp_ptr ip, mp_srcptr dp, mp_size_t n, mp_ptr scratch)
       ASSERT ( mpn_invert_itch (n) >= mpn_invertappr_itch (n) );
       e = mpn_ni_invertappr (ip, dp, n, scratch);
 
-      if (e) { /* Assume the error can only be "0" (no error) or "1". */
+      if (UNLIKELY (e)) { /* Assume the error can only be "0" (no error) or "1". */
 	/* Code to detect and correct the "off by one" approximation. */
 	mpn_mul_n (scratch, ip, dp, n);
 	ASSERT_NOCARRY (mpn_add_n (scratch + n, scratch + n, dp, n));

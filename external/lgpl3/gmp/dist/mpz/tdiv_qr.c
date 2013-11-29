@@ -1,7 +1,8 @@
 /* mpz_tdiv_qr(quot,rem,dividend,divisor) -- Set QUOT to DIVIDEND/DIVISOR,
    and REM to DIVIDEND mod DIVISOR.
 
-Copyright 1991, 1993, 1994, 2000, 2001, 2005 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 2000, 2001, 2005, 2011, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,16 +22,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 #include "longlong.h"
-#ifdef BERKELEY_MP
-#include "mp.h"
-#endif
 
 void
-#ifndef BERKELEY_MP
 mpz_tdiv_qr (mpz_ptr quot, mpz_ptr rem, mpz_srcptr num, mpz_srcptr den)
-#else /* BERKELEY_MP */
-mdiv (mpz_srcptr num, mpz_srcptr den, mpz_ptr quot, mpz_ptr rem)
-#endif /* BERKELEY_MP */
 {
   mp_size_t ql;
   mp_size_t ns, ds, nl, dl;
@@ -43,18 +37,16 @@ mdiv (mpz_srcptr num, mpz_srcptr den, mpz_ptr quot, mpz_ptr rem)
   dl = ABS (ds);
   ql = nl - dl + 1;
 
-  if (dl == 0)
+  if (UNLIKELY (dl == 0))
     DIVIDE_BY_ZERO;
 
-  MPZ_REALLOC (rem, dl);
+  rp = MPZ_REALLOC (rem, dl);
 
   if (ql <= 0)
     {
       if (num != rem)
 	{
-	  mp_ptr np, rp;
 	  np = PTR (num);
-	  rp = PTR (rem);
 	  MPN_COPY (rp, np, nl);
 	  SIZ (rem) = SIZ (num);
 	}
@@ -64,11 +56,9 @@ mdiv (mpz_srcptr num, mpz_srcptr den, mpz_ptr quot, mpz_ptr rem)
       return;
     }
 
-  MPZ_REALLOC (quot, ql);
+  qp = MPZ_REALLOC (quot, ql);
 
   TMP_MARK;
-  qp = PTR (quot);
-  rp = PTR (rem);
   np = PTR (num);
   dp = PTR (den);
 
