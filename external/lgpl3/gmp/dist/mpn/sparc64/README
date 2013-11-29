@@ -65,7 +65,7 @@ Integer conditional move instructions cannot dual-issue with other integer
 instructions.  No conditional move can issue 1-5 cycles after a load.  (This
 might have been fixed for UltraSPARC-3.)
 
-The UltraSPARC-3 pipeline is very simular to he one of UltraSPARC-1/2 , but is
+The UltraSPARC-3 pipeline is very simular to the one of UltraSPARC-1/2 , but is
 somewhat slower.  Branches execute slower, and there may be other new stalls.
 But integer multiply doesn't stall the entire CPU and also has a much lower
 latency.  But it's still not pipelined, and thus useless for our needs.

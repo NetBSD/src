@@ -28,7 +28,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 #include "longlong.h"
 
-static int isprime __GMP_PROTO ((unsigned long int));
+static int isprime (unsigned long int);
 
 
 /* MPN_MOD_OR_MODEXACT_1_ODD can be used instead of mpn_mod_1 for the trial
@@ -65,7 +65,7 @@ mpz_probab_prime_p (mpz_srcptr n, int reps)
   /* Check if n has small factors.  */
 #if defined (PP_INVERTED)
   r = MPN_MOD_OR_PREINV_MOD_1 (PTR(n), (mp_size_t) SIZ(n), (mp_limb_t) PP,
-                               (mp_limb_t) PP_INVERTED);
+			       (mp_limb_t) PP_INVERTED);
 #else
   r = mpn_mod_1 (PTR(n), (mp_size_t) SIZ(n), (mp_limb_t) PP);
 #endif

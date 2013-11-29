@@ -1,6 +1,6 @@
 dnl  Intel P6-15 mpn_add_n/mpn_sub_n -- mpn add or subtract.
 
-dnl  Copyright 2006, 2007 Free Software Foundation, Inc.
+dnl  Copyright 2006, 2007, 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -21,11 +21,14 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2.25
-C K10:		 2
-C P4:		10
-C P6 core2:	 2.05
-C P6 corei7:	 2.3
+C AMD K8,K9	 2.25
+C AMD K10	 2
+C Intel P4	10
+C Intel core2	 2.05
+C Intel NHM	 2.3
+C Intel SBR	 1.9
+C Intel atom	 ?
+C VIA nano	 ?
 
 C INPUT PARAMETERS
 define(`rp',	`%rdi')
@@ -45,16 +48,20 @@ ifdef(`OPERATION_sub_n', `
 
 MULFUNC_PROLOGUE(mpn_add_n mpn_add_nc mpn_sub_n mpn_sub_nc)
 
-ASM_START()
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
 
+ASM_START()
 	TEXT
 	ALIGN(16)
-
 PROLOGUE(func_nc)
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8	')
 	jmp	L(start)
 EPILOGUE()
 
 PROLOGUE(func)
+	FUNC_ENTRY(4)
 	xor	%r8, %r8
 L(start):
 	mov	(up), %r10
@@ -63,12 +70,12 @@ L(start):
 	lea	-8(up,n,8), up
 	lea	-8(vp,n,8), vp
 	lea	-16(rp,n,8), rp
-	mov	%ecx, %eax
+	mov	R32(%rcx), R32(%rax)
 	neg	n
-	and	$3, %eax
+	and	$3, R32(%rax)
 	je	L(b00)
-	add	%rax, n		C clear low rcx bits for jrcxz
-	cmp	$2, %eax
+	add	%rax, n			C clear low rcx bits for jrcxz
+	cmp	$2, R32(%rax)
 	jl	L(b01)
 	je	L(b10)
 
@@ -91,8 +98,9 @@ L(b10):	shr	%r8			C set cy
 
 L(end):	ADCSBB	%r11, %r10
 	mov	%r10, 8(rp)
-	mov	%ecx, %eax		C clear eax, ecx contains 0
-	adc	%eax, %eax
+	mov	R32(%rcx), R32(%rax)	C clear eax, ecx contains 0
+	adc	R32(%rax), R32(%rax)
+	FUNC_EXIT()
 	ret
 
 	ALIGN(16)

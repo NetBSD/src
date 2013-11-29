@@ -55,16 +55,16 @@ mpz_kronecker_ui (mpz_srcptr a, unsigned long b)
       int        twos;
 
       if (b == 0)
-        return JACOBI_LS0 (a_low, a_size);   /* (a/0) */
+	return JACOBI_LS0 (a_low, a_size);   /* (a/0) */
 
       if (! (a_low & 1))
-        return 0;  /* (even/even)=0 */
+	return 0;  /* (even/even)=0 */
 
       /* (a/2)=(2/a) for a odd */
       count_trailing_zeros (twos, b);
       b >>= twos;
       result_bit1 = (JACOBI_TWOS_U_BIT1 (twos, a_low)
-                     ^ JACOBI_ASGN_SU_BIT1 (a_size, b));
+		     ^ JACOBI_ASGN_SU_BIT1 (a_size, b));
     }
 
   if (b == 1)

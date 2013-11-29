@@ -1,7 +1,7 @@
 /* mpz_tdiv_q_ui(quot, dividend, divisor_limb)
    -- Divide DIVIDEND by DIVISOR_LIMB and store the result in QUOT.
 
-Copyright 1991, 1993, 1994, 1996, 1998, 2001, 2002, 2004 Free Software
+Copyright 1991, 1993, 1994, 1996, 1998, 2001, 2002, 2004, 2012 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -29,7 +29,7 @@ mpz_tdiv_q_ui (mpz_ptr quot, mpz_srcptr dividend, unsigned long int divisor)
   mp_ptr np, qp;
   mp_limb_t rl;
 
-  if (divisor == 0)
+  if (UNLIKELY (divisor == 0))
     DIVIDE_BY_ZERO;
 
   ns = SIZ(dividend);
@@ -40,8 +40,7 @@ mpz_tdiv_q_ui (mpz_ptr quot, mpz_srcptr dividend, unsigned long int divisor)
     }
 
   nn = ABS(ns);
-  MPZ_REALLOC (quot, nn);
-  qp = PTR(quot);
+  qp = MPZ_REALLOC (quot, nn);
   np = PTR(dividend);
 
 #if BITS_PER_ULONG > GMP_NUMB_BITS  /* avoid warnings about shift amount */
