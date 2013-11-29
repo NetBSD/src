@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/11/29 08:03:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2013/11/29 14:51:36 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -239,6 +239,9 @@ CLEANFILES+=	mpn_${_build}
 COPTS += -Wno-stack-protector
 .if !empty(GMP_MACHINE_ARCH:M*arm*)
 COPTS += -marm
+.endif
+.if ${GMP_MACHINE_ARCH} == "sparc64"
+NOGCCERROR=yes
 .endif
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
