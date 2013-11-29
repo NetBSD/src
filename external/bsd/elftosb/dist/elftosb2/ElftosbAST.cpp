@@ -1201,7 +1201,7 @@ void SectionMatchListASTNode::printTree(int indent) const
 	}
 	
 	printIndent(indent+1);
-	printf("source: ", m_source->c_str());
+	printf("source: ");
 	if (m_source)
 	{
 		printf("%s\n", m_source->c_str());
@@ -1283,7 +1283,7 @@ void SymbolASTNode::printTree(int indent) const
 	printf("%s(", nodeName().c_str());
 	if (source)
 	{
-		printf(source);
+		printf("%s", source);
 	}
 	else
 	{
@@ -1292,7 +1292,7 @@ void SymbolASTNode::printTree(int indent) const
 	printf(":");
 	if (symbol)
 	{
-		printf(symbol);
+		printf("%s", symbol);
 	}
 	else
 	{
