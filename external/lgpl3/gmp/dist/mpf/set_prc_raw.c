@@ -23,7 +23,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpf_set_prec_raw (mpf_ptr x, mp_bitcnt_t prec_in_bits)
+mpf_set_prec_raw (mpf_ptr x, mp_bitcnt_t prec_in_bits) __GMP_NOTHROW
 {
   x->_mp_prec = __GMPF_BITS_TO_PREC (prec_in_bits);
 }

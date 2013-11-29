@@ -37,14 +37,14 @@ mpq_set_ui (MP_RAT *dest, unsigned long int num, unsigned long int den)
     {
       /* Canonicalize 0/n to 0/1.  */
       den = 1;
-      dest->_mp_num._mp_size = 0;
+      SIZ(NUM(dest)) = 0;
     }
   else
     {
-      dest->_mp_num._mp_d[0] = num;
-      dest->_mp_num._mp_size = 1;
+      PTR(NUM(dest))[0] = num;
+      SIZ(NUM(dest)) = 1;
     }
 
-  dest->_mp_den._mp_d[0] = den;
-  dest->_mp_den._mp_size = (den != 0);
+  PTR(DEN(dest))[0] = den;
+  SIZ(DEN(dest)) = (den != 0);
 }
