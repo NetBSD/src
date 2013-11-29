@@ -177,7 +177,7 @@ public:
 	void printUsage(Options & options)
 	{
 		options.usage(std::cout, "key-files...");
-		printf(k_usageText, k_toolName);
+		printf("%s", k_usageText);
 	}
 	
 	/*!
