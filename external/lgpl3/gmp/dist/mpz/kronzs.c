@@ -50,7 +50,7 @@ mpz_kronecker_si (mpz_srcptr a, long b)
 #endif
 
   result_bit1 = JACOBI_BSGN_SS_BIT1 (a_size, b);
-  b_limb = (unsigned long) ABS (b);
+  b_limb = ABS_CAST (unsigned long, b);
   a_ptr = PTR(a);
 
   if ((b_limb & 1) == 0)
@@ -59,10 +59,10 @@ mpz_kronecker_si (mpz_srcptr a, long b)
       int        twos;
 
       if (b_limb == 0)
-        return JACOBI_LS0 (a_low, a_size);   /* (a/0) */
+	return JACOBI_LS0 (a_low, a_size);   /* (a/0) */
 
       if (! (a_low & 1))
-        return 0;  /* (even/even)=0 */
+	return 0;  /* (even/even)=0 */
 
       /* (a/2)=(2/a) for a odd */
       count_trailing_zeros (twos, b_limb);

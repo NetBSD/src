@@ -50,7 +50,7 @@ __gmp_tmp_reentrant_alloc (struct tmp_reentrant_t **markp, size_t size)
 #define P   ((struct tmp_reentrant_t *) p)
 
   total_size = size + HSIZ;
-  p = (*__gmp_allocate_func) (total_size);
+  p = (char *) (*__gmp_allocate_func) (total_size);
   P->size = total_size;
   P->next = *markp;
   *markp = P;

@@ -1,6 +1,6 @@
 dnl  x86 mpn_bdiv_dbm1.
 
-dnl  Copyright 2008 Free Software Foundation, Inc.
+dnl  Copyright 2008, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -19,14 +19,22 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C	    cycles/limb
-C K7:		 3.5
-C P4 m0:	  ?
-C P4 m1:	  ?
-C P4 m2:	13.67
-C P4 m3:	  ?
-C P4 m4:	  ?
-C P6-13:	 5.1
+C			    cycles/limb
+C P5
+C P6 model 0-8,10-12)
+C P6 model 9  (Banias)
+C P6 model 13 (Dothan)		 5.1
+C P4 model 0  (Willamette)
+C P4 model 1  (?)
+C P4 model 2  (Northwood)	13.67
+C P4 model 3  (Prescott)
+C P4 model 4  (Nocona)
+C Intel Atom
+C AMD K6
+C AMD K7			 3.5
+C AMD K8
+C AMD K10
+
 
 C TODO
 C  * Optimize for more x86 processors
@@ -57,18 +65,17 @@ PROLOGUE(mpn_bdiv_dbm1c)
 	cmp	$2, %eax
 	jc	L(b1)
 	jz	L(b2)
-	jmp	L(b3)
+
+L(b3):	lea	-8(%esi), %esi
+	lea	8(%edi), %edi
+	add	$-3, %ebp
+	jmp	L(3)
 
 L(b0):	mov	4(%esi), %eax
 	lea	-4(%esi), %esi
 	lea	12(%edi), %edi
 	add	$-4, %ebp
 	jmp	L(0)
-L(b3):
-	lea	-8(%esi), %esi
-	lea	8(%edi), %edi
-	add	$-3, %ebp
-	jmp	L(3)
 
 L(b2):	mov	4(%esi), %eax
 	lea	4(%esi), %esi
@@ -77,8 +84,7 @@ L(b2):	mov	4(%esi), %eax
 	jmp	L(2)
 
 	ALIGN(8)
-L(top):
-	mov	4(%esi), %eax
+L(top):	mov	4(%esi), %eax
 	mul	%ecx
 	lea	16(%edi), %edi
 	sub	%eax, %ebx

@@ -1,6 +1,6 @@
  /* mpq_get_num(num,rat_src) -- Set NUM to the numerator of RAT_SRC.
 
-Copyright 1991, 1994, 1995, 2001 Free Software Foundation, Inc.
+Copyright 1991, 1994, 1995, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,14 +21,14 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpq_get_num (MP_INT *num, const MP_RAT *src)
+mpq_get_num (mpz_ptr num, mpq_srcptr src)
 {
-  mp_size_t size = src->_mp_num._mp_size;
+  mp_size_t size = SIZ(NUM(src));
   mp_size_t abs_size = ABS (size);
+  mp_ptr dp;
 
-  if (num->_mp_alloc < abs_size)
-    _mpz_realloc (num, abs_size);
+  dp = MPZ_NEWALLOC (num, abs_size);
+  SIZ(num) = size;
 
-  MPN_COPY (num->_mp_d, src->_mp_num._mp_d, abs_size);
-  num->_mp_size = size;
+  MPN_COPY (dp, PTR(NUM(src)), abs_size);
 }

@@ -21,11 +21,11 @@ include(`../config.m4')
 
 
 C     cycles/limb  startup (approx)
-C P5:     1.0         40
-C P6      2.4         70
-C K6      1.0         55
-C K7:     1.3         75
-C P4:     2.6        175
+C P5	  1.0	      40
+C P6	  2.4	      70
+C K6	  1.0	      55
+C K7	  1.3	      75
+C P4	  2.6	     175
 C
 C (Startup time includes some function call overheads.)
 

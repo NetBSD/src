@@ -1,22 +1,22 @@
 /* Test mpz_gcd, mpz_gcdext, and mpz_gcd_ui.
 
 Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005,
-2008, 2009 Free Software Foundation, Inc.
+2008, 2009, 2012 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,10 +25,29 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 #include "tests.h"
 
-void one_test __GMP_PROTO ((mpz_t, mpz_t, mpz_t, int));
-void debug_mp __GMP_PROTO ((mpz_t, int));
+void one_test (mpz_t, mpz_t, mpz_t, int);
+void debug_mp (mpz_t, int);
 
-static int gcdext_valid_p __GMP_PROTO ((const mpz_t a, const mpz_t b, const mpz_t g, const mpz_t s));
+static int gcdext_valid_p (const mpz_t, const mpz_t, const mpz_t, const mpz_t);
+
+/* Keep one_test's variables global, so that we don't need
+   to reinitialize them for each test.  */
+mpz_t gcd1, gcd2, s, temp1, temp2, temp3;
+
+#define MAX_SCHOENHAGE_THRESHOLD HGCD_REDUCE_THRESHOLD
+
+/* Define this to make all operands be large enough for Schoenhage gcd
+   to be used.  */
+#ifndef WHACK_SCHOENHAGE
+#define WHACK_SCHOENHAGE 0
+#endif
+
+#if WHACK_SCHOENHAGE
+#define MIN_OPERAND_BITSIZE (MAX_SCHOENHAGE_THRESHOLD * GMP_NUMB_BITS)
+#else
+#define MIN_OPERAND_BITSIZE 1
+#endif
+
 
 void
 check_data (void)
@@ -47,10 +66,7 @@ check_data (void)
   mpz_t  a, b, got, want;
   int    i;
 
-  mpz_init (a);
-  mpz_init (b);
-  mpz_init (got);
-  mpz_init (want);
+  mpz_inits (a, b, got, want, NULL);
 
   for (i = 0; i < numberof (data); i++)
     {
@@ -72,75 +88,161 @@ check_data (void)
 	}
     }
 
-  mpz_clear (a);
-  mpz_clear (b);
-  mpz_clear (got);
-  mpz_clear (want);
+  mpz_clears (a, b, got, want, NULL);
 }
 
-/* Keep one_test's variables global, so that we don't need
-   to reinitialize them for each test.  */
-mpz_t gcd1, gcd2, s, t, temp1, temp2, temp3;
+void
+make_chain_operands (mpz_t ref, mpz_t a, mpz_t b, gmp_randstate_t rs, int nb1, int nb2, int chain_len)
+{
+  mpz_t bs, temp1, temp2;
+  int j;
 
-#if GCD_DC_THRESHOLD > GCDEXT_DC_THRESHOLD
-#define MAX_SCHOENHAGE_THRESHOLD GCD_DC_THRESHOLD
-#else
-#define MAX_SCHOENHAGE_THRESHOLD GCDEXT_DC_THRESHOLD
-#endif
+  mpz_inits (bs, temp1, temp2, NULL);
 
-/* Define this to make all operands be large enough for Schoenhage gcd
-   to be used.  */
-#ifndef WHACK_SCHOENHAGE
-#define WHACK_SCHOENHAGE 0
-#endif
+  /* Generate a division chain backwards, allowing otherwise unlikely huge
+     quotients.  */
 
-#if WHACK_SCHOENHAGE
-#define MIN_OPERAND_BITSIZE (MAX_SCHOENHAGE_THRESHOLD * GMP_NUMB_BITS)
-#else
-#define MIN_OPERAND_BITSIZE 1
-#endif
+  mpz_set_ui (a, 0);
+  mpz_urandomb (bs, rs, 32);
+  mpz_urandomb (bs, rs, mpz_get_ui (bs) % nb1 + 1);
+  mpz_rrandomb (b, rs, mpz_get_ui (bs));
+  mpz_add_ui (b, b, 1);
+  mpz_set (ref, b);
+
+  for (j = 0; j < chain_len; j++)
+    {
+      mpz_urandomb (bs, rs, 32);
+      mpz_urandomb (bs, rs, mpz_get_ui (bs) % nb2 + 1);
+      mpz_rrandomb (temp2, rs, mpz_get_ui (bs) + 1);
+      mpz_add_ui (temp2, temp2, 1);
+      mpz_mul (temp1, b, temp2);
+      mpz_add (a, a, temp1);
+
+      mpz_urandomb (bs, rs, 32);
+      mpz_urandomb (bs, rs, mpz_get_ui (bs) % nb2 + 1);
+      mpz_rrandomb (temp2, rs, mpz_get_ui (bs) + 1);
+      mpz_add_ui (temp2, temp2, 1);
+      mpz_mul (temp1, a, temp2);
+      mpz_add (b, b, temp1);
+    }
+
+  mpz_clears (bs, temp1, temp2, NULL);
+}
+
+/* Test operands from a table of seed data.  This variant creates the operands
+   using plain ol' mpz_rrandomb.  This is a hack for better coverage of the gcd
+   code, which depends on that the random number generators give the exact
+   numbers we expect.  */
+void
+check_kolmo1 (void)
+{
+  static const struct {
+    unsigned int seed;
+    int nb;
+    const char *want;
+  } data[] = {
+    { 59618, 38208, "5"},
+    { 76521, 49024, "3"},
+    { 85869, 54976, "1"},
+    { 99449, 63680, "1"},
+    {112453, 72000, "1"}
+  };
+
+  gmp_randstate_t rs;
+  mpz_t  bs, a, b, want;
+  int    i, unb, vnb, nb;
+
+  gmp_randinit_default (rs);
+
+  mpz_inits (bs, a, b, want, NULL);
+
+  for (i = 0; i < numberof (data); i++)
+    {
+      nb = data[i].nb;
+
+      gmp_randseed_ui (rs, data[i].seed);
+
+      mpz_urandomb (bs, rs, 32);
+      unb = mpz_get_ui (bs) % nb;
+      mpz_urandomb (bs, rs, 32);
+      vnb = mpz_get_ui (bs) % nb;
+
+      mpz_rrandomb (a, rs, unb);
+      mpz_rrandomb (b, rs, vnb);
+
+      mpz_set_str_or_abort (want, data[i].want, 0);
+
+      one_test (a, b, want, -1);
+    }
+
+  mpz_clears (bs, a, b, want, NULL);
+  gmp_randclear (rs);
+}
+
+/* Test operands from a table of seed data.  This variant creates the operands
+   using a division chain.  This is a hack for better coverage of the gcd
+   code, which depends on that the random number generators give the exact
+   numbers we expect.  */
+void
+check_kolmo2 (void)
+{
+  static const struct {
+    unsigned int seed;
+    int nb, chain_len;
+  } data[] = {
+    {  917, 15, 5 },
+    { 1032, 18, 6 },
+    { 1167, 18, 6 },
+    { 1174, 18, 6 },
+    { 1192, 18, 6 },
+  };
+
+  gmp_randstate_t rs;
+  mpz_t  bs, a, b, want;
+  int    i;
+
+  gmp_randinit_default (rs);
+
+  mpz_inits (bs, a, b, want, NULL);
+
+  for (i = 0; i < numberof (data); i++)
+    {
+      gmp_randseed_ui (rs, data[i].seed);
+      make_chain_operands (want, a, b, rs, data[i].nb, data[i].nb, data[i].chain_len);
+      one_test (a, b, want, -1);
+    }
+
+  mpz_clears (bs, a, b, want, NULL);
+  gmp_randclear (rs);
+}
 
 int
 main (int argc, char **argv)
 {
   mpz_t op1, op2, ref;
-  int i, j, chain_len;
+  int i, chain_len;
   gmp_randstate_ptr rands;
   mpz_t bs;
   unsigned long bsi, size_range;
-  int reps = 200;
+  long int reps = 200;
 
   tests_start ();
   TESTS_REPS (reps, argv, argc);
 
   rands = RANDS;
 
-  check_data ();
+  mpz_inits (bs, op1, op2, ref, gcd1, gcd2, temp1, temp2, temp3, s, NULL);
 
-  mpz_init (bs);
-  mpz_init (op1);
-  mpz_init (op2);
-  mpz_init (ref);
-  mpz_init (gcd1);
-  mpz_init (gcd2);
-  mpz_init (temp1);
-  mpz_init (temp2);
-  mpz_init (temp3);
-  mpz_init (s);
-  mpz_init (t);
+  check_data ();
+  check_kolmo1 ();
+  check_kolmo2 ();
 
   /* Testcase to exercise the u0 == u1 case in mpn_gcdext_lehmer_n. */
-  mpz_set_ui (op2, GMP_NUMB_MAX);
+  mpz_set_ui (op2, GMP_NUMB_MAX); /* FIXME: Huge limb doesn't always fit */
   mpz_mul_2exp (op1, op2, 100);
   mpz_add (op1, op1, op2);
   mpz_mul_ui (op2, op2, 2);
   one_test (op1, op2, NULL, -1);
-
-#if 0
-  mpz_set_str (op1, "4da8e405e0d2f70d6d679d3de08a5100a81ec2cff40f97b313ae75e1183f1df2b244e194ebb02a4ece50d943640a301f0f6cc7f539117b783c3f3a3f91649f8a00d2e1444d52722810562bce02fccdbbc8fe3276646e306e723dd3b", 16);
-  mpz_set_str (op2, "76429e12e4fdd8929d89c21657097fbac09d1dc08cf7f1323a34e78ca34226e1a7a29b86fee0fa7fe2cc2a183d46d50df1fe7029590974ad7da77605f35f902cb8b9b8d22dd881eaae5919675d49a337145a029c3b33fc2b0", 16);
-  one_test (op1, op2, NULL, -1);
-#endif
 
   for (i = 0; i < reps; i++)
     {
@@ -154,9 +256,9 @@ main (int argc, char **argv)
       size_range = mpz_get_ui (bs) % 17 + 2;
 
       mpz_urandomb (bs, rands, size_range);
-      mpz_urandomb (op1, rands, mpz_get_ui (bs) + MIN_OPERAND_BITSIZE);
+      mpz_rrandomb (op1, rands, mpz_get_ui (bs) + MIN_OPERAND_BITSIZE);
       mpz_urandomb (bs, rands, size_range);
-      mpz_urandomb (op2, rands, mpz_get_ui (bs) + MIN_OPERAND_BITSIZE);
+      mpz_rrandomb (op2, rands, mpz_get_ui (bs) + MIN_OPERAND_BITSIZE);
 
       mpz_urandomb (bs, rands, 8);
       bsi = mpz_get_ui (bs);
@@ -176,58 +278,17 @@ main (int argc, char **argv)
       /* Generate a division chain backwards, allowing otherwise unlikely huge
 	 quotients.  */
 
-      mpz_set_ui (op1, 0);
       mpz_urandomb (bs, rands, 32);
-      mpz_urandomb (bs, rands, mpz_get_ui (bs) % 16 + 1);
-      mpz_rrandomb (op2, rands, mpz_get_ui (bs));
-      mpz_add_ui (op2, op2, 1);
-      mpz_set (ref, op2);
-
-#if WHACK_SCHOENHAGE
-      chain_len = 1000000;
-#else
+      chain_len = mpz_get_ui (bs) % LOG2C (GMP_NUMB_BITS * MAX_SCHOENHAGE_THRESHOLD);
       mpz_urandomb (bs, rands, 32);
-      chain_len = mpz_get_ui (bs) % (GMP_NUMB_BITS * MAX_SCHOENHAGE_THRESHOLD / 256);
-#endif
+      chain_len = mpz_get_ui (bs) % (1 << chain_len) / 32;
 
-      for (j = 0; j < chain_len; j++)
-	{
-	  mpz_urandomb (bs, rands, 32);
-	  mpz_urandomb (bs, rands, mpz_get_ui (bs) % 12 + 1);
-	  mpz_rrandomb (temp2, rands, mpz_get_ui (bs) + 1);
-	  mpz_add_ui (temp2, temp2, 1);
-	  mpz_mul (temp1, op2, temp2);
-	  mpz_add (op1, op1, temp1);
+      make_chain_operands (ref, op1, op2, rands, 16, 12, chain_len);
 
-	  /* Don't generate overly huge operands.  */
-	  if (SIZ (op1) > 3 * MAX_SCHOENHAGE_THRESHOLD)
-	    break;
-
-	  mpz_urandomb (bs, rands, 32);
-	  mpz_urandomb (bs, rands, mpz_get_ui (bs) % 12 + 1);
-	  mpz_rrandomb (temp2, rands, mpz_get_ui (bs) + 1);
-	  mpz_add_ui (temp2, temp2, 1);
-	  mpz_mul (temp1, op1, temp2);
-	  mpz_add (op2, op2, temp1);
-
-	  /* Don't generate overly huge operands.  */
-	  if (SIZ (op2) > 3 * MAX_SCHOENHAGE_THRESHOLD)
-	    break;
-	}
       one_test (op1, op2, ref, i);
     }
 
-  mpz_clear (bs);
-  mpz_clear (op1);
-  mpz_clear (op2);
-  mpz_clear (ref);
-  mpz_clear (gcd1);
-  mpz_clear (gcd2);
-  mpz_clear (temp1);
-  mpz_clear (temp2);
-  mpz_clear (temp3);
-  mpz_clear (s);
-  mpz_clear (t);
+  mpz_clears (bs, op1, op2, ref, gcd1, gcd2, temp1, temp2, temp3, s, NULL);
 
   tests_end ();
   exit (0);
@@ -243,7 +304,7 @@ void
 one_test (mpz_t op1, mpz_t op2, mpz_t ref, int i)
 {
   /*
-  printf ("%ld %ld %ld\n", SIZ (op1), SIZ (op2), SIZ (ref));
+  printf ("%d %d %d\n", SIZ (op1), SIZ (op2), ref != NULL ? SIZ (ref) : 0);
   fflush (stdout);
   */
 
@@ -370,7 +431,7 @@ gcdext_valid_p (const mpz_t a, const mpz_t b, const mpz_t g, const mpz_t s)
   if (mpz_cmpabs_ui (s, 1) > 0)
     {
       mpz_mul_2exp (temp3, s, 1);
-      if (mpz_cmpabs (temp3, temp2) > 0)
+      if (mpz_cmpabs (temp3, temp2) >= 0)
 	return 0;
     }
 
@@ -386,7 +447,7 @@ gcdext_valid_p (const mpz_t a, const mpz_t b, const mpz_t g, const mpz_t s)
   if (mpz_cmpabs_ui (temp2, 1) > 0)
     {
       mpz_mul_2exp (temp2, temp2, 1);
-      if (mpz_cmpabs (temp2, temp1) > 0)
+      if (mpz_cmpabs (temp2, temp1) >= 0)
 	return 0;
     }
   return 1;

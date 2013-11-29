@@ -1,7 +1,7 @@
 dnl  MIPS64 mpn_sub_n -- Subtract two limb vectors of the same length > 0 and
 dnl  store difference in a third limb vector.
 
-dnl  Copyright 1995, 2000, 2001, 2002 Free Software Foundation, Inc.
+dnl  Copyright 1995, 2000, 2001, 2002, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -27,6 +27,17 @@ C s2_ptr	$6
 C size		$7
 
 ASM_START()
+PROLOGUE(mpn_sub_nc)
+	ld	$10,0($5)
+	ld	$11,0($6)
+
+	daddiu	$7,$7,-1
+	and	$9,$7,4-1	C number of limbs in first loop
+	beq	$9,$0,.L0	C if multiple of 4 limbs, skip first loop
+	 move	$2,$8
+	b	.Loop0
+	 dsubu	$7,$7,$9
+EPILOGUE()
 PROLOGUE(mpn_sub_n)
 	ld	$10,0($5)
 	ld	$11,0($6)
@@ -109,4 +120,4 @@ PROLOGUE(mpn_sub_n)
 	sd	$11,0($4)
 	j	$31
 	or	$2,$2,$8
-EPILOGUE(mpn_sub_n)
+EPILOGUE()

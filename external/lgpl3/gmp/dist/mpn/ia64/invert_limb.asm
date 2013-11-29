@@ -1,5 +1,7 @@
 dnl  IA-64 mpn_invert_limb -- Invert a normalized limb.
 
+dnl  Contributed to the GNU project by Torbjorn Granlund and Kevin Ryde.
+
 dnl  Copyright 2000, 2002, 2004 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.

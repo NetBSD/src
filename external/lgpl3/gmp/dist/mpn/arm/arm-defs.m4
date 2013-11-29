@@ -2,7 +2,7 @@ divert(-1)
 
 dnl  m4 macros for ARM assembler.
 
-dnl  Copyright 2001 Free Software Foundation, Inc.
+dnl  Copyright 2001, 2012, 2013 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -23,7 +23,7 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 dnl  Standard commenting is with @, the default m4 # is for constants and we
 dnl  don't want to disable macro expansions in or after them.
 
-changecom(@)
+changecom(@&*$)
 
 
 dnl  APCS register names.
@@ -46,5 +46,35 @@ deflit(ip,r12)
 deflit(sp,r13)
 deflit(lr,r14)
 deflit(pc,r15)
+
+
+define(`lea_list', `')
+define(`lea_num',0)
+
+dnl  LEA(reg,gmp_symbol)
+dnl
+dnl  Load the address of gmp_symbol into a register.  The gmp_symbol must be
+dnl  either local or protected/hidden, since we assume it has a fixed distance
+dnl  from the point of use.
+
+define(`LEA',`dnl
+ldr	$1, L(ptr`'lea_num)
+ifdef(`PIC',dnl
+`dnl
+L(bas`'lea_num):dnl
+	add	$1, $1, pc`'dnl
+	m4append(`lea_list',`
+L(ptr'lea_num`):	.word	GSYM_PREFIX`'$2-L(bas'lea_num`)-8')
+	define(`lea_num', eval(lea_num+1))dnl
+',`dnl
+	m4append(`lea_list',`
+L(ptr'lea_num`):	.word	GSYM_PREFIX`'$2')
+	define(`lea_num', eval(lea_num+1))dnl
+')dnl
+')
+
+define(`EPILOGUE_cpu',
+`lea_list
+	SIZE(`$1',.-`$1')')
 
 divert

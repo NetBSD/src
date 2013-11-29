@@ -4,7 +4,7 @@
    CERTAIN TO BE SUBJECT TO INCOMPATIBLE CHANGES OR DISAPPEAR COMPLETELY IN
    FUTURE GNU MP RELEASES.
 
-Copyright 2001, 2002 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -36,6 +36,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
+#include "longlong.h"
 
 
 /* change this to "#define TRACE(x) x" for diagnostics */
@@ -89,8 +90,10 @@ __gmp_doprnt_mpf (const struct doprnt_funs_t *funs,
 	   overestimate the integer part, and add prec.  If f<1 then
 	   underestimate the zeros between the radix point and the first
 	   digit and subtract that from prec.  In either case add 2 so the
-	   round to nearest can be applied accurately.  */
-	ndigits = prec + 2
+	   round to nearest can be applied accurately.  Finally, we add 1 to
+	   handle the case of 1-eps where EXP(f) = 0 but mpf_get_str returns
+	   exp as 1.  */
+	ndigits = prec + 2 + 1
 	  + EXP(f) * (mp_bases[ABS(p->base)].chars_per_limb + (EXP(f)>=0));
 	ndigits = MAX (ndigits, 1);
 	break;
