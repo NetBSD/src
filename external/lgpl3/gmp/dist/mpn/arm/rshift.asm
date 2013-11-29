@@ -70,5 +70,8 @@ L(end):	orr	r7, r7, r6, lsl tnc
 L(1):	str	r7, [rp], #4
 	lsl	r0, r4, tnc
 	pop	{r4, r6, r7, r8}
-	bx	r14
+ifdef(`ARM_THUMB_MODE',
+`	bx	r14
+',`	mov	pc, r14
+')
 EPILOGUE()

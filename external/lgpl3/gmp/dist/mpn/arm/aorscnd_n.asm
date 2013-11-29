@@ -117,5 +117,8 @@ L(top):	ldm	vp!, {r4,r5,r6,r7}
 
 L(end):	RETVAL
 	pop	{r4-r11}
-	bx	r14
+ifdef(`ARM_THUMB_MODE',
+`	bx	r14
+',`	mov	pc, r14
+')
 EPILOGUE()

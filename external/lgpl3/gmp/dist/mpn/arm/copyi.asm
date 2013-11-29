@@ -52,5 +52,9 @@ L(top):	ldmia	up!, { r3, r8, r9, r12 }	C load 4 limbs
 	bne	L(top)
 
 	ldmfd	sp!, { r7, r8, r9 }		C restore regs from stack
-L(rtn):	bx	lr
+L(rtn):
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 EPILOGUE()

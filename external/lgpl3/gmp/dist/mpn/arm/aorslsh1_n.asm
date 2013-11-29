@@ -151,5 +151,8 @@ L(rt1):	mov	r14, r12
 	REVCY(r12)
 L(rt0):	RETVAL(	r14)
 	pop	{r4-r10r11, r14}
-	bx	r14
+ifdef(`ARM_THUMB_MODE',
+`	bx	r14
+',`	mov	pc, r14
+')
 EPILOGUE()

@@ -50,7 +50,10 @@ L(oop):	divstep(n1,n0,d)
 
 	str	n1, [rem_ptr]		C store remainder
 	adc	r0, n0, n0		C quotient: add last carry from divstep
-	bx	lr
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 
 L(_large_divisor):
 	stmfd	sp!, { r8, lr }
