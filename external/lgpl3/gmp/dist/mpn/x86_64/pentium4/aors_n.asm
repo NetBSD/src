@@ -1,6 +1,8 @@
 dnl  x86-64 mpn_add_n/mpn_sub_n optimized for Pentium 4.
 
-dnl  Copyright 2007, 2008 Free Software Foundation, Inc.
+dnl  Contributed to the GNU project by Torbjorn Granlund.
+
+dnl  Copyright 2007, 2008, 2010, 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -21,10 +23,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2.8
-C K10:		 2.8
-C P4:		 4
-C P6-15:	 3.6-5	(fluctuating)
+C AMD K8,K9	 2.8
+C AMD K10	 2.8
+C Intel P4	 4
+C Intel core2	 3.6-5	(fluctuating)
+C Intel corei	 ?
+C Intel atom	 ?
+C VIA nano	 ?
 
 
 C INPUT PARAMETERS
@@ -43,19 +48,20 @@ ifdef(`OPERATION_sub_n', `
 	define(func,	      mpn_sub_n)
 	define(func_nc,	      mpn_sub_nc)')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 MULFUNC_PROLOGUE(mpn_add_n mpn_add_nc mpn_sub_n mpn_sub_nc)
-
 ASM_START()
-
 	TEXT
-	ALIGN(16)
-
-PROLOGUE(func_nc)
-	jmp	L(ent)
-EPILOGUE()
-
 PROLOGUE(func)
+	FUNC_ENTRY(4)
 	xor	%r8, %r8
+IFDOS(`	jmp	L(ent)		')
+EPILOGUE()
+PROLOGUE(func_nc)
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8	')
 L(ent):	push	%rbx
 	push	%r12
 
@@ -174,5 +180,6 @@ L(1):	mov	%r11, 8(rp)
 L(ret):	mov	R32(%rbx), R32(%rax)
 	pop	%r12
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 EPILOGUE()

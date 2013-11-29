@@ -24,7 +24,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "longlong.h"
 
 size_t
-mpz_sizeinbase (mpz_srcptr x, int base)
+mpz_sizeinbase (mpz_srcptr x, int base) __GMP_NOTHROW
 {
   size_t  result;
   MPN_SIZEINBASE (result, PTR(x), ABSIZ(x), base);

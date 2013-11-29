@@ -21,8 +21,3 @@ include(`../config.m4')
 
 MULFUNC_PROLOGUE(mpn_popcount)
 include_mpn(`powerpc64/vmx/popcount.asm')
-
-C                   cycles/limb
-C 7400,7410 (G4):       2.75
-C 744x,745x (G4+):      2.25
-C 970 (G5):             5.3

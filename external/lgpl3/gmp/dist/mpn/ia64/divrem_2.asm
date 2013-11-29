@@ -1,12 +1,12 @@
-dnl  IA-64 mpn_divrem_2 -- Divide an n-limb number by a 2-limb number.
+dnl  IA-64 mpn_divrem_2 -- Divide an mpn number by a normalized 2-limb number.
 
-dnl  Copyright 2004, 2005 Free Software Foundation, Inc.
+dnl  Copyright 2010, 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
 dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
+dnl  by the Free Software Foundation; either version 2.1 of the License, or (at
 dnl  your option) any later version.
 
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
@@ -15,45 +15,22 @@ dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 dnl  License for more details.
 
 dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  along with the GNU MP Library; see the file COPYING.LIB.  If not, write
+dnl  to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+dnl  Boston, MA 02110-1301, USA.
 
 include(`../config.m4')
 
-C         cycles/limb
-C Itanium:    63
-C Itanium 2:  46
+C               norm   frac
+C itanium 1
+C itanium 2     29     29
 
 
 C TODO
-C  * Further optimize the loop.  We could probably do some more trickery with
-C    arithmetic in the FPU, or perhaps use a non-zero addend of xma in more
-C    places.
-C  * Software pipeline for perhaps 5 saved cycles, around the end and start of
-C    the loop.
-C  * Schedule code outside of loop better.
-C  * Update the comments.  They are now using the same name for the same
-C    logical quantity.
-C  * Handle conditional zeroing of r31 in loop more cleanly.
-C  * Inline mpn_invert_limb and schedule its insns across the entire init code.
-C  * Ultimately, use 2-limb, or perhaps 3-limb or 4-limb inverse.
+C  * Inline and interleave limb inversion code with loop setup code.
+C  * We should use explicit bundling in much of the code, since it typically
+C    cuts some cycles with the GNU assembler.
 
-define(`qp',`r32')
-define(`qxn',`r33')
-define(`np',`r34')
-define(`nn',`r35')
-define(`dp',`r36')
-
-define(`fnh',`f11')
-define(`fminus1',`f10')
-define(`fd0',`f13')
-define(`fd1',`f14')
-define(`d0',`r39')
-define(`d1',`r36')
-define(`fnl',`f32')
-define(`fdinv',`f12')
-
-define(`R1',`r38') define(`R0',`r37')
-define(`P1',`r28') define(`P0',`r27')
 
 ASM_START()
 
@@ -61,204 +38,233 @@ C HP's assembler requires these declarations for importing mpn_invert_limb
 	.global	mpn_invert_limb
 	.type	mpn_invert_limb,@function
 
+C INPUT PARAMETERS
+C qp   = r32
+C fn   = r33
+C np   = r34
+C nn   = r35
+C dp   = r36
+
+define(`f0x1', `f15')
+
+ASM_START()
 PROLOGUE(mpn_divrem_2)
 	.prologue
-	.save ar.pfs, r42
-	.save ar.lc, r44
-	.save rp, r41
 ifdef(`HAVE_ABI_32',
-`	addp4		qp = 0, qp		C M I
-	addp4		np = 0, np		C M I
-	addp4		dp = 0, dp		C M I
-	zxt4		nn = nn			C I
-	zxt4		qxn = qxn		C I
+`	addp4		r32 = 0, r32		C M I
+	addp4		r34 = 0, r34		C M I
+	addp4		r36 = 0, r36		C M I
+	zxt4		r35 = r35		C I
+	zxt4		r33 = r33		C I
 	;;
 ')
-
-	alloc		r42 = ar.pfs, 5,8,1,0	C M2
-	ld8		d0 = [dp], 8		C M0M1	d0
-	mov		r44 = ar.lc		C I0
-	shladd		np = nn, 3, np		C M I
+	.save ar.pfs, r42
+	alloc	 r42 = ar.pfs, 5, 9, 1, 0
+	shladd	 r34 = r35, 3, r34
+	adds	 r14 = 8, r36
+	mov	 r43 = r1
 	;;
-	ld8		d1 = [dp]		C M0M1	d1
-	mov		r41 = b0		C I0
-	add		r15 = -8, np		C M I
-	add		np = -16, np		C M I
-	mov		r40 = r0		C M I
+	adds	 r15 = -8, r34
+	ld8	 r39 = [r14]
+	.save ar.lc, r45
+	mov	 r45 = ar.lc
+	adds	 r14 = -16, r34
+	mov	 r40 = r0
+	adds	 r34 = -24, r34
 	;;
-	ld8		R1 = [r15]		C M0M1	n1
-	ld8		R0 = [r34], -8		C M0M1	n0
+	ld8	 r38 = [r15]
+	.save rp, r41
+	mov	 r41 = b0
+	.body
+	ld8	 r36 = [r36]
+	ld8	 r37 = [r14]
 	;;
-	cmp.ltu		p6, p0 = d1, R1		C M I
-	cmp.eq		p8, p0 = d1, R1		C M I
+	cmp.gtu	 p6, p7 = r39, r38
+  (p6)	br.cond.dptk .L8
 	;;
-  (p8)	cmp.leu		p6, p0 = d0, R0
-	cmp.ltu		p8, p9 = R0, d0
-  (p6)	br.cond.dpnt	.L_high_limb_1		C FIXME: inline!
+	cmp.leu	 p8, p9 = r36, r37
+	cmp.geu	 p6, p7 = r39, r38
+	;;
+  (p8)	cmp4.ne.and.orcm p6, p7 = 0, r0
+  (p7)	br.cond.dptk .L51
 .L8:
+	add	 r14 = r33, r35		// un + fn
+	mov	 r46 = r39		// argument to mpn_invert_limb
+	;;
+	adds	 r35 = -3, r14
+	;;
+	cmp.gt	 p12, p0 = r0, r35
+  (p12)	br.cond.dpnt L(end)
+	br.call.sptk.many b0 = mpn_invert_limb
+	;;
+	setf.sig f11 = r8		// di (non-final)
+	setf.sig f34 = r39		// d1
+	setf.sig f33 = r36		// d0
+	mov	 r1 = r43
+	;;
+	mov	 r17 = 1
+	setf.sig f9 = r38		// n2
+	xma.l	 f6 = f11, f34, f0	// t0 = LO(di * d1)
+	;;
+	setf.sig f10 = r37		// n1
+	setf.sig f15 = r17		// 1
+	xma.hu	 f8 = f11, f33, f0	// s0 = HI(di * d0)
+	;;
+	getf.sig r17 = f6
+	getf.sig r16 = f8
+	mov	 ar.lc = r35
+	;;
+	sub	 r18 = r0, r39		// -d1
+	add	 r14 = r17, r36
+	;;
+	setf.sig f14 = r18		// -d1
+	cmp.leu	 p8, p9 = r17, r14
+	add	 r16 = r14, r16
+	;;
+  (p9)	adds	 r19 = 0, r0
+  (p8)	adds	 r19 = -1, r0
+	cmp.gtu	 p6, p7 = r14, r16
+	;;
+  (p6)	adds	 r19 = 1, r19
+	;;
+ifelse(1,1,`
+	cmp.gt	 p7, p6 = r0, r19
+	;;
+  (p6)	adds	 r8 = -1, r8		// di--
+  (p6)	sub	 r14 = r16, r39		// t0 -= d1
+  (p6)	cmp.ltu	 p6, p7 = r16, r39	// cy for: t0 - d1
+	;;
+  (p6)	cmp.gt	 p9, p8 = 1, r19
+  (p7)	cmp.gt	 p9, p8 = 0, r19
+  (p6)	adds	 r19 = -1, r19		// t1 -= cy
+	mov	 r16 = r14
+	;;
+  (p8)	adds	 r8 = -1, r8		// di--
+  (p8)	sub	 r14 = r16, r39		// t0 -= d1
+  (p8)	cmp.ltu	 p8, p9 = r16, r39	// cy for: t0 - d1
+	;;
+  (p8)	cmp.gt	 p7, p6 = 1, r19
+  (p9)	cmp.gt	 p7, p6 = 0, r19
+  (p8)	adds	 r19 = -1, r19		// t1 -= cy
+	mov	 r16 = r14
+	;;
+  (p6)	adds	 r8 = -1, r8		// di--
+  (p6)	sub	 r14 = r16, r39		// t0 -= d1
+  (p6)	cmp.ltu	 p6, p7 = r16, r39	// cy for: t0 - d1
+	;;
+  (p6)	cmp.gt	 p9, p8 = 1, r19
+  (p7)	cmp.gt	 p9, p8 = 0, r19
+  (p6)	adds	 r19 = -1, r19		// t1 -= cy
+	mov	 r16 = r14
+	;;
+  (p8)	adds	 r8 = -1, r8		// di--
+  (p8)	sub	 r14 = r16, r39		// t0 -= d1
+  (p8)	cmp.ltu	 p8, p9 = r16, r39	// cy for: t0 - d1
+	;;
+  (p8)	adds	 r19 = -1, r19		// t1 -= cy
+	mov	 r16 = r14
+',`
+	cmp.gt	 p8, p9 = r0, r19
+  (p8)	br.cond.dpnt .L46
+.L52:
+	cmp.leu	 p6, p7 = r39, r16
+	sub	 r14 = r16, r39
+	adds	 r8 = -1, r8
+	;;
+  (p7)	adds	 r19 = -1, r19
+	mov	 r16 = r14
+	;;
+  (p7)	cmp.gt	 p8, p9 = r0, r19
+  (p9)	br.cond.dptk .L52
+.L46:
+')
+	setf.sig f32 = r8		// di
+	shladd	 r32 = r35, 3, r32
+	;;
 
-	mov		r45 = d1
-	br.call.sptk.many b0 = mpn_invert_limb	C FIXME: inline+schedule
-	;;
-	setf.sig	fd1 = d1		C d1
-	setf.sig	fd0 = d0		C d0
-	add		r14 = r33, r35		C nn + qxn
-	;;
-	setf.sig	fdinv = r8		C dinv
-	mov		r9 = -1
-	add		r35 = -3, r14
-	;;
-	setf.sig	fminus1 = r9
-	cmp.gt		p6, p0 = r0, r35
-	shladd		qp = r35, 3, qp
-	mov		ar.lc = r35
-	mov		r31 = 0			C n0
-  (p6)	br.cond.dpnt	.Ldone
-	;;
 	ALIGN(16)
-C *** MAIN LOOP START ***
-.Loop:		C 00
-	mov		r15 = R0		C nadj = n10
-	cmp.le		p14, p15 = 0, R0	C check high bit of R0
-	cmp.le		p8, p0 = r33, r35	C dividend limbs remaining?
-	;;	C 01
-	.pred.rel "mutex", p14, p15
-  (p8)	ld8		r31 = [r34], -8		C n0
-  (p15)	add		r15 = d1, R0		C nadj = n10 + d1
-  (p15)	add		r14 = 1, R1		C nh + (nl:63)
-  (p14)	mov		r14 = R1		C nh
-	cmp.eq		p6, p0 = d1, R1		C nh == d1
-  (p6)	br.cond.spnt	.L_R1_eq_d1
-	;;	C 02
-	setf.sig	f8 = r14		C n2 + (nl:63)
-	setf.sig	f15 = r15		C nadj
-	sub		r23 = -1, R1		C r23 = ~nh
-	;;	C 03
-	setf.sig	fnh = r23
-	setf.sig	fnl = R0
-	;;	C 08
-	xma.hu		f7 = fdinv, f8, f15	C xh = HI(dinv*(nh-nmask)+nadj)
-	;;	C 12
-	xma.l		f7 = f7, fminus1, fnh	C nh + xh
-	;;	C 16
-	getf.sig	r14 = f7
-	xma.hu		f9 = f7, fd1, fnl	C xh = HI(q1*d1+nl)
-	xma.l		f33 = f7, fd1, fnl	C xh = LO(q1*d1+nl)
-	;;	C 20
-	getf.sig	r16 = f9
-	sub		r24 = d1, R1
-		C 21
-	getf.sig	r17 = f33
-	;;	C 25
-	cmp.eq		p6, p7 = r16, r24
-	;;	C 26
-	.pred.rel "mutex", p6, p7
-  (p6)	xma.l		f8 = f7, fminus1, f0	C f8 = -f7
-  (p7)	xma.l		f8 = f7,fminus1,fminus1	C f8 = -f7-1
-	;;	C 27
-	.pred.rel "mutex", p6, p7
-  (p6)	sub		r18 = 0, r14		C q = -q1
-  (p7)	sub		r18 = -1, r14		C q = -q1-1
-  (p6)	add		r14 = 0, r17		C n1 = xl
-  (p7)	add		r14 = d1, r17		C n1 = xl + d1
-	;;	C 30
-	xma.hu		f9 = fd0, f8, f0	C d0*(-f7-1) = -d0*f7-d0
-	xma.l		f35 = fd0, f8, f0
-	;;	C 34
-	getf.sig	P1 = f9		C P1
-		C 35
-	getf.sig	P0 = f35		C P0
+L(top):	nop 0
+	nop 0
+	cmp.gt	 p8, p9 = r33, r35
 	;;
-.L_adj:		C 40
-	cmp.ltu		p8, p0 = r31, P0	C p8 = cy from low limb
-	cmp.ltu		p6, p0 = r14, P1	C p6 = prel cy from high limb
-	sub		R0 = r31, P0
-	sub		R1 = r14, P1
-	;;	C 41
-  (p8)	cmp.eq.or	p6, p0 = 0, R1		C p6 = final cy from high limb
-  (p8)	add		R1 = -1, R1
-	cmp.ne		p10, p0 = r0, r0	C clear p10 FIXME: use unc below!
-	cmp.ne		p13, p0 = r0, r0	C clear p13 FIXME: use unc below!
-	;;	C 42
-  (p6)	add		R0 = R0, d0
-  (p6)	add		R1 = R1, d1
-  (p6)	add		r18 = -1, r18		C q--
-	;;	C 43
-  (p6)	cmp.ltu		p10, p0 = R0, d0
-  (p6)	cmp.ltu		p0, p13 = R1, d1
-	;;	C 44
-  (p10)	cmp.ne.and	p0, p13 = -1, R1	C p13 = !cy
-  (p10)	add		R1 = 1, R1
-  (p13)	br.cond.spnt	.L_two_too_big		C jump if not cy
-	;;	C 45
-	st8		[qp] = r18, -8
-	add		r35 = -1, r35
-	mov		r31 = 0			C n0, next iteration
-	br.cloop.sptk	.Loop
-C *** MAIN LOOP END ***
+ (p8)	mov	 r37 = r0
+ (p9)	ld8	 r37 = [r34], -8
+	xma.hu	 f8 = f9, f32, f10	//				0,29
+	xma.l	 f12 = f9, f32, f10	//				0
 	;;
-.Ldone:
-	mov		r8 = r40
-	mov		b0 = r41
-	add		r21 = 8, r34
-	add		r22 = 16, r34
+	getf.sig r20 = f12		// q0				4
+	xma.l	 f13 = f15, f8, f9	// q += n2			4
+	sub	 r8 = -1, r36		// bitnot d0
 	;;
-	st8		[r21] = R0
-	st8		[r22] = R1
-	mov		ar.pfs = r42
-	mov		ar.lc = r44
+	getf.sig r18 = f13		//				8
+	xma.l	 f7 = f14, f13, f10	//				8
+	xma.l	 f6 = f33, f13, f33	// t0 = LO(d0*q+d0)		8
+	xma.hu	 f9 = f33, f13, f33	// t1 = HI(d0*q+d0)		9
+	;;
+	getf.sig r38 = f7		// n1				12
+	getf.sig r16 = f6		//				13
+	getf.sig r19 = f9		//				14
+	;;
+	sub	 r38 = r38, r39		// n1 -= d1			17
+	;;
+	cmp.ne	 p9, p0 = r0, r0	// clear p9
+	cmp.leu	 p10, p11 = r16, r37	// cy for: n0 - t0		18
+	;;
+	sub	 r37 = r37, r16		// n0 -= t0			19
+  (p11)	sub	 r38 = r38, r19, 1	// n1 -= t1 - cy		19
+  (p10)	sub	 r38 = r38, r19		// n1 -= t1			19
+	;;
+	cmp.gtu	 p6, p7 = r20, r38	// n1 >= q0			20
+	;;
+  (p7)	cmp.ltu	 p9, p0 = r8, r37	//				21
+  (p6)	add	 r18 = 1, r18		//
+  (p7)	add	 r37 = r37, r36		//				21
+  (p7)	add	 r38 = r38, r39		//				21
+	;;
+	setf.sig f10 = r37		// n1				22
+  (p9)	add	 r38 = 1, r38		//				22
+	;;
+	setf.sig f9 = r38		// n2				23
+	cmp.gtu	 p6, p7 = r39, r38	//				23
+  (p7)	br.cond.spnt L(fix)
+L(bck):	st8	 [r32] = r18, -8
+	adds	 r35 = -1, r35
+	br.cloop.sptk.few L(top)
+	;;
+
+L(end):	add	r14 = 8, r34
+	add	r15 = 16, r34
+	mov	 b0 = r41
+	;;
+	st8	[r14] = r37
+	st8	[r15] = r38
+	mov	 ar.pfs = r42
+	mov	 r8 = r40
+	mov	 ar.lc = r45
 	br.ret.sptk.many b0
-
-.L_high_limb_1:
+	;;
+.L51:
 	.pred.rel "mutex", p8, p9
-	sub		R0 = R0, d0
-  (p8)	sub		R1 = R1, d1, 1
-  (p9)	sub		R1 = R1, d1
-	mov		r40 = 1
-	br.sptk		.L8
+	sub	 r37 = r37, r36
+  (p9)	sub	 r38 = r38, r39, 1
+  (p8)	sub	 r38 = r38, r39
+	adds	 r40 = 1, r0
+	br .L8
 	;;
 
-.L_two_too_big:
-	add		R0 = R0, d0
-	add		R1 = R1, d1
+L(fix):	cmp.geu	 p6, p7 = r39, r38
+	cmp.leu	 p8, p9 = r36, r37
 	;;
-	add		r18 = -1, r18		C q--
-	cmp.ltu		p10, p0 = R0, d0
+  (p8)	cmp4.ne.and.orcm p6, p7 = 0, r0
+  (p6)	br.cond.dptk L(bck)
+	sub	 r37 = r37, r36
+  (p9)	sub	 r38 = r38, r39, 1
+  (p8)	sub	 r38 = r38, r39
+	adds	 r18 = 1, r18
 	;;
-  (p10)	add		R1 = 1, R1
-	st8		[qp] = r18, -8
-	add		r35 = -1, r35
-	mov		r31 = 0			C n0, next iteration
-	br.cloop.sptk	.Loop
-	br.sptk		.Ldone
+	setf.sig f9 = r38		// n2
+	setf.sig f10 = r37		// n1
+	br	 L(bck)
 
-.L_R1_eq_d1:
-	add		r14 = R0, d1		C r = R0 + d1
-	mov		r18 = -1		C q = -1
-	;;
-	cmp.leu		p6, p0 = R0, r14
- (p6)	br.cond.spnt	.L20			C jump unless cy
-	;;
-	sub		P1 = r14, d0
-	add		R0 = r31, d0
-	;;
-	cmp.ltu		p8, p9 = R0, r31
-	;;
-	.pred.rel "mutex", p8, p9
-	st8		[qp] = r18, -8
-  (p8)	add		R1 = r0, P1, 1		C R1 = n1 - P1 - cy
-  (p9)	add		R1 = r0, P1		C R1 = n1 - P1
-	add		r35 = -1, r35
-	mov		r31 = 0			C n0, next iteration
-	br.cloop.sptk	.Loop
-	br.sptk		.Ldone
-	;;
-.L20:	cmp.ne		p6, p7 = 0, d0
-	;;
-	.pred.rel "mutex", p6, p7
-  (p6)	add		P1 = -1, d0
-  (p7)	mov		P1 = d0
-	sub		P0 = r0, d0
-	br.sptk		.L_adj
 EPILOGUE()
 ASM_END()

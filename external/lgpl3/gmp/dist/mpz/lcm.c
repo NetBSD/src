@@ -1,6 +1,6 @@
 /* mpz_lcm -- mpz/mpz least common multiple.
 
-Copyright 1996, 2000, 2001, 2005 Free Software Foundation, Inc.
+Copyright 1996, 2000, 2001, 2005, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -19,14 +19,12 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
-#include "longlong.h"
-
 
 void
 mpz_lcm (mpz_ptr r, mpz_srcptr u, mpz_srcptr v)
 {
   mpz_t g;
-  mp_size_t usize, vsize, size;
+  mp_size_t usize, vsize;
   TMP_DECL;
 
   usize = SIZ (u);
@@ -39,13 +37,18 @@ mpz_lcm (mpz_ptr r, mpz_srcptr u, mpz_srcptr v)
   usize = ABS (usize);
   vsize = ABS (vsize);
 
-  if (vsize == 1)
+  if (vsize == 1 || usize == 1)
     {
       mp_limb_t  vl, gl, c;
       mp_srcptr  up;
       mp_ptr     rp;
 
-    one:
+      if (usize == 1)
+	{
+	  usize = vsize;
+	  MPZ_SRCPTR_SWAP (u, v);
+	}
+
       MPZ_REALLOC (r, usize+1);
 
       up = PTR(u);
@@ -61,16 +64,8 @@ mpz_lcm (mpz_ptr r, mpz_srcptr u, mpz_srcptr v)
       return;
     }
 
-  if (usize == 1)
-    {
-      usize = vsize;
-      MPZ_SRCPTR_SWAP (u, v);
-      goto one;
-    }
-
   TMP_MARK;
-  size = MAX (usize, vsize);
-  MPZ_TMP_INIT (g, size);
+  MPZ_TMP_INIT (g, usize); /* v != 0 implies |gcd(u,v)| <= |u| */
 
   mpz_gcd (g, u, v);
   mpz_divexact (g, u, g);

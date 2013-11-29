@@ -1,6 +1,6 @@
 /* mpn_powlo -- Compute R = U^E mod B^n, where B is the limb base.
 
-Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
+Copyright 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -81,8 +81,7 @@ mpn_powlo (mp_ptr rp, mp_srcptr bp,
 
   TMP_MARK;
 
-  count_leading_zeros (cnt, ep[en - 1]);
-  ebi = (mp_bitcnt_t) en * GMP_LIMB_BITS - cnt;
+  MPN_SIZEINBASE_2EXP(ebi, ep, en, 1);
 
   windowsize = win_size (ebi);
 

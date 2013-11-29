@@ -1,8 +1,8 @@
 /* mpn_perfect_square_p(u,usize) -- Return non-zero if U is a perfect square,
    zero otherwise.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -102,8 +102,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* FIXME: The %= here isn't good, and might destroy any savings from keeping
    the PERFSQR_MOD_IDX stuff within a limb (rather than needing umul_ppmm).
    Maybe a new sort of mpn_preinv_mod_1 could accept an unnormalized divisor
-   and a shift count, like mpn_preinv_divrem_1.	 But mod_34lsub1 is our
-   normal case, so lets not worry too much about mod_1.	 */
+   and a shift count, like mpn_preinv_divrem_1.  But mod_34lsub1 is our
+   normal case, so lets not worry too much about mod_1.  */
 #define PERFSQR_MOD_PP(r, up, usize)					\
   do {									\
     if (BELOW_THRESHOLD (usize, PREINV_MOD_1_TO_MOD_1_THRESHOLD))	\
@@ -145,7 +145,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   } while (0)
 
 /* The expression "(int) idx - GMP_LIMB_BITS < 0" lets the compiler use the
-   sign bit from "idx-GMP_LIMB_BITS", which might help avoid a branch.	*/
+   sign bit from "idx-GMP_LIMB_BITS", which might help avoid a branch.  */
 #define PERFSQR_MOD_2(r, d, inv, mhi, mlo)			\
   do {								\
     mp_limb_t  m;						\
@@ -185,7 +185,7 @@ mpn_perfect_square_p (mp_srcptr up, mp_size_t usize)
   /* Check that we have even multiplicity of 2, and then check that the rest is
      a possible perfect square.  Leave disabled until we can determine this
      really is an improvement.  It it is, it could completely replace the
-     simple probe above, since this should through out more non-squares, but at
+     simple probe above, since this should throw out more non-squares, but at
      the expense of somewhat more cycles.  */
   {
     mp_limb_t lo;

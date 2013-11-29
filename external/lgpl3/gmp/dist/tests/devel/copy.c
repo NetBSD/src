@@ -1,22 +1,23 @@
 /*
-Copyright 1999, 2000, 2001, 2004, 2009 Free Software Foundation, Inc.
+Copyright 1999, 2000, 2001, 2004, 2009, 2011 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -59,8 +60,10 @@ cputime ()
 }
 #endif
 
+static void print_posneg (mp_limb_t);
 static void mpn_print (mp_ptr, mp_size_t);
 
+#define LXW ((int) (2 * sizeof (mp_limb_t)))
 #define M * 1000000
 
 #ifndef CLOCK
@@ -68,7 +71,7 @@ static void mpn_print (mp_ptr, mp_size_t);
 #endif
 
 #ifndef OPS
-#define OPS (CLOCK/2)
+#define OPS (CLOCK/5)
 #endif
 #ifndef SIZE
 #define SIZE 496
@@ -152,9 +155,22 @@ main (int argc, char **argv)
       if (mpn_cmp (dx, dy, size+2) != 0
 	  || dx[0] != 0x87654321 || dx[size+1] != 0x12345678)
 	{
+	  mp_size_t s, e;
+	  for (s = 0;; s++)
+	    if ((unsigned long long) (dx+1)[s] != (unsigned long long) (dy+1)[s])
+	      break;
+	  for (e = size - 1;; e--)
+	    if ((unsigned long long) (dx+1)[e] != (unsigned long long) (dy+1)[e])
+	      break;
 #ifndef PRINT
-	  mpn_print (dx+1, size);
-	  mpn_print (dy+1, size);
+	  for (i = s; i <= e; i++)
+	    {
+	      printf ("%6d: ", i);
+	      printf ("%0*llX ", LXW, (unsigned long long) (dx+1)[i]);
+	      printf ("%0*llX ", LXW, (unsigned long long) (dy+1)[i]);
+	      print_posneg ((dy+1)[i] - (dx+1)[i]);
+	      printf ("\n");
+	    }
 #endif
 	  printf ("\n");
 	  if (dy[0] != 0x87654321)
@@ -170,6 +186,24 @@ main (int argc, char **argv)
 }
 
 static void
+print_posneg (mp_limb_t d)
+{
+  char buf[LXW + 2];
+  if (d == 0)
+    printf (" %*X", LXW, 0);
+  else if (-d < d)
+    {
+      sprintf (buf, "%llX", (unsigned long long) -d);
+      printf ("%*s-%s", LXW - (int) strlen (buf), "", buf);
+    }
+  else
+    {
+      sprintf (buf, "%llX", (unsigned long long) d);
+      printf ("%*s+%s", LXW - (int) strlen (buf), "", buf);
+    }
+}
+
+static void
 mpn_print (mp_ptr p, mp_size_t size)
 {
   mp_size_t i;
@@ -179,7 +213,7 @@ mpn_print (mp_ptr p, mp_size_t size)
 #ifdef _LONG_LONG_LIMB
       printf ("%0*lX%0*lX", (int) (sizeof(mp_limb_t)),
 	      (unsigned long) (p[i] >> (GMP_LIMB_BITS/2)),
-              (int) (sizeof(mp_limb_t)), (unsigned long) (p[i]));
+	      (int) (sizeof(mp_limb_t)), (unsigned long) (p[i]));
 #else
       printf ("%0*lX", (int) (2 * sizeof(mp_limb_t)), p[i]);
 #endif
