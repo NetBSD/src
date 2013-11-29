@@ -64,10 +64,10 @@ arm-*-coff)		targ_emul=armcoff ;;
 arm-*-freebsd* | arm-*-kfreebsd*-gnu)
 	       		targ_emul=armelf_fbsd
 			targ_extra_emuls="armelf" ;;
-arm*eb-*-netbsdelf*-eabi*)
+arm*eb-*-netbsdelf*-*eabi*)
 			targ_emul=armelfb_nbsd_eabi;
 			targ_extra_emuls="armelf_nbsd_eabi armelf armnbsd" ;;
-arm*-*-netbsdelf*-eabi*)
+arm*-*-netbsdelf*-*eabi*)
 			targ_emul=armelf_nbsd_eabi;
 			targ_extra_emuls="armelfb_nbsd_eabi armelf armnbsd" ;;
 arm*eb-*-netbsdelf*)	targ_emul=armelfb_nbsd;

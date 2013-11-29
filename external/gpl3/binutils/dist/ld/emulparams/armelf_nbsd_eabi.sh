@@ -10,7 +10,7 @@ OTHER_READONLY_SECTIONS="
 unset LIB_PATH
 
 case "$target" in
-  arm*-*-netbsdelf*-eabi*)
+  arm*-*-netbsdelf*-*eabi*)
     ;;
   arm*-*-netbsdelf*)
     LIB_PATH='=/usr/lib/eabi'
