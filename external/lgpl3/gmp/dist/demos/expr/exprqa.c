@@ -46,7 +46,7 @@ e_mpq_set_si1 (mpq_ptr q, long num)
 /* The same as mpz, but putting the result in the numerator.  Negatives and
    fractions aren't parsed here because '-' and '/' are operators. */
 static size_t
-e_mpq_number (mpq_ptr res, __gmp_const char *e, size_t elen, int base)
+e_mpq_number (mpq_ptr res, const char *e, size_t elen, int base)
 {
   mpz_set_ui (mpq_denref (res), 1L);
   return mpexpr_mpz_number (mpq_numref (res), e, elen, base);
@@ -61,9 +61,9 @@ e_mpq_init (mpq_ptr q, unsigned long prec)
 }
 
 int
-mpq_expr_a (__gmp_const struct mpexpr_operator_t *table,
+mpq_expr_a (const struct mpexpr_operator_t *table,
             mpq_ptr res, int base,
-            __gmp_const char *e, size_t elen,
+            const char *e, size_t elen,
             mpq_srcptr var[26])
 {
   struct mpexpr_parse_t  p;

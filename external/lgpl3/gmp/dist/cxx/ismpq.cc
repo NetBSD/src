@@ -49,7 +49,7 @@ operator>> (istream &i, mpq_ptr q)
       if (i.good())
         i.putback(c);
       else if (i.eof())
-        i.clear();
+        i.clear(ios::eofbit);
     }
 
   return i;

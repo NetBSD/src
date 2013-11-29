@@ -34,7 +34,6 @@ mpn_preinv_mod_1 (mp_srcptr up, mp_size_t un, mp_limb_t d, mp_limb_t dinv)
 {
   mp_size_t i;
   mp_limb_t n0, r;
-  mp_limb_t dummy;
 
   ASSERT (un >= 1);
   ASSERT (d & GMP_LIMB_HIGHBIT);
@@ -46,7 +45,7 @@ mpn_preinv_mod_1 (mp_srcptr up, mp_size_t un, mp_limb_t d, mp_limb_t dinv)
   for (i = un - 2; i >= 0; i--)
     {
       n0 = up[i];
-      udiv_qrnnd_preinv (dummy, r, r, n0, d, dinv);
+      udiv_rnnd_preinv (r, r, n0, d, dinv);
     }
   return r;
 }

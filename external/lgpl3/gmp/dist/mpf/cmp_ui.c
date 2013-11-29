@@ -21,7 +21,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 int
-mpf_cmp_ui (mpf_srcptr u, unsigned long int vval)
+mpf_cmp_ui (mpf_srcptr u, unsigned long int vval) __GMP_NOTHROW
 {
   mp_srcptr up;
   mp_size_t usize;
