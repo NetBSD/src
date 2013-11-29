@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1072 2013/11/29 13:33:00 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1073 2013/11/29 18:20:40 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1096,7 +1096,7 @@ using the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
-Current Vers:	5.9.1
+Current Vers:	5.9.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
