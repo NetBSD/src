@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1071 2013/11/29 09:17:38 aymeric Exp $
+#	$NetBSD: 3RDPARTY,v 1.1072 2013/11/29 13:33:00 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -661,6 +661,18 @@ Notes:
 - Build the doxygen man pages. Edit the Doxyfile to GENERATE_MAN=yes.
   man pages are in doxygen/man/man3. Remove the extra man pages that are
   .so'ing only. Copy the rest to man.
+
+Package:	llvm
+Version:	3.4rc1 (r195771)
+Current Vers.:	3.4rc1
+Maintainer:	llvmdev@cs.uiuc.edu
+Home Page:	http://llvm.org
+Responsible:	joerg
+License:	BSD/MIT
+Location:	external/bsd/llvm/dist
+Notes:
+A CVS ACL is in place for the location to prevent unintentioned commits.
+All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
