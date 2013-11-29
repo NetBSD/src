@@ -86,6 +86,6 @@ void Log::log(Logger::log_level_t level, const std::string & msg)
 
 void StdoutLogger::_log(const char * msg)
 {
-	printf(msg);
+	printf("%s", msg);
 }
 
