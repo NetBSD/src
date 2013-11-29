@@ -1,4 +1,4 @@
-/*	$NetBSD: log1.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: log1.c,v 1.3 2013/11/29 16:36:11 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -66,8 +66,8 @@ static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp  (
 
 static int	log_cursor1 __P((SCR *, int));
 static void	log_err __P((SCR *, const char *, int));
-#if defined(DEBUG) && 0
-static void	log_trace __P((SCR *, char *, db_recno_t, u_char *));
+#if defined(LOGDEBUG) && defined(TRACE)
+static void	log_trace __P((SCR *, const char *, db_recno_t, u_char *));
 #endif
 
 /* Try and restart the log on failure, i.e. if we run out of memory. */
@@ -214,8 +214,8 @@ log_cursor1(SCR *sp, int type)
 	if (ep->log->put(ep->log, &key, &data, 0) == -1)
 		LOG_ERR;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "%lu: %s: %u/%u\n", ep->l_cur,
+#if defined(LOGDEBUG) && defined(TRACE)
+	vtrace("%lu: %s: %u/%u\n", ep->l_cur,
 	    type == LOG_CURSOR_INIT ? "log_cursor_init" : "log_cursor_end",
 	    sp->lno, sp->cno);
 #endif
@@ -310,30 +310,30 @@ log_line(SCR *sp, db_recno_t lno, u_int action)
 	if (ep->log->put(ep->log, &key, &data, 0) == -1)
 		LOG_ERR;
 
-#if defined(DEBUG) && 0
+#if defined(LOGDEBUG) && defined(TRACE)
 	switch (action) {
 	case LOG_LINE_APPEND_F:
-		vtrace(sp, "%u: log_line: append_f: %lu {%u}\n",
+		vtrace("%u: log_line: append_f: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	case LOG_LINE_APPEND_B:
-		vtrace(sp, "%u: log_line: append_b: %lu {%u}\n",
+		vtrace("%u: log_line: append_b: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	case LOG_LINE_DELETE_F:
-		vtrace(sp, "%lu: log_line: delete_f: %lu {%u}\n",
+		vtrace("%lu: log_line: delete_f: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	case LOG_LINE_DELETE_B:
-		vtrace(sp, "%lu: log_line: delete_b: %lu {%u}\n",
+		vtrace("%lu: log_line: delete_b: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	case LOG_LINE_RESET_F:
-		vtrace(sp, "%lu: log_line: reset_f: %lu {%u}\n",
+		vtrace("%lu: log_line: reset_f: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	case LOG_LINE_RESET_B:
-		vtrace(sp, "%lu: log_line: reset_b: %lu {%u}\n",
+		vtrace("%lu: log_line: reset_b: %lu {%u}\n",
 		    ep->l_cur, lno, len);
 		break;
 	}
@@ -385,8 +385,8 @@ log_mark(SCR *sp, LMARK *lmp)
 	if (ep->log->put(ep->log, &key, &data, 0) == -1)
 		LOG_ERR;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "%lu: mark %c: %lu/%u\n",
+#if defined(LOGDEBUG) && defined(TRACE)
+	vtrace("%lu: mark %c: %lu/%u\n",
 	    ep->l_cur, lmp->name, lmp->lno, lmp->cno);
 #endif
 	/* Reset high water mark. */
@@ -438,7 +438,7 @@ log_backward(SCR *sp, MARK *rp)
 		--ep->l_cur;
 		if (ep->log->get(ep->log, &key, &data, 0))
 			LOG_ERR;
-#if defined(DEBUG) && 0
+#if defined(LOGDEBUG) && defined(TRACE)
 		log_trace(sp, "log_backward", ep->l_cur, data.data);
 #endif
 		switch (*(p = (u_char *)data.data)) {
@@ -547,7 +547,7 @@ log_setline(SCR *sp)
 		--ep->l_cur;
 		if (ep->log->get(ep->log, &key, &data, 0))
 			LOG_ERR;
-#if defined(DEBUG) && 0
+#if defined(LOGDEBUG) && defined(TRACE)
 		log_trace(sp, "log_setline", ep->l_cur, data.data);
 #endif
 		switch (*(p = (u_char *)data.data)) {
@@ -642,7 +642,7 @@ log_forward(SCR *sp, MARK *rp)
 		++ep->l_cur;
 		if (ep->log->get(ep->log, &key, &data, 0))
 			LOG_ERR;
-#if defined(DEBUG) && 0
+#if defined(LOGDEBUG) && defined(TRACE)
 		log_trace(sp, "log_forward", ep->l_cur, data.data);
 #endif
 		switch (*(p = (u_char *)data.data)) {
@@ -721,11 +721,11 @@ log_err(SCR *sp, const char *file, int line)
 		msgq(sp, M_ERR, "267|Log restarted");
 }
 
-#if defined(DEBUG) && 0
+#if defined(LOGDEBUG) && defined(TRACE)
 static void
 log_trace(sp, msg, rno, p)
 	SCR *sp;
-	char *msg;
+	const char *msg;
 	db_recno_t rno;
 	u_char *p;
 {
@@ -736,40 +736,39 @@ log_trace(sp, msg, rno, p)
 	switch (*p) {
 	case LOG_CURSOR_INIT:
 		memmove(&m, p + sizeof(u_char), sizeof(MARK));
-		vtrace(sp, "%lu: %s:  C_INIT: %u/%u\n", rno, msg, m.lno, m.cno);
+		vtrace("%lu: %s:  C_INIT: %u/%u\n", rno, msg, m.lno, m.cno);
 		break;
 	case LOG_CURSOR_END:
 		memmove(&m, p + sizeof(u_char), sizeof(MARK));
-		vtrace(sp, "%lu: %s:   C_END: %u/%u\n", rno, msg, m.lno, m.cno);
+		vtrace("%lu: %s:   C_END: %u/%u\n", rno, msg, m.lno, m.cno);
 		break;
 	case LOG_LINE_APPEND_F:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s:  APPEND_F: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s:  APPEND_F: %lu\n", rno, msg, lno);
 		break;
 	case LOG_LINE_APPEND_B:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s:  APPEND_B: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s:  APPEND_B: %lu\n", rno, msg, lno);
 		break;
 	case LOG_LINE_DELETE_F:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s:  DELETE_F: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s:  DELETE_F: %lu\n", rno, msg, lno);
 		break;
 	case LOG_LINE_DELETE_B:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s:  DELETE_B: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s:  DELETE_B: %lu\n", rno, msg, lno);
 		break;
 	case LOG_LINE_RESET_F:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s: RESET_F: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s: RESET_F: %lu\n", rno, msg, lno);
 		break;
 	case LOG_LINE_RESET_B:
 		memmove(&lno, p + sizeof(u_char), sizeof(db_recno_t));
-		vtrace(sp, "%lu: %s: RESET_B: %lu\n", rno, msg, lno);
+		vtrace("%lu: %s: RESET_B: %lu\n", rno, msg, lno);
 		break;
 	case LOG_MARK:
 		memmove(&lm, p + sizeof(u_char), sizeof(LMARK));
-		vtrace(sp,
-		    "%lu: %s:    MARK: %u/%u\n", rno, msg, lm.lno, lm.cno);
+		vtrace("%lu: %s:    MARK: %u/%u\n", rno, msg, lm.lno, lm.cno);
 		break;
 	default:
 		abort();

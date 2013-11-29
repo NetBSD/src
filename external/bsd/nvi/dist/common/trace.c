@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.2 2013/11/22 15:52:05 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 2013/11/29 16:36:11 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -38,7 +38,7 @@ static FILE *tfp;
  * PUBLIC: void vtrace_end __P((void));
  */
 void
-vtrace_end()
+vtrace_end(void)
 {
 	if (tfp != NULL && tfp != stderr)
 		(void)fclose(tfp);
@@ -48,11 +48,10 @@ vtrace_end()
  * vtrace_init --
  *	Initialize tracing.
  *
- * PUBLIC: void vtrace_init __P((char *));
+ * PUBLIC: void vtrace_init __P((const char *));
  */
 void
-vtrace_init(name)
-	char *name;
+vtrace_init(const char *name)
 {
 	if (name == NULL || (tfp = fopen(name, "w")) == NULL)
 		tfp = stderr;
@@ -66,24 +65,14 @@ vtrace_init(name)
  * PUBLIC: void vtrace __P((const char *, ...));
  */
 void
-#ifdef __STDC__
 vtrace(const char *fmt, ...)
-#else
-vtrace(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
 	if (tfp == NULL)
 		vtrace_init(NULL);
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vfprintf(tfp, fmt, ap);
 	va_end(ap);
 
