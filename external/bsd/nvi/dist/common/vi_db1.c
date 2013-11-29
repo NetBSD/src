@@ -120,30 +120,30 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 		l1 = TAILQ_FIRST(&sp->tiq)->lno;
 		l2 = TAILQ_LAST(&sp->tiq, _texth)->lno;
 		if (l1 <= lno && l2 >= lno) {
-#if defined(DEBUG) && 0
-			vtrace(sp,
+#if defined(DBDEBUG) && defined(TRACE)
+			vtrace(
 			    "retrieve TEXT buffer line %lu\n", (u_long)lno);
-#endif
-			for (tp = TAILQ_FIRST(&sp->tiq);
-			    tp->lno != lno; tp = TAILQ_NEXT(tp, q));
-			if (lenp != NULL)
-				*lenp = tp->len;
-			if (pp != NULL)
-				*pp = tp->lb;
-			return (0);
-		}
-		/*
-		 * Adjust the line number for the number of lines used
-		 * by the text input buffers.
-		 */
-		if (lno > l2)
-			lno -= l2 - l1;
-	}
+    #endif
+			    for (tp = TAILQ_FIRST(&sp->tiq);
+				tp->lno != lno; tp = TAILQ_NEXT(tp, q));
+			    if (lenp != NULL)
+				    *lenp = tp->len;
+			    if (pp != NULL)
+				    *pp = tp->lb;
+			    return (0);
+		    }
+		    /*
+		     * Adjust the line number for the number of lines used
+		     * by the text input buffers.
+		     */
+		    if (lno > l2)
+			    lno -= l2 - l1;
+	    }
 
-	/* Look-aside into the cache, and see if the line we want is there. */
-	if (lno == sp->c_lno) {
-#if defined(DEBUG) && 0
-		vtrace(sp, "retrieve cached line %lu\n", (u_long)lno);
+	    /* Look-aside into the cache, and see if the line we want is there. */
+	    if (lno == sp->c_lno) {
+    #if defined(DBDEBUG) && defined(TRACE)
+		    vtrace("retrieve cached line %lu\n", (u_long)lno);
 #endif
 		if (lenp != NULL)
 			*lenp = sp->c_len;
@@ -198,8 +198,8 @@ err3:		if (lenp != NULL)
 	sp->c_lno = lno;
 	sp->c_len = wlen;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "retrieve DB line %lu\n", (u_long)lno);
+#if defined(DBDEBUG) && defined(TRACE)
+	vtrace("retrieve DB line %lu\n", (u_long)lno);
 #endif
 	if (lenp != NULL)
 		*lenp = wlen;
@@ -220,8 +220,8 @@ db_delete(SCR *sp, db_recno_t lno)
 	DBT key;
 	EXF *ep;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "delete line %lu\n", (u_long)lno);
+#if defined(DBDEBUG) && defined(TRACE)
+	vtrace("delete line %lu\n", (u_long)lno);
 #endif
 	/* Check for no underlying file. */
 	if ((ep = sp->ep) == NULL) {
@@ -285,8 +285,8 @@ db_append(SCR *sp, int update, db_recno_t lno, const CHAR_T *p, size_t len)
 	size_t flen;
 	int rval;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "append to %lu: len %u {%.*s}\n", lno, len, MIN(len, 20), p);
+#if defined(DBDEBUG) && defined(TRACE)
+	vtrace("append to %lu: len %u {%.*s}\n", lno, len, MIN(len, 20), p);
 #endif
 	/* Check for no underlying file. */
 	if ((ep = sp->ep) == NULL) {
@@ -360,8 +360,8 @@ db_insert(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 	size_t flen;
 	int rval;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "insert before %lu: len %lu {%.*s}\n",
+#if defined(DBDEBUG) && defined(TRACE)
+	vtrace("insert before %lu: len %lu {%.*s}\n",
 	    (u_long)lno, (u_long)len, MIN(len, 20), p);
 #endif
 	/* Check for no underlying file. */
@@ -426,8 +426,8 @@ db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 	const char *fp;
 	size_t flen;
 
-#if defined(DEBUG) && 0
-	vtrace(sp, "replace line %lu: len %lu {%.*s}\n",
+#if defined(DBDEBUG) && defined(TRACE)
+	vtrace("replace line %lu: len %lu {%.*s}\n",
 	    (u_long)lno, (u_long)len, MIN(len, 20), p);
 #endif
 	/* Check for no underlying file. */
