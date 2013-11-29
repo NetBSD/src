@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_read.c,v 1.5 2013/11/27 20:44:56 christos Exp $	*/
+/*	$NetBSD: ip_read.c,v 1.6 2013/11/29 15:24:08 christos Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -207,7 +207,6 @@ ip_wevent(WIN *wp, SCR *sp, EVENT *evp, u_int32_t flags, int ms)
 static input_t
 ip_read(SCR *sp, IP_PRIVATE *ipp, struct timeval *tp, int termread, int *nr)
 {
-	struct timeval poll;
 	GS *gp;
 	fd_set rdfd;
 	input_t rval;
@@ -228,8 +227,6 @@ ip_read(SCR *sp, IP_PRIVATE *ipp, struct timeval *tp, int termread, int *nr)
 	 *    a map sequence.  If input exists, we fall into #2.
 	 */
 	FD_ZERO(&rdfd);
-	poll.tv_sec = 0;
-	poll.tv_usec = 0;
 	if (tp != NULL) {
 		FD_SET(fd, &rdfd);
 		switch (select(fd + 1, &rdfd, NULL, NULL, tp)) {
