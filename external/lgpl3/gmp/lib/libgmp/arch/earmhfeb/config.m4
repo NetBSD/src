@@ -1,6 +1,7 @@
 dnl config.m4.  Generated automatically by configure.
 changequote(<,>)
 ifdef(<__CONFIG_M4_INCLUDED__>,,<
+define(<CONFIG_TOP_SRCDIR>,<`/usr/src7/external/lgpl3/gmp/dist'>)
 define(<WANT_ASSERT>,0)
 define(<WANT_PROFILING>,<`no'>)
 define(<M4WRAP_SPURIOUS>,<no>)
@@ -17,6 +18,7 @@ define(<LSYM_PREFIX>, <.L>)
 define(<W32>, <.long>)
 define(<ALIGN_LOGARITHMIC>,<yes>)
 define(<SQR_TOOM2_THRESHOLD>,<78>)
+define(<BMOD_1_TO_MOD_1_THRESHOLD>,<41>)
 define(<SIZEOF_UNSIGNED>,<4>)
 define(<GMP_LIMB_BITS>,32)
 define(<GMP_NAIL_BITS>,0)
