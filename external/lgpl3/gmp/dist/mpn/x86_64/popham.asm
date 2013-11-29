@@ -1,6 +1,6 @@
 dnl  AMD64 mpn_popcount, mpn_hamdist -- population count and hamming distance.
 
-dnl  Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+dnl  Copyright 2004, 2005, 2007, 2010, 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -23,10 +23,13 @@ include(`../config.m4')
 
 C		     popcount	      hamdist
 C		    cycles/limb	    cycles/limb
-C K8,K9:		 6		 7
-C K10:			 6		 7
-C P4:			12		14.3
-C P6-15:		 7		 8
+C AMD K8,K9		 6		 7
+C AMD K10		 6		 7
+C Intel P4		12		14.3
+C Intel core2		 7		 8
+C Intel corei		 ?		 7.3
+C Intel atom		16.5		17.5
+C VIA nano		 8.75		10.4
 
 C TODO
 C  * Tune.  It should be possible to reach 5 c/l for popcount and 6 c/l for
@@ -41,6 +44,7 @@ ifdef(`OPERATION_popcount',`
   define(`h33333333',	`%r11')
   define(`h0f0f0f0f',	`%rcx')
   define(`h01010101',	`%rdx')
+  define(`POP',		`$1')
   define(`HAM',		`dnl')
 ')
 ifdef(`OPERATION_hamdist',`
@@ -52,106 +56,111 @@ ifdef(`OPERATION_hamdist',`
   define(`h33333333',	`%r11')
   define(`h0f0f0f0f',	`%rcx')
   define(`h01010101',	`%r14')
+  define(`POP',		`dnl')
   define(`HAM',		`$1')
 ')
 
 
 MULFUNC_PROLOGUE(mpn_popcount mpn_hamdist)
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(32)
 PROLOGUE(func)
+ POP(`	FUNC_ENTRY(2)		')
+ HAM(`	FUNC_ENTRY(3)		')
+	push	%r12
+	push	%r13
+ HAM(`	push	%r14		')
 
-	pushq	%r12
-	pushq	%r13
- HAM(`	pushq	%r14		')
+	mov	$0x5555555555555555, h55555555
+	mov	$0x3333333333333333, h33333333
+	mov	$0x0f0f0f0f0f0f0f0f, h0f0f0f0f
+	mov	$0x0101010101010101, h01010101
 
-	movq	$0x5555555555555555, h55555555
-	movq	$0x3333333333333333, h33333333
-	movq	$0x0f0f0f0f0f0f0f0f, h0f0f0f0f
-	movq	$0x0101010101010101, h01010101
+	lea	(up,n,8), up
+ HAM(`	lea	(vp,n,8), vp	')
+	neg	n
 
-	leaq	(up,n,8), up
- HAM(`	leaq	(vp,n,8), vp	')
-	negq	n
+	xor	R32(%rax), R32(%rax)
 
-	xorl	%eax, %eax
+	bt	$0, R32(n)
+	jnc	L(top)
 
-	btq	$0, n
-	jnc	L(oop)
+	mov	(up,n,8), %r8
+ HAM(`	xor	(vp,n,8), %r8	')
 
-	movq	(up,n,8), %r8
- HAM(`	xorq	(vp,n,8), %r8	')
+	mov	%r8, %r9
+	shr	%r8
+	and	h55555555, %r8
+	sub	%r8, %r9
 
-	movq	%r8, %r9
-	shrq	%r8
-	andq	h55555555, %r8
-	subq	%r8, %r9
+	mov	%r9, %r8
+	shr	$2, %r9
+	and	h33333333, %r8
+	and	h33333333, %r9
+	add	%r8, %r9		C 16 4-bit fields (0..4)
 
-	movq	%r9, %r8
-	shrq	$2, %r9
-	andq	h33333333, %r8
-	andq	h33333333, %r9
-	addq	%r8, %r9		C 16 4-bit fields (0..4)
+	mov	%r9, %r8
+	shr	$4, %r9
+	and	h0f0f0f0f, %r8
+	and	h0f0f0f0f, %r9
+	add	%r8, %r9		C 8 8-bit fields (0..16)
 
-	movq	%r9, %r8
-	shrq	$4, %r9
-	andq	h0f0f0f0f, %r8
-	andq	h0f0f0f0f, %r9
-	addq	%r8, %r9		C 8 8-bit fields (0..16)
+	imul	h01010101, %r9		C sum the 8 fields in high 8 bits
+	shr	$56, %r9
 
-	imulq	h01010101, %r9		C sum the 8 fields in high 8 bits
-	shrq	$56, %r9
-
-	addq	%r9, %rax		C add to total
-	addq	$1, n
-	jz	L(done)
+	mov	%r9, %rax		C add to total
+	add	$1, n
+	jz	L(end)
 
 	ALIGN(16)
-L(oop):	movq	(up,n,8), %r8
-	movq	8(up,n,8), %r12
- HAM(`	xorq	(vp,n,8), %r8	')
- HAM(`	xorq	8(vp,n,8), %r12	')
+L(top):	mov	(up,n,8), %r8
+	mov	8(up,n,8), %r12
+ HAM(`	xor	(vp,n,8), %r8	')
+ HAM(`	xor	8(vp,n,8), %r12	')
 
-	movq	%r8, %r9
-	movq	%r12, %r13
-	shrq	%r8
-	shrq	%r12
-	andq	h55555555, %r8
-	andq	h55555555, %r12
-	subq	%r8, %r9
-	subq	%r12, %r13
+	mov	%r8, %r9
+	mov	%r12, %r13
+	shr	%r8
+	shr	%r12
+	and	h55555555, %r8
+	and	h55555555, %r12
+	sub	%r8, %r9
+	sub	%r12, %r13
 
-	movq	%r9, %r8
-	movq	%r13, %r12
-	shrq	$2, %r9
-	shrq	$2, %r13
-	andq	h33333333, %r8
-	andq	h33333333, %r9
-	andq	h33333333, %r12
-	andq	h33333333, %r13
-	addq	%r8, %r9		C 16 4-bit fields (0..4)
-	addq	%r12, %r13		C 16 4-bit fields (0..4)
+	mov	%r9, %r8
+	mov	%r13, %r12
+	shr	$2, %r9
+	shr	$2, %r13
+	and	h33333333, %r8
+	and	h33333333, %r9
+	and	h33333333, %r12
+	and	h33333333, %r13
+	add	%r8, %r9		C 16 4-bit fields (0..4)
+	add	%r12, %r13		C 16 4-bit fields (0..4)
 
-	addq	%r13, %r9		C 16 4-bit fields (0..8)
-	movq	%r9, %r8
-	shrq	$4, %r9
-	andq	h0f0f0f0f, %r8
-	andq	h0f0f0f0f, %r9
-	addq	%r8, %r9		C 8 8-bit fields (0..16)
+	add	%r13, %r9		C 16 4-bit fields (0..8)
+	mov	%r9, %r8
+	shr	$4, %r9
+	and	h0f0f0f0f, %r8
+	and	h0f0f0f0f, %r9
+	add	%r8, %r9		C 8 8-bit fields (0..16)
 
-	imulq	h01010101, %r9		C sum the 8 fields in high 8 bits
-	shrq	$56, %r9
+	imul	h01010101, %r9		C sum the 8 fields in high 8 bits
+	shr	$56, %r9
 
-	addq	%r9, %rax		C add to total
-	addq	$2, n
-	jnc	L(oop)
+	add	%r9, %rax		C add to total
+	add	$2, n
+	jnc	L(top)
 
-L(done):
- HAM(`	popq	%r14		')
-	popq	%r13
-	popq	%r12
+L(end):
+ HAM(`	pop	%r14		')
+	pop	%r13
+	pop	%r12
+	FUNC_EXIT()
 	ret
-
 EPILOGUE()

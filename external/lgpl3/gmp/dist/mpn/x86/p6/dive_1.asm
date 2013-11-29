@@ -127,7 +127,7 @@ C	subl	%edx, %eax       1
 C	imull	%ebp, %eax       4
 C	mull	PARAM_DIVISOR    5
 C			       ----
-C       total		        10
+C	total			10
 C
 C and this is the measured speed.  No special scheduling is necessary, out
 C of order execution hides the load latency.

@@ -6,7 +6,8 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright (C) 2004, 2005, 2006, 2007, 2009 Free Software Foundation, Inc.
+Copyright (C) 2004, 2005, 2006, 2007, 2009, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -31,14 +32,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   r[k+1] = r[k] - r[k] * (u*r[k] - 1)
   r[k+1] = r[k] + r[k] - r[k]*(u*r[k])
 */
-
-/* This is intended for constant THRESHOLDs only, where the compiler can
-   completely fold the result.  */
-#define LOG2C(n) \
- (((n) >=    0x1) + ((n) >=    0x2) + ((n) >=    0x4) + ((n) >=    0x8) + \
-  ((n) >=   0x10) + ((n) >=   0x20) + ((n) >=   0x40) + ((n) >=   0x80) + \
-  ((n) >=  0x100) + ((n) >=  0x200) + ((n) >=  0x400) + ((n) >=  0x800) + \
-  ((n) >= 0x1000) + ((n) >= 0x2000) + ((n) >= 0x4000) + ((n) >= 0x8000))
 
 #if TUNE_PROGRAM_BUILD
 #define NPOWS \

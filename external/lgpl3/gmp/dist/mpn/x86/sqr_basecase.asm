@@ -22,11 +22,11 @@ include(`../config.m4')
 
 
 C     cycles/crossproduct  cycles/triangleproduct
-C P5:
-C P6:
-C K6:
-C K7:
-C P4:
+C P5
+C P6
+C K6
+C K7
+C P4
 
 
 C void mpn_sqr_basecase (mp_ptr dst, mp_srcptr src, mp_size_t size);

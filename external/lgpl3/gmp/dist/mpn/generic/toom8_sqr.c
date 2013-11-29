@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -82,25 +82,32 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   (SQR_TOOM8_MAX >= SQR_TOOM8_THRESHOLD)
 #endif
 
-#define TOOM8_SQR_REC(p, a, n, ws)					\
+#define TOOM8_SQR_REC(p, a, f, p2, a2, n, ws)				\
   do {									\
     if (MAYBE_sqr_basecase && ( !MAYBE_sqr_above_basecase		\
-	|| BELOW_THRESHOLD (n, SQR_TOOM2_THRESHOLD)))			\
+	|| BELOW_THRESHOLD (n, SQR_TOOM2_THRESHOLD))) {			\
       mpn_sqr_basecase (p, a, n);					\
-    else if (MAYBE_sqr_toom2 && ( !MAYBE_sqr_above_toom2		\
-	     || BELOW_THRESHOLD (n, SQR_TOOM3_THRESHOLD)))		\
+      if (f) mpn_sqr_basecase (p2, a2, n);				\
+    } else if (MAYBE_sqr_toom2 && ( !MAYBE_sqr_above_toom2		\
+	     || BELOW_THRESHOLD (n, SQR_TOOM3_THRESHOLD))) {		\
       mpn_toom2_sqr (p, a, n, ws);					\
-    else if (MAYBE_sqr_toom3 && ( !MAYBE_sqr_above_toom3		\
-	     || BELOW_THRESHOLD (n, SQR_TOOM4_THRESHOLD)))		\
+      if (f) mpn_toom2_sqr (p2, a2, n, ws);				\
+    } else if (MAYBE_sqr_toom3 && ( !MAYBE_sqr_above_toom3		\
+	     || BELOW_THRESHOLD (n, SQR_TOOM4_THRESHOLD))) {		\
       mpn_toom3_sqr (p, a, n, ws);					\
-    else if (MAYBE_sqr_toom4 && ( !MAYBE_sqr_above_toom4		\
-	     || BELOW_THRESHOLD (n, SQR_TOOM6_THRESHOLD)))		\
+      if (f) mpn_toom3_sqr (p2, a2, n, ws);				\
+    } else if (MAYBE_sqr_toom4 && ( !MAYBE_sqr_above_toom4		\
+	     || BELOW_THRESHOLD (n, SQR_TOOM6_THRESHOLD))) {		\
       mpn_toom4_sqr (p, a, n, ws);					\
-    else if (! MAYBE_sqr_above_toom6					\
-	     || BELOW_THRESHOLD (n, SQR_TOOM8_THRESHOLD))		\
+      if (f) mpn_toom4_sqr (p2, a2, n, ws);				\
+    } else if (! MAYBE_sqr_above_toom6					\
+	     || BELOW_THRESHOLD (n, SQR_TOOM8_THRESHOLD)) {		\
       mpn_toom6_sqr (p, a, n, ws);					\
-    else								\
+      if (f) mpn_toom6_sqr (p2, a2, n, ws);				\
+    } else {								\
       mpn_toom8_sqr (p, a, n, ws);					\
+      if (f) mpn_toom8_sqr (p2, a2, n, ws);				\
+    }									\
   } while (0)
 
 void
@@ -139,51 +146,51 @@ mpn_toom8_sqr  (mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_ptr scratch)
   /********************** evaluation and recursive calls *********************/
   /* $\pm1/8$ */
   mpn_toom_eval_pm2rexp (v2, v0, 7, ap, n, s, 3, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-1/8)*B(-1/8)*8^. */
-  TOOM8_SQR_REC(r7, v2, n + 1, wse); /* A(+1/8)*B(+1/8)*8^. */
+  /* A(-1/8)*B(-1/8)*8^. */ /* A(+1/8)*B(+1/8)*8^. */
+  TOOM8_SQR_REC(pp, v0, 2, r7, v2, n + 1, wse);
   mpn_toom_couple_handling (r7, 2 * n + 1 + BIT_CORRECTION, pp, 0, n, 3, 0);
 
   /* $\pm1/4$ */
   mpn_toom_eval_pm2rexp (v2, v0, 7, ap, n, s, 2, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-1/4)*B(-1/4)*4^. */
-  TOOM8_SQR_REC(r5, v2, n + 1, wse); /* A(+1/4)*B(+1/4)*4^. */
+  /* A(-1/4)*B(-1/4)*4^. */ /* A(+1/4)*B(+1/4)*4^. */
+  TOOM8_SQR_REC(pp, v0, 2, r5, v2, n + 1, wse);
   mpn_toom_couple_handling (r5, 2 * n + 1, pp, 0, n, 2, 0);
 
   /* $\pm2$ */
   mpn_toom_eval_pm2 (v2, v0, 7, ap, n, s, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-2)*B(-2) */
-  TOOM8_SQR_REC(r3, v2, n + 1, wse); /* A(+2)*B(+2) */
+  /* A(-2)*B(-2) */ /* A(+2)*B(+2) */
+  TOOM8_SQR_REC(pp, v0, 2, r3, v2, n + 1, wse);
   mpn_toom_couple_handling (r3, 2 * n + 1, pp, 0, n, 1, 2);
 
   /* $\pm8$ */
   mpn_toom_eval_pm2exp (v2, v0, 7, ap, n, s, 3, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-8)*B(-8) */
-  TOOM8_SQR_REC(r1, v2, n + 1, wse); /* A(+8)*B(+8) */
+  /* A(-8)*B(-8) */ /* A(+8)*B(+8) */
+  TOOM8_SQR_REC(pp, v0, 2, r1, v2, n + 1, wse);
   mpn_toom_couple_handling (r1, 2 * n + 1 + BIT_CORRECTION, pp, 0, n, 3, 6);
 
   /* $\pm1/2$ */
   mpn_toom_eval_pm2rexp (v2, v0, 7, ap, n, s, 1, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-1/2)*B(-1/2)*2^. */
-  TOOM8_SQR_REC(r6, v2, n + 1, wse); /* A(+1/2)*B(+1/2)*2^. */
+  /* A(-1/2)*B(-1/2)*2^. */ /* A(+1/2)*B(+1/2)*2^. */
+  TOOM8_SQR_REC(pp, v0, 2, r6, v2, n + 1, wse);
   mpn_toom_couple_handling (r6, 2 * n + 1, pp, 0, n, 1, 0);
 
   /* $\pm1$ */
   mpn_toom_eval_pm1 (v2, v0, 7, ap, n, s,    pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-1)*B(-1) */
-  TOOM8_SQR_REC(r4, v2, n + 1, wse); /* A(1)*B(1) */
+  /* A(-1)*B(-1) */ /* A(1)*B(1) */
+  TOOM8_SQR_REC(pp, v0, 2, r4, v2, n + 1, wse);
   mpn_toom_couple_handling (r4, 2 * n + 1, pp, 0, n, 0, 0);
 
   /* $\pm4$ */
   mpn_toom_eval_pm2exp (v2, v0, 7, ap, n, s, 2, pp);
-  TOOM8_SQR_REC(pp, v0, n + 1, wse); /* A(-4)*B(-4) */
-  TOOM8_SQR_REC(r2, v2, n + 1, wse); /* A(+4)*B(+4) */
+  /* A(-4)*B(-4) */ /* A(+4)*B(+4) */
+  TOOM8_SQR_REC(pp, v0, 2, r2, v2, n + 1, wse);
   mpn_toom_couple_handling (r2, 2 * n + 1, pp, 0, n, 2, 4);
 
 #undef v0
 #undef v2
 
   /* A(0)*B(0) */
-  TOOM8_SQR_REC(pp, ap, n, wse);
+  TOOM8_SQR_REC(pp, ap, 0, pp, ap, n, wse);
 
   mpn_toom_interpolate_16pts (pp, r1, r3, r5, r7, n, 2 * s, 0, wse);
 

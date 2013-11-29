@@ -8,7 +8,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2005, 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2005, 2006, 2007, 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -64,9 +64,7 @@ mpn_mu_bdiv_qr (mp_ptr qp,
   mp_size_t qn;
   mp_size_t in;
   mp_limb_t cy, c0;
-  int k;
   mp_size_t tn, wn;
-  mp_size_t i;
 
   qn = nn - dn;
 

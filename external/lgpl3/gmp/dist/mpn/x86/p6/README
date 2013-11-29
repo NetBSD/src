@@ -52,7 +52,7 @@ Some of these might be able to be improved.
 
 	mpn_mul_basecase          8.2 cycles/crossproduct (approx)
 	mpn_sqr_basecase          4.0 cycles/crossproduct (approx)
-	                          or 7.75 cycles/triangleproduct (approx)
+				  or 7.75 cycles/triangleproduct (approx)
 
 Pentium II and III have MMX and get the following improvements.
 

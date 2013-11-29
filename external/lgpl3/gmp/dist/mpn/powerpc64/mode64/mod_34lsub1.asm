@@ -1,4 +1,4 @@
-dnl  PowerPC-64 mpn_mod_34lsub1 -- modulo 2^24-1.
+dnl  PowerPC-64 mpn_mod_34lsub1 -- modulo 2^48-1.
 
 dnl  Copyright 2005 Free Software Foundation, Inc.
 
@@ -19,10 +19,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     1.33
-C POWER4/PPC970:     1.5
-C POWER5:	     1.57
+C                   cycles/limb
+C POWER3/PPC630          1.33
+C POWER4/PPC970          1.5
+C POWER5                 1.32
+C POWER6                 2.35
+C POWER7                 1
 
 C INPUT PARAMETERS
 define(`up',`r3')

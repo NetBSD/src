@@ -1,4 +1,4 @@
-dnl  PowerPC-64 mpn_basecase.
+dnl  PowerPC-64 mpn_mul_basecase.
 
 dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2008 Free Software
 dnl  Foundation, Inc.
@@ -20,11 +20,11 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:    6-18
-C POWER4/PPC970:     8
-C POWER5:            8
-
+C                  cycles/limb
+C POWER3/PPC630         6-18
+C POWER4/PPC970          8
+C POWER5                 8
+C POWER6                24
 
 C INPUT PARAMETERS
 define(`rp', `r3')

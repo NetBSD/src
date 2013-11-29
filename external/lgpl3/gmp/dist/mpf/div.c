@@ -1,7 +1,7 @@
 /* mpf_div -- Divide two floats.
 
-Copyright 1993, 1994, 1996, 2000, 2001, 2002, 2004, 2005, 2010 Free Software
-Foundation, Inc.
+Copyright 1993, 1994, 1996, 2000, 2001, 2002, 2004, 2005, 2010, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -37,7 +37,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    to save one limb in the division.
 
    If r==u but the size is enough bigger than prec that there won't be an
-   overlap between quotient and dividend in mpn_tdiv_qr, then we can avoid
+   overlap between quotient and dividend in mpn_div_q, then we can avoid
    copying up,usize.  This would only arise from a prec reduced with
    mpf_set_prec_raw and will be pretty unusual, but might be worthwhile if
    it could be worked into the copy_u decision cleanly.  */
@@ -55,12 +55,8 @@ mpf_div (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
 
   usize = SIZ(u);
   vsize = SIZ(v);
-  sign_quotient = usize ^ vsize;
-  usize = ABS (usize);
-  vsize = ABS (vsize);
-  prec = PREC(r);
 
-  if (vsize == 0)
+  if (UNLIKELY (vsize == 0))
     DIVIDE_BY_ZERO;
 
   if (usize == 0)
@@ -69,6 +65,11 @@ mpf_div (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
       EXP(r) = 0;
       return;
     }
+
+  sign_quotient = usize ^ vsize;
+  usize = ABS (usize);
+  vsize = ABS (vsize);
+  prec = PREC(r);
 
   TMP_MARK;
   rexp = EXP(u) - EXP(v) + 1;

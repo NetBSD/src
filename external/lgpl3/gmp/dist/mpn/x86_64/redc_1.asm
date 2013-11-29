@@ -1,6 +1,6 @@
 dnl  AMD64 mpn_redc_1 -- Montgomery reduction with a one-limb modular inverse.
 
-dnl  Copyright 2004, 2008 Free Software Foundation, Inc.
+dnl  Copyright 2004, 2008, 2011, 2012 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -22,48 +22,51 @@ include(`../config.m4')
 
 C	     cycles/limb
 C	     cycles/limb
-C K8,K9:	 2.5
-C K10:		 2.5
-C P4:		 ?
-C P6-15 (Core2): 5.3
-C P6-28 (Atom):	 ?
+C AMD K8,K9	 2.5
+C AMD K10	 2.5
+C Intel P4	 ?
+C Intel core2	 5.3
+C Intel corei	 ?
+C Intel atom	 ?
+C VIA nano	 ?
 
 C TODO
 C  * Handle certain sizes, e.g., 1, 2, 3, 4, 8, with single-loop code.
 C    The code for 1, 2, 3, 4 should perhaps be completely register based.
 C  * Perhaps align outer loops.
-C  * The sub_n at the end leaks side-channel data.  How do we fix that?
-C  * Write mpn_add_n_sub_n computing R = A + B - C.  It should run at 2 c/l.
 C  * We could software pipeline the IMUL stuff, by putting it before the
 C    outer loops and before the end of the outer loops.  The last outer
 C    loop iteration would then compute an unneeded product, but it is at
 C    least not a stray read from up[], since it is at up[n].
-C  * Can we combine both the add_n and sub_n into the loops, somehow?
+C  * Make a tail call to mpn_add_n.
 
 C INPUT PARAMETERS
-define(`rp',	  `%rdi')
-define(`up',	  `%rsi')
-define(`param_mp',`%rdx')
-define(`n',	  `%rcx')
-define(`invm',	  `%r8')
+define(`rp',	  `%rdi')	C rcx
+define(`up',	  `%rsi')	C rdx
+define(`mp_param',`%rdx')	C r8
+define(`n',	  `%rcx')	C r9
+define(`invm',	  `%r8')	C stack
 
 define(`mp',	  `%r13')
 define(`i',	  `%r11')
 define(`nneg',	  `%r12')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(32)
 PROLOGUE(mpn_redc_1)
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8	')
 	push	%rbp
 	push	%rbx
 	push	%r12
 	push	%r13
 	push	%r14
-	push	n
-	sub	$8, %rsp		C maintain ABI required rsp alignment
 
-	lea	(param_mp,n,8), mp	C mp += n
+	lea	(mp_param,n,8), mp	C mp += n
 	lea	(up,n,8), up		C up += n
 
 	mov	n, nneg
@@ -83,7 +86,7 @@ L(o1):	mov	nneg, i
 	imul	invm, %rbp
 
 	mov	(mp,i,8), %rax
-	xor	%ebx, %ebx
+	xor	R32(%rbx), R32(%rbx)
 	mul	%rbp
 	add	$1, i
 	jnz	1f
@@ -102,7 +105,7 @@ L(lo1):	add	%r10, (up,i,8)
 	adc	%rax, %r9
 	mov	(mp,i,8), %rax
 	adc	%rdx, %r14
-L(mi1):	xor	%r10d, %r10d
+L(mi1):	xor	R32(%r10), R32(%r10)
 	mul	%rbp
 	add	%r9, 8(up,i,8)
 	adc	%rax, %r14
@@ -114,28 +117,27 @@ L(mi1):	xor	%r10d, %r10d
 	adc	%rdx, %r10
 	mov	16(mp,i,8), %rax
 	mul	%rbp
-	xor	%r9d, %r9d
-	xor	%r14d, %r14d
+	xor	R32(%r9), R32(%r9)
+	xor	R32(%r14), R32(%r14)
 	add	%rbx, 24(up,i,8)
 	adc	%rax, %r10
 	mov	24(mp,i,8), %rax
 	adc	%rdx, %r9
-	xor	%ebx, %ebx
+	xor	R32(%rbx), R32(%rbx)
 	mul	%rbp
 	add	$4, i
 	js	L(lo1)
 L(ed1):	add	%r10, (up)
 	adc	%rax, %r9
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	add	%r9, 8(up)
 	adc	$0, %r14
 L(n1):	mov	%r14, 16(up,nneg,8)	C up[0]
 	add	$8, up
 	dec	n
 	jnz	L(o1)
-C	lea	(mp), mp
-	lea	16(up), up
+	lea	16(up,nneg,8), up
 	jmp	L(common)
 
 L(b0):	C lea	(mp), mp
@@ -145,7 +147,7 @@ L(o0):	mov	nneg, i
 	imul	invm, %rbp
 
 	mov	(mp,i,8), %rax
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	mul	%rbp
 	mov	%rax, %r14
 	mov	%rdx, %rbx
@@ -156,7 +158,7 @@ L(lo0):	add	%r10, (up,i,8)
 	adc	%rax, %r9
 	mov	(mp,i,8), %rax
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	mul	%rbp
 	add	%r9, 8(up,i,8)
 	adc	%rax, %r14
@@ -168,30 +170,28 @@ L(mi0):	mov	8(mp,i,8), %rax
 	adc	%rdx, %r10
 	mov	16(mp,i,8), %rax
 	mul	%rbp
-	xor	%r9d, %r9d
-	xor	%r14d, %r14d
+	xor	R32(%r9), R32(%r9)
+	xor	R32(%r14), R32(%r14)
 	add	%rbx, 24(up,i,8)
 	adc	%rax, %r10
 	mov	24(mp,i,8), %rax
 	adc	%rdx, %r9
-	xor	%ebx, %ebx
+	xor	R32(%rbx), R32(%rbx)
 	mul	%rbp
 	add	$4, i
 	js	L(lo0)
 L(ed0):	add	%r10, (up)
 	adc	%rax, %r9
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	add	%r9, 8(up)
 	adc	$0, %r14
 	mov	%r14, 16(up,nneg,8)	C up[0]
 	add	$8, up
 	dec	n
 	jnz	L(o0)
-C	lea	(mp), mp
-	lea	16(up), up
+	lea	16(up,nneg,8), up
 	jmp	L(common)
-
 
 L(b3):	lea	-8(mp), mp
 	lea	-24(up), up
@@ -210,7 +210,7 @@ L(lo3):	add	%r10, (up,i,8)
 	adc	%rax, %r9
 	mov	(mp,i,8), %rax
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	mul	%rbp
 	add	%r9, 8(up,i,8)
 	adc	%rax, %r14
@@ -222,28 +222,27 @@ L(lo3):	add	%r10, (up,i,8)
 	adc	%rdx, %r10
 L(mi3):	mov	16(mp,i,8), %rax
 	mul	%rbp
-	xor	%r9d, %r9d
-	xor	%r14d, %r14d
+	xor	R32(%r9), R32(%r9)
+	xor	R32(%r14), R32(%r14)
 	add	%rbx, 24(up,i,8)
 	adc	%rax, %r10
 	mov	24(mp,i,8), %rax
 	adc	%rdx, %r9
-	xor	%ebx, %ebx
+	xor	R32(%rbx), R32(%rbx)
 	mul	%rbp
 	add	$4, i
 	js	L(lo3)
 L(ed3):	add	%r10, 8(up)
 	adc	%rax, %r9
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	add	%r9, 16(up)
 	adc	$0, %r14
 	mov	%r14, 24(up,nneg,8)	C up[0]
 	add	$8, up
 	dec	n
 	jnz	L(o3)
-	lea	8(mp), mp
-	lea	24(up), up
+	lea	24(up,nneg,8), up
 	jmp	L(common)
 
 L(b2):	lea	-16(mp), mp
@@ -254,7 +253,7 @@ L(o2):	mov	nneg, i
 
 	mov	16(mp,i,8), %rax
 	mul	%rbp
-	xor	%r14d, %r14d
+	xor	R32(%r14), R32(%r14)
 	mov	%rax, %r10
 	mov	24(mp,i,8), %rax
 	mov	%rdx, %r9
@@ -265,7 +264,7 @@ L(lo2):	add	%r10, (up,i,8)
 	adc	%rax, %r9
 	mov	(mp,i,8), %rax
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	mul	%rbp
 	add	%r9, 8(up,i,8)
 	adc	%rax, %r14
@@ -277,59 +276,52 @@ L(lo2):	add	%r10, (up,i,8)
 	adc	%rdx, %r10
 	mov	16(mp,i,8), %rax
 	mul	%rbp
-	xor	%r9d, %r9d
-	xor	%r14d, %r14d
+	xor	R32(%r9), R32(%r9)
+	xor	R32(%r14), R32(%r14)
 	add	%rbx, 24(up,i,8)
 	adc	%rax, %r10
 	mov	24(mp,i,8), %rax
 	adc	%rdx, %r9
-L(mi2):	xor	%ebx, %ebx
+L(mi2):	xor	R32(%rbx), R32(%rbx)
 	mul	%rbp
 	add	$4, i
 	js	L(lo2)
 L(ed2):	add	%r10, 16(up)
 	adc	%rax, %r9
 	adc	%rdx, %r14
-	xor	%r10d, %r10d
+	xor	R32(%r10), R32(%r10)
 	add	%r9, 24(up)
 	adc	$0, %r14
 	mov	%r14, 32(up,nneg,8)	C up[0]
 	add	$8, up
 	dec	n
 	jnz	L(o2)
-	lea	16(mp), mp
-	lea	32(up), up
+	lea	32(up,nneg,8), up
 
 
 L(common):
-	lea	(mp,nneg,8), mp		C restore entry mp
 
 C   cy = mpn_add_n (rp, up, up - n, n);
-C		    rdi rsi  rdx    rcx
-	lea	(up,nneg,8), up		C up -= n
-	lea	(up,nneg,8), %rdx	C rdx = up - n [up entry value]
-	mov	rp, nneg		C preserve rp over first call
-	mov	8(%rsp), %rcx		C pass entry n
-C	mov	rp, %rdi
+C		    rdi rsi  rdx    rcx		STD
+C		    rcx rdx  r8     r9		DOS
+
+IFSTD(` lea	(up,nneg,8), %rdx	') C rdx = up - n [up entry value]
+IFSTD(` mov	nneg, %rcx		')
+IFSTD(` neg	%rcx			') C rcx = -nneg = n
+
+IFDOS(` lea	(up,nneg,8), %r8	') C r8 = up - n
+IFDOS(` mov	up, %rdx		') C rdx = up
+IFDOS(` mov	nneg, %r9		')
+IFDOS(` neg	%r9			') C r9 = -nneg = n
+IFDOS(` mov	rp, %rcx		') C rcx = rp
+
 	CALL(	mpn_add_n)
-	test	R32(%rax), R32(%rax)
-	jz	L(ret)
 
-C     mpn_sub_n (rp, rp, mp, n);
-C		 rdi rsi rdx rcx
-	mov	nneg, %rdi
-	mov	nneg, %rsi
-	mov	mp, %rdx
-	mov	8(%rsp), %rcx		C pass entry n
-	CALL(	mpn_sub_n)
-
-L(ret):
-	add	$8, %rsp
-	pop	n			C just increment rsp
 	pop	%r14
 	pop	%r13
 	pop	%r12
 	pop	%rbx
 	pop	%rbp
+	FUNC_EXIT()
 	ret
 EPILOGUE()
