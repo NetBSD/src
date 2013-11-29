@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1863 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1864 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -302,8 +302,12 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	x68k: Support upto 1008 MB extended memory that is found on the XM6i
 		emulator. [tsutsui 20131027]
 	OpenSSH: Imported 6.4 [christos 20131108]
+	x86: Default rounding mode of the x87 changed to long double precision.
+		[joerg 20131111]
 	zless(1): Added via lastest version of zmore(1) from OpenBSD
 		[pettai 20131112]
+	libm: Added basic long double support for elementary functions.
+		Most transcendent functions are stubbed out. [joerg 20131119]
 	nvi(1): Upgrade to the latest git source [christos 20131122]
 	MPC: Updated to MPC 1.0.1.  [mrg 20131128]
 	MPFR: Updated to MPFR 3.1.2.  [mrg 20131128]
