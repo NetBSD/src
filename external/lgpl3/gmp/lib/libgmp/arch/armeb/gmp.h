@@ -2218,7 +2218,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/evbarm/usr/src6/tooldir.NetBSD-6.0_STABLE-amd64/bin/armeb--netbsdelf-gcc --sysroot=/var/obj/evbarm/usr/src6/destdir.evbarm -L/var/obj/evbarm/usr/src6/destdir.evbarm/lib -L/var/obj/evbarm/usr/src6/destdir.evbarm/usr/lib -B/var/obj/evbarm/usr/src6/destdir.evbarm/usr/lib/ -I/var/obj/evbarm/usr/src7/external/lgpl3/gmp/.native/gcc/include -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS "-marm -O2 -pedantic -fomit-frame-pointer"
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */
