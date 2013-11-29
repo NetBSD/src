@@ -27,7 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.5 2013/08/26 14:20:53 matt Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.6 2013/11/29 23:00:48 joerg Exp $");
+
+#include "crtbegin.h"
 
 typedef void (*fptr_t)(void);
 
@@ -131,5 +133,3 @@ __do_global_dtors_aux(void)
 #endif
 }
 #endif /* !__ARM_EABI__ || SHARED */
-
-#include "crtbegin.h"
