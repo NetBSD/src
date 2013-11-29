@@ -1,6 +1,6 @@
 /* mpz_set (dest_integer, src_integer) -- Assign DEST_INTEGER from SRC_INTEGER.
 
-Copyright 1991, 1993, 1994, 1995, 2000 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1995, 2000, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,33 +21,19 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 
-#ifdef BERKELEY_MP
-#include "mp.h"
-#define FUNCTION   move
-#define ARGUMENTS  mpz_srcptr u, mpz_ptr w
-
-#else
-#define FUNCTION   mpz_set
-#define ARGUMENTS  mpz_ptr w, mpz_srcptr u
-
-#endif
-
-
 void
-FUNCTION (ARGUMENTS)
+mpz_set (mpz_ptr w, mpz_srcptr u)
 {
   mp_ptr wp, up;
   mp_size_t usize, size;
 
-  usize = u->_mp_size;
+  usize = SIZ(u);
   size = ABS (usize);
 
-  if (w->_mp_alloc < size)
-    _mpz_realloc (w, size);
+  wp = MPZ_REALLOC (w, size);
 
-  wp = w->_mp_d;
-  up = u->_mp_d;
+  up = PTR(u);
 
   MPN_COPY (wp, up, size);
-  w->_mp_size = usize;
+  SIZ(w) = usize;
 }

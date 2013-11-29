@@ -24,7 +24,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* Notice this is equivalent to mpz_set_f + mpz_fits_u*_p.  */
 
 int
-FUNCTION (mpf_srcptr f)
+FUNCTION (mpf_srcptr f) __GMP_NOTHROW
 {
   mp_size_t  fn;
   mp_srcptr  fp;

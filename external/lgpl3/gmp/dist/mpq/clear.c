@@ -23,8 +23,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpq_clear (MP_RAT *m)
 {
-  (*__gmp_free_func) (m->_mp_num._mp_d,
-		    m->_mp_num._mp_alloc * BYTES_PER_MP_LIMB);
-  (*__gmp_free_func) (m->_mp_den._mp_d,
-		    m->_mp_den._mp_alloc * BYTES_PER_MP_LIMB);
+  (*__gmp_free_func) (PTR(NUM(m)),
+		    ALLOC(NUM(m)) * BYTES_PER_MP_LIMB);
+  (*__gmp_free_func) (PTR(DEN(m)),
+		    ALLOC(DEN(m)) * BYTES_PER_MP_LIMB);
 }

@@ -21,19 +21,19 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 
-C                           cycles/limb
-C P5:
-C P6 model 0-8,10-12)
-C P6 model 9  (Banias)
+C			    cycles/limb
+C P5
+C P6 model 0-8,10-12
+C P6 model 9  (Banias)		 6.5
 C P6 model 13 (Dothan)
 C P4 model 0  (Willamette)
 C P4 model 1  (?)
 C P4 model 2  (Northwood)
 C P4 model 3  (Prescott)
 C P4 model 4  (Nocona)
-C K6:
-C K7:                            3.75
-C K8:
+C AMD K6
+C AMD K7			 3.75
+C AMD K8
 
 C TODO
 C  * Improve feed-in and wind-down code.  We beat the old code for all n != 1,

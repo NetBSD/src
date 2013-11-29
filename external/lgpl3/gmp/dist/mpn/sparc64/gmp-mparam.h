@@ -28,12 +28,11 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define MOD_1_NORM_THRESHOLD                 3
 #define MOD_1_UNNORM_THRESHOLD               3
 #define MOD_1N_TO_MOD_1_1_THRESHOLD      MP_SIZE_T_MAX  /* never */
-#define MOD_1U_TO_MOD_1_1_THRESHOLD      MP_SIZE_T_MAX
-#define MOD_1_1_TO_MOD_1_2_THRESHOLD     MP_SIZE_T_MAX
-#define MOD_1_2_TO_MOD_1_4_THRESHOLD     MP_SIZE_T_MAX
+#define MOD_1U_TO_MOD_1_1_THRESHOLD         22
+#define MOD_1_1_TO_MOD_1_2_THRESHOLD         0  /* never mpn_mod_1_1p */
+#define MOD_1_2_TO_MOD_1_4_THRESHOLD        27
 #define PREINV_MOD_1_TO_MOD_1_THRESHOLD  MP_SIZE_T_MAX  /* never */
 #define USE_PREINV_DIVREM_1                  1
-#define DIVREM_2_THRESHOLD                   7
 #define DIVEXACT_1_THRESHOLD                 0  /* always */
 #define BMOD_1_TO_MOD_1_THRESHOLD        MP_SIZE_T_MAX  /* never */
 

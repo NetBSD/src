@@ -2,20 +2,20 @@
 
 Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* Usage: t-printf [-s]
@@ -100,7 +100,7 @@ check_plain (va_alist)
     return;
 
   fmtsize = strlen (fmt_orig) + 1;
-  fmt = (*__gmp_allocate_func) (fmtsize);
+  fmt = (char *) (*__gmp_allocate_func) (fmtsize);
 
   for (p = fmt_orig, q = fmt; *p != '\0'; p++)
     {
@@ -296,7 +296,7 @@ check_obstack_vprintf (const char *want, const char *fmt, va_list ap)
 
   obstack_init (&ob);
   got_len = gmp_obstack_vprintf (&ob, fmt, ap);
-  got = obstack_base (&ob);
+  got = (char *) obstack_base (&ob);
   ob_len = obstack_object_size (&ob);
 
   if (got_len != want_len

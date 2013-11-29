@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -54,18 +54,24 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #endif
 #endif
 
+#if HAVE_NATIVE_mpn_sublsh2_n_ip1
+#define DO_mpn_sublsh2_n(dst,src,n,ws) mpn_sublsh2_n_ip1(dst,src,n)
+#else
+#define DO_mpn_sublsh2_n(dst,src,n,ws) DO_mpn_sublsh_n(dst,src,n,2,ws)
+#endif
+
 #if HAVE_NATIVE_mpn_sublsh_n
-#define DO_mpn_sublsh_n(dst,src,n,s,ws) mpn_sublsh_n (dst,src,n,s)
+#define DO_mpn_sublsh_n(dst,src,n,s,ws) mpn_sublsh_n (dst,dst,src,n,s)
 #else
 static mp_limb_t
 DO_mpn_sublsh_n (mp_ptr dst, mp_srcptr src, mp_size_t n, unsigned int s, mp_ptr ws)
 {
-#if USE_MUL_1
+#if USE_MUL_1 && 0
   return mpn_submul_1(dst,src,n,CNST_LIMB(1) <<(s));
 #else
   mp_limb_t __cy;
   __cy = mpn_lshift (ws,src,n,s);
-  return    __cy + mpn_sub_n (dst,dst,ws,n);
+  return __cy + mpn_sub_n (dst,dst,ws,n);
 #endif
 }
 #endif
@@ -146,7 +152,7 @@ mpn_toom_interpolate_8pts (mp_ptr pp, mp_size_t n,
 
   ASSERT_NOCARRY(mpn_divexact_by3 (r5, r5, 3 * n + 1));
 
-  ASSERT_NOCARRY(DO_mpn_sublsh_n (r5, r3, 3 * n + 1, 2, ws));
+  ASSERT_NOCARRY(DO_mpn_sublsh2_n (r5, r3, 3 * n + 1, ws));
 
   /* last interpolation steps... */
   /* ... are mixed with recomposition */
@@ -187,6 +193,9 @@ mpn_toom_interpolate_8pts (mp_ptr pp, mp_size_t n,
 
   cy = mpn_add_1 (pp + 6*n, r3 + n, n, pp[6*n]);
   MPN_INCR_U (r3 + 2*n, n + 1, cy);
-  cy = r3[3*n] + mpn_add_n (pp + 7*n, pp + 7*n, r3 + 2*n, n);
-  MPN_INCR_U (pp + 8*n, spt - n, cy);
+  cy = mpn_add_n (pp + 7*n, pp + 7*n, r3 + 2*n, n);
+  if (LIKELY(spt != n))
+    MPN_INCR_U (pp + 8*n, spt - n, cy + r3[3*n]);
+  else
+    ASSERT (r3[3*n] | cy == 0);
 }

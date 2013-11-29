@@ -27,7 +27,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* No need to parse '-' since that's handled as an operator.
    This function also by mpq_expr_a, so it's not static.  */
 size_t
-mpexpr_mpz_number (mpz_ptr res, __gmp_const char *e, size_t elen, int base)
+mpexpr_mpz_number (mpz_ptr res, const char *e, size_t elen, int base)
 {
   char    *edup;
   size_t  i, ret;
@@ -69,9 +69,9 @@ e_mpz_init (mpz_ptr z, unsigned long prec)
 }
 
 int
-mpz_expr_a (__gmp_const struct mpexpr_operator_t *table,
+mpz_expr_a (const struct mpexpr_operator_t *table,
             mpz_ptr res, int base,
-            __gmp_const char *e, size_t elen,
+            const char *e, size_t elen,
             mpz_srcptr var[26])
 {
   struct mpexpr_parse_t  p;
