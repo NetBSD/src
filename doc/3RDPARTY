@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1068 2013/11/28 22:36:52 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1069 2013/11/29 01:52:58 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,7 +41,7 @@
 
 Package:	acpica
 Version:	20110623
-Current Vers:	20120620
+Current Vers:	20131115
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
 Home Page:	http://www.acpica.org/
@@ -53,8 +53,8 @@ Notes:
 Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
-Version:	6.2a3
-Current Vers:	6.2a3
+Version:	6.2
+Current Vers:	6.2rc1
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
@@ -111,7 +111,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
 Version:	9.9.3-P2
-Current Vers:	9.9.3-P2
+Current Vers:	9.9.4-P1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -191,7 +191,7 @@ Notes:
 
 Package:	byacc
 Version:	20130304
-Current Vers:	20130304
+Current Vers:	20130925
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
@@ -313,7 +313,7 @@ The distribution doesn't include the Linux specific bits or build system.
 
 Package:	diffutils
 Version:	2.8.1
-Current Vers:	3.2
+Current Vers:	3.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
@@ -340,7 +340,7 @@ Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
 Version:	5.14
-Current Vers:	5.14
+Current Vers:	5.15
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
@@ -366,7 +366,7 @@ There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
 Version:	4.1.3-20080831/4.5.4
-Current Vers:	4.8.1
+Current Vers:	4.8.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -416,7 +416,7 @@ Only double-precision addressed at this time.
 
 Package:	gettext
 Version:	0.14.4
-Current Vers:	0.17
+Current Vers:	0.18
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
@@ -463,7 +463,7 @@ in src/usr.bin/grep, replacing FreeGrep
 
 Package:	groff
 Version:	1.19.2
-Current Vers:	1.21
+Current Vers:	1.22.2
 Maintainer:	Werner Lemberg/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Home Page:	http://www.gnu.org/software/groff/
@@ -477,7 +477,7 @@ for import.
 
 Package:	heimdal
 Version:	1.5pre1
-Current Vers:	1.5pre1
+Current Vers:	1.5.2
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Home Page:	http://www.pdc.kth.se/heimdal/
@@ -500,7 +500,7 @@ Notes:
 
 Package:	ipf
 Version:	5.1.1
-Current Vers:	5.1.1
+Current Vers:	5.1.2
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
@@ -624,7 +624,7 @@ Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	2.8.4
-Current Vers:	2.8.5 (legacy) / 3.0.3 (stable)
+Current Vers:	2.8.5 (legacy) / 3.0.4 (stable)
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/downloads
 Home Page: 	http://libarchive.github.com/
@@ -636,7 +636,7 @@ Distribution is stripped down to the relevant part.
 
 Package:	libdevmapper
 Version:	1.02.40
-Current Vers:	1.02.40
+Current Vers:	2.02.98
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
@@ -679,7 +679,7 @@ should test it before import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	1.3.0
-Current Vers:	1.4.0
+Current Vers:	1.5.1
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -748,7 +748,7 @@ Uses libc's ohash, and strtonum
 
 Package:	mDNSResponder
 Version:	212.1
-Current Vers:	258.14
+Current Vers:	541
 Maintainer:	Apple
 Archive Site:	http://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	http://developer.apple.com/opensource/internet/bonjour.html
@@ -761,7 +761,7 @@ Notes:
 
 Package:	mdocml
 Version:	1.12.1
-Current Vers:	1.12.1
+Current Vers:	1.12.2
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
@@ -829,7 +829,7 @@ Package:	ntp
 Version:	4.2.6p5
 Current Vers:	4.2.6p5
 Maintainer:	David L. Mills <mills@udel.edu>
-Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
+Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
 Mailing List:
 Responsible:	simonb, jonathan, kardel
@@ -853,7 +853,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.23
-Current Vers:	2.4.34
+Current Vers:	2.4.38
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
@@ -865,7 +865,7 @@ Notes:
 
 Package:	OpenPAM
 Version:	20120526 (Micrampelis)
-Current Vers:	20120526 (Micrampelis)
+Current Vers:	20130907 (Nummularia)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
@@ -890,7 +890,7 @@ Please submit all changes to the author.
 
 Package:	HPN-SSH
 Version:	6.1p1 13 v14
-Current Vers:	6.1p1 13 v14
+Current Vers:	6.3p1 v14
 Maintainer:	www.psc.edu
 Archive Site:	No direct link anymore, @#$#$ psc.
 Home Page:	http://www.psc.edu/index.php/hpn-ssh
@@ -1084,7 +1084,7 @@ using the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
-Current Vers:	5.8.1
+Current Vers:	5.9.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -1154,7 +1154,7 @@ original.
 
 Package:	sqlite
 Version:	pre-3.6.9 snapshot
-Current Vers:	3.8.0
+Current Vers:	3.8.1
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1166,7 +1166,7 @@ unnecessary local changes.
 
 Package:	tcpdump
 Version:	4.3.0
-Current Vers:	4.4.0
+Current Vers:	4.5.1
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1192,7 +1192,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.8
-Current Vers:	4.13
+Current Vers:	5.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
@@ -1294,7 +1294,7 @@ Notes:
 
 Package:	zlib
 Version:	1.2.3
-Current Vers:	1.2.7
+Current Vers:	1.2.8
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
@@ -1307,7 +1307,7 @@ Imported to src/common/dist/zlib and shared by the kernel and userland.
 
 Package:	services, protocols
 Version:	2013-02-21 (services), 2013-02-17 (protocols)
-Current Vers:	2013-02-21 (services), 2013-02-17 (protocols)
+Current Vers:	2013-11-27 (services), 2013-11-12 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
@@ -1332,7 +1332,7 @@ Notes:
 
 Package:	pigz
 Version:	2.1.6
-Current Vers:	2.1.6
+Current Vers:	2.3.1
 Maintainer:	Mark Adler <madler@alumni.caltech.edu>
 Archive Site:	http://zlib.net/pigz/
 Home Page:	http://zlib.net/pigz/
@@ -1344,7 +1344,7 @@ Notes:
 
 Package:	xz
 Version:	5.0.0
-Current Vers:	5.0.4
+Current Vers:	5.0.5 (stable) / 5.1.3alpha (devel)
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
