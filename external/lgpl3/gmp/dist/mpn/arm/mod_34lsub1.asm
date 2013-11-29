@@ -94,7 +94,10 @@ L(sum2):
 	add	r0, r0, r12, lsr #8
 
 	pop	{ r4, r5, r6, r7 }
-	bx	lr
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 
 L(le2):	cmn	n, #1
 	bne	L(1)
@@ -105,5 +108,8 @@ L(1):	ldr	r2, [ap]
 	bic	r0, r2, #0xff000000
 	add	r0, r0, r2, lsr #24
 	pop	{ r4, r5, r6, r7 }
-	bx	lr
+ifdef(`ARM_THUMB_MODE',
+`	bx	lr
+',`	mov	pc, lr
+')
 EPILOGUE()
