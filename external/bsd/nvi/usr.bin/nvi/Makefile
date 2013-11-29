@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/11/29 16:37:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2013/11/29 22:56:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,10 @@ USE_WIDECHAR?=yes
 
 CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 
-CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS -DUSE_BUNDLED_DB
+CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 #DBG=-g
 #CPPFLAGS+=-DLOGDEBUG -DTRACE
+#CPPFLAGS+=-DDBDEBUG -DTRACE
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
 #.if defined(HAVE_GCC)
@@ -31,14 +32,14 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	ex_write.c ex_yank.c ex_z.c exf.c getc.c gs.c \
 	ip_funcs.c ip_read.c ip_screen.c ip_term.c \
 	ip_run.c ip_send.c ip_trans.c ipc_cmd.c ipc_method.c \
-	key.c log1.c trace.c \
+	key.c trace.c \
 	main.c mark.c msg.c nothread.c options.c options_f.c put.c recover.c \
 	screen.c search.c seq.c util.c v_at.c v_ch.c v_cmd.c v_delete.c \
 	v_event.c v_ex.c v_increment.c v_init.c v_itxt.c v_left.c v_mark.c \
 	v_match.c v_paragraph.c v_put.c v_redraw.c v_replace.c v_right.c \
 	v_screen.c v_scroll.c v_search.c v_section.c v_sentence.c v_status.c \
 	v_txt.c v_ulcase.c v_undo.c v_util.c v_word.c v_xchar.c v_yank.c \
-	v_z.c v_zexit.c vi.c vi_db1.c vs_line.c vs_msg.c vs_refresh.c \
+	v_z.c v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c \
 	vs_relative.c vs_smap.c vs_split.c
 
 # For wide char support
@@ -46,6 +47,14 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
 CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE -DUSE_WIDECHAR
 .endif
+
+# For db3 db1 emulation
+#SRCS+=db1.c log.c vi_db.c
+#CPPFLAGS+=-DUSE_DB1
+
+# For built-in db1 emulation
+SRCS+=vi_db1.c log1.c
+CPPFLAGS+=-DUSE_BUNDLED_DB
 
 LINKS=	${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 MLINKS=	vi.1 ex.1 vi.1 view.1
