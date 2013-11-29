@@ -1,4 +1,4 @@
-/* $Id: port.h,v 1.1 2013/11/22 16:00:45 christos Exp $ (Berkeley) $Date: 2013/11/22 16:00:45 $ */
+/* $Id: port.h,v 1.2 2013/11/29 22:56:19 christos Exp $ (Berkeley) $Date: 2013/11/29 22:56:19 $ */
 
 /*
  * Declare the basic types, if they aren't already declared.  Named and
@@ -121,6 +121,7 @@
 #define	MIN(_a,_b)	((_a)<(_b)?(_a):(_b))
 #endif
 
+#ifndef USE_DB1
 /*
  * XXX
  * "DB" isn't always portable, and we want the private information.
@@ -128,6 +129,7 @@
 #define DB      L__DB
 #undef	pgno_t			/* IRIX has its own version. */
 #define	pgno_t	L__db_pgno_t
+#endif
 
 /*
  * XXX

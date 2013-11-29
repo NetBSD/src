@@ -231,9 +231,6 @@
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 /* #undef TM_IN_SYS_TIME */
 
-/* Define when using bundled db. */
-#define USE_BUNDLED_DB 1
-
 /* Define when using db4 logging. */
 /* #undef USE_DB4_LOGGING */
 
