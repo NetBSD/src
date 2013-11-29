@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2012/11/15 19:49:12 jkunz Exp $
+# $NetBSD: Makefile.inc,v 1.2 2013/11/29 23:02:49 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,9 @@ CPPFLAGS+=	-I${DIST}/elftosb2
 CPPFLAGS+=	-DLinux
 
 CWARNFLAGS+=	-Wno-multichar
+CWARNFLAGS.clang+=	-Wno-switch -Wno-error=delete-non-virtual-dtor \
+			-Wno-bitwise-op-parentheses -Wno-parentheses \
+			-Wno-tautological-compare
 
 LIBISCXX=	yes
 
