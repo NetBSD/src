@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1070 2013/11/29 08:53:14 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1071 2013/11/29 09:17:38 aymeric Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -841,13 +841,13 @@ See /usr/src/dist/ntp/ntp2netbsd for update instructions.
 Package:	nvi
 Version:	1.81.6, HEAD as of 2013-11-20
 Current Vers:	1.81.6
-Maintainer:	Keith Bostic <bostic@bsdi.com>
+Maintainer:	Sven Verdoolaege <skimo@kotnet.org>, Keith Bostic
 Archive Site:	git://repo.or.cz/nvi.git, ftp://ftp.bostic.com/pub/
 Home Page:	https://repo.or.cz/w/nvi.git http://www.bostic.com/vi/
 Mailing List:
-Responsible:	aymeric, christos
+Responsible:	christos
 License:	BSD (3/4-clause)
-Location:	dist/nvi
+Location:	external/bsd/nvi/dist
 Notes:
 We have lots of local fixes.
 
