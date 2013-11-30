@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.3 2013/11/27 21:17:36 christos Exp $ */
+/*	$NetBSD: recover.c,v 1.4 2013/11/30 14:54:29 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -260,7 +260,15 @@ rcv_sync(SCR *sp, u_int flags)
 
 	/* Sync the file if it's been modified. */
 	if (F_ISSET(ep, F_MODIFIED)) {
-		if (ep->db->sync(ep->db, 0)) {
+		/*
+		 * If we are using a db1 version of the database,
+		 * we want to sync the underlying btree not the
+		 * recno tree which is transient anyway.
+		 */
+#ifndef R_RECNOSYNC
+#define	R_RECNOSYNC 0
+#endif
+		if (ep->db->sync(ep->db, R_RECNOSYNC)) {
 			F_CLR(ep, F_RCV_ON | F_RCV_NORM);
 			msgq_str(sp, M_SYSERR,
 			    ep->rcv_path, "060|File backup failed: %s");

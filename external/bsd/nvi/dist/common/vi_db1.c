@@ -685,10 +685,19 @@ db_init(SCR *sp, EXF *ep, char *rcv_name, char *oname, size_t psize, int *open_e
 
 	memset(&oinfo, 0, sizeof(RECNOINFO));
 	oinfo.bval = '\n';			/* Always set. */
-	oinfo.psize = psize;
-	oinfo.flags = R_SNAPSHOT;
-	if (rcv_name)
-		oinfo.bfname = ep->rcv_path;
+	/*
+	 * If we are not recovering, set the pagesize and arrange to
+	 * first get a snapshot of the file.
+	 */
+	if (rcv_name == NULL) {
+		oinfo.psize = psize;
+		oinfo.flags = R_SNAPSHOT;
+	}
+	/*
+	 * Always set the btree name, otherwise we are going to be using
+	 * an in-memory database for the btree.
+	 */
+	oinfo.bfname = ep->rcv_path;
 
 #define _DB_OPEN_MODE	S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 
@@ -709,6 +718,12 @@ db_init(SCR *sp, EXF *ep, char *rcv_name, char *oname, size_t psize, int *open_e
 
 		*open_err = 1;
 		return 1;
+	} else {
+		/*
+		 * We always sync the underlying btree so that the header
+		 * is written first
+		 */
+		ep->db->sync(ep->db, R_RECNOSYNC);
 	}
 
 	return 0;
