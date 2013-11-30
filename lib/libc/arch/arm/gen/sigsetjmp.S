@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.7 2013/09/03 00:30:19 matt Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.8 2013/11/30 20:20:42 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -78,14 +78,14 @@ ENTRY(__siglongjmp14)
 #ifdef __thumb__
 	it	eq
 #endif
-	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
-	b	PIC_SYM(_C_LABEL(__longjmp14), PLT)
+	beq	PLT_SYM(_C_LABEL(_longjmp))
+	b	PLT_SYM(_C_LABEL(__longjmp14))
 #else
 	push	{r3, lr}
 	beq	11f
-	bl	PIC_SYM(_C_LABEL(__longjmp14), PLT)
+	bl	PLT_SYM(_C_LABEL(__longjmp14))
 	pop	{r3, pc}
-11:	bl	PIC_SYM(_C_LABEL(_longjmp), PLT)
+11:	bl	PLT_SYM(_C_LABEL(_longjmp))
 	pop	{r3, pc}
 #endif
 
