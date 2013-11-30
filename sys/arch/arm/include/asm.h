@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.24 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.25 2013/11/30 20:11:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -116,7 +116,7 @@
 
 #ifdef __PIC__
 #define	REL_SYM(a, b)	((a) - (b))
-#define	PLT_SYM(x)	PIC_SYM(x, PLT)
+#define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	PIC_SYM(x, GOT)
 #define	GOT_GET(x,got,sym)	\
 	ldr	x, sym;		\
