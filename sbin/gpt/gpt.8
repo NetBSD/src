@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.20 2013/11/22 03:51:06 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.21 2013/11/30 19:43:53 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd November 21, 2013
+.Dd November 30, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -333,25 +333,32 @@ If the
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
 .\" ==== show ====
-.It Nm Ic show Oo Fl lu Oc Ar device ...
+.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Ar device ...
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
 an overall view of the disk contents.
 With the
+.Fl g
+option the GPT partition GUID will be displayed instead of the GPT partition
+type.
+With the
 .Fl l
 option the GPT partition label will be displayed instead of the GPT partition
 type.
-The option has no effect on non-GPT partitions.
 With the
 .Fl u
 option the GPT partition type is displayed as an UUID instead of in a
 user friendly form.
-The
-.Fl l
-option takes precedence over the
-.Fl u
-option.
+With the
+.Fl i
+option, all the details of a particular GPT partition will be displayed.
+None of the options have any effect on non-GPT partitions.
+The order of precedence for the options are:
+.Fl i ,
+.Fl l ,
+.Fl g ,
+.Fl u .
 .El
 .Sh EXAMPLES
 .Bd -literal
