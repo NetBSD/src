@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_fetch_and_sub_8.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: sync_fetch_and_sub_8.S,v 1.2 2013/11/30 21:09:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,10 +40,10 @@ ENTRY_NP(__sync_fetch_and_sub_8)
 	mov	r3, r2
 	mov	r2, r1
 #endif
-1:	ldrexd	r0, [ip]		/* load old value */
+1:	ldrexd	r0, r1, [ip]		/* load old value */
 	subs	TLO, LO, NLO		/* calculate new value */
 	sbcs	THI, HI, NHI		/* calculate new value */
-	strexd	r6, r4, [ip]		/* try to store */
+	strexd	r6, r4, r5, [ip]	/* try to store */
 	cmp	r6, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
