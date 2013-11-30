@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2010/02/11 09:06:47 roy Exp $
+#	$NetBSD: list,v 1.25 2013/11/30 08:27:17 nakayama Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -11,7 +11,7 @@ PROG	usr/sbin/loadkmap
 
 # crunchgen source directory specials
 SPECIAL	loadkmap	srcdir sys/arch/amiga/stand/loadkmap
-SPECIAL	vi		srcdir usr.bin/nvi/build
+SPECIAL	vi		srcdir external/bsd/nvi/usr.bin/nvi
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
