@@ -29,10 +29,11 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: fabs.S,v 1.1 2013/02/03 07:14:41 matt Exp $")
+RCSID("$NetBSD: fabs.S,v 1.2 2013/11/30 22:39:04 joerg Exp $")
 
 	.fpu	vfp
 
+ENTRY(fabsl)
 ENTRY(fabs)
 	vabs.f64	d0, d0
 	RET
