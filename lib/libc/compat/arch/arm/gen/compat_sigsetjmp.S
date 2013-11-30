@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetjmp.S,v 1.2 2013/08/19 22:11:50 matt Exp $	*/
+/*	$NetBSD: compat_sigsetjmp.S,v 1.3 2013/11/30 20:54:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -72,8 +72,8 @@ ENTRY(siglongjmp)
 #if defined(__thumb__)
 	it	eq
 #endif
-	beq	PIC_SYM(_C_LABEL(_longjmp), PLT)
-	b	PIC_SYM(_C_LABEL(longjmp), PLT)
+	beq	PLT_SYM(_C_LABEL(_longjmp))
+	b	PLT_SYM(_C_LABEL(longjmp))
 #else
 	push	{lr}
 	sub	sp, sp, #4
