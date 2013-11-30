@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.12 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13 2013/11/30 20:20:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,7 @@ ENTRY_NP(CERROR)
 	.cfi_offset 4, -8
 #endif
 	mov	r4, r0
-	bl	PIC_SYM(_C_LABEL(__errno), PLT)
+	bl	PLT_SYM(_C_LABEL(__errno))
 	str	r4, [r0]
 #ifdef __thumb__
 	movs	r0, #0
