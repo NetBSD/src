@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_64.S,v 1.8 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_and_64.S,v 1.9 2013/11/30 21:09:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,10 +39,10 @@ ENTRY_NP(_atomic_and_64_nv)
 	mov	r2, r1
 #endif
 	mov	ip, r0			/* need r0 for return value */
-1:	ldrexd	r0, [ip]		/* load old value */
+1:	ldrexd	r0, r1, [ip]		/* load old value */
 	ands	r0, r0, r2		/* calculate new value */
 	ands	r1, r1, r3		/* calculate new value */
-	strexd	r4, r0, [ip]		/* try to store */
+	strexd	r4, r0, r1, [ip]	/* try to store */
 	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
