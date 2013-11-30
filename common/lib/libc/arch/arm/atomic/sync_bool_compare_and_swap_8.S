@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_bool_compare_and_swap_8.S,v 1.1 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: sync_bool_compare_and_swap_8.S,v 1.2 2013/11/30 21:09:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@ ENTRY_NP(__sync_bool_compare_and_swap_8)
 	mov	ip, r0			/* we need r0 for return value */
 	movs	r0, #0			/* assume failure */
 #ifdef __ARM_EABI__
-	ldrd	r4, [sp]		/* fetch new value from stack */
+	ldrd	r4, r5, [sp]		/* fetch new value from stack */
 #else
 	ldr	r4, [sp, #0]		/* fetch new value from stack */
 	ldr	r5, [sp, #4]		/* fetch new value from stack */
@@ -48,7 +48,7 @@ ENTRY_NP(__sync_bool_compare_and_swap_8)
 	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
 1:
-	ldrexd	r6, [ip]		/* load current value */
+	ldrexd	r6, r7, [ip]		/* load current value */
 	cmp	r6, r2			/*   compare to old? 1st half */
 #ifdef __thumb__
 	bne	2f			/*     jump to return if different */
@@ -57,7 +57,7 @@ ENTRY_NP(__sync_bool_compare_and_swap_8)
 	cmpeq	r7, r3			/*   compare to old? 2nd half */
 #endif
 	bne	2f			/*     jump to return if different */
-	strexd	r0, r4, [ip]		/* store new value */
+	strexd	r0, r4, r5, [ip]	/* store new value */
 	cmp	r0, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
 	movs	r0, #1			/* indicate success */
