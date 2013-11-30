@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.8 2013/09/03 00:30:19 matt Exp $ */
+/* $NetBSD: __clone.S,v 1.9 2013/11/30 20:20:42 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -109,7 +109,7 @@ ENTRY(__clone)
 	RETr(r1)
 #endif
 	/* call _exit with the returned value */
-	bl	PIC_SYM(_C_LABEL(_exit), PLT)
+	bl	PLT_SYM(_C_LABEL(_exit))
 
 	/* NOTREACHED */
 

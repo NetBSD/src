@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.16 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.17 2013/11/30 20:20:42 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -64,7 +64,7 @@ ENTRY(__setjmp14)
 #endif
 	movs	r1, #0
 	movs	r0, #0
-	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	pop	{r0-r2, lr}
 #else
@@ -152,7 +152,7 @@ ENTRY(__longjmp14)
 	adds	r1, r1, #(_JB_SIGMASK * 4)
 #endif
 	movs	r0, #3				/* SIG_SETMASK */
-	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	pop	{r0-r2, lr}
 #else
@@ -218,8 +218,8 @@ ENTRY(__longjmp14)
 
 	/* validation failed, die die die. */
 .Lbotch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
 1:	b	1b		/* Cannot get here */
 
 	.align	0

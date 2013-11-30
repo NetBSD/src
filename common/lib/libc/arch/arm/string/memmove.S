@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.6 2013/08/19 02:37:12 matt Exp $	*/
+/*	$NetBSD: memmove.S,v 1.7 2013/11/30 20:20:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ ENTRY(bcopy)
 	subhs	r3, r0, r1	/* if (dst > src) r3 = dst - src */
 	sublo	r3, r1, r0	/* if (src > dst) r3 = src - dst */
 	cmp	r3, r2		/* if (r3 >= len) we have an overlap */
-	bhs	PIC_SYM(_C_LABEL(memcpy), PLT)
+	bhs	PLT_SYM(_C_LABEL(memcpy))
 
 	/* Determine copy direction */
 	cmp	r1, r0
