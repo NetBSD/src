@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2013/11/29 14:51:36 martin Exp $
+#	$NetBSD: Makefile,v 1.20 2013/11/30 23:45:05 wiz Exp $
 
 .include <bsd.init.mk>
 
@@ -244,4 +244,4 @@ COPTS += -marm
 NOGCCERROR=yes
 .endif
 
-CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare -Wno-parentheses
