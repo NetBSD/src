@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.4 2013/11/08 22:42:52 matt Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.5 2013/11/30 21:09:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@ ENTRY_NP(_atomic_cas_64)
 	push	{r4, r5, r6}		/* save temporaries */
 	mov	ip, r0			/* we need r0 for return value */
 #ifdef __ARM_EABI__
-	ldrd	r4, [sp]		/* fetch new value */
+	ldrd	r4, r5, [sp]		/* fetch new value */
 #else
 	ldr	r4, [sp, #0]		/* fetch new value */
 	ldr	r5, [sp, #4]		/* fetch new value */
@@ -47,7 +47,7 @@ ENTRY_NP(_atomic_cas_64)
 	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
 1:
-	ldrexd	r0, [ip]		/* load current value */
+	ldrexd	r0, r1, [ip]		/* load current value */
 	cmp	r0, r2			/*   compare to old? 1st half */
 #ifdef __thumb__
 	bne	2f			/*     jump to return if different */
@@ -56,7 +56,7 @@ ENTRY_NP(_atomic_cas_64)
 	cmpeq	r1, r3			/*   compare to old? 2nd half */
 #endif
 	bne	2f			/*     jump to return if different */
-	strexd	r6, r4, [ip]		/* store new value */
+	strexd	r6, r4, r5, [ip]	/* store new value */
 	cmp	r6, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
 #ifdef _ARM_ARCH_7

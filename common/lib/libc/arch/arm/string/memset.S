@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.5 2013/08/19 06:23:59 matt Exp $	*/
+/*	$NetBSD: memset.S,v 1.6 2013/11/30 21:09:11 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -128,22 +128,22 @@ ENTRY(memset)
 .Lmemset_loop128:
 	subs	r1, r1, #0x80
 #ifdef _ARM_ARCH_DWORD_OK
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
 	stmiage	ip!, {r2-r3}
 	stmiage	ip!, {r2-r3}
@@ -171,10 +171,10 @@ ENTRY(memset)
 .Lmemset_loop32:
 	subs	r1, r1, #0x20
 #ifdef _ARM_ARCH_DWORD_OK
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
 	stmiage	ip!, {r2-r3}
 	stmiage	ip!, {r2-r3}
@@ -188,8 +188,8 @@ ENTRY(memset)
 
 	/* Deal with 16 bytes or more */
 #ifdef _ARM_ARCH_DWORD_OK
-	strdge	r2, [ip], #0x08
-	strdge	r2, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
+	strdge	r2, r3, [ip], #0x08
 #else
 	stmiage	ip!, {r2-r3}
 	stmiage	ip!, {r2-r3}

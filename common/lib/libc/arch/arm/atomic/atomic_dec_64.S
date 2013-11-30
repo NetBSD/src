@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64.S,v 1.6 2013/08/11 04:41:17 matt Exp $	*/
+/*	$NetBSD: atomic_dec_64.S,v 1.7 2013/11/30 21:09:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,10 @@
 
 ENTRY_NP(_atomic_dec_64_nv)
 	mov	ip, r0			/* need r0 for return value */
-1:	ldrexd	r0, [ip]		/* load old value */
+1:	ldrexd	r0, r1, [ip]		/* load old value */
 	subs	LO, LO, #1		/* calculate new value */
 	sbcs	HI, HI, #0		/* calculate new value */
-	strexd	r2, r0, [ip]		/* try to store */
+	strexd	r2, r0, r1, [ip]	/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
