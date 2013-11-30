@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/11/29 22:56:19 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2013/11/30 14:52:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -82,7 +82,12 @@ CLEANFILES+=${i}_extern.h
 _${i}_SRCS != echo ${DIST}/${i}/*.c ${DIST}/${i}/*.xs
 ${i}_extern.h: ${SRCS}
 	${_MKTARGET_CREATE}
-	${TOOL_SED} -n "s/^ \* PUBLIC: \(.*\)/\1/p" ${.ALLSRC:M*/$i/*} > ${.TARGET}
+	@${TOOL_SED} -n "s/^ \* PUBLIC: \(.*\)/\1/p" ${.ALLSRC:M*/$i/*} > ${.TARGET}.tmp
+	@if cmp -s ${.TARGET}.tmp ${.TARGET}; then \
+		rm -f ${.TARGET}.tmp; \
+	else \
+		mv -f ${.TARGET}.tmp ${.TARGET}; \
+	fi
 .endfor
 
 DPSRCS+=version.h
