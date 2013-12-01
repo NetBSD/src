@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.1.1.4 2013/12/01 19:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.7 2012/01/24 19:02:02 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.9 2013/11/19 20:45:50 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.1.1.3 2012/02/22 17:48:23 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.1.1.4 2013/12/01 19:28:16 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -78,13 +78,17 @@ file_encoding(struct magic_set *ms, const unsigned char *buf, size_t nbytes, uni
 	unsigned char *nbuf = NULL;
 
 	*type = "text";
-	mlen = (nbytes + 1) * sizeof(nbuf[0]);
-	if ((nbuf = CAST(unsigned char *, calloc((size_t)1, mlen))) == NULL) {
+	*ulen = 0;
+	*code = "unknown";
+	*code_mime = "binary";
+
+	mlen = (nbytes + 1) * sizeof((*ubuf)[0]);
+	if ((*ubuf = CAST(unichar *, calloc((size_t)1, mlen))) == NULL) {
 		file_oomem(ms, mlen);
 		goto done;
 	}
-	mlen = (nbytes + 1) * sizeof((*ubuf)[0]);
-	if ((*ubuf = CAST(unichar *, calloc((size_t)1, mlen))) == NULL) {
+	mlen = (nbytes + 1) * sizeof(nbuf[0]);
+	if ((nbuf = CAST(unsigned char *, calloc((size_t)1, mlen))) == NULL) {
 		file_oomem(ms, mlen);
 		goto done;
 	}
