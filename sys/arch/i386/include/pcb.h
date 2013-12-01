@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.49 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: pcb.h,v 1.50 2013/12/01 01:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ struct pcb {
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	char	*pcb_iomap;		/* I/O permission bitmap */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.73 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.74 2013/12/01 01:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.73 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.74 2013/12/01 01:05:16 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.73 2013/10/23 20:18:50 drochne
 #ifdef VM86
 #include <machine/vm86.h>
 #endif
-
-extern const pcu_ops_t fpu_ops;
 
 static inline struct trapframe *
 process_frame(struct lwp *l)
@@ -248,9 +246,9 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	union savefpu *frame = process_fpframe(l);
 
-	if (pcu_used_p(&fpu_ops)) {
+	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
-		pcu_save(&fpu_ops);
+		npxsave_lwp(l, true);
 #endif
 	} else {
 		/*
@@ -276,6 +274,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 			frame->sv_87.sv_env.en_sw = 0x0000;
 			frame->sv_87.sv_env.en_tw = 0xffff;
 		}
+		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	if (i386_use_fxsave) {
@@ -350,7 +349,13 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 	union savefpu *frame = process_fpframe(l);
 
-	pcu_discard(&fpu_ops, true);
+	if (l->l_md.md_flags & MDL_USEDFPU) {
+#if NNPX > 0
+		npxsave_lwp(l, false);
+#endif
+	} else {
+		l->l_md.md_flags |= MDL_USEDFPU;
+	}
 
 	if (i386_use_fxsave) {
 		struct save87 s87;
@@ -395,9 +400,13 @@ process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 	if (i386_use_fxsave == 0)
 		return (EINVAL);
 
-	if (pcu_used_p(&fpu_ops)) {
+	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
-		pcu_save(&fpu_ops);
+		struct pcb *pcb = lwp_getpcb(l);
+
+		if (pcb->pcb_fpcpu != NULL) {
+			npxsave_lwp(l, true);
+		}
 #endif
 	} else {
 		/*
@@ -414,6 +423,8 @@ process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 		frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
 		frame->sv_xmm.sv_env.en_sw = 0x0000;
 		frame->sv_xmm.sv_env.en_tw = 0x00;
+
+		l->l_md.md_flags |= MDL_USEDFPU;  
 	}
 
 	memcpy(regs, &frame->sv_xmm, sizeof(*regs));
@@ -428,8 +439,18 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 	if (i386_use_fxsave == 0)
 		return (EINVAL);
 
-	pcu_save(&fpu_ops); /* keep i387 regs */
-	pcu_discard(&fpu_ops, true);
+	if (l->l_md.md_flags & MDL_USEDFPU) {
+#if NNPX > 0
+		struct pcb *pcb = lwp_getpcb(l);
+
+		/* If we were using the FPU, drop it. */
+		if (pcb->pcb_fpcpu != NULL) {
+			npxsave_lwp(l, false);
+		}
+#endif
+	} else {
+		l->l_md.md_flags |= MDL_USEDFPU;
+	}
 
 	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
 	return (0);

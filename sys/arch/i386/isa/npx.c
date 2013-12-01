@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.145 2013/11/08 02:24:11 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.146 2013/12/01 01:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.145 2013/11/08 02:24:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.146 2013/12/01 01:05:16 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -374,7 +374,7 @@ int
 npxintr(void *arg, struct intrframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-	struct lwp *l = curlwp;
+	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
 	struct pcb *pcb;
 	ksiginfo_t ksi;
@@ -540,33 +540,73 @@ x86fpflags_to_ksiginfo(uint32_t flags)
 	return(0);
 }
 
-extern const pcu_ops_t fpu_ops;
-
 /*
  * Implement device not available (DNA) exception
+ *
+ * If we were the last lwp to use the FPU, we can simply return.
+ * Otherwise, we save the previous state, if necessary, and restore
+ * our last saved state.
  */
 static int
 npxdna(struct cpu_info *ci)
 {
+	struct lwp *l, *fl;
+	struct pcb *pcb;
+	int s;
 
+	if (ci->ci_fpsaving) {
+		/* Recursive trap. */
+		return 1;
+	}
+
+	/* Lock out IPIs and disable preemption. */
+	s = splhigh();
 #ifndef XEN
 	x86_enable_intr();
 #endif
-	pcu_load(&fpu_ops);
-	return 1;
-}
+	/* Save state on current CPU. */
+	l = ci->ci_curlwp;
+	pcb = lwp_getpcb(l);
 
-static void
-npx_state_load(struct lwp *l, u_int flags)
-{
-	struct pcb * const pcb = lwp_getpcb(l);
+	fl = ci->ci_fpcurlwp;
+	if (fl != NULL) {
+		/*
+		 * It seems we can get here on Xen even if we didn't
+		 * switch lwp.  In this case do nothing
+		 */
+		if (fl == l) {
+			KASSERT(pcb->pcb_fpcpu == ci);
+			ci->ci_fpused = 1;
+			clts();
+			splx(s);
+			return 1;
+		}
+		KASSERT(fl != l);
+		npxsave_cpu(true);
+		KASSERT(ci->ci_fpcurlwp == NULL);
+	}
 
+	/* Save our state if on a remote CPU. */
+	if (pcb->pcb_fpcpu != NULL) {
+		/* Explicitly disable preemption before dropping spl. */
+		KPREEMPT_DISABLE(l);
+		splx(s);
+		npxsave_lwp(l, true);
+		KASSERT(pcb->pcb_fpcpu == NULL);
+		s = splhigh();
+		KPREEMPT_ENABLE(l);
+	}
+
+	/*
+	 * Restore state on this CPU, or initialize.  Ensure that
+	 * the entire update is atomic with respect to FPU-sync IPIs.
+	 */
 	clts();
-	pcb->pcb_cr0 &= ~CR0_TS;
-	if (!(flags & PCU_RELOAD))
-		return;
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	ci->ci_fpused = 1;
 
-	if (!(flags & PCU_LOADED)) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
 		if (i386_use_fxsave) {
 			fldcw(&pcb->pcb_savefpu.
@@ -575,6 +615,7 @@ npx_state_load(struct lwp *l, u_int flags)
 			fldcw(&pcb->pcb_savefpu.
 			    sv_87.sv_env.en_cw);
 		}
+		l->l_md.md_flags |= MDL_USEDFPU;
 	} else if (i386_use_fxsave) {
 		/*
 		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
@@ -600,51 +641,107 @@ npx_state_load(struct lwp *l, u_int flags)
 	} else {
 		frstor(&pcb->pcb_savefpu.sv_87);
 	}
+
+	KASSERT(ci == curcpu());
+	splx(s);
+	return 1;
 }
 
-static void
-npx_state_save(struct lwp *l, u_int flags)
+/*
+ * Save current CPU's FPU state.  Must be called at IPL_HIGH.
+ */
+void
+npxsave_cpu(bool save)
 {
 	struct cpu_info *ci;
-	struct pcb * const pcb = lwp_getpcb(l);
+	struct lwp *l;
+	struct pcb *pcb;
+
+	KASSERT(curcpu()->ci_ilevel == IPL_HIGH);
 
 	ci = curcpu();
+	l = ci->ci_fpcurlwp;
+	if (l == NULL)
+		return;
 
-	/*
-	 * Set ci->ci_fpsaving, so that any pending exception will
-	 * be thrown away.  It will be caught again if/when the
-	 * FPU state is restored.
-	 */
-	KASSERT(ci->ci_fpsaving == 0);
-	clts();
-	ci->ci_fpsaving = 1;
-	if (i386_use_fxsave) {
-		fxsave(&pcb->pcb_savefpu.sv_xmm);
-	} else {
-		fnsave(&pcb->pcb_savefpu.sv_87);
+	pcb = lwp_getpcb(l);
+
+	if (save) {
+		 /*
+		  * Set ci->ci_fpsaving, so that any pending exception will
+		  * be thrown away.  It will be caught again if/when the
+		  * FPU state is restored.
+		  */
+		KASSERT(ci->ci_fpsaving == 0);
+		clts();
+		ci->ci_fpsaving = 1;
+		if (i386_use_fxsave) {
+			fxsave(&pcb->pcb_savefpu.sv_xmm);
+		} else {
+			fnsave(&pcb->pcb_savefpu.sv_87);
+		}
+		ci->ci_fpsaving = 0;
 	}
-	ci->ci_fpsaving = 0;
-}
 
-static void
-npx_state_release(struct lwp *l, u_int flags)
-{
-	struct pcb * const pcb = lwp_getpcb(l);
-	
 	stts();
-	pcb->pcb_cr0 |= CR0_TS;
+	pcb->pcb_fpcpu = NULL;
+	ci->ci_fpcurlwp = NULL;
+	ci->ci_fpused = 1;
 }
 
-const pcu_ops_t fpu_ops = {
-	.pcu_id = PCU_FPU,
-	.pcu_state_load = npx_state_load,
-	.pcu_state_save = npx_state_save,
-	.pcu_state_release = npx_state_release,
-};
+/*
+ * Save l's FPU state, which may be on this processor or another processor.
+ * It may take some time, so we avoid disabling preemption where possible.
+ * Caller must know that the target LWP is stopped, otherwise this routine
+ * may race against it.
+ */
+void
+npxsave_lwp(struct lwp *l, bool save)
+{
+	struct cpu_info *oci;
+	struct pcb *pcb;
+	int s, spins, ticks;
 
-const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-	[PCU_FPU] = &fpu_ops,
-};
+	spins = 0;
+	ticks = hardclock_ticks;
+	for (;;) {
+		s = splhigh();
+		pcb = lwp_getpcb(l);
+		oci = pcb->pcb_fpcpu;
+		if (oci == NULL) {
+			splx(s);
+			break;
+		}
+		if (oci == curcpu()) {
+			KASSERT(oci->ci_fpcurlwp == l);
+			npxsave_cpu(save);
+			splx(s);
+			break;
+		}
+		splx(s);
+#ifdef XEN
+		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
+			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
+			    cpu_name(oci));
+		}
+#else /* XEN */
+		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
+		while (pcb->pcb_fpcpu == oci &&
+		    ticks == hardclock_ticks) {
+			x86_pause();
+			spins++;
+		}
+		if (spins > 100000000) {
+			panic("npxsave_lwp: did not");
+		}
+	}
+
+	if (!save) {
+		/* Ensure we restart with a clean slate. */
+	 	l->l_md.md_flags &= ~MDL_USEDFPU;
+	}
+}
 
 /* 
  * The following mechanism is used to ensure that the FPE_... value
@@ -847,20 +944,16 @@ int
 npxtrap(struct lwp *l)
 {
 	u_short control, status;
-#if 0
 	struct cpu_info *ci = curcpu();
 	struct lwp *fl = ci->ci_fpcurlwp;
-#endif
-	struct pcb *pcb = lwp_getpcb(l);
 
 	if (!i386_fpu_present) {
-		printf("%s: curthread = %p, npx_type = %d\n",
-		    __func__, l, npx_type);
+		printf("%s: fpcurthread = %p, curthread = %p, npx_type = %d\n",
+		    __func__, fl, l, npx_type);
 		panic("npxtrap from nowhere");
 	}
 	kpreempt_disable();
 
-#if 0
 	/*
 	 * Interrupt handling (for another interrupt) may have pushed the
 	 * state to memory.  Fetch the relevant parts of the state from
@@ -877,15 +970,6 @@ npxtrap(struct lwp *l)
 
 	if (fl == l)
 		fnclex();
-#else
-	if (i386_use_fxsave) {
-		fxsave(&pcb->pcb_savefpu.sv_xmm);
-	} else {
-		fnsave(&pcb->pcb_savefpu.sv_87);
-	}
-	control = GET_FPU_CW(pcb);
-	status = GET_FPU_SW(pcb);
-#endif
 	kpreempt_enable();
 	return fpetable[status & ((~control & 0x3f) | 0x40)];
 }

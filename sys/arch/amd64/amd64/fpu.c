@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.42 2013/10/27 16:25:01 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.43 2013/12/01 01:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -95,13 +95,24 @@
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
 
+/*
+ * XXXfvdl update copyright notice. this started out as a stripped isa/npx.c
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.42 2013/10/27 16:25:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.43 2013/12/01 01:05:16 christos Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/file.h>
 #include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/device.h>
+#include <sys/vmmeter.h>
 #include <sys/kernel.h>
 
 #include <sys/bus.h>
@@ -175,6 +186,11 @@ fputrap(struct trapframe *frame)
 	KPREEMPT_DISABLE(l);
 	x86_enable_intr();
 
+	/*
+	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
+	 * should be set, and we should have gotten a DNA exception.
+	 */
+	KASSERT(l == curlwp);
 	fxsave(sfp);
 	pcb->pcb_savefpu_i387.fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	pcb->pcb_savefpu_i387.fp_ex_sw = sfp->fp_fxsave.fx_fsw;
@@ -233,34 +249,70 @@ x86fpflags_to_ksiginfo(uint32_t flags)
  * Otherwise, we save the previous state, if necessary, and restore
  * our last saved state.
  */
-
-extern const pcu_ops_t fpu_ops;
-
 void
 fpudna(struct cpu_info *ci)
 {
-	pcu_load(&fpu_ops);
-}
+	uint16_t cw;
+	uint32_t mxcsr;
+	struct lwp *l, *fl;
+	struct pcb *pcb;
+	int s;
 
-static void
-fpu_state_load(struct lwp *l, u_int flags)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	clts();
-	pcb->pcb_cr0 &= ~CR0_TS;
-	if ((flags & PCU_RELOAD) == 0)
+	if (ci->ci_fpsaving) {
+		/* Recursive trap. */
+		x86_enable_intr();
 		return;
+	}
 
-	if ((flags & PCU_LOADED) == 0) {
-		uint32_t mxcsr;
-		uint16_t cw;
+	/* Lock out IPIs and disable preemption. */
+	s = splhigh();
+	x86_enable_intr();
 
+	/* Save state on current CPU. */
+	l = ci->ci_curlwp;
+	pcb = lwp_getpcb(l);
+	fl = ci->ci_fpcurlwp;
+	if (fl != NULL) {
+		/*
+		 * It seems we can get here on Xen even if we didn't
+		 * switch lwp.  In this case do nothing
+		 */
+		if (fl == l) {
+			KASSERT(pcb->pcb_fpcpu == ci);
+			clts();
+			splx(s);
+			return;
+		}
+		KASSERT(fl != l);
+		fpusave_cpu(true);
+		KASSERT(ci->ci_fpcurlwp == NULL);
+	}
+
+	/* Save our state if on a remote CPU. */
+	if (pcb->pcb_fpcpu != NULL) {
+		/* Explicitly disable preemption before dropping spl. */
+		KPREEMPT_DISABLE(l);
+		splx(s);
+		fpusave_lwp(l, true);
+		KASSERT(pcb->pcb_fpcpu == NULL);
+		s = splhigh();
+		KPREEMPT_ENABLE(l);
+	}
+
+	/*
+	 * Restore state on this CPU, or initialize.  Ensure that
+	 * the entire update is atomic with respect to FPU-sync IPIs.
+	 */
+	clts();
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
 		cw = pcb->pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		mxcsr = pcb->pcb_savefpu.fp_fxsave.fx_mxcsr;
 		x86_ldmxcsr(&mxcsr);
+		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
 		/*
 		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
@@ -286,33 +338,97 @@ fpu_state_load(struct lwp *l, u_int flags)
 		fldummy(&zero);
 		fxrstor(&pcb->pcb_savefpu);
 	}
+
+	KASSERT(ci == curcpu());
+	splx(s);
 }
 
-static void
-fpu_state_save(struct lwp *l, u_int flags)
+/*
+ * Save current CPU's FPU state.  Must be called at IPL_HIGH.
+ */
+void
+fpusave_cpu(bool save)
 {
-	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci;
+	struct pcb *pcb;
+	struct lwp *l;
 
-	clts();
-	fxsave(&pcb->pcb_savefpu);
-}
+	KASSERT(curcpu()->ci_ilevel == IPL_HIGH);
 
-static void
-fpu_state_release(struct lwp *l, u_int flags)
-{
-	struct pcb *pcb = lwp_getpcb(l);
+	ci = curcpu();
+	l = ci->ci_fpcurlwp;
+	if (l == NULL) {
+		return;
+	}
+	pcb = lwp_getpcb(l);
+
+	if (save) {
+		 /*
+		  * Set ci->ci_fpsaving, so that any pending exception will
+		  * be thrown away.  It will be caught again if/when the
+		  * FPU state is restored.
+		  */
+		KASSERT(ci->ci_fpsaving == 0);
+		clts();
+		ci->ci_fpsaving = 1;
+		fxsave(&pcb->pcb_savefpu);
+		ci->ci_fpsaving = 0;
+	}
 
 	stts();
-	pcb->pcb_cr0 |= CR0_TS;
+	pcb->pcb_fpcpu = NULL;
+	ci->ci_fpcurlwp = NULL;
 }
 
-const pcu_ops_t fpu_ops = {
-	.pcu_id = PCU_FPU,
-	.pcu_state_load = fpu_state_load,
-	.pcu_state_save = fpu_state_save,
-	.pcu_state_release = fpu_state_release,
-};
+/*
+ * Save l's FPU state, which may be on this processor or another processor.
+ * It may take some time, so we avoid disabling preemption where possible.
+ * Caller must know that the target LWP is stopped, otherwise this routine
+ * may race against it.
+ */
+void
+fpusave_lwp(struct lwp *l, bool save)
+{
+	struct cpu_info *oci;
+	struct pcb *pcb;
+	int s, spins, ticks;
 
-const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-	[PCU_FPU] = &fpu_ops,
-};
+	spins = 0;
+	ticks = hardclock_ticks;
+	for (;;) {
+		s = splhigh();
+		pcb = lwp_getpcb(l);
+		oci = pcb->pcb_fpcpu;
+		if (oci == NULL) {
+			splx(s);
+			break;
+		}
+		if (oci == curcpu()) {
+			KASSERT(oci->ci_fpcurlwp == l);
+			fpusave_cpu(save);
+			splx(s);
+			break;
+		}
+		splx(s);
+#ifdef XEN
+		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
+			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
+			    cpu_name(oci));
+		}
+#else /* XEN */
+		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
+#endif
+		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
+			x86_pause();
+			spins++;
+		}
+		if (spins > 100000000) {
+			panic("fpusave_lwp: did not");
+		}
+	}
+
+	if (!save) {
+		/* Ensure we restart with a clean slate. */
+	 	l->l_md.md_flags &= ~MDL_USEDFPU;
+	}
+}

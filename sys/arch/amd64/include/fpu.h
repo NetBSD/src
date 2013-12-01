@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.9 2013/11/11 11:10:45 joerg Exp $	*/
+/*	$NetBSD: fpu.h,v 1.10 2013/12/01 01:05:16 christos Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -79,7 +79,12 @@ struct trapframe;
 struct cpu_info;
 
 void fpuinit(struct cpu_info *);
+void fpudrop(void);
+void fpusave(struct lwp *);
+void fpudiscard(struct lwp *);
 void fputrap(struct trapframe *);
+void fpusave_lwp(struct lwp *, bool);
+void fpusave_cpu(bool);
 
 #endif
 
