@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.5 2013/11/28 23:19:43 christos Exp $ */
+/*	$NetBSD: vs_split.c,v 1.6 2013/12/01 02:34:54 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -317,7 +317,6 @@ vs_insert(SCR *sp, WIN *wp)
 	 * If we reached the end, this screen goes there.  Otherwise,
 	 * put it before or after the screen where we stopped.
 	 */
-	TAILQ_NEXT(sp, q) = NULL;
 	if (tsp == NULL) {
 		TAILQ_INSERT_TAIL(&wp->scrq, sp, q);
 	} else if (tsp->roff < sp->roff ||
@@ -782,7 +781,6 @@ vs_swap(SCR *sp, SCR **nspp, const char *name)
 	 * code will move the old one to the background queue.
 	 */
 	TAILQ_REMOVE(&gp->hq, nsp, q);
-	TAILQ_NEXT(nsp, q) = NULL;
 	TAILQ_INSERT_AFTER(&wp->scrq, sp, nsp, q);
 
 	/*
