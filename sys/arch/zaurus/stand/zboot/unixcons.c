@@ -1,4 +1,4 @@
-/*	$NetBSD: unixcons.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: unixcons.c,v 1.2 2013/12/01 02:54:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -175,7 +175,7 @@ awaitkey(int timeout, int tell)
 			for (j = 0; j < len; j++)
 				numbuf[len + j] = '\b';
 			numbuf[len + j] = '\0';
-			printf(numbuf);
+			printf("%s", numbuf);
 		}
 		c = common_getc(infd, 1);
 		if (c == 0)
