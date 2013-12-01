@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/08/13 19:29:45 drochner Exp $
+#	$NetBSD: Makefile,v 1.5 2013/12/01 20:01:14 christos Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -33,11 +33,13 @@ MLINKS+=	libmagic.3 magic_open.3 \
 INCS=		magic.h
 INCSDIR=	/usr/include
 
+VERSION != ${TOOL_SED} -ne "s/^PACKAGE_VERSION='\([0-9]*\)\.\([0-9]*\)'/\1\2/p"  ${DIST}/configure
+
 COPTS.softmagic.c = -Wno-format-nonliteral
 
 magic.c:	magic.h
 magic.h:        magic.h.in
-	${TOOL_SED} -e "s/X.YY/514/" < ${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} -e "s/X.YY/${VERSION}/" < ${.ALLSRC} > ${.TARGET}
 CLEANFILES+=	magic.h
 
 .include <bsd.lib.mk>
