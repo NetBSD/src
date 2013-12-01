@@ -498,6 +498,7 @@ _rtt()
 	*(volatile uint32_t *)(S3C2440_WDT_BASE + WDT_WTCON) =
 		(0 << WTCON_PRESCALE_SHIFT) | WTCON_ENABLE |
 		WTCON_CLKSEL_16 | WTCON_ENRST;
+	__builtin_unreachable();
 }
 
 void
