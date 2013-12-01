@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.18 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.19 2013/12/01 01:05:16 christos Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -61,7 +61,7 @@
 #define X86_IPI_HALT			0x00000001
 #define X86_IPI_MICROSET		0x00000002
 #define X86_IPI__UNUSED1		0x00000004
-#define X86_IPI__UNUSED2		0x00000008
+#define X86_IPI_SYNCH_FPU		0x00000008
 #define X86_IPI_MTRR			0x00000010
 #define X86_IPI_GDT			0x00000020
 #define X86_IPI_XCALL			0x00000040
