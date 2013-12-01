@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1050 2013/11/28 13:47:29 joerg Exp $
+# $NetBSD: mi,v 1.1051 2013/12/01 09:13:55 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5536,6 +5536,7 @@
 ./var/run/lwresd				base-bind-root
 ./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
+./var/shm					base-sys-root
 ./var/spool					base-sys-root
 ./var/spool/ftp					base-netutil-root
 ./var/spool/ftp/bin				base-netutil-root
