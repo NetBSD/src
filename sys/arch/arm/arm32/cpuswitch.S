@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.79 2013/08/18 06:32:15 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.80 2013/12/01 02:54:33 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.79 2013/08/18 06:32:15 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.80 2013/12/01 02:54:33 joerg Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -205,9 +205,9 @@ ENTRY(cpu_switchto)
 
 	/* Save all the registers in the old lwp's pcb */
 #if defined(_ARM_ARCH_DWORD_OK)
-	strd	r8, [r5, #(PCB_R8)]
-	strd	r10, [r5, #(PCB_R10)]
-	strd	r12, [r5, #(PCB_R12)]
+	strd	r8, r9, [r5, #(PCB_R8)]
+	strd	r10, r11, [r5, #(PCB_R10)]
+	strd	r12, r13, [r5, #(PCB_R12)]
 #else
 	add	r0, r5, #(PCB_R8)
 	stmia	r0, {r8-r13}
@@ -272,9 +272,9 @@ ENTRY(cpu_switchto)
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_KSP)]	/* sp */
 #elif defined(_ARM_ARCH_DWORD_OK)
-	ldrd	r8, [r7, #(PCB_R8)]
-	ldrd	r10, [r7, #(PCB_R10)]
-	ldrd	r12, [r7, #(PCB_R12)]	/* sp */
+	ldrd	r8, r9, [r7, #(PCB_R8)]
+	ldrd	r10, r11, [r7, #(PCB_R10)]
+	ldrd	r12, r13, [r7, #(PCB_R12)]	/* sp */
 #else
 	add	r0, r7, #PCB_R8
 	ldmia	r0, {r8-r13}
@@ -390,9 +390,9 @@ ENTRY_NP(softint_switch)
 
 	/* Save all the registers into the old lwp's pcb */
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
-	strd	r8, [r2, #(PCB_R8)]
-	strd	r10, [r2, #(PCB_R10)]
-	strd	r12, [r2, #(PCB_R12)]
+	strd	r8, r9, [r2, #(PCB_R8)]
+	strd	r10, r11, [r2, #(PCB_R10)]
+	strd	r12, r13, [r2, #(PCB_R12)]
 #else
 	add	r3, r2, #(PCB_R8)
 	stmia	r3, {r8-r13}

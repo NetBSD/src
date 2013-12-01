@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2013/12/01 02:54:33 joerg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.33 2013/08/18 06:28:18 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.34 2013/12/01 02:54:33 joerg Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -72,7 +72,7 @@ ASENTRY_NP(start)
 #endif
 .L1:
 #ifdef _ARM_ARCH_DWORD_OK
-	strd	r4, [r1], #0x0008	/* Zero the bss */
+	strd	r4, r5, [r1], #0x0008	/* Zero the bss */
 #else
 	str	r4, [r1], #0x0004	/* Zero the bss */
 #endif
