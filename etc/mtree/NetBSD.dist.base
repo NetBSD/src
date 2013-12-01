@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.129 2013/11/28 14:19:18 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.130 2013/12/01 09:13:54 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1317,6 +1317,7 @@
 ./var/run/lwresd		mode=0775 gname=named
 ./var/run/named			mode=0775 gname=named
 ./var/rwho			uname=_rwhod gname=_rwhod
+./var/shm			mode=01777
 ./var/spool
 ./var/spool/ftp
 ./var/spool/ftp/bin
