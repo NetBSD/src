@@ -12443,7 +12443,7 @@ decode_insn (insn_decode_record *arm_record, record_type_t record_type,
 {
 
   /* (Starting from numerical 0); bits 25, 26, 27 decodes type of arm instruction.  */
-  static const sti_arm_hdl_fp_t const arm_handle_insn[8] =                    
+  static const sti_arm_hdl_fp_t arm_handle_insn[8] =                    
   {
     arm_record_data_proc_misc_ld_str,   /* 000.  */
     arm_record_data_proc_imm,           /* 001.  */
@@ -12456,7 +12456,7 @@ decode_insn (insn_decode_record *arm_record, record_type_t record_type,
   };
 
   /* (Starting from numerical 0); bits 13,14,15 decodes type of thumb instruction.  */
-  static const sti_arm_hdl_fp_t const thumb_handle_insn[8] =
+  static const sti_arm_hdl_fp_t thumb_handle_insn[8] =
   { \
     thumb_record_shift_add_sub,        /* 000.  */
     thumb_record_add_sub_cmp_mov,      /* 001.  */
