@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 2009/05/08 23:36:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2013/12/01 20:15:42 christos Exp $
 
-DIST=${.CURDIR}/../dist
 WARNS=4
+DIST=${NETBSDSRCDIR}/external/bsd/file/dist
+
+.include <bsd.own.mk>
 
 BINDIR?= /usr/bin
 USE_FORT?= yes	# data-driven bugs?
@@ -12,8 +14,10 @@ MFILESDIR?=	/usr/share/misc
 MFILES?=	magic.mgc
 MAGIC?=		${MFILESDIR}/magic
 
+VERSION != ${TOOL_SED} -ne "s/^PACKAGE_VERSION='\([^']*\)'/\1/p" ${DIST}/configure
+
 CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DQUICK -DBUILTIN_ELF \
-		-DELFCORE
+		-DELFCORE -DVERSION='"${VERSION}"'
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/src
 
 .PATH:		${DIST}/src ${DIST}/doc
