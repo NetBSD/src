@@ -130,10 +130,11 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     umul_ppmm (_q1d,_q0, n2, di0);					\
     add_sssaaaa (_q3,_q2,_q1, _q2,_q1, _q2a,_q1d);			\
 									\
-    add_ssaaaa (r1, r0, n3, n2, 0, 1); /* FIXME: combine as in x86_64 asm */ \
+    add_ssaaaa (r1, r0, n3, n2, CNST_LIMB(0), CNST_LIMB(1));		\
+    				  /* FIXME: combine as in x86_64 asm */	\
 									\
     /* [q3,q2,q1,q0] += [n3,n3,n1,n0] */				\
-    add_csaac (_c, _q0, _q0, n0, 0);					\
+    add_csaac (_c, _q0, _q0, n0, CNST_LIMB(0));				\
     add_csaac (_c, _q1, _q1, n1, _c);					\
     add_csaac (_c, _q2, _q2, r0, _c);					\
     _q3 = _q3 + r1 + _c;						\
@@ -145,14 +146,14 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 									\
     _mask = -(mp_limb_t) (r1 >= _q1 & (r1 > _q1 | r0 >= _q0));  /* (r1,r0) >= (q1,q0) */  \
     add_ssaaaa (r1, r0, r1, r0, d1 & _mask, d0 & _mask);		\
-    sub_ddmmss (_q3, _q2, _q3, _q2, 0, -_mask);				\
+    sub_ddmmss (_q3, _q2, _q3, _q2, CNST_LIMB(0), -_mask);		\
 									\
     if (UNLIKELY (r1 >= d1))						\
       {									\
 	if (r1 > d1 || r0 >= d0)					\
 	  {								\
 	    sub_ddmmss (r1, r0, r1, r0, d1, d0);			\
-	    add_ssaaaa (_q3, _q2, _q3, _q2, 0, 1);			\
+	    add_ssaaaa (_q3, _q2, _q3, _q2, CNST_LIMB(0), CNST_LIMB(1));\
 	  }								\
       }									\
     (q1) = _q3;								\

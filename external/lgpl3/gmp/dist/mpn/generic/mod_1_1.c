@@ -160,7 +160,7 @@ mpn_mod_1_1p_cps (mp_limb_t cps[4], mp_limb_t b)
    *   B2modb = - b * bi;
    *   ASSERT (B2modb <= b);    // NB: equality iff b = B/2
    */
-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
+  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
   cps[3] = B2modb >> cnt;
 }
 
