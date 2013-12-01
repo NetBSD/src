@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.5 2013/01/03 16:27:52 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.6 2013/12/01 19:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.70 2012/11/07 17:54:48 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.72 2013/11/18 17:54:58 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.5 2013/01/03 16:27:52 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.6 2013/12/01 19:28:16 christos Exp $");
 #endif
 #endif
 
@@ -127,14 +127,12 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 				if (file_printf(ms, mime ?
 				    " compressed-encoding=" : " (") == -1)
 					goto error;
+				if (file_buffer(ms, -1, NULL, buf, nbytes) == -1)
+					goto error;
+				if (!mime && file_printf(ms, ")") == -1)
+					goto error;
 			}
 
-			if ((mime == 0 || mime & MAGIC_MIME_ENCODING) &&
-			    file_buffer(ms, -1, NULL, buf, nbytes) == -1)
-				goto error;
-
-			if (!mime && file_printf(ms, ")") == -1)
-				goto error;
 			rv = 1;
 			break;
 		}
@@ -487,7 +485,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 #endif
 			free(*newch);
 			n = 0;
-			newch[0] = '\0';
+			*newch = NULL;
 			goto err;
 		} else {
 			n = r;
