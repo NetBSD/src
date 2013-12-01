@@ -123,27 +123,27 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 #if defined(DBDEBUG) && defined(TRACE)
 			vtrace(
 			    "retrieve TEXT buffer line %lu\n", (u_long)lno);
-    #endif
-			    for (tp = TAILQ_FIRST(&sp->tiq);
-				tp->lno != lno; tp = TAILQ_NEXT(tp, q));
-			    if (lenp != NULL)
-				    *lenp = tp->len;
-			    if (pp != NULL)
-				    *pp = tp->lb;
-			    return (0);
-		    }
-		    /*
-		     * Adjust the line number for the number of lines used
-		     * by the text input buffers.
-		     */
-		    if (lno > l2)
-			    lno -= l2 - l1;
-	    }
+#endif
+			for (tp = TAILQ_FIRST(&sp->tiq);
+			    tp->lno != lno; tp = TAILQ_NEXT(tp, q));
+			if (lenp != NULL)
+				*lenp = tp->len;
+			if (pp != NULL)
+				*pp = tp->lb;
+			return (0);
+		}
+		/*
+		 * Adjust the line number for the number of lines used
+		 * by the text input buffers.
+		 */
+		if (lno > l2)
+			lno -= l2 - l1;
+	}
 
-	    /* Look-aside into the cache, and see if the line we want is there. */
-	    if (lno == sp->c_lno) {
-    #if defined(DBDEBUG) && defined(TRACE)
-		    vtrace("retrieve cached line %lu\n", (u_long)lno);
+	/* Look-aside into the cache, and see if the line we want is there. */
+	if (lno == sp->c_lno) {
+#if defined(DBDEBUG) && defined(TRACE)
+		vtrace("retrieve cached line %lu\n", (u_long)lno);
 #endif
 		if (lenp != NULL)
 			*lenp = sp->c_len;
