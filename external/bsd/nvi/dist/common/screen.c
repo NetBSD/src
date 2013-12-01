@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 2013/12/01 02:34:54 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.6 2013/12/01 21:48:33 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,7 @@ mem:				msgq(orig, M_SYSERR, NULL);
 	*spp = sp;
 	return (0);
 
-err:	screen_end1(sp, 0);
+err:	screen_fini(sp);
 	return (1);
 }
 
@@ -197,9 +197,20 @@ screen_end1(SCR *sp, int init)
 }
 
 /*
+ * screen_fini --
+ *	Release a screen, that has not been chained to the screen queues.
+ *
+ * PUBLIC: int screen_fini __P((SCR *));
+ */
+int
+screen_fini(SCR *sp)
+{
+	return screen_end1(sp, 0);
+}
+
+/*
  * screen_end --
- *	Release a screen, no matter what had (and had not) been
- *	initialized.
+ *	Release a screen, that has been chained to the screen queues.
  *
  * PUBLIC: int screen_end __P((SCR *));
  */
@@ -208,7 +219,6 @@ screen_end(SCR *sp)
 {
 	return screen_end1(sp, 1);
 }
-
 /*
  * screen_next --
  *	Return the next screen in the queue.
