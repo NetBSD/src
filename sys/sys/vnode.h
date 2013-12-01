@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.242 2013/12/01 00:59:34 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.243 2013/12/01 17:29:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -206,8 +206,7 @@ typedef struct vnode vnode_t;
 #define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #ifdef _VFS_VNODE_PRIVATE
-#define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
-#define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
+#define	VI_CHANGING	0x00100000	/* vnode changes state */
 #endif	/* _VFS_VNODE_PRIVATE */
 
 /*
@@ -218,8 +217,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\26INACTREDO" \
-    "\30INACTNOW\31DIROP"
+    "\22LAYER\24CLEAN\25CHANGING\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
