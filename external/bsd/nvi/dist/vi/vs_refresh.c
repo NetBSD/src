@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.4 2013/11/26 16:48:01 christos Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -81,8 +81,7 @@ vs_refresh(SCR *sp, int forcepaint)
 			(void)vs_paint(tsp,
 			    (F_ISSET(VIP(tsp), VIP_CUR_INVALID) ?
 			    UPDATE_CURSOR : 0) | UPDATE_SCREEN);
-			if (VIP(sp))
-				F_SET(VIP(sp), VIP_CUR_INVALID);
+			F_SET(VIP(sp), VIP_CUR_INVALID);
 		}
 
 	/*
