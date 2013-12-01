@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_edit.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
+/*	$NetBSD: ex_edit.c,v 1.6 2013/12/01 21:48:33 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ ex_N_edit(SCR *sp, EXCMD *cmdp, FREF *frp, int attach)
 		return (1);
 	if ((cmdp->cmd == &cmds[C_VSPLIT] && vs_vsplit(sp, new)) ||
 	    (cmdp->cmd != &cmds[C_VSPLIT] && vs_split(sp, new, 0))) {
-		(void)screen_end(new);
+		(void)screen_fini(new);
 		return (1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_args.c,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: ex_args.c,v 1.3 2013/12/01 21:48:33 christos Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -141,7 +141,7 @@ ex_N_next(SCR *sp, EXCMD *cmdp)
 	if (screen_init(sp->gp, sp, &new))
 		return (1);
 	if (vs_split(sp, new, 0)) {
-		(void)screen_end(new);
+		(void)screen_fini(new);
 		return (1);
 	}
 
