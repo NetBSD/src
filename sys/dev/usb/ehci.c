@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.219 2013/11/26 05:54:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.220 2013/12/01 07:28:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.219 2013/11/26 05:54:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.220 2013/12/01 07:28:47 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3296,7 +3296,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 
 	DPRINTFN(10,("ehci_ctrl_done: xfer=%p\n", xfer));
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.262 2013/10/28 17:40:43 matt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.263 2013/12/01 07:28:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.262 2013/10/28 17:40:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.263 2013/12/01 07:28:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3120,7 +3120,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 	int len = UGETW(xfer->request.wLength);
 	int isread = (xfer->request.bmRequestType & UT_READ);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
