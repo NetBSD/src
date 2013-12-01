@@ -387,7 +387,7 @@ remote_event_create(REMOTE_EVENT_T *event)
 	_sema_init(event->event, 0);
 }
 
-static inline void
+__unused static inline void
 remote_event_destroy(REMOTE_EVENT_T *event)
 {
 	(void)event;
