@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.95 2013/12/01 01:05:16 christos Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2013/12/01 01:05:16 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -735,14 +735,15 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curlwp\n");
+	db_printf("addr		dev	id	flags	ipis	curlwp 		fpcurlwp\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%ld	%x	%x	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
-		    ci->ci_curlwp);
+		    ci->ci_curlwp,
+		    ci->ci_fpcurlwp);
 	}
 }
 #endif /* DDB */
@@ -1050,6 +1051,20 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 	if (cpu_feature[2] & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 
+}
+
+void
+cpu_offline_md(void)
+{
+        int s;
+
+        s = splhigh();
+#ifdef __i386__
+        npxsave_cpu(true);
+#else   
+        fpusave_cpu(true);
+#endif
+        splx(s);
 }
 
 void    
