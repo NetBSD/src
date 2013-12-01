@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_edit.c,v 1.4 2013/11/28 23:19:43 christos Exp $ */
+/*	$NetBSD: ex_edit.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,6 @@ ex_N_edit(SCR *sp, EXCMD *cmdp, FREF *frp, int attach)
 		/* Copy file state, keep the screen and cursor the same. */
 		new->ep = sp->ep;
 		++new->ep->refcnt;
-		TAILQ_NEXT(new, eq) = NULL;
 		TAILQ_INSERT_HEAD(&new->ep->scrq, new, eq);
 
 		new->frp = frp;

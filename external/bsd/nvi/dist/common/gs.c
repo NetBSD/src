@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.c,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: gs.c,v 1.4 2013/12/01 02:34:54 christos Exp $ */
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.
@@ -112,10 +112,8 @@ win_end(WIN *wp)
 		(void)file_end(wp->ccl_sp, NULL, 1);
 		(void)screen_end(wp->ccl_sp);
 	}
-	while ((sp = TAILQ_FIRST(&wp->scrq)) != NULL) {
-		TAILQ_REMOVE(&wp->scrq, sp, q);
+	while ((sp = TAILQ_FIRST(&wp->scrq)) != NULL)
 		(void)screen_end(sp);
-	}
 
 	/* Free key input queue. */
 	if (wp->i_event != NULL)
@@ -150,14 +148,10 @@ gs_end(GS *gp)
 	WIN *wp;
 
 	/* If there are any remaining screens, kill them off. */
-	while ((wp = TAILQ_FIRST(&gp->dq)) != NULL) {
-		TAILQ_REMOVE(&gp->dq, wp, q);
+	while ((wp = TAILQ_FIRST(&gp->dq)) != NULL)
 		(void)win_end(wp);
-	}
-	while ((sp = TAILQ_FIRST(&gp->hq)) != NULL) {
-		TAILQ_REMOVE(&gp->hq, sp, q);
+	while ((sp = TAILQ_FIRST(&gp->hq)) != NULL)
 		(void)screen_end(sp);
-	}
 
 #ifdef HAVE_PERL_INTERP
 	perl_end(gp);
