@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: database,v 1.33 2013/03/09 22:36:00 christos Exp $
+# $File: database,v 1.35 2013/11/20 00:00:14 christos Exp $
 # database:  file(1) magic for various databases
 #
 # extracted from header/code files by Graeme Wilford (eep2gw@ee.surrey.ac.uk)
@@ -84,8 +84,8 @@
 #
 #
 # Round Robin Database Tool by Tobias Oetiker <oetiker@ee.ethz.ch>
-0	string	RRD		RRDTool DB
->4	string	x		version %s
+0	string/b	RRD\0		RRDTool DB
+>4	string/b	x		version %s
 #----------------------------------------------------------------------
 # ROOT: file(1) magic for ROOT databases
 #
@@ -303,7 +303,10 @@
 >>>>>>>8	ubelong		0		
 # skip MM*DD*.bin by test for for reserved NULL byte
 >>>>>>>>508	ubelong		0		
->>>>>>>>>0	use		xbase-memo-print
+# real memo files should contain text here
+>>>>>>>>>520	ubelong		>0x20202019	
+>>>>>>>>>>520	ubelong		<0xFEFEFEFF	
+>>>>>>>>>>>0	use		xbase-memo-print
 # garbage PCX , ZIP , JAR , XPI 
 >>>>>>>8	default		x		
 

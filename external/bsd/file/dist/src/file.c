@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.5 2013/03/23 15:49:16 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.6 2013/12/01 19:28:17 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.149 2013/01/07 18:20:19 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.152 2013/06/26 14:46:54 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.5 2013/03/23 15:49:16 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.6 2013/12/01 19:28:17 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -471,8 +471,11 @@ file_mbswidth(const char *s)
 			 * is always right
 			 */
 			width++;
-		} else
-			width += wcwidth(nextchar);
+		} else {
+			int w = wcwidth(nextchar);
+			if (w > 0)
+				width += w;
+		}
 
 		s += bytesconsumed, n -= bytesconsumed;
 	}
