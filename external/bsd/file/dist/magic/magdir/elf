@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: elf,v 1.59 2013/03/21 17:50:02 christos Exp $
+# $File: elf,v 1.64 2013/08/04 09:31:47 christos Exp $
 # elf:  file(1) magic for ELF executables
 #
 # We have to check the byte order flag to see what byte order all the
@@ -30,16 +30,17 @@
 #>>>(0x38+0xcc) string	>\0		of '%s'
 #>>>(0x38+0x10) lelong	>0		(signal %d),
 >16	leshort		&0xff00		processor-specific,
+>18	clear		x
 >18	leshort		0		no machine,
 >18	leshort		1		AT&T WE32100
 >18	leshort		2		SPARC
 >18	leshort		3		Intel 80386,
 >18	leshort		4		Motorola
 >>4	byte		1
->>>36	lelong		&0x01000000	68000 - invalid byte order,
->>>36	lelong		&0x00810000	CPU32 - invalid byte order,
->>>36	lelong		0		68020 - invalid byte order,
->18	leshort		5		Motorola 88000 - invalid byte order,
+>>>36	lelong		&0x01000000	68000,
+>>>36	lelong		&0x00810000	CPU32,
+>>>36	lelong		0		68020,
+>18	leshort		5		Motorola 88000,
 >18	leshort		6		Intel 80486,
 >18	leshort		7		Intel 80860,
 # The official e_machine number for MIPS is now #8, regardless of endianness.
@@ -74,10 +75,10 @@
 >>>48  lelong&0xf0000000	0x60000000	MIPS64
 >>>48  lelong&0xf0000000	0x70000000	MIPS32 rel2
 >>>48  lelong&0xf0000000	0x80000000	MIPS64 rel2
->18	leshort		9		Amdahl - invalid byte order,
+>18	leshort		9		Amdahl,
 >18	leshort		10		MIPS (deprecated),
->18	leshort		11		RS6000 - invalid byte order,
->18	leshort		15		PA-RISC - invalid byte order,
+>18	leshort		11		RS6000,
+>18	leshort		15		PA-RISC,
 # only for 32-bit
 >>4	byte		1
 >>>38	leshort		0x0214		2.0
@@ -174,6 +175,7 @@
 >18	leshort		97		NatSemi 32k,
 >18	leshort		106		Analog Devices Blackfin,
 >18	leshort		113		Altera Nios II,
+>18	beshort		138		LatticeMico32,
 >18	leshort		174		META,
 >18	leshort		183		ARM aarch64,
 >18	leshort		187		Tilera TILE64,
@@ -182,6 +184,8 @@
 >18	leshort		0x3426		OpenRISC (obsolete),
 >18	leshort		0x8472		OpenRISC (obsolete),
 >18	leshort		0x9026		Alpha (unofficial),
+>18	default		x
+>>18	leshort		x		*unknown arch 0x%x*
 >20	lelong		0		invalid version
 >20	lelong		1		version 1
 
