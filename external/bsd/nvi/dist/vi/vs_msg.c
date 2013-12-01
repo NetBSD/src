@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.4 2013/11/26 16:48:01 christos Exp $ */
+/*	$NetBSD: vs_msg.c,v 1.5 2013/12/01 02:34:54 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -661,8 +661,6 @@ vs_resolve(SCR *sp, SCR *csp, int forcewait)
 	gp = sp->gp;
 	wp = sp->wp;
 	vip = VIP(sp);
-	if (vip == NULL)
-		return 0;
 	if (csp == NULL)
 		csp = sp;
 

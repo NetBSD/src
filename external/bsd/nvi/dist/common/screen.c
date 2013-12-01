@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 2013/11/28 23:19:43 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 2013/12/01 02:34:54 christos Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -29,6 +29,7 @@ static const char sccsid[] = "Id: screen.c,v 10.22 2001/06/25 15:19:12 skimo Exp
 #include "common.h"
 #include "../vi/vi.h"
 
+static int screen_end1(SCR *, int);
 /*
  * screen_init --
  *	Do the default initialization of an SCR structure.
@@ -120,25 +121,18 @@ mem:				msgq(orig, M_SYSERR, NULL);
 	*spp = sp;
 	return (0);
 
-err:	screen_end(sp);
+err:	screen_end1(sp, 0);
 	return (1);
 }
 
-/*
- * screen_end --
- *	Release a screen, no matter what had (and had not) been
- *	initialized.
- *
- * PUBLIC: int screen_end __P((SCR *));
- */
-int
-screen_end(SCR *sp)
+static int
+screen_end1(SCR *sp, int init)
 {
 	int rval;
 
 	/* If multiply referenced, just decrement the count and return. */
-	 if (--sp->refcnt != 0)
-		 return (0);
+	if (--sp->refcnt != 0)
+		return (0);
 
 	/*
 	 * Remove the screen from the displayed queue.
@@ -146,7 +140,7 @@ screen_end(SCR *sp)
 	 * If a created screen failed during initialization, it may not
 	 * be linked into the chain.
 	 */
-	if (TAILQ_NEXT(sp, q) != NULL)
+	if (init)
 		TAILQ_REMOVE(&sp->wp->scrq, sp, q);
 
 	/* The screen is no longer real. */
@@ -203,6 +197,19 @@ screen_end(SCR *sp)
 }
 
 /*
+ * screen_end --
+ *	Release a screen, no matter what had (and had not) been
+ *	initialized.
+ *
+ * PUBLIC: int screen_end __P((SCR *));
+ */
+int
+screen_end(SCR *sp)
+{
+	return screen_end1(sp, 1);
+}
+
+/*
  * screen_next --
  *	Return the next screen in the queue.
  *
@@ -227,7 +234,6 @@ screen_next(SCR *sp)
 	/* Try the hidden queue; if found, move screen to the display queue. */
 	if ((next = TAILQ_FIRST(&gp->hq)) != NULL) {
 		TAILQ_REMOVE(&gp->hq, next, q);
-		TAILQ_NEXT(next, q) = NULL;
 		TAILQ_INSERT_HEAD(&wp->scrq, next, q);
 		next->wp = sp->wp;
 		return (next);
