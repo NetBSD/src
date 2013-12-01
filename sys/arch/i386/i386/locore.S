@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.107 2013/10/23 20:18:50 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.108 2013/12/01 01:05:16 christos Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.107 2013/10/23 20:18:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.108 2013/12/01 01:05:16 christos Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1077,11 +1077,20 @@ ENTRY(cpu_switchto)
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
 #else /* !XEN */
-	movl	PCB_CR0(%ebx),%ecx
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 
+	/*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+	cmpl	CPUVAR(FPCURLWP),%edi
+	je	3f
+	orl	$CR0_TS,%ecx
+
 	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpl	%edx,%ecx
+3:	cmpl	%edx,%ecx
 	je	4f
 	movl	%ecx,%cr0
 #endif /* !XEN */

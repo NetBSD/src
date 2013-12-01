@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.738 2013/11/11 11:10:45 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.739 2013/12/01 01:05:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.738 2013/11/11 11:10:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.739 2013/12/01 01:05:16 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -266,7 +266,6 @@ void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
-extern const pcu_ops_t fpu_ops;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -499,7 +498,7 @@ i386_proc0_tss_ldt_init(void)
 	struct pcb *pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
@@ -547,16 +546,21 @@ i386_tls_switch(lwp_t *l)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = lwp_getpcb(l);
+	/*
+         * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
 
         /*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 
-	if (pcb->pcb_cr0 & CR0_TS) {
+	if (l != ci->ci_fpcurlwp) {
 		HYPERVISOR_fpu_taskswitch(1);
-	} else
-		HYPERVISOR_fpu_taskswitch(0);
+	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -666,7 +670,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset, if FP is used. */
-	pcu_discard_all(l);
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 }
 
 void
@@ -864,16 +868,23 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct trapframe *tf;
 	uint16_t control;
 
+#if NNPX > 0
+	/* If we were using the FPU, forget about it. */
+	if (pcb->pcb_fpcpu != NULL) {
+		npxsave_lwp(l, false);
+	}
+#endif
+
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	pcu_discard(&fpu_ops, false);
 	if (pack->ep_osversion >= 699002600)
 		control = __INITIAL_NPXCW__;
 	else
 		control = __NetBSD_COMPAT_NPXCW__;
 
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = control;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
@@ -1627,7 +1638,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
-	if (pcu_used_p(&fpu_ops)) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 #if NNPX > 0
 
@@ -1635,7 +1646,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		pcu_save(&fpu_ops);
+		if (pcb->pcb_fpcpu) {
+			npxsave_lwp(l, true);
+		}
 #endif
 		if (i386_use_fxsave) {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
@@ -1728,9 +1741,17 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
+#if NNPX > 0
+	/*
+	 * If we were using the FPU, forget that we were.
+	 */
+	if (pcb->pcb_fpcpu != NULL) {
+		npxsave_lwp(l, false);
+	}
+#endif
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
-		pcu_discard(&fpu_ops, true);
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
@@ -1754,8 +1775,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				    sizeof (pcb->pcb_savefpu.sv_87));
 			}
 		}
-	} else
-		pcu_discard(&fpu_ops, false);
+		l->l_md.md_flags |= MDL_USEDFPU;
+	}
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
