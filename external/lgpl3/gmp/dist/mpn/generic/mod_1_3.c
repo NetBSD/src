@@ -51,13 +51,13 @@ mpn_mod_1s_3p_cps (mp_limb_t cps[6], mp_limb_t b)
   ASSERT (B1modb <= b);		/* NB: not fully reduced mod b */
   cps[2] = B1modb >> cnt;
 
-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
+  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
   cps[3] = B2modb >> cnt;
 
-  udiv_rnnd_preinv (B3modb, B2modb, 0, b, bi);
+  udiv_rnnd_preinv (B3modb, B2modb, CNST_LIMB(0), b, bi);
   cps[4] = B3modb >> cnt;
 
-  udiv_rnnd_preinv (B4modb, B3modb, 0, b, bi);
+  udiv_rnnd_preinv (B4modb, B3modb, CNST_LIMB(0), b, bi);
   cps[5] = B4modb >> cnt;
 
 #if WANT_ASSERT

@@ -98,7 +98,7 @@ mpn_divrem_2 (mp_ptr qp, mp_size_t qxn,
       for (i = qxn - 1; i >= 0; i--)
 	{
 	  mp_limb_t q;
-	  udiv_qr_3by2 (q, r1, r0, r1, r0, 0UL, d1, d0, di.inv32);
+	  udiv_qr_3by2 (q, r1, r0, r1, r0, CNST_LIMB(0), d1, d0, di.inv32);
 	  qp[i] = q;
 	}
     }
