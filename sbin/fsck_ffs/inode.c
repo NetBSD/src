@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.69 2013/06/23 22:03:34 dholland Exp $	*/
+/*	$NetBSD: inode.c,v 1.70 2013/12/02 18:46:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.69 2013/06/23 22:03:34 dholland Exp $");
+__RCSID("$NetBSD: inode.c,v 1.70 2013/12/02 18:46:52 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -993,7 +993,7 @@ expandfile(union dinode *dp)
 			dp->dp1.di_ib[ilevel - 1] = iswap32(newblk);
 	} else {
 		ibp = getdatablk(is_ufs2 ? iswap64(dp->dp2.di_ib[ilevel - 1]) :
-		    iswap32(dp->dp2.di_ib[ilevel - 1]), sblock->fs_bsize);
+		    iswap32(dp->dp1.di_ib[ilevel - 1]), sblock->fs_bsize);
 	}
 	/* walk indirect blocks up to the data block */
 	for (; ilevel >0 ; ilevel--) {
