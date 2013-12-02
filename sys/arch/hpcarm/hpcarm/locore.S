@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2013/08/26 15:31:44 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2013/12/02 18:36:11 joerg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -57,7 +57,7 @@ ENTRY_NP(kernel_text)
 ASENTRY_NP(start)
 	/* Put the processer in SVC mode */
 	mov	r5, sp
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	bic	r4, r4, #(PSR_MODE)
 	orr	r4, r4, #(PSR_SVC32_MODE)
 	msr	cpsr_all, r4
@@ -255,7 +255,7 @@ ENTRY(dumpsys)
 	stmfd	sp!, {r0-r7, lr}
 	
 	/* push the status bits onto the stack */
-	mrs	r0, cpsr_all
+	mrs	r0, cpsr
 	stmfd	sp!, {r0}
 
 	/* fill in dumppcb */
