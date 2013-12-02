@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.30 2012/01/11 16:10:13 macallan Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.31 2013/12/02 15:54:06 jdc Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.30 2012/01/11 16:10:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.31 2013/12/02 15:54:06 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 #if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &bw2_console_screen.scr_ri;
-	unsigned long defattr;
+	unsigned long defattr = 0;
 #endif
 
 	/* Fill in the remaining fbdevice values */
@@ -442,6 +442,7 @@ bwtwo_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct bwtwo_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
+	char *bits;
 
 	ri->ri_depth = 1;
 	ri->ri_width = sc->sc_width;
@@ -451,8 +452,14 @@ bwtwo_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 
-	memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
-	    sc->sc_stride * sc->sc_height);
+	/*
+	 * Make sure that we set a maximum of 32 bits at a time,
+	 * otherwise we'll see VME write errors if this is a P4 BW2.
+	 */
+	for (bits = (char *) ri->ri_bits;
+	    bits < (char *) ri->ri_bits + ri->ri_stride * ri->ri_height;
+	    bits += 4);
+		memset(bits, (*defattr >> 16) & 0xff, 4);
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = 0;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
