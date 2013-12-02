@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoimax.c,v 1.1 2013/12/02 04:39:10 lneto Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.2 2013/12/02 12:20:44 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -63,6 +63,6 @@ __RCSID("$NetBSD: strtoimax.c,v 1.1 2013/12/02 04:39:10 lneto Exp $");
 #include "_strtol.h"
 
 #ifdef _LIBC
-__weak_alias(_strtoimax, strtoimax)
-__weak_alias(_strtoimax_l, strtoimax_l)
+__weak_alias(strtoimax, _strtoimax)
+__weak_alias(strtoimax_l, _strtoimax_l)
 #endif
