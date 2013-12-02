@@ -1,7 +1,7 @@
-/*	$NetBSD: lbaselib.c,v 1.1.1.2 2012/03/15 00:08:06 alnsn Exp $	*/
+/*	$NetBSD: lbaselib.c,v 1.2 2013/12/02 04:57:41 lneto Exp $	*/
 
 /*
-** $Id: lbaselib.c,v 1.1.1.2 2012/03/15 00:08:06 alnsn Exp $
+** $Id: lbaselib.c,v 1.2 2013/12/02 04:57:41 lneto Exp $
 ** Basic library
 ** See Copyright Notice in lua.h
 */
@@ -284,10 +284,12 @@ static int luaB_loadstring (lua_State *L) {
 }
 
 
+#ifndef _KERNEL
 static int luaB_loadfile (lua_State *L) {
   const char *fname = luaL_optstring(L, 1, NULL);
   return load_aux(L, luaL_loadfile(L, fname));
 }
+#endif
 
 
 /*
@@ -324,6 +326,7 @@ static int luaB_load (lua_State *L) {
 }
 
 
+#ifndef _KERNEL
 static int luaB_dofile (lua_State *L) {
   const char *fname = luaL_optstring(L, 1, NULL);
   int n = lua_gettop(L);
@@ -331,6 +334,7 @@ static int luaB_dofile (lua_State *L) {
   lua_call(L, 0, LUA_MULTRET);
   return lua_gettop(L) - n;
 }
+#endif
 
 
 static int luaB_assert (lua_State *L) {
@@ -449,12 +453,16 @@ static int luaB_newproxy (lua_State *L) {
 static const luaL_Reg base_funcs[] = {
   {"assert", luaB_assert},
   {"collectgarbage", luaB_collectgarbage},
+#ifndef _KERNEL
   {"dofile", luaB_dofile},
+#endif
   {"error", luaB_error},
   {"gcinfo", luaB_gcinfo},
   {"getfenv", luaB_getfenv},
   {"getmetatable", luaB_getmetatable},
+#ifndef _KERNEL
   {"loadfile", luaB_loadfile},
+#endif
   {"load", luaB_load},
   {"loadstring", luaB_loadstring},
   {"next", luaB_next},

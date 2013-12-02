@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/12/02 04:39:10 lneto Exp $
+#	$NetBSD: Makefile,v 1.4 2013/12/02 04:57:41 lneto Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ SRCS=		lua.c
 
 WARNS=		1
 
-# Lua source code
+# Lua core source code
 SRCS+=		lapi.c \
 		lcode.c \
 		ldebug.c \
@@ -29,11 +29,15 @@ SRCS+=		lapi.c \
 		ltm.c \
 		lundump.c \
 		lvm.c \
-		lzio.c \
-		# lauxlib.c \
-		ltablib.c \
+		lzio.c
+
+# Lua auxlib source code
+SRCS+=		lauxlib.c
+
+# Lua stdlibs source code
+SRCS+=		lbaselib.c \
 		lstrlib.c \
-		lbaselib.c \
+		ltablib.c \
 		linit.c
 
 # Compatability code
