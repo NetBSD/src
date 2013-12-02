@@ -32,8 +32,20 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoimax.c,v 1.8 2013/04/16 21:44:08 joerg Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.1 2013/12/02 04:39:10 lneto Exp $");
 
+#ifdef _LIBC
+#include "namespace.h"
+#endif
+
+#if defined(_KERNEL)
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#elif defined(_STANDALONE)
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#else
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -41,6 +53,7 @@ __RCSID("$NetBSD: strtoimax.c,v 1.8 2013/04/16 21:44:08 joerg Exp $");
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdlib.h>
+#endif
 
 #define	_FUNCNAME	strtoimax
 #define	__INT		intmax_t
@@ -49,5 +62,7 @@ __RCSID("$NetBSD: strtoimax.c,v 1.8 2013/04/16 21:44:08 joerg Exp $");
 
 #include "_strtol.h"
 
-__strong_alias(_strtoimax, strtoimax)
-__strong_alias(_strtoimax_l, strtoimax_l)
+#ifdef _LIBC
+__weak_alias(_strtoimax, strtoimax)
+__weak_alias(_strtoimax_l, strtoimax_l)
+#endif

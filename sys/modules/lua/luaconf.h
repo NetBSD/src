@@ -1,5 +1,5 @@
 /*
-** $Id: luaconf.h,v 1.1 2013/10/16 19:44:57 mbalmer Exp $
+** $Id: luaconf.h,v 1.2 2013/12/02 04:39:10 lneto Exp $
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
@@ -505,8 +505,7 @@
 */
 
 #ifdef _KERNEL
-#define LUA_NUMBER	long long
-
+#define LUA_NUMBER	int64_t
 #else
 #define LUA_NUMBER_DOUBLE
 #define LUA_NUMBER	double
@@ -528,9 +527,9 @@
 */
 
 #ifdef _KERNEL
-#define LUA_NUMBER_SCAN		"%lld"
-#define LUA_NUMBER_FMT		"%lld"
-#define lua_str2number(s,p)	strtoll((s), (p), 10)
+#define LUA_NUMBER_SCAN		"%" SCNd64
+#define LUA_NUMBER_FMT		"%" PRId64
+#define lua_str2number(s,p)	((int64_t) strtoimax((s), (p), 10))
 #else
 #define LUA_NUMBER_SCAN		"%lf"
 #define LUA_NUMBER_FMT		"%.14g"
