@@ -1,4 +1,4 @@
-/*	$NetBSD: luacore.c,v 1.4 2013/10/23 18:57:40 mbalmer Exp $ */
+/*	$NetBSD: luacore.c,v 1.5 2013/12/02 05:06:32 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>.
@@ -39,6 +39,7 @@
 #include <sys/systm.h>
 
 #include <lua.h>
+#include <lauxlib.h>
 
 #ifdef _MODULE
 MODULE(MODULE_CLASS_MISC, luacore, "lua");
@@ -156,43 +157,34 @@ core_panic(lua_State *L)
 
 /* mutexes */
 
-struct core_reg {
-	const char *n;
-	int (*f)(lua_State *);
+static const luaL_Reg core_lib[ ] = {
+	{ "print",			print },
+	{ "print_nolog",		print_nolog },
+	{ "uprint",			uprint },
+	{ "aprint_normal",		core_aprint_normal },
+	{ "aprint_naive",		core_aprint_naive },
+	{ "aprint_verbose",		core_aprint_verbose },
+	{ "aprint_debug",		core_aprint_debug },
+	{ "aprint_error",		core_aprint_error },
+	{ "aprint_get_error_count",	core_aprint_get_error_count },
+
+	/* panicing */
+	{ "panic",			core_panic },
+
+	/* callouts */
+
+	/* mutexes */
+
+	{NULL, NULL}
 };
+
 
 static int
 luaopen_core(void *ls)
 {
 	lua_State *L = (lua_State *)ls;
-	int n, nfunc;
-	struct core_reg core[] = {
-		/* printing functions */
-		{ "print",			print },
-		{ "print_nolog",		print_nolog },
-		{ "uprint",			uprint },
-		{ "aprint_normal",		core_aprint_normal },
-		{ "aprint_naive",		core_aprint_naive },
-		{ "aprint_verbose",		core_aprint_verbose },
-		{ "aprint_debug",		core_aprint_debug },
-		{ "aprint_error",		core_aprint_error },
-		{ "aprint_get_error_count",	core_aprint_get_error_count },
 
-		/* panicing */
-		{ "panic",			core_panic },
-
-		/* callouts */
-
-		/* mutexes */
-	};
-
-	nfunc = sizeof(core)/sizeof(core[1]);
-
-	lua_createtable(L, nfunc, 0);
-	for (n = 0; n < nfunc; n++) {
-		lua_pushcfunction(L, core[n].f);
-		lua_setfield(L, -2, core[n].n);
-	}
+	luaL_register(L, "core", core_lib);
 
 	/* some string values */
 	lua_pushstring(L, copyright);
@@ -216,7 +208,6 @@ luaopen_core(void *ls)
 	lua_pushinteger(L, ncpu);
 	lua_setfield(L, -2, "ncpu");
 
-	lua_setglobal(L, "core");
 	return 1;
 }
 
