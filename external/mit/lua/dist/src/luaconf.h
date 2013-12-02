@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.4 2012/03/15 01:02:19 alnsn Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.5 2013/12/02 06:07:22 lneto Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
@@ -510,15 +510,18 @@
 ** ===================================================================
 */
 
+#ifdef _KERNEL
+#define LUA_NUMBER	int64_t
+#else
 #define LUA_NUMBER_DOUBLE
 #define LUA_NUMBER	double
+#endif
 
 /*
 @@ LUAI_UACNUMBER is the result of an 'usual argument conversion'
 @* over a number.
 */
-#define LUAI_UACNUMBER	double
-
+#define LUAI_UACNUMBER	LUA_NUMBER	
 
 /*
 @@ LUA_NUMBER_SCAN is the format for reading numbers.
@@ -527,24 +530,36 @@
 @@ LUAI_MAXNUMBER2STR is maximum size of previous conversion.
 @@ lua_str2number converts a string to a number.
 */
+#ifdef _KERNEL
+#define LUA_NUMBER_SCAN		"%" SCNd64
+#define LUA_NUMBER_FMT		"%" PRId64
+#define lua_str2number(s,p)	((int64_t) strtoimax((s), (p), 10))
+#else
 #define LUA_NUMBER_SCAN		"%lf"
 #define LUA_NUMBER_FMT		"%.14g"
+#define lua_str2number(s,p)	strtod((s), (p))
+#endif
+
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
 #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
-#define lua_str2number(s,p)	strtod((s), (p))
-
 
 /*
 @@ The luai_num* macros define the primitive operations over numbers.
 */
 #if defined(LUA_CORE)
+#ifdef _KERNEL
+#define luai_nummod(a,b)	((a)%(b))
+#define luai_numpow(a,b)	luai_nummul(a,b)
+#else
 #include <math.h>
+#define luai_nummod(a,b)	((a) - floor((a)/(b))*(b))
+#define luai_numpow(a,b)	(pow(a,b))
+#endif
+
 #define luai_numadd(a,b)	((a)+(b))
 #define luai_numsub(a,b)	((a)-(b))
 #define luai_nummul(a,b)	((a)*(b))
 #define luai_numdiv(a,b)	((a)/(b))
-#define luai_nummod(a,b)	((a) - floor((a)/(b))*(b))
-#define luai_numpow(a,b)	(pow(a,b))
 #define luai_numunm(a)		(-(a))
 #define luai_numeq(a,b)		((a)==(b))
 #define luai_numlt(a,b)		((a)<(b))
@@ -612,7 +627,13 @@ union luai_Cast { double l_d; long l_l; };
 ** compiling as C++ code, with _longjmp/_setjmp when asked to use them,
 ** and with longjmp/setjmp otherwise.
 */
-#if defined(__cplusplus)
+#ifdef _KERNEL
+/* in NetBSD kernel */
+#define LUAI_THROW(L,c)	longjmp(& ((c)->b))
+#define LUAI_TRY(L,c,a)	if (setjmp(& ((c)->b)) == 0) { a }
+#define luai_jmpbuf	label_t
+
+#elif defined(__cplusplus)
 /* C++ exceptions */
 #define LUAI_THROW(L,c)	throw(c)
 #define LUAI_TRY(L,c,a)	try { a } catch(...) \
