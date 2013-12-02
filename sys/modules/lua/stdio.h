@@ -43,7 +43,7 @@
 
 #define putchar(c)	printf("%c", c)
 
-#define fputs(s, f)	printf(s)
+#define fputs(s, f)	printf("%s", s)
 
 #endif
 
