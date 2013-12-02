@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.5 2013/08/20 07:25:52 matt Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.6 2013/12/02 21:21:33 joerg Exp $	*/
 
 #include <arm/cdefs.h>
 
@@ -6,4 +6,8 @@
 #include "memcpy_arm.S"
 #else
 #include "memcpy_xscale.S"
+#endif
+
+#if defined(__ARM_EABI__)
+STRONG_ALIAS(__aeabi_memcpy, memcpy)
 #endif
