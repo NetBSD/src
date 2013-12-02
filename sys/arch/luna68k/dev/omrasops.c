@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.13 2012/07/20 19:31:53 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.14 2013/12/02 13:45:40 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.13 2012/07/20 19:31:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.14 2013/12/02 13:45:40 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -227,7 +227,7 @@ om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	srcy = ri->ri_font->fontheight * srcrow;
 	if (srcrow < dstrow && srcrow + nrows > dstrow) {
 		scanspan = -scanspan;
-		srcy += height;
+		srcy = srcy + height - 1;
 	}
 
 	p = (uint8_t *)ri->ri_bits + srcy * ri->ri_stride;
