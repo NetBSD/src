@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.36 2013/08/18 06:37:02 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.37 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -351,7 +351,7 @@ LOCK_CAS_DEBUG_LOCALS
 	sub	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	mrs	r0, spsr;		/* Get the SPSR */		   \
 	str	r0, [sp, #-TF_R0]!	/* Push the SPSR on the stack */
 
 /*
@@ -364,7 +364,7 @@ LOCK_CAS_DEBUG_LOCALS
 	str	lr, [sp, #-4]!;		/* save SVC32 lr */		   \
 	str	r6, [sp, #(TF_R6-TF_PC)]!; /* save callee-saved r6 */	   \
 	str	r4, [sp, #(TF_R4-TF_R6)]!; /* save callee-saved r4 */	   \
-	mrs	r0, cpsr_all;		/* Get the CPSR */		   \
+	mrs	r0, cpsr;		/* Get the CPSR */		   \
 	str	r0, [sp, #(-TF_R4)]!	/* Push the CPSR on the stack */
 
 /*
@@ -378,7 +378,7 @@ LOCK_CAS_DEBUG_LOCALS
 	str	ip, [sp, #TF_SVC_SP];					\
 	str	lr, [sp, #TF_SVC_LR];					\
 	str	lr, [sp, #TF_PC];					\
-	mrs	rX, cpsr_all;		/* Get the CPSR */		\
+	mrs	rX, cpsr;		/* Get the CPSR */		\
 	str	rX, [sp, #TF_SPSR]	/* save in trapframe */
 
 #define PUSHSWITCHFRAME1						   \
@@ -394,13 +394,13 @@ LOCK_CAS_DEBUG_LOCALS
 #define	PUSHSWITCHFRAME2						\
 	strd	r10, [sp, #TF_R10];	/* save r10 & r11 */		\
 	strd	r8, [sp, #TF_R8];	/* save r8 & r9 */		\
-	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	mrs	r0, cpsr;		/* Get the CPSR */		\
 	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
 #else
 #define	PUSHSWITCHFRAME2						\
 	add	r0, sp, #TF_R8;		/* get ptr to r8 and above */	\
 	stmia	r0, {r8-r11};		/* save rest of registers */	\
-	mrs	r0, cpsr_all;		/* Get the CPSR */		\
+	mrs	r0, cpsr;		/* Get the CPSR */		\
 	str	r0, [sp, #TF_SPSR]	/* save in trapframe */
 #endif
 
@@ -469,7 +469,7 @@ LOCK_CAS_DEBUG_LOCALS
 	sub	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	mrs	r0, spsr;		/* Get the SPSR */		   \
 	str	r0, [sp, #-TF_R0]!	/* Push the SPSR onto the stack */
 
 /*

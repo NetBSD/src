@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.21 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.22 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -133,7 +133,7 @@ END(xscale_control)
  */
 ENTRY(xscale_setttb)
 #ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 #else
@@ -273,7 +273,7 @@ _C_LABEL(xscale_minidata_clean_size):
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
-	mrs	r3, cpsr_all					;	\
+	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
 	msr	cpsr_all, r0
 
