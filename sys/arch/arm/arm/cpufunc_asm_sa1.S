@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.13 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.14 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -49,7 +49,7 @@
  */
 ENTRY(sa1_setttb)
 #ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 #else
@@ -146,7 +146,7 @@ _C_LABEL(sa1_cache_clean_size):
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	SA1_CACHE_CLEAN_BLOCK						\
-	mrs	r3, cpsr_all					;	\
+	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
 	msr	cpsr_all, r0
 
