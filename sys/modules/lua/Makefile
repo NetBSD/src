@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/12/02 04:57:41 lneto Exp $
+#	$NetBSD: Makefile,v 1.5 2013/12/02 06:07:22 lneto Exp $
 
 .include "../Makefile.inc"
 
@@ -45,8 +45,6 @@ SRCS+=		strcspn.c \
 		strncat.c \
 		strpbrk.c \
 		strspn.c
-
-CFLAGS+=	-include ${.CURDIR}/luaconf.h
 
 CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
 		-I${S}/sys
