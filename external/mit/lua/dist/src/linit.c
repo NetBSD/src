@@ -1,7 +1,7 @@
-/*	$NetBSD: linit.c,v 1.1.1.2 2012/03/15 00:08:04 alnsn Exp $	*/
+/*	$NetBSD: linit.c,v 1.2 2013/12/02 04:57:41 lneto Exp $	*/
 
 /*
-** $Id: linit.c,v 1.1.1.2 2012/03/15 00:08:04 alnsn Exp $
+** $Id: linit.c,v 1.2 2013/12/02 04:57:41 lneto Exp $
 ** Initialization of libraries for lua.c
 ** See Copyright Notice in lua.h
 */
@@ -18,13 +18,19 @@
 
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
+#ifndef _KERNEL
   {LUA_LOADLIBNAME, luaopen_package},
+#endif
   {LUA_TABLIBNAME, luaopen_table},
+#ifndef _KERNEL
   {LUA_IOLIBNAME, luaopen_io},
   {LUA_OSLIBNAME, luaopen_os},
+#endif
   {LUA_STRLIBNAME, luaopen_string},
+#ifndef _KERNEL
   {LUA_MATHLIBNAME, luaopen_math},
   {LUA_DBLIBNAME, luaopen_debug},
+#endif
   {NULL, NULL}
 };
 
