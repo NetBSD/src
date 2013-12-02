@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.8 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.9 2013/12/02 18:36:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -65,7 +65,7 @@ ENTRY(arm8_clock_config)
  * addresses that are about to change.
  */
 ENTRY(arm8_setttb)
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
@@ -176,7 +176,7 @@ ENTRY(arm8_cache_purgeID)
 
 	mov	r0, #0x00000000
 
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
@@ -248,7 +248,7 @@ ENTRY(arm8_cache_purgeID_E)
 	 * mcr p15, 0, rd, c7, c11, 1
 	 * mcr p15, 0, rd, c7, c7, 1
 	 */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 	mcr	p15, 0, r0, c7, c11, 1	/* clean I+D single entry */
