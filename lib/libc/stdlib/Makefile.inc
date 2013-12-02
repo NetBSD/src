@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.79 2013/04/26 18:29:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.80 2013/12/02 04:39:10 lneto Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -30,7 +30,6 @@ SRCS+=	jemalloc.c
 SRCS+=	malloc.c
 .endif
 
-CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
