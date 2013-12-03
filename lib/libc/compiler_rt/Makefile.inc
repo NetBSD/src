@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2013/07/04 22:14:43 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.2 2013/12/03 02:28:51 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -9,7 +9,6 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/ppc
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_CPU}
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
 .endif
-
 
 .PATH: ${COMPILER_RT_CPU_DIR}
 .PATH: ${COMPILER_RT_ARCH_DIR}
@@ -22,6 +21,22 @@ COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/${MACHINE_ARCH}
 #	divxc3.c \
 #	divdc3.c \
 #	divsc3.c
+
+.if ${HAVE_LLVM:Uno} == "yes"
+# Requires C11 support
+GENERIC_SRCS+= atomic.c
+.endif
+
+.if ${HAVE_LIBGCC} == "no"
+# Requires unwind support
+GENERIC_SRCS+= \
+	gcc_personality_v0.c
+
+# Conflicts with soft-float
+GENERIC_SRCS+= \
+	comparedf2.c \
+	comparesf2.c
+.endif
 
 GENERIC_SRCS+= \
 	absvdi2.c \
@@ -36,14 +51,11 @@ GENERIC_SRCS+= \
 	ashlti3.c \
 	ashrdi3.c \
 	ashrti3.c \
-	atomic.c \
 	clzdi2.c \
 	clzsi2.c \
 	clzti2.c \
 	cmpdi2.c \
 	cmpti2.c \
-	comparedf2.c \
-	comparesf2.c \
 	ctzdi2.c \
 	ctzsi2.c \
 	ctzti2.c \
@@ -90,7 +102,6 @@ GENERIC_SRCS+= \
 	floatuntidf.c \
 	floatuntisf.c \
 	floatuntixf.c \
-	gcc_personality_v0.c \
 	int_util.c \
 	lshrdi3.c \
 	lshrti3.c \
@@ -155,12 +166,31 @@ GENERIC_SRCS+= \
 	gcc_qsub.c
 .endif
 
+.if ${MACHINE_CPU} == "arm"
+.if !empty(LIBC_MACHINE_ARCH:Mearm*)
+GENERIC_SRCS+= \
+	aeabi_dcmp.S \
+	aeabi_fcmp.S \
+	aeabi_idivmod.S \
+	aeabi_ldivmod.S \
+	aeabi_uidivmod.S \
+	aeabi_uldivmod.S
+.endif
+
+GENERIC_SRCS+= \
+	bswapdi2.S \
+	bswapsi2.S
+.endif
+
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
       exists(${COMPILER_RT_ARCH_DIR}/${src:R}.S)
 SRCS+=	${src:R}.S
 .  else
 SRCS+=	${src}
-COPTS.${src}+=	-Wno-error=missing-prototypes
+COPTS.${src}+=	-Wno-missing-prototypes \
+		-Wno-old-style-definition \
+		-Wno-strict-prototypes \
+		-Wno-uninitialized
 .  endif
 .endfor
