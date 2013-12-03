@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.62 2013/09/12 12:42:18 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.63 2013/12/03 17:01:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.62 2013/09/12 12:42:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.63 2013/12/03 17:01:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,9 +614,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
 
-	cg6_setup_palette(sc);
-	cgsix_clearscreen(sc);
-
 	sc->sc_gc.gc_bitblt = cgsix_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = CG6_ALU_COPY;
@@ -625,6 +622,19 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		/* we mess with cg6_console_screen only once */
 		vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 		    &defattr);
+		sc->sc_bg = (defattr >> 16) & 0xf; /* yes, this is an index into devcmap */
+		
+		/*
+		 * XXX
+		 * Is this actually necessary? We're going to use the blitter later on anyway.
+		 */ 
+		/* We need unaccelerated initial screen clear on old revisions */
+		if (sc->sc_fhcrev < 2) {
+			memset(sc->sc_fb.fb_pixels, ri->ri_devcmap[sc->sc_bg],
+			    sc->sc_stride * sc->sc_height);
+		} else
+			cgsix_clearscreen(sc);
+
 		cg6_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 		
 		cgsix_defaultscreen.textops = &ri->ri_ops;
@@ -655,6 +665,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			    &defattr);
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		sc->sc_bg = (defattr >> 16) & 0xf;
 		if (ri->ri_flg & RI_ENABLE_ALPHA) {
 			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(sc->sc_ramsize / sc->sc_stride) - 
@@ -1297,10 +1308,6 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	}
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
-	/* We need unaccelerated initial screen clear on old revisions */
-	if (sc->sc_fhcrev < 2)
-		memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
-		    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
