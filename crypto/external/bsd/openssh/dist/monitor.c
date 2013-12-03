@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.11 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.12 2013/12/03 17:14:35 spz Exp $	*/
 /* $OpenBSD: monitor.c,v 1.127 2013/07/19 07:37:48 markus Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.11 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.12 2013/12/03 17:14:35 spz Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1181,6 +1181,9 @@ mm_answer_keyallowed(int sock, Buffer *m)
 			break;
 		}
 	}
+	debug3("%s: key %p is %s",
+	    __func__, key, allowed ? "allowed" : "not allowed");
+
 	if (key != NULL)
 		key_free(key);
 
@@ -1201,9 +1204,6 @@ mm_answer_keyallowed(int sock, Buffer *m)
 		free(cuser);
 		free(chost);
 	}
-
-	debug3("%s: key %p is %s",
-	    __func__, key, allowed ? "allowed" : "not allowed");
 
 	buffer_clear(m);
 	buffer_put_int(m, allowed);
