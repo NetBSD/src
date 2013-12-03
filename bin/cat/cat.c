@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.52 2012/11/19 19:41:31 christos Exp $	*/
+/* $NetBSD: cat.c,v 1.53 2013/12/03 17:06:51 spz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.52 2012/11/19 19:41:31 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.53 2013/12/03 17:06:51 spz Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,9 +250,11 @@ raw_args(char **argv)
 	filename = "stdin";
 	do {
 		if (*argv) {
-			if (!strcmp(*argv, "-"))
+			if (!strcmp(*argv, "-")) {
 				fd = fileno(stdin);
-			else if (fflag) {
+				if (fd < 0)
+					goto skip;
+			} else if (fflag) {
 				struct stat st;
 				fd = open(*argv, O_RDONLY|O_NONBLOCK, 0);
 				if (fd < 0)
@@ -279,7 +281,8 @@ skipnomsg:
 			filename = *argv++;
 		}
 		raw_cat(fd);
-		if (fd != fileno(stdin))
+		/* fd > 0 would be cuter but let's priorize human-readability */
+		if (fd >= 0 && fd != fileno(stdin))
 			(void)close(fd);
 	} while (*argv);
 }
@@ -294,6 +297,8 @@ raw_cat(int rfd)
 	int wfd;
 
 	wfd = fileno(stdout);
+	if (wfd < 0)
+		err(EXIT_FAILURE, "stdout");
 	if (buf == NULL) {
 		struct stat sbuf;
 
