@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.13 2013/12/04 19:59:47 jakllsch Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.14 2013/12/04 20:15:51 jakllsch Exp $");
 #endif
 
 #include <sys/types.h>
@@ -433,7 +433,7 @@ migrate(int fd)
 	mbr->mbr_part[0].part_shd = 0x00;
 	mbr->mbr_part[0].part_ssect = 0x02;
 	mbr->mbr_part[0].part_scyl = 0x00;
-	mbr->mbr_part[0].part_typ = 0xee;
+	mbr->mbr_part[0].part_typ = MBR_PTYPE_PMBR;
 	mbr->mbr_part[0].part_ehd = 0xfe;
 	mbr->mbr_part[0].part_esect = 0xff;
 	mbr->mbr_part[0].part_ecyl = 0xff;
