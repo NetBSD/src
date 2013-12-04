@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2013/12/04 00:49:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2013/12/04 00:57:21 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -193,7 +193,7 @@ gen-trialdivtab: gen-trialdivtab.c
 	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
 
 trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab
+trialdivtab.h: gen-trialdivtab Makefile
 	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
 
 CLEANFILES+=	${DPSRCS} gen-fac gen-fib gen-bases gen-jacobitab \
