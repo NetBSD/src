@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.28 2013/11/22 01:24:21 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.29 2013/12/04 01:38:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.28 2013/11/22 01:24:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.29 2013/12/04 01:38:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -701,7 +701,7 @@ npf_session_destroy(npf_session_t *se)
 {
 	if (se->s_nat) {
 		/* Release any NAT related structures. */
-		npf_nat_expire(se->s_nat);
+		npf_nat_destroy(se->s_nat);
 	}
 	if (se->s_rproc) {
 		/* Release rule procedure. */
@@ -788,6 +788,7 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, u_int ntype)
 		/* Race: mark a removed entry and explicitly expire. */
 		atomic_or_uint(&se->s_flags, SE_REMBACK | SE_EXPIRE);
 		npf_stats_inc(NPF_STAT_RACE_NAT);
+		se->s_nat = NULL;
 	}
 	rw_exit(&sh->sh_lock);
 	return ok ? 0 : EISCONN;
@@ -845,7 +846,7 @@ void
 npf_session_release(npf_session_t *se)
 {
 	KASSERT(se->s_refcnt > 0);
-	if ((se->s_flags & SE_ACTIVE) == 0) {
+	if ((se->s_flags & (SE_ACTIVE | SE_EXPIRE)) == 0) {
 		/* Activate: after this point, session is globally visible. */
 		se->s_flags |= SE_ACTIVE;
 	}
