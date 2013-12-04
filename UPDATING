@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.248 2013/11/29 02:05:59 mrg Exp $
+$NetBSD: UPDATING,v 1.249 2013/12/04 14:47:41 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20131129:
+	The GMP sources were updated, and builds will likely fail without
+	cleaning their build trees for both tools and in-tree, like below.
 
 20131128:
 	The MPC and MPFR sources were updated, and builds may require their
