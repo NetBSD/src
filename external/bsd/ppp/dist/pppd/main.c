@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2013/12/04 15:05:49 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #define RCSID	"Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: main.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2013/12/04 15:05:49 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1682,8 +1682,13 @@ device_script(program, in, out, dont_wait)
 
     if (log_to_fd >= 0)
 	errfd = log_to_fd;
-    else
+    else {
 	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
+	if (errfd == -1) {
+	    error("Cannot open `%s': %m", _PATH_CONNERRS);
+	    return -1;
+	}
+    }
 
     ++conn_running;
     pid = safe_fork(in, out, errfd);
