@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.24 2013/11/27 01:47:53 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.25 2013/12/04 20:15:51 jakllsch Exp $");
 #endif
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: gpt.c,v 1.24 2013/11/27 01:47:53 jnemeth Exp $");
 #include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/bootblock.h>
 
 #include <err.h>
 #include <errno.h>
@@ -392,9 +393,9 @@ gpt_mbr(int fd, off_t lba)
 	 */
 	pmbr = 0;
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_UNUSED)
 			continue;
-		if (mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
 			pmbr++;
 		else
 			break;
@@ -419,8 +420,8 @@ gpt_mbr(int fd, off_t lba)
 	if (p == NULL)
 		return (-1);
 	for (i = 0; i < 4; i++) {
-		if (mbr->mbr_part[i].part_typ == 0 ||
-		    mbr->mbr_part[i].part_typ == 0xee)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_UNUSED ||
+		    mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
 			continue;
 		start = le16toh(mbr->mbr_part[i].part_start_hi);
 		start = (start << 16) + le16toh(mbr->mbr_part[i].part_start_lo);
@@ -437,7 +438,7 @@ gpt_mbr(int fd, off_t lba)
 			warnx("%s: MBR part: type=%d, start=%llu, size=%llu",
 			    device_name, mbr->mbr_part[i].part_typ,
 			    (long long)start, (long long)size);
-		if (mbr->mbr_part[i].part_typ != 15) {
+		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return (-1);
