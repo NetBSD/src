@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.5 2013/11/23 15:53:37 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.6 2013/12/04 02:12:01 lneto Exp $ */
 
 /*
  * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -515,7 +515,7 @@ lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize)
 	} else {
 		nptr = kmem_alloc(nsize, KM_SLEEP);
 		if (ptr != NULL) {
-			memcpy(nptr, ptr, osize);
+			memcpy(nptr, ptr, osize < nsize ? osize : nsize);
 			kmem_free(ptr, osize);
 		}
 	}
