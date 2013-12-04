@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2012/12/26 19:39:26 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2013/12/04 00:49:18 mrg Exp $
 
 SRCS+= \
 	trialdiv.c \
@@ -160,15 +160,4 @@ ASM_SRCS_LIST= \
 	mode1o.asm		mpn/ia64/mode1o.asm \
 	divrem_1.asm		mpn/ia64/divrem_1.asm \
 
-
-gen-trialdivtab: gen-trialdivtab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
-
-# XXX
 GMP_LIMB_BITS=64
-
-trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab
-	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
-
-CLEANFILES+=	trialdivtab.h
