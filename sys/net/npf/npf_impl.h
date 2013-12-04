@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.43 2013/11/23 19:32:20 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.44 2013/12/04 01:38:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ void		npf_rule_free(npf_rule_t *);
 uint64_t	npf_rule_getid(const npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
-npf_rproc_t *	npf_rule_getrproc(npf_rule_t *);
+npf_rproc_t *	npf_rule_getrproc(const npf_rule_t *);
 
 void		npf_ext_sysinit(void);
 void		npf_ext_sysfini(void);
@@ -329,7 +329,7 @@ void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *, const int);
 int		npf_nat_translate(npf_cache_t *, nbuf_t *, npf_nat_t *,
 		    const bool, const int);
-void		npf_nat_expire(npf_nat_t *);
+void		npf_nat_destroy(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
