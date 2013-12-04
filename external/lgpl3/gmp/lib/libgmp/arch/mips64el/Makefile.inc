@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2013/11/29 08:10:04 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2013/12/04 00:49:18 mrg Exp $
 
 SRCS+= \
 	random.c \
@@ -185,19 +185,10 @@ ASM_SRCS_LIST= \
 	addmul_1.asm		mpn/mips64/addmul_1.asm \
 	sub_n.asm		mpn/mips64/sub_n.asm \
 
-gen-trialdivtab: gen-trialdivtab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
-
 .if (defined(CPUFLAGS) && !empty(CPUFLAGS:M-mabi=64))
 GMP_LIMB_BITS=64
 .else
 GMP_LIMB_BITS=32
 .endif
-
-trialdiv.c: trialdivtab.h
-trialdivtab.h: gen-trialdivtab Makefile
-	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
-
-CLEANFILES+=	trialdivtab.h
 
 COPTS+=		-Wno-error
