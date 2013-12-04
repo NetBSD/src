@@ -1,5 +1,5 @@
 
-/*	$NetBSD: mount_tmpfs.c,v 1.26 2013/12/04 13:30:35 martin Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.27 2013/12/04 15:10:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.26 2013/12/04 13:30:35 martin Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.27 2013/12/04 15:10:11 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ ram_factor(float f)
 
 	len = sizeof(ram);
 	if (sysctlbyname("hw.physmem64", &ram, &len, NULL, 0))
-		err(EXIT_FAILURE, "can't get \"hw.physmem64\": %s", strerror(errno));
+		err(EXIT_FAILURE, "can't get \"hw.physmem64\"");
 
 	return (int64_t)((float)ram * f);
 }
@@ -97,10 +97,10 @@ ram_fract(const char *arg)
 
 	f = strtof(arg, &endp);
 	if (endp && *endp != 0)
-		err(EXIT_FAILURE, "syntax error in ram fraction: ram/%s"
+		errx(EXIT_FAILURE, "syntax error in ram fraction: ram/%s"
 		    " at %s", arg, endp);
 	if (f <= 0.0f)
-		err(EXIT_FAILURE, "ram fraction must be a positive number:"
+		errx(EXIT_FAILURE, "ram fraction must be a positive number:"
 		     " ram/%s", arg);
 
 	return ram_factor(1.0f/f);
@@ -117,10 +117,10 @@ ram_percent(const char *arg)
 
 	f = strtof(arg, &endp);
 	if (endp && *endp != 0)
-		err(EXIT_FAILURE, "syntax error in ram percentage: ram%%%s"
+		errx(EXIT_FAILURE, "syntax error in ram percentage: ram%%%s"
 		    " at %s", arg, endp);
 	if (f <= 0.0f || f >= 100.0f)
-		err(EXIT_FAILURE, "ram percentage must be a between 0 and 100"
+		errx(EXIT_FAILURE, "ram percentage must be a between 0 and 100"
 		     " ram%%%s", arg);
 
 	return ram_factor(f/100.0f);
