@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.10 2013/11/04 21:25:05 christos Exp $
+# $Id: Makefile,v 1.11 2013/12/05 16:26:04 joerg Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -13,10 +13,10 @@ CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
-.if ${HAVE_GCC} < 48
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.else
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 .endif
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DDIAGNOSTIC
