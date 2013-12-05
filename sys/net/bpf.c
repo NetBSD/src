@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.179 2013/11/16 01:13:52 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.180 2013/12/05 15:55:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.179 2013/11/16 01:13:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.180 2013/12/05 15:55:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -356,7 +356,7 @@ bpf_detachd(struct bpf_d *d)
 	 * If so, turn it off.
 	 */
 	if (d->bd_promisc) {
-		int error;
+		int error __diagused;
 
 		d->bd_promisc = 0;
 		/*
@@ -367,8 +367,10 @@ bpf_detachd(struct bpf_d *d)
 		 * if we don't get an unexpected error.
 		 */
   		error = ifpromisc(bp->bif_ifp, 0);
-		if (error && error != EINVAL)
-			panic("%s: ifpromisc failed: %d", __func__, error);
+#ifdef DIAGNOSTIC
+		if (error)
+			printf("%s: ifpromisc failed: %d", __func__, error);
+#endif
 	}
 	/* Remove d from the interface's descriptor list. */
 	p = &bp->bif_dlist;
