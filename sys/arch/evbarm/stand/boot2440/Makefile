@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2013/11/04 21:25:05 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2013/12/05 16:26:04 joerg Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -16,13 +16,15 @@ CPPFLAGS+=	-DDM9000MAC="0x08,0x08,0x11,0x18,0x12,0x27"
 CPPFLAGS+=	-DDEFAULT_BOOTFILE="ld0a:netbsd;net:"
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	-march=armv4 -mabi=apcs-gnu -mfloat-abi=soft
-.if ${HAVE_GCC} < 48
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.else
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 .endif
 CPUFLAGS=
 DBG=		-Os
+
+CWARNFLAGS.clang+=	-Wno-asm-operand-widths
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
