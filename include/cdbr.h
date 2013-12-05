@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.h,v 1.1 2010/04/25 00:54:45 joerg Exp $	*/
+/*	$NetBSD: cdbr.h,v 1.2 2013/12/05 21:17:23 joerg Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,8 @@ struct cdbr;
 __BEGIN_DECLS
 
 struct cdbr	*cdbr_open(const char *, int);
+struct cdbr	*cdbr_open_mem(void *, size_t, int,
+    void (*)(void *, void *, size_t), void *);
 uint32_t	 cdbr_entries(struct cdbr *);
 int		 cdbr_get(struct cdbr *, uint32_t, const void **, size_t *);
 int		 cdbr_find(struct cdbr *, const void *, size_t,
