@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.158 2013/09/09 15:04:12 prlw1 Exp $
+# $NetBSD: postinstall,v 1.159 2013/12/05 15:41:23 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1749,34 +1749,6 @@ do_catpages()
 	return $failed
 }
 
-#
-#	obsolete
-#	(this item is last to allow other items to move obsolete files)
-#
-additem obsolete "remove obsolete file sets and minor libraries"
-do_obsolete()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
-	op="$1"
-	failed=0
-
-	sort -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
-
-	(
-		obsolete_libs /lib
-		obsolete_libs /usr/lib
-		obsolete_libs /usr/lib/i18n
-		obsolete_libs /usr/X11R6/lib
-		obsolete_libs /usr/X11R7/lib
-		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
-		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
-	) | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
 
 #
 #	ptyfsoldnodes
@@ -1862,6 +1834,63 @@ do_ptyfsoldnodes()
 	return ${failed}
 }
 
+
+#
+#	varshm
+#
+additem varshm "check for a tmpfs mounted on /var/shm"
+do_varshm()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varshm  fix|check"
+	op="$1"
+	failed=0
+
+	if ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	then
+		failed = 0;
+	else
+		if [ "${op}" = "check" ]; then
+			failed=1
+			echo "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+		elif [ "${op}" = "fix" ]; then
+			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
+				>> "${DEST_DIR}/etc/fstab"
+			echo "Added tmpfs with 25% ram limit as /var/shm"
+
+		fi
+	fi
+
+	return ${failed}
+}
+
+
+#
+#	obsolete
+#	(this item is last to allow other items to move obsolete files)
+#
+additem obsolete "remove obsolete file sets and minor libraries"
+do_obsolete()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	op="$1"
+	failed=0
+
+	sort -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
+		obsolete_libs /usr/X11R7/lib
+		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
+		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
+	) | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
 
 #
 #	end of items
