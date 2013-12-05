@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.4 2012/09/27 00:37:43 joerg Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.5 2013/12/05 21:17:23 joerg Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.4 2012/09/27 00:37:43 joerg Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.5 2013/12/05 21:17:23 joerg Exp $");
 
 #include "namespace.h"
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: cdbr.c,v 1.4 2012/09/27 00:37:43 joerg Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -62,6 +63,7 @@ __weak_alias(cdbr_close,_cdbr_close)
 __weak_alias(cdbr_find,_cdbr_find)
 __weak_alias(cdbr_get,_cdbr_get)
 __weak_alias(cdbr_open,_cdbr_open)
+__weak_alias(cdbr_open_mem,_cdbr_open_mem)
 #endif
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -70,6 +72,8 @@ __weak_alias(cdbr_open,_cdbr_open)
 #endif
 
 struct cdbr {
+	void (*unmap)(void *, void *, size_t);
+	void *cookie;
 	uint8_t *mmap_base;
 	size_t mmap_size;
 
@@ -91,26 +95,62 @@ struct cdbr {
 	uint8_t entries_index_s1, entries_index_s2;
 };
 
+static void
+cdbr_unmap(void *cookie __unused, void *base, size_t size)
+{
+	munmap(base, size);
+}
+
 /* ARGSUSED */
 struct cdbr *
 cdbr_open(const char *path, int flags)
 {
-	uint8_t buf[40];
+	void *base;
+	size_t size;
 	int fd;
 	struct cdbr *cdbr;
 	struct stat sb;
 
 	if ((fd = open(path, O_RDONLY)) == -1)
 		return NULL;
-
-	errno = EINVAL;
-	if (fstat(fd, &sb) == -1 ||
-	    read(fd, buf, sizeof(buf)) != sizeof(buf) ||
-	    memcmp(buf, "NBCDB\n\0\001", 8) ||
-	    (cdbr = malloc(sizeof(*cdbr))) == NULL) {
+	if (fstat(fd, &sb) == -1) {
 		close(fd);
 		return NULL;
 	}
+
+	if (sb.st_size >= SSIZE_MAX) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+
+	size = (size_t)sb.st_size;
+	base = mmap(NULL, size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
+	close(fd);
+
+	if (base == MAP_FAILED)
+		return NULL;
+
+	cdbr = cdbr_open_mem(base, size, flags, cdbr_unmap, NULL);
+	if (cdbr == NULL)
+		munmap(base, size);
+	return cdbr;
+}
+
+struct cdbr *
+cdbr_open_mem(void *base, size_t size, int flags,
+    void (*unmap)(void *, void *, size_t), void *cookie)
+{
+	struct cdbr *cdbr;
+	uint8_t *buf = base;
+	if (size < 40 || memcmp(buf, "NBCDB\n\0\001", 8)) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	cdbr = malloc(sizeof(*cdbr));
+	cdbr->unmap = unmap;
+	cdbr->cookie = cookie;
 
 	cdbr->data_size = le32dec(buf + 24);
 	cdbr->entries = le32dec(buf + 28);
@@ -131,14 +171,8 @@ cdbr_open(const char *path, int flags)
 	else
 		cdbr->index_size = 4;
 
-	cdbr->mmap_size = (size_t)sb.st_size;
-	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
-	close(fd);
-
-	if (cdbr->mmap_base == MAP_FAILED) {
-		free(cdbr);
-		return NULL;
-	}
+	cdbr->mmap_base = base;
+	cdbr->mmap_size = size;
 
 	cdbr->hash_base = cdbr->mmap_base + 40;
 	cdbr->offset_base = cdbr->hash_base + cdbr->entries_index * cdbr->index_size;
@@ -154,7 +188,7 @@ cdbr_open(const char *path, int flags)
 	    cdbr->data_base + cdbr->data_size >
 	    cdbr->mmap_base + cdbr->mmap_size) {
 		errno = EINVAL;
-		cdbr_close(cdbr);
+		free(cdbr);
 		return NULL;
 	}
 
@@ -255,6 +289,7 @@ cdbr_find(struct cdbr *cdbr, const void *key, size_t key_len,
 void
 cdbr_close(struct cdbr *cdbr)
 {
-	munmap(cdbr->mmap_base, cdbr->mmap_size);
+	if (cdbr->unmap)
+		(*cdbr->unmap)(cdbr->cookie, cdbr->mmap_base, cdbr->mmap_size);
 	free(cdbr);
 }
