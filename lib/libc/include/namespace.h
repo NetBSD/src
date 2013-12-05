@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.169 2013/08/28 17:47:07 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.170 2013/12/05 21:17:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@
 #define cdbr_find		_cdbr_find
 #define cdbr_get		_cdbr_get
 #define cdbr_open		_cdbr_open
+#define cdbr_open_mem		_cdbr_open_mem
 #define cdbw_close		_cdbw_close
 #define cdbw_open		_cdbw_open
 #define cdbw_put		_cdbw_put
