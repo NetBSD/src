@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.79 2013/10/31 01:55:03 mrg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.80 2013/12/05 22:49:33 matt Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -101,6 +101,7 @@ CLEANDIRFILES+= .depend ${__DPSRCS.d} ${__DPSRCS.d:.d=.d.tmp} ${.CURDIR}/tags ${
 .if !target(tags)
 tags: ${SRCS}
 .if defined(SRCS) && !empty(SRCS)
+	${_MKTARGET_CREATE}
 	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif
