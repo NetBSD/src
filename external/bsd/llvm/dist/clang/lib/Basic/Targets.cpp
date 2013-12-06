@@ -3679,6 +3679,7 @@ class ARMTargetInfo : public TargetInfo {
     // it is safe to use atomic instructions on armv6 and newer.
     if (!T.isOSLinux() &&
         T.getOS() != llvm::Triple::FreeBSD &&
+        T.getOS() != llvm::Triple::NetBSD &&
         T.getOS() != llvm::Triple::Bitrig)
       return false;
     StringRef ArchName = T.getArchName();
@@ -3706,10 +3707,19 @@ public:
       : TargetInfo(Triple), ABI("aapcs-linux"), CPU("arm1136j-s"),
         FPMath(FP_Default), IsAAPCS(true) {
     BigEndian = false;
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-    // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
-    WCharType = UnsignedInt;
+    switch (getTriple().getOS()) {
+    case llvm::Triple::NetBSD:
+      SizeType = UnsignedLong;
+      PtrDiffType = SignedLong;
+      WCharType = SignedInt;
+      break;
+    default:
+      // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
+      WCharType = UnsignedInt;
+      SizeType = UnsignedInt;
+      PtrDiffType = SignedInt;
+      break;
+    }
 
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.

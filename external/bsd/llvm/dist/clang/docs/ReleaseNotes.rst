@@ -62,7 +62,36 @@ Clang's diagnostics are constantly being improved to catch more issues,
 explain them more clearly, and provide more accurate source information
 about them. The improvements since the 3.3 release include:
 
--  ...
+- -Wheader-guard warns on mismatches between the #ifndef and #define lines
+  in a header guard.
+- -Wlogical-not-parentheses warns when a logical not ('!') only applies to the
+  left-hand side of a comparison.  This warning is part of -Wparentheses.
+- Boolean increment, a deprecated feature, has own warning flag
+  -Wdeprecated-increment-bool, and is still part of -Wdeprecated.
+- Clang errors on builtin enum increments and decrements.
+- -Wloop-analysis now warns on for-loops which have the same increment or 
+  decrement in the loop header as the last statement in the loop.
+- -Wuninitialized now performs checking across field initializers to detect
+  when one field in used uninitialized in another field initialization.
+- Clang can detect initializer list use inside a macro and suggest parentheses
+  if possible to fix.
+- Many improvements to Clang's typo correction facilities, such as:
+  + Adding global namespace qualifiers so that corrections can refer to shadowed
+    or otherwise ambiguous or unreachable namespaces.
+  + Including accessible class members in the set of typo correction candidates,
+    so that corrections requiring a class name in the name specifier are now
+    possible.
+  + Allowing typo corrections that involve removing a name specifier.
+  + In some situations, correcting function names when a function was given the
+    wrong number of arguments, including situations where the original function
+    name was correct but was shadowed by a lexically closer function with the
+    same name yet took a different number of arguments.
+  + Offering typo suggestions for 'using' declarations.
+  + Providing better diagnostics and fixit suggestions in more situations when
+    a '->' was used instead of '.' or vice versa.
+  + Providing more relevant suggestions for typos followed by '.' or '='.
+  + Various performance improvements when searching for typo correction
+    candidates.
 
 New Compiler Flags
 ------------------
@@ -141,6 +170,15 @@ Static Analyzer
 The static analyzer (which contains additional code checking beyond compiler
 warnings) has improved significantly in both in the core analysis engine and 
 also in the kinds of issues it can find.
+
+Windows Support
+---------------
+
+- `clang-cl <UsersManual.html#clang-cl>` provides a new driver mode that is
+  designed for compatibility with Visual Studio's compiler, cl.exe. This driver
+  mode makes Clang accept the same kind of command-line options as cl.exe.
+  Please note that this mode is still experimental.
+
 
 Core Analysis Improvements
 ==========================
