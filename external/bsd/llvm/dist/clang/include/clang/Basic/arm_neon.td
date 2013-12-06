@@ -133,6 +133,7 @@ class Inst <string n, string p, string t, Op o> {
   Op Operand = o;
   bit isShift = 0;
   bit isScalarShift = 0;
+  bit isScalarNarrowShift = 0;
   bit isVCVT_N = 0;
   bit isA64 = 0;
   bit isCrypto = 0;
@@ -182,6 +183,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // x: signed integer   (int/float args)
 // u: unsigned integer (int/float args)
 // f: float (int args)
+// F: double (int args)
 // d: default
 // g: default, ignore 'Q' size modifier.
 // j: default, force 'Q' size modifier.
@@ -626,7 +628,7 @@ def FMLS : SInst<"vfms", "dddd", "fQfQd">;
 // Logical operations
 // With additional Qd, Ql, QPl type.
 def BSL : SInst<"vbsl", "dudd",
-                "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPsQdPlQPl">;
+                "csilUcUsUiUlfdPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPsQdPlQPl">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Absolute Difference
@@ -678,7 +680,7 @@ def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI>;
 def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "fj", "d">;
 def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI>;
 def VCVT_F64_F32 : SInst<"vcvt_f64", "wd", "f">;
-def VCVT_F64 : SInst<"vcvt_f64", "fd",  "QlQUl">;
+def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "QlQUl">;
 def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI>;
 def VCVTX_F32_F64 : SInst<"vcvtx_f32", "fj",  "d">;
 def VCVTX_HIGH_F32_F64 : SOpInst<"vcvtx_high_f32", "qfj", "d", OP_VCVTX_HI>;
@@ -798,7 +800,7 @@ def QRSHRN_HIGH_N  : SOpInst<"vqrshrn_high_n", "hmdi",
 def VMOVL_HIGH   : SOpInst<"vmovl_high", "nd", "HcHsHiHUcHUsHUi", OP_MOVL_HI>;
 
 let isVCVT_N = 1 in {
-def CVTF_N_F64   : SInst<"vcvt_n_f64", "fdi", "QlQUl">;
+def CVTF_N_F64   : SInst<"vcvt_n_f64", "Fdi", "QlQUl">;
 def FCVTZS_N_S64 : SInst<"vcvt_n_s64", "xdi", "Qd">;
 def FCVTZS_N_U64 : SInst<"vcvt_n_u64", "udi", "Qd">;
 }
@@ -833,13 +835,13 @@ def GET_LANE : IInst<"vget_lane", "sdi",
 def SET_LANE : IInst<"vset_lane", "dsdi",
                      "csilPcPsUcUsUiUlQcQsQiQlQUcQUsQUiQUlPcPsQPcQPsfdQfQdPlQPl">;
 def COPY_LANE : IOpInst<"vcopy_lane", "ddidi",
-                        "csiPcPsUcUsUiPcPsfPl", OP_COPY_LN>;
+                        "csilPcPsUcUsUiUlPcPsPlfd", OP_COPY_LN>;
 def COPYQ_LANE : IOpInst<"vcopy_lane", "ddigi",
                         "QcQsQiQlQUcQUsQUiQUlQPcQPsQfQdQPl", OP_COPYQ_LN>;
 def COPY_LANEQ : IOpInst<"vcopy_laneq", "ddiki",
-                     "csiPcPsUcUsUif", OP_COPY_LNQ>;
+                     "csilPcPsPlUcUsUiUlfd", OP_COPY_LNQ>;
 def COPYQ_LANEQ : IOpInst<"vcopy_laneq", "ddidi",
-                     "QcQsQiQlQUcQUsQUiQUlQPcQPsQfdQPl", OP_COPY_LN>;
+                     "QcQsQiQlQUcQUsQUiQUlQPcQPsQfQdQPl", OP_COPY_LN>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set all lanes to same value
@@ -858,7 +860,7 @@ def MOV_N   : WOpInst<"vmov_n", "ds",
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combining vectors, with additional Pl
-def COMBINE : NoTestOpInst<"vcombine", "kdd", "csilhfUcUsUiUlPcPsPl", OP_CONC>;
+def COMBINE : NoTestOpInst<"vcombine", "kdd", "csilhfdUcUsUiUlPcPsPl", OP_CONC>;
 
 ////////////////////////////////////////////////////////////////////////////////
 //Initialize a vector from bit pattern, with additional Pl
@@ -1055,14 +1057,16 @@ def SCALAR_SRI_N: SInst<"vsri_n", "sssi", "SlSUl">;
 // Shift Left And Insert (Immediate)
 def SCALAR_SLI_N: SInst<"vsli_n", "sssi", "SlSUl">;
 
-// Signed/Unsigned Saturating Shift Right Narrow (Immediate)
-def SCALAR_SQSHRN_N: SInst<"vqshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
-// Signed/Unsigned Saturating Rounded Shift Right Narrow (Immediate)
-def SCALAR_SQRSHRN_N: SInst<"vqrshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
-// Signed Saturating Shift Right Unsigned Narrow (Immediate)
-def SCALAR_SQSHRUN_N: SInst<"vqshrun_n", "zsi", "SsSiSl">;
-// Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
-def SCALAR_SQRSHRUN_N: SInst<"vqrshrun_n", "zsi", "SsSiSl">;
+let isScalarNarrowShift = 1 in {
+  // Signed/Unsigned Saturating Shift Right Narrow (Immediate)
+  def SCALAR_SQSHRN_N: SInst<"vqshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
+  // Signed/Unsigned Saturating Rounded Shift Right Narrow (Immediate)
+  def SCALAR_SQRSHRN_N: SInst<"vqrshrn_n", "zsi", "SsSiSlSUsSUiSUl">;
+  // Signed Saturating Shift Right Unsigned Narrow (Immediate)
+  def SCALAR_SQSHRUN_N: SInst<"vqshrun_n", "zsi", "SsSiSl">;
+  // Signed Saturating Rounded Shift Right Unsigned Narrow (Immediate)
+  def SCALAR_SQRSHRUN_N: SInst<"vqrshrun_n", "zsi", "SsSiSl">;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed/Unsigned Fixed-point Convert To Floating-Point (Immediate)
@@ -1123,6 +1127,30 @@ def SCALAR_UCVTFS : SInst<"vcvt_f32", "ys", "SUi">;
 def SCALAR_UCVTFD : SInst<"vcvt_f64", "os", "SUl">;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Scalar Floating-point Converts
+def SCALAR_FCVTXN  : IInst<"vcvtx_f32", "ys", "Sd">;
+def SCALAR_FCVTNSS : SInst<"vcvtn_s32", "$s", "Sf">;
+def SCALAR_FCVTNUS : SInst<"vcvtn_u32", "bs", "Sf">;
+def SCALAR_FCVTNSD : SInst<"vcvtn_s64", "$s", "Sd">;
+def SCALAR_FCVTNUD : SInst<"vcvtn_u64", "bs", "Sd">;
+def SCALAR_FCVTMSS : SInst<"vcvtm_s32", "$s", "Sf">;
+def SCALAR_FCVTMUS : SInst<"vcvtm_u32", "bs", "Sf">;
+def SCALAR_FCVTMSD : SInst<"vcvtm_s64", "$s", "Sd">;
+def SCALAR_FCVTMUD : SInst<"vcvtm_u64", "bs", "Sd">;
+def SCALAR_FCVTASS : SInst<"vcvta_s32", "$s", "Sf">;
+def SCALAR_FCVTAUS : SInst<"vcvta_u32", "bs", "Sf">;
+def SCALAR_FCVTASD : SInst<"vcvta_s64", "$s", "Sd">;
+def SCALAR_FCVTAUD : SInst<"vcvta_u64", "bs", "Sd">;
+def SCALAR_FCVTPSS : SInst<"vcvtp_s32", "$s", "Sf">;
+def SCALAR_FCVTPUS : SInst<"vcvtp_u32", "bs", "Sf">;
+def SCALAR_FCVTPSD : SInst<"vcvtp_s64", "$s", "Sd">;
+def SCALAR_FCVTPUD : SInst<"vcvtp_u64", "bs", "Sd">;
+def SCALAR_FCVTZSS : SInst<"vcvt_s32", "$s", "Sf">;
+def SCALAR_FCVTZUS : SInst<"vcvt_u32", "bs", "Sf">;
+def SCALAR_FCVTZSD : SInst<"vcvt_s64", "$s", "Sd">;
+def SCALAR_FCVTZUD : SInst<"vcvt_u64", "bs", "Sd">;
+
+////////////////////////////////////////////////////////////////////////////////
 // Scalar Floating-point Reciprocal Estimate
 def SCALAR_FRECPE : IInst<"vrecpe", "ss", "SfSd">;
 
@@ -1176,6 +1204,10 @@ def SCALAR_FACLT : IInst<"vcalt", "bss", "SfSd">;
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Absolute Value
 def SCALAR_ABS : SInst<"vabs", "ss", "Sl">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Absolute Difference
+def SCALAR_ABD : IInst<"vabd", "sss", "SfSd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Signed Saturating Absolute Value

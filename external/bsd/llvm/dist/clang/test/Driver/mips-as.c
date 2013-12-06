@@ -126,3 +126,24 @@
 // RUN:   | FileCheck -check-prefix=MIPS-NAN-LEGACY %s
 // MIPS-NAN-LEGACY: as{{(.exe)?}}"
 // MIPS-NAN_LEGACY-NOT: "-mnan={{.*}}"
+//
+// RUN: %clang -target mips-linux-gnu -mfp64 -mfp32 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-MFP32 %s
+// MIPS-MFP32: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB" "-mfp32"
+//
+// RUN: %clang -target mips-linux-gnu -mfp32 -mfp64 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-MFP64 %s
+// MIPS-MFP64: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB" "-mfp64"
+//
+// RUN: %clang -target mips-linux-gnu -mno-msa -mmsa -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-MSA %s
+// MIPS-MSA: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB" "-mmsa"
+//
+// RUN: %clang -target mips-linux-gnu -mmsa -mno-msa -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-NMSA %s
+// MIPS-NMSA: as{{(.exe)?}}"
+// MIPS-NMSA-NOT: "-mmsa"

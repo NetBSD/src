@@ -6270,7 +6270,10 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
   switch (NewTSK) {
   case TSK_Undeclared:
   case TSK_ImplicitInstantiation:
-    llvm_unreachable("Don't check implicit instantiations here");
+    assert(
+        (PrevTSK == TSK_Undeclared || PrevTSK == TSK_ImplicitInstantiation) &&
+        "previous declaration must be implicit!");
+    return false;
 
   case TSK_ExplicitSpecialization:
     switch (PrevTSK) {
@@ -7438,7 +7441,8 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     NamedDecl *Prev = *P;
     if (!HasExplicitTemplateArgs) {
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Prev)) {
-        if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
+        QualType Adjusted = adjustCCAndNoReturn(R, Method->getType());
+        if (Context.hasSameUnqualifiedType(Method->getType(), Adjusted)) {
           Matches.clear();
 
           Matches.addDecl(Method, P.getAccess());
