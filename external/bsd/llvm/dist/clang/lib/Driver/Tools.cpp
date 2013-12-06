@@ -499,6 +499,11 @@ static std::string getARMTargetCPU(const ArgList &Args,
     MArch = Triple.getArchName();
   }
 
+  if (Triple.getOS() == llvm::Triple::NetBSD) {
+    if (MArch == "armv6")
+      return "arm1176jzf-s";
+  }
+
   // Handle -march=native.
   std::string NativeMArch;
   if (MArch == "native") {
@@ -5967,6 +5972,13 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArch() == llvm::Triple::x86)
     CmdArgs.push_back("--32");
 
+  // Pass the target CPU to GNU as for ARM, since the source code might
+  // not have the correct .cpu annotation.
+  if (getToolChain().getArch() == llvm::Triple::arm) {
+    std::string MArch(getARMTargetCPU(Args, getToolChain().getTriple()));
+    CmdArgs.push_back(Args.MakeArgString("-mcpu=" + MArch));
+  }
+
   // Set byte order explicitly
   if (getToolChain().getArch() == llvm::Triple::mips)
     CmdArgs.push_back("-EB");
@@ -6173,11 +6185,25 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back(Args.MakeArgString("-mnan=2008"));
     }
 
+    if (Arg *A = Args.getLastArg(options::OPT_mfp32, options::OPT_mfp64)) {
+      if (A->getOption().matches(options::OPT_mfp32))
+        CmdArgs.push_back(Args.MakeArgString("-mfp32"));
+      else
+        CmdArgs.push_back(Args.MakeArgString("-mfp64"));
+    }
+
     Args.AddLastArg(CmdArgs, options::OPT_mips16, options::OPT_mno_mips16);
     Args.AddLastArg(CmdArgs, options::OPT_mmicromips,
                     options::OPT_mno_micromips);
     Args.AddLastArg(CmdArgs, options::OPT_mdsp, options::OPT_mno_dsp);
     Args.AddLastArg(CmdArgs, options::OPT_mdspr2, options::OPT_mno_dspr2);
+
+    if (Arg *A = Args.getLastArg(options::OPT_mmsa, options::OPT_mno_msa)) {
+      // Do not use AddLastArg because not all versions of MIPS assembler
+      // support -mmsa / -mno-msa options.
+      if (A->getOption().matches(options::OPT_mmsa))
+        CmdArgs.push_back(Args.MakeArgString("-mmsa"));
+    }
 
     Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
                                       options::OPT_fpic, options::OPT_fno_pic,
