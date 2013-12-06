@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.23 2013/11/13 09:49:08 mbalmer Exp $
+# $NetBSD: ad.mips,v 1.24 2013/12/06 14:01:12 mrg Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -482,7 +482,7 @@
 ./usr/lib/o32/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,arch64
 ./usr/lib/o32/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,arch64
 ./usr/lib/o32/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,arch64
-./usr/lib/o32/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=48,arch64
+./usr/lib/o32/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48,arch64
 ./usr/lib/o32/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libhdb.so.14			base-compat-shlib	compat,pic,kerberos,arch64
