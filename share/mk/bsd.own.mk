@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.756 2013/12/05 22:51:08 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.757 2013/12/06 23:14:15 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -502,7 +502,7 @@ MACHINES.mips=		arc cobalt algor cobalt emips evbmips ews4800mips \
 MACHINES.powerpc=	amigappc bebox evbppc ibmnws macppc mvmeppc \
 			ofppc prep rs6000 sandpoint
 MACHINES.sh3=		dreamcast evbsh3 hpcsh landisk mmeye
-MACHINES.sparc=		sparc
+MACHINES.sparc=		sparc sparc64
 MACHINES.sparc64=	sparc64
 MACHINES.vax=		vax
 MACHINES.x86_64=	amd64

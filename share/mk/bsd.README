@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.322 2013/11/11 10:24:53 joerg Exp $
+#	$NetBSD: bsd.README,v 1.323 2013/12/06 23:14:15 matt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -879,6 +879,10 @@ TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
 TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
 
 TOOL_ZIC		Time zone compiler.  [zic]
+
+For each possible value of MACHINE_CPU, MACHINES.${MACHINE_CPU} contain a
+list of what ports can be built for it.  This keeps those definitions in
+centralized place.
 
 <bsd.own.mk> is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
