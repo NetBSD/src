@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.77 2013/05/05 14:22:07 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.78 2013/12/06 11:23:47 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.77 2013/05/05 14:22:07 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.78 2013/12/06 11:23:47 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -180,6 +180,12 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 					sub_win->alines[sy]->flags
 					    &= ~__ISDIRTY;
 				}
+				if (sub_win->alines[sy]->flags & __ISFORCED) {
+					orig->alines[sy + sub_win->begy - orig->begy]->flags
+					    |= __ISFORCED;
+					sub_win->alines[sy]->flags
+					    &= ~__ISFORCED;
+				}
 			}
 		}
 	}
@@ -209,7 +215,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 		    "_wnoutrefresh: wy %d\tf %d\tl %d\tflags %x\n",
 		    wy, *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
-		if ((wlp->flags & __ISDIRTY) == 0)
+		if ((wlp->flags & (__ISDIRTY | __ISFORCED)) == 0)
 			continue;
 		vlp = screen->__virtscr->alines[y_off];
 
@@ -274,6 +280,8 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 				vlp->flags &= ~__ISPASTEOL;
 			if (wlp->flags & __ISDIRTY)
 				vlp->flags |= __ISDIRTY;
+			if (wlp->flags & __ISFORCED)
+				vlp->flags |= __ISFORCED;
 
 #ifdef DEBUG
 			__CTRACE(__CTRACE_REFRESH,
@@ -282,24 +290,25 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 #endif
 			/* Set change pointers on "__virtscr". */
 			if (*vlp->firstchp >
-			    *wlp->firstchp + wbegx - win->ch_off)
-				*vlp->firstchp =
-				    *wlp->firstchp + wbegx - win->ch_off;
+				*wlp->firstchp + wbegx - win->ch_off)
+					*vlp->firstchp =
+					    *wlp->firstchp + wbegx - win->ch_off;
 			if (*vlp->lastchp <
-			    *wlp->lastchp + wbegx - win->ch_off)
-				*vlp->lastchp =
-				    *wlp->lastchp + wbegx - win->ch_off;
+				*wlp->lastchp + wbegx - win->ch_off)
+					*vlp->lastchp =
+					    *wlp->lastchp + wbegx - win->ch_off;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_REFRESH,
 			    "__virtscr: firstch = %d, lastch = %d\n",
 			    *vlp->firstchp, *vlp->lastchp);
 #endif
 			/*
-			 * Unset change pointers only if a window, as a pad
-			 * can be displayed again without any of the contents
-			 * changing.
+			 * Unset change pointers only if a window and we
+			 * are not forcing a redraw. A pad can be displayed
+			 * again without any of the contents changing.
 			 */
-			if (!(win->flags & __ISPAD)) {
+			if ((!(win->flags & __ISPAD)) ||
+			    ((wlp->flags & __ISFORCED) == __ISFORCED)) {
 				/* Set change pointers on "win". */
 				if (*wlp->firstchp >= win->ch_off)
 					*wlp->firstchp = maxx + win->ch_off;
@@ -395,9 +404,9 @@ int
 doupdate(void)
 {
 	WINDOW	*win;
-	__LINE	*wlp;
+	__LINE	*wlp, *vlp;
 	short	 wy;
-	int	 dnum;
+	int	 dnum, was_cleared;
 #ifdef HAVE_WCHAR
 	__LDATA *lp;
 	nschar_t *np;
@@ -450,6 +459,7 @@ doupdate(void)
 		}
 	}
 
+	was_cleared = 0;
 	if ((win->flags & __CLEAROK) || (curscr->flags & __CLEAROK) ||
 	    _cursesi_screen->curwin) {
 		if (curscr->wattr & __COLOR)
@@ -465,6 +475,8 @@ doupdate(void)
 		}
 		__touchwin(win);
 		win->flags &= ~__CLEAROK;
+		/* note we cleared for later */
+		was_cleared = 1;
 	}
 	if (!cursor_address) {
 		if (win->curx != 0)
@@ -544,6 +556,7 @@ doupdate(void)
 
 	for (wy = 0; wy < win->maxy; wy++) {
 		wlp = win->alines[wy];
+		vlp = _cursesi_screen->__virtscr->alines[win->begy + wy];
 /* XXX: remove this debug */
 #ifdef DEBUG
 		__CTRACE(__CTRACE_REFRESH,
@@ -552,29 +565,47 @@ doupdate(void)
 #endif /* DEBUG */
 		if (!_cursesi_screen->curwin)
 			curscr->alines[wy]->hash = wlp->hash;
-		if (wlp->flags & __ISDIRTY) {
+		if ((wlp->flags & __ISDIRTY) ||
+		    (wlp->flags & __ISFORCED)) {
 #ifdef DEBUG
 			__CTRACE(__CTRACE_REFRESH,
 			    "doupdate: [ISDIRTY]wy:%d\tf:%d\tl:%d\n", wy,
 			    *wlp->firstchp, *wlp->lastchp);
 #endif /* DEBUG */
+			/*
+		 	* We have just cleared so don't force an update
+		 	* otherwise we spray neeedless blanks to a cleared
+		 	* screen.
+		 	*/
+			if (was_cleared == 1)
+				win->alines[wy]->flags &= ~__ISFORCED;
+
 			if (makech(wy) == ERR)
 				return (ERR);
 			else {
 				if (*wlp->firstchp >= 0)
 					*wlp->firstchp = win->maxx;
 				if (*wlp->lastchp < win->maxx)
-					*wlp->lastchp = 0;
+					*wlp->lastchp = win->ch_off;
 				if (*wlp->lastchp < *wlp->firstchp) {
 #ifdef DEBUG
 					__CTRACE(__CTRACE_REFRESH,
 					    "doupdate: line %d notdirty\n", wy);
 #endif /* DEBUG */
-					wlp->flags &= ~__ISDIRTY;
+					wlp->flags &= ~(__ISDIRTY | __ISFORCED);
 				}
 			}
-
 		}
+
+		/*
+		 * virtscr is now synced for the line, unset the change
+		 * pointers.
+		 */
+		if (*vlp->firstchp >= 0)
+			*vlp->firstchp = _cursesi_screen->__virtscr->maxx;
+		if (*vlp->lastchp <= _cursesi_screen->__virtscr->maxx)
+			*vlp->lastchp = 0;
+
 #ifdef DEBUG
 		__CTRACE(__CTRACE_REFRESH, "\t%d\t%d\n",
 		    *wlp->firstchp, *wlp->lastchp);
@@ -641,6 +672,7 @@ makech(int wy)
 	WINDOW	*win;
 	static __LDATA blank;
 	__LDATA *nsp, *csp, *cp, *cep;
+	__LINE *wlp;
 	size_t	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx;
 	const char	*ce;
@@ -691,6 +723,7 @@ makech(int wy)
 		_cursesi_screen->ly++;
 		_cursesi_screen->lx = 0;
 	}
+	wlp = win->alines[wy];
 	wx = *win->alines[wy]->firstchp;
 	if (wx < 0)
 		wx = 0;
@@ -754,7 +787,8 @@ makech(int wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #endif /* DEBUG */
 #ifndef HAVE_WCHAR
-		if (memcmp(nsp, csp, sizeof(__LDATA)) == 0) {
+		if (!(wlp->flags & __ISFORCED) && 
+		    (memcmp(nsp, csp, sizeof(__LDATA)) == 0)) {
 			if (wx <= lch) {
 				while (wx <= lch &&
 				    memcmp(nsp, csp, sizeof(__LDATA)) == 0) {
@@ -774,8 +808,9 @@ makech(int wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%x,%x,%p)\n",
 			csp->ch, csp->attr, win->bch, win->battr, csp->nsp);
 #endif /* DEBUG */
-		if (((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
-		    cellcmp(nsp, csp)) {
+		if (!(wlp->flags & __ISFORCED) &&
+		     (((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
+		       cellcmp(nsp, csp))) {
 			if (wx <= lch) {
 				while (wx <= lch && cellcmp( csp, nsp )) {
 					nsp++;
@@ -798,11 +833,13 @@ makech(int wy)
 		_cursesi_screen->ly = wy;
 		_cursesi_screen->lx = wx;
 #ifndef HAVE_WCHAR
-		while (wx <= lch && memcmp(nsp, csp, sizeof(__LDATA)) != 0) {
+		while (wx <= lch && (memcmp(nsp, csp, sizeof(__LDATA)) != 0) ||
+			(wlp->flags & __ISFORCED)) {
 			if (ce != NULL &&
 			    wx >= nlsp && nsp->ch == ' ' && nsp->attr == lspc) {
 #else
-		while (!cellcmp(nsp, csp) && wx <= lch) {
+		while ((!cellcmp(nsp, csp) || (wlp->flags & __ISFORCED)) &&
+			wx <= lch) {
 			if (ce != NULL && wx >= nlsp
 			   && nsp->ch == (wchar_t)btowc((int)' ') /* XXX */
 			   && (nsp->attr & WA_ATTRIBUTES) == lspc) {
@@ -818,12 +855,18 @@ makech(int wy)
 #endif /* HAVE_WCHAR */
 					if (cep-- <= csp)
 						break;
-				clsp = cep - curscr->alines[wy]->line -
-				    win->begx * __LDATASIZE;
+				if (cep > (curscr->alines[wy]->line + win->begx * __LDATASIZE))
+					clsp = cep - curscr->alines[wy]->line -
+				    	win->begx * __LDATASIZE;
+				else
+					clsp = 0;
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
 				    "makech: clsp = %zu, nlsp = %zu\n",
 				    clsp, nlsp);
+				__CTRACE(__CTRACE_REFRESH,
+				    "makech: line = %p, cep = %p, begx = %u\n",
+				    curscr->alines[wy]->line, cep, win->begx);
 #endif
 				if (((clsp - nlsp >= strlen(clr_eol) &&
 				    clsp < win->maxx * __LDATASIZE) ||
