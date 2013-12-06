@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.5 2013/11/28 01:37:14 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.6 2013/12/06 02:31:31 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,12 +134,11 @@ resize(int fd)
 		}
 
 	newsize = map_resize(map, size, alignsecs);
-	if (newsize == 0 && alignment > 0 && size > 0) {
+	if (newsize == 0 && alignment > 0) {
 		warnx("%s: could not resize partition with alignment "
 		      "constraint", device_name);
-		newsize = map_resize(map, size, 0);
-	}
-	if (newsize == 0) {
+		return;
+	} else if (newsize == 0) {
 		warnx("%s: could not resize partition", device_name);
 		return;
 	}
