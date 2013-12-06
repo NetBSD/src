@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.17 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.18 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.17 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.18 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -106,8 +106,8 @@ npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 }
 
 /*
- * npfa_icmp_match: ALG matching inspector - determines ALG case and
- * associates ALG with NAT entry.
+ * npfa_icmp_match: match inspector - determines ALG case and associates
+ * our ALG with the NAT entry.
  */
 static bool
 npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
@@ -119,8 +119,8 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
-	/* Check for low TTL. */
-	if (ip->ip_ttl > TR_MAX_TTL) {
+	/* Check for low TTL.  Also, we support outbound NAT only. */
+	if (ip->ip_ttl > TR_MAX_TTL || di != PFIL_OUT) {
 		return false;
 	}
 
@@ -303,7 +303,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 	bool ret, forw;
 
 	#define	SWAP(type, x, y) { type tmp = x; x = y; y = tmp; }
-	SWAP(npf_addr_t *, enpc.npc_srcip, enpc.npc_dstip);
+	SWAP(npf_addr_t *, enpc.npc_ips[NPF_SRC], enpc.npc_ips[NPF_DST]);
 
 	switch (enpc.npc_proto) {
 	case IPPROTO_TCP:
@@ -339,15 +339,15 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 }
 
 /*
- * npfa_icmp_nat: ALG inbound translation inspector, rewrite IP address
- * in the IP header, which is embedded in ICMP packet.
+ * npfa_icmp_nat: ALG translator - rewrites IP address in the IP header
+ * which is embedded in ICMP packet.  Note: backwards stream only.
  */
 static bool
-npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int forw)
 {
 	npf_cache_t enpc;
 
-	if (di != PFIL_IN || !npf_iscached(npc, NPC_ICMP))
+	if (forw || !npf_iscached(npc, NPC_ICMP))
 		return false;
 	if (!npfa_icmp_inspect(npc, nbuf, &enpc))
 		return false;
@@ -365,6 +365,9 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	 * Retrieve the original address and port, then calculate ICMP
 	 * checksum for these changes in the embedded packet.  While data
 	 * is not rewritten in the cache, save IP and TCP/UDP checksums.
+	 *
+	 * XXX: Assumes NPF_NATOUT (source address/port).  Currently,
+	 * npfa_icmp_match() matches only for the PFIL_OUT traffic.
 	 */
 	const int proto = enpc.npc_proto;
 	uint16_t ipcksum = 0, l4cksum = 0;
@@ -377,7 +380,7 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 		const struct ip *eip = enpc.npc_ip.v4;
 		ipcksum = eip->ip_sum;
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_srcip, addr);
+	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[NPF_SRC], addr);
 
 	switch (proto) {
 	case IPPROTO_TCP: {
@@ -401,10 +404,10 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 
 	/*
 	 * Rewrite the source IP address and port of the embedded IP header,
-	 * which represents the original packet, therefore passing PFIL_OUT.
-	 * This updates the checksums in the embedded packet.
+	 * which represents the original packet.  This updates the checksums
+	 * in the embedded packet.
 	 */
-	if (npf_nat_translate(&enpc, nbuf, nt, false, PFIL_OUT)) {
+	if (npf_nat_translate(&enpc, nbuf, nt, forw)) {
 		return false;
 	}
 
