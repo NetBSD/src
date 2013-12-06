@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.29 2013/12/04 01:38:49 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.30 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.29 2013/12/04 01:38:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.30 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -494,9 +494,11 @@ npf_session_lookup(const npf_cache_t *npc, const nbuf_t *nbuf,
 	if (!npf_session_fillent(npc, &senkey)) {
 		return NULL;
 	}
-	KASSERT(npc->npc_srcip && npc->npc_dstip && npc->npc_alen > 0);
-	memcpy(&senkey.se_src_addr, npc->npc_srcip, npc->npc_alen);
-	memcpy(&senkey.se_dst_addr, npc->npc_dstip, npc->npc_alen);
+	KASSERT(npc->npc_ips[NPF_SRC] && npc->npc_ips[NPF_DST]);
+	KASSERT(npc->npc_alen > 0);
+
+	memcpy(&senkey.se_src_addr, npc->npc_ips[NPF_SRC], npc->npc_alen);
+	memcpy(&senkey.se_dst_addr, npc->npc_ips[NPF_DST], npc->npc_alen);
 	senkey.se_alen = npc->npc_alen;
 
 	/*
@@ -638,8 +640,8 @@ npf_session_establish(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	alen = npc->npc_alen;
 	fw = &se->s_forw_entry;
-	memcpy(&fw->se_src_addr, npc->npc_srcip, alen);
-	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
+	memcpy(&fw->se_src_addr, npc->npc_ips[NPF_SRC], alen);
+	memcpy(&fw->se_dst_addr, npc->npc_ips[NPF_DST], alen);
 
 	/* Protocol and interface. */
 	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
@@ -978,6 +980,7 @@ again:
 		bool removed = (se->s_flags & SE_REMOVED) == SE_REMOVED;
 
 		nse = LIST_NEXT(se, s_list);
+		KASSERT((se->s_flags & SE_EXPIRE) != 0);
 		if (removed && se->s_refcnt == 0) {
 			/* Destroy only if removed and no references. */
 			LIST_REMOVE(se, s_list);
