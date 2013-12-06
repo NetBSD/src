@@ -238,6 +238,10 @@ static DecodeStatus DecodeVLDSTLanePostInstruction(MCInst &Inst, unsigned Insn,
                                                    uint64_t Address,
                                                    const void *Decoder);
 
+static DecodeStatus DecodeSHLLInstruction(MCInst &Inst, unsigned Insn,
+                                          uint64_t Address,
+                                          const void *Decoder);
+
 static bool Check(DecodeStatus &Out, DecodeStatus In);
 
 #include "AArch64GenDisassemblerTables.inc"
@@ -1342,13 +1346,13 @@ static DecodeStatus DecodeVLDSTLanePostInstruction(MCInst &Inst, unsigned Insn,
   case AArch64::LD4LN_WB_D_fixed: case AArch64::LD4LN_WB_D_register: {
     switch (Opc) {
     case AArch64::LD4LN_WB_B_fixed: case AArch64::LD4LN_WB_B_register:
-      TransferBytes = 3; break;
+      TransferBytes = 4; break;
     case AArch64::LD4LN_WB_H_fixed: case AArch64::LD4LN_WB_H_register:
-      TransferBytes = 6; break;
+      TransferBytes = 8; break;
     case AArch64::LD4LN_WB_S_fixed: case AArch64::LD4LN_WB_S_register:
-      TransferBytes = 12; break;
+      TransferBytes = 16; break;
     case AArch64::LD4LN_WB_D_fixed: case AArch64::LD4LN_WB_D_register:
-      TransferBytes = 24; break;
+      TransferBytes = 32; break;
     }
     IsLoad = true;
     NumVecs = 4;
@@ -1534,3 +1538,35 @@ static DecodeStatus DecodeVLDSTLanePostInstruction(MCInst &Inst, unsigned Insn,
 
   return MCDisassembler::Success;
 }
+
+static DecodeStatus DecodeSHLLInstruction(MCInst &Inst, unsigned Insn,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  unsigned Rd = fieldFromInstruction(Insn, 0, 5);
+  unsigned Rn = fieldFromInstruction(Insn, 5, 5);
+  unsigned size = fieldFromInstruction(Insn, 22, 2);
+  unsigned Q = fieldFromInstruction(Insn, 30, 1);
+
+  DecodeFPR128RegisterClass(Inst, Rd, Address, Decoder);
+
+  if(Q)
+    DecodeFPR128RegisterClass(Inst, Rn, Address, Decoder);
+  else
+    DecodeFPR64RegisterClass(Inst, Rn, Address, Decoder);
+
+  switch (size) {
+  case 0:
+    Inst.addOperand(MCOperand::CreateImm(8));
+    break;
+  case 1:
+    Inst.addOperand(MCOperand::CreateImm(16));
+    break;
+  case 2:
+    Inst.addOperand(MCOperand::CreateImm(32));
+    break;
+  default :
+    return MCDisassembler::Fail;
+  }
+  return MCDisassembler::Success;
+}
+

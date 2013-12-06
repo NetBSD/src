@@ -84,6 +84,9 @@ Non-comprehensive list of changes in this release
 * Different sized pointers for different address spaces should now
   generally work. This is primarily useful for GPU targets.
 
+* OCaml bindings have been significantly extended to cover almost all of the
+  LLVM libraries.
+
 * ... next change ...
 
 .. NOTE
@@ -106,6 +109,19 @@ code generation.
 For more information on MSA (including documentation for the instruction set),
 see the `MIPS SIMD page at Imagination Technologies
 <http://imgtec.com/mips/mips-simd.asp>`_
+
+SPARC Target
+------------
+
+The SPARC backend got many improvements, namely
+
+* experimental SPARC V9 backend
+* JIT support for SPARC
+* fp128 support
+* exception handling
+* TLS support
+* leaf functions optimization
+* bug fixes
 
 External Open Source Projects Using LLVM 3.4
 ============================================
@@ -159,6 +175,23 @@ optimizations. An important part of pocl is a set of LLVM passes used to
 statically parallelize multiple work-items with the kernel compiler, even in
 the presence of work-group barriers. This enables static parallelization of
 the fine-grained static concurrency in the work groups in multiple ways. 
+
+Portable Native Client (PNaCl)
+------------------------------
+
+`Portable Native Client (PNaCl) <http://www.chromium.org/nativeclient/pnacl>`_
+is a Chrome initiative to bring the performance and low-level control of native
+code to modern web browsers, without sacrificing the security benefits and
+portability of web applications. PNaCl works by compiling native C and C++ code
+to an intermediate representation using the LLVM clang compiler. This
+intermediate representation is a subset of LLVM bytecode that is wrapped into a
+portable executable, which can be hosted on a web server like any other website
+asset. When the site is accessed, Chrome fetches and translates the portable
+executable into an architecture-specific machine code optimized directly for
+the underlying device. PNaCl lets developers compile their code once to run on
+any hardware platform and embed their PNaCl application in any website,
+enabling developers to directly leverage the power of the underlying CPU and
+GPU.
 
 TTA-based Co-design Environment (TCE)
 -------------------------------------
