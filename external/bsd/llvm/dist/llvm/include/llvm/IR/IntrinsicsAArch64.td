@@ -54,6 +54,10 @@ def int_aarch64_neon_fcvtas :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 def int_aarch64_neon_fcvtau :
   Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzs :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+def int_aarch64_neon_fcvtzu :
+  Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 
 // Vector maxNum (Floating Point)
 def int_aarch64_neon_vmaxnm : Neon_2Arg_Intrinsic;
@@ -307,6 +311,9 @@ def int_aarch64_neon_vsqadd : Neon_2Arg_Intrinsic;
 // Scalar Absolute Value
 def int_aarch64_neon_vabs :
   Intrinsic<[llvm_v1i64_ty], [llvm_v1i64_ty], [IntrNoMem]>;
+
+// Scalar Absolute Difference
+def int_aarch64_neon_vabd : Neon_2Arg_Intrinsic;
 
 // Scalar Negate Value
 def int_aarch64_neon_vneg :
