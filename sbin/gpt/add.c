@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.21 2013/11/28 01:37:14 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.22 2013/12/06 02:31:31 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -136,17 +136,15 @@ add(int fd)
 		alignsecs = alignment / secsz;
 		map = map_alloc(block, size, alignsecs);
 		if (map == NULL) {
-			warnx("%s: error: not enough space available on device for an aligned partition", device_name);
-			map = map_alloc(block, size, 0);
-			if (map == NULL) {
-				warnx("%s: error: not enough available on device", device_name);
-				return;
-			}
+			warnx("%s: error: not enough space available on "
+			      "device for an aligned partition", device_name);
+			return;
 		}
 	} else {
 		map = map_alloc(block, size, 0);
 		if (map == NULL) {
-			warnx("%s: error: not enough space available on device", device_name);
+			warnx("%s: error: not enough space available on "
+			      "device", device_name);
 			return;
 		}
 	}
