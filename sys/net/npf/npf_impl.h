@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.44 2013/12/04 01:38:49 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.45 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -100,8 +100,12 @@ typedef bool (*npf_alg_func_t)(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
 typedef npf_session_t *(*npf_alg_sfunc_t)(npf_cache_t *, nbuf_t *, int);
 typedef void (*npf_workfunc_t)(void);
 
-/* Some artificial limits. */
+/*
+ * Some artificial limits.
+ * Note: very unlikely to have many ALGs.
+ */
 #define	NPF_MAX_RULES		(1024 * 1024)
+#define	NPF_MAX_ALGS		4
 #define	NPF_MAX_TABLES		128
 #define	NPF_MAX_RPROCS		128
 #define	NPF_MAX_IFMAP		64
@@ -184,9 +188,9 @@ int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 int		npf_cache_all(npf_cache_t *, nbuf_t *);
 void		npf_recache(npf_cache_t *, nbuf_t *);
 
-bool		npf_rwrip(const npf_cache_t *, int, const npf_addr_t *);
-bool		npf_rwrport(const npf_cache_t *, int, const in_port_t);
-bool		npf_rwrcksum(const npf_cache_t *, const int,
+bool		npf_rwrip(const npf_cache_t *, u_int, const npf_addr_t *);
+bool		npf_rwrport(const npf_cache_t *, u_int, const in_port_t);
+bool		npf_rwrcksum(const npf_cache_t *, u_int,
 		    const npf_addr_t *, const in_port_t);
 
 uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
@@ -327,8 +331,7 @@ bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *, const int);
-int		npf_nat_translate(npf_cache_t *, nbuf_t *, npf_nat_t *,
-		    const bool, const int);
+int		npf_nat_translate(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
 void		npf_nat_destroy(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
@@ -345,7 +348,7 @@ npf_alg_t *	npf_alg_register(const char *, npf_alg_func_t, npf_alg_func_t,
 int		npf_alg_unregister(npf_alg_t *);
 npf_alg_t *	npf_alg_construct(const char *);
 bool		npf_alg_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
+void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, bool);
 npf_session_t *	npf_alg_session(npf_cache_t *, nbuf_t *, int);
 
 /* Debugging routines. */

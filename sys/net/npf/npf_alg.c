@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.9 2013/06/02 02:20:04 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.10 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.9 2013/06/02 02:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.10 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,8 +57,6 @@ struct npf_alg {
 	const char *	na_name;
 	u_int		na_slot;
 };
-
-#define	NPF_MAX_ALGS	8
 
 /* List of ALGs and the count. */
 static pserialize_t	alg_psz			__cacheline_aligned;
@@ -218,7 +216,7 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
  * npf_alg_exec: execute ALG hooks for translation.
  */
 void
-npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
 	int s;
 
@@ -227,7 +225,7 @@ npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 		npf_alg_func_t func;
 
 		if ((func = alg_tfunc[i]) != NULL) {
-			func(npc, nbuf, nt, di);
+			func(npc, nbuf, nt, (int)forw);
 		}
 	}
 	pserialize_read_exit(s);
