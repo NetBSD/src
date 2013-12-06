@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.21 2013/11/30 19:43:53 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.22 2013/12/06 02:31:31 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd November 30, 2013
+.Dd December 5, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -110,7 +110,6 @@ option allows the user to specify an alignment for the start and size.
 The alignment may have a suffix to indicate its magnitude.
 .Nm
 will attempt to align the partition.
-If it can not, then it will attempt to create an unaligned partition.
 .Pp
 The
 .Fl b Ar blocknr
