@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.33 2013/11/12 00:46:34 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.34 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -104,18 +104,24 @@ typedef uint8_t			npf_netmask_t;
 typedef struct {
 	/* Information flags. */
 	uint32_t		npc_info;
-	/* Pointers to the IP v4/v6 addresses. */
-	npf_addr_t *		npc_srcip;
-	npf_addr_t *		npc_dstip;
-	/* Size (v4 or v6) of IP addresses. */
+
+	/*
+	 * Pointers to the IP source and destination addresses,
+	 * and the address length (4 for IPv4 or 16 for IPv6).
+	 */
+	npf_addr_t *		npc_ips[2];
 	uint8_t			npc_alen;
+
+	/* IP header length and L4 protocol. */
 	uint8_t			npc_hlen;
 	uint16_t		npc_proto;
+
 	/* IPv4, IPv6. */
 	union {
 		struct ip *		v4;
 		struct ip6_hdr *	v6;
 	} npc_ip;
+
 	/* TCP, UDP, ICMP. */
 	union {
 		struct tcphdr *		tcp;
@@ -131,6 +137,9 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 {
 	return __predict_true((npc->npc_info & inf) != 0);
 }
+
+#define	NPF_SRC		0
+#define	NPF_DST		1
 
 /*
  * Network buffer interface.

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.22 2013/12/04 01:38:49 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.23 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -43,14 +43,8 @@
  *
  *	There are two types of translation: outbound (NPF_NATOUT) and
  *	inbound (NPF_NATIN).  It should not be confused with connection
- *	direction.
- *
- *	Outbound NAT rewrites:
- *	- Source on "forwards" stream.
- *	- Destination on "backwards" stream.
- *	Inbound NAT rewrites:
- *	- Destination on "forwards" stream.
- *	- Source on "backwards" stream.
+ *	direction.  See npf_nat_which() for the description of how the
+ *	addresses are rewritten.
  *
  *	It should be noted that bi-directional NAT is a combined outbound
  *	and inbound translation, therefore constructed as two policies.
@@ -76,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.22 2013/12/04 01:38:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.23 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -160,7 +154,6 @@ static pool_cache_t		nat_cache	__read_mostly;
 void
 npf_nat_sysinit(void)
 {
-
 	nat_cache = pool_cache_init(sizeof(npf_nat_t), coherency_unit,
 	    0, 0, "npfnatpl", NULL, IPL_NET, NULL, NULL, NULL);
 	KASSERT(nat_cache != NULL);
@@ -169,8 +162,7 @@ npf_nat_sysinit(void)
 void
 npf_nat_sysfini(void)
 {
-
-	/* NAT policies should already be destroyed. */
+	/* All NAT policies should already be destroyed. */
 	pool_cache_destroy(nat_cache);
 }
 
@@ -178,7 +170,6 @@ npf_nat_sysfini(void)
  * npf_nat_newpolicy: create a new NAT policy.
  *
  * => Shares portmap if policy is on existing translation address.
- * => XXX: serialise at upper layer.
  */
 npf_natpolicy_t *
 npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
@@ -424,6 +415,29 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
 }
 
 /*
+ * npf_nat_which: tell which address (source or destination) should be
+ * rewritten given the combination of the NAT type and flow direction.
+ */
+static inline u_int
+npf_nat_which(const int type, bool forw)
+{
+	/*
+	 * Outbound NAT rewrites:
+	 * - Source on "forwards" stream.
+	 * - Destination on "backwards" stream.
+	 * Inbound NAT is other way round.
+	 */
+	if (type == NPF_NATOUT) {
+		forw = !forw;
+	} else {
+		KASSERT(type == NPF_NATIN);
+	}
+	CTASSERT(NPF_SRC == 0 && NPF_DST == 1);
+	KASSERT(forw == 0 || forw == 1);
+	return (u_int)forw;
+}
+
+/*
  * npf_nat_inspect: inspect packet against NAT ruleset and return a policy.
  *
  * => Acquire a reference on the policy, if found.
@@ -471,12 +485,12 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np, npf_session_t *se)
 
 	/* Save the original address which may be rewritten. */
 	if (np->n_type == NPF_NATOUT) {
-		/* Source (local) for Outbound NAT. */
-		memcpy(&nt->nt_oaddr, npc->npc_srcip, npc->npc_alen);
+		/* Outbound NAT: source (think internal) address. */
+		memcpy(&nt->nt_oaddr, npc->npc_ips[NPF_SRC], npc->npc_alen);
 	} else {
-		/* Destination (external) for Inbound NAT. */
+		/* Inbound NAT: destination (think external) address. */
 		KASSERT(np->n_type == NPF_NATIN);
-		memcpy(&nt->nt_oaddr, npc->npc_dstip, npc->npc_alen);
+		memcpy(&nt->nt_oaddr, npc->npc_ips[NPF_DST], npc->npc_alen);
 	}
 
 	/*
@@ -517,16 +531,17 @@ out:
  * npf_nat_translate: perform address and/or port translation.
  */
 int
-npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
-    const bool forw, const int di)
+npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, bool forw)
 {
 	const int proto = npc->npc_proto;
 	const npf_natpolicy_t *np = nt->nt_natpolicy;
+	const u_int which = npf_nat_which(np->n_type, forw);
 	const npf_addr_t *addr;
 	in_port_t port;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
+	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
 	if (forw) {
 		/* "Forwards" stream: use translation address/port. */
@@ -539,33 +554,24 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	}
 	KASSERT((np->n_flags & NPF_NAT_PORTS) != 0 || port == 0);
 
-	/* Process delayed checksums (XXX: NetBSD). */
-	if (nbuf_cksum_barrier(nbuf, di)) {
-		npf_recache(npc, nbuf);
-	}
-	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
-
 	/* Execute ALG hook first. */
 	if ((npc->npc_info & NPC_ALG_EXEC) == 0) {
 		npc->npc_info |= NPC_ALG_EXEC;
-		npf_alg_exec(npc, nbuf, nt, di);
+		npf_alg_exec(npc, nbuf, nt, forw);
 	}
 
 	/*
-	 * Rewrite IP and/or TCP/UDP checksums first, since it will use
-	 * the cache containing original values for checksum calculation.
+	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
+	 * current (old) address/port for the calculations.  Then perform
+	 * the address translation i.e. rewrite source or destination.
 	 */
-	if (!npf_rwrcksum(npc, di, addr, port)) {
+	if (!npf_rwrcksum(npc, which, addr, port)) {
+		return EINVAL;
+	}
+	if (!npf_rwrip(npc, which, addr)) {
 		return EINVAL;
 	}
 
-	/*
-	 * Address translation: rewrite source/destination address, depending
-	 * on direction (PFIL_OUT - for source, PFIL_IN - for destination).
-	 */
-	if (!npf_rwrip(npc, di, addr)) {
-		return EINVAL;
-	}
 	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
 		/* Done. */
 		return 0;
@@ -574,9 +580,8 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	switch (proto) {
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 		/* Rewrite source/destination port. */
-		if (!npf_rwrport(npc, di, port)) {
+		if (!npf_rwrport(npc, which, port)) {
 			return EINVAL;
 		}
 		break;
@@ -675,8 +680,13 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int di)
 	}
 
 translate:
+	/* May need to process the delayed checksums first (XXX: NetBSD). */
+	if (nbuf_cksum_barrier(nbuf, di)) {
+		npf_recache(npc, nbuf);
+	}
+
 	/* Perform the translation. */
-	error = npf_nat_translate(npc, nbuf, nt, forw, di);
+	error = npf_nat_translate(npc, nbuf, nt, forw);
 out:
 	if (error && nse) {
 		/* It created for NAT - just expire. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.27 2013/11/22 01:48:36 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.28 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.27 2013/11/22 01:48:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.28 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -338,8 +338,8 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 
 		/* Cache: layer 3 - IPv4. */
 		npc->npc_alen = sizeof(struct in_addr);
-		npc->npc_srcip = (npf_addr_t *)&ip->ip_src;
-		npc->npc_dstip = (npf_addr_t *)&ip->ip_dst;
+		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip->ip_src;
+		npc->npc_ips[NPF_DST] = (npf_addr_t *)&ip->ip_dst;
 		npc->npc_hlen = ip->ip_hl << 2;
 		npc->npc_proto = ip->ip_p;
 
@@ -413,8 +413,8 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_alen = sizeof(struct in6_addr);
-		npc->npc_srcip = (npf_addr_t *)&ip6->ip6_src;
-		npc->npc_dstip = (npf_addr_t *)&ip6->ip6_dst;
+		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip6->ip6_src;
+		npc->npc_ips[NPF_DST]= (npf_addr_t *)&ip6->ip6_dst;
 
 		npc->npc_ip.v6 = ip6;
 		flags |= NPC_IP6;
@@ -516,17 +516,12 @@ npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
  * npf_rwrip: rewrite required IP address.
  */
 bool
-npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
+npf_rwrip(const npf_cache_t *npc, u_int which, const npf_addr_t *addr)
 {
-	npf_addr_t *oaddr;
-
 	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
-	/*
-	 * Rewrite source address if outgoing and destination if incoming.
-	 */
-	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
-	memcpy(oaddr, addr, npc->npc_alen);
+	memcpy(npc->npc_ips[which], addr, npc->npc_alen);
 	return true;
 }
 
@@ -534,21 +529,22 @@ npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
  * npf_rwrport: rewrite required TCP/UDP port.
  */
 bool
-npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
+npf_rwrport(const npf_cache_t *npc, u_int which, const in_port_t port)
 {
 	const int proto = npc->npc_proto;
 	in_port_t *oport;
 
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 	KASSERT(proto == IPPROTO_TCP || proto == IPPROTO_UDP);
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
 	/* Get the offset and store the port in it. */
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = npc->npc_l4.tcp;
-		oport = (di == PFIL_OUT) ? &th->th_sport : &th->th_dport;
+		oport = (which == NPF_SRC) ? &th->th_sport : &th->th_dport;
 	} else {
 		struct udphdr *uh = npc->npc_l4.udp;
-		oport = (di == PFIL_OUT) ? &uh->uh_sport : &uh->uh_dport;
+		oport = (which == NPF_SRC) ? &uh->uh_sport : &uh->uh_dport;
 	}
 	memcpy(oport, &port, sizeof(in_port_t));
 	return true;
@@ -558,17 +554,17 @@ npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
  * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum.
  */
 bool
-npf_rwrcksum(const npf_cache_t *npc, const int di,
+npf_rwrcksum(const npf_cache_t *npc, u_int which,
     const npf_addr_t *addr, const in_port_t port)
 {
+	const npf_addr_t *oaddr = npc->npc_ips[which];
 	const int proto = npc->npc_proto;
 	const int alen = npc->npc_alen;
-	npf_addr_t *oaddr;
 	uint16_t *ocksum;
 	in_port_t oport;
 
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
-	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = npc->npc_ip.v4;
@@ -597,7 +593,7 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 		struct tcphdr *th = npc->npc_l4.tcp;
 
 		ocksum = &th->th_sum;
-		oport = (di == PFIL_OUT) ? th->th_sport : th->th_dport;
+		oport = (which == NPF_SRC) ? th->th_sport : th->th_dport;
 	} else {
 		struct udphdr *uh = npc->npc_l4.udp;
 
@@ -607,7 +603,7 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 			/* No need to update. */
 			return true;
 		}
-		oport = (di == PFIL_OUT) ? uh->uh_sport : uh->uh_dport;
+		oport = (which == NPF_SRC) ? uh->uh_sport : uh->uh_dport;
 	}
 
 	uint16_t cksum = npf_addr_cksum(*ocksum, alen, oaddr, addr);

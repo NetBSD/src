@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.5 2013/11/23 19:32:20 rmind Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.6 2013/12/06 01:33:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.5 2013/11/23 19:32:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.6 2013/12/06 01:33:37 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,6 +157,6 @@ npf_cop_table(bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 	if ((t = npf_tableset_getbyid(tblset, tid)) == NULL) {
 		return 0;
 	}
-	addr = (A & SRC_FLAG_BIT) ? npc->npc_srcip : npc->npc_dstip;
+	addr = npc->npc_ips[(A & SRC_FLAG_BIT) ? NPF_SRC : NPF_DST];
 	return npf_table_lookup(t, npc->npc_alen, addr) == 0;
 }
