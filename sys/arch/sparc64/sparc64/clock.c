@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.113 2013/09/12 12:45:53 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.113 2013/09/12 12:45:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.114 2013/12/07 11:17:25 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -216,7 +216,7 @@ stick_get_timecount(struct timecounter *tc)
 static u_int
 stick2e_get_timecount(struct timecounter *tc)
 {
-	return psycho_getstick();
+	return psycho_getstick32();
 }
 #endif
 
