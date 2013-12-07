@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.20 2013/08/22 09:57:30 nakayama Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.21 2013/12/07 11:17:24 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -139,6 +139,7 @@ bus_space_tag_t psycho_alloc_bus_tag(struct psycho_pbm *, int);
 #define psycho_alloc_io_tag(pp) psycho_alloc_bus_tag((pp), PCI_IO_BUS_SPACE)
 
 uint64_t psycho_getstick(void);
+uint32_t psycho_getstick32(void);
 void psycho_setstick(long);
 void psycho_nextstick(long);
 
