@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.129 2013/10/30 15:37:49 drochner Exp $ */
+/*	$NetBSD: disks.c,v 1.130 2013/12/07 20:40:42 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,12 +89,32 @@ static void fixsb(const char *, const char *, char);
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
 
+static bool tmpfs_on_var_shm(void);
+
 const char *
 getfslabelname(uint8_t f)
 {
 	if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
 		return "invalid";
 	return fstypenames[f];
+}
+
+/*
+ * Decide wether we want to mount a tmpfs on /var/shm: we do this always
+ * when the machine has more than 16 MB of user memory. On smaller machines,
+ * shm_open() and friends will not perform well anyway.
+ */
+static bool
+tmpfs_on_var_shm()
+{
+	uint64_t ram;
+	size_t len;
+
+	len = sizeof(ram);
+	if (sysctlbyname("hw.usermem64", &ram, &len, NULL, 0))
+		return false;
+
+	return ram > 16UL*1024UL*1024UL;
 }
 
 /* from src/sbin/atactl/atactl.c
@@ -825,10 +845,13 @@ make_fstab(void)
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
 	    get_default_cdrom());
+	scripting_fprintf(f, "%stmpfs\t\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n",
+	    tmpfs_on_var_shm() ? "" : "#");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
 	make_target_dir("/cdrom");
+	make_target_dir("/var/shm");
 
 	scripting_fprintf(NULL, "EOF\n");
 
