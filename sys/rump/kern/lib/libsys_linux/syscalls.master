@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 2013/10/05 09:22:01 njoly Exp $
+	$NetBSD: syscalls.master,v 1.6 2013/12/07 09:19:36 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -543,8 +543,7 @@
 421	UNIMPL		adjtime
 422	UNIMPL		lfs_segwait
 423	UNIMPL		futimes
-424	NODEF		{ int|linux_sys||lutimes(const char *path, \
-			    struct linux_timeval *tv); }
+424	UNIMPL		lutimes
 425	UNIMPL		setitimer
 426	UNIMPL		getitimer
 427	UNIMPL		clock_gettime
