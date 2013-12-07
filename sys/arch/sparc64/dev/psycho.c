@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.117 2013/11/08 15:44:26 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.118 2013/12/07 11:17:24 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.117 2013/11/08 15:44:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.118 2013/12/07 11:17:24 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -1572,6 +1572,14 @@ psycho_getstick(void)
 	    (bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
 	    STICK_CNT_HIGH) & 0x7fffffff) << 32;
 	return stick;
+}
+
+uint32_t
+psycho_getstick32(void)
+{
+
+	return bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW);
 }
 
 void
