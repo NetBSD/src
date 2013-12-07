@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.183 2013/03/23 11:50:02 he Exp $	*/
+/*	$NetBSD: util.c,v 1.184 2013/12/07 19:42:36 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1143,7 +1143,6 @@ struct check_table { unsigned int mode; const char *path;} checks[] = {
   { S_IFDIR, "/dev" },
   { S_IFCHR, "/dev/console" },
 /* XXX check for rootdev in target /dev? */
-  { S_IFREG, "/etc/fstab" },
   { S_IFREG, "/sbin/fsck" },
   { S_IFREG, "/sbin/fsck_ffs" },
   { S_IFREG, "/sbin/mount" },
