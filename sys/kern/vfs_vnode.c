@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.29 2013/12/01 17:29:40 christos Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.30 2013/12/07 10:03:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.29 2013/12/01 17:29:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.30 2013/12/07 10:03:28 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -626,27 +626,22 @@ vrelel(vnode_t *vp, int flags)
 		 * locking is pushed down into the file systems.
 		 *
 		 * Defer vnode release to vrele_thread if caller
-		 * requests it explicitly.
+		 * requests it explicitly or is the pagedaemon.
 		 */
 		if ((curlwp == uvm.pagedaemon_lwp) ||
 		    (flags & VRELEL_ASYNC_RELE) != 0) {
-			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
 			/*
 			 * We have to try harder.
 			 */
 			mutex_exit(vp->v_interlock);
-			error = vn_lock(vp, LK_EXCLUSIVE);
-			if (error != 0) {
-				/* XXX */
-				vnpanic(vp, "%s: unable to lock %p",
-				    __func__, vp);
-			}
+			error = VOP_LOCK(vp, LK_EXCLUSIVE);
+			KASSERT(error == 0);
 			mutex_enter(vp->v_interlock);
 			/*
-			 * if we did get another reference while
-			 * sleeping, don't try to inactivate it yet.
+			 * If the node got another reference while sleeping,
+			 * don't try to inactivate it yet.
 			 */
 			if (__predict_false(vtryrele(vp))) {
 				VOP_UNLOCK(vp);
@@ -659,31 +654,20 @@ vrelel(vnode_t *vp, int flags)
 				return;
 			}
 			defer = false;
-		} else if ((vp->v_iflag & VI_LAYER) != 0) {
-			/* 
-			 * Acquiring the stack's lock in vclean() even
-			 * for an honest vput/vrele is dangerous because
-			 * our caller may hold other vnode locks; defer.
-			 */
-			defer = true;
 		} else {
 			/* If we can't acquire the lock, then defer. */
-			mutex_exit(vp->v_interlock);
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
-			if (error != 0) {
-				defer = true;
-			} else {
-				defer = false;
-			}
-			mutex_enter(vp->v_interlock);
+			error = VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT);
+			defer = (error != 0);
 		}
+
+		KASSERT(mutex_owned(vp->v_interlock));
+		KASSERT(! (curlwp == vrele_lwp && defer));
 
 		if (defer) {
 			/*
 			 * Defer reclaim to the kthread; it's not safe to
 			 * clean it here.  We donate it our last reference.
 			 */
-			KASSERT(mutex_owned(vp->v_interlock));
 			if ((flags & VRELEL_CHANGING_SET) != 0) {
 				KASSERT((vp->v_iflag & VI_CHANGING) != 0);
 				vp->v_iflag &= ~VI_CHANGING;
