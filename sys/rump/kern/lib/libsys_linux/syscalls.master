@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2013/12/07 09:19:36 njoly Exp $
+	$NetBSD: syscalls.master,v 1.7 2013/12/07 11:49:27 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -581,7 +581,7 @@
 ; 452 only ever appeared in 5.99.x and can be reused after netbsd-7
 452	UNIMPL		5.99 quotactl
 453	UNIMPL		pipe2
-454	UNIMPL		dup3
+454	NODEF		{ int|linux_sys||dup3(int from, int to, int flags); }
 455	UNIMPL		kqueue1
 456	UNIMPL		paccept
 457	UNIMPL		linkat
