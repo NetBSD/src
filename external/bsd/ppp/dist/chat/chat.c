@@ -91,7 +91,7 @@
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp ";
 #endif
 #else
-__RCSID("$NetBSD: chat.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.3 2013/12/07 20:24:35 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1163,6 +1163,7 @@ char *s;
 	timeout_next = 0;
 	s = clean(s, 0);
 	timeout = atoi(s);
+	free(s);
 	
 	if (timeout <= 0)
 	    timeout = DEFAULT_CHAT_TIMEOUT;
