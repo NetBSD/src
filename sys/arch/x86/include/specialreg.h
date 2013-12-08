@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.73 2013/11/20 17:50:39 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.74 2013/12/08 18:00:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -216,6 +216,39 @@
 	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
 		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
+
+/*
+ * Extended Control Register XCR0
+ */
+#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
+#define	XCR0_SSE	0x00000002	/* SSE state */
+#define	XCR0_AVX	0x00000004	/* AVX state (ymmn registers) */
+
+#define XCR0_FLAGS1	"\20" \
+	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "B03"
+
+/*
+ * CPUID Processor extended state Enumeration Fn0000000d
+ *
+ * %ecx == 0: supported features info:
+ *	%edx:%eax bits valid for XCR0
+ *	%ebx Save area size for features enabled in XCR0
+ *	%ecx Maximim save area size for all cpu features
+ *
+ * %ecx == 1:
+ *	%eax: Bit 0 => xsaveopt instruction avalaible (sandy bridge onwards)
+ *
+ * %ecx >= 2: Save area details for XCR0 bit n
+ *	%eax: size of save area for this feature
+ *	%ebx: offset of save area for this feature
+ *	%ecx, %edx: reserved
+ *	All of %eax, %ebx, %ecx and %edx are zero for unsupported features.
+ */
+
+#define	CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
+
+#define CPUID_PES1_FLAGS	"\20" \
+	"\1" "XSAVEOPT"
 
 /*
  * Intel Deterministic Cache Parameter Leaf
