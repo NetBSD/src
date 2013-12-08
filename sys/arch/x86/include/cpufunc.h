@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2011/09/24 10:32:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14 2013/12/08 18:00:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -93,8 +93,9 @@ void	fxrstor(void *);
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
 void	x86_ldmxcsr(void *);
+/* x86_cpuid2() writes four 32bit values, %eax, %ebx, %ecx and %edx */
 #define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
-void	x86_cpuid2(unsigned, unsigned, unsigned *);
+void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
 
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
 void	x86_disable_intr(void);
@@ -125,6 +126,14 @@ void		wrmsr(u_int, uint64_t);
 void		wrmsr_locked(u_int, u_int, uint64_t);
 void		setfs(int);
 void		setusergs(int);
+
+/* Extended processor state functions (for AVX registers etc) */
+
+uint64_t	rdxcr(uint32_t);		/* xgetbv */
+void		wrxcr(uint32_t, uint64_t);	/* xsetgv */
+void		xrstor(const void *, uint64_t);
+void		xsave(void *, uint64_t);
+void		xsaveopt(const void *, uint64_t);
 
 #endif /* _KERNEL */
 
