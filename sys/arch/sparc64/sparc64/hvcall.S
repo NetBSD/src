@@ -1,4 +1,4 @@
-/*	$NetBSD: hvcall.S,v 1.2 2013/12/07 16:54:43 palle Exp $ */
+/*	$NetBSD: hvcall.S,v 1.3 2013/12/08 14:41:28 palle Exp $ */
 /*	$OpenBSD: hvcall.S,v 1.10 2011/06/25 20:45:00 kettenis Exp $	*/
 
 /*
@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if 0
-FIXME not necessary on NetBSD? fails building if present...	
-#include "assym.h"
-#endif	
 #include <machine/asm.h>
 
 #define FAST_TRAP	0x80
