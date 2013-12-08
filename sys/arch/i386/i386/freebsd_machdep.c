@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.56 2013/12/08 20:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.56 2013/12/08 20:45:30 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -65,7 +65,7 @@ freebsd_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __FreeBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw = __FreeBSD_NPXCW__;
 	else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __FreeBSD_NPXCW__;
 }
@@ -285,8 +285,7 @@ netbsd_to_freebsd_ptrace_regs(struct reg *nregs, struct fpreg *nfpregs, struct f
 	fregs->freebsd_ptrace_regs.tf_esp = nregs->r_esp;
 	fregs->freebsd_ptrace_regs.tf_ss = nregs->r_ss;
 
-	fregs->freebsd_ptrace_fpregs.sv_env =
-		*(struct freebsd_env87 *)&nframe->sv_env;
+	fregs->freebsd_ptrace_fpregs.sv_env = nframe->sv_env;
 	memcpy(fregs->freebsd_ptrace_fpregs.sv_ac, nframe->sv_ac,
 	      sizeof(fregs->freebsd_ptrace_fpregs.sv_ac));
 	fregs->freebsd_ptrace_fpregs.sv_ex_sw = 
@@ -336,8 +335,7 @@ freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *fregs, struct reg *nreg
 	nregs->r_esp = fregs->freebsd_ptrace_regs.tf_esp;
 	nregs->r_ss = fregs->freebsd_ptrace_regs.tf_ss;
 
-	nframe->sv_env =
-		*(struct env87 *)&fregs->freebsd_ptrace_fpregs.sv_env;
+	nframe->sv_env = fregs->freebsd_ptrace_fpregs.sv_env;
 	memcpy(nframe->sv_ac, fregs->freebsd_ptrace_fpregs.sv_ac,
 	      sizeof(nframe->sv_ac));
 	nframe->sv_ex_sw =

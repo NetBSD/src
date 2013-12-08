@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.146 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.147 2013/12/08 20:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.146 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.147 2013/12/08 20:45:30 dsl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -435,7 +435,7 @@ npxintr(void *arg, struct intrframe *frame)
 	fpu_save(addr);
 	fwait();
         if (i386_use_fxsave) {
-		fldcw(&addr->sv_xmm.sv_env.en_cw);
+		fldcw(&addr->sv_xmm.sv_env.fx_cw);
 		/*
 		 * FNINIT doesn't affect MXCSR or the XMM registers;
 		 * no need to re-load MXCSR here.
@@ -452,8 +452,8 @@ npxintr(void *arg, struct intrframe *frame)
 	 * words, so the complete exception state can be recovered.
 	 */
         if (i386_use_fxsave) {
-		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
-		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
+		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.fx_sw;
+		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.fx_tw;
 	} else {
 		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
 		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
@@ -610,7 +610,7 @@ npxdna(struct cpu_info *ci)
 		fninit();
 		if (i386_use_fxsave) {
 			fldcw(&pcb->pcb_savefpu.
-			    sv_xmm.sv_env.en_cw);
+			    sv_xmm.sv_env.fx_cw);
 		} else {
 			fldcw(&pcb->pcb_savefpu.
 			    sv_87.sv_env.en_cw);
@@ -916,11 +916,11 @@ static const uint8_t fpetable[128] = {
 
 #define GET_FPU_CW(pcb) \
     (i386_use_fxsave ? \
-	pcb->pcb_savefpu.sv_xmm.sv_env.en_cw : \
+	pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw : \
 	pcb->pcb_savefpu.sv_87.sv_env.en_cw)
 #define GET_FPU_SW(pcb) \
     (i386_use_fxsave ? \
-	pcb->pcb_savefpu.sv_xmm.sv_env.en_sw : \
+	pcb->pcb_savefpu.sv_xmm.sv_env.fx_sw : \
 	pcb->pcb_savefpu.sv_87.sv_env.en_sw)
 
 /*
