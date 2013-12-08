@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.22 2013/12/06 02:31:31 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.23 2013/12/08 09:32:51 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 5, 2013
+.Dd December 8, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ There is no formalized definition of the different levels yet.
 .Bl -tag -width indent
 .\" ==== add ====
 .It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar blocknr Oc \
-Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar sectors Oc \
+Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar size Oc \
 Oo Fl t Ar type Oc Ar device ...
 The
 .Ic add
@@ -129,9 +129,15 @@ The
 option allows the user to specify a label for the partition.
 .Pp
 The
-.Fl s Ar sectors
-option allows the user to specify the size of the partition in sectors.
-The minimum size is 1.
+.Fl s Ar size
+option allows the user to specify the size of the partition.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+The minimum size is 1 sector.
 .Pp
 The
 .Fl t Ar type
@@ -317,7 +323,7 @@ Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
 .It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
-Oo Fl s Ar sectors Oc Ar device ...
+Oo Fl s Ar size Oc Ar device ...
 The
 .Ic resize
 command allows the user to resize a partition.
@@ -327,6 +333,13 @@ The
 .Fl s
 option allows the new size to be specified, otherwise the partition will
 be increased to the maximum available size.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+The minimum size is 1 sector.
 If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
