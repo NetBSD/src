@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.53 2013/12/03 17:06:51 spz Exp $	*/
+/* $NetBSD: cat.c,v 1.54 2013/12/08 08:32:13 spz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.53 2013/12/03 17:06:51 spz Exp $");
+__RCSID("$NetBSD: cat.c,v 1.54 2013/12/08 08:32:13 spz Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,10 +279,11 @@ skipnomsg:
 				continue;
 			}
 			filename = *argv++;
+		} else if (fd < 0) {
+			err(EXIT_FAILURE, "stdin");
 		}
 		raw_cat(fd);
-		/* fd > 0 would be cuter but let's priorize human-readability */
-		if (fd >= 0 && fd != fileno(stdin))
+		if (fd != fileno(stdin))
 			(void)close(fd);
 	} while (*argv);
 }
