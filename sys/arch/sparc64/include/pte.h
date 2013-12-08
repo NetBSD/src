@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.22 2010/01/15 15:02:48 nakayama Exp $ */
+/*	$NetBSD: pte.h,v 1.23 2013/12/08 14:41:28 palle Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -222,10 +222,51 @@ typedef struct sun4u_tte pte_t;
         "b\6L\0"        "b\5CP\0"       "b\4CV\0" \
         "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
+#define SUN4V_PGSZ_SHIFT	0
+#define	SUN4V_TLB_SZ(s)		(((uint64_t)(s))<<SUN4V_PGSZ_SHIFT)
+
+/* TLB data masks */
+#define SUN4V_TLB_V		0x8000000000000000LL
+#define SUN4V_TLB_8K		SUN4V_TLB_SZ(PGSZ_8K)
+#define SUN4V_TLB_64K		SUN4V_TLB_SZ(PGSZ_64K)
+#define SUN4V_TLB_512K		SUN4V_TLB_SZ(PGSZ_512K)
+#define SUN4V_TLB_4M		SUN4V_TLB_SZ(PGSZ_4M)
+#define SUN4V_TLB_SZ_MASK	0x000000000000000fLL
+#define SUN4V_TLB_NFO		0x4000000000000000LL
+#define SUN4V_TLB_IE		0x0000000000001000LL
+#define SUN4V_TLB_SOFT2_MASK	0x3f00000000000000LL
+#define SUN4V_TLB_PA_MASK	0x00ffffffffffe000LL
+#define SUN4V_TLB_SOFT_MASK	0x0000000000000030LL
+/* S/W bits */
+#define SUN4V_TLB_ACCESS	0x0000000000000010LL
+#define SUN4V_TLB_MODIFY	0x0000000000000020LL
+#define SUN4V_TLB_REAL_W	0x2000000000000000LL
+#define SUN4V_TLB_TSB_LOCK	0x1000000000000000UL
+#define SUN4V_TLB_L             SUN4V_TLB_TSB_LOCK     
+#define SUN4V_TLB_EXEC		SUN4V_TLB_X
+#define SUN4V_TLB_EXEC_ONLY	0x0200000000000000LL
+/* H/W bits */
+#define SUN4V_TLB_CACHE_MASK	0x0000000000000600LL
+#define SUN4V_TLB_CP		0x0000000000000400LL
+#define SUN4V_TLB_CV		0x0000000000000200LL
+#define SUN4V_TLB_E		0x0000000000000800LL
+#define SUN4V_TLB_P		0x0000000000000100LL
+#define SUN4V_TLB_X		0x0000000000000080LL
+#define SUN4V_TLB_W		0x0000000000000040LL
+#define SUN4V_TLB_G		0x0000000000000000LL
+
 #define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
 (((valid)?TLB_V:0LL)|TLB_SZ(sz)|(((uint64_t)(pa))&TLB_PA_MASK)|\
 ((cache)?((aliased)?TLB_CP:TLB_CACHE_MASK):TLB_E)|\
 ((priv)?TLB_P:0LL)|((write)?TLB_W:0LL)|((g)?TLB_G:0LL)|((ie)?TLB_IE:0LL))
+
+#define SUN4V_TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
+(((valid)?SUN4V_TLB_V:0LL)|SUN4V_TLB_SZ(sz)|\
+(((u_int64_t)(pa))&SUN4V_TLB_PA_MASK)|\
+((cache)?((aliased)?SUN4V_TLB_CP:SUN4V_TLB_CACHE_MASK):SUN4V_TLB_E)|\
+((priv)?SUN4V_TLB_P:0LL)|((write)?SUN4V_TLB_W:0LL)|((g)?SUN4V_TLB_G:0LL)|\
+((ie)?SUN4V_TLB_IE:0LL))
+
 
 #define MMU_CACHE_VIRT	0x3
 #define MMU_CACHE_PHYS	0x2
