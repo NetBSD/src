@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2013/11/18 01:32:52 chs Exp $
+	$NetBSD: syscalls.master,v 1.46 2013/12/08 15:55:10 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -230,7 +230,7 @@
 			    const char *to); }
 83	NOARGS		{ int|sys||mkdir(const char *path, linux_umode_t mode); }
 84	NOARGS		{ int|sys||rmdir(const char *path); }
-85	STD		{ int|linux_sys||creat(const char *path, int mode); }
+85	STD		{ int|linux_sys||creat(const char *path, linux_umode_t mode); }
 86	NOARGS		{ int|sys||link(const char *path, const char *link); }
 87	STD		{ int|linux_sys||unlink(const char *path); }
 88	NOARGS		{ int|sys||symlink(const char *path, const char *to); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.107 2013/12/08 14:59:43 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.108 2013/12/08 15:55:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.107 2013/12/08 14:59:43 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.108 2013/12/08 15:55:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap, register_
 {
 	/* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
+		syscallarg(linux_umode_t) mode;
 	} */
 	struct sys_open_args oa;
 
@@ -193,7 +193,7 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 	/* {
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
-		syscallarg(int) mode;
+		syscallarg(linux_umode_t) mode;
 	} */
 	int error, fl;
 	struct sys_open_args boa;
@@ -218,7 +218,7 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, registe
 		syscallarg(int) fd;
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
-		syscallarg(int) mode;
+		syscallarg(linux_umode_t) mode;
 	} */
 	int error, fl;
 	struct sys_openat_args boa;
