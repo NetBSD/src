@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1158 2013/11/13 16:24:59 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1159 2013/12/08 07:41:06 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1165 2013/11/13 16:24:33 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1166 2013/12/08 07:40:37 msaitoh Exp
  */
 
 /*
@@ -2597,6 +2597,24 @@
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE4	0x0c09		/* Haswell PCI-E x4 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_MINI_HDA	0x0c0c		/* Haswell Mini HD Audio Controller */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_1	0x0c46		/* Atom S1200 PCIe Root Port 1 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_2	0x0c47		/* Atom S1200 PCIe Root Port 2 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_3	0x0c48		/* Atom S1200 PCIe Root Port 3 */
+#define	PCI_PRODUCT_INTEL_S1200_PCIE_4	0x0c49		/* Atom S1200 PCIe Root Port 4 */
+#define	PCI_PRODUCT_INTEL_S1200_INTERNALMNG	0x0c54		/* Atom S1200 Internal management */
+#define	PCI_PRODUCT_INTEL_S1200_DFX1	0x0c55		/* Atom S1200 Debug function 1 */
+#define	PCI_PRODUCT_INTEL_S1200_DFX2	0x0c56		/* Atom S1200 Debug function 2 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_0	0x0c59		/* Atom S1200 SMBus 0 (PCIe mass-storage) */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_1	0x0c5a		/* Atom S1200 SMBus 1 (enclosure maintain) */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_2	0x0c5b		/* Atom S1200 SMBus 2 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_3	0x0c5c		/* Atom S1200 SMBus 3 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_4	0x0c5d		/* Atom S1200 SMBus 4 */
+#define	PCI_PRODUCT_INTEL_S1200_SMBUS_5	0x0c5e		/* Atom S1200 SMBus 5 */
+#define	PCI_PRODUCT_INTEL_S1200_UART	0x0c5f		/* Atom S1200 High-Speed UART */
+#define	PCI_PRODUCT_INTEL_S1200_ILB	0x0c60		/* Atom S1200 LPC bridge */
+#define	PCI_PRODUCT_INTEL_S1200_S1220	0x0c72		/* Atom S1220 Internal */
+#define	PCI_PRODUCT_INTEL_S1200_S1240	0x0c73		/* Atom S1240 Internal */
+#define	PCI_PRODUCT_INTEL_S1200_S1260	0x0c75		/* Atom S1260 Internal */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543GC_FIBER	0x1001		/* i82453GC 1000baseX Ethernet */
 #define	PCI_PRODUCT_INTEL_MODEM56	0x1002		/* 56k Modem */
