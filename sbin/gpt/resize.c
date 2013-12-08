@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.6 2013/12/06 02:31:31 jnemeth Exp $");
+__RCSID("$NetBSD: resize.c,v 1.7 2013/12/08 09:32:51 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -45,11 +45,10 @@ __RCSID("$NetBSD: resize.c,v 1.6 2013/12/06 02:31:31 jnemeth Exp $");
 #include "map.h"
 #include "gpt.h"
 
-static off_t alignment, size;
+static off_t alignment, sectors, size;
 static unsigned int entry;
 
-const char resizemsg[] = "resize -i index [-a alignment] [-s sectors] "
-	"device ...";
+const char resizemsg[] = "resize -i index [-a alignment] [-s size] device ...";
 
 __dead static void
 usage_resize(void)
@@ -124,16 +123,16 @@ resize(int fd)
 		return;
 	}
 
-	if (size > 0 && size == map->map_size)
+	if (sectors > 0 && sectors == map->map_size)
 		if (alignment == 0 ||
-		    (alignment > 0 && size % alignsecs == 0)) {
+		    (alignment > 0 && sectors % alignsecs == 0)) {
 			/* nothing to do */
 			warnx("%s: partition does not need resizing",
 			    device_name);
 			return;
 		}
 
-	newsize = map_resize(map, size, alignsecs);
+	newsize = map_resize(map, sectors, alignsecs);
 	if (newsize == 0 && alignment > 0) {
 		warnx("%s: could not resize partition with alignment "
 		      "constraint", device_name);
@@ -198,11 +197,31 @@ cmd_resize(int argc, char *argv[])
 				usage_resize();
 			break;
 		case 's':
-			if (size > 0)
+			if (sectors > 0 || size > 0)
 				usage_resize();
-			size = strtoll(optarg, &p, 10);
-			if (*p != 0 || size < 1)
+			sectors = strtoll(optarg, &p, 10);
+			if (sectors < 1)
 				usage_resize();
+			if (*p == '\0')
+				break;
+			if (*p == 's' || *p == 'S') {
+				if (*(p + 1) == '\0')
+					break;
+				else
+					usage_resize();
+			}
+			if (*p == 'b' || *p == 'B') {
+				if (*(p + 1) == '\0') {
+					size = sectors;
+					sectors = 0;
+					break;
+				} else
+					usage_resize();
+			}
+			if (dehumanize_number(optarg, &human_num) < 0)
+				usage_resize();
+			size = human_num;
+			sectors = 0;
 			break;
 		default:
 			usage_resize();
@@ -223,11 +242,21 @@ cmd_resize(int argc, char *argv[])
 		}
 
 		if (alignment % secsz != 0) {
-			warnx("Alignment must be a multiple of sector size; ");
+			warnx("Alignment must be a multiple of sector size;");
 			warnx("the sector size for %s is %d bytes.",
 			    device_name, secsz);
 			continue;
 		}
+
+		if (size % secsz != 0) {
+			warnx("Size in bytes must be a multiple of sector "
+			      "size;");
+			warnx("the sector size for %s is %d bytes.",
+			    device_name, secsz);
+			continue;
+		}
+		if (size > 0)
+			sectors = size / secsz;
 
 		resize(fd);
 
