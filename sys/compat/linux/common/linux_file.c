@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.106 2013/11/18 01:32:52 chs Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.107 2013/12/08 14:59:43 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.106 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.107 2013/12/08 14:59:43 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ int
 linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, register_t *retval)
 {
 	/* {
+		syscallarg(int) fd;
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
