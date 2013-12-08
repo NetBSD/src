@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.17 2013/09/07 00:32:02 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.18 2013/12/08 14:37:01 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.17 2013/09/07 00:32:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.18 2013/12/08 14:37:01 skrll Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -255,7 +255,7 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 void
 pic_dispatch(struct intrsource *is, void *frame)
 {
-	int rv;
+	int rv __unused;
 
 	if (__predict_false(is->is_arg == NULL)
 	    && __predict_true(frame != NULL)) {
