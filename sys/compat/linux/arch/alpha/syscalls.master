@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 2013/11/19 03:52:07 chs Exp $
+	$NetBSD: syscalls.master,v 1.81 2013/12/08 15:55:10 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -91,13 +91,14 @@
 7	NODEF		{ int|osf1_sys||wait4(int pid, int *status, \
 			    int options, struct osf1_rusage *rusage); }
 ;8	ALIAS		osf1_sys_old_creat, NOT USED
-8	STD		{ int|linux_sys||creat(const char *path, mode_t mode); }
+8	STD		{ int|linux_sys||creat(const char *path, linux_umode_t mode); }
 9	NOARGS		{ int|sys||link(const char *path, const char *link); }
 10	STD		{ int|linux_sys||unlink(const char *path); }
 11	UNIMPL
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	NOARGS		{ int|sys||fchdir(int fd); }
-14	STD		{ int|linux_sys||mknod(const char *path, int mode, int dev); }
+14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
+			    int dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 16	NOARGS		{ int|sys||__posix_chown(const char *path, int uid, int gid); }
 ;17	ALIAS		osf1_sys_brk
@@ -134,7 +135,8 @@
 			    void *taddr, unsigned long tsize, \
 			    void *daddr, unsigned long dsize); }
 44	UNIMPL
-45	STD		{ int|linux_sys||open(const char *path, int flags, int mode); }
+45	STD		{ int|linux_sys||open(const char *path, int flags, \
+			    linux_umode_t mode); }
 46	UNIMPL
 47	NOARGS		{ gid_t|sys||getgid_with_egid(void); }
 ; ALIAS osf1_sys_sigprocmask(int how, unsigned long mask);
@@ -252,7 +254,7 @@
 122	NODEF		{ int|osf1_sys||settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
 123	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
-124	NOARGS		{ int|sys||fchmod(int fd, mode_t mode); }
+124	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
 125	STD		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 				int flags, struct osockaddr *from, \
 				int *fromlenaddr); }
@@ -269,7 +271,7 @@
 134	NOARGS		{ int|sys||shutdown(int s, int how); }
 135	STD		{ int|linux_sys||socketpair(int domain, int type, \
 				int protocol, int *rsv); }
-136	NOARGS		{ int|sys||mkdir(const char *path, int mode); }
+136	NOARGS		{ int|sys||mkdir(const char *path, linux_umode_t mode); }
 137	NOARGS		{ int|sys||rmdir(const char *path); }
 138	NODEF		{ int|osf1_sys||utimes(const char *path, \
 			    const struct osf1_timeval *tptr); }
