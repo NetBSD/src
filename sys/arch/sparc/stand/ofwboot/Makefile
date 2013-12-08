@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2013/08/21 06:41:52 matt Exp $
+#	$NetBSD: Makefile,v 1.31 2013/12/08 14:41:28 palle Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -13,6 +13,9 @@ KLINK_MACHINE=	sparc64
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
 SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c isfloppy.c
+.if ${MACHINE_ARCH} == "sparc64"
+SRCS+=		hvcall.S
+.endif
 .PATH:		${S}/arch/sparc64/sparc64 ${S}/arch/sparc/stand/common
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
@@ -25,6 +28,9 @@ COPTS+=		-ffreestanding
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
 CPPFLAGS+=	-D_STANDALONE -DSUN4U
+.if ${MACHINE_ARCH} == "sparc64"
+CPPFLAGS+=	-DSUN4V
+.endif
 CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64 -DBOOT_AOUT
 CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DSUPPORT_DHCP
@@ -119,6 +125,10 @@ AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
+
+hvcall.o: hvcall.S
+	${NORMAL_S}
+
 
 # Explicit dependency for this.
 boot.o: boot.c
