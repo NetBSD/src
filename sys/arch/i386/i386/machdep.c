@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.739 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.740 2013/12/08 20:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.739 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.740 2013/12/08 20:45:30 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -886,8 +886,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = control;
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+		pcb->pcb_savefpu.sv_xmm.sv_env.fx_cw = control;
+		pcb->pcb_savefpu.sv_xmm.sv_env.fx_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = control;
 	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
