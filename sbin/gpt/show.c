@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.12 2013/11/30 19:43:53 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.13 2013/12/08 08:30:01 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -311,7 +311,7 @@ cmd_show(int argc, char *argv[])
 			continue;
 		}
 
-		if (entry > 1)
+		if (entry > 0)
 			show_one();
 		else
 			show();
