@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.266 2012/12/08 12:36:30 kiyohara Exp $	*/
+/*	$NetBSD: trap.c,v 1.267 2013/12/08 20:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.266 2012/12/08 12:36:30 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.267 2013/12/08 20:45:30 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -203,7 +203,7 @@ xmm_si_code(struct lwp *l)
 		return 0;
 	}
 	pcb = lwp_getpcb(l);
-	mxcsr = pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
+	mxcsr = pcb->pcb_savefpu.sv_xmm.sv_env.fx_mxcsr;
 
 	/*
          * Since we only have a single status and control register,

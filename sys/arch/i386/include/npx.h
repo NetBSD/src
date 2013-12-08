@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.26 2013/11/11 11:10:45 joerg Exp $	*/
+/*	$NetBSD: npx.h,v 1.27 2013/12/08 20:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,16 +42,28 @@
 #ifndef	_I386_NPX_H_
 #define	_I386_NPX_H_
 
-/* Environment information of floating point unit */
+union fp_addr {
+	uint64_t fa_64;	/* Linear address for 64bit systems */
+	struct {
+		uint32_t fa_off;	/* Linear address for 32 bit */
+		uint16_t fa_seg;	/* Code/data (etc) segment */
+		uint16_t fa_pad;
+	} fa_32;
+} __packed;
+
+/*
+ * Environment information of floating point unit (fsave instruction).
+ * Note that the 'tag word' contains 2 bits per register and is relative
+ * to the stack top.
+ * The fxsave version is 1 bit per register indexed by register number.
+ */
 struct env87 {
 	long	 en_cw;		/* control word (16bits) */
 	long	 en_sw;		/* status word (16bits) */
 	long	 en_tw;		/* tag word (16bits) */
-	long	 en_fip;	/* floating point instruction pointer */
-	uint16_t en_fcs;	/* floating code segment selector */
-	uint16_t en_opcode;	/* opcode last executed (11 bits ) */
-	long	 en_foo;	/* floating operand offset */
-	long	 en_fos;	/* floating operand segment selector */
+	union fp_addr en_ip;	/* floating point instruction pointer */
+#define en_opcode en_ip.fa_32.fa_pad	/* opcode last executed (11bits) */
+	union fp_addr en_dp;	/* floating operand offset */
 };
 
 /* Contents of each floating point accumulator */
@@ -77,21 +89,17 @@ struct save87 {
 #endif
 };
 
-/* Environment of FPU/MMX/SSE/SSE2. */
+/* Environment of FPU/MMX/SSE/SSE2 (fxsave instruction). */
 struct envxmm {
-/*0*/	uint16_t en_cw;		/* FPU Control Word */
-	uint16_t en_sw;		/* FPU Status Word */
-	uint8_t  en_tw;		/* FPU Tag Word (abridged) */
-	uint8_t  en_rsvd0;
-	uint16_t en_opcode;	/* FPU Opcode */
-	uint32_t en_fip;	/* FPU Instruction Pointer */
-	uint16_t en_fcs;	/* FPU IP selector */
-	uint16_t en_rsvd1;
-/*16*/	uint32_t en_foo;	/* FPU Data pointer */
-	uint16_t en_fos;	/* FPU Data pointer selector */
-	uint16_t en_rsvd2;
-	uint32_t en_mxcsr;	/* MXCSR Register State */
-	uint32_t en_rsvd3;
+/*0*/	uint16_t fx_cw;		/* FPU Control Word */
+	uint16_t fx_sw;		/* FPU Status Word */
+	uint8_t  fx_tw;		/* FPU Tag Word (abridged) */
+	uint8_t  fx_reserved1;
+	uint16_t fx_opcode;	/* FPU Opcode */
+	union fp_addr fx_ip;	/* FPU Instruction Pointer */
+/*16*/	union fp_addr fx_dp;	/* FPU Data pointer */
+	uint32_t fx_mxcsr;	/* MXCSR Register State */
+	uint32_t fx_mxcsr_mask;
 };
 
 /* FPU regsters in the extended save format. */
