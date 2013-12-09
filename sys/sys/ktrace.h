@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.60 2013/12/09 16:45:23 pooka Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.61 2013/12/09 17:43:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,6 +35,7 @@
 #define _SYS_KTRACE_H_
 
 #include <sys/mutex.h>
+#include <sys/lwp.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
