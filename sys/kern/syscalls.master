@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.264 2013/10/17 18:01:11 njoly Exp $
+	$NetBSD: syscalls.master,v 1.265 2013/12/09 17:13:17 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -130,7 +130,7 @@
 43	NOERR 	RUMP	{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
-45	STD 		{ int|sys||ktrace(const char *fname, int ops, \
+45	STD 	RUMP	{ int|sys||ktrace(const char *fname, int ops, \
 			    int facs, pid_t pid); }
 46	COMPAT_13 MODULAR { int|sys||sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
@@ -550,7 +550,7 @@
 			    gid_t gid); }
 286	STD 	RUMP	{ pid_t|sys||getsid(pid_t pid); }
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
-288	STD 		{ int|sys||fktrace(int fd, int ops, \
+288	STD 	RUMP	{ int|sys||fktrace(int fd, int ops, \
 			    int facs, pid_t pid); }
 289	STD 	RUMP	{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
