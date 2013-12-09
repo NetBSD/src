@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.10 2013/12/08 20:45:30 dsl Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.11 2013/12/09 17:39:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -41,6 +41,7 @@
 #define _FREEBSD_MACHDEP_H
 
 #include <compat/sys/sigtypes.h>
+#include <machine/npx.h>
 
 /*
  * signal support
