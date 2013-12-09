@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.134 2013/10/08 11:47:57 njoly Exp $
+#	$NetBSD: makesyscalls.sh,v 1.135 2013/12/09 16:27:15 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -812,7 +812,7 @@ function putent(type, compatwrap) {
 	}
 	printf("%s %s)\n", uncompattype(argtype[argc]), argname[argc]) \
 	    > rumpcalls
-	printf("{\n\tregister_t retval[2] = {0, 0};\n") > rumpcalls
+	printf("{\n\tregister_t retval[2];\n") > rumpcalls
 	if (returntype != "void") {
 		if (type != "NOERR") {
 			printf("\tint error = 0;\n") > rumpcalls
@@ -938,7 +938,7 @@ END {
 		printf("int rump_sys_pipe(int *);\n") > rumpprotos
 		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
 		printf("int\nrump_sys_pipe(int *fd)\n{\n") > rumpcalls
-		printf("\tregister_t retval[2] = {0, 0};\n") > rumpcalls
+		printf("\tregister_t retval[2];\n") > rumpcalls
 		printf("\tint error = 0;\n") > rumpcalls
 		printf("\n\terror = rsys_syscall(SYS_pipe, ") > rumpcalls
 		printf("NULL, 0, retval);\n") > rumpcalls
