@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.36 2013/03/15 12:09:59 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.37 2013/12/09 16:54:20 pooka Exp $
 #
 
 LIB=	rumpvfs
@@ -48,6 +48,9 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 
 # MFS miniroot support
 SRCS+=	mfs_miniroot.c
+
+# ktrace vfs part
+SRCS+= kern_ktrace_vfs.c
 
 #quota2 plists
 SRCS+= quota1_subr.c vfs_quotactl.c
