@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.13 2013/12/08 08:30:01 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.14 2013/12/09 01:35:02 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -223,7 +223,7 @@ show_one(void)
 	map_t *m;
 	struct gpt_ent *ent;
 	const char *s1;
-	char *s2;
+	char *s2, human_num[5];
 
 	for (m = map_first(); m != NULL; m = m->map_next)
 		if (entry == m->map_index)
@@ -236,8 +236,21 @@ show_one(void)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	printf("Start: %llu\n", (long long)m->map_start);
-	printf("Size: %llu\n", (long long)m->map_size);
+	if (humanize_number(human_num, 5, (int64_t)(m->map_start * secsz),
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+	if (human_num[0] != '\0')
+		printf("Start: %llu (%s)\n", (long long)m->map_start,
+		    human_num);
+	else
+		printf("Start: %llu\n", (long long)m->map_start);
+	if (humanize_number(human_num, 5, (int64_t)(m->map_size * secsz),
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+	if (human_num[0] != '\0')
+		printf("Size: %llu (%s)\n", (long long)m->map_size, human_num);
+	else
+		printf("Size: %llu\n", (long long)m->map_size);
 
 	le_uuid_dec(ent->ent_type, &type);
 	s1 = friendly(&type);
