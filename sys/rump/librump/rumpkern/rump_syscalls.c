@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.94 2013/12/09 17:15:11 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.95 2013/12/09 19:19:39 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.94 2013/12/09 17:15:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.95 2013/12/09 19:19:39 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -88,6 +88,7 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 	ssize_t rv = -1;
 	struct sys_read_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
@@ -114,6 +115,7 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 	ssize_t rv = -1;
 	struct sys_write_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
@@ -140,6 +142,7 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 	int rv = -1;
 	struct sys_open_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 	SPARG(&callarg, mode) = mode;
@@ -166,6 +169,7 @@ rump___sysimpl_close(int fd)
 	int rv = -1;
 	struct sys_close_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_close, &callarg, sizeof(callarg), retval);
@@ -190,6 +194,7 @@ rump___sysimpl_link(const char * path, const char * link)
 	int rv = -1;
 	struct sys_link_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, link) = link;
 
@@ -215,6 +220,7 @@ rump___sysimpl_unlink(const char * path)
 	int rv = -1;
 	struct sys_unlink_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_unlink, &callarg, sizeof(callarg), retval);
@@ -239,6 +245,7 @@ rump___sysimpl_chdir(const char * path)
 	int rv = -1;
 	struct sys_chdir_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_chdir, &callarg, sizeof(callarg), retval);
@@ -263,6 +270,7 @@ rump___sysimpl_fchdir(int fd)
 	int rv = -1;
 	struct sys_fchdir_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fchdir, &callarg, sizeof(callarg), retval);
@@ -287,6 +295,7 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 	int rv = -1;
 	struct compat_50_sys_mknod_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 	SPARG(&callarg, dev) = dev;
@@ -313,6 +322,7 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_chmod_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
@@ -338,6 +348,7 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 	int rv = -1;
 	struct sys_chown_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
@@ -381,6 +392,7 @@ rump___sysimpl_unmount(const char * path, int flags)
 	int rv = -1;
 	struct sys_unmount_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
@@ -406,6 +418,7 @@ rump___sysimpl_setuid(uid_t uid)
 	int rv = -1;
 	struct sys_setuid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, uid) = uid;
 
 	error = rsys_syscall(SYS_setuid, &callarg, sizeof(callarg), retval);
@@ -464,6 +477,7 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 	ssize_t rv = -1;
 	struct sys_recvmsg_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, msg) = msg;
 	SPARG(&callarg, flags) = flags;
@@ -490,6 +504,7 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 	ssize_t rv = -1;
 	struct sys_sendmsg_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, msg) = msg;
 	SPARG(&callarg, flags) = flags;
@@ -516,6 +531,7 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 	ssize_t rv = -1;
 	struct sys_recvfrom_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, len) = len;
@@ -545,6 +561,7 @@ rump___sysimpl_accept(int s, struct sockaddr * name, socklen_t * anamelen)
 	int rv = -1;
 	struct sys_accept_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, anamelen) = anamelen;
@@ -571,6 +588,7 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, socklen_t * alen)
 	int rv = -1;
 	struct sys_getpeername_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fdes) = fdes;
 	SPARG(&callarg, asa) = asa;
 	SPARG(&callarg, alen) = alen;
@@ -597,6 +615,7 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, socklen_t * alen)
 	int rv = -1;
 	struct sys_getsockname_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fdes) = fdes;
 	SPARG(&callarg, asa) = asa;
 	SPARG(&callarg, alen) = alen;
@@ -623,6 +642,7 @@ rump___sysimpl_access(const char * path, int flags)
 	int rv = -1;
 	struct sys_access_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
@@ -648,6 +668,7 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 	int rv = -1;
 	struct sys_chflags_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
@@ -673,6 +694,7 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 	int rv = -1;
 	struct sys_fchflags_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, flags) = flags;
 
@@ -726,6 +748,7 @@ rump___sysimpl_dup(int fd)
 	int rv = -1;
 	struct sys_dup_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_dup, &callarg, sizeof(callarg), retval);
@@ -767,6 +790,7 @@ rump___sysimpl_ktrace(const char * fname, int ops, int facs, pid_t pid)
 	int rv = -1;
 	struct sys_ktrace_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fname) = fname;
 	SPARG(&callarg, ops) = ops;
 	SPARG(&callarg, facs) = facs;
@@ -811,6 +835,7 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 	int rv = -1;
 	struct sys___getlogin_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, namebuf) = namebuf;
 	SPARG(&callarg, namelen) = namelen;
 
@@ -836,6 +861,7 @@ rump___sysimpl___setlogin(const char * namebuf)
 	int rv = -1;
 	struct sys___setlogin_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, namebuf) = namebuf;
 
 	error = rsys_syscall(SYS___setlogin, &callarg, sizeof(callarg), retval);
@@ -860,6 +886,7 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 	int rv = -1;
 	struct sys_ioctl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, com) = com;
 	SPARG(&callarg, data) = data;
@@ -886,6 +913,7 @@ rump___sysimpl_revoke(const char * path)
 	int rv = -1;
 	struct sys_revoke_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_revoke, &callarg, sizeof(callarg), retval);
@@ -910,6 +938,7 @@ rump___sysimpl_symlink(const char * path, const char * link)
 	int rv = -1;
 	struct sys_symlink_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, link) = link;
 
@@ -935,6 +964,7 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 	ssize_t rv = -1;
 	struct sys_readlink_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, count) = count;
@@ -961,6 +991,7 @@ rump___sysimpl_umask(mode_t newmask)
 	mode_t rv = -1;
 	struct sys_umask_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, newmask) = newmask;
 
 	error = rsys_syscall(SYS_umask, &callarg, sizeof(callarg), retval);
@@ -985,6 +1016,7 @@ rump___sysimpl_chroot(const char * path)
 	int rv = -1;
 	struct sys_chroot_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_chroot, &callarg, sizeof(callarg), retval);
@@ -1009,6 +1041,7 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 	int rv = -1;
 	struct sys_getgroups_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, gidsetsize) = gidsetsize;
 	SPARG(&callarg, gidset) = gidset;
 
@@ -1034,6 +1067,7 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 	int rv = -1;
 	struct sys_setgroups_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, gidsetsize) = gidsetsize;
 	SPARG(&callarg, gidset) = gidset;
 
@@ -1080,6 +1114,7 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 	int rv = -1;
 	struct sys_setpgid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, pid) = pid;
 	SPARG(&callarg, pgid) = pgid;
 
@@ -1105,6 +1140,7 @@ rump___sysimpl_dup2(int from, int to)
 	int rv = -1;
 	struct sys_dup2_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 
@@ -1130,6 +1166,7 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 	int rv = -1;
 	struct sys_fcntl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, cmd) = cmd;
 	SPARG(&callarg, arg) = arg;
@@ -1156,6 +1193,7 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 	int rv = -1;
 	struct compat_50_sys_select_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, nd) = nd;
 	SPARG(&callarg, in) = in;
 	SPARG(&callarg, ou) = ou;
@@ -1184,6 +1222,7 @@ rump___sysimpl_fsync(int fd)
 	int rv = -1;
 	struct sys_fsync_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fsync, &callarg, sizeof(callarg), retval);
@@ -1208,6 +1247,7 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, socklen_t namelen)
 	int rv = -1;
 	struct sys_connect_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, namelen) = namelen;
@@ -1234,6 +1274,7 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, socklen_t namelen)
 	int rv = -1;
 	struct sys_bind_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, namelen) = namelen;
@@ -1260,6 +1301,7 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, socklen_
 	int rv = -1;
 	struct sys_setsockopt_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, level) = level;
 	SPARG(&callarg, name) = name;
@@ -1288,6 +1330,7 @@ rump___sysimpl_listen(int s, int backlog)
 	int rv = -1;
 	struct sys_listen_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, backlog) = backlog;
 
@@ -1313,6 +1356,7 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, socklen_t * av
 	int rv = -1;
 	struct sys_getsockopt_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, level) = level;
 	SPARG(&callarg, name) = name;
@@ -1341,6 +1385,7 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 	ssize_t rv = -1;
 	struct sys_readv_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
@@ -1367,6 +1412,7 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 	ssize_t rv = -1;
 	struct sys_writev_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
@@ -1393,6 +1439,7 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 	int rv = -1;
 	struct sys_fchown_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
@@ -1419,6 +1466,7 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 	int rv = -1;
 	struct sys_fchmod_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, mode) = mode;
 
@@ -1444,6 +1492,7 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 	int rv = -1;
 	struct sys_setreuid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, ruid) = ruid;
 	SPARG(&callarg, euid) = euid;
 
@@ -1469,6 +1518,7 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 	int rv = -1;
 	struct sys_setregid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, rgid) = rgid;
 	SPARG(&callarg, egid) = egid;
 
@@ -1494,6 +1544,7 @@ rump___sysimpl_rename(const char * from, const char * to)
 	int rv = -1;
 	struct sys_rename_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 
@@ -1519,6 +1570,7 @@ rump___sysimpl_flock(int fd, int how)
 	int rv = -1;
 	struct sys_flock_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, how) = how;
 
@@ -1544,6 +1596,7 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_mkfifo_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
@@ -1569,6 +1622,7 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 	ssize_t rv = -1;
 	struct sys_sendto_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, len) = len;
@@ -1598,6 +1652,7 @@ rump___sysimpl_shutdown(int s, int how)
 	int rv = -1;
 	struct sys_shutdown_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, how) = how;
 
@@ -1623,6 +1678,7 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 	int rv = -1;
 	struct sys_socketpair_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, domain) = domain;
 	SPARG(&callarg, type) = type;
 	SPARG(&callarg, protocol) = protocol;
@@ -1650,6 +1706,7 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_mkdir_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
@@ -1675,6 +1732,7 @@ rump___sysimpl_rmdir(const char * path)
 	int rv = -1;
 	struct sys_rmdir_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_rmdir, &callarg, sizeof(callarg), retval);
@@ -1699,6 +1757,7 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 	int rv = -1;
 	struct compat_50_sys_utimes_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
@@ -1745,6 +1804,7 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 	int rv = -1;
 	struct sys_nfssvc_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, flag) = flag;
 	SPARG(&callarg, argp) = argp;
 
@@ -1770,6 +1830,7 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 	ssize_t rv = -1;
 	struct sys_pread_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
@@ -1798,6 +1859,7 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 	ssize_t rv = -1;
 	struct sys_pwrite_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
@@ -1826,6 +1888,7 @@ rump___sysimpl_setgid(gid_t gid)
 	int rv = -1;
 	struct sys_setgid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, gid) = gid;
 
 	error = rsys_syscall(SYS_setgid, &callarg, sizeof(callarg), retval);
@@ -1850,6 +1913,7 @@ rump___sysimpl_setegid(gid_t egid)
 	int rv = -1;
 	struct sys_setegid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, egid) = egid;
 
 	error = rsys_syscall(SYS_setegid, &callarg, sizeof(callarg), retval);
@@ -1874,6 +1938,7 @@ rump___sysimpl_seteuid(uid_t euid)
 	int rv = -1;
 	struct sys_seteuid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, euid) = euid;
 
 	error = rsys_syscall(SYS_seteuid, &callarg, sizeof(callarg), retval);
@@ -1898,6 +1963,7 @@ rump___sysimpl_pathconf(const char * path, int name)
 	long rv = -1;
 	struct sys_pathconf_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
@@ -1923,6 +1989,7 @@ rump___sysimpl_fpathconf(int fd, int name)
 	long rv = -1;
 	struct sys_fpathconf_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 
@@ -1948,6 +2015,7 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 	int rv = -1;
 	struct sys_getrlimit_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, which) = which;
 	SPARG(&callarg, rlp) = rlp;
 
@@ -1973,6 +2041,7 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 	int rv = -1;
 	struct sys_setrlimit_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, which) = which;
 	SPARG(&callarg, rlp) = rlp;
 
@@ -1998,6 +2067,7 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 	off_t rv = -1;
 	struct sys_lseek_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
@@ -2025,6 +2095,7 @@ rump___sysimpl_truncate(const char * path, off_t length)
 	int rv = -1;
 	struct sys_truncate_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, length) = length;
@@ -2051,6 +2122,7 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 	int rv = -1;
 	struct sys_ftruncate_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, length) = length;
@@ -2077,6 +2149,7 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * old, size_t * ol
 	int rv = -1;
 	struct sys___sysctl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, namelen) = namelen;
 	SPARG(&callarg, old) = old;
@@ -2106,6 +2179,7 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 	int rv = -1;
 	struct compat_50_sys_futimes_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
@@ -2131,6 +2205,7 @@ rump___sysimpl_getpgid(pid_t pid)
 	pid_t rv = -1;
 	struct sys_getpgid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, pid) = pid;
 
 	error = rsys_syscall(SYS_getpgid, &callarg, sizeof(callarg), retval);
@@ -2155,6 +2230,7 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 	int rv = -1;
 	struct sys_reboot_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, opt) = opt;
 	SPARG(&callarg, bootstr) = bootstr;
 
@@ -2180,6 +2256,7 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 	int rv = -1;
 	struct sys_poll_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fds) = fds;
 	SPARG(&callarg, nfds) = nfds;
 	SPARG(&callarg, timeout) = timeout;
@@ -2206,6 +2283,7 @@ rump___sysimpl_fdatasync(int fd)
 	int rv = -1;
 	struct sys_fdatasync_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fdatasync, &callarg, sizeof(callarg), retval);
@@ -2230,6 +2308,7 @@ rump___sysimpl_modctl(int cmd, void * arg)
 	int rv = -1;
 	struct sys_modctl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, cmd) = cmd;
 	SPARG(&callarg, arg) = arg;
 
@@ -2255,6 +2334,7 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 	int rv = -1;
 	struct sys__ksem_init_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, idp) = idp;
 
@@ -2280,6 +2360,7 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 	int rv = -1;
 	struct sys__ksem_open_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, oflag) = oflag;
 	SPARG(&callarg, mode) = mode;
@@ -2308,6 +2389,7 @@ rump___sysimpl__ksem_unlink(const char * name)
 	int rv = -1;
 	struct sys__ksem_unlink_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS__ksem_unlink, &callarg, sizeof(callarg), retval);
@@ -2332,6 +2414,7 @@ rump___sysimpl__ksem_close(intptr_t id)
 	int rv = -1;
 	struct sys__ksem_close_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_close, &callarg, sizeof(callarg), retval);
@@ -2356,6 +2439,7 @@ rump___sysimpl__ksem_post(intptr_t id)
 	int rv = -1;
 	struct sys__ksem_post_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_post, &callarg, sizeof(callarg), retval);
@@ -2380,6 +2464,7 @@ rump___sysimpl__ksem_wait(intptr_t id)
 	int rv = -1;
 	struct sys__ksem_wait_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_wait, &callarg, sizeof(callarg), retval);
@@ -2404,6 +2489,7 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 	int rv = -1;
 	struct sys__ksem_trywait_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_trywait, &callarg, sizeof(callarg), retval);
@@ -2428,6 +2514,7 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 	int rv = -1;
 	struct sys__ksem_getvalue_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 	SPARG(&callarg, value) = value;
 
@@ -2453,6 +2540,7 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 	int rv = -1;
 	struct sys__ksem_destroy_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_destroy, &callarg, sizeof(callarg), retval);
@@ -2477,6 +2565,7 @@ rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 	int rv = -1;
 	struct sys__ksem_timedwait_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 	SPARG(&callarg, abstime) = abstime;
 
@@ -2502,6 +2591,7 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_lchmod_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
@@ -2527,6 +2617,7 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 	int rv = -1;
 	struct sys_lchown_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
@@ -2553,6 +2644,7 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 	int rv = -1;
 	struct compat_50_sys_lutimes_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
@@ -2578,6 +2670,7 @@ rump___sysimpl_getsid(pid_t pid)
 	pid_t rv = -1;
 	struct sys_getsid_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, pid) = pid;
 
 	error = rsys_syscall(SYS_getsid, &callarg, sizeof(callarg), retval);
@@ -2602,6 +2695,7 @@ rump___sysimpl_fktrace(int fd, int ops, int facs, pid_t pid)
 	int rv = -1;
 	struct sys_fktrace_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, ops) = ops;
 	SPARG(&callarg, facs) = facs;
@@ -2629,6 +2723,7 @@ rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offse
 	ssize_t rv = -1;
 	struct sys_preadv_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
@@ -2657,6 +2752,7 @@ rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offs
 	ssize_t rv = -1;
 	struct sys_pwritev_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
@@ -2685,6 +2781,7 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 	int rv = -1;
 	struct sys___getcwd_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, bufp) = bufp;
 	SPARG(&callarg, length) = length;
 
@@ -2710,6 +2807,7 @@ rump___sysimpl_fchroot(int fd)
 	int rv = -1;
 	struct sys_fchroot_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fchroot, &callarg, sizeof(callarg), retval);
@@ -2734,6 +2832,7 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 	int rv = -1;
 	struct sys_lchflags_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
@@ -2797,6 +2896,7 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 	int rv = -1;
 	struct compat_50_sys_kevent_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, changelist) = changelist;
 	SPARG(&callarg, nchanges) = nchanges;
@@ -2826,6 +2926,7 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 	int rv = -1;
 	struct sys_fsync_range_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, flags) = flags;
 	SPARG(&callarg, start) = start;
@@ -2853,6 +2954,7 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 	int rv = -1;
 	struct sys_getvfsstat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, bufsize) = bufsize;
 	SPARG(&callarg, flags) = flags;
@@ -2879,6 +2981,7 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 	int rv = -1;
 	struct sys_statvfs1_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flags) = flags;
@@ -2905,6 +3008,7 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 	int rv = -1;
 	struct sys_fstatvfs1_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flags) = flags;
@@ -2931,6 +3035,7 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 	int rv = -1;
 	struct sys_extattrctl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, cmd) = cmd;
 	SPARG(&callarg, filename) = filename;
@@ -2959,6 +3064,7 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 	int rv = -1;
 	struct sys_extattr_set_file_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -2987,6 +3093,7 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 	ssize_t rv = -1;
 	struct sys_extattr_get_file_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3015,6 +3122,7 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 	int rv = -1;
 	struct sys_extattr_delete_file_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3041,6 +3149,7 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 	int rv = -1;
 	struct sys_extattr_set_fd_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3069,6 +3178,7 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 	ssize_t rv = -1;
 	struct sys_extattr_get_fd_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3097,6 +3207,7 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 	int rv = -1;
 	struct sys_extattr_delete_fd_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3123,6 +3234,7 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 	int rv = -1;
 	struct sys_extattr_set_link_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3151,6 +3263,7 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 	ssize_t rv = -1;
 	struct sys_extattr_get_link_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3179,6 +3292,7 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 	int rv = -1;
 	struct sys_extattr_delete_link_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
@@ -3205,6 +3319,7 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 	ssize_t rv = -1;
 	struct sys_extattr_list_fd_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, data) = data;
@@ -3232,6 +3347,7 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 	ssize_t rv = -1;
 	struct sys_extattr_list_file_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, data) = data;
@@ -3259,6 +3375,7 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 	ssize_t rv = -1;
 	struct sys_extattr_list_link_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, data) = data;
@@ -3286,6 +3403,7 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 	int rv = -1;
 	struct compat_50_sys_pselect_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, nd) = nd;
 	SPARG(&callarg, in) = in;
 	SPARG(&callarg, ou) = ou;
@@ -3315,6 +3433,7 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 	int rv = -1;
 	struct compat_50_sys_pollts_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fds) = fds;
 	SPARG(&callarg, nfds) = nfds;
 	SPARG(&callarg, ts) = (const struct timespec50 *)ts;
@@ -3342,6 +3461,7 @@ rump___sysimpl_setxattr(const char * path, const char * name, const void * value
 	int rv = -1;
 	struct sys_setxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3370,6 +3490,7 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, const void * valu
 	int rv = -1;
 	struct sys_lsetxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3398,6 +3519,7 @@ rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t s
 	int rv = -1;
 	struct sys_fsetxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3426,6 +3548,7 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 	int rv = -1;
 	struct sys_getxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3453,6 +3576,7 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 	int rv = -1;
 	struct sys_lgetxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3480,6 +3604,7 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 	int rv = -1;
 	struct sys_fgetxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, value) = value;
@@ -3507,6 +3632,7 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 	int rv = -1;
 	struct sys_listxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
@@ -3533,6 +3659,7 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 	int rv = -1;
 	struct sys_llistxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
@@ -3559,6 +3686,7 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 	int rv = -1;
 	struct sys_flistxattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
@@ -3585,6 +3713,7 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 	int rv = -1;
 	struct sys_removexattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
@@ -3610,6 +3739,7 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 	int rv = -1;
 	struct sys_lremovexattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
@@ -3635,6 +3765,7 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 	int rv = -1;
 	struct sys_fremovexattr_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 
@@ -3660,6 +3791,7 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 	int rv = -1;
 	struct compat_50_sys___stat30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
@@ -3685,6 +3817,7 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 	int rv = -1;
 	struct compat_50_sys___fstat30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
 
@@ -3710,6 +3843,7 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 	int rv = -1;
 	struct compat_50_sys___lstat30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
@@ -3735,6 +3869,7 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 	int rv = -1;
 	struct sys___getdents30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, count) = count;
@@ -3761,6 +3896,7 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 	int rv = -1;
 	struct sys___socket30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, domain) = domain;
 	SPARG(&callarg, type) = type;
 	SPARG(&callarg, protocol) = protocol;
@@ -3787,6 +3923,7 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 	int rv = -1;
 	struct sys___getfh30_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fname) = fname;
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
@@ -3813,6 +3950,7 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 	int rv = -1;
 	struct sys___fhopen40_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, flags) = flags;
@@ -3839,6 +3977,7 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 	int rv = -1;
 	struct sys___fhstatvfs140_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, buf) = buf;
@@ -3866,6 +4005,7 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 	int rv = -1;
 	struct compat_50_sys___fhstat40_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
@@ -3892,6 +4032,7 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 	int rv = -1;
 	struct sys___mount50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, type) = type;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
@@ -3919,6 +4060,7 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 	int rv = -1;
 	struct sys___posix_fadvise50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
@@ -3944,6 +4086,7 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 	int rv = -1;
 	struct sys___select50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, nd) = nd;
 	SPARG(&callarg, in) = in;
 	SPARG(&callarg, ou) = ou;
@@ -3972,6 +4115,7 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 	int rv = -1;
 	struct sys___utimes50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = tptr;
 
@@ -3997,6 +4141,7 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 	int rv = -1;
 	struct sys___futimes50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = tptr;
 
@@ -4022,6 +4167,7 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 	int rv = -1;
 	struct sys___lutimes50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = tptr;
 
@@ -4047,6 +4193,7 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 	int rv = -1;
 	struct sys___kevent50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, changelist) = changelist;
 	SPARG(&callarg, nchanges) = nchanges;
@@ -4076,6 +4223,7 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 	int rv = -1;
 	struct sys___pselect50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, nd) = nd;
 	SPARG(&callarg, in) = in;
 	SPARG(&callarg, ou) = ou;
@@ -4105,6 +4253,7 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 	int rv = -1;
 	struct sys___pollts50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fds) = fds;
 	SPARG(&callarg, nfds) = nfds;
 	SPARG(&callarg, ts) = ts;
@@ -4132,6 +4281,7 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 	int rv = -1;
 	struct sys___stat50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = ub;
 
@@ -4157,6 +4307,7 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 	int rv = -1;
 	struct sys___fstat50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, sb) = sb;
 
@@ -4182,6 +4333,7 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 	int rv = -1;
 	struct sys___lstat50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = ub;
 
@@ -4207,6 +4359,7 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 	int rv = -1;
 	struct sys___mknod50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 	SPARG(&callarg, dev) = dev;
@@ -4233,6 +4386,7 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 	int rv = -1;
 	struct sys___fhstat50_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, sb) = sb;
@@ -4259,6 +4413,7 @@ rump___sysimpl_pipe2(int * fildes, int flags)
 	int rv = -1;
 	struct sys_pipe2_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fildes) = fildes;
 	SPARG(&callarg, flags) = flags;
 
@@ -4284,6 +4439,7 @@ rump___sysimpl_dup3(int from, int to, int flags)
 	int rv = -1;
 	struct sys_dup3_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 	SPARG(&callarg, flags) = flags;
@@ -4310,6 +4466,7 @@ rump___sysimpl_kqueue1(int flags)
 	int rv = -1;
 	struct sys_kqueue1_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_kqueue1, &callarg, sizeof(callarg), retval);
@@ -4334,6 +4491,7 @@ rump___sysimpl_paccept(int s, struct sockaddr * name, socklen_t * anamelen, cons
 	int rv = -1;
 	struct sys_paccept_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, anamelen) = anamelen;
@@ -4362,6 +4520,7 @@ rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, 
 	int rv = -1;
 	struct sys_linkat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd1) = fd1;
 	SPARG(&callarg, name1) = name1;
 	SPARG(&callarg, fd2) = fd2;
@@ -4390,6 +4549,7 @@ rump___sysimpl_renameat(int fromfd, const char * from, int tofd, const char * to
 	int rv = -1;
 	struct sys_renameat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fromfd) = fromfd;
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, tofd) = tofd;
@@ -4417,6 +4577,7 @@ rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_mkfifoat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
@@ -4443,6 +4604,7 @@ rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, dev_t dev)
 	int rv = -1;
 	struct sys_mknodat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
@@ -4471,6 +4633,7 @@ rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
 	int rv = -1;
 	struct sys_mkdirat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
@@ -4497,6 +4660,7 @@ rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
 	int rv = -1;
 	struct sys_faccessat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, amode) = amode;
@@ -4524,6 +4688,7 @@ rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
 	int rv = -1;
 	struct sys_fchmodat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
@@ -4551,6 +4716,7 @@ rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int
 	int rv = -1;
 	struct sys_fchownat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, owner) = owner;
@@ -4579,6 +4745,7 @@ rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
 	int rv = -1;
 	struct sys_fstatat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, buf) = buf;
@@ -4606,6 +4773,7 @@ rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr
 	int rv = -1;
 	struct sys_utimensat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = tptr;
@@ -4633,6 +4801,7 @@ rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 	int rv = -1;
 	struct sys_openat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, oflags) = oflags;
@@ -4660,6 +4829,7 @@ rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 	int rv = -1;
 	struct sys_readlinkat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, buf) = buf;
@@ -4687,6 +4857,7 @@ rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
 	int rv = -1;
 	struct sys_symlinkat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path1) = path1;
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path2) = path2;
@@ -4713,6 +4884,7 @@ rump___sysimpl_unlinkat(int fd, const char * path, int flag)
 	int rv = -1;
 	struct sys_unlinkat_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flag) = flag;
@@ -4739,6 +4911,7 @@ rump___sysimpl_futimens(int fd, const struct timespec * tptr)
 	int rv = -1;
 	struct sys_futimens_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = tptr;
 
@@ -4764,6 +4937,7 @@ rump___sysimpl___quotactl(const char * path, struct quotactl_args * args)
 	int rv = -1;
 	struct sys___quotactl_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, args) = args;
 
@@ -4789,6 +4963,7 @@ rump___sysimpl_recvmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	int rv = -1;
 	struct sys_recvmmsg_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, mmsg) = mmsg;
 	SPARG(&callarg, vlen) = vlen;
@@ -4817,6 +4992,7 @@ rump___sysimpl_sendmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	int rv = -1;
 	struct sys_sendmmsg_args callarg;
 
+	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, mmsg) = mmsg;
 	SPARG(&callarg, vlen) = vlen;
