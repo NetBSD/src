@@ -295,7 +295,7 @@ void vmw_kms_cursor_snoop(struct vmw_surface *srf,
 	    box->d != 1    || box_count != 1) {
 		/* TODO handle none page aligned offsets */
 		/* TODO handle more dst & src != 0 */
-		/* TODO handle more then one copy */
+		/* TODO handle more than one copy */
 		DRM_ERROR("Cant snoop dma request for cursor!\n");
 		DRM_ERROR("(%u, %u, %u) (%u, %u, %u) (%ux%ux%u) %u %u\n",
 			  box->srcx, box->srcy, box->srcz,
