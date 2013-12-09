@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.138 2013/12/09 21:11:15 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.139 2013/12/09 21:12:45 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -232,7 +232,7 @@ NR == 1 {
 	printf "#ifdef RUMP_CLIENT\n" > rumpcalls
 	printf "#include <errno.h>\n" > rumpcalls
 	printf "#include <stdint.h>\n" > rumpcalls
-	printf "#include <stdlib.h>\n\n" > rumpcalls
+	printf "#include <stdlib.h>\n" > rumpcalls
 	printf "#include <string.h>\n\n" > rumpcalls
 	printf "#include <srcsys/syscall.h>\n" > rumpcalls
 	printf "#include <srcsys/syscallargs.h>\n\n" > rumpcalls
