@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.25 2013/12/04 20:15:51 jakllsch Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.26 2013/12/09 08:03:17 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -727,7 +727,9 @@ static struct {
 	{ cmd_remove, "remove" },
 	{ NULL, "rename" },
 	{ cmd_resize, "resize" },
+	{ cmd_set, "set" },
 	{ cmd_show, "show" },
+	{ cmd_unset, "unset" },
 	{ NULL, "verify" },
 	{ NULL, NULL }
 };
@@ -738,7 +740,8 @@ usage(void)
 	extern const char addmsg1[], addmsg2[], biosbootmsg[], createmsg[];
 	extern const char destroymsg[], labelmsg1[], labelmsg2[], labelmsg3[];
 	extern const char migratemsg[], recovermsg[], removemsg1[];
-	extern const char removemsg2[], resizemsg[], showmsg[];
+	extern const char removemsg2[], resizemsg[], setmsg[], showmsg[];
+	extern const char unsetmsg[];
 
 	fprintf(stderr,
 	    "usage: %s %s\n"
@@ -749,6 +752,8 @@ usage(void)
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %*s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
@@ -768,7 +773,9 @@ usage(void)
 	    getprogname(), removemsg1,
 	    getprogname(), removemsg2,
 	    getprogname(), resizemsg,
-	    getprogname(), showmsg);
+	    getprogname(), setmsg,
+	    getprogname(), showmsg,
+	    getprogname(), unsetmsg);
 	exit(1);
 }
 
