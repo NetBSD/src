@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.136 2013/12/09 16:32:06 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.137 2013/12/09 19:18:52 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -828,6 +828,7 @@ function putent(type, compatwrap) {
 		argsize = "sizeof(callarg)"
 		printf("\tstruct %s%s_args callarg;\n\n",compatwrap_,funcname) \
 		    > rumpcalls
+		printf "\tmemset(&callarg, 0, sizeof(callarg));\n" > rumpcalls
 		for (i = 1; i <= argc; i++) {
 			if (argname[i] == "PAD") {
 				printf("\tSPARG(&callarg, %s) = 0;\n", \
