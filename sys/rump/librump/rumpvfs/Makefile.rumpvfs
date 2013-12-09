@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.38 2013/12/09 17:57:11 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.39 2013/12/09 20:44:00 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -18,7 +18,7 @@ LIB=	rumpvfs
 #
 # Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
+SRCS+=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
 
 SRCS+=	rumpvfs_if_wrappers.c
 
