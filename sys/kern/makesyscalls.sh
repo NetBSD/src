@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.135 2013/12/09 16:27:15 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.136 2013/12/09 16:32:06 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -1003,3 +1003,6 @@ echo >> $rumpcallshdr
 cat $rumpprotos >> $rumpcallshdr
 
 #chmod 444 $sysnames $sysnumhdr $syssw
+
+echo Generated following files:
+echo $sysarghdr $sysnumhdr $syssw $sysnames $rumpcalls $rumpcallshdr
