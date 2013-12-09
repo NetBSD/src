@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.24 2013/12/09 01:35:02 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.25 2013/12/09 08:03:17 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 8, 2013
+.Dd December 9, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -344,6 +344,35 @@ If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
+.\" ==== set ====
+.It Nm Ic set Fl a Ar attribute Fl i Ar index Ar device ...
+The
+.Ic set
+command sets various partition attributes.
+The
+.Fl a
+option specifies which attributes to set and may be specified more then once.
+The
+.Fl i
+option specifies which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc , and
+.Do bootfailed Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The other three attributes are for compatibility with
+.Fx
+and are not currently used by any
+.Nx
+code.
+They may be used by
+.Nx
+code in the future.
 .\" ==== show ====
 .It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Ar device ...
 The
@@ -372,6 +401,35 @@ The order of precedence for the options are:
 .Fl l ,
 .Fl g ,
 .Fl u .
+.\" ==== unset ====
+.It Nm Ic unset Fl a Ar attribute Fl i Ar index Ar device ...
+The
+.Ic unset
+command unsets various partition attributes.
+The
+.Fl a
+option specifies which attributes to unset and may be specified more then once.
+The
+.Fl i
+option specifies which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc , and
+.Do bootfailed Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The other three attributes are for compatibility with
+.Fx
+and are not currently used by any
+.Nx
+code.
+They may be used by
+.Nx
+code in the future.
 .El
 .Sh EXAMPLES
 .Bd -literal
