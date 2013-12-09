@@ -1,5 +1,9 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.37 2013/12/09 16:54:20 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.38 2013/12/09 17:57:11 pooka Exp $
 #
+
+.include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.own.mk>
 
 LIB=	rumpvfs
 
@@ -50,7 +54,9 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 SRCS+=	mfs_miniroot.c
 
 # ktrace vfs part
+.if ${RUMP_KTRACE} == "yes"
 SRCS+= kern_ktrace_vfs.c
+.endif
 
 #quota2 plists
 SRCS+= quota1_subr.c vfs_quotactl.c
@@ -69,8 +75,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-
-.include "${RUMPTOP}/Makefile.rump"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
