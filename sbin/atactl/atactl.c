@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.72 2013/10/30 15:37:49 drochner Exp $	*/
+/*	$NetBSD: atactl.c,v 1.73 2013/12/09 09:35:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.72 2013/10/30 15:37:49 drochner Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.73 2013/12/09 09:35:16 wiz Exp $");
 #endif
 
 
@@ -577,7 +577,7 @@ static const struct {
 	{ 127, "Abort off-line test" },
 	{ 129, "Short captive" },
 	{ 130, "Extended captive" },
-	{ 256, "Unknown test" }, /* larger then uint8_t */
+	{ 256, "Unknown test" }, /* larger than uint8_t */
 	{ 0, NULL }
 };
 

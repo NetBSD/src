@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.15 2011/11/23 23:07:28 jmcneill Exp $ */
+/* $NetBSD: toccata.c,v 1.16 2013/12/09 09:35:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.15 2011/11/23 23:07:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.16 2013/12/09 09:35:16 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ const struct audio_hw_if audiocs_hw_if = {
 	toccata_close,
 	0,	/*
 		 * XXX toccata_drain could be written:
-		 * sleep for play interrupt. This loses less then 512 bytes of
+		 * sleep for play interrupt. This loses less than 512 bytes of
 		 * sample data, otherwise up to 1024.
 		 */
 	ad1848_query_encoding,

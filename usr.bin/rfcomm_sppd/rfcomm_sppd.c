@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.15 2011/07/18 21:51:06 christos Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.16 2013/12/09 09:35:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.15 2011/07/18 21:51:06 christos Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.16 2013/12/09 09:35:17 wiz Exp $");
 
 #include <sys/param.h>
 
@@ -294,7 +294,7 @@ open_tty(const char *tty)
 	int		 master;
 
 	/*
-	 * Construct master PTY name. The slave tty name must be less then
+	 * Construct master PTY name. The slave tty name must be less than
 	 * PATH_MAX characters in length, must contain '/' character and
 	 * must not end with '/'.
 	 */

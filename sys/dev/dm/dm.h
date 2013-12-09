@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.24 2012/07/28 00:43:22 matt Exp $      */
+/*        $NetBSD: dm.h,v 1.25 2013/12/09 09:35:16 wiz Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ typedef struct dm_table_head {
 /*
  * This structure is used to store opened vnodes for disk with name.
  * I need this because devices can be opened only once, but I can
- * have more then one device on one partition.
+ * have more than one device on one partition.
  */
 
 typedef struct dm_pdev {
