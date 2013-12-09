@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.276 2013/11/18 18:45:29 njoly Exp $	*/
+/*	$NetBSD: rump.c,v 1.277 2013/12/09 16:23:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.276 2013/11/18 18:45:29 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.277 2013/12/09 16:23:10 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -834,7 +834,7 @@ rump_hyp_syscall(int num, void *arg, long *retval)
 
 	callp = rump_sysent + num;
 	l = curlwp;
-	rv = sy_call(callp, l, (void *)arg, regrv);
+	rv = sy_invoke(callp, l, (void *)arg, regrv, num);
 	retval[0] = regrv[0];
 	retval[1] = regrv[1];
 
@@ -1021,7 +1021,7 @@ rump_syscall(int num, void *data, size_t dlen, register_t *retval)
 #endif
 	callp = e->e_sysent + num;
 
-	rv = sy_call(callp, curlwp, data, retval);
+	rv = sy_invoke(callp, curlwp, data, retval, num);
 	rump_unschedule();
 
 	return rv;
