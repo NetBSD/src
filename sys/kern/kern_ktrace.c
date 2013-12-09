@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.163 2013/09/16 09:25:56 martin Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.164 2013/12/09 16:45:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,14 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.163 2013/09/16 09:25:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.164 2013/12/09 16:45:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/ktrace.h>
@@ -131,7 +129,6 @@ struct ktr_desc {
 static int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int,
 			 size_t);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
-static int	ktrace_common(lwp_t *, int, int, int, file_t **);
 static int	ktrops(lwp_t *, struct proc *, int, int,
 		    struct ktr_desc *);
 static int	ktrsetchildren(lwp_t *, struct proc *, int, int,
@@ -220,23 +217,6 @@ ktd_logerr(struct proc *p, int error)
 	ktd_logerrl(ktd, error);
 }
 #endif
-
-static inline int
-ktrenter(lwp_t *l)
-{
-
-	if ((l->l_pflag & LP_KTRACTIVE) != 0)
-		return 1;
-	l->l_pflag |= LP_KTRACTIVE;
-	return 0;
-}
-
-static inline void
-ktrexit(lwp_t *l)
-{
-
-	l->l_pflag &= ~LP_KTRACTIVE;
-}
 
 static int
 ktrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -1188,75 +1168,6 @@ sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap, register_t *retva
 		    SCARG(uap, facs), SCARG(uap, pid), &fp);
 	fd_putfile(fd);
 	return error;
-}
-
-/*
- * ktrace system call
- */
-/* ARGSUSED */
-int
-sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) fname;
-		syscallarg(int) ops;
-		syscallarg(int) facs;
-		syscallarg(int) pid;
-	} */
-	struct vnode *vp = NULL;
-	file_t *fp = NULL;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	int error = 0;
-	int fd;
-
-	if (ktrenter(l))
-		return EAGAIN;
-
-	if (KTROP(SCARG(uap, ops)) != KTROP_CLEAR) {
-		/*
-		 * an operation which requires a file argument.
-		 */
-		error = pathbuf_copyin(SCARG(uap, fname), &pb);
-		if (error) {
-			ktrexit(l);
-			return (error);
-		}
-		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
-			pathbuf_destroy(pb);
-			ktrexit(l);
-			return (error);
-		}
-		vp = nd.ni_vp;
-		pathbuf_destroy(pb);
-		VOP_UNLOCK(vp);
-		if (vp->v_type != VREG) {
-			vn_close(vp, FREAD|FWRITE, l->l_cred);
-			ktrexit(l);
-			return (EACCES);
-		}
-		/*
-		 * This uses up a file descriptor slot in the
-		 * tracing process for the duration of this syscall.
-		 * This is not expected to be a problem.
-		 */
-		if ((error = fd_allocfile(&fp, &fd)) != 0) {
-			vn_close(vp, FWRITE, l->l_cred);
-			ktrexit(l);
-			return error;
-		}
-		fp->f_flag = FWRITE;
-		fp->f_type = DTYPE_VNODE;
-		fp->f_ops = &vnops;
-		fp->f_data = (void *)vp;
-		vp = NULL;
-	}
-	error = ktrace_common(l, SCARG(uap, ops), SCARG(uap, facs),
-	    SCARG(uap, pid), &fp);
-	if (KTROP(SCARG(uap, ops)) != KTROP_CLEAR)
-		fd_abort(curproc, fp, fd);
-	return (error);
 }
 
 int
