@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_lfs.c,v 1.14 2013/06/18 18:18:58 christos Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.15 2013/12/09 09:35:16 wiz Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
@@ -129,7 +129,7 @@ try_lfs(void)
 #if 0
 	fsi_lfs.ibsize = (fsi_lfs.version == 1) ? s->dlfs_bsize : s->dlfs_fsize;
 #else	/* simplify calculation to reduce code size */
-	/* use fsi.bsize (larger then needed for v2, but probably no harm) */
+	/* use fsi.bsize (larger than needed for v2, but probably no harm) */
 #endif
 
 	/*
