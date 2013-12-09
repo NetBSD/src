@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.92 2013/10/17 18:04:40 njoly Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.93 2013/12/09 16:35:12 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.92 2013/10/17 18:04:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.93 2013/12/09 16:35:12 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ ssize_t rump___sysimpl_read(int, void *, size_t);
 ssize_t
 rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_read_args callarg;
@@ -109,7 +109,7 @@ ssize_t rump___sysimpl_write(int, const void *, size_t);
 ssize_t
 rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_write_args callarg;
@@ -135,7 +135,7 @@ int rump___sysimpl_open(const char *, int, mode_t);
 int
 rump___sysimpl_open(const char * path, int flags, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_open_args callarg;
@@ -161,7 +161,7 @@ int rump___sysimpl_close(int);
 int
 rump___sysimpl_close(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_close_args callarg;
@@ -185,7 +185,7 @@ int rump___sysimpl_link(const char *, const char *);
 int
 rump___sysimpl_link(const char * path, const char * link)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_link_args callarg;
@@ -210,7 +210,7 @@ int rump___sysimpl_unlink(const char *);
 int
 rump___sysimpl_unlink(const char * path)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_unlink_args callarg;
@@ -234,7 +234,7 @@ int rump___sysimpl_chdir(const char *);
 int
 rump___sysimpl_chdir(const char * path)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_chdir_args callarg;
@@ -258,7 +258,7 @@ int rump___sysimpl_fchdir(int);
 int
 rump___sysimpl_fchdir(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchdir_args callarg;
@@ -282,7 +282,7 @@ int rump___sysimpl_mknod(const char *, mode_t, uint32_t);
 int
 rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_mknod_args callarg;
@@ -308,7 +308,7 @@ int rump___sysimpl_chmod(const char *, mode_t);
 int
 rump___sysimpl_chmod(const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_chmod_args callarg;
@@ -333,7 +333,7 @@ int rump___sysimpl_chown(const char *, uid_t, gid_t);
 int
 rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_chown_args callarg;
@@ -359,7 +359,7 @@ pid_t rump___sysimpl_getpid(void);
 pid_t
 rump___sysimpl_getpid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	pid_t rv = -1;
 
 	rsys_syscall(SYS_getpid, NULL, 0, retval);
@@ -376,7 +376,7 @@ int rump___sysimpl_unmount(const char *, int);
 int
 rump___sysimpl_unmount(const char * path, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_unmount_args callarg;
@@ -401,7 +401,7 @@ int rump___sysimpl_setuid(uid_t);
 int
 rump___sysimpl_setuid(uid_t uid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setuid_args callarg;
@@ -425,7 +425,7 @@ uid_t rump___sysimpl_getuid(void);
 uid_t
 rump___sysimpl_getuid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	uid_t rv = -1;
 
 	rsys_syscall(SYS_getuid, NULL, 0, retval);
@@ -442,7 +442,7 @@ uid_t rump___sysimpl_geteuid(void);
 uid_t
 rump___sysimpl_geteuid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	uid_t rv = -1;
 
 	rsys_syscall(SYS_geteuid, NULL, 0, retval);
@@ -459,7 +459,7 @@ ssize_t rump___sysimpl_recvmsg(int, struct msghdr *, int);
 ssize_t
 rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_recvmsg_args callarg;
@@ -485,7 +485,7 @@ ssize_t rump___sysimpl_sendmsg(int, const struct msghdr *, int);
 ssize_t
 rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_sendmsg_args callarg;
@@ -511,7 +511,7 @@ ssize_t rump___sysimpl_recvfrom(int, void *, size_t, int, struct sockaddr *, soc
 ssize_t
 rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockaddr * from, socklen_t * fromlenaddr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_recvfrom_args callarg;
@@ -540,7 +540,7 @@ int rump___sysimpl_accept(int, struct sockaddr *, socklen_t *);
 int
 rump___sysimpl_accept(int s, struct sockaddr * name, socklen_t * anamelen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_accept_args callarg;
@@ -566,7 +566,7 @@ int rump___sysimpl_getpeername(int, struct sockaddr *, socklen_t *);
 int
 rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, socklen_t * alen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getpeername_args callarg;
@@ -592,7 +592,7 @@ int rump___sysimpl_getsockname(int, struct sockaddr *, socklen_t *);
 int
 rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, socklen_t * alen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getsockname_args callarg;
@@ -618,7 +618,7 @@ int rump___sysimpl_access(const char *, int);
 int
 rump___sysimpl_access(const char * path, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_access_args callarg;
@@ -643,7 +643,7 @@ int rump___sysimpl_chflags(const char *, u_long);
 int
 rump___sysimpl_chflags(const char * path, u_long flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_chflags_args callarg;
@@ -668,7 +668,7 @@ int rump___sysimpl_fchflags(int, u_long);
 int
 rump___sysimpl_fchflags(int fd, u_long flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchflags_args callarg;
@@ -693,7 +693,7 @@ void rump___sysimpl_sync(void);
 void
 rump___sysimpl_sync(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 
 	rsys_syscall(SYS_sync, NULL, 0, retval);
 }
@@ -704,7 +704,7 @@ pid_t rump___sysimpl_getppid(void);
 pid_t
 rump___sysimpl_getppid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	pid_t rv = -1;
 
 	rsys_syscall(SYS_getppid, NULL, 0, retval);
@@ -721,7 +721,7 @@ int rump___sysimpl_dup(int);
 int
 rump___sysimpl_dup(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_dup_args callarg;
@@ -745,7 +745,7 @@ gid_t rump___sysimpl_getegid(void);
 gid_t
 rump___sysimpl_getegid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	gid_t rv = -1;
 
 	rsys_syscall(SYS_getegid, NULL, 0, retval);
@@ -762,7 +762,7 @@ gid_t rump___sysimpl_getgid(void);
 gid_t
 rump___sysimpl_getgid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	gid_t rv = -1;
 
 	rsys_syscall(SYS_getgid, NULL, 0, retval);
@@ -779,7 +779,7 @@ int rump___sysimpl___getlogin(char *, size_t);
 int
 rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___getlogin_args callarg;
@@ -804,7 +804,7 @@ int rump___sysimpl___setlogin(const char *);
 int
 rump___sysimpl___setlogin(const char * namebuf)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___setlogin_args callarg;
@@ -828,7 +828,7 @@ int rump___sysimpl_ioctl(int, u_long, void *);
 int
 rump___sysimpl_ioctl(int fd, u_long com, void * data)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_ioctl_args callarg;
@@ -854,7 +854,7 @@ int rump___sysimpl_revoke(const char *);
 int
 rump___sysimpl_revoke(const char * path)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_revoke_args callarg;
@@ -878,7 +878,7 @@ int rump___sysimpl_symlink(const char *, const char *);
 int
 rump___sysimpl_symlink(const char * path, const char * link)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_symlink_args callarg;
@@ -903,7 +903,7 @@ ssize_t rump___sysimpl_readlink(const char *, char *, size_t);
 ssize_t
 rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_readlink_args callarg;
@@ -929,7 +929,7 @@ mode_t rump___sysimpl_umask(mode_t);
 mode_t
 rump___sysimpl_umask(mode_t newmask)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	mode_t rv = -1;
 	struct sys_umask_args callarg;
@@ -953,7 +953,7 @@ int rump___sysimpl_chroot(const char *);
 int
 rump___sysimpl_chroot(const char * path)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_chroot_args callarg;
@@ -977,7 +977,7 @@ int rump___sysimpl_getgroups(int, gid_t *);
 int
 rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getgroups_args callarg;
@@ -1002,7 +1002,7 @@ int rump___sysimpl_setgroups(int, const gid_t *);
 int
 rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setgroups_args callarg;
@@ -1027,7 +1027,7 @@ int rump___sysimpl_getpgrp(void);
 int
 rump___sysimpl_getpgrp(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 
@@ -1048,7 +1048,7 @@ int rump___sysimpl_setpgid(pid_t, pid_t);
 int
 rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setpgid_args callarg;
@@ -1073,7 +1073,7 @@ int rump___sysimpl_dup2(int, int);
 int
 rump___sysimpl_dup2(int from, int to)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_dup2_args callarg;
@@ -1098,7 +1098,7 @@ int rump___sysimpl_fcntl(int, int, void *);
 int
 rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fcntl_args callarg;
@@ -1124,7 +1124,7 @@ int rump___sysimpl_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int
 rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct timeval * tv)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_select_args callarg;
@@ -1152,7 +1152,7 @@ int rump___sysimpl_fsync(int);
 int
 rump___sysimpl_fsync(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fsync_args callarg;
@@ -1176,7 +1176,7 @@ int rump___sysimpl_connect(int, const struct sockaddr *, socklen_t);
 int
 rump___sysimpl_connect(int s, const struct sockaddr * name, socklen_t namelen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_connect_args callarg;
@@ -1202,7 +1202,7 @@ int rump___sysimpl_bind(int, const struct sockaddr *, socklen_t);
 int
 rump___sysimpl_bind(int s, const struct sockaddr * name, socklen_t namelen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_bind_args callarg;
@@ -1228,7 +1228,7 @@ int rump___sysimpl_setsockopt(int, int, int, const void *, socklen_t);
 int
 rump___sysimpl_setsockopt(int s, int level, int name, const void * val, socklen_t valsize)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setsockopt_args callarg;
@@ -1256,7 +1256,7 @@ int rump___sysimpl_listen(int, int);
 int
 rump___sysimpl_listen(int s, int backlog)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_listen_args callarg;
@@ -1281,7 +1281,7 @@ int rump___sysimpl_getsockopt(int, int, int, void *, socklen_t *);
 int
 rump___sysimpl_getsockopt(int s, int level, int name, void * val, socklen_t * avalsize)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getsockopt_args callarg;
@@ -1309,7 +1309,7 @@ ssize_t rump___sysimpl_readv(int, const struct iovec *, int);
 ssize_t
 rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_readv_args callarg;
@@ -1335,7 +1335,7 @@ ssize_t rump___sysimpl_writev(int, const struct iovec *, int);
 ssize_t
 rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_writev_args callarg;
@@ -1361,7 +1361,7 @@ int rump___sysimpl_fchown(int, uid_t, gid_t);
 int
 rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchown_args callarg;
@@ -1387,7 +1387,7 @@ int rump___sysimpl_fchmod(int, mode_t);
 int
 rump___sysimpl_fchmod(int fd, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchmod_args callarg;
@@ -1412,7 +1412,7 @@ int rump___sysimpl_setreuid(uid_t, uid_t);
 int
 rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setreuid_args callarg;
@@ -1437,7 +1437,7 @@ int rump___sysimpl_setregid(gid_t, gid_t);
 int
 rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setregid_args callarg;
@@ -1462,7 +1462,7 @@ int rump___sysimpl_rename(const char *, const char *);
 int
 rump___sysimpl_rename(const char * from, const char * to)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_rename_args callarg;
@@ -1487,7 +1487,7 @@ int rump___sysimpl_flock(int, int);
 int
 rump___sysimpl_flock(int fd, int how)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_flock_args callarg;
@@ -1512,7 +1512,7 @@ int rump___sysimpl_mkfifo(const char *, mode_t);
 int
 rump___sysimpl_mkfifo(const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_mkfifo_args callarg;
@@ -1537,7 +1537,7 @@ ssize_t rump___sysimpl_sendto(int, const void *, size_t, int, const struct socka
 ssize_t
 rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const struct sockaddr * to, socklen_t tolen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_sendto_args callarg;
@@ -1566,7 +1566,7 @@ int rump___sysimpl_shutdown(int, int);
 int
 rump___sysimpl_shutdown(int s, int how)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_shutdown_args callarg;
@@ -1591,7 +1591,7 @@ int rump___sysimpl_socketpair(int, int, int, int *);
 int
 rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_socketpair_args callarg;
@@ -1618,7 +1618,7 @@ int rump___sysimpl_mkdir(const char *, mode_t);
 int
 rump___sysimpl_mkdir(const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_mkdir_args callarg;
@@ -1643,7 +1643,7 @@ int rump___sysimpl_rmdir(const char *);
 int
 rump___sysimpl_rmdir(const char * path)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_rmdir_args callarg;
@@ -1667,7 +1667,7 @@ int rump___sysimpl_utimes(const char *, const struct timeval *);
 int
 rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_utimes_args callarg;
@@ -1692,7 +1692,7 @@ int rump___sysimpl_setsid(void);
 int
 rump___sysimpl_setsid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 
@@ -1713,7 +1713,7 @@ int rump___sysimpl_nfssvc(int, void *);
 int
 rump___sysimpl_nfssvc(int flag, void * argp)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_nfssvc_args callarg;
@@ -1738,7 +1738,7 @@ ssize_t rump___sysimpl_pread(int, void *, size_t, off_t);
 ssize_t
 rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_pread_args callarg;
@@ -1766,7 +1766,7 @@ ssize_t rump___sysimpl_pwrite(int, const void *, size_t, off_t);
 ssize_t
 rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_pwrite_args callarg;
@@ -1794,7 +1794,7 @@ int rump___sysimpl_setgid(gid_t);
 int
 rump___sysimpl_setgid(gid_t gid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setgid_args callarg;
@@ -1818,7 +1818,7 @@ int rump___sysimpl_setegid(gid_t);
 int
 rump___sysimpl_setegid(gid_t egid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setegid_args callarg;
@@ -1842,7 +1842,7 @@ int rump___sysimpl_seteuid(uid_t);
 int
 rump___sysimpl_seteuid(uid_t euid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_seteuid_args callarg;
@@ -1866,7 +1866,7 @@ long rump___sysimpl_pathconf(const char *, int);
 long
 rump___sysimpl_pathconf(const char * path, int name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	long rv = -1;
 	struct sys_pathconf_args callarg;
@@ -1891,7 +1891,7 @@ long rump___sysimpl_fpathconf(int, int);
 long
 rump___sysimpl_fpathconf(int fd, int name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	long rv = -1;
 	struct sys_fpathconf_args callarg;
@@ -1916,7 +1916,7 @@ int rump___sysimpl_getrlimit(int, struct rlimit *);
 int
 rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getrlimit_args callarg;
@@ -1941,7 +1941,7 @@ int rump___sysimpl_setrlimit(int, const struct rlimit *);
 int
 rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setrlimit_args callarg;
@@ -1966,7 +1966,7 @@ off_t rump___sysimpl_lseek(int, off_t, int);
 off_t
 rump___sysimpl_lseek(int fd, off_t offset, int whence)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	off_t rv = -1;
 	struct sys_lseek_args callarg;
@@ -1993,7 +1993,7 @@ int rump___sysimpl_truncate(const char *, off_t);
 int
 rump___sysimpl_truncate(const char * path, off_t length)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_truncate_args callarg;
@@ -2019,7 +2019,7 @@ int rump___sysimpl_ftruncate(int, off_t);
 int
 rump___sysimpl_ftruncate(int fd, off_t length)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_ftruncate_args callarg;
@@ -2045,7 +2045,7 @@ int rump___sysimpl___sysctl(const int *, u_int, void *, size_t *, const void *, 
 int
 rump___sysimpl___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp, const void * new, size_t newlen)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___sysctl_args callarg;
@@ -2074,7 +2074,7 @@ int rump___sysimpl_futimes(int, const struct timeval *);
 int
 rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_futimes_args callarg;
@@ -2099,7 +2099,7 @@ pid_t rump___sysimpl_getpgid(pid_t);
 pid_t
 rump___sysimpl_getpgid(pid_t pid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	pid_t rv = -1;
 	struct sys_getpgid_args callarg;
@@ -2123,7 +2123,7 @@ int rump___sysimpl_reboot(int, char *);
 int
 rump___sysimpl_reboot(int opt, char * bootstr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_reboot_args callarg;
@@ -2148,7 +2148,7 @@ int rump___sysimpl_poll(struct pollfd *, u_int, int);
 int
 rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_poll_args callarg;
@@ -2174,7 +2174,7 @@ int rump___sysimpl_fdatasync(int);
 int
 rump___sysimpl_fdatasync(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fdatasync_args callarg;
@@ -2198,7 +2198,7 @@ int rump___sysimpl_modctl(int, void *);
 int
 rump___sysimpl_modctl(int cmd, void * arg)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_modctl_args callarg;
@@ -2223,7 +2223,7 @@ int rump___sysimpl__ksem_init(unsigned int, intptr_t *);
 int
 rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_init_args callarg;
@@ -2248,7 +2248,7 @@ int rump___sysimpl__ksem_open(const char *, int, mode_t, unsigned int, intptr_t 
 int
 rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned int value, intptr_t * idp)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_open_args callarg;
@@ -2276,7 +2276,7 @@ int rump___sysimpl__ksem_unlink(const char *);
 int
 rump___sysimpl__ksem_unlink(const char * name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_unlink_args callarg;
@@ -2300,7 +2300,7 @@ int rump___sysimpl__ksem_close(intptr_t);
 int
 rump___sysimpl__ksem_close(intptr_t id)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_close_args callarg;
@@ -2324,7 +2324,7 @@ int rump___sysimpl__ksem_post(intptr_t);
 int
 rump___sysimpl__ksem_post(intptr_t id)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_post_args callarg;
@@ -2348,7 +2348,7 @@ int rump___sysimpl__ksem_wait(intptr_t);
 int
 rump___sysimpl__ksem_wait(intptr_t id)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_wait_args callarg;
@@ -2372,7 +2372,7 @@ int rump___sysimpl__ksem_trywait(intptr_t);
 int
 rump___sysimpl__ksem_trywait(intptr_t id)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_trywait_args callarg;
@@ -2396,7 +2396,7 @@ int rump___sysimpl__ksem_getvalue(intptr_t, unsigned int *);
 int
 rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_getvalue_args callarg;
@@ -2421,7 +2421,7 @@ int rump___sysimpl__ksem_destroy(intptr_t);
 int
 rump___sysimpl__ksem_destroy(intptr_t id)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_destroy_args callarg;
@@ -2445,7 +2445,7 @@ int rump___sysimpl__ksem_timedwait(intptr_t, const struct timespec *);
 int
 rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys__ksem_timedwait_args callarg;
@@ -2470,7 +2470,7 @@ int rump___sysimpl_lchmod(const char *, mode_t);
 int
 rump___sysimpl_lchmod(const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lchmod_args callarg;
@@ -2495,7 +2495,7 @@ int rump___sysimpl_lchown(const char *, uid_t, gid_t);
 int
 rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lchown_args callarg;
@@ -2521,7 +2521,7 @@ int rump___sysimpl_lutimes(const char *, const struct timeval *);
 int
 rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_lutimes_args callarg;
@@ -2546,7 +2546,7 @@ pid_t rump___sysimpl_getsid(pid_t);
 pid_t
 rump___sysimpl_getsid(pid_t pid)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	pid_t rv = -1;
 	struct sys_getsid_args callarg;
@@ -2570,7 +2570,7 @@ ssize_t rump___sysimpl_preadv(int, const struct iovec *, int, off_t);
 ssize_t
 rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_preadv_args callarg;
@@ -2598,7 +2598,7 @@ ssize_t rump___sysimpl_pwritev(int, const struct iovec *, int, off_t);
 ssize_t
 rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offset)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_pwritev_args callarg;
@@ -2626,7 +2626,7 @@ int rump___sysimpl___getcwd(char *, size_t);
 int
 rump___sysimpl___getcwd(char * bufp, size_t length)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___getcwd_args callarg;
@@ -2651,7 +2651,7 @@ int rump___sysimpl_fchroot(int);
 int
 rump___sysimpl_fchroot(int fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchroot_args callarg;
@@ -2675,7 +2675,7 @@ int rump___sysimpl_lchflags(const char *, u_long);
 int
 rump___sysimpl_lchflags(const char * path, u_long flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lchflags_args callarg;
@@ -2700,7 +2700,7 @@ int rump___sysimpl_issetugid(void);
 int
 rump___sysimpl_issetugid(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int rv = -1;
 
 	rsys_syscall(SYS_issetugid, NULL, 0, retval);
@@ -2717,7 +2717,7 @@ int rump___sysimpl_kqueue(void);
 int
 rump___sysimpl_kqueue(void )
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 
@@ -2738,7 +2738,7 @@ int rump___sysimpl_kevent(int, const struct kevent *, size_t, struct kevent *, s
 int
 rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_kevent_args callarg;
@@ -2767,7 +2767,7 @@ int rump___sysimpl_fsync_range(int, int, off_t, off_t);
 int
 rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fsync_range_args callarg;
@@ -2794,7 +2794,7 @@ int rump___sysimpl_getvfsstat(struct statvfs *, size_t, int);
 int
 rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getvfsstat_args callarg;
@@ -2820,7 +2820,7 @@ int rump___sysimpl_statvfs1(const char *, struct statvfs *, int);
 int
 rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_statvfs1_args callarg;
@@ -2846,7 +2846,7 @@ int rump___sysimpl_fstatvfs1(int, struct statvfs *, int);
 int
 rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fstatvfs1_args callarg;
@@ -2872,7 +2872,7 @@ int rump___sysimpl_extattrctl(const char *, int, const char *, int, const char *
 int
 rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int attrnamespace, const char * attrname)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattrctl_args callarg;
@@ -2900,7 +2900,7 @@ int rump___sysimpl_extattr_set_file(const char *, int, const char *, const void 
 int
 rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char * attrname, const void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_set_file_args callarg;
@@ -2928,7 +2928,7 @@ ssize_t rump___sysimpl_extattr_get_file(const char *, int, const char *, void *,
 ssize_t
 rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char * attrname, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_get_file_args callarg;
@@ -2956,7 +2956,7 @@ int rump___sysimpl_extattr_delete_file(const char *, int, const char *);
 int
 rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const char * attrname)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_delete_file_args callarg;
@@ -2982,7 +2982,7 @@ int rump___sysimpl_extattr_set_fd(int, int, const char *, const void *, size_t);
 int
 rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, const void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_set_fd_args callarg;
@@ -3010,7 +3010,7 @@ ssize_t rump___sysimpl_extattr_get_fd(int, int, const char *, void *, size_t);
 ssize_t
 rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_get_fd_args callarg;
@@ -3038,7 +3038,7 @@ int rump___sysimpl_extattr_delete_fd(int, int, const char *);
 int
 rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrname)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_delete_fd_args callarg;
@@ -3064,7 +3064,7 @@ int rump___sysimpl_extattr_set_link(const char *, int, const char *, const void 
 int
 rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char * attrname, const void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_set_link_args callarg;
@@ -3092,7 +3092,7 @@ ssize_t rump___sysimpl_extattr_get_link(const char *, int, const char *, void *,
 ssize_t
 rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char * attrname, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_get_link_args callarg;
@@ -3120,7 +3120,7 @@ int rump___sysimpl_extattr_delete_link(const char *, int, const char *);
 int
 rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const char * attrname)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_extattr_delete_link_args callarg;
@@ -3146,7 +3146,7 @@ ssize_t rump___sysimpl_extattr_list_fd(int, int, void *, size_t);
 ssize_t
 rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_list_fd_args callarg;
@@ -3173,7 +3173,7 @@ ssize_t rump___sysimpl_extattr_list_file(const char *, int, void *, size_t);
 ssize_t
 rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_list_file_args callarg;
@@ -3200,7 +3200,7 @@ ssize_t rump___sysimpl_extattr_list_link(const char *, int, void *, size_t);
 ssize_t
 rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * data, size_t nbytes)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	ssize_t rv = -1;
 	struct sys_extattr_list_link_args callarg;
@@ -3227,7 +3227,7 @@ int rump___sysimpl_pselect(int, fd_set *, fd_set *, fd_set *, const struct times
 int
 rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const struct timespec * ts, const sigset_t * mask)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_pselect_args callarg;
@@ -3256,7 +3256,7 @@ int rump___sysimpl_pollts(struct pollfd *, u_int, const struct timespec *, const
 int
 rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * ts, const sigset_t * mask)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys_pollts_args callarg;
@@ -3283,7 +3283,7 @@ int rump___sysimpl_setxattr(const char *, const char *, const void *, size_t, in
 int
 rump___sysimpl_setxattr(const char * path, const char * name, const void * value, size_t size, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_setxattr_args callarg;
@@ -3311,7 +3311,7 @@ int rump___sysimpl_lsetxattr(const char *, const char *, const void *, size_t, i
 int
 rump___sysimpl_lsetxattr(const char * path, const char * name, const void * value, size_t size, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lsetxattr_args callarg;
@@ -3339,7 +3339,7 @@ int rump___sysimpl_fsetxattr(int, const char *, const void *, size_t, int);
 int
 rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t size, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fsetxattr_args callarg;
@@ -3367,7 +3367,7 @@ int rump___sysimpl_getxattr(const char *, const char *, void *, size_t);
 int
 rump___sysimpl_getxattr(const char * path, const char * name, void * value, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_getxattr_args callarg;
@@ -3394,7 +3394,7 @@ int rump___sysimpl_lgetxattr(const char *, const char *, void *, size_t);
 int
 rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lgetxattr_args callarg;
@@ -3421,7 +3421,7 @@ int rump___sysimpl_fgetxattr(int, const char *, void *, size_t);
 int
 rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fgetxattr_args callarg;
@@ -3448,7 +3448,7 @@ int rump___sysimpl_listxattr(const char *, char *, size_t);
 int
 rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_listxattr_args callarg;
@@ -3474,7 +3474,7 @@ int rump___sysimpl_llistxattr(const char *, char *, size_t);
 int
 rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_llistxattr_args callarg;
@@ -3500,7 +3500,7 @@ int rump___sysimpl_flistxattr(int, char *, size_t);
 int
 rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_flistxattr_args callarg;
@@ -3526,7 +3526,7 @@ int rump___sysimpl_removexattr(const char *, const char *);
 int
 rump___sysimpl_removexattr(const char * path, const char * name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_removexattr_args callarg;
@@ -3551,7 +3551,7 @@ int rump___sysimpl_lremovexattr(const char *, const char *);
 int
 rump___sysimpl_lremovexattr(const char * path, const char * name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_lremovexattr_args callarg;
@@ -3576,7 +3576,7 @@ int rump___sysimpl_fremovexattr(int, const char *);
 int
 rump___sysimpl_fremovexattr(int fd, const char * name)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fremovexattr_args callarg;
@@ -3601,7 +3601,7 @@ int rump___sysimpl_stat30(const char *, struct stat *);
 int
 rump___sysimpl_stat30(const char * path, struct stat * ub)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys___stat30_args callarg;
@@ -3626,7 +3626,7 @@ int rump___sysimpl_fstat30(int, struct stat *);
 int
 rump___sysimpl_fstat30(int fd, struct stat * sb)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys___fstat30_args callarg;
@@ -3651,7 +3651,7 @@ int rump___sysimpl_lstat30(const char *, struct stat *);
 int
 rump___sysimpl_lstat30(const char * path, struct stat * ub)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys___lstat30_args callarg;
@@ -3676,7 +3676,7 @@ int rump___sysimpl_getdents30(int, char *, size_t);
 int
 rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___getdents30_args callarg;
@@ -3702,7 +3702,7 @@ int rump___sysimpl_socket30(int, int, int);
 int
 rump___sysimpl_socket30(int domain, int type, int protocol)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___socket30_args callarg;
@@ -3728,7 +3728,7 @@ int rump___sysimpl_getfh30(const char *, void *, size_t *);
 int
 rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___getfh30_args callarg;
@@ -3754,7 +3754,7 @@ int rump___sysimpl_fhopen40(const void *, size_t, int);
 int
 rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___fhopen40_args callarg;
@@ -3780,7 +3780,7 @@ int rump___sysimpl_fhstatvfs140(const void *, size_t, struct statvfs *, int);
 int
 rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * buf, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___fhstatvfs140_args callarg;
@@ -3807,7 +3807,7 @@ int rump___sysimpl_fhstat40(const void *, size_t, struct stat *);
 int
 rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct compat_50_sys___fhstat40_args callarg;
@@ -3833,7 +3833,7 @@ int rump___sysimpl_mount50(const char *, const char *, int, void *, size_t);
 int
 rump___sysimpl_mount50(const char * type, const char * path, int flags, void * data, size_t data_len)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___mount50_args callarg;
@@ -3861,7 +3861,7 @@ int rump___sysimpl_posix_fadvise50(int, off_t, off_t, int);
 int
 rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int rv = -1;
 	struct sys___posix_fadvise50_args callarg;
 
@@ -3885,7 +3885,7 @@ int rump___sysimpl_select50(int, fd_set *, fd_set *, fd_set *, struct timeval *)
 int
 rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct timeval * tv)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___select50_args callarg;
@@ -3913,7 +3913,7 @@ int rump___sysimpl_utimes50(const char *, const struct timeval *);
 int
 rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___utimes50_args callarg;
@@ -3938,7 +3938,7 @@ int rump___sysimpl_futimes50(int, const struct timeval *);
 int
 rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___futimes50_args callarg;
@@ -3963,7 +3963,7 @@ int rump___sysimpl_lutimes50(const char *, const struct timeval *);
 int
 rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___lutimes50_args callarg;
@@ -3988,7 +3988,7 @@ int rump___sysimpl_kevent50(int, const struct kevent *, size_t, struct kevent *,
 int
 rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___kevent50_args callarg;
@@ -4017,7 +4017,7 @@ int rump___sysimpl_pselect50(int, fd_set *, fd_set *, fd_set *, const struct tim
 int
 rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const struct timespec * ts, const sigset_t * mask)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___pselect50_args callarg;
@@ -4046,7 +4046,7 @@ int rump___sysimpl_pollts50(struct pollfd *, u_int, const struct timespec *, con
 int
 rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec * ts, const sigset_t * mask)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___pollts50_args callarg;
@@ -4073,7 +4073,7 @@ int rump___sysimpl_stat50(const char *, struct stat *);
 int
 rump___sysimpl_stat50(const char * path, struct stat * ub)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___stat50_args callarg;
@@ -4098,7 +4098,7 @@ int rump___sysimpl_fstat50(int, struct stat *);
 int
 rump___sysimpl_fstat50(int fd, struct stat * sb)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___fstat50_args callarg;
@@ -4123,7 +4123,7 @@ int rump___sysimpl_lstat50(const char *, struct stat *);
 int
 rump___sysimpl_lstat50(const char * path, struct stat * ub)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___lstat50_args callarg;
@@ -4148,7 +4148,7 @@ int rump___sysimpl_mknod50(const char *, mode_t, dev_t);
 int
 rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___mknod50_args callarg;
@@ -4174,7 +4174,7 @@ int rump___sysimpl_fhstat50(const void *, size_t, struct stat *);
 int
 rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___fhstat50_args callarg;
@@ -4200,7 +4200,7 @@ int rump___sysimpl_pipe2(int *, int);
 int
 rump___sysimpl_pipe2(int * fildes, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_pipe2_args callarg;
@@ -4225,7 +4225,7 @@ int rump___sysimpl_dup3(int, int, int);
 int
 rump___sysimpl_dup3(int from, int to, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_dup3_args callarg;
@@ -4251,7 +4251,7 @@ int rump___sysimpl_kqueue1(int);
 int
 rump___sysimpl_kqueue1(int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_kqueue1_args callarg;
@@ -4275,7 +4275,7 @@ int rump___sysimpl_paccept(int, struct sockaddr *, socklen_t *, const sigset_t *
 int
 rump___sysimpl_paccept(int s, struct sockaddr * name, socklen_t * anamelen, const sigset_t * mask, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_paccept_args callarg;
@@ -4303,7 +4303,7 @@ int rump___sysimpl_linkat(int, const char *, int, const char *, int);
 int
 rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_linkat_args callarg;
@@ -4331,7 +4331,7 @@ int rump___sysimpl_renameat(int, const char *, int, const char *);
 int
 rump___sysimpl_renameat(int fromfd, const char * from, int tofd, const char * to)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_renameat_args callarg;
@@ -4358,7 +4358,7 @@ int rump___sysimpl_mkfifoat(int, const char *, mode_t);
 int
 rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_mkfifoat_args callarg;
@@ -4384,7 +4384,7 @@ int rump___sysimpl_mknodat(int, const char *, mode_t, dev_t);
 int
 rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, dev_t dev)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_mknodat_args callarg;
@@ -4412,7 +4412,7 @@ int rump___sysimpl_mkdirat(int, const char *, mode_t);
 int
 rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_mkdirat_args callarg;
@@ -4438,7 +4438,7 @@ int rump___sysimpl_faccessat(int, const char *, int, int);
 int
 rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_faccessat_args callarg;
@@ -4465,7 +4465,7 @@ int rump___sysimpl_fchmodat(int, const char *, mode_t, int);
 int
 rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchmodat_args callarg;
@@ -4492,7 +4492,7 @@ int rump___sysimpl_fchownat(int, const char *, uid_t, gid_t, int);
 int
 rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fchownat_args callarg;
@@ -4520,7 +4520,7 @@ int rump___sysimpl_fstatat(int, const char *, struct stat *, int);
 int
 rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_fstatat_args callarg;
@@ -4547,7 +4547,7 @@ int rump___sysimpl_utimensat(int, const char *, const struct timespec *, int);
 int
 rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_utimensat_args callarg;
@@ -4574,7 +4574,7 @@ int rump___sysimpl_openat(int, const char *, int, mode_t);
 int
 rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_openat_args callarg;
@@ -4601,7 +4601,7 @@ int rump___sysimpl_readlinkat(int, const char *, char *, size_t);
 int
 rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_readlinkat_args callarg;
@@ -4628,7 +4628,7 @@ int rump___sysimpl_symlinkat(const char *, int, const char *);
 int
 rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_symlinkat_args callarg;
@@ -4654,7 +4654,7 @@ int rump___sysimpl_unlinkat(int, const char *, int);
 int
 rump___sysimpl_unlinkat(int fd, const char * path, int flag)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_unlinkat_args callarg;
@@ -4680,7 +4680,7 @@ int rump___sysimpl_futimens(int, const struct timespec *);
 int
 rump___sysimpl_futimens(int fd, const struct timespec * tptr)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_futimens_args callarg;
@@ -4705,7 +4705,7 @@ int rump___sysimpl___quotactl(const char *, struct quotactl_args *);
 int
 rump___sysimpl___quotactl(const char * path, struct quotactl_args * args)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys___quotactl_args callarg;
@@ -4730,7 +4730,7 @@ int rump___sysimpl_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int, s
 int
 rump___sysimpl_recvmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigned int flags, struct timespec * timeout)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_recvmmsg_args callarg;
@@ -4758,7 +4758,7 @@ int rump___sysimpl_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
 int
 rump___sysimpl_sendmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigned int flags)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 	int rv = -1;
 	struct sys_sendmmsg_args callarg;
@@ -4785,7 +4785,7 @@ int rump_sys_pipe(int *);
 int
 rump_sys_pipe(int *fd)
 {
-	register_t retval[2] = {0, 0};
+	register_t retval[2];
 	int error = 0;
 
 	error = rsys_syscall(SYS_pipe, NULL, 0, retval);
