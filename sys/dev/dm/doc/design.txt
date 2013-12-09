@@ -377,7 +377,7 @@
         char name[0];
     };
 
-    Because I need more then on dm_target_version I will need one major proplib 
+    Because I need more than one dm_target_version I will need one major proplib 
     dictionary to store children dictionaries with target data.
 
     <dict>
