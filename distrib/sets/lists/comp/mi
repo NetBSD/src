@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1868 2013/12/03 16:13:49 njoly Exp $
+#	$NetBSD: mi,v 1.1869 2013/12/10 01:09:31 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4043,6 +4043,7 @@
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint,rump
+./usr/libdata/lint/llib-lrumpnet_netbt.ln	comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lsaslc.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
