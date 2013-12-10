@@ -4849,7 +4849,7 @@ macro_build_jrpatch (expressionS *ep, unsigned int sreg)
   }
   if (mips_relax.sequence != 1) {
     mips_macro_warning.sizes[1] -= 2 * 4;
-    mips_macro_warning.insns[0] -= 2;
+    mips_macro_warning.insns[1] -= 2;
   }
 }
 
