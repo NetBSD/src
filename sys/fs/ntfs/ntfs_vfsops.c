@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.90 2013/11/23 13:35:36 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.91 2013/12/10 18:20:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.90 2013/11/23 13:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.91 2013/12/10 18:20:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,8 @@ ntfs_unmount(
 	if (ntmp->ntm_devvp->v_type != VBAD)
 		spec_node_setmountedfs(ntmp->ntm_devvp, NULL);
 
-	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
+	error = vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
+	KASSERT(error == 0);
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
