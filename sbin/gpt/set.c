@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.1 2013/12/09 08:03:17 jnemeth Exp $");
+__RCSID("$NetBSD: set.c,v 1.2 2013/12/10 01:05:00 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -131,7 +131,7 @@ set(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
-	printf("Partition attributes updated\n");
+	printf("Partition %d attributes updated\n", entry);
 }
 
 int
