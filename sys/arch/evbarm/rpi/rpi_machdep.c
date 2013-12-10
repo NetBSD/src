@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.38 2013/10/15 09:07:48 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.39 2013/12/10 16:30:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.38 2013/10/15 09:07:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.39 2013/12/10 16:30:36 joerg Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -168,7 +168,7 @@ static struct plcom_instance rpi_pi = {
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fwrev		vbt_fwrev;
 	struct vcprop_tag_boardmodel	vbt_boardmodel;
@@ -180,7 +180,7 @@ static struct {
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag end;
-} vb __packed __aligned(16) =
+} vb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
@@ -257,11 +257,11 @@ static struct {
 };
 
 #if NGENFB > 0
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid __packed __aligned(16) =
+} vb_edid =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
@@ -280,7 +280,7 @@ static struct {
 	}
 };
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
@@ -291,7 +291,7 @@ static struct {
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb __packed __aligned(16) =
+} vb_setfb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
