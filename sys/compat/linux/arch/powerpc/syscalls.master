@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57 2013/12/08 15:55:10 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.58 2013/12/10 14:54:36 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -483,19 +483,31 @@
 283	UNIMPL		splice
 284	UNIMPL		tee
 285	UNIMPL		vmsplice
-286	UNIMPL		openat
-287	UNIMPL		mkdirat
-288	UNIMPL		mknodat
-289	UNIMPL		fchownat
+286	STD		{ int|linux_sys||openat(int fd, const char *path, \
+			    int flags, ... linux_umode_t mode); }
+287	NOARGS		{ int|sys||mkdirat(int fd, const char *path, \
+			    linux_umode_t mode); }
+288	STD		{ int|linux_sys||mknodat(int fd, const char *path, \
+			    linux_umode_t mode, unsigned dev); }
+289	STD		{ int|linux_sys||fchownat(int fd, const char *path, \
+			    uid_t owner, gid_t group, int flag); }
 290	UNIMPL		futimesat
-291	UNIMPL		fstatat64
-292	UNIMPL		unlinkat
-293	UNIMPL		renameat
-294	UNIMPL		linkat
-295	UNIMPL		symlinkat
-296	UNIMPL		readlinkat
-297	UNIMPL		fchmodat
-298	UNIMPL		faccessat
+291	STD		{ int|linux_sys||fstatat64(int fd, const char *path, \
+			    struct linux_stat64 *sp, int flag); }
+292	STD		{ int|linux_sys||unlinkat(int fd, const char *path, \
+			    int flag); }
+293	NOARGS		{ int|sys||renameat(int fromfd, const char *from, \
+			    int tofd, const char *to); }
+294	STD		{ int|linux_sys||linkat(int fd1, const char *name1, \
+			    int fd2, const char *name2, int flags); }
+295	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
+			    const char *path2); }
+296	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+			    char *buf, size_t bufsize); }
+297	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
+			    linux_umode_t mode); }
+298	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
+			    int amode); }
 299	STD		{ int|linux_sys||set_robust_list( \
 			    struct linux_robust_list_head *head, size_t len); }
 300	STD		{ int|linux_sys||get_robust_list(int pid, \
