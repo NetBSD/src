@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.5 2013/12/05 21:17:23 joerg Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.6 2013/12/10 20:58:45 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.5 2013/12/05 21:17:23 joerg Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.6 2013/12/10 20:58:45 christos Exp $");
 
 #include "namespace.h"
 
@@ -119,6 +119,7 @@ cdbr_open(const char *path, int flags)
 	}
 
 	if (sb.st_size >= SSIZE_MAX) {
+		close(fd);
 		errno = EINVAL;
 		return NULL;
 	}
