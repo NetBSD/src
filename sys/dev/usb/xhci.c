@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.10 2013/11/17 16:11:35 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.11 2013/12/10 19:39:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.10 2013/11/17 16:11:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.11 2013/12/10 19:39:42 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1621,6 +1621,15 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	ri = xr->xr_ep;
 	cs = xr->xr_cs;
 
+	/*
+	 * Although the xhci hardware can do scatter/gather dma from
+	 * arbitrary sized buffers, there is a non-obvious restriction
+	 * that a LINK trb is only allowed at the end of a burst of
+	 * transfers - which might be 16kB.
+	 * Arbitrary aligned LINK trb definitely fail on Ivy bridge.
+	 * The simple solution is not to allow a LINK trb in the middle
+	 * of anything - as here.
+	 */
 	if (ri + ntrbs >= (xr->xr_ntrb - 1)) {
 		parameter = xhci_ring_trbp(xr, 0);
 		status = 0;
@@ -1639,6 +1648,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 
 	ri++;
 
+	/* Write any subsequent TRB first */
 	for (i = 1; i < ntrbs; i++) {
 		parameter = trbs[i].trb_0;
 		status = trbs[i].trb_2;
@@ -1658,6 +1668,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 		ri++;
 	}
 
+	/* Write the first TRB last */
 	i = 0;
 	{
 		parameter = trbs[i].trb_0;
@@ -2659,6 +2670,17 @@ xhci_device_bulk_start(usbd_xfer_handle xfer)
 	KASSERT((xfer->rqflags & URQ_REQUEST) == 0);
 
 	parameter = DMAADDR(dma, 0);
+	/*
+	 * XXX: The physical buffer must not cross a 64k boundary.
+	 * If the user supplied buffer crosses such a boundary then 2
+	 * (or more) TRB should be used.
+	 * If multiple TRB are used the td_size field must be set correctly.
+	 * For v1.0 devices (like ivy bridge) this is the number of usb data
+	 * blocks needed to complete the transfer.
+	 * Setting it to 1 in the last TRB causes an extra zero-length
+	 * data block be sent.
+	 * The earlier documentation differs, I don't know how it behaves.
+	 */
 	KASSERT(len <= 0x10000);
 	status = XHCI_TRB_2_IRQ_SET(0) |
 	    XHCI_TRB_2_TDSZ_SET(1) |
