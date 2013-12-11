@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.37 2013/12/09 20:25:59 bouyer Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.38 2013/12/11 16:01:26 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -635,6 +635,13 @@ usr.bin/gzip/Makefile				1.17, 1.18
 usr.bin/gzip/zmore				1.4, 1.5
 usr.bin/gzip/zmore.1				1.4
  
-	 Added zless(1) - comes in the lastest version of zmore(1) from OpenBSD
+	 Added zless(1) - comes in the latest version of zmore(1) from OpenBSD
 	 [pettai, ticket #1889]
+
+sys/arch/xen/xen/evtchn.c			1.70
+
+	Remove the "evtchn_do_event: handler %p didn't lower ipl %d %d\n"
+	printf as analysis shows it actually isn't a bug in the handler,
+	but related to spin mutexes. Fixes port-xen/46313
+	[bouyer, ticket #1890]
 
