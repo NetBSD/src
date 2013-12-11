@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.74 2013/11/20 13:52:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.75 2013/12/11 02:14:08 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.74 2013/11/20 13:52:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.75 2013/12/11 02:14:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.74 2013/11/20 13:52:30 jruoho Exp 
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
 #include <x86/machdep.h>
+#include <x86/x86/tsc.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_cpu.h>
@@ -162,6 +163,16 @@ acpicpu_md_flags(void)
 	 */
 	val |= ACPICPU_FLAG_C_APIC | ACPICPU_FLAG_C_TSC;
 
+	/*
+	 * Detect whether TSC is invariant. If it is not, we keep the flag to
+	 * note that TSC will not run at constant rate. Depending on the CPU,
+	 * this may affect P- and T-state changes, but especially relevant
+	 * are C-states; with variant TSC, states larger than C1 may
+	 * completely stop the counter.
+	 */
+	if (tsc_is_invariant())
+		val &= ~ACPICPU_FLAG_C_TSC;
+
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
@@ -212,24 +223,6 @@ acpicpu_md_flags(void)
 
 			if ((regs[0] & CPUID_DSPM_ARAT) != 0)
 				val &= ~ACPICPU_FLAG_C_APIC;
-		}
-
-		/*
-		 * Detect whether TSC is invariant. If it is not,
-		 * we keep the flag to note that TSC will not run
-		 * at constant rate. Depending on the CPU, this may
-		 * affect P- and T-state changes, but especially
-		 * relevant are C-states; with variant TSC, states
-		 * larger than C1 may completely stop the counter.
-		 */
-		x86_cpuid(0x80000000, regs);
-
-		if (regs[0] >= 0x80000007) {
-
-			x86_cpuid(0x80000007, regs);
-
-			if ((regs[3] & __BIT(8)) != 0)
-				val &= ~ACPICPU_FLAG_C_TSC;
 		}
 
 		break;
@@ -284,13 +277,10 @@ acpicpu_md_flags(void)
 		case 0x15: /* AMD Bulldozer */
 
 			/*
-			 * Like with Intel, detect invariant TSC,
-			 * MSR-based P-states, and AMD's "turbo"
-			 * (Core Performance Boost), respectively.
+			 * Like with Intel, detect MSR-based P-states,
+			 * and AMD's "turbo" (Core Performance Boost),
+			 * respectively.
 			 */
-			if ((regs[3] & CPUID_APM_TSC) != 0)
-				val &= ~ACPICPU_FLAG_C_TSC;
-
 			if ((regs[3] & CPUID_APM_HWP) != 0)
 				val |= ACPICPU_FLAG_P_FFH;
 
