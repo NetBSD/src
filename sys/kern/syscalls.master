@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.265 2013/12/09 17:13:17 pooka Exp $
+	$NetBSD: syscalls.master,v 1.266 2013/12/11 09:40:56 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -594,7 +594,7 @@
 #endif
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
 305	NOERR 	RUMP	{ int|sys||issetugid(void); }
-306	STD 		{ int|sys||utrace(const char *label, void *addr, \
+306	STD	RUMP	{ int|sys||utrace(const char *label, void *addr, \
 				size_t len); }
 307	STD 		{ int|sys||getcontext(struct __ucontext *ucp); }
 308	STD 		{ int|sys||setcontext(const struct __ucontext *ucp); }
