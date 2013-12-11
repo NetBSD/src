@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.23 2013/12/09 19:31:00 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.24 2013/12/11 23:13:48 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -107,6 +107,7 @@ fromvers ../../../sys/ktrace.h
 sed -n '/#define[ 	]*KTROP_[A-Z_]/s/KTROP_/RUMP_&/gp' <../../../sys/ktrace.h | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*KTR_[A-Z_]/s/KTR_/RUMP_&/gp' <../../../sys/ktrace.h | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*KTRFAC_[A-Z_]/{s/KTRFAC_/RUMP_&/g;s/KTR_/RUMP_&/g;p;}' <../../../sys/ktrace.h | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*KTRFACv[0-9]/{s/KTRFACv/RUMP_&/g;s/KTRFAC_/RUMP_&/g;p;}' <../../../sys/ktrace.h | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/module.h
 getstruct ../../../sys/module.h modctl_load
