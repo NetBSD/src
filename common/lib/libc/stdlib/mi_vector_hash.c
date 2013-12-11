@@ -1,4 +1,4 @@
-/*	$NetBSD: mi_vector_hash.c,v 1.4 2011/10/21 23:45:56 joerg Exp $	*/
+/*	$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,15 +43,22 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mi_vector_hash.c,v 1.4 2011/10/21 23:45:56 joerg Exp $");
-
-#include "namespace.h"
+__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2013/12/11 01:24:08 joerg Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
 #endif
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#include <sys/systm.h>
+#include <lib/libkern/libkern.h>
+#else
+#include "namespace.h"
+
 #include <stdint.h>
 #include <stdlib.h>
+#endif
 
 #define mix(a, b, c) do {		\
 	a -= b; a -= c; a ^= (c >> 13);	\
@@ -67,8 +74,10 @@ __RCSID("$NetBSD: mi_vector_hash.c,v 1.4 2011/10/21 23:45:56 joerg Exp $");
 
 #define FIXED_SEED	0x9e3779b9	/* Golden ratio, arbitrary constant */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #ifdef __weak_alias
 __weak_alias(mi_vector_hash, _mi_vector_hash)
+#endif
 #endif
 
 void
