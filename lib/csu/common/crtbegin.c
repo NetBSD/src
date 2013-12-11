@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.6 2013/11/29 23:00:48 joerg Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.7 2013/12/11 06:55:24 matt Exp $");
 
 #include "crtbegin.h"
 
@@ -39,7 +39,7 @@ __weakref_visible void Jv_RegisterClasses(const fptr_t *)
 	__weak_reference(_Jv_RegisterClasses);
 
 #if !defined(HAVE_INITFINI_ARRAY)
-__dso_hidden const fptr_t __CTOR_LIST__[] __section(".ctors") = {
+__dso_hidden const fptr_t __aligned(sizeof(void *)) __CTOR_LIST__[] __section(".ctors") = {
 	(fptr_t) -1,
 };
 __dso_hidden extern const fptr_t __CTOR_LIST_END__[];
