@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.10 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: fpu.h,v 1.11 2013/12/11 22:06:51 dsl Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -32,11 +32,6 @@ __CTASSERT(sizeof (struct fxsave64) == 512);
 
 struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
-};
-
-struct savefpu_i387 {
-	uint16_t fp_ex_sw;		/* saved status from last exception */
-	uint16_t fp_ex_tw;		/* saved tag from last exception */
 };
 
 /*

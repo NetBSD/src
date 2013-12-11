@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.43 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: fpu.c,v 1.44 2013/12/11 22:06:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.43 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.44 2013/12/11 22:06:51 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -192,8 +192,6 @@ fputrap(struct trapframe *frame)
 	 */
 	KASSERT(l == curlwp);
 	fxsave(sfp);
-	pcb->pcb_savefpu_i387.fp_ex_tw = sfp->fp_fxsave.fx_ftw;
-	pcb->pcb_savefpu_i387.fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 
 	if (frame->tf_trapno == T_XMM) {
 		mxcsr = sfp->fp_fxsave.fx_mxcsr;
