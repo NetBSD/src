@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.28 2013/12/09 19:31:36 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.29 2013/12/11 23:14:03 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -512,6 +512,9 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_KTRFAC_VER_MASK	0x0f000000	
 #define	RUMP_KTRFAC_VER_SHIFT	24	
 #define	RUMP_KTRFAC_VERSION(tf)	(((tf) & RUMP_KTRFAC_VER_MASK) >> RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv0	(0 << RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv1	(1 << RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv2	(2 << RUMP_KTRFAC_VER_SHIFT)
 
 /*	NetBSD: module.h,v 1.34 2013/10/23 18:57:40 mbalmer Exp 	*/
 struct rump_modctl_load {
