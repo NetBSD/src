@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1869 2013/12/10 01:09:31 riz Exp $
+#	$NetBSD: mi,v 1.1870 2013/12/11 01:24:08 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3118,6 +3118,7 @@
 ./usr/include/sys/callback.h			comp-c-include
 ./usr/include/sys/callout.h			comp-c-include
 ./usr/include/sys/cc_microtime.h		comp-obsolete		obsolete
+./usr/include/sys/cdbr.h			comp-c-include
 ./usr/include/sys/cdefs.h			comp-c-include
 ./usr/include/sys/cdefs_aout.h			comp-c-include
 ./usr/include/sys/cdefs_elf.h			comp-c-include

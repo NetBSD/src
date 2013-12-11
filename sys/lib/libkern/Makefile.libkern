@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.27 2013/12/02 04:39:10 lneto Exp $
+#	$NetBSD: Makefile.libkern,v 1.28 2013/12/11 01:24:08 joerg Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -97,6 +97,10 @@ SRCS+=	heapsort.c ptree.c rb.c
 
 # for crypto
 SRCS+=	explicit_memset.c consttime_memequal.c
+
+.PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
+SRCS+=	cdbr.c
+SRCS+=	mi_vector_hash.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po

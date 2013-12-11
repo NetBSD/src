@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2013/10/27 08:35:40 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.145 2013/12/11 01:24:08 joerg Exp $
 
 .include <bsd.sys.mk>
 
@@ -6,7 +6,7 @@ INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \
-	callback.h callout.h cdefs.h cdefs_aout.h \
+	callback.h callout.h cdbr.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	cpufreq.h cpuio.h ctype_bits.h ctype_inline.h \
 	device.h device_if.h \
@@ -43,6 +43,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	wait.h wapbl.h wapbl_replay.h wdog.h xattr.h
 
 INCSYMLINKS=\
+	sys/cdbr.h /usr/include/cdbr.h \
 	sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/poll.h /usr/include/poll.h \

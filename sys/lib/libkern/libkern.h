@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.109 2013/12/02 04:39:10 lneto Exp $	*/
+/*	$NetBSD: libkern.h,v 1.110 2013/12/11 01:24:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -321,6 +321,8 @@ char	*initstate(unsigned long, char *, size_t);
 char	*setstate(char *);
 #endif /* SMALL_RANDOM */
 long	 random(void);
+void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
+	    uint32_t[3]);
 void	 mtprng_init32(struct mtprng_state *, uint32_t);
 void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
 uint32_t mtprng_rawrandom(struct mtprng_state *);
