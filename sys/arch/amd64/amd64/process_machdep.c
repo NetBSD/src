@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23 2013/12/01 01:05:16 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24 2013/12/12 22:41:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2013/12/01 01:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2013/12/12 22:41:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
-	memcpy(&regs->fxstate, frame, sizeof(*regs));
+	regs->fxstate = *frame;
 	return (0);
 }
 
