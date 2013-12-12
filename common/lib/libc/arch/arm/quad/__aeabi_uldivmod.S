@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.7 2013/08/19 03:43:07 matt Exp $")
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.8 2013/12/12 18:01:14 matt Exp $")
 
 /*
  * typedef struct { unsigned long long quo, rem } ulldiv_t;
@@ -105,7 +105,7 @@ ENTRY(__aeabi_uldivmod)
 #else
 	mvn	r0, #0
 #endif
-	mvns	r1, r0
+	movs	r1, r0
 	bl	PLT_SYM(__aeabi_ldiv0)
 	pop	{r2-r4,pc}
 #endif
