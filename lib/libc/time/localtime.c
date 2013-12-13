@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.79 2013/12/13 10:34:47 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.80 2013/12/13 10:37:24 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.79 2013/12/13 10:34:47 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.80 2013/12/13 10:37:24 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,16 @@ __weak_alias(tzname,_tzname)
 #ifndef TZ_ABBR_ERR_CHAR
 #define TZ_ABBR_ERR_CHAR	'_'
 #endif /* !defined TZ_ABBR_ERR_CHAR */
+
+/* The minimum and maximum finite time values.  */
+static time_t const time_t_min =
+  (TYPE_SIGNED(time_t)
+   ? (time_t) -1 << (int)(CHAR_BIT * sizeof (time_t) - 1)
+   : 0);
+static time_t const time_t_max =
+  (TYPE_SIGNED(time_t)
+   ? - (~ 0 < 0) - ((time_t) -1 << (int)(CHAR_BIT * sizeof (time_t) - 1))
+   : -1);
 
 /*
 ** SunOS 4.1.1 headers lack O_BINARY.
