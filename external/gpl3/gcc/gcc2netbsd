@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2netbsd,v 1.2 2013/10/05 18:38:03 christos Exp $
+#	$NetBSD: gcc2netbsd,v 1.3 2013/12/13 10:01:49 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # gcc2netbsd:  convert a file source tree into a
-# format suitable for import.  Works on current dir.
+# format suitable for import.  Works on first arg dir.
 # You can run this only once if you want it to work.
 #
 # based on file 2netbsd
@@ -45,18 +45,24 @@ FILE="$1"
 cleantags "$FILE"
 
 RM="
-gcc/java
+boehm-gc
 gcc/ada
 gcc/fortran
-gcc/testsuite/ada
-gcc/testsuite/gfortran.dg
-gcc/testsuite/gfortran.fortran-torture
-libffi
-zlib
-boehm-gc
-libjava
+gcc/go
+gcc/java
+gcc/testsuite
 libada
+libatomic
+libffi
 libgfortran
+libgo
+libgomp/testsuite
+libiberty/testsuite
+libjava
+libmudflap/testsuite
+libquadmath
+libstdc++-v3/testsuite
+zlib
 "
 
 find "$FILE" -name .cvsignore -exec rm -f {} +
