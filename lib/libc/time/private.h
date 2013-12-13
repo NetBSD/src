@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.30 2013/09/20 19:06:54 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.31 2013/12/13 10:37:24 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -328,17 +328,6 @@ const char *	scheck(const char * string, const char * format);
 #ifndef TYPE_SIGNED
 #define TYPE_SIGNED(type) (/*CONSTCOND*/((type) -1) < 0)
 #endif /* !defined TYPE_SIGNED */
-
-/* The minimum and maximum finite time values.  */
-static time_t const time_t_min =
-  (TYPE_SIGNED(time_t)
-   ? (time_t) -1 << (int)(CHAR_BIT * sizeof (time_t) - 1)
-/*###336 [lint] warning semantics of 'p << p' change in ANSI C; use explicit cast [118]%%%*/
-   : 0);
-static time_t const time_t_max =
-  (TYPE_SIGNED(time_t)
-   ? - (~ 0 < 0) - ((time_t) -1 << (int)(CHAR_BIT * sizeof (time_t) - 1))
-   : -1);
 
 #ifndef INT_STRLEN_MAXIMUM
 /*
