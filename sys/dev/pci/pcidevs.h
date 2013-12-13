@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1160 2013/12/12 15:05:55 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1161 2013/12/13 07:14:13 pedro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1167 2013/12/12 15:05:07 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1168 2013/12/13 07:11:09 pedro Exp
  */
 
 /*
@@ -1564,6 +1564,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR9287	0x002e		/* AR9287 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9300	0x0030		/* AR9300 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9485	0x0032		/* AR9485 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9462	0x0034		/* AR9462 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 Wireless LAN (no eeprom) */
@@ -2554,6 +2555,7 @@
 #define	PCI_PRODUCT_INTEL_SRCU42E	0x0408		/* SCSI RAID Controller */
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_HASWELL_IGD_1	0x0412		/* Haswell Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_I347AT4	0x0438		/* I347-AT4 Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM Controller */
