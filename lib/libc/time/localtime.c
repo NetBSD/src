@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.78 2013/09/20 19:06:54 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.79 2013/12/13 10:34:47 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.78 2013/09/20 19:06:54 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.79 2013/12/13 10:34:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1108,7 +1108,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 				}
 				if (time_t_max - janfirst < yearsecs)
 					break;
-				janfirst += yearsecs;
+				janfirst += (time_t)yearsecs;
 			}
 			_DIAGASSERT(__type_fit(int, atp - sp->ats));
 			sp->timecnt = (int)(atp - sp->ats);
