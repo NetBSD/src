@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.2,v 1.1.2.2 2013/10/13 07:26:23 jdc Exp $
+# $NetBSD: CHANGES-5.2.2,v 1.1.2.3 2013/12/13 08:53:11 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -20,4 +20,11 @@ xsrc/xfree/xc/programs/Xserver/dix/dixfonts.c		1.4 via patch
 	the original structure before jumping to the cleanup code that
 	references *c.
 	[spz, ticket #966]
+
+sys/arch/xen/xen/evtchn.c			1.70
+
+	Remove the "evtchn_do_event: handler %p didn't lower ipl %d %d\n"
+	printf as analysis shows it actually isn't a bug in the handler,
+	but related to spin mutexes. Fixes port-xen/46313
+	[bouyer, ticket #1890]
 
