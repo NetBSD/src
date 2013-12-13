@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.159 2013/12/05 15:41:23 martin Exp $
+# $NetBSD: postinstall,v 1.160 2013/12/13 07:37:50 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1851,11 +1851,11 @@ do_varshm()
 	else
 		if [ "${op}" = "check" ]; then
 			failed=1
-			echo "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
 		elif [ "${op}" = "fix" ]; then
 			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
 				>> "${DEST_DIR}/etc/fstab"
-			echo "Added tmpfs with 25% ram limit as /var/shm"
+			msg "Added tmpfs with 25% ram limit as /var/shm"
 
 		fi
 	fi
