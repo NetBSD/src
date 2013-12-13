@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.38 2013/12/11 16:01:26 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.39 2013/12/13 12:23:52 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -644,4 +644,11 @@ sys/arch/xen/xen/evtchn.c			1.70
 	printf as analysis shows it actually isn't a bug in the handler,
 	but related to spin mutexes. Fixes port-xen/46313
 	[bouyer, ticket #1890]
+
+sys/kern/uipc_syscalls.c			1.163
+
+	If the unix socket is closed before accept, the mbuf returned
+	by m_get() will have an uninitialized length and contain junk
+	from a previous call. Initialize m_len to be 0 to handle this
+	case. Fixes PR/47591
 
