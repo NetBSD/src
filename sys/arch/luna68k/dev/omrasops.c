@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.14 2013/12/02 13:45:40 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.15 2013/12/14 19:27:41 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.14 2013/12/02 13:45:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.15 2013/12/14 19:27:41 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
  *	- most significant byte is stored at lower address,
  *	- most significant bit is displayed at left most on screen.
  * Implementation relies on;
- *	- every memory references is done in aligned 32bit chunk,
+ *	- first column is at 32bit aligned address,
  *	- font glyphs are stored in 32bit padded.
  */
 
@@ -70,6 +70,34 @@ static int	om_allocattr(void *, int, int, int, long *);
 
 #define	W(p) (*(uint32_t *)(p))
 #define	R(p) (*(uint32_t *)((uint8_t *)(p) + 0x40000))
+
+/*
+ * macros to handle unaligned bit copy ops.
+ * See src/sys/dev/rasops/rasops_mask.h for MI version.
+ * Also refer src/sys/arch/hp300/dev/maskbits.h.
+ * (which was implemented for ancient src/sys/arch/hp300/dev/grf_hy.c)
+ */
+
+/* luna68k version GETBITS() that gets w bits from bit x at psrc memory */
+#define	FASTGETBITS(psrc, x, w, dst)					\
+	asm("bfextu %3{%1:%2},%0"					\
+	    : "=d" (dst) 						\
+	    : "di" (x), "di" (w), "o" R(psrc))
+
+/* luna68k version PUTBITS() that puts w bits from bit x at pdst memory */
+/* XXX this macro assumes (x + w) <= 32 to handle unaligned residual bits */
+#define	FASTPUTBITS(src, x, w, pdst)					\
+do {									\
+	uint32_t __tmp;							\
+	__tmp = R(pdst);						\
+	asm("bfins %3,%0{%1:%2}"					\
+	    : "+d" (__tmp)						\
+	    : "di" (x), "di" (w), "d" (src));				\
+	W(pdst) = __tmp;						\
+} while (/* CONSTCOND */0)
+
+#define	GETBITS(psrc, x, w, dst)	FASTGETBITS(psrc, x, w, dst)
+#define	PUTBITS(src, x, w, pdst)	FASTPUTBITS(src, x, w, pdst)
 
 /*
  * Blit a character at the specified co-ordinates.
@@ -256,9 +284,11 @@ static void
 om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = cookie;
-	uint8_t *sp, *dp, *basep;
-	int scanspan, height, width, align, shift, w, y, srcx, dstx;
-	uint32_t lmask, rmask;
+	uint8_t *sp, *dp, *sq, *dq, *basep;
+	int scanspan, height, w, y, srcx, dstx;
+	int sb, eb, db, sboff, full, cnt, lnum, rnum;
+	uint32_t lmask, rmask, tmp;
+	bool sbover;
 
 	scanspan = ri->ri_stride;
 	y = ri->ri_font->fontheight * startrow;
@@ -268,82 +298,116 @@ om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 	w = ri->ri_font->fontwidth * ncols;
 	basep = (uint8_t *)ri->ri_bits + y * scanspan;
 
-	align = shift = srcx & ALIGNMASK;
-	width = w + align;
-	align = dstx & ALIGNMASK;
-	lmask = ALL1BITS >> align;
-	rmask = ALL1BITS << (-(w + align) & ALIGNMASK);
-	shift = align - shift;
-	sp = basep + (srcx / 32) * 4;
-	dp = basep + (dstx / 32) * 4;
+	sb = srcx & ALIGNMASK;
+	db = dstx & ALIGNMASK;
 
-	if (shift != 0)
-		goto hardluckalignment;
+	if (db + w <= BLITWIDTH) {
+		/* Destination is contained within a single word */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
 
-	/* alignments comfortably match */
-	if (width <= BLITWIDTH) {
-		lmask &= rmask;
 		while (height > 0) {
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
+			GETBITS(sp, sb, w, tmp);
+			PUTBITS(tmp, db, w, dp);
 			dp += scanspan;
 			sp += scanspan;
 			height--;
 		}
+		return;
 	}
-	/* copy forward (left-to-right) */
-	else if (dstcol < srccol || srccol + ncols < dstcol) {
-		uint8_t *sq = sp, *dq = dp;
 
-		w = width;
+	lmask = (db == 0) ? 0 : ALL1BITS >> db;
+	eb = (db + w) & ALIGNMASK;
+	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb); 
+	lnum = (32 - db) & ALIGNMASK;
+	rnum = (dstx + w) & ALIGNMASK;
+
+	if (lmask != 0)
+		full = (w - (32 - db)) / 32;
+	else
+		full = w / 32;
+
+	sbover = (sb + lnum) >= 32;
+
+	if (dstcol < srccol || srccol + ncols < dstcol) {
+		/* copy forward (left-to-right) */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
+
+		if (lmask != 0) {
+			sboff = sb + lnum;
+			if (sboff >= 32)
+				sboff -= 32;
+		} else
+			sboff = sb;
+
+		sq = sp;
+		dq = dp;
 		while (height > 0) {
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
-			width -= 2 * BLITWIDTH;
-			while (width > 0) {
+			if (lmask != 0) {
+				GETBITS(sp, sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, dp);
+				dp += BYTESDONE;
+				if (sbover)
+					sp += BYTESDONE;
+			}
+
+			for (cnt = full; cnt; cnt--) {
+				GETBITS(sp, sboff, 32, tmp);
+				W(dp) = tmp;
 				sp += BYTESDONE;
 				dp += BYTESDONE;
-				W(dp) = R(sp);
-				width -= BLITWIDTH;
 			}
-			sp += BYTESDONE;
-			dp += BYTESDONE;
-			W(dp) = (R(sp) & rmask) | (R(dp) & ~rmask);
+
+			if (rmask != 0) {
+				GETBITS(sp, sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, dp);
+			}
+
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
-			width = w;
 			height--;
 		}
-	}
-	/* copy backward (right-to-left) */
-	else {
-		uint8_t *sq, *dq;
+	} else {
+		/* copy backward (right-to-left) */
+		sp = basep + ((srcx + w) / 32) * 4;
+		dp = basep + ((dstx + w) / 32) * 4;
 
-		sq = (sp += width / 32 * 4);
-		dq = (dp += width / 32 * 4);
-		w = width;
+		sboff = (srcx + w) & ALIGNMASK;
+		sboff -= rnum;
+		if (sboff < 0) {
+			sp -= BYTESDONE;
+			sboff += 32;
+		}
+
+		sq = sp;
+		dq = dp;
 		while (height > 0) {
-			W(dp) = (R(sp) & rmask) | (R(dp) & ~rmask);
-			width -= 2 * BLITWIDTH;
-			while (width > 0) {
+			if (rnum != 0) {
+				GETBITS(sp, sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, dp);
+			}
+
+			for (cnt = full; cnt; cnt--) {
 				sp -= BYTESDONE;
 				dp -= BYTESDONE;
-				W(dp) = R(sp);
-				width -= BLITWIDTH;
+				GETBITS(sp, sboff, 32, tmp);
+				W(dp) = tmp;
 			}
-			sp -= BYTESDONE;
-			dp -= BYTESDONE;
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
+
+			if (lmask != 0) {
+				if (sbover)
+					sp -= BYTESDONE;
+				dp -= BYTESDONE;
+				GETBITS(sp, sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, dp);
+			}
 
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
-			width = w;
 			height--;
 		}
 	}
-	return;
-
-    hardluckalignment:
-	/* alignments painfully disagree */
-	return;
 }
 
 /*
