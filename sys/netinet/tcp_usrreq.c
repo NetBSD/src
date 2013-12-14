@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.162.2.2 2013/10/20 13:29:37 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.162.2.3 2013/12/14 19:29:29 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162.2.2 2013/10/20 13:29:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162.2.3 2013/12/14 19:29:29 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1048,7 +1048,40 @@ sysctl_net_inet_tcp_mssdflt(SYSCTLFN_ARGS)
 		return (EINVAL);
 	tcp_mssdflt = mssdflt;
 
+	mutex_enter(softnet_lock);
+	tcp_tcpcb_template();
+	mutex_exit(softnet_lock);
+
 	return (0);
+}
+
+/*
+ * sysctl helper for TCP CB template update
+ */
+static int
+sysctl_update_tcpcb_template(SYSCTLFN_ARGS)
+{
+	int t, error;
+	struct sysctlnode node;
+
+	/* follow procedures in sysctl(9) manpage */
+	t = *(int *)rnode->sysctl_data;
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0)
+		return EINVAL;
+
+	*(int *)rnode->sysctl_data = t;
+
+	mutex_enter(softnet_lock);
+	tcp_tcpcb_template();
+	mutex_exit(softnet_lock);
+
+	return 0;
 }
 
 /*
@@ -1676,7 +1709,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rfc1323",
 		       SYSCTL_DESCR("Enable RFC1323 TCP extensions"),
-		       NULL, 0, &tcp_do_rfc1323, 0,
+		       sysctl_update_tcpcb_template, 0, &tcp_do_rfc1323, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RFC1323, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1776,13 +1809,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "win_scale",
 		       SYSCTL_DESCR("Use RFC1323 window scale options"),
-		       NULL, 0, &tcp_do_win_scale, 0,
+		       sysctl_update_tcpcb_template, 0, &tcp_do_win_scale, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_WSCALE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "timestamps",
 		       SYSCTL_DESCR("Use RFC1323 time stamp options"),
-		       NULL, 0, &tcp_do_timestamps, 0,
+		       sysctl_update_tcpcb_template, 0, &tcp_do_timestamps, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_TSTAMP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
