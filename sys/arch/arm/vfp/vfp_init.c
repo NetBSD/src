@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.27 2013/11/18 18:02:01 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.28 2013/12/14 15:47:18 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -261,7 +261,6 @@ vfp_attach(void)
 {
 	struct cpu_info * const ci = curcpu();
 	const char *model = NULL;
-	bool vfp_p = false;
 
 	if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)
 	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
@@ -289,8 +288,14 @@ vfp_attach(void)
 		 * If we could enable them, then they exist.
 		 */
 		cpacr = armreg_cpacr_read();
-		vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
+		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
 		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
+		if (!vfp_p) {
+			aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
+			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+			ci->ci_vfp_id = 0;
+			return;
+		}
 	}
 
 	void *uh = install_coproc_handler(VFP_COPROC, vfp_test);
