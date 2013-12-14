@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.46 2013/09/05 07:09:14 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.47 2013/12/14 09:52:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.46 2013/09/05 07:09:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.47 2013/12/14 09:52:33 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2288,7 +2288,7 @@ plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 
 	c = PREAD1(pi, PL01XCOM_DR);
 	{
-		int cn_trapped = 0; /* unused */
+		int cn_trapped __unused = 0;
 #ifdef DDB
 		extern int db_active;
 		if (!db_active)
@@ -2308,7 +2308,7 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 	int cin, stat;
 	if (plcom_readaheadcount < MAX_READAHEAD
 	     && !ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)) {
-		int cn_trapped = 0;
+		int cn_trapped __unused = 0;
 		cin = PREAD1(pi, PL01XCOM_DR);
 		cn_check_magic(dev, cin, plcom_cnm_state);
 		plcom_readahead[plcom_readaheadcount++] = cin;
