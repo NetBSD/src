@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.62 2013/12/09 20:25:28 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.63 2013/12/14 19:38:21 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1039,4 +1039,44 @@ sys/uvm/uvm_km.c				1.125
 	uvm_km_kmem_alloc: don't hardcode kmem_va_arena. This could lead to
 	freeing to the wrong vmem arena in case of failed page allocations.
 	[para, ticket #989]
+
+sys/dev/usb/ehci.c				1.221
+
+	In ehci_check_qh_intr don't treat a short control transfer as done
+	if the status phase is still inflight.  Let the hardware complete it.
+	PR/48358: Repeated low-speed USB control transfers returning short data
+		  fail on EHCI
+	PR/46696: uhub disables port where USB keyboard attached
+	[skrll, ticket #990]
+
+sys/netinet/tcp_usrreq.c			1.170
+
+	Update TCP CB with new values on rfc1323 and mssdflt sysctl updates
+	From yasuoka-cj7TXg5MjN14Eiagz67IpQ@public.gmane.org in kern/44254
+	[kefren, ticket #992]
+
+sys/compat/linux/common/linux_misc.c		1.227
+
+	On linux_sys_getdents, insert d_type at the end of each record.
+	Fixes PR kern/47806.
+	[hauke, ticket #993]
+
+sys/arch/sparc64/sparc64/locore.s		1.350
+
+	Increase an interrupt depth only in the case of hardware interrupts,
+	and remove the ci_idepth trick in softint_fastintr.
+	Fixes the following diagnostic panic reported in port-sparc64.
+	  panic: kernel diagnostic assertion "!cpu_intr_p()" failed: file
+	  "../../../../kern/subr_xcall.c", line 351
+	[nakayama, ticket #994]
+
+sys/kern/uipc_syscalls.c			1.163
+
+	PR/47591: Michael Plass: If the unix socket is closed before accept,
+	unp->unp_conn will be NULL in PRU_ACCEPT, as called from
+	sys_accept->so_accept. This will cause the usrreq to return with
+	no error, leaving the mbuf gotten from m_get() with an uninitialized
+	length, containing junk from a previous call. Initialize m_len to
+	be 0 to handle this case. 
+	[spz, ticket #996]
 
