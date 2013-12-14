@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.57 2013/11/23 14:20:46 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.58 2013/12/14 16:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.57 2013/11/23 14:20:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.58 2013/12/14 16:19:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -876,4 +876,11 @@ netexport_wrunlock(void)
 {
 
 	rw_exit(&netexport_lock);
+}
+
+bool
+netexport_hasexports(void)
+{
+	
+	return nfs_pub.np_valid || !TAILQ_EMPTY(&netexport_list);
 }
