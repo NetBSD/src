@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338.8.2 2012/03/21 16:10:21 riz Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.8.2.4.1 2013/12/14 19:33:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3281,12 +3281,6 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	 LDPTR	[%g3 + %lo(CPUINFO_VA+CI_TICK_IH)], %g5
 0:
 
-	! Increment the per-cpu interrupt level
-	sethi	%hi(CPUINFO_VA+CI_IDEPTH), %g1
-	ld	[%g1 + %lo(CPUINFO_VA+CI_IDEPTH)], %g2
-	inc	%g2
-	st	%g2, [%g1 + %lo(CPUINFO_VA+CI_IDEPTH)]
-
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(kintrcnt)), %g1
 	sethi	%hi(_C_LABEL(uintrcnt)), %g2
@@ -3374,6 +3368,17 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	wrpr	%l6, %pil
+
+#define SOFTINT_INT \
+	(1<<IPL_SOFTCLOCK|1<<IPL_SOFTBIO|1<<IPL_SOFTNET|1<<IPL_SOFTSERIAL)
+
+	! Increment the per-cpu interrupt depth in case of hardintrs
+	btst	SOFTINT_INT, %l3
+	bnz,pn	%icc, sparc_intr_retry
+	 sethi	%hi(CPUINFO_VA+CI_IDEPTH), %l1
+	ld	[%l1 + %lo(CPUINFO_VA+CI_IDEPTH)], %l2
+	inc	%l2
+	st	%l2, [%l1 + %lo(CPUINFO_VA+CI_IDEPTH)]
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
@@ -3474,11 +3479,14 @@ intrcmplt:
 	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5			! initialize intr count for next run
 
-	! Decrement this cpu's interrupt depth
-	sethi	%hi(CPUINFO_VA+CI_IDEPTH), %l4
+	! Decrement this cpu's interrupt depth in case of hardintrs
+	btst	SOFTINT_INT, %l3
+	bnz,pn	%icc, 1f
+	 sethi	%hi(CPUINFO_VA+CI_IDEPTH), %l4
 	ld	[%l4 + %lo(CPUINFO_VA+CI_IDEPTH)], %l5
 	dec	%l5
 	st	%l5, [%l4 + %lo(CPUINFO_VA+CI_IDEPTH)]
+1:
 
 #ifdef NOT_DEBUG
 	set	_C_LABEL(intrdebug), %o2
@@ -5230,11 +5238,8 @@ ENTRY(softint_fastintr)
 	set	CPUINFO_VA, %l0			! l0 = curcpu()
 	rdpr	%pil, %l7			! l7 = splhigh()
 	wrpr	%g0, PIL_HIGH, %pil
-	ld	[%l0 + CI_IDEPTH], %l1
 	LDPTR	[%l0 + CI_EINTSTACK], %l6	! l6 = ci_eintstack
-	dec	%l1
 	add	%sp, -CC64FSZ, %l2		! ci_eintstack = sp - CC64FSZ
-	st	%l1, [%l0 + CI_IDEPTH]		! adjust ci_idepth
 	STPTR	%l2, [%l0 + CI_EINTSTACK]	! save intstack for nexted intr
 
 	mov	%i0, %o0			! o0/i0 = softint lwp
@@ -5279,10 +5284,7 @@ ENTRY(softint_fastintr)
 
 	restore					! rewind register window
 
-	ld	[%l0 + CI_IDEPTH], %l1
 	STPTR	%l6, [%l0 + CI_EINTSTACK]	! restore ci_eintstack
-	inc	%l1
-	st	%l1, [%l0 + CI_IDEPTH]		! re-adjust ci_idepth
 	wrpr	%g0, %l7, %pil			! restore ipl
 	ret
 	 restore	%g0, 1, %o0
@@ -5306,10 +5308,7 @@ softint_fastintr_ret:
 	st	%o1, [%l0 + CI_MTX_COUNT]
 	st	%g0, [%o0 + L_CTXSWTCH]		! prev->l_ctxswtch = 0
 
-	ld	[%l0 + CI_IDEPTH], %l1
 	STPTR	%l6, [%l0 + CI_EINTSTACK]	! restore ci_eintstack
-	inc	%l1
-	st	%l1, [%l0 + CI_IDEPTH]		! re-adjust ci_idepth
 	wrpr	%g0, %l7, %pil			! restore ipl
 	ret
 	 restore	%g0, 1, %o0
