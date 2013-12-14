@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.4 2013/10/05 06:51:43 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.5 2013/12/14 09:58:03 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.4 2013/10/05 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.5 2013/12/14 09:58:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,8 +164,7 @@ static int dwc2_frame_list_alloc(struct dwc2_hsotg *hsotg, gfp_t mem_flags)
 
 static void dwc2_frame_list_free(struct dwc2_hsotg *hsotg)
 {
-	u32 *frame_list;
-	dma_addr_t frame_list_dma;
+	usb_dma_t frame_list_usbdma;
 	unsigned long flags;
 
 	spin_lock_irqsave(&hsotg->lock, flags);
@@ -175,13 +174,12 @@ static void dwc2_frame_list_free(struct dwc2_hsotg *hsotg)
 		return;
 	}
 
-	frame_list = hsotg->frame_list;
-	frame_list_dma = hsotg->frame_list_dma;
+	frame_list_usbdma = hsotg->frame_list_usbdma;
 	hsotg->frame_list = NULL;
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 
-	usb_freemem(&hsotg->hsotg_sc->sc_bus, &hsotg->frame_list_usbdma);
+	usb_freemem(&hsotg->hsotg_sc->sc_bus, &frame_list_usbdma);
 }
 
 static void dwc2_per_sched_enable(struct dwc2_hsotg *hsotg, u32 fr_list_en)
