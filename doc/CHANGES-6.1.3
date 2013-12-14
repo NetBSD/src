@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.3,v 1.1.2.6 2013/11/25 08:31:24 bouyer Exp $
+# $NetBSD: CHANGES-6.1.3,v 1.1.2.7 2013/12/14 19:37:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.1 release to the NetBSD 6.1.2
 release:
@@ -89,4 +89,23 @@ sys/uvm/uvm_km.c				1.125
 	uvm_km_kmem_alloc: don't hardcode kmem_va_arena. This could lead to
 	freeing to the wrong vmem arena in case of failed page allocations.
 	[para, ticket #989]
+
+sys/arch/sparc64/sparc64/locore.s		1.350
+
+	Increase an interrupt depth only in the case of hardware interrupts,
+	and remove the ci_idepth trick in softint_fastintr.
+	Fixes the following diagnostic panic reported in port-sparc64.
+	  panic: kernel diagnostic assertion "!cpu_intr_p()" failed: file
+	  "../../../../kern/subr_xcall.c", line 351
+	[nakayama, ticket #994]
+
+sys/kern/uipc_syscalls.c			1.163
+
+	PR/47591: Michael Plass: If the unix socket is closed before accept,
+	unp->unp_conn will be NULL in PRU_ACCEPT, as called from
+	sys_accept->so_accept. This will cause the usrreq to return with
+	no error, leaving the mbuf gotten from m_get() with an uninitialized
+	length, containing junk from a previous call. Initialize m_len to
+	be 0 to handle this case. 
+	[spz, ticket #996]
 
