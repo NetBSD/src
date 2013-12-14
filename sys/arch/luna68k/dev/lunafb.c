@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.27 2013/07/19 16:35:57 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.28 2013/12/14 19:51:13 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.27 2013/07/19 16:35:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.28 2013/12/14 19:51:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,6 +461,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 	omfb_stdscreen.nrows = ri->ri_rows;
 	omfb_stdscreen.ncols = ri->ri_cols;
 	omfb_stdscreen.textops = &ri->ri_ops;
+	omfb_stdscreen.capabilities = ri->ri_caps;
 	omfb_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	omfb_stdscreen.fontheight = ri->ri_font->fontheight;
 }
