@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2013/12/14 10:29:45 njoly Exp $
+	$NetBSD: syscalls.master,v 1.10 2013/12/14 17:34:47 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -249,9 +249,9 @@
 170	UNIMPL		1.0 msgsys
 171	UNIMPL		1.0 shmsys
 172	UNIMPL
-173	NODEF 	 	{ ssize_t|linux_sys||pread(int fd, char *buf, \
+173	NOARGS 	 	{ ssize_t|sys||pread(int fd, char *buf, \
 			    size_t nbyte, int PAD, linux_off_t offset); }
-174	NODEF 	 	{ ssize_t|linux_sys||pwrite(int fd, char *buf, \
+174	NOARGS 	 	{ ssize_t|sys||pwrite(int fd, char *buf, \
 			    size_t nbyte, int PAD, linux_off_t offset); }
 175	UNIMPL		ntp_gettime
 176	UNIMPL		ntp_adjtime
