@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.8 2013/12/09 16:49:43 pooka Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.9 2013/12/14 06:27:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.8 2013/12/09 16:49:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.9 2013/12/14 06:27:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -190,6 +190,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_compat_50___ntp_gettime30, "compat" },
 	    { SYS_compat_50___fhstat40, "compat" },
 	    { SYS_compat_50_aio_suspend, "compat" },
+	    { SYS_compat_60__lwp_park, "compat" },
 	    { SYS__ksem_init, "ksem" },
 	    { SYS__ksem_open, "ksem" },
 	    { SYS__ksem_unlink, "ksem" },
