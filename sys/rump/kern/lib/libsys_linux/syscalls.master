@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2013/12/08 08:54:48 njoly Exp $
+	$NetBSD: syscalls.master,v 1.9 2013/12/14 10:29:45 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -589,8 +589,8 @@
 458	NOARGS		{ int|sys||renameat(int fromfd, const char *from, \
 			    int tofd, const char *to); }
 459	UNIMPL		mkfifoat
-460	NODEF		{ int|linux_sys||mknodat(int fd, const char *path, \
-			    mode_t mode, unsigned dev); }
+460	STD		{ int|rump_linux_sys||mknodat(int fd, const char *path, \
+			    mode_t mode, int PAD, unsigned dev); }
 461	NOARGS		{ int|sys||mkdirat(int fd, const char *path, \
 			    mode_t mode); }
 462	NODEF		{ int|linux_sys||faccessat(int fd, const char *path, \
