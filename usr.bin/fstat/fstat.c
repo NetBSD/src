@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.104 2013/12/15 08:16:24 mlelstv Exp $	*/
+/*	$NetBSD: fstat.c,v 1.105 2013/12/15 09:21:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.104 2013/12/15 08:16:24 mlelstv Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.105 2013/12/15 09:21:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1325,7 +1325,7 @@ getftype(enum vtype v_type)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-Afnv] [-p pid] [-u user] "
-	    "[-N system] [-M core] [file ...]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-Afnv] [-M core] [-N system] "
+	    "[-p pid] [-u user] [file ...]\n", getprogname());
 	exit(1);
 }
