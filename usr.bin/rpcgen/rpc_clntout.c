@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.14 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.15 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_clntout.c,v 1.14 2013/08/11 08:03:10 dholland Exp $");
+__RCSID("$NetBSD: rpc_clntout.c,v 1.15 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -53,10 +53,10 @@ __RCSID("$NetBSD: rpc_clntout.c,v 1.14 2013/08/11 08:03:10 dholland Exp $");
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static void write_program __P((definition *));
-static const char *ampr __P((const char *));
-static const char *aster __P((const char *));
-static void printbody __P((proc_list *));
+static void write_program(definition *);
+static const char *ampr(const char *);
+static const char *aster(const char *);
+static void printbody(proc_list *);
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
@@ -119,84 +119,36 @@ printarglist(proc_list *proc, const char *result,
 
 	if (!newstyle) {	/* old style: always pass argument by
 				 * reference */
-		if (Cflag) {	/* C++ style heading */
-			f_print(fout, "(");
-			ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-			f_print(fout, "*argp, ");
-			if (Mflag) {
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s, ", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s%s)\n", addargtype, addargname);
-		} else {
-			f_print(fout, "(argp, ");
-			if (Mflag)
-				f_print(fout, "%s, ", result);
-			f_print(fout, "%s)\n", addargname);
-			f_print(fout, "\t");
-			ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-			f_print(fout, "*argp;\n");
-			if (Mflag) {
-				f_print(fout, "\t");
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s;\n", aster(proc->res_type),
-				    result);
-			}
+		f_print(fout, "(");
+		ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
+		f_print(fout, "*argp, ");
+		if (Mflag) {
+			if (streq(proc->res_type, "void"))
+				f_print(fout, "char ");
+			else
+				ptype(proc->res_prefix, proc->res_type, 0);
+			f_print(fout, "%s%s, ", aster(proc->res_type),
+			    result);
 		}
+		f_print(fout, "%s%s)\n", addargtype, addargname);
 	} else {
 		f_print(fout, "(");
 		if (!streq(proc->args.decls->decl.type, "void")) {
 			/* new style, 1 or multiple arguments */
-			if (!Cflag) {
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					f_print(fout, "%s, ", l->decl.name);
-			} else {/* C++ style header */
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					pdeclaration(proc->args.argname,
-					    &l->decl, 0, ", ");
-			}
+			for (l = proc->args.decls; l != NULL; l = l->next)
+				pdeclaration(proc->args.argname,
+				    &l->decl, 0, ", ");
 		}
-		if (!Cflag) {
-			if (Mflag) {
-				f_print(fout, "\t");
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s;\n", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s)\n", addargname);
-			if (!streq(proc->args.decls->decl.type, "void")) {
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					pdeclaration(proc->args.argname,
-					    &l->decl, 1, ";\n");
-			}
-		} else {
-			if (Mflag) {
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s, ", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s%s)\n", addargtype, addargname);
+		if (Mflag) {
+			if (streq(proc->res_type, "void"))
+				f_print(fout, "char ");
+			else
+				ptype(proc->res_prefix, proc->res_type, 0);
+			f_print(fout, "%s%s, ", aster(proc->res_type),
+			    result);
 		}
+		f_print(fout, "%s%s)\n", addargtype, addargname);
 	}
-
-	if (!Cflag)
-		f_print(fout, "\t%s%s;\n", addargtype, addargname);
 }
 
 
