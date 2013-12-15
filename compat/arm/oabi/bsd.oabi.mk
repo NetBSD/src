@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.oabi.mk,v 1.1 2013/04/27 08:44:35 matt Exp $
+#	$NetBSD: bsd.oabi.mk,v 1.2 2013/12/15 18:08:37 joerg Exp $
 
 MLIBDIR=		oabi
 .if ${MACHINE_ARCH:M*eb} != ""
@@ -20,10 +20,10 @@ CRYPTO_MACHINE_CPU=	${ARM_MACHINE_ARCH}
 LDELFSO_MACHINE_CPU=	${ARM_MACHINE_ARCH}
 GOMP_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 
-COPTS+=		-mabi=apcs-gnu -mfloat-abi=soft
-CPUFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
-LDADD+=		-mabi=apcs-gnu -mfloat-abi=soft
-LDFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
-MKDEPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
+COPTS+=		${ARM_APCS_FLAGS}
+CPUFLAGS+=	${ARM_APCS_FLAGS}
+LDADD+=		${ARM_APCS_FLAGS}
+LDFLAGS+=	${ARM_APCS_FLAGS}
+MKDEPFLAGS+=	${ARM_APCS_FLAGS}
 
 .include "${.PARSEDIR}/../../Makefile.compat"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.19 2013/11/04 21:25:22 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.20 2013/12/15 18:08:37 joerg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -43,7 +43,7 @@ vers.c: ${.CURDIR}/version
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv3m
+CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv3m
 .if ${HAVE_GCC} < 48
 CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
 .else
