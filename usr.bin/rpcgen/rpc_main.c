@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.38 2013/12/15 00:40:17 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.39 2013/12/15 09:18:31 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.38 2013/12/15 00:40:17 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.39 2013/12/15 09:18:31 wiz Exp $");
 #endif
 #endif
 
@@ -1102,12 +1102,12 @@ static void
 usage(void)
 {
 	f_print(stderr, "usage:  %s infile\n", cmdname);
-	f_print(stderr, "\t%s [-a][-b][-C][-Dname[=value]] -i size [-I [-K seconds]] [-A] [-M] [-N] [-T] infile\n",
+	f_print(stderr, "\t%s [-AaBbILMNTv] [-Dname[=value]] [-i size] [-K seconds] [-Y pathname] infile\n",
 	    cmdname);
-	f_print(stderr, "\t%s [-L] [-M] [-c | -h | -l | -m | -t | -Sc | -Ss] [-o outfile] [infile]\n",
+	f_print(stderr, "\t%s [-c | -h | -l | -m | -t | -Sc | -Ss] [-o outfile] [infile]\n",
 	    cmdname);
-	f_print(stderr, "\t%s [-s nettype]* [-o outfile] [infile]\n", cmdname);
-	f_print(stderr, "\t%s [-n netid]* [-o outfile] [infile]\n", cmdname);
+	f_print(stderr, "\t%s [-s nettype] [-o outfile] [infile]\n", cmdname);
+	f_print(stderr, "\t%s [-n netid] [-o outfile] [infile]\n", cmdname);
 	options_usage();
 	exit(1);
 }
@@ -1118,25 +1118,27 @@ options_usage(void)
 	f_print(stderr, "options:\n");
 	f_print(stderr, "-A\t\tgenerate svc_caller() function\n");
 	f_print(stderr, "-a\t\tgenerate all files, including samples\n");
+	f_print(stderr, "-B\t\tgenerate BSD c++ macros\n");
 	f_print(stderr, "-b\t\tbackward compatibility mode (generates code for SunOS 4.1)\n");
 	f_print(stderr, "-c\t\tgenerate XDR routines\n");
 	f_print(stderr, "-Dname[=value]\tdefine a symbol (same as #define)\n");
 	f_print(stderr, "-h\t\tgenerate header file\n");
-	f_print(stderr, "-i size\t\tsize at which to start generating inline code\n");
 	f_print(stderr, "-I\t\tgenerate code for inetd support in server (for SunOS 4.1)\n");
+	f_print(stderr, "-i size\t\tsize at which to start generating inline code\n");
 	f_print(stderr, "-K seconds\tserver exits after K seconds of inactivity\n");
-	f_print(stderr, "-l\t\tgenerate client side stubs\n");
 	f_print(stderr, "-L\t\tserver errors will be printed to syslog\n");
-	f_print(stderr, "-m\t\tgenerate server side stubs\n");
+	f_print(stderr, "-l\t\tgenerate client side stubs\n");
 	f_print(stderr, "-M\t\tgenerate thread-safe stubs\n");
-	f_print(stderr, "-n netid\tgenerate server code that supports named netid\n");
+	f_print(stderr, "-m\t\tgenerate server side stubs\n");
 	f_print(stderr, "-N\t\tsupports multiple arguments and call-by-value\n");
+	f_print(stderr, "-n netid\tgenerate server code that supports named netid\n");
 	f_print(stderr, "-o outfile\tname of the output file\n");
 	f_print(stderr, "-s nettype\tgenerate server code that supports named nettype\n");
 	f_print(stderr, "-Sc\t\tgenerate sample client code that uses remote procedures\n");
 	f_print(stderr, "-Ss\t\tgenerate sample server code that defines remote procedures\n");
-	f_print(stderr, "-t\t\tgenerate RPC dispatch table\n");
 	f_print(stderr, "-T\t\tgenerate code to support RPC dispatch tables\n");
+	f_print(stderr, "-t\t\tgenerate RPC dispatch table\n");
+	f_print(stderr, "-v\t\tdisplay version number\n");
 	f_print(stderr, "-Y path\t\tdirectory name to find C preprocessor (cpp)\n");
 
 	exit(1);
