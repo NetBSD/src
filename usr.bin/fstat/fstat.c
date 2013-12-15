@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.103 2013/10/19 15:56:05 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.104 2013/12/15 08:16:24 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.103 2013/10/19 15:56:05 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.104 2013/12/15 08:16:24 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ static int 	fsflg,	/* show files on same filesystem as file(s) argument */
 	uflg;	/* show files open by a particular (effective) user */
 static int 	checkfile; /* true if restricting to particular files or filesystems */
 static int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
+static int	Aflg;	/* prefix with address of file structure */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
 static fdfile_t **ofiles; /* buffer of pointers to file structures */
@@ -175,7 +176,7 @@ static void	misctrans(struct file *, int);
 static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
-static void	vtrans(struct vnode *, int, int);
+static void	vtrans(struct vnode *, int, int, long);
 static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
 static void	kdriver_init(void);
@@ -195,7 +196,7 @@ main(int argc, char **argv)
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
-	while ((ch = getopt(argc, argv, "fnp:u:vN:M:")) != -1)
+	while ((ch = getopt(argc, argv, "fnAp:u:vN:M:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
@@ -208,6 +209,9 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			nflg = 1;
+			break;
+		case 'A':
+			Aflg = 1;
 			break;
 		case 'p':
 			if (pflg++)
@@ -277,6 +281,8 @@ main(int argc, char **argv)
 	if ((p = kvm_getproc2(kd, what, arg, sizeof *p, &cnt)) == NULL) {
 		errx(1, "%s", kvm_geterr(kd));
 	}
+	if (Aflg)
+		(void)printf("%-*s ", 2*(int)(sizeof(void*)), "ADDR");
 	if (nflg)
 		(void)printf("%s",
 "USER     CMD          PID   FD  DEV     INUM  MODE  SZ|DV R/W");
@@ -444,11 +450,11 @@ dofiles(struct kinfo_proc2 *p)
 	 * root directory vnode, if one
 	 */
 	if (cwdi.cwdi_rdir)
-		vtrans(cwdi.cwdi_rdir, RDIR, FREAD);
+		vtrans(cwdi.cwdi_rdir, RDIR, FREAD, (long)cwdi.cwdi_rdir);
 	/*
 	 * current working directory vnode
 	 */
-	vtrans(cwdi.cwdi_cdir, CDIR, FREAD);
+	vtrans(cwdi.cwdi_cdir, CDIR, FREAD, (long)cwdi.cwdi_cdir);
 #if 0
 	/*
 	 * Disable for now, since p->p_tracep appears to point to a ktr_desc *
@@ -496,9 +502,12 @@ ftrans(fdfile_t *fp, int i)
 		    i, fdfile.ff_file, Pid);
 		return;
 	}
+	if (Aflg && file.f_type != DTYPE_VNODE)
+		(void)printf("%*lx ",
+			2*(int)(sizeof(void*)), (long)fdfile.ff_file);
 	switch (file.f_type) {
 	case DTYPE_VNODE:
-		vtrans(file.f_data, i, file.f_flag);
+		vtrans(file.f_data, i, file.f_flag, (long)fdfile.ff_file);
 		break;
 	case DTYPE_SOCKET:
 		if (checkfile == 0)
@@ -590,7 +599,7 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 }
 
 static void
-vtrans(struct vnode *vp, int i, int flag)
+vtrans(struct vnode *vp, int i, int flag, long addr)
 {
 	struct vnode vn;
 	struct filestat fst;
@@ -620,6 +629,8 @@ vtrans(struct vnode *vp, int i, int flag)
 		if (fsmatch == 0 || (filename == NULL && fsflg == 0))
 			return;
 	}
+	if (Aflg)
+		(void)printf("%*lx ", 2*(int)(sizeof(void*)), addr);
 	PREFIX(i);
 	if (badtype == dead) {
 		char buf[1024];
@@ -1314,7 +1325,7 @@ getftype(enum vtype v_type)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-fnv] [-p pid] [-u user] "
+	(void)fprintf(stderr, "Usage: %s [-Afnv] [-p pid] [-u user] "
 	    "[-N system] [-M core] [file ...]\n", getprogname());
 	exit(1);
 }
