@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.32 2013/08/12 20:36:30 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.33 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.32 2013/08/12 20:36:30 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.33 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -54,24 +54,24 @@ __RCSID("$NetBSD: rpc_cout.c,v 1.32 2013/08/12 20:36:30 christos Exp $");
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static int findtype __P((definition *, const char *));
-static int undefined __P((const char *));
-static void print_generic_header __P((const char *, int));
-static void print_header __P((definition *));
-static void print_prog_header __P((proc_list *));
-static void print_trailer __P((void));
-static void print_ifopen __P((int, const char *));
-static void print_ifarg __P((const char *));
-static void print_ifsizeof __P((const char *, const char *));
-static void print_ifclose __P((int));
-static void print_ifstat __P((int, const char *, const char *, relation,
-			      const char *, const char *, const char *));
-static void emit_enum __P((definition *));
-static void emit_program __P((definition *));
-static void emit_union __P((definition *));
-static void emit_struct __P((definition *));
-static void emit_typedef __P((definition *));
-static void print_stat __P((int, declaration *));
+static int findtype(definition *, const char *);
+static int undefined(const char *);
+static void print_generic_header(const char *, int);
+static void print_header(definition *);
+static void print_prog_header(proc_list *);
+static void print_trailer(void);
+static void print_ifopen(int, const char *);
+static void print_ifarg(const char *);
+static void print_ifsizeof(const char *, const char *);
+static void print_ifclose(int);
+static void print_ifstat(int, const char *, const char *, relation,
+    const char *, const char *, const char *);
+static void emit_enum(definition *);
+static void emit_program(definition *);
+static void emit_union(definition *);
+static void emit_struct(definition *);
+static void emit_typedef(definition *);
+static void print_stat(int, declaration *);
 
 /*
  * Emit the C-routine for the given definition
@@ -146,21 +146,12 @@ print_generic_header(const char *procname, int pointerp)
 {
 	f_print(fout, "\n");
 	f_print(fout, "bool_t\n");
-	if (Cflag) {
-		f_print(fout, "xdr_%s(", procname);
-		f_print(fout, "XDR *xdrs, ");
-		f_print(fout, "%s ", procname);
-		if (pointerp)
-			f_print(fout, "*");
-		f_print(fout, "objp)\n{\n");
-	} else {
-		f_print(fout, "xdr_%s(xdrs, objp)\n", procname);
-		f_print(fout, "\tXDR *xdrs;\n");
-		f_print(fout, "\t%s ", procname);
-		if (pointerp)
-			f_print(fout, "*");
-		f_print(fout, "objp;\n{\n");
-	}
+	f_print(fout, "xdr_%s(", procname);
+	f_print(fout, "XDR *xdrs, ");
+	f_print(fout, "%s ", procname);
+	if (pointerp)
+		f_print(fout, "*");
+	f_print(fout, "objp)\n{\n");
 }
 
 static void

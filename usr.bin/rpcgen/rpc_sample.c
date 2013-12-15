@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.12 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.13 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_sample.c,v 1.12 2013/08/11 08:03:10 dholland Exp $");
+__RCSID("$NetBSD: rpc_sample.c,v 1.13 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -54,9 +54,9 @@ __RCSID("$NetBSD: rpc_sample.c,v 1.12 2013/08/11 08:03:10 dholland Exp $");
 
 static char RQSTP[] = "rqstp";
 
-static void write_sample_client __P((const char *, version_list *));
-static void write_sample_server __P((definition *));
-static void return_type __P((proc_list *));
+static void write_sample_client(const char *, version_list *);
+static void write_sample_server(definition *);
+static void return_type(proc_list *);
 
 void
 write_sample_svc(definition *def)
@@ -93,10 +93,7 @@ write_sample_client(const char *program_name, version_list *vp)
 
 	f_print(fout, "\n\nvoid\n");
 	pvname(program_name, vp->vers_num);
-	if (Cflag)
-		f_print(fout, "(char *host)\n{\n");
-	else
-		f_print(fout, "(host)\n\tchar *host;\n{\n");
+	f_print(fout, "(char *host)\n{\n");
 	f_print(fout, "\tCLIENT *clnt;\n");
 
 	for (proc = vp->procs; proc != NULL; proc = proc->next) {
@@ -255,11 +252,7 @@ write_sample_clnt_main(void)
 	version_list *vp;
 
 	f_print(fout, "\n\n");
-	if (Cflag)
-		f_print(fout, "int\nmain(int argc, char *argv[])\n{\n");
-	else
-		f_print(fout, "int\nmain(argc, argv)\n\tint argc;\n\tchar *argv[];\n{\n");
-
+	f_print(fout, "int\nmain(int argc, char *argv[])\n{\n");
 	f_print(fout, "\tchar *host;");
 	f_print(fout, "\n\n\tif (argc < 2) {");
 	f_print(fout, "\n\t\tprintf(\"usage: %%s server_host\\n\", argv[0]);\n");

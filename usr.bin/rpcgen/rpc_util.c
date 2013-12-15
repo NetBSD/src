@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.c,v 1.12 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_util.c,v 1.13 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_util.c,v 1.12 2013/08/11 08:03:10 dholland Exp $");
+__RCSID("$NetBSD: rpc_util.c,v 1.13 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: rpc_util.c,v 1.12 2013/08/11 08:03:10 dholland Exp $");
 
 #define ARGEXT "argument"
 
-static void printwhere __P((void));
+static void printwhere(void);
 
 char    curline[MAXLINESIZE];	/* current read line */
 char   *where = curline;	/* current point in line */
@@ -73,12 +73,12 @@ FILE   *fin;			/* file pointer of current input */
 
 list   *defined;		/* list of defined things */
 
-static const char *toktostr __P((tok_kind));
-static void printbuf __P((void));
-static void printwhere __P((void));
-static int findit __P((definition *, const char *));
-static const char *fixit __P((const char *, const char *));
-static int typedefed __P((definition *, const char *));
+static const char *toktostr(tok_kind);
+static void printbuf(void);
+static void printwhere(void);
+static int findit(definition *, const char *);
+static const char *fixit(const char *, const char *);
+static int typedefed(definition *, const char *);
 
 /*
  * Reinitialize the world

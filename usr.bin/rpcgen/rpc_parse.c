@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.17 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.18 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.17 2013/08/11 08:03:10 dholland Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.18 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -56,18 +56,18 @@ __RCSID("$NetBSD: rpc_parse.c,v 1.17 2013/08/11 08:03:10 dholland Exp $");
 
 #define ARGNAME "arg"
 
-static void isdefined __P((definition *));
-static void def_struct __P((definition *));
-static void def_program __P((definition *));
-static void def_enum __P((definition *));
-static void def_const __P((definition *));
-static void def_union __P((definition *));
-static void check_type_name __P((const char *, int));
-static void def_typedef __P((definition *));
-static void get_declaration __P((declaration *, defkind));
-static void get_prog_declaration __P((declaration *, defkind, int));
-static void get_type __P((const char **, const char **, defkind));
-static void unsigned_dec __P((const char **));
+static void isdefined(definition *);
+static void def_struct(definition *);
+static void def_program(definition *);
+static void def_enum(definition *);
+static void def_const(definition *);
+static void def_union(definition *);
+static void check_type_name(const char *, int);
+static void def_typedef(definition *);
+static void get_declaration(declaration *, defkind);
+static void get_prog_declaration(declaration *, defkind, int);
+static void get_type(const char **, const char **, defkind);
+static void unsigned_dec(const char **);
 
 /*
  * return the next definition you see

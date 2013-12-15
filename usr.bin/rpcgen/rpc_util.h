@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_util.h,v 1.7 2013/08/12 14:03:18 joerg Exp $	*/
+/*	$NetBSD: rpc_util.h,v 1.8 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -74,9 +74,9 @@ extern bas_type *typ_list_t;
 extern int inetdflag;
 extern int pmflag;   
 extern int tblflag;
+extern int BSDflag;
 extern int logflag;
 extern int newstyle;
-extern int Cflag;     /* C++ flag */
 extern int Mflag;     /* multithread flag */
 extern int tirpcflag; /* flag for generating tirpc code */
 extern int doinline; /* if this is 0, then do not generate inline code */
@@ -101,75 +101,77 @@ extern int nonfatalerrors;
 #define FINDVAL(list,item,finder) \
 	findval(list, item, finder)
 
-void reinitialize __P((void));
-int streq __P((const char *, const char *));
-definition *findval __P((list *, const char *,
-			 int (*)(definition *, const char *)));
-void storeval __P((list **, definition *));
-const char *fixtype __P((const char *));
-const char *stringfix __P((const char *));
-void ptype __P((const char *, const char *, int));
-int isvectordef __P((const char *, relation));
-char *locase __P((const char *));
-void pvname_svc __P((const char *, const char *));
-void pvname __P((const char *, const char *));
+void reinitialize(void);
+int streq(const char *, const char *);
+definition *findval(list *, const char *,
+			 int (*)(definition *, const char *));
+void storeval(list **, definition *);
+const char *fixtype(const char *);
+const char *stringfix(const char *);
+void ptype(const char *, const char *, int);
+int isvectordef(const char *, relation);
+char *locase(const char *);
+void pvname_svc(const char *, const char *);
+void pvname(const char *, const char *);
 void error(const char *) __dead;
 void crash(void) __dead;
-void record_open __P((const char *));
+void record_open(const char *);
 void expected1(tok_kind) __dead;
 void expected2(tok_kind, tok_kind) __dead;
 void expected3(tok_kind, tok_kind, tok_kind) __dead;
-void tabify __P((FILE *, int));
-char *make_argname __P((const char *, const char *));
-void add_type __P((int, const char *));
-bas_type *find_type __P((const char *));
+void tabify(FILE *, int);
+char *make_argname(const char *, const char *);
+void add_type(int, const char *);
+bas_type *find_type(const char *);
 /*
  * rpc_cout routines 
  */
-void emit __P((definition *));
-void emit_inline __P((declaration *, int));
-void emit_single_in_line __P((declaration *, int, relation));
-char *upcase __P((const char *));
+void emit(definition *);
+void emit_inline(declaration *, int);
+void emit_single_in_line(declaration *, int, relation);
+char *upcase(const char *);
 
 /*
  * rpc_hout routines 
  */
 
-void print_datadef __P((definition *));
-void print_funcdef __P((definition *));
-void pxdrfuncdecl __P((const char *, int));
-void pprocdef __P((proc_list *, version_list *, const char *, int, int));
-void pdeclaration __P((const char *, declaration *, int, const char *));
+void print_datadef(definition *);
+void print_progdef(definition *);
+void print_funcdef(definition *, int *);
+void print_funcend(int);
+void pxdrfuncdecl(const char *, int);
+void pprocdef(proc_list *, version_list *, const char *, int);
+void pdeclaration(const char *, declaration *, int, const char *);
 
 /*
  * rpc_svcout routines 
  */
-void write_most __P((char *, int, int));
-void write_netid_register __P((const char *));
-void write_nettype_register __P((const char *));
-void write_rest __P((void));
-void write_programs __P((const char *));
-int nullproc __P((proc_list *));
-void write_svc_aux __P((int));
-void write_msg_out __P((void));
-void write_inetd_register __P((const char *));
+void write_most(char *, int, int);
+void write_netid_register(const char *);
+void write_nettype_register(const char *);
+void write_rest(void);
+void write_programs(const char *);
+int nullproc(proc_list *);
+void write_svc_aux(int);
+void write_msg_out(void);
+void write_inetd_register(const char *);
 
 /*
  * rpc_clntout routines
  */
-void write_stubs __P((void));
-void printarglist __P((proc_list *, const char *, const char *, const char *));
+void write_stubs(void);
+void printarglist(proc_list *, const char *, const char *, const char *);
 
 
 /*
  * rpc_tblout routines
  */
-void write_tables __P((void));
+void write_tables(void);
 
 /*
  * rpc_sample routines
  */
-void write_sample_svc __P((definition *));
-int write_sample_clnt __P((definition *));
-void add_sample_msg __P((void));
-void write_sample_clnt_main __P((void));
+void write_sample_svc(definition *);
+int write_sample_clnt(definition *);
+void add_sample_msg(void);
+void write_sample_clnt_main(void);
