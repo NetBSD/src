@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.105 2013/12/15 09:21:03 wiz Exp $	*/
+/*	$NetBSD: fstat.c,v 1.106 2013/12/15 18:56:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.105 2013/12/15 09:21:03 wiz Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.106 2013/12/15 18:56:59 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,7 +502,7 @@ ftrans(fdfile_t *fp, int i)
 		    i, fdfile.ff_file, Pid);
 		return;
 	}
-	if (Aflg && file.f_type != DTYPE_VNODE)
+	if (Aflg && file.f_type != DTYPE_VNODE && checkfile == 0)
 		(void)printf("%*lx ",
 			2*(int)(sizeof(void*)), (long)fdfile.ff_file);
 	switch (file.f_type) {
