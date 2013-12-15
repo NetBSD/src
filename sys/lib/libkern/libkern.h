@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.110 2013/12/11 01:24:08 joerg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.111 2013/12/15 21:15:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -189,9 +189,15 @@ tolower(int ch)
 #endif
 #endif
 
+#ifndef	CTASSERT
 #define	CTASSERT(x)		__CTASSERT(x)
+#endif
+#ifndef	CTASSERT_SIGNED
 #define	CTASSERT_SIGNED(x)	__CTASSERT(((typeof(x))-1) < 0)
+#endif
+#ifndef	CTASSERT_UNSIGNED
 #define	CTASSERT_UNSIGNED(x)	__CTASSERT(((typeof(x))-1) >= 0)
+#endif
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
