@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2013/12/05 16:26:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2013/12/15 18:08:37 joerg Exp $
 
 PROG=		zboot
 
@@ -21,7 +21,7 @@ CFLAGS+=	-fno-unwind-tables
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -mcpu=xscale
+CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
 .if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
 .else
