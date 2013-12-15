@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.13 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.14 2013/12/15 10:42:52 spz Exp $	*/
 /* $OpenBSD: servconf.c,v 1.240 2013/07/19 07:37:48 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.13 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.14 2013/12/15 10:42:52 spz Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -2012,7 +2012,7 @@ int server_match_spec_complete(struct connection_info *ci)
 		dst->n = src->n; \
 } while (0)
 #define M_CP_STROPT(n) do {\
-	if (src->n != NULL) { \
+	if (src->n != NULL && dst->n != src->n) { \
 		free(dst->n); \
 		dst->n = src->n; \
 	} \
@@ -2043,8 +2043,6 @@ copy_set_server_options(ServerOptions *dst, ServerOptions *src, int preauth)
 	M_CP_INTOPT(hostbased_uses_name_from_packet_only);
 	M_CP_INTOPT(kbd_interactive_authentication);
 	M_CP_INTOPT(zero_knowledge_password_authentication);
-	M_CP_STROPT(authorized_keys_command);
-	M_CP_STROPT(authorized_keys_command_user);
 	M_CP_INTOPT(permit_root_login);
 	M_CP_INTOPT(permit_empty_passwd);
 
