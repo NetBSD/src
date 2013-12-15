@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.28 2013/12/05 16:26:04 joerg Exp $
+#	$NetBSD: Makefile.gzboot,v 1.29 2013/12/15 18:08:37 joerg Exp $
 
 NOMAN=  # defined
 
@@ -36,7 +36,7 @@ STARTFILE= srtbegin.o
 CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
-CPPFLAGS+= -mabi=apcs-gnu -mfloat-abi=soft
+CPPFLAGS+= ${ARM_APCS_FLAGS}
 .if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
 .else
