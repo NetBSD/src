@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.222 2013/12/15 10:25:23 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.223 2013/12/15 17:15:34 para Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.222 2013/12/15 10:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.223 2013/12/15 17:15:34 para Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3364,7 +3364,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	usb_device_request_t *req = &xfer->request;
 	usbd_device_handle dev = epipe->pipe.device;
 	ehci_softc_t *sc = dev->bus->hci_private;
-	int addr = dev->address;
+	int addr __diagused = dev->address;
 	ehci_soft_qtd_t *setup, *stat, *next;
 	ehci_soft_qh_t *sqh;
 	int isread;
