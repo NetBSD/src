@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.246 2013/12/15 10:25:23 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.247 2013/12/15 18:50:25 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.246 2013/12/15 10:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.247 2013/12/15 18:50:25 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1722,7 +1722,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
         KASSERT(OHCI_ED_GET_FA(HTOO32(sed->ed.ed_flags)) == dev->address);
-        KASSERT(OHCI_ED_SET_MAXP(HTOO32(sed->ed.ed_flags)) ==
+        KASSERT(OHCI_ED_GET_MAXP(HTOO32(sed->ed.ed_flags)) ==
             UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize));
 
 	next = stat;
