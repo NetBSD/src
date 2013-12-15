@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.93 2013/09/13 07:18:34 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.94 2013/12/15 21:09:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.93 2013/09/13 07:18:34 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.94 2013/12/15 21:09:50 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -99,6 +99,8 @@ static void	module_enqueue(module_t *);
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 static void	sysctl_module_setup(void);
+static int	sysctl_module_autotime(SYSCTLFN_PROTO);
+
 #define MODULE_CLASS_MATCH(mi, class) \
 	((class) == MODULE_CLASS_ANY || (class) == (mi)->mi_class)
 
@@ -405,6 +407,27 @@ module_builtin_require_force(void)
 
 static struct sysctllog *module_sysctllog;
 
+static int
+sysctl_module_autotime(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int t, error;
+
+	t = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0)
+		return (EINVAL);
+
+	*(int *)rnode->sysctl_data = t;
+	return (0);
+}
+
 static void
 sysctl_module_setup(void)
 {
@@ -436,6 +459,12 @@ sysctl_module_setup(void)
 		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "autotime",
+		SYSCTL_DESCR("Auto-unload delay"),
+		sysctl_module_autotime, 0, &module_autotime, 0,
 		CTL_CREATE, CTL_EOL);
 }
 
@@ -1107,10 +1136,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (modp != NULL) {
 		*modp = mod;
 	}
-	if (autoload) {
+	if (autoload && module_autotime > 0) {
 		/*
 		 * Arrange to try unloading the module after
-		 * a short delay.
+		 * a short delay unless auto-unload is disabled.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
 		mod->mod_flags |= MODFLG_AUTO_LOADED;
@@ -1288,7 +1317,9 @@ module_find_section(const char *name, void **addr, size_t *size)
  *
  *	Automatically unload modules.  We try once to unload autoloaded
  *	modules after module_autotime seconds.  If the system is under
- *	severe memory pressure, we'll try unloading all modules.
+ *	severe memory pressure, we'll try unloading all modules, else if
+ *	module_autotime is zero, we don't try to unload, even if the
+ *	module was previously scheduled for unload.
  */
 static void
 module_thread(void *cookie)
@@ -1311,7 +1342,8 @@ module_thread(void *cookie)
 
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
-			} else if (mod->mod_autotime == 0) {
+			} else if (module_autotime == 0 ||
+				   mod->mod_autotime == 0) {
 				continue;
 			} else if (time_second < mod->mod_autotime) {
 				module_thread_ticks = hz;
