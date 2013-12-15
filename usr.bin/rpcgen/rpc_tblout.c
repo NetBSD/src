@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.13 2013/08/11 08:03:10 dholland Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.14 2013/12/15 00:40:17 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.13 2013/08/11 08:03:10 dholland Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.14 2013/12/15 00:40:17 christos Exp $");
 #endif
 #endif
 
@@ -68,8 +68,8 @@ static const char null_entry[] = "\t(char *(*)())0,\n\
 static const char tbl_nproc[] =
     "u_int %s_nproc =\n\t(u_int)(sizeof(%s_table)/sizeof(%s_table[0]));\n\n";
 
-static void write_table __P((definition *));
-static void printit __P((const char *, const char *));
+static void write_table(definition *);
+static void printit(const char *, const char *);
 
 void
 write_tables(void)
