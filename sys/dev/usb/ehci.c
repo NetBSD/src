@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.221 2013/12/01 07:34:16 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.222 2013/12/15 10:25:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.221 2013/12/01 07:34:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.222 2013/12/15 10:25:23 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3395,18 +3395,9 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 	sqh = epipe->sqh;
 
-	/*
-	 * Update device address and length since they may have changed
-	 * during the setup of the control pipe in usbd_new_device().
-	 */
-	/* XXX This only needs to be done once, but it's too early in open. */
-	/* XXXX Should not touch ED here! */
-	sqh->qh.qh_endp =
-	    (sqh->qh.qh_endp & htole32(~(EHCI_QH_ADDRMASK | EHCI_QH_MPLMASK))) |
-	    htole32(
-	     EHCI_QH_SET_ADDR(addr) |
-	     EHCI_QH_SET_MPL(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize))
-	    );
+	KASSERT(EHCI_QH_GET_ADDR(le32toh(sqh->qh.qh_endp)) == addr);
+	KASSERT(EHCI_QH_GET_MPL(le32toh(sqh->qh.qh_endp)) == 
+	    UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize));
 
 	/* Set up data transaction */
 	if (len != 0) {
