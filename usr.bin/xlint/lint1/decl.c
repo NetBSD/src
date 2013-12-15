@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.57 2013/04/19 18:51:14 christos Exp $ */
+/* $NetBSD: decl.c,v 1.58 2013/12/15 03:43:37 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.57 2013/04/19 18:51:14 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.58 2013/12/15 03:43:37 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1121,7 +1121,7 @@ decl1str(sym_t *dsym)
 			 */
 			if (bitfieldtype_ok == 0 || isityp(t) == 0) {
 				/* illegal bit-field type */
-				error(35);
+				warning(35);
 				sz = tp->t_flen;
 				dsym->s_type = tp = duptyp(gettyp(t = INT));
 				if ((tp->t_flen = sz) > size(t))
