@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.77 2013/10/27 10:09:28 apb Exp $
+.\"	$NetBSD: sysctl.7,v 1.78 2013/12/15 21:10:32 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 27, 2013
+.Dd December 14, 2013
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -739,6 +739,7 @@ The third level names for the settings are described below.
 .Bl -column "kern.module.autoload" "integer" "Changeable" -offset indent
 .It Sy Third level name	Type	Changeable
 .It kern.module.autoload	integer	yes
+.It kern.module.autotime	integer	yes
 .It kern.module.verbose	integer	yes
 .El
 .Pp
@@ -749,6 +750,10 @@ A boolean that controls whether kernel modules are loaded automatically.
 See
 .Xr module 7
 for additional details.
+.It Li kern.module.autotime
+An integer that controls the delay before an attempt is made to
+automatically unload a module that was auto-loaded.  Setting this value
+to zero disables the auto-unload function.
 .It Li kern.module.verbose
 A boolean that enables or disables verbose
 debug messages related to kernel modules.
