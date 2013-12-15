@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nb_name.c,v 1.5 2003/04/04 08:05:34 jdolecek Exp $");
+__RCSID("$NetBSD: nb_name.c,v 1.6 2013/12/15 21:45:07 stacktic Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -169,7 +169,7 @@ nb_name_encode(struct nb_name *np, u_char *dst)
 		memsetw(cp + 2, NB_NAMELEN - 1, NBENCODE(' '));
 		cp += NB_ENCNAMELEN;
 	} else {
-		for (i = 0; *name && i < NB_NAMELEN; i++, cp += 2, name++) {
+		for (i = 0; *name && i < NB_NAMELEN - 1; i++, cp += 2, name++) {
 			ch = NBENCODE(toupper(*name));
 			memcpy(cp, &ch, 2);
 		}
