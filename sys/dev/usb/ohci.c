@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.247 2013/12/15 18:50:25 jakllsch Exp $	*/
+/*	$NetBSD: ohci.c,v 1.248 2013/12/16 10:04:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.247 2013/12/15 18:50:25 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.248 2013/12/16 10:04:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1683,6 +1683,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	usb_device_request_t *req = &xfer->request;
 	usbd_device_handle dev = opipe->pipe.device;
 	ohci_softc_t *sc = dev->bus->hci_private;
+	int addr = dev->address;
 	ohci_soft_td_t *setup, *stat, *next, *tail;
 	ohci_soft_ed_t *sed;
 	int isread;
@@ -1697,7 +1698,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
 		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
-		    UGETW(req->wIndex), len, dev->address,
+		    UGETW(req->wIndex), len, addr,
 		    opipe->pipe.endpoint->edesc->bEndpointAddress));
 
 	setup = opipe->tail.td;
@@ -1716,14 +1717,21 @@ ohci_device_request(usbd_xfer_handle xfer)
 	sed = opipe->sed;
 	opipe->u.ctl.length = len;
 
-	/* XXX is this ever written to by hardware ??? */
+	/* Update device address and length since they may have changed
+	   during the setup of the control pipe in usbd_new_device(). */
+	/* XXX This only needs to be done once, but it's too early in open. */
+	/* XXXX Should not touch ED here! */
+
 	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_flags),
 	    sizeof(sed->ed.ed_flags),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
-        KASSERT(OHCI_ED_GET_FA(HTOO32(sed->ed.ed_flags)) == dev->address);
-        KASSERT(OHCI_ED_GET_MAXP(HTOO32(sed->ed.ed_flags)) ==
-            UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize));
+	sed->ed.ed_flags = HTOO32(
+	 (O32TOH(sed->ed.ed_flags) & ~(OHCI_ED_ADDRMASK | OHCI_ED_MAXPMASK)) |
+	 OHCI_ED_SET_FA(addr) |
+	 OHCI_ED_SET_MAXP(UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize)));
+	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_flags),
+	    sizeof(sed->ed.ed_flags),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	next = stat;
 
