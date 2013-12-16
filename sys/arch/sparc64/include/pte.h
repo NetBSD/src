@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.23 2013/12/08 14:41:28 palle Exp $ */
+/*	$NetBSD: pte.h,v 1.24 2013/12/16 20:17:35 palle Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -176,7 +176,7 @@ typedef struct sun4u_tte pte_t;
 #define TLB_REAL_W		0x0000000000000400LL
 /* #define TLB_TSB_LOCK		0x0000000000000200LL */
 #define TLB_TSB_LOCK		0x0000000000001000LL
-#define TLB_EXEC		0x0000000000000100LL
+#define SUN4U_TLB_EXEC		0x0000000000000100LL
 #define TLB_EXEC_ONLY		0x0000000000000080LL
 /* H/W bits */
 #define TLB_L			0x0000000000000040LL
@@ -267,6 +267,8 @@ typedef struct sun4u_tte pte_t;
 ((priv)?SUN4V_TLB_P:0LL)|((write)?SUN4V_TLB_W:0LL)|((g)?SUN4V_TLB_G:0LL)|\
 ((ie)?SUN4V_TLB_IE:0LL))
 
+
+#define TLB_EXEC (CPU_ISSUN4V ? SUN4V_TLB_EXEC : SUN4U_TLB_EXEC)
 
 #define MMU_CACHE_VIRT	0x3
 #define MMU_CACHE_PHYS	0x2
