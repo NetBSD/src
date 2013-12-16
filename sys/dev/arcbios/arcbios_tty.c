@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.22 2011/04/24 16:26:59 rmind Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.23 2013/12/16 15:49:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.22 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.23 2013/12/16 15:49:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -235,11 +235,11 @@ void
 arcbios_tty_poll(void *v)
 {
 	struct tty *tp = v;
-	int c, l_r;
+	int c;
 
 	while (arcbios_tty_getchar(&c)) {
 		if (tp->t_state & TS_ISOPEN)
-			l_r = (*tp->t_linesw->l_rint)(c, tp);
+			(void)(*tp->t_linesw->l_rint)(c, tp);
 	}
 	callout_reset(&arcbios_tty_ch, 1, arcbios_tty_poll, tp);
 }
