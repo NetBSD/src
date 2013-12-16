@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2013/11/18 16:23:47 bad Exp $
+# $NetBSD: mi,v 1.60 2013/12/16 23:54:26 lneto Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -98,10 +98,10 @@
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/lua				base-kernel-modules	kmod
 ./@MODULEDIR@/lua/lua.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/luacore				base-kernel-modules	kmod
-./@MODULEDIR@/luacore/luacore.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/luapmf				base-kernel-modules	kmod
 ./@MODULEDIR@/luapmf/luapmf.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/luasystm				base-kernel-modules	kmod
+./@MODULEDIR@/luasystm/luasystm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mfs				base-kernel-modules	kmod
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
