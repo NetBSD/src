@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.33 2013/06/16 06:29:08 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.34 2013/12/16 18:29:57 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.33 2013/06/16 06:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.34 2013/12/16 18:29:57 jakllsch Exp $");
 
 
 /*
@@ -63,7 +63,6 @@ static void	rgephy_attach(device_t, device_t, void *);
 
 struct rgephy_softc {
 	struct mii_softc mii_sc;
-	int mii_revision;
 };
 
 CFATTACH_DECL_NEW(rgephy, sizeof(struct rgephy_softc),
@@ -122,11 +121,12 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, rev);
 
-	rsc->mii_revision = rev;
-
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
@@ -303,7 +303,7 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		if (rsc->mii_revision >= 2) {
+		if (sc->mii_mpd_rev >= 2) {
 			/* RTL8211B(L) */
 			reg = PHY_READ(sc, RGEPHY_MII_SSR);
 			if (reg & RGEPHY_SSR_LINK) {
@@ -359,7 +359,7 @@ rgephy_status(struct mii_softc *sc)
 	mii->mii_media_active = IFM_ETHER;
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision >= 2) {
+	if (sc->mii_mpd_rev >= 2) {
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if (ssr & RGEPHY_SSR_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
@@ -389,7 +389,7 @@ rgephy_status(struct mii_softc *sc)
 		}
 	}
 
-	if (rsc->mii_revision >= 2) {
+	if (sc->mii_mpd_rev >= 2) {
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		switch (ssr & RGEPHY_SSR_SPD_MASK) {
 		case RGEPHY_SSR_S1000:
@@ -460,7 +460,7 @@ rgephy_loop(struct mii_softc *sc)
 	int i;
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision < 2) {
+	if (sc->mii_mpd_rev < 2) {
 		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
 	}
@@ -496,7 +496,7 @@ rgephy_load_dspcode(struct mii_softc *sc)
 	int val;
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision >= 2)
+	if (sc->mii_mpd_rev >= 2)
 		return;
 
 #if 1
@@ -598,9 +598,9 @@ rgephy_reset(struct mii_softc *sc)
 	DELAY(1000);
 
 	rsc = (struct rgephy_softc *)sc;
-	if (rsc->mii_revision < 2) {
+	if (sc->mii_mpd_rev < 2) {
 		rgephy_load_dspcode(sc);
-	} else if (rsc->mii_revision == 3) {
+	} else if (sc->mii_mpd_rev == 3) {
 		/* RTL8211C(L) */
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
