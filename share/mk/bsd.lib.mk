@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.343 2013/12/13 02:47:45 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.344 2013/12/16 21:34:16 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -188,9 +188,6 @@ CTFFLAGS+=	-g
 .endif
 .endif
 
-.if empty(MACHINE_ARCH:Mearmv7*eb)
-# These will remove $a/$d/$t symbols needed for linking ARM BE8 images so
-# we can't strip them out.
 LIBSTRIPAOBJS=	yes
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 LIBSTRIPCOBJS=	yes
@@ -203,7 +200,6 @@ LIBSTRIPFOBJS=	yes
 .endif
 .if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*) 
 LIBSTRIPSHLIBOBJS=	yes
-.endif
 .endif
 
 .c.o:
