@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.223 2013/12/15 17:15:34 para Exp $ */
+/*	$NetBSD: ehci.c,v 1.224 2013/12/16 10:04:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.223 2013/12/15 17:15:34 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.224 2013/12/16 10:04:20 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3364,7 +3364,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	usb_device_request_t *req = &xfer->request;
 	usbd_device_handle dev = epipe->pipe.device;
 	ehci_softc_t *sc = dev->bus->hci_private;
-	int addr __diagused = dev->address;
+	int addr = dev->address;
 	ehci_soft_qtd_t *setup, *stat, *next;
 	ehci_soft_qh_t *sqh;
 	int isread;
@@ -3395,9 +3395,18 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 	sqh = epipe->sqh;
 
-	KASSERT(EHCI_QH_GET_ADDR(le32toh(sqh->qh.qh_endp)) == addr);
-	KASSERT(EHCI_QH_GET_MPL(le32toh(sqh->qh.qh_endp)) == 
-	    UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize));
+	/*
+	 * Update device address and length since they may have changed
+	 * during the setup of the control pipe in usbd_new_device().
+	 */
+	/* XXX This only needs to be done once, but it's too early in open. */
+	/* XXXX Should not touch ED here! */
+	sqh->qh.qh_endp =
+	    (sqh->qh.qh_endp & htole32(~(EHCI_QH_ADDRMASK | EHCI_QH_MPLMASK))) |
+	    htole32(
+	     EHCI_QH_SET_ADDR(addr) |
+	     EHCI_QH_SET_MPL(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize))
+	    );
 
 	/* Set up data transaction */
 	if (len != 0) {
