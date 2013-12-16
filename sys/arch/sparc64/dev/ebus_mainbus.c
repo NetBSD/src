@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.11 2013/09/12 19:51:09 martin Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.12 2013/12/16 20:17:35 palle Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.11 2013/09/12 19:51:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.12 2013/12/16 20:17:35 palle Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -69,9 +69,11 @@ static void *ebus_mainbus_intr_establish(bus_space_tag_t, int, int,
 static bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *,
 	bus_space_tag_t, int);
 #ifdef SUN4V
+#if 0
+XXX
 static void ebus_mainbus_intr_ack(struct intrhand *);
 #endif
-
+#endif
 int
 ebus_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -280,6 +282,8 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 
 #ifdef SUN4V
+#if 0
+XXX
 	if (CPU_ISSUN4V) {
 		struct upa_reg reg;
 		u_int64_t devhandle, devino = INTINO(ihandle);
@@ -329,7 +333,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		return (ih);
 	}
 #endif
-
+#endif
 	ihandle |= sc->sc_ign;
 	ino = INTINO(ihandle);
 
@@ -372,11 +376,12 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 }
 
 #ifdef SUN4V
-
+#if 0
+XXX
 static void
 ebus_mainbus_intr_ack(struct intrhand *ih)
 {
 	hv_intr_setstate(ih->ih_number, INTR_IDLE);
 }
-
+#endif
 #endif

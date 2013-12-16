@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2013/11/10 00:50:13 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.106 2013/12/16 20:17:35 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -347,6 +347,9 @@ void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
+
+/* cpu.c */
+int	cpu_myid(void);
 
 /* disksubr.c */
 struct dkbad;
