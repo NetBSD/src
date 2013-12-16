@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.105 2013/11/08 15:44:26 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.106 2013/12/16 20:17:35 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2013/11/08 15:44:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106 2013/12/16 20:17:35 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2013/11/08 15:44:26 nakayama Exp $");
 #include <machine/openfirm.h>
 
 #include <sparc64/sparc64/cache.h>
+#ifdef SUN4V
+#include <sparc64/hypervisor.h>
+#endif
 
 int ecache_min_line_size;
 
@@ -410,6 +413,37 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	 */
 	uvm_page_recolor(atop(bigcache)); /* XXX */
 
+}
+
+int
+cpu_myid(void)
+{
+	char buf[32];
+	int impl;
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		uint64_t myid;
+		hv_cpu_myid(&myid);
+		return myid;
+	}
+#endif
+	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
+		return lduwa(0x1fff40000d0UL, ASI_PHYS_NON_CACHED);
+	impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
+	switch (impl) {
+		case IMPL_OLYMPUS_C:
+		case IMPL_JUPITER:
+			return CPU_JUPITERID;
+		case IMPL_CHEETAH:
+		case IMPL_CHEETAH_PLUS:
+		case IMPL_JAGUAR:
+		case IMPL_PANTHER:
+			return CPU_FIREPLANEID;
+		default:
+			return CPU_UPAID;
+	}
 }
 
 #if defined(MULTIPROCESSOR)
