@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2013/09/24 18:12:59 jdc Exp $
+# $NetBSD: GENERIC,v 1.170 2013/12/16 20:17:34 palle Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.170 $"
 
 maxusers	64
 
@@ -31,6 +31,7 @@ maxusers	64
 
 # Options for variants of the Sun SPARC architecure.
 options 	SUN4U		# sun4u - UltraSPARC
+options 	SUN4V		# sun4v - UltraSPARC T1/T2+/T3/T4/T5
 #options 	BLINK		# blink the system LED
 
 #### System options that are the same for all ports

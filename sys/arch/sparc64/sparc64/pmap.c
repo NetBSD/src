@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.281 2013/09/11 18:27:44 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.282 2013/12/16 20:17:35 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2013/09/11 18:27:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2013/12/16 20:17:35 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -60,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2013/09/11 18:27:44 martin Exp $");
 #include <machine/bootinfo.h>
 
 #include <sparc64/sparc64/cache.h>
+#ifdef SUN4V
+#include <sparc64/hypervisor.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -145,6 +148,10 @@ paddr_t	vm_first_phys, vm_num_phys;
 int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 #define TSBENTS (512<<tsbsize)
 #define	TSBSIZE	(TSBENTS * 16)
+
+#ifdef SUN4V
+struct tsb_desc *tsb_desc;
+#endif
 
 static struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
@@ -1145,7 +1152,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_flags = CPUF_PRIMARY;
-		cpus->ci_cpuid = CPU_UPAID;
+		cpus->ci_cpuid = cpu_myid();
 		cpus->ci_fplwp = NULL;
 		cpus->ci_eintstack = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
@@ -1233,6 +1240,26 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 		ci->ci_ctxbusy = curcpu()->ci_ctxbusy;
 	}
 
+#ifdef SUN4V
+	if (initial && CPU_ISSUN4V) {
+		tsb_desc = (struct tsb_desc *)kdata_alloc(
+			sizeof(struct tsb_desc), 16);
+		memset(tsb_desc, 0, sizeof(struct tsb_desc));
+		/* 8K page size used for TSB index computation */
+		tsb_desc->td_idxpgsz = 0;
+		tsb_desc->td_assoc = 1;
+		tsb_desc->td_size = TSBENTS;
+		tsb_desc->td_ctxidx = -1;
+		tsb_desc->td_pgsz = 0xf;
+		tsb_desc->td_pa = pmap_kextract((vaddr_t)ci->ci_tsb_dmmu);
+		BDPRINTF(PDB_BOOT1, ("cpu %d: TSB descriptor allocated at %p "
+		    "size %08x - td_pa at %p\n",
+		    ci->ci_index, tsb_desc, sizeof(struct tsb_desc),
+		    tsb_desc->td_pa));
+		
+	}
+#endif
+
 	BDPRINTF(PDB_BOOT1, ("cpu %d: TSB allocated at %p/%p size %08x\n",
 	    ci->ci_index, ci->ci_tsb_dmmu, ci->ci_tsb_immu, TSBSIZE));
 }
@@ -1250,11 +1277,8 @@ cpu_pmap_init(struct cpu_info *ci)
 	 * running for cpu0 yet..
 	 */
 	ci->ci_pmap_next_ctx = 1;
-#ifdef SUN4V
-#error find out if we have 16 or 13 bit context ids
-#else
-	ci->ci_numctx = 0x2000; /* all SUN4U use 13 bit contexts */
-#endif
+	/* all SUN4U use 13 bit contexts - SUN4V use at least 13 bit contexts */
+	ci->ci_numctx = 0x2000; 
 	ctxsize = sizeof(paddr_t)*ci->ci_numctx;
 	ci->ci_ctxbusy = (paddr_t *)kdata_alloc(ctxsize, sizeof(uint64_t));
 	memset(ci->ci_ctxbusy, 0, ctxsize);
