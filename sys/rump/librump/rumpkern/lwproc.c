@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.25 2013/12/09 16:21:15 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.26 2013/12/16 15:36:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.25 2013/12/09 16:21:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.26 2013/12/16 15:36:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -137,6 +137,9 @@ lwproc_newproc(struct proc *parent, int flags)
 
 	p->p_vmspace = vmspace_kernel();
 	p->p_emul = emul_default;
+#ifdef __HAVE_SYSCALL_INTERN
+	p->p_emul->e_syscall_intern(p);
+#endif
 	if (*parent->p_comm)
 		strcpy(p->p_comm, parent->p_comm);
 	else
