@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2012/10/27 17:18:10 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2013/12/16 15:45:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2012/10/27 17:18:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2013/12/16 15:45:29 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,7 +246,6 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	const char *cpufreq, *osload;
 	char *bootpath = NULL;
 	vaddr_t kernend;
-	int kernstartpfn, kernendpfn;
 	u_int i;
 	int rv;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
@@ -323,12 +322,6 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	{
 		kernend = mips_round_page(end);
 	}
-
-	/* Leave 1 page before kernel untouched as that's where our initial
-	 * kernel stack is */
-	/* XXX We could free it in cpu_startup() though XXX */
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text)) - 1;
-	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	cpufreq = arcbios_GetEnvironmentVariable("cpufreq");
 
@@ -630,6 +623,9 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	if (mem_cluster_cnt == 0)
 		panic("no free memory descriptors found");
 
+	/* Leave 1 page before kernel untouched as that's where our initial
+	 * kernel stack is */
+	/* XXX We could free it in cpu_startup() though XXX */
 	mips_page_physload((vaddr_t)kernel_text - PAGE_SIZE, (vaddr_t)kernend,
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
