@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.51 2013/01/03 09:40:55 martin Exp $ */
+/*	$NetBSD: param.h,v 1.52 2013/12/16 20:17:35 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -230,9 +230,15 @@ extern void	delay(unsigned int);
 
 extern int cputyp;
 
+#if defined (SUN4US) || defined (SUN4V)
 #define CPU_ISSUN4U     (cputyp == CPU_SUN4U)
 #define CPU_ISSUN4US    (cputyp == CPU_SUN4US)
 #define CPU_ISSUN4V     (cputyp == CPU_SUN4V)
+#else
+#define CPU_ISSUN4U	(1)
+#define CPU_ISSUN4US	(0)
+#define CPU_ISSUN4V	(0)
+#endif
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
