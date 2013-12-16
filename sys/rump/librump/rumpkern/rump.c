@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.280 2013/12/09 17:57:11 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.281 2013/12/16 15:36:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.280 2013/12/09 17:57:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.281 2013/12/16 15:36:30 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -837,6 +837,7 @@ rump_hyp_syscall(int num, void *arg, long *retval)
 	if (__predict_false(num >= SYS_NSYSENT))
 		return ENOSYS;
 
+	/* XXX: always uses native syscall vector */
 	callp = rump_sysent + num;
 	l = curlwp;
 	rv = sy_invoke(callp, l, (void *)arg, regrv, num);
@@ -1016,6 +1017,7 @@ rump_syscall(int num, void *data, size_t dlen, register_t *retval)
 	struct proc *p;
 	struct emul *e;
 	struct sysent *callp;
+	const int *etrans = NULL;
 	int rv;
 
 	rump_schedule();
@@ -1027,6 +1029,30 @@ rump_syscall(int num, void *data, size_t dlen, register_t *retval)
 	callp = e->e_sysent + num;
 
 	rv = sy_invoke(callp, curlwp, data, retval, num);
+
+	/*
+	 * I hope that (!__HAVE_MINIMAL_EMUL || __HAVE_SYSCALL_INTERN) is
+	 * an invariant ...
+	 */
+#if !defined(__HAVE_MINIMAL_EMUL)
+	etrans = e->e_errno;
+#elif defined(__HAVE_SYSCALL_INTERN)
+	etrans = p->p_emuldata;
+#endif
+
+	if (etrans) {
+		rv = etrans[rv];
+		/*
+		 * XXX: small hack since Linux etrans vectors on some
+		 * archs contain negative errnos, but rump_syscalls
+		 * uses the -1 + errno ABI.  Note that these
+		 * negative values are always the result of translation,
+		 * otherwise the above translation method would not
+		 * work very well.
+		 */
+		if (rv < 0)
+			rv = -rv;
+	}
 	rump_unschedule();
 
 	return rv;

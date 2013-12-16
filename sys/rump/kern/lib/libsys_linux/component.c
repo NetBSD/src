@@ -1,7 +1,9 @@
-/*	$NetBSD: component.c,v 1.8 2013/04/03 23:51:20 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.9 2013/12/16 15:36:30 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <compat/linux/common/linux_errno.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -11,15 +13,25 @@
 
 extern struct sysent rump_linux_sysent[];
 
+#ifdef __HAVE_SYSCALL_INTERN
+static void
+rumplinux_syscall_intern(struct proc *p)
+{
+
+	p->p_emuldata = __UNCONST(native_to_linux_errno);
+}
+#endif
+
 struct emul emul_rump_sys_linux = {
 	.e_name = "linux-rump",
 	.e_sysent = rump_linux_sysent,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = RUMP_LINUX_SYS_NSYSENT,
+	.e_errno = native_to_linux_errno;
 #endif
 	.e_vm_default_addr = uvm_default_mapaddr,
 #ifdef __HAVE_SYSCALL_INTERN
-	.e_syscall_intern = syscall_intern,
+	.e_syscall_intern = rumplinux_syscall_intern,
 #endif
 };
 
