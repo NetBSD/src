@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.28 2013/11/13 17:47:27 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.29 2013/12/16 23:27:33 bad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.28 2013/11/13 17:47:27 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.29 2013/12/16 23:27:33 bad Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -65,7 +65,11 @@ __dead static void
 die(int sflag, int error, const char *reason)
 {
 
-	fprintf(stderr, "%s: %s", reason, strerror(error));
+	if (reason != NULL)
+		fputs(reason, stderr);
+	if (error > 0)
+		fprintf(stderr, ": %s", strerror(error));
+	fputc('\n', stderr);
 	if (!sflag)
 		rump_daemonize_done(error);
 	exit(1);
@@ -295,7 +299,8 @@ main(int argc, char *argv[])
 
 				snprintf(pb, sizeof(pb), "lib%s.so", optarg);
 				if (dlopen(pb, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
-					die(1, 0, "dlopen lib");
+					fprintf(stderr, "dlopen: %s", dlerror());
+					die(1, 0, NULL);
 				}
 			}
 			break;
