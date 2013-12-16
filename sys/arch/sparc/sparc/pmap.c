@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.356 2013/12/13 10:31:05 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.357 2013/12/16 15:48:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.356 2013/12/13 10:31:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.357 2013/12/16 15:48:29 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -942,7 +942,7 @@ pgt_page_free(struct pool *pp, void *v)
 {
 	vaddr_t va;
 	paddr_t pa;
-	bool rv;
+	bool rv __diagused;
 
 	va = (vaddr_t)v;
 	rv = pmap_extract(pmap_kernel(), va, &pa);
@@ -2669,7 +2669,6 @@ pv_changepte4m(struct vm_page *pg, int bis, int bic)
 		return;
 
 	for (; pv != NULL; pv = pv->pv_next) {
-		int tpte;
 		pm = pv->pv_pmap;
 		/* XXXSMP: should lock pm */
 		va = pv->pv_va;
@@ -2685,8 +2684,8 @@ pv_changepte4m(struct vm_page *pg, int bis, int bic)
 			cache_flush_page(va, pm->pm_ctxnum);
 		}
 
-		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		KASSERT((tpte & SRMMU_TETYPE) == SRMMU_TEPTE);
+		KASSERT((sp->sg_pte[VA_SUN4M_VPG(va)] & SRMMU_TETYPE) ==
+			SRMMU_TEPTE);
 		VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4M(updatepte4m(va,
 		    &sp->sg_pte[VA_SUN4M_VPG(va)], bic, bis, pm->pm_ctxnum,
 		    PMAP_CPUSET(pm)));
