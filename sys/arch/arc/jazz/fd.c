@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.41 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: fd.c,v 1.42 2013/12/16 15:46:57 mrg Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.42 2013/12/16 15:46:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,12 +245,8 @@ void
 fdcattach(struct fdc_softc *fdc)
 {
 	struct fdc_attach_args fa;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	int type;
 
-	iot = fdc->sc_iot;
-	ioh = fdc->sc_ioh;
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
 
