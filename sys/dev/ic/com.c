@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.320 2013/12/16 01:51:19 htodd Exp $ */
+/* $NetBSD: com.c,v 1.321 2013/12/16 12:08:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.320 2013/12/16 01:51:19 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.321 2013/12/16 12:08:14 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -385,7 +385,7 @@ com_attach_subr(struct com_softc *sc)
 {
 	struct com_regs *regsp = &sc->sc_regs;
 	struct tty *tp;
-#if (COM_16650 || COM_16750)
+#if defined(COM_16650) || defined(COM_16750)
 	u_int8_t lcr;
 #endif
 	const char *fifo_msg = NULL;
