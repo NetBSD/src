@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.5 2013/12/02 06:07:22 lneto Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.6 2013/12/16 23:25:56 lneto Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
@@ -149,7 +149,11 @@
 ** CHANGE that if ptrdiff_t is not adequate on your machine. (On most
 ** machines, ptrdiff_t gives a good choice between int or long.)
 */
+#ifdef _KERNEL
+#define LUA_INTEGER	LUA_NUMBER
+#else
 #define LUA_INTEGER	ptrdiff_t
+#endif
 
 
 /*
@@ -511,7 +515,8 @@
 */
 
 #ifdef _KERNEL
-#define LUA_NUMBER	int64_t
+#include <sys/stdint.h>
+#define LUA_NUMBER	intmax_t
 #else
 #define LUA_NUMBER_DOUBLE
 #define LUA_NUMBER	double
@@ -531,9 +536,9 @@
 @@ lua_str2number converts a string to a number.
 */
 #ifdef _KERNEL
-#define LUA_NUMBER_SCAN		"%" SCNd64
-#define LUA_NUMBER_FMT		"%" PRId64
-#define lua_str2number(s,p)	((int64_t) strtoimax((s), (p), 10))
+#define LUA_NUMBER_SCAN		"%jd"
+#define LUA_NUMBER_FMT		"%jd"
+#define lua_str2number(s,p)	strtoimax((s), (p), 10)
 #else
 #define LUA_NUMBER_SCAN		"%lf"
 #define LUA_NUMBER_FMT		"%.14g"
@@ -766,7 +771,13 @@ union luai_Cast { double l_d; long l_l; };
 ** CHANGE them if your system supports long long or does not support long.
 */
 
-#if defined(LUA_USELONGLONG)
+#ifdef _KERNEL
+
+#define LUA_INTFRMLEN		"j"
+#define LUA_INTFRM_T		intmax_t
+#define LUA_UINTFRM_T		uintmax_t
+
+#elif defined(LUA_USELONGLONG)
 
 #define LUA_INTFRMLEN		"ll"
 #define LUA_INTFRM_T		long long

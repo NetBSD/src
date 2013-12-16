@@ -1,7 +1,7 @@
-/*	$NetBSD: lstrlib.c,v 1.2 2013/12/02 23:06:35 lneto Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.3 2013/12/16 23:25:56 lneto Exp $	*/
 
 /*
-** $Id: lstrlib.c,v 1.2 2013/12/02 23:06:35 lneto Exp $
+** $Id: lstrlib.c,v 1.3 2013/12/16 23:25:56 lneto Exp $
 ** Standard library for string operations and pattern-matching
 ** See Copyright Notice in lua.h
 */
@@ -786,7 +786,11 @@ static int str_format (lua_State *L) {
         }
         case 'o':  case 'u':  case 'x':  case 'X': {
           addintlen(form);
+#ifndef _KERNEL
           sprintf(buff, form, (unsigned LUA_INTFRM_T)luaL_checknumber(L, arg));
+#else
+          sprintf(buff, form, (LUA_UINTFRM_T)luaL_checknumber(L, arg));
+#endif
           break;
         }
 #ifndef _KERNEL
