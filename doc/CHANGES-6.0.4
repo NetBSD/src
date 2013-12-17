@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.4,v 1.1.2.10 2013/12/17 22:34:07 riz Exp $
+# $NetBSD: CHANGES-6.0.4,v 1.1.2.11 2013/12/17 22:40:04 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.3 release to the NetBSD 6.0.4
 release:
@@ -123,4 +123,11 @@ sbin/fsck_ffs/inode.c				1.70
 	Fix cut-and-paste error in the non-ufs2 case which can cause
 	fsck_ffs to exit with an internal error.
 	[bouyer, ticket #991]
+
+sys/arch/xen/xen/evtchn.c			1.70
+
+        Remove the "evtchn_do_event: handler %p didn't lower ipl %d %d\n"
+        printf as analysis shows it actually isn't a bug in the handler,
+        but related to spin mutexes. Fixes port-xen/46313.
+	[bouyer, ticket #995]
 
