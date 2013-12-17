@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.9 2013/12/16 15:36:30 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.10 2013/12/17 14:30:18 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -27,7 +27,7 @@ struct emul emul_rump_sys_linux = {
 	.e_sysent = rump_linux_sysent,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = RUMP_LINUX_SYS_NSYSENT,
-	.e_errno = native_to_linux_errno;
+	.e_errno = native_to_linux_errno,
 #endif
 	.e_vm_default_addr = uvm_default_mapaddr,
 #ifdef __HAVE_SYSCALL_INTERN
