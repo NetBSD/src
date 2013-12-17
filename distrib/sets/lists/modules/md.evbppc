@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.38 2013/12/16 23:54:26 lneto Exp $
+# $NetBSD: md.evbppc,v 1.39 2013/12/17 08:46:37 njoly Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -96,6 +96,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lfs/lfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lua				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lua/lua.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/luacore				base-obsolete		obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/luacore/luacore.kmod		base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/luapmf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/luapmf/luapmf.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/luasystm			base-kernel-modules	kmod,compatmodules
@@ -303,6 +305,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/lfs/lfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lua				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lua/lua.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/luacore			base-obsolete		obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/luacore/luacore.kmod		base-obsolete		obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/luapmf			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/luapmf/luapmf.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/luasystm			base-kernel-modules	kmod,compatmodules
