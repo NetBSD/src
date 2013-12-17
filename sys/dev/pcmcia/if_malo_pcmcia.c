@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.1 2012/08/25 08:20:03 kiyohara Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.2 2013/12/17 01:00:16 joerg Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.1 2012/08/25 08:20:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.2 2013/12/17 01:00:16 joerg Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1793,7 +1793,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	hdr->result = 0;
 
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
-	memset(body, 0, sizeof(struct malo_cmd_body_assoc *));
+	memset(body, 0, sizeof(*body));
 	memcpy(body->peermac, sc->sc_net[sc->sc_net_cur].bssid, ETHER_ADDR_LEN);
 	body->capinfo = htole16(sc->sc_net[sc->sc_net_cur].capinfo);
 	body->listenintrv = htole16(10);
