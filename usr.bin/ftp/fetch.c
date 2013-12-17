@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.195 2011/12/10 05:53:58 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.195.2.1 2013/12/17 21:07:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.195 2011/12/10 05:53:58 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.195.2.1 2013/12/17 21:07:59 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -64,18 +64,23 @@ __RCSID("$NetBSD: fetch.c,v 1.195 2011/12/10 05:53:58 lukem Exp $");
 #include <unistd.h>
 #include <time.h>
 
+#include "ssl.h"
 #include "ftp_var.h"
 #include "version.h"
 
 typedef enum {
 	UNKNOWN_URL_T=-1,
 	HTTP_URL_T,
+#ifdef WITH_SSL
+	HTTPS_URL_T,
+#endif
 	FTP_URL_T,
 	FILE_URL_T,
 	CLASSIC_URL_T
 } url_t;
 
 __dead static void	aborthttp(int);
+__dead static void	timeouthttp(int);
 #ifndef NO_AUTH
 static int	auth_url(const char *, char **, const char *, const char *);
 static void	base64_encode(const unsigned char *, size_t, unsigned char *);
@@ -100,7 +105,15 @@ static int	redirect_loop;
 #define	FILE_URL	"file://"	/* file URL prefix */
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
+#ifdef WITH_SSL
+#define	HTTPS_URL	"https://"	/* https URL prefix */
 
+#define	IS_HTTP_TYPE(urltype) \
+	(((urltype) == HTTP_URL_T) || ((urltype) == HTTPS_URL_T))
+#else
+#define	IS_HTTP_TYPE(urltype) \
+	((urltype) == HTTP_URL_T)
+#endif
 
 /*
  * Determine if token is the next word in buf (case insensitive).
@@ -346,6 +359,13 @@ parse_url(const char *url, const char *desc, url_t *utype,
 	} else if (STRNEQUAL(url, FILE_URL)) {
 		url += sizeof(FILE_URL) - 1;
 		*utype = FILE_URL_T;
+#ifdef WITH_SSL
+	} else if (STRNEQUAL(url, HTTPS_URL)) {
+		url += sizeof(HTTPS_URL) - 1;
+		*utype = HTTPS_URL_T;
+		*portnum = HTTPS_PORT;
+		tport = httpsport;
+#endif
 	} else {
 		warnx("Invalid %s `%s'", desc, url);
  cleanup_parse_url:
@@ -463,7 +483,7 @@ sigjmp_buf	httpabort;
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
  * If proxyenv is set, use that for the proxy, otherwise try ftp_proxy or
- * http_proxy as appropriate.
+ * http_proxy/https_proxy as appropriate.
  * Supports HTTP redirects.
  * Returns 1 on failure, 0 on completed xfer, -1 if ftp connection
  * is still open (e.g, ftp xfer with trailing /)
@@ -473,8 +493,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 {
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
-	sigfunc volatile	oldintr;
-	sigfunc volatile	oldintp;
+	sigfunc volatile	oldint;
+	sigfunc volatile	oldpipe;
+	sigfunc volatile	oldalrm;
+	sigfunc volatile	oldquit;
 	int volatile		s;
 	struct stat		sb;
 	int volatile		ischunked;
@@ -498,23 +520,31 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	char			*puser, *ppass, *useragent;
 	off_t			hashbytes, rangestart, rangeend, entitylen;
 	int			(*volatile closefunc)(FILE *);
-	FILE			*volatile fin;
+	FETCH			*volatile fin;
 	FILE			*volatile fout;
+	const char		*volatile penv = proxyenv;
 	time_t			mtime;
 	url_t			urltype;
 	in_port_t		portnum;
+#ifdef WITH_SSL
+	void			*ssl;
+#endif
 
-	DPRINTF("fetch_url: `%s' proxyenv `%s'\n", url, STRorNULL(proxyenv));
+	DPRINTF("%s: `%s' proxyenv `%s'\n", __func__, url, STRorNULL(penv));
 
-	oldintr = oldintp = NULL;
+	oldquit = oldalrm = oldint = oldpipe = NULL;
 	closefunc = NULL;
-	fin = fout = NULL;
+	fin = NULL;
+	fout = NULL;
 	s = -1;
 	savefile = NULL;
 	auth = location = message = NULL;
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
 	uuser = pass = host = path = decodedpath = puser = ppass = NULL;
+
+	if (sigsetjmp(httpabort, 1))
+		goto cleanup_fetch_url;
 
 	if (parse_url(url, "URL", &urltype, &uuser, &pass, &host, &port,
 	    &portnum, &path) == -1)
@@ -531,7 +561,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			rval = fetch_ftp(url);
 			goto cleanup_fetch_url;
 		}
-		if (urltype != HTTP_URL_T || outfile == NULL)  {
+		if (!IS_HTTP_TYPE(urltype) || outfile == NULL)  {
 			warnx("Invalid URL (no file after host) `%s'", url);
 			goto cleanup_fetch_url;
 		}
@@ -549,7 +579,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		else
 			savefile = ftp_strdup(decodedpath);
 	}
-	DPRINTF("fetch_url: savefile `%s'\n", savefile);
+	DPRINTF("%s: savefile `%s'\n", __func__, savefile);
 	if (EMPTYSTRING(savefile)) {
 		if (urltype == FTP_URL_T) {
 			rval = fetch_ftp(url);
@@ -571,17 +601,17 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	}
 	if (urltype == FILE_URL_T) {		/* file:// URLs */
 		direction = "copied";
-		fin = fopen(decodedpath, "r");
+		fin = fetch_open(decodedpath, "r");
 		if (fin == NULL) {
 			warn("Can't open `%s'", decodedpath);
 			goto cleanup_fetch_url;
 		}
-		if (fstat(fileno(fin), &sb) == 0) {
+		if (fstat(fetch_fileno(fin), &sb) == 0) {
 			mtime = sb.st_mtime;
 			filesize = sb.st_size;
 		}
 		if (restart_point) {
-			if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
+			if (lseek(fetch_fileno(fin), restart_point, SEEK_SET) < 0) {
 				warn("Can't seek to restart `%s'",
 				    decodedpath);
 				goto cleanup_fetch_url;
@@ -594,18 +624,25 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				    (LLT)restart_point);
 			fputs("\n", ttyout);
 		}
+		if (0 == rcvbuf_size) {
+			rcvbuf_size = 8 * 1024; /* XXX */
+		}
 	} else {				/* ftp:// or http:// URLs */
 		const char *leading;
 		int hasleading;
 
-		if (proxyenv == NULL) {
-			if (urltype == HTTP_URL_T)
-				proxyenv = getoptionvalue("http_proxy");
+		if (penv == NULL) {
+#ifdef WITH_SSL
+			if (urltype == HTTPS_URL_T)
+				penv = getoptionvalue("https_proxy");
+#endif
+			if (penv == NULL && IS_HTTP_TYPE(urltype))
+				penv = getoptionvalue("http_proxy");
 			else if (urltype == FTP_URL_T)
-				proxyenv = getoptionvalue("ftp_proxy");
+				penv = getoptionvalue("ftp_proxy");
 		}
 		direction = "retrieved";
-		if (! EMPTYSTRING(proxyenv)) {			/* use proxy */
+		if (! EMPTYSTRING(penv)) {			/* use proxy */
 			url_t purltype;
 			char *phost, *ppath;
 			char *pport, *no_proxy;
@@ -652,21 +689,20 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (isproxy) {
 				if (restart_point) {
 					warnx("Can't restart via proxy URL `%s'",
-					    proxyenv);
+					    penv);
 					goto cleanup_fetch_url;
 				}
-				if (parse_url(proxyenv, "proxy URL", &purltype,
+				if (parse_url(penv, "proxy URL", &purltype,
 				    &puser, &ppass, &phost, &pport, &pportnum,
 				    &ppath) == -1)
 					goto cleanup_fetch_url;
 
-				if ((purltype != HTTP_URL_T
+				if ((!IS_HTTP_TYPE(purltype)
 				     && purltype != FTP_URL_T) ||
 				    EMPTYSTRING(phost) ||
 				    (! EMPTYSTRING(ppath)
 				     && strcmp(ppath, "/") != 0)) {
-					warnx("Malformed proxy URL `%s'",
-					    proxyenv);
+					warnx("Malformed proxy URL `%s'", penv);
 					FREEPTR(phost);
 					FREEPTR(pport);
 					FREEPTR(ppath);
@@ -690,8 +726,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				FREEPTR(path);
 				path = ftp_strdup(url);
 				FREEPTR(ppath);
+				urltype = purltype;
 			}
-		} /* ! EMPTYSTRING(proxyenv) */
+		} /* ! EMPTYSTRING(penv) */
 
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = 0;
@@ -700,7 +737,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_protocol = 0;
 		error = getaddrinfo(host, port, &hints, &res0);
 		if (error) {
-			warnx("Can't lookup `%s:%s': %s", host, port,
+			warnx("Can't LOOKUP `%s:%s': %s", host, port,
 			    (error == EAI_SYSTEM) ? strerror(errno)
 						  : gai_strerror(error));
 			goto cleanup_fetch_url;
@@ -709,6 +746,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			host = res0->ai_canonname;
 
 		s = -1;
+#ifdef WITH_SSL
+		ssl = NULL;
+#endif
 		for (res = res0; res; res = res->ai_next) {
 			char	hname[NI_MAXHOST], sname[NI_MAXSERV];
 
@@ -734,11 +774,22 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				continue;
 			}
 
-			if (ftp_connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+			if (ftp_connect(s, res->ai_addr, res->ai_addrlen,
+			    verbose || !res->ai_next) < 0) {
 				close(s);
 				s = -1;
 				continue;
 			}
+
+#ifdef WITH_SSL
+			if (urltype == HTTPS_URL_T) {
+				if ((ssl = fetch_start_ssl(s)) == NULL) {
+					close(s);
+					s = -1;
+					continue;
+				}
+			}
+#endif
 
 			/* success */
 			break;
@@ -749,7 +800,13 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			goto cleanup_fetch_url;
 		}
 
-		fin = fdopen(s, "r+");
+		oldalrm = xsignal(SIGALRM, timeouthttp);
+		alarmtimer(quit_time ? quit_time : 60);
+		fin = fetch_fdopen(s, "r+");
+		fetch_set_ssl(fin, ssl);
+		alarmtimer(0);
+
+		alarmtimer(quit_time ? quit_time : 60);
 		/*
 		 * Construct and send the request.
 		 */
@@ -764,11 +821,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				leading = ", ";
 				hasleading++;
 			}
-			fprintf(fin, "GET %s HTTP/1.0\r\n", path);
+			fetch_printf(fin, "GET %s HTTP/1.0\r\n", path);
 			if (flushcache)
-				fprintf(fin, "Pragma: no-cache\r\n");
+				fetch_printf(fin, "Pragma: no-cache\r\n");
 		} else {
-			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
+			fetch_printf(fin, "GET %s HTTP/1.1\r\n", path);
 			if (strchr(host, ':')) {
 				char *h, *p;
 
@@ -781,18 +838,23 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				    (p = strchr(h, '%')) != NULL) {
 					*p = '\0';
 				}
-				fprintf(fin, "Host: [%s]", h);
+				fetch_printf(fin, "Host: [%s]", h);
 				free(h);
 			} else
-				fprintf(fin, "Host: %s", host);
+				fetch_printf(fin, "Host: %s", host);
+#ifdef WITH_SSL
+			if ((urltype == HTTP_URL_T && portnum != HTTP_PORT) ||
+			    (urltype == HTTPS_URL_T && portnum != HTTPS_PORT))
+#else
 			if (portnum != HTTP_PORT)
-				fprintf(fin, ":%u", portnum);
-			fprintf(fin, "\r\n");
-			fprintf(fin, "Accept: */*\r\n");
-			fprintf(fin, "Connection: close\r\n");
+#endif
+				fetch_printf(fin, ":%u", portnum);
+			fetch_printf(fin, "\r\n");
+			fetch_printf(fin, "Accept: */*\r\n");
+			fetch_printf(fin, "Connection: close\r\n");
 			if (restart_point) {
 				fputs(leading, ttyout);
-				fprintf(fin, "Range: bytes=" LLF "-\r\n",
+				fetch_printf(fin, "Range: bytes=" LLF "-\r\n",
 				    (LLT)restart_point);
 				fprintf(ttyout, "restarting at " LLF,
 				    (LLT)restart_point);
@@ -800,12 +862,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				hasleading++;
 			}
 			if (flushcache)
-				fprintf(fin, "Cache-Control: no-cache\r\n");
+				fetch_printf(fin, "Cache-Control: no-cache\r\n");
 		}
 		if ((useragent=getenv("FTPUSERAGENT")) != NULL) {
-			fprintf(fin, "User-Agent: %s\r\n", useragent);
+			fetch_printf(fin, "User-Agent: %s\r\n", useragent);
 		} else {
-			fprintf(fin, "User-Agent: %s/%s\r\n",
+			fetch_printf(fin, "User-Agent: %s/%s\r\n",
 			    FTP_PRODUCT, FTP_VERSION);
 		}
 		if (wwwauth) {
@@ -815,7 +877,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				leading = ", ";
 				hasleading++;
 			}
-			fprintf(fin, "Authorization: %s\r\n", wwwauth);
+			fetch_printf(fin, "Authorization: %s\r\n", wwwauth);
 		}
 		if (proxyauth) {
 			if (verbose) {
@@ -824,18 +886,22 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				leading = ", ";
 				hasleading++;
 			}
-			fprintf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
+			fetch_printf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
 		}
 		if (verbose && hasleading)
 			fputs(")\n", ttyout);
-		fprintf(fin, "\r\n");
-		if (fflush(fin) == EOF) {
+		fetch_printf(fin, "\r\n");
+		if (fetch_flush(fin) == EOF) {
 			warn("Writing HTTP request");
+			alarmtimer(0);
 			goto cleanup_fetch_url;
 		}
+		alarmtimer(0);
 
 				/* Read the response */
-		len = get_line(fin, buf, sizeof(buf), &errormsg);
+		alarmtimer(quit_time ? quit_time : 60);
+		len = fetch_getline(fin, buf, sizeof(buf), &errormsg);
+		alarmtimer(0);
 		if (len < 0) {
 			if (*errormsg == '\n')
 				errormsg++;
@@ -844,7 +910,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 		while (len > 0 && (ISLWS(buf[len-1])))
 			buf[--len] = '\0';
-		DPRINTF("fetch_url: received `%s'\n", buf);
+		DPRINTF("%s: received `%s'\n", __func__, buf);
 
 				/* Determine HTTP response code */
 		cp = strchr(buf, ' ');
@@ -859,7 +925,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 				/* Read the rest of the header. */
 		while (1) {
-			len = get_line(fin, buf, sizeof(buf), &errormsg);
+			alarmtimer(quit_time ? quit_time : 60);
+			len = fetch_getline(fin, buf, sizeof(buf), &errormsg);
+			alarmtimer(0);
 			if (len < 0) {
 				if (*errormsg == '\n')
 					errormsg++;
@@ -870,7 +938,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				buf[--len] = '\0';
 			if (len == 0)
 				break;
-			DPRINTF("fetch_url: received `%s'\n", buf);
+			DPRINTF("%s: received `%s'\n", __func__, buf);
 
 		/*
 		 * Look for some headers
@@ -882,8 +950,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				filesize = STRTOLL(cp, &ep, 10);
 				if (filesize < 0 || *ep != '\0')
 					goto improper;
-				DPRINTF("fetch_url: parsed len as: " LLF "\n",
-				    (LLT)filesize);
+				DPRINTF("%s: parsed len as: " LLF "\n",
+				    __func__, (LLT)filesize);
 
 			} else if (match_token(&cp, "Content-Range:")) {
 				if (! match_token(&cp, "bytes"))
@@ -954,8 +1022,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 			} else if (match_token(&cp, "Location:")) {
 				location = ftp_strdup(cp);
-				DPRINTF("fetch_url: parsed location as `%s'\n",
-				    cp);
+				DPRINTF("%s: parsed location as `%s'\n",
+				    __func__, cp);
 
 			} else if (match_token(&cp, "Transfer-Encoding:")) {
 				if (match_token(&cp, "binary")) {
@@ -970,19 +1038,20 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto cleanup_fetch_url;
 				}
 				ischunked++;
-				DPRINTF("fetch_url: using chunked encoding\n");
+				DPRINTF("%s: using chunked encoding\n",
+				    __func__);
 
 			} else if (match_token(&cp, "Proxy-Authenticate:")
 				|| match_token(&cp, "WWW-Authenticate:")) {
 				if (! (token = match_token(&cp, "Basic"))) {
-					DPRINTF(
-			"fetch_url: skipping unknown auth scheme `%s'\n",
-						    token);
+					DPRINTF("%s: skipping unknown auth "
+					    "scheme `%s'\n", __func__, token);
 					continue;
 				}
 				FREEPTR(auth);
 				auth = ftp_strdup(token);
-				DPRINTF("fetch_url: parsed auth as `%s'\n", cp);
+				DPRINTF("%s: parsed auth as `%s'\n",
+				    __func__, cp);
 			}
 
 		}
@@ -1064,7 +1133,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				apass = NULL;
 			}
 			if (auth_url(auth, authp, auser, apass) == 0) {
-				rval = fetch_url(url, proxyenv,
+				rval = fetch_url(url, penv,
 				    proxyauth, wwwauth);
 				memset(*authp, 0, strlen(*authp));
 				FREEPTR(*authp);
@@ -1085,7 +1154,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	if (strcmp(savefile, "-") == 0) {
 		fout = stdout;
 	} else if (*savefile == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
+		oldpipe = xsignal(SIGPIPE, SIG_IGN);
 		fout = popen(savefile + 1, "w");
 		if (fout == NULL) {
 			warn("Can't execute `%s'", savefile + 1);
@@ -1121,10 +1190,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	}
 
 			/* Trap signals */
-	if (sigsetjmp(httpabort, 1))
-		goto cleanup_fetch_url;
-	(void)xsignal(SIGQUIT, psummary);
-	oldintr = xsignal(SIGINT, aborthttp);
+	oldquit = xsignal(SIGQUIT, psummary);
+	oldint = xsignal(SIGINT, aborthttp);
 
 	assert(rcvbuf_size > 0);
 	if ((size_t)rcvbuf_size > bufsize) {
@@ -1136,6 +1203,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 	bytes = 0;
 	hashbytes = mark;
+	if (oldalrm) {
+		(void)xsignal(SIGALRM, oldalrm);
+		oldalrm = NULL;
+	}
 	progressmeter(-1);
 
 			/* Finally, suck down the file. */
@@ -1147,7 +1218,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		lastchunk = 0;
 					/* read chunk-size */
 		if (ischunked) {
-			if (fgets(xferbuf, bufsize, fin) == NULL) {
+			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
 				warnx("Unexpected EOF reading chunk-size");
 				goto cleanup_fetch_url;
 			}
@@ -1182,7 +1253,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				warnx("Unexpected data following chunk-size");
 				goto cleanup_fetch_url;
 			}
-			DPRINTF("fetch_url: got chunk-size of " LLF "\n",
+			DPRINTF("%s: got chunk-size of " LLF "\n", __func__,
 			    (LLT)chunksize);
 			if (chunksize == 0) {
 				lastchunk = 1;
@@ -1192,7 +1263,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					/* transfer file or chunk */
 		while (1) {
 			struct timeval then, now, td;
-			off_t bufrem;
+			volatile off_t bufrem;
 
 			if (rate_get)
 				(void)gettimeofday(&then, NULL);
@@ -1200,7 +1271,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (ischunked)
 				bufrem = MIN(chunksize, bufrem);
 			while (bufrem > 0) {
-				flen = fread(xferbuf, sizeof(char),
+				flen = fetch_read(xferbuf, sizeof(char),
 				    MIN((off_t)bufsize, bufrem), fin);
 				if (flen <= 0)
 					goto chunkdone;
@@ -1239,7 +1310,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					/* read CRLF after chunk*/
  chunkdone:
 		if (ischunked) {
-			if (fgets(xferbuf, bufsize, fin) == NULL) {
+			if (fetch_getln(xferbuf, bufsize, fin) == NULL) {
+				alarmtimer(0);
 				warnx("Unexpected EOF reading chunk CRLF");
 				goto cleanup_fetch_url;
 			}
@@ -1259,7 +1331,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			(void)putc('#', ttyout);
 		(void)putc('\n', ttyout);
 	}
-	if (ferror(fin)) {
+	if (fetch_error(fin)) {
 		warn("Reading file");
 		goto cleanup_fetch_url;
 	}
@@ -1291,12 +1363,16 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	warnx("Improper response from `%s:%s'", host, port);
 
  cleanup_fetch_url:
-	if (oldintr)
-		(void)xsignal(SIGINT, oldintr);
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
+	if (oldint)
+		(void)xsignal(SIGINT, oldint);
+	if (oldpipe)
+		(void)xsignal(SIGPIPE, oldpipe);
+	if (oldalrm)
+		(void)xsignal(SIGALRM, oldalrm);
+	if (oldquit)
+		(void)xsignal(SIGQUIT, oldpipe);
 	if (fin != NULL)
-		fclose(fin);
+		fetch_close(fin);
 	else if (s != -1)
 		close(s);
 	if (closefunc != NULL && fout != NULL)
@@ -1329,12 +1405,32 @@ static void
 aborthttp(int notused)
 {
 	char msgbuf[100];
-	size_t len;
+	int len;
 
 	sigint_raised = 1;
 	alarmtimer(0);
-	len = strlcpy(msgbuf, "\nHTTP fetch aborted.\n", sizeof(msgbuf));
-	write(fileno(ttyout), msgbuf, len);
+	if (fromatty) {
+		len = snprintf(msgbuf, sizeof(msgbuf),
+		    "\n%s: HTTP fetch aborted.\n", getprogname());
+		if (len > 0)
+			write(fileno(ttyout), msgbuf, len);
+	}
+	siglongjmp(httpabort, 1);
+}
+
+static void
+timeouthttp(int notused)
+{
+	char msgbuf[100];
+	int len;
+
+	alarmtimer(0);
+	if (fromatty) {
+		len = snprintf(msgbuf, sizeof(msgbuf),
+		    "\n%s: HTTP fetch timeout.\n", getprogname());
+		if (len > 0)
+			write(fileno(ttyout), msgbuf, len);
+	}
 	siglongjmp(httpabort, 1);
 }
 
@@ -1687,6 +1783,7 @@ static int
 go_fetch(const char *url)
 {
 	char *proxyenv;
+	char *p;
 
 #ifndef NO_ABOUT
 	/*
@@ -1727,8 +1824,24 @@ go_fetch(const char *url)
 	/*
 	 * Check for file:// and http:// URLs.
 	 */
-	if (STRNEQUAL(url, HTTP_URL) || STRNEQUAL(url, FILE_URL))
+	if (STRNEQUAL(url, HTTP_URL)
+#ifdef WITH_SSL
+	    || STRNEQUAL(url, HTTPS_URL)
+#endif
+	    || STRNEQUAL(url, FILE_URL))
 		return (fetch_url(url, NULL, NULL, NULL));
+
+	/*
+	 * If it contains "://" but does not begin with ftp://
+	 * or something that was already handled, then it's
+	 * unsupported.
+	 *
+	 * If it contains ":" but not "://" then we assume the
+	 * part before the colon is a host name, not an URL scheme,
+	 * so we don't try to match that here.
+	 */
+	if ((p = strstr(url, "://")) != NULL && ! STRNEQUAL(url, FTP_URL))
+		errx(1, "Unsupported URL scheme `%.*s'", (int)(p - url), url);
 
 	/*
 	 * Try FTP URL-style and host:file arguments next.

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.156 2011/12/10 05:53:58 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.156.2.1 2013/12/17 21:07:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.156 2011/12/10 05:53:58 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.156.2.1 2013/12/17 21:07:59 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -202,25 +202,20 @@ getremoteinfo(void)
 			/* determine remote system type */
 	if (command("SYST") == COMPLETE) {
 		if (overbose) {
-			char *cp, c;
-
-			c = 0;
-			cp = strchr(reply_string + 4, ' ');
-			if (cp == NULL)
-				cp = strchr(reply_string + 4, '\r');
-			if (cp) {
-				if (cp[-1] == '.')
-					cp--;
-				c = *cp;
-				*cp = '\0';
-			}
-
-			fprintf(ttyout, "Remote system type is %s.\n",
-			    reply_string + 4);
-			if (cp)
-				*cp = c;
+			int os_len = strcspn(reply_string + 4, " \r\n\t");
+			if (os_len > 1 && reply_string[4 + os_len - 1] == '.')
+				os_len--;
+			fprintf(ttyout, "Remote system type is %.*s.\n",
+			    os_len, reply_string + 4);
 		}
-		if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
+		/*
+		 * Decide whether we should default to bninary.
+		 * Traditionally checked for "215 UNIX Type: L8", but
+		 * some printers report "Linux" ! so be more forgiving.
+		 * In reality we probably almost never want text any more.
+		 */
+		if (!strncasecmp(reply_string + 4, "unix", 4) ||
+		    !strncasecmp(reply_string + 4, "linux", 5)) {
 			if (proxy)
 				unix_proxy = 1;
 			else
@@ -1351,7 +1346,7 @@ get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
  * error message displayed.)
  */
 int
-ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
+ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen, int pe)
 {
 	int		flags, rv, timeout, error;
 	socklen_t	slen;
@@ -1417,8 +1412,9 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 	rv = connect(sock, name, namelen);	/* inititate the connection */
 	if (rv == -1) {				/* connection error */
 		if (errno != EINPROGRESS) {	/* error isn't "please wait" */
+			if (pe || (errno != EHOSTUNREACH))
  connecterror:
-			warn("Can't connect to `%s:%s'", hname, sname);
+				warn("Can't connect to `%s:%s'", hname, sname);
 			return -1;
 		}
 
