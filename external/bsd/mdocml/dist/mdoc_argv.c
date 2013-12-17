@@ -453,6 +453,7 @@ args(struct mdoc *m, int line, int *pos,
 		char *buf, enum argsflag fl, char **v)
 {
 	char		*p, *pp;
+	int		 pairs;
 	enum margserr	 rc;
 
 	if ('\0' == buf[*pos]) {
@@ -546,6 +547,8 @@ args(struct mdoc *m, int line, int *pos,
 	/* 
 	 * Process a quoted literal.  A quote begins with a double-quote
 	 * and ends with a double-quote NOT preceded by a double-quote.
+	 * Null-terminate the literal in place.
+	 * Collapse pairs of quotes inside quoted literals.
 	 * Whitespace is NOT involved in literal termination.
 	 */
 
@@ -556,13 +559,22 @@ args(struct mdoc *m, int line, int *pos,
 		if (MDOC_PPHRASE & m->flags)
 			m->flags |= MDOC_PHRASELIT;
 
+		pairs = 0;
 		for ( ; buf[*pos]; (*pos)++) {
+			/* Move following text left after quoted quotes. */
+			if (pairs)
+				buf[*pos - pairs] = buf[*pos];
 			if ('\"' != buf[*pos])
 				continue;
+			/* Unquoted quotes end quoted args. */
 			if ('\"' != buf[*pos + 1])
 				break;
+			/* Quoted quotes collapse. */
+			pairs++;
 			(*pos)++;
 		}
+		if (pairs)
+			buf[*pos - pairs] = '\0';
 
 		if ('\0' == buf[*pos]) {
 			if (MDOC_PPHRASE & m->flags)
