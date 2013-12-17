@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1451 2013/12/16 23:54:26 lneto Exp $
+# $NetBSD: mi,v 1.1452 2013/12/17 08:46:37 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3119,6 +3119,7 @@
 ./usr/share/man/cat8/zpool.0			man-zfs-catman		zfs,.cat
 ./usr/share/man/cat8/zzz.0			man-sysutil-catman	.cat
 ./usr/share/man/cat9/boot.0			man-obsolete		obsolete
+./usr/share/man/cat9lua/core.0			man-obsolete		obsolete
 ./usr/share/man/cat9lua/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat9lua/pmf.0			man-sys-catman		.cat
 ./usr/share/man/cat9lua/systm.0			man-sys-catman		.cat
@@ -5808,6 +5809,7 @@
 ./usr/share/man/html8/zic.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/zpool.html		man-zfs-htmlman		zfs,html
 ./usr/share/man/html8/zzz.html			man-sysutil-htmlman	html
+./usr/share/man/html9lua/core.html		man-obsolete		obsolete
 ./usr/share/man/html9lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/pmf.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/systm.html		man-sys-htmlman		html
@@ -8886,6 +8888,7 @@
 ./usr/share/man/man8/zpool.8			man-zfs-man		zfs,.man
 ./usr/share/man/man8/zzz.8			man-sysutil-man		.man
 ./usr/share/man/man9/boot.9			man-obsolete		obsolete
+./usr/share/man/man9lua/core.9lua		man-obsolete		obsolete
 ./usr/share/man/man9lua/intro.9lua		man-sys-man		.man
 ./usr/share/man/man9lua/pmf.9lua		man-sys-man		.man
 ./usr/share/man/man9lua/systm.9lua		man-sys-man		.man
