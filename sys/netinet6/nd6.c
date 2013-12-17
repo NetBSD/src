@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.130.14.1 2013/12/17 20:58:16 bouyer Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.130.14.1 2013/12/17 20:58:16 bouyer Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2282,44 +2282,43 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 {
 	int error = 0, s;
 	struct nd_prefix *pr;
-	struct in6_prefix *p = NULL;
-	struct in6_prefix *pe = NULL;
+	uint8_t *p = NULL, *ps = NULL;
+	uint8_t *pe = NULL;
 	size_t l;
 
 	s = splsoftnet();
 
 	if (oldp) {
-		p = (struct in6_prefix *)oldp;
-		pe = (struct in6_prefix *)((char *)oldp + *oldlenp);
+		ps = p = (uint8_t*)oldp;
+		pe = (uint8_t*)oldp + *oldlenp;
 	}
 	l = 0;
 
 	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		u_short advrtrs;
-		size_t advance;
-		struct sockaddr_in6 *sin6;
-		struct sockaddr_in6 *s6;
+		struct sockaddr_in6 sin6;
 		struct nd_pfxrouter *pfr;
+		struct in6_prefix pfx;
 
-		if (oldp && p + 1 <= pe)
+		if (oldp && p + sizeof(struct in6_prefix) <= pe)
 		{
-			memset(p, 0, sizeof(*p));
-			sin6 = (struct sockaddr_in6 *)(p + 1);
+			memset(&pfx, 0, sizeof(pfx));
+			ps = p;
+			pfx.prefix = pr->ndpr_prefix;
 
-			p->prefix = pr->ndpr_prefix;
-			if (sa6_recoverscope(&p->prefix)) {
+			if (sa6_recoverscope(&pfx.prefix)) {
 				log(LOG_ERR,
 				    "scope error in prefix list (%s)\n",
-				    ip6_sprintf(&p->prefix.sin6_addr));
+				    ip6_sprintf(&pfx.prefix.sin6_addr));
 				/* XXX: press on... */
 			}
-			p->raflags = pr->ndpr_raf;
-			p->prefixlen = pr->ndpr_plen;
-			p->vltime = pr->ndpr_vltime;
-			p->pltime = pr->ndpr_pltime;
-			p->if_index = pr->ndpr_ifp->if_index;
+			pfx.raflags = pr->ndpr_raf;
+			pfx.prefixlen = pr->ndpr_plen;
+			pfx.vltime = pr->ndpr_vltime;
+			pfx.pltime = pr->ndpr_pltime;
+			pfx.if_index = pr->ndpr_ifp->if_index;
 			if (pr->ndpr_vltime == ND6_INFINITE_LIFETIME)
-				p->expire = 0;
+				pfx.expire = 0;
 			else {
 				time_t maxexpire;
 
@@ -2329,43 +2328,48 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 				    ((sizeof(maxexpire) * 8) - 1));
 				if (pr->ndpr_vltime <
 				    maxexpire - pr->ndpr_lastupdate) {
-					p->expire = pr->ndpr_lastupdate +
+					pfx.expire = pr->ndpr_lastupdate +
 						pr->ndpr_vltime;
 				} else
-					p->expire = maxexpire;
+					pfx.expire = maxexpire;
 			}
-			p->refcnt = pr->ndpr_refcnt;
-			p->flags = pr->ndpr_stateflags;
-			p->origin = PR_ORIG_RA;
+			pfx.refcnt = pr->ndpr_refcnt;
+			pfx.flags = pr->ndpr_stateflags;
+			pfx.origin = PR_ORIG_RA;
+
+			p += sizeof(pfx); l += sizeof(pfx);
+
 			advrtrs = 0;
 			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
-				if ((void *)&sin6[advrtrs + 1] > (void *)pe) {
+				if (p + sizeof(sin6) > pe) {
 					advrtrs++;
 					continue;
 				}
-				s6 = &sin6[advrtrs];
-				sockaddr_in6_init(s6, &pfr->router->rtaddr,
+
+				sockaddr_in6_init(&sin6, &pfr->router->rtaddr,
 				    0, 0, 0);
-				if (sa6_recoverscope(s6)) {
+				if (sa6_recoverscope(&sin6)) {
 					log(LOG_ERR,
 					    "scope error in "
 					    "prefix list (%s)\n",
 					    ip6_sprintf(&pfr->router->rtaddr));
 				}
 				advrtrs++;
+				memcpy(p, &sin6, sizeof(sin6));
+				p += sizeof(sin6);
+				l += sizeof(sin6);
 			}
-			p->advrtrs = advrtrs;
+			pfx.advrtrs = advrtrs;
+			memcpy(ps, &pfx, sizeof(pfx));
 		}
 		else {
+			l += sizeof(pfx);
 			advrtrs = 0;
-			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry)
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
 				advrtrs++;
+				l += sizeof(sin6);
+			}
 		}
-
-		advance = sizeof(*p) + sizeof(*sin6) * advrtrs;
-		l += advance;
-		if (p)
-			p = (struct in6_prefix *)((char *)p + advance);
 	}
 
 	if (oldp) {
