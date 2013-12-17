@@ -108,6 +108,24 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 
 #if (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
 
+#ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+/* Defined in sljit_mod.c */
+extern kmutex_t sljit_allocator_mutex;
+
+static SLJIT_INLINE void allocator_grab_lock(void)
+{
+	mutex_enter(&sljit_allocator_mutex);
+}
+
+static SLJIT_INLINE void allocator_release_lock(void)
+{
+	mutex_exit(&sljit_allocator_mutex);
+}
+#else
+
 #include <pthread.h>
 
 static pthread_mutex_t allocator_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -121,10 +139,29 @@ static SLJIT_INLINE void allocator_release_lock(void)
 {
 	pthread_mutex_unlock(&allocator_mutex);
 }
+#endif
 
 #endif /* SLJIT_EXECUTABLE_ALLOCATOR */
 
 #if (defined SLJIT_UTIL_GLOBAL_LOCK && SLJIT_UTIL_GLOBAL_LOCK)
+
+#ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+/* Defined in sljit_mod.c */
+extern kmutex_t sljit_global_mutex;
+
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_grab_lock(void)
+{
+	mutex_enter(&sljit_global_mutex);
+}
+
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
+{
+	mutex_exit(&sljit_global_mutex);
+}
+#else
 
 #include <pthread.h>
 
@@ -139,6 +176,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 {
 	pthread_mutex_unlock(&global_mutex);
 }
+#endif
 
 #endif /* SLJIT_UTIL_GLOBAL_LOCK */
 
