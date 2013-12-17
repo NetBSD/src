@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.4 2013/09/12 15:38:04 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.5 2013/12/17 13:11:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.4 2013/09/12 15:38:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.5 2013/12/17 13:11:18 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -277,7 +277,7 @@ clockhandler(void *arg)
 	 * adjust for jitter.
 	 */
 	delta -= sc->sc_autoinc;
-	if (delta < 0 || delta >= sc->sc_autoinc) {
+	if (delta >= sc->sc_autoinc) {
 		delta = 0;
 	}
 	armreg_cntv_tval_write(sc->sc_autoinc - delta);
