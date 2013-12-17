@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.34 2013/12/16 18:29:57 jakllsch Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.35 2013/12/17 16:00:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.34 2013/12/16 18:29:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.35 2013/12/17 16:00:23 martin Exp $");
 
 
 /*
@@ -169,11 +169,8 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 static int
 rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
-	struct rgephy_softc *rsc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg, speed, gig, anar;
-
-	rsc = (struct rgephy_softc *)sc;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -350,7 +347,6 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 static void
 rgephy_status(struct mii_softc *sc)
 {
-	struct rgephy_softc *rsc;
 	struct mii_data *mii = sc->mii_pdata;
 	int gstat, bmsr, bmcr;
 	uint16_t ssr;
@@ -358,7 +354,6 @@ rgephy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	rsc = (struct rgephy_softc *)sc;
 	if (sc->mii_mpd_rev >= 2) {
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if (ssr & RGEPHY_SSR_LINK)
@@ -455,11 +450,9 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 static void
 rgephy_loop(struct mii_softc *sc)
 {
-	struct rgephy_softc *rsc;
 	uint32_t bmsr;
 	int i;
 
-	rsc = (struct rgephy_softc *)sc;
 	if (sc->mii_mpd_rev < 2) {
 		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
@@ -492,10 +485,8 @@ rgephy_loop(struct mii_softc *sc)
 static void
 rgephy_load_dspcode(struct mii_softc *sc)
 {
-	struct rgephy_softc *rsc;
 	int val;
 
-	rsc = (struct rgephy_softc *)sc;
 	if (sc->mii_mpd_rev >= 2)
 		return;
 
@@ -591,13 +582,11 @@ rgephy_load_dspcode(struct mii_softc *sc)
 static void
 rgephy_reset(struct mii_softc *sc)
 {
-	struct rgephy_softc *rsc;
 	uint16_t ssr;
 
 	mii_phy_reset(sc);
 	DELAY(1000);
 
-	rsc = (struct rgephy_softc *)sc;
 	if (sc->mii_mpd_rev < 2) {
 		rgephy_load_dspcode(sc);
 	} else if (sc->mii_mpd_rev == 3) {
