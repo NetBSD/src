@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.4,v 1.1.2.9 2013/12/17 20:54:49 bouyer Exp $
+# $NetBSD: CHANGES-6.0.4,v 1.1.2.10 2013/12/17 22:34:07 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.3 release to the NetBSD 6.0.4
 release:
@@ -117,4 +117,10 @@ sys/compat/common/compat_util.c			1.45
 
 	Free pathbuf in an error path.
 	[martin, ticket #999]
+
+sbin/fsck_ffs/inode.c				1.70
+
+	Fix cut-and-paste error in the non-ufs2 case which can cause
+	fsck_ffs to exit with an internal error.
+	[bouyer, ticket #991]
 
