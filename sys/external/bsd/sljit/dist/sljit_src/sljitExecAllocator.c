@@ -94,17 +94,32 @@ static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
 
 #else
 
+#ifdef _KERNEL
+#include <sys/param.h>
+#include <sys/module.h> /* for module_map */
+#include <uvm/uvm.h>
+#else
 #include <sys/mman.h>
+#endif
 
 static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 {
+#ifdef _KERNEL
+	return (void *)uvm_km_alloc(module_map, size,
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_EXEC);
+#else
 	void* retval = mmap(0, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
 	return (retval != MAP_FAILED) ? retval : NULL;
+#endif
 }
 
 static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
 {
+#ifdef _KERNEL
+	uvm_km_free(module_map, (vaddr_t)chunk, size, UVM_KMF_WIRED);
+#else
 	munmap(chunk, size);
+#endif
 }
 
 #endif
