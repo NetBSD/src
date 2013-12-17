@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.160 2013/12/13 07:37:50 martin Exp $
+# $NetBSD: postinstall,v 1.161 2013/12/17 12:51:26 njoly Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1845,6 +1845,7 @@ do_varshm()
 	op="$1"
 	failed=0
 
+	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
 	if ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
 	then
 		failed = 0;
