@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.39 2013/12/13 12:23:52 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.40 2013/12/17 20:57:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -651,4 +651,16 @@ sys/kern/uipc_syscalls.c			1.163
 	by m_get() will have an uninitialized length and contain junk
 	from a previous call. Initialize m_len to be 0 to handle this
 	case. Fixes PR/47591
+
+sys/netinet6/nd6.c				1.146
+usr.sbin/ndp/ndp.c				1.42
+
+	Instead of voodo casts use simple byte pointer arithmetic and memcpy to
+	create the "packed" binary format we pass out to userland when querying
+	the router/prefix list.
+	Simplify code to print the router/prefix list: use memcpy and local
+	structs properly aligned on the stack to decode the binary format
+	passed by the kernel - instead of (bogusly) assuming the format will
+	obey all local alignement requirements.
+	[martin, ticket #1892]
 
