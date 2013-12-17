@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.6 2012/03/03 05:41:45 nonaka Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.7 2013/12/17 17:13:46 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.6 2012/03/03 05:41:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.7 2013/12/17 17:13:46 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,6 +134,7 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_VIA, 0x4438, "VT2002P" },
 	{ HDA_VENDOR_VIA, 0x0448, "VT1812" },
 	{ HDA_VENDOR_VIA, 0x0440, "VT1818S" },
+	{ HDA_VENDOR_VIA, 0x4760, "VT1705" },
 	{ HDA_VENDOR_VIA, HDA_PRODUCT_ANY, "VIA" },
 	/* Analog Devices */
 	{ HDA_VENDOR_ANALOG_DEVICES, 0x184a, "AD1884A" },
