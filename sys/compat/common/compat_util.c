@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.44 2010/11/19 06:44:35 dholland Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.44.14.1 2013/12/17 20:52:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44 2010/11/19 06:44:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44.14.1 2013/12/17 20:52:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 	error = namei(&nd);
 	if (error != 0) {
 		epp->ep_interp = NULL;
+		pathbuf_destroy(pb);
 		return error;
 	}
 
