@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.66 2013/12/17 21:08:22 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.67 2013/12/17 22:33:26 riz Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1114,4 +1114,16 @@ usr.bin/ftp/version.h				patch
 
 	Add HTTPS support to ftp(1).
 	[tron, ticket #997]
+
+sys/dev/acpi/acpi_cpu.h				1.44
+sys/dev/acpi/acpi_cpu_tstate.c			1.31
+
+	Remove the upper limit for the number of T-states.
+	[bouyer, ticket #984]
+
+sbin/fsck_ffs/inode.c				1.70
+
+	Fix cut-and-paste error in the non-ufs2 case which can cause
+	fsck_ffs to exit with an internal error.
+	[bouyer, ticket #991]
 
