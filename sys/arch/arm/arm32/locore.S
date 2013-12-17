@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 2013/12/01 02:54:33 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 2013/12/17 01:27:21 joerg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.34 2013/12/01 02:54:33 joerg Exp $")
+	RCSID("$NetBSD: locore.S,v 1.35 2013/12/17 01:27:21 joerg Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -218,9 +218,9 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)
