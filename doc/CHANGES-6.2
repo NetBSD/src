@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.65 2013/12/17 20:52:38 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.66 2013/12/17 21:08:22 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -1096,4 +1096,22 @@ sys/compat/common/compat_util.c			1.45
 
 	Free pathbuf in an error path.
 	[martin, ticket #999]
+
+usr.bin/ftp/Makefile				patch
+usr.bin/ftp/cmds.c				patch
+usr.bin/ftp/cmdtab.c				patch
+usr.bin/ftp/extern.h				patch
+usr.bin/ftp/fetch.c				patch
+usr.bin/ftp/ftp.1				patch
+usr.bin/ftp/ftp.c				patch
+usr.bin/ftp/ftp_var.h				patch
+usr.bin/ftp/main.c				patch
+usr.bin/ftp/progressbar.c			patch
+usr.bin/ftp/ssl.c				patch
+usr.bin/ftp/ssl.h				patch
+usr.bin/ftp/util.c				patch
+usr.bin/ftp/version.h				patch
+
+	Add HTTPS support to ftp(1).
+	[tron, ticket #997]
 
