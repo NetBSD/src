@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.4 2013/06/20 05:30:21 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.5 2013/12/17 13:12:45 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.4 2013/06/20 05:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.5 2013/12/17 13:12:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,11 +143,13 @@ armgic_ipl_to_priority(int ipl)
 	return (IPL_HIGH - ipl) * GICC_PMR_PRIORITIES / NIPL;
 }
 
+#if 0
 static inline int
 armgic_priority_to_ipl(uint32_t priority)
 {
 	return IPL_HIGH - priority * NIPL / GICC_PMR_PRIORITIES;
 }
+#endif
 
 static void
 armgic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
