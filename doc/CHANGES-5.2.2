@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.2,v 1.1.2.3 2013/12/13 08:53:11 sborrill Exp $
+# $NetBSD: CHANGES-5.2.2,v 1.1.2.4 2013/12/17 20:58:38 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.2.1
 release:
@@ -27,4 +27,16 @@ sys/arch/xen/xen/evtchn.c			1.70
 	printf as analysis shows it actually isn't a bug in the handler,
 	but related to spin mutexes. Fixes port-xen/46313
 	[bouyer, ticket #1890]
+
+sys/netinet6/nd6.c				1.146
+usr.sbin/ndp/ndp.c				1.42
+
+	Instead of voodo casts use simple byte pointer arithmetic and memcpy to
+	create the "packed" binary format we pass out to userland when querying
+	the router/prefix list.
+	Simplify code to print the router/prefix list: use memcpy and local
+	structs properly aligned on the stack to decode the binary format
+	passed by the kernel - instead of (bogusly) assuming the format will
+	obey all local alignement requirements.
+	[martin, ticket #1892]
 
