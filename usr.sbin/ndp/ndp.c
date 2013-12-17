@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.40 2011/08/31 13:32:38 joerg Exp $	*/
+/*	$NetBSD: ndp.c,v 1.40.4.1 2013/12/17 20:47:32 bouyer Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -1132,9 +1132,8 @@ plist(void)
 {
 #ifdef ICMPV6CTL_ND6_PRLIST
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST };
-	char *buf;
-	struct in6_prefix *p, *ep, *n;
-	struct sockaddr_in6 *advrtr;
+	char *buf, *p, *ep;
+	struct in6_prefix pfx;
 	size_t l;
 	struct timeval tim;
 	const int niflags = NI_NUMERICHOST;
@@ -1155,17 +1154,17 @@ plist(void)
 		/*NOTREACHED*/
 	}
 
-	ep = (struct in6_prefix *)(void *)(buf + l);
-	for (p = (struct in6_prefix *)(void *)buf; p < ep; p = n) {
-		advrtr = (struct sockaddr_in6 *)(void *)(p + 1);
-		n = (struct in6_prefix *)(void *)&advrtr[p->advrtrs];
+	ep = buf + l;
+	for (p = buf; p < ep; ) {
+		memcpy(&pfx, p, sizeof(pfx));
+		p += sizeof(pfx);
 
-		if (getnameinfo((struct sockaddr *)(void *)&p->prefix,
-		    (socklen_t)p->prefix.sin6_len, namebuf, sizeof(namebuf),
+		if (getnameinfo((struct sockaddr*)&pfx.prefix,
+		    (socklen_t)pfx.prefix.sin6_len, namebuf, sizeof(namebuf),
 		    NULL, 0, niflags) != 0)
 			(void)strlcpy(namebuf, "?", sizeof(namebuf));
-		(void)printf("%s/%d if=%s\n", namebuf, p->prefixlen,
-		    if_indextoname((unsigned int)p->if_index, ifix_buf));
+		(void)printf("%s/%d if=%s\n", namebuf, pfx.prefixlen,
+		    if_indextoname((unsigned int)pfx.if_index, ifix_buf));
 
 		(void)gettimeofday(&tim, 0);
 		/*
@@ -1173,54 +1172,56 @@ plist(void)
 		 * by origin.  notify the difference to the users.
 		 */
 		(void)printf("flags=%s%s%s%s%s",
-		    p->raflags.onlink ? "L" : "",
-		    p->raflags.autonomous ? "A" : "",
-		    (p->flags & NDPRF_ONLINK) != 0 ? "O" : "",
-		    (p->flags & NDPRF_DETACHED) != 0 ? "D" : "",
+		    pfx.raflags.onlink ? "L" : "",
+		    pfx.raflags.autonomous ? "A" : "",
+		    (pfx.flags & NDPRF_ONLINK) != 0 ? "O" : "",
+		    (pfx.flags & NDPRF_DETACHED) != 0 ? "D" : "",
 #ifdef NDPRF_HOME
-		    (p->flags & NDPRF_HOME) != 0 ? "H" : ""
+		    (pfx.flags & NDPRF_HOME) != 0 ? "H" : ""
 #else
 		    ""
 #endif
 		    );
-		if (p->vltime == ND6_INFINITE_LIFETIME)
+		if (pfx.vltime == ND6_INFINITE_LIFETIME)
 			(void)printf(" vltime=infinity");
 		else
-			(void)printf(" vltime=%lu", (unsigned long)p->vltime);
-		if (p->pltime == ND6_INFINITE_LIFETIME)
+			(void)printf(" vltime=%lu", (unsigned long)pfx.vltime);
+		if (pfx.pltime == ND6_INFINITE_LIFETIME)
 			(void)printf(", pltime=infinity");
 		else
-			(void)printf(", pltime=%lu", (unsigned long)p->pltime);
-		if (p->expire == 0)
+			(void)printf(", pltime=%lu", (unsigned long)pfx.pltime);
+		if (pfx.expire == 0)
 			(void)printf(", expire=Never");
-		else if (p->expire >= tim.tv_sec)
+		else if (pfx.expire >= tim.tv_sec)
 			(void)printf(", expire=%s",
-			    sec2str(p->expire - tim.tv_sec));
+			    sec2str(pfx.expire - tim.tv_sec));
 		else
 			(void)printf(", expired");
-		(void)printf(", ref=%d", p->refcnt);
+		(void)printf(", ref=%d", pfx.refcnt);
 		(void)printf("\n");
 		/*
 		 * "advertising router" list is meaningful only if the prefix
 		 * information is from RA.
 		 */
-		if (p->advrtrs) {
+		if (pfx.advrtrs) {
 			int j;
-			struct sockaddr_in6 *sin6;
+			struct sockaddr_in6 sin6;
 
-			sin6 = advrtr;
 			(void)printf("  advertised by\n");
-			for (j = 0; j < p->advrtrs; j++) {
+			for (j = 0; j < pfx.advrtrs && p <= ep; j++) {
 				struct in6_nbrinfo *nbi;
 
-				if (getnameinfo((struct sockaddr *)(void *)sin6,
-				    (socklen_t)sin6->sin6_len, namebuf,
+				memcpy(&sin6, p, sizeof(sin6));
+				p += sizeof(sin6);
+
+				if (getnameinfo((struct sockaddr *)&sin6,
+				    (socklen_t)sin6.sin6_len, namebuf,
 				    sizeof(namebuf), NULL, 0, ninflags) != 0)
 					(void)strlcpy(namebuf, "?", sizeof(namebuf));
 				(void)printf("    %s", namebuf);
 
-				nbi = getnbrinfo(&sin6->sin6_addr,
-				    (unsigned int)p->if_index, 0);
+				nbi = getnbrinfo(&sin6.sin6_addr,
+				    (unsigned int)pfx.if_index, 0);
 				if (nbi) {
 					switch (nbi->state) {
 					case ND6_LLINFO_REACHABLE:
@@ -1234,7 +1235,6 @@ plist(void)
 					}
 				} else
 					(void)printf(" (no neighbor state)\n");
-				sin6++;
 			}
 		} else
 			(void)printf("  No advertising router\n");
