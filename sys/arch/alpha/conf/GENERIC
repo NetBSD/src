@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.354 2013/10/15 19:27:48 jdc Exp $
+# $NetBSD: GENERIC,v 1.355 2013/12/18 12:43:59 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.354 $"
+ident		"GENERIC-$Revision: 1.355 $"
 
 maxusers 32
 
@@ -59,7 +59,7 @@ options 	NTP			# kernel PLL for NTP
 #options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-#makeoptions	DEBUG="-g"
+makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
 
 #options 	KGDB			# Remote kernel GDB support
