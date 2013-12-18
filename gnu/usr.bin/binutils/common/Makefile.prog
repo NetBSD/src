@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.8 2006/10/05 20:40:12 plunky Exp $
+#	$NetBSD: Makefile.prog,v 1.8.30.1 2013/12/18 18:43:29 matt Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -8,7 +8,7 @@
 TOP=		${NETBSDSRCDIR}/gnu
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/../common/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../common/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
 # Might end in "-new" in GNU makefile
 XPROG=		${PROG:c++filt=cxxfilt}
@@ -18,7 +18,7 @@ SRCS=		${G_${BUPROG}_OBJECTS:.o=.c} \
 		${G_${BUPROG}_DEPENDENCIES:M*.o:.o=.c}
 MAN=		${G_man_MANS:M${PROG}.1}
 
-CPPFLAGS+=	-I${.CURDIR}/../common/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BFD_MACHINE_ARCH}
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
