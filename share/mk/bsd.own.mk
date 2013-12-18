@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:C/arm.*/arm/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -557,8 +557,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # an "elf" tag for historically a.out platforms.
 #
 .if ${OBJECT_FMT} == "ELF" && \
-    (${MACHINE_GNU_ARCH} == "arm" || \
-     ${MACHINE_GNU_ARCH} == "armeb" || \
+    (${MACHINE_CPU} == "arm" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_CPU} == "m68k" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
