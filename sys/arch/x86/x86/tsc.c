@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.35 2013/12/11 02:14:08 msaitoh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.35 2013/12/11 02:14:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.36 2013/12/18 03:20:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,9 @@ tsc_is_invariant(void)
 		 * http://lkml.org/lkml/2005/11/4/173
 		 *
 		 * See Appendix E.4.7 CPUID Fn8000_0007_EDX Advanced Power
-		 * Management Features, AMD64 Architecture ProgrammerVolume 3:
-		 * General-Purpose and System Instructions. The check is
-		 * done below.
+		 * Management Features, AMD64 Architecture Programmer's
+		 * Manual Volume 3: General-Purpose and System Instructions.
+		 * The check is done below.
 		 */
 	}
 
