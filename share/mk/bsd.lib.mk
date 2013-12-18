@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.289.2.2.2.1.2.1 2009/12/14 06:33:16 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.289.2.2.2.1.2.2 2013/12/18 18:39:05 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -215,14 +215,14 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .c.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .c.go:
@@ -233,21 +233,21 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .cc.po .cpp.po .cxx.po .C.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .cc.go .cpp.go .cxx.go .C.go:
@@ -258,21 +258,21 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .f.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${.IMPSRC} -o ${.TARGET}
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .f.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .f.go:
@@ -283,7 +283,7 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .f.ln:
@@ -294,49 +294,49 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .m.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${PROFFLAGS} -pg ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .m.go:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${DEBUGFLAGS} -g ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .m.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .s.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .S.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .s.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .S.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -X ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .s.go:
 	${_MKTARGET_COMPILE}
@@ -349,12 +349,12 @@ FFLAGS+=	${FOPTS}
 .s.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .S.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 
 .if defined(LIB)							# {
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
