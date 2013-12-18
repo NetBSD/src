@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.31 2013/12/18 20:50:30 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.32 2013/12/18 20:56:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.31 2013/12/18 20:50:30 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.32 2013/12/18 20:56:32 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -309,7 +309,6 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'l':
-			setenv("LD_DYNAMIC_WEAK", "1", 2);
 			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
 				char pb[MAXPATHLEN];
 				/* try to mimic linker -l syntax */
