@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.14 2013/12/09 01:35:02 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.15 2013/12/18 03:20:09 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,7 +134,7 @@ unfriendly:
 static void
 show(void)
 {
-	uuid_t type;
+	uuid_t guid, type;
 	off_t start;
 	map_t *m, *p;
 	struct mbr *mbr;
@@ -198,8 +198,8 @@ show(void)
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
 			} else if (show_guid) {
-				uuid_to_string((uuid_t *)ent->ent_guid,
-				    &s, NULL);
+				le_uuid_dec(ent->ent_guid, &guid);
+				uuid_to_string(&guid, &s, NULL);
 				printf("- %s", s);
 				free(s);
 			} else {
@@ -219,7 +219,7 @@ show(void)
 static void
 show_one(void)
 {
-	uuid_t type;
+	uuid_t guid, type;
 	map_t *m;
 	struct gpt_ent *ent;
 	const char *s1;
@@ -260,7 +260,8 @@ show_one(void)
 	printf("Type: %s (%s)\n", s1, s2);
 	free(s2);
 
-	uuid_to_string((uuid_t *)ent->ent_guid, &s2, NULL);
+	le_uuid_dec(ent->ent_guid, &guid);
+	uuid_to_string(&guid, &s2, NULL);
 	printf("GUID: %s\n", s2);
 	free(s2);
 
