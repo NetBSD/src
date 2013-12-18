@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.198.2.3.4.3 2010/02/28 04:05:41 matt Exp $
+#	$NetBSD: build.sh,v 1.198.2.3.4.4 2013/12/18 18:40:35 matt Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -290,7 +290,15 @@ getarch()
 		# MACHINE_ARCH is "arm" or "armeb", not "armel"
 		MACHINE_ARCH=arm${MACHINE##*-}
 		MACHINE_ARCH=${MACHINE_ARCH%el}
-		MACHINE=${MACHINE%-e[bl]}
+		MACHINE=evbarm
+		;;
+
+	evbarmv7-e[bl])
+		makewrappermachine=${MACHINE}
+		# MACHINE_ARCH is "armv7" or "armv7eb", not "armv7el"
+		MACHINE_ARCH=armv7${MACHINE##*-}
+		MACHINE_ARCH=${MACHINE_ARCH%el}
+		MACHINE=evbarm
 		;;
 
 	evbmips-e[bl]|sbmips-e[bl])
@@ -402,7 +410,7 @@ validatearch()
 	#
 	case "${MACHINE_ARCH}" in
 
-	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
+	alpha|arm|armeb|armv7|armv7eb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
 		;;
 
 	"")
@@ -420,7 +428,7 @@ validatearch()
 	case "${MACHINE}" in
 
 	evbarm)
-		arches="arm armeb"
+		arches="arm armeb armv7 armv7eb"
 		;;
 
 	algor|arc|cobalt|pmax)
@@ -1225,7 +1233,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.198.2.3.4.3 2010/02/28 04:05:41 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.198.2.3.4.4 2013/12/18 18:40:35 matt Exp $
 # with these arguments: ${_args}
 #
 
