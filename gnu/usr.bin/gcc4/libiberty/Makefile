@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2013/12/18 18:42:57 matt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -14,7 +14,7 @@ GNUHOSTDIST=	${DIST}
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH:S/armv7/arm/} \
 		-I${DIST}/include
 
 COPTS.argv.c = -Wno-stack-protector
