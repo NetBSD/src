@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
+/* $NetBSD: ti_iic.c,v 1.5 2013/12/18 12:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.5 2013/12/18 12:54:35 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -559,7 +559,7 @@ ti_iic_handle_intr(struct ti_iic_softc *sc, uint32_t stat)
 void
 ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
 {
-	int len;
+	int len = 0;
 
 	KASSERT(mutex_owned(&sc->sc_mtx));
 	DPRINTF(("ti_iic_do_read stat %#x\n", stat));
@@ -586,7 +586,7 @@ ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
 void
 ti_iic_do_write(struct ti_iic_softc *sc, uint32_t stat)
 {
-	int len;
+	int len = 0;
 
 	DPRINTF(("ti_iic_do_write stat %#x\n", stat));
 	KASSERT(mutex_owned(&sc->sc_mtx));
