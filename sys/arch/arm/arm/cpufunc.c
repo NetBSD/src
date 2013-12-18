@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.130 2013/11/12 17:31:55 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.131 2013/12/18 12:52:47 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.130 2013/11/12 17:31:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.131 2013/12/18 12:52:47 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3039,15 +3039,17 @@ struct cpu_option armv7_options[] = {
 void
 armv7_setup(char *args)
 {
-	int cpuctrl, cpuctrlmask;
+	int cpuctrl;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE ;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
+#if 0
+	int cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
+#endif
 
 #ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
@@ -3427,7 +3429,7 @@ void
 xscale_setup(char *args)
 {
 	uint32_t auxctl;
-	int cpuctrl, cpuctrlmask;
+	int cpuctrl;
 
 	/*
 	 * The XScale Write Buffer is always enabled.  Our option
@@ -3440,13 +3442,15 @@ xscale_setup(char *args)
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
 		 | CPU_CONTROL_BPRD_ENABLE;
-	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+#if 0
+	int cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
 		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
+#endif
 
 #ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
