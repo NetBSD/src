@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.19 2013/08/18 15:58:19 matt Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.20 2013/12/18 13:03:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.19 2013/08/18 15:58:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.20 2013/12/18 13:03:59 skrll Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -200,11 +200,9 @@ ep93xx_intr_calculate_masks(void)
 inline void
 splx(int new)
 {
-	int	old;
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = curcpl();
 	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
