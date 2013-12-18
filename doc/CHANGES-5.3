@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.42 2013/12/18 04:07:37 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.43 2013/12/18 20:25:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -663,4 +663,17 @@ usr.sbin/ndp/ndp.c				1.42
 	passed by the kernel - instead of (bogusly) assuming the format will
 	obey all local alignement requirements.
 	[martin, ticket #1892]
+
+lib/libc/net/gethnamaddr.c				1.79-1.82 via patch
+lib/libc/net/getnameinfo.3				1.37-1.40 via patch
+lib/libc/net/getnameinfo.c				1.4 via patch
+lib/libc/net/hostent.h					1.1, 1.2 via patch
+lib/libc/net/sethostent.c				1.17-1.19 via patch
+
+	Make getnameinfo(3) re-entrant (ahem __ypdomain).
+	Add not advertised reentrant functions: {get,set,end}hostent_r,
+	gethostbyname{,2}_r, gethostbyaddr_r. Make getnameinfo(3) use
+	gethostbyaddr_r(3).
+	Implement no-check-names.
+	[bad, ticket #1887]
 
