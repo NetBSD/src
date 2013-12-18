@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.29 2013/12/16 23:27:33 bad Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.30 2013/12/18 20:48:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.29 2013/12/16 23:27:33 bad Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.30 2013/12/18 20:48:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.29 2013/12/16 23:27:33 bad Exp $");
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 #include <rump/rumpdefs.h>
+#include <rump/rumperr.h>
 
 __dead static void
 usage(void)
@@ -62,17 +63,32 @@ usage(void)
 }
 
 __dead static void
-die(int sflag, int error, const char *reason)
+diedie(int sflag, const char *reason, int error, const char *errstr)
 {
 
 	if (reason != NULL)
 		fputs(reason, stderr);
-	if (error > 0)
-		fprintf(stderr, ": %s", strerror(error));
+	if (errstr) {
+		fprintf(stderr, ": %s", errstr);
+	}
 	fputc('\n', stderr);
 	if (!sflag)
 		rump_daemonize_done(error);
 	exit(1);
+}
+
+__dead static void
+die(int sflag, int error, const char *reason)
+{
+
+	diedie(sflag, reason, error, error == 0 ? NULL : strerror(error));
+}
+
+__dead static void
+die_rumperr(int sflag, int error, const char *reason)
+{
+
+	diedie(sflag, reason, error, error == 0 ? NULL : rump_strerror(error));
 }
 
 static sem_t sigsem;
@@ -293,6 +309,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'l':
+			setenv("LD_DYNAMIC_WEAK", "1", 1);
 			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
 				char pb[MAXPATHLEN];
 				/* try to mimic linker -l syntax */
@@ -341,12 +358,12 @@ main(int argc, char *argv[])
 	if (!sflag) {
 		error = rump_daemonize_begin();
 		if (error)
-			die(1, error, "rump daemonize");
+			die_rumperr(1, error, "rump daemonize");
 	}
 
 	error = rump_init();
 	if (error)
-		die(sflag, error, "rump init failed");
+		die_rumperr(sflag, error, "rump init failed");
 
 	/* load modules */
 	for (i = 0; i < curmod; i++) {
@@ -355,9 +372,14 @@ main(int argc, char *argv[])
 #define ETFSKEY "/module.mod"
 		if ((error = rump_pub_etfs_register(ETFSKEY,
 		    modarray[0], RUMP_ETFS_REG)) != 0)
-			die(sflag, error, "module etfs register failed");
+			die_rumperr(sflag,
+			    error, "module etfs register failed");
 		memset(&ml, 0, sizeof(ml));
 		ml.ml_filename = ETFSKEY;
+		/*
+		 * XXX: since this is a syscall, error namespace depends
+		 * on loaded emulations.  revisit and fix.
+		 */
 		if (rump_sys_modctl(RUMP_MODCTL_LOAD, &ml) == -1)
 			die(sflag, errno, "module load failed");
 		rump_pub_etfs_remove(ETFSKEY);
@@ -400,12 +422,12 @@ main(int argc, char *argv[])
 
 		if ((error = rump_pub_etfs_register_withsize(etfs[i].key,
 		    etfs[i].hostpath, etfs[i].type, foffset, flen)) != 0)
-			die(sflag, error, "etfs register");
+			die_rumperr(sflag, error, "etfs register");
 	}
 
 	error = rump_init_server(serverurl);
 	if (error)
-		die(sflag, error, "rump server init failed");
+		die_rumperr(sflag, error, "rump server init failed");
 
 	if (!sflag)
 		rump_daemonize_done(RUMP_DAEMONIZE_SUCCESS);
