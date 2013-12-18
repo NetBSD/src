@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2013/12/18 18:42:57 matt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,7 +6,7 @@ LIB=		cpp
 
 SRCS=		${G_libcpp_a_OBJS:.o=.c}
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH:S/armv7/arm/} \
 		-I${GCCARCH} -I${BACKENDOBJ} \
 		${G_INCLUDES:M-I*:N-I.*} \
 		-DPREFIX=\"/usr\"
