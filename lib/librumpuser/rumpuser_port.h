@@ -1,15 +1,9 @@
-/*	$NetBSD: rumpuser_port.h,v 1.22 2013/10/27 16:39:46 rmind Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.23 2013/12/18 20:24:04 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
  * Quick & dirty.
  * Maybe should try to use the infrastructure in tools/compat instead?
- */
-
-/*
- * XXX:
- * There is currently no errno translation for the error values reported
- * by the hypercall layer.
  */
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
