@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.25 2013/08/18 15:58:19 matt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.26 2013/12/18 13:03:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.25 2013/08/18 15:58:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.26 2013/12/18 13:03:59 skrll Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -258,11 +258,9 @@ ixp12x0_intr_calculate_masks(void)
 inline void
 splx(int new)
 {
-	int	old;
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = curcpl();
 	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
