@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2008/10/25 23:56:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.45.6.1 2013/12/18 18:41:39 matt Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -17,7 +17,7 @@ libinstall:	# do nothing
 
 LIB=		bfd
 
-BFD_MACHINE_ARCH?=	${MACHINE_ARCH}
+BFD_MACHINE_ARCH?=	${MACHINE_ARCH:S/armv7/arm/}
 
 .if exists(${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"

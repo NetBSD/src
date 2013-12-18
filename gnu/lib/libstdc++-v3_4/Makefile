@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/11/09 20:07:15 christos Exp $
+#	$NetBSD: Makefile,v 1.3.28.1 2013/12/18 18:41:39 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -7,8 +7,9 @@ NOLINT=		# defined
 
 LIB=		stdc++
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../Makefile.inc"
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	6
 SHLIB_MINOR=	0
@@ -120,9 +121,9 @@ CLEANFILES+= unwind.h
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libiberty \
 	${CONF}/locale/generic \
-	${.CURDIR}/arch/${MACHINE_ARCH}
+	${.CURDIR}/arch/${GCC_MACHINE_ARCH}
 
-${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+${OBJS}: ${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk
 .else
 .include <bsd.prog.mk> # do nothing
 .endif

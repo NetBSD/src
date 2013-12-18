@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.11.6.1 2013/12/18 18:41:39 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -7,15 +7,17 @@ NOLINT=		# defined
 
 LIB=		objc
 
+.include "${.CURDIR}/../Makefile.inc"
+
 .if ${MKGCC} != "no"
 
 SHLIB_MAJOR=	2
 SHLIB_MINOR=	1
 
 # XXX just while all platforms defs.mk are updated..
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk)
 # Machine-dependent definitions (include file names).
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk"
 EXTRA_FAKEHEADERS=
 .else
 # Machine-independent definitions (include file names).
@@ -27,18 +29,18 @@ LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc4/libgcc && ${PRINTOBJDIR}
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/gcc4
-GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
-LIBOBJCARCH=	${NETBSDSRCDIR}/gnu/lib/libobjc4/arch/${MACHINE_ARCH}
-GCCLIBXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${GCC_MACHINE_ARCH}
+LIBOBJCARCH=	${NETBSDSRCDIR}/gnu/lib/libobjc4/arch/${GCC_MACHINE_ARCH}
+GCCLIBXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
 
 GCPPFLAGS=	${G_ALL_CFLAGS} ${G_INCLUDES}
-CPPFLAGS+=	-I. -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I. -I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
 
-BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} bits
+BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH} bits
 DPSRCS+=	bits
 
 .for f in Protocol.m Object.m NXConstStr.m linking.m
@@ -95,7 +97,7 @@ unwind.h: ${G_UNWIND_H}
 CLEANFILES+= cs-tconfig.h tconfig.h unwind.h
 
 # XXX just while all platforms defs.mk are updated..
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+.if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}/defs.mk)
 optionlist: ${G_ALL_OPT_FILES} ${LIBOBJCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
 	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
 		> ${.TARGET}

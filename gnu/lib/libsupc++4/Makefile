@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/11/09 20:07:15 christos Exp $
+#	$NetBSD: Makefile,v 1.2.28.1 2013/12/18 18:41:40 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,8 +9,10 @@ NOPROFILE=	# defined
 
 LIB=		supc++
 
-.if exists(${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../Makefile.inc"
+
+.if exists(${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	0
 SHLIB_MINOR=	0
@@ -35,9 +37,9 @@ CLEANFILES+= unwind.h
 	${DIST}/libstdc++-v3/libmath \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libiberty \
-	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}
+	${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}
 
-${OBJS}: ${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk
+${OBJS}: ${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH}/defs.mk
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
