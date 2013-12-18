@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2006/11/09 21:27:58 christos Exp $
+#	$NetBSD: Makefile,v 1.8.30.1 2013/12/18 18:43:29 matt Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/gnu
 
 .include "${.CURDIR}/../common/Makefile.inc"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
 PROG=		as
 SRCS=		${G_OBJS:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
@@ -20,7 +20,7 @@ COPTS.symbols.c = -Wno-stack-protector
 COPTS.stabs.c = -Wno-stack-protector
 COPTS.macro.c = -Wno-stack-protector
 
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH}
 CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
 CPPFLAGS+=	-I${DIST}
 

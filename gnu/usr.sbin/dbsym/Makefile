@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/01/03 14:04:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.13.44.1 2013/12/18 18:43:30 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -25,12 +25,13 @@ DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
 
 .ifndef HOSTPROG
-.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
+BFD_MACHINE_ARCH=${MACHINE_ARCH:S/armv7/arm/}
+.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
 BFDDIR!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 IBERTYDIR!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
+CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${BFD_MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .endif # HOSTPROG
